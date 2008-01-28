@@ -63,7 +63,7 @@ The following executables must be in your path:
 
 The path_config file 
 ==================== 
-Now - you should change to the cirectory build/. If you have checked
+Now - you should change to the directory build/. If you have checked
 out the source code according to the checkout command listed at the
 top, all the libraries will be located in a common hierarchy - however
 we have attempted to make the build process slightly more general. In
@@ -80,10 +80,10 @@ every src/ directory to the path_config file.
 The last variable in the path_config file is EXTERNAL_LIB_PATH, you
 should set this variable to point to a directory which contains
 (symlinks to) all external libraries needed in the build (not
-including external libraries in standard locations). So, wehen you
+including external libraries in standard locations). So, when you
 have installed the libfftw3 library in /some/funny/path/i32/lib you
 should add a symbolic link from the path given in EXTERNAL_LIB_PATH to
-/some/funny/path/i32/lib/libfftw3.so - or something like this.
+/some/funny/path/i32/lib/libfftw3.so.
 
 
 Building the libraries
@@ -102,8 +102,8 @@ be built in the following order:
    7: libanalysis(F90)
    8: libenkf(C)
 
-If you wish you can also just use the build_all.py script which will
-build the libraries in the correct order.
+If you wish you can also use the build_all.py script which will build
+the libraries in the correct order.
 
 
 
@@ -111,7 +111,7 @@ Building the executable for an existing model
 =============================================
 When all libraries have built successfully you can build the
 executable. Go to the SOURCE directory. The SOURCE directory is
-organized as follows and build process is organized as follows:
+organized and build process is organized as follows:
 
 o All the model spesific files are located in a subdirectories
   Model_XXX, and the "active" model is based on symlinks into the
@@ -119,7 +119,7 @@ o All the model spesific files are located in a subdirectories
 
 o All the source files have extension .F90 - prior to compiling
   they are piped through the cpp preprosessor to generate .f90
-  files. These f90 files are stored temporarily in model spesfic
+  files. These f90 files are stored temporarily in a model spesific
   tmp directory - this way the actual build is not done on an NFS
   mounted volume, a side effect which increases build speed
   dramatically.
