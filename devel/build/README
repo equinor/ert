@@ -1,0 +1,106 @@
+svn checkout
+------------
+To check out the EnKF sources type the following command in a shell:
+
+bash% svn co http://tr-linapp03.tr.statoil.no/reservoir/EnKF/devel EnKF
+
+The final EnKF is the name of a directory which will be created to
+hold the newly checked out code; where in your personal filesystem you
+put this is 100% arbitrary.
+
+When the checkout is complete you should have a EnKF directory, if you
+cd into this directory you should see the following subdirectories:
+
+ bin
+ doc
+ Helps
+ libecl
+ libenkf
+ libhash
+ libutil
+ librms
+ libsched
+ libutil 
+ 
+
+
+
+External libraries
+------------------
+
+
+
+1. The following executables must be in your path:
+
+     Scripts/f90dep.py         [available as f90dep]
+     Scripts/select_model.py   [available as select_model]
+     svnversion
+     ifort                     [fortran 90 compiler]
+  
+2. Create the path_config file, and add a symbolic link from all
+   source directories pointing to this file. (See path_config.template
+   for instructions on how to make this file).
+
+3. Start building the libraries. For each library this should only
+   amount to changing into to src/ directory and do make. The
+   libraries should be built in the following order:
+
+   1: libhash(C)
+   2: libutil(C)
+   3: libecl(C)
+   4: libsched(C)
+   5: librms(C)
+   6: libsample(F90)
+   7: libanalysis(F90)
+   8: libenkf(C)
+
+4. When all libraries have built successfully you can build the
+   executable. Go to the SOURCE directory. The SOURCE directory is
+   organized as follows and build process is organized as follows:
+
+   o All the model spesific files are located in a subdirectories
+     Model_XXX, and the "active" model is based on symlinks into the
+     relevant directory.
+
+   o All the source files have extension .F90 - prior to compiling
+     they are piped through the cpp preprosessor to generate .f90
+     files. These f90 files are stored temporarily in model spesfic
+     tmp directory - this way the actual build is not done on an NFS
+     mounted volume, a side effect which increases build speed
+     dramatically.
+
+   The steps you must go through to build a model is the following:
+
+   a: You must make up your mind on which model to build.
+
+   b: Go manually into the Model_xxx directory of the chosen model. In
+      this directory you should create a file called user_defs.inc
+      which looks like this:
+----------------------------
+character(Len=80), Parameter :: code_path         = "/h/a152128/EnKF/devel/EnKF/SOURCE/Model_OmegaNorth/"
+character(Len=80), Parameter :: code_include_path = "/h/a152128/EnKF/devel/EnKF/SOURCE/Model_OmegaNorth/include/"
+character(len=80), parameter :: scriptdir         = "/h/a152128/EnKF/devel/EnKF/Scripts/"
+character(len=80), parameter :: helpdir           = "/h/a152128/EnKF/devel/EnKF/Helps/"
+----------------------------
+      Of course you should replace the path-values on the right with
+      the ones which are correct in your case.
+    
+   c: Go back to the SOURCE directory and type:
+
+      bash% select_model Model_xxx
+  
+      to actually select the model (i.e. add some symbolic links). In
+      addition to establishing the model spesific links, this command
+      will also evaluate dependencies++
+
+   d: Type make - and keep your fingers crossed.
+
+   If this worked out allright you have built an EnKF executable for
+   one of the existing models successfully - maybe not very
+   interesting, but you have at least verified that the toolchain
+   works. 
+
+5. To build an EnKF executable for a new model is a quite significant
+   excercise in bootstrapping. Rough guidelines:
+
+
