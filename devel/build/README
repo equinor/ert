@@ -29,7 +29,11 @@ SOURCE(F90)      - The source code for the main EnKF executable(s).
 
 32/64 bits
 ==========
-
+The EnKF system is still stuck in 32 bit - in principle there should
+be no reason not to switch to 64 bits - but you never know?! All the C
+based libraries are compiled with a switch mflag=m32 to gcc, and this
+is also embedded in the filenames, i.e. libecl_m32.a.  For the fortran
+librarires/executable we use a 32 bit compiler.
 
 
 External libraries
@@ -52,7 +56,7 @@ The following executables must be in your path:
   Scripts/f90dep.py         [available as f90dep]
   Scripts/select_model.py   [available as select_model]
   svnversion
-  ifort                     [fortran 90 compiler]
+  ifort                     [32 bit fortran 90 compiler]
   gcc                       [gnu C compiler]
 
 
