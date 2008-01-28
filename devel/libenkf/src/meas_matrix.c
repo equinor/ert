@@ -45,8 +45,13 @@ void meas_matrix_add(meas_matrix_type * matrix , int iens , double value) {
 }
 
 
+/*
+  Observe that this code does *NOT* subtract the ensemble
+  mean from S. This is in contrast to the original Fortran
+  code which did that.
+*/
 
-void meas_vector_allocS(const meas_matrix_type * matrix , double **_S) {
+double * meas_vector_allocS(const meas_matrix_type * matrix) {
   double * S;
   int offset = 0;
   int iens, ens_stride , obs_stride;
@@ -68,48 +73,49 @@ void meas_vector_allocS(const meas_matrix_type * matrix , double **_S) {
     }
   }
 
-  /* 
-     Code written to facilitate the return of mean and standard
-     deviation of S - currently not used.
-  */
-  {
-    int   iobs;
+/*   /\*  */
+/*      Code written to facilitate the return of mean and standard */
+/*      deviation of S - currently not used. */
+/*   *\/ */
+/*   { */
+/*     int   iobs; */
 
-    double * S1 = util_calloc(nrobs , sizeof * S1 , __func__);
-    double * S2 = util_calloc(nrobs , sizeof * S2 , __func__);
-    double * meanS;
-    double * stdS;
-
-
-    for (iens = 0; iens < matrix->ens_size; iens++) 
-      for (iobs = 0; iobs < nrobs; iobs++) {
-	int index = iens * ens_stride + iobs * obs_stride;
-	S1[iobs] += S[index];
-	S2[iobs] += S[index] * S[index];
-      }
-
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      S1[iobs] *= 1.0 / matrix->ens_size;
-      S2[iobs] *= 1.0 / matrix->ens_size - S1[iobs] * S1[iobs];
-    }
-    meanS = S1;
-    stdS  = S2;
+/*     double * S1 = util_calloc(nrobs , sizeof * S1 , __func__); */
+/*     double * S2 = util_calloc(nrobs , sizeof * S2 , __func__); */
+/*     double * meanS; */
+/*     double * stdS; */
 
 
-    /*
-      Subtracting the mean - the standard deviation is
-      currently not used for anything.
-    */
+/*     for (iens = 0; iens < matrix->ens_size; iens++)  */
+/*       for (iobs = 0; iobs < nrobs; iobs++) { */
+/* 	int index = iens * ens_stride + iobs * obs_stride; */
+/* 	S1[iobs] += S[index]; */
+/* 	S2[iobs] += S[index] * S[index]; */
+/*       } */
 
-    for (iens = 0; iens < matrix->ens_size; iens++) 
-      for (iobs = 0; iobs < nrobs; iobs++) {
-	int index = iens * ens_stride + iobs * obs_stride;
-	S[index] -= meanS[iobs];
-      }
+/*     for (iobs = 0; iobs < nrobs; iobs++) { */
+/*       S1[iobs] *= 1.0 / matrix->ens_size; */
+/*       S2[iobs] *= 1.0 / matrix->ens_size - S1[iobs] * S1[iobs]; */
+/*     } */
+/*     meanS = S1; */
+/*     stdS  = S2; */
+
+
+/*     /\* */
+/*       Subtracting the mean - the standard deviation is */
+/*       currently not used for anything. */
+/*     *\/ */
+
+/*     for (iens = 0; iens < matrix->ens_size; iens++)  */
+/*       for (iobs = 0; iobs < nrobs; iobs++) { */
+/* 	int index = iens * ens_stride + iobs * obs_stride; */
+/* 	S[index] -= meanS[iobs]; */
+/*       } */
     
-    free(S1);
-    free(S2);
-  }
-  *_S = S;
+/*     free(S1); */
+/*     free(S2); */
+/*   } */
+  
+  return S;
 }
 

@@ -6,6 +6,17 @@
 */
 
 /*
+subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,update_randrot,istep,xpath)
+! Computes the analysed ensemble for A using the EnKF or square root schemes.
+
+   use mod_anafunc
+   use m_multa
+   implicit none
+
+   integer, intent(in) :: istep
+   character(Len=*), intent(in) :: xpath
+
+
    integer, intent(in) :: nrens            ! number of ensemble members
    integer, intent(in) :: nrobs            ! number of observations
 
@@ -43,9 +54,6 @@ void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs
 
 
 
-void analysis_initS(void) {
-  
-}
 
 
 void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const double * S , const double * D , const double * innov , const int * nrens , 
@@ -59,6 +67,11 @@ void initX(int nrens , int nrobs , bool verbose , bool update_randrot) {
   int  truncation , mode , istep;
   char * xpath;
 
+  /*
+    Have to subtract mean(S) from S - because that is what the
+    fortran core routine expects.
+  */
+  
   verbose_int        = util_C2f90_bool(verbose);
   update_randrot_int = util_C2f90_bool(update_randrot);
   
@@ -76,5 +89,19 @@ void initX(int nrens , int nrobs , bool verbose , bool update_randrot) {
 		      (const int *) &update_randrot_int , 
 		      (const int *) &istep              , 
 		      xpath);
-  
 }
+
+
+/*
+
+  X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
+  S 	= meas_matrix_allocS(meas_matrix);
+  R 	= obs_data_allocR(obs_data , ens_size , innov , S , alpha);
+  D 	= obs_data_allocD(obs_data , ens_size , S , returnE , &E);
+  innov = obs_data_alloc_innov(obs_data , ens_size , S);
+  
+
+  initX(X , R , E , S , D , innov , ....);
+
+*/
+  
