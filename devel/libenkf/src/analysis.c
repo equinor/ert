@@ -44,7 +44,7 @@ void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs
 
 
 void analysis_initS(void) {
-
+  
 }
 
 

@@ -230,8 +230,9 @@ FILE * enkf_util_fopen_w(const char * , const char * );
 void   enkf_util_fwrite(const void *, int , int , FILE *, const char * );
 void   enkf_util_fread ( void *, int , int , FILE *, const char * );
 
-double enkf_util_rand_normal(double , double );
-void   enkf_util_fread_assert_target_type(FILE * , enkf_impl_type , const char *);
-void   enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
+void 	enkf_util_rand_stdnormal_vector(int  , double *);
+double 	enkf_util_rand_normal(double , double );
+void   	enkf_util_fread_assert_target_type(FILE * , enkf_impl_type , const char *);
+void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 
 #endif

@@ -10,12 +10,11 @@ INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 CFLAGS  = -$(MFLAG) -O3 -std=gnu99 -g -Wall 
 ARFLAGS = -csr
 #################################################################
-FORTRAN_OBJECTS   = m_enkfX5.o mod_anafunc.o m_mean_preserving_rotation.o m_random.o m_multa.o m_randrot.o
 OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config.o trans_func.o logmode.o multflt_interC.o multz_interC.o enkf_types.o enkf_obs.o obs_data.o obs_node.o well_obs.o field_obs.o meas_op.o meas_vector.o well_config.o well.o enkf_config_node.o field_config.o field.o ecl_static_kw_config.o ecl_static_kw.o equil_config.o equil.o enkf_state.o multflt.o enkf_util.o multflt_config.o enkf_config.o multz.o multz_config.o enkf_node.o pgbox_config.o pgbox.o enkf_fs.o gen_kw_config.o gen_kw.o gen_kw_interC.o enkf_fs.o basic_driver.o plain_driver.o analysis.o meas_matrix.o
 INC_FILES_INSTALL = thist.h scalar.h scalar_config.h trans_func.h logmode.h enkf_obs.h obs_data.h obs_node.h well_obs.h meas_op.h meas_vector.h well_config.h well.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw_config.h ecl_static_kw.h equil_config.h equil.h enkf_state.h multflt.h enkf_util.h multflt_config.h enkf_config.h multz.h multz_config.h enkf_node.h pgbox_config.h pgbox.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h plain_driver.h analysis.h meas_matrix.h
 
-LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lpthread -lz -lg2c -lifcore -llapack -lblas 
-LIB_PATH          = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L$(LIBENKF_HOME)/lib -L/h/a152128/lib/linux -L/local/intel/compiler90/ia32/fc/lib
+LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lanalysis_$(MFLAG) -lm -lpthread -lz -lg2c -lifcore -llapack -lblas 
+LIB_PATH          = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L$(LIBENKF_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH)
 LIB               = libenkf_$(MFLAG).a
 TARGET_INCLUDE    = -I$(LIBENKF_HOME)/include -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include
 
@@ -39,7 +38,7 @@ clean:
 	ln -s ../../SOURCE/*.o .
 
 
-$(LIB): $(OBJECTS) $(FORTRAN_OBJECTS)
+$(LIB): $(OBJECTS) 
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS) $(FORTRAN_OBJECTS)
 
 %.o : %.c

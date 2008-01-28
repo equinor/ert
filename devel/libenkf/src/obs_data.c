@@ -76,20 +76,47 @@ void obs_data_fprintf(const obs_data_type * obs_data , FILE *stream) {
 }
 
 
+static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size) {
+  double *E;
+  int iens, iobs, nrobs;
+  int ens_stride , obs_stride;
+  nrobs = obs_data->size;
+  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
 
-double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, const double * S , const double * meanS) {
-  double *D;
+  E = util_malloc(nrobs * ens_size * sizeof * E , __func__);
+  enkf_util_rand_stdnormal_vector(nrobs * ens_size , E);
+  
+  for  (iens = 0; iens < ens_size; iens++) {
+    for (iobs = 0; iobs < nrobs; iobs++) {
+      int index = iens * ens_stride + iobs * obs_stride;
+      E[index] *= 1.0;
+    }
+  }
+  return E;
+
+}
+
+
+double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, const double * S , const double * meanS , bool returnE , double **_E) {
+  double *D , *E;
   int iens, iobs, nrobs;
   int ens_stride , obs_stride;
   nrobs = obs_data->size;
   analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
   D = util_malloc(nrobs * ens_size * sizeof * D , __func__);
+  E = obs_data_allocE(obs_data , ens_size);
   for  (iens = 0; iens < ens_size; iens++) {
     for (iobs = 0; iobs < nrobs; iobs++) {
       int index = iens * ens_stride + iobs * obs_stride;
-      D[index] = obs_data->value[iobs] - (S[index] + meanS[iobs]);
+      D[index] = obs_data->value[iobs] + E[index] - (S[index] + meanS[iobs]);
     }
   }
+
+  if (returnE)
+    *_E = E;
+  else
+    free(E);
+
   return D;
 }
 

@@ -86,6 +86,14 @@ double enkf_util_rand_normal(double mean , double std) {
   return mean + std * sqrt(-2.0 * log(R[0])) * cos(2.0 * pi * R[1]);
 }
 
+void enkf_util_rand_stdnormal_vector(int size , double *R) {
+  int i;
+  for (i = 0; i < size; i++)
+    R[i] = enkf_util_rand_normal(0.0 , 1.0);
+
+}
+
+
 /*****************************************************************/
 
 
