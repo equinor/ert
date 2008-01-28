@@ -6,28 +6,30 @@
 #include <enkf_config_node.h> 
 
 struct enkf_config_node_struct {
-  config_free_ftype               *freef;
+  config_free_ftype  *freef;
   enkf_impl_type       impl_type;
   enkf_var_type        var_type; 
   char 		     * ensfile;          
   char 		     * eclfile;          
-  void                      	   * data; /* This points to the config object of the actual implementation. */
+  void               * data; /* This points to the config object of the actual implementation. */
 } ;
 
 
 
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_type,
 					       enkf_impl_type             impl_type,
-					       const void                      * data, 
-					       config_free_ftype               * freef) {
+					       const char               * ensfile , 
+					       const char               * eclfile , 
+					       const void               * data, 
+					       config_free_ftype        * freef) {
   
   enkf_config_node_type * node = malloc( sizeof *node);
-  node->data = (void *) data;
-  node->freef              = freef;
-  node->var_type     	   = var_type;
-  node->impl_type     	   = impl_type;
-  node->ensfile            = NULL;
-  node->eclfile            = NULL;
+  node->data       = (void *) data;
+  node->freef      = freef;
+  node->var_type   = var_type;
+  node->impl_type  = impl_type;
+  node->ensfile    = NULL;
+  node->eclfile    = NULL;
 
   return node;
 }

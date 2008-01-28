@@ -32,7 +32,7 @@
 #include <pgbox.h>
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
-#include "enkf_config_decl.h"
+
 
 
 struct enkf_state_struct {
@@ -171,8 +171,7 @@ static const char * enkf_state_select_ens_path(const enkf_state_type * enkf_stat
 void enkf_state_set_run_path(enkf_state_type * enkf_state) {
   if (enkf_state->run_path != NULL)
     free(enkf_state->run_path);
-  
-  enkf_state->run_path        = path_fmt_alloc_path(enkf_state->config->run_path , enkf_state->my_iens);
+  enkf_state->run_path = path_fmt_alloc_path(enkf_config_get_run_path_ref(enkf_state->config) , enkf_state->my_iens);
 }
 
 void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
@@ -523,7 +522,7 @@ void enkf_state_swapout(enkf_state_type * enkf_state , int mask , bool forecast)
   while (list_node != NULL) {                                           
     enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
     if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_node_swapout(enkf_node , enkf_state_select_ens_path(enkf_state , enkf_node_get_key_ref(enkf_node) , forecast));
+      /*enkf_node_swapout(enkf_node , enkf_state_select_ens_path(enkf_state , enkf_node_get_key_ref(enkf_node) , forecast));*/
     list_node  = list_node_get_next(list_node);                         
   }                                                                     
 }
@@ -535,7 +534,7 @@ void enkf_state_swapin(enkf_state_type * enkf_state , int mask , bool forecast) 
   while (list_node != NULL) {                                           
     enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
     if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_node_swapin(enkf_node , enkf_state_select_ens_path(enkf_state , enkf_node_get_key_ref(enkf_node) , forecast));
+      /*enkf_node_swapin(enkf_node , enkf_state_select_ens_path(enkf_state , enkf_node_get_key_ref(enkf_node) , forecast));*/
     list_node  = list_node_get_next(list_node);                         
   }                                                                     
 }

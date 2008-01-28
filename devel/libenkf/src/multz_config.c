@@ -194,12 +194,6 @@ char * multz_config_alloc_description(const multz_config_type * config, int mult
 
 /*****************************************************************/
 
-CONFIG_GET_ENSFILE(multz);
-CONFIG_GET_ECLFILE(multz);
-CONFIG_SET_ECLFILE(multz);
-CONFIG_SET_ENSFILE(multz);
-CONFIG_SET_ECLFILE_VOID(multz);
-CONFIG_SET_ENSFILE_VOID(multz);
 VOID_FUNC(multz_config_free , multz_config_type);
 
 							 

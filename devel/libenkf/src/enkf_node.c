@@ -62,6 +62,11 @@ const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) 
   return node->config; 
 }
 
+const char     *  enkf_node_get_ensfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_ensfile_ref(node->config); }
+const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_eclfile_ref(node->config); }
+
+
+
 /*****************************************************************/
 
 /*
@@ -351,22 +356,17 @@ void enkf_node_sample(enkf_node_type *enkf_node) {
 }
 
 
-void enkf_node_swapin(enkf_node_type *enkf_node , const char * filename) {
+void enkf_node_swapin(enkf_node_type *enkf_node , FILE * stream) {
   FUNC_ASSERT(enkf_node->swapin , "swapin");
-  if (enkf_node_swapped(enkf_node)) {
-    FILE * stream  = util_fopen(filename , "r");
+  if (enkf_node_swapped(enkf_node)) 
     enkf_node->swapin(enkf_node->data , stream);
-    fclose(stream);
-  }
 }
 
 
-void enkf_node_swapout(enkf_node_type *enkf_node , const char * filename) {
+void enkf_node_swapout(enkf_node_type *enkf_node , FILE * stream) {
   FUNC_ASSERT(enkf_node->swapin , "swapout");
-  FILE * stream  = util_fopen(filename , "r");
   enkf_node->swapout(enkf_node->data , stream);
   enkf_node->swapped = true;
-  fclose(stream);
 }
 
 

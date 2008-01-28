@@ -13,12 +13,11 @@
 typedef struct {
   char              * ecl_kw_name;      
   enkf_var_type       var_type;  
-  char 		    * ensfile;          
-  char 		    * eclfile;          
   scalar_config_type  * scalar_config;
   int *i1, *i2 , *j1 , *j2 , *k;
   int 	           * area;
 } multz_config_type;
+
 
 
 double              multz_config_truncate(const multz_config_type * , int , double );
@@ -32,13 +31,7 @@ char              * multz_config_alloc_description(const multz_config_type * , i
 
 
 /*Generated headers */
-CONFIG_GET_ENSFILE_HEADER(multz);
-CONFIG_GET_ECLFILE_HEADER(multz);
-CONFIG_SET_ENSFILE_HEADER(multz);
-CONFIG_SET_ECLFILE_HEADER(multz);
 GET_DATA_SIZE_HEADER(multz);
-CONFIG_SET_ECLFILE_HEADER_VOID(multz);
-CONFIG_SET_ENSFILE_HEADER_VOID(multz);
 VOID_FUNC_HEADER(multz_config_free);
 
 #endif

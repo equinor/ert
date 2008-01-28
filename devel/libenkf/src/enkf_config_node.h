@@ -7,10 +7,12 @@ typedef void   (config_free_ftype)                (void *);
 
 typedef struct enkf_config_node_struct enkf_config_node_type;
 
-enkf_config_node_type * enkf_config_node_alloc(enkf_var_type     	          ,
-					       enkf_impl_type    	          ,
-					       const void        	        * ,
-					       config_free_ftype 	        *);
+enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
+					       enkf_impl_type        ,
+					       const char          * , 
+					       const char          * , 
+					       const void          * ,
+					       config_free_ftype   *);
 
 
 void 		  enkf_config_node_free(enkf_config_node_type * );

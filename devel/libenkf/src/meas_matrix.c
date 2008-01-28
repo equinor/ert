@@ -45,13 +45,20 @@ void meas_matrix_add(meas_matrix_type * matrix , int iens , double value) {
 }
 
 
+void meas_matrix_reset(meas_matrix_type * matrix) {
+  int iens;
+  for (iens = 0; iens < matrix->ens_size; iens++) 
+    meas_vector_reset(matrix->meas_vectors[iens]);
+}
+
+
 /*
   Observe that this code does *NOT* subtract the ensemble
   mean from S. This is in contrast to the original Fortran
   code which did that.
 */
 
-double * meas_vector_allocS(const meas_matrix_type * matrix) {
+double * meas_matrix_allocS(const meas_matrix_type * matrix) {
   double * S;
   int offset = 0;
   int iens, ens_stride , obs_stride;
@@ -65,11 +72,16 @@ double * meas_vector_allocS(const meas_matrix_type * matrix) {
       fprintf(stderr,"%s: fatal internal error - not all measurement vectors equally long - aborting \n",__func__);
       abort();
     }
+
     if (obs_stride == 1)
       memcpy(&S[offset] , meas_vector_get_data_ref(vector) , nrobs * sizeof * S);
     else {
-      fprintf(stderr,"%s: code currently assumes obs_stride = 1 - aborting \n",__func__);
-      abort();
+      const double * meas_data = meas_vector_get_data_ref(vector);
+      int iobs;
+      for (iobs = 0; iobs < nrobs; iobs++) {
+	int index = iobs * obs_stride + iens * ens_stride;
+	S[index] = meas_data[iobs];
+      }
     }
   }
 

@@ -21,7 +21,16 @@
 #include <history.h>
   
 
-#include "enkf_config_decl.h"
+struct enkf_config_struct {
+  int  		    ens_size;
+  hash_type        *config_hash;
+  hash_type        *obs_hash;
+  bool              endian_swap;
+  path_fmt_type    * run_path;
+  int                Nwells;
+  char            **well_list;
+};
+
 
 /*****************************************************************/
 
@@ -135,7 +144,7 @@ void enkf_config_add_type(enkf_config_type * enkf_config,
       abort();
     }
     {
-      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , data , freef);
+      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , NULL , data , freef);
       hash_insert_hash_owned_ref(enkf_config->config_hash , key , node , enkf_config_node_free__);
     }
   }
@@ -194,6 +203,8 @@ const enkf_config_node_type * enkf_config_get_ref(const enkf_config_type * confi
   }
 }
 
+
+const path_fmt_type * enkf_config_get_run_path_ref(const enkf_config_type *config) { return config->run_path; }
 
 
 

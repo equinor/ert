@@ -4,6 +4,7 @@
 #include <enkf_config_node.h>
 #include <enkf_types.h>
 #include <obs_data.h>
+#include <path_fmt.h>
 
 #define LOG_INPUT    1
 #define LOG_ENKF     2 
@@ -26,7 +27,7 @@ void               enkf_config_add_type0(enkf_config_type * , const char * , int
 void               enkf_config_add_well(enkf_config_type * , const char * , int , const char ** );
 const enkf_config_node_type * enkf_config_get_ref(const enkf_config_type * , const char * );
 void                          enkf_config_free(enkf_config_type * );
-
+const         path_fmt_type * enkf_config_get_run_path_ref(const enkf_config_type *);
 
 
 #endif
