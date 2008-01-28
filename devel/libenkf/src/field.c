@@ -1,7 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <enkf_config.h>
 #include <field.h>
 #include <util.h>
 #include <string.h>

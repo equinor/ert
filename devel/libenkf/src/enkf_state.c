@@ -12,7 +12,7 @@
 #include <list_node.h>
 #include <enkf_node.h>
 #include <enkf_state.h>
-#include <enkf_config.h>
+#include <enkf_ens.h>
 #include <enkf_types.h>
 #include <ecl_static_kw.h>
 #include <field.h>
@@ -42,7 +42,7 @@ struct enkf_state_struct {
   hash_type    	   	* impl_types;
   
   enkf_fs_type          * enkf_fs;
-  enkf_config_type 	* config;
+  enkf_ens_type 	* ens;
   char             	* eclbase;
   char                  * run_path;
   bool             	 _fmt_file;  
@@ -171,7 +171,7 @@ static const char * enkf_state_select_ens_path(const enkf_state_type * enkf_stat
 void enkf_state_set_run_path(enkf_state_type * enkf_state) {
   if (enkf_state->run_path != NULL)
     free(enkf_state->run_path);
-  enkf_state->run_path = path_fmt_alloc_path(enkf_config_get_run_path_ref(enkf_state->config) , enkf_state->my_iens);
+  enkf_state->run_path = path_fmt_alloc_path(enkf_ens_get_run_path_ref(enkf_state->ens) , enkf_state->my_iens);
 }
 
 void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
@@ -180,10 +180,10 @@ void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
 
 
 
-enkf_state_type *enkf_state_alloc(const enkf_config_type * config , const char * eclbase, int iens , enkf_fs_type * fs , bool fmt_file) {
+enkf_state_type *enkf_state_alloc(const enkf_ens_type * config , const char * eclbase, int iens , enkf_fs_type * fs , bool fmt_file) {
   enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
   
-  enkf_state->config          = (enkf_config_type *) config;
+  enkf_state->ens          = (enkf_ens_type *) config;
   enkf_state->node_list       = list_alloc();
   enkf_state->node_hash       = hash_alloc(10);
   enkf_state->impl_types      = hash_alloc(10);
@@ -216,7 +216,7 @@ enkf_state_type *enkf_state_alloc(const enkf_config_type * config , const char *
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  enkf_state_type * new = enkf_state_alloc(src->config , src->eclbase, src->my_iens , src->enkf_fs , enkf_state_fmt_file(src));
+  enkf_state_type * new = enkf_state_alloc(src->ens , src->eclbase, src->my_iens , src->enkf_fs , enkf_state_fmt_file(src));
   list_node_type *list_node;                                          
   list_node = list_get_head(src->node_list);                     
 
@@ -289,12 +289,12 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_name) 
     abort();
   }
 
-  if (!enkf_config_has_key(enkf_state->config , node_name)) {
+  if (!enkf_ens_has_key(enkf_state->ens , node_name)) {
     fprintf(stderr,"%s could not find configuration object for:%s - aborting \n",__func__ , node_name);
     abort();
   }
   {
-    const enkf_config_node_type *config  = enkf_config_get_ref(enkf_state->config  , node_name);
+    const enkf_config_node_type *config  = enkf_ens_get_config_ref(enkf_state->ens  , node_name);
     enkf_state_add_node__1(enkf_state , node_name , config);
   }
 }
@@ -307,7 +307,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
   restart_kw_list_reset(enkf_state->restart_kw_list);
   while (ecl_kw != NULL) {
     char *kw                       = ecl_kw_alloc_strip_header(ecl_kw);
-    const enkf_impl_type impl_type = enkf_config_impl_type(enkf_state->config , kw);
+    const enkf_impl_type impl_type = enkf_ens_impl_type(enkf_state->ens , kw);
     enkf_var_type enkf_type;
 
     switch (impl_type) {
@@ -323,11 +323,11 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
     }    
     restart_kw_list_add(enkf_state->restart_kw_list , kw);
 
-    if (!enkf_config_has_key(enkf_state->config , kw)) 
-      enkf_config_add_type0(enkf_state->config , kw , ecl_kw_get_size(ecl_kw) , enkf_type , impl_type);
+    if (!enkf_ens_has_key(enkf_state->ens , kw)) 
+      enkf_ens_add_type0(enkf_state->ens , kw , ecl_kw_get_size(ecl_kw) , enkf_type , impl_type);
     
     if (!enkf_state_has_node(enkf_state , kw)) 
-      enkf_state_add_node__1(enkf_state , kw , enkf_config_get_ref(enkf_state->config , kw)); 
+      enkf_state_add_node__1(enkf_state , kw , enkf_ens_get_config_ref(enkf_state->ens , kw)); 
     
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
@@ -356,7 +356,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
 void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , int report_step) {
   bool at_eof;
   const bool fmt_file  = enkf_state_fmt_file(enkf_state);
-  bool endian_swap     = enkf_config_get_endian_swap(enkf_state->config);
+  bool endian_swap     = enkf_ens_get_endian_swap(enkf_state->ens);
   ecl_block_type       * ecl_block;
   char * restart_file  = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_step);
 
@@ -382,15 +382,15 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
   const bool fmt_file = enkf_state_fmt_file(enkf_state);
   ecl_sum_type * ecl_sum;
   int Nwells;
-  const char ** well_list = enkf_config_get_well_list_ref(enkf_state->config , &Nwells);
+  const char ** well_list = enkf_ens_get_well_list_ref(enkf_state->ens , &Nwells);
   char * summary_file     = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_file        , fmt_file ,  report_step);
   char * header_file      = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file , fmt_file , -1);
 
   int iwell;
-  ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
+  ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_ens_get_endian_swap(enkf_state->ens));
   for (iwell = 0; iwell < Nwells; iwell++) {
     if (! enkf_state_has_node(enkf_state , well_list[iwell])) 
-      enkf_state_add_node__1(enkf_state , well_list[iwell] , enkf_config_get_ref(enkf_state->config , well_list[iwell])); 
+      enkf_state_add_node__1(enkf_state , well_list[iwell] , enkf_ens_get_config_ref(enkf_state->ens , well_list[iwell])); 
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , well_list[iwell]);
       well_load_summary_data(enkf_node_value_ptr(enkf_node) , report_step , ecl_sum);
@@ -456,7 +456,7 @@ void * enkf_state_load_ecl_void(void * input_arg) {
 void enkf_state_ecl_write(const enkf_state_type * enkf_state ,  int mask , int report_step) {
   const int buffer_size = 65536;
   const bool fmt_file   = enkf_state_fmt_file(enkf_state);
-  bool endian_swap      = enkf_config_get_endian_swap(enkf_state->config);
+  bool endian_swap      = enkf_ens_get_endian_swap(enkf_state->ens);
   char  * restart_file  = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_step);
   fortio_type * fortio  = fortio_open(restart_file , "w" , endian_swap);
   void *buffer          = malloc(buffer_size);

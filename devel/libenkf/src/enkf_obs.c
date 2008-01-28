@@ -5,7 +5,7 @@
 #include <util.h>
 #include <enkf_obs.h>
 #include <ecl_rft_node.h>
-#include <enkf_config.h>
+#include <enkf_ens.h>
 #include <well_obs.h>
 #include <obs_node.h>
 #include <history.h>
@@ -15,7 +15,7 @@
 
 
 struct enkf_obs_struct {
-  const enkf_config_type * config;
+  const enkf_ens_type    * ens;
   history_type           * hist;
   const sched_file_type  * sched_file;
   hash_type              * obs_hash;
@@ -26,9 +26,9 @@ struct enkf_obs_struct {
 
 
 
-enkf_obs_type * enkf_obs_alloc(const enkf_config_type * config , const sched_file_type * sched_file ) {
+enkf_obs_type * enkf_obs_alloc(const enkf_ens_type * ens , const sched_file_type * sched_file ) {
   enkf_obs_type * enkf_obs = malloc(sizeof * enkf_obs);
-  enkf_obs->config   	   = config;
+  enkf_obs->ens   	   = ens;
   enkf_obs->obs_hash 	   = hash_alloc(10);
   
   
@@ -40,9 +40,9 @@ enkf_obs_type * enkf_obs_alloc(const enkf_config_type * config , const sched_fil
 
 
 
-const void * __enkf_obs_config_get(const enkf_obs_type * enkf_obs , const char * key , enkf_impl_type impl_type) {
-  if (enkf_config_has_key(enkf_obs->config , key)) {
-    const enkf_config_node_type * node = enkf_config_get_ref(enkf_obs->config , key );
+const void * __enkf_obs_ens_get(const enkf_obs_type * enkf_obs , const char * key , enkf_impl_type impl_type) {
+  if (enkf_ens_has_key(enkf_obs->ens , key)) {
+    const enkf_config_node_type * node = enkf_ens_get_config_ref(enkf_obs->ens , key );
     if (enkf_config_node_get_impl_type(node) == impl_type) 
       return enkf_config_node_get_ref(node);      
     else {
@@ -50,7 +50,7 @@ const void * __enkf_obs_config_get(const enkf_obs_type * enkf_obs , const char *
       abort();
     }
   } else {
-    fprintf(stderr,"%s: can not find config key for observation:%s - aborting \n",__func__ , key);
+    fprintf(stderr,"%s: can not find ens key for observation:%s - aborting \n",__func__ , key);
     abort();
   }
 }
@@ -75,9 +75,9 @@ void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_nod
 
 
 
-/* enkf_obs_type * enkf_obs_fscanf_alloc(const char * filename , const enkf_config_type * config , const history_type * hist) { */
+/* enkf_obs_type * enkf_obs_fscanf_alloc(const char * filename , const enkf_ens_type * ens , const history_type * hist) { */
 /*   const int num_reports = 100; */
-/*   enkf_obs_type * enkf_obs = enkf_obs_alloc(config , hist , num_reports); */
+/*   enkf_obs_type * enkf_obs = enkf_obs_alloc(ens , hist , num_reports); */
 /*   FILE * stream = enkf_util_fopen_r(filename , __func__); */
 /*   char *path; */
   
@@ -105,9 +105,9 @@ void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_nod
 /* 	/\* */
 /* 	  Now we have scanned the full line sucessfully ...  */
 /* 	*\/ */
-/* 	char * config_file = util_alloc_full_path(path , file); */
+/* 	char * ens_file = util_alloc_full_path(path , file); */
 /* 	enkf_active_type     active_mode; */
-/* 	const void * config; */
+/* 	const void * ens; */
 /* 	void       * obs; */
 
 /* 	if (active == 1)  */
@@ -135,11 +135,11 @@ void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_nod
 /* 	} */
 
 /* 	if (strcmp(obs_type , WELL_OBS_TYPE_STRING) == 0) {       */
-/* 	  config = __enkf_obs_config_get(enkf_obs , key , WELL); */
-/* 	  obs = well_obs_fscanf_alloc(config_file , config , hist); */
+/* 	  ens = __enkf_obs_ens_get(enkf_obs , key , WELL); */
+/* 	  obs = well_obs_fscanf_alloc(ens_file , ens , hist); */
 /* 	} else if (strcmp(obs_type , POINT_OBS_TYPE_STRING) == 0) { */
-/* 	  config = __enkf_obs_config_get(enkf_obs , key , FIELD); */
-/* 	  obs = /\*well_obs_fscanf_alloc(well_config , hist);*\/ NULL; */
+/* 	  ens = __enkf_obs_ens_get(enkf_obs , key , FIELD); */
+/* 	  obs = /\*well_obs_fscanf_alloc(well_ens , hist);*\/ NULL; */
 /* 	} else { */
 /* 	  fprintf(stderr,"%s: observation type: %s is not recognized - aborting \n",__func__ , obs_type); */
 /* 	  abort(); */
@@ -147,7 +147,7 @@ void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_nod
 	
 /* 	obs_node = obs_node_alloc(obs , active_mode , obs_time , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__); */
 /* 	enkf_obs_add_obs(enkf_obs , key , obs_node); */
-/* 	free(config_file); */
+/* 	free(ens_file); */
 /*       } */
 /*     } */
 /*   } while ( !feof(stream) ); */
@@ -171,17 +171,17 @@ void enkf_obs_free(enkf_obs_type * enkf_obs) {
 */
 
 
-void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const char * key , const char * obs_label , const char * config_file) {
+void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const char * key , const char * obs_label , const char * ens_file) {
   const char * well_name = key;
   bool default_active = true;
   
-  if (enkf_config_has_key(enkf_obs->config , well_name)) {
-    const enkf_config_node_type * config_node = enkf_config_get_ref(enkf_obs->config , well_name);
-    if (enkf_config_node_get_impl_type(config_node) == WELL) {
-      well_obs_type * well_obs = well_obs_fscanf_alloc(config_file , enkf_config_node_get_ref(config_node) , enkf_obs->hist);
+  if (enkf_ens_has_key(enkf_obs->ens , well_name)) {
+    const enkf_config_node_type * ens_node = enkf_ens_get_config_ref(enkf_obs->ens , well_name);
+    if (enkf_config_node_get_impl_type(ens_node) == WELL) {
+      well_obs_type * well_obs = well_obs_fscanf_alloc(ens_file , enkf_config_node_get_ref(ens_node) , enkf_obs->hist);
       enkf_obs_add_obs(enkf_obs , key , obs_node_alloc(well_obs , obs_label , enkf_obs->num_reports , default_active , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__));
     } else {
-      fprintf(stderr,"%s config object:%s exists - but it is not of well type - aborting \n",__func__ , well_name );
+      fprintf(stderr,"%s ens object:%s exists - but it is not of well type - aborting \n",__func__ , well_name );
       abort();
     }
   } else {
@@ -198,16 +198,16 @@ void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const char * key, const ch
   const char * ecl_field = key;
   bool default_active = false;
   
-  if (enkf_config_has_key(enkf_obs->config , ecl_field)) {
-    const enkf_config_node_type * config_node = enkf_config_get_ref(enkf_obs->config , ecl_field);
-    if (enkf_config_node_get_impl_type(config_node) == FIELD) {
-      field_obs_type * field_obs = field_obs_alloc(enkf_config_node_get_ref(config_node) , ecl_field , size , i , j , k , obs_data);
+  if (enkf_ens_has_key(enkf_obs->ens , ecl_field)) {
+    const enkf_config_node_type * ens_node = enkf_ens_get_config_ref(enkf_obs->ens , ecl_field);
+    if (enkf_config_node_get_impl_type(ens_node) == FIELD) {
+      field_obs_type * field_obs = field_obs_alloc(enkf_config_node_get_ref(ens_node) , ecl_field , size , i , j , k , obs_data);
       obs_node_type  * obs_node  = obs_node_alloc(field_obs , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__);
       if (meas_time != -1)
 	obs_node_activate_time_t(obs_node , enkf_obs->sched_file , meas_time , meas_time);
       enkf_obs_add_obs(enkf_obs , ecl_field , obs_node);
     } else {
-      fprintf(stderr,"%s config object:%s exists - but it is not of field type - aborting \n",__func__ , ecl_field );
+      fprintf(stderr,"%s ens object:%s exists - but it is not of field type - aborting \n",__func__ , ecl_field );
       abort();
     }
   } else {
