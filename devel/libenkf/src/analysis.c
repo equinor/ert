@@ -89,6 +89,7 @@ void initX(int nrens , int nrobs , bool verbose , bool update_randrot) {
 		      (const int *) &update_randrot_int , 
 		      (const int *) &istep              , 
 		      xpath);
+  
 }
 
 

@@ -257,3 +257,34 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , const double 
   free(ens_std);
   return R;
 }
+
+
+void obs_data_scale(const obs_data_type * obs_data , int ens_size, double *S , double *E , double *D , double *R , double *innov) {
+  const int nrobs = obs_data->size;
+  double * scale_factor = util_malloc(nrobs * sizeof * scale_factor , __func__);
+  int iens, iobs;
+  int ens_stride , obs_stride;
+  
+  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);  
+  
+  for  (iens = 0; iens < ens_size; iens++) {
+    for (iobs = 0; iobs < nrobs; iobs++) {
+      int index          = iens * ens_stride + iobs * obs_stride;
+      scale_factor[iobs] = 1.0 / obs_data->std[iobs];
+
+      S[index] *= scale_factor[iobs];
+      if (E != NULL) E[index] *= scale_factor[iobs];
+      D[index] *= scale_factor[iobs];
+    }
+  }
+  for (iobs = 0; iobs < nrobs; iobs++) 
+    innov[iobs] *= scale_factor[iobs];
+
+  {
+    int i,j;
+    for (i=0; i < nrobs; i++)
+      for (j=0; j < nrobs; j++)
+	R[i*nrobs + j] *= scale_factor[i] * scale_factor[j];
+  }
+  free(scale_factor);
+}

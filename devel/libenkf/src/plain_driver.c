@@ -3,6 +3,7 @@
 #include <basic_driver.h>
 #include <plain_driver.h>
 #include <path_fmt.h>
+#include <util.h>
 
 #define PLAIN_DRIVER_ID 1001
 
@@ -26,7 +27,9 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , bool a
   plain_driver_assert_cast(driver);
   {
     char * filename;
-    enkf_node_fread(node , filename);
+    FILE * stream = util_fopen(filename , "r");
+    enkf_node_fread(node , stream);
+    fclose(stream);
   }
 }
 
@@ -36,7 +39,9 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , bool a
   plain_driver_assert_cast(driver);
   {
     char * filename;
-    enkf_node_fwrite(node , filename);
+    FILE * stream = util_fopen(filename , "r");
+    enkf_node_fwrite(node , stream);
+    fclose(stream);
   }
 }
 
@@ -46,7 +51,9 @@ void plain_driver_swapout_node(void * _driver , int report_step , int iens , boo
   plain_driver_assert_cast(driver);
   {
     char * filename;
-    enkf_node_swapout(node , filename);
+    FILE * stream = util_fopen(filename , "r");
+    enkf_node_swapout(node , stream);
+    fclose(stream);
   }
 }
 
@@ -56,7 +63,9 @@ void plain_driver_swapin_node(void * _driver , int report_step , int iens , bool
   plain_driver_assert_cast(driver);
   {
     char * filename;
-    enkf_node_swapin(node , filename);
+    FILE * stream = util_fopen(filename , "r");
+    enkf_node_swapin(node , stream);
+    fclose(stream);
   }
 }
 
@@ -70,8 +79,8 @@ void plain_driver_free(void *_driver) {
 
 
 /*
-  The driver takes a copy of the path object, i.e. it can be free in
-  the calling scope after calling plain_driver_alloc().
+  The driver takes a copy of the path object, i.e. it can be deleted
+  in the calling scope after calling plain_driver_alloc().
 */
 void * plain_driver_alloc(const char * path) {
   plain_driver_type * driver = malloc(sizeof * driver);
