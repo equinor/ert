@@ -1,0 +1,18 @@
+#This file is an example of a path_config file. Because every user can
+#have the various libraries required to build EnKF in different
+#locations, the path_config file is not under version control.
+#
+#You should make your own personal copy of this file, and it should set
+#correct values for the variables listed below. The final variable,
+#EXTERNAL_LIB_PATH is a path where (links to) external librarires like
+#blas and particular compiler libraries+++ can be found.
+
+LIBHASH_HOME  	  = /h/a152128/EnKF/devel/EnKF/libhash
+LIBUTIL_HOME  	  = /h/a152128/EnKF/devel/EnKF/libutil
+LIBECL_HOME   	  = /h/a152128/EnKF/devel/EnKF/libecl
+LIBSCHED_HOME 	  = /h/a152128/EnKF/devel/EnKF/libsched
+LIBRMS_HOME   	  = /h/a152128/EnKF/devel/EnKF/librms
+LIBENKF_HOME  	  = /h/a152128/EnKF/devel/EnKF/libenkf
+LIBANALYSIS_HOME  = /h/a152128/EnKF/devel/EnKF/libanalysis
+EXTERNAL_LIB_PATH = /h/a152128/lib/linux
+
