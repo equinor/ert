@@ -1,5 +1,5 @@
 svn checkout
-------------
+============
 To check out the EnKF sources type the following command in a shell:
 
 bash% svn co http://tr-linapp03.tr.statoil.no/reservoir/EnKF/devel EnKF
@@ -11,39 +11,83 @@ put this is 100% arbitrary.
 When the checkout is complete you should have a EnKF directory, if you
 cd into this directory you should see the following subdirectories:
 
- bin
- doc
- Helps
- libecl
- libenkf
- libhash
- libutil
- librms
- libsched
- libutil 
- 
+bin         	 - not actively maintained
+doc         	 - not actively maintained
+Helps       	 - not actively maintained
+libecl(C)   	 - library to read/write ECLIPSE restart/summary/grid/... files
+libenkf(C)  	 - Various EnKF objects - only partly in use - the future?
+libhash(C)  	 - Small library implementing a hash table.
+libutil(C)  	 - Small library with lots of utility functions - no state.
+librms(C)   	 - Small library for reading and writing RMS roff files
+libsched(C) 	 - Library to parse selected keywords from SCHEDULE file
+libsample(F90)   - library to sample smooth gaussian fields
+libanalysis(F90) - library to do the real EnKF core - i.e. calculate
+                   the update matrix.
+SOURCE(F90)      - The source code for the main EnKF executable(s).
+
+
+
+32/64 bits
+==========
 
 
 
 External libraries
-------------------
+==================
+You will need the external libraries fftw3, blas and lapack. blas and
+lapack are hopefully already installed on your machine, the fftw3
+library can be downloaded from http://www.fftw.org. In addition you
+might need special libraries for your compiler, i.e. the ifortcore
+library.
+
+The external libraries can be placed whereever you want, but read
+about the path_condfig file below.
 
 
 
-1. The following executables must be in your path:
+Executables in path
+===================
+The following executables must be in your path:
 
-     Scripts/f90dep.py         [available as f90dep]
-     Scripts/select_model.py   [available as select_model]
-     svnversion
-     ifort                     [fortran 90 compiler]
-  
-2. Create the path_config file, and add a symbolic link from all
-   source directories pointing to this file. (See path_config.template
-   for instructions on how to make this file).
+  Scripts/f90dep.py         [available as f90dep]
+  Scripts/select_model.py   [available as select_model]
+  svnversion
+  ifort                     [fortran 90 compiler]
+  gcc                       [gnu C compiler]
 
-3. Start building the libraries. For each library this should only
-   amount to changing into to src/ directory and do make. The
-   libraries should be built in the following order:
+
+
+The path_config file 
+==================== 
+Now - you should change to the cirectory build/. If you have checked
+out the source code according to the checkout command listed at the
+top, all the libraries will be located in a common hierarchy - however
+we have attempted to make the build process slightly more general. In
+principle the various libraries can be spread all over the place;
+shared among users e.t.c. To facilitate this we use a file called
+path_config which lists the location of all the libraries.
+
+Create the path_config file - see the template path_config.template
+for how to do it. When you have built the path_config file you can run
+the script make_tags.py - this will index all source code into a tags
+file, which can be used with e.g. emacs or vi, *and* add a link from
+every src/ directory to the path_config file.
+
+The last variable in the path_config file is EXTERNAL_LIB_PATH, you
+should set this variable to point to a directory which contains
+(symlinks to) all external libraries needed in the build (not
+including external libraries in standard locations). So, wehen you
+have installed the libfftw3 library in /some/funny/path/i32/lib you
+should add a symbolic link from the path given in EXTERNAL_LIB_PATH to
+/some/funny/path/i32/lib/libfftw3.so - or something like this.
+
+
+Building the libraries
+======================
+
+Start building the libraries. For each library this should only amount
+to changing into to src/ directory and do make. The libraries should
+be built in the following order:
 
    1: libhash(C)
    2: libutil(C)
@@ -54,53 +98,67 @@ External libraries
    7: libanalysis(F90)
    8: libenkf(C)
 
-4. When all libraries have built successfully you can build the
-   executable. Go to the SOURCE directory. The SOURCE directory is
-   organized as follows and build process is organized as follows:
+If you wish you can also just use the build_all.py script which will
+build the libraries in the correct order.
 
-   o All the model spesific files are located in a subdirectories
-     Model_XXX, and the "active" model is based on symlinks into the
-     relevant directory.
 
-   o All the source files have extension .F90 - prior to compiling
-     they are piped through the cpp preprosessor to generate .f90
-     files. These f90 files are stored temporarily in model spesfic
-     tmp directory - this way the actual build is not done on an NFS
-     mounted volume, a side effect which increases build speed
-     dramatically.
 
-   The steps you must go through to build a model is the following:
+Building the executable for an existing model
+=============================================
+When all libraries have built successfully you can build the
+executable. Go to the SOURCE directory. The SOURCE directory is
+organized as follows and build process is organized as follows:
 
-   a: You must make up your mind on which model to build.
+o All the model spesific files are located in a subdirectories
+  Model_XXX, and the "active" model is based on symlinks into the
+  relevant directory.
 
-   b: Go manually into the Model_xxx directory of the chosen model. In
-      this directory you should create a file called user_defs.inc
-      which looks like this:
+o All the source files have extension .F90 - prior to compiling
+  they are piped through the cpp preprosessor to generate .f90
+  files. These f90 files are stored temporarily in model spesfic
+  tmp directory - this way the actual build is not done on an NFS
+  mounted volume, a side effect which increases build speed
+  dramatically.
+
+The steps you must go through to build a model is the following:
+
+1: You must make up your mind on which model to build.
+
+2: Go manually into the Model_xxx directory of the chosen model. In
+   this directory you should create a file called user_defs.inc
+   which looks like this:
 ----------------------------
 character(Len=80), Parameter :: code_path         = "/h/a152128/EnKF/devel/EnKF/SOURCE/Model_OmegaNorth/"
 character(Len=80), Parameter :: code_include_path = "/h/a152128/EnKF/devel/EnKF/SOURCE/Model_OmegaNorth/include/"
 character(len=80), parameter :: scriptdir         = "/h/a152128/EnKF/devel/EnKF/Scripts/"
 character(len=80), parameter :: helpdir           = "/h/a152128/EnKF/devel/EnKF/Helps/"
 ----------------------------
-      Of course you should replace the path-values on the right with
-      the ones which are correct in your case.
-    
-   c: Go back to the SOURCE directory and type:
+   Of course you should replace the path-values on the right with
+   the ones which are correct in your case.
+ 
+3: Go back to the SOURCE directory and type:
 
-      bash% select_model Model_xxx
-  
-      to actually select the model (i.e. add some symbolic links). In
-      addition to establishing the model spesific links, this command
-      will also evaluate dependencies++
+   bash% select_model Model_xxx
 
-   d: Type make - and keep your fingers crossed.
+   to actually select the model (i.e. add some symbolic links). In
+   addition to establishing the model spesific links, this command
+   will also evaluate dependencies++
 
-   If this worked out allright you have built an EnKF executable for
-   one of the existing models successfully - maybe not very
-   interesting, but you have at least verified that the toolchain
-   works. 
+4: Type make - and keep your fingers crossed.
 
-5. To build an EnKF executable for a new model is a quite significant
-   excercise in bootstrapping. Rough guidelines:
+If this worked out allright you have built an EnKF executable for
+one of the existing models successfully - maybe not very
+interesting, but you have at least verified that the toolchain
+works. 
+
+To build an EnKF executable for a new model is a quite significant
+excercise in bootstrapping - stay tuned!
+
+
+Building the executable for a new model
+=======================================
+Hard work ...
+
+
 
 

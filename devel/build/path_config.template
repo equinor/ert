@@ -12,7 +12,7 @@ LIBUTIL_HOME  	  = /h/a152128/EnKF/devel/EnKF/libutil
 LIBECL_HOME   	  = /h/a152128/EnKF/devel/EnKF/libecl
 LIBSCHED_HOME 	  = /h/a152128/EnKF/devel/EnKF/libsched
 LIBRMS_HOME   	  = /h/a152128/EnKF/devel/EnKF/librms
-LIBENKF_HOME  	  = /h/a152128/EnKF/devel/EnKF/libenkf
+LIBSAMPLE_HOME    = /h/a152128/EnKF/devel/EnKF/libsample
 LIBANALYSIS_HOME  = /h/a152128/EnKF/devel/EnKF/libanalysis
+LIBENKF_HOME  	  = /h/a152128/EnKF/devel/EnKF/libenkf
 EXTERNAL_LIB_PATH = /h/a152128/lib/linux
-
