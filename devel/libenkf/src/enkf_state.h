@@ -9,16 +9,24 @@
 #include <enkf_util.h>
 #include <ecl_block.h>
 #include <enkf_fs.h>
+#include <meas_vector.h>
+#include <enkf_fs.h>
 
 
 typedef struct enkf_state_struct enkf_state_type;
 
+enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
+bool 		   enkf_state_get_analyzed(const enkf_state_type * );
+void 		   enkf_state_set_analyzed(enkf_state_type * , bool );
+void               enkf_state_swapout_node(const enkf_state_type * , const char *);
+void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
+meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *);
 void              enkf_state_swapout(enkf_state_type * , int , bool );
 void              enkf_state_swapin(enkf_state_type * , int , bool);
 enkf_state_type * enkf_state_copyc(const enkf_state_type * );
 void              enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
 void              enkf_state_add_node(enkf_state_type * , const char * );
-enkf_state_type * enkf_state_alloc(const enkf_ens_type * , const char *, int , enkf_fs_type * , bool );
+enkf_state_type * enkf_state_alloc(const enkf_ens_type * , int);
 enkf_node_type  * enkf_state_get_node(const enkf_state_type * , const char * );
 void              enkf_state_del_node(enkf_state_type * , const char * );
 void              enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
@@ -37,6 +45,7 @@ void              enkf_state_free(enkf_state_type * );
 void              enkf_state_apply(enkf_state_type * , enkf_node_ftype1 * , int );
 void              enkf_state_serialize(enkf_state_type * , size_t);
 void              enkf_state_set_iens(enkf_state_type *  , int );
+int               enkf_state_get_iens(const enkf_state_type * );
 void 		  enkf_state_set_run_path(enkf_state_type *);
 
 void enkf_ensemble_update(enkf_state_type ** , int  , size_t , const double * );

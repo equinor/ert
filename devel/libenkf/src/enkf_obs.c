@@ -204,25 +204,38 @@ void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const enkf_config_node_type
 
 
 void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_data_type * obs_data) {
-  char ** kw_list = hash_alloc_keylist(enkf_obs->obs_hash);
-  int iobs;
-  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
-    obs_node_type * obs_node = hash_get(enkf_obs->obs_hash , kw_list[iobs]);
+  bool valid;
+  obs_node_type * obs_node = hash_iter_get_first(enkf_obs->obs_hash , &valid);
+  while (valid) {
     obs_node_get_observations(obs_node , report_step , obs_data);
+    obs_node = hash_iter_get_next(enkf_obs->obs_hash , &valid);
   }
-  hash_free_ext_keylist(enkf_obs->obs_hash , kw_list);
 }
 
 
 
-void enkf_obs_measure(const enkf_obs_type * enkf_obs , int report_step , const enkf_state_type * enkf_state , meas_vector_type * meas_vector) {
-  char ** kw_list = hash_alloc_keylist(enkf_obs->obs_hash);
-  int iobs;
-  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
-    obs_node_type * obs_node   = hash_get(enkf_obs->obs_hash , kw_list[iobs]);
-    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw_list[iobs]);
-    obs_node_measure(obs_node , report_step , enkf_node , meas_vector);
+void enkf_obs_measure(enkf_obs_type * enkf_obs , int report_step , const enkf_state_type * enkf_state) {
+  enkf_fs_type *fs = enkf_state_get_fs_ref(enkf_state);
+  bool analyzed = enkf_state_get_analyzed(enkf_state);
+  int my_iens   = enkf_state_get_iens(enkf_state);
+  const char *kw;
+
+  
+  kw = hash_iter_get_first_key(enkf_obs->obs_hash);
+  while (kw != NULL) {
+    obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
+    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
+    
+    {
+      bool swapped = enkf_node_swapped(enkf_node);
+      
+      if (swapped) enkf_fs_swapin_node(fs , enkf_node , report_step , my_iens , analyzed);
+      obs_node_measure(obs_node , report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
+      if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed);
+      
+    }
+    
+    kw = hash_iter_get_next_key(enkf_obs->obs_hash);
   }
-  hash_free_ext_keylist(enkf_obs->obs_hash , kw_list);
 }
 

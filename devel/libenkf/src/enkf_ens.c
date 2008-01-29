@@ -41,6 +41,7 @@ struct enkf_ens_struct {
   enkf_fs_type     *fs;
   path_fmt_type    *run_path;
   bool              endian_swap;
+  bool              fmt_file;
 };
 
 
@@ -69,6 +70,14 @@ static void enkf_ens_realloc_well_list(enkf_ens_type * enkf_ens) {
 }
 
 bool enkf_ens_get_endian_swap(const enkf_ens_type * enkf_ens) { return enkf_ens->endian_swap; }
+bool enkf_ens_get_fmt_file(const enkf_ens_type * enkf_ens) { return enkf_ens->fmt_file; }
+
+
+enkf_fs_type * enkf_ens_get_fs_ref(const enkf_ens_type * ens) { return ens->fs; }
+
+meas_vector_type * enkf_ens_iget_meas_vector(const enkf_ens_type * ens , int iens) {
+  return meas_matrix_iget_vector(ens->meas_matrix , iens);
+}
 
 
 enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * ens_path_static , const char * ens_path_parameter , const char * ens_path_dynamic_forecast , const char * ens_path_dynamic_analyzed , bool endian_swap) {

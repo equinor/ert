@@ -34,6 +34,7 @@ struct enkf_node_struct {
   fwrite_ftype        *fwrite_f;
   swapin_ftype        *swapin;
   swapout_ftype       *swapout;
+  realloc_data_ftype  *realloc_data;
 
   serialize_ftype    *serialize;
   deserialize_ftype  *deserialize;
@@ -52,6 +53,7 @@ struct enkf_node_struct {
   char               *node_key;
   void               *data;
   bool                swapped;
+  bool                modified; 
   const enkf_config_node_type *config;
 };
 
@@ -169,16 +171,18 @@ static void serial_state_init_deserialize(const serial_state_type * serial_state
 
 /*****************************************************************/
 
+
 /*
   All the function pointers REALLY should be in the config object ... 
 */
 
-void enkf_node_realloc_data(enkf_node_type * node) {
+
+void enkf_node_alloc_domain_object(enkf_node_type * node) {
   if (node->data != NULL)
     node->freef(node->data);
-
   node->data = node->alloc(enkf_config_node_get_ref(node->config));
 }
+
 
 
 
@@ -360,6 +364,7 @@ void enkf_node_swapin(enkf_node_type *enkf_node , FILE * stream) {
   FUNC_ASSERT(enkf_node->swapin , "swapin");
   if (enkf_node_swapped(enkf_node)) 
     enkf_node->swapin(enkf_node->data , stream);
+  enkf_node->swapped = false;
 }
 
 
@@ -369,8 +374,11 @@ void enkf_node_swapout(enkf_node_type *enkf_node , FILE * stream) {
   enkf_node->swapped = true;
 }
 
-
-
+void enkf_node_realloc_data(enkf_node_type * enkf_node) {
+  FUNC_ASSERT(enkf_node->swapin , "realloc_data");
+  enkf_node->realloc_data(enkf_node->data);
+  enkf_node->swapped = false;
+}
 
 void enkf_node_clear(enkf_node_type *enkf_node) {
   FUNC_ASSERT(enkf_node->clear , "clear");
@@ -531,10 +539,13 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
 }
 
 
+void enkf_node_set_modified(enkf_node_type * node)      { node->modified = true; }
+bool enkf_node_get_modified(const enkf_node_type *node) { return node->modified; }
 
 enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_type * config) {
   enkf_node_type * node = enkf_node_alloc_empty(node_key , config);
   enkf_node_realloc_data(node);
+  enkf_node_set_modified(node);
   return node;
 }
 

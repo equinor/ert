@@ -52,6 +52,16 @@ void meas_matrix_reset(meas_matrix_type * matrix) {
 }
 
 
+meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type * matrix , int iens) {
+  if (iens >= 0 && iens < matrix->ens_size) 
+    return matrix->meas_vectors[iens];
+  else {
+    fprintf(stderr,"%s - aborting \n",__func__);
+    abort();
+  }
+}
+
+
 /*
   Observe that this code does *NOT* subtract the ensemble
   mean from S. This is in contrast to the original Fortran

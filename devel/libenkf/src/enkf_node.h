@@ -36,6 +36,7 @@ typedef void   	      (ecl_write_ftype)            (const void * , const char *)
 typedef void   	      (fread_ftype)                (      void * , FILE *);
 typedef void   	      (fwrite_ftype)               (const void * , FILE *);
 typedef void          (swapin_ftype)      	   (void * , FILE *);
+typedef void          (realloc_data_ftype)	   (void * );
 typedef void          (swapout_ftype)     	   (void * , FILE *);
 typedef void   	      (sample_ftype)     	   (      void *);
 typedef void   	      (free_ftype)       	   (      void *);
@@ -53,6 +54,8 @@ typedef struct enkf_node_struct enkf_node_type;
 typedef void          (enkf_node_ftype1)        (enkf_node_type *);
 
 enkf_node_type * enkf_node_alloc(const char * , const enkf_config_node_type *);
+void 		 enkf_node_set_modified(enkf_node_type * );
+bool 		 enkf_node_get_modified(const enkf_node_type *);
 
 
 enkf_node_type * enkf_node_copyc(const enkf_node_type * );
@@ -88,8 +91,9 @@ void             enkf_node_fwrite (const enkf_node_type * , FILE * stream);
 int              enkf_node_serialize(enkf_node_type * , size_t , double * , size_t , size_t , bool *);
 void             enkf_node_clear     (enkf_node_type *);
 void             enkf_node_fread  (enkf_node_type * , FILE * stream);
-void enkf_node_swapin(enkf_node_type *  , FILE * );
-void enkf_node_swapout(enkf_node_type * , FILE * );
+void 		 enkf_node_swapin(enkf_node_type *  , FILE * );
+void 		 enkf_node_swapout(enkf_node_type * , FILE * );
+void 		 enkf_node_realloc_data(enkf_node_type * );
 
 void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );

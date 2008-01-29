@@ -32,7 +32,7 @@
 #include <pgbox.h>
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
-
+#include <meas_vector.h>
 
 
 struct enkf_state_struct {
@@ -40,13 +40,14 @@ struct enkf_state_struct {
   list_type    	   	* node_list;
   hash_type    	   	* node_hash;
   hash_type    	   	* impl_types;
-  
+
+  meas_vector_type      * meas_vector;
   enkf_fs_type          * enkf_fs;
   enkf_ens_type 	* ens;
   char             	* eclbase;
   char                  * run_path;
-  bool             	 _fmt_file;  
   int                     my_iens;
+  bool                   _analyzed;
 };
 
 
@@ -141,18 +142,21 @@ void enkf_state_ ## node_func(enkf_state_type * enkf_state , const char *path, i
 
 /*****************************************************************/
 
-/*
-  In principle different members can have fmt / binary files - overkill??
-*/
 
-bool enkf_state_fmt_file(const enkf_state_type * enkf_state) {
-  return enkf_state->_fmt_file;
+bool enkf_state_get_analyzed(const enkf_state_type * enkf_state) {
+  return enkf_state->_analyzed;
 }
 
-/*
-  Because the ecl_sum / ecl_fstate routine takes an integer
-  mode as input, instead of a bool.
-*/
+
+void enkf_state_set_analyzed(enkf_state_type * enkf_state, bool analyzed) {
+  enkf_state->_analyzed = analyzed;
+}
+
+
+bool enkf_state_fmt_file(const enkf_state_type * enkf_state) {
+  return enkf_ens_get_fmt_file(enkf_state->ens);
+}
+
 
 int enkf_state_fmt_mode(const enkf_state_type * enkf_state) {
   if (enkf_state_fmt_file(enkf_state))
@@ -162,10 +166,6 @@ int enkf_state_fmt_mode(const enkf_state_type * enkf_state) {
 }
 
 
-static const char * enkf_state_select_ens_path(const enkf_state_type * enkf_state , const char * node_kw , bool forecast) {
-  fprintf(stderr,"%s not implemented - aborting \n",__func__);
-  return NULL;
-}
 
 
 void enkf_state_set_run_path(enkf_state_type * enkf_state) {
@@ -180,21 +180,29 @@ void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
 }
 
 
+int  enkf_state_get_iens(const enkf_state_type * enkf_state) {
+  return enkf_state->my_iens;
+}
 
-enkf_state_type *enkf_state_alloc(const enkf_ens_type * ens , const char * eclbase, int iens , enkf_fs_type * fs , bool fmt_file) {
+
+enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
+  return state->enkf_fs;
+}
+
+
+enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens) {
   enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
   
   enkf_state->ens             = (enkf_ens_type *) ens;
   enkf_state->node_list       = list_alloc();
   enkf_state->node_hash       = hash_alloc(10);
   enkf_state->impl_types      = hash_alloc(10);
-  enkf_state->eclbase         = util_alloc_string_copy(eclbase);
-  enkf_state->_fmt_file       = fmt_file;
   enkf_state->restart_kw_list = restart_kw_list_alloc();
   enkf_state_set_iens(enkf_state , iens);
   enkf_state->run_path        = NULL;
   enkf_state_set_run_path(enkf_state);
-  enkf_state->enkf_fs         = fs;
+  enkf_state->enkf_fs         = enkf_ens_get_fs_ref(ens);
+  enkf_state->meas_vector     = enkf_ens_iget_meas_vector(ens , iens);
   /* 
      This information should really be in a config object. Currently
      not used, but could/will be used in a string based type lookup. 
@@ -217,7 +225,7 @@ enkf_state_type *enkf_state_alloc(const enkf_ens_type * ens , const char * eclba
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  enkf_state_type * new = enkf_state_alloc(src->ens , src->eclbase, src->my_iens , src->enkf_fs , enkf_state_fmt_file(src));
+  enkf_state_type * new = enkf_state_alloc(src->ens , src->my_iens);
   list_node_type *list_node;                                          
   list_node = list_get_head(src->node_list);                     
 
@@ -304,8 +312,11 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_name) 
 
 
 static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const ecl_block_type *ecl_block) {
+  int report_step = ecl_block_get_report_nr(ecl_block);
+  enkf_fs_type *fs = enkf_ens_get_fs_ref(enkf_state->ens);
   ecl_kw_type * ecl_kw = ecl_block_get_first_kw(ecl_block);
   restart_kw_list_reset(enkf_state->restart_kw_list);
+  
   while (ecl_kw != NULL) {
     char *kw                       = ecl_kw_alloc_strip_header(ecl_kw);
     const enkf_impl_type impl_type = enkf_ens_impl_type(enkf_state->ens , kw);
@@ -332,13 +343,18 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
     
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-     
+      
       switch (impl_type)  {
       case(FIELD):
+	if (enkf_node_swapped(enkf_node)) enkf_node_realloc_data(enkf_node);
 	field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_kw);
 	break;
       case(STATIC):
 	ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
+	/*
+	  Static kewyords go straight out ....
+	*/
+	enkf_fs_swapout_node(fs , enkf_node , report_step , enkf_state->my_iens , false);
 	break;
       default:
 	fprintf(stderr,"%s: internal error - can only get data from implementation types: FIELD and STATIC - aborting \n",__func__);
@@ -573,6 +589,10 @@ void enkf_state_serialize(enkf_state_type * enkf_state , size_t stride) {
   }
 }
 */
+
+meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *state) {
+  return state->meas_vector;
+}
 
 
 void enkf_state_free(enkf_state_type *enkf_state) {

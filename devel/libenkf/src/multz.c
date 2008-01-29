@@ -73,10 +73,11 @@ void multz_free_data(multz_type *multz) {
 }
 
 
+
 multz_type * multz_alloc(const multz_config_type * multz_config) {
   multz_type * multz  = malloc(sizeof *multz);
   multz->config = multz_config;
-  multz->scalar   = scalar_alloc(multz_config->scalar_config); 
+  multz->scalar = scalar_alloc(multz_config->scalar_config); 
   DEBUG_ASSIGN(multz)
   return multz;
 }
