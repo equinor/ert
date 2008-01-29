@@ -5,7 +5,6 @@
 #include <util.h>
 #include <enkf_obs.h>
 #include <ecl_rft_node.h>
-#include <enkf_ens.h>
 #include <well_obs.h>
 #include <obs_node.h>
 #include <history.h>
@@ -14,8 +13,8 @@
 #include <sched_file.h>
 
 
+
 struct enkf_obs_struct {
-  const enkf_ens_type    * ens;
   history_type           * hist;
   const sched_file_type  * sched_file;
   hash_type              * obs_hash;
@@ -26,9 +25,8 @@ struct enkf_obs_struct {
 
 
 
-enkf_obs_type * enkf_obs_alloc(const enkf_ens_type * ens , const sched_file_type * sched_file ) {
+enkf_obs_type * enkf_obs_alloc(const sched_file_type * sched_file ) {
   enkf_obs_type * enkf_obs = malloc(sizeof * enkf_obs);
-  enkf_obs->ens   	   = ens;
   enkf_obs->obs_hash 	   = hash_alloc(10);
   
   
@@ -40,20 +38,6 @@ enkf_obs_type * enkf_obs_alloc(const enkf_ens_type * ens , const sched_file_type
 
 
 
-const void * __enkf_obs_ens_get(const enkf_obs_type * enkf_obs , const char * key , enkf_impl_type impl_type) {
-  if (enkf_ens_has_key(enkf_obs->ens , key)) {
-    const enkf_config_node_type * node = enkf_ens_get_config_ref(enkf_obs->ens , key );
-    if (enkf_config_node_get_impl_type(node) == impl_type) 
-      return enkf_config_node_get_ref(node);      
-    else {
-      fprintf(stderr,"%s: obse node:%s is not of correct type - aborting \n",__func__ , key);
-      abort();
-    }
-  } else {
-    fprintf(stderr,"%s: can not find ens key for observation:%s - aborting \n",__func__ , key);
-    abort();
-  }
-}
 
 
 
@@ -72,6 +56,22 @@ void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_nod
 }
 
 
+
+
+/* const void * __enkf_obs_ens_get(const enkf_obs_type * enkf_obs , const char * key , enkf_impl_type impl_type) { */
+/*   if (enkf_ens_has_key(enkf_obs->ens , key)) { */
+/*     const enkf_config_node_type * node = enkf_ens_get_config_ref(enkf_obs->ens , key ); */
+/*     if (enkf_config_node_get_impl_type(node) == impl_type)  */
+/*       return enkf_config_node_get_ref(node);       */
+/*     else { */
+/*       fprintf(stderr,"%s: obse node:%s is not of correct type - aborting \n",__func__ , key); */
+/*       abort(); */
+/*     } */
+/*   } else { */
+/*     fprintf(stderr,"%s: can not find ens key for observation:%s - aborting \n",__func__ , key); */
+/*     abort(); */
+/*   } */
+/* } */
 
 
 
@@ -170,57 +170,33 @@ void enkf_obs_free(enkf_obs_type * enkf_obs) {
   Observations should probably have a name of some sort 
 */
 
-
-void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const char * key , const char * obs_label , const char * ens_file) {
-  const char * well_name = key;
+void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * well_name , const char * obs_label , const char * config_file) {
   bool default_active = true;
-  
-  if (enkf_ens_has_key(enkf_obs->ens , well_name)) {
-    const enkf_config_node_type * ens_node = enkf_ens_get_config_ref(enkf_obs->ens , well_name);
-    if (enkf_config_node_get_impl_type(ens_node) == WELL) {
-      well_obs_type * well_obs = well_obs_fscanf_alloc(ens_file , enkf_config_node_get_ref(ens_node) , enkf_obs->hist);
-      enkf_obs_add_obs(enkf_obs , key , obs_node_alloc(well_obs , obs_label , enkf_obs->num_reports , default_active , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__));
-    } else {
-      fprintf(stderr,"%s ens object:%s exists - but it is not of well type - aborting \n",__func__ , well_name );
-      abort();
-    }
-  } else {
-    fprintf(stderr,"%s: must add well:%s _before_ it can be used as an observation. \n",__func__ , well_name);
-    abort();
-  }
+  well_obs_type * well_obs = well_obs_fscanf_alloc(config_file , enkf_config_node_get_ref(config_node) , enkf_obs->hist);
+  enkf_obs_add_obs(enkf_obs , well_name , obs_node_alloc(well_obs , obs_label , enkf_obs->num_reports , default_active , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__));
 }
 
 
 
 
 
-void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const char * key, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , time_t meas_time) {
-  const char * ecl_field = key;
+
+void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * ecl_field, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , time_t meas_time) {
   bool default_active = false;
-  
-  if (enkf_ens_has_key(enkf_obs->ens , ecl_field)) {
-    const enkf_config_node_type * ens_node = enkf_ens_get_config_ref(enkf_obs->ens , ecl_field);
-    if (enkf_config_node_get_impl_type(ens_node) == FIELD) {
-      field_obs_type * field_obs = field_obs_alloc(enkf_config_node_get_ref(ens_node) , ecl_field , size , i , j , k , obs_data);
-      obs_node_type  * obs_node  = obs_node_alloc(field_obs , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__);
-      if (meas_time != -1)
-	obs_node_activate_time_t(obs_node , enkf_obs->sched_file , meas_time , meas_time);
-      enkf_obs_add_obs(enkf_obs , ecl_field , obs_node);
-    } else {
-      fprintf(stderr,"%s ens object:%s exists - but it is not of field type - aborting \n",__func__ , ecl_field );
-      abort();
-    }
-  } else {
-    fprintf(stderr,"%s: must add field :%s _before_ it can be used as an observation. \n",__func__ , ecl_field);
-    abort();
-  }
+
+  field_obs_type * field_obs = field_obs_alloc(enkf_config_node_get_ref(config_node) , ecl_field , size , i , j , k , obs_data);
+  obs_node_type  * obs_node  = obs_node_alloc(field_obs , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__);
+  if (meas_time != -1)
+    obs_node_activate_time_t(obs_node , enkf_obs->sched_file , meas_time , meas_time);
+  enkf_obs_add_obs(enkf_obs , ecl_field , obs_node);
 }
 
 
 
-void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const ecl_rft_node_type * rft_node, const double * p_data) {
+
+void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const enkf_config_node_type * config_node , const ecl_rft_node_type * rft_node, const double * p_data) {
   char * obs_label = util_alloc_string_sum2("RFT/" , ecl_rft_node_well_name_ref(rft_node));
-  enkf_obs_add_field_obs(enkf_obs , "PRES" ,  obs_label , ecl_rft_node_get_size(rft_node) , ecl_rft_node_get_i(rft_node), ecl_rft_node_get_j(rft_node), ecl_rft_node_get_k(rft_node) , p_data , ecl_rft_node_get_recording_time(rft_node));
+  enkf_obs_add_field_obs(enkf_obs , config_node , "PRES" ,  obs_label , ecl_rft_node_get_size(rft_node) , ecl_rft_node_get_i(rft_node), ecl_rft_node_get_j(rft_node), ecl_rft_node_get_k(rft_node) , p_data , ecl_rft_node_get_recording_time(rft_node));
   free(obs_label);
 }
 

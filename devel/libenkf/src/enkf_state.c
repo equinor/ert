@@ -174,16 +174,17 @@ void enkf_state_set_run_path(enkf_state_type * enkf_state) {
   enkf_state->run_path = path_fmt_alloc_path(enkf_ens_get_run_path_ref(enkf_state->ens) , enkf_state->my_iens);
 }
 
+
 void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
   enkf_state->my_iens         = iens;
 }
 
 
 
-enkf_state_type *enkf_state_alloc(const enkf_ens_type * config , const char * eclbase, int iens , enkf_fs_type * fs , bool fmt_file) {
+enkf_state_type *enkf_state_alloc(const enkf_ens_type * ens , const char * eclbase, int iens , enkf_fs_type * fs , bool fmt_file) {
   enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
   
-  enkf_state->ens          = (enkf_ens_type *) config;
+  enkf_state->ens             = (enkf_ens_type *) ens;
   enkf_state->node_list       = list_alloc();
   enkf_state->node_hash       = hash_alloc(10);
   enkf_state->impl_types      = hash_alloc(10);

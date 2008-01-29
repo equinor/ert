@@ -21,18 +21,24 @@
 #include <history.h>
 #include <meas_matrix.h>
 #include <enkf_state.h>  
+#include <analysis.h>
+#include <enkf_obs.h>
+#include <sched_file.h>
+#include <enkf_fs.h>
 
 
 struct enkf_ens_struct {
-  int  		    ens_size;
-  meas_matrix_type *meas_matrix;
-  hash_type        *config_hash;
-  hash_type        *obs_hash;
+  int  		      ens_size;
+  meas_matrix_type   *meas_matrix;
+  hash_type          *config_hash;
+  enkf_obs_type      *obs;
   enkf_state_type  **state_list;
+  sched_file_type   *sched_file;
   
   char            **well_list;
   int               Nwells;
 
+  enkf_fs_type     *fs;
   path_fmt_type    *run_path;
   bool              endian_swap;
 };
@@ -68,8 +74,8 @@ bool enkf_ens_get_endian_swap(const enkf_ens_type * enkf_ens) { return enkf_ens-
 enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * ens_path_static , const char * ens_path_parameter , const char * ens_path_dynamic_forecast , const char * ens_path_dynamic_analyzed , bool endian_swap) {
 
   enkf_ens_type * enkf_ens = malloc(sizeof *enkf_ens);
-  enkf_ens->config_hash = hash_alloc(10);
-  enkf_ens->obs_hash    = hash_alloc(10);
+  enkf_ens->config_hash    = hash_alloc(10);
+  enkf_ens->obs            = enkf_obs_alloc(enkf_ens->sched_file);
   
   enkf_ens->endian_swap   = endian_swap;
   enkf_ens->Nwells        = 0;
@@ -181,7 +187,7 @@ void enkf_ens_add_type0(enkf_ens_type * enkf_ens , const char *key , int size, e
 
 void enkf_ens_free(enkf_ens_type * enkf_ens) {  
   hash_free(enkf_ens->config_hash);
-  hash_free(enkf_ens->obs_hash);
+  enkf_obs_free(enkf_ens->obs);
   {
     int i;
     for (i=0; i < enkf_ens->Nwells; i++)
@@ -190,10 +196,11 @@ void enkf_ens_free(enkf_ens_type * enkf_ens) {
     
     for (i=0; i < enkf_ens->ens_size; i++)
       enkf_state_free(enkf_ens->state_list[i]);
-
+    
   }
   meas_matrix_free(enkf_ens->meas_matrix);
   path_fmt_free(enkf_ens->run_path);
+  enkf_fs_free(enkf_ens->fs);
   free(enkf_ens);
 }
 
@@ -211,6 +218,42 @@ const enkf_config_node_type * enkf_ens_get_config_ref(const enkf_ens_type * ens,
 
 
 const path_fmt_type * enkf_ens_get_run_path_ref(const enkf_ens_type *ens) { return ens->run_path; }
+
+/*****************************************************************/
+
+
+static const enkf_config_node_type * enkf_ens_assert_obs(const enkf_ens_type * ens , const char *obs_key , enkf_impl_type impl_type) {
+  if (enkf_ens_has_key(ens , obs_key)) {
+    const enkf_config_node_type * config_node = enkf_ens_get_config_ref(ens , obs_key);
+    if (enkf_config_node_get_impl_type(config_node) == impl_type) 
+      return config_node;
+    else {
+      fprintf(stderr,"%s ensemble object:%s exists - but it is not of correct type - aborting \n",__func__ , obs_key);
+      abort();
+    }
+  } else {
+    fprintf(stderr,"%s: ensemble does not have key: %s - aborting \n",__func__ , obs_key);
+    abort();
+  }
+}
+
+
+void enkf_ens_add_well_obs(enkf_ens_type * ens , const char *obs_key , const char * obs_label , const char * config_file) {
+  const enkf_config_node_type * config_node = enkf_ens_assert_obs(ens , obs_key , WELL);
+  enkf_obs_add_well_obs(ens->obs , config_node , obs_key , obs_label , config_file);
+}
+
+
+void enkf_ens_add_field_obs(enkf_ens_type * ens, const char * obs_key, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , time_t meas_time) { 
+  const enkf_config_node_type * config_node = enkf_ens_assert_obs(ens , obs_key , FIELD);
+  enkf_obs_add_field_obs(ens->obs , config_node , obs_key , obs_label , size , i , j , k , obs_data , meas_time);
+}
+
+
+void enkf_ens_add_rft_obs(enkf_ens_type * ens , const ecl_rft_node_type * rft_node, const double * p_data) {
+  const enkf_config_node_type * config_node = enkf_ens_assert_obs(ens , "PRES" , FIELD);
+  enkf_obs_add_rft_obs(ens->obs , config_node , rft_node , p_data);
+}
 
 
 
