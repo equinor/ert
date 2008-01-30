@@ -26,8 +26,6 @@ VOID_FREE_HEADER(pgbox);
 VOID_FREE_DATA_HEADER(pgbox);
 VOID_REALLOC_DATA_HEADER(pgbox);
 VOID_COPYC_HEADER      (pgbox);
-VOID_SWAPIN_HEADER(pgbox)
-VOID_SWAPOUT_HEADER(pgbox)
 VOID_SERIALIZE_HEADER  (pgbox);
 VOID_DESERIALIZE_HEADER (pgbox);
 
@@ -36,8 +34,8 @@ VOID_FWRITE_HEADER (pgbox)
 VOID_FREAD_HEADER  (pgbox)
 
 
-VOID_FUNC_HEADER       (pgbox_sample   );
-VOID_FUNC_HEADER       (pgbox_isqrt    );
+VOID_FUNC_HEADER       (pgbox_initialize   );
+VOID_FUNC_HEADER       (pgbox_isqrt        );
 
 
 #endif

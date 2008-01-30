@@ -28,18 +28,16 @@ struct serial_state_struct {
 
 struct enkf_node_struct {
   alloc_ftype         *alloc;
-  fread_alloc_ftype   *fread_alloc;
   ecl_write_ftype     *ecl_write;
   fread_ftype         *fread_f;
   fwrite_ftype        *fwrite_f;
-  swapin_ftype        *swapin;
-  swapout_ftype       *swapout;
   realloc_data_ftype  *realloc_data;
+  free_data_ftype     *free_data;
 
   serialize_ftype    *serialize;
   deserialize_ftype  *deserialize;
   
-  sample_ftype       *sample;
+  initialize_ftype   *initialize;
   free_ftype         *freef;
   clear_ftype        *clear;
   copyc_ftype        *copyc;
@@ -198,7 +196,7 @@ enkf_node_type * enkf_node_alloc_old(const char *node_key,
 				 swapout_ftype      * swapout   , 
 				 swapin_ftype       * swapin    ,
 				 copyc_ftype        * copyc     ,
-				 sample_ftype       * sample    , 
+				 initialize_ftype       * initialize    , 
 				 serialize_ftype    * serialize , 
 				 deserialize_ftype  * deserialize , 
 				 free_ftype         * freef) {
@@ -210,7 +208,7 @@ enkf_node_type * enkf_node_alloc_old(const char *node_key,
   node->ens_write = ens_write;
   node->swapin    = swapin;
   node->swapout   = swapout;
-  node->sample    = sample;
+  node->initialize    = initialize;
   node->freef     = freef;
   node->copyc     = copyc;
   node->config    = config;
@@ -269,8 +267,17 @@ bool enkf_node_swapped(const enkf_node_type *enkf_node) {
 }
 
 
-
+/*
 #define FUNC_ASSERT(func,func_name) if (func == NULL) { fprintf(stderr,"%s: function handler: %s not registered when writing node:%s - aborting\n",__func__ , func_name , enkf_node->node_key); abort(); }
+*/
+
+#define FUNC_ASSERT(func) \
+   if (func == NULL) {      \
+      fprintf(stderr,"%s: function handler: %s not registered for node:%s - aborting\n",__func__ , #func , enkf_node->node_key); \
+      abort(); \
+   }
+
+
 
 void * enkf_node_value_ptr(const enkf_node_type * enkf_node) { 
   return enkf_node->data; 
@@ -278,31 +285,31 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
 
 
 void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
-  FUNC_ASSERT(enkf_node->ecl_write , "ecl_write");
+  FUNC_ASSERT(enkf_node->ecl_write);
   enkf_node->ecl_write(enkf_node->data , path);
 }
 
 void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
-  FUNC_ASSERT(enkf_node->fwrite_f , "fwrite_f");
+  FUNC_ASSERT(enkf_node->fwrite_f);
   enkf_node->fwrite_f(enkf_node->data , stream);
 }
 
 
 void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream) {
-  FUNC_ASSERT(enkf_node->fread_f , "fread_f");
+  FUNC_ASSERT(enkf_node->fread_f);
   enkf_node->fread_f(enkf_node->data , stream);
 }
 
 
 
 void enkf_node_ens_clear(enkf_node_type *enkf_node) {
-  FUNC_ASSERT(enkf_node->clear , "clear");
+  FUNC_ASSERT(enkf_node->clear);
   enkf_node->clear(enkf_node->data);
 }
 
 
 int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool *complete) {
-  FUNC_ASSERT(enkf_node->serialize , "serialize");
+  FUNC_ASSERT(enkf_node->serialize);
   if (serial_state_do_serialize(enkf_node->serial_state)) {
     int internal_offset = serial_state_get_internal_offset(enkf_node->serial_state);
     int elements_added  = enkf_node->serialize(enkf_node->data , internal_offset , serial_data_size , serial_data , stride , offset , complete);
@@ -315,7 +322,7 @@ int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , do
 
 
 void enkf_node_deserialize(enkf_node_type *enkf_node , double *serial_data , size_t stride) {
-  FUNC_ASSERT(enkf_node->serialize , "serialize");
+  FUNC_ASSERT(enkf_node->serialize);
   if (serial_state_do_deserialize(enkf_node->serial_state)) {
     int serial_size , internal_offset , new_internal_offset;
     size_t serial_offset;
@@ -329,59 +336,66 @@ void enkf_node_deserialize(enkf_node_type *enkf_node , double *serial_data , siz
 
 
 void enkf_node_sqrt(enkf_node_type *enkf_node) {
-  FUNC_ASSERT(enkf_node->isqrt , "sqrt");
+  FUNC_ASSERT(enkf_node->isqrt);
   enkf_node->isqrt(enkf_node->data);
 }
 
 void enkf_node_scale(enkf_node_type *enkf_node , double scale_factor) {
-  FUNC_ASSERT(enkf_node->scale , "scale");
+  FUNC_ASSERT(enkf_node->scale);
   enkf_node->scale(enkf_node->data , scale_factor);
 }
 
 void enkf_node_iadd(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
-  FUNC_ASSERT(enkf_node->iadd , "iadd");
+  FUNC_ASSERT(enkf_node->iadd);
   enkf_node->iadd(enkf_node->data , delta_node->data);
 }
 
 void enkf_node_iaddsqr(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
-  FUNC_ASSERT(enkf_node->iaddsqr , "iaddsqr");
+  FUNC_ASSERT(enkf_node->iaddsqr);
   enkf_node->iaddsqr(enkf_node->data , delta_node->data);
 }
 
 void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
-  FUNC_ASSERT(enkf_node->imul , "imul");
+  FUNC_ASSERT(enkf_node->imul);
   enkf_node->imul(enkf_node->data , delta_node->data);
 }
 
 
-void enkf_node_sample(enkf_node_type *enkf_node) {
-  FUNC_ASSERT(enkf_node->sample , "sample");
-  enkf_node->sample(enkf_node->data);
+void enkf_node_initialize(enkf_node_type *enkf_node) {
+  FUNC_ASSERT(enkf_node->initialize);
+  enkf_node->initialize(enkf_node->data);
 }
 
 
 void enkf_node_swapin(enkf_node_type *enkf_node , FILE * stream) {
-  FUNC_ASSERT(enkf_node->swapin , "swapin");
-  if (enkf_node_swapped(enkf_node)) 
-    enkf_node->swapin(enkf_node->data , stream);
+  FUNC_ASSERT(enkf_node->fread_f);
+  FUNC_ASSERT(enkf_node->realloc_data);
+  if (enkf_node_swapped(enkf_node)) {
+    enkf_node->realloc_data(enkf_node->data);
+    enkf_node->fread_f(enkf_node->data , stream);
+  }
   enkf_node->swapped = false;
 }
 
 
 void enkf_node_swapout(enkf_node_type *enkf_node , FILE * stream) {
-  FUNC_ASSERT(enkf_node->swapin , "swapout");
-  enkf_node->swapout(enkf_node->data , stream);
+  FUNC_ASSERT(enkf_node->fwrite_f);
+  FUNC_ASSERT(enkf_node->free_data);
+  if (!enkf_node->swapped) {
+    enkf_node->fwrite_f(enkf_node->data , stream);
+    enkf_node->free_data(enkf_node->data);
+  }
   enkf_node->swapped = true;
 }
 
 void enkf_node_realloc_data(enkf_node_type * enkf_node) {
-  FUNC_ASSERT(enkf_node->swapin , "realloc_data");
+  FUNC_ASSERT(enkf_node->realloc_data);
   enkf_node->realloc_data(enkf_node->data);
   enkf_node->swapped = false;
 }
 
 void enkf_node_clear(enkf_node_type *enkf_node) {
-  FUNC_ASSERT(enkf_node->clear , "clear");
+  FUNC_ASSERT(enkf_node->clear);
   enkf_node->clear(enkf_node->data);
 }
 
@@ -392,7 +406,7 @@ void enkf_node_printf(const enkf_node_type *enkf_node) {
 
 /*
   char * enkf_node_alloc_ensfile(const enkf_node_type *enkf_node , const char * path) {
-  FUNC_ASSERT(enkf_node->alloc_ensfile , "alloc_ensfile");
+  FUNC_ASSERT(enkf_node , "alloc_ensfile");
   return enkf_node->alloc_ensfile(enkf_node->data , path);
 }
 */
@@ -433,98 +447,77 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   switch (impl_type) {
   case(MULTZ):
     node->alloc       = multz_alloc__;
-    node->fread_alloc = NULL; /*multz_fread_alloc__;*/
     node->ecl_write   = multz_ecl_write__;
     node->fread_f     = multz_fread__;
     node->fwrite_f    = multz_fwrite__;
-    node->swapout     = multz_swapout__;
-    node->swapin      = multz_swapin__;
     node->copyc       = multz_copyc__;
-    node->sample      = multz_sample__;
+    node->initialize  = multz_initialize__;
     node->serialize   = multz_serialize__;
     node->deserialize = multz_deserialize__;
     node->freef       = multz_free__;
     break;
   case(MULTFLT):
     node->alloc       = multflt_alloc__;
-    node->fread_alloc = NULL; /*multflt_fread_alloc__;*/
     node->ecl_write   = multflt_ecl_write__;
     node->fread_f     = multflt_fread__;
     node->fwrite_f    = multflt_fwrite__;
-    node->swapout     = multflt_swapout__;
-    node->swapin      = multflt_swapin__;
     node->copyc       = multflt_copyc__;
-    node->sample      = multflt_sample__;
+    node->initialize  = multflt_initialize__;
     node->serialize   = multflt_serialize__;
     node->deserialize = multflt_deserialize__;
     node->freef       = multflt_free__;
     break;
   case(WELL):
     node->alloc       = well_alloc__;
-    node->fread_alloc = NULL; /*well_fread_alloc__;*/
     node->ecl_write   = NULL;
     node->fread_f     = well_fread__;
     node->fwrite_f    = well_fwrite__;
-    node->swapout     = well_swapout__;
-    node->swapin      = well_swapin__;
     node->copyc       = well_copyc__;
-    node->sample      = NULL;
+    node->initialize  = NULL;
     node->serialize   = well_serialize__;
     node->deserialize = well_deserialize__;
     node->freef       = well_free__;
     break;
   case(FIELD):
     node->alloc       = field_alloc__;
-    node->fread_alloc = NULL; /*field_fread_alloc__;*/
     node->ecl_write   = field_ecl_write__;
     node->fread_f     = field_fread__;
     node->fwrite_f    = field_fwrite__;
-    node->swapout     = field_swapout__;
-    node->swapin      = field_swapin__;
     node->copyc       = field_copyc__;
-    node->sample      = field_sample__;
+    node->initialize  = field_initialize__;
     node->serialize   = field_serialize__;
     node->deserialize = field_deserialize__;
     node->freef       = field_free__;
     break;
   case(PGBOX):
     node->alloc       = pgbox_alloc__;
-    node->fread_alloc = NULL; /*pgbox_fread_alloc__; */
     node->ecl_write   = NULL; /* pgbox_ecl_write__;  */
     node->fread_f     = pgbox_fread__;
     node->fwrite_f    = pgbox_fwrite__;
-    node->swapout     = pgbox_swapout__;
-    node->swapin      = pgbox_swapin__;
     node->copyc       = pgbox_copyc__;
-    node->sample      = pgbox_sample__;
+    node->initialize  = pgbox_initialize__;
     node->serialize   = pgbox_serialize__;
     node->deserialize = pgbox_deserialize__;
     node->freef       = pgbox_free__;
     break;
   case(EQUIL):
     node->alloc       = equil_alloc__;
-    node->fread_alloc = NULL; /*equil_fread_alloc__;*/
     node->ecl_write   = equil_ecl_write__;
     node->fread_f     = equil_fread__;
     node->fwrite_f    = equil_fwrite__;
-    node->swapout     = equil_swapout__;
-    node->swapin      = equil_swapin__;
     node->copyc       = equil_copyc__;
-    node->sample      = equil_sample__;
+    node->initialize  = equil_initialize__;
     node->serialize   = equil_serialize__;
     node->deserialize = equil_deserialize__;
     node->freef       = equil_free__;
     break;
   case(STATIC):
     node->alloc       = ecl_static_kw_alloc__;
-    node->fread_alloc = NULL; /* ecl_static_kw_fread_alloc__;*/
     node->ecl_write   = NULL; /* ecl_static_kw_ecl_write__; */
     node->fread_f     = ecl_static_kw_fread__;
     node->fwrite_f    = ecl_static_kw_fwrite__;
-    node->swapout     = ecl_static_kw_swapout__;
-    node->swapin      = ecl_static_kw_swapin__;
     node->copyc       = ecl_static_kw_copyc__;
-    node->sample      = NULL; 
+    node->initialize  = NULL; 
     node->serialize   = NULL; 
     node->deserialize = NULL;
     node->freef       = ecl_static_kw_free__;

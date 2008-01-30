@@ -132,19 +132,6 @@ void pgbox_clear(pgbox_type * pgbox) {
 
 
 
-void pgbox_swapout(pgbox_type * pgbox , FILE * stream) {
-  pgbox_fwrite(pgbox , stream);
-  pgbox_free_data(pgbox);
-}
-
-
-
-void pgbox_swapin(pgbox_type * pgbox , FILE * stream) {
-  pgbox_realloc_data(pgbox);
-  pgbox_fread(pgbox  , stream);
-}
-
-
 
 int pgbox_deserialize(const pgbox_type * pgbox , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
   const pgbox_config_type *config      = pgbox->config;
@@ -171,7 +158,7 @@ int pgbox_serialize(const pgbox_type *pgbox , int internal_offset , size_t seria
 
 
 
-void pgbox_sample(pgbox_type *pgbox) {
+void pgbox_initialize(pgbox_type *pgbox) {
   printf("%s: Warning not implemented ... \n",__func__);
 }
 
@@ -191,8 +178,6 @@ VOID_FREE_DATA(pgbox)
 ENSEMBLE_MULX_VECTOR(pgbox);
 VOID_REALLOC_DATA(pgbox)
 VOID_COPYC     (pgbox)
-VOID_SWAPIN(pgbox)
-VOID_SWAPOUT(pgbox)
 VOID_SERIALIZE (pgbox);
 VOID_DESERIALIZE (pgbox);
 
@@ -201,4 +186,4 @@ VOID_DESERIALIZE (pgbox);
 /******************************************************************/
 
 VOID_FUNC      (pgbox_clear        , pgbox_type)
-VOID_FUNC      (pgbox_sample       , pgbox_type)
+VOID_FUNC      (pgbox_initialize   , pgbox_type)

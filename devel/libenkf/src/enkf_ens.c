@@ -40,6 +40,7 @@ struct enkf_ens_struct {
 
   enkf_fs_type     *fs;
   path_fmt_type    *run_path;
+  path_fmt_type    *eclbase;
   bool              endian_swap;
   bool              fmt_file;
 };
@@ -79,8 +80,22 @@ meas_vector_type * enkf_ens_iget_meas_vector(const enkf_ens_type * ens , int ien
   return meas_matrix_iget_vector(ens->meas_matrix , iens);
 }
 
+void enkf_ens_set_state_run_path(const enkf_ens_type * ens , int iens) {
+  char * run_path = path_fmt_alloc_path(ens->run_path , iens);
+  enkf_state_set_run_path(ens->state_list[iens] , run_path); 
+  free(run_path);
+}
 
-enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * ens_path_static , const char * ens_path_parameter , const char * ens_path_dynamic_forecast , const char * ens_path_dynamic_analyzed , bool endian_swap) {
+
+void enkf_ens_set_state_eclbase(const enkf_ens_type * ens , int iens) {
+  char * eclbase = path_fmt_alloc_path(ens->eclbase , iens);
+  enkf_state_set_eclbase(ens->state_list[iens] , eclbase); 
+  free(eclbase);
+}
+
+
+
+enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * eclbase , const char * ens_path_static , const char * ens_path_parameter , const char * ens_path_dynamic_forecast , const char * ens_path_dynamic_analyzed , bool endian_swap) {
 
   enkf_ens_type * enkf_ens = malloc(sizeof *enkf_ens);
   enkf_ens->config_hash    = hash_alloc(10);
@@ -92,6 +107,7 @@ enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * ens_path_sta
   enkf_ens_realloc_well_list(enkf_ens);
   
   enkf_ens->run_path     = path_fmt_alloc_directory_fmt(run_path , true);
+  enkf_ens->eclbase      = path_fmt_alloc_file_fmt(eclbase);
   enkf_ens->meas_matrix  = meas_matrix_alloc(enkf_ens->ens_size);
   enkf_ens->state_list   = malloc(enkf_ens->ens_size * sizeof * enkf_ens->state_list);
   {
@@ -225,8 +241,6 @@ const enkf_config_node_type * enkf_ens_get_config_ref(const enkf_ens_type * ens,
   }
 }
 
-
-const path_fmt_type * enkf_ens_get_run_path_ref(const enkf_ens_type *ens) { return ens->run_path; }
 
 /*****************************************************************/
 

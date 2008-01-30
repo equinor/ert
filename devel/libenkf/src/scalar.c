@@ -105,28 +105,6 @@ void scalar_stream_fwrite(const scalar_type * scalar , FILE * stream) {
 }
 
 
-char * scalar_swapout(scalar_type * scalar , const char * path) {
-  /*char * ensfile = util_alloc_full_path(path , scalar_config_get_ensfile_ref(scalar->config));
-  scalar_fwrite(scalar , ensfile);
-  scalar_free_data(scalar);
-  return ensfile;
-  */
-  fprintf(stderr,"%s: not implemented - aborting \n",__func__);
-  abort();
-}
-
-
-
-void scalar_swapin(scalar_type * scalar , const char *file) {
-  /*
-    scalar_realloc_data(scalar);
-    scalar_fread(scalar  , file);
-  */
-  fprintf(stderr,"%s: not implemented - aborting \n",__func__);
-  abort();
-}
-
-
 
 
 void scalar_sample(scalar_type *scalar) {
@@ -241,8 +219,6 @@ VOID_REALLOC_DATA(scalar)
 VOID_ENS_WRITE (scalar)
 VOID_ENS_READ  (scalar)
 VOID_COPYC     (scalar)
-VOID_SWAPIN(scalar)
-VOID_SWAPOUT(scalar)
 VOID_SERIALIZE(scalar)
 VOID_TRUNCATE(scalar)
 

@@ -51,5 +51,7 @@ typedef enum {abs_err = 300  , rel_err  , relmin_err } enkf_obs_err_type;
 
 typedef enum {nolog = 0 , log_input_mask = 1 , log_enkf_mask = 2 , log_output_mask = 4 , log_all = 7} enkf_logmode_enum;
 
+enkf_impl_type    enkf_types_get_impl_type(const char * );
+const char      * enkf_types_get_impl_name(enkf_impl_type );
 
 #endif

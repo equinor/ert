@@ -37,8 +37,6 @@ VOID_FREE_HEADER(field);
 VOID_FREE_DATA_HEADER(field);
 VOID_REALLOC_DATA_HEADER(field);
 VOID_COPYC_HEADER      (field);
-VOID_SWAPIN_HEADER(field)
-VOID_SWAPOUT_HEADER(field)
 VOID_SERIALIZE_HEADER  (field);
 VOID_DESERIALIZE_HEADER (field);
 
@@ -47,8 +45,8 @@ VOID_FWRITE_HEADER (field)
 VOID_FREAD_HEADER  (field)
 
 
-VOID_FUNC_HEADER       (field_sample   );
-VOID_FUNC_HEADER       (field_isqrt    );
+VOID_FUNC_HEADER       (field_initialize );
+VOID_FUNC_HEADER       (field_isqrt      );
 
 
 

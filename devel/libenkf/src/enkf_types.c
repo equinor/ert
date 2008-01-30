@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <enkf_types.h>
+#include <util.h>
 
 
 const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
@@ -35,7 +36,28 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
 
 
 
+#define if_strcmp(s) if (strcmp(impl_type_string , #s) == 0) impl_type = s
 
+enkf_impl_type enkf_types_get_impl_type(const char * __impl_type_string) {
+  enkf_impl_type impl_type;
+  char * impl_type_string = util_alloc_string_copy(__impl_type_string);
+  util_strupr(impl_type_string);
+  if_strcmp(STATIC);
+  else if_strcmp(MULTZ);
+  else if_strcmp(MULTFLT);
+  else if_strcmp(EQUIL);
+  else if_strcmp(WELL);
+  else if_strcmp(PGBOX);
+  else if_strcmp(GEN_KW);
+  else {
+    fprintf(stderr,"%s: enkf_type: %s not recognized - aborting \n",__func__ , __impl_type_string);
+    abort();
+  }
+  free(impl_type_string);
+  return impl_type;
+}
+
+#undef if_strcmp
 
 
 

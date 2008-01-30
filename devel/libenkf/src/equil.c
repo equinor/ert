@@ -94,21 +94,8 @@ void equil_fread(equil_type * equil , FILE * stream) {
 }
 
 
-void equil_swapout(equil_type * equil , FILE * stream) {
-  equil_fwrite(equil , stream);
-  equil_free_data(equil);
-}
 
-
-void equil_swapin(equil_type * equil , FILE * stream) {
-  equil_realloc_data(equil);
-  equil_fread(equil , stream);
-}
-
-
-
-
-void equil_sample(equil_type *equil) {
+void equil_initialize(equil_type *equil) {
   scalar_sample(equil->scalar);
 }
 
@@ -133,8 +120,6 @@ int equil_deserialize(equil_type *equil , int internal_offset , size_t serial_si
 
 
 
-VOID_SWAPOUT(equil);
-VOID_SWAPIN(equil);
 MATH_OPS_SCALAR(equil);
 VOID_ALLOC(equil);
 VOID_SERIALIZE (equil);
@@ -146,6 +131,6 @@ VOID_ECL_WRITE (equil)
 VOID_FWRITE (equil)
 VOID_FREAD  (equil)
 VOID_COPYC     (equil)
-VOID_FUNC      (equil_sample    , equil_type)
+VOID_FUNC      (equil_initialize    , equil_type)
 VOID_FUNC      (equil_free      , equil_type)
 

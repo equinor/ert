@@ -90,18 +90,6 @@ void well_fwrite(const well_type * well , FILE * stream) {
 }
 
 
-void well_swapout(well_type * well , FILE * stream) {
-  well_fwrite(well , stream);
-  well_free_data(well);
-}
-
-
-void well_swapin(well_type * well , FILE * stream) {
-  well_realloc_data(well);
-  well_fread(well  , stream);
-}
-
-
 
 void well_free(well_type *well) {
   well_free_data(well);
@@ -165,8 +153,6 @@ VOID_REALLOC_DATA(well)
 VOID_FWRITE (well)
 VOID_FREAD  (well)
 VOID_COPYC     (well)
-VOID_SWAPIN(well)
-VOID_SWAPOUT(well)
 VOID_SERIALIZE(well)
 VOID_DESERIALIZE(well)
 /******************************************************************/

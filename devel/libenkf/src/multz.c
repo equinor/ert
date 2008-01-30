@@ -69,7 +69,7 @@ void multz_realloc_data(multz_type *multz) {
 
 
 void multz_free_data(multz_type *multz) {
-  scalar_free(multz->scalar);
+  scalar_free_data(multz->scalar);
 }
 
 
@@ -119,28 +119,6 @@ void multz_ecl_write(const multz_type * multz , const char * eclfile) {
 }
 
 
-void multz_swapout(multz_type * multz , FILE * stream) {
-  DEBUG_ASSERT(multz)
-  {
-    multz_fwrite(multz , stream);
-    multz_free_data(multz);
-  }
-}
-
-
-
-void multz_swapin(multz_type * multz , FILE * stream) {
-  DEBUG_ASSERT(multz)
-  {
-    multz_realloc_data(multz);
-    multz_fread(multz  , stream);
-  }
-}
-
-
-
-
-
 
 void multz_free(multz_type *multz) {
   DEBUG_ASSERT(multz)
@@ -169,7 +147,7 @@ void multz_truncate(multz_type * multz) {
 
 
 
-void  multz_sample(multz_type *multz) {
+void  multz_initialize(multz_type *multz) {
   DEBUG_ASSERT(multz)
   scalar_sample(multz->scalar);  
 }
@@ -207,7 +185,7 @@ void multz_TEST() {
     
     for (iens = 0; iens < ens_size; iens++) {
       multz_ens[iens] = multz_alloc(config);
-      multz_sample(multz_ens[iens]);
+      multz_initialize(multz_ens[iens]);
       sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
       util_make_path(path);
       multz_ecl_write(multz_ens[iens] , path);
@@ -237,8 +215,6 @@ VOID_ECL_WRITE (multz)
 VOID_FWRITE    (multz)
 VOID_FREAD     (multz)
 VOID_COPYC     (multz)
-VOID_SWAPIN(multz)
-VOID_SWAPOUT(multz)
 VOID_SERIALIZE(multz)
 VOID_DESERIALIZE(multz)
 VOID_TRUNCATE(multz)
@@ -249,6 +225,6 @@ ENSEMBLE_MULX_VECTOR_VOID(multz)
 /******************************************************************/
 
 VOID_FUNC      (multz_clear        , multz_type)
-VOID_FUNC      (multz_sample       , multz_type)
+VOID_FUNC      (multz_initialize       , multz_type)
 
 

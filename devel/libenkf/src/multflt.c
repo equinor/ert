@@ -138,18 +138,6 @@ void multflt_fread(multflt_type * multflt , FILE * stream) {
 
 
 
-void multflt_swapout(multflt_type * multflt , FILE * stream) {
-  multflt_fwrite(multflt , stream);
-  multflt_free_data(multflt);
-}
-
-
-void multflt_swapin(multflt_type * multflt , FILE * stream) {
-  multflt_realloc_data(multflt);
-  multflt_fread(multflt , stream);
-}
-
-
 void multflt_truncate(multflt_type * multflt) {
   DEBUG_ASSERT(multflt)
   scalar_truncate( multflt->scalar );  
@@ -157,7 +145,7 @@ void multflt_truncate(multflt_type * multflt) {
 
 
 
-void  multflt_sample(multflt_type *multflt) {
+void  multflt_initialize(multflt_type *multflt) {
   DEBUG_ASSERT(multflt)
   scalar_sample(multflt->scalar);  
 }
@@ -209,7 +197,7 @@ void multflt_TEST() {
     
     for (iens = 0; iens < ens_size; iens++) {
       multflt_ens[iens] = multflt_alloc(config);
-      multflt_sample(multflt_ens[iens]);
+      multflt_initialize(multflt_ens[iens]);
       sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
       util_make_path(path);
       multflt_ecl_write(multflt_ens[iens] , path);
@@ -229,8 +217,6 @@ const char * multflt_get_name(const multflt_type * multflt, int fault_nr) {
 
 MATH_OPS_SCALAR(multflt);
 VOID_ALLOC(multflt);
-VOID_SWAPOUT(multflt);
-VOID_SWAPIN(multflt);
 VOID_SERIALIZE (multflt);
 VOID_DESERIALIZE (multflt);
 /******************************************************************/
@@ -241,6 +227,6 @@ VOID_ECL_WRITE (multflt)
 VOID_FWRITE (multflt)
 VOID_FREAD  (multflt)
 VOID_COPYC  (multflt)
-VOID_FUNC   (multflt_sample    , multflt_type)
+VOID_FUNC   (multflt_initialize    , multflt_type)
 VOID_FUNC   (multflt_free      , multflt_type)
 

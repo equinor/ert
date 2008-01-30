@@ -129,9 +129,9 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 
 
-void  gen_kw_sample(gen_kw_type *gen_kw) {
+void  gen_kw_initialize(gen_kw_type *gen_kw) {
   DEBUG_ASSERT(gen_kw)
-  scalar_sample(gen_kw->scalar);  
+  scalar_initialize(gen_kw->scalar);  
 }
 
 
@@ -185,8 +185,6 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 
 MATH_OPS_SCALAR(gen_kw);
 VOID_ALLOC(gen_kw);
-VOID_SWAPOUT(gen_kw);
-VOID_SWAPIN(gen_kw);
 VOID_SERIALIZE (gen_kw);
 VOID_DESERIALIZE (gen_kw);
 /******************************************************************/
@@ -196,6 +194,6 @@ VOID_DESERIALIZE (gen_kw);
 VOID_FWRITE (gen_kw)
 VOID_FREAD  (gen_kw)
 VOID_COPYC  (gen_kw)
-VOID_FUNC   (gen_kw_sample    , gen_kw_type)
+VOID_FUNC   (gen_kw_initialize    , gen_kw_type)
 VOID_FUNC   (gen_kw_free      , gen_kw_type)
 

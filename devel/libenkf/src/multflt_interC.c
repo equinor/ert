@@ -79,7 +79,7 @@ void multflt_get_data__(const int * iens, double * data) {
 
 
 void multflt_inter_sample__(const int * iens, double * data) {
-  multflt_sample(MULTFLT_LIST[(*iens) - 1]);
+  multflt_initialize(MULTFLT_LIST[(*iens) - 1]);
   multflt_get_data(MULTFLT_LIST[(*iens) - 1] , data);
 }
 

@@ -158,21 +158,6 @@ void * prefix ## _copyc__(const void * void_arg) {    \
 
 /*****************************************************************/
 
-#define VOID_SWAPIN(prefix) \
-void prefix ## _swapin__(void *void_arg , FILE * stream) { \
-   prefix ## _swapin((prefix ## _type *) void_arg , stream);     \
-}                                                            
-
-#define VOID_SWAPOUT(prefix) \
-void prefix ## _swapout__(void *void_arg , FILE * stream) { \
-   prefix ## _swapout((prefix ## _type *) void_arg , stream);     \
-}                                                            
-
-
-#define VOID_SWAPIN_HEADER(prefix)  void prefix ## _swapin__(void *  , FILE * );
-#define VOID_SWAPOUT_HEADER(prefix) void prefix ## _swapout__(void * , FILE * );
-
-/*****************************************************************/
 
 #define CONFIG_GET_ECL_KW_NAME(prefix)        const char * prefix ## _config_get_ecl_kw_name(const prefix ## _config_type * config) { return config->ecl_kw_name; }
 #define CONFIG_GET_ECL_KW_NAME_HEADER(prefix) const char * prefix ## _config_get_ecl_kw_name(const prefix ## _config_type * )

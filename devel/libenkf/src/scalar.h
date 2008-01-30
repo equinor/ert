@@ -40,13 +40,12 @@ VOID_FREE_HEADER(scalar);
 VOID_FREE_DATA_HEADER(scalar);
 VOID_REALLOC_DATA_HEADER(scalar);
 VOID_COPYC_HEADER      (scalar);
-VOID_SWAPIN_HEADER(scalar)
-VOID_SWAPOUT_HEADER(scalar)
 VOID_ECL_WRITE_HEADER (scalar)
 
-     /*VOID_FWRITE_HEADER (scalar)
-       VOID_FREAD_HEADER  (scalar)
-     */
+/*
+  VOID_FWRITE_HEADER (scalar)
+  VOID_FREAD_HEADER  (scalar)
+*/
 
 VOID_FUNC_HEADER       (scalar_sample   );
 VOID_FUNC_HEADER       (scalar_isqrt    );

@@ -71,26 +71,7 @@ void ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stre
 
 
 
-void ecl_static_kw_swapout(ecl_static_kw_type * ecl_static_kw , FILE * stream) {
-  DEBUG_ASSERT(ecl_static_kw);
-  {
-    ecl_static_kw_fwrite(ecl_static_kw , stream);
-    ecl_static_kw_free_data(ecl_static_kw);
-  }
-}
 
-
-
-void ecl_static_kw_swapin(ecl_static_kw_type * ecl_static_kw , FILE * stream) {
-  DEBUG_ASSERT(ecl_static_kw);
-  {
-    ecl_static_kw_fread(ecl_static_kw , stream);
-  }
-}
-
-
-VOID_SWAPIN(ecl_static_kw);
-VOID_SWAPOUT(ecl_static_kw);
 /*****************************************************************/
 VOID_ALLOC(ecl_static_kw)
 VOID_FREE(ecl_static_kw)

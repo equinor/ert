@@ -168,10 +168,12 @@ int enkf_state_fmt_mode(const enkf_state_type * enkf_state) {
 
 
 
-void enkf_state_set_run_path(enkf_state_type * enkf_state) {
-  if (enkf_state->run_path != NULL)
-    free(enkf_state->run_path);
-  enkf_state->run_path = path_fmt_alloc_path(enkf_ens_get_run_path_ref(enkf_state->ens) , enkf_state->my_iens);
+void enkf_state_set_run_path(enkf_state_type * enkf_state , const char * run_path) {
+  enkf_state->run_path = util_realloc_string_copy(enkf_state->run_path , run_path);
+}
+
+void enkf_state_set_eclbase(enkf_state_type * enkf_state , const char * eclbase) {
+  enkf_state->eclbase = util_realloc_string_copy(enkf_state->eclbase , eclbase);
 }
 
 
@@ -200,7 +202,7 @@ enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens) {
   enkf_state->restart_kw_list = restart_kw_list_alloc();
   enkf_state_set_iens(enkf_state , iens);
   enkf_state->run_path        = NULL;
-  enkf_state_set_run_path(enkf_state);
+  enkf_state->eclbase         = NULL;
   enkf_state->enkf_fs         = enkf_ens_get_fs_ref(ens);
   enkf_state->meas_vector     = enkf_ens_iget_meas_vector(ens , iens);
   /* 
@@ -521,7 +523,6 @@ void enkf_state_ecl_write(const enkf_state_type * enkf_state ,  int mask , int r
 
 
 void enkf_state_ens_write(const enkf_state_type * enkf_state , int mask) {
-  const char *path = NULL ; /*enkf_state_get_enspath_ref(enkf_state);*/
   list_node_type *list_node;                                            
   list_node  = list_get_head(enkf_state->node_list);                    
   while (list_node != NULL) {                                           
@@ -882,7 +883,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ens , int ens_size , size_t ta
 
 
 /*ENKF_STATE_APPLY_PATH(fread);*/
-ENKF_STATE_APPLY(sample);
+ENKF_STATE_APPLY(initialize);
 ENKF_STATE_APPLY(clear);
 ENKF_STATE_APPLY(clear_serial_state);
 ENKF_STATE_APPLY_SCALAR(scale);

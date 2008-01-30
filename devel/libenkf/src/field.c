@@ -398,24 +398,9 @@ void field_ecl_write(const field_type * field , const char * path) {
 
 
 
-void field_swapout(field_type * field , FILE * stream) {
-  field_fwrite(field , stream);
-  field_free_data(field);
-}
 
 
-
-void field_swapin(field_type * field , FILE * stream) {
-  field_realloc_data(field);
-  field_fread(field  , stream);
-}
-
-
-
-
-
-
-void field_sample(field_type *field) {
+void field_initialize(field_type *field) {
   printf("%s: Warning not implemented ... \n",__func__);
 }
 
@@ -743,8 +728,6 @@ VOID_ECL_WRITE (field)
 VOID_FWRITE (field)
 VOID_FREAD  (field)
 VOID_COPYC     (field)
-VOID_SWAPIN(field)
-VOID_SWAPOUT(field)
 VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);
 ENSEMBLE_MULX_VECTOR(field);
@@ -753,7 +736,7 @@ ENSEMBLE_MULX_VECTOR(field);
 /******************************************************************/
 
 VOID_FUNC      (field_clear        , field_type)
-VOID_FUNC      (field_sample       , field_type)
+VOID_FUNC      (field_initialize       , field_type)
 
 
 

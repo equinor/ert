@@ -46,7 +46,9 @@ void              enkf_state_apply(enkf_state_type * , enkf_node_ftype1 * , int 
 void              enkf_state_serialize(enkf_state_type * , size_t);
 void              enkf_state_set_iens(enkf_state_type *  , int );
 int               enkf_state_get_iens(const enkf_state_type * );
-void 		  enkf_state_set_run_path(enkf_state_type *);
+void 		  enkf_state_set_run_path(enkf_state_type * , const char*);
+void 		  enkf_state_set_eclbase(enkf_state_type * , const char*);
+
 
 void enkf_ensemble_update(enkf_state_type ** , int  , size_t , const double * );
 #endif
