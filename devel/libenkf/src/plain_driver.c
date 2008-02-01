@@ -22,7 +22,7 @@ static void plain_driver_assert_cast(plain_driver_type * plain_driver) {
 }
 
 
-void plain_driver_load_node(void * _driver , int report_step , int iens , bool analyzed , enkf_node_type * node) {
+void plain_driver_load_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -35,7 +35,7 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , bool a
 }
 
 
-void plain_driver_save_node(void * _driver , int report_step , int iens , bool analyzed , enkf_node_type * node) {
+void plain_driver_save_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -48,7 +48,7 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , bool a
 }
 
 
-void plain_driver_swapout_node(void * _driver , int report_step , int iens , bool analyzed , enkf_node_type * node) {
+void plain_driver_swapout_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -61,7 +61,7 @@ void plain_driver_swapout_node(void * _driver , int report_step , int iens , boo
 }
 
 
-void plain_driver_swapin_node(void * _driver , int report_step , int iens , bool analyzed , enkf_node_type * node) {
+void plain_driver_swapin_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {

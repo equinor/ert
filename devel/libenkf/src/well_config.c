@@ -123,6 +123,14 @@ const char * well_config_get_well_name_ref(const well_config_type * config) {
 }
 
 
+void well_config_summarize(const well_config_type * config) {
+  int ivar;
+  printf("--------------------------\n");
+  printf("Name   : %s\n" , config->well_name);
+  for (ivar =0; ivar < config->data_size; ivar++)
+    printf("var[%d] : %s\n",ivar,config->var_list[ivar]);
+  printf("--------------------------\n");
+}
 
 
 /*****************************************************************/

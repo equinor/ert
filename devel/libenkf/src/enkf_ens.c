@@ -29,6 +29,8 @@
 #include <void_arg.h>
 
 
+
+
 struct enkf_ens_struct {
   int  		      ens_size;
   meas_matrix_type   *meas_matrix;
@@ -308,6 +310,7 @@ void enkf_ens_load_ecl_complete_mt(enkf_ens_type *enkf_ens) {
     free(enkf_ens->arg_load_ecl);
     enkf_ens->arg_load_ecl = NULL;
   }
+
 }
 
 

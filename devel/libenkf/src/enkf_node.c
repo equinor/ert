@@ -379,7 +379,7 @@ void enkf_node_swapin(enkf_node_type *enkf_node , FILE * stream) {
 }
 
 
-void enkf_node_swapout(enkf_node_type *enkf_node , FILE * stream) {
+void enkf_node_swapout(enkf_node_type *enkf_node , FILE * stream ) {
   FUNC_ASSERT(enkf_node->fwrite_f);
   FUNC_ASSERT(enkf_node->free_data);
   if (!enkf_node->swapped) {
@@ -548,7 +548,7 @@ bool enkf_node_get_modified(const enkf_node_type *node) { return node->modified;
 
 enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_type * config) {
   enkf_node_type * node = enkf_node_alloc_empty(node_key , config);
-  node->data    = node->alloc(config);
+  node->data    = node->alloc(enkf_config_node_get_ref(config));
   node->swapped = false;
   enkf_node_set_modified(node);
   return node;

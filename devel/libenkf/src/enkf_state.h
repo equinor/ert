@@ -23,7 +23,7 @@ void 		   enkf_state_set_analyzed(enkf_state_type * , bool );
 void               enkf_state_swapout_node(const enkf_state_type * , const char *);
 void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
 meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *);
-void              enkf_state_swapout(enkf_state_type * , int , bool );
+void              enkf_state_swapout(enkf_state_type * , int , int , bool );
 void              enkf_state_swapin(enkf_state_type * , int , bool);
 enkf_state_type * enkf_state_copyc(const enkf_state_type * );
 void              enkf_state_iset_eclpath(enkf_state_type * , int , const char *);

@@ -25,7 +25,7 @@ int                well_config_get_var_index(const well_config_type * , const ch
 const char      ** well_config_get_var_list_ref(const well_config_type *);
 void               well_config_add_var(well_config_type *  , const char * );
 bool               well_config_has_var(const well_config_type * , const char * );
-
+void               well_config_summarize(const well_config_type * );
 
 
 GET_DATA_SIZE_HEADER(well);

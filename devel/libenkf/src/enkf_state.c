@@ -35,6 +35,7 @@
 #include <meas_vector.h>
 #include <enkf_obs.h>
 #include <obs_node.h>
+#include <basic_driver.h>
 
 struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;
@@ -47,7 +48,7 @@ struct enkf_state_struct {
   char             	* eclbase;
   char                  * run_path;
   int                     my_iens;
-  bool                   _analyzed;
+  analysis_type           analysis_state;
 };
 
 
@@ -143,13 +144,13 @@ void enkf_state_ ## node_func(enkf_state_type * enkf_state , const char *path, i
 /*****************************************************************/
 
 
-bool enkf_state_get_analyzed(const enkf_state_type * enkf_state) {
-  return enkf_state->_analyzed;
+analysis_type enkf_state_get_analysis_state(const enkf_state_type * enkf_state) {
+  return enkf_state->analysis_state;
 }
 
 
-void enkf_state_set_analyzed(enkf_state_type * enkf_state, bool analyzed) {
-  enkf_state->_analyzed = analyzed;
+void enkf_state_set_analysis_state(enkf_state_type * enkf_state , analysis_type analysis_state) {
+  enkf_state->analysis_state = analysis_state;
 }
 
 
@@ -255,6 +256,7 @@ static void enkf_state_add_node__1(enkf_state_type * enkf_state , const char * n
   enkf_node_type *enkf_node = enkf_node_alloc(node_name , config);
   enkf_state_add_node__2(enkf_state , node_name , enkf_node);    
 
+
   /* All code below here is special code for plurigaussian fields */
   {
     enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
@@ -345,7 +347,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
 	/*
 	  Static kewyords go straight out ....
 	*/
-	enkf_fs_swapout_node(fs , enkf_node , report_step , enkf_state->my_iens , false);
+	enkf_fs_swapout_node(fs , enkf_node , report_step , enkf_state->my_iens , forecast__);
 	break;
       default:
 	fprintf(stderr,"%s: internal error - can only get data from implementation types: FIELD and STATIC - aborting \n",__func__);
@@ -370,7 +372,6 @@ void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , 
 
   fortio_type * fortio = fortio_open(restart_file , "r" , endian_swap);
   
-  printf("Loader fra: %s \n",restart_file);
   if (unified)
     ecl_block_fseek(report_step , fmt_file , true , fortio);
   
@@ -396,7 +397,6 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
   char * header_file      = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file , fmt_file , -1);
 
   int iwell;
-  printf("Loader fra: %s \n",summary_file);
   ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_ens_get_endian_swap(enkf_state->ens));
   for (iwell = 0; iwell < Nwells; iwell++) {
     if (! enkf_state_has_node(enkf_state , well_list[iwell])) 
@@ -418,10 +418,10 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
   nice.
 */
 void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , int report_step) {
-  enkf_fs_type *fs = enkf_state_get_fs_ref(enkf_state);
-  bool analyzed    = enkf_state_get_analyzed(enkf_state);
-  int my_iens      = enkf_state_get_iens(enkf_state);
-  char **obs_keys  = hash_alloc_keylist(enkf_obs->obs_hash);
+  enkf_fs_type *fs      = enkf_state_get_fs_ref(enkf_state);
+  analysis_type state   = enkf_state_get_analysis_state(enkf_state);
+  int my_iens       	= enkf_state_get_iens(enkf_state);
+  char **obs_keys   	= hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
 
   for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
@@ -431,9 +431,9 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
     {
       bool swapped = enkf_node_swapped(enkf_node);
       
-      if (swapped) enkf_fs_swapin_node(fs , enkf_node , report_step , my_iens , analyzed);
+      if (swapped) enkf_fs_swapin_node(fs , enkf_node , report_step , my_iens , state);
       obs_node_measure(obs_node , report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
-      if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed);
+      if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed__);
     }
   }
 }
@@ -443,9 +443,10 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
 void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step ) {
   enkf_state_load_ecl_restart(enkf_state , unified , report_step);
   enkf_state_load_ecl_summary(enkf_state , unified , report_step);
-  enkf_state_measure(enkf_state ,  enkf_obs , report_step);
-  enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , true);
+  enkf_state_measure(enkf_state , enkf_obs , report_step);
+  enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , report_step , forecast__);
 }
+
 
 
 
@@ -555,13 +556,15 @@ void enkf_state_ens_write(const enkf_state_type * enkf_state , int mask) {
 }
 
 
-void enkf_state_swapout(enkf_state_type * enkf_state , int mask , bool forecast) {
+
+void enkf_state_swapout(enkf_state_type * enkf_state , int mask , int report_step , bool forecast) {
+  enkf_fs_type *fs = enkf_ens_get_fs_ref(enkf_state->ens);
   list_node_type *list_node;                                            
   list_node  = list_get_head(enkf_state->node_list);                    
   while (list_node != NULL) {                                           
     enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
     if (enkf_node_include_type(enkf_node , mask))                       
-      /*enkf_node_swapout(enkf_node , enkf_state_select_ens_path(enkf_state , enkf_node_get_key_ref(enkf_node) , forecast));*/
+      enkf_fs_swapout_node(fs , enkf_node , report_step , enkf_state->my_iens , forecast);
     list_node  = list_node_get_next(list_node);                         
   }                                                                     
 }

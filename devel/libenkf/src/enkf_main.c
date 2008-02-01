@@ -1,5 +1,6 @@
 #include <enkf_fs.h>
 #include <enkf_ens.h>
+#include <util.h>
 #include <plain_driver.h>
 
 
@@ -21,13 +22,12 @@ int main (int argc , char ** argv) {
   enkf_ens_type * enkf_ens;
   enkf_ens = enkf_ens_alloc(100 , fs , run_path , eclbase , s , false , false , true);
 
+  enkf_ens_add_well(enkf_ens , "PR10_G18" , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
   enkf_ens_load_ecl_init_mt(enkf_ens , 307);
   {
     int iens;
-    for (iens = 38; iens < 100; iens++) {
-      printf("Skal loade fra iens:%d \n",iens);
+    for (iens = 38; iens < 100; iens++) 
       enkf_ens_iload_ecl_mt(enkf_ens , iens);
-    }
   }
   enkf_ens_load_ecl_complete_mt(enkf_ens);
   

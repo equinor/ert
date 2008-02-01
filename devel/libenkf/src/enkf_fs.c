@@ -36,7 +36,7 @@ enkf_fs_type * enkf_fs_alloc(void * dynamic_analyzed , void * dynamic_forecast ,
 
 
 
-static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_node_type * enkf_node , bool analyzed) {
+static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_node_type * enkf_node , analysis_type state) {
   enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
   basic_driver_type * driver;
   switch (var_type) {
@@ -50,13 +50,13 @@ static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_
     driver = fs->parameter;
     break;
   case(ecl_restart):
-    if (analyzed)
+    if (state == analyzed__)
       driver = fs->dynamic_analyzed;
     else
       driver = fs->dynamic_forecast;
     break;
   case(ecl_summary):
-    if (analyzed)
+    if (state == analyzed__)
       driver = fs->dynamic_analyzed;
     else
       driver = fs->dynamic_forecast;
@@ -88,14 +88,14 @@ void enkf_fs_free(enkf_fs_type * fs) {
 }
 
 
-void enkf_fs_swapin_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , bool analyzed) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , analyzed);
-  driver->swapin(driver , report_step , iens , analyzed , enkf_node);
+void enkf_fs_swapin_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , analysis_type state) {
+  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , state);
+  driver->swapin(driver , report_step , iens , state , enkf_node);
 }
 
 
-void enkf_fs_swapout_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , bool analyzed) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , analyzed);
-  driver->swapout(driver , report_step , iens , analyzed , enkf_node); 
+void enkf_fs_swapout_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , analysis_type state) {
+  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , state);
+  driver->swapout(driver , report_step , iens , state , enkf_node); 
 }
 
