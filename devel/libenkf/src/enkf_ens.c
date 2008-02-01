@@ -33,6 +33,7 @@
 
 struct enkf_ens_struct {
   int  		      ens_size;
+  int                 iens_offset;
   meas_matrix_type   *meas_matrix;
   hash_type          *config_hash;
   enkf_obs_type      *obs;
@@ -85,19 +86,16 @@ bool enkf_ens_get_fmt_file(const enkf_ens_type * enkf_ens) { return enkf_ens->fm
 
 enkf_fs_type * enkf_ens_get_fs_ref(const enkf_ens_type * ens) { return ens->fs; }
 
-meas_vector_type * enkf_ens_iget_meas_vector(const enkf_ens_type * ens , int iens) {
-  return meas_matrix_iget_vector(ens->meas_matrix , iens);
-}
 
 void enkf_ens_set_state_run_path(const enkf_ens_type * ens , int iens) {
-  char * run_path = path_fmt_alloc_path(ens->run_path , iens);
+  char * run_path = path_fmt_alloc_path(ens->run_path , iens + ens->iens_offset);
   enkf_state_set_run_path(ens->state_list[iens] , run_path); 
   free(run_path);
 }
 
 
 void enkf_ens_set_state_eclbase(const enkf_ens_type * ens , int iens) {
-  char * eclbase = path_fmt_alloc_path(ens->eclbase , iens);
+  char * eclbase = path_fmt_alloc_path(ens->eclbase , iens + ens->iens_offset);
   enkf_state_set_eclbase(ens->state_list[iens] , eclbase); 
   free(eclbase);
 }
@@ -130,12 +128,13 @@ enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs,
   enkf_ens->eclbase      = path_fmt_alloc_file_fmt(eclbase);
   enkf_ens->meas_matrix  = meas_matrix_alloc(enkf_ens->ens_size);
   enkf_ens->state_list   = malloc(enkf_ens->ens_size * sizeof * enkf_ens->state_list);
+  enkf_ens->iens_offset  = 40;
   {
     int iens;
     for (iens = 0; iens < enkf_ens->ens_size; iens++) {
-      enkf_ens->state_list[iens] = enkf_state_alloc(enkf_ens , iens);
+      enkf_ens->state_list[iens] = enkf_state_alloc(enkf_ens , iens + enkf_ens->iens_offset , meas_matrix_iget_vector(enkf_ens->meas_matrix , iens));
       enkf_ens_set_state_run_path(enkf_ens , iens);
-      enkf_ens_set_state_eclbase(enkf_ens , iens);
+      enkf_ens_set_state_eclbase(enkf_ens  , iens);
     }
   }
   enkf_ens->thread_pool_load_ecl = NULL;
@@ -355,3 +354,13 @@ void enkf_ens_add_rft_obs(enkf_ens_type * ens , const ecl_rft_node_type * rft_no
 
 
 
+/*****************************************************************/
+
+void enkf_ens_analysis(enkf_ens_type * ens) {
+  int nrobs = obs_data_get_nrobs(ens->obs_data);
+  if (nrobs > 0) {
+    double * X = analysis_allocX(ens->ens_size , obs_data_get_nrobs(ens->obs_data) , ens->meas_matrix , ens->obs_data , true , true);
+    
+    free(X);
+  }
+}

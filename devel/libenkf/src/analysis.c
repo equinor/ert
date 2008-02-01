@@ -1,8 +1,5 @@
-#include <stdlib.h>
-#include <util.h>
-
 /*
-  Fortran routine - linked in dirctly with the object file 
+  Fortran routine - in libanalysis
 */
 
 /*
@@ -44,7 +41,10 @@ subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,
 
 */
 
-
+#include <stdlib.h>
+#include <util.h>
+#include <obs_data.h>
+#include <meas_matrix.h>
 
 void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs_stride) {
   *ens_stride = nrobs;
@@ -52,20 +52,33 @@ void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs
 }
 
 
-
-
-
-
 void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const double * S , const double * D , const double * innov , const int * nrens , 
 			 const int * nrobs , const int * verbose , const double * truncation , const int * mode , const int * update_randrot , const int * istep , const char * xpath);
 
 
 
-void initX(int nrens , int nrobs , bool verbose , bool update_randrot) {
+double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
   int  update_randrot_int, verbose_int;
+  const double alpha = 1.50;
   double *X , *R , *E , *S , *D , *innov;
-  int  truncation , mode , istep;
+  int  truncation , mode , istep , ens_stride , obs_stride;
   char * xpath;
+  bool returnE; 
+  
+  istep   = -1;
+  mode    = 22;
+  returnE = false;
+
+  
+  
+  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
+  X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
+  S 	= meas_matrix_allocS(meas_matrix , ens_stride , obs_stride);
+  innov = obs_data_alloc_innov(obs_data , ens_size , ens_stride , obs_stride , S);
+  R 	= obs_data_allocR(obs_data , ens_size , ens_stride , obs_stride , innov , S , alpha);
+  D 	= obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , returnE , &E);
+  obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
+  
 
   /*
     Have to subtract mean(S) from S - because that is what the
@@ -81,7 +94,7 @@ void initX(int nrens , int nrobs , bool verbose , bool update_randrot) {
 		      S , 
 		      D , 
 		      innov , 
-		      (const int *) &nrens        	, 
+		      (const int *) &ens_size        	, 
 		      (const int *) &nrobs        	, 
 		      (const int *) &verbose_int  	, 
 		      (const double *) truncation 	, 
@@ -90,17 +103,17 @@ void initX(int nrens , int nrobs , bool verbose , bool update_randrot) {
 		      (const int *) &istep              , 
 		      xpath);
   
+  free(S);
+  free(R);
+  free(D);
+  free(innov);
+  if (E != NULL) free(E);
+
+  return X;
 }
 
 
 /*
-
-  X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
-  S 	= meas_matrix_allocS(meas_matrix);
-  R 	= obs_data_allocR(obs_data , ens_size , innov , S , alpha);
-  D 	= obs_data_allocD(obs_data , ens_size , S , returnE , &E);
-  innov = obs_data_alloc_innov(obs_data , ens_size , S);
-  
 
   initX(X , R , E , S , D , innov , ....);
 

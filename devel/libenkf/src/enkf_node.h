@@ -8,6 +8,8 @@
 
 /**********************************/
 
+typedef enum   {forecast , serialized , analyzed} state_enum;
+
 #define NODE_STD_FIELDS \
 int internal_offset;
 

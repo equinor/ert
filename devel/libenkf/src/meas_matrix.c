@@ -3,7 +3,6 @@
 #include <string.h>
 #include <meas_vector.h>
 #include <util.h>
-#include <analysis.h>
 
 struct meas_matrix_struct {
   int ens_size;
@@ -68,13 +67,12 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type * matrix , int
   code which did that.
 */
 
-double * meas_matrix_allocS(const meas_matrix_type * matrix) {
+double * meas_matrix_allocS(const meas_matrix_type * matrix, int ens_stride , int obs_stride) {
   double * S;
   int offset = 0;
-  int iens, ens_stride , obs_stride;
+  int iens;
   
   const int nrobs = meas_vector_get_nrobs(matrix->meas_vectors[0]);
-  analysis_set_stride(matrix->ens_size , nrobs , &ens_stride , &obs_stride);
   S  = util_malloc(nrobs * matrix->ens_size * sizeof * S , __func__);
   for (iens = 0; iens < matrix->ens_size; iens++) {
     const meas_vector_type * vector = matrix->meas_vectors[iens];

@@ -7,7 +7,6 @@
 #include <well_config.h>
 #include <well.h>
 
-typedef enum   {abs_error = 0 , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_error_type; /* Should not have enkf_ prefix */
 typedef struct well_obs_struct well_obs_type;
 
 well_obs_type * well_obs_alloc(const well_config_type * , int , const char ** , const history_type * , const double *  , const double *  , const enkf_obs_error_type * );

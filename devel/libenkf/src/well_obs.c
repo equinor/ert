@@ -19,9 +19,9 @@ typedef struct well_obs_error_struct well_obs_error_type;
 
 struct well_obs_error_struct {
   int size;
-  double   	    * abs_std;
-  double   	    * rel_std; 
-  enkf_obs_err_type * error_mode;
+  double   	      * abs_std;
+  double   	      * rel_std; 
+  enkf_obs_error_type * error_mode;
 };
 
 
@@ -174,7 +174,10 @@ static well_obs_type * __well_obs_alloc(const well_config_type * config , int si
 }
 
 
-
+/*
+  WOPR  (300|301|302)  abs_std rel_std
+  WWCT  (300|301|302)  abs_std rel_std
+*/
 well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_type * config , const history_type * hist) {
   FILE * stream = enkf_util_fopen_r(filename , __func__);
   int size      = util_count_file_lines(stream);

@@ -20,7 +20,7 @@ struct field_obs_struct {
   int                     * i , * j , * k;
   double               	  *  abs_std;
   double 	       	  *  rel_std;   
-  enkf_obs_err_type       *  error_mode;
+  enkf_obs_error_type     *  error_mode;
   double                  *  obs_value;
   char                    *  obs_name;
 };

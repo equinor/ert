@@ -3,12 +3,11 @@
 #include <enkf_node.h>
 
 typedef struct basic_driver_struct basic_driver_type;
-typedef enum {forecast__ , analyzed__} analysis_type;
 
-typedef void (load_node_ftype) 	  (void * , int , int , analysis_type , enkf_node_type *);
-typedef void (save_node_ftype) 	  (void * , int , int , analysis_type , enkf_node_type *);
-typedef void (swapin_node_ftype)  (void * , int , int , analysis_type , enkf_node_type *);
-typedef void (swapout_node_ftype) (void * , int , int , analysis_type , enkf_node_type *);
+typedef void (load_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
+typedef void (save_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
+typedef void (swapin_node_ftype)  (void * , int , int , state_enum , enkf_node_type *);
+typedef void (swapout_node_ftype) (void * , int , int , state_enum , enkf_node_type *);
 typedef void (free_driver_ftype)  (void *);
 
 

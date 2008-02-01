@@ -4,7 +4,7 @@
 #include <enkf_util.h>
 #include <obs_data.h>
 #include <util.h>
-#include <analysis.h>
+
 
 struct obs_data_struct {
   int       size;
@@ -31,6 +31,7 @@ static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) 
 }
 
 
+int obs_data_get_nrobs(const obs_data_type * obs_data) { return obs_data->size; }
 
 obs_data_type * obs_data_alloc() {
   obs_data_type * obs_data = malloc(sizeof * obs_data);
@@ -83,13 +84,11 @@ void obs_data_fprintf(const obs_data_type * obs_data , FILE *stream) {
 }
 
 
-static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size) {
+static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_stride, int obs_stride) {
   double *pert_mean , *pert_var;
   double *E;
   int iens, iobs, nrobs;
-  int ens_stride , obs_stride;
   nrobs = obs_data->size;
-  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
 
   E         = util_malloc(nrobs * ens_size * sizeof * E        , __func__);
   pert_mean = util_malloc(nrobs            * sizeof * pert_mean , __func__);
@@ -139,13 +138,11 @@ static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size) {
   fortran code, where it was assumed that ensemble mean was shifted 
   from S.
 */
-double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, const double * S , bool returnE , double **_E) {
+double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , const double * S , bool returnE , double **_E) {
   double *D , *E;
   int iens, iobs, nrobs;
-  int ens_stride , obs_stride;
   nrobs = obs_data->size;
-  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
-  E 	= obs_data_allocE(obs_data , ens_size);
+  E 	= obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
   D 	= util_malloc(nrobs * ens_size * sizeof * D , __func__);
 
   for  (iens = 0; iens < ens_size; iens++) {
@@ -173,13 +170,11 @@ double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, const do
  
 
 
-double * obs_data_alloc_innov(const obs_data_type * obs_data , int ens_size , const double *S) {
+double * obs_data_alloc_innov(const obs_data_type * obs_data , int ens_size , int ens_stride , int obs_stride ,  const double *S) {
   double *innov;
   double *S1;
   int iens, iobs, nrobs;
-  int ens_stride , obs_stride;
   nrobs = obs_data->size;
-  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
   innov = util_malloc(nrobs * sizeof *innov , __func__);
   S1    = util_malloc(nrobs * sizeof *S1 , __func__);
 
@@ -203,15 +198,13 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , int ens_size , co
 }
 
 
-double * obs_data_allocR(obs_data_type * obs_data , int ens_size , const double * innov , const double *S , double alpha) {
+double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_stride , int obs_stride , const double * innov , const double *S , double alpha) {
   const int nrobs = obs_data->size;
   double *ens_avg;
   double *ens_std;
   double *R;
   int iens, iobs;
-  int ens_stride , obs_stride;
-  
-  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);  
+
   ens_std = util_malloc(nrobs * sizeof *ens_std , __func__);
   ens_avg = util_malloc(nrobs * sizeof *ens_avg , __func__);
   
@@ -259,13 +252,11 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , const double 
 }
 
 
-void obs_data_scale(const obs_data_type * obs_data , int ens_size, double *S , double *E , double *D , double *R , double *innov) {
+
+void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , double *S , double *E , double *D , double *R , double *innov) {
   const int nrobs = obs_data->size;
   double * scale_factor = util_malloc(nrobs * sizeof * scale_factor , __func__);
   int iens, iobs;
-  int ens_stride , obs_stride;
-  
-  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);  
   
   for  (iens = 0; iens < ens_size; iens++) {
     for (iobs = 0; iobs < nrobs; iobs++) {

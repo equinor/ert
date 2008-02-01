@@ -41,9 +41,8 @@ typedef enum {STATIC = 100 , MULTZ , MULTFLT , EQUIL , FIELD , WELL , PGBOX , GE
 
 
 typedef enum {active_off = 200 , active_on , active_at , active_after , active_before} enkf_active_type;
+typedef enum   {abs_error = 0 , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_error_type; /* Should not have enkf_ prefix */
 
-
-typedef enum {abs_err = 300  , rel_err  , relmin_err } enkf_obs_err_type;
 
 /*
   typedef enum {WELL_OBS = 0 , POINT_OBS = 1} enkf_obs_type;

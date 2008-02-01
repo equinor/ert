@@ -22,7 +22,7 @@ static void plain_driver_assert_cast(plain_driver_type * plain_driver) {
 }
 
 
-void plain_driver_load_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
+void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -35,7 +35,7 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , analys
 }
 
 
-void plain_driver_save_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
+void plain_driver_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -48,10 +48,10 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , analys
 }
 
 
-void plain_driver_swapout_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
+void plain_driver_swapout_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
-  {
+  if (!enkf_node_swapped(node)) {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
     FILE * stream = util_fopen(filename , "w");
     enkf_node_swapout(node , stream);
@@ -61,7 +61,7 @@ void plain_driver_swapout_node(void * _driver , int report_step , int iens , ana
 }
 
 
-void plain_driver_swapin_node(void * _driver , int report_step , int iens , analysis_type state , enkf_node_type * node) {
+void plain_driver_swapin_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {

@@ -48,7 +48,7 @@ struct enkf_state_struct {
   char             	* eclbase;
   char                  * run_path;
   int                     my_iens;
-  analysis_type           analysis_state;
+  state_enum              analysis_state;
 };
 
 
@@ -144,12 +144,12 @@ void enkf_state_ ## node_func(enkf_state_type * enkf_state , const char *path, i
 /*****************************************************************/
 
 
-analysis_type enkf_state_get_analysis_state(const enkf_state_type * enkf_state) {
+state_enum enkf_state_get_analysis_state(const enkf_state_type * enkf_state) {
   return enkf_state->analysis_state;
 }
 
 
-void enkf_state_set_analysis_state(enkf_state_type * enkf_state , analysis_type analysis_state) {
+void enkf_state_set_analysis_state(enkf_state_type * enkf_state , state_enum analysis_state) {
   enkf_state->analysis_state = analysis_state;
 }
 
@@ -193,7 +193,7 @@ enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
 }
 
 
-enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens) {
+enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens , meas_vector_type * meas_vector) {
   enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
   
   enkf_state->ens             = (enkf_ens_type *) ens;
@@ -204,7 +204,7 @@ enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens) {
   enkf_state->run_path        = NULL;
   enkf_state->eclbase         = NULL;
   enkf_state->enkf_fs         = enkf_ens_get_fs_ref(ens);
-  enkf_state->meas_vector     = enkf_ens_iget_meas_vector(ens , iens);
+  enkf_state->meas_vector     = meas_vector;
 
   return enkf_state;
 }
@@ -217,7 +217,7 @@ enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens) {
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  enkf_state_type * new = enkf_state_alloc(src->ens , src->my_iens);
+  enkf_state_type * new = enkf_state_alloc(src->ens , src->my_iens, src->meas_vector);
   list_node_type *list_node;                                          
   list_node = list_get_head(src->node_list);                     
 
@@ -347,7 +347,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
 	/*
 	  Static kewyords go straight out ....
 	*/
-	enkf_fs_swapout_node(fs , enkf_node , report_step , enkf_state->my_iens , forecast__);
+	enkf_fs_swapout_node(fs , enkf_node , report_step , enkf_state->my_iens , forecast);
 	break;
       default:
 	fprintf(stderr,"%s: internal error - can only get data from implementation types: FIELD and STATIC - aborting \n",__func__);
@@ -419,7 +419,7 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
 */
 void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , int report_step) {
   enkf_fs_type *fs      = enkf_state_get_fs_ref(enkf_state);
-  analysis_type state   = enkf_state_get_analysis_state(enkf_state);
+  state_enum state   = enkf_state_get_analysis_state(enkf_state);
   int my_iens       	= enkf_state_get_iens(enkf_state);
   char **obs_keys   	= hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
@@ -433,7 +433,7 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
       
       if (swapped) enkf_fs_swapin_node(fs , enkf_node , report_step , my_iens , state);
       obs_node_measure(obs_node , report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
-      if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed__);
+      if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed);
     }
   }
 }
@@ -444,7 +444,7 @@ void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
   enkf_state_load_ecl_restart(enkf_state , unified , report_step);
   enkf_state_load_ecl_summary(enkf_state , unified , report_step);
   enkf_state_measure(enkf_state , enkf_obs , report_step);
-  enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , report_step , forecast__);
+  enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , report_step , forecast);
 }
 
 

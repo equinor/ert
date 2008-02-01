@@ -14,7 +14,6 @@
 #include <pgbox.h>
 
 typedef struct serial_state_struct serial_state_type;
-typedef enum   {forecast , serialized , analyzed} state_enum;
 
 
 struct serial_state_struct {
@@ -382,10 +381,8 @@ void enkf_node_swapin(enkf_node_type *enkf_node , FILE * stream) {
 void enkf_node_swapout(enkf_node_type *enkf_node , FILE * stream ) {
   FUNC_ASSERT(enkf_node->fwrite_f);
   FUNC_ASSERT(enkf_node->free_data);
-  if (!enkf_node->swapped) {
-    enkf_node->fwrite_f(enkf_node->data , stream);
-    enkf_node->free_data(enkf_node->data);
-  }
+  enkf_node->fwrite_f(enkf_node->data , stream);
+  enkf_node->free_data(enkf_node->data);
   enkf_node->swapped = true;
 }
 
