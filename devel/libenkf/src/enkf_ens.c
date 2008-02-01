@@ -101,14 +101,16 @@ void enkf_ens_set_state_eclbase(const enkf_ens_type * ens , int iens) {
 }
 
 
-
-enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * eclbase , const char * ens_path_static , const char * ens_path_parameter , const char * ens_path_dynamic_forecast , const char * ens_path_dynamic_analyzed , bool unified , bool endian_swap) {
-
+enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs, 
+			       const char * run_path , const char * eclbase , const char * schedule_file , const int * start_date , bool unified , bool endian_swap) {
   enkf_ens_type * enkf_ens = malloc(sizeof *enkf_ens);
   enkf_ens->config_hash    = hash_alloc(10);
+  enkf_ens->sched_file     = sched_file_alloc(start_date) ; sched_file_parse(enkf_ens->sched_file , schedule_file);
   enkf_ens->obs            = enkf_obs_alloc(enkf_ens->sched_file);
   enkf_ens->obs_data       = obs_data_alloc();
+  enkf_ens->fs             = fs;
 
+  enkf_ens->ens_size      = ens_size;
   enkf_ens->endian_swap   = endian_swap;
   enkf_ens->Nwells        = 0;
   enkf_ens->well_list     = NULL;
@@ -122,7 +124,7 @@ enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * eclbase , co
   {
     int iens;
     for (iens = 0; iens < enkf_ens->ens_size; iens++)
-      enkf_ens->state_list[iens] = NULL ;   /*enkf_state_alloc(enkf_ens);*/
+      enkf_ens->state_list[iens] = enkf_state_alloc(enkf_ens , iens);
   }
   enkf_ens->thread_pool_load_ecl = NULL;
   enkf_ens->arg_load_ecl         = NULL;

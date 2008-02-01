@@ -422,7 +422,11 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
 }
 
 
-
+/**
+  This function iterates over the observations, and as such it requires
+  quite intimate knowledge of enkf_obs_type structure - not quite
+  nice.
+*/
 void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , int report_step) {
   enkf_fs_type *fs = enkf_state_get_fs_ref(enkf_state);
   bool analyzed    = enkf_state_get_analyzed(enkf_state);
@@ -452,7 +456,6 @@ void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
   enkf_state_measure(enkf_state ,  enkf_obs , report_step);
   enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , true);
 }
-
 
 
 
