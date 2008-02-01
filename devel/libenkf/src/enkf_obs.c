@@ -9,17 +9,10 @@
 #include <obs_node.h>
 #include <history.h>
 #include <enkf_util.h>
-#include <enkf_state.h>
 #include <sched_file.h>
 
 
 
-struct enkf_obs_struct {
-  history_type           * hist;
-  const sched_file_type  * sched_file;
-  hash_type              * obs_hash;
-  int                      num_reports;
-};
 
 
 
@@ -212,30 +205,4 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
   }
 }
 
-
-
-void enkf_obs_measure(enkf_obs_type * enkf_obs , int report_step , const enkf_state_type * enkf_state) {
-  enkf_fs_type *fs = enkf_state_get_fs_ref(enkf_state);
-  bool analyzed = enkf_state_get_analyzed(enkf_state);
-  int my_iens   = enkf_state_get_iens(enkf_state);
-  const char *kw;
-
-  
-  kw = hash_iter_get_first_key(enkf_obs->obs_hash);
-  while (kw != NULL) {
-    obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
-    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-    
-    {
-      bool swapped = enkf_node_swapped(enkf_node);
-      
-      if (swapped) enkf_fs_swapin_node(fs , enkf_node , report_step , my_iens , analyzed);
-      obs_node_measure(obs_node , report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
-      if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed);
-      
-    }
-    
-    kw = hash_iter_get_next_key(enkf_obs->obs_hash);
-  }
-}
 

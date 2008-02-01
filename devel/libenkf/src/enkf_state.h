@@ -1,19 +1,21 @@
 #ifndef __ENKF_STATE_H__
 #define __ENKF_STATE_H__
 
+
 #include <fortio.h>
 #include <stdbool.h>
 #include <enkf_ens.h>
 #include <enkf_types.h>
 #include <enkf_node.h>
 #include <enkf_util.h>
+#include <enkf_obs.h>
 #include <ecl_block.h>
-#include <enkf_fs.h>
 #include <meas_vector.h>
 #include <enkf_fs.h>
 
 
 typedef struct enkf_state_struct enkf_state_type;
+
 
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
 bool 		   enkf_state_get_analyzed(const enkf_state_type * );
@@ -33,7 +35,7 @@ void              enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void            * enkf_state_load_ecl_summary_void(void * );
 void            * enkf_state_load_ecl_restart_void(void * );
 void            * enkf_state_load_ecl_void(void * );
-void              enkf_state_load_ecl(enkf_state_type * , bool , int );
+void              enkf_state_load_ecl(enkf_state_type * , enkf_obs_type * , bool , int );
 
 void              enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
 void              enkf_state_sample(enkf_state_type * , int);

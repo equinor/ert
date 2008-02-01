@@ -33,7 +33,8 @@
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
 #include <meas_vector.h>
-
+#include <enkf_obs.h>
+#include <obs_node.h>
 
 struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;
@@ -421,9 +422,49 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
 }
 
 
-void enkf_state_load_ecl(enkf_state_type * enkf_state , bool unified , int report_step) {
+
+void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , int report_step) {
+  enkf_fs_type *fs = enkf_state_get_fs_ref(enkf_state);
+  bool analyzed    = enkf_state_get_analyzed(enkf_state);
+  int my_iens      = enkf_state_get_iens(enkf_state);
+  char **obs_keys  = hash_alloc_keylist(enkf_obs->obs_hash);
+  int iobs;
+
+  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
+    const char * kw = obs_keys[iobs];
+    obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
+    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
+    {
+      bool swapped = enkf_node_swapped(enkf_node);
+      
+      if (swapped) enkf_fs_swapin_node(fs , enkf_node , report_step , my_iens , analyzed);
+      obs_node_measure(obs_node , report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
+      if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed);
+    }
+  }
+}
+
+
+
+void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step ) {
   enkf_state_load_ecl_restart(enkf_state , unified , report_step);
   enkf_state_load_ecl_summary(enkf_state , unified , report_step);
+  enkf_state_measure(enkf_state ,  enkf_obs , report_step);
+  enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , true);
+}
+
+
+
+
+void * enkf_state_load_ecl_void(void * input_arg) {
+  void_arg_type * void_arg     = (void_arg_type *) input_arg;
+  enkf_state_type * enkf_state =  void_arg_get_ptr(void_arg   , 0);
+  enkf_obs_type * enkf_obs     =  void_arg_get_ptr(void_arg   , 1);
+  bool unified                 =  void_arg_get_bool(void_arg  , 2);  
+  int report_step              =  void_arg_get_int(void_arg   , 3);
+  
+  enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step);
+  return NULL;
 }
 
 
@@ -456,19 +497,6 @@ void * enkf_state_load_ecl_restart_void(void * input_arg) {
   return NULL;
 }
 
-
-void * enkf_state_load_ecl_void(void * input_arg) {
-  void_arg_type * arg = (void_arg_type *) input_arg;
-  enkf_state_type * enkf_state;
-  bool unified;
-  int report_step;
-  
-  enkf_state  = void_arg_get_ptr(arg , 0);
-  unified     = void_arg_get_bool(arg , 1 );
-  report_step = void_arg_get_int(arg , 2 );
-  enkf_state_load_ecl(enkf_state , unified , report_step);
-  return NULL;
-}
 
 
 

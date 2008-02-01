@@ -16,6 +16,7 @@
 #include <multflt_config.h>
 #include <well_obs.h>
 #include <pgbox_config.h>
+#include <thread_pool.h>
 #include <obs_node.h>
 #include <obs_data.h>
 #include <history.h>
@@ -25,6 +26,7 @@
 #include <enkf_obs.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
+#include <void_arg.h>
 
 
 struct enkf_ens_struct {
@@ -32,8 +34,9 @@ struct enkf_ens_struct {
   meas_matrix_type   *meas_matrix;
   hash_type          *config_hash;
   enkf_obs_type      *obs;
-  enkf_state_type  **state_list;
-  sched_file_type   *sched_file;
+  obs_data_type      *obs_data;
+  enkf_state_type   **state_list;
+  sched_file_type    *sched_file;
   
   char            **well_list;
   int               Nwells;
@@ -43,6 +46,10 @@ struct enkf_ens_struct {
   path_fmt_type    *eclbase;
   bool              endian_swap;
   bool              fmt_file;
+  bool              unified;
+
+  thread_pool_type  *thread_pool_load_ecl;
+  void_arg_type    **arg_load_ecl;
 };
 
 
@@ -95,16 +102,18 @@ void enkf_ens_set_state_eclbase(const enkf_ens_type * ens , int iens) {
 
 
 
-enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * eclbase , const char * ens_path_static , const char * ens_path_parameter , const char * ens_path_dynamic_forecast , const char * ens_path_dynamic_analyzed , bool endian_swap) {
+enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * eclbase , const char * ens_path_static , const char * ens_path_parameter , const char * ens_path_dynamic_forecast , const char * ens_path_dynamic_analyzed , bool unified , bool endian_swap) {
 
   enkf_ens_type * enkf_ens = malloc(sizeof *enkf_ens);
   enkf_ens->config_hash    = hash_alloc(10);
   enkf_ens->obs            = enkf_obs_alloc(enkf_ens->sched_file);
-  
+  enkf_ens->obs_data       = obs_data_alloc();
+
   enkf_ens->endian_swap   = endian_swap;
   enkf_ens->Nwells        = 0;
   enkf_ens->well_list     = NULL;
   enkf_ens_realloc_well_list(enkf_ens);
+  enkf_ens->unified      = unified;
   
   enkf_ens->run_path     = path_fmt_alloc_directory_fmt(run_path , true);
   enkf_ens->eclbase      = path_fmt_alloc_file_fmt(eclbase);
@@ -113,8 +122,10 @@ enkf_ens_type * enkf_ens_alloc(const char * run_path , const char * eclbase , co
   {
     int iens;
     for (iens = 0; iens < enkf_ens->ens_size; iens++)
-      enkf_ens->state_list[iens] = NULL ; /*enkf_state_alloc(enkf_ens);*/
+      enkf_ens->state_list[iens] = NULL ;   /*enkf_state_alloc(enkf_ens);*/
   }
+  enkf_ens->thread_pool_load_ecl = NULL;
+  enkf_ens->arg_load_ecl         = NULL;
   return  enkf_ens;
 }
 
@@ -144,10 +155,10 @@ void enkf_ens_add_well(enkf_ens_type * enkf_ens , const char *well_name , int si
 
 
 void enkf_ens_add_type(enkf_ens_type * enkf_ens, 
-			  const char * key , 
-			  enkf_var_type enkf_type , 
-			  enkf_impl_type impl_type , 
-			  const void *data) {
+		       const char * key , 
+		       enkf_var_type enkf_type , 
+		       enkf_impl_type impl_type , 
+		       const void *data) {
   if (enkf_ens_has_key(enkf_ens , key)) {
     fprintf(stderr,"%s: a ensuration object:%s has already been added - aborting \n",__func__ , key);
     abort();
@@ -226,6 +237,7 @@ void enkf_ens_free(enkf_ens_type * enkf_ens) {
   meas_matrix_free(enkf_ens->meas_matrix);
   path_fmt_free(enkf_ens->run_path);
   enkf_fs_free(enkf_ens->fs);
+  obs_data_free(enkf_ens->obs_data);
   free(enkf_ens);
 }
 
@@ -240,6 +252,55 @@ const enkf_config_node_type * enkf_ens_get_config_ref(const enkf_ens_type * ens,
     abort();
   }
 }
+
+/*****************************************************************/
+
+void enkf_ens_load_ecl_init_mt(enkf_ens_type * enkf_ens , int report_step) {
+  enkf_obs_get_observations(enkf_ens->obs , report_step , enkf_ens->obs_data);
+  if (enkf_ens->arg_load_ecl != NULL) {
+    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
+    abort();
+  }
+  {
+    int iens;
+    enkf_ens->arg_load_ecl = util_malloc(enkf_ens->ens_size * sizeof * enkf_ens->arg_load_ecl , __func__);
+    for (iens = 0; iens < enkf_ens->ens_size; iens++) {
+      enkf_ens->arg_load_ecl[iens] = void_arg_alloc4(pointer_value , pointer_value , int_value , bool_value);
+      void_arg_pack_ptr(enkf_ens->arg_load_ecl[iens]  , 0 , enkf_ens->state_list[iens]);
+      void_arg_pack_ptr(enkf_ens->arg_load_ecl[iens]  , 1 , enkf_ens->obs);
+      void_arg_pack_int(enkf_ens->arg_load_ecl[iens]  , 2 , report_step);
+      void_arg_pack_bool(enkf_ens->arg_load_ecl[iens] , 3 , enkf_ens->unified);
+    }
+  }
+
+  if (enkf_ens->thread_pool_load_ecl != NULL) {
+    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
+    abort();
+  }
+  enkf_ens->thread_pool_load_ecl = thread_pool_alloc(enkf_ens->ens_size);
+}
+
+
+
+void enkf_ens_iload_ecl_mt(enkf_ens_type *enkf_ens , int iens) {
+  thread_pool_add_job(enkf_ens->thread_pool_load_ecl , enkf_state_load_ecl_void , enkf_ens->arg_load_ecl[iens]);
+}
+
+
+void enkf_ens_mt_load_ecl_init_mt(enkf_ens_type *enkf_ens) {
+  thread_pool_join(enkf_ens->thread_pool_load_ecl);
+  thread_pool_free(enkf_ens->thread_pool_load_ecl);
+  enkf_ens->thread_pool_load_ecl = NULL;
+
+  {
+    int iens;
+    for (iens = 0; iens < enkf_ens->ens_size; iens++)
+      void_arg_free(enkf_ens->arg_load_ecl[iens]);
+    free(enkf_ens->arg_load_ecl);
+    enkf_ens->arg_load_ecl = NULL;
+  }
+}
+
 
 
 /*****************************************************************/

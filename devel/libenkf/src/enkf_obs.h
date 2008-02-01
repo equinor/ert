@@ -4,17 +4,24 @@
 #include <meas_vector.h>
 #include <well_obs.h>
 #include <field_obs.h>
-#include <enkf_state.h>
 #include <ecl_rft_node.h>
+#include <enkf_config_node.h>
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
+
+struct enkf_obs_struct {
+  history_type           * hist;
+  const sched_file_type  * sched_file;
+  hash_type              * obs_hash;
+  int                      num_reports;
+};
 
 
 enkf_obs_type * enkf_obs_alloc(const sched_file_type *);
 void            enkf_obs_free(enkf_obs_type * );
 
-void 		enkf_obs_measure(enkf_obs_type * , int , const enkf_state_type *);
+/*void 		enkf_obs_measure(enkf_obs_type * , int , const enkf_state_type *);*/
 void 		enkf_obs_get_observations(enkf_obs_type * , int , obs_data_type * );
 void            enkf_obs_add_well_obs(enkf_obs_type *   , const enkf_config_node_type * , const char * , const char * , const char * );
 void            enkf_obs_add_field_obs(enkf_obs_type *  , const enkf_config_node_type * , const char * , const char * , int , const int * , const int *, const int *, const double * , time_t );
