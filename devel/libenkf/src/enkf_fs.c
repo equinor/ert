@@ -84,6 +84,7 @@ void enkf_fs_free(enkf_fs_type * fs) {
   enkf_fs_free_driver(fs->dynamic_forecast);
   enkf_fs_free_driver(fs->parameter);
   enkf_fs_free_driver(fs->eclipse_static);
+  free(fs);
 }
 
 

@@ -102,10 +102,10 @@ void enkf_ens_set_state_eclbase(const enkf_ens_type * ens , int iens) {
 
 
 enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs, 
-			       const char * run_path , const char * eclbase , const char * schedule_file , const int * start_date , bool unified , bool endian_swap) {
+			       const char * run_path , const char * eclbase , sched_file_type * sched_file , bool unified , bool endian_swap) {
   enkf_ens_type * enkf_ens = malloc(sizeof *enkf_ens);
   enkf_ens->config_hash    = hash_alloc(10);
-  enkf_ens->sched_file     = sched_file_alloc(start_date) ; sched_file_parse(enkf_ens->sched_file , schedule_file);
+  enkf_ens->sched_file     = sched_file; 
   enkf_ens->obs            = enkf_obs_alloc(enkf_ens->sched_file);
   enkf_ens->obs_data       = obs_data_alloc();
   enkf_ens->fs             = fs;
@@ -234,11 +234,11 @@ void enkf_ens_free(enkf_ens_type * enkf_ens) {
     
     for (i=0; i < enkf_ens->ens_size; i++)
       enkf_state_free(enkf_ens->state_list[i]);
-    
+    free(enkf_ens->state_list);
   }
   meas_matrix_free(enkf_ens->meas_matrix);
   path_fmt_free(enkf_ens->run_path);
-  enkf_fs_free(enkf_ens->fs);
+  path_fmt_free(enkf_ens->eclbase);
   obs_data_free(enkf_ens->obs_data);
   free(enkf_ens);
 }

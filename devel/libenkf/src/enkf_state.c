@@ -632,7 +632,6 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
   hash_free(enkf_state->impl_types);
   free(enkf_state->run_path);
-  enkf_fs_free(enkf_state->enkf_fs);
   restart_kw_list_free(enkf_state->restart_kw_list);
   free(enkf_state->eclbase);
   free(enkf_state);
