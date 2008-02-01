@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include <enkf_macros.h>
 #include <enkf_config_node.h> 
+#include <util.h>
 
 struct enkf_config_node_struct {
-  config_free_ftype  *freef;
+  config_free_ftype  * freef;
   enkf_impl_type       impl_type;
   enkf_var_type        var_type; 
   char 		     * ensfile;          
@@ -28,8 +29,8 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   node->freef      = freef;
   node->var_type   = var_type;
   node->impl_type  = impl_type;
-  node->ensfile    = NULL;
-  node->eclfile    = NULL;
+  node->ensfile    = util_alloc_string_copy(ensfile);
+  node->eclfile    = util_alloc_string_copy(eclfile);
 
   return node;
 }

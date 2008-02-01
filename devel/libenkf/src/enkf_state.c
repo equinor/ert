@@ -40,7 +40,6 @@ struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;
   list_type    	   	* node_list;
   hash_type    	   	* node_hash;
-  hash_type    	   	* impl_types;
 
   meas_vector_type      * meas_vector;
   enkf_fs_type          * enkf_fs;
@@ -179,7 +178,7 @@ void enkf_state_set_eclbase(enkf_state_type * enkf_state , const char * eclbase)
 
 
 void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
-  enkf_state->my_iens         = iens;
+  enkf_state->my_iens = iens;
 }
 
 
@@ -199,24 +198,13 @@ enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens) {
   enkf_state->ens             = (enkf_ens_type *) ens;
   enkf_state->node_list       = list_alloc();
   enkf_state->node_hash       = hash_alloc(10);
-  enkf_state->impl_types      = hash_alloc(10);
   enkf_state->restart_kw_list = restart_kw_list_alloc();
   enkf_state_set_iens(enkf_state , iens);
   enkf_state->run_path        = NULL;
   enkf_state->eclbase         = NULL;
   enkf_state->enkf_fs         = enkf_ens_get_fs_ref(ens);
   enkf_state->meas_vector     = enkf_ens_iget_meas_vector(ens , iens);
-  /* 
-     This information should really be in a config object. Currently
-     not used, but could/will be used in a string based type lookup. 
-  */
-  hash_insert_int(enkf_state->impl_types     , "WELL"       , WELL);
-  hash_insert_int(enkf_state->impl_types     , "MULTZ"      , MULTZ);
-  hash_insert_int(enkf_state->impl_types     , "MULTFLT"    , MULTFLT);
-  hash_insert_int(enkf_state->impl_types     , "EQUIL"      , EQUIL);
-  hash_insert_int(enkf_state->impl_types     , "STATIC"     , STATIC);
-  hash_insert_int(enkf_state->impl_types     , "FIELD"      , FIELD);
-  
+
   return enkf_state;
 }
 
@@ -382,6 +370,7 @@ void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , 
 
   fortio_type * fortio = fortio_open(restart_file , "r" , endian_swap);
   
+  printf("Loader fra: %s \n",restart_file);
   if (unified)
     ecl_block_fseek(report_step , fmt_file , true , fortio);
   
@@ -407,6 +396,7 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
   char * header_file      = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file , fmt_file , -1);
 
   int iwell;
+  printf("Loader fra: %s \n",summary_file);
   ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_ens_get_endian_swap(enkf_state->ens));
   for (iwell = 0; iwell < Nwells; iwell++) {
     if (! enkf_state_has_node(enkf_state , well_list[iwell])) 
@@ -463,8 +453,8 @@ void * enkf_state_load_ecl_void(void * input_arg) {
   void_arg_type * void_arg     = (void_arg_type *) input_arg;
   enkf_state_type * enkf_state =  void_arg_get_ptr(void_arg   , 0);
   enkf_obs_type * enkf_obs     =  void_arg_get_ptr(void_arg   , 1);
-  bool unified                 =  void_arg_get_bool(void_arg  , 2);  
-  int report_step              =  void_arg_get_int(void_arg   , 3);
+  int report_step              =  void_arg_get_int(void_arg   , 2);
+  bool unified                 =  void_arg_get_bool(void_arg  , 3);  
   
   enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step);
   return NULL;
@@ -630,7 +620,6 @@ meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *state) {
 void enkf_state_free(enkf_state_type *enkf_state) {
   list_free(enkf_state->node_list);
   hash_free(enkf_state->node_hash);
-  hash_free(enkf_state->impl_types);
   free(enkf_state->run_path);
   restart_kw_list_free(enkf_state->restart_kw_list);
   free(enkf_state->eclbase);

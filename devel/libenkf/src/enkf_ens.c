@@ -102,7 +102,13 @@ void enkf_ens_set_state_eclbase(const enkf_ens_type * ens , int iens) {
 
 
 enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs, 
-			       const char * run_path , const char * eclbase , sched_file_type * sched_file , bool unified , bool endian_swap) {
+			       const char * run_path , 
+			       const char * eclbase  , 
+			       sched_file_type * sched_file , 
+			       bool fmt_file ,
+			       bool unified  , 
+			       bool endian_swap) {
+
   enkf_ens_type * enkf_ens = malloc(sizeof *enkf_ens);
   enkf_ens->config_hash    = hash_alloc(10);
   enkf_ens->sched_file     = sched_file; 
@@ -115,7 +121,8 @@ enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs,
   enkf_ens->Nwells        = 0;
   enkf_ens->well_list     = NULL;
   enkf_ens_realloc_well_list(enkf_ens);
-  enkf_ens->unified      = unified;
+  enkf_ens->unified       = unified;
+  enkf_ens->fmt_file      = fmt_file;
   
   enkf_ens->run_path     = path_fmt_alloc_directory_fmt(run_path , true);
   enkf_ens->eclbase      = path_fmt_alloc_file_fmt(eclbase);
@@ -123,12 +130,16 @@ enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs,
   enkf_ens->state_list   = malloc(enkf_ens->ens_size * sizeof * enkf_ens->state_list);
   {
     int iens;
-    for (iens = 0; iens < enkf_ens->ens_size; iens++)
+    for (iens = 0; iens < enkf_ens->ens_size; iens++) {
       enkf_ens->state_list[iens] = enkf_state_alloc(enkf_ens , iens);
+      enkf_ens_set_state_run_path(enkf_ens , iens);
+      enkf_ens_set_state_eclbase(enkf_ens , iens);
+    }
   }
   enkf_ens->thread_pool_load_ecl = NULL;
   enkf_ens->arg_load_ecl         = NULL;
   return  enkf_ens;
+
 }
 
 
@@ -145,9 +156,7 @@ const char ** enkf_ens_get_well_list_ref(const enkf_ens_type * ens , int *Nwells
 
 
 void enkf_ens_add_well(enkf_ens_type * enkf_ens , const char *well_name , int size, const char ** var_list) {
-  enkf_ens_add_type(enkf_ens , well_name , ecl_summary , WELL,
-		       well_config_alloc(well_name , size , var_list));
-  
+  enkf_ens_add_type(enkf_ens , well_name , ecl_summary , WELL, NULL , well_config_alloc(well_name , size , var_list));
   enkf_ens->Nwells++;
   enkf_ens_realloc_well_list(enkf_ens);
   enkf_ens->well_list[enkf_ens->Nwells - 1] = util_alloc_string_copy(well_name);
@@ -156,11 +165,12 @@ void enkf_ens_add_well(enkf_ens_type * enkf_ens , const char *well_name , int si
 
 
 
-void enkf_ens_add_type(enkf_ens_type * enkf_ens, 
-		       const char * key , 
-		       enkf_var_type enkf_type , 
+void enkf_ens_add_type(enkf_ens_type * enkf_ens , 
+		       const char    * key      , 
+		       enkf_var_type enkf_type  , 
 		       enkf_impl_type impl_type , 
-		       const void *data) {
+		       const char   * ecl_file  , 
+		       const void   * data) {
   if (enkf_ens_has_key(enkf_ens , key)) {
     fprintf(stderr,"%s: a ensuration object:%s has already been added - aborting \n",__func__ , key);
     abort();
@@ -195,7 +205,7 @@ void enkf_ens_add_type(enkf_ens_type * enkf_ens,
       abort();
     }
     {
-      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , NULL , data , freef);
+      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , ecl_file , data , freef);
       hash_insert_hash_owned_ref(enkf_ens->config_hash , key , node , enkf_config_node_free__);
     }
   }
@@ -206,12 +216,9 @@ void enkf_ens_add_type(enkf_ens_type * enkf_ens,
 void enkf_ens_add_type0(enkf_ens_type * enkf_ens , const char *key , int size, enkf_var_type enkf_type , enkf_impl_type impl_type) {
   switch(impl_type) {
   case(STATIC):
-    enkf_ens_add_type(enkf_ens , key , enkf_type , impl_type , ecl_static_kw_config_alloc(size , key , key));
+    enkf_ens_add_type(enkf_ens , key , enkf_type , impl_type , NULL , ecl_static_kw_config_alloc(size , key , key));
     break;
   case(FIELD):
-    /*
-      enkf_ens_add_type(enkf_ens , key , enkf_type , impl_type , field_ens_alloc(size , key , key)   , field_ens_free__ , field_ens_get_size__);
-    */
     fprintf(stderr,"%s: Can not add FIELD ens objects like:%s on the run - these must be from the main program with enkf_ens_add_type - sorry.\n",__func__ , key);
     abort();
     break;
@@ -289,7 +296,7 @@ void enkf_ens_iload_ecl_mt(enkf_ens_type *enkf_ens , int iens) {
 }
 
 
-void enkf_ens_mt_load_ecl_init_mt(enkf_ens_type *enkf_ens) {
+void enkf_ens_load_ecl_complete_mt(enkf_ens_type *enkf_ens) {
   thread_pool_join(enkf_ens->thread_pool_load_ecl);
   thread_pool_free(enkf_ens->thread_pool_load_ecl);
   enkf_ens->thread_pool_load_ecl = NULL;

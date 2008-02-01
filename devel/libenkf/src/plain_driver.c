@@ -40,7 +40,7 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , bool a
   plain_driver_assert_cast(driver);
   {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream = util_fopen(filename , "r");
+    FILE * stream = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream);
     fclose(stream);
     free(filename);
@@ -53,7 +53,7 @@ void plain_driver_swapout_node(void * _driver , int report_step , int iens , boo
   plain_driver_assert_cast(driver);
   {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream = util_fopen(filename , "r");
+    FILE * stream = util_fopen(filename , "w");
     enkf_node_swapout(node , stream);
     fclose(stream);
     free(filename);

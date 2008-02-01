@@ -222,7 +222,7 @@ VOID_DESERIALIZE (multflt);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-
+VOID_FREE_DATA(multflt);
 VOID_ECL_WRITE (multflt)
 VOID_FWRITE (multflt)
 VOID_FREAD  (multflt)

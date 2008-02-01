@@ -127,6 +127,7 @@ VOID_DESERIALIZE (equil);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
+VOID_FREE_DATA(equil)
 VOID_ECL_WRITE (equil)
 VOID_FWRITE (equil)
 VOID_FREAD  (equil)

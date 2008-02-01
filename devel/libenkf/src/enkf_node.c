@@ -26,6 +26,7 @@ struct serial_state_struct {
 };
 
 
+
 struct enkf_node_struct {
   alloc_ftype         *alloc;
   ecl_write_ftype     *ecl_write;
@@ -394,6 +395,8 @@ void enkf_node_realloc_data(enkf_node_type * enkf_node) {
   enkf_node->swapped = false;
 }
 
+
+
 void enkf_node_clear(enkf_node_type *enkf_node) {
   FUNC_ASSERT(enkf_node->clear);
   enkf_node->clear(enkf_node->data);
@@ -455,6 +458,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->serialize   = multz_serialize__;
     node->deserialize = multz_deserialize__;
     node->freef       = multz_free__;
+    node->free_data   = multz_free_data__;
     break;
   case(MULTFLT):
     node->alloc       = multflt_alloc__;
@@ -466,6 +470,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->serialize   = multflt_serialize__;
     node->deserialize = multflt_deserialize__;
     node->freef       = multflt_free__;
+    node->free_data   = multflt_free_data__;
     break;
   case(WELL):
     node->alloc       = well_alloc__;
@@ -477,6 +482,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->serialize   = well_serialize__;
     node->deserialize = well_deserialize__;
     node->freef       = well_free__;
+    node->free_data   = well_free_data__;
     break;
   case(FIELD):
     node->alloc       = field_alloc__;
@@ -488,6 +494,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->serialize   = field_serialize__;
     node->deserialize = field_deserialize__;
     node->freef       = field_free__;
+    node->free_data   = field_free_data__;
     break;
   case(PGBOX):
     node->alloc       = pgbox_alloc__;
@@ -499,6 +506,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->serialize   = pgbox_serialize__;
     node->deserialize = pgbox_deserialize__;
     node->freef       = pgbox_free__;
+    node->free_data   = pgbox_free_data__;
     break;
   case(EQUIL):
     node->alloc       = equil_alloc__;
@@ -510,6 +518,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->serialize   = equil_serialize__;
     node->deserialize = equil_deserialize__;
     node->freef       = equil_free__;
+    node->free_data   = equil_free_data__;
     break;
   case(STATIC):
     node->alloc       = ecl_static_kw_alloc__;
@@ -521,6 +530,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->serialize   = NULL; 
     node->deserialize = NULL;
     node->freef       = ecl_static_kw_free__;
+    node->free_data   = ecl_static_kw_free_data__;
     break;
     
   default:
@@ -535,9 +545,11 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
 void enkf_node_set_modified(enkf_node_type * node)      { node->modified = true; }
 bool enkf_node_get_modified(const enkf_node_type *node) { return node->modified; }
 
+
 enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_type * config) {
   enkf_node_type * node = enkf_node_alloc_empty(node_key , config);
-  enkf_node_realloc_data(node);
+  node->data    = node->alloc(config);
+  node->swapped = false;
   enkf_node_set_modified(node);
   return node;
 }
