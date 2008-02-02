@@ -1,5 +1,5 @@
 #include <enkf_fs.h>
-#include <enkf_ens.h>
+#include <enkf_ensemble.h>
 #include <util.h>
 #include <plain_driver.h>
 #include <config.h>
@@ -28,31 +28,31 @@ int main (int argc , char ** argv) {
   plain_driver_type * parameter        = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Parameter");
   
   enkf_fs_type  * fs = enkf_fs_alloc(dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
-  enkf_ens_type * enkf_ens;
-  enkf_ens = enkf_ens_alloc(1 , fs , data_file , run_path , eclbase , s , false , false , true);
+  enkf_ensemble_type * enkf_ensemble;
+  enkf_ensemble = enkf_ensemble_alloc(1 , fs , data_file , run_path , eclbase , s , false , false , true);
 
-  enkf_ens_add_well(enkf_ens , "PR10_G18" , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
-  enkf_ens_add_well(enkf_ens , "T21A"     , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
-  enkf_ens_add_well(enkf_ens , "PR03A_G8" , 4 , (const char *[4]) {"WGPR" , "WWCT" , "WOPR" , "WBHP"});
-  enkf_ens_add_well_obs(enkf_ens , "PR03A_G8" , NULL , "Config/PRO3A_G8");
-  enkf_ens_add_gen_kw(enkf_ens , "Config/gen_kw_config.txt");
+  enkf_ensemble_add_well(enkf_ensemble , "PR10_G18" , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
+  enkf_ensemble_add_well(enkf_ensemble , "T21A"     , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
+  enkf_ensemble_add_well(enkf_ensemble , "PR03A_G8" , 4 , (const char *[4]) {"WGPR" , "WWCT" , "WOPR" , "WBHP"});
+  enkf_ensemble_add_well_obs(enkf_ensemble , "PR03A_G8" , NULL , "Config/PRO3A_G8");
+  enkf_ensemble_add_gen_kw(enkf_ensemble , "Config/gen_kw_config.txt");
   
   /*
-    enkf_ens_load_ecl_init_mt(enkf_ens , 307);
+    enkf_ensemble_load_ecl_init_mt(enkf_ensemble , 307);
     {
     int iens;
     for (iens = 0; iens < 20; iens++)
-    enkf_ens_iload_ecl_mt(enkf_ens , iens);
+    enkf_ensemble_iload_ecl_mt(enkf_ensemble , iens);
     
     }
-    enkf_ens_load_ecl_complete_mt(enkf_ens);
-    enkf_ens_analysis(enkf_ens);
+    enkf_ensemble_load_ecl_complete_mt(enkf_ensemble);
+    enkf_ensemble_analysis(enkf_ensemble);
   */
   
-  enkf_ens_add_data_kw(enkf_ens , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
-  enkf_ens_init_eclipse(enkf_ens);
+  enkf_ensemble_add_data_kw(enkf_ensemble , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
+  enkf_ensemble_init_eclipse(enkf_ensemble);
 
   sched_file_free(s);
-  enkf_ens_free(enkf_ens);
+  enkf_ensemble_free(enkf_ensemble);
   enkf_fs_free(fs);
 }

@@ -4,7 +4,7 @@
 
 #include <fortio.h>
 #include <stdbool.h>
-#include <enkf_ens.h>
+#include <enkf_ensemble.h>
 #include <enkf_types.h>
 #include <enkf_node.h>
 #include <enkf_util.h>
@@ -30,7 +30,7 @@ void              enkf_state_swapin(enkf_state_type * , int , bool);
 enkf_state_type * enkf_state_copyc(const enkf_state_type * );
 void              enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
 void              enkf_state_add_node(enkf_state_type * , const char * );
-enkf_state_type * enkf_state_alloc(const enkf_ens_type * , int , meas_vector_type * );
+enkf_state_type * enkf_state_alloc(const enkf_ensemble_type * , int , meas_vector_type * );
 enkf_node_type  * enkf_state_get_node(const enkf_state_type * , const char * );
 void              enkf_state_del_node(enkf_state_type * , const char * );
 void              enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
@@ -54,5 +54,5 @@ void 		  enkf_state_set_run_path(enkf_state_type * , const char*);
 void 		  enkf_state_set_eclbase(enkf_state_type * , const char*);
 
 
-void enkf_ensemble_update(enkf_state_type ** , int  , size_t , const double * );
+void enkf_ensembleemble_update(enkf_state_type ** , int  , size_t , const double * );
 #endif
