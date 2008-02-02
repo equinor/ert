@@ -27,9 +27,13 @@ bool                  	      enkf_ens_has_key(const enkf_ens_type * , const char
 void                  	      enkf_ens_add_type(enkf_ens_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);
 void                  	      enkf_ens_add_type0(enkf_ens_type * , const char * , int , enkf_var_type , enkf_impl_type );
 void                  	      enkf_ens_add_well(enkf_ens_type * , const char * , int , const char ** );
+void                          enkf_ens_add_gen_kw(enkf_ens_type * , const char * );
 const enkf_config_node_type * enkf_ens_get_config_ref(const enkf_ens_type * , const char * );
 void                          enkf_ens_free(enkf_ens_type * );
 enkf_fs_type                * enkf_ens_get_fs_ref(const enkf_ens_type *);
+void                          enkf_ens_set_data_kw(enkf_ens_type * , const char * , const char *);
+void                          enkf_ens_add_data_kw(enkf_ens_type * , const char * , const char *);
+void                          enkf_ens_init_eclipse(enkf_ens_type * );
 
 void 			      enkf_ens_load_ecl_init_mt(enkf_ens_type * enkf_ens , int );
 void 			      enkf_ens_iload_ecl_mt(enkf_ens_type *enkf_ens , int );

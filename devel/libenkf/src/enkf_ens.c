@@ -27,6 +27,7 @@
 #include <sched_file.h>
 #include <enkf_fs.h>
 #include <void_arg.h>
+#include <gen_kw_config.h>
 
 
 
@@ -168,6 +169,30 @@ void enkf_ens_add_well(enkf_ens_type * enkf_ens , const char *well_name , int si
 }
 
 
+void enkf_ens_add_gen_kw(enkf_ens_type * enkf_ens , const char * config_file) {
+  enkf_ens_add_type(enkf_ens , "GEN_KW" , parameter , GEN_KW , NULL , gen_kw_config_fscanf_alloc(config_file , NULL));
+}
+
+
+void enkf_ens_add_data_kw(enkf_ens_type * enkf_ens , const char * new_kw , const char * value) {
+  int iens;
+  for (iens = 0; iens < enkf_ens->ens_size; iens++)
+    enkf_state_add_data_kw(enkf_ens->state_list[iens] , new_kw , value);
+}
+
+
+void enkf_ens_set_data_kw(enkf_ens_type * enkf_ens , const char * new_kw , const char * value) {
+  int iens;
+  for (iens = 0; iens < enkf_ens->ens_size; iens++)
+    enkf_state_set_data_kw(enkf_ens->state_list[iens] , new_kw , value);
+}
+
+
+void enkf_ens_init_eclipse(enkf_ens_type * enkf_ens) {
+  int iens;
+  for (iens = 0; iens < enkf_ens->ens_size; iens++)
+    enkf_state_init_eclipse(enkf_ens->state_list[iens]);
+}
 
 
 void enkf_ens_add_type(enkf_ens_type * enkf_ens , 
@@ -182,7 +207,7 @@ void enkf_ens_add_type(enkf_ens_type * enkf_ens ,
   }
 
   {
-    config_free_ftype              * freef;
+    config_free_ftype * freef;
     switch(impl_type) {
     case(FIELD):
       freef             = field_config_free__;
@@ -204,6 +229,9 @@ void enkf_ens_add_type(enkf_ens_type * enkf_ens ,
       break;
     case(PGBOX):
       freef             = pgbox_config_free__;
+      break;
+    case(GEN_KW):
+      freef             = gen_kw_config_free__;
       break;
     default:
       fprintf(stderr,"%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
@@ -354,7 +382,6 @@ void enkf_ens_add_rft_obs(enkf_ens_type * ens , const ecl_rft_node_type * rft_no
   const enkf_config_node_type * config_node = enkf_ens_assert_obs(ens , "PRES" , FIELD);
   enkf_obs_add_rft_obs(ens->obs , config_node , rft_node , p_data);
 }
-
 
 
 

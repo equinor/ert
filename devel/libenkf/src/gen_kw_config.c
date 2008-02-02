@@ -15,8 +15,7 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(int size) {
   gen_kw_config_type *gen_kw_config = malloc(sizeof *gen_kw_config);
   gen_kw_config->kw_list       = enkf_util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
   gen_kw_config->scalar_config = scalar_config_alloc_empty(size);
-
-  gen_kw_config->var_type    = parameter;
+  gen_kw_config->var_type      = parameter;
 
   return gen_kw_config;
 }
@@ -38,6 +37,7 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
     int size;
     
     size = util_count_file_lines(stream);
+    printf("size: %d \n",size);
     fseek(stream , 0L , SEEK_SET);
     config = __gen_kw_config_alloc_empty(size);
     do {
@@ -53,17 +53,22 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
     fclose(stream);
     config->template_file = util_alloc_string_copy(template_file);
   } else {
+    fprintf(stderr,"%s: ** Warning ** : config file:%s does not exist \n",__func__ , filename);
+    fprintf(stderr,"%s: ** Warning ** : config file:%s does not exist \n",__func__ , filename);
+    
     config = __gen_kw_config_alloc_empty(0);
     config->template_file = util_alloc_string_copy(template_file);
+    config->kw_list = NULL;
   }
   return config;
 }
 
 
 void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
-  scalar_config_free(gen_kw_config->scalar_config);
   util_free_string_list(gen_kw_config->kw_list , scalar_config_get_data_size(gen_kw_config->scalar_config));
-  free(gen_kw_config->template_file);
+  if (gen_kw_config->template_file != NULL)
+    free(gen_kw_config->template_file);
+  scalar_config_free(gen_kw_config->scalar_config);
   free(gen_kw_config);
 }
 
