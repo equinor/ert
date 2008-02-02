@@ -20,7 +20,7 @@
 #include <ecl_util.h>
 #include <thread_pool.h>
 #include <path_fmt.h>
-
+#include <gen_kw.h>
 #include <ecl_sum.h>
 #include <well.h>
 #include <multz.h>
@@ -41,6 +41,7 @@ struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;
   list_type    	   	* node_list;
   hash_type    	   	* node_hash;
+  hash_type             * data_kw;
 
   meas_vector_type      * meas_vector;
   enkf_fs_type          * enkf_fs;
@@ -205,7 +206,7 @@ enkf_state_type * enkf_state_alloc(const enkf_ens_type * ens , int iens , meas_v
   enkf_state->eclbase         = NULL;
   enkf_state->enkf_fs         = enkf_ens_get_fs_ref(ens);
   enkf_state->meas_vector     = meas_vector;
-
+  enkf_state->data_kw         = hash_alloc(10);
   return enkf_state;
 }
 
@@ -623,6 +624,7 @@ meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *state) {
 void enkf_state_free(enkf_state_type *enkf_state) {
   list_free(enkf_state->node_list);
   hash_free(enkf_state->node_hash);
+  hash_free(enkf_state->data_kw);
   free(enkf_state->run_path);
   restart_kw_list_free(enkf_state->restart_kw_list);
   free(enkf_state->eclbase);
@@ -657,6 +659,61 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
   } 
 }
 
+
+/**
+   The value is string - the hash routine takes a copy of the string,
+   which means that the calling unit is free to whatever it wants with
+   the string.
+*/
+
+void enkf_state_add_data_kw(enkf_state_type * enkf_state , const char * new_kw , const char * value) {
+  if (hash_has_key(enkf_state->data_kw , new_kw)) {
+    fprintf(stderr,"%s: keyword:%s already added - use enkf_state_set_data_kw() to change value - aborting\n",__func__ , new_kw);
+    abort();
+  }
+  {
+    void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
+    hash_insert_hash_owned_ref(enkf_state->data_kw , new_kw , void_arg , void_arg_free__);
+  }
+}
+
+void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
+  if (!hash_has_key(enkf_state->data_kw , kw)) {
+    fprintf(stderr,"%s: keyword:%s does not exist - must use enkf_state_add_data_kw() first -  aborting\n",__func__ , kw);
+    abort();
+  }
+  {
+    void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
+    hash_insert_hash_owned_ref(enkf_state->data_kw , kw , void_arg , void_arg_free__);
+  }
+}
+
+
+
+void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
+  int      ikw , gen_kw_size;
+  double * values;
+  char  ** kw_list;
+
+  char * data_file = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_data_file , true , -1);
+  bool has_gen_kw = enkf_state_has_node(enkf_state , "GEN_KW");
+  if (has_gen_kw) {
+    enkf_node_type * gen_node = enkf_state_get_node(enkf_state , "GEN_KW");
+    gen_kw_type    * gen_kw   = enkf_node_value_ptr(gen_node);
+    gen_kw_export(gen_kw , &gen_kw_size , &kw_list , &values);
+    for (ikw = 0; ikw < gen_kw_size; ikw++) 
+      hash_insert_hash_owned_ref(enkf_state->data_kw , kw_list[ikw] , void_arg_alloc_double(values[ikw]) , void_arg_free__);
+  } 
+  
+  util_make_path(enkf_state->run_path);
+  util_filter_file(enkf_ens_get_data_file(enkf_state->ens) , data_file , '<' , '>' , enkf_state->data_kw);
+
+  if (has_gen_kw) {
+    for (ikw = 0; ikw < gen_kw_size; ikw++) 
+      hash_del(enkf_state->data_kw , kw_list[ikw]);
+  }
+  free(data_file);
+}
 
 
 

@@ -184,47 +184,6 @@ void enkf_node_alloc_domain_object(enkf_node_type * node) {
 
 
 
-
-
-/*
-enkf_node_type * enkf_node_alloc_old(const char *node_key, 
-				 const enkf_config_node_type * config    , 
-				 alloc_ftype        * alloc     , 
-				 ecl_write_ftype    * ecl_write , 
-				 ens_read_ftype     * ens_read  , 
-				 ens_write_ftype    * ens_write , 
-				 swapout_ftype      * swapout   , 
-				 swapin_ftype       * swapin    ,
-				 copyc_ftype        * copyc     ,
-				 initialize_ftype       * initialize    , 
-				 serialize_ftype    * serialize , 
-				 deserialize_ftype  * deserialize , 
-				 free_ftype         * freef) {
-  
-  enkf_node_type *node = malloc(sizeof *node);
-  node->alloc     = alloc;
-  node->ecl_write = ecl_write;
-  node->ens_read  = ens_read;
-  node->ens_write = ens_write;
-  node->swapin    = swapin;
-  node->swapout   = swapout;
-  node->initialize    = initialize;
-  node->freef     = freef;
-  node->copyc     = copyc;
-  node->config    = config;
-  node->node_key  = util_alloc_string_copy(node_key);
-  node->data      = NULL;
-
-  node->serialize    = serialize;
-  node->deserialize  = deserialize;
-  node->serial_state = serial_state_alloc();
-  enkf_node_realloc_data(node);
-  return node;
-}
-*/
-
-
-
 void enkf_node_clear_serial_state(enkf_node_type * node) {
   serial_state_clear(node->serial_state);
 }

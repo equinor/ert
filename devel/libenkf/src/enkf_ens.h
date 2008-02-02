@@ -17,11 +17,11 @@ typedef struct enkf_ens_struct enkf_ens_type;
 
 void 			      enkf_ens_set_state_run_path(const enkf_ens_type * , int );
 void 			      enkf_ens_set_state_eclbase(const enkf_ens_type * , int );
-
+const char                  * enkf_ens_get_data_file(const enkf_ens_type * );
 const char            	   ** enkf_ens_get_well_list_ref(const enkf_ens_type * , int *);
 bool                  	      enkf_ens_get_endian_swap(const enkf_ens_type * );
 bool                          enkf_ens_get_fmt_file(const enkf_ens_type * );
-enkf_ens_type         	    * enkf_ens_alloc(int , enkf_fs_type * , const char * , const char * , sched_file_type * , bool , bool , bool);
+enkf_ens_type         	    * enkf_ens_alloc(int , enkf_fs_type * , const char * , const char * , const char * , sched_file_type * , bool , bool , bool);
 enkf_impl_type        	      enkf_ens_impl_type(const enkf_ens_type *, const char * );
 bool                  	      enkf_ens_has_key(const enkf_ens_type * , const char *);
 void                  	      enkf_ens_add_type(enkf_ens_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);

@@ -63,7 +63,7 @@ field_config.o       : field_config.c field_config.h enkf_types.h
 field.o              : field.c field.h field_config.o enkf_types.h enkf_macros.h
 equil_config.o : enkf_util.h equil_config.c equil_config.h enkf_macros.h scalar_config.o
 equil.o        : equil.c equil_config.o equil.h enkf_macros.h enkf_types.h
-enkf_state.o   : enkf_util.h enkf_state.c enkf_state.h enkf_node.o enkf_macros.h field.o field_config.o multz.o multflt.o equil.o multz_config.o multflt_config.o equil_config.o well.o well_config.o enkf_fs.o analysis.o
+enkf_state.o   : enkf_util.h enkf_state.c enkf_state.h enkf_node.o enkf_macros.h field.o field_config.o multz.o multflt.o equil.o multz_config.o multflt_config.o equil_config.o well.o well_config.o enkf_fs.o analysis.o gen_kw.o
 multflt_config.o : multflt_config.c multflt_config.h enkf_macros.h
 multflt.o      : enkf_util.h multflt.c multflt.h multflt_config.o enkf_util.o logmode.o
 ecl_config.o   : enkf_util.h ecl_config.c ecl_config.h enkf_macros.h enkf_config_node.o
@@ -80,4 +80,6 @@ enkf_fs.o       : enkf_fs.c enkf_fs.h basic_driver.o plain_driver.o
 basic_driver.o  : basic_driver.c basic_driver.h
 plain_driver.o  : plain_driver.c plain_driver.h
 meas_matrix.o   : meas_matrix.c meas_matrix.h 
+gen_kw.o        : gen_kw.c gen_kw.h gen_kw_config.o
+gen_kw_config.o : gen_kw_config.c gen_kw_config.h
 

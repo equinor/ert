@@ -84,6 +84,11 @@ const char * gen_kw_config_get_name(const gen_kw_config_type * config, int kw_nr
 }
 
 
+char ** gen_kw_config_get_name_list(const gen_kw_config_type * config) {
+  return config->kw_list;
+}
+
+
 const char * gen_kw_config_get_template_ref(const gen_kw_config_type * config) {
   return config->template_file;
 }

@@ -25,6 +25,7 @@ void             gen_kw_truncate(gen_kw_type * );
 gen_kw_type   *  gen_kw_alloc_mean(int , const gen_kw_type **);
 const char     * gen_kw_get_name(const gen_kw_type * , int );
 void             gen_kw_filter_file(const gen_kw_type * , const char * );
+void             gen_kw_export(const gen_kw_type * , int * , char ***, double **);
 
 VOID_ECL_WRITE_HEADER  (gen_kw)
 VOID_FWRITE_HEADER  (gen_kw)

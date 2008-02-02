@@ -50,6 +50,7 @@ struct enkf_ens_struct {
   bool              endian_swap;
   bool              fmt_file;
   bool              unified;
+  char *            data_file;
 
   thread_pool_type  *thread_pool_load_ecl;
   void_arg_type    **arg_load_ecl;
@@ -86,6 +87,7 @@ bool enkf_ens_get_fmt_file(const enkf_ens_type * enkf_ens) { return enkf_ens->fm
 
 enkf_fs_type * enkf_ens_get_fs_ref(const enkf_ens_type * ens) { return ens->fs; }
 
+const char * enkf_ens_get_data_file(const enkf_ens_type * ens) { return ens->data_file; }
 
 void enkf_ens_set_state_run_path(const enkf_ens_type * ens , int iens) {
   char * run_path = path_fmt_alloc_path(ens->run_path , iens + ens->iens_offset);
@@ -102,8 +104,9 @@ void enkf_ens_set_state_eclbase(const enkf_ens_type * ens , int iens) {
 
 
 enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs, 
-			       const char * run_path , 
-			       const char * eclbase  , 
+			       const char * data_file , 
+			       const char * run_path  , 
+			       const char * eclbase   , 
 			       sched_file_type * sched_file , 
 			       bool fmt_file ,
 			       bool unified  , 
@@ -123,6 +126,7 @@ enkf_ens_type * enkf_ens_alloc(int ens_size , enkf_fs_type *fs,
   enkf_ens_realloc_well_list(enkf_ens);
   enkf_ens->unified       = unified;
   enkf_ens->fmt_file      = fmt_file;
+  enkf_ens->data_file     = util_alloc_string_copy(data_file);
   
   enkf_ens->run_path     = path_fmt_alloc_directory_fmt(run_path , true);
   enkf_ens->eclbase      = path_fmt_alloc_file_fmt(eclbase);
@@ -248,6 +252,7 @@ void enkf_ens_free(enkf_ens_type * enkf_ens) {
   path_fmt_free(enkf_ens->run_path);
   path_fmt_free(enkf_ens->eclbase);
   obs_data_free(enkf_ens->obs_data);
+  free(enkf_ens->data_file);
   free(enkf_ens);
 }
 

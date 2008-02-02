@@ -73,6 +73,7 @@ const double * gen_kw_get_output_ref(const gen_kw_type * gen_kw) {
 }
 
 
+
 gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw_type * gen_kw  = malloc(sizeof *gen_kw);
   gen_kw->config = config;
@@ -131,7 +132,7 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 void  gen_kw_initialize(gen_kw_type *gen_kw) {
   DEBUG_ASSERT(gen_kw)
-  scalar_initialize(gen_kw->scalar);  
+  scalar_sample(gen_kw->scalar);  
 }
 
 
@@ -173,6 +174,18 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   hash_free(kw_hash);
 
 }
+
+
+void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list , double **_output_values) {
+  gen_kw_output_transform(gen_kw);
+
+  *_kw_list       = gen_kw_config_get_name_list(gen_kw->config);
+  *_size          = gen_kw_config_get_data_size(gen_kw->config);
+  *_output_values = (double *) scalar_get_output_ref(gen_kw->scalar);
+
+}
+
+
 
 const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
   return  gen_kw_config_get_name(gen_kw->config , kw_nr);

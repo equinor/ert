@@ -59,18 +59,17 @@ void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const
 
 double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
   int  update_randrot_int, verbose_int;
+  const char * xpath = NULL;
   const double alpha = 1.50;
   double *X , *R , *E , *S , *D , *innov;
-  int  truncation , mode , istep , ens_stride , obs_stride;
-  char * xpath;
+  int  truncation , mode , istep , ens_stride , obs_stride , iens, iobs;
   bool returnE; 
   
-  istep   = -1;
-  mode    = 22;
-  returnE = false;
+  istep      = -1;
+  mode       = 22;
+  returnE    = false;
+  truncation = 0.99;
 
-  
-  
   analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
   X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
   S 	= meas_matrix_allocS(meas_matrix , ens_stride , obs_stride);
@@ -78,12 +77,22 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   R 	= obs_data_allocR(obs_data , ens_size , ens_stride , obs_stride , innov , S , alpha);
   D 	= obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , returnE , &E);
   obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
-  
 
-  /*
-    Have to subtract mean(S) from S - because that is what the
-    fortran core routine expects.
+  /* 
+     Substractin mean value of S
   */
+  for (iobs = 0; iobs < nrobs; iobs++) {
+    double S1 = 0;
+    for (iens = 0; iens < ens_size; iens++) {
+      int index = iobs * obs_stride + iens * ens_stride;
+      S1 += S[index];
+    }
+    S1 = S1 / ens_size;
+    for (iens = 0; iens < ens_size; iens++) {
+      int index = iobs * obs_stride + iens * ens_stride;
+      S[index] -= S1;
+    }
+  } 
   
   verbose_int        = util_C2f90_bool(verbose);
   update_randrot_int = util_C2f90_bool(update_randrot);
