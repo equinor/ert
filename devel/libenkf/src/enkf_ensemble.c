@@ -133,11 +133,12 @@ enkf_ensemble_type * enkf_ensemble_alloc(int ens_size , enkf_fs_type *fs,
   enkf_ensemble->eclbase      = path_fmt_alloc_file_fmt(eclbase);
   enkf_ensemble->meas_matrix  = meas_matrix_alloc(enkf_ensemble->ens_size);
   enkf_ensemble->state_list   = malloc(enkf_ensemble->ens_size * sizeof * enkf_ensemble->state_list);
-  enkf_ensemble->iens_offset  = 40;
+  enkf_ensemble->iens_offset  = 91;
   {
     int iens;
     for (iens = 0; iens < enkf_ensemble->ens_size; iens++) {
-      enkf_ensemble->state_list[iens] = enkf_state_alloc(enkf_ensemble , iens + enkf_ensemble->iens_offset , meas_matrix_iget_vector(enkf_ensemble->meas_matrix , iens));
+      enkf_ensemble->state_list[iens] = enkf_state_alloc(enkf_ensemble , iens + enkf_ensemble->iens_offset , enkf_ensemble->fs , 
+							 meas_matrix_iget_vector(enkf_ensemble->meas_matrix , iens));
       enkf_ensemble_set_state_run_path(enkf_ensemble , iens);
       enkf_ensemble_set_state_eclbase(enkf_ensemble  , iens);
     }

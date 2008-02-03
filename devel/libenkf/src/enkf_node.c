@@ -210,7 +210,6 @@ bool enkf_node_include_type(const enkf_node_type * enkf_node, int mask) {
 }
 
 
-
 enkf_impl_type enkf_node_get_impl_type(const enkf_node_type * enkf_node) {
   return enkf_config_node_get_impl_type(enkf_node->config);
 }
@@ -395,14 +394,13 @@ const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) { return enk
 
 
 /* Manual inheritance - .... */
-static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_config_node_type * config) {
+static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_config_node_type *config , enkf_impl_type impl_type) {
   enkf_node_type * node = util_malloc(sizeof * node , __func__);
   node->config          = config;
   node->node_key        = util_alloc_string_copy(node_key);
   node->data            = NULL;
   node->swapped         = false;
 
-  enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
   switch (impl_type) {
   case(MULTZ):
     node->alloc       = multz_alloc__;
@@ -503,8 +501,19 @@ bool enkf_node_get_modified(const enkf_node_type *node) { return node->modified;
 
 
 enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_type * config) {
-  enkf_node_type * node = enkf_node_alloc_empty(node_key , config);
-  node->data    = node->alloc(enkf_config_node_get_ref(config));
+  enkf_node_type * node;
+  enkf_impl_type impl_type; 
+  if (config == NULL)
+    impl_type = STATIC;
+  else
+    impl_type = enkf_config_node_get_impl_type(config);
+
+  node = enkf_node_alloc_empty(node_key , config , impl_type);
+  if (impl_type == STATIC)
+    node->data = node->alloc(NULL);
+  else
+    node->data = node->alloc(enkf_config_node_get_ref(config));
+  
   node->swapped = false;
   enkf_node_set_modified(node);
   return node;

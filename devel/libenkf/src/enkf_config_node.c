@@ -44,25 +44,39 @@ void enkf_config_node_free(enkf_config_node_type * node) {
 }
 
 
+const void *  enkf_config_node_get_ref(const enkf_config_node_type * node) { 
+  return node->data; 
+}
 
 bool enkf_config_node_include_type(const enkf_config_node_type * config_node , int mask) {
-  if (config_node->var_type & mask)
+  enkf_var_type var_type;
+  if (config_node == NULL) 
+    var_type = ecl_static;
+  else
+    var_type = config_node->var_type;
+
+  
+  if (var_type & mask)
     return true;
   else
     return false;
 }
 
-const void *  enkf_config_node_get_ref(const enkf_config_node_type * node) { 
-  return node->data; 
-}
 
 enkf_impl_type enkf_config_node_get_impl_type(const enkf_config_node_type *config_node) { 
-  return config_node->impl_type; 
+  if (config_node == NULL)
+    return STATIC;
+  else
+    return config_node->impl_type; 
 }
 
 enkf_var_type enkf_config_node_get_var_type(const enkf_config_node_type *config_node) { 
+  if (config_node == NULL)
+    return ecl_static;
+  else
   return config_node->var_type; 
 }
+
 
 const char * enkf_config_node_get_ensfile_ref(const enkf_config_node_type * config_node) { return config_node->ensfile; }
 const char * enkf_config_node_get_eclfile_ref(const enkf_config_node_type * config_node) { return config_node->eclfile; }

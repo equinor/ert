@@ -30,7 +30,7 @@ void              enkf_state_swapin(enkf_state_type * , int , bool);
 enkf_state_type * enkf_state_copyc(const enkf_state_type * );
 void              enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
 void              enkf_state_add_node(enkf_state_type * , const char * );
-enkf_state_type * enkf_state_alloc(const enkf_ensemble_type * , int , meas_vector_type * );
+enkf_state_type * enkf_state_alloc(const enkf_ensemble_type * , int , enkf_fs_type * , meas_vector_type * );
 enkf_node_type  * enkf_state_get_node(const enkf_state_type * , const char * );
 void              enkf_state_del_node(enkf_state_type * , const char * );
 void              enkf_state_load_ecl_summary(enkf_state_type * , bool , int );

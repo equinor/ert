@@ -14,7 +14,7 @@
 struct ecl_static_kw_struct {
   DEBUG_DECLARE
   const ecl_static_kw_config_type * config;
-  ecl_kw_type               * ecl_kw;
+  ecl_kw_type * ecl_kw;
 };
 
 

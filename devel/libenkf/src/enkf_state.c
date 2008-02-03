@@ -168,11 +168,10 @@ int enkf_state_fmt_mode(const enkf_state_type * enkf_state) {
 }
 
 
-
-
 void enkf_state_set_run_path(enkf_state_type * enkf_state , const char * run_path) {
   enkf_state->run_path = util_realloc_string_copy(enkf_state->run_path , run_path);
 }
+
 
 void enkf_state_set_eclbase(enkf_state_type * enkf_state , const char * eclbase) {
   enkf_state->eclbase = util_realloc_string_copy(enkf_state->eclbase , eclbase);
@@ -194,7 +193,7 @@ enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
 }
 
 
-enkf_state_type * enkf_state_alloc(const enkf_ensemble_type * ens , int iens , meas_vector_type * meas_vector) {
+enkf_state_type * enkf_state_alloc(const enkf_ensemble_type * ens , int iens , enkf_fs_type * fs , meas_vector_type * meas_vector) {
   enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
   
   enkf_state->ens             = (enkf_ensemble_type *) ens;
@@ -204,7 +203,7 @@ enkf_state_type * enkf_state_alloc(const enkf_ensemble_type * ens , int iens , m
   enkf_state_set_iens(enkf_state , iens);
   enkf_state->run_path        = NULL;
   enkf_state->eclbase         = NULL;
-  enkf_state->enkf_fs         = enkf_ensemble_get_fs_ref(ens);
+  enkf_state->enkf_fs         = fs;
   enkf_state->meas_vector     = meas_vector;
   enkf_state->data_kw         = hash_alloc(10);
   return enkf_state;
@@ -218,7 +217,7 @@ enkf_state_type * enkf_state_alloc(const enkf_ensemble_type * ens , int iens , m
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  enkf_state_type * new = enkf_state_alloc(src->ens , src->my_iens, src->meas_vector);
+  enkf_state_type * new = enkf_state_alloc(src->ens , src->my_iens, src->enkf_fs , src->meas_vector);
   list_node_type *list_node;                                          
   list_node = list_get_head(src->node_list);                     
 
@@ -304,7 +303,6 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_name) 
 
 
 
-
 static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const ecl_block_type *ecl_block) {
   int report_step = ecl_block_get_report_nr(ecl_block);
   enkf_fs_type *fs = enkf_ensemble_get_fs_ref(enkf_state->ens);
@@ -313,48 +311,33 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
   
   while (ecl_kw != NULL) {
     char *kw                       = ecl_kw_alloc_strip_header(ecl_kw);
-    const enkf_impl_type impl_type = enkf_ensemble_impl_type(enkf_state->ens , kw);
-    enkf_var_type enkf_type;
-
-    switch (impl_type) {
-    case(FIELD):
-      enkf_type = ecl_restart;
-      break;
-    case(STATIC):
-      enkf_type = ecl_static;
-      break;
-    default:
-      fprintf(stderr,"%s internal error - when loading ECLIPSE restart files only FIELD and STATIC implementation types are (currently) recognized - aborting \n",__func__);
-      abort();
-    }    
     restart_kw_list_add(enkf_state->restart_kw_list , kw);
 
-    if (!enkf_ensemble_has_key(enkf_state->ens , kw)) 
-      enkf_ensemble_add_type0(enkf_state->ens , kw , ecl_kw_get_size(ecl_kw) , enkf_type , impl_type);
-    
-    if (!enkf_state_has_node(enkf_state , kw)) 
-      enkf_state_add_node__1(enkf_state , kw , enkf_ensemble_get_config_ref(enkf_state->ens , kw)); 
-    
-    {
-      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-      
-      switch (impl_type)  {
-      case(FIELD):
+    if (enkf_ensemble_has_key(enkf_state->ens , kw)) {
+      /* It is a dynamic restart kw like PRES or SGAS */
+      if (enkf_ensemble_impl_type(enkf_state->ens , kw) != FIELD) {
+	fprintf(stderr,"%s: hm - something wrong - can (currently) only load fields from restart files - aborting \n",__func__);
+	abort();
+      }
+      if (!enkf_state_has_node(enkf_state , kw)) 
+	enkf_state_add_node__1(enkf_state , kw , enkf_ensemble_get_config_ref(enkf_state->ens , kw)); 
+      {
+	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
 	if (enkf_node_swapped(enkf_node)) enkf_node_realloc_data(enkf_node);
 	field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_kw);
-	break;
-      case(STATIC):
+      }
+    } else {
+      /* It is a static kw like INTEHEAD or SCON */
+      if (!enkf_state_has_node(enkf_state , kw)) 
+	enkf_state_add_node__1(enkf_state , kw , NULL); 
+      {
+	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
 	ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
 	/*
 	  Static kewyords go straight out ....
 	*/
 	enkf_fs_swapout_node(fs , enkf_node , report_step , enkf_state->my_iens , forecast);
-	break;
-      default:
-	fprintf(stderr,"%s: internal error - can only get data from implementation types: FIELD and STATIC - aborting \n",__func__);
-	abort();
       }
-
     }
     free(kw);
     ecl_kw = ecl_block_get_next_kw(ecl_block);
