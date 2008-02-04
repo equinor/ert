@@ -48,6 +48,7 @@ struct enkf_ensemble_struct {
   enkf_fs_type     *fs;
   path_fmt_type    *run_path;
   path_fmt_type    *eclbase;
+  path_fmt_type    *index_path;
   bool              endian_swap;
   bool              fmt_file;
   bool              unified;
@@ -90,11 +91,6 @@ enkf_fs_type * enkf_ensemble_get_fs_ref(const enkf_ensemble_type * ens) { return
 
 const char * enkf_ensemble_get_data_file(const enkf_ensemble_type * ens) { return ens->data_file; }
 
-void enkf_ensemble_set_state_run_path(const enkf_ensemble_type * ens , int iens) {
-  char * run_path = path_fmt_alloc_path(ens->run_path , iens + ens->iens_offset);
-  enkf_state_set_run_path(ens->state_list[iens] , run_path); 
-  free(run_path);
-}
 
 
 void enkf_ensemble_set_state_eclbase(const enkf_ensemble_type * ens , int iens) {
@@ -105,13 +101,13 @@ void enkf_ensemble_set_state_eclbase(const enkf_ensemble_type * ens , int iens) 
 
 
 enkf_ensemble_type * enkf_ensemble_alloc(int ens_size , enkf_fs_type *fs, 
-			       const char * data_file , 
-			       const char * run_path  , 
-			       const char * eclbase   , 
-			       sched_file_type * sched_file , 
-			       bool fmt_file ,
-			       bool unified  , 
-			       bool endian_swap) {
+					 const char * data_file  , 
+					 const char * _run_path   , 
+					 const char * _eclbase    , 
+					 sched_file_type * sched_file , 
+					 bool fmt_file ,
+					 bool unified  , 
+					 bool endian_swap) {
 
   enkf_ensemble_type * enkf_ensemble = malloc(sizeof *enkf_ensemble);
   enkf_ensemble->config_hash    = hash_alloc(10);
@@ -129,18 +125,23 @@ enkf_ensemble_type * enkf_ensemble_alloc(int ens_size , enkf_fs_type *fs,
   enkf_ensemble->fmt_file      = fmt_file;
   enkf_ensemble->data_file     = util_alloc_string_copy(data_file);
   
-  enkf_ensemble->run_path     = path_fmt_alloc_directory_fmt(run_path , true);
-  enkf_ensemble->eclbase      = path_fmt_alloc_file_fmt(eclbase);
+  enkf_ensemble->run_path     = path_fmt_alloc_directory_fmt(_run_path , true);
+  enkf_ensemble->eclbase      = path_fmt_alloc_file_fmt(_eclbase);
   enkf_ensemble->meas_matrix  = meas_matrix_alloc(enkf_ensemble->ens_size);
   enkf_ensemble->state_list   = malloc(enkf_ensemble->ens_size * sizeof * enkf_ensemble->state_list);
   enkf_ensemble->iens_offset  = 91;
   {
     int iens;
     for (iens = 0; iens < enkf_ensemble->ens_size; iens++) {
+      char * run_path   = path_fmt_alloc_path(enkf_ensemble->run_path   , iens + enkf_ensemble->iens_offset);
+      char * eclbase    = path_fmt_alloc_path(enkf_ensemble->eclbase    , iens + enkf_ensemble->iens_offset);
+
       enkf_ensemble->state_list[iens] = enkf_state_alloc(enkf_ensemble , iens + enkf_ensemble->iens_offset , enkf_ensemble->fs , 
+							 run_path , eclbase ,
 							 meas_matrix_iget_vector(enkf_ensemble->meas_matrix , iens));
-      enkf_ensemble_set_state_run_path(enkf_ensemble , iens);
-      enkf_ensemble_set_state_eclbase(enkf_ensemble  , iens);
+      
+      free(run_path);
+      free(eclbase);
     }
   }
   enkf_ensemble->thread_pool_load_ecl = NULL;

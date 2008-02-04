@@ -4,6 +4,7 @@
 #include <path_fmt.h>
 #include <enkf_node.h>
 #include <basic_driver.h>
+#include <fs_index.h>
 
 
 
@@ -12,14 +13,16 @@ struct enkf_fs_struct {
   basic_driver_type  * dynamic_forecast;
   basic_driver_type  * eclipse_static;
   basic_driver_type  * parameter;
+  fs_index_type      * index;
 };
 
 
 
 
-enkf_fs_type * enkf_fs_alloc(void * dynamic_analyzed , void * dynamic_forecast , void * eclipse_static , void * parameter) {
+enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index, 
+			     void * dynamic_analyzed , void * dynamic_forecast , void * eclipse_static , void * parameter) {
   enkf_fs_type * fs = malloc(sizeof * fs);
-
+  fs->index             = fs_index;
   fs->dynamic_analyzed  = (basic_driver_type *) dynamic_analyzed;   
   fs->dynamic_forecast  = (basic_driver_type *) dynamic_forecast;
   fs->eclipse_static    = (basic_driver_type *) eclipse_static;
@@ -92,6 +95,7 @@ void enkf_fs_free(enkf_fs_type * fs) {
   enkf_fs_free_driver(fs->dynamic_forecast);
   enkf_fs_free_driver(fs->parameter);
   enkf_fs_free_driver(fs->eclipse_static);
+  fs_index_free(fs->index);
   free(fs);
 }
 
@@ -107,3 +111,8 @@ void enkf_fs_swapout_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , 
   driver->swapout(driver , report_step , iens , state , enkf_node); 
 }
 
+
+
+void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type , int iens) {
+  fs_index_add_node(enkf_fs->index , iens , kw , var_type , impl_type);
+}

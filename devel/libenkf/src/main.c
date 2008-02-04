@@ -5,12 +5,13 @@
 #include <plain_driver_static.h>
 #include <config.h>
 #include <hash.h>
+#include <fs_index.h>
+#include <enkf_types.h>
 
 
 int main (int argc , char ** argv) {
   const char * data_file     = "GRANE_orig.DATA";
   const char * run_path      = "/d/felles/bg/scratch/EnKF_Grane2008/HM_Test/tmpdir_%04d";
-  /*const char * run_path      = "/tmp/enkf/RunPATH/tmpdir_%04d";*/
   const char * eclbase       = "GRANE-%04d";
   const char * schedule_file = "SCHEDULE_orig.INC";
   const int start_date[3]    = { 1 , 1 , 1977};
@@ -27,8 +28,24 @@ int main (int argc , char ** argv) {
   plain_driver_type * dynamic_forecast 	      = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Forecast");
   plain_driver_type * parameter        	      = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Parameter");
   plain_driver_static_type * eclipse_static   = plain_driver_static_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Static");
+  fs_index_type     * fs_index                = fs_index_alloc("./Ensemble/mem%03d/INDEX");
+
+  fs_index_add_node(fs_index , 10 , "KW1", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW2", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW3", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW4", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW5", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW6", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW7", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW8", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KW9", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KWA", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KWB", ecl_static , MULTZ);
+  fs_index_add_node(fs_index , 10 , "KWC", ecl_static , MULTZ);
   
-  enkf_fs_type  * fs = enkf_fs_alloc(dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
+  exit(1);
+  
+  enkf_fs_type  * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
   enkf_ensemble_type * enkf_ensemble;
   enkf_ensemble = enkf_ensemble_alloc(10 , fs , data_file , run_path , eclbase , s , false , false , true);
 

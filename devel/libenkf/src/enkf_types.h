@@ -31,7 +31,7 @@ typedef enum {constant         = 1  , /* A parameter which is constant both in t
 /*
   These correspond to implementation types.
 */
-typedef enum {STATIC = 100 , MULTZ , MULTFLT , EQUIL , FIELD , WELL , PGBOX , GEN_KW} enkf_impl_type;
+typedef enum {INVALID = 0, STATIC = 100 , MULTZ , MULTFLT , EQUIL , FIELD , WELL , PGBOX , GEN_KW} enkf_impl_type;
 
 
 /*
@@ -41,7 +41,7 @@ typedef enum {STATIC = 100 , MULTZ , MULTFLT , EQUIL , FIELD , WELL , PGBOX , GE
 
 
 typedef enum {active_off = 200 , active_on , active_at , active_after , active_before} enkf_active_type;
-typedef enum   {abs_error = 0 , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_error_type; /* Should not have enkf_ prefix */
+typedef enum {abs_error = 0 , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_error_type; /* Should not have enkf_ prefix */
 
 
 /*
@@ -52,5 +52,5 @@ typedef enum {nolog = 0 , log_input_mask = 1 , log_enkf_mask = 2 , log_output_ma
 
 enkf_impl_type    enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(enkf_impl_type );
-
+enkf_impl_type    enkf_types_check_impl_type(const char * );
 #endif
