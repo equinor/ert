@@ -30,21 +30,6 @@ int main (int argc , char ** argv) {
   plain_driver_static_type * eclipse_static   = plain_driver_static_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Static");
   fs_index_type     * fs_index                = fs_index_alloc("./Ensemble/mem%03d/INDEX");
 
-  fs_index_add_node(fs_index , 10 , "KW1", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW2", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW3", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW4", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW5", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW6", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW7", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW8", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KW9", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KWA", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KWB", ecl_static , MULTZ);
-  fs_index_add_node(fs_index , 10 , "KWC", ecl_static , MULTZ);
-  
-  exit(1);
-  
   enkf_fs_type  * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
   enkf_ensemble_type * enkf_ensemble;
   enkf_ensemble = enkf_ensemble_alloc(10 , fs , data_file , run_path , eclbase , s , false , false , true);

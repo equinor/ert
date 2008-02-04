@@ -113,6 +113,6 @@ void enkf_fs_swapout_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , 
 
 
 
-void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type , int iens) {
+void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {
   fs_index_add_node(enkf_fs->index , iens , kw , var_type , impl_type);
 }

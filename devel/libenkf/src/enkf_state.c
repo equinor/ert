@@ -249,7 +249,7 @@ static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const ch
     The hash contains a pointer to a list_node structure, which contains a pointer
     to an enkf_node which contains a pointer to the actual enkf object.
   */
-  hash_insert_ref(enkf_state->node_hash , node_name  , list_node);
+  hash_insert_ref(enkf_state->node_hash , node_name , list_node);
 }
 
 
@@ -257,6 +257,7 @@ static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const ch
 static void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_name , const enkf_config_node_type * config) {
   enkf_node_type *enkf_node = enkf_node_alloc(node_name , config);
   enkf_state_add_node_internal(enkf_state , node_name , enkf_node);    
+  enkf_fs_add_index_node(enkf_state->fs , enkf_state->my_iens , node_name , enkf_config_node_get_var_type(config) , enkf_config_node_get_impl_type(config));
 
   /* All code below here is special code for plurigaussian fields */
   {

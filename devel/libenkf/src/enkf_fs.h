@@ -12,5 +12,5 @@ enkf_fs_type * enkf_fs_alloc(fs_index_type * , void * , void * , void * , void *
 void           enkf_fs_free(enkf_fs_type *);
 void           enkf_fs_swapin_node(enkf_fs_type * , enkf_node_type * , int , int  , state_enum  );
 void           enkf_fs_swapout_node(enkf_fs_type * , enkf_node_type * , int , int , state_enum  );
-void           enkf_fs_add_index_node(enkf_fs_type *  , const char * , enkf_var_type, enkf_impl_type , int );
+void           enkf_fs_add_index_node(enkf_fs_type *  , int , const char * , enkf_var_type, enkf_impl_type);
 #endif
