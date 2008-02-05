@@ -72,6 +72,8 @@ bool enkf_config_get_endian_swap(const enkf_config_type * enkf_config) { return 
 
 bool enkf_config_get_fmt_file(const enkf_config_type * enkf_config) { return enkf_config->fmt_file; }
 
+bool enkf_config_get_unified(const enkf_config_type * enkf_config) { return enkf_config->unified; }
+
 const char * enkf_config_get_data_file(const enkf_config_type * ens) { return ens->data_file; }
 
 
@@ -205,3 +207,33 @@ const enkf_config_node_type * enkf_config_get_config_ref(const enkf_config_type 
     abort();
   }
 }
+
+
+
+char * enkf_config_alloc_run_path(const enkf_config_type * config , int iens) {
+  return path_fmt_alloc_path(config->run_path , iens);
+}
+
+char * enkf_config_alloc_eclbase(const enkf_config_type * config , int iens) {
+  return path_fmt_alloc_path(config->eclbase , iens);
+}
+
+int enkf_config_get_ens_size(const enkf_config_type * config) { return config->ens_size; }
+
+
+
+
+void enkf_config_free(enkf_config_type * config) {  
+  hash_free(config->config_hash);
+  {
+    int i;
+    for (i=0; i < config->Nwells; i++)
+      free(config->well_list[i]);
+    free(config->well_list);
+  }
+  path_fmt_free(config->run_path);
+  path_fmt_free(config->eclbase);
+  free(config->data_file);
+  free(config);
+}
+

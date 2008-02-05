@@ -1,5 +1,7 @@
 #ifndef __ENKF_CONFIG_H__
 #define __ENKF_CONFIG_H__
+#include <enkf_config_node.h>
+#include <stdbool.h>
 
 typedef struct enkf_config_struct enkf_config_type;
 
@@ -23,6 +25,10 @@ void                enkf_config_add_type(enkf_config_type * , const char * , enk
 const enkf_config_node_type * enkf_config_get_config_ref(const enkf_config_type * , const char * );
 void                  	      enkf_config_add_type0(enkf_config_type * , const char * , int , enkf_var_type , enkf_impl_type );
 
-
+char 			    * enkf_config_alloc_run_path(const enkf_config_type * , int );
+char 			    * enkf_config_alloc_eclbase(const enkf_config_type  * , int );
+int                           enkf_config_get_ens_size(const enkf_config_type * );
+void enkf_config_free(enkf_config_type * );
+bool enkf_config_get_unified(const enkf_config_type * );
 
 #endif
