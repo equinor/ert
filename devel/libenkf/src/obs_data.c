@@ -237,7 +237,6 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_strid
       obs_data->std_inflation[iobs] = 1.0;
   }
   
-  
   R = util_malloc( nrobs * nrobs * sizeof * R , __func__);
   for (iobs = 0; iobs < nrobs * nrobs; iobs++)
     R[iobs] = 0;

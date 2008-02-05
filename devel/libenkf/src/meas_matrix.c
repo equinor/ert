@@ -67,9 +67,22 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type * matrix , int
   code which did that.
 */
 
+
+static void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride_x) {
+  int ix , iy;
+
+  for (iy=0; iy < ny; iy++) {
+    for (ix = 0; ix < nx; ix++) {
+      int index = iy * stride_y + ix * stride_x;
+      printf("%8g " , M[index]);
+    }
+    printf("\n");
+  }
+}
+
+
 double * meas_matrix_allocS(const meas_matrix_type * matrix, int ens_stride , int obs_stride) {
   double * S;
-  int offset = 0;
   int iens;
   
   const int nrobs = meas_vector_get_nrobs(matrix->meas_vectors[0]);
@@ -80,10 +93,11 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int ens_stride , in
       fprintf(stderr,"%s: fatal internal error - not all measurement vectors equally long - aborting \n",__func__);
       abort();
     }
-
-    if (obs_stride == 1)
+    
+    if (obs_stride == 1) {
+      int offset = iens * nrobs;
       memcpy(&S[offset] , meas_vector_get_data_ref(vector) , nrobs * sizeof * S);
-    else {
+    } else {
       const double * meas_data = meas_vector_get_data_ref(vector);
       int iobs;
       for (iobs = 0; iobs < nrobs; iobs++) {
@@ -92,6 +106,7 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int ens_stride , in
       }
     }
   }
+  printf_matrix(S , nrobs , matrix->ens_size , obs_stride , ens_stride);
 
 /*   /\*  */
 /*      Code written to facilitate the return of mean and standard */
