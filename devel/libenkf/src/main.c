@@ -11,7 +11,7 @@
 
 int main (int argc , char ** argv) {
   const char * data_file     = "GRANE_orig.DATA";
-  const char * run_path      = "/d/felles/bg/scratch/EnKF_Grane2008/HM_Test/tmpdir_%04d";
+  const char * run_path      = "/d/felles/bg/scratch/Testing/tmpdir_%04d";
   const char * eclbase       = "GRANE-%04d";
   const char * schedule_file = "SCHEDULE_orig.INC";
   const int start_date[3]    = { 1 , 1 , 1977};
@@ -49,6 +49,7 @@ int main (int argc , char ** argv) {
   }
   enkf_ensemble_load_ecl_complete_mt(enkf_ensemble);
   enkf_ensemble_analysis(enkf_ensemble);
+  exit(1);
     
   enkf_ensemble_add_data_kw(enkf_ensemble , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
   enkf_ensemble_init_eclipse(enkf_ensemble);

@@ -33,27 +33,12 @@
 
 
 struct enkf_ensemble_struct {
-  int  		      ens_size;
-  int                 iens_offset;
   meas_matrix_type   *meas_matrix;
-  hash_type          *config_hash;
   enkf_obs_type      *obs;
   obs_data_type      *obs_data;
   enkf_state_type   **state_list;
   sched_file_type    *sched_file;
-  
-  char            **well_list;
-  int               Nwells;
-
   enkf_fs_type     *fs;
-  path_fmt_type    *run_path;
-  path_fmt_type    *eclbase;
-  path_fmt_type    *index_path;
-  bool              endian_swap;
-  bool              fmt_file;
-  bool              unified;
-  char *            data_file;
-
   thread_pool_type  *thread_pool_load_ecl;
   void_arg_type    **arg_load_ecl;
 };
@@ -64,32 +49,9 @@ struct enkf_ensemble_struct {
 
 
 
-enkf_impl_type enkf_ensemble_impl_type(const enkf_ensemble_type *enkf_ensemble, const char * ecl_kw_name) {
-  enkf_impl_type impl_type;
-
-  if (hash_has_key(enkf_ensemble->config_hash , ecl_kw_name)) {
-    enkf_config_node_type * node = hash_get(enkf_ensemble->config_hash , ecl_kw_name);
-    impl_type = enkf_config_node_get_impl_type(node);
-  } else
-    impl_type = STATIC;
-
-  return impl_type;
-}
-
-
-
-/*****************************************************************/
-static void enkf_ensemble_realloc_well_list(enkf_ensemble_type * enkf_ensemble) {
-  enkf_ensemble->well_list = realloc(enkf_ensemble->well_list , enkf_ensemble->Nwells * sizeof * enkf_ensemble->well_list);
-}
-
-bool enkf_ensemble_get_endian_swap(const enkf_ensemble_type * enkf_ensemble) { return enkf_ensemble->endian_swap; }
-bool enkf_ensemble_get_fmt_file(const enkf_ensemble_type * enkf_ensemble) { return enkf_ensemble->fmt_file; }
 
 
 enkf_fs_type * enkf_ensemble_get_fs_ref(const enkf_ensemble_type * ens) { return ens->fs; }
-
-const char * enkf_ensemble_get_data_file(const enkf_ensemble_type * ens) { return ens->data_file; }
 
 
 
@@ -100,36 +62,19 @@ void enkf_ensemble_set_state_eclbase(const enkf_ensemble_type * ens , int iens) 
 }
 
 
-enkf_ensemble_type * enkf_ensemble_alloc(int ens_size , enkf_fs_type *fs, 
-					 const char * data_file  , 
-					 const char * _run_path   , 
-					 const char * _eclbase    , 
-					 sched_file_type * sched_file , 
-					 bool fmt_file ,
-					 bool unified  , 
-					 bool endian_swap) {
-
+enkf_ensemble_type * enkf_ensemble_alloc(enkf_fs_type *fs, 
+					 sched_file_type * sched_file) {
+					 
   enkf_ensemble_type * enkf_ensemble = malloc(sizeof *enkf_ensemble);
-  enkf_ensemble->config_hash    = hash_alloc(10);
+					 
   enkf_ensemble->sched_file     = sched_file; 
   enkf_ensemble->obs            = enkf_obs_alloc(enkf_ensemble->sched_file);
   enkf_ensemble->obs_data       = obs_data_alloc();
   enkf_ensemble->fs             = fs;
 
-  enkf_ensemble->ens_size      = ens_size;
-  enkf_ensemble->endian_swap   = endian_swap;
-  enkf_ensemble->Nwells        = 0;
-  enkf_ensemble->well_list     = NULL;
-  enkf_ensemble_realloc_well_list(enkf_ensemble);
-  enkf_ensemble->unified       = unified;
-  enkf_ensemble->fmt_file      = fmt_file;
-  enkf_ensemble->data_file     = util_alloc_string_copy(data_file);
-  
-  enkf_ensemble->run_path     = path_fmt_alloc_directory_fmt(_run_path , true);
-  enkf_ensemble->eclbase      = path_fmt_alloc_file_fmt(_eclbase);
   enkf_ensemble->meas_matrix  = meas_matrix_alloc(enkf_ensemble->ens_size);
   enkf_ensemble->state_list   = malloc(enkf_ensemble->ens_size * sizeof * enkf_ensemble->state_list);
-  enkf_ensemble->iens_offset  = 91;
+  enkf_ensemble->iens_offset  = 1;
   {
     int iens;
     for (iens = 0; iens < enkf_ensemble->ens_size; iens++) {
@@ -152,28 +97,8 @@ enkf_ensemble_type * enkf_ensemble_alloc(int ens_size , enkf_fs_type *fs,
 
 
 
-bool enkf_ensemble_has_key(const enkf_ensemble_type * enkf_ensemble , const char * key) {
-  return hash_has_key(enkf_ensemble->config_hash , key);
-}
 
 
-const char ** enkf_ensemble_get_well_list_ref(const enkf_ensemble_type * ens , int *Nwells) {
-  *Nwells = ens->Nwells;
-  return (const char **) ens->well_list;
-}
-
-
-void enkf_ensemble_add_well(enkf_ensemble_type * enkf_ensemble , const char *well_name , int size, const char ** var_list) {
-  enkf_ensemble_add_type(enkf_ensemble , well_name , ecl_summary , WELL, NULL , well_config_alloc(well_name , size , var_list));
-  enkf_ensemble->Nwells++;
-  enkf_ensemble_realloc_well_list(enkf_ensemble);
-  enkf_ensemble->well_list[enkf_ensemble->Nwells - 1] = util_alloc_string_copy(well_name);
-}
-
-
-void enkf_ensemble_add_gen_kw(enkf_ensemble_type * enkf_ensemble , const char * config_file) {
-  enkf_ensemble_add_type(enkf_ensemble , "GEN_KW" , parameter , GEN_KW , NULL , gen_kw_config_fscanf_alloc(config_file , NULL));
-}
 
 
 void enkf_ensemble_add_data_kw(enkf_ensemble_type * enkf_ensemble , const char * new_kw , const char * value) {
@@ -196,72 +121,6 @@ void enkf_ensemble_init_eclipse(enkf_ensemble_type * enkf_ensemble) {
     enkf_state_init_eclipse(enkf_ensemble->state_list[iens]);
 }
 
-
-void enkf_ensemble_add_type(enkf_ensemble_type * enkf_ensemble , 
-		       const char    * key      , 
-		       enkf_var_type enkf_type  , 
-		       enkf_impl_type impl_type , 
-		       const char   * ecl_file  , 
-		       const void   * data) {
-  if (enkf_ensemble_has_key(enkf_ensemble , key)) {
-    fprintf(stderr,"%s: a ensuration object:%s has already been added - aborting \n",__func__ , key);
-    abort();
-  }
-
-  {
-    config_free_ftype * freef;
-    switch(impl_type) {
-    case(FIELD):
-      freef             = field_config_free__;
-      break;
-    case(MULTZ):
-      freef             = multz_config_free__;
-      break;
-    case(WELL):
-      freef             = well_config_free__;
-      break;
-    case(MULTFLT):
-      freef             = multflt_config_free__;
-      break;
-    case(EQUIL):
-      freef             = equil_config_free__;
-      break;
-    case(STATIC):
-      freef             = ecl_static_kw_config_free__;
-      break;
-    case(PGBOX):
-      freef             = pgbox_config_free__;
-      break;
-    case(GEN_KW):
-      freef             = gen_kw_config_free__;
-      break;
-    default:
-      fprintf(stderr,"%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
-      abort();
-    }
-    {
-      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , ecl_file , data , freef);
-      hash_insert_hash_owned_ref(enkf_ensemble->config_hash , key , node , enkf_config_node_free__);
-    }
-  }
-}
-
-
-
-void enkf_ensemble_add_type0(enkf_ensemble_type * enkf_ensemble , const char *key , int size, enkf_var_type enkf_type , enkf_impl_type impl_type) {
-  switch(impl_type) {
-  case(STATIC):
-    enkf_ensemble_add_type(enkf_ensemble , key , enkf_type , impl_type , NULL , ecl_static_kw_config_alloc(size , key , key));
-    break;
-  case(FIELD):
-    fprintf(stderr,"%s: Can not add FIELD ens objects like:%s on the run - these must be from the main program with enkf_ensemble_add_type - sorry.\n",__func__ , key);
-    abort();
-    break;
-  default:
-    fprintf(stderr,"%s only STATIC and FIELD types are implemented - aborting \n",__func__);
-    abort();
-  }
-}
 
 
 
@@ -287,16 +146,6 @@ void enkf_ensemble_free(enkf_ensemble_type * enkf_ensemble) {
 }
 
 
-
-const enkf_config_node_type * enkf_ensemble_get_config_ref(const enkf_ensemble_type * ens, const char * key) {
-  if (hash_has_key(ens->config_hash , key)) {
-    enkf_config_node_type * node = hash_get(ens->config_hash , key);
-    return node;
-  } else {
-    fprintf(stderr,"%s: ens node:%s does not exist \n",__func__ , key);
-    abort();
-  }
-}
 
 /*****************************************************************/
 
@@ -394,7 +243,6 @@ void enkf_ensemble_analysis(enkf_ensemble_type * ens) {
   int nrobs = obs_data_get_nrobs(ens->obs_data);
   if (nrobs > 0) {
     double * X = analysis_allocX(ens->ens_size , obs_data_get_nrobs(ens->obs_data) , ens->meas_matrix , ens->obs_data , true , true);
-    
     free(X);
   }
 }

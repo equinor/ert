@@ -59,16 +59,16 @@ void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const
 
 double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
   int  update_randrot_int, verbose_int;
-  const char * xpath = NULL;
-  const double alpha = 1.50;
+  const char * xpath 	  = NULL;
+  const double alpha 	  = 1.50;
+  const double truncation = 0.99;
   double *X , *R , *E , *S , *D , *innov;
-  int  truncation , mode , istep , ens_stride , obs_stride , iens, iobs;
+  int mode , istep , ens_stride , obs_stride , iens, iobs;
   bool returnE; 
   
   istep      = -1;
   mode       = 22;
   returnE    = false;
-  truncation = 0.99;
 
   analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
   X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
@@ -106,7 +106,7 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
 		      (const int *) &ens_size        	, 
 		      (const int *) &nrobs        	, 
 		      (const int *) &verbose_int  	, 
-		      (const double *) truncation 	, 
+		      (const double *) &truncation 	, 
 		      (const int *) &mode         	,     
 		      (const int *) &update_randrot_int , 
 		      (const int *) &istep              , 
@@ -117,7 +117,8 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   free(D);
   free(innov);
   if (E != NULL) free(E);
-
+  
+  printf_matrix(X , ens_size , ens_size , 1 , ens_size);
   return X;
 }
 

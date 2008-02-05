@@ -67,14 +67,13 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type * matrix , int
   code which did that.
 */
 
-
-static void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride_x) {
+void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride_x) {
   int ix , iy;
 
   for (iy=0; iy < ny; iy++) {
     for (ix = 0; ix < nx; ix++) {
       int index = iy * stride_y + ix * stride_x;
-      printf("%8g " , M[index]);
+      printf(" %10.3f " , M[index]);
     }
     printf("\n");
   }
