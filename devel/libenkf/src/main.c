@@ -1,8 +1,10 @@
 #include <enkf_fs.h>
-#include <enkf_ensemble.h>
+#include <enkf_main.h>
+#include <enkf_config.h>
 #include <util.h>
 #include <plain_driver.h>
 #include <plain_driver_static.h>
+#include <plain_driver_parameter.h>
 #include <config.h>
 #include <hash.h>
 #include <fs_index.h>
@@ -14,47 +16,73 @@ int main (int argc , char ** argv) {
   const char * run_path      = "/d/felles/bg/scratch/Testing/tmpdir_%04d";
   const char * eclbase       = "GRANE-%04d";
   const char * schedule_file = "SCHEDULE_orig.INC";
-  const int start_date[3]    = { 1 , 1 , 1977};
-  sched_file_type *s;
-
+  const char * grid_file     = "/d/proj/bg/enkf/EnKF_Grane2008/Refcase/GRANE.EGRID";
+  
   {
     hash_type * config_hash = hash_alloc(10);
     config_parse("Config/main" , config_hash);
   }
   
-  s = sched_file_alloc(start_date);
-  sched_file_parse(s , schedule_file);
+  /* 
+     It is not clear whether we should send in a filename - or a
+     completey parsed object?
+
+     Currently we send in complete objects - and they are owned in
+     this scope.
+  */
+  
   plain_driver_type * dynamic_analyzed 	      = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Analyzed");
   plain_driver_type * dynamic_forecast 	      = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Forecast");
-  plain_driver_type * parameter        	      = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Parameter");
+  plain_driver_parameter_type * parameter     = plain_driver_parameter_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Parameter");
   plain_driver_static_type * eclipse_static   = plain_driver_static_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Static");
   fs_index_type     * fs_index                = fs_index_alloc("./Ensemble/mem%03d/INDEX");
-
-  enkf_fs_type  * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
-  enkf_ensemble_type * enkf_ensemble;
-  enkf_ensemble = enkf_ensemble_alloc(10 , fs , data_file , run_path , eclbase , s , false , false , true);
-
-  enkf_ensemble_add_well(enkf_ensemble , "PR10_G18" , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
-  enkf_ensemble_add_well(enkf_ensemble , "T21A"     , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
-  enkf_ensemble_add_well(enkf_ensemble , "PR03A_G8" , 4 , (const char *[4]) {"WGPR" , "WWCT" , "WOPR" , "WBHP"});
-  enkf_ensemble_add_well_obs(enkf_ensemble , "PR03A_G8" , NULL , "Config/PRO3A_G8");
-  enkf_ensemble_add_gen_kw(enkf_ensemble , "Config/gen_kw_config.txt");
   
-  enkf_ensemble_load_ecl_init_mt(enkf_ensemble , 319);
+  enkf_fs_type     * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
+  enkf_main_type   * enkf_main;
+  enkf_config_type * enkf_config = enkf_config_fscanf_alloc("Config/enkf" , false , false , true);
+  enkf_main = enkf_main_alloc(enkf_config , fs);
+
+  enkf_config_add_well(enkf_config , "PR10_G18" , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
+  enkf_config_add_well(enkf_config , "T21A"     , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
+  enkf_config_add_well(enkf_config , "PR03A_G8" , 4 , (const char *[4]) {"WGPR" , "WWCT" , "WOPR" , "WBHP"});
+
+
+  /*
+  enkf_config_add_type(config , "SWAT"  , ecl_restart , FIELD , 
+		       field_config_alloc("SWAT" , ecl_float_type   , nx , ny , nz , active_size , index_map , 1));
+  
+  enkf_config_add_type(config , "PRESSURE" , ecl_restart , FIELD , 
+		       field_config_alloc("PRESSURE"  , ecl_float_type , nx , ny , nz , active_size , index_map , 1));
+		       
+  enkf_config_add_type(config , "SGAS"  , ecl_restart , FIELD , 
+		       field_config_alloc("SGAS" , ecl_float_type    , nx , ny , nz , active_size , index_map , 1 ));
+
+
+  enkf_config_add_type(config , "RS"     , ecl_restart , FIELD , 
+		       field_config_alloc("RS"  , ecl_float_type        , nx , ny , nz , active_size , index_map , 1 ));
+  
+  enkf_config_add_type(config , "RV"    , ecl_restart , FIELD , 
+		       field_config_alloc("RV"    , ecl_float_type       , nx , ny , nz , active_size , index_map , 1 ));
+  */
+
+
+  enkf_main_add_well_obs(enkf_main   , "PR03A_G8" , NULL , "Config/PRO3A_G8");
+  enkf_config_add_gen_kw(enkf_config , "Config/gen_kw_config.txt");
+  
+  enkf_main_load_ecl_init_mt(enkf_main , 319);
   {
     int iens;
     for (iens = 0; iens < 10; iens++)
-      enkf_ensemble_iload_ecl_mt(enkf_ensemble , iens);
+      enkf_main_iload_ecl_mt(enkf_main , iens);
     
   }
-  enkf_ensemble_load_ecl_complete_mt(enkf_ensemble);
-  enkf_ensemble_analysis(enkf_ensemble);
+  enkf_main_load_ecl_complete_mt(enkf_main);
+  enkf_main_analysis(enkf_main);
   exit(1);
-    
-  enkf_ensemble_add_data_kw(enkf_ensemble , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
-  enkf_ensemble_init_eclipse(enkf_ensemble);
-
-  sched_file_free(s);
-  enkf_ensemble_free(enkf_ensemble);
+  
+  enkf_main_add_data_kw(enkf_main , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
+  enkf_main_init_eclipse(enkf_main);
+  
+  enkf_main_free(enkf_main);
   enkf_fs_free(fs);
 }

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sched_file.h>
+#include <sched_util.h>
 #include <stdio.h>
 #include <util.h>
 #include <history.h>
@@ -12,7 +13,7 @@ int main(int argc , char **argv) {
   sched_file_type *s;
   history_type *h;
   
-  s = sched_file_alloc((const int [3]) {1 , 1 , 1999});
+  s = sched_file_alloc(sched_util_make_start_date( (const int [3]) {1 , 1 , 1999}) );
   sched_file_parse(s , "SCHEDULE_orig.INC");
   
   

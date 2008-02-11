@@ -32,8 +32,8 @@ struct history_struct {
 
 
 struct history_node_struct {
-  hash_type      *data;
-  date_node_type *date;
+  hash_type       * data;
+  date_node_type  * date;
 };
 
 

@@ -5,6 +5,8 @@
 #include <util.h>
 
 
+/*****************************************************************/
+
 const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   switch(impl_type) {
   case STATIC:
@@ -25,6 +27,9 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   case PGBOX:
     return "PGBOX";
     break;
+  case FIELD:
+    return "FIELD";
+    break;
   case GEN_KW:
     return "GEN_KW";
     break;
@@ -34,6 +39,7 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   }
 }
 
+
 #define if_strcmp(s) if (strcmp(impl_type_string , #s) == 0) impl_type = s
 static enkf_impl_type enkf_types_get_impl_type__(const char * impl_type_string) {
   enkf_impl_type impl_type;
@@ -41,6 +47,7 @@ static enkf_impl_type enkf_types_get_impl_type__(const char * impl_type_string) 
   else if_strcmp(MULTZ);
   else if_strcmp(MULTFLT);
   else if_strcmp(EQUIL);
+  else if_strcmp(FIELD);
   else if_strcmp(WELL);
   else if_strcmp(PGBOX);
   else if_strcmp(GEN_KW);

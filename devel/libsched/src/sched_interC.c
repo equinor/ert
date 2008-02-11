@@ -6,6 +6,7 @@
 #include <ecl_fstate.h>
 #include <ecl_sum.h>
 #include <history.h>
+#include <sched_util.h>
 
 
 static const bool    ENDIAN_CONVERT  = true;
@@ -161,7 +162,7 @@ void sched_init__(const char * _schedule_file  	   , const int * schedule_file_l
   if (update) {
     char * init_file   = util_alloc_cstring(_init_file , init_file_len);
     bool   endian_flip = util_intptr_2bool(endian_flip_int);
-    sched_file_type *s = sched_file_alloc(start_date);
+    sched_file_type *s = sched_file_alloc( sched_util_make_start_date(start_date) );
     sched_file_parse(s  , schedule_file);
     sched_file_init_conn_factor(s , init_file , endian_flip , index_map);
     sched_file_fprintf_days_dat(s , "days.dat");

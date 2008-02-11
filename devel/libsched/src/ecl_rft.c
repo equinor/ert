@@ -10,7 +10,7 @@
 #include <ecl_rft_vector.h>
 #include <ecl_rft_node.h>
 #include <sched_file.h>
-
+#include <sched_util.h>
 
 
 int main(int argc, char ** argv) {
@@ -30,7 +30,7 @@ int main(int argc, char ** argv) {
     {
       char * eclipse_rft_file = util_fscanf_alloc_token(stream);  util_forward_line(stream , &at_eof);
       char * sched_file_name  = util_fscanf_alloc_token(stream);  util_forward_line(stream , &at_eof);
-      sched_file              = sched_file_alloc(NULL);
+      sched_file              = sched_file_alloc( 0 );
       sched_file_parse(sched_file , sched_file_name);
       rft_vector 	      = ecl_rft_vector_alloc(eclipse_rft_file , true);
       printf("rft_file.......: %s \n",eclipse_rft_file);

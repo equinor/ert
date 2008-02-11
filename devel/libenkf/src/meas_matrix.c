@@ -61,11 +61,6 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type * matrix , int
 }
 
 
-/*
-  Observe that this code does *NOT* subtract the ensemble
-  mean from S. This is in contrast to the original Fortran
-  code which did that.
-*/
 
 void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride_x) {
   int ix , iy;
@@ -78,6 +73,13 @@ void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride
     printf("\n");
   }
 }
+
+
+/*
+  Observe that this code does *NOT* subtract the ensemble
+  mean from S. This is in contrast to the original Fortran
+  code which did that.
+*/
 
 
 double * meas_matrix_allocS(const meas_matrix_type * matrix, int ens_stride , int obs_stride) {

@@ -45,16 +45,9 @@ list_type * sched_file_get_kw_list(const sched_file_type * s) { return s->kw_lis
 
 time_t sched_file_get_start_date(const sched_file_type * s) { return s->start_date; }
 
-void sched_file_set_start_date(sched_file_type * s , const int * start_date) {
-  if (start_date == NULL)
-    s->start_date = 0;
-  else 
-    s->start_date = util_make_time1(start_date[0] , start_date[1] , start_date[2]);
-}
 
 
-
-sched_file_type * sched_file_alloc(const int *start_date) {
+sched_file_type * sched_file_alloc(time_t start_date) {
   sched_file_type * sched_file = malloc(sizeof *sched_file);
   {
     hash_type *month_hash = hash_alloc(48);
@@ -125,7 +118,7 @@ sched_file_type * sched_file_alloc(const int *start_date) {
   sched_file->acc_days            = 0;
   sched_file->kw_list      	  = list_alloc();
   sched_file->dims                = malloc(3 * sizeof sched_file->dims);
-  sched_file_set_start_date(sched_file , start_date);
+  sched_file->start_date          = start_date;
   return sched_file;
 }
 
@@ -354,7 +347,7 @@ sched_file_type * sched_file_fread_alloc(FILE *stream, int last_date_nr , time_t
   int len,kw_nr;
   sched_file_type * sched_file;
   
-  sched_file = sched_file_alloc(NULL);
+  sched_file = sched_file_alloc( 0 );
   util_fread(&len                             , sizeof len                             , 1 , stream , __func__); 
   util_fread(&sched_file->compdat_initialized , sizeof sched_file->compdat_initialized , 1 , stream , __func__);
   util_fread(sched_file->dims                 , sizeof sched_file->dims                , 3 , stream , __func__); 
@@ -458,6 +451,11 @@ int sched_file_int3_to_report_step(const sched_file_type * s , int mday, int mon
 
 int sched_file_DATES_to_report_step(const sched_file_type * s , const char * DATES_line , int * status) {
   return sched_file_time_t_to_report_step(s , date_node_parse_DATES_line(DATES_line , s->month_hash) , status);
+}
+
+
+time_t sched_file_DATES_to_time_t(const sched_file_type * s , const char * DATES_line) {
+  return date_node_parse_DATES_line(DATES_line , s->month_hash);
 }
 
 

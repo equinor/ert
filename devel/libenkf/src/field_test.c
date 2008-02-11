@@ -31,7 +31,9 @@ int main (int argc , char **argv) {
   ecl_grid_type * ecl_grid         = ecl_grid_alloc_EGRID(EGRID_file , true);
   const int * index_map            = ecl_grid_alloc_index_map(ecl_grid);
   ecl_grid_get_dims(ecl_grid , &nx , &ny , &nz , &active_size);
-  field_config = field_config_alloc("KW" , ecl_double_type , nx , ny , nz , active_size , index_map , 0);
+
+  /*
+    field_config = field_config_alloc("KW" , ecl_double_type , nx , ny , nz , active_size , index_map , 0);
   field        = field_alloc(field_config);
   pg_config    = pgbox_config_alloc(ecl_grid , pgfilter , NULL , 2 , 1 , nx , 1 , ny , 1 , 10 , field_config);
   pg           = pgbox_alloc(pg_config);
@@ -39,7 +41,7 @@ int main (int argc , char **argv) {
   pgbox_apply(pg);
   
 
-
+  */
   pgbox_free(pg);
   pgbox_config_free(pg_config);
   field_config_free(field_config);

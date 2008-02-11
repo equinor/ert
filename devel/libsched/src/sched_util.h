@@ -12,6 +12,7 @@ void   sched_util_fprintf_dbl(bool , double , int , int , FILE *);
 double sched_util_atof(const char *);
 int    sched_util_atoi(const char *);
 void   sched_util_fprintf_qst(bool , const char * , int , FILE *);
-void sched_util_fprintf_days_line(int , time_t , time_t , FILE *);
+void   sched_util_fprintf_days_line(int , time_t , time_t , FILE *);
+time_t sched_util_make_start_date(const int * );
 
 #endif

@@ -28,6 +28,7 @@
 #include <enkf_fs.h>
 #include <void_arg.h>
 #include <gen_kw_config.h>
+#include <history.h>
 
 
 
@@ -39,6 +40,7 @@ struct enkf_main_struct {
   obs_data_type      *obs_data;
   enkf_state_type   **state_list;
   sched_file_type    *sched_file;
+  history_type       *hist;
   enkf_fs_type       *fs;
 
   thread_pool_type   *thread_pool_load_ecl;
@@ -57,13 +59,12 @@ enkf_fs_type * enkf_main_get_fs_ref(const enkf_main_type * ens) { return ens->fs
 
 
 
-
-
-enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs, sched_file_type * sched_file) {
+enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs) {
   int ens_size               = enkf_config_get_ens_size(config);
   enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
   enkf_main->config         = config;
-  enkf_main->sched_file     = sched_file; 
+  enkf_main->sched_file     = sched_file_alloc(enkf_config_get_start_date(config));
+  sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_file(config));
   enkf_main->obs            = enkf_obs_alloc(enkf_main->sched_file);
   enkf_main->obs_data       = obs_data_alloc();
   enkf_main->fs             = fs;
@@ -131,6 +132,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
       enkf_state_free(enkf_main->state_list[i]);
     free(enkf_main->state_list);
   }
+  sched_file_free(enkf_main->sched_file);
   meas_matrix_free(enkf_main->meas_matrix);
   obs_data_free(enkf_main->obs_data);
   free(enkf_main);
@@ -194,9 +196,9 @@ void enkf_main_load_ecl_complete_mt(enkf_main_type *enkf_main) {
 /*****************************************************************/
 
 
-static const enkf_config_node_type * enkf_main_assert_obs(const enkf_main_type * ens , const char *obs_key , enkf_impl_type impl_type) {
-  if (enkf_main_has_key(ens , obs_key)) {
-    const enkf_config_node_type * config_node = enkf_main_get_config_ref(ens , obs_key);
+static const enkf_config_node_type * enkf_main_assert_obs(const enkf_main_type * enkf_main , const char *obs_key , enkf_impl_type impl_type) {
+  if (enkf_config_has_key(enkf_main->config , obs_key)) {
+    const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_main->config , obs_key);
     if (enkf_config_node_get_impl_type(config_node) == impl_type) 
       return config_node;
     else {
@@ -210,21 +212,21 @@ static const enkf_config_node_type * enkf_main_assert_obs(const enkf_main_type *
 }
 
 
-void enkf_main_add_well_obs(enkf_main_type * ens , const char *obs_key , const char * obs_label , const char * config_file) {
-  const enkf_config_node_type * config_node = enkf_main_assert_obs(ens , obs_key , WELL);
-  enkf_obs_add_well_obs(ens->obs , config_node , obs_key , obs_label , config_file);
+void enkf_main_add_well_obs(enkf_main_type * enkf_main , const char *obs_key , const char * obs_label , const char * config_file) {
+  const enkf_config_node_type * config_node = enkf_main_assert_obs(enkf_main , obs_key , WELL);
+  enkf_obs_add_well_obs(enkf_main->obs , config_node , obs_key , obs_label , config_file);
 }
 
 
-void enkf_main_add_field_obs(enkf_main_type * ens, const char * obs_key, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , time_t meas_time) { 
-  const enkf_config_node_type * config_node = enkf_main_assert_obs(ens , obs_key , FIELD);
-  enkf_obs_add_field_obs(ens->obs , config_node , obs_key , obs_label , size , i , j , k , obs_data , meas_time);
+void enkf_main_add_field_obs(enkf_main_type * enkf_main, const char * obs_key, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , time_t meas_time) { 
+  const enkf_config_node_type * config_node = enkf_main_assert_obs(enkf_main , obs_key , FIELD);
+  enkf_obs_add_field_obs(enkf_main->obs , config_node , obs_key , obs_label , size , i , j , k , obs_data , meas_time);
 }
 
 
-void enkf_main_add_rft_obs(enkf_main_type * ens , const ecl_rft_node_type * rft_node, const double * p_data) {
-  const enkf_config_node_type * config_node = enkf_main_assert_obs(ens , "PRES" , FIELD);
-  enkf_obs_add_rft_obs(ens->obs , config_node , rft_node , p_data);
+void enkf_main_add_rft_obs(enkf_main_type * enkf_main , const ecl_rft_node_type * rft_node, const double * p_data) {
+  const enkf_config_node_type * config_node = enkf_main_assert_obs(enkf_main , "PRES" , FIELD);
+  enkf_obs_add_rft_obs(enkf_main->obs , config_node , rft_node , p_data);
 }
 
 

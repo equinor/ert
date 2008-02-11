@@ -31,7 +31,7 @@ sched_kw_type * sched_kw_alloc(const char * kw_name , sched_type_enum type, bool
   switch (kw->type) {
   case(COMPDAT):
     kw->data = sched_kw_compdat_alloc();
-      break;
+    break;
   case(WCONHIST):
     kw->data = sched_kw_wconhist_alloc();
     break;

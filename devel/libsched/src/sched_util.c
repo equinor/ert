@@ -306,3 +306,11 @@ void sched_util_fprintf_days_line(int date_nr , time_t t1 , time_t t2 , FILE *st
   fprintf(stream , "%04d  %8.2f %4d %2d %2d\n",date_nr , days , ts.tm_year + 1900 , ts.tm_mon + 1, ts.tm_mday);
 }
 
+
+
+time_t sched_util_make_start_date(const int * start_date) {
+  if (start_date == NULL)
+    return 0;
+  else
+    return util_make_time1(start_date[0] , start_date[1] , start_date[2]);
+}

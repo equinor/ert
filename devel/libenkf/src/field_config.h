@@ -6,9 +6,29 @@
 #include <enkf_macros.h>
 #include <enkf_types.h>
 #include <ecl_kw.h>
+#include <path_fmt.h>
 
 
 typedef enum { unknown_file = 0 , rms_roff_file = 1 , ecl_kw_file = 2 , ecl_grdecl_file = 3} field_file_type;
+
+/* Must be power of two series */
+
+typedef enum { none                   = 0  , /* For restart fields */
+               load_unique            = 1  , /* path_fmt_type to load from */ 
+               load_base_case         = 2  , /* Filename to load */
+	       layer_trends           = 4  , /* Config file */   
+	       gaussian_perturbations = 8  , /* Config file */   
+} field_init_type;
+
+/*
+  gaussian_perturbations : Whether gaussian perturbations should be added.
+  layer_trends           : Whether the base case should be baased on layer trends.
+  load_base_case         : Base case loaded from file
+  load_uniqe             : Members loaded from separate files.
+*/
+  
+
+
 typedef struct field_config_struct field_config_type;
 
 struct field_config_struct {
@@ -18,14 +38,22 @@ struct field_config_struct {
   int logmode;
   const int *index_map;
   
-  void * min_value;
-  void * max_value;
+  void 	      * min_value;
+  void        * max_value;
   int           sizeof_ctype;
-  ecl_type_enum ecl_type;
+  
+  ecl_type_enum   ecl_type;
+  field_init_type init_type; 
+  char        	* base_file;
+  char        	* perturbation_config_file;
+  char          * layer_config_file;  
+  path_fmt_type * init_file_fmt;
+
   bool fmt_file;
   bool endian_swap;
   bool limits_set;
   bool write_compressed;
+  bool add_perturbation;
 };
 
 
@@ -34,7 +62,8 @@ field_file_type     field_config_guess_file_type(const char * , bool);
 field_file_type     field_config_manual_file_type(const char * );
 ecl_type_enum       field_config_get_ecl_type(const field_config_type * );
 void                field_config_get_dims(const field_config_type * , int * , int * , int *);
-field_config_type * field_config_alloc(const char * , ecl_type_enum ,  int , int , int , int , const int * , int);
+field_config_type * field_config_alloc_dynamic(const char * , int , int , int , int , const int * );
+field_config_type * field_config_alloc_parameter(const char * , int , int , int , int  , const int * , int , field_init_type  , int  , const char ** );
 void                field_config_free(field_config_type *);
 void                field_config_set_io_options(const field_config_type * , bool *, bool *);
 int                 field_config_get_volume(const field_config_type * );

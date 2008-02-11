@@ -91,7 +91,7 @@ field_file_type field_config_guess_file_type(const char * filename , bool endian
 
 
 
-field_config_type * field_config_alloc(const char * ecl_kw_name , ecl_type_enum ecl_type , int nx , int ny , int nz , int active_size , const int * index_map , int logmode) {
+static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , int nx , int ny , int nz , int active_size , const int * index_map) {
   field_config_type *config = malloc(sizeof *config);
   
   /*
@@ -100,11 +100,14 @@ field_config_type * field_config_alloc(const char * ecl_kw_name , ecl_type_enum 
   */
   config->data_size        = active_size; 
 
+
+  config->base_file                = NULL;
+  config->perturbation_config_file = NULL;
+  config->layer_config_file        = NULL;
   
   config->ecl_kw_name = NULL;
   field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
-  config->logmode = logmode;
 
   config->nx = nx;
   config->ny = ny;
@@ -115,14 +118,67 @@ field_config_type * field_config_alloc(const char * ecl_kw_name , ecl_type_enum 
   config->sz = nx * ny;
   config->index_map = index_map;
   
-  config->fmt_file    	   = false;
-  config->endian_swap 	   = true;
-  config->limits_set  	   = false;
-  config->min_value   	   = malloc(config->sizeof_ctype);
-  config->max_value   	   = malloc(config->sizeof_ctype);
-  config->write_compressed = true;
+  config->fmt_file    	      = false;
+  config->endian_swap 	      = true;
+  config->limits_set  	      = false;
+  config->min_value   	      = malloc(config->sizeof_ctype);
+  config->max_value   	      = malloc(config->sizeof_ctype);
+  config->write_compressed    = true;
+  config->base_file                = NULL;
+  config->perturbation_config_file = NULL;
+  config->layer_config_file        = NULL;
+  config->init_file_fmt            = NULL;
+
   return config;
 }
+
+
+field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , int nx , int ny , int nz , int active_size , const int * index_map) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
+  config->logmode   = 0;
+  config->init_type = none;
+  return config;
+}
+
+
+#define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
+field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , int nx , int ny , int nz , int active_size , const int * index_map , int logmode, field_init_type init_type , int config_len , const char ** config_files) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
+  config->logmode   = logmode;
+  config->init_type = init_type;
+  if (init_type == none) {
+    fprintf(stderr,"%s: invalid init type \n",__func__);
+    abort();
+  }
+  {
+    int config_index = 0;
+    if (init_type & load_unique) {
+      ASSERT_CONFIG_FILE(config_index , config_len);
+      config->init_file_fmt = path_fmt_alloc_file_fmt(config_files[config_index]);
+      config_index++;
+    }
+
+    if (init_type & load_base_case) {
+      ASSERT_CONFIG_FILE(config_index , config_len);
+      config->base_file = util_alloc_string_copy(config_files[config_index]);
+      config_index++;
+    }
+
+    if (init_type & layer_trends) {
+      ASSERT_CONFIG_FILE(config_index , config_len);
+      config->layer_config_file = util_alloc_string_copy(config_files[config_index]);
+      config_index++;
+    }
+
+    if (init_type & gaussian_perturbations) {
+      ASSERT_CONFIG_FILE(config_index , config_len);
+      config->perturbation_config_file = util_alloc_string_copy(config_files[config_index]);
+      config_index++;
+    }
+  }
+  return config;
+}
+#undef ASSERT_CONFIG_FILE
 
 
 bool field_config_write_compressed(const field_config_type * config) { return config->write_compressed; }
@@ -192,7 +248,10 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 void field_config_free(field_config_type * config) {
   free(config->min_value);
   free(config->max_value);
-  if (config->ecl_kw_name != NULL) free(config->ecl_kw_name);
+  if (config->ecl_kw_name 	       != NULL) free(config->ecl_kw_name);
+  if (config->base_file   	       != NULL) free(config->base_file);
+  if (config->perturbation_config_file != NULL) free(config->perturbation_config_file);
+  if (config->layer_config_file        != NULL) free(config->layer_config_file);
   free(config);
 }
   

@@ -316,7 +316,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
 	abort();
       }
       if (!enkf_state_has_node(enkf_state , kw)) 
-	enkf_state_add_node(enkf_state , kw , enkf_config_get_config_ref(enkf_state->config , kw)); 
+	enkf_state_add_node(enkf_state , kw , enkf_config_get_node_ref(enkf_state->config , kw)); 
       {
 	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
 	if (enkf_node_swapped(enkf_node)) enkf_node_realloc_data(enkf_node);
@@ -380,7 +380,7 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
   ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
   for (iwell = 0; iwell < Nwells; iwell++) {
     if (! enkf_state_has_node(enkf_state , well_list[iwell])) 
-      enkf_state_add_node(enkf_state , well_list[iwell] , enkf_config_get_config_ref(enkf_state->config , well_list[iwell])); 
+      enkf_state_add_node(enkf_state , well_list[iwell] , enkf_config_get_node_ref(enkf_state->config , well_list[iwell])); 
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , well_list[iwell]);
       well_load_summary_data(enkf_node_value_ptr(enkf_node) , report_step , ecl_sum);
