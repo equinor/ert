@@ -48,8 +48,10 @@ struct enkf_state_struct {
   enkf_config_type 	* config;
   char             	* eclbase;
   char                  * run_path;
+  char                  * ecl_store_path;
   int                     my_iens;
   state_enum              analysis_state;
+  ecl_store_enum          ecl_store;
 };
 
 
@@ -193,7 +195,7 @@ enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
 }
 
 
-enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , enkf_fs_type * fs , const char * run_path , const char * eclbase ,  meas_vector_type * meas_vector) {
+enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , ecl_store_enum ecl_store , enkf_fs_type * fs , const char * run_path , const char * eclbase ,  const char * ecl_store_path , meas_vector_type * meas_vector) {
   enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
   
   enkf_state->config          = (enkf_config_type *) config;
@@ -208,6 +210,9 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
   enkf_state->data_kw         = hash_alloc(10);
   enkf_state_set_run_path(enkf_state , run_path);
   enkf_state_set_eclbase(enkf_state , eclbase);
+  enkf_state->ecl_store_path  = util_alloc_string_copy(ecl_store_path);
+  enkf_state->ecl_store       = ecl_store; 
+
   return enkf_state;
 }
 
@@ -219,7 +224,7 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  enkf_state_type * new = enkf_state_alloc(src->config , src->my_iens, src->fs , src->run_path , src->eclbase ,  src->meas_vector);
+  enkf_state_type * new = enkf_state_alloc(src->config , src->my_iens, src->ecl_store , src->fs , src->run_path , src->eclbase ,  src->ecl_store_path , src->meas_vector);
   list_node_type *list_node;                                          
   list_node = list_get_head(src->node_list);                     
 
@@ -291,13 +296,47 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_name) 
   if (!enkf_ensemble_has_key(enkf_state->config , node_name)) {
     fprintf(stderr,"%s could not find configuration object for:%s - aborting \n",__func__ , node_name);
     abort();
-  }
-  {
+    }
+    {
     const enkf_config_node_type *config  = enkf_ensemble_get_config_ref(enkf_state->config  , node_name);
     enkf_state_add_node__1(enkf_state , node_name , config);
   }
-}
+  }
 */
+
+
+static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report_nr) {
+  const bool fmt_file  = enkf_state_fmt_file(enkf_state);
+
+  if (enkf_state->ecl_store != store_none) {
+    util_make_path(enkf_state->ecl_store_path);
+    if (enkf_state->ecl_store & store_summary) {
+      char * summary_target = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_file , fmt_file , report_nr);
+      char * summary_src    = ecl_util_alloc_filename(enkf_state->run_path       , enkf_state->eclbase , ecl_summary_file , fmt_file , report_nr);
+      char * header_target  = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr);
+
+      util_copy_file(summary_src , summary_target);
+      if (!util_file_exists(header_target)) {
+	char * header_src = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr);
+	util_copy_file(header_src , header_target);
+	free(header_src);
+      }
+      free(summary_target);
+      free(summary_src);
+      free(header_target);
+    }
+  }
+
+  if (enkf_state->ecl_store & store_restart) {
+    char * restart_target = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_nr);
+    char * restart_src    = ecl_util_alloc_filename(enkf_state->run_path       , enkf_state->eclbase , ecl_restart_file , fmt_file , report_nr);
+    
+    util_copy_file(restart_src , restart_target);
+    free(restart_target);
+    free(restart_src);
+  }
+  
+}
 
 
 static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const ecl_block_type *ecl_block) {
@@ -421,6 +460,7 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
 
 
 void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step ) {
+  enkf_state_ecl_store(enkf_state , report_step);
   enkf_state_load_ecl_restart(enkf_state , unified , report_step);
   enkf_state_load_ecl_summary(enkf_state , unified , report_step);
   enkf_state_measure(enkf_state , enkf_obs , report_step);
@@ -606,6 +646,7 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   free(enkf_state->run_path);
   restart_kw_list_free(enkf_state->restart_kw_list);
   free(enkf_state->eclbase);
+  if (enkf_state->ecl_store_path != NULL) free(enkf_state->ecl_store_path);
   free(enkf_state);
 }
 

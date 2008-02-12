@@ -7,7 +7,7 @@
 
 struct well_config_struct {
   CONFIG_STD_FIELDS;
-  char *  well_name;
+  char  * well_name;
   char ** var_list;
 };
 
@@ -15,6 +15,7 @@ struct well_config_struct {
 
 typedef struct well_config_struct well_config_type;
 
+void               well_config_set_obs_config_file(well_config_type * , const char * );
 const char       * well_config_get_config_txt_file_ref(const well_config_type * );
 well_config_type * well_config_fscanf_alloc(const char * , const char * );
 well_config_type * well_config_alloc(const char * , int , const char ** );

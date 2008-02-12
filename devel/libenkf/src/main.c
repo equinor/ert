@@ -31,22 +31,20 @@ int main (int argc , char ** argv) {
      this scope.
   */
   
-  plain_driver_type * dynamic_analyzed 	      = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Analyzed");
-  plain_driver_type * dynamic_forecast 	      = plain_driver_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Forecast");
-  plain_driver_parameter_type * parameter     = plain_driver_parameter_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Parameter");
-  plain_driver_static_type * eclipse_static   = plain_driver_static_alloc("/tmp/enkf/Ensemble/%04d/mem%03d/Static");
+  
+  enkf_main_type   * enkf_main;
+  enkf_config_type * enkf_config = enkf_config_fscanf_alloc("Config/enkf" , 1 , false , false , true);
+
+  plain_driver_type * dynamic_analyzed 	      = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	   , "%04d/mem%03d/Analyzed");
+  plain_driver_type * dynamic_forecast 	      = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	   , "%04d/mem%03d/Forecast");
+  plain_driver_parameter_type * parameter     = plain_driver_parameter_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Parameter");
+  plain_driver_static_type * eclipse_static   = plain_driver_static_alloc(enkf_config_get_ens_path(enkf_config)    , "%04d/mem%03d/Static");
   fs_index_type     * fs_index                = fs_index_alloc("./Ensemble/mem%03d/INDEX");
   
   enkf_fs_type     * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
-  enkf_main_type   * enkf_main;
-  enkf_config_type * enkf_config = enkf_config_fscanf_alloc("Config/enkf" , false , false , true);
   enkf_main = enkf_main_alloc(enkf_config , fs);
 
-  enkf_config_add_well(enkf_config , "PR10_G18" , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
-  enkf_config_add_well(enkf_config , "T21A"     , 4 , (const char *[4]) {"WGPR" , "WWPR" , "WOPR" , "WBHP"});
-  enkf_config_add_well(enkf_config , "PR03A_G8" , 4 , (const char *[4]) {"WGPR" , "WWCT" , "WOPR" , "WBHP"});
-
-
+  
   /*
   enkf_config_add_type(config , "SWAT"  , ecl_restart , FIELD , 
 		       field_config_alloc("SWAT" , ecl_float_type   , nx , ny , nz , active_size , index_map , 1));
@@ -66,7 +64,6 @@ int main (int argc , char ** argv) {
   */
 
 
-  enkf_main_add_well_obs(enkf_main   , "PR03A_G8" , NULL , "Config/PRO3A_G8");
   enkf_config_add_gen_kw(enkf_config , "Config/gen_kw_config.txt");
   
   enkf_main_load_ecl_init_mt(enkf_main , 319);

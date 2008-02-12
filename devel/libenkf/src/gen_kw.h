@@ -27,16 +27,17 @@ const char     * gen_kw_get_name(const gen_kw_type * , int );
 void             gen_kw_filter_file(const gen_kw_type * , const char * );
 void             gen_kw_export(const gen_kw_type * , int * , char ***, double **);
 
+
 VOID_ECL_WRITE_HEADER  (gen_kw)
 VOID_FWRITE_HEADER  (gen_kw)
 VOID_FREAD_HEADER   (gen_kw)
 VOID_COPYC_HEADER      (gen_kw);
 VOID_SERIALIZE_HEADER  (gen_kw);
 VOID_DESERIALIZE_HEADER  (gen_kw);
+VOID_FREE_DATA_HEADER(gen_kw)
 
-
-VOID_FUNC_HEADER       (gen_kw_sample   );
-VOID_FUNC_HEADER       (gen_kw_free     );
+VOID_FUNC_HEADER       (gen_kw_initialize   );
+VOID_FUNC_HEADER       (gen_kw_free         );
 
 
 MATH_OPS_HEADER(gen_kw);

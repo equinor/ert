@@ -57,12 +57,14 @@ void well_config_add_var(well_config_type * config , const char * var) {
 }
 
 
+
+
 static well_config_type * __well_config_alloc(const char * well_name) {
   well_config_type * config = malloc(sizeof *config);
 
-  config->well_name   = util_alloc_string_copy(well_name);
-  config->data_size   = 0;
-  config->var_list    = NULL;
+  config->well_name   	  = util_alloc_string_copy(well_name);
+  config->data_size   	  = 0;
+  config->var_list    	  = NULL;
   return config;
 }
 

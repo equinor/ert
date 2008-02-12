@@ -20,6 +20,7 @@ struct enkf_obs_struct {
 
 enkf_obs_type * enkf_obs_alloc(const sched_file_type *);
 void            enkf_obs_free(enkf_obs_type * );
+enkf_obs_type * enkf_obs_fscanf_alloc(const sched_file_type * , const char * );
 
 /*void 		enkf_obs_measure(enkf_obs_type * , int , const enkf_state_type *);*/
 void 		enkf_obs_get_observations(enkf_obs_type * , int , obs_data_type * );

@@ -105,14 +105,23 @@ void plain_driver_static_free(void *_driver) {
   The driver takes a copy of the path object, i.e. it can be deleted
   in the calling scope after calling plain_driver_static_alloc().
 */
-void * plain_driver_static_alloc(const char * path) {
+void * plain_driver_static_alloc(const char * root_path , const char * driver_path) {
   plain_driver_static_type * driver = malloc(sizeof * driver);
   driver->load        = plain_driver_static_load_node;
   driver->save        = plain_driver_static_save_node;
   driver->swapout     = plain_driver_static_swapout_node;
   driver->swapin      = plain_driver_static_swapin_node;
   driver->free_driver = plain_driver_static_free;
-  driver->path        = path_fmt_alloc_directory_fmt(path , true);
+  {
+    char *path;
+    if (root_path != NULL)
+      path = util_alloc_full_path(root_path , driver_path);
+    else
+      path = util_alloc_string_copy(driver_path);
+    
+    driver->path        = path_fmt_alloc_directory_fmt(path , true);
+    free(path);
+  }
   driver->plain_driver_static_id = PLAIN_DRIVER_STATIC_ID;
   {
     basic_driver_type * basic_driver = (basic_driver_type *) driver;

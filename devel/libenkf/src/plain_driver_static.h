@@ -6,6 +6,6 @@
 typedef struct plain_driver_static_struct plain_driver_static_type;
 
 
-void * plain_driver_static_alloc(const char *);
+void * plain_driver_static_alloc(const char * , const char *);
 
 #endif

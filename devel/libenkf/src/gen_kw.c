@@ -203,7 +203,7 @@ VOID_DESERIALIZE (gen_kw);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-
+VOID_FREE_DATA(gen_kw)
 VOID_FWRITE (gen_kw)
 VOID_FREAD  (gen_kw)
 VOID_COPYC  (gen_kw)

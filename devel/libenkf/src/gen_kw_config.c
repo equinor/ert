@@ -37,7 +37,6 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
     int size;
     
     size = util_count_file_lines(stream);
-    printf("size: %d \n",size);
     fseek(stream , 0L , SEEK_SET);
     config = __gen_kw_config_alloc_empty(size);
     do {

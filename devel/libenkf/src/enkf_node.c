@@ -12,6 +12,8 @@
 #include <well.h>
 #include <ecl_static_kw.h>
 #include <pgbox.h>
+#include <gen_kw.h>
+
 
 typedef struct serial_state_struct serial_state_type;
 
@@ -402,6 +404,18 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   node->swapped         = false;
 
   switch (impl_type) {
+  case(GEN_KW):
+    node->alloc       = gen_kw_alloc__;
+    node->ecl_write   = NULL;
+    node->fread_f     = gen_kw_fread__;
+    node->fwrite_f    = gen_kw_fwrite__;
+    node->copyc       = gen_kw_copyc__;
+    node->initialize  = gen_kw_initialize__;
+    node->serialize   = gen_kw_serialize__;
+    node->deserialize = gen_kw_deserialize__;
+    node->freef       = gen_kw_free__;
+    node->free_data   = gen_kw_free_data__;
+    break;
   case(MULTZ):
     node->alloc       = multz_alloc__;
     node->ecl_write   = multz_ecl_write__;

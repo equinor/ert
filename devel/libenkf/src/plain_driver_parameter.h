@@ -6,6 +6,6 @@
 typedef struct plain_driver_parameter_struct plain_driver_parameter_type;
 
 
-void * plain_driver_parameter_alloc(const char *);
+void * plain_driver_parameter_alloc(const char * , const char *);
 
 #endif

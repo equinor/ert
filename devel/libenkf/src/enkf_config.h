@@ -3,6 +3,7 @@
 #include <enkf_config_node.h>
 #include <stdbool.h>
 #include <time.h>
+#include <enkf_types.h>
 
 typedef struct enkf_config_struct enkf_config_type;
 
@@ -26,16 +27,19 @@ void                enkf_config_add_gen_kw(enkf_config_type * , const char * );
 void                enkf_config_add_type(enkf_config_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);
 time_t              enkf_config_get_start_date(const enkf_config_type * );
 const        char * enkf_config_get_schedule_file(const enkf_config_type * );
+const        char * enkf_config_get_obs_config_file(const enkf_config_type * );
+const        char * enkf_config_get_ens_path(const enkf_config_type * config);
 
 const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * , const char * );
 void                          enkf_config_get_grid_dims(const enkf_config_type * , int *, int *, int *, int *);
 char 			    * enkf_config_alloc_run_path(const enkf_config_type * , int );
 char 			    * enkf_config_alloc_eclbase(const enkf_config_type  * , int );
+char 			    * enkf_config_alloc_ecl_store_path(const enkf_config_type  * , int );
 int                           enkf_config_get_ens_size(const enkf_config_type * );
 void enkf_config_free(enkf_config_type * );
 bool enkf_config_get_unified(const enkf_config_type * );
 
-enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  bool  ,  bool   , bool );
-
-
+enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  int , bool  ,  bool   , bool );
+int                enkf_config_get_ens_offset(const enkf_config_type * );
+ecl_store_enum     enkf_config_iget_ecl_store(const enkf_config_type * , int );
 #endif

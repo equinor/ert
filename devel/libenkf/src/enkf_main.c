@@ -65,7 +65,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs) {
   enkf_main->config         = config;
   enkf_main->sched_file     = sched_file_alloc(enkf_config_get_start_date(config));
   sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_file(config));
-  enkf_main->obs            = enkf_obs_alloc(enkf_main->sched_file);
+  enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->sched_file , enkf_config_get_obs_config_file(config));
   enkf_main->obs_data       = obs_data_alloc();
   enkf_main->fs             = fs;
 
@@ -73,16 +73,19 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs) {
   enkf_main->state_list   = malloc(ens_size * sizeof * enkf_main->state_list);
   {
     int iens;
-    int iens_offset = 1;
+    int iens_offset = enkf_config_get_ens_offset(config);
     for (iens = 0; iens < ens_size; iens++) {
-      char * run_path = enkf_config_alloc_run_path(config , iens + iens_offset);
-      char * eclbase  = enkf_config_alloc_eclbase (config , iens + iens_offset);
-      enkf_main->state_list[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_main->fs , 
+      char * run_path 	    = enkf_config_alloc_run_path(config , iens + iens_offset);
+      char * eclbase  	    = enkf_config_alloc_eclbase (config , iens + iens_offset);
+      char * ecl_store_path = enkf_config_alloc_ecl_store_path (config , iens + iens_offset);
+      enkf_main->state_list[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
 						     run_path , 
 						     eclbase  , 
+						     ecl_store_path , 
 						     meas_matrix_iget_vector(enkf_main->meas_matrix , iens));
       free(run_path);
       free(eclbase);
+      free(ecl_store_path);
     }
   }
   enkf_main->thread_pool_load_ecl = NULL;

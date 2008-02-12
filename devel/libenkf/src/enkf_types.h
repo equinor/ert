@@ -50,6 +50,12 @@ typedef enum {abs_error = 0 , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_er
 
 typedef enum {nolog = 0 , log_input_mask = 1 , log_enkf_mask = 2 , log_output_mask = 4 , log_all = 7} enkf_logmode_enum;
 
+
+typedef enum {store_none     = 0,
+	      store_summary  = 1,
+	      store_restart  = 2} ecl_store_enum;
+
+
 enkf_impl_type    enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(enkf_impl_type );
 enkf_impl_type    enkf_types_check_impl_type(const char * );
