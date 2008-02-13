@@ -10,6 +10,7 @@
 #include <history.h>
 #include <enkf_util.h>
 #include <sched_file.h>
+#include <enkf_config.h>
 
 
 
@@ -17,14 +18,13 @@
 
 
 
-
-enkf_obs_type * enkf_obs_alloc(const sched_file_type * sched_file ) {
+static enkf_obs_type * enkf_obs_alloc(const sched_file_type * sched_file , const history_type * hist) {
   enkf_obs_type * enkf_obs = malloc(sizeof * enkf_obs);
   enkf_obs->obs_hash 	   = hash_alloc(10);
   
   
   enkf_obs->sched_file     = sched_file;
-  enkf_obs->hist     	   = history_alloc_from_schedule(sched_file);
+  enkf_obs->hist     	   = hist;
   enkf_obs->num_reports    = history_get_num_reports(enkf_obs->hist);
   return enkf_obs;
 }
@@ -154,7 +154,6 @@ void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_nod
 
 void enkf_obs_free(enkf_obs_type * enkf_obs) {
   hash_free(enkf_obs->obs_hash);
-  history_free(enkf_obs->hist);
   free(enkf_obs);
 }
 
@@ -165,7 +164,7 @@ void enkf_obs_free(enkf_obs_type * enkf_obs) {
 
 void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * well_name , const char * obs_label , const char * config_file) {
   bool default_active = true;
-  well_obs_type * well_obs = well_obs_fscanf_alloc(config_file , enkf_config_node_get_ref(config_node) , enkf_obs->hist);
+  well_obs_type * well_obs = well_obs_fscanf_alloc(config_file , enkf_config_node_get_ref(config_node) , enkf_obs->hist , enkf_obs->sched_file);
   enkf_obs_add_obs(enkf_obs , well_name , obs_node_alloc(well_obs , obs_label , enkf_obs->num_reports , default_active , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__));
 }
 
@@ -208,9 +207,12 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
 
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }
-enkf_obs_type * enkf_obs_fscanf_alloc(const sched_file_type * sched_file , const char * config_file) {
+enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sched_file_type * sched_file , const history_type * hist) {
+  char * config_path;
+  const char * config_file = enkf_config_get_obs_config_file(config);
+  util_alloc_file_components(config_file , &config_path , NULL , NULL);
   FILE * stream = util_fopen(config_file , "r");
-  enkf_obs_type * enkf_obs = enkf_obs_alloc(sched_file);
+  enkf_obs_type * enkf_obs = enkf_obs_alloc(sched_file , hist);
   bool   at_eof;
 
   do {
@@ -233,21 +235,27 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const sched_file_type * sched_file , const
 	}
       }
       if (active_tokens > 0) {
-	const char *kw = token_list[0];
-	void * config_node = NULL;
+	const char *kw           = token_list[0];
+	const char * well_name   = token_list[1];
+	char * config_file = util_alloc_full_path(config_path , token_list[2]);
 	char * obs_label   = NULL;
+	const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , well_name);
+
 	
 	if (strcmp(kw , "WELL") == 0) {
 	  ASSERT_TOKENS("WELL" , active_tokens , 2);
-	  enkf_obs_add_well_obs(enkf_obs , config_node , token_list[1] , obs_label , token_list[2]);
+	  enkf_obs_add_well_obs(enkf_obs , config_node , well_name , obs_label , config_file);
 	} else 
 	  fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
+	
+	free(config_file);
       }
       util_free_string_list(token_list , tokens);
       free(line);
     }
   } while ( !at_eof );
 
+  free(config_path);
   fclose(stream);
   return enkf_obs;
 }

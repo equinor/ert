@@ -69,7 +69,7 @@ int main (int argc , char ** argv) {
   enkf_main_load_ecl_init_mt(enkf_main , 319);
   {
     int iens;
-    for (iens = 0; iens < 10; iens++)
+    for (iens = 0; iens < enkf_config_get_ens_size(enkf_config); iens++)
       enkf_main_iload_ecl_mt(enkf_main , iens);
     
   }

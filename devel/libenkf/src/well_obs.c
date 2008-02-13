@@ -4,35 +4,45 @@
 #include <util.h>
 #include <enkf_util.h>
 #include <well_obs.h>
+#include <hash.h>
 #include <meas_op.h>
 #include <meas_vector.h>
 #include <hash.h>
 #include <list.h>
 #include <history.h>
+#include <sched_file.h>
 #include <well_config.h>
 #include <well.h>
 
 
 
-typedef struct well_obs_error_struct well_obs_error_type;
+typedef struct obs_error_struct      obs_error_type;
+typedef struct well_var_obs_struct   well_var_obs_type;
 
 
-struct well_obs_error_struct {
+struct obs_error_struct {
   int size;
   double   	      * abs_std;
   double   	      * rel_std; 
+  bool                * active;
   enkf_obs_error_type * error_mode;
+};
+
+
+
+struct well_var_obs_struct {
+  char                   * var;
+  bool                     currently_active;        
+  obs_error_type         * error;
 };
 
 
 struct well_obs_struct {
   const well_config_type * config;
-  int    	           size;
-  const history_type     *  hist;
-  char   	       	 ** var_list;
-
-  bool                   *  currently_active;        
-  well_obs_error_type    ** error;
+  const history_type     * hist;
+  const sched_file_type  * sched_file;
+  hash_type              * var_hash;
+  int                      __num_reports;
 };
 
 
@@ -40,11 +50,12 @@ struct well_obs_struct {
 
 
 
-static void well_obs_error_realloc(well_obs_error_type * well_error, int new_size) {
+static void obs_error_realloc(obs_error_type * well_error, int new_size) {
   int old_size           = well_error->size;
   well_error->abs_std    = enkf_util_realloc(well_error->abs_std    , new_size * sizeof * well_error->abs_std    , __func__);
   well_error->rel_std    = enkf_util_realloc(well_error->rel_std    , new_size * sizeof * well_error->rel_std    , __func__);
   well_error->error_mode = enkf_util_realloc(well_error->error_mode , new_size * sizeof * well_error->error_mode , __func__);
+  well_error->active     = enkf_util_realloc(well_error->active     , new_size * sizeof * well_error->active     , __func__);
   well_error->size       = new_size;
 
   if (new_size > old_size && old_size > 0) {
@@ -53,6 +64,7 @@ static void well_obs_error_realloc(well_obs_error_type * well_error, int new_siz
       well_error->abs_std[report_nr]    = well_error->abs_std[old_size-1];
       well_error->rel_std[report_nr]    = well_error->rel_std[old_size-1];
       well_error->error_mode[report_nr] = well_error->error_mode[old_size-1];
+      well_error->active[report_nr]     = well_error->active[old_size-1];
     }
   }
 }
@@ -60,14 +72,15 @@ static void well_obs_error_realloc(well_obs_error_type * well_error, int new_siz
 
 
 
-static well_obs_error_type * well_obs_error_alloc(int size) {
-  well_obs_error_type * well_error = malloc(sizeof * well_error);
+static obs_error_type * obs_error_alloc(int size) {
+  obs_error_type * well_error = malloc(sizeof * well_error);
 
   well_error->size       = 0;
   well_error->abs_std    = NULL;
   well_error->rel_std    = NULL;
   well_error->error_mode = NULL;
-  well_obs_error_realloc(well_error , size);
+  well_error->active     = NULL;
+  obs_error_realloc(well_error , size);
   
   return well_error;
 }
@@ -75,15 +88,16 @@ static well_obs_error_type * well_obs_error_alloc(int size) {
 
 
 
-static void well_obs_error_free(well_obs_error_type * well_error) {
+static void obs_error_free(obs_error_type * well_error) {
   free(well_error->abs_std);
   free(well_error->rel_std);
   free(well_error->error_mode);
+  free(well_error->active);
   free(well_error);
 }
 
 
-static void well_obs_error_iset(well_obs_error_type * well_error , int report , double abs_std , double rel_std , enkf_obs_error_type error_mode) {
+static void obs_error_iset(obs_error_type * well_error , int report , double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
   if (report < 0 || report >= well_error->size) {
     fprintf(stderr,"%s report_nr:%d not in interval [0,%d> - aborting \n",__func__ , report , well_error->size);
     abort();
@@ -104,30 +118,31 @@ static void well_obs_error_iset(well_obs_error_type * well_error , int report , 
   well_error->abs_std[report]    = abs_std;
   well_error->rel_std[report]    = rel_std;
   well_error->error_mode[report] = error_mode;
+  well_error->active[report]     = active;
 }
 
 
 
-static void well_obs_error_set_block(well_obs_error_type * well_error , int first_report , int last_report , double abs_std , double rel_std , enkf_obs_error_type error_mode) {
+static void obs_error_set_block(obs_error_type * well_error , int first_report , int last_report , double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
   int report_nr;
   for (report_nr = 0; report_nr <= last_report; report_nr++)
-    well_obs_error_iset(well_error , report_nr , abs_std , rel_std , error_mode);
+    obs_error_iset(well_error , report_nr , abs_std , rel_std , error_mode , active);
 }
 
 
-static void well_obs_error_set_all(well_obs_error_type * well_error , double abs_std , double rel_std , enkf_obs_error_type error_mode) {
-  well_obs_error_set_block(well_error , 0 , well_error->size - 1, abs_std , rel_std , error_mode);
+static void obs_error_set_all(obs_error_type * well_error , double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+  obs_error_set_block(well_error , 0 , well_error->size - 1, abs_std , rel_std , error_mode , active);
 }
 
-static void well_obs_error_set_last(well_obs_error_type * well_error , int report_size, double abs_std , double rel_std , enkf_obs_error_type error_mode) {
-  well_obs_error_set_block(well_error , well_error->size - report_size , well_error->size - 1, abs_std , rel_std , error_mode);
+static void obs_error_set_last(obs_error_type * well_error , int report_size, double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+  obs_error_set_block(well_error , well_error->size - report_size , well_error->size - 1, abs_std , rel_std , error_mode , active);
 }
 
-static void well_obs_error_set_first(well_obs_error_type * well_error , int report_size, double abs_std , double rel_std , enkf_obs_error_type error_mode) {
-  well_obs_error_set_block(well_error , 0 , report_size , abs_std , rel_std , error_mode);
+static void obs_error_set_first(obs_error_type * well_error , int report_size, double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+  obs_error_set_block(well_error , 0 , report_size , abs_std , rel_std , error_mode , active);
 }
 
-static double well_obs_error_iget_std(well_obs_error_type * well_error , int report_step, double data) {
+static double obs_error_iget_std(obs_error_type * well_error , int report_step, double data) {
   if (report_step < 0 || report_step >= well_error->size) {
     fprintf(stderr,"%s report_nr:%d not in interval [0,%d> - aborting \n",__func__ , report_step , well_error->size);
     abort();
@@ -152,64 +167,174 @@ static double well_obs_error_iget_std(well_obs_error_type * well_error , int rep
   }
 }
 
+/*****************************************************************/
+
+well_var_obs_type * well_var_obs_alloc(const char * var , int size) {
+  well_var_obs_type * well_var_obs = util_malloc(sizeof * well_var_obs , __func__);
+
+  well_var_obs->var   		 = util_alloc_string_copy(var);
+  well_var_obs->error 		 = obs_error_alloc(size);
+  well_var_obs->currently_active = false;
+  obs_error_set_block(well_var_obs->error , 0 , size - 1 , 0.0 , 0.0 , abs_error , false);
+  
+  return well_var_obs;
+}
+
+
+void well_var_obs_free(well_var_obs_type * well_var_obs) {
+  obs_error_free(well_var_obs->error);
+  free(well_var_obs->var);
+  free(well_var_obs);
+}
+
+
+void well_var_obs_free__(void * well_var_obs) {
+  well_var_obs_free( (well_var_obs_type *) well_var_obs );
+}
+
+
 
 /*****************************************************************/
 
-static well_obs_type * __well_obs_alloc(const well_config_type * config , int size, int report_size , const history_type * hist) {
+static well_obs_type * __well_obs_alloc(const well_config_type * config , const history_type * hist , const sched_file_type * sched_file) {
 
   well_obs_type * well_obs   = malloc(sizeof * well_obs);
-  well_obs->size      	     = size;
-  well_obs->var_list   	     = enkf_util_malloc(size * sizeof * well_obs->var_list   , __func__);
-  well_obs->error            = enkf_util_malloc(size * sizeof * well_obs->error      , __func__);
-  {
-    int ivar;
-    for (ivar = 0; ivar < size; ivar++)
-      well_obs->error[ivar] = well_obs_error_alloc(report_size);
-  }
-  well_obs->currently_active = enkf_util_malloc(size * sizeof * well_obs->currently_active , __func__);
   well_obs->hist             = hist;
+  well_obs->sched_file       = sched_file;
   well_obs->config           = config;
-
+  well_obs->var_hash         = hash_alloc(10);
+  well_obs->__num_reports    = history_get_num_reports(hist);
   return well_obs;
 }
 
 
-/*
-  WOPR  (300|301|302)  abs_std rel_std
-  WWCT  (300|301|302)  abs_std rel_std
-*/
-well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_type * config , const history_type * hist) {
-  FILE * stream = enkf_util_fopen_r(filename , __func__);
-  int size      = util_count_file_lines(stream);
-  well_obs_type * well_obs = __well_obs_alloc(config , size , history_get_num_reports(hist) , hist);
-  char * line = NULL;
-  bool at_eof;
-  int ivar;
 
-  fseek(stream , 0L , SEEK_SET);
-  for (ivar = 0; ivar < size; ivar++) {
-    line = util_fscanf_realloc_line(stream , &at_eof , line);
-    if (!at_eof) {
-      double abs_std, rel_std;
-      int error_mode;
-      char var[32];
-      int scan_count = sscanf(line , "%s    %d  %lg  %lg" , var, &error_mode , &abs_std , &rel_std);
-      if (scan_count == 4) {
-	if (well_config_has_var(config , var)) {
-	  well_obs->var_list[ivar]   = util_alloc_string_copy(var);
-	  well_obs_error_set_all(well_obs->error[ivar] , abs_std , rel_std , error_mode);
-	} else {
-	  fprintf(stderr,"%s: attempt to observe %s/%s but the variable:%s is not added to the state vector - aborting.\n",__func__ , well_config_get_well_name_ref(config) , var , var);
-	  abort();
-	}
-      } else {
-	fprintf(stderr,"%s: invalid input line %d :\"%s\" - aborting \n",__func__ , ivar + 1, line);
+static void well_obs_add_var(const well_obs_type * well_obs , const char * var) {
+  if (well_config_has_var(well_obs->config , var)) {
+    well_var_obs_type * well_var = well_var_obs_alloc(var , well_obs->__num_reports);
+    hash_insert_hash_owned_ref(well_obs->var_hash , var , well_var , well_var_obs_free__);
+  } else {
+    fprintf(stderr,"%s: well: %s does not have variable:%s - aborting \n",__func__ , well_config_get_well_name_ref(well_obs->config) , var);
+    abort();
+  }
+}
+
+
+static bool well_obs_has_var(const well_obs_type * well_obs , const char * var) {
+  return hash_has_key(well_obs->var_hash , var);
+}
+
+
+static well_var_obs_type * well_obs_get_var(const well_obs_type * well_obs , const char * var) {
+  return hash_get(well_obs->var_hash , var);
+}
+
+
+int well_obs_parse_report_nr(const well_obs_type * well_obs , const char * token , int default_value) {
+  int report;
+  if (token[0] == '*')
+    report = default_value;
+  else {
+    time_t date;
+    if (util_sscanf_date(token , &date)) {
+      report = sched_file_time_t_to_report_step(well_obs->sched_file , date , NULL);
+      if (report == -1) abort();
+    } else { 
+      if (!util_sscanf_int(token , &report)) {
+	fprintf(stderr,"%s: failed to parse:\"%s\" to report_nr or date - aborting \n",__func__ , token);
 	abort();
       }
     }
-  } 
+  }
+  return report;
+}
 
-  free(line);
+
+
+/*
+WOPR (*|10|01/01/2002) - (*|12|01/01/2003) (ON|OFF) (ABS|REL|RELMIN) std1  (std2)
+*/
+/*#define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }*/
+well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_type * config , const history_type * hist , const sched_file_type * sched_file) {
+  FILE * stream = enkf_util_fopen_r(filename , __func__);
+  well_obs_type * well_obs = __well_obs_alloc(config , hist , sched_file);
+  bool at_eof;
+  do {
+    char  * line  = util_fscanf_alloc_line(stream , &at_eof);
+    char ** token_list;
+    int     i , tokens , active_tokens;
+    
+    if (line != NULL) {
+      char * var;
+      util_split_string(line , " " , &tokens , &token_list);
+
+      active_tokens = tokens;
+      for (i = 0; i < tokens; i++) {
+	if (token_list[i][0] == '-') {
+	  if (token_list[i][1] == '-') {
+	    active_tokens = i;
+	    break;
+	  }
+	}
+      }
+      
+      if (active_tokens >= 5) {
+	well_var_obs_type * well_var;
+	var = token_list[0];
+	if ( !well_obs_has_var(well_obs , var) )
+	  well_obs_add_var(well_obs , var);
+
+	well_var = well_obs_get_var(well_obs , var);
+	{
+	  char *on_off = token_list[4];
+	  int report1 , report2;
+	  report1 = well_obs_parse_report_nr(well_obs , token_list[1] , 0);
+	  if ( ! (token_list[2][0] == '-') ) {
+	    fprintf(stderr,"%s: expected \"-\" separating dates|report_nr - aborting\n",__func__);
+	    abort();
+	  }
+	  report2 = well_obs_parse_report_nr(well_obs , token_list[3] , well_obs->__num_reports - 1);
+	  if (strcmp(on_off , "OFF") == 0) 
+	    obs_error_set_block(well_var->error , report1 , report2 , 0.0 , 0.0 , abs_error , false);
+	  else if (strcmp(on_off , "ON") == 0) {
+	    if (active_tokens >= 7) {
+	      double std1 , std2;
+	      char * error_mode = token_list[5];
+	      if (sscanf(token_list[6] , "%lg" , &std1) != 1) {
+		fprintf(stderr,"%s: failed to parse: %s as floating number - aborting \n",__func__ , token_list[6]);
+		abort();
+	      }
+	      if (strcmp(error_mode , "ABS") == 0) 
+		obs_error_set_block(well_var->error , report1 , report2 , std1 , 0.0  , abs_error , false);
+	      else if (strcmp(error_mode , "REL") == 0)
+		obs_error_set_block(well_var->error , report1 , report2 , 0.0  , std1 , rel_error , false);
+	      else if (strcmp(error_mode , "RELMIN") == 0) {
+		if (active_tokens >= 8) {
+		  if (sscanf(token_list[7] , "%lg" , &std2) == 1)
+		    obs_error_set_block(well_var->error , report1 , report2 , std1 , std2 , rel_min_abs_error , false);
+		  else {
+		    fprintf(stderr,"%s: could not parse: %s as floating number - aborting \n",__func__ , token_list[7]);
+		    abort();
+		  }
+		} else {
+		  fprintf(stderr,"%s: to few tokens - aborting \n",__func__);
+		  abort();
+		}
+	      }
+	    }  
+	  } else {
+	    fprintf(stderr,"%s: did not recognize:%s - aborting \n",__func__ ,on_off);
+	    abort();
+	  }
+	}
+      } else {
+	if (active_tokens > 0)
+	  fprintf(stderr,"%s ** Warning ** line:%s ignored \n",__func__ , line);
+      }
+      util_free_string_list(token_list , tokens);
+    }
+    free(line);
+  } while (!at_eof);
   fclose(stream);
   return well_obs;
 }
@@ -218,66 +343,53 @@ well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_
 
 
 
-well_obs_type * well_obs_alloc(const well_config_type * config , int nvar , const char ** var_list , const history_type * hist , const double * abs_std , const double * rel_std , const enkf_obs_error_type * error_mode ) {
-  int i;
-  well_obs_type * well_obs  = __well_obs_alloc(config , nvar , history_get_num_reports(hist) , hist);
-
-  for (i=0; i < nvar; i++) {
-    if (well_config_has_var(config , var_list[i])) 
-      well_obs->var_list[i] = util_alloc_string_copy(var_list[i]);
-    else {
-      fprintf(stderr,"%s: attempt to observe %s/%s but the variable:%s is not added to the state vector - aborting.\n",
-	      __func__ , well_config_get_well_name_ref(config) , var_list[i] , var_list[i]);
-      abort();
-    }
-    well_obs_error_set_all(well_obs->error[i] , abs_std[i] , rel_std[i] , error_mode[i]);
-  }
-  return well_obs;
-}
 
 
 
 
 void well_obs_get_observations(const well_obs_type * well_obs , int report_step, obs_data_type * obs_data) {
   const char *well_name = well_config_get_well_name_ref(well_obs->config);
+  char ** var_list;
   const int kw_len = 16;
   char kw[kw_len+1];
   int i;
-  for (i=0; i < well_obs->size; i++) {
+  var_list = hash_alloc_keylist(well_obs->var_hash);
+  for (i = 0; i < hash_get_size(well_obs->var_hash); i++) {
     bool default_used;
-    double d   = history_get2(well_obs->hist , report_step , well_name , well_obs->var_list[i] , &default_used);
+    double d   = history_get2(well_obs->hist , report_step , well_name , var_list[i] , &default_used);
+    well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
     if (!default_used) {
-      double std = well_obs_error_iget_std(well_obs->error[i] , report_step , d);
+      double std = obs_error_iget_std(obs->error , report_step , d);
       strncpy(kw , well_name   , kw_len);
       strcat(kw , "/");
-      strncat(kw , well_obs->var_list[i] , kw_len - 1 - (strlen(well_name)));
+      strncat(kw , var_list[i] , kw_len - 1 - (strlen(well_name)));
       obs_data_add(obs_data , d , std , kw);
-      well_obs->currently_active[i] = true;
+      obs->currently_active = true;
     } else 
-      well_obs->currently_active[i] = false;
+      obs->currently_active = false;
   }
+  hash_free_ext_keylist(well_obs->var_hash , var_list);
 }
 
 
 
 void well_obs_measure(const well_obs_type * well_obs , const well_type * well_state , meas_vector_type * meas_vector) {
   int i;
-
-  for (i=0; i < well_obs->size; i++) 
-    if (well_obs->currently_active[i])
-      meas_vector_add(meas_vector , well_get(well_state , well_obs->var_list[i]));
+  char ** var_list;
+  var_list = hash_alloc_keylist(well_obs->var_hash);
   
+  for (i=0; i < hash_get_size(well_obs->var_hash); i++) {
+    well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
+    if (obs->currently_active) {
+      meas_vector_add(meas_vector , well_get(well_state , var_list[i]));
+    } 
+  }
+  hash_free_ext_keylist(well_obs->var_hash , var_list);
 }
 
 
 void well_obs_free(well_obs_type * well_obs) {
-  util_free_string_list(well_obs->var_list , well_obs->size);
-  free(well_obs->currently_active);
-  {
-    int ivar;
-    for (ivar = 0; ivar < well_obs->size; ivar++)
-      well_obs_error_free(well_obs->error[ivar]);
-  }
+  hash_free(well_obs->var_hash);
   free(well_obs);
 }
 

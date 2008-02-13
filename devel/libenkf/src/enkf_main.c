@@ -65,7 +65,8 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs) {
   enkf_main->config         = config;
   enkf_main->sched_file     = sched_file_alloc(enkf_config_get_start_date(config));
   sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_file(config));
-  enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->sched_file , enkf_config_get_obs_config_file(config));
+  enkf_main->hist           = history_alloc_from_schedule(enkf_main->sched_file);
+  enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->config , enkf_main->sched_file , enkf_main->hist);
   enkf_main->obs_data       = obs_data_alloc();
   enkf_main->fs             = fs;
 
@@ -136,6 +137,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
     free(enkf_main->state_list);
   }
   sched_file_free(enkf_main->sched_file);
+  history_free(enkf_main->hist);
   meas_matrix_free(enkf_main->meas_matrix);
   obs_data_free(enkf_main->obs_data);
   free(enkf_main);
