@@ -99,6 +99,7 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_ar
     /* NORMAL mu std       */
     transf   = trans_normal;
     void_arg = void_arg_alloc2(double_value , double_value);
+    printf("Har funnet normal pos:%d \n",ftell(stream));
   } else if (strcmp(func_name , "UNIFORM") == 0) {
     /* Uniform distribution */
     /* UNIFORM min max      */
@@ -134,7 +135,8 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_ar
     abort();
   }
   void_arg_fscanf(void_arg , stream);
-  
+  printf("Har lest argumenter:%d \n",ftell(stream));
+
   *_func_name = func_name;
   *_void_arg  = void_arg;
   return transf;

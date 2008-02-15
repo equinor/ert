@@ -33,6 +33,9 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   case GEN_KW:
     return "GEN_KW";
     break;
+  case RELPERM:
+    return "RELPERM";
+    break;
   default:
     fprintf(stderr,"%s: internal error - unrecognized implementation type: %d - aborting \n",__func__ , impl_type);
     abort();
@@ -51,6 +54,7 @@ static enkf_impl_type enkf_types_get_impl_type__(const char * impl_type_string) 
   else if_strcmp(WELL);
   else if_strcmp(PGBOX);
   else if_strcmp(GEN_KW);
+  else if_strcmp(RELPERM);
   else impl_type = INVALID;
   return impl_type;
 }
