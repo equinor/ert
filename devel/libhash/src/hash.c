@@ -39,8 +39,8 @@ typedef struct hash_sort_node {
 
 #define HASH_GET_SCALAR(FUNC,TYPE) \
 TYPE FUNC (const hash_type *hash,  const char *key) { \
-   node_data_type *data = hash_get(hash , key); \
-   return *((TYPE *) data->data);                     \
+   node_data_type *node_data = hash_get(hash , key); \
+   return *((TYPE *) node_data_get_data(node_data)); \
 }
 
 
@@ -57,16 +57,9 @@ void FUNC(hash_type *hash, const char *key , TYPE *value, int SIZE) {  \
 
 #define HASH_GET_ARRAY_PTR(FUNC,TYPE)\
 TYPE * FUNC(const hash_type * hash, const char *key) { \
-   node_data_type *data = hash_get(hash , key);       \
-   return ((TYPE *) data->data);                      \
+   node_data_type *node_data = hash_get(hash , key);   \
+   return ((TYPE *) node_data_get_data(node_data));    \
 }
-
-#define HASH_NODE_AS(FUNC,TYPE)                           \
-TYPE FUNC(const hash_node_type * node) {                  \
-   node_data_type *data = hash_node_value_ptr(node);      \
-   return *((TYPE *) data->data);                         \
-} 
-
 
 /*****************************************************************/
 
@@ -133,8 +126,10 @@ HASH_GET_SCALAR(hash_get_double , double)
 HASH_GET_ARRAY_PTR(hash_get_double_ptr , double)
 HASH_GET_ARRAY_PTR(hash_get_int_ptr    , int)
 
-HASH_NODE_AS(hash_node_as_int    , int)
-HASH_NODE_AS(hash_node_as_double , double)
+     /*
+       HASH_NODE_AS(hash_node_as_int    , int)
+       HASH_NODE_AS(hash_node_as_double , double)
+     */
 
 static uint32_t hash_index(const uint8_t *key, size_t len) {
   uint32_t hash = 0;
@@ -320,12 +315,13 @@ static void hash_insert_node(hash_type *hash , hash_node_type *node) {
 
 
 static void hash_insert_managed_copy(hash_type *hash, const char *key, const void *value_ptr , int value_size) {
-  hash_node_type *node;
-  node_data_type hash_data;
-  hash_data.data      = (void *) value_ptr;
-  hash_data.byte_size = value_size;
-  node = hash_node_alloc_new(key , &hash_data , node_data_copyc , node_data_free , hash->hashf , hash->size);
+  hash_node_type *node; 
+  node_data_type *node_data = node_data_alloc(value_size , value_ptr);
+  node = hash_node_alloc_new(key , node_data , node_data_copyc , node_data_free , hash->hashf , hash->size);
   hash_insert_node(hash , node);
+
+  /* This only frees the container - actual storage is freed when the hash table is deleted */
+  free(node_data);
 }
 
 
@@ -374,10 +370,11 @@ HASH_INSERT_ARRAY (hash_insert_int_array    , int)
 HASH_INSERT_ARRAY (hash_insert_double_array , double)
 
 
-char * hash_get_string(const hash_type *hash , const char *key) {
-  node_data_type *data = hash_get(hash , key);
-  if (data != NULL)
-    return data->data;
+
+const char * hash_get_string(const hash_type *hash , const char *key) {
+  node_data_type *node_data = hash_get(hash , key);
+  if (node_data != NULL)
+    return node_data_get_data(node_data);
   else
     return NULL;
 }
