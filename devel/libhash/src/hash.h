@@ -21,7 +21,7 @@ void        	  hash_insert_copy(hash_type *, const char * , const void *, copyc_
 void        	  hash_insert_string(hash_type *, const char *, const char *);
 bool        	  hash_has_key(const hash_type *, const char *);
 void        	* hash_get(const hash_type *, const char *);
-char        	* hash_get_string(const hash_type * , const char *);
+const char      * hash_get_string(const hash_type * , const char *);
 void        	  hash_del(hash_type *, const char *);
 void              hash_clear(hash_type *);
 void        	  hash_printf_keys(hash_type *hash);

@@ -45,10 +45,9 @@ void list_node_link(list_node_type *node1 , list_node_type *node2) {
 
 list_node_type * list_node_alloc_managed(const void *value_ptr , int value_size) {
   list_node_type *node;
-  node_data_type list_data;
-  list_data.data      = (void *) value_ptr;
-  list_data.byte_size = value_size;
-  node = list_node_alloc(&list_data , node_data_copyc , node_data_free);
+  node_data_type *node_data = node_data_alloc(value_size , value_ptr);
+  node = list_node_alloc(node_data , node_data_copyc , node_data_free);
+  free(node_data);
   return node;
 }
 
@@ -77,21 +76,22 @@ void list_node_free(list_node_type *node) {
 
 
 const char * list_node_get_string(list_node_type *node) {
-  node_data_type *data = list_node_value_ptr(node);
-  return (const char *) data->data;                
+  node_data_type *node_data = list_node_value_ptr(node);
+  return (const char *) node_data_get_data(node_data);
 }
 
 
 /*****************************************************************/
 
-#define LIST_NODE_AS_SCALAR(FUNC,TYPE)                    \
-TYPE FUNC(const list_node_type * node) {                  \
-   node_data_type *data = list_node_value_ptr(node);      \
-   return *((TYPE *) data->data);                         \
+#define LIST_NODE_AS_SCALAR(FUNC,TYPE)                         \
+TYPE FUNC(const list_node_type * node) {                       \
+   node_data_type *node_data = list_node_value_ptr(node);      \
+   return *((TYPE *) node_data_get_data(node_data));           \
 } 
 
 
 LIST_NODE_AS_SCALAR(list_node_as_int    , int)
 LIST_NODE_AS_SCALAR(list_node_as_double , double)
+
 
 #undef LIST_NODE_AS_SCALAR
