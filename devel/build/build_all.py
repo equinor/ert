@@ -16,6 +16,7 @@ def load_path_list(path_config):
 
 path_list = load_path_list("path_config")
 for path in path_list:
+    print path
     cwd = os.getcwd()
     if os.path.exists("%s/src/makefile" % path):
         os.chdir("%s/src" % path)
