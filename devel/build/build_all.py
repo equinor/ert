@@ -19,4 +19,11 @@ for path in path_list:
     cwd = os.getcwd()
     if os.path.exists("%s/src/makefile" % path):
         os.chdir("%s/src" % path)
-        os.system("make -j 4")
+        os.system("make clean")
+        nCPU = 4
+        if path.find("sample") != -1:
+            nCPU = 1
+        elif path.find("analysis") != -1:
+            nCPU = 1
+        os.system("make -j %d" % nCPU) 
+        os.chdir(cwd)
