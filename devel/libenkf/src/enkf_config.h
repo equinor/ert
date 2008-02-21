@@ -29,6 +29,7 @@ time_t              enkf_config_get_start_date(const enkf_config_type * );
 const        char * enkf_config_get_schedule_file(const enkf_config_type * );
 const        char * enkf_config_get_obs_config_file(const enkf_config_type * );
 const        char * enkf_config_get_ens_path(const enkf_config_type * config);
+char             ** enkf_config_alloc_keylist(const enkf_config_type * , int *);
 
 const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * , const char * );
 void                          enkf_config_get_grid_dims(const enkf_config_type * , int *, int *, int *, int *);

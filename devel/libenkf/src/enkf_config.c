@@ -84,6 +84,12 @@ bool enkf_config_get_unified(const enkf_config_type * enkf_config) { return enkf
 
 const char * enkf_config_get_data_file(const enkf_config_type * ens) { return ens->data_file; }
 
+char ** enkf_config_alloc_keylist(const enkf_config_type * config , int *keys) {
+  *keys = hash_get_size(config->config_hash);
+  return hash_alloc_keylist(config->config_hash);
+}
+
+
 
 bool enkf_config_has_key(const enkf_config_type * config , const char * key) {
   return hash_has_key(config->config_hash , key);
@@ -320,7 +326,6 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * config_file ,
       
       
       if (active_tokens > 0) {
-	printf("Parsing ....: %s \n",token_list[0]);	  
 	impl_type = enkf_types_check_impl_type(token_list[0]);
 	if (impl_type == INVALID) {
 	  const char * kw = token_list[0];
@@ -418,7 +423,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * config_file ,
 	      const char * key         = token_list[1];
 	      const char * ecl_file    = token_list[2];
 	      char       * config_file = util_alloc_full_path(config_path , token_list[3]);
-	      enkf_config_add_type(enkf_config , key , parameter , MULTFLT , ecl_file , multflt_config_fscanf_alloc(config_file));
+	      enkf_config_add_type(enkf_config , key , parameter , EQUIL , ecl_file , equil_config_fscanf_alloc(config_file));
 	      free(config_file);
 	    }
 	    break;

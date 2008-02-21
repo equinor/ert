@@ -107,9 +107,9 @@ void multz_fread(multz_type * multz , FILE * stream) {
 
 
 void multz_ecl_write(const multz_type * multz , const char * eclfile) {
-  DEBUG_ASSERT(multz) 
+  DEBUG_ASSERT(multz)
   {
-    FILE * stream  = enkf_util_fopen_w(eclfile , __func__);
+    FILE * stream  = util_fopen(eclfile , "w");
     
     multz_output_transform(multz);
     multz_config_ecl_write(multz->config , multz_get_output_ref(multz) , stream);

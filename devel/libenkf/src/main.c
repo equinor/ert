@@ -18,11 +18,6 @@ int main (int argc , char ** argv) {
   const char * schedule_file = "SCHEDULE_orig.INC";
   const char * grid_file     = "/d/proj/bg/enkf/EnKF_Grane2008/Refcase/GRANE.EGRID";
   
-  {
-    hash_type * config_hash = hash_alloc(10);
-    config_parse("Config/main" , config_hash);
-  }
-  
   /* 
      It is not clear whether we should send in a filename - or a
      completey parsed object?
@@ -39,47 +34,20 @@ int main (int argc , char ** argv) {
   plain_driver_type * dynamic_forecast 	      = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	   , "%04d/mem%03d/Forecast");
   plain_driver_parameter_type * parameter     = plain_driver_parameter_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Parameter");
   plain_driver_static_type * eclipse_static   = plain_driver_static_alloc(enkf_config_get_ens_path(enkf_config)    , "%04d/mem%03d/Static");
-  fs_index_type     * fs_index                = fs_index_alloc("./Ensemble/mem%03d/INDEX");
+  fs_index_type     * fs_index                = fs_index_alloc(enkf_config_get_ens_path(enkf_config) , "INDEX/mem%03d/INDEX");
   
   enkf_fs_type     * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
   enkf_main = enkf_main_alloc(enkf_config , fs);
 
-  
+  enkf_main_run(enkf_main , 0 , 25);
+
   /*
-  enkf_config_add_type(config , "SWAT"  , ecl_restart , FIELD , 
-		       field_config_alloc("SWAT" , ecl_float_type   , nx , ny , nz , active_size , index_map , 1));
-  
-  enkf_config_add_type(config , "PRESSURE" , ecl_restart , FIELD , 
-		       field_config_alloc("PRESSURE"  , ecl_float_type , nx , ny , nz , active_size , index_map , 1));
-		       
-  enkf_config_add_type(config , "SGAS"  , ecl_restart , FIELD , 
-		       field_config_alloc("SGAS" , ecl_float_type    , nx , ny , nz , active_size , index_map , 1 ));
-
-
-  enkf_config_add_type(config , "RS"     , ecl_restart , FIELD , 
-		       field_config_alloc("RS"  , ecl_float_type        , nx , ny , nz , active_size , index_map , 1 ));
-  
-  enkf_config_add_type(config , "RV"    , ecl_restart , FIELD , 
-		       field_config_alloc("RV"    , ecl_float_type       , nx , ny , nz , active_size , index_map , 1 ));
+    enkf_main_analysis(enkf_main);
+    enkf_main_add_data_kw(enkf_main , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
+    enkf_main_init_eclipse(enkf_main);
   */
-
-
-  enkf_config_add_gen_kw(enkf_config , "Config/gen_kw_config.txt");
   
-  enkf_main_load_ecl_init_mt(enkf_main , 319);
-  {
-    int iens;
-    for (iens = 0; iens < enkf_config_get_ens_size(enkf_config); iens++)
-      enkf_main_iload_ecl_mt(enkf_main , iens);
-    
-  }
-  enkf_main_load_ecl_complete_mt(enkf_main);
-  enkf_main_analysis(enkf_main);
-  exit(1);
-  
-  enkf_main_add_data_kw(enkf_main , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
-  enkf_main_init_eclipse(enkf_main);
-  
+  enkf_config_free(enkf_config);
   enkf_main_free(enkf_main);
   enkf_fs_free(fs);
 }

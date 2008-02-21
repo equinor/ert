@@ -77,8 +77,8 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   R 	= obs_data_allocR(obs_data , ens_size , ens_stride , obs_stride , innov , S , alpha);
   D 	= obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , returnE , &E);
   obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
-
-  /* 
+  
+  /*
      Substractin mean value of S
   */
   for (iobs = 0; iobs < nrobs; iobs++) {
@@ -117,7 +117,7 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   free(D);
   free(innov);
   if (E != NULL) free(E);
-  
+
   printf_matrix(X , ens_size , ens_size , 1 , ens_size);
   return X;
 }

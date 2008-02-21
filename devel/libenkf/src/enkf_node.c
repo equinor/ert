@@ -246,8 +246,13 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
 
 void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
   FUNC_ASSERT(enkf_node->ecl_write);
-  enkf_node->ecl_write(enkf_node->data , path);
+  {
+    char * file = util_alloc_full_path(path , enkf_config_node_get_eclfile_ref(enkf_node->config));
+    enkf_node->ecl_write(enkf_node->data , file);
+    free(file);
+  }
 }
+
 
 void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
   FUNC_ASSERT(enkf_node->fwrite_f);

@@ -29,8 +29,9 @@
 #include <void_arg.h>
 #include <gen_kw_config.h>
 #include <history.h>
-
-
+#include <lsf_jobs.h>
+#include <node_ctype.h>
+#include <pthread.h>
 
 
 struct enkf_main_struct {
@@ -38,13 +39,13 @@ struct enkf_main_struct {
   meas_matrix_type   *meas_matrix;
   enkf_obs_type      *obs;
   obs_data_type      *obs_data;
-  enkf_state_type   **state_list;
+  enkf_state_type   **ensemble;
   sched_file_type    *sched_file;
   history_type       *hist;
   enkf_fs_type       *fs;
 
-  thread_pool_type   *thread_pool_load_ecl;
-  void_arg_type     **arg_load_ecl;
+  thread_pool_type   *thread_pool;
+  void_arg_type     **void_arg;
 };
 
 
@@ -71,26 +72,42 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs) {
   enkf_main->fs             = fs;
 
   enkf_main->meas_matrix  = meas_matrix_alloc(ens_size);
-  enkf_main->state_list   = malloc(ens_size * sizeof * enkf_main->state_list);
+  enkf_main->ensemble     = malloc(ens_size * sizeof * enkf_main->ensemble);
   {
-    int iens;
+    int iens , keys , ik;
     int iens_offset = enkf_config_get_ens_offset(config);
+    char **keylist = enkf_config_alloc_keylist(config , &keys);
     for (iens = 0; iens < ens_size; iens++) {
       char * run_path 	    = enkf_config_alloc_run_path(config , iens + iens_offset);
       char * eclbase  	    = enkf_config_alloc_eclbase (config , iens + iens_offset);
       char * ecl_store_path = enkf_config_alloc_ecl_store_path (config , iens + iens_offset);
-      enkf_main->state_list[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
-						     run_path , 
-						     eclbase  , 
-						     ecl_store_path , 
-						     meas_matrix_iget_vector(enkf_main->meas_matrix , iens));
+      enkf_main->ensemble[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
+						   run_path , 
+						   eclbase  , 
+						   ecl_store_path , 
+						   meas_matrix_iget_vector(enkf_main->meas_matrix , iens));
+      
+      
       free(run_path);
       free(eclbase);
       free(ecl_store_path);
     }
+    for (ik = 0; ik < keys; ik++) {
+      const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , keylist[ik]);
+      for (iens = 0; iens < ens_size; iens++)
+	enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
+    }
+
+    util_free_string_list(keylist , keys);
   }
-  enkf_main->thread_pool_load_ecl = NULL;
-  enkf_main->arg_load_ecl         = NULL;
+
+  
+  /*
+    This - can not be hardcoded ....
+  */
+  enkf_main_add_data_kw(enkf_main , "INIT-CONFIG" , "INCLUDE\n   \'EQUIL.INC\'/\nRPTSOL\n     0  0  0  0  0 0   2  0   0  0   0   0  0   0 /\n");
+  enkf_main->thread_pool = NULL;
+  enkf_main->void_arg    = NULL;
   return  enkf_main;
 
 }
@@ -105,7 +122,7 @@ void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * new_kw , co
   const int ens_size = enkf_config_get_ens_size(enkf_main->config);
   int iens;
   for (iens = 0; iens < ens_size; iens++)
-    enkf_state_add_data_kw(enkf_main->state_list[iens] , new_kw , value);
+    enkf_state_add_data_kw(enkf_main->ensemble[iens] , new_kw , value);
 }
 
 
@@ -113,15 +130,15 @@ void enkf_main_set_data_kw(enkf_main_type * enkf_main , const char * new_kw , co
   const int ens_size = enkf_config_get_ens_size(enkf_main->config);
   int iens;
   for (iens = 0; iens < ens_size; iens++)
-    enkf_state_set_data_kw(enkf_main->state_list[iens] , new_kw , value);
+    enkf_state_set_data_kw(enkf_main->ensemble[iens] , new_kw , value);
 }
 
 
-void enkf_main_init_eclipse(enkf_main_type * enkf_main) {
+void enkf_main_init_eclipse(enkf_main_type * enkf_main , int report_step1 , int report_step2) {
   const int ens_size = enkf_config_get_ens_size(enkf_main->config);
   int iens;
   for (iens = 0; iens < ens_size; iens++)
-    enkf_state_init_eclipse(enkf_main->state_list[iens]);
+    enkf_state_init_eclipse(enkf_main->ensemble[iens] , enkf_main->sched_file , report_step1 , report_step2);
 }
 
 
@@ -133,8 +150,8 @@ void enkf_main_free(enkf_main_type * enkf_main) {
     const int ens_size = enkf_config_get_ens_size(enkf_main->config);
     int i;
     for (i=0; i < ens_size; i++)
-      enkf_state_free(enkf_main->state_list[i]);
-    free(enkf_main->state_list);
+      enkf_state_free(enkf_main->ensemble[i]);
+    free(enkf_main->ensemble);
   }
   sched_file_free(enkf_main->sched_file);
   history_free(enkf_main->hist);
@@ -150,48 +167,48 @@ void enkf_main_free(enkf_main_type * enkf_main) {
 void enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int report_step) {
   const int ens_size = enkf_config_get_ens_size(enkf_main->config);
   enkf_obs_get_observations(enkf_main->obs , report_step , enkf_main->obs_data);
-  if (enkf_main->arg_load_ecl != NULL) {
+  if (enkf_main->void_arg != NULL) {
     fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
     abort();
   }
   {
     int iens;
-    enkf_main->arg_load_ecl = util_malloc(ens_size * sizeof * enkf_main->arg_load_ecl , __func__);
+    enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
     for (iens = 0; iens < ens_size; iens++) {
-      enkf_main->arg_load_ecl[iens] = void_arg_alloc4(pointer_value , pointer_value , int_value , bool_value);
-      void_arg_pack_ptr(enkf_main->arg_load_ecl[iens]  , 0 , enkf_main->state_list[iens]);
-      void_arg_pack_ptr(enkf_main->arg_load_ecl[iens]  , 1 , enkf_main->obs);
-      void_arg_pack_int(enkf_main->arg_load_ecl[iens]  , 2 , report_step);
-      void_arg_pack_bool(enkf_main->arg_load_ecl[iens] , 3 , enkf_config_get_unified(enkf_main->config));
+      enkf_main->void_arg[iens] = void_arg_alloc4(void_pointer , void_pointer , int_value , bool_value);
+      void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
+      void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->obs);
+      void_arg_pack_int(enkf_main->void_arg[iens]  , 2 , report_step);
+      void_arg_pack_bool(enkf_main->void_arg[iens] , 3 , enkf_config_get_unified(enkf_main->config));
     }
   }
 
-  if (enkf_main->thread_pool_load_ecl != NULL) {
+  if (enkf_main->thread_pool != NULL) {
     fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
     abort();
   }
-  enkf_main->thread_pool_load_ecl = thread_pool_alloc(ens_size);
+  enkf_main->thread_pool = thread_pool_alloc(ens_size);
 }
 
 
 
 void enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int iens) {
-  thread_pool_add_job(enkf_main->thread_pool_load_ecl , enkf_state_load_ecl_void , enkf_main->arg_load_ecl[iens]);
+  thread_pool_add_job(enkf_main->thread_pool , enkf_state_load_ecl_void , enkf_main->void_arg[iens]);
 }
 
 
 void enkf_main_load_ecl_complete_mt(enkf_main_type *enkf_main) {
-  thread_pool_join(enkf_main->thread_pool_load_ecl);
-  thread_pool_free(enkf_main->thread_pool_load_ecl);
-  enkf_main->thread_pool_load_ecl = NULL;
-
+  thread_pool_join(enkf_main->thread_pool);
+  thread_pool_free(enkf_main->thread_pool);
+  enkf_main->thread_pool = NULL;
+  
   {
     const int ens_size = enkf_config_get_ens_size(enkf_main->config);
     int iens;
     for (iens = 0; iens < ens_size; iens++)
-      void_arg_free(enkf_main->arg_load_ecl[iens]);
-    free(enkf_main->arg_load_ecl);
-    enkf_main->arg_load_ecl = NULL;
+      void_arg_free(enkf_main->void_arg[iens]);
+    free(enkf_main->void_arg);
+    enkf_main->void_arg = NULL;
   }
 
 }
@@ -248,3 +265,88 @@ void enkf_main_analysis(enkf_main_type * enkf_main) {
     free(X);
   }
 }
+
+
+/*****************************************************************/
+
+void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
+  const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
+  const int sleep_time     	= 1;
+  const int max_running    	= 25;
+  const int max_resubmit        = 10;
+  const bool sub_exit      	= false;
+  const int eclipse_version_nr  = 2;
+  const char * eclipse_que      = "common";
+  const char * resource_request = "rusage[e100=1:duration=10] select[ia32||ia64||x86_64]";
+  const char * summary_path     = "Summary";
+  const char * bsub_status_cmd  = "bjobs -a";
+  const char * submit_cmd       = "/d/proj/bg/enkf/bin/ecl_submit.x";
+  const char * tmp_path         = "/tmp";
+  char * summary_file           = util_malloc(strlen("Summary") + 1 + 4 + 1 + 4 + 1 , __func__);
+  int iens;
+  
+  
+  sprintf(summary_file , "Summary_%04d-%04d" , step1 , step2);
+  lsf_pool_type * lsf_pool = lsf_pool_alloc(enkf_config_get_ens_size(enkf_main->config),
+					    sleep_time         , 
+					    max_running        , 
+					    sub_exit           ,      
+					    eclipse_version_nr , 
+					    eclipse_que        , 
+					    resource_request   , 
+					    summary_path       , 
+					    summary_file       , 
+					    bsub_status_cmd    , 
+					    submit_cmd         ,
+					    tmp_path);
+  free(summary_file);
+
+  enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
+  if (enkf_main->void_arg != NULL) {
+    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
+    abort();
+  }
+  
+  enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
+  for (iens = 0; iens < ens_size; iens++) {
+    enkf_main->void_arg[iens] = void_arg_alloc9(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , bool_value);
+    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
+    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , lsf_pool);
+    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 2 , enkf_main->obs);
+    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 3 , enkf_main->sched_file);
+    void_arg_pack_bool(enkf_main->void_arg[iens] , 4 , enkf_config_get_unified(enkf_main->config));
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 5 , step1);
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 6 , step2);
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 7 , max_resubmit);
+    /* 
+       The final bool is not packed - that is a return value, which
+       is set in the called routine.
+    */
+  }
+  
+  if (enkf_main->thread_pool != NULL) {
+    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
+      abort();
+  }
+  enkf_main->thread_pool = thread_pool_alloc(ens_size);
+  
+  for (iens = 0; iens < ens_size; iens++) 
+    thread_pool_add_job(enkf_main->thread_pool , enkf_state_run_eclipse__ , enkf_main->void_arg[iens]);
+
+  {
+    pthread_t lsf_thread;
+    pthread_create( &lsf_thread , NULL , lsf_pool_run_jobs__ , lsf_pool);
+    pthread_join( lsf_thread , NULL);
+  }
+  thread_pool_join(enkf_main->thread_pool);
+
+
+  for (iens = 0; iens < ens_size; iens++) 
+    void_arg_free(enkf_main->void_arg[iens]);
+  free(enkf_main->void_arg);
+  enkf_main->void_arg = NULL;
+  thread_pool_free(enkf_main->thread_pool);
+  enkf_main->thread_pool = NULL;
+  lsf_pool_free(lsf_pool);
+}
+

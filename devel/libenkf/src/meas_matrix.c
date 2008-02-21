@@ -108,7 +108,6 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int ens_stride , in
     }
   }
   printf_matrix(S , nrobs , matrix->ens_size , obs_stride , ens_stride);
-
 /*   /\*  */
 /*      Code written to facilitate the return of mean and standard */
 /*      deviation of S - currently not used. */

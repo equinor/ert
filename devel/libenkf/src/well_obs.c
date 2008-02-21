@@ -167,6 +167,15 @@ static double obs_error_iget_std(obs_error_type * well_error , int report_step, 
   }
 }
 
+
+static bool obs_error_iactive(const obs_error_type * obs , int report_step) {
+  if (report_step < 0 || report_step >= obs->size) {
+    fprintf(stderr,"%s report_nr:%d not in interval [0,%d> - aborting \n",__func__ , report_step , obs->size);
+    abort();
+  }
+  return obs->active[report_step];
+}
+
 /*****************************************************************/
 
 well_var_obs_type * well_var_obs_alloc(const char * var , int size) {
@@ -305,13 +314,13 @@ well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_
 		abort();
 	      }
 	      if (strcmp(error_mode , "ABS") == 0) 
-		obs_error_set_block(well_var->error , report1 , report2 , std1 , 0.0  , abs_error , false);
+		obs_error_set_block(well_var->error , report1 , report2 , std1 , 0.0  , abs_error , true);
 	      else if (strcmp(error_mode , "REL") == 0)
-		obs_error_set_block(well_var->error , report1 , report2 , 0.0  , std1 , rel_error , false);
+		obs_error_set_block(well_var->error , report1 , report2 , 0.0  , std1 , rel_error , true);
 	      else if (strcmp(error_mode , "RELMIN") == 0) {
 		if (active_tokens >= 8) {
 		  if (sscanf(token_list[7] , "%lg" , &std2) == 1)
-		    obs_error_set_block(well_var->error , report1 , report2 , std1 , std2 , rel_min_abs_error , false);
+		    obs_error_set_block(well_var->error , report1 , report2 , std1 , std2 , rel_min_abs_error , true);
 		  else {
 		    fprintf(stderr,"%s: could not parse: %s as floating number - aborting \n",__func__ , token_list[7]);
 		    abort();
@@ -344,6 +353,15 @@ well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_
 
 
 
+static double well_obs_get_observation__(const history_type * hist , int report_step , const char * well_name , const char * var, bool *active) {
+  bool default_used;
+  double d = history_get2(hist , report_step , well_name , var , &default_used);
+  if (default_used || (d == 0.0))
+    *active = false;
+  else
+    *active = true;
+  return d;
+}
 
 
 
@@ -355,18 +373,18 @@ void well_obs_get_observations(const well_obs_type * well_obs , int report_step,
   int i;
   var_list = hash_alloc_keylist(well_obs->var_hash);
   for (i = 0; i < hash_get_size(well_obs->var_hash); i++) {
-    bool default_used;
-    double d   = history_get2(well_obs->hist , report_step , well_name , var_list[i] , &default_used);
-    well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
-    if (!default_used) {
-      double std = obs_error_iget_std(obs->error , report_step , d);
-      strncpy(kw , well_name   , kw_len);
-      strcat(kw , "/");
-      strncat(kw , var_list[i] , kw_len - 1 - (strlen(well_name)));
-      obs_data_add(obs_data , d , std , kw);
-      obs->currently_active = true;
-    } else 
-      obs->currently_active = false;
+    well_var_obs_type * var = well_obs_get_var(well_obs , var_list[i]);
+    var->currently_active = false;
+    if (obs_error_iactive(var->error , report_step)) {
+      double d   = well_obs_get_observation__(well_obs->hist , report_step , well_name , var_list[i] , &var->currently_active);
+      if (var->currently_active) {
+	double std = obs_error_iget_std(var->error , report_step , d);
+	strncpy(kw , well_name   , kw_len);
+	strcat(kw , "/");
+	strncat(kw , var_list[i] , kw_len - 1 - (strlen(well_name)));
+	obs_data_add(obs_data , d , std , kw);
+      } 
+    }
   }
   hash_free_ext_keylist(well_obs->var_hash , var_list);
 }
@@ -380,9 +398,8 @@ void well_obs_measure(const well_obs_type * well_obs , const well_type * well_st
   
   for (i=0; i < hash_get_size(well_obs->var_hash); i++) {
     well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
-    if (obs->currently_active) {
+    if (obs->currently_active) 
       meas_vector_add(meas_vector , well_get(well_state , var_list[i]));
-    } 
   }
   hash_free_ext_keylist(well_obs->var_hash , var_list);
 }
@@ -392,6 +409,7 @@ void well_obs_free(well_obs_type * well_obs) {
   hash_free(well_obs->var_hash);
   free(well_obs);
 }
+
 
 
 

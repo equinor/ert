@@ -12,13 +12,15 @@
 #include <ecl_block.h>
 #include <meas_vector.h>
 #include <enkf_fs.h>
+#include <lsf_jobs.h>
+#include <sched_file.h>
 
 
 typedef struct enkf_state_struct enkf_state_type;
 
 void               enkf_state_set_data_kw(enkf_state_type *, const char * , const char * );
 void               enkf_state_add_data_kw(enkf_state_type *, const char * , const char * );
-void               enkf_state_init_eclipse(enkf_state_type *);
+void               enkf_state_init_eclipse(enkf_state_type *, const sched_file_type * , int , int);
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
 bool 		   enkf_state_get_analyzed(const enkf_state_type * );
 void 		   enkf_state_set_analyzed(enkf_state_type * , bool );
@@ -37,8 +39,12 @@ void              enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void            * enkf_state_load_ecl_summary_void(void * );
 void            * enkf_state_load_ecl_restart_void(void * );
 void            * enkf_state_load_ecl_void(void * );
-void              enkf_state_load_ecl(enkf_state_type * , enkf_obs_type * , bool , int );
+void              enkf_state_load_ecl(enkf_state_type * , enkf_obs_type * , bool , int , int);
+void              enkf_state_add_lsf_job(enkf_state_type *  , lsf_pool_type * , int , int );
+void            * enkf_state_run_eclipse__(void * );
 
+
+void              enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
 void              enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
 void              enkf_state_sample(enkf_state_type * , int);
 void              enkf_state_ens_write(const enkf_state_type * , int);

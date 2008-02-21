@@ -63,9 +63,13 @@ static void fs_index_node_free(fs_index_node_type * index_node) {
 /*****************************************************************/
 
 
-fs_index_type * fs_index_alloc(const char * path) {
+fs_index_type * fs_index_alloc(const char * root_path , const char * index_path) {
   fs_index_type * fs_index = malloc(sizeof * fs_index);
-  fs_index->path = path_fmt_alloc_directory_fmt(path , true);
+  {
+    char * path = util_alloc_full_path(root_path , index_path);
+    fs_index->path = path_fmt_alloc_directory_fmt(path , true);
+    free(path);
+  }
   return fs_index;
 }
 

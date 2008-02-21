@@ -11,7 +11,7 @@
 #include <scalar_config.h>
 
 typedef struct {
-  char              * ecl_kw_name;      
+  char               * ecl_kw_name;      
   enkf_var_type       var_type;  
   scalar_config_type  * scalar_config;
   int *i1, *i2 , *j1 , *j2 , *k;

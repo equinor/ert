@@ -36,6 +36,9 @@
 #include <obs_node.h>
 #include <basic_driver.h>
 #include <enkf_config.h>
+#include <node_ctype.h>
+#include <lsf_jobs.h>
+#include <sched_file.h>
 
 struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;
@@ -248,21 +251,27 @@ static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char 
 
 
 
-static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const char * node_name , const enkf_node_type * node) {
-  list_node_type *list_node = list_append_list_owned_ref(enkf_state->node_list , node , enkf_node_free__);
-  /*
-    The hash contains a pointer to a list_node structure, which contains a pointer
-    to an enkf_node which contains a pointer to the actual enkf object.
-  */
-  hash_insert_ref(enkf_state->node_hash , node_name , list_node);
+static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const char * node_key , const enkf_node_type * node) {
+  if (enkf_state_has_node(enkf_state , node_key)) {
+    fprintf(stderr,"%s: node:%s already added  - aborting \n",__func__ , node_key);
+    abort();
+  }
+  {
+    list_node_type *list_node = list_append_list_owned_ref(enkf_state->node_list , node , enkf_node_free__);
+    /*
+      The hash contains a pointer to a list_node structure, which contains a pointer
+      to an enkf_node which contains a pointer to the actual enkf object.
+    */
+    hash_insert_ref(enkf_state->node_hash , node_key , list_node);
+  }
 }
 
 
 
-static void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_name , const enkf_config_node_type * config) {
-  enkf_node_type *enkf_node = enkf_node_alloc(node_name , config);
-  enkf_state_add_node_internal(enkf_state , node_name , enkf_node);    
-  enkf_fs_add_index_node(enkf_state->fs , enkf_state->my_iens , node_name , enkf_config_node_get_var_type(config) , enkf_config_node_get_impl_type(config));
+void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , const enkf_config_node_type * config) {
+  enkf_node_type *enkf_node = enkf_node_alloc(node_key , config);
+  enkf_state_add_node_internal(enkf_state , node_key , enkf_node);    
+  enkf_fs_add_index_node(enkf_state->fs , enkf_state->my_iens , node_key , enkf_config_node_get_var_type(config) , enkf_config_node_get_impl_type(config));
 
   /* All code below here is special code for plurigaussian fields */
   {
@@ -305,37 +314,50 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_name) 
 */
 
 
-static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report_nr) {
+static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report_nr1 , int report_nr2) {
   const bool fmt_file  = enkf_state_fmt_file(enkf_state);
-
+  int first_report;
   if (enkf_state->ecl_store != store_none) {
+
     util_make_path(enkf_state->ecl_store_path);
     if (enkf_state->ecl_store & store_summary) {
-      char * summary_target = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_file , fmt_file , report_nr);
-      char * summary_src    = ecl_util_alloc_filename(enkf_state->run_path       , enkf_state->eclbase , ecl_summary_file , fmt_file , report_nr);
-      char * header_target  = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr);
+      first_report       = report_nr1 + 1;
+      {
+	char ** summary_target = ecl_util_alloc_filelist(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
+	char ** summary_src    = ecl_util_alloc_filelist(enkf_state->run_path       , enkf_state->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
+	char  * header_target  = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
+	int i;
+	for (i=0; i  < report_nr2 - first_report + 1; i++) 
+	  util_copy_file(summary_src[i] , summary_target[i]);
 
-      util_copy_file(summary_src , summary_target);
-      if (!util_file_exists(header_target)) {
-	char * header_src = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr);
-	util_copy_file(header_src , header_target);
-	free(header_src);
+	if (!util_file_exists(header_target)) {
+	  char * header_src = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
+	  util_copy_file(header_src , header_target);
+	  free(header_src);
+	}
+	util_free_string_list(summary_target , report_nr2 - first_report + 1);
+	util_free_string_list(summary_src    , report_nr2 - first_report + 1);
+	free(header_target);
       }
-      free(summary_target);
-      free(summary_src);
-      free(header_target);
+    }
+  
+    if (enkf_state->ecl_store & store_restart) {
+      if (report_nr1 == 0)
+	first_report = 0;
+      else
+	first_report = report_nr1 + 1;
+      {
+	char ** restart_target = ecl_util_alloc_filelist(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
+	char ** restart_src    = ecl_util_alloc_filelist(enkf_state->run_path       , enkf_state->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
+	int i;
+	for (i=0; i  < report_nr2 - first_report + 1; i++) 
+	  util_copy_file(restart_src[i] , restart_target[i]);
+
+	util_free_string_list(restart_target , report_nr2 - first_report + 1);
+	util_free_string_list(restart_src    , report_nr2 - first_report + 1);
+      }
     }
   }
-
-  if (enkf_state->ecl_store & store_restart) {
-    char * restart_target = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_nr);
-    char * restart_src    = ecl_util_alloc_filename(enkf_state->run_path       , enkf_state->eclbase , ecl_restart_file , fmt_file , report_nr);
-    
-    util_copy_file(restart_src , restart_target);
-    free(restart_target);
-    free(restart_src);
-  }
-  
 }
 
 
@@ -438,7 +460,7 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
 */
 void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , int report_step) {
   enkf_fs_type *fs      = enkf_state_get_fs_ref(enkf_state);
-  state_enum state   = enkf_state_get_analysis_state(enkf_state);
+  state_enum state      = enkf_state_get_analysis_state(enkf_state);
   int my_iens       	= enkf_state_get_iens(enkf_state);
   char **obs_keys   	= hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
@@ -455,16 +477,17 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
       if (swapped) enkf_fs_swapout_node(fs , enkf_node , report_step , my_iens , analyzed);
     }
   }
+  hash_free_ext_keylist(enkf_obs->obs_hash , obs_keys);
 }
 
 
 
-void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step ) {
-  enkf_state_ecl_store(enkf_state , report_step);
-  enkf_state_load_ecl_restart(enkf_state , unified , report_step);
-  enkf_state_load_ecl_summary(enkf_state , unified , report_step);
-  enkf_state_measure(enkf_state , enkf_obs , report_step);
-  enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , report_step , forecast);
+void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2) {
+  enkf_state_ecl_store(enkf_state , report_step1 , report_step2);
+  enkf_state_load_ecl_restart(enkf_state , unified , report_step2);
+  enkf_state_load_ecl_summary(enkf_state , unified , report_step2);
+  enkf_state_measure(enkf_state , enkf_obs , report_step2);
+  enkf_state_swapout(enkf_state , ecl_restart + ecl_summary + ecl_static , report_step2 , forecast);
 }
 
 
@@ -474,10 +497,11 @@ void * enkf_state_load_ecl_void(void * input_arg) {
   void_arg_type * void_arg     = (void_arg_type *) input_arg;
   enkf_state_type * enkf_state =  void_arg_get_ptr(void_arg   , 0);
   enkf_obs_type * enkf_obs     =  void_arg_get_ptr(void_arg   , 1);
-  int report_step              =  void_arg_get_int(void_arg   , 2);
-  bool unified                 =  void_arg_get_bool(void_arg  , 3);  
+  int report_step1             =  void_arg_get_int(void_arg   , 2);
+  int report_step2             =  void_arg_get_int(void_arg   , 3);
+  bool unified                 =  void_arg_get_bool(void_arg  , 4);  
   
-  enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step);
+  enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
   return NULL;
 }
 
@@ -518,16 +542,28 @@ void enkf_state_ecl_write(const enkf_state_type * enkf_state ,  int mask , int r
   const int buffer_size = 65536;
   const bool fmt_file   = enkf_state_fmt_file(enkf_state);
   bool endian_swap      = enkf_config_get_endian_swap(enkf_state->config);
-  char  * restart_file  = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_step);
-  fortio_type * fortio  = fortio_open(restart_file , "w" , endian_swap);
   void *buffer          = malloc(buffer_size);
+  char * restart_file;
+  fortio_type * fortio;
   list_node_type *list_node;                                            
 
+  if (report_step == 0) {
+    if (mask & ecl_restart)
+      mask -= ecl_restart;
+    if (mask & ecl_static)
+      mask -= ecl_static;
+    restart_file = NULL;
+    fortio       = NULL;
+  } else {
+    restart_file  = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_step);
+    fortio        = fortio_open(restart_file , "w" , endian_swap);
+  }
+  
+  
   util_make_path(enkf_state->run_path);
   list_node = list_get_head(enkf_state->node_list);                     
   while (list_node != NULL) {                                           
     enkf_node_type * enkf_node = list_node_value_ptr(list_node);         
-
     if (enkf_node_include_type(enkf_node , mask)) {
       bool swapped = enkf_node_swapped(enkf_node);
       {
@@ -556,8 +592,10 @@ void enkf_state_ecl_write(const enkf_state_type * enkf_state ,  int mask , int r
     }
     list_node = list_node_get_next(list_node);
   }
-  free(restart_file);
-  fortio_close(fortio);
+  if (report_step != 0) {
+    free(restart_file);
+    fortio_close(fortio);
+  }
   free(buffer);
 }
 
@@ -709,7 +747,7 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 
 
-void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
+void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int report_step1 , int report_step2) {
   int      ikw , gen_kw_size;
   double * values;
   char  ** kw_list;
@@ -732,9 +770,73 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       hash_del(enkf_state->data_kw , kw_list[ikw]);
   }
   free(data_file);
+
+  {
+    char * schedule_file = util_alloc_full_path(enkf_state->run_path , "SCHEDULE.INC");
+    sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
+    free(schedule_file);
+  }
+  enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static , report_step1);
 }
 
 
+
+
+
+
+void enkf_state_run_eclipse(enkf_state_type * enkf_state , lsf_pool_type * lsf_pool, enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , int max_resubmit , bool *job_OK) {
+  const int sleep_time = 10;
+  const int iens       = enkf_state_get_iens(enkf_state);
+  char * restart_file  = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , enkf_state_fmt_file(enkf_state) , report_step2);
+  int lsf_ijob;
+
+  /* 
+     Prepare the job first ...
+  */
+  
+  enkf_state_init_eclipse(enkf_state , sched_file , report_step1 , report_step2);
+  lsf_pool_add_job(lsf_pool , iens , enkf_state->eclbase , enkf_state->run_path , restart_file , NULL , NULL , max_resubmit);
+  lsf_ijob = lsf_pool_get_ijob(lsf_pool , iens);
+  while (1) {
+    lsf_status_type lsf_status = lsf_pool_iget_status(lsf_pool , lsf_ijob);
+    if (lsf_status == lsf_status_OK) {
+      enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
+      *job_OK = true;
+      break;
+    } else if ((lsf_status == lsf_status_exit) || (lsf_status == lsf_status_complete_fail)) {
+      *job_OK = false;
+      break;
+    }
+    sleep(sleep_time);
+  }
+
+  free(restart_file);
+}
+
+
+
+
+
+void * enkf_state_run_eclipse__(void * _void_arg) {
+  void_arg_type * void_arg = (void_arg_type *) _void_arg;
+  enkf_state_type * enkf_state 	 = void_arg_get_ptr(void_arg  	, 0);
+  lsf_pool_type   * lsf_pool   	 = void_arg_get_ptr(void_arg  	, 1);
+  enkf_obs_type   * enkf_obs   	 = void_arg_get_ptr(void_arg  	, 2);
+  sched_file_type * sched_file   = void_arg_get_ptr(void_arg    , 3);
+  bool              unified    	 = void_arg_get_bool(void_arg 	, 4);
+  int               report_step1 = void_arg_get_int(void_arg  	, 5);
+  int               report_step2 = void_arg_get_int(void_arg  	, 6);
+  int               max_resubmit = void_arg_get_int(void_arg  	, 7);
+  bool            * job_OK       = void_arg_get_buffer(void_arg , 8);
+
+  enkf_state_run_eclipse(enkf_state , lsf_pool , enkf_obs , sched_file , unified , report_step1 , report_step2 , max_resubmit , job_OK);
+  return NULL;
+}
+
+
+
+
+/*****************************************************************/
 
 static double * enkf_ensembleemble_alloc_serial_data(int ens_size , size_t target_serial_size , size_t * _serial_size) {
   size_t   serial_size = target_serial_size / ens_size;
@@ -865,11 +967,11 @@ void enkf_ensembleemble_update(enkf_state_type ** enkf_ensemble , int ens_size ,
 					   int_value 	 ,     /* 1 */
 					   size_t_value  ,     /* 2 */
 					   int_value     ,     /* 3 */
-					   pointer_value ,     /* 4 */
-					   pointer_value ,     /* 5 */
-					   pointer_value ,     /* 6 */
-					   pointer_value ,     /* 7 */
-					   pointer_value ,     /* 8 */ 
+					   void_pointer  ,     /* 4 */
+					   void_pointer  ,     /* 5 */
+					   void_pointer  ,     /* 6 */
+					   void_pointer  ,     /* 7 */
+					   void_pointer  ,     /* 8 */ 
 					   int_value       );  /* 9 */
     }
     iens2[threads-1] = ens_size;
@@ -890,7 +992,7 @@ void enkf_ensembleemble_update(enkf_state_type ** enkf_ensemble , int ens_size ,
       void_arg_pack_ptr(void_arg[ithread]     , 6 , next_node);
       void_arg_pack_ptr(void_arg[ithread]     , 7 , member_serial_size);
       void_arg_pack_ptr(void_arg[ithread]     , 8 , member_complete);
-      void_arg_pack_int(void_arg[ithread]    , 9 , update_mask);
+      void_arg_pack_int(void_arg[ithread]     , 9 , update_mask);
     }
     
     

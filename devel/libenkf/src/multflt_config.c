@@ -75,8 +75,8 @@ multflt_config_type * multflt_config_fscanf_alloc(const char * filename ) {
 }
 
 void multflt_config_free(multflt_config_type * multflt_config) {
-  scalar_config_free(multflt_config->scalar_config);
   util_free_string_list(multflt_config->fault_names , scalar_config_get_data_size(multflt_config->scalar_config));
+  scalar_config_free(multflt_config->scalar_config);
   free(multflt_config);
 }
 

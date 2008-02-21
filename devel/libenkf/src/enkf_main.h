@@ -34,7 +34,7 @@ void                          enkf_main_free(enkf_main_type * );
 enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
 void                          enkf_main_add_data_kw(enkf_main_type * , const char * , const char *);
-void                          enkf_main_init_eclipse(enkf_main_type * );
+void                          enkf_main_init_eclipse(enkf_main_type * , int , int );
 
 void 			      enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
 void 			      enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
