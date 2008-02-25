@@ -76,13 +76,34 @@ the script make_tags.py - this will index all source code into a tags
 file, which can be used with e.g. emacs or vi, *and* add a link from
 every src/ directory to the path_config file.
 
-The last variable in the path_config file is EXTERNAL_LIB_PATH, you
-should set this variable to point to a directory which contains
-(symlinks to) all external libraries needed in the build (not
-including external libraries in standard locations). So, when you
-have installed the libfftw3 library in /some/funny/path/i32/lib you
-should add a symbolic link from the path given in EXTERNAL_LIB_PATH to
+The two last variables in the path_config file are EXTERNAL_LIB_PATH,
+end ENKF_BIN_PATH. They are slightly different from the other variabls
+in the path_config file. The variable EXTERNAL_LIB_PATH should point
+to a directory which contains (symlinks to) all external libraries
+needed in the build (not including external libraries in standard
+locations). So, when you have installed the libfftw3 library in
+/some/funny/path/i32/lib you should add a symbolic link from the path
+given in EXTERNAL_LIB_PATH to
 /some/funny/path/i32/lib/libfftw3.(so|a).
+
+The path ENKF_BIN_PATH is used to store the external binaries needed
+by the EnKF application. Set the variable ENKF_BIN_PATH to some value,
+and create the corresponding directory. Finally you should copy the
+script Scripts/ecl_submit.py to the ENKF_BIN_PATH location. Observe
+that the target script should be *without* extension:
+ 
+   bash%: cp ../Scripts/ecl_submit.py $ENKF_BIN_PATH/ecl_submit
+
+
+The location of the eclipse executable(s):
+==========================================
+The Eclipse simulations are submitted through a scripts
+Scripts/ecl_submit.py; this script reads configuration information
+(i.e. where to find the eclipse executables) from a file called
+ecl_env.py. This file does not exist yet, you should copy the file
+Scripts/ecl_env.py.template to Scripts/ecl_env.py and update it.
+If there are several users of EnKF on the same system, they can (and
+should??) share the submit command.
 
 
 Building the libraries
