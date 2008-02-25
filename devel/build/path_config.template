@@ -16,3 +16,4 @@ LIBSAMPLE_HOME    = /h/a152128/EnKF/devel/EnKF/libsample
 LIBANALYSIS_HOME  = /h/a152128/EnKF/devel/EnKF/libanalysis
 LIBENKF_HOME  	  = /h/a152128/EnKF/devel/EnKF/libenkf
 EXTERNAL_LIB_PATH = /h/a152128/lib/linux
+ENKF_BIN_PATH     = /d/proj/bg/enkf/bin

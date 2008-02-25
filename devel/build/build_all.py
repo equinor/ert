@@ -5,16 +5,31 @@ import sys
 
 def load_path_list(path_config):
     path_list = []
+    path_dict = {}
     fileH = open(path_config)
     for line in fileH.readlines():
         if line.find("=") > -1:
-            path = line.split("=")[1]
+            (var , path) = line.split("=")[0:2]
             path_list.append(path.strip())
-    return path_list
+            path_dict[var.strip()] = path.strip()
+    return (path_list , path_dict)
 
 
 
-path_list = load_path_list("path_config")
+(path_list , path_dict) = load_path_list("path_config")
+if not os.path.exists(path_dict["ENKF_BIN_PATH"]):
+    os.makedirs(path_dict["ENKF_BIN_PATH"])
+cmd = "cp %s/ecl_submit.py %s/ecl_submit" % ("../Scripts" , path_dict["ENKF_BIN_PATH"])
+print cmd
+os.system(cmd)
+if os.path.exists("%s/ecl_env.py" % "../Scripts"):
+   cmd = "cp %s/ecl_env.py %s/ecl_env.py" % ("../Scripts" , path_dict["ENKF_BIN_PATH"])
+   print "%s\n" % cmd
+   os.system(cmd)
+else:
+   sys.stderr.write("** WARNING : could not find file \"ecl_env.py\" - build might fail to submit eclipse jobs. ** \n")
+
+
 for path in path_list:
     print path
     cwd = os.getcwd()
@@ -28,3 +43,5 @@ for path in path_list:
             nCPU = 1
         os.system("make -j %d" % nCPU) 
         os.chdir(cwd)
+
+
