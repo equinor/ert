@@ -10,6 +10,7 @@
 LIBHASH_HOME  	  = /h/a152128/EnKF/devel/EnKF/libhash
 LIBUTIL_HOME  	  = /h/a152128/EnKF/devel/EnKF/libutil
 LIBECL_HOME   	  = /h/a152128/EnKF/devel/EnKF/libecl
+LIBECL_QUEUE_HOME = /h/a152128/EnKF/devel/EnKF/libecl_queue
 LIBSCHED_HOME 	  = /h/a152128/EnKF/devel/EnKF/libsched
 LIBRMS_HOME   	  = /h/a152128/EnKF/devel/EnKF/librms
 LIBSAMPLE_HOME    = /h/a152128/EnKF/devel/EnKF/libsample
