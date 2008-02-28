@@ -6,6 +6,12 @@ typedef enum {ecl_queue_null = 0, ecl_queue_waiting, ecl_queue_pending , ecl_que
 typedef struct basic_queue_driver_struct basic_queue_driver_type;
 typedef struct basic_queue_job_struct    basic_queue_job_type;
 
+typedef basic_queue_job_type * (submit_job_ftype)  (basic_queue_driver_type * , int);
+typedef void                   (clean_job_ftype)   (basic_queue_driver_type * , basic_queue_job_type * );
+typedef void                   (abort_job_ftype)   (basic_queue_driver_type * , basic_queue_job_type * );
+typedef ecl_job_status_type    (get_status_ftype)  (basic_queue_driver_type * , basic_queue_job_type * );
+
+
 
 void basic_queue_driver_assert_cast(const basic_queue_driver_type * );
 void basic_queue_driver_init(basic_queue_driver_type * );
