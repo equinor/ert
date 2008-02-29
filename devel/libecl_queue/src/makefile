@@ -7,7 +7,7 @@ COMPILE_INCLUDE  = -I$(LIBECL_QUEUE_HOME)/src -I$(LIBUTIL_HOME)/include -I$(LIBH
 INSTALL_INC_PATH =  $(LIBECL_QUEUE_HOME)/include
 INSTALL_LIB_PATH =  $(LIBECL_QUEUE_HOME)/lib
 #################################################################
-CFLAGS  = -O2 -$(MFLAG)  -std=gnu99 -g -Wall -fPICg
+CFLAGS  = -O2 -$(MFLAG)  -std=gnu99 -g -Wall -fPIC
 ARFLAGS = -csr
 #################################################################
 OBJECTS   = ecl_queue.o basic_queue_driver.o lsf_driver.o

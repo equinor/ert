@@ -30,6 +30,14 @@ struct ecl_queue_struct {
 
 
 
+void ecl_queue_submit_job(ecl_queue_type * queue) {
+  basic_queue_driver_type*driver = queue->driver;
+  driver->submit(queue->driver , 1 , NULL , NULL , NULL , NULL);
+}
+
+
+
+
 ecl_queue_type * ecl_queue_alloc(int size , void * driver) {
   ecl_queue_type * queue = util_malloc(sizeof * queue , __func__);
   queue->size   = size;
