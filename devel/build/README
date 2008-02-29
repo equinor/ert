@@ -2,7 +2,7 @@ svn checkout
 ============
 To check out the EnKF sources type the following command in a shell:
 
-bash% svn co http://tr-linapp03.tr.statoil.no/reservoir/EnKF/devel EnKF
+bash% svn co http://sdp.statoil.no/reservoir/EnKF/devel EnKF
 
 The final EnKF is the name of a directory which will be created to
 hold the newly checked out code; where in your personal filesystem you
