@@ -5,18 +5,6 @@
 
 				  
 
-struct basic_queue_job_struct {
-  int __id;
-};
-
-
-struct basic_queue_driver_struct {
-  int __id;
-  submit_job_ftype * submit;
-  clean_job_ftype  * clean;
-  abort_job_ftype  * abort_f;
-  get_status_ftype * get_status;
-};
 
 /*****************************************************************/
 
