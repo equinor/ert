@@ -16,8 +16,6 @@ program main
 
   !******************************************!
 
-  integer :: i,j
-
   call m_pseudo2d_mp_pseudo2d(y,nx,ny,ns,300.0,100.0,25.0,25.0,nx+20,ny+20,40,.true.)
   call random_number(alpha)
 
