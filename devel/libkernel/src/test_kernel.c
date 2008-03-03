@@ -203,8 +203,8 @@ int main(int argc,char **argv)
   //Sample y and alpha
   box_muller(ns,alpha,10 / (double) ns,0.0);
   alpha[0] = alpha[0] + 1;
-  //m_sample2d_mp_sample2d_(y[0],&nx,&ny,&ns,&nre,&dx,&dy,&rx,&ry,&dir,&sampfix,&verbose);
-  m_pseudo2d_mp_pseudo2d_(y[0],&nx,&ny,&ns,&rx,&ry,&dx,&dy,&n1,&n2,&dir,&verbose);
+  m_sample2d_mp_sample2d_(y[0],&nx,&ny,&ns,&nre,&dx,&dy,&rx,&ry,&dir,&sampfix,&verbose);
+  //m_pseudo2d_mp_pseudo2d_(y[0],&nx,&ny,&ns,&rx,&ry,&dx,&dy,&n1,&n2,&dir,&verbose);
 
   // Write some samples to file
   //gnuplot_write_ungridded(nx,ny,y[0],"unbounded_sample_0.plt");

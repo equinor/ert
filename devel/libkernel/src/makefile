@@ -16,8 +16,8 @@ ARFLAGS = -csr
 OBJECTS           = kernel_core.o cost_func.o pre-image.o
 INC_FILES 				= kernel_core.h cost_func.h pre-image.h
 LIB               = libkernel_$(MFLAG).a
-LIB_LINK          = -lsample_$(MFLAG) -lkernel_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lz -lg2c -lblas -lifcore -lguide -lfftw3   -lbfgs 
-LIB_PATH          = -L/usr/lib/gcc/x86_64-redhat-linux/3.4.3/32  -L$(LIBSAMPLE_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBBFGS_HOME)/lib -L$(LIBKERNEL_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L/local/intel/compiler90/ia32/fc/lib
+LIB_LINK          = -lsample_$(MFLAG) -lanalysis_$(MFLAG) -lkernel_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lz -lg2c -llapack -lblas -lifcore -lguide -lirc -lfftw3   -lbfgs 
+LIB_PATH          = -L/usr/lib/gcc/x86_64-redhat-linux/3.4.3/32  -L$(LIBSAMPLE_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBBFGS_HOME)/lib -L$(LIBKERNEL_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L/local/intel/compiler90/ia32/fc/lib
 TARGET_INCLUDE    = -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBKERNEL_HOME)/include
 
 all: $(LIB)
