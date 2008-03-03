@@ -88,14 +88,13 @@ double max(const double x, const double y)
 
 int main(int argc,char **argv)
 {
-  const int nx = 120;
-  const int ny = 120;
+  const int nx = 40;
+  const int ny = 40;
+  const int n1 = 2*nx;
+  const int n2 = 2*ny;
   const int n = nx*ny;
   const int nre = 1;
   const int ns = 100;
-
-  const int n1 = 2*nx;
-  const int n2 = 2*ny;
 
   const double dx = 25.0;
   const double dy = 25.0;
@@ -105,7 +104,7 @@ int main(int argc,char **argv)
   const int verbose = -1;
   const int sampfix = -1;
 
-  int i,j;
+  int i;
   int ntries = 15;
 
   double lamda;
@@ -204,24 +203,24 @@ int main(int argc,char **argv)
   //Sample y and alpha
   box_muller(ns,alpha,10 / (double) ns,0.0);
   alpha[0] = alpha[0] + 1;
-  m_sample2d_mp_sample2d_(y[0],&nx,&ny,&ns,&nre,&dx,&dy,&rx,&ry,&dir,&sampfix,&verbose);
-  //m_pseudo2d_mp_pseudo2d_(y[0],&nx,&ny,&ns,&rx,&ry,&dx,&dy,&n1,&n2,&dir,&verbose);
+  //m_sample2d_mp_sample2d_(y[0],&nx,&ny,&ns,&nre,&dx,&dy,&rx,&ry,&dir,&sampfix,&verbose);
+  m_pseudo2d_mp_pseudo2d_(y[0],&nx,&ny,&ns,&rx,&ry,&dx,&dy,&n1,&n2,&dir,&verbose);
 
   // Write some samples to file
-  gnuplot_write_ungridded(nx,ny,y[0],"unbounded_sample_0.plt");
-  gnuplot_write_ungridded(nx,ny,y[1],"unbounded_sample_1.plt");
+  //gnuplot_write_ungridded(nx,ny,y[0],"unbounded_sample_0.plt");
+  //gnuplot_write_ungridded(nx,ny,y[1],"unbounded_sample_1.plt");
 
   // Find an aproximative pre-image using the 2xdot cost function
   pre_image_approx(cost_func_2xdot, ntries, n,ns,(const double**) y,alpha,lamda,mu, low_bnd,high_bnd,nbd,x);
-  gnuplot_write_ungridded(nx,ny,x,"unbounded_pre-image_2xdot.plt");
+  //gnuplot_write_ungridded(nx,ny,x,"unbounded_pre-image_2xdot.plt");
 
   // Find an aproximative pre-image using the 3xdot cost function
   pre_image_approx(cost_func_3xdot, ntries, n,ns,(const double**) y,alpha,lamda,mu, low_bnd,high_bnd,nbd,x);
-  gnuplot_write_ungridded(nx,ny,x,"unbounded_pre-image_3xdot.plt");
+  //gnuplot_write_ungridded(nx,ny,x,"unbounded_pre-image_3xdot.plt");
 
   // Find an aproximative pre-image using the gauss cost function
   pre_image_approx(cost_func_gauss, ntries, n,ns,(const double**) y,alpha,lamda,mu, low_bnd,high_bnd,nbd,x);
-  gnuplot_write_ungridded(nx,ny,x,"unbounded_pre-image_gauss.plt");
+  //gnuplot_write_ungridded(nx,ny,x,"unbounded_pre-image_gauss.plt");
 
   // Truncate y to [0,1]
   for(i=0; i<ns*n; i++)
@@ -240,20 +239,20 @@ int main(int argc,char **argv)
   }
 
   // Write two of the bounded samples to file
-  gnuplot_write_ungridded(nx,ny,y[0],"bounded_sample_0.plt");
-  gnuplot_write_ungridded(nx,ny,y[1],"bounded_sample_1.plt");
+  //gnuplot_write_ungridded(nx,ny,y[0],"bounded_sample_0.plt");
+  //gnuplot_write_ungridded(nx,ny,y[1],"bounded_sample_1.plt");
 
   // Find an aproximative pre-image using the 2xdot cost-function
   pre_image_approx(cost_func_2xdot, ntries, n,ns,(const double**) y,alpha,lamda,mu, low_bnd,high_bnd,nbd,x);
-  gnuplot_write_ungridded(nx,ny,x,"bounded_pre-image_2xdot.plt");
+  //gnuplot_write_ungridded(nx,ny,x,"bounded_pre-image_2xdot.plt");
 
   // Find an aproximative pre-image using the 3xdot cost-function
   pre_image_approx(cost_func_3xdot, ntries, n,ns,(const double**) y,alpha,lamda,mu, low_bnd,high_bnd,nbd,x);
-  gnuplot_write_ungridded(nx,ny,x,"bounded_pre-image_3xdot.plt");
+  //gnuplot_write_ungridded(nx,ny,x,"bounded_pre-image_3xdot.plt");
 
   // Find an aproximative pre-image using the gauss cost-function
   pre_image_approx(cost_func_gauss, ntries, n,ns,(const double**) y,alpha,lamda,mu, low_bnd,high_bnd,nbd,x);
-  gnuplot_write_ungridded(nx,ny,x,"bounded_pre-image_gauss.plt");
+  //gnuplot_write_ungridded(nx,ny,x,"bounded_pre-image_gauss.plt");
   
   // Free allocated memory
   free(x);
