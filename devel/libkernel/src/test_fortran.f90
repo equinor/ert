@@ -25,6 +25,7 @@ program main
   low_bnd = 0.0
   high_bnd = 1.0
 
+  call fw_pre_image_approx_2xdot_xpsqx(ntries,ndim,ns,y,alpha,low_bnd,high_bnd,nbd,x)
   call fw_pre_image_approx_dot_xpsqx(ntries,ndim,ns,y,alpha,low_bnd,high_bnd,nbd,x)
 
 end program main
