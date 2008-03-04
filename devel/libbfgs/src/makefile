@@ -2,7 +2,7 @@ include path_config
 
 FF = ifort
 
-FFLAGS = -fpe0 -traceback -warn all -CB -u -g -c -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian -msse3 -funroll-loops -parallel
+FFLAGS = -fpe0 -traceback -warn all -CB -u -g -c -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
 
 all: libbfgs.a
 	install -d $(LIBBFGS_HOME)/lib
