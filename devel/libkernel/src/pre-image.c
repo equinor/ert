@@ -11,6 +11,8 @@
 
 #define DEBUG
 
+/********************************************************************/
+
 void pre_image_approx(const cost_func_type *cost_func,
                       const int ntries,
                       const int n, 
@@ -39,7 +41,6 @@ void pre_image_approx(const cost_func_type *cost_func,
 
 
   // Configure L-BFGS-B
-  // FIXME: We should allow for some changing of these
   factr = 1.0E2;
   pgtol = 1.0E-4;
   m = 20;
@@ -87,15 +88,9 @@ void pre_image_approx(const cost_func_type *cost_func,
       // Call the L-BFGS-B routine
       setulb_(&n,&m,x,low_bnd,high_bnd,nbd,&f,g,
               &factr,&pgtol,wa,iwa,task,&iprint,csave,lsave,isave,dsave);
-
       if(strncmp(task,"FG",2) == 0)
       {
         tsq = kernel_featurespace_dist_squared(cost_func->kernel_list,n,x,ny,alpha,(const double**) y,&aka);
-        f = cost_func_apply(cost_func,tsq,n,lambda,x,mu);
-        cost_func_apply_gradx(cost_func,tsq,n,lambda,x,mu,ny,alpha,y,g);
-        #ifdef DEBUG
-        printf("tsq: %f\ncost_func: %f\n",tsq,f);
-        #endif
         //Break if rounding error dominates the calculations
         if(tsq < 0.0)
         {
@@ -105,6 +100,11 @@ void pre_image_approx(const cost_func_type *cost_func,
           util_memcpy_string_C2f90("CONV",task,60); 
           break;
         }
+        f = cost_func_apply(cost_func,tsq,n,lambda,x,mu);
+        cost_func_apply_gradx(cost_func,tsq,n,lambda,x,mu,ny,alpha,y,g);
+        #ifdef DEBUG
+        printf("tsq: %f\ncost_func: %f\n",tsq,f);
+        #endif
       }
     }
     while(strncmp(task,"FG",2)==0 || strncmp(task,"NEW_X",5)==0);
