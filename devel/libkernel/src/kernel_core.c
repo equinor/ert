@@ -57,7 +57,7 @@ void kernel_dotproduct_gradx(const int n, const double *x, const double *y,const
   const int one = 1;
 
   alpha = ddot_(&n,x,&one,y,&one);
-  alpha = order * pow(alpha,order - 1.0);
+  alpha = order * pow(alpha,order - 1);
   dcopy_(&n,y,&one,g,&one);
   dscal_(&n,&alpha,g,&one);
 };
@@ -74,7 +74,7 @@ void kernel_dotproduct_gradxx(const int n, const double *x, const double order, 
   const int one = 1;
 
   alpha = ddot_(&n,x,&one,x,&one);
-  alpha = 2.0 * order * pow(alpha,order-1.0);
+  alpha = 2.0 * order * pow(alpha,order-1);
   dcopy_(&n,x,&one,g,&one);
   dscal_(&n,&alpha,g,&one);
 };

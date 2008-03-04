@@ -40,8 +40,8 @@ void pre_image_approx(const cost_func_type *cost_func,
 
   // Configure L-BFGS-B
   // FIXME: We should allow for some changing of these
-  factr = 1.0E0;
-  pgtol = 1.0E-5;
+  factr = 1.0E2;
+  pgtol = 1.0E-4;
   m = 20;
 
   //  Allocate internal workingspace
