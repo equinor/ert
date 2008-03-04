@@ -9,7 +9,7 @@ COMPILE_LIB_PATH  = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L/h/jgv/lib
 INSTALL_INC_PATH  = $(LIBKERNEL_HOME)/include
 INSTALL_LIB_PATH  = $(LIBKERNEL_HOME)/lib
 #################################################################
-CFLAGS  = -$(MFLAG) -std=gnu99 -g -Wall -fPIC -O3
+CFLAGS  = -$(MFLAG) -std=gnu99 -g -Wall -fPIC
 FFLAGS  = -fpe0 -traceback -warn all -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian  #-msse3 -funroll-loops -parallel
 ARFLAGS = -csr
 #################################################################
@@ -25,7 +25,8 @@ all: $(LIB)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
-	$(CC) $(CFLAGS) $(TARGET_INCLUDE) test_kernel.c  -o test_kernel.x $(LIB_PATH) $(LIB_LINK)
+	$(CC) $(CFLAGS) $(TARGET_INCLUDE) -c test_kernel.c gnuplot.c  
+	$(CC) $(CFLAGS) test_kernel.o gnuplot.o -o test_kernel.x $(LIB_PATH) $(LIB_LINK)
 	$(FF) $(FFLAGS) -c test_fortran.f90
 	$(FF) test_fortran.o -o test_fortran.x $(LIB_PATH) $(LIB_LINK)
 
@@ -36,8 +37,7 @@ clean:
 	rm -f *.o
 	rm -f *,mod
 	rm -f $(LIB)
-	rm -f $(INSTALL_INC_PATH)/*.h
-	rm -f $(INSTALL_LIB_PATH)/$(LIB)
+	rm -f *.plt
 
 
 %.o : %.c
