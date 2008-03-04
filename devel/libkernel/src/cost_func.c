@@ -51,6 +51,11 @@ void cost_func_free(cost_func_type *cost_func)
 double cost_func_apply(const cost_func_type *cost_func, const double tausquared,const int n,const double lambda, const double *x,
                        const double *mu)
 {
+  if(tausquared < 0.0)
+  {
+    fprintf(stderr,"%s: trying to evaluate cost function with tsq < 0.0 - aborting\n",__func__);
+    abort();
+  }
   return cost_func->f(tausquared) + cost_func->reg(n,lambda,x,mu);
 };
 
@@ -64,6 +69,12 @@ void cost_func_apply_gradx(const cost_func_type *cost_func,const double tausquar
   double beta;
   double gamma;
   double *dg;
+
+  if(tausquared < 0.0)
+  {
+    fprintf(stderr,"%s: trying to evaluate grad of cost function with tsq < 0.0 - aborting\n",__func__);
+    abort();
+  }
   
   gamma = cost_func->df(tausquared);
   dscal_(&n,&dzero,g,&one);
