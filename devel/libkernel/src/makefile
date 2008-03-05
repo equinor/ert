@@ -9,7 +9,7 @@ COMPILE_LIB_PATH  = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L/h/jgv/lib
 INSTALL_INC_PATH  = $(LIBKERNEL_HOME)/include
 INSTALL_LIB_PATH  = $(LIBKERNEL_HOME)/lib
 #################################################################
-CFLAGS  = -$(MFLAG) -std=gnu99 -g -Wall -fPIC
+CFLAGS  = -$(MFLAG) -Wall -fPIC -std=gnu99 -g -O2
 FFLAGS  = -fpe0 -traceback -warn all -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian  #-msse3 -funroll-loops -parallel
 ARFLAGS = -csr
 #################################################################

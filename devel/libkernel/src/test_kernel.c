@@ -80,8 +80,8 @@ double max(const double x, const double y)
 
 int main(int argc,char **argv)
 {
-  const int nx = 400;
-  const int ny = 400;
+  const int nx = 100;
+  const int ny = 100;
   const int n = nx*ny;
   const int nre = 1;
   const int ns = 100;

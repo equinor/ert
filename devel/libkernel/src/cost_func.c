@@ -6,6 +6,21 @@
 #include "cost_func.h"
 #include "blas.h"
 
+/********************************************************************/
+
+
+
+/** \brief Allocator for the cost_func_type.
+  *
+  * Given a kernel_list_type, a strictly increasing function f and a regularization function
+  * reg, a cost_func_type is function
+  *
+  * cost_func = f( tausq(x) ) + reg(x,mu,lambda)
+  *
+  * where 
+  *
+  * tausq(x) = dist(\phi(x) , \sum_i \alpha_i \phi(y_i))^2.
+  */
 cost_func_type *cost_func_alloc(kernel_list_type *kernel_list,f_func f_name,reg_func reg_name)
 {
   cost_func_type *cost_func = util_malloc(sizeof *cost_func,__func__);
@@ -43,11 +58,19 @@ cost_func_type *cost_func_alloc(kernel_list_type *kernel_list,f_func f_name,reg_
   return cost_func;
 };
 
+
+
+/** \brief Deallocator for the cost_func_type.
+  */
 void cost_func_free(cost_func_type *cost_func)
 {
   free(cost_func);
 };
 
+
+
+/** \brief Calculate the value of a cost_func_type at (tausquared,lambda,x,mu).
+  */
 double cost_func_apply(const cost_func_type *cost_func, const double tausquared,const int n,const double lambda, const double *x,
                        const double *mu)
 {
@@ -59,6 +82,10 @@ double cost_func_apply(const cost_func_type *cost_func, const double tausquared,
   return cost_func->f(tausquared) + cost_func->reg(n,lambda,x,mu);
 };
 
+
+
+/** \brief Calculate the gradient of a cost_func_type at (tausquared,lambda,x,mu).
+  */
 void cost_func_apply_gradx(const cost_func_type *cost_func,const double tausquared, const int n, const double lambda, const double *x,
                            const double *mu,const int ny,const double *alpha,const double **y, double *g)
 {
@@ -80,7 +107,6 @@ void cost_func_apply_gradx(const cost_func_type *cost_func,const double tausquar
   dscal_(&n,&dzero,g,&one);
   kernel_list_apply_gradxx(cost_func->kernel_list,n,x,g);
 
-  //#pramga omp paralell for private(dg)
   dg = util_malloc(n*sizeof *dg,__func__);
   for(i=0; i<ny; i++)
   {
@@ -95,20 +121,27 @@ void cost_func_apply_gradx(const cost_func_type *cost_func,const double tausquar
 };
 
 
+
 double f_func_x(const double x)
 {
   return x;  
 };
+
+
 
 double f_func_dx(const double x)
 {
   return 1.0;
 };
 
+
+
 double f_func_sqrtx(const double x)
 {
   return sqrt(x);
 };
+
+
 
 double f_func_dsqrtx(const double x)
 {
@@ -123,10 +156,14 @@ double f_func_dsqrtx(const double x)
   }
 };
 
+
+
 double f_func_xplussqrtx(const double x)
 {
   return sqrt(x) + x;
 };
+
+
 
 double f_func_dxplussqrtx(const double x)
 {
@@ -141,10 +178,14 @@ double f_func_dxplussqrtx(const double x)
   }
 };
 
+
+
 double reg_func_none(const int n,const double lamdba,const double *x,const double *mu)
 {
   return 0.0;
 };
+
+
 
 void reg_func_none_gradx(const int n, const double lambda, const double *x, const double *mu, double *g)
 {
