@@ -26,6 +26,11 @@
 #include "blas.h"
 #include "kernel_core.h"
 
+/*****************************************************
+#include <omp.h>
+*****************************************************/
+
+
 /** \brief Functional form of the dot product kernel
   *
   * The dot product kernel of order d is defined by k(x,y) = (x^T y)^d
@@ -186,6 +191,20 @@ void kernel_tanh_gradxx(const int n, const double *x, const double beta, double 
 */
 
 
+
+/** \brief Allocator for the kernel_node_type.
+  *
+  * Given a kernel list, which is a function of the type
+  *
+  * kl(x,y) = \sum_i^nk k_i(x,y) 
+  *
+  * a kernel node is one of the k_i's. Typically, it has the form
+  *
+  * k_i(x,y) = weight * g(x,y;param)
+  *
+  * where g denotes either the dot product of Gaussian kernel.
+  *
+  */
 kernel_node_type * kernel_node_alloc(const kernel_type kernel_name , double weight , double param)
 {
   kernel_node_type *kernel = util_malloc(sizeof * kernel,__func__);
@@ -224,6 +243,8 @@ kernel_node_type * kernel_node_alloc(const kernel_type kernel_name , double weig
 
 
 
+/** \brief Deallocator for kernel_noide_type
+  */
 void kernel_node_free(kernel_node_type *kernel)
 {
   free(kernel);
@@ -231,6 +252,8 @@ void kernel_node_free(kernel_node_type *kernel)
 
 
 
+/** \brief Assertion of a kernel_node_type.
+  */
 void kernel_node_assert(const kernel_node_type *kernel)
 {
   if(kernel->weight < 0.0)
@@ -246,6 +269,8 @@ void kernel_node_assert(const kernel_node_type *kernel)
 
 
 
+/** \brief Get the value of a kernel_node_type at x,y.
+  */
 double kernel_apply(const kernel_node_type *kernel, const int n, const double *x, const double *y) 
 {
   return kernel->weight * kernel->func(n,x,y,kernel->param);
@@ -253,6 +278,8 @@ double kernel_apply(const kernel_node_type *kernel, const int n, const double *x
 
 
 
+/** \brief Get the gradient wrt. to x of a kernel_node_type at x,y.
+  */
 void kernel_apply_gradx(const kernel_node_type *kernel, const int n, const double *x, const double *y, double *g)
 {
   const int one = 1;
@@ -262,6 +289,8 @@ void kernel_apply_gradx(const kernel_node_type *kernel, const int n, const doubl
 
 
 
+/** \brief Get the gradient wrt. to x of a kernel_node_type at x,x,
+  */
 void kernel_apply_gradxx(const kernel_node_type *kernel,const int n,const double *x, double *g)
 {
   const int one = 1;
@@ -271,6 +300,10 @@ void kernel_apply_gradxx(const kernel_node_type *kernel,const int n,const double
 
 
 
+/** \brief Allocator for the kernel_list_type
+  *
+  *
+  */
 kernel_list_type* kernel_list_alloc(const int nk, kernel_type *kernel_names,double *weights, double *params)
 {
   int i;
@@ -289,6 +322,8 @@ kernel_list_type* kernel_list_alloc(const int nk, kernel_type *kernel_names,doub
 
 
 
+/** \brief Deallocator for the kernel_list_type.
+  */ 
 void kernel_list_free(kernel_list_type *kernel_list)
 {
   int i;
@@ -305,6 +340,8 @@ void kernel_list_free(kernel_list_type *kernel_list)
 
 
 
+/** \brief Assertion of a kernel_list_type.
+  */
 void kernel_list_assert(const kernel_list_type *kernel_list)
 {
   int i;
@@ -320,13 +357,14 @@ void kernel_list_assert(const kernel_list_type *kernel_list)
 
 
 
+/** \brief Get the value of a kernel_list_type at x,y.
+  */
 double kernel_list_apply(const kernel_list_type *kernel_list, const int  n, const double *x, const double *y)
 {
   int i;
   double k;
   
   k=0.0;
-  //#pragma omp parallel for private(k)
   for(i=0; i<kernel_list->nk; i++)
   {
     k = k + kernel_apply(kernel_list->kernel_nodes[i],n,x,y); 
@@ -336,6 +374,8 @@ double kernel_list_apply(const kernel_list_type *kernel_list, const int  n, cons
 
 
 
+/** \brief Get the gradient wrt. to x of a kernel_list_type at x,y.
+  */
 void kernel_list_apply_gradx(const kernel_list_type *kernel_list, const int n, const double *x, const double *y, double *g)
 {
   int i;
@@ -346,7 +386,6 @@ void kernel_list_apply_gradx(const kernel_list_type *kernel_list, const int n, c
 
   dscal_(&n,&dzero,g,&one);
 
-  //#pragma omp parallel for private(dg)
   dg = util_malloc(n*sizeof *dg,__func__);
   for(i=0; i<kernel_list->nk; i++)
   {
@@ -359,6 +398,8 @@ void kernel_list_apply_gradx(const kernel_list_type *kernel_list, const int n, c
 
 
 
+/** \brief Get the gradient wrt. to x of a kernel_list_type at x,x.
+  */
 void kernel_list_apply_gradxx(const kernel_list_type *kernel_list, const int n, const double *x, double *g)
 {
   int i;
@@ -369,7 +410,6 @@ void kernel_list_apply_gradxx(const kernel_list_type *kernel_list, const int n, 
 
   dscal_(&n,&dzero,g,&one);
 
-  //#pragma omp parallel for private(dg)
   dg = util_malloc(n*sizeof *dg,__func__);
   for(i=0; i<kernel_list->nk; i++)
   {
@@ -382,10 +422,15 @@ void kernel_list_apply_gradxx(const kernel_list_type *kernel_list, const int n, 
 
 
 
+/** \brief Calculate dist(\phi(x), \sum_i \alpha_i \phi(y_i))^2.
+  */
 double kernel_featurespace_dist_squared(const kernel_list_type *kernel_list,const int n,const double *x,const int ny,const double *alpha,const double **y,double *aka)
 {
   int i;
   double dist_sq;
+  double *dist_sq_work;
+
+  dist_sq_work = util_malloc(ny*sizeof*dist_sq_work,__func__);
 
   if(aka == NULL)
   {
@@ -393,16 +438,26 @@ double kernel_featurespace_dist_squared(const kernel_list_type *kernel_list,cons
     *aka = kernel_featurespace_dist_get_aka(kernel_list,n,ny,alpha,y);
   }
   dist_sq = kernel_list_apply(kernel_list,n,x,x);
+
+  #pragma omp for shared(dist_sq_work,alpha,kernel_list,n,x,y)  private(i)
   for(i=0; i<ny; i++)
   {
-    dist_sq = dist_sq - 2.0*alpha[i]*kernel_list_apply(kernel_list,n,x,y[i]);
+      dist_sq_work[i] = - 2.0*alpha[i]*kernel_list_apply(kernel_list,n,x,y[i]);
   }
+  #pragma omp barrier
+  for(i=0; i<ny; i++)
+  {
+    dist_sq = dist_sq + dist_sq_work[i];
+  }
+  free(dist_sq_work);
   dist_sq = dist_sq + *aka;
   return dist_sq;
 };
 
 
 
+/** \brief Calculate \sum_i \sum_j \alpha_i\alpha_j k(y_i,y_j).
+  */
 double kernel_featurespace_dist_get_aka(const kernel_list_type *kernel_list,const int n, const int ny,const double *alpha,const double **y)
 {
   double aka;

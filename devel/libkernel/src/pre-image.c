@@ -9,8 +9,6 @@
 #include "cost_func.h"
 #include "pre-image.h"
 
-#define DEBUG
-
 /********************************************************************/
 
 void pre_image_approx(const cost_func_type *cost_func,
@@ -30,7 +28,7 @@ void pre_image_approx(const cost_func_type *cost_func,
   const int one = 1;
   const double dmone = -1.0;
 
-  bool mirrorfix;
+  bool mirrorfix, converged;
   int i,j,iprint,m;
   double f,factr,pgtol,tsq,aka;
 
@@ -39,6 +37,8 @@ void pre_image_approx(const cost_func_type *cost_func,
   int *isave,*iwa;
   double *dsave,*g,*wa,*xm;
 
+  /******************************************************************/
+  converged = false;
 
   // Configure L-BFGS-B
   factr = 1.0E2;
@@ -67,6 +67,7 @@ void pre_image_approx(const cost_func_type *cost_func,
 
   // Calculate aka
   aka = kernel_featurespace_dist_get_aka(cost_func->kernel_list,n,ny,alpha,y);
+
   #ifdef DEBUG
   printf("aka: %f\n",aka);
   #endif
@@ -97,11 +98,13 @@ void pre_image_approx(const cost_func_type *cost_func,
           #ifdef DEBUG
           printf("Iteration ended, tsq <0, calculations dominated by rounding error.\n");
           #endif
+
           util_memcpy_string_C2f90("CONV",task,60); 
           break;
         }
         f = cost_func_apply(cost_func,tsq,n,lambda,x,mu);
         cost_func_apply_gradx(cost_func,tsq,n,lambda,x,mu,ny,alpha,y,g);
+
         #ifdef DEBUG
         printf("tsq: %f\ncost_func: %f\n",tsq,f);
         #endif
@@ -110,6 +113,7 @@ void pre_image_approx(const cost_func_type *cost_func,
     while(strncmp(task,"FG",2)==0 || strncmp(task,"NEW_X",5)==0);
 
     // Check for mirror problem 
+
     #ifdef DEBUG
     printf("Iteration terminated, checking for mirroring.\n");
     #endif
@@ -133,8 +137,17 @@ void pre_image_approx(const cost_func_type *cost_func,
       #ifdef DEBUG
       printf("Iteration terminated, convergence.\n");
       #endif
+      converged = true;
       break;
     }
+  }
+  if(converged)
+  {
+    printf("Pre-image solver converged, cost_func: %f\n",f);
+  }
+  else{
+    printf("Pre-image solver did not converge -- aborting.\n");
+    abort();
   }
 
   // Free internal workingspace

@@ -3,7 +3,7 @@
 
 #include <util.h>
 
-
+/****************************************************************************/
 
 void gnuplot_write_gridded(const int nx,const int ny,const double *gridx, const double *gridy,const double *z, char *filename)
 {
