@@ -90,7 +90,6 @@ void cost_func_apply_gradx(const cost_func_type *cost_func,const double tausquar
                            const double *mu,const int ny,const double *alpha,const double **y, double *g)
 {
   const int one = 1;
-  const double dzero = 0.0;
   const double done = 1.0;
   int i;
   double beta;
@@ -102,12 +101,17 @@ void cost_func_apply_gradx(const cost_func_type *cost_func,const double tausquar
     fprintf(stderr,"%s: trying to evaluate grad of cost function with tsq < 0.0 - aborting\n",__func__);
     abort();
   }
+
+  for(i=0; i<n; i++)
+  {
+    g[i] = 0.0;
+  }
   
   gamma = cost_func->df(tausquared);
-  dscal_(&n,&dzero,g,&one);
   kernel_list_apply_gradxx(cost_func->kernel_list,n,x,g);
 
   dg = util_malloc(n*sizeof *dg,__func__);
+
   for(i=0; i<ny; i++)
   {
     kernel_list_apply_gradx(cost_func->kernel_list,n,x,y[i],dg);
@@ -189,8 +193,9 @@ double reg_func_none(const int n,const double lamdba,const double *x,const doubl
 
 void reg_func_none_gradx(const int n, const double lambda, const double *x, const double *mu, double *g)
 {
-  const int one = 1;
-  const double dzero = 0.0;
-
-  dscal_(&n,&dzero,g,&one);
+  int i;
+  for(i=0; i<n; i++)
+  {
+    g[i] = 0.0;
+  }
 };

@@ -1,7 +1,7 @@
 program main
   integer, parameter :: ntries = 5
-  integer, parameter :: nx = 100
-  integer, parameter :: ny = 100
+  integer, parameter :: nx = 40
+  integer, parameter :: ny = 40
   integer, parameter :: ndim = nx*ny
   integer, parameter :: ns = 10
 

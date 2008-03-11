@@ -10,7 +10,7 @@ INSTALL_INC_PATH  = $(LIBKERNEL_HOME)/include
 INSTALL_LIB_PATH  = $(LIBKERNEL_HOME)/lib
 #################################################################
 CFLAGS  = -$(MFLAG) -Wall -fPIC -std=gnu99 -g
-FFLAGS  = -openmp -fpe0 -traceback -warn all -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
+FFLAGS  = -O2 -openmp -fpe0 -traceback -warn all -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
 ARFLAGS = -csr
 #################################################################
 OBJECTS           = kernel_core.o cost_func.o pre-image.o
