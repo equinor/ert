@@ -97,7 +97,7 @@ int main(int argc,char **argv)
   int i;
   int ntries = 15;
 
-  double lamda;
+  const double lamda = 0.0;
 
   double *x;
   double *mu;
@@ -196,8 +196,8 @@ int main(int argc,char **argv)
   m_sample2d_mp_sample2d_(y[0],&nx,&ny,&ns,&nre,&dx,&dy,&rx,&ry,&dir,&sampfix,&verbose);
 
   // Write some samples to file
-  gnuplot_write_ungridded(nx,ny,y[0],"unbounded_sample_0.plt");
-  gnuplot_write_ungridded(nx,ny,y[1],"unbounded_sample_1.plt");
+  //gnuplot_write_ungridded(nx,ny,y[0],"unbounded_sample_0.plt");
+  //gnuplot_write_ungridded(nx,ny,y[1],"unbounded_sample_1.plt");
 
   // Find an aproximative pre-image using the 2xdot cost function
   pre_image_approx(cost_func_2xdot, ntries, n,ns,(const double**) y,alpha,lamda,mu, low_bnd,high_bnd,nbd,x);

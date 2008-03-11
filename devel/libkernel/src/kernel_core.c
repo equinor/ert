@@ -26,11 +26,6 @@
 #include "blas.h"
 #include "kernel_core.h"
 
-/*****************************************************
-#include <omp.h>
-*****************************************************/
-
-
 /** \brief Functional form of the dot product kernel
   *
   * The dot product kernel of order d is defined by k(x,y) = (x^T y)^d
@@ -264,6 +259,7 @@ void kernel_node_assert(const kernel_node_type *kernel)
   else if(kernel->param < 0.0)
   {
     fprintf(stderr,"%s: kernel_node has param: %f <0 - aborting \n",__func__,kernel->param);
+    abort();
   }
 };
 
@@ -439,12 +435,10 @@ double kernel_featurespace_dist_squared(const kernel_list_type *kernel_list,cons
   }
   dist_sq = kernel_list_apply(kernel_list,n,x,x);
 
-  #pragma omp for shared(dist_sq_work,alpha,kernel_list,n,x,y)  private(i)
   for(i=0; i<ny; i++)
   {
       dist_sq_work[i] = - 2.0*alpha[i]*kernel_list_apply(kernel_list,n,x,y[i]);
   }
-  #pragma omp barrier
   for(i=0; i<ny; i++)
   {
     dist_sq = dist_sq + dist_sq_work[i];

@@ -1,6 +1,4 @@
-#ifdef DEBUG
 #include <math.h>
-#endif
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +6,8 @@
 #include "blas.h"
 #include "cost_func.h"
 #include "pre-image.h"
+
+
 
 /********************************************************************/
 
@@ -93,6 +93,9 @@ void pre_image_approx(const cost_func_type *cost_func,
       {
         tsq = kernel_featurespace_dist_squared(cost_func->kernel_list,n,x,ny,alpha,(const double**) y,&aka);
         //Break if rounding error dominates the calculations
+        #ifdef DEBUG
+        printf("tsq: %f\n",tsq);
+        #endif
         if(tsq < 0.0)
         {
           #ifdef DEBUG
@@ -104,10 +107,6 @@ void pre_image_approx(const cost_func_type *cost_func,
         }
         f = cost_func_apply(cost_func,tsq,n,lambda,x,mu);
         cost_func_apply_gradx(cost_func,tsq,n,lambda,x,mu,ny,alpha,y,g);
-
-        #ifdef DEBUG
-        printf("tsq: %f\ncost_func: %f\n",tsq,f);
-        #endif
       }
     }
     while(strncmp(task,"FG",2)==0 || strncmp(task,"NEW_X",5)==0);
@@ -143,11 +142,16 @@ void pre_image_approx(const cost_func_type *cost_func,
   }
   if(converged)
   {
-    printf("Pre-image solver converged, cost_func: %f\n",f);
+    tsq = kernel_featurespace_dist_squared(cost_func->kernel_list,n,x,ny,alpha,y,&aka);
+    if(tsq < 0.0)
+    {
+      tsq = 0.0;
+    }
+    printf("Pre-image solver converged. tau: %f\n",sqrt(tsq));
   }
   else{
-    printf("Pre-image solver did not converge -- aborting.\n");
-    abort();
+    fprintf(stderr,"%s: Pre-image solver did not converge -- aborting.\n",__func__);
+    //abort();
   }
 
   // Free internal workingspace
@@ -169,6 +173,61 @@ void pre_image_approx(const cost_func_type *cost_func,
 
 *****************************************************************/
   
+void fw_pre_image_approx_dot_xpsqx_(
+                            const int *ntries,
+                            const int *n,
+                            const int *ny,
+                            const double *y,
+                            const double *alpha,
+                            const double *low_bnd,
+                            const double *high_bnd,
+                            const int *nbd,
+                            double *x
+                            )
+{
+  // Configure cost function 
+  f_func f = {X};
+  reg_func reg = {NONE};
+  
+  cost_func_type *cost_func;
+  kernel_list_type *kernel_dot;
+
+  kernel_type kernels[1] = {DOT};
+  double weights[1] = {1.0};
+  double params[1] = {1.0};
+
+  // Wrapper for y
+  const double **wrap_y;
+
+  // This is unused, since we are not using regularization
+  double *mu;
+
+  int i;
+  /*********************************************************/
+
+  // Allocate kernel and cost function
+  kernel_dot = kernel_list_alloc(1,kernels,weights,params);
+  cost_func = cost_func_alloc(kernel_dot,f,reg); 
+
+  // Wrap y
+  wrap_y = util_malloc(*n *sizeof *wrap_y,__func__);
+  wrap_y[0] = y;
+  for(i=1; i< *ny; i++)
+  {
+    wrap_y[i]  = wrap_y[i-1] + *n;
+  }
+
+
+  // Get pre-image approximation
+  pre_image_approx(cost_func,*ntries,*n,*ny, (const double **) wrap_y,alpha,0.0,mu,low_bnd,high_bnd,nbd,x);
+
+  // Clean up
+  kernel_list_free(kernel_dot);
+  cost_func_free(cost_func);
+  free(wrap_y);
+};
+
+
 
 void fw_pre_image_approx_2xdot_xpsqx_(
                             const int *ntries,
@@ -225,7 +284,8 @@ void fw_pre_image_approx_2xdot_xpsqx_(
 };
 
 
-void fw_pre_image_approx_dot_xpsqx_(
+
+void fw_pre_image_approx_3xdot_xpsqx_(
                             const int *ntries,
                             const int *n,
                             const int *ny,
@@ -238,15 +298,15 @@ void fw_pre_image_approx_dot_xpsqx_(
                             )
 {
   // Configure cost function 
-  f_func f = {X};
+  f_func f = {XPLUSSQRTX};
   reg_func reg = {NONE};
   
   cost_func_type *cost_func;
-  kernel_list_type *kernel_dot;
+  kernel_list_type *kernel_3xdot;
 
-  kernel_type kernels[1] = {DOT};
-  double weights[1] = {1.0};
-  double params[1] = {1.0};
+  kernel_type kernels[3] = {DOT,DOT,DOT};
+  double weights[3] = {1.0,1.0,1.0};
+  double params[3] = {1.0,2.0,3.0};
 
   // Wrapper for y
   const double **wrap_y;
@@ -258,8 +318,8 @@ void fw_pre_image_approx_dot_xpsqx_(
   /*********************************************************/
 
   // Allocate kernel and cost function
-  kernel_dot = kernel_list_alloc(1,kernels,weights,params);
-  cost_func = cost_func_alloc(kernel_dot,f,reg); 
+  kernel_3xdot = kernel_list_alloc(2,kernels,weights,params);
+  cost_func = cost_func_alloc(kernel_3xdot,f,reg); 
 
   // Wrap y
   wrap_y = util_malloc(*n *sizeof *wrap_y,__func__);
@@ -274,7 +334,7 @@ void fw_pre_image_approx_dot_xpsqx_(
   pre_image_approx(cost_func,*ntries,*n,*ny, (const double **) wrap_y,alpha,0.0,mu,low_bnd,high_bnd,nbd,x);
 
   // Clean up
-  kernel_list_free(kernel_dot);
+  kernel_list_free(kernel_3xdot);
   cost_func_free(cost_func);
   free(wrap_y);
 };
