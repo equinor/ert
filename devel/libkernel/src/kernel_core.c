@@ -133,10 +133,13 @@ void kernel_gauss_gradx(const int n,const double *x,const double *y,const double
   */
 void kernel_gauss_gradxx(const int n,const double *x,const double beta,double *g)
 {
-  const double dzero = 0.0;
-  const int one = 1;
+  int i;
 
-  dscal_(&n,&dzero,g,&one);
+  for(i=0; i<n; i++)
+  {
+    g[i] = 0.0;
+  }
+
 };
 
 
@@ -377,10 +380,12 @@ void kernel_list_apply_gradx(const kernel_list_type *kernel_list, const int n, c
   int i;
   double *dg;
   const int one = 1;
-  const double dzero = 0.0;
   const double done = 1.0;
 
-  dscal_(&n,&dzero,g,&one);
+  for(i=0; i<n; i++)
+  {
+    g[i] = 0.0;
+  }
 
   dg = util_malloc(n*sizeof *dg,__func__);
   for(i=0; i<kernel_list->nk; i++)
@@ -401,10 +406,12 @@ void kernel_list_apply_gradxx(const kernel_list_type *kernel_list, const int n, 
   int i;
   double *dg;
   const int one = 1;
-  const double dzero = 0.0;
   const double done = 1.0;
 
-  dscal_(&n,&dzero,g,&one);
+  for(i=0; i<n; i++)
+  {
+    g[i] = 0.0;
+  }
 
   dg = util_malloc(n*sizeof *dg,__func__);
   for(i=0; i<kernel_list->nk; i++)

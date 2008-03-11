@@ -28,7 +28,7 @@ void pre_image_approx(const cost_func_type *cost_func,
   const int one = 1;
   const double dmone = -1.0;
 
-  bool mirrorfix, converged;
+  bool converged;
   int i,j,iprint,m;
   double f,factr,pgtol,tsq,aka;
 
@@ -74,8 +74,7 @@ void pre_image_approx(const cost_func_type *cost_func,
   
   for(i=0; i < ntries; i++)
   {
-    // Initialize
-    mirrorfix = false;
+
     util_memcpy_string_C2f90("START",task,60);
 
     // Start the iteration in a radom sample from y
@@ -111,7 +110,6 @@ void pre_image_approx(const cost_func_type *cost_func,
     }
     while(strncmp(task,"FG",2)==0 || strncmp(task,"NEW_X",5)==0);
 
-    // Check for mirror problem 
 
     #ifdef DEBUG
     printf("Iteration terminated, checking for mirroring.\n");
@@ -151,7 +149,7 @@ void pre_image_approx(const cost_func_type *cost_func,
   }
   else{
     fprintf(stderr,"%s: Pre-image solver did not converge -- aborting.\n",__func__);
-    //abort();
+    abort();
   }
 
   // Free internal workingspace
