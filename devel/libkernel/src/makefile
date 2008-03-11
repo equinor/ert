@@ -9,15 +9,15 @@ COMPILE_LIB_PATH  = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L/h/jgv/lib
 INSTALL_INC_PATH  = $(LIBKERNEL_HOME)/include
 INSTALL_LIB_PATH  = $(LIBKERNEL_HOME)/lib
 #################################################################
-CFLAGS  = -$(MFLAG) -Wall -fPIC -std=gnu99 -g -O2
-FFLAGS  = -fpe0 -traceback -warn all -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian  #-msse3 -funroll-loops -parallel
+CFLAGS  = -$(MFLAG) -Wall -fPIC -std=gnu99 -g
+FFLAGS  = -openmp -fpe0 -traceback -warn all -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
 ARFLAGS = -csr
 #################################################################
 OBJECTS           = kernel_core.o cost_func.o pre-image.o
 INC_FILES 				= kernel_core.h cost_func.h pre-image.h
 LIB               = libkernel_$(MFLAG).a
-LIB_LINK          = -lsample_$(MFLAG) -lanalysis_$(MFLAG) -lkernel_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lz -lg2c -llapack -lblas -lifcore -lguide -lirc -lfftw3   -lbfgs 
-LIB_PATH          = -L/usr/lib/gcc/x86_64-redhat-linux/3.4.3/32  -L$(LIBSAMPLE_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBBFGS_HOME)/lib -L$(LIBKERNEL_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L/local/intel/compiler90/ia32/fc/lib
+LIB_LINK          = -lsample_$(MFLAG) -lanalysis_$(MFLAG) -lkernel_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lz -lg2c -lmkl_lapack -lmkl -lifcoremt -lguide -lfftw3   -lbfgs 
+LIB_PATH          = -L/usr/lib/gcc/x86_64-redhat-linux/3.4.3/32  -L$(LIBSAMPLE_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBBFGS_HOME)/lib -L$(LIBKERNEL_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L/local/intel/compiler90/ia32/fc/lib -L/local/intel/mkl/mkl721/lib/32
 TARGET_INCLUDE    = -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBKERNEL_HOME)/include
 
 all: $(LIB)
@@ -29,6 +29,8 @@ all: $(LIB)
 	$(CC) $(CFLAGS) test_kernel.o gnuplot.o -o test_kernel.x $(LIB_PATH) $(LIB_LINK)
 	$(FF) $(FFLAGS) -c test_fortran.f90
 	$(FF) test_fortran.o -o test_fortran.x $(LIB_PATH) $(LIB_LINK)
+	$(FF) $(FFLAGS) -c test_fortran_omp.f90
+	$(FF) test_fortran_omp.o -o test_fortran_omp.x $(LIB_PATH) $(LIB_LINK)
 
 $(LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)

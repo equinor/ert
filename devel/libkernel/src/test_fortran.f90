@@ -1,7 +1,7 @@
 program main
   integer, parameter :: ntries = 5
-  integer, parameter :: nx = 400
-  integer, parameter :: ny = 400
+  integer, parameter :: nx = 100
+  integer, parameter :: ny = 100
   integer, parameter :: ndim = nx*ny
   integer, parameter :: ns = 10
 
@@ -23,7 +23,14 @@ program main
   low_bnd = 0.0
   high_bnd = 1.0
 
-  call fw_pre_image_approx_2xdot_xpsqx(ntries,ndim,ns,y,alpha,low_bnd,high_bnd,nbd,x)
+
+  write(*,*) "Solving pre-image problem for a 1st order dot product kernel"
   call fw_pre_image_approx_dot_xpsqx(ntries,ndim,ns,y,alpha,low_bnd,high_bnd,nbd,x)
+
+  write(*,*) "Solving pre-image problem for a 2nd order dot product kernel"
+  call fw_pre_image_approx_2xdot_xpsqx(ntries,ndim,ns,y,alpha,low_bnd,high_bnd,nbd,x)
+
+  write(*,*) "Solving pre-image problem for a 3rd order dot product kernel"
+  call fw_pre_image_approx_3xdot_xpsqx(ntries,ndim,ns,y,alpha,low_bnd,high_bnd,nbd,x)
 
 end program main
