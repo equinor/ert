@@ -268,16 +268,15 @@ static void ecl_diag_avg_production(const char *out_path , const history_type * 
       stream = util_fopen(well_file , "w");
       for (istep = 0; istep < size; istep++) {
 	double time_value;
-	time_value = ecl_sum_iget2(avg , istep , 0 );
+	time_value = ecl_sum_get_with_index(avg , istep , 0 );
 	fprintf(stream , "%04d  %8.2f" , istep , time_value);
 	for (ivar = 0; ivar < nvar; ivar++) {
 	  double history_value , avg_value , std_value;
-	  int index;
 	  const char *var = var_list[ivar];
 	  
 	  history_value = history_get(hist , istep + 1 , well , var);
-	  avg_value = ecl_sum_iget1(avg , istep , well ,  var , &index);
-	  std_value = ecl_sum_iget1(std , istep , well ,  var , &index);
+	  avg_value = ecl_sum_get_well_var(avg , istep , well ,  var );
+	  std_value = ecl_sum_get_well_var(std , istep , well ,  var );
 	  
 	  fprintf(stream , "%16.7f   %16.7f  %16.7f " , history_value , avg_value , std_value);
 	}

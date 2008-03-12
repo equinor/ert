@@ -187,9 +187,9 @@ static rate_type * rate_alloc_empty(int kw_size) {
 
 static double __sum_get(const ecl_sum_type * sum , int report_nr , const char * well , const char * var) {
   double value;
-  int    index = ecl_sum_get_index(sum , well , var);
+  int    index = ecl_sum_get_well_var_index(sum , well , var);
   if (index >= 0)
-    value = ecl_sum_iget2(sum , report_nr , index);
+    value = ecl_sum_get_with_index(sum , report_nr , index);
   else {
     fprintf(stderr,"%s: warning well/variable combination:%s/%s does not exist - default value -1 used.\n",__func__ , well , var);
     value = -1;
@@ -202,7 +202,7 @@ rate_type * rate_alloc_from_summary(bool history_mode , const ecl_sum_type * sum
   int   cmode ;
   
   if (ecl_sum_has_well_var(sum , well , "WMCTL"))
-    cmode = round(ecl_sum_iget(sum , report_nr , well , "WMCTL"));
+    cmode = round(ecl_sum_get_well_var(sum , report_nr , well , "WMCTL"));
   else
     cmode = 0;
   
