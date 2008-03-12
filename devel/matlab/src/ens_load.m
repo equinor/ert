@@ -1,7 +1,7 @@
-function [well , var , unit ,time_step , true_time ,  history , ens_data] = ens_load(filename)
+function [title ,  var , unit ,time_step , true_time ,  history , ens_data] = ens_load(filename)
 fid       = fopen(filename , 'rb');
 
-well 	  = fread_string(fid);
+title     = fread_string(fid);
 var  	  = fread_string(fid);
 unit 	  = fread_string(fid);
 ens_size  = fread(fid , 1 , 'int');
