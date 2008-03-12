@@ -38,14 +38,16 @@ void pre_image_approx(const cost_func_type *cost_func,
   double *dsave,*g,*wa,*xm;
 
   /******************************************************************/
-  converged = false;
 
   // Configure L-BFGS-B
-  factr = 1.0E2;
+  factr = 1.0E1;
   pgtol = 1.0E-4;
   m = 20;
 
-  //  Allocate internal workingspace
+  /* The L-BFGS-B fortran code doesn't handle its own memory. We
+     need to allocate the memory here...
+  */
+
   lsave =   util_malloc(4                     *sizeof *lsave, __func__);
   csave =   util_malloc(60                    *sizeof *csave, __func__);
   task  =   util_malloc(60                    *sizeof *task,  __func__);
@@ -56,33 +58,53 @@ void pre_image_approx(const cost_func_type *cost_func,
   wa    =   util_malloc(((2*m+4)*n+11*m*m+8*m)*sizeof *wa,    __func__); 
   xm    =   util_malloc(n                     *sizeof *xm,    __func__);
 
-  // Don't be verbose
+  /* Don't be verbose unless debugging is enabled.
+  */
   iprint = -1;
-
   #ifdef DEBUG
   iprint = 1;
   printf("Verbose mode enabled.\n");
   #endif
 
 
-  // Calculate aka
+  /* Suppose that we want to find an approximative x such that
+     
+      phi(x) = \sum \alpha_i phi(y_i) 
+
+     for given alpha and y. Using the cost function method implemented in
+     this library, we need to calculate the sum
+
+        aka = \sum_i \sum_j \alpha_i\alpha_j <phi(y_i),phi(y_j)>
+
+     where <,> is a dot product. This is computationally expensive, so
+     we only do this ONCE and store it in aka for the iterations.
+  */
   aka = kernel_featurespace_dist_get_aka(cost_func->kernel_list,n,ny,alpha,y);
 
   #ifdef DEBUG
   printf("aka: %f\n",aka);
   #endif
+
+  /* If the convergence criteria in L-BFGS-B are met or
+     squared distance in pre-image space goes negative
+     (i.e., rouding error dominates), converged is set
+     to true.
+  */
+  converged = false;
   
   for(i=0; i < ntries; i++)
   {
-
+    /* Tell the L-BFGS-B routine that we are to start
+       a new minimization and initialize it in a random
+       sample from {y_1,y_2,...,y_n}
+    */
     util_memcpy_string_C2f90("START",task,60);
-
-    // Start the iteration in a radom sample from y
     j = rand() % ny;
     dcopy_(&n,y[j],&one,x,&one);
     #ifdef DEBUG
     printf("Starting L-BFGS-B in y[%i]..\n",j);
     #endif
+
     do  
     {
       // Call the L-BFGS-B routine
@@ -91,10 +113,15 @@ void pre_image_approx(const cost_func_type *cost_func,
       if(strncmp(task,"FG",2) == 0)
       {
         tsq = kernel_featurespace_dist_squared(cost_func->kernel_list,n,x,ny,alpha,(const double**) y,&aka);
-        //Break if rounding error dominates the calculations
         #ifdef DEBUG
         printf("tsq: %f\n",tsq);
         #endif
+
+        /* tsq is the squared distance in the feature space,
+           if it goes negative, rouding error dominates and
+           we have convergence (or a bogus result if the
+           scaling is off!)
+        */
         if(tsq < 0.0)
         {
           #ifdef DEBUG
@@ -104,13 +131,25 @@ void pre_image_approx(const cost_func_type *cost_func,
           util_memcpy_string_C2f90("CONV",task,60); 
           break;
         }
+        
+        /* If tsq is not negative, we calculate the 
+           value and gradient of the cost function at
+           the new iterate.
+        */
         f = cost_func_apply(cost_func,tsq,n,lambda,x,mu);
         cost_func_apply_gradx(cost_func,tsq,n,lambda,x,mu,ny,alpha,y,g);
       }
     }
     while(strncmp(task,"FG",2)==0 || strncmp(task,"NEW_X",5)==0);
 
+    /* The iteration has terminated.
 
+       With some kernels (even ordered dp's in particular)
+       the L-BFGS-B has a tendency to end the iterations in
+       -x, when the true minima in is in x. To avoid this
+       problem, we check the value of the cost function
+       in -x. If it is less, we start a new iteration there.
+    */
     #ifdef DEBUG
     printf("Iteration terminated, checking for mirroring.\n");
     #endif
@@ -120,6 +159,9 @@ void pre_image_approx(const cost_func_type *cost_func,
     tsq = kernel_featurespace_dist_squared(cost_func->kernel_list,n,xm,ny,alpha,y,&aka);
     if(cost_func_apply(cost_func,tsq,n,lambda,x,mu) < f)
     {
+      /* The mirror problem has occured, we start
+         a new minimization in -x.
+      */
       #ifdef DEBUG
       printf("Mirror problem observed. Starting new iterations in -x\n");  
       #endif
@@ -128,7 +170,11 @@ void pre_image_approx(const cost_func_type *cost_func,
       i--;
     }
 
-    // Check for convergence
+    /* If L-BFGS-B met its internal convergence
+       criteria, or tsq went negative, we have
+       convergence and exit. If not, we do a new
+       iteration in the outer for loop.
+    */
     if(strncmp(task,"CONV",4) == 0)
     {
       #ifdef DEBUG
@@ -138,6 +184,12 @@ void pre_image_approx(const cost_func_type *cost_func,
       break;
     }
   }
+
+  /* The pre-image solver has terminated. 
+
+     Check for convergence. If it failed, terminate
+     the program to avoid bogus results.
+  */
   if(converged)
   {
     tsq = kernel_featurespace_dist_squared(cost_func->kernel_list,n,x,ny,alpha,y,&aka);
@@ -152,7 +204,7 @@ void pre_image_approx(const cost_func_type *cost_func,
     abort();
   }
 
-  // Free internal workingspace
+  // Free workingspace
   free(lsave);
   free(csave);
   free(task);
