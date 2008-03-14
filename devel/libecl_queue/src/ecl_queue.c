@@ -4,6 +4,8 @@
 #include <ecl_queue.h>
 #include <util.h>
 #include <basic_queue_driver.h>
+#include <path_fmt.h>
+#include <pthread.h>
 
 
 /**
@@ -18,30 +20,312 @@ All queue drivers must support the following functions:
   abort:  This will stop the job, and then call clean.
 
   status: This will get the status of the job.
-
+  
 */ 
 
 
+typedef struct {
+  int                  	 external_id;
+  int                  	 submit_attempt; 
+  char                 	*target_file;
+  char                 	*ecl_base;
+  char                 	*run_path;
+  ecl_job_status_type  	 job_status;
+  basic_queue_job_type 	*job_data;
+} ecl_queue_node_type;
+
+/*****************************************************************/
+
+static void ecl_queue_node_clear(ecl_queue_node_type * node) {
+  node->external_id    = -1;
+  node->job_status     = ecl_queue_null;
+  node->submit_attempt = 0;
+  node->target_file    = NULL;
+  node->ecl_base       = NULL;
+  node->run_path       = NULL;
+}
+
+
+static ecl_queue_node_type * ecl_queue_node_alloc() {
+  ecl_queue_node_type * node = util_malloc(sizeof * node , __func__);
+  ecl_queue_node_clear(node);
+  return node;
+}
+
+
+static void ecl_queue_node_set_status(ecl_queue_node_type * node, ecl_job_status_type status) {
+  node->job_status = status;
+}
+
+static void ecl_queue_node_free_data(ecl_queue_node_type * node) {
+  if (node->ecl_base != NULL)    free(node->ecl_base);
+  if (node->run_path != NULL)    free(node->run_path);
+  if (node->target_file != NULL) free(node->target_file);
+}
+
+static void ecl_queue_node_free(ecl_queue_node_type * node) {
+  ecl_queue_node_free_data(node);
+  free(node);
+}
+
+static ecl_job_status_type ecl_queue_node_get_status(const ecl_queue_node_type * node) {
+  return node->job_status;
+}
+
+
+static int ecl_queue_node_get_external_id(const ecl_queue_node_type * node) {
+  if (node->external_id < 0) {
+    fprintf(stderr,"%s: tried to get external id from uninitialized job - aborting \n",__func__);
+    abort();
+  }
+  return node->external_id;
+}
+
+
+static void ecl_queue_node_finalize(ecl_queue_node_type * node) {
+  ecl_queue_node_free_data(node);
+  ecl_queue_node_clear(node);
+}
+
+
+
+/*****************************************************************/
 
 struct ecl_queue_struct {
-  int size;
-  basic_queue_driver_type * driver;
+  int                        sleep_time;
+  int                        active_size; 
+  int                        size;
+  int                        max_submit;
+  int                        max_running; 
+  char                     * submit_cmd;
+  char                     * ecl_version_id;
+  path_fmt_type            * run_path_fmt;
+  path_fmt_type            * ecl_base_fmt;
+  path_fmt_type            * target_file_fmt;
+  ecl_queue_node_type     ** jobs;
+  basic_queue_driver_type  * driver;
+  pthread_mutex_t            active_mutex;
+  pthread_mutex_t            status_mutex;
+  int                        status_list[ecl_queue_max_state];
 };
 
 
 
-void ecl_queue_submit_job(ecl_queue_type * queue) {
-  basic_queue_driver_type*driver = queue->driver;
-  driver->submit(queue->driver , 1 , NULL , NULL , NULL , NULL);
+static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index , int external_id) {
+  if (external_id < 0) {
+    fprintf(stderr,"%s: external_id must be >= 0 - aborting \n",__func__);
+    abort();
+  }
+  {
+    ecl_queue_node_type * node = queue->jobs[queue_index];
+    node->external_id    = external_id;
+    node->job_status     = ecl_queue_waiting;
+    node->submit_attempt = 0;
+    node->run_path       = path_fmt_alloc_path(queue->run_path_fmt , external_id);
+
+    node->ecl_base       = path_fmt_alloc_path(queue->ecl_base_fmt , external_id);
+    if (queue->target_file_fmt != NULL)
+      node->target_file = path_fmt_alloc_path(queue->target_file_fmt , external_id , external_id);
+    else
+      node->target_file = NULL;
+    
+    {
+      printf("%d -> %s %s %s \n",external_id , node->run_path , node->ecl_base , node->target_file);
+    }
+    node->job_data      = NULL;
+    /*if ( !util_path_exists(node->run_path) ) {
+      fprintf(stderr,"%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
+      abort();
+    }
+    */
+  }
+}
+
+
+static int ecl_queue_get_active_size(ecl_queue_type * queue) {
+  int active_size;
+  pthread_mutex_lock( &queue->active_mutex );
+  active_size = queue->active_size;
+  pthread_mutex_unlock( &queue->active_mutex );
+  return active_size;
+}
+
+
+static void ecl_queue_assert_queue_index(const ecl_queue_type * queue , int queue_index) {
+  if (queue_index < 0 || queue_index >= queue->size) {
+    fprintf(stderr,"%s: invalid queue_index - internal error - aborting \n",__func__);
+    abort();
+  }
+}
+
+
+static bool ecl_queue_change_node_status(ecl_queue_type * queue , ecl_queue_node_type * node , ecl_job_status_type new_status) {
+  ecl_job_status_type old_status = ecl_queue_node_get_status(node);
+  ecl_queue_node_set_status(node , new_status);
+  queue->status_list[old_status]--;
+  queue->status_list[new_status]++;
+  return ( !(new_status == old_status) );
+}
+
+
+static bool ecl_queue_update_status(ecl_queue_type * queue) {
+  basic_queue_driver_type *driver  = queue->driver;
+  bool change = false;
+  int ijob;
+  for (ijob = 0; ijob < queue->size; ijob++) {
+    ecl_queue_node_type * node       = queue->jobs[ijob];
+    ecl_job_status_type   new_status;
+    ecl_job_status_type   old_status = ecl_queue_node_get_status(node);
+    
+    if ( !((old_status == ecl_queue_waiting) || (old_status == ecl_queue_null)) ) {
+      new_status = driver->get_status(driver , node->job_data);
+      change = (change || ecl_queue_change_node_status(queue , node , new_status));
+    }
+  }
+  return change;
+}
+
+
+void ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
+  ecl_queue_assert_queue_index(queue , queue_index);
+  ecl_queue_node_type * node = queue->jobs[queue_index];
+  if (ecl_queue_node_get_status(node) == ecl_queue_waiting) {
+    basic_queue_driver_type *driver  = queue->driver;
+    if (node->submit_attempt < queue->max_submit) {
+      node->job_data = driver->submit(queue->driver , queue_index , queue->submit_cmd , node->run_path , node->ecl_base , queue->ecl_version_id);
+      ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
+      node->submit_attempt++;
+    } else 
+      ecl_queue_change_node_status(queue , node , ecl_queue_complete_FAIL);
+  }
+}
+
+
+void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
+  int queue_index;
+  do {
+    ecl_queue_update_status(queue);
+    {
+      /* Submitting new jobs */
+      int active_size    = ecl_queue_get_active_size(queue);
+      int total_active   = queue->status_list[ecl_queue_pending] + queue->status_list[ecl_queue_running];
+      int num_submit_new = queue->max_running - total_active;
+      queue_index = 0;
+      while ((queue_index < active_size) && (num_submit_new > 0)) {
+	ecl_queue_node_type * node = queue->jobs[queue_index];
+	if (ecl_queue_node_get_status(node) == ecl_queue_waiting) {
+	  ecl_queue_submit_job(queue , queue_index);
+	  num_submit_new--;
+	}
+	queue_index++;
+      }
+    }
+
+    {
+      basic_queue_driver_type *driver  = queue->driver;
+
+      for (queue_index = 0; queue_index < ecl_queue_get_active_size(queue); queue_index++) {
+	ecl_queue_node_type * node = queue->jobs[queue_index];
+	switch (ecl_queue_node_get_status(node)) {
+	case(ecl_queue_done):
+	  if (node->target_file != NULL) {
+	    if (util_file_exists(node->target_file))
+	      ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
+	    else
+	      ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
+	  } else 
+	    ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
+	  driver->free_job(driver , node->job_data);
+	  break;
+	case(ecl_queue_exit):
+	  ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
+	  driver->free_job(driver , node->job_data);
+	  break;
+	default:
+	  break;
+	}
+      }
+    }
+    sleep(queue->sleep_time);
+  } while ( (queue->status_list[ecl_queue_complete_OK] + queue->status_list[ecl_queue_complete_FAIL]) < num_total_run);
+}
+
+
+void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
+  pthread_mutex_lock( &queue->active_mutex );
+  {
+    int active_size  = queue->active_size;
+    if (active_size == queue->size) {
+      fprintf(stderr,"%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
+      abort();
+    }
+    ecl_queue_initialize_node(queue , active_size , external_id);
+    queue->status_list[ecl_queue_null]++;
+    queue->active_size++;
+  }
+  pthread_mutex_unlock( &queue->active_mutex );
+}
+
+
+ecl_queue_type * ecl_queue_alloc(int size , int max_running , const char * submit_cmd , const char * ecl_version_id , const char * __run_path_fmt , const char * __ecl_base_fmt , const char * __target_file_fmt , void * driver) {
+  ecl_queue_type * queue = util_malloc(sizeof * queue , __func__);
+
+  queue->sleep_time     = 2;
+  queue->max_running    = max_running;
+  queue->size           = size;
+  queue->submit_cmd     = util_alloc_string_copy(submit_cmd);
+  queue->ecl_version_id = util_alloc_string_copy(ecl_version_id);
+  queue->jobs           = util_malloc(size * sizeof * queue->jobs , __func__);
+  {
+    int i;
+    for (i=0; i < size; i++) 
+      queue->jobs[i] = ecl_queue_node_alloc();
+
+    for (i=0; i < ecl_queue_max_state; i++)
+      queue->status_list[i] = 0;
+  }
+
+  queue->run_path_fmt = path_fmt_alloc_directory_fmt(__run_path_fmt , false);
+  queue->ecl_base_fmt = path_fmt_alloc_file_fmt(__ecl_base_fmt);
+  if (__target_file_fmt != NULL)
+    queue->target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
+  
+  queue->driver = driver;
+  /*basic_queue_driver_assert_cast(queue->driver);*/
+  pthread_mutex_init( &queue->status_mutex , NULL );
+  pthread_mutex_init( &queue->active_mutex , NULL );
+  return queue;
 }
 
 
 
 
-ecl_queue_type * ecl_queue_alloc(int size , void * driver) {
-  ecl_queue_type * queue = util_malloc(sizeof * queue , __func__);
-  queue->size   = size;
-  queue->driver = driver;
-  basic_queue_driver_assert_cast(queue->driver);
-  return queue;
+void ecl_queue_finalize(ecl_queue_type * queue) {
+  int i;
+  for (i=0; i < queue->size; i++) 
+    ecl_queue_node_finalize(queue->jobs[i]);
+
+  for (i=0; i < ecl_queue_max_state; i++)
+    queue->status_list[i] = 0;
+  
+  queue->active_size = 0;
+}
+
+
+
+void ecl_queue_free(ecl_queue_type * queue) {
+  free(queue->submit_cmd);
+  free(queue->ecl_version_id);
+  path_fmt_free(queue->run_path_fmt);
+  path_fmt_free(queue->ecl_base_fmt);
+  if (queue->target_file_fmt != NULL)
+    path_fmt_free(queue->target_file_fmt);
+  {
+    int i;
+    for (i=0; i < queue->size; i++) 
+      ecl_queue_node_free(queue->jobs[i]);
+    free(queue->jobs);
+  }
+  free(queue);
+  queue = NULL;
 }

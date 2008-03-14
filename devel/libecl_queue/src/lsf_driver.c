@@ -25,9 +25,9 @@ struct lsf_driver_struct {
 
   pthread_mutex_t    submit_lock;
   submit_job_ftype * submit;
-  clean_job_ftype  * clean;
   abort_job_ftype  * abort_f;
   get_status_ftype * get_status;
+  free_job_ftype   * free_job;
 };
 
 /*****************************************************************/
@@ -108,14 +108,15 @@ ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver
 #undef CASE
 
 
-void lsf_driver_clean_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+
+void lsf_driver_free_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   lsf_job_type    * job    = (lsf_job_type    *) __job;
   lsf_driver_type * driver = (lsf_driver_type *) __driver;
   lsf_driver_assert_cast(driver); 
   lsf_job_assert_cast(job);
-
   lsf_job_free(job);
 }
+
 
 
 void lsf_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
@@ -124,8 +125,9 @@ void lsf_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_t
   lsf_driver_assert_cast(driver); 
   lsf_job_assert_cast(job);
   lsb_forcekilljob(job->lsf_jobnr);
-  lsf_driver_clean_job(__driver , __job);
+  lsf_driver_free_job(__driver , __job);
 }
+
 
 
 basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver, int queue_index , const char * submit_cmd , const char * run_path , const char * ecl_base , const char * ecl_version_id) {
@@ -161,7 +163,7 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
 
 
 
-basic_queue_driver_type * lsf_driver_alloc(const char * queue_name , const char * resource_request) {
+void * lsf_driver_alloc(const char * queue_name , const char * resource_request) {
   lsf_driver_type * lsf_driver = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name       = util_alloc_string_copy(queue_name);
   lsf_driver->resource_request = util_alloc_string_copy(resource_request);
@@ -185,8 +187,8 @@ basic_queue_driver_type * lsf_driver_alloc(const char * queue_name , const char 
   
   lsf_driver->submit     = lsf_driver_submit_job;
   lsf_driver->get_status = lsf_driver_get_job_status;
-  lsf_driver->clean      = lsf_driver_clean_job;
   lsf_driver->abort_f    = lsf_driver_abort_job;
+  lsf_driver->free_job   = lsf_driver_free_job;
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) lsf_driver;
     basic_queue_driver_init(basic_driver);
@@ -194,6 +196,13 @@ basic_queue_driver_type * lsf_driver_alloc(const char * queue_name , const char 
   }
 }
 
+
+void lsf_driver_free(lsf_driver_type * driver) {
+  free(driver->resource_request);
+  free(driver->queue_name);
+  free(driver);
+  driver = NULL;
+}
 
 
 #undef LSF_DRIVER_ID  
