@@ -1,5 +1,5 @@
 include path_config
-MFLAG = m32
+MFLAG = m64
 CC = gcc
 AR = ar
 #################################################################
@@ -14,7 +14,7 @@ OBJECTS   = ecl_queue.o basic_queue_driver.o lsf_driver.o
 INC_FILES = ecl_queue.h basic_queue_driver.h lsf_driver.h
 LIB       = libecl_queue_$(MFLAG).a
 LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_QUEUE_HOME)/lib
-LIB_LINK  = -lecl_queue_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz #-lbat  -llsf -lnsl 
+LIB_LINK  = -lecl_queue_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
 TARGET_INCLUDE  = -I$(LIBECL_QUEUE_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include
 
 INSTALL: $(LIB)
@@ -22,7 +22,7 @@ INSTALL: $(LIB)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
-	gcc $(CFLAGS) $(TARGET_INCLUDE) ecl_queue_test.c         -o queue.x          $(LIB_PATH)  $(LIB_LINK)
+	gcc $(CFLAGS) $(TARGET_INCLUDE) ecl_queue_test.c         -o queue.x  $(LIB_PATH)  $(LIB_LINK)
 
 clean:
 	rm -f *.o *~ 

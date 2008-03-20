@@ -43,6 +43,7 @@ static void ecl_queue_node_clear(ecl_queue_node_type * node) {
   node->target_file    = NULL;
   node->ecl_base       = NULL;
   node->run_path       = NULL;
+  node->job_data       = NULL;
 }
 
 
@@ -61,6 +62,10 @@ static void ecl_queue_node_free_data(ecl_queue_node_type * node) {
   if (node->ecl_base != NULL)    free(node->ecl_base);
   if (node->run_path != NULL)    free(node->run_path);
   if (node->target_file != NULL) free(node->target_file);
+  if (node->job_data != NULL) {
+    fprintf(stderr,"%s: internal error - driver spesific job data has not been freed - will leak \n",__func__);
+    abort();
+  }
 }
 
 static void ecl_queue_node_free(ecl_queue_node_type * node) {
@@ -129,15 +134,11 @@ static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index ,
     else
       node->target_file = NULL;
     
-    {
-      printf("%d -> %s %s %s \n",external_id , node->run_path , node->ecl_base , node->target_file);
-    }
     node->job_data      = NULL;
-    /*if ( !util_path_exists(node->run_path) ) {
+    if ( !util_path_exists(node->run_path) ) {
       fprintf(stderr,"%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
       abort();
     }
-    */
   }
 }
 
@@ -167,6 +168,12 @@ static bool ecl_queue_change_node_status(ecl_queue_type * queue , ecl_queue_node
   return ( !(new_status == old_status) );
 }
 
+static void ecl_queue_free_job(ecl_queue_type * queue , ecl_queue_node_type * node) {
+  basic_queue_driver_type *driver  = queue->driver;
+  driver->free_job(driver , node->job_data);
+  node->job_data = NULL;
+}
+
 
 static bool ecl_queue_update_status(ecl_queue_type * queue) {
   basic_queue_driver_type *driver  = queue->driver;
@@ -174,11 +181,9 @@ static bool ecl_queue_update_status(ecl_queue_type * queue) {
   int ijob;
   for (ijob = 0; ijob < queue->size; ijob++) {
     ecl_queue_node_type * node       = queue->jobs[ijob];
-    ecl_job_status_type   new_status;
-    ecl_job_status_type   old_status = ecl_queue_node_get_status(node);
     
-    if ( !((old_status == ecl_queue_waiting) || (old_status == ecl_queue_null)) ) {
-      new_status = driver->get_status(driver , node->job_data);
+    if (node->job_data != NULL) {
+      ecl_job_status_type  new_status = driver->get_status(driver , node->job_data);
       change = (change || ecl_queue_change_node_status(queue , node , new_status));
     }
   }
@@ -201,9 +206,11 @@ void ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
 }
 
 
+
 void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
   int queue_index;
   do {
+    printf("*"); fflush(stdout);
     ecl_queue_update_status(queue);
     {
       /* Submitting new jobs */
@@ -221,31 +228,28 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
       }
     }
 
-    {
-      basic_queue_driver_type *driver  = queue->driver;
-
-      for (queue_index = 0; queue_index < ecl_queue_get_active_size(queue); queue_index++) {
-	ecl_queue_node_type * node = queue->jobs[queue_index];
-	switch (ecl_queue_node_get_status(node)) {
-	case(ecl_queue_done):
-	  if (node->target_file != NULL) {
-	    if (util_file_exists(node->target_file))
-	      ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
-	    else
-	      ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
-	  } else 
+    for (queue_index = 0; queue_index < ecl_queue_get_active_size(queue); queue_index++) {
+      ecl_queue_node_type * node = queue->jobs[queue_index];
+      switch (ecl_queue_node_get_status(node)) {
+      case(ecl_queue_done):
+	if (node->target_file != NULL) {
+	  if (util_file_exists(node->target_file))
 	    ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
-	  driver->free_job(driver , node->job_data);
-	  break;
-	case(ecl_queue_exit):
-	  ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
-	  driver->free_job(driver , node->job_data);
-	  break;
-	default:
-	  break;
-	}
+	  else
+	    ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
+	} else 
+	  ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
+	ecl_queue_free_job(queue , node);
+	break;
+      case(ecl_queue_exit):
+	ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
+	ecl_queue_free_job(queue , node);
+	break;
+      default:
+	break;
       }
     }
+    
     sleep(queue->sleep_time);
   } while ( (queue->status_list[ecl_queue_complete_OK] + queue->status_list[ecl_queue_complete_FAIL]) < num_total_run);
 }
@@ -267,11 +271,12 @@ void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
 }
 
 
-ecl_queue_type * ecl_queue_alloc(int size , int max_running , const char * submit_cmd , const char * ecl_version_id , const char * __run_path_fmt , const char * __ecl_base_fmt , const char * __target_file_fmt , void * driver) {
+ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit , const char * submit_cmd , const char * ecl_version_id , const char * __run_path_fmt , const char * __ecl_base_fmt , const char * __target_file_fmt , void * driver) {
   ecl_queue_type * queue = util_malloc(sizeof * queue , __func__);
 
   queue->sleep_time     = 2;
   queue->max_running    = max_running;
+  queue->max_submit     = max_submit;
   queue->size           = size;
   queue->submit_cmd     = util_alloc_string_copy(submit_cmd);
   queue->ecl_version_id = util_alloc_string_copy(ecl_version_id);
@@ -291,9 +296,10 @@ ecl_queue_type * ecl_queue_alloc(int size , int max_running , const char * submi
     queue->target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
   
   queue->driver = driver;
-  /*basic_queue_driver_assert_cast(queue->driver);*/
+  basic_queue_driver_assert_cast(queue->driver);
   pthread_mutex_init( &queue->status_mutex , NULL );
   pthread_mutex_init( &queue->active_mutex , NULL );
+  queue->active_size = 0;
   return queue;
 }
 

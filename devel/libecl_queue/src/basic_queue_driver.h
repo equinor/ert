@@ -31,13 +31,16 @@ struct basic_queue_job_struct {
   int __id;
 };
 
+#define BASIC_QUEUE_DRIVER_FIELDS \
+submit_job_ftype * submit;        \
+free_job_ftype   * free_job;      \
+abort_job_ftype  * abort_f;       \
+get_status_ftype * get_status;    \
+int __id;        
+
 
 struct basic_queue_driver_struct {
-  int __id;
-  submit_job_ftype * submit;
-  free_job_ftype   * free_job;
-  abort_job_ftype  * abort_f;
-  get_status_ftype * get_status;
+  BASIC_QUEUE_DRIVER_FIELDS
 };
 
 

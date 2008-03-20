@@ -16,7 +16,7 @@ struct lsf_job_struct {
 
 
 struct lsf_driver_struct {
-  int __basic_id;
+  BASIC_QUEUE_DRIVER_FIELDS
   int __lsf_id;
   char * resource_request;
   char * queue_name;
@@ -24,10 +24,6 @@ struct lsf_driver_struct {
   struct submitReply lsf_reply; 
 
   pthread_mutex_t    submit_lock;
-  submit_job_ftype * submit;
-  abort_job_ftype  * abort_f;
-  get_status_ftype * get_status;
-  free_job_ftype   * free_job;
 };
 
 /*****************************************************************/
@@ -48,26 +44,23 @@ void lsf_driver_init(lsf_driver_type * queue_driver) {
 
 
 void lsf_job_assert_cast(const lsf_job_type * queue_job) {
-  if (queue_job->__lsf_id != LSF_DRIVER_ID) {
+  if (queue_job->__lsf_id != LSF_JOB_ID) {
     fprintf(stderr,"%s: internal error - cast failed \n",__func__);
     abort();
   }
 }
 
 
-void lsf_job_init(lsf_job_type * queue_job) {
-  queue_job->__lsf_id = LSF_DRIVER_ID;
-}
 
 lsf_job_type * lsf_job_alloc() {
   lsf_job_type * job;
   job = util_malloc(sizeof * job , __func__);
+  job->__lsf_id = LSF_JOB_ID;
   return job;
 }
 
 void lsf_job_free(lsf_job_type * job) {
   free(job);
-  job = NULL;
 }
 
 
@@ -89,18 +82,23 @@ ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver
 	fprintf(stderr,"%s: failed to get information about LSF job:%ld - aborting \n",__func__ , job->lsf_jobnr);
 	abort();
       }
-      
       job_info = lsb_readjobinfo( NULL );
+      lsb_closejobinfo();
+
       switch (job_info->status) {
 	CASE(JOB_STAT_PEND  , ecl_queue_pending);
 	CASE(JOB_STAT_SSUSP , ecl_queue_running);
 	CASE(JOB_STAT_RUN   , ecl_queue_running);
 	CASE(JOB_STAT_EXIT  , ecl_queue_exit);
 	CASE(JOB_STAT_DONE  , ecl_queue_done);
+	CASE(JOB_STAT_PDONE , ecl_queue_done);
+	CASE(JOB_STAT_PERR  , ecl_queue_exit);
+	CASE(192            , ecl_queue_done); /* This 192 seems to pop up - where the fuck it comes frome  _PDONE + _USUSP ??? */
       default:
-	fprintf(stderr,"%s: lsf_status:%d not handled - aborting \n",__func__ , job_info->status);
-	abort();
+	fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
+	status = ecl_queue_done; /* ????  */
       }
+      
       return status;
     }
   }
@@ -135,7 +133,6 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
   lsf_driver_assert_cast(driver); 
   {
     lsf_job_type * job    = lsf_job_alloc();
-    job->__lsf_id = LSF_JOB_ID;
     char * lsf_stdout = util_alloc_joined_string((const char *[4]) {run_path   , "/"      , ecl_base , ".LSF-stdout"}  , 4 , "");
     char * command    = util_alloc_joined_string((const char *[4]) {submit_cmd , run_path , ecl_base , ecl_version_id} , 4 , " ");
     
@@ -189,6 +186,10 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
   lsf_driver->get_status = lsf_driver_get_job_status;
   lsf_driver->abort_f    = lsf_driver_abort_job;
   lsf_driver->free_job   = lsf_driver_free_job;
+  if (lsb_init(NULL) != 0) {
+    fprintf(stderr,"%s failed to initialize LSF environment - aborting\n",__func__);
+    abort();
+  }
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) lsf_driver;
     basic_queue_driver_init(basic_driver);
