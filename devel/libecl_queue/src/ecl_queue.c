@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <ecl_queue.h>
 #include <util.h>
+#include <ecl_util.h>
 #include <basic_queue_driver.h>
 #include <path_fmt.h>
 #include <pthread.h>
@@ -30,6 +31,7 @@ typedef struct {
   char                 	*target_file;
   char                 	*ecl_base;
   char                 	*run_path;
+  char                  *smspec_file;
   ecl_job_status_type  	 job_status;
   basic_queue_job_type 	*job_data;
 } ecl_queue_node_type;
@@ -44,6 +46,7 @@ static void ecl_queue_node_clear(ecl_queue_node_type * node) {
   node->ecl_base       = NULL;
   node->run_path       = NULL;
   node->job_data       = NULL;
+  node->smspec_file    = NULL;
 }
 
 
@@ -62,6 +65,7 @@ static void ecl_queue_node_free_data(ecl_queue_node_type * node) {
   if (node->ecl_base != NULL)    free(node->ecl_base);
   if (node->run_path != NULL)    free(node->run_path);
   if (node->target_file != NULL) free(node->target_file);
+  if (node->smspec_file != NULL) free(node->smspec_file);
   if (node->job_data != NULL) {
     fprintf(stderr,"%s: internal error - driver spesific job data has not been freed - will leak \n",__func__);
     abort();
@@ -114,7 +118,7 @@ struct ecl_queue_struct {
   int                        status_list[ecl_queue_max_state];
 };
 
-
+static bool ecl_queue_change_node_status(ecl_queue_type *  , ecl_queue_node_type *  , ecl_job_status_type );
 
 static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index , int external_id) {
   if (external_id < 0) {
@@ -124,7 +128,6 @@ static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index ,
   {
     ecl_queue_node_type * node = queue->jobs[queue_index];
     node->external_id    = external_id;
-    node->job_status     = ecl_queue_waiting;
     node->submit_attempt = 0;
     node->run_path       = path_fmt_alloc_path(queue->run_path_fmt , external_id);
 
@@ -133,12 +136,16 @@ static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index ,
       node->target_file = path_fmt_alloc_path(queue->target_file_fmt , external_id , external_id);
     else
       node->target_file = NULL;
-    
+    {
+      bool fmt_file = false;
+      node->smspec_file   = ecl_util_alloc_filename(node->run_path , node->ecl_base , ecl_summary_header_file , fmt_file , -1);
+    }
     node->job_data      = NULL;
     if ( !util_path_exists(node->run_path) ) {
       fprintf(stderr,"%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
       abort();
     }
+    ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
   }
 }
 
@@ -197,6 +204,8 @@ void ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
   if (ecl_queue_node_get_status(node) == ecl_queue_waiting) {
     basic_queue_driver_type *driver  = queue->driver;
     if (node->submit_attempt < queue->max_submit) {
+      if (util_file_exists(node->smspec_file))
+	util_unlink_existing(node->smspec_file);
       node->job_data = driver->submit(queue->driver , queue_index , queue->submit_cmd , node->run_path , node->ecl_base , queue->ecl_version_id);
       ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
       node->submit_attempt++;
@@ -206,12 +215,52 @@ void ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
 }
 
 
+ecl_job_status_type ecl_queue_export_job_status(ecl_queue_type * queue , int external_id) {
+  bool node_found    = false;
+  int active_size    = ecl_queue_get_active_size(queue);
+  int queue_index    = 0; 
+  ecl_job_status_type status;
+  while (queue_index < active_size) {
+    ecl_queue_node_type * node = queue->jobs[queue_index];
+    if (ecl_queue_node_get_external_id(node) == external_id) {
+      node_found = true;
+      status = node->job_status;
+      break;
+    } else
+      queue_index++;
+  }
+  if (node_found)
+    return status;
+  else {
+    fprintf(stderr,"%s: could not find job with id: %d - aborting.\n",__func__ , external_id);
+    abort();
+  }
+}
 
-void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
+
+static void ecl_queue_print_jobs(const ecl_queue_type *queue) {
+  int waiting  = queue->status_list[ecl_queue_waiting];
+  int pending  = queue->status_list[ecl_queue_pending];
+  /* 
+     EXIT and DONE are included here, because the target file has
+     not yet been checked.
+  */
+  int running  = queue->status_list[ecl_queue_running] + queue->status_list[ecl_queue_done] + queue->status_list[ecl_queue_exit];
+  int complete = queue->status_list[ecl_queue_complete_OK];
+  int failed   = queue->status_list[ecl_queue_complete_FAIL];
+
+  printf("Waiting: %3d    Pending: %3d    Running: %3d    Complete: %3d     Failed: %3d \n",waiting , pending , running , complete , failed);
+}
+  
+
+void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
   int queue_index;
   do {
-    printf("*"); fflush(stdout);
-    ecl_queue_update_status(queue);
+    {
+      bool rewrite = ecl_queue_update_status(queue);
+      if (rewrite)
+	ecl_queue_print_jobs(queue);
+    }
     {
       /* Submitting new jobs */
       int active_size    = ecl_queue_get_active_size(queue);
@@ -249,10 +298,10 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 	break;
       }
     }
-    
     sleep(queue->sleep_time);
   } while ( (queue->status_list[ecl_queue_complete_OK] + queue->status_list[ecl_queue_complete_FAIL]) < num_total_run);
 }
+
 
 
 void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
@@ -264,7 +313,6 @@ void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
       abort();
     }
     ecl_queue_initialize_node(queue , active_size , external_id);
-    queue->status_list[ecl_queue_null]++;
     queue->active_size++;
   }
   pthread_mutex_unlock( &queue->active_mutex );
@@ -288,6 +336,7 @@ ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit , c
 
     for (i=0; i < ecl_queue_max_state; i++)
       queue->status_list[i] = 0;
+    queue->status_list[ecl_queue_null] = size;
   }
 
   queue->run_path_fmt = path_fmt_alloc_directory_fmt(__run_path_fmt , false);

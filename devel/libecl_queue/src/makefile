@@ -13,8 +13,8 @@ ARFLAGS = -csr
 OBJECTS   = ecl_queue.o basic_queue_driver.o lsf_driver.o
 INC_FILES = ecl_queue.h basic_queue_driver.h lsf_driver.h
 LIB       = libecl_queue_$(MFLAG).a
-LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_QUEUE_HOME)/lib
-LIB_LINK  = -lecl_queue_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
+LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBECL_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_QUEUE_HOME)/lib
+LIB_LINK  = -lecl_queue_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
 TARGET_INCLUDE  = -I$(LIBECL_QUEUE_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include
 
 INSTALL: $(LIB)
