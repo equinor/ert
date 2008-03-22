@@ -128,13 +128,24 @@ void lsf_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_t
 
 
 
-basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver, int queue_index , const char * submit_cmd , const char * run_path , const char * ecl_base , const char * ecl_version_id) {
+basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver, 
+					     const char * submit_cmd  	  , 
+					     const char * run_path    	  , 
+					     const char * ecl_base    	  , 
+					     const char * eclipse_exe 	  ,   
+					     const char * eclipse_config  , 
+					     const char * eclipse_LD_path , 
+					     const char * license_server) {
   lsf_driver_type * driver = (lsf_driver_type *) __driver;
   lsf_driver_assert_cast(driver); 
   {
     lsf_job_type * job    = lsf_job_alloc();
     char * lsf_stdout = util_alloc_joined_string((const char *[4]) {run_path   , "/"      , ecl_base , ".LSF-stdout"}  , 4 , "");
-    char * command    = util_alloc_joined_string((const char *[4]) {submit_cmd , run_path , ecl_base , ecl_version_id} , 4 , " ");
+    char * command;
+    if (eclipse_LD_path == NULL)
+      command = util_alloc_joined_string((const char*[6]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server} , 6 , " ");
+    else
+      command = util_alloc_joined_string((const char*[7]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server , eclipse_LD_path} , 7 , " ");
     
     pthread_mutex_lock( &driver->submit_lock );
     driver->lsf_request.jobName = (char *) ecl_base;

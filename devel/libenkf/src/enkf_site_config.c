@@ -164,6 +164,13 @@ enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_ty
   return hash_get(site->config , key);
 }
 
+
+const char * enkf_site_config_get_value(const enkf_site_config_type * site , const char * key) {
+  enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
+  return node->value;
+}
+
+
 bool enkf_site_config_node_set(const enkf_site_config_type * site , const char * key) {
   enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
   return node->value_set;

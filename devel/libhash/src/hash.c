@@ -215,8 +215,8 @@ static void hash_iter_free_keylist(hash_type * hash) {
 
 void hash_iter_complete(hash_type * hash) {
    if (hash->iter_mode == iter_active) {
-   	  hash->iter_mode = iter_complete;
-   	  pthread_mutex_unlock( &hash->iter_mutex );
+     hash->iter_mode = iter_complete;
+     pthread_mutex_unlock( &hash->iter_mutex );
    }
 }
 	
