@@ -1,6 +1,6 @@
 #ifndef __HASH_H__
 #define __HASH_H__
-
+#include <stdlib.h>
 typedef struct hash_struct hash_type;
 
 #include <hash_node.h>

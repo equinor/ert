@@ -107,7 +107,10 @@ struct ecl_queue_struct {
   int                        max_submit;
   int                        max_running; 
   char                     * submit_cmd;
-  char                     * ecl_version_id;
+  char                     * eclipse_exe;
+  char                     * eclipse_config;
+  char                     * license_server;
+  char                     * eclipse_LD_path;
   path_fmt_type            * run_path_fmt;
   path_fmt_type            * ecl_base_fmt;
   path_fmt_type            * target_file_fmt;
@@ -206,7 +209,14 @@ void ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
     if (node->submit_attempt < queue->max_submit) {
       if (util_file_exists(node->smspec_file))
 	util_unlink_existing(node->smspec_file);
-      node->job_data = driver->submit(queue->driver , queue_index , queue->submit_cmd , node->run_path , node->ecl_base , queue->ecl_version_id);
+      node->job_data = driver->submit(queue->driver         , 
+				      queue->submit_cmd     , 
+				      node->run_path        , 
+				      node->ecl_base        , 
+				      queue->eclipse_exe    ,  
+				      queue->eclipse_config , 
+				      queue->eclipse_LD_path,
+				      queue->license_server);
       ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
       node->submit_attempt++;
     } else 
@@ -319,16 +329,27 @@ void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
 }
 
 
-ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit , const char * submit_cmd , const char * ecl_version_id , const char * __run_path_fmt , const char * __ecl_base_fmt , const char * __target_file_fmt , void * driver) {
+ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit , 
+				 const char * submit_cmd      , 
+				 const char * eclipse_exe     , 
+				 const char * eclipse_LD_path , 
+				 const char * eclipse_config  ,
+				 const char * license_server  ,
+				 const char * __run_path_fmt  , 
+				 const char * __ecl_base_fmt  ,
+				 const char * __target_file_fmt , void * driver) {
   ecl_queue_type * queue = util_malloc(sizeof * queue , __func__);
 
-  queue->sleep_time     = 2;
-  queue->max_running    = max_running;
-  queue->max_submit     = max_submit;
-  queue->size           = size;
-  queue->submit_cmd     = util_alloc_string_copy(submit_cmd);
-  queue->ecl_version_id = util_alloc_string_copy(ecl_version_id);
-  queue->jobs           = util_malloc(size * sizeof * queue->jobs , __func__);
+  queue->sleep_time      = 1;
+  queue->max_running     = max_running;
+  queue->max_submit      = max_submit;
+  queue->size            = size;
+  queue->submit_cmd      = util_alloc_string_copy(submit_cmd);
+  queue->eclipse_exe     = util_alloc_string_copy(eclipse_exe);
+  queue->eclipse_config  = util_alloc_string_copy(eclipse_config);
+  queue->license_server  = util_alloc_string_copy(license_server);
+  queue->eclipse_LD_path = util_alloc_string_copy(eclipse_LD_path);
+  queue->jobs            = util_malloc(size * sizeof * queue->jobs , __func__);
   {
     int i;
     for (i=0; i < size; i++) 
@@ -370,7 +391,10 @@ void ecl_queue_finalize(ecl_queue_type * queue) {
 
 void ecl_queue_free(ecl_queue_type * queue) {
   free(queue->submit_cmd);
-  free(queue->ecl_version_id);
+  free(queue->eclipse_exe);
+  free(queue->eclipse_config);
+  free(queue->license_server);
+  if (queue->eclipse_LD_path != NULL) free(queue->eclipse_LD_path);
   path_fmt_free(queue->run_path_fmt);
   path_fmt_free(queue->ecl_base_fmt);
   if (queue->target_file_fmt != NULL)
