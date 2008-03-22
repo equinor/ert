@@ -6,13 +6,12 @@
 #include <hash.h>
 #include <enkf_site_config.h>
 
-typedef bool   (validate_ftype)                   (const enkf_site_config_type * , const enkf_site_config_node_type *);
+typedef bool   (validate_ftype) (const enkf_site_config_type * , const enkf_site_config_node_type *);
 
 
 struct enkf_site_config_struct {
   hash_type * config;
 };
-
 
 
 struct enkf_site_config_node_struct {
@@ -26,7 +25,7 @@ struct enkf_site_config_node_struct {
 };
 
 
-void enkf_config_node_set_value(enkf_site_config_node_type * node , const char * value) {
+void enkf_site_config_node_set_value(enkf_site_config_node_type * node , const char * value) {
   if (node->value_set)
     free(node->value);
 
@@ -49,8 +48,13 @@ void enkf_config_node_set_value(enkf_site_config_node_type * node , const char *
   }
   node->value     = util_alloc_string_copy(value);
   node->value_set = true;
+  printf("Setting: %s->%s \n",node->key,value);
 }
 
+
+const char * enkf_site_config_node_get_value(const enkf_site_config_node_type * node) {
+  return node->value;
+}
 
 
 enkf_site_config_node_type * enkf_site_config_node_alloc(const char * key, const char * default_value , int selection_size , const char ** selection_set , validate_ftype * validate) {
@@ -65,7 +69,7 @@ enkf_site_config_node_type * enkf_site_config_node_alloc(const char * key, const
     node->selection_set = NULL;
   node->value_set       = false;
   if (default_value != NULL)
-    enkf_config_node_set_value(node , default_value);
+    enkf_site_config_node_set_value(node , default_value);
   node->validate = validate;
   return node;
 }
@@ -100,14 +104,91 @@ bool enkf_site_config_node_validate(const enkf_site_config_type * config , const
 }
 
 
-static bool enkf_site_config_validate_queue(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
+static bool enkf_site_config_validate_queue_system(const enkf_site_config_type * site , const enkf_site_config_node_type * node) {
+  bool valid = true;
+  const char * queue_system = enkf_site_config_node_get_value(node);
+  if (strcmp(queue_system , "LSF") == 0) {
+    if ( !(enkf_site_config_node_set(site , "LSF_QUEUE") && enkf_site_config_node_set(site , "LSF_RESOURCES")) ) {
+      fprintf(stderr,"** When using LSF as queue system, you must specify LSF_QUEUE and LSF_RESOURCES.\n");
+      valid = false;
+    }
+  }
+  return valid;
+}
+
+
+static bool enkf_site_config_validate_queue_name(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
   return true;
 }
+
+static bool enkf_site_config_assert_set(const enkf_site_config_type * config , const enkf_site_config_node_type *  node) {
+  if (!node->value_set)
+    fprintf(stderr,"** You must supply a value for the %s key.\n",node->key);
+  return node->value_set;
+}
+
+
+static bool enkf_site_config_assert_set_executable(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
+  bool valid = false;
+  if (enkf_site_config_assert_set(config , node)) {
+    if (util_file_exists(node->value))
+      if (util_is_executable(node->value))
+	valid = true;
+
+    if (!valid) 
+      fprintf(stderr,"** %s must point to an existing executable file.\n",node->key);
+    
+  }
+  return valid;
+}
+
+static bool enkf_site_config_assert_set_existing(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
+  bool valid = false;
+  if (enkf_site_config_assert_set(config , node)) {
+    if (util_file_exists(node->value))
+      valid = true;
+    
+    if (!valid) 
+      fprintf(stderr,"** %s must point to an existing file.\n",node->key);
+  }
+  return valid;
+}
+
+static bool enkf_site_config_assert_eclipse_executable(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
+  return enkf_site_config_assert_set(config , node);
+}
+
 /*****************************************************************/
+
+enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * site , const char * key) {
+  return hash_get(site->config , key);
+}
+
+bool enkf_site_config_node_set(const enkf_site_config_type * site , const char * key) {
+  enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
+  return node->value_set;
+}
 
 
 void enkf_site_config_add_node(enkf_site_config_type * site , const char * key , const char * default_value , int selection_size , const char ** selection_set , validate_ftype * validate) {
   hash_insert_hash_owned_ref(site->config , key , enkf_site_config_node_alloc(key , default_value , selection_size , selection_set , validate) , enkf_site_config_node_free__);
+}
+
+
+bool enkf_site_config_has_key(const enkf_site_config_type * site ,const char * key) {
+  return hash_has_key(site->config , key);
+}
+
+
+
+void enkf_site_config_set_key(enkf_site_config_type * site , const char * key , const char * value) {
+  if (enkf_site_config_has_key(site , key)) {
+    enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
+    enkf_site_config_node_set_value(node , value);
+  } else {
+    fprintf(stderr,"%s: key:%s is not recognized - aborting \n",__func__ , key);
+    abort();
+  }
 }
 
 
@@ -117,13 +198,43 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
     config_file = _config_file;
   
   if (config_file == NULL) {
-    fprintf(stderr,"%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting \n",__func__);
+    fprintf(stderr,"%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
     abort();
   }
   if (util_file_exists(config_file)) {
     enkf_site_config_type * site;
     site = util_malloc(sizeof * site , __func__);
-    enkf_site_config_add_node(site , "QUEUE_SYSTEM" , NULL , 2 , (const char *[2]) {"LSF" , "LOCAL"} , enkf_site_config_validate_queue);
+    site->config = hash_alloc(10);
+    enkf_site_config_add_node(site , "QUEUE_SYSTEM"  	  , NULL , 2 , (const char *[2]) {"LSF" , "LOCAL"} , enkf_site_config_validate_queue_system);
+    enkf_site_config_add_node(site , "LSF_QUEUE"     	  , NULL , 0 , NULL , enkf_site_config_validate_queue_name);
+    enkf_site_config_add_node(site , "LSF_RESOURCES" 	  , NULL , 0 , NULL , NULL);
+    enkf_site_config_add_node(site , "START_ECLIPSE_CMD"  , NULL , 0 , NULL , enkf_site_config_assert_set_executable); 
+    enkf_site_config_add_node(site , "ECLIPSE_EXECUTABLE" , NULL , 0 , NULL , enkf_site_config_assert_eclipse_executable); 
+    enkf_site_config_add_node(site , "ECLIPSE_LD_PATH"    , NULL , 0 , NULL , NULL); 
+    enkf_site_config_add_node(site , "LICENSE_SERVER"     , NULL , 0 , NULL , enkf_site_config_assert_set);
+    enkf_site_config_add_node(site , "ECLIPSE_CONFIG"     , NULL , 0 , NULL , enkf_site_config_assert_set_existing);
+    {
+      FILE * stream = util_fopen(config_file , "r");
+      bool at_eof = false;
+      char * key , * value;
+      while (!at_eof) {
+	key = util_fscanf_alloc_token(stream);
+	if (key != NULL) {
+	  value = util_fscanf_alloc_line(stream , &at_eof);
+	  if (value != NULL) {
+	    if (enkf_site_config_has_key(site , key))
+	      enkf_site_config_set_key(site , key , value);
+	    else
+	      fprintf(stderr,"** Warning: key:%s is not recognized - line ignored \n",key);
+	  free(value);
+	  } 
+	  free(key);
+	} else 
+	  util_forward_line(stream , &at_eof);
+      }
+      fclose(stream);
+    }
+    enkf_site_config_validate(site);
     return site;
   } else {
     fprintf(stderr,"%s: main config_file: %s not found - aborting \n",__func__ , config_file);
@@ -133,3 +244,25 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
 
 
 
+void enkf_site_config_validate(enkf_site_config_type *site) {
+  bool valid_site_config = true;
+  char ** key_list = hash_alloc_keylist(site->config);
+  int ikey;
+
+  for (ikey=0; ikey < hash_get_size(site->config); ikey++) {
+    enkf_site_config_node_type * node = hash_get(site->config , key_list[ikey]);
+    valid_site_config = (valid_site_config && enkf_site_config_node_validate(site , node));
+  }
+  hash_free_ext_keylist(site->config , key_list);
+  if (!valid_site_config) {
+    fprintf(stderr,"%s: configuration errors - aborting \n",__func__);
+    abort();
+  }
+}
+
+
+
+void  enkf_site_config_free(enkf_site_config_type * site) {
+  hash_free(site->config);
+  free(site);
+}
