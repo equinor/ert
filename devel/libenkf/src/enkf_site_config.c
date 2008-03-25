@@ -6,6 +6,11 @@
 #include <hash.h>
 #include <enkf_site_config.h>
 
+enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * , const char * );
+static bool                  enkf_site_config_assert_set_int(const enkf_site_config_type * , const enkf_site_config_node_type *  );
+
+/*****************************************************************/
+
 typedef bool   (validate_ftype) (const enkf_site_config_type * , const enkf_site_config_node_type *);
 
 
@@ -107,17 +112,27 @@ bool enkf_site_config_node_validate(const enkf_site_config_type * config , const
 static bool enkf_site_config_validate_queue_system(const enkf_site_config_type * site , const enkf_site_config_node_type * node) {
   bool valid = true;
   const char * queue_system = enkf_site_config_node_get_value(node);
+  enkf_site_config_node_type * max_running_node;
   if (strcmp(queue_system , "LSF") == 0) {
     if ( !(enkf_site_config_node_set(site , "LSF_QUEUE") && enkf_site_config_node_set(site , "LSF_RESOURCES")) ) {
       fprintf(stderr,"** When using LSF as queue system, you must specify LSF_QUEUE and LSF_RESOURCES.\n");
       valid = false;
     }
+    max_running_node = enkf_site_config_get_node(site , "MAX_RUNNING_LSF");
+  } else if (strcmp(queue_system , "LOCAL") == 0) {
+    max_running_node = enkf_site_config_get_node(site , "MAX_RUNNING_LOCAL");
+  } else {
+    fprintf(stderr,"%s: queue_system:%s not recognized - serious internal error - aborting \n",__func__ , queue_system);
+    abort();
   }
+  
+  valid = enkf_site_config_assert_set_int(site , max_running_node);
   return valid;
 }
 
 
 static bool enkf_site_config_validate_queue_name(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
+  /* Could call the lsf_driver to validate this queue_name .... */
   return true;
 }
 
@@ -125,6 +140,19 @@ static bool enkf_site_config_assert_set(const enkf_site_config_type * config , c
   if (!node->value_set)
     fprintf(stderr,"** You must supply a value for the %s key.\n",node->key);
   return node->value_set;
+}
+
+
+static bool enkf_site_config_assert_set_int(const enkf_site_config_type * config , const enkf_site_config_node_type *  node) {
+  bool valid = enkf_site_config_assert_set(config , node);
+  if (valid) {
+    int dummy;
+    if (!util_sscanf_int(node->value , &dummy)) {
+      fprintf(stderr," ** Failed to convert %s=%s to an integer.\n",node->key , node->value);
+      valid = false;
+    }
+  }
+  return valid;
 }
 
 
@@ -187,7 +215,6 @@ bool enkf_site_config_has_key(const enkf_site_config_type * site ,const char * k
 }
 
 
-
 void enkf_site_config_set_key(enkf_site_config_type * site , const char * key , const char * value) {
   if (enkf_site_config_has_key(site , key)) {
     enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
@@ -220,6 +247,9 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
     enkf_site_config_add_node(site , "ECLIPSE_LD_PATH"    , NULL , 0 , NULL , NULL); 
     enkf_site_config_add_node(site , "LICENSE_SERVER"     , NULL , 0 , NULL , enkf_site_config_assert_set);
     enkf_site_config_add_node(site , "ECLIPSE_CONFIG"     , NULL , 0 , NULL , enkf_site_config_assert_set_existing);
+    enkf_site_config_add_node(site , "MAX_RUNNING_LSF"    , NULL , 0 , NULL , NULL);
+    enkf_site_config_add_node(site , "MAX_RUNNING_LOCAL"  , NULL , 0 , NULL , NULL);
+
     {
       FILE * stream = util_fopen(config_file , "r");
       bool at_eof = false;

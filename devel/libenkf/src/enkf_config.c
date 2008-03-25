@@ -30,6 +30,10 @@
 #include <enkf_config.h>
 #include <ecl_grid.h>
 #include <time.h>
+#include <enkf_site_config.h>
+#include <ecl_queue.h>
+#include <lsf_driver.h>
+#include <local_driver.h>
 
 
 struct enkf_config_struct {
@@ -291,6 +295,7 @@ static void enkf_config_post_assert(const enkf_config_type * config) {
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }
 enkf_config_type * enkf_config_fscanf_alloc(const char * config_file , 
+					    enkf_site_config_type * site_config , 
 					    int  ens_offset,
 					    bool fmt_file ,
 					    bool unified  ,         
@@ -328,69 +333,77 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * config_file ,
       if (active_tokens > 0) {
 	impl_type = enkf_types_check_impl_type(token_list[0]);
 	if (impl_type == INVALID) {
-	  const char * kw = token_list[0];
 	  
-	  if (strcmp(kw , "SIZE") == 0) {
-	    int ens_size;
-	    ASSERT_TOKENS("SIZE" , active_tokens , 1);
-	    if (util_sscanf_int(token_list[1] , &ens_size)) 
-	      enkf_config_set_ens_size( enkf_config , ens_size);
-	    else {
-	      fprintf(stderr,"%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
-	      abort();
-	    }
-	  } else if (strcmp(kw , "OBS_CONFIG") == 0) {
-	    ASSERT_TOKENS("OBS_CONFIG" , active_tokens , 1);
-	    {
-	      char * obs_config_file = util_alloc_full_path(config_path , token_list[1]);
-	      enkf_config_set_obs_config_file(enkf_config , obs_config_file);
-	      free(obs_config_file);
-	    }
-	  } else if (strcmp(kw , "ENSPATH") == 0) {
-	    ASSERT_TOKENS("ENSPATH" , active_tokens , 1);
-	    enkf_config_set_ens_path(enkf_config , token_list[1]);
-	  } else if (strcmp(kw , "RUNPATH") == 0) {
-	    ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
-	    enkf_config_set_run_path( enkf_config , token_list[1] );
-	  } else if (strcmp(kw , "DATA_FILE") == 0) {
-	    ASSERT_TOKENS("DATA_FILE" , active_tokens , 1);
-	    enkf_config_set_data_file( enkf_config , token_list[1] );
-	  } else if (strcmp(kw , "ECLBASE") == 0) {
-	    ASSERT_TOKENS("ECLBASE" , active_tokens , 1);
-	    enkf_config_set_eclbase( enkf_config , token_list[1] );
-	  } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
-	    ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 1);
-	    if (enkf_config->start_time == -1) {
-	      fprintf(stderr,"%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
-	      abort();
-	    }
-	    enkf_config_set_schedule_file(enkf_config , token_list[1]);
-	  } else if (strcmp(kw , "ECL_STORE_PATH") == 0) {
-	    ASSERT_TOKENS("ECL_STORE_PATH" , active_tokens , 1);
-	    enkf_config_set_ecl_store_path(enkf_config , token_list[1]);
-	  } else if (strcmp(kw , "ECL_STORE") == 0) {
-	    ASSERT_TOKENS("ECL_STORE" , active_tokens , 2);
-	    int ecl_store;
-	    if (enkf_config->ecl_store_path == NULL) {
-	      fprintf(stderr,"%s: must configure ECL_STORE_PATH prior to ECL_STORE - aborting \n",__func__);
-	      abort();
-	    } else {
-	      if (util_sscanf_int(token_list[1] , &ecl_store)) 
-		enkf_config_set_ecl_store(enkf_config , ecl_store , active_tokens - 2 , (const char **) &token_list[2]);
+	  const char * kw = token_list[0];
+	  if (enkf_site_config_has_key(site_config , kw)) {
+	    /* The configuration overrides a value from the site_config object. */
+	    char * site_value;
+	    ASSERT_TOKENS(kw , active_tokens , 1);
+	    site_value  = util_alloc_joined_string((const char **) &token_list[1] , active_tokens - 1 , " ");
+	    enkf_site_config_set_key(site_config , kw , site_value);
+	    free(site_value);
+	  } else {
+	    if (strcmp(kw , "SIZE") == 0) {
+	      int ens_size;
+	      ASSERT_TOKENS("SIZE" , active_tokens , 1);
+	      if (util_sscanf_int(token_list[1] , &ens_size)) 
+		enkf_config_set_ens_size( enkf_config , ens_size);
 	      else {
-		fprintf(stderr,"%s: error when parsing: %s to integer - aborting \n",__func__ , token_list[1]);
+		fprintf(stderr,"%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
 		abort();
 	      }
-	    }
-	  } else if (strcmp(kw , "GRID") == 0) {
-	    ASSERT_TOKENS("GRID" , active_tokens , 1);
-	    enkf_config_set_grid(enkf_config , token_list[1]);
-	  } else if (strcmp(kw , "START_TIME") == 0) {
-	    ASSERT_TOKENS("START_TIME" , active_tokens , 3);
-	    enkf_config_set_start_date(enkf_config , (const char **) &token_list[1]);
-	  } else
-	    fprintf(stderr,"%s: ** Warning ** keyword: %s not recognzied - line ignored \n",__func__ , kw);
-	    
+	    } else if (strcmp(kw , "OBS_CONFIG") == 0) {
+	      ASSERT_TOKENS("OBS_CONFIG" , active_tokens , 1);
+	      {
+		char * obs_config_file = util_alloc_full_path(config_path , token_list[1]);
+		enkf_config_set_obs_config_file(enkf_config , obs_config_file);
+		free(obs_config_file);
+	      }
+	    } else if (strcmp(kw , "ENSPATH") == 0) {
+	      ASSERT_TOKENS("ENSPATH" , active_tokens , 1);
+	      enkf_config_set_ens_path(enkf_config , token_list[1]);
+	    } else if (strcmp(kw , "RUNPATH") == 0) {
+	      ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
+	      enkf_config_set_run_path( enkf_config , token_list[1] );
+	    } else if (strcmp(kw , "DATA_FILE") == 0) {
+	      ASSERT_TOKENS("DATA_FILE" , active_tokens , 1);
+	      enkf_config_set_data_file( enkf_config , token_list[1] );
+	    } else if (strcmp(kw , "ECLBASE") == 0) {
+	      ASSERT_TOKENS("ECLBASE" , active_tokens , 1);
+	      enkf_config_set_eclbase( enkf_config , token_list[1] );
+	    } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
+	      ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 1);
+	      if (enkf_config->start_time == -1) {
+		fprintf(stderr,"%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
+		abort();
+	      }
+	      enkf_config_set_schedule_file(enkf_config , token_list[1]);
+	    } else if (strcmp(kw , "ECL_STORE_PATH") == 0) {
+	      ASSERT_TOKENS("ECL_STORE_PATH" , active_tokens , 1);
+	      enkf_config_set_ecl_store_path(enkf_config , token_list[1]);
+	    } else if (strcmp(kw , "ECL_STORE") == 0) {
+	      ASSERT_TOKENS("ECL_STORE" , active_tokens , 2);
+	      int ecl_store;
+	      if (enkf_config->ecl_store_path == NULL) {
+		fprintf(stderr,"%s: must configure ECL_STORE_PATH prior to ECL_STORE - aborting \n",__func__);
+		abort();
+	      } else {
+		if (util_sscanf_int(token_list[1] , &ecl_store)) 
+		  enkf_config_set_ecl_store(enkf_config , ecl_store , active_tokens - 2 , (const char **) &token_list[2]);
+		else {
+		  fprintf(stderr,"%s: error when parsing: %s to integer - aborting \n",__func__ , token_list[1]);
+		  abort();
+		}
+	      }
+	    } else if (strcmp(kw , "GRID") == 0) {
+	      ASSERT_TOKENS("GRID" , active_tokens , 1);
+	      enkf_config_set_grid(enkf_config , token_list[1]);
+	    } else if (strcmp(kw , "START_TIME") == 0) {
+	      ASSERT_TOKENS("START_TIME" , active_tokens , 3);
+	      enkf_config_set_start_date(enkf_config , (const char **) &token_list[1]);
+	    } else
+	      fprintf(stderr,"%s: ** Warning ** keyword: %s not recognzied - line ignored \n",__func__ , kw);
+	  }    
 	} else {
 	  switch(impl_type) {
 	  case(MULTZ):
@@ -484,6 +497,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * config_file ,
   } while (!at_eof);
   if (config_path != NULL) free(config_path);
   enkf_config_post_assert(enkf_config);
+  enkf_site_config_validate(site_config);
   return enkf_config;
 }
 #undef ASSERT_TOKENS
@@ -642,3 +656,65 @@ void enkf_config_free(enkf_config_type * config) {
   free(config);
 }
 
+
+
+ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , const enkf_site_config_type * site_config) {
+  ecl_queue_type          * ecl_queue;
+  int                       max_running;  
+  basic_queue_driver_type * queue_driver;
+
+  const char * queue_system = enkf_site_config_get_value(site_config , "QUEUE_SYSTEM");
+  if (strcmp(queue_system , "LSF") == 0) {
+    const char * resource_request = enkf_site_config_get_value(site_config , "LSF_RESOURCES");
+    const char * queue_name       = enkf_site_config_get_value(site_config , "LSF_QUEUE");
+    max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LSF") , NULL , 10);
+    queue_driver = lsf_driver_alloc(queue_name , resource_request);
+  } else if (strcmp(queue_system , "LOCAL") == 0) {
+    queue_driver = local_driver_alloc();
+    max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LOCAL") , NULL , 10);
+  }
+  else {
+    fprintf(stderr,"%s: internal error - queue_system:%s not recognized - aborting \n",__func__ , queue_system);
+    abort();
+  }
+  
+  {
+    int max_submit  = 5;
+    const char * eclipse_LD_path;
+    const char * __run_path = path_fmt_get_fmt(config->run_path);
+    const char * __ecl_base = path_fmt_get_fmt(config->eclbase);
+    char       * __target_file_fmt;
+    char  restart_extension[7];
+    path_fmt_type * target_file_fmt;
+    
+    if (enkf_config_get_fmt_file(config))
+      sprintf(restart_extension , ".F%s04d" , "%");
+    else
+      sprintf(restart_extension , ".X%s04d" , "%");
+    
+    __target_file_fmt = util_alloc_joined_string( (const char *[4]) {__run_path , UTIL_PATH_SEP , __ecl_base , restart_extension} , 4 , "");
+
+    if (enkf_site_config_node_set(site_config , "ECLIPSE_LD_PATH"))
+      eclipse_LD_path = enkf_site_config_get_value(site_config , "ECLIPSE_LD_PATH");
+    else
+      eclipse_LD_path = NULL;
+    
+    target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
+    ecl_queue = ecl_queue_alloc(enkf_config_get_ens_size(config),
+				max_running , 
+				max_submit  ,
+				enkf_site_config_get_value(site_config , "START_ECLIPSE_CMD"),
+				enkf_site_config_get_value(site_config , "ECLIPSE_EXECUTABLE"),
+				eclipse_LD_path , 
+				enkf_site_config_get_value(site_config , "ECLIPSE_CONFIG"),
+				enkf_site_config_get_value(site_config , "LICENSE_SERVER"),
+				config->run_path , 
+				config->eclbase , 
+				target_file_fmt  , 
+				queue_driver);
+    
+    path_fmt_free(target_file_fmt);
+    free(__target_file_fmt);
+  }
+  return ecl_queue;
+}

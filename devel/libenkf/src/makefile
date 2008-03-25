@@ -1,9 +1,12 @@
 include path_config
+SITE_CONFIG_FILE = "/h/a152128/EnKF/devel/EnKF/libenkf/src/site-config"
+#m32 -> #define i386 1    m64 -> __x86_64 1
 MFLAG = m32
 CC = gcc
 AR = ar
 #################################################################
-COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include
+MAIN_INCLUDE     = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include -I$(LIBECL_QUEUE_HOME)/include
+COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
 INSTALL_INC_PATH =   $(LIBENKF_HOME)/include
 INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 #################################################################
@@ -14,11 +17,15 @@ OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config
 
 INC_FILES_INSTALL = thist.h scalar.h scalar_config.h trans_func.h logmode.h enkf_obs.h obs_data.h obs_node.h well_obs.h meas_op.h meas_vector.h well_config.h well.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw_config.h ecl_static_kw.h equil_config.h equil.h enkf_state.h multflt.h enkf_util.h multflt_config.h enkf_main.h multz.h multz_config.h enkf_node.h pgbox_config.h pgbox.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h plain_driver.h analysis.h meas_matrix.h config.h plain_driver_static.h fs_index.h enkf_config.h plain_driver_parameter.h relperm.h relperm_config.h enkf_site_config.h 
 
-
-LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lanalysis_$(MFLAG) -lm -lpthread -lz -lg2c -lifcore -llapack -lblas 
-LIB_PATH          = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L$(LIBENKF_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH)
+ifeq ($MFLAG,m64)
+   LSF_LIBS          = -lbat  -llsf -lnsl
+else
+   LSF_LIBS          = 
+endif
+LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -lecl_queue_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lanalysis_$(MFLAG) -lm -lpthread -lz  -lifcore -lirc  -llapack -lblas $(LSF_LIBS) 
+LIB_PATH          = -L$(LIBECL_QUEUE_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L$(LIBENKF_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L$(EXTERNAL_LIB_PATH)/ifort_$(MFLAG)
 LIB               = libenkf_$(MFLAG).a
-TARGET_INCLUDE    = -I$(LIBENKF_HOME)/include -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include
+TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
 
 
 INSTALL: $(LIB)
@@ -26,7 +33,7 @@ INSTALL: $(LIB)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
-	gcc $(CFLAGS) $(TARGET_INCLUDE) main.c  -o enkf.x  $(LIB_PATH) $(LIB_LINK) 
+	gcc $(CFLAGS) -D'SITE_CONFIG_FILE=$(SITE_CONFIG_FILE)' $(TARGET_INCLUDE) main.c  -o enkf.x  $(LIB_PATH) $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE) test.c  -o test.x  $(LIB_PATH) $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE) thist_test.c -o thist.x $(LIB_PATH) $(LIB_LINK)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) field_test.c -o field.x $(LIB_PATH) $(LIB_LINK)
@@ -93,5 +100,5 @@ config.o        : config.c config.h
 plain_driver_static.o    : plain_driver_static.c plain_driver_static.h enkf_node.o
 plain_driver_parameter.o : plain_driver_parameter.c plain_driver_parameter.h enkf_node.o
 fs_index.i            : fs_index.h fs_index.c
-enkf_config.o         : enkf_config.c enkf_config.h enkf_site_config.o
+enkf_config.o         : enkf_config.c enkf_config.h enkf_site_config.o enkf_site_config.o
 enkf_site_config.o    : enkf_site_config.h enkf_site_config.c

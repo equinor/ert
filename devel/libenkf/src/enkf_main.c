@@ -32,10 +32,11 @@
 #include <lsf_jobs.h>
 #include <node_ctype.h>
 #include <pthread.h>
-
+#include <ecl_queue.h>
 
 struct enkf_main_struct {
   enkf_config_type   *config;
+  ecl_queue_type     *ecl_queue;
   meas_matrix_type   *meas_matrix;
   enkf_obs_type      *obs;
   obs_data_type      *obs_data;
@@ -60,7 +61,7 @@ enkf_fs_type * enkf_main_get_fs_ref(const enkf_main_type * ens) { return ens->fs
 
 
 
-enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs) {
+enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , ecl_queue_type * ecl_queue) {
   int ens_size               = enkf_config_get_ens_size(config);
   enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
   enkf_main->config         = config;
@@ -70,6 +71,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs) {
   enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->config , enkf_main->sched_file , enkf_main->hist);
   enkf_main->obs_data       = obs_data_alloc();
   enkf_main->fs             = fs;
+  enkf_main->ecl_queue      = ecl_queue;
 
   enkf_main->meas_matrix  = meas_matrix_alloc(ens_size);
   enkf_main->ensemble     = malloc(ens_size * sizeof * enkf_main->ensemble);

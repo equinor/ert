@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <time.h>
 #include <enkf_types.h>
+#include <enkf_site_config.h>
+#include <ecl_queue.h>
 
 typedef struct enkf_config_struct enkf_config_type;
 
@@ -40,7 +42,8 @@ int                           enkf_config_get_ens_size(const enkf_config_type * 
 void enkf_config_free(enkf_config_type * );
 bool enkf_config_get_unified(const enkf_config_type * );
 
-enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  int , bool  ,  bool   , bool );
+enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  enkf_site_config_type * , int, bool  ,  bool   , bool );
 int                enkf_config_get_ens_offset(const enkf_config_type * );
 ecl_store_enum     enkf_config_iget_ecl_store(const enkf_config_type * , int );
+ecl_queue_type   * enkf_config_alloc_ecl_queue(const enkf_config_type * , const enkf_site_config_type * );
 #endif
