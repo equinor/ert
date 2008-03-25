@@ -26,6 +26,26 @@ struct lsf_driver_struct {
   pthread_mutex_t    submit_lock;
 };
 
+
+
+/*
+  The LSF libraries are only available in 64 bit, 
+  provides some short stubs for 32 bit.
+*/
+#ifdef i386
+
+void 	  * lsf_driver_alloc(const char * queue_name , const char * resource_request) {
+  fprintf(stderr,"%s: sorry LSF driver not available when compiled in 32 bit mode - aborting.\n",__func__);
+  abort();
+}
+
+void 	    lsf_driver_free(lsf_driver_type * driver ) {
+  
+}
+
+#else
+
+
 /*****************************************************************/
 
 #define LSF_DRIVER_ID  1001
@@ -193,10 +213,11 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
   }
   lsf_driver->lsf_request.options2 = 0;
   
-  lsf_driver->submit     = lsf_driver_submit_job;
-  lsf_driver->get_status = lsf_driver_get_job_status;
-  lsf_driver->abort_f    = lsf_driver_abort_job;
-  lsf_driver->free_job   = lsf_driver_free_job;
+  lsf_driver->submit      = lsf_driver_submit_job;
+  lsf_driver->get_status  = lsf_driver_get_job_status;
+  lsf_driver->abort_f     = lsf_driver_abort_job;
+  lsf_driver->free_job    = lsf_driver_free_job;
+  lsf_driver->free_driver = lsf_driver_free__;
   if (lsb_init(NULL) != 0) {
     fprintf(stderr,"%s failed to initialize LSF environment - aborting\n",__func__);
     abort();
@@ -216,9 +237,15 @@ void lsf_driver_free(lsf_driver_type * driver) {
   driver = NULL;
 }
 
+void lsf_driver_free__(basic_queue_driver_type * driver) {
+  lsf_driver_free((lsf_driver_type *) driver);
+}
+
+
 
 #undef LSF_DRIVER_ID  
 #undef LSF_JOB_ID    
+#endif
 
 /*****************************************************************/
 
