@@ -101,6 +101,7 @@ static void ecl_queue_node_finalize(ecl_queue_node_type * node) {
 /*****************************************************************/
 
 struct ecl_queue_struct {
+  int                        target_report;
   int                        sleep_time;
   int                        active_size; 
   int                        size;
@@ -123,7 +124,7 @@ struct ecl_queue_struct {
 
 static bool ecl_queue_change_node_status(ecl_queue_type *  , ecl_queue_node_type *  , ecl_job_status_type );
 
-static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index , int external_id) {
+static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index , int external_id , int target_report) {
   if (external_id < 0) {
     fprintf(stderr,"%s: external_id must be >= 0 - aborting \n",__func__);
     abort();
@@ -136,7 +137,7 @@ static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index ,
 
     node->ecl_base       = path_fmt_alloc_path(queue->ecl_base_fmt , external_id);
     if (queue->target_file_fmt != NULL)
-      node->target_file = path_fmt_alloc_path(queue->target_file_fmt , external_id , external_id);
+      node->target_file = path_fmt_alloc_path(queue->target_file_fmt , external_id , external_id , target_report);
     else
       node->target_file = NULL;
     {
@@ -314,7 +315,7 @@ void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 
 
 
-void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
+void ecl_queue_add_job(ecl_queue_type * queue , int external_id, int target_report) {
   pthread_mutex_lock( &queue->active_mutex );
   {
     int active_size  = queue->active_size;
@@ -322,7 +323,7 @@ void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
       fprintf(stderr,"%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
       abort();
     }
-    ecl_queue_initialize_node(queue , active_size , external_id);
+    ecl_queue_initialize_node(queue , active_size , external_id , target_report);
     queue->active_size++;
   }
   pthread_mutex_unlock( &queue->active_mutex );
@@ -330,14 +331,15 @@ void ecl_queue_add_job(ecl_queue_type * queue , int external_id) {
 
 
 ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit , 
-				 const char * submit_cmd      , 
-				 const char * eclipse_exe     , 
-				 const char * eclipse_LD_path , 
-				 const char * eclipse_config  ,
-				 const char * license_server  ,
-				 const char * __run_path_fmt  , 
-				 const char * __ecl_base_fmt  ,
-				 const char * __target_file_fmt , void * driver) {
+				 const char    	     * submit_cmd      	 , 
+				 const char    	     * eclipse_exe     	 , 
+				 const char    	     * eclipse_LD_path 	 , 
+				 const char    	     * eclipse_config  	 ,
+				 const char    	     * license_server  	 ,
+				 const path_fmt_type * run_path_fmt 	 , 
+				 const path_fmt_type * ecl_base_fmt 	 , 
+				 const path_fmt_type * target_file_fmt ,
+				 void * driver) {
   ecl_queue_type * queue = util_malloc(sizeof * queue , __func__);
 
   queue->sleep_time      = 1;
@@ -360,11 +362,13 @@ ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit ,
     queue->status_list[ecl_queue_null] = size;
   }
 
-  queue->run_path_fmt = path_fmt_alloc_directory_fmt(__run_path_fmt , false);
-  queue->ecl_base_fmt = path_fmt_alloc_file_fmt(__ecl_base_fmt);
-  if (__target_file_fmt != NULL)
-    queue->target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
-  
+  queue->run_path_fmt = path_fmt_copyc(run_path_fmt);
+  queue->ecl_base_fmt = path_fmt_copyc(ecl_base_fmt);
+  if (target_file_fmt != NULL)
+    queue->target_file_fmt = path_fmt_copyc(target_file_fmt);
+  else
+    queue->target_file_fmt = NULL;
+
   queue->driver = driver;
   basic_queue_driver_assert_cast(queue->driver);
   pthread_mutex_init( &queue->status_mutex , NULL );
@@ -404,6 +408,10 @@ void ecl_queue_free(ecl_queue_type * queue) {
     for (i=0; i < queue->size; i++) 
       ecl_queue_node_free(queue->jobs[i]);
     free(queue->jobs);
+  }
+  {
+    basic_queue_driver_type * driver = queue->driver;
+    driver->free_driver(driver);
   }
   free(queue);
   queue = NULL;
