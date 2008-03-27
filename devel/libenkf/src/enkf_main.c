@@ -99,9 +99,12 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
 	enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
     }
 
+    for (iens = 0; iens < ens_size; iens++) 
+      enkf_state_initialize(enkf_main->ensemble[iens]);
+      
     util_free_string_list(keylist , keys);
   }
-
+  
   
   /*
     This - can not be hardcoded ....

@@ -72,6 +72,25 @@ field_file_type field_config_manual_file_type(const char * filename) {
 
 
 
+
+/**
+This function takes in a filename and tries to guess the type of the
+file. It can determine the following three types of files:
+
+  ecl_kw_file: This a file containg ecl_kw instances in the form found
+     in eclipse restart files.
+
+  rms_roff_file: An rms roff file - obviously.
+ 
+  ecl_grdecl_file: This is a file containing a parameter of the form
+     found in eclipse grid declaration files, i.e. formatted, one
+     keyword and all elements (active and not).
+
+  The latter test is the weakest. Observe that the function will
+  happily return unkown_file if none of these types are recognized,
+  i.e. it is *essential* to check the return value.
+
+*/
 field_file_type field_config_guess_file_type(const char * filename , bool endian_flip) {
   bool fmt_file = util_fmt_bit8(filename );
   FILE * stream = util_fopen(filename , "r");
@@ -297,7 +316,7 @@ bool field_config_get_endian_swap(const field_config_type * config) {
 
 
 char * field_config_alloc_init_file(const field_config_type * config, int iens) {
-  return path_fmt_alloc_file(config->init_file_fmt , iens);
+  return path_fmt_alloc_path(config->init_file_fmt , iens);
 }
 
 

@@ -49,6 +49,19 @@ typedef void   	      (imul_ftype)       	   (      void * , const void *);
 typedef void   	      (iaddsqr_ftype)    	   (      void * , const void *);
 typedef void          (ensemble_mulX_vector_ftype) (      void * , int , const void ** , const double *);
 
+typedef enum {alloc_func       = 0, 
+	      ecl_write_func   = 1,
+	      fread_func       = 2,
+	      fwrite_func      = 3,
+	      copyc_func       = 4,
+	      initialize_func  = 5,
+	      serialize_func   = 6,
+	      deserialize_func = 7,
+	      free_func        = 8,
+	      free_data_func   = 9} node_function_type;
+
+	      
+
 typedef struct enkf_node_struct enkf_node_type;
 
 typedef void          (enkf_node_ftype1)        (enkf_node_type *);
@@ -89,5 +102,6 @@ const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * );
 const char     *  enkf_node_get_key_ref(const enkf_node_type * );
 bool              enkf_node_swapped(const enkf_node_type *);
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);
+bool enkf_node_has_func(const enkf_node_type * , node_function_type );
 
 #endif

@@ -34,7 +34,7 @@ void relperm_inter_init__(const char * _config_file, const int * config_file_len
 }
 
 void relperm_inter_sample__(const int * iens, double * data){
-  relperm_initialize(RELPERM_LIST[(*iens)-1]);
+  relperm_initialize(RELPERM_LIST[(*iens)-1] , 0);
   relperm_get_data(RELPERM_LIST[(*iens)-1],data); 
 }
 

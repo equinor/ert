@@ -83,10 +83,37 @@ void enkf_state_ ## node_func(enkf_state_type * enkf_state , int mask) { \
   list_node = list_get_head(enkf_state->node_list);                      \
   while (list_node != NULL) {                                            \
     enkf_node_type *enkf_node = list_node_value_ptr(list_node);          \
-    if (enkf_node_include_type(enkf_node , mask))                        \
-      enkf_node_ ## node_func (enkf_node , enkf_state->my_iens);         \
+    if (enkf_node_has_func(enkf_node , initialize_func)) {               \
+      if (enkf_node_include_type(enkf_node , mask))                        \
+         enkf_node_ ## node_func (enkf_node , enkf_state->my_iens);         \
+    } \
     list_node = list_node_get_next(list_node);                           \
   }                                                                      \
+}
+
+
+void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_function_type function_type) {
+  list_node_type *list_node;                                             
+  list_node = list_get_head(enkf_state->node_list);                      
+  while (list_node != NULL) {                                            
+    enkf_node_type *enkf_node = list_node_value_ptr(list_node);          
+    if (enkf_node_include_type(enkf_node , mask)) {
+      switch(function_type) {
+      case(initialize_func):
+	enkf_node_initialize(enkf_node , enkf_state->my_iens);
+	break;
+      default:
+	fprintf(stderr,"%s . function not implemented ... \n",__func__);
+	abort();
+      }
+    }
+    list_node = list_node_get_next(list_node);                           
+  }                                                                      
+}
+
+
+void enkf_state_initialize(enkf_state_type * enkf_state) {
+  enkf_state_apply_NEW2(enkf_state , parameter , initialize_func);
 }
 
 
@@ -381,7 +408,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
   restart_kw_list_reset(enkf_state->restart_kw_list);
   
   while (ecl_kw != NULL) {
-    char *kw                       = ecl_kw_alloc_strip_header(ecl_kw);
+    char *kw = ecl_kw_alloc_strip_header(ecl_kw);
     restart_kw_list_add(enkf_state->restart_kw_list , kw);
 
     if (enkf_config_has_key(enkf_state->config , kw)) {
@@ -1086,7 +1113,6 @@ void enkf_ensembleemble_update(enkf_state_type ** enkf_ensemble , int ens_size ,
 
 
 /*ENKF_STATE_APPLY_PATH(fread);*/
-ENKF_STATE_APPLY_IENS(initialize);
 ENKF_STATE_APPLY(clear);
 ENKF_STATE_APPLY(clear_serial_state);
 ENKF_STATE_APPLY_SCALAR(scale);

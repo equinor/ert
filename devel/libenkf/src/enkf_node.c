@@ -227,10 +227,6 @@ bool enkf_node_swapped(const enkf_node_type *enkf_node) {
 }
 
 
-/*
-#define FUNC_ASSERT(func,func_name) if (func == NULL) { fprintf(stderr,"%s: function handler: %s not registered when writing node:%s - aborting\n",__func__ , func_name , enkf_node->node_key); abort(); }
-*/
-
 #define FUNC_ASSERT(func) \
    if (func == NULL) {      \
       fprintf(stderr,"%s: function handler: %s not registered for node:%s - aborting\n",__func__ , #func , enkf_node->node_key); \
@@ -517,6 +513,28 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
 
 void enkf_node_set_modified(enkf_node_type * node)      { node->modified = true; }
 bool enkf_node_get_modified(const enkf_node_type *node) { return node->modified; }
+
+
+#define CASE_SET(type , func) case(type): has_func = (func != NULL); break;
+bool enkf_node_has_func(const enkf_node_type * node , node_function_type function_type) {
+  bool has_func = false;
+  switch (function_type) {
+    CASE_SET(alloc_func        , node->alloc);
+    CASE_SET(ecl_write_func    , node->ecl_write);
+    CASE_SET(fread_func        , node->fread_f);
+    CASE_SET(fwrite_func       , node->fwrite_f);
+    CASE_SET(copyc_func        , node->copyc);
+    CASE_SET(initialize_func   , node->initialize);
+    CASE_SET(serialize_func    , node->serialize);
+    CASE_SET(deserialize_func  , node->deserialize);
+    CASE_SET(free_func         , node->freef);
+    CASE_SET(free_data_func    , node->free_data);
+  default:
+    fprintf(stderr,"%s: node_function_identifier: %d not recognized - aborting \n",__func__ , function_type);
+  }
+  return has_func;
+}
+#undef CASE_SET
 
 
 enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_type * config) {

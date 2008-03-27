@@ -24,6 +24,19 @@ GET_DATA_SIZE_HEADER(field);
 
 /*****************************************************************/
 
+/**
+The field data type contains for "something" which is distributed over
+the full grid, i.e. permeability or pressure. All configuration
+information is stored in the config object, which is of type
+field_config_type. Observe the following:
+
+ * The field **only** contains the active cells - the config object
+   has a reference actnum information.
+
+ * The data is stored in a char pointer; the real underlying data can
+   be (at least) of the types int, float and double.
+
+*/
 struct field_struct {
   DEBUG_DECLARE
   const  field_config_type * config;
@@ -42,7 +55,7 @@ for (k=0; k < config->nz; k++) {                                                
       int index1D = field_config_global_index(config , i , j , k);                             \
       int index3D;                                                                             \
       if (rms_order)                                               		     	       \
-        index3D = i * config->ny*config->nz  +  j * config->ny + (config->nz - k);             \
+        index3D = i * config->ny*config->nz  +  j * config->nz + (config->nz - k);             \
       else                                                                       	       \
         index3D = i + j * config->nx + k* config->nx*config->ny;           	               \
       if (index1D >= 0)                                                                        \
@@ -117,17 +130,15 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ord
   
 
 /*****************************************************************/
-
-
 #define IMPORT_MACRO                                                                           \
 for (k=0; k < config->nz; k++) {                                                               \
   for (j=0; j < config->ny; j++) {                                                             \
     for (i=0; i < config->nx; i++) {                                                           \
-      int index1D = field_config_global_index(config , i , j , k);                                        \
+      int index1D = field_config_global_index(config , i , j , k);                             \
       int index3D;                                                                             \
       if (index1D >= 0) {                                                                      \
 	if (rms_order)                                               		     	       \
-	  index3D = i * config->ny*config->nz  +  j * config->ny + (config->nz - k);           \
+	  index3D = i * config->ny*config->nz  +  j * config->nz + (config->nz - k);           \
 	else                                                                       	       \
 	  index3D = i + j * config->nx + k* config->nx*config->ny;           	               \
 	target_data[index1D] = src_data[index3D] ;                               	       \
@@ -404,6 +415,7 @@ void field_initialize(field_type *field , int iens) {
     char * filename = field_config_alloc_init_file(field->config , iens);
     field_fload(field , filename , field_config_get_endian_swap(field->config));
     init_type -= load_unique;
+    printf("Have loaded from:%s \n",filename);
     free(filename);
   }
   if (init_type != 0) {
@@ -740,7 +752,6 @@ VOID_INITIALIZE(field);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-
 VOID_FUNC      (field_clear        , field_type)
 
 
