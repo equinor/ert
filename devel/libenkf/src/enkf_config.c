@@ -679,7 +679,7 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
   }
   
   {
-    int max_submit  = 5;
+    int max_submit  = 2;
     const char * eclipse_LD_path;
     const char * __run_path = path_fmt_get_fmt(config->run_path);
     const char * __ecl_base = path_fmt_get_fmt(config->eclbase);
@@ -691,15 +691,14 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
       sprintf(restart_extension , ".F%s04d" , "%");
     else
       sprintf(restart_extension , ".X%s04d" , "%");
-    
     __target_file_fmt = util_alloc_joined_string( (const char *[4]) {__run_path , UTIL_PATH_SEP , __ecl_base , restart_extension} , 4 , "");
+    target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
 
     if (enkf_site_config_node_set(site_config , "ECLIPSE_LD_PATH"))
       eclipse_LD_path = enkf_site_config_get_value(site_config , "ECLIPSE_LD_PATH");
     else
       eclipse_LD_path = NULL;
     
-    target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
     ecl_queue = ecl_queue_alloc(enkf_config_get_ens_size(config),
 				max_running , 
 				max_submit  ,

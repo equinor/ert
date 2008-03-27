@@ -14,7 +14,7 @@ const double   * multflt_get_output_ref(const multflt_type * );
 const double   * multflt_get_data_ref(const multflt_type * );
 void             multflt_get_data(const multflt_type * , double * );
 void             multflt_set_data(multflt_type * , const double * );
-void             multflt_initialize(multflt_type *);
+void             multflt_initialize(multflt_type * , int);
 multflt_type   * multflt_alloc(const multflt_config_type * );
 void             multflt_free(multflt_type *);
 void             multflt_ecl_write(const multflt_type * , const char *);
@@ -33,9 +33,8 @@ VOID_FREAD_HEADER   (multflt)
 VOID_COPYC_HEADER      (multflt);
 VOID_SERIALIZE_HEADER  (multflt);
 VOID_DESERIALIZE_HEADER  (multflt);
+VOID_INITIALIZE_HEADER(multflt);
 
-
-VOID_FUNC_HEADER       (multflt_initialize   );
 VOID_FUNC_HEADER       (multflt_free         );
 
 

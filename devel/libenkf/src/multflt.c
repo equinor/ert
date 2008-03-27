@@ -145,7 +145,7 @@ void multflt_truncate(multflt_type * multflt) {
 
 
 
-void  multflt_initialize(multflt_type *multflt) {
+void  multflt_initialize(multflt_type *multflt, int iens) {
   DEBUG_ASSERT(multflt)
   scalar_sample(multflt->scalar);  
 }
@@ -197,7 +197,7 @@ void multflt_TEST() {
     
     for (iens = 0; iens < ens_size; iens++) {
       multflt_ens[iens] = multflt_alloc(config);
-      multflt_initialize(multflt_ens[iens]);
+      multflt_initialize(multflt_ens[iens] , 0);
       sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
       util_make_path(path);
       multflt_ecl_write(multflt_ens[iens] , path);
@@ -219,6 +219,7 @@ MATH_OPS_SCALAR(multflt);
 VOID_ALLOC(multflt);
 VOID_SERIALIZE (multflt);
 VOID_DESERIALIZE (multflt);
+VOID_INITIALIZE(multflt);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
@@ -227,6 +228,5 @@ VOID_ECL_WRITE (multflt)
 VOID_FWRITE (multflt)
 VOID_FREAD  (multflt)
 VOID_COPYC  (multflt)
-VOID_FUNC   (multflt_initialize    , multflt_type)
 VOID_FUNC   (multflt_free      , multflt_type)
 

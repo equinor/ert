@@ -29,7 +29,6 @@
 #include <void_arg.h>
 #include <gen_kw_config.h>
 #include <history.h>
-#include <lsf_jobs.h>
 #include <node_ctype.h>
 #include <pthread.h>
 #include <ecl_queue.h>
@@ -107,7 +106,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
   /*
     This - can not be hardcoded ....
   */
-  enkf_main_add_data_kw(enkf_main , "INIT-CONFIG" , "INCLUDE\n   \'EQUIL.INC\'/\nRPTSOL\n     0  0  0  0  0 0   2  0   0  0   0   0  0   0 /\n");
+  enkf_main_add_data_kw(enkf_main , "INIT" , "INCLUDE\n   \'EQUIL.INC\'/\nRPTSOL\n     0  0  0  0  0 0   2  0   0  0   0   0  0   0 /\n");
   enkf_main->thread_pool = NULL;
   enkf_main->void_arg    = NULL;
   return  enkf_main;
@@ -274,35 +273,8 @@ void enkf_main_analysis(enkf_main_type * enkf_main) {
 void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
   const int sleep_time     	= 1;
-  const int max_running    	= 25;
-  const int max_resubmit        = 10;
-  const bool sub_exit      	= false;
-  const int eclipse_version_nr  = 2;
-  const char * eclipse_que      = "common";
-  const char * resource_request = "rusage[e100=1:duration=10] select[ia32||ia64||x86_64]";
-  const char * summary_path     = "Summary";
-  const char * bsub_status_cmd  = "bjobs -a";
-  const char * submit_cmd       = "/d/proj/bg/enkf/bin/ecl_submit.x";
-  const char * tmp_path         = "/tmp";
-  char * summary_file           = util_malloc(strlen("Summary") + 1 + 4 + 1 + 4 + 1 , __func__);
   int iens;
   
-  
-  sprintf(summary_file , "Summary_%04d-%04d" , step1 , step2);
-  lsf_pool_type * lsf_pool = lsf_pool_alloc(enkf_config_get_ens_size(enkf_main->config),
-					    sleep_time         , 
-					    max_running        , 
-					    sub_exit           ,      
-					    eclipse_version_nr , 
-					    eclipse_que        , 
-					    resource_request   , 
-					    summary_path       , 
-					    summary_file       , 
-					    bsub_status_cmd    , 
-					    submit_cmd         ,
-					    tmp_path);
-  free(summary_file);
-
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   if (enkf_main->void_arg != NULL) {
     fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
@@ -313,13 +285,13 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   for (iens = 0; iens < ens_size; iens++) {
     enkf_main->void_arg[iens] = void_arg_alloc9(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , bool_value);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
-    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , lsf_pool);
+    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->ecl_queue);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 2 , enkf_main->obs);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 3 , enkf_main->sched_file);
     void_arg_pack_bool(enkf_main->void_arg[iens] , 4 , enkf_config_get_unified(enkf_main->config));
     void_arg_pack_int(enkf_main->void_arg[iens]  , 5 , step1);
     void_arg_pack_int(enkf_main->void_arg[iens]  , 6 , step2);
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 7 , max_resubmit);
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 7 , -1);
     /* 
        The final bool is not packed - that is a return value, which
        is set in the called routine.
@@ -328,20 +300,15 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   
   if (enkf_main->thread_pool != NULL) {
     fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
-      abort();
+    abort();
   }
   enkf_main->thread_pool = thread_pool_alloc(ens_size);
-  
   for (iens = 0; iens < ens_size; iens++) 
     thread_pool_add_job(enkf_main->thread_pool , enkf_state_run_eclipse__ , enkf_main->void_arg[iens]);
 
-  {
-    pthread_t lsf_thread;
-    pthread_create( &lsf_thread , NULL , lsf_pool_run_jobs__ , lsf_pool);
-    pthread_join( lsf_thread , NULL);
-  }
+  ecl_queue_run_jobs(enkf_main->ecl_queue , ens_size);
   thread_pool_join(enkf_main->thread_pool);
-
+  
 
   for (iens = 0; iens < ens_size; iens++) 
     void_arg_free(enkf_main->void_arg[iens]);
@@ -349,6 +316,5 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   enkf_main->void_arg = NULL;
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
-  lsf_pool_free(lsf_pool);
 }
 

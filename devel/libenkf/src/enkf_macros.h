@@ -179,6 +179,16 @@ int prefix ## _deserialize__(void *void_arg, int internal_offset , size_t serial
 }
 #define VOID_DESERIALIZE_HEADER(prefix) int prefix ## _deserialize__(void *, int , size_t , const double *, size_t , size_t);
 
+/*****************************************************************/
+#define VOID_INITIALIZE(prefix)     \
+void prefix ## _initialize__(void *void_arg, int iens) {              \
+   prefix ## _type  *arg = (prefix ## _type *) void_arg;       \
+   prefix ## _initialize (arg , iens);                              \
+}
+#define VOID_INITIALIZE_HEADER(prefix) void prefix ## _initialize__(void *, int);
+
+
+
 
 /*****************************************************************/
 

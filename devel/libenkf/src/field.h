@@ -39,13 +39,13 @@ VOID_REALLOC_DATA_HEADER(field);
 VOID_COPYC_HEADER      (field);
 VOID_SERIALIZE_HEADER  (field);
 VOID_DESERIALIZE_HEADER (field);
+VOID_INITIALIZE_HEADER(field);
 
 VOID_ECL_WRITE_HEADER (field)
 VOID_FWRITE_HEADER (field)
 VOID_FREAD_HEADER  (field)
 
 
-VOID_FUNC_HEADER       (field_initialize );
 VOID_FUNC_HEADER       (field_isqrt      );
 
 

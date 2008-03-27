@@ -32,7 +32,7 @@ relperm_type * relperm_alloc(const relperm_config_type * relperm_config){
   return relperm;
 }
 
-void relperm_initialize(relperm_type * relperm) {
+void relperm_initialize(relperm_type * relperm, int iens) {
   scalar_sample(relperm->scalar);
   DEBUG_ASSERT(relperm)
 }

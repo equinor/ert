@@ -326,9 +326,9 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
 }
 
 
-void enkf_node_initialize(enkf_node_type *enkf_node) {
+void enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
   FUNC_ASSERT(enkf_node->initialize);
-  enkf_node->initialize(enkf_node->data);
+  enkf_node->initialize(enkf_node->data , iens);
 }
 
 

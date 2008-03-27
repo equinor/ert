@@ -37,8 +37,9 @@
 #include <basic_driver.h>
 #include <enkf_config.h>
 #include <node_ctype.h>
-#include <lsf_jobs.h>
+#include <ecl_queue.h>
 #include <sched_file.h>
+#include <basic_queue_driver.h>
 
 struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;
@@ -71,6 +72,19 @@ void enkf_state_ ## node_func(enkf_state_type * enkf_state , int mask) { \
     enkf_node_type *enkf_node = list_node_value_ptr(list_node);          \
     if (enkf_node_include_type(enkf_node , mask))                        \
       enkf_node_ ## node_func (enkf_node);                               \
+    list_node = list_node_get_next(list_node);                           \
+  }                                                                      \
+}
+
+
+#define ENKF_STATE_APPLY_IENS(node_func)                                 \
+void enkf_state_ ## node_func(enkf_state_type * enkf_state , int mask) { \
+  list_node_type *list_node;                                             \
+  list_node = list_get_head(enkf_state->node_list);                      \
+  while (list_node != NULL) {                                            \
+    enkf_node_type *enkf_node = list_node_value_ptr(list_node);          \
+    if (enkf_node_include_type(enkf_node , mask))                        \
+      enkf_node_ ## node_func (enkf_node , enkf_state->my_iens);         \
     list_node = list_node_get_next(list_node);                           \
   }                                                                      \
 }
@@ -763,7 +777,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   } 
   
   util_make_path(enkf_state->run_path);
-  util_filter_file(enkf_config_get_data_file(enkf_state->config) , data_file , '<' , '>' , enkf_state->data_kw);
+  util_filter_file(enkf_config_get_data_file(enkf_state->config) , "--" , data_file , '<' , '>' , enkf_state->data_kw);
 
   if (has_gen_kw) {
     for (ikw = 0; ikw < gen_kw_size; ikw++) 
@@ -784,43 +798,32 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
 
 
 
-void enkf_state_run_eclipse(enkf_state_type * enkf_state , lsf_pool_type * lsf_pool, enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , int max_resubmit , bool *job_OK) {
-  const int sleep_time = 10;
+void enkf_state_run_eclipse(enkf_state_type * enkf_state , ecl_queue_type * ecl_queue , enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , int max_resubmit , bool *job_OK) {
+  const int sleep_time = 3;
   const int iens       = enkf_state_get_iens(enkf_state);
-  char * restart_file  = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , enkf_state_fmt_file(enkf_state) , report_step2);
-  int lsf_ijob;
-
   /* 
      Prepare the job first ...
   */
-  
+
   enkf_state_init_eclipse(enkf_state , sched_file , report_step1 , report_step2);
-  lsf_pool_add_job(lsf_pool , iens , enkf_state->eclbase , enkf_state->run_path , restart_file , NULL , NULL , max_resubmit);
-  lsf_ijob = lsf_pool_get_ijob(lsf_pool , iens);
-  while (1) {
-    lsf_status_type lsf_status = lsf_pool_iget_status(lsf_pool , lsf_ijob);
-    if (lsf_status == lsf_status_OK) {
+  ecl_queue_add_job(ecl_queue , iens , report_step2);
+  while (true) {
+    ecl_job_status_type status = ecl_queue_export_job_status(ecl_queue , iens);
+    if (status == ecl_queue_complete_OK) {
       enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
-      *job_OK = true;
       break;
-    } else if ((lsf_status == lsf_status_exit) || (lsf_status == lsf_status_complete_fail)) {
-      *job_OK = false;
+    } else if (status == ecl_queue_complete_FAIL) {
+      fprintf(stderr,"** job:%d failed completely - this will break ... \n",iens);
       break;
-    }
-    sleep(sleep_time);
-  }
-
-  free(restart_file);
+    } else sleep(sleep_time);
+  } 
+  
 }
-
-
-
-
 
 void * enkf_state_run_eclipse__(void * _void_arg) {
   void_arg_type * void_arg = (void_arg_type *) _void_arg;
   enkf_state_type * enkf_state 	 = void_arg_get_ptr(void_arg  	, 0);
-  lsf_pool_type   * lsf_pool   	 = void_arg_get_ptr(void_arg  	, 1);
+  ecl_queue_type  * ecl_queue    = void_arg_get_ptr(void_arg  	, 1);
   enkf_obs_type   * enkf_obs   	 = void_arg_get_ptr(void_arg  	, 2);
   sched_file_type * sched_file   = void_arg_get_ptr(void_arg    , 3);
   bool              unified    	 = void_arg_get_bool(void_arg 	, 4);
@@ -829,7 +832,7 @@ void * enkf_state_run_eclipse__(void * _void_arg) {
   int               max_resubmit = void_arg_get_int(void_arg  	, 7);
   bool            * job_OK       = void_arg_get_buffer(void_arg , 8);
 
-  enkf_state_run_eclipse(enkf_state , lsf_pool , enkf_obs , sched_file , unified , report_step1 , report_step2 , max_resubmit , job_OK);
+  enkf_state_run_eclipse(enkf_state , ecl_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , max_resubmit , job_OK);
   return NULL;
 }
 
@@ -1083,7 +1086,7 @@ void enkf_ensembleemble_update(enkf_state_type ** enkf_ensemble , int ens_size ,
 
 
 /*ENKF_STATE_APPLY_PATH(fread);*/
-ENKF_STATE_APPLY(initialize);
+ENKF_STATE_APPLY_IENS(initialize);
 ENKF_STATE_APPLY(clear);
 ENKF_STATE_APPLY(clear_serial_state);
 ENKF_STATE_APPLY_SCALAR(scale);

@@ -35,7 +35,7 @@ typedef int   	      (deserialize_ftype)       (void *       	, /* Node object  
 typedef void * 	      (alloc_ftype)                (const void *);
 typedef void   	      (fread_ftype)                (      void * , FILE *);
 typedef void   	      (fwrite_ftype)               (const void * , FILE *);
-typedef void   	      (initialize_ftype)     	   (      void *);
+typedef void   	      (initialize_ftype)     	   (      void * , int);
 typedef void   	      (ecl_write_ftype)            (const void * , const char *);
 typedef void          (realloc_data_ftype)	   (void * );
 typedef void          (free_data_ftype)	           (void * );
@@ -59,7 +59,7 @@ bool 		 enkf_node_get_modified(const enkf_node_type *);
 enkf_node_type * enkf_node_copyc(const enkf_node_type * );
 void             enkf_node_free(enkf_node_type *enkf_node);
 void             enkf_node_free__(void *);
-void             enkf_initialize    (enkf_node_type *);
+void             enkf_initialize    (enkf_node_type * , int);
 bool             enkf_node_include_type(const enkf_node_type * , int );
 void           * enkf_node_value_ptr(const enkf_node_type * );
 enkf_impl_type   enkf_node_get_impl_type(const enkf_node_type * );
@@ -69,7 +69,7 @@ void             enkf_node_deserialize(enkf_node_type * , double * , size_t );
 
 void             enkf_node_ecl_write (const enkf_node_type *, const char *);
 /*void             enkf_node_ecl_read  (enkf_node_type * , const char *);*/
-void             enkf_node_initialize(enkf_node_type *enkf_node);
+void             enkf_node_initialize(enkf_node_type *enkf_node , int);
 void             enkf_node_printf(const enkf_node_type *);
 void             enkf_node_fwrite (const enkf_node_type * , FILE * stream);
 int              enkf_node_serialize(enkf_node_type * , size_t , double * , size_t , size_t , bool *);

@@ -147,7 +147,7 @@ void multz_truncate(multz_type * multz) {
 
 
 
-void  multz_initialize(multz_type *multz) {
+void  multz_initialize(multz_type *multz, int iens) {
   DEBUG_ASSERT(multz)
   scalar_sample(multz->scalar);  
 }
@@ -185,7 +185,7 @@ void multz_TEST() {
     
     for (iens = 0; iens < ens_size; iens++) {
       multz_ens[iens] = multz_alloc(config);
-      multz_initialize(multz_ens[iens]);
+      multz_initialize(multz_ens[iens] , 0);
       sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
       util_make_path(path);
       multz_ecl_write(multz_ens[iens] , path);
@@ -220,11 +220,10 @@ VOID_DESERIALIZE(multz)
 VOID_TRUNCATE(multz)
 ENSEMBLE_MULX_VECTOR(multz)
 ENSEMBLE_MULX_VECTOR_VOID(multz)
+VOID_INITIALIZE(multz)
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-
 VOID_FUNC      (multz_clear        , multz_type)
-VOID_FUNC      (multz_initialize       , multz_type)
 
 

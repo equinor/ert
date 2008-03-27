@@ -7,6 +7,7 @@
 #include <ecl_kw.h>
 #include <ecl_util.h>
 #include <rms_file.h>
+#include <path_fmt.h>
 
 
 /*****************************************************************/
@@ -284,6 +285,22 @@ int field_config_get_sizeof_ctype(const field_config_type * config) { return con
 inline int field_config_global_index(const field_config_type * config , int i , int j , int k) {
   return config->index_map[ k * config->nx * config->ny + j * config->nx + i];
 }
+
+
+field_init_type field_config_get_init_type(const field_config_type * config) {
+  return config->init_type;
+}
+
+bool field_config_get_endian_swap(const field_config_type * config) {
+  return config->endian_swap;
+}
+
+
+char * field_config_alloc_init_file(const field_config_type * config, int iens) {
+  return path_fmt_alloc_file(config->init_file_fmt , iens);
+}
+
+
 
 
 void field_config_get_ijk(const field_config_type * config , int global_index, int *_i , int *_j , int *_k) {

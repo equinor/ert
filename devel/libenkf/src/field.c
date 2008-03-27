@@ -398,14 +398,19 @@ void field_ecl_write(const field_type * field , const char * path) {
 
 
 
-
-
-void field_initialize(field_type *field) {
-  printf("%s: Warning not implemented ... \n",__func__);
+void field_initialize(field_type *field , int iens) {
+  field_init_type init_type = field_config_get_init_type(field->config);
+  if (init_type & load_unique) {
+    char * filename = field_config_alloc_init_file(field->config , iens);
+    field_fload(field , filename , field_config_get_endian_swap(field->config));
+    init_type -= load_unique;
+    free(filename);
+  }
+  if (init_type != 0) {
+    fprintf(stderr,"%s not fully implemented ... \n",__func__);
+    abort();
+  }
 }
-
-
-
 
 void field_free(field_type *field) {
   field_free_data(field);
@@ -731,12 +736,12 @@ VOID_COPYC     (field)
 VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);
 ENSEMBLE_MULX_VECTOR(field);
+VOID_INITIALIZE(field);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
 VOID_FUNC      (field_clear        , field_type)
-VOID_FUNC      (field_initialize       , field_type)
 
 
 

@@ -95,7 +95,7 @@ void equil_fread(equil_type * equil , FILE * stream) {
 
 
 
-void equil_initialize(equil_type *equil) {
+void equil_initialize(equil_type *equil, int iens) {
   scalar_sample(equil->scalar);
 }
 
@@ -124,6 +124,7 @@ MATH_OPS_SCALAR(equil);
 VOID_ALLOC(equil);
 VOID_SERIALIZE (equil);
 VOID_DESERIALIZE (equil);
+VOID_INITIALIZE(equil);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
@@ -132,6 +133,6 @@ VOID_ECL_WRITE (equil)
 VOID_FWRITE (equil)
 VOID_FREAD  (equil)
 VOID_COPYC     (equil)
-VOID_FUNC      (equil_initialize    , equil_type)
+
 VOID_FUNC      (equil_free      , equil_type)
 

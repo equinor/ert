@@ -28,13 +28,12 @@ VOID_REALLOC_DATA_HEADER(pgbox);
 VOID_COPYC_HEADER      (pgbox);
 VOID_SERIALIZE_HEADER  (pgbox);
 VOID_DESERIALIZE_HEADER (pgbox);
-
+VOID_INITIALIZE_HEADER(pgbox);
 VOID_ECL_WRITE_HEADER (pgbox)
 VOID_FWRITE_HEADER (pgbox)
 VOID_FREAD_HEADER  (pgbox)
 
 
-VOID_FUNC_HEADER       (pgbox_initialize   );
 VOID_FUNC_HEADER       (pgbox_isqrt        );
 
 

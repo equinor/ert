@@ -75,7 +75,7 @@ void multz_get_data__(const int * iens, double * data) {
 
 
 void multz_inter_sample__(const int * iens, double * data) {
-  multz_initialize(MULTZ_LIST[(*iens) - 1]);
+  multz_initialize(MULTZ_LIST[(*iens) - 1] , 0);
   multz_get_data(MULTZ_LIST[(*iens) - 1] , data);
 }
 

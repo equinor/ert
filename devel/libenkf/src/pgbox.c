@@ -158,7 +158,7 @@ int pgbox_serialize(const pgbox_type *pgbox , int internal_offset , size_t seria
 
 
 
-void pgbox_initialize(pgbox_type *pgbox) {
+void pgbox_initialize(pgbox_type *pgbox , int iens) {
   printf("%s: Warning not implemented ... \n",__func__);
 }
 
@@ -180,10 +180,9 @@ VOID_REALLOC_DATA(pgbox)
 VOID_COPYC     (pgbox)
 VOID_SERIALIZE (pgbox);
 VOID_DESERIALIZE (pgbox);
-
+VOID_INITIALIZE(pgbox);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
 VOID_FUNC      (pgbox_clear        , pgbox_type)
-VOID_FUNC      (pgbox_initialize   , pgbox_type)

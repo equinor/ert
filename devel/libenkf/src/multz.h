@@ -19,7 +19,7 @@ void             multz_ecl_write(const multz_type * , const char *);
 /*void             multz_direct_ecl_write(const multz_type * , const char *);*/
 void             multz_ens_write(const multz_type * , const char *);
 void             multz_ens_read(multz_type * , const char *);
-void             multz_initialize(multz_type *);
+void             multz_initialize(multz_type * , int);
 void             multz_truncate(multz_type *);
 multz_type     * multz_alloc_mean(int , const multz_type **);
 void             multz_TEST(void);
@@ -41,8 +41,9 @@ VOID_DESERIALIZE_HEADER  (multz)
 VOID_ECL_WRITE_HEADER (multz)
 VOID_FWRITE_HEADER (multz)
 VOID_FREAD_HEADER  (multz)
+VOID_INITIALIZE_HEADER(multz)
 
-VOID_FUNC_HEADER       (multz_initialize   );
+
 VOID_FUNC_HEADER       (multz_isqrt    );
 
 #endif

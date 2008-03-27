@@ -17,7 +17,7 @@ OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config
 
 INC_FILES_INSTALL = thist.h scalar.h scalar_config.h trans_func.h logmode.h enkf_obs.h obs_data.h obs_node.h well_obs.h meas_op.h meas_vector.h well_config.h well.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw_config.h ecl_static_kw.h equil_config.h equil.h enkf_state.h multflt.h enkf_util.h multflt_config.h enkf_main.h multz.h multz_config.h enkf_node.h pgbox_config.h pgbox.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h plain_driver.h analysis.h meas_matrix.h config.h plain_driver_static.h fs_index.h enkf_config.h plain_driver_parameter.h relperm.h relperm_config.h enkf_site_config.h 
 
-ifeq ($MFLAG,m64)
+ifeq ($(MFLAG),m64)
    LSF_LIBS          = -lbat  -llsf -lnsl
 else
    LSF_LIBS          = 
@@ -70,7 +70,7 @@ well_obs.o           : well_obs.h well_obs.c meas_op.o
 meas_op.o            : meas_op.c meas_op.h
 well_config.o        : enkf_main.c enkf_main.h enkf_types.h enkf_macros.h enkf_config_node.o well_config.c well_config.h well_config_private.h
 well.o               : well.c well.h well_config.o 
-enkf_config_node.o   : enkf_main.c enkf_main.h enkf_types.h enkf_macros.h
+enkf_config_node.o   : enkf_types.h enkf_macros.h
 field_config.o       : field_config.c field_config.h enkf_types.h
 field.o              : field.c field.h field_config.o enkf_types.h enkf_macros.h
 equil_config.o : enkf_util.h equil_config.c equil_config.h enkf_macros.h scalar_config.o
@@ -102,3 +102,4 @@ plain_driver_parameter.o : plain_driver_parameter.c plain_driver_parameter.h enk
 fs_index.i            : fs_index.h fs_index.c
 enkf_config.o         : enkf_config.c enkf_config.h enkf_site_config.o enkf_site_config.o
 enkf_site_config.o    : enkf_site_config.h enkf_site_config.c
+enkf_main.o           : enkf_main.c enkf_main.h enkf_state.o enkf_config.o enkf_site_config.o

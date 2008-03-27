@@ -65,7 +65,7 @@ void gen_kw_get_data__(const int * iens, double * data) {
 
 
 void gen_kw_inter_sample__(const int * iens, double * data) {
-  gen_kw_initialize(GEN_KW_LIST[(*iens) - 1]);
+  gen_kw_initialize(GEN_KW_LIST[(*iens) - 1] , 0);
   gen_kw_get_data(GEN_KW_LIST[(*iens) - 1] , data);
 }
 

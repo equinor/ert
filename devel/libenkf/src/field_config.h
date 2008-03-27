@@ -57,6 +57,7 @@ struct field_config_struct {
 };
 
 
+bool                field_config_get_endian_swap(const field_config_type * );
 bool                field_config_write_compressed(const field_config_type * );
 field_file_type     field_config_guess_file_type(const char * , bool);
 field_file_type     field_config_manual_file_type(const char * );
@@ -77,6 +78,9 @@ int                 field_config_get_active_size(const field_config_type * );
 int                 field_config_get_sizeof_ctype(const field_config_type * );
 int                 field_config_global_index(const field_config_type * , int , int , int );
 void                field_config_get_ijk(const field_config_type * , int , int * , int * , int *);
+field_init_type     field_config_get_init_type(const field_config_type * );
+char              * field_config_alloc_init_file(const field_config_type * , int );
+
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
