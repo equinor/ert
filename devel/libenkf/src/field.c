@@ -31,7 +31,7 @@ information is stored in the config object, which is of type
 field_config_type. Observe the following:
 
  * The field **only** contains the active cells - the config object
-   has a reference actnum information.
+   has a reference to actnum information.
 
  * The data is stored in a char pointer; the real underlying data can
    be (at least) of the types int, float and double.
@@ -347,14 +347,8 @@ void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , 
 }
 
 
-
-void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file , bool endian_swap ) {
-  const int data_size             = field_config_get_volume(field->config);
-  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
-  const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
-
-  void *data;
-  data = enkf_util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
+static void * __field_alloc_3D_data(const field_type * field , int data_size , ecl_type_enum ecl_type , ecl_type_enum target_type) {
+  void * data = enkf_util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
   if (ecl_type == ecl_double_type) {
     double fill = 0.0;
     field_export3D(field , data , false , target_type , &fill);
@@ -368,10 +362,34 @@ void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio , 
     fprintf(stderr,"%s: trying to export type != int/float/double - aborting \n",__func__);
     abort();
   }
-  
+  return data;
+}
+
+
+void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file , bool endian_swap ) {
+  const int data_size             = field_config_get_volume(field->config);
+  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
+  const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
+  void *data = __field_alloc_3D_data(field , data_size , ecl_type , target_type );
+
   ecl_kw_fwrite_param_fortio(fortio , fmt_file , endian_swap , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , data);
   free(data);
 }
+
+
+void field_ecl_grdecl_export(const field_type * field , FILE * stream) {
+  const int data_size             = field_config_get_volume(field->config);
+  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
+  const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
+  void *data                      = __field_alloc_3D_data(field , data_size , ecl_type , target_type );
+  ecl_kw_type            * ecl_kw = ecl_kw_alloc_complete_shared(true , true , field_config_get_ecl_kw_name(field->config) , data_size , target_type , data);
+
+  ecl_kw_fprintf_grdecl(ecl_kw , stream);
+  ecl_kw_free(ecl_kw);
+  free(data);
+
+}
+
 
 
 void field_ecl_write_allD(const field_type * field  , const char * eclfile , bool write3D) {
@@ -404,7 +422,12 @@ void field_ecl_write1D(const field_type * field , const char * path) {
 
 
 void field_ecl_write(const field_type * field , const char * path) {
-  field_ecl_write1D(field , path);
+  field_ecl_write3D(field , path);
+  {
+    FILE * stream = util_fopen(path , "w");
+    field_ecl_grdecl_export(field , stream);
+    fclose(stream);
+  }
 }
 
 
@@ -415,7 +438,6 @@ void field_initialize(field_type *field , int iens) {
     char * filename = field_config_alloc_init_file(field->config , iens);
     field_fload(field , filename , field_config_get_endian_swap(field->config));
     init_type -= load_unique;
-    printf("Have loaded from:%s \n",filename);
     free(filename);
   }
   if (init_type != 0) {
