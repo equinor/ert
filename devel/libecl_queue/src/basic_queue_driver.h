@@ -9,6 +9,7 @@ typedef enum {ecl_queue_null = 0     ,
 	      ecl_queue_exit         ,    
 	      ecl_queue_complete_OK  , 
 	      ecl_queue_complete_FAIL,
+	      ecl_queue_restart      ,
 	      ecl_queue_max_state     } ecl_job_status_type;
 
 

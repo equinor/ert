@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ecl_queue.h>
@@ -21,9 +22,10 @@ All queue drivers must support the following functions:
   abort:  This will stop the job, and then call clean.
 
   status: This will get the status of the job.
-  
 */ 
 
+
+typedef enum {submit_OK = 0 , submit_job_FAIL , submit_driver_FAIL} submit_status_type;
 
 typedef struct {
   int                  	 external_id;
@@ -176,7 +178,10 @@ static bool ecl_queue_change_node_status(ecl_queue_type * queue , ecl_queue_node
   ecl_queue_node_set_status(node , new_status);
   queue->status_list[old_status]--;
   queue->status_list[new_status]++;
-  return ( !(new_status == old_status) );
+  if (new_status != old_status)
+    return true;
+  else
+    return false;
 }
 
 static void ecl_queue_free_job(ecl_queue_type * queue , ecl_queue_node_type * node) {
@@ -186,43 +191,49 @@ static void ecl_queue_free_job(ecl_queue_type * queue , ecl_queue_node_type * no
 }
 
 
-static bool ecl_queue_update_status(ecl_queue_type * queue) {
+static void ecl_queue_update_status(ecl_queue_type * queue ) {
   basic_queue_driver_type *driver  = queue->driver;
-  bool change = false;
   int ijob;
   for (ijob = 0; ijob < queue->size; ijob++) {
     ecl_queue_node_type * node       = queue->jobs[ijob];
-    
     if (node->job_data != NULL) {
       ecl_job_status_type  new_status = driver->get_status(driver , node->job_data);
-      change = (change || ecl_queue_change_node_status(queue , node , new_status));
+      ecl_queue_change_node_status(queue , node , new_status);
     }
   }
-  return change;
 }
 
 
-void ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
+static submit_status_type ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
+  submit_status_type submit_status;
   ecl_queue_assert_queue_index(queue , queue_index);
   ecl_queue_node_type * node = queue->jobs[queue_index];
-  if (ecl_queue_node_get_status(node) == ecl_queue_waiting) {
-    basic_queue_driver_type *driver  = queue->driver;
-    if (node->submit_attempt < queue->max_submit) {
-      if (util_file_exists(node->smspec_file))
-	util_unlink_existing(node->smspec_file);
-      node->job_data = driver->submit(queue->driver         , 
-				      queue->submit_cmd     , 
-				      node->run_path        , 
-				      node->ecl_base        , 
-				      queue->eclipse_exe    ,  
-				      queue->eclipse_config , 
-				      queue->eclipse_LD_path,
-				      queue->license_server);
-      ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
-      node->submit_attempt++;
-    } else 
-      ecl_queue_change_node_status(queue , node , ecl_queue_complete_FAIL);
+  basic_queue_driver_type *driver  = queue->driver;
+  if (node->submit_attempt < queue->max_submit) {
+    if (util_file_exists(node->smspec_file))
+      util_unlink_existing(node->smspec_file);
+    {
+      basic_queue_job_type * job_data = driver->submit(queue->driver         , 
+						       queue->submit_cmd     , 
+						       node->run_path        , 
+						       node->ecl_base        , 
+						       queue->eclipse_exe    ,  
+						       queue->eclipse_config , 
+						       queue->eclipse_LD_path,
+						       queue->license_server);
+      if (job_data != NULL) {
+	ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
+	node->job_data = job_data;
+	node->submit_attempt++;
+	submit_status = submit_OK;
+      } else
+	submit_status = submit_driver_FAIL;
+    }
+  } else {
+    ecl_queue_change_node_status(queue , node , ecl_queue_complete_FAIL);
+    submit_status = submit_job_FAIL;
   }
+  return submit_status;
 }
 
 
@@ -253,25 +264,48 @@ static void ecl_queue_print_jobs(const ecl_queue_type *queue) {
   int waiting  = queue->status_list[ecl_queue_waiting];
   int pending  = queue->status_list[ecl_queue_pending];
   /* 
-     EXIT and DONE are included here, because the target file has
-     not yet been checked.
+     EXIT and DONE are included in "xxx_running", because the target
+     file has not yet been checked.
   */
   int running  = queue->status_list[ecl_queue_running] + queue->status_list[ecl_queue_done] + queue->status_list[ecl_queue_exit];
   int complete = queue->status_list[ecl_queue_complete_OK];
   int failed   = queue->status_list[ecl_queue_complete_FAIL];
+  int restarts = queue->status_list[ecl_queue_restart];  
 
-  printf("Waiting: %3d    Pending: %3d    Running: %3d    Complete: %3d     Failed: %3d \n",waiting , pending , running , complete , failed);
+  printf("Waiting: %3d    Pending: %3d    Running: %3d     Restarts: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , restarts , failed , complete);
+  fflush(stdout);
 }
   
 
+
+
 void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
+  int phase = 0;
   int queue_index;
+  int old_status_list[ecl_queue_max_state];
+  {
+    int i;
+    for (i=0; i < ecl_queue_max_state; i++)
+      old_status_list[i] = 0;
+  }
+  
   do {
-    {
-      bool rewrite = ecl_queue_update_status(queue);
-      if (rewrite)
-	ecl_queue_print_jobs(queue);
+    char spinner[4];
+    spinner[0] = '-';
+    spinner[1] = '\\';
+    spinner[2] = '|';
+    spinner[3] = '/';
+    ecl_queue_update_status(queue);
+    if (memcmp(old_status_list , queue->status_list , ecl_queue_max_state * sizeof * old_status_list) != 0) {
+      printf("\b \n");
+      ecl_queue_print_jobs(queue);
+      memcpy(old_status_list , queue->status_list , ecl_queue_max_state * sizeof * old_status_list);
+    } else {
+      printf("\b%c",spinner[phase]); 
+      fflush(stdout);
+      phase = (phase + 1) % 4;
     }
+    
     {
       /* Submitting new jobs */
       int active_size    = ecl_queue_get_active_size(queue);
@@ -281,8 +315,11 @@ void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
       while ((queue_index < active_size) && (num_submit_new > 0)) {
 	ecl_queue_node_type * node = queue->jobs[queue_index];
 	if (ecl_queue_node_get_status(node) == ecl_queue_waiting) {
-	  ecl_queue_submit_job(queue , queue_index);
-	  num_submit_new--;
+	  submit_status_type submit_status = ecl_queue_submit_job(queue , queue_index);
+	  if (submit_status == submit_OK) 
+	    num_submit_new--;
+	  else if (submit_status == submit_driver_FAIL)
+	    break;
 	}
 	queue_index++;
       }
@@ -295,13 +332,16 @@ void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 	if (node->target_file != NULL) {
 	  if (util_file_exists(node->target_file))
 	    ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
-	  else
+	  else {
 	    ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
+	    queue->status_list[ecl_queue_restart]++;
+	  }
 	} else 
 	  ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
 	ecl_queue_free_job(queue , node);
 	break;
       case(ecl_queue_exit):
+	queue->status_list[ecl_queue_restart]++;
 	ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
 	ecl_queue_free_job(queue , node);
 	break;
@@ -311,6 +351,7 @@ void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
     }
     sleep(queue->sleep_time);
   } while ( (queue->status_list[ecl_queue_complete_OK] + queue->status_list[ecl_queue_complete_FAIL]) < num_total_run);
+  printf("\n");
 }
 
 
@@ -347,10 +388,14 @@ ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit ,
   queue->max_submit      = max_submit;
   queue->size            = size;
   queue->submit_cmd      = util_alloc_string_copy(submit_cmd);
-  queue->eclipse_exe     = util_alloc_string_copy(eclipse_exe);
+  queue->eclipse_exe     = util_alloc_joined_string((const char *[3]) {"\"" , eclipse_exe , "\""} , 3 , "");
   queue->eclipse_config  = util_alloc_string_copy(eclipse_config);
   queue->license_server  = util_alloc_string_copy(license_server);
-  queue->eclipse_LD_path = util_alloc_string_copy(eclipse_LD_path);
+  if (eclipse_LD_path != NULL)
+    queue->eclipse_LD_path = util_alloc_joined_string((const char *[3]) {"\"" , eclipse_LD_path , "\""} , 3 , "");
+  else
+    queue->eclipse_LD_path = NULL;
+
   queue->jobs            = util_malloc(size * sizeof * queue->jobs , __func__);
   {
     int i;
