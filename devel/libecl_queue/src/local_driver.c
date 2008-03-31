@@ -117,7 +117,7 @@ void local_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job
 void * submit_job_thread(void * cmd) {
   system((const char *) cmd);
   free(cmd);
-  /*pthread_exit();*/
+  pthread_exit(NULL);
   return NULL;
 }
 
