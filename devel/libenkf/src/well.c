@@ -138,9 +138,14 @@ void well_load_summary_data(well_type * well , int report_step , const ecl_sum_t
     const char ** var_list               = well_config_get_var_list_ref(config);
     const char *  well_name              = well_config_get_well_name_ref(config);
     int ivar;
+
+    /*
+      Skal denne bruke report step?????????????
+      Denne skal vel ikke bruke report step ???
+    */
     
     for (ivar = 0; ivar < well_config_get_data_size(config); ivar++) 
-      well->data[ivar] = ecl_sum_get_well_var(ecl_sum , report_step , well_name , var_list[ivar]);
+      well->data[ivar] = ecl_sum_get_well_var(ecl_sum , 0 /*report_step*/ , well_name , var_list[ivar]);
   }
 }
 

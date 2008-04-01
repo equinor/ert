@@ -103,3 +103,5 @@ fs_index.i            : fs_index.h fs_index.c
 enkf_config.o         : enkf_config.c enkf_config.h enkf_site_config.o enkf_site_config.o
 enkf_site_config.o    : enkf_site_config.h enkf_site_config.c
 enkf_main.o           : enkf_main.c enkf_main.h enkf_state.o enkf_config.o enkf_site_config.o
+analysis.o            : analysis.c meas_matrix.o obs_data.o
+

@@ -34,17 +34,18 @@
 #include <ecl_queue.h>
 #include <lsf_driver.h>
 #include <local_driver.h>
+#include <rsh_driver.h>
 
 
 struct enkf_config_struct {
-  ecl_grid_type    *grid;
-  int  		    ens_size;
-  int               ens_offset;
+  ecl_grid_type   *grid;
+  int  		   ens_size;
+  int              ens_offset;
   int              iens_offset;
   hash_type       *config_hash;
-  time_t            start_time;
+  time_t           start_time;
   char            **well_list;
-  int               Nwells;
+  int              Nwells;
   path_fmt_type    *run_path;
   path_fmt_type    *eclbase;
   path_fmt_type    *ecl_store_path;
@@ -535,6 +536,7 @@ void enkf_config_add_well(enkf_config_type * enkf_config , const char *well_name
   enkf_config->Nwells++;
   enkf_config_realloc_well_list(enkf_config);
   enkf_config->well_list[enkf_config->Nwells - 1] = util_alloc_string_copy(well_name);
+  
 }
 
 
@@ -672,12 +674,15 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
   } else if (strcmp(queue_system , "LOCAL") == 0) {
     queue_driver = local_driver_alloc();
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LOCAL") , NULL , 10);
+  } else if (strcmp(queue_system , "RSH") == 0) {
+    queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , enkf_site_config_get_value(site_config , "RSH_HOST_LIST"));
+    max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_RSH") , NULL , 10);
   }
   else {
     fprintf(stderr,"%s: internal error - queue_system:%s not recognized - aborting \n",__func__ , queue_system);
     abort();
   }
-  
+
   {
     int max_submit  = 2;
     const char * eclipse_LD_path;
@@ -716,4 +721,13 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
     free(__target_file_fmt);
   }
   return ecl_queue;
+}
+
+
+void enkf_config_post_check(const enkf_config_type * config, const sched_file_type * sched_file) {
+  int num_wells , i;
+  const char ** wells = enkf_config_get_well_list_ref(config , &num_wells);
+  for (i=0; i < num_wells; i++)
+    if (!sched_file_has_well(sched_file , wells[i])) 
+      fprintf(stderr,"** Warning: the well:%s is not in the SCHEDULE file - this might indicate an error. \n",wells[i]);
 }

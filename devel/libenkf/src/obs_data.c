@@ -4,7 +4,7 @@
 #include <enkf_util.h>
 #include <obs_data.h>
 #include <util.h>
-
+#include <meas_matrix.h>
 
 struct obs_data_struct {
   int       size;
@@ -132,7 +132,9 @@ static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, i
 
 
 
-/*
+/**
+  The D matrix 
+  
   Observe that this code assumes that the ensemble mean has *not* 
   been subtracted from S. This is in contrast to the original
   fortran code, where it was assumed that ensemble mean was shifted 
@@ -245,7 +247,7 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_strid
     double std = obs_data->std[iobs] * obs_data->std_inflation[iobs];
     R[iobs * (nrobs + 1)] = std * std;
   }
-  
+
   free(ens_std);
   return R;
 }
@@ -261,7 +263,7 @@ void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_strid
     for (iobs = 0; iobs < nrobs; iobs++) {
       int index          = iens * ens_stride + iobs * obs_stride;
       scale_factor[iobs] = 1.0 / obs_data->std[iobs];
-
+      
       S[index] *= scale_factor[iobs];
       if (E != NULL) E[index] *= scale_factor[iobs];
       D[index] *= scale_factor[iobs];

@@ -74,6 +74,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
 
   enkf_main->meas_matrix  = meas_matrix_alloc(ens_size);
   enkf_main->ensemble     = malloc(ens_size * sizeof * enkf_main->ensemble);
+  enkf_config_post_check(config , enkf_main->sched_file);
   {
     int iens , keys , ik;
     int iens_offset = enkf_config_get_ens_offset(config);
@@ -308,10 +309,13 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   enkf_main->thread_pool = thread_pool_alloc(ens_size);
   for (iens = 0; iens < ens_size; iens++) 
     thread_pool_add_job(enkf_main->thread_pool , enkf_state_run_eclipse__ , enkf_main->void_arg[iens]);
-
   ecl_queue_run_jobs(enkf_main->ecl_queue , ens_size);
   thread_pool_join(enkf_main->thread_pool);
-  
+  {
+    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
+    
+    free(X);
+  }
 
   for (iens = 0; iens < ens_size; iens++) 
     void_arg_free(enkf_main->void_arg[iens]);

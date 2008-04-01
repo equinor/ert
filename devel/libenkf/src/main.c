@@ -34,7 +34,7 @@ int main (int argc , char ** argv) {
   
   ecl_queue = enkf_config_alloc_ecl_queue(enkf_config , site_config);
   enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue);
-  enkf_main_run(enkf_main , 0 , 25);
+  enkf_main_run(enkf_main , 0 , 3);
   
 
   /*

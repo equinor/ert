@@ -57,6 +57,81 @@ void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const
 
 
 
+/**  
+
+    Number of ensemble members -------------------->
+
+
+    Number of observations
+    |
+    |
+   \|/
+     
+
+
+
+     --------------------
+    |S1  S4              |
+S = |S2  S5              | 
+    |S3  S6              |
+     --------------------
+
+     --------------------
+    |E1  E4              |
+E = |E1  E5              | 
+    |E3  E6              |
+     --------------------
+
+     --------------------
+    |D1  D4              |
+D = |D2  D5              | 
+    |D3  D6              |
+     --------------------
+
+     ------- 
+    |R1  R4 |   This matrix *is* quadratic ...
+R = |R2  R5 |
+    |R3  R6 |
+     -------
+
+
+     --------------------
+    |X1  X10             |
+    |X2  X11             | 
+    |X3  X12             |
+    |X4  X13             | 
+X = |X5  X14             | 
+    |X6  X15             |
+    |X7  X16             |  
+    |X8  X17             |
+    |X9  X18             |
+     --------------------
+
+
+     The C part of the code is written with strides, and (should) work
+     for any low-level layout of the matrices, however the Fortran
+     code insists on Fortran layout, i.e. the column index running
+     fastest (i.e. with stride 1), as the numbering scheme above
+     indicates.
+
+  
+     For the matrices S, E and D - it makes sense to talk of an
+     ensemble direction (horizontally), and and observation direction
+     (vertically). Considering element S1:
+
+     * To go to next observation for the same ensemble member you go
+       down to S2; in memory the distance between these two are 1,
+       i.e. the obs_stride equals one. 
+
+     * To go to the same next ensemble member, for the same
+       observation you move horizontally to S4, in memory these are 3
+       elements apart, i.e. the ens_stride equals 3.
+
+     
+     For the matrices R and X it does not make the same sense to talk
+     of an ensemble direction and an observation direction.
+*/
+
 double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
   int  update_randrot_int, verbose_int;
   const char * xpath 	  = NULL;
@@ -78,6 +153,7 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   D 	= obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , returnE , &E);
   obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
   
+
   /*
      Substractin mean value of S
   */
@@ -97,6 +173,20 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   verbose_int        = util_C2f90_bool(verbose);
   update_randrot_int = util_C2f90_bool(update_randrot);
   
+
+  if (verbose) {
+    printf_matrix(R , nrobs , nrobs    , 1 , nrobs , "R" , " %8.3lg ");
+    printf("\n");
+    
+    printf_matrix(D , nrobs , ens_size , obs_stride , ens_stride , "D" , " %8.3lg ");
+    printf("\n");
+    
+    printf_matrix(S , nrobs , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
+    printf("\n");
+
+    printf_matrix(innov , nrobs , 1 , 1 , 1 , "Innov" , " %8.3lg ");
+  }
+
   m_enkfx5_mp_enkfx5_(X , 
 		      R , 
 		      E , 
@@ -118,7 +208,7 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   free(innov);
   if (E != NULL) free(E);
 
-  printf_matrix(X , ens_size , ens_size , 1 , ens_size);
+  printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
   return X;
 }
 

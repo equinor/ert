@@ -110,6 +110,10 @@ field_file_type field_config_guess_file_type(const char * filename , bool endian
 }
 
 
+field_ecl_export_format field_config_get_ecl_export_format(const field_config_type * field_config) {
+  return field_config->ecl_export_format;
+}
+
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , int nx , int ny , int nz , int active_size , const int * index_map) {
   field_config_type *config = malloc(sizeof *config);
@@ -120,7 +124,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   */
   config->data_size        = active_size; 
 
-
+  config->ecl_export_format        = ecl_kw_format;
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;

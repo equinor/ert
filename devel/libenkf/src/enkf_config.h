@@ -3,6 +3,7 @@
 #include <enkf_config_node.h>
 #include <stdbool.h>
 #include <time.h>
+#include <sched_file.h>
 #include <enkf_types.h>
 #include <enkf_site_config.h>
 #include <ecl_queue.h>
@@ -46,4 +47,5 @@ enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  enkf_site_config_ty
 int                enkf_config_get_ens_offset(const enkf_config_type * );
 ecl_store_enum     enkf_config_iget_ecl_store(const enkf_config_type * , int );
 ecl_queue_type   * enkf_config_alloc_ecl_queue(const enkf_config_type * , const enkf_site_config_type * );
+void               enkf_config_post_check(const enkf_config_type * , const sched_file_type * );
 #endif

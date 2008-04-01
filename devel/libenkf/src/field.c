@@ -422,12 +422,23 @@ void field_ecl_write1D(const field_type * field , const char * path) {
 
 
 void field_ecl_write(const field_type * field , const char * path) {
-  field_ecl_write3D(field , path);
-  {
-    FILE * stream = util_fopen(path , "w");
-    field_ecl_grdecl_export(field , stream);
-    fclose(stream);
+  field_ecl_export_format export_format = field_config_get_ecl_export_format(field->config);
+  switch (export_format) {
+  case(ecl_kw_format):
+    field_ecl_write3D(field , path);
+    break;
+  case(ecl_grdecl_format):
+    {
+      FILE * stream = util_fopen(path , "w");
+      field_ecl_grdecl_export(field , stream);
+      fclose(stream);
+    }
+    break;
+  default:
+    fprintf(stderr,"%s: internal error export_format = %d - aborting \n",__func__ , export_format);
+    abort();
   }
+
 }
 
 
