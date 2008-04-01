@@ -70,7 +70,6 @@ static int rsh_host_available(const rsh_host_type * rsh_host) {
 
 static void rsh_host_submit_job(rsh_host_type * rsh_host , const char * rsh_cmd , const char * ext_cmd) {
   rsh_host->running++;
-  /*printf("%s: Currently running: %d \n",rsh_host->host_name , rsh_host->running);*/
   {
     char * command = util_alloc_joined_string((const char *[6]) {rsh_cmd , " " , rsh_host->host_name , " '" , ext_cmd , "'"} , 6 , "");
     system(command);
@@ -80,7 +79,9 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , const char * rsh_cmd 
 }
 
 
-static const char * rsh_host_get_hostname(const rsh_host_type * host) { return host->host_name; }
+/*
+  static const char * rsh_host_get_hostname(const rsh_host_type * host) { return host->host_name; }
+*/
 
 
 
@@ -91,8 +92,8 @@ static void * rsh_host_submit_job__(void * __void_arg) {
   char * rsh_cmd = void_arg_get_ptr(void_arg , 2); 
 
   rsh_host_submit_job(rsh_host , rsh_cmd , ext_cmd);
-  void_arg_free(void_arg);
   free(ext_cmd);
+  void_arg_free(void_arg);
   
   pthread_exit(NULL);
   return NULL;
@@ -263,8 +264,18 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
 }
 
 
+/**
+The rsh_host_list should be a string of the following format:
 
-void * rsh_driver_alloc(const char * rsh_command) {
+ rsh_host_list = "host1:2  host2:2   host4:4  host6:2"
+
+i.e a space separated list of hosts, where each host consists of a
+name and a number; the number designating how many concurrent jobs
+this host can handle. Observe that the load of the host is *not*
+consulted.
+*/
+
+void * rsh_driver_alloc(const char * rsh_command, const char * rsh_host_list) {
   rsh_driver_type * rsh_driver = util_malloc(sizeof * rsh_driver , __func__);
   rsh_driver->__rsh_id         = LOCAL_DRIVER_ID;
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
@@ -275,17 +286,48 @@ void * rsh_driver_alloc(const char * rsh_command) {
   rsh_driver->abort_f     = rsh_driver_abort_job;
   rsh_driver->free_job    = rsh_driver_free_job;
   rsh_driver->free_driver = rsh_driver_free__;
+  rsh_driver->num_hosts   = 0;
+  rsh_driver->host_list   = NULL;
+  {
+    char ** host_num_list;
+    int     ihost , num_hosts;
+    util_split_string(rsh_host_list , " " , &num_hosts , &host_num_list);
+    for (ihost = 0; ihost < num_hosts; ihost++) {
+      int pos = 0;
+      while ( pos < strlen(host_num_list[ihost]) && host_num_list[ihost][pos] != ':') 
+	pos++;
 
-  rsh_driver->num_hosts = 2;
-  rsh_driver->host_list = util_malloc(rsh_driver->num_hosts * sizeof * rsh_driver->host_list , __func__);
+      {
+	char *host = util_alloc_substring_copy(host_num_list[ihost] , pos);
+	int max_running;
 
-  rsh_driver->host_list[0] = rsh_host_alloc("bgo118lin" , 4);
-  rsh_driver->host_list[1] = rsh_host_alloc("bgo141lin" , 4);
+	if (pos == strlen(host_num_list[ihost])) {
+	  fprintf(stderr," ** Warning no \":\" found for host:%s - assuming only one job to this host\n",host);
+	  max_running = 1;
+	} else 
+	  if (!util_sscanf_int(&host_num_list[ihost][pos+1] , &max_running))
+	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , host_num_list[ihost]);
+	
+	rsh_driver_add_host(rsh_driver , host , max_running);
+	free(host);
+      }
+    }
+    util_free_string_list(host_num_list , num_hosts);
+  }
+    
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) rsh_driver;
     basic_queue_driver_init(basic_driver);
     return basic_driver;
   }
+}
+
+
+void rsh_driver_add_host(rsh_driver_type * rsh_driver , const char * hostname , int host_max_running) {
+  rsh_driver->num_hosts++;
+  rsh_driver->host_list = util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list , __func__);
+
+  rsh_driver->host_list[(rsh_driver->num_hosts - 1)] = rsh_host_alloc(hostname , host_max_running);
 }
 
 
