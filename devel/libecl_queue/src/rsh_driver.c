@@ -40,6 +40,11 @@ struct rsh_driver_struct {
 
 /******************************************************************/
 
+
+/**
+   If the host is for some reason not available, NULL should be returned.
+*/
+
 static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) {
   rsh_host_type * host = util_malloc(sizeof * host , __func__);
   
@@ -324,10 +329,12 @@ void * rsh_driver_alloc(const char * rsh_command, const char * rsh_host_list) {
 
 
 void rsh_driver_add_host(rsh_driver_type * rsh_driver , const char * hostname , int host_max_running) {
-  rsh_driver->num_hosts++;
-  rsh_driver->host_list = util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list , __func__);
-
-  rsh_driver->host_list[(rsh_driver->num_hosts - 1)] = rsh_host_alloc(hostname , host_max_running);
+  rsh_host_type * new_host = rsh_host_alloc(hostname , host_max_running);
+  if (new_host != NULL) {
+    rsh_driver->num_hosts++;
+    rsh_driver->host_list = util_realloc(rsh_driver->host_list , rsh_driver->num_hosts * sizeof * rsh_driver->host_list , __func__);
+    rsh_driver->host_list[(rsh_driver->num_hosts - 1)] = new_host;
+  }
 }
 
 
