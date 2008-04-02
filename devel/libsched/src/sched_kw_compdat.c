@@ -290,6 +290,16 @@ static comp_type * comp_sched_fread_alloc(int kw_size , FILE * stream) {
 
 /*****************************************************************/
 
+void sched_kw_compdat_update_well_set(const sched_kw_compdat_type * kw , set_type * well_set) {
+  list_node_type *comp_node = list_get_head(kw->comp_list);
+  while (comp_node != NULL) {
+    comp_type * comp = list_node_value_ptr(comp_node);
+    set_add_key(well_set , comp->well);
+    comp_node = list_node_get_next(comp_node);
+  }
+}
+
+
 
 
 void sched_kw_compdat_init_conn_factor(sched_kw_compdat_type * kw , const ecl_kw_type *permx_kw, const ecl_kw_type * permz_kw , const int * dims , const int * index_field , bool *OK) {
@@ -390,7 +400,6 @@ sched_kw_compdat_type * sched_kw_compdat_fread_alloc(FILE *stream) {
   return kw;
 }
   
-
 
 
 

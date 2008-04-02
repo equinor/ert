@@ -12,6 +12,18 @@
 #include <sched_kw.h>
 #include <sched_file.h>
 #include <history.h>
+#include <set.h>
+
+/**
+The sched_file struct can parse and internalize a schedule file. It
+can parse some keywords, like COMPDAT and WCONHIST, they are
+implemented in their own files, i.e. sched_kw_compdat and
+sched_kw_wconhist. Keywords which are not recognized are just stored
+as lump of bytes.
+
+*/
+
+
 
 
 struct sched_file_struct {
@@ -19,6 +31,7 @@ struct sched_file_struct {
   hash_type  *fixed_record_kw;
   hash_type  *kw_types;
   list_type  *kw_list;
+  set_type   *well_set;
   int         next_date_nr;
   double      acc_days;
   bool        compdat_initialized;
@@ -119,6 +132,7 @@ sched_file_type * sched_file_alloc(time_t start_date) {
   sched_file->kw_list      	  = list_alloc();
   sched_file->dims                = malloc(3 * sizeof sched_file->dims);
   sched_file->start_date          = start_date;
+  sched_file->well_set            = set_alloc_empty();
   return sched_file;
 }
 
@@ -156,10 +170,23 @@ void sched_file_free(sched_file_type *sched_file) {
   hash_free(sched_file->month_hash);
   hash_free(sched_file->fixed_record_kw);
   hash_free(sched_file->kw_types);
+  set_free(sched_file->well_set);
   free(sched_file->dims);
   free(sched_file);
 }
 
+
+
+static void sched_file_update_well_set(sched_file_type * sched_file) {
+  list_node_type *list_node = list_get_head(sched_file->kw_list);
+  while (list_node != NULL) {
+    const sched_kw_type * sched_kw = list_node_value_ptr(list_node);
+    if (sched_kw_get_type(sched_kw) == COMPDAT) 
+      sched_kw_compdat_update_well_set(sched_kw_get_data_ref(sched_kw) , sched_file->well_set);
+    
+    list_node = list_node_get_next(list_node);
+  }
+}
 
 
 
@@ -239,7 +266,9 @@ void sched_file_parse(sched_file_type * sched_file , const char * filename) {
     }
   } while (cont);
   util_free_string_list(line_list , lines);
+  sched_file_update_well_set(sched_file);
 }
+
 
 
 void sched_file_fprintf(const sched_file_type * sched_file , int last_date_nr , time_t last_time , double last_day , const char * file) {
@@ -330,7 +359,7 @@ void sched_file_fwrite(const sched_file_type * sched_file , FILE * stream) {
   util_fwrite(&sched_file->compdat_initialized , sizeof sched_file->compdat_initialized , 1 , stream , __func__);
   util_fwrite(sched_file->dims                 , sizeof sched_file->dims       	        , 3 , stream , __func__); 
   util_fwrite(&sched_file->start_date          , sizeof sched_file->start_date 	        , 1 , stream , __func__);
-
+  set_fwrite(sched_file->well_set , stream);
   {
     list_node_type *list_node = list_get_head(sched_file->kw_list);
     while (list_node != NULL) {
@@ -340,6 +369,9 @@ void sched_file_fwrite(const sched_file_type * sched_file , FILE * stream) {
     }
   }
 }
+
+
+
 
 
 sched_file_type * sched_file_fread_alloc(FILE *stream, int last_date_nr , time_t last_time , double last_day) {
@@ -352,7 +384,7 @@ sched_file_type * sched_file_fread_alloc(FILE *stream, int last_date_nr , time_t
   util_fread(&sched_file->compdat_initialized , sizeof sched_file->compdat_initialized , 1 , stream , __func__);
   util_fread(sched_file->dims                 , sizeof sched_file->dims                , 3 , stream , __func__); 
   util_fread(&sched_file->start_date          , sizeof sched_file->start_date          , 1 , stream , __func__); 
-  
+  sched_file->well_set = set_fread_alloc(stream);
   at_eof = false;
   stop   = false;
   cont   = true;
@@ -458,4 +490,6 @@ time_t sched_file_DATES_to_time_t(const sched_file_type * s , const char * DATES
   return date_node_parse_DATES_line(DATES_line , s->month_hash);
 }
 
-
+bool sched_file_has_well(const sched_file_type * s , const char * well) {
+  return set_has_key(s->well_set , well);
+}

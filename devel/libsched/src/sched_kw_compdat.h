@@ -2,6 +2,7 @@
 #define __SCHED_KW_COMPDAT_H__
 #include <ecl_kw.h>
 #include <stdio.h>
+#include <set.h>
 
 
 typedef struct sched_kw_compdat_struct sched_kw_compdat_type;
@@ -14,4 +15,5 @@ void                    sched_kw_compdat_add_line(sched_kw_compdat_type * kw , c
 void                    sched_kw_compdat_fprintf(const sched_kw_compdat_type * , FILE *);
 sched_kw_compdat_type * sched_kw_compdat_fread_alloc(FILE *stream);
 void                    sched_kw_compdat_fwrite(const sched_kw_compdat_type * , FILE *stream);
+void                    sched_kw_compdat_update_well_set(const sched_kw_compdat_type * , set_type * );
 #endif
