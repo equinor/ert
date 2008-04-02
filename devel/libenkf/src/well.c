@@ -149,7 +149,9 @@ void well_load_summary_data(well_type * well , int report_step , const ecl_sum_t
   }
 }
 
-
+/******************************************************************/
+/* Anonumously generated functions used by the enkf_node object   */
+/******************************************************************/
 MATH_OPS(well)
 VOID_ALLOC(well)
 VOID_FREE(well)
@@ -160,10 +162,5 @@ VOID_FREAD  (well)
 VOID_COPYC     (well)
 VOID_SERIALIZE(well)
 VOID_DESERIALIZE(well)
-/******************************************************************/
-/* Anonumously generated functions used by the enkf_node object   */
-/******************************************************************/
-
-VOID_FUNC      (well_clear        , well_type)
 
 

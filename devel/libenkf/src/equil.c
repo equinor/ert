@@ -119,20 +119,20 @@ int equil_deserialize(equil_type *equil , int internal_offset , size_t serial_si
 
 
 
+/******************************************************************/
+/* Anonumously generated functions used by the enkf_node object   */
+/******************************************************************/
+
 
 MATH_OPS_SCALAR(equil);
 VOID_ALLOC(equil);
 VOID_SERIALIZE (equil);
 VOID_DESERIALIZE (equil);
 VOID_INITIALIZE(equil);
-/******************************************************************/
-/* Anonumously generated functions used by the enkf_node object   */
-/******************************************************************/
 VOID_FREE_DATA(equil)
 VOID_ECL_WRITE (equil)
 VOID_FWRITE (equil)
 VOID_FREAD  (equil)
 VOID_COPYC     (equil)
-
-VOID_FUNC      (equil_free      , equil_type)
+VOID_FREE (equil)
 

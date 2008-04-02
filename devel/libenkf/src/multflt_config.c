@@ -98,5 +98,4 @@ const char * multflt_config_get_name(const multflt_config_type * config, int fau
 
 
 /*****************************************************************/
-
-VOID_FUNC(multflt_config_free , multflt_config_type);
+VOID_FREE(multflt_config)

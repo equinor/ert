@@ -30,8 +30,9 @@ void         field_fload(field_type * , const char * , bool );
 void         field_export3D(const field_type * , void *, bool , ecl_type_enum , void *);
 field_type * field_copyc(const field_type *);
 
-MATH_OPS_HEADER(field);
+
 ENSEMBLE_MULX_VECTOR_HEADER(field);
+MATH_OPS_HEADER(field);
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);
 VOID_FREE_DATA_HEADER(field);
@@ -41,12 +42,10 @@ VOID_SERIALIZE_HEADER  (field);
 VOID_DESERIALIZE_HEADER (field);
 VOID_INITIALIZE_HEADER(field);
 
-VOID_ECL_WRITE_HEADER (field)
-VOID_FWRITE_HEADER (field)
-VOID_FREAD_HEADER  (field)
-
-
-VOID_FUNC_HEADER       (field_isqrt      );
+VOID_ECL_WRITE_HEADER (field);
+VOID_FWRITE_HEADER (field);
+VOID_FREAD_HEADER  (field);
+VOID_CLEAR_HEADER (field);
 
 
 

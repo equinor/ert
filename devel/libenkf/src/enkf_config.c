@@ -703,7 +703,7 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
       eclipse_LD_path = enkf_site_config_get_value(site_config , "ECLIPSE_LD_PATH");
     else
       eclipse_LD_path = NULL;
-    
+
     ecl_queue = ecl_queue_alloc(enkf_config_get_ens_size(config),
 				max_running , 
 				max_submit  ,

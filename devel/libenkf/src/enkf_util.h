@@ -8,27 +8,6 @@
 
 /*****************************************************************/
 
-#define VOID_FUNC_CONST(func,type) \
-void func ## __(const void *void_arg) { \
-   const type *arg = (const type *) void_arg; \
-   func(arg);                             \
-}
-
-#define VOID_FUNC(func,type) \
-void func ## __(void *void_arg) { \
-   type *arg = (type *) void_arg; \
-   func(arg);                     \
-}
-
-
-
-#define VOID_FUNC_HEADER(func) void func ## __(void *void_arg)
-#define VOID_FUNC_HEADER_CONST(func) void func ## __(const void *void_arg)
-#define VOID_SCALE_FUNC_HEADER(func) void func ## __(void *, double )
-#define VOID_ADD_FUNC_HEADER(func) void func ## __(void *, const void *) 
-
-/*****************************************************************/
-
 #define SQRT_FUNC(prefix)                           \
 void prefix ## _isqrt(void * void_arg) {            \
 prefix ## _type *arg = (prefix ## _type *) void_arg;\

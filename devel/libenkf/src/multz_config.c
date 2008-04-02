@@ -193,8 +193,7 @@ char * multz_config_alloc_description(const multz_config_type * config, int mult
 
 
 /*****************************************************************/
-
-VOID_FUNC(multz_config_free , multz_config_type);
+VOID_FREE(multz_config)
 
 							 
 

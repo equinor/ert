@@ -221,6 +221,16 @@ void prefix ## _obs_measure__(const void * void_arg ,  const void * domain_objec
 
 /*****************************************************************/
 
+#define VOID_SCALE(prefix)        void prefix ## _scale(void * void_arg) { prefix ## _scale( (prefix ## _type *) void_arg); }
+#define VOID_SCALE_HEADER(prefix) void prefix ## _scale(void * );
+
+/*****************************************************************/
+
+#define VOID_CLEAR(prefix)         void prefix ## _clear__(void * void_arg) { prefix ## _clear( (prefix ## _type *) void_arg); }
+#define VOID_CLEAR_HEADER(prefix)  void prefix ## _clear__(void * )
+
+/*****************************************************************/
+
 #define CONFIG_GET_ENSFILE(prefix)       	     const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * config) { return config->ensfile; }
 #define CONFIG_GET_ECLFILE(prefix)       	     const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * config) { return config->eclfile; }
 #define CONFIG_GET_ENSFILE_HEADER(prefix)       const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * )

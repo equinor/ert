@@ -203,7 +203,9 @@ char * multz_alloc_description(const multz_type * multz , int multz_nr) {
 
 
 
-
+/******************************************************************/
+/* Anonumously generated functions used by the enkf_node object   */
+/******************************************************************/
 
 
 MATH_OPS_SCALAR(multz)
@@ -218,12 +220,10 @@ VOID_COPYC     (multz)
 VOID_SERIALIZE(multz)
 VOID_DESERIALIZE(multz)
 VOID_TRUNCATE(multz)
+VOID_SCALE(multz)
 ENSEMBLE_MULX_VECTOR(multz)
 ENSEMBLE_MULX_VECTOR_VOID(multz)
 VOID_INITIALIZE(multz)
-/******************************************************************/
-/* Anonumously generated functions used by the enkf_node object   */
-/******************************************************************/
-VOID_FUNC      (multz_clear        , multz_type)
+
 
 

@@ -36,8 +36,8 @@
 struct enkf_main_struct {
   enkf_config_type   *config;
   ecl_queue_type     *ecl_queue;
-  meas_matrix_type   *meas_matrix;
   enkf_obs_type      *obs;
+  meas_matrix_type   *meas_matrix;
   obs_data_type      *obs_data;
   enkf_state_type   **ensemble;
   sched_file_type    *sched_file;

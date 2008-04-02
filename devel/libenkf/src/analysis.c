@@ -52,6 +52,11 @@ void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs
 }
 
 
+
+/**
+   The actual routine m_enkfx5_mp_enkfx5_() is written in fortran, and
+   found in the library libanalysis.
+*/
 void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const double * S , const double * D , const double * innov , const int * nrens , 
 			 const int * nrobs , const int * verbose , const double * truncation , const int * mode , const int * update_randrot , const int * istep , const char * xpath);
 
@@ -129,7 +134,8 @@ X = |X5  X14             |
 
      
      For the matrices R and X it does not make the same sense to talk
-     of an ensemble direction and an observation direction.
+     of an ensemble direction and an observation direction as R has
+     dimensisons nrobs x nrobs and X has dimensions nrens x nrens.
 */
 
 double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
@@ -144,9 +150,13 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   istep      = -1;
   mode       = 22;
   returnE    = false;
-
+  
   analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
   X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
+  /*
+    Must exclude both outliers and observations with zero ensemble
+    variation *before* the matrices are allocated.
+  */
   S 	= meas_matrix_allocS(meas_matrix , ens_stride , obs_stride);
   innov = obs_data_alloc_innov(obs_data , ens_size , ens_stride , obs_stride , S);
   R 	= obs_data_allocR(obs_data , ens_size , ens_stride , obs_stride , innov , S , alpha);
@@ -155,7 +165,7 @@ double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * mea
   
 
   /*
-     Substractin mean value of S
+     Substracting mean value of S
   */
   for (iobs = 0; iobs < nrobs; iobs++) {
     double S1 = 0;

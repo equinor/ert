@@ -43,7 +43,4 @@ VOID_FWRITE_HEADER (multz)
 VOID_FREAD_HEADER  (multz)
 VOID_INITIALIZE_HEADER(multz)
 
-
-VOID_FUNC_HEADER       (multz_isqrt    );
-
 #endif

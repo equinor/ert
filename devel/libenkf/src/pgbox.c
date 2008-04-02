@@ -171,6 +171,10 @@ VOID_FWRITE (pgbox)
 VOID_FREAD  (pgbox)
 
 
+/******************************************************************/
+/* Anonumously generated functions used by the enkf_node object   */
+/******************************************************************/
+VOID_CLEAR (pgbox)
 MATH_OPS(pgbox)
 VOID_ALLOC(pgbox)
 VOID_FREE(pgbox)
@@ -181,8 +185,5 @@ VOID_COPYC     (pgbox)
 VOID_SERIALIZE (pgbox);
 VOID_DESERIALIZE (pgbox);
 VOID_INITIALIZE(pgbox);
-/******************************************************************/
-/* Anonumously generated functions used by the enkf_node object   */
-/******************************************************************/
 
-VOID_FUNC      (pgbox_clear        , pgbox_type)
+

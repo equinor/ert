@@ -89,4 +89,4 @@ void scalar_config_free(scalar_config_type * scalar_config) {
 /*****************************************************************/
 
 GET_DATA_SIZE(scalar);
-VOID_FUNC(scalar_config_free , scalar_config_type);
+VOID_FREE(scalar_config);

@@ -22,6 +22,7 @@ ifeq ($(MFLAG),m64)
 else
    LSF_LIBS          = 
 endif
+
 LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -lecl_queue_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lanalysis_$(MFLAG) -lm -lpthread -lz  -lifcore -lirc  -llapack -lblas $(LSF_LIBS) 
 LIB_PATH          = -L$(LIBECL_QUEUE_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L$(LIBENKF_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L$(EXTERNAL_LIB_PATH)/ifort_$(MFLAG)
 LIB               = libenkf_$(MFLAG).a

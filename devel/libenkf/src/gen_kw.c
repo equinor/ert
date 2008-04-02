@@ -170,7 +170,7 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   gen_kw_output_transform(gen_kw);
   for (ikw = 0; ikw < size; ikw++)
     hash_insert_hash_owned_ref(kw_hash , gen_kw_config_get_name(gen_kw->config , ikw) , void_arg_alloc_double(output_data[ikw]) , void_arg_free__);
-  util_filter_file(gen_kw_config_get_template_ref(gen_kw->config) , "--" , target_file , '<' , '>' , kw_hash);
+  util_filter_file(gen_kw_config_get_template_ref(gen_kw->config) , NULL , target_file , '<' , '>' , kw_hash);
   hash_free(kw_hash);
 }
 
@@ -191,21 +191,18 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 }
 
 
-/*
-  Mathops not implemented ... 
-*/
+/******************************************************************/
+/* Anonumously generated functions used by the enkf_node object   */
+/******************************************************************/
 
 MATH_OPS_SCALAR(gen_kw);
 VOID_ALLOC(gen_kw);
 VOID_SERIALIZE (gen_kw);
 VOID_DESERIALIZE (gen_kw);
 VOID_INITIALIZE(gen_kw);
-/******************************************************************/
-/* Anonumously generated functions used by the enkf_node object   */
-/******************************************************************/
 VOID_FREE_DATA(gen_kw)
 VOID_FWRITE (gen_kw)
 VOID_FREAD  (gen_kw)
 VOID_COPYC  (gen_kw)
-VOID_FUNC   (gen_kw_free      , gen_kw_type)
+VOID_FREE   (gen_kw)
 

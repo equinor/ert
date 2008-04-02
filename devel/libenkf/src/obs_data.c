@@ -207,8 +207,8 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_strid
   double *R;
   int iens, iobs;
 
-  ens_std = util_malloc(nrobs * sizeof *ens_std , __func__);
-  ens_avg = util_malloc(nrobs * sizeof *ens_avg , __func__);
+  ens_std = util_malloc(nrobs * sizeof * ens_std , __func__);
+  ens_avg = util_malloc(nrobs * sizeof * ens_avg , __func__);
   
   for (iobs = 0; iobs < nrobs; iobs++) {
     ens_std[iobs] = 0.0;
@@ -226,7 +226,7 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_strid
   for (iobs = 0; iobs < nrobs; iobs++) {
     ens_avg[iobs] *= 1.0 / ens_size;
     ens_std[iobs] *= 1.0 / ens_size;
-    ens_std[iobs] = sqrt(ens_std[iobs] - ens_avg[iobs] * ens_avg[iobs]);
+    ens_std[iobs]  = sqrt(ens_std[iobs] - ens_avg[iobs] * ens_avg[iobs]);
   }
   free(ens_avg);
 

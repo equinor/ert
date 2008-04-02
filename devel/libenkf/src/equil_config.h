@@ -29,6 +29,6 @@ void                  equil_config_free(equil_config_type *);
 int                   equil_config_get_nequil(const equil_config_type *);
 equil_config_type   * equil_config_fscanf_alloc(const char * );
 
-VOID_FUNC_HEADER(equil_config_free);
+VOID_FREE_HEADER(equil_config);
 
 #endif

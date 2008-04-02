@@ -28,5 +28,5 @@ int                   gen_kw_config_get_data_size(const gen_kw_config_type * );
 const char          * gen_kw_config_get_name(const gen_kw_config_type * , int );
 char               ** gen_kw_config_get_name_list(const gen_kw_config_type *);
 
-VOID_FUNC_HEADER(gen_kw_config_free);
+VOID_FREE_HEADER(gen_kw_config);
 #endif

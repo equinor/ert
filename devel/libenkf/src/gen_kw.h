@@ -36,10 +36,7 @@ VOID_SERIALIZE_HEADER  (gen_kw);
 VOID_DESERIALIZE_HEADER  (gen_kw);
 VOID_FREE_DATA_HEADER(gen_kw)
 VOID_INITIALIZE_HEADER(gen_kw);
-
-VOID_FUNC_HEADER       (gen_kw_free         );
-
-
+VOID_FREE_HEADER       (gen_kw);
 MATH_OPS_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
 

@@ -21,9 +21,4 @@ VOID_DESERIALIZE_HEADER  (well)
 VOID_FWRITE_HEADER (well)
 VOID_FREAD_HEADER  (well)
 
-
-VOID_FUNC_HEADER       (well_isqrt    );
-
-
-
 #endif

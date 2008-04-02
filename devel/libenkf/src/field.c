@@ -769,6 +769,10 @@ void field_apply_limits(field_type * field) {
 }
 
 
+/******************************************************************/
+/* Anonumously generated functions used by the enkf_node object   */
+/******************************************************************/
+
 MATH_OPS(field)
 VOID_ALLOC(field)
 VOID_FREE(field)
@@ -780,12 +784,10 @@ VOID_FREAD  (field)
 VOID_COPYC     (field)
 VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);
-ENSEMBLE_MULX_VECTOR(field);
 VOID_INITIALIZE(field);
-/******************************************************************/
-/* Anonumously generated functions used by the enkf_node object   */
-/******************************************************************/
-VOID_FUNC      (field_clear        , field_type)
+VOID_CLEAR(field);
+ENSEMBLE_MULX_VECTOR(field);
+
 
 
 

@@ -228,5 +228,5 @@ VOID_ECL_WRITE (multflt)
 VOID_FWRITE (multflt)
 VOID_FREAD  (multflt)
 VOID_COPYC  (multflt)
-VOID_FUNC   (multflt_free      , multflt_type)
+VOID_FREE(multflt)
 

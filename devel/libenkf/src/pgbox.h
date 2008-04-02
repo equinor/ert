@@ -34,7 +34,4 @@ VOID_FWRITE_HEADER (pgbox)
 VOID_FREAD_HEADER  (pgbox)
 
 
-VOID_FUNC_HEADER       (pgbox_isqrt        );
-
-
 #endif

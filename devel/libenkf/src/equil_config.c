@@ -97,7 +97,7 @@ void equil_config_ecl_write(const equil_config_type * config  , const double * w
 
 /*****************************************************************/
 
-GET_DATA_SIZE(equil);
-VOID_FUNC(equil_config_free , equil_config_type);
+GET_DATA_SIZE(equil)
+VOID_FREE(equil_config)
 
 

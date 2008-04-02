@@ -34,10 +34,7 @@ VOID_COPYC_HEADER      (multflt);
 VOID_SERIALIZE_HEADER  (multflt);
 VOID_DESERIALIZE_HEADER  (multflt);
 VOID_INITIALIZE_HEADER(multflt);
-
-VOID_FUNC_HEADER       (multflt_free         );
-
-
+VOID_FREE_HEADER(multflt);
 MATH_OPS_HEADER(multflt);
 VOID_ALLOC_HEADER(multflt);
 

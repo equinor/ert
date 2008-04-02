@@ -87,5 +87,5 @@ field_ecl_export_format field_config_get_ecl_export_format(const field_config_ty
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
-VOID_FUNC_HEADER(field_config_free);
+VOID_FREE_HEADER(field_config);
 #endif
