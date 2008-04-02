@@ -27,7 +27,6 @@ INSTALL: $(LIB)
 	gcc $(CFLAGS) $(TARGET_INCLUDE)	tag_list.c    	-o tag_list.x          $(LIB_PATH)  $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_extract.c 	-o rms_extract.x       $(LIB_PATH)  $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_setname.c 	-o rms_setname.x       $(LIB_PATH)  $(LIB_LINK) 
-	gcc $(CFLAGS) $(TARGET_INCLUDE)	condor_import.c -o /d/proj/bg/enkf/bin/condor_import.x   $(LIB_PATH)  $(LIB_LINK) 
 
 clean:
 	rm -f *.o *~ 
