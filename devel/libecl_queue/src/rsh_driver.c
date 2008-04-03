@@ -19,9 +19,10 @@ struct rsh_job_struct {
 
 
 typedef struct {
-  char * host_name;
-  int    max_running;
-  int    running;
+  char 	     	  * host_name;
+  int  	     	    max_running;
+  int  	     	    running;
+  pthread_mutex_t   host_mutex;
 } rsh_host_type;
 
 
@@ -51,7 +52,8 @@ static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) 
   host->host_name   = util_alloc_string_copy(host_name);
   host->max_running = max_running;
   host->running     = 0;
-  
+  pthread_mutex_init( &host->host_mutex , NULL );
+    
   return host;
 }
 
@@ -68,19 +70,33 @@ static void rsh_host_free(rsh_host_type * rsh_host) {
 }
 
 
-static int rsh_host_available(const rsh_host_type * rsh_host) {
-  return rsh_host->max_running - rsh_host->running;
+static bool rsh_host_available(rsh_host_type * rsh_host) {
+  bool available;
+  pthread_mutex_lock( &rsh_host->host_mutex );
+  if ((rsh_host->max_running - rsh_host->running) > 0) {
+    available = true;
+    rsh_host->running++;
+  } else
+    available = false;
+  pthread_mutex_unlock( &rsh_host->host_mutex );
+  return available;
 }
 
 
+
+
+
 static void rsh_host_submit_job(rsh_host_type * rsh_host , const char * rsh_cmd , const char * ext_cmd) {
-  rsh_host->running++;
-  {
-    char * command = util_alloc_joined_string((const char *[6]) {rsh_cmd , " " , rsh_host->host_name , " '" , ext_cmd , "'"} , 6 , "");
-    system(command);
-    free(command);
-  }
+  /* Observe that this job has already been added to the running jobs
+     in the rsh_host_available function.*/
+  
+  char * command = util_alloc_joined_string((const char *[6]) {rsh_cmd , " " , rsh_host->host_name , " '" , ext_cmd , "'"} , 6 , "");
+  system(command);
+  free(command);
+  
+  pthread_mutex_lock( &rsh_host->host_mutex );
   rsh_host->running--;
+  pthread_mutex_unlock( &rsh_host->host_mutex );
 }
 
 
@@ -222,7 +238,7 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
     char * ext_command;
     pthread_mutex_lock( &driver->submit_lock );
     for (ihost = 0; ihost < driver->num_hosts; ihost++) {
-      if (rsh_host_available(driver->host_list[ihost]) > 0) {
+      if (rsh_host_available(driver->host_list[ihost])) {
 	host = driver->host_list[ihost];
 	break;
       }
