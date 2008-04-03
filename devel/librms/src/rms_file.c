@@ -127,7 +127,7 @@ list_node_type * rms_file_iterate_tag_node(const rms_file_type * rms_file , list
 rms_file_type * rms_file_alloc(const char *filename, bool fmt_file) {
   rms_file_type *rms_file   = malloc(sizeof *rms_file);
   rms_file->endian_convert  = false;
-  rms_file->type_map  	    = hash_alloc(10);
+  rms_file->type_map  	    = hash_alloc();
   rms_file->tag_list  	    = list_alloc();
   
   hash_insert_hash_owned_ref(rms_file->type_map , "byte"   , rms_type_alloc(rms_byte_type ,    1) ,  rms_type_free);

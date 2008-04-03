@@ -32,7 +32,7 @@ in a C++ class.
  | typedef struct new_struct new_type;
  | 
  | new_type * new_type_alloc(int , const char *);
- | int        new_get_size(const new_type *);
+ | double   * new_get_data_ref(const new_type *);
  | void       new_type_free(new_type *);
  | 
  | 
@@ -42,24 +42,22 @@ in a C++ class.
  | #include <new.h>
  | 
  | struct new_struct {
- |    int    size;
- |    char * name;
+ |    double *data;
  | }
  | 
- | new_type * new_type_alloc(int size, const char * name) {
+ | new_type * new_type_alloc(int size) {
  |    new_type * new = util_malloc(sizeof * new_type , __func__);
- |    new->size = size;
- |    new->name = util_alloc_string_copy(name);
+      new->date = util_malloc(size * sizeof new->data);
  |    return new;
  | }
  |
- | int new_get_size(const new_type * new) {
- |    return new->size;
+ | double * new_get_data_ref(const new_type * new) {
+ |    return new->data;
  | }
  | 
  | 
  | void new_type_free(new_type * new) {
- |    free(new->name);
+ |    free(new->data);
  |    free(new);
  | }
  | 
@@ -85,7 +83,7 @@ What happen in this little example is the following things:
     In the header file we also claim that the three functions:
 
       i   new_type * new_type_alloc(int , const chat*);
-      ii  int        new_get_size(const new_type *);
+      ii  double *   new_get_data_ref(const new_type *);
       iii void       new_type_free(new_type *);
 
     will be coming.
@@ -99,9 +97,10 @@ What happen in this little example is the following things:
     type new_type_struct, i.e. code like:
   
         ....
-        new->size = 178;
+        new->data[17] = 178.9;
         ....
   
-    in "other.c" will *NOT* compile.
+    in "other.c" will *NOT* compile. It will fail with the message
+    "dereferencing pointer to imcomplete type."
 
 */

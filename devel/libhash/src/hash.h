@@ -12,7 +12,7 @@ typedef struct hash_struct hash_type;
 #define HASH_NODE_AS(FUNC,TYPE)            TYPE FUNC(const hash_node_type * node)
 
 
-hash_type   	* hash_alloc(int);
+hash_type   	* hash_alloc();
 void              hash_iter_comlete(hash_type * );
 void        	  hash_free(hash_type *);
 void              hash_free__(void *);

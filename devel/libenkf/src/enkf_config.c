@@ -260,7 +260,7 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
 						  bool unified  ,         
 						  bool endian_swap) {
   enkf_config_type * config = malloc(sizeof * config);
-  config->config_hash = hash_alloc(10);
+  config->config_hash = hash_alloc();
 
   config->endian_swap   = endian_swap;
   config->unified       = unified;

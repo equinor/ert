@@ -164,13 +164,13 @@ gen_kw_type * gen_kw_alloc_mean(int ens_size , const gen_kw_type **gen_kw_ens) {
 void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   const int size             = gen_kw_config_get_data_size(gen_kw->config);
   const double * output_data = scalar_get_output_ref(gen_kw->scalar);
-  hash_type * kw_hash = hash_alloc(10);
+  hash_type * kw_hash = hash_alloc();
   int ikw;
 
   gen_kw_output_transform(gen_kw);
   for (ikw = 0; ikw < size; ikw++)
     hash_insert_hash_owned_ref(kw_hash , gen_kw_config_get_name(gen_kw->config , ikw) , void_arg_alloc_double(output_data[ikw]) , void_arg_free__);
-  util_filter_file(gen_kw_config_get_template_ref(gen_kw->config) , NULL , target_file , '<' , '>' , kw_hash);
+  util_filter_file(gen_kw_config_get_template_ref(gen_kw->config) , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn0);
   hash_free(kw_hash);
 }
 

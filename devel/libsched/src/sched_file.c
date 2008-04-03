@@ -63,7 +63,7 @@ time_t sched_file_get_start_date(const sched_file_type * s) { return s->start_da
 sched_file_type * sched_file_alloc(time_t start_date) {
   sched_file_type * sched_file = malloc(sizeof *sched_file);
   {
-    hash_type *month_hash = hash_alloc(48);
+    hash_type *month_hash = hash_alloc();
     hash_insert_int(month_hash , "JAN" , 0);
     hash_insert_int(month_hash , "FEB" , 1);
     hash_insert_int(month_hash , "MAR" , 2);
@@ -106,7 +106,7 @@ sched_file_type * sched_file_alloc(time_t start_date) {
   }
 
   {
-    hash_type * fixed_record_kw = hash_alloc(10);
+    hash_type * fixed_record_kw = hash_alloc();
     hash_insert_int(fixed_record_kw , "INCLUDE"  , 1);
     hash_insert_int(fixed_record_kw , "RPTSCHED" , 1);
     hash_insert_int(fixed_record_kw , "DRSDT"    , 1);
@@ -118,7 +118,7 @@ sched_file_type * sched_file_alloc(time_t start_date) {
   }
   
   {
-    hash_type * kw_types = hash_alloc(10);
+    hash_type * kw_types = hash_alloc();
     hash_insert_int(kw_types , "DATES"    , DATES);
     hash_insert_int(kw_types , "WCONHIST" , WCONHIST);
     hash_insert_int(kw_types , "COMPDAT"  , COMPDAT);

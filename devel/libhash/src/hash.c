@@ -9,7 +9,7 @@
 #include <hash_node.h>
 #include <node_data.h>
 
-
+#define HASH_DEFAULT_SIZE 16
 
 typedef enum {iter_invalid , iter_active , iter_complete} __iter_mode;
 
@@ -91,11 +91,13 @@ void hash_del(hash_type *hash , const char *key) {
   const uint32_t global_index = hash->hashf(key , strlen(key));
   const uint32_t table_index  = (global_index % hash->size);
   hash_node_type *node        = hash_sll_get(hash->table[table_index] , global_index , key);
+
   if (node == NULL) {
     fprintf(stderr,"%s: hash does not contain key:%s - aborting \n",__func__ , key);
     abort();
   } else
-  hash_sll_del_node(hash->table[table_index] , node);
+    hash_sll_del_node(hash->table[table_index] , node);
+
   hash->elements--;
   hash->iter_mode = iter_invalid;
 }
@@ -192,8 +194,8 @@ static void hash_resize(hash_type *hash, int new_size) {
 
 
 
-hash_type * hash_alloc(int size) {
-  return __hash_alloc(size , 0.50 , hash_index);
+hash_type * hash_alloc() {
+  return __hash_alloc(HASH_DEFAULT_SIZE , 0.50 , hash_index);
 }
 
 
@@ -344,6 +346,18 @@ void hash_insert_ref(hash_type *hash , const char *key , const void *value) {
   node = hash_node_alloc_new(key , value , NULL , NULL , hash->hashf , hash->size );
   hash_insert_node(hash , node);
 }
+
+
+/**
+This function will insert a reference "value" with key "key"; when the
+key is deleted - either by an explicit call to hash_del(), or when the
+complete hash table is free'd with hash_free(), the destructur 'del'
+is called with 'value' as argument.
+
+It is importand to realize that when elements are inserted into a hash
+table with this function the calling scope gives up responsibility of
+freeing the memory pointed to by value.
+*/
 
 void hash_insert_hash_owned_ref(hash_type *hash , const char *key , const void *value , del_type *del) {
   hash_node_type *node;
@@ -556,5 +570,4 @@ int i;
 #undef HASH_INSERT_ARRAY
 #undef HASH_GET_ARRAY_PTR
 #undef HASH_NODE_AS
-
-
+#undef HASH_DEFAULT_SIZE

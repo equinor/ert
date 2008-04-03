@@ -47,7 +47,7 @@ struct history_node_struct {
 
 history_node_type * history_node_alloc() {
   history_node_type * history_node = malloc(sizeof * history_node);
-  history_node->data = hash_alloc(4);
+  history_node->data = hash_alloc();
   return history_node;
 }
 
@@ -141,7 +141,7 @@ static void history_realloc_data(history_type * hist , int alloc_size) {
 history_type * history_alloc(time_t start_date) {
   history_type * hist = malloc(sizeof *hist);
   hist->size       = 0;
-  hist->well_hash  = hash_alloc(10);
+  hist->well_hash  = hash_alloc();
   hist->data       = NULL;
   hist->alloc_size = 0;
   hist->start_date = start_date;

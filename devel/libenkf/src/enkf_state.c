@@ -244,14 +244,14 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
   
   enkf_state->config          = (enkf_config_type *) config;
   enkf_state->node_list       = list_alloc();
-  enkf_state->node_hash       = hash_alloc(10);
+  enkf_state->node_hash       = hash_alloc();
   enkf_state->restart_kw_list = restart_kw_list_alloc();
   enkf_state_set_iens(enkf_state , iens);
   enkf_state->run_path        = NULL;
   enkf_state->eclbase         = NULL;
   enkf_state->fs              = fs;
   enkf_state->meas_vector     = meas_vector;
-  enkf_state->data_kw         = hash_alloc(10);
+  enkf_state->data_kw         = hash_alloc();
   enkf_state_set_run_path(enkf_state , run_path);
   enkf_state_set_eclbase(enkf_state , eclbase);
   enkf_state->ecl_store_path  = util_alloc_string_copy(ecl_store_path);
@@ -804,7 +804,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   } 
   
   util_make_path(enkf_state->run_path);
-  util_filter_file(enkf_config_get_data_file(enkf_state->config) , "--" , data_file , '<' , '>' , enkf_state->data_kw);
+  util_filter_file(enkf_config_get_data_file(enkf_state->config) , "--" , data_file , '<' , '>' , enkf_state->data_kw , false);
 
   if (has_gen_kw) {
     for (ikw = 0; ikw < gen_kw_size; ikw++) 

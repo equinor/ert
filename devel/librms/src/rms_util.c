@@ -75,6 +75,7 @@ int rms_util_fread_strlen(FILE *stream) {
   return len;
 }
 
+
 /*
   max_length *includes* the trailing \0.
 */

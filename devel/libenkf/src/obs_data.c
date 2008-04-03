@@ -7,12 +7,13 @@
 #include <meas_matrix.h>
 
 struct obs_data_struct {
-  int       size;
+  int       active_size;
+  int       total_size;
   int       alloc_size;
   double   *value;
   double   *std;
-  double   *std_inflation;
   char    **keyword;
+  bool     *obs_active;
 }; 
 
 
@@ -22,7 +23,7 @@ static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) 
   obs_data->value         = enkf_util_realloc(obs_data->value         , new_alloc_size * sizeof * obs_data->value   	  , __func__);
   obs_data->std           = enkf_util_realloc(obs_data->std           , new_alloc_size * sizeof * obs_data->std     	  , __func__);
   obs_data->keyword       = enkf_util_realloc(obs_data->keyword       , new_alloc_size * sizeof * obs_data->keyword 	  , __func__);
-  obs_data->std_inflation = enkf_util_realloc(obs_data->std_inflation , new_alloc_size * sizeof * obs_data->std_inflation , __func__);
+  obs_data->obs_active    = enkf_util_realloc(obs_data->obs_active    , new_alloc_size * sizeof * obs_data->obs_active    , __func__);
   {
     int i;
     for (i= old_alloc_size; i < new_alloc_size; i++)
@@ -31,15 +32,15 @@ static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) 
 }
 
 
-int obs_data_get_nrobs(const obs_data_type * obs_data) { return obs_data->size; }
+int obs_data_get_nrobs(const obs_data_type * obs_data) { return obs_data->total_size; }
 
 obs_data_type * obs_data_alloc() {
   obs_data_type * obs_data = malloc(sizeof * obs_data);
-  obs_data->size       	  = 0;
+  obs_data->total_size       	  = 0;
   obs_data->value      	  = NULL;
   obs_data->std        	  = NULL;
   obs_data->keyword    	  = NULL;
-  obs_data->std_inflation = NULL;
+  obs_data->obs_active    = NULL;
 
   obs_data->alloc_size = 0;
   obs_data_realloc_data(obs_data , 10);
@@ -49,20 +50,23 @@ obs_data_type * obs_data_alloc() {
 
 
 void obs_data_reset(obs_data_type * obs_data) { 
-  obs_data->size = 0; 
+  obs_data->total_size = 0; 
+  obs_data->active_size = 0; 
 }
 
 
 void obs_data_add(obs_data_type * obs_data, double value, double std , const char *kw) {
-  if (obs_data->size == obs_data->alloc_size)
+  if (obs_data->total_size == obs_data->alloc_size)
     obs_data_realloc_data(obs_data , 2*obs_data->alloc_size + 2);
   {
-    int index = obs_data->size;
+    int index = obs_data->total_size;
     obs_data->value[index]   	  = value;
     obs_data->std[index]     	  = std;
     obs_data->keyword[index]      = util_realloc_string_copy(obs_data->keyword[index] , kw);
+    obs_data->obs_active[index]   = true;
   }
-  obs_data->size++;
+  obs_data->total_size++;
+  obs_data->active_size++;
 }
 
 
@@ -70,8 +74,8 @@ void obs_data_add(obs_data_type * obs_data, double value, double std , const cha
 void obs_data_free(obs_data_type * obs_data) {
   free(obs_data->value);
   free(obs_data->std);
-  free(obs_data->std_inflation);
-  util_free_string_list(obs_data->keyword , obs_data->size);
+  free(obs_data->obs_active);
+  util_free_string_list(obs_data->keyword , obs_data->total_size);
   free(obs_data);
 }
 
@@ -79,7 +83,7 @@ void obs_data_free(obs_data_type * obs_data) {
 
 void obs_data_fprintf(const obs_data_type * obs_data , FILE *stream) {
   int i;
-  for (i = 0; i < obs_data->size; i++)
+  for (i = 0; i < obs_data->total_size; i++)
     fprintf(stream , "%-3d : %-16s  %12.3f +/- %12.3f \n", i+1 , obs_data->keyword[i] , obs_data->value[i] , obs_data->std[i]);
 }
 
@@ -88,7 +92,7 @@ static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, i
   double *pert_mean , *pert_var;
   double *E;
   int iens, iobs, nrobs;
-  nrobs = obs_data->size;
+  nrobs = obs_data->total_size;
 
   E         = util_malloc(nrobs * ens_size * sizeof * E        , __func__);
   pert_mean = util_malloc(nrobs            * sizeof * pert_mean , __func__);
@@ -143,7 +147,7 @@ static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, i
 double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , const double * S , bool returnE , double **_E) {
   double *D , *E;
   int iens, iobs, nrobs;
-  nrobs = obs_data->size;
+  nrobs = obs_data->total_size;
   E 	= obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
   D 	= util_malloc(nrobs * ens_size * sizeof * D , __func__);
 
@@ -165,18 +169,13 @@ double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_
 }
 
 
-/*
-  Outliers are identified by an std_inflation > 1 - observe
-  that the stored std is *NOT* inflated.
-*/
- 
 
 
 double * obs_data_alloc_innov(const obs_data_type * obs_data , int ens_size , int ens_stride , int obs_stride ,  const double *S) {
   double *innov;
   double *S1;
   int iens, iobs, nrobs;
-  nrobs = obs_data->size;
+  nrobs = obs_data->total_size;
   innov = util_malloc(nrobs * sizeof *innov , __func__);
   S1    = util_malloc(nrobs * sizeof *S1 , __func__);
 
@@ -200,8 +199,56 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , int ens_size , in
 }
 
 
+/**
+This function deactivates obsveration iobs, and decrements the total
+number of active observations.
+*/
+static void obs_data_deactivate_obs(obs_data_type * obs_data , int iobs) {
+  if (obs_data->obs_active[iobs]) {
+    obs_data->obs_active[iobs] = false;
+    obs_data->active_size--;
+  }
+}
+
+
+/**
+This code deactivates outliers. This is done based on two different
+principles:
+
+ o If the ensemble variation of a particular measurement is zero (for
+   instance all members achieved the target rate). This decision is
+   based solely on the measurements of the ensemble; the observations
+   are not taken into account.
+
+ o If the overlap between ensemble prediction and observed data is too
+   small.
+
+Ideally these two requirements should be combined into one common
+statistic?
+*/
+
+
+void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * innov , const double *ens_std , double ens_std_cutoff , double alpha) {
+  int nrobs = obs_data->total_size;
+  int iobs;
+  for (iobs = 0; iobs < nrobs; iobs++) {
+    if (ens_std[iobs] < ens_std_cutoff)
+      /*
+	De activitated because the ensemble has to little variation for this
+	particular measurement.
+      */
+      obs_data_deactivate_obs(obs_data , iobs);
+    else {
+      if (fabs( innov[iobs] ) > alpha * (ens_std[iobs] + obs_data->std[iobs])) 
+	/* OK - this is an outlier ... */
+	obs_data_deactivate_obs(obs_data , iobs);
+    }
+  }
+}
+
+
 double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_stride , int obs_stride , const double * innov , const double *S , double alpha) {
-  const int nrobs = obs_data->size;
+  const int nrobs = obs_data->total_size;
   double *ens_avg;
   double *ens_std;
   double *R;
@@ -230,21 +277,12 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_strid
   }
   free(ens_avg);
 
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    if (fabs( innov[iobs] ) > alpha * (ens_std[iobs] + obs_data->std[iobs])) {
-      /* OK - this is an outlier ... */
-      double new_obs_std            = (fabs(innov[iobs]) / alpha - ens_std[iobs]);
-      obs_data->std_inflation[iobs] = new_obs_std / obs_data->std[iobs];
-    } else 
-      obs_data->std_inflation[iobs] = 1.0;
-  }
-  
   R = util_malloc( nrobs * nrobs * sizeof * R , __func__);
   for (iobs = 0; iobs < nrobs * nrobs; iobs++)
     R[iobs] = 0;
   
   for (iobs = 0; iobs < nrobs; iobs++) {
-    double std = obs_data->std[iobs] * obs_data->std_inflation[iobs];
+    double std = obs_data->std[iobs];
     R[iobs * (nrobs + 1)] = std * std;
   }
 
@@ -255,7 +293,7 @@ double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_strid
 
 
 void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , double *S , double *E , double *D , double *R , double *innov) {
-  const int nrobs = obs_data->size;
+  const int nrobs = obs_data->total_size;
   double * scale_factor = util_malloc(nrobs * sizeof * scale_factor , __func__);
   int iens, iobs;
   

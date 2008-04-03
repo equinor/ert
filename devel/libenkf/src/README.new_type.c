@@ -43,7 +43,7 @@ are in enkf_node.h. The functions we need (do not have to specify them
 all) are:
 
 
-1.  typedef void * (alloc_ftype) (const void *);
+1.  alloc_ftype: new_type * new_type_alloc(const new_type_config *);
     --------------------------------------------
 
     This function takes a pointer to a config object of the right type
@@ -52,18 +52,37 @@ all) are:
     instance.
 
 
-2.  typedef void  (fread_ftype) ( void * , FILE * );
+2.  fread_ftype: void new_type_fread(new_type * , FILE * );
     ------------------------------------------------
     This function should take a pointer to a new_type object, and a
     stream opened for reading as input, and then read in data for the
     object from disk.
 
 
-3.  typedef void  (fwrite_ftype) ( void * , FILE * );
+3.  fwrite_ftype: void new_type_fwrite(new_type * , FILE * );
     ------------------------------------------------
     This function should take a pointer to a new_type object, and a
     stream opened for writing as input, and then write the data from
     the object to disk. The two functions instances fread_ftype - and
-    fwrite_ftype must of course match.
+    fwrite_ftype must of course match, but apart from that they are
+    quite free.
+
+
+4.  initialize_ftype: void new_type_initialize(new_type * , int);
+    ------------------------------------------------------------
+    This function takes a pointer to a new_type instance, and a an
+    ensemble number as input; it should then initialize the data of
+    the new_type object - this can either be done by sampling a random
+    number according to some distribution, by reading in input from an
+    external program or by calling an external program (i.e. RMS).
+
+
+5.  ecl_write_ftype: void new_type_ecl_write(const new_type * , const char *);
+    --------------------------------------------------------------------------
+    This function takes a const pointer to a new_type instance, along
+    with a filename. The function should write eclipse data to the
+    filename specified in the second argument. 
+
+
 
 */
