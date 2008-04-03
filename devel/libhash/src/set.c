@@ -15,7 +15,7 @@ struct set_struct {
 
 set_type * set_alloc(int size, const char ** keyList) {
   set_type * set = malloc(sizeof * set);
-  set->key_hash  = hash_alloc(10);
+  set->key_hash  = hash_alloc();
   {
     int ikey;
     for (ikey = 0; ikey < size; ikey++)
@@ -37,15 +37,41 @@ bool set_add_key(set_type * set, const char * key) {
   }
 }
 
+void set_remove_key(set_type * set, const char * key) {
+  if (!hash_has_key(set->key_hash , key)) {
+    fprintf(stderr, "%s: set does not have key: %s - aborting \n",__func__ , key);
+    abort();
+  }
+  hash_del(set->key_hash  , key);
+}
+
 bool set_has_key(set_type * set, const char * key) {
   return hash_has_key(set->key_hash, key);
 }
 
 
+void set_fprintf(const set_type * set, FILE * stream) {
+  int i;
+  char ** key_list = set_alloc_keylist(set);
+  fprintf(stream , " ");
+  for (i=0; i < set_get_size(set); i++)
+    fprintf(stream , "%s ",key_list[i]);
+  set_free_ext_keylist(set , key_list);
+}
+    
+
+
 int set_get_size(const set_type *set) { return hash_get_size(set->key_hash); }
 
 
-char ** set_alloc_keylist(const set_type * set) { return hash_alloc_keylist(set->key_hash); }
+char ** set_alloc_keylist(const set_type * set) { 
+  return hash_alloc_keylist(set->key_hash); 
+}
+
+
+void set_free_ext_keylist(const set_type * set , char ** key_list) { 
+  hash_free_ext_keylist(set->key_hash , key_list);
+}
 
 
 void set_free(set_type * set) {
