@@ -49,6 +49,10 @@ FILE * enkf_util_fopen_w(const char * filename , const char * caller) {
   return enkf_util_fopen(filename , "w" , "writing" , caller);
 }
 
+FILE * enkf_util_fopen_a(const char * filename , const char * caller) {
+  return enkf_util_fopen(filename , "a" , "appending" , caller);
+}
+
 FILE * enkf_util_fopen_r(const char * filename , const char * caller) {
   return enkf_util_fopen(filename , "r" , "reading" , caller);
 }

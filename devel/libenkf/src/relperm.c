@@ -19,8 +19,6 @@ struct relperm_struct{
   DEBUG_DECLARE
   const relperm_config_type  * config;
   scalar_type                * scalar;
-  /* Total water saturation table*/
-  double                    * swof;
 };
 
 /*****************************************************************/
@@ -30,7 +28,6 @@ relperm_type * relperm_alloc(const relperm_config_type * relperm_config){
   relperm_type * relperm = malloc(sizeof *relperm);
   relperm->config = relperm_config;
   relperm->scalar = scalar_alloc(relperm_config->scalar_config);
-  relperm->swof   = malloc(relperm_config->nsw * sizeof *relperm->swof);
   
   DEBUG_ASSIGN(relperm);
   return relperm;
@@ -87,10 +84,12 @@ void relperm_make_tab(relperm_type * relperm){
   output_data = malloc(size * sizeof *output_data);
   
   relperm_get_output_data(relperm, output_data);
+  /*
   for(i = 0; i <= relperm_config->nsw-1; i++) {
         relperm->swof[i] =  output_data[0] + ((1-output_data[0])/(relperm_config->nsw -1))*(i);
 
   }
+  */
   free(output_data);
 }
 
@@ -99,8 +98,9 @@ void relperm_tab_tot_water_sat(relperm_type * relperm) {
  
   /*  printf("Size of relperm->swof %d",size(relperm->swof),__func__); */
   /*  for (i =0 ; i < 5 ; i++){
-      } */
+      } 
   
   relperm->swof[0] = 2.1;
+  */
 
 }

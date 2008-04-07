@@ -206,6 +206,7 @@ void * enkf_util_malloc (int , const char * );
 void * enkf_util_realloc(void * , int , const char * );
 FILE * enkf_util_fopen_r(const char * , const char * );
 FILE * enkf_util_fopen_w(const char * , const char * );
+FILE * enkf_util_fopen_a(const char * , const char * );
 void   enkf_util_fwrite(const void *, int , int , FILE *, const char * );
 void   enkf_util_fread ( void *, int , int , FILE *, const char * );
 

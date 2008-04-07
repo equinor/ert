@@ -9,10 +9,11 @@ typedef struct relperm_struct relperm_type;
 relperm_type * relperm_alloc(const relperm_config_type * );
 void           relperm_initialize(relperm_type *, int iens);
 void           relperm_get_data(const relperm_type *, double *);
-void           relperm_set_data(relperm_type *, const double *);
-void           relperm_ecl_write(const relperm_type *,const char *);
+void           relperm_set_data(const relperm_type *, const double *);
+void           relperm_make_tab(relperm_type *);
+void           relperm_ecl_write(const relperm_type *,const double *, const char *);
 void           relperm_output_transform(const relperm_type *);
 const double * relperm_get_output_ref(const relperm_type *);
 void relperm_get_output_data(const relperm_type *, double *);
-
+void relperm_tab_tot_water_sat(relperm_type * relperm);
 #endif
