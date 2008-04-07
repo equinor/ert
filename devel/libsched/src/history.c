@@ -433,56 +433,46 @@ history_type * history_alloc_from_schedule(const sched_file_type *s) {
 
 
 static  history_type * history_alloc_from_summary__(const ecl_sum_type * sum , int Nwells , const char ** well_list , bool history_mode) {
-  if (ecl_sum_get_report_mode(sum)) {
-    /*char ** well_list            = ecl_sum_alloc_well_names_copy(sum);*/
-    history_type *hist              = history_alloc(ecl_sum_get_start_time(sum));
-    /*
-      date_node_type *current_date = NULL;
-      Nwells                       = ecl_sum_get_Nwells(sum);
-    */
-    int    first_report , last_report , report_nr;
-    time_t start_time = ecl_sum_get_start_time(sum);
-    ecl_sum_get_report_size(sum , &first_report , &last_report);
-    
-    if (first_report == 0)
-      first_report = 1;
-    /*
-      The first summary report is from time = 0 - before the
-      simulation has actually started - bumping it up ...
-    */
-
-    if (first_report > 1) {
-      fprintf(stderr,"%s: warning summary object missing the first:%d report steps - empty records prepended. \n",__func__ , first_report);
-      for (report_nr = 0; report_nr < first_report; report_nr++) {
-	/*
-	  ???
-	*/
-      }
+  history_type *hist              = history_alloc(ecl_sum_get_start_time(sum));
+  int    first_report , last_report , report_nr;
+  time_t start_time = ecl_sum_get_start_time(sum);
+  ecl_sum_get_report_size(sum , &first_report , &last_report);
+  
+  if (first_report == 0)
+    first_report = 1;
+  /*
+    The first summary report is from time = 0 - before the
+    simulation has actually started - bumping it up ...
+  */
+  
+  if (first_report > 1) {
+    fprintf(stderr,"%s: warning summary object missing the first:%d report steps - empty records prepended. \n",__func__ , first_report);
+    for (report_nr = 0; report_nr < first_report; report_nr++) {
+      /*
+	???
+      */
     }
-    
-    
-    for (report_nr = first_report; report_nr <= last_report; report_nr++) {
-      date_node_type * date_node = date_node_alloc_ext(false , ecl_sum_get_sim_time(sum , report_nr) , report_nr  , &start_time);
-      int iwell;
-      history_add_date(hist , date_node);
-      for (iwell = 0; iwell < Nwells; iwell++) {
-	rate_type * rate = rate_alloc_from_summary(history_mode , sum , report_nr , well_list[iwell]);
-	if (rate != NULL)
-	  history_add_rate(hist , report_nr , rate);
-      }
-    }
-    /*util_free_string_list(well_list , Nwells);*/
-    hist->history_mode = history_mode;
-    return hist;
-  } else {
-    fprintf(stderr,"%s: when allocating history from a summary object the summary object must be allocated with report_mode = true \n",__func__);
-    abort();
   }
+  
+  
+  for (report_nr = first_report; report_nr <= last_report; report_nr++) {
+    date_node_type * date_node = date_node_alloc_ext(false , ecl_sum_get_sim_time(sum , report_nr) , report_nr  , &start_time);
+    int iwell;
+    history_add_date(hist , date_node);
+    for (iwell = 0; iwell < Nwells; iwell++) {
+      rate_type * rate = rate_alloc_from_summary(history_mode , sum , report_nr , well_list[iwell]);
+      if (rate != NULL)
+	history_add_rate(hist , report_nr , rate);
+      }
+  }
+  hist->history_mode = history_mode;
+  return hist;
 }
 
 
 history_type * history_alloc_from_summary(const ecl_sum_type * ecl_sum , bool history_mode) {
-  return history_alloc_from_summary__(ecl_sum , ecl_sum_get_Nwells(ecl_sum) , ecl_sum_get_well_names_ref(ecl_sum) , history_mode);
+  history_type * history = history_alloc_from_summary__(ecl_sum , ecl_sum_get_Nwells(ecl_sum) , ecl_sum_get_well_names_ref(ecl_sum) , history_mode);
+  return history;
 }
 
 
