@@ -3,6 +3,19 @@
 #include <void_arg.h>
 
 
+/*
+Strip out this little text and call it "template":
+------------
+Her kommer et template.
+Her skal vi ha inn en integer: <FLAG>
+Her skal det inn en double verdi: <VALUE>
+Og dette skal vaere en streng: <OUTPATH>
+
+Til slutt skal det komme et nokkelord som ikke er i tabellen: <HEMMELIG>
+
+Slutt
+*/
+
 
 
 
@@ -77,7 +90,6 @@ int main(int argc , char ** argv) {
     util_filter_file(template_file , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
     printf("Have written file:%s with substituted values.\n",target_file);
     printf("-----------------------------------------------------------------\n");
-    break;
   }
   
   hash_free(kw_hash);

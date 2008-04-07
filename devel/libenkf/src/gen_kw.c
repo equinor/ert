@@ -174,6 +174,9 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   hash_free(kw_hash);
 }
 
+void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * target_file) {
+  gen_kw_filter_file(gen_kw , target_file);
+}
 
 void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list , double **_output_values) {
   gen_kw_output_transform(gen_kw);
@@ -205,4 +208,4 @@ VOID_FWRITE (gen_kw)
 VOID_FREAD  (gen_kw)
 VOID_COPYC  (gen_kw)
 VOID_FREE   (gen_kw)
-
+VOID_ECL_WRITE(gen_kw)

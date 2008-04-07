@@ -65,7 +65,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
   enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
   enkf_main->config         = config;
   enkf_main->sched_file     = sched_file_alloc(enkf_config_get_start_date(config));
-  sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_file(config));
+  sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_src_file(config));
   enkf_main->hist           = history_alloc_from_schedule(enkf_main->sched_file);
   enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->config , enkf_main->sched_file , enkf_main->hist);
   enkf_main->obs_data       = obs_data_alloc();
@@ -111,6 +111,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
     This - can not be hardcoded ....
   */
   enkf_main_add_data_kw(enkf_main , "INIT" , "INCLUDE\n   \'EQUIL.INC\'/\nRPTSOL\n     0  0  0  0  0 0   2  0   0  0   0   0  0   0 /\n");
+  enkf_main_add_data_kw(enkf_main , "INCLUDE_PATH" , "/h/a152128/EnKF/devel/EnKF/libenkf/src/Gurbat");
   enkf_main->thread_pool = NULL;
   enkf_main->void_arg    = NULL;
   return  enkf_main;

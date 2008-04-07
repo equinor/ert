@@ -426,6 +426,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
       }
     } else {
       /* It is a static kw like INTEHEAD or SCON */
+      /* ecl_util_escape_kw(kw); */
       if (!enkf_state_has_node(enkf_state , kw)) 
 	enkf_state_add_node(enkf_state , kw , NULL); 
       {
@@ -789,31 +790,11 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 
 void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int report_step1 , int report_step2) {
-  int      ikw , gen_kw_size;
-  double * values;
-  char  ** kw_list;
-
   char * data_file = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_data_file , true , -1);
-  bool has_gen_kw = enkf_state_has_node(enkf_state , "GEN_KW");
-  if (has_gen_kw) {
-    enkf_node_type * gen_node = enkf_state_get_node(enkf_state , "GEN_KW");
-    gen_kw_type    * gen_kw   = enkf_node_value_ptr(gen_node);
-    gen_kw_export(gen_kw , &gen_kw_size , &kw_list , &values);
-    for (ikw = 0; ikw < gen_kw_size; ikw++) 
-      hash_insert_hash_owned_ref(enkf_state->data_kw , kw_list[ikw] , void_arg_alloc_double(values[ikw]) , void_arg_free__);
-  } 
-  
   util_make_path(enkf_state->run_path);
-  util_filter_file(enkf_config_get_data_file(enkf_state->config) , "--" , data_file , '<' , '>' , enkf_state->data_kw , false);
-
-  if (has_gen_kw) {
-    for (ikw = 0; ikw < gen_kw_size; ikw++) 
-      hash_del(enkf_state->data_kw , kw_list[ikw]);
-  }
-  free(data_file);
-
+  util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
   {
-    char * schedule_file = util_alloc_full_path(enkf_state->run_path , "SCHEDULE.INC");
+    char * schedule_file = util_alloc_full_path(enkf_state->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
     sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
     free(schedule_file);
   }

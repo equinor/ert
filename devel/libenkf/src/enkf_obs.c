@@ -208,54 +208,50 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }
 enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sched_file_type * sched_file , const history_type * hist) {
-  char * config_path;
-  const char * config_file = enkf_config_get_obs_config_file(config);
-  util_alloc_file_components(config_file , &config_path , NULL , NULL);
-  FILE * stream = util_fopen(config_file , "r");
   enkf_obs_type * enkf_obs = enkf_obs_alloc(sched_file , hist);
-  bool   at_eof;
-
-  do {
-    int active_tokens , tokens;
-    char  *line;
-    char **token_list;
-
-    line  = util_fscanf_alloc_line(stream , &at_eof);
-    if (line != NULL) {
-      int i;
-      util_split_string(line , " " , &tokens , &token_list);
-
-      active_tokens = tokens;
-      for (i = 0; i < tokens; i++) {
-	if (token_list[i][0] == '-') {
-	  if (token_list[i][1] == '-') {
-	    active_tokens = i;
-	    break;
+  const char * config_file = enkf_config_get_obs_config_file(config);
+  if (config_file != NULL) {
+    FILE * stream = util_fopen(config_file , "r");
+    bool   at_eof;
+    do {
+      int active_tokens , tokens;
+      char  *line;
+      char **token_list;
+      
+      line  = util_fscanf_alloc_line(stream , &at_eof);
+      if (line != NULL) {
+	int i;
+	util_split_string(line , " " , &tokens , &token_list);
+	
+	active_tokens = tokens;
+	for (i = 0; i < tokens; i++) {
+	  if (token_list[i][0] == '-') {
+	    if (token_list[i][1] == '-') {
+	      active_tokens = i;
+	      break;
+	    }
 	  }
 	}
+	if (active_tokens > 0) {
+	  const char *kw           = token_list[0];
+	  const char * well_name   = token_list[1];
+	  char * config_file = token_list[2];
+	  char * obs_label   = NULL;
+	  const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , well_name);
+	  
+	  
+	  if (strcmp(kw , "WELL") == 0) {
+	    ASSERT_TOKENS("WELL" , active_tokens , 2);
+	    enkf_obs_add_well_obs(enkf_obs , config_node , well_name , obs_label , config_file);
+	  } else 
+	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
+	  
+	}
+	util_free_string_list(token_list , tokens);
+	free(line);
       }
-      if (active_tokens > 0) {
-	const char *kw           = token_list[0];
-	const char * well_name   = token_list[1];
-	char * config_file = util_alloc_full_path(config_path , token_list[2]);
-	char * obs_label   = NULL;
-	const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , well_name);
-
-	
-	if (strcmp(kw , "WELL") == 0) {
-	  ASSERT_TOKENS("WELL" , active_tokens , 2);
-	  enkf_obs_add_well_obs(enkf_obs , config_node , well_name , obs_label , config_file);
-	} else 
-	  fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
-	
-	free(config_file);
-      }
-      util_free_string_list(token_list , tokens);
-      free(line);
-    }
-  } while ( !at_eof );
-
-  free(config_path);
-  fclose(stream);
+    } while ( !at_eof );
+    fclose(stream);
+  }
   return enkf_obs;
 }

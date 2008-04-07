@@ -1,6 +1,8 @@
 #include <stdlib.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <util.h>
 #include <hash.h>
 #include <multz_config.h>
@@ -54,7 +56,8 @@ struct enkf_config_struct {
   bool              fmt_file;
   bool              unified;
   char *            data_file;
-  char *            schedule_file;
+  char *            schedule_src_file;
+  char *            schedule_target_file;
   char *            obs_config_file;
   char *            ens_path;
 };
@@ -195,17 +198,22 @@ static void enkf_config_set_data_file(enkf_config_type * config , const char * d
   }
 }
 
-static void enkf_config_set_schedule_file(enkf_config_type * config , const char * schedule_file) {
-  if (util_file_exists(schedule_file)) 
-    config->schedule_file = util_realloc_string_copy(config->schedule_file , schedule_file);
+static void enkf_config_set_schedule_files(enkf_config_type * config , const char * schedule_src_file , const char * schedule_target_file) {
+  if (util_file_exists(schedule_src_file)) 
+    config->schedule_src_file = util_realloc_string_copy(config->schedule_src_file , schedule_src_file);
   else {
-    fprintf(stderr,"%s: sorry: schedule_file:%s does not exist - aborting \n",__func__ , schedule_file);
+    fprintf(stderr,"%s: sorry: schedule_src_file:%s does not exist - aborting \n",__func__ , schedule_src_file);
     abort();
   }
+  config->schedule_target_file = util_realloc_string_copy(config->schedule_target_file , schedule_target_file);
 }
 
-const char * enkf_config_get_schedule_file(const enkf_config_type * config) {
-  return config->schedule_file;
+const char * enkf_config_get_schedule_src_file(const enkf_config_type * config) {
+  return config->schedule_src_file;
+}
+
+const char * enkf_config_get_schedule_target_file(const enkf_config_type * config) {
+  return config->schedule_target_file;
 }
 
 
@@ -272,18 +280,19 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   /*
     All of these must be set before the config object is ready for use.
   */
-  config->eclbase   	  = NULL;
-  config->data_file 	  = NULL;
-  config->grid      	  = NULL;
-  config->run_path  	  = NULL;
-  config->schedule_file   = NULL;
-  config->start_time      = -1;
-  config->ecl_store_path  = NULL;
-  config->ens_size        = -1;
-  config->ens_offset      = ens_offset;
-  config->ecl_store       = NULL;
-  config->obs_config_file = NULL;
-  config->ens_path        = NULL;
+  config->eclbase   	       = NULL;
+  config->data_file 	       = NULL;
+  config->grid      	       = NULL;
+  config->run_path  	       = NULL;
+  config->schedule_src_file    = NULL;
+  config->schedule_target_file = NULL;
+  config->start_time           = -1;
+  config->ecl_store_path       = NULL;
+  config->ens_size             = -1;
+  config->ens_offset           = ens_offset;
+  config->ecl_store            = NULL;
+  config->obs_config_file      = NULL;
+  config->ens_path             = NULL;
   
   return config;
 }
@@ -295,212 +304,232 @@ static void enkf_config_post_assert(const enkf_config_type * config) {
 }
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }
-enkf_config_type * enkf_config_fscanf_alloc(const char * config_file , 
+enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file , 
 					    enkf_site_config_type * site_config , 
 					    int  ens_offset,
 					    bool fmt_file ,
 					    bool unified  ,         
 					    bool endian_swap) { 
 
-  char * config_path;
-  enkf_config_type * enkf_config = enkf_config_alloc_empty(ens_offset , fmt_file , unified , endian_swap);
-  util_alloc_file_components(config_file , &config_path , NULL , NULL);
-  FILE * stream = util_fopen(config_file , "r");
-  char * line;
-  bool at_eof = false;
-  int * index_map = NULL;
-  
-  do {
-    enkf_impl_type impl_type;
-    int i , tokens;
-    int active_tokens;
-    char **token_list;
+  char *config_file;
+  {
+    char * config_path;
+    util_alloc_file_components(__config_file , &config_path , &config_file , NULL);
+    if (config_path != NULL) {
+      if (chdir(config_path) != 0) {
+	fprintf(stderr,"%s: failed to change driectory to: %s : %s \n",__func__ , config_path , strerror(errno));
+	abort();
+      }
+      printf("Changing to directory ...................: %s \n",config_path);
+      free(config_path);
+    }
+  }
+  printf("Loading configuration information from ..: %s \n",config_file);  
+  {  
+    enkf_config_type * enkf_config = enkf_config_alloc_empty(ens_offset , fmt_file , unified , endian_swap);
+    FILE * stream = util_fopen(config_file , "r");
+    char * line;
+    bool at_eof = false;
+    int * index_map = NULL;
 
-    line  = util_fscanf_alloc_line(stream , &at_eof);
-    if (line != NULL) {
-      util_split_string(line , " " , &tokens , &token_list);
+
+    
+    do {
+      enkf_impl_type impl_type;
+      int i , tokens;
+      int active_tokens;
+      char **token_list;
+
+      line  = util_fscanf_alloc_line(stream , &at_eof);
+      if (line != NULL) {
+	util_split_string(line , " " , &tokens , &token_list);
       
-      active_tokens = tokens;
-      for (i = 0; i < tokens; i++) {
-	if (token_list[i][0] == '-') {
-	  if (token_list[i][1] == '-') {
-	    active_tokens = i;
-	    break;
+	active_tokens = tokens;
+	for (i = 0; i < tokens; i++) {
+	  if (token_list[i][0] == '-') {
+	    if (token_list[i][1] == '-') {
+	      active_tokens = i;
+	      break;
+	    }
 	  }
 	}
-      }
       
       
-      if (active_tokens > 0) {
-	impl_type = enkf_types_check_impl_type(token_list[0]);
-	if (impl_type == INVALID) {
+	if (active_tokens > 0) {
+	  impl_type = enkf_types_check_impl_type(token_list[0]);
+	  if (impl_type == INVALID) {
 	  
-	  const char * kw = token_list[0];
-	  if (enkf_site_config_has_key(site_config , kw)) {
-	    /* The configuration overrides a value from the site_config object. */
-	    char * site_value;
-	    ASSERT_TOKENS(kw , active_tokens , 1);
-	    site_value  = util_alloc_joined_string((const char **) &token_list[1] , active_tokens - 1 , " ");
-	    enkf_site_config_set_key(site_config , kw , site_value);
-	    free(site_value);
-	  } else {
-	    if (strcmp(kw , "SIZE") == 0) {
-	      int ens_size;
-	      ASSERT_TOKENS("SIZE" , active_tokens , 1);
-	      if (util_sscanf_int(token_list[1] , &ens_size)) 
-		enkf_config_set_ens_size( enkf_config , ens_size);
-	      else {
-		fprintf(stderr,"%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
-		abort();
-	      }
-	    } else if (strcmp(kw , "OBS_CONFIG") == 0) {
-	      ASSERT_TOKENS("OBS_CONFIG" , active_tokens , 1);
-	      {
-		char * obs_config_file = util_alloc_full_path(config_path , token_list[1]);
-		enkf_config_set_obs_config_file(enkf_config , obs_config_file);
-		free(obs_config_file);
-	      }
-	    } else if (strcmp(kw , "ENSPATH") == 0) {
-	      ASSERT_TOKENS("ENSPATH" , active_tokens , 1);
-	      enkf_config_set_ens_path(enkf_config , token_list[1]);
-	    } else if (strcmp(kw , "RUNPATH") == 0) {
-	      ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
-	      enkf_config_set_run_path( enkf_config , token_list[1] );
-	    } else if (strcmp(kw , "DATA_FILE") == 0) {
-	      ASSERT_TOKENS("DATA_FILE" , active_tokens , 1);
-	      enkf_config_set_data_file( enkf_config , token_list[1] );
-	    } else if (strcmp(kw , "ECLBASE") == 0) {
-	      ASSERT_TOKENS("ECLBASE" , active_tokens , 1);
-	      enkf_config_set_eclbase( enkf_config , token_list[1] );
-	    } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
-	      ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 1);
-	      if (enkf_config->start_time == -1) {
-		fprintf(stderr,"%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
-		abort();
-	      }
-	      enkf_config_set_schedule_file(enkf_config , token_list[1]);
-	    } else if (strcmp(kw , "ECL_STORE_PATH") == 0) {
-	      ASSERT_TOKENS("ECL_STORE_PATH" , active_tokens , 1);
-	      enkf_config_set_ecl_store_path(enkf_config , token_list[1]);
-	    } else if (strcmp(kw , "ECL_STORE") == 0) {
-	      ASSERT_TOKENS("ECL_STORE" , active_tokens , 2);
-	      int ecl_store;
-	      if (enkf_config->ecl_store_path == NULL) {
-		fprintf(stderr,"%s: must configure ECL_STORE_PATH prior to ECL_STORE - aborting \n",__func__);
-		abort();
-	      } else {
-		if (util_sscanf_int(token_list[1] , &ecl_store)) 
-		  enkf_config_set_ecl_store(enkf_config , ecl_store , active_tokens - 2 , (const char **) &token_list[2]);
+	    const char * kw = token_list[0];
+	    if (enkf_site_config_has_key(site_config , kw)) {
+	      /* The configuration overrides a value from the site_config object. */
+	      char * site_value;
+	      ASSERT_TOKENS(kw , active_tokens , 1);
+	      site_value  = util_alloc_joined_string((const char **) &token_list[1] , active_tokens - 1 , " ");
+	      enkf_site_config_set_key(site_config , kw , site_value);
+	      free(site_value);
+	    } else {
+	      if (strcmp(kw , "SIZE") == 0) {
+		int ens_size;
+		ASSERT_TOKENS("SIZE" , active_tokens , 1);
+		if (util_sscanf_int(token_list[1] , &ens_size)) 
+		  enkf_config_set_ens_size( enkf_config , ens_size);
 		else {
-		  fprintf(stderr,"%s: error when parsing: %s to integer - aborting \n",__func__ , token_list[1]);
+		  fprintf(stderr,"%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
 		  abort();
 		}
-	      }
-	    } else if (strcmp(kw , "GRID") == 0) {
-	      ASSERT_TOKENS("GRID" , active_tokens , 1);
-	      enkf_config_set_grid(enkf_config , token_list[1]);
-	    } else if (strcmp(kw , "START_TIME") == 0) {
-	      ASSERT_TOKENS("START_TIME" , active_tokens , 3);
-	      enkf_config_set_start_date(enkf_config , (const char **) &token_list[1]);
-	    } else
-	      fprintf(stderr,"%s: ** Warning ** keyword: %s not recognzied - line ignored \n",__func__ , kw);
-	  }    
-	} else {
-	  switch(impl_type) {
-	  case(MULTZ):
-	    {
-	      const char * key         = token_list[1];
-	      const char * ecl_file    = token_list[2];
-	      char       * config_file = util_alloc_full_path(config_path , token_list[3]);
-	      int   nx,ny,nz,active_size;
-		
-	      if (enkf_config->grid == NULL) {
-		fprintf(stderr,"%s must add grid prior to adding MULTZ - aborting \n",__func__);
-		abort();
-	      }
-	      ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
-	      enkf_config_add_type(enkf_config , key , parameter , MULTZ , ecl_file , multz_config_fscanf_alloc(config_file , nx , ny , nz));
-	      free(config_file);
-	    }
-	    break;
-	  case(MULTFLT):
-	    {
-	      const char * key         = token_list[1];
-	      const char * ecl_file    = token_list[2];
-	      char       * config_file = util_alloc_full_path(config_path , token_list[3]);
-	      enkf_config_add_type(enkf_config , key , parameter , MULTFLT , ecl_file , multflt_config_fscanf_alloc(config_file));
-	      free(config_file);
-	    }
-	    break;
-	  case(EQUIL):
-	    {
-	      const char * key         = token_list[1];
-	      const char * ecl_file    = token_list[2];
-	      char       * config_file = util_alloc_full_path(config_path , token_list[3]);
-	      enkf_config_add_type(enkf_config , key , parameter , EQUIL , ecl_file , equil_config_fscanf_alloc(config_file));
-	      free(config_file);
-	    }
-	    break;
-	  case(FIELD):
-	    ASSERT_TOKENS("FIELD" , active_tokens , 2);
-	    {
-	      const char * key             = token_list[1];
-	      const char * var_type_string = token_list[2];
-	      int   nx,ny,nz,active_size;
-
-	      if (enkf_config->grid == NULL) {
-		fprintf(stderr,"%s must add grid prior to adding FIELD - aborting \n",__func__);
-		abort();
-	      }
-	      ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
-	      if (index_map == NULL) index_map = (int *) ecl_grid_alloc_index_map(enkf_config->grid);
-		
-	      if (strcmp(var_type_string , "DYNAMIC") == 0)
-		enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , nx , ny , nz , active_size , index_map));
-	      else if (strcmp(var_type_string , "PARAMETER") == 0) {
-		ASSERT_TOKENS("FIELD" , active_tokens , 5);
+	      } else if (strcmp(kw , "OBS_CONFIG") == 0) {
+		ASSERT_TOKENS("OBS_CONFIG" , active_tokens , 1);
 		{
-		  const char * ecl_file = token_list[3];
-		  int init_mode;
-		  if (util_sscanf_int(token_list[4] , &init_mode)) 
-		    enkf_config_add_type(enkf_config , key , parameter   , FIELD , ecl_file , field_config_alloc_parameter(key , 
-															   nx , ny , nz , active_size , 
-															   index_map , 
-															   0 , init_mode , active_tokens - 5 , (const char **) &token_list[5]));
+		  char * obs_config_file = token_list[1];
+		  enkf_config_set_obs_config_file(enkf_config , obs_config_file);
+		}
+	      } else if (strcmp(kw , "ENSPATH") == 0) {
+		ASSERT_TOKENS("ENSPATH" , active_tokens , 1);
+		enkf_config_set_ens_path(enkf_config , token_list[1]);
+	      } else if (strcmp(kw , "RUNPATH") == 0) {
+		ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
+		enkf_config_set_run_path( enkf_config , token_list[1] );
+	      } else if (strcmp(kw , "DATA_FILE") == 0) {
+		ASSERT_TOKENS("DATA_FILE" , active_tokens , 1);
+		enkf_config_set_data_file( enkf_config , token_list[1] );
+	      } else if (strcmp(kw , "ECLBASE") == 0) {
+		ASSERT_TOKENS("ECLBASE" , active_tokens , 1);
+		enkf_config_set_eclbase( enkf_config , token_list[1] );
+	      } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
+		ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 2);
+		if (enkf_config->start_time == -1) {
+		  fprintf(stderr,"%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
+		  abort();
+		}
+		enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[2]);
+	      } else if (strcmp(kw , "ECL_STORE_PATH") == 0) {
+		ASSERT_TOKENS("ECL_STORE_PATH" , active_tokens , 1);
+		enkf_config_set_ecl_store_path(enkf_config , token_list[1]);
+	      } else if (strcmp(kw , "ECL_STORE") == 0) {
+		ASSERT_TOKENS("ECL_STORE" , active_tokens , 2);
+		int ecl_store;
+		if (enkf_config->ecl_store_path == NULL) {
+		  fprintf(stderr,"%s: must configure ECL_STORE_PATH prior to ECL_STORE - aborting \n",__func__);
+		  abort();
+		} else {
+		  if (util_sscanf_int(token_list[1] , &ecl_store)) 
+		    enkf_config_set_ecl_store(enkf_config , ecl_store , active_tokens - 2 , (const char **) &token_list[2]);
 		  else {
-		    fprintf(stderr,"%s: init mode must be valid int - aborting \n",__func__);
+		    fprintf(stderr,"%s: error when parsing: %s to integer - aborting \n",__func__ , token_list[1]);
 		    abort();
 		  }
 		}
-	      } else {
-		fprintf(stderr,"%s : aborting \n",__func__);
-		abort();
+	      } else if (strcmp(kw , "GRID") == 0) {
+		ASSERT_TOKENS("GRID" , active_tokens , 1);
+		enkf_config_set_grid(enkf_config , token_list[1]);
+	      } else if (strcmp(kw , "START_TIME") == 0) {
+		ASSERT_TOKENS("START_TIME" , active_tokens , 3);
+		enkf_config_set_start_date(enkf_config , (const char **) &token_list[1]);
+	      } else
+		fprintf(stderr,"%s: ** Warning ** keyword: %s not recognzied - line ignored \n",__func__ , kw);
+	    }    
+	  } else {
+	    switch(impl_type) {
+	    case(MULTZ):
+	      {
+		const char * key         = token_list[1];
+		const char * ecl_file    = token_list[2];
+		char       * config_file = token_list[3];
+		int   nx,ny,nz,active_size;
+		
+		if (enkf_config->grid == NULL) {
+		  fprintf(stderr,"%s must add grid prior to adding MULTZ - aborting \n",__func__);
+		  abort();
+		}
+		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
+		enkf_config_add_type(enkf_config , key , parameter , MULTZ , ecl_file , multz_config_fscanf_alloc(config_file , nx , ny , nz));
 	      }
+	      break;
+	    case(MULTFLT):
+	      {
+		const char * key         = token_list[1];
+		const char * ecl_file    = token_list[2];
+		char       * config_file = token_list[3];
+		enkf_config_add_type(enkf_config , key , parameter , MULTFLT , ecl_file , multflt_config_fscanf_alloc(config_file));
+	      }
+	      break;
+	    case(EQUIL):
+	      {
+		const char * key         = token_list[1];
+		const char * ecl_file    = token_list[2];
+		char       * config_file = token_list[3];
+		enkf_config_add_type(enkf_config , key , parameter , EQUIL , ecl_file , equil_config_fscanf_alloc(config_file));
+	      }
+	      break;
+	    case(FIELD):
+	      ASSERT_TOKENS("FIELD" , active_tokens , 2);
+	      {
+		const char * key             = token_list[1];
+		const char * var_type_string = token_list[2];
+		int   nx,ny,nz,active_size;
+
+		if (enkf_config->grid == NULL) {
+		  fprintf(stderr,"%s must add grid prior to adding FIELD - aborting \n",__func__);
+		  abort();
+		}
+		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
+		if (index_map == NULL) index_map = (int *) ecl_grid_alloc_index_map(enkf_config->grid);
+		
+		if (strcmp(var_type_string , "DYNAMIC") == 0)
+		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , nx , ny , nz , active_size , index_map));
+		else if (strcmp(var_type_string , "PARAMETER") == 0) {
+		  ASSERT_TOKENS("FIELD" , active_tokens , 5);
+		  {
+		    const char * ecl_file = token_list[3];
+		    int init_mode;
+		    if (util_sscanf_int(token_list[4] , &init_mode)) 
+		      enkf_config_add_type(enkf_config , key , parameter   , FIELD , ecl_file , field_config_alloc_parameter(key , 
+															     nx , ny , nz , active_size , 
+															     index_map , 
+															     0 , init_mode , active_tokens - 5 , (const char **) &token_list[5]));
+		    else {
+		      fprintf(stderr,"%s: init mode must be valid int - aborting \n",__func__);
+		      abort();
+		    }
+		  }
+		} else {
+		  fprintf(stderr,"%s : aborting \n",__func__);
+		  abort();
+		}
+	      }
+	      break;
+	    case(WELL):
+	      ASSERT_TOKENS("WELL" , active_tokens , 2);
+	      enkf_config_add_well(enkf_config , token_list[1] , active_tokens - 2 , (const char **) &token_list[2]);
+	      break;
+	    case(PGBOX):
+	      break;
+	    case(GEN_KW):
+	      ASSERT_TOKENS("GEN_KW" , active_tokens , 4);
+	      {
+		const char * key              = token_list[1];
+		const char * template_file    = token_list[2];
+		const char * target_file      = token_list[3];
+		const char * config_file      = token_list[4];
+		enkf_config_add_type(enkf_config , key , parameter , GEN_KW , target_file , gen_kw_config_fscanf_alloc(config_file , template_file));
+	      }
+	      break;
+	    default:
+	      fprintf(stderr,"%s: Invalid keyword: %s - aborting \n",__func__ ,  token_list[0]);
+	      abort();
 	    }
-	    break;
-	  case(WELL):
-	    ASSERT_TOKENS("WELL" , active_tokens , 2);
-	    enkf_config_add_well(enkf_config , token_list[1] , active_tokens - 2 , (const char **) &token_list[2]);
-	    break;
-	  case(PGBOX):
-	    break;
-	  case(GEN_KW):
-	    break;
-	  default:
-	    fprintf(stderr,"%s: Invalid keyword: %s - aborting \n",__func__ ,  token_list[0]);
-	    abort();
 	  }
 	}
+	util_free_string_list(token_list , tokens);
+	free(line);
       }
-      util_free_string_list(token_list , tokens);
-      free(line);
-    }
-  } while (!at_eof);
-  if (config_path != NULL) free(config_path);
-  enkf_config_post_assert(enkf_config);
-  enkf_site_config_validate(site_config);
-  return enkf_config;
-}
+    } while (!at_eof);
+    free(config_file);
+    enkf_config_post_assert(enkf_config);
+    enkf_site_config_validate(site_config);
+    return enkf_config;
+  }
+  }
 #undef ASSERT_TOKENS
 
 
@@ -654,6 +683,11 @@ void enkf_config_free(enkf_config_type * config) {
     path_fmt_free(config->ecl_store_path);
   if (config->obs_config_file != NULL) free(config->obs_config_file);
   if (config->ens_path != NULL) free(config->ens_path);
+  if (config->schedule_src_file != NULL) {
+    free(config->schedule_src_file);
+    free(config->schedule_target_file);
+  }
+  
   free(config->ecl_store);
   free(config);
 }

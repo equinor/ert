@@ -18,9 +18,9 @@ GET_DATA_SIZE_HEADER(scalar);
 
 struct scalar_struct {
   const scalar_config_type *config;
-  double                  *data;
-  double                  *output_data;
-  bool                     output_valid;
+  double                   *data;
+  double                   *output_data;
+  bool                      output_valid;
 };
 
 /*****************************************************************/

@@ -29,7 +29,6 @@ void                enkf_config_add_well(enkf_config_type * , const char * , int
 void                enkf_config_add_gen_kw(enkf_config_type * , const char * );
 void                enkf_config_add_type(enkf_config_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);
 time_t              enkf_config_get_start_date(const enkf_config_type * );
-const        char * enkf_config_get_schedule_file(const enkf_config_type * );
 const        char * enkf_config_get_obs_config_file(const enkf_config_type * );
 const        char * enkf_config_get_ens_path(const enkf_config_type * config);
 char             ** enkf_config_alloc_keylist(const enkf_config_type * , int *);
@@ -48,4 +47,6 @@ int                enkf_config_get_ens_offset(const enkf_config_type * );
 ecl_store_enum     enkf_config_iget_ecl_store(const enkf_config_type * , int );
 ecl_queue_type   * enkf_config_alloc_ecl_queue(const enkf_config_type * , const enkf_site_config_type * );
 void               enkf_config_post_check(const enkf_config_type * , const sched_file_type * );
+const char       * enkf_config_get_schedule_target_file(const enkf_config_type * );
+const char       * enkf_config_get_schedule_src_file(const enkf_config_type * );
 #endif

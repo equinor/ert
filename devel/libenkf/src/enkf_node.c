@@ -64,7 +64,14 @@ const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) 
   return node->config; 
 }
 
-const char     *  enkf_node_get_ensfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_ensfile_ref(node->config); }
+const char     *  enkf_node_get_ensfile_ref(const enkf_node_type * node ) { 
+  if (node->config == NULL) {
+    return node->node_key;
+  } else 
+    return enkf_config_node_get_ensfile_ref(node->config); 
+}
+
+
 const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_eclfile_ref(node->config); }
 
 
@@ -412,7 +419,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   switch (impl_type) {
   case(GEN_KW):
     node->alloc       = gen_kw_alloc__;
-    node->ecl_write   = NULL;
+    node->ecl_write   = gen_kw_ecl_write__;
     node->fread_f     = gen_kw_fread__;
     node->fwrite_f    = gen_kw_fwrite__;
     node->copyc       = gen_kw_copyc__;

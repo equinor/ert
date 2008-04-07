@@ -228,14 +228,14 @@ statistic?
 */
 
 
-void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * innov , const double *ens_std , double ens_std_cutoff , double alpha) {
+void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * innov , const double *ens_std , double std_cutoff , double alpha) {
   int nrobs = obs_data->total_size;
   int iobs;
   for (iobs = 0; iobs < nrobs; iobs++) {
-    if (ens_std[iobs] < ens_std_cutoff)
+    if (ens_std[iobs] < std_cutoff)
       /*
-	De activitated because the ensemble has to little variation for this
-	particular measurement.
+	De activated because the ensemble has to little variation for
+	this particular measurement.
       */
       obs_data_deactivate_obs(obs_data , iobs);
     else {

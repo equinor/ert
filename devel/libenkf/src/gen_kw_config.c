@@ -11,12 +11,14 @@
 
 
 
-static gen_kw_config_type * __gen_kw_config_alloc_empty(int size) {
+static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file) {
   gen_kw_config_type *gen_kw_config = malloc(sizeof *gen_kw_config);
   gen_kw_config->kw_list       = enkf_util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
   gen_kw_config->scalar_config = scalar_config_alloc_empty(size);
   gen_kw_config->var_type      = parameter;
-
+  gen_kw_config->template_file = util_alloc_string_copy(template_file);
+  if (!util_file_exists(template_file))
+    util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
   return gen_kw_config;
 }
 
@@ -38,7 +40,7 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
     
     size = util_count_file_lines(stream);
     fseek(stream , 0L , SEEK_SET);
-    config = __gen_kw_config_alloc_empty(size);
+    config = __gen_kw_config_alloc_empty(size , template_file);
     do {
       char name[128];  /* UGGLY HARD CODED LIMIT */
       if (fscanf(stream , "%s" , name) != 1) {
@@ -50,15 +52,10 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
       line_nr++;
     } while ( line_nr < size );
     fclose(stream);
-    config->template_file = util_alloc_string_copy(template_file);
-  } else {
-    fprintf(stderr,"%s: ** Warning ** : config file:%s does not exist \n",__func__ , filename);
-    fprintf(stderr,"%s: ** Warning ** : config file:%s does not exist \n",__func__ , filename);
-    
-    config = __gen_kw_config_alloc_empty(0);
-    config->template_file = util_alloc_string_copy(template_file);
-    config->kw_list = NULL;
   }
+  else 
+    util_abort("%s: config_file:%s does not exist - aborting.\n" , __func__ , filename);
+
   return config;
 }
 

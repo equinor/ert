@@ -39,5 +39,5 @@ VOID_INITIALIZE_HEADER(gen_kw);
 VOID_FREE_HEADER       (gen_kw);
 MATH_OPS_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
-
+VOID_ECL_WRITE_HEADER(gen_kw);
 #endif
