@@ -254,6 +254,8 @@ struct new_type_struct {
 
 /*
 scalar_type
+===========
+This type is implemented in scalar.c / scalar_config.c.
 */
 
 

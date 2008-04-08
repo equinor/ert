@@ -318,7 +318,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
     util_alloc_file_components(__config_file , &path , &base , &ext);
     if (path != NULL) {
       if (chdir(path) != 0) {
-	fprintf(stderr,"%s: failed to change driectory to: %s : %s \n",__func__ , path , strerror(errno));
+	fprintf(stderr,"%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
 	abort();
       }
       printf("Changing to directory ...................: %s \n",path);
@@ -739,7 +739,7 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
       sprintf(restart_extension , ".F%s04d" , "%");
     else
       sprintf(restart_extension , ".X%s04d" , "%");
-    __target_file_fmt = util_alloc_joined_string( (const char *[4]) {__run_path , UTIL_PATH_SEP , __ecl_base , restart_extension} , 4 , "");
+    __target_file_fmt = util_alloc_joined_string( (const char *[4]) {__run_path , UTIL_PATH_SEP_STRING , __ecl_base , restart_extension} , 4 , "");
     target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
 
     if (enkf_site_config_node_set(site_config , "ECLIPSE_LD_PATH"))

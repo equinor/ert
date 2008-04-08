@@ -30,7 +30,7 @@ struct serial_state_struct {
 
 struct enkf_node_struct {
   alloc_ftype         *alloc;
-g  ecl_write_ftype     *ecl_write;
+  ecl_write_ftype     *ecl_write;
   fread_ftype         *fread_f;
   fwrite_ftype        *fwrite_f;
   realloc_data_ftype  *realloc_data;
