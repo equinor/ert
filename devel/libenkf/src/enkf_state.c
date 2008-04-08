@@ -426,7 +426,7 @@ static void enkf_state_load_ecl_restart__(enkf_state_type * enkf_state , const e
       }
     } else {
       /* It is a static kw like INTEHEAD or SCON */
-      /* ecl_util_escape_kw(kw); */
+      ecl_util_escape_kw(kw); 
       if (!enkf_state_has_node(enkf_state , kw)) 
 	enkf_state_add_node(enkf_state , kw , NULL); 
       {

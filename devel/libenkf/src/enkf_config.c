@@ -310,20 +310,29 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 					    bool fmt_file ,
 					    bool unified  ,         
 					    bool endian_swap) { 
-
   char *config_file;
   {
-    char * config_path;
-    util_alloc_file_components(__config_file , &config_path , &config_file , NULL);
-    if (config_path != NULL) {
-      if (chdir(config_path) != 0) {
-	fprintf(stderr,"%s: failed to change driectory to: %s : %s \n",__func__ , config_path , strerror(errno));
+    char * path;
+    char * base;
+    char * ext;
+    util_alloc_file_components(__config_file , &path , &base , &ext);
+    if (path != NULL) {
+      if (chdir(path) != 0) {
+	fprintf(stderr,"%s: failed to change driectory to: %s : %s \n",__func__ , path , strerror(errno));
 	abort();
       }
-      printf("Changing to directory ...................: %s \n",config_path);
-      free(config_path);
-    }
+      printf("Changing to directory ...................: %s \n",path);
+      if (ext != NULL) {
+	config_file = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
+	free(base);
+      } else 
+	config_file = base;
+      free(ext);
+      free(path);
+    } else
+      config_file = util_alloc_string_copy(__config_file);
   }
+  
   printf("Loading configuration information from ..: %s \n",config_file);  
   {  
     enkf_config_type * enkf_config = enkf_config_alloc_empty(ens_offset , fmt_file , unified , endian_swap);

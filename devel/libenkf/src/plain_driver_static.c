@@ -31,9 +31,7 @@ static void plain_driver_static_assert_node(const enkf_node_type * node) {
 
 
 static const char * __get_filename(const enkf_node_type * node) {
-  ecl_static_kw_type * static_kw = enkf_node_value_ptr(node);
-  const ecl_kw_type  * ecl_kw    = ecl_static_kw_ecl_kw_ptr(static_kw);
-  return ecl_kw_get_header_ref(ecl_kw);
+  return enkf_node_get_ensfile_ref(node);
 }
 
 

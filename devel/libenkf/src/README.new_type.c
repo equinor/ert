@@ -52,14 +52,22 @@ all) are:
     instance.
 
 
-2.  fread_ftype: void new_type_fread(new_type * , FILE * );
+2.  ecl_write_ftype: void new_type_ecl_write(const new_type * , const char *);
+    --------------------------------------------------------------------------
+    This function takes a const pointer to a new_type instance, along
+    with a filename. The function should write eclipse data to the
+    filename specified in the second argument. 
+
+
+
+3.  fread_ftype: void new_type_fread(new_type * , FILE * );
     ------------------------------------------------
     This function should take a pointer to a new_type object, and a
     stream opened for reading as input, and then read in data for the
     object from disk.
 
 
-3.  fwrite_ftype: void new_type_fwrite(new_type * , FILE * );
+4.  fwrite_ftype: void new_type_fwrite(new_type * , FILE * );
     ------------------------------------------------
     This function should take a pointer to a new_type object, and a
     stream opened for writing as input, and then write the data from
@@ -68,7 +76,14 @@ all) are:
     quite free.
 
 
-4.  initialize_ftype: void new_type_initialize(new_type * , int);
+5.  copyc_ftype: new_type * new_type_copyc(const new_type *);
+    ---------------------------------------------------------------
+    This function takes a const pointer to a new_type instance. A new
+    new_type copy instance with identical data is created. The two
+    instance share config object.
+
+
+6.  initialize_ftype: void new_type_initialize(new_type * , int);
     ------------------------------------------------------------
     This function takes a pointer to a new_type instance, and a an
     ensemble number as input; it should then initialize the data of
@@ -77,12 +92,170 @@ all) are:
     external program or by calling an external program (i.e. RMS).
 
 
-5.  ecl_write_ftype: void new_type_ecl_write(const new_type * , const char *);
-    --------------------------------------------------------------------------
-    This function takes a const pointer to a new_type instance, along
-    with a filename. The function should write eclipse data to the
-    filename specified in the second argument. 
+7.  serialize_ftype: int (const new_type * , int , size_t , double * , size_t , size_t , bool *);
+    --------------------------------------------------------------------------------------------
+    This one is a bit tricky... The enkf_state object, holding among
+    others things instances of new_type * can be illustrated as this:
+
+
+    --------------
+    | enkf_state |
+    ==============         ---------------- 
+    | PRESSURE   |-------->| Pressure data|     
+    |------------|         ---------------- 
+    | New_type   |---|
+    --------------   |         -----------------
+    | multz      |   |-------->| new_type data |
+    --------------             -----------------  
+       |  
+       |       -------------- 
+       |------>| multz data |
+               --------------  
+
+    The key point of this figure is that the various data we want to
+    update with enkf are at random locations in memory. To be able to
+    do the
+               A' = AX
+ 
+    matrix multiplication we must assemble this data in a long
+    vector. That is what is meant by searializing. The searilize
+    routine is so complicated for (at least) two reasons:
+
+     o We can allocate a certain amount of memory, and then the
+       serialize routines should continue until the available memory
+       is exhausted, update and the resume.
+
+     o For efficiency reasons a "funny" stride should be used.
 
 
 
+8.  deserialize_ftype: int new_type_deserialize(new_type * , int , size_t , const double * , size_t , size_t);
+    ---------------------------------------------------------------------------------------------------------
+    This is "just" the opposite of serialize, take data back after the
+    update (matrix multiplication).
+
+
+9.  free_ftype: void new_type_free(new_type *);
+    -------------------------------------------
+    This function should free all the memory used by the new_type
+    instance. Observe that the config pointer should be left alone,
+    that will be collected elsewhere.
+
+10. free_data_ftype: void new_type_free_data(new_type *);
+    -----------------------------------------------------
+    This function should free the data of the new_type instance, but
+    retain the new_type holding structure. This function is called
+    after an instance has swapped to disk.
+
+There are more to these functions - which will be decribed below.
 */
+
+
+
+/*
+OK - here comes the implementation:
+*/
+
+/*
+  These are standard header files needed by almost any C-program:
+*/
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
+
+/*
+  Lots of small utility functions for: memory handling, string
+  handling and file handling. Implemented in the libutil library.
+*/
+#include <util.h>
+
+
+/*
+  Lots of (ugly) C-macros to generate anonymous versions of the various
+  functions listed above.
+*/
+#include <enkf_macros.h>
+
+
+/*
+  This file contains several enum typedefs, the most important one in
+  this context is the enkf_impl_type; the NEW_TYPE should be added to
+  this (at the end).
+*/
+#include <enkf_types.h>
+
+
+/*
+  The header file for the actual new_type object.
+*/
+#include <new_type.h>
+
+
+
+/*
+  These two #define statements, along with the macros found in
+  enkf_debug.h allow for some simple run_time checks of the various
+  casts. Observe that the header file enkf_debug.h is included from
+  the current directory; it is *not* installed in an include/
+  directory.
+*/
+#define  TARGET_TYPE NEW_TYPE   /* The variable type in this file - according to the enkf_impl_type classification */
+#define  DEBUG                  /* We want debugging */  
+#include "enkf_debug.h"
+
+
+
+/* 
+   Here comes the new_type_struct defintion: 
+*/
+
+struct new_type_struct {
+  DEBUG_DECLARE
+  const new_type_config_type *config;
+  
+  1: scalar_type    *scalar;
+  2: double         *data;
+};
+
+/*
+  Observe the following properties of the struct:
+
+  1. The statement DEBUG_DECLARE inserts a variable __impl_type as the
+     first element of the struct (if debugging is enabled) with
+     #define DBEUG. This should be the first element in the struct.
+
+  2. The struct contains a pointer to a new_type_config_type object;
+     this pointer is const, as the new_type instances are not allowed
+     to write the configuration information (it is shared among many
+     instances), only read it.
+
+  3. The actual data is stored in either a scalar instance, or just as
+     double * data. (1: and 2: is *NOT* some new funny C-syntax).
+
+     The scalar_type object is described further down. If use of
+     scalar_type is not appropriate, you must store the data in some
+     other way. There are no formal rules to this, but if you stick to
+     the suggested "double *data;" convention suggested above, you
+     will get several macros for algebraic manipulation (adding,
+     scaling, squaring +++) of new_type instances for free. 
+
+     Hence - it is *strongly* recommended to use either:
+
+       scalar_type * scalar;
+  
+       or
+ 
+       double * data;
+      
+     to hold the actual data.
+*/
+
+
+/*
+scalar_type
+*/
+
+
+
+
