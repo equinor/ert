@@ -51,7 +51,7 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
 	         disp(sprintf('Could not find file: %s - returning from ens_plot',posterior_file));
    	         return;
    	      end
-	      [title , var , unit , time_step , posterior_dates , history , posterior] = ens_load(posterior_file);
+	      [plot_title , var , unit , time_step , posterior_dates , history , posterior] = ens_load(posterior_file);
               posterior_size  = size(posterior , 2);
            end
 
@@ -60,7 +60,7 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
 	      disp(sprintf('Could not find file: %s - returning from ens_plot',prior_file));
    	      return;
    	   end
-           [title , var , unit , time_step , prior_dates , history , prior] = ens_load(prior_file);
+           [plot_title , var , unit , time_step , prior_dates , history , prior] = ens_load(prior_file);
            prior_size = size(prior , 2);
         
    
@@ -87,7 +87,7 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
 
            xlabel('Date');
            ylabel(sprintf('%s (%s)',var,unit));
-	   title(sprintf('%s',title));
+	   title(sprintf('%s',plot_title));
 	      
            for i=1:prior_size,
 	      p = plot(prior_dates , prior(:,i) , 'b' , 'LineWidth' , lw) ; 
