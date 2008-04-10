@@ -40,4 +40,5 @@ VOID_FREE_HEADER       (gen_kw);
 MATH_OPS_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
 VOID_ECL_WRITE_HEADER(gen_kw);
+VOID_REALLOC_DATA_HEADER(gen_kw);
 #endif

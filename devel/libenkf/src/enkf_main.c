@@ -99,10 +99,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
       for (iens = 0; iens < ens_size; iens++)
 	enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
     }
-
-    for (iens = 0; iens < ens_size; iens++) 
-      enkf_state_initialize(enkf_main->ensemble[iens]);
-      
+    
     util_free_string_list(keylist , keys);
   }
   
@@ -110,7 +107,13 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
   /*
     This - can not be hardcoded ....
   */
-  enkf_main_add_data_kw(enkf_main , "INIT" , "INCLUDE\n   \'EQUIL.INC\'/\nRPTSOL\n     0  0  0  0  0 0   2  0   0  0   0   0  0   0 /\n");
+  {
+    char * DATA_initialize = util_alloc_multiline_string((const char *[3]) {"EQUIL" , 
+									    "       2469   382.4   1705.0  0.0    500    0.0     1     1      20 /",
+									    "       2469   382.4   1000.0  0.0    500    0.0     1     1      20 /"} , 3);      
+    enkf_main_add_data_kw(enkf_main , "INIT" , DATA_initialize);
+    free(DATA_initialize);
+  }
   enkf_main_add_data_kw(enkf_main , "INCLUDE_PATH" , "/h/a152128/EnKF/devel/EnKF/libenkf/src/Gurbat");
   enkf_main->thread_pool = NULL;
   enkf_main->void_arg    = NULL;
@@ -273,6 +276,46 @@ void enkf_main_analysis(enkf_main_type * enkf_main) {
 }
 
 
+void enkf_main_swapout_ensemble(enkf_main_type * enkf_main , int report_step , state_enum state) {
+  int iens;
+  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
+    enkf_state_swapout(enkf_main->ensemble[iens] , all_types , report_step , state);
+}
+
+
+void enkf_main_swapin_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
+  int iens;
+  printf("Starter her ... %s \n",__func__);
+  printf("Skal hente fra rapport: %d \n",report_step);
+  
+  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) {
+    printf("iens: %d    ",iens);
+    enkf_state_swapin(enkf_main->ensemble[iens] , mask , report_step , state);
+  }
+}
+
+
+void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int report_step , state_enum state) {
+  int iens;
+  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
+    enkf_state_fwrite(enkf_main->ensemble[iens] , all_types , report_step , state);
+}
+
+
+void  enkf_main_initialize_ensemble(enkf_main_type * enkf_main) {
+  int iens;
+  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
+    enkf_state_initialize(enkf_main->ensemble[iens]);
+}
+
+
+
+/*****************************************************************/
+
+void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step2) {
+  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter , step2 , forecast);
+}
+
 /*****************************************************************/
 
 void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
@@ -280,6 +323,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   const int sleep_time     	= 1;
   int iens;
   
+  printf("<-----------------------------------------------------------------\n");
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   if (enkf_main->void_arg != NULL) {
     fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
@@ -312,17 +356,30 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
     thread_pool_add_job(enkf_main->thread_pool , enkf_state_run_eclipse__ , enkf_main->void_arg[iens]);
   ecl_queue_run_jobs(enkf_main->ecl_queue , ens_size);
   thread_pool_join(enkf_main->thread_pool);
-  {
-    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
-    
-    free(X);
-  }
+  ecl_queue_finalize(enkf_main->ecl_queue); /* Must *NOT* be called before all jobs are done */
 
+  /** Opprydding */
   for (iens = 0; iens < ens_size; iens++) 
     void_arg_free(enkf_main->void_arg[iens]);
   free(enkf_main->void_arg);
   enkf_main->void_arg = NULL;
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
+  
+  printf("Skal kalle update_ensemble ... \n");
+  enkf_main_update_ensemble(enkf_main , step1 , step2);
+  /*{
+    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
+    
+    free(X);
+    }
+  */
+
+
+  
+  printf("Skal skrive det analyserte ensembelet til disk\n");
+  enkf_main_fwrite_ensemble(enkf_main , step2 , analyzed);
+  printf("%s: ferdig \n" , __func__);
+  printf("----------------------------------------------------------------->\n");
 }
 

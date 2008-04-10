@@ -37,17 +37,15 @@ int main (int argc , char ** argv) {
     
     ecl_queue = enkf_config_alloc_ecl_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue);
-    enkf_main_run(enkf_main , 0 , 3);
+    enkf_main_initialize_ensemble(enkf_main);
+    enkf_main_run(enkf_main , 0 , 1);
+    enkf_main_run(enkf_main , 1 , 2);
     
     
     /*
-      enkf_main_analysis(enkf_main);
-      enkf_main_add_data_kw(enkf_main , "INIT" , "INCLUDE\n  \'EQUIL.INC\'/\n");
-      enkf_main_init_eclipse(enkf_main);
+      enkf_config_free(enkf_config);
+      enkf_main_free(enkf_main);
+      enkf_fs_free(fs);
     */
-    
-    enkf_config_free(enkf_config);
-    enkf_main_free(enkf_main);
-    enkf_fs_free(fs);
   }
 }

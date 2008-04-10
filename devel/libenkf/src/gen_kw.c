@@ -200,6 +200,7 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 
 MATH_OPS_SCALAR(gen_kw);
 VOID_ALLOC(gen_kw);
+VOID_REALLOC_DATA(gen_kw);
 VOID_SERIALIZE (gen_kw);
 VOID_DESERIALIZE (gen_kw);
 VOID_INITIALIZE(gen_kw);

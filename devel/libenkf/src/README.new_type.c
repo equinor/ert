@@ -26,7 +26,7 @@ the configuration information in two different files (objects):
 
 
 The figure shows an ensemble of 5 members (of some type); they all
-have a pointer to a common configuration object. The though behind
+have a pointer to a common configuration object. The thought behind
 this is that all members should share configuration information,
 i.e. for instance all the members in a permeability field should have
 the same active/inactive cells, all the relperm instances should use
@@ -94,7 +94,7 @@ all) are:
 
 7.  serialize_ftype: int (const new_type * , int , size_t , double * , size_t , size_t , bool *);
     --------------------------------------------------------------------------------------------
-    This one is a bit tricky... The enkf_state object, holding among
+    This one is a bit tricky ... The enkf_state object, holding among
     others things instances of new_type * can be illustrated as this:
 
 
@@ -146,6 +146,10 @@ all) are:
     This function should free the data of the new_type instance, but
     retain the new_type holding structure. This function is called
     after an instance has swapped to disk.
+
+11. realloc_data_ftype: 
+    -------------------
+
 
 There are more to these functions - which will be decribed below.
 */

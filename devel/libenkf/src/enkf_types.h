@@ -23,6 +23,12 @@ typedef enum {constant         = 1  , /* A parameter which is constant both in t
 	      ecl_static       = 32 , /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
 	      all_types        = 63 }  enkf_var_type;
 
+
+/*
+
+The static can be confusing - because the impl_type STATIC and the
+enkf_var_type ecl_static symbolize perfectly the same thing. */
+
 /* 
    For instance the pressure is implemented with a field, and behaves as a ecl_restart variable. The
    permeability is also implemented as a field, but this is a parameter.

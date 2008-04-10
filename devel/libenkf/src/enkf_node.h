@@ -5,10 +5,12 @@
 #include <enkf_util.h>
 #include <enkf_types.h>
 #include <enkf_config_node.h>
+#include <void_arg.h>
+#include <ecl_kw.h>
 
 /**********************************/
 
-typedef enum   {forecast , serialized , analyzed} state_enum;
+typedef enum   {undefined , forecast , serialized , analyzed} state_enum;
 
 #define NODE_STD_FIELDS \
 int internal_offset;
@@ -64,7 +66,8 @@ typedef enum {alloc_func       = 0,
 
 typedef struct enkf_node_struct enkf_node_type;
 
-typedef void          (enkf_node_ftype1)        (enkf_node_type *);
+typedef void          (enkf_node_ftype1)           (enkf_node_type *);
+typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , void_arg_type * );
 
 enkf_node_type * enkf_node_alloc(const char * , const enkf_config_node_type *);
 void 		 enkf_node_set_modified(enkf_node_type * );
@@ -102,6 +105,7 @@ const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * );
 const char     *  enkf_node_get_key_ref(const enkf_node_type * );
 bool              enkf_node_swapped(const enkf_node_type *);
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);
-bool enkf_node_has_func(const enkf_node_type * , node_function_type );
+bool         	  enkf_node_has_func(const enkf_node_type * , node_function_type );
+void              enkf_node_load_static_ecl_kw(enkf_node_type *, const ecl_kw_type *);
 
 #endif

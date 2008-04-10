@@ -16,6 +16,7 @@
 #include <sched_file.h>
 
 
+
 typedef struct enkf_state_struct enkf_state_type;
 
 void               enkf_state_set_data_kw(enkf_state_type *, const char * , const char * );
@@ -27,8 +28,8 @@ void 		   enkf_state_set_analyzed(enkf_state_type * , bool );
 void               enkf_state_swapout_node(const enkf_state_type * , const char *);
 void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
 meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *);
-void              enkf_state_swapout(enkf_state_type * , int , int , bool );
-void              enkf_state_swapin(enkf_state_type * , int , bool);
+void              enkf_state_swapout(enkf_state_type * , int , int , state_enum );
+void              enkf_state_swapin(enkf_state_type * , int , int , state_enum);
 enkf_state_type * enkf_state_copyc(const enkf_state_type * );
 void              enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
 /*void              enkf_state_add_node(enkf_state_type * , const char * );*/
@@ -47,7 +48,7 @@ void            * enkf_state_run_eclipse__(void * );
 void              enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
 void              enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
 void              enkf_state_sample(enkf_state_type * , int);
-void              enkf_state_ens_write(const enkf_state_type * , int);
+void              enkf_state_fwrite(const enkf_state_type * , int , int  , state_enum );
 void              enkf_state_ens_read(       enkf_state_type * , const char * , int);
 void 		  enkf_state_ecl_write(const enkf_state_type * , int , int);
 void              enkf_state_ecl_read(enkf_state_type * , const ecl_block_type *);
@@ -58,7 +59,7 @@ void              enkf_state_set_iens(enkf_state_type *  , int );
 int               enkf_state_get_iens(const enkf_state_type * );
 void 		  enkf_state_set_run_path(enkf_state_type * , const char*);
 void 		  enkf_state_set_eclbase(enkf_state_type * , const char*);
-
+void              enkf_state_initialize(enkf_state_type * );
 
 void enkf_ensembleemble_update(enkf_state_type ** , int  , size_t , const double * );
 #endif

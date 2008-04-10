@@ -27,18 +27,22 @@ static void plain_driver_parameter_assert_cast(plain_driver_parameter_type * pla
    The convention is that if we ask for the analyzed, we get the
    report step according to input, if we ask for the forecast the
    report step is set one back.
+
+   This means that the function will fail hard if we ask for the
+   forecast at report_step == 0 - which is maybe fair enough.
 */
 
 static int __get_report_step(int report_step , state_enum state) {
   if (state == analyzed)
     return report_step;
-  else if (state == forecast)
+  else if (state == forecast) {
+    if (report_step == 0) 
+      util_abort("%s: sorry at report_step:0 there is no forecast - aborting \n",__func__);
     return report_step - 1;
-  else {
-    fprintf(stderr,"%s state:%d - internal error - aborting \n",__func__ , state);
-    abort();
-  }
+  } else 
+    util_abort("%s state:%d - internal error - aborting \n",__func__ , state);
 }
+
 
 void plain_driver_parameter_load_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
   int report_step = __get_report_step(_report_step , state);
@@ -88,7 +92,8 @@ void plain_driver_parameter_swapin_node(void * _driver , int _report_step , int 
   plain_driver_parameter_assert_cast(driver);
   {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream = util_fopen(filename , "r");
+    FILE * stream   = util_fopen(filename , "r");
+    printf("Skal swappe inn fra: %s \n",filename);
     enkf_node_swapin(node , stream);
     fclose(stream);
     free(filename);

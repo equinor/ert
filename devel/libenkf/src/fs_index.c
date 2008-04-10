@@ -91,6 +91,7 @@ static fs_index_node_type ** fs_index_node_list_fread_alloc(const char * index_f
   return node_list;
 }
 
+
 static void fs_index_free_list(fs_index_node_type ** node_list , int index_size) {
   int inode;
   for (inode = 0; inode < index_size; inode++) 

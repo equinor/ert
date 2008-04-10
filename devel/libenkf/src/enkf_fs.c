@@ -41,7 +41,7 @@ enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index,
 
 static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_node_type * enkf_node , state_enum state) {
   enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
-  basic_driver_type * driver;
+  basic_driver_type * driver = NULL;
   switch (var_type) {
   case(constant):
     driver = fs->parameter;
@@ -58,8 +58,8 @@ static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_
     else if (state == forecast)
       driver = fs->dynamic_forecast;
     else {
-      fprintf(stderr,"%s: internal error - aborting \n",__func__);
-      abort();
+      enkf_node_printf(enkf_node);
+      util_abort("%s: internal error - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
     }
     break;
   case(ecl_summary):
@@ -68,17 +68,16 @@ static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_
     else if (state == forecast)
       driver = fs->dynamic_forecast;
     else {
-      fprintf(stderr,"%s: internal error - aborting \n",__func__);
-      abort();
+      enkf_node_printf(enkf_node);
+      util_abort("%s: internal error - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
     }
     break;
   case(ecl_static):
     driver = fs->eclipse_static;
     break;
   default:
-    fprintf(stderr,"%s: fatal internal error - could not determine enkf_fs driver for object - aborting:\n",__func__);
     enkf_node_printf(enkf_node);
-    abort();
+    util_abort("%s: fatal internal error - could not determine enkf_fs driver for object - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
   }
   basic_driver_assert_cast(driver);
   return driver;
@@ -111,6 +110,18 @@ void enkf_fs_swapout_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , 
   driver->swapout(driver , report_step , iens , state , enkf_node); 
 }
 
+
+void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
+  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , state);
+  if (enkf_node_swapped(enkf_node)) 
+    util_abort("%s: trying to fwrite node:%s which has already been swapped out - this is an internal **BUG**. \n",__func__ , enkf_node_get_key_ref(enkf_node));
+  driver->save(driver , report_step , iens , state , enkf_node); 
+}
+
+
+void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
+  enkf_fs_swapin_node(enkf_fs , enkf_node , report_step , iens , state);
+}
 
 
 void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {

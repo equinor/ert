@@ -149,6 +149,7 @@ static int serial_state_get_internal_offset(const serial_state_type * state) {
 }
 
 
+
 static void serial_state_update_forecast(serial_state_type * state , size_t offset , int elements_added , bool complete) {
   state->serial_size    = elements_added;
   state->state_complete = complete;
@@ -185,8 +186,9 @@ static void serial_state_init_deserialize(const serial_state_type * serial_state
 }
 
 
-/*****************************************************************/
 
+
+/*****************************************************************/
 
 /*
   All the function pointers REALLY should be in the config object ... 
@@ -427,16 +429,17 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
 
   switch (impl_type) {
   case(GEN_KW):
-    node->alloc       = gen_kw_alloc__;
-    node->ecl_write   = gen_kw_ecl_write__;
-    node->fread_f     = gen_kw_fread__;
-    node->fwrite_f    = gen_kw_fwrite__;
-    node->copyc       = gen_kw_copyc__;
-    node->initialize  = gen_kw_initialize__;
-    node->serialize   = gen_kw_serialize__;
-    node->deserialize = gen_kw_deserialize__;
-    node->freef       = gen_kw_free__;
-    node->free_data   = gen_kw_free_data__;
+    node->realloc_data = gen_kw_realloc_data__;
+    node->alloc        = gen_kw_alloc__;
+    node->ecl_write    = gen_kw_ecl_write__;
+    node->fread_f      = gen_kw_fread__;
+    node->fwrite_f     = gen_kw_fwrite__;
+    node->copyc        = gen_kw_copyc__;
+    node->initialize   = gen_kw_initialize__;
+    node->serialize    = gen_kw_serialize__;
+    node->deserialize  = gen_kw_deserialize__;
+    node->freef        = gen_kw_free__;
+    node->free_data    = gen_kw_free_data__;
     break;
   case(MULTZ):
     node->alloc       = multz_alloc__;
@@ -463,28 +466,30 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->free_data   = multflt_free_data__;
     break;
   case(WELL):
-    node->alloc       = well_alloc__;
-    node->ecl_write   = NULL;
-    node->fread_f     = well_fread__;
-    node->fwrite_f    = well_fwrite__;
-    node->copyc       = well_copyc__;
-    node->initialize  = NULL;
-    node->serialize   = well_serialize__;
-    node->deserialize = well_deserialize__;
-    node->freef       = well_free__;
-    node->free_data   = well_free_data__;
+    node->realloc_data = well_realloc_data__;
+    node->alloc        = well_alloc__;
+    node->ecl_write    = NULL;
+    node->fread_f      = well_fread__;
+    node->fwrite_f     = well_fwrite__;
+    node->copyc        = well_copyc__;
+    node->initialize   = NULL;
+    node->serialize    = well_serialize__;
+    node->deserialize  = well_deserialize__;
+    node->freef        = well_free__;
+    node->free_data    = well_free_data__;
     break;
   case(FIELD):
-    node->alloc       = field_alloc__;
-    node->ecl_write   = field_ecl_write__;
-    node->fread_f     = field_fread__;
-    node->fwrite_f    = field_fwrite__;
-    node->copyc       = field_copyc__;
-    node->initialize  = field_initialize__;
-    node->serialize   = field_serialize__;
-    node->deserialize = field_deserialize__;
-    node->freef       = field_free__;
-    node->free_data   = field_free_data__;
+    node->realloc_data = field_realloc_data__;
+    node->alloc        = field_alloc__;
+    node->ecl_write    = field_ecl_write__;
+    node->fread_f      = field_fread__;
+    node->fwrite_f     = field_fwrite__;
+    node->copyc        = field_copyc__;
+    node->initialize   = field_initialize__;
+    node->serialize    = field_serialize__;
+    node->deserialize  = field_deserialize__;
+    node->freef        = field_free__;
+    node->free_data    = field_free_data__;
     break;
   case(PGBOX):
     node->alloc       = pgbox_alloc__;
@@ -578,4 +583,11 @@ enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_t
 }
 
 
+void enkf_node_load_static_ecl_kw(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {
+  if (enkf_node_get_impl_type(enkf_node) != STATIC) 
+    util_abort("%s: internal error - this function should only be called with static nodes. \n" , __func__);
+
+  ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
+  enkf_node->swapped = false;
+}
 
