@@ -6,6 +6,7 @@
 #include <enkf_config_node.h>
 #include <util.h>
 #include <multz.h>
+#include <relperm.h>
 #include <multflt.h>
 #include <equil.h>
 #include <field.h>
@@ -452,6 +453,18 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->deserialize = multz_deserialize__;
     node->freef       = multz_free__;
     node->free_data   = multz_free_data__;
+    break;
+  case(RELPERM):
+    node->alloc       = relperm_alloc__;
+    node->ecl_write   = relperm_ecl_write__;
+    node->fread_f     = relperm_fread__;
+    node->fwrite_f    = relperm_fwrite__;
+    node->copyc       = relperm_copyc__;
+    node->initialize  = relperm_initialize__;
+    node->serialize   = relperm_serialize__;
+    node->deserialize = relperm_deserialize__;
+    node->freef       = relperm_free__;
+    node->free_data   = relperm_free_data__;
     break;
   case(MULTFLT):
     node->alloc       = multflt_alloc__;

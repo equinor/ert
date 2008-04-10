@@ -44,7 +44,7 @@ void relperm_inter_sample__(const int * iens, double * data){
 
 void relperm_inter_ecl_write__(const char * _path, const int * path_len, const double * data, const int * iens){
   char * path = util_alloc_cstring(_path,path_len);
-  relperm_ecl_write(RELPERM_LIST[(*iens)-1],data,path);
+  relperm_ecl_write_f90test(RELPERM_LIST[(*iens)-1],data,path);
   
   /*
   char * file = util_alloc_full_path(path,"RELPERM.INC");

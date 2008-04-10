@@ -23,7 +23,7 @@ typedef struct {
 double              multz_config_truncate(const multz_config_type * , int , double );
 multz_config_type * multz_config_fscanf_alloc(const char * , int , int , int);
 multz_config_type * multz_config_alloc(int , int , int , const char * , const char * );
-void                multz_config_free(multz_config_type *);
+void                multz_config_free(multz_config_type *); 
 const        char * multz_config_get_ensfile_ref(const multz_config_type * );
 const        char * multz_config_get_eclfile_ref(const multz_config_type * );
 void                multz_config_ecl_write(const multz_config_type * , const double *, FILE *);

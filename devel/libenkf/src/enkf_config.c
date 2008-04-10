@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <util.h>
 #include <hash.h>
-#include <multz_config.h>
 #include <enkf_config_node.h>
 #include <path_fmt.h>
 #include <ecl_static_kw_config.h>
@@ -14,6 +13,7 @@
 #include <field_config.h>
 #include <equil_config.h>
 #include <multz_config.h>
+#include <relperm_config.h>
 #include <multflt_config.h>
 #include <well_obs.h>
 #include <pgbox_config.h>
@@ -268,7 +268,7 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
 						  bool unified  ,         
 						  bool endian_swap) {
   enkf_config_type * config = malloc(sizeof * config);
-  config->config_hash = hash_alloc();
+  config->config_hash = hash_alloc(10);
 
   config->endian_swap   = endian_swap;
   config->unified       = unified;
@@ -454,6 +454,16 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		enkf_config_add_type(enkf_config , key , parameter , MULTZ , ecl_file , multz_config_fscanf_alloc(config_file , nx , ny , nz));
 	      }
 	      break;
+	    case(RELPERM):
+	      {
+		const char * key         = token_list[1];
+		const char * ecl_file    = token_list[2];
+		char       * config_file = token_list[3];
+		char       * table_file  = token_list[4];
+		enkf_config_add_type(enkf_config, key,parameter, RELPERM, ecl_file, relperm_config_fscanf_alloc(config_file,table_file));
+		
+	      }
+	      break;
 	    case(MULTFLT):
 	      {
 		const char * key         = token_list[1];
@@ -604,6 +614,9 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       break;
     case(MULTZ):
       freef             = multz_config_free__;
+      break;
+    case(RELPERM):
+      freef             = relperm_config_free__;
       break;
     case(WELL):
       freef             = well_config_free__;

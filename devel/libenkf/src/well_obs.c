@@ -211,7 +211,7 @@ static well_obs_type * __well_obs_alloc(const well_config_type * config , const 
   well_obs->hist             = hist;
   well_obs->sched_file       = sched_file;
   well_obs->config           = config;
-  well_obs->var_hash         = hash_alloc();
+  well_obs->var_hash         = hash_alloc(10);
   well_obs->__num_reports    = history_get_num_reports(hist);
   return well_obs;
 }

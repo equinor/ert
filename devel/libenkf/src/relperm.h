@@ -10,10 +10,25 @@ relperm_type * relperm_alloc(const relperm_config_type * );
 void           relperm_initialize(relperm_type *, int iens);
 void           relperm_get_data(const relperm_type *, double *);
 void           relperm_set_data(const relperm_type *, const double *);
-void           relperm_make_tab(relperm_type *);
-void           relperm_ecl_write(const relperm_type *,const double *, const char *);
+void           relperm_ecl_write_f90test(const relperm_type *,const double *, const char *);
 void           relperm_output_transform(const relperm_type *);
 const double * relperm_get_output_ref(const relperm_type *);
 void relperm_get_output_data(const relperm_type *, double *);
-void relperm_tab_tot_water_sat(relperm_type * relperm);
+
+
+MATH_OPS_HEADER(relperm);
+ENSEMBLE_MULX_VECTOR_HEADER(relperm);
+ENSEMBLE_MULX_VECTOR_VOID_HEADER(relperm);
+VOID_ALLOC_HEADER(relperm);
+VOID_FREE_HEADER(relperm);
+VOID_FREE_DATA_HEADER(relperm);
+VOID_REALLOC_DATA_HEADER(relperm);
+VOID_COPYC_HEADER      (relperm);
+VOID_SERIALIZE_HEADER  (relperm)
+VOID_DESERIALIZE_HEADER  (relperm)
+VOID_ECL_WRITE_HEADER (relperm)
+VOID_FWRITE_HEADER (relperm)
+VOID_FREAD_HEADER  (relperm)
+VOID_INITIALIZE_HEADER(relperm)
+
 #endif

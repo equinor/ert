@@ -20,7 +20,7 @@
 
 static enkf_obs_type * enkf_obs_alloc(const sched_file_type * sched_file , const history_type * hist) {
   enkf_obs_type * enkf_obs = malloc(sizeof * enkf_obs);
-  enkf_obs->obs_hash 	   = hash_alloc();
+  enkf_obs->obs_hash 	   = hash_alloc(10);
   
   
   enkf_obs->sched_file     = sched_file;
