@@ -38,5 +38,6 @@ bool   	        history_has_well(const history_type * , const char * );
 /*well_var_type   history_get_var_type(const history_type *  , const char * );   */
 history_type     * history_alloc_from_schedule(const sched_file_type *);
 int                history_get_num_reports(const history_type * );
+void               history_summarize(const history_type * );
 
 #endif

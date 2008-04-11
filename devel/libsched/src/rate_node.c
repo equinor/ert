@@ -199,14 +199,13 @@ static double __sum_get(const ecl_sum_type * sum , int report_nr , const char * 
 
 
 rate_type * rate_alloc_from_summary(bool history_mode , const ecl_sum_type * sum , int report_nr , const char * well) {
-  int   cmode ;
-  
-  if (ecl_sum_has_well_var(sum , well , "WMCTL"))
+  int  cmode = -1;
+
+  if (ecl_sum_has_well_var(sum , well , "WMCTL")) 
     cmode = round(ecl_sum_get_well_var(sum , report_nr , well , "WMCTL"));
-  else
-    cmode = 0;
+  else 
+    util_abort("%s: summary data did not contain kewyord WMCTL - can not determine well status. \n",__func__);
   
-  if (cmode == 0) return NULL;
   {
     rate_type * rate = rate_alloc_empty(11);
     rate->well = util_alloc_string_copy(well);

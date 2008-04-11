@@ -11,8 +11,8 @@ CFLAGS  = -O2 -$(MFLAG) -std=gnu99 -g -Wall
 FFLAGS  = -fpe0 -traceback -warn unused -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
 ARFLAGS = -csr
 #################################################################
-OBJECTS   = history.o rate_node.o date_node.o sched_interC.o sched_file.o sched_util.o sched_kw.o sched_kw_compdat.o sched_kw_wconhist.o sched_kw_dates.o sched_kw_untyped.o sched_kw_tstep.o
-INC_FILES = date_node.h rate_node.h history.h sched_file.h sched_util.h sched_kw.h sched_kw_compdat.h sched_kw_wconhist.h sched_kw_dates.h sched_kw_untyped.h sched_kw_tstep.h
+OBJECTS   = history.o rate_node.o date_node.o sched_interC.o sched_file.o sched_util.o sched_kw.o sched_kw_compdat.o sched_kw_wconhist.o sched_kw_dates.o sched_kw_untyped.o sched_kw_tstep.o history_ens_diag.o
+INC_FILES = date_node.h rate_node.h history.h sched_file.h sched_util.h sched_kw.h sched_kw_compdat.h sched_kw_wconhist.h sched_kw_dates.h sched_kw_untyped.h sched_kw_tstep.h history_ens_diag.h
 LIB       = libsched_$(MFLAG).a
 LIB_LINK  = -lsched_$(MFLAG) -lecl_$(MFLAG) -lhash_$(MFLAG) -lutil_$(MFLAG) -lm -lz
 LIB_PATH  = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib
@@ -25,6 +25,7 @@ all: $(LIB)
 	install $(LIB) $(INSTALL_LIB_PATH)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) sched_test.c -o sched.x $(LIB_PATH) $(LIB_LINK)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) ecl_rft.c    -o rft.x   $(LIB_PATH) $(LIB_LINK)
+
 
 clean:
 	rm -f *.o *~ 
@@ -56,4 +57,4 @@ sched_kw.o          : sched_kw.c sched_kw.h sched_kw_wconhist.o sched_kw_untyped
 sched_file.o        : sched_file.c sched_file.h sched_util.o sched_kw.o sched_kw_compdat.o 
 sched_interC.o      : sched_interC.c sched_file.o
 date_node.o         : date_node.c date_node.h
-
+history_ens_diag.o  : history_ens_diag.c history_ens_diag.h
