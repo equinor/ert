@@ -99,28 +99,15 @@ void enkf_fs_free(enkf_fs_type * fs) {
 }
 
 
-void enkf_fs_swapin_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , state);
-  driver->swapin(driver , report_step , iens , state , enkf_node);
-}
-
-
-void enkf_fs_swapout_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , state);
-  driver->swapout(driver , report_step , iens , state , enkf_node); 
-}
-
-
 void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , state);
-  if (enkf_node_swapped(enkf_node)) 
-    util_abort("%s: trying to fwrite node:%s which has already been swapped out - this is an internal **BUG**. \n",__func__ , enkf_node_get_key_ref(enkf_node));
   driver->save(driver , report_step , iens , state , enkf_node); 
 }
 
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  enkf_fs_swapin_node(enkf_fs , enkf_node , report_step , iens , state);
+  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node , state);
+  driver->load(driver , report_step , iens , state , enkf_node); 
 }
 
 

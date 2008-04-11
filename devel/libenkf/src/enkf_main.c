@@ -276,29 +276,28 @@ void enkf_main_analysis(enkf_main_type * enkf_main) {
 }
 
 
-void enkf_main_swapout_ensemble(enkf_main_type * enkf_main , int report_step , state_enum state) {
+void enkf_main_swapout_ensemble(enkf_main_type * enkf_main , int mask) {
   int iens;
   for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
-    enkf_state_swapout(enkf_main->ensemble[iens] , all_types , report_step , state);
+    enkf_state_swapout(enkf_main->ensemble[iens] , mask);
 }
 
 
-void enkf_main_swapin_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
+void enkf_main_swapin_ensemble(enkf_main_type * enkf_main , int mask) {
   int iens;
   printf("Starter her ... %s \n",__func__);
-  printf("Skal hente fra rapport: %d \n",report_step);
-  
   for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) {
     printf("iens: %d    ",iens);
-    enkf_state_swapin(enkf_main->ensemble[iens] , mask , report_step , state);
+    enkf_state_swapin(enkf_main->ensemble[iens] , mask );
   }
 }
 
 
-void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int report_step , state_enum state) {
+
+void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
   int iens;
   for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
-    enkf_state_fwrite(enkf_main->ensemble[iens] , all_types , report_step , state);
+    enkf_state_fwrite_as(enkf_main->ensemble[iens] , mask , report_step , state);
 }
 
 
@@ -312,8 +311,15 @@ void  enkf_main_initialize_ensemble(enkf_main_type * enkf_main) {
 
 /*****************************************************************/
 
+void enkf_main_set_ensemble_state(enkf_main_type * enkf_main , int report_step , state_enum state) {
+  int iens;
+  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
+    enkf_state_set_state(enkf_main->ensemble[iens] , report_step , state);
+}
+
 void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step2) {
-  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter , step2 , forecast);
+  enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
 }
 
 /*****************************************************************/
@@ -378,7 +384,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
 
   
   printf("Skal skrive det analyserte ensembelet til disk\n");
-  enkf_main_fwrite_ensemble(enkf_main , step2 , analyzed);
+  enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
   printf("%s: ferdig \n" , __func__);
   printf("----------------------------------------------------------------->\n");
 }

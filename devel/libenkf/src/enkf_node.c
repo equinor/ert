@@ -53,7 +53,7 @@ struct enkf_node_struct {
   serial_state_type  *serial_state;
   char               *node_key;
   void               *data;
-  bool                swapped;
+  bool                memory_allocated;
   bool                modified; 
   const enkf_config_node_type *config;
 };
@@ -200,6 +200,7 @@ void enkf_node_alloc_domain_object(enkf_node_type * node) {
   if (node->data != NULL)
     node->freef(node->data);
   node->data = node->alloc(enkf_config_node_get_ref(node->config));
+  node->memory_allocated = true;
 }
 
 
@@ -241,10 +242,6 @@ enkf_var_type enkf_node_get_var_type(const enkf_node_type * enkf_node) {
 }
 
 
-bool enkf_node_swapped(const enkf_node_type *enkf_node) {
-  return enkf_node->swapped;
-}
-
 
 #define FUNC_ASSERT(func) \
    if (func == NULL) {      \
@@ -275,13 +272,30 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
 
 
 void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
-  FUNC_ASSERT(enkf_node->fwrite_f);
-  enkf_node->fwrite_f(enkf_node->data , stream);
+  if (!enkf_node->memory_allocated) 
+    util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
+  {
+    FUNC_ASSERT(enkf_node->fwrite_f);
+    enkf_node->fwrite_f(enkf_node->data , stream);
+  }
 }
+
+
+void enkf_node_assert_memory(enkf_node_type * enkf_node) {
+  FUNC_ASSERT(enkf_node->realloc_data);
+  if (!enkf_node->memory_allocated) {
+    enkf_node->realloc_data(enkf_node->data);
+    enkf_node->memory_allocated = true;
+  }
+}
+
+
+bool enkf_node_memory_allocated(const enkf_node_type * node) { return node->memory_allocated; }
 
 
 void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream) {
   FUNC_ASSERT(enkf_node->fread_f);
+  enkf_node_assert_memory(enkf_node);
   enkf_node->fread_f(enkf_node->data , stream);
 }
 
@@ -315,7 +329,6 @@ void enkf_node_deserialize(enkf_node_type *enkf_node , double *serial_data , siz
     serial_state_init_deserialize(enkf_node->serial_state , &internal_offset , &serial_offset, &serial_size );
     new_internal_offset = enkf_node->deserialize(enkf_node->data , internal_offset , serial_size , serial_data , stride , serial_offset);
     serial_state_update_serialized(enkf_node->serial_state , new_internal_offset);
-    
   }
 }
 
@@ -352,29 +365,10 @@ void enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
 }
 
 
-void enkf_node_swapin(enkf_node_type *enkf_node , FILE * stream) {
-  FUNC_ASSERT(enkf_node->fread_f);
-  FUNC_ASSERT(enkf_node->realloc_data);
-  if (enkf_node_swapped(enkf_node)) {
-    enkf_node->realloc_data(enkf_node->data);
-    enkf_node->fread_f(enkf_node->data , stream);
-  }
-  enkf_node->swapped = false;
-}
-
-
-void enkf_node_swapout(enkf_node_type *enkf_node , FILE * stream ) {
-  FUNC_ASSERT(enkf_node->fwrite_f);
+void enkf_node_free_data(enkf_node_type * enkf_node) {
   FUNC_ASSERT(enkf_node->free_data);
-  enkf_node->fwrite_f(enkf_node->data , stream);
   enkf_node->free_data(enkf_node->data);
-  enkf_node->swapped = true;
-}
-
-void enkf_node_realloc_data(enkf_node_type * enkf_node) {
-  FUNC_ASSERT(enkf_node->realloc_data);
-  enkf_node->realloc_data(enkf_node->data);
-  enkf_node->swapped = false;
+  enkf_node->memory_allocated = false;
 }
 
 
@@ -422,11 +416,11 @@ const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) { return enk
 
 /* Manual inheritance - .... */
 static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_config_node_type *config , enkf_impl_type impl_type) {
-  enkf_node_type * node = util_malloc(sizeof * node , __func__);
-  node->config          = config;
-  node->node_key        = util_alloc_string_copy(node_key);
-  node->data            = NULL;
-  node->swapped         = false;
+  enkf_node_type * node  = util_malloc(sizeof * node , __func__);
+  node->config           = config;
+  node->node_key         = util_alloc_string_copy(node_key);
+  node->data             = NULL;
+  node->memory_allocated = false;
 
   switch (impl_type) {
   case(GEN_KW):
@@ -529,16 +523,17 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->free_data   = equil_free_data__;
     break;
   case(STATIC):
-    node->alloc       = ecl_static_kw_alloc__;
-    node->ecl_write   = NULL; /* ecl_static_kw_ecl_write__; */
-    node->fread_f     = ecl_static_kw_fread__;
-    node->fwrite_f    = ecl_static_kw_fwrite__;
-    node->copyc       = ecl_static_kw_copyc__;
-    node->initialize  = NULL; 
-    node->serialize   = NULL; 
-    node->deserialize = NULL;
-    node->freef       = ecl_static_kw_free__;
-    node->free_data   = ecl_static_kw_free_data__;
+    node->realloc_data = ecl_static_kw_realloc_data__;
+    node->alloc        = ecl_static_kw_alloc__;
+    node->ecl_write    = NULL; /* ecl_static_kw_ecl_write__; */
+    node->fread_f      = ecl_static_kw_fread__;
+    node->fwrite_f     = ecl_static_kw_fwrite__;
+    node->copyc        = ecl_static_kw_copyc__;
+    node->initialize   = NULL; 
+    node->serialize    = NULL; 
+    node->deserialize  = NULL;
+    node->freef        = ecl_static_kw_free__;
+    node->free_data    = ecl_static_kw_free_data__;
     break;
     
   default:
@@ -588,9 +583,8 @@ enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_t
   if (impl_type == STATIC)
     node->data = node->alloc(NULL);
   else
-    node->data = node->alloc(enkf_config_node_get_ref(config));
+    enkf_node_alloc_domain_object(node);
   
-  node->swapped = false;
   enkf_node_set_modified(node);
   return node;
 }
@@ -601,6 +595,6 @@ void enkf_node_load_static_ecl_kw(enkf_node_type * enkf_node , const ecl_kw_type
     util_abort("%s: internal error - this function should only be called with static nodes. \n" , __func__);
 
   ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
-  enkf_node->swapped = false;
+  enkf_node->memory_allocated = true;
 }
 

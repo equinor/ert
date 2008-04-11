@@ -58,7 +58,7 @@ void ecl_static_kw_init(ecl_static_kw_type * ecl_static_kw, const ecl_kw_type * 
 void ecl_static_kw_fread(ecl_static_kw_type * ecl_static_kw , FILE * stream) {
   DEBUG_ASSERT(ecl_static_kw);
   enkf_util_fread_assert_target_type(stream , STATIC , __func__);
-  ecl_kw_fread_realloc_compressed(ecl_static_kw->ecl_kw , stream);
+  ecl_static_kw->ecl_kw = ecl_kw_fread_alloc_compressed(stream);
 }
 
 
@@ -68,6 +68,19 @@ void ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stre
   ecl_kw_fwrite_compressed(ecl_static_kw->ecl_kw , stream);
 }
 
+
+/**
+This is a pure dummy, memory is handled differently for this object
+type:
+
+  o The ecl_kw_type instance holding the data is boostrapped on fread().
+  
+  o The whole ecl_kw_type instances is free'd on free_data.
+*/
+
+void ecl_static_kw_realloc_data(ecl_static_kw_type * ecl_static_kw) {
+  return ;
+}
 
 
 
@@ -79,4 +92,4 @@ VOID_FREE_DATA(ecl_static_kw)
 VOID_FWRITE (ecl_static_kw)
 VOID_FREAD  (ecl_static_kw)
 VOID_COPYC(ecl_static_kw)
-
+VOID_REALLOC_DATA(ecl_static_kw)

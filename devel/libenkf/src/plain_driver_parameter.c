@@ -51,7 +51,9 @@ void plain_driver_parameter_load_node(void * _driver , int _report_step , int ie
   {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
     FILE * stream = util_fopen(filename , "r");
+    printf("Skal loade fra: %s \n",filename);
     enkf_node_fread(node , stream);
+    printf("fread OK \n");
     fclose(stream);
     free(filename);
   }
@@ -72,33 +74,6 @@ void plain_driver_parameter_save_node(void * _driver , int _report_step , int ie
 }
 
 
-void plain_driver_parameter_swapout_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
-  int report_step = __get_report_step(_report_step , state);
-  plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
-  plain_driver_parameter_assert_cast(driver);
-  if (!enkf_node_swapped(node)) {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream = util_fopen(filename , "w");
-    enkf_node_swapout(node , stream);
-    fclose(stream);
-    free(filename);
-  }
-}
-
-
-void plain_driver_parameter_swapin_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
-  int report_step = __get_report_step(_report_step , state);
-  plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
-  plain_driver_parameter_assert_cast(driver);
-  {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream   = util_fopen(filename , "r");
-    printf("Skal swappe inn fra: %s \n",filename);
-    enkf_node_swapin(node , stream);
-    fclose(stream);
-    free(filename);
-  }
-}
 
 
 void plain_driver_parameter_free(void *_driver) {
@@ -117,8 +92,6 @@ void * plain_driver_parameter_alloc(const char * root_path , const char * driver
   plain_driver_parameter_type * driver = malloc(sizeof * driver);
   driver->load        = plain_driver_parameter_load_node;
   driver->save        = plain_driver_parameter_save_node;
-  driver->swapout     = plain_driver_parameter_swapout_node;
-  driver->swapin      = plain_driver_parameter_swapin_node;
   driver->free_driver = plain_driver_parameter_free;
   {
     char *path;

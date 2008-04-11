@@ -47,8 +47,8 @@ void scalar_get_output_data(const scalar_type * scalar , double * output_data) {
 
 
 void scalar_realloc_data(scalar_type *scalar) {
-  scalar->data        = enkf_util_calloc(scalar_config_get_data_size(scalar->config) , sizeof *scalar->data        , __func__);
-  scalar->output_data = enkf_util_calloc(scalar_config_get_data_size(scalar->config) , sizeof *scalar->output_data , __func__);
+  scalar->data        = util_malloc(scalar_config_get_data_size(scalar->config) * sizeof *scalar->data        , __func__);
+  scalar->output_data = util_malloc(scalar_config_get_data_size(scalar->config) * sizeof *scalar->output_data , __func__);
 }
 
 
@@ -85,12 +85,12 @@ scalar_type * scalar_copyc(const scalar_type *scalar) {
 }
 
 
+
 void scalar_stream_fread(scalar_type * scalar , FILE * stream) {
 
   int  size;
   fread(&size , sizeof  size     , 1 , stream);
-  enkf_util_fread(scalar->data , sizeof *scalar->data , size , stream , __func__);
-  fclose(stream);
+  util_fread(scalar->data , sizeof *scalar->data , size , stream , __func__);
   scalar->output_valid = false;
 
 }
@@ -99,8 +99,8 @@ void scalar_stream_fread(scalar_type * scalar , FILE * stream) {
 void scalar_stream_fwrite(const scalar_type * scalar , FILE * stream) {
 
   const int data_size = scalar_config_get_data_size(scalar->config);
-  fwrite(&data_size              ,   sizeof  data_size     , 1 , stream);
-  enkf_util_fwrite(scalar->data    ,   sizeof *scalar->data    ,data_size , stream , __func__);
+  fwrite(&data_size     ,   sizeof  data_size     , 1 , stream);
+  util_fwrite(scalar->data , sizeof *scalar->data    ,data_size , stream , __func__);
   
 }
 

@@ -49,30 +49,6 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
 }
 
 
-void plain_driver_swapout_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
-  if (!enkf_node_swapped(node)) {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream = util_fopen(filename , "w");
-    enkf_node_swapout(node , stream);
-    fclose(stream);
-    free(filename);
-  }
-}
-
-
-void plain_driver_swapin_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
-  {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream = util_fopen(filename , "r");
-    enkf_node_swapin(node , stream);
-    fclose(stream);
-    free(filename);
-  }
-}
 
 
 void plain_driver_free(void *_driver) {
@@ -91,8 +67,6 @@ void * plain_driver_alloc(const char * root_path , const char * driver_path) {
   plain_driver_type * driver = malloc(sizeof * driver);
   driver->load        = plain_driver_load_node;
   driver->save        = plain_driver_save_node;
-  driver->swapout     = plain_driver_swapout_node;
-  driver->swapin      = plain_driver_swapin_node;
   driver->free_driver = plain_driver_free;
   {
     char *path;
