@@ -21,7 +21,7 @@ history_type *   history_alloc_from_summary(const ecl_sum_type *  , bool );
 void   history_add_date(history_type *  , const date_node_type * );
 void   history_add_rate(history_type *  , int , const rate_type * );
 void   history_fwrite(const history_type * , FILE *);
-void   history_summarize(const history_type *);
+void   history_summarize(const history_type * , FILE *);
 
 double history_get_ORAT(const history_type * , int , const char * ,  bool *);
 double history_get_WRAT(const history_type * , int , const char * ,  bool *);
@@ -38,6 +38,5 @@ bool   	        history_has_well(const history_type * , const char * );
 /*well_var_type   history_get_var_type(const history_type *  , const char * );   */
 history_type     * history_alloc_from_schedule(const sched_file_type *);
 int                history_get_num_reports(const history_type * );
-void               history_summarize(const history_type * );
 
 #endif

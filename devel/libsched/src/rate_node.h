@@ -18,6 +18,7 @@
 
 typedef struct rate_struct rate_type;
 
+void         rate_fprintf(const rate_type * , FILE * );
 void         rate_sched_fprintf(const rate_type *  , FILE *);
 rate_type *  rate_alloc_from_token_list(int , const char **);
 rate_type *  rate_alloc_from_summary(bool , const ecl_sum_type * , int , const char * );

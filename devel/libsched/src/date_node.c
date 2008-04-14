@@ -124,12 +124,14 @@ void date_node_fprintf(const date_node_type * node, FILE *stream , int last_date
   fprintf(stream , "  %02d \'%s\' %4d  / -- Dates keyword: %3d \n" , ts.tm_mday , month_table[ts.tm_mon] , ts.tm_year + 1900 , node->date_nr);
   if (last_date_nr > 0) {
     if (node->date_nr >= last_date_nr)
-      *stop = true;
+      if (stop != NULL)
+	*stop = true;
   }
 
   if (last_time > 0) {
     if (node->time >= last_time)
-      *stop = true;
+      if (stop != NULL)
+	*stop = true;
   }
 
 }

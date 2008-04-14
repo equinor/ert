@@ -67,8 +67,10 @@ void history_ens_diag_imake_plotfile(int iens1 , int iens2 , int min_size , cons
 
   for (istep=0; istep < min_size; istep++) {
     double history_value = 0;
-    if (history != NULL)
-      history_value = history_get(history , istep , well , var);
+    if (istep > 0)
+      if (history != NULL)
+	history_value = history_get(history , istep, well , var);
+    
     util_fwrite_double(history_value , stream);                              /* History value */ 
   }
   

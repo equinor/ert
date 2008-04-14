@@ -23,10 +23,10 @@ struct history_struct {
   int  		   alloc_size; 
   time_t           start_date;
   time_t           creation_time;
-  char            *data_src;
-  bool             history_mode;
+  char               *data_src;
+  bool                history_mode;
   history_node_type **data;
-  hash_type       *well_hash;
+  hash_type          *well_hash;
 };
 
 
@@ -102,7 +102,19 @@ history_node_type * history_node_fread_alloc(const time_t * start_date , FILE *s
 }
 							 
 
-
+void history_node_fprintf(const history_node_type * hist_node, FILE * stream) {
+  date_node_fprintf(hist_node->date , stream , -1 , -1 , NULL);
+  {
+    char **key_list  = hash_alloc_keylist(hist_node->data);
+    rate_type * rate;
+    int i;
+    for (i = 0; i < hash_get_size(hist_node->data); i++) {
+      rate = hash_get(hist_node->data , key_list[i]);
+      rate_fprintf(rate , stream);
+    }
+    hash_free_ext_keylist(hist_node->data , key_list);
+  }
+}
 
 
 
@@ -220,19 +232,26 @@ bool history_has_well(const history_type * hist , const char * well) {
 }
     
 
-void history_summarize(const history_type * hist) {
+void history_summarize(const history_type * hist , FILE * stream) {
   char ** well_list = hash_alloc_keylist(hist->well_hash);
-  int iw;
+  int iw , itime;
   printf("-----------------------------------------------------------------\n");
   for (iw = 0; iw < hash_get_size(hist->well_hash); iw++) 
     printf("Well[%d] : <%s> \n",iw , well_list[iw]);
   printf("-----------------------------------------------------------------\n");
+
+  for (itime = 0; itime < hist->size; itime++) {
+    const history_node_type * node = hist->data[itime];
+    printf("History node: %d ",itime);
+    history_node_fprintf(node , stream);
+  }
   hash_free_ext_keylist(hist->well_hash , well_list);
 }
 
 
-
-
+/**
+This function expects time_step in the interval [1,hist->size]
+*/
 static const rate_type * history_get_rate_node(const history_type * hist , int time_step, const char * well) {
   const rate_type * rate = NULL;
 
@@ -243,7 +262,7 @@ static const rate_type * history_get_rate_node(const history_type * hist , int t
 	rate = hash_get(history_node->data , well);
       else {
 	if (!history_has_well(hist , well)) {
-          history_summarize(hist);
+          history_summarize(hist , stdout);
 	  fprintf(stderr,"%s: The well:%s does not exist in the history object - aborting \n",__func__ , well);
 	  abort();
 	}

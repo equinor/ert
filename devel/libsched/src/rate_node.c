@@ -358,6 +358,10 @@ void rate_sched_fprintf_rates(const rate_type * rate , FILE *stream) {
 }
 
 
+void rate_fprintf(const rate_type * rate , FILE * stream) {
+  fprintf(stream,"%s  ORAT:%g  \n",rate->well , rate->ORAT);
+}
+
 
 static void rate_set_from_string(rate_type * node , int kw_size , const char **token_list) {
   {
