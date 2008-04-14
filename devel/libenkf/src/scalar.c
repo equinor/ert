@@ -92,7 +92,7 @@ void scalar_stream_fread(scalar_type * scalar , FILE * stream) {
   fread(&size , sizeof  size     , 1 , stream);
   util_fread(scalar->data , sizeof *scalar->data , size , stream , __func__);
   scalar->output_valid = false;
-
+  
 }
 
 

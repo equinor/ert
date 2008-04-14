@@ -419,6 +419,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
   
   while (ecl_kw != NULL) {
     char *kw = ecl_kw_alloc_strip_header(ecl_kw);
+    ecl_util_escape_kw(kw);
     restart_kw_list_add(enkf_state->restart_kw_list , kw);
 
     if (enkf_config_has_key(enkf_state->config , kw)) {
@@ -597,29 +598,58 @@ void * enkf_state_load_ecl_restart_void(void * input_arg) {
 }
 
 
-
-
-void enkf_state_ecl_write(const enkf_state_type * enkf_state ,  int mask) {
-  const int buffer_size  = 65536;
-  const bool fmt_file    = enkf_state_fmt_file(enkf_state);
-  const int  report_step = enkf_state->report_step;
+void enkf_state_write_restart_file(enkf_state_type *  enkf_state) {
   bool endian_swap       = enkf_config_get_endian_swap(enkf_state->config);
-  void *buffer           = malloc(buffer_size);
-  char * restart_file;
-  fortio_type * fortio;
+  const bool fmt_file    = enkf_state_fmt_file(enkf_state);
+  char * restart_file    = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , enkf_state->report_step);
+  fortio_type * fortio   = fortio_open(restart_file , "w" , endian_swap);
+  const char * kw;
+
+  kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
+  while (kw != NULL) {
+    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
+    enkf_var_type    var_type  = enkf_node_get_var_type(enkf_node);
+    if (!enkf_node_memory_allocated(enkf_node))
+      enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);  
+
+    if (var_type == ecl_restart) {
+      /* Pressure and saturations */
+      if (enkf_node_get_impl_type(enkf_node) == FIELD)
+	field_ecl_write1D_fortio(enkf_node_value_ptr(enkf_node) , fortio , fmt_file , endian_swap);
+      else {
+	fprintf(stderr,"%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
+	abort();
+      }
+    } else if (var_type == ecl_static)
+      ecl_kw_fwrite(ecl_static_kw_ecl_kw_ptr((const ecl_static_kw_type *) enkf_node_value_ptr(enkf_node)) , fortio);
+
+    kw = restart_kw_list_get_next(enkf_state->restart_kw_list);
+  }
+  fortio_close(fortio);
+}
+
+
+/**
+This function writes out all the files needed by an ECLIPSE
+simulation, this includes the restart file, and the various INCLUDE
+files corresponding to parameteres estimated by EnKF.
+
+The writing of restart file is delegated to
+enkf_state_write_restart_file().
+*/
+void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
+  int    restart_mask    = 0;
   list_node_type *list_node;                                            
 
-  if (report_step == 0) {
-    if (mask & ecl_restart)
-      mask -= ecl_restart;
-    if (mask & ecl_static)
-      mask -= ecl_static;
-    restart_file = NULL;
-    fortio       = NULL;
-  } else {
-    restart_file  = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_step);
-    fortio        = fortio_open(restart_file , "w" , endian_swap);
-  }
+  if (mask & ecl_restart) 
+    restart_mask += ecl_restart;
+  if (mask & ecl_static)
+    restart_mask += ecl_static;
+  mask -= restart_mask;
+
+  if (restart_mask > 0 && enkf_state->report_step > 0)
+    enkf_state_write_restart_file(enkf_state);
+  
   
   util_make_path(enkf_state->run_path);
   list_node = list_get_head(enkf_state->node_list);                     
@@ -628,28 +658,13 @@ void enkf_state_ecl_write(const enkf_state_type * enkf_state ,  int mask) {
     if (enkf_node_include_type(enkf_node , mask)) {
       if (!enkf_node_memory_allocated(enkf_node))
 	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
-
-      if (enkf_node_include_type(enkf_node , ecl_restart)) {      
-	/* Pressure and saturations */
-	if (enkf_node_get_impl_type(enkf_node) == FIELD)
-	  field_ecl_write1D_fortio(enkf_node_value_ptr(enkf_node) , fortio , fmt_file , endian_swap);
-	else {
-	  fprintf(stderr,"%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
-	  abort();
-	}	  
-      } else if (enkf_node_include_type(enkf_node , ecl_static)) {
-	ecl_kw_fwrite(ecl_static_kw_ecl_kw_ptr((const ecl_static_kw_type *) enkf_node_value_ptr(enkf_node)) , fortio);
-      } else if (enkf_node_include_type(enkf_node , parameter + static_parameter))
+      
+      if (enkf_node_include_type(enkf_node , parameter + static_parameter))
         enkf_node_ecl_write(enkf_node , enkf_state->run_path);
       
     }
     list_node = list_node_get_next(list_node);
   }
-  if (report_step != 0) {
-    free(restart_file);
-    fortio_close(fortio);
-  }
-  free(buffer);
 }
 
 
