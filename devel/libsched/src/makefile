@@ -55,6 +55,6 @@ sched_kw_untyped.o  : sched_kw_untyped.h sched_kw_untyped.c sched_util.o
 sched_kw_tstep.o    : sched_kw_tstep.h sched_kw_tstep.c sched_util.o
 sched_kw.o          : sched_kw.c sched_kw.h sched_kw_wconhist.o sched_kw_untyped.o sched_kw_compdat.o sched_kw_dates.o sched_util.o sched_kw_tstep.o
 sched_file.o        : sched_file.c sched_file.h sched_util.o sched_kw.o sched_kw_compdat.o 
-sched_interC.o      : sched_interC.c sched_file.o
+sched_interC.o      : sched_interC.c sched_file.o history.o
 date_node.o         : date_node.c date_node.h
 history_ens_diag.o  : history_ens_diag.c history_ens_diag.h

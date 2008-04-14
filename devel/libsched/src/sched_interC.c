@@ -211,7 +211,7 @@ void sched_load_hist_from_summary__(const char * _hist_file , const int * hist_f
     history_fwrite(GLOBAL_HISTORY  , stream);
     fclose(stream);
   }
-  history_summarize(GLOBAL_HISTORY);
+  history_summarize(GLOBAL_HISTORY , stdout);
   free(hist_file);
 }
  
