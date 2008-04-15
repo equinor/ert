@@ -1,3 +1,61 @@
+/**
+Observations/measurements are handled by three different (toplevel) objects:
+
+enkf_obs_type
+-------------
+This object contians qualitative information about the observations,
+i.e. when they are active, what is the error of the observations, what
+type they are, and how to measure them. This is the morst persistent
+object.
+            
+
+obs_data_type
+
+
+
+-----------------------------------------------------------------
+The file contains two different variables holding the number of
+observations, nrobs_total and nrobs_active. The first holds the total
+number of observations at this timestep, and the second holds the
+number of active measurements at this timestep; the inactive
+measurements have been deactivated the obs_data_deactivate_outliers()
+function.
+
+The flow is as follows:
+
+ 1. All the observations have been collected in an obs_data instance,
+    and all the corresponding measurements of the state have been
+    collected in a meas_matrix instance - we are ready for analysis.
+
+ 2. The functions meas_matrix_allocS_stats() is called to calculate
+    the ensemble mean and std of all the measurements.
+
+ 3. The function obs_data_deactivate_outliers() is called to compare
+    the ensemble mean and std with the observations, in the case of
+    outliers the number obs_active flag of the obs_data instance is
+    set to false.
+
+ 4. The remaining functions (and matrices) now refer to the number of
+    active observations, however the "raw" observations found in the
+    obs_data instance are in a vector with nrobs_total observations;
+    i.e. we must handle two indices and two total lengths. A bit
+    messy.
+
+
+Variables of size nrobs_total:
+------------------------------
+ o obs->value / obs->std / obs->obs_active
+ o meanS , innov, stdS
+
+
+variables of size nrobs_active:
+-------------------------------
+Matrices: S, D, E and various internal variables.
+*/
+
+
+
+
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -36,7 +94,8 @@ int obs_data_get_nrobs(const obs_data_type * obs_data) { return obs_data->total_
 
 obs_data_type * obs_data_alloc() {
   obs_data_type * obs_data = malloc(sizeof * obs_data);
-  obs_data->total_size       	  = 0;
+  obs_data->total_size    = 0;
+  obs_data->active_size   = 0;
   obs_data->value      	  = NULL;
   obs_data->std        	  = NULL;
   obs_data->keyword    	  = NULL;
@@ -81,53 +140,60 @@ void obs_data_free(obs_data_type * obs_data) {
 
 
 
-void obs_data_fprintf(const obs_data_type * obs_data , FILE *stream) {
-  int i;
-  for (i = 0; i < obs_data->total_size; i++)
-    fprintf(stream , "%-3d : %-16s  %12.3f +/- %12.3f \n", i+1 , obs_data->keyword[i] , obs_data->value[i] , obs_data->std[i]);
-}
 
 
 static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_stride, int obs_stride) {
+  const int nrobs_active = obs_data->active_size;
+  const int nrobs_total  = obs_data->total_size;
   double *pert_mean , *pert_var;
   double *E;
-  int iens, iobs, nrobs;
-  nrobs = obs_data->total_size;
-
-  E         = util_malloc(nrobs * ens_size * sizeof * E        , __func__);
-  pert_mean = util_malloc(nrobs            * sizeof * pert_mean , __func__);
-  pert_var  = util_malloc(nrobs            * sizeof * pert_var  , __func__);
-  enkf_util_rand_stdnormal_vector(nrobs * ens_size , E);
+  int iens, iobs_active;
   
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    pert_mean[iobs] = 0;
-    pert_var[iobs]  = 0;
-  }
+  E         = util_malloc(nrobs_active * ens_size * sizeof * E         , __func__);
 
+  pert_mean = util_malloc(nrobs_active            * sizeof * pert_mean , __func__);
+  pert_var  = util_malloc(nrobs_active            * sizeof * pert_var  , __func__);
+  enkf_util_rand_stdnormal_vector(nrobs_active * ens_size , E);
+  
+  for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
+    pert_mean[iobs_active] = 0;
+    pert_var[iobs_active]  = 0;
+  }
+  
   for (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      int index = iens * ens_stride + iobs * obs_stride;
-      pert_mean[iobs] += E[index];
+    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
+      int index = iens * ens_stride + iobs_active * obs_stride;
+      pert_mean[iobs_active] += E[index];
     }
   }
-  for (iobs = 0; iobs < nrobs; iobs++) 
-    pert_mean[iobs] /= ens_size;
+
+
+  for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
+    pert_mean[iobs_active] /= ens_size;
 
   for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      int index = iens * ens_stride + iobs * obs_stride;
-      E[index] -= pert_mean[iobs];
-      pert_var[iobs] += E[index] * E[index];
+    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
+      int index = iens * ens_stride + iobs_active * obs_stride;
+      E[index] -= pert_mean[iobs_active];
+      pert_var[iobs_active] += E[index] * E[index];
+    }
+  }
+
+  {
+    int iobs_total;
+    for (iens = 0; iens < ens_size; iens++) {
+      int iobs_active = 0;
+      for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
+	if (obs_data->obs_active[iobs_total]) {
+	  int index = iens * ens_stride + iobs_active * obs_stride;
+	  E[index] *= obs_data->std[iobs_total] * sqrt(ens_size / pert_var[iobs_active]);
+	  iobs_active++;
+	}
+      }
     }
   }
   
-  for (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      int index = iens * ens_stride + iobs * obs_stride;
-      E[index] *= obs_data->std[iobs] * sqrt(ens_size / pert_var[iobs]);
-    }
-  }
-  
+
   free(pert_mean);
   free(pert_var);
   return E;
@@ -145,19 +211,22 @@ static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, i
   from S.
 */
 double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , const double * S , bool returnE , double **_E) {
-  double *D , *E;
-  int iens, iobs, nrobs;
-  nrobs = obs_data->total_size;
-  E 	= obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
-  D 	= util_malloc(nrobs * ens_size * sizeof * D , __func__);
+  const int nrobs_active = obs_data->active_size;
+  int iens, iobs;
+  double *D = NULL;
+  double *E = NULL;
+
+
+  E 	       = obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
+  D 	       = util_malloc(nrobs_active * ens_size * sizeof * D , __func__);
+
 
   for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs; iobs++) {
+    for (iobs = 0; iobs < nrobs_active; iobs++) {
       int index = iens * ens_stride + iobs * obs_stride;
       D[index] = obs_data->value[iobs] + E[index] - S[index];
     }
   }
-  
   if (returnE)
     *_E = E;
   else {
@@ -171,30 +240,15 @@ double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_
 
 
 
-double * obs_data_alloc_innov(const obs_data_type * obs_data , int ens_size , int ens_stride , int obs_stride ,  const double *S) {
+double * obs_data_alloc_innov(const obs_data_type * obs_data , const double *meanS) {
   double *innov;
-  double *S1;
-  int iens, iobs, nrobs;
+  int iobs, nrobs;
   nrobs = obs_data->total_size;
   innov = util_malloc(nrobs * sizeof *innov , __func__);
-  S1    = util_malloc(nrobs * sizeof *S1 , __func__);
-
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    innov[iobs] = obs_data->value[iobs];
-    S1[iobs]    = 0.0;
-  }
-
-  for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      int index = iens * ens_stride + iobs * obs_stride;
-      S1[iobs] += S[index];
-    }
-  }
 
   for (iobs = 0; iobs < nrobs; iobs++) 
-    innov[iobs] -= S1[iobs] / ens_size;
-  
-  free(S1);
+    innov[iobs] = obs_data->value[iobs] - meanS[iobs];
+
   return innov;
 }
 
@@ -203,10 +257,12 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , int ens_size , in
 This function deactivates obsveration iobs, and decrements the total
 number of active observations.
 */
-static void obs_data_deactivate_obs(obs_data_type * obs_data , int iobs) {
+
+static void obs_data_deactivate_obs(obs_data_type * obs_data , int iobs,const char * msg) {
   if (obs_data->obs_active[iobs]) {
     obs_data->obs_active[iobs] = false;
     obs_data->active_size--;
+    printf("Deactivating:%s : %s \n",obs_data->keyword[iobs] , msg);
   }
 }
 
@@ -228,7 +284,9 @@ statistic?
 */
 
 
-void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * innov , const double *ens_std , double std_cutoff , double alpha) {
+
+
+void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * innov , const double *ens_std , double std_cutoff , double alpha , int * nrobs_active , bool **active_obs) {
   int nrobs = obs_data->total_size;
   int iobs;
   for (iobs = 0; iobs < nrobs; iobs++) {
@@ -237,84 +295,105 @@ void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * inno
 	De activated because the ensemble has to little variation for
 	this particular measurement.
       */
-      obs_data_deactivate_obs(obs_data , iobs);
+      {
+	printf("stdS : %g \n",ens_std[iobs]);	
+	obs_data_deactivate_obs(obs_data , iobs , "No ensemble variation");
+      }
     else {
       if (fabs( innov[iobs] ) > alpha * (ens_std[iobs] + obs_data->std[iobs])) 
 	/* OK - this is an outlier ... */
-	obs_data_deactivate_obs(obs_data , iobs);
+	obs_data_deactivate_obs(obs_data , iobs , "No overlap");
     }
   }
+  *nrobs_active = obs_data->active_size;
+  *active_obs   = obs_data->obs_active;
 }
 
 
-double * obs_data_allocR(obs_data_type * obs_data , int ens_size , int ens_stride , int obs_stride , const double * innov , const double *S , double alpha) {
-  const int nrobs = obs_data->total_size;
-  double *ens_avg;
-  double *ens_std;
+double * obs_data_allocR(obs_data_type * obs_data) {
+  const int nrobs_total  = obs_data->total_size;
+  const int nrobs_active = obs_data->active_size;
   double *R;
-  int iens, iobs;
+  int iobs_active;
 
-  ens_std = util_malloc(nrobs * sizeof * ens_std , __func__);
-  ens_avg = util_malloc(nrobs * sizeof * ens_avg , __func__);
+  R = util_malloc( nrobs_active * nrobs_active * sizeof * R , __func__);
+  for (iobs_active = 0; iobs_active < nrobs_active * nrobs_active; iobs_active++)
+    R[iobs_active] = 0;
   
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    ens_std[iobs] = 0.0;
-    ens_avg[iobs] = 0.0;
-  }
+  {
+    int iobs_total;
+    iobs_active = 0;
 
-  for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      int index = iens * ens_stride + iobs * obs_stride;
-      ens_std[iobs] += S[index] * S[index];
-      ens_avg[iobs] += S[index];
+    for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
+      if (obs_data->obs_active[iobs_total]) {
+	double std = obs_data->std[iobs_total];
+	R[iobs_active * (nrobs_active + 1)] = std * std;
+	iobs_active++;
+      }
     }
   }
   
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    ens_avg[iobs] *= 1.0 / ens_size;
-    ens_std[iobs] *= 1.0 / ens_size;
-    ens_std[iobs]  = sqrt(ens_std[iobs] - ens_avg[iobs] * ens_avg[iobs]);
-  }
-  free(ens_avg);
-
-  R = util_malloc( nrobs * nrobs * sizeof * R , __func__);
-  for (iobs = 0; iobs < nrobs * nrobs; iobs++)
-    R[iobs] = 0;
-  
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    double std = obs_data->std[iobs];
-    R[iobs * (nrobs + 1)] = std * std;
-  }
-
-  free(ens_std);
   return R;
 }
 
 
 
 void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , double *S , double *E , double *D , double *R , double *innov) {
-  const int nrobs = obs_data->total_size;
-  double * scale_factor = util_malloc(nrobs * sizeof * scale_factor , __func__);
-  int iens, iobs;
+  const int nrobs_total  = obs_data->total_size;
+  const int nrobs_active = obs_data->active_size;
+  double * scale_factor  = util_malloc(nrobs_active * sizeof * scale_factor , __func__);
+  int iens, iobs_total , iobs_active;
   
   for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      int index          = iens * ens_stride + iobs * obs_stride;
-      scale_factor[iobs] = 1.0 / obs_data->std[iobs];
-      
-      S[index] *= scale_factor[iobs];
-      if (E != NULL) E[index] *= scale_factor[iobs];
-      D[index] *= scale_factor[iobs];
+    iobs_active = 0;
+    for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
+      if (obs_data->obs_active[iobs_total]) {
+	scale_factor[iobs_active] = 1.0 / obs_data->std[iobs_total];
+	{
+	  int index  = iens * ens_stride + iobs_active * obs_stride;
+	  S[index]  *= scale_factor[iobs_active];
+	  if (E != NULL) E[index] *= scale_factor[iobs_active];
+	  D[index] *= scale_factor[iobs_active];
+	}
+	iobs_active++;
+      }
     }
   }
-  for (iobs = 0; iobs < nrobs; iobs++) 
-    innov[iobs] *= scale_factor[iobs];
+  iobs_active = 0;
+  for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
+    if (obs_data->obs_active[iobs_total]) {
+      innov[iobs_total] *= scale_factor[iobs_active];
+      iobs_active++;
+    }
+  }
 
+  
   {
     int i,j;
-    for (i=0; i < nrobs; i++)
-      for (j=0; j < nrobs; j++)
-	R[i*nrobs + j] *= scale_factor[i] * scale_factor[j];
+    for (i=0; i < nrobs_active; i++)
+      for (j=0; j < nrobs_active; j++)
+	R[i*nrobs_active + j] *= scale_factor[i] * scale_factor[j];
   }
   free(scale_factor);
+}
+
+
+
+void obs_data_fprintf(const obs_data_type * obs_data , FILE * stream, const double * meanS , const double * stdS) {
+  int iobs;
+  fprintf(stream , "--------------------------------------------------------------------\n");
+  for (iobs = 0; iobs < obs_data->total_size; iobs++) {
+    fprintf(stream , "%-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , obs_data->keyword[iobs] , obs_data->value[iobs] , obs_data->std[iobs]);
+    if (obs_data->obs_active[iobs])
+      fprintf(stream , "   Active    |");
+    else
+      fprintf(stream , "   Inactive  |");
+
+    if (meanS != NULL) 
+      fprintf(stream,"   %12.3f +/- %12.3f \n",meanS[iobs] , stdS[iobs]);
+    else
+      fprintf(stream , "\n");
+    
+  }
+  fprintf(stream , "--------------------------------------------------------------------\n");
 }

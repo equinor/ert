@@ -59,7 +59,8 @@ typedef enum {nolog = 0 , log_input_mask = 1 , log_enkf_mask = 2 , log_output_ma
 
 typedef enum {store_none     = 0,
 	      store_summary  = 1,
-	      store_restart  = 2} ecl_store_enum;
+	      store_restart  = 2, 
+	      store_data     = 4} ecl_store_enum;
 
 
 enkf_impl_type    enkf_types_get_impl_type(const char * );

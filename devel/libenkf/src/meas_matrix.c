@@ -97,6 +97,10 @@ void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS ,
   double * S1 = util_malloc(nrobs * sizeof * S1 , __func__);
   double * S2 = util_malloc(nrobs * sizeof * S2 , __func__);
   
+  for (iobs = 0; iobs < nrobs; iobs++) {
+    S1[iobs] = 0;
+    S2[iobs] = 0;
+  }
   
   for (iens = 0; iens < matrix->ens_size; iens++) {
     const meas_vector_type * vector = matrix->meas_vectors[iens];
@@ -119,32 +123,32 @@ void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS ,
 
 
 
+
 /*
+
   Observe that this code does *NOT* subtract the ensemble
   mean from S. This is in contrast to the original Fortran
   code which did that.
 */
-
-
-double * meas_matrix_allocS(const meas_matrix_type * matrix, int ens_stride , int obs_stride) {
+double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , int ens_stride , int obs_stride, const bool * active_obs) {
   double * S;
   int iens ;
-  const int nrobs = meas_vector_get_nrobs(matrix->meas_vectors[0]);
-  S  = util_malloc(nrobs * matrix->ens_size * sizeof * S , __func__);
+  const int nrobs_vector = meas_vector_get_nrobs(matrix->meas_vectors[0]);
+  S  = util_malloc(nrobs_active * matrix->ens_size * sizeof * S , __func__);
   for (iens = 0; iens < matrix->ens_size; iens++) {
     const meas_vector_type * vector = matrix->meas_vectors[iens];
-    if (nrobs != meas_vector_get_nrobs(vector)) {
+    if (nrobs_vector != meas_vector_get_nrobs(vector)) {
       fprintf(stderr,"%s: fatal internal error - not all measurement vectors equally long - aborting \n",__func__);
       abort();
     }
     
     if (obs_stride == 1) {
-      int offset = iens * nrobs;
-      memcpy(&S[offset] , meas_vector_get_data_ref(vector) , nrobs * sizeof * S);
+      int offset = iens * nrobs_active;
+      memcpy(&S[offset] , meas_vector_get_data_ref(vector) , nrobs_active * sizeof * S);
     } else {
       const double * meas_data = meas_vector_get_data_ref(vector);
       int iobs;
-      for (iobs = 0; iobs < nrobs; iobs++) {
+      for (iobs = 0; iobs < nrobs_active; iobs++) {
 	int index = iobs * obs_stride + iens * ens_stride;
 	S[index] = meas_data[iobs];
       }

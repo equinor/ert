@@ -51,9 +51,7 @@ void plain_driver_parameter_load_node(void * _driver , int _report_step , int ie
   {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
     FILE * stream = util_fopen(filename , "r");
-    printf("Skal loade fra: %s \n",filename);
     enkf_node_fread(node , stream);
-    printf("fread OK \n");
     fclose(stream);
     free(filename);
   }

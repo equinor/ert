@@ -196,12 +196,16 @@ void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const enkf_config_node_type
 
 
 void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_data_type * obs_data) {
-  bool valid;
-  obs_node_type * obs_node = hash_iter_get_first(enkf_obs->obs_hash , &valid);
-  while (valid) {
+  char ** obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
+  int iobs;
+
+  obs_data_reset(obs_data);
+  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
+    obs_node_type * obs_node = hash_get(enkf_obs->obs_hash , obs_keys[iobs]);
     obs_node_get_observations(obs_node , report_step , obs_data);
-    obs_node = hash_iter_get_next(enkf_obs->obs_hash , &valid);
   }
+  hash_free_ext_keylist(enkf_obs->obs_hash , obs_keys);
+  
 }
 
 

@@ -128,9 +128,9 @@ X = |X5  X14             |
        down to S2; in memory the distance between these two are 1,
        i.e. the obs_stride equals one. 
 
-     * To go to the same next ensemble member, for the same
-       observation you move horizontally to S4, in memory these are 3
-       elements apart, i.e. the ens_stride equals 3.
+     * To go to the next ensemble member, for the same observation, you
+       move horizontally to S4, in memory these are 3 elements apart,
+       i.e. the ens_stride equals 3.
 
      
      For the matrices R and X it does not make the same sense to talk
@@ -138,87 +138,105 @@ X = |X5  X14             |
      dimensisons nrobs x nrobs and X has dimensions nrens x nrens.
 */
 
-double * analysis_allocX(int ens_size , int nrobs , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
+double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
   int  update_randrot_int, verbose_int;
   const char * xpath 	  = NULL;
   const double alpha 	  = 1.50;
   const double truncation = 0.99;
-  double *X , *R , *E , *S , *D , *innov;
-  int mode , istep , ens_stride , obs_stride , iens, iobs;
+  bool  * active_obs;
+  double *X , *R , *E , *S , *D , *innov , *meanS , *stdS;
+  int mode , istep , ens_stride , obs_stride , iens, nrobs_active;
   bool returnE; 
   
   istep      = -1;
   mode       = 22;
   returnE    = false;
   
-  analysis_set_stride(ens_size , nrobs , &ens_stride , &obs_stride);
-  X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
+  
   /*
     Must exclude both outliers and observations with zero ensemble
     variation *before* the matrices are allocated.
   */
-  S 	= meas_matrix_allocS(meas_matrix , ens_stride , obs_stride);
-  innov = obs_data_alloc_innov(obs_data , ens_size , ens_stride , obs_stride , S);
-  R 	= obs_data_allocR(obs_data , ens_size , ens_stride , obs_stride , innov , S , alpha);
-  D 	= obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , returnE , &E);
-  obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
-  
+  X = NULL;
+  meas_matrix_allocS_stats(meas_matrix , &meanS , &stdS);
+  innov = obs_data_alloc_innov(obs_data , meanS);
+  obs_data_deactivate_outliers(obs_data , innov , stdS , 1e-6 , alpha , &nrobs_active , &active_obs);
 
-  /*
-     Substracting mean value of S
-  */
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    double S1 = 0;
-    for (iens = 0; iens < ens_size; iens++) {
-      int index = iobs * obs_stride + iens * ens_stride;
-      S1 += S[index];
-    }
-    S1 = S1 / ens_size;
-    for (iens = 0; iens < ens_size; iens++) {
-      int index = iobs * obs_stride + iens * ens_stride;
-      S[index] -= S1;
-    }
-  } 
-  
-  verbose_int        = util_C2f90_bool(verbose);
-  update_randrot_int = util_C2f90_bool(update_randrot);
-  
+  obs_data_fprintf(obs_data , stdout , meanS , stdS);
+  printf("**** Observations: %d -> %d \n", nrobs_total , nrobs_active);
 
-  if (verbose) {
-    printf_matrix(R , nrobs , nrobs    , 1 , nrobs , "R" , " %8.3lg ");
+  if (nrobs_active > 0) {
+    analysis_set_stride(ens_size , nrobs_active , &ens_stride , &obs_stride);
+    S 	= meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , active_obs);
+    printf_matrix(S , nrobs_active , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
     printf("\n");
     
-    printf_matrix(D , nrobs , ens_size , obs_stride , ens_stride , "D" , " %8.3lg ");
-    printf("\n");
-    
-    printf_matrix(S , nrobs , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
-    printf("\n");
+    R 	= obs_data_allocR(obs_data);
+    D 	= obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , returnE , &E);
+    /*obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);*/
+    X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
 
-    printf_matrix(innov , nrobs , 1 , 1 , 1 , "Innov" , " %8.3lg ");
-  }
-
-  m_enkfx5_mp_enkfx5_(X , 
-		      R , 
-		      E , 
-		      S , 
-		      D , 
-		      innov , 
-		      (const int *) &ens_size        	, 
-		      (const int *) &nrobs        	, 
-		      (const int *) &verbose_int  	, 
-		      (const double *) &truncation 	, 
-		      (const int *) &mode         	,     
-		      (const int *) &update_randrot_int , 
-		      (const int *) &istep              , 
-		      xpath);
+    /*
+      Substracting mean value of S
+    */
+    {
+      int iobs_active = 0;
+      int iobs_total;
+      for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
+	if (active_obs[iobs_total]) {
+	  for (iens = 0; iens < ens_size; iens++) {
+	    int index = iobs_active * obs_stride + iens * ens_stride;
+	    printf("index:%d /%d \n",index , ens_size * nrobs_active);
+	    S[index] -= meanS[iobs_total];
+	  }
+	  iobs_active++;
+	}
+      } 
+    }
   
-  free(S);
-  free(R);
-  free(D);
+    verbose_int        = util_C2f90_bool(verbose);
+    update_randrot_int = util_C2f90_bool(update_randrot);
+  
+    if (1) {
+      printf_matrix(R , nrobs_active , nrobs_active    , 1 , nrobs_active , "R" , " %8.3lg ");
+      printf("\n");
+    
+      printf_matrix(D , nrobs_active , ens_size , obs_stride , ens_stride , "D" , " %8.3lg ");
+      printf("\n");
+    
+      printf_matrix(S , nrobs_active , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
+      printf("\n");
+
+      printf_matrix(innov , nrobs_active , 1 , 1 , 1 , "Innov" , " %8.3lg ");
+    }
+
+    m_enkfx5_mp_enkfx5_(X , 
+			R , 
+			E , 
+			S , 
+			D , 
+			innov , 
+			(const int *) &ens_size        	, 
+			(const int *) &nrobs_active     , 
+			(const int *) &verbose_int  	, 
+			(const double *) &truncation 	, 
+			(const int *) &mode         	,     
+			(const int *) &update_randrot_int , 
+			(const int *) &istep              , 
+			xpath);
+  
+    printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
+    free(R);
+    free(D);
+    if (E != NULL) free(E);
+    free(S);
+  } else 
+    printf("** No active observations ** \n");
+  free(meanS);
+  free(stdS);
   free(innov);
-  if (E != NULL) free(E);
 
-  printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
+
   return X;
 }
 

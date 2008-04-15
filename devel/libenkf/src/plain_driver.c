@@ -41,7 +41,6 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
   {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
     FILE * stream = util_fopen(filename , "w");
-    printf("%s: Saver til:%s \n",__func__ , filename);
     enkf_node_fwrite(node , stream);
     fclose(stream);
     free(filename);

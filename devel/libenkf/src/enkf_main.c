@@ -285,11 +285,9 @@ void enkf_main_swapout_ensemble(enkf_main_type * enkf_main , int mask) {
 
 void enkf_main_swapin_ensemble(enkf_main_type * enkf_main , int mask) {
   int iens;
-  printf("Starter her ... %s \n",__func__);
-  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) {
-    printf("iens: %d    ",iens);
+  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
     enkf_state_swapin(enkf_main->ensemble[iens] , mask );
-  }
+
 }
 
 
@@ -329,8 +327,8 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   const int sleep_time     	= 1;
   int iens;
   
-  printf("<-----------------------------------------------------------------\n");
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
+  meas_matrix_reset(enkf_main->meas_matrix);
   if (enkf_main->void_arg != NULL) {
     fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
     abort();
@@ -372,20 +370,21 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
   
-  printf("Skal kalle update_ensemble ... \n");
   enkf_main_update_ensemble(enkf_main , step1 , step2);
-  /*{
+  {
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
-    
-    free(X);
+
+    if (X != NULL) {
+      printf("Har allokert X: %g \n",X[0]);
+      free(X);
     }
-  */
+    
+  }
 
 
   
   printf("Skal skrive det analyserte ensembelet til disk\n");
   enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
   printf("%s: ferdig \n" , __func__);
-  printf("----------------------------------------------------------------->\n");
 }
 

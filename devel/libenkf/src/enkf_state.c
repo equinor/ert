@@ -371,6 +371,16 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
   if (enkf_state->ecl_store != store_none) {
 
     util_make_path(enkf_state->ecl_store_path);
+    if (enkf_state->ecl_store & store_data) {
+      char * data_target = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_data_file , true , -1);
+      char * data_src    = ecl_util_alloc_filename(enkf_state->run_path       , enkf_state->eclbase , ecl_data_file , true , -1);
+      
+      util_copy_file(data_src , data_target);
+      free(data_target);
+      free(data_src);
+    }
+
+
     if (enkf_state->ecl_store & store_summary) {
       first_report       = report_nr1 + 1;
       {
@@ -549,7 +559,6 @@ void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
   enkf_state_measure(enkf_state , enkf_obs , report_step2);
   enkf_state_swapout(enkf_state , ecl_restart + ecl_summary);
   util_unlink_path(enkf_state->run_path);
-  printf("Forlater load_ecl ... \n");
 }
 
 
@@ -721,7 +730,6 @@ void enkf_state_swapin(enkf_state_type * enkf_state , int mask ) {
   while (list_node != NULL) {                                           
     enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
     if (enkf_node_include_type(enkf_node , mask)) {
-      printf("Skal ta swapin: %s \n",enkf_node_get_key_ref(enkf_node));
       enkf_node_assert_memory(enkf_node);
       enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
     }
