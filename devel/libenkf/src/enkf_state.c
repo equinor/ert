@@ -442,7 +442,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 	enkf_state_add_node(enkf_state , kw , enkf_config_get_node_ref(enkf_state->config , kw)); 
       {
 	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-	enkf_node_assert_memory(enkf_node);
+	enkf_node_ensure_memory(enkf_node);
 	field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_kw);
       }
     } else {
@@ -522,19 +522,23 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
   quite intimate knowledge of enkf_obs_type structure - not quite
   nice.
 */
-void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , int report_step) {
+void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs) {
   char **obs_keys   	= hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
 
+  printf("Observations: %d \n",hash_get_size(enkf_obs->obs_hash));
   for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
     const char * kw = obs_keys[iobs];
-    obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
-    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
+    printf("Measuring: %s \n",kw);
+    {
+      obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
+      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
 
-    if (!enkf_node_memory_allocated(enkf_node))
-      enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
-    
-    obs_node_measure(obs_node , report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
+      if (!enkf_node_memory_allocated(enkf_node))
+	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+      
+      obs_node_measure(obs_node , enkf_state->report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
+    }
   }
   hash_free_ext_keylist(enkf_obs->obs_hash , obs_keys);
 }
@@ -552,11 +556,11 @@ void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
     enkf_state_load_ecl_restart(enkf_state , unified , report_step1);
     enkf_state_fwrite_as(enkf_state , ecl_restart , report_step1 , analyzed);
   }
+
   enkf_state_set_state(enkf_state , report_step2 , forecast); 
-  
   enkf_state_load_ecl_restart(enkf_state , unified , report_step2);
   enkf_state_load_ecl_summary(enkf_state , unified , report_step2);
-  enkf_state_measure(enkf_state , enkf_obs , report_step2);
+  enkf_state_measure(enkf_state , enkf_obs);
   enkf_state_swapout(enkf_state , ecl_restart + ecl_summary);
   util_unlink_path(enkf_state->run_path);
 }
@@ -730,7 +734,7 @@ void enkf_state_swapin(enkf_state_type * enkf_state , int mask ) {
   while (list_node != NULL) {                                           
     enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
     if (enkf_node_include_type(enkf_node , mask)) {
-      enkf_node_assert_memory(enkf_node);
+      enkf_node_ensure_memory(enkf_node);
       enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
     }
     list_node  = list_node_get_next(list_node);                         
@@ -916,15 +920,36 @@ void * enkf_state_run_eclipse__(void * _void_arg) {
 
 /*****************************************************************/
 
-static double * enkf_ensembleemble_alloc_serial_data(int ens_size , size_t target_serial_size , size_t * _serial_size) {
-  size_t   serial_size = target_serial_size / ens_size;
+/**
+  Observe that target_serial_size and _serial_size count the number of
+  double elements, *NOT* the number of bytes, hence it is essential to
+  have a margin to avoid overflow of the size_t datatype (on 32 bit machines).
+*/
+
+static double * enkf_ensemble_alloc_serial_data(int ens_size , size_t target_serial_size , size_t * _serial_size) {
+  size_t   serial_size;
   double * serial_data;
+
+  {
+    /*
+      Ensure that the allocated memory is a multiple ens_size.
+    */
+    div_t tmp   = div(target_serial_size , ens_size);
+    serial_size = ens_size * tmp.quot;
+#ifdef i386
+    serial_size = util_int_min(serial_size , 8196 * 8196); /* 8196 * 8196 is the maximum number of doubles we allocate */
+#endif
+  }
+
   do {
-    serial_data = malloc(serial_size * ens_size * sizeof * serial_data);
+    serial_data = malloc(serial_size * sizeof * serial_data);
     if (serial_data == NULL) 
       serial_size /= 2;
+
   } while (serial_data == NULL);
-  *_serial_size = serial_size * ens_size;
+  *_serial_size = serial_size;
+  
+  serial_data[0] = 57;
   return serial_data;
 }
 
@@ -958,7 +983,7 @@ void enkf_ensembleemble_mulX(double * serial_state , int serial_x_stride , int s
 
 
 void * enkf_ensembleemble_serialize_threaded(void * _void_arg) {
-  void_arg_type * void_arg     = ( void_arg_type * ) _void_arg;
+  void_arg_type * void_arg     = void_arg_safe_cast( _void_arg );
   int update_mask;
   int iens , iens1 , iens2 , serial_stride;
   size_t serial_size;
@@ -982,6 +1007,7 @@ void * enkf_ensembleemble_serialize_threaded(void * _void_arg) {
     list_node_type  * list_node  = start_node[iens];
     bool node_complete           = true;  
     size_t   serial_offset       = iens;
+    printf("%s iens:%d \n",__func__ , iens);
     
     while (node_complete) {                                           
       enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
@@ -1008,17 +1034,17 @@ void * enkf_ensembleemble_serialize_threaded(void * _void_arg) {
 
 
 
-void enkf_ensembleemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size_t target_serial_size , const double * X) {
-  const int threads = 4;
+void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size_t target_serial_size , const double * X) {
+  const int threads = 1;
   int update_mask = ecl_summary + ecl_restart + parameter;
-  thread_pool_type * tp = thread_pool_alloc(threads);
+  thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
   void_arg_type ** void_arg    = malloc(threads * sizeof * void_arg);
   int *     iens1              = malloc(threads * sizeof * iens1);
   int *     iens2              = malloc(threads * sizeof * iens2);
   bool *    member_complete    = malloc(ens_size * sizeof * member_complete);
   size_t  * member_serial_size = malloc(ens_size * sizeof * member_serial_size);
   size_t    serial_size;
-  double *  serial_data   = enkf_ensembleemble_alloc_serial_data(ens_size , target_serial_size , &serial_size);
+  double *  serial_data   = enkf_ensemble_alloc_serial_data(ens_size , target_serial_size , &serial_size);
   int       serial_stride = ens_size;
   int       iens , ithread;
   
@@ -1073,11 +1099,9 @@ void enkf_ensembleemble_update(enkf_state_type ** enkf_ensemble , int ens_size ,
       void_arg_pack_int(void_arg[ithread]     , 9 , update_mask);
     }
     
-    
     for (ithread =  0; ithread < threads; ithread++) 
       thread_pool_add_job(tp , &enkf_ensembleemble_serialize_threaded , void_arg[ithread]);
     thread_pool_join(tp);
-    
 
     /* Serialize section */
 /*     for (iens = 0; iens < ens_size; iens++) { */
@@ -1104,6 +1128,7 @@ void enkf_ensembleemble_update(enkf_state_type ** enkf_ensemble , int ens_size ,
 /*       /\* Restart on this node *\/ */
 /*       next_node[iens] = list_node; */
 /*     } */
+
 
     for (iens=1; iens < ens_size; iens++) {
       if (member_complete[iens]    != member_complete[iens-1])    {  fprintf(stderr,"%s: member_complete difference    - INTERNAL ERROR - aborting \n",__func__); abort(); }
