@@ -1,3 +1,8 @@
+/**
+See the file README.obs for ducumentation of the varios datatypes
+involved with observations/measurement/+++.
+*/
+
 #include <math.h>
 #include <stdlib.h>
 #include <meas_matrix.h>
@@ -86,9 +91,9 @@ void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride
 
 
 /**
-This function computes the ensemble mean and ensemble std of the
-various observables. The data are returned (by reference) in two
-vectors allocated in this function.
+   This function computes the ensemble mean and ensemble std of the
+   various observables. The data are returned (by reference) in two
+   vectors allocated in this function.
 */
 
 void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS , double **_stdS) {

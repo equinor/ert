@@ -24,6 +24,7 @@ struct scalar_struct {
 };
 
 /*****************************************************************/
+
 void scalar_clear(scalar_type * scalar) {
   const int size = scalar_config_get_data_size(scalar->config);   
   int k;
@@ -40,6 +41,7 @@ void scalar_set_data(scalar_type * scalar , const double * data) {
 void scalar_get_data(const scalar_type * scalar , double * data) {
   memcpy(data , scalar->data , scalar_config_get_data_size(scalar->config) * sizeof * data);
 }
+
 
 void scalar_get_output_data(const scalar_type * scalar , double * output_data) {
   memcpy(output_data , scalar->output_data , scalar_config_get_data_size(scalar->config) * sizeof * output_data);

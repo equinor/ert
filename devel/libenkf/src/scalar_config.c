@@ -51,12 +51,14 @@ void scalar_config_transform(const scalar_config_type * config , const double * 
 
 
 void scalar_config_truncate(const scalar_config_type * config , double *data) {
-  int i;
-  for (i=0; i < config->data_size; i++) {
+  return;
+  /*
+    for (i=0; i < config->data_size; i++) {
     if (config->active[i]) 
-      if (config->output_transform[i] == NULL)
-	data[i] = util_double_max(0.0 , data[i]);
-  }
+    if (config->output_transform[i] == NULL)
+    data[i] = util_double_max(0.0 , data[i]);
+    }
+  */
 }
 
 

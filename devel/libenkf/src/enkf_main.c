@@ -152,6 +152,14 @@ void enkf_main_init_eclipse(enkf_main_type * enkf_main , int report_step1 , int 
 
 
 
+void enkf_main_measure(enkf_main_type * enkf_main) {
+  const int ens_size = enkf_config_get_ens_size(enkf_main->config);
+  int iens;
+  meas_matrix_reset(enkf_main->meas_matrix);
+  for (iens = 0; iens < ens_size; iens++)
+    enkf_state_measure(enkf_main->ensemble[iens] , enkf_main->obs);
+}
+
 
 void enkf_main_free(enkf_main_type * enkf_main) {  
   enkf_obs_free(enkf_main->obs);
@@ -287,7 +295,6 @@ void enkf_main_swapin_ensemble(enkf_main_type * enkf_main , int mask) {
   int iens;
   for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
     enkf_state_swapin(enkf_main->ensemble[iens] , mask );
-
 }
 
 
@@ -370,12 +377,24 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
   
-  enkf_main_update_ensemble(enkf_main , step1 , step2);
+  /*
+    enkf_main_update_ensemble(enkf_main , step1 , step2);
+  */
+  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
+  enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
   {
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
-
+    /*
+      double *X = util_malloc(ens_size * ens_size * sizeof *X , __func__);
+      {
+      int i;
+      for (i=0; i < ens_size*ens_size; i++) X[i] = 0.0;
+      for (i=0; i < ens_size; i++) X[i * (ens_size + 1)] = 1.0;
+      }
+    */
+    
     if (X != NULL) {
-      printf("Har allokert X: %g \n",X[0]);
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */ , X);
       free(X);
     }
     
@@ -383,8 +402,33 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
 
 
   
-  printf("Skal skrive det analyserte ensembelet til disk\n");
+
   enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
-  printf("%s: ferdig \n" , __func__);
+  printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
 
+
+
+void enkf_test(enkf_main_type * enkf_main) {
+  const int step2 = 1;
+  const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
+
+  enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
+  enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
+  enkf_main_measure(enkf_main);
+
+  {
+    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
+    {
+      int i;
+      for (i=0; i < ens_size*ens_size; i++) X[i] = 0.0;
+      for (i=0; i < ens_size; i++) X[i * (ens_size + 1)] = 1.0;
+    }
+
+    if (X != NULL) {
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 , X);
+      free(X);
+    }
+  }
+}

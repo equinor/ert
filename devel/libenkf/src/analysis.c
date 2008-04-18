@@ -186,7 +186,6 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
 	if (active_obs[iobs_total]) {
 	  for (iens = 0; iens < ens_size; iens++) {
 	    int index = iobs_active * obs_stride + iens * ens_stride;
-	    printf("index:%d /%d \n",index , ens_size * nrobs_active);
 	    S[index] -= meanS[iobs_total];
 	  }
 	  iobs_active++;

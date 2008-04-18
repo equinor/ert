@@ -15,10 +15,11 @@ const double   * gen_kw_get_data_ref(const gen_kw_type * );
 void             gen_kw_get_data(const gen_kw_type * , double * );
 void             gen_kw_set_data(gen_kw_type * , const double * );
 void             gen_kw_initialize(gen_kw_type *, int);
-gen_kw_type   * gen_kw_alloc(const gen_kw_config_type * );
+
+gen_kw_type    * gen_kw_alloc(const gen_kw_config_type * );
+
 void             gen_kw_free(gen_kw_type *);
 void             gen_kw_ecl_write(const gen_kw_type * , const char *);
-/*void             gen_kw_direct_ecl_write(const gen_kw_type * , const char *);*/
 void             gen_kw_ens_write(const gen_kw_type * , const char *);
 void             gen_kw_ens_read(gen_kw_type * , const char *);
 void             gen_kw_truncate(gen_kw_type * );

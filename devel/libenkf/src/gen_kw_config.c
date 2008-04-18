@@ -17,6 +17,7 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * t
   gen_kw_config->scalar_config = scalar_config_alloc_empty(size);
   gen_kw_config->var_type      = parameter;
   gen_kw_config->template_file = util_alloc_string_copy(template_file);
+  gen_kw_config->executable    = NULL;
   if (!util_file_exists(template_file))
     util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
   return gen_kw_config;
@@ -30,6 +31,32 @@ void gen_kw_config_transform(const gen_kw_config_type * config , const double * 
 }
 
 
+
+/**
+This function will allocate a gen_kw_config keyword. The first
+argument is the name of a file containing the keywords, and the second
+argument is the name of the template file used.
+
+The format of the file containing keywords is as follows:
+  ________________________
+ /
+ | KEY1  UNIFORM 0     1
+ | KEY2  NORMAL  10   10
+ | KEY2  CONST   0.25
+ \________________________
+
+The first part is just the keyword, the second part is the properties
+of the prior distribution of that keyword. That is implemented as an
+object of type scalar/scalar_config - and documented there.
+
+For the template file there are essentially no restrictions:
+
+ o All occurences of <KEY1> are replaced with the corresponding value.
+
+ o The file template file must exist when the function
+   gen_kw_config_fscanf_alloc() is called.
+
+*/
 
 gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const char * template_file) {
   gen_kw_config_type * config;

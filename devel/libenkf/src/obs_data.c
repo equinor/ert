@@ -1,19 +1,8 @@
 /**
-Observations/measurements are handled by three different (toplevel) objects:
-
-enkf_obs_type
--------------
-This object contians qualitative information about the observations,
-i.e. when they are active, what is the error of the observations, what
-type they are, and how to measure them. This is the morst persistent
-object.
-            
-
-obs_data_type
+See the file README.obs for ducumentation of the varios datatypes
+involved with observations/measurement/+++.
 
 
-
------------------------------------------------------------------
 The file contains two different variables holding the number of
 observations, nrobs_total and nrobs_active. The first holds the total
 number of observations at this timestep, and the second holds the

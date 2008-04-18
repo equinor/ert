@@ -156,17 +156,11 @@ static void serial_state_update_forecast(serial_state_type * state , size_t offs
   state->state_complete = complete;
   state->state          = serialized;
   state->offset         = offset;
-  /*
-    printf("Oppdater forecast: offset:%d   elements:%d  complete:%d \n",offset,elements_added , complete);
-  */
 }
 
 
 
 static void serial_state_update_serialized(serial_state_type * state , int new_internal_offset) {
-  /*
-    printf("Oppdaterer serialized: new_internal_offset:%d    complete:%d \n",new_internal_offset , state->state_complete);
-  */
   if (state->state_complete) {
     state->state           = analyzed;
     state->serial_size     = -1;
@@ -281,7 +275,7 @@ void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
 }
 
 
-void enkf_node_assert_memory(enkf_node_type * enkf_node) {
+void enkf_node_ensure_memory(enkf_node_type * enkf_node) {
   FUNC_ASSERT(enkf_node->realloc_data);
   if (!enkf_node->memory_allocated) {
     enkf_node->realloc_data(enkf_node->data);
@@ -290,12 +284,21 @@ void enkf_node_assert_memory(enkf_node_type * enkf_node) {
 }
 
 
+
+
 bool enkf_node_memory_allocated(const enkf_node_type * node) { return node->memory_allocated; }
+
+static void enkf_node_assert_memory(const enkf_node_type * enkf_node , const char * caller) {
+  if (!enkf_node_memory_allocated(enkf_node)) {
+    printf("Fatal error - no memory ?? \n");
+    util_abort("%s:  tried to call:%s without allocated memory for node:%s - internal ERROR - aborting.\n",__func__ , caller , enkf_node->node_key);
+  }
+}
 
 
 void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream) {
   FUNC_ASSERT(enkf_node->fread_f);
-  enkf_node_assert_memory(enkf_node);
+  enkf_node_ensure_memory(enkf_node);
   enkf_node->fread_f(enkf_node->data , stream);
 }
 
@@ -309,10 +312,11 @@ void enkf_node_ens_clear(enkf_node_type *enkf_node) {
 
 int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool *complete) {
   FUNC_ASSERT(enkf_node->serialize);
+  enkf_node_assert_memory(enkf_node , __func__);
   if (serial_state_do_serialize(enkf_node->serial_state)) {
     int internal_offset = serial_state_get_internal_offset(enkf_node->serial_state);
     int elements_added  = enkf_node->serialize(enkf_node->data , internal_offset , serial_data_size , serial_data , stride , offset , complete);
- 
+    
     serial_state_update_forecast(enkf_node->serial_state , offset , elements_added , *complete);
     return elements_added;
   } return 0;

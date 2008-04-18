@@ -11,7 +11,9 @@
 
 typedef struct gen_kw_config_struct gen_kw_config_type;
 
+
 struct gen_kw_config_struct {
+  char                * executable;
   char               ** kw_list;
   enkf_var_type         var_type;  
   scalar_config_type  * scalar_config;

@@ -1,3 +1,8 @@
+/**
+   See the file README.obs for ducumentation of the varios datatypes
+   involved with observations/measurement/+++.
+*/
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

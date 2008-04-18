@@ -529,7 +529,6 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
   printf("Observations: %d \n",hash_get_size(enkf_obs->obs_hash));
   for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
     const char * kw = obs_keys[iobs];
-    printf("Measuring: %s \n",kw);
     {
       obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
@@ -937,7 +936,12 @@ static double * enkf_ensemble_alloc_serial_data(int ens_size , size_t target_ser
     div_t tmp   = div(target_serial_size , ens_size);
     serial_size = ens_size * tmp.quot;
 #ifdef i386
-    serial_size = util_int_min(serial_size , 8196 * 8196); /* 8196 * 8196 is the maximum number of doubles we allocate */
+    /* 
+       33570816 = 2^25 is the maximum number of doubles we will
+       allocate, this corresponds to 2^28 bytes - which it seems
+       we can adress quite safely ...
+    */
+    serial_size = util_int_min(serial_size , 33570816 ); 
 #endif
   }
 
@@ -982,7 +986,7 @@ void enkf_ensembleemble_mulX(double * serial_state , int serial_x_stride , int s
 
 
 
-void * enkf_ensembleemble_serialize_threaded(void * _void_arg) {
+void * enkf_ensemble_serialize_threaded(void * _void_arg) {
   void_arg_type * void_arg     = void_arg_safe_cast( _void_arg );
   int update_mask;
   int iens , iens1 , iens2 , serial_stride;
@@ -1007,7 +1011,6 @@ void * enkf_ensembleemble_serialize_threaded(void * _void_arg) {
     list_node_type  * list_node  = start_node[iens];
     bool node_complete           = true;  
     size_t   serial_offset       = iens;
-    printf("%s iens:%d \n",__func__ , iens);
     
     while (node_complete) {                                           
       enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
@@ -1100,7 +1103,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
     }
     
     for (ithread =  0; ithread < threads; ithread++) 
-      thread_pool_add_job(tp , &enkf_ensembleemble_serialize_threaded , void_arg[ithread]);
+      thread_pool_add_job(tp , &enkf_ensemble_serialize_threaded , void_arg[ithread]);
     thread_pool_join(tp);
 
     /* Serialize section */

@@ -4,6 +4,29 @@ with the corresponding header files) are meant to serve as a
 documentation and reference on how to add new object types to the enkf
 system.
 
+The enkf object system is based on the enkf_node_type as a sort of
+abstract class, this object has a void pointer which will point to the
+actual data instance (i.e. for instance an instance of the type
+"new_type" implemented here), along with several function pointers to
+manipulate the data object. 
+
+   _______________________________________                 _______________________________
+  | enkf_node_type instance               |               |                               |
+  | ------------------------------------- |               | Actual data , e.g. a field or |
+  | * void * data                         |-------------->| a multiplier.                 |
+  | * Function pointers to manipulate     |               |_______________________________|
+  |   data                                |    
+  | * Something more - not relevant here  |
+  |_______________________________________|
+
+
+The enkf_node object can contain pointers to all types of objects.
+
+
+
+
+
+
 
 new_type.c (should read README.new_type.h first).
 ==========
@@ -33,14 +56,6 @@ the same active/inactive cells, all the relperm instances should use
 the same relperm model e.t.c. This file is about implementing the data
 members, i.e. the small boxes. The implementation of the config
 object, is discussed in README.new_type_config.c.
-
-The enkf object system is based on the enkf_node_type as a sort of
-virtual class, this object has a void pointer which will point to the
-actual data instance (i.e. for instance an instance of the type
-"new_type" implemented here), along with several function pointers to
-manipulate the data object. The definition of the function pointers
-are in enkf_node.h. The functions we need (do not have to specify them
-all) are:
 
 
 1.  alloc_ftype: new_type * new_type_alloc(const new_type_config *);
@@ -147,11 +162,39 @@ all) are:
     retain the new_type holding structure. This function is called
     after an instance has swapped to disk.
 
-11. realloc_data_ftype: 
-    -------------------
+11. realloc_data_ftype: void (new_type *);
+    --------------------------------------------------------------
+    This function is the "opposite" of function number 10, i.e. it
+    is to reallocate memory to hold the actual data.
 
 
-There are more to these functions - which will be decribed below.
+Now - since the enkf_node objects can point to arbitrary types of
+object the data pointer is a void pointer, and the function pointer
+expect (void *) as input, instead of pointers to e.g. new_type
+instances. To cast from the typed functions listed above, to functions
+accepting (void *) there are several utility functions, i.e. the macro
+VOID_ECL_WRITE() will create a void * version of the XXX_ecl_write()
+function:
+
+The macro call: VOID_ECL_WRITE(new_type) will generate the following code:
+
+   void new_type_ecl_write__(void *__new_type) {
+        new_type_ecl_write( (new_type *) __new_type);
+   }
+
+And the macro VOID_ECL_WRITE_HEADER(new_type) will generate the
+corresponding header. These (void) functions are the ones used when
+initializing the function pointers in the enkf_node object. For
+instance for registering the new_type object in the enkf_node
+implementation (function: enkf_node_alloc_empty)
+
+....
+....
+case(NEW_TYPE):
+   node->alloc    = new_type_alloc__;
+   node->fwrite_f = new_type_fwrite__;
+   ...
+
 */
 
 

@@ -6,7 +6,6 @@ objects:
 
 obs_node_type
 -------------
-
 This object contians qualitative information about the observations,
 i.e. when they are active, what is the error of the observations, what
 type they are, and how to measure them. The obs_node_type object
@@ -20,7 +19,10 @@ observation, that can typically be to get an historical rate from the
 history; the data is pushed onto an instance of obs_data_type. measure
 on the other is used to extract information from the ensemble state,
 i.e. measure for instance a simulated rate or a pressure, and push the
-data onto a meas_vector_type instance.
+data onto a meas_vector_type instance. 
+
+Several obs_node instances are collected in the enkf_obs type, which
+is mostly a hash table of obs_node instances.
 
 The obs_node_type lives through the whole simulation, this in contrast
 to the two other data types involved in the process.
@@ -36,15 +38,14 @@ obs_data_type instance is reset.
 
 meas_vector_type / meas_matrix_type
 ----------------------------------- 
-
 This data type is used in the same way as the obs_data_type, for
 measurements. When an eclipse integration is complete the
 obs_node->measure function is called, and the measurements are pushed
 onto the meas_vector. (The whole ensemble corresponds to meas_matrix_type).
 
 
-ANALYSIS:
----------
+Analysis
+--------
 Observe that the analysis step ONLY involves a meas_matrix_type
 instance and an obs_data instance.
 

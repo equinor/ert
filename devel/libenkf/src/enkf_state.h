@@ -19,6 +19,7 @@
 
 typedef struct enkf_state_struct enkf_state_type;
 
+void               enkf_state_measure( const enkf_state_type *  , enkf_obs_type * );
 void               enkf_state_set_state(enkf_state_type * , int , state_enum );
 void               enkf_state_set_data_kw(enkf_state_type *, const char * , const char * );
 void               enkf_state_add_data_kw(enkf_state_type *, const char * , const char * );

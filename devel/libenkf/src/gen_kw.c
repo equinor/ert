@@ -22,7 +22,7 @@ GET_DATA_SIZE_HEADER(gen_kw);
 struct gen_kw_struct {
   DEBUG_DECLARE
   const gen_kw_config_type *config;
-  scalar_type               *scalar;
+  scalar_type              *scalar;
 };
 
 /*****************************************************************/
@@ -97,14 +97,14 @@ gen_kw_type * gen_kw_copyc(const gen_kw_type *gen_kw) {
 
 
 void gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream) {
-  DEBUG_ASSERT(gen_kw);
+  DEBUG_ASSERT(gen_kw)
   enkf_util_fwrite_target_type(stream , GEN_KW);
   scalar_stream_fwrite(gen_kw->scalar , stream);
 }
 
 
 void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {
-  DEBUG_ASSERT(gen_kw);
+  DEBUG_ASSERT(gen_kw)
   enkf_util_fread_assert_target_type(stream , GEN_KW , __func__);
   scalar_stream_fread(gen_kw->scalar , stream);
 }
@@ -170,13 +170,21 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   gen_kw_output_transform(gen_kw);
   for (ikw = 0; ikw < size; ikw++)
     hash_insert_hash_owned_ref(kw_hash , gen_kw_config_get_name(gen_kw->config , ikw) , void_arg_alloc_double(output_data[ikw]) , void_arg_free__);
-  util_filter_file(gen_kw_config_get_template_ref(gen_kw->config) , NULL , target_file , '<' , '>' , kw_hash,false );
+  util_filter_file(gen_kw_config_get_template_ref(gen_kw->config) , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn0 );
   hash_free(kw_hash);
+  
 }
 
+
 void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * target_file) {
+  DEBUG_ASSERT(gen_kw)
   gen_kw_filter_file(gen_kw , target_file);
+
+  /* 
+     Esktra eksekverbar : sytem("xxxx ");
+  */
 }
+
 
 void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list , double **_output_values) {
   gen_kw_output_transform(gen_kw);
