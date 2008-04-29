@@ -1,0 +1,45 @@
+#ifndef __HAVANA_H__
+#define __HAVANA_H__
+
+#include <havana_fault_config.h>
+#include <enkf_util.h>
+#include <enkf_macros.h>
+
+typedef struct havana_fault_struct havana_fault_type;
+
+
+void             havana_fault_output_transform(const havana_fault_type * );
+void             havana_fault_get_output_data(const havana_fault_type * , double * );
+const double   * havana_fault_get_output_ref(const havana_fault_type * );
+const double   * havana_fault_get_data_ref(const havana_fault_type * );
+void             havana_fault_get_data(const havana_fault_type * , double * );
+void             havana_fault_set_data(havana_fault_type * , const double * );
+void             havana_fault_initialize(havana_fault_type *, int);
+
+havana_fault_type    * havana_fault_alloc(const havana_fault_config_type * );
+
+void             havana_fault_free(havana_fault_type *);
+void             havana_fault_ecl_write(const havana_fault_type * , const char *);
+void             havana_fault_ens_write(const havana_fault_type * , const char *);
+void             havana_fault_ens_read(havana_fault_type * , const char *);
+void             havana_fault_truncate(havana_fault_type * );
+havana_fault_type   *  havana_fault_alloc_mean(int , const havana_fault_type **);
+const char     * havana_fault_get_name(const havana_fault_type * , int );
+void             havana_fault_filter_file(const havana_fault_type * , const char * );
+void             havana_fault_export(const havana_fault_type * , int * , char ***, double **);
+
+
+VOID_ECL_WRITE_HEADER  (havana_fault)
+VOID_FWRITE_HEADER  (havana_fault)
+VOID_FREAD_HEADER   (havana_fault)
+VOID_COPYC_HEADER      (havana_fault);
+VOID_SERIALIZE_HEADER  (havana_fault);
+VOID_DESERIALIZE_HEADER  (havana_fault);
+VOID_FREE_DATA_HEADER(havana_fault)
+VOID_INITIALIZE_HEADER(havana_fault);
+VOID_FREE_HEADER       (havana_fault);
+MATH_OPS_HEADER(havana_fault);
+VOID_ALLOC_HEADER(havana_fault);
+VOID_ECL_WRITE_HEADER(havana_fault);
+VOID_REALLOC_DATA_HEADER(havana_fault);
+#endif
