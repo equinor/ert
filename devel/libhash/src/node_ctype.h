@@ -8,7 +8,7 @@
   pointer: means a (typed) pointer which points to a memory location outside the container object.
 */
 
-typedef enum  {void_buffer  = 0,
+typedef enum  {void_buffer  = 0, 
 	       void_pointer = 1,
 	       int_value    = 2, 
 	       double_value = 3, 
@@ -17,4 +17,6 @@ typedef enum  {void_buffer  = 0,
 	       bool_value   = 6 , 
 	       size_t_value = 7} node_ctype;
 
+
+const char * node_ctype_name(node_ctype );
 #endif
