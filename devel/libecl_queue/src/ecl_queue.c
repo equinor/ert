@@ -68,10 +68,8 @@ static void ecl_queue_node_free_data(ecl_queue_node_type * node) {
   if (node->run_path != NULL)    free(node->run_path);
   if (node->target_file != NULL) free(node->target_file);
   if (node->smspec_file != NULL) free(node->smspec_file);
-  if (node->job_data != NULL) {
-    fprintf(stderr,"%s: internal error - driver spesific job data has not been freed - will leak \n",__func__);
-    abort();
-  }
+  if (node->job_data != NULL) 
+    util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
 
 static void ecl_queue_node_free(ecl_queue_node_type * node) {
@@ -85,10 +83,9 @@ static ecl_job_status_type ecl_queue_node_get_status(const ecl_queue_node_type *
 
 
 static int ecl_queue_node_get_external_id(const ecl_queue_node_type * node) {
-  if (node->external_id < 0) {
-    fprintf(stderr,"%s: tried to get external id from uninitialized job - aborting \n",__func__);
-    abort();
-  }
+  if (node->external_id < 0) 
+    util_abort("%s: tried to get external id from uninitialized job - aborting \n",__func__);
+  
   return node->external_id;
 }
 
@@ -126,11 +123,10 @@ struct ecl_queue_struct {
 
 static bool ecl_queue_change_node_status(ecl_queue_type *  , ecl_queue_node_type *  , ecl_job_status_type );
 
+
 static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index , int external_id , int target_report) {
-  if (external_id < 0) {
-    fprintf(stderr,"%s: external_id must be >= 0 - aborting \n",__func__);
-    abort();
-  }
+  if (external_id < 0) 
+    util_abort("%s: external_id must be >= 0 - aborting \n",__func__);
   {
     ecl_queue_node_type * node = queue->jobs[queue_index];
     node->external_id    = external_id;
@@ -147,10 +143,9 @@ static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index ,
       node->smspec_file   = ecl_util_alloc_filename(node->run_path , node->ecl_base , ecl_summary_header_file , fmt_file , -1);
     }
     node->job_data      = NULL;
-    if ( !util_path_exists(node->run_path) ) {
-      fprintf(stderr,"%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
-      abort();
-    }
+    if ( !util_path_exists(node->run_path) ) 
+      util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
+    
     ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
   }
 }
@@ -166,10 +161,8 @@ static int ecl_queue_get_active_size(ecl_queue_type * queue) {
 
 
 static void ecl_queue_assert_queue_index(const ecl_queue_type * queue , int queue_index) {
-  if (queue_index < 0 || queue_index >= queue->size) {
-    fprintf(stderr,"%s: invalid queue_index - internal error - aborting \n",__func__);
-    abort();
-  }
+  if (queue_index < 0 || queue_index >= queue->size) 
+    util_abort("%s: invalid queue_index - internal error - aborting \n",__func__);
 }
 
 
@@ -214,6 +207,7 @@ static submit_status_type ecl_queue_submit_job(ecl_queue_type * queue , int queu
       util_unlink_existing(node->smspec_file);
     {
       basic_queue_job_type * job_data = driver->submit(queue->driver         , 
+						       queue_index           , 
 						       queue->submit_cmd     , 
 						       node->run_path        , 
 						       node->ecl_base        , 
@@ -236,6 +230,11 @@ static submit_status_type ecl_queue_submit_job(ecl_queue_type * queue , int queu
   return submit_status;
 }
 
+static void ecl_queue_print_status(const ecl_queue_type * queue) {
+  printf("Target report.....: %d \n",queue->target_report);
+  printf("active_size ......: %d \n",queue->active_size);
+}
+
 
 ecl_job_status_type ecl_queue_export_job_status(ecl_queue_type * queue , int external_id) {
   bool node_found    = false;
@@ -251,11 +250,13 @@ ecl_job_status_type ecl_queue_export_job_status(ecl_queue_type * queue , int ext
     } else
       queue_index++;
   }
+  
   if (node_found)
     return status;
   else {
-    fprintf(stderr,"%s: could not find job with id: %d - aborting.\n",__func__ , external_id);
-    abort();
+    ecl_queue_print_status(queue);
+    util_abort("%s: could not find job with id: %d - aborting.\n",__func__ , external_id);
+    return status; /* Dummy --- */
   }
 }
 
@@ -275,7 +276,19 @@ static void ecl_queue_print_jobs(const ecl_queue_type *queue) {
   printf("Waiting: %3d    Pending: %3d    Running: %3d     Restarts: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , restarts , failed , complete);
   fflush(stdout);
 }
+
+
+void ecl_queue_finalize(ecl_queue_type * queue) {
+  int i;
+  for (i=0; i < queue->size; i++) 
+    ecl_queue_node_finalize(queue->jobs[i]);
   
+  for (i=0; i < ecl_queue_max_state; i++)
+    queue->status_list[i] = 0;
+  
+  queue->active_size = 0;
+  rsh_driver_summarize(queue->size);
+}
 
 
 
@@ -330,9 +343,15 @@ void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
       switch (ecl_queue_node_get_status(node)) {
       case(ecl_queue_done):
 	if (node->target_file != NULL) {
-	  if (util_file_exists(node->target_file))
+	  if (util_file_exists(node->target_file)) {
+	    util_block_growing_file(node->target_file);   /* An attempt to ensure that all the ECLIPSE files are completly written */
+	    util_block_growing_directory(node->run_path); 
 	    ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
-	  else {
+	  } else {
+	    bool verbose = true;
+	    if (verbose) {
+	      printf("Restarting: %s \n",node->ecl_base);
+	    }
 	    ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
 	    queue->status_list[ecl_queue_restart]++;
 	  }
@@ -360,10 +379,9 @@ void ecl_queue_add_job(ecl_queue_type * queue , int external_id, int target_repo
   pthread_mutex_lock( &queue->active_mutex );
   {
     int active_size  = queue->active_size;
-    if (active_size == queue->size) {
-      fprintf(stderr,"%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
-      abort();
-    }
+    if (active_size == queue->size) 
+      util_abort("%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
+    
     ecl_queue_initialize_node(queue , active_size , external_id , target_report);
     queue->active_size++;
   }
@@ -425,16 +443,6 @@ ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit ,
 
 
 
-void ecl_queue_finalize(ecl_queue_type * queue) {
-  int i;
-  for (i=0; i < queue->size; i++) 
-    ecl_queue_node_finalize(queue->jobs[i]);
-
-  for (i=0; i < ecl_queue_max_state; i++)
-    queue->status_list[i] = 0;
-  
-  queue->active_size = 0;
-}
 
 
 

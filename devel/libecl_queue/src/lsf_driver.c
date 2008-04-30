@@ -3,10 +3,25 @@
 #include <string.h>
 #include <basic_queue_driver.h>
 #include <lsf_driver.h>
-#include <lsf/lsbatch.h>
 #include <util.h>
 #include <pthread.h>
 #include <void_arg.h>
+
+/**
+The LSF_LIBRARY_DRIVER uses the lsb/lsf libraries directly; if the
+librarie/headers .... are not available for linking we can use the
+LSF_SYSTEM_DRIVER instead - this is based on calling bsub and bjobs
+with system calls, using temporary files and parsing the output.
+*/
+
+
+#ifdef i386
+#define LSF_SYSTEM_DRIVER
+#else
+#define LSF_LIBRARY_DRIVER
+#include <lsf/lsbatch.h>
+#endif
+
 
 struct lsf_job_struct {
   int 	    __basic_id;
@@ -20,30 +35,18 @@ struct lsf_driver_struct {
   int __lsf_id;
   char * resource_request;
   char * queue_name;
+  pthread_mutex_t    submit_lock;
+
+#ifdef LSF_LIBRARY_DRIVER
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
-
-  pthread_mutex_t    submit_lock;
+#else
+  char bsub_submit_cmd_fmt[1024];
+#endif
 };
 
 
 
-/*
-  The LSF libraries are only available in 64 bit, 
-  provides some short stubs for 32 bit.
-*/
-#ifdef i386
-
-void 	  * lsf_driver_alloc(const char * queue_name , const char * resource_request) {
-  fprintf(stderr,"%s: sorry LSF driver not available when compiled in 32 bit mode - aborting.\n",__func__);
-  abort();
-}
-
-void 	    lsf_driver_free(lsf_driver_type * driver ) {
-  
-}
-
-#else
 
 
 /*****************************************************************/
@@ -57,6 +60,7 @@ void lsf_driver_assert_cast(const lsf_driver_type * queue_driver) {
     abort();
   }
 }
+
 
 void lsf_driver_init(lsf_driver_type * queue_driver) {
   queue_driver->__lsf_id = LSF_DRIVER_ID;
@@ -84,9 +88,9 @@ void lsf_job_free(lsf_job_type * job) {
 }
 
 
-
+#ifdef LSF_LIBRARY_DRIVER
 #define CASE(S1,S2) case(S1):  status = S2; break;
-ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
     return ecl_queue_null;
@@ -124,7 +128,15 @@ ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver
   }
 }
 #undef CASE
+#endif
 
+ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+#ifdef LSF_LIBRARY_DRIVER
+  return lsf_driver_get_job_status_libary(__driver , __job);
+#else
+  return 0;
+#endif
+}
 
 
 void lsf_driver_free_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
@@ -137,18 +149,69 @@ void lsf_driver_free_job(basic_queue_driver_type * __driver , basic_queue_job_ty
 
 
 
+static void lsf_driver_killjob(int jobnr) {
+#ifdef LSF_LIBRARY_DRIVER
+  lsb_forcekilljob(jobnr);
+#else
+#endif
+}
+
+
 void lsf_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   lsf_job_type    * job    = (lsf_job_type    *) __job;
   lsf_driver_type * driver = (lsf_driver_type *) __driver;
   lsf_driver_assert_cast(driver); 
   lsf_job_assert_cast(job);
-  lsb_forcekilljob(job->lsf_jobnr);
+  lsf_driver_killjob(job->lsf_jobnr);
   lsf_driver_free_job(__driver , __job);
 }
 
 
 
+
+#ifdef LSF_SYSTEM_DRIVER
+static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
+  int jobid;
+  FILE * stream = util_fopen(stdout_file , "r");
+  {
+    char buffer[16];
+    int c;
+    int i;
+    do {
+      c = fgetc(stream);
+    } while (c != '<');
+
+    i = -1;
+    do {
+      i++;
+      buffer[i] = fgetc(stream);
+    } while(buffer[i] != '>');
+    buffer[i] = '\0';
+    jobid = atoi(buffer);
+  }
+  fclose(stream);
+  return jobid;
+}
+
+
+static int lsf_driver_submit_system_job(const char * submit_cmd_fmt , const char * run_path , const char * ecl_base , const char * submit_cmd) {
+  int job_id;
+  char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
+  char bsub_cmd[4096];
+
+  sprintf(bsub_cmd , submit_cmd_fmt , run_path , ecl_base , ecl_base , submit_cmd , tmp_file);
+  system(bsub_cmd);
+
+  job_id = lsf_job_parse_bsub_stdout(tmp_file);
+  util_unlink_existing(tmp_file); 
+  free(tmp_file);
+  return job_id;
+}
+#endif
+
+
 basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver, 
+					     int   queue_index , 
 					     const char * submit_cmd  	  , 
 					     const char * run_path    	  , 
 					     const char * ecl_base    	  , 
@@ -159,8 +222,8 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
   lsf_driver_type * driver = (lsf_driver_type *) __driver;
   lsf_driver_assert_cast(driver); 
   {
-    lsf_job_type * job    = lsf_job_alloc();
-    char * lsf_stdout = util_alloc_joined_string((const char *[4]) {run_path   , "/"      , ecl_base , ".LSF-stdout"}  , 4 , "");
+    lsf_job_type * job = lsf_job_alloc();
+    char * lsf_stdout  = util_alloc_joined_string((const char *[4]) {run_path   , "/"      , ecl_base , ".LSF-stdout"}  , 4 , "");
     char * command;
     if (eclipse_LD_path == NULL)
       command = util_alloc_joined_string((const char*[6]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server} , 6 , " ");
@@ -168,18 +231,22 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
       command = util_alloc_joined_string((const char*[7]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server , eclipse_LD_path} , 7 , " ");
     
     pthread_mutex_lock( &driver->submit_lock );
+
+#ifdef LSF_LIBRARY_DRIVER
     driver->lsf_request.jobName = (char *) ecl_base;
     driver->lsf_request.outFile = lsf_stdout;
     driver->lsf_request.command = command;
     job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
+#else
+    job->lsf_jobnr = lsf_driver_submit_system_job( driver->bsub_submit_cmd_fmt , run_path , ecl_base , command);
+#endif
+
     pthread_mutex_unlock( &driver->submit_lock );
     free(lsf_stdout);
     free(command);
 
-    if (job->lsf_jobnr < 0) {
-      fprintf(stderr,"%s: something failed when submitting job to lsf_system - aborting \n",__func__);
-      abort();
-    }
+    if (job->lsf_jobnr < 0) 
+      util_abort("%s: something failed when submitting job to lsf_system. Return value:%d - aborting \n",__func__ , job->lsf_jobnr);
     
     {
       basic_queue_job_type * basic_job = (basic_queue_job_type *) job;
@@ -196,8 +263,15 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
   lsf_driver->queue_name       = util_alloc_string_copy(queue_name);
   lsf_driver->resource_request = util_alloc_string_copy(resource_request);
   lsf_driver->__lsf_id         = LSF_DRIVER_ID;
+  lsf_driver->submit      = lsf_driver_submit_job;
+  lsf_driver->get_status  = lsf_driver_get_job_status;
+  lsf_driver->abort_f     = lsf_driver_abort_job;
+  lsf_driver->free_job    = lsf_driver_free_job;
+  lsf_driver->free_driver = lsf_driver_free__;
+
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
   
+#ifdef LSF_LIBRARY_DRIVER
   memset(&lsf_driver->lsf_request , 0 , sizeof (lsf_driver->lsf_request));
   lsf_driver->lsf_request.options   	   = SUB_QUEUE + SUB_RES_REQ + SUB_JOB_NAME + SUB_OUT_FILE;
   lsf_driver->lsf_request.queue     	   = lsf_driver->queue_name;
@@ -212,16 +286,19 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
       lsf_driver->lsf_request.rLimits[i] = DEFAULT_RLIMIT;
   }
   lsf_driver->lsf_request.options2 = 0;
-  
-  lsf_driver->submit      = lsf_driver_submit_job;
-  lsf_driver->get_status  = lsf_driver_get_job_status;
-  lsf_driver->abort_f     = lsf_driver_abort_job;
-  lsf_driver->free_job    = lsf_driver_free_job;
-  lsf_driver->free_driver = lsf_driver_free__;
-  if (lsb_init(NULL) != 0) {
-    fprintf(stderr,"%s failed to initialize LSF environment - aborting\n",__func__);
-    abort();
-  }
+
+  if (lsb_init(NULL) != 0) 
+    util_abort("%s failed to initialize LSF environment - aborting\n",__func__);
+#else
+  sprintf(lsf_driver->bsub_submit_cmd_fmt , "bsub -o %s/%s.stdout -q %s -J %s -R\"%s\" %s > %s" , 
+	  "%s"                          	, /* Run_path */
+	  "%s"                          	, /* ECL_BASE */
+	  lsf_driver->queue_name             	, 
+	  "%s"                          	, /* lsf job name   */
+	  lsf_driver->resource_request          , 
+	  "%s"                                  , /* Full submit command */
+	  "%s");                                  /* tmp file       */
+#endif
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) lsf_driver;
     basic_queue_driver_init(basic_driver);
@@ -241,11 +318,8 @@ void lsf_driver_free__(basic_queue_driver_type * driver) {
   lsf_driver_free((lsf_driver_type *) driver);
 }
 
-
-
 #undef LSF_DRIVER_ID  
 #undef LSF_JOB_ID    
-#endif
 
 /*****************************************************************/
 

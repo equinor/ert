@@ -20,6 +20,7 @@ struct local_job_struct {
 struct local_driver_struct {
   BASIC_QUEUE_DRIVER_FIELDS
   int __local_id;
+  pthread_attr_t     thread_attr;
   pthread_mutex_t    submit_lock;
 };
 
@@ -123,13 +124,14 @@ void * submit_job_thread(void * cmd) {
 
 
 basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __driver, 
-					     const char * submit_cmd  	  , 
-					     const char * run_path    	  , 
-					     const char * ecl_base    	  , 
-					     const char * eclipse_exe 	  ,   
-					     const char * eclipse_config  , 
-					     const char * eclipse_LD_path , 
-					     const char * license_server) {
+					       int   node_index                   , 
+					       const char * submit_cmd  	  , 
+					       const char * run_path    	  , 
+					       const char * ecl_base    	  , 
+					       const char * eclipse_exe 	  ,   
+					       const char * eclipse_config  , 
+					       const char * eclipse_LD_path , 
+					       const char * license_server) {
   local_driver_type * driver = (local_driver_type *) __driver;
   local_driver_assert_cast(driver); 
   {
@@ -144,7 +146,7 @@ basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __drive
       command = util_alloc_joined_string((const char*[7]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server , eclipse_LD_path} , 7 , " ");
     
     pthread_mutex_lock( &driver->submit_lock );
-    if (pthread_create( &job->run_thread , NULL , submit_job_thread , command) != 0) {
+    if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread , command) != 0) {
       fprintf(stderr,"%s: failed to create run thread - aborting \n",__func__);
       abort();
     }
@@ -165,7 +167,8 @@ void * local_driver_alloc() {
   local_driver_type * local_driver = util_malloc(sizeof * local_driver , __func__);
   local_driver->__local_id         = LOCAL_DRIVER_ID;
   pthread_mutex_init( &local_driver->submit_lock , NULL );
-  
+  pthread_attr_init( &local_driver->thread_attr );
+  pthread_attr_setdetachstate( &local_driver->thread_attr , PTHREAD_CREATE_DETACHED );
   
   local_driver->submit      = local_driver_submit_job;
   local_driver->get_status  = local_driver_get_job_status;
@@ -181,6 +184,7 @@ void * local_driver_alloc() {
 
 
 void local_driver_free(local_driver_type * driver) {
+  pthread_attr_destroy ( &driver->thread_attr );
   free(driver);
   driver = NULL;
 }
