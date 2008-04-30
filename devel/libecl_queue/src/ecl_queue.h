@@ -4,6 +4,7 @@
 #include <path_fmt.h>
 
 typedef struct ecl_queue_struct ecl_queue_type;
+void                ecl_queue_finalize(ecl_queue_type * queue);
 ecl_queue_type   *  ecl_queue_alloc(int  , int , int  , const char * , const char * , const char * , const char *  , const char *  , const path_fmt_type * , const path_fmt_type * , const path_fmt_type * , void * );
 void                ecl_queue_free(ecl_queue_type *);
 void                ecl_queue_add_job(ecl_queue_type * , int , int);
