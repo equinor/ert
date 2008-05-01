@@ -23,6 +23,9 @@ int main(int argc, char ** argv)
     int    ens_size = atoi(argv[6]);
 
     char * format = (char *) malloc(200);
+
+    havana_fault_type ** ensemble; 
+
     sprintf(format,"%s/ens%s",directoryPrefix,"%d");
     printf("%s\n",format);
 
@@ -30,7 +33,7 @@ int main(int argc, char ** argv)
 
 
 
-   havana_fault_type ** ensemble; 
+
 
    havana_fault_config_type * havana_config =  havana_fault_config_fscanf_alloc(configFile, templateModelFile,executableFile);
 

@@ -23,15 +23,15 @@ void havana_fault_config_transform(const havana_fault_config_type * config , con
 havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filename , const char * template_file, const char * executable_file) 
 {
     /* Allocate and read */
-  if (util_file_exists(filename) == 0 ) 
+  if (!util_file_exists(filename) ) 
   {
       util_abort("%s: config_file:%s does not exist - aborting.\n" , __func__ , filename);
   }
-  if (util_file_exists(template_file) == 0 ) 
+  if (!util_file_exists(template_file) ) 
   {
       util_abort("%s: template_file:%s does not exist - aborting.\n" , __func__ , template_file);
   }
-  if (util_file_exists(executable_file) == 0 ) 
+  if (!util_file_exists(executable_file)  ) 
   {
       util_abort("%s: executable_file:%s does not exist - aborting.\n" , __func__ , executable_file);
   }
