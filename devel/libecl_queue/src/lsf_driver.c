@@ -40,8 +40,12 @@ struct lsf_driver_struct {
 #ifdef LSF_LIBRARY_DRIVER
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
+  int                stdout_fd;
+  char               stdout_dev[32];
 #else
   char bsub_submit_cmd_fmt[1024];
+  hash_type         *status_map;
+  hash_type         *bjobs_output;
 #endif
 };
 
@@ -207,6 +211,13 @@ static int lsf_driver_submit_system_job(const char * submit_cmd_fmt , const char
   free(tmp_file);
   return job_id;
 }
+
+static void lsf_driver_init_bjobs_table(lsf_driver_type * driver) {
+  char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
+  
+  util_unlink_existing(tmp_file); 
+  free(tmp_file);
+}
 #endif
 
 
@@ -236,7 +247,21 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
     driver->lsf_request.jobName = (char *) ecl_base;
     driver->lsf_request.outFile = lsf_stdout;
     driver->lsf_request.command = command;
-    job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
+
+    {
+      /*
+	Hack to temporarily redirect stdout to /dev/null,
+	to avoid stupid message from lsb_submit() function.
+      */
+      
+      driver->stdout_fd = dup(driver->stdout_fd);
+      freopen("/dev/null" , "w" , stdout);
+      
+      job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
+
+      sprintf(driver->stdout_dev , "/dev/fd/%d" , driver->stdout_fd);
+      freopen(driver->stdout_dev , "w" , stdout);      
+    }
 #else
     job->lsf_jobnr = lsf_driver_submit_system_job( driver->bsub_submit_cmd_fmt , run_path , ecl_base , command);
 #endif
@@ -286,7 +311,7 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
       lsf_driver->lsf_request.rLimits[i] = DEFAULT_RLIMIT;
   }
   lsf_driver->lsf_request.options2 = 0;
-
+  lsf_driver->stdout_fd = 1;
   if (lsb_init(NULL) != 0) 
     util_abort("%s failed to initialize LSF environment - aborting\n",__func__);
 #else
@@ -298,6 +323,17 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
 	  lsf_driver->resource_request          , 
 	  "%s"                                  , /* Full submit command */
 	  "%s");                                  /* tmp file       */
+
+  lsf_driver->bjobs_output = hash_alloc(); 
+  lsf_driver->status_map   = hash_alloc();
+  hash_insert_int(lsf_driver->status_map , "PEND"   , ecl_queue_pending);
+  hash_insert_int(lsf_driver->status_map , "SSUSP"  , ecl_queue_running);
+  hash_insert_int(lsf_driver->status_map , "PSUSP"  , ecl_queue_pending);
+  hash_insert_int(lsf_driver->status_map , "RUN"    , ecl_queue_running);
+  hash_insert_int(lsf_driver->status_map , "EXIT"   , ecl_queue_exit);
+  hash_insert_int(lsf_driver->status_map , "USUSP"  , ecl_queue_running);
+  hash_insert_int(lsf_driver->status_map , "DONE"   , ecl_queue_done);
+  hash_insert_int(lsf_driver->status_map , "UNKWN"  , ecl_queue_exit); /* Uncertain about this one */
 #endif
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) lsf_driver;
@@ -306,11 +342,14 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
   }
 }
 
-
 void lsf_driver_free(lsf_driver_type * driver) {
   free(driver->resource_request);
   free(driver->queue_name);
   free(driver);
+#ifdef LSF_SYSTEM_DRIVER
+  hash_free(driver->status_map);
+  hash_free(driver->bjobs_output);
+#endif
   driver = NULL;
 }
 

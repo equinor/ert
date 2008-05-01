@@ -3,11 +3,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ecl_queue.h>
+#include <msg.h>
 #include <util.h>
 #include <ecl_util.h>
 #include <basic_queue_driver.h>
 #include <path_fmt.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <void_arg.h>
 
 
 /**
@@ -101,7 +104,7 @@ static void ecl_queue_node_finalize(ecl_queue_node_type * node) {
 
 struct ecl_queue_struct {
   int                        target_report;
-  int                        sleep_time;
+  unsigned long              usleep_time;
   int                        active_size; 
   int                        size;
   int                        max_submit;
@@ -287,19 +290,20 @@ void ecl_queue_finalize(ecl_queue_type * queue) {
     queue->status_list[i] = 0;
   
   queue->active_size = 0;
-  rsh_driver_summarize(queue->size);
 }
 
 
 
-void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
-  int phase = 0;
-  int queue_index;
-  int old_status_list[ecl_queue_max_state];
+void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
+  msg_type * submit_msg = msg_alloc("Submitting new jobs:  ]");
+  bool new_jobs = false;
+  bool cont     = true;
+  int  phase = 0;
+  int  old_status_list[ecl_queue_max_state];
   {
     int i;
     for (i=0; i < ecl_queue_max_state; i++)
-      old_status_list[i] = 0;
+      old_status_list[i] = -1;
   }
   
   do {
@@ -308,72 +312,146 @@ void  ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
     spinner[1] = '\\';
     spinner[2] = '|';
     spinner[3] = '/';
+
     ecl_queue_update_status(queue);
-    if (memcmp(old_status_list , queue->status_list , ecl_queue_max_state * sizeof * old_status_list) != 0) {
+    if ( (memcmp(old_status_list , queue->status_list , ecl_queue_max_state * sizeof * old_status_list) != 0) || new_jobs ) {
       printf("\b \n");
       ecl_queue_print_jobs(queue);
       memcpy(old_status_list , queue->status_list , ecl_queue_max_state * sizeof * old_status_list);
-    } else {
+    } 
+    
+    if ((queue->status_list[ecl_queue_complete_OK] + queue->status_list[ecl_queue_complete_FAIL]) == num_total_run)
+      cont = false;
+    
+    if (cont) {
       printf("\b%c",spinner[phase]); 
       fflush(stdout);
       phase = (phase + 1) % 4;
-    }
-    
-    {
-      /* Submitting new jobs */
-      int active_size    = ecl_queue_get_active_size(queue);
-      int total_active   = queue->status_list[ecl_queue_pending] + queue->status_list[ecl_queue_running];
-      int num_submit_new = queue->max_running - total_active;
-      queue_index = 0;
-      while ((queue_index < active_size) && (num_submit_new > 0)) {
-	ecl_queue_node_type * node = queue->jobs[queue_index];
-	if (ecl_queue_node_get_status(node) == ecl_queue_waiting) {
-	  submit_status_type submit_status = ecl_queue_submit_job(queue , queue_index);
-	  if (submit_status == submit_OK) 
-	    num_submit_new--;
-	  else if (submit_status == submit_driver_FAIL)
-	    break;
-	}
-	queue_index++;
-      }
-    }
+      
+      {
+	/* Submitting new jobs */
+	
+	int active_size    = ecl_queue_get_active_size(queue);
+	int total_active   = queue->status_list[ecl_queue_pending] + queue->status_list[ecl_queue_running];
+	int num_submit_new = queue->max_running - total_active; 
+	char spinner2[2];
+	spinner2[1] = '\0';
 
-    for (queue_index = 0; queue_index < ecl_queue_get_active_size(queue); queue_index++) {
-      ecl_queue_node_type * node = queue->jobs[queue_index];
-      switch (ecl_queue_node_get_status(node)) {
-      case(ecl_queue_done):
-	if (node->target_file != NULL) {
-	  if (util_file_exists(node->target_file)) {
-	    util_block_growing_file(node->target_file);   /* An attempt to ensure that all the ECLIPSE files are completly written */
-	    util_block_growing_directory(node->run_path); 
-	    ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
-	  } else {
-	    bool verbose = true;
-	    if (verbose) {
-	      printf("Restarting: %s \n",node->ecl_base);
+	new_jobs = false;
+	if (queue->status_list[ecl_queue_waiting] > 0)   /* We have waiting jobs at all           */
+	  if (num_submit_new > 0)                        /* The queue can allow more running jobs */
+	    new_jobs = true;
+	
+
+	if (new_jobs) {
+	  int submit_count = 0;
+	  int queue_index  = 0;
+
+	  while ((queue_index < active_size) && (num_submit_new > 0)) {
+	    ecl_queue_node_type * node = queue->jobs[queue_index];
+	    if (ecl_queue_node_get_status(node) == ecl_queue_waiting) {
+	      {
+		submit_status_type submit_status = ecl_queue_submit_job(queue , queue_index);
+		
+		if (submit_status == submit_OK) {
+		  if (submit_count == 0) {
+		    printf("\b");
+		    msg_show(submit_msg);
+		    printf("\b\b");
+		  }
+		  spinner2[0] = spinner[phase];
+		  msg_update(submit_msg , spinner2);
+		  phase = (phase + 1) % 4;
+		  num_submit_new--;
+		  submit_count++;
+		} else if (submit_status == submit_driver_FAIL)
+		  break;
+	      }
 	    }
-	    ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
-	    queue->status_list[ecl_queue_restart]++;
+	    queue_index++;
 	  }
-	} else 
-	  ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
-	ecl_queue_free_job(queue , node);
-	break;
-      case(ecl_queue_exit):
-	queue->status_list[ecl_queue_restart]++;
-	ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
-	ecl_queue_free_job(queue , node);
-	break;
-      default:
-	break;
+	  
+	  if (submit_count > 0) {
+	    printf("  "); fflush(stdout);
+	    msg_hide(submit_msg);
+	    printf(" ]\b"); fflush(stdout);
+	  } else 
+	    /* 
+	       We wanted to - and tried - to submit new jobs; but the
+	       driver failed to deliver.
+	    */
+	    new_jobs = false;
+	}
       }
+      
+      {
+	/*
+	  Checking for complete / exited jobs.
+	*/
+
+	int queue_index;
+	for (queue_index = 0; queue_index < ecl_queue_get_active_size(queue); queue_index++) {
+	  ecl_queue_node_type * node = queue->jobs[queue_index];
+	  switch (ecl_queue_node_get_status(node)) {
+	  case(ecl_queue_done):
+	    if (node->target_file != NULL) {
+	      if (util_file_exists(node->target_file)) {
+		/* An attempt to ensure that all the ECLIPSE files are completly written */
+		/*
+		  util_block_growing_file(node->target_file);   
+		  util_block_growing_directory(node->run_path); 
+		*/
+		ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
+	      } else {
+		bool verbose = true;
+		if (verbose) {
+		  printf("Restarting: %s \n",node->ecl_base);
+		}
+		ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
+		queue->status_list[ecl_queue_restart]++;
+	      }
+	    } else 
+	      ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
+	    ecl_queue_free_job(queue , node);
+	    break;
+	  case(ecl_queue_exit):
+	    queue->status_list[ecl_queue_restart]++;
+	    ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
+	    ecl_queue_free_job(queue , node);
+	    break;
+	  default:
+	    break;
+	  }
+	}
+      }
+      
+      if (!new_jobs)
+	usleep(queue->usleep_time);
+
+      /* 
+	 For some fu*** reason the usleep() call does not
+	 seem to work ??
+	
+      */
+      
+      /*
+	else we have submitted new jobs - and know the status is out of sync,
+	no need to wait before a rescan.
+      */
     }
-    sleep(queue->sleep_time);
-  } while ( (queue->status_list[ecl_queue_complete_OK] + queue->status_list[ecl_queue_complete_FAIL]) < num_total_run);
+  } while ( cont );
   printf("\n");
 }
 
 
+void * ecl_queue_run_jobs__(void * __void_arg) {
+  void_arg_type * void_arg = void_arg_safe_cast(__void_arg);
+  ecl_queue_type * queue   = void_arg_get_ptr(void_arg , 0);
+  int num_total_run        = void_arg_get_int(void_arg , 1);
+  
+  ecl_queue_run_jobs(queue , num_total_run);
+  return NULL;
+}
 
 void ecl_queue_add_job(ecl_queue_type * queue , int external_id, int target_report) {
   pthread_mutex_lock( &queue->active_mutex );
@@ -389,6 +467,7 @@ void ecl_queue_add_job(ecl_queue_type * queue , int external_id, int target_repo
 }
 
 
+
 ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit , 
 				 const char    	     * submit_cmd      	 , 
 				 const char    	     * eclipse_exe     	 , 
@@ -400,8 +479,8 @@ ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit ,
 				 const path_fmt_type * target_file_fmt ,
 				 void * driver) {
   ecl_queue_type * queue = util_malloc(sizeof * queue , __func__);
-
-  queue->sleep_time      = 1;
+  
+  queue->usleep_time     = 200000; /* 1/5 second */
   queue->max_running     = max_running;
   queue->max_submit      = max_submit;
   queue->size            = size;
