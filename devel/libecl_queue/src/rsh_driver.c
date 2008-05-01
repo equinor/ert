@@ -43,9 +43,6 @@ struct rsh_driver_struct {
 
 
 
-static int * submit_count = NULL;
-static int * join_count   = NULL;
-
 /******************************************************************/
 
 
@@ -54,16 +51,6 @@ static int * join_count   = NULL;
 */
 
 
-void rsh_driver_summarize(int queue_size) {
-  if (submit_count != NULL) {
-    int i;
-    for (i=0; i < queue_size; i++) {
-      printf("job:%3d      Submit:%d   Join:%d    \n",i,submit_count[i] , join_count[i]);
-      submit_count[i] = 0;
-      join_count[i]   = 0;
-    }
-  }
-}
 
 
 static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) {
@@ -181,9 +168,6 @@ rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
 
 
 void rsh_job_free(rsh_job_type * job) {
-  if (job->active)  
-    join_count[job->node_index]++;
-  
   free(job->run_path);
   free(job);
 }
@@ -200,7 +184,7 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
     rsh_driver_assert_cast(driver); 
     rsh_job_assert_cast(job);
     {
-      ecl_job_status_type status = -1; /* Dummy to shut uo compiler warning */
+      ecl_job_status_type status = -1; /* Dummy to shut up compiler warning. */
       if (job->active == false) 
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
       else {
@@ -292,7 +276,6 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
 	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , void_arg);
 	if (pthread_return_value != 0) 
 	  util_abort("%s failed to create thread. ERROR:%d  \n", __func__ , pthread_return_value);
-	submit_count[node_index]++;
       }
       job->active = true;
       basic_job = (basic_queue_job_type *) job;
@@ -363,16 +346,6 @@ void * rsh_driver_alloc(int queue_size , const char * rsh_command, const char * 
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) rsh_driver;
     basic_queue_driver_init(basic_driver);
 
-    submit_count = util_malloc(queue_size * sizeof * submit_count , __func__ );
-    join_count   = util_malloc(queue_size * sizeof * join_count   , __func__ ) ;
-    {
-      int i;
-      for (i = 0; i < queue_size; i++) {
-	submit_count[i] = 0;
-	join_count[i] = 0;
-      }
-    }
-    
     return basic_driver;
   }
 }
