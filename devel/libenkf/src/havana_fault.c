@@ -10,7 +10,7 @@
 #include <enkf_util.h>
 #include <math.h>
 #include <scalar.h>
-
+#include <assert.h>
 
 #define  DEBUG
 #define  TARGET_TYPE HAVANA_FAULT
@@ -133,12 +133,10 @@ void havana_fault_truncate(havana_fault_type * havana_fault) {
 }
 
 
-
-void  havana_fault_initialize(havana_fault_type *havana_fault, int iens) {
-  DEBUG_ASSERT(havana_fault)
-  scalar_sample(havana_fault->scalar);  
-}
-
+ void  havana_fault_initialize(havana_fault_type *havana_fault, int iens) { 
+   DEBUG_ASSERT(havana_fault) 
+   scalar_sample(havana_fault->scalar);   
+ } 
 
 
 int havana_fault_serialize(const havana_fault_type *havana_fault , int internal_offset , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, bool * complete) {
@@ -182,16 +180,34 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
 
 void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * target_file) {
   DEBUG_ASSERT(havana_fault)
+  char * run_path;
+  char * havana_model_file;
+  char * extension;
+  char * command;
+  const char * executable;
+
+  /* Assume that target_file contain the file inclusive its file path for the current ensemble member */ 
+
+  /* Create havana model file (target_file) in run directory */
   havana_fault_filter_file(havana_fault , target_file);
 
-  /* Execute Havana using the target file as model file and the executable as the program for Havana */
-  /* The output from Havana should be saved in the same directory and is Eclipse input files to be included in the .DATA file */  
-  const char * executable = havana_fault->config->havana_executable;
-  char * command = NULL;
-  sprintf(command,"%s %s",executable,target_file);
-  printf("Running Havana");
+  /* Get the file path to the run directory from target_file */
+  util_alloc_file_components(target_file , &run_path , &havana_model_file , &extension);
+
+  /* Execute Havana from the run directory */
+  /* The output from Havana should be saved in the run directory */
+
+  executable = havana_fault->config->havana_executable;
+  command = (char *) malloc(300 * sizeof(char));
+
+  /* Go to the run directory and execute the Havana model from there */
+  sprintf(command,"%s %s %s %s  %s.%s","cd ",run_path,"; ",executable,havana_model_file,extension);
   system(command);
-  
+
+  free(command);
+  free(run_path);
+  free(havana_model_file);
+  free(extension);
 }
 
 
