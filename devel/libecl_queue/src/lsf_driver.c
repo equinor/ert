@@ -8,9 +8,9 @@
 #include <void_arg.h>
 
 /**
-The LSF_LIBRARY_DRIVER uses the lsb/lsf libraries directly; if the
+the LSF_LIBRARY_DRIVER uses the lsb/lsf libraries directly; if the
 librarie/headers .... are not available for linking we can use the
-LSF_SYSTEM_DRIVER instead - this is based on calling bsub and bjobs
+lsf_system_driver instead - this is based on calling bsub and bjobs
 with system calls, using temporary files and parsing the output.
 */
 
@@ -40,8 +40,6 @@ struct lsf_driver_struct {
 #ifdef LSF_LIBRARY_DRIVER
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
-  int                stdout_fd;
-  char               stdout_dev[32];
 #else
   char bsub_submit_cmd_fmt[1024];
   hash_type         *status_map;
@@ -93,10 +91,10 @@ void lsf_job_free(lsf_job_type * job) {
 
 
 #ifdef LSF_LIBRARY_DRIVER
-#define CASE(S1,S2) case(S1):  status = S2; break;
+#define case(s1,s2) case(s1):  status = s2; break;
 static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
-    /* The job has not been registered at all ... */
+    /* the job has not been registered at all ... */
     return ecl_queue_null;
   else {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
@@ -107,21 +105,21 @@ static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_t
       ecl_job_status_type status;
       struct jobInfoEnt *job_info;
       if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) {
-	fprintf(stderr,"%s: failed to get information about LSF job:%ld - aborting \n",__func__ , job->lsf_jobnr);
+	fprintf(stderr,"%s: failed to get information about lsf job:%ld - aborting \n",__func__ , job->lsf_jobnr);
 	abort();
       }
       job_info = lsb_readjobinfo( NULL );
       lsb_closejobinfo();
 
       switch (job_info->status) {
-	CASE(JOB_STAT_PEND  , ecl_queue_pending);
-	CASE(JOB_STAT_SSUSP , ecl_queue_running);
-	CASE(JOB_STAT_RUN   , ecl_queue_running);
-	CASE(JOB_STAT_EXIT  , ecl_queue_exit);
-	CASE(JOB_STAT_DONE  , ecl_queue_done);
-	CASE(JOB_STAT_PDONE , ecl_queue_done);
-	CASE(JOB_STAT_PERR  , ecl_queue_exit);
-	CASE(192            , ecl_queue_done); /* This 192 seems to pop up - where the fuck it comes frome  _PDONE + _USUSP ??? */
+	case(JOB_STAT_PEND  , ecl_queue_pending);
+	case(JOB_STAT_SSUSP , ecl_queue_running);
+	case(JOB_STAT_RUN   , ecl_queue_running);
+	case(JOB_STAT_EXIT  , ecl_queue_exit);
+	case(JOB_STAT_DONE  , ecl_queue_done);
+	case(JOB_STAT_PDONE , ecl_queue_done);
+	case(JOB_STAT_PERR  , ecl_queue_exit);
+	case(192            , ecl_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
       default:
 	fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
 	status = ecl_queue_done; /* ????  */
@@ -131,7 +129,7 @@ static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_t
     }
   }
 }
-#undef CASE
+#undef case
 #endif
 
 ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
@@ -228,18 +226,18 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
 					     const char * ecl_base    	  , 
 					     const char * eclipse_exe 	  ,   
 					     const char * eclipse_config  , 
-					     const char * eclipse_LD_path , 
+					     const char * eclipse_ld_path , 
 					     const char * license_server) {
   lsf_driver_type * driver = (lsf_driver_type *) __driver;
   lsf_driver_assert_cast(driver); 
   {
     lsf_job_type * job = lsf_job_alloc();
-    char * lsf_stdout  = util_alloc_joined_string((const char *[4]) {run_path   , "/"      , ecl_base , ".LSF-stdout"}  , 4 , "");
+    char * lsf_stdout  = util_alloc_joined_string((const char *[4]) {run_path   , "/"      , ecl_base , ".lsf-stdout"}  , 4 , "");
     char * command;
-    if (eclipse_LD_path == NULL)
+    if (eclipse_ld_path == NULL)
       command = util_alloc_joined_string((const char*[6]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server} , 6 , " ");
     else
-      command = util_alloc_joined_string((const char*[7]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server , eclipse_LD_path} , 7 , " ");
+      command = util_alloc_joined_string((const char*[7]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server , eclipse_ld_path} , 7 , " ");
     
     pthread_mutex_lock( &driver->submit_lock );
 
@@ -247,21 +245,7 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
     driver->lsf_request.jobName = (char *) ecl_base;
     driver->lsf_request.outFile = lsf_stdout;
     driver->lsf_request.command = command;
-
-    {
-      /*
-	Hack to temporarily redirect stdout to /dev/null,
-	to avoid stupid message from lsb_submit() function.
-      */
-      
-      driver->stdout_fd = dup(driver->stdout_fd);
-      freopen("/dev/null" , "w" , stdout);
-      
-      job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
-
-      sprintf(driver->stdout_dev , "/dev/fd/%d" , driver->stdout_fd);
-      freopen(driver->stdout_dev , "w" , stdout);      
-    }
+    job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
 #else
     job->lsf_jobnr = lsf_driver_submit_system_job( driver->bsub_submit_cmd_fmt , run_path , ecl_base , command);
 #endif
@@ -270,13 +254,21 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
     free(lsf_stdout);
     free(command);
 
-    if (job->lsf_jobnr < 0) 
-      util_abort("%s: something failed when submitting job to lsf_system. Return value:%d - aborting \n",__func__ , job->lsf_jobnr);
     
-    {
+    if (job->lsf_jobnr > 0) {
       basic_queue_job_type * basic_job = (basic_queue_job_type *) job;
       basic_queue_job_init(basic_job);
       return basic_job;
+    } else {
+      /*
+	The submit failed - the queue system shall handle
+	NULL return values.
+      */
+#ifdef LSF_LIBRARY_DRIVER
+      fprintf(stderr,"%s: ** Warning: lsb_submit() failed: %s/%d \n",__func__ , lsb_sysmsg() , lsberrno);
+#endif
+      lsf_job_free(job);
+      return NULL;
     }
   }
 }
@@ -311,9 +303,9 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
       lsf_driver->lsf_request.rLimits[i] = DEFAULT_RLIMIT;
   }
   lsf_driver->lsf_request.options2 = 0;
-  lsf_driver->stdout_fd = 1;
   if (lsb_init(NULL) != 0) 
     util_abort("%s failed to initialize LSF environment - aborting\n",__func__);
+  setenv("BSUB_QUIET" , "yes" , 1);
 #else
   sprintf(lsf_driver->bsub_submit_cmd_fmt , "bsub -o %s/%s.stdout -q %s -J %s -R\"%s\" %s > %s" , 
 	  "%s"                          	, /* Run_path */
