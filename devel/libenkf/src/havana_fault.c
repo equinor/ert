@@ -24,7 +24,7 @@ struct havana_fault_struct
 {
   DEBUG_DECLARE
   const havana_fault_config_type *config;
-  scalar_type              *scalar;
+  scalar_type                    *scalar;
 };
 
 /*****************************************************************/
@@ -77,10 +77,10 @@ const double * havana_fault_get_output_ref(const havana_fault_type * havana_faul
 
 
 havana_fault_type * havana_fault_alloc(const havana_fault_config_type * config) {
-  havana_fault_type * havana_fault  = malloc(sizeof *havana_fault);
+  havana_fault_type * havana_fault  = malloc(sizeof * havana_fault);
   havana_fault->config = config;
   gen_kw_config_type * gen_kw_config = config->gen_kw_config;
-  havana_fault->scalar   = scalar_alloc(gen_kw_config->scalar_config); 
+  havana_fault->scalar               = scalar_alloc(gen_kw_config->scalar_config); 
   DEBUG_ASSIGN(havana_fault)
   return havana_fault;
 }

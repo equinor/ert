@@ -304,6 +304,8 @@ field_type * field_copyc(const field_type *field) {
 }
 
 
+
+
 void field_fread(field_type * field , FILE * stream) {
   int  data_size , sizeof_ctype;
   bool read_compressed;
@@ -463,8 +465,20 @@ void field_free(field_type *field) {
 }
 
 
+void field_truncate(field_type * field) {
+  const field_config_type *config     = field->config;
+  ecl_type_enum ecl_type              = field_config_get_ecl_type(config);
+  const int                data_size  = field_config_get_data_size(config);
+  if (ecl_type == ecl_float_type) {
+    float min_value = 0.00001;
+    float max_value = 199999999.0;
+    
+    enkf_util_truncate(field->data , data_size , ecl_type , &min_value , &max_value);
+  }
+}
 
-int field_deserialize(const field_type * field , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+
+int field_deserialize(field_type * field , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
@@ -474,17 +488,17 @@ int field_deserialize(const field_type * field , int internal_offset , size_t se
   if (ecl_type == ecl_double_type)
     data = &((double *) field->data)[internal_offset];
   else if (ecl_type == ecl_float_type) 
-    data = enkf_util_malloc(serial_size * sizeof * data , __func__);
-  else {
-    fprintf(stderr,"%s: tried to deserialize field with type:%d different from float/double - aborting \n",__func__ , ecl_type);
-    abort();
-  }
+    data = util_malloc(serial_size * sizeof * data , __func__);
+  else 
+    util_abort("%s: tried to deserialize field with type:%d different from float/double - aborting \n",__func__ , ecl_type);
+
   new_internal_offset = enkf_util_deserialize(data , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
   if (ecl_type == ecl_float_type) {
     util_double_to_float( &((float *) field->data)[internal_offset] , data , serial_size);
     free(data);
   }
 
+  field_truncate(field);
   return new_internal_offset;
 }
 
@@ -504,10 +518,9 @@ int field_serialize(const field_type *field , int internal_offset , size_t seria
   else if (ecl_type == ecl_float_type) {
     data = enkf_util_malloc(data_size * sizeof * data , __func__);
     util_float_to_double(data , (const float *) field->data , data_size);
-  } else {
-    fprintf(stderr,"%s: tried to serialize field with type:%d different from float/double - aborting \n",__func__ , ecl_type);
-    abort();
-  }
+  } else 
+    util_abort("%s: tried to serialize field with type:%s(%d) different from float/double - aborting \n",__func__ , ecl_util_type_name(ecl_type) , ecl_type);
+
   elements_added = enkf_util_serialize(data , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   
   if (ecl_type == ecl_float_type) free(data);

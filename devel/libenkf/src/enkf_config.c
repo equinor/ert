@@ -731,7 +731,9 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
     queue_driver = local_driver_alloc();
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LOCAL") , NULL , 10);
   } else if (strcmp(queue_system , "RSH") == 0) {
-    queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , enkf_site_config_get_value(site_config , "RSH_HOST_LIST"));
+    queue_driver = rsh_driver_alloc(enkf_config_get_ens_size(config), 
+				    enkf_site_config_get_value(site_config , "RSH_COMMAND") , 
+				    enkf_site_config_get_value(site_config , "RSH_HOST_LIST"));
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_RSH") , NULL , 10);
   }
   else {

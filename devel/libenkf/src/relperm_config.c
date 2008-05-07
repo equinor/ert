@@ -104,30 +104,19 @@ table_config_type * relperm_config_fscanf_table_config_alloc(FILE * stream_tab, 
 
   table_config_type * tab_config = util_malloc(sizeof *tab_config,__func__);      
 
-  printf("Er i relperm_config_fscanf_table_alloc \n");
-  printf("Har lest argumenter:%d \n",ftell(stream_tab));
-
   line = util_fscanf_alloc_line(stream_tab,&at_eof);
-  printf("Skrive line: %s \n",line);
-
   if (line != NULL){
     util_split_string(line," ", &tokens, &token_list);
     /* tokens has to be equal to 16 or else the line in relperm_table.txt is not correctly specified */ 
-    if(tokens == 16){
+    if (tokens == 16){
       tab_config->eclipse_file = util_alloc_string_copy(token_list[0]);
       tab_config->relptab_kw   = relperm_config_set_relptab_kw(token_list[1]);
       tab_config->ecl_file_append = relperm_config_check_ecl_file(ecl_file_hash,tab_config->eclipse_file,tab_config->relptab_kw);
-    }
-    else{
-      printf("The line in relperm_table.txt is not correctly specified \n");
-      fprintf(stderr,"%s: The number of arguments should be 16, and the line has %d arguments",__func__,tokens);
-      abort();
-    }
+    } else
+      util_abort("%s: The line in relperm_table.txt is not correctly specified.\n The number of arguments should be 16, and the line has %d arguments",__func__,tokens);
   }
-  else{
-    fprintf(stderr,"%s: Something wrong when reading relperm_tab.txt",__func__);
-    abort();
-  }
+  else 
+    util_abort("%s: Something wrong when reading relperm_tab.txt",__func__);
 
   if(strcmp(token_list[2], "COREY") == 0){
     tab_config->func = COREY;

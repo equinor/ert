@@ -12,6 +12,7 @@ INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 #################################################################
 CFLAGS  = -$(MFLAG) -O3 -std=gnu99 -g -Wall 
 ARFLAGS = -csr
+LDFLAGS = -rdynamic
 #################################################################
 OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config.o trans_func.o logmode.o multflt_interC.o multz_interC.o enkf_types.o enkf_obs.o obs_data.o obs_node.o well_obs.o field_obs.o meas_op.o meas_vector.o well_config.o well.o enkf_config_node.o field_config.o field.o ecl_static_kw_config.o ecl_static_kw.o equil_config.o equil.o enkf_state.o multflt.o enkf_util.o multflt_config.o enkf_main.o multz.o multz_config.o enkf_node.o pgbox_config.o pgbox.o enkf_fs.o gen_kw_config.o gen_kw.o gen_kw_interC.o enkf_fs.o basic_driver.o plain_driver.o analysis.o meas_matrix.o config.o fs_index.o enkf_config.o plain_driver_parameter.o relperm.o relperm_config.o relperm_interC.o enkf_site_config.o 
 
@@ -35,12 +36,12 @@ INSTALL: $(LIB)
 	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
 	gcc $(CFLAGS) -D'SITE_CONFIG_FILE=$(SITE_CONFIG_FILE)' $(TARGET_INCLUDE) main.c  -o enkf.x  $(LIB_PATH) $(LIB_LINK) 
-	gcc $(CFLAGS) $(TARGET_INCLUDE) havanna_example.c  -o hav.x  $(LIB_PATH) $(LIB_LINK) 
-	#gcc $(CFLAGS) $(TARGET_INCLUDE) test.c  -o test.x  $(LIB_PATH) $(LIB_LINK) 
-	#gcc $(CFLAGS) $(TARGET_INCLUDE) thist_test.c -o thist.x $(LIB_PATH) $(LIB_LINK)
-	#gcc $(CFLAGS) $(TARGET_INCLUDE) field_test.c -o field.x $(LIB_PATH) $(LIB_LINK)
-	#gcc $(CFLAGS) $(TARGET_INCLUDE) swcr_init.c  -o /d/proj/bg/enkf/bin/swcr_init.x  $(LIB_PATH) $(LIB_LINK)
-	#gcc $(CFLAGS) $(TARGET_INCLUDE) relp_test.c  -o relp.x  $(LIB_PATH) $(LIB_LINK)
+	gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) havanna_example.c  -o hav.x  $(LIB_PATH) $(LIB_LINK) 
+	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) test.c  -o test.x  $(LIB_PATH) $(LIB_LINK) 
+	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) thist_test.c -o thist.x $(LIB_PATH) $(LIB_LINK)
+	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) field_test.c -o field.x $(LIB_PATH) $(LIB_LINK)
+	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) swcr_init.c  -o /d/proj/bg/enkf/bin/swcr_init.x  $(LIB_PATH) $(LIB_LINK)
+	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) relp_test.c  -o relp.x  $(LIB_PATH) $(LIB_LINK)
 
 
 clean:

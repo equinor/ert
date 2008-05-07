@@ -196,7 +196,7 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     verbose_int        = util_C2f90_bool(verbose);
     update_randrot_int = util_C2f90_bool(update_randrot);
   
-    if (1) {
+    if (verbose) {
       printf_matrix(R , nrobs_active , nrobs_active    , 1 , nrobs_active , "R" , " %8.3lg ");
       printf("\n");
     
@@ -224,7 +224,9 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
 			(const int *) &istep              , 
 			xpath);
   
-    printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
+    if (verbose) 
+      printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
+
     free(R);
     free(D);
     if (E != NULL) free(E);

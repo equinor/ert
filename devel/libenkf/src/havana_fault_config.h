@@ -14,7 +14,7 @@ struct havana_fault_config_struct
   char  *havana_executable;
 };
 
-const char          * havana_fault_config_get_template_ref(const havana_fault_config_type * );
+const char                * havana_fault_config_get_template_ref(const havana_fault_config_type * );
 havana_fault_config_type  * havana_fault_config_fscanf_alloc(const char * , const char *,const char *);
 void                  havana_fault_config_free(havana_fault_config_type *);
 void                  havana_fault_config_transform(const havana_fault_config_type * , const double * , double *);

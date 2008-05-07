@@ -329,17 +329,59 @@ void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step
 
 /*****************************************************************/
 
+
+void * dummy_sleep(void * arg) {
+  sleep( 5 );
+}
+
+
+void dummy_test() {
+#define N 1500
+  pthread_attr_t thread_attr;
+  pthread_t t[N];
+  int threads;
+  int i = 0;
+  int arg; 
+
+  arg = i;
+  pthread_attr_init( &thread_attr );
+  pthread_attr_setdetachstate( &thread_attr , PTHREAD_CREATE_DETACHED );
+  pthread_attr_setdetachstate( &thread_attr , PTHREAD_CREATE_JOINABLE );
+  while ( ( pthread_create( &t[i] , &thread_attr , dummy_sleep , &arg) == 0) ) {
+    i++;
+    arg = i;
+  }
+  threads = i;
+  pthread_attr_destroy ( &thread_attr );
+
+
+  printf("*****************************************************************\n");
+  printf("** Have created:%d threads                                     **\n" , i);
+  printf("*****************************************************************\n");
+  sleep(10);
+  printf("All jobs *SHOULD* be complete ...?=?? \n");
+  /*
+    for (i=0; i < threads; i++)
+    pthread_join( t[i] , NULL);
+  */
+
+}
+
+/******************************************************************/
+
 void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
   const int sleep_time     	= 1;
   int iens;
   
+  /*dummy_test();*/
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_matrix);
-  if (enkf_main->void_arg != NULL) {
-    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
-    abort();
-  }
+  
+  if (enkf_main->void_arg != NULL) 
+    util_abort("%s: hmmm - something is rotten - aborting \n",__func__);
+  if (enkf_main->thread_pool != NULL) 
+    util_abort("%s: hmmm - something is rotten - aborting \n",__func__);
   
   enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
   for (iens = 0; iens < ens_size; iens++) {
@@ -358,16 +400,28 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
     */
   }
   
-  if (enkf_main->thread_pool != NULL) {
-    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
-    abort();
+  {
+    pthread_t queue_thread;
+    void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
+    void_arg_pack_ptr(queue_args , 0 , enkf_main->ecl_queue);
+    void_arg_pack_int(queue_args , 1 , ens_size);
+
+    pthread_create( &queue_thread , NULL , ecl_queue_run_jobs__ , queue_args);
+
+    enkf_main->thread_pool = thread_pool_alloc(4);
+    for (iens = 0; iens < ens_size; iens++) 
+      thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , enkf_main->void_arg[iens]);
+
+    thread_pool_join(enkf_main->thread_pool);
+    thread_pool_free(enkf_main->thread_pool);
+    
+    enkf_main->thread_pool = thread_pool_alloc(ens_size);
+    for (iens = 0; iens < ens_size; iens++) 
+      thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
+    thread_pool_join(enkf_main->thread_pool);
+    pthread_join ( queue_thread , NULL );
+    ecl_queue_finalize(enkf_main->ecl_queue); /* Must *NOT* be called before all jobs are done */
   }
-  enkf_main->thread_pool = thread_pool_alloc(ens_size);
-  for (iens = 0; iens < ens_size; iens++) 
-    thread_pool_add_job(enkf_main->thread_pool , enkf_state_run_eclipse__ , enkf_main->void_arg[iens]);
-  ecl_queue_run_jobs(enkf_main->ecl_queue , ens_size);
-  thread_pool_join(enkf_main->thread_pool);
-  ecl_queue_finalize(enkf_main->ecl_queue); /* Must *NOT* be called before all jobs are done */
 
   /** Opprydding */
   for (iens = 0; iens < ens_size; iens++) 
@@ -376,24 +430,27 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   enkf_main->void_arg = NULL;
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
+
+  /*dummy_test();*/
+
   
-  /*
-    enkf_main_update_ensemble(enkf_main , step1 , step2);
-  */
   enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
   enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+  printf("OK - er klar til aa allokere X \n");
   {
-    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
+    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
     /*
-      double *X = util_malloc(ens_size * ens_size * sizeof *X , __func__);
-      {
-      int i;
-      for (i=0; i < ens_size*ens_size; i++) X[i] = 0.0;
-      for (i=0; i < ens_size; i++) X[i * (ens_size + 1)] = 1.0;
-      }
+      double * X = util_malloc(ens_size * ens_size * sizeof *X , __func__);
     */
     
+    
     if (X != NULL) {
+      {
+	int i;
+	for (i=0; i < ens_size*ens_size; i++) X[i] = 0.0;
+	for (i=0; i < ens_size; i++) X[i * (ens_size + 1)] = 1.0;
+      }
+      
       enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */ , X);
       free(X);
     }
@@ -402,33 +459,10 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
 
 
   
-
+  printf("---------------------------------\n");
   enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
   printf("%s: ferdig med step: %d \n" , __func__,step2);
+  /*dummy_test();*/
 }
 
 
-
-void enkf_test(enkf_main_type * enkf_main) {
-  const int step2 = 1;
-  const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
-
-  enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
-  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
-  enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
-  enkf_main_measure(enkf_main);
-
-  {
-    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
-    {
-      int i;
-      for (i=0; i < ens_size*ens_size; i++) X[i] = 0.0;
-      for (i=0; i < ens_size; i++) X[i * (ens_size + 1)] = 1.0;
-    }
-
-    if (X != NULL) {
-      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 , X);
-      free(X);
-    }
-  }
-}

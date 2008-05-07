@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <enkf_util.h>
 #include <util.h>
+#include <ecl_util.h>
 
 
 void * enkf_util_malloc(int byte_size , const char * caller) {
@@ -100,7 +101,35 @@ void enkf_util_rand_stdnormal_vector(int size , double *R) {
 
 /*****************************************************************/
 
+#define TRUNCATE(type , void_data , size , min_ptr , max_ptr) \
+{                                          \
+   type * data    =   (type *) void_data;  \
+   type min_value = *((type *) min_ptr);   \
+   type max_value = *((type *) max_ptr);   \
+   int i;                                  \
+   for (i=0; i < size; i++) {              \
+     if (data[i] < min_value)              \
+        data[i] = min_value;               \
+     else if (data[i] > max_value)         \
+        data[i] = max_value;               \
+   }                                       \
+}  
 
+void enkf_util_truncate(void * void_data , int size , ecl_type_enum ecl_type , void * min_ptr , void *max_ptr) {
+  if (ecl_type == ecl_double_type) 
+     TRUNCATE(double , void_data , size , min_ptr , max_ptr)
+  else if (ecl_type == ecl_float_type)
+     TRUNCATE(float , void_data , size , min_ptr , max_ptr)
+  else if (ecl_type == ecl_int_type)
+     TRUNCATE(int , void_data , size , min_ptr , max_ptr)
+  else 
+     util_abort("%s: unrecognized type - aborting \n",__func__);
+}
+#undef TRUNCATE
+
+/*
+  Denne maa ta inn type paa node_data.
+*/
 
 size_t enkf_util_serialize(const double * node_data, const bool * active , size_t node_offset , size_t node_size , double * serial_data , 
 			   size_t serial_size , size_t serial_offset , int serial_stride ,  bool * complete) {
@@ -129,8 +158,6 @@ size_t enkf_util_serialize(const double * node_data, const bool * active , size_
       if (global_serial_index > serial_size || global_serial_index < 0) 
 	util_abort("%s:%d fatal error global_serial_index:%d  serial_size:%d \n",__func__ , __LINE__ , global_serial_index , serial_size);
       
-      /*printf("global_index:%d   serial_size:%d \n",global_serial_index , serial_size);*/
-
       serial_data[global_serial_index] = node_data[node_index];
       serial_index++;
       if (serial_offset + serial_stride * serial_index >= serial_size) {

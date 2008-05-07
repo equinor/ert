@@ -80,6 +80,24 @@ double trans_normal(double x , const void_arg_type * arg) {
   return x * std + mu;
 }
 
+/**
+   Used to sample values between min and max - but it is the logarithm
+   of value which is uniformly distributed. Relates to the uniform
+   distribution in the same manner as the lognormal distribution
+   relates to the normal distribution.
+*/
+
+double trans_logunif(double x , const void_arg_type * arg) {
+  double log_min = log(void_arg_get_double(arg , 0));
+  double log_max = log(void_arg_get_double(arg , 1));
+  double log_y;
+  {
+    double tmp = 0.5*(1 + erf(x/sqrt(2.0))); /* 0 - 1 */
+    log_y      = log_min + tmp * (log_max - log_min);
+  }
+  return exp(log_y);
+}
+
 
 
 transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_arg_type **_void_arg , bool *active) {
@@ -123,6 +141,10 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_ar
     /* DUNIF steps mu std */
     transf   = trans_derrf_OE;
     void_arg = void_arg_alloc3(int_value , double_value , double_value);
+  } else if (strcmp(func_name , "LOGUNIF") == 0) {
+    /* ULOG min max */
+    transf   = trans_logunif;
+    void_arg = void_arg_alloc2(double_value , double_value);
   } else if (strcmp(func_name , "CONST") == 0) {
     /* Constant    */
     /* CONST value */

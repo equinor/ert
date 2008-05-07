@@ -39,7 +39,6 @@ int main (int argc , char ** argv) {
     enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue);
 
     enkf_main_initialize_ensemble(enkf_main);
-    enkf_test(enkf_main);
     {
       int report_step;
       for (report_step = 0; report_step < 61; report_step++)

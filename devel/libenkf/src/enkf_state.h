@@ -45,6 +45,8 @@ void            * enkf_state_load_ecl_void(void * );
 void              enkf_state_load_ecl(enkf_state_type * , enkf_obs_type * , bool , int , int);
 void              enkf_state_add_lsf_job(enkf_state_type *  , lsf_pool_type * , int , int );
 void            * enkf_state_run_eclipse__(void * );
+void            * enkf_state_start_eclipse__(void * );
+void            * enkf_state_complete_eclipse__(void * );
 
 
 void              enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
