@@ -420,7 +420,11 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
       thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
     thread_pool_join(enkf_main->thread_pool);
     pthread_join ( queue_thread , NULL );
-    ecl_queue_finalize(enkf_main->ecl_queue); /* Must *NOT* be called before all jobs are done */
+    if ( !ecl_queue_finalize(enkf_main->ecl_queue) ) { /* Must *NOT* be called before all jobs are done */
+      fprintf(stderr,"Some models failed to integrate from DATES %d -> %d \n",step1 , step2);
+      fprintf(stderr,"look in the ECLIPSE .PRT files - FIX the problem - and try again ... :-) \n");
+      exit(1);
+    }
   }
 
   /** Opprydding */
@@ -445,12 +449,14 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
     
     
     if (X != NULL) {
-      {
+      /*
+	{
 	int i;
 	for (i=0; i < ens_size*ens_size; i++) X[i] = 0.0;
 	for (i=0; i < ens_size; i++) X[i * (ens_size + 1)] = 1.0;
-      }
-      
+	}
+      */
+
       enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */ , X);
       free(X);
     }
