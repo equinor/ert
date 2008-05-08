@@ -79,23 +79,37 @@ int main(int argc, char ** argv)
         Bruk leksikalt begrensede telle-variabler, forsøk å gi
         tellevariblene et navn som indikerer hva de teller over. Det
         er for eksempel åpenbart at 'iens' teller over ensemble
-        medlemmer.
+        medlemmer, 'i' derimot kan telle over hva som helst. 
       */
       int iens;
 
       for (iens=0; iens < ens_size; iens++) {
-	  
-	  char * target_file = path_fmt_alloc_file(run_path_fmt , iens+1 ,target_model_file);
-	  
-	  ensemble[iens] = havana_fault_alloc(havana_config);
-	  
-	  havana_fault_initialize(ensemble[iens],iens);
-	  
-	  havana_fault_ecl_write(ensemble[iens] , target_file);
-	  
-	  free(target_file);
-	  
-	  havana_fault_free(ensemble[iens]); 
+	/*
+	  Forsøk å organisere malloc / free i en nøstet struktur, slik
+	  at det første objektet som blir allokert i et scope, er det
+	  siste som blir free'et:
+
+          char * target_file = path_fmt_alloc_file() <----·
+	  ensemble[iens] = havana_fault_alloc(); <----·   |
+          ....                                        |   |
+          ....                                        |   |
+          havana_fault_free(ensemble[iens]);  <-------·   |
+	  free(target_file); <----------------------------· 
+	*/
+
+
+
+	char * target_file = path_fmt_alloc_file(run_path_fmt , iens+1 ,target_model_file);
+	
+	ensemble[iens] = havana_fault_alloc(havana_config);
+	
+	havana_fault_initialize(ensemble[iens],iens);
+	
+	havana_fault_ecl_write(ensemble[iens] , target_file);
+	
+	havana_fault_free(ensemble[iens]); 
+	
+	free(target_file);
       }
     }
     free(ensemble);
