@@ -59,7 +59,7 @@ int main(int argc, char ** argv)
 
     path_fmt_type             * run_path_fmt;
     havana_fault_type        ** ensemble; 
-    havana_fault_config_type  * havana_config =  havana_fault_config_fscanf_alloc(configFile, templateModelFile,executableFile);
+    havana_fault_config_type  * havana_config;
 
     if (!util_sscanf_int(argv[6] , &ens_size)) {
       fprintf(stderr,"Failed to interpret:%s as an integer - exiting.\n",argv[6]);
@@ -78,7 +78,8 @@ int main(int argc, char ** argv)
       /* 
         Bruk leksikalt begrensede telle-variabler, forsøk å gi
         tellevariblene et navn som indikerer hva de teller over. Det
-	er åpenbart at 'iens' teller over ensemble medlemmer.
+        er for eksempel åpenbart at 'iens' teller over ensemble
+        medlemmer.
       */
       int iens;
 
@@ -98,7 +99,7 @@ int main(int argc, char ** argv)
       }
     }
     free(ensemble);
-      
+    havana_config_free(havana_config);  
     path_fmt_free(run_path_fmt);
   }
 }   

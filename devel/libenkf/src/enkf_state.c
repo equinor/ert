@@ -931,6 +931,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , ecl_queue_type *
   const int usleep_time = 100000; /* 1/10 of a second */ 
   const int iens        = enkf_state_get_iens(enkf_state);
 
+  *job_OK = true;
   while (true) {
     ecl_job_status_type status = ecl_queue_export_job_status(ecl_queue , iens);
 
@@ -939,6 +940,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , ecl_queue_type *
       break;
     } else if (status == ecl_queue_complete_FAIL) {
       fprintf(stderr,"** job:%d failed completely - this will break ... \n",iens);
+      *job_OK = false;
       break;
     } else usleep(usleep_time);
   } 

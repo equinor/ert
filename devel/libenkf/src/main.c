@@ -38,9 +38,10 @@ int main (int argc , char ** argv) {
     ecl_queue = enkf_config_alloc_ecl_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue);
 
-    enkf_main_initialize_ensemble(enkf_main);
+    enkf_main_initialize_ensemble(enkf_main); 
     {
       int report_step;
+
       for (report_step = 0; report_step < 61; report_step++)
 	enkf_main_run(enkf_main , report_step , report_step + 1);
     }

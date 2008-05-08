@@ -420,10 +420,18 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
       thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
     thread_pool_join(enkf_main->thread_pool);
     pthread_join ( queue_thread , NULL );
-    if ( !ecl_queue_finalize(enkf_main->ecl_queue) ) { /* Must *NOT* be called before all jobs are done */
-      fprintf(stderr,"Some models failed to integrate from DATES %d -> %d \n",step1 , step2);
-      fprintf(stderr,"look in the ECLIPSE .PRT files - FIX the problem - and try again ... :-) \n");
-      exit(1);
+    ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done */
+
+    {
+      bool complete_OK = true;
+      for (iens = 0; iens < ens_size; iens++)
+	complete_OK = (complete_OK && void_arg_get_bool(enkf_main->void_arg[iens] , 8));
+      
+      if ( !complete_OK) {
+	fprintf(stderr,"Some models failed to integrate from DATES %d -> %d \n",step1 , step2);
+	fprintf(stderr,"look in the ECLIPSE .PRT files - FIX the problem - and try again ... :-) \n");
+	exit(1);
+      }
     }
   }
 
