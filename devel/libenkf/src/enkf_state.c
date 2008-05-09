@@ -610,7 +610,7 @@ void * enkf_state_load_ecl_restart_void(void * input_arg) {
 }
 
 
-void enkf_state_write_restart_file(enkf_state_type *  enkf_state) {
+void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   bool endian_swap       = enkf_config_get_endian_swap(enkf_state->config);
   const bool fmt_file    = enkf_state_fmt_file(enkf_state);
   char * restart_file    = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , enkf_state->report_step);
@@ -927,7 +927,7 @@ void enkf_state_start_eclipse(enkf_state_type * enkf_state , ecl_queue_type * ec
 }
 
 
-void enkf_state_complete_eclipse(enkf_state_type * enkf_state , ecl_queue_type * ecl_queue , enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , bool *job_OK) {
+void enkf_state_complete_eclipse(enkf_state_type * enkf_state , ecl_queue_type * ecl_queue , enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , bool load_results , bool *job_OK) {
   const int usleep_time = 100000; /* 1/10 of a second */ 
   const int iens        = enkf_state_get_iens(enkf_state);
 
@@ -936,7 +936,8 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , ecl_queue_type *
     ecl_job_status_type status = ecl_queue_export_job_status(ecl_queue , iens);
 
     if (status == ecl_queue_complete_OK) {
-      enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
+      if (load_results)
+	enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
       break;
     } else if (status == ecl_queue_complete_FAIL) {
       fprintf(stderr,"** job:%d failed completely - this will break ... \n",iens);
@@ -956,10 +957,10 @@ void * enkf_state_complete_eclipse__(void * __void_arg) {
   bool              unified    	 = void_arg_get_bool(void_arg 	, 4);
   int               report_step1 = void_arg_get_int(void_arg  	, 5);
   int               report_step2 = void_arg_get_int(void_arg  	, 6);
-  /*int               max_resubmit = void_arg_get_int(void_arg  	, 7);*/
-  bool            * job_OK       = void_arg_get_buffer(void_arg , 8);
+  bool              load_results = void_arg_get_bool(void_arg   , 8);
+  bool            * job_OK       = void_arg_get_buffer(void_arg , 9);
 
-  enkf_state_complete_eclipse(enkf_state , ecl_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , job_OK);
+  enkf_state_complete_eclipse(enkf_state , ecl_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , load_results , job_OK);
 }
 
 
@@ -973,9 +974,10 @@ void * enkf_state_start_eclipse__(void * __void_arg) {
   int               report_step1 = void_arg_get_int(void_arg  	, 5);
   int               report_step2 = void_arg_get_int(void_arg  	, 6);
   int               max_resubmit = void_arg_get_int(void_arg  	, 7);
-  bool            * job_OK       = void_arg_get_buffer(void_arg , 8);
+  bool            * job_OK       = void_arg_get_buffer(void_arg , 9);
 
   enkf_state_start_eclipse(enkf_state , ecl_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , max_resubmit , job_OK);
+  
   return NULL ; 
 }
 

@@ -139,8 +139,8 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , 
   double * meanS;
   int iens , active_iobs;
   const int nrobs_total = meas_vector_get_nrobs(matrix->meas_vectors[0]);
-  S     = util_malloc(nrobs_active * matrix->ens_size * sizeof * S , __func__);
-  meanS = util_malloc(nrobs_active * sizeof * S , __func__);
+  S     = util_malloc(nrobs_active * matrix->ens_size * sizeof * S     , __func__);
+  meanS = util_malloc(nrobs_active *                    sizeof * meanS , __func__);
 
   for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
     meanS[active_iobs] = 0;
@@ -159,7 +159,7 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , 
       for (total_iobs = 0; total_iobs < nrobs_total; total_iobs++) {
 	if (active_obs[total_iobs]) {
 	  int index = active_iobs * obs_stride  +  iens * ens_stride;
-	  S[index] = meas_data[total_iobs];
+	  S[index]            = meas_data[total_iobs];
 	  meanS[active_iobs] += meas_data[total_iobs];
 	  active_iobs++;
 	}

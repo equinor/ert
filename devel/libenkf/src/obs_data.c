@@ -201,19 +201,24 @@ static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, i
 */
 double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , const double * S , const double * meanS , bool returnE , double **_E) {
   const int nrobs_active = obs_data->active_size;
-  int iens, iobs;
+  const int nrobs_total  = obs_data->total_size;
+  int iobs_active, iobs_total;
+  int iens;
   double *D = NULL;
   double *E = NULL;
 
 
-  E 	       = obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
-  D 	       = util_malloc(nrobs_active * ens_size * sizeof * D , __func__);
-
+  E  = obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
+  D  = util_malloc(nrobs_active * ens_size * sizeof * D , __func__);
 
   for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs = 0; iobs < nrobs_active; iobs++) {
-      int index = iens * ens_stride + iobs * obs_stride;
-      D[index] = obs_data->value[iobs] + E[index] - S[index] - meanS[iobs];
+    iobs_active = 0;
+    for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
+      if (obs_data->obs_active[iobs_total]) {
+	int index = iens * ens_stride + iobs_active * obs_stride;
+	D[index]  = obs_data->value[iobs_total] + E[index] - S[index] - meanS[iobs_active];
+	iobs_active++;
+      }
     }
   }
 

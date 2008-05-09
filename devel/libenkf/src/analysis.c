@@ -81,14 +81,14 @@ S = |S2  S5              |
     |S3  S6              |
      --------------------
 
-     --------------------
-    |E1  E4              |
+     --------------------   This matrix is only used for mode = ?3 => 
+    |E1  E4              |  SVD subspace pseudo inversion of SS'+EE'. 
 E = |E1  E5              | 
     |E3  E6              |
      --------------------
 
-     --------------------
-    |D1  D4              |
+     --------------------    This matrix is only used for the EnKF 
+    |D1  D4              |   schemes with perturbed measurements.  
 D = |D2  D5              | 
     |D3  D6              |
      --------------------
@@ -148,11 +148,27 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
   int mode , istep , ens_stride , obs_stride , iens, nrobs_active;
   bool returnE; 
   
-  istep      = -1;
-  mode       = 22;
+  istep      = -1;     /* Must be <= 0 to avoid writing on xpath - which will fail. */
+  mode       = 12;
   returnE    = false;  /* Mode = 13 | 23 => returnE = true */
+  returnE    = false;
+
   
-  
+  /*
+    
+    mode     Need E     Need D
+    --------------------------- 
+    11       tmp        Yes 
+    12       tmp        Yes
+    13       Yes        Yes
+    21       No         No
+    22       No         No
+    23       Yes        No
+    --------------------------
+    
+  */
+
+
   /*
     Must exclude both outliers and observations with zero ensemble
     variation *before* the matrices are allocated.
@@ -195,7 +211,7 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     printf("\n");
     
     R 	  = obs_data_allocR(obs_data);
-    D 	  = obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , meanS , returnE , &E);
+    D     = obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , meanS , returnE , &E);
     innov = obs_data_alloc_innov(obs_data , meanS);
     obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
     X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
@@ -215,6 +231,7 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
       printf("\n");
 
       printf_matrix(innov , nrobs_active , 1 , 1 , 1 , "Innov" , " %8.3lg ");
+      printf("\n");
     }
     
     m_enkfx5_mp_enkfx5_(X , 
@@ -235,6 +252,22 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     if (verbose) 
       printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
 
+    {
+      int col;
+      for (col = 0; col < ens_size; col ++) {
+	double col_sum = 0;
+	int row;
+	for (row = 0; row < ens_size; row++) {
+	  int index = row + col * ens_size;
+	  col_sum += X[index];
+	}
+	if (fabs(col_sum - 1.0) > 0.0001) 
+	  util_abort("%s: something is seriously broken. col:%d  col_sum = %g != 1.0 - ABORTING\n",__func__ , col , col_sum);
+      }
+    }
+    
+      
+    
 
 
     free(innov);

@@ -43,7 +43,7 @@ int main (int argc , char ** argv) {
       int report_step;
 
       for (report_step = 0; report_step < 61; report_step++)
-	enkf_main_run(enkf_main , report_step , report_step + 1);
+	enkf_main_run(enkf_main , report_step , report_step + 1 , true);
     }
     
     /*
