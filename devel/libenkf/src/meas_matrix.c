@@ -128,39 +128,59 @@ void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS ,
 
 
 
-
-/*
-
-  Observe that this code does *NOT* subtract the ensemble
-  mean from S. This is in contrast to the original Fortran
-  code which did that.
+ 
+/**
+  In the return value S - the mean value has been subtracted. _meanS
+  is "returned by reference"
 */
-double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , int ens_stride , int obs_stride, const bool * active_obs) {
+
+double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , int ens_stride , int obs_stride, double ** _meanS , const bool * active_obs) {
   double * S;
-  int iens ;
-  const int nrobs_vector = meas_vector_get_nrobs(matrix->meas_vectors[0]);
-  S  = util_malloc(nrobs_active * matrix->ens_size * sizeof * S , __func__);
+  double * meanS;
+  int iens , active_iobs;
+  const int nrobs_total = meas_vector_get_nrobs(matrix->meas_vectors[0]);
+  S     = util_malloc(nrobs_active * matrix->ens_size * sizeof * S , __func__);
+  meanS = util_malloc(nrobs_active * sizeof * S , __func__);
+
+  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
+    meanS[active_iobs] = 0;
+
   for (iens = 0; iens < matrix->ens_size; iens++) {
     const meas_vector_type * vector = matrix->meas_vectors[iens];
-    if (nrobs_vector != meas_vector_get_nrobs(vector)) {
+    if (nrobs_total != meas_vector_get_nrobs(vector)) {
       fprintf(stderr,"%s: fatal internal error - not all measurement vectors equally long - aborting \n",__func__);
       abort();
     }
     
-    if (obs_stride == 1) {
-      int offset = iens * nrobs_active;
-      memcpy(&S[offset] , meas_vector_get_data_ref(vector) , nrobs_active * sizeof * S);
-    } else {
+    {
       const double * meas_data = meas_vector_get_data_ref(vector);
-      int iobs;
-      for (iobs = 0; iobs < nrobs_active; iobs++) {
-	int index = iobs * obs_stride + iens * ens_stride;
-	S[index] = meas_data[iobs];
+      int total_iobs;
+      active_iobs = 0;
+      for (total_iobs = 0; total_iobs < nrobs_total; total_iobs++) {
+	if (active_obs[total_iobs]) {
+	  int index = active_iobs * obs_stride  +  iens * ens_stride;
+	  S[index] = meas_data[total_iobs];
+	  meanS[active_iobs] += meas_data[total_iobs];
+	  active_iobs++;
+	}
       }
     }
   }
 
-  
+
+  /*
+    Subtracting the (ensemble mean) of each measurement.
+  */
+  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
+    meanS[active_iobs] /= matrix->ens_size;
+
+  for (iens = 0; iens < matrix->ens_size; iens++) 
+    for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++) {
+      int index = active_iobs * obs_stride  +  iens * ens_stride;
+      S[index] -= meanS[active_iobs];
+    }
+  *_meanS = meanS;
+      
   return S;
 }
 

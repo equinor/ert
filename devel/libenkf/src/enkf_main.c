@@ -450,7 +450,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2) {
   enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
   printf("OK - er klar til aa allokere X \n");
   {
-    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
+    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
     /*
       double * X = util_malloc(ens_size * ens_size * sizeof *X , __func__);
     */
