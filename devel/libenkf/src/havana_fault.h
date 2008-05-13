@@ -25,7 +25,7 @@ void             havana_fault_ens_read(havana_fault_type * , const char *);
 void             havana_fault_truncate(havana_fault_type * );
 havana_fault_type   *  havana_fault_alloc_mean(int , const havana_fault_type **);
 const char     * havana_fault_get_name(const havana_fault_type * , int );
-void             havana_fault_filter_file(const havana_fault_type * , const char * );
+void             havana_fault_filter_file(const havana_fault_type * , const char *,int *, char ***, char*** );
 void             havana_fault_export(const havana_fault_type * , int * , char ***, double **);
 
 
