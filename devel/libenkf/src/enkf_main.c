@@ -483,6 +483,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
       
     printf("---------------------------------\n");
     enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
+    enkf_main_fprintf_results(enkf_main);
     printf("%s: ferdig med step: %d \n" , __func__,step2);
   }
 }
