@@ -281,12 +281,18 @@ static void ecl_queue_print_jobs(const ecl_queue_type *queue) {
 }
 
 
+/** 
+This function goes through all the nodes and call finalize on them. It
+is essential that this routine is not called before all the jobs have
+completed.
+*/
+
 void ecl_queue_finalize(ecl_queue_type * queue) {
   int i;
   for (i=0; i < queue->size; i++) 
     ecl_queue_node_finalize(queue->jobs[i]);
   
-  for (i=0; i < ecl_queue_max_state; i++)
+  for (i=0; i < ecl_queue_max_state; i++) 
     queue->status_list[i] = 0;
   
   queue->active_size = 0;
