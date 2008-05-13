@@ -133,7 +133,7 @@ object, is discussed in README.new_type_config.c.
                A' = AX
  
     matrix multiplication we must assemble this data in a long
-    vector. That is what is meant by searializing. The searilize
+    vector. That is what is meant by serializing. The serialize
     routine is so complicated for (at least) two reasons:
 
      o We can allocate a certain amount of memory, and then the
@@ -166,6 +166,12 @@ object, is discussed in README.new_type_config.c.
     --------------------------------------------------------------
     This function is the "opposite" of function number 10, i.e. it
     is to reallocate memory to hold the actual data.
+
+
+12. ensemble_fprintf_results_ftype * fprintf_results 
+    --------------------------------------------------------------
+    This function is used to print the reuslts in a formatted nice way. Only 
+    applicable for variables with small amounts of data, like gen_kw.
 
 
 Now - since the enkf_node objects can point to arbitrary types of

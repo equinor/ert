@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <util.h>
 #include <hash.h>
+#include <multz_config.h>
 #include <enkf_config_node.h>
 #include <path_fmt.h>
 #include <ecl_static_kw_config.h>
@@ -13,7 +14,6 @@
 #include <field_config.h>
 #include <equil_config.h>
 #include <multz_config.h>
-#include <relperm_config.h>
 #include <multflt_config.h>
 #include <well_obs.h>
 #include <pgbox_config.h>
@@ -37,6 +37,7 @@
 #include <lsf_driver.h>
 #include <local_driver.h>
 #include <rsh_driver.h>
+#include <relperm_config.h>
 
 
 struct enkf_config_struct {
@@ -47,7 +48,8 @@ struct enkf_config_struct {
   hash_type       *config_hash;
   time_t           start_time;
   char            **well_list;
-  int              Nwells;
+  int              nwells;
+  path_fmt_type    *result_path;
   path_fmt_type    *run_path;
   path_fmt_type    *eclbase;
   path_fmt_type    *ecl_store_path;
@@ -80,7 +82,7 @@ enkf_impl_type enkf_config_impl_type(const enkf_config_type *enkf_config, const 
 
 
 static void enkf_config_realloc_well_list(enkf_config_type * enkf_config) {
-  enkf_config->well_list = realloc(enkf_config->well_list , enkf_config->Nwells * sizeof * enkf_config->well_list);
+  enkf_config->well_list = realloc(enkf_config->well_list , enkf_config->nwells * sizeof * enkf_config->well_list);
 }
 
 
@@ -134,6 +136,13 @@ static void enkf_config_set_run_path(enkf_config_type * config , const char * ru
   if (config->run_path != NULL)
     path_fmt_free(config->run_path);
   config->run_path = path_fmt_alloc_directory_fmt(run_path , true);
+}
+
+
+static void enkf_config_set_result_path(enkf_config_type * config , const char * result_path) {
+  if (config->result_path != NULL)
+    path_fmt_free(config->result_path);
+  config->result_path = path_fmt_alloc_directory_fmt(result_path , true);
 }
 
 
@@ -235,27 +244,27 @@ static void enkf_config_set_ens_size(enkf_config_type * config , int ens_size) {
     for (iens = 0; iens < ens_size; iens++)
       config->ecl_store[iens] = store_none;
   } else {
-    fprintf(stderr,"%s: SIZE must be greater than zero - aborting \n",__func__);
+    fprintf(stderr,"%s: size must be greater than zero - aborting \n",__func__);
     abort();
   }
 }
 
 
 /*
-   1 MAY 1999
+   1 may 1999
 */
 
 static void enkf_config_set_start_date(enkf_config_type * config , const char ** tokens) {
   int day , year;
-  bool OK = true;
+  bool ok = true;
 
-  OK = util_sscanf_int(tokens[0] , &day);
-  OK = OK && util_sscanf_int(tokens[2] , &year); 
-  if (OK) {
+  ok = util_sscanf_int(tokens[0] , &day);
+  ok = ok && util_sscanf_int(tokens[2] , &year); 
+  if (ok) {
     int month_nr = util_get_month_nr(tokens[1]);
     config->start_time = util_make_time1( day , month_nr , year );
   } else {
-    fprintf(stderr,"%s: fatal error when parsing START_TIME \n",__func__);
+    fprintf(stderr,"%s: fatal error when parsing start_time \n",__func__);
     abort();
   }
 }
@@ -268,17 +277,17 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
 						  bool unified  ,         
 						  bool endian_swap) {
   enkf_config_type * config = malloc(sizeof * config);
-  config->config_hash = hash_alloc(10);
+  config->config_hash = hash_alloc();
 
   config->endian_swap   = endian_swap;
   config->unified       = unified;
   config->fmt_file      = fmt_file;
-  config->Nwells        = 0;
+  config->nwells        = 0;
   config->well_list     = NULL;  
   enkf_config_realloc_well_list(config);
 
   /*
-    All of these must be set before the config object is ready for use.
+    all of these must be set before the config object is ready for use.
   */
   config->eclbase   	       = NULL;
   config->data_file 	       = NULL;
@@ -294,6 +303,7 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->obs_config_file      = NULL;
   config->ens_path             = NULL;
   
+  enkf_config_set_result_path(config , "Results/%04d");
   return config;
 }
 
@@ -303,7 +313,7 @@ static void enkf_config_post_assert(const enkf_config_type * config) {
 
 }
 
-#define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }
+#define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) util_abort("%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); 
 enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file , 
 					    enkf_site_config_type * site_config , 
 					    int  ens_offset,
@@ -461,7 +471,6 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		char       * config_file = token_list[3];
 		char       * table_file  = token_list[4];
 		enkf_config_add_type(enkf_config, key,parameter, RELPERM, ecl_file, relperm_config_fscanf_alloc(config_file,table_file));
-		
 	      }
 	      break;
 	    case(MULTFLT):
@@ -547,8 +556,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
     enkf_config_post_assert(enkf_config);
     enkf_site_config_validate(site_config);
     return enkf_config;
-  }
-  }
+  }	
+}
 #undef ASSERT_TOKENS
 
 
@@ -573,23 +582,23 @@ enkf_config_type * enkf_config_alloc(int ens_size            ,
 */
 
 
-const char ** enkf_config_get_well_list_ref(const enkf_config_type * ens , int *Nwells) {
-  *Nwells = ens->Nwells;
+const char ** enkf_config_get_well_list_ref(const enkf_config_type * ens , int *nwells) {
+  *nwells = ens->nwells;
   return (const char **) ens->well_list;
 }
 
 
 void enkf_config_add_well(enkf_config_type * enkf_config , const char *well_name , int size, const char ** var_list) {
-  enkf_config_add_type(enkf_config , well_name , ecl_summary , WELL, NULL , well_config_alloc(well_name , size , var_list));
-  enkf_config->Nwells++;
+  enkf_config_add_type(enkf_config , well_name , ecl_summary , WELL , NULL , well_config_alloc(well_name , size , var_list));
+  enkf_config->nwells++;
   enkf_config_realloc_well_list(enkf_config);
-  enkf_config->well_list[enkf_config->Nwells - 1] = util_alloc_string_copy(well_name);
+  enkf_config->well_list[enkf_config->nwells - 1] = util_alloc_string_copy(well_name);
   
 }
 
 
 void enkf_config_add_gen_kw(enkf_config_type * enkf_config , const char * config_file) {
-  enkf_config_add_type(enkf_config , "GEN_KW" , parameter , GEN_KW , NULL , gen_kw_config_fscanf_alloc(config_file , NULL));
+  enkf_config_add_type(enkf_config , "gen_kw" , parameter , GEN_KW , NULL , gen_kw_config_fscanf_alloc(config_file , NULL));
 }
 
 
@@ -614,9 +623,6 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       break;
     case(MULTZ):
       freef             = multz_config_free__;
-      break;
-    case(RELPERM):
-      freef             = relperm_config_free__;
       break;
     case(WELL):
       freef             = well_config_free__;
@@ -682,6 +688,11 @@ char * enkf_config_alloc_eclbase(const enkf_config_type * config , int iens) {
   return path_fmt_alloc_path(config->eclbase , iens);
 }
 
+char * enkf_config_alloc_result_path(const enkf_config_type * config , int report_step) {
+  return path_fmt_alloc_path(config->result_path , report_step);
+}
+
+
 int    	       enkf_config_get_ens_size  (const enkf_config_type * config) { return config->ens_size; }
 int    	       enkf_config_get_ens_offset(const enkf_config_type * config) { return config->ens_offset; }
 time_t 	       enkf_config_get_start_date(const enkf_config_type * config) { return config->start_time; }
@@ -693,10 +704,11 @@ void enkf_config_free(enkf_config_type * config) {
   hash_free(config->config_hash);
   {
     int i;
-    for (i=0; i < config->Nwells; i++)
+    for (i=0; i < config->nwells; i++)
       free(config->well_list[i]);
     free(config->well_list);
   }
+  path_fmt_free(config->result_path);
   path_fmt_free(config->run_path);
   path_fmt_free(config->eclbase);
   ecl_grid_free(config->grid);
@@ -731,9 +743,7 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
     queue_driver = local_driver_alloc();
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LOCAL") , NULL , 10);
   } else if (strcmp(queue_system , "RSH") == 0) {
-    queue_driver = rsh_driver_alloc(enkf_config_get_ens_size(config), 
-				    enkf_site_config_get_value(site_config , "RSH_COMMAND") , 
-				    enkf_site_config_get_value(site_config , "RSH_HOST_LIST"));
+    queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , enkf_site_config_get_value(site_config , "RSH_HOST_LIST"));
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_RSH") , NULL , 10);
   }
   else {

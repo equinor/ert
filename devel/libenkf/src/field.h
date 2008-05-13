@@ -32,7 +32,7 @@ field_type * field_copyc(const field_type *);
 
 
 ENSEMBLE_MULX_VECTOR_HEADER(field);
-MATH_OPS_HEADER(field);
+MATH_OPS_VOID_HEADER(field);
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);
 VOID_FREE_DATA_HEADER(field);

@@ -236,6 +236,13 @@ void prefix ## _obs_measure__(const void * void_arg ,  const void * domain_objec
 #define CONFIG_GET_ENSFILE_HEADER(prefix)       const char * prefix ## _config_get_ensfile_ref(const prefix ## _config_type * )
 #define CONFIG_GET_ECLFILE_HEADER(prefix)       const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * )
 
+/*****************************************************************/
 
+#define VOID_FPRINTF_RESULTS(prefix) \
+void prefix ## _ensemble_fprintf_results__(const void ** void_ensemble , int ens_size , const char * filename) { \
+   const prefix ## _type ** ensemble = (const prefix ## _type **) void_ensemble;                                          \
+   prefix ## _ensemble_fprintf_results( ensemble , ens_size , filename) ;                                                  \
+}
+#define VOID_FPRINTF_RESULTS_HEADER(prefix) void prefix ## _ensemble_fprintf_results__(const void ** , int , const char * );
 
 #endif

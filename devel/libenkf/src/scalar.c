@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <util.h>
-#include <enkf_util.h>
 #include <enkf_types.h>
 #include <scalar_config.h>
 #include <scalar.h>
@@ -21,6 +20,7 @@ struct scalar_struct {
   double                   *data;
   double                   *output_data;
   bool                      output_valid;
+  bool                      __output_locked;
 };
 
 /*****************************************************************/
@@ -28,8 +28,10 @@ struct scalar_struct {
 void scalar_clear(scalar_type * scalar) {
   const int size = scalar_config_get_data_size(scalar->config);   
   int k;
-  for (k = 0; k < size; k++)
-    scalar->data[k] = 0.0;
+  for (k = 0; k < size; k++) {
+    scalar->output_data[k] = 0.0;
+    scalar->data[k]        = 0.0;
+  }
 }
 
 void scalar_set_data(scalar_type * scalar , const double * data) {
@@ -67,6 +69,7 @@ scalar_type * scalar_alloc(const scalar_config_type * scalar_config) {
   scalar->config = scalar_config;
   scalar->data        = NULL;
   scalar->output_data = NULL;
+  scalar->__output_locked = false;
   scalar_realloc_data(scalar);
   return scalar;
 }
@@ -74,8 +77,11 @@ scalar_type * scalar_alloc(const scalar_config_type * scalar_config) {
 
 void scalar_memcpy(scalar_type * new, const scalar_type * old) {
   int size = scalar_config_get_data_size(old->config);
-  memcpy(new->data , old->data , size * sizeof *old->data);
-  new->output_valid = false;
+
+  memcpy(new->data        , old->data        , size * sizeof *old->data);
+  memcpy(new->output_data , old->output_data , size * sizeof *old->output_data);
+
+  new->output_valid = old->output_valid;
 }
 
 
@@ -159,6 +165,9 @@ void scalar_truncate(scalar_type * scalar) {
 
 
 void scalar_transform(scalar_type * scalar) {
+  if (scalar->__output_locked) 
+    util_abort("%s: internal error - trying to do output_transform on locked data.\n",__func__);
+  
   scalar_config_transform(scalar->config , scalar->data , scalar->output_data);
   scalar->output_valid = true;
 }
@@ -167,36 +176,114 @@ const double * scalar_get_output_ref(const scalar_type * scalar) { return scalar
 const double * scalar_get_data_ref  (const scalar_type * scalar) { return scalar->data; }
 
 
-/*
-void scalar_iadd(void *void_arg , const void *void_delta) {                
-  scalar_type *arg         = (scalar_type *)       void_arg;  	       
-  const scalar_type *delta = (const scalar_type *) void_delta;	       
-  const scalar_config_type *config = arg->config; 			       
-  const int data_size = config->data_size;                      			       
-  int i;                                              			       
-  if (config != delta->config) {                                                 
-    fprintf(stderr,"%s:two scalarz object have different config objects - aborting \n",__func__);
-    abort();                                                                   
-  }                                                                              
-  for (i=0; i < data_size; i++) {                           			       
-    arg->data[i]        += delta->data[i];
-    arg->output_data[i] += delta->output_data[i];
-  }
-}
 
+static void scalar_lock_output(scalar_type * scalar) { scalar->__output_locked   = true; }
+static void scalar_unlock_output(scalar_type * scalar) { scalar->__output_locked = false; }
 
-void scalar_iscale(void *void_arg , double scale_factor) {                
-  scalar_type *arg                 = (scalar_type *)       void_arg;  	       
-  const scalar_config_type *config = arg->config; 			       
-  const int data_size            = config->data_size;                      			       
-  int i;                                              			       
+/**
+   The scalar object must implement it's own mathematical functions,
+   because what we are interested in is the average of e.g. a
+   multipier, and *NOT* of the underlying GAUSSIAN variable which is
+   in scalar->data; and since transformations are generally
+   non-linear, the mathematical operations, and the output transform
+   do not commute.
 
-  for (i=0; i < data_size; i++) {                           			       
-    arg->data[i]        *= scale_factor;
-    arg->output_data[i] *= scale_factor;
-  }
-}
+   Trying to call output_transform on a scalar which has been manipulated
+   with these functions will result in a fatal error.
 */
+
+
+void scalar_isqr(scalar_type * scalar) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size = config->data_size;
+  int i;
+
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) 
+    scalar->output_data[i] = scalar->output_data[i] * scalar->output_data[i];
+}
+
+
+
+void scalar_isqrt(scalar_type * scalar) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size = config->data_size;
+  int i;
+
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) {
+    if (scalar->output_data[i] < 0) 
+      fprintf(stderr,"%s: ** Warning ** sqrt(%g) \n",__func__ , scalar->output_data[i]);
+    scalar->output_data[i] = sqrt(scalar->output_data[i]);
+  }
+}
+
+
+void scalar_iscale(scalar_type * scalar, double factor) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size = config->data_size;
+  int i;
+
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) 
+    scalar->output_data[i] *= factor;
+}
+
+
+void scalar_iadd(scalar_type * scalar , const scalar_type * delta) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size              = config->data_size;                      			       
+  int i;                                              			       
+  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) 
+    scalar->output_data[i] += delta->output_data[i];
+}
+
+void scalar_isub(scalar_type * scalar , const scalar_type * delta) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size              = config->data_size;                      			       
+  int i;                                              			       
+  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) 
+    scalar->output_data[i] -= delta->output_data[i];
+}
+
+
+void scalar_imul(scalar_type * scalar , const scalar_type * delta) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size              = config->data_size;                      			       
+  int i;                                              			       
+  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) 
+    scalar->output_data[i] *= delta->output_data[i];
+}
+
+
+void scalar_imul_add(scalar_type * scalar , double scale_factor , const scalar_type * delta) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size              = config->data_size;                      			       
+  int i;                                              			       
+  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) 
+    scalar->output_data[i] += scale_factor * delta->output_data[i];
+}
+
+
+void scalar_iaddsqr(scalar_type * scalar , const scalar_type * delta) {
+  const scalar_config_type *config = scalar->config; 			       
+  const int data_size              = config->data_size;                      			       
+  int i;                                              			       
+  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
+  scalar_lock_output(scalar);
+  for (i=0; i < data_size; i++) 
+    scalar->output_data[i] += delta->output_data[i] * delta->output_data[i];
+}
+
+
 
 
 
@@ -207,26 +294,3 @@ void scalar_iscale(void *void_arg , double scale_factor) {
 void scalar_TEST() {
   return ;
 }
-
-
-
-
-MATH_OPS(scalar)
-
-/*
-VOID_ALLOC(scalar)
-VOID_FREE(scalar)
-VOID_FREE_DATA(scalar)
-VOID_REALLOC_DATA(scalar)
-VOID_ENS_WRITE (scalar)
-VOID_ENS_READ  (scalar)
-VOID_COPYC     (scalar)
-VOID_SERIALIZE(scalar)
-VOID_TRUNCATE(scalar)
-
-
-
-VOID_FUNC      (scalar_clear        , scalar_type)
-VOID_FUNC      (scalar_sample       , scalar_type)
-*/
-

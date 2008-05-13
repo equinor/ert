@@ -10,7 +10,7 @@ double    well_get(const well_type * , const char * );
 void      well_load_summary_data(well_type * , int , const ecl_sum_type * );
 
 
-MATH_OPS_HEADER(well);
+MATH_OPS_VOID_HEADER(well);
 VOID_ALLOC_HEADER(well);
 VOID_FREE_HEADER(well);
 VOID_FREE_DATA_HEADER(well);

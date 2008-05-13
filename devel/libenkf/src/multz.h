@@ -28,7 +28,7 @@ void             multz_fwrite(const multz_type * , FILE * );
 char           * multz_alloc_description(const multz_type * , int );
 
 
-MATH_OPS_HEADER(multz);
+MATH_OPS_VOID_HEADER(multz);
 ENSEMBLE_MULX_VECTOR_HEADER(multz);
 ENSEMBLE_MULX_VECTOR_VOID_HEADER(multz);
 VOID_ALLOC_HEADER(multz);

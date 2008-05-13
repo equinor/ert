@@ -310,6 +310,61 @@ void  enkf_main_initialize_ensemble(enkf_main_type * enkf_main) {
   int iens;
   for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
     enkf_state_initialize(enkf_main->ensemble[iens]);
+  enkf_main_fprintf_results(enkf_main);
+}
+
+
+/**
+   This function returns a (enkf_node_type ** ) pointer, which points
+   to all the instances with the same keyword, i.e.
+
+     enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
+  
+   Will return an ensemble of pressure nodes. Observe that apart from
+   the list of pointers, *now new storage* is allocated, all the
+   pointers point in to the underlying enkf_node instances under the
+   enkf_main / enkf_state objects. Consequently there is no designated
+   free() function to match this, just free() the result.
+
+   Example:
+
+   enkf_node_type ** pressure_nodes = enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
+ 
+   Do something with the pressure nodes ... 
+
+   free(pressure_nodes);
+
+*/
+
+enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key) {
+  const int ens_size              = enkf_config_get_ens_size(enkf_main->config);
+  enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
+  
+  return node_ensemble;
+}
+
+/*****************************************************************/
+
+void enkf_main_fprintf_results(const enkf_main_type * enkf_main) {
+  const int ens_size     = enkf_config_get_ens_size(enkf_main->config);
+  const int report_step  = enkf_state_get_report_step(enkf_main->ensemble[0]);
+  int config_size;
+  char ** key_list = enkf_config_alloc_keylist(enkf_main->config , &config_size);
+  int ikw;
+
+  for (ikw=0; ikw < config_size; ikw++) {
+    const enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
+    if (enkf_node_has_func(node , ensemble_fprintf_results_func)) {
+      enkf_node_type ** node_ensemble = enkf_main_get_node_ensemble(enkf_main , key_list[ikw]);
+      char            * path          = enkf_config_alloc_result_path(enkf_main->config , report_step);
+      enkf_node_ensemble_fprintf_results((const enkf_node_type **) node_ensemble , ens_size , report_step , path);
+      free(path);
+      free(node_ensemble);
+    }
+  }
 }
 
 

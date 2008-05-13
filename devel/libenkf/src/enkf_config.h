@@ -37,6 +37,7 @@ const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * 
 void                          enkf_config_get_grid_dims(const enkf_config_type * , int *, int *, int *, int *);
 char 			    * enkf_config_alloc_run_path(const enkf_config_type * , int );
 char 			    * enkf_config_alloc_eclbase(const enkf_config_type  * , int );
+char                        * enkf_config_alloc_result_path(const enkf_config_type * config , int );
 char 			    * enkf_config_alloc_ecl_store_path(const enkf_config_type  * , int );
 int                           enkf_config_get_ens_size(const enkf_config_type * );
 void enkf_config_free(enkf_config_type * );

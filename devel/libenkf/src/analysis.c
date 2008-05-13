@@ -45,6 +45,7 @@ subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,
 #include <util.h>
 #include <obs_data.h>
 #include <meas_matrix.h>
+#include <math.h>
 
 void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs_stride) {
   *ens_stride = nrobs;

@@ -19,7 +19,7 @@ void         pgbox_fread(pgbox_type * , FILE * );
 
 /*****************************************************************/
 
-MATH_OPS_HEADER(pgbox);
+MATH_OPS_VOID_HEADER(pgbox);
 ENSEMBLE_MULX_VECTOR_HEADER(pgbox);
 VOID_ALLOC_HEADER(pgbox);
 VOID_FREE_HEADER(pgbox);

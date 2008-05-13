@@ -11,8 +11,10 @@
 double trans_derrf_OE(double x , const void_arg_type * arg) {
   double y;
   int steps  = void_arg_get_int(arg , 0);
-  double mu  = void_arg_get_double(arg , 1);
-  double std = void_arg_get_double(arg , 2);
+  /*
+    double mu  = void_arg_get_double(arg , 1);
+    double std = void_arg_get_double(arg , 2);
+  */
   y = floor(steps*0.5*(1 + erf(x/sqrt(2.0)))) / (steps - 1);
   return y;
 }

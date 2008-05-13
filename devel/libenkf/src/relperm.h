@@ -16,7 +16,7 @@ const double * relperm_get_output_ref(const relperm_type *);
 void relperm_get_output_data(const relperm_type *, double *);
 
 
-MATH_OPS_HEADER(relperm);
+MATH_OPS_VOID_HEADER(relperm);
 ENSEMBLE_MULX_VECTOR_HEADER(relperm);
 ENSEMBLE_MULX_VECTOR_VOID_HEADER(relperm);
 VOID_ALLOC_HEADER(relperm);

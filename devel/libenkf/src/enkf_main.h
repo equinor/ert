@@ -16,6 +16,7 @@
 
 typedef struct enkf_main_struct enkf_main_type;
 
+void                          enkf_main_fprintf_results(const enkf_main_type * );
 void 			      enkf_main_set_state_run_path(const enkf_main_type * , int );
 void 			      enkf_main_set_state_eclbase(const enkf_main_type * , int );
 const char                  * enkf_main_get_data_file(const enkf_main_type * );

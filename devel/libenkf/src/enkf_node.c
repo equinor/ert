@@ -14,6 +14,7 @@
 #include <ecl_static_kw.h>
 #include <pgbox.h>
 #include <gen_kw.h>
+#include <path_fmt.h>
 
 
 typedef struct serial_state_struct serial_state_type;
@@ -40,15 +41,16 @@ struct enkf_node_struct {
   serialize_ftype    *serialize;
   deserialize_ftype  *deserialize;
   
-  initialize_ftype   *initialize;
-  free_ftype         *freef;
-  clear_ftype        *clear;
-  copyc_ftype        *copyc;
-  scale_ftype        *scale;
-  iadd_ftype         *iadd;
-  imul_ftype         *imul;
-  isqrt_ftype        *isqrt;
-  iaddsqr_ftype      *iaddsqr;
+  initialize_ftype   		 * initialize;
+  free_ftype         		 * freef;
+  clear_ftype        		 * clear;
+  copyc_ftype        		 * copyc;
+  scale_ftype        		 * scale;
+  iadd_ftype         		 * iadd;
+  imul_ftype         		 * imul;
+  isqrt_ftype        		 * isqrt;
+  iaddsqr_ftype      		 * iaddsqr;   
+  ensemble_fprintf_results_ftype * fprintf_results;
 
   serial_state_type  *serial_state;
   char               *node_key;
@@ -284,6 +286,22 @@ void enkf_node_ensure_memory(enkf_node_type * enkf_node) {
 }
 
 
+void enkf_node_ensemble_fprintf_results(const enkf_node_type ** ensemble , int ens_size , int report_step , const char * path) {
+  /*
+    FUNC_ASSERT(ensemble[0]->fprintf_results);
+  */
+  {
+    void ** data_pointers = util_malloc(ens_size * sizeof * data_pointers , __func__);
+    char * filename       = util_alloc_full_path(path , ensemble[0]->node_key);
+    int iens;
+    for (iens=0; iens < ens_size; iens++)
+      data_pointers[iens] = ensemble[iens]->data;
+    
+    ensemble[0]->fprintf_results((const void **) data_pointers , ens_size , filename);
+    free(filename);
+    free(data_pointers);
+  }
+}
 
 
 bool enkf_node_memory_allocated(const enkf_node_type * node) { return node->memory_allocated; }
@@ -426,19 +444,36 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   node->data             = NULL;
   node->memory_allocated = false;
 
+  /* Start by initializing all function pointers 
+     to NULL.
+  */
+  node->realloc_data   = gen_kw_realloc_data__;
+  node->alloc          = gen_kw_alloc__;
+  node->ecl_write      = gen_kw_ecl_write__;
+  node->fread_f        = gen_kw_fread__;
+  node->fwrite_f       = gen_kw_fwrite__;
+  node->copyc          = gen_kw_copyc__;
+  node->initialize     = gen_kw_initialize__;
+  node->serialize      = gen_kw_serialize__;
+  node->deserialize    = gen_kw_deserialize__;
+  node->freef          = gen_kw_free__;
+  node->free_data      = gen_kw_free_data__;
+  node->fprintf_results= NULL;
+
   switch (impl_type) {
   case(GEN_KW):
-    node->realloc_data = gen_kw_realloc_data__;
-    node->alloc        = gen_kw_alloc__;
-    node->ecl_write    = gen_kw_ecl_write__;
-    node->fread_f      = gen_kw_fread__;
-    node->fwrite_f     = gen_kw_fwrite__;
-    node->copyc        = gen_kw_copyc__;
-    node->initialize   = gen_kw_initialize__;
-    node->serialize    = gen_kw_serialize__;
-    node->deserialize  = gen_kw_deserialize__;
-    node->freef        = gen_kw_free__;
-    node->free_data    = gen_kw_free_data__;
+    node->realloc_data 	  = gen_kw_realloc_data__;
+    node->alloc        	  = gen_kw_alloc__;
+    node->ecl_write    	  = gen_kw_ecl_write__;
+    node->fread_f      	  = gen_kw_fread__;
+    node->fwrite_f     	  = gen_kw_fwrite__;
+    node->copyc        	  = gen_kw_copyc__;
+    node->initialize   	  = gen_kw_initialize__;
+    node->serialize    	  = gen_kw_serialize__;
+    node->deserialize  	  = gen_kw_deserialize__;
+    node->freef        	  = gen_kw_free__;
+    node->free_data    	  = gen_kw_free_data__;
+    node->fprintf_results = gen_kw_ensemble_fprintf_results__;
     break;
   case(MULTZ):
     node->alloc       = multz_alloc__;
@@ -479,11 +514,9 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   case(WELL):
     node->realloc_data = well_realloc_data__;
     node->alloc        = well_alloc__;
-    node->ecl_write    = NULL;
     node->fread_f      = well_fread__;
     node->fwrite_f     = well_fwrite__;
     node->copyc        = well_copyc__;
-    node->initialize   = NULL;
     node->serialize    = well_serialize__;
     node->deserialize  = well_deserialize__;
     node->freef        = well_free__;
@@ -528,14 +561,11 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     break;
   case(STATIC):
     node->realloc_data = ecl_static_kw_realloc_data__;
-    node->alloc        = ecl_static_kw_alloc__;
     node->ecl_write    = NULL; /* ecl_static_kw_ecl_write__; */
+    node->alloc        = ecl_static_kw_alloc__;
     node->fread_f      = ecl_static_kw_fread__;
     node->fwrite_f     = ecl_static_kw_fwrite__;
     node->copyc        = ecl_static_kw_copyc__;
-    node->initialize   = NULL; 
-    node->serialize    = NULL; 
-    node->deserialize  = NULL;
     node->freef        = ecl_static_kw_free__;
     node->free_data    = ecl_static_kw_free_data__;
     break;
@@ -557,16 +587,17 @@ bool enkf_node_get_modified(const enkf_node_type *node) { return node->modified;
 bool enkf_node_has_func(const enkf_node_type * node , node_function_type function_type) {
   bool has_func = false;
   switch (function_type) {
-    CASE_SET(alloc_func        , node->alloc);
-    CASE_SET(ecl_write_func    , node->ecl_write);
-    CASE_SET(fread_func        , node->fread_f);
-    CASE_SET(fwrite_func       , node->fwrite_f);
-    CASE_SET(copyc_func        , node->copyc);
-    CASE_SET(initialize_func   , node->initialize);
-    CASE_SET(serialize_func    , node->serialize);
-    CASE_SET(deserialize_func  , node->deserialize);
-    CASE_SET(free_func         , node->freef);
-    CASE_SET(free_data_func    , node->free_data);
+    CASE_SET(alloc_func        		    , node->alloc);
+    CASE_SET(ecl_write_func    		    , node->ecl_write);
+    CASE_SET(fread_func        		    , node->fread_f);
+    CASE_SET(fwrite_func       		    , node->fwrite_f);
+    CASE_SET(copyc_func        		    , node->copyc);
+    CASE_SET(initialize_func   		    , node->initialize);
+    CASE_SET(serialize_func    		    , node->serialize);
+    CASE_SET(deserialize_func  		    , node->deserialize);
+    CASE_SET(free_func         		    , node->freef);
+    CASE_SET(free_data_func    		    , node->free_data);
+    CASE_SET(ensemble_fprintf_results_func  , node->fprintf_results);
   default:
     fprintf(stderr,"%s: node_function_identifier: %d not recognized - aborting \n",__func__ , function_type);
   }

@@ -680,7 +680,11 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
 }
 
 
-
+/**
+  This function takes a report_step and a analyzed|forecast state as
+  input; the enkf_state instance is set accordingly and written to
+  disk.
+*/
 void enkf_state_fwrite_as(enkf_state_type * enkf_state  , int mask , int report_step , state_enum state) {
   enkf_state_set_state(enkf_state , report_step , state);
   enkf_state_fwrite(enkf_state , mask);
@@ -961,6 +965,7 @@ void * enkf_state_complete_eclipse__(void * __void_arg) {
   bool            * job_OK       = void_arg_get_buffer(void_arg , 9);
 
   enkf_state_complete_eclipse(enkf_state , ecl_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , load_results , job_OK);
+  return NULL ;
 }
 
 
@@ -981,6 +986,10 @@ void * enkf_state_start_eclipse__(void * __void_arg) {
   return NULL ; 
 }
 
+
+int enkf_state_get_report_step(const enkf_state_type * enkf_state) { 
+  return enkf_state->report_step;
+}
 
 
 

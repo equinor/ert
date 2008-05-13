@@ -34,33 +34,36 @@ typedef int   	      (deserialize_ftype)       (void *       	, /* Node object  
                                                  size_t );        /* Offset of serial data 	*/   
 
 
-typedef void * 	      (alloc_ftype)                (const void *);
-typedef void   	      (fread_ftype)                (      void * , FILE *);
-typedef void   	      (fwrite_ftype)               (const void * , FILE *);
-typedef void   	      (initialize_ftype)     	   (      void * , int);
-typedef void   	      (ecl_write_ftype)            (const void * , const char *);
-typedef void          (realloc_data_ftype)	   (void * );
-typedef void          (free_data_ftype)	           (void * );
-typedef void   	      (free_ftype)       	   (      void *);
-typedef void   	      (clear_ftype)      	   (      void *);
-typedef void * 	      (copyc_ftype)      	   (const void *);
-typedef void   	      (isqrt_ftype)      	   (      void *);
-typedef void   	      (scale_ftype)      	   (      void * , double);
-typedef void   	      (iadd_ftype)       	   (      void * , const void *);
-typedef void   	      (imul_ftype)       	   (      void * , const void *);
-typedef void   	      (iaddsqr_ftype)    	   (      void * , const void *);
-typedef void          (ensemble_mulX_vector_ftype) (      void * , int , const void ** , const double *);
+typedef void * 	      (alloc_ftype)                	(const void *);
+typedef void   	      (fread_ftype)                	(      void *  , FILE *);
+typedef void   	      (fwrite_ftype)               	(const void *  , FILE *);
+typedef void   	      (initialize_ftype)     	   	(      void *  , int);
+typedef void   	      (ecl_write_ftype)            	(const void *  , const char *);
+typedef void          (realloc_data_ftype)	   	(void * );
+typedef void          (free_data_ftype)	           	(void * );
+typedef void   	      (free_ftype)       	   	(      void *);
+typedef void   	      (clear_ftype)      	   	(      void *);
+typedef void * 	      (copyc_ftype)      	   	(const void *);
+typedef void   	      (isqrt_ftype)      	   	(      void *);
+typedef void   	      (scale_ftype)      	   	(      void *  , double);
+typedef void   	      (iadd_ftype)       	   	(      void *  , const void *);
+typedef void   	      (imul_ftype)       	   	(      void *  , const void *);
+typedef void   	      (iaddsqr_ftype)    	   	(      void *  , const void *);
+typedef void          (ensemble_mulX_vector_ftype) 	(      void *  , int , const void ** , const double *);
+typedef void          (ensemble_fprintf_results_ftype)  (const void ** , int , const char *);
 
-typedef enum {alloc_func       = 0, 
-	      ecl_write_func   = 1,
-	      fread_func       = 2,
-	      fwrite_func      = 3,
-	      copyc_func       = 4,
-	      initialize_func  = 5,
-	      serialize_func   = 6,
-	      deserialize_func = 7,
-	      free_func        = 8,
-	      free_data_func   = 9} node_function_type;
+
+typedef enum {alloc_func       	   	    = 0, 
+	      ecl_write_func   	   	    = 1,
+	      fread_func       	   	    = 2,
+	      fwrite_func      	   	    = 3,
+	      copyc_func       	   	    = 4,
+	      initialize_func  	   	    = 5,
+	      serialize_func   	   	    = 6,
+	      deserialize_func 	   	    = 7,
+	      free_func        	   	    = 8,
+	      free_data_func   	   	    = 9,     
+	      ensemble_fprintf_results_func = 10}  node_function_type;
 
 	      
 
@@ -98,6 +101,7 @@ void             enkf_node_fread  (enkf_node_type * , FILE * stream);
 void 		 enkf_node_swapin(enkf_node_type *  , FILE * );
 void 		 enkf_node_swapout(enkf_node_type * , FILE * );
 void 		 enkf_node_realloc_data(enkf_node_type * );
+void             enkf_node_ensemble_fprintf_results(const enkf_node_type ** , int , int , const char * );
 
 void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );

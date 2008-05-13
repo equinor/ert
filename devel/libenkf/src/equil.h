@@ -22,7 +22,7 @@ VOID_FWRITE_HEADER     (equil)
 VOID_INITIALIZE_HEADER       (equil);
 VOID_FREE_HEADER       (equil);
 VOID_COPYC_HEADER      (equil);
-MATH_OPS_HEADER(equil);
+MATH_OPS_VOID_HEADER(equil);
 VOID_ALLOC_HEADER(equil);
 VOID_ECL_WRITE_HEADER(equil);
 

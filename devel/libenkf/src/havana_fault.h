@@ -38,7 +38,7 @@ VOID_DESERIALIZE_HEADER  (havana_fault);
 VOID_FREE_DATA_HEADER(havana_fault)
 VOID_INITIALIZE_HEADER(havana_fault);
 VOID_FREE_HEADER       (havana_fault);
-MATH_OPS_HEADER(havana_fault);
+MATH_OPS_VOID_HEADER(havana_fault);
 VOID_ALLOC_HEADER(havana_fault);
 VOID_ECL_WRITE_HEADER(havana_fault);
 VOID_REALLOC_DATA_HEADER(havana_fault);
