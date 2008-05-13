@@ -300,7 +300,7 @@ this host can handle. Observe that the load of the host is *not*
 consulted.
 */
 
-void * rsh_driver_alloc(int queue_size , const char * rsh_command, const char * rsh_host_list) {
+void * rsh_driver_alloc(const char * rsh_command, const char * rsh_host_list) {
   rsh_driver_type * rsh_driver = util_malloc(sizeof * rsh_driver , __func__);
   rsh_driver->__rsh_id         = RSH_DRIVER_ID;
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
