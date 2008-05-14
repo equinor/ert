@@ -33,7 +33,7 @@ int main (int argc , char ** argv) {
     plain_driver_parameter_type * parameter      = plain_driver_parameter_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Parameter");
     plain_driver_type * eclipse_static           = plain_driver_alloc(enkf_config_get_ens_path(enkf_config)    , "%04d/mem%03d/Static");
     fs_index_type     * fs_index                 = fs_index_alloc(enkf_config_get_ens_path(enkf_config) , "INDEX/mem%03d/INDEX");
-    enkf_fs_type     * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
+    enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
     
     ecl_queue = enkf_config_alloc_ecl_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue);

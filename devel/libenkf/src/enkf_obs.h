@@ -25,8 +25,5 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * , const sched_fil
 /*void 		enkf_obs_measure(enkf_obs_type * , int , const enkf_state_type *);*/
 void 		enkf_obs_get_observations(enkf_obs_type * , int , obs_data_type * );
 void            enkf_obs_add_well_obs(enkf_obs_type *   , const enkf_config_node_type * , const char * , const char * , const char * );
-void            enkf_obs_add_field_obs(enkf_obs_type *  , const enkf_config_node_type * , const char * , const char * , int , const int * , const int *, const int *, const double * , time_t );
-void            enkf_obs_add_rft_obs(enkf_obs_type *    , const enkf_config_node_type * , const ecl_rft_node_type * , const double * );
-/*enkf_obs_type * enkf_obs_fscanf_alloc(const char *    , const enkf_ens_type * , const history_type * );*/
 
 #endif

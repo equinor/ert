@@ -44,27 +44,29 @@ int main(int argc, char ** argv)
      * Når det gjelder filnavn / kataloger så forsøk å bruke
        util_path_xxx() relaterte funksjoner, da blir det (eventuelt)
        mye lettere å porte til windows på et senere tidspunkt.
-     * Variabelen format skal kun leve som input til en path_fmt
+       * Variabelen format skal kun leve som input til en path_fmt
        instans - den bør defineres som en variabel med begrenset
        skope. 
   */
-  
+
   {
-    char * directory_prefix    = argv[1];
-    char * executable_file     = argv[2];
-    char * template_and_target_file_list = argv[3];
-    char * config_file         = argv[4];
-    char * target_model_file;
+    const char * directory_prefix    		 = argv[1];
+    const char * executable_file     		 = argv[2];
+    const char * template_and_target_file_list   = argv[3];
+    const char * config_file                     = argv[4];
+    const char * ens_size_string                 = argv[5];
+
     int    ens_size;
 
     path_fmt_type             * run_path_fmt;
     havana_fault_type        ** ensemble; 
     havana_fault_config_type  * havana_config;
 
-    if (!util_sscanf_int(argv[5] , &ens_size)) {
-      fprintf(stderr,"Failed to interpret:%s as an integer - exiting.\n",argv[6]);
+    if (!util_sscanf_int(ens_size_string , &ens_size)) {
+      fprintf(stderr,"Failed to interpret:%s as an integer - exiting.\n",ens_size_string);
       exit(1);
     }
+    
     {
       const char * file_fmt = "ens%d";
       char       * format   = util_alloc_full_path(directory_prefix , file_fmt);
@@ -72,13 +74,8 @@ int main(int argc, char ** argv)
       free(format);
     }
 
-    /* Is only used to send the file path into the havana_fault_ecl_write  function  since the target files are in the template_and_target_file_list */
-    target_model_file = util_malloc(6 * sizeof(char),__func__);
-    strcpy(target_model_file,"dummy");
-    /*     printf("%s",run_path_fmt);*/
     havana_config =  havana_fault_config_fscanf_alloc(config_file, template_and_target_file_list , executable_file);
     ensemble      =  util_malloc(ens_size * sizeof *ensemble , __func__);
-    
     {
       /* 
         Bruk leksikalt begrensede telle-variabler, forsøk å gi
@@ -102,19 +99,14 @@ int main(int argc, char ** argv)
 	  free(target_file); <----------------------------· 
 	*/
 
-
-
-	char * target_file = path_fmt_alloc_file(run_path_fmt , iens+1 ,target_model_file);
-	/* printf("\n%s\n\n",target_file);*/
+	
+	char * target_path = path_fmt_alloc_path(run_path_fmt , iens+1);
 	ensemble[iens] = havana_fault_alloc(havana_config);
-	
 	havana_fault_initialize(ensemble[iens],iens);
-	
-	havana_fault_ecl_write(ensemble[iens] , target_file);
-	
+	havana_fault_ecl_write(ensemble[iens] , target_path);
 	havana_fault_free(ensemble[iens]); 
+	free(target_path);
 	
-	free(target_file);
       }
     }
     free(ensemble);

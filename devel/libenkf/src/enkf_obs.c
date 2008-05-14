@@ -174,15 +174,63 @@ void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type
 }
 
 
+/**
+  This functions loads block data observations. The return values are
+  given by references. The format of the file should be as follows:
+
+  i1  j1   k1   value1  std1
+  i2  j2   k2   value2  std2
+  i3  j3   k3   value3  std3
+  ...
+  ...
+
+  Blank lines are *NOT* allowed. 
+*/
 
 
+static void enkf_obs_fscanf_alloc_block_data(const char * filename , int * _size , int ** _i , int ** _j , int ** _k , double ** _data , double ** _std) {
+  int size;
+  int *i , *j , *k;
+  double * data , * std;
+
+  FILE * stream = util_fopen(filename , "r");
+  size = util_count_file_lines(stream);
+  if (size > 0) {
+    i    = util_malloc(size * sizeof * i    , __func__);
+    j    = util_malloc(size * sizeof * j    , __func__);
+    k    = util_malloc(size * sizeof * k    , __func__);
+    data = util_malloc(size * sizeof * data , __func__);
+    std  = util_malloc(size * sizeof * std  , __func__);
+
+    {
+      int line_nr;
+      for (line_nr = 0; line_nr < size; line_nr++) {
+	if (fscanf(stream , "%d %d %d %lg %lg" , &i[line_nr] , &j[line_nr] , &k[line_nr] , &data[line_nr] , &std[line_nr]) != 5) {
+	  char * line;
+	  bool   at_eof;
+	  util_rewind_line(stream);
+	  line = util_fscanf_alloc_line(stream , &at_eof);
+	  util_abort("%s: something failed when reading line %d: \"%s\" in %s. Expected format: \"i  j  k   value   std\".\n",__func__ , line_nr + 1 , line , filename);
+	}
+      }
+    }
+  
+    *_i 	 = i;
+    *_j 	 = j;
+    *_k 	 = k;
+    *_data = data;
+    *_std  = std;
+  }
+  *_size = size;
+  fclose(stream);
+}
 
 
-void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * ecl_field, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , time_t meas_time) {
-  bool default_active = false;
+static void enkf_obs_add_field_obs__(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * ecl_field, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , const double * obs_std , time_t meas_time) {
+  bool default_active        		    = false;
+  field_obs_type * field_obs 		    = field_obs_alloc(enkf_config_node_get_ref(config_node) , ecl_field , size , i , j , k , obs_data , obs_std);
+  obs_node_type  * obs_node  		    = obs_node_alloc(field_obs , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__);
 
-  field_obs_type * field_obs = field_obs_alloc(enkf_config_node_get_ref(config_node) , ecl_field , size , i , j , k , obs_data);
-  obs_node_type  * obs_node  = obs_node_alloc(field_obs , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__);
   if (meas_time != -1)
     obs_node_activate_time_t(obs_node , enkf_obs->sched_file , meas_time , meas_time);
   enkf_obs_add_obs(enkf_obs , ecl_field , obs_node);
@@ -190,14 +238,32 @@ void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const enkf_config_node_typ
 
 
 
-
-void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const enkf_config_node_type * config_node , const ecl_rft_node_type * rft_node, const double * p_data) {
+void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const enkf_config_node_type * config_node , const ecl_rft_node_type * rft_node, const double * p_data , const double * p_std) {
   char * obs_label = util_alloc_string_sum2("RFT/" , ecl_rft_node_well_name_ref(rft_node));
-  enkf_obs_add_field_obs(enkf_obs , config_node , "PRES" ,  obs_label , ecl_rft_node_get_size(rft_node) , ecl_rft_node_get_i(rft_node), ecl_rft_node_get_j(rft_node), ecl_rft_node_get_k(rft_node) , p_data , ecl_rft_node_get_recording_time(rft_node));
+  enkf_obs_add_field_obs__(enkf_obs , config_node , "PRESSURE" ,  obs_label , ecl_rft_node_get_size(rft_node) , ecl_rft_node_get_i(rft_node), ecl_rft_node_get_j(rft_node), ecl_rft_node_get_k(rft_node) , p_data , p_std , ecl_rft_node_get_recording_time(rft_node));
   free(obs_label);
 }
 
 
+void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * block_file , const char * ecl_field, const char * obs_label , time_t meas_time) {
+  int *i;
+  int *j;
+  int *k;
+  int size;
+  double * data , * std;
+  
+
+  enkf_obs_fscanf_alloc_block_data(block_file , &size , &i , &j , &k , &data , &std);
+  if (size > 0) {
+    enkf_obs_add_field_obs__(enkf_obs , config_node , ecl_field , obs_label , size , i , j , k , data , std , meas_time);
+    free(i);
+    free(j);
+    free(k);
+    free(data);
+    free(std);
+  }
+
+}
 
 
 void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_data_type * obs_data) {
@@ -243,16 +309,35 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	}
 	if (active_tokens > 0) {
 	  const char *kw           = token_list[0];
-	  const char * well_name   = token_list[1];
-	  char * config_file = token_list[2];
-	  char * obs_label   = NULL;
-	  const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , well_name);
-	  
-	  
 	  if (strcmp(kw , "WELL") == 0) {
 	    ASSERT_TOKENS("WELL" , active_tokens , 2);
-	    enkf_obs_add_well_obs(enkf_obs , config_node , well_name , obs_label , config_file);
-	  } else 
+	    {
+	      const char * well_name   = token_list[1];
+	      char * config_file = token_list[2];
+	      char * obs_label   = NULL;
+	      const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , well_name);
+	      enkf_obs_add_well_obs(enkf_obs , config_node , well_name , obs_label , config_file);
+	    }
+	  }
+	  else if (strcmp(kw , "BLOCK") == 0) {
+	    ASSERT_TOKENS("BLOCK" , active_tokens , 4);
+	    {
+	      const char * obs_label 	    = token_list[1];
+	      const char * field     	    = token_list[2];
+	      const char * meas_time_string = token_list[3];
+	      const char * data_file        = token_list[4];
+	      const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , field);
+	      time_t meas_time;
+	      if (!util_sscanf_date(meas_time_string , &meas_time)) {
+		int report_step;
+		if (!util_sscanf_int(meas_time_string , &report_step)) 
+		  meas_time = sched_file_report_step_to_time_t(enkf_obs->sched_file , report_step);
+		else
+		  util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
+	      }
+	      enkf_obs_add_field_obs(enkf_obs , config_node , data_file , field , obs_label , meas_time);
+	    }
+	  } else
 	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
 	  
 	}

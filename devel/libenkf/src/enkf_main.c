@@ -442,14 +442,19 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
 
     {
       bool complete_OK = true;
-      for (iens = 0; iens < ens_size; iens++)
-	complete_OK = (complete_OK && void_arg_get_bool(enkf_main->void_arg[iens] , 9));
-      
-      if ( !complete_OK) {
-	fprintf(stderr,"Some models failed to integrate from DATES %d -> %d \n",step1 , step2);
-	fprintf(stderr,"look in the ECLIPSE .PRT files - FIX the problem - and try again ... :-) \n");
-	exit(1);
+      int model_nr = 0;
+      for (iens = 0; iens < ens_size; iens++) {
+	if ( !void_arg_get_bool(enkf_main->void_arg[iens] , 9)) {
+	  if ( !complete_OK) {
+	    fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
+	    complete_OK = false;
+	  }
+	  fprintf(stderr,"  %02d: %s \n",model_nr , enkf_config_alloc_run_path(enkf_main->config , iens));
+	  model_nr++;
+	}
       }
+      if (!complete_OK)
+	exit(1);
     }
   }
 

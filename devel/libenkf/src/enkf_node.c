@@ -252,17 +252,25 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
 }
 
 
+/**
+   This function calls the node spesific ecl_write function. IF the
+   ecl_file of the (node == NULL) *ONLY* the path is sent to the node
+   spesific file.
+
+   This means that it is the responsibility of the node code to know
+   wether a full file name is required, or only a path.
+*/
+  
 void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
   FUNC_ASSERT(enkf_node->ecl_write);
   {
-    char       * file = NULL;
     const char * node_eclfile = enkf_config_node_get_eclfile_ref(enkf_node->config);
-    if (node_eclfile != NULL) 
-      file = util_alloc_full_path(path , node_eclfile);
-    enkf_node->ecl_write(enkf_node->data , file);
-    
-    if (file != NULL)
-      free(file);
+    if (node_eclfile != NULL) {
+      char * target_file = util_alloc_full_path(path , node_eclfile);
+      enkf_node->ecl_write(enkf_node->data , target_file);
+      free(target_file);
+    } else
+      enkf_node->ecl_write(enkf_node->data , path);
   }
 }
 

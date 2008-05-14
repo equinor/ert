@@ -1,4 +1,3 @@
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -187,25 +186,20 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
   bool end_of_file;
   fscanf(stream,"%d",&ntemplates);
   printf("%s %d\n","Number of template files: ",ntemplates);
-  /* util_forward_line(stream,&end_of_file); */
 
-  target             = util_malloc(ntemplates*sizeof(char *),__func__);
-  file_type          = util_malloc(ntemplates*sizeof(char *),__func__);
-
-
+  target             = util_malloc(ntemplates*sizeof(char *) , __func__);
+  file_type          = util_malloc(ntemplates*sizeof(char *) , __func__);
 
   for( int i=0; i < ntemplates; i++)
   {
       char * target_file_root;
       char * template_file;
-      int len;
-
+      
       util_forward_line(stream,&end_of_file);
-      if(end_of_file)
-      {
-          printf("Error: End of fil when reading list of template files for Havana\n");
-          printf("%s %s\n","Error: Occurred in source code function: ",__func__);
-          exit(1);
+      if(end_of_file) {
+	printf("Error: End of fil when reading list of template files for Havana\n");
+	printf("%s %s\n","Error: Occurred in source code function: ",__func__);
+	exit(1);
       }
 
       /* Read file type */
@@ -223,9 +217,8 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
       /*      fscanf(stream,"%s %s %s",file_type[i],template_file,target_file_root); */
       /* sprintf(target[i],"%s/%s",run_path,target_file_root); */
 
-      len = strlen(run_path) + strlen(target_file_root) +2;
-      target[i]     = util_malloc(len*sizeof(char),__func__);
-      sprintf(target[i],"%s/%s",run_path,target_file_root);
+      target[i] = util_alloc_full_path(run_path , target_file_root);
+
 
       printf("%s   %s   %s\n",file_type[i],template_file,target[i]); 
 
@@ -233,72 +226,56 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
 
       free(target_file_root);
       free(template_file);
-
-
   }
   fclose(stream);
  }
-
-
+ 
+ 
   /* Return values */
   *ntarget_ref     = ntemplates;
   *target_ref      = target;
   *file_type_ref    = file_type;
 
   hash_free(kw_hash);
-
-
-
 }
 
 
-void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * target_file) {
-  DEBUG_ASSERT(havana_fault)
-  char * run_path;
-  char * havana_model_file;
-  char * extension;
-  char * command;
+/**
+  This function writes the results for eclipse to use. Observe that
+  for this function the second argument is a target_path (the
+  config_object has been allocated with target_file == NULL).
+*/
+
+
+void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path) {
+  DEBUG_ASSERT(havana_fault);
+
   const char * executable;
   char ** target_files;
   char ** file_types;
   int ntarget_files;
 
-  /* Assume that target_file contain the file inclusive its file path for the current ensemble member */ 
-
-  /* Get the file path to the run directory from target_file */
-  util_alloc_file_components(target_file , &run_path , &havana_model_file , &extension);
-  /* printf("Run path: %s\n",run_path); */
-
   /* Create havana model file (target_file) in run directory */
-  havana_fault_filter_file(havana_fault , run_path, &ntarget_files, &target_files,&file_types);
-
+  havana_fault_filter_file(havana_fault , run_path , &ntarget_files , &target_files , &file_types);
+  
 
   /* Execute Havana from the run directory. The output from Havana should be saved in the run directory */
-
   executable = havana_fault->config->havana_executable;
-  command = (char *) malloc(300 * sizeof(char));
 
+  
   for(int i=0; i< ntarget_files; i++)
   {
       if(!strcmp(file_types[i],"M"))
       {
-          /* Go to the run directory and execute the Havana model from there */
-          sprintf(command,"%s %s %s %s  %s","cd ",run_path,"; ",executable,target_files[i]);
-          system(command);
+	/* Go to the run directory and execute the Havana model from there */
+	char * command = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , executable , target_files[i]} , 5 , " ");
+	system(command);
+	free(command);
       }
       
   }
-  free(command);
-  free(run_path);
-  free(havana_model_file);
-  free(extension);
-  for(int i=0; i < ntarget_files; i++)
-  {
-      if(target_files[i] != 0) free(target_files[i]);
-      if(file_types[i] != 0) free(file_types[i]);
-  }
-  free(target_files);
-  free(file_types);
+  util_free_string_list( target_files , ntarget_files );
+  util_free_string_list( file_types   , ntarget_files );
 }
 
 
