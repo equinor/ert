@@ -21,4 +21,5 @@ date_node_type      * date_node_copyc(const date_node_type * );
 void                * date_node_copyc__(const void * );
 time_t                date_node_get_date(const date_node_type * );
 time_t                date_node_parse_DATES_line(const char * , const hash_type * );
+void                  date_node_get_time_t(const date_node_type * , int , time_t *);
 #endif

@@ -26,5 +26,6 @@ void              sched_kw_fwrite(const sched_kw_type *kw , FILE *);
 void              sched_kw_fprintf_rates(const sched_kw_type * , const char *, const char * , date_node_type **);
 void              sched_kw_fprintf_days_dat(const sched_kw_type * , FILE *);
 void              sched_kw_get_report_step(const sched_kw_type *  , time_t , int * );
+void              sched_kw_get_time_t(const sched_kw_type * , int , time_t *);
 void              sched_kw_make_history(const sched_kw_type *  , history_type * , date_node_type **);
 #endif

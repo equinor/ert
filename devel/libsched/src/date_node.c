@@ -191,7 +191,12 @@ void date_node_fprintf_rate_date(const date_node_type * date_node , const char *
   free(obs_path);
 }
 
-
+  
+void date_node_get_time_t(const date_node_type * date , int report_step , time_t *t) {
+  if (report_step == date->date_nr) 
+    *t = date->time;
+}
+      
 
 /*
   If there is equality the *next* report step will be returned; 
@@ -199,7 +204,7 @@ void date_node_fprintf_rate_date(const date_node_type * date_node , const char *
 */
 
 void date_node_get_report_step(const date_node_type * date , time_t t , int * report_step) {
-  if (difftime(date->time , t) > 0) {
+  if (difftime(date->time , t) >= 0) {
     int y1,d1,m1,y2,d2,m2;
     util_set_date_values(t          , &d1,&m1,&y1);
     util_set_date_values(date->time , &d2,&m2,&y2);

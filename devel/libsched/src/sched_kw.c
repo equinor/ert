@@ -219,6 +219,19 @@ void sched_kw_get_report_step(const sched_kw_type * kw , time_t t , int * report
     sched_kw_dates_get_report_step(kw->data , t , report_step);
 }
 
+/**
+   This function takes a report_step as input, and sets the time_t
+   instance accordingly. If the current sched_kw instance is not of
+   DATES type nothing happens to the time_t instance.
+
+   I.e. the calling scope must monitor the value of t to check whether
+   it has been updated.
+*/
+void sched_kw_get_time_t(const sched_kw_type * kw , int report_step, time_t *t) {
+  if (kw->type == DATES) 
+    sched_kw_dates_get_time_t(kw->data ,  report_step , t);
+}
+
 
 
 void sched_kw_make_history(const sched_kw_type * kw , history_type * history, date_node_type **current_date) {

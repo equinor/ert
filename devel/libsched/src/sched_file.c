@@ -434,6 +434,62 @@ void sched_file_fprintf_days_dat(const sched_file_type *s , const char *days_fil
   fclose(stream);
 }
 
+/**
+  This function counts the number of report_steps in the schedule
+  file.
+*/
+int sched_file_count_report_steps(const sched_file_type * s) {
+  int report_steps = 0;
+  list_node_type *list_node = list_get_head(s->kw_list);
+  while (list_node != NULL) {
+    const sched_kw_type * sched_kw = list_node_value_ptr(list_node);
+
+    if (sched_kw_get_type(sched_kw) == DATES)
+      report_steps++;
+
+    list_node = list_node_get_next(list_node);
+  }
+  return report_steps;
+}
+
+
+
+
+/**
+
+ This function takes a report step as input, an returns the
+ corresponding time as a time_t value. The reference *_status is used
+ to indicate success/failure:
+
+ _status <  0 : report_step < 0
+ _status == 0 : success
+ _status >  0 : the report_step is beyond the end of the schedule_file.
+ 
+*/
+
+
+
+static time_t sched_file_report_step_to_time_t__(const sched_file_type * s , int report_step , int *_status) {
+  int status = -1;
+  time_t t = -1;
+  if (report_step <= sched_file_count_report_steps(s)) {
+    list_node_type *list_node = list_get_head(s->kw_list);
+    while (list_node != NULL) {
+      const sched_kw_type * sched_kw = list_node_value_ptr(list_node);
+      sched_kw_get_time_t(sched_kw , report_step , &t);
+      
+      if (t != -1) {
+	status = 0;
+	list_node = NULL;
+      } else
+	list_node = list_node_get_next(list_node);
+    } 
+  } else
+    status = 1;
+
+  *_status = status;
+  return t;
+}
 
 
 int sched_file_time_t_to_report_step(const sched_file_type * s , time_t t , int * _status) {
@@ -493,3 +549,12 @@ time_t sched_file_DATES_to_time_t(const sched_file_type * s , const char * DATES
 bool sched_file_has_well(const sched_file_type * s , const char * well) {
   return set_has_key(s->well_set , well);
 }
+
+time_t sched_file_report_step_to_time_t(const sched_file_type * s , int report_step) {
+  int status;
+  time_t t = sched_file_report_step_to_time_t__(s , report_step , &status);
+  if (status != 0) 
+    util_abort("%s: failed to find report_step:%d in schedule_file. \n",__func__ , report_step);
+  return t;
+}
+    

@@ -25,4 +25,6 @@ int 		  sched_file_int3_to_report_step(const sched_file_type * , int , int , int
 int 		  sched_file_DATES_to_report_step(const sched_file_type * , const char * , int *);
 time_t            sched_file_DATES_to_time_t(const sched_file_type *  , const char * );
 bool              sched_file_has_well(const sched_file_type * , const char * );
+int               sched_file_count_report_steps(const sched_file_type * );
+time_t            sched_file_report_step_to_time_t(const sched_file_type *  , int );
 #endif

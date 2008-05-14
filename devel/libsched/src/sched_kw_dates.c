@@ -54,6 +54,16 @@ void sched_kw_dates_get_report_step(const sched_kw_dates_type *kw  , time_t t , 
 }
 
 
+void sched_kw_dates_get_time_t(const sched_kw_dates_type *kw  , int report_step , time_t *t) {
+  list_node_type *date_node = list_get_head(kw->date_list);
+  while (date_node != NULL) {
+    const date_node_type * date = list_node_value_ptr(date_node);
+    date_node_get_time_t(date , report_step , t);
+    date_node = list_node_get_next(date_node);
+  }
+}
+
+
 
 sched_kw_dates_type * sched_kw_dates_alloc(int *next_date_ptr , const time_t * start_date){
   sched_kw_dates_type *dates = malloc(sizeof *dates);

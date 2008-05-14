@@ -6,6 +6,7 @@
 #include <ecl_fstate.h>
 #include <ecl_sum.h>
 #include <history.h>
+#include <history_ens_diag.h>
 #include <sched_util.h>
 
 
@@ -359,7 +360,28 @@ void sched_inter_get_report_date__(const int * report_step , int * day, int * mo
   
 
 
-
+void sched_inter_diag_ens_interactive__(const char * _eclbase_dir  , const int * dir_len     ,
+					const char * _eclbase_name , const int * name_len    ,
+					const char * _history_file , const int * history_len , 
+					const int  * fmt_file_int  , const int * unified_int) {
+  
+  char * eclbase_dir  = util_alloc_cstring(_eclbase_dir , dir_len);
+  char * eclbase_name = util_alloc_cstring(_eclbase_name , name_len);
+  char * history_file = util_alloc_cstring(_history_file , history_len);
+  bool  fmt_file      = util_intptr_2bool(fmt_file_int);
+  bool  unified       = util_intptr_2bool(unified_int);
+  history_type * hist;
+  {
+    FILE * stream = util_fopen(history_file , "r");
+    hist = history_fread_alloc(stream);
+    fclose(stream);
+  }
+  history_ens_diag_ens_interactive(eclbase_dir , eclbase_name , fmt_file , unified , ENDIAN_CONVERT , hist);
+  
+  free(eclbase_dir);
+  free(eclbase_name);
+  free(history_file);
+}
 
 
 

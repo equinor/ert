@@ -16,5 +16,6 @@ void                  sched_kw_dates_fwrite(const sched_kw_dates_type * , FILE *
 void                  sched_kw_dates_iterate_current(const sched_kw_dates_type * , date_node_type **);
 void                  sched_kw_dates_fprintf_days_dat(const sched_kw_dates_type * , FILE *);
 void                  sched_kw_dates_get_report_step(const sched_kw_dates_type * , time_t , int * );
+void                  sched_kw_dates_get_time_t(const sched_kw_dates_type *  , int  , time_t *);
 void                  sched_kw_dates_make_history(const sched_kw_dates_type * ,  history_type * );
 #endif
