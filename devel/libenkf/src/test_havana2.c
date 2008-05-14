@@ -62,10 +62,8 @@ int main(int argc, char ** argv)
     havana_fault_type        ** ensemble; 
     havana_fault_config_type  * havana_config;
 
-    if (!util_sscanf_int(ens_size_string , &ens_size)) {
-      fprintf(stderr,"Failed to interpret:%s as an integer - exiting.\n",ens_size_string);
-      exit(1);
-    }
+    if (!util_sscanf_int(ens_size_string , &ens_size)) 
+      util_abort("%s: Failed to interpret:%s as an integer - exiting.\n",__func__ , ens_size_string);
     
     {
       const char * file_fmt = "ens%d";

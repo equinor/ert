@@ -163,7 +163,7 @@ havana_fault_type * havana_fault_alloc_mean(int ens_size , const havana_fault_ty
 }
 
 
-void havana_fault_filter_file(const havana_fault_type * havana_fault , const char * run_path, int *ntarget_ref, char ***target_ref, char*** file_type_ref) 
+void havana_fault_filter_file(const havana_fault_type * havana_fault , const char * run_path, int *ntarget_ref, char ***target_ref) 
 {
   const int size             = havana_fault_config_get_data_size(havana_fault->config);
   const double * output_data = scalar_get_output_ref(havana_fault->scalar);
@@ -171,15 +171,15 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
   int ikw;
   int ntemplates = 0;
   char ** target;
-  char ** file_type;
-
+  
   havana_fault_output_transform(havana_fault);
   for (ikw = 0; ikw < size; ikw++)
     hash_insert_hash_owned_ref(kw_hash , havana_fault_config_get_name(havana_fault->config , ikw) , void_arg_alloc_double(output_data[ikw]) , void_arg_free__);
 
-  
 
-  /* Scan through the list of template files and create target files */
+  /* 
+     Scan through the list of template files and create target files. 
+  */
  {
   const char *template_file_list = havana_fault_config_get_template_ref(havana_fault->config);
   FILE * stream = util_fopen(template_file_list,"r");
@@ -187,8 +187,7 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
   fscanf(stream,"%d",&ntemplates);
   printf("%s %d\n","Number of template files: ",ntemplates);
 
-  target             = util_malloc(ntemplates*sizeof(char *) , __func__);
-  file_type          = util_malloc(ntemplates*sizeof(char *) , __func__);
+  target             = util_malloc(ntemplates * sizeof(char *) , __func__);
 
   for( int i=0; i < ntemplates; i++)
   {
@@ -196,16 +195,9 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
       char * template_file;
       
       util_forward_line(stream,&end_of_file);
-      if(end_of_file) {
-	printf("Error: End of fil when reading list of template files for Havana\n");
-	printf("%s %s\n","Error: Occurred in source code function: ",__func__);
-	exit(1);
-      }
-
-      /* Read file type */
-      file_type[i] =  util_fscanf_alloc_token(stream);
-      /* printf("%s\n",file_type[i]); */
-
+      if(end_of_file) 
+	util_abort("%s: Premature end of file when reading list of template files for Havana from:%s \n",__func__ , template_file_list);
+      
       /* Read template file */
       template_file =  util_fscanf_alloc_token(stream);
       /* printf("%s\n",template_file); */
@@ -214,14 +206,11 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
       target_file_root = util_fscanf_alloc_token(stream);
       /* printf("%s\n",target_file_root); */
 
-      /*      fscanf(stream,"%s %s %s",file_type[i],template_file,target_file_root); */
-      /* sprintf(target[i],"%s/%s",run_path,target_file_root); */
-
       target[i] = util_alloc_full_path(run_path , target_file_root);
 
 
-      printf("%s   %s   %s\n",file_type[i],template_file,target[i]); 
-
+      printf("%s   %s  \n",template_file,target[i]); 
+      
       util_filter_file(template_file , NULL , target[i] , '<' , '>' , kw_hash , util_filter_warn0 );      
 
       free(target_file_root);
@@ -234,8 +223,6 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
   /* Return values */
   *ntarget_ref     = ntemplates;
   *target_ref      = target;
-  *file_type_ref    = file_type;
-
   hash_free(kw_hash);
 }
 
@@ -252,11 +239,10 @@ void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char 
 
   const char * executable;
   char ** target_files;
-  char ** file_types;
   int ntarget_files;
 
   /* Create havana model file (target_file) in run directory */
-  havana_fault_filter_file(havana_fault , run_path , &ntarget_files , &target_files , &file_types);
+  havana_fault_filter_file(havana_fault , run_path , &ntarget_files , &target_files);
   
 
   /* Execute Havana from the run directory. The output from Havana should be saved in the run directory */
@@ -265,18 +251,15 @@ void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char 
   
   for(int i=0; i< ntarget_files; i++)
   {
-      if(!strcmp(file_types[i],"M"))
-      {
-	/* Go to the run directory and execute the Havana model from there */
-	char * command = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , executable , target_files[i]} , 5 , " ");
-	system(command);
-	free(command);
-      }
-      
+    /* Go to the run directory and execute the Havana model from there */
+    char * command = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , executable , target_files[i]} , 5 , " ");
+    system(command);
+    free(command);
   }
   util_free_string_list( target_files , ntarget_files );
-  util_free_string_list( file_types   , ntarget_files );
 }
+
+
 
 
 void havana_fault_export(const havana_fault_type * havana_fault , int * _size , char ***_kw_list , double **_output_values) {
