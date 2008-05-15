@@ -17,10 +17,13 @@ void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_
   config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , ecl_kw_name);
 }
 
+
+
 void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_type) {
   config->ecl_type     = ecl_type;
   config->sizeof_ctype = ecl_util_get_sizeof_ctype(ecl_type);
 }
+
 
 
 static const char * field_config_file_type_string(field_file_type file_type) {
@@ -41,13 +44,13 @@ static const char * field_config_file_type_string(field_file_type file_type) {
 }
 
 
+
 static bool field_config_valid_file_type(field_file_type file_type) {
   if (file_type == rms_roff_file || file_type == ecl_kw_file || file_type == ecl_grdecl_file)
     return true;
   else
     return false;
 }
-
 
 
 
@@ -110,9 +113,11 @@ field_file_type field_config_guess_file_type(const char * filename , bool endian
 }
 
 
+
 field_ecl_export_format field_config_get_ecl_export_format(const field_config_type * field_config) {
   return field_config->ecl_export_format;
 }
+
 
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , int nx , int ny , int nz , int active_size , const int * index_map) {
@@ -157,12 +162,14 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
 }
 
 
+
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , int nx , int ny , int nz , int active_size , const int * index_map) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
   config->logmode   = 0;
   config->init_type = none;
   return config;
 }
+
 
 
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
@@ -205,7 +212,9 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , int 
 #undef ASSERT_CONFIG_FILE
 
 
+
 bool field_config_write_compressed(const field_config_type * config) { return config->write_compressed; }
+
 
 
 void field_config_set_limits(field_config_type * config , void * min_value , void * max_value) {
@@ -213,6 +222,7 @@ void field_config_set_limits(field_config_type * config , void * min_value , voi
   memcpy(config->max_value , max_value , config->sizeof_ctype);
   config->limits_set = true;
 }
+
 
 
 void field_config_apply_limits(const field_config_type * config, void * _data) {
@@ -259,7 +269,6 @@ void field_config_apply_limits(const field_config_type * config, void * _data) {
 
 
 
-
 void field_config_set_io_options(const field_config_type * config , bool *fmt_file , bool * endian_swap) {
   *fmt_file    = config->fmt_file;
   *endian_swap = config->endian_swap;
@@ -267,6 +276,7 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
    *ecl_type    = config->ecl_type;
    */
 }
+
 
 
 void field_config_free(field_config_type * config) {
@@ -280,21 +290,30 @@ void field_config_free(field_config_type * config) {
 }
   
 
+
 int field_config_get_volume(const field_config_type * config) {
   return config->nx * config->ny * config->nz;
 }
+
+
 
 ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
   return config->ecl_type;
 }
 
+
+
 int field_config_get_byte_size(const field_config_type * config) {
   return config->data_size * config->sizeof_ctype;
 }
 
+
+
 int field_config_get_active_size(const field_config_type * config) {
   return config->data_size;
 }
+
+
 
 int field_config_get_sizeof_ctype(const field_config_type * config) { return config->sizeof_ctype; }
 
@@ -304,25 +323,27 @@ int field_config_get_sizeof_ctype(const field_config_type * config) { return con
   Observe that the indices are zero-based, in contrast 
   to those used by eclipse which are based on one.
 */
-
 inline int field_config_global_index(const field_config_type * config , int i , int j , int k) {
   return config->index_map[ k * config->nx * config->ny + j * config->nx + i];
 }
+
 
 
 field_init_type field_config_get_init_type(const field_config_type * config) {
   return config->init_type;
 }
 
+
+
 bool field_config_get_endian_swap(const field_config_type * config) {
   return config->endian_swap;
 }
 
 
+
 char * field_config_alloc_init_file(const field_config_type * config, int iens) {
   return path_fmt_alloc_path(config->init_file_fmt , iens);
 }
-
 
 
 
@@ -346,12 +367,12 @@ void field_config_get_ijk(const field_config_type * config , int global_index, i
 
 
 
-
 void field_config_get_dims(const field_config_type * config , int *nx , int *ny , int *nz) {
   *nx = config->nx;
   *ny = config->ny;
   *nz = config->nz;
 }
+
 
 
 /*****************************************************************/
