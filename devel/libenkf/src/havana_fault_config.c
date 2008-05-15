@@ -9,6 +9,97 @@
 
 #include <havana_fault_config.h>
 
+/** 
+    A purely local type
+*/
+
+struct fault_group_struct {
+  int     size;
+  char  **fault_names;
+  char   *modify_template;
+  char   *group_name;
+};
+
+/*****************************************************************/
+/** 
+   Implementation of fault_group_type follows here. This is just
+   convenience class for handling groups of faults. No functionality
+   of this type should be exported.
+*/
+   
+
+static fault_group_type * fault_group_alloc(const char * group_name , int size, const char ** fault_names , const char * modify_template) {
+  fault_group_type * group = util_malloc(sizeof * group , __func__);
+  group->size            = size;
+  group->modify_template = util_alloc_string_copy(modify_template);
+  group->fault_names     = util_alloc_stringlist_copy(fault_names , size);
+  group->group_name      = util_alloc_string_copy(group_name);
+  return group;
+}
+
+
+static void fault_group_free(fault_group_type * group) {
+  free(group->modify_template);
+  free(group->group_name);
+  util_free_string_list(group->fault_names , group->size);
+}
+
+
+static void fault_group_faultlist_append(const fault_group_type * group , FILE * stream) {
+  int i;
+  for (i=0; i < group->size; i++)
+    fprintf(stream , "%s\n",group->fault_names[i]);
+}
+
+
+static void fault_group_fprintf_faultlist(const fault_group_type * group , const char * PFM_path) {
+  char * filename = util_alloc_full_path(PFM_path , ".faultlist");
+  FILE * stream   = util_fopen(filename , "w");
+  fprintf(stream , "%d\n",group->size);
+  fault_group_faultlist_append(group , stream);
+  fclose(stream);
+  free(filename);
+}
+
+
+static void fault_group_fprintf_ALL_faultlist(const fault_group_type **group_list , int num_fault_groups , const char * PFM_path){
+  int total_faults = 0;
+  int igroup;
+  for (igroup = 0; igroup < num_fault_groups; igroup++) 
+    total_faults += group_list[igroup]->size;
+  {
+    char * filename = util_alloc_full_path(PFM_path , ".faultlist");
+    FILE * stream = util_fopen(filename , "w");
+    fprintf(stream , "%d\n", total_faults);
+    
+    for (igroup = 0; igroup < num_fault_groups; igroup++) 
+      fault_group_faultlist_append(group_list[igroup] , stream);
+
+    fclose(stream);
+    free(filename);
+  }
+    
+}
+
+static void fault_group_run_havana(const fault_group_type * group , hash_type * kw_hash , const char * run_path , const char * PFM_path , const char * havana_executable) {
+  char * target_file = util_alloc_full_path( run_path , group->group_name);
+  char * command     = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , havana_executable , group->group_name } , 5 , " ");
+  util_filter_file( group->modify_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
+  fault_group_fprintf_faultlist(group , PFM_path);
+  
+  system( command ); /* Should probably fork and redirect stdout+++ */
+
+  free( command );
+  free( target_file );
+}
+
+
+
+
+
+/*****************************************************************/
+
+
 
 
 /* Transform */
@@ -18,30 +109,180 @@ void havana_fault_config_transform(const havana_fault_config_type * config , con
 }
 
 
+static havana_fault_config_type * __havana_fault_alloc( ) {
+  havana_fault_config_type * config = util_malloc(sizeof * config , __func__);
 
-
-havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filename , const char * template_file, const char * executable_file) 
-{
-    /* Allocate and read */
-  if (!util_file_exists(filename) ) 
-  {
-      util_abort("%s: config_file:%s does not exist - aborting.\n" , __func__ , filename);
-  }
-  if (!util_file_exists(template_file) ) 
-  {
-      util_abort("%s: template_file:%s does not exist - aborting.\n" , __func__ , template_file);
-  }
-  if (!util_file_exists(executable_file)  ) 
-  {
-      util_abort("%s: executable_file:%s does not exist - aborting.\n" , __func__ , executable_file);
-  }
-
-  havana_fault_config_type *havana_fault_config = malloc(sizeof *havana_fault_config);
-
-  havana_fault_config->havana_executable = util_alloc_string_copy(executable_file);
-  havana_fault_config->gen_kw_config = gen_kw_config_fscanf_alloc(filename , template_file);
-  return havana_fault_config;
+  config->num_fault_groups  	= 0;
+  config->fault_groups      	= NULL;
+  config->havana_executable 	= NULL;
+  config->input_fault_path      = NULL;
+  config->update_template       = NULL;
+  config->unfaulted_GRDECL_file = NULL;
+  config->gen_kw_config         = NULL;
+  return config;
 }
+
+
+
+void havana_fault_config_set_executable(havana_fault_config_type * config , const char* executable) {
+  config->havana_executable = util_realloc_string_copy(config->havana_executable , executable); 
+}
+
+void havana_fault_config_set_input_fault_path(havana_fault_config_type * config , const char* input_fault_path) {
+  config->input_fault_path = util_realloc_string_copy(config->input_fault_path , input_fault_path); 
+}
+
+void havana_fault_config_set_update_template(havana_fault_config_type * config , const char* update_template) {
+  config->update_template = util_realloc_string_copy(config->update_template , update_template); 
+}
+
+void havana_fault_config_set_GRDECL_file(havana_fault_config_type * config , const char* GRDECL_file) {
+  config->unfaulted_GRDECL_file = util_realloc_string_copy(config->unfaulted_GRDECL_file , GRDECL_file); 
+}
+
+void havana_fault_config_add_fault_group(havana_fault_config_type * config , const char * group_name , const char * modify_template , int group_size , const char ** fault_names) {
+  config->num_fault_groups++;
+  config->fault_groups = util_realloc(config->fault_groups , config->num_fault_groups * sizeof * config->fault_groups , __func__);
+  config->fault_groups[config->num_fault_groups - 1] = fault_group_alloc(group_name , group_size , fault_names , modify_template);
+}
+
+void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , const char * gen_kw_config_file) {
+  if (config->gen_kw_config != NULL) {
+    fprintf(stderr,"%s: ** Warning: freeing existsing gen_kw_config object from second DATA statement.\n",__func__);
+    gen_kw_config_free(config->gen_kw_config);
+  }
+  printf("Looking for:%s \n",gen_kw_config_file);
+  config->gen_kw_config = gen_kw_config_fscanf_alloc( gen_kw_config_file , NULL );
+}
+
+
+
+
+void havana_fault_config_run_havana(const havana_fault_config_type * config , scalar_type * scalar_data , const char * run_path) {
+  const int size = havana_fault_config_get_data_size(config);
+  int igroup;
+  hash_type * kw_hash = hash_alloc();
+
+  scalar_transform( scalar_data );
+  {
+    const double * data = scalar_get_output_ref( scalar_data );
+    int ikw;
+    for (ikw = 0; ikw < size; ikw++)
+      hash_insert_hash_owned_ref(kw_hash , havana_fault_config_get_name(config , ikw) , void_arg_alloc_double(data[ikw]) , void_arg_free__);
+  }
+  hash_insert_hash_owned_ref( kw_hash , "INPUT_FAULTS" , void_arg_alloc_ptr(config->input_fault_path) , void_arg_free__);
+  hash_insert_hash_owned_ref( kw_hash , "GRDECL"       , void_arg_alloc_ptr(config->unfaulted_GRDECL_file) , void_arg_free__);
+
+  for (igroup = 0; igroup < config->num_fault_groups; igroup++) 
+    fault_group_run_havana( config->fault_groups[igroup] , kw_hash , run_path , config->input_fault_path , config->havana_executable);
+  
+  fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , config->input_fault_path);
+  {
+    char * target_file = util_alloc_full_path( run_path , "update" );
+    char * command     = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , config->havana_executable , "update"} , 5 , " ");
+
+    util_filter_file( config->update_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
+    system( command );
+    
+    free(command);
+    free(target_file);
+  }
+  hash_free(kw_hash);
+}
+
+
+static void havana_fault_config_printf(const havana_fault_config_type * config) {
+  printf("Havana executable.........: %s \n",config->havana_executable);
+  printf("Unfaulted grid............: %s \n",config->unfaulted_GRDECL_file);
+  printf("Input faults..............: %s \n",config->input_fault_path);
+  printf("Template for IntoEclipse..: %s \n",config->update_template);
+}
+
+
+/**
+   Should check that the object is in a consistent state; essentially
+   checking that all necessary variables have been set to a value !=
+   NULL.
+*/
+static void havana_fault_config_assert(const havana_fault_config_type * config) {
+  havana_fault_config_printf(config);
+}
+
+
+/**
+The format of the file should be as follows:
+
+DATA             /tmp/Synthetic/sharedfiles/configfiles/havana_config.dat
+GRDECL           /tmp/Synthetic/sharedfiles/structureinput/Seismic_B_nothrow.GRDECL
+INPUT_FAULTS     /tmp/Synthetic/sharedfiles/structureinput/PFM
+UPDATE           /tmp/Synthetic/sharedfiles/templates/updateGrid.template
+HAVANA           /d/proj/bg/enkf/EnKF_Structural/Havana/havana
+GROUP            G01   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G01.template Seismic_B_BaseThrow 
+GROUP            G02   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G02.template FaultX FaultY FaultZ
+GROUP            G03   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G03.template FaultA FaultB FaultC FaultD
+
+Each group can contain many faults; but each fault must be in only one
+group. This is not checked for.
+*/
+
+
+
+#define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) util_abort("%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); 
+havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filename) {
+  havana_fault_config_type * config = __havana_fault_alloc();
+  FILE  * stream = util_fopen(filename , "r");
+  bool at_eof = false;
+
+
+  while ( !at_eof ) {
+    char  * line;
+    int     tokens;
+    char ** token_list;
+    line  = util_fscanf_alloc_line(stream , &at_eof);
+    if (line != NULL) {
+      char * kw;
+      util_split_string(line , " " , &tokens , &token_list);
+      if (tokens > 0) {
+	kw = token_list[0];
+	printf("kw:%s token[1]:%s  \n",kw,token_list[1]);
+
+	if (strcmp(kw , "GRDECL") == 0) {
+	  ASSERT_TOKENS(kw , tokens , 1);
+	  havana_fault_config_set_GRDECL_file(config , token_list[1]);
+	} else if (strcmp(kw , "INPUT_FAULTS") == 0) {
+	  ASSERT_TOKENS(kw , tokens , 1);
+	  havana_fault_config_set_input_fault_path(config , token_list[1]);
+	} else if (strcmp(kw , "UPDATE") == 0) {
+	  ASSERT_TOKENS(kw , tokens , 1);
+	  havana_fault_config_set_update_template(config , token_list[1]);
+	} else if (strcmp(kw , "HAVANA") == 0) {
+	  ASSERT_TOKENS(kw , tokens , 1);
+	  havana_fault_config_set_executable(config , token_list[1]);
+	} else if (strcmp(kw , "DATA") == 0) {
+	  ASSERT_TOKENS(kw , tokens , 1);
+	  havana_fault_config_set_gen_kw_config(config , token_list[1]);
+	} else if (strcmp(kw , "GROUP") == 0) {
+	  ASSERT_TOKENS(kw , tokens , 3);
+	  {
+	    const char  * group_name      = token_list[1];
+	    const char  * modify_template = token_list[2];
+	    const char ** fault_names     = (const char **) &token_list[3];
+	    int group_size                = tokens - 3;        
+	    havana_fault_config_add_fault_group(config , group_name , modify_template , group_size , fault_names);
+	  }
+	} else 
+	  fprintf(stderr,"** Warning: keyword:%s in file:%s not recognized - ignored \n",kw , filename);
+	util_free_string_list(token_list , tokens);
+      }
+      free(line);
+    }
+  }
+  fclose(stream);
+  havana_fault_config_assert(config);
+  return config;
+}
+#undef ASSERT_TOKENS
+
 
 
 void havana_fault_config_free(havana_fault_config_type * havana_fault_config) 
@@ -50,13 +291,22 @@ void havana_fault_config_free(havana_fault_config_type * havana_fault_config)
     assert(havana_fault_config->gen_kw_config);
     gen_kw_config_type *tmp = havana_fault_config->gen_kw_config;
     gen_kw_config_free(tmp);
-    havana_fault_config->gen_kw_config= NULL;
-
-    if (havana_fault_config->havana_executable != NULL)
+    havana_fault_config->gen_kw_config = NULL;
+    
+    free(havana_fault_config->havana_executable);
+    free(havana_fault_config->input_fault_path);
+    free(havana_fault_config->unfaulted_GRDECL_file);
+    free(havana_fault_config->update_template);
     {
-        free(havana_fault_config->havana_executable);
+      int igroup;
+      for (igroup = 0; igroup < havana_fault_config->num_fault_groups; igroup++)
+	fault_group_free(havana_fault_config->fault_groups[igroup]);
+      free(havana_fault_config->fault_groups);
     }
+    free(havana_fault_config);
 }
+
+
 
 int havana_fault_config_get_data_size(const havana_fault_config_type * havana_fault_config) 
 {

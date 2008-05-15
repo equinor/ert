@@ -18,8 +18,17 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * t
   gen_kw_config->var_type      = parameter;
   gen_kw_config->template_file = util_alloc_string_copy(template_file);
   gen_kw_config->executable    = NULL;
-  if (!util_file_exists(template_file))
-    util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
+
+  /* 
+     Allows for template_file == NULL - as a way to adapt to
+     the requirements of the havana_fault object. Should maybe
+     not bend-over in this way? 
+  */
+   
+  if (template_file != NULL) {
+    if (!util_file_exists(template_file))
+      util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
+  }
   return gen_kw_config;
 }
 

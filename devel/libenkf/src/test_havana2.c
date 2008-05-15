@@ -11,8 +11,8 @@
 int main(int argc, char ** argv) 
 {
 
-  if (argc < 6) {
-    printf("Usage: test_havana   <directoryprefix> <executable>  <template_and_target_file_list>  <config file>  <nreal>\n");
+  if (argc < 4) {
+    printf("Usage: test_havana   <directoryprefix> <config file>  <nreal>\n");
     exit(1);
   }
 
@@ -51,10 +51,8 @@ int main(int argc, char ** argv)
 
   {
     const char * directory_prefix    		 = argv[1];
-    const char * executable_file     		 = argv[2];
-    const char * template_and_target_file_list   = argv[3];
-    const char * config_file                     = argv[4];
-    const char * ens_size_string                 = argv[5];
+    const char * config_file                     = argv[2];
+    const char * ens_size_string                 = argv[3];
 
     int    ens_size;
 
@@ -72,7 +70,7 @@ int main(int argc, char ** argv)
       free(format);
     }
 
-    havana_config =  havana_fault_config_fscanf_alloc(config_file, template_and_target_file_list , executable_file);
+    havana_config =  havana_fault_config_fscanf_alloc(config_file);
     ensemble      =  util_malloc(ens_size * sizeof *ensemble , __func__);
     {
       /* 

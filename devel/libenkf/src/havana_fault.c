@@ -181,21 +181,20 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
      Scan through the list of template files and create target files. 
   */
  {
-  const char *template_file_list = havana_fault_config_get_template_ref(havana_fault->config);
-  FILE * stream = util_fopen(template_file_list,"r");
-  bool end_of_file;
-  fscanf(stream,"%d",&ntemplates);
-  printf("%s %d\n","Number of template files: ",ntemplates);
-
-  target             = util_malloc(ntemplates * sizeof(char *) , __func__);
-
-  for( int i=0; i < ntemplates; i++)
-  {
-      char * target_file_root;
-      char * template_file;
-      
-      util_forward_line(stream,&end_of_file);
-      if(end_of_file) 
+   const char *template_file_list = havana_fault_config_get_template_ref(havana_fault->config);
+   FILE * stream = util_fopen(template_file_list,"r");
+   bool end_of_file;
+   fscanf(stream,"%d",&ntemplates);
+   printf("%s %d\n","Number of template files: ",ntemplates);
+   
+   target             = util_malloc(ntemplates * sizeof(char *) , __func__);
+   
+   for( int i=0; i < ntemplates; i++) {
+       char * target_file_root;
+       char * template_file;
+       
+       util_forward_line(stream,&end_of_file);
+       if(end_of_file) 
 	util_abort("%s: Premature end of file when reading list of template files for Havana from:%s \n",__func__ , template_file_list);
       
       /* Read template file */
@@ -231,33 +230,41 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
   This function writes the results for eclipse to use. Observe that
   for this function the second argument is a target_path (the
   config_object has been allocated with target_file == NULL).
+
+  Observe that with the current interaction with havanna *ONLY* one
+  instance of this function can run at a time - conflict with the
+  ".faultlist" file - this must be modularized!!
 */
+
 
 
 void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path) {
   DEBUG_ASSERT(havana_fault);
-
-  const char * executable;
-  char ** target_files;
-  int ntarget_files;
-
-  /* Create havana model file (target_file) in run directory */
-  havana_fault_filter_file(havana_fault , run_path , &ntarget_files , &target_files);
-  
-
-  /* Execute Havana from the run directory. The output from Havana should be saved in the run directory */
-  executable = havana_fault->config->havana_executable;
-
-  
-  for(int i=0; i< ntarget_files; i++)
-  {
-    /* Go to the run directory and execute the Havana model from there */
-    char * command = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , executable , target_files[i]} , 5 , " ");
-    system(command);
-    free(command);
-  }
-  util_free_string_list( target_files , ntarget_files );
+  havana_fault_config_run_havana(havana_fault->config , havana_fault->scalar ,  run_path);
 }
+
+
+/*   const char * executable; */
+/*   char ** target_files; */
+/*   int ntarget_files; */
+
+/*   /\* Create havana model file (target_file) in run directory *\/ */
+/*   havana_fault_filter_file(havana_fault , run_path , &ntarget_files , &target_files); */
+  
+
+/*   /\* Execute Havana from the run directory. The output from Havana should be saved in the run directory *\/ */
+/*   executable = havana_fault->config->havana_executable; */
+
+  
+/*   for (int i=0; i< ntarget_files; i++) */
+/*   { */
+/*     /\* Go to the run directory and execute the Havana model from there *\/ */
+/*     char * command = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , executable , target_files[i]} , 5 , " "); */
+/*     system(command); */
+/*     free(command); */
+/*   } */
+/*   util_free_string_list( target_files , ntarget_files ); */
+/* } */
 
 
 

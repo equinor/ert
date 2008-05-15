@@ -35,8 +35,9 @@ void gen_kw_inter_init__(const char * _config_file, const int * config_file_len 
 
 void gen_kw_inter_ecl_write_avg__(const int * ens_size , const char *_path , const int * path_len) {
   char *path = util_alloc_cstring(_path , path_len);
-  
-  gen_kw_type *avg_gen_kw = gen_kw_alloc_mean(*ens_size , (const gen_kw_type **) GEN_KW_LIST);
+  gen_kw_type * avg , *std;
+
+  gen_kw_alloc_stats((const gen_kw_type **) GEN_KW_LIST , *ens_size , &avg , &std);
   
   /*
     if (*avg_output == 1)
@@ -45,7 +46,8 @@ void gen_kw_inter_ecl_write_avg__(const int * ens_size , const char *_path , con
     gen_kw_ecl_write(avg_gen_kw , path);
   */
 
-  gen_kw_free(avg_gen_kw);
+  gen_kw_free(avg);
+  gen_kw_free(std);
   free(path);
 }
 
