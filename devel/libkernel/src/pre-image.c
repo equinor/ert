@@ -7,8 +7,6 @@
 #include "cost_func.h"
 #include "pre-image.h"
 
-
-
 /********************************************************************/
 
 void pre_image_approx(const cost_func_type *cost_func,
@@ -40,9 +38,11 @@ void pre_image_approx(const cost_func_type *cost_func,
   /******************************************************************/
 
   // Configure L-BFGS-B
-  factr = 1.0E1;
-  pgtol = 1.0E-4;
-  m = 20;
+  // factr = 1.0E12;
+  // pgtol = 1.0E-2;
+  factr = 1.0E2;
+  pgtol = 1.0E-5;
+  m = 4;
 
   /* The L-BFGS-B fortran code doesn't handle its own memory. We
      need to allocate the memory here...
@@ -98,6 +98,7 @@ void pre_image_approx(const cost_func_type *cost_func,
        a new minimization and initialize it in a random
        sample from {y_1,y_2,...,y_n}
     */
+
     util_memcpy_string_C2f90("START",task,60);
     j = rand() % ny;
     dcopy_(&n,y[j],&one,x,&one);
@@ -368,7 +369,7 @@ void fw_pre_image_approx_3xdot_xpsqx_(
   /*********************************************************/
 
   // Allocate kernel and cost function
-  kernel_3xdot = kernel_list_alloc(2,kernels,weights,params);
+  kernel_3xdot = kernel_list_alloc(3,kernels,weights,params);
   cost_func = cost_func_alloc(kernel_3xdot,f,reg); 
 
   // Wrap y
@@ -385,6 +386,62 @@ void fw_pre_image_approx_3xdot_xpsqx_(
 
   // Clean up
   kernel_list_free(kernel_3xdot);
+  cost_func_free(cost_func);
+  free(wrap_y);
+};
+
+
+
+void fw_pre_image_approx_gauss_xpsqx_(
+                            const int *ntries,
+                            const int *n,
+                            const int *ny,
+                            const double *y,
+                            const double *alpha,
+                            const double *low_bnd,
+                            const double *high_bnd,
+                            const int *nbd,
+                            double *x
+                            )
+{
+  // Configure cost function 
+  f_func f = {XPLUSSQRTX};
+  reg_func reg = {NONE};
+  
+  cost_func_type *cost_func;
+  kernel_list_type *kernel_gauss;
+
+  kernel_type kernels[1] = {GAUSS};
+  double weights[1] = {(double) *n};
+  double params[1] = {(double) *n};
+
+  // Wrapper for y
+  const double **wrap_y;
+
+  // This is unused, since we are not using regularization
+  double *mu;
+
+  int i;
+  /*********************************************************/
+
+  // Allocate kernel and cost function
+  kernel_gauss = kernel_list_alloc(1,kernels,weights,params);
+  cost_func = cost_func_alloc(kernel_gauss,f,reg); 
+
+  // Wrap y to c style
+  wrap_y = util_malloc(*n *sizeof *wrap_y,__func__);
+  wrap_y[0] = y;
+  for(i=1; i< *ny; i++)
+  {
+    wrap_y[i]  = wrap_y[i-1] + *n;
+  }
+
+
+  // Get pre-image approximation
+  pre_image_approx(cost_func,*ntries,*n,*ny, (const double **) wrap_y,alpha,0.0,mu,low_bnd,high_bnd,nbd,x);
+
+  // Clean up
+  kernel_list_free(kernel_gauss);
   cost_func_free(cost_func);
   free(wrap_y);
 };

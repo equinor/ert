@@ -112,6 +112,9 @@ void cost_func_apply_gradx(const cost_func_type *cost_func,const double tausquar
 
   dg = util_malloc(n*sizeof *dg,__func__);
 
+  /*
+    This loop could be parallized.
+  */
   for(i=0; i<ny; i++)
   {
     kernel_list_apply_gradx(cost_func->kernel_list,n,x,y[i],dg);

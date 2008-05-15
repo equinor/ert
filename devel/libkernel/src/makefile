@@ -16,7 +16,7 @@ ARFLAGS = -csr
 OBJECTS           = kernel_core.o cost_func.o pre-image.o
 INC_FILES 				= kernel_core.h cost_func.h pre-image.h
 LIB               = libkernel_$(MFLAG).a
-LIB_LINK          = -lsample_$(MFLAG) -lanalysis_$(MFLAG) -lkernel_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lz -lg2c -lmkl_lapack -lmkl -lifcoremt -lguide -lfftw3_$(MFLAG)   -lbfgs 
+LIB_LINK          = -lsample_$(MFLAG) -lanalysis_$(MFLAG) -lkernel_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lz -lg2c -lmkl_lapack -lmkl -lifcoremt -lguide -lfftw3_$(MFLAG)  -lbfgs 
 LIB_PATH          = -L/usr/lib/gcc/x86_64-redhat-linux/3.4.3/32  -L$(LIBSAMPLE_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBBFGS_HOME)/lib -L$(LIBKERNEL_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L/local/intel/compiler90/ia32/fc/lib -L/local/intel/mkl/mkl721/lib/32
 TARGET_INCLUDE    = -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBKERNEL_HOME)/include
 
