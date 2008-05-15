@@ -464,13 +464,14 @@ double kernel_featurespace_dist_get_aka(const kernel_list_type *kernel_list,cons
   double aka;
   int i,j;
 
-  // Note: This code can be optimized if we enforce k(x,y) = k(y,x)
+  // Note: This code assumes  k(x,y) = k(y,x)! This is a requirement for k to be a valid kernel.
   aka = 0.0;
   for(i=0; i<ny; i++)
   {
-    for(j=0; j<ny; j++)
+    aka = aka + alpha[i]*alpha[i] * kernel_list_apply(kernel_list,n,y[i],y[i]);
+    for(j=i+1; j<ny; j++)
     {
-      aka = aka + alpha[i]*alpha[j] * kernel_list_apply(kernel_list,n,y[i],y[j]);
+      aka = aka + 2 * alpha[i]*alpha[j] * kernel_list_apply(kernel_list,n,y[i],y[j]);
     }
   }
   return aka;
