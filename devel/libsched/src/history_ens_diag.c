@@ -359,14 +359,14 @@ static char ** fread_alloc_wells(const char *well_file , int *_nwell) {
 
 
 void history_ens_diag_ens_interactive(const char *eclbase_dir , const char *eclbase_name , bool fmt_file , bool unified , bool endian_convert, history_type * history) {
-#define defvar_N 4
-  const bool report_mode = false;
-  const int prompt_len = 68;
+#define defvar_N 3
+  const bool report_mode = true;
+  const int prompt_len   = 68;
   char out_path[128];
   char ens_path[128];
   int  i , iens1,iens2,nwell,nvar;
   char prompt[128];
-  const char *defvar_list[defvar_N] = {"WOPT" , "WOPR" , "WGOR" , "WWCT"};
+  const char *defvar_list[defvar_N] = {"WOPR" , "WGOR" , "WWCT"};
   char **well_list;
   char **var_list;
 
@@ -396,7 +396,7 @@ void history_ens_diag_ens_interactive(const char *eclbase_dir , const char *eclb
     }
   }
   
-  read_int ("Number of variables  ...[0 to use default set: WOPT WOPR WGOR WWCT]" , prompt_len , &nvar);
+  read_int ("Number of variables  ...[0 to use default set: WOPR WGOR WWCT]" , prompt_len , &nvar);
   if (nvar == 0) {
     nvar = defvar_N;
     var_list = util_alloc_string_list(nvar , 64);
