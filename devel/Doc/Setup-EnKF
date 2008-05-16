@@ -13,8 +13,8 @@ Table of contents
     2.2  SCHEDULE file
     2.3  DATA file
       2.3.1  Include statements
-      2.3.2  Init section
-      2.3.3  RPTONLY and SKIPREST
+      2.3.2  SOLUTION section
+      2.3.3  RPTONLY / SKIPREST / RPTSCHED
       2.3.4  MINPV/MINPVV
       2.3.5  The parameters to estimate
       2.3.6  Optional: INCLUDE -> IMPORT 
@@ -102,7 +102,43 @@ Table of contents
              replace all relative paths in include statements with
              absolute paths.
 
-       2.3.2 The 
+       2.3.2 The (ECLIPSE)-init of the simulations are different for
+             the first time step and the following timesteps, this
+             implies that the SOLUTION section in the datafile must
+             be updated between the first and the second timestep:
+
+               First timestep: The solution section must have the
+               'EQUIL' keyword for ECLIPSE to calculate the initial
+               fluid distribution (alternatively they can be imported
+               from) an external application.
+
+               Remaining timesteps: The solution section must contain
+               a 'RESTART ' keyword.
+
+             The way we have solved this with the EnKF application is
+             that you should replace the existing initialization code
+             (i.e. typically an EQUIL keyword) with the string
+             <INIT>. This is then replaced with the correct code by
+             EnKF automagically(?!) (but - see comment about INIT in
+             section 3.3).
+
+       2.3.3 There are a couple of keywords which MUST be present in
+             the DATAFILE for EnKF to operate correctly.
+
+             RPTONLY: This keyword must be present in the SUMMARY
+             section of the datafile. This keyword ensures that
+             ECLIPSE writes date to the summary file only at the
+             report steps; for EnKF it essential to have temporal
+             consistency between summary data and restart data, and
+             currently this is enforced with the use of this keyword. 
+
+             SKIPREST: This keyword must be in the SCHEDULE section,
+             typically just before the actual SCHEDULE content. If
+             this keyword is not present restarts will not work
+             correctly. 
+
+
+
 
 
 
