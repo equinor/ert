@@ -52,6 +52,17 @@ static void fault_group_faultlist_append(const fault_group_type * group , FILE *
     fprintf(stream , "%s\n",group->fault_names[i]);
 }
 
+/**
+  This function adds symbolic links from the path tmp_PFM_path to the
+  real fault files in PFM_path. This is done so that several instances
+  of havana can access the same (original) faults at the same
+  time. The '.faultlist' file is located in the tmp_PFM_path.
+
+  Observe that the argument PFM_path in the xxx_fprintf_faultlist()
+  function should in general correspond to the value of the
+  tmp_PFM_path variable.
+*/
+
 static void fault_group_link_faults(const fault_group_type * group , const char * PFM_path , const char * tmp_PFM_path) {
   int i;
   for (i =  0; i < group->size; i++) {
@@ -64,8 +75,8 @@ static void fault_group_link_faults(const fault_group_type * group , const char 
 }
 
 
-static void fault_group_fprintf_faultlist(const fault_group_type * group , const char * havana_run_path) {
-  char * filename = util_alloc_full_path(havana_run_path , ".faultlist");
+static void fault_group_fprintf_faultlist(const fault_group_type * group , const char * PFM_path) {
+  char * filename = util_alloc_full_path(PFM_path , ".faultlist");
   FILE * stream   = util_fopen(filename , "w");
   fprintf(stream , "%d\n",group->size);
   fault_group_faultlist_append(group , stream);
