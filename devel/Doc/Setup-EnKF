@@ -1,0 +1,112 @@
+			Starting EnKF
+                        =============
+
+
+This document should describe how to get started using the EnKF
+implementation from StatoilHydro to do history matching. 
+
+Table of contents
+
+ 1. Basic startup.
+ 2. Files you need.
+    2.1  Grid file  
+    2.2  SCHEDULE file
+    2.3  DATA file
+      2.3.1  Include statements
+      2.3.2  Init section
+      2.3.3  RPTONLY and SKIPREST
+      2.3.4  MINPV/MINPVV
+      2.3.5  The parameters to estimate
+      2.3.6  Optional: INCLUDE -> IMPORT 
+ 3. About the configuration file:
+    3.1  About paths in the config file
+    3.2  Basic configuration information
+    3.3  Parameters to estimate 
+    3.4  Observations
+    3.5  Overriding the site-config configuration
+ 4. Running it ...  
+
+
+
+
+1. Basic startup 
+   -------------
+   Start with typing 'enkf' on the command line; if you get command
+   not found you must go and nag on your enkf-administrator.
+
+   If the enkf application is installed OK you should get an error
+   message like this:
+
+     main: usage ./enkf config_file
+
+     ****************************************************************************
+     **                                                                        **
+     **  A fatal error occured in the EnKF program, and we have to abort.      **
+     **  We now *try* to provide a backtrace, which would be very useful       **
+     **  when debugging. The process of making a (human readable) backtrace    **
+     **  is quite complex, among other things it involves several calls to the **
+     **  external program addr2line. We have arrived here because the program  **
+     **  state is already quite broken, so the backtrace might be (seriously)  **
+     **  broken as well. In particular it is not thread safe:                  **
+     **                                                                        **
+     ****************************************************************************
+     --------------------------------------------------------------------------------
+      #00 util_abort(..) in /h/a152128/EnKF/devel/EnKF/libutil/src/util.c:2387
+      #01 main      (..) in /h/a152128/EnKF/devel/EnKF/libenkf/src/main.c:55
+     --------------------------------------------------------------------------------
+     Abort
+
+   That is because the enkf application requires a configuration file
+   as the first and only argument. A large part of the remaining part
+   of this document is related to this configuration file.
+
+
+2. Before you can start the EnKF simulation you need some files from
+   an ordinary ECLIPSE simulation on the same model. Some of the files
+   must be edited a bit before the simulation can start.
+
+   2.1 The EnKF simulation needs a grid file from an existing
+       simulation. The EnKF application can use both EGRID and GRID
+       files - of both formatted and unformatted type.
+
+       The grid file is (presently) used to map out active/inactive
+       cells. This means that the grid file must contain an accurate
+       description of the active and inactive cells. If the
+       MINPV/MINPVV keywords are used in the datafile the consistency
+       between the GRID file and the GRID section in the ECLIPSE can
+       be a bit tricky. See details in section 2.3.1.
+
+   2.2 The SCHEDULE file is used to force the ECLIPSE simulation in
+       the normal way, in addition the EnKF application parses the
+       SCHEDULE file and reads historical rates from the WCONHIST
+       keywords. One time-step for EnKF application corresponds to one
+       DATES keyword in the schedule file, this means that the longer
+       DATES periods in the SCHEDULE file, the longer time the EnKF
+       simulation will take.
+
+       The SCHEDULE file can be used nearly unchanged, but please
+       ensure the following:
+
+         o The file should end with 'END'.
+         o It is only allowed with one schedule file, nested SCHEDULE
+           files will not be parsed correctly.
+         o The files often seem to have a really confused opinion of
+           which end-of line convention to use. The program eol-fix.x
+           does a quite decent job.
+
+   2.3 There are several alterations which must be done to the
+       datafile prior to starting the EnKF application.
+
+       2.3.1 The EnKF simulations will be run 'all-over-place'
+             filesystem wise, it is therefor *STRONGLY* advised to
+             replace all relative paths in include statements with
+             absolute paths.
+
+       2.3.2 The 
+
+
+
+
+
+
+   
