@@ -62,10 +62,9 @@ multflt_config_type * multflt_config_fscanf_alloc(const char * filename ) {
   config = __multflt_config_alloc_empty(size);
   do {
     char name[128];  /* UGGLY HARD CODED LIMIT */
-    if (fscanf(stream , "%s" , name) != 1) {
-      fprintf(stderr,"%s: something wrong when reading: %s - aborting \n",__func__ , filename);
-      abort();
-    }
+    if (fscanf(stream , "%s" , name) != 1) 
+      util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
+    
     config->fault_names[line_nr] = util_alloc_string_copy(name);
     scalar_config_fscanf_line(config->scalar_config , line_nr , stream);
     line_nr++;

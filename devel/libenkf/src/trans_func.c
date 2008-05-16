@@ -7,6 +7,7 @@
 #include <util.h>
 
 
+
 /* This should be removed - old legacy shit from Oseberg East */
 double trans_derrf_OE(double x , const void_arg_type * arg) {
   double y;
@@ -119,10 +120,9 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_ar
 
   *active = true;
   func_name = util_fscanf_alloc_token(stream);
-  if (func_name == NULL) {
-    fprintf(stderr,"%s: could not locate name of transformation - aborting \n",__func__);
-    abort();
-  }
+  if (func_name == NULL) 
+    util_abort("%s: could not locate name of transformation - aborting \n",__func__);
+  
 
   if (strcmp(func_name , "NORMAL") == 0) {
     /* Normal distribution */
@@ -168,10 +168,9 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_ar
     transf   = trans_const;
     void_arg = void_arg_alloc1( double_value );
     *active  = false;
-  } else {
-    fprintf(stderr,"%s: function name:%s not recognized - aborting \n", __func__ , func_name);
-    abort();
-  }
+  } else 
+    util_abort("%s: function name:%s not recognized - aborting \n", __func__ , func_name);
+  
   void_arg_fscanf(void_arg , stream);
 
   *_func_name = func_name;

@@ -30,10 +30,10 @@ struct fault_group_struct {
 
 static fault_group_type * fault_group_alloc(const char * group_name , int size, const char ** fault_names , const char * modify_template) {
   fault_group_type * group = util_malloc(sizeof * group , __func__);
-  group->size            = size;
-  group->modify_template = util_alloc_string_copy(modify_template);
-  group->fault_names     = util_alloc_stringlist_copy(fault_names , size);
-  group->group_name      = util_alloc_string_copy(group_name);
+  group->size              = size;
+  group->modify_template   = util_alloc_string_copy(modify_template);
+  group->fault_names       = util_alloc_stringlist_copy(fault_names , size);
+  group->group_name        = util_alloc_string_copy(group_name);
   return group;
 }
 
@@ -42,6 +42,7 @@ static void fault_group_free(fault_group_type * group) {
   free(group->modify_template);
   free(group->group_name);
   util_free_string_list(group->fault_names , group->size);
+  free(group);
 }
 
 
@@ -109,10 +110,25 @@ void havana_fault_config_transform(const havana_fault_config_type * config , con
 }
 
 
+
+/**
+   This function allocates a havana_fault_config instance. The primary
+   role of this function is to allocate the actual object, *AND* to
+   ensure that all the internal pointers are correctly initialized. 
+
+   The state of havana_fault_config instance can then later be checked
+   in havana_fault_config_assert().
+*/
+
+
+
+  
 static havana_fault_config_type * __havana_fault_alloc( ) {
   havana_fault_config_type * config = util_malloc(sizeof * config , __func__);
 
   config->num_fault_groups  	= 0;
+  config->num_fault_files       = 0;
+  config->fault_files           = NULL;
   config->fault_groups      	= NULL;
   config->havana_executable 	= NULL;
   config->input_fault_path      = NULL;
@@ -123,27 +139,56 @@ static havana_fault_config_type * __havana_fault_alloc( ) {
 }
 
 
-
 void havana_fault_config_set_executable(havana_fault_config_type * config , const char* executable) {
   config->havana_executable = util_realloc_string_copy(config->havana_executable , executable); 
 }
 
 void havana_fault_config_set_input_fault_path(havana_fault_config_type * config , const char* input_fault_path) {
+  if (! util_is_directory(input_fault_path)) 
+    util_abort("%s: INPUT_FAULTS must point to an existing directory.\n",__func__);
+
   config->input_fault_path = util_realloc_string_copy(config->input_fault_path , input_fault_path); 
 }
 
 void havana_fault_config_set_update_template(havana_fault_config_type * config , const char* update_template) {
+  if (! util_file_exists(update_template))
+    util_abort("%s: UPDATE must point to an existing file.\n",__func__);
   config->update_template = util_realloc_string_copy(config->update_template , update_template); 
 }
 
 void havana_fault_config_set_GRDECL_file(havana_fault_config_type * config , const char* GRDECL_file) {
+  if (! util_file_exists(GRDECL_file))
+      util_abort("%s: GRDECL must point to an existing file.\n",__func__);
   config->unfaulted_GRDECL_file = util_realloc_string_copy(config->unfaulted_GRDECL_file , GRDECL_file); 
 }
 
+
+static void havana_fault_config_add_fault_file(havana_fault_config_type * config , const char * fault_path , const char * fault_file) {
+  char * full_path = util_alloc_full_path(fault_path , fault_file); /* Only a reference is added - it is freed with the list later. */
+  
+  if (! util_file_exists(full_path)) 
+    util_abort("%s: fault_file:%s does not exist. \n",__func__ , full_path);
+  
+  config->fault_files = util_stringlist_append_ref(config->fault_files , config->num_fault_files , full_path);
+  config->num_fault_files++;
+}
+
+
 void havana_fault_config_add_fault_group(havana_fault_config_type * config , const char * group_name , const char * modify_template , int group_size , const char ** fault_names) {
+  if (! util_file_exists(modify_template)) 
+    util_abort("%s: template:%s does not exist. \n",__func__ , modify_template);
+
+  if (config->input_fault_path == NULL) 
+    util_abort("%s: must set the input_fault_path with INPUT_FAULTS before you can define fault groups\n",__func__);
+
   config->num_fault_groups++;
   config->fault_groups = util_realloc(config->fault_groups , config->num_fault_groups * sizeof * config->fault_groups , __func__);
   config->fault_groups[config->num_fault_groups - 1] = fault_group_alloc(group_name , group_size , fault_names , modify_template);
+  {
+    int ifault;
+    for (ifault = 0; ifault < group_size; ifault++)
+      havana_fault_config_add_fault_file(config , config->input_fault_path , fault_names[ifault]);
+  }
 }
 
 void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , const char * gen_kw_config_file) {
@@ -151,7 +196,6 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
     fprintf(stderr,"%s: ** Warning: freeing existsing gen_kw_config object from second DATA statement.\n",__func__);
     gen_kw_config_free(config->gen_kw_config);
   }
-  printf("Looking for:%s \n",gen_kw_config_file);
   config->gen_kw_config = gen_kw_config_fscanf_alloc( gen_kw_config_file , NULL );
 }
 
@@ -199,6 +243,7 @@ static void havana_fault_config_printf(const havana_fault_config_type * config) 
 }
 
 
+
 /**
    Should check that the object is in a consistent state; essentially
    checking that all necessary variables have been set to a value !=
@@ -207,6 +252,10 @@ static void havana_fault_config_printf(const havana_fault_config_type * config) 
 static void havana_fault_config_assert(const havana_fault_config_type * config) {
   havana_fault_config_printf(config);
 }
+
+
+
+
 
 
 /**
@@ -226,7 +275,6 @@ group. This is not checked for.
 */
 
 
-
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) util_abort("%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); 
 havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filename) {
   havana_fault_config_type * config = __havana_fault_alloc();
@@ -244,8 +292,6 @@ havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filenam
       util_split_string(line , " " , &tokens , &token_list);
       if (tokens > 0) {
 	kw = token_list[0];
-	printf("kw:%s token[1]:%s  \n",kw,token_list[1]);
-
 	if (strcmp(kw , "GRDECL") == 0) {
 	  ASSERT_TOKENS(kw , tokens , 1);
 	  havana_fault_config_set_GRDECL_file(config , token_list[1]);
@@ -303,6 +349,7 @@ void havana_fault_config_free(havana_fault_config_type * havana_fault_config)
 	fault_group_free(havana_fault_config->fault_groups[igroup]);
       free(havana_fault_config->fault_groups);
     }
+    util_free_string_list(havana_fault_config->fault_files , havana_fault_config->num_fault_files);
     free(havana_fault_config);
 }
 

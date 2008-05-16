@@ -18,7 +18,9 @@ struct havana_fault_config_struct
   char                * input_fault_path;
   char                * update_template;
   int                   num_fault_groups;
+  int                   num_fault_files;
   fault_group_type   ** fault_groups;
+  char               ** fault_files;
 };
 
 const char                 * havana_fault_config_get_template_ref(const havana_fault_config_type * );
