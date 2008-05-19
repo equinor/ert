@@ -14,15 +14,18 @@ Table of contents
     2.3  DATA file
       2.3.1  Include statements
       2.3.2  SOLUTION section
-      2.3.3  RPTONLY / SKIPREST / RPTSCHED
+      2.3.3  RPTONLY / SKIPREST / RPTSOL
       2.3.4  MINPV/MINPVV
       2.3.5  The parameters to estimate
-      2.3.6  Optional: INCLUDE -> IMPORT 
+     (2.3.6  Optional: INCLUDE -> IMPORT)
  3. About the configuration file:
     3.1  About paths in the config file
     3.2  Basic configuration information
     3.3  Parameters to estimate 
     3.4  Observations
+    3.4.1  Well rate observations from SCHEDULE
+    3.4.2  Block observations (i.e. RFT)
+    3.4.3  Observations of other summary variables.
     3.5  Overriding the site-config configuration
  4. Running it ...  
 
@@ -110,7 +113,7 @@ Table of contents
                First timestep: The solution section must have the
                'EQUIL' keyword for ECLIPSE to calculate the initial
                fluid distribution (alternatively they can be imported
-               from) an external application.
+               from an external application).
 
                Remaining timesteps: The solution section must contain
                a 'RESTART ' keyword.
@@ -136,6 +139,91 @@ Table of contents
              typically just before the actual SCHEDULE content. If
              this keyword is not present restarts will not work
              correctly. 
+
+             RPTSOL: This keyword controls the output of restart
+             files/reports (I think there are actually several nearly
+             identical keywords here). This works at least:
+
+             RPTSOL
+                 RESTART=2 /
+
+     
+       2.3.4 The MINPV/MINPVV keywords. (This section only applies if
+             you are attempting to estimate the PORO and/or the MULTPV
+             keywords - however that is a quite common thing to do.)
+             When you specify a value for MINPV, all cells with pore
+             volume below this limit will become inactive, when the
+             ensemble members have different values for PORO/MULTPV
+             the spatial distribution of active/inactive cells will
+             vary (slightly) among the members, and then ** ALL HELL
+             IS LOOSE **.
+
+	     The following approach to MINPV/MINPVV is suggested:
+
+	     1. Run the base case model with the MINPV/MINPVV keywords
+                present and produce an EGRID file by using the
+                GRIDFILE keyword. (If you already have an EGRID file
+                you can use that one).
+
+	     2. Remove MINPV/MINPVV from the datafile.
+
+             3. Run the following command:
+ 
+                  bash% kw_extract.x <EGRID_FILE> <OUTPUT_FILE> COORD ZCORN ACTNUM 
+                         
+                This will extract the ECLIPSE variables COORD, ZCORN
+                and ACTNUM from the EGRID_FILE and write them to the
+                OUTPUT_FILE. 
+
+             4. In the grid section of the data file, replace
+	        include statements including grdecl/zcorn/actnum with
+	        the following statement:
+ 
+                IMPORT 
+                   '<OUTPUT_FILE>' /
+
+                Where OUTPUT_FILE is the file name you gave on the
+                command line. An extra advantage with this is that
+                reading grid information into ECLIPSE is considerably
+                faster (assuming your EGRID file was binary).
+
+
+       2.3.5 The parameters to estimate. In some way you have to get
+             the parameters to estimate into ECLIPSE. There are many
+             ways to do this, but the most common is that you insert a 
+
+             INCLUDE
+                 '<FILENAME>' / 
+  
+             statement into the datafile. The FILENAME should
+             typically correspond to the filename given in the
+             configuration file, see section 3.3.
+
+             Observe that when estimating full fields, like PERMX and
+             PORO, you should use IMPORT instead of include. The
+             reason for this is that IMPORT allows the use of binary
+             files, which does speed up the reading and writing of
+             files considerably.
+
+     
+
+3. About the configuration file. 
+
+3.1 The configuration file is first and only input argument given when
+    starting the EnKF application. One of the first things the EnKF
+    application does is to decompose the config file argument into a
+    leading path part, and the actual filename. It then does a chdir()
+    into the path, that means that all paths and files refered to in
+    the configuration are interpreted relative to the path given on
+    the command line (did that make sense?).
+
+
+
+    
+
+
+
+
 
 
 
