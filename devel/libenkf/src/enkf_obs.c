@@ -266,6 +266,8 @@ void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const enkf_config_node_typ
 }
 
 
+
+
 void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_data_type * obs_data) {
   char ** obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
@@ -337,6 +339,13 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	      }
 	      enkf_obs_add_field_obs(enkf_obs , config_node , data_file , field , obs_label , meas_time);
 	    }
+	  } else if (strcmp(kw , "SUMMARY") == 0) {
+	    ASSERT_TOKENS("SUMMARY" , active_tokens , 4);
+	    const char * obs_kw           = token_list[1];
+	    const char * meas_time_string = token_list[2];
+	    const char * value_string     = token_list[3];
+	    const char * std_string       = token_list[4];
+	    
 	  } else
 	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
 	  

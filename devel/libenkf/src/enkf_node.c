@@ -11,6 +11,7 @@
 #include <equil.h>
 #include <field.h>
 #include <well.h>
+#include <summary.h>
 #include <ecl_static_kw.h>
 #include <pgbox.h>
 #include <gen_kw.h>
@@ -529,6 +530,17 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->deserialize  = well_deserialize__;
     node->freef        = well_free__;
     node->free_data    = well_free_data__;
+    break;
+  case(SUMMARY):
+    node->realloc_data = summary_realloc_data__;
+    node->alloc        = summary_alloc__;
+    node->fread_f      = summary_fread__;
+    node->fwrite_f     = summary_fwrite__;
+    node->copyc        = summary_copyc__;
+    node->serialize    = summary_serialize__;
+    node->deserialize  = summary_deserialize__;
+    node->freef        = summary_free__;
+    node->free_data    = summary_free_data__;
     break;
   case(FIELD):
     node->realloc_data = field_realloc_data__;

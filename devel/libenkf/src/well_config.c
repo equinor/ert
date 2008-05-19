@@ -112,6 +112,7 @@ well_config_type * well_config_fscanf_alloc(const char * well_name , const char 
 
 void well_config_free(well_config_type * config) {
   int i;
+  free(config->well_name);
   for (i = 0; i < config->data_size; i++)
     free(config->var_list[i]);
   free(config->var_list);

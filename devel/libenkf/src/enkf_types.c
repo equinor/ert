@@ -36,6 +36,12 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   case RELPERM:
     return "RELPERM";
     break;
+  case SUMMARY:
+    return "SUMMARY";
+    break;
+  case HAVANA_FAULT:
+    return "HAVANA_FAULT";
+    break;
   default:
     fprintf(stderr,"%s: internal error - unrecognized implementation type: %d - aborting \n",__func__ , impl_type);
     abort();
@@ -48,6 +54,8 @@ static enkf_impl_type enkf_types_get_impl_type__(const char * impl_type_string) 
   enkf_impl_type impl_type;
   if_strcmp(STATIC);
   else if_strcmp(MULTZ);
+  else if_strcmp(SUMMARY);
+  else if_strcmp(HAVANA_FAULT);
   else if_strcmp(MULTFLT);
   else if_strcmp(EQUIL);
   else if_strcmp(FIELD);

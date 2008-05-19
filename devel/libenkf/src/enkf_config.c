@@ -38,6 +38,9 @@
 #include <local_driver.h>
 #include <rsh_driver.h>
 #include <relperm_config.h>
+#include <summary.h>
+#include <summary_config.h>
+#include <havana_fault_config.h>
 
 
 struct enkf_config_struct {
@@ -530,6 +533,10 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      ASSERT_TOKENS("WELL" , active_tokens , 2);
 	      enkf_config_add_well(enkf_config , token_list[1] , active_tokens - 2 , (const char **) &token_list[2]);
 	      break;
+	    case(SUMMARY):
+	      ASSERT_TOKENS("SUMMARY" , active_tokens , 2);
+	      enkf_config_add_type(enkf_config , token_list[1] , ecl_summary , SUMMARY , NULL , summary_config_alloc(active_tokens - 2 , (const char **) &token_list[2]));
+	      break;
 	    case(PGBOX):
 	      break;
 	    case(GEN_KW):
@@ -641,6 +648,12 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       break;
     case(GEN_KW):
       freef             = gen_kw_config_free__;
+      break;
+    case(SUMMARY):
+      freef             = summary_config_free__;
+      break;
+    case(HAVANA_FAULT):
+      freef             = havana_fault_config_free__;
       break;
     default:
       fprintf(stderr,"%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
