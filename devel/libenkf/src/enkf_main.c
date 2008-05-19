@@ -251,23 +251,6 @@ static const enkf_config_node_type * enkf_main_assert_obs(const enkf_main_type *
 }
 
 
-void enkf_main_add_well_obs(enkf_main_type * enkf_main , const char *obs_key , const char * obs_label , const char * config_file) {
-  const enkf_config_node_type * config_node = enkf_main_assert_obs(enkf_main , obs_key , WELL);
-  enkf_obs_add_well_obs(enkf_main->obs , config_node , obs_key , obs_label , config_file);
-}
-
-
-void enkf_main_add_field_obs(enkf_main_type * enkf_main, const char * obs_key, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , time_t meas_time) { 
-  const enkf_config_node_type * config_node = enkf_main_assert_obs(enkf_main , obs_key , FIELD);
-  enkf_obs_add_field_obs(enkf_main->obs , config_node , obs_key , obs_label , size , i , j , k , obs_data , meas_time);
-}
-
-
-void enkf_main_add_rft_obs(enkf_main_type * enkf_main , const ecl_rft_node_type * rft_node, const double * p_data) {
-  const enkf_config_node_type * config_node = enkf_main_assert_obs(enkf_main , "PRES" , FIELD);
-  enkf_obs_add_rft_obs(enkf_main->obs , config_node , rft_node , p_data);
-}
-
 
 
 

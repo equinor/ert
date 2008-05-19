@@ -1,5 +1,5 @@
 /**
-   See the file README.obs for ducumentation of the varios datatypes
+   See the file README.obs for ducumentation of the various datatypes
    involved with observations/measurement/+++.
 */
 
@@ -25,6 +25,7 @@ struct obs_node_struct {
   obs_get_ftype    *get_obs;
   obs_meas_ftype   *measure;
 
+  char             *state_kw;  /* This is used to look up the corresponding enkf_state object. */
   char             *obs_label;
   int               size;
   obs_active_type  *active;    
@@ -58,8 +59,8 @@ static void obs_node_set_active_mode_time_t(obs_node_type * obs_node , const sch
   int status1 , status2;
   int report1 , report2;
 
-  report1 = sched_file_time_t_to_report_step(sched , time1 , &status1); 
-  report2 = sched_file_time_t_to_report_step(sched , time2 , &status2); 
+  report1 = sched_file_time_t_to_report_step__(sched , time1 , &status1); 
+  report2 = sched_file_time_t_to_report_step__(sched , time2 , &status2); 
 
   if (status1 == -1)
     report1 = 0;
@@ -108,6 +109,7 @@ static void obs_node_resize(obs_node_type * node , int new_size) {
 
 
 obs_node_type * obs_node_alloc(const void      * obs,
+			       const char      * state_kw,
 			       const char      * obs_label,
 			       int               num_reports,
 			       bool              default_active,
@@ -124,7 +126,8 @@ obs_node_type * obs_node_alloc(const void      * obs,
   node->active             = NULL;
   node->default_active     = default_active;
   node->obs_label          = util_alloc_string_copy(obs_label);
-  obs_node_resize(node , num_reports);
+  node->state_kw           = util_alloc_string_copy(state_kw);
+  obs_node_resize(node , num_reports + 1); /* Ohh  - these fucking +/- problems. */
   
   return node;
 }
@@ -134,6 +137,7 @@ obs_node_type * obs_node_alloc(const void      * obs,
 void obs_node_free(obs_node_type * node) {
   if (node->freef != NULL) node->freef( (void *) node->obs);
   if (node->obs_label != NULL) free(node->obs_label);
+  free(node->state_kw);
   free(node->active);
   free(node);
 }
@@ -153,6 +157,10 @@ void obs_node_measure(const obs_node_type * node , int report_step , const void 
 
 const void *  obs_node_get_ref(const obs_node_type * node) { 
   return node->obs; 
+}
+
+const char * obs_node_get_state_kw(const obs_node_type * node) { 
+  return node->state_kw;
 }
 
 

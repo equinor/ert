@@ -105,8 +105,7 @@ void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_functi
 	enkf_node_initialize(enkf_node , enkf_state->my_iens);
 	break;
       default:
-	fprintf(stderr,"%s . function not implemented ... \n",__func__);
-	abort();
+	util_abort("%s . function not implemented ... \n",__func__);
       }
     }
     list_node = list_node_get_next(list_node);                           
@@ -304,10 +303,8 @@ static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char 
 
 
 static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const char * node_key , const enkf_node_type * node) {
-  if (enkf_state_has_node(enkf_state , node_key)) {
-    fprintf(stderr,"%s: node:%s already added  - aborting \n",__func__ , node_key);
-    abort();
-  }
+  if (enkf_state_has_node(enkf_state , node_key)) 
+    util_abort("%s: node:%s already added  - aborting \n",__func__ , node_key);
   {
     list_node_type *list_node = list_append_list_owned_ref(enkf_state->node_list , node , enkf_node_free__);
     /*
@@ -333,15 +330,12 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
       const char * target_key = pgbox_config_get_target_key(pgbox_config);
       if (enkf_state_has_node(enkf_state , target_key)) {
 	enkf_node_type * target_node = enkf_state_get_node(enkf_state , target_key);
-	if (enkf_node_get_impl_type(target_node) != FIELD) {
-	  fprintf(stderr,"%s: target node:%s is not of type field - aborting \n",__func__ , target_key);
-	  abort();
-	}
+	if (enkf_node_get_impl_type(target_node) != FIELD) 
+	  util_abort("%s: target node:%s is not of type field - aborting \n",__func__ , target_key);
+	
 	pgbox_set_target_field(enkf_node_value_ptr(enkf_node) , enkf_node_value_ptr(target_node));
-      } else {
-	fprintf(stderr,"%s: target field:%s must be added to the state object *BEFORE* the pgbox object - aborting \n" , __func__ , target_key);
-	abort();
-      }
+      } else 
+	util_abort("%s: target field:%s must be added to the state object *BEFORE* the pgbox object - aborting \n" , __func__ , target_key);
     }
   }
 }
@@ -435,10 +429,9 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 
     if (enkf_config_has_key(enkf_state->config , kw)) {
       /* It is a dynamic restart kw like PRES or SGAS */
-      if (enkf_config_impl_type(enkf_state->config , kw) != FIELD) {
-	fprintf(stderr,"%s: hm - something wrong - can (currently) only load fields from restart files - aborting \n",__func__);
-	abort();
-      }
+      if (enkf_config_impl_type(enkf_state->config , kw) != FIELD) 
+	util_abort("%s: hm - something wrong - can (currently) only load fields from restart files - aborting \n",__func__);
+
       if (!enkf_state_has_node(enkf_state , kw)) 
 	enkf_state_add_node(enkf_state , kw , enkf_config_get_node_ref(enkf_state->config , kw)); 
       {
@@ -531,7 +524,7 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
     const char * kw = obs_keys[iobs];
     {
       obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
-      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
+      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , obs_node_get_state_kw(obs_node));
 
       if (!enkf_node_memory_allocated(enkf_node))
 	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
@@ -628,10 +621,9 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
       /* Pressure and saturations */
       if (enkf_node_get_impl_type(enkf_node) == FIELD)
 	field_ecl_write1D_fortio(enkf_node_value_ptr(enkf_node) , fortio , fmt_file , endian_swap);
-      else {
-	fprintf(stderr,"%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
-	abort();
-      }
+      else 
+	util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
+      
     } else if (var_type == ecl_static)
       ecl_kw_fwrite(ecl_static_kw_ecl_kw_ptr((const ecl_static_kw_type *) enkf_node_value_ptr(enkf_node)) , fortio);
 
@@ -801,10 +793,8 @@ enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const 
     list_node_type * list_node = hash_get(enkf_state->node_hash , node_key);
     enkf_node_type * enkf_node = list_node_value_ptr(list_node);
     return enkf_node;
-  } else {
-    fprintf(stderr,"%s: node:%s not found in state object - aborting \n",__func__ , node_key);
-    abort();
-  }
+  } else 
+    util_abort("%s: node:%s not found in state object - aborting \n",__func__ , node_key);
 }
 
 
@@ -816,10 +806,8 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
     hash_del(enkf_state->node_hash , node_key);
     list_del_node(enkf_state->node_list , list_node);
     
-  } else {
-    fprintf(stderr,"%s: node:%s not found in state object - aborting \n",__func__ , node_key);
-    abort();
-  } 
+  } else 
+    util_abort("%s: node:%s not found in state object - aborting \n",__func__ , node_key);
 }
 
 
@@ -830,10 +818,9 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 */
 
 void enkf_state_add_data_kw(enkf_state_type * enkf_state , const char * new_kw , const char * value) {
-  if (hash_has_key(enkf_state->data_kw , new_kw)) {
-    fprintf(stderr,"%s: keyword:%s already added - use enkf_state_set_data_kw() to change value - aborting\n",__func__ , new_kw);
-    abort();
-  }
+  if (hash_has_key(enkf_state->data_kw , new_kw)) 
+    util_abort("%s: keyword:%s already added - use enkf_state_set_data_kw() to change value - aborting\n",__func__ , new_kw);
+  
   {
     void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
     hash_insert_hash_owned_ref(enkf_state->data_kw , new_kw , void_arg , void_arg_free__);
@@ -842,10 +829,8 @@ void enkf_state_add_data_kw(enkf_state_type * enkf_state , const char * new_kw ,
 
 
 void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
-  if (!hash_has_key(enkf_state->data_kw , kw)) {
-    fprintf(stderr,"%s: keyword:%s does not exist - must use enkf_state_add_data_kw() first -  aborting\n",__func__ , kw);
-    abort();
-  }
+  if (!hash_has_key(enkf_state->data_kw , kw)) 
+    util_abort("%s: keyword:%s does not exist - must use enkf_state_add_data_kw() first -  aborting\n",__func__ , kw);
   {
     void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
     hash_insert_hash_owned_ref(enkf_state->data_kw , kw , void_arg , void_arg_free__);
@@ -1209,8 +1194,8 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
 
 
     for (iens=1; iens < ens_size; iens++) {
-      if (member_complete[iens]    != member_complete[iens-1])    {  fprintf(stderr,"%s: member_complete difference    - INTERNAL ERROR - aborting \n",__func__); abort(); }
-      if (member_serial_size[iens] != member_serial_size[iens-1]) {  fprintf(stderr,"%s: member_serial_size difference - INTERNAL ERROR - aborting \n",__func__); abort(); }
+      if (member_complete[iens]    != member_complete[iens-1])    util_abort("%s: member_complete difference    - INTERNAL ERROR - aborting \n",__func__); 
+      if (member_serial_size[iens] != member_serial_size[iens-1]) util_abort("%s: member_serial_size difference - INTERNAL ERROR - aborting \n",__func__); 
     }
     state_complete = member_complete[0];
     

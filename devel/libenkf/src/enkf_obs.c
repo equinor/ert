@@ -16,9 +16,34 @@
 #include <enkf_util.h>
 #include <sched_file.h>
 #include <enkf_config.h>
+#include <summary_obs.h>
+
+static int enkf_obs_sscanf_report_step(const enkf_obs_type * enkf_obs , const char * meas_time_string) {
+  int report_step;
+
+  if (!util_sscanf_int(meas_time_string , &report_step)) {
+    time_t meas_time;
+    if ( util_sscanf_date(meas_time_string , &meas_time)) 
+      report_step = sched_file_time_t_to_report_step(enkf_obs->sched_file , meas_time);
+    else
+      util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
+  }
+
+  return report_step;
+}
 
 
-
+static time_t enkf_obs_sscanf_obs_time(const enkf_obs_type * enkf_obs , const char * meas_time_string) {
+  time_t meas_time;
+  if (!util_sscanf_date(meas_time_string , &meas_time)) {
+    int report_step;
+    if (!util_sscanf_int(meas_time_string , &report_step)) 
+      meas_time = sched_file_report_step_to_time_t(enkf_obs->sched_file , report_step);
+    else
+      util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
+  }
+  return meas_time;
+}
 
 
 
@@ -30,7 +55,7 @@ static enkf_obs_type * enkf_obs_alloc(const sched_file_type * sched_file , const
   
   enkf_obs->sched_file     = sched_file;
   enkf_obs->hist     	   = hist;
-  enkf_obs->num_reports    = history_get_num_reports(enkf_obs->hist);
+  enkf_obs->num_reports    = sched_file_count_report_steps(sched_file); /*history_get_num_reports(enkf_obs->hist);*/
   return enkf_obs;
 }
 
@@ -170,9 +195,48 @@ void enkf_obs_free(enkf_obs_type * enkf_obs) {
 void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * well_name , const char * obs_label , const char * config_file) {
   bool default_active = true;
   well_obs_type * well_obs = well_obs_fscanf_alloc(config_file , enkf_config_node_get_ref(config_node) , enkf_obs->hist , enkf_obs->sched_file);
-  enkf_obs_add_obs(enkf_obs , well_name , obs_node_alloc(well_obs , obs_label , enkf_obs->num_reports , default_active , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__));
+  enkf_obs_add_obs(enkf_obs , well_name , obs_node_alloc(well_obs , well_name , obs_label , enkf_obs->num_reports , default_active , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__));
 }
 
+
+
+/**
+   This function adds a summary observation. 
+*/
+
+
+
+
+void enkf_obs_add_summary_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * state_kw , const char * var , const char * data_file) {
+  const bool default_active = false;
+  summary_obs_type * summary_obs;
+  obs_node_type    * obs_node;
+  int              * report_nr;
+  int                i , size;
+
+  {
+    double  * value;
+    double  * std;
+    char   ** meas_time_string;
+  
+    summary_obs_fscanf_alloc_data(data_file , &size , &meas_time_string , &value , &std);
+    report_nr = util_malloc(size * sizeof * report_nr , __func__);
+    for (i=0; i < size; i++)
+      report_nr[i] = enkf_obs_sscanf_report_step(enkf_obs , meas_time_string[i]);
+    
+    summary_obs = summary_obs_alloc(enkf_config_node_get_ref(config_node) , var , size , report_nr , value , std);
+    free(std);
+    free(value);
+  
+    util_free_string_list(meas_time_string , size);
+  }
+  obs_node = obs_node_alloc(summary_obs , state_kw , var , enkf_obs->num_reports , default_active , summary_obs_get_observations__ , summary_obs_measure__ , summary_obs_free__);
+  for (i=0;  i < size; i++)
+    obs_node_activate_report_step(obs_node , report_nr[i] , report_nr[i]);
+  
+  enkf_obs_add_obs(enkf_obs , var , obs_node);
+  free(report_nr);
+}
 
 /**
   This functions loads block data observations. The return values are
@@ -229,7 +293,7 @@ static void enkf_obs_fscanf_alloc_block_data(const char * filename , int * _size
 static void enkf_obs_add_field_obs__(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * ecl_field, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , const double * obs_std , time_t meas_time) {
   bool default_active        		    = false;
   field_obs_type * field_obs 		    = field_obs_alloc(enkf_config_node_get_ref(config_node) , ecl_field , size , i , j , k , obs_data , obs_std);
-  obs_node_type  * obs_node  		    = obs_node_alloc(field_obs , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__);
+  obs_node_type  * obs_node  		    = obs_node_alloc(field_obs , ecl_field , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__);
 
   if (meas_time != -1)
     obs_node_activate_time_t(obs_node , enkf_obs->sched_file , meas_time , meas_time);
@@ -281,6 +345,7 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
   
 }
 
+  
 
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }
@@ -329,23 +394,23 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	      const char * meas_time_string = token_list[3];
 	      const char * data_file        = token_list[4];
 	      const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , field);
-	      time_t meas_time;
-	      if (!util_sscanf_date(meas_time_string , &meas_time)) {
-		int report_step;
-		if (!util_sscanf_int(meas_time_string , &report_step)) 
-		  meas_time = sched_file_report_step_to_time_t(enkf_obs->sched_file , report_step);
-		else
-		  util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
-	      }
+	      time_t meas_time = enkf_obs_sscanf_obs_time(enkf_obs , meas_time_string);
 	      enkf_obs_add_field_obs(enkf_obs , config_node , data_file , field , obs_label , meas_time);
 	    }
 	  } else if (strcmp(kw , "SUMMARY") == 0) {
-	    ASSERT_TOKENS("SUMMARY" , active_tokens , 4);
-	    const char * obs_kw           = token_list[1];
-	    const char * meas_time_string = token_list[2];
-	    const char * value_string     = token_list[3];
-	    const char * std_string       = token_list[4];
+	    ASSERT_TOKENS("SUMMARY" , active_tokens , 3);
+	    /*
+	      SUMMARY RPR RPR:2 data_file
+
+	      RPR:    keyword in enkf_state lookup
+	      RPR:2:  summary variable to look up - this will be the unique obs_key
+	    */
 	    
+	    const char * state_kw         = token_list[1];
+	    const char * var              = token_list[2];
+	    const char * data_file        = token_list[3];
+	    const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , state_kw);
+	    enkf_obs_add_summary_obs(enkf_obs , config_node , state_kw , var , data_file);
 	  } else
 	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
 	  
