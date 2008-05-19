@@ -48,7 +48,7 @@ int main(int argc, char ** argv) {
 	if (well != NULL) {
 	  const ecl_rft_node_type * rft_node  = ecl_rft_vector_get_node(rft_vector , well);
 	  char * tvd_file                     = util_fscanf_alloc_token(stream);
-	  int    report_step                  = sched_file_time_t_to_report_step(sched_file , ecl_rft_node_get_recording_time(rft_node) , NULL);
+	  int    report_step                  = sched_file_time_t_to_report_step(sched_file , ecl_rft_node_get_recording_time(rft_node));
 	  
 	  util_forward_line(stream , &at_eof);
 	  sprintf(obs_file , "%s/%04d/RFT" , obs_path , report_step);

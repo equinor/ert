@@ -492,7 +492,7 @@ static time_t sched_file_report_step_to_time_t__(const sched_file_type * s , int
 }
 
 
-int sched_file_time_t_to_report_step(const sched_file_type * s , time_t t , int * _status) {
+int sched_file_time_t_to_report_step__(const sched_file_type * s , time_t t , int * _status) {
   int report_step = -1;
   int status = -1;
   if (difftime(t , s->start_date)  >= 0) {
@@ -533,12 +533,12 @@ int sched_file_time_t_to_report_step(const sched_file_type * s , time_t t , int 
 
 int sched_file_int3_to_report_step(const sched_file_type * s , int mday, int mon , int year , int * status) {
   time_t t         = util_make_time1(mday , mon , year);
-  return sched_file_time_t_to_report_step(s , t , status);
+  return sched_file_time_t_to_report_step__(s , t , status);
 }
 
 
 int sched_file_DATES_to_report_step(const sched_file_type * s , const char * DATES_line , int * status) {
-  return sched_file_time_t_to_report_step(s , date_node_parse_DATES_line(DATES_line , s->month_hash) , status);
+  return sched_file_time_t_to_report_step__(s , date_node_parse_DATES_line(DATES_line , s->month_hash) , status);
 }
 
 
@@ -558,3 +558,11 @@ time_t sched_file_report_step_to_time_t(const sched_file_type * s , int report_s
   return t;
 }
     
+
+int sched_file_time_t_to_report_step(const sched_file_type * s , time_t t ) {
+  int status , report_step;
+  report_step = sched_file_time_t_to_report_step__(s , t , &status);
+  if (status != 0)
+    util_abort("%s: failed to find report_step.\n",__func__);
+  return report_step;
+}
