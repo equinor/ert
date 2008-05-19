@@ -230,7 +230,7 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
   for (igroup = 0; igroup < config->num_fault_groups; igroup++) 
     fault_group_run_havana( config->fault_groups[igroup] , kw_hash , run_path , config->input_fault_path , tmp_fault_path , config->havana_executable);
   
-  fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , config->input_fault_path);
+  fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , tmp_fault_path);
   {
     char * target_file = util_alloc_full_path( run_path , "update" );
     char * command     = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , config->havana_executable , "update"} , 5 , " ");
