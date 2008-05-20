@@ -245,4 +245,6 @@ void prefix ## _ensemble_fprintf_results__(const void ** void_ensemble , int ens
 }
 #define VOID_FPRINTF_RESULTS_HEADER(prefix) void prefix ## _ensemble_fprintf_results__(const void ** , int , const char * );
 
+
+
 #endif

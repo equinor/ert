@@ -156,35 +156,7 @@ int gen_kw_deserialize(gen_kw_type *gen_kw , int internal_offset , size_t serial
 
   This function should probably be written as a macro...
 */
-
-void gen_kw_alloc_stats(const gen_kw_type **gen_kw_ens , int ens_size , gen_kw_type ** _mean , gen_kw_type ** _std) {
-  int iens;
-  gen_kw_type * mean = gen_kw_copyc(gen_kw_ens[0]);
-  gen_kw_type * std  = gen_kw_copyc(gen_kw_ens[0]);
-
-  gen_kw_clear(mean);
-  gen_kw_clear(std);
-
-  for (iens = 0; iens < ens_size; iens++) {
-    gen_kw_output_transform(gen_kw_ens[iens]);
-    gen_kw_iadd(mean   , gen_kw_ens[iens]);
-    gen_kw_iaddsqr(std , gen_kw_ens[iens]);
-  }
-  gen_kw_iscale(mean , 1.0 / ens_size);
-  gen_kw_iscale(std  , 1.0 / ens_size);
-  {
-    gen_kw_type * tmp = gen_kw_copyc(mean);
-    gen_kw_isqr(tmp);
-    gen_kw_imul_add(std , -1.0 , tmp);
-    gen_kw_free(tmp);
-  }
-  gen_kw_isqrt(std);
-
-  *_mean = mean;
-  *_std  = std;
-}
-
-
+ALLOC_STATS_SCALAR(gen_kw)  
 
 
 
@@ -226,6 +198,7 @@ void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list ,
 
 }
 
+
 #define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
 void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size , const char * filename) {
   const int float_width     =  9;
@@ -234,16 +207,11 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
   int        size    = gen_kw_config_get_data_size(ensemble[0]->config);
   int      * width   = util_malloc((size + 1) * sizeof * width , __func__);
   int        ikw , total_width;
-  char     ** format;
 
   gen_kw_type * mean;
   gen_kw_type * std;
 
   gen_kw_alloc_stats(ensemble , ens_size , &mean , &std);
-  format = util_malloc((size + 1) * sizeof * format , __func__);
-  for (ikw = 0; ikw <= size; ikw++)
-    format[ikw] = util_malloc(16 , __func__);
-
   width[0] = strlen("Member #|");
   total_width = width[0];
   for (ikw = 0; ikw < size; ikw++) {
@@ -251,10 +219,6 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
     width[ikw + 1] += ( 1 - (width[ikw + 1] & 1)); /* Ensure odd length */
     total_width += width[ikw + 1] + 1;
   }
-
-  sprintf(format[0],"%%%dd" , width[0]);
-  for (ikw = 0; ikw < size; ikw++)
-    sprintf(format[ikw+1] , "%%%d.%df" , width[ikw+1] , float_precision);
 
   {
     FILE * stream = util_fopen(filename , "w");
@@ -301,10 +265,6 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
   gen_kw_free(mean);
   gen_kw_free(std);
   free(width);
-  
-  for (ikw = 0; ikw <= size; ikw++)
-    free(format[ikw]);
-  free(format);
 }
 #undef PRINT_LINE
 

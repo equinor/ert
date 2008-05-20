@@ -234,6 +234,61 @@ void prefix ## _ensemble_mulX_vector__(void *new , int ens_size , const void ** 
 
 /*****************************************************************/
 
+#define ALLOC_STATS_SCALAR(prefix)                                                                                                   \
+void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , prefix ## _type ** _mean , prefix ## _type ** _std) { \
+  int iens;                                                                                                                          \
+  prefix ## _type * mean = prefix ## _copyc(ensemble[0]);									     \
+  prefix ## _type * std  = prefix ## _copyc(ensemble[0]);									     \
+  prefix ## _clear(mean);				 									     \
+  prefix ## _clear(std); 				 									     \
+  for (iens = 0; iens < ens_size; iens++) {     	 									     \
+    prefix ## _output_transform(ensemble[iens]);	 									     \
+    prefix ## _iadd(mean   , ensemble[iens]);   	 									     \
+    prefix ## _iaddsqr(std , ensemble[iens]);   	 									     \
+  }                                        		 									     \
+  prefix ## _iscale(mean , 1.0 / ens_size);		 									     \
+  prefix ## _iscale(std  , 1.0 / ens_size);		 									     \
+  {                                        		 									     \
+    prefix ## _type * tmp = prefix ## _copyc(mean);	 									     \
+    prefix ## _isqr(tmp);                          	 									     \
+    prefix ## _imul_add(std , -1.0 , tmp);	   	 									     \
+    prefix ## _free(tmp);                 	   	 									     \
+  }                                       	   	 									     \
+  prefix ## _isqrt(std);                           	 									     \
+  *_mean = mean;				   	 									     \
+  *_std  = std; 				   	 									     \
+}
+
+
+
+
+#define ALLOC_STATS(prefix)                                                                                                          \
+void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , prefix ## _type ** _mean , prefix ## _type ** _std) { \
+  int iens;                                                                                                                          \
+  prefix ## _type * mean = prefix ## _copyc(ensemble[0]);									     \
+  prefix ## _type * std  = prefix ## _copyc(ensemble[0]);									     \
+  prefix ## _clear(mean);				 									     \
+  prefix ## _clear(std); 				 									     \
+  for (iens = 0; iens < ens_size; iens++) {     	 									     \
+    prefix ## _iadd(mean   , ensemble[iens]);   	 									     \
+    prefix ## _iaddsqr(std , ensemble[iens]);   	 									     \
+  }                                        		 									     \
+  prefix ## _iscale(mean , 1.0 / ens_size);		 									     \
+  prefix ## _iscale(std  , 1.0 / ens_size);		 									     \
+  {                                        		 									     \
+    prefix ## _type * tmp = prefix ## _copyc(mean);	 									     \
+    prefix ## _isqr(tmp);                          	 									     \
+    prefix ## _imul_add(std , -1.0 , tmp);	   	 									     \
+    prefix ## _free(tmp);                 	   	 									     \
+  }                                       	   	 									     \
+  prefix ## _isqrt(std);                           	 									     \
+  *_mean = mean;				   	 									     \
+  *_std  = std; 				   	 									     \
+}
+
+#define ALLOC_STATS_HEADER(prefix) void prefix ## _alloc_stats(const prefix ## _type ** , int , prefix ## _type ** , prefix ## _type ** );
+/*****************************************************************/
+
 
 size_t enkf_util_serialize(const double * , const bool * , size_t , size_t , double * , size_t , size_t , int ,  bool * );
 size_t enkf_util_deserialize(double *     , const bool * , size_t , size_t , size_t   , const double * , size_t , int );

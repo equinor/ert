@@ -9,7 +9,7 @@ typedef struct well_struct well_type;
 double    well_get(const well_type * , const char * );
 void      well_load_summary_data(well_type * , int , const ecl_sum_type * );
 
-
+ALLOC_STATS_HEADER(well)
 MATH_OPS_VOID_HEADER(well);
 VOID_ALLOC_HEADER(well);
 VOID_FREE_HEADER(well);
@@ -20,5 +20,5 @@ VOID_SERIALIZE_HEADER  (well)
 VOID_DESERIALIZE_HEADER  (well)
 VOID_FWRITE_HEADER (well)
 VOID_FREAD_HEADER  (well)
-
+VOID_FPRINTF_RESULTS_HEADER(well)
 #endif

@@ -522,15 +522,16 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->free_data   = multflt_free_data__;
     break;
   case(WELL):
-    node->realloc_data = well_realloc_data__;
-    node->alloc        = well_alloc__;
-    node->fread_f      = well_fread__;
-    node->fwrite_f     = well_fwrite__;
-    node->copyc        = well_copyc__;
-    node->serialize    = well_serialize__;
-    node->deserialize  = well_deserialize__;
-    node->freef        = well_free__;
-    node->free_data    = well_free_data__;
+    node->realloc_data 	  = well_realloc_data__;
+    node->alloc        	  = well_alloc__;
+    node->fread_f      	  = well_fread__;
+    node->fwrite_f     	  = well_fwrite__;
+    node->copyc        	  = well_copyc__;
+    node->serialize    	  = well_serialize__;
+    node->deserialize  	  = well_deserialize__;
+    node->freef        	  = well_free__;
+    node->free_data    	  = well_free_data__;
+    node->fprintf_results = well_ensemble_fprintf_results__;
     break;
   case(SUMMARY):
     node->realloc_data = summary_realloc_data__;
