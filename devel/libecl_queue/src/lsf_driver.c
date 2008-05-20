@@ -144,6 +144,7 @@ ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver
 void lsf_driver_free_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   lsf_job_type    * job    = (lsf_job_type    *) __job;
   lsf_driver_type * driver = (lsf_driver_type *) __driver;
+
   lsf_driver_assert_cast(driver); 
   lsf_job_assert_cast(job);
   lsf_job_free(job);
