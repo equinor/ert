@@ -203,34 +203,37 @@ static void ecl_queue_update_status(ecl_queue_type * queue ) {
 static submit_status_type ecl_queue_submit_job(ecl_queue_type * queue , int queue_index) {
   submit_status_type submit_status;
   ecl_queue_assert_queue_index(queue , queue_index);
-  ecl_queue_node_type * node = queue->jobs[queue_index];
-  basic_queue_driver_type *driver  = queue->driver;
-  if (node->submit_attempt < queue->max_submit) {
-    if (util_file_exists(node->smspec_file))
-      util_unlink_existing(node->smspec_file);
-    {
-      basic_queue_job_type * job_data = driver->submit(queue->driver         , 
-						       queue_index           , 
-						       queue->submit_cmd     , 
-						       node->run_path        , 
-						       node->ecl_base        , 
-						       queue->eclipse_exe    ,  
-						       queue->eclipse_config , 
-						       queue->eclipse_LD_path,
-						       queue->license_server);
-      if (job_data != NULL) {
-	ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
-	node->job_data = job_data;
-	node->submit_attempt++;
-	submit_status = submit_OK;
-      } else
-	submit_status = submit_driver_FAIL;
+  {
+    ecl_queue_node_type     * node    = queue->jobs[queue_index];
+    basic_queue_driver_type * driver  = queue->driver;
+    
+    if (node->submit_attempt < queue->max_submit) {
+      if (util_file_exists(node->smspec_file))
+	util_unlink_existing(node->smspec_file);
+      {
+	basic_queue_job_type * job_data = driver->submit(queue->driver         , 
+							 queue_index           , 
+							 queue->submit_cmd     , 
+							 node->run_path        , 
+							 node->ecl_base        , 
+							 queue->eclipse_exe    ,  
+							 queue->eclipse_config , 
+							 queue->eclipse_LD_path,
+							 queue->license_server);
+	if (job_data != NULL) {
+	  ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
+	  node->job_data = job_data;
+	  node->submit_attempt++;
+	  submit_status = submit_OK;
+	} else
+	  submit_status = submit_driver_FAIL;
+      }
+    } else {
+      ecl_queue_change_node_status(queue , node , ecl_queue_complete_FAIL);
+      submit_status = submit_job_FAIL;
     }
-  } else {
-    ecl_queue_change_node_status(queue , node , ecl_queue_complete_FAIL);
-    submit_status = submit_job_FAIL;
+    return submit_status;
   }
-  return submit_status;
 }
 
 static void ecl_queue_print_status(const ecl_queue_type * queue) {
@@ -259,7 +262,7 @@ ecl_job_status_type ecl_queue_export_job_status(ecl_queue_type * queue , int ext
   else {
     ecl_queue_print_status(queue);
     util_abort("%s: could not find job with id: %d - aborting.\n",__func__ , external_id);
-    return status; /* Dummy --- */
+    return 0; 
   }
 }
 
@@ -402,11 +405,6 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 	  case(ecl_queue_done):
 	    if (node->target_file != NULL) {
 	      if (util_file_exists(node->target_file)) {
-		/* An attempt to ensure that all the ECLIPSE files are completly written */
-		/*
-		  util_block_growing_file(node->target_file);   
-		  util_block_growing_directory(node->run_path); 
-		*/
 		ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
 	      } else {
 		bool verbose = true;
@@ -447,6 +445,7 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
     }
   } while ( cont );
   printf("\n");
+  msg_free(submit_msg , false);
 }
 
 
