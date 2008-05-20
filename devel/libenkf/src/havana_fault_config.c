@@ -211,7 +211,8 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
 
 
 void havana_fault_config_run_havana(const havana_fault_config_type * config , scalar_type * scalar_data , const char * run_path) {
-  char * tmp_fault_path = util_alloc_full_path(run_path , "tmp-havana");
+  char * tmp_fault_input_path = util_alloc_full_path(run_path  , "tmp_havana_input_faults");
+  char * tmp_fault_output_path = util_alloc_full_path(run_path , "tmp_havana_output_faults");
   const int size = havana_fault_config_get_data_size(config);
   int igroup;
   hash_type * kw_hash = hash_alloc();
@@ -223,14 +224,30 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
     for (ikw = 0; ikw < size; ikw++)
       hash_insert_hash_owned_ref(kw_hash , havana_fault_config_get_name(config , ikw) , void_arg_alloc_double(data[ikw]) , void_arg_free__);
   }
-  hash_insert_hash_owned_ref( kw_hash , "INPUT_FAULTS" , void_arg_alloc_ptr(tmp_fault_path)      , void_arg_free__);
-  hash_insert_hash_owned_ref( kw_hash , "GRDECL"       , void_arg_alloc_ptr(config->unfaulted_GRDECL_file) , void_arg_free__);
-  util_make_path(tmp_fault_path);
+  hash_insert_hash_owned_ref( kw_hash , "INPUT_FAULTS"  , void_arg_alloc_ptr(tmp_fault_input_path)      , void_arg_free__);
+  hash_insert_hash_owned_ref( kw_hash , "OUTPUT_FAULTS" , void_arg_alloc_ptr(tmp_fault_output_path)      , void_arg_free__);
+  hash_insert_hash_owned_ref( kw_hash , "GRDECL"        , void_arg_alloc_ptr(config->unfaulted_GRDECL_file) , void_arg_free__);  
+  util_make_path(tmp_fault_input_path);
+  util_make_path(tmp_fault_output_path);
   
+  /* Run havana for each fault group to update displacement */
+  /* Following is requirement to the template files: 
+     1. One template file per fault group containing the havana ACTION ModifyPFM
+     2. One template file for the ACTION IntoEclipse
+     3. INPUT_FAULTS  must be specified by tmp_havana_input_faults  in template file for ACTION ModifyPFM
+     4. OUTPUT_FAULTS must be specified by tmp_havana_output_faults in template file for ACTION ModifyPFM
+     5. INPUT_FAULTS  must be specified by tmp_havana_output_faults in template file for ACTION IntoEclipse
+     6. INPUT_ECLIPSE must be specified by <GRDECL>        in template file for ACTION IntoEclipse
+  */
+  /* In this program input faults will be read from temporary directory:   tmp_havana_input_faults */
+  /* and output faults should be written to temporary directory: tmp_havana_output_faults */
+  
+
   for (igroup = 0; igroup < config->num_fault_groups; igroup++) 
-    fault_group_run_havana( config->fault_groups[igroup] , kw_hash , run_path , config->input_fault_path , tmp_fault_path , config->havana_executable);
-  
-  fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , tmp_fault_path);
+    fault_group_run_havana( config->fault_groups[igroup] , kw_hash , run_path , config->input_fault_path , tmp_fault_input_path , config->havana_executable);
+
+  /* Before running havana action IntoEclipse, we must set .faultlist to all faults in tmp_havana_output_faults */
+  fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , tmp_fault_output_path);
   {
     char * target_file = util_alloc_full_path( run_path , "update" );
     char * command     = util_alloc_joined_string((const char *[5]) {"cd" , run_path , ";" , config->havana_executable , "update"} , 5 , " ");
@@ -243,7 +260,8 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
     free(target_file);
   }
   hash_free(kw_hash);
-  free(tmp_fault_path);
+  free(tmp_fault_input_path);
+  free(tmp_fault_output_path);
 }
 
 
@@ -283,7 +301,7 @@ GROUP            G02   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G02.templa
 GROUP            G03   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G03.template FaultA FaultB FaultC FaultD
 
 Each group can contain many faults; but each fault must be in only one
-group. This is not checked for.
+group. This is not checked for. Note that the last group must correspond to all faults that have no change in displacement
 */
 
 
