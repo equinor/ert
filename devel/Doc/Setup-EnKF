@@ -122,8 +122,8 @@ Table of contents
              that you should replace the existing initialization code
              (i.e. typically an EQUIL keyword) with the string
              <INIT>. This is then replaced with the correct code by
-             EnKF automagically(?!) (but - see comment about INIT in
-             section 3.3).
+             EnKF automagically(?!) (but - see comment about INIT_FILE
+             in section 3.3).
 
        2.3.3 There are a couple of keywords which MUST be present in
              the DATAFILE for EnKF to operate correctly.
@@ -207,15 +207,103 @@ Table of contents
 
      
 
-3. About the configuration file. 
+3.  The configuration file. Section 3.1 describes how the EnKF
+    application interprets pathnames within the configuration file. 
 
-3.1 The configuration file is first and only input argument given when
-    starting the EnKF application. One of the first things the EnKF
-    application does is to decompose the config file argument into a
-    leading path part, and the actual filename. It then does a chdir()
-    into the path, that means that all paths and files refered to in
-    the configuration are interpreted relative to the path given on
-    the command line (did that make sense?).
+    For running EnKF we bascially have to enter three different types
+    of configuration information: (1): Basic information of where
+    various files are found, ensemble size, ,,,, (2): Which parameters
+    we want to update in the analysis and (3) which observations to
+    use. These three things are described in sections 3.2 - 3.4.
+
+
+  3.1 The configuration file is first and only input argument given
+      when starting the EnKF application. One of the first things the
+      EnKF application does is to decompose the config file argument
+      into a leading path part, and the actual filename. It then does
+      a chdir() into the path, that means that all paths and files
+      refered to in the configuration are interpreted relative to the
+      path given on the command line (did that make sense?).
+
+
+  3.2 The configuration file must contain (at least) the following
+      parameters:
+
+      SIZE: This is just the size of the ensemble, i.e. the number of
+        members in the ensemble.
+
+      GRID: This is the name of an existing GRID/EGRID file for the
+        current case.
+
+      START_TIME: This is the starting time of the simulation, this
+        string should just be taken verbatim from the START keyword in
+        the ECLIPSE data file, i.e. "1 JAN 2000" (without the
+        "). Unfortunately this is different from the date format used in
+        the rest of the EnKF application.
+
+      SCHEDULE_FILE: This is the name of the SCHEDULE file, this will be
+        used to control the ECLIPSE simulations, in addition historical
+        rates of oil, water and gas, will be taken from the schedule
+        file. 
+
+      DATA_FILE: This is the name of ECLIPSE DATA file used to control
+        the simulations. The data file should be edited according to the
+        description in section 2.3.
+
+      ENS_PATH: This is the root path for storage of the ensemble.
+
+      INIT_FILE: This should point to a file containing initialization
+        code for the ECLIPSE run. If you are using the EQUIL keyword to
+        estimate initial WOC/GOC the EnKF application will automagically
+        take care of this.
+
+      The variable RUNPATH and ECLBASE are examples of format variables;
+      they should contain an intger format string (i.e. %d) which is
+      replaced with ensemble number at run time. This is currently not
+      checked for; the EnKF application will run happily with incorrect
+      integer formats, but the results will be rubbish.
+
+      RUNPATH: This should be directory pointing to where you want to
+        perform the ECLIPSE simulations. The value should contain an
+        integer format spesification, which will be replaced with the
+        ensemble number at run-time.
+
+      ECLBASE: This is the ECLIPSE basename used for the
+        simulations. It is a format variable which should contain a %d
+        specifier.
+
+
+  3.3 The next thing we must specify in the configuration file is the
+      parameters to estimate. The general structure of this is as
+      follows (but there are MANY exceptions):
+
+      <PARAMETER-TYPE> <UNIQUE-ID> <TARGET_FILE>  <CONFIG_FILE>
+
+      The PARAMETER-TYPE string is discussed below. The UNIQUE-ID is
+      a string (with no spaces in it); this is the keyword used
+      internally by the EnKF application to identify the various
+      parameters, and also what is used as label when exporting
+      results++
+
+      The TARGET_FILE is the name of a (typically ECLIPSE input) file
+      generated for this parameter. This should  then typically be
+      inluded in the simulation with an INCLUDE <TARGET_FILE> /
+      statement in the DATAFILE.
+
+      The CONFIG_FILE will typically contain additional configuration
+      information for the parameter, e.g. initial distribution+++
+
+      
+      The following parameter types are (currently) supported (not all
+      fully implemented):
+
+	MULTZ, MULTFLT, EQUIL, FIELD , WELL, PGBOX, GEN_KW, RELPERM,
+	HAVANA_FAULT, SUMMARY 
+
+           
+
+   
+
 
 
 
