@@ -482,7 +482,7 @@ int field_deserialize(field_type * field , int internal_offset , size_t serial_s
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
-  double *data;
+  double *data = NULL; /* Shut up compiler */
   int new_internal_offset;
 
   if (ecl_type == ecl_double_type)

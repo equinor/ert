@@ -127,7 +127,7 @@ obs_node_type * obs_node_alloc(const void      * obs,
   node->default_active     = default_active;
   node->obs_label          = util_alloc_string_copy(obs_label);
   node->state_kw           = util_alloc_string_copy(state_kw);
-  obs_node_resize(node , num_reports + 1); /* Ohh  - these fucking +/- problems. */
+  obs_node_resize(node , num_reports); /* +1 here ?? Ohh  - these fucking +/- problems. */
   
   return node;
 }

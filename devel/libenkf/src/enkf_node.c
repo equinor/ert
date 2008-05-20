@@ -16,6 +16,7 @@
 #include <pgbox.h>
 #include <gen_kw.h>
 #include <path_fmt.h>
+#include <havana_fault.h>
 
 
 typedef struct serial_state_struct serial_state_type;
@@ -541,6 +542,17 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->deserialize  = summary_deserialize__;
     node->freef        = summary_free__;
     node->free_data    = summary_free_data__;
+    break;
+  case(HAVANA_FAULT):
+    node->realloc_data = havana_fault_realloc_data__;
+    node->alloc        = havana_fault_alloc__;
+    node->fread_f      = havana_fault_fread__;
+    node->fwrite_f     = havana_fault_fwrite__;
+    node->copyc        = havana_fault_copyc__;
+    node->serialize    = havana_fault_serialize__;
+    node->deserialize  = havana_fault_deserialize__;
+    node->freef        = havana_fault_free__;
+    node->free_data    = havana_fault_free_data__;
     break;
   case(FIELD):
     node->realloc_data = field_realloc_data__;

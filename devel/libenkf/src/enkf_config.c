@@ -305,7 +305,8 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->ecl_store            = NULL;
   config->obs_config_file      = NULL;
   config->ens_path             = NULL;
-  
+  config->result_path          = NULL;
+
   enkf_config_set_result_path(config , "Results/%04d");
   return config;
 }
@@ -375,12 +376,11 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	    }
 	  }
 	}
-      
+	
       
 	if (active_tokens > 0) {
 	  impl_type = enkf_types_check_impl_type(token_list[0]);
 	  if (impl_type == INVALID) {
-	  
 	    const char * kw = token_list[0];
 	    if (enkf_site_config_has_key(site_config , kw)) {
 	      /* The configuration overrides a value from the site_config object. */
@@ -484,6 +484,12 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		enkf_config_add_type(enkf_config , key , parameter , MULTFLT , ecl_file , multflt_config_fscanf_alloc(config_file));
 	      }
 	      break;
+	    case(HAVANA_FAULT):
+	      {
+		const char * key         = token_list[1];
+		const char * config_file = token_list[2];
+		enkf_config_add_type(enkf_config , key , parameter , HAVANA_FAULT , NULL , havana_fault_config_fscanf_alloc(config_file));
+	      }
 	    case(EQUIL):
 	      {
 		const char * key         = token_list[1];
@@ -559,6 +565,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	free(line);
       }
     } while (!at_eof);
+    if (index_map != NULL) free(index_map);
     free(config_file);
     enkf_config_post_assert(enkf_config);
     enkf_site_config_validate(site_config);

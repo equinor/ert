@@ -39,17 +39,18 @@ int main (int argc , char ** argv) {
     enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue);
 
     enkf_main_initialize_ensemble(enkf_main); 
+
     {
       int report_step;
-
-      for (report_step = 0; report_step < 61; report_step++)
-	enkf_main_run(enkf_main , report_step , report_step + 1 , true);
+      
+      for (report_step = 0; report_step < 1; report_step++)
+	enkf_main_run(enkf_main , report_step , report_step + 1 , false);
     }
     
-    /*
-      enkf_config_free(enkf_config);
-      enkf_main_free(enkf_main);
-      enkf_fs_free(fs);
-    */
+    ecl_queue_free(ecl_queue);
+    enkf_main_free(enkf_main);
+    enkf_site_config_free(site_config); /* Should probably be owned by enkf_main ?? */
+
+    enkf_fs_free(fs);  /* Takes the drivers as well */
   }
 }

@@ -193,7 +193,7 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   if (template_file != NULL) {
     const int size             = gen_kw_config_get_data_size(gen_kw->config);
     const double * output_data = scalar_get_output_ref(gen_kw->scalar);
-    hash_type * kw_hash = hash_alloc(10);
+    hash_type * kw_hash = hash_alloc();
     int ikw;
     
     gen_kw_output_transform(gen_kw);

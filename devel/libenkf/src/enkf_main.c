@@ -161,6 +161,7 @@ void enkf_main_measure(enkf_main_type * enkf_main) {
 }
 
 
+
 void enkf_main_free(enkf_main_type * enkf_main) {  
   enkf_obs_free(enkf_main->obs);
   {
@@ -170,10 +171,12 @@ void enkf_main_free(enkf_main_type * enkf_main) {
       enkf_state_free(enkf_main->ensemble[i]);
     free(enkf_main->ensemble);
   }
+
   sched_file_free(enkf_main->sched_file);
   history_free(enkf_main->hist);
   meas_matrix_free(enkf_main->meas_matrix);
   obs_data_free(enkf_main->obs_data);
+  enkf_config_free(enkf_main->config);
   free(enkf_main);
 }
 
@@ -348,6 +351,7 @@ void enkf_main_fprintf_results(const enkf_main_type * enkf_main) {
       free(node_ensemble);
     }
   }
+  util_free_string_list(key_list , config_size);
 }
 
 
@@ -452,6 +456,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   if (enkf_update) {
     enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
     enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+
     {
       double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
       

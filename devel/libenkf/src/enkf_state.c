@@ -793,8 +793,10 @@ enkf_node_type * enkf_state_get_node(const enkf_state_type * enkf_state , const 
     list_node_type * list_node = hash_get(enkf_state->node_hash , node_key);
     enkf_node_type * enkf_node = list_node_value_ptr(list_node);
     return enkf_node;
-  } else 
+  } else {
     util_abort("%s: node:%s not found in state object - aborting \n",__func__ , node_key);
+    return NULL; /* Compiler shut up */
+  }
 }
 
 
@@ -840,7 +842,7 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 
 void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int report_step1 , int report_step2) {
-  char * data_file = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_data_file , true , -1);
+  
   if (report_step1 > 0) {
     char DATA_initialize[256];
     sprintf(DATA_initialize , "RESTART\n   \'%s\'  %d  /\n" , enkf_state->eclbase , report_step1);
@@ -848,7 +850,12 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   }
 
   util_make_path(enkf_state->run_path);
-  util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
+  {
+    char * data_file = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_data_file , true , -1);
+    util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
+    free(data_file);
+  }
+
   {
     char * schedule_file = util_alloc_full_path(enkf_state->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
     sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
@@ -856,6 +863,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   }
   enkf_state_set_state(enkf_state , report_step1 , analyzed);
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
+  
 }
 
 
@@ -967,7 +975,6 @@ void * enkf_state_start_eclipse__(void * __void_arg) {
   bool            * job_OK       = void_arg_get_buffer(void_arg , 9);
 
   enkf_state_start_eclipse(enkf_state , ecl_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , max_resubmit , job_OK);
-  
   return NULL ; 
 }
 
