@@ -50,4 +50,5 @@ ecl_queue_type   * enkf_config_alloc_ecl_queue(const enkf_config_type * , const 
 void               enkf_config_post_check(const enkf_config_type * , const sched_file_type * );
 const char       * enkf_config_get_schedule_target_file(const enkf_config_type * );
 const char       * enkf_config_get_schedule_src_file(const enkf_config_type * );
+const char       * enkf_config_get_init_file(const enkf_config_type * );
 #endif

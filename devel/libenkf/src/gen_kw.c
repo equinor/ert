@@ -226,7 +226,7 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
 
     util_fprintf_string("Member #|" , width[0] , true , stream);
     for (ikw = 0; ikw < size; ikw++) {
-      util_fprintf_string(kw_list[ikw] , width[ikw + 1] , true , stream);
+      util_fprintf_string(kw_list[ikw] , width[ikw + 1] , center , stream);
       fprintf(stream , "|");
     }
     fprintf(stream , "\n");

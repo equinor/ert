@@ -104,15 +104,19 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
   }
   
   
-  /*
-    This - can not be hardcoded ....
-  */
   {
-    char * DATA_initialize = util_alloc_multiline_string((const char *[3]) {"EQUIL" , 
-									    "       2469   382.4   1705.0  0.0    500    0.0     1     1      20 /",
-									    "       2469   382.4   1000.0  0.0    500    0.0     1     1      20 /"} , 3);      
-    enkf_main_add_data_kw(enkf_main , "INIT" , DATA_initialize);
-    free(DATA_initialize);
+    const char * init_file   = enkf_config_get_init_file(config);
+    if (init_file == NULL) 
+      util_abort("%s: INIT_FILE is not set - must either use INIT_FILE in config_file or EQUIL keyword.",__func__);
+    {
+      char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
+      char * DATA_initialize = util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2);
+
+      enkf_main_add_data_kw(enkf_main , "INIT" , DATA_initialize);
+      
+      free(DATA_initialize);
+      free(tmp_include);
+    }
   }
   enkf_main_add_data_kw(enkf_main , "INCLUDE_PATH" , "/h/a152128/EnKF/devel/EnKF/libenkf/src/Gurbat");
   enkf_main->thread_pool = NULL;
@@ -426,7 +430,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
     thread_pool_join(enkf_main->thread_pool);
     pthread_join ( queue_thread , NULL );
     ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done */
-
+    
     {
       bool complete_OK = true;
       int model_nr = 0;
@@ -458,7 +462,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
     enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
 
     {
-      double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
+      double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
       
       if (X != NULL) {
 	/*

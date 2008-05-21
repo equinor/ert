@@ -161,7 +161,7 @@ void well_ensemble_fprintf_results(const well_type ** ensemble, int ens_size , c
   width[0] = strlen("Member #|");
   total_width = width[0];
   for (ivar = 0; ivar < size; ivar++) {
-    width[ivar + 1]  = util_int_max(strlen(var_list[ivar]), 2 * float_width + 5) + 1;  /* Must accomodate A +/- B */
+    width[ivar + 1]  = util_int_max(strlen(var_list[ivar]), 2 * float_width + 5) + 3;  /* Must accomodate A +/- B */
     width[ivar + 1] += ( 1 - (width[ivar + 1] & 1)); /* Ensure odd length */
     total_width += width[ivar + 1] + 1;
   }
@@ -172,7 +172,7 @@ void well_ensemble_fprintf_results(const well_type ** ensemble, int ens_size , c
 
     util_fprintf_string("Member #|" , width[0] , true , stream);
     for (ivar = 0; ivar < size; ivar++) {
-      util_fprintf_string(var_list[ivar] , width[ivar + 1] , true , stream);
+      util_fprintf_string(var_list[ivar] , width[ivar + 1] , center , stream);
       fprintf(stream , "|");
     }
     fprintf(stream , "\n");

@@ -13,11 +13,19 @@
 #include <string.h>
 #include <local_driver.h>
 #include <lsf_driver.h>
+#include <signal.h>
+
+
+void install_SIGNALS(void) {
+  signal(SIGSEGV , util_abort_signal);
+}
+
+
 
 
 int main (int argc , char ** argv) {
 
-  
+  install_SIGNALS();
   if (argc != 2) 
     util_abort("%s: usage %s config_file \n",__func__ , argv[0]);
   else {

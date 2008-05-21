@@ -65,6 +65,7 @@ struct enkf_config_struct {
   char *            schedule_target_file;
   char *            obs_config_file;
   char *            ens_path;
+  char *            init_file;
 };
 
 
@@ -124,6 +125,14 @@ static void enkf_config_set_ens_path(enkf_config_type * config , const char * en
 
 const char * enkf_config_get_ens_path(const enkf_config_type * config) {
   return config->ens_path;
+}
+
+static void enkf_config_set_init_file(enkf_config_type * config , const char * init_file) {
+  config->init_file = util_realloc_string_copy(config->obs_config_file , init_file);
+}
+
+const char * enkf_config_get_init_file(const enkf_config_type * config) {
+  return config->init_file;
 }
 
 
@@ -306,6 +315,7 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->obs_config_file      = NULL;
   config->ens_path             = NULL;
   config->result_path          = NULL;
+  config->init_file            = NULL;
 
   enkf_config_set_result_path(config , "Results/%04d");
   return config;
@@ -353,8 +363,6 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
     FILE * stream = util_fopen(config_file , "r");
     char * line;
     bool at_eof = false;
-    int * index_map = NULL;
-
 
     
     do {
@@ -408,6 +416,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      } else if (strcmp(kw , "ENSPATH") == 0) {
 		ASSERT_TOKENS("ENSPATH" , active_tokens , 1);
 		enkf_config_set_ens_path(enkf_config , token_list[1]);
+	      } else if (strcmp(kw , "INIT_FILE") == 0) {
+		ASSERT_TOKENS("INIT_FILE" , active_tokens , 1);
+		enkf_config_set_init_file(enkf_config , token_list[1]);
 	      } else if (strcmp(kw , "RUNPATH") == 0) {
 		ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
 		enkf_config_set_run_path( enkf_config , token_list[1] );
@@ -418,12 +429,15 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		ASSERT_TOKENS("ECLBASE" , active_tokens , 1);
 		enkf_config_set_eclbase( enkf_config , token_list[1] );
 	      } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
-		ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 2);
+		ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 1);
 		if (enkf_config->start_time == -1) {
 		  fprintf(stderr,"%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
 		  abort();
 		}
-		enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[2]);
+		if (active_tokens == 2)
+		  enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[2]);
+		else
+		  enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[1]);
 	      } else if (strcmp(kw , "ECL_STORE_PATH") == 0) {
 		ASSERT_TOKENS("ECL_STORE_PATH" , active_tokens , 1);
 		enkf_config_set_ecl_store_path(enkf_config , token_list[1]);
@@ -504,6 +518,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * key             = token_list[1];
 		const char * var_type_string = token_list[2];
 		int   nx,ny,nz,active_size;
+		
+		int * index_map;
 
 		if (enkf_config->grid == NULL) {
 		  fprintf(stderr,"%s must add grid prior to adding FIELD - aborting \n",__func__);
@@ -565,7 +581,6 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	free(line);
       }
     } while (!at_eof);
-    if (index_map != NULL) free(index_map);
     free(config_file);
     enkf_config_post_assert(enkf_config);
     enkf_site_config_validate(site_config);
@@ -741,7 +756,7 @@ void enkf_config_free(enkf_config_type * config) {
     free(config->schedule_src_file);
     free(config->schedule_target_file);
   }
-  
+  free(config->init_file);
   free(config->ecl_store);
   free(config);
 }
