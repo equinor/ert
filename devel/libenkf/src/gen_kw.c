@@ -130,7 +130,7 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 
 
-void  gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
+void gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
   DEBUG_ASSERT(gen_kw)
   scalar_sample(gen_kw->scalar);  
 }

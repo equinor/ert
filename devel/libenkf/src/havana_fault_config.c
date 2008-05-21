@@ -101,8 +101,9 @@ static  void fault_group_fprintf_ALL_faultlist(const fault_group_type **group_li
     fclose(stream);
     free(filename);
   }
-    
 }
+
+
 
 static void fault_group_run_havana(const fault_group_type * group , hash_type * kw_hash , const char * run_path , const char * PFM_path , const char * tmp_PFM_path , const char * havana_executable) {
   char * target_file = util_alloc_full_path( run_path , group->group_name);
@@ -116,8 +117,6 @@ static void fault_group_run_havana(const fault_group_type * group , hash_type * 
   free( command );
   free( target_file );
 }
-
-
 
 
 
@@ -218,8 +217,8 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
 
 void havana_fault_config_run_havana(const havana_fault_config_type * config , scalar_type * scalar_data , const char * run_path) {
   char * tmp_fault_input_path  = util_alloc_full_path(run_path  , "tmp_havana_input_faults");
-  char * tmp_fault_output_path = util_alloc_full_path(run_path , "tmp_havana_output_faults");
-  char * tmp_GRDECL_output     = util_alloc_full_path(run_path , config->faulted_GRDECL_file);
+  char * tmp_fault_output_path = util_alloc_full_path(run_path  , "tmp_havana_output_faults");
+  char * tmp_GRDECL_output     = util_alloc_full_path(run_path  , config->faulted_GRDECL_file);
   const int size = havana_fault_config_get_data_size(config);
   int igroup;
   hash_type * kw_hash = hash_alloc();
@@ -302,7 +301,8 @@ static void havana_fault_config_assert(const havana_fault_config_type * config) 
 The format of the file should be as follows:
 
 DATA             /tmp/Synthetic/sharedfiles/configfiles/havana_config.dat
-GRDECL           /tmp/Synthetic/sharedfiles/structureinput/Seismic_B_nothrow.GRDECL
+INPUT_ECLIPSE    /tmp/Synthetic/sharedfiles/structureinput/Seismic_B_nothrow.GRDECL
+OUTPUT_ECLIPSE   filename.grdecl
 INPUT_FAULTS     /tmp/Synthetic/sharedfiles/structureinput/PFM
 UPDATE           /tmp/Synthetic/sharedfiles/templates/updateGrid.template
 HAVANA           /d/proj/bg/enkf/EnKF_Structural/Havana/havana
@@ -312,6 +312,10 @@ GROUP            G03   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G03.templa
 
 Each group can contain many faults; but each fault must be in only one
 group. This is not checked for. Note that the last group must correspond to all faults that have no change in displacement
+
+Observe that the OUTPUT_ECLIPSE variable should be relative to the
+ECLIPSE run_path. The remaining variables can be both relative to the
+CWD and absolute.
 */
 
 

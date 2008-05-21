@@ -457,17 +457,17 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   /* Start by initializing all function pointers 
      to NULL.
   */
-  node->realloc_data   = gen_kw_realloc_data__;
-  node->alloc          = gen_kw_alloc__;
-  node->ecl_write      = gen_kw_ecl_write__;
-  node->fread_f        = gen_kw_fread__;
-  node->fwrite_f       = gen_kw_fwrite__;
-  node->copyc          = gen_kw_copyc__;
-  node->initialize     = gen_kw_initialize__;
-  node->serialize      = gen_kw_serialize__;
-  node->deserialize    = gen_kw_deserialize__;
-  node->freef          = gen_kw_free__;
-  node->free_data      = gen_kw_free_data__;
+  node->realloc_data   = NULL;
+  node->alloc          = NULL;
+  node->ecl_write      = NULL;
+  node->fread_f        = NULL;
+  node->fwrite_f       = NULL;
+  node->copyc          = NULL;
+  node->initialize     = NULL;
+  node->serialize      = NULL;
+  node->deserialize    = NULL;
+  node->freef          = NULL;
+  node->free_data      = NULL;
   node->fprintf_results= NULL;
 
   switch (impl_type) {
@@ -547,6 +547,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   case(HAVANA_FAULT):
     node->realloc_data = havana_fault_realloc_data__;
     node->alloc        = havana_fault_alloc__;
+    node->ecl_write    = havana_fault_ecl_write__;
     node->fread_f      = havana_fault_fread__;
     node->fwrite_f     = havana_fault_fwrite__;
     node->copyc        = havana_fault_copyc__;
@@ -554,6 +555,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->deserialize  = havana_fault_deserialize__;
     node->freef        = havana_fault_free__;
     node->free_data    = havana_fault_free_data__;
+    node->initialize   = havana_fault_initialize__;
     break;
   case(FIELD):
     node->realloc_data = field_realloc_data__;

@@ -29,7 +29,7 @@ struct havana_fault_struct
 /*****************************************************************/
 
 void havana_fault_free_data(havana_fault_type *havana_fault) {
-    assert(havana_fault->scalar);
+  assert(havana_fault->scalar);
   scalar_free_data(havana_fault->scalar);
 }
 
@@ -133,10 +133,10 @@ void havana_fault_truncate(havana_fault_type * havana_fault) {
 }
 
 
- void  havana_fault_initialize(havana_fault_type *havana_fault, int iens) { 
+void  havana_fault_initialize(havana_fault_type *havana_fault, int iens) { 
    DEBUG_ASSERT(havana_fault) 
-   scalar_sample(havana_fault->scalar);   
- } 
+   scalar_sample(havana_fault->scalar);
+} 
 
 
 int havana_fault_serialize(const havana_fault_type *havana_fault , int internal_offset , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, bool * complete) {

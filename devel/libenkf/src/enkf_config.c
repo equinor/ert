@@ -504,6 +504,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * config_file = token_list[2];
 		enkf_config_add_type(enkf_config , key , parameter , HAVANA_FAULT , NULL , havana_fault_config_fscanf_alloc(config_file));
 	      }
+	      break;
 	    case(EQUIL):
 	      {
 		const char * key         = token_list[1];
@@ -519,17 +520,13 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * var_type_string = token_list[2];
 		int   nx,ny,nz,active_size;
 		
-		int * index_map;
-
 		if (enkf_config->grid == NULL) {
 		  fprintf(stderr,"%s must add grid prior to adding FIELD - aborting \n",__func__);
 		  abort();
 		}
 		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
-		if (index_map == NULL) index_map = (int *) ecl_grid_alloc_index_map(enkf_config->grid);
-		
 		if (strcmp(var_type_string , "DYNAMIC") == 0)
-		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , nx , ny , nz , active_size , index_map));
+		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , nx , ny , nz , active_size , ecl_grid_get_index_map_ref(enkf_config->grid)));
 		else if (strcmp(var_type_string , "PARAMETER") == 0) {
 		  ASSERT_TOKENS("FIELD" , active_tokens , 5);
 		  {
@@ -538,7 +535,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		    if (util_sscanf_int(token_list[4] , &init_mode)) 
 		      enkf_config_add_type(enkf_config , key , parameter   , FIELD , ecl_file , field_config_alloc_parameter(key , 
 															     nx , ny , nz , active_size , 
-															     index_map , 
+															     ecl_grid_get_index_map_ref(enkf_config->grid),
 															     0 , init_mode , active_tokens - 5 , (const char **) &token_list[5]));
 		    else {
 		      fprintf(stderr,"%s: init mode must be valid int - aborting \n",__func__);
