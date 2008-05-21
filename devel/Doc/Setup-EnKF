@@ -274,7 +274,7 @@ Table of contents
 
 
   3.3 The next thing we must specify in the configuration file is the
-      parameters to estimate. The general structure of this is as
+      parameters to estimate. The standard structure of this is as
       follows (but there are MANY exceptions):
 
       <PARAMETER-TYPE> <UNIQUE-ID> <TARGET_FILE>  <CONFIG_FILE>
@@ -299,10 +299,65 @@ Table of contents
 
 	MULTZ, MULTFLT, EQUIL, FIELD , WELL, PGBOX, GEN_KW, RELPERM,
 	HAVANA_FAULT, SUMMARY 
+      
+      Here follows a brief description of each parameter type, and how
+      the configuration information should be entered:
+  
+      MULTZ: This parameter is intended for estimating MULTZ barriers
+        between layers. In the main configuration file it follows the
+        standard structure described above. The spesific configuration
+        file for the MULTZ parameter has the following structure:
 
-           
+        k  <i1  i2   j1   j2>  <PRIOR-DISTRIBUTION>
+        k                      <PRIOR-DISTRIBUTION>
+        .....
+        .....
 
-   
+  
+        Each line corresponds to one MULTZ parameter. The first value,
+        k, is the layer we are etsimating on. (A value of k = 3, means
+        we are estimating the vertical transmissibility multiplier
+        between layer 'k' and layer 'k + 1'. The arguments i1 i2 j1 j2
+        are the horizontal extent of the layer, if omitted the MULTZ
+        parameter is applied to the whole layer. The prior
+        distribution is specified with a name and the optional
+        parameters to this distribution (see section 3.3.1 for various
+        prior distributions).
+  
+
+     MULTFLT: This parameter is for estimating MULTFLT multipliers. It
+        is very similar in structure to the MULTZ parameter. The
+        specific MULTFLT configuration file look like this:
+  
+        <FAULT-NAME1>    <PRIOR-DISTRIBUTION>
+        <FAULT-NAME2>    <PRIOR-DISTRIBUTION>
+        ..... 
+        
+
+     EQUIL: This parameter is for estimating initial 
+     
+       
+  3.4 The observations are specified in a (several) file(s) of their
+      own. From the main configuration this file is specified with the
+      keyword OBS_CONFIG - which should then point to another file
+      containing information about the observations.
+
+      Currently the system supports three different types of
+      observations:
+
+      WELL: This is observations of well rates, the actual
+        observations are taken directly from the SCHEDULE file.
+
+      BLOCK: This is observations of cell/block properties. The
+        observations can be of arbitrary ECLIPSE fields like PRESSURE
+        (typically for an RFT), PORO or ... The actual values must be
+        entered by the user in a seperate configuration file.
+
+      SUMMARY: This is arbitrary data which can be read out from the
+        summary file. I.e. well rates, region properties, ... As with
+        BLOCK observations the actual values must be specified by the
+        user in a separate file.
+
 
 
 
