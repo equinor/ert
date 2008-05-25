@@ -219,14 +219,30 @@ static void enkf_config_set_data_file(enkf_config_type * config , const char * d
   }
 }
 
-static void enkf_config_set_schedule_files(enkf_config_type * config , const char * schedule_src_file , const char * schedule_target_file) {
-  if (util_file_exists(schedule_src_file)) 
-    config->schedule_src_file = util_realloc_string_copy(config->schedule_src_file , schedule_src_file);
-  else {
-    fprintf(stderr,"%s: sorry: schedule_src_file:%s does not exist - aborting \n",__func__ , schedule_src_file);
-    abort();
-  }
-  config->schedule_target_file = util_realloc_string_copy(config->schedule_target_file , schedule_target_file);
+
+/**
+  This function sets the schedule files. The schedule_src_file is
+  general file (absolut or relative pointing anywhere), which point to
+  an existing SCHEDULE file.
+
+  The target file is the name of the SCHEDULE file the EnKF
+  application generates at run-time. This MUST just be a name, not a
+  full path (not checked). If the target file argument is NULL, the
+  basename of the src_file is used.
+
+*/
+
+static void enkf_config_set_schedule_files(enkf_config_type * config , const char * schedule_src_file , const char * schedule_target_file) { 
+  if (util_file_exists(schedule_src_file))
+    config->schedule_src_file = util_realloc_string_copy(config->schedule_src_file , schedule_src_file); 
+  else
+    util_abort("%s: sorry:schedule_src_file:%s does not exist - aborting \n",__func__ ,schedule_src_file); 
+
+  if (schedule_target_file != NULL) 
+    config->schedule_target_file = util_realloc_string_copy(config->schedule_target_file , schedule_target_file); 
+  else 
+    util_alloc_file_components(schedule_src_file , NULL , &config->schedule_target_file , NULL);
+  
 }
 
 const char * enkf_config_get_schedule_src_file(const enkf_config_type * config) {
@@ -434,10 +450,10 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		  fprintf(stderr,"%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
 		  abort();
 		}
-		if (active_tokens == 2)
+		if (active_tokens == 3)
 		  enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[2]);
-		else
-		  enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[1]);
+		else 
+		  enkf_config_set_schedule_files(enkf_config , token_list[1] , NULL);
 	      } else if (strcmp(kw , "ECL_STORE_PATH") == 0) {
 		ASSERT_TOKENS("ECL_STORE_PATH" , active_tokens , 1);
 		enkf_config_set_ecl_store_path(enkf_config , token_list[1]);

@@ -297,7 +297,7 @@ static void enkf_obs_add_field_obs__(enkf_obs_type * enkf_obs, const enkf_config
 
   if (meas_time != -1)
     obs_node_activate_time_t(obs_node , enkf_obs->sched_file , meas_time , meas_time);
-  enkf_obs_add_obs(enkf_obs , ecl_field , obs_node);
+  enkf_obs_add_obs(enkf_obs , obs_label , obs_node);
 }
 
 

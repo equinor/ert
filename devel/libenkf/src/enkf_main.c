@@ -409,27 +409,35 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
     */
   }
   
+  /*
+    The thread pool can just be a local variable.
+    No reason to bind it to the enkf_main object.
+  */
+
   {
-    pthread_t queue_thread;
-    void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
-    void_arg_pack_ptr(queue_args , 0 , enkf_main->ecl_queue);
-    void_arg_pack_int(queue_args , 1 , ens_size);
+    {
+      pthread_t queue_thread;
+      void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
+      void_arg_pack_ptr(queue_args , 0 , enkf_main->ecl_queue);
+      void_arg_pack_int(queue_args , 1 , ens_size);
+      
+      pthread_create( &queue_thread , NULL , ecl_queue_run_jobs__ , queue_args);
 
-    pthread_create( &queue_thread , NULL , ecl_queue_run_jobs__ , queue_args);
+      enkf_main->thread_pool = thread_pool_alloc(4);
+      for (iens = 0; iens < ens_size; iens++) 
+	thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , enkf_main->void_arg[iens]);
 
-    enkf_main->thread_pool = thread_pool_alloc(4);
-    for (iens = 0; iens < ens_size; iens++) 
-      thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , enkf_main->void_arg[iens]);
-
-    thread_pool_join(enkf_main->thread_pool);
-    thread_pool_free(enkf_main->thread_pool);
+      thread_pool_join(enkf_main->thread_pool);
+      thread_pool_free(enkf_main->thread_pool);
     
-    enkf_main->thread_pool = thread_pool_alloc(ens_size);
-    for (iens = 0; iens < ens_size; iens++) 
-      thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
-    thread_pool_join(enkf_main->thread_pool);
-    pthread_join ( queue_thread , NULL );
-    ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done */
+      enkf_main->thread_pool = thread_pool_alloc(ens_size);
+      for (iens = 0; iens < ens_size; iens++) 
+	thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
+      thread_pool_join(enkf_main->thread_pool);
+      pthread_join ( queue_thread , NULL );
+      ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done */
+      void_arg_free( queue_args );
+    }
     
     {
       bool complete_OK = true;
