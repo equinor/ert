@@ -229,4 +229,4 @@ VOID_FWRITE (multflt)
 VOID_FREAD  (multflt)
 VOID_COPYC  (multflt)
 VOID_FREE(multflt)
-
+VOID_REALLOC_DATA(multflt)

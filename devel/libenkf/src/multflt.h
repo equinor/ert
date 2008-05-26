@@ -37,5 +37,6 @@ VOID_INITIALIZE_HEADER(multflt);
 VOID_FREE_HEADER(multflt);
 MATH_OPS_VOID_HEADER(multflt);
 VOID_ALLOC_HEADER(multflt);
+VOID_REALLOC_DATA_HEADER(multflt);
 
 #endif

@@ -120,7 +120,7 @@ static void enkf_config_set_obs_config_file(enkf_config_type * config , const ch
 }
 
 static void enkf_config_set_ens_path(enkf_config_type * config , const char * ens_path) {
-  config->ens_path = util_realloc_string_copy(config->obs_config_file , ens_path);
+  config->ens_path = util_realloc_string_copy(config->ens_path , ens_path);
 }
 
 const char * enkf_config_get_ens_path(const enkf_config_type * config) {
@@ -128,7 +128,10 @@ const char * enkf_config_get_ens_path(const enkf_config_type * config) {
 }
 
 static void enkf_config_set_init_file(enkf_config_type * config , const char * init_file) {
-  config->init_file = util_realloc_string_copy(config->obs_config_file , init_file);
+  if (config->init_file != NULL)
+    free(config->init_file);
+  
+  config->init_file = util_alloc_realpath(init_file);
 }
 
 const char * enkf_config_get_init_file(const enkf_config_type * config) {
@@ -165,10 +168,9 @@ static void enkf_config_set_ecl_store_path(enkf_config_type * config , const cha
 }
 
 static void enkf_config_set_ecl_store(enkf_config_type * config , int store_value , int tokens, const char ** token_list) {
-  if (config->ens_size <= 0) {
-    fprintf(stderr,"%s: must set ens_size first - aborting \n",__func__);
-    abort();
-  }
+  if (config->ens_size <= 0) 
+    util_abort("%s: must set ens_size first - aborting \n",__func__);
+  
   {
     int token_index   = 0;
     int prev_iens     = -1;
@@ -178,10 +180,9 @@ static void enkf_config_set_ecl_store(enkf_config_type * config , int store_valu
 	token_index++;
       else {
 	if (token_list[token_index][0] == '-') {
-	  if (prev_iens == -1) {
-	    fprintf(stderr,"%s: something rotten - lonesome dash \n",__func__);
-	    abort();
-	  }
+	  if (prev_iens == -1) 
+	    util_abort("%s: something rotten - lonesome dash \n",__func__);
+
 	  range_active = true;
 	} else {
 	  int iens,iens1,iens2;
@@ -197,10 +198,8 @@ static void enkf_config_set_ecl_store(enkf_config_type * config , int store_valu
 		config->ecl_store[iens - config->ens_offset] = store_value;
 	    }
 	    range_active = false;  
-	  } else {
-	    fprintf(stderr,"%s: something wrong when parsing: \"%s\" to integer \n",__func__ , token_list[token_index]);
-	    abort();
-	  }
+	  } else 
+	    util_abort("%s: something wrong when parsing: \"%s\" to integer \n",__func__ , token_list[token_index]);
 	}
 	token_index++;
       }
@@ -213,10 +212,8 @@ static void enkf_config_set_ecl_store(enkf_config_type * config , int store_valu
 static void enkf_config_set_data_file(enkf_config_type * config , const char * data_file) {
   if (util_file_exists(data_file))
     config->data_file = util_realloc_string_copy(config->data_file , data_file);
-  else {
-    fprintf(stderr,"%s: sorry: data_file:%s does not exist - aborting \n",__func__ , data_file);
-    abort();
-  }
+  else 
+    util_abort("%s: sorry: data_file:%s does not exist - aborting \n",__func__ , data_file);
 }
 
 
@@ -240,10 +237,23 @@ static void enkf_config_set_schedule_files(enkf_config_type * config , const cha
 
   if (schedule_target_file != NULL) 
     config->schedule_target_file = util_realloc_string_copy(config->schedule_target_file , schedule_target_file); 
-  else 
-    util_alloc_file_components(schedule_src_file , NULL , &config->schedule_target_file , NULL);
-  
+  else {
+    char * base_name;
+    char * extension;
+
+    util_alloc_file_components(schedule_src_file , NULL , &base_name , &extension);
+    if (extension != NULL) {
+      config->schedule_target_file = util_malloc(strlen( base_name) + strlen( extension) + 2 , __func__);
+      sprintf(config->schedule_target_file , "%s.%s" , base_name , extension);
+      free(base_name);
+      free(extension);
+    } else 
+      config->schedule_target_file = base_name;
+  }
+
 }
+
+
 
 const char * enkf_config_get_schedule_src_file(const enkf_config_type * config) {
   return config->schedule_src_file;
@@ -271,10 +281,8 @@ static void enkf_config_set_ens_size(enkf_config_type * config , int ens_size) {
     config->ecl_store = util_malloc(ens_size * sizeof * config->ecl_store , __func__);
     for (iens = 0; iens < ens_size; iens++)
       config->ecl_store[iens] = store_none;
-  } else {
-    fprintf(stderr,"%s: size must be greater than zero - aborting \n",__func__);
-    abort();
-  }
+  } else 
+    util_abort("%s: size must be greater than zero - aborting \n",__func__);
 }
 
 
@@ -291,10 +299,8 @@ static void enkf_config_set_start_date(enkf_config_type * config , const char **
   if (ok) {
     int month_nr = util_get_month_nr(tokens[1]);
     config->start_time = util_make_time1( day , month_nr , year );
-  } else {
-    fprintf(stderr,"%s: fatal error when parsing start_time \n",__func__);
-    abort();
-  }
+  } else 
+    util_abort("%s: fatal error when parsing start_time: \"%s %s %s\" \n",__func__, tokens[0] , tokens[1] , tokens[2]);
 }
 
 
@@ -339,9 +345,16 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
 
 
 
+#define __assert_not_null(p , t , OK) if (p == NULL ) { fprintf(stderr,"The key:%s must be set.\n",t); OK = false; }
 static void enkf_config_post_assert(const enkf_config_type * config) {
+  bool OK = true;
 
+  __assert_not_null(config->ens_path           , "ENSPATH"  , OK);
+  __assert_not_null(config->schedule_src_file  , "SCHEDULE" , OK);
+  __assert_not_null(config->schedule_src_file  , "SCHEDULE" , OK);
+  
 }
+#undef __assert_not_null
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) util_abort("%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); 
 enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file , 
@@ -357,10 +370,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
     char * ext;
     util_alloc_file_components(__config_file , &path , &base , &ext);
     if (path != NULL) {
-      if (chdir(path) != 0) {
-	fprintf(stderr,"%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
-	abort();
-      }
+      if (chdir(path) != 0) 
+	util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
+
       printf("Changing to directory ...................: %s \n",path);
       if (ext != NULL) {
 	config_file = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
@@ -419,10 +431,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		ASSERT_TOKENS("SIZE" , active_tokens , 1);
 		if (util_sscanf_int(token_list[1] , &ens_size)) 
 		  enkf_config_set_ens_size( enkf_config , ens_size);
-		else {
-		  fprintf(stderr,"%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
-		  abort();
-		}
+		else 
+		  util_abort("%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
+		
 	      } else if (strcmp(kw , "OBS_CONFIG") == 0) {
 		ASSERT_TOKENS("OBS_CONFIG" , active_tokens , 1);
 		{
@@ -446,10 +457,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		enkf_config_set_eclbase( enkf_config , token_list[1] );
 	      } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
 		ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 1);
-		if (enkf_config->start_time == -1) {
-		  fprintf(stderr,"%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
-		  abort();
-		}
+		if (enkf_config->start_time == -1) 
+		  util_abort("%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
+		
 		if (active_tokens == 3)
 		  enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[2]);
 		else 
@@ -466,10 +476,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		} else {
 		  if (util_sscanf_int(token_list[1] , &ecl_store)) 
 		    enkf_config_set_ecl_store(enkf_config , ecl_store , active_tokens - 2 , (const char **) &token_list[2]);
-		  else {
-		    fprintf(stderr,"%s: error when parsing: %s to integer - aborting \n",__func__ , token_list[1]);
-		    abort();
-		  }
+		  else 
+		    util_abort("%s: error when parsing: %s to integer - aborting \n",__func__ , token_list[1]);
 		}
 	      } else if (strcmp(kw , "GRID") == 0) {
 		ASSERT_TOKENS("GRID" , active_tokens , 1);
@@ -483,16 +491,16 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	  } else {
 	    switch(impl_type) {
 	    case(MULTZ):
+	      ASSERT_TOKENS("MULTZ" , active_tokens , 3);
 	      {
 		const char * key         = token_list[1];
 		const char * ecl_file    = token_list[2];
 		char       * config_file = token_list[3];
 		int   nx,ny,nz,active_size;
 		
-		if (enkf_config->grid == NULL) {
-		  fprintf(stderr,"%s must add grid prior to adding MULTZ - aborting \n",__func__);
-		  abort();
-		}
+		if (enkf_config->grid == NULL) 
+		  util_abort("%s must add grid prior to adding MULTZ - aborting \n",__func__);
+
 		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
 		enkf_config_add_type(enkf_config , key , parameter , MULTZ , ecl_file , multz_config_fscanf_alloc(config_file , nx , ny , nz));
 	      }
@@ -507,6 +515,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      }
 	      break;
 	    case(MULTFLT):
+	      ASSERT_TOKENS("MULTFLT" , active_tokens , 3);
 	      {
 		const char * key         = token_list[1];
 		const char * ecl_file    = token_list[2];
@@ -515,6 +524,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      }
 	      break;
 	    case(HAVANA_FAULT):
+
 	      {
 		const char * key         = token_list[1];
 		const char * config_file = token_list[2];
@@ -522,6 +532,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      }
 	      break;
 	    case(EQUIL):
+	      ASSERT_TOKENS("EQUIl" , active_tokens , 3);
 	      {
 		const char * key         = token_list[1];
 		const char * ecl_file    = token_list[2];
@@ -536,10 +547,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * var_type_string = token_list[2];
 		int   nx,ny,nz,active_size;
 		
-		if (enkf_config->grid == NULL) {
-		  fprintf(stderr,"%s must add grid prior to adding FIELD - aborting \n",__func__);
-		  abort();
-		}
+		if (enkf_config->grid == NULL) 
+		  util_abort("%s must add grid prior to adding FIELD - aborting \n",__func__);
+		
 		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
 		if (strcmp(var_type_string , "DYNAMIC") == 0)
 		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , nx , ny , nz , active_size , ecl_grid_get_index_map_ref(enkf_config->grid)));
@@ -553,15 +563,11 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 															     nx , ny , nz , active_size , 
 															     ecl_grid_get_index_map_ref(enkf_config->grid),
 															     0 , init_mode , active_tokens - 5 , (const char **) &token_list[5]));
-		    else {
-		      fprintf(stderr,"%s: init mode must be valid int - aborting \n",__func__);
-		      abort();
-		    }
+		    else 
+		      util_abort("%s: init mode must be valid int - aborting \n",__func__);
 		  }
-		} else {
-		  fprintf(stderr,"%s : aborting \n",__func__);
-		  abort();
-		}
+		} else 
+		  util_abort("%s : aborting \n",__func__);
 	      }
 	      break;
 	    case(WELL):
@@ -585,8 +591,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      }
 	      break;
 	    default:
-	      fprintf(stderr,"%s: Invalid keyword: %s - aborting \n",__func__ ,  token_list[0]);
-	      abort();
+	      util_abort("%s: Invalid keyword: %s - aborting \n",__func__ ,  token_list[0]);
 	    }
 	  }
 	}
@@ -652,13 +657,12 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
 		       enkf_impl_type impl_type , 
 		       const char   * ecl_file  , 
 		       const void   * data) {
-  if (enkf_config_has_key(enkf_config , key)) {
-    fprintf(stderr,"%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
-    abort();
-  }
 
+  if (enkf_config_has_key(enkf_config , key)) 
+    util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
+  
   {
-    config_free_ftype * freef;
+    config_free_ftype * freef = NULL;
     switch(impl_type) {
     case(FIELD):
       freef             = field_config_free__;
@@ -691,9 +695,9 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       freef             = havana_fault_config_free__;
       break;
     default:
-      fprintf(stderr,"%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
-      abort();
+      util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
     }
+    
     {
       enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , ecl_file , data , freef);
       hash_insert_hash_owned_ref(enkf_config->config_hash , key , node , enkf_config_node_free__);
@@ -713,8 +717,8 @@ const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * 
     enkf_config_node_type * node = hash_get(ens->config_hash , key);
     return node;
   } else {
-    fprintf(stderr,"%s: ens node:%s does not exist \n",__func__ , key);
-    abort();
+    util_abort("%s: ens node:%s does not exist \n",__func__ , key);
+    return NULL; /* Compiler shut up */
   }
 }
 
@@ -727,6 +731,7 @@ char * enkf_config_alloc_ecl_store_path(const enkf_config_type * config , int ie
   else
     return NULL;
 }
+
 
 char * enkf_config_alloc_run_path(const enkf_config_type * config , int iens) {
   return path_fmt_alloc_path(config->run_path , iens);
@@ -793,11 +798,8 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
   } else if (strcmp(queue_system , "RSH") == 0) {
     queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , enkf_site_config_get_value(site_config , "RSH_HOST_LIST"));
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_RSH") , NULL , 10);
-  }
-  else {
-    fprintf(stderr,"%s: internal error - queue_system:%s not recognized - aborting \n",__func__ , queue_system);
-    abort();
-  }
+  } else 
+    util_abort("%s: internal error - queue_system:%s not recognized - aborting \n",__func__ , queue_system);
 
   {
     int max_submit  = 2;

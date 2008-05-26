@@ -25,24 +25,28 @@ GET_DATA_SIZE_HEADER(field);
 /*****************************************************************/
 
 /**
-The field data type contains for "something" which is distributed over
-the full grid, i.e. permeability or pressure. All configuration
-information is stored in the config object, which is of type
-field_config_type. Observe the following:
+  The field data type contains for "something" which is distributed
+  over the full grid, i.e. permeability or pressure. All configuration
+  information is stored in the config object, which is of type
+  field_config_type. Observe the following:
 
- * The field **only** contains the active cells - the config object
-   has a reference to actnum information.
+  * The field **only** contains the active cells - the config object
+    has a reference to actnum information.
 
- * The data is stored in a char pointer; the real underlying data can
-   be (at least) of the types int, float and double.
-
+  * The data is stored in a char pointer; the real underlying data can
+    be (at least) of the types int, float and double.
 */
+
 struct field_struct {
   DEBUG_DECLARE
   const  field_config_type * config;
   char  *data;
   
-  bool   shared_data;
+  bool   shared_data;                         
+  /* If shared_data is true the field object does not
+     have it's own data.
+  */
+
   int    shared_byte_size;
 };
 

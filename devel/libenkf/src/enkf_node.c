@@ -486,6 +486,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->fprintf_results = gen_kw_ensemble_fprintf_results__;
     break;
   case(MULTZ):
+    node->realloc_data = multz_realloc_data__;
     node->alloc       = multz_alloc__;
     node->ecl_write   = multz_ecl_write__;
     node->fread_f     = multz_fread__;
@@ -510,16 +511,17 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->free_data   = relperm_free_data__;
     break;
   case(MULTFLT):
-    node->alloc       = multflt_alloc__;
-    node->ecl_write   = multflt_ecl_write__;
-    node->fread_f     = multflt_fread__;
-    node->fwrite_f    = multflt_fwrite__;
-    node->copyc       = multflt_copyc__;
-    node->initialize  = multflt_initialize__;
-    node->serialize   = multflt_serialize__;
-    node->deserialize = multflt_deserialize__;
-    node->freef       = multflt_free__;
-    node->free_data   = multflt_free_data__;
+    node->realloc_data = multflt_realloc_data__;
+    node->alloc        = multflt_alloc__;
+    node->ecl_write    = multflt_ecl_write__;
+    node->fread_f      = multflt_fread__;
+    node->fwrite_f     = multflt_fwrite__;
+    node->copyc        = multflt_copyc__;
+    node->initialize   = multflt_initialize__;
+    node->serialize    = multflt_serialize__;
+    node->deserialize  = multflt_deserialize__;
+    node->freef        = multflt_free__;
+    node->free_data    = multflt_free_data__;
     break;
   case(WELL):
     node->realloc_data 	  = well_realloc_data__;
