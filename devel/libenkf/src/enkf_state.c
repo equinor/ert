@@ -857,13 +857,9 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   }
 
   {
-    printf("run_path:%s \n",enkf_state->run_path);
-    printf("SCHEDULE target_file:%s \n",enkf_config_get_schedule_target_file(enkf_state->config));
-    {
-      char * schedule_file = util_alloc_full_path(enkf_state->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
-      sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
-      free(schedule_file);
-    }
+    char * schedule_file = util_alloc_full_path(enkf_state->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
+    sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
+    free(schedule_file);
   }
   enkf_state_set_state(enkf_state , report_step1 , analyzed);
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);

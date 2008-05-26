@@ -107,14 +107,18 @@ static  void fault_group_fprintf_ALL_faultlist(const fault_group_type **group_li
 
 static void fault_group_run_havana(const fault_group_type * group , hash_type * kw_hash , const char * run_path , const char * PFM_path , const char * tmp_PFM_path , const char * havana_executable) {
   char * target_file = util_alloc_full_path( run_path , group->group_name);
-  char * command     = util_alloc_joined_string((const char *[2]) {havana_executable , target_file } , 2 , " ");
   util_filter_file( group->modify_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
   fault_group_link_faults(group , PFM_path , tmp_PFM_path);
   fault_group_fprintf_faultlist(group , tmp_PFM_path);
 
-  system( command ); /* Should probably fork and redirect stdout+++ */
+  {
+    char * stdout_file = util_alloc_full_path(run_path , "havana_stdout");
+    char * stderr_file = util_alloc_full_path(run_path , "havana_stderr");
+    util_fork_exec ( havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , NULL , stdout_file , stderr_file);
+    free(stderr_file);
+    free(stdout_file);
+  }
 
-  free( command );
   free( target_file );
 }
 
@@ -204,7 +208,6 @@ void havana_fault_config_add_fault_group(havana_fault_config_type * config , con
 
 
 void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , const char * gen_kw_config_file) {
-  printf("%s: %s \n",__func__ , gen_kw_config_file);
   if (config->gen_kw_config != NULL) {
     fprintf(stderr,"%s: ** Warning: freeing existsing gen_kw_config object from second DATA statement.\n",__func__);
     gen_kw_config_free(config->gen_kw_config);
@@ -257,14 +260,15 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
   fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , tmp_fault_output_path);
   {
     char * target_file = util_alloc_full_path( run_path , "update" );
-    char * command     = util_alloc_joined_string((const char *[2]) {config->havana_executable , target_file} , 2 , " ");
+    char * stdout_file = util_alloc_full_path( run_path , "havana_stdout" );
+    char * stderr_file = util_alloc_full_path( run_path , "havana_stderr" );
 
     util_filter_file( config->update_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
-    system( command );
+    util_fork_exec ( config->havana_executable , 1 , (const char *[1]) {target_file} , true , tmp_GRDECL_output , NULL , stdout_file , stderr_file);
     
-    
-    free(command);
     free(target_file);
+    free(stdout_file);
+    free(stderr_file);
   }
   hash_free(kw_hash);
   free(tmp_fault_input_path);
@@ -289,7 +293,10 @@ static void havana_fault_config_printf(const havana_fault_config_type * config) 
    NULL.
 */
 static void havana_fault_config_assert(const havana_fault_config_type * config) {
-  havana_fault_config_printf(config);
+  return;
+  /*
+    havana_fault_config_printf(config);
+  */
 }
 
 
