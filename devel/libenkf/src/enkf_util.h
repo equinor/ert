@@ -292,12 +292,6 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 
 size_t enkf_util_serialize(const double * , const bool * , size_t , size_t , double * , size_t , size_t , int ,  bool * );
 size_t enkf_util_deserialize(double *     , const bool * , size_t , size_t , size_t   , const double * , size_t , int );
-void * enkf_util_calloc(int , int , const char * );
-void * enkf_util_malloc (int , const char * );
-void * enkf_util_realloc(void * , int , const char * );
-FILE * enkf_util_fopen_r(const char * , const char * );
-FILE * enkf_util_fopen_w(const char * , const char * );
-FILE * enkf_util_fopen_a(const char * , const char * );
 void   enkf_util_fwrite(const void *, int , int , FILE *, const char * );
 void   enkf_util_fread ( void *, int , int , FILE *, const char * );
 

@@ -7,6 +7,7 @@
 #include <ecl_util.h>
 
 
+/*
 void * enkf_util_malloc(int byte_size , const char * caller) {
   void *tmp = malloc(byte_size);
   if (tmp == NULL) {
@@ -57,6 +58,7 @@ FILE * enkf_util_fopen_a(const char * filename , const char * caller) {
 FILE * enkf_util_fopen_r(const char * filename , const char * caller) {
   return enkf_util_fopen(filename , "r" , "reading" , caller);
 }
+*/
 
 
 void enkf_util_fwrite(const void *ptr , int item_size, int items , FILE *stream , const char * caller) {

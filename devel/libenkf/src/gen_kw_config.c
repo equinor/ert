@@ -13,7 +13,7 @@
 
 static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file) {
   gen_kw_config_type *gen_kw_config = malloc(sizeof *gen_kw_config);
-  gen_kw_config->kw_list       = enkf_util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
+  gen_kw_config->kw_list       = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
   gen_kw_config->scalar_config = scalar_config_alloc_empty(size);
   gen_kw_config->var_type      = parameter;
   gen_kw_config->template_file = util_alloc_string_copy(template_file);

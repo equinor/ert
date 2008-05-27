@@ -67,7 +67,7 @@ scalar.o               : scalar.h scalar.c enkf_util.o scalar_config.o
 enkf_types.o         : enkf_types.c enkf_types.h
 enkf_obs.o           : enkf_obs.c enkf_obs.h enkf_main.o obs_node.o well_obs.o field_obs.o summary_obs.o
 obs_data.o           : obs_data.c obs_data.h
-obs_node.o           : obs_node.c obs_node.h enkf_types.h
+obs_node.o           : obs_node.c obs_node.h enkf_types.h enkf_util.o
 meas_vector.o          : meas_vector.c meas_vector.h enkf_util.o
 well_obs.o           : well_obs.h well_obs.c meas_op.o
 meas_op.o            : meas_op.c meas_op.h
@@ -106,6 +106,6 @@ enkf_config.o         : enkf_config.c enkf_config.h enkf_site_config.o enkf_site
 enkf_site_config.o    : enkf_site_config.h enkf_site_config.c
 enkf_main.o           : enkf_main.c enkf_main.h enkf_state.o enkf_config.o enkf_site_config.o
 analysis.o            : analysis.c meas_matrix.o obs_data.o
-summary_obs.o         : summary_obs.h summary_obs.c
+summary_obs.o         : summary_obs.h summary_obs.c enkf_util.o
 summary.o             : summary.c summary.h
 summary_config.o      : summary_config.c summary_config.h

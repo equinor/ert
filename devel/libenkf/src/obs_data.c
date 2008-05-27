@@ -67,10 +67,10 @@ struct obs_data_struct {
 static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) {
   int old_alloc_size      = obs_data->alloc_size;
   obs_data->alloc_size    = new_alloc_size;
-  obs_data->value         = enkf_util_realloc(obs_data->value         , new_alloc_size * sizeof * obs_data->value   	  , __func__);
-  obs_data->std           = enkf_util_realloc(obs_data->std           , new_alloc_size * sizeof * obs_data->std     	  , __func__);
-  obs_data->keyword       = enkf_util_realloc(obs_data->keyword       , new_alloc_size * sizeof * obs_data->keyword 	  , __func__);
-  obs_data->obs_active    = enkf_util_realloc(obs_data->obs_active    , new_alloc_size * sizeof * obs_data->obs_active    , __func__);
+  obs_data->value         = util_realloc(obs_data->value         , new_alloc_size * sizeof * obs_data->value   	  , __func__);
+  obs_data->std           = util_realloc(obs_data->std           , new_alloc_size * sizeof * obs_data->std     	  , __func__);
+  obs_data->keyword       = util_realloc(obs_data->keyword       , new_alloc_size * sizeof * obs_data->keyword 	  , __func__);
+  obs_data->obs_active    = util_realloc(obs_data->obs_active    , new_alloc_size * sizeof * obs_data->obs_active    , __func__);
   {
     int i;
     for (i= old_alloc_size; i < new_alloc_size; i++)

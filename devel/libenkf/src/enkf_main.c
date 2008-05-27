@@ -59,6 +59,24 @@ struct enkf_main_struct {
 enkf_fs_type * enkf_main_get_fs_ref(const enkf_main_type * ens) { return ens->fs; }
 
 
+void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
+  int ikw, iens , size;
+  char ** data_kw_keys = enkf_config_alloc_data_kw_key_list(enkf_main->config , &size);
+
+  if (size > 0) {
+    for (iens = 0; iens < ens_size; iens++) 
+      for (ikw = 0; ikw < size; ikw++) {
+	const char * key   = data_kw_keys[ikw];
+	const char * value = enkf_config_get_data_kw(enkf_main->config , key);
+	enkf_state_set_data_kw(enkf_main->ensemble[iens] , key, value);
+      }
+    util_free_string_list(data_kw_keys , size);
+  }
+}
+			       
+
+
+
 
 enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , ecl_queue_type * ecl_queue) {
   int ens_size               = enkf_config_get_ens_size(config);
@@ -112,13 +130,13 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
       char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
       char * DATA_initialize = util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2);
 
-      enkf_main_add_data_kw(enkf_main , "INIT" , DATA_initialize);
+      enkf_main_set_data_kw(enkf_main , "INIT" , DATA_initialize);
       
       free(DATA_initialize);
       free(tmp_include);
     }
   }
-  enkf_main_add_data_kw(enkf_main , "INCLUDE_PATH" , "/h/a152128/EnKF/devel/EnKF/libenkf/src/Gurbat");
+  enkf_main_insert_data_kw(enkf_main , ens_size);
   enkf_main->thread_pool = NULL;
   enkf_main->void_arg    = NULL;
   return  enkf_main;
@@ -127,16 +145,6 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
 
 
 
-
-
-
-
-void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * new_kw , const char * value) {
-  const int ens_size = enkf_config_get_ens_size(enkf_main->config);
-  int iens;
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_state_add_data_kw(enkf_main->ensemble[iens] , new_kw , value);
-}
 
 
 void enkf_main_set_data_kw(enkf_main_type * enkf_main , const char * new_kw , const char * value) {

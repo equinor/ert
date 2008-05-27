@@ -63,7 +63,7 @@ void field_obs_get_observations(const field_obs_type * field_obs , int report_st
   char  * obs_name = NULL;
   int i;
   for (i=0; i < field_obs->size; i++) {
-    obs_name = enkf_util_realloc(obs_name , strlen(field_obs->obs_name) + 30 , __func__);
+    obs_name = util_realloc(obs_name , strlen(field_obs->obs_name) + 30 , __func__);
     sprintf(obs_name , "%s i=%3d, j=%3d, k=%3d" , field_obs->obs_name , field_obs->i[i] , field_obs->j[i] , field_obs->k[i]);
     obs_data_add(obs_data , field_obs->obs_value[i] , field_obs->obs_std[i] , obs_name);
   }

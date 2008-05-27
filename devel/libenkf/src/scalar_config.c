@@ -15,13 +15,13 @@ scalar_config_type * scalar_config_alloc_empty(int size) {
   scalar_config_type *scalar_config = malloc(sizeof *scalar_config);
 
   scalar_config->data_size   	       = size;
-  scalar_config->mean        	       = enkf_util_malloc(size * sizeof *scalar_config->mean        , __func__);
-  scalar_config->std         	       = enkf_util_malloc(size * sizeof *scalar_config->std         ,  __func__);
-  scalar_config->active      	       = enkf_util_malloc(size * sizeof *scalar_config->active      , __func__);
-  scalar_config->output_transform      = enkf_util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform      , __func__);
-  scalar_config->output_transform_name = enkf_util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform_name , __func__);
+  scalar_config->mean        	       = util_malloc(size * sizeof *scalar_config->mean        , __func__);
+  scalar_config->std         	       = util_malloc(size * sizeof *scalar_config->std         ,  __func__);
+  scalar_config->active      	       = util_malloc(size * sizeof *scalar_config->active      , __func__);
+  scalar_config->output_transform      = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform      , __func__);
+  scalar_config->output_transform_name = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform_name , __func__);
   scalar_config->internal_offset       = 0;
-  scalar_config->void_arg              = enkf_util_malloc(scalar_config->data_size * sizeof * scalar_config->void_arg , __func__);
+  scalar_config->void_arg              = util_malloc(scalar_config->data_size * sizeof * scalar_config->void_arg , __func__);
 
   {
     int i;

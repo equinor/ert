@@ -354,7 +354,7 @@ void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , 
 
 
 static void * __field_alloc_3D_data(const field_type * field , int data_size , ecl_type_enum ecl_type , ecl_type_enum target_type) {
-  void * data = enkf_util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
+  void * data = util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
   if (ecl_type == ecl_double_type) {
     double fill = 0.0;
     field_export3D(field , data , false , target_type , &fill);
@@ -515,12 +515,12 @@ int field_serialize(const field_type *field , int internal_offset , size_t seria
   const int                data_size  = field_config_get_data_size(config);
 
   int elements_added;
-  double *data;
+  double *data = NULL;
   
   if (ecl_type == ecl_double_type)
     data = (double *) field->data;
   else if (ecl_type == ecl_float_type) {
-    data = enkf_util_malloc(data_size * sizeof * data , __func__);
+    data = util_malloc(data_size * sizeof * data , __func__);
     util_float_to_double(data , (const float *) field->data , data_size);
   } else 
     util_abort("%s: tried to serialize field with type:%s(%d) different from float/double - aborting \n",__func__ , ecl_util_type_name(ecl_type) , ecl_type);

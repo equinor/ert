@@ -89,7 +89,7 @@ static void obs_node_set_active_mode_time_t(obs_node_type * obs_node , const sch
 static void obs_node_resize(obs_node_type * node , int new_size) {
   obs_active_type active_mode;
   int i;
-  node->active = enkf_util_realloc(node->active , new_size * sizeof * node->active , __func__);
+  node->active = util_realloc(node->active , new_size * sizeof * node->active , __func__);
   if (node->default_active)
     active_mode = obs_active;
   else

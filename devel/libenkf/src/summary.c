@@ -34,7 +34,7 @@ void summary_clear(summary_type * summary) {
 
 
 void summary_realloc_data(summary_type *summary) {
-  summary->data = enkf_util_calloc(summary_config_get_data_size(summary->config) , sizeof *summary->data , __func__);
+  summary->data = util_malloc(summary_config_get_data_size(summary->config) * sizeof *summary->data , __func__);
 }
 
 

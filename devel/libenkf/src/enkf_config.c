@@ -49,6 +49,7 @@ struct enkf_config_struct {
   int              ens_offset;
   int              iens_offset;
   hash_type       *config_hash;
+  hash_type       *data_kw;   /* This is just temporary during the init process - is later transfered to the individual enkf_state objects */
   time_t           start_time;
   char            **well_list;
   int              nwells;
@@ -138,6 +139,31 @@ const char * enkf_config_get_init_file(const enkf_config_type * config) {
   return config->init_file;
 }
 
+
+
+/** 
+    The functions enkf_config_get_data_kw() and
+    enkf_config_alloc_data_kw_list() are small helper functions for
+    the enkf_config's handling of data_kw from the main configuration
+    file.  
+
+    The point is that under operation these keywords are owned (and
+    used) by the enkf_state objects and not by the enkf_config
+    objects. Maybe a bit awkward, because there is (currently) no way
+    to get state specific information in (but - that might come ....).
+*/
+
+
+
+void * enkf_config_get_data_kw(const enkf_config_type * config , const char * key) {
+  return hash_get(config->data_kw , key);
+}
+
+
+char ** enkf_config_alloc_data_kw_key_list(const enkf_config_type * config, int * size) {
+  *size = hash_get_size(config->data_kw);
+  return hash_alloc_keylist(config->data_kw);
+}
 
 
 static void enkf_config_set_eclbase(enkf_config_type * config , const char * eclbase) {
@@ -312,6 +338,7 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
 						  bool endian_swap) {
   enkf_config_type * config = malloc(sizeof * config);
   config->config_hash = hash_alloc();
+  config->data_kw     = hash_alloc();
 
   config->endian_swap   = endian_swap;
   config->unified       = unified;
@@ -446,6 +473,10 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      } else if (strcmp(kw , "INIT_FILE") == 0) {
 		ASSERT_TOKENS("INIT_FILE" , active_tokens , 1);
 		enkf_config_set_init_file(enkf_config , token_list[1]);
+	      } else if (strcmp(kw , "DATA_KW") == 0) {
+		/* This is later 'stolen' by the enkf_state objects - and the encompassing hash structure is free'd and forgotten. */
+		ASSERT_TOKENS("DATA_KW" , active_tokens , 2);
+		hash_insert_hash_owned_ref(enkf_config->data_kw , token_list[1] , util_alloc_joined_string(&token_list[2] , active_tokens - 2 , " ") , free);
 	      } else if (strcmp(kw , "RUNPATH") == 0) {
 		ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
 		enkf_config_set_run_path( enkf_config , token_list[1] );
@@ -774,6 +805,7 @@ void enkf_config_free(enkf_config_type * config) {
     free(config->schedule_src_file);
     free(config->schedule_target_file);
   }
+  hash_free(config->data_kw);
   free(config->init_file);
   free(config->ecl_store);
   free(config);
@@ -781,10 +813,11 @@ void enkf_config_free(enkf_config_type * config) {
 
 
 
+
 ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , const enkf_site_config_type * site_config) {
   ecl_queue_type          * ecl_queue;
-  int                       max_running;  
-  basic_queue_driver_type * queue_driver;
+  int                       max_running  = 0;  
+  basic_queue_driver_type * queue_driver = NULL;
 
   const char * queue_system = enkf_site_config_get_value(site_config , "QUEUE_SYSTEM");
   if (strcmp(queue_system , "LSF") == 0) {

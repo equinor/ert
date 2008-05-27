@@ -16,7 +16,7 @@ struct meas_vector_struct {
 
 static void meas_vector_realloc_data(meas_vector_type * meas_vector, int new_alloc_size) {
   meas_vector->alloc_size = new_alloc_size;
-  meas_vector->data       = enkf_util_realloc(meas_vector->data , new_alloc_size * sizeof * meas_vector->data , __func__);
+  meas_vector->data       = util_realloc(meas_vector->data , new_alloc_size * sizeof * meas_vector->data , __func__);
 }
 
 

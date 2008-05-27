@@ -34,7 +34,7 @@ void well_clear(well_type * well) {
 
 
 void well_realloc_data(well_type *well) {
-  well->data = enkf_util_calloc(well_config_get_data_size(well->config) , sizeof *well->data , __func__);
+  well->data = util_malloc(well_config_get_data_size(well->config) * sizeof *well->data , __func__);
 }
 
 

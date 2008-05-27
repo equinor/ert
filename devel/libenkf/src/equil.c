@@ -71,7 +71,7 @@ static void equil_get_woc_goc_ref(const equil_type * equil, const double **woc ,
 
 
 void equil_ecl_write(const equil_type * equil, const char * eclfile) {
-  FILE * stream   = enkf_util_fopen_w(eclfile , __func__);
+  FILE * stream   = util_fopen(eclfile , "w");
   const double *woc , *goc;
   equil_output_transform(equil);
   equil_get_woc_goc_ref(equil , &woc , &goc);

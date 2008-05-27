@@ -13,7 +13,7 @@
 
 static multflt_config_type * __multflt_config_alloc_empty(int size) {
   multflt_config_type *multflt_config = malloc(sizeof *multflt_config);
-  multflt_config->fault_names   = enkf_util_malloc(size * sizeof *multflt_config->fault_names , __func__);
+  multflt_config->fault_names   = util_malloc(size * sizeof *multflt_config->fault_names , __func__);
   multflt_config->scalar_config = scalar_config_alloc_empty(size);
 
   multflt_config->ecl_kw_name = NULL;

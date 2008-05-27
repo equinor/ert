@@ -15,13 +15,13 @@ equil_config_type * equil_config_alloc(int size) {
 
   config->data_size    	  	   = size;
                             
-  config->datum_depth  	     	   = enkf_util_malloc(size * sizeof * config->datum_depth  	       , __func__);
-  config->datum_P      	     	   = enkf_util_malloc(size * sizeof * config->datum_P      	       , __func__);
-  config->oil_water_Pc 	     	   = enkf_util_malloc(size * sizeof * config->oil_water_Pc 	       , __func__);
-  config->gas_oil_Pc   	     	   = enkf_util_malloc(size * sizeof * config->gas_oil_Pc   	       , __func__);
-  config->live_oil_init_mode 	   = enkf_util_malloc(size * sizeof * config->live_oil_init_mode       , __func__);
-  config->black_oil_wgas_init_mode = enkf_util_malloc(size * sizeof * config->black_oil_wgas_init_mode , __func__);
-  config->init_accuracy            = enkf_util_malloc(size * sizeof * config->init_accuracy            , __func__);
+  config->datum_depth  	     	   = util_malloc(size * sizeof * config->datum_depth  	       , __func__);
+  config->datum_P      	     	   = util_malloc(size * sizeof * config->datum_P      	       , __func__);
+  config->oil_water_Pc 	     	   = util_malloc(size * sizeof * config->oil_water_Pc 	       , __func__);
+  config->gas_oil_Pc   	     	   = util_malloc(size * sizeof * config->gas_oil_Pc   	       , __func__);
+  config->live_oil_init_mode 	   = util_malloc(size * sizeof * config->live_oil_init_mode       , __func__);
+  config->black_oil_wgas_init_mode = util_malloc(size * sizeof * config->black_oil_wgas_init_mode , __func__);
+  config->init_accuracy            = util_malloc(size * sizeof * config->init_accuracy            , __func__);
   
   config->scalar_config            = scalar_config_alloc_empty(size * 2);
   /*

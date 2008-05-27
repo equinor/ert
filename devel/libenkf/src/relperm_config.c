@@ -22,11 +22,11 @@ static relperm_config_type * __relperm_config_alloc_empty( int size_conf, int si
   relperm_config->nsw           = 0;
   relperm_config->nsg           = 0;
   relperm_config->famnr         = 0;
-  relperm_config->kw_list       = enkf_util_malloc(size_conf * sizeof  *relperm_config->kw_list, __func__);
-  relperm_config->index_hash    = hash_alloc(10);
-  relperm_config->ecl_file_hash = hash_alloc(10);
+  relperm_config->kw_list       = util_malloc(size_conf * sizeof  *relperm_config->kw_list, __func__);
+  relperm_config->index_hash    = hash_alloc();
+  relperm_config->ecl_file_hash = hash_alloc();
   
-  relperm_config->table_config = enkf_util_malloc(size_tab * sizeof *relperm_config->table_config,__func__); 
+  relperm_config->table_config  = util_malloc(size_tab * sizeof *relperm_config->table_config,__func__); 
   
   return relperm_config;
 }
@@ -276,10 +276,10 @@ void relperm_config_ecl_write_table(const relperm_config_type * config, const do
     relpfile = util_alloc_full_path(path,table_config[ik]->eclipse_file);
     /* ecl_file_append = relperm_config_check_ecl_file(config->ecl_file_hash,table_config[ik]->eclipse_file,table_config[ik]->relptab_kw);*/
     if(table_config[ik]->ecl_file_append){
-      relp_ecl_stream =enkf_util_fopen_a(relpfile,__func__);      
+      relp_ecl_stream = util_fopen(relpfile, "a");      
     }
     else{
-      relp_ecl_stream =enkf_util_fopen_w(relpfile,__func__);
+      relp_ecl_stream =util_fopen(relpfile, "r");
     }
     
     relperm_config_check_data(table_config[ik]->tab,config->index_hash,data,config->famnr);
@@ -337,10 +337,10 @@ void relperm_config_ecl_write_swof(FILE * relp_ecl_stream, const table_type * ta
 
   double swco,soco,ewat,scwa,scoi,eowa,pewa;
   int i;
-  double * swof1 = enkf_util_malloc(nsw * sizeof *swof1,__func__);
-  double * swof2 = enkf_util_malloc(nsw * sizeof *swof2,__func__);
-  double * swof3 = enkf_util_malloc(nsw * sizeof *swof3,__func__);
-  double * swof4 = enkf_util_malloc(nsw * sizeof *swof4,__func__);
+  double * swof1 = util_malloc(nsw * sizeof *swof1,__func__);
+  double * swof2 = util_malloc(nsw * sizeof *swof2,__func__);
+  double * swof3 = util_malloc(nsw * sizeof *swof3,__func__);
+  double * swof4 = util_malloc(nsw * sizeof *swof4,__func__);
   
   swco = data[hash_get_int(index_hash,tab->swco)];
   soco = data[hash_get_int(index_hash,tab->soco)];
@@ -390,10 +390,10 @@ void relperm_config_ecl_write_sgof(FILE * relp_ecl_stream, const table_type * ta
   double swco,soco,sgco,scga,scoi,egas,eogw;
   int i;
   
-  double * sgof1 = enkf_util_malloc(nso * sizeof *sgof1,__func__);
-  double * sgof2 = enkf_util_malloc(nso * sizeof *sgof2,__func__);
-  double * sgof3 = enkf_util_malloc(nso * sizeof *sgof3,__func__);
-  double * sgof4 = enkf_util_malloc(nso * sizeof *sgof4,__func__);
+  double * sgof1 = util_malloc(nso * sizeof *sgof1,__func__);
+  double * sgof2 = util_malloc(nso * sizeof *sgof2,__func__);
+  double * sgof3 = util_malloc(nso * sizeof *sgof3,__func__);
+  double * sgof4 = util_malloc(nso * sizeof *sgof4,__func__);
 
   swco = data[hash_get_int(index_hash,tab->swco)];
   soco = data[hash_get_int(index_hash,tab->soco)];
@@ -440,10 +440,10 @@ void relperm_config_ecl_write_slgof(FILE * relp_ecl_stream, const table_type * t
    */
   double swco,soco,sgco,sorg, scga, scoi,egas,eogw,pega;
   int i;
-  double * slgof1 = enkf_util_malloc(nso * sizeof *slgof1,__func__);
-  double * slgof2 = enkf_util_malloc(nso * sizeof *slgof2,__func__);
-  double * slgof3 = enkf_util_malloc(nso * sizeof *slgof3,__func__);
-  double * slgof4 = enkf_util_malloc(nso * sizeof *slgof4,__func__);
+  double * slgof1 = util_malloc(nso * sizeof *slgof1,__func__);
+  double * slgof2 = util_malloc(nso * sizeof *slgof2,__func__);
+  double * slgof3 = util_malloc(nso * sizeof *slgof3,__func__);
+  double * slgof4 = util_malloc(nso * sizeof *slgof4,__func__);
 
   swco = data[hash_get_int(index_hash,tab->swco)];
   soco = data[hash_get_int(index_hash,tab->soco)];
@@ -488,9 +488,9 @@ void relperm_config_ecl_write_swfn(FILE * relp_ecl_stream, const table_type * ta
   */
   double swco,soco,scwa,ewat;
   int i;
-  double * swfn1 = enkf_util_malloc(nsw * sizeof *swfn1,__func__);
-  double * swfn2 = enkf_util_malloc(nsw * sizeof *swfn2,__func__);
-  double * swfn3 = enkf_util_malloc(nsw * sizeof *swfn3,__func__);
+  double * swfn1 = util_malloc(nsw * sizeof *swfn1,__func__);
+  double * swfn2 = util_malloc(nsw * sizeof *swfn2,__func__);
+  double * swfn3 = util_malloc(nsw * sizeof *swfn3,__func__);
   
   swco = data[hash_get_int(index_hash,tab->swco)];
   soco = data[hash_get_int(index_hash,tab->soco)];
@@ -529,9 +529,9 @@ void relperm_config_ecl_write_sgfn(FILE * relp_ecl_stream, const table_type * ta
   double sgco,swco,sorg,scga,egas;
   int i;
 
-  double * sgfn1 =  enkf_util_malloc(nsg * sizeof *sgfn1,__func__); 
-  double * sgfn2 = enkf_util_malloc(nsg * sizeof *sgfn2,__func__); 
-  double * sgfn3 = enkf_util_malloc(nsg * sizeof *sgfn3,__func__); 
+  double * sgfn1 = util_malloc(nsg * sizeof *sgfn1,__func__); 
+  double * sgfn2 = util_malloc(nsg * sizeof *sgfn2,__func__); 
+  double * sgfn3 = util_malloc(nsg * sizeof *sgfn3,__func__); 
   
   sgco = data[hash_get_int(index_hash,tab->sgco)];
   swco = data[hash_get_int(index_hash,tab->swco)];
@@ -575,9 +575,9 @@ void relperm_config_ecl_write_sof3(FILE * relp_ecl_stream, const table_type * ta
   double swco,soco,sgco,sorg,scoi,eowa,scga,eogw;
   int i;
   
-  double * sof31 = enkf_util_malloc(nso * sizeof *sof31, __func__);
-  double * sof32 = enkf_util_malloc(nso * sizeof *sof32, __func__);
-  double * sof33 = enkf_util_malloc(nso * sizeof *sof33, __func__);
+  double * sof31 = util_malloc(nso * sizeof *sof31, __func__);
+  double * sof32 = util_malloc(nso * sizeof *sof32, __func__);
+  double * sof33 = util_malloc(nso * sizeof *sof33, __func__);
 
   swco = data[hash_get_int(index_hash,tab->swco)];
   soco = data[hash_get_int(index_hash,tab->soco)];

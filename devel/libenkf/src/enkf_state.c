@@ -819,25 +819,18 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
    the string.
 */
 
-void enkf_state_add_data_kw(enkf_state_type * enkf_state , const char * new_kw , const char * value) {
-  if (hash_has_key(enkf_state->data_kw , new_kw)) 
-    util_abort("%s: keyword:%s already added - use enkf_state_set_data_kw() to change value - aborting\n",__func__ , new_kw);
-  
-  {
-    void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
-    hash_insert_hash_owned_ref(enkf_state->data_kw , new_kw , void_arg , void_arg_free__);
-  }
-}
-
 
 void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
-  if (!hash_has_key(enkf_state->data_kw , kw)) 
-    util_abort("%s: keyword:%s does not exist - must use enkf_state_add_data_kw() first -  aborting\n",__func__ , kw);
-  {
-    void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
-    hash_insert_hash_owned_ref(enkf_state->data_kw , kw , void_arg , void_arg_free__);
-  }
+  void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
+  hash_insert_hash_owned_ref(enkf_state->data_kw , kw , void_arg , void_arg_free__);
 }
+
+
+
+/**
+   This function goes through the data_kw list from the config object,
+   and inserts the objects in the enkf_state objects.
+*/
 
 
 

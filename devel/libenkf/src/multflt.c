@@ -97,7 +97,7 @@ multflt_type * multflt_copyc(const multflt_type *multflt) {
 
 
 static void __multflt_ecl_write(const multflt_type * multflt, const char * eclfile , bool direct) {
-  FILE * stream   = enkf_util_fopen_w(eclfile , __func__);
+  FILE * stream   = util_fopen(eclfile , "w");
   {
     const multflt_config_type *config = multflt->config;
     const int data_size       = multflt_config_get_data_size(config);

@@ -52,10 +52,10 @@ struct well_obs_struct {
 
 static void obs_error_realloc(obs_error_type * well_error, int new_size) {
   int old_size           = well_error->size;
-  well_error->abs_std    = enkf_util_realloc(well_error->abs_std    , new_size * sizeof * well_error->abs_std    , __func__);
-  well_error->rel_std    = enkf_util_realloc(well_error->rel_std    , new_size * sizeof * well_error->rel_std    , __func__);
-  well_error->error_mode = enkf_util_realloc(well_error->error_mode , new_size * sizeof * well_error->error_mode , __func__);
-  well_error->active     = enkf_util_realloc(well_error->active     , new_size * sizeof * well_error->active     , __func__);
+  well_error->abs_std    = util_realloc(well_error->abs_std    , new_size * sizeof * well_error->abs_std    , __func__);
+  well_error->rel_std    = util_realloc(well_error->rel_std    , new_size * sizeof * well_error->rel_std    , __func__);
+  well_error->error_mode = util_realloc(well_error->error_mode , new_size * sizeof * well_error->error_mode , __func__);
+  well_error->active     = util_realloc(well_error->active     , new_size * sizeof * well_error->active     , __func__);
   well_error->size       = new_size;
 
   if (new_size > old_size && old_size > 0) {
@@ -265,7 +265,7 @@ WOPR (*|10|01/01/2002) - (*|12|01/01/2003) (ON|OFF) (ABS|REL|RELMIN) std1  (std2
 */
 /*#define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }*/
 well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_type * config , const history_type * hist , const sched_file_type * sched_file) {
-  FILE * stream = enkf_util_fopen_r(filename , __func__);
+  FILE * stream = util_fopen(filename , "r");
   well_obs_type * well_obs = __well_obs_alloc(config , hist , sched_file);
   bool at_eof;
   do {

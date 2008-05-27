@@ -21,12 +21,12 @@ static multz_config_type * __multz_config_alloc_empty(int size ) {
   multz_config->ecl_kw_name = NULL;
   multz_config->var_type    = parameter;
   
-  multz_config->i1   	= enkf_util_malloc(size * sizeof *multz_config->i1      , __func__);
-  multz_config->i2   	= enkf_util_malloc(size * sizeof *multz_config->i2      , __func__);
-  multz_config->j1   	= enkf_util_malloc(size * sizeof *multz_config->j1      , __func__);
-  multz_config->j2   	= enkf_util_malloc(size * sizeof *multz_config->j2      , __func__);
-  multz_config->k    	= enkf_util_malloc(size * sizeof *multz_config->k       , __func__);
-  multz_config->area 	= enkf_util_malloc(size * sizeof *multz_config->area    , __func__);
+  multz_config->i1   	= util_malloc(size * sizeof *multz_config->i1      , __func__);
+  multz_config->i2   	= util_malloc(size * sizeof *multz_config->i2      , __func__);
+  multz_config->j1   	= util_malloc(size * sizeof *multz_config->j1      , __func__);
+  multz_config->j2   	= util_malloc(size * sizeof *multz_config->j2      , __func__);
+  multz_config->k    	= util_malloc(size * sizeof *multz_config->k       , __func__);
+  multz_config->area 	= util_malloc(size * sizeof *multz_config->area    , __func__);
 
   return multz_config;
 }
