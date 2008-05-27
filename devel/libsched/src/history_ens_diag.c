@@ -43,7 +43,7 @@ static void set_well_var(const char *file , char **_well , char **_var) {
 
 void history_ens_diag_imake_plotfile(int iens1 , int iens2 , int min_size , const ecl_sum_type **ecl_sum_list , const char *out_file , const char * title , const char * well , const char * var, int index , history_type * history) {
   FILE *stream;
-  int iens,istep;
+  int iens,istep,first_report;
 
   
   stream = util_fopen(out_file , "w");
@@ -53,7 +53,11 @@ void history_ens_diag_imake_plotfile(int iens1 , int iens2 , int min_size , cons
   util_fwrite_int(iens2 - iens1 + 1 , stream);  			       /* Ensemble size */
   util_fwrite_int(min_size , stream);           			       /* Member length */         
 
-  for (istep=0; istep < min_size; istep++) {
+  {
+    int tmp;
+    ecl_sum_get_report_size( ecl_sum_list[0] , &first_report , &tmp);
+  }
+  for (istep=first_report; istep < ( first_report + min_size); istep++) {
     int date[3];
     time_t sim_time = ecl_sum_get_sim_time(ecl_sum_list[0] , istep );
     if (sim_time == -1) {
@@ -210,6 +214,7 @@ static void history_ens_diag_ens(int iens1 , int iens2 , const char *out_path , 
     }
   }
 
+  return ; /* Ignore the misfit calculations */
   {
     char **hvar_list;
     double *min , *max , *inv_covar;

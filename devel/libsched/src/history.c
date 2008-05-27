@@ -263,18 +263,13 @@ static const rate_type * history_get_rate_node(const history_type * hist , int t
       else {
 	if (!history_has_well(hist , well)) {
           history_summarize(hist , stdout);
-	  fprintf(stderr,"%s: The well:%s does not exist in the history object - aborting \n",__func__ , well);
-	  abort();
+	  util_abort("%s: The well:%s does not exist in the history object - aborting \n",__func__ , well);
 	}
       }
-    } else {
-      fprintf(stderr,"%s: asked for timestep:%d ... \n",__func__ , time_step);
-      abort();
-    }
-  } else {
-    fprintf(stderr,"%s tried to ask for nonexistning time_step:%d - aborting \n",__func__ , time_step);
-    abort();
-  }
+    } else 
+      util_abort("%s: asked for timestep:%d ... \n",__func__ , time_step);
+  } else 
+    util_abort("%s tried to ask for nonexistning time_step:%d - aborting \n",__func__ , time_step);
   
   return rate;
 }
@@ -384,9 +379,8 @@ double history_iget(const history_type * hist , int time_step , const char * wel
 static well_var_type history_get_var_type(const history_type * hist , const char * var) {
   well_var_type var_type;
   if (!ecl_well_var_valid(var , &var_type)) {
-    fprintf(stderr,"%s: variable: %s not recognized\n",__func__ , var);
-    fprintf(stderr,"aborting \n");
-    abort();
+    util_abort("%s: variable: %s not recognized\n",__func__ , var);
+    return 0;  /* To keep the compiler happy */
   } else
     return var_type;
 }
@@ -498,8 +492,8 @@ history_type * history_alloc_from_summary(const ecl_sum_type * ecl_sum , bool hi
 time_t history_get_report_date(history_type * hist , int time_step) {
   const history_node_type * node = history_get_node(hist , time_step);
   if (node == NULL) {
-    fprintf(stderr,"%s: could not lookup date_node:%d - aborting \n",__func__ , time_step);
-    abort();
+    util_abort("%s: could not lookup date_node:%d - aborting \n",__func__ , time_step);
+    return -1; /* To keep the compiler happy */
   } else 
     return date_node_get_date(node->date);
 }

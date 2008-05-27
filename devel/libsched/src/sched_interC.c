@@ -376,7 +376,7 @@ void sched_inter_diag_ens_interactive__(const char * _eclbase_dir  , const int *
     hist = history_fread_alloc(stream);
     fclose(stream);
   }
-  history_ens_diag_ens_interactive(eclbase_dir , eclbase_name , fmt_file , unified , ENDIAN_CONVERT , hist);
+  history_ens_diag_ens_interactive(eclbase_dir , eclbase_name , fmt_file , unified , ENDIAN_CONVERT , /*hist*/ NULL);
   
   free(eclbase_dir);
   free(eclbase_name);

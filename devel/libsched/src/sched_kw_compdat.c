@@ -182,10 +182,16 @@ static void comp_set_from_string(comp_type * node , int kw_size , const char **t
   } else
     node->comp_string  = util_alloc_string_copy(token_list[5]);
   
-  if (strcmp(node->comp_string , "OPEN") == 0) node->comp_state = OPEN;
-  if (strcmp(node->comp_string , "AUTO") == 0) node->comp_state = AUTO;
-  if (strcmp(node->comp_string , "SHUT") == 0) node->comp_state = SHUT;
+  if (strcmp(node->comp_string , "OPEN") == 0) 
+    node->comp_state = OPEN;
+  else if (strcmp(node->comp_string , "AUTO") == 0) 
+    node->comp_state = AUTO;
+  else if (strcmp(node->comp_string , "SHUT") == 0) 
+    node->comp_state = SHUT;
+  else 
+    util_abort("%s: error when parsing COMPDAT. Completion state:%s not recognized. \n",__func__ , node->comp_string);
   
+
   node->sat_table       = sched_util_atoi(token_list[6]);
   node->conn_factor     = sched_util_atof(token_list[7]);
   node->well_diameter   = sched_util_atof(token_list[8]);     
@@ -202,10 +208,8 @@ static void comp_set_from_string(comp_type * node , int kw_size , const char **t
   if (strcmp(node->well_dir_string , "X")  == 0) node->well_dir = X;
   if (strcmp(node->well_dir_string , "Y")  == 0) node->well_dir = Y;
   if (strcmp(node->well_dir_string , "Z")  == 0) node->well_dir = Z;
-  if (node->well_dir == -1) {
-    fprintf(stderr,"%s: well_dir_string = %s not recognized - aborting \n",__func__ , node->well_dir_string);
-    abort();
-  }
+  if (node->well_dir == -1) 
+    util_abort("%s: well_dir_string = %s not recognized - aborting \n",__func__ , node->well_dir_string);
   
   node->r0 = sched_util_atof(token_list[13]);                
 }
