@@ -51,8 +51,6 @@ struct enkf_config_struct {
   hash_type       *config_hash;
   hash_type       *data_kw;   /* This is just temporary during the init process - is later transfered to the individual enkf_state objects */
   time_t           start_time;
-  char            **well_list;
-  int              nwells;
   path_fmt_type    *result_path;
   path_fmt_type    *run_path;
   path_fmt_type    *eclbase;
@@ -82,12 +80,6 @@ enkf_impl_type enkf_config_impl_type(const enkf_config_type *enkf_config, const 
     impl_type = STATIC;
 
   return impl_type;
-}
-
-
-
-static void enkf_config_realloc_well_list(enkf_config_type * enkf_config) {
-  enkf_config->well_list = realloc(enkf_config->well_list , enkf_config->nwells * sizeof * enkf_config->well_list);
 }
 
 
@@ -343,9 +335,6 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->endian_swap   = endian_swap;
   config->unified       = unified;
   config->fmt_file      = fmt_file;
-  config->nwells        = 0;
-  config->well_list     = NULL;  
-  enkf_config_realloc_well_list(config);
 
   /*
     all of these must be set before the config object is ready for use.
@@ -494,9 +483,6 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		enkf_config_set_eclbase( enkf_config , token_list[1] );
 	      } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
 		ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 1);
-		if (enkf_config->start_time == -1) 
-		  util_abort("%s: must set START_TIME before SCHEDULE_FILE - aborting \n",__func__);
-		
 		if (active_tokens == 3)
 		  enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[2]);
 		else 
@@ -646,38 +632,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 
 
 
-/*
-enkf_config_type * enkf_config_alloc(int ens_size            , 
-				     const int  * start_date ,
-				     const char * grid_file  , 
-				     const char * data_file  , 
-				     const char * _run_path  , 
-				     const char * _eclbase) {
-
-  enkf_config_type * config = malloc(sizeof * config);
-  config->ens_size      = ens_size;
-  config->grid          = ecl_grid_alloc(grid_file , endian_swap);
-  config->data_file    = util_alloc_string_copy(data_file);
-  config->run_path     = path_fmt_alloc_directory_fmt(_run_path , true);
-  config->eclbase      = path_fmt_alloc_file_fmt(_eclbase);
-  memcpy(config->start_date , start_date , 3 * sizeof * start_date);
-  return config;
-}
-*/
-
-
-const char ** enkf_config_get_well_list_ref(const enkf_config_type * ens , int *nwells) {
-  *nwells = ens->nwells;
-  return (const char **) ens->well_list;
-}
-
-
 void enkf_config_add_well(enkf_config_type * enkf_config , const char *well_name , int size, const char ** var_list) {
   enkf_config_add_type(enkf_config , well_name , ecl_summary , WELL , NULL , well_config_alloc(well_name , size , var_list));
-  enkf_config->nwells++;
-  enkf_config_realloc_well_list(enkf_config);
-  enkf_config->well_list[enkf_config->nwells - 1] = util_alloc_string_copy(well_name);
-  
 }
 
 
@@ -792,12 +748,13 @@ ecl_store_enum enkf_config_iget_ecl_store(const enkf_config_type * config, int i
 
 void enkf_config_free(enkf_config_type * config) {  
   hash_free(config->config_hash);
-  {
+  /*{
     int i;
     for (i=0; i < config->nwells; i++)
       free(config->well_list[i]);
     free(config->well_list);
   }
+  */
   path_fmt_free(config->result_path);
   path_fmt_free(config->run_path);
   path_fmt_free(config->eclbase);
@@ -880,11 +837,3 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
   return ecl_queue;
 }
 
-
-void enkf_config_post_check(const enkf_config_type * config, const sched_file_type * sched_file) {
-  int num_wells , i;
-  const char ** wells = enkf_config_get_well_list_ref(config , &num_wells);
-  for (i=0; i < num_wells; i++)
-    if (!sched_file_has_well(sched_file , wells[i])) 
-      fprintf(stderr,"** Warning: the well:%s is not in the SCHEDULE file - this might indicate an error. \n",wells[i]);
-}

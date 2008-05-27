@@ -173,6 +173,15 @@ object, is discussed in README.new_type_config.c.
     This function is used to print the reuslts in a formatted nice way. Only 
     applicable for variables with small amounts of data, like gen_kw.
 
+13. ecl_load_ftype: void (new_type * , const char * run_path , const char * eclbase, const ecl_sum_type , int report_step)
+    -----------------------------------------------------------------
+    This function is used to load ECLIPSE results from a complete
+    forward simulation. Observe that the restart data are not loaded
+    through this interface, and that the summary datka get an
+    ecl_sum_type * instance for convenience. If you want to add a new
+    which should be loaded from a eclipse directory, you must manage
+    with the run_path ankd ecl_base input.
+
 
 Now - since the enkf_node objects can point to arbitrary types of
 object the data pointer is a void pointer, and the function pointer

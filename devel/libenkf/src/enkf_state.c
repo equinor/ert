@@ -417,6 +417,21 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
   }
 }
 
+/**
+   This function iterates over all the keywords in the ecl_block which
+   is input to function. As it iterates it: 
+   
+   1. It (re)builds the restart_kw_list() object, to be sure that
+      we can output these keywords in the correct order.
+
+   2. If the enkf_state does not have a node with the particular kw,
+      it is classified as a static keyword, and added to the
+      enkf_state object.
+
+   3. The actual data is loaded by calling the enkf_node_load_ecl()
+      function.
+*/
+   
 
 static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , const ecl_block_type *ecl_block) {
   int report_step = ecl_block_get_report_nr(ecl_block);
@@ -432,9 +447,6 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
       /* It is a dynamic restart kw like PRES or SGAS */
       if (enkf_config_impl_type(enkf_state->config , kw) != FIELD) 
 	util_abort("%s: hm - something wrong - can (currently) only load fields from restart files - aborting \n",__func__);
-
-      if (!enkf_state_has_node(enkf_state , kw)) 
-	enkf_state_add_node(enkf_state , kw , enkf_config_get_node_ref(enkf_state->config , kw)); 
       {
 	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
 	enkf_node_ensure_memory(enkf_node);
@@ -442,7 +454,6 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
       }
     } else {
       /* It is a static kw like INTEHEAD or SCON */
-      ecl_util_escape_kw(kw); 
       if (!enkf_state_has_node(enkf_state , kw)) 
 	enkf_state_add_node(enkf_state , kw , NULL); 
       {
@@ -491,32 +502,32 @@ void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , 
 
    
 
-void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , int report_step) {
+static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_step) {
   const bool fmt_file = enkf_state_fmt_file(enkf_state);
   ecl_sum_type * ecl_sum;
-  int Nwells;
-  const char ** well_list = enkf_config_get_well_list_ref(enkf_state->config , &Nwells);
   char * summary_file     = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_file        , fmt_file ,  report_step);
   char * header_file      = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file , fmt_file , -1);
   
-  int iwell;
   ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
-  for (iwell = 0; iwell < Nwells; iwell++) {
+  /*
+    for (iwell = 0; iwell < Nwells; iwell++) {
     if (! enkf_state_has_node(enkf_state , well_list[iwell])) 
-      enkf_state_add_node(enkf_state , well_list[iwell] , enkf_config_get_node_ref(enkf_state->config , well_list[iwell])); 
+    enkf_state_add_node(enkf_state , well_list[iwell] , enkf_config_get_node_ref(enkf_state->config , well_list[iwell])); 
     {
-      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , well_list[iwell]);
-      enkf_node_ecl_load(enkf_node , report_step , NULL , ecl_sum);
+    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , well_list[iwell]);
+    enkf_node_ecl_load(enkf_node , report_step , NULL , ecl_sum);
     }
-  }
+    }
+  */
   
   {
     list_node_type *list_node;                                             
     list_node = list_get_head(enkf_state->node_list);                      
     while (list_node != NULL) {                                            
       enkf_node_type *enkf_node = list_node_value_ptr(list_node);          
-      if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
-	enkf_node_ecl_load(enkf_node , report_step , NULL , ecl_sum);
+      if (enkf_node_has_func(enkf_node , ecl_load_func)) 
+	enkf_node_ecl_load(enkf_node , enkf_state->run_path , enkf_state->eclbase , ecl_sum , report_step);
+      
       list_node = list_node_get_next(list_node);                           
     }                                                                      
   }
@@ -553,13 +564,30 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
 
 
 
-void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2) {
+/*
+  Loading of ECLIPSE results goes like this:
+
+  1. First the restart file is loaded, and the various ecl_kw
+     instances are distributed depending on whether they are static
+     (i.e INTEHEAD and SCONS, ...) or dynamic (i.e. PRESSURE, SWAT ,
+     ...). 
+
+  2. Then the function enkf_state_apply_ecl_load() is called; this
+     function iterates over all the nodes in the enkf_state(), and
+     calls their respective load_ecl() functions (if they have
+     one). 
+*/
+
+
+
+void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2) {
   enkf_state_ecl_store(enkf_state , report_step1 , report_step2);
 
   /*
     Loading in the X0000 files containing the initial distribution of
     pressure/saturations/....
   */
+
   if (report_step1 == 0) {
     enkf_state_load_ecl_restart(enkf_state , unified , report_step1);
     enkf_state_fwrite_as(enkf_state , ecl_restart , report_step1 , analyzed);
@@ -567,7 +595,8 @@ void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
 
   enkf_state_set_state(enkf_state , report_step2 , forecast); 
   enkf_state_load_ecl_restart(enkf_state , unified , report_step2);
-  enkf_state_load_ecl_summary(enkf_state , unified , report_step2);
+  enkf_state_apply_ecl_load(enkf_state , report_step2);
+
   enkf_state_measure(enkf_state , enkf_obs);
   enkf_state_swapout(enkf_state , ecl_restart + ecl_summary);
   util_unlink_path(enkf_state->run_path);
@@ -576,7 +605,7 @@ void enkf_state_load_ecl(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
 
 
 
-void * enkf_state_load_ecl_void(void * input_arg) {
+void * enkf_state_ecl_load__(void * input_arg) {
   void_arg_type * void_arg     =  void_arg_safe_cast(input_arg);
   enkf_state_type * enkf_state =  void_arg_get_ptr(void_arg   , 0);
   enkf_obs_type * enkf_obs     =  void_arg_get_ptr(void_arg   , 1);
@@ -584,39 +613,10 @@ void * enkf_state_load_ecl_void(void * input_arg) {
   int report_step2             =  void_arg_get_int(void_arg   , 3);
   bool unified                 =  void_arg_get_bool(void_arg  , 4);  
   
-  enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
+  enkf_state_ecl_load(enkf_state , enkf_obs , unified , report_step1 , report_step2);
   return NULL;
 }
 
-
-void * enkf_state_load_ecl_summary_void(void * input_arg) {
-  void_arg_type * arg = (void_arg_type *) input_arg;
-  enkf_state_type * enkf_state;
-  bool unified;
-  int report_step;
-  
-  enkf_state  = void_arg_get_ptr(arg  , 0);
-  unified     = void_arg_get_bool(arg , 1 );
-  report_step = void_arg_get_int(arg  , 2 );
-
-  enkf_state_load_ecl_summary(enkf_state , unified , report_step);
-  return NULL;
-}
-
-
-void * enkf_state_load_ecl_restart_void(void * input_arg) {
-  void_arg_type * arg = (void_arg_type *) input_arg;
-  enkf_state_type * enkf_state;
-  bool unified;
-  int report_step;
-  
-  enkf_state  = void_arg_get_ptr(arg , 0);
-  unified     = void_arg_get_bool(arg , 1 );
-  report_step = void_arg_get_int(arg , 2 );
-
-  enkf_state_load_ecl_restart(enkf_state , unified , report_step);
-  return NULL;
-}
 
 
 void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
@@ -650,13 +650,14 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 
 
 /**
-This function writes out all the files needed by an ECLIPSE
-simulation, this includes the restart file, and the various INCLUDE
-files corresponding to parameteres estimated by EnKF.
+  This function writes out all the files needed by an ECLIPSE
+  simulation, this includes the restart file, and the various INCLUDE
+  files corresponding to parameteres estimated by EnKF.
 
-The writing of restart file is delegated to
-enkf_state_write_restart_file().
+  The writing of restart file is delegated to
+  enkf_state_write_restart_file().
 */
+
 void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
   int    restart_mask    = 0;
   list_node_type *list_node;                                            
@@ -880,46 +881,18 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
 
 
 
-void enkf_state_run_eclipse(enkf_state_type * enkf_state , ecl_queue_type * ecl_queue , enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , int max_resubmit , bool *job_OK) {
-  const int usleep_time = 100000; /* 1/10 of a second */ 
-  const int iens        = enkf_state_get_iens(enkf_state);
-  /* 
-     Prepare the job first ...
-  */
+/**
+   xx_run_eclipse() has been split in two functions:
 
-  enkf_state_init_eclipse(enkf_state , sched_file , report_step1 , report_step2);
-  ecl_queue_add_job(ecl_queue , iens , report_step2);
-  while (true) {
-    ecl_job_status_type status = ecl_queue_export_job_status(ecl_queue , iens);
+   1: enkf_state_start_eclipse()
 
-    if (status == ecl_queue_complete_OK) {
-      enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
-      break;
-    } else if (status == ecl_queue_complete_FAIL) {
-      fprintf(stderr,"** job:%d failed completely - this will break ... \n",iens);
-      break;
-    } else usleep(usleep_time);
+   2: enkf_state_complete_eclipse()
 
-  } 
-}
+   Because the firstis quite CPU intensive (gunzip), and the number of
+   concurrent threads should be limitied. For the second there are one
+   thread for each ensemble member. This is handeled by the calling scope.
+*/
 
-
-
-void * enkf_state_run_eclipse__(void * __void_arg) {
-  void_arg_type * void_arg       = void_arg_safe_cast(__void_arg);
-  enkf_state_type * enkf_state 	 = void_arg_get_ptr(void_arg  	, 0);
-  ecl_queue_type  * ecl_queue    = void_arg_get_ptr(void_arg  	, 1);
-  enkf_obs_type   * enkf_obs   	 = void_arg_get_ptr(void_arg  	, 2);
-  sched_file_type * sched_file   = void_arg_get_ptr(void_arg    , 3);
-  bool              unified    	 = void_arg_get_bool(void_arg 	, 4);
-  int               report_step1 = void_arg_get_int(void_arg  	, 5);
-  int               report_step2 = void_arg_get_int(void_arg  	, 6);
-  int               max_resubmit = void_arg_get_int(void_arg  	, 7);
-  bool            * job_OK       = void_arg_get_buffer(void_arg , 8);
-
-  enkf_state_run_eclipse(enkf_state , ecl_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , max_resubmit , job_OK);
-  return NULL ; 
-}
 
 
 void enkf_state_start_eclipse(enkf_state_type * enkf_state , ecl_queue_type * ecl_queue , enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , int max_resubmit , bool *job_OK) {
@@ -943,7 +916,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , ecl_queue_type *
 
     if (status == ecl_queue_complete_OK) {
       if (load_results)
-	enkf_state_load_ecl(enkf_state , enkf_obs , unified , report_step1 , report_step2);
+	enkf_state_ecl_load(enkf_state , enkf_obs , unified , report_step1 , report_step2);
       break;
     } else if (status == ecl_queue_complete_FAIL) {
       fprintf(stderr,"** job:%d failed completely - this will break ... \n",iens);

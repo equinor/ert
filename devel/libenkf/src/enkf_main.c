@@ -93,7 +93,6 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
 
   enkf_main->meas_matrix  = meas_matrix_alloc(ens_size);
   enkf_main->ensemble     = malloc(ens_size * sizeof * enkf_main->ensemble);
-  enkf_config_post_check(config , enkf_main->sched_file);
   {
     int iens , keys , ik;
     int iens_offset = enkf_config_get_ens_offset(config);
@@ -235,7 +234,7 @@ void enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int report_step) {
 
 
 void enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int iens) {
-  thread_pool_add_job(enkf_main->thread_pool , enkf_state_load_ecl_void , enkf_main->void_arg[iens]);
+  thread_pool_add_job(enkf_main->thread_pool , enkf_state_ecl_load__ , enkf_main->void_arg[iens]);
 }
 
 
@@ -482,23 +481,15 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   enkf_main->void_arg = NULL;
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
-
+  
   if (enkf_update) {
     enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
     enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
-
+    
     {
       double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
       
       if (X != NULL) {
-	/*
-	  {
-	  int i;
-	  for (i=0; i < ens_size*ens_size; i++) X[i] = 0.0;
-	  for (i=0; i < ens_size; i++) X[i * (ens_size + 1)] = 1.0;
-	  }
-	*/
-	
 	enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */ , X);
 	free(X);
       }

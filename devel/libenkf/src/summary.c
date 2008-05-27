@@ -130,8 +130,7 @@ double summary_get(const summary_type * summary, const char * var) {
 }
 
 
-
-void summary_ecl_load(summary_type * summary , int report_step , const ecl_block_type *restart_block , const ecl_sum_type * ecl_sum) {
+void summary_ecl_load(summary_type * summary , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, int report_step) {
   DEBUG_ASSERT(summary)
   {
     const summary_config_type *config    = summary->config;

@@ -288,9 +288,9 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
 */
 
 
-void enkf_node_ecl_load(enkf_node_type *enkf_node , int report_step, const ecl_block_type * restart_block , const ecl_sum_type * ecl_sum) {
-  if (enkf_node->ecl_load != NULL) 
-    enkf_node->ecl_load(enkf_node->data , report_step , restart_block, ecl_sum);
+void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, int report_step) {
+  FUNC_ASSERT(enkf_node->ecl_load);
+  enkf_node->ecl_load(enkf_node->data , run_path   , ecl_base , ecl_sum , report_step);
 }
 
 

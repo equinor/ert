@@ -39,10 +39,8 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * , int , ecl_store_en
 enkf_node_type  * enkf_state_get_node(const enkf_state_type * , const char * );
 void              enkf_state_del_node(enkf_state_type * , const char * );
 void              enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
-void            * enkf_state_load_ecl_summary_void(void * );
-void            * enkf_state_load_ecl_restart_void(void * );
-void            * enkf_state_load_ecl_void(void * );
-void              enkf_state_load_ecl(enkf_state_type * , enkf_obs_type * , bool , int , int);
+void            * enkf_state_ecl_load__(void * );
+void              enkf_state_ecl_load(enkf_state_type * , enkf_obs_type * , bool , int , int);
 void              enkf_state_add_lsf_job(enkf_state_type *  , lsf_pool_type * , int , int );
 void            * enkf_state_run_eclipse__(void * );
 void            * enkf_state_start_eclipse__(void * );
