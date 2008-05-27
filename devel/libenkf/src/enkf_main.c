@@ -32,6 +32,7 @@
 #include <node_ctype.h>
 #include <pthread.h>
 #include <ecl_queue.h>
+#include <msg.h>
 
 struct enkf_main_struct {
   enkf_config_type   *config;
@@ -96,11 +97,14 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
   {
     int iens , keys , ik;
     int iens_offset = enkf_config_get_ens_offset(config);
-    char **keylist = enkf_config_alloc_keylist(config , &keys);
+    char **keylist  = enkf_config_alloc_keylist(config , &keys);
+    msg_type * msg  = msg_alloc("Initializing member: ");
+    msg_show(msg);
     for (iens = 0; iens < ens_size; iens++) {
       char * run_path 	    = enkf_config_alloc_run_path(config , iens + iens_offset);
       char * eclbase  	    = enkf_config_alloc_eclbase (config , iens + iens_offset);
       char * ecl_store_path = enkf_config_alloc_ecl_store_path (config , iens + iens_offset);
+      msg_update_int(msg , "%03d" , iens);
       enkf_main->ensemble[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
 						   run_path , 
 						   eclbase  , 
@@ -112,11 +116,17 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
       free(eclbase);
       free(ecl_store_path);
     }
+    msg_free(msg , true);
+    
+    msg  = msg_alloc("Adding key: ");
+    msg_show(msg);
     for (ik = 0; ik < keys; ik++) {
+      msg_update(msg , keylist[ik]);
       const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , keylist[ik]);
       for (iens = 0; iens < ens_size; iens++)
 	enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
     }
+    msg_free(msg , true);
     
     util_free_string_list(keylist , keys);
   }

@@ -131,7 +131,8 @@ double well_get(const well_type * well, const char * var) {
 }
 
 
-void well_load_summary_data(well_type * well , int report_step , const ecl_sum_type * ecl_sum) {
+
+void well_ecl_load(well_type * well , int report_step , const ecl_block_type * restart_block , const ecl_sum_type * ecl_sum) {
   DEBUG_ASSERT(well)
   {
     const well_config_type *config       = well->config;
@@ -230,4 +231,4 @@ VOID_COPYC     (well)
 VOID_SERIALIZE(well)
 VOID_DESERIALIZE(well)
 VOID_FPRINTF_RESULTS(well)
-
+VOID_ECL_LOAD(well)

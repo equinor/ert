@@ -7,6 +7,8 @@
 #include <enkf_config_node.h>
 #include <void_arg.h>
 #include <ecl_kw.h>
+#include <ecl_block.h>
+#include <ecl_sum.h>
 
 /**********************************/
 
@@ -39,6 +41,7 @@ typedef void   	      (fread_ftype)                	(      void *  , FILE *);
 typedef void   	      (fwrite_ftype)               	(const void *  , FILE *);
 typedef void   	      (initialize_ftype)     	   	(      void *  , int);
 typedef void   	      (ecl_write_ftype)            	(const void *  , const char *);
+typedef void   	      (ecl_load_ftype)            	(const void *  , int , const ecl_block_type * , const ecl_sum_type *);
 typedef void          (realloc_data_ftype)	   	(void * );
 typedef void          (free_data_ftype)	           	(void * );
 typedef void   	      (free_ftype)       	   	(      void *);
@@ -55,15 +58,16 @@ typedef void          (ensemble_fprintf_results_ftype)  (const void ** , int , c
 
 typedef enum {alloc_func       	   	    = 0, 
 	      ecl_write_func   	   	    = 1,
-	      fread_func       	   	    = 2,
-	      fwrite_func      	   	    = 3,
-	      copyc_func       	   	    = 4,
-	      initialize_func  	   	    = 5,
-	      serialize_func   	   	    = 6,
-	      deserialize_func 	   	    = 7,
-	      free_func        	   	    = 8,
-	      free_data_func   	   	    = 9,     
-	      ensemble_fprintf_results_func = 10}  node_function_type;
+	      ecl_load_func                 = 2,
+	      fread_func       	   	    = 3,
+	      fwrite_func      	   	    = 4,
+	      copyc_func       	   	    = 5,
+	      initialize_func  	   	    = 6,
+	      serialize_func   	   	    = 7,
+	      deserialize_func 	   	    = 8,
+	      free_func        	   	    = 9,
+	      free_data_func   	   	    = 10,    
+	      ensemble_fprintf_results_func = 11}  node_function_type;
 
 	      
 
@@ -89,9 +93,8 @@ void             enkf_node_clear_serial_state(enkf_node_type * );
 void             enkf_node_deserialize(enkf_node_type * , double * , size_t );
 void             enkf_node_ensure_memory(enkf_node_type * );
 
-
+void             enkf_node_ecl_load  (enkf_node_type *, int , const ecl_block_type * , const ecl_sum_type *);
 void             enkf_node_ecl_write (const enkf_node_type *, const char *);
-/*void             enkf_node_ecl_read  (enkf_node_type * , const char *);*/
 void             enkf_node_initialize(enkf_node_type *enkf_node , int);
 void             enkf_node_printf(const enkf_node_type *);
 void             enkf_node_fwrite (const enkf_node_type * , FILE * stream);

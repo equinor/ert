@@ -35,6 +35,7 @@ struct serial_state_struct {
 struct enkf_node_struct {
   alloc_ftype         *alloc;
   ecl_write_ftype     *ecl_write;
+  ecl_load_ftype      *ecl_load;
   fread_ftype         *fread_f;
   fwrite_ftype        *fwrite_f;
   realloc_data_ftype  *realloc_data;
@@ -277,6 +278,22 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
 }
 
 
+/**
+   This function loads (internalizes) ECLIPSE results, the ecl_block
+   instance with restart data, and the ecl_sum instance with summary
+   data must be loaded by the calling function.
+
+   If the node does not have a ecl_load function, the function just
+   returns.
+*/
+
+
+void enkf_node_ecl_load(enkf_node_type *enkf_node , int report_step, const ecl_block_type * restart_block , const ecl_sum_type * ecl_sum) {
+  if (enkf_node->ecl_load != NULL) 
+    enkf_node->ecl_load(enkf_node->data , report_step , restart_block, ecl_sum);
+}
+
+
 void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
   if (!enkf_node->memory_allocated) 
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
@@ -454,12 +471,14 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   node->data             = NULL;
   node->memory_allocated = false;
 
-  /* Start by initializing all function pointers 
+  /* 
+     Start by initializing all function pointers 
      to NULL.
   */
   node->realloc_data   = NULL;
   node->alloc          = NULL;
   node->ecl_write      = NULL;
+  node->ecl_load       = NULL;
   node->fread_f        = NULL;
   node->fwrite_f       = NULL;
   node->copyc          = NULL;
@@ -525,6 +544,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->fprintf_results = multflt_ensemble_fprintf_results__;
     break;
   case(WELL):
+    node->ecl_load        = well_ecl_load__;
     node->realloc_data 	  = well_realloc_data__;
     node->alloc        	  = well_alloc__;
     node->fread_f      	  = well_fread__;
@@ -537,6 +557,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->fprintf_results = well_ensemble_fprintf_results__;
     break;
   case(SUMMARY):
+    node->ecl_load     = summary_ecl_load__;
     node->realloc_data = summary_realloc_data__;
     node->alloc        = summary_alloc__;
     node->fread_f      = summary_fread__;
@@ -628,6 +649,7 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
   switch (function_type) {
     CASE_SET(alloc_func        		    , node->alloc);
     CASE_SET(ecl_write_func    		    , node->ecl_write);
+    CASE_SET(ecl_load_func                  , node->ecl_load);
     CASE_SET(fread_func        		    , node->fread_f);
     CASE_SET(fwrite_func       		    , node->fwrite_f);
     CASE_SET(copyc_func        		    , node->copyc);

@@ -1,14 +1,16 @@
 #ifndef __WELL_H__
 #define __WELL_H__
 #include <ecl_sum.h>
+#include <ecl_block.h>
 #include <enkf_macros.h>
 #include <enkf_util.h>
 
 typedef struct well_struct well_type;
 
 double    well_get(const well_type * , const char * );
-void      well_load_summary_data(well_type * , int , const ecl_sum_type * );
+void      well_load_summary_data(well_type * , int , const ecl_block_type * , const ecl_sum_type * );
 
+VOID_ECL_LOAD_HEADER(well);
 ALLOC_STATS_HEADER(well)
 MATH_OPS_VOID_HEADER(well);
 VOID_ALLOC_HEADER(well);

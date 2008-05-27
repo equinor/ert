@@ -379,9 +379,15 @@ static void enkf_config_post_assert(const enkf_config_type * config) {
   __assert_not_null(config->ens_path           , "ENSPATH"  , OK);
   __assert_not_null(config->schedule_src_file  , "SCHEDULE" , OK);
   __assert_not_null(config->schedule_src_file  , "SCHEDULE" , OK);
-  
+  if (config->ens_size <= 0) {
+    fprintf(stderr,"Must set ensemble size > 0 with KEYWORD SIZE.\n");
+    OK = false;
+  }
+  if (!OK) util_exit("Exiting due to errors in config file\n");
 }
 #undef __assert_not_null
+
+
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) util_abort("%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); 
 enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file , 

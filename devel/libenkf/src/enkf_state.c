@@ -22,6 +22,7 @@
 #include <gen_kw.h>
 #include <ecl_sum.h>
 #include <well.h>
+#include <summary.h>
 #include <multz.h>
 #include <multflt.h>
 #include <equil.h>
@@ -487,6 +488,9 @@ void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , 
 
 
 
+
+   
+
 void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , int report_step) {
   const bool fmt_file = enkf_state_fmt_file(enkf_state);
   ecl_sum_type * ecl_sum;
@@ -494,7 +498,7 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
   const char ** well_list = enkf_config_get_well_list_ref(enkf_state->config , &Nwells);
   char * summary_file     = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_file        , fmt_file ,  report_step);
   char * header_file      = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file , fmt_file , -1);
-
+  
   int iwell;
   ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
   for (iwell = 0; iwell < Nwells; iwell++) {
@@ -502,9 +506,21 @@ void enkf_state_load_ecl_summary(enkf_state_type * enkf_state, bool unified , in
       enkf_state_add_node(enkf_state , well_list[iwell] , enkf_config_get_node_ref(enkf_state->config , well_list[iwell])); 
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , well_list[iwell]);
-      well_load_summary_data(enkf_node_value_ptr(enkf_node) , report_step , ecl_sum);
+      enkf_node_ecl_load(enkf_node , report_step , NULL , ecl_sum);
     }
   }
+  
+  {
+    list_node_type *list_node;                                             
+    list_node = list_get_head(enkf_state->node_list);                      
+    while (list_node != NULL) {                                            
+      enkf_node_type *enkf_node = list_node_value_ptr(list_node);          
+      if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
+	enkf_node_ecl_load(enkf_node , report_step , NULL , ecl_sum);
+      list_node = list_node_get_next(list_node);                           
+    }                                                                      
+  }
+  
   ecl_sum_free(ecl_sum);
   free(summary_file);
   free(header_file);

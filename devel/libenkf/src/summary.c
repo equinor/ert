@@ -122,17 +122,16 @@ double summary_get(const summary_type * summary, const char * var) {
   {
     const summary_config_type *config    = summary->config;
     int index                            = summary_config_get_var_index(config , var);
-    if (index < 0) {
-      fprintf(stderr,"%s: summary instance does not have variable:%s - aborting \n",__func__ , var);
-      abort();
-    }
+    if (index < 0) 
+      util_abort("%s: summary instance does not have variable:%s - aborting \n",__func__ , var);
+    
     return summary->data[index];
   }
 }
 
 
 
-void summary_load_data(summary_type * summary , int report_step , const ecl_sum_type * ecl_sum) {
+void summary_ecl_load(summary_type * summary , int report_step , const ecl_block_type *restart_block , const ecl_sum_type * ecl_sum) {
   DEBUG_ASSERT(summary)
   {
     const summary_config_type *config    = summary->config;
@@ -157,5 +156,5 @@ VOID_FREAD  (summary)
 VOID_COPYC     (summary)
 VOID_SERIALIZE(summary)
 VOID_DESERIALIZE(summary)
-
+VOID_ECL_LOAD(summary)
 
