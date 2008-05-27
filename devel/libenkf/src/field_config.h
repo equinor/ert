@@ -9,8 +9,9 @@
 #include <path_fmt.h>
 
 
-typedef enum { unknown_file  = 0 , rms_roff_file = 1 , ecl_kw_file = 2 , ecl_grdecl_file = 3} field_file_type;
-typedef enum { ecl_kw_format = 0 , ecl_grdecl_format = 1} field_ecl_export_format;
+typedef enum { unknown_file     = 0 , rms_roff_file = 1 , ecl_kw_file = 2 , ecl_grdecl_file = 3} field_file_type;
+typedef enum { ecl_kw_all_cells = 0 , ecl_kw_active_cells = 1 , ecl_grdecl_format = 2}           field_ecl_export_format;
+/* active_cells currently not really implemented */
 
 /* Must be power of two series */
 

@@ -127,9 +127,8 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
     Observe that size is the number of *ACTIVCE* cells,
     and generally *not* equal to nx*ny*nz.
   */
-  config->data_size        = active_size; 
-
-  config->ecl_export_format        = ecl_kw_format;
+  config->data_size                = active_size; 
+  config->ecl_export_format        = ecl_kw_all_cells;
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;

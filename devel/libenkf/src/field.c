@@ -353,6 +353,7 @@ void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , 
 }
 
 
+
 static void * __field_alloc_3D_data(const field_type * field , int data_size , ecl_type_enum ecl_type , ecl_type_enum target_type) {
   void * data = util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
   if (ecl_type == ecl_double_type) {
@@ -430,7 +431,7 @@ void field_ecl_write1D(const field_type * field , const char * path) {
 void field_ecl_write(const field_type * field , const char * path) {
   field_ecl_export_format export_format = field_config_get_ecl_export_format(field->config);
   switch (export_format) {
-  case(ecl_kw_format):
+  case(ecl_kw_all_cells):
     field_ecl_write3D(field , path);
     break;
   case(ecl_grdecl_format):

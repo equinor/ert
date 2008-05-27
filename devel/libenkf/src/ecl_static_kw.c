@@ -19,7 +19,7 @@ struct ecl_static_kw_struct {
 
 
 
-const ecl_kw_type * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * ecl_static) { return ecl_static->ecl_kw; }
+ecl_kw_type * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * ecl_static) { return ecl_static->ecl_kw; }
 
 ecl_static_kw_type * ecl_static_kw_alloc(const ecl_static_kw_config_type * config) {
   ecl_static_kw_type * static_kw = malloc(sizeof *static_kw);

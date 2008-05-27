@@ -279,6 +279,22 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
 
 
 /**
+   This function writes the node data, which must be either a field,
+   or STATIC. Directly to an open fortio instance. No node->function is invoked.
+*/
+
+void enkf_node_ecl_write_fortio(const enkf_node_type *enkf_node , fortio_type * fortio , bool fmt_file , enkf_impl_type impl_type) {
+  if (impl_type == STATIC) {
+    ecl_kw_type * ecl_kw = ecl_static_kw_ecl_kw_ptr( enkf_node_value_ptr(enkf_node) );
+    ecl_kw_set_fmt_file(ecl_kw , fmt_file);
+    ecl_kw_fwrite(ecl_kw , fortio);
+  } else if (impl_type == FIELD) {
+    field_ecl_write1D_fortio(enkf_node_value_ptr(enkf_node) , fortio , fmt_file , fortio_get_endian_flip(fortio));
+  } else
+    util_abort("%s: internal error - unrecognized type:%d \n",__func__ , impl_type);
+}
+
+/**
    This function loads (internalizes) ECLIPSE results, the ecl_block
    instance with restart data, and the ecl_sum instance with summary
    data must be loaded by the calling function.

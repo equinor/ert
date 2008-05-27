@@ -98,7 +98,7 @@ obs_data_type * obs_data_alloc() {
 
 
 void obs_data_reset(obs_data_type * obs_data) { 
-  obs_data->total_size = 0; 
+  obs_data->total_size  = 0; 
   obs_data->active_size = 0; 
 }
 

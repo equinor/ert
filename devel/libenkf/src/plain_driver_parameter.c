@@ -50,7 +50,7 @@ void plain_driver_parameter_load_node(void * _driver , int _report_step , int ie
   plain_driver_parameter_assert_cast(driver);
   {
     char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream = util_fopen(filename , "r");
+    FILE * stream   = util_fopen(filename , "r");
     enkf_node_fread(node , stream);
     fclose(stream);
     free(filename);

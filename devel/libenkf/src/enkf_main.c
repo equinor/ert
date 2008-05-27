@@ -347,6 +347,7 @@ enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main ,
   const int ens_size              = enkf_config_get_ens_size(enkf_main->config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
   int iens;
+
   for (iens = 0; iens < ens_size; iens++)
     node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
   
@@ -398,10 +399,8 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   const int sleep_time     	= 1;
   int iens;
   
-  if (enkf_update) {
-    enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
-    meas_matrix_reset(enkf_main->meas_matrix);
-  }
+  enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
+  meas_matrix_reset(enkf_main->meas_matrix);
   
   if (enkf_main->void_arg != NULL) 
     util_abort("%s: hmmm - something is rotten - aborting \n",__func__);
@@ -419,11 +418,12 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
     void_arg_pack_int(enkf_main->void_arg[iens]  , 5 , step1);
     void_arg_pack_int(enkf_main->void_arg[iens]  , 6 , step2);
     void_arg_pack_int(enkf_main->void_arg[iens]  , 7 , -1);
-    void_arg_pack_bool(enkf_main->void_arg[iens] , 8 , enkf_update);
+    void_arg_pack_bool(enkf_main->void_arg[iens] , 8 , true);  /* This true is the question whether to load results ... */
     /* 
-       The final bool is not packed - that is a return value, which
-       is set in the called routine.
+       The final bool is not packed - that is a return value, which is
+       set in the called routine.
     */
+    
   }
   
   /*
@@ -444,15 +444,15 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
       for (iens = 0; iens < ens_size; iens++) 
 	thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , enkf_main->void_arg[iens]);
 
-      thread_pool_join(enkf_main->thread_pool);
+      thread_pool_join(enkf_main->thread_pool);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(enkf_main->thread_pool);
-    
+
       enkf_main->thread_pool = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
 	thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
-      thread_pool_join(enkf_main->thread_pool);
-      pthread_join ( queue_thread , NULL );
-      ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done */
+      thread_pool_join(enkf_main->thread_pool);  /* All jobs have completed and the results have been loaded back. */
+      pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      		   */
+      ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done. 		   */               
       void_arg_free( queue_args );
     }
     
@@ -461,7 +461,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
       int model_nr = 0;
       for (iens = 0; iens < ens_size; iens++) {
 	if ( !void_arg_get_bool(enkf_main->void_arg[iens] , 9)) {
-	  if ( !complete_OK) {
+	  if ( !complete_OK ) {
 	    fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
 	    complete_OK = false;
 	  }
@@ -470,7 +470,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
 	}
       }
       if (!complete_OK)
-	exit(1);
+	util_exit("");
     }
   }
 
@@ -482,24 +482,22 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
   
+  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
+  enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+  
   if (enkf_update) {
-    enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
-    enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
     
-    {
-      double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
-      
-      if (X != NULL) {
-	enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */ , X);
-	free(X);
-      }
+    if (X != NULL) {
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */ , X);
+      free(X);
     }
-      
-    printf("---------------------------------\n");
-    enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
-    enkf_main_fprintf_results(enkf_main);
-    printf("%s: ferdig med step: %d \n" , __func__,step2);
   }
+    
+  printf("---------------------------------\n");
+  enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
+  enkf_main_fprintf_results(enkf_main);
+  printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
 
 

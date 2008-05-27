@@ -9,6 +9,7 @@
 #include <ecl_kw.h>
 #include <ecl_block.h>
 #include <ecl_sum.h>
+#include <fortio.h>
 
 /**********************************/
 
@@ -117,5 +118,5 @@ const char     *  enkf_node_get_key_ref(const enkf_node_type * );
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);
 bool         	  enkf_node_has_func(const enkf_node_type * , node_function_type );
 void              enkf_node_load_static_ecl_kw(enkf_node_type *, const ecl_kw_type *);
-
+void              enkf_node_ecl_write_fortio(const enkf_node_type * , fortio_type * , bool , enkf_impl_type);
 #endif
