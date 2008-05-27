@@ -27,7 +27,7 @@ int main (int argc , char ** argv) {
 
   install_SIGNALS();
   if (argc != 2) 
-    util_abort("%s: usage %s config_file \n",__func__ , argv[0]);
+    util_exit("%s: usage %s config_file \n",__func__ , argv[0]);
   else {
     const char * site_config_file = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * config_file      = argv[1];

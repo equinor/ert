@@ -6,6 +6,7 @@ involved with observations/measurement/+++.
 #include <stdio.h>
 #include <enkf_util.h>
 #include <meas_vector.h>
+#include <util.h>
 
 struct meas_vector_struct {
   int     size;

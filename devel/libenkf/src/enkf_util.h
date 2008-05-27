@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <enkf_types.h>
+#include <ecl_util.h>
 
 
 /*****************************************************************/
@@ -290,8 +291,12 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 /*****************************************************************/
 
 
-size_t enkf_util_serialize(const double * , const bool * , size_t , size_t , double * , size_t , size_t , int ,  bool * );
+size_t enkf_util_serialize(const double *   , const bool *  , size_t , size_t , double * , size_t , size_t , int ,  bool * );
 size_t enkf_util_deserialize(double *     , const bool * , size_t , size_t , size_t   , const double * , size_t , int );
+
+size_t enkf_util_serializeII(const void * , ecl_type_enum ,  const bool * , size_t , size_t , double * , size_t , size_t , int ,  bool * );
+size_t enkf_util_deserializeII(void *     , ecl_type_enum , const bool * , size_t , size_t , size_t   , const double * , size_t , int );
+
 void   enkf_util_fwrite(const void *, int , int , FILE *, const char * );
 void   enkf_util_fread ( void *, int , int , FILE *, const char * );
 

@@ -182,7 +182,7 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
 void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * target_file) {
   DEBUG_ASSERT(gen_kw)
   gen_kw_filter_file(gen_kw , target_file);
-
+  
   /* 
      Esktra eksekverbar : sytem("xxxx ");
   */

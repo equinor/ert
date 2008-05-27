@@ -19,6 +19,7 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * t
   gen_kw_config->template_file = util_alloc_string_copy(template_file);
   gen_kw_config->executable    = NULL;
 
+
   /* 
      Allows for template_file == NULL - as a way to adapt to
      the requirements of the havana_fault object. Should maybe

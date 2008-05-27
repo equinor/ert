@@ -22,6 +22,7 @@ struct havana_fault_config_struct
   fault_group_type   ** fault_groups;
 };
 
+void                         havana_fault_config_run_havana(const havana_fault_config_type *  , scalar_type *  , const char * );
 const char                 * havana_fault_config_get_template_ref(const havana_fault_config_type * );
 havana_fault_config_type   * havana_fault_config_fscanf_alloc(const char *);
 void                         havana_fault_config_free(havana_fault_config_type *);

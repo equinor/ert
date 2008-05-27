@@ -511,17 +511,18 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->free_data   = relperm_free_data__;
     break;
   case(MULTFLT):
-    node->realloc_data = multflt_realloc_data__;
-    node->alloc        = multflt_alloc__;
-    node->ecl_write    = multflt_ecl_write__;
-    node->fread_f      = multflt_fread__;
-    node->fwrite_f     = multflt_fwrite__;
-    node->copyc        = multflt_copyc__;
-    node->initialize   = multflt_initialize__;
-    node->serialize    = multflt_serialize__;
-    node->deserialize  = multflt_deserialize__;
-    node->freef        = multflt_free__;
-    node->free_data    = multflt_free_data__;
+    node->realloc_data 	  = multflt_realloc_data__;
+    node->alloc        	  = multflt_alloc__;
+    node->ecl_write    	  = multflt_ecl_write__;
+    node->fread_f      	  = multflt_fread__;
+    node->fwrite_f     	  = multflt_fwrite__;
+    node->copyc        	  = multflt_copyc__;
+    node->initialize   	  = multflt_initialize__;
+    node->serialize    	  = multflt_serialize__;
+    node->deserialize  	  = multflt_deserialize__;
+    node->freef        	  = multflt_free__;
+    node->free_data    	  = multflt_free_data__;
+    node->fprintf_results = multflt_ensemble_fprintf_results__;
     break;
   case(WELL):
     node->realloc_data 	  = well_realloc_data__;
@@ -547,17 +548,18 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->free_data    = summary_free_data__;
     break;
   case(HAVANA_FAULT):
-    node->realloc_data = havana_fault_realloc_data__;
-    node->alloc        = havana_fault_alloc__;
-    node->ecl_write    = havana_fault_ecl_write__;
-    node->fread_f      = havana_fault_fread__;
-    node->fwrite_f     = havana_fault_fwrite__;
-    node->copyc        = havana_fault_copyc__;
-    node->serialize    = havana_fault_serialize__;
-    node->deserialize  = havana_fault_deserialize__;
-    node->freef        = havana_fault_free__;
-    node->free_data    = havana_fault_free_data__;
-    node->initialize   = havana_fault_initialize__;
+    node->realloc_data 	  = havana_fault_realloc_data__;
+    node->alloc        	  = havana_fault_alloc__;
+    node->ecl_write    	  = havana_fault_ecl_write__;
+    node->fread_f      	  = havana_fault_fread__;
+    node->fwrite_f     	  = havana_fault_fwrite__;
+    node->copyc        	  = havana_fault_copyc__;
+    node->serialize    	  = havana_fault_serialize__;
+    node->deserialize  	  = havana_fault_deserialize__;
+    node->freef        	  = havana_fault_free__;
+    node->free_data    	  = havana_fault_free_data__;
+    node->initialize   	  = havana_fault_initialize__;
+    node->fprintf_results = havana_fault_ensemble_fprintf_results__;
     break;
   case(FIELD):
     node->realloc_data = field_realloc_data__;

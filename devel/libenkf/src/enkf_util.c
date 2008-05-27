@@ -1,64 +1,12 @@
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <enkf_util.h>
 #include <util.h>
 #include <ecl_util.h>
 
-
-/*
-void * enkf_util_malloc(int byte_size , const char * caller) {
-  void *tmp = malloc(byte_size);
-  if (tmp == NULL) {
-    fprintf(stderr,"%s: failed to allocate %d bytes - aborting \n",caller , byte_size);
-    abort();
-  }
-  return tmp;
-}
-
-void * enkf_util_calloc(int elements , int element_size , const char * caller) {
-  void *tmp = calloc(elements , element_size);
-  if (tmp == NULL) {
-    fprintf(stderr,"%s: failed to allocate %d bytes - aborting \n",caller , elements * element_size);
-    abort();
-  }
-  return tmp;
-}
-
-
-void * enkf_util_realloc(void *ptr , int byte_size , const char * caller) {
-  void *tmp = realloc(ptr , byte_size);
-  if (tmp == NULL) {
-    fprintf(stderr,"%s: failed to allocate %d bytes - aborting \n",caller , byte_size);
-    abort();
-  }
-  return tmp;
-}
-
-
-
-static FILE * enkf_util_fopen(const char * filename , const char * mode , const char * text_mode , const char * caller) {
-  FILE *stream = fopen(filename , mode);
-  if (stream == NULL) {
-    fprintf(stderr,"%s: failed to open:%s for %s - aborting \n",caller , filename , text_mode);
-    abort();
-  }
-  return stream;
-}
-  
-FILE * enkf_util_fopen_w(const char * filename , const char * caller) {
-  return enkf_util_fopen(filename , "w" , "writing" , caller);
-}
-
-FILE * enkf_util_fopen_a(const char * filename , const char * caller) {
-  return enkf_util_fopen(filename , "a" , "appending" , caller);
-}
-
-FILE * enkf_util_fopen_r(const char * filename , const char * caller) {
-  return enkf_util_fopen(filename , "r" , "reading" , caller);
-}
-*/
 
 
 void enkf_util_fwrite(const void *ptr , int item_size, int items , FILE *stream , const char * caller) {
@@ -129,10 +77,34 @@ void enkf_util_truncate(void * void_data , int size , ecl_type_enum ecl_type , v
 }
 #undef TRUNCATE
 
+
+
+size_t enkf_util_serializeII(const void * __node_data, ecl_type_enum node_type ,  const bool * active , size_t node_offset , size_t node_size , double * serial_data , 
+			     size_t serial_size , size_t serial_offset , int serial_stride ,  bool * complete) {
+  
+  size_t node_index;
+  size_t serial_index = 0;
+
+  if (node_type == ecl_double_type) {
+    /* Serialize double -> double */
+    const  double * node_data = (const double *) __node_data;
+#include "serialize.h"
+  } else if (node_type == ecl_float_type) {
+    /* Serialize float -> double */
+    const  float * node_data = (const float *) __node_data;
+#include "serialize.h"
+  } else 
+    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+
+  return serial_index;
+
+}
+
+
+
 /*
   Denne maa ta inn type paa node_data.
 */
-
 size_t enkf_util_serialize(const double * node_data, const bool * active , size_t node_offset , size_t node_size , double * serial_data , 
 			   size_t serial_size , size_t serial_offset , int serial_stride ,  bool * complete) {
   size_t node_index;
@@ -172,6 +144,31 @@ size_t enkf_util_serialize(const double * node_data, const bool * active , size_
   return serial_index;
 }
 
+
+
+size_t enkf_util_deserializeII(void * __node_data , ecl_type_enum node_type , const bool * active , size_t node_offset , size_t node_size , size_t node_serial_size , 
+			       const double * serial_data , size_t serial_offset , int serial_stride) {
+  
+  size_t serial_index = 0;
+  size_t node_index;
+  size_t new_node_offset = 0;
+  int    last_node_index = util_int_min(node_size , node_offset + node_serial_size);
+  if (last_node_index < (node_size - 1))
+    new_node_offset = last_node_index;
+  else
+    new_node_offset = 0;
+  
+  if (node_type == ecl_double_type) {
+    double * node_data = (double *) __node_data;
+#include "deserialize.h"
+  } else if (node_type == ecl_float_type) {
+    float * node_data = (float *) __node_data;
+#include "deserialize.h"
+  } else 
+    util_abort("%s: internal error: trying to deserialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+
+  return new_node_offset;
+}
 
 
 

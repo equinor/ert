@@ -489,18 +489,23 @@ int field_deserialize(field_type * field , int internal_offset , size_t serial_s
   double *data = NULL; /* Shut up compiler */
   int new_internal_offset;
 
-  if (ecl_type == ecl_double_type)
+  /*
+    if (ecl_type == ecl_double_type)
     data = &((double *) field->data)[internal_offset];
-  else if (ecl_type == ecl_float_type) 
+    else if (ecl_type == ecl_float_type) 
     data = util_malloc(serial_size * sizeof * data , __func__);
-  else 
+    else 
     util_abort("%s: tried to deserialize field with type:%d different from float/double - aborting \n",__func__ , ecl_type);
+  */
+    
+  new_internal_offset = enkf_util_deserializeII(field->data , ecl_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
 
-  new_internal_offset = enkf_util_deserialize(data , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
-  if (ecl_type == ecl_float_type) {
+  /*
+    if (ecl_type == ecl_float_type) {
     util_double_to_float( &((float *) field->data)[internal_offset] , data , serial_size);
     free(data);
-  }
+    }
+  */
 
   field_truncate(field);
   return new_internal_offset;
@@ -515,20 +520,7 @@ int field_serialize(const field_type *field , int internal_offset , size_t seria
   const int                data_size  = field_config_get_data_size(config);
 
   int elements_added;
-  double *data = NULL;
-  
-  if (ecl_type == ecl_double_type)
-    data = (double *) field->data;
-  else if (ecl_type == ecl_float_type) {
-    data = util_malloc(data_size * sizeof * data , __func__);
-    util_float_to_double(data , (const float *) field->data , data_size);
-  } else 
-    util_abort("%s: tried to serialize field with type:%s(%d) different from float/double - aborting \n",__func__ , ecl_util_type_name(ecl_type) , ecl_type);
-
-  elements_added = enkf_util_serialize(data , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
-  
-  if (ecl_type == ecl_float_type) free(data);
-  return elements_added;
+  elements_added = enkf_util_serializeII(field->data , ecl_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
 }
 
 

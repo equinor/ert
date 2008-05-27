@@ -97,7 +97,7 @@ static void obs_error_free(obs_error_type * well_error) {
 }
 
 
-static void obs_error_iset(obs_error_type * well_error , int report , double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+static void obs_error_iset(obs_error_type * well_error , int report , double rel_std , double abs_std , enkf_obs_error_type error_mode , bool active) {
   if (report < 0 || report >= well_error->size) {
     fprintf(stderr,"%s report_nr:%d not in interval [0,%d> - aborting \n",__func__ , report , well_error->size);
     abort();
@@ -123,24 +123,25 @@ static void obs_error_iset(obs_error_type * well_error , int report , double abs
 
 
 
-static void obs_error_set_block(obs_error_type * well_error , int first_report , int last_report , double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+static void obs_error_set_block(obs_error_type * well_error , int first_report , int last_report , double rel_std , double abs_std , enkf_obs_error_type error_mode , bool active) {
   int report_nr;
   for (report_nr = 0; report_nr <= last_report; report_nr++)
-    obs_error_iset(well_error , report_nr , abs_std , rel_std , error_mode , active);
+    obs_error_iset(well_error , report_nr , rel_std , abs_std , error_mode , active);
 }
 
 
-static void obs_error_set_all(obs_error_type * well_error , double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+static void obs_error_set_all(obs_error_type * well_error , double rel_std , double abs_std , enkf_obs_error_type error_mode , bool active) {
   obs_error_set_block(well_error , 0 , well_error->size - 1, abs_std , rel_std , error_mode , active);
 }
 
-static void obs_error_set_last(obs_error_type * well_error , int report_size, double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+static void obs_error_set_last(obs_error_type * well_error , int report_size, double rel_std , double abs_std , enkf_obs_error_type error_mode , bool active) {
   obs_error_set_block(well_error , well_error->size - report_size , well_error->size - 1, abs_std , rel_std , error_mode , active);
 }
 
-static void obs_error_set_first(obs_error_type * well_error , int report_size, double abs_std , double rel_std , enkf_obs_error_type error_mode , bool active) {
+static void obs_error_set_first(obs_error_type * well_error , int report_size, double rel_std , double abs_std ,  enkf_obs_error_type error_mode , bool active) {
   obs_error_set_block(well_error , 0 , report_size , abs_std , rel_std , error_mode , active);
 }
+
 
 static double obs_error_iget_std(obs_error_type * well_error , int report_step, double data) {
   if (report_step < 0 || report_step >= well_error->size) {
@@ -314,21 +315,19 @@ well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_
 		abort();
 	      }
 	      if (strcmp(error_mode , "ABS") == 0) 
-		obs_error_set_block(well_var->error , report1 , report2 , std1 , 0.0  , abs_error , true);
+		obs_error_set_block(well_var->error , report1 , report2 , 0.0  , std1 , abs_error , true);
 	      else if (strcmp(error_mode , "REL") == 0)
-		obs_error_set_block(well_var->error , report1 , report2 , 0.0  , std1 , rel_error , true);
+		obs_error_set_block(well_var->error , report1 , report2 , std1 , 0.0  , rel_error , true);
 	      else if (strcmp(error_mode , "RELMIN") == 0) {
 		if (active_tokens >= 8) {
+
 		  if (sscanf(token_list[7] , "%lg" , &std2) == 1)
 		    obs_error_set_block(well_var->error , report1 , report2 , std1 , std2 , rel_min_abs_error , true);
-		  else {
-		    fprintf(stderr,"%s: could not parse: %s as floating number - aborting \n",__func__ , token_list[7]);
-		    abort();
-		  }
-		} else {
-		  fprintf(stderr,"%s: to few tokens - aborting \n",__func__);
-		  abort();
-		}
+		  else 
+		    util_abort("%s: could not parse: %s as floating number - aborting \n",__func__ , token_list[7]);
+		  
+		} else
+		  util_abort("%s: to few tokens - aborting \n",__func__);
 	      }
 	    }  
 	  } else {

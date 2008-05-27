@@ -474,9 +474,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		ASSERT_TOKENS("INIT_FILE" , active_tokens , 1);
 		enkf_config_set_init_file(enkf_config , token_list[1]);
 	      } else if (strcmp(kw , "DATA_KW") == 0) {
-		/* This is later 'stolen' by the enkf_state objects - and the encompassing hash structure is free'd and forgotten. */
+		/* This is later taken over by the enkf_state objects */
 		ASSERT_TOKENS("DATA_KW" , active_tokens , 2);
-		hash_insert_hash_owned_ref(enkf_config->data_kw , token_list[1] , util_alloc_joined_string(&token_list[2] , active_tokens - 2 , " ") , free);
+		hash_insert_hash_owned_ref(enkf_config->data_kw , token_list[1] , util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ") , free);
 	      } else if (strcmp(kw , "RUNPATH") == 0) {
 		ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
 		enkf_config_set_run_path( enkf_config , token_list[1] );

@@ -116,7 +116,7 @@ double trans_logunif(double x , const void_arg_type * arg) {
 transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_arg_type **_void_arg , bool *active) {
   char            * func_name;
   void_arg_type   * void_arg = NULL;
-  transform_ftype * transf;
+  transform_ftype * transf   = NULL;
 
   *active = true;
   func_name = util_fscanf_alloc_token(stream);

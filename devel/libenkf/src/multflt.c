@@ -177,6 +177,79 @@ multflt_type * multflt_alloc_mean(int ens_size , const multflt_type **multflt_en
 
 
 
+#define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
+void multflt_ensemble_fprintf_results(const multflt_type ** ensemble, int ens_size , const char * filename) {
+  const multflt_config_type * config = ensemble[0]->config;
+  const int float_width     =  9;
+  const int float_precision =  5;
+  int        size    = multflt_config_get_data_size(ensemble[0]->config);
+  int      * width   = util_malloc((size + 1) * sizeof * width , __func__);
+  int        ikw , total_width;
+
+  multflt_type * mean;
+  multflt_type * std;
+
+  multflt_alloc_stats(ensemble , ens_size , &mean , &std);
+  width[0] = strlen("Member #|");
+  total_width = width[0];
+  for (ikw = 0; ikw < size; ikw++) {
+    width[ikw + 1]  = util_int_max(strlen(multflt_config_get_name(config , ikw)), 2 * float_width + 5) + 1;  /* Must accomodate A +/- B */
+    width[ikw + 1] += ( 1 - (width[ikw + 1] & 1)); /* Ensure odd length */
+    total_width += width[ikw + 1] + 1;
+  }
+
+  {
+    FILE * stream = util_fopen(filename , "w");
+    int iens;
+
+    util_fprintf_string("Member #|" , width[0] , true , stream);
+    for (ikw = 0; ikw < size; ikw++) {
+      util_fprintf_string(multflt_config_get_name(config , ikw) , width[ikw + 1] , center , stream);
+      fprintf(stream , "|");
+    }
+    fprintf(stream , "\n");
+    PRINT_LINE(total_width , '=' , stream);
+
+    util_fprintf_string("Mean" , width[0] - 1 , true , stream);
+    fprintf(stream , "|");
+    {
+      const double * mean_data = scalar_get_output_ref(mean->scalar);
+      const double * std_data  = scalar_get_output_ref(std->scalar);
+      for (ikw = 0; ikw < size; ikw++) {
+	int w = (width[ikw + 1] - 5) / 2;
+	util_fprintf_double(mean_data[ikw] , w , float_precision , stream);
+	fprintf(stream , " +/- ");
+	util_fprintf_double(std_data[ikw] , w , float_precision , stream);
+	fprintf(stream , "|");
+      }
+      fprintf(stream , "\n");
+    }
+    PRINT_LINE(total_width , '-' , stream);
+    for (iens = 0; iens < ens_size; iens++) {
+      const double * data = scalar_get_output_ref(ensemble[iens]->scalar);
+      util_fprintf_int(iens , width[0] - 1 , stream);
+      fprintf(stream , "|");
+      
+      for (ikw = 0; ikw < size; ikw++) {
+	util_fprintf_double(data[ikw] , width[ikw + 1] , float_precision , stream);
+	fprintf(stream , "|");
+      }
+      fprintf(stream , "\n");
+    }
+    PRINT_LINE(total_width , '=' , stream);
+    fclose(stream);
+  }
+  
+  multflt_free(mean);
+  multflt_free(std);
+  free(width);
+}
+#undef PRINT_LINE
+
+
+
+
+
 /*****************************************************************/
 
 
@@ -211,9 +284,6 @@ const char * multflt_get_name(const multflt_type * multflt, int fault_nr) {
 }
 
 
-/*
-  Mathops not implemented ... 
-*/
 
 MATH_OPS_SCALAR(multflt);
 VOID_ALLOC(multflt);
@@ -230,3 +300,5 @@ VOID_FREAD  (multflt)
 VOID_COPYC  (multflt)
 VOID_FREE(multflt)
 VOID_REALLOC_DATA(multflt)
+ALLOC_STATS_SCALAR(multflt)
+VOID_FPRINTF_RESULTS(multflt)
