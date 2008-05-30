@@ -135,7 +135,6 @@ static void ecl_queue_initialize_node(ecl_queue_type * queue , int queue_index ,
     node->external_id    = external_id;
     node->submit_attempt = 0;
     node->run_path       = path_fmt_alloc_path(queue->run_path_fmt , external_id);
-
     node->ecl_base       = path_fmt_alloc_path(queue->ecl_base_fmt , external_id);
     if (queue->target_file_fmt != NULL)
       node->target_file = path_fmt_alloc_path(queue->target_file_fmt , external_id , external_id , target_report);
@@ -174,6 +173,8 @@ static bool ecl_queue_change_node_status(ecl_queue_type * queue , ecl_queue_node
   ecl_queue_node_set_status(node , new_status);
   queue->status_list[old_status]--;
   queue->status_list[new_status]++;
+  if (new_status == ecl_queue_done)
+    printf("Setting %s -> DONE \n",node->ecl_base);
   if (new_status != old_status)
     return true;
   else
@@ -345,7 +346,11 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 	int num_submit_new = queue->max_running - total_active; 
 	char spinner2[2];
 	spinner2[1] = '\0';
-
+	
+	/*
+	  printf("num_submit_new:%d = %d - (%d + %d)  \n",num_submit_new , queue->max_running , queue->status_list[ecl_queue_pending] , queue->status_list[ecl_queue_running]);
+	  sleep(3);
+	*/
 	new_jobs = false;
 	if (queue->status_list[ecl_queue_waiting] > 0)   /* We have waiting jobs at all           */
 	  if (num_submit_new > 0)                        /* The queue can allow more running jobs */
@@ -392,7 +397,11 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 	    new_jobs = false;
 	}
       }
-      
+      /*
+	printf("=================================================================\n");
+	printf("== Ferdig med nye jobber == \n");
+	sleep(2);
+      */
       {
 	/*
 	  Checking for complete / exited jobs.
@@ -403,14 +412,16 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 	  ecl_queue_node_type * node = queue->jobs[queue_index];
 	  switch (ecl_queue_node_get_status(node)) {
 	  case(ecl_queue_done):
+	    printf("Fant at %d/%s hadde status DONE\n",queue_index , node->ecl_base);
+	    exit(1);
 	    if (node->target_file != NULL) {
 	      if (util_file_exists(node->target_file)) {
 		ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
 	      } else {
 		bool verbose = true;
-		if (verbose) {
+		if (verbose)
 		  printf("Restarting: %s \n",node->ecl_base);
-		}
+
 		ecl_queue_change_node_status(queue , node , ecl_queue_waiting);
 		queue->status_list[ecl_queue_restart]++;
 	      }
@@ -432,12 +443,6 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
       if (!new_jobs)
 	usleep(queue->usleep_time);
 
-      /* 
-	 For some fu*** reason the usleep() call does not
-	 seem to work ??
-	
-      */
-      
       /*
 	else we have submitted new jobs - and know the status is out of sync,
 	no need to wait before a rescan.
@@ -506,7 +511,9 @@ ecl_queue_type * ecl_queue_alloc(int size , int max_running , int max_submit ,
 
     for (i=0; i < ecl_queue_max_state; i++)
       queue->status_list[i] = 0;
-    queue->status_list[ecl_queue_null] = size;
+    
+    for (i=0; i < size; i++) 
+      queue->status_list[ecl_queue_node_get_status(queue->jobs[i])]++;
   }
 
   queue->run_path_fmt = path_fmt_copyc(run_path_fmt);
