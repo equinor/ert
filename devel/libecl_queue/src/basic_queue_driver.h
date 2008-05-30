@@ -1,16 +1,16 @@
 #ifndef __BASIC_QUEUE_DRIVER_H__
 #define __BASIC_QUEUE_DRIVER_H__
 
-typedef enum {ecl_queue_null = 0     , 
-	      ecl_queue_waiting      , 
-	      ecl_queue_pending      , 
-	      ecl_queue_running      , 
-	      ecl_queue_done         , 
-	      ecl_queue_exit         ,    
-	      ecl_queue_complete_OK  , 
-	      ecl_queue_complete_FAIL,
-	      ecl_queue_restart      ,
-	      ecl_queue_max_state     } ecl_job_status_type;
+typedef enum {ecl_queue_null          = 0 ,   /* For a queue node which has been allocated - but not "added" with a ecl_queue_add_job() call. */
+	      ecl_queue_waiting       = 1 ,   /* A node which is waiting in the internal queue. */
+	      ecl_queue_pending       = 2 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
+	      ecl_queue_running       = 3 ,   /* The job is running */
+	      ecl_queue_done          = 4 ,   /* The job is done - but we have not yet checked if the target file is produced */
+	      ecl_queue_exit          = 5 ,   /* The job has exited - check attempts to determine if we retry or go to complete_fail */
+	      ecl_queue_complete_OK   = 6 ,   
+	      ecl_queue_complete_FAIL = 7 ,
+	      ecl_queue_restart       = 8 ,
+	      ecl_queue_max_state     = 9 } ecl_job_status_type;
 
 
 typedef struct basic_queue_driver_struct basic_queue_driver_type;
