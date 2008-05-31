@@ -180,7 +180,7 @@ static void __fprintf_python_hash(FILE * stream , const char * id , const hash_t
   for (i = 0; i < size; i++) {
     const char * value = hash_get(hash , key_list[i]);
 
-    fprintf(stream,"\"%s\":\"" , key_list[i]);
+    fprintf(stream,"\"%s\" : " , key_list[i]);
     if (context_hash != NULL) {
       fprintf(stream,"\"");
       util_filtered_fprintf( value , strlen(value) , stream , '<' , '>' , context_hash , util_filter_warn0);
