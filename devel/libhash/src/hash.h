@@ -33,7 +33,7 @@ void              hash_free_ext_keylist(const hash_type *, char **);
   hash_node_type  * hash_iter_init(const hash_type *);
   hash_node_type  * hash_iter_next(const hash_type *, const hash_node_type * );
 */
-char           ** hash_alloc_sorted_keylist(const hash_type *);
+char           ** hash_alloc_sorted_keylist(const hash_type *hash , int ( hash_get_cmp_value ) (const void *));
 void              hash_insert_hash_owned_ref(hash_type *, const char * , const void *, del_type *);
 const char 	* hash_iter_get_next_key(hash_type * );
 const char 	* hash_iter_get_first_key(hash_type * );

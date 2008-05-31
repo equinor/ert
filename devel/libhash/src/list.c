@@ -12,11 +12,6 @@ struct list_struct {
 };
 
 
-typedef struct hash_data_struct {
-  int    byte_size;
-  void  *data;
-} hash_data_type;
-
 
 
 /*****************************************************************/
