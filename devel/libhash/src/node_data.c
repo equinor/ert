@@ -4,6 +4,12 @@
 #include <node_data.h>
 #include <node_ctype.h>
 
+
+/*
+  Used to hold typed storage.
+*/
+
+
 struct node_data_struct {
   node_ctype        ctype;
   int               byte_size;
