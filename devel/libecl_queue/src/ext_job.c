@@ -87,6 +87,9 @@ void ext_job_free(ext_job_type * ext_job) {
   util_free_string_list(ext_job->argv , ext_job->argc);
 }
 
+void ext_job_free__(void * __ext_job) {
+  ext_job_free ( ext_job_safe_cast(__ext_job) );
+}
 
 
 void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
@@ -208,7 +211,8 @@ static void __indent(FILE * stream, int indent) {
 
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const hash_type * context_hash) { 
   fprintf(stream," {");
-  __indent(stream, 0); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , context_hash);    __end_line(stream);
+  __indent(stream, 0); __fprintf_python_string(stream , "name"  	  , ext_job->name , NULL);                    __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , context_hash);    __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "init_code"    	  , ext_job->init_code , context_hash);       __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	  , ext_job->target_file , context_hash);     __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	  , ext_job->stdout_file , context_hash);     __end_line(stream);
@@ -217,21 +221,15 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const h
   __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , (const char **) ext_job->argv , ext_job->argc , context_hash); __end_line(stream);
   __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	  , ext_job->environment , context_hash);      __end_line(stream);
   __indent(stream, 2); __fprintf_python_hash(stream   , "platform_exe" 	  , ext_job->platform_exe , context_hash); 
-  fprintf(stream,"}\n");
+  fprintf(stream,"}");
 }
 
 
-int ext_job_compare__(const void * __ext_job1, const void * __ext_job2 ) {
-  ext_job_type * job1 = ext_job_safe_cast(__ext_job1);
-  ext_job_type * job2 = ext_job_safe_cast(__ext_job2);
 
-  if (job1->priority < job2->priority)
-    return -1;
-  else if (job1->priority == job2->priority) {
-    util_abort("%s: two jobs %s and %s  have identitcal priority \n",__func__ , job1->name , job2->name);
-    return 0;
-  } else /* if (job1->priority > job2->priority) */
-    return 1;
+
+int ext_job_get_priority__(const void * __ext_job) {
+  ext_job_type * ext_job = ext_job_safe_cast(__ext_job);
+  return ext_job->priority;
 }
 
 
