@@ -7,8 +7,9 @@ typedef struct ext_job_struct ext_job_type;
 
 ext_job_type * ext_job_alloc(const char * , int) ;
 void ext_job_free(ext_job_type * ) ;
-
+void ext_job_free__(void * );
 void ext_job_add_environment(ext_job_type *, const char * , const char * ) ;
+int  ext_job_get_priority__(const void * );
 
 void ext_job_set_portable_exe(ext_job_type * , const char * );
 void ext_job_set_init_code(ext_job_type * , const char * );
