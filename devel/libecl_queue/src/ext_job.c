@@ -56,23 +56,31 @@ const char * ext_job_get_name(const ext_job_type * ext_job) {
 }
 
 
-ext_job_type * ext_job_alloc(const char * name) {
-  ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
 
+
+static ext_job_type * ext_job_alloc__(const char * name) {
+  ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
+  
   ext_job->__type_id = __TYPE_ID__;
-  ext_job->name = util_alloc_string_copy(name);
+  ext_job->name         = util_alloc_string_copy(name);
   ext_job->portable_exe = NULL;
-  ext_job->init_code = NULL;
-  ext_job->stdout_file = NULL;
-  ext_job->target_file = NULL;
-  ext_job->stdin_file = NULL;
-  ext_job->stderr_file = NULL;
-  ext_job->argv = NULL;
-  ext_job->argc = 0;
+  ext_job->init_code    = NULL;
+  ext_job->stdout_file  = NULL;
+  ext_job->target_file  = NULL;
+  ext_job->stdin_file   = NULL;
+  ext_job->stderr_file  = NULL;
+  ext_job->argv 	= NULL;
+  ext_job->argc 	= 0;    
   ext_job->platform_exe = hash_alloc();
   ext_job->environment  = hash_alloc();
 
   return ext_job;
+}
+
+
+/* Exported function - must have name != NULL */
+ext_job_type * ext_job_alloc(const char * name) {
+  return ext_job_alloc__(name);
 }
 
 
@@ -110,6 +118,10 @@ void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
 
 void ext_job_set_target_file(ext_job_type * ext_job, const char * target_file) {
   ext_job->target_file = util_realloc_string_copy(ext_job->target_file , target_file);
+}
+
+void ext_job_set_name(ext_job_type * ext_job, const char * name) {
+  ext_job->name = util_realloc_string_copy(ext_job->name , name);
 }
 
 
@@ -231,23 +243,37 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const h
 
 
 
+static void ext_job_assert(const ext_job_type * ext_job) {
+  bool OK = true;
+  if (ext_job->name == NULL) {
+    OK = false;
+  }
+
+  if (!OK) 
+    util_abort("%s: errors in the ext_job instance. \n" , __func__);
+}
+
+
 
 #define ASSERT_TOKENS(t , n , kw) if (t != n) { util_abort("%s: When parsing:%s I need exactlt:%d items \n",kw,n); }
-ext_job_type * ext_job_fscanf_alloc(const char * filename, const char * job_name) {
+ext_job_type * ext_job_fscanf_alloc(const char * filename) {
   bool at_eof            = false;
-  ext_job_type * ext_job = ext_job_alloc(job_name );
+  ext_job_type * ext_job = ext_job_alloc__( NULL );
   FILE * stream          = util_fopen(filename , "r");
-  while (&at_eof) {
+
+  while (!at_eof) {
     char ** token_list;
     int     tokens;
     char * line = util_fscanf_alloc_line(stream , &at_eof);
-    
     if (line != NULL) {
       util_split_string(line , " " , &tokens , &token_list); 
       if (tokens > 0) {
 	const char * kw = token_list[0];
 
-	if (strcmp(kw , "STDIN") == 0) {
+	if (strcmp(kw , "NAME") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_set_name(ext_job , token_list[1]);
+	} else if (strcmp(kw , "STDIN") == 0) {
 	  ASSERT_TOKENS(tokens , 2 , kw);
 	  ext_job_set_stdin_file(ext_job , token_list[1]);
 	} else if (strcmp(kw , "STDOUT") == 0) {
@@ -282,6 +308,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * filename, const char * job_name
       free(line);
     }
   }
+  ext_job_assert(ext_job);
   return ext_job;
 }
 
