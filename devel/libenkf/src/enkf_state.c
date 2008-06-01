@@ -42,12 +42,15 @@
 #include <sched_file.h>
 #include <basic_queue_driver.h>
 #include <pthread.h>
+#include <ext_joblist.h>
+
 
 struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;
   list_type    	   	* node_list;
   hash_type    	   	* node_hash;
   hash_type             * data_kw;
+  ext_joblist_type      * joblist;
 
   meas_vector_type      * meas_vector;
   enkf_fs_type          * fs;
@@ -250,7 +253,8 @@ enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
 }
 
 
-enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , ecl_store_enum ecl_store , enkf_fs_type * fs , const char * run_path , const char * eclbase ,  const char * ecl_store_path , meas_vector_type * meas_vector) {
+enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , ecl_store_enum ecl_store , enkf_fs_type * fs , ext_joblist_type * joblist , 
+				   const char * run_path , const char * eclbase ,  const char * ecl_store_path , meas_vector_type * meas_vector) {
   enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
   
   enkf_state->config          = (enkf_config_type *) config;
@@ -261,6 +265,7 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
   enkf_state->run_path        = NULL;
   enkf_state->eclbase         = NULL;
   enkf_state->fs              = fs;
+  enkf_state->joblist         = joblist;
   enkf_state->meas_vector     = meas_vector;
   enkf_state->data_kw         = hash_alloc();
   enkf_state_set_run_path(enkf_state , run_path);
@@ -279,7 +284,7 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  enkf_state_type * new = enkf_state_alloc(src->config , src->my_iens, src->ecl_store , src->fs , src->run_path , src->eclbase ,  src->ecl_store_path , src->meas_vector);
+  enkf_state_type * new = enkf_state_alloc(src->config , src->my_iens, src->ecl_store , src->fs , src->joblist , src->run_path , src->eclbase ,  src->ecl_store_path , src->meas_vector);
   list_node_type *list_node;                                          
   list_node = list_get_head(src->node_list);                     
 
@@ -875,7 +880,12 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   }
   enkf_state_set_state(enkf_state , report_step1 , analyzed);
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
-  
+  {
+    char * stdin_file = util_alloc_full_path(enkf_state->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
+    ecl_util_init_stdin( stdin_file , enkf_state->eclbase );
+    free(stdin_file);
+  }
+  ext_joblist_python_fprintf( enkf_state->joblist , (const char *[1]) {"ECLIPSE100"} , 1 , enkf_state->run_path , NULL);
 }
 
 

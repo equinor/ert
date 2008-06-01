@@ -114,7 +114,7 @@ static void fault_group_run_havana(const fault_group_type * group , hash_type * 
   {
     char * stdout_file = util_alloc_full_path(run_path , "havana_stdout");
     char * stderr_file = util_alloc_full_path(run_path , "havana_stderr");
-    util_fork_exec ( havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , NULL , stdout_file , stderr_file);
+    util_vfork_exec ( havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , NULL , stdout_file , stderr_file);
     free(stderr_file);
     free(stdout_file);
   }
@@ -264,7 +264,7 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
     char * stderr_file = util_alloc_full_path( run_path , "havana_stderr" );
 
     util_filter_file( config->update_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
-    util_fork_exec ( config->havana_executable , 1 , (const char *[1]) {target_file} , true , tmp_GRDECL_output , NULL , stdout_file , stderr_file);
+    util_vfork_exec ( config->havana_executable , 1 , (const char *[1]) {target_file} , true , tmp_GRDECL_output , NULL , stdout_file , stderr_file);
     
     free(target_file);
     free(stdout_file);

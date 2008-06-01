@@ -41,6 +41,7 @@
 #include <summary.h>
 #include <summary_config.h>
 #include <havana_fault_config.h>
+#include <ext_joblist.h>
 
 
 struct enkf_config_struct {
@@ -821,7 +822,7 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
     ecl_queue = ecl_queue_alloc(enkf_config_get_ens_size(config),
 				max_running , 
 				max_submit  ,
-				enkf_site_config_get_value(site_config , "START_ECLIPSE_CMD"),
+				enkf_site_config_get_value(site_config , "JOB_SCRIPT"),
 				enkf_site_config_get_value(site_config , "ECLIPSE_EXECUTABLE"),
 				eclipse_LD_path , 
 				enkf_site_config_get_value(site_config , "ECLIPSE_CONFIG"),
@@ -837,3 +838,9 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
   return ecl_queue;
 }
 
+
+/** Nothing like a little HARD-coding ... */
+
+void enkf_config_add_eclipse_job(const enkf_config_type * config , const enkf_site_config_type * site_config , ext_joblist_type * joblist) {
+  ext_joblist_add_job(joblist , ext_job_fscanf_alloc("/h/a152128/EnKF/devel/EnKF/libecl_queue/src/ECLIPSE100"));
+}

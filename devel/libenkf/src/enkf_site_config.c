@@ -252,7 +252,7 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
     enkf_site_config_add_node(site , "QUEUE_SYSTEM"  	  , NULL , 3 , (const char *[3]) {"RSH" , "LSF" , "LOCAL"} , enkf_site_config_validate_queue_system);
     enkf_site_config_add_node(site , "LSF_QUEUE"     	  , NULL , 0 , NULL , enkf_site_config_validate_queue_name);
     enkf_site_config_add_node(site , "LSF_RESOURCES" 	  , NULL , 0 , NULL , NULL);
-    enkf_site_config_add_node(site , "START_ECLIPSE_CMD"  , NULL , 0 , NULL , enkf_site_config_assert_set_executable); 
+    enkf_site_config_add_node(site , "JOB_SCRIPT"         , NULL , 0 , NULL , enkf_site_config_assert_set_executable); 
     enkf_site_config_add_node(site , "ECLIPSE_EXECUTABLE" , NULL , 0 , NULL , enkf_site_config_assert_eclipse_executable); 
     enkf_site_config_add_node(site , "ECLIPSE_LD_PATH"    , NULL , 0 , NULL , NULL); 
     enkf_site_config_add_node(site , "LICENSE_SERVER"     , NULL , 0 , NULL , enkf_site_config_assert_set);

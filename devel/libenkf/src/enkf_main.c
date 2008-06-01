@@ -79,7 +79,7 @@ void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
 
 
 
-enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , ecl_queue_type * ecl_queue) {
+enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , ecl_queue_type * ecl_queue , ext_joblist_type * joblist) {
   int ens_size               = enkf_config_get_ens_size(config);
   enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
   enkf_main->config         = config;
@@ -105,6 +105,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
       char * ecl_store_path = enkf_config_alloc_ecl_store_path (config , iens + iens_offset);
       msg_update_int(msg , "%03d" , iens);
       enkf_main->ensemble[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
+						   joblist  , 
 						   run_path , 
 						   eclbase  , 
 						   ecl_store_path , 
@@ -399,6 +400,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   const int sleep_time     	= 1;
   int iens;
   
+  printf("Starting forward step: %d -> %d \n",step1,step2);
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_matrix);
   

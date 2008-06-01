@@ -14,6 +14,7 @@
 #include <local_driver.h>
 #include <lsf_driver.h>
 #include <signal.h>
+#include <ext_joblist.h>
 
 
 void install_SIGNALS(void) {
@@ -31,6 +32,7 @@ int main (int argc , char ** argv) {
   else {
     const char * site_config_file = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * config_file      = argv[1];
+    ext_joblist_type * joblist;
     ecl_queue_type   * ecl_queue;
     enkf_main_type   * enkf_main;
     enkf_site_config_type * site_config = enkf_site_config_bootstrap(site_config_file);
@@ -43,8 +45,10 @@ int main (int argc , char ** argv) {
     fs_index_type     * fs_index                 = fs_index_alloc(enkf_config_get_ens_path(enkf_config) , "INDEX/mem%03d/INDEX");
     enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
     
+    joblist   = ext_joblist_alloc();
     ecl_queue = enkf_config_alloc_ecl_queue(enkf_config , site_config);
-    enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue);
+    enkf_config_add_eclipse_job(enkf_config , site_config , joblist);
+    enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue , joblist);
 
     enkf_main_initialize_ensemble(enkf_main); 
     
@@ -59,6 +63,7 @@ int main (int argc , char ** argv) {
     enkf_main_free(enkf_main);
     enkf_site_config_free(site_config); /* Should probably be owned by enkf_main ?? */
 
+    ext_joblist_free(joblist);
     enkf_fs_free(fs);  /* Takes the drivers as well */
   }
 }
