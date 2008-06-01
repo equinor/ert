@@ -28,7 +28,6 @@ jobList = [
 struct ext_job_struct {
   int          __type_id;
   char       * name;
-  int  	       priority;
   char 	     * portable_exe;
   char 	     * init_code;
   char 	     * target_file;
@@ -52,12 +51,16 @@ ext_job_type * ext_job_safe_cast(const void * __ext_job) {
 }
 
 
-ext_job_type * ext_job_alloc(const char * name , int priority) {
+const char * ext_job_get_name(const ext_job_type * ext_job) {
+  return ext_job->name;
+}
+
+
+ext_job_type * ext_job_alloc(const char * name) {
   ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
 
   ext_job->__type_id = __TYPE_ID__;
   ext_job->name = util_alloc_string_copy(name);
-  ext_job->priority     = priority;
   ext_job->portable_exe = NULL;
   ext_job->init_code = NULL;
   ext_job->stdout_file = NULL;
@@ -85,6 +88,7 @@ void ext_job_free(ext_job_type * ext_job) {
   hash_free(ext_job->platform_exe);
   
   util_free_string_list(ext_job->argv , ext_job->argc);
+  free(ext_job);
 }
 
 void ext_job_free__(void * __ext_job) {
@@ -121,8 +125,8 @@ void ext_job_add_platform_exe(ext_job_type *ext_job , const char * platform , co
   hash_insert_hash_owned_ref( ext_job->platform_exe , platform , util_alloc_string_copy( exe ) , free);
 }
 
-void ext_job_add_environment(ext_job_type *ext_job , const char * platform , const char * exe) {
-  hash_insert_hash_owned_ref( ext_job->environment , platform , util_alloc_string_copy( exe ) , free);
+void ext_job_add_environment(ext_job_type *ext_job , const char * key , const char * value) {
+  hash_insert_hash_owned_ref( ext_job->environment , key , util_alloc_string_copy( value ) , free);
 }
 
 
@@ -227,10 +231,59 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const h
 
 
 
-int ext_job_get_priority__(const void * __ext_job) {
-  ext_job_type * ext_job = ext_job_safe_cast(__ext_job);
-  return ext_job->priority;
+
+#define ASSERT_TOKENS(t , n , kw) if (t != n) { util_abort("%s: When parsing:%s I need exactlt:%d items \n",kw,n); }
+ext_job_type * ext_job_fscanf_alloc(const char * filename, const char * job_name) {
+  bool at_eof            = false;
+  ext_job_type * ext_job = ext_job_alloc(job_name );
+  FILE * stream          = util_fopen(filename , "r");
+  while (&at_eof) {
+    char ** token_list;
+    int     tokens;
+    char * line = util_fscanf_alloc_line(stream , &at_eof);
+    
+    if (line != NULL) {
+      util_split_string(line , " " , &tokens , &token_list); 
+      if (tokens > 0) {
+	const char * kw = token_list[0];
+
+	if (strcmp(kw , "STDIN") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_set_stdin_file(ext_job , token_list[1]);
+	} else if (strcmp(kw , "STDOUT") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_set_stdout_file(ext_job , token_list[1]);
+	} else if (strcmp(kw , "STDERR") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_set_stderr_file(ext_job , token_list[1]);
+	} else if (strcmp(kw , "PORTABLE_EXE") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_set_portable_exe(ext_job , token_list[1]);
+	} else if (strcmp(kw , "INIT_CODE") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_set_init_code(ext_job , token_list[1]);
+	} else if (strcmp(kw , "TARGET_FILE") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_set_target_file(ext_job , token_list[1]);
+	} else if (strcmp(kw , "ARG") == 0) {
+	  ASSERT_TOKENS(tokens , 2 , kw);
+	  ext_job_add_arg(ext_job , token_list[1]);
+	} else if (strcmp(kw , "ENV") == 0) {
+	  ASSERT_TOKENS(tokens , 3 , kw);
+	  ext_job_add_environment(ext_job , token_list[1] , token_list[2]);
+	} else if (strcmp(kw , "PLATFORM_EXE") == 0) {
+	  ASSERT_TOKENS(tokens , 3 , kw);
+	  ext_job_add_platform_exe(ext_job , token_list[1] , token_list[2]);
+	} else 
+	  fprintf(stderr,"** Warning: when parsing:%s the keyword:%s is not recognized - ignored.\n",filename , kw);
+	
+	util_free_string_list(token_list , tokens);
+      }
+      free(line);
+    }
+  }
+  return ext_job;
 }
 
-
+#undef ASSERT_TOKENS
 #undef __TYPE_ID__

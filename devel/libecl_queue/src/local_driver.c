@@ -83,14 +83,10 @@ ecl_job_status_type local_driver_get_job_status(basic_queue_driver_type * __driv
 	fprintf(stderr,"%s: internal error - should not query status on inactive jobs \n" , __func__);
 	abort();
       } else {
-	/*
-	  printf("OK - skal forsoke aa sjekke om traaden lever: \n");
-	*/
 	if (pthread_kill(job->run_thread , 0) == 0)
 	  status = ecl_queue_running;
 	else
 	  status = ecl_queue_done;
-	printf("%d \n",status);
       }
       return status;
     }
@@ -121,91 +117,36 @@ void local_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job
 
 
 
-/* Blocking */
-void * submit_job_thread(void * cmd) {
-  printf("STarter:%s \n", (char *) cmd);
-  {
-    int ret_value; 
-    ret_value = system( (const char *) cmd);
-    printf("ret_value:%d \n",ret_value);
-    printf("errno:%d  / %s \n",errno, strerror(errno));
-  }
-  printf("%s:<%s> er ferdig ... \n",__func__ , (char *) cmd);
-  free(cmd);
-  pthread_exit(NULL);
-  return NULL;
-}
-
 
 void * submit_job_thread__(void * __arg) {
   void_arg_type * void_arg = void_arg_safe_cast(__arg);
   const char * executable  = void_arg_get_ptr(void_arg , 0);
-  const int    argc        = void_arg_get_int(void_arg , 1);
-  const char ** argv       = void_arg_get_ptr(void_arg , 2);
+  const char * run_path    = void_arg_get_ptr(void_arg , 1);
   
-  printf("Skal forsoke fork_exec: %s \n",executable);
-  util_fork_exec(executable , argc , argv , true , NULL , NULL , NULL , NULL); 
+  util_vfork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL); 
   pthread_exit(NULL);
   return NULL;
 }
+
 
 
 basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __driver, 
 					       int   node_index                   , 
 					       const char * submit_cmd  	  , 
 					       const char * run_path    	  , 
-					       const char * ecl_base    	  , 
-					       const char * eclipse_exe 	  ,   
-					       const char * eclipse_config  , 
-					       const char * eclipse_LD_path , 
-					       const char * license_server) {
+					       const char * job_name) {
   local_driver_type * driver = (local_driver_type *) __driver;
   local_driver_assert_cast(driver); 
   {
     local_job_type * job    = local_job_alloc();
-    void_arg_type  * void_arg = void_arg_alloc3(void_pointer , int_value , void_pointer);
-    /* 
-       command is freed in the start_routine() function
-    */
-    char ** argv;
-    int argc;
-    char * command;
-    if (eclipse_LD_path == NULL)
-      command = util_alloc_joined_string((const char*[6]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server} , 6 , " ");
-    else
-      command = util_alloc_joined_string((const char*[7]) {submit_cmd , run_path , ecl_base , eclipse_exe , eclipse_config , license_server , eclipse_LD_path} , 7 , " ");
-
-    void_arg_pack_ptr(void_arg , 0 , (char *) submit_cmd);
-
-    if (eclipse_LD_path == NULL) 
-      argc = 5;
-    else
-      argc = 6;
-    void_arg_pack_int(void_arg , 1 , argc);
-
-    argv = util_malloc( argc * sizeof * argv , __func__ );
-    argv[0] = run_path;
-    argv[1] = ecl_base;
-    argv[2] = eclipse_exe;
-    argv[3] = eclipse_config;
-    argv[4] = license_server;
-    if (argc == 6)
-      argv[5] = eclipse_LD_path;
-    void_arg_pack_ptr(void_arg , 2 , argv);
-    
-
+    void_arg_type  * void_arg = void_arg_alloc2(void_pointer , void_pointer);
+    void_arg_pack_ptr( void_arg , 0 , (char *) submit_cmd);
+    void_arg_pack_ptr( void_arg , 1 , (char *) run_path);
     pthread_mutex_lock( &driver->submit_lock );
     if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , void_arg) != 0) {
       fprintf(stderr,"%s: failed to create run thread - aborting \n",__func__);
       abort();
     }
-    /*
-      if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread , command) != 0) {
-      fprintf(stderr,"%s: failed to create run thread - aborting \n",__func__);
-      abort();
-      }
-    */
-    
     job->active = true;
     pthread_mutex_unlock( &driver->submit_lock );
     

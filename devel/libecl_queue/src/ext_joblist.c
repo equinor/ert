@@ -32,10 +32,14 @@ void ext_joblist_free(ext_joblist_type * joblist) {
 }
 
 
-ext_job_type * ext_joblist_add_new(ext_joblist_type * joblist , const char * new_name, int new_priority) {
-  ext_job_type * new_job = ext_job_alloc(new_name , new_priority);
+ext_job_type * ext_joblist_alloc_new(ext_joblist_type * joblist , const char * new_name) {
+  ext_job_type * new_job = ext_job_alloc(new_name );
   hash_insert_hash_owned_ref(joblist->jobs , new_name , new_job , ext_job_free__);
   return new_job;
+}
+
+void ext_joblist_add_job(ext_joblist_type * joblist , const ext_job_type * ext_job) {
+  hash_insert_hash_owned_ref(joblist->jobs , ext_job_get_name(ext_job) , ext_job , ext_job_free__);
 }
 
 
@@ -48,24 +52,25 @@ ext_job_type * ext_joblist_get_job(const ext_joblist_type * joblist , const char
   }
 }
 
+bool ext_joblist_has_job(const ext_joblist_type * joblist , const char * job_name) {
+  return hash_has_key(joblist->jobs , job_name);
+}
 
 
-void ext_joblist_python_fprintf(const ext_joblist_type * joblist , const char * path, const hash_type * context) {
-  char ** key_list   = hash_alloc_sorted_keylist(joblist->jobs , ext_job_get_priority__ );   
-  const int size     = hash_get_size( joblist->jobs );
+void ext_joblist_python_fprintf(const ext_joblist_type * joblist , const char ** kw_list , int size , const char * path, const hash_type * context) {
   char * module_file = util_alloc_full_path(path , MODULE_NAME);
   FILE * stream      = util_fopen(module_file , "w");
   int i;
 
   fprintf(stream , "%s = [" , JOBLIST_NAME);
   for (i=0; i < size; i++) {
-    ext_job_python_fprintf(hash_get(joblist->jobs , key_list[i]) , stream , context);
+    const ext_job_type * job = ext_joblist_get_job( joblist , kw_list[i] );
+    ext_job_python_fprintf(job , stream , context);
     if (i < (size - 1))
       fprintf(stream,",\n");
   }
   fprintf(stream , "]\n");
   
   fclose(stream);
-  util_free_string_list(key_list , hash_get_size(joblist->jobs));
   free(module_file);
 }

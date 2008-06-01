@@ -93,17 +93,17 @@ static bool rsh_host_available(rsh_host_type * rsh_host) {
 
 
 
-static void rsh_host_submit_job(rsh_host_type * rsh_host , const char * rsh_cmd , const char * ext_cmd) {
-  /* Observe that this job has already been added to the running jobs
-     in the rsh_host_available function.*/
+static void rsh_host_submit_job(rsh_host_type * rsh_host , const char * rsh_cmd , const char * submit_cmd , const char * run_path) {
+  /* 
+     Observe that this job has already been added to the running jobs
+     in the rsh_host_available function.
+  */
   
-  char * command = util_alloc_joined_string((const char *[6]) {rsh_cmd , " " , rsh_host->host_name , " '" , ext_cmd , "'"} , 6 , "");
-  system(command);
-  free(command);
-  
+  util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL);
+
   pthread_mutex_lock( &rsh_host->host_mutex );
   rsh_host->running--;
-  pthread_mutex_unlock( &rsh_host->host_mutex );
+  pthread_mutex_unlock( &rsh_host->host_mutex );  
 }
 
 
@@ -115,15 +115,16 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , const char * rsh_cmd 
 
 static void * rsh_host_submit_job__(void * __void_arg) {
   void_arg_type * void_arg = void_arg_safe_cast(__void_arg);
-  rsh_host_type * rsh_host = void_arg_get_ptr(void_arg , 0);
-  char * ext_cmd 	   = void_arg_get_ptr(void_arg , 1); 
-  char * rsh_cmd 	   = void_arg_get_ptr(void_arg , 2); 
+  char * rsh_cmd 	   = void_arg_get_ptr(void_arg , 0); 
+  rsh_host_type * rsh_host = void_arg_get_ptr(void_arg , 1);
+  char * submit_cmd 	   = void_arg_get_ptr(void_arg , 2); 
+  char * run_path          = void_arg_get_ptr(void_arg , 3); 
 
-  rsh_host_submit_job(rsh_host , rsh_cmd , ext_cmd);
-  free(ext_cmd);
-  void_arg_free(void_arg);
-  
+
+  rsh_host_submit_job(rsh_host , rsh_cmd , submit_cmd , run_path);
+  void_arg_free( void_arg );
   pthread_exit( NULL );
+
 }
 
 
@@ -226,11 +227,8 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
 					     int   node_index , 
 					     const char * submit_cmd  	  , 
 					     const char * run_path    	  , 
-					     const char * ecl_base    	  , 
-					     const char * eclipse_exe 	  ,   
-					     const char * eclipse_config  , 
-					     const char * eclipse_LD_path , 
-					     const char * license_server) {
+					     const char * job_name) {
+  
   rsh_driver_type * driver = (rsh_driver_type *) __driver;
   rsh_driver_assert_cast(driver); 
   {
@@ -240,7 +238,6 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
     */
     rsh_host_type * host = NULL;
     int    ihost;
-    char * ext_command;
     pthread_mutex_lock( &driver->submit_lock );
     for (ihost = 0; ihost < driver->num_hosts; ihost++) {
       if (rsh_host_available(driver->host_list[ihost])) {
@@ -250,28 +247,14 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
     }
     if (host != NULL) {
       /* A host is available */
-      void_arg_type * void_arg = void_arg_alloc3( void_pointer , void_pointer , void_pointer);
+      void_arg_type * void_arg = void_arg_alloc4( void_pointer , void_pointer , void_pointer , void_pointer);
       rsh_job_type  * job = rsh_job_alloc(node_index , run_path);
-      
-      if (eclipse_LD_path == NULL)
-	ext_command = util_alloc_joined_string((const char*[6]) {submit_cmd              	 , 
-								 run_path                	 , 
-								 ecl_base                	 , 
-								 eclipse_exe             	 , 
-								 eclipse_config          	 , 
-								 license_server}         	 , 6 , " ");
-      else
-	ext_command = util_alloc_joined_string((const char*[7]) {submit_cmd 		 , 
-							     run_path   		 , 
-							     ecl_base   		 ,                  
-							     eclipse_exe    		 , 
-							     eclipse_config 		 , 
-							     license_server 		 ,            
-							     eclipse_LD_path}            , 7 , " ");
-      /* This memory is free'd in the thread routine ... */
-      void_arg_pack_ptr(void_arg , 0 , host);
-      void_arg_pack_ptr(void_arg , 1 , ext_command);
-      void_arg_pack_ptr(void_arg , 2 , driver->rsh_command);
+  
+      void_arg_pack_ptr(void_arg , 0 , driver->rsh_command);
+      void_arg_pack_ptr(void_arg , 1 , host);
+      void_arg_pack_ptr(void_arg , 2 , (char *) submit_cmd);
+      void_arg_pack_ptr(void_arg , 3 , (char *) run_path);
+
       {
 	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , void_arg);
 	if (pthread_return_value != 0) 
