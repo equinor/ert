@@ -173,8 +173,6 @@ static bool ecl_queue_change_node_status(ecl_queue_type * queue , ecl_queue_node
   ecl_queue_node_set_status(node , new_status);
   queue->status_list[old_status]--;
   queue->status_list[new_status]++;
-  if (new_status == ecl_queue_done)
-    printf("Setting %s -> DONE \n",node->ecl_base);
   if (new_status != old_status)
     return true;
   else
@@ -216,11 +214,8 @@ static submit_status_type ecl_queue_submit_job(ecl_queue_type * queue , int queu
 							 queue_index           , 
 							 queue->submit_cmd     , 
 							 node->run_path        , 
-							 node->ecl_base        , 
-							 queue->eclipse_exe    ,  
-							 queue->eclipse_config , 
-							 queue->eclipse_LD_path,
-							 queue->license_server);
+							 node->ecl_base);
+	
 	if (job_data != NULL) {
 	  ecl_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
 	  node->job_data = job_data;
@@ -412,8 +407,6 @@ void ecl_queue_run_jobs(ecl_queue_type * queue , int num_total_run) {
 	  ecl_queue_node_type * node = queue->jobs[queue_index];
 	  switch (ecl_queue_node_get_status(node)) {
 	  case(ecl_queue_done):
-	    printf("Fant at %d/%s hadde status DONE\n",queue_index , node->ecl_base);
-	    exit(1);
 	    if (node->target_file != NULL) {
 	      if (util_file_exists(node->target_file)) {
 		ecl_queue_change_node_status(queue , node , ecl_queue_complete_OK);
