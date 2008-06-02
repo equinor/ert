@@ -1,5 +1,5 @@
 include path_config
-SITE_CONFIG_FILE = "/h/a152128/EnKF/devel/EnKF/libenkf/src/site-config"
+SITE_CONFIG_FILE = "/d/proj/bg/enkf/Config/site-config"
 #m32 -> #define i386 1    m64 -> __x86_64 1
 MFLAG = m32
 CC = gcc

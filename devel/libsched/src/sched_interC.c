@@ -244,7 +244,7 @@ static ecl_sum_type * ecl_diag_avg_load(const char * eclbase_dir , const char * 
     char **fileList;
     fileList  = ecl_util_alloc_scandir_filelist(eclbase_dir , eclbase_name , ecl_summary_file , fmt_file , &files);
     sum       = ecl_sum_fread_alloc(spec_file , files , (const char **) fileList , report_mode , endian_convert);
-    util_free_string_list(fileList , files);
+    util_free_stringlist(fileList , files);
   }
   free(spec_file);
   return sum;
@@ -306,7 +306,7 @@ static char ** fread_alloc_wells(const char *well_file , int *_nwell) {
     fileH = fopen(well_file , "r");
     while ( (nread = fscanf(fileH , "%s" , well)) == 1)
       nwell++;
-    well_list = util_alloc_string_list(nwell , 32);
+    well_list = util_alloc_stringlist(nwell , 32);
     rewind(fileH);
 
     iwell = 0;
@@ -376,7 +376,7 @@ void sched_inter_diag_ens_interactive__(const char * _eclbase_dir  , const int *
     hist = history_fread_alloc(stream);
     fclose(stream);
   }
-  history_ens_diag_ens_interactive(eclbase_dir , eclbase_name , fmt_file , unified , ENDIAN_CONVERT , /*hist*/ NULL);
+  history_ens_diag_ens_interactive(eclbase_dir , eclbase_name , fmt_file , unified , ENDIAN_CONVERT , hist);
   
   free(eclbase_dir);
   free(eclbase_name);

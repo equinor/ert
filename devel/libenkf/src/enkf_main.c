@@ -71,7 +71,7 @@ void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
 	const char * value = enkf_config_get_data_kw(enkf_main->config , key);
 	enkf_state_set_data_kw(enkf_main->ensemble[iens] , key, value);
       }
-    util_free_string_list(data_kw_keys , size);
+    util_free_stringlist(data_kw_keys , size);
   }
 }
 			       
@@ -128,7 +128,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
     }
     msg_free(msg , true);
     
-    util_free_string_list(keylist , keys);
+    util_free_stringlist(keylist , keys);
   }
   
   
@@ -374,7 +374,7 @@ void enkf_main_fprintf_results(const enkf_main_type * enkf_main) {
       free(node_ensemble);
     }
   }
-  util_free_string_list(key_list , config_size);
+  util_free_stringlist(key_list , config_size);
 }
 
 

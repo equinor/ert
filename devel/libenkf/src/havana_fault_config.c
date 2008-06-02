@@ -41,7 +41,7 @@ static fault_group_type * fault_group_alloc(const char * group_name , int size, 
 static void fault_group_free(fault_group_type * group) {
   free(group->modify_template);
   free(group->group_name);
-  util_free_string_list(group->fault_names , group->size);
+  util_free_stringlist(group->fault_names , group->size);
   free(group);
 }
 
@@ -372,7 +372,7 @@ havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filenam
 	  }
 	} else 
 	  fprintf(stderr,"** Warning: keyword:%s in file:%s not recognized - ignored \n",kw , filename);
-	util_free_string_list(token_list , tokens);
+	util_free_stringlist(token_list , tokens);
       }
       free(line);
     }

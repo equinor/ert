@@ -24,7 +24,7 @@ INSTALL: $(LIB)
 	install $(LIB) $(INSTALL_LIB_PATH)
 	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_test.c    	-o rms.x               $(LIB_PATH)  $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_stat.c    	-o rms_stat.x          $(LIB_PATH)  $(LIB_LINK) 
-	gcc $(CFLAGS) $(TARGET_INCLUDE)	tag_list.c    	-o tag_list.x          $(LIB_PATH)  $(LIB_LINK) 
+	gcc $(CFLAGS) $(TARGET_INCLUDE)	tag_list.c    	-o roff_tags.x          $(LIB_PATH)  $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_extract.c 	-o rms_extract.x       $(LIB_PATH)  $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_setname.c 	-o rms_setname.x       $(LIB_PATH)  $(LIB_LINK) 
 

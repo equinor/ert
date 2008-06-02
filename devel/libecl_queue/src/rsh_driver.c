@@ -322,7 +322,7 @@ void * rsh_driver_alloc(const char * rsh_command, const char * rsh_host_list) {
 	free(host);
       }
     }
-    util_free_string_list(host_num_list , num_hosts);
+    util_free_stringlist(host_num_list , num_hosts);
   }
     
   {

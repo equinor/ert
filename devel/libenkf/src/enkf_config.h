@@ -7,6 +7,7 @@
 #include <enkf_types.h>
 #include <enkf_site_config.h>
 #include <ecl_queue.h>
+#include <ext_joblist.h>
 
 typedef struct enkf_config_struct enkf_config_type;
 
@@ -27,7 +28,7 @@ enkf_config_type  * enkf_config_alloc(int ens_size            ,
 				      bool fmt_file 	     ,
 				      bool unified  	     ,         
 				      bool endian_swap);
-const char       ** enkf_config_get_well_list_ref(const enkf_config_type * , int *);
+const char       ** enkf_config_get_forward_model(const enkf_config_type * , int * );
 void                enkf_config_add_well(enkf_config_type * , const char * , int , const char ** );
 void                enkf_config_add_gen_kw(enkf_config_type * , const char * );
 void                enkf_config_add_type(enkf_config_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);
@@ -46,7 +47,7 @@ int                           enkf_config_get_ens_size(const enkf_config_type * 
 void enkf_config_free(enkf_config_type * );
 bool enkf_config_get_unified(const enkf_config_type * );
 
-enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  enkf_site_config_type * , int, bool  ,  bool   , bool );
+enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  enkf_site_config_type * , ext_joblist_type * , int , bool  ,  bool   , bool );
 int                enkf_config_get_ens_offset(const enkf_config_type * );
 ecl_store_enum     enkf_config_iget_ecl_store(const enkf_config_type * , int );
 ecl_queue_type   * enkf_config_alloc_ecl_queue(const enkf_config_type * , const enkf_site_config_type * );

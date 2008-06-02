@@ -49,6 +49,7 @@ struct enkf_config_struct {
   int  		   ens_size;
   int              ens_offset;
   int              iens_offset;
+  int              forward_model_length;
   hash_type       *config_hash;
   hash_type       *data_kw;   /* This is just temporary during the init process - is later transfered to the individual enkf_state objects */
   time_t           start_time;
@@ -66,6 +67,7 @@ struct enkf_config_struct {
   char *            obs_config_file;
   char *            ens_path;
   char *            init_file;
+  char **           forward_model; 
 };
 
 
@@ -355,20 +357,49 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->ens_path             = NULL;
   config->result_path          = NULL;
   config->init_file            = NULL;
+  config->forward_model        = NULL;
+  config->forward_model_length = 0;
 
   enkf_config_set_result_path(config , "Results/%04d");
   return config;
 }
 
 
+const char ** enkf_config_get_forward_model(const enkf_config_type * config , int * forward_model_length) {
+  *forward_model_length = config->forward_model_length;
+  return (const char **) config->forward_model;
+}
+
+void enkf_config_set_forward_model(enkf_config_type * config , const ext_joblist_type * joblist , const char  ** forward_model , int forward_model_length) {
+  if (config->forward_model != NULL)
+    util_free_stringlist(config->forward_model , config->forward_model_length);
+
+  config->forward_model_length = forward_model_length;
+  config->forward_model = util_alloc_stringlist_copy(forward_model , forward_model_length);
+  {
+    bool OK = true;
+    int i;
+    for (i=0; i < forward_model_length; i++) {
+      if ( !ext_joblist_has_job(joblist , forward_model[i]) ) {
+	OK = false;
+	fprintf(stderr, "%s: FORWARD_MODEL:%s not defined \n",__func__ , forward_model[i]);
+      }
+    }
+    if (!OK)
+      util_abort("%s: ERROR with FORWARD_MODEL keyword - aborting \n",__func__);
+  }
+}
+
 
 #define __assert_not_null(p , t , OK) if (p == NULL ) { fprintf(stderr,"The key:%s must be set.\n",t); OK = false; }
 static void enkf_config_post_assert(const enkf_config_type * config) {
   bool OK = true;
 
-  __assert_not_null(config->ens_path           , "ENSPATH"  , OK);
-  __assert_not_null(config->schedule_src_file  , "SCHEDULE" , OK);
-  __assert_not_null(config->schedule_src_file  , "SCHEDULE" , OK);
+  __assert_not_null(config->forward_model      , "FORWARD_MODEL" , OK);
+  __assert_not_null(config->ens_path           , "ENSPATH"  	 , OK);
+  __assert_not_null(config->schedule_src_file  , "SCHEDULE" 	 , OK);
+  __assert_not_null(config->schedule_src_file  , "SCHEDULE" 	 , OK);
+
   if (config->ens_size <= 0) {
     fprintf(stderr,"Must set ensemble size > 0 with KEYWORD SIZE.\n");
     OK = false;
@@ -382,6 +413,7 @@ static void enkf_config_post_assert(const enkf_config_type * config) {
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) util_abort("%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); 
 enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file , 
 					    enkf_site_config_type * site_config , 
+					    ext_joblist_type * joblist , 
 					    int  ens_offset,
 					    bool fmt_file ,
 					    bool unified  ,         
@@ -509,6 +541,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      } else if (strcmp(kw , "START_TIME") == 0) {
 		ASSERT_TOKENS("START_TIME" , active_tokens , 3);
 		enkf_config_set_start_date(enkf_config , (const char **) &token_list[1]);
+	      } else if (strcmp(kw , "FORWARD_MODEL") == 0) {
+		ASSERT_TOKENS("FORWARD_MODEL" , active_tokens , 1);
+		enkf_config_set_forward_model(enkf_config , joblist , (const char **) &token_list[1] , active_tokens - 1);
 	      } else
 		fprintf(stderr,"%s: ** Warning ** keyword: %s not recognzied - line ignored \n",__func__ , kw);
 	    }    
@@ -619,7 +654,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	    }
 	  }
 	}
-	util_free_string_list(token_list , tokens);
+	util_free_stringlist(token_list , tokens);
 	free(line);
       }
     } while (!at_eof);
@@ -749,13 +784,6 @@ ecl_store_enum enkf_config_iget_ecl_store(const enkf_config_type * config, int i
 
 void enkf_config_free(enkf_config_type * config) {  
   hash_free(config->config_hash);
-  /*{
-    int i;
-    for (i=0; i < config->nwells; i++)
-      free(config->well_list[i]);
-    free(config->well_list);
-  }
-  */
   path_fmt_free(config->result_path);
   path_fmt_free(config->run_path);
   path_fmt_free(config->eclbase);
@@ -772,6 +800,7 @@ void enkf_config_free(enkf_config_type * config) {
   hash_free(config->data_kw);
   free(config->init_file);
   free(config->ecl_store);
+  util_free_stringlist(config->forward_model , config->forward_model_length);
   free(config);
 }
 
@@ -839,8 +868,3 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
 }
 
 
-/** Nothing like a little HARD-coding ... */
-
-void enkf_config_add_eclipse_job(const enkf_config_type * config , const enkf_site_config_type * site_config , ext_joblist_type * joblist) {
-  ext_joblist_add_job(joblist , ext_job_fscanf_alloc("/h/a152128/EnKF/devel/EnKF/libecl_queue/src/ECLIPSE100"));
-}

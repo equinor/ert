@@ -397,8 +397,8 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
 	  util_copy_file(header_src , header_target);
 	  free(header_src);
 	}
-	util_free_string_list(summary_target , report_nr2 - first_report + 1);
-	util_free_string_list(summary_src    , report_nr2 - first_report + 1);
+	util_free_stringlist(summary_target , report_nr2 - first_report + 1);
+	util_free_stringlist(summary_src    , report_nr2 - first_report + 1);
 	free(header_target);
       }
     }
@@ -415,8 +415,8 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
 	for (i=0; i  < report_nr2 - first_report + 1; i++) 
 	  util_copy_file(restart_src[i] , restart_target[i]);
 
-	util_free_string_list(restart_target , report_nr2 - first_report + 1);
-	util_free_string_list(restart_src    , report_nr2 - first_report + 1);
+	util_free_stringlist(restart_target , report_nr2 - first_report + 1);
+	util_free_stringlist(restart_src    , report_nr2 - first_report + 1);
       }
     }
   }
@@ -885,7 +885,11 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     ecl_util_init_stdin( stdin_file , enkf_state->eclbase );
     free(stdin_file);
   }
-  ext_joblist_python_fprintf( enkf_state->joblist , (const char *[1]) {"ECLIPSE100"} , 1 , enkf_state->run_path , NULL);
+  {
+    int forward_model_length;
+    const char ** forward_model = enkf_config_get_forward_model(enkf_state->config , &forward_model_length);
+    ext_joblist_python_fprintf( enkf_state->joblist , forward_model , forward_model_length , enkf_state->run_path , NULL);
+  }
 }
 
 

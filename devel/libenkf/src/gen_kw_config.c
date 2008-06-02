@@ -69,7 +69,7 @@ For the template file there are essentially no restrictions:
 */
 
 gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const char * template_file) {
-  gen_kw_config_type * config;
+  gen_kw_config_type * config = NULL;
   if (util_file_exists(filename)) {
     FILE * stream = util_fopen(filename , "r");
     int line_nr = 0;
@@ -89,8 +89,7 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
       line_nr++;
     } while ( line_nr < size );
     fclose(stream);
-  }
-  else 
+  } else 
     util_abort("%s: config_file:%s does not exist - aborting.\n" , __func__ , filename);
 
   return config;
@@ -98,7 +97,7 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
 
 
 void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
-  util_free_string_list(gen_kw_config->kw_list , scalar_config_get_data_size(gen_kw_config->scalar_config));
+  util_free_stringlist(gen_kw_config->kw_list , scalar_config_get_data_size(gen_kw_config->scalar_config));
   if (gen_kw_config->template_file != NULL)
     free(gen_kw_config->template_file);
   scalar_config_free(gen_kw_config->scalar_config);

@@ -36,7 +36,12 @@ int main (int argc , char ** argv) {
     ecl_queue_type   * ecl_queue;
     enkf_main_type   * enkf_main;
     enkf_site_config_type * site_config = enkf_site_config_bootstrap(site_config_file);
-    enkf_config_type * enkf_config      = enkf_config_fscanf_alloc(config_file , site_config , 1 , false , false , true);
+    joblist   = ext_joblist_alloc();
+    {
+      /** Nothing like a little HARD-coding ... */
+      ext_joblist_add_job(joblist , ext_job_fscanf_alloc("/d/proj/bg/enkf/Config/ECLIPSE100"));
+    }
+    enkf_config_type * enkf_config      = enkf_config_fscanf_alloc(config_file , site_config , joblist , 1 , false , false , true);
     
     plain_driver_type * dynamic_analyzed 	 = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	   , "%04d/mem%03d/Analyzed");
     plain_driver_type * dynamic_forecast 	 = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	   , "%04d/mem%03d/Forecast");
@@ -45,9 +50,8 @@ int main (int argc , char ** argv) {
     fs_index_type     * fs_index                 = fs_index_alloc(enkf_config_get_ens_path(enkf_config) , "INDEX/mem%03d/INDEX");
     enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
     
-    joblist   = ext_joblist_alloc();
+
     ecl_queue = enkf_config_alloc_ecl_queue(enkf_config , site_config);
-    enkf_config_add_eclipse_job(enkf_config , site_config , joblist);
     enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue , joblist);
 
     enkf_main_initialize_ensemble(enkf_main); 

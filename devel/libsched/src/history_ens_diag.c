@@ -175,7 +175,7 @@ ecl_sum_type ** history_ens_diag_load_ensemble(int iens1, int iens2 , int * _min
       printf("Loading from directory: %s ... ",path); fflush(stdout);
       ecl_sum_list[iens - iens1] = ecl_sum_fread_alloc(spec_file , files , (const char **) fileList , report_mode , endian_convert);
       printf("%d timestep \n",ecl_sum_get_size(ecl_sum_list[iens - iens1]));
-      util_free_string_list(fileList , files);
+      util_free_stringlist(fileList , files);
     }
 
     free(spec_file);
@@ -279,7 +279,7 @@ static void history_ens_diag_ens(int iens1 , int iens2 , const char *out_path , 
     free(max);
     free(inv_covar);
     free(std);
-    util_free_string_list(hvar_list , nvar);
+    util_free_stringlist(hvar_list , nvar);
   }
   
   {
@@ -394,7 +394,7 @@ void history_ens_diag_ens_interactive(const char *eclbase_dir , const char *eclb
       return;
     }
   } else {
-    well_list = util_alloc_string_list(nwell , 64);
+    well_list = util_alloc_stringlist(nwell , 64);
     for (i=0; i < nwell; i++) {
       sprintf(prompt , "   Well %2d" , i+1);
       read_string(prompt , prompt_len , well_list[i]);
@@ -404,11 +404,11 @@ void history_ens_diag_ens_interactive(const char *eclbase_dir , const char *eclb
   read_int ("Number of variables  ...[0 to use default set: WOPR WGOR WWCT]" , prompt_len , &nvar);
   if (nvar == 0) {
     nvar = defvar_N;
-    var_list = util_alloc_string_list(nvar , 64);
+    var_list = util_alloc_stringlist(nvar , 64);
     for (i=0; i < nvar; i++) 
       strcpy(var_list[i] , defvar_list[i]);
   } else {
-    var_list = util_alloc_string_list(nvar , 64);
+    var_list = util_alloc_stringlist(nvar , 64);
     for (i=0; i < nvar; i++) {
       sprintf(prompt , "   Var %2d                " , i+1);
       read_string(prompt , prompt_len , var_list[i]);
@@ -423,8 +423,8 @@ void history_ens_diag_ens_interactive(const char *eclbase_dir , const char *eclb
 
 
 
-  util_free_string_list(well_list , nwell);
-  util_free_string_list(var_list  , nvar);
+  util_free_stringlist(well_list , nwell);
+  util_free_stringlist(var_list  , nvar);
 }
 
 

@@ -61,7 +61,7 @@ void summary_obs_fscanf_alloc_data(const char * data_file , int * _size , char *
 	if ( !util_sscanf_double( token_list[2] , &std[size]))  util_abort("%s: could not parse:%s into a double - aborting", __func__ , token_list[2]);
 	size++;
 
-	util_free_string_list( token_list , tokens );
+	util_free_stringlist( token_list , tokens );
       }
     }
     free(line);

@@ -123,7 +123,7 @@ void obs_data_free(obs_data_type * obs_data) {
   free(obs_data->value);
   free(obs_data->std);
   free(obs_data->obs_active);
-  util_free_string_list(obs_data->keyword , obs_data->total_size);
+  util_free_stringlist(obs_data->keyword , obs_data->total_size);
   free(obs_data);
 }
 

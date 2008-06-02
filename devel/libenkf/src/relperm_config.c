@@ -137,7 +137,7 @@ table_config_type * relperm_config_fscanf_table_config_alloc(FILE * stream_tab, 
     abort();
   }
 
-  util_free_string_list(token_list,tokens);
+  util_free_stringlist(token_list,tokens);
   free(line);
   return tab_config;
 }
@@ -771,7 +771,7 @@ bool relperm_config_check_ecl_file(hash_type * ecl_file_hash, char * eclipse_fil
   return ecl_file_append;
 }
 void relperm_config_free(relperm_config_type * relperm_config){
-  util_free_string_list(relperm_config->kw_list, scalar_config_get_data_size(relperm_config->scalar_config));
+  util_free_stringlist(relperm_config->kw_list, scalar_config_get_data_size(relperm_config->scalar_config));
   free(relperm_config->index_hash);
   free(relperm_config->ecl_file_hash);
   scalar_config_free(relperm_config->scalar_config);

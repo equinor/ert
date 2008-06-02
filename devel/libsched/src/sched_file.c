@@ -265,7 +265,7 @@ void sched_file_parse(sched_file_type * sched_file , const char * filename) {
       }
     }
   } while (cont);
-  util_free_string_list(line_list , lines);
+  util_free_stringlist(line_list , lines);
   sched_file_update_well_set(sched_file);
 }
 

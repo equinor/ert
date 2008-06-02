@@ -15,6 +15,7 @@ function [data1 , data2] = ins_plot2(prefix , logy)
   [data1 , title1] = fread_thist(strcat(prefix , '.enkf' ) , 0);
   [data2 , title2] = fread_thist(strcat(prefix , '.eclipse') , 1);
 
+  logy = 0;
   ins_plot__(data1 , title1, 1 , 0);
   ins_plot__(data2 , title2, 2 , logy);
 

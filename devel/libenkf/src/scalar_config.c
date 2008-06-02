@@ -77,7 +77,7 @@ void scalar_config_free(scalar_config_type * scalar_config) {
   free(scalar_config->mean);
   free(scalar_config->std);
   free(scalar_config->active);
-  util_free_string_list(scalar_config->output_transform_name , scalar_config->data_size);
+  util_free_stringlist(scalar_config->output_transform_name , scalar_config->data_size);
   for (i=0; i < scalar_config->data_size; i++)
     if (scalar_config->void_arg[i] != NULL) void_arg_free(scalar_config->void_arg[i]);
 

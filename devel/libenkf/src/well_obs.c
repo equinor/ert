@@ -339,7 +339,7 @@ well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_
 	if (active_tokens > 0)
 	  fprintf(stderr,"%s ** Warning ** line:%s ignored \n",__func__ , line);
       }
-      util_free_string_list(token_list , tokens);
+      util_free_stringlist(token_list , tokens);
     }
     free(line);
   } while (!at_eof);

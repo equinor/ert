@@ -228,7 +228,7 @@ void enkf_obs_add_summary_obs(enkf_obs_type * enkf_obs, const enkf_config_node_t
     free(std);
     free(value);
   
-    util_free_string_list(meas_time_string , size);
+    util_free_stringlist(meas_time_string , size);
   }
   obs_node = obs_node_alloc(summary_obs , state_kw , var , enkf_obs->num_reports , default_active , summary_obs_get_observations__ , summary_obs_measure__ , summary_obs_free__);
   for (i=0;  i < size; i++)
@@ -415,7 +415,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
 	  
 	}
-	util_free_string_list(token_list , tokens);
+	util_free_stringlist(token_list , tokens);
 	free(line);
       }
     } while ( !at_eof );
