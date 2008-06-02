@@ -2,12 +2,17 @@
 import os
 import glob
 import sys
+import re
 
 def load_path_list(path_config):
     path_list = []
     path_dict = {}
     fileH = open(path_config)
     for line in fileH.readlines():
+        comment_start = line.find("#")
+        if comment_start > -1:
+            line = line[:comment_start]
+
         if line.find("=") > -1:
             (var , path) = line.split("=")[0:2]
             path_list.append(path.strip())
@@ -42,6 +47,7 @@ for path in path_list:
                nCPU = 1
            elif path.find("analysis") != -1:
                nCPU = 1
+           print "make -s -j %d MFLAG=%s" % (nCPU , mflag)
            os.system("make -s -j %d MFLAG=%s" % (nCPU , mflag)) 
         os.chdir(cwd)
 

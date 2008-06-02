@@ -95,7 +95,7 @@ void ext_job_free(ext_job_type * ext_job) {
   hash_free(ext_job->environment);
   hash_free(ext_job->platform_exe);
   
-  util_free_string_list(ext_job->argv , ext_job->argc);
+  util_free_stringlist(ext_job->argv , ext_job->argc);
   free(ext_job);
 }
 
@@ -208,7 +208,7 @@ static void __fprintf_python_hash(FILE * stream , const char * id , const hash_t
       fprintf(stream,",");
   }
   fprintf(stream,"}");
-  util_free_string_list(key_list , size);
+  util_free_stringlist(key_list , size);
 }
 
 
@@ -303,7 +303,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * filename) {
 	} else 
 	  fprintf(stderr,"** Warning: when parsing:%s the keyword:%s is not recognized - ignored.\n",filename , kw);
 	
-	util_free_string_list(token_list , tokens);
+	util_free_stringlist(token_list , tokens);
       }
       free(line);
     }

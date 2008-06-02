@@ -24,8 +24,8 @@ Table of contents
     3.3  Parameters to estimate 
     3.4  Observations
     3.4.1  Well rate observations from SCHEDULE
-    3.4.2  Block observations (i.e. RFT)
-    3.4.3  Observations of other summary variables.
+    3.4.2  Observations of other summary variables.
+    3.4.3  Block observations (i.e. RFT)
     3.5  Overriding the site-config configuration
  4. Running it ...  
 
@@ -340,27 +340,72 @@ Table of contents
   3.4 The observations are specified in a (several) file(s) of their
       own. From the main configuration this file is specified with the
       keyword OBS_CONFIG - which should then point to another file
-      containing information about the observations.
+      containing information about the observations. Currently the
+      system supports three different types of observations, WELL,
+      BLOCK and SUMMARY.
 
-      Currently the system supports three different types of
-      observations:
+      Things which are measured by the EnKF system to compare with
+      observations must be part of state vector, this means that when
+      observing e.g. the oil rate in well P1 you must also add well P1
+      as a quantity to update/estimate as described in section
+      3.3. It can be argued that this is entering the same information
+      twice, and the interface might change in the future. But
+      currently it is like this.
 
-      WELL: This is observations of well rates, the actual
-        observations are taken directly from the SCHEDULE file.
-
-      BLOCK: This is observations of cell/block properties. The
-        observations can be of arbitrary ECLIPSE fields like PRESSURE
-        (typically for an RFT), PORO or ... The actual values must be
-        entered by the user in a seperate configuration file.
-
-      SUMMARY: This is arbitrary data which can be read out from the
-        summary file. I.e. well rates, region properties, ... As with
-        BLOCK observations the actual values must be specified by the
-        user in a separate file.
-
+      The file pointed to by the OBS_CONFIG keyword is organized in
+      much the same way as the main config file. There are three
+      different keywords (WELL , SUMMARY and BLOCK), correspinding to
+      the the three observation types.
 
 
+      3.4.1 WELL: This is observations of well rates, the actual
+            observations are taken directly from the SCHEDULE
+            file. The (observation) config file should look like this:
+   
+            WELL   <WELL_NAME>   <WELL OBS CONFIG FILE>
 
+            The WELL_NAME must match a name given in the main config 
+            file. The config file (the third and last level of config
+            file information ...) contains information on when the
+            well is active (that is active in the sense that we are
+            conditioning on it), and what uncertainty which should be
+            ascribed to the data. A line in this config file looks
+            like this:
+
+            WOPR  *           -  *           ON  REL  0.10
+            1     2           3  4           5   6    7
+
+            The various columns have the following meaning:
+            
+            1: The well variable we are considering, could be WWCT,
+               WRAT ...
+  
+            2: The start of a period, this can be given in three
+               different ways:
+
+               10-10-2004 : As a date with format DD-MM-YYYY.
+               56         : As report number (i.e. EnKF time-step).
+               *          : From simulation start.   
+      
+
+
+
+      3.4.2 SUMMARY: This is arbitrary data which can be read out from
+            the summary file. I.e. well rates, region properties,
+            ... As with BLOCK observations the actual values must be
+            specified by the user in a separate file.
+
+      3.4.3 BLOCK: This is observations of cell/block properties. The
+            observations can be of arbitrary ECLIPSE fields like
+            PRESSURE (typically for an RFT), PORO or ... The actual
+            values must be entered by the user in a seperate
+            configuration file.
+
+
+
+      
+
+      
 
     
 
