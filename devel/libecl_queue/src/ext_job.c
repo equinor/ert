@@ -4,6 +4,8 @@
 #include <util.h>
 #include <hash.h>
 #include <ext_job.h>
+#include <config.h>
+#include <config_item.h>
 
 /*
 
@@ -29,13 +31,14 @@ struct ext_job_struct {
   int          __type_id;
   char       * name;
   char 	     * portable_exe;
-  char 	     * init_code;
   char 	     * target_file;
   char 	     * stdout_file;
   char 	     * stdin_file;
   char 	     * stderr_file;
   char 	     ** argv; /* This should *NOT* start with the executable */
-  int  	       argc;
+  int  	        argc;
+  char 	     ** init_code;
+  int           init_code_length;
   hash_type  * platform_exe;
   hash_type  * environment;
 };
@@ -65,6 +68,7 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->name         = util_alloc_string_copy(name);
   ext_job->portable_exe = NULL;
   ext_job->init_code    = NULL;
+  ext_job->init_code_length = 0;
   ext_job->stdout_file  = NULL;
   ext_job->target_file  = NULL;
   ext_job->stdin_file   = NULL;
@@ -87,15 +91,15 @@ ext_job_type * ext_job_alloc(const char * name) {
 void ext_job_free(ext_job_type * ext_job) {
   free(ext_job->name);
   util_safe_free(ext_job->portable_exe);
-  util_safe_free(ext_job->init_code);
   util_safe_free(ext_job->stdout_file);
   util_safe_free(ext_job->stdin_file);
   util_safe_free(ext_job->target_file);
   util_safe_free(ext_job->stderr_file);
   hash_free(ext_job->environment);
   hash_free(ext_job->platform_exe);
-  
-  util_free_stringlist(ext_job->argv , ext_job->argc);
+
+  util_free_stringlist(ext_job->init_code , ext_job->init_code_length);
+  util_free_stringlist(ext_job->argv      , ext_job->argc);
   free(ext_job);
 }
 
@@ -108,8 +112,11 @@ void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe)
   ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , portable_exe);
 }
 
-void ext_job_set_init_code(ext_job_type * ext_job, const char * init_code) {
-  ext_job->init_code = util_realloc_string_copy(ext_job->init_code , init_code);
+void ext_job_set_init_code(ext_job_type * ext_job, const char ** init_code, int init_code_length) {
+  if (ext_job->init_code != NULL)
+    util_free_stringlist(ext_job->init_code , ext_job->init_code_length);
+  ext_job->init_code = util_alloc_stringlist_copy(init_code , init_code_length);
+  ext_job->init_code_length = init_code_length;
 }
 
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
@@ -121,6 +128,7 @@ void ext_job_set_target_file(ext_job_type * ext_job, const char * target_file) {
 }
 
 void ext_job_set_name(ext_job_type * ext_job, const char * name) {
+  printf("Setting:%s \n",name);
   ext_job->name = util_realloc_string_copy(ext_job->name , name);
 }
 
@@ -144,10 +152,11 @@ void ext_job_add_environment(ext_job_type *ext_job , const char * key , const ch
 
 
 
-void ext_job_add_arg(ext_job_type * ext_job , const char * arg) {
-  ext_job->argv = util_realloc(ext_job->argv , (ext_job->argc + 1) * sizeof * ext_job->argv , __func__);
-  ext_job->argv[ext_job->argc] = util_alloc_string_copy( arg );
-  ext_job->argc++;
+void ext_job_set_argv(ext_job_type * ext_job , const char ** argv , int argc) {
+  if (ext_job->argv != NULL)
+    util_free_stringlist(ext_job->argv , ext_job->argc);
+  ext_job->argv = util_alloc_stringlist_copy(argv , argc);
+  ext_job->argc = argc;
 }
 
 
@@ -229,12 +238,13 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const h
   fprintf(stream," {");
   __indent(stream, 0); __fprintf_python_string(stream , "name"  	  , ext_job->name , NULL);                    __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , context_hash);    __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "init_code"    	  , ext_job->init_code , context_hash);       __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	  , ext_job->target_file , context_hash);     __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	  , ext_job->stdout_file , context_hash);     __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	  , ext_job->stderr_file , context_hash);     __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	  , ext_job->stdin_file , context_hash);      __end_line(stream);
-  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , (const char **) ext_job->argv , ext_job->argc , context_hash); __end_line(stream);
+
+  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , (const char **) ext_job->argv   , ext_job->argc , context_hash); __end_line(stream);
+  __indent(stream, 2); __fprintf_python_list(stream   , "init_code"    	  , (const char **) ext_job->init_code , ext_job->init_code_length , context_hash);       __end_line(stream);
   __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	  , ext_job->environment , context_hash);      __end_line(stream);
   __indent(stream, 2); __fprintf_python_hash(stream   , "platform_exe" 	  , ext_job->platform_exe , context_hash); 
   fprintf(stream,"}");
@@ -254,9 +264,60 @@ static void ext_job_assert(const ext_job_type * ext_job) {
 }
 
 
+static void ext_job_set_hash(hash_type * hash , const char ** key_value_list , int argc) {
+  int iarg;
+  for (iarg = 0; iarg < argc; iarg+= 2) 
+    hash_insert_hash_owned_ref(hash , key_value_list[iarg] , util_alloc_string_copy(key_value_list[iarg + 1]) , free);
+}
+
+
+ext_job_type * ext_job_fscanf_alloc(const char * filename) {
+  ext_job_type * ext_job = ext_job_alloc__(NULL);
+  config_type * config = config_alloc( false );
+
+  config_init_item(config , "STDIN"  	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "STDOUT" 	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "STDERR" 	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "NAME"   	     , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "INIT_CODE"      , 0 , NULL , false , true  , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "PORTABLE_EXE"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "TARGET_FILE"    , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "ENV"            , 0 , NULL , false , true  , 0 , NULL , 2 , 2 , NULL);
+  config_init_item(config , "PLATFORM_EXE"   , 0 , NULL , false , true  , 0 , NULL , 2 , 2 , NULL);
+  config_init_item(config , "ARGLIST"        , 0 , NULL , false , true  , 0 , NULL , 1 ,-1 , NULL);
+  config_parse(config , filename , "--");
+  {
+    if (config_item_set(config , "STDIN"))  	  ext_job_set_stdin_file(ext_job , config_get(config  , "STDIN"));
+    if (config_item_set(config , "STDOUT")) 	  ext_job_set_stdout_file(ext_job , config_get(config , "STDOUT"));
+    if (config_item_set(config , "STDERR")) 	  ext_job_set_stderr_file(ext_job , config_get(config , "STDERR"));
+    if (config_item_set(config , "NAME"))   	  ext_job_set_name(ext_job , config_get(config , "NAME"));
+    if (config_item_set(config , "TARGET_FILE"))  ext_job_set_target_file(ext_job , config_get(config , "TARGET_FILE"));
+    if (config_item_set(config , "PORTABLE_EXE")) ext_job_set_portable_exe(ext_job , config_get(config , "PORTABLE_EXE"));
+
+    if (config_item_set(config , "ARGLIST")) {
+      int argc = config_get_argc(config , "ARGLIST");
+      ext_job_set_argv(ext_job , config_get_argv(config , "ARGLIST") , argc);  /* argc is set in in the inner call - ugly ?! */
+    }
+    
+    if (config_item_set(config , "INIT_CODE")) {
+      int init_code_length = config_get_argc(config , "INIT_CODE");
+      ext_job_set_init_code(ext_job , (const char **) config_get_argv(config , "INIT_CODE") , init_code_length);
+    }
+
+    if (config_item_set(config , "ENV")) 
+      ext_job_set_hash(ext_job->environment , (const char **) config_get_argv(config , "ENV") , config_get_argc(config , "ENV"));
+    
+    if (config_item_set(config , "PLATFORM_EXE")) 
+      ext_job_set_hash(ext_job->platform_exe , (const char **) config_get_argv(config , "PLATFORM_EXE") , config_get_argc(config , "PLATFORM_EXE"));
+    
+  }
+  config_free(config);
+  return ext_job;
+}
+
 
 #define ASSERT_TOKENS(t , n , kw) if (t != n) { util_abort("%s: When parsing:%s I need exactlt:%d items \n",kw,n); }
-ext_job_type * ext_job_fscanf_alloc(const char * filename) {
+ext_job_type * ext_job_fscanf_alloc_old(const char * filename) {
   bool at_eof            = false;
   ext_job_type * ext_job = ext_job_alloc__( NULL );
   FILE * stream          = util_fopen(filename , "r");
@@ -287,13 +348,13 @@ ext_job_type * ext_job_fscanf_alloc(const char * filename) {
 	  ext_job_set_portable_exe(ext_job , token_list[1]);
 	} else if (strcmp(kw , "INIT_CODE") == 0) {
 	  ASSERT_TOKENS(tokens , 2 , kw);
-	  ext_job_set_init_code(ext_job , token_list[1]);
+	  ext_job_set_init_code(ext_job , (const char **) &token_list[1] , tokens - 1);
 	} else if (strcmp(kw , "TARGET_FILE") == 0) {
 	  ASSERT_TOKENS(tokens , 2 , kw);
 	  ext_job_set_target_file(ext_job , token_list[1]);
-	} else if (strcmp(kw , "ARG") == 0) {
+	} else if (strcmp(kw , "ARGLIST") == 0) {
 	  ASSERT_TOKENS(tokens , 2 , kw);
-	  ext_job_add_arg(ext_job , token_list[1]);
+	  ext_job_set_argv(ext_job ,  (const char **) &token_list[1] , tokens - 1);
 	} else if (strcmp(kw , "ENV") == 0) {
 	  ASSERT_TOKENS(tokens , 3 , kw);
 	  ext_job_add_environment(ext_job , token_list[1] , token_list[2]);

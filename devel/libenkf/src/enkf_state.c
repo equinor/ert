@@ -1197,6 +1197,8 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
 /*       next_node[iens] = list_node; */
 /*     } */
 
+    for (iens=0; iens < ens_size; iens++) 
+      printf("serial_size[%d] = %d \n",iens , member_serial_size[iens]);
 
     for (iens=1; iens < ens_size; iens++) {
       if (member_complete[iens]    != member_complete[iens-1])    util_abort("%s: member_complete difference    - INTERNAL ERROR - aborting \n",__func__); 
