@@ -255,7 +255,7 @@ enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
 
 enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , ecl_store_enum ecl_store , enkf_fs_type * fs , ext_joblist_type * joblist , 
 				   const char * run_path , const char * eclbase ,  const char * ecl_store_path , meas_vector_type * meas_vector) {
-  enkf_state_type * enkf_state = malloc(sizeof *enkf_state);
+  enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   
   enkf_state->config          = (enkf_config_type *) config;
   enkf_state->node_list       = list_alloc();
@@ -995,30 +995,33 @@ static double * enkf_ensemble_alloc_serial_data(int ens_size , size_t target_ser
   size_t   serial_size;
   double * serial_data;
 
-  {
-    /*
-      Ensure that the allocated memory is a multiple ens_size.
-    */
-    div_t tmp   = div(target_serial_size , ens_size);
-    serial_size = ens_size * tmp.quot;
 #ifdef i386
-    /* 
-       33570816 = 2^25 is the maximum number of doubles we will
-       allocate, this corresponds to 2^28 bytes - which it seems
-       we can adress quite safely ...
-    */
-    serial_size = util_int_min(serial_size , 33570816 ); 
+  /* 
+     33570816 = 2^25 is the maximum number of doubles we will
+     allocate, this corresponds to 2^28 bytes - which it seems
+     we can adress quite safely ...
+  */
+  serial_size = util_int_min(serial_size , 33570816 ); 
 #endif
-  }
-
+  
   do {
     serial_data = malloc(serial_size * sizeof * serial_data);
     if (serial_data == NULL) 
       serial_size /= 2;
 
   } while (serial_data == NULL);
-  *_serial_size = serial_size;
+
   
+  /*
+    Ensure that the allocated memory is an integer times ens_size.
+  */
+  {
+    div_t tmp   = div(serial_size , ens_size);
+    serial_size = ens_size * tmp.quot;
+  }
+  
+  serial_data = util_realloc(serial_data , serial_size * sizeof * serial_data);
+  *_serial_size = serial_size;
   return serial_data;
 }
 
@@ -1073,16 +1076,20 @@ void * enkf_ensemble_serialize__(void * _void_arg) {
   member_complete    = void_arg_get_ptr(void_arg , 8);
   update_mask        = void_arg_get_int(void_arg , 9);
   for (iens = iens1; iens < iens2; iens++) {
+    FILE * debug_stream = util_fopen("serialize.txt" , "a");
     list_node_type  * list_node  = start_node[iens];
     bool node_complete           = true;  
     size_t   serial_offset       = iens;
     
+    fprintf(debug_stream , "------------------------\n");
     while (node_complete) {                                           
       enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
       if (enkf_node_include_type(enkf_node , update_mask)) {                       
-	int elements_added = enkf_node_serialize(enkf_node , serial_size , serial_data , serial_stride , serial_offset , &node_complete);
+	int elements_added        = enkf_node_serialize(enkf_node , serial_size , serial_data , serial_stride , serial_offset , &node_complete);
 	serial_offset            += serial_stride * elements_added;  
 	member_serial_size[iens] += elements_added;
+	fprintf(debug_stream,  "serial_size:%d  serial_stride:%d  serial_offset:%d \n",serial_size , serial_stride , serial_offset);
+	fprintf(debug_stream , "Serializing: %s[%d] = %d \n",enkf_node_get_key_ref(enkf_node) , iens , elements_added);
       }
       
       if (node_complete) {
@@ -1095,6 +1102,7 @@ void * enkf_ensemble_serialize__(void * _void_arg) {
     }
       /* Restart on this node */
     next_node[iens] = list_node;
+    fclose(debug_stream);
   }
 
   return NULL;
