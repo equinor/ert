@@ -522,16 +522,16 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     break;
   case(MULTZ):
     node->realloc_data = multz_realloc_data__;
-    node->alloc       = multz_alloc__;
-    node->ecl_write   = multz_ecl_write__;
-    node->fread_f     = multz_fread__;
-    node->fwrite_f    = multz_fwrite__;
-    node->copyc       = multz_copyc__;
-    node->initialize  = multz_initialize__;
-    node->serialize   = multz_serialize__;
-    node->deserialize = multz_deserialize__;
-    node->freef       = multz_free__;
-    node->free_data   = multz_free_data__;
+    node->alloc        = multz_alloc__;
+    node->ecl_write    = multz_ecl_write__;
+    node->fread_f      = multz_fread__;
+    node->fwrite_f     = multz_fwrite__;
+    node->copyc        = multz_copyc__;
+    node->initialize   = multz_initialize__;
+    node->serialize    = multz_serialize__;
+    node->deserialize  = multz_deserialize__;
+    node->freef        = multz_free__;
+    node->free_data    = multz_free_data__;
     break;
   case(RELPERM):
     node->alloc       = relperm_alloc__;

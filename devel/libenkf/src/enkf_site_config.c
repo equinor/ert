@@ -5,6 +5,7 @@
 #include <util.h>
 #include <hash.h>
 #include <enkf_site_config.h>
+#include <config.h>
 
 enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * , const char * );
 static bool                  enkf_site_config_assert_set_int(const enkf_site_config_type * , const enkf_site_config_node_type *  );
@@ -315,4 +316,33 @@ void enkf_site_config_validate(enkf_site_config_type *site) {
 void  enkf_site_config_free(enkf_site_config_type * site) {
   hash_free(site->config);
   free(site);
+}
+
+
+enkf_site_config_type * enkf_site_config_bootstrap_NEW(const char * _config_file) {
+  const char * config_file = getenv("ENKF_SITE_CONFIG");
+  if (config_file == NULL)
+    config_file = _config_file;
+  
+  if (config_file == NULL) {
+    fprintf(stderr,"%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
+    abort();
+  }
+  {
+    config_type * config = config_alloc( false );
+    
+    config_init_item( config , "QUEUE_SYSTEM"  , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
+    config_init_item( config , "JOB_SCRIPT"    , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
+
+    config_init_item( config , "RSH_HOST_LIST"     , 0 , NULL , false , true  , 0 , NULL , 1 , 1 , NULL );
+    config_init_item( config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
+    config_init_item( config , "LSF_QUEUE"         , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
+    config_init_item( config , "RSH_COMMAND"       , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
+    config_init_item( config , "MAX_RUNNING_RSH"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
+    config_init_item( config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
+
+    config_parse(config , config_file);
+    return config;
+  }
+  
 }
