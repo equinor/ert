@@ -219,11 +219,6 @@ void prefix ## _obs_measure__(const void * void_arg ,  const void * domain_objec
 
 /*****************************************************************/
 
-#define VOID_FREE_CONFIG(prefix)        void prefix ## _config_free__(void * void_arg) { prefix ## _config_free( (prefix ## _config_type *) void_arg); }
-#define VOID_FREE_CONFIG_HEADER(prefix) void prefix ## _config_free__(void * )
-
-/*****************************************************************/
-
 #define VOID_SCALE(prefix)        void prefix ## _scale(void * void_arg) { prefix ## _scale( (prefix ## _type *) void_arg); }
 #define VOID_SCALE_HEADER(prefix) void prefix ## _scale(void * );
 

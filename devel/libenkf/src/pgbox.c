@@ -33,22 +33,22 @@ static void pgbox_realloc_data(pgbox_type * pgbox) {
 
 
 
-
-
 pgbox_type * pgbox_alloc(const pgbox_config_type * config) {
   pgbox_type * pgbox  = util_malloc(sizeof * pgbox , __func__);
   pgbox->config       = config;
   pgbox->target_field = NULL;
-  pgbox->data = NULL;
+  pgbox->data         = NULL;
   pgbox_realloc_data(pgbox);
   DEBUG_ASSIGN(pgbox)
   return pgbox;
 }
 
 
+
 void pgbox_set_target_field(pgbox_type * pgbox , field_type * target_field) {
   pgbox->target_field = target_field;
 }
+
 
 
 void pgbox_apply(pgbox_type * pgbox) {
@@ -75,15 +75,18 @@ void pgbox_free(pgbox_type * pgbox) {
 }
 
 
+
 void pgbox_fwrite(const pgbox_type * pgbox , FILE * stream) {
   const int data_size    = pgbox_config_get_data_size(pgbox->config);
   const int sizeof_ctype = sizeof * pgbox->data;
   bool  write_compressed = pgbox_config_write_compressed(pgbox->config);
   
   enkf_util_fwrite_target_type(stream , PGBOX);
+
   fwrite(&data_size               ,   sizeof  data_size        , 1 , stream);
   fwrite(&sizeof_ctype            ,   sizeof  sizeof_ctype     , 1 , stream);
   fwrite(&write_compressed        ,   sizeof  write_compressed , 1 , stream);
+
   if (write_compressed)
     util_fwrite_compressed(pgbox->data , sizeof_ctype * data_size , stream);
   else
@@ -95,15 +98,19 @@ void pgbox_fwrite(const pgbox_type * pgbox , FILE * stream) {
 void pgbox_fread(pgbox_type * pgbox , FILE * stream) {
   int  data_size , sizeof_ctype;
   bool read_compressed;
+
   enkf_util_fread_assert_target_type(stream , PGBOX , __func__);
+
   fread(&data_size     	  , sizeof  data_size        , 1 , stream);
   fread(&sizeof_ctype 	  , sizeof  sizeof_ctype     , 1 , stream);
   fread(&read_compressed  , sizeof  read_compressed  , 1 , stream);
+
   if (read_compressed)
     util_fread_compressed((char *) &pgbox->data[0] , stream);
   else
     enkf_util_fread(pgbox->data , sizeof_ctype , data_size , stream , __func__);
 }
+
 
 
 pgbox_type * pgbox_copyc(const pgbox_type * src) {
@@ -121,7 +128,6 @@ pgbox_type * pgbox_copyc(const pgbox_type * src) {
 
 
 
-
 void pgbox_clear(pgbox_type * pgbox) {
   const int data_size          = pgbox_config_get_data_size(pgbox->config);   
   int i;
@@ -131,19 +137,18 @@ void pgbox_clear(pgbox_type * pgbox) {
 
 
 
-
-
 int pgbox_deserialize(const pgbox_type * pgbox , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
   const pgbox_config_type *config      = pgbox->config;
   const int                data_size   = pgbox_config_get_data_size(config);
+
   double *data;
   int new_internal_offset;
 
   data = &pgbox->data[internal_offset];
   new_internal_offset = enkf_util_deserialize(data , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+
   return new_internal_offset;
 }
-
 
 
 
@@ -152,6 +157,7 @@ int pgbox_serialize(const pgbox_type *pgbox , int internal_offset , size_t seria
   const int                data_size  = pgbox_config_get_data_size(config);
 
   int elements_added;
+
   elements_added = enkf_util_serialize(pgbox->data , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   return elements_added;
 }
@@ -161,7 +167,6 @@ int pgbox_serialize(const pgbox_type *pgbox , int internal_offset , size_t seria
 void pgbox_initialize(pgbox_type *pgbox , int iens) {
   printf("%s: Warning not implemented ... \n",__func__);
 }
-
 
 
 
