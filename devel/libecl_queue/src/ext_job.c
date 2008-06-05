@@ -5,7 +5,6 @@
 #include <hash.h>
 #include <ext_job.h>
 #include <config.h>
-#include <config_item.h>
 
 /*
 
