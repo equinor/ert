@@ -1020,7 +1020,7 @@ static double * enkf_ensemble_alloc_serial_data(int ens_size , size_t target_ser
     serial_size = ens_size * tmp.quot;
   }
   
-  serial_data = util_realloc(serial_data , serial_size * sizeof * serial_data);
+  serial_data = util_realloc(serial_data , serial_size * sizeof * serial_data,__func__);
   *_serial_size = serial_size;
   return serial_data;
 }
