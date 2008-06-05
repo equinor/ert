@@ -56,9 +56,12 @@ pgbox_config_type * pgbox_config_alloc(const ecl_grid_type * grid ,
   }
 }
 
+
+
 int pgbox_config_get_byte_size(const pgbox_config_type * config) {
   return config->data_size * ecl_util_get_sizeof_ctype(ecl_double_type);
 }
+
 
 
 void pgbox_config_apply(const pgbox_config_type * config , const double * data , field_type * target_field) {
@@ -74,9 +77,12 @@ void pgbox_config_apply(const pgbox_config_type * config , const double * data ,
 }
 
 
+
 const char * pgbox_config_get_target_key(const pgbox_config_type * config) {
   return config->target_key;
 }
+
+
 
 void pgbox_config_free(pgbox_config_type * config) {
   free(config->index_list);
@@ -86,12 +92,13 @@ void pgbox_config_free(pgbox_config_type * config) {
 }
 
 
+
 bool pgbox_config_write_compressed(const pgbox_config_type * config) {
   return config->write_compressed;
 }
 
 
-/*****************************************************************/
 
-VOID_FREE_CONFIG(pgbox);
+/*****************************************************************/
 GET_DATA_SIZE(pgbox);
+VOID_FREE(pgbox_config);

@@ -45,7 +45,7 @@ void                pgbox_config_apply(const pgbox_config_type * , const double 
 void                pgbox_config_free(pgbox_config_type *  );
 
 /*****************************************************************/
-VOID_FREE(pgbox_config);
+VOID_FREE_HEADER(pgbox_config);
 GET_DATA_SIZE_HEADER(pgbox);
 
 #endif
