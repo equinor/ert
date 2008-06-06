@@ -1,4 +1,5 @@
 #include <ecl_grid.h>
+#include <field.h>
 #include <tpgzone_config.h>
 #include <util.h>
 
@@ -9,12 +10,12 @@
 tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * grid,
                                                     int                         num_gauss_fields,
                                                     int                         num_facies,
-                                                    tpgzone_trunc_scheme_type * trunc_scheme,
+                                         //           tpgzone_trunc_scheme_type * trunc_scheme,
                                                     const void_arg_type       * trunc_arg,
-                                                    hash_type                 * facies_kw,
-                                                    scalar_config_type        * poro,
-                                                    scalar_config_type        * permx,
-                                                    scalar_config_type        * permz,
+                                                    hash_type                 * facies_kw_hash,
+                                                    scalar_config_type        * poro_trans,
+                                                    scalar_config_type        * permx_trans,
+                                                    scalar_config_type        * permz_trans,
                                                     int i1, int i2, int j1, int j2, int k1, int k2)
 {
   /*
@@ -27,12 +28,12 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
   */
   config->num_gauss_fields = num_gauss_fields;
   config->num_facies       = num_facies;
-  config->trunc_scheme     = trunc_scheme;
+//  config->trunc_scheme     = trunc_scheme;
   config->trunc_arg        = trunc_arg;
-  config->facies_kw        = facies_kw;
-  config->poro             = poro,
-  config->permx            = permx,
-  config->permz            = permz,
+  config->facies_kw_hash   = facies_kw_hash;
+  config->poro_trans       = poro_trans,
+  config->permx_trans      = permx_trans,
+  config->permz_trans      = permz_trans,
   config->write_compressed = true;
 
   /*
@@ -55,6 +56,7 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
     ecl_grid_get_dims(grid,&nx,&ny,&nz, NULL);
     box = ecl_box_alloc(nx,ny,nz,i1,i2,j1,j2,k1,k2);
     elements = ecl_grid_count_box_active(grid,box);
+    config->num_active_blocks = elements;
 
     /*
       Set the active nodes
@@ -64,7 +66,8 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
     /*
       From the macro CONFIG_STD_FIELDS.
       
-      Note that there are currently only three parameters pr. facies.
+      Note that there are currently three extra parameters pr. facies,
+      describing the poro, permx and permz.
     */
     config->data_size = 3 * num_facies + elements * num_gauss_fields;
 
@@ -84,6 +87,7 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
 void tpgzone_config_free(tpgzone_config_type * config)
 {
   free(config->target_nodes);
+
   /*
     No reason to believe that this is set, but better safe than sorry.
   */
@@ -92,9 +96,35 @@ void tpgzone_config_free(tpgzone_config_type * config)
     free(config->ecl_kw_name);
   }
   free(config);
+
 }
 
 
+
+/*
+  Set peterophysics.
+*/
+
+void tpgzone_config_set_peterophysics(const tpgzone_config_type * config,
+                                      field_type                * target_poro,
+                                      field_type                * target_permx,
+                                      field_type                * target_permz)
+{
+  int index;
+  const int num_active_blocks = config->num_active_blocks;  
+  double * target_poro_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
+  double * target_permx_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
+  double * target_permz_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
+
+  for(index = 0; index < num_active_blocks; index++)
+  {
+
+  }
+
+  free(target_poro_buffer);
+  free(target_permx_buffer);
+  free(target_permz_buffer);
+}
 /*****************************************************************/
 
 VOID_FREE(tpgzone_config)

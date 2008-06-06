@@ -12,5 +12,5 @@ struct tpgzone_struct
 {
   DEBUG_DECLARE
   tpgzone_config_type * config;
-  double         * data;
+  double              * data;
 };
