@@ -4,6 +4,87 @@
 #include <util.h>
 
 /*
+  IDEA FOR CONFIGURATION FILE:
+
+
+  To add a truncated pluri-Gaussian zone, add aline
+
+  TPGZONE ZONE_NAME CONFIG_FILE
+
+  in the main configuration. ZONE_NAME will typically
+  be something like "TABERT",  "LAYER2" etc.
+
+  The zone configuration file CONFIG_FILE could look
+  like:
+
+  COORDS_BOX                    i1 i2 j1 j2 k1 k2
+  FACIES_BACKGROUND             SHALE
+  FACIES_FOREGROUND             SAND COAL CREVASSE
+  NUM_GAUSS_FIELDS              2
+  EROSION_SEQUENCE              EROSION_CONF_FILE
+  PETEROPHYSICS                 PETEROPHYSICS_CONF_FILE 
+
+  The idea is as follows:
+
+  o First line spec's the zone. Here we can add other
+    features later, such as COORDS_REGION and
+    COORDS_LAYER. On allocation, we should warn about
+    overlapping zones (but not abort, since it could
+    be explicitly wanted!).
+
+  o Second and third line specs the default facies
+    and other facies. Alternatively, we could have
+    this on one line and let the first facies be 
+    the default. 
+
+  o NUM_GAUSS_FIELDS specs the number of background
+    Gaussian fields. Note that the number of fields
+    can be different from the number of facies!
+  
+
+  o EROSION_SEQUENCE specs the erosion rule.
+    This will be a separate file, which could look
+    something like:
+    
+    SAND LINEAR a b c
+    COAL LINEAR d e f
+
+    This has the following interpreation:
+
+    - The facies starts in the default facies, i.e.
+      SHALE. If 
+      
+       a * g1 + b * g2 > c
+
+      where g1 and g2 are the two Gaussian fields,
+      then it is set to SAND. Furtermore, if
+
+       d *g1 + e * g2 > f
+
+      it's set to COAL.
+
+    - I.e., the file specs and erosion sequence
+      DOWNWARDS. Note that it could happen that
+      one facies type is never used in this scheme.
+
+  o PETEROPHYSICS specs the peterophysics rule.
+    The file will typically look something like:
+
+    SAND     PORO  UNIFORM    MIN MAX
+    SAND     PERMX LOGNORMAL  MU SIGMA
+    SAND     PERMZ LOGNORMAL  MU SIGMA
+    SHALE    PORO  UNIFORM    MIN MAX
+    SHALE    PERMX LOGNORMAL  MU SIGMA
+    SHALE    PERMZ LOGNORMAL  MU SIGMA
+    .....    ..... ........ ... ......
+    .....    ..... ........ ... ......
+    .....    ..... ........ ... ......
+    .....    ..... ........ ... ......
+
+  That's about it.. 
+*/
+
+/*
   This function creates a truncated pluri-Gaussian zone based
   on the six indicies of a box.
 */
