@@ -67,14 +67,14 @@ void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
   if (size > 0) {
     for (iens = 0; iens < ens_size; iens++) 
       for (ikw = 0; ikw < size; ikw++) {
-	const char * key   = data_kw_keys[ikw];
-	const char * value = enkf_config_get_data_kw(enkf_main->config , key);
-	enkf_state_set_data_kw(enkf_main->ensemble[iens] , key, value);
+        const char * key   = data_kw_keys[ikw];
+        const char * value = enkf_config_get_data_kw(enkf_main->config , key);
+        enkf_state_set_data_kw(enkf_main->ensemble[iens] , key, value);
       }
     util_free_stringlist(data_kw_keys , size);
   }
 }
-			       
+             
 
 
 
@@ -84,15 +84,16 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
   enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
   enkf_main->config         = config;
   enkf_main->sched_file     = sched_file_alloc(enkf_config_get_start_date(config));
+
   sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_src_file(config));
+
   enkf_main->hist           = history_alloc_from_schedule(enkf_main->sched_file);
   enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->config , enkf_main->sched_file , enkf_main->hist);
   enkf_main->obs_data       = obs_data_alloc();
   enkf_main->fs             = fs;
   enkf_main->ecl_queue      = ecl_queue;
-
-  enkf_main->meas_matrix  = meas_matrix_alloc(ens_size);
-  enkf_main->ensemble     = malloc(ens_size * sizeof * enkf_main->ensemble);
+  enkf_main->meas_matrix    = meas_matrix_alloc(ens_size);
+  enkf_main->ensemble       = malloc(ens_size * sizeof * enkf_main->ensemble);
   {
     int iens , keys , ik;
     int iens_offset = enkf_config_get_ens_offset(config);
@@ -100,16 +101,16 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
     msg_type * msg  = msg_alloc("Initializing member: ");
     msg_show(msg);
     for (iens = 0; iens < ens_size; iens++) {
-      char * run_path 	    = enkf_config_alloc_run_path(config , iens + iens_offset);
-      char * eclbase  	    = enkf_config_alloc_eclbase (config , iens + iens_offset);
+      char * run_path       = enkf_config_alloc_run_path(config , iens + iens_offset);
+      char * eclbase        = enkf_config_alloc_eclbase (config , iens + iens_offset);
       char * ecl_store_path = enkf_config_alloc_ecl_store_path (config , iens + iens_offset);
       msg_update_int(msg , "%03d" , iens);
       enkf_main->ensemble[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
-						   joblist  , 
-						   run_path , 
-						   eclbase  , 
-						   ecl_store_path , 
-						   meas_matrix_iget_vector(enkf_main->meas_matrix , iens));
+               joblist  , 
+               run_path , 
+               eclbase  , 
+               ecl_store_path , 
+               meas_matrix_iget_vector(enkf_main->meas_matrix , iens));
       
       
       free(run_path);
@@ -124,10 +125,10 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
       msg_update(msg , keylist[ik]);
       const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , keylist[ik]);
       for (iens = 0; iens < ens_size; iens++)
-	enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
-    }
+        enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
+      }
     msg_free(msg , true);
-    
+
     util_free_stringlist(keylist , keys);
   }
   
@@ -237,6 +238,7 @@ void enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int report_step) {
 void enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int iens) {
   thread_pool_add_job(enkf_main->thread_pool , enkf_state_ecl_load__ , enkf_main->void_arg[iens]);
 }
+
 
 
 void enkf_main_load_ecl_complete_mt(enkf_main_type *enkf_main) {
@@ -397,7 +399,7 @@ void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step
 
 void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf_update) {
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
-  const int sleep_time     	= 1;
+  const int sleep_time       = 1;
   int iens;
   
   printf("Starting forward step: %d -> %d \n",step1,step2);
@@ -443,18 +445,24 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
       pthread_create( &queue_thread , NULL , ecl_queue_run_jobs__ , queue_args);
 
       enkf_main->thread_pool = thread_pool_alloc(4);
+
       for (iens = 0; iens < ens_size; iens++) 
-	thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , enkf_main->void_arg[iens]);
+      {
+        thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , enkf_main->void_arg[iens]);
+      }
 
       thread_pool_join(enkf_main->thread_pool);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(enkf_main->thread_pool);
 
       enkf_main->thread_pool = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
-	thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
+      {  
+        thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
+      }
+
       thread_pool_join(enkf_main->thread_pool);  /* All jobs have completed and the results have been loaded back. */
-      pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      		   */
-      ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done. 		   */               
+      pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.             */
+      ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done.        */               
       void_arg_free( queue_args );
     }
     
@@ -462,23 +470,27 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
       bool complete_OK = true;
       int model_nr = 0;
       for (iens = 0; iens < ens_size; iens++) {
-	if ( !void_arg_get_bool(enkf_main->void_arg[iens] , 9)) {
-	  if ( !complete_OK ) {
-	    fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
-	    complete_OK = false;
-	  }
-	  fprintf(stderr,"  %02d: %s \n",model_nr , enkf_config_alloc_run_path(enkf_main->config , iens));
-	  model_nr++;
-	}
+        if ( !void_arg_get_bool(enkf_main->void_arg[iens] , 9)) {
+          if ( !complete_OK ) {
+            fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
+            complete_OK = false;
+          }
+          fprintf(stderr,"  %02d: %s \n",model_nr , enkf_config_alloc_run_path(enkf_main->config , iens));
+          model_nr++;
+          }
       }
       if (!complete_OK)
-	util_exit("");
+      {
+        util_exit("");
+      }
     }
   }
 
   /** Opprydding */
   for (iens = 0; iens < ens_size; iens++) 
+  {
     void_arg_free(enkf_main->void_arg[iens]);
+  }
   free(enkf_main->void_arg);
   enkf_main->void_arg = NULL;
   thread_pool_free(enkf_main->thread_pool);
