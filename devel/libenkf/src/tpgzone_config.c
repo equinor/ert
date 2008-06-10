@@ -181,7 +181,7 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * filename)
   /*
     Parse the config
   */
-  config_parse(config, filename, ENKF_COM_KW);
+  config_parse(config, filename, "--"/*ENKF_COM_KW*/);
 
   
   config_free(config);

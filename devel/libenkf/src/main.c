@@ -33,7 +33,7 @@ int main (int argc , char ** argv) {
     const char * site_config_file = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * config_file      = argv[1];
     ext_joblist_type * joblist;
-    ecl_queue_type   * ecl_queue;
+    job_queue_type   * job_queue;
     enkf_main_type   * enkf_main;
     enkf_site_config_type * site_config = enkf_site_config_bootstrap(site_config_file);
     joblist   = ext_joblist_alloc();
@@ -51,8 +51,8 @@ int main (int argc , char ** argv) {
     enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
     
 
-    ecl_queue = enkf_config_alloc_ecl_queue(enkf_config , site_config);
-    enkf_main = enkf_main_alloc(enkf_config , fs , ecl_queue , joblist);
+    job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
+    enkf_main = enkf_main_alloc(enkf_config , fs , job_queue , joblist);
 
     enkf_main_initialize_ensemble(enkf_main); 
     
@@ -63,7 +63,7 @@ int main (int argc , char ** argv) {
 	enkf_main_run(enkf_main , report_step , report_step + 1 , true);
     }
     
-    ecl_queue_free(ecl_queue);
+    job_queue_free(job_queue);
     enkf_main_free(enkf_main);
     enkf_site_config_free(site_config); /* Should probably be owned by enkf_main ?? */
 

@@ -33,7 +33,7 @@
 #include <ecl_grid.h>
 #include <time.h>
 #include <enkf_site_config.h>
-#include <ecl_queue.h>
+#include <job_queue.h>
 #include <lsf_driver.h>
 #include <local_driver.h>
 #include <rsh_driver.h>
@@ -808,8 +808,8 @@ void enkf_config_free(enkf_config_type * config) {
 
 
 
-ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , const enkf_site_config_type * site_config) {
-  ecl_queue_type          * ecl_queue;
+job_queue_type * enkf_config_alloc_job_queue(const enkf_config_type * config , const enkf_site_config_type * site_config) {
+  job_queue_type          * job_queue;
   int                       max_running  = 0;  
   basic_queue_driver_type * queue_driver = NULL;
 
@@ -845,7 +845,7 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
     else
       eclipse_LD_path = NULL;
 
-    ecl_queue = ecl_queue_alloc(enkf_config_get_ens_size(config),
+    job_queue = job_queue_alloc(enkf_config_get_ens_size(config),
 				max_running , 
 				max_submit  ,
 				enkf_site_config_get_value(site_config , "JOB_SCRIPT"),
@@ -854,7 +854,7 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
 				queue_driver);
     
   }
-  return ecl_queue;
+  return job_queue;
 }
 
 

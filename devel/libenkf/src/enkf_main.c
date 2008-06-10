@@ -31,12 +31,12 @@
 #include <history.h>
 #include <node_ctype.h>
 #include <pthread.h>
-#include <ecl_queue.h>
+#include <job_queue.h>
 #include <msg.h>
 
 struct enkf_main_struct {
   enkf_config_type   *config;
-  ecl_queue_type     *ecl_queue;
+  job_queue_type     *job_queue;
   enkf_obs_type      *obs;
   meas_matrix_type   *meas_matrix;
   obs_data_type      *obs_data;
@@ -79,7 +79,7 @@ void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
 
 
 
-enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , ecl_queue_type * ecl_queue , ext_joblist_type * joblist) {
+enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , job_queue_type * job_queue , ext_joblist_type * joblist) {
   int ens_size               = enkf_config_get_ens_size(config);
   enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
   enkf_main->config         = config;
@@ -91,7 +91,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , e
   enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->config , enkf_main->sched_file , enkf_main->hist);
   enkf_main->obs_data       = obs_data_alloc();
   enkf_main->fs             = fs;
-  enkf_main->ecl_queue      = ecl_queue;
+  enkf_main->job_queue      = job_queue;
   enkf_main->meas_matrix    = meas_matrix_alloc(ens_size);
   enkf_main->ensemble       = malloc(ens_size * sizeof * enkf_main->ensemble);
   {
@@ -415,7 +415,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   for (iens = 0; iens < ens_size; iens++) {
     enkf_main->void_arg[iens] = void_arg_alloc10(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , bool_value , bool_value);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
-    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->ecl_queue);
+    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->job_queue);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 2 , enkf_main->obs);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 3 , enkf_main->sched_file);
     void_arg_pack_bool(enkf_main->void_arg[iens] , 4 , enkf_config_get_unified(enkf_main->config));
@@ -439,10 +439,10 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
     {
       pthread_t queue_thread;
       void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
-      void_arg_pack_ptr(queue_args , 0 , enkf_main->ecl_queue);
+      void_arg_pack_ptr(queue_args , 0 , enkf_main->job_queue);
       void_arg_pack_int(queue_args , 1 , ens_size);
       
-      pthread_create( &queue_thread , NULL , ecl_queue_run_jobs__ , queue_args);
+      pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
       enkf_main->thread_pool = thread_pool_alloc(4);
 
@@ -462,7 +462,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
 
       thread_pool_join(enkf_main->thread_pool);  /* All jobs have completed and the results have been loaded back. */
       pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.             */
-      ecl_queue_finalize(enkf_main->ecl_queue);  /* Must *NOT* be called before all jobs are done.        */               
+      job_queue_finalize(enkf_main->job_queue);  /* Must *NOT* be called before all jobs are done.        */               
       void_arg_free( queue_args );
     }
     
