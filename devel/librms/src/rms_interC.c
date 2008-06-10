@@ -28,7 +28,7 @@ void old_rms_inter_roff_param__(const char *__filename , const int *strlen, cons
 void rms_inter_roff_param__(const char *__filename , const int *strlen, const char *__param_name , const int * param_len, 
 			    const int *nx , const int *ny , const int *nz , 
 			    float *undef_rms , float *undef_out,
-			    float *param, float *work) {
+			    float *param     , float *work) {
   char *filename   = util_alloc_cstring(__filename   , strlen);
   char *param_name = util_alloc_cstring(__param_name , param_len);
 

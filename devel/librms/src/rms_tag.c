@@ -260,9 +260,9 @@ void rms_tag_fwrite_parameter(const char *param_name , const rms_tagkey_type *da
   
   rms_tag_add_tagkey(tag , rms_tagkey_alloc_parameter_name(param_name) , OWNED_REF);
   rms_tag_add_tagkey(tag , data_key , SHARED);
-  
   rms_tag_fwrite(tag , stream);
   rms_tag_free(tag);
+  
 }
 
 

@@ -123,6 +123,11 @@ list_node_type * rms_file_iterate_tag_node(const rms_file_type * rms_file , list
 
 
 
+/** 
+    This function allocates and rms_file_type * handle, but it does
+    not load the file content. 
+*/
+
 
 rms_file_type * rms_file_alloc(const char *filename, bool fmt_file) {
   rms_file_type *rms_file   = malloc(sizeof *rms_file);

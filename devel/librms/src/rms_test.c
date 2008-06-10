@@ -19,8 +19,8 @@ int main (int argc , char **argv) {
 
   rms_file_type *file = rms_file_alloc(argv[1] , false);
   dim_tag = rms_file_fread_alloc_tag(file , "dimensions" , NULL , NULL);
-  mean = rms_file_fread_alloc_data_tagkey(file , "parameter" , "name" , "PERMX");
-  std  = rms_tagkey_copyc(mean); 
+  mean    = rms_file_fread_alloc_data_tagkey(file , "parameter" , "name" , "PERMX");
+  std     = rms_tagkey_copyc(mean); 
 
   rms_file_free_data(file);
   rms_stats_mean_std(mean , std , "PERMX" , argc - 1 , (const char **) &argv[1] , log_transform);

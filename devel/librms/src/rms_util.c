@@ -3,25 +3,37 @@
 #include <stdio.h>
 #include <string.h>
 #include <rms_util.h>
+#include <ecl_util.h>
+#include <util.h>
+
 
 
 /*
-  This translates from the RMS data layout to "fortan" data layout.
+  This translates from the RMS data layout to "Fortan / ECLIPSE" data
+  layout.
 
-  RMS: k index is running fastest *AND* backwards.
+  RMS: k index is running fastest *AND* backwards.  
   F90: i is running fastest, and k is running the 'normal' way.
-  
+
+  This function should be *THE ONLY* place in the code where explicit mention
+  is made to the RMS ordering sequence.
 */
+
+
+inline int rms_util_global_index_from_eclipse_ijk(int nx, int ny , int nz , int i , int j , int k) {
+  return i*ny*nz  +  j*nz  +  (nz - k);
+}
+
+
 
 void rms_util_set_fortran_data(void *_f90_data , const void * _rms_data, int sizeof_ctype , int nx, int ny , int nz) {
   char *f90_data       = (char *)       _f90_data;
   const char *rms_data = (const char *) _rms_data;
   int i,j,k,rms_index, f90_index;
-  rms_index = -1;
   for (i=0; i < nx; i++) 
     for (j=0; j < ny; j++)
-      for (k= (nz -1); k >= 0; k--) {
-	rms_index += 1;
+      for (k= 0; k < nz; k++) {
+	rms_index  = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);
 	f90_index  = i + j*nx + k*nx*ny;
 	memcpy(&f90_data[f90_index * sizeof_ctype] , &rms_data[rms_index * sizeof_ctype] , sizeof_ctype);
       }
@@ -33,11 +45,11 @@ void rms_util_read_fortran_data(const void *_f90_data , void * _rms_data, int si
   const char *f90_data = (const char *) _f90_data;
   char *rms_data       = (char *)       _rms_data;
   int i,j,k,rms_index, f90_index;
-  rms_index = -1;
+
   for (i=0; i < nx; i++) 
     for (j=0; j < ny; j++)
-      for (k= (nz -1); k >= 0; k--) {
-	rms_index += 1;
+      for (k= 0; k < nz; k++) {
+	rms_index  = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);
 	f90_index = i + j*nx + k*nx*ny;
 	memcpy(&rms_data[rms_index * sizeof_ctype] , &f90_data[f90_index * sizeof_ctype] , sizeof_ctype);
       }
@@ -120,6 +132,25 @@ void rms_util_fwrite_comment(const char * comment , FILE *stream) {
 
 void rms_util_fwrite_newline(FILE *stream) {
   return;
+}
+
+
+rms_type_enum rms_util_convert_ecl_type(ecl_type_enum ecl_type) {
+  rms_type_enum rms_type;
+  switch (ecl_type) {
+  case(ecl_int_type):
+    rms_type = rms_int_type;
+    break;
+  case(ecl_float_type):
+    rms_type = rms_float_type;
+    break;
+  case(ecl_double_type):
+    rms_type = rms_double_type;
+    break;
+  default:
+    util_abort("%s: Conversion ecl_type -> rms_type not supported for ecl_type:%s \n",__func__ , ecl_util_type_name(ecl_type));
+  }
+  return rms_type;
 }
 
 

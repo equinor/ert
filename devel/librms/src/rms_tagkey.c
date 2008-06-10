@@ -603,9 +603,32 @@ int rms_tagkey_get_sizeof_ctype(const rms_tagkey_type * key) {
   return key->sizeof_ctype;
 }
 
+
 rms_type_enum rms_tagkey_get_rms_type(const rms_tagkey_type * key) {
   return key->rms_type;
 }
+
+
+ecl_type_enum rms_tagkey_get_ecl_type(const rms_tagkey_type * key) {
+  ecl_type_enum ecl_type;
+  switch (key->rms_type) {
+  case(rms_float_type):
+    ecl_type = ecl_float_type;
+    break;
+  case(rms_double_type):
+    ecl_type = ecl_double_type;
+    break;
+  case(rms_int_type):
+    ecl_type = ecl_int_type;
+    break;
+  default:
+    fprintf(stderr,"%s: sorry rms_type: %d not implemented - aborting \n",__func__ , key->rms_type);
+    abort();
+  }
+  return ecl_type;
+}
+
+
 
 
 void rms_tagkey_free(rms_tagkey_type *tagkey) {
