@@ -95,7 +95,7 @@ void lsf_job_free(lsf_job_type * job) {
 static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* the job has not been registered at all ... */
-    return ecl_queue_null;
+    return job_queue_null;
   else {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
     lsf_driver_type * driver = (lsf_driver_type *) __driver;
@@ -112,17 +112,17 @@ static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_t
       lsb_closejobinfo();
 
       switch (job_info->status) {
-	case(JOB_STAT_PEND  , ecl_queue_pending);
-	case(JOB_STAT_SSUSP , ecl_queue_running);
-	case(JOB_STAT_RUN   , ecl_queue_running);
-	case(JOB_STAT_EXIT  , ecl_queue_exit);
-	case(JOB_STAT_DONE  , ecl_queue_done);
-	case(JOB_STAT_PDONE , ecl_queue_done);
-	case(JOB_STAT_PERR  , ecl_queue_exit);
-	case(192            , ecl_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
+	case(JOB_STAT_PEND  , job_queue_pending);
+	case(JOB_STAT_SSUSP , job_queue_running);
+	case(JOB_STAT_RUN   , job_queue_running);
+	case(JOB_STAT_EXIT  , job_queue_exit);
+	case(JOB_STAT_DONE  , job_queue_done);
+	case(JOB_STAT_PDONE , job_queue_done);
+	case(JOB_STAT_PERR  , job_queue_exit);
+	case(192            , job_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
       default:
 	fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
-	status = ecl_queue_done; /* ????  */
+	status = job_queue_done; /* ????  */
       }
       
       return status;
@@ -310,14 +310,14 @@ void * lsf_driver_alloc(const char * queue_name , const char * resource_request)
 
   lsf_driver->bjobs_output = hash_alloc(); 
   lsf_driver->status_map   = hash_alloc();
-  hash_insert_int(lsf_driver->status_map , "PEND"   , ecl_queue_pending);
-  hash_insert_int(lsf_driver->status_map , "SSUSP"  , ecl_queue_running);
-  hash_insert_int(lsf_driver->status_map , "PSUSP"  , ecl_queue_pending);
-  hash_insert_int(lsf_driver->status_map , "RUN"    , ecl_queue_running);
-  hash_insert_int(lsf_driver->status_map , "EXIT"   , ecl_queue_exit);
-  hash_insert_int(lsf_driver->status_map , "USUSP"  , ecl_queue_running);
-  hash_insert_int(lsf_driver->status_map , "DONE"   , ecl_queue_done);
-  hash_insert_int(lsf_driver->status_map , "UNKWN"  , ecl_queue_exit); /* Uncertain about this one */
+  hash_insert_int(lsf_driver->status_map , "PEND"   , job_queue_pending);
+  hash_insert_int(lsf_driver->status_map , "SSUSP"  , job_queue_running);
+  hash_insert_int(lsf_driver->status_map , "PSUSP"  , job_queue_pending);
+  hash_insert_int(lsf_driver->status_map , "RUN"    , job_queue_running);
+  hash_insert_int(lsf_driver->status_map , "EXIT"   , job_queue_exit);
+  hash_insert_int(lsf_driver->status_map , "USUSP"  , job_queue_running);
+  hash_insert_int(lsf_driver->status_map , "DONE"   , job_queue_done);
+  hash_insert_int(lsf_driver->status_map , "UNKWN"  , job_queue_exit); /* Uncertain about this one */
 #endif
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) lsf_driver;

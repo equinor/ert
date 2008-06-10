@@ -71,7 +71,7 @@ void local_job_free(local_job_type * job) {
 ecl_job_status_type local_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
-    return ecl_queue_null;
+    return job_queue_null;
   else {
     local_job_type    * job    = (local_job_type    *) __job;
     local_driver_type * driver = (local_driver_type *) __driver;
@@ -84,9 +84,9 @@ ecl_job_status_type local_driver_get_job_status(basic_queue_driver_type * __driv
 	abort();
       } else {
 	if (pthread_kill(job->run_thread , 0) == 0)
-	  status = ecl_queue_running;
+	  status = job_queue_running;
 	else
-	  status = ecl_queue_done;
+	  status = job_queue_done;
       }
       return status;
     }

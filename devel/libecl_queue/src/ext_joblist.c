@@ -33,13 +33,16 @@ void ext_joblist_free(ext_joblist_type * joblist) {
 
 
 ext_job_type * ext_joblist_alloc_new(ext_joblist_type * joblist , const char * new_name) {
-  ext_job_type * new_job = ext_job_alloc(new_name );
+  ext_job_type * new_job = ext_job_alloc( new_name );
   hash_insert_hash_owned_ref(joblist->jobs , new_name , new_job , ext_job_free__);
   return new_job;
 }
 
-void ext_joblist_add_job(ext_joblist_type * joblist , const ext_job_type * ext_job) {
-  hash_insert_hash_owned_ref(joblist->jobs , ext_job_get_name(ext_job) , ext_job , ext_job_free__);
+
+ext_job_type * ext_joblist_add_job(ext_joblist_type * joblist , const char * name , const char * config_file) {
+  ext_job_type * new_job = ext_job_fscanf_alloc(name , config_file);
+  hash_insert_hash_owned_ref(joblist->jobs , name , new_job , ext_job_free__);
+  return new_job;
 }
 
 
