@@ -23,8 +23,6 @@ INSTALL: $(LIB)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
-	#gcc $(CFLAGS) $(TARGET_INCLUDE) ecl_queue_test.c         -o queue.x  $(LIB_PATH)  $(LIB_LINK)
-	gcc $(CFLAGS) $(TARGET_INCLUDE) ext_test.c                -o ext.x  $(LIB_PATH)  $(LIB_LINK)
 
 clean:
 	rm -f *.o *~ 
