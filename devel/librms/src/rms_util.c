@@ -21,7 +21,7 @@
 
 
 inline int rms_util_global_index_from_eclipse_ijk(int nx, int ny , int nz , int i , int j , int k) {
-  return i*ny*nz  +  j*nz  +  (nz - k);
+  return i*ny*nz  +  j*nz  +  (nz - k - 1);
 }
 
 
@@ -136,7 +136,7 @@ void rms_util_fwrite_newline(FILE *stream) {
 
 
 rms_type_enum rms_util_convert_ecl_type(ecl_type_enum ecl_type) {
-  rms_type_enum rms_type;
+  rms_type_enum rms_type = rms_int_type;  /* Shut up the compiler */
   switch (ecl_type) {
   case(ecl_int_type):
     rms_type = rms_int_type;

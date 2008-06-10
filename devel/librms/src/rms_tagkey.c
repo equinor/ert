@@ -699,3 +699,19 @@ rms_tagkey_type * rms_tagkey_alloc_dim(const char * dim, int value) {
 
 
 int rms_tagkey_get_size(const rms_tagkey_type * tagkey) { return tagkey->size; }
+
+
+/**
+   This function will compare two tagkeys, and return true if they are
+   equal. If they differ in size/type/...  or other fundamental ways a
+   false is immediately returned.
+*/
+
+bool rms_tagkey_cmp(const rms_tagkey_type * tagkey1 , const rms_tagkey_type * tagkey2) {
+  if (tagkey1->size     != tagkey2->size)     return false;
+  if (tagkey1->rms_type != tagkey2->rms_type) return false;
+  if (memcmp(tagkey1->data , tagkey1->data , tagkey1->size * tagkey1->sizeof_ctype) == 0)
+    return true;
+  else
+    return false;
+}

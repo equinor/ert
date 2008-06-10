@@ -10,6 +10,7 @@
 typedef struct rms_tagkey_struct rms_tagkey_type;
 
 
+bool              rms_tagkey_cmp(const rms_tagkey_type * , const rms_tagkey_type * );
 void              rms_tagkey_free(rms_tagkey_type *);
 rms_tagkey_type * rms_tagkey_alloc_empty(bool);
 rms_tagkey_type * rms_tagkey_alloc_complete(const char * , int , rms_type_enum , const void * , bool);
