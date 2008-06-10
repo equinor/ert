@@ -16,7 +16,8 @@ typedef bool   (validate_ftype) (const enkf_site_config_type * , const enkf_site
 
 
 struct enkf_site_config_struct {
-  hash_type * config;
+  hash_type    *   config;
+  config_type  * __config;
 };
 
 
@@ -286,6 +287,24 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       fclose(stream);
     }
     enkf_site_config_validate(site);
+    
+    {
+      site->__config = config_alloc( false );
+      
+      config_init_item( site->__config , "QUEUE_SYSTEM"  , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
+      config_init_item( site->__config , "JOB_SCRIPT"    , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
+      
+      config_init_item( site->__config , "RSH_HOST_LIST"     , 0 , NULL , false , true  , 0 , NULL , 1 , -1 , NULL );
+      config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "LSF_QUEUE"         , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "RSH_COMMAND"       , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "MAX_RUNNING_RSH"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "INSTALL_JOB"       , 0 , NULL , true  , true  , 0 , NULL , 2 ,  2 , NULL );
+      
+      config_parse(site->__config , config_file , "--");
+    }
+
     return site;
   } else {
     fprintf(stderr,"%s: main config_file: %s not found - aborting \n",__func__ , config_file);
@@ -315,34 +334,6 @@ void enkf_site_config_validate(enkf_site_config_type *site) {
 
 void  enkf_site_config_free(enkf_site_config_type * site) {
   hash_free(site->config);
+  config_free(site->__config);
   free(site);
-}
-
-
-config_type * enkf_site_config_bootstrap_NEW(const char * _config_file) {
-  const char * config_file = getenv("ENKF_SITE_CONFIG");
-  if (config_file == NULL)
-    config_file = _config_file;
-  
-  if (config_file == NULL) {
-    fprintf(stderr,"%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
-    abort();
-  }
-  {
-    config_type * config = config_alloc( false );
-    
-    config_init_item( config , "QUEUE_SYSTEM"  , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
-    config_init_item( config , "JOB_SCRIPT"    , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
-
-    config_init_item( config , "RSH_HOST_LIST"     , 0 , NULL , false , true  , 0 , NULL , 1 , 1 , NULL );
-    config_init_item( config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
-    config_init_item( config , "LSF_QUEUE"         , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
-    config_init_item( config , "RSH_COMMAND"       , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
-    config_init_item( config , "MAX_RUNNING_RSH"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
-    config_init_item( config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
-
-    config_parse(config , config_file,ENKF_COM_KW);
-    return config;
-  }
-  
 }

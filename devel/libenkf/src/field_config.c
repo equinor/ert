@@ -7,6 +7,7 @@
 #include <ecl_kw.h>
 #include <ecl_util.h>
 #include <rms_file.h>
+#include <rms_util.h>
 #include <path_fmt.h>
 
 
@@ -128,7 +129,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
     and generally *not* equal to nx*ny*nz.
   */
   config->data_size                = active_size; 
-  config->ecl_export_format        = ecl_kw_all_cells;
+  config->ecl_export_format        = ecl_kw_all_cells; 
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
@@ -164,8 +165,9 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , int nx , int ny , int nz , int active_size , const int * index_map) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
-  config->logmode   = 0;
-  config->init_type = none;
+  config->logmode           = 0;
+  config->init_type         = none;
+  config->ecl_export_format = ecl_kw_active_cells;
   return config;
 }
 
@@ -296,6 +298,12 @@ int field_config_get_volume(const field_config_type * config) {
 
 
 
+rms_type_enum field_config_get_rms_type(const field_config_type * config) {
+  return rms_util_convert_ecl_type(config->ecl_type);
+}
+
+
+
 ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
   return config->ecl_type;
 }
@@ -319,8 +327,8 @@ int field_config_get_sizeof_ctype(const field_config_type * config) { return con
 
 
 /*
-  Observe that the indices are zero-based, in contrast 
-  to those used by eclipse which are based on one.
+  Observe that the indices are zero-based, in contrast to those used
+  by eclipse which are based on one.
 */
 inline int field_config_global_index(const field_config_type * config , int i , int j , int k) {
   return config->index_map[ k * config->nx * config->ny + j * config->nx + i];

@@ -39,7 +39,7 @@ int main (int argc , char ** argv) {
     joblist   = ext_joblist_alloc();
     {
       /** Nothing like a little HARD-coding ... */
-      ext_joblist_add_job(joblist , ext_job_fscanf_alloc("/d/proj/bg/enkf/Config/ECLIPSE100"));
+      ext_joblist_add_job(joblist , "ECLIPSE100" , "/d/proj/bg/enkf/Config/ECLIPSE100");
     }
     enkf_config_type * enkf_config      = enkf_config_fscanf_alloc(config_file , site_config , joblist , 1 , false , false , true);
     

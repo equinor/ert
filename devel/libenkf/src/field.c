@@ -12,6 +12,7 @@
 #include <rms_tagkey.h>
 #include <ecl_util.h>
 #include <rms_type.h>
+#include <rms_util.h>
 #include <fortio.h>
 
 #define  DEBUG
@@ -38,44 +39,41 @@ GET_DATA_SIZE_HEADER(field);
 */
 
 struct field_struct {
-  DEBUG_DECLARE
-  const  field_config_type * config;
-  char  *data;
-  
-  bool   shared_data;                         
-  /* If shared_data is true the field object does not
-     have it's own data.
-  */
-
-  int    shared_byte_size;
+  DEBUG_DECLARE                                   /* A type identifier which can be used for run-time checks of casting operations. */
+  const  field_config_type * config;              /* The field config object - containing information of active cells++ */
+  char  *data;                                    /* The actual storage for the field - suitabley casted to int/float/double on use*/
+             
+  bool   shared_data;                             /* If the data is shared - i.e. managed (xalloc & free) from another scope. */
+  int    shared_byte_size;                        /* The size of the shared buffer (if it is shared). */
 };
 
 
 
-#define EXPORT_MACRO                                                                           \
-for (k=0; k < config->nz; k++) {                                                               \
-  for (j=0; j < config->ny; j++) {                                                             \
-    for (i=0; i < config->nx; i++) {                                                           \
-      int index1D = field_config_global_index(config , i , j , k);                             \
-      int index3D;                                                                             \
-      if (rms_order)                                               		     	       \
-        index3D = i * config->ny*config->nz  +  j * config->nz + (config->nz - k);             \
-      else                                                                       	       \
-        index3D = i + j * config->nx + k* config->nx*config->ny;           	               \
-      if (index1D >= 0)                                                                        \
-	target_data[index3D] = src_data[index1D];                               	       \
-      else                                                                                     \
-        memcpy(&target_data[index3D] , fill_value , sizeof_ctype_target);                      \
-     }                                                                                         \
-  }                                                                                            \
-}
+#define EXPORT_MACRO                                                                           	  	  \
+{                                                                                                 	  \
+  int i,j,k;                                                                                      	  \
+   for (k=0; k < config->nz; k++) {                                                               	  \
+     for (j=0; j < config->ny; j++) {                                                             	  \
+       for (i=0; i < config->nx; i++) {                                                           	  \
+         int index1D = field_config_global_index(config , i , j , k);                             	  \
+         int index3D;                                                                             	  \
+         if (rms_index_order)                                               		     	       	  \
+           index3D = rms_util_global_index_from_eclipse_ijk(config->nx,config->ny,config->nz,i,j,k);      \
+         else                                                                       	       	          \
+           index3D = i + j * config->nx + k* config->nx*config->ny;           	               	          \
+         if (index1D >= 0)                                                                        	  \
+   	   target_data[index3D] = src_data[index1D];                               	       	          \
+         else                                                                                     	  \
+           memcpy(&target_data[index3D] , fill_value , sizeof_ctype_target);                      	  \
+        }                                                                                         	  \
+     }                                                                                            	  \
+   }                                                                                                      \
+}                                                                                                         
 
 
-void field_export3D(const field_type * field , void *_target_data , bool rms_order , ecl_type_enum target_type , void *fill_value) {
+void field_export3D(const field_type * field , void *_target_data , bool rms_index_order , ecl_type_enum target_type , void *fill_value) {
   const field_config_type * config = field->config;
   int   sizeof_ctype_target = ecl_util_get_sizeof_ctype(target_type);
-  int i,j,k;
-
   
   switch(config->ecl_type) {
   case(ecl_double_type):
@@ -131,32 +129,46 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ord
     break;
   }
 }
+#undef EXPORT_MACRO
   
 
 /*****************************************************************/
-#define IMPORT_MACRO                                                                           \
-for (k=0; k < config->nz; k++) {                                                               \
-  for (j=0; j < config->ny; j++) {                                                             \
-    for (i=0; i < config->nx; i++) {                                                           \
-      int index1D = field_config_global_index(config , i , j , k);                             \
-      int index3D;                                                                             \
-      if (index1D >= 0) {                                                                      \
-	if (rms_order)                                               		     	       \
-	  index3D = i * config->ny*config->nz  +  j * config->nz + (config->nz - k);           \
-	else                                                                       	       \
-	  index3D = i + j * config->nx + k* config->nx*config->ny;           	               \
-	target_data[index1D] = src_data[index3D] ;                               	       \
-     }                                                                                         \
-   }                                                                                           \
-  }                                                                                            \
+#define IMPORT_MACRO                                                                           	            \
+{                                                                                                           \
+  int i,j,k;                                                                                                \
+  for (k=0; k < config->nz; k++) {                                                               	    \
+     for (j=0; j < config->ny; j++) {                                                             	    \
+       for (i=0; i < config->nx; i++) {                                                           	    \
+         int index1D = field_config_global_index(config , i , j , k);                             	    \
+         int index3D;                                                                             	    \
+         if (index1D >= 0) {                                                                      	    \
+   	   if (rms_index_order)                                               		     	       	    \
+   	     index3D = rms_util_global_index_from_eclipse_ijk(config->nx,config->ny,config->nz,i,j,k); 	    \
+   	   else                                                                       	       	    	    \
+   	     index3D = i + j * config->nx + k* config->nx*config->ny;           	               	    \
+           target_data[index1D] = src_data[index3D] ;                               	       	    	    \
+         }                                                                                         	    \
+      }                                                                                           	    \
+     }                                                                                            	    \
+   }                                                                                                        \
 }
 
 
 
-static void field_import3D(field_type * field , const void *_src_data , bool rms_order , ecl_type_enum src_type) {
-  const field_config_type * config = field->config;
-  int i,j,k;
+/**
+   The main function of the field_import3D and field_export3D
+   functions are to skip the inactive cells (field_import3D) and
+   distribute inactive cells (field_export3D). In addition we can
+   reorganize input/output according to the RMS Roff index convention,
+   and also perform float <-> double conversions.
 
+   Observe that these functions only import/export onto memory
+   buffers, the actual reading and writing of files is done in other
+   functions (calling these).
+*/
+
+static void field_import3D(field_type * field , const void *_src_data , bool rms_index_order , ecl_type_enum src_type) {
+  const field_config_type * config = field->config;
   
   switch(config->ecl_type) {
   case(ecl_double_type):
@@ -212,7 +224,7 @@ static void field_import3D(field_type * field , const void *_src_data , bool rms
     break;
   }
 }
-
+#undef IMPORT_MACRO
 
 
 /*****************************************************************/
@@ -325,6 +337,139 @@ void field_fread(field_type * field , FILE * stream) {
 
 
 
+
+
+static void * __field_alloc_3D_data(const field_type * field , int data_size , bool rms_index_order , ecl_type_enum ecl_type , ecl_type_enum target_type) {
+  void * data = util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
+  if (ecl_type == ecl_double_type) {
+    double fill;
+    if (rms_index_order)
+      fill = RMS_INACTIVE_DOUBLE;
+    else
+      fill = 0;
+    field_export3D(field , data , rms_index_order , target_type , &fill);
+  } else if (ecl_type == ecl_float_type) {
+    float fill;
+    if (rms_index_order)
+      fill = RMS_INACTIVE_FLOAT;
+    else
+      fill = 0;
+    field_export3D(field , data , rms_index_order , target_type , &fill);
+  } else if (ecl_type == ecl_int_type) {
+    int fill;
+    if (rms_index_order)
+      fill = RMS_INACTIVE_INT;
+    else
+      fill = 0;
+    field_export3D(field , data , rms_index_order , target_type , &fill);
+  } else {
+    fprintf(stderr,"%s: trying to export type != int/float/double - aborting \n",__func__);
+    abort();
+  }
+  return data;
+}
+
+
+/**
+   A general comment abourt writing fields to disk:
+
+   The writing of fields to disk can be done in **MANY** different ways:
+
+   o The native function field_fwrite() will save the field in the
+     format most suitable for use with enkf. This function will only
+     save the active cells, and compress the field if the variable
+     write_compressed is true. Most of the configuration information
+     is with the field_config object, and not saved with the field.
+
+   o Export as ECLIPSE input. This again has three subdivisions:
+
+     * The function field_ecl_grdecl_export() will write the field to
+       disk in a format suitable for ECLIPSE INCLUDE statements. This
+       means that both active and inactive cells are written, with a
+       zero fill for the inactive.
+
+     * The functions field_xxxx_fortio() writes the field in the
+       ECLIPSE restart format. The function field_ecl_write3D_fortio()
+       writes all the cells - with zero filling for inactive
+       cells. This is suitable for IMPORT of e.g. PORO.
+       
+       The function field_ecl_write1D_fortio() will write only the
+       active cells in an ECLIPSE restart file. This is suitable for
+       e.g. the pressure.
+
+       Observe that the function field_ecl_write() should get config
+       information and automatically select the right way to export to
+       eclipse format.
+
+   o Export in RMS ROFF format. 
+*/
+
+  
+
+/** 
+    This function exports *one* field instance to the rms_file
+    instance. It is the responsibility of the field_ROFF_export()
+    function to initialize and close down the rms_file instance. 
+*/
+
+static void field_ROFF_export__(const field_type * field , rms_file_type * rms_file) {
+  const int data_size             = field_config_get_volume(field->config);
+  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
+  const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
+  
+  void *data  = __field_alloc_3D_data(field , data_size , true ,ecl_type , target_type);
+  rms_tagkey_type * data_key = rms_tagkey_alloc_complete("data" , data_size , rms_util_convert_ecl_type(target_type) , data , true);
+  rms_tag_fwrite_parameter(field_config_get_ecl_kw_name(field->config) , data_key , rms_file_get_FILE(rms_file));
+  rms_tagkey_free(data_key);
+  free(data);
+}
+
+
+static rms_file_type * field_init_ROFF_export(const field_type * field, const char * filename) {
+  rms_file_type * rms_file = rms_file_alloc(filename , false);
+  rms_file_fopen_w(rms_file);
+  rms_file_init_fwrite(rms_file , "parameter");          /* Version / byteswap ++ */
+  {
+    int nx,ny,nz;
+    field_config_get_dims(field->config , &nx , &ny , &nz);
+    rms_tag_fwrite_dimensions(nx , ny , nz , rms_file_get_FILE(rms_file));  /* Dimension header */
+  }
+  return rms_file;
+}
+
+
+static rms_file_type * field_complete_ROFF_export(const field_type * field , rms_file_type * rms_file) {
+  rms_file_complete_fwrite(rms_file);
+  rms_file_fclose(rms_file);
+  rms_file_free(rms_file);
+}
+
+
+
+
+/** 
+    This function exports the data of a field as a parameter to an RMS
+    roff file. The export process is divided in three parts:
+
+    1. The rms_file is opened, and initialized with some basic data
+       for dimensions++
+    2. The field is written to file.
+    3. The file is completed / closed.
+
+    The reason for doing it like this is that it should be easy to
+    export several fields (of the same dimension+++) with repeated
+    calls to 2 (i.e. field_ROFF_export__()) - that is currently not
+    implemented.
+*/
+    
+void field_ROFF_export(const field_type * field , const char * filename) {
+  rms_file_type * rms_file = field_init_ROFF_export(field , filename);
+  field_ROFF_export__(field , rms_file);             /* Should now be possible to several calls to field_ROFF_export__() */
+  field_complete_ROFF_export(field , rms_file);
+}
+
+
+
 void field_fwrite(const field_type * field , FILE * stream) {
   const int data_size    = field_config_get_data_size(field->config);
   const int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
@@ -342,9 +487,6 @@ void field_fwrite(const field_type * field , FILE * stream) {
 }
 
 
-
-
-
 void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file , bool endian_swap ) {
   const int data_size = field_config_get_data_size(field->config);
   const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config); 
@@ -353,31 +495,11 @@ void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , 
 }
 
 
-
-static void * __field_alloc_3D_data(const field_type * field , int data_size , ecl_type_enum ecl_type , ecl_type_enum target_type) {
-  void * data = util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
-  if (ecl_type == ecl_double_type) {
-    double fill = 0.0;
-    field_export3D(field , data , false , target_type , &fill);
-  } else if (ecl_type == ecl_float_type) {
-    float fill = 0.0;
-    field_export3D(field , data , false , target_type , &fill);
-  } else if (ecl_type == ecl_int_type) {
-    int fill = 0;
-    field_export3D(field , data , false , target_type , &fill);
-  } else {
-    fprintf(stderr,"%s: trying to export type != int/float/double - aborting \n",__func__);
-    abort();
-  }
-  return data;
-}
-
-
 void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file , bool endian_swap ) {
   const int data_size             = field_config_get_volume(field->config);
   const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
   const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
-  void *data = __field_alloc_3D_data(field , data_size , ecl_type , target_type );
+  void *data = __field_alloc_3D_data(field , data_size , false ,ecl_type , target_type);
 
   ecl_kw_fwrite_param_fortio(fortio , fmt_file , endian_swap , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , data);
   free(data);
@@ -388,7 +510,7 @@ void field_ecl_grdecl_export(const field_type * field , FILE * stream) {
   const int data_size             = field_config_get_volume(field->config);
   const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
   const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
-  void *data                      = __field_alloc_3D_data(field , data_size , ecl_type , target_type );
+  void *data                      = __field_alloc_3D_data(field , data_size , false , ecl_type , target_type );
   ecl_kw_type            * ecl_kw = ecl_kw_alloc_complete_shared(true , true , field_config_get_ecl_kw_name(field->config) , data_size , target_type , data);
 
   ecl_kw_fprintf_grdecl(ecl_kw , stream);
@@ -399,52 +521,40 @@ void field_ecl_grdecl_export(const field_type * field , FILE * stream) {
 
 
 
-void field_ecl_write_allD(const field_type * field  , const char * eclfile , bool write3D) {
-  fortio_type * fortio;
-  bool fmt_file , endian_swap;
 
-  field_config_set_io_options(field->config , &fmt_file , &endian_swap);
-  fortio = fortio_open(eclfile , "w" , endian_swap);
+/**
+  This is the generic "export field to eclipse" function. It will
+  check up the config object to determine how to export the field,
+  and then call the appropriate function. The alternatives are:
 
-  if (write3D)
-    field_ecl_write3D_fortio(field , fortio , fmt_file , endian_swap );
-  else
-    field_ecl_write1D_fortio(field , fortio , fmt_file , endian_swap );
-
-  fortio_close(fortio);
-}
-
-
-
-
-void field_ecl_write3D(const field_type * field , const char * path) {
-  field_ecl_write_allD(field , path , true);
-}
-
-
-void field_ecl_write1D(const field_type * field , const char * path) {
-  field_ecl_write_allD(field , path , false);
-}
-
+  * Restart format - only active cells (field_ecl_write1D_fortio).
+  * Restart format - all cells         (field_ecl_write3D_fortio).
+  * GRDECL format                      (field_ecl_grdecl_export)
+*/  
 
 
 void field_ecl_write(const field_type * field , const char * path) {
   field_ecl_export_format export_format = field_config_get_ecl_export_format(field->config);
-  switch (export_format) {
-  case(ecl_kw_all_cells):
-    field_ecl_write3D(field , path);
-    break;
-  case(ecl_grdecl_format):
-    {
-      FILE * stream = util_fopen(path , "w");
-      field_ecl_grdecl_export(field , stream);
-      fclose(stream);
-    }
-    break;
-  default:
-    fprintf(stderr,"%s: internal error export_format = %d - aborting \n",__func__ , export_format);
-    abort();
-  }
+
+  if ((export_format == ecl_kw_all_cells) || (export_format == ecl_kw_active_cells)) {
+    fortio_type * fortio;
+    bool fmt_file , endian_swap;
+
+    field_config_set_io_options(field->config , &fmt_file , &endian_swap);
+    fortio = fortio_open(path , "w" , endian_swap);
+
+    if (export_format == ecl_kw_all_cells)
+      field_ecl_write3D_fortio(field , fortio , fmt_file , endian_swap);
+    else
+      field_ecl_write1D_fortio(field , fortio , fmt_file , endian_swap);
+
+    fortio_close(fortio);
+  } else if (export_format == ecl_grdecl_format) {
+    FILE * stream = util_fopen(path , "w");
+    field_ecl_grdecl_export(field , stream);
+    fclose(stream);
+  } else 
+    util_abort("%s: internal error export_format = %d - aborting \n",__func__ , export_format);
 
 }
 
@@ -463,6 +573,7 @@ void field_initialize(field_type *field , int iens) {
     abort();
   }
 }
+
 
 void field_free(field_type *field) {
   field_free_data(field);
@@ -629,27 +740,10 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
 /*****************************************************************/
 
 void field_fload_rms(field_type * field , const char * filename) {
-  const char * key = field_config_get_ecl_kw_name(field->config);
+  const char * key           = field_config_get_ecl_kw_name(field->config);
   rms_file_type * rms_file   = rms_file_alloc(filename , false);
   rms_tagkey_type * data_tag = rms_file_fread_alloc_data_tagkey(rms_file , "parameter" , "name" , key);
-  ecl_type_enum   ecl_type;
-  {
-    rms_type_enum   rms_type   = rms_tagkey_get_rms_type(data_tag);
-    switch (rms_type) {
-    case(rms_float_type):
-      ecl_type = ecl_float_type;
-      break;
-    case(rms_double_type):
-      ecl_type = ecl_double_type;
-      break;
-    case(rms_int_type):
-      ecl_type = ecl_int_type;
-      break;
-    default:
-      fprintf(stderr,"%s: sorry rms_type: %d not implemented - aborting \n",__func__ , rms_type);
-      abort();
-    }
-  }
+  ecl_type_enum   ecl_type   = rms_tagkey_get_ecl_type(data_tag);
   if (rms_tagkey_get_size(data_tag) != field_config_get_volume(field->config)) {
     fprintf(stderr,"%s: trying to import rms_data_tag from:%s with wrong size - aborting \n",__func__ , filename);
     abort();
@@ -737,21 +831,46 @@ void field_fload(field_type * field , const char * filename , bool endian_flip) 
   field_fload_typed(field , filename , endian_flip , file_type);
 }
 
+/**
+   This function compares two fields, and return true if they are
+   equal. Observe that the config comparison is done with plain
+   pointer comparison, i.e. the actual content of the config objects
+   is not compared. If the two fields point to different config
+   objects, the comparision will fail immediately - without checking the
+   content of the fields.
+*/
+
+bool field_cmp(const field_type * f1 , const field_type * f2) {
+  if (f1->config != f2->config) {
+    fprintf(stderr,"The two fields have different config objects - and the comparison fails trivially.\n");
+    return false;
+  } else {
+    const int byte_size = field_config_get_byte_size(f1->config);   
+    if (memcmp( f1->data , f2->data , byte_size) != 0)
+      return false;
+    else
+      return true;
+  }
+}
+
 
 /*****************************************************************/
 
 
-/* Skal param_name vaere en variabel ?? */
-void field_rms_export_parameter(const field_type * field , const char * param_name , const float * data3D,  const rms_file_type * rms_file) {
-  const field_config_type * config = field->config;
-  const int data_size = field_config_get_data_size(config);
+/* /\* Skal param_name vaere en variabel ?? *\/ */
+/* void field_rms_export_parameter(const field_type * field , const char * param_name , const float * data3D,  const rms_file_type * rms_file) { */
+/*   const field_config_type * config = field->config; */
+/*   const int data_size = field_config_get_data_size(config); */
   
-  /* Hardcoded rms_float_type */
-  rms_tagkey_type *tagkey = rms_tagkey_alloc_complete("data" , data_size , rms_float_type , data3D , true);
-  rms_tag_fwrite_parameter(param_name , tagkey , rms_file_get_FILE(rms_file));
-  rms_tagkey_free(tagkey);
+/*   /\* Hardcoded rms_float_type *\/ */
+/*   rms_tagkey_type *tagkey = rms_tagkey_alloc_complete("data" , data_size , rms_float_type , data3D , true); */
+/*   rms_tag_fwrite_parameter(param_name , tagkey , rms_file_get_FILE(rms_file)); */
+/*   rms_tagkey_free(tagkey); */
   
-}
+/* } */
+
+
+
 
 void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
   field_config_get_dims(field->config , nx , ny ,nz);

@@ -15,7 +15,7 @@ static field_config_type * FIELD_CONFIG;
 
 void field_inter_static_init__(const char * _egrid_file , const int * egrid_file_len) {
   char * egrid_file = util_alloc_cstring(_egrid_file , egrid_file_len);
-  ecl_grid_type * ecl_grid = ecl_grid_alloc_EGRID(egrid_file , ENDIAN_FLIP);
+  ecl_grid_type * ecl_grid = ecl_grid_alloc(egrid_file , ENDIAN_FLIP);
   
   const int * INDEX_MAP   = ecl_grid_get_index_map_ref(ecl_grid);
   ecl_grid_get_dims(ecl_grid , &NX , &NY , &NZ , &ACTIVE_SIZE);

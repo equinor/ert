@@ -7,10 +7,11 @@
 #include <enkf_types.h>
 #include <ecl_kw.h>
 #include <path_fmt.h>
+#include <rms_file.h>
 
 
-typedef enum { unknown_file     = 0 , rms_roff_file = 1 , ecl_kw_file = 2 , ecl_grdecl_file = 3} field_file_type;
-typedef enum { ecl_kw_all_cells = 0 , ecl_kw_active_cells = 1 , ecl_grdecl_format = 2}           field_ecl_export_format;
+typedef enum { unknown_file     = 0 , rms_roff_file = 1       , ecl_kw_file = 2 , ecl_grdecl_file = 3} field_file_type;
+typedef enum { ecl_kw_all_cells = 0 , ecl_kw_active_cells = 1 , ecl_grdecl_format = 2}                 field_ecl_export_format;
 /* active_cells currently not really implemented */
 
 /* Must be power of two series */
@@ -65,6 +66,7 @@ bool                    field_config_write_compressed(const field_config_type * 
 field_file_type         field_config_guess_file_type(const char * , bool);
 field_file_type         field_config_manual_file_type(const char * );
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
+rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
 field_config_type     * field_config_alloc_dynamic(const char * , int , int , int , int , const int * );
 field_config_type     * field_config_alloc_parameter(const char * , int , int , int , int  , const int * , int , field_init_type  , int  , const char ** );

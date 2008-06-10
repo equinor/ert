@@ -887,8 +887,28 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   }
   {
     int forward_model_length;
+    bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
     const char ** forward_model = enkf_config_get_forward_model(enkf_state->config , &forward_model_length);
-    ext_joblist_python_fprintf( enkf_state->joblist , forward_model , forward_model_length , enkf_state->run_path , NULL);
+    hash_type * context = hash_alloc();
+    char * restart_file1 = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	  , fmt_file , report_step1);
+    char * restart_file2 = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	  , fmt_file , report_step2);
+    char * smspec_file   = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , -1);
+    char * iens          = util_alloc_sprintf("%d" , enkf_state->my_iens);
+    char * ecl_base      = enkf_state->eclbase;
+
+
+    hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )    , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )        , void_arg_free__);
+    
+    ext_joblist_python_fprintf( enkf_state->joblist , forward_model , forward_model_length , enkf_state->run_path , context);
+    
+    free(iens);
+    free(restart_file1);
+    free(restart_file2);
+    free(smspec_file);
   }
 }
 
@@ -1076,20 +1096,16 @@ void * enkf_ensemble_serialize__(void * _void_arg) {
   member_complete    = void_arg_get_ptr(void_arg , 8);
   update_mask        = void_arg_get_int(void_arg , 9);
   for (iens = iens1; iens < iens2; iens++) {
-    FILE * debug_stream = util_fopen("serialize.txt" , "a");
     list_node_type  * list_node  = start_node[iens];
     bool node_complete           = true;  
     size_t   serial_offset       = iens;
     
-    fprintf(debug_stream , "------------------------\n");
     while (node_complete) {                                           
       enkf_node_type *enkf_node = list_node_value_ptr(list_node);        
       if (enkf_node_include_type(enkf_node , update_mask)) {                       
 	int elements_added        = enkf_node_serialize(enkf_node , serial_size , serial_data , serial_stride , serial_offset , &node_complete);
 	serial_offset            += serial_stride * elements_added;  
 	member_serial_size[iens] += elements_added;
-	fprintf(debug_stream,  "serial_size:%d  serial_stride:%d  serial_offset:%d \n",serial_size , serial_stride , serial_offset);
-	fprintf(debug_stream , "Serializing: %s[%d] = %d \n",enkf_node_get_key_ref(enkf_node) , iens , elements_added);
       }
       
       if (node_complete) {
@@ -1102,7 +1118,6 @@ void * enkf_ensemble_serialize__(void * _void_arg) {
     }
       /* Restart on this node */
     next_node[iens] = list_node;
-    fclose(debug_stream);
   }
 
   return NULL;
@@ -1204,9 +1219,6 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
 /*       /\* Restart on this node *\/ */
 /*       next_node[iens] = list_node; */
 /*     } */
-
-    for (iens=0; iens < ens_size; iens++) 
-      printf("serial_size[%d] = %d \n",iens , member_serial_size[iens]);
 
     for (iens=1; iens < ens_size; iens++) {
       if (member_complete[iens]    != member_complete[iens-1])    util_abort("%s: member_complete difference    - INTERNAL ERROR - aborting \n",__func__); 

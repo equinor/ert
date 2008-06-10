@@ -10,7 +10,7 @@
   IDEA FOR CONFIGURATION FILE:
 
 
-  To add a truncated pluri-Gaussian zone, add aline
+  To add a truncated pluri-Gaussian zone, add a line
 
   TPGZONE ZONE_NAME CONFIG_FILE
 

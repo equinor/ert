@@ -106,6 +106,7 @@ bool enkf_config_has_key(const enkf_config_type * config , const char * key) {
 }
 
 
+
 void enkf_config_get_grid_dims(const enkf_config_type * config , int *nx , int *ny, int *nz , int *active_size) {
   ecl_grid_get_dims(config->grid , nx , ny , nz , active_size);
 }
@@ -832,16 +833,12 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
     const char * eclipse_LD_path;
     const char * __run_path = path_fmt_get_fmt(config->run_path);
     const char * __ecl_base = path_fmt_get_fmt(config->eclbase);
-    char       * __target_file_fmt;
     char  restart_extension[7];
-    path_fmt_type * target_file_fmt;
     
     if (enkf_config_get_fmt_file(config))
       sprintf(restart_extension , ".F%s04d" , "%");
     else
       sprintf(restart_extension , ".X%s04d" , "%");
-    __target_file_fmt = util_alloc_joined_string( (const char *[4]) {__run_path , UTIL_PATH_SEP_STRING , __ecl_base , restart_extension} , 4 , "");
-    target_file_fmt = path_fmt_alloc_file_fmt(__target_file_fmt);
 
     if (enkf_site_config_node_set(site_config , "ECLIPSE_LD_PATH"))
       eclipse_LD_path = enkf_site_config_get_value(site_config , "ECLIPSE_LD_PATH");
@@ -852,17 +849,10 @@ ecl_queue_type * enkf_config_alloc_ecl_queue(const enkf_config_type * config , c
 				max_running , 
 				max_submit  ,
 				enkf_site_config_get_value(site_config , "JOB_SCRIPT"),
-				enkf_site_config_get_value(site_config , "ECLIPSE_EXECUTABLE"),
-				eclipse_LD_path , 
-				enkf_site_config_get_value(site_config , "ECLIPSE_CONFIG"),
-				enkf_site_config_get_value(site_config , "LICENSE_SERVER"),
 				config->run_path , 
 				config->eclbase , 
-				target_file_fmt  , 
 				queue_driver);
     
-    path_fmt_free(target_file_fmt);
-    free(__target_file_fmt);
   }
   return ecl_queue;
 }

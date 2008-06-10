@@ -601,7 +601,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
   case(FIELD):
     node->realloc_data = field_realloc_data__;
     node->alloc        = field_alloc__;
-    node->ecl_write    = field_ecl_write__;
+    node->ecl_write    = field_ecl_write__; /* This is the function suitable for writing PORO / PERM +++ . Pressure ++ uses a field_xxx function directly. */
     node->fread_f      = field_fread__;
     node->fwrite_f     = field_fwrite__;
     node->copyc        = field_copyc__;
