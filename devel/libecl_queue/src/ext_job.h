@@ -20,6 +20,6 @@ void ext_job_set_stderr_file(ext_job_type * , const char * );
 void ext_job_add_platform_exe(ext_job_type *, const char * , const char * ) ;
 void ext_job_set_argc(ext_job_type *   , const char ** , int);
 void ext_job_python_fprintf(const ext_job_type * , FILE * , const hash_type *);
-ext_job_type * ext_job_fscanf_alloc(const char * );
+ext_job_type * ext_job_fscanf_alloc(const char * , const char *);
 
 #endif

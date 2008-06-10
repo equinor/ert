@@ -11,8 +11,8 @@ INSTALL_LIB_PATH =  $(LIBECL_QUEUE_HOME)/lib
 CFLAGS  = -O2 -$(MFLAG)  -std=gnu99 -g -Wall -fPIC
 ARFLAGS = -csr
 #################################################################
-OBJECTS   = ecl_queue.o basic_queue_driver.o lsf_driver.o local_driver.o rsh_driver.o ext_job.o ext_joblist.o
-INC_FILES = ecl_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h
+OBJECTS   = job_queue.o basic_queue_driver.o lsf_driver.o local_driver.o rsh_driver.o ext_job.o ext_joblist.o
+INC_FILES = job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h
 LIB       = libecl_queue_$(MFLAG).a
 LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBECL_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_QUEUE_HOME)/lib
 LIB_LINK  = -lecl_queue_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
@@ -40,7 +40,7 @@ $(LIB): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
 
-ecl_queue.o          : ecl_queue.c ecl_queue.h basic_queue_driver.o
+job_queue.o          : job_queue.c job_queue.h basic_queue_driver.o
 basic_queue_driver.o : basic_queue_driver.c basic_queue_driver.h
 lsf_driver.o         : lsf_driver.c lsf_driver.h
 local_driver.o       : local_driver.c local_driver.h

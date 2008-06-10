@@ -270,14 +270,13 @@ static void ext_job_set_hash(hash_type * hash , const char ** key_value_list , i
 }
 
 
-ext_job_type * ext_job_fscanf_alloc(const char * filename) {
-  ext_job_type * ext_job = ext_job_alloc__(NULL);
+ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
+  ext_job_type * ext_job = ext_job_alloc(name);
   config_type * config = config_alloc( false );
-
+  
   config_init_item(config , "STDIN"  	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "STDOUT" 	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "STDERR" 	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "NAME"   	     , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "INIT_CODE"      , 0 , NULL , false , true  , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "PORTABLE_EXE"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "TARGET_FILE"    , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
@@ -289,7 +288,6 @@ ext_job_type * ext_job_fscanf_alloc(const char * filename) {
     if (config_item_set(config , "STDIN"))  	  ext_job_set_stdin_file(ext_job , config_get(config  , "STDIN"));
     if (config_item_set(config , "STDOUT")) 	  ext_job_set_stdout_file(ext_job , config_get(config , "STDOUT"));
     if (config_item_set(config , "STDERR")) 	  ext_job_set_stderr_file(ext_job , config_get(config , "STDERR"));
-    if (config_item_set(config , "NAME"))   	  ext_job_set_name(ext_job , config_get(config , "NAME"));
     if (config_item_set(config , "TARGET_FILE"))  ext_job_set_target_file(ext_job , config_get(config , "TARGET_FILE"));
     if (config_item_set(config , "PORTABLE_EXE")) ext_job_set_portable_exe(ext_job , config_get(config , "PORTABLE_EXE"));
 
