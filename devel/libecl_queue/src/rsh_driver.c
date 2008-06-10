@@ -178,7 +178,7 @@ void rsh_job_free(rsh_job_type * job) {
 ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
-    return ecl_queue_null;
+    return job_queue_null;
   else {
     rsh_job_type    * job    = (rsh_job_type    *) __job;
     rsh_driver_type * driver = (rsh_driver_type *) __driver;
@@ -190,9 +190,9 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
       else {
 	if (pthread_kill(job->run_thread , 0) == 0)
-	  status = ecl_queue_running;
+	  status = job_queue_running;
 	else
-	  status = ecl_queue_done;
+	  status = job_queue_done;
       }
       return status;
     }
