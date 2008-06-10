@@ -319,7 +319,7 @@ void  enkf_site_config_free(enkf_site_config_type * site) {
 }
 
 
-enkf_site_config_type * enkf_site_config_bootstrap_NEW(const char * _config_file) {
+config_type * enkf_site_config_bootstrap_NEW(const char * _config_file) {
   const char * config_file = getenv("ENKF_SITE_CONFIG");
   if (config_file == NULL)
     config_file = _config_file;
@@ -341,7 +341,7 @@ enkf_site_config_type * enkf_site_config_bootstrap_NEW(const char * _config_file
     config_init_item( config , "MAX_RUNNING_RSH"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
     config_init_item( config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL );
 
-    config_parse(config , config_file);
+    config_parse(config , config_file,ENKF_COM_KW);
     return config;
   }
   

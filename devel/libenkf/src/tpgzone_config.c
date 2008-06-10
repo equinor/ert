@@ -1,3 +1,6 @@
+#include <stdbool.h>
+#include <stdlib.h>
+#include <config.h>
 #include <ecl_grid.h>
 #include <field.h>
 #include <tpgzone_config.h>
@@ -22,7 +25,7 @@
   FACIES_FOREGROUND             SAND COAL CREVASSE
   NUM_GAUSS_FIELDS              2
   EROSION_SEQUENCE              EROSION_CONF_FILE
-  PETEROPHYSICS                 PETEROPHYSICS_CONF_FILE 
+  PETROPHYSICS                  PETROPHYSICS_CONF_FILE 
 
   The idea is as follows:
 
@@ -91,12 +94,10 @@
 tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * grid,
                                                     int                         num_gauss_fields,
                                                     int                         num_facies,
-                                         //           tpgzone_trunc_scheme_type * trunc_scheme,
+                                                    tpgzone_trunc_scheme_type * trunc_scheme,
                                                     const void_arg_type       * trunc_arg,
                                                     hash_type                 * facies_kw_hash,
-                                                    scalar_config_type        * poro_trans,
-                                                    scalar_config_type        * permx_trans,
-                                                    scalar_config_type        * permz_trans,
+                                                    scalar_config_type        * petrophysics,
                                                     int i1, int i2, int j1, int j2, int k1, int k2)
 {
   /*
@@ -109,12 +110,10 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
   */
   config->num_gauss_fields = num_gauss_fields;
   config->num_facies       = num_facies;
-//  config->trunc_scheme     = trunc_scheme;
+  config->trunc_scheme     = trunc_scheme;
   config->trunc_arg        = trunc_arg;
   config->facies_kw_hash   = facies_kw_hash;
-  config->poro_trans       = poro_trans,
-  config->permx_trans      = permx_trans,
-  config->permz_trans      = permz_trans,
+  config->petrophysics     = petrophysics,
   config->write_compressed = true;
 
   /*
@@ -162,6 +161,35 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
 
 
 
+
+tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * filename)
+{
+  tpgzone_config_type * tpgzone_config;
+
+  config_type * config = config_alloc(false);
+
+  /*
+    Configure the config struct
+  */
+  config_init_item(config, "COORDS",            0, NULL, true, false, 0, NULL, 6, 6 , NULL);
+  config_init_item(config, "FACIES_BACKGROUND", 0, NULL, true, false, 0, NULL, 1, 1 , NULL);
+  config_init_item(config, "FACIES_FOREGROUND", 0, NULL, true, false, 0, NULL, 1, -1, NULL);
+  config_init_item(config, "NUM_GAUSS_FIELDS",  0, NULL, true, false, 0, NULL, 1, 1 , NULL);
+  config_init_item(config, "EROSION_SEQUENCE",  0, NULL, true, false, 0, NULL, 1, 1 , NULL);
+  config_init_item(config, "PETROPHYSICS",      0, NULL, true, false, 0, NULL, 1, 1 , NULL);
+
+  /*
+    Parse the config
+  */
+  config_parse(config, filename, ENKF_COM_KW);
+
+  
+  config_free(config);
+  return tpgzone_config;
+}
+
+
+
 /*
   Deallocator.
 */
@@ -183,28 +211,24 @@ void tpgzone_config_free(tpgzone_config_type * config)
 
 
 /*
-  Set peterophysics.
+  Set petrophysics.
 */
 
-void tpgzone_config_set_peterophysics(const tpgzone_config_type * config,
+void tpgzone_config_set_petrophysics(const tpgzone_config_type * config,
                                       field_type                * target_poro,
                                       field_type                * target_permx,
                                       field_type                * target_permz)
 {
   int index;
   const int num_active_blocks = config->num_active_blocks;  
-  double * target_poro_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
-  double * target_permx_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
-  double * target_permz_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
+  double * target_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
 
   for(index = 0; index < num_active_blocks; index++)
   {
 
   }
 
-  free(target_poro_buffer);
-  free(target_permx_buffer);
-  free(target_permz_buffer);
+  free(target_buffer);
 }
 /*****************************************************************/
 

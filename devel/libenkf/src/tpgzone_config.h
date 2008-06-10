@@ -9,16 +9,6 @@
 #include <scalar_config.h>
 
 /*
-  The heart of the truncated pluri-Gaussian model is the truncation
-  scheme, which assigns a int based on some double variables.
-
-  NOTE: 
-  The truncation schemes are restricted to composition of some
-  pre-defined parameteric functions. These *MUST* be hardcoded.
-*/
-//typedef int (tpgzone_trunc_scheme_type) (const double *, const void_arg_type *);
-
-/*
   Shorthand notation for the tpgzone_config_struct.
 */
 typedef struct tpgzone_config_struct tpgzone_config_type;
@@ -38,9 +28,7 @@ struct tpgzone_config_struct
   tpgzone_trunc_scheme_type * trunc_scheme;         /* Pointer to the truncation scheme */
   const void_arg_type       * trunc_arg;            /* Pointer to the argument of the truncation scheme */
   hash_type                 * facies_kw_hash;       /* Pointer to a hash with facies keywords */
-  scalar_config_type        * poro_trans;           /* Poro output transform for each facies */
-  scalar_config_type        * permx_trans;          /* Permx output transform for each facies */
-  scalar_config_type        * permz_trans;          /* Permx output transform for each facies */
+  scalar_config_type        * petrophysics;        /* Poro output transform for each facies */
   int                       * target_nodes;         /* Linear index to grid nodes in the block */
   bool                        write_compressed;     /* Should stored output be compressed? */
 };
