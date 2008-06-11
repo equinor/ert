@@ -42,6 +42,7 @@ INSTALL: $(LIB)
 	gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) field_test.c -o field.x $(LIB_PATH) $(LIB_LINK)
 	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) swcr_init.c  -o /d/proj/bg/enkf/bin/swcr_init.x  $(LIB_PATH) $(LIB_LINK)
 	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) relp_test.c  -o relp.x  $(LIB_PATH) $(LIB_LINK)
+	gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) tpgzone_test.c  -o tpgzone_test.x  $(LIB_PATH) $(LIB_LINK) 
 
 
 clean:

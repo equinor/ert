@@ -38,6 +38,7 @@ int trunc_scheme_func_linear(const double * gauss, int cur_facies, void_arg_type
 
     Make this do something..
   */
+  printf("%s: *WARNING* this function is empty.\n",__func__);
   return cur_facies;
 }
 
@@ -64,14 +65,8 @@ int tpgzone_trunc_scheme_type_apply(tpgzone_trunc_scheme_type *trunc_scheme, con
 {
   int i, facies;
 
-  /*
-    Initialize to default facies (i.e. 0)
-  */
   facies = 0;
 
-  /*
-    Apply the "erosion sequence"
-  */
   for(i=0; i<trunc_scheme->num_nodes; i++)
   {
     facies = tpgzone_trunc_scheme_node_type_apply(trunc_scheme->trunc_scheme_nodes[i], facies, gauss);
@@ -79,3 +74,16 @@ int tpgzone_trunc_scheme_type_apply(tpgzone_trunc_scheme_type *trunc_scheme, con
 
   return facies;
 }
+
+
+
+tpgzone_trunc_scheme_type * tpgzone_trunc_scheme_type_fscanf_alloc(const char * filename)
+{
+  /*
+    TODO
+
+    Make this do something..
+  */
+  printf("%s: *WARNING* this function is empty.\n",__func__);
+  return NULL;
+};
