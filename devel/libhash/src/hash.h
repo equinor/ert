@@ -34,6 +34,8 @@ void              hash_free_ext_keylist(const hash_type *, char **);
   hash_node_type  * hash_iter_next(const hash_type *, const hash_node_type * );
 */
 char           ** hash_alloc_sorted_keylist(const hash_type *hash , int ( hash_get_cmp_value ) (const void *));
+char           ** hash_alloc_key_sorted_list(const hash_type *hash, int (*cmp)(const void *, const void *));
+bool              hash_key_list_compare(const hash_type * hash1, const hash_type * hash2);
 void              hash_insert_hash_owned_ref(hash_type *, const char * , const void *, del_type *);
 const char 	* hash_iter_get_next_key(hash_type * );
 const char 	* hash_iter_get_first_key(hash_type * );

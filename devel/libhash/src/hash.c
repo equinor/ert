@@ -539,11 +539,8 @@ char ** hash_alloc_sorted_keylist(const hash_type *hash , int ( hash_get_cmp_val
 }
 
 
-/* Sorting end */
-/******************************************************************/
 
 
-/*
 static int key_cmp(const void *_s1 , const void *_s2) {
   const char * s1 = *((const char **) _s1);
   const char * s2 = *((const char **) _s2);
@@ -551,18 +548,55 @@ static int key_cmp(const void *_s1 , const void *_s2) {
   return strcmp(s1 , s2);
 }
 
-static char ** __hash_alloc_sorted_keylist(const hash_type *hash, int (cmp) (const void * , const void *)) { 
+
+
+static char ** __hash_alloc_key_sorted_list(const hash_type *hash, int (*cmp) (const void * , const void *)) { 
   char **keylist = hash_alloc_keylist(hash);
   
-  qsort(keylist , hash_get_size(hash) , sizeof *keylist , &cmp);
+  qsort(keylist , hash_get_size(hash) , sizeof *keylist , cmp);
   return keylist;
 }
 
 
-char ** hash_alloc_sorted_keylist( const hash_type *hash , int
-  return __hash_alloc_sorted_keylist(hash , key_cmp);
+
+char ** hash_alloc_key_sorted_list(const hash_type * hash, int (*cmp) (const void *, const void *))
+{
+  return __hash_alloc_key_sorted_list(hash , cmp);
 }
-*/
+
+
+
+bool hash_key_list_compare(const hash_type * hash1, const hash_type * hash2)
+{
+  bool has_equal_keylist;
+  int i,size1, size2;
+  char **keylist1, **keylist2; 
+
+  size1 = hash_get_size(hash1);
+  size2 = hash_get_size(hash2);
+
+  if(size1 != size2) return false;
+
+  keylist1 = hash_alloc_key_sorted_list(hash1, &key_cmp);
+  keylist2 = hash_alloc_key_sorted_list(hash2, &key_cmp);
+
+  has_equal_keylist = true;
+  for(i=0; i<size1; i++)
+  {
+    if(strcmp(keylist1[i],keylist2[i]) != 0)
+    {
+      has_equal_keylist = false;
+      break;
+    }
+  }
+
+  hash_free_ext_keylist(hash1, keylist1);
+  hash_free_ext_keylist(hash2, keylist2);
+
+  return has_equal_keylist;
+  
+}
+/******************************************************************/
 
 
 void hash_free_ext_keylist(const hash_type *hash , char ** keylist) {
