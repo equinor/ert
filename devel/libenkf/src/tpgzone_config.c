@@ -77,15 +77,16 @@
    TARGET_FIELD_03 TARGET_FIELD_03_CONF_FILE 
 
     Here, TARGET_FIELD_* are arbitrary fields. E.g.,
-    MY_PORO or MY_PERMX_MULTIPLIER. The configuration
-    files TARGET_FIELD_**_CONF_FILE shoul be as follows:
+    MY_PORO or MY_PERMZ_MULTIPLIER. The configuration
+    files TARGET_FIELD_**_CONF_FILE should look like:
 
     SAND  UNIFORM   MIN MAX
     SHALE NORMAL    MU  STD 
     COAL  LOGNORMAL MU  STD
 
     Note that all facies *MUST* be present in
-    the configuration file!
+    the configuration file! The allowed transforms
+    are equal to the transforms used e.g. in GEN_KW.
     
 
   That's about it.. 
@@ -101,6 +102,7 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
                                                     int                          num_gauss_fields,
                                                     int                          num_facies,
                                                     int                          num_target_fields,
+                                                    char                     **  target_keys,
                                                     tpgzone_trunc_scheme_type *  trunc_scheme,
                                                     hash_type                 *  facies_kw_hash,
                                                     scalar_config_type        ** petrophysics,
@@ -111,6 +113,7 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
   config->num_gauss_fields  = num_gauss_fields;
   config->num_facies        = num_facies;
   config->num_target_fields = num_target_fields;
+  config->target_keys       = target_keys;
   config->trunc_scheme      = trunc_scheme;
   config->facies_kw_hash    = facies_kw_hash;
   config->petrophysics      = petrophysics,
@@ -151,11 +154,7 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
 
 
 
-
-/*
-  Allocate a truncated pluri-Gaussian zone from a file.
-*/
-tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * filename, const ecl_grid_type * grid)
+tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * conf_file, const ecl_grid_type * grid)
 {
   tpgzone_config_type        * tpgzone_config  = NULL;
   hash_type                  * facies_kw_hash  = hash_alloc();
@@ -163,11 +162,10 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * filename, const e
   scalar_config_type        ** petrophysics;
   config_type                * config          = config_alloc(false);
 
-  char * truncation_sequence_conf_file;
-  char * peterophysics_conf_file;
-
   int num_gauss_fields, num_facies;
   int i1, i2, j1,j2, k1,k2;
+
+  char ** target_keys;
 
   config_init_item(config, "COORDS",               0, NULL, true, false, 0, NULL, 6, 6 , NULL);
   config_init_item(config, "FACIES_BACKGROUND",    0, NULL, true, false, 0, NULL, 1, 1 , NULL);
@@ -179,7 +177,7 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * filename, const e
   {
     config_item_type * config_item;
 
-    config_parse(config, filename, ENKF_COM_KW);
+    config_parse(config, conf_file, ENKF_COM_KW);
 
     config_item = config_get_item(config, "COORDS");
     if(!util_sscanf_int(config_item_iget_argv(config_item,0),&i1))
@@ -211,12 +209,15 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * filename, const e
       util_abort("%s: Failed to parse integer from argument to NUM_GAUSS_FIELDS.\n",__func__);
 
     trunc_scheme = tpgzone_trunc_scheme_type_fscanf_alloc(config_get(config,"TRUNCATION_SEQUENCE"));
-    petrophysics = tpgzone_config_petrophysics_fscanf_alloc(config_get(config,"PETROPHYSICS"));
+    tpgzone_config_petrophysics_fscanf_alloc(config_get(config,"PETROPHYSICS"),
+                                             facies_kw_hash,
+                                             petrophysics,
+                                             target_keys);
     
 
   }
 
-  tpgzone_config = tpgzone_config_alloc_from_box(grid, num_gauss_fields, num_facies, 0 /*TODO*/,
+  tpgzone_config = tpgzone_config_alloc_from_box(grid, num_gauss_fields, num_facies, 0, NULL, /*FIXME*/
                                                  trunc_scheme,facies_kw_hash,petrophysics,
                                                  i1,i2,j1,j2,k1,k2);
   
@@ -226,9 +227,6 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * filename, const e
 
 
 
-/*
-  Deallocator.
-*/
 void tpgzone_config_free(tpgzone_config_type * config)
 {
   if(config == NULL) util_abort("%s: Internal error, trying to free NULL pointer.\n",__func__);
@@ -247,43 +245,33 @@ void tpgzone_config_free(tpgzone_config_type * config)
 /*****************************************************************/
 
 
-
-/*
-  Allocate a petrophysics model from a configuration file.
-*/
-scalar_config_type ** tpgzone_config_petrophysics_fscanf_alloc(const char * filename)
+void tpgzone_config_petrophysics_fscanf_alloc(const char          * filename      , 
+                                              const hash_type     * facies_kw_hash,
+                                              scalar_config_type ** petrophysics,
+                                              char               ** target_keys)
+                                             
 {
   printf("%s: *WARNING* this function is empty.\n",__func__);
-  return NULL;
 }
 
 
 
-/*
-  Set petrophysics.
-*/
-
 void tpgzone_config_petrophysics_write(const tpgzone_config_type * config)
 {
-  int index;
+  int field_num,grid_block_num;
   const int num_active_blocks = config->num_active_blocks;  
   double * target_buffer = util_malloc(num_active_blocks * ecl_util_get_sizeof_ctype(ecl_double_type),__func__);
-
-  /*
-    TODO
-
-    Make this do something..
-  */
-  for(index = 0; index < num_active_blocks; index++)
-  {
-  }
 
   printf("%s: *WARNING* this function is empty.\n",__func__);
 
   free(target_buffer);
 }
 
+
+
 /*****************************************************************/
+
+
 
 VOID_FREE(tpgzone_config)
 GET_DATA_SIZE(tpgzone)

@@ -21,6 +21,7 @@ struct tpgzone_config_struct
   int                          num_facies;           /* Number of facies */
   int                          num_active_blocks;    /* Number of active gridblocks in the zone */
   int                          num_target_fields;    /* Number of fields to be set based on the tpg */
+  char                      ** target_keys;          /* Keywords to target fields */
   tpgzone_trunc_scheme_type  * trunc_scheme;         /* Pointer to the truncation scheme */
   hash_type                  * facies_kw_hash;       /* Pointer to a hash with facies keywords */
   scalar_config_type        ** petrophysics;         /* Petrophysics output transform for each target field and facies */
@@ -34,6 +35,7 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type        *
                                                     int                         ,
                                                     int                         ,
                                                     int                         ,
+                                                    char                      **,
                                                     tpgzone_trunc_scheme_type  *,
                                                     hash_type                  *,
                                                     scalar_config_type        **,
@@ -43,8 +45,11 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char *, const ecl_grid_t
 
 /*****************************************************************/
 
-scalar_config_type ** tpgzone_config_petrophysics_fscanf_alloc(const char               *);
-void                  tpgzone_config_petrophysics_write       (const tpgzone_config_type*);
+void tpgzone_config_petrophysics_fscanf_alloc(const char          *,
+                                              const hash_type     *,
+                                              scalar_config_type **,
+                                              char               **);
+void tpgzone_config_petrophysics_write       (const tpgzone_config_type*);
 
 /*****************************************************************/
 VOID_FREE_HEADER(tpgzone_config);
