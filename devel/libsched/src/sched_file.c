@@ -71,6 +71,7 @@ sched_file_type * sched_file_alloc(time_t start_date) {
     hash_insert_int(month_hash , "MAY" , 4);
     hash_insert_int(month_hash , "JUN" , 5);
     hash_insert_int(month_hash , "JUL" , 6);
+    hash_insert_int(month_hash , "JLY" , 6);
     hash_insert_int(month_hash , "AUG" , 7);
     hash_insert_int(month_hash , "SEP" , 8);
     hash_insert_int(month_hash , "OCT" , 9);
