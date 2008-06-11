@@ -293,19 +293,19 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
 
     if (config_item_set(config , "ARGLIST")) {
       int argc = config_get_argc(config , "ARGLIST");
-      ext_job_set_argv(ext_job , config_get_argv(config , "ARGLIST") , argc);  /* argc is set in in the inner call - ugly ?! */
+      ext_job_set_argv(ext_job , config_get_argv(config , "ARGLIST" , NULL) , argc);  /* argc is set in in the inner call - ugly ?! */
     }
     
     if (config_item_set(config , "INIT_CODE")) {
       int init_code_length = config_get_argc(config , "INIT_CODE");
-      ext_job_set_init_code(ext_job , (const char **) config_get_argv(config , "INIT_CODE") , init_code_length);
+      ext_job_set_init_code(ext_job , (const char **) config_get_argv(config , "INIT_CODE" , NULL) , init_code_length);
     }
 
     if (config_item_set(config , "ENV")) 
-      ext_job_set_hash(ext_job->environment , (const char **) config_get_argv(config , "ENV") , config_get_argc(config , "ENV"));
+      ext_job_set_hash(ext_job->environment , (const char **) config_get_argv(config , "ENV" , NULL) , config_get_argc(config , "ENV"));
     
     if (config_item_set(config , "PLATFORM_EXE")) 
-      ext_job_set_hash(ext_job->platform_exe , (const char **) config_get_argv(config , "PLATFORM_EXE") , config_get_argc(config , "PLATFORM_EXE"));
+      ext_job_set_hash(ext_job->platform_exe , (const char **) config_get_argv(config , "PLATFORM_EXE" , NULL) , config_get_argc(config , "PLATFORM_EXE"));
     
   }
   config_free(config);
