@@ -273,17 +273,17 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
 
 
 /**
-The rsh_host_list should be a string of the following format:
+   The rsh_host_list should be a list of strings of the following
+   format:
 
- rsh_host_list = "host1:2  host2:2   host4:4  host6:2"
+   rsh_host_list = ["host1:2",   "host2:2", "host4:4" ,  "host6:2"]
 
-i.e a space separated list of hosts, where each host consists of a
-name and a number; the number designating how many concurrent jobs
-this host can handle. Observe that the load of the host is *not*
-consulted.
+   i.e each host consists of a name and a number; the number
+   designating how many concurrent jobs this host can handle. Observe
+   that the load of the host is *not* consulted.
 */
 
-void * rsh_driver_alloc(const char * rsh_command, const char * rsh_host_list) {
+void * rsh_driver_alloc(const char * rsh_command, int num_hosts , const char ** rsh_host_list) {
   rsh_driver_type * rsh_driver = util_malloc(sizeof * rsh_driver , __func__);
   rsh_driver->__rsh_id         = RSH_DRIVER_ID;
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
@@ -299,30 +299,27 @@ void * rsh_driver_alloc(const char * rsh_command, const char * rsh_host_list) {
   rsh_driver->num_hosts   = 0;
   rsh_driver->host_list   = NULL;
   {
-    char ** host_num_list;
-    int     ihost , num_hosts;
-    util_split_string(rsh_host_list , " " , &num_hosts , &host_num_list);
+    int ihost;
     for (ihost = 0; ihost < num_hosts; ihost++) {
       int pos = 0;
-      while ( pos < strlen(host_num_list[ihost]) && host_num_list[ihost][pos] != ':') 
+      while ( pos < strlen(rsh_host_list[ihost]) && rsh_host_list[ihost][pos] != ':') 
 	pos++;
 
       {
-	char *host = util_alloc_substring_copy(host_num_list[ihost] , pos);
+	char *host = util_alloc_substring_copy(rsh_host_list[ihost] , pos);
 	int max_running;
 
-	if (pos == strlen(host_num_list[ihost])) {
+	if (pos == strlen(rsh_host_list[ihost])) {
 	  fprintf(stderr," ** Warning no \":\" found for host:%s - assuming only one job to this host\n",host);
 	  max_running = 1;
 	} else 
-	  if (!util_sscanf_int(&host_num_list[ihost][pos+1] , &max_running))
-	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , host_num_list[ihost]);
+	  if (!util_sscanf_int(&rsh_host_list[ihost][pos+1] , &max_running))
+	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , rsh_host_list[ihost]);
 	
 	rsh_driver_add_host(rsh_driver , host , max_running);
 	free(host);
       }
     }
-    util_free_stringlist(host_num_list , num_hosts);
   }
     
   {
