@@ -7,15 +7,15 @@
 
 
 int main(void) {
-  const char *s1 = "111";
-  const char *s2 = "222";
-  const char *s3 = "333";
-  const char *s4 = "444";
+  const char *s1 = "555";
+  const char *s2 = "555";
+  const char *s3 = "555";
+  const char *s4 = "555";
   const char *s5 = "555";
 
   hash_type      *hash;
   
-  hash = hash_alloc(4);
+  hash = hash_alloc();
 
   hash_insert_ref(hash , "HEI" , s1);
   hash_insert_ref(hash , "NAVN" , s2);
