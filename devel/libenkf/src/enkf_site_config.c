@@ -182,22 +182,6 @@ static bool enkf_site_config_assert_set_executable(const enkf_site_config_type *
   return valid;
 }
 
-static bool enkf_site_config_assert_set_existing(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
-  bool valid = false;
-  if (enkf_site_config_assert_set(config , node)) {
-    if (util_file_exists(node->value))
-      valid = true;
-    
-    if (!valid) 
-      fprintf(stderr,"** %s must point to an existing file.\n",node->key);
-  }
-  return valid;
-}
-
-static bool enkf_site_config_assert_eclipse_executable(const enkf_site_config_type * config , const enkf_site_config_node_type * node) {
-  return enkf_site_config_assert_set(config , node);
-}
-
 /*****************************************************************/
 
 enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * site , const char * key) {
@@ -208,6 +192,9 @@ enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_ty
 const char * enkf_site_config_get_value(const enkf_site_config_type * site , const char * key) {
   enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
   return node->value;
+  /*
+    return config_get(site->__config , key);
+  */
 }
 
 
@@ -224,10 +211,20 @@ void enkf_site_config_add_node(enkf_site_config_type * site , const char * key ,
 
 bool enkf_site_config_has_key(const enkf_site_config_type * site ,const char * key) {
   return hash_has_key(site->config , key);
+  
+  /*
+    return config_has_item( site->__config , key);
+  */
 }
 
 
+
+
+
 void enkf_site_config_set_key(enkf_site_config_type * site , const char * key , const char * value) {
+  /*
+    Forsvinner med _parse 
+  */
   if (enkf_site_config_has_key(site , key)) {
     enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
     enkf_site_config_node_set_value(node , value);
@@ -255,10 +252,6 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
     enkf_site_config_add_node(site , "LSF_QUEUE"     	  , NULL , 0 , NULL , enkf_site_config_validate_queue_name);
     enkf_site_config_add_node(site , "LSF_RESOURCES" 	  , NULL , 0 , NULL , NULL);
     enkf_site_config_add_node(site , "JOB_SCRIPT"         , NULL , 0 , NULL , enkf_site_config_assert_set_executable); 
-    enkf_site_config_add_node(site , "ECLIPSE_EXECUTABLE" , NULL , 0 , NULL , enkf_site_config_assert_eclipse_executable); 
-    enkf_site_config_add_node(site , "ECLIPSE_LD_PATH"    , NULL , 0 , NULL , NULL); 
-    enkf_site_config_add_node(site , "LICENSE_SERVER"     , NULL , 0 , NULL , enkf_site_config_assert_set);
-    enkf_site_config_add_node(site , "ECLIPSE_CONFIG"     , NULL , 0 , NULL , enkf_site_config_assert_set_existing);
     enkf_site_config_add_node(site , "MAX_RUNNING_LSF"    , NULL , 0 , NULL , NULL);
     enkf_site_config_add_node(site , "MAX_RUNNING_LOCAL"  , NULL , 0 , NULL , NULL);
     enkf_site_config_add_node(site , "MAX_RUNNING_RSH"    , NULL , 0 , NULL , NULL);
@@ -287,24 +280,28 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       fclose(stream);
     }
     enkf_site_config_validate(site);
-    
     {
       site->__config = config_alloc( false );
       
-      config_init_item( site->__config , "QUEUE_SYSTEM"  , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
-      config_init_item( site->__config , "JOB_SCRIPT"    , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
+      config_init_item( site->__config , "QUEUE_SYSTEM"      , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
+      config_init_item( site->__config , "JOB_SCRIPT"        , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
+      config_init_item( site->__config , "INSTALL_JOB"       , 0 , NULL , true  , true  , 0 , NULL , 2 ,  2 , NULL );
+      config_init_item( site->__config , "MEX_RESUBMIT"      , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
       
       config_init_item( site->__config , "RSH_HOST_LIST"     , 0 , NULL , false , true  , 0 , NULL , 1 , -1 , NULL );
       config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "LSF_QUEUE"         , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "RSH_COMMAND"       , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
       config_init_item( site->__config , "MAX_RUNNING_RSH"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "RSH_COMMAND"       , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+
+      config_init_item( site->__config , "LSF_QUEUE"         , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "LSF_RESOURCES"     , 0 , NULL , false , true  , 0 , NULL , 1 , -1 , NULL );
       config_init_item( site->__config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "INSTALL_JOB"       , 0 , NULL , true  , true  , 0 , NULL , 2 ,  2 , NULL );
+
+      
+      config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
       
       config_parse(site->__config , config_file , "--");
     }
-
     return site;
   } else {
     fprintf(stderr,"%s: main config_file: %s not found - aborting \n",__func__ , config_file);
