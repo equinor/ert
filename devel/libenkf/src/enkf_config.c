@@ -478,7 +478,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      /* The configuration overrides a value from the site_config object. */
 	      char * site_value;
 	      ASSERT_TOKENS(kw , active_tokens , 1);
-	      site_value  = util_alloc_joined_string((const char **) &token_list[1] , active_tokens - 1 , " ");
+	      site_value = util_alloc_joined_string((const char **) &token_list[1] , active_tokens - 1 , " ");
 	      enkf_site_config_set_key(site_config , kw , site_value);
 	      free(site_value);
 	    } else {
@@ -815,36 +815,28 @@ job_queue_type * enkf_config_alloc_job_queue(const enkf_config_type * config , c
 
   const char * queue_system = enkf_site_config_get_value(site_config , "QUEUE_SYSTEM");
   if (strcmp(queue_system , "LSF") == 0) {
-    const char * resource_request = enkf_site_config_get_value(site_config , "LSF_RESOURCES");
+    int   num_resource;
+    const char ** resource_request_list = enkf_site_config_get_argv(site_config , "LSF_RESOURCES" , &num_resource);
     const char * queue_name       = enkf_site_config_get_value(site_config , "LSF_QUEUE");
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LSF") , NULL , 10);
-    queue_driver = lsf_driver_alloc(queue_name , resource_request);
+    queue_driver = lsf_driver_alloc(queue_name , num_resource , resource_request_list);
   } else if (strcmp(queue_system , "LOCAL") == 0) {
     queue_driver = local_driver_alloc();
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LOCAL") , NULL , 10);
   } else if (strcmp(queue_system , "RSH") == 0) {
-    queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , enkf_site_config_get_value(site_config , "RSH_HOST_LIST"));
+    {
+      char ** host_list;
+      int     num_host;
+      util_split_string( enkf_site_config_get_value(site_config , "RSH_HOST_LIST") , " " , &num_host , &host_list);
+      queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , num_host , (const char **) host_list);
+      util_free_stringlist( host_list , num_host);
+    }
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_RSH") , NULL , 10);
   } else 
     util_abort("%s: internal error - queue_system:%s not recognized - aborting \n",__func__ , queue_system);
 
   {
     int max_submit  = 2;
-    const char * eclipse_LD_path;
-    const char * __run_path = path_fmt_get_fmt(config->run_path);
-    const char * __ecl_base = path_fmt_get_fmt(config->eclbase);
-    char  restart_extension[7];
-    
-    if (enkf_config_get_fmt_file(config))
-      sprintf(restart_extension , ".F%s04d" , "%");
-    else
-      sprintf(restart_extension , ".X%s04d" , "%");
-
-    if (enkf_site_config_node_set(site_config , "ECLIPSE_LD_PATH"))
-      eclipse_LD_path = enkf_site_config_get_value(site_config , "ECLIPSE_LD_PATH");
-    else
-      eclipse_LD_path = NULL;
-
     job_queue = job_queue_alloc(enkf_config_get_ens_size(config),
 				max_running , 
 				max_submit  ,

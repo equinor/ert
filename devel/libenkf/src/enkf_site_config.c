@@ -6,9 +6,12 @@
 #include <hash.h>
 #include <enkf_site_config.h>
 #include <config.h>
+#include <ext_joblist.h>
 
-enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * , const char * );
-static bool                  enkf_site_config_assert_set_int(const enkf_site_config_type * , const enkf_site_config_node_type *  );
+/*
+  enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * , const char * );
+  static bool                  enkf_site_config_assert_set_int(const enkf_site_config_type * , const enkf_site_config_node_type *  );
+*/
 
 /*****************************************************************/
 
@@ -16,11 +19,12 @@ typedef bool   (validate_ftype) (const enkf_site_config_type * , const enkf_site
 
 
 struct enkf_site_config_struct {
-  hash_type    *   config;
+  /* hash_type    *   config; */
   config_type  * __config;
 };
 
 
+#if 0
 struct enkf_site_config_node_struct {
   char                          * key;
   char 			        * value;
@@ -181,50 +185,64 @@ static bool enkf_site_config_assert_set_executable(const enkf_site_config_type *
   }
   return valid;
 }
+#endif
+
 
 /*****************************************************************/
 
+/*
 enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * site , const char * key) {
   return hash_get(site->config , key);
 }
+*/
+
 
 
 const char * enkf_site_config_get_value(const enkf_site_config_type * site , const char * key) {
-  enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
-  return node->value;
   /*
-    return config_get(site->__config , key);
+    enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
+    return node->value;
   */
+  return config_get(site->__config , key);
 }
 
 
+const char ** enkf_site_config_get_argv(const enkf_site_config_type * site , const char * key, int *size) {
+  /*
+    enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
+    return node->value;
+  */
+  return config_get_argv(site->__config , key , size);
+}
+
+
+/*
 bool enkf_site_config_node_set(const enkf_site_config_type * site , const char * key) {
   enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
   return node->value_set;
 }
+*/
 
 
+/*
 void enkf_site_config_add_node(enkf_site_config_type * site , const char * key , const char * default_value , int selection_size , const char ** selection_set , validate_ftype * validate) {
   hash_insert_hash_owned_ref(site->config , key , enkf_site_config_node_alloc(key , default_value , selection_size , selection_set , validate) , enkf_site_config_node_free__);
 }
-
+*/
 
 bool enkf_site_config_has_key(const enkf_site_config_type * site ,const char * key) {
-  return hash_has_key(site->config , key);
-  
   /*
-    return config_has_item( site->__config , key);
+    return hash_has_key(site->config , key);
   */
+  
+  return config_has_item( site->__config , key);
 }
-
 
 
 
 
 void enkf_site_config_set_key(enkf_site_config_type * site , const char * key , const char * value) {
   /*
-    Forsvinner med _parse 
-  */
   if (enkf_site_config_has_key(site , key)) {
     enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
     enkf_site_config_node_set_value(node , value);
@@ -232,6 +250,8 @@ void enkf_site_config_set_key(enkf_site_config_type * site , const char * key , 
     fprintf(stderr,"%s: key:%s is not recognized - aborting \n",__func__ , key);
     abort();
   }
+  */
+  config_set_arg(site->__config , key , 1 , (const char **) &value);
 }
 
 
@@ -247,16 +267,18 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
   if (util_file_exists(config_file)) {
     enkf_site_config_type * site;
     site = util_malloc(sizeof * site , __func__);
-    site->config = hash_alloc(10);
-    enkf_site_config_add_node(site , "QUEUE_SYSTEM"  	  , NULL , 3 , (const char *[3]) {"RSH" , "LSF" , "LOCAL"} , enkf_site_config_validate_queue_system);
-    enkf_site_config_add_node(site , "LSF_QUEUE"     	  , NULL , 0 , NULL , enkf_site_config_validate_queue_name);
-    enkf_site_config_add_node(site , "LSF_RESOURCES" 	  , NULL , 0 , NULL , NULL);
-    enkf_site_config_add_node(site , "JOB_SCRIPT"         , NULL , 0 , NULL , enkf_site_config_assert_set_executable); 
-    enkf_site_config_add_node(site , "MAX_RUNNING_LSF"    , NULL , 0 , NULL , NULL);
-    enkf_site_config_add_node(site , "MAX_RUNNING_LOCAL"  , NULL , 0 , NULL , NULL);
-    enkf_site_config_add_node(site , "MAX_RUNNING_RSH"    , NULL , 0 , NULL , NULL);
-    enkf_site_config_add_node(site , "RSH_HOST_LIST"      , NULL , 0 , NULL , NULL);
-    enkf_site_config_add_node(site , "RSH_COMMAND"        , NULL , 0 , NULL , NULL);
+    printf("Reading site information from ...........: %s\n",config_file);
+    /*
+      site->config = hash_alloc();
+      enkf_site_config_add_node(site , "QUEUE_SYSTEM"  	  , NULL , 3 , (const char *[3]) {"RSH" , "LSF" , "LOCAL"} , enkf_site_config_validate_queue_system);
+      enkf_site_config_add_node(site , "LSF_QUEUE"     	  , NULL , 0 , NULL , enkf_site_config_validate_queue_name);
+      enkf_site_config_add_node(site , "LSF_RESOURCES" 	  , NULL , 0 , NULL , NULL);
+      enkf_site_config_add_node(site , "JOB_SCRIPT"         , NULL , 0 , NULL , enkf_site_config_assert_set_executable); 
+      enkf_site_config_add_node(site , "MAX_RUNNING_LSF"    , NULL , 0 , NULL , NULL);
+      enkf_site_config_add_node(site , "MAX_RUNNING_LOCAL"  , NULL , 0 , NULL , NULL);
+      enkf_site_config_add_node(site , "MAX_RUNNING_RSH"    , NULL , 0 , NULL , NULL);
+      enkf_site_config_add_node(site , "RSH_HOST_LIST"      , NULL , 0 , NULL , NULL);
+      enkf_site_config_add_node(site , "RSH_COMMAND"        , NULL , 0 , NULL , NULL);
 
     {
       FILE * stream = util_fopen(config_file , "r");
@@ -280,6 +302,7 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       fclose(stream);
     }
     enkf_site_config_validate(site);
+    */
     {
       site->__config = config_alloc( false );
       
@@ -297,7 +320,6 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       config_init_item( site->__config , "LSF_RESOURCES"     , 0 , NULL , false , true  , 0 , NULL , 1 , -1 , NULL );
       config_init_item( site->__config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
 
-      
       config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
       
       config_parse(site->__config , config_file , "--");
@@ -312,7 +334,8 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
 
 
 void enkf_site_config_validate(enkf_site_config_type *site) {
-  bool valid_site_config = true;
+  /*
+    bool valid_site_config = true;
   char ** key_list = hash_alloc_keylist(site->config);
   int ikey;
 
@@ -325,12 +348,22 @@ void enkf_site_config_validate(enkf_site_config_type *site) {
     fprintf(stderr,"%s: configuration errors - aborting \n",__func__);
     abort();
   }
+  */
 }
 
 
+void enkf_site_config_install_jobs(const enkf_site_config_type * config , ext_joblist_type * joblist) {
+  int  i , argc;
+  const char ** item_list = config_get_argv(config->__config , "INSTALL_JOB" , &argc);
+  for (i=0; i < argc; i+=2 ) 
+    ext_joblist_add_job(joblist , item_list[i] , item_list[i+1]);
+}
+
 
 void  enkf_site_config_free(enkf_site_config_type * site) {
-  hash_free(site->config);
+  /*
+    hash_free(site->config);
+  */
   config_free(site->__config);
   free(site);
 }

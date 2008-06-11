@@ -4,6 +4,7 @@
 typedef struct enkf_site_config_struct       enkf_site_config_type;
 typedef struct enkf_site_config_node_struct  enkf_site_config_node_type; 
 
+const char           ** enkf_site_config_get_argv(const enkf_site_config_type * , const char * , int *);
 enkf_site_config_type * enkf_site_config_bootstrap(const char * );
 void                    enkf_site_config_free(enkf_site_config_type * );
 void                    enkf_site_config_validate(enkf_site_config_type *);
