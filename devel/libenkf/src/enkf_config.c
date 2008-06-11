@@ -371,29 +371,17 @@ const char ** enkf_config_get_forward_model(const enkf_config_type * config , in
   return (const char **) config->forward_model;
 }
 
-void enkf_config_set_forward_model(enkf_config_type * config , const ext_joblist_type * joblist , const char  ** forward_model , int forward_model_length) {
+void enkf_config_set_forward_model(enkf_config_type * config , const char  ** forward_model , int forward_model_length) {
   if (config->forward_model != NULL)
     util_free_stringlist(config->forward_model , config->forward_model_length);
 
   config->forward_model_length = forward_model_length;
   config->forward_model = util_alloc_stringlist_copy(forward_model , forward_model_length);
-  {
-    bool OK = true;
-    int i;
-    for (i=0; i < forward_model_length; i++) {
-      if ( !ext_joblist_has_job(joblist , forward_model[i]) ) {
-	OK = false;
-	fprintf(stderr, "%s: FORWARD_MODEL:%s not defined \n",__func__ , forward_model[i]);
-      }
-    }
-    if (!OK)
-      util_abort("%s: ERROR with FORWARD_MODEL keyword - aborting \n",__func__);
-  }
 }
 
 
 #define __assert_not_null(p , t , OK) if (p == NULL ) { fprintf(stderr,"The key:%s must be set.\n",t); OK = false; }
-static void enkf_config_post_assert(const enkf_config_type * config) {
+static void enkf_config_post_assert(const enkf_config_type * config , ext_joblist_type * joblist) {
   bool OK = true;
 
   __assert_not_null(config->forward_model      , "FORWARD_MODEL" , OK);
@@ -404,6 +392,17 @@ static void enkf_config_post_assert(const enkf_config_type * config) {
   if (config->ens_size <= 0) {
     fprintf(stderr,"Must set ensemble size > 0 with KEYWORD SIZE.\n");
     OK = false;
+  }
+  {
+    int i;
+    for (i=0; i < config->forward_model_length; i++) {
+      if ( !ext_joblist_has_job(joblist , config->forward_model[i]) ) {
+	OK = false;
+	fprintf(stderr, "%s: FORWARD_MODEL:%s not defined \n",__func__ , config->forward_model[i]);
+      }
+    }
+    if (!OK)
+      util_abort("%s: ERROR with FORWARD_MODEL keyword - aborting \n",__func__);
   }
   if (!OK) util_exit("Exiting due to errors in config file\n");
 }
@@ -476,11 +475,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	    const char * kw = token_list[0];
 	    if (enkf_site_config_has_key(site_config , kw)) {
 	      /* The configuration overrides a value from the site_config object. */
-	      char * site_value;
 	      ASSERT_TOKENS(kw , active_tokens , 1);
-	      site_value = util_alloc_joined_string((const char **) &token_list[1] , active_tokens - 1 , " ");
-	      enkf_site_config_set_key(site_config , kw , site_value);
-	      free(site_value);
+	      enkf_site_config_set_argv(site_config , kw ,  active_tokens - 1 , (const char **) &token_list[1] );
 	    } else {
 	      if (strcmp(kw , "SIZE") == 0) {
 		int ens_size;
@@ -544,7 +540,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		enkf_config_set_start_date(enkf_config , (const char **) &token_list[1]);
 	      } else if (strcmp(kw , "FORWARD_MODEL") == 0) {
 		ASSERT_TOKENS("FORWARD_MODEL" , active_tokens , 1);
-		enkf_config_set_forward_model(enkf_config , joblist , (const char **) &token_list[1] , active_tokens - 1);
+		enkf_config_set_forward_model(enkf_config , (const char **) &token_list[1] , active_tokens - 1);
 	      } else
 		fprintf(stderr,"%s: ** Warning ** keyword: %s not recognzied - line ignored \n",__func__ , kw);
 	    }    
@@ -660,7 +656,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
       }
     } while (!at_eof);
     free(config_file);
-    enkf_config_post_assert(enkf_config);
+    enkf_site_config_finalize(site_config , joblist);
+    enkf_config_post_assert(enkf_config , joblist);
+    
     enkf_site_config_validate(site_config);
     return enkf_config;
   }	

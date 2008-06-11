@@ -241,7 +241,7 @@ bool enkf_site_config_has_key(const enkf_site_config_type * site ,const char * k
 
 
 
-void enkf_site_config_set_key(enkf_site_config_type * site , const char * key , const char * value) {
+void enkf_site_config_set_argv(enkf_site_config_type * site , const char * key , int argc , const char ** argv ) {
   /*
   if (enkf_site_config_has_key(site , key)) {
     enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
@@ -251,7 +251,7 @@ void enkf_site_config_set_key(enkf_site_config_type * site , const char * key , 
     abort();
   }
   */
-  config_set_arg(site->__config , key , 1 , (const char **) &value);
+  config_set_arg(site->__config , key , argc , argv);
 }
 
 
@@ -357,6 +357,10 @@ void enkf_site_config_install_jobs(const enkf_site_config_type * config , ext_jo
   const char ** item_list = config_get_argv(config->__config , "INSTALL_JOB" , &argc);
   for (i=0; i < argc; i+=2 ) 
     ext_joblist_add_job(joblist , item_list[i] , item_list[i+1]);
+}
+
+void enkf_site_config_finalize(const enkf_site_config_type * config , ext_joblist_type * joblist) {
+  enkf_site_config_install_jobs(config , joblist);
 }
 
 
