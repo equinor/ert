@@ -18,6 +18,8 @@ LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBECL_HOME)/lib -L$(LIBUTIL_HOME)/lib -L
 LIB_LINK  = -ljob_queue_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
 TARGET_INCLUDE  = -I$(LIBJOB_QUEUE_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include
 
+
+
 INSTALL: $(LIB)
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
@@ -33,6 +35,16 @@ clean:
 
 $(LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
+
+
+ifeq ($(USE_LSF_LIBRARY),TRUE)
+   CFLAGS_LSF = $(CFLAGS) -D'USE_LSF_LIBRARY=TRUE'
+else
+   CFLAGS_LSF = $(CFLAGS) 
+endif
+
+lsf_driver.o : lsf_driver.c
+	$(CC) -c $(CFLAGS_LSF) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
