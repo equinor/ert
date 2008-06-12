@@ -1,5 +1,5 @@
 include path_config
-MFLAG = m32
+MFLAG = m64
 CC = gcc
 AR = ar
 FF = ifort

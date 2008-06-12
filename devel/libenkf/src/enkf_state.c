@@ -1036,11 +1036,17 @@ static double * enkf_ensemble_alloc_serial_data(int ens_size , size_t target_ser
     Ensure that the allocated memory is an integer times ens_size.
   */
   {
-    div_t tmp   = div(serial_size , ens_size);
-    serial_size = ens_size * tmp.quot;
+    int serial_size0 = serial_size;
+    {
+      div_t tmp   = div(serial_size , ens_size);
+      serial_size = ens_size * tmp.quot;
+    }
+    if (serial_size != serial_size0) {
+      /* Can not use realloc() here because the temporary memory requirements might be prohibitive. */
+      free(serial_data);
+      serial_data = util_malloc(serial_size * sizeof * serial_data , __func__);
+    }
   }
-  
-  serial_data = util_realloc(serial_data , serial_size * sizeof * serial_data , __func__);
   *_serial_size = serial_size;
   return serial_data;
 }

@@ -61,7 +61,7 @@ time_t sched_file_get_start_date(const sched_file_type * s) { return s->start_da
 
 
 sched_file_type * sched_file_alloc(time_t start_date) {
-  sched_file_type * sched_file = malloc(sizeof *sched_file);
+  sched_file_type * sched_file = util_malloc(sizeof *sched_file , __func__);
   {
     hash_type *month_hash = hash_alloc();
     hash_insert_int(month_hash , "JAN" , 0);
@@ -131,7 +131,7 @@ sched_file_type * sched_file_alloc(time_t start_date) {
   sched_file->next_date_nr 	  = 1; /* One based or zero based counting... ?? */
   sched_file->acc_days            = 0;
   sched_file->kw_list      	  = list_alloc();
-  sched_file->dims                = malloc(3 * sizeof sched_file->dims);
+  sched_file->dims                = util_malloc(3 * sizeof sched_file->dims , __func__);
   sched_file->start_date          = start_date;
   sched_file->well_set            = set_alloc_empty();
   return sched_file;
