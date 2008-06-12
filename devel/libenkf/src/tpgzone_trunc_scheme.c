@@ -79,11 +79,6 @@ int tpgzone_trunc_scheme_type_apply(tpgzone_trunc_scheme_type *trunc_scheme, con
 
 tpgzone_trunc_scheme_type * tpgzone_trunc_scheme_type_fscanf_alloc(const char * filename)
 {
-  /*
-    TODO
-
-    Make this do something..
-  */
   printf("%s: *WARNING* this function is empty.\n",__func__);
   return NULL;
 };

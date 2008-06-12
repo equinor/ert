@@ -69,7 +69,7 @@
       DOWNWARDS. Note that it could happen that
       one facies type is never used in this scheme.
 
-  o PETEROPHYSICS specs the peterophysics rule.
+  o PETROPHYSICS specs the petrophysics rule.
     The file will typically look something like:
 
    TARGET_FIELD_01 TARGET_FIELD_01_CONF_FILE 
@@ -103,20 +103,17 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
                                                     int                          num_facies,
                                                     int                          num_target_fields,
                                                     char                     **  target_keys,
+                                                    scalar_config_type       **  petrophysics,
                                                     tpgzone_trunc_scheme_type *  trunc_scheme,
                                                     hash_type                 *  facies_kw_hash,
-                                                    scalar_config_type        ** petrophysics,
                                                     int i1, int i2, int j1, int j2, int k1, int k2)
 {
   tpgzone_config_type * config = util_malloc(sizeof * config,__func__);
 
   config->num_gauss_fields  = num_gauss_fields;
   config->num_facies        = num_facies;
-  config->num_target_fields = num_target_fields;
-  config->target_keys       = target_keys;
   config->trunc_scheme      = trunc_scheme;
   config->facies_kw_hash    = facies_kw_hash;
-  config->petrophysics      = petrophysics,
   config->write_compressed  = true;
   config->ecl_kw_name       = NULL;
 
@@ -141,7 +138,7 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type       * 
 
     ecl_grid_set_box_active_list(grid,box,config->target_nodes);
 
-    config->data_size = num_target_fields * num_facies + elements * num_gauss_fields;
+    config->data_size = elements * num_gauss_fields;
 
     ecl_box_free(box);
   }
@@ -162,7 +159,7 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * conf_file, const 
   scalar_config_type        ** petrophysics;
   config_type                * config          = config_alloc(false);
 
-  int num_gauss_fields, num_facies;
+  int num_gauss_fields, num_facies, num_target_fields;
   int i1, i2, j1,j2, k1,k2;
 
   char ** target_keys;
@@ -189,9 +186,9 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * conf_file, const 
     if(!util_sscanf_int(config_item_iget_argv(config_item,3),&j2))
       util_abort("%s: Failed to parse coordinate j2 from COORDS.\n",__func__);
     if(!util_sscanf_int(config_item_iget_argv(config_item,4),&k1))
-      util_abort("%s: Failed to parse coordinate k1 from COORDS.\n",__func__);
-    if(!util_sscanf_int(config_item_iget_argv(config_item,5),&k2))
-      util_abort("%s: Failed to parse coordinate k2 from COORDS.\n",__func__);
+      util_abort("%s: failed to parse coordinate k1 from coords.\n",__func__);
+    if(!util_sscanf_int(config_item_iget_argv(config_item,4),&k2))
+      util_abort("%s: failed to parse coordinate k2 from coords.\n",__func__);
 
 
     hash_insert_int(facies_kw_hash, config_get(config,"FACIES_BACKGROUND"),0);
@@ -209,16 +206,23 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * conf_file, const 
       util_abort("%s: Failed to parse integer from argument to NUM_GAUSS_FIELDS.\n",__func__);
 
     trunc_scheme = tpgzone_trunc_scheme_type_fscanf_alloc(config_get(config,"TRUNCATION_SEQUENCE"));
-    tpgzone_config_petrophysics_fscanf_alloc(config_get(config,"PETROPHYSICS"),
-                                             facies_kw_hash,
-                                             petrophysics,
-                                             target_keys);
+
+    {
+      char ** facies_kw = hash_alloc_keylist(facies_kw_hash);
+      tpgzone_config_petrophysics_fscanf_alloc(config_get(config,"PETROPHYSICS"),
+                                               num_facies,
+                                               (const char **) facies_kw,
+                                               &num_target_fields,
+                                               target_keys,
+                                               petrophysics);
+      util_free_stringlist(facies_kw,num_facies);
+    }
     
 
   }
 
-  tpgzone_config = tpgzone_config_alloc_from_box(grid, num_gauss_fields, num_facies, 0, NULL, /*FIXME*/
-                                                 trunc_scheme,facies_kw_hash,petrophysics,
+  tpgzone_config = tpgzone_config_alloc_from_box(grid, num_gauss_fields, num_facies, 0, NULL,NULL, /*FIXME*/
+                                                 trunc_scheme,facies_kw_hash,
                                                  i1,i2,j1,j2,k1,k2);
   
   config_free(config);
@@ -231,13 +235,15 @@ void tpgzone_config_free(tpgzone_config_type * config)
 {
   if(config == NULL) util_abort("%s: Internal error, trying to free NULL pointer.\n",__func__);
 
-  hash_printf_keys(config->facies_kw_hash);
-
   if(config->target_nodes   != NULL)      free(config->target_nodes   );
   if(config->ecl_kw_name    != NULL)      free(config->ecl_kw_name    );
   if(config->facies_kw_hash != NULL) hash_free(config->facies_kw_hash );
 
-    free(config);
+  /* TODO 
+     Create code to free the truncation scheme, petrophysics model and target_keys.
+  */
+
+  free(config);
 }
 
 
@@ -245,13 +251,74 @@ void tpgzone_config_free(tpgzone_config_type * config)
 /*****************************************************************/
 
 
-void tpgzone_config_petrophysics_fscanf_alloc(const char          * filename      , 
-                                              const hash_type     * facies_kw_hash,
-                                              scalar_config_type ** petrophysics,
-                                              char               ** target_keys)
+void tpgzone_config_petrophysics_fscanf_alloc(const char          * filename, 
+                                              int                   num_facies,
+                                              const char         ** facies_kw,
+                                              int                 * num_target_fields,
+                                              char               ** target_keys,
+                                              scalar_config_type ** petrophysics)
                                              
 {
-  printf("%s: *WARNING* this function is empty.\n",__func__);
+  config_type * config = config_alloc(true);
+  config_parse(config, filename, ENKF_COM_KW);
+
+  target_keys = config_alloc_active_list(config, num_target_fields);
+  petrophysics = util_malloc(*num_target_fields * sizeof  petrophysics,__func__);
+
+  printf("Have found the following target fields:\n");
+  {
+    int i;
+    for(i=0; i<*num_target_fields; i++)
+      printf("%s\n",target_keys[i]);
+  }
+
+  {
+    int i;
+    char *target_conf_filename;
+    for(i=0; i<*num_target_fields; i++)
+    {
+     target_conf_filename = (char *) config_get(config,target_keys[i]);
+     petrophysics[i] = tpgzone_config_petrophysics_fscanf_alloc_item(target_conf_filename,num_facies,facies_kw);
+    }
+  }
+
+
+  config_free(config);
+}
+
+
+
+scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char  * filename,
+                                                                   int           num_facies,
+                                                                   const char ** facies_kw)
+{
+  config_type *config = config_alloc(true);
+  config_parse(config,filename,ENKF_COM_KW);
+
+  if(!config_has_keys(config, facies_kw, num_facies, true))
+  {
+    int i,config_num_facies;
+    char **config_facies_kw = config_alloc_active_list(config,&config_num_facies);
+
+    printf("ERROR: Configuration error in TPGZONE.\n");
+    printf("       I am asked to create a petrophysics model for the facies:\n");
+
+    for(i=0; i<num_facies; i++)
+    printf("       %02i:  %s\n",i,facies_kw[i]);
+
+    printf("\n       However, the file %s contains a petrophysics for the facies:\n",filename);
+    for(i=0; i<config_num_facies; i++)
+    printf("       %02i:  %s\n",i,config_facies_kw[i]);
+
+    printf("\n       Update your facies configuration.\n");
+    util_free_stringlist(config_facies_kw,config_num_facies);
+    config_free(config);
+    util_abort("%s: Mismatch between facies in zone configuration and petrophysics object - aborting.\n",__func__);
+    return NULL;
+  }
+
+  config_free(config);
+  return NULL;
 }
 
 

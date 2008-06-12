@@ -20,11 +20,11 @@ struct tpgzone_config_struct
   int                          num_gauss_fields;     /* Number of underlying Gaussian fields */
   int                          num_facies;           /* Number of facies */
   int                          num_active_blocks;    /* Number of active gridblocks in the zone */
-  int                          num_target_fields;    /* Number of fields to be set based on the tpg */
-  char                      ** target_keys;          /* Keywords to target fields */
+  int                          num_target_fields;
+  char                      ** target_keys; 
+  scalar_config_type        ** petrophysics;
   tpgzone_trunc_scheme_type  * trunc_scheme;         /* Pointer to the truncation scheme */
   hash_type                  * facies_kw_hash;       /* Pointer to a hash with facies keywords */
-  scalar_config_type        ** petrophysics;         /* Petrophysics output transform for each target field and facies */
   int                        * target_nodes;         /* Linear index to grid nodes in the block */
   bool                         write_compressed;     /* Should stored output be compressed? */
 };
@@ -36,9 +36,9 @@ tpgzone_config_type * tpgzone_config_alloc_from_box(const ecl_grid_type        *
                                                     int                         ,
                                                     int                         ,
                                                     char                      **,
+                                                    scalar_config_type        **,
                                                     tpgzone_trunc_scheme_type  *,
                                                     hash_type                  *,
-                                                    scalar_config_type        **,
                                                     int, int, int, int, int, int);
 
 tpgzone_config_type * tpgzone_config_fscanf_alloc(const char *, const ecl_grid_type *);
@@ -46,9 +46,15 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char *, const ecl_grid_t
 /*****************************************************************/
 
 void tpgzone_config_petrophysics_fscanf_alloc(const char          *,
-                                              const hash_type     *,
-                                              scalar_config_type **,
-                                              char               **);
+                                              int                  ,
+                                              const char         **,
+                                              int                 *,
+                                              char               **,
+                                              scalar_config_type **);
+
+scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char  *,
+                                                                   int          ,
+                                                                   const char **);
 void tpgzone_config_petrophysics_write       (const tpgzone_config_type*);
 
 /*****************************************************************/
