@@ -2,8 +2,8 @@ include path_config
 SITE_CONFIG_FILE = "/d/proj/bg/enkf/Config/site-config"
 #m32 -> #define i386 1    m64 -> __x86_64 1
 MFLAG = m64
-CC = gcc
-AR = ar
+CC    = gcc
+AR    = ar
 #################################################################
 MAIN_INCLUDE     = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include -I$(LIBJOB_QUEUE_HOME)/include
 COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
@@ -18,7 +18,7 @@ OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config
 
 INC_FILES_INSTALL = thist.h scalar.h scalar_config.h trans_func.h logmode.h enkf_obs.h obs_data.h obs_node.h well_obs.h meas_op.h meas_vector.h well_config.h well.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw_config.h ecl_static_kw.h equil_config.h equil.h enkf_state.h multflt.h enkf_util.h multflt_config.h enkf_main.h multz.h multz_config.h enkf_node.h pgbox_config.h pgbox.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h plain_driver.h analysis.h meas_matrix.h fs_index.h enkf_config.h plain_driver_parameter.h relperm.h relperm_config.h enkf_site_config.h havana_fault.h havana_fault_config.h summary_obs.h summary_config.h summary_config.o tpgzone_config.h tpgzone.h tpgzone_trunc_scheme.h
 
-ifeq ($(MFLAG),m64)
+ifeq ($(USE_LSF_LIBRARY),TRUE)
    LSF_LIBS          = -lbat  -llsf -lnsl
 else
    LSF_LIBS          = 
@@ -36,13 +36,13 @@ INSTALL: $(LIB)
 	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
 	gcc $(CFLAGS) -D'SITE_CONFIG_FILE=$(SITE_CONFIG_FILE)' $(TARGET_INCLUDE) main.c  -o enkf  $(LIB_PATH) $(LIB_LINK) 
-	gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) test_havana2.c  -o hav.x  $(LIB_PATH) $(LIB_LINK) 
+	#gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) test_havana2.c  -o hav.x  $(LIB_PATH) $(LIB_LINK) 
 	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) test.c  -o test.x  $(LIB_PATH) $(LIB_LINK) 
 	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) thist_test.c -o thist.x $(LIB_PATH) $(LIB_LINK)
-	gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) field_test.c -o field.x $(LIB_PATH) $(LIB_LINK)
+	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) field_test.c -o field.x $(LIB_PATH) $(LIB_LINK)
 	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) swcr_init.c  -o /d/proj/bg/enkf/bin/swcr_init.x  $(LIB_PATH) $(LIB_LINK)
 	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) relp_test.c  -o relp.x  $(LIB_PATH) $(LIB_LINK)
-	gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) tpgzone_test.c  -o tpgzone_test.x  $(LIB_PATH) $(LIB_LINK) 
+	#gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) tpgzone_test.c  -o tpgzone_test.x  $(LIB_PATH) $(LIB_LINK) 
 
 
 clean:
