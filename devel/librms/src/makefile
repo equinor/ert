@@ -8,25 +8,30 @@ INSTALL_INC_PATH  = $(LIBRMS_HOME)/include
 INSTALL_LIB_PATH  = $(LIBRMS_HOME)/lib
 #################################################################
 CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall 
+LDFLAGS = 
 ARFLAGS = -csr
 #################################################################
-OBJECTS           = rms_interC.o rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagkey.o rms_stats.o
-INC_FILES_INSTALL = rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h
-LIB               = librms_$(MFLAG).a
-LIB_LINK          = -lrms_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz
-LIB_PATH          = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBRMS_HOME)/lib
-TARGET_INCLUDE    = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBRMS_HOME)/include
+SDP_ROOT      = /project/res/$(shell /private/joaho/bin/res_target.py)
+OBJECTS       = rms_interC.o rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagkey.o rms_stats.o
+INC_FILES     = rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h
+LIB_ROOT      = rms
+LIB           = lib$(LIB_ROOT)_$(MFLAG).a
+LIB_LINK      = -l$(LIB_ROOT)_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz
+LIB_PATH      = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L./
 
-INSTALL: $(LIB)
+
+LOCAL: LIB BIN
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
-	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
+	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
-	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_test.c    	-o rms.x               $(LIB_PATH)  $(LIB_LINK) 
-	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_stat.c    	-o rms_stat.x          $(LIB_PATH)  $(LIB_LINK) 
-	gcc $(CFLAGS) $(TARGET_INCLUDE)	tag_list.c    	-o roff_tags.x          $(LIB_PATH)  $(LIB_LINK) 
-	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_extract.c 	-o rms_extract.x       $(LIB_PATH)  $(LIB_LINK) 
-	gcc $(CFLAGS) $(TARGET_INCLUDE)	rms_setname.c 	-o rms_setname.x       $(LIB_PATH)  $(LIB_LINK) 
+
+SDP_INSTALL: LIB BIN
+	install $(LIB) $(SDP_ROOT)/lib/lib$(LIB_ROOT).a
+	install $(BIN_FILES_SDP_INSTALL) $(SDP_ROOT)/bin
+	install $(INC_FILES) $(SDP_ROOT)/include
+
+LIB:	$(LIB)
 
 clean:
 	rm -f *.o *~ 
@@ -37,6 +42,7 @@ clean:
 
 $(LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
+
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
@@ -50,4 +56,33 @@ rms_tagkey.o : rms_tagkey.c rms_tagkey.h rms_type.o rms_util.o
 rms_tag.o    : rms_tag.c rms_tag.h rms_tagkey.o rms_util.o
 rms_file.o   : rms_file.c rms_file.h rms_util.o rms_tag.o rms_tagkey.o
 rms_interC.o : rms_interC.c rms_file.o
+
+#################################################################
+# Binaries
+
+BIN_FILES             = rms.x rms_stat.x roff_tags.x rms_extract.x rms_setname.x
+BIN:	                $(BIN_FILES)
+BIN_FILES_SDP_INSTALL = roff_tags.x
+
+rms_test.o    : rms_test.c
+rms_stat.o    : rms_stat.c
+tag_list.o    : tag_list.c
+rms_extract.o : rms_extract.c
+rms_setname.o : rms_setname.c
+
+roff_tags.x:	tag_list.o $(LIB)
+	gcc $(LDFLAGS) tag_list.o -o roff_tags.x $(LIB_PATH)  $(LIB_LINK) 	
+
+rms.x:	rms_test.o $(LIB)
+	gcc $(LDFLAGS) rms_test.o -o rms.x $(LIB_PATH)  $(LIB_LINK) 	
+
+rms_stat.x: rms_stat.o $(LIB)
+	gcc $(LDFLAGS) rms_stat.o -o rms_stat.x $(LIB_PATH)  $(LIB_LINK) 	
+
+rms_extract.x: rms_extract.o $(LIB)
+	gcc $(LDFLAGS) rms_extract.o -o rms_extract.x $(LIB_PATH)  $(LIB_LINK) 	
+
+rms_setname.x: rms_setname.o $(LIB)
+	gcc $(LDFLAGS) rms_setname.o -o rms_setname.x $(LIB_PATH)  $(LIB_LINK) 	
+
 
