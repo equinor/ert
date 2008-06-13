@@ -208,10 +208,11 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char * conf_file, const 
     if(!util_sscanf_int(config_item_iget_argv(config_item,0),&num_gauss_fields))
       util_abort("%s: Failed to parse integer from argument to NUM_GAUSS_FIELDS.\n",__func__);
 
-    trunc_scheme = tpgzone_trunc_scheme_type_fscanf_alloc(config_get(config,"TRUNCATION_SEQUENCE"));
+    trunc_scheme = tpgzone_trunc_scheme_type_fscanf_alloc(config_get(config,"TRUNCATION_SEQUENCE"),
+                                                                     facies_kw_hash,
+                                                                     num_gauss_fields);
 
     tpgzone_config_petrophysics_fscanf_alloc(config_get(config,"PETROPHYSICS"),
-                                             num_facies,
                                              facies_kw_hash,
                                              &num_target_fields,
                                              &target_keys,
@@ -267,8 +268,7 @@ void tpgzone_config_free(tpgzone_config_type * config)
 
 
 void tpgzone_config_petrophysics_fscanf_alloc(const char           * filename, 
-                                              int                    num_facies,
-                                              hash_type            * facies_kw_hash,
+                                              const hash_type      * facies_kw_hash,
                                               int                  * num_target_fields,
                                               char               *** __target_keys,
                                               scalar_config_type *** __petrophysics)
@@ -282,15 +282,9 @@ void tpgzone_config_petrophysics_fscanf_alloc(const char           * filename,
   target_keys = config_alloc_active_list(config, num_target_fields);
   petrophysics = util_malloc(*num_target_fields * sizeof  petrophysics,__func__);
 
-  printf("Have found the following target fields:\n");
   {
     int i;
-    for(i=0; i<*num_target_fields; i++)
-      printf("%s\n",target_keys[i]);
-  }
-
-  {
-    int i;
+    int num_facies = hash_get_size(facies_kw_hash);
     char *target_conf_filename;
     for(i=0; i<*num_target_fields; i++)
     {
@@ -307,9 +301,9 @@ void tpgzone_config_petrophysics_fscanf_alloc(const char           * filename,
 
 
 
-scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char  * filename,
-                                                                   int           num_facies,
-                                                                   hash_type   * facies_kw_hash)
+scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char        * filename,
+                                                                   int                 num_facies,
+                                                                   const hash_type   * facies_kw_hash)
 {
 
   scalar_config_type * petrophysics_item;
@@ -330,7 +324,9 @@ scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char  *
       int i,config_num_facies;
       char **config_facies_kw = config_alloc_active_list(config,&config_num_facies);
 
+      printf("\n");
       printf("ERROR: Configuration error in TPGZONE.\n");
+      printf("\n");
       printf("       I am asked to create a petrophysics model for the facies:\n");
 
       for(i=0; i<num_facies; i++)
@@ -360,9 +356,8 @@ scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char  *
     stream = util_fopen(filename,"r");
 
     /*
-      FIXME: This does not support comments...
+     UGLY BUGLY: This does not support comments...
     */
-    printf("Loading petrophysics model from %s\n",filename);
     for(i=0; i<num_facies; i++)
     {
       if(fscanf(stream,"%s",facies_name) != 1)

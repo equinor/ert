@@ -4,8 +4,9 @@
 
 struct tpgzone_trunc_scheme_node_type_struct
 {
-  tpgzone_trunc_scheme_func_type * func;
-  void_arg_type                  * arg;
+  tpgzone_trunc_scheme_func_type * func;       /* Truncation function */
+  double                         * arg;        /* Arguments to func   */
+  int                              new_facies; /* If func is evaluated to be true, this is the new facies type */
 };
 
 
@@ -13,6 +14,7 @@ struct tpgzone_trunc_scheme_node_type_struct
 struct tpgzone_trunc_scheme_type_struct
 {
   int                               num_nodes;
+  int                               num_gauss_fields;
   tpgzone_trunc_scheme_node_type ** trunc_scheme_nodes;
 };
 
@@ -31,15 +33,10 @@ struct tpgzone_trunc_scheme_type_struct
   void_arg_type with some double values? The first field in arg should at least
   be the number of Gaussian fields.
 */
-int trunc_scheme_func_linear(const double * gauss, int cur_facies, void_arg_type * arg)
+bool trunc_scheme_func_linear(const double * gauss, double * arg, int num_gauss_fields)
 {
-  /*
-    TODO
-
-    Make this do something..
-  */
   printf("%s: *WARNING* this function is empty.\n",__func__);
-  return cur_facies;
+  return false;
 }
 
 
@@ -51,9 +48,12 @@ int trunc_scheme_func_linear(const double * gauss, int cur_facies, void_arg_type
  and the current facies type stored in int, a new facies type is returned
  according to an erosion rule with parameters stored in void_arg_type.
 */
-int tpgzone_trunc_scheme_node_type_apply(tpgzone_trunc_scheme_node_type *node, int cur_facies, const double * gauss)
+int tpgzone_trunc_scheme_node_type_apply(tpgzone_trunc_scheme_node_type *node, int cur_facies, const double * gauss, int num_gauss_fields)
 {
-  return node->func(gauss,cur_facies,node->arg);
+  if(node->func(gauss, node->arg, num_gauss_fields))
+    return node->new_facies;
+  else
+    return cur_facies;
 }
 
 
@@ -69,7 +69,7 @@ int tpgzone_trunc_scheme_type_apply(tpgzone_trunc_scheme_type *trunc_scheme, con
 
   for(i=0; i<trunc_scheme->num_nodes; i++)
   {
-    facies = tpgzone_trunc_scheme_node_type_apply(trunc_scheme->trunc_scheme_nodes[i], facies, gauss);
+    facies = tpgzone_trunc_scheme_node_type_apply(trunc_scheme->trunc_scheme_nodes[i], facies, gauss, trunc_scheme->num_gauss_fields);
   }
 
   return facies;
@@ -77,8 +77,14 @@ int tpgzone_trunc_scheme_type_apply(tpgzone_trunc_scheme_type *trunc_scheme, con
 
 
 
-tpgzone_trunc_scheme_type * tpgzone_trunc_scheme_type_fscanf_alloc(const char * filename)
+tpgzone_trunc_scheme_type * tpgzone_trunc_scheme_type_fscanf_alloc(const char * filename,
+                                                                   hash_type  * facies_kw_hash,
+                                                                   int         num_gauss_fields)
 {
-  printf("%s: *WARNING* this function is empty.\n",__func__);
+  printf("*WARNING*: %s is **NOT** fully implemented.\n",__func__);
+  printf("Getting facies_kw_hash with keywords:\n");
+  hash_printf_keys(facies_kw_hash);
+
+  printf("\nI am asked to load a truncation scheme from %s\n\n",filename);
   return NULL;
 };

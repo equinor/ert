@@ -48,15 +48,14 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char *, const ecl_grid_t
 /*****************************************************************/
 
 void tpgzone_config_petrophysics_fscanf_alloc(const char           *,
-                                              int                   ,
-                                              hash_type            *,
+                                              const hash_type      *,
                                               int                  *,
                                               char               ***,
                                               scalar_config_type ***);
 
-scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char  *,
-                                                                   int          ,
-                                                                   hash_type   *);
+scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char        *,
+                                                                   int                ,
+                                                                   const hash_type   *);
 
 void tpgzone_config_petrophysics_write_field(const tpgzone_config_type *, const double *, const char *, field_type *);
 
