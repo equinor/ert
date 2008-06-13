@@ -35,9 +35,11 @@ struct lsf_job_struct {
   int  	    __lsf_id;
   long int  lsf_jobnr;
 #ifdef LSF_SYSTEM_DRIVER
-  char    * lsf_jobnr_char;
+  char    * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_output hash table */
 #endif
 };
+
+
 
 
 struct lsf_driver_struct {
@@ -66,6 +68,7 @@ struct lsf_driver_struct {
 
 #define LSF_DRIVER_ID  1001
 #define LSF_JOB_ID     2001
+
 
 void lsf_driver_assert_cast(const lsf_driver_type * queue_driver) {
   if (queue_driver->__lsf_id != LSF_DRIVER_ID) {
@@ -98,6 +101,7 @@ lsf_job_type * lsf_job_alloc() {
 #endif
   return job;
 }
+
 
 void lsf_job_free(lsf_job_type * job) {
 #ifdef LSF_SYSTEM_DRIVER

@@ -31,6 +31,7 @@ struct ext_job_struct {
   char       * name;
   char 	     * portable_exe;
   char 	     * target_file;
+  char       * start_file;   /* Will not start if not this file is present */
   char 	     * stdout_file;
   char 	     * stdin_file;
   char 	     * stderr_file;
@@ -70,6 +71,7 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->init_code_length = 0;
   ext_job->stdout_file  = NULL;
   ext_job->target_file  = NULL;
+  ext_job->start_file   = NULL;
   ext_job->stdin_file   = NULL;
   ext_job->stderr_file  = NULL;
   ext_job->argv 	= NULL;
@@ -124,6 +126,10 @@ void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
 
 void ext_job_set_target_file(ext_job_type * ext_job, const char * target_file) {
   ext_job->target_file = util_realloc_string_copy(ext_job->target_file , target_file);
+}
+
+void ext_job_set_start_file(ext_job_type * ext_job, const char * start_file) {
+  ext_job->start_file = util_realloc_string_copy(ext_job->start_file , start_file);
 }
 
 void ext_job_set_name(ext_job_type * ext_job, const char * name) {
@@ -238,6 +244,7 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const h
   __indent(stream, 0); __fprintf_python_string(stream , "name"  	  , ext_job->name , NULL);                    __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , context_hash);    __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	  , ext_job->target_file , context_hash);     __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	  , ext_job->start_file , context_hash);      __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	  , ext_job->stdout_file , context_hash);     __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	  , ext_job->stderr_file , context_hash);     __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	  , ext_job->stdin_file , context_hash);      __end_line(stream);
@@ -280,6 +287,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
   config_init_item(config , "INIT_CODE"      , 0 , NULL , false , true  , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "PORTABLE_EXE"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "TARGET_FILE"    , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
+  config_init_item(config , "START_FILE"     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
   config_init_item(config , "ENV"            , 0 , NULL , false , true  , 0 , NULL , 2 , 2 , NULL);
   config_init_item(config , "PLATFORM_EXE"   , 0 , NULL , false , true  , 0 , NULL , 2 , 2 , NULL);
   config_init_item(config , "ARGLIST"        , 0 , NULL , false , true  , 0 , NULL , 1 ,-1 , NULL);
@@ -289,6 +297,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
     if (config_item_set(config , "STDOUT")) 	  ext_job_set_stdout_file(ext_job , config_get(config , "STDOUT"));
     if (config_item_set(config , "STDERR")) 	  ext_job_set_stderr_file(ext_job , config_get(config , "STDERR"));
     if (config_item_set(config , "TARGET_FILE"))  ext_job_set_target_file(ext_job , config_get(config , "TARGET_FILE"));
+    if (config_item_set(config , "START_FILE"))   ext_job_set_start_file(ext_job , config_get(config , "START_FILE"));
     if (config_item_set(config , "PORTABLE_EXE")) ext_job_set_portable_exe(ext_job , config_get(config , "PORTABLE_EXE"));
 
     if (config_item_set(config , "ARGLIST")) {

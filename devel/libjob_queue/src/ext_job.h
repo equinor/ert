@@ -16,6 +16,7 @@ void ext_job_set_init_code(ext_job_type * , const char ** , int );
 void ext_job_set_stdout_file(ext_job_type * , const char * );
 void ext_job_set_stdin_file(ext_job_type * , const char * );
 void ext_job_set_target_file(ext_job_type * , const char * );
+void ext_job_set_start_file(ext_job_type * , const char * );
 void ext_job_set_stderr_file(ext_job_type * , const char * );
 void ext_job_add_platform_exe(ext_job_type *, const char * , const char * ) ;
 void ext_job_set_argc(ext_job_type *   , const char ** , int);
