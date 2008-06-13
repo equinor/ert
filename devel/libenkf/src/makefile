@@ -18,15 +18,44 @@ OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config
 INC_FILES_INSTALL = thist.h scalar.h scalar_config.h trans_func.h logmode.h enkf_obs.h obs_data.h obs_node.h well_obs.h meas_op.h meas_vector.h well_config.h well.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw_config.h ecl_static_kw.h equil_config.h equil.h enkf_state.h multflt.h enkf_util.h multflt_config.h enkf_main.h multz.h multz_config.h enkf_node.h pgbox_config.h pgbox.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h plain_driver.h analysis.h meas_matrix.h fs_index.h enkf_config.h plain_driver_parameter.h relperm.h relperm_config.h enkf_site_config.h havana_fault.h havana_fault_config.h summary_obs.h summary_config.h summary_config.o tpgzone_config.h tpgzone.h tpgzone_trunc_scheme.h
 
 ifeq ($(USE_LSF_LIBRARY),TRUE)
-   LSF_LIBS          = -lbat  -llsf -lnsl
+   LSF_LIBS   = -lbat  -llsf -lnsl
 else
-   LSF_LIBS          = 
+   LSF_LIBS   = 
 endif
 
 LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -ljob_queue_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lanalysis_$(MFLAG) -lm -lpthread -lz  -lifcore -lirc  -llapack -lblas $(LSF_LIBS) 
-LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L$(LIBENKF_HOME)/lib -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L$(EXTERNAL_LIB_PATH)/ifort_$(MFLAG)
-LIB               = libenkf_$(MFLAG).a
+LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L$(EXTERNAL_LIB_PATH)/ifort_$(MFLAG)
+LIB_ROOT          = enkf
+LIB               = lib$(LIB_ROOT)_$(MFLAG).a
 TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
+
+
+LOCAL: LIB BIN
+	install -d $(INSTALL_INC_PATH)
+	install -d $(INSTALL_LIB_PATH)
+	install $(INC_FILES) $(INSTALL_INC_PATH)
+	install $(LIB) $(INSTALL_LIB_PATH)
+
+SDP_INSTALL: LIB BIN
+	install $(LIB) $(SDP_ROOT)/lib/lib$(LIB_ROOT).a
+	install $(BIN_FILES_SDP_INSTALL) $(SDP_ROOT)/bin
+	install $(INC_FILES) $(SDP_ROOT)/include
+
+LIB:	$(LIB)
+
+clean:
+	rm -f *.o *~ 
+	rm -f $(LIB)
+	rm -f $(INSTALL_LIB_PATH)/$(LIB)
+	rm -f $(INSTALL_INC_PATH)/*.h
+
+
+$(LIB): $(OBJECTS)
+	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
+
+
+%.o : %.c
+	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
 
 INSTALL: $(LIB)
@@ -44,19 +73,7 @@ INSTALL: $(LIB)
 	#gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) tpgzone_test.c  -o tpgzone_test.x  $(LIB_PATH) $(LIB_LINK) 
 
 
-clean:
-	rm -f *.o *~
-	rm -f $(INSTALL_INC_PATH)/*.h
-	rm -f libenkf_m*
-	rm -f $(INSTALL_LIB_PATH)/$(LIB)
-
-
-$(LIB): $(OBJECTS) 
-	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS) $(FORTRAN_OBJECTS)
-
-%.o : %.c
-	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $< -o $@
-
+# Library objects:
 thist_interC.o       : thist.o
 thist.o              : thist.c thist.h
 logmode.o            : logmode.c logmode.h enkf_types.h
@@ -110,3 +127,26 @@ summary.o             : summary.c summary.h
 summary_config.o      : summary_config.c summary_config.h
 tpgzone.o             : tpgzone.h
 tpgzone_config.o      : enkf_macros.h enkf_types.h tpgzone_trunc_scheme.h
+
+
+
+#################################################################
+# Binaries
+
+BIN_FILES             = enkf tpgzone_test.x
+BIN:	                $(BIN_FILES)
+BIN_FILES_SDP_INSTALL = enkf
+
+enkf.o		: enkf.c
+tpgzone_test.o	: tpgzone_test.c
+
+
+enkf:	enkf.o $(LIB)
+	gcc$(LDFLAGS) enkf.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
+
+
+tpgzone_test.x:	tpgzone_test.o $(LIB)
+	gcc$(LDFLAGS) tpgzone_test.o -o tpgzone_test.x $(LIB_PATH)  $(LIB_LINK) 	
+
+
+
