@@ -2,6 +2,8 @@
 #define __TPGZONE_CONFIG_H__
 #include <stdbool.h>
 #include <ecl_grid.h>
+#include <field_config.h>
+#include <field.h>
 #include <enkf_macros.h>
 #include <enkf_types.h>
 #include <hash.h>
@@ -45,17 +47,18 @@ tpgzone_config_type * tpgzone_config_fscanf_alloc(const char *, const ecl_grid_t
 
 /*****************************************************************/
 
-void tpgzone_config_petrophysics_fscanf_alloc(const char          *,
-                                              int                  ,
-                                              const char         **,
-                                              int                 *,
-                                              char               **,
-                                              scalar_config_type **);
+void tpgzone_config_petrophysics_fscanf_alloc(const char           *,
+                                              int                   ,
+                                              hash_type            *,
+                                              int                  *,
+                                              char               ***,
+                                              scalar_config_type ***);
 
 scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char  *,
                                                                    int          ,
-                                                                   const char **);
-void tpgzone_config_petrophysics_write       (const tpgzone_config_type*);
+                                                                   hash_type   *);
+
+void tpgzone_config_petrophysics_write_field(const tpgzone_config_type *, const double *, const char *, field_type *);
 
 /*****************************************************************/
 VOID_FREE_HEADER(tpgzone_config);

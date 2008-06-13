@@ -30,6 +30,7 @@ void                  scalar_config_free(scalar_config_type *);
 const          char * scalar_config_get_ensfile_ref(const scalar_config_type * );
 const          char * scalar_config_get_eclfile_ref(const scalar_config_type * );
 void                  scalar_config_transform(const scalar_config_type * , const double * , double *);
+double                scalar_config_transform_item(const scalar_config_type *, double, int);
 void                  scalar_config_truncate(const scalar_config_type * config , double *);
 void                  scalar_config_fscanf_line(scalar_config_type * , int , FILE * );
 

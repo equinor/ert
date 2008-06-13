@@ -49,6 +49,20 @@ void scalar_config_transform(const scalar_config_type * config , const double * 
   }
 }
 
+double scalar_config_transform_item(const scalar_config_type * config, double input_data, int item)
+{
+  if(item < 0 || config->data_size <= item)
+  {
+    util_abort("%s: scalar_config type has size %i, trying to access item %i (0 offset). Index out of bounds - aborting.\n",
+               __func__,config->data_size,item);
+  }
+
+  if(config->output_transform[item] == NULL)
+    return input_data;
+  else
+    return config->output_transform[item](input_data,config->void_arg[item]);
+}
+
 
 void scalar_config_truncate(const scalar_config_type * config , double *data) {
   return;
