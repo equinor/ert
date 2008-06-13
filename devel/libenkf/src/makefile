@@ -137,12 +137,12 @@ BIN_FILES             = enkf tpgzone_test.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
-enkf.o		: enkf.c
+main.o		: main.c
 tpgzone_test.o	: tpgzone_test.c
 
 
-enkf:	enkf.o $(LIB)
-	gcc$(LDFLAGS) enkf.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
+enkf:	main.o $(LIB)
+	gcc$(LDFLAGS) main.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
 
 
 tpgzone_test.x:	tpgzone_test.o $(LIB)
