@@ -30,10 +30,11 @@ LIB               = lib$(LIB_ROOT)_$(MFLAG).a
 TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
 
 
+
 LOCAL: LIB BIN
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
-	install $(INC_FILES) $(INSTALL_INC_PATH)
+	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
 
 SDP_INSTALL: LIB BIN
@@ -58,20 +59,7 @@ $(LIB): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
 
-INSTALL: $(LIB)
-	install -d $(INSTALL_INC_PATH)
-	install -d $(INSTALL_LIB_PATH)
-	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
-	install $(LIB) $(INSTALL_LIB_PATH)
-	gcc $(CFLAGS) -D'SITE_CONFIG_FILE=$(SITE_CONFIG_FILE)' $(TARGET_INCLUDE) main.c  -o enkf  $(LIB_PATH) $(LIB_LINK) 
-	#gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) test_havana2.c  -o hav.x  $(LIB_PATH) $(LIB_LINK) 
-	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) test.c  -o test.x  $(LIB_PATH) $(LIB_LINK) 
-	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) thist_test.c -o thist.x $(LIB_PATH) $(LIB_LINK)
-	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) field_test.c -o field.x $(LIB_PATH) $(LIB_LINK)
-	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) swcr_init.c  -o /d/proj/bg/enkf/bin/swcr_init.x  $(LIB_PATH) $(LIB_LINK)
-	#gcc $(CFLAGS) $(LDFLAGS) $(TARGET_INCLUDE) relp_test.c  -o relp.x  $(LIB_PATH) $(LIB_LINK)
-	#gcc $(CFLAGS)  $(LDFLAGS) $(TARGET_INCLUDE) tpgzone_test.c  -o tpgzone_test.x  $(LIB_PATH) $(LIB_LINK) 
-
+#################################################################
 
 # Library objects:
 thist_interC.o       : thist.o
@@ -141,12 +129,16 @@ main.o		: main.c
 tpgzone_test.o	: tpgzone_test.c
 
 
+main.o	: main.c
+	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
+
+
 enkf:	main.o $(LIB)
-	gcc$(LDFLAGS) main.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
+	gcc $(LDFLAGS) main.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
 
 
 tpgzone_test.x:	tpgzone_test.o $(LIB)
-	gcc$(LDFLAGS) tpgzone_test.o -o tpgzone_test.x $(LIB_PATH)  $(LIB_LINK) 	
+	gcc $(LDFLAGS) tpgzone_test.o -o tpgzone_test.x $(LIB_PATH)  $(LIB_LINK) 	
 
 
 
