@@ -15,10 +15,8 @@ struct plain_driver_struct {
 
 
 static void plain_driver_assert_cast(plain_driver_type * plain_driver) {
-  if (plain_driver->plain_driver_id != PLAIN_DRIVER_ID) {
-    fprintf(stderr,"%s: internal error - cast failed - aborting \n",__func__);
-    abort();
-  }
+  if (plain_driver->plain_driver_id != PLAIN_DRIVER_ID) 
+    util_abort("%s: internal error - cast failed - aborting \n",__func__);
 }
 
 
