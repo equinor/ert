@@ -49,7 +49,7 @@ typedef enum {INVALID = 0   ,
 	      RELPERM ,       /* 108 */ 
 	      HAVANA_FAULT,   /* 109 */ 
 	      SUMMARY ,       /* 110 */
-        TPGZONE         /* 111 */ }   enkf_impl_type;
+              TPGZONE         /* 111 */ }   enkf_impl_type;
 /* 
    Should update the functions enkf_types_get_impl_name() and enkf_types_get_impl_type__() when this enum is updated.
 */

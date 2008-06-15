@@ -165,14 +165,14 @@ void enkf_main_set_data_kw(enkf_main_type * enkf_main , const char * new_kw , co
     enkf_state_set_data_kw(enkf_main->ensemble[iens] , new_kw , value);
 }
 
-
-void enkf_main_init_eclipse(enkf_main_type * enkf_main , int report_step1 , int report_step2) {
+/*
+void enkf_main_init_eclipse(enkf_main_type * enkf_main , int init_step , int report_step1 , int report_step2) {
   const int ens_size = enkf_config_get_ens_size(enkf_main->config);
   int iens;
   for (iens = 0; iens < ens_size; iens++)
-    enkf_state_init_eclipse(enkf_main->ensemble[iens] , enkf_main->sched_file , report_step1 , report_step2);
+    enkf_state_init_eclipse(enkf_main->ensemble[iens] , enkf_main->sched_file , init_step , report_step1 , report_step2);
 }
-
+*/
 
 
 void enkf_main_measure(enkf_main_type * enkf_main) {
@@ -202,61 +202,6 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   enkf_config_free(enkf_main->config);
   free(enkf_main);
 }
-
-
-
-/*****************************************************************/
-
-void enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int report_step) {
-  const int ens_size = enkf_config_get_ens_size(enkf_main->config);
-  enkf_obs_get_observations(enkf_main->obs , report_step , enkf_main->obs_data);
-  if (enkf_main->void_arg != NULL) {
-    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
-    abort();
-  }
-  {
-    int iens;
-    enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
-    for (iens = 0; iens < ens_size; iens++) {
-      enkf_main->void_arg[iens] = void_arg_alloc4(void_pointer , void_pointer , int_value , bool_value);
-      void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
-      void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->obs);
-      void_arg_pack_int(enkf_main->void_arg[iens]  , 2 , report_step);
-      void_arg_pack_bool(enkf_main->void_arg[iens] , 3 , enkf_config_get_unified(enkf_main->config));
-    }
-  }
-
-  if (enkf_main->thread_pool != NULL) {
-    fprintf(stderr,"%s: hmmm - something is rotten - aborting \n",__func__);
-    abort();
-  }
-  enkf_main->thread_pool = thread_pool_alloc(ens_size);
-}
-
-
-
-void enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int iens) {
-  thread_pool_add_job(enkf_main->thread_pool , enkf_state_ecl_load__ , enkf_main->void_arg[iens]);
-}
-
-
-
-void enkf_main_load_ecl_complete_mt(enkf_main_type *enkf_main) {
-  thread_pool_join(enkf_main->thread_pool);
-  thread_pool_free(enkf_main->thread_pool);
-  enkf_main->thread_pool = NULL;
-  
-  {
-    const int ens_size = enkf_config_get_ens_size(enkf_main->config);
-    int iens;
-    for (iens = 0; iens < ens_size; iens++)
-      void_arg_free(enkf_main->void_arg[iens]);
-    free(enkf_main->void_arg);
-    enkf_main->void_arg = NULL;
-  }
-
-}
-
 
 
 /*****************************************************************/
@@ -397,7 +342,8 @@ void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step
 
 /******************************************************************/
 
-void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf_update) {
+void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int step2 , bool enkf_update, bool unlink_run_path) {
+  bool  load_results            = enkf_update; /*??*/
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
   const int sleep_time       = 1;
   int iens;
@@ -413,19 +359,21 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   
   enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
   for (iens = 0; iens < ens_size; iens++) {
-    enkf_main->void_arg[iens] = void_arg_alloc10(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , bool_value , bool_value);
+    enkf_main->void_arg[iens] = void_arg_alloc12(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , int_value , bool_value , bool_value , bool_value);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->job_queue);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 2 , enkf_main->obs);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 3 , enkf_main->sched_file);
     void_arg_pack_bool(enkf_main->void_arg[iens] , 4 , enkf_config_get_unified(enkf_main->config));
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 5 , step1);
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 6 , step2);
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 7 , -1);
-    void_arg_pack_bool(enkf_main->void_arg[iens] , 8 , true);  /* This true is the question whether to load results ... */
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 5 , init_step);
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 6 , step1);
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 7 , step2);
+    void_arg_pack_int(enkf_main->void_arg[iens]  , 8 , -1);
+    void_arg_pack_bool(enkf_main->void_arg[iens] , 9 , load_results);
+    void_arg_pack_bool(enkf_main->void_arg[iens] ,10 , unlink_run_path);
     /* 
-       The final bool is not packed - that is a return value, which is
-       set in the called routine.
+       The final bool is not packed - that is a return value, the
+       value is set in the called routine.
     */
     
   }
@@ -496,8 +444,10 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
   
-  enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
-  enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+  if (load_results) {
+    enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
+    enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
+  }
   
   if (enkf_update) {
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
@@ -509,8 +459,10 @@ void enkf_main_run(enkf_main_type * enkf_main, int step1 , int step2 , bool enkf
   }
     
   printf("---------------------------------\n");
-  enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
-  enkf_main_fprintf_results(enkf_main);
+  if (enkf_update) {
+    enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
+    enkf_main_fprintf_results(enkf_main);
+  }
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
 

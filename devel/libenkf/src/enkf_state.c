@@ -45,24 +45,38 @@
 #include <ext_joblist.h>
 
 
-struct enkf_state_struct {
-  restart_kw_list_type  * restart_kw_list;
-  list_type    	   	* node_list;
-  hash_type    	   	* node_hash;
-  hash_type             * data_kw;
-  ext_joblist_type      * joblist;
 
-  meas_vector_type      * meas_vector;
-  enkf_fs_type          * fs;
-  enkf_config_type 	* config;
-  char             	* eclbase;
-  char                  * run_path;
-  char                  * ecl_store_path;
-  int                     my_iens;
-  int                     report_step;
-  state_enum              analysis_state;
-  ecl_store_enum          ecl_store;
+
+/** THE MOST IMPORTANT ENKF OBJECT */
+
+struct enkf_state_struct {
+  restart_kw_list_type  * restart_kw_list;   /* This is an ordered list of the keywords in the restart file - to be
+                                                able to regenerate restart files with keywords in the right order.*/
+  list_type    	   	* node_list;        
+  hash_type    	   	* node_hash;
+  hash_type             * data_kw;           /* This a list of key - value pairs which are used in a search-replace
+                                                operation on the ECLIPSE data file. Will at least contain the key "INIT"
+                                                - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
+
+
+  meas_vector_type      * meas_vector;       /* The meas_vector will accept measurements performed on this state.*/
+  enkf_config_type 	* config;            /* The main config object, which contains all the node config objects. */
+  char             	* eclbase;           /* What is the basename (in ECLIPSE) for this state. */
+  char                  * run_path;          /* Where should the ECLIPSE simulations be run. */ 
+  int                     my_iens;           /* The ensemble number of this instance (not generally zero offset - i.e.
+                                                should *NOT* be used as an index .*/
+  state_enum              analysis_state;       
+  int                     report_step;       /* The report_step and analysis_state = (analyzed || forecast) say
+                                                what is the current state with respect to enkf of the in-memory
+                                                representation of this enkf_state instance.*/
+  char                  * ecl_store_path;    /* Where should the ECLIPSE results be copied (can be NULL in case ecl_store == 0). */
+  ecl_store_enum          ecl_store;         /* What should be stored of ECLIPSE results - see the definition
+                                                of ecl_store_enum in enkf_types.h. */  
+  enkf_fs_type          * fs;                
+  ext_joblist_type      * joblist;                
 };
+
+
 
 
 static void enkf_state_add_node_internal(enkf_state_type * , const char * , const enkf_node_type * );
@@ -326,7 +340,6 @@ static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const ch
 void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , const enkf_config_node_type * config) {
   enkf_node_type *enkf_node = enkf_node_alloc(node_key , config);
   enkf_state_add_node_internal(enkf_state , node_key , enkf_node);    
-  enkf_fs_add_index_node(enkf_state->fs , enkf_state->my_iens , node_key , enkf_config_node_get_var_type(config) , enkf_config_node_get_impl_type(config));
 
   /* All code below here is special code for plurigaussian fields */
   {
@@ -604,12 +617,12 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
 
   enkf_state_measure(enkf_state , enkf_obs);
   enkf_state_swapout(enkf_state , ecl_restart + ecl_summary);
-  util_unlink_path(enkf_state->run_path);
 }
 
 
 
 
+/*
 void * enkf_state_ecl_load__(void * input_arg) {
   void_arg_type * void_arg     =  void_arg_safe_cast(input_arg);
   enkf_state_type * enkf_state =  void_arg_get_ptr(void_arg   , 0);
@@ -621,7 +634,7 @@ void * enkf_state_ecl_load__(void * input_arg) {
   enkf_state_ecl_load(enkf_state , enkf_obs , unified , report_step1 , report_step2);
   return NULL;
 }
-
+*/
 
 
 void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
@@ -851,19 +864,30 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 
 
+
 /**
-   This function goes through the data_kw list from the config object,
-   and inserts the objects in the enkf_state objects.
+   init_step    : The parameters are loaded from this EnKF/report step.
+   report_step1 : The simulation should start from this report step.
+   report_step2 : The simulation should stop at this report step.
+
+   For a normal EnKF run we well have init_step == report_step1, but
+   in the case where we want rerun from the beginning with updated
+   parameters, they will be different. If init_step != report_step1,
+   it is required that report_step1 == 0; otherwise the dynamic data
+   will become completely inconsistent. We just don't allow that!
 */
 
 
-
-void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int report_step1 , int report_step2) {
+void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int init_step, int report_step1 , int report_step2) {
   
+  if (report_step1 != init_step)
+    if (report_step1 > 0)
+      util_abort("%s: internal error - when initializing from a different timestep than starting from - the start step must be zero.\n",__func__);
+
   if (report_step1 > 0) {
-    char DATA_initialize[256];
-    sprintf(DATA_initialize , "RESTART\n   \'%s\'  %d  /\n" , enkf_state->eclbase , report_step1);
-    enkf_state_set_data_kw(enkf_state , "INIT" , DATA_initialize);
+    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , enkf_state->eclbase , report_step1);
+    enkf_state_set_data_kw(enkf_state , "INIT" , data_initialize);
+    free(data_initialize);
   }
 
   util_make_path(enkf_state->run_path);
@@ -878,30 +902,45 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
     free(schedule_file);
   }
-  enkf_state_set_state(enkf_state , report_step1 , analyzed);
+
+
+  {
+    int load_mask = constant + static_parameter + parameter;
+    if (report_step1 > 0) load_mask += ecl_restart; 
+    enkf_state_fread(enkf_state , load_mask , init_step , analyzed);
+  }
+  /* 
+     Uncertain about this one ...
+  */
+  enkf_state_set_state(enkf_state , report_step1 , analyzed); 
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
   {
     char * stdin_file = util_alloc_full_path(enkf_state->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
     ecl_util_init_stdin( stdin_file , enkf_state->eclbase );
     free(stdin_file);
   }
+
   {
     int forward_model_length;
     bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
     const char ** forward_model = enkf_config_get_forward_model(enkf_state->config , &forward_model_length);
     hash_type * context = hash_alloc();
-    char * restart_file1 = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	  , fmt_file , report_step1);
-    char * restart_file2 = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	  , fmt_file , report_step2);
-    char * smspec_file   = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , -1);
-    char * iens          = util_alloc_sprintf("%d" , enkf_state->my_iens);
-    char * ecl_base      = enkf_state->eclbase;
+    char * restart_file1   = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step1);
+    char * restart_file2   = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step2);
+    char * smspec_file     = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , -1);
+    char * iens            = util_alloc_sprintf("%d" , enkf_state->my_iens);
+    char * ecl_base        = enkf_state->eclbase;
+    char * report_step1_s  = util_alloc_sprintf("%d" , report_step1);
+    char * report_step2_s  = util_alloc_sprintf("%d" , report_step2);
 
 
-    hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 ) , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 ) , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   ) , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )    , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )        , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( report_step1_s ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( report_step2_s ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 )  , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 )  , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   )  , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
     
     ext_joblist_python_fprintf( enkf_state->joblist , forward_model , forward_model_length , enkf_state->run_path , context);
     
@@ -909,6 +948,8 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     free(restart_file1);
     free(restart_file2);
     free(smspec_file);
+    free(report_step1_s);
+    free(report_step2_s);
   }
 }
 
@@ -931,18 +972,18 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
 
 
 
-void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , int max_resubmit , bool *job_OK) {
+void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , const sched_file_type * sched_file , int init_step , int report_step1 , int report_step2) {
   const int iens        = enkf_state_get_iens(enkf_state);
   /* 
      Prepare the job and submit it to the queue
   */
 
-  enkf_state_init_eclipse(enkf_state , sched_file , report_step1 , report_step2);
+  enkf_state_init_eclipse(enkf_state , sched_file , init_step , report_step1 , report_step2);
   job_queue_add_job(job_queue , iens , report_step2);
 }
 
 
-void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , enkf_obs_type * enkf_obs , const sched_file_type * sched_file , bool unified , int report_step1 , int report_step2 , bool load_results , bool *job_OK) {
+void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2 , bool load_results , bool unlink_run_path , bool *job_OK) {
   const int usleep_time = 100000; /* 1/10 of a second */ 
   const int iens        = enkf_state_get_iens(enkf_state);
 
@@ -960,22 +1001,24 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type *
       break;
     } else usleep(usleep_time);
   } 
+  if (unlink_run_path)
+    util_unlink_path(enkf_state->run_path);
 }
 
 
 void * enkf_state_complete_eclipse__(void * __void_arg) {
-  void_arg_type * void_arg       = void_arg_safe_cast(__void_arg);
-  enkf_state_type * enkf_state 	 = void_arg_get_ptr(void_arg  	, 0);
-  job_queue_type  * job_queue    = void_arg_get_ptr(void_arg  	, 1);
-  enkf_obs_type   * enkf_obs   	 = void_arg_get_ptr(void_arg  	, 2);
-  sched_file_type * sched_file   = void_arg_get_ptr(void_arg    , 3);
-  bool              unified    	 = void_arg_get_bool(void_arg 	, 4);
-  int               report_step1 = void_arg_get_int(void_arg  	, 5);
-  int               report_step2 = void_arg_get_int(void_arg  	, 6);
-  bool              load_results = void_arg_get_bool(void_arg   , 8);
-  bool            * job_OK       = void_arg_get_buffer(void_arg , 9);
+  void_arg_type * void_arg          = void_arg_safe_cast(__void_arg);
+  enkf_state_type * enkf_state 	    = void_arg_get_ptr(void_arg    ,  0);
+  job_queue_type  * job_queue       = void_arg_get_ptr(void_arg    ,  1);
+  enkf_obs_type   * enkf_obs   	    = void_arg_get_ptr(void_arg    ,  2);
+  bool              unified    	    = void_arg_get_bool(void_arg   ,  4);
+  int               report_step1    = void_arg_get_int(void_arg    ,  6);
+  int               report_step2    = void_arg_get_int(void_arg    ,  7);
+  bool              load_results    = void_arg_get_bool(void_arg   ,  9);
+  bool              unlink_run_path = void_arg_get_bool(void_arg   , 10);
+  bool            * job_OK          = void_arg_get_buffer(void_arg , 11);
 
-  enkf_state_complete_eclipse(enkf_state , job_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , load_results , job_OK);
+  enkf_state_complete_eclipse(enkf_state , job_queue , enkf_obs , unified , report_step1 , report_step2 , load_results , unlink_run_path , job_OK);
   return NULL ;
 }
 
@@ -984,15 +1027,13 @@ void * enkf_state_start_eclipse__(void * __void_arg) {
   void_arg_type * void_arg       = void_arg_safe_cast(__void_arg);
   enkf_state_type * enkf_state 	 = void_arg_get_ptr(void_arg  	, 0);
   job_queue_type  * job_queue    = void_arg_get_ptr(void_arg  	, 1);
-  enkf_obs_type   * enkf_obs   	 = void_arg_get_ptr(void_arg  	, 2);
   sched_file_type * sched_file   = void_arg_get_ptr(void_arg    , 3);
-  bool              unified    	 = void_arg_get_bool(void_arg 	, 4);
-  int               report_step1 = void_arg_get_int(void_arg  	, 5);
-  int               report_step2 = void_arg_get_int(void_arg  	, 6);
-  int               max_resubmit = void_arg_get_int(void_arg  	, 7);
-  bool            * job_OK       = void_arg_get_buffer(void_arg , 9);
+  int               init_step    = void_arg_get_int(void_arg   , 5);
+  int               report_step1 = void_arg_get_int(void_arg  	, 6);
+  int               report_step2 = void_arg_get_int(void_arg  	, 7);
 
-  enkf_state_start_eclipse(enkf_state , job_queue , enkf_obs , sched_file , unified , report_step1 , report_step2 , max_resubmit , job_OK);
+
+  enkf_state_start_eclipse(enkf_state , job_queue , sched_file , init_step , report_step1 , report_step2);
   return NULL ; 
 }
 
@@ -1012,7 +1053,7 @@ int enkf_state_get_report_step(const enkf_state_type * enkf_state) {
 */
 
 static double * enkf_ensemble_alloc_serial_data(int ens_size , size_t target_serial_size , size_t * _serial_size) {
-  size_t   serial_size;
+  size_t   serial_size = target_serial_size;
   double * serial_data;
 
 #ifdef i386

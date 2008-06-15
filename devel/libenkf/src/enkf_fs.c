@@ -111,6 +111,16 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
 }
 
 
-void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {
-  fs_index_add_node(enkf_fs->index , iens , kw , var_type , impl_type);
+void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int report_step , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {
+  fs_index_add_node(enkf_fs->index , report_step , iens , kw , var_type , impl_type);
 }
+
+
+void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, restart_kw_list_type * kw_list) {
+  fs_index_fwrite_restart_kw_list(enkf_fs->index , report_step , iens , kw_list);
+}
+
+void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, restart_kw_list_type * kw_list) {
+  fs_index_fread_restart_kw_list(enkf_fs->index , report_step , iens , kw_list);
+}
+
