@@ -10,7 +10,7 @@ INSTALL_INC_PATH =   $(LIBENKF_HOME)/include
 INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 #################################################################
 __SDP_ROOT  = $(SDP_ROOT)/$(shell res_target.py)
-SVN_VERSION = $(shell svnversion)
+SVN_VERSION = $(shell svnversion ./)
 CFLAGS      = -$(MFLAG) -O2 -std=gnu99 -g -Wall 
 ARFLAGS     = -csr
 LDFLAGS     = -rdynamic
