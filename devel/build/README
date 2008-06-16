@@ -57,6 +57,7 @@ The following executables must be in your path:
   svnversion
   ifort                     [32 bit fortran 90 compiler]
   gcc                       [gnu C compiler]
+  res_target.py             [Script in joakims bin directory (/h/a152128/bin  ||   /private/joaho/bin)
 
 
 

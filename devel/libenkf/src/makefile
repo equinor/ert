@@ -9,7 +9,7 @@ COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
 INSTALL_INC_PATH =   $(LIBENKF_HOME)/include
 INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 #################################################################
-SDP_ROOT    = /project/res/$(shell /private/joaho/bin/res_target.py)
+__SDP_ROOT  = $(SDP_ROOT)/$(shell res_target.py)
 SVN_VERSION = $(shell svnversion)
 CFLAGS      = -$(MFLAG) -O2 -std=gnu99 -g -Wall 
 ARFLAGS     = -csr
@@ -40,9 +40,9 @@ LOCAL: LIB BIN
 	install $(LIB) $(INSTALL_LIB_PATH)
 
 SDP_INSTALL: LIB BIN
-	install $(LIB) $(SDP_ROOT)/lib/lib$(LIB_ROOT).a
-	install $(BIN_FILES_SDP_INSTALL) $(SDP_ROOT)/bin
-	install $(INC_FILES) $(SDP_ROOT)/include
+	install $(LIB) $(__SDP_ROOT)/lib/lib$(LIB_ROOT).a
+	install $(BIN_FILES_SDP_INSTALL) $(__SDP_ROOT)/bin
+	install $(INC_FILES) $(__SDP_ROOT)/include
 
 LIB:	$(LIB)
 

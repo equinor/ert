@@ -455,7 +455,6 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
   int report_step = ecl_block_get_report_nr(ecl_block);
   ecl_kw_type * ecl_kw = ecl_block_get_first_kw(ecl_block);
   restart_kw_list_reset(enkf_state->restart_kw_list);
-  
   while (ecl_kw != NULL) {
     char *kw = ecl_kw_alloc_strip_header(ecl_kw);
     ecl_util_escape_kw(kw);
@@ -487,6 +486,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
     free(kw);
     ecl_kw = ecl_block_get_next_kw(ecl_block);
   }
+  enkf_fs_fwrite_restart_kw_list(enkf_state->fs , report_step , enkf_state->my_iens, enkf_state->restart_kw_list);
 }
 
 

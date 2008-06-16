@@ -165,14 +165,7 @@ void enkf_main_set_data_kw(enkf_main_type * enkf_main , const char * new_kw , co
     enkf_state_set_data_kw(enkf_main->ensemble[iens] , new_kw , value);
 }
 
-/*
-void enkf_main_init_eclipse(enkf_main_type * enkf_main , int init_step , int report_step1 , int report_step2) {
-  const int ens_size = enkf_config_get_ens_size(enkf_main->config);
-  int iens;
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_state_init_eclipse(enkf_main->ensemble[iens] , enkf_main->sched_file , init_step , report_step1 , report_step2);
-}
-*/
+
 
 
 void enkf_main_measure(enkf_main_type * enkf_main) {
