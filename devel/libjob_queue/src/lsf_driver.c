@@ -257,7 +257,11 @@ static ecl_job_status_type lsf_driver_get_job_status_system(basic_queue_driver_t
       if (hash_has_key( driver->bjobs_output , job->lsf_jobnr_char) ) 
 	status = hash_get_int(driver->bjobs_output , job->lsf_jobnr_char);
       else
-	status = job_queue_null;
+	/* 
+	   It might be running - but sinjec job != NULL it is at least in the queue system.
+	*/
+	status = job_queue_pending;
+
     }
     pthread_mutex_unlock( &driver->bjobs_lock );
   }
