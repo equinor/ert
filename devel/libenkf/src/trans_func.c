@@ -22,6 +22,12 @@ double trans_derrf_OE(double x , const void_arg_type * arg) {
 
 
 
+/**
+   Width  = 1 => uniform
+   Width  > 1 => unimodal peaked
+   Width  < 1 => bimoal peaks
+*/
+
 double trans_errf(double x, const void_arg_type * arg) { 
   double min      = void_arg_get_double(arg , 0);
   double max      = void_arg_get_double(arg , 1);
@@ -32,6 +38,8 @@ double trans_errf(double x, const void_arg_type * arg) {
 
   return min + y * (max - min);
 }
+
+
 
 
 

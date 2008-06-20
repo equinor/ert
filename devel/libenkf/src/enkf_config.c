@@ -124,10 +124,14 @@ const char * enkf_config_get_ens_path(const enkf_config_type * config) {
   return config->ens_path;
 }
 
+
 static void enkf_config_set_init_file(enkf_config_type * config , const char * init_file) {
   if (config->init_file != NULL)
     free(config->init_file);
-  
+
+  if (! util_file_exists(init_file)) 
+    util_abort("%s: Sorry INIT_FILE points to:%s which can not be found. \n",__func__ , init_file);
+
   config->init_file = util_alloc_realpath(init_file);
 }
 
@@ -823,11 +827,9 @@ job_queue_type * enkf_config_alloc_job_queue(const enkf_config_type * config , c
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_LOCAL") , NULL , 10);
   } else if (strcmp(queue_system , "RSH") == 0) {
     {
-      char ** host_list;
       int     num_host;
-      util_split_string( enkf_site_config_get_value(site_config , "RSH_HOST_LIST") , " " , &num_host , &host_list);
-      queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , num_host , (const char **) host_list);
-      util_free_stringlist( host_list , num_host);
+      const char ** host_list  = enkf_site_config_get_argv(site_config , "RSH_HOST_LIST" , &num_host);
+      queue_driver = rsh_driver_alloc(enkf_site_config_get_value(site_config , "RSH_COMMAND") , num_host , host_list);
     }
     max_running  = strtol(enkf_site_config_get_value(site_config , "MAX_RUNNING_RSH") , NULL , 10);
   } else 

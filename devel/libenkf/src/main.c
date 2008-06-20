@@ -23,7 +23,8 @@ void install_SIGNALS(void) {
 
 void enkf_welcome() {
   printf("\n");
-  printf("svn version: %s \n",SVN_VERSION);
+  printf("svn version......: %s \n",SVN_VERSION);
+  printf("Compile time.....: %s \n",COMPILE_TIME_STAMP);
   printf("\n");
 }
 

@@ -9,11 +9,12 @@ COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
 INSTALL_INC_PATH =   $(LIBENKF_HOME)/include
 INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 #################################################################
-__SDP_ROOT  = $(SDP_ROOT)/$(shell res_target.py)
-SVN_VERSION = $(shell svnversion ./)
-CFLAGS      = -$(MFLAG) -O2 -std=gnu99 -g -Wall 
-ARFLAGS     = -csr
-LDFLAGS     = -rdynamic
+__SDP_ROOT  	   = $(SDP_ROOT)/$(shell res_target.py)
+SVN_VERSION 	   = $(shell svnversion ./)
+COMPILE_TIME_STAMP = $(shell date)
+CFLAGS      	   = -$(MFLAG) -O2 -std=gnu99 -g -Wall 
+ARFLAGS     	   = -csr
+LDFLAGS     	   = -rdynamic
 #################################################################
 OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config.o trans_func.o logmode.o multflt_interC.o multz_interC.o enkf_types.o enkf_obs.o obs_data.o obs_node.o well_obs.o field_obs.o meas_op.o meas_vector.o well_config.o well.o enkf_config_node.o field_config.o field.o ecl_static_kw_config.o ecl_static_kw.o equil_config.o equil.o enkf_state.o multflt.o enkf_util.o multflt_config.o enkf_main.o multz.o multz_config.o enkf_node.o pgbox_config.o pgbox.o enkf_fs.o gen_kw_config.o gen_kw.o gen_kw_interC.o enkf_fs.o basic_driver.o plain_driver.o analysis.o meas_matrix.o fs_index.o enkf_config.o plain_driver_parameter.o relperm.o relperm_config.o relperm_interC.o enkf_site_config.o havana_fault.o havana_fault_config.o summary_obs.o summary.o summary_config.o tpgzone_config.o tpgzone.o tpgzone_trunc_scheme.o
 
@@ -132,7 +133,7 @@ tpgzone_test.o	: tpgzone_test.c
 
 
 main.o	: main.c
-	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
 
 enkf:	main.o $(LIB)
