@@ -53,6 +53,11 @@ void gen_data_free(gen_data_type * gen_data) {
 }
 
 
+void gen_data_realloc_data(gen_data_type * gen_data) {
+  gen_data->data = util_realloc(gen-data->data , gen-data->size * ecl_util_get_sizeof_ctype(gen_data->ecl_type) , __func__);
+}
+
+
 /**
    Would prefer that this function was not called at all if the
    gen_data keyword does not (currently) hold data. The current
@@ -71,3 +76,44 @@ void gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
 }
 
 
+void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
+  DEBUG_ASSERT(gen_data)
+  enkf_util_fread_target_type(stream , GEN_DATA);
+  util_fread_bool(gen_data->active , stream);
+  if (gen_data->active) {
+    util_fread_int(gen_data->size , stream);
+    util_fread_int(gen_data->size , stream);
+    gen_data_realloc_data(gen_data);
+    util_fread_compressed(gen_data->data , stream);
+  }
+}
+
+static void gen_data_deactivate(gen_data_type * gen_data) {
+  if (gen_data->active) {
+    gen_data->active = false;
+    gen_data->size   = 0;
+    gen_data_free_data( gen_data );
+  }
+}
+
+
+void gen_data_ecl_read(gen_data_type * gen_data , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum , int report_step) {
+  DEBUG_ASSERT(gen_data)
+  {
+    const gen_data_config_type * config = gen_data->config;
+    /*
+      At this stage we could ask the config object both whether the
+      keyword is active at this stage, and for a spesific keyword to
+      match??
+    */
+    char * ecl_file = util_alloc_full_path(run_path , gen_data_config_get_eclfile(config));
+    if (util_file_exists(ecl_file)) {
+      FILE * stream = util_fopen(ecl_file , "r");
+      
+      fclose(stream);
+    } else 
+      gen_data_deactivate(gen_data);
+
+    free(ecl_file);
+  }
+}

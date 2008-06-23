@@ -232,7 +232,7 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
   rsh_driver_type * driver = (rsh_driver_type *) __driver;
   rsh_driver_assert_cast(driver); 
   {
-    basic_queue_job_type * basic_job;
+    basic_queue_job_type * basic_job = NULL;
     /* 
        command is freed in the start_routine() function
     */
@@ -250,21 +250,20 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
       void_arg_type * void_arg = void_arg_alloc4( void_pointer , void_pointer , void_pointer , void_pointer);
       rsh_job_type  * job = rsh_job_alloc(node_index , run_path);
   
-      void_arg_pack_ptr(void_arg , 0 , driver->rsh_command);
-      void_arg_pack_ptr(void_arg , 1 , host);
+      void_arg_pack_ptr(void_arg , 0 ,  driver->rsh_command);
+      void_arg_pack_ptr(void_arg , 1 ,  host);
       void_arg_pack_ptr(void_arg , 2 , (char *) submit_cmd);
       void_arg_pack_ptr(void_arg , 3 , (char *) run_path);
 
       {
 	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , void_arg);
 	if (pthread_return_value != 0) 
-	  util_abort("%s failed to create thread. ERROR:%d  \n", __func__ , pthread_return_value);
+	  util_abort("%s failed to create thread ERROR:%d  \n", __func__ , pthread_return_value);
       }
       job->active = true;
       basic_job = (basic_queue_job_type *) job;
       basic_queue_job_init(basic_job);
-    } else 
-      basic_job = NULL;
+    } 
     pthread_mutex_unlock( &driver->submit_lock );
 
     return basic_job;
