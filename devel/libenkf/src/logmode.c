@@ -6,6 +6,7 @@
 #include <logmode.h>
 #include <enkf_types.h>
 #include <util.h>
+#include <errno.h>
 
 struct logmode_struct {
   double     base;
