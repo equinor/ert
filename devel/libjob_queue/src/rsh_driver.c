@@ -169,6 +169,7 @@ rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
 
 
 void rsh_job_free(rsh_job_type * job) {
+  printf("Tar free(%d) \n",job->node_index);
   free(job->run_path);
   free(job);
 }
@@ -189,6 +190,7 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
       if (job->active == false) 
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
       else {
+	printf("Sjekker:%d \n",job->node_index); 
 	if (pthread_kill(job->run_thread , 0) == 0)
 	  status = job_queue_running;
 	else
