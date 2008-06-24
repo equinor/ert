@@ -174,7 +174,6 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
 
 static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * node) {
   basic_queue_driver_type *driver  = queue->driver;
-  printf("Skal ta free(%s) \n",node->job_name);
   driver->free_job(driver , node->job_data);
   node->job_data = NULL;
 }
