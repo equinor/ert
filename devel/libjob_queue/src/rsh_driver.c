@@ -9,7 +9,6 @@
 #include <void_arg.h>
 #include <errno.h>
 
-
 struct rsh_job_struct {
   int 	       __basic_id;
   int  	       __rsh_id;
