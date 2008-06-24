@@ -144,6 +144,7 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
     In total: 9 arguments
     bsub -o <lsf.stdout> -q <lsf_queue> -J <job_name> -R<"resource request"> <cmd> run_path 
   */
+  printf("Resource request:<%s> \n",resource_request);
   util_vfork_exec("bsub" , 9 , (const char *[9]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , resource_request , submit_cmd , run_path} , true , NULL , NULL , tmp_file , NULL);
 
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
