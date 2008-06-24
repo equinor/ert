@@ -190,6 +190,7 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
       else {
 	printf("Sjekker:%d \n",job->node_index); 
+	printf("thread:%d \n",job->run_thread);
 	if (pthread_kill(job->run_thread , 0) == 0)
 	  status = job_queue_running;
 	else
