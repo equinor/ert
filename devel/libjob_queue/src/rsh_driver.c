@@ -9,11 +9,13 @@
 #include <void_arg.h>
 #include <errno.h>
 
+
 struct rsh_job_struct {
   int 	       __basic_id;
   int  	       __rsh_id;
   int          node_index;
-  bool         active;
+  bool         active;       /* Means that it allocated - not really in use */ 
+  bool         running;      /* Means  it is currently running - should probably only use this? */
   pthread_t    run_thread;
   const char * host_name;    /* Currently not set */
   char       * run_path;
@@ -78,6 +80,7 @@ static void rsh_host_free(rsh_host_type * rsh_host) {
 
 static bool rsh_host_available(rsh_host_type * rsh_host) {
   bool available;
+
   pthread_mutex_lock( &rsh_host->host_mutex );
   if ((rsh_host->max_running - rsh_host->running) > 0) {
     available = true;
@@ -85,6 +88,7 @@ static bool rsh_host_available(rsh_host_type * rsh_host) {
   } else
     available = false;
   pthread_mutex_unlock( &rsh_host->host_mutex );
+
   return available;
 }
 
@@ -92,13 +96,15 @@ static bool rsh_host_available(rsh_host_type * rsh_host) {
 
 
 
-static void rsh_host_submit_job(rsh_host_type * rsh_host , const char * rsh_cmd , const char * submit_cmd , const char * run_path) {
+static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, const char * rsh_cmd , const char * submit_cmd , const char * run_path) {
   /* 
      Observe that this job has already been added to the running jobs
      in the rsh_host_available function.
   */
-  
+
+  job->running = true;
   util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL);
+  job->running = false;
 
   pthread_mutex_lock( &rsh_host->host_mutex );
   rsh_host->running--;
@@ -118,9 +124,9 @@ static void * rsh_host_submit_job__(void * __void_arg) {
   rsh_host_type * rsh_host = void_arg_get_ptr(void_arg , 1);
   char * submit_cmd 	   = void_arg_get_ptr(void_arg , 2); 
   char * run_path          = void_arg_get_ptr(void_arg , 3); 
+  rsh_job_type * job       = void_arg_get_ptr(void_arg , 4);
 
-
-  rsh_host_submit_job(rsh_host , rsh_cmd , submit_cmd , run_path);
+  rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , run_path);
   void_arg_free( void_arg );
   pthread_exit( NULL );
 
@@ -160,6 +166,7 @@ rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
   job = util_malloc(sizeof * job , __func__);
   job->__rsh_id   = RSH_JOB_ID;
   job->active     = false;
+  job->running    = false; 
   job->run_path   = util_alloc_string_copy(run_path);
   job->node_index = node_index;
   return job;
@@ -190,10 +197,18 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
       else {
 	printf("Sjekker:%d \n",job->node_index); 
 	printf("thread:%d \n",job->run_thread);
-	if (pthread_kill(job->run_thread , 0) == 0)
+	if (job->running)
 	  status = job_queue_running;
 	else
 	  status = job_queue_done;
+
+	/*
+	  if (pthread_kill(job->run_thread , 0) == 0)
+	  status = job_queue_running;
+	  else
+	  status = job_queue_done;
+	*/
+
 	printf("%d OK \n",job->node_index);
       }
       return status;
@@ -249,13 +264,14 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
     }
     if (host != NULL) {
       /* A host is available */
-      void_arg_type * void_arg = void_arg_alloc4( void_pointer , void_pointer , void_pointer , void_pointer);
+      void_arg_type * void_arg = void_arg_alloc5( void_pointer , void_pointer , void_pointer , void_pointer , void_pointer);
       rsh_job_type  * job = rsh_job_alloc(node_index , run_path);
   
       void_arg_pack_ptr(void_arg , 0 ,  driver->rsh_command);
       void_arg_pack_ptr(void_arg , 1 ,  host);
       void_arg_pack_ptr(void_arg , 2 , (char *) submit_cmd);
       void_arg_pack_ptr(void_arg , 3 , (char *) run_path);
+      void_arg_pack_ptr(void_arg , 4 , job);
 
       {
 	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , void_arg);
