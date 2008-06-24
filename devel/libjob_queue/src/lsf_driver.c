@@ -140,11 +140,6 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
-  /*
-    In total: 9 arguments
-    bsub -o <lsf.stdout> -q <lsf_queue> -J <job_name> -R<"resource request"> <cmd> run_path 
-  */
-  printf("Resource request:<%s> \n",resource_request);
   util_vfork_exec("bsub" , 9 , (const char *[9]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , resource_request , submit_cmd , run_path} , true , NULL , NULL , tmp_file , NULL);
 
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
@@ -414,7 +409,7 @@ void * lsf_driver_alloc(const char * queue_name , int num_resource_request , con
     char * tmp_request = util_alloc_string_copy(lsf_driver->resource_request);
     lsf_driver->resource_request = util_realloc(lsf_driver->resource_request , strlen(tmp_request) + 5 , __func__);
     sprintf(lsf_driver->resource_request , "-R\"%s\"" , tmp_request);
-    sprintf(lsf_driver->resource_request , "-R%s" , tmp_request);
+    sprintf(lsf_driver->resource_request , "-R%s"     , tmp_request);   /* This one works with the xStatoil bsub wrapper. */
     free(tmp_request);
   }
 #endif
