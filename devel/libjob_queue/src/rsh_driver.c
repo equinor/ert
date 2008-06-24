@@ -169,7 +169,6 @@ rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
 
 
 void rsh_job_free(rsh_job_type * job) {
-  printf("Tar free(%d) \n",job->node_index);
   free(job->run_path);
   free(job);
 }
@@ -195,6 +194,7 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
 	  status = job_queue_running;
 	else
 	  status = job_queue_done;
+	printf("%d OK \n",job->node_index);
       }
       return status;
     }

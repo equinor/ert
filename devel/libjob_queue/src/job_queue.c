@@ -174,8 +174,11 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
 
 static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * node) {
   basic_queue_driver_type *driver  = queue->driver;
-  driver->free_job(driver , node->job_data);
-  node->job_data = NULL;
+  printf("Skal ta free(%s) \n",node->job_name);
+  /*
+    driver->free_job(driver , node->job_data);
+    node->job_data = NULL;
+  */
 }
 
 
@@ -333,10 +336,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	char spinner2[2];
 	spinner2[1] = '\0';
 	
-	/*
-	  printf("num_submit_new:%d = %d - (%d + %d)  \n",num_submit_new , queue->max_running , queue->status_list[job_queue_pending] , queue->status_list[job_queue_running]);
-	  sleep(3);
-	*/
 	new_jobs = false;
 	if (queue->status_list[job_queue_waiting] > 0)   /* We have waiting jobs at all           */
 	  if (num_submit_new > 0)                        /* The queue can allow more running jobs */
@@ -383,11 +382,11 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	    new_jobs = false;
 	}
       }
+
       {
 	/*
 	  Checking for complete / exited jobs.
 	*/
-
 	int queue_index;
 	for (queue_index = 0; queue_index < job_queue_get_active_size(queue); queue_index++) {
 	  job_queue_node_type * node = queue->jobs[queue_index];
