@@ -103,6 +103,7 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
   */
 
   job->running = true;
+  printf("Calling: %s %s %s %s \n" , rsh_cmd , rsh_host->host_name , submit_cmd, run_path);
   util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL);
   job->running = false;
 
@@ -199,13 +200,6 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
 	  status = job_queue_running;
 	else
 	  status = job_queue_done;
-
-	/*
-	  if (pthread_kill(job->run_thread , 0) == 0)
-	  status = job_queue_running;
-	  else
-	  status = job_queue_done;
-	*/
       }
       return status;
     }
