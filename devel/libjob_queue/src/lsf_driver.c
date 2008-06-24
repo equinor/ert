@@ -414,6 +414,7 @@ void * lsf_driver_alloc(const char * queue_name , int num_resource_request , con
     char * tmp_request = util_alloc_string_copy(lsf_driver->resource_request);
     lsf_driver->resource_request = util_realloc(lsf_driver->resource_request , strlen(tmp_request) + 5 , __func__);
     sprintf(lsf_driver->resource_request , "-R\"%s\"" , tmp_request);
+    sprintf(lsf_driver->resource_request , "-R%s" , tmp_request);
     free(tmp_request);
   }
 #endif
