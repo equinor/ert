@@ -39,6 +39,7 @@ struct rsh_driver_struct {
   pthread_attr_t      thread_attr;
   char              * rsh_command;
   int                 num_hosts;
+  int                 last_host_index;
   rsh_host_type     **host_list;
 };
 
@@ -102,7 +103,6 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
      in the rsh_host_available function.
   */
 
-  job->status = job_queue_running; 
   util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL);
   job->status = job_queue_done;
 
@@ -191,9 +191,10 @@ job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver , b
     rsh_driver_assert_cast(driver); 
     rsh_job_assert_cast(job);
     {
-      if (job->active == false) 
+      if (job->active == false) {
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
-      else 
+	return job_queue_null;  /* Dummy to shut up compiler */
+      } else 
 	return job->status;
     }
   }
@@ -237,14 +238,18 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
        command is freed in the start_routine() function
     */
     rsh_host_type * host = NULL;
-    int    ihost;
+    int ihost;
+    int host_index = 0;
     pthread_mutex_lock( &driver->submit_lock );
     for (ihost = 0; ihost < driver->num_hosts; ihost++) {
-      if (rsh_host_available(driver->host_list[ihost])) {
-	host = driver->host_list[ihost];
+      host_index = (ihost + driver->last_host_index) % driver->num_hosts;
+      if (rsh_host_available(driver->host_list[host_index])) {
+	host = driver->host_list[host_index];
 	break;
-      }
+      } 
     }
+    driver->last_host_index = (host_index + 1) % driver->num_hosts;
+    
     if (host != NULL) {
       /* A host is available */
       void_arg_type * void_arg = void_arg_alloc5( void_pointer , void_pointer , void_pointer , void_pointer , void_pointer);
@@ -255,12 +260,13 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
       void_arg_pack_ptr(void_arg , 2 , (char *) submit_cmd);
       void_arg_pack_ptr(void_arg , 3 , (char *) run_path);
       void_arg_pack_ptr(void_arg , 4 , job);
-
+      
       {
 	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , void_arg);
 	if (pthread_return_value != 0) 
 	  util_abort("%s failed to create thread ERROR:%d  \n", __func__ , pthread_return_value);
       }
+      job->status = job_queue_running; 
       job->active = true;
       basic_job = (basic_queue_job_type *) job;
       basic_queue_job_init(basic_job);
@@ -290,14 +296,15 @@ void * rsh_driver_alloc(const char * rsh_command, int num_hosts , const char ** 
   pthread_attr_init( &rsh_driver->thread_attr );
   pthread_attr_setdetachstate( &rsh_driver->thread_attr , PTHREAD_CREATE_DETACHED );
 
-  rsh_driver->rsh_command = util_alloc_string_copy(rsh_command);
-  rsh_driver->submit      = rsh_driver_submit_job;
-  rsh_driver->get_status  = rsh_driver_get_job_status;
-  rsh_driver->abort_f     = rsh_driver_abort_job;
-  rsh_driver->free_job    = rsh_driver_free_job;
-  rsh_driver->free_driver = rsh_driver_free__;
-  rsh_driver->num_hosts   = 0;
-  rsh_driver->host_list   = NULL;
+  rsh_driver->rsh_command     = util_alloc_string_copy(rsh_command);
+  rsh_driver->submit          = rsh_driver_submit_job;
+  rsh_driver->get_status      = rsh_driver_get_job_status;
+  rsh_driver->abort_f         = rsh_driver_abort_job;
+  rsh_driver->free_job        = rsh_driver_free_job;
+  rsh_driver->free_driver     = rsh_driver_free__;
+  rsh_driver->num_hosts       = 0;
+  rsh_driver->host_list       = NULL;
+  rsh_driver->last_host_index = 0;
   {
     int ihost;
     for (ihost = 0; ihost < num_hosts; ihost++) {

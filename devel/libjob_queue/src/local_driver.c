@@ -10,10 +10,11 @@
 #include <errno.h>
 
 struct local_job_struct {
-  int 	     __basic_id;
-  int  	     __local_id;
-  bool       active;
-  pthread_t  run_thread;
+  int 	     	  __basic_id;
+  int  	     	  __local_id;
+  bool       	  active;
+  job_status_type status;
+  pthread_t       run_thread;
 };
 
 
@@ -56,6 +57,7 @@ local_job_type * local_job_alloc() {
   job = util_malloc(sizeof * job , __func__);
   job->__local_id = LOCAL_JOB_ID;
   job->active = false;
+  job->status = job_queue_waiting;
   return job;
 }
 
@@ -78,17 +80,11 @@ job_status_type local_driver_get_job_status(basic_queue_driver_type * __driver ,
     local_driver_assert_cast(driver); 
     local_job_assert_cast(job);
     {
-      job_status_type status;
       if (job->active == false) {
-	fprintf(stderr,"%s: internal error - should not query status on inactive jobs \n" , __func__);
-	abort();
-      } else {
-	if (pthread_kill(job->run_thread , 0) == 0)
-	  status = job_queue_running;
-	else
-	  status = job_queue_done;
-      }
-      return status;
+	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
+	return job_queue_null; /* Dummy */
+      } else 
+	return job->status;
     }
   }
 }
@@ -122,8 +118,10 @@ void * submit_job_thread__(void * __arg) {
   void_arg_type * void_arg = void_arg_safe_cast(__arg);
   const char * executable  = void_arg_get_ptr(void_arg , 0);
   const char * run_path    = void_arg_get_ptr(void_arg , 1);
-  
+  local_job_type * job     = void_arg_get_ptr(void_arg , 2);
+
   util_vfork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL); 
+  job->status = job_queue_done;
   pthread_exit(NULL);
   return NULL;
 }
@@ -139,15 +137,17 @@ basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __drive
   local_driver_assert_cast(driver); 
   {
     local_job_type * job    = local_job_alloc();
-    void_arg_type  * void_arg = void_arg_alloc2(void_pointer , void_pointer);
+    void_arg_type  * void_arg = void_arg_alloc3(void_pointer , void_pointer , void_pointer);
     void_arg_pack_ptr( void_arg , 0 , (char *) submit_cmd);
     void_arg_pack_ptr( void_arg , 1 , (char *) run_path);
+    void_arg_pack_ptr( void_arg , 2 , job );
     pthread_mutex_lock( &driver->submit_lock );
     if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , void_arg) != 0) {
       fprintf(stderr,"%s: failed to create run thread - aborting \n",__func__);
       abort();
     }
     job->active = true;
+    job->status = job_queue_running;
     pthread_mutex_unlock( &driver->submit_lock );
     
     {
