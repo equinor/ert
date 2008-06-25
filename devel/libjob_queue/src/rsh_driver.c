@@ -323,7 +323,7 @@ void * rsh_driver_alloc(const char * rsh_command, int num_hosts , const char ** 
 	  if (!util_sscanf_int(&rsh_host_list[ihost][pos+1] , &max_running))
 	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , rsh_host_list[ihost]);
 	
-	printf("Adding host:%s:%d \n",host , mak_running);
+	printf("Adding host:%s:%d \n",host , max_running);
 	rsh_driver_add_host(rsh_driver , host , max_running);
 	free(host);
       }
