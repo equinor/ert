@@ -68,7 +68,7 @@ void local_job_free(local_job_type * job) {
 
 
 
-ecl_job_status_type local_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+job_status_type local_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
     return job_queue_null;
@@ -78,7 +78,7 @@ ecl_job_status_type local_driver_get_job_status(basic_queue_driver_type * __driv
     local_driver_assert_cast(driver); 
     local_job_assert_cast(job);
     {
-      ecl_job_status_type status;
+      job_status_type status;
       if (job->active == false) {
 	fprintf(stderr,"%s: internal error - should not query status on inactive jobs \n" , __func__);
 	abort();

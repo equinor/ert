@@ -989,7 +989,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type *
 
   *job_OK = true;
   while (true) {
-    ecl_job_status_type status = job_queue_export_job_status(job_queue , iens);
+    job_status_type status = job_queue_export_job_status(job_queue , iens);
 
     if (status == job_queue_complete_OK) {
       if (load_results)

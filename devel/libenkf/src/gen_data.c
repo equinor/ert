@@ -24,6 +24,7 @@
    ways through one simulation.
 */
    
+typedef enum {ascii_file , binary_C_file , binary_fortran_file} gen_data_file_type;
 
 
 #define  DEBUG
@@ -46,6 +47,21 @@ struct gen_data_struct {
 
 /*****************************************************************/
 
+
+static gen_data_file_type gen_data_determine_file_type(FILE * stream) {
+  char buffer[32];
+  long int init_pos = ftell(stream);
+  gen_data_file_type file_type;
+  util_fread(buffer , 1 , 5 , stream , __func__);
+  buffer[5] = '\0';
+  util_strupr(buffer);
+  if (strcmp(buffer , "ASCII" , 5) == 0)
+    file_type = ascii_file;
+  else {
+    fseek(stream , init_pos , SEEK_SET);
+    
+  }
+}
 
 void gen_data_free(gen_data_type * gen_data) {
   util_safe_free(gen_data->data);
