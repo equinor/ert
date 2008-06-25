@@ -243,7 +243,6 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
     pthread_mutex_lock( &driver->submit_lock );
     for (ihost = 0; ihost < driver->num_hosts; ihost++) {
       host_index = (ihost + driver->last_host_index) % driver->num_hosts;
-      printf("(%d + %d) mod %d = %d (=%s) \n",ihost , driver->last_host_index,driver->num_hosts , host_index, driver->host_list[host_index]->host_name);
       if (rsh_host_available(driver->host_list[host_index])) {
 	host = driver->host_list[host_index];
 	break;
