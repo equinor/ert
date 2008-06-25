@@ -43,7 +43,7 @@ typedef struct {
   char                  *exit_file;
   char                 	*job_name;
   char                 	*run_path;
-  ecl_job_status_type  	 job_status;
+  job_status_type  	 job_status;
   basic_queue_job_type 	*job_data;
 } job_queue_node_type;
 
@@ -67,7 +67,7 @@ static job_queue_node_type * job_queue_node_alloc() {
 }
 
 
-static void job_queue_node_set_status(job_queue_node_type * node, ecl_job_status_type status) {
+static void job_queue_node_set_status(job_queue_node_type * node, job_status_type status) {
   node->job_status = status;
 }
 
@@ -85,7 +85,7 @@ static void job_queue_node_free(job_queue_node_type * node) {
   free(node);
 }
 
-static ecl_job_status_type job_queue_node_get_status(const job_queue_node_type * node) {
+static job_status_type job_queue_node_get_status(const job_queue_node_type * node) {
   return node->job_status;
 }
 
@@ -124,7 +124,7 @@ struct job_queue_struct {
   int                        status_list[job_queue_max_state];
 };
 
-static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , ecl_job_status_type );
+static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
 
 static void job_queue_initialize_node(job_queue_type * queue , int queue_index , int external_id , int target_report) {
@@ -161,8 +161,8 @@ static void job_queue_assert_queue_index(const job_queue_type * queue , int queu
 }
 
 
-static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node_type * node , ecl_job_status_type new_status) {
-  ecl_job_status_type old_status = job_queue_node_get_status(node);
+static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node_type * node , job_status_type new_status) {
+  job_status_type old_status = job_queue_node_get_status(node);
   job_queue_node_set_status(node , new_status);
   queue->status_list[old_status]--;
   queue->status_list[new_status]++;
@@ -185,7 +185,7 @@ static void job_queue_update_status(job_queue_type * queue ) {
   for (ijob = 0; ijob < queue->size; ijob++) {
     job_queue_node_type * node       = queue->jobs[ijob];
     if (node->job_data != NULL) {
-      ecl_job_status_type  new_status = driver->get_status(driver , node->job_data);
+      job_status_type  new_status = driver->get_status(driver , node->job_data);
       job_queue_change_node_status(queue , node , new_status);
     }
   }
@@ -229,11 +229,11 @@ static void job_queue_print_status(const job_queue_type * queue) {
 }
 
 
-ecl_job_status_type job_queue_export_job_status(job_queue_type * queue , int external_id) {
+job_status_type job_queue_export_job_status(job_queue_type * queue , int external_id) {
   bool node_found    = false;
   int active_size    = job_queue_get_active_size(queue);
   int queue_index    = 0; 
-  ecl_job_status_type status;
+  job_status_type status;
   while (queue_index < active_size) {
     job_queue_node_type * node = queue->jobs[queue_index];
     if (job_queue_node_get_external_id(node) == external_id) {

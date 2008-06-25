@@ -15,7 +15,7 @@ struct rsh_job_struct {
   int  	       __rsh_id;
   int          node_index;
   bool         active;       /* Means that it allocated - not really in use */ 
-  bool         running;      /* Means  it is currently running - should probably only use this? */
+  job_status_type status;        
   pthread_t    run_thread;
   const char * host_name;    /* Currently not set */
   char       * run_path;
@@ -102,10 +102,9 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
      in the rsh_host_available function.
   */
 
-  job->running = true;
-  printf("Calling: %s %s %s %s \n" , rsh_cmd , rsh_host->host_name , submit_cmd, run_path);
+  job->status = job_queue_running; 
   util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL);
-  job->running = false;
+  job->status = job_queue_done;
 
   pthread_mutex_lock( &rsh_host->host_mutex );
   rsh_host->running--;
@@ -167,7 +166,7 @@ rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
   job = util_malloc(sizeof * job , __func__);
   job->__rsh_id   = RSH_JOB_ID;
   job->active     = false;
-  job->running    = false; 
+  job->status     = job_queue_waiting;
   job->run_path   = util_alloc_string_copy(run_path);
   job->node_index = node_index;
   return job;
@@ -182,7 +181,7 @@ void rsh_job_free(rsh_job_type * job) {
 
 
 
-ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
     return job_queue_null;
@@ -192,16 +191,10 @@ ecl_job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver
     rsh_driver_assert_cast(driver); 
     rsh_job_assert_cast(job);
     {
-      ecl_job_status_type status = -1; /* Dummy to shut up compiler warning. */
       if (job->active == false) 
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
-      else {
-	if (job->running)
-	  status = job_queue_running;
-	else
-	  status = job_queue_done;
-      }
-      return status;
+      else 
+	return job->status;
     }
   }
 }

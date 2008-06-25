@@ -10,5 +10,5 @@ void                job_queue_free(job_queue_type *);
 void                job_queue_add_job(job_queue_type * , int , int);
 void                job_queue_run_jobs(job_queue_type * , int );
 void *              job_queue_run_jobs__(void * );
-ecl_job_status_type job_queue_export_job_status(job_queue_type * , int );
+job_status_type     job_queue_export_job_status(job_queue_type * , int );
 #endif

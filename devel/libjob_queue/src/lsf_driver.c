@@ -188,7 +188,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
 #ifdef LSF_LIBRARY_DRIVER
 #define case(s1,s2) case(s1):  status = s2; break;
-static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* the job has not been registered at all ... */
     return job_queue_null;
@@ -198,7 +198,7 @@ static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_t
     lsf_driver_assert_cast(driver); 
     lsf_job_assert_cast(job);
     {
-      ecl_job_status_type status;
+      job_status_type status;
       struct jobInfoEnt *job_info;
       if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) {
 	fprintf(stderr,"%s: failed to get information about lsf job:%ld - aborting \n",__func__ , job->lsf_jobnr);
@@ -229,9 +229,9 @@ static ecl_job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_t
 
 #else
 
-static ecl_job_status_type lsf_driver_get_job_status_system(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+static job_status_type lsf_driver_get_job_status_system(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   const int bjobs_refresh_time = 5; /* Seconds */
-  ecl_job_status_type status = job_queue_null;
+  job_status_type status = job_queue_null;
 
   if (__job != NULL) {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
@@ -269,7 +269,7 @@ static ecl_job_status_type lsf_driver_get_job_status_system(basic_queue_driver_t
 
 
 
-ecl_job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
 #ifdef LSF_LIBRARY_DRIVER
   return lsf_driver_get_job_status_libary(__driver , __job);
 #else
@@ -409,7 +409,7 @@ void * lsf_driver_alloc(const char * queue_name , int num_resource_request , con
     char * tmp_request = util_alloc_string_copy(lsf_driver->resource_request);
     lsf_driver->resource_request = util_realloc(lsf_driver->resource_request , strlen(tmp_request) + 5 , __func__);
     sprintf(lsf_driver->resource_request , "\"%s\"" , tmp_request);
-    sprintf(lsf_driver->resource_request , "%s" , tmp_request);
+    sprintf(lsf_driver->resource_request , "%s" , tmp_request);  /* Works in Trondheim (I think ...) */
     free(tmp_request);
   }
 #endif
