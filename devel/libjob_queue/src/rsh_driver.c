@@ -243,6 +243,7 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
     pthread_mutex_lock( &driver->submit_lock );
     for (ihost = 0; ihost < driver->num_hosts; ihost++) {
       host_index = (ihost + driver->last_host_index) % driver->num_hosts;
+      printf("(%d + %d) mod %d = %d (=%s) \n",ihost , driver->last_host_index,driver->num_hosts , host_index, driver->host_list[host_index]->host_name);
       if (rsh_host_available(driver->host_list[host_index])) {
 	host = driver->host_list[host_index];
 	break;
@@ -323,7 +324,6 @@ void * rsh_driver_alloc(const char * rsh_command, int num_hosts , const char ** 
 	  if (!util_sscanf_int(&rsh_host_list[ihost][pos+1] , &max_running))
 	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , rsh_host_list[ihost]);
 	
-	printf("Adding host:%s:%d \n",host , max_running);
 	rsh_driver_add_host(rsh_driver , host , max_running);
 	free(host);
       }
