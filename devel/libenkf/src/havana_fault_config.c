@@ -114,7 +114,7 @@ static void fault_group_run_havana(const fault_group_type * group , hash_type * 
   {
     char * stdout_file = util_alloc_full_path(run_path , "havana_stdout");
     char * stderr_file = util_alloc_full_path(run_path , "havana_stderr");
-    util_vfork_exec ( havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , NULL , stdout_file , stderr_file);
+    util_vfork_exec ( havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , run_path , NULL , stdout_file , stderr_file);
     free(stderr_file);
     free(stdout_file);
   }
@@ -158,7 +158,6 @@ static havana_fault_config_type * __havana_fault_alloc( ) {
   config->input_fault_path      = NULL;
   config->update_template       = NULL;
   config->unfaulted_GRDECL_file = NULL;
-  config->faulted_GRDECL_file   = NULL;
   config->gen_kw_config         = NULL;
   return config;
 }
@@ -188,12 +187,6 @@ void havana_fault_config_set_unfaulted_GRDECL_file(havana_fault_config_type * co
 }
 
 
-void havana_fault_config_set_faulted_GRDECL_file(havana_fault_config_type * config , const char* GRDECL_file) {
-  config->faulted_GRDECL_file = util_realloc_string_copy(config->faulted_GRDECL_file , GRDECL_file); 
-}
-
-
-
 void havana_fault_config_add_fault_group(havana_fault_config_type * config , const char * group_name , const char * modify_template , int group_size , const char ** fault_names) {
   if (! util_file_exists(modify_template)) 
     util_abort("%s: template:%s does not exist. \n",__func__ , modify_template);
@@ -221,7 +214,6 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
 void havana_fault_config_run_havana(const havana_fault_config_type * config , scalar_type * scalar_data , const char * run_path) {
   char * tmp_fault_input_path  = util_alloc_full_path(run_path  , "tmp_havana_input_faults");
   char * tmp_fault_output_path = util_alloc_full_path(run_path  , "tmp_havana_output_faults");
-  char * tmp_GRDECL_output     = util_alloc_full_path(run_path  , config->faulted_GRDECL_file);
   const int size = havana_fault_config_get_data_size(config);
   int igroup;
   hash_type * kw_hash = hash_alloc();
@@ -236,7 +228,6 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
   hash_insert_hash_owned_ref( kw_hash , "INPUT_FAULTS"   , void_arg_alloc_ptr(tmp_fault_input_path)          , void_arg_free__);
   hash_insert_hash_owned_ref( kw_hash , "OUTPUT_FAULTS"  , void_arg_alloc_ptr(tmp_fault_output_path)         , void_arg_free__);
   hash_insert_hash_owned_ref( kw_hash , "INPUT_ECLIPSE"  , void_arg_alloc_ptr(config->unfaulted_GRDECL_file) , void_arg_free__);  
-  hash_insert_hash_owned_ref( kw_hash , "OUTPUT_ECLIPSE" , void_arg_alloc_ptr(tmp_GRDECL_output)             , void_arg_free__);  
   util_make_path(tmp_fault_input_path);
   util_make_path(tmp_fault_output_path);
   
@@ -264,7 +255,7 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
     char * stderr_file = util_alloc_full_path( run_path , "havana_stderr" );
 
     util_filter_file( config->update_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
-    util_vfork_exec ( config->havana_executable , 1 , (const char *[1]) {target_file} , true , tmp_GRDECL_output , NULL , stdout_file , stderr_file);
+    util_vfork_exec ( config->havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , run_path , NULL , stdout_file , stderr_file);
     
     free(target_file);
     free(stdout_file);
@@ -273,14 +264,12 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
   hash_free(kw_hash);
   free(tmp_fault_input_path);
   free(tmp_fault_output_path);
-  free(tmp_GRDECL_output);
 }
 
 
 static void havana_fault_config_printf(const havana_fault_config_type * config) {
   printf("Havana executable.........: %s \n",config->havana_executable);
   printf("Unfaulted grid............: %s \n",config->unfaulted_GRDECL_file);
-  printf("Faulted grid..............: %s \n",config->faulted_GRDECL_file);
   printf("Input faults..............: %s \n",config->input_fault_path);
   printf("Template for IntoEclipse..: %s \n\n",config->update_template);
 }
@@ -309,7 +298,6 @@ The format of the file should be as follows:
 
 DATA             /tmp/Synthetic/sharedfiles/configfiles/havana_config.dat
 INPUT_ECLIPSE    /tmp/Synthetic/sharedfiles/structureinput/Seismic_B_nothrow.GRDECL
-OUTPUT_ECLIPSE   filename.grdecl
 INPUT_FAULTS     /tmp/Synthetic/sharedfiles/structureinput/PFM
 UPDATE           /tmp/Synthetic/sharedfiles/templates/updateGrid.template
 HAVANA           /d/proj/bg/enkf/EnKF_Structural/Havana/havana
@@ -348,7 +336,7 @@ havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filenam
 	  havana_fault_config_set_unfaulted_GRDECL_file(config , token_list[1]);
 	} else if (strcmp(kw , "OUTPUT_ECLIPSE") == 0) {
 	  ASSERT_TOKENS(kw , tokens , 1);
-	  havana_fault_config_set_faulted_GRDECL_file(config , token_list[1]);
+	  /*havana_fault_config_set_faulted_GRDECL_file(config , token_list[1]);*/
 	} else if (strcmp(kw , "INPUT_FAULTS") == 0) {
 	  ASSERT_TOKENS(kw , tokens , 1);
 	  havana_fault_config_set_input_fault_path(config , token_list[1]);

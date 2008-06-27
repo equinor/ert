@@ -120,7 +120,7 @@ void * submit_job_thread__(void * __arg) {
   const char * run_path    = void_arg_get_ptr(void_arg , 1);
   local_job_type * job     = void_arg_get_ptr(void_arg , 2);
 
-  util_vfork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL); 
+  util_vfork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL , NULL); 
   job->status = job_queue_done;
   pthread_exit(NULL);
   return NULL;

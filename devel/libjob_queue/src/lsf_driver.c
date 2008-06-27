@@ -140,7 +140,7 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
-  util_vfork_exec("bsub" , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , tmp_file , NULL);
+  util_vfork_exec("bsub" , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
 
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
   util_unlink_existing(tmp_file); 
@@ -154,7 +154,7 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
 
 static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
-  util_vfork_exec("bjobs", 1 , (const char *[1]) {"-a"} , true , NULL , NULL , tmp_file , NULL);
+  util_vfork_exec("bjobs", 1 , (const char *[1]) {"-a"} , true , NULL , NULL , NULL , tmp_file , NULL);
   
   {
     int  job_id_int;

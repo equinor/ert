@@ -34,7 +34,7 @@ typedef enum {ascii_file , binary_C_file , binary_fortran_file} gen_data_file_ty
 
 struct gen_data_struct {
   DEBUG_DECLARE
-  const  gen_data_config_type  * config;    /* Normal config object - mainly contains filename for remote load */
+  const  gen_data_config_type  * config;    /* Thin config object - mainly contains filename for remote load */
   ecl_type_enum                  ecl_type;  /* Type of data can be ecl_float_type || ecl_double_type - read at load time, 
 					       can change from time-step to time-step.*/           
   int   			 size;      /* The number of elements. */
@@ -46,22 +46,92 @@ struct gen_data_struct {
 
 
 /*****************************************************************/
+/**
+Format of the gen-data files should be:
+ASCII|BINARY
+N:KEYWORD
+DOUBLE|FLOAT
+<SIZE>
+d1
+d2
+d3
+d4
+d5
+....
+....
+
+Observe the following: For the keyword you must specify the length of
+the keyword as an integer before the actual keyword, separated from
+the keyword with a ":" - OK that is ugly.
+
+I.e. to write an ascii file (with C):
+
+   fprintf(stream, "ASCII\n");
+   fprintf(stream,"%d:%s\n",strlen(keyword) , keyword);
+   fprintf(stream,"DOUBLE\n");
+   fprintf(stream,"%d\n",elements);
+   for (i = 0; i < elements; i++) {
+
+   }  
 
 
-static gen_data_file_type gen_data_determine_file_type(FILE * stream) {
-  char buffer[32];
-  long int init_pos = ftell(stream);
-  gen_data_file_type file_type;
-  util_fread(buffer , 1 , 5 , stream , __func__);
-  buffer[5] = '\0';
-  util_strupr(buffer);
-  if (strcmp(buffer , "ASCII" , 5) == 0)
-    file_type = ascii_file;
+*/
+
+
+static void gen_data_fread_ascii_header(gen_data_type * gen_data , FILE * stream) {
+  bool at_eof;
+  char * string_type;
+  util_fskip_lines(stream , &at_eof); /* We know the first line contains "ASCII". */
+  fscanf(stream, "%d:",kw_length);
+  kw = util_fscanf_alloc_token(stream);
+  if (kw_length > 0) {
+    if (strlen(kw) != kw_length)
+      util_abort("%s: something wrong with header:%d:%s \n",__func__ , kw_length , kw);
+  } else {
+    if (kw != NULL)
+      util_abort("%s: something wrong with header:%d:%s \n",__func__ , kw_length , kw);
+  }
+
+  string_type = util_fscanf_alloc_token(stream);
+  util_strupr(string_type);
+  if (strcmp(string_type, "DOUBLE") == 0)
+    gen_data->ecl_type = ecl_double_type;
+  else if (strcmp(string_type, "FLOAT") == 0)
+    gen_data->ecl_type = ecl_float_type;
+  else 
+    util_abort("%s: type identiefier:%s  not recognized - valid values are FLOAT | DOUBLE \n",__func__ , string_type);
+}
+
+
+
+static gen_data_file_type gen_data_determine_file_type(const char * filename , bool * endian_flip) {
+  if (fortio_is_fortran_file(filename , endian_flip))
+    return binary_fortran_file;
   else {
-    fseek(stream , init_pos , SEEK_SET);
-    
+    FILE * stream = util_fopen(filename , "r");
+    char buffer[32];
+    long int init_pos = ftell(stream);
+    gen_data_file_type file_type;
+    util_fread(buffer , 1 , 5 , stream , __func__);
+    buffer[5] = '\0';
+    util_strupr(buffer);
+    if (strcmp(buffer , "ASCII" , 5) == 0)
+      file_type = ascii_file;
+    else {
+      fseek(stream , init_pos , SEEK_SET);
+      util_fread(buffer , 1 , 6 , stream , __func__);
+      buffer[6] = '\0';
+      util_strupr(buffer);
+      if (strcmp(buffer , "BINARY" , 6) == 0) 
+	file_type = binary_C_file;
+      else {
+	util_abort("%s: could not determine BINARY / ASCII status of file:%s. Header: %s not recognized \n",__func__ , filename , buffer);
+	return binary_C_file; /* Dummy */
+      }
+    }
   }
 }
+
 
 void gen_data_free(gen_data_type * gen_data) {
   util_safe_free(gen_data->data);
