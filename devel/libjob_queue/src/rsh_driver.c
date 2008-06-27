@@ -103,7 +103,7 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
      in the rsh_host_available function.
   */
 
-  util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL);
+  util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL , NULL);
   job->status = job_queue_done;
 
   pthread_mutex_lock( &rsh_host->host_mutex );
