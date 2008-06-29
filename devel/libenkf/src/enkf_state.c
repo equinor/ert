@@ -502,14 +502,14 @@ void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , 
   ecl_block_type       * ecl_block;
   char * restart_file  = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_step);
 
-  fortio_type * fortio = fortio_open(restart_file , "r" , endian_swap);
+  fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap);
   
   if (unified)
     ecl_block_fseek(report_step , fmt_file , true , fortio);
   
   ecl_block = ecl_block_alloc(report_step , fmt_file , endian_swap);
   ecl_block_fread(ecl_block , fortio , &at_eof);
-  fortio_close(fortio);
+  fortio_fclose(fortio);
   
   enkf_state_load_ecl_restart_block(enkf_state , ecl_block);
   ecl_block_free(ecl_block);
@@ -644,7 +644,7 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   bool endian_swap       = enkf_config_get_endian_swap(enkf_state->config);
   const bool fmt_file    = enkf_state_fmt_file(enkf_state);
   char * restart_file    = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , enkf_state->report_step);
-  fortio_type * fortio   = fortio_open(restart_file , "w" , endian_swap);
+  fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap);
   const char * kw;
 
   kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
@@ -668,7 +668,7 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 
     kw = restart_kw_list_get_next(enkf_state->restart_kw_list);
   }
-  fortio_close(fortio);
+  fortio_fclose(fortio);
 }
 
 

@@ -296,7 +296,7 @@ void sched_file_init_conn_factor(sched_file_type * sched_file , const char * ini
   bool OK;
   ecl_kw_type * permx_kw , *ihead_kw , *permz_kw;
   bool fmt_file        = util_fmt_bit8(init_file );
-  fortio_type * fortio = fortio_open(init_file , "r" , endian_flip);
+  fortio_type * fortio = fortio_fopen(init_file , "r" , endian_flip);
 
   ecl_kw_fseek_kw("INTEHEAD" , fmt_file , true , true , fortio);
   ihead_kw = ecl_kw_fread_alloc(fortio , fmt_file);
@@ -307,7 +307,7 @@ void sched_file_init_conn_factor(sched_file_type * sched_file , const char * ini
   ecl_kw_fseek_kw("PERMZ" , fmt_file , true , true , fortio);
   permz_kw = ecl_kw_fread_alloc(fortio , fmt_file );
   
-  fortio_close(fortio);
+  fortio_fclose(fortio);
 
   {
     int * tmp  = ecl_kw_get_data_ref(ihead_kw);
