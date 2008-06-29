@@ -9,9 +9,10 @@ involved with observations/measurement/+++.
 #include <util.h>
 
 struct meas_vector_struct {
-  int     size;
-  int     alloc_size;
-  double *data;
+  int      size;            /* The number of active measurements currently in the vector instance. */
+  int      alloc_size;      /* The current length of the memory buffer owned by the vector instance. */ 
+  int      target_size;     /* If the current size of the buffer exceeds this length - it will be shrinked on reset. */ 
+  double  *data;            /* The actual stoarge vector. */
 }; 
 
 
@@ -21,16 +22,19 @@ static void meas_vector_realloc_data(meas_vector_type * meas_vector, int new_all
 }
 
 
+
 void meas_vector_reset(meas_vector_type * meas_vector) {
   meas_vector->size = 0;
+  if (meas_vector->alloc_size > meas_vector->target_size)
+    meas_vector_realloc_data(meas_vector , meas_vector->target_size);
 }
 
 
 meas_vector_type * meas_vector_alloc() {
   meas_vector_type * meas_vector = malloc(sizeof * meas_vector);
   meas_vector->data = NULL;
-  meas_vector->alloc_size = 0;
-  meas_vector_realloc_data(meas_vector , 10);
+  meas_vector->target_size = 32;
+  meas_vector_realloc_data(meas_vector , meas_vector->target_size);
   meas_vector_reset(meas_vector);
   return meas_vector;
 }

@@ -15,6 +15,7 @@ void        * enkf_config_get_data_kw(const enkf_config_type *  , const char * )
 char       ** enkf_config_alloc_data_kw_key_list(const enkf_config_type * , int * );
 
 enkf_impl_type      enkf_config_impl_type(const enkf_config_type *, const char * );
+bool                enkf_config_include_static_kw(const enkf_config_type * , const char * );
 bool                enkf_config_get_endian_swap(const enkf_config_type * );
 bool                enkf_config_get_fmt_file(const enkf_config_type * );
 const char        * enkf_config_get_data_file(const enkf_config_type * );

@@ -62,7 +62,8 @@ d5
 
 Observe the following: For the keyword you must specify the length of
 the keyword as an integer before the actual keyword, separated from
-the keyword with a ":" - OK that is ugly.
+the keyword with a ":" - OK that is butt ugly - no reason to scream
+and shout :-)
 
 I.e. to write an ascii file (with C):
 
@@ -101,6 +102,7 @@ static void gen_data_fread_ascii_header(gen_data_type * gen_data , FILE * stream
   else 
     util_abort("%s: type identiefier:%s  not recognized - valid values are FLOAT | DOUBLE \n",__func__ , string_type);
 }
+
 
 
 

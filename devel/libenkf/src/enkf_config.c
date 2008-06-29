@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <util.h>
 #include <hash.h>
+#include <set.h>
 #include <multz_config.h>
 #include <enkf_config_node.h>
 #include <path_fmt.h>
@@ -68,6 +69,9 @@ struct enkf_config_struct {
   char *            ens_path;
   char *            init_file;
   char **           forward_model; 
+
+  bool              include_all_static_kw;  /* If true all static keywords are stored.*/ 
+  set_type        * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
 };
 
 
@@ -84,7 +88,6 @@ enkf_impl_type enkf_config_impl_type(const enkf_config_type *enkf_config, const 
 
   return impl_type;
 }
-
 
 bool enkf_config_get_endian_swap(const enkf_config_type * enkf_config) { return enkf_config->endian_swap; }
 
@@ -329,6 +332,32 @@ static void enkf_config_set_start_date(enkf_config_type * config , const char **
     util_abort("%s: fatal error when parsing start_time: \"%s %s %s\" \n",__func__, tokens[0] , tokens[1] , tokens[2]);
 }
 
+/**
+   This function adds a keyword to the list of restart keywords wich
+   are included. Observe that ecl_util_escape_kw() is called prior to
+   adding it.
+*/
+
+void enkf_config_add_static_kw(enkf_config_type * enkf_config , const char * _kw) {
+  char * kw = util_alloc_string_copy(_kw);
+  ecl_util_escape_kw(kw);
+  set_add_key(enkf_config->static_kw_set , kw);
+  free(kw);
+}
+
+
+/**
+   This function checks whether the static kw should be
+   included. Observe that it is __assumed__ that ecl_util_escape_kw()
+   has already been called on the kw.
+*/
+
+bool enkf_config_include_static_kw(const enkf_config_type * enkf_config , const char * kw) {
+  if (enkf_config->include_all_static_kw)
+    return true;
+  else
+    return set_has_key(enkf_config->static_kw_set , kw);
+}
 
 
 
@@ -364,8 +393,33 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->init_file            = NULL;
   config->forward_model        = NULL;
   config->forward_model_length = 0;
-
   enkf_config_set_result_path(config , "Results/%04d");
+
+  config->include_all_static_kw = false;
+  config->static_kw_set         = set_alloc_empty();
+  
+  enkf_config_add_static_kw(config , "INTEHEAD");
+  enkf_config_add_static_kw(config , "LOGIHEAD"); 
+  enkf_config_add_static_kw(config , "DOUBHEAD"); 
+  enkf_config_add_static_kw(config , "IGRP"); 
+  enkf_config_add_static_kw(config , "SGRP"); 
+  enkf_config_add_static_kw(config , "XGRP"); 
+  enkf_config_add_static_kw(config , "ZGRP"); 
+  enkf_config_add_static_kw(config , "IWEL"); 
+  enkf_config_add_static_kw(config , "SWEL"); 
+  enkf_config_add_static_kw(config , "XWEL"); 
+  enkf_config_add_static_kw(config , "ZWEL"); 
+  enkf_config_add_static_kw(config , "ICON"); 
+  enkf_config_add_static_kw(config , "SCON"); 
+  enkf_config_add_static_kw(config , "XCON"); 
+  enkf_config_add_static_kw(config , "HIDDEN"); 
+  enkf_config_add_static_kw(config , "STARTSOL"); 
+  enkf_config_add_static_kw(config , "PRESSURE"); 
+  enkf_config_add_static_kw(config , "SWAT"); 
+  enkf_config_add_static_kw(config , "SGAS"); 
+  enkf_config_add_static_kw(config , "RS"); 
+  enkf_config_add_static_kw(config , "RV"); 
+  enkf_config_add_static_kw(config , "ENDSOL"); 
   return config;
 }
 
@@ -482,7 +536,11 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      ASSERT_TOKENS(kw , active_tokens , 1);
 	      enkf_site_config_set_argv(site_config , kw ,  active_tokens - 1 , (const char **) &token_list[1] );
 	    } else {
-	      if (strcmp(kw , "SIZE") == 0) {
+	      if (strcmp(kw , "ADD_STATIC_KW") == 0) {
+		int ikw;
+		for (ikw = 1; ikw < active_tokens; ikw++)
+		  enkf_config_add_static_kw(enkf_config , token_list[ikw]);
+	      } else if (strcmp(kw , "SIZE") == 0) {
 		int ens_size;
 		ASSERT_TOKENS("SIZE" , active_tokens , 1);
 		if (util_sscanf_int(token_list[1] , &ens_size)) 
@@ -804,6 +862,7 @@ void enkf_config_free(enkf_config_type * config) {
   free(config->init_file);
   free(config->ecl_store);
   util_free_stringlist(config->forward_model , config->forward_model_length);
+  set_free(config->static_kw_set);
   free(config);
 }
 

@@ -458,9 +458,9 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
   while (ecl_kw != NULL) {
     char *kw = ecl_kw_alloc_strip_header(ecl_kw);
     ecl_util_escape_kw(kw);
-    restart_kw_list_add(enkf_state->restart_kw_list , kw);
 
     if (enkf_config_has_key(enkf_state->config , kw)) {
+      restart_kw_list_add(enkf_state->restart_kw_list , kw);
       /* It is a dynamic restart kw like PRES or SGAS */
       if (enkf_config_impl_type(enkf_state->config , kw) != FIELD) 
 	util_abort("%s: hm - something wrong - can (currently) only load fields from restart files - aborting \n",__func__);
@@ -471,17 +471,20 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
       }
     } else {
       /* It is a static kw like INTEHEAD or SCON */
-      if (!enkf_state_has_node(enkf_state , kw)) 
-	enkf_state_add_node(enkf_state , kw , NULL); 
-      {
-	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-	enkf_node_load_static_ecl_kw(enkf_node , ecl_kw);
-	/*
-	  Static kewyords go straight out ....
-	*/
-	enkf_fs_fwrite_node(enkf_state->fs , enkf_node , report_step , enkf_state->my_iens , forecast);
-	enkf_node_free_data(enkf_node);
-      }
+      if (enkf_config_include_static_kw(enkf_state->config , kw)) {
+	restart_kw_list_add(enkf_state->restart_kw_list , kw);
+	if (!enkf_state_has_node(enkf_state , kw)) 
+	  enkf_state_add_node(enkf_state , kw , NULL); 
+	{
+	  enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
+	  enkf_node_load_static_ecl_kw(enkf_node , ecl_kw);
+	  /*
+	    Static kewyords go straight out ....
+	  */
+	  enkf_fs_fwrite_node(enkf_state->fs , enkf_node , report_step , enkf_state->my_iens , forecast);
+	  enkf_node_free_data(enkf_node);
+	}
+      } 
     }
     free(kw);
     ecl_kw = ecl_block_get_next_kw(ecl_block);

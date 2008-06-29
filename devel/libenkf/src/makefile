@@ -118,7 +118,7 @@ summary.o             : summary.c summary.h
 summary_config.o      : summary_config.c summary_config.h
 tpgzone.o             : tpgzone.h
 tpgzone_config.o      : enkf_macros.h enkf_types.h tpgzone_trunc_scheme.h
-
+main.o                : enkf_main.o enkf_types.o enkf_config.o enkf_fs.o fs_index.o
 
 
 #################################################################

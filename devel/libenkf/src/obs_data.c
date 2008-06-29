@@ -54,13 +54,14 @@ Matrices: S, D, E and various internal variables.
 #include <meas_matrix.h>
 
 struct obs_data_struct {
-  int       active_size;
-  int       total_size;
-  int       alloc_size;
+  int       total_size;     /* The number of measurements which have been added with obs_data_add. */
+  int       active_size;    /* The number of the measurements which are active (some might have been deactivated). */ 
+  int       alloc_size;     /* The size of the value and std buffers. */ 
+  int       target_size;    /* We aim for this size of the buffers - if alloc_size is currently larger, it will shrink on reset. */ 
   double   *value;
   double   *std;
   char    **keyword;
-  bool     *obs_active;
+  bool     *obs_active;     /* A map of the true|false of the currentobeservations. */ 
 }; 
 
 
@@ -83,15 +84,15 @@ int obs_data_get_nrobs(const obs_data_type * obs_data) { return obs_data->total_
 
 obs_data_type * obs_data_alloc() {
   obs_data_type * obs_data = malloc(sizeof * obs_data);
-  obs_data->total_size    = 0;
-  obs_data->active_size   = 0;
+  obs_data->target_size   = 32;
+  obs_data->alloc_size    = 0;
   obs_data->value      	  = NULL;
   obs_data->std        	  = NULL;
   obs_data->keyword    	  = NULL;
   obs_data->obs_active    = NULL;
 
-  obs_data->alloc_size = 0;
-  obs_data_realloc_data(obs_data , 10);
+  obs_data_realloc_data(obs_data , obs_data->target_size);
+  obs_data_reset(obs_data);
   return obs_data;
 }
 
@@ -100,6 +101,8 @@ obs_data_type * obs_data_alloc() {
 void obs_data_reset(obs_data_type * obs_data) { 
   obs_data->total_size  = 0; 
   obs_data->active_size = 0; 
+  if (obs_data->alloc_size > obs_data->target_size)
+    obs_data_realloc_data(obs_data , obs_data->target_size);
 }
 
 
@@ -351,7 +354,7 @@ void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_strid
   const int nrobs_total  = obs_data->total_size;
   const int nrobs_active = obs_data->active_size;
   double * scale_factor  = util_malloc(nrobs_active * sizeof * scale_factor , __func__);
-  int iens, iobs_total , iobs_active;
+  int iens, iobs_active;
   
   {
     int iobs_total;
