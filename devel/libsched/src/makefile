@@ -11,7 +11,7 @@ CFLAGS  = -O2 -$(MFLAG) -std=gnu99 -g -Wall
 FFLAGS  = -fpe0 -traceback -warn unused -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
 ARFLAGS = -csr
 #################################################################
-OBJECTS   = history.o rate_node.o date_node.o sched_interC.o sched_file.o sched_util.o sched_kw.o sched_kw_compdat.o sched_kw_wconhist.o sched_kw_dates.o sched_kw_untyped.o sched_kw_tstep.o history_ens_diag.o
+OBJECTS   = history.o rate_node.o date_node.o sched_interC.o sched_file.o sched_util.o sched_kw.o sched_kw_compdat.o sched_kw_wconhist.o sched_kw_dates.o sched_kw_untyped.o sched_kw_tstep.o sched_kw_welspecs.o sched_kw_gruptree.o history_ens_diag.o 
 INC_FILES = date_node.h rate_node.h history.h sched_file.h sched_util.h sched_kw.h sched_kw_compdat.h sched_kw_wconhist.h sched_kw_dates.h sched_kw_untyped.h sched_kw_tstep.h history_ens_diag.h
 LIB       = libsched_$(MFLAG).a
 LIB_LINK  = -lsched_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lm -lz
@@ -54,7 +54,7 @@ sched_kw_dates.o    : sched_kw_dates.h sched_kw_dates.c sched_util.o date_node.o
 sched_kw_untyped.o  : sched_kw_untyped.h sched_kw_untyped.c sched_util.o
 sched_kw_tstep.o    : sched_kw_tstep.h sched_kw_tstep.c sched_util.o
 sched_kw_welspecs.o : sched_kw_welspecs.h sched_kw_welspecs.c
-sched_kw_gruptree.o : sched_kw_gruptree.h sched_kw_gruptreec
+sched_kw_gruptree.o : sched_kw_gruptree.h sched_kw_gruptree.c
 sched_kw.o          : sched_kw.c sched_kw.h sched_kw_wconhist.o sched_kw_untyped.o sched_kw_compdat.o sched_kw_dates.o sched_util.o sched_kw_tstep.o
 sched_file.o        : sched_file.c sched_file.h sched_util.o sched_kw.o sched_kw_compdat.o 
 sched_interC.o      : sched_interC.c sched_file.o history.o
