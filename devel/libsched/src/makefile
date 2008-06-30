@@ -53,6 +53,8 @@ sched_kw_compdat.o  : sched_kw_compdat.h sched_kw_compdat.c sched_util.o
 sched_kw_dates.o    : sched_kw_dates.h sched_kw_dates.c sched_util.o date_node.o
 sched_kw_untyped.o  : sched_kw_untyped.h sched_kw_untyped.c sched_util.o
 sched_kw_tstep.o    : sched_kw_tstep.h sched_kw_tstep.c sched_util.o
+sched_kw_welspecs.o : sched_kw_welspecs.h sched_kw_welspecs.c
+sched_kw_gruptree.o : sched_kw_gruptree.h sched_kw_gruptreec
 sched_kw.o          : sched_kw.c sched_kw.h sched_kw_wconhist.o sched_kw_untyped.o sched_kw_compdat.o sched_kw_dates.o sched_util.o sched_kw_tstep.o
 sched_file.o        : sched_file.c sched_file.h sched_util.o sched_kw.o sched_kw_compdat.o 
 sched_interC.o      : sched_interC.c sched_file.o history.o
