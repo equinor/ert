@@ -45,7 +45,6 @@ typedef struct
   int              fip_region;
   char           * fs_kw1;
   char           * fs_kw2;
-  char           * fs_kw3;
   char           * ecl300_kw;
 
 } welspec_type;
@@ -62,7 +61,6 @@ static welspec_type * welspec_alloc_empty()
   ws->group     = NULL;
   ws->fs_kw1    = NULL;
   ws->fs_kw2    = NULL;
-  ws->fs_kw3    = NULL;
   ws->ecl300_kw = NULL;
 
   return ws;
@@ -77,7 +75,6 @@ static void welspec_free(welspec_type * ws)
   if(ws->group      != NULL) free(ws->def      );
   if(ws->fs_kw1     != NULL) free(ws->fs_kw1   );
   if(ws->fs_kw2     != NULL) free(ws->fs_kw2   );
-  if(ws->fs_kw3     != NULL) free(ws->fs_kw3   );
   if(ws->ecl300_kw  != NULL) free(ws->ecl300_kw);
 };
 
@@ -113,11 +110,11 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
   {
     if(strcmp(token_list[5], "OIL") == 0)
       ws->phase = OIL;
-    if(strcmp(token_list[5], "WATER") == 0)
+    else if(strcmp(token_list[5], "WATER") == 0)
       ws->phase = WATER;
-    if(strcmp(token_list[5], "GAS") == 0)
+    else if(strcmp(token_list[5], "GAS") == 0)
       ws->phase = GAS;
-    if(strcmp(token_list[5], "LIQ") == 0)
+    else if(strcmp(token_list[5], "LIQ") == 0)
       ws->phase = LIQ;
     else
       util_abort("%s: error when parsing WELSPECS. Phase %s not recognized - aborting.\n",__func__,token_list[5]);
@@ -130,20 +127,64 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
   {
     if(strcmp(token_list[7],"STD") == 0)
       ws->inflow_eq = STD;
-    if(strcmp(token_list[7],"NO") == 0)
+    else if(strcmp(token_list[7],"NO") == 0)
       ws->inflow_eq = NO;
-    if(strcmp(token_list[7],"R-G") == 0)
+    else if(strcmp(token_list[7],"R-G") == 0)
       ws->inflow_eq = RG;
-    if(strcmp(token_list[7],"YES") == 0)
+    else if(strcmp(token_list[7],"YES") == 0)
       ws->inflow_eq = YES;
-    if(strcmp(token_list[7],"P-P") == 0)
+    else if(strcmp(token_list[7],"P-P") == 0)
       ws->inflow_eq = PP;
-    if(strcmp(token_list[7],"GPP") == 0)
+    else if(strcmp(token_list[7],"GPP") == 0)
       ws->inflow_eq = GPP;
     else
-      util_abort("%s: error when parsing WELSPECS. Inflow equation %s not recognized - aborting.\n",__func__,token_list[5]);
+      util_abort("%s: error when parsing WELSPECS. Inflow equation %s not recognized - aborting.\n",__func__,token_list[7]);
   }
 
+  if(!ws->def[8])
+  {
+    if(strcmp(token_list[8],"STOP") == 0)
+      ws->auto_shut = STOP;
+    else if(strcmp(token_list[8],"SHUT") == 0)
+      ws->auto_shut = SHUT;
+    else
+      util_abort("%s: error when parsing WELSPECS. Automatic shut-in mode %s not recognized - aborting.\n",__func__,token_list[8]);
+  }
+
+  if(!ws->def[9])
+  {
+    if(strcmp(token_list[9],"YES") == 0)
+      ws->crossflow = CF_YES;
+    else if(strcmp(token_list[9],"NO") == 0)
+      ws->crossflow = CF_NO;
+    else
+      util_abort("%s: error when parsing WELSPECS. Crossflow ability mode %s not recognized - aborting.\n",__func__,token_list[9]);
+  }
+
+  if(!ws->def[10])
+    ws->pvt_region = sched_util_atoi(token_list[10]);
+
+  if(!ws->def[11])
+  {
+    if(strcmp(token_list[11],"SEG") == 0)
+      ws->hdstat_head  = SEG;
+    else if(strcmp(token_list[11],"AVG") == 0)
+      ws->hdstat_head  = AVG;
+    else
+      util_abort("%s: error when parsing WELSPECS. Hydrostatic head model %s not recognized - aborting.\n",__func__,token_list[11]);
+  }
+
+  if(!ws->def[12])
+    ws->fip_region = sched_util_atoi(token_list[12]);
+
+  if(!ws->def[13])
+    ws->fs_kw1 = util_alloc_string_copy(token_list[13]);
+
+  if(!ws->def[14])
+    ws->fs_kw2 = util_alloc_string_copy(token_list[14]);
+
+  if(!ws->def[15])
+    ws->ecl300_kw = util_alloc_string_copy(token_list[15]);
 
   return ws;
 };
