@@ -441,12 +441,12 @@ void enkf_config_set_forward_model(enkf_config_type * config , const char  ** fo
 #define __assert_not_null(p , t , OK) if (p == NULL ) { fprintf(stderr,"The key:%s must be set.\n",t); OK = false; }
 static void enkf_config_post_assert(const enkf_config_type * config , ext_joblist_type * joblist) {
   bool OK = true;
-
+  
   __assert_not_null(config->forward_model      , "FORWARD_MODEL" , OK);
   __assert_not_null(config->ens_path           , "ENSPATH"  	 , OK);
   __assert_not_null(config->schedule_src_file  , "SCHEDULE" 	 , OK);
   __assert_not_null(config->schedule_src_file  , "SCHEDULE" 	 , OK);
-
+  
   if (config->ens_size <= 0) {
     fprintf(stderr,"Must set ensemble size > 0 with KEYWORD SIZE.\n");
     OK = false;
