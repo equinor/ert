@@ -17,11 +17,37 @@ struct sched_kw_welspecs_struct
   welspec_type struct.
 */
 
-typedef enum {OIL,  WATER, GAS, LIQ}           phase_type;
-typedef enum {STD,  NO   , RG, YES, PP, GPP}   inflow_eq_type;
-typedef enum {STOP, SHUT}                      auto_shut_type;
-typedef enum {CF_YES,  CF_NO}                  crossflow_type; 
-typedef enum {SEG,  AVG}                       hdstat_head_type;
+typedef enum {PH_OIL, PH_WAT, PH_GAS, PH_LIQ} phase_type;
+#define PH_OIL_STRING "OIL"
+#define PH_WAT_STRING "WATER"
+#define PH_GAS_STRING "GAS"
+#define PH_LIQ_STRING "LIQ"
+
+
+
+typedef enum {IE_STD, IE_NO, IE_RG, IE_YES, IE_PP, IE_GPP} inflow_eq_type;
+#define IE_STD_STRING "STD"
+#define IE_NO_STRING  "NO"
+#define IE_RG_STRING  "R-G"
+#define IE_YES_STRING "YES"
+#define IE_PP_STRING  "P-P"
+#define IE_GPP_STRING "GPP"
+
+
+
+typedef enum {AS_STOP, AS_SHUT} auto_shut_type;
+#define AS_STOP_STRING "STOP"
+#define AS_SHUT_STRING "SHUT"
+
+
+
+typedef enum {CF_YES, CF_NO} crossflow_type; 
+#define CF_YES_STRING "YES"
+#define CF_NO_STRING  "NO"
+
+typedef enum {HD_SEG,  HD_AVG} hdstat_head_type;
+#define HD_SEG_STRING "SEG"
+#define HD_AVG_STRING "AVG"
 
 typedef struct
 {
@@ -51,6 +77,47 @@ typedef struct
 
 
 
+static char * get_phase_string(phase_type * phase)
+{
+  switch(*phase)
+  {
+    case(PH_OIL):
+      return PH_OIL_STRING;
+    case(PH_WAT):
+      return PH_WAT_STRING;
+    case(PH_GAS):
+      return PH_GAS_STRING;
+    case(PH_LIQ):
+      return PH_LIQ_STRING;
+    default:
+      util_abort("%s: Internal error - aborting.\n",__func__);
+  }
+};
+
+
+
+static char * get_inflow_eq_string(inflow_eq_type *eq)
+{
+  switch(*eq)
+  {
+  }
+};
+
+
+
+static void welspec_sched_fprintf(const welspec_type * ws, FILE * stream)
+{
+  fprintf(stream, " ");
+  sched_util_fprintf_qst(ws->def[0]           , ws->name           , 8,     stream);
+  sched_util_fprintf_qst(ws->def[1]           , ws->group          , 8,     stream);
+  sched_util_fprintf_int(ws->def[2]           , ws->hh_i           , 4,     stream);
+  sched_util_fprintf_int(ws->def[3]           , ws->hh_j           , 4,     stream);
+
+  sched_util_fprintf_dbl(ws->def[4]           , ws->md             , 9, 3,  stream);
+};
+
+
+
 static welspec_type * welspec_alloc_empty()
 {
   welspec_type *ws = util_malloc(sizeof *ws,__func__);
@@ -65,6 +132,60 @@ static welspec_type * welspec_alloc_empty()
 
   return ws;
 }
+
+
+
+static void welspec_fwrite(const welspec_type * ws, FILE * stream)
+{
+  util_fwrite_string(ws->name     , stream);
+  util_fwrite_string(ws->group    , stream);
+  util_fwrite_string(ws->fs_kw1   , stream);
+  util_fwrite_string(ws->fs_kw2   , stream);
+  util_fwrite_string(ws->ecl300_kw, stream);
+
+  util_fwrite(&ws->hh_i        , sizeof ws->hh_i        , 1 , stream, __func__);
+  util_fwrite(&ws->hh_j        , sizeof ws->hh_j        , 1 , stream, __func__);
+  util_fwrite(&ws->md          , sizeof ws->md          , 1 , stream, __func__);
+  util_fwrite(&ws->phase       , sizeof ws->phase       , 1 , stream, __func__);
+  util_fwrite(&ws->drain_rad   , sizeof ws->drain_rad   , 1 , stream, __func__);
+  util_fwrite(&ws->inflow_eq   , sizeof ws->inflow_eq   , 1 , stream, __func__);
+  util_fwrite(&ws->auto_shut   , sizeof ws->auto_shut   , 1 , stream, __func__);
+  util_fwrite(&ws->crossflow   , sizeof ws->crossflow   , 1 , stream, __func__);
+  util_fwrite(&ws->pvt_region  , sizeof ws->pvt_region  , 1 , stream, __func__);
+  util_fwrite(&ws->hdstat_head , sizeof ws->hdstat_head , 1 , stream, __func__);
+  util_fwrite(&ws->fip_region  , sizeof ws->fip_region  , 1 , stream, __func__);
+
+  util_fwrite(ws->def          , sizeof ws->def         , WELSPEC_NUM_KW, stream, __func__);
+}; 
+
+
+
+static welspec_type * welspec_fread_alloc(FILE * stream)
+{
+  welspec_type * ws = welspec_alloc_empty();  
+
+  ws->name      = util_fread_alloc_string(stream);
+  ws->group     = util_fread_alloc_string(stream);
+  ws->fs_kw1    = util_fread_alloc_string(stream);
+  ws->fs_kw2    = util_fread_alloc_string(stream);
+  ws->ecl300_kw = util_fread_alloc_string(stream);
+
+  util_fread(&ws->hh_i        , sizeof ws->hh_i        , 1 , stream, __func__);
+  util_fread(&ws->hh_j        , sizeof ws->hh_j        , 1 , stream, __func__);
+  util_fread(&ws->md          , sizeof ws->md          , 1 , stream, __func__);
+  util_fread(&ws->phase       , sizeof ws->phase       , 1 , stream, __func__);
+  util_fread(&ws->drain_rad   , sizeof ws->drain_rad   , 1 , stream, __func__);
+  util_fread(&ws->inflow_eq   , sizeof ws->inflow_eq   , 1 , stream, __func__);
+  util_fread(&ws->auto_shut   , sizeof ws->auto_shut   , 1 , stream, __func__);
+  util_fread(&ws->crossflow   , sizeof ws->crossflow   , 1 , stream, __func__);
+  util_fread(&ws->pvt_region  , sizeof ws->pvt_region  , 1 , stream, __func__);
+  util_fread(&ws->hdstat_head , sizeof ws->hdstat_head , 1 , stream, __func__);
+  util_fread(&ws->fip_region  , sizeof ws->fip_region  , 1 , stream, __func__);
+
+  util_fread(ws->def          , sizeof ws->def         , WELSPEC_NUM_KW, stream, __func__);
+
+  return ws;
+};
 
 
 
@@ -108,14 +229,14 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
 
   if(!ws->def[5])
   {
-    if(strcmp(token_list[5], "OIL") == 0)
-      ws->phase = OIL;
-    else if(strcmp(token_list[5], "WATER") == 0)
-      ws->phase = WATER;
-    else if(strcmp(token_list[5], "GAS") == 0)
-      ws->phase = GAS;
-    else if(strcmp(token_list[5], "LIQ") == 0)
-      ws->phase = LIQ;
+    if(strcmp(token_list[5], PH_OIL_STRING) == 0)
+      ws->phase = PH_OIL;
+    else if(strcmp(token_list[5], PH_WAT_STRING) == 0)
+      ws->phase = PH_WAT;
+    else if(strcmp(token_list[5], PH_GAS_STRING) == 0)
+      ws->phase = PH_GAS;
+    else if(strcmp(token_list[5], PH_LIQ_STRING) == 0)
+      ws->phase = PH_LIQ;
     else
       util_abort("%s: error when parsing WELSPECS. Phase %s not recognized - aborting.\n",__func__,token_list[5]);
   };
@@ -125,18 +246,18 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
 
   if(!ws->def[7])
   {
-    if(strcmp(token_list[7],"STD") == 0)
-      ws->inflow_eq = STD;
-    else if(strcmp(token_list[7],"NO") == 0)
-      ws->inflow_eq = NO;
-    else if(strcmp(token_list[7],"R-G") == 0)
-      ws->inflow_eq = RG;
-    else if(strcmp(token_list[7],"YES") == 0)
-      ws->inflow_eq = YES;
-    else if(strcmp(token_list[7],"P-P") == 0)
-      ws->inflow_eq = PP;
-    else if(strcmp(token_list[7],"GPP") == 0)
-      ws->inflow_eq = GPP;
+    if(strcmp(token_list[7],IE_STD_STRING) == 0)
+      ws->inflow_eq = IE_STD;
+    else if(strcmp(token_list[7],IE_NO_STRING) == 0)
+      ws->inflow_eq = IE_NO;
+    else if(strcmp(token_list[7],IE_RG_STRING) == 0)
+      ws->inflow_eq = IE_RG;
+    else if(strcmp(token_list[7],IE_YES_STRING) == 0)
+      ws->inflow_eq = IE_YES;
+    else if(strcmp(token_list[7],IE_PP_STRING) == 0)
+      ws->inflow_eq = IE_PP;
+    else if(strcmp(token_list[7],IE_GPP_STRING) == 0)
+      ws->inflow_eq = IE_GPP;
     else
       util_abort("%s: error when parsing WELSPECS. Inflow equation %s not recognized - aborting.\n",__func__,token_list[7]);
   }
@@ -144,9 +265,9 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
   if(!ws->def[8])
   {
     if(strcmp(token_list[8],"STOP") == 0)
-      ws->auto_shut = STOP;
+      ws->auto_shut = AS_STOP;
     else if(strcmp(token_list[8],"SHUT") == 0)
-      ws->auto_shut = SHUT;
+      ws->auto_shut = AS_SHUT;
     else
       util_abort("%s: error when parsing WELSPECS. Automatic shut-in mode %s not recognized - aborting.\n",__func__,token_list[8]);
   }
@@ -167,9 +288,9 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
   if(!ws->def[11])
   {
     if(strcmp(token_list[11],"SEG") == 0)
-      ws->hdstat_head  = SEG;
+      ws->hdstat_head  = HD_SEG;
     else if(strcmp(token_list[11],"AVG") == 0)
-      ws->hdstat_head  = AVG;
+      ws->hdstat_head  = HD_AVG;
     else
       util_abort("%s: error when parsing WELSPECS. Hydrostatic head model %s not recognized - aborting.\n",__func__,token_list[11]);
   }
