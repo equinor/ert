@@ -403,6 +403,14 @@ sched_kw_welspecs_type * sched_kw_welspecs_alloc()
 
 
 
+void sched_kw_welspecs_free(sched_kw_welspecs_type * kw)
+{
+  list_free(kw->welspec_list);
+  free(kw);
+};
+
+
+
 void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type * kw, FILE * stream)
 {
   fprintf(stream, "WELSPECS\n");
@@ -429,4 +437,39 @@ void sched_kw_welspecs_add_line(sched_kw_welspecs_type * kw, const char * line)
     list_append_list_owned_ref(kw->welspec_list, ws, welspec_free__);
   }
   sched_util_free_token_list(tokens,token_list);
+};
+
+
+
+void sched_kw_welspecs_fwrite(const sched_kw_welspecs_type * kw, FILE * stream)
+{
+  int welspec_lines = list_get_size(kw->welspec_list);
+  util_fwrite(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
+  {
+    list_node_type * ws_node = list_get_head(kw->welspec_list);
+    while(ws_node != NULL)
+    {
+      welspec_type * ws = list_node_value_ptr(ws_node);
+      welspec_fwrite(ws, stream);
+      ws_node = list_node_get_next(ws_node);
+    }
+  }
+};
+
+
+
+sched_kw_welspecs_type * sched_kw_welspecs_fread_alloc(FILE * stream)
+{
+  int i, welspec_lines;
+  sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc();
+  
+  util_fread(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
+
+  for(i=0; i< welspec_lines; i++)
+  {
+    welspec_type * ws = welspec_fread_alloc(stream);
+    list_append_list_owned_ref(kw->welspec_list, ws, welspec_free__);
+  }
+
+  return kw;
 };
