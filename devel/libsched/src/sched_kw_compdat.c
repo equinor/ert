@@ -16,7 +16,7 @@ typedef enum {OPEN , AUTO , SHUT}   comp_state_type;
 
 
 struct sched_kw_compdat_struct {
-  int        kw_size;
+  int        kw_size;              /* This is the width of one compdat 'line'. */
   list_type *comp_list;
 };
 

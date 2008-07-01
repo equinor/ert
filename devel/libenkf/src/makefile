@@ -126,7 +126,7 @@ main.o                : enkf_main.o enkf_types.o enkf_config.o enkf_fs.o fs_inde
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf tpgzone_test.x
+BIN_FILES             = enkf tpgzone_test.x gen_test.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
@@ -137,9 +137,11 @@ tpgzone_test.o	: tpgzone_test.c
 main.o	: main.c
 	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
-
 enkf:	main.o $(LIB)
 	gcc $(LDFLAGS) main.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
+
+gen_test.x:	gen_test.o $(LIB)
+	gcc $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	
 
 
 tpgzone_test.x:	tpgzone_test.o $(LIB)

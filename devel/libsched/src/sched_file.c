@@ -244,9 +244,11 @@ void sched_file_parse(sched_file_type * sched_file , const char * filename) {
 	else 
 	  sched_kw_add_line(active_kw , line , &sched_file->start_date , sched_file->month_hash , &complete);
 	/*
-	  The complete variable signals that the current record is complete - i.e. the line terminated with a slash ...
+	  The complete variable signals that the current record is
+	  complete - i.e. the line terminated with a slash ...  
 
-	  Not quite sure how well it handels continuation without a slash ??
+	  Not quite sure how well it handels continuation without a
+	  slash ??
 	*/
 	
 	if (record_size >= 1 && complete) {

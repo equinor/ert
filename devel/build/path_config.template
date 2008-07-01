@@ -32,5 +32,5 @@ EXTERNAL_INC_PATH = /h/a152128/include
 ENKF_BIN_PATH     = /d/proj/bg/enkf/bin
 SITE_CONFIG_FILE  = "/h/a152128/EnKF/devel/EnKF/libenkf/src/site-config"
 USE_LSF_LIBRARY   = TRUE
-SDP_ROOT          = /prroject/res
+SDP_ROOT          = /project/res
 

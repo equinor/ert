@@ -1004,7 +1004,9 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type *
       break;
     } else usleep(usleep_time);
   } 
-  if (unlink_run_path)
+  
+  /* In case the job fails, we leave the run_path directory. */
+  if (unlink_run_path && (status == job_queue_queue_complete_OK))
     util_unlink_path(enkf_state->run_path);
 }
 
