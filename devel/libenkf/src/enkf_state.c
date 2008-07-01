@@ -989,24 +989,25 @@ void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * jo
 void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2 , bool load_results , bool unlink_run_path , bool *job_OK) {
   const int usleep_time = 100000; /* 1/10 of a second */ 
   const int iens        = enkf_state_get_iens(enkf_state);
+  job_status_type final_status;
 
   *job_OK = true;
   while (true) {
-    job_status_type status = job_queue_export_job_status(job_queue , iens);
+    final_status = job_queue_export_job_status(job_queue , iens);
 
-    if (status == job_queue_complete_OK) {
+    if (final_status == job_queue_complete_OK) {
       if (load_results)
 	enkf_state_ecl_load(enkf_state , enkf_obs , unified , report_step1 , report_step2);
       break;
-    } else if (status == job_queue_complete_FAIL) {
+    } else if (final_status == job_queue_complete_FAIL) {
       fprintf(stderr,"** job:%d failed completely - this will break ... \n",iens);
       *job_OK = false;
       break;
     } else usleep(usleep_time);
   } 
   
-  /* In case the job fails, we leave the run_path directory. */
-  if (unlink_run_path && (status == job_queue_queue_complete_OK))
+  /* In case the job fails, we leave the run_path directory around for debugging. */
+  if (unlink_run_path && (final_status == job_queue_complete_OK))
     util_unlink_path(enkf_state->run_path);
 }
 
