@@ -227,7 +227,7 @@ void multflt_ensemble_fprintf_results(const multflt_type ** ensemble, int ens_si
     PRINT_LINE(total_width , '-' , stream);
     for (iens = 0; iens < ens_size; iens++) {
       const double * data = scalar_get_output_ref(ensemble[iens]->scalar);
-      util_fprintf_int(iens , width[0] - 1 , stream);
+      util_fprintf_int(iens + 1, width[0] - 1 , stream);
       fprintf(stream , "|");
       
       for (ikw = 0; ikw < size; ikw++) {
