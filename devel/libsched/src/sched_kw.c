@@ -9,8 +9,9 @@
 #include <sched_kw_wconhist.h>
 #include <sched_kw_dates.h>
 #include <sched_kw_tstep.h>
-#include <sched_kw_untyped.h>
 #include <sched_kw_welspecs.h>
+#include <sched_kw_gruptree.h>
+#include <sched_kw_untyped.h>
 
 
 struct sched_kw_struct {
@@ -45,6 +46,9 @@ sched_kw_type * sched_kw_alloc(const char * kw_name , sched_type_enum type, bool
   case(WELSPECS):
     kw->data = sched_kw_welspecs_alloc();
     break;
+  case(GRUPTREE):
+    kw->data = sched_kw_gruptree_alloc();
+    break;
   case(UNTYPED):
     kw->data = sched_kw_untyped_alloc(kw_name , one_line_kw);
     break;
@@ -73,6 +77,9 @@ void sched_kw_free(sched_kw_type * kw) {
     break;
   case(WELSPECS):
     sched_kw_welspecs_free(kw->data);
+    break;
+  case(GRUPTREE):
+    sched_kw_gruptree_free(kw->data);
     break;
   case(UNTYPED):
     sched_kw_untyped_free(kw->data);
@@ -108,6 +115,9 @@ void sched_kw_add_line(sched_kw_type * kw, const char * line, const time_t *star
   case(WELSPECS):
     sched_kw_welspecs_add_line(kw->data, line);
     break;
+  case(GRUPTREE):
+    sched_kw_gruptree_add_line(kw->data, line);
+    break;
   case(UNTYPED):
     sched_kw_untyped_add_line(kw->data , line);
     break;
@@ -138,6 +148,9 @@ void sched_kw_fprintf(const sched_kw_type * kw , int last_date_nr , time_t last_
   case(WELSPECS):
     sched_kw_welspecs_fprintf(kw->data, stream);
     break;
+  case(GRUPTREE):
+    sched_kw_gruptree_fprintf(kw->data, stream);
+    break;
   case(UNTYPED):
     sched_kw_untyped_fprintf(kw->data , stream);
     break;
@@ -165,6 +178,9 @@ void sched_kw_fwrite(const sched_kw_type *kw , FILE *stream) {
     break;
   case(WELSPECS):
     sched_kw_welspecs_fwrite(kw->data, stream);
+    break;
+  case(GRUPTREE):
+    sched_kw_gruptree_fwrite(kw->data, stream);
     break;
   case(UNTYPED):
     sched_kw_untyped_fwrite(kw->data , stream);
@@ -195,6 +211,9 @@ sched_kw_type * sched_kw_fread_alloc(int *next_date_nr , double *acc_days_ptr , 
     break;
   case(WELSPECS):
     kw->data = sched_kw_welspecs_fread_alloc(stream);
+    break;
+  case(GRUPTREE):
+    kw->data = sched_kw_gruptree_fread_alloc(stream);
     break;
   case(UNTYPED):
     kw->data = sched_kw_untyped_fread_alloc(stream);
