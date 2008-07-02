@@ -124,6 +124,7 @@ sched_file_type * sched_file_alloc(time_t start_date) {
     hash_insert_int(kw_types , "WCONHIST" , WCONHIST);
     hash_insert_int(kw_types , "COMPDAT"  , COMPDAT);
     hash_insert_int(kw_types , "TSTEP"    , TSTEP);
+    hash_insert_int(kw_types , "WELSPECS" , WELSPECS);
     sched_file->kw_types = kw_types;
   }
   

@@ -2,9 +2,9 @@
 #include <list.h>
 #include <util.h>
 #include <sched_util.h>
-#include <string.h>
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct sched_kw_welspecs_struct
 {
@@ -90,7 +90,7 @@ static char * get_phase_string(phase_type phase)
     case(PH_LIQ):
       return PH_LIQ_STRING;
     default:
-      util_abort("%s: Internal error - aborting.\n",__func__);
+      return ECL_DEFAULT_KW;
   }
 };
 
@@ -113,7 +113,7 @@ static char * get_inflow_eq_string(inflow_eq_type eq)
     case(IE_GPP):
       return IE_GPP_STRING;
     default:
-      util_abort("%s: Internal error - aborting.\n",__func__);
+      return ECL_DEFAULT_KW;
   }
 };
 
@@ -128,7 +128,7 @@ static char * get_auto_shut_string(auto_shut_type as)
     case(AS_SHUT):
       return AS_SHUT_STRING;
     default:
-      util_abort("%s: Internal error - aborting.\n",__func__);
+      return ECL_DEFAULT_KW;
   }
 };
 
@@ -143,7 +143,7 @@ static char * get_crossflow_string(crossflow_type cf)
     case(CF_NO):
       return CF_NO_STRING;
     default:
-      util_abort("%s: Internal error - aborting.\n",__func__);
+      return ECL_DEFAULT_KW;
   }
 }
 
@@ -158,7 +158,7 @@ static char * get_hdstat_head_string(hdstat_head_type hd)
     case(HD_AVG):
       return HD_AVG_STRING;
     default:
-      util_abort("%s: Internal error - aborting.\n",__func__);
+      return ECL_DEFAULT_KW;
   }
 };
 
@@ -171,19 +171,21 @@ static void welspec_sched_fprintf(const welspec_type * ws, FILE * stream)
   sched_util_fprintf_qst(ws->def[1]  , ws->group                               , 8,     stream);
   sched_util_fprintf_int(ws->def[2]  , ws->hh_i                                , 4,     stream);
   sched_util_fprintf_int(ws->def[3]  , ws->hh_j                                , 4,     stream);
-  sched_util_fprintf_dbl(ws->def[4]  , ws->md                                  , 9, 3,  stream);
-  sched_util_fprintf_qst(ws->def[5]  , get_phase_string(ws->phase)             , 8,     stream);
-  sched_util_fprintf_dbl(ws->def[6]  , ws->drain_rad                           , 9, 3,  stream);
-  sched_util_fprintf_qst(ws->def[7]  , get_inflow_eq_string(ws->inflow_eq)     , 8,     stream);
-  sched_util_fprintf_qst(ws->def[8]  , get_auto_shut_string(ws->auto_shut)     , 8,     stream);
-  sched_util_fprintf_qst(ws->def[9]  , get_crossflow_string(ws->crossflow)     , 8,     stream);
+  sched_util_fprintf_dbl(ws->def[4]  , ws->md                                  , 8, 3,  stream);
+  sched_util_fprintf_qst(ws->def[5]  , get_phase_string(ws->phase)             , 5,     stream);
+  sched_util_fprintf_dbl(ws->def[6]  , ws->drain_rad                           , 8, 3,  stream);
+  sched_util_fprintf_qst(ws->def[7]  , get_inflow_eq_string(ws->inflow_eq)     , 3,     stream);
+  sched_util_fprintf_qst(ws->def[8]  , get_auto_shut_string(ws->auto_shut)     , 4,     stream);
+  sched_util_fprintf_qst(ws->def[9]  , get_crossflow_string(ws->crossflow)     , 3,     stream);
   sched_util_fprintf_int(ws->def[10] , ws->pvt_region                          , 4,     stream);
-  sched_util_fprintf_qst(ws->def[11] , get_hdstat_head_string(ws->hdstat_head) , 8,     stream);
+  sched_util_fprintf_qst(ws->def[11] , get_hdstat_head_string(ws->hdstat_head) , 3,     stream);
   sched_util_fprintf_int(ws->def[12] , ws->fip_region                          , 4,     stream);
+  /*
   sched_util_fprintf_qst(ws->def[13] , ws->fs_kw1                              , 8,     stream);
   sched_util_fprintf_qst(ws->def[14] , ws->fs_kw2                              , 8,     stream);
   sched_util_fprintf_qst(ws->def[15] , ws->ecl300_kw                           , 8,     stream);
-  fprintf(stream,"\n");
+  */
+  fprintf(stream,"/\n");
 };
 
 
@@ -294,7 +296,7 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
     }
   }
 
-  ws->name = token_list[0];
+  ws->name = util_alloc_string_copy(token_list[0]);
   
   if(!ws->def[1])
     ws->group = util_alloc_string_copy(token_list[1]);
@@ -390,7 +392,7 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
 
 
 
-/***********************************************************************************/
+/*****************************************************************************/
 
 
 
