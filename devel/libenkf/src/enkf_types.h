@@ -38,7 +38,7 @@ enkf_var_type ecl_static symbolize perfectly the same thing. */
   These correspond to implementation types.
 */
 typedef enum {INVALID = 0   , 
-	      STATIC = 100  ,
+	      STATIC  = 100  ,
 	      MULTZ   ,       /* 101 */
 	      MULTFLT ,       /* 102 */
 	      EQUIL   ,       /* 103 */   

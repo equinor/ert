@@ -384,6 +384,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	/*
 	  Checking for complete / exited jobs.
 	*/
+	bool verbose = true;
 	int queue_index;
 	for (queue_index = 0; queue_index < job_queue_get_active_size(queue); queue_index++) {
 	  job_queue_node_type * node = queue->jobs[queue_index];
@@ -391,7 +392,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	  case(job_queue_done):
 
 	    if (util_file_exists(node->exit_file)) {
-	      bool verbose = true;
 	      if (verbose)
 		printf("Restarting: %s \n",node->job_name);
 	      
@@ -403,6 +403,8 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	    job_queue_free_job(queue , node);
 	    break;
 	  case(job_queue_exit):
+	    if (verbose)
+	      printf("Restarting: %s \n",node->job_name);
 	    queue->status_list[job_queue_restart]++;
 	    job_queue_change_node_status(queue , node , job_queue_waiting);
 	    job_queue_free_job(queue , node);
@@ -415,10 +417,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
       
       if (!new_jobs)
 	usleep(queue->usleep_time);
-
+      
       /*
-	else we have submitted new jobs - and know the status is out of sync,
-	no need to wait before a rescan.
+	else we have submitted new jobs - and know the status is out
+	of sync, no need to wait before a rescan.
       */
     }
   } while ( cont );

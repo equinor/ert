@@ -17,6 +17,7 @@
 #include <gen_kw.h>
 #include <path_fmt.h>
 #include <havana_fault.h>
+#include <gen_data.h>
 
 
 typedef struct serial_state_struct serial_state_type;
@@ -645,7 +646,18 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->freef        = ecl_static_kw_free__;
     node->free_data    = ecl_static_kw_free_data__;
     break;
-    
+  case(GEN_DATA):
+    node->realloc_data = gen_data_realloc_data__;
+    node->alloc        = gen_data_alloc__;
+    node->fread_f      = gen_data_fread__;
+    node->fwrite_f     = gen_data_fwrite__;
+    node->copyc        = gen_data_copyc__;
+    node->freef        = gen_data_free__;
+    node->free_data    = gen_data_free_data__;
+    node->ecl_load     = gen_data_ecl_load__;
+    node->serialize    = gen_data_serialize__;
+    node->deserialize  = gen_data_deserialize__; 
+    break;
   default:
     fprintf(stderr,"%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);
     abort();

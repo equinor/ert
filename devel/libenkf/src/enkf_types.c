@@ -9,6 +9,9 @@
 
 const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   switch(impl_type) {
+  case(INVALID):
+    return "INVALID";
+    break;
   case STATIC:
     return "STATIC";
     break;

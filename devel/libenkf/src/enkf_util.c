@@ -145,7 +145,6 @@ size_t enkf_util_serialize(const double * node_data, const bool * active , size_
 }
 
 
-
 size_t enkf_util_deserializeII(void * __node_data , ecl_type_enum node_type , const bool * active , size_t node_offset , size_t node_size , size_t node_serial_size , 
 			       const double * serial_data , size_t serial_offset , int serial_stride) {
   

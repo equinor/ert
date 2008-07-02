@@ -62,6 +62,7 @@ struct enkf_config_struct {
   bool              endian_swap;
   bool              fmt_file;
   bool              unified;
+  int               debug_level;
   char *            data_file;
   char *            schedule_src_file;
   char *            schedule_target_file;
@@ -88,6 +89,9 @@ enkf_impl_type enkf_config_impl_type(const enkf_config_type *enkf_config, const 
 
   return impl_type;
 }
+
+int  enkf_config_get_debug(const enkf_config_type * enkf_config)             { return enkf_config->debug_level; }
+void enkf_config_set_debug(enkf_config_type * enkf_config , int debug_level) { enkf_config->debug_level = debug_level; }
 
 bool enkf_config_get_endian_swap(const enkf_config_type * enkf_config) { return enkf_config->endian_swap; }
 
@@ -336,13 +340,21 @@ static void enkf_config_set_start_date(enkf_config_type * config , const char **
    This function adds a keyword to the list of restart keywords wich
    are included. Observe that ecl_util_escape_kw() is called prior to
    adding it.
+
+   The kw __ALL__ is magic; and will result in a request to store all
+   static kewyords. This wastes disk-space, but might be beneficial
+   when debugging.
 */
 
 void enkf_config_add_static_kw(enkf_config_type * enkf_config , const char * _kw) {
-  char * kw = util_alloc_string_copy(_kw);
-  ecl_util_escape_kw(kw);
-  set_add_key(enkf_config->static_kw_set , kw);
-  free(kw);
+  if (strcmp(_kw , "__ALL__") == 0)
+    enkf_config->include_all_static_kw = true;
+  else {
+    char * kw = util_alloc_string_copy(_kw);
+    ecl_util_escape_kw(kw);
+    set_add_key(enkf_config->static_kw_set , kw);
+    free(kw);
+  }
 }
 
 
@@ -393,7 +405,7 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->init_file            = NULL;
   config->forward_model        = NULL;
   config->forward_model_length = 0;
-  enkf_config_set_result_path(config , "Results/%04d");
+  enkf_config_set_debug(config , 0);
 
   config->include_all_static_kw = false;
   config->static_kw_set         = set_alloc_empty();
@@ -446,12 +458,14 @@ static void enkf_config_post_assert(const enkf_config_type * config , ext_joblis
   __assert_not_null(config->ens_path           , "ENSPATH"  	 , OK);
   __assert_not_null(config->schedule_src_file  , "SCHEDULE" 	 , OK);
   __assert_not_null(config->schedule_src_file  , "SCHEDULE" 	 , OK);
-  
+  __assert_not_null(config->result_path        , "RESULT_PATH"  , OK);
+
   if (config->ens_size <= 0) {
     fprintf(stderr,"Must set ensemble size > 0 with KEYWORD SIZE.\n");
     OK = false;
   }
-  {
+
+  if (OK) {
     int i;
     for (i=0; i < config->forward_model_length; i++) {
       if ( !ext_joblist_has_job(joblist , config->forward_model[i]) ) {
@@ -459,8 +473,6 @@ static void enkf_config_post_assert(const enkf_config_type * config , ext_joblis
 	fprintf(stderr, "%s: FORWARD_MODEL:%s not defined \n",__func__ , config->forward_model[i]);
       }
     }
-    if (!OK)
-      util_abort("%s: ERROR with FORWARD_MODEL keyword - aborting \n",__func__);
   }
   if (!OK) util_exit("Exiting due to errors in config file\n");
 }
@@ -511,7 +523,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
       int i , tokens;
       int active_tokens;
       char **token_list;
-
+      bool debug = (enkf_config_get_debug(enkf_config) > 0);
+      
       line  = util_fscanf_alloc_line(stream , &at_eof);
       if (line != NULL) {
 	util_split_string(line , " " , &tokens , &token_list);
@@ -526,11 +539,11 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	  }
 	}
 	
-      
 	if (active_tokens > 0) {
 	  impl_type = enkf_types_check_impl_type(token_list[0]);
 	  if (impl_type == INVALID) {
 	    const char * kw = token_list[0];
+	    if (debug) printf("Parsing: %s \n",kw);
 	    if (enkf_site_config_has_key(site_config , kw)) {
 	      /* The configuration overrides a value from the site_config object. */
 	      ASSERT_TOKENS(kw , active_tokens , 1);
@@ -541,13 +554,14 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		for (ikw = 1; ikw < active_tokens; ikw++)
 		  enkf_config_add_static_kw(enkf_config , token_list[ikw]);
 	      } else if (strcmp(kw , "SIZE") == 0) {
-		int ens_size;
 		ASSERT_TOKENS("SIZE" , active_tokens , 1);
-		if (util_sscanf_int(token_list[1] , &ens_size)) 
-		  enkf_config_set_ens_size( enkf_config , ens_size);
-		else 
-		  util_abort("%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
-		
+		{
+		  int ens_size;
+		  if (util_sscanf_int(token_list[1] , &ens_size)) 
+		    enkf_config_set_ens_size( enkf_config , ens_size);
+		  else 
+		    util_abort("%s: failed to convert:%s to valid integer - aborting \n",__func__ , token_list[1]);
+		}
 	      } else if (strcmp(kw , "OBS_CONFIG") == 0) {
 		ASSERT_TOKENS("OBS_CONFIG" , active_tokens , 1);
 		{
@@ -564,6 +578,17 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		/* This is later taken over by the enkf_state objects */
 		ASSERT_TOKENS("DATA_KW" , active_tokens , 2);
 		hash_insert_hash_owned_ref(enkf_config->data_kw , token_list[1] , util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ") , free);
+	      } else if (strcmp(kw , "DEBUG") == 0) {
+		{
+		  int debug_level;
+		  ASSERT_TOKENS("DEBUG_LEVEL" , active_tokens , 1);
+		  
+		  if (util_sscanf_int(token_list[1] , &debug_level))
+		      enkf_config_set_debug(enkf_config ,debug_level);
+		  else
+		    util_abort("%s: failed to parse debug_level:%s to an integer \n",__func__ , token_list[1]);
+		  
+		}
 	      } else if (strcmp(kw , "RUNPATH") == 0) {
 		ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
 		enkf_config_set_run_path( enkf_config , token_list[1] );
@@ -573,6 +598,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      } else if (strcmp(kw , "ECLBASE") == 0) {
 		ASSERT_TOKENS("ECLBASE" , active_tokens , 1);
 		enkf_config_set_eclbase( enkf_config , token_list[1] );
+	      } else if (strcmp(kw , "RESULT_PATH") == 0) {
+		ASSERT_TOKENS("RESULT_PATH" , active_tokens , 1);
+		enkf_config_set_result_path( enkf_config , token_list[1] );
 	      } else if (strcmp(kw , "SCHEDULE_FILE") == 0) {
 		ASSERT_TOKENS("SCHEDULE_FILE" , active_tokens , 1);
 		if (active_tokens == 3)
@@ -697,6 +725,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      enkf_config_add_type(enkf_config , token_list[1] , ecl_summary , SUMMARY , NULL , summary_config_alloc(active_tokens - 2 , (const char **) &token_list[2]));
 	      break;
 	    case(PGBOX):
+	      break;
+	    case(GEN_DATA):
 	      break;
 	    case(GEN_KW):
 	      ASSERT_TOKENS("GEN_KW" , active_tokens , 4);

@@ -10,6 +10,7 @@
 #include <ecl_util.h>
 #include <gen_data_config.h>
 #include <gen_data.h>
+#include <gen_common.h>
 #include <enkf_macros.h>
 
 
@@ -29,7 +30,6 @@
    ways through one simulation; however only one way at one time step.
 */
    
-typedef enum {ascii_file , binary_C_file , binary_fortran_file} gen_data_file_type;
 
 
 #define  DEBUG
@@ -61,197 +61,28 @@ struct gen_data_struct {
 
 
 
-/*****************************************************************/
-/**
-Format of the gen_data files should be:
-ASCII|BINARY
-KEYWORD
-DOUBLE|FLOAT
-<SIZE>
-d1
-d2
-d3
-d4
-d5
-....
-....
-
-I.e. to write an ascii file (with C):
-
-   fprintf(stream, "ASCII\n");
-   fprintf(stream,"%s\n"keyword);
-   fprintf(stream,"DOUBLE\n");
-   fprintf(stream,"%d\n",elements);
-   for (i = 0; i < elements; i++) {
-
-   }  
-
-
-   When written in binary with C you *MUST INCLUDE* the terminating \0
-   at the end of the "BINARY", "KEYWORD" and "DOUBLE|FLOAT" strings.
-   
-   When written in binary with Fortran it is not necessary to include
-   any form of termination, but it is essential that the write
-   statement only writes the required number of bytes, with no extra
-   spaces at the end.
-*/
-
-
-static void gen_data_fread_ascii_header(gen_data_type * gen_data , const char * config_tag , FILE * stream) {
-  util_fskip_lines(stream , 1); /* We know the first line contains "ASCII". */
-  {
-    gen_data->file_tag = util_fscanf_alloc_token(stream);
-    if (gen_data->file_tag == NULL)
-      util_abort("%s: could not locate tag. \n" , __func__);
-    
-    if (config_tag != NULL)
-      if (strcmp(gen_data->file_tag , config_tag) != 0) 
-      util_abort("%s: tags did not match: Config:%s  CurrentFile:%s \n",__func__ , config_tag , gen_data->file_tag);
-    util_fskip_lines(stream , 1);
-  }
-  
-  {
-    char * string_type;
-    string_type = util_fscanf_alloc_token(stream);
-    util_strupr(string_type);
-    if (strcmp(string_type, "DOUBLE") == 0)
-      gen_data->ecl_type = ecl_double_type;
-    else if (strcmp(string_type, "FLOAT") == 0)
-      gen_data->ecl_type = ecl_float_type;
-    else 
-      util_abort("%s: type identiefier:%s  not recognized - valid values are FLOAT | DOUBLE \n",__func__ , string_type);
-    free(string_type);
-    util_fskip_lines(stream , 1);
-  }
-
-  if (!util_fscanf_int(stream , &gen_data->size))
-    util_abort("%s: Failed to read the number of elements when parsing:%s. \n",__func__ , gen_data->src_file);
-}
-
-
-static void gen_data_fread_binary_C_header(gen_data_type * gen_data , const char * config_tag , FILE * stream) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_data_fread_binary_fortran_header(gen_data_type * gen_data ,const char * config_tag ,  FILE * stream) {
-  util_exit("%s: not implemented yet ... \n");
-}
 
 
 static void gen_data_fread_header(gen_data_type * gen_data , const char * config_tag , FILE * stream) {
-  switch (gen_data->file_type) {
-  case(ascii_file):
-    gen_data_fread_ascii_header(gen_data , config_tag , stream);
-    break;
-  case(binary_C_file):
-    gen_data_fread_binary_C_header(gen_data , config_tag , stream);
-    break;
-  case(binary_fortran_file):
-    gen_data_fread_binary_fortran_header(gen_data , config_tag , stream);
-    break;
-  default:
-    util_abort("%s: internal error - invalid value in switch statement. \n",__func__);
-  }
+  gen_common_fload_header(gen_data->file_type , stream , config_tag , &gen_data->file_tag , &gen_data->size , &gen_data->ecl_type);
 }
-
-
-static void gen_data_fread_binary_C_data(gen_data_type * gen_data , FILE * stream) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_data_fread_binary_fortran_data(gen_data_type * gen_data , FILE * stream) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_data_fread_ascii_data(gen_data_type * gen_data , FILE *stream) {
-  int i;
-  switch (gen_data->ecl_type) {
-  case(ecl_float_type):
-    {
-      float * data = (float *) gen_data->data;
-      for (i=0; i < gen_data->size; i++)
-	if (fscanf(stream,"%g",&data[i]) != 1)
-	  util_abort("%s: failed to read element %d of %d from %s. \n",__func__ , (i+1), gen_data->size , gen_data->src_file);
-    }
-    break;
-  case(ecl_double_type):
-    {
-      double * data = (double *) gen_data->data;
-      for (i=0; i < gen_data->size; i++)
-	if (fscanf(stream,"%lg",&data[i]) != 1)
-	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), gen_data->size , gen_data->src_file);
-    }
-    break;
-  default:
-    util_abort("%s: unrecognized/not supported data_type:%d.\n",__func__ , gen_data->ecl_type);
-  }
-}
-
 
 
 static void gen_data_fread_data(gen_data_type * gen_data , FILE * stream) {
-  switch (gen_data->file_type) {
-  case(ascii_file):
-    gen_data_fread_ascii_data(gen_data , stream);
-    break;
-  case(binary_C_file):
-    gen_data_fread_binary_C_data(gen_data , stream);
-    break;
-  case(binary_fortran_file):
-    gen_data_fread_binary_fortran_data(gen_data , stream);
-    break;
-  default:
-    util_abort("%s: internal error - invalid value in switch statement. \n",__func__);
-  }
+  gen_common_fload_data(stream , gen_data->src_file , gen_data->file_type , gen_data->ecl_type , gen_data->size , gen_data->data);
 }
 
 
 static void gen_data_set_file_data(gen_data_type * gen_data , const char * filename ) {
-  char buffer[32];
   gen_data->src_file = util_alloc_string_copy( filename );
-  if (fortio_is_fortran_file(filename , &gen_data->fortran_endian_flip)) {
-    int record_length;
-    fortio_type * fortio = fortio_fopen(filename , "r" , gen_data->fortran_endian_flip);
-    record_length = fortio_fread_record(fortio , buffer);
-    if (record_length != 6) 
-      util_abort("%s: could not locate \'BINARY\' header in %s.\n",__func__ , filename);
-    buffer[6] = '\0';
-    util_strupr(buffer);
-    if (strcmp(buffer , "BINARY") != 0)
-      util_abort("%s: could not locate \'BINARY\' header in %s.\n",__func__ , filename);
-    
-    fortio_fclose(fortio);
-    gen_data->file_type = binary_fortran_file;
-  } else {
-    FILE * stream = util_fopen(filename , "r");
-    long int init_pos = ftell(stream);
-    util_fread(buffer , 1 , 5 , stream , __func__);
-    buffer[5] = '\0';
-    util_strupr(buffer);
-    if (strcmp(buffer , "ASCII") == 0)
-      gen_data->file_type = ascii_file;
-    else {
-      fseek(stream , init_pos , SEEK_SET);
-      util_fread(buffer , 1 , 6 , stream , __func__);
-      buffer[6] = '\0';
-      util_strupr(buffer);
-      if (strcmp(buffer , "BINARY") == 0) 
-	gen_data->file_type = binary_C_file;
-      else 
-	util_abort("%s: could not determine BINARY / ASCII status of file:%s. Header: %s not recognized \n",__func__ , filename , buffer);
-    }
-    fclose(stream);
-  }
+  gen_common_get_file_type(filename , &gen_data->file_type , &gen_data->fortran_endian_flip);
 }
 
 
 
 gen_data_type * gen_data_alloc(const gen_data_config_type * config) {
   gen_data_type * gen_data = util_malloc(sizeof * gen_data, __func__);
-  gen_data->config    = config;
+  gen_data->config    = (gen_data_config_type *) config;
   gen_data->data      = NULL;
   gen_data->file_tag  = NULL;
   gen_data->src_file  = NULL;
@@ -368,7 +199,10 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
 	gen_data_config_assert_metadata(gen_data->config , report_step , gen_data->size , gen_data->ecl_type , gen_data->file_tag);
       } else 
 	util_abort("%s: At report_step:%d could not find file:%s.\n",__func__ , report_step , full_path);
-      
+
+      if (gen_data->size == 0)
+	gen_data_deactivate(gen_data);
+  
       free(full_path);
     } else
       gen_data_deactivate(gen_data);
@@ -379,20 +213,21 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
 int gen_data_serialize(const gen_data_type *gen_data , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete) {
   ecl_type_enum ecl_type = gen_data->ecl_type;
   const int data_size    = gen_data->size;
-
-  int elements_added;
-  elements_added = enkf_util_serializeII(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  int elements_added = 0;
+  if (data_size > 0) 
+    elements_added = enkf_util_serializeII(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   return elements_added;
 }
 
 
 int gen_data_deserialize(gen_data_type * gen_data , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
-  ecl_type_enum ecl_type = gen_data->ecl_type;
-  const int data_size    = gen_data->size;
-  int new_internal_offset;
-
-  new_internal_offset = enkf_util_deserializeII(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
-
+  ecl_type_enum ecl_type  = gen_data->ecl_type;
+  const int data_size     = gen_data->size;
+  int new_internal_offset = 0;
+  
+  if (data_size > 0)
+    new_internal_offset = enkf_util_deserializeII(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  
   /*
     gen_data_truncate(gen_data);
   */
