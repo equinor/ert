@@ -34,6 +34,8 @@ struct lsf_job_struct {
   int 	    __basic_id;
   int  	    __lsf_id;
   long int  lsf_jobnr;
+  int       num_exec_host;
+  char    **exec_host;
 #ifdef LSF_SYSTEM_DRIVER
   char    * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_output hash table */
 #endif
@@ -96,6 +98,8 @@ lsf_job_type * lsf_job_alloc() {
   lsf_job_type * job;
   job = util_malloc(sizeof * job , __func__);
   job->__lsf_id = LSF_JOB_ID;
+  job->num_exec_host = 0;
+  job->exec_host     = NULL;
 #ifdef LSF_SYSTEM_DRIVER
   job->lsf_jobnr_char = NULL;
 #endif
@@ -103,10 +107,16 @@ lsf_job_type * lsf_job_alloc() {
 }
 
 
+void lsf_job_fprintf(const lsf_job_type * lsf_job) {
+  printf("LSF_ID: %d \n",lsf_job->lsf_jobnr);
+}
+
+
 void lsf_job_free(lsf_job_type * job) {
 #ifdef LSF_SYSTEM_DRIVER
   util_safe_free(job->lsf_jobnr_char);
 #endif
+  util_free_stringlist(job->exec_host , job->num_exec_host);
   free(job);
 }
 
@@ -206,6 +216,11 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
       }
       job_info = lsb_readjobinfo( NULL );
       lsb_closejobinfo();
+      /*
+	int numExHosts;
+	char **exHosts;
+      */
+
 
       switch (job_info->status) {
 	case(JOB_STAT_PEND  , job_queue_pending);
@@ -270,11 +285,16 @@ static job_status_type lsf_driver_get_job_status_system(basic_queue_driver_type 
 
 
 job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+  job_status_type status;
 #ifdef LSF_LIBRARY_DRIVER
-  return lsf_driver_get_job_status_libary(__driver , __job);
+  status = lsf_driver_get_job_status_libary(__driver , __job);
 #else
-  return lsf_driver_get_job_status_system(__driver , __job);
+  status = lsf_driver_get_job_status_system(__driver , __job);
 #endif
+  if (status == job_queue_exit) 
+    lsf_job_fprintf((lsf_job_type *) __job);
+
+  return status;
 }
 
 
