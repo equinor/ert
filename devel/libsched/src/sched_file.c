@@ -15,12 +15,11 @@
 #include <set.h>
 
 /**
-The sched_file struct can parse and internalize a schedule file. It
-can parse some keywords, like COMPDAT and WCONHIST, they are
-implemented in their own files, i.e. sched_kw_compdat and
-sched_kw_wconhist. Keywords which are not recognized are just stored
-as lump of bytes.
-
+   The sched_file struct can parse and internalize a schedule file. It
+   can parse some keywords, like COMPDAT and WCONHIST, they are
+   implemented in their own files, i.e. sched_kw_compdat and
+   sched_kw_wconhist. Keywords which are not recognized are just stored
+   as a lump of bytes.
 */
 
 
@@ -28,7 +27,15 @@ as lump of bytes.
 
 struct sched_file_struct {
   hash_type  *month_hash;
-  hash_type  *fixed_record_kw;
+  hash_type  *fixed_record_kw;  /* Most keywords in the schedule file are over several lines, they typically start
+				   with a tag, like COMPDAT, then there are an arbitrary number of lines, each
+				   terminated with '/', and then the whole keyword, i.e. COMPDAT, is terminated
+				   with a '/' on a separate line.
+
+				   However - some keywords have a *fixed* number of lines, and they are *NOT*
+				   terminated by a '/' on separate line. This confuses the parser, and we must tell
+				   the parser in advance of all the keywords which have a fixed length.
+				*/
   hash_type  *kw_types;
   list_type  *kw_list;
   set_type   *well_set;
