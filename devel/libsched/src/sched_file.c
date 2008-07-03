@@ -71,45 +71,46 @@ sched_file_type * sched_file_alloc(time_t start_date) {
   sched_file_type * sched_file = util_malloc(sizeof *sched_file , __func__);
   {
     hash_type *month_hash = hash_alloc();
-    hash_insert_int(month_hash , "JAN" , 0);
-    hash_insert_int(month_hash , "FEB" , 1);
-    hash_insert_int(month_hash , "MAR" , 2);
-    hash_insert_int(month_hash , "APR" , 3);
-    hash_insert_int(month_hash , "MAY" , 4);
-    hash_insert_int(month_hash , "JUN" , 5);
-    hash_insert_int(month_hash , "JUL" , 6);
-    hash_insert_int(month_hash , "JLY" , 6);
-    hash_insert_int(month_hash , "AUG" , 7);
-    hash_insert_int(month_hash , "SEP" , 8);
-    hash_insert_int(month_hash , "OCT" , 9);
-    hash_insert_int(month_hash , "NOV" ,10);
-    hash_insert_int(month_hash , "DEC" ,11);
+    hash_insert_int(month_hash , "JAN" , 1);
+    hash_insert_int(month_hash , "FEB" , 2);
+    hash_insert_int(month_hash , "MAR" , 3);
+    hash_insert_int(month_hash , "APR" , 4);
+    hash_insert_int(month_hash , "MAY" , 5);
+    hash_insert_int(month_hash , "JUN" , 6);
+    hash_insert_int(month_hash , "JUL" , 7);
+    hash_insert_int(month_hash , "JLY" , 7);
+    hash_insert_int(month_hash , "AUG" , 8);
+    hash_insert_int(month_hash , "SEP" , 9);
+    hash_insert_int(month_hash , "OCT" ,10);
+    hash_insert_int(month_hash , "NOV" ,11);
+    hash_insert_int(month_hash , "DEC" ,12);
     
-    hash_insert_int(month_hash , "jan" , 0);
-    hash_insert_int(month_hash , "feb" , 1);
-    hash_insert_int(month_hash , "mar" , 2);
-    hash_insert_int(month_hash , "apr" , 3);
-    hash_insert_int(month_hash , "may" , 4);
-    hash_insert_int(month_hash , "jun" , 5);
-    hash_insert_int(month_hash , "jul" , 6);
-    hash_insert_int(month_hash , "aug" , 7);
-    hash_insert_int(month_hash , "sep" , 8);
-    hash_insert_int(month_hash , "oct" , 9);
-    hash_insert_int(month_hash , "nov" ,10);
-    hash_insert_int(month_hash , "dec" ,11);
+    hash_insert_int(month_hash , "jan" , 1);
+    hash_insert_int(month_hash , "feb" , 2);
+    hash_insert_int(month_hash , "mar" , 3);
+    hash_insert_int(month_hash , "apr" , 4);
+    hash_insert_int(month_hash , "may" , 5);
+    hash_insert_int(month_hash , "jun" , 6);
+    hash_insert_int(month_hash , "jul" , 7);
+    hash_insert_int(month_hash , "aug" , 8);
+    hash_insert_int(month_hash , "sep" , 9);
+    hash_insert_int(month_hash , "oct" ,10);
+    hash_insert_int(month_hash , "nov" ,11);
+    hash_insert_int(month_hash , "dec" ,12);
 
-    hash_insert_int(month_hash , "Jan" , 0);
-    hash_insert_int(month_hash , "Feb" , 1);
-    hash_insert_int(month_hash , "Mar" , 2);
-    hash_insert_int(month_hash , "Apr" , 3);
-    hash_insert_int(month_hash , "May" , 4);
-    hash_insert_int(month_hash , "Jun" , 5);
-    hash_insert_int(month_hash , "Jul" , 6);
-    hash_insert_int(month_hash , "Aug" , 7);
-    hash_insert_int(month_hash , "Sep" , 8);
-    hash_insert_int(month_hash , "Oct" , 9);
-    hash_insert_int(month_hash , "Nov" ,10);
-    hash_insert_int(month_hash , "Dec" ,11);
+    hash_insert_int(month_hash , "Jan" , 1);
+    hash_insert_int(month_hash , "Feb" , 2);
+    hash_insert_int(month_hash , "Mar" , 3);
+    hash_insert_int(month_hash , "Apr" , 4);
+    hash_insert_int(month_hash , "May" , 5);
+    hash_insert_int(month_hash , "Jun" , 6);
+    hash_insert_int(month_hash , "Jul" , 7);
+    hash_insert_int(month_hash , "Aug" , 8);
+    hash_insert_int(month_hash , "Sep" , 9);
+    hash_insert_int(month_hash , "Oct" ,10);
+    hash_insert_int(month_hash , "Nov" ,11);
+    hash_insert_int(month_hash , "Dec" ,12);
+
     sched_file->month_hash = month_hash;
   }
 
@@ -122,6 +123,7 @@ sched_file_type * sched_file_alloc(time_t start_date) {
     hash_insert_int(fixed_record_kw , "RPTRST"   , 1);
     hash_insert_int(fixed_record_kw , "TSTEP"    , 1);
     hash_insert_int(fixed_record_kw , "TUNING"   , 3);
+    hash_insert_int(fixed_record_kw , "WHISTCTL" , 1);  /* Sorry guys - already fixed. :-| */
     sched_file->fixed_record_kw = fixed_record_kw;
   }
   
