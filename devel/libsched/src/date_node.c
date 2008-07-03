@@ -53,23 +53,19 @@ date_node_type * date_node_alloc_ext(bool TStep , time_t time , int date_nr , co
 
 
 time_t date_node_parse_DATES_line(const char * DATES_string , const hash_type * month_hash) {
-  int tokens , i;
+  int mday , month , year, tokens;
   char **token_list;
-  time_t time;
-  struct tm ts;
-  sched_util_parse_line(DATES_string , &tokens , &token_list , 3 , NULL);
-  ts.tm_sec    = 0;
-  ts.tm_min    = 0;
-  ts.tm_hour   = 0;
-  ts.tm_mday   = atoi(token_list[0]);
-  ts.tm_mon    = hash_get_int(month_hash , token_list[1]);
-  ts.tm_year   = atoi(token_list[2]) - 1900;
-  time = mktime( &ts );
-  for (i=0; i < tokens; i++) {
-    if (token_list[i] != NULL) free(token_list[i]);
-  }
-  free(token_list);
+  time_t time = -1;
 
+  sched_util_parse_line(DATES_string , &tokens , &token_list , 3 , NULL);
+  month = hash_get_int(month_hash , token_list[1]);
+  if (util_sscanf_int(token_list[0] , &mday) && util_sscanf_int(token_list[2] , &year))
+    time = util_make_time1(mday , month , year);
+  else 
+    util_abort("%s: fatal error when extracting date from:%s \n",DATES_string);
+  
+  util_free_stringlist(token_list , tokens);
+  
   return time;
 }
 
