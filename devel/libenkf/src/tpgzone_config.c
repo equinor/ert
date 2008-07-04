@@ -317,7 +317,7 @@ scalar_config_type * tpgzone_config_petrophysics_fscanf_alloc_item(const char   
       in the zone configuration and the facies in the petrophysics configuration.
       Thus, the first thing we do is to assert that this holds.
     */
-    char ** facies_kw = hash_alloc_keylist(facies_kw_hash);
+    char ** facies_kw = hash_alloc_keylist( (hash_type *) facies_kw_hash);
 
     if(!config_has_keys(config, (const char **) facies_kw, num_facies, true))
     {

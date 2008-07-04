@@ -14,10 +14,14 @@ struct plain_driver_struct {
 };
 
 
+
+
+
 static void plain_driver_assert_cast(plain_driver_type * plain_driver) {
   if (plain_driver->plain_driver_id != PLAIN_DRIVER_ID) 
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
 }
+
 
 
 void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
@@ -53,6 +57,19 @@ void plain_driver_free(void *_driver) {
   plain_driver_assert_cast(driver);
   path_fmt_free(driver->path);
   free(driver);
+}
+
+
+
+void plain_driver_README(const char * root_path) {
+  char * README_file = util_alloc_full_path(root_path , "README.txt");
+  FILE * stream      = util_fopen(README_file , "w");
+
+  fprintf(stream,"This is the root directory of the EnKF ensemble filesystem. All files contain one enkf_node \n");
+  fprintf(stream,"instance. The files are binary, and compressed with zlip (util_fwrite_compressed).\n");
+
+  fclose(stream);
+  free(README_file);
 }
 
 

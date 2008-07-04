@@ -934,14 +934,14 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     int forward_model_length;
     bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
     const char ** forward_model = enkf_config_get_forward_model(enkf_state->config , &forward_model_length);
-    hash_type * context = hash_alloc();
-    char * restart_file1   = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step1);
-    char * restart_file2   = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step2);
-    char * smspec_file     = ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , -1);
-    char * iens            = util_alloc_sprintf("%d" , enkf_state->my_iens);
-    char * ecl_base        = enkf_state->eclbase;
-    char * report_step1_s  = util_alloc_sprintf("%d" , report_step1);
-    char * report_step2_s  = util_alloc_sprintf("%d" , report_step2);
+    hash_type * context    	= hash_alloc();
+    char * restart_file1   	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step1);
+    char * restart_file2   	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step2);
+    char * smspec_file     	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , -1);
+    char * iens            	= util_alloc_sprintf("%d" , enkf_state->my_iens);
+    char * ecl_base        	= enkf_state->eclbase;
+    char * report_step1_s  	= util_alloc_sprintf("%d" , report_step1);
+    char * report_step2_s  	= util_alloc_sprintf("%d" , report_step2);
 
 
     hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( report_step1_s ) , void_arg_free__);
@@ -960,6 +960,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     free(smspec_file);
     free(report_step1_s);
     free(report_step2_s);
+    hash_free(context);
   }
 }
 

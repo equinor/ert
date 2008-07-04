@@ -236,6 +236,31 @@ int gen_data_deserialize(gen_data_type * gen_data , int internal_offset , size_t
 
 
 
+/**
+   Returns double value of element nr i in the gen_data instance. If
+   underlying data_type is float, it is converted.
+*/
+
+
+double gen_data_iget_double(const gen_data_type * gen_data, int index) {
+  if (index < 0 || index >= gen_data->size) {
+    util_abort("%s: asked for element:%d - only has:%d elements - aborting \n",__func__ , index , gen_data->size);
+    return 0; /* Dummy */
+  }
+
+  if (gen_data->ecl_type == ecl_double_type) {
+    const double * data = (const double * )gen_data->data;
+    return data[index];
+  } else if (gen_data->ecl_type == ecl_float_type) {
+    const float * data = (const float * )gen_data->data;
+    return (double ) data[index];
+  } else {
+    util_abort("%s: internal error: gen_data->ecl_type:%d not supported.\n",__func__ , gen_data->ecl_type);
+    return 0; /* Dummy */
+  }
+}
+
+
 
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
@@ -252,7 +277,7 @@ VOID_COPYC     (gen_data)
 VOID_ECL_LOAD(gen_data)
 VOID_SERIALIZE(gen_data)
 VOID_DESERIALIZE(gen_data)
-
+     
      /*
        VOID_TRUNCATE(gen_data)
        VOID_SCALE(gen_data)

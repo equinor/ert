@@ -237,3 +237,66 @@ void gen_common_fload_data(FILE * stream , const char * src_file , gen_data_file
   }
 }
 
+
+
+
+static void gen_common_fskip_binary_C_data(FILE * stream ,const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
+  util_exit("%s: not implemented yet ... \n");
+}
+
+
+static void gen_common_fskip_binary_fortran_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
+  util_exit("%s: not implemented yet ... \n");
+}
+
+
+static void gen_common_fskip_ascii_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
+  int i;
+  switch (ecl_type) {
+  case(ecl_float_type):
+    {
+      float  data;
+      for (i=0; i < size; i++)
+	if (fscanf(stream,"%g",&data) != 1)
+	  util_abort("%s: failed to read element %d of %d from %s. \n",__func__ , (i+1), size , src_file);
+    }
+    break;
+  case(ecl_double_type):
+    {
+      double data;
+      for (i=0; i < size; i++)
+	if (fscanf(stream,"%lg",&data) != 1)
+	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
+    }
+    break;
+  case(ecl_int_type):
+    {
+      int data;
+      for (i=0; i < size; i++)
+	if (fscanf(stream,"%d",&data) != 1)
+	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
+    }
+    break;
+  default:
+    util_abort("%s: unrecognized/not supported data_type:%d.\n",__func__ , ecl_type);
+  }
+}
+
+
+
+void gen_common_fskip_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
+  switch (file_type) {
+  case(ascii_file):
+    gen_common_fskip_ascii_data(stream , src_file , file_type , ecl_type , size);
+    break;
+  case(binary_C_file):
+    gen_common_fskip_binary_C_data(stream , src_file , file_type , ecl_type , size);
+    break;
+  case(binary_fortran_file):
+    gen_common_fskip_binary_fortran_data(stream , src_file , file_type , ecl_type , size);
+    break;
+  default:
+    util_abort("%s: internal error - invalid value in switch statement. \n",__func__);
+  }
+}
+
