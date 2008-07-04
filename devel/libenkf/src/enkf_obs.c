@@ -341,7 +341,7 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
     obs_node_type * obs_node = hash_get(enkf_obs->obs_hash , obs_keys[iobs]);
     obs_node_get_observations(obs_node , report_step , obs_data);
   }
-  hash_free_ext_keylist(enkf_obs->obs_hash , obs_keys);
+  util_free_stringlist( obs_keys , hash_get_size(enkf_obs->obs_hash));
   
 }
 

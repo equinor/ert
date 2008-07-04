@@ -11,9 +11,17 @@
 
 
 /**
-   Observe that this config object is prinsipally a bit different from
-   the other _config objects, in that for the gen_data type more of
-   the meta information is owned by the actual storage objects.
+   Observe that this config object is principally quite different from
+   the other _config objects for two reasons:
+
+   1. The gen_data type contains more of the meta information in the
+      actual storage objects.
+
+   2. The observation (e.g. a seismic interpretation) and the enkf
+      predictions, are assembled in the same config_ structure. This
+      is *not* the case for other quantities. (E.g. wells are added
+      twice, both as a dynamic variable, and as something to observe).
+
 */
 
 
@@ -22,9 +30,10 @@ struct gen_data_config_struct {
   int      num_active;        /* The number of timesteps where this gen_data instance is active. */
   int     *active_reports;    /* A list of timesteps where this gen_data keyword is active. */
   char   **tag_list;          /* The remote tags we are looking for - can be NULL.*/
-  char   **ecl_file_list;     /* The remote file we will load from. */
-
-
+  char   **ecl_file_list;     /* The remote file we will load forecasts from.*/
+  char   **obs_file_list;     /* A list of files we load observations from ?? */
+  bool    *obs_active;        /* Whether the observation is active - i.e. should be used in the EnKF update step. */   
+  
   /*-----------------------------------------------------------------*/
   /* Because the actual gen_data instances bootstrap from a file, the
      themselves contain meta information about size, ctype and so
@@ -35,6 +44,7 @@ struct gen_data_config_struct {
      variables below here are support variables for this
      functionality.
   */
+
   int               __report_step;   /* The current active report_step. */
   ecl_type_enum     __ecl_type;     
   char            * __file_tag;
@@ -51,6 +61,8 @@ static gen_data_config_type * gen_data_config_alloc_empty( enkf_var_type var_typ
   config->active_reports = NULL;
   config->tag_list       = NULL;
   config->ecl_file_list  = NULL;
+  config->obs_file_list  = NULL;
+  config->obs_active     = NULL;    
   config->__file_tag     = NULL;
   config->__report_step  = -1;
   pthread_mutex_init( &config->update_lock , NULL );
@@ -64,6 +76,8 @@ void gen_data_config_free(gen_data_config_type * config) {
   util_safe_free(config->__file_tag);
   util_free_stringlist(config->tag_list      , config->num_active);
   util_free_stringlist(config->ecl_file_list , config->num_active);
+  util_free_stringlist(config->obs_file_list , config->num_active);
+  util_safe_free(config->obs_active);
   free(config);
 }
 
@@ -115,15 +129,20 @@ bool gen_data_config_is_active(const gen_data_config_type * config , int report_
 
 
 
-static void gen_data_config_add_active(gen_data_config_type * gen_config , const char * ecl_file , int report_step , const char * tag) {
+static void gen_data_config_add_active(gen_data_config_type * gen_config , const char * obs_file , const char * ecl_file , int report_step , bool obs_active , const char * tag) {
   gen_config->num_active++;
   gen_config->active_reports = util_realloc(gen_config->active_reports , gen_config->num_active * sizeof * gen_config->active_reports , __func__);
   gen_config->ecl_file_list  = util_realloc(gen_config->ecl_file_list  , gen_config->num_active * sizeof * gen_config->ecl_file_list  , __func__);
+  gen_config->obs_file_list  = util_realloc(gen_config->obs_file_list  , gen_config->num_active * sizeof * gen_config->obs_file_list  , __func__);
   gen_config->tag_list       = util_realloc(gen_config->tag_list       , gen_config->num_active * sizeof * gen_config->tag_list       , __func__);
+  gen_config->obs_active     = util_realloc(gen_config->obs_active     , gen_config->num_active * sizeof * gen_config->obs_active     , __func__);
+
 
   gen_config->active_reports[gen_config->num_active - 1] = report_step;
   gen_config->ecl_file_list[gen_config->num_active - 1]  = util_alloc_string_copy(ecl_file);
+  gen_config->obs_file_list[gen_config->num_active - 1]  = util_alloc_string_copy(obs_file);
   gen_config->tag_list[gen_config->num_active - 1]       = util_alloc_string_copy(tag);
+  gen_config->obs_active[gen_config->num_active - 1]     = obs_active;
 }
 
 
@@ -157,8 +176,8 @@ void gen_data_config_get_ecl_file(const gen_data_config_type * config , int repo
    This function bootstraps a gen_data_config object from a configuration
    file. The format of the configuration file is as follows:
 
-   ECL_FILE1   REPORT_STEP1   <TAG1>
-   ECL_FILE2   REPORT_STEP2   <TAG2>
+   OBS_FILE1  ECL_FILE1   REPORT_STEP1   ON|OFF   <TAG1>
+   OBS_FILE2  ECL_FILE2   REPORT_STEP2   ON|OFF   <TAG2>
    ....
 
    Here ECL_FILE is the name of a file which is loaded, report_step is
@@ -173,29 +192,45 @@ gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
   {
     int    iarg , argc;
     int    num_active;
-    char **ecl_file_list;
+    char **obs_file_list;
+
+    obs_file_list = config_alloc_active_list(config , &num_active);
     
-    ecl_file_list = config_alloc_active_list(config , &num_active);
     for (iarg = 0; iarg < num_active; iarg++) {
-      const char  * ecl_file = ecl_file_list[iarg];
-      const char ** argv     = config_get_argv(config , ecl_file , &argc);
+      const char  * obs_file = obs_file_list[iarg];
+      const char ** argv     = config_get_argv(config , obs_file , &argc);
+      const char  * ecl_file;
       const char  * tag;
+      bool  obs_active = false; /* Dummy init */
       int report_step;
       
-      if (argc == 0) 
-	util_exit("%s: missing report step when parsing:%s in %s \n",__func__ , ecl_file , config_file);
+      if (argc <= 2) 
+	util_exit("%s: missing report step / ON|OFF when parsing:%s in %s \n",__func__ , obs_file , config_file);
 
-      if (!util_sscanf_int(argv[0] , &report_step)) 
+      ecl_file = argv[0];
+      if (!util_sscanf_int(argv[1] , &report_step)) 
 	util_exit("%s: failed to parse out report_step as integer - aborting \n",__func__);
-
-      if (argc == 1)
+      
+      {
+	char * on_off = util_alloc_string_copy( argv[2] );
+	util_strupr( on_off );
+	if (strcmp(on_off , "ON") == 0)
+	  obs_active = true;
+	else if (strcmp(on_off , "OFF") == 0)
+	  obs_active = false;
+	else 
+	  util_abort("%s: item nr four must be ON or OFF. \n",__func__);
+	free( on_off );
+      }
+      
+      if (argc == 3)
 	tag = NULL;
       else
-	tag = argv[1];
+	tag = argv[3];
       
-      gen_data_config_add_active(gen_config , ecl_file , report_step , tag);
+      gen_data_config_add_active(gen_config , obs_file , ecl_file , report_step , obs_active , tag);
     }
-    util_free_stringlist(ecl_file_list , num_active);
+    util_free_stringlist(obs_file_list , num_active);
   }
   config_free(config);
   return gen_config;

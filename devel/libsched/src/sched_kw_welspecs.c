@@ -273,9 +273,9 @@ static void welspec_free(welspec_type * ws)
 {
   free(ws->def      );
   free(ws->group    );
-  free(ws->fs_kw1   );
-  free(ws->fs_kw2   );
-  free(ws->ecl300_kw);
+  util_safe_free(ws->fs_kw1   );
+  util_safe_free(ws->fs_kw2   );
+  util_safe_free(ws->ecl300_kw);
   free(ws->name);
   free(ws);
 };

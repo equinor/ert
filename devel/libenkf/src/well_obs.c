@@ -370,22 +370,26 @@ void well_obs_get_observations(const well_obs_type * well_obs , int report_step,
   const int kw_len = 16;
   char kw[kw_len+1];
   int i;
-  var_list = hash_alloc_keylist(well_obs->var_hash);
-  for (i = 0; i < hash_get_size(well_obs->var_hash); i++) {
-    well_var_obs_type * var = well_obs_get_var(well_obs , var_list[i]);
-    var->currently_active = false;
-    if (obs_error_iactive(var->error , report_step)) {
-      double d   = well_obs_get_observation__(well_obs->hist , report_step , well_name , var_list[i] , &var->currently_active);
-      if (var->currently_active) {
-	double std = obs_error_iget_std(var->error , report_step , d);
-	strncpy(kw , well_name   , kw_len);
-	strcat(kw , "/");
-	strncat(kw , var_list[i] , kw_len - 1 - (strlen(well_name)));
-	obs_data_add(obs_data , d , std , kw);
-      } 
+  hash_lock(well_obs->var_hash);
+  {
+    var_list = hash_alloc_keylist(well_obs->var_hash);
+    for (i = 0; i < hash_get_size(well_obs->var_hash); i++) {
+      well_var_obs_type * var = well_obs_get_var(well_obs , var_list[i]);
+      var->currently_active = false;
+      if (obs_error_iactive(var->error , report_step)) {
+	double d   = well_obs_get_observation__(well_obs->hist , report_step , well_name , var_list[i] , &var->currently_active);
+	if (var->currently_active) {
+	  double std = obs_error_iget_std(var->error , report_step , d);
+	  strncpy(kw , well_name   , kw_len);
+	  strcat(kw , "/");
+	  strncat(kw , var_list[i] , kw_len - 1 - (strlen(well_name)));
+	  obs_data_add(obs_data , d , std , kw);
+	} 
+      }
     }
+    util_free_stringlist( var_list , hash_get_size( well_obs->var_hash ));
   }
-  hash_free_ext_keylist(well_obs->var_hash , var_list);
+  hash_unlock(well_obs->var_hash);
 }
 
 
@@ -393,14 +397,18 @@ void well_obs_get_observations(const well_obs_type * well_obs , int report_step,
 void well_obs_measure(const well_obs_type * well_obs , const well_type * well_state , meas_vector_type * meas_vector) {
   int i;
   char ** var_list;
-  var_list = hash_alloc_keylist(well_obs->var_hash);
-  
-  for (i=0; i < hash_get_size(well_obs->var_hash); i++) {
-    well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
-    if (obs->currently_active) 
-      meas_vector_add(meas_vector , well_get(well_state , var_list[i]));
-  }
-  hash_free_ext_keylist(well_obs->var_hash , var_list);
+  hash_lock ( well_obs->var_hash );
+  {
+    var_list = hash_alloc_keylist(well_obs->var_hash);
+    
+    for (i=0; i < hash_get_size(well_obs->var_hash); i++) {
+      well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
+      if (obs->currently_active) 
+	meas_vector_add(meas_vector , well_get(well_state , var_list[i]));
+    }
+    util_free_stringlist( var_list , hash_get_size( well_obs->var_hash ));
+  } 
+  hash_unlock( well_obs->var_hash );
 }
 
 

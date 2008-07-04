@@ -254,15 +254,20 @@ int relperm_config_get_data_size(const relperm_config_type * relperm_config) {
 }
 
 void relperm_config_ecl_write(const relperm_config_type * relperm_config,const double * data,  FILE * stream,char * eclpath){
-  const char * kw;
-  kw = hash_iter_get_first_key(relperm_config->ecl_file_hash);
-  while(kw !=NULL){
+  hash_lock( relperm_config->ecl_file_hash );
+  {
+    const int hash_size = hash_get_size( relperm_config->ecl_file_hash );
+    char ** key_list    = hash_alloc_keylist( relperm_config->ecl_file_hash );
+    int ikey;
     
-    fprintf(stream,"INCLUDE \n %s / \n",kw);
-    kw=hash_iter_get_next_key(relperm_config->ecl_file_hash);
+    for (ikey = 0; ikey < hash_size; ikey++) 
+      fprintf(stream,"INCLUDE \n %s / \n",key_list[ikey]);
+    relperm_config_ecl_write_table(relperm_config, data, eclpath);
+    util_free_stringlist( key_list , hash_size );
   }
-  relperm_config_ecl_write_table(relperm_config, data, eclpath);
+  hash_unlock( relperm_config->ecl_file_hash );
 }
+
 
 void relperm_config_ecl_write_table(const relperm_config_type * config, const double * data, const char * path){
   int ik;

@@ -144,14 +144,21 @@ void enkf_state_initialize(enkf_state_type * enkf_state) {
 
 
 void enkf_state_apply_NEW(enkf_state_type * enkf_state , int mask , enkf_node_ftype_NEW * node_func , void_arg_type * arg) {
-  enkf_node_type * enkf_node;
-  bool cont;
-  enkf_node = hash_iter_get_first(enkf_state->node_hash , &cont);
-  while (cont) {
-    if (enkf_node_include_type(enkf_node , mask))                        
-      node_func(enkf_node , arg);                               
-    enkf_node = hash_iter_get_next(enkf_state->node_hash , &cont);
-  }                                                                      
+  hash_lock( enkf_state->node_hash );
+  {
+    const int hash_size = hash_get_size( enkf_state->node_hash );
+    char ** key_list    = hash_alloc_keylist(enkf_state->node_hash);
+    int ikey;
+    
+    for (ikey = 0; ikey < hash_get_size( enkf_state->node_hash ); ikey++) {
+      enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
+      if (enkf_node_include_type(enkf_node , mask))                        
+	node_func(enkf_node , arg);                               
+    }
+    
+    util_free_stringlist( key_list , hash_size );
+  }
+  hash_unlock( enkf_state->node_hash );
 }
 
 
@@ -458,7 +465,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
   while (ecl_kw != NULL) {
     char *kw = ecl_kw_alloc_strip_header(ecl_kw);
     ecl_util_escape_kw(kw);
-
+    
     if (enkf_config_has_key(enkf_state->config , kw)) {
       restart_kw_list_add(enkf_state->restart_kw_list , kw);
       /* It is a dynamic restart kw like PRES or SGAS */
@@ -565,7 +572,7 @@ static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_s
   nice.
 */
 void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs) {
-  char **obs_keys   	= hash_alloc_keylist(enkf_obs->obs_hash);
+  char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
 
   for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
@@ -580,7 +587,7 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
       obs_node_measure(obs_node , enkf_state->report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
     }
   }
-  hash_free_ext_keylist(enkf_obs->obs_hash , obs_keys);
+  util_free_stringlist( obs_keys , hash_get_size( enkf_obs->obs_hash ));
 }
 
 

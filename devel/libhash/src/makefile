@@ -63,4 +63,4 @@ BIN_FILES = hash.x
 
 
 hash.x: hash_test.o $(LIB)
-	gcc $(LDFLAGS) hash_test.o -o hash.x     $(LIB_LINK_PATH) $(LIB_LINK) 
+	gcc $(LDFLAGS) -$(MFLAG) hash_test.o -o hash.x     $(LIB_LINK_PATH) $(LIB_LINK) 

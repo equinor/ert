@@ -71,13 +71,14 @@ void history_node_fwrite(const history_node_type * history_node , FILE *stream) 
     char **well_list;
     int    wells , i ;
     date_node_fwrite(history_node->date , stream);
+
     wells = hash_get_size(history_node->data);
     well_list = hash_alloc_keylist(history_node->data);
     util_fwrite(&wells , sizeof wells , 1 , stream , __func__);
     for (i = 0; i < wells; i++)
       rate_sched_fwrite(hash_get(history_node->data , well_list[i]) , stream);
 
-    hash_free_ext_keylist(history_node->data , well_list);
+    util_free_stringlist(well_list , hash_get_size(history_node->data));
   }
 }
 	
@@ -112,7 +113,7 @@ void history_node_fprintf(const history_node_type * hist_node, FILE * stream) {
       rate = hash_get(hist_node->data , key_list[i]);
       rate_fprintf(rate , stream);
     }
-    hash_free_ext_keylist(hist_node->data , key_list);
+    util_free_stringlist(key_list , hash_get_size(hist_node->data));
   }
 }
 
@@ -184,22 +185,22 @@ void history_fwrite(const history_type * hist , FILE *stream) {
     for (i=0; i < wells; i++) 
       util_fwrite_string(well_list[i] , stream);
     
-    hash_free_ext_keylist(hist->well_hash , well_list);
+    util_free_stringlist(well_list , hash_get_size(hist->well_hash));
   }
 }
 
 
 history_type * history_fread_alloc(FILE *stream) {
- history_type * hist = history_alloc(0);
-
- util_fread(&hist->creation_time , sizeof hist->creation_time , 1 , stream , __func__);
- util_fread(&hist->history_mode  , sizeof hist->history_mode  , 1 , stream , __func__);
- hist->data_src = util_fread_alloc_string(stream);
- util_fread(&hist->size          , sizeof hist->size       , 1 , stream , __func__);
- util_fread(&hist->alloc_size    , sizeof hist->alloc_size , 1 , stream , __func__);
- util_fread(&hist->start_date    , sizeof hist->start_date , 1 , stream , __func__);
- history_realloc_data(hist , hist->alloc_size);
- {
+  history_type * hist = history_alloc(0);
+  
+  util_fread(&hist->creation_time , sizeof hist->creation_time , 1 , stream , __func__);
+  util_fread(&hist->history_mode  , sizeof hist->history_mode  , 1 , stream , __func__);
+  hist->data_src = util_fread_alloc_string(stream);
+  util_fread(&hist->size          , sizeof hist->size       , 1 , stream , __func__);
+  util_fread(&hist->alloc_size    , sizeof hist->alloc_size , 1 , stream , __func__);
+  util_fread(&hist->start_date    , sizeof hist->start_date , 1 , stream , __func__);
+  history_realloc_data(hist , hist->alloc_size);
+  {
     int i , wells;
     char *well;
     for (i=0; i < hist->size; i++)
@@ -211,8 +212,8 @@ history_type * history_fread_alloc(FILE *stream) {
       hash_insert_int(hist->well_hash , well , 1);
       free(well);
     }
- }
- return hist;
+  }
+  return hist;
 }
 
 
@@ -245,7 +246,8 @@ void history_summarize(const history_type * hist , FILE * stream) {
     printf("History node: %d ",itime);
     history_node_fprintf(node , stream);
   }
-  hash_free_ext_keylist(hist->well_hash , well_list);
+  util_free_stringlist(well_list , hash_get_size( hist->well_hash ));
+
 }
 
 
@@ -422,8 +424,7 @@ char ** history_alloc_well_list(const history_type *hist,  int report_step) {
       active++;
     }
   }
-
-  hash_free_ext_keylist(hist->well_hash , total_well_list);
+  util_free_stringlist( total_well_list , hash_get_size( hist->well_hash ));
   return well_list;
 }
 

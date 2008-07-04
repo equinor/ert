@@ -71,18 +71,18 @@ rms_extract.o : rms_extract.c
 rms_setname.o : rms_setname.c
 
 roff_tags.x:	tag_list.o $(LIB)
-	gcc $(LDFLAGS) tag_list.o -o roff_tags.x $(LIB_PATH)  $(LIB_LINK) 	
+	gcc -$(MFLAG) $(LDFLAGS) tag_list.o -o roff_tags.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms.x:	rms_test.o $(LIB)
-	gcc $(LDFLAGS) rms_test.o -o rms.x $(LIB_PATH)  $(LIB_LINK) 	
+	gcc -$(MFLAG) $(LDFLAGS) rms_test.o -o rms.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms_stat.x: rms_stat.o $(LIB)
-	gcc $(LDFLAGS) rms_stat.o -o rms_stat.x $(LIB_PATH)  $(LIB_LINK) 	
+	gcc -$(MFLAG) $(LDFLAGS) rms_stat.o -o rms_stat.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms_extract.x: rms_extract.o $(LIB)
-	gcc $(LDFLAGS) rms_extract.o -o rms_extract.x $(LIB_PATH)  $(LIB_LINK) 	
+	gcc -$(MFLAG) $(LDFLAGS) rms_extract.o -o rms_extract.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms_setname.x: rms_setname.o $(LIB)
-	gcc $(LDFLAGS) rms_setname.o -o rms_setname.x $(LIB_PATH)  $(LIB_LINK) 	
+	gcc -$(MFLAG) $(LDFLAGS) rms_setname.o -o rms_setname.x $(LIB_PATH)  $(LIB_LINK) 	
 
 

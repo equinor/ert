@@ -446,7 +446,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
     
     if (X != NULL) {
-      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */ , X);
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*1024 /* 1GB */, X);   
       free(X);
     }
   }

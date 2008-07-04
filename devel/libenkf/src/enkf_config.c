@@ -43,6 +43,8 @@
 #include <summary_config.h>
 #include <havana_fault_config.h>
 #include <ext_joblist.h>
+#include <gen_data.h>
+#include <gen_data_config.h>
 
 
 struct enkf_config_struct {
@@ -100,6 +102,7 @@ bool enkf_config_get_fmt_file(const enkf_config_type * enkf_config) { return enk
 bool enkf_config_get_unified(const enkf_config_type * enkf_config) { return enkf_config->unified; }
 
 const char * enkf_config_get_data_file(const enkf_config_type * ens) { return ens->data_file; }
+
 
 char ** enkf_config_alloc_keylist(const enkf_config_type * config , int *keys) {
   *keys = hash_get_size(config->config_hash);
@@ -347,7 +350,7 @@ static void enkf_config_set_start_date(enkf_config_type * config , const char **
 */
 
 void enkf_config_add_static_kw(enkf_config_type * enkf_config , const char * _kw) {
-  if (strcmp(_kw , "__ALL__") == 0)
+  if (strcmp(_kw , "__ALL__") == 0) 
     enkf_config->include_all_static_kw = true;
   else {
     char * kw = util_alloc_string_copy(_kw);
@@ -432,6 +435,18 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   enkf_config_add_static_kw(config , "RS"); 
   enkf_config_add_static_kw(config , "RV"); 
   enkf_config_add_static_kw(config , "ENDSOL"); 
+
+  enkf_config_add_static_kw(config , "ICAQNUM");
+  enkf_config_add_static_kw(config , "IAAQ");
+  enkf_config_add_static_kw(config , "ICAQ");
+  enkf_config_add_static_kw(config , "SCAQNUM");
+  enkf_config_add_static_kw(config , "SAAQ");
+  enkf_config_add_static_kw(config , "SCAQ");
+  enkf_config_add_static_kw(config , "ACAQNUM");
+  enkf_config_add_static_kw(config , "XAAQ");
+  enkf_config_add_static_kw(config , "ACAQ");
+
+
   return config;
 }
 
@@ -540,10 +555,10 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	}
 	
 	if (active_tokens > 0) {
+	  if (debug) printf("Parsing: %s \n",token_list[0]);
 	  impl_type = enkf_types_check_impl_type(token_list[0]);
 	  if (impl_type == INVALID) {
 	    const char * kw = token_list[0];
-	    if (debug) printf("Parsing: %s \n",kw);
 	    if (enkf_site_config_has_key(site_config , kw)) {
 	      /* The configuration overrides a value from the site_config object. */
 	      ASSERT_TOKENS(kw , active_tokens , 1);
@@ -728,6 +743,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      break;
 	    case(GEN_DATA):
 	      break;
+	      enkf_config_add_type(enkf_config , token_list[1] , ecl_restart , GEN_DATA , NULL , gen_data_config_fscanf_alloc(token_list[2]));
 	    case(GEN_KW):
 	      ASSERT_TOKENS("GEN_KW" , active_tokens , 4);
 	      {

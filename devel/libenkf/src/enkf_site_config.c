@@ -317,7 +317,7 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       config_init_item( site->__config , "RSH_COMMAND"       , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
 
       config_init_item( site->__config , "LSF_QUEUE"         , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "LSF_RESOURCES"     , 0 , NULL , false , true  , 0 , NULL , 1 , -1 , NULL );
+      config_init_item( site->__config , "LSF_RESOURCES"     , 0 , NULL , false , false , 0 , NULL , 1 , -1 , NULL );
       config_init_item( site->__config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
 
       config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );

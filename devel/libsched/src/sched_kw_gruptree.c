@@ -37,17 +37,15 @@ void sched_kw_gruptree_fprintf(const sched_kw_gruptree_type * kw, FILE * stream)
   fprintf(stream, "GRUPTREE\n");
   
   {
-    const char * child_name;
-    const char * parent_name;
-    child_name = hash_iter_get_first_key(kw->gruptree_hash);
-    while(child_name != NULL)
-    {
-      parent_name = hash_get_string(kw->gruptree_hash,child_name);
-      fprintf(stream,"  '%s'  '%s' /\n",child_name,parent_name);
-      child_name = hash_iter_get_next_key(kw->gruptree_hash);
+    const int   num_keys = hash_get_size(kw->gruptree_hash);
+    char ** child_list   = hash_alloc_keylist(kw->gruptree_hash);
+    int i;
 
+    for (i = 0; i < num_keys; i++) {
+      const char * parent_name = hash_get_string(kw->gruptree_hash , child_list[i]);
+      fprintf(stream,"  '%s'  '%s' /\n",child_list[i] , parent_name);
     }
-    hash_iter_complete(kw->gruptree_hash);
+    util_free_stringlist( child_list , num_keys );
   }
 
   fprintf(stream,"/\n\n");
@@ -78,24 +76,20 @@ void sched_kw_gruptree_fwrite(const sched_kw_gruptree_type * kw, FILE * stream)
 {
   int gruptree_lines = hash_get_size(kw->gruptree_hash);
   util_fwrite(&gruptree_lines, sizeof gruptree_lines, 1, stream, __func__);
-
   {
-    const char * child_name;
-    const char * parent_name;
-    child_name = hash_iter_get_first_key(kw->gruptree_hash);
-    while(child_name != NULL)
-    {
-      parent_name = hash_get_string(kw->gruptree_hash,child_name);
+    const int   num_keys = hash_get_size(kw->gruptree_hash);
+    char ** child_list   = hash_alloc_keylist(kw->gruptree_hash);
+    int i;
 
-      util_fwrite_string(child_name , stream);
-      util_fwrite_string(parent_name, stream);
+    for (i = 0; i < num_keys; i++) {
+      const char * parent_name = hash_get_string(kw->gruptree_hash , child_list[i]);
 
-      child_name = hash_iter_get_next_key(kw->gruptree_hash);
-
+      util_fwrite_string(child_list[i] , stream);
+      util_fwrite_string(parent_name   , stream);
     }
-    hash_iter_complete(kw->gruptree_hash);
+    util_free_stringlist( child_list , num_keys );
   }
-};
+}
 
 
 

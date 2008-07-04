@@ -176,8 +176,8 @@ void gen_data_fload(gen_data_type * gen_data , const char * config_tag , const c
   gen_data_fread_header(gen_data , config_tag , stream);
   gen_data_realloc_data(gen_data);
   gen_data_fread_data(gen_data , stream);
-  free( gen_data->src_file );
-  free( gen_data->file_tag );
+  free( gen_data->src_file );  gen_data->src_file = NULL;
+  free( gen_data->file_tag );  gen_data->file_tag = NULL; 
   fclose(stream);
 }
 
