@@ -69,6 +69,7 @@ void sched_kw_gruptree_add_line(sched_kw_gruptree_type * kw, const char * line)
     token_list[1] = "FIELD";
   
   hash_insert_string(kw->gruptree_hash,token_list[0],token_list[1]);
+  util_free_stringlist( token_list , tokens );  /* Joakim la til denne */
 };
 
 

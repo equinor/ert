@@ -2,11 +2,7 @@
 #define __SCHED_KW_WELSPECS_H__
 #include <stdio.h>
 
-/*
-  Define the maximum number of keywords in a WELSPEC record.
-  Note that this includes FrontSim and ECLIPSE 300 KWs.
-*/
-#define WELSPEC_NUM_KW 16
+
 #define ECL_DEFAULT_KW "*"
 
 /*************************************************************/

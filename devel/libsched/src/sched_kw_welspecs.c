@@ -6,6 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+  Define the maximum number of keywords in a WELSPEC record.
+  Note that this includes FrontSim and ECLIPSE 300 KWs.
+*/
+#define WELSPEC_NUM_KW 16
+
+
 struct sched_kw_welspecs_struct
 {
   list_type * welspec_list;
@@ -52,7 +59,7 @@ typedef enum {HD_SEG,  HD_AVG} hdstat_head_type;
 typedef struct
 {
   /*
-    def : Read as default, not as defined.
+    def : Read as defaulted, not as defined.
   */
   bool           * def;
 
@@ -261,6 +268,25 @@ static welspec_type * welspec_fread_alloc(FILE * stream)
 
 
 
+
+static void welspec_free(welspec_type * ws)
+{
+  free(ws->def      );
+  free(ws->group    );
+  free(ws->fs_kw1   );
+  free(ws->fs_kw2   );
+  free(ws->ecl300_kw);
+  free(ws->name);
+  free(ws);
+};
+
+
+
+
+/*
+
+  Original versjon
+
 static void welspec_free(welspec_type * ws)
 {
   if(ws->def != NULL) free(ws->def);
@@ -270,6 +296,8 @@ static void welspec_free(welspec_type * ws)
   if(ws->fs_kw2     != NULL) free(ws->fs_kw2   );
   if(ws->ecl300_kw  != NULL) free(ws->ecl300_kw);
 };
+
+*/
 
 
 
