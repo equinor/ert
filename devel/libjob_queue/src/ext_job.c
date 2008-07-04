@@ -204,7 +204,7 @@ static void __fprintf_python_list(FILE * stream , const char * id , const char *
 static void __fprintf_python_hash(FILE * stream , const char * id , const hash_type * hash, const hash_type * context_hash) {
   int i;
   int size = hash_get_size(hash);
-  char ** key_list = hash_alloc_keylist(hash);
+  char ** key_list = hash_alloc_keylist( (hash_type *) hash);
   fprintf(stream , "\"%s\" : " , id);
   fprintf(stream,"{");
   for (i = 0; i < size; i++) {

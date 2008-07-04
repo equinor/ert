@@ -34,8 +34,8 @@ for path in path_list:
             nCPU = 1
         elif path.find("analysis") != -1:
             nCPU = 1
-        print "make -s -j %d " % (nCPU)
-        os.system("make -s -j %d " % (nCPU)) 
+        print "make -s -j %d MFLAG=m64" % (nCPU)
+        os.system("make -s -j %d MFLAG=m64" % (nCPU)) 
         os.chdir(cwd)
 
 

@@ -8,7 +8,6 @@
 #include <hash.h>
 
 typedef struct set_struct set_type;
-void         set_free_ext_keylist(const set_type * , char ** );
 void         set_remove_key(set_type * , const char * );
 set_type   * set_alloc(int , const char ** );
 set_type   * set_alloc_empty();

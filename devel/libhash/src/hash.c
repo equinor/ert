@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <inttypes.h>
 #include <dirent.h>
 #include <pthread.h>
@@ -9,19 +10,24 @@
 #include <hash_node.h>
 #include <node_data.h>
 
+
 #define HASH_DEFAULT_SIZE 16
 
 typedef enum {iter_invalid , iter_active , iter_complete} __iter_mode;
 
 
 struct hash_struct {
-  pthread_mutex_t  iter_mutex;
-  uint32_t         size;
-  uint32_t         elements;
-  double           resize_fill;
-  hash_sll_type  **table;
-  hashf_type      *hashf;
-
+  pthread_mutex_t   iter_mutex;
+  uint32_t          size;
+  uint32_t          elements;
+  double            resize_fill;
+  hash_sll_type   **table;
+  hashf_type       *hashf;
+  pthread_mutex_t   writer_lock;    /* This lock is applied when the hash_table changes, insert/delete values. 
+				       It can also be taken by outside code to ensure that the hash stays in
+				       a constant state for an arbitrary amount of time.*/
+  
+  int               read_count;     /* The number of active readers. */
   char           **iter_keylist;
   __iter_mode      iter_mode;
   int              iter_index , iter_size;
@@ -32,6 +38,96 @@ typedef struct hash_sort_node {
   char     *key;
   int       cmp_value;
 } hash_sort_type;
+
+
+
+/**
+   This is a seriously homemade locking system. There are three
+   different usage scenarios which require locking:
+
+   1. An external application wants to do something with all the
+      hash_keys(). This application take a long time to complete, and
+      need to ensure that the hash content is unchanged during the
+      execution time. This is done with
+
+        hash_lock( hash );
+
+        .......
+
+        hash_unlock( hash );
+
+      It is fully the responsibility of the application level to call
+      lock and unlock.
+
+
+   2. There are some functions which change the internal data
+      structure of the hash table, i.e. inserting and deleting
+      calls. These processes are protected hash_lock() / hash_unlock().
+
+   
+   3. There are some hash functions, i.e. hash_alloc_keylist() which
+      take some time to complete, and require the internal hash state
+      to be unchanged in the process. These functions call
+      hash_lock_reader() and hash_unlock_reader(). There can be many
+      concurrent readers, however only one writer. The writer calls
+      the functions hash_block_reader() and hash_unblock_reader().
+
+
+   The functions with locking are as follows:
+
+
+   Function                	 locking
+   -----------------------------------------------------------
+   hash_del                	 hash_lock & hash_block_reader
+   hash_insert_node        	 hash_lock & hash_block_reader
+   hash_alloc_key_sorted_list    hash_lock_reader
+   hash_alloc_sorted_keylist     hash_lock_reader
+   hash_alloc_keylist            hash_lock_reader
+   -----------------------------------------------------------
+
+   Should probably have more reader locks ...
+*/
+
+
+/**
+   This function locks the hash for updating. The purpose of the
+   function is to protect the hash for an extended period of time. The
+   typical usage is illustrated in the documentation of hash_alloc_keylist().
+*/
+
+void hash_lock(hash_type * hash) {
+  pthread_mutex_lock( &hash->writer_lock );
+}
+
+void hash_unlock(hash_type * hash) {
+  pthread_mutex_unlock( &hash->writer_lock );
+}
+
+static void hash_lock_reader(hash_type * hash) {
+  while (hash->read_count < 0)
+    usleep(1);
+  hash->read_count++;
+}
+
+static void hash_unlock_reader(hash_type * hash) {
+  hash->read_count--;
+}
+
+
+/* 
+   These should use condition variables .... 
+*/
+
+static void hash_block_reader(hash_type * hash) {
+  while (hash->read_count > 0) {
+    usleep(1);
+  }
+  hash->read_count = -1;
+}
+
+static void hash_unblock_reader(hash_type * hash) {
+  hash->read_count = 0;
+}
 
 
 
@@ -88,21 +184,31 @@ static void * __hash_get_node(const hash_type *hash , const char *key, bool abor
 
 
 void hash_del(hash_type *hash , const char *key) {
-  const uint32_t global_index = hash->hashf(key , strlen(key));
-  const uint32_t table_index  = (global_index % hash->size);
-  hash_node_type *node        = hash_sll_get(hash->table[table_index] , global_index , key);
+  hash_lock( hash );
+  hash_block_reader( hash );
 
-  if (node == NULL) {
-    fprintf(stderr,"%s: hash does not contain key:%s - aborting \n",__func__ , key);
-    abort();
-  } else
-    hash_sll_del_node(hash->table[table_index] , node);
-
-  hash->elements--;
-  hash->iter_mode = iter_invalid;
+  {
+    const uint32_t global_index = hash->hashf(key , strlen(key));
+    const uint32_t table_index  = (global_index % hash->size);
+    hash_node_type *node        = hash_sll_get(hash->table[table_index] , global_index , key);
+    
+    if (node == NULL) {
+      fprintf(stderr,"%s: hash does not contain key:%s - aborting \n",__func__ , key);
+      abort();
+    } else
+      hash_sll_del_node(hash->table[table_index] , node);
+    
+    hash->elements--;
+    hash->iter_mode = iter_invalid;
+  }
+  hash_unblock_reader( hash );
+  hash_unlock( hash );
 }
 
 
+/* 
+   Locking is tricky on this one ....
+*/
 void hash_clear(hash_type *hash) {
   int old_size = hash_get_size(hash);
   if (old_size > 0) {
@@ -162,7 +268,9 @@ static hash_type * __hash_alloc(int size, double resize_fill , hashf_type *hashf
   hash->resize_fill  = resize_fill;
   hash->iter_mode    = iter_invalid;
   hash->iter_keylist = NULL;
-  pthread_mutex_init( &hash->iter_mutex , NULL);
+  hash->read_count   = 0;
+  pthread_mutex_init( &hash->iter_mutex  , NULL);
+  pthread_mutex_init( &hash->writer_lock , NULL);
   return hash;
 }
 
@@ -295,26 +403,39 @@ void hash_free__(void *void_hash) {
 }
 
 
+
+/**
+   Observe that this function locks the hash table, so it will block
+   if the hash is already locked by another thread. If it is already
+   locked by this thread - you have an eternal dead lock. 
+*/
+   
 static void hash_insert_node(hash_type *hash , hash_node_type *node) {
-  uint32_t table_index = hash_node_get_table_index(node);
+  hash_lock( hash );
+  hash_block_reader( hash );
   {
-    /*
-      If a node with the same key already exists in the table
-      it is removed.
-    */
-    hash_node_type *existing_node = __hash_get_node(hash , hash_node_get_keyref(node) , false);
-    if (existing_node != NULL) {
-      hash_sll_del_node(hash->table[table_index] , existing_node);
-      hash->elements--;
-    } 
+    uint32_t table_index = hash_node_get_table_index(node);
+    {
+      /*
+	If a node with the same key already exists in the table
+	it is removed.
+      */
+      hash_node_type *existing_node = __hash_get_node(hash , hash_node_get_keyref(node) , false);
+      if (existing_node != NULL) {
+	hash_sll_del_node(hash->table[table_index] , existing_node);
+	hash->elements--;
+      } 
+    }
+    
+    hash_sll_add_node(hash->table[table_index] , node);  
+    hash->elements++;
+    if ((1.0 * hash->elements / hash->size) > hash->resize_fill) 
+      hash_resize(hash , hash->size * 2);
+    
+    hash->iter_mode = iter_invalid;
   }
-  
-  hash_sll_add_node(hash->table[table_index] , node);  
-  hash->elements++;
-  if ((1.0 * hash->elements / hash->size) > hash->resize_fill) 
-    hash_resize(hash , hash->size * 2);
-  
-  hash->iter_mode = iter_invalid;
+  hash_unblock_reader( hash );
+  hash_unlock( hash );
 }
 
 
@@ -428,7 +549,7 @@ static hash_node_type * hash_iter_next(const hash_type *hash , const hash_node_t
       while (i < hash->size && hash_sll_empty(hash->table[i]))
 		i++;
       if (i < hash->size) 
-		next_node = hash_sll_get_head(hash->table[i]);
+	next_node = hash_sll_get_head(hash->table[i]);
     }
   }
   return next_node;
@@ -444,18 +565,41 @@ void hash_printf_keys(hash_type *hash) {
 }
 
 
-char ** hash_alloc_keylist(const hash_type *hash) {
+
+
+/**
+   In a multithreaded program the access to the hash structure should
+   be locked when using hash_alloc_keylist:
+
+   hash_lock( hash );
+   keys = hash_alloc_keylist( hash );
+    
+     <Do something with the hash table>
+ 
+   hash_unlock( hash );
+
+   Otherwise one might risk that another thread is updating the hash
+   table, invalidating the key_list (in particular if a key is removed
+   the program might abort() on hash_get operations).
+*/
+
+   
+char ** hash_alloc_keylist(hash_type *hash) {
   char **keylist;
-  int i = 0;
-  hash_node_type *node;
-  keylist = calloc(hash->elements , sizeof *keylist);
-  node = hash_iter_init(hash);
-  while (node != NULL) {
-    const char *key = hash_node_get_keyref(node); 
-    keylist[i] = alloc_string_copy(key);
-    node = hash_iter_next(hash , node);
-    i++;
+  hash_lock_reader( hash );
+  {
+    int i = 0;
+    hash_node_type *node;
+    keylist = calloc(hash->elements , sizeof *keylist);
+    node = hash_iter_init(hash);
+    while (node != NULL) {
+      const char *key = hash_node_get_keyref(node); 
+      keylist[i] = alloc_string_copy(key);
+      node = hash_iter_next(hash , node);
+      i++;
+    }
   }
+  hash_unlock_reader( hash );
   return keylist;
 }
 
@@ -514,7 +658,7 @@ static int hash_sortlist_cmp(const void *_p1 , const void  *_p2) {
 }
 
 
-static char ** __hash_alloc_ordered_keylist(const hash_type *hash , int ( hash_get_cmp_value) (const void * )) {    
+static char ** __hash_alloc_ordered_keylist(hash_type *hash , int ( hash_get_cmp_value) (const void * )) {    
   int i;
   char **sorted_keylist;
   char **tmp_keylist   = hash_alloc_keylist(hash);
@@ -525,17 +669,24 @@ static char ** __hash_alloc_ordered_keylist(const hash_type *hash , int ( hash_g
   
   qsort(sort_list , hash_get_size(hash) , sizeof *sort_list , &hash_sortlist_cmp);
   sorted_keylist = calloc(hash_get_size(hash) , sizeof *sorted_keylist);
-  for (i = 0; i < hash_get_size(hash); i++) 
+  for (i = 0; i < hash_get_size(hash); i++) {
     sorted_keylist[i] = alloc_string_copy(sort_list[i].key);
-  
-  hash_free_ext_keylist(hash , tmp_keylist);
+    free(tmp_keylist[i]);
+  }
+  free(tmp_keylist);
   hash_free_sort_list(hash , sort_list);
   return sorted_keylist;
 }
 
 
-char ** hash_alloc_sorted_keylist(const hash_type *hash , int ( hash_get_cmp_value) (const void *)) {
-  return __hash_alloc_ordered_keylist(hash , hash_get_cmp_value);
+char ** hash_alloc_sorted_keylist(hash_type *hash , int ( hash_get_cmp_value) (const void *)) {
+  char ** key_list;
+
+  hash_lock_reader( hash );
+  key_list = __hash_alloc_ordered_keylist(hash , hash_get_cmp_value);
+  hash_unlock_reader( hash );
+
+  return key_list;
 }
 
 
@@ -550,7 +701,7 @@ static int key_cmp(const void *_s1 , const void *_s2) {
 
 
 
-static char ** __hash_alloc_key_sorted_list(const hash_type *hash, int (*cmp) (const void * , const void *)) { 
+static char ** __hash_alloc_key_sorted_list(hash_type *hash, int (*cmp) (const void * , const void *)) { 
   char **keylist = hash_alloc_keylist(hash);
   
   qsort(keylist , hash_get_size(hash) , sizeof *keylist , cmp);
@@ -559,14 +710,20 @@ static char ** __hash_alloc_key_sorted_list(const hash_type *hash, int (*cmp) (c
 
 
 
-char ** hash_alloc_key_sorted_list(const hash_type * hash, int (*cmp) (const void *, const void *))
+char ** hash_alloc_key_sorted_list(hash_type * hash, int (*cmp) (const void *, const void *))
 {
-  return __hash_alloc_key_sorted_list(hash , cmp);
+  char ** key_list;
+
+  hash_lock_reader( hash );
+  key_list =__hash_alloc_key_sorted_list(hash , cmp);
+  hash_unlock_reader( hash );
+
+  return key_list;
 }
 
 
 
-bool hash_key_list_compare(const hash_type * hash1, const hash_type * hash2)
+bool hash_key_list_compare(hash_type * hash1, hash_type * hash2)
 {
   bool has_equal_keylist;
   int i,size1, size2;
@@ -590,21 +747,17 @@ bool hash_key_list_compare(const hash_type * hash1, const hash_type * hash2)
     }
   }
 
-  hash_free_ext_keylist(hash1, keylist1);
-  hash_free_ext_keylist(hash2, keylist2);
-
+  for(i=0; i<size1; i++) {
+    free( keylist1[i] );
+    free( keylist2[i] );
+  }
+  free( keylist1 );
+  free( keylist2 );
   return has_equal_keylist;
   
 }
 /******************************************************************/
 
-
-void hash_free_ext_keylist(const hash_type *hash , char ** keylist) {
-int i;
- for (i = 0; i < hash_get_size(hash); i++) 
-    free(keylist[i]);
-  free(keylist);
-}
 
 
 #undef HASH_GET_SCALAR

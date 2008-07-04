@@ -108,7 +108,7 @@ lsf_job_type * lsf_job_alloc() {
 
 
 void lsf_job_fprintf(const lsf_job_type * lsf_job) {
-  printf("LSF_ID: %d \n",lsf_job->lsf_jobnr);
+  printf("LSF_ID: %ld \n",lsf_job->lsf_jobnr);
 }
 
 

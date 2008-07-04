@@ -54,9 +54,11 @@ void set_fprintf(const set_type * set, FILE * stream) {
   int i;
   char ** key_list = set_alloc_keylist(set);
   fprintf(stream , " ");
-  for (i=0; i < set_get_size(set); i++)
+  for (i=0; i < set_get_size(set); i++) {
     fprintf(stream , "%s ",key_list[i]);
-  set_free_ext_keylist(set , key_list);
+    free(key_list[i]);
+  }
+  free(key_list);
 }
     
 
@@ -69,9 +71,6 @@ char ** set_alloc_keylist(const set_type * set) {
 }
 
 
-void set_free_ext_keylist(const set_type * set , char ** key_list) { 
-  hash_free_ext_keylist(set->key_hash , key_list);
-}
 
 
 void set_free(set_type * set) {
