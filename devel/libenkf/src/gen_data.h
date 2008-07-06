@@ -10,6 +10,9 @@ void          	         gen_data_ecl_load(gen_data_type * , const char *  , cons
 gen_data_type 	       * gen_data_alloc(const gen_data_config_type *);
 void          	         gen_data_free(gen_data_type * );
 double                   gen_data_iget_double(const gen_data_type * , int );
+gen_data_config_type   * gen_data_get_config(const gen_data_type * );
+int                      gen_data_get_size(const gen_data_type * );
+
 
 
 VOID_ALLOC_HEADER(gen_data);

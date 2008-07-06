@@ -122,9 +122,6 @@ static void gen_common_fload_ascii_header(FILE * stream , const char * config_ta
     if (file_tag == NULL)
       util_abort("%s: could not locate tag. \n" , __func__);
     
-    if (config_tag != NULL)
-      if (strcmp(file_tag , config_tag) != 0) 
-	util_abort("%s: tags did not match: Config:%s  CurrentFile:%s \n",__func__ , config_tag , file_tag);
     util_fskip_lines(stream , 1);
     *_file_tag = file_tag;
   }
@@ -173,6 +170,14 @@ void gen_common_fload_header(gen_data_file_type file_type , FILE * stream , cons
   default:
     util_abort("%s: internal error - invalid value in switch statement. \n",__func__);
   }
+
+  /*
+    Checking that the tags agree.
+  */
+  if (config_tag != NULL)
+    if (strcmp(*file_tag , config_tag) != 0) 
+      util_abort("%s: tags did not match: Config:%s  CurrentFile:%s \n",__func__ , config_tag , *file_tag);
+
 }
 
 
@@ -187,12 +192,12 @@ static void gen_common_fload_binary_fortran_data(FILE * stream , const char * sr
 }
 
 
-static void gen_common_fload_ascii_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size, void * data) {
+static void gen_common_fload_ascii_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size, void * _data) {
   int i;
   switch (ecl_type) {
   case(ecl_float_type):
     {
-      float * data = (float *) data;
+      float * data = (float *) _data;
       for (i=0; i < size; i++)
 	if (fscanf(stream,"%g",&data[i]) != 1)
 	  util_abort("%s: failed to read element %d of %d from %s. \n",__func__ , (i+1), size , src_file);
@@ -200,7 +205,7 @@ static void gen_common_fload_ascii_data(FILE * stream , const char * src_file , 
     break;
   case(ecl_double_type):
     {
-      double * data = (double *) data;
+      double * data = (double *) _data;
       for (i=0; i < size; i++)
 	if (fscanf(stream,"%lg",&data[i]) != 1)
 	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
@@ -208,9 +213,9 @@ static void gen_common_fload_ascii_data(FILE * stream , const char * src_file , 
     break;
   case(ecl_int_type):
     {
-      int * data = (int *) data;
-      for (i=0; i < size; i++)
-	if (fscanf(stream,"%d",&data[i]) != 1)
+      int * data = (int *) _data;
+      for (i=0; i < size; i++) 
+	if (fscanf(stream,"%d" , &data[i]) != 1)
 	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
     }
     break;
@@ -300,3 +305,22 @@ void gen_common_fskip_data(FILE * stream , const char * src_file , gen_data_file
   }
 }
 
+
+
+double gen_common_iget_double(int index , int size , ecl_type_enum ecl_type , void * _data) {
+  if (index < 0 || index >= size) {
+    util_abort("%s: asked for element:%d - only has:%d elements - aborting \n",__func__ , index , size);
+    return 0; /* Dummy */
+  }
+
+  if (ecl_type == ecl_double_type) {
+    const double * data = (const double * ) _data;
+    return data[index];
+  } else if (ecl_type == ecl_float_type) {
+    const float * data = (const float * ) _data;
+    return (double ) data[index];
+  } else {
+    util_abort("%s: internal error: ecl_type:%d not supported.\n",__func__ , ecl_type);
+    return 0; /* Dummy */
+  }
+}

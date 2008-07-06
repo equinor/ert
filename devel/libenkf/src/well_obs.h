@@ -19,5 +19,5 @@ well_obs_type * well_obs_fscanf_alloc(const char * , const well_config_type *  ,
 
 VOID_FREE_HEADER(well_obs);
 VOID_GET_OBS_HEADER(well_obs);
-VOID_MEASURE_HEADER(well);
+VOID_MEASURE_HEADER(well_obs);
 #endif

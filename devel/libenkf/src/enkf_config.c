@@ -742,8 +742,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	    case(PGBOX):
 	      break;
 	    case(GEN_DATA):
-	      break;
 	      enkf_config_add_type(enkf_config , token_list[1] , ecl_restart , GEN_DATA , NULL , gen_data_config_fscanf_alloc(token_list[2]));
+	      break;
 	    case(GEN_KW):
 	      ASSERT_TOKENS("GEN_KW" , active_tokens , 4);
 	      {
@@ -829,6 +829,9 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       break;
     case(HAVANA_FAULT):
       freef             = havana_fault_config_free__;
+      break;
+    case(GEN_DATA):
+      freef             = gen_data_config_free__;
       break;
     default:
       util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);

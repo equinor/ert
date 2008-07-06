@@ -101,4 +101,4 @@ void field_obs_free(field_obs_type * field_obs) {
 
 VOID_FREE(field_obs)
 VOID_GET_OBS(field_obs)
-VOID_MEASURE(field)
+VOID_MEASURE(field_obs , field)

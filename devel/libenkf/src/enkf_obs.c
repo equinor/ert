@@ -17,6 +17,7 @@
 #include <sched_file.h>
 #include <enkf_config.h>
 #include <summary_obs.h>
+#include <gen_obs.h>
 
 static int enkf_obs_sscanf_report_step(const enkf_obs_type * enkf_obs , const char * meas_time_string) {
   int report_step;
@@ -185,6 +186,12 @@ void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_nod
 void enkf_obs_free(enkf_obs_type * enkf_obs) {
   hash_free(enkf_obs->obs_hash);
   free(enkf_obs);
+}
+
+
+void enkf_obs_add_gen_obs(enkf_obs_type * enkf_obs , const char * key , const enkf_config_node_type * config_node ) {
+  gen_obs_type * gen_obs = gen_obs_alloc( enkf_config_node_get_ref( config_node ));
+  enkf_obs_add_obs(enkf_obs , key , obs_node_alloc(gen_obs , key , key , enkf_obs->num_reports , true , gen_obs_get_observations__ , gen_obs_measure__ , gen_obs_free__));
 }
 
 

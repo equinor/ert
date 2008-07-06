@@ -149,4 +149,4 @@ void summary_obs_measure(const summary_obs_type * obs , const summary_type * sum
 
 VOID_FREE(summary_obs)
 VOID_GET_OBS(summary_obs)
-VOID_MEASURE(summary)
+VOID_MEASURE(summary_obs , summary)

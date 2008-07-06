@@ -17,5 +17,5 @@ field_obs_type * field_obs_fscanf_alloc(const char * , const field_config_type *
 
 VOID_FREE_HEADER(field_obs);
 VOID_GET_OBS_HEADER(field_obs);
-VOID_MEASURE_HEADER(field);
+VOID_MEASURE_HEADER(field_obs);
 #endif

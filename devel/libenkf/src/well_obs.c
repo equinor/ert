@@ -423,4 +423,4 @@ void well_obs_free(well_obs_type * well_obs) {
 
 VOID_FREE(well_obs)
 VOID_GET_OBS(well_obs)
-VOID_MEASURE(well)
+VOID_MEASURE(well_obs , well)

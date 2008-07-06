@@ -13,7 +13,7 @@ void               summary_obs_fscanf_alloc_data(const char * , int *  , char **
 
 VOID_FREE_HEADER(summary_obs);
 VOID_GET_OBS_HEADER(summary_obs);
-VOID_MEASURE_HEADER(summary);
+VOID_MEASURE_HEADER(summary_obs);
 
 
 #endif
