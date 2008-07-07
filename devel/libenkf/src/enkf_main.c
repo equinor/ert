@@ -226,7 +226,7 @@ void enkf_main_analysis(enkf_main_type * enkf_main) {
   int nrobs          = obs_data_get_nrobs(enkf_main->obs_data);
   
   if (nrobs > 0) {
-    double * X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , true , true);
+    double * X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
     free(X);
   }
 }

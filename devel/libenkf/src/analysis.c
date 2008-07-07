@@ -208,8 +208,10 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     
     analysis_set_stride(ens_size , nrobs_active , &ens_stride , &obs_stride);
     S = meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
-    printf_matrix(S , nrobs_active , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
-    printf("\n");
+    if (verbose) {
+      printf_matrix(S , nrobs_active , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
+      printf("\n");
+    }
     
     R 	  = obs_data_allocR(obs_data);
     D     = obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , meanS , returnE , &E);

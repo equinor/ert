@@ -76,6 +76,9 @@ static void gen_data_fread_data(gen_data_type * gen_data , FILE * stream) {
 
 
 static void gen_data_set_file_data(gen_data_type * gen_data , const char * filename ) {
+  gen_data->src_file = util_safe_free( gen_data->src_file );
+  gen_data->file_tag = util_safe_free( gen_data->src_file );  
+  
   gen_data->src_file = util_alloc_string_copy( filename );
   gen_common_get_file_type(filename , &gen_data->file_type , &gen_data->fortran_endian_flip);
 }
@@ -180,8 +183,6 @@ void gen_data_fload(gen_data_type * gen_data , const char * config_tag , const c
   gen_data_fread_header(gen_data , config_tag , stream);
   gen_data_realloc_data(gen_data);
   gen_data_fread_data(gen_data , stream);
-  free( gen_data->src_file );  gen_data->src_file = NULL;
-  free( gen_data->file_tag );  gen_data->file_tag = NULL; 
   fclose(stream);
 }
 
@@ -193,13 +194,13 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
     
     if (gen_data_config_is_active(config , report_step)) {
       char *ecl_file;
-      char *file_tag;
+      char *config_tag;
       char *full_path;
-      gen_data_config_get_ecl_file(config , report_step , &ecl_file , &file_tag);
+      gen_data_config_get_ecl_file(config , report_step , &ecl_file , &config_tag);
       full_path = util_alloc_full_path(run_path , ecl_file);
       
       if (util_file_exists(full_path)) {
-	gen_data_fload(gen_data , file_tag , full_path);
+	gen_data_fload(gen_data , config_tag , full_path);
 	gen_data_config_assert_metadata(gen_data->config , report_step , gen_data->size , gen_data->ecl_type , gen_data->file_tag);
       } else 
 	util_abort("%s: At report_step:%d could not find file:%s.\n",__func__ , report_step , full_path);

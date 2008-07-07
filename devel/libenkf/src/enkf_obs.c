@@ -189,7 +189,7 @@ void enkf_obs_free(enkf_obs_type * enkf_obs) {
 }
 
 
-void enkf_obs_add_gen_obs(enkf_obs_type * enkf_obs , const char * key , const enkf_config_node_type * config_node ) {
+void enkf_obs_add_gen_obs(enkf_obs_type * enkf_obs , const char * key , enkf_config_node_type * config_node ) {
   gen_obs_type * gen_obs = gen_obs_alloc( enkf_config_node_get_ref( config_node ));
   enkf_obs_add_obs(enkf_obs , key , obs_node_alloc(gen_obs , key , key , enkf_obs->num_reports , true , gen_obs_get_observations__ , gen_obs_measure__ , gen_obs_free__));
 }
@@ -418,6 +418,11 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	    const char * data_file        = token_list[3];
 	    const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , state_kw);
 	    enkf_obs_add_summary_obs(enkf_obs , config_node , state_kw , var , data_file);
+	  } else if (strcmp(kw , "GEN_OBS") == 0) {
+	    ASSERT_TOKENS("GEN_OBS" , active_tokens , 1);
+	    const char * state_kw         = token_list[1];
+	    enkf_config_node_type * config_node = enkf_config_get_node_ref(config , state_kw);
+	    enkf_obs_add_gen_obs(enkf_obs , state_kw , config_node);
 	  } else
 	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
 	  

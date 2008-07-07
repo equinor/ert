@@ -174,6 +174,7 @@ void gen_common_fload_header(gen_data_file_type file_type , FILE * stream , cons
   /*
     Checking that the tags agree.
   */
+  
   if (config_tag != NULL)
     if (strcmp(*file_tag , config_tag) != 0) 
       util_abort("%s: tags did not match: Config:%s  CurrentFile:%s \n",__func__ , config_tag , *file_tag);
