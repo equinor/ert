@@ -64,6 +64,7 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 
 
 
+
 void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data) {
   /* Checks if the observation is globally ON or OFF - the enkf_obs_node might be a bit messed up on this question. */ 
   if (gen_data_config_obs_on(gen_obs->config , report_step)) {  
@@ -111,7 +112,6 @@ void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data
     free(data);
     free(std);
   }
-
 }
   
 /*****************************************************************/

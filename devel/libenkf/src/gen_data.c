@@ -149,7 +149,7 @@ void gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
     util_fwrite_int(gen_data->size , stream);
     util_fwrite_int(gen_data->ecl_type , stream);
     util_fwrite_compressed(gen_data->data , gen_data->size * ecl_util_get_sizeof_ctype(gen_data->ecl_type) , stream);
-  }
+  } 
 }
 
 
@@ -158,8 +158,8 @@ void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
   enkf_util_fread_assert_target_type(stream , GEN_DATA , __func__);
   gen_data->active = util_fread_bool(stream);
   if (gen_data->active) {
-    gen_data->size = util_fread_int(stream);
-    gen_data->size = util_fread_int(stream);
+    gen_data->size     = util_fread_int(stream);
+    gen_data->ecl_type = util_fread_int(stream);
     gen_data_realloc_data(gen_data);
     util_fread_compressed(gen_data->data , stream);
   }
@@ -198,10 +198,11 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
       char *full_path;
       gen_data_config_get_ecl_file(config , report_step , &ecl_file , &config_tag);
       full_path = util_alloc_full_path(run_path , ecl_file);
-      
+      printf("Loading from:%s \n",full_path);
       if (util_file_exists(full_path)) {
 	gen_data_fload(gen_data , config_tag , full_path);
 	gen_data_config_assert_metadata(gen_data->config , report_step , gen_data->size , gen_data->ecl_type , gen_data->file_tag);
+        gen_data->active = true; 
       } else 
 	util_abort("%s: At report_step:%d could not find file:%s.\n",__func__ , report_step , full_path);
 

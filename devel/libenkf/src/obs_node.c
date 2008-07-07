@@ -144,8 +144,9 @@ void obs_node_free(obs_node_type * node) {
 
 
 void obs_node_get_observations(obs_node_type * node , int report_step, obs_data_type * obs_data) {
-  if (node->active[report_step] == obs_active) 
-    node->get_obs(node->obs , report_step , obs_data);
+  if (node->get_obs != NULL)
+    if (node->active[report_step] == obs_active) 
+      node->get_obs(node->obs , report_step , obs_data);
 }
 
 
