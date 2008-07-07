@@ -15,6 +15,7 @@ typedef struct hash_struct hash_type;
 void 		  hash_lock  (hash_type * );
 void 		  hash_unlock(hash_type * );
 hash_type   	* hash_alloc();
+void              hash_iter_complete(hash_type * );
 void        	  hash_free(hash_type *);
 void              hash_free__(void *);
 void        	  hash_insert_ref(hash_type * , const char * , const void *);
