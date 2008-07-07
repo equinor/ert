@@ -64,10 +64,11 @@ void sched_kw_gruptree_add_line(sched_kw_gruptree_type * kw, const char * line)
     util_abort("%s: Error when parsing record in GRUPTREE. Record must have one or two strings. Found %i - aborting.\n",__func__,tokens);
   
   if(token_list[1] == NULL)
-    token_list[1] = "FIELD";
-  
-  hash_insert_string(kw->gruptree_hash,token_list[0],token_list[1]);
-  util_free_stringlist( token_list , tokens );  /* Joakim la til denne */
+    hash_insert_string(kw->gruptree_hash, token_list[0], "FIELD");
+  else
+    hash_insert_string(kw->gruptree_hash, token_list[0], token_list[1]);
+
+  util_free_stringlist( token_list , tokens );
 };
 
 

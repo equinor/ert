@@ -282,25 +282,6 @@ static void welspec_free(welspec_type * ws)
 
 
 
-
-/*
-
-  Original versjon
-
-static void welspec_free(welspec_type * ws)
-{
-  if(ws->def != NULL) free(ws->def);
-
-  if(ws->group      != NULL) free(ws->def      );
-  if(ws->fs_kw1     != NULL) free(ws->fs_kw1   );
-  if(ws->fs_kw2     != NULL) free(ws->fs_kw2   );
-  if(ws->ecl300_kw  != NULL) free(ws->ecl300_kw);
-};
-
-*/
-
-
-
 static void welspec_free__(void * __ws)
 {
   welspec_type * ws = (welspec_type *) __ws;
