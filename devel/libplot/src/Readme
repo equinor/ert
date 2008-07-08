@@ -4,8 +4,9 @@ Plplot homepage: http://plplot.sourceforge.net
 Plplot wiki: http://www.miscdebris.net/plplot_wiki/index.php?title=Main_Page
 Exampels are placed in: /h/masar/plplot-5.9.0/examples/c
 
-TODO:
+Suggestions:
 - Color for different graphs
+- Plot days instead of timesteps
 - Graph type (dots, lines etc.)
 - Truetype fonts ? "Legends?" for the lables?
 
