@@ -402,8 +402,8 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
       }
 
       thread_pool_join(enkf_main->thread_pool);  /* All jobs have completed and the results have been loaded back. */
-      pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.             */
-      job_queue_finalize(enkf_main->job_queue);  /* Must *NOT* be called before all jobs are done.        */               
+      pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.                      */
+      job_queue_finalize(enkf_main->job_queue);  /* Must *NOT* be called before all jobs are done.                 */               
       void_arg_free( queue_args );
     }
     
@@ -441,9 +441,12 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
     enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
     enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
   }
-  
+
+  printf("Starter paa oppdatering \n");
   if (enkf_update) {
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
+    
+    printf("Har X \n");
     
     if (X != NULL) {
       /* The second to last argument is the number of double

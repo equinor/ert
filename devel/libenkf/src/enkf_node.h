@@ -68,7 +68,8 @@ typedef enum {alloc_func       	   	    = 0,
 	      deserialize_func 	   	    = 8,
 	      free_func        	   	    = 9,
 	      free_data_func   	   	    = 10,    
-	      ensemble_fprintf_results_func = 11}  node_function_type;
+	      ensemble_fprintf_results_func = 11,
+              clear_serial_state_func       = 12} node_function_type;
 
 	      
 
