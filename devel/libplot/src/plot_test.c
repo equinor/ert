@@ -60,7 +60,7 @@ int main(int argc, const char **argv) {
      }
      plot_item_set_graph_data(p, item, x, y, N, BLUE, LINE);
     
-     /* Create yet another cos, but with another frequency (\omega = 3) */ 
+     /* Create yet another cos, but with another angular frequency (\omega = 3) */ 
      N = 100;
      x = malloc(sizeof(double) * N);
      y = malloc(sizeof(double) * N);
@@ -70,7 +70,7 @@ int main(int argc, const char **argv) {
      }
      plot_item_set_graph_data(p, item, x, y, N, RED, POINT);
      
-     plot_item_set_labels(item, "x-axis", "y-axis", "f(x) = sin(x) and f(x) = cos(x)", BROWN);
+     plot_item_set_labels(item, "x-axis", "y-axis", "Harmonic waves", BROWN);
      plot_item_set_viewport(item, 0, period, -1, 1);
      plot_item_plot_data(p, item);
      plot_item_free(p->plots, item);

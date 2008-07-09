@@ -18,7 +18,7 @@ typedef enum __plot_style {
 } plot_style;
 
 typedef enum __plot_color {
-     BLACK = 0,
+     WHITE = 0,
      RED = 1,
      YELLOW = 2,
      GREEN = 3,
@@ -33,7 +33,7 @@ typedef enum __plot_color {
      TURQUOISE = 12,
      MAGENTA = 13,
      SALMON = 14,
-     WHITE = 15
+     BLACK = 15
 } plot_color;
 
 typedef struct _plot_dataset {

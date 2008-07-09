@@ -81,8 +81,13 @@ plot_item *plot_item_new(plot *p, char *dev, char *filename) {
      plsfnam(item->filename);
      plsdev(item->device);
 
-     /* Define a white color as default bg */
-     plscolbg(255,255,255);
+     /* The following code switches BLACK and WHITE's int values.
+      * By doing this we get a white background, and we can use plcol0()
+      * to set BLACK values for axis as such.
+      */
+     plscol0(WHITE, 255, 255, 255);
+     plscol0(BLACK, 0, 0, 0); 
+
      plinit();
 
      return item;
@@ -126,7 +131,7 @@ int plot_item_plot_data(plot *p, plot_item *item) {
 		break;
 	     case POINT:
 		tmp->style = POINT;
-		plpoin(tmp->length, tmp->xvalue, tmp->yvalue, 3);
+		plpoin(tmp->length, tmp->xvalue, tmp->yvalue, 1);
 		break;
 	     default:
 		fprintf(stderr, "Error: no plot style is defined!\n");
@@ -183,15 +188,17 @@ void plot_item_set_viewport(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin,
 
      /* Define a default color for the axis 
       * For some strange reason this won't work with BLACK.
-      *
-     plcol0(BLACK); */
+      */
+     plcol0(BLACK); 
 
       /* Draw a box with axes, etc.
        * plbox (xopt, xtick, nxsub, yopt, ytick, nysub); 
        * options at:
        * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/plbox.html
        */
-     plbox("bnst", 0, 0, "bnstv", 0, 0);
+     //plbox("bnst", 0, 0, "bnstv", 0, 0);
+     plschr(0, 0.6); 
+     plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
 
      if (!item->xlabel || !item->ylabel || !item->title) {
 	  fprintf(stderr, "Error: you need to set lables before setting the viewport!\n");
