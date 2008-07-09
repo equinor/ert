@@ -6,7 +6,7 @@ Exampels are placed in: /h/masar/plplot-5.9.0/examples/c
 
 Suggestions:
 - Plot days instead of timesteps
-- Truetype fonts ? "Legends?" for the lables?
+- "Legends?" for the lables?
 
 COMPILATION: 
 
@@ -17,11 +17,60 @@ Depends on:
 - libecl
 - zlib
 
+
+-------------------------------------------------------------------------------
 Rememer to set:
 csh% setenv LD_LIBRARY_PATH /h/masar/plplot-5.9.0/Compilation/lib
 or
-bash% export LD_LIBRARY_PATH=/h/masar/plplot-5.9.0/Compilation/lib
+bash% export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot-5.9.0/Compilation/lib"
 
+
+Some notes on TrueType fonts:
+
+setenv PLPLOT_FREETYPE_FONT_DIR /h/masar/sfd/
+setenv PLPLOT_FREETYPE_SYMBOL_BOLD_FONT FreeSerifBold.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_BOLD_ITALIC_FONT FreeSerifBoldItalic.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_BOLD_OBLIQUE_FONT FreeSerifBoldItalic.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_FONT FreeSerif.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_ITALIC_FONT FreeSerifItalic.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_OBLIQUE_FONT FreeSerifItalic.ttf
+
+OR
+setenv PLPLOT_FREETYPE_SYMBOL_BOLD_FONT FreeSansBold.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_BOLD_OBLIQUE_FONT FreeSansBoldOblique.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_FONT FreeSerif.ttf
+setenv PLPLOT_FREETYPE_SYMBOL_OBLIQUE_FONT FreeSansOblique.ttf
+
+OR 
+
+export PLPLOT_FREETYPE_FONT_DIR=/h/masar/sfd/
+export PLPLOT_FREETYPE_SYMBOL_BOLD_FONT=FreeSerifBold.ttf
+export PLPLOT_FREETYPE_SYMBOL_BOLD_ITALIC_FONT=FreeSerifBoldItalic.ttf
+export PLPLOT_FREETYPE_SYMBOL_BOLD_OBLIQUE_FONT=FreeSerifBoldItalic.ttf
+export PLPLOT_FREETYPE_SYMBOL_FONT=FreeSerif.ttf
+export PLPLOT_FREETYPE_SYMBOL_ITALIC_FONT=FreeSerifItalic.ttf
+export PLPLOT_FREETYPE_SYMBOL_OBLIQUE_FONT=FreeSerifItalic.ttf
+-------------------------------------------------------------------------------
+COMPILE INSTRUCTIONS FOR PLPLOT ITSELF:
+
+First you need to have cmake installed.
+It has been compiled already and you can find it in /h/masar/cmake/bin.
+
+Basic instructions: http://www.miscdebris.net/plplot_wiki/index.php?title=Linux
+Modifications: 
+
+csh% ccmake -DCMAKE_INSTALL_PREFIX:PATH=/h/masar/plplot-5.9.0/Compilation/ -DCMAKE_VERBOSE_MAKEFILE=ON -DHAVE_FREETYPE=ON ..
+
+Now there is a few variables that has to be changed:
+ENABLE_f77=OFF
+ENABLE_f95=OFF
+FREETYPE_INCLUDE_DIR=/usr/include/freetype2
+WITH_FREETYPE=ON
+PL_FREETYPE_FONT_PATH=/h/masar/sfd/
+
+csh% make && make install
+
+-------------------------------------------------------------------------------
 FILES:
 plplot_test.x - Generic test
 summary_view.x - Plotting version of summary.x
