@@ -80,12 +80,15 @@ plot_item *plot_item_new(plot *p, char *dev, char *filename) {
      
      plsfnam(item->filename);
      plsdev(item->device);
+
+     /* Define a white color as default bg */
+     plscolbg(255,255,255);
      plinit();
 
      return item;
 }
 
-int plot_item_plot_data(plot *p, plot_item *item, plot_style style) {
+int plot_item_plot_data(plot *p, plot_item *item) {
      list_node_type *node , *next_node;
 
      node = list_get_head(item->datasets);
@@ -96,8 +99,15 @@ int plot_item_plot_data(plot *p, plot_item *item, plot_style style) {
 	  tmp = list_node_value_ptr(node);
 
 	  printf("%s: adding a graph with %d samples in the x-y vectors\n", __func__, tmp->length);
-	  switch (style) {
+	  
+	  /* Set the defined color for the graph 
+	   * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/color.html#color-map-0
+	   */
+	  plcol0((PLINT) tmp->color);
+	  
+	  switch (tmp->style) {
 	     case HISTOGRAM:
+		tmp->style = HISTOGRAM;
 		/* plhist (n, data, datmin, datmax, nbin, opt); 
 		 * n: number of data pointis
 		 * data:    Pointer to array with values of the n data points.
@@ -111,12 +121,15 @@ int plot_item_plot_data(plot *p, plot_item *item, plot_style style) {
 		 */
 		break;
 	     case LINE:
+		tmp->style = LINE;
 		plline(tmp->length, tmp->xvalue, tmp->yvalue);
 		break;
 	     case POINT:
-		plpoin(tmp->length, tmp->xvalue, tmp->yvalue, 4);
+		tmp->style = POINT;
+		plpoin(tmp->length, tmp->xvalue, tmp->yvalue, 3);
 		break;
 	     default:
+		fprintf(stderr, "Error: no plot style is defined!\n");
 		break;
 	  }
 
@@ -128,21 +141,24 @@ int plot_item_plot_data(plot *p, plot_item *item, plot_style style) {
      return true;
 }
 
-void plot_item_set_graph_data(plot *p, plot_item *item, double *xvalue, double *yvalue, int length) {
+void plot_item_set_graph_data(plot *p, plot_item *item, double *xvalue, double *yvalue, int length, plot_color color, plot_style style) {
      plot_dataset *dataset;
      dataset = plot_dataset_alloc();
      dataset->xvalue = xvalue;
      dataset->yvalue = yvalue;
      dataset->length = length;
+     dataset->color = color;
+     dataset->style = style;
      
      printf("%s: Adding dataset %p to list with length %d\n", __func__, dataset, dataset->length);
      list_append_ref(item->datasets, dataset);
 }
 
-void plot_item_set_labels(plot_item *item, char *xlabel, char *ylabel, char *title) {
+void plot_item_set_labels(plot_item *item, char *xlabel, char *ylabel, char *title, plot_color color) {
      item->xlabel = strdup(xlabel);
      item->ylabel = strdup(ylabel);
      item->title = strdup(title);
+     item->label_color = color;
      printf("%s: setting the labels for the plot\n", __func__);
 }
 
@@ -155,7 +171,6 @@ void plot_item_set_viewport(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin,
      /* Setup the viewport 
       * Device-independent routine for setting up the viewport
       * plvpor (xmin, xmax, ymin, ymax);
-      * plvpor(0.15, 0.85, 0.1, 0.9);
       * or just setup/define the standard viewport ....
       */
      plvsta();
@@ -166,11 +181,10 @@ void plot_item_set_viewport(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin,
       */
      plwind(xmin, xmax, ymin, ymax);
 
-     /* Sets the color for color map0 
-      * Se color choices:
-      * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/color.html#color-map-0
-      */
-     plcol0(2);
+     /* Define a default color for the axis 
+      * For some strange reason this won't work with BLACK.
+      *
+     plcol0(BLACK); */
 
       /* Draw a box with axes, etc.
        * plbox (xopt, xtick, nxsub, yopt, ytick, nysub); 
@@ -182,6 +196,14 @@ void plot_item_set_viewport(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin,
      if (!item->xlabel || !item->ylabel || !item->title) {
 	  fprintf(stderr, "Error: you need to set lables before setting the viewport!\n");
      } else {
+	  /* 
+	   * http://old.ysn.ru/docs/plplot/plplotdoc-html-0.4.1/characters.html
+	   */
+	  plcol0(item->label_color);
+
+	  /* Scale the textsize by 0.8 */
+	  plschr(0, 0.8); 
+	  /* Set some default values for the labels */
 	  pllab(item->xlabel, item->ylabel, item->title);
      }
 

@@ -79,11 +79,11 @@ int main(int argc, const char **argv) {
      item = plot_item_new(p, "png", "punqs3_wopr.png");
      for (j = 0; j < nwords; j++) {
 	  collect_summary_data(&x, &y, &N, keywords[j]);
-	  plot_item_set_graph_data(p, item, x, y, N);
+	  plot_item_set_graph_data(p, item, x, y, N, BLUE, LINE);
      }
-     plot_item_set_labels(item, "Timesteps", "WOPR:PRO1", "PUNQS3 test");
+     plot_item_set_labels(item, "Timesteps", "WOPR:PRO1", "PUNQS3 test", BROWN);
      plot_item_set_viewport(item, 0, 83, 0, 210);
-     plot_item_plot_data(p, item, LINE);
+     plot_item_plot_data(p, item);
      plot_item_free(p->plots, item);
 
      
@@ -107,10 +107,10 @@ int main(int argc, const char **argv) {
 	  util_safe_free(x);
      }
      
-     plot_item_set_graph_data(p, item, x_tot, y_tot, N);
-     plot_item_set_labels(item, "Timesteps", "WOPR, sum", "PUNQS3 test");
+     plot_item_set_graph_data(p, item, x_tot, y_tot, N, BROWN, LINE);
+     plot_item_set_labels(item, "Timesteps", "WOPR, sum", "PUNQS3 test", BROWN);
      plot_item_set_viewport(item, 0, 85, 0, 1200);
-     plot_item_plot_data(p, item, LINE);
+     plot_item_plot_data(p, item);
      plot_item_free(p->plots, item);
 
      plot_free(p);
