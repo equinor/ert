@@ -56,9 +56,9 @@ int main(int argc, const char **argv) {
 	  y[i] = cos(x[i]);
      }
      plot_item_set_graph_data(p, item, x, y, N);
-     plot_item_set_size(item, 0, period, -1, 1);
      plot_item_set_labels(item, "x-axis", "y-axis", "f(x) = sin(x) and f(x) = cos(x)");
-     plot_item_plot_data(p, item);
+     plot_item_set_viewport(item, 0, period, -1, 1);
+     plot_item_plot_data(p, item, LINE);
 
      printf ("------------------------------------------------\n");
      
@@ -72,9 +72,9 @@ int main(int argc, const char **argv) {
      }
      plot_item_set_graph_data(p, item, x, y, N);
      plot_item_manipulate_data(p, item, __plot_example_plot2);
-     plot_item_set_size(item, 0, period, 0, 500 * 0.5);
      plot_item_set_labels(item, "x-axis", "y-axis", "f(x) = exp(x)");
-     plot_item_plot_data(p, item);
+     plot_item_set_viewport(item, 0, period, 0, 500 * 0.5);
+     plot_item_plot_data(p, item, LINE);
 
      printf ("------------------------------------------------\n");
 

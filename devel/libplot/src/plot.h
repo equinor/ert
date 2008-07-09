@@ -11,10 +11,17 @@
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>
 
+typedef enum __plot_style {
+     HISTOGRAM = 0,
+     LINE = 1,
+     POINT = 2
+} plot_style;
+
 typedef struct _plot_dataset {
-     double  *xvalue; 
-     double  *yvalue;
-     int      length;
+     double     *xvalue; 
+     double     *yvalue;
+     int         length;
+     plot_style *style;
 } plot_dataset;
 
 typedef struct __plot_item {
@@ -49,8 +56,8 @@ void                    __plot_item_free(list_type *list, plot_item *item);
 extern plot_item       *plot_item_new(plot_type *p, char *dev, char *filename);
 extern void             plot_item_set_graph_data(plot_type *p, plot_item *item, double *xvalue, double *yvalue, int length);
 extern void             plot_item_set_labels(plot_item *item, char *xlabel, char *ylabel, char *title);
-extern void             plot_item_set_size(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin, PLFLT ymax);
+extern void             plot_item_set_viewport(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin, PLFLT ymax);
 extern void             plot_item_manipulate_data(plot_type *p, plot_item *item, void (*func)(void *data));
-extern int              plot_item_plot_data(plot_type *p, plot_item *item);
+extern int              plot_item_plot_data(plot_type *p, plot_item *item, plot_style style);
 
 #endif
