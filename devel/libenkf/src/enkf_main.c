@@ -446,8 +446,6 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
   if (enkf_update) {
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
     
-    printf("Har X \n");
-    
     if (X != NULL) {
       /* The second to last argument is the number of double
 	 we ask for, to get the number of bytes you must multiply
@@ -455,7 +453,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
 
 	 1024 * 1024 * 128 => 1GB of memory
       */
-      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*256 , X);   
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*256 /* 2GB */, X);   
       free(X);
     }
   }

@@ -542,7 +542,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
       
       line  = util_fscanf_alloc_line(stream , &at_eof);
       if (line != NULL) {
-	util_split_string(line , " " , &tokens , &token_list);
+	util_split_string(line , " \t" , &tokens , &token_list);
       
 	active_tokens = tokens;
 	for (i = 0; i < tokens; i++) {
