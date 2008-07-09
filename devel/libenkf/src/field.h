@@ -25,6 +25,7 @@ void         field_free(field_type *);
 double       field_ijk_lookup(const field_type * , int , int , int);
 void         field_get_dims(const field_type *, int *, int *, int *);
 void         field_fload(field_type * , const char * , bool );
+void         field_fload_auto(field_type * , const char * , bool );
 void         field_export3D(const field_type * , void *, bool , ecl_type_enum , void *);
 field_type * field_copyc(const field_type *);
 bool         field_cmp(const field_type *  , const field_type * );

@@ -831,6 +831,15 @@ void field_fload(field_type * field , const char * filename , bool endian_flip) 
   field_fload_typed(field , filename , endian_flip , file_type);
 }
 
+
+
+void field_fload_auto(field_type * field , const char * filename , bool endian_flip) {
+  field_file_type file_type = field_config_guess_file_type(filename , endian_flip);
+  field_fload_typed(field , filename , endian_flip , file_type);
+}
+
+
+
 /**
    This function compares two fields, and return true if they are
    equal. Observe that the config comparison is done with plain
