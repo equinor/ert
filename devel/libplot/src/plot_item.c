@@ -1,6 +1,6 @@
 #include "plot.h"
 
-plot_item *__plot_item_alloc() {
+static plot_item *plot_item_alloc() {
      plot_item *item;
 
      item = malloc(sizeof *item);
@@ -11,7 +11,7 @@ plot_item *__plot_item_alloc() {
      return item;
 }
 
-plot_dataset *__plot_dataset_alloc() {
+static plot_dataset *plot_dataset_alloc() {
      plot_dataset *dataset;
 
      dataset = malloc(sizeof *dataset);
@@ -22,7 +22,10 @@ plot_dataset *__plot_dataset_alloc() {
      return dataset;
 }
 
-void __plot_item_free(list_type *list, plot_item *item) { 
+/**************************************************************/
+/**************************************************************/
+
+void plot_item_free(list_type *list, plot_item *item) { 
      list_node_type *node , *next_node;
      
      fprintf(stderr, "%s: free on %p, (%s)\n", __func__, item, item->filename);
@@ -60,10 +63,10 @@ void __plot_item_free(list_type *list, plot_item *item) {
 
 
 
-plot_item *plot_item_new(plot_type *p, char *dev, char *filename) {
+plot_item *plot_item_new(plot *p, char *dev, char *filename) {
      plot_item *item;
 
-     item = __plot_item_alloc();
+     item = plot_item_alloc();
      item->device = strdup(dev);
      item->filename = strdup(filename);
 
@@ -82,7 +85,7 @@ plot_item *plot_item_new(plot_type *p, char *dev, char *filename) {
      return item;
 }
 
-int plot_item_plot_data(plot_type *p, plot_item *item, plot_style style) {
+int plot_item_plot_data(plot *p, plot_item *item, plot_style style) {
      list_node_type *node , *next_node;
 
      node = list_get_head(item->datasets);
@@ -122,14 +125,12 @@ int plot_item_plot_data(plot_type *p, plot_item *item, plot_style style) {
 
      printf("%s: finished plotting %s\n", __func__, item->filename);
 
-     __plot_item_free(p->plots, item);
-
      return true;
 }
 
-void plot_item_set_graph_data(plot_type *p, plot_item *item, double *xvalue, double *yvalue, int length) {
+void plot_item_set_graph_data(plot *p, plot_item *item, double *xvalue, double *yvalue, int length) {
      plot_dataset *dataset;
-     dataset = __plot_dataset_alloc();
+     dataset = plot_dataset_alloc();
      dataset->xvalue = xvalue;
      dataset->yvalue = yvalue;
      dataset->length = length;
@@ -186,7 +187,7 @@ void plot_item_set_viewport(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin,
 
 }
 
-void plot_item_manipulate_data(plot_type *p, plot_item *item, void (*func)(void *data)) {
+void plot_item_manipulate_data(plot *p, plot_item *item, void (*func)(void *data)) {
      item->func = func;
      item->func(item);
 }

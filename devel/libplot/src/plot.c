@@ -1,7 +1,7 @@
 #include "plot.h"
 
-plot_type *plot_alloc() {
-     plot_type *p;
+plot *plot_alloc() {
+     plot *p;
 
      p = malloc(sizeof * p);
      if (!p)
@@ -12,7 +12,7 @@ plot_type *plot_alloc() {
      return p;
 }
 
-void plot_free(plot_type *p) {
+void plot_free(plot *p) {
      list_node_type *node , *next_node;
      bool flag = false;
 
@@ -26,7 +26,7 @@ void plot_free(plot_type *p) {
 	  next_node = list_node_get_next(node);
 	  tmp = list_node_value_ptr(node);
 
-	  __plot_item_free(p->plots, tmp);
+	  plot_item_free(p->plots, tmp);
 	  node = next_node;
      }
 
@@ -39,7 +39,7 @@ void plot_free(plot_type *p) {
        plend();
 }
 
-int plot_init(plot_type *p, bool debug, int argc, const char **argv) {
+int plot_init(plot *p, bool debug, int argc, const char **argv) {
      char ver[80];
      int j;
      j = plparseopts(&argc, argv, PL_PARSE_FULL);

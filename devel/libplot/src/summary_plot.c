@@ -10,7 +10,7 @@ WOPR:PRO11 WOPR:PRO12 WOPR:PRO15
 */
 
 
-void collect_summary_data(double **x, double **y, int *size, const char *keyword) {
+static void collect_summary_data(double **x, double **y, int *size, const char *keyword) {
      const char data_file[] = "/d/proj/bg/enkf/EnKF_PUNQS3/PUNQS3/Original/PUNQS3.DATA";
      char *base;
      char *header_file;
@@ -56,9 +56,13 @@ void collect_summary_data(double **x, double **y, int *size, const char *keyword
      ecl_sum_free(ecl_sum);
 }
 
+/**************************************************************/
+/**************************************************************/
+
+
 
 int main(int argc, const char **argv) {
-     plot_type *p;
+     plot *p;
      plot_item *item;
      double *x, *y;
      double *y_tot = NULL;
@@ -80,6 +84,7 @@ int main(int argc, const char **argv) {
      plot_item_set_labels(item, "Timesteps", "WOPR:PRO1", "PUNQS3 test");
      plot_item_set_viewport(item, 0, 83, 0, 210);
      plot_item_plot_data(p, item, LINE);
+     plot_item_free(p->plots, item);
 
      
      printf("--------------------------------------------\n");
@@ -106,6 +111,7 @@ int main(int argc, const char **argv) {
      plot_item_set_labels(item, "Timesteps", "WOPR, sum", "PUNQS3 test");
      plot_item_set_viewport(item, 0, 85, 0, 1200);
      plot_item_plot_data(p, item, LINE);
+     plot_item_free(p->plots, item);
 
      plot_free(p);
 }
