@@ -17,11 +17,31 @@ typedef enum __plot_style {
      POINT = 2
 } plot_style;
 
+typedef enum __plot_color {
+     BLACK = 0,
+     RED = 1,
+     YELLOW = 2,
+     GREEN = 3,
+     AQUAMARINE = 4,
+     PINK = 5,
+     WHEAT = 6,
+     GRAY = 7,
+     BROWN = 8,
+     BLUE = 9,
+     VIOLET = 10,
+     CYAN = 11,
+     TURQUOISE = 12,
+     MAGENTA = 13,
+     SALMON = 14,
+     WHITE = 15
+} plot_color;
+
 typedef struct _plot_dataset {
      double     *xvalue; 
      double     *yvalue;
      int         length;
-     plot_style *style;
+     plot_style  style;
+     plot_color  color;
 } plot_dataset;
 
 typedef struct __plot_item {
@@ -33,6 +53,7 @@ typedef struct __plot_item {
      char           *xlabel;
      char           *ylabel;
      char           *title;
+     plot_color      label_color;
 
      void            (*func)(void *data); /* data-manipulation function */
 } plot_item;
@@ -52,10 +73,10 @@ extern int              plot_init(plot *p, bool debug, int argc, const char **ar
 /* plot_item.c */
 extern plot_item       *plot_item_new(plot *p, char *dev, char *filename);
 extern void             plot_item_free(list_type *list, plot_item *item);
-extern void             plot_item_set_graph_data(plot *p, plot_item *item, double *xvalue, double *yvalue, int length);
-extern void             plot_item_set_labels(plot_item *item, char *xlabel, char *ylabel, char *title);
+extern void             plot_item_set_graph_data(plot *p, plot_item *item, double *xvalue, double *yvalue, int length, plot_color color, plot_style style);
+extern void             plot_item_set_labels(plot_item *item, char *xlabel, char *ylabel, char *title, plot_color color);
 extern void             plot_item_set_viewport(plot_item *item, PLFLT xmin, PLFLT xmax, PLFLT ymin, PLFLT ymax);
 extern void             plot_item_manipulate_data(plot *p, plot_item *item, void (*func)(void *data));
-extern int              plot_item_plot_data(plot *p, plot_item *item, plot_style style);
+extern int              plot_item_plot_data(plot *p, plot_item *item);
 
 #endif

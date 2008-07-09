@@ -48,7 +48,7 @@ int main(int argc, const char **argv) {
 	  x[i] = i * period / N;
 	  y[i] = sin(x[i]);
      }
-     plot_item_set_graph_data(p, item, x, y, N);
+     plot_item_set_graph_data(p, item, x, y, N, BROWN, LINE);
 
      /* Create another graph in the same plot */
      N = 50;
@@ -58,10 +58,21 @@ int main(int argc, const char **argv) {
 	  x[i] = i * period / N;
 	  y[i] = cos(x[i]);
      }
-     plot_item_set_graph_data(p, item, x, y, N);
-     plot_item_set_labels(item, "x-axis", "y-axis", "f(x) = sin(x) and f(x) = cos(x)");
+     plot_item_set_graph_data(p, item, x, y, N, BLUE, LINE);
+    
+     /* Create yet another cos, but with another frequency (\omega = 3) */ 
+     N = 100;
+     x = malloc(sizeof(double) * N);
+     y = malloc(sizeof(double) * N);
+     for (i = 0; i < N; i++) {
+	  x[i] = i * (period) / N;
+	  y[i] = cos(3*x[i]);
+     }
+     plot_item_set_graph_data(p, item, x, y, N, RED, POINT);
+     
+     plot_item_set_labels(item, "x-axis", "y-axis", "f(x) = sin(x) and f(x) = cos(x)", BROWN);
      plot_item_set_viewport(item, 0, period, -1, 1);
-     plot_item_plot_data(p, item, LINE);
+     plot_item_plot_data(p, item);
      plot_item_free(p->plots, item);
 
      printf ("------------------------------------------------\n");
@@ -74,11 +85,11 @@ int main(int argc, const char **argv) {
 	  x[i] = i * period / N;
 	  y[i] = exp(x[i]);
      }
-     plot_item_set_graph_data(p, item, x, y, N);
+     plot_item_set_graph_data(p, item, x, y, N, BLUE, LINE);
      plot_item_manipulate_data(p, item, plot_example_plot2);
-     plot_item_set_labels(item, "x-axis", "y-axis", "f(x) = exp(x)");
+     plot_item_set_labels(item, "x-axis", "y-axis", "f(x) = exp(x)", BROWN);
      plot_item_set_viewport(item, 0, period, 0, 500 * 0.5);
-     plot_item_plot_data(p, item, LINE);
+     plot_item_plot_data(p, item);
      plot_item_free(p->plots, item);
 
      printf ("------------------------------------------------\n");
