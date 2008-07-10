@@ -11,8 +11,8 @@ INSTALL_LIB_PATH  = $(LIBPLOT_HOME)/lib
 CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall -fPIC
 ARFLAGS = -csr
 #################################################################
-OBJECTS       = plot.o plot_item.o
-INC_FILES     = plot.h
+OBJECTS       = plot.o plot_dataset.o
+INC_FILES     = plot.h plot_dataset.h
 LIB_ROOT      = plot
 LIB           = lib$(LIB_ROOT)_$(MFLAG).a 
 LIB_LINK      = -l$(LIB_ROOT)_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lecl_$(MFLAG) -lz -lm -lplot_$(MFLAG) -lplplotd 
@@ -45,18 +45,20 @@ $(LIB): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE)  $(CPPFLAGS) $< -o $@
 
 # Library source code
-plot.o : plot.h plot.c plot_item.c
+plot.o : plot.h plot.c plot_dataset.c
 
 
 #Binaries
 plot_test.o : plot_test.c
 
-BIN:	    plot.x summary_plot.x
-BIN_FILES = plot.x summary_plot.x
+BIN:	    plot.x
+BIN_FILES = plot.x
+#BIN:	    plot.x summary_plot.x
+#BIN_FILES = plot.x summary_plot.x
 
 
 plot.x: plot_test.o $(LIB)
 	gcc $(LDFLAGS) plot_test.o -o plot.x     $(LIB_LINK_PATH) $(LIB_LINK) 
 
-summary_plot.x: summary_plot.o $(LIB)
-	gcc $(LDFLAGS) summary_plot.o -o summary_plot.x     $(LIB_LINK_PATH) $(LIB_LINK) 
+#summary_plot.x: summary_plot.o $(LIB)
+#	gcc $(LDFLAGS) summary_plot.o -o summary_plot.x     $(LIB_LINK_PATH) $(LIB_LINK) 
