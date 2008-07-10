@@ -6,7 +6,6 @@
 int main(int argc, char ** argv)
 {
   char * config_file;
-  char * config_base;
   char * path;
   char * ext;
 
@@ -16,16 +15,21 @@ int main(int argc, char ** argv)
     return 0;
   }
 
-  util_alloc_file_components(argv[1], &path, &config_base, &ext);
+  util_alloc_file_components(argv[1], &path, &config_file, &ext);
 
   if(path != NULL)
     chdir(path);
 
-  config_file = util_strcat_realloc(config_base,".");
+  config_file = util_strcat_realloc(config_file,".");
   config_file = util_strcat_realloc(config_file,ext);
   
   tpgzone_type * tpgzone = tpgzone_fscanf_alloc(config_file, true);
 
   tpgzone_free(tpgzone);
+
+  free(config_file);
+  free(path);
+  free(ext);
+
   return 0;
 }

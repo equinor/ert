@@ -2,11 +2,15 @@
 #include <config.h>
 #include <util.h>
 #include <ecl_kw.h>
-#include <ecl_grid.h>
 #include <field_config.h>
 #include <field.h>
+#include <tpgzone_util.h>
+
+
 
 typedef struct petp_item_struct petp_item_type;
+
+
 
 struct petp_item_struct{
   double * data;
@@ -101,37 +105,10 @@ static double * petp_item_apply_alloc(const petp_item_type * petp_item, const in
 
 
 
-static field_config_type * __field_config_alloc__(const petp_item_type * petp_item, const char * grid_file, bool endian_flip)
-{
-  field_config_type * field_config;
-
-  {
-    field_file_type file_type = field_config_guess_file_type(petp_item->ecl_filename, endian_flip);
-    if(file_type != ecl_kw_file && file_type != ecl_grdecl_file)
-      util_abort("%s: Sorry, only grdecl or kw_file are supported - aborting.\n", __func__);
-  }
-
-  {
-    int nx, ny, nz, active_size;
-    ecl_grid_type * ecl_grid = ecl_grid_alloc(grid_file, endian_flip);
-    ecl_grid_get_dims(ecl_grid, &nx, &ny, &nz, &active_size);
-
-    field_config = field_config_alloc_dynamic(petp_item->ecl_kw,
-                                              nx, ny, nz, active_size,
-                                              ecl_grid_get_index_map_ref(ecl_grid));
-
-    ecl_grid_free(ecl_grid);
-  }
-
-  return field_config;
-}
-
-
-
 static void petp_item_fwrite(const petp_item_type * petp_item, const int * facies, const int * blocks,
                              int size, const char * grid_file, bool endian_flip)
 {
-  field_config_type * field_config = __field_config_alloc__(petp_item, grid_file, endian_flip);
+  field_config_type * field_config = tpgzone_field_config_alloc__(petp_item->ecl_filename, petp_item->ecl_kw, grid_file, endian_flip);
   field_type        * field        = field_alloc(field_config);
 
   field_fload_auto(field, petp_item->ecl_filename, endian_flip);
