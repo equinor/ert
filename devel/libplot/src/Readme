@@ -17,6 +17,9 @@ Depends on:
 - libecl
 - zlib
 
+For debugging, run for example 
+csh% ./plot.x -debug
+
 
 -------------------------------------------------------------------------------
 Rememer to set:
@@ -27,6 +30,8 @@ bash% export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot-5.9.0/Compilation
 
 Some notes on TrueType fonts:
 
+The way to change the symbol (for example when plotting points) font is:
+
 setenv PLPLOT_FREETYPE_FONT_DIR /h/masar/sfd/
 setenv PLPLOT_FREETYPE_SYMBOL_BOLD_FONT FreeSerifBold.ttf
 setenv PLPLOT_FREETYPE_SYMBOL_BOLD_ITALIC_FONT FreeSerifBoldItalic.ttf
@@ -35,21 +40,9 @@ setenv PLPLOT_FREETYPE_SYMBOL_FONT FreeSerif.ttf
 setenv PLPLOT_FREETYPE_SYMBOL_ITALIC_FONT FreeSerifItalic.ttf
 setenv PLPLOT_FREETYPE_SYMBOL_OBLIQUE_FONT FreeSerifItalic.ttf
 
-OR
-setenv PLPLOT_FREETYPE_SYMBOL_BOLD_FONT FreeSansBold.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_BOLD_OBLIQUE_FONT FreeSansBoldOblique.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_FONT FreeSerif.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_OBLIQUE_FONT FreeSansOblique.ttf
+For more in depth work with the fonts in the plot, one can look at:
+http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/characters.html#fci
 
-OR 
-
-export PLPLOT_FREETYPE_FONT_DIR=/h/masar/sfd/
-export PLPLOT_FREETYPE_SYMBOL_BOLD_FONT=FreeSerifBold.ttf
-export PLPLOT_FREETYPE_SYMBOL_BOLD_ITALIC_FONT=FreeSerifBoldItalic.ttf
-export PLPLOT_FREETYPE_SYMBOL_BOLD_OBLIQUE_FONT=FreeSerifBoldItalic.ttf
-export PLPLOT_FREETYPE_SYMBOL_FONT=FreeSerif.ttf
-export PLPLOT_FREETYPE_SYMBOL_ITALIC_FONT=FreeSerifItalic.ttf
-export PLPLOT_FREETYPE_SYMBOL_OBLIQUE_FONT=FreeSerifItalic.ttf
 -------------------------------------------------------------------------------
 COMPILE INSTRUCTIONS FOR PLPLOT ITSELF:
 
@@ -59,6 +52,7 @@ It has been compiled already and you can find it in /h/masar/cmake/bin.
 Basic instructions: http://www.miscdebris.net/plplot_wiki/index.php?title=Linux
 Modifications: 
 
+Use the curses Interface for CMake:
 csh% ccmake -DCMAKE_INSTALL_PREFIX:PATH=/h/masar/plplot-5.9.0/Compilation/ -DCMAKE_VERBOSE_MAKEFILE=ON -DHAVE_FREETYPE=ON ..
 
 Now there is a few variables that has to be changed:
