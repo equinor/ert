@@ -173,6 +173,16 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , int nx
 
 
 
+field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, int nx, int ny, int nz, int active_size, const int * index_map)
+{
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
+  config->logmode            = 0;
+  config->init_type          = none;
+  return config;
+}
+
+
+
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
 field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , int nx , int ny , int nz , int active_size , const int * index_map , int logmode, field_init_type init_type , int config_len , const char ** config_files) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);

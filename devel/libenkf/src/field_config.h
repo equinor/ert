@@ -69,6 +69,7 @@ ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
 field_config_type     * field_config_alloc_dynamic(const char * , int , int , int , int , const int * );
+field_config_type     * field_config_alloc_parameter_no_init(const char *, int, int, int, int, const int *);
 field_config_type     * field_config_alloc_parameter(const char * , int , int , int , int  , const int * , int , field_init_type  , int  , const char ** );
 void                    field_config_free(field_config_type *);
 void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
