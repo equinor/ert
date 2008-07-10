@@ -50,6 +50,11 @@ static int * tpgzone_alloc_blocks_from_grid(const char * grid_file,
 
 
 
+static double ** tpgzone_alloc_gauss_from_file(const tpgzone_type * tpgzone)
+{
+  double ** gauss = util_malloc(tpgzone->num_gauss_fields * sizeof * gauss, __func__);
+}
+
 /***************************************************************************************/
 
 
@@ -210,4 +215,17 @@ tpgzone_type * tpgzone_fscanf_alloc(char * config_file, bool endian_flip)
   }
   tpgzone_summarize(tpgzone);
   return tpgzone;
+}
+
+
+void tpgzone_apply(const tpgzone_type * tpgzone)
+{
+  double ** gauss = tpgzone_alloc_gauss_from_file(tpgzone);
+  
+  {
+    int i;
+    for(i=0; i<tpgzone->num_gauss_fields; i++)
+      free(gauss[i]);
+  } 
+  free(gauss);
 }

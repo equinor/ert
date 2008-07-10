@@ -11,7 +11,7 @@ CFLAGS  = -O2 -$(MFLAG) -std=gnu99 -g -Wall
 FFLAGS  = -fpe0 -traceback -warn unused -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
 ARFLAGS = -csr
 #################################################################
-OBJECTS   = tpgzone.o trs.o petp.o
+OBJECTS   = tpgzone.o trs.o petp.o tpgzone_util.o
 INC_FILES = tpgzone.h trs.h petp.h 
 LIB       = libtpg_$(MFLAG).a
 LIB_LINK  = -ltpg_$(MFLAG) -lenkf_$(MFLAG) -lrms_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG)  -lm -lz
@@ -45,6 +45,7 @@ $(LIB): $(OBJECTS)
 	$(FC) -c $(FFLAGS) $< -o $@
 
 
-tpgzone.o       : tpgzone.h
+tpgzone.o       : tpgzone.h trs.h petp.h
+petp.o          : petp.h tpgzone_util.h
 trs.o           : trs.h
-petp.o          : petp.h
+tpgzone_util.o  : tpgzone_util.h
