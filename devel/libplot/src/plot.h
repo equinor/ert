@@ -10,13 +10,13 @@
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>
 
-typedef enum __plot_style {
+typedef enum plot_style_enum {
      HISTOGRAM = 0,
      LINE = 1,
      POINT = 2
-} plot_style;
+} plot_style_type;
 
-typedef enum __plot_color {
+typedef enum plot_color_enum {
      WHITE = 0,
      RED = 1,
      YELLOW = 2,
@@ -33,29 +33,30 @@ typedef enum __plot_color {
      MAGENTA = 13,
      SALMON = 14,
      BLACK = 15
-} plot_color;
+} plot_color_type;
 
 
-typedef struct __plot {
-     list_type      *datasets; 
-     char           *filename;
-     char           *device;
+typedef struct plot_struct plot_type;
+struct plot_struct {
+     list_type       *datasets; 
+     char            *filename;
+     char            *device;
 
-     char           *xlabel;
-     char           *ylabel;
-     char           *title;
-     plot_color      label_color;
-} plot;
+     char            *xlabel;
+     char            *ylabel;
+     char            *title;
+     plot_color_type  label_color;
+};
 
 
-extern plot *plot_alloc();
-extern void  plot_initialize(plot *item, char *dev, char *filename);
+extern plot_type *plot_alloc();
+extern void       plot_initialize(plot_type *item, char *dev, char *filename);
 
-extern void  plot_set_labels(plot *item, char *xlabel, char *ylabel, char *title, plot_color color);
-extern void  plot_set_viewport(plot *item, PLFLT xmin, PLFLT xmax, PLFLT ymin, PLFLT ymax);
-extern void  plot_data(plot *item);
+extern void       plot_set_labels(plot_type *item, char *xlabel, char *ylabel, char *title, plot_color_type color);
+extern void       plot_set_viewport(plot_type *item, PLFLT xmin, PLFLT xmax, PLFLT ymin, PLFLT ymax);
+extern void       plot_data(plot_type *item);
 
-extern void  plot_free_all_datasets(plot *item); 
-extern void  plot_free(plot *item);
+extern void       plot_free_all_datasets(plot_type *item); 
+extern void       plot_free(plot_type *item);
 
 #endif

@@ -1,8 +1,8 @@
-#include "plot.h"
-#include "plot_dataset.h"
+#include <plot.h>
+#include <plot_dataset.h>
 
-plot_dataset *plot_dataset_alloc() {
-     plot_dataset *d;
+plot_dataset_type *plot_dataset_alloc() {
+     plot_dataset_type *d;
 
      d = malloc(sizeof *d);
      if(!d)
@@ -11,13 +11,13 @@ plot_dataset *plot_dataset_alloc() {
      return d;
 }
 
-void plot_dataset_free(plot_dataset *d) {
+void plot_dataset_free(plot_dataset_type *d) {
      util_safe_free(d->xvalue);
      util_safe_free(d->yvalue);
      util_safe_free(d);
 }
 
-void plot_dataset_set_data(plot_dataset *d, double *x, double *y, int len, plot_color c, plot_style s) {
+void plot_dataset_set_data(plot_dataset_type *d, double *x, double *y, int len, plot_color_type c, plot_style_type s) {
      if (!d) {
 	  fprintf(stderr, "Error: you need to allocate the new dataset first\n");
 	  return;
@@ -30,7 +30,7 @@ void plot_dataset_set_data(plot_dataset *d, double *x, double *y, int len, plot_
      d->style = s;
 }
 
-int plot_dataset_add(plot *item, plot_dataset *d) {
+int plot_dataset_add(plot_type *item, plot_dataset_type *d) {
      if (!d || !item) {
 	  fprintf(stderr, "Error: you need to allocate a new dataset or plot-item.\n");
 	  return false;

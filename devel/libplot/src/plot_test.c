@@ -1,9 +1,9 @@
-#include "plot.h"
-#include "plot_dataset.h"
+#include <plot.h>
+#include <plot_dataset.h>
 
 int main(int argc, const char **argv) {
-     plot *item;
-     plot_dataset *d;
+     plot_type *item;
+     plot_dataset_type *d;
      int N = 100; /* Number of samples */
      const double period = 2*PI;
      int i;
