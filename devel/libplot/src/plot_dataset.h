@@ -1,19 +1,20 @@
 #ifndef __PLOT_DATASET_H__
 #define __PLOT_DATASET_H__
 
-typedef struct _plot_dataset {
-     double     *xvalue; 
-     double     *yvalue;
-     int         length;
-     plot_style  style;
-     plot_color  color;
-} plot_dataset;
+typedef struct plot_dataset_struct plot_dataset_type;
+struct plot_dataset_struct {
+     double          *xvalue;
+     double          *yvalue;
+     double           std_y;
+     int              length;
+     plot_style_type  style;
+     plot_color_type  color;
+};
 
 
-extern plot_dataset *plot_dataset_alloc();
-extern void          plot_dataset_free(plot_dataset *d);
-
-extern void          plot_dataset_set_data(plot_dataset *d, double *x, double *y, int len, plot_color c, plot_style s);
-extern int           plot_dataset_add(plot *item, plot_dataset *d);
+extern plot_dataset_type *plot_dataset_alloc();
+extern void               plot_dataset_free(plot_dataset_type *d);
+extern void               plot_dataset_set_data(plot_dataset_type *d, double *x, double *y, int len, plot_color_type c, plot_style_type s);
+extern int                plot_dataset_add(plot_type *item, plot_dataset_type *d);
 
 #endif

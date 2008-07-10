@@ -1,8 +1,8 @@
-#include "plot.h"
-#include "plot_dataset.h"
+#include <plot.h>
+#include <plot_dataset.h>
 
-plot *plot_alloc() {
-     plot *item;
+plot_type *plot_alloc() {
+     plot_type *item;
 
      item = malloc(sizeof *item);
      if (!item)
@@ -11,7 +11,7 @@ plot *plot_alloc() {
      return item;
 }
 
-void plot_initialize(plot *item, char *dev, char *filename) {
+void plot_initialize(plot_type *item, char *dev, char *filename) {
      item->device = strdup(dev);
      item->filename = strdup(filename);
 
@@ -34,7 +34,7 @@ void plot_initialize(plot *item, char *dev, char *filename) {
      plinit();
 }
 
-void plot_free_all_datasets(plot *item) {
+void plot_free_all_datasets(plot_type *item) {
      list_node_type *node , *next_node;
 
      if (!item->datasets)
@@ -42,7 +42,7 @@ void plot_free_all_datasets(plot *item) {
 
      node = list_get_head(item->datasets);
      while (node != NULL) {
-	  plot_dataset *tmp;
+	  plot_dataset_type *tmp;
 	  next_node = list_node_get_next(node);
 	  tmp = list_node_value_ptr(node);
 	  list_del_node(item->datasets, node);
@@ -55,7 +55,7 @@ void plot_free_all_datasets(plot *item) {
 
 }
 
-void plot_free(plot *item) { 
+void plot_free(plot_type *item) { 
      fprintf(stderr, "%s: free on %p, (%s)\n", __func__, item, item->filename);
     
      /* Free the graphs in the plot */ 
@@ -74,12 +74,12 @@ void plot_free(plot *item) {
      plend();
 }
 
-void plot_data(plot *item) {
+void plot_data(plot_type *item) {
      list_node_type *node , *next_node;
 
      node = list_get_head(item->datasets);
      while (node != NULL) {
-	  plot_dataset *tmp;
+	  plot_dataset_type *tmp;
 
 	  next_node = list_node_get_next(node);
 	  tmp = list_node_value_ptr(node);
@@ -125,7 +125,7 @@ void plot_data(plot *item) {
      printf("%s: finished plotting %s\n", __func__, item->filename);
 }
 
-void plot_set_labels(plot *item, char *xlabel, char *ylabel, char *title, plot_color color) {
+void plot_set_labels(plot_type *item, char *xlabel, char *ylabel, char *title, plot_color_type color) {
      item->xlabel = strdup(xlabel);
      item->ylabel = strdup(ylabel);
      item->title = strdup(title);
@@ -133,7 +133,7 @@ void plot_set_labels(plot *item, char *xlabel, char *ylabel, char *title, plot_c
      printf("%s: setting the labels for the plot\n", __func__);
 }
 
-void plot_set_viewport(plot *item, PLFLT xmin, PLFLT xmax, PLFLT ymin, PLFLT ymax) {
+void plot_set_viewport(plot_type *item, PLFLT xmin, PLFLT xmax, PLFLT ymin, PLFLT ymax) {
      printf("%s: setting the viewport for the plot\n", __func__);
 
      /* Advance to the next subpage, looks like it has to be done */

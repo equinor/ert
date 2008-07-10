@@ -1,4 +1,5 @@
-#include "plot.h"
+#include <plot.h>
+#include <plot_dataset.h>
 #include <ecl_kw.h>
 #include <ecl_sum.h>
 
@@ -62,8 +63,8 @@ static void collect_summary_data(double **x, double **y, int *size, const char *
 
 
 int main(int argc, const char **argv) {
-     plot *p;
-     plot *item;
+     plot_type *item;
+     plot_dataset_type *d;
      double *x, *y;
      double *y_tot = NULL;
      double *x_tot = NULL;
@@ -73,23 +74,24 @@ int main(int argc, const char **argv) {
      int nwords = 6;
      int i;
 
-     p = plot_alloc();
-     plot_init(p, true, argc, argv);
-
-     item = plot_new(p, "png", "punqs3_wopr.png");
+     item = plot_alloc();
+     plot_initialize(item, "png", "punqs3_wopr.png");
      for (j = 0; j < nwords; j++) {
 	  collect_summary_data(&x, &y, &N, keywords[j]);
-	  plot_set_graph_data(p, item, x, y, N, BLUE, LINE);
+	  d = plot_dataset_alloc();
+	  plot_dataset_set_data(d, x, y, N, BROWN, LINE);
+	  plot_dataset_add(item, d);
      }
      plot_set_labels(item, "Timesteps", "WOPR:PRO1", "PUNQS3 test", BROWN);
      plot_set_viewport(item, 0, 83, 0, 210);
-     plot_plot_data(p, item);
-     plot_free(p->plots, item);
-
+     plot_data(item);
+     plot_free(item);
      
      printf("--------------------------------------------\n");
 
-     item = plot_new(p, "png", "punqs3_all_wopr.png");
+     item = plot_alloc();
+     plot_initialize(item, "png", "punqs3__all_wopr.png");
+
      /* Calculate total production for all wells */ 
      for (j = 0; j < nwords; j++) {
 	  collect_summary_data(&x, &y, &N, keywords[j]);
@@ -107,11 +109,12 @@ int main(int argc, const char **argv) {
 	  util_safe_free(x);
      }
      
-     plot_set_graph_data(p, item, x_tot, y_tot, N, BROWN, LINE);
+     d = plot_dataset_alloc();
+     plot_dataset_set_data(d, x_tot, y_tot, N, BROWN, LINE);
+     plot_dataset_add(item, d);
+     
      plot_set_labels(item, "Timesteps", "WOPR, sum", "PUNQS3 test", BROWN);
      plot_set_viewport(item, 0, 85, 0, 1200);
-     plot_plot_data(p, item);
-     plot_free(p->plots, item);
-
-     plot_free(p);
+     plot_data(item);
+     plot_free(item);
 }
