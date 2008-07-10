@@ -142,3 +142,6 @@ enkf:	main.o $(LIB)
 gen_test.x:	gen_test.o $(LIB)
 	gcc -$(MFLAG) $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	
 
+sched_test.x:	sched_test.o $(LIB)
+	gcc -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+

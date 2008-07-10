@@ -467,3 +467,6 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
 }
 
 
+
+
+sched_file_type * enkf_main_get_sched_file(const enkf_main_type * enkf_main) { return enkf_main->sched_file; }

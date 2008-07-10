@@ -15,7 +15,17 @@
 #include <lsf_driver.h>
 #include <signal.h>
 #include <ext_joblist.h>
+#include <enkf_sched.h>
+#include <stringlist.h>
 
+
+void enkf_sched_test(const enkf_main_type * enkf_main , const ext_joblist_type * joblist) {
+  stringlist_type * forward_model = stringlist_alloc_argv_ref((const char *[3]) {"REPLERM" , "ECLIPSE100" , "SEISMIC_TEST"} , 3);
+  enkf_sched_type * enkf_sched = enkf_sched_fscanf_alloc( "sched_config" , enkf_main_get_sched_file( enkf_main ) , joblist , forward_model);
+  enkf_sched_fprintf(enkf_sched , stdout);
+  enkf_sched_free( enkf_sched );
+  stringlist_free( forward_model );
+}
 
 void install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);
@@ -74,8 +84,8 @@ int main (int argc , char ** argv) {
     plain_driver_README( enkf_config_get_ens_path(enkf_config) );
     job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , fs , job_queue , joblist);
-
     enkf_main_initialize_ensemble(enkf_main); 
+    
     
     /*
       enkf_main_run(enkf_main , 61 , 0 , 61 , false , false);
