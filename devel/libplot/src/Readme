@@ -6,6 +6,7 @@ Exampels are placed in: /h/masar/plplot-5.9.0/examples/c
 
 Suggestions:
 - Plot days instead of timesteps
+- Plot a std example
 - "Legends?" for the lables?
 
 COMPILATION: 
@@ -19,6 +20,15 @@ Depends on:
 
 For debugging, run for example 
 csh% ./plot.x -debug
+
+Indentation:
+k&r style indentation (indent -kr *.[c,h])
+
+Vim options:
+set tabstop=8
+set shiftwidth=4
+set expandtab
+
 
 
 -------------------------------------------------------------------------------
