@@ -7,5 +7,6 @@ typedef struct petp_struct petp_type;
 petp_type * petp_fscanf_alloc(const char *, const hash_type *);
 void petp_free(petp_type *);
 void petp_fwrite(const petp_type *, const int *, const int *, int, const char *, bool); 
+void petp_summarize(const petp_type *);
 
 #endif
