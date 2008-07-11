@@ -159,21 +159,22 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream, string
 	}
       } else
 	util_abort("%s: failed to parse %s and %s as integers\n",__func__ , token_list[0] , token_list[1]);
-    }
-    sched_node = enkf_sched_node_alloc_empty();
-    sched_node->report_step1  = report_step1;
-    sched_node->report_step2  = report_step2;
-    sched_node->enkf_active   = enkf_active;
-    sched_node->report_stride = report_stride;
-    sched_node->forward_model = forward_model;
-    
-    if (forward_model != default_forward_model) {
-      int argc = stringlist_get_size(forward_model);
-      int i;
-      printf("Har speseill forward modell \n");
-      for (i = 0; i < argc; i++)
-	if (!ext_joblist_has_job(joblist , stringlist_iget(forward_model , i)))
-	  util_abort("%s: the forward job:%s has not been installed.\n",__func__ , stringlist_iget(forward_model , i));
+
+      sched_node = enkf_sched_node_alloc_empty();
+      sched_node->report_step1  = report_step1;
+      sched_node->report_step2  = report_step2;
+      sched_node->enkf_active   = enkf_active;
+      sched_node->report_stride = report_stride;
+      sched_node->forward_model = forward_model;
+
+      if (forward_model != default_forward_model) {
+	int argc = stringlist_get_size(forward_model);
+	int i;
+	printf("Har speseill forward modell \n");
+	for (i = 0; i < argc; i++)
+	  if (!ext_joblist_has_job(joblist , stringlist_iget(forward_model , i)))
+	    util_abort("%s: the forward job:%s has not been installed.\n",__func__ , stringlist_iget(forward_model , i));
+      }
     }
     util_free_stringlist(token_list , tokens);
     free(line);

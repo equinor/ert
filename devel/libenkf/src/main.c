@@ -110,8 +110,7 @@ int main (int argc , char ** argv) {
 	report_step = report_step1;
 	do {
 	  next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
-	  printf("Running: %d -> %d (%d) \n",report_step , next_report_step, report_stride);
-
+	  /*printf("Running: %d -> %d (%d) enkf_on:%d \n",report_step , next_report_step, report_stride,enkf_on);*/
 	  enkf_main_run(enkf_main , report_step , report_step , next_report_step , enkf_on , unlink_run_path , forward_model);
 	  report_step = next_report_step;
 	} while (next_report_step < report_step2);
