@@ -33,10 +33,13 @@
 #include <pthread.h>
 #include <job_queue.h>
 #include <msg.h>
+#include <stringlist.h>
+
 
 struct enkf_main_struct {
   enkf_config_type   *config;
   job_queue_type     *job_queue;
+  
   enkf_obs_type      *obs;
   meas_matrix_type   *meas_matrix;
   obs_data_type      *obs_data;
@@ -335,10 +338,9 @@ void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step
 
 /******************************************************************/
 
-void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int step2 , bool enkf_update, bool unlink_run_path) {
+void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
   bool  load_results            = enkf_update; /*??*/
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
-  const int sleep_time       = 1;
   int iens;
   
   printf("Starting forward step: %d -> %d \n",step1,step2);
@@ -352,7 +354,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
   
   enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
   for (iens = 0; iens < ens_size; iens++) {
-    enkf_main->void_arg[iens] = void_arg_alloc12(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , int_value , bool_value , bool_value , bool_value);
+    enkf_main->void_arg[iens] = void_arg_alloc13(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , int_value , bool_value , bool_value , bool_value , void_pointer);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->job_queue);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 2 , enkf_main->obs);
@@ -368,6 +370,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
        The final bool is not packed - that is a return value, the
        value is set in the called routine.
     */
+    void_arg_pack_ptr(enkf_main->void_arg[iens] , 12 , (stringlist_type *) forward_model);
     
   }
   
@@ -469,4 +472,4 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
 
 
 
-sched_file_type * enkf_main_get_sched_file(const enkf_main_type * enkf_main) { return enkf_main->sched_file; }
+const sched_file_type * enkf_main_get_sched_file(const enkf_main_type * enkf_main) { return enkf_main->sched_file; }

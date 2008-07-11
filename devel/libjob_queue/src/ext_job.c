@@ -133,7 +133,6 @@ void ext_job_set_start_file(ext_job_type * ext_job, const char * start_file) {
 }
 
 void ext_job_set_name(ext_job_type * ext_job, const char * name) {
-  printf("Setting:%s \n",name);
   ext_job->name = util_realloc_string_copy(ext_job->name , name);
 }
 

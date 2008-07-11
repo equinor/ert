@@ -45,14 +45,13 @@
 #include <ext_joblist.h>
 #include <gen_data.h>
 #include <gen_data_config.h>
-
+#include <stringlist.h>
 
 struct enkf_config_struct {
   ecl_grid_type   *grid;
   int  		   ens_size;
   int              ens_offset;
   int              iens_offset;
-  int              forward_model_length;
   hash_type       *config_hash;
   hash_type       *data_kw;   /* This is just temporary during the init process - is later transfered to the individual enkf_state objects */
   time_t           start_time;
@@ -71,8 +70,8 @@ struct enkf_config_struct {
   char *            obs_config_file;
   char *            ens_path;
   char *            init_file;
-  char **           forward_model; 
-
+  char *            enkf_sched_file;
+  stringlist_type  *forward_model;
   bool              include_all_static_kw;  /* If true all static keywords are stored.*/ 
   set_type        * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
 };
@@ -134,6 +133,18 @@ const char * enkf_config_get_ens_path(const enkf_config_type * config) {
   return config->ens_path;
 }
 
+
+static void enkf_config_set_enkf_sched_file(enkf_config_type * config , const char * enkf_sched_file) {
+  if (util_file_exists(enkf_sched_file))
+    config->enkf_sched_file = util_realloc_string_copy( config->enkf_sched_file , enkf_sched_file);
+  else
+    util_abort("%s: can not find file: %s \n", __func__ , enkf_sched_file);
+}
+
+
+const char * enkf_config_get_enkf_sched_file(const enkf_config_type * config) {
+  return config->enkf_sched_file;
+}
 
 static void enkf_config_set_init_file(enkf_config_type * config , const char * init_file) {
   if (config->init_file != NULL)
@@ -407,7 +418,7 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->result_path          = NULL;
   config->init_file            = NULL;
   config->forward_model        = NULL;
-  config->forward_model_length = 0;
+  config->enkf_sched_file      = NULL;
   enkf_config_set_debug(config , 0);
 
   config->include_all_static_kw = false;
@@ -451,17 +462,15 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
 }
 
 
-const char ** enkf_config_get_forward_model(const enkf_config_type * config , int * forward_model_length) {
-  *forward_model_length = config->forward_model_length;
-  return (const char **) config->forward_model;
+const stringlist_type * enkf_config_get_forward_model(const enkf_config_type * config) {
+  return config->forward_model;
 }
 
 void enkf_config_set_forward_model(enkf_config_type * config , const char  ** forward_model , int forward_model_length) {
   if (config->forward_model != NULL)
-    util_free_stringlist(config->forward_model , config->forward_model_length);
+    stringlist_free(config->forward_model);
 
-  config->forward_model_length = forward_model_length;
-  config->forward_model = util_alloc_stringlist_copy(forward_model , forward_model_length);
+  config->forward_model = stringlist_alloc_argv_copy(forward_model , forward_model_length);
 }
 
 
@@ -482,10 +491,10 @@ static void enkf_config_post_assert(const enkf_config_type * config , ext_joblis
 
   if (OK) {
     int i;
-    for (i=0; i < config->forward_model_length; i++) {
-      if ( !ext_joblist_has_job(joblist , config->forward_model[i]) ) {
+    for (i=0; i < stringlist_get_argc(config->forward_model); i++) {
+      if ( !ext_joblist_has_job(joblist , stringlist_iget(config->forward_model , i))) {
 	OK = false;
-	fprintf(stderr, "%s: FORWARD_MODEL:%s not defined \n",__func__ , config->forward_model[i]);
+	fprintf(stderr, "%s: FORWARD_MODEL:%s not defined \n",__func__ , stringlist_iget(config->forward_model , i));
       }
     }
   }
@@ -607,6 +616,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      } else if (strcmp(kw , "RUNPATH") == 0) {
 		ASSERT_TOKENS("RUNPATH" , active_tokens , 1);
 		enkf_config_set_run_path( enkf_config , token_list[1] );
+	      } else if (strcmp(kw, "ENKF_SCHED_FILE") == 0) {
+		ASSERT_TOKENS("ENKF_SCHED_FILE" , active_tokens , 1);
+		enkf_config_set_enkf_sched_file(enkf_config , token_list[1]);
 	      } else if (strcmp(kw , "DATA_FILE") == 0) {
 		ASSERT_TOKENS("DATA_FILE" , active_tokens , 1);
 		enkf_config_set_data_file( enkf_config , token_list[1] );
@@ -901,7 +913,8 @@ void enkf_config_free(enkf_config_type * config) {
   free(config->data_file);
   if (config->ecl_store_path != NULL)
     path_fmt_free(config->ecl_store_path);
-  if (config->obs_config_file != NULL) free(config->obs_config_file);
+  util_safe_free(config->obs_config_file);
+  util_safe_free(config->enkf_sched_file);
   if (config->ens_path != NULL) free(config->ens_path);
   if (config->schedule_src_file != NULL) {
     free(config->schedule_src_file);
@@ -910,7 +923,7 @@ void enkf_config_free(enkf_config_type * config) {
   hash_free(config->data_kw);
   free(config->init_file);
   free(config->ecl_store);
-  util_free_stringlist(config->forward_model , config->forward_model_length);
+  stringlist_free(config->forward_model);
   set_free(config->static_kw_set);
   free(config);
 }

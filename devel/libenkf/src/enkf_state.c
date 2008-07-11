@@ -43,7 +43,7 @@
 #include <basic_queue_driver.h>
 #include <pthread.h>
 #include <ext_joblist.h>
-
+#include <stringlist.h>
 
 
 
@@ -724,7 +724,7 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 */
 
 
-void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int init_step, int report_step1 , int report_step2) {
+void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int init_step, int report_step1 , int report_step2, const stringlist_type * _forward_model) {
   
   if (report_step1 != init_step)
     if (report_step1 > 0)
@@ -767,9 +767,9 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   }
 
   {
-    int forward_model_length;
+    int forward_model_length    = stringlist_get_argc(_forward_model);;
     bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
-    const char ** forward_model = enkf_config_get_forward_model(enkf_state->config , &forward_model_length);
+    const char ** forward_model = stringlist_get_argv(_forward_model);
     hash_type * context    	= hash_alloc();
     char * restart_file1   	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step1);
     char * restart_file2   	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step2);
@@ -819,13 +819,13 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
 
 
 
-void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , const sched_file_type * sched_file , int init_step , int report_step1 , int report_step2) {
+void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , const sched_file_type * sched_file , int init_step , int report_step1 , int report_step2, const stringlist_type * forward_model) {
   const int iens        = enkf_state_get_iens(enkf_state);
   /* 
      Prepare the job and submit it to the queue
   */
 
-  enkf_state_init_eclipse(enkf_state , sched_file , init_step , report_step1 , report_step2);
+  enkf_state_init_eclipse(enkf_state , sched_file , init_step , report_step1 , report_step2, forward_model);
   job_queue_add_job(job_queue , iens , report_step2);
 }
 
@@ -884,9 +884,10 @@ void * enkf_state_start_eclipse__(void * __void_arg) {
   int               init_step    = void_arg_get_int(void_arg   , 5);
   int               report_step1 = void_arg_get_int(void_arg  	, 6);
   int               report_step2 = void_arg_get_int(void_arg  	, 7);
+  
+  const stringlist_type * forward_model = void_arg_get_ptr(void_arg , 12);
 
-
-  enkf_state_start_eclipse(enkf_state , job_queue , sched_file , init_step , report_step1 , report_step2);
+  enkf_state_start_eclipse(enkf_state , job_queue , sched_file , init_step , report_step1 , report_step2 , forward_model);
   return NULL ; 
 }
 

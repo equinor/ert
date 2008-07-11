@@ -43,7 +43,7 @@ struct sched_file_struct {
 				   case it is essential that KEYWORD1 is in the fixed_record_kw -
 				   otherwise it will not be properly terminated. If on the other hand
 				   KEYWORD2 is *not* one of those we recognize, KEYWORD1 is (incorrectly)
-				   assumed to continue all the way up to the '/' terminating KEYWORD1 -
+				   assumed to continue all the way up to the '/' terminating KEYWORD2 -
 				   we (currently) accept that misunderstanding.
 				   
 
@@ -55,11 +55,11 @@ struct sched_file_struct {
                                        D E F /
                                    /
 				*/
-  hash_type  *kw_types;
-  list_type  *kw_list;
-  set_type   *well_set;
-  int         next_date_nr;
-  double      acc_days;
+  hash_type  *kw_types;         /* A hash table with the keywords we recognize. */
+  list_type  *kw_list;          /* The actual data - as a list of sched_kw instances. */
+  set_type   *well_set;         /* A set of the wells we have seen. */
+  int         next_date_nr;     /* A variable used during parsing. */
+  double      acc_days;         /* A variable used during parsing. */
   bool        compdat_initialized;
   int        *dims;
   time_t      start_date;
@@ -233,7 +233,7 @@ void sched_file_parse(sched_file_type * sched_file , const char * filename) {
   active_kw   = NULL;
   cont        = true;
   record_nr   = 0;
-  record_size     = -1;
+  record_size = -1;
   do {
     const char *line = line_list[linenr];
     if (strncmp(line , "END" , 3) == 0) {
@@ -247,10 +247,8 @@ void sched_file_parse(sched_file_type * sched_file , const char * filename) {
 	{
 	  int index = 0;
 	  while (index < strlen(line)) {
-	    if (kw_name[index] == ' ') {
-	      fprintf(stderr,"%s: Hmmmm - this looks suspicious line: \"%s\" should be a pure keyword, without data - aborting.\n",__func__ , kw_name);
-	      abort();
-	    }
+	    if (kw_name[index] == ' ') 
+	      util_abort("%s: Hmmmm - this looks suspicious line: \"%s\" should be a pure keyword, without data - aborting.\n",__func__ , kw_name);
 	    index++;
 	  }
 	}
@@ -599,3 +597,4 @@ int sched_file_time_t_to_report_step(const sched_file_type * s , time_t t ) {
     util_abort("%s: failed to find report_step.\n",__func__);
   return report_step;
 }
+

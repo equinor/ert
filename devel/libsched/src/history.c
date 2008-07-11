@@ -19,10 +19,10 @@
 typedef struct history_node_struct history_node_type;
 
 struct history_struct {
-  int  		   size;
-  int  		   alloc_size; 
-  time_t           start_date;
-  time_t           creation_time;
+  int  		      size;
+  int  		      alloc_size; 
+  time_t              start_date;
+  time_t              creation_time;
   char               *data_src;
   bool                history_mode;
   history_node_type **data;

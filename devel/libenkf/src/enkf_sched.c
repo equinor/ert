@@ -58,17 +58,15 @@ static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int repor
   return node;
 }
 
-static enkf_sched_node_type * enkf_sched_node_copyc(const enkf_sched_node_type * src , const stringlist_type * std_forward_model) {
-  enkf_sched_node_type *new;
 
-  if (src->forward_model == std_forward_model)
-    new = enkf_sched_node_alloc(src->report_step1 , src->report_step2 , src->report_stride , src->enkf_active , std_forward_model);
-  else 
-    new = enkf_sched_node_alloc(src->report_step1 , src->report_step2 , src->report_stride , src->enkf_active , stringlist_alloc_deep_copy(src->forward_model));
 
-  return new;
+void enkf_sched_node_get_data(const enkf_sched_node_type * node , int * report_step1 , int * report_step2 , int * report_stride , bool * enkf_on , stringlist_type ** forward_model) {
+  *report_step1  = node->report_step1;
+  *report_step2  = node->report_step2;
+  *report_stride = node->report_stride;
+  *enkf_on       = node->enkf_active;
+  *forward_model = node->forward_model;
 }
-
 
 static void enkf_sched_node_free(enkf_sched_node_type * node , const stringlist_type * std_forward_model) {
   if (node->forward_model != std_forward_model)
@@ -127,7 +125,7 @@ static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , const st
 static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream, stringlist_type * default_forward_model, const ext_joblist_type * joblist , bool * at_eof) {
   enkf_sched_node_type * sched_node = NULL;
   char ** token_list;
-  bool enkf_active;
+  bool enkf_active = false; /* Compiler shut up */
   int report_step1 , report_step2, report_stride;
   int tokens;
   stringlist_type * forward_model = default_forward_model;
@@ -135,33 +133,33 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream, string
   char * line = util_fscanf_alloc_line(stream , at_eof);
   if (line != NULL) {
     util_split_string(line , " \t" , &tokens , &token_list);
-    if (tokens < 3) 
-      util_abort("%s: fatal error when parsing line:\'%s\' - must have at least 3 tokens \n",__func__ , line);
-    if (util_sscanf_int(token_list[0] , &report_step1) && util_sscanf_int(token_list[1] , &report_step2)) {
-      util_strupr(token_list[2]);
-      if (strcmp(token_list[2] , "ON") == 0) {
-	enkf_active = true;
+    if (tokens >= 3) {
+      /*util_abort("%s: fatal error when parsing line:\'%s\' - must have at least 3 tokens \n",__func__ , line);*/
+      if (util_sscanf_int(token_list[0] , &report_step1) && util_sscanf_int(token_list[1] , &report_step2)) {
+	util_strupr(token_list[2]);
+	if (strcmp(token_list[2] , "ON") == 0) {
+	  enkf_active = true;
 	  report_stride = 1;
-      } else if (strcmp(token_list[2] , "OFF") == 0) {
-	enkf_active = false;
-	report_stride = report_step2 - report_step1;
-      } else 
-	util_abort("%s: failed to interpret %s as ON || OFF \n",__func__ , token_list[2]);
-      
-      if (tokens > 3) {
-	int model_start;
-	int model_length;
-	if (util_sscanf_int(token_list[3] , &report_stride)) 
-	  model_start  = 4;
-	else
-	  model_start = 3;
-	model_length = tokens - model_start;
-	if (model_length > 0)
-	  forward_model = stringlist_alloc_argv_copy((const char **) &token_list[model_start] , model_length);
-      }
-    } else
-      util_abort("%s: failed to parse %s and %s as integers\n",__func__ , token_list[0] , token_list[1]);
-      
+	} else if (strcmp(token_list[2] , "OFF") == 0) {
+	  enkf_active = false;
+	  report_stride = report_step2 - report_step1;
+	} else 
+	  util_abort("%s: failed to interpret %s as ON || OFF \n",__func__ , token_list[2]);
+	
+	if (tokens > 3) {
+	  int model_start;
+	  int model_length;
+	  if (util_sscanf_int(token_list[3] , &report_stride)) 
+	    model_start  = 4;
+	  else
+	    model_start = 3;
+	  model_length = tokens - model_start;
+	  if (model_length > 0)
+	    forward_model = stringlist_alloc_argv_copy((const char **) &token_list[model_start] , model_length);
+	}
+      } else
+	util_abort("%s: failed to parse %s and %s as integers\n",__func__ , token_list[0] , token_list[1]);
+    }
     sched_node = enkf_sched_node_alloc_empty();
     sched_node->report_step1  = report_step1;
     sched_node->report_step2  = report_step2;
@@ -183,47 +181,61 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream, string
   return sched_node;
 }
 
+
 /*****************************************************************/
 
-/** 
-    Inserts the new node at index location 'index'.
- */
-static void enkf_sched_iadd_node(enkf_sched_type * enkf_sched, int index, enkf_sched_node_type *node) {
-  if (index < 0 || index > enkf_sched->size)
-    util_abort("%s: index:%d invlid. Valid range: [0,%d] \n",__func__ , index ,  enkf_sched->size);
-  {
-    int new_size = enkf_sched->size + 1;
-    enkf_sched_node_type ** new_list = util_malloc(new_size * sizeof * new_list , __func__);
-    memcpy(new_list            ,  enkf_sched->node_list        , index * sizeof * new_list);  /* Copying everything _before_ index */
-    memcpy(&new_list[index+1]  , &enkf_sched->node_list[index] , (new_size - index) * sizeof * new_list);  /* Copying everything _after_ index */
-    new_list[index]        = node;
-    enkf_sched->node_list = new_list;
-    enkf_sched->size      = new_size;
-    free( enkf_sched->node_list );
-    enkf_sched->last_report = util_int_max(enkf_sched->last_report , node->report_step2);
-  }
-}
+
+/* static enkf_sched_node_type * enkf_sched_node_copyc(const enkf_sched_node_type * src , const stringlist_type * std_forward_model) { */
+/*   enkf_sched_node_type *new; */
+
+/*   if (src->forward_model == std_forward_model) */
+/*     new = enkf_sched_node_alloc(src->report_step1 , src->report_step2 , src->report_stride , src->enkf_active , std_forward_model); */
+/*   else  */
+/*     new = enkf_sched_node_alloc(src->report_step1 , src->report_step2 , src->report_stride , src->enkf_active , stringlist_alloc_deep_copy(src->forward_model)); */
+
+/*   return new; */
+/* } */
+
+/* /\**  */
+/*     Inserts the new node at index location 'index'. */
+/*  *\/ */
+
+/* static void enkf_sched_iadd_node(enkf_sched_type * enkf_sched, int index, enkf_sched_node_type *node) { */
+/*   if (index < 0 || index > enkf_sched->size) */
+/*     util_abort("%s: index:%d invlid. Valid range: [0,%d] \n",__func__ , index ,  enkf_sched->size); */
+/*   { */
+/*     int new_size = enkf_sched->size + 1; */
+/*     enkf_sched_node_type ** new_list = util_malloc(new_size * sizeof * new_list , __func__); */
+/*     memcpy(new_list            ,  enkf_sched->node_list        , index * sizeof * new_list);  /\* Copying everything _before_ index *\/ */
+/*     memcpy(&new_list[index+1]  , &enkf_sched->node_list[index] , (new_size - index) * sizeof * new_list);  /\* Copying everything _after_ index *\/ */
+/*     new_list[index]        = node; */
+/*     enkf_sched->node_list = new_list; */
+/*     enkf_sched->size      = new_size; */
+/*     free( enkf_sched->node_list ); */
+/*     enkf_sched->last_report = util_int_max(enkf_sched->last_report , node->report_step2); */
+/*   } */
+/* } */
 
 
 
-/** 
-    Removes element number 'index' rom the node_list 
-*/ 
+/* /\**  */
+/*     Removes element number 'index' rom the node_list  */
+/* *\/  */
 
-static void enkf_sched_idel_node(enkf_sched_type * enkf_sched , int index) {
-  if (index < 0 || index >= enkf_sched->size)
-    util_abort("%s: index:%d invlid. Valid range: [0,%d) \n",__func__ , index ,  enkf_sched->size);
+/* static void enkf_sched_idel_node(enkf_sched_type * enkf_sched , int index) { */
+/*   if (index < 0 || index >= enkf_sched->size) */
+/*     util_abort("%s: index:%d invlid. Valid range: [0,%d) \n",__func__ , index ,  enkf_sched->size); */
 
-  {
-    int new_size = enkf_sched->size - 1;
-    enkf_sched_node_type ** new_list = util_malloc(new_size * sizeof * new_list , __func__);
-    memcpy(new_list          ,  enkf_sched->node_list          , index * sizeof * new_list);  /* Copying everything _before_ index */
-    memcpy(&new_list[index]  , &enkf_sched->node_list[index+1] , (new_size - index) * sizeof * new_list);  /* Copying everything _after_ index */
-    free( enkf_sched->node_list );
-    enkf_sched->node_list = new_list;
-    enkf_sched->size      = new_size;
-  }
-}
+/*   { */
+/*     int new_size = enkf_sched->size - 1; */
+/*     enkf_sched_node_type ** new_list = util_malloc(new_size * sizeof * new_list , __func__); */
+/*     memcpy(new_list          ,  enkf_sched->node_list          , index * sizeof * new_list);  /\* Copying everything _before_ index *\/ */
+/*     memcpy(&new_list[index]  , &enkf_sched->node_list[index+1] , (new_size - index) * sizeof * new_list);  /\* Copying everything _after_ index *\/ */
+/*     free( enkf_sched->node_list ); */
+/*     enkf_sched->node_list = new_list; */
+/*     enkf_sched->size      = new_size; */
+/*   } */
+/* } */
 
 
 
@@ -285,7 +297,6 @@ static void enkf_sched_add_node(enkf_sched_type * enkf_sched , enkf_sched_node_t
       util_abort("%s: going to far: new_report1:%d  last-report:%d \n",__func__ , new_report1 , enkf_sched->last_report );
     {
       enkf_sched_node_type ** new_node_list = util_malloc(sizeof * new_node_list * (enkf_sched->size + 3) , __func__); 
-      int new_size; 
       int index , i;
       int new_length = util_int_max( new_node->report_step2 , enkf_sched->last_report); 
 
@@ -302,7 +313,7 @@ static void enkf_sched_add_node(enkf_sched_type * enkf_sched , enkf_sched_node_t
 	index_map[i] = enkf_sched->size; /* The new addition */
       
       {
-	stringlist_type * forward_model;
+	const stringlist_type * forward_model;
 	int new_global_index = 0;
 	int report1 = 0;
 	int report2, report_index; 
@@ -350,7 +361,6 @@ static enkf_sched_type * enkf_sched_alloc_empty( const sched_file_type * sched_f
   enkf_sched->std_forward_model    = forward_model;
   enkf_sched->joblist              = joblist;
   enkf_sched->schedule_num_reports = sched_file_count_report_steps( sched_file );
-  enkf_sched->schedule_num_reports = 5;
   enkf_sched->last_report          = 0;
   return enkf_sched;
   
@@ -372,7 +382,7 @@ void enkf_sched_random_test(enkf_sched_type * enkf_sched) {
   for (i=0; i < N; i++) {
     int r1 = random() % enkf_sched->last_report;
     int r2 = r1 + random() % 25;
-    enkf_sched_type * node = enkf_sched_node_alloc(r1 , r2 , 1 , true , enkf_sched->std_forward_model);
+    enkf_sched_node_type * node = enkf_sched_node_alloc(r1 , r2 , 1 , true , enkf_sched->std_forward_model);
     enkf_sched_add_node(enkf_sched , node);
     printf("%6d/%d  %d -> %d OK",i,N,r1,r2);
   }
@@ -396,7 +406,7 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , const s
     enkf_sched_node_type * node;
     bool at_eof;
     do { 
-      node = enkf_sched_node_fscanf_alloc(stream , default_forward_model , joblist , &at_eof);
+      node = enkf_sched_node_fscanf_alloc(stream , (stringlist_type *) default_forward_model , joblist , &at_eof);
       if (node != NULL)
 	enkf_sched_add_node(enkf_sched , node);
     } while (!at_eof);
@@ -412,4 +422,23 @@ void enkf_sched_fprintf(const enkf_sched_type * enkf_sched , FILE * stream) {
   int i;
   for (i=0; i < enkf_sched->size; i++)
     enkf_sched_node_fprintf(enkf_sched->node_list[i] , enkf_sched->std_forward_model , stream );
+}
+
+
+
+int enkf_sched_get_schedule_num_reports(const enkf_sched_type * enkf_sched) {
+  return enkf_sched->schedule_num_reports;
+}
+
+
+int enkf_sched_get_num_nodes(const enkf_sched_type * enkf_sched) {
+  return enkf_sched->size;
+}
+
+
+const enkf_sched_node_type * enkf_sched_iget_node(const enkf_sched_type * enkf_sched , int index) {
+  if (index < 0 || index >= enkf_sched->size)
+    util_abort("%s: Go fix your code - lazy bastartd ... \n",__func__);
+
+  return enkf_sched->node_list[index];
 }

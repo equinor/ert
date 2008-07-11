@@ -8,13 +8,14 @@
 #include <enkf_site_config.h>
 #include <job_queue.h>
 #include <ext_joblist.h>
+#include <stringlist.h>
 
 typedef struct enkf_config_struct enkf_config_type;
 
 void        * enkf_config_get_data_kw(const enkf_config_type *  , const char * );
 char       ** enkf_config_alloc_data_kw_key_list(const enkf_config_type * , int * );
 
-
+const char * enkf_config_get_enkf_sched_file(const enkf_config_type *);
 int                 enkf_config_get_debug(const enkf_config_type * );
 enkf_impl_type      enkf_config_impl_type(const enkf_config_type *, const char * );
 bool                enkf_config_include_static_kw(const enkf_config_type * , const char * );
@@ -31,7 +32,7 @@ enkf_config_type  * enkf_config_alloc(int ens_size            ,
 				      bool fmt_file 	     ,
 				      bool unified  	     ,         
 				      bool endian_swap);
-const char       ** enkf_config_get_forward_model(const enkf_config_type * , int * );
+const stringlist_type * enkf_config_get_forward_model(const enkf_config_type *);
 void                enkf_config_add_well(enkf_config_type * , const char * , int , const char ** );
 void                enkf_config_add_gen_kw(enkf_config_type * , const char * );
 void                enkf_config_add_type(enkf_config_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);

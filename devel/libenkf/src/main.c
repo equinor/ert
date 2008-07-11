@@ -81,22 +81,41 @@ int main (int argc , char ** argv) {
     fs_index_type     * fs_index                 = fs_index_alloc(enkf_config_get_ens_path(enkf_config)               , "%04d/mem%03d/INDEX");
     enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
 
+
     plain_driver_README( enkf_config_get_ens_path(enkf_config) );
     job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , fs , job_queue , joblist);
+    const enkf_sched_type * enkf_sched = enkf_sched_fscanf_alloc( enkf_config_get_enkf_sched_file(enkf_config) , enkf_main_get_sched_file(enkf_main) , joblist , enkf_config_get_forward_model(enkf_config));
     enkf_main_initialize_ensemble(enkf_main); 
     
     
-    /*
-      enkf_main_run(enkf_main , 61 , 0 , 61 , false , false);
-      exit(1);
-    */
     {
-      int report_step;
-      bool unlink_run_path = true;
       
-      for (report_step = 0; report_step < 961; report_step++)
-	enkf_main_run(enkf_main , report_step , report_step , report_step + 1 , true , unlink_run_path);
+      bool unlink_run_path = true;
+      const int num_nodes            = enkf_sched_get_num_nodes(enkf_sched);
+      const int schedule_num_reports = enkf_sched_get_schedule_num_reports(enkf_sched);
+      int inode;
+      enkf_sched_fprintf(enkf_sched, stdout);
+      for (inode = 0; inode < num_nodes; inode++) {
+	const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
+	int report_step1;
+	int report_step2;
+	int report_stride;
+	int report_step;
+	int next_report_step;
+	bool enkf_on;
+	stringlist_type * forward_model;
+
+	enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &report_stride , &enkf_on , &forward_model);
+	report_step = report_step1;
+	do {
+	  next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
+	  printf("Running: %d -> %d (%d) \n",report_step , next_report_step, report_stride);
+
+	  enkf_main_run(enkf_main , report_step , report_step , next_report_step , enkf_on , unlink_run_path , forward_model);
+	  report_step = next_report_step;
+	} while (next_report_step < report_step2);
+      }
     }
     
     job_queue_free(job_queue);

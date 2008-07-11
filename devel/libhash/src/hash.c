@@ -95,6 +95,10 @@ typedef struct hash_sort_node {
    typical usage is illustrated in the documentation of hash_alloc_keylist().
 */
 
+/* 
+   I am afraid this has deadlocked - at least once. 
+*/
+
 void hash_lock(hash_type * hash) {
   pthread_mutex_lock( &hash->writer_lock );
 }
@@ -104,29 +108,33 @@ void hash_unlock(hash_type * hash) {
 }
 
 static void hash_lock_reader(hash_type * hash) {
-  while (hash->read_count < 0)
+  /*
+    while (hash->read_count < 0)
     usleep(1);
-  hash->read_count++;
+    hash->read_count++;
+  */
 }
 
 static void hash_unlock_reader(hash_type * hash) {
-  hash->read_count--;
+  /*
+    hash->read_count--;
+  */
 }
 
 
-/* 
-   These should use condition variables .... 
-*/
-
 static void hash_block_reader(hash_type * hash) {
-  while (hash->read_count > 0) {
+  /*
+    while (hash->read_count > 0) {
     usleep(1);
-  }
-  hash->read_count = -1;
+    }
+    hash->read_count = -1;
+  */
 }
 
 static void hash_unblock_reader(hash_type * hash) {
-  hash->read_count = 0;
+  /*
+    hash->read_count = 0;
+  */
 }
 
 
@@ -169,6 +177,7 @@ static char * alloc_string_copy(const char *src) {
 static void * __hash_get_node(const hash_type *hash , const char *key, bool abort_on_error) {
   const uint32_t global_index = hash->hashf(key , strlen(key));
   const uint32_t table_index  = (global_index % hash->size);
+
   hash_node_type *node        = hash_sll_get(hash->table[table_index] , global_index , key);
   if (node != NULL) {
     /*hash_node_assert_type(node , data_type); */
