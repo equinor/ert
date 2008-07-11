@@ -3,8 +3,11 @@
 #include <config.h>
 #include <tpgzone.h>
 #include <ecl_grid.h>
+#include <field_config.h>
+#include <field.h>
 #include <trs.h>
 #include <petp.h>
+#include <tpgzone_util.h>
 
 
 
@@ -22,6 +25,7 @@ struct tpgzone_struct
   trs_type   * trs;
   petp_type  * petp;
 };
+
 
 
 static int * tpgzone_alloc_blocks_from_grid(const char * grid_file, 
@@ -50,10 +54,34 @@ static int * tpgzone_alloc_blocks_from_grid(const char * grid_file,
 
 
 
-static double ** tpgzone_alloc_gauss_from_file(const tpgzone_type * tpgzone)
+static double ** tpgzone_alloc_gauss_from_file(const tpgzone_type * tpgzone, bool endian_flip)
 {
+  int i;
   double ** gauss = util_malloc(tpgzone->num_gauss_fields * sizeof * gauss, __func__);
+
+  for(i=0; i<tpgzone->num_gauss_fields; i++)
+  {
+    int *__index_map;
+    field_config_type * field_config = tpgzone_field_config_alloc__(tpgzone->gauss_field_files[i],
+                                                                    TPGZONE_GAUSS_ECL_KW,
+                                                                    tpgzone->ecl_grid_file,
+                                                                    endian_flip,
+                                                                    &__index_map);
+
+    field_type * field = field_alloc(field_config);
+    field_fload_auto(field, tpgzone->gauss_field_files[i], endian_flip);
+
+    gauss[i] = field_indexed_get_alloc(field, tpgzone->num_blocks, tpgzone->blocks);
+
+    free(__index_map);
+    field_free(field);
+    field_config_free(field_config);
+  }
+
+  return gauss;
 }
+
+
 
 /***************************************************************************************/
 
@@ -218,10 +246,25 @@ tpgzone_type * tpgzone_fscanf_alloc(char * config_file, bool endian_flip)
 }
 
 
-void tpgzone_apply(const tpgzone_type * tpgzone)
+
+void tpgzone_apply(const tpgzone_type * tpgzone, bool endian_flip)
 {
-  double ** gauss = tpgzone_alloc_gauss_from_file(tpgzone);
-  
+  double ** gauss = tpgzone_alloc_gauss_from_file(tpgzone, endian_flip);
+
+  {
+    /*
+      Dev. testing.
+    */
+    int i,j;
+    for(i=0; i<tpgzone->num_gauss_fields; i++)
+    {
+      for(j=0; j<tpgzone->num_blocks; j++)
+        printf("gauss field: %d block: %d  val: %f\n",i,tpgzone->blocks[j],gauss[i][j]);
+    }
+  }
+
+
+
   {
     int i;
     for(i=0; i<tpgzone->num_gauss_fields; i++)
