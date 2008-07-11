@@ -23,7 +23,7 @@ all: $(LIB)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
-	gcc $(CFLAGS) $(TARGET_INCLUDE) tpgzone_test.c -o tpgzone_test.x $(LIB_PATH) $(LIB_LINK)
+	gcc $(CFLAGS) $(TARGET_INCLUDE) main.c -o tpgzone.x $(LIB_PATH) $(LIB_LINK)
 
 
 

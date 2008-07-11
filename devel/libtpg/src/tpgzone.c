@@ -68,24 +68,23 @@ static double ** tpgzone_alloc_gauss_from_file(const tpgzone_type * tpgzone, boo
   int i;
   double ** gauss = util_malloc(tpgzone->num_gauss_fields * sizeof * gauss, __func__);
 
+  ecl_grid_type * ecl_grid = ecl_grid_alloc(tpgzone->ecl_grid_file, endian_flip);
   for(i=0; i<tpgzone->num_gauss_fields; i++)
   {
-    int *__index_map;
     field_config_type * field_config = tpgzone_field_config_alloc__(tpgzone->gauss_field_files[i],
                                                                     TPGZONE_GAUSS_ECL_KW,
-                                                                    tpgzone->ecl_grid_file,
-                                                                    endian_flip,
-                                                                    &__index_map);
+                                                                    ecl_grid,
+                                                                    endian_flip);
 
     field_type * field = field_alloc(field_config);
     field_fload_auto(field, tpgzone->gauss_field_files[i], endian_flip);
 
     gauss[i] = field_indexed_get_alloc(field, tpgzone->num_blocks, tpgzone->blocks);
 
-    free(__index_map);
     field_free(field);
     field_config_free(field_config);
   }
+  ecl_grid_free(ecl_grid);
 
   return gauss;
 }
@@ -133,7 +132,7 @@ tpgzone_type * tpgzone_fscanf_alloc(char * config_file, bool endian_flip)
 {
   tpgzone_type * tpgzone = util_malloc(sizeof * tpgzone, __func__);
 
-  printf("Loading tpgzone info from %s...\n", config_file);
+  printf("Loading tpgzone config from %s...\n", config_file);
   {
 
     config_type * config = config_alloc(false);
