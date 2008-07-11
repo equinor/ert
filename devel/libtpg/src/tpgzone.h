@@ -4,7 +4,7 @@
 /*
   ECLIPSE keyword from which the gaussian fields are loaded.
 */
-#define TPGZONE_GAUSS_ECL_KW "TPGGAUSS"
+#define TPGZONE_GAUSS_ECL_KW "TPGZONE"
 
 typedef struct tpgzone_struct tpgzone_type;
 

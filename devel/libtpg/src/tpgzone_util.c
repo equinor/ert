@@ -13,12 +13,9 @@ field_config_type * tpgzone_field_config_alloc__
                      )
 {
   field_config_type * field_config;
-
-  {
-    field_file_type file_type = field_config_guess_file_type(ecl_filename, endian_flip);
-    if(file_type != ecl_kw_file && file_type != ecl_grdecl_file)
-      util_abort("%s: Sorry, only grdecl or kw_file are supported - aborting.\n", __func__);
-  }
+  field_file_type file_type = field_config_guess_file_type(ecl_filename, endian_flip);
+  if(file_type == unknown_file)
+    util_abort("%s: Sorry, ecl_kw, ecl_grdecl or rms_roff files are supported - aborting.\n", __func__);
 
   {
     int nx, ny, nz, active_size;
@@ -30,6 +27,9 @@ field_config_type * tpgzone_field_config_alloc__
     field_config = field_config_alloc_parameter_no_init(ecl_kw,
                                               nx, ny, nz, active_size,
                                               (const int *) *__index_map);
+
+    if(file_type == ecl_grdecl_file);
+      field_config->ecl_export_format = ecl_grdecl_format;
 
     ecl_grid_free(ecl_grid);
   }
