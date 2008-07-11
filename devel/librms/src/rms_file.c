@@ -469,6 +469,7 @@ bool rms_file_is_roff(FILE * stream) {
     roff_file = true;
   
   fseek(stream , current_pos , SEEK_SET);
+  free(header);
   return roff_file;
 }
 
