@@ -30,6 +30,8 @@ void         field_export3D(const field_type * , void *, bool , ecl_type_enum , 
 field_type * field_copyc(const field_type *);
 bool         field_cmp(const field_type *  , const field_type * );
 
+double     * field_indexed_get_alloc(const field_type *, int, const int *);
+
 
 ENSEMBLE_MULX_VECTOR_HEADER(field);
 MATH_OPS_VOID_HEADER(field);

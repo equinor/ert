@@ -698,6 +698,34 @@ void field_indexed_set(field_type * field, ecl_type_enum src_type , int len , co
 
 
 
+double * field_indexed_get_alloc(const field_type * field, int len, const int * index_list)
+{
+  double * data = util_malloc(len * sizeof * data, __func__);
+  ecl_type_enum src_type = field_config_get_ecl_type(field->config);
+  int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
+  
+  if(src_type == ecl_double_type)
+  {
+    /* double -> double */
+    int i;
+    for(i=0; i<len; i++)
+      memcpy(&data[i * ecl_double_type], &field->data[index_list[i] * ecl_double_type] , ecl_double_type);
+  }
+  else if(src_type == ecl_float_type)
+  {
+    /* float -> double */
+    util_float_to_double(data, (float *) field->data, len);
+  }
+  else {
+    fprintf(stderr,"%s: existing field must of type float/double - aborting. \n", __func__);
+    abort();
+  }
+
+  return data;
+}
+
+
+
 bool field_ijk_valid(const field_type * field , int i , int j , int k) {
   int global_index = field_config_global_index(field->config , i , j , k);
   if (global_index >=0)
