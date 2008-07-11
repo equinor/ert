@@ -39,6 +39,15 @@ static int * tpgzone_alloc_blocks_from_grid(const char * grid_file,
   ecl_grid_type * ecl_grid = ecl_grid_alloc(grid_file, endian_flip);
   ecl_grid_get_dims(ecl_grid,&nx,&ny,&nz, NULL);
 
+  {
+    /*
+      Sanity check input.
+    */
+    if(i1 < 1 || i1 > nx || i2 > nx) util_abort("%s: Specified zone is outside the grid - aborting.\n", __func__);
+    if(j1 < 1 || j1 > ny || j2 > ny) util_abort("%s: Specified zone is outside the grid - aborting.\n", __func__);
+    if(k1 < 1 || k1 > nz || k2 > nz) util_abort("%s: Specified zone is outside the grid - aborting.\n", __func__);
+  }
+
   ecl_box    = ecl_box_alloc(nx, ny ,nz, i1, i2, j1, j2, k1, k2);
   *num_blocks = ecl_grid_count_box_active(ecl_grid, ecl_box);
 
@@ -99,11 +108,7 @@ void tpgzone_summarize(const tpgzone_type * tpgzone)
   printf("num_blocks           : %d \n", tpgzone->num_blocks);
   printf("facies:\n");
   hash_printf_keys(tpgzone->facies_kw_hash);
-  printf("blocks:\n");
-  for(i=0; i<tpgzone->num_blocks; i++)
-  printf("%d ",tpgzone->blocks[i]);
-  printf("\n");
-
+  petp_summarize(tpgzone->petp);
 }
 
 
@@ -249,22 +254,12 @@ tpgzone_type * tpgzone_fscanf_alloc(char * config_file, bool endian_flip)
 
 void tpgzone_apply(const tpgzone_type * tpgzone, bool endian_flip)
 {
-  double ** gauss = tpgzone_alloc_gauss_from_file(tpgzone, endian_flip);
+  double ** gauss  = tpgzone_alloc_gauss_from_file(tpgzone, endian_flip);
+  int     * facies = trs_apply_alloc(tpgzone->trs, (const double **) gauss, tpgzone->num_blocks);
 
-  {
-    /*
-      Dev. testing.
-    */
-    int i,j;
-    for(i=0; i<tpgzone->num_gauss_fields; i++)
-    {
-      for(j=0; j<tpgzone->num_blocks; j++)
-        printf("gauss field: %d block: %d  val: %f\n",i,tpgzone->blocks[j],gauss[i][j]);
-    }
-  }
+  petp_fwrite(tpgzone->petp, facies, tpgzone->blocks, tpgzone->num_blocks, tpgzone->ecl_grid_file, endian_flip);
 
-
-
+  free(facies);
   {
     int i;
     for(i=0; i<tpgzone->num_gauss_fields; i++)

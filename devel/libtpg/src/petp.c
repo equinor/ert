@@ -28,6 +28,14 @@ struct petp_struct
 };
 
 
+static void petp_item_summarize(const petp_item_type * petp_item)
+{
+  printf(" - ecl_filename: %s\n",petp_item->ecl_filename);
+  printf(" - ecl_kw      : %s\n",petp_item->ecl_kw);
+
+};
+
+
 
 static petp_item_type * petp_item_alloc(int num_facies)
 {
@@ -143,7 +151,20 @@ static petp_type * petp_alloc_empty(int num_target_files)
 
 
 
-void petp_write(const petp_type * petp, const int * facies, const int * blocks, int size, const char * grid_file, bool endian_flip)
+void petp_summarize(const petp_type * petp)
+{
+  int i;
+
+  for(i=0; i<petp->num_target_files; i++)
+  {
+    printf("target %d :\n", i);
+    petp_item_summarize(petp->petp_items[i]);
+  }
+}
+
+
+
+void petp_fwrite(const petp_type * petp, const int * facies, const int * blocks, int size, const char * grid_file, bool endian_flip)
 {
   int i;
 
