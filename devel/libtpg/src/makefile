@@ -45,7 +45,7 @@ $(LIB): $(OBJECTS)
 	$(FC) -c $(FFLAGS) $< -o $@
 
 
-tpgzone.o       : tpgzone.h trs.h petp.h
+tpgzone.o       : tpgzone.h trs.h petp.h tpgzone_util.h
 petp.o          : petp.h tpgzone_util.h
 trs.o           : trs.h
 tpgzone_util.o  : tpgzone_util.h

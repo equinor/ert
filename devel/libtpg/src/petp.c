@@ -108,7 +108,8 @@ static double * petp_item_apply_alloc(const petp_item_type * petp_item, const in
 static void petp_item_fwrite(const petp_item_type * petp_item, const int * facies, const int * blocks,
                              int size, const char * grid_file, bool endian_flip)
 {
-  field_config_type * field_config = tpgzone_field_config_alloc__(petp_item->ecl_filename, petp_item->ecl_kw, grid_file, endian_flip);
+  int *__index_map;
+  field_config_type * field_config = tpgzone_field_config_alloc__(petp_item->ecl_filename, petp_item->ecl_kw, grid_file, endian_flip, &__index_map);
   field_type        * field        = field_alloc(field_config);
 
   field_fload_auto(field, petp_item->ecl_filename, endian_flip);
@@ -120,6 +121,7 @@ static void petp_item_fwrite(const petp_item_type * petp_item, const int * facie
     free(data);
   }
 
+  free(__index_map);
   field_free(field);
   field_config_free(field_config);
 }

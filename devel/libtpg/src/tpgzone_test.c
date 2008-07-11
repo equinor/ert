@@ -5,6 +5,8 @@
 
 int main(int argc, char ** argv)
 {
+  bool endian_flip = true;
+
   char * config_file;
   char * path;
   char * ext;
@@ -23,7 +25,9 @@ int main(int argc, char ** argv)
   config_file = util_strcat_realloc(config_file,".");
   config_file = util_strcat_realloc(config_file,ext);
   
-  tpgzone_type * tpgzone = tpgzone_fscanf_alloc(config_file, true);
+  tpgzone_type * tpgzone = tpgzone_fscanf_alloc(config_file, endian_flip);
+
+  tpgzone_apply(tpgzone, endian_flip);
 
   tpgzone_free(tpgzone);
 
