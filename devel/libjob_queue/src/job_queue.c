@@ -134,8 +134,8 @@ static void job_queue_initialize_node(job_queue_type * queue , int queue_index ,
     job_queue_node_type * node = queue->jobs[queue_index];
     node->external_id    = external_id;
     node->submit_attempt = 0;
-    node->run_path       = path_fmt_alloc_path(queue->run_path_fmt , external_id);
-    node->job_name       = path_fmt_alloc_path(queue->job_name_fmt , external_id);
+    node->run_path       = path_fmt_alloc_path(queue->run_path_fmt , false , external_id);
+    node->job_name       = path_fmt_alloc_path(queue->job_name_fmt , false , external_id);
     node->exit_file      = util_alloc_full_path(node->run_path , EXIT_FILE);
     node->job_data      = NULL;
     if ( !util_path_exists(node->run_path) ) 
