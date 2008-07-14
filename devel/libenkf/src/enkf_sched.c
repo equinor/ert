@@ -86,8 +86,6 @@ static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , const st
   else
     fprintf(stream, "*");
 
-  stringlist_fprintf(node->forward_model , stream);
-
   fprintf(stream , "\n");
 }
 

@@ -359,7 +359,7 @@ bool field_config_get_endian_swap(const field_config_type * config) {
 
 
 char * field_config_alloc_init_file(const field_config_type * config, int iens) {
-  return path_fmt_alloc_path(config->init_file_fmt , iens);
+  return path_fmt_alloc_path(config->init_file_fmt , false , iens);
 }
 
 

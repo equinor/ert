@@ -338,8 +338,8 @@ void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step
 
 /******************************************************************/
 
-void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
-  bool  load_results            = enkf_update; /*??*/
+void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
+  bool  load_results            = true; /** Must have individual switch */
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
   int iens;
   
@@ -354,7 +354,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
   
   enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
   for (iens = 0; iens < ens_size; iens++) {
-    enkf_main->void_arg[iens] = void_arg_alloc13(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , int_value , bool_value , bool_value , bool_value , void_pointer);
+    enkf_main->void_arg[iens] = void_arg_alloc14(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , int_value , bool_value , bool_value , bool_value , void_pointer, int_value);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->job_queue);
     void_arg_pack_ptr(enkf_main->void_arg[iens]  , 2 , enkf_main->obs);
@@ -371,7 +371,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , int step1 , int s
        value is set in the called routine.
     */
     void_arg_pack_ptr(enkf_main->void_arg[iens] , 12 , (stringlist_type *) forward_model);
-    
+    void_arg_pack_int(enkf_main->void_arg[iens] , 13 , init_state);
   }
   
   /*

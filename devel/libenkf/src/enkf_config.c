@@ -197,21 +197,21 @@ static void enkf_config_set_eclbase(enkf_config_type * config , const char * ecl
 static void enkf_config_set_run_path(enkf_config_type * config , const char * run_path) {
   if (config->run_path != NULL)
     path_fmt_free(config->run_path);
-  config->run_path = path_fmt_alloc_directory_fmt(run_path , true);
+  config->run_path = path_fmt_alloc_directory_fmt(run_path);
 }
 
 
 static void enkf_config_set_result_path(enkf_config_type * config , const char * result_path) {
   if (config->result_path != NULL)
     path_fmt_free(config->result_path);
-  config->result_path = path_fmt_alloc_directory_fmt(result_path , true);
+  config->result_path = path_fmt_alloc_directory_fmt(result_path);
 }
 
 
 static void enkf_config_set_ecl_store_path(enkf_config_type * config , const char * ecl_store_path) {
   if (config->ecl_store_path != NULL)
     path_fmt_free(config->ecl_store_path);
-  config->ecl_store_path = path_fmt_alloc_directory_fmt(ecl_store_path , false);
+  config->ecl_store_path = path_fmt_alloc_directory_fmt(ecl_store_path);
 }
 
 static void enkf_config_set_ecl_store(enkf_config_type * config , int store_value , int tokens, const char ** token_list) {
@@ -878,22 +878,22 @@ const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * 
 
 char * enkf_config_alloc_ecl_store_path(const enkf_config_type * config , int iens) {
   if (config->ecl_store_path != NULL)
-    return path_fmt_alloc_path(config->ecl_store_path , iens);
+    return path_fmt_alloc_path(config->ecl_store_path , true , iens);
   else
     return NULL;
 }
 
 
 char * enkf_config_alloc_run_path(const enkf_config_type * config , int iens) {
-  return path_fmt_alloc_path(config->run_path , iens);
+  return path_fmt_alloc_path(config->run_path , true , iens);
 }
 
 char * enkf_config_alloc_eclbase(const enkf_config_type * config , int iens) {
-  return path_fmt_alloc_path(config->eclbase , iens);
+  return path_fmt_alloc_path(config->eclbase , false , iens);
 }
 
 char * enkf_config_alloc_result_path(const enkf_config_type * config , int report_step) {
-  return path_fmt_alloc_path(config->result_path , report_step);
+  return path_fmt_alloc_path(config->result_path , true , report_step);
 }
 
 

@@ -28,7 +28,7 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , state_
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
     FILE * stream = util_fopen(filename , "r");
     enkf_node_fread(node , stream);
     fclose(stream);
@@ -41,7 +41,7 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
     FILE * stream = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream);
     fclose(stream);
@@ -63,12 +63,13 @@ void plain_driver_free(void *_driver) {
 
 void plain_driver_README(const char * root_path) {
   char * README_file = util_alloc_full_path(root_path , "README.txt");
-  FILE * stream      = util_fopen(README_file , "w");
-
-  fprintf(stream,"This is the root directory of the EnKF ensemble filesystem. All files contain one enkf_node \n");
-  fprintf(stream,"instance. The files are binary, and compressed with zlip (util_fwrite_compressed).\n");
-
-  fclose(stream);
+  util_make_path(root_path);
+  {
+    FILE * stream      = util_fopen(README_file , "w");
+    fprintf(stream,"This is the root directory of the EnKF ensemble filesystem. All files contain one enkf_node \n");
+    fprintf(stream,"instance. The files are binary, and compressed with zlib (util_fwrite_compressed).\n");
+    fclose(stream);
+  }
   free(README_file);
 }
 
@@ -89,7 +90,7 @@ void * plain_driver_alloc(const char * root_path , const char * driver_path) {
     else
       path = util_alloc_string_copy(driver_path);
     
-    driver->path        = path_fmt_alloc_directory_fmt(path , true);
+    driver->path = path_fmt_alloc_directory_fmt(path );
     free(path);
   }
   driver->plain_driver_id = PLAIN_DRIVER_ID;

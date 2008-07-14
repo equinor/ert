@@ -21,7 +21,7 @@ struct enkf_fs_struct {
 
 enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index, 
 			     void * dynamic_analyzed , void * dynamic_forecast , void * eclipse_static , void * parameter) {
-  enkf_fs_type * fs = malloc(sizeof * fs);
+  enkf_fs_type * fs     = util_malloc(sizeof * fs , __func__);
   fs->index             = fs_index;
   fs->dynamic_analyzed  = (basic_driver_type *) dynamic_analyzed;   
   fs->dynamic_forecast  = (basic_driver_type *) dynamic_forecast;
@@ -114,7 +114,6 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
 void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int report_step , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {
   fs_index_add_node(enkf_fs->index , report_step , iens , kw , var_type , impl_type);
 }
-
 
 void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, restart_kw_list_type * kw_list) {
   fs_index_fwrite_restart_kw_list(enkf_fs->index , report_step , iens , kw_list);

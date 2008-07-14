@@ -95,14 +95,17 @@ int main (int argc , char ** argv) {
       const int num_nodes            = enkf_sched_get_num_nodes(enkf_sched);
       const int schedule_num_reports = enkf_sched_get_schedule_num_reports(enkf_sched);
       int inode;
+      bool prev_enkf_on = true;
       enkf_sched_fprintf(enkf_sched, stdout);
       for (inode = 0; inode < num_nodes; inode++) {
 	const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-	int report_step1;
-	int report_step2;
-	int report_stride;
-	int report_step;
-	int next_report_step;
+	state_enum init_state;
+	int 	   init_step;
+	int 	   report_step1;
+	int 	   report_step2;
+	int 	   report_stride;
+	int 	   report_step;
+	int 	   next_report_step;
 	bool enkf_on;
 	stringlist_type * forward_model;
 
@@ -111,8 +114,15 @@ int main (int argc , char ** argv) {
 	do {
 	  next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
 	  /*printf("Running: %d -> %d (%d) enkf_on:%d \n",report_step , next_report_step, report_stride,enkf_on);*/
-	  enkf_main_run(enkf_main , report_step , report_step , next_report_step , enkf_on , unlink_run_path , forward_model);
-	  report_step = next_report_step;
+	  init_step = report_step;
+	  if (prev_enkf_on)
+	    init_state = analyzed;
+	  else
+	    init_state = forecast;
+	  
+	  enkf_main_run(enkf_main , init_step , init_state , report_step , next_report_step , enkf_on , unlink_run_path , forward_model);
+	  report_step  = next_report_step;
+	  prev_enkf_on = enkf_on;
 	} while (next_report_step < report_step2);
       }
     }

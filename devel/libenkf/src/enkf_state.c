@@ -488,6 +488,7 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
   enkf_state_load_ecl_restart(enkf_state , unified , report_step2);
   enkf_state_apply_ecl_load(enkf_state , report_step2);
 
+  /* Burde ha et eget measure flag */
   enkf_state_measure(enkf_state , enkf_obs);
   enkf_state_swapout(enkf_state , ecl_restart + ecl_summary);
 }
@@ -724,7 +725,7 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 */
 
 
-void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int init_step, int report_step1 , int report_step2, const stringlist_type * _forward_model) {
+void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int init_step, state_enum init_state , int report_step1 , int report_step2, const stringlist_type * _forward_model) {
   
   if (report_step1 != init_step)
     if (report_step1 > 0)
@@ -753,7 +754,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   {
     int load_mask = constant + static_parameter + parameter;
     if (report_step1 > 0) load_mask += ecl_restart; 
-    enkf_state_fread(enkf_state , load_mask , init_step , analyzed);
+    enkf_state_fread(enkf_state , load_mask , init_step , init_state);
   }
   /* 
      Uncertain about this one ...
@@ -819,13 +820,13 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
 
 
 
-void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , const sched_file_type * sched_file , int init_step , int report_step1 , int report_step2, const stringlist_type * forward_model) {
+void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , const sched_file_type * sched_file , int init_step , state_enum init_state , int report_step1 , int report_step2, const stringlist_type * forward_model) {
   const int iens        = enkf_state_get_iens(enkf_state);
   /* 
      Prepare the job and submit it to the queue
   */
 
-  enkf_state_init_eclipse(enkf_state , sched_file , init_step , report_step1 , report_step2, forward_model);
+  enkf_state_init_eclipse(enkf_state , sched_file , init_step , init_state , report_step1 , report_step2, forward_model);
   job_queue_add_job(job_queue , iens , report_step2);
 }
 
@@ -881,13 +882,14 @@ void * enkf_state_start_eclipse__(void * __void_arg) {
   enkf_state_type * enkf_state 	 = void_arg_get_ptr(void_arg  	, 0);
   job_queue_type  * job_queue    = void_arg_get_ptr(void_arg  	, 1);
   sched_file_type * sched_file   = void_arg_get_ptr(void_arg    , 3);
-  int               init_step    = void_arg_get_int(void_arg   , 5);
+  int               init_step    = void_arg_get_int(void_arg    , 5);
   int               report_step1 = void_arg_get_int(void_arg  	, 6);
   int               report_step2 = void_arg_get_int(void_arg  	, 7);
+  state_enum        init_state   = void_arg_get_int(void_arg    , 13);
   
   const stringlist_type * forward_model = void_arg_get_ptr(void_arg , 12);
 
-  enkf_state_start_eclipse(enkf_state , job_queue , sched_file , init_step , report_step1 , report_step2 , forward_model);
+  enkf_state_start_eclipse(enkf_state , job_queue , sched_file , init_step , init_state, report_step1 , report_step2 , forward_model);
   return NULL ; 
 }
 

@@ -44,15 +44,39 @@ static int __get_report_step(int report_step , state_enum state) {
 }
 
 
+/**
+   Observe that if we do not find the filename we are looking for, we
+   seek backwards through the report numbers, all the way back to
+   report_nr 0. The direct motivation for this functionality is the
+   following situation:
+
+   1. We do a spin-up from report 0 to report R1.
+
+   2. We start the assimulation from R1, then we have to go all the
+      way back to report 0 to get hold of the parameter.
+*/
+
 void plain_driver_parameter_load_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
   int report_step = __get_report_step(_report_step , state);
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
-    FILE * stream   = util_fopen(filename , "r");
-    enkf_node_fread(node , stream);
-    fclose(stream);
+    char * filename;
+    filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
+    while (!util_file_exists(filename)) {
+      report_step--;
+      if (report_step < 0) 
+	util_abort("%s can not find any stored item for ??? \n",__func__);
+      else {
+	free(filename);
+	filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
+      }
+    }
+    {
+      FILE * stream   = util_fopen(filename , "r");
+      enkf_node_fread(node , stream);
+      fclose(stream);
+    }
     free(filename);
   }
 }
@@ -63,7 +87,7 @@ void plain_driver_parameter_save_node(void * _driver , int _report_step , int ie
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
     FILE * stream = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream);
     fclose(stream);
@@ -98,7 +122,7 @@ void * plain_driver_parameter_alloc(const char * root_path , const char * driver
     else
       path = util_alloc_string_copy(driver_path);
     
-    driver->path        = path_fmt_alloc_directory_fmt(path , true);
+    driver->path        = path_fmt_alloc_directory_fmt(path);
     free(path);
   }
   driver->plain_driver_parameter_id = PLAIN_DRIVER_ID;

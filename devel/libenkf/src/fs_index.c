@@ -77,7 +77,7 @@ fs_index_type * fs_index_alloc(const char * root_path , const char * index_path)
   fs_index_type * fs_index = malloc(sizeof * fs_index);
   {
     char * path = util_alloc_full_path(root_path , index_path);
-    fs_index->path = path_fmt_alloc_directory_fmt(path , true);
+    fs_index->path = path_fmt_alloc_directory_fmt(path);
     free(path);
   }
   return fs_index;
@@ -112,7 +112,7 @@ static void fs_index_free_list(fs_index_node_type ** node_list , int index_size)
 
 
 bool fs_index_has_node(fs_index_type *fs_index , int report_step , int iens , const char *kw) {
-  char * index_file = path_fmt_alloc_file(fs_index->path , report_step , iens , "index");
+  char * index_file = path_fmt_alloc_file(fs_index->path , false , report_step , iens , "index");
   int    index_size , inode;
   bool   has_node = false;
   fs_index_node_type **node_list = fs_index_node_list_fread_alloc(index_file , &index_size);
@@ -127,7 +127,7 @@ bool fs_index_has_node(fs_index_type *fs_index , int report_step , int iens , co
 
 
 void fs_index_add_node(fs_index_type *fs_index , int report_step , int iens , const char *kw , enkf_var_type var_type , enkf_impl_type impl_type) {
-  char * index_file = path_fmt_alloc_file(fs_index->path , report_step , iens , "index");
+  char * index_file = path_fmt_alloc_file(fs_index->path , true , report_step , iens , "index");
   int    index_size;
   fs_index_node_type **node_list = fs_index_node_list_fread_alloc(index_file , &index_size);
   {
@@ -168,7 +168,7 @@ void fs_index_add_node(fs_index_type *fs_index , int report_step , int iens , co
 
     
 void fs_index_fwrite_restart_kw_list(fs_index_type * fs_index , int report_step , int iens , restart_kw_list_type * kw_list) {
-  char * kw_file = path_fmt_alloc_file(fs_index->path , report_step , iens , "kw_list");
+  char * kw_file = path_fmt_alloc_file(fs_index->path , true , report_step , iens , "kw_list");
   FILE * stream  = util_fopen(kw_file , "w");
   restart_kw_list_fwrite(kw_list , stream);
   fclose(stream);
@@ -177,7 +177,7 @@ void fs_index_fwrite_restart_kw_list(fs_index_type * fs_index , int report_step 
 
 
 void fs_index_fread_restart_kw_list(fs_index_type * fs_index , int report_step, int iens , restart_kw_list_type * kw_list) {
-  char * kw_file = path_fmt_alloc_file(fs_index->path , report_step , iens , "kw_list");
+  char * kw_file = path_fmt_alloc_file(fs_index->path , false , report_step , iens , "kw_list");
   FILE * stream  = util_fopen(kw_file , "r");
   restart_kw_list_fread(kw_list , stream);
   fclose(stream);
