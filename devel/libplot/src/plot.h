@@ -36,27 +36,19 @@ typedef enum plot_color_enum {
 } plot_color_type;
 
 typedef struct plot_struct plot_type;
-struct plot_struct {
-    list_type *datasets;
-    char *filename;
-    char *device;
 
-    char *xlabel;
-    char *ylabel;
-    char *title;
-    plot_color_type label_color;
-};
 
 extern plot_type *plot_alloc();
-extern void plot_initialize(plot_type * item, char *dev, char *filename);
-
-extern void plot_set_labels(plot_type * item, char *xlabel,
-			    char *ylabel, char *title,
+extern int plot_get_stream(plot_type * item);
+extern list_type *plot_get_datasets(plot_type * item);
+extern void plot_initialize(plot_type * item, const char *dev,
+			    const char *filename);
+extern void plot_set_labels(plot_type * item, const char *xlabel,
+			    const char *ylabel, const char *title,
 			    plot_color_type color);
 extern void plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 			      PLFLT ymin, PLFLT ymax);
 extern void plot_data(plot_type * item);
-
 extern void plot_free_all_datasets(plot_type * item);
 extern void plot_free(plot_type * item);
 

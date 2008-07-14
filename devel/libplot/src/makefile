@@ -6,7 +6,7 @@ AR = ar
 LIBPLPLOT_HOME = /h/masar/plplot-5.9.0/Compilation
 LIBPLPLOT_LINK = plplotd
 #################################################################
-COMPILE_INCLUDE   = -I$(LIBPLOT_HOME)/src -I$(LIBPLPLOT_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBECL_HOME)/include
+COMPILE_INCLUDE   = -I$(LIBPLOT_HOME)/src -I$(LIBPLPLOT_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBECL_HOME)/include 
 INSTALL_INC_PATH  = $(LIBPLOT_HOME)/include
 INSTALL_LIB_PATH  = $(LIBPLOT_HOME)/lib
 #################################################################
@@ -16,7 +16,7 @@ ARFLAGS = -csr
 OBJECTS       = plot.o plot_dataset.o
 INC_FILES     = plot.h plot_dataset.h
 LIB           = libplot_$(MFLAG).a 
-LIB_LINK      = -lplot_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lecl_$(MFLAG) -lz -lm -l$(LIBPLPLOT_LINK) 
+LIB_LINK      = -lplot_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lecl_$(MFLAG) -lz -lm -l$(LIBPLPLOT_LINK) -lpthread 
 LIB_PATH = -L$(LIBPLOT_HOME)/lib -L$(LIBPLPLOT_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib 
 TARGET_INCLUDE   = -I$(LIBPLOT_HOME)/src -I$(LIBPLPLOT_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBECL_HOME)/include
 

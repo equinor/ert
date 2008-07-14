@@ -51,10 +51,8 @@ collect_summary_data(double **x, double **y, int *size,
 	    util_set_date_values(ecl_sum_get_sim_time
 				 (ecl_sum, report_step), &day, &month,
 				 &year);
-	    /*
-	     * fprintf(stdout, "%04d %02d/%02d/%04d ", report_step, day,
-	     * month, year);
-	     */
+	    fprintf(stdout, "%04d %02d/%02d/%04d\n", report_step, day,
+		    month, year);
 
 	    x_tmp[report_step] = (double) report_step;
 	    y_tmp[report_step] =
@@ -109,7 +107,7 @@ int main(int argc, const char **argv)
     printf("--------------------------------------------\n");
 
     item = plot_alloc();
-    plot_initialize(item, "png", "punqs3__all_wopr.png");
+    plot_initialize(item, "png", "punqs3_all_wopr.png");
 
     /*
      * Calculate total production for all wells 
