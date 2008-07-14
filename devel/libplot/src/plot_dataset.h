@@ -2,14 +2,18 @@
 #define __PLOT_DATASET_H__
 
 typedef struct plot_dataset_struct plot_dataset_type;
-struct plot_dataset_struct {
-    double *xvalue;
-    double *yvalue;
-    double std_y;
-    int length;
-    plot_style_type style;
-    plot_color_type color;
-};
+
+/* Get functions */
+extern int plot_datset_get_length(plot_dataset_type * d);
+extern plot_color_type plot_datset_get_color(plot_dataset_type * d);
+extern plot_style_type plot_datset_get_style(plot_dataset_type * d);
+double *plot_datset_get_vector_x(plot_dataset_type * d);
+double *plot_datset_get_vector_y(plot_dataset_type * d);
+
+/* Set functions */
+extern void plot_datset_set_style(plot_dataset_type * d,
+				  plot_style_type s);
+
 
 extern plot_dataset_type *plot_dataset_alloc();
 extern void plot_dataset_free(plot_dataset_type * d);

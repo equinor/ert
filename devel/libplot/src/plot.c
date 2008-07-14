@@ -1,5 +1,21 @@
 #include <plot.h>
 #include <plot_dataset.h>
+#include <pthread.h>
+
+
+struct plot_struct {
+    list_type *datasets;
+    const char *filename;
+    const char *device;
+    int stream;
+    int *tot_streams;
+
+    const char *xlabel;
+    const char *ylabel;
+    const char *title;
+    plot_color_type label_color;
+};
+
 
 plot_type *plot_alloc()
 {
@@ -12,20 +28,43 @@ plot_type *plot_alloc()
     return item;
 }
 
-void plot_initialize(plot_type * item, char *dev, char *filename)
+int plot_get_stream(plot_type * item)
 {
-    item->device = strdup(dev);
-    item->filename = strdup(filename);
+    if (!item)
+	return -1;
 
-    /*
-     * Initialize these to avoid uninitialised conditional jumps 
-     */
+    return item->stream;
+}
+
+list_type *plot_get_datasets(plot_type * item)
+{
+    if (!item)
+	return NULL;
+
+    return item->datasets;
+}
+
+void plot_initialize(plot_type * item, const char *dev,
+		     const char *filename)
+{
+    static int output_stream = 0;
+    static int tot_streams = 0;
+    pthread_mutex_t update_lock;
+
+    item->stream = output_stream;
+    item->tot_streams = &tot_streams;
+    fprintf(stderr, "ID[%d] SETTING UP NEW OUTPUT STREAM\n", item->stream);
+    plsstrm(item->stream);
+
     item->xlabel = NULL;
     item->ylabel = NULL;
     item->title = NULL;
-
     item->datasets = list_alloc();
 
+    /* Define unique output stream */
+
+    item->device = dev;
+    item->filename = filename;
     plsdev(item->device);
     plsfnam(item->filename);
 
@@ -37,6 +76,14 @@ void plot_initialize(plot_type * item, char *dev, char *filename)
     plscol0(WHITE, 255, 255, 255);
     plscol0(BLACK, 0, 0, 0);
     plinit();
+
+    /* Make this threadsafe */
+    pthread_mutex_init(&update_lock, NULL);
+    pthread_mutex_lock(&update_lock);
+    /* Use another input stream next time */
+    output_stream++;
+    tot_streams++;
+    pthread_mutex_unlock(&update_lock);
 }
 
 void plot_free_all_datasets(plot_type * item)
@@ -64,35 +111,46 @@ void plot_free_all_datasets(plot_type * item)
 
 void plot_free(plot_type * item)
 {
-    fprintf(stderr, "%s: free on %p, (%s)\n", __func__, item,
-	    item->filename);
+    pthread_mutex_t update_lock;
+
+    fprintf(stderr, "ID[%d] %s: free on %p, (%s)\n", item->stream,
+	    __func__, item, item->filename);
+
+    plsstrm(item->stream);
 
     /*
      * Free the graphs in the plot 
      */
     plot_free_all_datasets(item);
 
-    /*
-     * Now free the rest 
+    /* First we end the current stream, then we check if the program is on the last
+     * active stream. If so, cleanup everything..
      */
-    util_safe_free(item->filename);
-    util_safe_free(item->device);
-    util_safe_free(item->xlabel);
-    util_safe_free(item->ylabel);
-    util_safe_free(item->title);
+    plend1();
+    fprintf(stderr, "ID[%d] ENDING CURRENT STREAM\n", item->stream);
+
+
+    pthread_mutex_init(&update_lock, NULL);
+    pthread_mutex_lock(&update_lock);
+    /* We now have one less stream */
+    --*item->tot_streams;
+    if (!*item->tot_streams) {
+	fprintf(stderr, "ID[%d] Cleaning up!\n", item->stream);
+	plend();
+    }
+    pthread_mutex_unlock(&update_lock);
 
     util_safe_free(item);
-
-    /*
-     * Call the plplot end routine for this item 
-     */
-    plend();
 }
 
 void plot_data(plot_type * item)
 {
     list_node_type *node, *next_node;
+    printf("ID[%d] %s: plotting %s\n", item->stream, __func__,
+	   item->filename);
 
+
+    plsstrm(item->stream);
     node = list_get_head(item->datasets);
     while (node != NULL) {
 	plot_dataset_type *tmp;
@@ -100,26 +158,31 @@ void plot_data(plot_type * item)
 	next_node = list_node_get_next(node);
 	tmp = list_node_value_ptr(node);
 
-	printf("%s: adding a graph with %d samples in the x-y vectors\n",
-	       __func__, tmp->length);
+	printf
+	    ("ID[%d] %s: plotting graph with %d samples in the x-y vectors\n",
+	     item->stream, __func__, plot_datset_get_length(tmp));
 
 	/*
 	 * Set the defined color for the graph
 	 * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/color.html#color-map-0 
 	 */
-	plcol0((PLINT) tmp->color);
+	plcol0((PLINT) plot_datset_get_color(tmp));
 
-	switch (tmp->style) {
+	switch (plot_datset_get_style(tmp)) {
 	case HISTOGRAM:
-	    tmp->style = HISTOGRAM;
+	    plot_datset_set_style(tmp, HISTOGRAM);
 	    break;
 	case LINE:
-	    tmp->style = LINE;
-	    plline(tmp->length, tmp->xvalue, tmp->yvalue);
+	    plot_datset_set_style(tmp, LINE);
+	    plline(plot_datset_get_length(tmp),
+		   plot_datset_get_vector_x(tmp),
+		   plot_datset_get_vector_y(tmp));
 	    break;
 	case POINT:
-	    tmp->style = POINT;
-	    plpoin(tmp->length, tmp->xvalue, tmp->yvalue, 1);
+	    plot_datset_set_style(tmp, POINT);
+	    plpoin(plot_datset_get_length(tmp),
+		   plot_datset_get_vector_x(tmp),
+		   plot_datset_get_vector_y(tmp), 1);
 	    break;
 	default:
 	    fprintf(stderr, "Error: no plot style is defined!\n");
@@ -129,27 +192,32 @@ void plot_data(plot_type * item)
 	node = next_node;
     }
 
-    printf("%s: finished plotting %s\n", __func__, item->filename);
 }
 
 void
-plot_set_labels(plot_type * item, char *xlabel, char *ylabel,
-		char *title, plot_color_type color)
+plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
+		const char *title, plot_color_type color)
 {
-    item->xlabel = strdup(xlabel);
-    item->ylabel = strdup(ylabel);
-    item->title = strdup(title);
+    printf("ID[%d] %s: setting the labels for the plot\n", item->stream,
+	   __func__);
+
+    item->xlabel = xlabel;
+    item->ylabel = ylabel;
+    item->title = title;
     item->label_color = color;
-    printf("%s: setting the labels for the plot\n", __func__);
 }
 
 void
 plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 		  PLFLT ymin, PLFLT ymax)
 {
-    printf("%s: setting the viewport for the plot\n", __func__);
+    printf("ID[%d] %s: setting the viewport for the plot\n", item->stream,
+	   __func__);
+    plsstrm(item->stream);
 
-    /*
+    /* DOCUMENTATION:
+     * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/viewport_window.html#viewports
+     *
      * Advance to the next subpage, looks like it has to be done 
      */
     pladv(0);
@@ -183,7 +251,8 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 
     if (!item->xlabel || !item->ylabel || !item->title) {
 	fprintf(stderr,
-		"Error: you need to set lables before setting the viewport!\n");
+		"!!!! ID[%d] ERROR: you need to set lables before setting the viewport!\n",
+		item->stream);
     } else {
 	/*
 	 * http://old.ysn.ru/docs/plplot/plplotdoc-html-0.4.1/characters.html

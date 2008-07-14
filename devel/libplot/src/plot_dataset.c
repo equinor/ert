@@ -1,6 +1,63 @@
 #include <plot.h>
 #include <plot_dataset.h>
 
+struct plot_dataset_struct {
+    double *xvalue;
+    double *yvalue;
+    double std_y;
+    int length;
+    plot_style_type style;
+    plot_color_type color;
+};
+
+int plot_datset_get_length(plot_dataset_type * d)
+{
+    if (!d)
+	return -1;
+
+    return d->length;
+}
+
+plot_color_type plot_datset_get_color(plot_dataset_type * d)
+{
+    if (!d)
+	return -1;
+
+    return d->color;
+}
+
+plot_style_type plot_datset_get_style(plot_dataset_type * d)
+{
+    if (!d)
+	return -1;
+
+    return d->style;
+}
+
+double *plot_datset_get_vector_x(plot_dataset_type * d)
+{
+    if (!d)
+	return NULL;
+
+    return d->xvalue;
+}
+
+double *plot_datset_get_vector_y(plot_dataset_type * d)
+{
+    if (!d)
+	return NULL;
+
+    return d->yvalue;
+}
+
+void plot_datset_set_style(plot_dataset_type * d, plot_style_type s)
+{
+    if (!d)
+	return;
+
+    d->style = s;
+}
+
 plot_dataset_type *plot_dataset_alloc()
 {
     plot_dataset_type *d;
@@ -49,9 +106,9 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
 	return false;
     }
 
-    printf("%s: Adding dataset %p to list with length %d\n", __func__, d,
-	   d->length);
-    list_append_ref(item->datasets, d);
+    printf("ID[%d] %s: Adding dataset %p to list with length %d\n",
+	   plot_get_stream(item), __func__, d, d->length);
+    list_append_ref(plot_get_datasets(item), d);
 
     return true;
 }

@@ -4,17 +4,15 @@
 int main(int argc, const char **argv)
 {
     plot_type *item;
+    plot_type *item2;
     plot_dataset_type *d;
     int N = 100;		/* Number of samples */
     const double period = 2 * PI;
     int i;
     double *x, *y;
 
-    /*
-     * Create a new plot window, and fill with 2 graphs 
-     */
-    item = plot_alloc();
-    plot_initialize(item, "png", "martin.png");
+    item2 = plot_alloc();
+    plot_initialize(item2, "png", "martin.png");
 
     x = malloc(sizeof(double) * N);
     y = malloc(sizeof(double) * N);
@@ -24,11 +22,8 @@ int main(int argc, const char **argv)
     }
     d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
-    plot_dataset_add(item, d);
+    plot_dataset_add(item2, d);
 
-    /*
-     * Create another graph in the same plot 
-     */
     x = malloc(sizeof(double) * N);
     y = malloc(sizeof(double) * N);
     for (i = 0; i < N; i++) {
@@ -37,7 +32,7 @@ int main(int argc, const char **argv)
     }
     d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, N, CYAN, LINE);
-    plot_dataset_add(item, d);
+    plot_dataset_add(item2, d);
 
     /*
      * Create yet another cos, but with another angular frequency (\omega
@@ -51,14 +46,7 @@ int main(int argc, const char **argv)
     }
     d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, N, RED, POINT);
-    plot_dataset_add(item, d);
-
-    plot_set_labels(item, "x-axis", "y-axis", "Harmonic waves", BLACK);
-    plot_set_viewport(item, 0, period, -1, 1);
-    plot_data(item);
-    plot_free(item);
-
-    printf("------------------------------------------------\n");
+    plot_dataset_add(item2, d);
 
     /*
      * Create a second new plot window, and fill it with only 1 graph 
@@ -75,13 +63,18 @@ int main(int argc, const char **argv)
     d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
     plot_dataset_add(item, d);
-
     plot_set_labels(item, "x-axis", "y-axis", "f(x) = exp(x)", BROWN);
-    plot_set_viewport(item, 0, period, 0, 500 * 0.5);
+
+    /* This demonstrates that order doesnt mather when we use 
+     * the correct outputstreams, which is handeled by the lib.
+     */
+    plot_set_labels(item2, "x-axis", "y-axis", "#frHarmonic waves", BLACK);
+    plot_set_viewport(item2, 0, period, -1, 1);
+    plot_set_viewport(item, 0, period, 0, 250);
     plot_data(item);
     plot_free(item);
-
-    printf("------------------------------------------------\n");
+    plot_data(item2);
+    plot_free(item2);
 
     return 0;
 }
