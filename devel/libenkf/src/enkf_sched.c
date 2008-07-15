@@ -285,6 +285,9 @@ void enkf_sched_free( enkf_sched_type * enkf_sched) {
 
 static void enkf_sched_add_node(enkf_sched_type * enkf_sched , enkf_sched_node_type * new_node) {
   if (enkf_sched->size == 0) {
+    if (new_node->report_step1 != 0)
+      util_abort("%s: first node must start at report step 0 \n",__func__);
+    
     enkf_sched->size = 1;
     enkf_sched->node_list    = util_malloc(sizeof * enkf_sched->node_list , __func__);
     enkf_sched->node_list[0] = new_node;
@@ -397,10 +400,9 @@ void enkf_sched_random_test(enkf_sched_type * enkf_sched) {
 enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , const sched_file_type * sched_file , const ext_joblist_type * joblist, const stringlist_type * default_forward_model) {
   
   enkf_sched_type * enkf_sched = enkf_sched_alloc_empty(sched_file , joblist ,default_forward_model);
-  enkf_sched_set_default(enkf_sched);
-  /*enkf_sched_random_test(enkf_sched);*/
-
-  if (enkf_sched_file != NULL) {
+  if (enkf_sched_file == NULL)
+    enkf_sched_set_default(enkf_sched);
+  else {
     FILE * stream = util_fopen(enkf_sched_file , "r");
     enkf_sched_node_type * node;
     bool at_eof;
@@ -412,6 +414,9 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , const s
     
     fclose( stream );
   }
+  if (enkf_sched->size == 0)
+    util_abort("%s: empty enkf_sched instance - aborting \n",__func__);
+
   return enkf_sched;
 }
 
