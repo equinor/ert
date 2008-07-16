@@ -1,6 +1,18 @@
 #ifndef __PLOT_DATASET_H__
 #define __PLOT_DATASET_H__
+/**
+ * @addtogroup plot_dataset_type plot_dataset_type: A dataset
+ * @brief Defines the plot_dataset_type, this is the "graph data" which should
+ * be added to a plot.
+ *
+ * @remarks For every new dataset, start by allocating a new dataset with plot_dataset_alloc().
+ *
+ * @{
+ */
 
+/**
+ * @brief Contains information about a dataset.
+ */
 typedef struct plot_dataset_struct plot_dataset_type;
 
 /* Get functions */
@@ -22,4 +34,7 @@ extern void plot_dataset_set_data(plot_dataset_type * d, double *x,
 				  plot_color_type c, plot_style_type s);
 extern int plot_dataset_add(plot_type * item, plot_dataset_type * d);
 
+/**
+ * @}
+ */
 #endif

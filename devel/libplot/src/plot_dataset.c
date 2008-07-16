@@ -1,13 +1,16 @@
 #include <plot.h>
 #include <plot_dataset.h>
 
+/**
+ * @brief Contains information about a dataset.
+ */
 struct plot_dataset_struct {
-    double *xvalue;
-    double *yvalue;
+    double *xvalue; /**< Vector containing x-axis data */
+    double *yvalue; /**< Vector containing y-axis data */
     double std_y;
-    int length;
-    plot_style_type style;
-    plot_color_type color;
+    int length; /**< Length of the vectors defining the axis */
+    plot_style_type style; /**< The graph style */
+    plot_color_type color; /**< The graph color */
 };
 
 int plot_datset_get_length(plot_dataset_type * d)
@@ -58,6 +61,12 @@ void plot_datset_set_style(plot_dataset_type * d, plot_style_type s)
     d->style = s;
 }
 
+/**
+ * @return Returns a new plot_dataset_type pointer.
+ * @brief Create a new plot_dataset_type
+ *
+ * Create a new dataset - allocates the memory.
+ */
 plot_dataset_type *plot_dataset_alloc()
 {
     plot_dataset_type *d;
@@ -69,6 +78,12 @@ plot_dataset_type *plot_dataset_alloc()
     return d;
 }
 
+/**
+ * @brief Free your dataset item
+ * @param d your current dataset
+ *
+ * Use this function to free your allocated memory from plot_dataset_alloc().
+ */
 void plot_dataset_free(plot_dataset_type * d)
 {
     util_safe_free(d->xvalue);
@@ -76,6 +91,18 @@ void plot_dataset_free(plot_dataset_type * d)
     util_safe_free(d);
 }
 
+/**
+ * @brief Set the collected data to the dataset.
+ * @param d your current dataset
+ * @param x vector containing x-data
+ * @param y vector containing y-data
+ * @param len length of vectors
+ * @param c color for the graph
+ * @param s style for the graph
+ *
+ * After collecting your x-y data you have to let the dataset item know about
+ * it. At the same time you define some detail about how the graph should look.
+ */
 void
 plot_dataset_set_data(plot_dataset_type * d, double *x, double *y,
 		      int len, plot_color_type c, plot_style_type s)
@@ -93,6 +120,14 @@ plot_dataset_set_data(plot_dataset_type * d, double *x, double *y,
     d->style = s;
 }
 
+/**
+ * @brief Add a dataset to the plot 
+ * @param your current plot
+ * @param your current dataset
+ *
+ * When the data is in place in the dataset you can add it to the plot item,
+ * this way it will be included when you do the plot.
+ */
 int plot_dataset_add(plot_type * item, plot_dataset_type * d)
 {
     if (!d || !item) {

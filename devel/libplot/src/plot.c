@@ -3,20 +3,56 @@
 #include <pthread.h>
 
 
+/**
+ * @brief Contains information about a plot-window.
+ */
 struct plot_struct {
+    /**
+     * This is a doubly linked list which contains the datasets
+     * that will be plotted in this plot-window.
+     */
     list_type *datasets;
-    const char *filename;
-    const char *device;
-    int stream;
-    int *tot_streams;
+    const char *filename; /**< Filename for the plot */
 
-    const char *xlabel;
-    const char *ylabel;
-    const char *title;
-    plot_color_type label_color;
+    /** Device name for the plot, where you have the following 
+     * list of choices:
+     * - xwin:       X-Window (Xlib)
+     * - tk:         Tcl/TK Window
+     * - gcw:        Gnome Canvas Widget
+     * - ps:         PostScript File (monochrome)
+     * - psc:        PostScript File (color)
+     * - xfig:       Fig file
+     * - hp7470:     HP 7470 Plotter File (HPGL Cartridge, Small Plotter)
+     * - hp7580:     HP 7580 Plotter File (Large Plotter)
+     * - lj_hpgl:    HP Laserjet III, HPGL emulation mode
+     * - pbm:        PDB (PPM) Driver
+     * - png:        PNG file
+     * - jpeg:       JPEG file
+     * - null:       Null device
+     * - tkwin:      New tk driver
+     * - mem:        User-supplied memory device
+     * - gif:        GIF file
+     * - svg:        Scalable Vector Graphics (SVG 1.1)
+     *
+     * @remarks: this is set with plot_initialize().
+     */
+     const char *device;
+     int stream; /**< The plots current stream ID */
+     int *tot_streams; /**< Keeps strack of total streams */
+
+     const char *xlabel; /**< Label for the x-axis */
+     const char *ylabel; /**< Label for the y-axis */
+     const char *title; /**< Plot title */
+     plot_color_type label_color; /**< Color for the labels */
 };
 
 
+/**
+ * @return Returns a new plot_type pointer.
+ * @brief Create a new plot_type
+ *
+ * Create a new plot - allocates the memory.
+ */
 plot_type *plot_alloc()
 {
     plot_type *item;
@@ -44,6 +80,15 @@ list_type *plot_get_datasets(plot_type * item)
     return item->datasets;
 }
 
+/**
+ * @brief Initialize a new plot
+ * @param item your current plot
+ * @param dev the output device
+ * @param filename the output filename 
+ * 
+ * This function has to be called before you set any other information 
+ * on the plot_type *item. This is because plinit() gets called inside this function.
+ */
 void plot_initialize(plot_type * item, const char *dev,
 		     const char *filename)
 {
@@ -66,7 +111,9 @@ void plot_initialize(plot_type * item, const char *dev,
     item->device = dev;
     item->filename = filename;
     plsdev(item->device);
-    plsfnam(item->filename);
+
+    if (strcmp(item->device, "xwin"))
+        plsfnam(item->filename);
 
     /*
      * The following code switches BLACK and WHITE's int values. By doing
@@ -86,6 +133,12 @@ void plot_initialize(plot_type * item, const char *dev,
     pthread_mutex_unlock(&update_lock);
 }
 
+/**
+ * @brief Free all the datasets in a plot item
+ * @param item your current plot
+ * 
+ * Using this function is optional, the datasets WILL be freed  when plot_free() is called anyway.
+ */
 void plot_free_all_datasets(plot_type * item)
 {
     list_node_type *node, *next_node;
@@ -109,6 +162,12 @@ void plot_free_all_datasets(plot_type * item)
 
 }
 
+/**
+ * @brief Free your plot item
+ * @param item your current plot
+ * 
+ * Use this function to free your allocated memory from plot_alloc().
+ */
 void plot_free(plot_type * item)
 {
     pthread_mutex_t update_lock;
@@ -143,6 +202,12 @@ void plot_free(plot_type * item)
     util_safe_free(item);
 }
 
+/**
+ * @brief Do the actual plotting
+ * @param item your current plot
+ * 
+ * After adding the datasets, setting viewport and labels you are ready to do the plotting.
+ */
 void plot_data(plot_type * item)
 {
     list_node_type *node, *next_node;
@@ -173,6 +238,7 @@ void plot_data(plot_type * item)
 	    plot_datset_set_style(tmp, HISTOGRAM);
 	    break;
 	case LINE:
+	    plwid(1.8);
 	    plot_datset_set_style(tmp, LINE);
 	    plline(plot_datset_get_length(tmp),
 		   plot_datset_get_vector_x(tmp),
@@ -180,9 +246,11 @@ void plot_data(plot_type * item)
 	    break;
 	case POINT:
 	    plot_datset_set_style(tmp, POINT);
+	    /* Point types: http://plplot.sourceforge.net/examples-data/demo06/x06.01.png */
+	    plssym(0, 0.6);
 	    plpoin(plot_datset_get_length(tmp),
 		   plot_datset_get_vector_x(tmp),
-		   plot_datset_get_vector_y(tmp), 1);
+		   plot_datset_get_vector_y(tmp), 17);
 	    break;
 	default:
 	    fprintf(stderr, "Error: no plot style is defined!\n");
@@ -194,6 +262,16 @@ void plot_data(plot_type * item)
 
 }
 
+/**
+ * @brief Set labels
+ * @param item your current plot
+ * @param xlabel label for the x-axis
+ * @param ylabel label for the y-axis
+ * @param title title for the plot
+ * @param color the color for your labels
+ * 
+ * Set the labels for your plot, do this before setting the viewport.
+ */
 void
 plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
 		const char *title, plot_color_type color)
@@ -207,6 +285,17 @@ plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
     item->label_color = color;
 }
 
+
+/**
+ * @brief Setup viewport
+ * @param item your current plot
+ * @param xmin minimum value for the x-axis
+ * @param xmax maximum value for the x-axis
+ * @param ymin minimum value for the y-axis
+ * @param ymax maximum value for the y-axis
+ * 
+ * Sets up your viewport, defining and the axis, setting up fonts and colors.
+ */
 void
 plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 		  PLFLT ymin, PLFLT ymax)
@@ -262,8 +351,7 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 	/*
 	 * Scale the textsize by 0.8 
 	 */
-	plschr(0, 0.8);
-	plfont(1);
+	plschr(0, 0.7);
 	/*
 	 * Set some default values for the labels 
 	 */
