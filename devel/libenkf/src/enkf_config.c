@@ -14,7 +14,6 @@
 #include <well_config.h>
 #include <field_config.h>
 #include <equil_config.h>
-#include <multz_config.h>
 #include <multflt_config.h>
 #include <well_obs.h>
 #include <pgbox_config.h>
