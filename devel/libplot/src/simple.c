@@ -8,12 +8,12 @@ int main(int argc, const char **argv)
     const double period = 2 * PI;
 
     item = plot_alloc();
-    plot_initialize(item, "xwin", NULL);
+    plot_initialize(item, "xwin", NULL, NORMAL);
 
     {
-        double *x, *y;
-        int N = 100;
-        int i;
+	double *x, *y;
+	int N = 100;
+	int i;
 	x = malloc(sizeof(double) * 2 * N);
 	y = malloc(sizeof(double) * 2 * N);
 	for (i = 0; i < 2 * N; i++) {

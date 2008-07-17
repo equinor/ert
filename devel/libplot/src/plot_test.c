@@ -12,7 +12,7 @@ int main(int argc, const char **argv)
     double *x, *y;
 
     item2 = plot_alloc();
-    plot_initialize(item2, "png", "martin.png");
+    plot_initialize(item2, "png", "martin.png", NORMAL);
 
     x = malloc(sizeof(double) * N);
     y = malloc(sizeof(double) * N);
@@ -52,7 +52,7 @@ int main(int argc, const char **argv)
      * Create a second new plot window, and fill it with only 1 graph 
      */
     item = plot_alloc();
-    plot_initialize(item, "jpeg", "plot.jpg");
+    plot_initialize(item, "jpeg", "plot.jpg", NORMAL);
     x = malloc(sizeof(double) * N);
     y = malloc(sizeof(double) * N);
     for (i = 0; i < N; i++) {

@@ -1,14 +1,8 @@
 #include <plot.h>
 #include <plot_dataset.h>
+#include <plot_util.h>
 #include <ecl_kw.h>
 #include <ecl_sum.h>
-
-/*
- * in directory: /d/proj/bg/enkf/EnKF_PUNQS3/PUNQS3/Original bash%
- * /h/masar/EnKF/libecl/src/summary.x PUNQS3.DATA WOPR:PRO1 WOPR:PRO4
- * WOPR:PRO5 WOPR:PRO11 WOPR:PRO12 WOPR:PRO15
- * 
- */
 
 static void
 collect_summary_data(double **x, double **y, int *size,
@@ -23,41 +17,21 @@ collect_summary_data(double **x, double **y, int *size,
     ecl_sum_type *ecl_sum;
     int report_step, first_report_step, last_report_step;
     double *x_tmp, *y_tmp;
+    double diff_day;
     time_t t, t0;
-    struct tm time;
-    char buf[32];
-    char timebuf[20];
-    double diff_sec, diff_min, diff_hour, diff_day;
-    struct tm time0;
 
     util_alloc_file_components(data_file, &path, &base, NULL);
-
     ecl_util_alloc_summary_files(path, base, &header_file,
 				 &summary_file_list, &files, &fmt_file,
 				 &unified);
-
     ecl_sum = ecl_sum_fread_alloc(header_file, files,
 				  (const char **) summary_file_list, true,
 				  true);
     ecl_sum_get_report_size(ecl_sum, &first_report_step,
 			    &last_report_step);
-
     x_tmp = malloc(sizeof(double) * (files + 1));
     y_tmp = malloc(sizeof(double) * (files + 1));
-
     *size = files;
-
-    /* 1 Feb 1967 */
-    /* Grab this from the first element in the list */
-    time0.tm_year = 1967 - 1900;
-    time0.tm_mon = 1 - 1;
-    time0.tm_mday = 1;
-    time0.tm_hour = 0;
-    time0.tm_min = 0;
-    time0.tm_sec = 1;
-    t0 = mktime(&time0);
-    if (t0 == -1)
-	(void) puts("-unknown-");
 
     for (report_step = first_report_step; report_step <= last_report_step;
 	 report_step++) {
@@ -67,31 +41,18 @@ collect_summary_data(double **x, double **y, int *size,
 	    util_set_date_values(ecl_sum_get_sim_time
 				 (ecl_sum, report_step), &day, &month,
 				 &year);
-	    snprintf(buf, sizeof(buf), "%02d/%02d/%04d", day, month, year);
-	    //util_sscanf_date(buf, &t);
-	    //time = gmtime(&t);
-	    time.tm_year = year - 1900;
-	    time.tm_mon = month - 1;
-	    time.tm_mday = day;
-	    time.tm_hour = 0;
-	    time.tm_min = 0;
-	    time.tm_sec = 1;
-	    time.tm_isdst = -1;
-	    t = mktime(&time);
-	    if (t == -1)
-		(void) puts("-unknown-");
-	    else {
-		strftime(timebuf, sizeof(timebuf), "%d/%m/%Y %A", &time);
+
+	    if (report_step == first_report_step)
+		plot_util_get_time(day, month, year, &t0, NULL);
+
+	    if (!t0) {
+		fprintf(stderr,
+			"!!!! Error: no first report step was found\n");
+		continue;
 	    }
 
-	    diff_sec = difftime(t, t0);
-	    diff_min = diff_sec / 60;
-	    diff_hour = diff_min / 60;
-	    diff_day = diff_hour / 24;
-	    /* Confirm with http://www.onlineconversion.com/days_between.htm 
-	       printf("Days since 01/01/1967: %f\n", diff_day);
-	     */
-
+	    plot_util_get_time(day, month, year, &t, NULL);
+	    plot_util_get_diff(&diff_day, t, t0);
 	    x_tmp[report_step] = (double) diff_day;
 	    y_tmp[report_step] =
 		ecl_sum_get_general_var(ecl_sum, report_step, keyword);
@@ -117,11 +78,9 @@ int main(int argc, const char **argv)
     double *x, *y;
     double *y_tot = NULL;
     double *x_tot = NULL;
+    double x_max, y_max;
     int N, j;
 
-    /*
-     * const char *keywords[] = {"WOPR:PRO1", "WOPR:PRO4"}; 
-     */
     const char *keywords[] =
 	{ "WOPR:PRO1", "WOPR:PRO4", "WOPR:PRO5", "WOPR:PRO11",
 	"WOPR:PRO12", "WOPR:PRO15"
@@ -132,7 +91,7 @@ int main(int argc, const char **argv)
     plparseopts(&argc, argv, PL_PARSE_FULL);
 
     item = plot_alloc();
-    plot_initialize(item, "png", "punqs3_wopr.png");
+    plot_initialize(item, "png", "punqs3_wopr.png", NORMAL);
     for (j = 0; j < nwords; j++) {
 	collect_summary_data(&x, &y, &N,
 			     "/d/proj/bg/enkf/EnKF_PUNQS3/PUNQS3/Original/PUNQS3.DATA",
@@ -149,7 +108,7 @@ int main(int argc, const char **argv)
     printf("--------------------------------------------\n");
 
     item = plot_alloc();
-    plot_initialize(item, "png", "punqs3_all_wopr.png");
+    plot_initialize(item, "png", "punqs3_all_wopr.png", NORMAL);
 
     /*
      * Calculate total production for all wells 
@@ -184,7 +143,7 @@ int main(int argc, const char **argv)
     printf("--------------------------------------------\n");
 
     item = plot_alloc();
-    plot_initialize(item, "png", "punqs3_fopt.png");
+    plot_initialize(item, "png", "punqs3_fopt.png", NORMAL);
 
     {
 	char str[PATH_MAX];
@@ -195,7 +154,7 @@ int main(int argc, const char **argv)
 	 */
 	for (i = 1; i <= 100; i += 20) {
 	    snprintf(str, PATH_MAX,
-		     "/d/proj/bg/enkf/PUNQS3_ORIG_RELMIN/tmp_%04d/PUNQS3_%04d.DATA",
+		     "/d/proj/bg/enkf/EnKF_PUNQS3/PUNQS3_ORIG_RELMIN/tmp_%04d/PUNQS3_%04d.DATA",
 		     i, i);
 	    collect_summary_data(&x, &y, &N, str, "FOPT");
 	    d = plot_dataset_alloc();
@@ -221,7 +180,8 @@ int main(int argc, const char **argv)
     plot_dataset_add(item, d);
 
     plot_set_labels(item, "Days", "FOPT", "PUNQS3 FOPT Original", BLACK);
-    plot_set_viewport(item, 0, 6025, 0, 3873400);
+    plot_util_get_maxima(item, &x_max, &y_max);
+    plot_set_viewport(item, 0, x_max, 0, y_max);
     plot_data(item);
     plot_free(item);
 
