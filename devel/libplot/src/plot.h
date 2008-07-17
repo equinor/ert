@@ -1,3 +1,5 @@
+#ifndef __PLOT_H__
+#define __PLOT_H__
 /*! \mainpage libplot: plotting library based on Plplot
  *
  * \section intro Introduction
@@ -28,18 +30,23 @@
  * @{
  */
 
-#ifndef __PLOT_H__
-#define __PLOT_H__
 #include <util.h>
 #include <list.h>
 #include <list_node.h>
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>
+#include <plplot/plplotcanvas.h>
 
 /**
- * @brief Contains information about a plot-window.
+ * @brief Contains information about a plotting window.
  */
 typedef struct plot_struct plot_type;
+
+
+typedef enum plot_window_enum {
+    NORMAL = 0,
+    CANVAS = 1
+} plot_window_type;
 
 /**
  * @brief: Plot style for one single graph/dataset.
@@ -81,9 +88,10 @@ typedef enum plot_color_enum {
 
 extern plot_type *plot_alloc();
 extern int plot_get_stream(plot_type * item);
+extern PlplotCanvas *plot_get_canvas(plot_type * item);
 extern list_type *plot_get_datasets(plot_type * item);
 extern void plot_initialize(plot_type * item, const char *dev,
-			    const char *filename);
+			    const char *filename, plot_window_type w);
 extern void plot_set_labels(plot_type * item, const char *xlabel,
 			    const char *ylabel, const char *title,
 			    plot_color_type color);

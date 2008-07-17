@@ -5,11 +5,10 @@ Plplot wiki: http://www.miscdebris.net/plplot_wiki/index.php?title=Main_Page
 Exampels are placed in: /h/masar/plplot-5.9.0/examples/c
 
 Notes:
+- Plotting on the fly?
 - Abort macro and abort handling function.
 - Make a general summery_plot.x
-- Functions to get max and minmum value of the timesteps.
 - Possible to set the size of the plot window bigger?
-- Cleanup time functions
 - Plot a std example
 - "Legends?" for the lables?
 

@@ -4,7 +4,7 @@
 
 
 /**
- * @brief Contains information about a plot-window.
+ * @brief Contains information about a plotting window.
  */
 struct plot_struct {
     /**
@@ -36,14 +36,16 @@ struct plot_struct {
      *
      * @remarks: this is set with plot_initialize().
      */
-     const char *device;
-     int stream; /**< The plots current stream ID */
-     int *tot_streams; /**< Keeps strack of total streams */
+    const char *device;
+    int stream;	 /**< The plots current stream ID */
+    int *tot_streams;  /**< Keeps strack of total streams */
 
-     const char *xlabel; /**< Label for the x-axis */
-     const char *ylabel; /**< Label for the y-axis */
-     const char *title; /**< Plot title */
-     plot_color_type label_color; /**< Color for the labels */
+    const char *xlabel;	 /**< Label for the x-axis */
+    const char *ylabel;	 /**< Label for the y-axis */
+    const char *title;	/**< Plot title */
+    plot_color_type label_color;  /**< Color for the labels */
+    plot_window_type w;
+    PlplotCanvas *canvas;
 };
 
 
@@ -72,6 +74,14 @@ int plot_get_stream(plot_type * item)
     return item->stream;
 }
 
+PlplotCanvas *plot_get_canvas(plot_type * item)
+{
+    if (!item)
+	return NULL;
+
+    return item->canvas;
+}
+
 list_type *plot_get_datasets(plot_type * item)
 {
     if (!item)
@@ -90,7 +100,7 @@ list_type *plot_get_datasets(plot_type * item)
  * on the plot_type *item. This is because plinit() gets called inside this function.
  */
 void plot_initialize(plot_type * item, const char *dev,
-		     const char *filename)
+		     const char *filename, plot_window_type w)
 {
     static int output_stream = 0;
     static int tot_streams = 0;
@@ -104,25 +114,37 @@ void plot_initialize(plot_type * item, const char *dev,
     item->xlabel = NULL;
     item->ylabel = NULL;
     item->title = NULL;
+    item->w = w;
     item->datasets = list_alloc();
 
     /* Define unique output stream */
 
     item->device = dev;
     item->filename = filename;
-    plsdev(item->device);
 
-    if (strcmp(item->device, "xwin"))
-        plsfnam(item->filename);
+    if (dev)
+	plsdev(item->device);
+    if (dev) {
+	if (strcmp(item->device, "xwin"))
+	    plsfnam(item->filename);
+    }
 
     /*
      * The following code switches BLACK and WHITE's int values. By doing
      * this we get a white background, and we can use plcol0() to set
      * BLACK values for axis as such. 
      */
-    plscol0(WHITE, 255, 255, 255);
-    plscol0(BLACK, 0, 0, 0);
-    plinit();
+    if (item->w == CANVAS) {
+	item->canvas = plplot_canvas_new();
+	plplot_canvas_set_size(item->canvas, 600, 400);
+	plplot_canvas_use_persistence(item->canvas, TRUE);
+	plplot_canvas_scol0(item->canvas, WHITE, 255, 255, 255);
+	plplot_canvas_scol0(item->canvas, BLACK, 0, 0, 0);
+    } else {
+	plscol0(WHITE, 255, 255, 255);
+	plscol0(BLACK, 0, 0, 0);
+	plinit();
+    }
 
     /* Make this threadsafe */
     pthread_mutex_init(&update_lock, NULL);
@@ -256,7 +278,6 @@ void plot_data(plot_type * item)
 	    fprintf(stderr, "Error: no plot style is defined!\n");
 	    break;
 	}
-
 	node = next_node;
     }
 
@@ -304,58 +325,71 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 	   __func__);
     plsstrm(item->stream);
 
-    /* DOCUMENTATION:
-     * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/viewport_window.html#viewports
-     *
-     * Advance to the next subpage, looks like it has to be done 
-     */
-    pladv(0);
+    if (item->w == CANVAS) {
+	plplot_canvas_col0(item->canvas, BLACK);
+	plplot_canvas_adv(item->canvas, 0);
+	plplot_canvas_vsta(item->canvas);
+	plplot_canvas_wind(item->canvas, 0, 2 * PI, -1, 1);
+	plplot_canvas_wid(item->canvas, 2);
+	plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
 
-    /*
-     * Setup the viewport Device-independent routine for setting up the
-     * viewport plvpor (xmin, xmax, ymin, ymax); or just setup/define the
-     * standard viewport .... 
-     */
-    plvsta();
-
-    /*
-     * Specify world coordinates of viewport boundaries
-     * plwind (xmin, xmax, ymin, ymax);
-     */
-    plwind(xmin, xmax, ymin, ymax);
-
-    /*
-     * Define a default color for the axis For some strange reason this
-     * won't work with BLACK. 
-     */
-    plcol0(BLACK);
-
-    /*
-     * Draw a box with axes, etc. plbox (xopt, xtick, nxsub, yopt, ytick,
-     * nysub); options at:
-     * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/plbox.html 
-     */
-    plschr(0, 0.6);
-    plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
-
-    if (!item->xlabel || !item->ylabel || !item->title) {
-	fprintf(stderr,
-		"!!!! ID[%d] ERROR: you need to set lables before setting the viewport!\n",
-		item->stream);
+        /* TODO Set labels with another function, NOT here */ 
+	plplot_canvas_lab(item->canvas, "(x)", "(y)", "Animation test");
+	plplot_canvas_adv(item->canvas, 0);
     } else {
-	/*
-	 * http://old.ysn.ru/docs/plplot/plplotdoc-html-0.4.1/characters.html
+
+	/* DOCUMENTATION:
+	 * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/viewport_window.html#viewports
+	 *
+	 * Advance to the next subpage, looks like it has to be done 
 	 */
-	plcol0(item->label_color);
+	pladv(0);
 
 	/*
-	 * Scale the textsize by 0.8 
+	 * Setup the viewport Device-independent routine for setting up the
+	 * viewport plvpor (xmin, xmax, ymin, ymax); or just setup/define the
+	 * standard viewport .... 
 	 */
-	plschr(0, 0.7);
+	plvsta();
+
 	/*
-	 * Set some default values for the labels 
+	 * Specify world coordinates of viewport boundaries
+	 * plwind (xmin, xmax, ymin, ymax);
 	 */
-	pllab(item->xlabel, item->ylabel, item->title);
+	plwind(xmin, xmax, ymin, ymax);
+
+	/*
+	 * Define a default color for the axis For some strange reason this
+	 * won't work with BLACK. 
+	 */
+	plcol0(BLACK);
+
+	/*
+	 * Draw a box with axes, etc. plbox (xopt, xtick, nxsub, yopt, ytick,
+	 * nysub); options at:
+	 * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/plbox.html 
+	 */
+	plschr(0, 0.6);
+	plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+
+	if (!item->xlabel || !item->ylabel || !item->title) {
+	    fprintf(stderr,
+		    "!!!! ID[%d] ERROR: you need to set lables before setting the viewport!\n",
+		    item->stream);
+	} else {
+	    /*
+	     * http://old.ysn.ru/docs/plplot/plplotdoc-html-0.4.1/characters.html
+	     */
+	    plcol0(item->label_color);
+
+	    /*
+	     * Scale the textsize by 0.8 
+	     */
+	    plschr(0, 0.7);
+	    /*
+	     * Set some default values for the labels 
+	     */
+	    pllab(item->xlabel, item->ylabel, item->title);
+	}
     }
-
 }

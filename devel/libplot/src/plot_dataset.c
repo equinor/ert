@@ -1,6 +1,7 @@
 #include <plot.h>
 #include <plot_dataset.h>
 
+
 /**
  * @brief Contains information about a dataset.
  */
@@ -8,10 +9,44 @@ struct plot_dataset_struct {
     double *xvalue; /**< Vector containing x-axis data */
     double *yvalue; /**< Vector containing y-axis data */
     double std_y;
-    int length; /**< Length of the vectors defining the axis */
+    int length;	/**< Length of the vectors defining the axis */
     plot_style_type style; /**< The graph style */
     plot_color_type color; /**< The graph color */
+    int step;
+    bool finished;
 };
+
+void plot_dataset_finished(plot_dataset_type *d, bool flag) 
+{
+    if (!d)
+	return;
+
+    d->finished = flag;
+}
+
+bool plot_dataset_is_finished(plot_dataset_type *d) {
+    if (d->finished)
+        return true;
+
+    return false;
+}
+
+int plot_dataset_get_step(plot_dataset_type *d) 
+{
+    if (!d)
+	return -1;
+
+    return d->step;
+}
+
+int plot_dataset_step_next(plot_dataset_type *d) 
+{
+    if (!d)
+	return -1;
+
+    d->step++;
+    return d->step;
+}
 
 int plot_datset_get_length(plot_dataset_type * d)
 {
@@ -118,12 +153,15 @@ plot_dataset_set_data(plot_dataset_type * d, double *x, double *y,
     d->length = len;
     d->color = c;
     d->style = s;
+    d->step = 0;
+    d->finished  = false;
 }
+
 
 /**
  * @brief Add a dataset to the plot 
- * @param your current plot
- * @param your current dataset
+ * @param item your current plot
+ * @param d your current dataset
  *
  * When the data is in place in the dataset you can add it to the plot item,
  * this way it will be included when you do the plot.
