@@ -647,7 +647,7 @@ void field_ijk_set(field_type * field , int i , int j , int k , const void * val
 {                                      \
    int i;                              \
    for (i=0; i < (n); i++)             \
-       (t)[i] = (s)[i];                \
+       (t)[index[i]] = (s)[i];                \
 }                                      \
 
 
