@@ -136,7 +136,7 @@ void plot_initialize(plot_type * item, const char *dev,
      */
     if (item->w == CANVAS) {
 	item->canvas = plplot_canvas_new();
-	plplot_canvas_set_size(item->canvas, 600, 400);
+	plplot_canvas_set_size(item->canvas, 800, 600);
 	plplot_canvas_use_persistence(item->canvas, TRUE);
 	plplot_canvas_scol0(item->canvas, WHITE, 255, 255, 255);
 	plplot_canvas_scol0(item->canvas, BLACK, 0, 0, 0);
@@ -329,7 +329,7 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 	plplot_canvas_col0(item->canvas, BLACK);
 	plplot_canvas_adv(item->canvas, 0);
 	plplot_canvas_vsta(item->canvas);
-	plplot_canvas_wind(item->canvas, 0, 2 * PI, -1, 1);
+	plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
 	plplot_canvas_wid(item->canvas, 2);
 	plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
 

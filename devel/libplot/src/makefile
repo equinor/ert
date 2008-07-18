@@ -30,6 +30,7 @@ all: $(LIB)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) summary_plot.c -o summary_plot.x $(LIB_PATH) $(LIB_LINK)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) simple.c -o simple.x $(LIB_PATH) $(LIB_LINK)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) plot_canvas_test.c -o plot_canvas_test.x $(LIB_PATH) $(LIB_LINK) `pkg-config --cflags gtk+-2.0` `pkg-config --libs gtk+-2.0` -I/usr/include/libgnomeprint-2.2/ -I/usr/include/libgnomecanvas-2.0 -I/usr/include/libart-2.0/ -lplplotgnome2d `pkg-config --cflags gthread-2.0` `pkg-config --libs gthread-2.0`
+	gcc $(CFLAGS) $(TARGET_INCLUDE) summary_plot_live.c -o summary_plot_live.x $(LIB_PATH) $(LIB_LINK) `pkg-config --cflags gtk+-2.0` `pkg-config --libs gtk+-2.0` -I/usr/include/libgnomeprint-2.2/ -I/usr/include/libgnomecanvas-2.0 -I/usr/include/libart-2.0/ -lplplotgnome2d `pkg-config --cflags gthread-2.0` `pkg-config --libs gthread-2.0`
 
 
 clean:
