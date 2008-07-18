@@ -396,7 +396,7 @@ void relperm_config_ecl_write_sgof(FILE * relp_ecl_stream, const table_type * ta
      Column 3: The corrsponding oil relperm when oil, gas and connate water are present
      Column 4: The corresponding oil-gas cappilary pressure
    */
-  double swco,soco,sgco,scga,scoi,egas,eogw;
+  double swco,soco,sgco,scga,scoi,egas,eogw,sorg;
   int i;
   
   double * sgof1 = util_malloc(nso * sizeof *sgof1,__func__);
@@ -407,6 +407,7 @@ void relperm_config_ecl_write_sgof(FILE * relp_ecl_stream, const table_type * ta
   swco = data[hash_get_int(index_hash,tab->swco)];
   soco = data[hash_get_int(index_hash,tab->soco)];
   sgco = data[hash_get_int(index_hash,tab->sgco)];
+  sorg = data[hash_get_int(index_hash,tab->sorg)];
   scga = data[hash_get_int(index_hash,tab->scga)];
   scoi = data[hash_get_int(index_hash,tab->scoi)];
   egas = data[hash_get_int(index_hash,tab->egas)];
@@ -581,7 +582,7 @@ void relperm_config_ecl_write_sof3(FILE * relp_ecl_stream, const table_type * ta
      Column 3: The corresponding oil relperm for regions where only oil, gas and connate water are present
   */
 
-  double swco,soco,sgco,sorg,scqoi,eowa,scga,eogw;
+  double swco,soco,sgco,sorg,scoi,eowa,scga,eogw;
   int i;
   
   double * sof31 = util_malloc(nso * sizeof *sof31, __func__);
