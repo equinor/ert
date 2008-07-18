@@ -16,7 +16,6 @@ int main(int argc, char *argv[])
     GtkWidget *win;
     PlplotCanvas *canvas;
     PlplotCanvas *canvas2;
-    GtkFrame *frame;
     GtkBox *vbox;
     GtkBox *hbox;
     GtkButton *button;
@@ -42,20 +41,17 @@ int main(int argc, char *argv[])
     item2 = plot_alloc();
     plot_initialize(item2, NULL, NULL, CANVAS);
     canvas2 = plot_get_canvas(item2);
-    plot_set_viewport(item2, 0, 2 * PI, -1, 1);
+    plot_set_viewport(item2, -period, period, -0.3, 1);
 
     /* 
      * START GTK PACKING CODE 
      */
-    frame = GTK_FRAME(gtk_frame_new(NULL));
-    gtk_frame_set_shadow_type(frame, GTK_SHADOW_ETCHED_OUT);
     vbox = GTK_BOX(gtk_vbox_new(FALSE, 0));
     gtk_box_pack_start(vbox, GTK_WIDGET(canvas), TRUE, FALSE, 0);
     gtk_box_pack_start(vbox, GTK_WIDGET(canvas2), TRUE, FALSE, 0);
     hbox = GTK_BOX(gtk_hbox_new(FALSE, 0));
     button = GTK_BUTTON(gtk_button_new_from_stock(GTK_STOCK_EXECUTE));
     gtk_box_pack_start(hbox, GTK_WIDGET(button), TRUE, FALSE, 0);
-    gtk_box_pack_start(vbox, GTK_WIDGET(frame), TRUE, FALSE, 0);
     gtk_box_pack_start(vbox, GTK_WIDGET(hbox), TRUE, FALSE, 0);
     win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_container_set_border_width(GTK_CONTAINER(win), 5);
@@ -89,8 +85,11 @@ int main(int argc, char *argv[])
     x = malloc(sizeof(double) * ((N*2) + 1));
     y = malloc(sizeof(double) * ((N*2) + 1));
     for (i = 0; i <= N*2; i++) {
-        x[i] = i * period / (N*2);
-        y[i] = sin(x[i]);
+        x[i] = (i - N) / period;
+        if (x[i] != 0.0)
+            y[i] = sin(PI * x[i]) / (PI * x[i]);
+        else
+            y[i] = 1.0;
     }
     d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, (N*2), GREEN, LINE);

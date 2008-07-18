@@ -4,7 +4,6 @@
 
 gboolean plot_canvas_data_join(gpointer data)
 {
-
     plot_type *item = data;
     list_node_type *node, *next_node;
     int len;
