@@ -48,6 +48,7 @@ relperm_config_type * relperm_config_fscanf_alloc(const char * config_file, cons
   config = __relperm_config_alloc_empty(size_conf,size_tab-1);
   config->num_tab = size_tab-1;
   line_nr = 0;
+
   do {
     char name[128];
     if (fscanf(stream_config,"%s" , name) != 1) {
@@ -82,7 +83,7 @@ relperm_config_type * relperm_config_fscanf_alloc(const char * config_file, cons
   /* Allocation of table input in relperm_table.txt */
   util_forward_line(stream_table, &at_eof);    
   line_nr = 0;
-  printf("size_tab and config-num_tab %d %d\n",size_tab,config->num_tab);
+  printf("size_tab and config->num_tab %d %d\n",size_tab,config->num_tab);
   do{
     config->table_config[line_nr]=relperm_config_fscanf_table_config_alloc(stream_table,config->ecl_file_hash);
     relperm_config_check_tab_input(config->index_hash,config->table_config[line_nr],config->famnr);
@@ -161,7 +162,7 @@ table_type * relperm_config_table_alloc(char ** token_list, int tokens){
 }
 
 void relperm_config_check_tab_input(const hash_type * index_hash,const table_config_type * tab_config, const int famnr){
-  printf("Er i relperm_config_check_tab_input \n");    
+
   
   if(famnr == 1){
     if(tab_config->relptab_kw==SWOF || tab_config->relptab_kw==SGOF || tab_config->relptab_kw==SLGOF){
@@ -259,7 +260,7 @@ void relperm_config_ecl_write(const relperm_config_type * relperm_config,const d
     const int hash_size = hash_get_size( relperm_config->ecl_file_hash );
     char ** key_list    = hash_alloc_keylist( relperm_config->ecl_file_hash );
     int ikey;
-    
+
     for (ikey = 0; ikey < hash_size; ikey++) 
       fprintf(stream,"INCLUDE \n %s / \n",key_list[ikey]);
     relperm_config_ecl_write_table(relperm_config, data, eclpath);
@@ -279,12 +280,13 @@ void relperm_config_ecl_write_table(const relperm_config_type * config, const do
     char * relpfile;
     
     relpfile = util_alloc_full_path(path,table_config[ik]->eclipse_file);
+
     /* ecl_file_append = relperm_config_check_ecl_file(config->ecl_file_hash,table_config[ik]->eclipse_file,table_config[ik]->relptab_kw);*/
     if(table_config[ik]->ecl_file_append){
       relp_ecl_stream = util_fopen(relpfile, "a");      
     }
     else{
-      relp_ecl_stream =util_fopen(relpfile, "r");
+      relp_ecl_stream =util_fopen(relpfile, "w");
     }
     
     relperm_config_check_data(table_config[ik]->tab,config->index_hash,data,config->famnr);
@@ -363,13 +365,15 @@ void relperm_config_ecl_write_swof(FILE * relp_ecl_stream, const table_type * ta
   if(func == COREY){
     for(i=0;i < nsw ; i++){
       /*      swof1[i] =  swco + ((1-swco)/(nsw-1))*i; Should be used for drainage*/
-      swof1[i] =  swco + ((1-swco-soco)/(nsw-1))*i;
+      /* swof1[i] =  swco + ((1-swco-soco)/(nsw-1))*i; */
+      swof1[i] =  swco + ((1-swco)/(nsw-1))*i;
       swof2[i] = (swof1[i]-swco)/(1-swco-soco);
       if(swof2[i]<0) {swof2[i]=0.0;}
       if(swof2[i]>1) {swof2[i]=1.0;}
       swof2[i]=scwa*pow(swof2[i],ewat);
       swof3[i]=(1-swof1[i]-soco)/(1-swco-soco);
       if(swof3[i]<0){swof3[i]=0.0;}
+      if(swof3[i]>0){swof3[i]=1.0;}
       swof3[i]=scoi*pow(swof3[i],eowa);
       swof4[i]=exp(-pewa*(swof1[i]-swco));
       if(swof4[i]<0){swof4[i]=0.0;}
@@ -415,14 +419,14 @@ void relperm_config_ecl_write_sgof(FILE * relp_ecl_stream, const table_type * ta
   }
   if(func == COREY){
     for(i=0;i <nso;i++){
-      sgof1[i]= 0.0 +((1.0-0.0)/(nso-1))*i;
-      printf("sgof1[i] =%g",sgof1[i]);
-      sgof2[i]= (sgof1[i]-sgco)/(1-sgco-swco-soco);
+      sgof1[i]= sgco +((1.0-sgco)/(nso-1))*i;
+      sgof2[i]= (sgof1[i]-sgco)/(1-sgco-swco-sorg);
       if(sgof2[i] < 0){sgof2[i] = 0.0;}
       if(sgof2[i] > 1){sgof2[i] = 1.0;}
       sgof2[i]=scga*pow(sgof2[i],egas);
-      sgof3[i]=(1-sgof1[i]-swco-soco)/(1-swco-soco);
+      sgof3[i]=(1-sgof1[i]-sorg)/(1-sgco-swco-sorg);
       if(sgof3[i] < 0){sgof3[i] = 0.0;}
+      if(sgof3[i] > 1){sgof3[i] = 1.0;}
       sgof3[i]=scoi*pow(sgof3[i],eogw);
       sgof4[i]=0.0;
       fprintf(relp_ecl_stream,"%10.7f %10.7f %10.7f %10.7f \n",sgof1[i],sgof2[i],sgof3[i],sgof4[i]);
@@ -468,11 +472,11 @@ void relperm_config_ecl_write_slgof(FILE * relp_ecl_stream, const table_type * t
   if(func ==COREY){
     for(i=0;i < nso; i++){
       slgof1[i]=swco +soco + ((1-swco-soco)/(nso-1))*i;
-      slgof2[i]=(1-slgof1[i]-sgco)/(1-sgco-swco-soco);
+      slgof2[i]=(1-slgof1[i]-sgco)/(1-sgco-swco-sorg);
       if(slgof2[i] < 0){slgof2[i] = 0.0;}
       if(slgof2[i] > 1){slgof2[i] = 1.0;}
       slgof2[i]=scga*pow(slgof2[i],egas);
-      slgof3[i]=(slgof1[i]-swco-soco)/(1-swco-soco);
+      slgof3[i]=(slgof1[i]-swco-soco)/(1-swco-sorg);
       slgof3[i]=scoi*pow(slgof3[i],eogw);
       slgof4[i]=exp(-pega*(slgof1[i]-sgco));
       if(slgof4[i]<0){(slgof4[i]=0.0);}
@@ -552,7 +556,7 @@ void relperm_config_ecl_write_sgfn(FILE * relp_ecl_stream, const table_type * ta
   if(func == COREY){
     for(i =0; i<nsg; i++){
       sgfn1[i] = sgco + ((1-swco-sgco)/(nsg-1))*i;
-      sgfn2[i] = (sgfn1[i]-sgco)/(1-sgco-sorg);
+      sgfn2[i] = (sgfn1[i]-sgco)/(1-sgco-swco-sorg);
       if(sgfn2[i] < 0){sgfn2[i] = 0.0;}
       if(sgfn2[i] > 1){sgfn2[i] = 1.0;}
       sgfn2[i]=scga*pow(sgfn2[i],egas);
@@ -577,7 +581,7 @@ void relperm_config_ecl_write_sof3(FILE * relp_ecl_stream, const table_type * ta
      Column 3: The corresponding oil relperm for regions where only oil, gas and connate water are present
   */
 
-  double swco,soco,sgco,sorg,scoi,eowa,scga,eogw;
+  double swco,soco,sgco,sorg,scqoi,eowa,scga,eogw;
   int i;
   
   double * sof31 = util_malloc(nso * sizeof *sof31, __func__);
@@ -604,7 +608,7 @@ void relperm_config_ecl_write_sof3(FILE * relp_ecl_stream, const table_type * ta
     for(i = 0; i<nso; i++){
       sof31[i] = soco + ((1-soco-swco)/(nso-1))*i;
       sof32[i] = (sof31[i]-soco)/(1-soco-swco);
-      sof33[i] = (sof31[i]-sorg)/(1-sgco-sorg);
+      sof33[i] = (sof31[i]-sorg)/(1-sgco-swco-sorg);
       if(sof32[i] < 0){sof32[i] = 0.0;}
       if(sof33[i] < 0){sof33[i] = 0.0;}
       sof32[i] = scoi*pow(sof32[i],eowa);

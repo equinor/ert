@@ -130,6 +130,9 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   */
   config->data_size                = active_size; 
   config->ecl_export_format        = ecl_kw_all_cells; 
+  /*
+  config->ecl_export_format        = ecl_grdecl_format; 
+  */
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;

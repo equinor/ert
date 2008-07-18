@@ -817,6 +817,9 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
     case(MULTZ):
       freef             = multz_config_free__;
       break;
+    case(RELPERM):
+      freef             = relperm_config_free__;
+      break;
     case(WELL):
       freef             = well_config_free__;
       break;

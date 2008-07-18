@@ -42,8 +42,8 @@ void relperm_realloc_data(relperm_type * relperm){
 
 void relperm_fwrite(const relperm_type * relperm, FILE * stream){
   DEBUG_ASSERT(relperm);
-  enkf_util_fread_assert_target_type(stream , RELPERM , __func__);
-  scalar_stream_fread(relperm->scalar , stream);
+  enkf_util_fwrite_target_type(stream , RELPERM);
+  scalar_stream_fwrite(relperm->scalar , stream);
 }
 
 void relperm_fread(relperm_type * relperm , FILE * stream) {
@@ -112,11 +112,13 @@ void relperm_ecl_write_f90test(const relperm_type * relperm, const double * data
 void relperm_ecl_write(const relperm_type * relperm , const char * __eclfile) {
   DEBUG_ASSERT(relperm)
   {
+    printf("Er i relperm_ecl_write_1 \n");
     char * eclfile;
     char * eclpath; 
-    FILE * stream  = util_fopen(eclfile , "w");
+    FILE * stream  = util_fopen(__eclfile , "w");
     relperm_output_transform(relperm);
     util_alloc_file_components(__eclfile, &eclpath,&eclfile, NULL);
+    printf("Er i relperm_ecl_write_2 \n");
     relperm_config_ecl_write(relperm->config , relperm_get_output_ref(relperm) , stream,eclpath);
     fclose(stream);
   }
