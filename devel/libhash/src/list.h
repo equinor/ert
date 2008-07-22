@@ -11,7 +11,6 @@ void             list_del_node(list_type *list , list_node_type *);
   void             list_add_node(list_type *, list_node_type *);
 */
 void             list_free(list_type *);
-bool             list_empty(const list_type * list);
 list_node_type * list_iget_node(const list_type *, int );
 list_node_type * list_get_head(const list_type *);
 list_node_type * list_get_tail(const list_type *);
