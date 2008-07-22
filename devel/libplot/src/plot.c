@@ -74,6 +74,15 @@ int plot_get_stream(plot_type * item)
     return item->stream;
 }
 
+plot_window_type plot_get_window_type(plot_type * item)
+{
+    if (!item)
+	return -1;
+
+    return item->w;
+
+}
+
 PlplotCanvas *plot_get_canvas(plot_type * item)
 {
     if (!item)
@@ -135,8 +144,8 @@ void plot_initialize(plot_type * item, const char *dev,
      * BLACK values for axis as such. 
      */
     if (item->w == CANVAS) {
-	item->canvas = plplot_canvas_new();
-	plplot_canvas_set_size(item->canvas, 800, 600);
+	item->canvas = plplot_canvas_new(TRUE);
+	plplot_canvas_set_size(item->canvas, 1024, 720);
 	plplot_canvas_use_persistence(item->canvas, TRUE);
 	plplot_canvas_scol0(item->canvas, WHITE, 255, 255, 255);
 	plplot_canvas_scol0(item->canvas, BLACK, 0, 0, 0);
@@ -233,9 +242,6 @@ void plot_free(plot_type * item)
 void plot_data(plot_type * item)
 {
     list_node_type *node, *next_node;
-    printf("ID[%d] %s: plotting %s\n", item->stream, __func__,
-	   item->filename);
-
 
     plsstrm(item->stream);
     node = list_get_head(item->datasets);
@@ -249,35 +255,7 @@ void plot_data(plot_type * item)
 	    ("ID[%d] %s: plotting graph with %d samples in the x-y vectors\n",
 	     item->stream, __func__, plot_datset_get_length(tmp));
 
-	/*
-	 * Set the defined color for the graph
-	 * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/color.html#color-map-0 
-	 */
-	plcol0((PLINT) plot_datset_get_color(tmp));
-
-	switch (plot_datset_get_style(tmp)) {
-	case HISTOGRAM:
-	    plot_datset_set_style(tmp, HISTOGRAM);
-	    break;
-	case LINE:
-	    plwid(1.8);
-	    plot_datset_set_style(tmp, LINE);
-	    plline(plot_datset_get_length(tmp),
-		   plot_datset_get_vector_x(tmp),
-		   plot_datset_get_vector_y(tmp));
-	    break;
-	case POINT:
-	    plot_datset_set_style(tmp, POINT);
-	    /* Point types: http://plplot.sourceforge.net/examples-data/demo06/x06.01.png */
-	    plssym(0, 0.6);
-	    plpoin(plot_datset_get_length(tmp),
-		   plot_datset_get_vector_x(tmp),
-		   plot_datset_get_vector_y(tmp), 17);
-	    break;
-	default:
-	    fprintf(stderr, "Error: no plot style is defined!\n");
-	    break;
-	}
+	plot_dataset(item, tmp);
 	node = next_node;
     }
 
@@ -330,10 +308,9 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 	plplot_canvas_adv(item->canvas, 0);
 	plplot_canvas_vsta(item->canvas);
 	plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
-	plplot_canvas_wid(item->canvas, 2);
 	plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
 
-        /* TODO Set labels with another function, NOT here */ 
+	/* TODO Set labels with another function, NOT here */
 	plplot_canvas_lab(item->canvas, "(x)", "(y)", "Animation test");
 	plplot_canvas_adv(item->canvas, 0);
     } else {

@@ -88,6 +88,7 @@ typedef enum plot_color_enum {
 
 extern plot_type *plot_alloc();
 extern int plot_get_stream(plot_type * item);
+extern plot_window_type plot_get_window_type(plot_type * item);
 extern PlplotCanvas *plot_get_canvas(plot_type * item);
 extern list_type *plot_get_datasets(plot_type * item);
 extern void plot_initialize(plot_type * item, const char *dev,

@@ -16,7 +16,7 @@ struct plot_dataset_struct {
     bool finished;
 };
 
-void plot_dataset_finished(plot_dataset_type *d, bool flag) 
+void plot_dataset_finished(plot_dataset_type * d, bool flag)
 {
     if (!d)
 	return;
@@ -24,14 +24,15 @@ void plot_dataset_finished(plot_dataset_type *d, bool flag)
     d->finished = flag;
 }
 
-bool plot_dataset_is_finished(plot_dataset_type *d) {
+bool plot_dataset_is_finished(plot_dataset_type * d)
+{
     if (d->finished)
-        return true;
+	return true;
 
     return false;
 }
 
-int plot_dataset_get_step(plot_dataset_type *d) 
+int plot_dataset_get_step(plot_dataset_type * d)
 {
     if (!d)
 	return -1;
@@ -39,7 +40,7 @@ int plot_dataset_get_step(plot_dataset_type *d)
     return d->step;
 }
 
-int plot_dataset_step_next(plot_dataset_type *d) 
+int plot_dataset_step_next(plot_dataset_type * d)
 {
     if (!d)
 	return -1;
@@ -154,7 +155,84 @@ plot_dataset_set_data(plot_dataset_type * d, double *x, double *y,
     d->color = c;
     d->style = s;
     d->step = 0;
-    d->finished  = false;
+    d->finished = false;
+}
+
+void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
+		       int to)
+{
+    int i, k, k2;
+    double *x = d->xvalue;
+    double *y = d->yvalue;
+
+    plsstrm(plot_get_stream(item));
+    printf("item: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from, to);
+
+    for (i = 0; i < (to - from); i++) {
+	k = from + i;
+        k2 = k + 1;
+
+	printf("plotting from %d -> %d: %f, %f to %f, %f\n",
+	       k, k2, x[k], y[k], x[k2], y[k2]);
+	plplot_canvas_join(plot_get_canvas(item),
+			   x[k], y[k], x[k2], y[k2]);
+        plplot_canvas_adv(plot_get_canvas(item), 0);
+    }
+
+}
+
+void plot_dataset(plot_type * item, plot_dataset_type * d)
+{
+    plsstrm(plot_get_stream(item));
+
+    if (plot_get_window_type(item) == CANVAS) {
+	plplot_canvas_col0(plot_get_canvas(item),
+			   (PLINT) plot_datset_get_color(d));
+
+    } else {
+	plcol0((PLINT) plot_datset_get_color(d));
+    }
+
+    switch (plot_datset_get_style(d)) {
+    case HISTOGRAM:
+	break;
+    case LINE:
+	plwid(1.8);
+	if (plot_get_window_type(item) == CANVAS) {
+	    plplot_canvas_line(plot_get_canvas(item),
+			       plot_datset_get_length(d),
+			       plot_datset_get_vector_x(d),
+			       plot_datset_get_vector_y(d));
+
+	} else {
+	    plline(plot_datset_get_length(d),
+		   plot_datset_get_vector_x(d),
+		   plot_datset_get_vector_y(d));
+	}
+	break;
+    case POINT:
+	if (plot_get_window_type(item) == CANVAS) {
+	    plplot_canvas_ssym(plot_get_canvas(item), 0, 0.6);
+	    plplot_canvas_poin(plot_get_canvas(item),
+			       plot_datset_get_length(d),
+			       plot_datset_get_vector_x(d),
+			       plot_datset_get_vector_y(d), 17);
+
+	} else {
+	    plssym(0, 0.6);
+	    plpoin(plot_datset_get_length(d),
+		   plot_datset_get_vector_x(d),
+		   plot_datset_get_vector_y(d), 17);
+	}
+	break;
+    default:
+	fprintf(stderr, "Error: no plot style is defined!\n");
+	break;
+    }
+
+    if (plot_get_window_type(item) == CANVAS)
+        plplot_canvas_adv(plot_get_canvas(item), 0);
+
 }
 
 

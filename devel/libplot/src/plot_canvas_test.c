@@ -1,10 +1,57 @@
 #include <plot.h>
 #include <plot_dataset.h>
-#include <plot_canvas.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <plplot/plplotcanvas.h>
 
+
+gboolean plot_canvas_data_join(gpointer data)
+{
+    plot_type *item = data;
+    list_node_type *node, *next_node;
+    int len;
+    double *x;
+    double *y;
+    int step;
+    int flag = true;
+
+    node = list_get_head(plot_get_datasets(item));
+    while (node != NULL) {
+        plot_dataset_type *tmp;
+        next_node = list_node_get_next(node);
+        tmp = list_node_value_ptr(node);
+        len = plot_datset_get_length(tmp);
+
+        if (plot_dataset_is_finished(tmp)) {
+            node = next_node;
+            continue;
+        }
+        flag = false;
+
+        if (plot_dataset_get_step(tmp) == len) {
+            printf("ID[%d] Plotted last node, skipping..\n",
+                   plot_get_stream(item));
+            plot_dataset_finished(tmp, true);
+            node = next_node;
+            continue;
+        }
+
+        step = plot_dataset_step_next(tmp);
+
+        x = plot_datset_get_vector_x(tmp);
+        y = plot_datset_get_vector_y(tmp);
+        plot_dataset_join(item, tmp, step - 1, step);
+
+        printf("ID[%d] Plotting step %d -> %d of total %d\n",
+               plot_get_stream(item), step - 1, step, len);
+        node = next_node;
+    }
+
+    if (!flag)
+        return true;
+
+    return false;
+}
 
 void destroy_local(GtkWidget * widget, gpointer data)
 {
@@ -92,7 +139,7 @@ int main(int argc, char *argv[])
             y[i] = 1.0;
     }
     d = plot_dataset_alloc();
-    plot_dataset_set_data(d, x, y, (N*2), GREEN, LINE);
+    plot_dataset_set_data(d, x, y, (N*2), BLACK, LINE);
     plot_dataset_add(item2, d);
 
     /* 

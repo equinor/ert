@@ -5,7 +5,11 @@ Plplot wiki: http://www.miscdebris.net/plplot_wiki/index.php?title=Main_Page
 Exampels are placed in: /h/masar/plplot-5.9.0/examples/c
 
 Notes:
-- Plotting on the fly?
+- !!! Cleanup canvas part, make it logical together with the rest.
+- !!! Font problem
+- Plot the gurbat model
+- Make the gui a bit functional. Start/stop timers in the GUI.
+
 - Abort macro and abort handling function.
 - Make a general summery_plot.x
 - Possible to set the size of the plot window bigger?
@@ -76,5 +80,11 @@ csh% make && make install
 
 -------------------------------------------------------------------------------
 FILES:
-plplot_test.x - Generic test
-summary_view.x - Plotting version of summary.x
+
+plot_test.x - A test with multiple streams in messed up order.
+simple.x - A simple test using xwin driver
+summary_plot.x - Version of summary.x, collecting data from summaryfiles and plot.
+
+plot_canvas_test.x - Test plotting on the gnome2 canvas widget.
+summary_plot_live.x - Basic application that monitors directories waiting for new summary files and then plot the new line segments when they arrive.
+
