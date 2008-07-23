@@ -308,6 +308,7 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 	plplot_canvas_adv(item->canvas, 0);
 	plplot_canvas_vsta(item->canvas);
 	plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
+	plplot_canvas_schr(item->canvas, 0, 0.5);
 	plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
 
 	/* TODO Set labels with another function, NOT here */

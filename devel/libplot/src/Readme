@@ -6,8 +6,6 @@ Exampels are placed in: /h/masar/plplot-5.9.0/examples/c
 
 Notes:
 - !!! Cleanup canvas part, make it logical together with the rest.
-- !!! Font problem
-- Plot the gurbat model
 - Make the gui a bit functional. Start/stop timers in the GUI.
 
 - Abort macro and abort handling function.
@@ -15,15 +13,6 @@ Notes:
 - Possible to set the size of the plot window bigger?
 - Plot a std example
 - "Legends?" for the lables?
-
-COMPILATION: 
-
-Depends on:
-- plplot (-lplplotd)
-- libutil
-- libhash
-- libecl
-- zlib
 
 Indentation:
 k&r style indentation (indent -kr *.[c,h])
@@ -33,26 +22,16 @@ set tabstop=8
 set shiftwidth=4
 set expandtab
 
-
-
 -------------------------------------------------------------------------------
 Rememer to set:
-csh% setenv LD_LIBRARY_PATH /h/masar/plplot-5.9.0/Compilation/lib
-or
-bash% export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot-5.9.0/Compilation/lib"
 
+FOR TRUETYPE:
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot-5.9.0/Compilation/lib"
+setenv LD_LIBRARY_PATH /h/masar/plplot-5.9.0/Compilation/lib
 
-Some notes on TrueType fonts:
-
-The way to change the symbol (for example when plotting points) font is:
-
-setenv PLPLOT_FREETYPE_FONT_DIR /h/masar/sfd/
-setenv PLPLOT_FREETYPE_SYMBOL_BOLD_FONT FreeSerifBold.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_BOLD_ITALIC_FONT FreeSerifBoldItalic.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_BOLD_OBLIQUE_FONT FreeSerifBoldItalic.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_FONT FreeSerif.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_ITALIC_FONT FreeSerifItalic.ttf
-setenv PLPLOT_FREETYPE_SYMBOL_OBLIQUE_FONT FreeSerifItalic.ttf
+FOR NONE TRUETYPE:
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot/lib"
+setenv LD_LIBRARY_PATH /h/masar/plplot/lib
 
 For more in depth work with the fonts in the plot, one can look at:
 http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/characters.html#fci
@@ -66,15 +45,11 @@ It has been compiled already and you can find it in /h/masar/cmake/bin.
 Basic instructions: http://www.miscdebris.net/plplot_wiki/index.php?title=Linux
 Modifications: 
 
-Use the curses Interface for CMake:
-csh% ccmake -DCMAKE_INSTALL_PREFIX:PATH=/h/masar/plplot-5.9.0/Compilation/ -DCMAKE_VERBOSE_MAKEFILE=ON -DHAVE_FREETYPE=ON ..
+Using CMake and including truetype:
 
-Now there is a few variables that has to be changed:
-ENABLE_f77=OFF
-ENABLE_f95=OFF
-FREETYPE_INCLUDE_DIR=/usr/include/freetype2
-WITH_FREETYPE=ON
-PL_FREETYPE_FONT_PATH=/h/masar/sfd/
+csh% cmake -DCMAKE_INSTALL_PREFIX:PATH=/h/masar/plplot-truetype/ -DENABLE_f77=OFF -DENABLE_f95=OFF -DBUILD_TEST=ON -DWITH_FREETYPE=OFF -DENABLE_octave=OFF -DENABLE_tk=OFF -DENABLE_tcl=OFF -DENABLE_cxx=OFF -DHAVE_FREETYPE=OFF -DHAVE_AGG=OFF -DWITH_CSA=OFF -DPL_FREETYPE_FONT_PATH=/h/masar/sfd/ -DWITH_FREETYPE=ON  -DHAVE_FREETYPE=ON
+
+Remember, you can also use the curses interface for cmake, just replace "cmake" with "ccmake".
 
 csh% make && make install
 
