@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     /* 
      * PLOT THE DATA WITH TIMER FUNCTIONS
      */
-    g_timeout_add(100, plot_canvas_data_join, item);
+//    g_timeout_add(100, plot_canvas_data_join, item);
     g_timeout_add(100, plot_canvas_data_join, item2);
 
     gtk_widget_show_all(win);

@@ -162,11 +162,11 @@ void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
 		       int to)
 {
     int i, k, k2;
-    double *x = d->xvalue;
-    double *y = d->yvalue;
+    PLFLT *x = (PLFLT *) d->xvalue;
+    PLFLT *y = (PLFLT *) d->yvalue;
 
     plsstrm(plot_get_stream(item));
-    printf("item: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from, to);
+    printf("---\nitem: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from, to);
 
     for (i = 0; i < (to - from); i++) {
 	k = from + i;
