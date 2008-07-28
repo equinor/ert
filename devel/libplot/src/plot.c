@@ -2,6 +2,9 @@
 #include <plot_dataset.h>
 #include <pthread.h>
 
+#define WIDTH 1024
+#define HEIGHT 740
+
 
 /**
  * @brief Contains information about a plotting window.
@@ -63,6 +66,9 @@ plot_type *plot_alloc()
     if (!item)
 	return NULL;
 
+    item->w = NORMAL;
+    item->stream = -1;
+
     return item;
 }
 
@@ -72,6 +78,11 @@ int plot_get_stream(plot_type * item)
 	return -1;
 
     return item->stream;
+}
+
+void plot_set_stream(plot_type * item, int stream) 
+{
+    item->stream = stream;
 }
 
 plot_window_type plot_get_window_type(plot_type * item)
@@ -118,7 +129,9 @@ void plot_initialize(plot_type * item, const char *dev,
     item->stream = output_stream;
     item->tot_streams = &tot_streams;
     fprintf(stderr, "ID[%d] SETTING UP NEW OUTPUT STREAM\n", item->stream);
-    plsstrm(item->stream);
+
+    if (item->w != CANVAS)
+        plsstrm(item->stream);
 
     item->xlabel = NULL;
     item->ylabel = NULL;
@@ -144,8 +157,8 @@ void plot_initialize(plot_type * item, const char *dev,
      * BLACK values for axis as such. 
      */
     if (item->w == CANVAS) {
-	item->canvas = plplot_canvas_new(TRUE);
-	plplot_canvas_set_size(item->canvas, 1024, 720);
+	item->canvas = plplot_canvas_new();
+	plplot_canvas_set_size(item->canvas, WIDTH, HEIGHT);
 	plplot_canvas_use_persistence(item->canvas, TRUE);
 	plplot_canvas_scol0(item->canvas, WHITE, 255, 255, 255);
 	plplot_canvas_scol0(item->canvas, BLACK, 0, 0, 0);
@@ -206,8 +219,6 @@ void plot_free(plot_type * item)
     fprintf(stderr, "ID[%d] %s: free on %p, (%s)\n", item->stream,
 	    __func__, item, item->filename);
 
-    plsstrm(item->stream);
-
     /*
      * Free the graphs in the plot 
      */
@@ -216,9 +227,19 @@ void plot_free(plot_type * item)
     /* First we end the current stream, then we check if the program is on the last
      * active stream. If so, cleanup everything..
      */
-    plend1();
-    fprintf(stderr, "ID[%d] ENDING CURRENT STREAM\n", item->stream);
+    if (item->w == CANVAS) {
+        printf("Stream number: %d\n", plplot_canvas_get_stream_number(item->canvas));
+/*
+        plsstrm(plplot_canvas_get_stream_number(item->canvas));
+        plend1();
+*/
+        plplot_canvas_finalize(item->canvas);
+    } else {
+        plsstrm(item->stream);
+        plend1();
+    }
 
+    fprintf(stderr, "ID[%d] ENDING CURRENT STREAM\n", item->stream);
 
     pthread_mutex_init(&update_lock, NULL);
     pthread_mutex_lock(&update_lock);
@@ -284,6 +305,24 @@ plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
     item->label_color = color;
 }
 
+void
+plot_resize_axis(plot_type * item, PLFLT xmin, PLFLT xmax, PLFLT ymin,
+		 PLFLT ymax)
+{
+    plsstrm(item->stream);
+
+    plplot_canvas_col0(item->canvas, BLACK);
+    plplot_canvas_adv(item->canvas, 0);
+    plplot_canvas_vsta(item->canvas);
+    plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
+    plplot_canvas_schr(item->canvas, 0, 0.5);
+    plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+
+    printf("Set canvas xmax %f, ymax: %f\n", xmax, ymax);
+
+    plplot_canvas_adv(item->canvas, 0);
+
+}
 
 /**
  * @brief Setup viewport
@@ -304,15 +343,12 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
     plsstrm(item->stream);
 
     if (item->w == CANVAS) {
-	plplot_canvas_col0(item->canvas, BLACK);
-	plplot_canvas_adv(item->canvas, 0);
-	plplot_canvas_vsta(item->canvas);
-	plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
-	plplot_canvas_schr(item->canvas, 0, 0.5);
-	plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+	plot_resize_axis(item, xmin, xmax, ymin, ymax);
 
-	/* TODO Set labels with another function, NOT here */
-	plplot_canvas_lab(item->canvas, "(x)", "(y)", "Animation test");
+	plplot_canvas_col0(item->canvas, item->label_color);
+        plplot_canvas_schr(item->canvas, 0, 0.5);
+        plplot_canvas_lab(item->canvas, item->xlabel, item->ylabel, item->title);
+
 	plplot_canvas_adv(item->canvas, 0);
     } else {
 
@@ -360,14 +396,42 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 	     */
 	    plcol0(item->label_color);
 
-	    /*
-	     * Scale the textsize by 0.8 
-	     */
-	    plschr(0, 0.7);
+	    plschr(0, 0.5);
 	    /*
 	     * Set some default values for the labels 
 	     */
 	    pllab(item->xlabel, item->ylabel, item->title);
 	}
     }
+}
+
+
+void plot_get_maxima(plot_type * item, double *x_max, double *y_max)
+{
+    list_node_type *node, *next_node;
+    double tmp_x = 0;
+    double tmp_y = 0;
+    double *x, *y;
+    int i;
+
+    node = list_get_head(plot_get_datasets(item));
+    while (node != NULL) {
+	plot_dataset_type *tmp;
+	next_node = list_node_get_next(node);
+	tmp = list_node_value_ptr(node);
+        x = plot_datset_get_vector_x(tmp);
+        y = plot_datset_get_vector_y(tmp);
+
+        for (i = 0; i <= plot_datset_get_length(tmp); i++) {
+            if (x[i] > tmp_x)
+                tmp_x = x[i];
+            if (y[i] > tmp_y)
+                tmp_y = y[i];
+        }
+	node = next_node;
+    }
+    
+    fprintf(stderr, "ID[%d] Found maxima: x: %f and y: %f\n", plot_get_stream(item), tmp_x, tmp_y);
+    *x_max = tmp_x;
+    *y_max = tmp_y;
 }

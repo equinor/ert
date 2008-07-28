@@ -10,7 +10,6 @@
 void plot_util_get_time(int mday, int mon, int year, time_t * t_ptr,
 			struct tm *time_ptr);
 void plot_util_get_diff(double *mday, time_t t, time_t t0);
-void plot_util_get_maxima(plot_type *item, double *x_max, double *y_max);
 
 /**
  * @}

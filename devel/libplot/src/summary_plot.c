@@ -114,7 +114,7 @@ int main(int argc, const char **argv)
     plot_dataset_add(item, d);
 
     plot_set_labels(item, "Days", "FOPT", "PUNQS3 FOPT Original", BLACK);
-    plot_util_get_maxima(item, &x_max, &y_max);
+    plot_get_maxima(item, &x_max, &y_max);
     plot_set_viewport(item, 0, x_max, 0, y_max);
     plot_data(item);
     plot_free(item);

@@ -6,8 +6,8 @@
  * @brief Contains information about a dataset.
  */
 struct plot_dataset_struct {
-    double *xvalue; /**< Vector containing x-axis data */
-    double *yvalue; /**< Vector containing y-axis data */
+    PLFLT *xvalue; /**< Vector containing x-axis data */
+    PLFLT *yvalue; /**< Vector containing y-axis data */
     double std_y;
     int length;	/**< Length of the vectors defining the axis */
     plot_style_type style; /**< The graph style */
@@ -73,7 +73,7 @@ plot_style_type plot_datset_get_style(plot_dataset_type * d)
     return d->style;
 }
 
-double *plot_datset_get_vector_x(plot_dataset_type * d)
+PLFLT *plot_datset_get_vector_x(plot_dataset_type * d)
 {
     if (!d)
 	return NULL;
@@ -81,7 +81,7 @@ double *plot_datset_get_vector_x(plot_dataset_type * d)
     return d->xvalue;
 }
 
-double *plot_datset_get_vector_y(plot_dataset_type * d)
+PLFLT *plot_datset_get_vector_y(plot_dataset_type * d)
 {
     if (!d)
 	return NULL;
@@ -140,7 +140,7 @@ void plot_dataset_free(plot_dataset_type * d)
  * it. At the same time you define some detail about how the graph should look.
  */
 void
-plot_dataset_set_data(plot_dataset_type * d, double *x, double *y,
+plot_dataset_set_data(plot_dataset_type * d, PLFLT *x, PLFLT *y,
 		      int len, plot_color_type c, plot_style_type s)
 {
     if (!d) {
@@ -162,21 +162,22 @@ void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
 		       int to)
 {
     int i, k, k2;
-    PLFLT *x = (PLFLT *) d->xvalue;
-    PLFLT *y = (PLFLT *) d->yvalue;
+    PLFLT *x = d->xvalue;
+    PLFLT *y = d->yvalue;
 
     plsstrm(plot_get_stream(item));
-    printf("---\nitem: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from, to);
+    printf("item: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from,
+	   to);
 
     for (i = 0; i < (to - from); i++) {
 	k = from + i;
-        k2 = k + 1;
+	k2 = k + 1;
 
 	printf("plotting from %d -> %d: %f, %f to %f, %f\n",
 	       k, k2, x[k], y[k], x[k2], y[k2]);
 	plplot_canvas_join(plot_get_canvas(item),
 			   x[k], y[k], x[k2], y[k2]);
-        plplot_canvas_adv(plot_get_canvas(item), 0);
+	plplot_canvas_adv(plot_get_canvas(item), 0);
     }
 
 }
@@ -229,10 +230,6 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
 	fprintf(stderr, "Error: no plot style is defined!\n");
 	break;
     }
-
-    if (plot_get_window_type(item) == CANVAS)
-        plplot_canvas_adv(plot_get_canvas(item), 0);
-
 }
 
 
@@ -262,4 +259,28 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
     list_append_ref(plot_get_datasets(item), d);
 
     return true;
+}
+
+void plot_dataset_get_maxima(plot_dataset_type * d, double *x_max,
+			     double *y_max)
+{
+    double tmp_x = 0;
+    double tmp_y = 0;
+    int i;
+    double *x, *y;
+    x = plot_datset_get_vector_x(d);
+    y = plot_datset_get_vector_y(d);
+
+
+    for (i = 0; i <= plot_datset_get_length(d); i++) {
+	if (x[i] > tmp_x)
+	    tmp_x = x[i];
+	if (y[i] > tmp_y)
+	    tmp_y = y[i];
+
+    }
+
+    fprintf(stderr, "Found DATASET maxima: x: %f and y: %f\n", tmp_x, tmp_y);
+    *x_max = tmp_x;
+    *y_max = tmp_y;
 }

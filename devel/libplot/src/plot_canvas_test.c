@@ -4,6 +4,8 @@
 #include <gtk/gtk.h>
 #include <plplot/plplotcanvas.h>
 
+PlplotCanvas *canvas;
+PlplotCanvas *canvas2;
 
 gboolean plot_canvas_data_join(gpointer data)
 {
@@ -14,6 +16,9 @@ gboolean plot_canvas_data_join(gpointer data)
     double *y;
     int step;
     int flag = true;
+
+//    plplot_canvas_clear(plot_get_canvas(item));
+    plplot_canvas_adv(plot_get_canvas(item), 0);
 
     node = list_get_head(plot_get_datasets(item));
     while (node != NULL) {
@@ -58,14 +63,30 @@ void destroy_local(GtkWidget * widget, gpointer data)
     gtk_main_quit();
 }
 
+void resize_window(GtkWidget * widget, gpointer data)
+{
+    GtkRequisition requisition;
+    const double period = 2 * PI;
+    int w = ((GtkWidget *)data)->requisition.width;
+    int h = ((GtkWidget *)data)->requisition.height;
+
+    printf("foo %dx%d\n", ((GtkWidget *)data)->allocation.height, ((GtkWidget *)data)->allocation.width);
+
+//  plplot_canvas_set_size(canvas2, h, w);
+/*
+    plplot_canvas_vsta(canvas2);
+    plplot_canvas_wind(canvas2, -period, period*2, -0.3, 1);
+    plplot_canvas_clear(canvas2);
+    plplot_canvas_box(canvas2, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+    plplot_canvas_adv(canvas2, 0);
+*/
+}
+
 int main(int argc, char *argv[])
 {
     GtkWidget *win;
-    PlplotCanvas *canvas;
-    PlplotCanvas *canvas2;
     GtkBox *vbox;
     GtkBox *hbox;
-    GtkButton *button;
     plot_type *item;
     plot_type *item2;
     plot_dataset_type *d;
@@ -94,16 +115,18 @@ int main(int argc, char *argv[])
      * START GTK PACKING CODE 
      */
     vbox = GTK_BOX(gtk_vbox_new(FALSE, 0));
-    gtk_box_pack_start(vbox, GTK_WIDGET(canvas), TRUE, FALSE, 0);
-    gtk_box_pack_start(vbox, GTK_WIDGET(canvas2), TRUE, FALSE, 0);
+    //gtk_box_pack_start(vbox, GTK_WIDGET(canvas), TRUE, TRUE, 0);
+    gtk_box_pack_start(vbox, GTK_WIDGET(canvas2), TRUE, TRUE, 0);
     hbox = GTK_BOX(gtk_hbox_new(FALSE, 0));
-    button = GTK_BUTTON(gtk_button_new_from_stock(GTK_STOCK_EXECUTE));
-    gtk_box_pack_start(hbox, GTK_WIDGET(button), TRUE, FALSE, 0);
-    gtk_box_pack_start(vbox, GTK_WIDGET(hbox), TRUE, FALSE, 0);
+    gtk_box_pack_start(vbox, GTK_WIDGET(hbox), TRUE, TRUE, 0);
     win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_container_set_border_width(GTK_CONTAINER(win), 5);
     g_signal_connect(G_OBJECT(win), "destroy", G_CALLBACK(destroy_local),
 		     item);
+/*
+    g_signal_connect(G_OBJECT(win), "check_resize", G_CALLBACK(resize_window),
+		     vbox);
+*/
     gtk_container_add(GTK_CONTAINER(win), GTK_WIDGET(vbox));
 
     /* 
@@ -146,6 +169,7 @@ int main(int argc, char *argv[])
      * PLOT THE DATA WITH TIMER FUNCTIONS
      */
 //    g_timeout_add(100, plot_canvas_data_join, item);
+    plplot_canvas_use_persistence(plot_get_canvas(item2), FALSE);
     g_timeout_add(100, plot_canvas_data_join, item2);
 
     gtk_widget_show_all(win);
