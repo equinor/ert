@@ -88,6 +88,7 @@ typedef enum plot_color_enum {
 
 extern plot_type *plot_alloc();
 extern int plot_get_stream(plot_type * item);
+extern void plot_set_stream(plot_type *item, int stream);
 extern plot_window_type plot_get_window_type(plot_type * item);
 extern PlplotCanvas *plot_get_canvas(plot_type * item);
 extern list_type *plot_get_datasets(plot_type * item);
@@ -96,11 +97,15 @@ extern void plot_initialize(plot_type * item, const char *dev,
 extern void plot_set_labels(plot_type * item, const char *xlabel,
 			    const char *ylabel, const char *title,
 			    plot_color_type color);
+extern void plot_resize_axis(plot_type * item, PLFLT xmin, PLFLT xmax,
+			     PLFLT ymin, PLFLT ymax);
 extern void plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 			      PLFLT ymin, PLFLT ymax);
 extern void plot_data(plot_type * item);
 extern void plot_free_all_datasets(plot_type * item);
 extern void plot_free(plot_type * item);
+extern void plot_get_maxima(plot_type * item, double *x_max, double *y_max);
+
 
 /**
  * @}

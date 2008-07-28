@@ -6,7 +6,7 @@
 #include <ecl_sum.h>
 
 void
-plot_summary_collect_data(double **x, double **y, int *size,
+plot_summary_collect_data(PLFLT **x, PLFLT **y, int *size,
 		     const char *data_file, const char *keyword)
 {
     char *base;
@@ -17,8 +17,8 @@ plot_summary_collect_data(double **x, double **y, int *size,
     bool fmt_file, unified;
     ecl_sum_type *ecl_sum;
     int report_step, first_report_step, last_report_step;
-    double *x_tmp, *y_tmp;
-    double diff_day;
+    PLFLT *x_tmp, *y_tmp;
+    PLFLT diff_day;
     time_t t, t0;
 
     util_alloc_file_components(data_file, &path, &base, NULL);
@@ -30,8 +30,8 @@ plot_summary_collect_data(double **x, double **y, int *size,
 				  true);
     ecl_sum_get_report_size(ecl_sum, &first_report_step,
 			    &last_report_step);
-    x_tmp = malloc(sizeof(double) * (files + 1));
-    y_tmp = malloc(sizeof(double) * (files + 1));
+    x_tmp = malloc(sizeof(PLFLT) * (files + 1));
+    y_tmp = malloc(sizeof(PLFLT) * (files + 1));
     *size = files;
 
     for (report_step = first_report_step; report_step <= last_report_step;
@@ -54,8 +54,8 @@ plot_summary_collect_data(double **x, double **y, int *size,
 
 	    plot_util_get_time(day, month, year, &t, NULL);
 	    plot_util_get_diff(&diff_day, t, t0);
-	    x_tmp[report_step] = (double) diff_day;
-	    y_tmp[report_step] =
+	    x_tmp[report_step] = (PLFLT) diff_day;
+	    y_tmp[report_step] = (PLFLT)
 		ecl_sum_get_general_var(ecl_sum, report_step, keyword);
 /*
             printf("step: %d \t x_tmp: %f\t y_tmp: %f\n", report_step, x_tmp[report_step], y_tmp[report_step]); */
