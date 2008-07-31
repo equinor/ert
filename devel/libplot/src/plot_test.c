@@ -77,4 +77,6 @@ int main(int argc, const char **argv)
     plot_free(item2);
 
     return 0;
+    argc = 0;
+    argv = NULL;
 }

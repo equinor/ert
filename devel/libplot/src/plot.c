@@ -2,9 +2,6 @@
 #include <plot_dataset.h>
 #include <pthread.h>
 
-#define WIDTH 1024
-#define HEIGHT 740
-
 
 /**
  * @brief Contains information about a plotting window.
@@ -47,8 +44,11 @@ struct plot_struct {
     const char *ylabel;	 /**< Label for the y-axis */
     const char *title;	/**< Plot title */
     plot_color_type label_color;  /**< Color for the labels */
-    plot_window_type w;
-    PlplotCanvas *canvas;
+    plot_window_type w;	/**< Defined if it is a canvas or a normal plot */
+    PlplotCanvas *canvas; /**< The Canvas Widget pointer (gcw driver) */
+
+    int height;	/**< The height of your plot window */
+    int width; /**< The width of your plot window */
 };
 
 
@@ -68,6 +68,12 @@ plot_type *plot_alloc()
 
     item->w = NORMAL;
     item->stream = -1;
+    item->xlabel = NULL;
+    item->ylabel = NULL;
+    item->title = NULL;
+    item->datasets = list_alloc();
+    item->height = DEFAULT_HEIGHT;
+    item->width = DEFAULT_WIDTH;
 
     return item;
 }
@@ -80,8 +86,11 @@ int plot_get_stream(plot_type * item)
     return item->stream;
 }
 
-void plot_set_stream(plot_type * item, int stream) 
+void plot_set_stream(plot_type * item, int stream)
 {
+    if (!item)
+	return;
+
     item->stream = stream;
 }
 
@@ -91,7 +100,6 @@ plot_window_type plot_get_window_type(plot_type * item)
 	return -1;
 
     return item->w;
-
 }
 
 PlplotCanvas *plot_get_canvas(plot_type * item)
@@ -111,6 +119,24 @@ list_type *plot_get_datasets(plot_type * item)
 }
 
 /**
+ * @brief Setup window size.
+ * @param item your current plot
+ * @param width the width of your window.
+ * @param height the height of you window.
+ * 
+ * Sets up your window geometry. This has to be set before initializing the window, else default size is set.
+ */
+void plot_set_window_size(plot_type * item, int width, int height)
+{
+    if (!item)
+	return;
+
+    item->width = width;
+    item->height = height;
+}
+
+
+/**
  * @brief Initialize a new plot
  * @param item your current plot
  * @param dev the output device
@@ -125,48 +151,45 @@ void plot_initialize(plot_type * item, const char *dev,
     static int output_stream = 0;
     static int tot_streams = 0;
     pthread_mutex_t update_lock;
+    char buf[16];
+    char *drvopt = "text=0";	/* disable truetype for gcw */
 
     item->stream = output_stream;
     item->tot_streams = &tot_streams;
-    fprintf(stderr, "ID[%d] SETTING UP NEW OUTPUT STREAM\n", item->stream);
-
-    if (item->w != CANVAS)
-        plsstrm(item->stream);
-
-    item->xlabel = NULL;
-    item->ylabel = NULL;
-    item->title = NULL;
-    item->w = w;
-    item->datasets = list_alloc();
-
-    /* Define unique output stream */
-
     item->device = dev;
     item->filename = filename;
+    item->w = w;
 
-    if (dev)
-	plsdev(item->device);
-    if (dev) {
-	if (strcmp(item->device, "xwin"))
-	    plsfnam(item->filename);
-    }
-
-    /*
-     * The following code switches BLACK and WHITE's int values. By doing
-     * this we get a white background, and we can use plcol0() to set
-     * BLACK values for axis as such. 
-     */
-    if (item->w == CANVAS) {
+    switch (item->w) {
+    case CANVAS:
+	plsetopt("drvopt", drvopt);
 	item->canvas = plplot_canvas_new();
-	plplot_canvas_set_size(item->canvas, WIDTH, HEIGHT);
-	plplot_canvas_use_persistence(item->canvas, TRUE);
 	plplot_canvas_scol0(item->canvas, WHITE, 255, 255, 255);
 	plplot_canvas_scol0(item->canvas, BLACK, 0, 0, 0);
-    } else {
+	plplot_canvas_set_size(item->canvas, item->width, item->height);
+	plplot_canvas_use_persistence(item->canvas, TRUE);
+	item->stream = plplot_canvas_get_stream_number(item->canvas);
+	break;
+    case NORMAL:
+	plsstrm(item->stream);
+	if (dev)
+	    plsdev(item->device);
+	if (dev) {
+	    if (strcmp(item->device, "xwin"))
+		plsfnam(item->filename);
+	}
 	plscol0(WHITE, 255, 255, 255);
 	plscol0(BLACK, 0, 0, 0);
+	snprintf(buf, sizeof(buf), "%dx%d", item->width, item->height);
+	plsetopt("geometry", buf);
+	plfontld(0);
 	plinit();
+	break;
+    default:
+	fprintf(stderr, "ERROR: No window type specified!\n");
+	break;
     }
+    fprintf(stderr, "ID[%d] SETTING UP NEW OUTPUT STREAM\n", item->stream);
 
     /* Make this threadsafe */
     pthread_mutex_init(&update_lock, NULL);
@@ -203,7 +226,6 @@ void plot_free_all_datasets(plot_type * item)
 
     list_free(item->datasets);
     item->datasets = NULL;
-
 }
 
 /**
@@ -216,37 +238,30 @@ void plot_free(plot_type * item)
 {
     pthread_mutex_t update_lock;
 
-    fprintf(stderr, "ID[%d] %s: free on %p, (%s)\n", item->stream,
-	    __func__, item, item->filename);
+    fprintf(stderr, "ID[%d] %s: free on %p\n", item->stream,
+	    __func__, item);
 
     /*
      * Free the graphs in the plot 
      */
     plot_free_all_datasets(item);
 
-    /* First we end the current stream, then we check if the program is on the last
-     * active stream. If so, cleanup everything..
-     */
     if (item->w == CANVAS) {
-        printf("Stream number: %d\n", plplot_canvas_get_stream_number(item->canvas));
-/*
-        plsstrm(plplot_canvas_get_stream_number(item->canvas));
-        plend1();
-*/
-        plplot_canvas_finalize(item->canvas);
+	plplot_canvas_finalize(item->canvas);
     } else {
-        plsstrm(item->stream);
-        plend1();
+	plsstrm(item->stream);
+	plend1();
     }
 
-    fprintf(stderr, "ID[%d] ENDING CURRENT STREAM\n", item->stream);
-
+    fprintf(stderr, "ID[%d] %s: ENDING CURRENT STREAM\n", item->stream,
+	    __func__);
     pthread_mutex_init(&update_lock, NULL);
     pthread_mutex_lock(&update_lock);
     /* We now have one less stream */
     --*item->tot_streams;
     if (!*item->tot_streams) {
-	fprintf(stderr, "ID[%d] Cleaning up!\n", item->stream);
+	fprintf(stderr, "ID[%d] %s: Cleaning up!\n", item->stream,
+		__func__);
 	plend();
     }
     pthread_mutex_unlock(&update_lock);
@@ -305,24 +320,6 @@ plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
     item->label_color = color;
 }
 
-void
-plot_resize_axis(plot_type * item, PLFLT xmin, PLFLT xmax, PLFLT ymin,
-		 PLFLT ymax)
-{
-    plsstrm(item->stream);
-
-    plplot_canvas_col0(item->canvas, BLACK);
-    plplot_canvas_adv(item->canvas, 0);
-    plplot_canvas_vsta(item->canvas);
-    plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
-    plplot_canvas_schr(item->canvas, 0, 0.5);
-    plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
-
-    printf("Set canvas xmax %f, ymax: %f\n", xmax, ymax);
-
-    plplot_canvas_adv(item->canvas, 0);
-
-}
 
 /**
  * @brief Setup viewport
@@ -340,72 +337,63 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 {
     printf("ID[%d] %s: setting the viewport for the plot\n", item->stream,
 	   __func__);
-    plsstrm(item->stream);
 
-    if (item->w == CANVAS) {
-	plot_resize_axis(item, xmin, xmax, ymin, ymax);
-
-	plplot_canvas_col0(item->canvas, item->label_color);
-        plplot_canvas_schr(item->canvas, 0, 0.5);
-        plplot_canvas_lab(item->canvas, item->xlabel, item->ylabel, item->title);
-
+    switch (item->w) {
+    case CANVAS:
+	plplot_canvas_col0(item->canvas, BLACK);
 	plplot_canvas_adv(item->canvas, 0);
-    } else {
-
-	/* DOCUMENTATION:
-	 * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/viewport_window.html#viewports
-	 *
-	 * Advance to the next subpage, looks like it has to be done 
-	 */
+	plplot_canvas_vsta(item->canvas);
+	plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
+	plplot_canvas_schr(item->canvas, 0, LABEL_FONTSIZE);
+	plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+	plplot_canvas_adv(item->canvas, 0);
+	break;
+    case NORMAL:
+	plsstrm(item->stream);
 	pladv(0);
-
-	/*
-	 * Setup the viewport Device-independent routine for setting up the
-	 * viewport plvpor (xmin, xmax, ymin, ymax); or just setup/define the
-	 * standard viewport .... 
-	 */
 	plvsta();
-
-	/*
-	 * Specify world coordinates of viewport boundaries
-	 * plwind (xmin, xmax, ymin, ymax);
-	 */
 	plwind(xmin, xmax, ymin, ymax);
-
-	/*
-	 * Define a default color for the axis For some strange reason this
-	 * won't work with BLACK. 
-	 */
 	plcol0(BLACK);
-
-	/*
-	 * Draw a box with axes, etc. plbox (xopt, xtick, nxsub, yopt, ytick,
-	 * nysub); options at:
-	 * http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/plbox.html 
-	 */
-	plschr(0, 0.6);
+	plschr(0, LABEL_FONTSIZE);
 	plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+	break;
+    default:
+	break;
+    }
 
-	if (!item->xlabel || !item->ylabel || !item->title) {
-	    fprintf(stderr,
-		    "!!!! ID[%d] ERROR: you need to set lables before setting the viewport!\n",
-		    item->stream);
-	} else {
-	    /*
-	     * http://old.ysn.ru/docs/plplot/plplotdoc-html-0.4.1/characters.html
-	     */
+    if (!item->xlabel || !item->ylabel || !item->title) {
+	fprintf(stderr,
+		"!!!! ID[%d] ERROR: you need to set lables before setting the viewport!\n",
+		item->stream);
+    } else {
+	switch (item->w) {
+	case CANVAS:
+	    plplot_canvas_col0(item->canvas, item->label_color);
+	    plplot_canvas_schr(item->canvas, 0, LABEL_FONTSIZE);
+	    plplot_canvas_lab(item->canvas, item->xlabel, item->ylabel,
+			      item->title);
+	    plplot_canvas_adv(item->canvas, 0);
+	    break;
+	case NORMAL:
+	    plschr(0, LABEL_FONTSIZE);
 	    plcol0(item->label_color);
-
-	    plschr(0, 0.5);
-	    /*
-	     * Set some default values for the labels 
-	     */
 	    pllab(item->xlabel, item->ylabel, item->title);
+	    break;
+	default:
+	    break;
 	}
     }
 }
 
 
+/**
+ * @brief Get maximum values
+ * @param item your current plot
+ * @param x_max pointer to the new x maximum
+ * @param y_max pointer to the new y maximum
+ * 
+ * Find the maximum value in the plot item, checks all added datasets.
+ */
 void plot_get_maxima(plot_type * item, double *x_max, double *y_max)
 {
     list_node_type *node, *next_node;
@@ -419,19 +407,21 @@ void plot_get_maxima(plot_type * item, double *x_max, double *y_max)
 	plot_dataset_type *tmp;
 	next_node = list_node_get_next(node);
 	tmp = list_node_value_ptr(node);
-        x = plot_datset_get_vector_x(tmp);
-        y = plot_datset_get_vector_y(tmp);
+	x = plot_datset_get_vector_x(tmp);
+	y = plot_datset_get_vector_y(tmp);
 
-        for (i = 0; i <= plot_datset_get_length(tmp); i++) {
-            if (x[i] > tmp_x)
-                tmp_x = x[i];
-            if (y[i] > tmp_y)
-                tmp_y = y[i];
-        }
+	for (i = 0; i <= plot_datset_get_length(tmp); i++) {
+	    if (x[i] > tmp_x)
+		tmp_x = x[i];
+	    if (y[i] > tmp_y)
+		tmp_y = y[i];
+	}
 	node = next_node;
     }
-    
-    fprintf(stderr, "ID[%d] Found maxima: x: %f and y: %f\n", plot_get_stream(item), tmp_x, tmp_y);
+
+    fprintf(stderr, "ID[%d] %s: Found maxima: x: %f and y: %f\n",
+	    item->stream, __func__, tmp_x, tmp_y);
+
     *x_max = tmp_x;
     *y_max = tmp_y;
 }

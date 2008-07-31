@@ -10,7 +10,7 @@
  * @image html punqs3_fopt.png 
  *
  * \section install Installation of plplot
- * As of now, plplot is installed in the directory /h/masar/plplot-5.9.0/Complilation.
+ * As of now, plplot is installed in the directory /h/masar/plplot/.
  * For more information on how this was compiled, see the Readme file in the src/ directory.
  *
  * \subsection example1 Example 1: Plotting of the function: y = sinc(x).
@@ -18,6 +18,9 @@
 
  * \subsection example2 Example 2: Plotting some well known functions.
  * \include plot_test.c
+ * 
+ * \subsection example3 Example 3: Plotting inside a gtk application, with animation.
+ * \include plot_canvas_test.c
  */
 
 /**
@@ -88,24 +91,36 @@ typedef enum plot_color_enum {
 
 extern plot_type *plot_alloc();
 extern int plot_get_stream(plot_type * item);
-extern void plot_set_stream(plot_type *item, int stream);
+extern void plot_set_stream(plot_type * item, int stream);
 extern plot_window_type plot_get_window_type(plot_type * item);
 extern PlplotCanvas *plot_get_canvas(plot_type * item);
 extern list_type *plot_get_datasets(plot_type * item);
+extern void plot_set_window_size(plot_type * item, int width, int height);
 extern void plot_initialize(plot_type * item, const char *dev,
 			    const char *filename, plot_window_type w);
 extern void plot_set_labels(plot_type * item, const char *xlabel,
 			    const char *ylabel, const char *title,
 			    plot_color_type color);
-extern void plot_resize_axis(plot_type * item, PLFLT xmin, PLFLT xmax,
-			     PLFLT ymin, PLFLT ymax);
 extern void plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 			      PLFLT ymin, PLFLT ymax);
 extern void plot_data(plot_type * item);
 extern void plot_free_all_datasets(plot_type * item);
 extern void plot_free(plot_type * item);
-extern void plot_get_maxima(plot_type * item, double *x_max, double *y_max);
+extern void plot_get_maxima(plot_type * item, double *x_max,
+			    double *y_max);
+#if WITH_TRUETYPE
+#define LABEL_FONTSIZE 0.6
+#define SYMBOL_SIZE 0.7
+#define LINEWIDTH_SIZE 2	/* integer */
+#else
+#define LABEL_FONTSIZE 0.5
+#define SYMBOL_SIZE 0.8
+#define LINEWIDTH_SIZE 0.9
+#endif
 
+#define SYMBOL 17
+#define DEFAULT_WIDTH 1024
+#define DEFAULT_HEIGHT 768
 
 /**
  * @}

@@ -26,8 +26,8 @@ set expandtab
 Rememer to set:
 
 FOR TRUETYPE:
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot-5.9.0/Compilation/lib"
-setenv LD_LIBRARY_PATH /h/masar/plplot-5.9.0/Compilation/lib
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot-truetype/lib"
+setenv LD_LIBRARY_PATH /h/masar/plplot-truetype/lib
 
 FOR NONE TRUETYPE:
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot/lib"

@@ -140,7 +140,7 @@ void plot_dataset_free(plot_dataset_type * d)
  * it. At the same time you define some detail about how the graph should look.
  */
 void
-plot_dataset_set_data(plot_dataset_type * d, PLFLT *x, PLFLT *y,
+plot_dataset_set_data(plot_dataset_type * d, PLFLT * x, PLFLT * y,
 		      int len, plot_color_type c, plot_style_type s)
 {
     if (!d) {
@@ -166,13 +166,11 @@ void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
     PLFLT *y = d->yvalue;
 
     plsstrm(plot_get_stream(item));
-    printf("item: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from,
-	   to);
+    printf("item: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from, to);
 
     for (i = 0; i < (to - from); i++) {
 	k = from + i;
 	k2 = k + 1;
-
 	printf("plotting from %d -> %d: %f, %f to %f, %f\n",
 	       k, k2, x[k], y[k], x[k2], y[k2]);
 	plplot_canvas_join(plot_get_canvas(item),
@@ -189,7 +187,6 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
     if (plot_get_window_type(item) == CANVAS) {
 	plplot_canvas_col0(plot_get_canvas(item),
 			   (PLINT) plot_datset_get_color(d));
-
     } else {
 	plcol0((PLINT) plot_datset_get_color(d));
     }
@@ -198,7 +195,6 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
     case HISTOGRAM:
 	break;
     case LINE:
-	plwid(1.8);
 	if (plot_get_window_type(item) == CANVAS) {
 	    plplot_canvas_line(plot_get_canvas(item),
 			       plot_datset_get_length(d),
@@ -213,17 +209,17 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
 	break;
     case POINT:
 	if (plot_get_window_type(item) == CANVAS) {
-	    plplot_canvas_ssym(plot_get_canvas(item), 0, 0.6);
+	    plplot_canvas_ssym(plot_get_canvas(item), 0, SYMBOL_SIZE);
 	    plplot_canvas_poin(plot_get_canvas(item),
 			       plot_datset_get_length(d),
 			       plot_datset_get_vector_x(d),
-			       plot_datset_get_vector_y(d), 17);
+			       plot_datset_get_vector_y(d), SYMBOL);
 
 	} else {
-	    plssym(0, 0.6);
+	    plssym(0, SYMBOL_SIZE);
 	    plpoin(plot_datset_get_length(d),
 		   plot_datset_get_vector_x(d),
-		   plot_datset_get_vector_y(d), 17);
+		   plot_datset_get_vector_y(d), SYMBOL);
 	}
 	break;
     default:
@@ -261,6 +257,13 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
     return true;
 }
 
+/**
+ * @brief Get maximal value from one dataset
+ * @param d your current dataset
+ * @param x_max pointer to max x-value
+ * @param y_max pointer to max y-value
+ * 
+ */
 void plot_dataset_get_maxima(plot_dataset_type * d, double *x_max,
 			     double *y_max)
 {
@@ -271,16 +274,12 @@ void plot_dataset_get_maxima(plot_dataset_type * d, double *x_max,
     x = plot_datset_get_vector_x(d);
     y = plot_datset_get_vector_y(d);
 
-
     for (i = 0; i <= plot_datset_get_length(d); i++) {
 	if (x[i] > tmp_x)
 	    tmp_x = x[i];
 	if (y[i] > tmp_y)
 	    tmp_y = y[i];
-
     }
-
-    fprintf(stderr, "Found DATASET maxima: x: %f and y: %f\n", tmp_x, tmp_y);
     *x_max = tmp_x;
     *y_max = tmp_y;
 }

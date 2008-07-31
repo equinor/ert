@@ -5,8 +5,9 @@
  * @{
  */
 
-extern void plot_summary_collect_data(PLFLT **x, PLFLT **y, int *size,
-                     const char *data_file, const char *keyword);
+extern void plot_summary_collect_data(PLFLT ** x, PLFLT ** y, int *size,
+				      const char *data_file,
+				      const char *keyword);
 
 
 /**

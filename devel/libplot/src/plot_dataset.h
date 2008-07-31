@@ -35,8 +35,8 @@ bool plot_dataset_is_finished(plot_dataset_type * d);
 
 extern plot_dataset_type *plot_dataset_alloc();
 extern void plot_dataset_free(plot_dataset_type * d);
-extern void plot_dataset_set_data(plot_dataset_type * d, PLFLT *x,
-				  PLFLT *y, int len,
+extern void plot_dataset_set_data(plot_dataset_type * d, PLFLT * x,
+				  PLFLT * y, int len,
 				  plot_color_type c, plot_style_type s);
 extern void plot_dataset_join(plot_type * item, plot_dataset_type * d,
 			      int from, int to);
