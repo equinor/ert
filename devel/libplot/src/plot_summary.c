@@ -6,8 +6,8 @@
 #include <ecl_sum.h>
 
 void
-plot_summary_collect_data(PLFLT **x, PLFLT **y, int *size,
-		     const char *data_file, const char *keyword)
+plot_summary_collect_data(PLFLT ** x, PLFLT ** y, int *size,
+			  const char *data_file, const char *keyword)
 {
     char *base;
     char *header_file;
@@ -42,28 +42,17 @@ plot_summary_collect_data(PLFLT **x, PLFLT **y, int *size,
 	    util_set_date_values(ecl_sum_get_sim_time
 				 (ecl_sum, report_step), &day, &month,
 				 &year);
-
 	    if (report_step == first_report_step)
 		plot_util_get_time(day, month, year, &t0, NULL);
-
-	    if (!t0) {
-		fprintf(stderr,
-			"!!!! Error: no first report step was found\n");
-		continue;
-	    }
-
 	    plot_util_get_time(day, month, year, &t, NULL);
 	    plot_util_get_diff(&diff_day, t, t0);
 	    x_tmp[report_step] = (PLFLT) diff_day;
 	    y_tmp[report_step] = (PLFLT)
 		ecl_sum_get_general_var(ecl_sum, report_step, keyword);
-/*
-            printf("step: %d \t x_tmp: %f\t y_tmp: %f\n", report_step, x_tmp[report_step], y_tmp[report_step]); */
 	}
     }
     *x = x_tmp;
     *y = y_tmp;
-
     util_safe_free(header_file);
     util_safe_free(base);
     util_safe_free(path);

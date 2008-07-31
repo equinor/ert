@@ -25,7 +25,7 @@ void plot_util_get_time(int mday, int mon, int year, time_t * t_ptr,
 	*t_ptr = t;
 }
 
-void plot_util_get_diff(PLFLT *mday, time_t t, time_t t0)
+void plot_util_get_diff(PLFLT * mday, time_t t, time_t t0)
 {
     PLFLT diff_sec, diff_min, diff_hour, diff_day;
 
