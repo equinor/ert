@@ -12,12 +12,12 @@ int main(int argc, const char **argv)
 
     {
 	plot_dataset_type *d;
-	double *x, *y;
 	int N = pow(2, 10);
+	PLFLT x[2 * N];
+	PLFLT y[2 * N];
 	int i;
-	x = malloc(sizeof(double) * 2 * N);
-	y = malloc(sizeof(double) * 2 * N);
-	for (i = 0; i < 2 * N; i++) {
+
+	for (i = 0; i <= 2 * N; i++) {
 	    x[i] = (i - N) / period;
 	    if (x[i] != 0.0)
 		y[i] = sin(PI * x[i]) / (PI * x[i]);
@@ -35,7 +35,6 @@ int main(int argc, const char **argv)
     plot_free(item);
 
     return 0;
-
     argc = 0;
     argv = NULL;
 }

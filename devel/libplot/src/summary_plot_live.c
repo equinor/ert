@@ -10,6 +10,7 @@
 #include <list_node.h>
 #include <config.h>
 #include <time.h>
+#include <assert.h>
 
 #define TIMEOUT 10000		/* unit: millisecond */
 #define ECL_EXT ".DATA"
@@ -187,7 +188,6 @@ void summary_plot_add_ensamble_member(summary_plot_type * sp,
     summary_plot_append_textbox(sp->spg,
 				"Adding ensemble %s/%s to plot %p with keyword '%s'",
 				dir, file, sp->item, sp->kw);
-
     summary_plot_get_ecl_data(spm, NULL, NULL, &spm->files);
     list_append_ref(sp->list, spm);
 }
@@ -203,6 +203,7 @@ gboolean summary_plot_timout(gpointer data)
     list_node_type *node2, *next_node2;
     summary_plot_gui_type *spg = data;
     double x_max, y_max;
+    bool show = false;
 
     summary_plot_append_textbox(spg,
 				"Entered timer at %d msec interval\nLooking for new summaryfiles ...",
@@ -305,6 +306,8 @@ gboolean summary_plot_timout(gpointer data)
 			sp->y_max = y_max;
 			flag = true;
 		    }
+		    util_safe_free(x);
+		    util_safe_free(y);
 		    plot_dataset_free(d);
 		}
 
@@ -343,10 +346,13 @@ gboolean summary_plot_timout(gpointer data)
 	    list_del_node(spg->list, sp->node);
 	    summary_plot_free(sp);
 	    gtk_notebook_remove_page(GTK_NOTEBOOK(sp_new->spg->nb), i);
-	    gtk_widget_show_all(sp_new->spg->win);
+	    show = true;
 	}
 	node2 = next_node2;
     }
+
+    if (show)
+	gtk_widget_show_all(GTK_WIDGET(spg->win));
 
     return true;
 }
@@ -522,20 +528,18 @@ summary_plot_type *summary_plot_create_tab_with_data(summary_plot_gui_type
     plot_summary_collect_data(&x, &y, &N, ecl_data_file, sp_kw);
     d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, N, BLACK, POINT);
+    util_safe_free(x);
+    util_safe_free(y);
     plot_dataset_add(sp->item, d);
 
     if ((xmax == 0) || (ymax == 0))
-	plot_get_maxima(sp->item, &sp->x_max, &sp->y_max);
+	plot_get_extrema(sp->item, &sp->x_max, &sp->y_max, NULL, NULL);
     else {
 	sp->x_max = xmax;
 	sp->y_max = ymax;
     }
-
-    if (sp->x_max == 0 || sp->y_max == 0) {
-	fprintf(stderr, "Error: maxima for either x or y axis is zero!\n");
-	exit(-1);
-    }
-
+    /* Check if maxima for either x or y axis is zero */
+    assert(sp->x_max != 0 && sp->y_max != 0);
     plot_set_labels(sp->item, "Days", sp_kw, spg->conf_file, BLACK);
     plot_set_viewport(sp->item, 0, sp->x_max, 0, sp->y_max);
     plot_data(sp->item);
@@ -634,7 +638,7 @@ int main(int argc, char **argv)
 
     if (argc < 2) {
 	fprintf(stderr, "** ERROR ** %s EnKF.conf \n", argv[0]);
-	exit(-1);
+	exit(EXIT_FAILURE);
     }
 
     gtk_init(&argc, &argv);
@@ -645,9 +649,8 @@ int main(int argc, char **argv)
     summary_plot_add_well_tabs(spg, argv[1]);
 
     summary_plot_timout(spg);
-    g_timeout_add(TIMEOUT, summary_plot_timout, spg);
-
     gtk_widget_show_all(spg->win);
+    g_timeout_add(TIMEOUT, summary_plot_timout, spg);
     gtk_main();
 
     return true;

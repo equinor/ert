@@ -1,5 +1,6 @@
 #include <plot.h>
 #include <plot_dataset.h>
+#include <assert.h>
 
 
 /**
@@ -18,83 +19,57 @@ struct plot_dataset_struct {
 
 void plot_dataset_finished(plot_dataset_type * d, bool flag)
 {
-    if (!d)
-	return;
-
+    assert(d != NULL);
     d->finished = flag;
 }
 
 bool plot_dataset_is_finished(plot_dataset_type * d)
 {
-    if (d->finished)
-	return true;
-
+    assert(d != NULL);
     return false;
 }
 
 int plot_dataset_get_step(plot_dataset_type * d)
 {
-    if (!d)
-	return -1;
-
+    assert(d != NULL);
     return d->step;
 }
 
 int plot_dataset_step_next(plot_dataset_type * d)
 {
-    if (!d)
-	return -1;
-
+    assert(d != NULL);
     d->step++;
     return d->step;
 }
 
 int plot_datset_get_length(plot_dataset_type * d)
 {
-    if (!d)
-	return -1;
-
+    assert(d != NULL);
     return d->length;
 }
 
 plot_color_type plot_datset_get_color(plot_dataset_type * d)
 {
-    if (!d)
-	return -1;
-
+    assert(d != NULL);
     return d->color;
 }
 
 plot_style_type plot_datset_get_style(plot_dataset_type * d)
 {
-    if (!d)
-	return -1;
-
+    assert(d != NULL);
     return d->style;
 }
 
 PLFLT *plot_datset_get_vector_x(plot_dataset_type * d)
 {
-    if (!d)
-	return NULL;
-
+    assert(d != NULL);
     return d->xvalue;
 }
 
 PLFLT *plot_datset_get_vector_y(plot_dataset_type * d)
 {
-    if (!d)
-	return NULL;
-
+    assert(d != NULL);
     return d->yvalue;
-}
-
-void plot_datset_set_style(plot_dataset_type * d, plot_style_type s)
-{
-    if (!d)
-	return;
-
-    d->style = s;
 }
 
 /**
@@ -108,9 +83,6 @@ plot_dataset_type *plot_dataset_alloc()
     plot_dataset_type *d;
 
     d = malloc(sizeof *d);
-    if (!d)
-	return NULL;
-
     return d;
 }
 
@@ -122,6 +94,7 @@ plot_dataset_type *plot_dataset_alloc()
  */
 void plot_dataset_free(plot_dataset_type * d)
 {
+    assert(d != NULL);
     util_safe_free(d->xvalue);
     util_safe_free(d->yvalue);
     util_safe_free(d);
@@ -143,20 +116,23 @@ void
 plot_dataset_set_data(plot_dataset_type * d, PLFLT * x, PLFLT * y,
 		      int len, plot_color_type c, plot_style_type s)
 {
-    if (!d) {
-	fprintf(stderr,
-		"Error: you need to allocate the new dataset first\n");
-	return;
+    assert(d != NULL);
+    len = len + 1;
+    d->xvalue = malloc(sizeof(PLFLT) * len);
+    memcpy(d->xvalue, x, sizeof(PLFLT) * len);
+    if (y) {
+        d->yvalue = malloc(sizeof(PLFLT) * len);
+        memcpy(d->yvalue, y, sizeof(PLFLT) * len);
+    } else {
+        d->yvalue = NULL;
     }
-
-    d->xvalue = x;
-    d->yvalue = y;
-    d->length = len;
+    d->length = len - 1;
     d->color = c;
     d->style = s;
     d->step = 0;
     d->finished = false;
 }
+
 
 void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
 		       int to)
@@ -165,6 +141,7 @@ void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
     PLFLT *x = d->xvalue;
     PLFLT *y = d->yvalue;
 
+    assert(item != NULL && d != NULL);
     plsstrm(plot_get_stream(item));
     printf("item: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from, to);
 
@@ -182,6 +159,7 @@ void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
 
 void plot_dataset(plot_type * item, plot_dataset_type * d)
 {
+    assert(item != NULL && d != NULL);
     plsstrm(plot_get_stream(item));
 
     if (plot_get_window_type(item) == CANVAS) {
@@ -206,7 +184,7 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
 		   plot_datset_get_vector_x(d),
 		   plot_datset_get_vector_y(d));
 	}
-	break;
+        break;
     case POINT:
 	if (plot_get_window_type(item) == CANVAS) {
 	    plplot_canvas_ssym(plot_get_canvas(item), 0, SYMBOL_SIZE);
@@ -221,9 +199,11 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
 		   plot_datset_get_vector_x(d),
 		   plot_datset_get_vector_y(d), SYMBOL);
 	}
+        break;
+
+    case BLANK:
 	break;
     default:
-	fprintf(stderr, "Error: no plot style is defined!\n");
 	break;
     }
 }
@@ -239,6 +219,8 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
  */
 int plot_dataset_add(plot_type * item, plot_dataset_type * d)
 {
+    int i;
+
     if (!d || !item) {
 	fprintf(stderr,
 		"Error: you need to allocate a new dataset or plot-item.\n");
@@ -252,7 +234,9 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
 
     printf("ID[%d] %s: Adding dataset %p to list with length %d\n",
 	   plot_get_stream(item), __func__, d, d->length);
+    i = list_get_size(plot_get_datasets(item));
     list_append_ref(plot_get_datasets(item), d);
+    assert(i <= list_get_size(plot_get_datasets(item)));
 
     return true;
 }
@@ -271,9 +255,12 @@ void plot_dataset_get_maxima(plot_dataset_type * d, double *x_max,
     double tmp_y = 0;
     int i;
     double *x, *y;
+
+    assert(d != NULL);
     x = plot_datset_get_vector_x(d);
     y = plot_datset_get_vector_y(d);
 
+    /* FIXME: This function only works for maximal values > 0 */
     for (i = 0; i <= plot_datset_get_length(d); i++) {
 	if (x[i] > tmp_x)
 	    tmp_x = x[i];

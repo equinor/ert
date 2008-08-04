@@ -21,7 +21,7 @@ ARFLAGS = -csr
 OBJECTS       = plot.o plot_dataset.o plot_util.o plot_summary.o
 INC_FILES     = plot.h plot_dataset.h plot_util.h plot_summary.h
 LIB           = libplot_$(MFLAG).a 
-LIB_LINK      = -lplot_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lecl_$(MFLAG) -lz -lm -l$(LIBPLPLOT_LINK) -lpthread $(GTK_LINK)
+LIB_LINK      = -lplot_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lecl_$(MFLAG) -lz -lm -l$(LIBPLPLOT_LINK) -lpthread $(GTK_LINK) 
 LIB_PATH = -L$(LIBPLOT_HOME)/lib -L$(LIBPLPLOT_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib 
 TARGET_INCLUDE   = -I$(LIBPLOT_HOME)/src -I$(LIBPLPLOT_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBECL_HOME)/include
 
@@ -36,6 +36,7 @@ all: $(LIB)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) simple.c -o simple.x $(LIB_PATH) $(LIB_LINK)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(GTK_INCLUDE) plot_canvas_test.c -o plot_canvas_test.x $(LIB_PATH) $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(GTK_INCLUDE) summary_plot_live.c -o summary_plot_live.x $(LIB_PATH) $(LIB_LINK) 
+	gcc $(CFLAGS) $(TARGET_INCLUDE) $(GTK_INCLUDE) errorbar_test.c -o errorbar_test.x $(LIB_PATH) $(LIB_LINK) 
 
 clean:
 	rm -f *.o *~ *.x

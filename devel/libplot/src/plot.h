@@ -58,9 +58,10 @@ typedef enum plot_window_enum {
  * you want for that one graph.
  */
 typedef enum plot_style_enum {
-    HISTOGRAM = 0,
-    LINE = 1,
-    POINT = 2
+    BLANK = 0,
+    HISTOGRAM = 1,
+    LINE = 2,
+    POINT = 3,
 } plot_style_type;
 
 /**
@@ -103,11 +104,12 @@ extern void plot_set_labels(plot_type * item, const char *xlabel,
 			    plot_color_type color);
 extern void plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 			      PLFLT ymin, PLFLT ymax);
+extern void plot_errorbar_data(plot_type * item);
 extern void plot_data(plot_type * item);
 extern void plot_free_all_datasets(plot_type * item);
 extern void plot_free(plot_type * item);
-extern void plot_get_maxima(plot_type * item, double *x_max,
-			    double *y_max);
+extern void plot_get_extrema(plot_type * item, double *x_max,
+			    double *y_max, double *x_min, double *y_min);
 #if WITH_TRUETYPE
 #define LABEL_FONTSIZE 0.6
 #define SYMBOL_SIZE 0.7
