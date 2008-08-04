@@ -23,10 +23,6 @@ extern PLFLT *plot_datset_get_vector_x(plot_dataset_type * d);
 extern PLFLT *plot_datset_get_vector_y(plot_dataset_type * d);
 extern int plot_dataset_get_step(plot_dataset_type * d);
 
-/* Set functions */
-extern void plot_datset_set_style(plot_dataset_type * d,
-				  plot_style_type s);
-
 /* Canvas specific */
 extern int plot_dataset_step_next(plot_dataset_type * d);
 extern void plot_dataset_finished(plot_dataset_type * d, bool flag);

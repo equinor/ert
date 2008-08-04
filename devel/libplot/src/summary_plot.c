@@ -9,10 +9,15 @@ int main(int argc, const char **argv)
 {
     plot_type *item;
     plot_dataset_type *d;
-    double *x, *y;
+    PLFLT *x, *y;
     double x_max, y_max;
     int N;
     const char *kw = argv[1];
+
+    if (argc < 2) {
+	fprintf(stderr, "Error: give keyword as argument!\n");
+	exit(EXIT_FAILURE);
+    }
 
     item = plot_alloc();
     plot_set_window_size(item, 1152, 768);
@@ -38,27 +43,34 @@ int main(int argc, const char **argv)
 		d = plot_dataset_alloc();
 		plot_dataset_set_data(d, x, y, N, BLUE, LINE);
 		plot_dataset_add(item, d);
+		util_safe_free(x);
+		util_safe_free(y);
 
 		snprintf(str, PATH_MAX,
 			 "/d/proj/bg/enkf/EnKF_PUNQS3/enkf_runs/member_%03d/PUNQS3_%04d.DATA",
 			 k, k);
-		plot_summary_collect_data(&x, &y, &N, str, kw);
 		d = plot_dataset_alloc();
+		plot_summary_collect_data(&x, &y, &N, str, kw);
 		plot_dataset_set_data(d, x, y, N, RED, LINE);
 		plot_dataset_add(item, d);
+		util_safe_free(x);
+		util_safe_free(y);
 	    }
 	}
     }
 
+    d = plot_dataset_alloc();
     plot_summary_collect_data(&x, &y, &N,
 			      "/d/proj/bg/enkf/EnKF_PUNQS3/PUNQS3/Original/PUNQS3.DATA",
 			      kw);
-    d = plot_dataset_alloc();
     plot_dataset_set_data(d, x, y, N, BLACK, POINT);
     plot_dataset_add(item, d);
 
+    util_safe_free(x);
+    util_safe_free(y);
+
     plot_set_labels(item, "Days", kw, "PUNQS3", BLACK);
-    plot_get_maxima(item, &x_max, &y_max);
+    plot_get_extrema(item, &x_max, &y_max, NULL, NULL);
     plot_set_viewport(item, 0, x_max, 0, y_max);
     plot_data(item);
     plot_free(item);

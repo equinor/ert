@@ -9,14 +9,13 @@ int main(int argc, const char **argv)
     int N = 100;		/* Number of samples */
     const double period = 2 * PI;
     int i;
-    double *x, *y;
+    PLFLT x[N];
+    PLFLT y[N];
 
     item2 = plot_alloc();
     plot_initialize(item2, "png", "martin.png", NORMAL);
 
-    x = malloc(sizeof(double) * N);
-    y = malloc(sizeof(double) * N);
-    for (i = 0; i < N; i++) {
+    for (i = 0; i <= N; i++) {
 	x[i] = i * period / N;
 	y[i] = sin(x[i]);
     }
@@ -24,9 +23,7 @@ int main(int argc, const char **argv)
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
     plot_dataset_add(item2, d);
 
-    x = malloc(sizeof(double) * N);
-    y = malloc(sizeof(double) * N);
-    for (i = 0; i < N; i++) {
+    for (i = 0; i <= N; i++) {
 	x[i] = i * period / N;
 	y[i] = cos(x[i]);
     }
@@ -38,9 +35,7 @@ int main(int argc, const char **argv)
      * Create yet another cos, but with another angular frequency (\omega
      * = 3) 
      */
-    x = malloc(sizeof(double) * N);
-    y = malloc(sizeof(double) * N);
-    for (i = 0; i < N; i++) {
+    for (i = 0; i <= N; i++) {
 	x[i] = i * (period) / N;
 	y[i] = cos(3 * x[i]);
     }
@@ -53,9 +48,7 @@ int main(int argc, const char **argv)
      */
     item = plot_alloc();
     plot_initialize(item, "jpeg", "plot.jpg", NORMAL);
-    x = malloc(sizeof(double) * N);
-    y = malloc(sizeof(double) * N);
-    for (i = 0; i < N; i++) {
+    for (i = 0; i <= N; i++) {
 	x[i] = i * period / N;
 	y[i] = exp(x[i]);
     }

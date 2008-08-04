@@ -97,30 +97,34 @@ int main(int argc, char *argv[])
      */
     {
 	plot_dataset_type *d;
-	int N = pow(2, 6);
 	const double period = 2 * PI;
 	int i;
-	double *x, *y;
+	int N = pow(2, 6);
+	{
+	    PLFLT x[N];
+	    PLFLT y[N];
 
-	x = malloc(sizeof(double) * (N + 1));
-	y = malloc(sizeof(double) * (N + 1));
-	for (i = 0; i <= N; i++) {
-	    x[i] = i * period / N;
-	    y[i] = sin(x[i]);
+	    for (i = 0; i <= N; i++) {
+		x[i] = i * period / N;
+		y[i] = sin(x[i]);
+	    }
+	    d = plot_dataset_alloc();
+	    plot_dataset_set_data(d, x, y, N, BLUE, LINE);
+	    plot_dataset_add(item, d);
 	}
-	d = plot_dataset_alloc();
-	plot_dataset_set_data(d, x, y, N, BLUE, LINE);
-	plot_dataset_add(item, d);
 
-	x = malloc(sizeof(double) * ((N * 2) + 1));
-	y = malloc(sizeof(double) * ((N * 2) + 1));
-	for (i = 0; i <= N * 2; i++) {
-	    x[i] = i * period / (N * 2);
-	    y[i] = cos(x[i]);
+	{
+	    PLFLT x[N * 2];
+	    PLFLT y[N * 2];
+
+	    for (i = 0; i <= N * 2; i++) {
+		x[i] = i * period / (N * 2);
+		y[i] = cos(x[i]);
+	    }
+	    d = plot_dataset_alloc();
+	    plot_dataset_set_data(d, x, y, (N * 2), RED, LINE);
+	    plot_dataset_add(item, d);
 	}
-	d = plot_dataset_alloc();
-	plot_dataset_set_data(d, x, y, (N * 2), RED, LINE);
-	plot_dataset_add(item, d);
     }
 
     /* 
