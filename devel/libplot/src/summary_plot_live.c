@@ -297,7 +297,8 @@ gboolean summary_plot_timout(gpointer data)
 						    1,
 						    last_report_step - 1);
 		    }
-		    plot_dataset_get_maxima(d, &x_max, &y_max);
+		    plot_dataset_get_extrema(d, &x_max, &y_max, NULL,
+					     NULL);
 		    if (x_max > sp->x_max) {
 			sp->x_max = x_max;
 			flag = true;
@@ -310,7 +311,6 @@ gboolean summary_plot_timout(gpointer data)
 		    util_safe_free(y);
 		    plot_dataset_free(d);
 		}
-
 		tmp->last_report_step = last_report_step;
 		tmp->files = j;
 		ecl_sum_free(ecl_sum);
@@ -335,8 +335,8 @@ gboolean summary_plot_timout(gpointer data)
 	    fprintf
 		(stderr,
 		 "ID[%d] Adding a new tab %p with kw: %s and new xmax: %f, ymax: %f\n",
-		 plot_get_stream(sp->item), sp_new->item, sp->kw,
-		 sp->x_max, sp->y_max);
+		 plot_get_stream(sp_new->item), sp_new->item, sp_new->kw,
+		 sp_new->x_max, sp_new->y_max);
 	    summary_plot_append_textbox(spg,
 					"One or more datasets in plot %s went off axis, creating new tab with resized axis!",
 					sp_new->kw);
@@ -386,7 +386,6 @@ void summary_plot_append_textbox(summary_plot_gui_type * spg,
     va_end(ap);
     timestamp = summary_plot_get_timestamp();
     snprintf(buf, sizeof(buf), "[%s] %s\n", timestamp, va_buf);
-
     gtk_text_buffer_get_end_iter(spg->buffer, &iter);
     gtk_text_buffer_insert(spg->buffer, &iter, buf, -1);
     gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(spg->text),
@@ -412,7 +411,6 @@ config_type *summary_plot_init_config(const char *config_file)
 		     -1, NULL);
     config_init_item(config, "WELL", 0, NULL, true, true, 2, NULL, 1,
 		     -1, NULL);
-
     config_parse(config, config_file, ECL_COM_KW);
 
     {

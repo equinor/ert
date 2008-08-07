@@ -16,9 +16,9 @@ void plot_util_get_time(int mday, int mon, int year, time_t * t_ptr,
     time.tm_sec = 1;
     time.tm_isdst = -1;
     t = mktime(&time);
+
     if (t == -1)
 	(void) puts("-unknown-");
-
     if (time_ptr != NULL)
 	*time_ptr = time;
     if (t_ptr != NULL)
@@ -36,4 +36,21 @@ void plot_util_get_diff(PLFLT * mday, time_t t, time_t t0)
 
     /* Confirm with: http://www.onlineconversion.com/days_between.htm */
     *mday = diff_day;
+}
+
+PLFLT plot_util_calc_rms(PLFLT * y, int len)
+{
+    int i;
+    PLFLT diff, mean;
+    PLFLT sum = 0;
+
+    for (i = 1; i < len; i++)
+	sum += y[i];
+    mean = sum / (PLFLT) len;
+    sum = 0;
+    for (i = 1; i < len; i++) {
+	diff = y[i] - mean;
+	sum += pow(diff, 2);
+    }
+    return sqrtf((1 / (PLFLT) len) * sum);
 }

@@ -9,12 +9,11 @@
 struct plot_dataset_struct {
     PLFLT *xvalue; /**< Vector containing x-axis data */
     PLFLT *yvalue; /**< Vector containing y-axis data */
-    double std_y;
     int length;	/**< Length of the vectors defining the axis */
     plot_style_type style; /**< The graph style */
     plot_color_type color; /**< The graph color */
-    int step;
-    bool finished;
+    int step; /**< Helper value when using animation */
+    bool finished; /**< Helper value when using animation */
 };
 
 void plot_dataset_finished(plot_dataset_type * d, bool flag)
@@ -26,7 +25,7 @@ void plot_dataset_finished(plot_dataset_type * d, bool flag)
 bool plot_dataset_is_finished(plot_dataset_type * d)
 {
     assert(d != NULL);
-    return false;
+    return d->finished;
 }
 
 int plot_dataset_get_step(plot_dataset_type * d)
@@ -121,10 +120,10 @@ plot_dataset_set_data(plot_dataset_type * d, PLFLT * x, PLFLT * y,
     d->xvalue = malloc(sizeof(PLFLT) * len);
     memcpy(d->xvalue, x, sizeof(PLFLT) * len);
     if (y) {
-        d->yvalue = malloc(sizeof(PLFLT) * len);
-        memcpy(d->yvalue, y, sizeof(PLFLT) * len);
+	d->yvalue = malloc(sizeof(PLFLT) * len);
+	memcpy(d->yvalue, y, sizeof(PLFLT) * len);
     } else {
-        d->yvalue = NULL;
+	d->yvalue = NULL;
     }
     d->length = len - 1;
     d->color = c;
@@ -170,21 +169,18 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
     }
 
     switch (plot_datset_get_style(d)) {
-    case HISTOGRAM:
-	break;
     case LINE:
 	if (plot_get_window_type(item) == CANVAS) {
 	    plplot_canvas_line(plot_get_canvas(item),
 			       plot_datset_get_length(d),
 			       plot_datset_get_vector_x(d),
 			       plot_datset_get_vector_y(d));
-
 	} else {
 	    plline(plot_datset_get_length(d),
 		   plot_datset_get_vector_x(d),
 		   plot_datset_get_vector_y(d));
 	}
-        break;
+	break;
     case POINT:
 	if (plot_get_window_type(item) == CANVAS) {
 	    plplot_canvas_ssym(plot_get_canvas(item), 0, SYMBOL_SIZE);
@@ -192,15 +188,13 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
 			       plot_datset_get_length(d),
 			       plot_datset_get_vector_x(d),
 			       plot_datset_get_vector_y(d), SYMBOL);
-
 	} else {
 	    plssym(0, SYMBOL_SIZE);
 	    plpoin(plot_datset_get_length(d),
 		   plot_datset_get_vector_x(d),
 		   plot_datset_get_vector_y(d), SYMBOL);
 	}
-        break;
-
+	break;
     case BLANK:
 	break;
     default:
@@ -242,31 +236,81 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
 }
 
 /**
- * @brief Get maximal value from one dataset
+ * @brief Get extrema values from one dataset
  * @param d your current dataset
  * @param x_max pointer to max x-value
  * @param y_max pointer to max y-value
+ * @param x_min pointer to the new x minimum
+ * @param y_min pointer to the new y minimum
  * 
+ * Find the extrema values in the plot item, checks all added dataset.
  */
-void plot_dataset_get_maxima(plot_dataset_type * d, double *x_max,
-			     double *y_max)
+void plot_dataset_get_extrema(plot_dataset_type * d, double *x_max,
+			      double *y_max, double *x_min, double *y_min)
 {
-    double tmp_x = 0;
-    double tmp_y = 0;
+    double tmp_x_max = 0;
+    double tmp_y_max = 0;
+    double tmp_x_min = 0;
+    double tmp_y_min = 0;
     int i;
     double *x, *y;
+    bool flag = false;
 
     assert(d != NULL);
     x = plot_datset_get_vector_x(d);
     y = plot_datset_get_vector_y(d);
 
-    /* FIXME: This function only works for maximal values > 0 */
     for (i = 0; i <= plot_datset_get_length(d); i++) {
-	if (x[i] > tmp_x)
-	    tmp_x = x[i];
-	if (y[i] > tmp_y)
-	    tmp_y = y[i];
+	if (!flag) {
+	    tmp_x_max = x[i];
+	    tmp_x_min = x[i];
+	    tmp_y_max = y[i];
+	    tmp_y_min = y[i];
+	    flag = true;
+	}
+	if (y[i] > tmp_y_max)
+	    tmp_y_max = y[i];
+	if (y[i] < tmp_y_min)
+	    tmp_y_min = y[i];
+	if (x[i] > tmp_x_max)
+	    tmp_x_max = x[i];
+	if (x[i] < tmp_x_min)
+	    tmp_x_min = x[i];
     }
-    *x_max = tmp_x;
-    *y_max = tmp_y;
+    if (x_max)
+	*x_max = tmp_x_max;
+    if (y_max)
+	*y_max = tmp_y_max;
+    if (x_min)
+	*x_min = tmp_x_min;
+    if (y_min)
+	*y_min = tmp_y_min;
+}
+
+plot_dataset_type *plot_dataset_get_prominent(plot_type * item, int *len)
+{
+    list_node_type *node, *next_node;
+    plot_dataset_type *ref = NULL;
+    int tmp_len = 0;
+
+    assert(item != NULL);
+
+    node = list_get_head(plot_get_datasets(item));
+    while (node != NULL) {
+	plot_dataset_type *tmp;
+	int len2;
+
+	next_node = list_node_get_next(node);
+	tmp = list_node_value_ptr(node);
+	len2 = plot_datset_get_length(tmp);
+	if (len2 > tmp_len) {
+	    ref = tmp;
+	    tmp_len = len2;
+	}
+	node = next_node;
+    }
+    if (len)
+	*len = tmp_len;
+
+    return ref;
 }

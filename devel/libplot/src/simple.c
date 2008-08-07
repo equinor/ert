@@ -1,7 +1,7 @@
 #include <plot.h>
 #include <plot_dataset.h>
 
-int main(int argc, const char **argv)
+int main()
 {
     plot_type *item;
     const double period = 2 * PI;
@@ -35,6 +35,4 @@ int main(int argc, const char **argv)
     plot_free(item);
 
     return 0;
-    argc = 0;
-    argv = NULL;
 }
