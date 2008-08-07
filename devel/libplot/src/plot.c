@@ -1,5 +1,6 @@
 #include <plot.h>
 #include <plot_dataset.h>
+#include <plot_util.h>
 #include <pthread.h>
 #include <assert.h>
 
@@ -53,6 +54,30 @@ struct plot_struct {
 };
 
 
+int plot_get_stream(plot_type * item)
+{
+    assert(item != NULL);
+    return item->stream;
+}
+
+plot_window_type plot_get_window_type(plot_type * item)
+{
+    assert(item != NULL);
+    return item->w;
+}
+
+PlplotCanvas *plot_get_canvas(plot_type * item)
+{
+    assert(item != NULL);
+    return item->canvas;
+}
+
+list_type *plot_get_datasets(plot_type * item)
+{
+    assert(item != NULL);
+    return item->datasets;
+}
+
 /**
  * @return Returns a new plot_type pointer.
  * @brief Create a new plot_type
@@ -75,36 +100,6 @@ plot_type *plot_alloc()
     return item;
 }
 
-int plot_get_stream(plot_type * item)
-{
-    assert(item != NULL);
-    return item->stream;
-}
-
-void plot_set_stream(plot_type * item, int stream)
-{
-    assert(item != NULL);
-    item->stream = stream;
-}
-
-plot_window_type plot_get_window_type(plot_type * item)
-{
-    assert(item != NULL);
-    return item->w;
-}
-
-PlplotCanvas *plot_get_canvas(plot_type * item)
-{
-    assert(item != NULL);
-    return item->canvas;
-}
-
-list_type *plot_get_datasets(plot_type * item)
-{
-    assert(item != NULL);
-    return item->datasets;
-}
-
 /**
  * @brief Setup window size.
  * @param item your current plot
@@ -120,12 +115,12 @@ void plot_set_window_size(plot_type * item, int width, int height)
     item->height = height;
 }
 
-
 /**
  * @brief Initialize a new plot
  * @param item your current plot
  * @param dev the output device
  * @param filename the output filename 
+ * @param w define it we are plotting to a canvas or normal
  * 
  * This function has to be called before you set any other information 
  * on the plot_type *item. This is because plinit() gets called inside this function.
@@ -137,7 +132,7 @@ void plot_initialize(plot_type * item, const char *dev,
     static int tot_streams = 0;
     pthread_mutex_t update_lock;
     char buf[16];
-    char *drvopt = "text=0";	/* disable truetype for gcw */
+    char *drvopt = "text=0";	/* disables truetype for gcw */
 
     assert(item != NULL);
     item->stream = output_stream;
@@ -225,9 +220,6 @@ void plot_free(plot_type * item)
     assert(item != NULL);
     fprintf(stderr, "ID[%d] %s: free on %p\n", item->stream,
 	    __func__, item);
-    /*
-     * Free the graphs in the plot 
-     */
     plot_free_all_datasets(item);
 
     if (item->w == CANVAS) {
@@ -241,7 +233,6 @@ void plot_free(plot_type * item)
 	    __func__);
     pthread_mutex_init(&update_lock, NULL);
     pthread_mutex_lock(&update_lock);
-    /* We now have one less stream */
     --*item->tot_streams;
     if (!*item->tot_streams) {
 	fprintf(stderr, "ID[%d] %s: Cleaning up!\n", item->stream,
@@ -249,7 +240,6 @@ void plot_free(plot_type * item)
 	plend();
     }
     pthread_mutex_unlock(&update_lock);
-
     util_safe_free(item);
 }
 
@@ -271,16 +261,12 @@ void plot_data(plot_type * item)
 
 	next_node = list_node_get_next(node);
 	tmp = list_node_value_ptr(node);
-
 	printf
 	    ("ID[%d] %s: plotting graph with %d samples in the x-y vectors\n",
 	     item->stream, __func__, plot_datset_get_length(tmp));
-
 	plot_dataset(item, tmp);
-
 	node = next_node;
     }
-
 }
 
 void plot_errorbar_data(plot_type * item)
@@ -291,29 +277,16 @@ void plot_errorbar_data(plot_type * item)
     int tmp_len = 0;
     int i;
     plot_dataset_type *ref = NULL;
-    
+
     assert(item != NULL);
     plsstrm(item->stream);
-    node = list_get_head(item->datasets);
-    while (node != NULL) {
-	plot_dataset_type *tmp;
-	int len;
-	
-	next_node = list_node_get_next(node);
-	tmp = list_node_value_ptr(node);
-	len = plot_datset_get_length(tmp);
-	if (len > tmp_len) {
-	    ref = tmp;
-	    tmp_len = len;
-	}
-	node = next_node;
-    }
+    ref = plot_dataset_get_prominent(item, &tmp_len);
 
-    for (i = 0; i < tmp_len; i++) {
+    for (i = 0; i <= tmp_len; i++) {
 	PLFLT max = 0;
 	PLFLT min = 0;
 	bool flag = false;
-	
+
 	node = list_get_head(item->datasets);
 	while (node != NULL) {
 	    plot_dataset_type *tmp;
@@ -330,33 +303,85 @@ void plot_errorbar_data(plot_type * item)
 	    if (y[i] > max)
 		max = y[i];
 	    if (y[i] < min)
-	       min = y[i];	
+		min = y[i];
 	    node = next_node;
 	}
 
 	assert(i >= 0);
-	if (i == 0) {
-	    ymin = malloc(sizeof(PLFLT));
-	    ymax = malloc(sizeof(PLFLT));
-	} else {
-	    ymin = realloc(ymin, sizeof(PLFLT) * (i + 1));
-	    ymax = realloc(ymax, sizeof(PLFLT) * (i + 1));
-	}
+	ymin = realloc(ymin, sizeof(PLFLT) * (i + 1));
+	ymax = realloc(ymax, sizeof(PLFLT) * (i + 1));
 	ymin[i] = min;
 	ymax[i] = max;
     }
 
     assert(tmp_len > 0);
     assert(ymax != NULL && ymax != NULL);
-
-    /*
-    printf("using length: %d - %p\n", tmp_len, ref);
-    for(i = 0; i < tmp_len; i++) 
-	printf("ymin: %f, ymax: %f\n", ymin[i], ymax[i]);
-    */
-
     plerry(tmp_len, plot_datset_get_vector_x(ref), ymin, ymax);
+    util_safe_free(ymin);
+    util_safe_free(ymax);
+}
 
+void plot_std_data(plot_type * item, bool mean)
+{
+    list_node_type *node, *next_node;
+    int tmp_len = 0;
+    int i;
+    plot_dataset_type *ref = NULL;
+    PLFLT *ymin = NULL;
+    PLFLT *ymax = NULL;
+    PLFLT *vec_mean = NULL;
+
+    assert(item != NULL);
+    plsstrm(item->stream);
+    ref = plot_dataset_get_prominent(item, &tmp_len);
+
+    for (i = 0; i <= tmp_len; i++) {
+	int j = -1;
+	PLFLT *vec = 0;
+	PLFLT rms;
+	PLFLT vec_sum = 0;
+
+	node = list_get_head(item->datasets);
+	while (node != NULL) {
+	    plot_dataset_type *tmp;
+	    PLFLT *y;
+
+	    next_node = list_node_get_next(node);
+	    tmp = list_node_value_ptr(node);
+	    y = plot_datset_get_vector_y(tmp);
+	    j++;
+	    vec = realloc(vec, sizeof(PLFLT) * (j + 1));
+	    vec[j] = y[i];
+	    vec_sum += vec[j];
+
+	    node = next_node;
+	}
+	rms = plot_util_calc_rms(vec, j);
+	assert(i >= 0);
+	ymin = realloc(ymin, sizeof(PLFLT) * (i + 1));
+	ymax = realloc(ymax, sizeof(PLFLT) * (i + 1));
+	if (mean) {
+	    vec_mean = realloc(vec_mean, sizeof(PLFLT) * (i + 1));
+	    vec_mean[i] = vec_sum / (PLFLT) (j + 1);
+	}
+	ymin[i] = (vec_sum / (PLFLT) (j + 1)) - rms;
+	ymax[i] = (vec_sum / (PLFLT) (j + 1)) + rms;;
+	util_safe_free(vec);
+    }
+
+    assert(tmp_len > 0);
+    assert(ymax != NULL && ymax != NULL);
+    plerry(tmp_len, plot_datset_get_vector_x(ref), ymin, ymax);
+    if (mean) {
+	plot_dataset_type *d;
+
+	d = plot_dataset_alloc();
+	plot_dataset_set_data(d, plot_datset_get_vector_x(ref), vec_mean,
+			      tmp_len, RED, LINE);
+	plot_dataset(item, d);
+	plot_dataset_free(d);
+	util_safe_free(vec_mean);
+    }
     util_safe_free(ymin);
     util_safe_free(ymax);
 }
@@ -453,16 +478,17 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 
 
 /**
- * @brief Get maximum values
+ * @brief Get extrema values
  * @param item your current plot
  * @param x_max pointer to the new x maximum
  * @param y_max pointer to the new y maximum
  * @param x_min pointer to the new x minimum
  * @param y_min pointer to the new y minimum
  * 
- * Find the maximum value in the plot item, checks all added datasets.
+ * Find the extrema values in the plot item, checks all added datasets.
  */
-void plot_get_extrema(plot_type * item, double *x_max, double *y_max, double *x_min, double *y_min)
+void plot_get_extrema(plot_type * item, double *x_max, double *y_max,
+		      double *x_min, double *y_min)
 {
     list_node_type *node, *next_node;
     double tmp_x_max = 0;
@@ -481,7 +507,7 @@ void plot_get_extrema(plot_type * item, double *x_max, double *y_max, double *x_
 	tmp = list_node_value_ptr(node);
 	x = plot_datset_get_vector_x(tmp);
 	y = plot_datset_get_vector_y(tmp);
-	for (i = 0; i < plot_datset_get_length(tmp); i++) {
+	for (i = 0; i <= plot_datset_get_length(tmp); i++) {
 	    if (!flag) {
 		tmp_y_max = y[i];
 		tmp_y_min = y[i];
@@ -492,12 +518,11 @@ void plot_get_extrema(plot_type * item, double *x_max, double *y_max, double *x_
 	    if (y[i] > tmp_y_max)
 		tmp_y_max = y[i];
 	    if (y[i] < tmp_y_min)
-	       tmp_y_min = y[i];	
+		tmp_y_min = y[i];
 	    if (x[i] > tmp_x_max)
 		tmp_x_max = x[i];
 	    if (x[i] < tmp_x_min)
-	       tmp_x_min = x[i];	
-
+		tmp_x_min = x[i];
 	}
 	node = next_node;
     }
@@ -505,8 +530,8 @@ void plot_get_extrema(plot_type * item, double *x_max, double *y_max, double *x_
 	*x_max = tmp_x_max;
     if (y_max)
 	*y_max = tmp_y_max;
-    if(x_min)
+    if (x_min)
 	*x_min = tmp_x_min;
-    if(y_min)
+    if (y_min)
 	*y_min = tmp_y_min;
 }

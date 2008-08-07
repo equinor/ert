@@ -59,9 +59,8 @@ typedef enum plot_window_enum {
  */
 typedef enum plot_style_enum {
     BLANK = 0,
-    HISTOGRAM = 1,
-    LINE = 2,
-    POINT = 3,
+    LINE = 1,
+    POINT = 2
 } plot_style_type;
 
 /**
@@ -92,7 +91,6 @@ typedef enum plot_color_enum {
 
 extern plot_type *plot_alloc();
 extern int plot_get_stream(plot_type * item);
-extern void plot_set_stream(plot_type * item, int stream);
 extern plot_window_type plot_get_window_type(plot_type * item);
 extern PlplotCanvas *plot_get_canvas(plot_type * item);
 extern list_type *plot_get_datasets(plot_type * item);
@@ -105,11 +103,12 @@ extern void plot_set_labels(plot_type * item, const char *xlabel,
 extern void plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 			      PLFLT ymin, PLFLT ymax);
 extern void plot_errorbar_data(plot_type * item);
+extern void plot_std_data(plot_type * item, bool mean);
 extern void plot_data(plot_type * item);
 extern void plot_free_all_datasets(plot_type * item);
 extern void plot_free(plot_type * item);
 extern void plot_get_extrema(plot_type * item, double *x_max,
-			    double *y_max, double *x_min, double *y_min);
+			     double *y_max, double *x_min, double *y_min);
 #if WITH_TRUETYPE
 #define LABEL_FONTSIZE 0.6
 #define SYMBOL_SIZE 0.7
