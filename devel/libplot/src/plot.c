@@ -519,7 +519,7 @@ void plot_get_extrema(plot_type * item, double *x_max, double *y_max,
 		tmp_y_max = y[i];
 	    if (y[i] < tmp_y_min)
 		tmp_y_min = y[i];
-	    if (x[i] > tmp_x_max)
+	    if (x[i] > tmp_x_max) 
 		tmp_x_max = x[i];
 	    if (x[i] < tmp_x_min)
 		tmp_x_min = x[i];
