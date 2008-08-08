@@ -37,6 +37,7 @@ all: $(LIB)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(GTK_INCLUDE) plot_canvas_test.c -o plot_canvas_test.x $(LIB_PATH) $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(GTK_INCLUDE) summary_plot_live.c -o summary_plot_live.x $(LIB_PATH) $(LIB_LINK) 
 	gcc $(CFLAGS) $(TARGET_INCLUDE) $(GTK_INCLUDE) errorbar_test.c -o errorbar_test.x $(LIB_PATH) $(LIB_LINK) 
+	gcc $(CFLAGS) $(TARGET_INCLUDE) $(GTK_INCLUDE) test.c -o test.x $(LIB_PATH) $(LIB_LINK) -L/h/a152128/fftw/fftw-3.1.2/m64/lib -I/h/a152128/fftw/fftw-3.1.2/include -lfftw3
 
 clean:
 	rm -f *.o *~ *.x

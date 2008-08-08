@@ -5,7 +5,6 @@ Plplot wiki: http://www.miscdebris.net/plplot_wiki/index.php?title=Main_Page
 
 Notes:
 - Cleanup stream handling code to keep track of the streams in a list.
-- Make errorbar code logical.
 - "Legends?" for the lables?
 
 Indentation:

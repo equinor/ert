@@ -36,7 +36,7 @@ int main(int argc, const char **argv)
      * = 3) 
      */
     for (i = 0; i <= N; i++) {
-	x[i] = i * (period) / N;
+	x[i] = i * period / N;
 	y[i] = cos(3 * x[i]);
     }
     d = plot_dataset_alloc();
