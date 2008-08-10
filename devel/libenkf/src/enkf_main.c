@@ -49,7 +49,6 @@ struct enkf_main_struct {
   enkf_fs_type       *fs;
 
   thread_pool_type   *thread_pool;
-  void_arg_type     **void_arg;
 };
 
 
@@ -152,7 +151,6 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , j
   }
   enkf_main_insert_data_kw(enkf_main , ens_size);
   enkf_main->thread_pool = NULL;
-  enkf_main->void_arg    = NULL;
   return  enkf_main;
 
 }
@@ -341,39 +339,21 @@ void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step
 void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
   bool  load_results            = true; /** Must have individual switch */
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
+  enkf_run_info_type ** run_info;     
   int iens;
   
   printf("Starting forward step: %d -> %d \n",step1,step2);
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_matrix);
-  
-  if (enkf_main->void_arg != NULL) 
-    util_abort("%s: hmmm - something is rotten - aborting \n",__func__);
+
+  run_info = util_malloc(ens_size * sizeof * run_info , __func__);
   if (enkf_main->thread_pool != NULL) 
     util_abort("%s: hmmm - something is rotten - aborting \n",__func__);
   
-  enkf_main->void_arg = util_malloc(ens_size * sizeof * enkf_main->void_arg , __func__);
-  for (iens = 0; iens < ens_size; iens++) {
-    enkf_main->void_arg[iens] = void_arg_alloc14(void_pointer , void_pointer , void_pointer , void_pointer , bool_value , int_value , int_value , int_value , int_value , bool_value , bool_value , bool_value , void_pointer, int_value);
-    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 0 , enkf_main->ensemble[iens]);
-    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 1 , enkf_main->job_queue);
-    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 2 , enkf_main->obs);
-    void_arg_pack_ptr(enkf_main->void_arg[iens]  , 3 , enkf_main->sched_file);
-    void_arg_pack_bool(enkf_main->void_arg[iens] , 4 , enkf_config_get_unified(enkf_main->config));
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 5 , init_step);
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 6 , step1);
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 7 , step2);
-    void_arg_pack_int(enkf_main->void_arg[iens]  , 8 , -1);
-    void_arg_pack_bool(enkf_main->void_arg[iens] , 9 , load_results);
-    void_arg_pack_bool(enkf_main->void_arg[iens] ,10 , unlink_run_path);
-    /* 
-       The final bool is not packed - that is a return value, the
-       value is set in the called routine.
-    */
-    void_arg_pack_ptr(enkf_main->void_arg[iens] , 12 , (stringlist_type *) forward_model);
-    void_arg_pack_int(enkf_main->void_arg[iens] , 13 , init_state);
-  }
-  
+  for (iens = 0; iens < ens_size; iens++) 
+    run_info[iens] = enkf_run_info_alloc(enkf_main->ensemble[iens] , enkf_main->job_queue , enkf_main->obs , enkf_main->sched_file , enkf_config_get_unified(enkf_main->config),
+					 init_step , init_state , step1 , step2 , 
+					 load_results , unlink_run_path , (stringlist_type *) forward_model);
   /*
     The thread pool can just be a local variable.
     No reason to bind it to the enkf_main object.
@@ -392,7 +372,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
 
       for (iens = 0; iens < ens_size; iens++) 
       {
-        thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , enkf_main->void_arg[iens]);
+        thread_pool_add_job(enkf_main->thread_pool , enkf_state_start_eclipse__ , run_info[iens]);
       }
 
       thread_pool_join(enkf_main->thread_pool);  /* OK: All directories for ECLIPSE simulations are ready. */
@@ -401,7 +381,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
       enkf_main->thread_pool = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
       {  
-        thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , enkf_main->void_arg[iens]);
+        thread_pool_add_job(enkf_main->thread_pool , enkf_state_complete_eclipse__ , run_info[iens]);
       }
 
       thread_pool_join(enkf_main->thread_pool);  /* All jobs have completed and the results have been loaded back. */
@@ -414,7 +394,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
       bool complete_OK = true;
       int model_nr = 0;
       for (iens = 0; iens < ens_size; iens++) {
-        if ( !void_arg_get_bool(enkf_main->void_arg[iens] , 9)) {
+	if (! enkf_run_info_OK(run_info[iens])) { 
           if ( !complete_OK ) {
             fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
             complete_OK = false;
@@ -432,11 +412,8 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
 
   /** Opprydding */
   for (iens = 0; iens < ens_size; iens++) 
-  {
-    void_arg_free(enkf_main->void_arg[iens]);
-  }
-  free(enkf_main->void_arg);
-  enkf_main->void_arg = NULL;
+    enkf_run_info_free(run_info[iens]);
+  free(run_info);
   thread_pool_free(enkf_main->thread_pool);
   enkf_main->thread_pool = NULL;
   

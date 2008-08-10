@@ -17,7 +17,8 @@
 #include <ext_joblist.h>
 #include <stringlist.h>
 
-typedef struct enkf_state_struct enkf_state_type;
+typedef struct enkf_state_struct    enkf_state_type;
+typedef struct enkf_run_info_struct enkf_run_info_type;
 
 int                enkf_state_get_report_step(const enkf_state_type * );
 void               enkf_state_measure( const enkf_state_type *  , enkf_obs_type * );
@@ -65,4 +66,20 @@ void               enkf_state_set_eclbase(enkf_state_type * , const char*);
 void               enkf_state_initialize(enkf_state_type * );
 
 void enkf_ensemble_update(enkf_state_type ** , int  , size_t , const double * );
+
+/*****************************************************************/
+enkf_run_info_type * enkf_run_info_alloc(enkf_state_type * ,
+					 job_queue_type  * ,
+					 enkf_obs_type   * ,
+					 sched_file_type * ,
+                                         bool              ,
+					 int               ,
+					 state_enum        ,
+					 int               ,
+					 int               ,
+					 bool              ,
+					 bool              ,
+					 stringlist_type * );
+bool enkf_run_info_OK(const enkf_run_info_type * );
+void enkf_run_info_free(enkf_run_info_type * );
 #endif

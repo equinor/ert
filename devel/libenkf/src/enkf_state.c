@@ -47,6 +47,7 @@
 
 
 
+
 /** THE MOST IMPORTANT ENKF OBJECT */
 
 struct enkf_state_struct {
@@ -76,7 +77,113 @@ struct enkf_state_struct {
   ext_joblist_type      * joblist;                
 };
 
+/*****************************************************************/
 
+/**
+   This struct is a pure utility structure used to pack the various
+   bits and pieces of information needed to start, monitor, and load
+   back results from the forward model simulations. 
+
+   Ideally this struct should be fully static (ie. invisible outside
+   this file), however the instances are (currently) allocated from
+   the enkf_main file, therefor some functions are exported. 
+
+   Observe the following points:
+
+   1: The struct only contains scalars and pointers to ALREADY
+      EXISTING objects, i.e. no memory is allocated by this struct.
+
+   2: The two fields: 'state' and 'complete_OK' are pr. member, the
+      rest of the fields are only related to the current integration
+      step , and common to all members.
+*/
+
+
+struct enkf_run_info_struct {
+  int               __type_id;       /* ID to perform runtime checks of casts. */
+  enkf_state_type * state;           /* The state we are currently considering. */
+  job_queue_type  * job_queue;       /* The job queue which will run the current job. */
+  enkf_obs_type   * obs;             /* The main enkf observation data. */
+  sched_file_type * sched_file;      /* The schedule file. */   
+  bool              unified;         /* Use unified eclipse files (no - don't do that !) */
+  int               init_step;       /* The report step we initialize from - will often be equal to step1, but can be different. */
+  state_enum        init_state;      /* Whether we should init from a forecast or an analyzed state. */
+  int               step1;           /* The forward model is integrated: step1 -> step2 */
+  int               step2;  	     
+  int               __minus1;        /* What the fuck is this ?? */
+  bool              load_results;    /* Whether the results should be loaded when the forward model is complete. */
+  bool              unlink_run_path; /* Whether the run_path should be unlinked when the forward model is through. */
+  stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
+
+  /******************************************************************/
+  /* Return value - set in the called routine!!  */
+  bool              complete_OK;     /* Did the forward model complete OK? */
+};
+#define ENKF_RUN_INFO_TYPE_ID 45681
+
+enkf_run_info_type * enkf_run_info_alloc(enkf_state_type * state      ,	  
+					 job_queue_type  * job_queue  ,   
+					 enkf_obs_type   * obs        ,	  
+					 sched_file_type * sched_file ,   
+                                         bool              unified    ,          
+					 int               init_step  ,       
+					 state_enum        init_state ,      
+					 int               step1      ,           
+					 int               step2      ,   	     
+					 bool              load_results,    
+					 bool              unlink_run_path, 
+					 stringlist_type * forward_model) {
+
+  enkf_run_info_type * run_info = util_malloc( sizeof * run_info , __func__);
+  
+  run_info->state = state;
+  run_info->job_queue = job_queue;
+  run_info->obs = obs;
+  run_info->sched_file = sched_file;
+  run_info->unified = unified;
+  run_info->init_step = init_step;
+  run_info->init_state = init_state;
+  run_info->step1 = step1;
+  run_info->step2 = step2;
+  run_info->__minus1 = -1;
+  run_info->load_results = load_results;    
+  run_info->unlink_run_path = unlink_run_path;
+  run_info->forward_model = forward_model;
+
+  run_info->complete_OK = false;
+  run_info->__type_id   = ENKF_RUN_INFO_TYPE_ID;
+  return run_info;
+}
+
+
+static enkf_run_info_type * enkf_run_info_safe_cast(void *__run_info) {
+  enkf_run_info_type * run_info = (enkf_run_info_type *) __run_info;
+  if (run_info->__type_id != ENKF_RUN_INFO_TYPE_ID) 
+    util_abort("%s: run_time cast failed - aborting \n",__func__);
+  
+  return run_info;
+}
+
+
+
+bool enkf_run_info_OK(const enkf_run_info_type * run_info) {
+  return run_info->complete_OK;
+}
+
+
+
+
+void enkf_run_info_free(enkf_run_info_type * run_info) {
+  free(run_info);
+}
+#undef ENKF_RUN_INFO_TYPE_ID 
+/* Implementation of enkf_run_info complete */
+/*****************************************************************/
+
+
+
+
+                                         
 
 
 static void enkf_state_add_node_internal(enkf_state_type * , const char * , const enkf_node_type * );
@@ -860,36 +967,31 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type *
 }
 
 
-void * enkf_state_complete_eclipse__(void * __void_arg) {
-  void_arg_type * void_arg          = void_arg_safe_cast(__void_arg);
-  enkf_state_type * enkf_state 	    = void_arg_get_ptr(void_arg    ,  0);
-  job_queue_type  * job_queue       = void_arg_get_ptr(void_arg    ,  1);
-  enkf_obs_type   * enkf_obs   	    = void_arg_get_ptr(void_arg    ,  2);
-  bool              unified    	    = void_arg_get_bool(void_arg   ,  4);
-  int               report_step1    = void_arg_get_int(void_arg    ,  6);
-  int               report_step2    = void_arg_get_int(void_arg    ,  7);
-  bool              load_results    = void_arg_get_bool(void_arg   ,  9);
-  bool              unlink_run_path = void_arg_get_bool(void_arg   , 10);
-  bool            * job_OK          = void_arg_get_buffer(void_arg , 11);
-
-  enkf_state_complete_eclipse(enkf_state , job_queue , enkf_obs , unified , report_step1 , report_step2 , load_results , unlink_run_path , job_OK);
+void * enkf_state_complete_eclipse__(void * __run_info) {
+  enkf_run_info_type * run_info = enkf_run_info_safe_cast(__run_info);
+  enkf_state_complete_eclipse(run_info->state , 
+			      run_info->job_queue  , 
+			      run_info->obs   , 
+			      run_info->unified    , 
+			      run_info->step1 , 
+			      run_info->step2 , 
+			      run_info->load_results , 
+			      run_info->unlink_run_path , 
+			      &run_info->complete_OK);
   return NULL ;
 }
 
 
-void * enkf_state_start_eclipse__(void * __void_arg) {
-  void_arg_type * void_arg       = void_arg_safe_cast(__void_arg);
-  enkf_state_type * enkf_state 	 = void_arg_get_ptr(void_arg  	, 0);
-  job_queue_type  * job_queue    = void_arg_get_ptr(void_arg  	, 1);
-  sched_file_type * sched_file   = void_arg_get_ptr(void_arg    , 3);
-  int               init_step    = void_arg_get_int(void_arg    , 5);
-  int               report_step1 = void_arg_get_int(void_arg  	, 6);
-  int               report_step2 = void_arg_get_int(void_arg  	, 7);
-  state_enum        init_state   = void_arg_get_int(void_arg    , 13);
-  
-  const stringlist_type * forward_model = void_arg_get_ptr(void_arg , 12);
-
-  enkf_state_start_eclipse(enkf_state , job_queue , sched_file , init_step , init_state, report_step1 , report_step2 , forward_model);
+void * enkf_state_start_eclipse__(void * __run_info) {
+  enkf_run_info_type * run_info = enkf_run_info_safe_cast(__run_info);
+  enkf_state_start_eclipse(run_info->state , 
+			   run_info->job_queue , 
+			   run_info->sched_file , 
+			   run_info->init_step , 
+			   run_info->init_state, 
+			   run_info->step1 , 
+			   run_info->step2 , 
+			   run_info->forward_model);
   return NULL ; 
 }
 
