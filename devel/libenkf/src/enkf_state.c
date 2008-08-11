@@ -28,8 +28,6 @@
 #include <equil.h>
 #include <well_config.h>
 #include <void_arg.h>
-#include <pgbox_config.h>
-#include <pgbox.h>
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
 #include <meas_vector.h>
@@ -348,7 +346,7 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
   enkf_state_add_node_internal(enkf_state , node_key , enkf_node);    
 
   /* All code below here is special code for plurigaussian fields */
-  {
+  /*{
     enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
     if (impl_type == PGBOX) {
       const pgbox_config_type * pgbox_config = enkf_config_node_get_ref(config);
@@ -363,6 +361,7 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 	util_abort("%s: target field:%s must be added to the state object *BEFORE* the pgbox object - aborting \n" , __func__ , target_key);
     }
   }
+  */
 }
 
 

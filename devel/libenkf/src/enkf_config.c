@@ -16,7 +16,6 @@
 #include <equil_config.h>
 #include <multflt_config.h>
 #include <well_obs.h>
-#include <pgbox_config.h>
 #include <thread_pool.h>
 #include <obs_node.h>
 #include <obs_data.h>
@@ -750,8 +749,6 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      ASSERT_TOKENS("SUMMARY" , active_tokens , 2);
 	      enkf_config_add_type(enkf_config , token_list[1] , ecl_summary , SUMMARY , NULL , summary_config_alloc(active_tokens - 2 , (const char **) &token_list[2]));
 	      break;
-	    case(PGBOX):
-	      break;
 	    case(GEN_DATA):
 	      enkf_config_add_type(enkf_config , token_list[1] , ecl_restart , GEN_DATA , NULL , gen_data_config_fscanf_alloc(token_list[2]));
 	      break;
@@ -831,9 +828,6 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       break;
     case(STATIC):
       freef             = ecl_static_kw_config_free__;
-      break;
-    case(PGBOX):
-      freef             = pgbox_config_free__;
       break;
     case(GEN_KW):
       freef             = gen_kw_config_free__;

@@ -13,7 +13,6 @@
 #include <well.h>
 #include <summary.h>
 #include <ecl_static_kw.h>
-#include <pgbox.h>
 #include <gen_kw.h>
 #include <path_fmt.h>
 #include <havana_fault.h>
@@ -611,18 +610,6 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->deserialize  = field_deserialize__;
     node->freef        = field_free__;
     node->free_data    = field_free_data__;
-    break;
-  case(PGBOX):
-    node->alloc       = pgbox_alloc__;
-    node->ecl_write   = NULL; /* pgbox_ecl_write__;  */
-    node->fread_f     = pgbox_fread__;
-    node->fwrite_f    = pgbox_fwrite__;
-    node->copyc       = pgbox_copyc__;
-    node->initialize  = pgbox_initialize__;
-    node->serialize   = pgbox_serialize__;
-    node->deserialize = pgbox_deserialize__;
-    node->freef       = pgbox_free__;
-    node->free_data   = pgbox_free_data__;
     break;
   case(EQUIL):
     node->alloc       = equil_alloc__;

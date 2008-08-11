@@ -15,7 +15,6 @@
 #include <multz_config.h>
 #include <multflt_config.h>
 #include <well_obs.h>
-#include <pgbox_config.h>
 #include <thread_pool.h>
 #include <obs_node.h>
 #include <obs_data.h>

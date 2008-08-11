@@ -35,22 +35,22 @@ enkf_var_type ecl_static symbolize perfectly the same thing. */
 */
 
 /*
-  These correspond to implementation types.
+  These correspond to implementation types. The numbers are on disk, and should
+  (preferably) not be updated.
 */
-typedef enum {INVALID = 0   , 
-	      STATIC  = 100  ,
-	      MULTZ   ,       /* 101 */
-	      MULTFLT ,       /* 102 */
-	      EQUIL   ,       /* 103 */   
-	      FIELD   ,       /* 104 */ 
-	      WELL    ,       /* 105 */ 
-	      PGBOX   ,       /* 106 */ 
-	      GEN_KW  ,       /* 107 */  
-	      RELPERM ,       /* 108 */ 
-	      HAVANA_FAULT,   /* 109 */ 
-	      SUMMARY ,       /* 110 */
-              TPGZONE ,       /* 111 */ 
-              GEN_DATA        /* 112 */} enkf_impl_type;
+typedef enum {INVALID 	   = 0   , 
+	      STATIC  	   = 100 ,
+	      MULTZ   	   = 101 ,
+	      MULTFLT 	   = 102 ,      
+	      EQUIL   	   = 103 ,         
+	      FIELD   	   = 104 ,       
+	      WELL    	   = 105 ,       
+	      GEN_KW  	   = 107 ,        
+	      RELPERM 	   = 108,       
+	      HAVANA_FAULT = 109,   
+	      SUMMARY      = 110,      
+              TPGZONE      = 111,       
+              GEN_DATA     = 112  } enkf_impl_type;
 /* 
    Should update the functions enkf_types_get_impl_name() and enkf_types_get_impl_type__() when this enum is updated.
 */
@@ -64,7 +64,7 @@ typedef enum {INVALID = 0   ,
 
 
 typedef enum {active_off = 200 , active_on , active_at , active_after , active_before} enkf_active_type;
-typedef enum {abs_error = 0 , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_error_type; /* Should not have enkf_ prefix */
+typedef enum {abs_error   = 0  , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_error_type; /* Should not have enkf_ prefix */
 
 
 /*
