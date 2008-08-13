@@ -38,7 +38,6 @@ typedef struct summary_plot_struct {
     int timer_id;
     char *kw;
     bool off_charts;
-    bool delete;
 } summary_plot_type;
 
 
@@ -70,10 +69,11 @@ static void summary_plot_append_textbox(summary_plot_gui_type * spg,
 static config_type *summary_plot_init_config(const char *config_file);
 static void summary_plot_initialize_ensembles(summary_plot_type * sp);
 static void summary_plot_setup_gui(summary_plot_gui_type * spg);
-static summary_plot_type
-    * summary_plot_create_tab_with_data(summary_plot_gui_type * spg,
-					char *sp_kw, double xmax,
-					double ymax);
+static gboolean summary_plot_canvas_menu(GtkWidget * widget,
+					 GdkEvent * event);
+static summary_plot_type *
+summary_plot_create_tab_with_data(summary_plot_gui_type * spg, char *sp_kw,
+				  double xmax, double ymax);
 void summary_plot_add_well_tabs(summary_plot_gui_type * spg,
 				char *conf_file);
 static void summary_plot_destroy_local(GtkWidget * widget, gpointer data);
@@ -88,7 +88,6 @@ summary_plot_type *summary_plot_alloc()
     sp = malloc(sizeof *sp);
     sp->list = list_alloc();
     sp->off_charts = false;
-    sp->delete = false;
     sp->timer_id = -1;
     sp->node = NULL;
     return sp;
@@ -307,10 +306,10 @@ gboolean summary_plot_timout(gpointer data)
 			sp->y_max = y_max;
 			flag = true;
 		    }
-		    util_safe_free(x);
-		    util_safe_free(y);
 		    plot_dataset_free(d);
 		}
+		util_safe_free(x);
+		util_safe_free(y);
 		tmp->last_report_step = last_report_step;
 		tmp->files = j;
 		ecl_sum_free(ecl_sum);
@@ -504,6 +503,41 @@ void summary_plot_setup_gui(summary_plot_gui_type * spg)
     gtk_container_add(GTK_CONTAINER(spg->win), GTK_WIDGET(vbox));
 }
 
+gboolean summary_plot_canvas_menu(GtkWidget * widget, GdkEvent * event)
+{
+    if (event->type == GDK_BUTTON_PRESS) {
+	GdkEventButton *bevent = (GdkEventButton *) event;
+	gtk_menu_popup(GTK_MENU(widget), NULL, NULL, NULL, NULL,
+		       bevent->button, bevent->time);
+	return true;
+    }
+
+    return false;
+}
+
+void summary_plot_save_cb(GtkWidget * widget, gpointer data)
+{
+    summary_plot_type *sp = data;
+
+    printf("Tab page: %s\n", sp->kw);
+    printf("=== NOT IMPLEMENTED ===\n");
+    /* 
+     * Would be nice to just use plcpstream([..]), and plreplot() 
+     * in this function, but this does not seem to work properly
+     * with the gcw driver! (Even the driver itself does a SEGV 
+     * when trying to save the plots, try: ./x01c -dev gcw and then 
+     * save an image with the save button)
+     *
+     * To have a save function a solution is to just keep all the 
+     * data in the struct and plot everything to a new image using
+     * a new initialized driver.
+     *
+     * Unfortunately this code was not designed for that purpose, so
+     * to grab this data it needs to be stored the summary_plot structure.
+     */ 
+    widget = NULL;
+}
+
 summary_plot_type *summary_plot_create_tab_with_data(summary_plot_gui_type
 						     * spg, char *sp_kw,
 						     double xmax,
@@ -515,6 +549,8 @@ summary_plot_type *summary_plot_create_tab_with_data(summary_plot_gui_type
     PLFLT *x, *y;
     const char *ecl_data_file;
     plot_dataset_type *d;
+    GtkWidget *menu;
+    GtkWidget *menu_item;
 
     ecl_data_file = config_get(spg->config, "DATA_FILE");
     sp = summary_plot_alloc();
@@ -544,6 +580,25 @@ summary_plot_type *summary_plot_create_tab_with_data(summary_plot_gui_type
     gtk_notebook_append_page(spg->nb,
 			     GTK_WIDGET(plot_get_canvas
 					(sp->item)), gtk_label_new(sp_kw));
+    menu = gtk_menu_new();
+    menu_item = gtk_image_menu_item_new_from_stock(GTK_STOCK_SAVE, NULL);
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+		     G_CALLBACK(summary_plot_save_cb), sp);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    gtk_widget_show(menu_item);
+    menu_item = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    gtk_widget_show(menu_item);
+    menu_item = gtk_image_menu_item_new_from_stock(GTK_STOCK_QUIT, NULL);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+		     G_CALLBACK(summary_plot_destroy_local), spg);
+    gtk_widget_show(menu_item);
+    g_signal_connect_swapped(G_OBJECT(plot_get_canvas(sp->item)), "event",
+			     G_CALLBACK(summary_plot_canvas_menu),
+			     G_OBJECT(menu));
+    gtk_widget_show(menu);
+
     summary_plot_initialize_ensembles(sp);
     summary_plot_append_textbox(spg,
 				"Adding timer for %p with timeout %d ms",
