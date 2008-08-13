@@ -17,14 +17,8 @@ set expandtab
 
 -------------------------------------------------------------------------------
 Rememer to set:
-
-FOR TRUETYPE:
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot-truetype/lib"
 setenv LD_LIBRARY_PATH /h/masar/plplot-truetype/lib
-
-FOR NONE TRUETYPE:
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/h/masar/plplot/lib"
-setenv LD_LIBRARY_PATH /h/masar/plplot/lib
 
 For more in depth work with the fonts in the plot, one can look at:
 http://plplot.sourceforge.net/docbook-manual/plplot-html-5.9.0/characters.html#fci

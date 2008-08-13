@@ -132,7 +132,7 @@ void plot_initialize(plot_type * item, const char *dev,
     static int tot_streams = 0;
     pthread_mutex_t update_lock;
     char buf[16];
-    char *drvopt = "text=0";	/* disables truetype for gcw */
+    char *drvopt = "replot=1,text=0";	/* disables truetype for gcw */
 
     assert(item != NULL);
     item->stream = output_stream;
