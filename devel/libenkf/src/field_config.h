@@ -8,6 +8,7 @@
 #include <ecl_kw.h>
 #include <path_fmt.h>
 #include <rms_file.h>
+#include <ecl_grid.h>
 
 
 
@@ -45,8 +46,8 @@ typedef struct field_config_struct field_config_type;
 
 struct field_config_struct {
   CONFIG_STD_FIELDS;
-  int nx,ny,nz;
-  int sx,sy,sz;
+  int nx,ny,nz;                       /* The number of elements in the three directions. */ 
+  int sx,sy,sz;                       /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
   int logmode;
   const int *index_map;
   
@@ -70,16 +71,17 @@ struct field_config_struct {
 };
 
 
+const char            * field_config_default_extension(field_file_format_type , bool );
 bool                    field_config_get_endian_swap(const field_config_type * );
 bool                    field_config_write_compressed(const field_config_type * );
 field_file_format_type  field_config_guess_file_type(const char * , bool);
-field_file_format_type  field_config_manual_file_type(const char * );
+field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
-field_config_type     * field_config_alloc_dynamic(const char * , int , int , int , int , const int * );
-field_config_type     * field_config_alloc_parameter_no_init(const char *, int, int, int, int, const int *);
-field_config_type     * field_config_alloc_parameter(const char * , int , int , int , int  , const int * , int , field_init_type  , int  , const char ** );
+field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid_type *);
+field_config_type     * field_config_alloc_parameter_no_init(const char *, const ecl_grid_type *);
+field_config_type     * field_config_alloc_parameter(const char * , const ecl_grid_type * , int , field_init_type  , int  , const char ** );
 void                    field_config_free(field_config_type *);
 void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
 int                     field_config_get_volume(const field_config_type * );

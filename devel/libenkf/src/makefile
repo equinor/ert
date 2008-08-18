@@ -128,7 +128,7 @@ enkf_ui_util.o        : enkf_ui_util.c enkf_ui_util.h
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x
+BIN_FILES             = enkf gen_test.x field_convert.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
@@ -143,6 +143,9 @@ enkf:	main.o $(LIB)
 
 gen_test.x:	gen_test.o $(LIB)
 	gcc -$(MFLAG) $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+
+field_convert.x:	field_convert.o $(LIB)
+	gcc -$(MFLAG) $(LDFLAGS) field_convert.o -o field_convert.x  $(LIB_PATH)  $(LIB_LINK) 	
 
 sched_test.x:	sched_test.o $(LIB)
 	gcc -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	

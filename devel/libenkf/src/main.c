@@ -24,6 +24,7 @@ void install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);
 }
 
+
 void text_splash() {
   int i;
   {
@@ -33,7 +34,7 @@ void text_splash() {
       printf("%s\n" , splash_text[i]);
     printf("\n\n");
 
-    sleep(3);
+    sleep(1);
 #undef SPLASH_LENGTH
   }
 }

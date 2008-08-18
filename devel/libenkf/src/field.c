@@ -862,7 +862,7 @@ void field_fload_typed(field_type * field , const char * filename ,  bool endian
 
 void field_fload(field_type * field , const char * filename , bool endian_flip) {
   field_file_format_type file_type = field_config_guess_file_type(filename , endian_flip);
-  if (file_type == unknown_file) file_type = field_config_manual_file_type(filename);
+  if (file_type == unknown_file) file_type = field_config_manual_file_type(filename , true);
   field_fload_typed(field , filename , endian_flip , file_type);
 }
 

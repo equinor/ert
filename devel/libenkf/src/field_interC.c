@@ -19,7 +19,7 @@ void field_inter_static_init__(const char * _egrid_file , const int * egrid_file
   
   const int * INDEX_MAP   = ecl_grid_get_index_map_ref(ecl_grid);
   ecl_grid_get_dims(ecl_grid , &NX , &NY , &NZ , &ACTIVE_SIZE);
-  FIELD_CONFIG            = field_config_alloc_dynamic("KW" , NX , NY , NZ , ACTIVE_SIZE , INDEX_MAP );
+  FIELD_CONFIG            = field_config_alloc_dynamic("KW" , ecl_grid);
   
   ecl_grid_free(ecl_grid);
   free(egrid_file);

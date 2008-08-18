@@ -4,6 +4,7 @@
 #include <util.h>
 #include <field_config.h>
 #include <enkf_macros.h>
+#include <ecl_grid.h>
 #include <ecl_kw.h>
 #include <ecl_util.h>
 #include <rms_file.h>
@@ -35,6 +36,12 @@ static const char * field_config_file_type_string(field_file_format_type file_ty
   case(ecl_kw_file):
     return "ECLIPSE file in restart format";
     break;
+  case(ecl_kw_file_all_cells):
+    return "ECLIPSE file in restart format (all cells)";
+    break;
+  case(ecl_kw_file_active_cells):
+    return "ECLIPSE file in restart format (active cells)";
+    break;
   case(ecl_grdecl_file):
     return "ECLIPSE file in grdecl format";
     break;
@@ -46,32 +53,86 @@ static const char * field_config_file_type_string(field_file_format_type file_ty
 
 
 
-static bool field_config_valid_file_type(field_file_format_type file_type) {
-  if (file_type == rms_roff_file || file_type == ecl_kw_file || file_type == ecl_grdecl_file)
-    return true;
-  else
-    return false;
+/**
+   This function takes a field_file_format_type variable, and returns
+   a string containing a default extension for files of this type. For
+   ecl_kw_file it will return NULL, i.e. no default extension.
+
+     rms_roff_file   => ROFF
+     ecl_grdecl_file => GRDECL
+     ecl_kw_file_xxx => NULL
+
+   It will return UPPERCASE or lowercase depending on the value of the
+   second argument.
+*/
+   
+   
+const char * field_config_default_extension(field_file_format_type file_type, bool upper_case) {
+  if (file_type == rms_roff_file) {
+    if (upper_case)
+      return "ROFF";
+    else
+      return "roff";
+  } else if (file_type == ecl_grdecl_file) {
+    if (upper_case)
+      return "GRDECL"; 
+    else
+      return "grdecl";
+  } else
+    return NULL;
 }
 
 
 
-field_file_format_type field_config_manual_file_type(const char * filename) {
-  field_file_format_type file_type = unknown_file;
-  printf("\nCould not determine type of file: %s \n",filename);
+
+static bool field_config_valid_file_type(field_file_format_type file_type, bool import) {
+  if (import) {
+    if (file_type == rms_roff_file || file_type == ecl_kw_file || file_type == ecl_grdecl_file)
+      return true;
+    else
+      return false;
+  } else {
+    if (file_type == rms_roff_file || file_type == ecl_kw_file_active_cells || file_type == ecl_kw_file_all_cells || file_type == ecl_grdecl_file)
+      return true;
+    else
+      return false;
+  }
+}
+
+
+
+
+/**
+   This function prompts the user for a file type. 
+
+   If the parameter 'import' is true we provide the alternative
+   ecl_kw_file (in that case the program itself will determine
+   whether) the file contains all cells (i.e. PERMX) or only active
+   cells (i.e. pressure).
+
+   If the parameter 'import' is true the user must specify whether we
+   are considering all cells, or only active cells.
+*/
+
+field_file_format_type field_config_manual_file_type(const char * prompt , bool import) {
+  int int_file_type;
+  printf("%s\n",prompt);
+  printf("----------------------------------------------------------------\n");
+  printf(" %3d: %s.\n" , rms_roff_file   , field_config_file_type_string(rms_roff_file));
+  if (import)
+    printf(" %3d: %s.\n" , ecl_kw_file     , field_config_file_type_string(ecl_kw_file));
+  else {
+    printf(" %3d: %s.\n" , ecl_kw_file_active_cells  , field_config_file_type_string(ecl_kw_file_active_cells));      
+    printf(" %3d: %s.\n" , ecl_kw_file_all_cells     , field_config_file_type_string(ecl_kw_file_all_cells));
+  }
+  printf(" %3d: %s.\n" , ecl_grdecl_file , field_config_file_type_string(ecl_grdecl_file));
+  printf("----------------------------------------------------------------\n");
   do {
-    printf("----------------------------------------------------------------\n");
-    printf(" %3d: %s \n",rms_roff_file   , field_config_file_type_string(rms_roff_file));
-    printf(" %3d: %s \n",ecl_kw_file     , field_config_file_type_string(ecl_kw_file));
-    printf(" %3d: %s \n",ecl_grdecl_file , field_config_file_type_string(ecl_grdecl_file));
-    printf("----------------------------------------------------------------\n\n");
-    {
-      int int_file_type;
-      printf("===> "); scanf("%d" , &int_file_type); file_type = int_file_type;
-    }
-    if (!field_config_valid_file_type(file_type))
-      file_type = unknown_file;
-  } while(file_type == unknown_file);
-  return file_type;
+    int_file_type = util_scanf_int("===> ");
+    if (!field_config_valid_file_type(int_file_type, import))
+      int_file_type = unknown_file;
+  } while(int_file_type == unknown_file);
+  return int_file_type;
 }
 
 
@@ -81,7 +142,7 @@ field_file_format_type field_config_manual_file_type(const char * filename) {
 This function takes in a filename and tries to guess the type of the
 file. It can determine the following three types of files:
 
-  ecl_kw_file: This a file containg ecl_kw instances in the form found
+  ecl_kw_file: This is a file containg ecl_kw instances in the form found
      in eclipse restart files.
 
   rms_roff_file: An rms roff file - obviously.
@@ -121,14 +182,13 @@ field_file_format_type field_config_get_ecl_export_format(const field_config_typ
 
 
 
-static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , int nx , int ny , int nz , int active_size , const int * index_map) {
-  field_config_type *config = malloc(sizeof *config);
+static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , const ecl_grid_type * ecl_grid) {
+  field_config_type *config = util_malloc(sizeof *config, __func__);
   
   /*
     Observe that size is the number of *ACTIVCE* cells,
     and generally *not* equal to nx*ny*nz.
   */
-  config->data_size                = active_size; 
   config->ecl_export_format        = ecl_kw_file_all_cells; 
   /*
   config->ecl_export_format        = ecl_grdecl_format; 
@@ -141,14 +201,13 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
 
-  config->nx = nx;
-  config->ny = ny;
-  config->nz = nz;
-
+  ecl_grid_get_dims(ecl_grid , &config->nx , &config->ny , &config->nz , &config->data_size);
+  config->index_map = ecl_grid_get_index_map_ref(ecl_grid);
+  
   config->sx = 1;
-  config->sy = nx;
-  config->sz = nx * ny;
-  config->index_map = index_map;
+  config->sy = config->nx;
+  config->sz = config->nx * config->ny;
+
   
   config->fmt_file    	      = false;
   config->endian_swap 	      = true;
@@ -166,8 +225,8 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
 
 
 
-field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , int nx , int ny , int nz , int active_size , const int * index_map) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
+field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid);
   config->logmode           = 0;
   config->init_type         = none;
   config->ecl_export_format = ecl_kw_file_active_cells;
@@ -176,9 +235,8 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , int nx
 
 
 
-field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, int nx, int ny, int nz, int active_size, const int * index_map)
-{
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
+field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, const ecl_grid_type * ecl_grid) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid);
   config->logmode            = 0;
   config->init_type          = none;
   return config;
@@ -187,8 +245,8 @@ field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_nam
 
 
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
-field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , int nx , int ny , int nz , int active_size , const int * index_map , int logmode, field_init_type init_type , int config_len , const char ** config_files) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
+field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , int logmode , field_init_type init_type , int config_len , const char ** config_files) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid);
   config->logmode   = logmode;
   config->init_type = init_type;
   if (init_type == none) {
@@ -387,10 +445,10 @@ void field_config_get_ijk(const field_config_type * config , int global_index, i
 
 
 
-void field_config_get_dims(const field_config_type * config , int *nx , int *ny , int *nz) {
-  *nx = config->nx;
-  *ny = config->ny;
-  *nz = config->nz;
+ void field_config_get_dims(const field_config_type * config , int *nx , int *ny , int *nz) {
+   *nx = config->nx;
+   *ny = config->ny;
+   *nz = config->nz;
 }
 
 

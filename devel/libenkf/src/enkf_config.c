@@ -723,7 +723,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		
 		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
 		if (strcmp(var_type_string , "DYNAMIC") == 0)
-		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , nx , ny , nz , active_size , ecl_grid_get_index_map_ref(enkf_config->grid)));
+		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , enkf_config->grid));
 		else if (strcmp(var_type_string , "PARAMETER") == 0) {
 		  ASSERT_TOKENS("FIELD" , active_tokens , 5);
 		  {
@@ -731,8 +731,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		    int init_mode;
 		    if (util_sscanf_int(token_list[4] , &init_mode)) 
 		      enkf_config_add_type(enkf_config , key , parameter   , FIELD , ecl_file , field_config_alloc_parameter(key , 
-															     nx , ny , nz , active_size , 
-															     ecl_grid_get_index_map_ref(enkf_config->grid),
+															     enkf_config->grid,
 															     0 , init_mode , active_tokens - 5 , (const char **) &token_list[5]));
 		    else 
 		      util_abort("%s: init mode must be valid int - aborting \n",__func__);
