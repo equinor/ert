@@ -610,25 +610,42 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap);
   const char * kw;
 
+  if (restart_kw_list_empty(enkf_state->restart_kw_list))
+    enkf_fs_fread_restart_kw_list(enkf_state->fs , enkf_state->report_step , enkf_state->my_iens , enkf_state->restart_kw_list);
+  
+
   kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
   while (kw != NULL) {
-    enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-    enkf_var_type    var_type  = enkf_node_get_var_type(enkf_node);
-    if (!enkf_node_memory_allocated(enkf_node))
-      enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);  
+    /* 
+       If the restart kw_list asks for a keyword which we do not have,
+       we assume it is a static keyword and add it it to the
+       enkf_state instance. 
 
-    if (var_type == ecl_restart) {
-      /* Pressure and saturations */
-      if (enkf_node_get_impl_type(enkf_node) == FIELD)
-	enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , FIELD);
-      else 
-	util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
+       This is a bit unfortunate, because a bug/problem of some sort,
+       might be masked (seemingly solved) by adding a static keyword,
+       before things blow up completely at a later instant.
+    */
+    
+    if (!enkf_state_has_node(enkf_state , kw)) 
+      enkf_state_add_node(enkf_state , kw , NULL); 
+    {
+      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
+      enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
+      if (!enkf_node_memory_allocated(enkf_node))
+	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
       
-    } else if (var_type == ecl_static) {
-      enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , STATIC );
-      enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
+       if (var_type == ecl_restart) {
+	 /* Pressure and saturations */
+	 if (enkf_node_get_impl_type(enkf_node) == FIELD)
+	   enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , FIELD);
+	 else 
+	   util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
+	 
+       } else if (var_type == ecl_static) {
+	 enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , STATIC );
+	 enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
+       }
     }
-
     kw = restart_kw_list_get_next(enkf_state->restart_kw_list);
   }
   fortio_fclose(fortio);
@@ -862,6 +879,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     if (report_step1 > 0) load_mask += ecl_restart; 
     enkf_state_fread(enkf_state , load_mask , init_step , init_state);
   }
+
   /* 
      Uncertain about this one ...
   */

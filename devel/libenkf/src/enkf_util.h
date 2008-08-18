@@ -305,4 +305,12 @@ double 	enkf_util_rand_normal(double , double );
 void   	enkf_util_fread_assert_target_type(FILE * , enkf_impl_type , const char *);
 void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 
+char  * enkf_util_scanf_alloc_filename(const char * , int );
+
+/* These #defines are used in the enkf_util_scanf_alloc_filename function. */
+#define EXISTING_FILE  1
+#define NEW_FILE       2
+#define AUTO_MKDIR     4
+
+
 #endif

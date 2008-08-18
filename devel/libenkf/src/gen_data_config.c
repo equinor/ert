@@ -31,8 +31,9 @@ struct gen_data_config_struct {
   char   **config_tag_list;   /* The remote tags we are looking for - can be NULL.*/
   char   **ecl_file_list;     /* The remote file we will load forecasts from.*/
   char   **obs_file_list;     /* A list of files we load observations from ?? */
-  bool    *obs_active;        /* Whether the observation is active - i.e. should be used in the EnKF update step. */   
-  
+  bool    *obs_active;        /* Whether the observation is active (for this report step) - i.e. should be used in the EnKF update step. */   
+
+
   /*-----------------------------------------------------------------*/
   /* Because the actual gen_data instances bootstrap from a file, the
      themselves contain meta information about size, ctype and so
@@ -43,7 +44,7 @@ struct gen_data_config_struct {
      variables below here are support variables for this
      functionality.
   */
-  bool            * iactive;         /* A map of active / inactive cells in the observation vector */
+  bool            * iactive;         /* A map of active / inactive cells in the observation vector (for this report step). */
   int               __report_step;   /* The current active report_step. */
   int               __report_index; 
   int               __obs_size;      /* Storing the size of (currently active) observation, and comparing with gen_data measurements MUST agree. */
@@ -107,6 +108,8 @@ void gen_data_config_free(gen_data_config_type * config) {
   util_safe_free(config->iactive);
   free(config);
 }
+
+
 
 /* 
    This function returns (by reference) the name of the observation file, and
@@ -177,6 +180,11 @@ void gen_data_config_assert_metadata(gen_data_config_type * config , int report_
   }
   pthread_mutex_unlock( &config->update_lock );
 }
+
+
+
+
+
 
 
 /** This function does the opposite of gen_data_config_assert_metadata(). When a
@@ -312,7 +320,7 @@ void gen_data_config_set_obs_size(gen_data_config_type * config, int obs_size) {
    This function bootstraps a gen_data_config object from a configuration
    file. The format of the configuration file is as follows:
 
-   OBS_FILE1  ECL_FILE1   REPORT_STEP1   ON|OFF   <TAG1>
+   OBS_FILE1  ECL_FILE1   REPORT_STEP1   ON|OFF   <TAG1>  
    OBS_FILE2  ECL_FILE2   REPORT_STEP2   ON|OFF   <TAG2>
    ....
 

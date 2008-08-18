@@ -4,7 +4,6 @@
 #include <util.h>
 #include <hash.h>
 #include <multz_config.h>
-#include <enkf_main.h>
 #include <enkf_config_node.h>
 #include <path_fmt.h>
 #include <ecl_static_kw_config.h>
@@ -33,6 +32,7 @@
 #include <job_queue.h>
 #include <msg.h>
 #include <stringlist.h>
+#include <enkf_main.h>
 
 
 struct enkf_main_struct {
@@ -52,10 +52,6 @@ struct enkf_main_struct {
 
 
 /*****************************************************************/
-
-
-
-
 
 
 enkf_fs_type * enkf_main_get_fs_ref(const enkf_main_type * ens) { return ens->fs; }
@@ -155,6 +151,14 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , j
 }
 
 
+const enkf_config_type * enkf_main_get_config(const enkf_main_type * enkf_main) {
+  return enkf_main->config;
+}
+
+const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * enkf_main, const char * key) {
+  enkf_config_type * config = enkf_main->config;
+  return enkf_config_get_node_ref(config , key);
+}
 
 
 
@@ -318,6 +322,10 @@ void enkf_main_fprintf_results(const enkf_main_type * enkf_main) {
 }
 
 
+enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int iens) {
+  return enkf_main->ensemble[iens];
+}
+
 
 /*****************************************************************/
 
@@ -351,7 +359,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
   
   for (iens = 0; iens < ens_size; iens++) 
     run_info[iens] = enkf_run_info_alloc(enkf_main->ensemble[iens] , enkf_main->job_queue , enkf_main->obs , enkf_main->sched_file , enkf_config_get_unified(enkf_main->config),
-					 init_step , init_state , step1 , step2 , 
+					 init_step    , init_state , step1 , step2 , 
 					 load_results , unlink_run_path , (stringlist_type *) forward_model);
   /*
     The thread pool can just be a local variable.

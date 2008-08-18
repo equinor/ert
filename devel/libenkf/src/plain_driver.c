@@ -37,6 +37,17 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , state_
 }
 
 
+void plain_driver_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+  plain_driver_type * driver = (plain_driver_type *) _driver;
+  plain_driver_assert_cast(driver);
+  {
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
+    util_unlink_existing(filename);
+    free(filename);
+  }
+}
+
+
 void plain_driver_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
@@ -46,6 +57,26 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
     enkf_node_fwrite(node , stream);
     fclose(stream);
     free(filename);
+  }
+}
+
+
+/**
+   Return true if we have a on-disk representation of the node.
+*/
+
+bool plain_driver_has_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+  plain_driver_type * driver = (plain_driver_type *) _driver;
+  plain_driver_assert_cast(driver);
+  {
+    bool has_node;
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    if (util_file_exists(filename))
+      has_node = true;
+    else
+      has_node = false;
+    free(filename);
+    return has_node;
   }
 }
 
@@ -82,7 +113,9 @@ void * plain_driver_alloc(const char * root_path , const char * driver_path) {
   plain_driver_type * driver = malloc(sizeof * driver);
   driver->load        = plain_driver_load_node;
   driver->save        = plain_driver_save_node;
+  driver->has_node    = plain_driver_has_node;
   driver->free_driver = plain_driver_free;
+  driver->unlink_node = plain_driver_unlink_node;
   {
     char *path;
     if (root_path != NULL)

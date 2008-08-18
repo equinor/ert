@@ -24,7 +24,7 @@ struct enkf_sched_node_struct {
 
 
 struct enkf_sched_struct {
-  int    size;                                /* NUmber of elements in the node_lost */
+  int    size;                                   /* Number of elements in the node_list */
   enkf_sched_node_type ** node_list;
 
 
@@ -33,6 +33,7 @@ struct enkf_sched_struct {
   const ext_joblist_type * joblist; 
   const stringlist_type  * std_forward_model;    /* Does not take ownership of this - i.e. it must be freed by the calling scope. */ 
 };
+
 
 
 /** 
@@ -168,7 +169,6 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream, string
       if (forward_model != default_forward_model) {
 	int argc = stringlist_get_size(forward_model);
 	int i;
-	printf("Har speseill forward modell \n");
 	for (i = 0; i < argc; i++)
 	  if (!ext_joblist_has_job(joblist , stringlist_iget(forward_model , i)))
 	    util_abort("%s: the forward job:%s has not been installed.\n",__func__ , stringlist_iget(forward_model , i));
@@ -386,7 +386,6 @@ void enkf_sched_random_test(enkf_sched_type * enkf_sched) {
     int r2 = r1 + random() % 25;
     enkf_sched_node_type * node = enkf_sched_node_alloc(r1 , r2 , 1 , true , enkf_sched->std_forward_model);
     enkf_sched_add_node(enkf_sched , node);
-    printf("%6d/%d  %d -> %d OK",i,N,r1,r2);
   }
 }
   
@@ -437,6 +436,30 @@ int enkf_sched_get_schedule_num_reports(const enkf_sched_type * enkf_sched) {
 
 int enkf_sched_get_num_nodes(const enkf_sched_type * enkf_sched) {
   return enkf_sched->size;
+}
+
+
+/**
+   This function takes a report number, and returns the index of
+   enkf_sched_node which contains (in the half-open interval: [...>)
+   this report number. 
+   
+   The function will return -1 if the report number can not be
+   found. 
+*/
+int enkf_sched_get_node_index(const enkf_sched_type * enkf_sched , int report_step) {
+  if (report_step < 0 || report_step >= enkf_sched->last_report)
+    return -1;
+  else {
+    int index = 0;
+    while (1) {
+      const enkf_sched_node_type * node = enkf_sched->node_list[index];
+      if (node->report_step1 <= report_step && node->report_step2 > report_step)
+	break;
+      index++;
+    }
+    return index;
+  }
 }
 
 

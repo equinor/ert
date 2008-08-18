@@ -12,7 +12,6 @@
 #include <ecl_block.h>
 #include <meas_vector.h>
 #include <enkf_fs.h>
-#include <lsf_jobs.h>
 #include <sched_file.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
@@ -42,7 +41,6 @@ void               enkf_state_del_node(enkf_state_type * , const char * );
 void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void             * enkf_state_ecl_load__(void * );
 void               enkf_state_ecl_load(enkf_state_type * , enkf_obs_type * , bool , int , int);
-void               enkf_state_add_lsf_job(enkf_state_type *  , lsf_pool_type * , int , int );
 void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_eclipse__(void * );
 void             * enkf_state_complete_eclipse__(void * );

@@ -529,34 +529,40 @@ void field_ecl_grdecl_export(const field_type * field , FILE * stream) {
 
   * Restart format - only active cells (field_ecl_write1D_fortio).
   * Restart format - all cells         (field_ecl_write3D_fortio).
-  * GRDECL format                      (field_ecl_grdecl_export)
+  * GRDECL  format                     (field_ecl_grdecl_export)
 */  
 
-
-void field_ecl_write(const field_type * field , const char * path) {
-  field_ecl_export_format export_format = field_config_get_ecl_export_format(field->config);
-
-  if ((export_format == ecl_kw_all_cells) || (export_format == ecl_kw_active_cells)) {
+void field_export(const field_type * field, const char * file , field_file_format_type file_type) {
+  if ((file_type == ecl_kw_file_all_cells) || (file_type == ecl_kw_file_active_cells)) {
     fortio_type * fortio;
     bool fmt_file , endian_swap;
 
     field_config_set_io_options(field->config , &fmt_file , &endian_swap);
-    fortio = fortio_fopen(path , "w" , endian_swap);
+    fortio = fortio_fopen(file , "w" , endian_swap);
 
-    if (export_format == ecl_kw_all_cells)
+    if (file_type == ecl_kw_file_all_cells)
       field_ecl_write3D_fortio(field , fortio , fmt_file , endian_swap);
     else
       field_ecl_write1D_fortio(field , fortio , fmt_file , endian_swap);
 
     fortio_fclose(fortio);
-  } else if (export_format == ecl_grdecl_format) {
-    FILE * stream = util_fopen(path , "w");
+  } else if (file_type == ecl_grdecl_file) {
+    FILE * stream = util_fopen(file , "w");
     field_ecl_grdecl_export(field , stream);
     fclose(stream);
-  } else 
-    util_abort("%s: internal error export_format = %d - aborting \n",__func__ , export_format);
-
+  } else if (file_type == rms_roff_file) 
+    field_ROFF_export(field , file);
+  else
+    util_abort("%s: internal error file_type = %d - aborting \n",__func__ , file_type);
 }
+
+
+void field_ecl_write(const field_type * field , const char * file) {
+  field_file_format_type export_format = field_config_get_ecl_export_format(field->config);
+  field_export(field , file , export_format);
+}
+
+
 
 
 
@@ -709,11 +715,11 @@ double * field_indexed_get_alloc(const field_type * field, int len, const int * 
     /* double -> double */
     int i;
     for(i=0; i<len; i++)
-      memcpy(&data[i * ecl_double_type], &field->data[index_list[i] * ecl_double_type] , ecl_double_type);
+      memcpy(&data[i * sizeof_ctype], &field->data[index_list[i] * sizeof_ctype] , sizeof_ctype);
   }
-  else if(src_type == ecl_float_type)
-  {
+  else if(src_type == ecl_float_type) {
     /* float -> double */
+    util_abort("%s: indexing ignored in float -> double converison \n",__func__);
     util_float_to_double(data, (float *) field->data, len);
   }
   else {
@@ -834,7 +840,7 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename , bool en
 
 
 
-void field_fload_typed(field_type * field , const char * filename ,  bool endian_flip , field_file_type file_type) {
+void field_fload_typed(field_type * field , const char * filename ,  bool endian_flip , field_file_format_type file_type) {
   switch (file_type) {
   case(rms_roff_file):
     field_fload_rms(field , filename );
@@ -853,8 +859,9 @@ void field_fload_typed(field_type * field , const char * filename ,  bool endian
 
 
 
+
 void field_fload(field_type * field , const char * filename , bool endian_flip) {
-  field_file_type file_type = field_config_guess_file_type(filename , endian_flip);
+  field_file_format_type file_type = field_config_guess_file_type(filename , endian_flip);
   if (file_type == unknown_file) file_type = field_config_manual_file_type(filename);
   field_fload_typed(field , filename , endian_flip , file_type);
 }
@@ -862,7 +869,7 @@ void field_fload(field_type * field , const char * filename , bool endian_flip) 
 
 
 void field_fload_auto(field_type * field , const char * filename , bool endian_flip) {
-  field_file_type file_type = field_config_guess_file_type(filename , endian_flip);
+  field_file_format_type file_type = field_config_guess_file_type(filename , endian_flip);
   field_fload_typed(field , filename , endian_flip , file_type);
 }
 

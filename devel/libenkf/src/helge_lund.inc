@@ -1,4 +1,5 @@
-const char *splash_text[56] = 
+#define SPLASH_LENGTH 56
+const char *splash_text[SPLASH_LENGTH] = 
 {
 "          iiLL,,ttLLGGDDDDDDDDEEKKKKKKKKKKKKWWWWDDKKKKKKDDDDDDDDGGDDDDDDDDDDGG::,,::        ..iittGG",
 "          iiLL;;ffGGDDEEDDDDKKKKWWWWKKWWKKWWWWWWKKEEDDKKKKKKDDGGDDDDDDDDDDDDDDtt,,        ::iiiittLL",

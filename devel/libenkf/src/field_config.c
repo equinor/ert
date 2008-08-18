@@ -27,7 +27,7 @@ void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_ty
 
 
 
-static const char * field_config_file_type_string(field_file_type file_type) {
+static const char * field_config_file_type_string(field_file_format_type file_type) {
   switch (file_type) {
   case(rms_roff_file):
     return "Binary ROFF file from RMS";
@@ -46,7 +46,7 @@ static const char * field_config_file_type_string(field_file_type file_type) {
 
 
 
-static bool field_config_valid_file_type(field_file_type file_type) {
+static bool field_config_valid_file_type(field_file_format_type file_type) {
   if (file_type == rms_roff_file || file_type == ecl_kw_file || file_type == ecl_grdecl_file)
     return true;
   else
@@ -55,13 +55,13 @@ static bool field_config_valid_file_type(field_file_type file_type) {
 
 
 
-field_file_type field_config_manual_file_type(const char * filename) {
-  field_file_type file_type = unknown_file;
+field_file_format_type field_config_manual_file_type(const char * filename) {
+  field_file_format_type file_type = unknown_file;
   printf("\nCould not determine type of file: %s \n",filename);
   do {
     printf("----------------------------------------------------------------\n");
-    printf(" %3d: %s \n",rms_roff_file , field_config_file_type_string(rms_roff_file));
-    printf(" %3d: %s \n",ecl_kw_file , field_config_file_type_string(ecl_kw_file));
+    printf(" %3d: %s \n",rms_roff_file   , field_config_file_type_string(rms_roff_file));
+    printf(" %3d: %s \n",ecl_kw_file     , field_config_file_type_string(ecl_kw_file));
     printf(" %3d: %s \n",ecl_grdecl_file , field_config_file_type_string(ecl_grdecl_file));
     printf("----------------------------------------------------------------\n\n");
     {
@@ -95,11 +95,11 @@ file. It can determine the following three types of files:
   i.e. it is *essential* to check the return value.
 
 */
-field_file_type field_config_guess_file_type(const char * filename , bool endian_flip) {
+field_file_format_type field_config_guess_file_type(const char * filename , bool endian_flip) {
   bool fmt_file = util_fmt_bit8(filename );
   FILE * stream = util_fopen(filename , "r");
 
-  field_file_type file_type;
+  field_file_format_type file_type;
   if (ecl_kw_is_kw_file(stream , fmt_file , endian_flip))
     file_type = ecl_kw_file;
   else if (rms_file_is_roff(stream))
@@ -115,7 +115,7 @@ field_file_type field_config_guess_file_type(const char * filename , bool endian
 
 
 
-field_ecl_export_format field_config_get_ecl_export_format(const field_config_type * field_config) {
+field_file_format_type field_config_get_ecl_export_format(const field_config_type * field_config) {
   return field_config->ecl_export_format;
 }
 
@@ -129,7 +129,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
     and generally *not* equal to nx*ny*nz.
   */
   config->data_size                = active_size; 
-  config->ecl_export_format        = ecl_kw_all_cells; 
+  config->ecl_export_format        = ecl_kw_file_all_cells; 
   /*
   config->ecl_export_format        = ecl_grdecl_format; 
   */
@@ -170,7 +170,7 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , int nx
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , nx , ny , nz , active_size , index_map);
   config->logmode           = 0;
   config->init_type         = none;
-  config->ecl_export_format = ecl_kw_active_cells;
+  config->ecl_export_format = ecl_kw_file_active_cells;
   return config;
 }
 

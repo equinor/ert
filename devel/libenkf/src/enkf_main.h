@@ -1,9 +1,11 @@
 #ifndef __ENKF_ENSEMBLE_H__
 #define __ENKF_ENSEMBLE_H__
+
 #include <stdbool.h>
 #include <enkf_config.h>
 #include <enkf_config_node.h>
 #include <enkf_types.h>
+#include <enkf_state.h>
 #include <obs_data.h>
 #include <path_fmt.h>
 #include <enkf_fs.h>
@@ -45,8 +47,10 @@ void                          enkf_main_set_state_eclbase(const enkf_main_type *
 enkf_main_type              * enkf_main_alloc(enkf_config_type * , enkf_fs_type *, job_queue_type *, ext_joblist_type * );
 enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
+enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
 
-const enkf_config_node_type * enkf_main_get_config_ref(const enkf_main_type * , const char * );
+const enkf_config_type      * enkf_main_get_config(const enkf_main_type * );
+const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
 
 const sched_file_type * enkf_main_get_sched_file(const enkf_main_type *);
 #endif

@@ -10,12 +10,21 @@
 #include <rms_file.h>
 
 
-typedef enum { unknown_file     = 0 , rms_roff_file = 1       , ecl_kw_file = 2 , ecl_grdecl_file = 3} field_file_type;
-typedef enum { ecl_kw_all_cells = 0 , ecl_kw_active_cells = 1 , ecl_grdecl_format = 2}                 field_ecl_export_format;
+
+/*Hmm these two looked suspiciously similar ... */
+typedef enum { unknown_file  		= 0,
+	       rms_roff_file 		= 1,
+	       ecl_kw_file   		= 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
+	       ecl_kw_file_active_cells = 3,       /* ecl_kw format, only active cells - used writing to file. */
+	       ecl_kw_file_all_cells    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
+	       ecl_grdecl_file          = 5} field_file_format_type;
+
+	        
 /* active_cells currently not really implemented */
 
-/* Must be power of two series */
 
+
+/* Must be power of two series */
 typedef enum { none                   = 0  , /* For restart fields */
                load_unique            = 1  , /* path_fmt_type to load from */ 
                load_base_case         = 2  , /* Filename to load */
@@ -45,7 +54,7 @@ struct field_config_struct {
   void        * max_value;
   int           sizeof_ctype;
 
-  field_ecl_export_format ecl_export_format;
+  field_file_format_type  ecl_export_format;
   ecl_type_enum           ecl_type;
   field_init_type         init_type; 
   char        	* base_file;
@@ -63,8 +72,8 @@ struct field_config_struct {
 
 bool                    field_config_get_endian_swap(const field_config_type * );
 bool                    field_config_write_compressed(const field_config_type * );
-field_file_type         field_config_guess_file_type(const char * , bool);
-field_file_type         field_config_manual_file_type(const char * );
+field_file_format_type  field_config_guess_file_type(const char * , bool);
+field_file_format_type  field_config_manual_file_type(const char * );
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
@@ -86,7 +95,7 @@ int                     field_config_global_index(const field_config_type * , in
 void                    field_config_get_ijk(const field_config_type * , int , int * , int * , int *);
 field_init_type         field_config_get_init_type(const field_config_type * );
 char                  * field_config_alloc_init_file(const field_config_type * , int );
-field_ecl_export_format field_config_get_ecl_export_format(const field_config_type * );
+field_file_format_type  field_config_get_ecl_export_format(const field_config_type * );
 
 
 /*Generated headers */

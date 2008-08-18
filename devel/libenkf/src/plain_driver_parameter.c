@@ -5,7 +5,7 @@
 #include <path_fmt.h>
 #include <util.h>
 
-#define PLAIN_DRIVER_ID 1003
+#define PLAIN_DRIVER_PARAMETER_ID 1003
 
 struct plain_driver_parameter_struct {
   BASIC_DRIVER_FIELDS;
@@ -15,7 +15,7 @@ struct plain_driver_parameter_struct {
 
 
 static void plain_driver_parameter_assert_cast(plain_driver_parameter_type * plain_driver_parameter) {
-  if (plain_driver_parameter->plain_driver_parameter_id != PLAIN_DRIVER_ID) 
+  if (plain_driver_parameter->plain_driver_parameter_id != PLAIN_DRIVER_PARAMETER_ID) 
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
 }
 
@@ -96,6 +96,46 @@ void plain_driver_parameter_save_node(void * _driver , int _report_step , int ie
 }
 
 
+void plain_driver_parameter_unlink_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
+  int report_step = __get_report_step(_report_step , state);
+  plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
+  plain_driver_parameter_assert_cast(driver);
+  {
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    util_unlink_existing(filename);
+    free(filename);
+  }
+}
+
+
+/**
+   Observe that the semantics is fundamentally different between
+   plain_driver_paramater_has_node, and plain_driver_parameter_load_node:
+
+   * When (trying to) load a node the function will try previous report steps
+     all the way back to the first report step.
+
+   * The has_node function will _not_ go back to earlier report steps, but
+     instead return false if the report_step we ask for is not present.
+*/
+
+bool plain_driver_parameter_has_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
+  int report_step = __get_report_step(_report_step , state);
+  plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
+  plain_driver_parameter_assert_cast(driver);
+  {
+    bool has_node;
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    if (util_file_exists(filename))
+      has_node = true;
+    else
+      has_node = false;
+    free(filename);
+    return has_node;
+  }
+}
+
+
 
 
 void plain_driver_parameter_free(void *_driver) {
@@ -115,6 +155,8 @@ void * plain_driver_parameter_alloc(const char * root_path , const char * driver
   driver->load        = plain_driver_parameter_load_node;
   driver->save        = plain_driver_parameter_save_node;
   driver->free_driver = plain_driver_parameter_free;
+  driver->unlink_node = plain_driver_parameter_unlink_node;
+  driver->has_node    = plain_driver_parameter_has_node;
   {
     char *path;
     if (root_path != NULL)
@@ -125,7 +167,7 @@ void * plain_driver_parameter_alloc(const char * root_path , const char * driver
     driver->path        = path_fmt_alloc_directory_fmt(path);
     free(path);
   }
-  driver->plain_driver_parameter_id = PLAIN_DRIVER_ID;
+  driver->plain_driver_parameter_id = PLAIN_DRIVER_PARAMETER_ID;
   {
     basic_driver_type * basic_driver = (basic_driver_type *) driver;
     basic_driver_init(basic_driver);

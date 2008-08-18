@@ -43,7 +43,7 @@ struct gen_data_struct {
   ecl_type_enum                  ecl_type;    	      /* Type of data can be ecl_float_type || ecl_double_type - read at load time, 
 					      	         can change from time-step to time-step.*/           
   int   			 size;        	      /* The number of elements. */
-  bool  			 active;      	      /* Is the keyword currently active ?*/
+  bool  			 active;      	      /* Is the keyword active for this report_step ?*/
   char                         * data;        	      /* Actual storage - will be casted to double or float on use. */
 
   /*-----------------------------------------------------------------*/
@@ -197,6 +197,8 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
       char *config_tag;
       char *full_path;
       gen_data_config_get_ecl_file(config , report_step , &ecl_file , &config_tag);
+      
+
       full_path = util_alloc_full_path(run_path , ecl_file);
       printf("Loading from:%s \n",full_path);
       if (util_file_exists(full_path)) {

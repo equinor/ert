@@ -6,6 +6,8 @@ typedef struct basic_driver_struct basic_driver_type;
 
 typedef void (load_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
 typedef void (save_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
+typedef bool (has_node_ftype)     (void * , int , int , state_enum , enkf_node_type *);
+typedef void (unlink_node_ftype)  (void * , int , int , state_enum , enkf_node_type *); 
 typedef void (free_driver_ftype)  (void *);
 
 
@@ -34,8 +36,10 @@ typedef void (free_driver_ftype)  (void *);
 #define BASIC_DRIVER_FIELDS   	   \
 load_node_ftype    * load;    	   \
 save_node_ftype    * save;    	   \
+has_node_ftype     * has_node;     \
+unlink_node_ftype  * unlink_node;  \
 free_driver_ftype  * free_driver;  \
-int                  basic_type_id 
+int                  basic_type_id
 
 
 struct basic_driver_struct {
