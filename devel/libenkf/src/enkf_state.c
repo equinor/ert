@@ -439,11 +439,13 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
    
 
 static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , const ecl_block_type *ecl_block) {
-  int report_step = ecl_block_get_report_nr(ecl_block);
-  ecl_kw_type * ecl_kw = ecl_block_get_first_kw(ecl_block);
+  restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(ecl_block);
+  int report_step 		       = ecl_block_get_report_nr(ecl_block);
+  const char * block_kw 	       = restart_kw_list_get_first(block_kw_list);
+
   restart_kw_list_reset(enkf_state->restart_kw_list);
-  while (ecl_kw != NULL) {
-    char *kw = ecl_kw_alloc_strip_header(ecl_kw);
+  while (block_kw != NULL) {
+    char * kw = util_alloc_string_copy(block_kw);
     ecl_util_escape_kw(kw);
     
     if (enkf_config_has_key(enkf_state->config , kw)) {
@@ -454,7 +456,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
       {
 	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
 	enkf_node_ensure_memory(enkf_node);
-	field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_kw);
+	field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_block_iget_kw(ecl_block , block_kw , 0));
       }
     } else {
       /* It is a static kw like INTEHEAD or SCON */
@@ -463,8 +465,10 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 	if (!enkf_state_has_node(enkf_state , kw)) 
 	  enkf_state_add_node(enkf_state , kw , NULL); 
 	{
-	  enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-	  enkf_node_load_static_ecl_kw(enkf_node , ecl_kw);
+	  enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
+	  ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
+	  ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
+	  enkf_node_load_static_ecl_kw(enkf_node , ecl_block_iget_kw(ecl_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )));
 	  /*
 	    Static kewyords go straight out ....
 	  */
@@ -474,7 +478,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
       } 
     }
     free(kw);
-    ecl_kw = ecl_block_get_next_kw(ecl_block);
+    block_kw = restart_kw_list_get_next(block_kw_list);
   }
   enkf_fs_fwrite_restart_kw_list(enkf_state->fs , report_step , enkf_state->my_iens, enkf_state->restart_kw_list);
 }
@@ -620,7 +624,7 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
        If the restart kw_list asks for a keyword which we do not have,
        we assume it is a static keyword and add it it to the
        enkf_state instance. 
-
+       
        This is a bit unfortunate, because a bug/problem of some sort,
        might be masked (seemingly solved) by adding a static keyword,
        before things blow up completely at a later instant.
@@ -631,20 +635,23 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
+      if (var_type == ecl_static) 
+	ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , enkf_state->report_step);
+
       if (!enkf_node_memory_allocated(enkf_node))
 	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
       
-       if (var_type == ecl_restart) {
-	 /* Pressure and saturations */
-	 if (enkf_node_get_impl_type(enkf_node) == FIELD)
-	   enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , FIELD);
-	 else 
-	   util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
-	 
-       } else if (var_type == ecl_static) {
-	 enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , STATIC );
-	 enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
-       }
+      if (var_type == ecl_restart) {
+	/* Pressure and saturations */
+	if (enkf_node_get_impl_type(enkf_node) == FIELD)
+	  enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , FIELD);
+	else 
+	  util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
+      } else if (var_type == ecl_static) {
+	enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , STATIC );
+	enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
+      } else 
+	util_abort("%s: internal error - should not be here ... \n",__func__);
     }
     kw = restart_kw_list_get_next(enkf_state->restart_kw_list);
   }

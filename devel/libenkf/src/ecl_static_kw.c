@@ -15,19 +15,96 @@ struct ecl_static_kw_struct {
   DEBUG_DECLARE
   const ecl_static_kw_config_type * config;
   ecl_kw_type * ecl_kw;
+
+  /*-----------------------------------------------------------------*/
+  /* The fields below here are a fuxxxg hack to support multiple
+     keywords with the same 'name' - see documentation below. */
+
+  int  __kw_count;      /* Which mumber in the series this instance is - starting at 0.*/
+  bool __write_mode;    /* Whether we are currently writing (the static keyword to the enkf_fs 'database'). */
+  int  __report_step;   /* The currently active report_step .*/
 };
 
 
+/**
+   It is an assumption quite heavily immersed in the enkf code that
+   the enkf_state objects should have unique keys identifying the
+   various nodes. Now, unfortunately it turns out that the keywords
+   relating to AQUIFER properties (at least) can appear several times
+   in a restart file, and we must handle that.
+   
+   The implementation is quite naive - observe the following points:
 
-ecl_kw_type * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * ecl_static) { return ecl_static->ecl_kw; }
+    o It has been a design principle that the calling scope should
+      _not_ have to do any book keeping on the static ecl_kw instances.
+      
+    o The ecl_static_kw objects can only store _one_ ecl_kw instance
+      at a time. 
+
+   The are several responsibilities on the calling scope (which are in
+   accordance with the current implementation):
+
+    o Calling scope must call ecl_static_kw_inc_counter() _before_ the
+      calling enkf_fs with the node. It must call with write_mode ==
+      true when the static keywords are stored, and with write_mode ==
+      false when the static keywords are loaded again.
+
+    o Calling scope must make sure that the ecl_kw instance is freed
+      immediately after use by calling enkf_node_free_data().
+
+   The implementation basicilly works by increasing an integer
+   counter, which is reset to zero everytime write_mode _or_
+   report_step changes value.
+*/
+
+
+/**
+   The input state is defined by the parameters write_mode and
+   report_step. If they differ from the currently stored state the
+   counter is reset to 0, otherwise it is increased.
+*/
+
+void ecl_static_kw_inc_counter(ecl_static_kw_type * ecl_static, bool write_mode , int report_step) {
+  if (ecl_static->__write_mode != write_mode)            /* Changing reading <-> writing */
+    ecl_static->__kw_count = 0;
+  else if (ecl_static->__report_step != report_step)     /* Changing report_step */
+    ecl_static->__kw_count = 0;
+  else
+    ecl_static->__kw_count++;                            /* Increase counter */
+  
+  ecl_static->__write_mode = write_mode;
+}
+
+
+
+/**
+   Used by the filessystem function reading/writing spesific instances to disk.
+*/
+int ecl_static_kw_get_counter(const ecl_static_kw_type * ecl_static) {
+  if (ecl_static->__kw_count < 0)
+    util_abort("%s: internal error: __kw_count = %d \n",__func__ , ecl_static->__kw_count);
+  
+  return ecl_static->__kw_count;
+}
+
+
+
+/**
+
+*/
 
 ecl_static_kw_type * ecl_static_kw_alloc(const ecl_static_kw_config_type * config) {
-  ecl_static_kw_type * static_kw = malloc(sizeof *static_kw);
+  ecl_static_kw_type * static_kw = util_malloc(sizeof *static_kw , __func__);
+  static_kw->__report_step = -1;
+  static_kw->__write_mode  = false;
   static_kw->ecl_kw = NULL;
   static_kw->config = config;
   DEBUG_ASSIGN(static_kw)
   return static_kw;
 }
+
+
+ecl_kw_type * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * ecl_static) { return ecl_static->ecl_kw; }
 
 
 ecl_static_kw_type * ecl_static_kw_copyc(const ecl_static_kw_type *src) {
@@ -51,6 +128,9 @@ void ecl_static_kw_free(ecl_static_kw_type * kw) {
 
 
 void ecl_static_kw_init(ecl_static_kw_type * ecl_static_kw, const ecl_kw_type * ecl_kw) {
+  if (ecl_static_kw->ecl_kw != NULL)
+    util_abort("%s: internal error: trying to assign ecl_kw to ecl_static_kw which is already set.\n",__func__);
+  
   ecl_static_kw->ecl_kw = ecl_kw_alloc_copy(ecl_kw);
 }
 
@@ -58,6 +138,8 @@ void ecl_static_kw_init(ecl_static_kw_type * ecl_static_kw, const ecl_kw_type * 
 void ecl_static_kw_fread(ecl_static_kw_type * ecl_static_kw , FILE * stream) {
   DEBUG_ASSERT(ecl_static_kw);
   enkf_util_fread_assert_target_type(stream , STATIC , __func__);
+  if (ecl_static_kw->ecl_kw != NULL)
+    util_abort("%s: internal error: trying to assign ecl_kw to ecl_static_kw which is already set.\n",__func__);
   ecl_static_kw->ecl_kw = ecl_kw_fread_alloc_compressed(stream);
 }
 
@@ -67,6 +149,7 @@ void ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stre
   enkf_util_fwrite_target_type(stream , STATIC);
   ecl_kw_fwrite_compressed(ecl_static_kw->ecl_kw , stream);
 }
+
 
 
 /**

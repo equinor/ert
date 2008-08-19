@@ -266,22 +266,24 @@ char * enkf_util_scanf_alloc_filename(const char * prompt , int options) {
     util_abort("%s: internal error - asking for both new and existing file - impossible \n", __func__);
   {
     bool OK = true;
-    char * __file;
-    char * __path;
+    char * _path;
     char file[1024];
     do {
       printf("%s",prompt);
       scanf("%s" , file);
-      util_alloc_file_components(file , &__path , &__file , NULL);
-      if (!util_path_exists(__path)) 
-	if (options & AUTO_MKDIR)
-	  util_make_path(__path);
-      free(__path);
-      free(__file);
+      util_alloc_file_components(file , &_path , NULL ,  NULL);
+      if (_path != NULL) {
+	if (!util_path_exists(_path)) 
+	  if (options & AUTO_MKDIR)
+	    util_make_path(_path);
+	free(_path);
+      }
       
-      if (options & EXISTING_FILE)
-	if (!util_file_exists(file)) 
-	  OK = false;
+      if ((options & EXISTING_FILE) && (!util_file_exists(file)))
+	OK = false;
+      else if ((options & NEW_FILE) && (util_file_exists(file)))
+	OK = false;
+
     } while (!OK);
     return util_alloc_string_copy(file);    
   }
