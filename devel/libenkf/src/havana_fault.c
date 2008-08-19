@@ -109,7 +109,7 @@ void havana_fault_fwrite(const havana_fault_type *havana_fault , FILE * stream) 
 
 void havana_fault_fread(havana_fault_type * havana_fault , FILE * stream) {
   DEBUG_ASSERT(havana_fault)
-  enkf_util_fread_assert_target_type(stream , HAVANA_FAULT , __func__);
+  enkf_util_fread_assert_target_type(stream , HAVANA_FAULT);
   scalar_stream_fread(havana_fault->scalar , stream);
 }
 

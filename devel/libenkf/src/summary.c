@@ -69,7 +69,7 @@ void summary_fread(summary_type * summary , FILE * stream) {
   DEBUG_ASSERT(summary); 
   {
     int  size;
-    enkf_util_fread_assert_target_type(stream , SUMMARY , __func__);
+    enkf_util_fread_assert_target_type(stream , SUMMARY);
     fread(&size , sizeof  size , 1 , stream);
     enkf_util_fread(summary->data , sizeof *summary->data , size , stream , __func__);
   }

@@ -89,7 +89,7 @@ void equil_fwrite(const equil_type * equil, FILE * stream) {
 
 void equil_fread(equil_type * equil , FILE * stream) {
   DEBUG_ASSERT(equil);
-  enkf_util_fread_assert_target_type(stream , EQUIL , __func__);
+  enkf_util_fread_assert_target_type(stream , EQUIL);
   scalar_stream_fread(equil->scalar , stream);
 }
 

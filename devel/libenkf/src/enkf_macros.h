@@ -243,6 +243,13 @@ void prefix ## _ensemble_fprintf_results__(const void ** void_ensemble , int ens
 }
 #define VOID_FPRINTF_RESULTS_HEADER(prefix) void prefix ## _ensemble_fprintf_results__(const void ** , int , const char * );
 
+/*****************************************************************/
 
+#define ASSERT_TYPE(prefix) \
+void prefix ## _assert_type(const prefix ## _type * object) { \
+  if (object->__impl_type != TARGET_TYPE)  \
+    util_abort("%s: assert_type failed\n",__func__); \
+}
+#define ASSERT_TYPE_HEADER(prefix) void prefix ## _assert_type(const prefix ## _type * );
 
 #endif

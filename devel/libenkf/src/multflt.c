@@ -132,7 +132,7 @@ void multflt_fwrite(const multflt_type *multflt , FILE * stream) {
 
 void multflt_fread(multflt_type * multflt , FILE * stream) {
   DEBUG_ASSERT(multflt);
-  enkf_util_fread_assert_target_type(stream , MULTFLT , __func__);
+  enkf_util_fread_assert_target_type(stream , MULTFLT);
   scalar_stream_fread(multflt->scalar , stream);
 }
 

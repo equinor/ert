@@ -21,5 +21,6 @@ VOID_FWRITE_HEADER(ecl_static_kw);
 VOID_FREAD_HEADER(ecl_static_kw);
 VOID_COPYC_HEADER(ecl_static_kw);
 VOID_REALLOC_DATA_HEADER(ecl_static_kw);
+ASSERT_TYPE_HEADER(ecl_static_kw);
 
 #endif

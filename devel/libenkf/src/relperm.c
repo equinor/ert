@@ -48,7 +48,7 @@ void relperm_fwrite(const relperm_type * relperm, FILE * stream){
 
 void relperm_fread(relperm_type * relperm , FILE * stream) {
   DEBUG_ASSERT(relperm); 
-  enkf_util_fread_assert_target_type(stream , RELPERM , __func__);
+  enkf_util_fread_assert_target_type(stream , RELPERM);
   scalar_stream_fread(relperm->scalar , stream);
 }
 

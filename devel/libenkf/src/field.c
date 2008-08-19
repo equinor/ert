@@ -325,7 +325,7 @@ field_type * field_copyc(const field_type *field) {
 void field_fread(field_type * field , FILE * stream) {
   int  data_size , sizeof_ctype;
   bool read_compressed;
-  enkf_util_fread_assert_target_type(stream , FIELD , __func__);
+  enkf_util_fread_assert_target_type(stream , FIELD );
   fread(&data_size     	  , sizeof  data_size        , 1 , stream);
   fread(&sizeof_ctype 	  , sizeof  sizeof_ctype     , 1 , stream);
   fread(&read_compressed  , sizeof  read_compressed  , 1 , stream);

@@ -202,13 +202,11 @@ size_t enkf_util_deserialize(double * node_data , const bool * active , size_t n
 
 
 
-void enkf_util_fread_assert_target_type(FILE * stream , enkf_impl_type target_type , const char *caller) {
+void enkf_util_fread_assert_target_type(FILE * stream , enkf_impl_type target_type) {
   enkf_impl_type file_type;
   file_type = util_fread_int(stream);
-  if (file_type != target_type) {
-    fprintf(stderr,"%s/%s: wrong target type in file - aborting \n",__func__ , caller);
-    abort();
-  }
+  if (file_type != target_type) 
+    util_abort("%s: wrong target type in file (expected:%d  got:%d)  - aborting \n",__func__ , target_type , file_type);
 }
 
 

@@ -155,7 +155,7 @@ void gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
 
 void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
   DEBUG_ASSERT(gen_data)
-  enkf_util_fread_assert_target_type(stream , GEN_DATA , __func__);
+  enkf_util_fread_assert_target_type(stream , GEN_DATA);
   gen_data->active = util_fread_bool(stream);
   if (gen_data->active) {
     gen_data->size     = util_fread_int(stream);

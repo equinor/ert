@@ -105,7 +105,7 @@ void gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream) {
 
 void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {
   DEBUG_ASSERT(gen_kw)
-  enkf_util_fread_assert_target_type(stream , GEN_KW , __func__);
+  enkf_util_fread_assert_target_type(stream , GEN_KW);
   scalar_stream_fread(gen_kw->scalar , stream);
 }
 

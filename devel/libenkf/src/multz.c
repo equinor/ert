@@ -101,7 +101,7 @@ void multz_fwrite(const multz_type *multz , FILE * stream) {
 
 void multz_fread(multz_type * multz , FILE * stream) {
   DEBUG_ASSERT(multz); 
-  enkf_util_fread_assert_target_type(stream , MULTZ , __func__);
+  enkf_util_fread_assert_target_type(stream , MULTZ);
   scalar_stream_fread(multz->scalar , stream);
 }
 

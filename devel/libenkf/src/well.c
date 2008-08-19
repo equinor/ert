@@ -69,7 +69,7 @@ void well_fread(well_type * well , FILE * stream) {
   DEBUG_ASSERT(well); 
   {
     int  size;
-    enkf_util_fread_assert_target_type(stream , WELL , __func__);
+    enkf_util_fread_assert_target_type(stream , WELL);
     fread(&size , sizeof  size , 1 , stream);
     enkf_util_fread(well->data , sizeof *well->data , size , stream , __func__);
   }

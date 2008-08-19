@@ -255,6 +255,7 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
 }
 
 
+
 /**
    This function calls the node spesific ecl_write function. IF the
    ecl_file of the (node == NULL) *ONLY* the path is sent to the node
