@@ -32,16 +32,17 @@ static plain_driver_static_type * plain_driver_static_init(void *_driver) {
 }
 
 
-char * plain_driver_static_alloc_filename(plain_driver_static_type * driver, int report_step , int iens , state_enum state , enkf_node_type * node) {
+char * plain_driver_static_alloc_filename(plain_driver_static_type * driver, int report_step , int iens , state_enum state , enkf_node_type * node , bool auto_mkdir) {
   ecl_static_kw_type * ecl_static = enkf_node_value_ptr( node );
   ecl_static_kw_assert_type(ecl_static);
   {
     /*
-      Observe that the function path_fmt_alloc_file() assumes that the final argument (the filename)
-      is a string.
+      Observe that the function path_fmt_alloc_file() assumes that the
+      final argument (the filename) is a string; so although it is numeric in this
+      case we must convert that integer to a string.
     */
     char * counter_str = util_alloc_sprintf("%d" , ecl_static_kw_get_counter(ecl_static));
-    char * filename 	 = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node) , counter_str);
+    char * filename    = path_fmt_alloc_file(driver->path , auto_mkdir , report_step , iens , enkf_node_get_ensfile_ref(node) , counter_str);
     free(counter_str);
     return filename;
   }
@@ -52,8 +53,8 @@ char * plain_driver_static_alloc_filename(plain_driver_static_type * driver, int
 void plain_driver_static_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node);
-    FILE * stream   	 = util_fopen(filename , "r");
+    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node , false);
+    FILE * stream   = util_fopen(filename , "r");
     enkf_node_fread(node , stream);
     fclose(stream);
     free(filename);
@@ -64,8 +65,8 @@ void plain_driver_static_load_node(void * _driver , int report_step , int iens ,
 void plain_driver_static_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node);
-    FILE * stream   	 = util_fopen(filename , "w");
+    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node , false);
+    FILE * stream   = util_fopen(filename , "w");
     util_unlink_existing(filename);
     fclose(stream);
     free(filename);
@@ -76,7 +77,7 @@ void plain_driver_static_unlink_node(void * _driver , int report_step , int iens
 void plain_driver_static_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node);
+    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node , true);
     FILE * stream   	 = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream);
     fclose(stream);
@@ -93,7 +94,7 @@ bool plain_driver_static_has_node(void * _driver , int report_step , int iens , 
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
     bool has_node;
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node);
+    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node , false);
     if (util_file_exists(filename))
       has_node = true;
     else
@@ -140,6 +141,12 @@ void * plain_driver_static_alloc(const char * root_path , const char * driver_pa
   driver->unlink_node = plain_driver_static_unlink_node;
   {
     char *path;
+
+    /**
+       The format is:
+
+       [root_path]/driver_path/<STATIC-KW>
+    */
 
     if (root_path != NULL) 
       path = util_alloc_sprintf("%s%c%s%c%s" , root_path , UTIL_PATH_SEP_CHAR , driver_path , UTIL_PATH_SEP_CHAR , "%s" );
