@@ -9,7 +9,6 @@
 #include <multz_config.h>
 #include <enkf_config_node.h>
 #include <path_fmt.h>
-#include <ecl_static_kw_config.h>
 #include <enkf_types.h>
 #include <well_config.h>
 #include <field_config.h>
@@ -826,7 +825,7 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       freef             = equil_config_free__;
       break;
     case(STATIC):
-      freef             = ecl_static_kw_config_free__;
+      freef             = NULL; 
       break;
     case(GEN_KW):
       freef             = gen_kw_config_free__;

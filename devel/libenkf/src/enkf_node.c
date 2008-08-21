@@ -56,7 +56,7 @@ struct enkf_node_struct {
   ensemble_fprintf_results_ftype * fprintf_results;
 
   serial_state_type  *serial_state;
-  char               *node_key;
+  char               *node_key;  /* Bør vel bare være i config node */
   void               *data;
   bool                memory_allocated;
   bool                modified; 
@@ -79,12 +79,14 @@ keyword, because that might contain characters (typically '/') which
 can not be part of a filename.
 */
 
-const char     *  enkf_node_get_ensfile_ref(const enkf_node_type * node ) { 
+/*
+const char * enkf_node_get_ensfile_ref(const enkf_node_type * node ) { 
   if (node->config == NULL) 
     return node->node_key;
   else 
     return enkf_config_node_get_ensfile_ref(node->config); 
 }
+*/
 
 
 const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_eclfile_ref(node->config); }
@@ -217,7 +219,13 @@ enkf_node_type * enkf_node_copyc(const enkf_node_type * src) {
     abort();
   }
   {
-    enkf_node_type * new = enkf_node_alloc(enkf_node_get_key_ref(src) , src->config);
+    enkf_node_type * new;
+    
+    if (enkf_node_get_impl_type(src) == STATIC)
+      new = enkf_node_alloc_static(enkf_node_get_key_ref(src));
+    else
+      new = enkf_node_alloc(src->config);
+    
     printf("%s: not properly implemented ... \n",__func__);
     abort();
     return new;
@@ -470,7 +478,11 @@ void enkf_node_free__(void *void_node) {
   enkf_node_free((enkf_node_type *) void_node);
 }
 
-const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) { return enkf_node->node_key; }
+const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) { 
+  return enkf_node->node_key; 
+}
+
+
 #undef FUNC_ASSERT
 
 
@@ -683,14 +695,9 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
 #undef CASE_SET
 
 
-enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_type * config) {
+static enkf_node_type * enkf_node_alloc__(const char *node_key,  enkf_impl_type impl_type , const enkf_config_node_type * config) {
   enkf_node_type * node;
-  enkf_impl_type impl_type; 
-  if (config == NULL)
-    impl_type = STATIC;
-  else
-    impl_type = enkf_config_node_get_impl_type(config);
-
+  
   node = enkf_node_alloc_empty(node_key , config , impl_type);
   if (impl_type == STATIC)
     node->data = node->alloc(NULL);
@@ -700,6 +707,22 @@ enkf_node_type * enkf_node_alloc(const char *node_key,  const enkf_config_node_t
   enkf_node_set_modified(node);
   return node;
 }
+
+
+enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
+  if (config == NULL)
+    util_abort("%s: internal error - must use enkf_node_alloc_static() to allocate static nodes.\n",__func__);
+  
+  return enkf_node_alloc__(enkf_config_node_get_key_ref(config) , enkf_config_node_get_impl_type(config) , config);
+}
+
+
+enkf_node_type * enkf_node_alloc_static(const char * key) {
+  return enkf_node_alloc__(key , STATIC , NULL);
+}
+
+
+
 
 
 void enkf_node_load_static_ecl_kw(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {

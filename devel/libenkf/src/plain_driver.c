@@ -28,7 +28,7 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , state_
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "r");
     enkf_node_fread(node , stream);
     fclose(stream);
@@ -41,7 +41,7 @@ void plain_driver_unlink_node(void * _driver , int report_step , int iens , stat
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
     util_unlink_existing(filename);
     free(filename);
   }
@@ -52,7 +52,7 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream);
     fclose(stream);
@@ -65,12 +65,12 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
    Return true if we have a on-disk representation of the node.
 */
 
-bool plain_driver_has_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+bool plain_driver_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
     bool has_node;
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
     if (util_file_exists(filename))
       has_node = true;
     else

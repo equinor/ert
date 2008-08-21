@@ -342,7 +342,13 @@ static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const ch
 
 
 void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , const enkf_config_node_type * config) {
-  enkf_node_type *enkf_node = enkf_node_alloc(node_key , config);
+  enkf_node_type *enkf_node;
+
+  if (config == NULL)
+    enkf_node = enkf_node_alloc_static(node_key);
+  else
+    enkf_node = enkf_node_alloc(config);
+
   enkf_state_add_node_internal(enkf_state , node_key , enkf_node);    
 
   /* All code below here is special code for plurigaussian fields */
@@ -446,24 +452,36 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
   restart_kw_list_reset(enkf_state->restart_kw_list);
   while (block_kw != NULL) {
     char * kw = util_alloc_string_copy(block_kw);
+    enkf_impl_type impl_type;
     ecl_util_escape_kw(kw);
-    
+
     if (enkf_config_has_key(enkf_state->config , kw)) {
+      enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+      impl_type = enkf_config_node_get_impl_type(config_node);
+    } else
+      impl_type = STATIC;
+    
+
+    if (impl_type == FIELD) {
       restart_kw_list_add(enkf_state->restart_kw_list , kw);
       /* It is a dynamic restart kw like PRES or SGAS */
-      if (enkf_config_impl_type(enkf_state->config , kw) != FIELD) 
-	util_abort("%s: hm - something wrong - can (currently) only load fields from restart files - aborting \n",__func__);
       {
 	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
 	enkf_node_ensure_memory(enkf_node);
 	field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_block_iget_kw(ecl_block , block_kw , 0));
       }
-    } else {
+    } else if (impl_type == STATIC) {
       /* It is a static kw like INTEHEAD or SCON */
       if (enkf_config_include_static_kw(enkf_state->config , kw)) {
 	restart_kw_list_add(enkf_state->restart_kw_list , kw);
-	if (!enkf_state_has_node(enkf_state , kw)) 
-	  enkf_state_add_node(enkf_state , kw , NULL); 
+	if (!enkf_config_has_key(enkf_state->config , kw)) 
+	  enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL);
+	
+	if (!enkf_state_has_node(enkf_state , kw)) {
+	  enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+	  enkf_state_add_node(enkf_state , kw , config_node); 
+	}
+	
 	{
 	  enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
 	  ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
@@ -476,7 +494,9 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 	  enkf_node_free_data(enkf_node);
 	}
       } 
-    }
+    } else
+      util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
+    
     free(kw);
     block_kw = restart_kw_list_get_next(block_kw_list);
   }

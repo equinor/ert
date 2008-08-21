@@ -62,14 +62,14 @@ void plain_driver_parameter_load_node(void * _driver , int _report_step , int ie
   plain_driver_parameter_assert_cast(driver);
   {
     char * filename;
-    filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
+    filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
     while (!util_file_exists(filename)) {
       report_step--;
       if (report_step < 0) 
 	util_abort("%s can not find any stored item for ??? \n",__func__);
       else {
 	free(filename);
-	filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_ensfile_ref(node));
+	filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
       }
     }
     {
@@ -87,7 +87,7 @@ void plain_driver_parameter_save_node(void * _driver , int _report_step , int ie
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream);
     fclose(stream);
@@ -101,7 +101,7 @@ void plain_driver_parameter_unlink_node(void * _driver , int _report_step , int 
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
     util_unlink_existing(filename);
     free(filename);
   }
@@ -119,13 +119,13 @@ void plain_driver_parameter_unlink_node(void * _driver , int _report_step , int 
      instead return false if the report_step we ask for is not present.
 */
 
-bool plain_driver_parameter_has_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
+bool plain_driver_parameter_has_node(void * _driver , int _report_step , int iens , state_enum state , const char * key) {
   int report_step = __get_report_step(_report_step , state);
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   {
     bool has_node;
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_ensfile_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
     if (util_file_exists(filename))
       has_node = true;
     else

@@ -78,7 +78,8 @@ typedef struct enkf_node_struct enkf_node_type;
 typedef void          (enkf_node_ftype1)           (enkf_node_type *);
 typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , void_arg_type * );
 
-enkf_node_type * enkf_node_alloc(const char * , const enkf_config_node_type *);
+enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
+enkf_node_type * enkf_node_alloc_static(const char *);
 void 		 enkf_node_set_modified(enkf_node_type * );
 bool 		 enkf_node_get_modified(const enkf_node_type *);
 enkf_node_type * enkf_node_copyc(const enkf_node_type * );
@@ -113,7 +114,6 @@ void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );
 void   enkf_node_iaddsqr(enkf_node_type * , const enkf_node_type * );
 void   enkf_node_imul(enkf_node_type *    , const enkf_node_type * );
 const  enkf_config_node_type * enkf_node_get_config(const enkf_node_type * );
-const char     *  enkf_node_get_ensfile_ref(const enkf_node_type * );
 const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * );
 const char     *  enkf_node_get_key_ref(const enkf_node_type * );
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);

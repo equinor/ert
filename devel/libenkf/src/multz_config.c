@@ -18,8 +18,6 @@ static multz_config_type * __multz_config_alloc_empty(int size ) {
   
   multz_config_type *multz_config = malloc(sizeof *multz_config);
   multz_config->scalar_config = scalar_config_alloc_empty(size);
-  multz_config->ecl_kw_name = NULL;
-  multz_config->var_type    = parameter;
   
   multz_config->i1   	= util_malloc(size * sizeof *multz_config->i1      , __func__);
   multz_config->i2   	= util_malloc(size * sizeof *multz_config->i2      , __func__);

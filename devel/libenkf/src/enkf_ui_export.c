@@ -41,8 +41,8 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
 
 
   {
-    enkf_node_type * node = enkf_node_alloc(key , config_node);
     enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
+    enkf_node_type * node = enkf_node_alloc(config_node);
 
     if (enkf_fs_has_node(fs , node , report_step , iens , analysis_state)) {
       char * filename = enkf_util_scanf_alloc_filename("File to store field in =>" , AUTO_MKDIR);
@@ -96,6 +96,53 @@ void enkf_ui_export_restart_all(void *_arg) {
 
 
 
+void enkf_ui_export_cell(void *_arg) {
+  void_arg_type   * arg    = void_arg_safe_cast(_arg);
+  enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
+
+  {
+    char * key;
+    const enkf_config_node_type * config_node;
+    enkf_node_type * node;
+    state_enum analysis_state;
+    char       analysis_state_char;
+    int        report_step;
+    int        cell_nr;
+    do {
+      enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , &key , NULL , &analysis_state , NULL);
+      if (analysis_state == analyzed)
+	analysis_state_char = 'A';
+      else
+	analysis_state_char = 'F';
+      
+      config_node = enkf_main_get_config_node(enkf_main , key);
+      if (enkf_config_node_get_impl_type(config_node) != FIELD) {
+	printf("** EnKF parameter:%s is not a field - can not be exported this way.\n", key);
+	free(key);
+      }
+    } while (enkf_config_node_get_impl_type(config_node) != FIELD);  
+
+    cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node));
+    /*
+    {
+      int iens1, int iens2;
+      int iens;
+      enkf_node_type * node = enkf_node_alloc(key , config_node);
+      enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
+
+      
+      for (iens = 0; iens < iens1; iens < iens2) {
+	if (enkf_fs_has_node(fs , node , report_step , iens , analysis_state)) {
+	  char * filename = enkf_util_scanf_alloc_filename("File to store field in =>" , AUTO_MKDIR);
+	  enkf_fs_fread_node(fs , node , report_step , iens , analysis_state);
+	}
+      }
+    }
+    */
+  }
+}
+
+
 void enkf_ui_export_menu(void * _arg) {
   void_arg_type   * arg    = void_arg_safe_cast(_arg);
   enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
@@ -108,6 +155,7 @@ void enkf_ui_export_menu(void * _arg) {
   menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , arg);
   menu_add_item(menu , "Export fields to ECLIPSE restart format (all cells)"    , "lL" , enkf_ui_export_restart_all   , arg);
   menu_add_separator(menu);
+  menu_add_item(menu , "Export cell values to text file(s)" , "cC" , enkf_ui_export_cell , arg);
   menu_run(menu);
   menu_free(menu);
 }

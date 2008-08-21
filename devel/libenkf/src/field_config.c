@@ -407,6 +407,20 @@ inline int field_config_global_index(const field_config_type * config , int i , 
 
 
 
+/**
+   Returns true / false whether a cell is active. 
+*/
+bool field_config_active_cell(const field_config_type * config , int i , int j , int k) {
+  int global_index = field_config_global_index(config , i,j,k);
+  if (global_index >= 0)
+    return true;
+  else
+    return false;
+}
+
+
+
+
 field_init_type field_config_get_init_type(const field_config_type * config) {
   return config->init_type;
 }
