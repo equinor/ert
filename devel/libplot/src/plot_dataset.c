@@ -16,11 +16,13 @@ struct plot_dataset_struct {
     bool finished; /**< Helper value when using animation */
 };
 
+
 void plot_dataset_finished(plot_dataset_type * d, bool flag)
 {
     assert(d != NULL);
     d->finished = flag;
 }
+
 
 bool plot_dataset_is_finished(plot_dataset_type * d)
 {
@@ -133,6 +135,8 @@ plot_dataset_set_data(plot_dataset_type * d, PLFLT * x, PLFLT * y,
 }
 
 
+/*
+  This function seems to work only canvas ...
 void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
 		       int to)
 {
@@ -155,46 +159,28 @@ void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
     }
 
 }
+*/
+
 
 void plot_dataset(plot_type * item, plot_dataset_type * d)
 {
     assert(item != NULL && d != NULL);
     plsstrm(plot_get_stream(item));
+    plcol0((PLINT) plot_datset_get_color(d));
 
-    if (plot_get_window_type(item) == CANVAS) {
-	plplot_canvas_col0(plot_get_canvas(item),
-			   (PLINT) plot_datset_get_color(d));
-    } else {
-	plcol0((PLINT) plot_datset_get_color(d));
-    }
 
     switch (plot_datset_get_style(d)) {
     case LINE:
-	if (plot_get_window_type(item) == CANVAS) {
-	    plplot_canvas_line(plot_get_canvas(item),
-			       plot_datset_get_length(d),
-			       plot_datset_get_vector_x(d),
-			       plot_datset_get_vector_y(d));
-	} else {
-	    plline(plot_datset_get_length(d),
-		   plot_datset_get_vector_x(d),
-		   plot_datset_get_vector_y(d));
-	}
+      plline(plot_datset_get_length(d),
+	     plot_datset_get_vector_x(d),
+	     plot_datset_get_vector_y(d));
 	break;
     case POINT:
-	if (plot_get_window_type(item) == CANVAS) {
-	    plplot_canvas_ssym(plot_get_canvas(item), 0, SYMBOL_SIZE);
-	    plplot_canvas_poin(plot_get_canvas(item),
-			       plot_datset_get_length(d),
-			       plot_datset_get_vector_x(d),
-			       plot_datset_get_vector_y(d), SYMBOL);
-	} else {
-	    plssym(0, SYMBOL_SIZE);
-	    plpoin(plot_datset_get_length(d),
-		   plot_datset_get_vector_x(d),
-		   plot_datset_get_vector_y(d), SYMBOL);
-	}
-	break;
+      plssym(0, SYMBOL_SIZE);
+      plpoin(plot_datset_get_length(d),
+	     plot_datset_get_vector_x(d),
+	     plot_datset_get_vector_y(d), SYMBOL);
+      break;
     case BLANK:
 	break;
     default:
@@ -226,8 +212,6 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
 	return false;
     }
 
-    printf("ID[%d] %s: Adding dataset %p to list with length %d\n",
-	   plot_get_stream(item), __func__, d, d->length);
     i = list_get_size(plot_get_datasets(item));
     list_append_ref(plot_get_datasets(item), d);
     assert(i <= list_get_size(plot_get_datasets(item)));
