@@ -18,6 +18,69 @@
 #include <havana_fault.h>
 #include <gen_data.h>
 
+/**
+   A small illustration (says more than thousand words ...) of how the
+   enkf_node, enkf_config_node, field[1] and field_config[1] objects are
+   linked.
+
+
+     ================
+     |              |   o-----------
+     |  ================           |                =====================
+     |  |              |   o--------                |                   |
+     |	|  ================        |------------->  |                   |
+     |	|  |		  |        |                |  enkf_config_node |
+     |	|  |		  |        |                |                   |
+     ===|  |  enkf_node   |  o------                |                   |
+      o	|  |		  |                         |                   |
+      |	===|		  |                         =====================
+      |	 o |		  |                                   o
+      |	 | ================                                   |
+      |  |        o                                           |
+      \__|        |					      |
+         \________/					      |
+             |						      |
+             |						      |
+             |						      |
+            \|/						      |
+     							      |
+     ================                       		     \|/
+     |              |   o-----------
+     |  ================           |                =====================
+     |  |              |   o--------                |                   |
+     |	|  ================        |------------->  |                   |
+     |	|  |		  |        |                |  field_config     |
+     |	|  |		  |        |                |                   |
+     ===|  |  field       |  o------                |                   |
+       	|  |		  |                         |                   |
+     	===|		  |                         =====================
+     	   |		  |
+     	   ================
+
+
+   To summarize in words:
+
+   * The enkf_node object is an abstract object, which again contains
+     a spesific enkf_object, like e.g. the field objects shown
+     here. In general we have an ensemble of enkf_node objects.
+
+   * The enkf_node objects contain a pointer to a enkf_config_node
+     object.
+
+   * The enkf_config_node object contains a pointer to the spesific
+     config object, i.e. field_config in this case.
+
+   * All the field objects contain a pointer to a field_config object.
+
+
+   [1]: field is just an example, and could be replaces with any of
+        the enkf object types.
+*/
+
+
+
+
+
 
 typedef struct serial_state_struct serial_state_type;
 
@@ -43,7 +106,7 @@ struct enkf_node_struct {
 
   serialize_ftype    *serialize;
   deserialize_ftype  *deserialize;
-  
+
   initialize_ftype   		 * initialize;
   free_ftype         		 * freef;
   clear_ftype        		 * clear;
@@ -52,25 +115,25 @@ struct enkf_node_struct {
   iadd_ftype         		 * iadd;
   imul_ftype         		 * imul;
   isqrt_ftype        		 * isqrt;
-  iaddsqr_ftype      		 * iaddsqr;   
+  iaddsqr_ftype      		 * iaddsqr;
   ensemble_fprintf_results_ftype * fprintf_results;
 
   serial_state_type  *serial_state;
   char               *node_key;  /* Bør vel bare være i config node */
   void               *data;
   bool                memory_allocated;
-  bool                modified; 
+  bool                modified;
   const enkf_config_node_type *config;
 };
 
 
 
 
-const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) { 
-  return node->config; 
+const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) {
+  return node->config;
 }
 
-/** 
+/**
 This function returns a pointer to the ensfile of the node. Observe
 that nodes representing static ECLIPSE keywords do not have config
 information, so in this case the hash_key is returned. It is important
@@ -80,11 +143,11 @@ can not be part of a filename.
 */
 
 /*
-const char * enkf_node_get_ensfile_ref(const enkf_node_type * node ) { 
-  if (node->config == NULL) 
+const char * enkf_node_get_ensfile_ref(const enkf_node_type * node ) {
+  if (node->config == NULL)
     return node->node_key;
-  else 
-    return enkf_config_node_get_ensfile_ref(node->config); 
+  else
+    return enkf_config_node_get_ensfile_ref(node->config);
 }
 */
 
@@ -98,14 +161,14 @@ const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { retu
 /*
   1. serialize: input : internal_offset
                 output: elements_added , state_complete
-     
+
   2. serial_state_update_forecast()
-  
+
   3. EnkF update multiply X * serial_state.
 
   4. deserialize: input:  elements_added
                   output: updated internal_offste , state_complete
-  
+
   5. serial_state_update_serialized()
 */
 
@@ -139,7 +202,7 @@ static void serial_state_free(serial_state_type * state) {
 static bool serial_state_do_serialize(const serial_state_type * state) {
   if (state->state == forecast)
     return true;
-  else     
+  else
     return false;
 }
 
@@ -147,7 +210,7 @@ static bool serial_state_do_serialize(const serial_state_type * state) {
 static bool serial_state_do_deserialize(const serial_state_type * state) {
   if (state->state == serialized)
     return true;
-  else     
+  else
     return false;
 }
 
@@ -193,7 +256,7 @@ static void serial_state_init_deserialize(const serial_state_type * serial_state
 /*****************************************************************/
 
 /*
-  All the function pointers REALLY should be in the config object ... 
+  All the function pointers REALLY should be in the config object ...
 */
 
 
@@ -220,12 +283,8 @@ enkf_node_type * enkf_node_copyc(const enkf_node_type * src) {
   }
   {
     enkf_node_type * new;
-    
-    if (enkf_node_get_impl_type(src) == STATIC)
-      new = enkf_node_alloc_static(enkf_node_get_key_ref(src));
-    else
-      new = enkf_node_alloc(src->config);
-    
+    new = enkf_node_alloc(src->config);
+
     printf("%s: not properly implemented ... \n",__func__);
     abort();
     return new;
@@ -258,8 +317,8 @@ enkf_var_type enkf_node_get_var_type(const enkf_node_type * enkf_node) {
 
 
 
-void * enkf_node_value_ptr(const enkf_node_type * enkf_node) { 
-  return enkf_node->data; 
+void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
+  return enkf_node->data;
 }
 
 
@@ -272,7 +331,7 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
    This means that it is the responsibility of the node code to know
    wether a full file name is required, or only a path.
 */
-  
+
 void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
   FUNC_ASSERT(enkf_node->ecl_write);
   {
@@ -320,7 +379,7 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
 
 
 void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
-  if (!enkf_node->memory_allocated) 
+  if (!enkf_node->memory_allocated)
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
   {
     FUNC_ASSERT(enkf_node->fwrite_f);
@@ -348,7 +407,7 @@ void enkf_node_ensemble_fprintf_results(const enkf_node_type ** ensemble , int e
     int iens;
     for (iens=0; iens < ens_size; iens++)
       data_pointers[iens] = ensemble[iens]->data;
-    
+
     ensemble[0]->fprintf_results((const void **) data_pointers , ens_size , filename);
     free(filename);
     free(data_pointers);
@@ -386,7 +445,7 @@ int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , do
   if (serial_state_do_serialize(enkf_node->serial_state)) {
     int internal_offset = serial_state_get_internal_offset(enkf_node->serial_state);
     int elements_added  = enkf_node->serialize(enkf_node->data , internal_offset , serial_data_size , serial_data , stride , offset , complete);
-    
+
     serial_state_update_forecast(enkf_node->serial_state , offset , elements_added , *complete);
     return elements_added;
   } return 0;
@@ -478,8 +537,8 @@ void enkf_node_free__(void *void_node) {
   enkf_node_free((enkf_node_type *) void_node);
 }
 
-const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) { 
-  return enkf_node->node_key; 
+const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) {
+  return enkf_node->node_key;
 }
 
 
@@ -493,15 +552,17 @@ const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) {
 
 
 /* Manual inheritance - .... */
-static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_config_node_type *config , enkf_impl_type impl_type) {
+static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *config) {
+  const char *node_key     = enkf_config_node_get_key_ref(config);
+  enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
   enkf_node_type * node  = util_malloc(sizeof * node , __func__);
   node->config           = config;
   node->node_key         = util_alloc_string_copy(node_key);
   node->data             = NULL;
   node->memory_allocated = false;
 
-  /* 
-     Start by initializing all function pointers 
+  /*
+     Start by initializing all function pointers
      to NULL.
   */
   node->realloc_data   = NULL;
@@ -656,7 +717,7 @@ static enkf_node_type * enkf_node_alloc_empty(const char *node_key,  const enkf_
     node->free_data    = gen_data_free_data__;
     node->ecl_load     = gen_data_ecl_load__;
     node->serialize    = gen_data_serialize__;
-    node->deserialize  = gen_data_deserialize__; 
+    node->deserialize  = gen_data_deserialize__;
     break;
   default:
     fprintf(stderr,"%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);
@@ -695,15 +756,12 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
 #undef CASE_SET
 
 
-static enkf_node_type * enkf_node_alloc__(const char *node_key,  enkf_impl_type impl_type , const enkf_config_node_type * config) {
-  enkf_node_type * node;
-  
-  node = enkf_node_alloc_empty(node_key , config , impl_type);
-  if (impl_type == STATIC)
-    node->data = node->alloc(NULL);
-  else
-    enkf_node_alloc_domain_object(node);
-  
+static enkf_node_type * enkf_node_alloc__(const enkf_config_node_type * config) {
+  enkf_node_type * node    = enkf_node_alloc_empty(config);
+
+  node = enkf_node_alloc_empty(config);
+  enkf_node_alloc_domain_object(node);
+
   enkf_node_set_modified(node);
   return node;
 }
@@ -712,21 +770,18 @@ static enkf_node_type * enkf_node_alloc__(const char *node_key,  enkf_impl_type 
 enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
   if (config == NULL)
     util_abort("%s: internal error - must use enkf_node_alloc_static() to allocate static nodes.\n",__func__);
-  
-  return enkf_node_alloc__(enkf_config_node_get_key_ref(config) , enkf_config_node_get_impl_type(config) , config);
+
+  return enkf_node_alloc__(config);
 }
 
 
-enkf_node_type * enkf_node_alloc_static(const char * key) {
-  return enkf_node_alloc__(key , STATIC , NULL);
-}
 
 
 
 
 
 void enkf_node_load_static_ecl_kw(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {
-  if (enkf_node_get_impl_type(enkf_node) != STATIC) 
+  if (enkf_node_get_impl_type(enkf_node) != STATIC)
     util_abort("%s: internal error - this function should only be called with static nodes. \n" , __func__);
 
   ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
