@@ -12,4 +12,5 @@ void                  sched_kw_tstep_free(sched_kw_tstep_type * );
 sched_kw_tstep_type * sched_kw_tstep_fread_alloc(int *  , double * , const time_t *, int , time_t , FILE * , bool *);
 void                  sched_kw_tstep_fwrite(const sched_kw_tstep_type * , FILE *);
 void                  sched_kw_tstep_iterate_current(const sched_kw_tstep_type * , int *);
+int                   sched_kw_tstep_get_size(const sched_kw_tstep_type *);
 #endif

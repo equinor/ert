@@ -9,6 +9,7 @@
 #include <sched_util.h>
 #include <sched_kw_compdat.h>
 #include <sched_kw_dates.h>
+#include <sched_kw_tstep.h>
 #include <sched_kw.h>
 #include <sched_file.h>
 #include <history.h>
@@ -475,8 +476,12 @@ int sched_file_count_report_steps(const sched_file_type * s) {
   while (list_node != NULL) {
     const sched_kw_type * sched_kw = list_node_value_ptr(list_node);
 
-    if (sched_kw_get_type(sched_kw) == DATES)
+    if (sched_kw_get_type(sched_kw) == DATES )
       report_steps++;
+    if (sched_kw_get_type(sched_kw) == TSTEP )
+    {
+      report_steps += sched_kw_tstep_get_size(sched_kw_get_data_ref(sched_kw));
+    }
 
     list_node = list_node_get_next(list_node);
   }

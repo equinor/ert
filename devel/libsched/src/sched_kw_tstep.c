@@ -176,3 +176,9 @@ void sched_kw_tstep_iterate_current(const sched_kw_tstep_type * kw , int *curren
   (*current_tstep_nr) += list_get_size(kw->tstep_list);
 }
 
+
+
+int sched_kw_tstep_get_size(const sched_kw_tstep_type * kw)
+{
+  return list_get_size(kw->tstep_list);
+}
