@@ -76,11 +76,13 @@ void enkf_ui_run_restart__(void * _void_arg) {
   void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
   enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
   enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
+  const int prompt_len  = 35;
+  const int last_report = enkf_sched_get_last_report(enkf_sched);
   int start_report;
   state_enum state;
 
-  start_report = util_scanf_int("Report step ==============> ",0);
-  state        = enkf_ui_util_scanf_state("Analyzed/forecast [A|F] ==> ");
+  start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
+  state        = enkf_ui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
   
   enkf_ui_run(enkf_main , enkf_sched , start_report , state);
 }

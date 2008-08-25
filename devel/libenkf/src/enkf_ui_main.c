@@ -7,6 +7,7 @@
 #include <menu.h>
 #include <enkf_ui_run.h>
 #include <enkf_ui_export.h>
+#include <enkf_ui_plot.h>
 #include <void_arg.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
@@ -35,6 +36,7 @@ void enkf_ui_main_menu(enkf_main_type * enkf_main , enkf_sched_type * enkf_sched
     menu_type * menu = menu_alloc("EnKF main menu" , "qQ");
     menu_add_item(menu , "Run EnKF"                     , "rR" , enkf_ui_run_menu    , run_arg);
     menu_add_item(menu , "Export data to other formats" , "eE" , enkf_ui_export_menu , run_arg);
+    menu_add_item(menu , "Plot results"                 , "pP" , enkf_ui_plot_menu   , run_arg);
     menu_run(menu);
     menu_free(menu);
   }
