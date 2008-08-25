@@ -8,7 +8,7 @@ int main()
 
     item = plot_alloc();
     plot_set_window_size(item, 640, 480);
-    plot_initialize(item, "png", "test.png", NORMAL);
+    plot_initialize(item, "png", "test.png");
 
     {
 	plot_dataset_type *d;

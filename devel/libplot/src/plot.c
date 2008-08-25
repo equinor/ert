@@ -46,8 +46,6 @@ struct plot_struct {
     const char *ylabel;	 /**< Label for the y-axis */
     const char *title;	/**< Plot title */
     plot_color_type label_color;  /**< Color for the labels */
-    plot_window_type w;	/**< Defined if it is a canvas or a normal plot */
-    PlplotCanvas *canvas; /**< The Canvas Widget pointer (gcw driver) */
 
     int height;	/**< The height of your plot window */
     int width; /**< The width of your plot window */
@@ -60,17 +58,6 @@ int plot_get_stream(plot_type * item)
     return item->stream;
 }
 
-plot_window_type plot_get_window_type(plot_type * item)
-{
-    assert(item != NULL);
-    return item->w;
-}
-
-PlplotCanvas *plot_get_canvas(plot_type * item)
-{
-    assert(item != NULL);
-    return item->canvas;
-}
 
 list_type *plot_get_datasets(plot_type * item)
 {
@@ -89,7 +76,6 @@ plot_type *plot_alloc()
     plot_type *item;
 
     item = malloc(sizeof *item);
-    item->w = NORMAL;
     item->stream = -1;
     item->xlabel = NULL;
     item->ylabel = NULL;
@@ -99,6 +85,8 @@ plot_type *plot_alloc()
     item->width = DEFAULT_WIDTH;
     return item;
 }
+
+
 
 /**
  * @brief Setup window size.
@@ -115,6 +103,7 @@ void plot_set_window_size(plot_type * item, int width, int height)
     item->height = height;
 }
 
+
 /**
  * @brief Initialize a new plot
  * @param item your current plot
@@ -125,61 +114,43 @@ void plot_set_window_size(plot_type * item, int width, int height)
  * This function has to be called before you set any other information 
  * on the plot_type *item. This is because plinit() gets called inside this function.
  */
-void plot_initialize(plot_type * item, const char *dev,
-		     const char *filename, plot_window_type w)
-{
-    static int output_stream = 0;
-    static int tot_streams = 0;
-    pthread_mutex_t update_lock;
-    char buf[16];
-    char *drvopt = "replot=1,text=0";	/* disables truetype for gcw */
+void plot_initialize(plot_type * item, const char *dev, const char *filename) {
+  static int output_stream = 0;
+  static int tot_streams = 0;
+  pthread_mutex_t update_lock;
+  char buf[16];
+  
+  assert(item != NULL);
+  item->stream = output_stream;
+  item->tot_streams = &tot_streams;
+  item->device = dev;
+  item->filename = filename;
+  plsstrm(item->stream);
+  
+  if (dev) {
+    if (strcmp(item->device, "xwin"))
+      plsfnam(item->filename);
+  }
+  if (dev)
+    plsdev(item->device);
 
-    assert(item != NULL);
-    item->stream = output_stream;
-    item->tot_streams = &tot_streams;
-    item->device = dev;
-    item->filename = filename;
-    item->w = w;
-    plsstrm(item->stream);
-
-    switch (item->w) {
-    case CANVAS:
-	plsetopt("drvopt", drvopt);
-	item->canvas = plplot_canvas_new();
-	plplot_canvas_scol0(item->canvas, WHITE, 255, 255, 255);
-	plplot_canvas_scol0(item->canvas, BLACK, 0, 0, 0);
-	plplot_canvas_set_size(item->canvas, item->width, item->height);
-	plplot_canvas_use_persistence(item->canvas, TRUE);
-	item->stream = plplot_canvas_get_stream_number(item->canvas);
-	break;
-    case NORMAL:
-	if (dev) {
-	    if (strcmp(item->device, "xwin"))
-		plsfnam(item->filename);
-	}
-	if (dev)
-	    plsdev(item->device);
-	plscol0(WHITE, 255, 255, 255);
-	plscol0(BLACK, 0, 0, 0);
-	snprintf(buf, sizeof(buf), "%dx%d", item->width, item->height);
-	plsetopt("geometry", buf);
-	plfontld(0);
-	plinit();
-	break;
-    default:
-	fprintf(stderr, "ERROR: No window type specified!\n");
-	break;
-    }
-    fprintf(stderr, "ID[%d] SETTING UP NEW OUTPUT STREAM\n", item->stream);
-
-    /* Make this threadsafe */
-    pthread_mutex_init(&update_lock, NULL);
-    pthread_mutex_lock(&update_lock);
-    /* Use another input stream next time */
-    output_stream++;
-    tot_streams++;
-    pthread_mutex_unlock(&update_lock);
+  plscol0(WHITE, 255, 255, 255);
+  plscol0(BLACK, 0, 0, 0);
+  snprintf(buf, sizeof(buf), "%dx%d", item->width, item->height);
+  plsetopt("geometry", buf);
+  plfontld(0);
+  plinit();
+  
+  /* Make this threadsafe */
+  pthread_mutex_init(&update_lock, NULL);
+  pthread_mutex_lock(&update_lock);
+  /* Use another input stream next time */
+  output_stream++;
+  tot_streams++;
+  pthread_mutex_unlock(&update_lock);
 }
+
+
 
 /**
  * @brief Free all the datasets in a plot item
@@ -218,27 +189,17 @@ void plot_free(plot_type * item)
     pthread_mutex_t update_lock;
 
     assert(item != NULL);
-    fprintf(stderr, "ID[%d] %s: free on %p\n", item->stream,
-	    __func__, item);
     plot_free_all_datasets(item);
 
-    if (item->w == CANVAS) {
-	plplot_canvas_finalize(item->canvas);
-    } else {
-	plsstrm(item->stream);
-	plend1();
-    }
+    plsstrm(item->stream);
+    plend1();
 
-    fprintf(stderr, "ID[%d] %s: ENDING CURRENT STREAM\n", item->stream,
-	    __func__);
     pthread_mutex_init(&update_lock, NULL);
     pthread_mutex_lock(&update_lock);
     --*item->tot_streams;
-    if (!*item->tot_streams) {
-	fprintf(stderr, "ID[%d] %s: Cleaning up!\n", item->stream,
-		__func__);
-	plend();
-    }
+    if (!*item->tot_streams) 
+      plend();
+    
     pthread_mutex_unlock(&update_lock);
     util_safe_free(item);
 }
@@ -261,13 +222,11 @@ void plot_data(plot_type * item)
 
 	next_node = list_node_get_next(node);
 	tmp = list_node_value_ptr(node);
-	printf
-	    ("ID[%d] %s: plotting graph with %d samples in the x-y vectors\n",
-	     item->stream, __func__, plot_datset_get_length(tmp));
 	plot_dataset(item, tmp);
 	node = next_node;
     }
 }
+
 
 void plot_errorbar_data(plot_type * item)
 {
@@ -402,8 +361,6 @@ plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
 		const char *title, plot_color_type color)
 {
     assert(item != NULL);
-    printf("ID[%d] %s: setting the labels for the plot\n", item->stream,
-	   __func__);
     item->xlabel = xlabel;
     item->ylabel = ylabel;
     item->title = title;
@@ -426,55 +383,25 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
 		  PLFLT ymin, PLFLT ymax)
 {
     assert(item != NULL);
-    printf("ID[%d] %s: setting the viewport for the plot\n", item->stream,
-	   __func__);
-
-    switch (item->w) {
-    case CANVAS:
-	plplot_canvas_col0(item->canvas, BLACK);
-	plplot_canvas_adv(item->canvas, 0);
-	plplot_canvas_vsta(item->canvas);
-	plplot_canvas_wind(item->canvas, xmin, xmax, ymin, ymax);
-	plplot_canvas_schr(item->canvas, 0, LABEL_FONTSIZE);
-	plplot_canvas_box(item->canvas, "bcnst", 0.0, 0, "bcnstv", 0.0, 0);
-	plplot_canvas_adv(item->canvas, 0);
-	break;
-    case NORMAL:
-	plsstrm(item->stream);
-	pladv(0);
-	plvsta();
-	plwind(xmin, xmax, ymin, ymax);
-	plcol0(BLACK);
-	plschr(0, LABEL_FONTSIZE);
-	plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
-	break;
-    default:
-	break;
-    }
-
+    plsstrm(item->stream);
+    pladv(0);
+    plvsta();
+    plwind(xmin, xmax, ymin, ymax);
+    plcol0(BLACK);
+    plschr(0, LABEL_FONTSIZE);
+    plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+    
     if (!item->xlabel || !item->ylabel || !item->title) {
-	fprintf(stderr,
-		"ERROR ID[%d]: you need to set lables before setting the viewport!\n",
-		item->stream);
+      fprintf(stderr,
+	      "ERROR ID[%d]: you need to set lables before setting the viewport!\n",
+	      item->stream);
     } else {
-	switch (item->w) {
-	case CANVAS:
-	    plplot_canvas_col0(item->canvas, item->label_color);
-	    plplot_canvas_schr(item->canvas, 0, LABEL_FONTSIZE);
-	    plplot_canvas_lab(item->canvas, item->xlabel, item->ylabel,
-			      item->title);
-	    plplot_canvas_adv(item->canvas, 0);
-	    break;
-	case NORMAL:
-	    plschr(0, LABEL_FONTSIZE);
-	    plcol0(item->label_color);
-	    pllab(item->xlabel, item->ylabel, item->title);
-	    break;
-	default:
-	    break;
-	}
+      plschr(0, LABEL_FONTSIZE);
+      plcol0(item->label_color);
+      pllab(item->xlabel, item->ylabel, item->title);
     }
 }
+
 
 
 /**
@@ -487,51 +414,53 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
  * 
  * Find the extrema values in the plot item, checks all added datasets.
  */
-void plot_get_extrema(plot_type * item, double *x_max, double *y_max,
-		      double *x_min, double *y_min)
-{
-    list_node_type *node, *next_node;
-    double tmp_x_max = 0;
-    double tmp_y_max = 0;
-    double tmp_x_min = 0;
-    double tmp_y_min = 0;
-    double *x, *y;
-    int i;
-    bool flag = false;
 
-    assert(item != NULL);
-    node = list_get_head(plot_get_datasets(item));
-    while (node != NULL) {
-	plot_dataset_type *tmp;
-	next_node = list_node_get_next(node);
-	tmp = list_node_value_ptr(node);
-	x = plot_datset_get_vector_x(tmp);
-	y = plot_datset_get_vector_y(tmp);
-	for (i = 0; i <= plot_datset_get_length(tmp); i++) {
-	    if (!flag) {
-		tmp_y_max = y[i];
-		tmp_y_min = y[i];
-		tmp_x_max = x[i];
-		tmp_x_min = x[i];
-		flag = true;
-	    }
-	    if (y[i] > tmp_y_max)
-		tmp_y_max = y[i];
-	    if (y[i] < tmp_y_min)
-		tmp_y_min = y[i];
-	    if (x[i] > tmp_x_max) 
-		tmp_x_max = x[i];
-	    if (x[i] < tmp_x_min)
-		tmp_x_min = x[i];
-	}
-	node = next_node;
+void plot_get_extrema(plot_type * item, double *x_max, double *y_max,
+		      double *x_min, double *y_min) {
+  list_node_type *node, *next_node;
+  double tmp_x_max = 0;
+  double tmp_y_max = 0;
+  double tmp_x_min = 0;
+  double tmp_y_min = 0;
+  double *x, *y;
+  int i;
+  bool flag = false;
+ 
+  assert(item != NULL);
+  node = list_get_head(plot_get_datasets(item));
+  while (node != NULL) {
+    plot_dataset_type *tmp;
+    next_node = list_node_get_next(node);
+    tmp = list_node_value_ptr(node);
+    x = plot_datset_get_vector_x(tmp);
+    y = plot_datset_get_vector_y(tmp);
+    for (i = 0; i <= plot_datset_get_length(tmp); i++) {
+      if (!flag) {
+	tmp_y_max = y[i];
+	tmp_y_min = y[i];
+	tmp_x_max = x[i];
+	tmp_x_min = x[i];
+	flag = true;
+      }
+      if (y[i] > tmp_y_max)
+	tmp_y_max = y[i];
+      if (y[i] < tmp_y_min)
+	tmp_y_min = y[i];
+      if (x[i] > tmp_x_max) 
+	tmp_x_max = x[i];
+      if (x[i] < tmp_x_min)
+	tmp_x_min = x[i];
     }
-    if (x_max)
-	*x_max = tmp_x_max;
-    if (y_max)
-	*y_max = tmp_y_max;
-    if (x_min)
-	*x_min = tmp_x_min;
-    if (y_min)
-	*y_min = tmp_y_min;
+    node = next_node;
+  }
+  if (x_max)
+    *x_max = tmp_x_max;
+  if (y_max)
+    *y_max = tmp_y_max;
+  if (x_min)
+    *x_min = tmp_x_min;
+  if (y_min)
+    *y_min = tmp_y_min;
 }
+
+

@@ -21,7 +21,7 @@ int main(int argc, const char **argv)
 
     item = plot_alloc();
     plot_set_window_size(item, 1152, 768);
-    plot_initialize(item, "png", "punqs3.png", NORMAL);
+    plot_initialize(item, "png", "punqs3.png");
 
     {
 	char str[PATH_MAX];

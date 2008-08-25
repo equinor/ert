@@ -13,7 +13,7 @@ int main(int argc, const char **argv)
     PLFLT y[N];
 
     item2 = plot_alloc();
-    plot_initialize(item2, "png", "martin.png", NORMAL);
+    plot_initialize(item2, "png", "martin.png");
 
     for (i = 0; i <= N; i++) {
 	x[i] = i * period / N;
@@ -47,7 +47,7 @@ int main(int argc, const char **argv)
      * Create a second new plot window, and fill it with only 1 graph 
      */
     item = plot_alloc();
-    plot_initialize(item, "jpeg", "plot.jpg", NORMAL);
+    plot_initialize(item, "jpeg", "plot.jpg");
     for (i = 0; i <= N; i++) {
 	x[i] = i * period / N;
 	y[i] = exp(x[i]);
