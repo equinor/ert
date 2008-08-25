@@ -434,6 +434,10 @@ int enkf_sched_get_schedule_num_reports(const enkf_sched_type * enkf_sched) {
 }
 
 
+int enkf_sched_get_last_report(const enkf_sched_type * enkf_sched) {
+  return enkf_sched->last_report;
+}
+
 int enkf_sched_get_num_nodes(const enkf_sched_type * enkf_sched) {
   return enkf_sched->size;
 }

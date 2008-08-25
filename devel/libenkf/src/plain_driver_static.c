@@ -58,18 +58,9 @@ static plain_driver_static_type * plain_driver_static_init(void *_driver) {
 char * plain_driver_static_alloc_filename(plain_driver_static_type * driver, int report_step , int iens , state_enum state , enkf_node_type * node , bool auto_mkdir) {
   ecl_static_kw_type * ecl_static = enkf_node_value_ptr( node );
   ecl_static_kw_assert_type(ecl_static);
-  {
-    /*
-      Observe that the function path_fmt_alloc_file() assumes that the
-      final argument (the filename) is a string; so although it is
-      numeric in this case we must convert that integer to a string.
-    */
-    char * counter_str = util_alloc_sprintf("%d" , ecl_static_kw_get_counter(ecl_static));
-    char * filename    = path_fmt_alloc_file(driver->path , auto_mkdir , report_step , iens , enkf_node_get_key_ref(node) , counter_str);
-    free(counter_str);
-    return filename;
-  }
+  return path_fmt_alloc_file(driver->path , auto_mkdir , report_step , iens , enkf_node_get_key_ref(node) , ecl_static_kw_get_counter(ecl_static));
 }
+
 
 
 
@@ -115,20 +106,9 @@ void plain_driver_static_save_node(void * _driver , int report_step , int iens ,
 
 bool plain_driver_static_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
   util_abort("%s: internal error - the filesystem does not support query on static nodes ... \n",__func__);
-  /*
-    plain_driver_static_type * driver = plain_driver_static_init(_driver);
-    {
-    bool has_node;
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , key , false);
-    if (util_file_exists(filename))
-    has_node = true;
-    else
-    has_node = false;
-    free(filename);
-    return has_node;
-    }
-  */
+  return false;
 }
+
 
 
 
@@ -154,19 +134,15 @@ void * plain_driver_static_alloc(const char * root_path , const char * driver_pa
     /**
        The format is:
 
-       [root_path]/driver_path/<STATIC-KW>
-
-       The final integer is a filename and added in the
-       ***_alloc_filename() function, and as such not actually part of
-       the directory format.
+       [root_path]/driver_path/<STATIC-KW>/<INTEGER>
     */
 
     if (root_path != NULL) 
-      path = util_alloc_sprintf("%s%c%s%c%s" , root_path , UTIL_PATH_SEP_CHAR , driver_path , UTIL_PATH_SEP_CHAR , "%s" );
+      path = util_alloc_sprintf("%s%c%s%c%s%c%s" , root_path , UTIL_PATH_SEP_CHAR , driver_path , UTIL_PATH_SEP_CHAR , "%s" , UTIL_PATH_SEP_CHAR , "%d");
     else
-      path = util_alloc_sprintf("%s%c%s" , driver_path , UTIL_PATH_SEP_CHAR , "%s");
+      path = util_alloc_sprintf("%s%c%s%c%s" , driver_path , UTIL_PATH_SEP_CHAR , "%s" , UTIL_PATH_SEP_CHAR , "%d");
     
-    driver->path = path_fmt_alloc_directory_fmt( path );
+    driver->path = path_fmt_alloc_path_fmt( path );
     free(path);
   }
   driver->plain_driver_static_id = PLAIN_DRIVER_STATIC_ID;

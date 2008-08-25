@@ -333,6 +333,7 @@ void field_fread(field_type * field , FILE * stream) {
     util_fread_compressed(field->data , stream);
   else
     enkf_util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
+
 }
 
 
@@ -638,6 +639,37 @@ void field_ijk_get(const field_type * field , int i , int j , int k , void * val
   int global_index = field_config_global_index(field->config , i , j , k);
   int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
   memcpy(value , &field->data[global_index * sizeof_ctype] , sizeof_ctype);
+}
+
+
+
+/**
+   Takes a global index (counting only active cells) as input, and
+   returns a double.
+*/
+
+
+double field_iget_double(const field_type * field , int global_index) {
+  ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+  int sizeof_ctype 	 = field_config_get_sizeof_ctype(field->config);
+  char buffer[8]; /* Enough to hold one double */
+  memcpy(buffer , &field->data[global_index * sizeof_ctype] , sizeof_ctype);
+  if ( ecl_type == ecl_double_type ) 
+    return *((double *) buffer);
+  else if (ecl_type == ecl_float_type) 
+    {
+      double double_value;
+      float  float_value;
+      
+      float_value  = *((float *) buffer);
+      double_value = float_value;
+      
+      return double_value;
+    }
+  else {
+    util_abort("%s: failed - wrong internaø type \n",__func__);
+    return -1;
+  }
 }
 
 

@@ -342,15 +342,10 @@ static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const ch
 
 
 void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , const enkf_config_node_type * config) {
-  enkf_node_type *enkf_node;
-
-  if (config == NULL)
-    enkf_node = enkf_node_alloc_static(node_key);
-  else
-    enkf_node = enkf_node_alloc(config);
-
+  enkf_node_type *enkf_node = enkf_node_alloc(config);
   enkf_state_add_node_internal(enkf_state , node_key , enkf_node);    
-
+  
+  
   /* All code below here is special code for plurigaussian fields */
   /*{
     enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
@@ -456,7 +451,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
     ecl_util_escape_kw(kw);
 
     if (enkf_config_has_key(enkf_state->config , kw)) {
-      enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+      const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
       impl_type = enkf_config_node_get_impl_type(config_node);
     } else
       impl_type = STATIC;
@@ -478,7 +473,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 	  enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL);
 	
 	if (!enkf_state_has_node(enkf_state , kw)) {
-	  enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+	  const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
 	  enkf_state_add_node(enkf_state , kw , config_node); 
 	}
 	

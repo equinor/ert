@@ -128,7 +128,7 @@ field_file_format_type field_config_manual_file_type(const char * prompt , bool 
   printf(" %3d: %s.\n" , ecl_grdecl_file , field_config_file_type_string(ecl_grdecl_file));
   printf("----------------------------------------------------------------\n");
   do {
-    int_file_type = util_scanf_int("===> ");
+    int_file_type = util_scanf_int("===> " , 0);
     if (!field_config_valid_file_type(int_file_type, import))
       int_file_type = unknown_file;
   } while(int_file_type == unknown_file);
@@ -257,7 +257,7 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , cons
     int config_index = 0;
     if (init_type & load_unique) {
       ASSERT_CONFIG_FILE(config_index , config_len);
-      config->init_file_fmt = path_fmt_alloc_file_fmt(config_files[config_index]);
+      config->init_file_fmt = path_fmt_alloc_path_fmt(config_files[config_index]);
       config_index++;
     }
 

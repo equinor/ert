@@ -93,16 +93,15 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , j
   enkf_main->ensemble       = malloc(ens_size * sizeof * enkf_main->ensemble);
   {
     int iens , keys , ik;
-    int iens_offset = enkf_config_get_ens_offset(config);
     char **keylist  = enkf_config_alloc_keylist(config , &keys);
     msg_type * msg  = msg_alloc("Initializing member: ");
     msg_show(msg);
     for (iens = 0; iens < ens_size; iens++) {
-      char * run_path       = enkf_config_alloc_run_path(config , iens + iens_offset);
-      char * eclbase        = enkf_config_alloc_eclbase (config , iens + iens_offset);
-      char * ecl_store_path = enkf_config_alloc_ecl_store_path (config , iens + iens_offset);
+      char * run_path       = enkf_config_alloc_run_path(config , iens );
+      char * eclbase        = enkf_config_alloc_eclbase (config , iens );
+      char * ecl_store_path = enkf_config_alloc_ecl_store_path (config , iens);
       msg_update_int(msg , "%03d" , iens);
-      enkf_main->ensemble[iens] = enkf_state_alloc(config   , iens + iens_offset , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
+      enkf_main->ensemble[iens] = enkf_state_alloc(config   , iens , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
                joblist  , 
                run_path , 
                eclbase  , 

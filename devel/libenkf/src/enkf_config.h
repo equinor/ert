@@ -51,7 +51,7 @@ int                           enkf_config_get_ens_size(const enkf_config_type * 
 void enkf_config_free(enkf_config_type * );
 bool enkf_config_get_unified(const enkf_config_type * );
 
-enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  enkf_site_config_type * , ext_joblist_type * , int , bool  ,  bool   , bool );
+enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  enkf_site_config_type * , ext_joblist_type * ,  bool  ,  bool   , bool );
 int                enkf_config_get_ens_offset(const enkf_config_type * );
 ecl_store_enum     enkf_config_iget_ecl_store(const enkf_config_type * , int );
 job_queue_type   * enkf_config_alloc_job_queue(const enkf_config_type * , const enkf_site_config_type * );

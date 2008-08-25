@@ -105,7 +105,7 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
   driver->load(driver , report_step , iens , state , enkf_node); 
 }
 
-bool enkf_fs_has_node(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
+bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
   basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , config_node , state);
   return driver->has_node(driver , report_step , iens , state , enkf_config_node_get_key_ref(config_node));
 }

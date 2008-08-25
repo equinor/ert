@@ -29,13 +29,13 @@
 */
 
 
-state_enum enkf_ui_util_scanf_state(const char * prompt) {
+state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool accept_both) {
   char analyzed_string[64];
   bool OK;
   state_enum state;
   do {
     OK = true;
-    printf("%s",prompt);
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
     scanf("%s" , analyzed_string);
     if (strlen(analyzed_string) == 1) {
       char c = toupper(analyzed_string[0]);
@@ -43,8 +43,15 @@ state_enum enkf_ui_util_scanf_state(const char * prompt) {
 	state = analyzed;
       else if (c == 'F')
 	state = forecast;
-      else
-	OK = false;
+      else {
+	if (accept_both) {
+	  if (c == 'B')
+	    state = both;
+	  else
+	    OK = false;
+	} else
+	  OK = false;
+      }
     } else
       OK = false;
   } while ( !OK );
@@ -69,23 +76,101 @@ state_enum enkf_ui_util_scanf_state(const char * prompt) {
    and the same with the report_step pointer.
 */
 
-void enkf_ui_util_scanf_parameter(const enkf_config_type * config , char ** key , int * report_step , state_enum * state , int * iens) {
+void enkf_ui_util_scanf_parameter(const enkf_config_type * config , int prompt_len , bool accept_both , char ** key , int * report_step , state_enum * state , int * iens) {
   char kw[256];
   bool kw_exists = false;
   do {
-    printf("Keyword ==================> "); 
+    util_printf_prompt("Keyword" , prompt_len , '=' , "=> ");
     scanf("%s" , kw);
     kw_exists = enkf_config_has_key(config , kw);
     if (kw_exists) {
-      if (report_step != NULL) *report_step = util_scanf_int("Report step ==============> ");
-      *state                  = enkf_ui_util_scanf_state("Analyzed/forecast [A|F] ==> ");
-      if (iens != NULL) *iens = util_scanf_int("Ensemble member [0 based]=> ");
-      
+      if (report_step != NULL) *report_step = util_scanf_int("Report step" , prompt_len);
+      if (state != NULL) {
+	if (accept_both)
+	  *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F|B]" , prompt_len , true);
+	else
+	  *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F]" , prompt_len , false);
+      }
+      if (iens != NULL)        *iens  	    = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , enkf_config_get_ens_size(config) - 1);
     }
   } while (!kw_exists);
   *key = util_alloc_string_copy(kw);
 }
 
+
+/**
+   Present the user with the queries:
+
+      First ensemble member ==>
+      Last ensemble member ===>
+  
+    It then allocates (bool *) pointer [0..ens_size-1], where the
+    interval gven by the user is true (i.e. actve), and the rest is
+    false. It s the responsiibility of the calling scope to free this.
+*/
+
+
+bool * enkf_ui_util_scanf_alloc_iens_active(const enkf_config_type * config, int prompt_len , int * _iens1 , int * _iens2) {
+  const int ens_size = enkf_config_get_ens_size(config);
+  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  int iens1 = util_scanf_int_with_limits("First ensemble member" , prompt_len , 0 , ens_size - 1);
+  int iens2 = util_scanf_int_with_limits("Last ensemble member" , prompt_len , iens1 , ens_size - 1);
+  int iens;
+
+  for (iens = 0; iens < ens_size; iens++) 
+    iactive[iens] = false;
+
+  for (iens = iens1; iens <= iens2; iens++) 
+    iactive[iens] = true;
+
+
+  *_iens1 = iens1;
+  *_iens2 = iens2;
+  return iactive;
+}
+
+
+/**
+   Similar to enkf_ui_util_scanf_alloc_iens_active(), but based on report steps.
+*/
+
+bool * enkf_ui_util_scanf_alloc_report_active(const enkf_sched_type * enkf_sched , int prompt_len) {
+  const int last_step = enkf_sched_get_last_report(enkf_sched);
+  int len = 23;
+  bool * iactive = util_malloc((last_step + 1) * sizeof * iactive , __func__);
+  int step1 = util_scanf_int_with_limits("First report step" , prompt_len , 0 , last_step);
+  int step2 = util_scanf_int_with_limits("Last report step" , prompt_len , step1 , last_step);
+  int step;
+
+  for (step = 0; step <= last_step; step++) 
+    iactive[step] = false;
+
+  for (step = step1; step <= step2; step++) 
+    iactive[step] = true;
+
+  return iactive;
+}
+
+
+/** 
+    This functions reads i,j,k and returns them be reference; if the
+    reference pointer is NULL, that coordinate is skipped. I.e.
+
+    enkf_ui_util_scanf_ijk__(config , 100 , &i , &j , NULL);
+
+    Will read i and j.
+*/
+
+
+void enkf_ui_util_scanf_ijk__(const field_config_type * config, int prompt_len , int *i , int *j , int *k) {
+  int nx,ny,nz;
+
+  field_config_get_dims(config , &nx , &ny , &nz);
+  if (i != NULL) (*i) = util_scanf_int_with_limits("Give i-index" , prompt_len , 1 , nx) - 1;
+  if (j != NULL) (*j) = util_scanf_int_with_limits("Give j-index" , prompt_len , 1 , ny) - 1;
+  if (k != NULL) (*k) = util_scanf_int_with_limits("Give k-index" , prompt_len , 1 , nz) - 1;
+  
+}
 
 
 /**
@@ -97,14 +182,11 @@ void enkf_ui_util_scanf_parameter(const enkf_config_type * config , char ** key 
    to an active cell.
 */
    
-int enkf_ui_util_scanf_ijk(const field_config_type * config) {
+int enkf_ui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
   int i,j,k;
   int global_index;
   do {
-    i = util_scanf_int("Give i-index => ") - 1;
-    j = util_scanf_int("Give j-index => ") - 1;
-    k = util_scanf_int("Give k-index => ") - 1;
-
+    enkf_ui_util_scanf_ijk__(config , prompt_len , &i,&j,&k);
     global_index = field_config_global_index(config , i,j,k);
     if (global_index < 0)
       printf("Sorry the point: (%d,%d,%d) corresponds to an inactive cell\n" , i + 1 , j+ 1 , k + 1);

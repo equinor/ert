@@ -79,7 +79,7 @@ void enkf_ui_run_restart__(void * _void_arg) {
   int start_report;
   state_enum state;
 
-  start_report = util_scanf_int("Report step ==============> ");
+  start_report = util_scanf_int("Report step ==============> ",0);
   state        = enkf_ui_util_scanf_state("Analyzed/forecast [A|F] ==> ");
   
   enkf_ui_run(enkf_main , enkf_sched , start_report , state);

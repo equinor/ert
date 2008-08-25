@@ -13,7 +13,12 @@
 
 /**********************************/
 
-typedef enum   {undefined , forecast , serialized , analyzed} state_enum;
+typedef enum   {undefined , forecast , serialized , analyzed , both} state_enum;
+/**
+   The state == both is used for output purposes (getting both forecast and analyzed).
+*/
+
+
 
 #define NODE_STD_FIELDS \
 int internal_offset;

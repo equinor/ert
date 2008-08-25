@@ -47,8 +47,6 @@
 struct enkf_config_struct {
   ecl_grid_type   *grid;
   int  		   ens_size;
-  int              ens_offset;
-  int              iens_offset;
   hash_type       *config_hash;
   hash_type       *data_kw;   /* This is just temporary during the init process - is later transfered to the individual enkf_state objects */
   time_t           start_time;
@@ -187,7 +185,7 @@ char ** enkf_config_alloc_data_kw_key_list(const enkf_config_type * config, int 
 static void enkf_config_set_eclbase(enkf_config_type * config , const char * eclbase) {
   if (config->eclbase != NULL)
     path_fmt_free(config->eclbase);
-  config->eclbase = path_fmt_alloc_file_fmt(eclbase);
+  config->eclbase = path_fmt_alloc_path_fmt(eclbase);
 }
 
 
@@ -237,10 +235,10 @@ static void enkf_config_set_ecl_store(enkf_config_type * config , int store_valu
 	      iens1     = iens2;
 	      prev_iens = iens2;
 	    }
-	    if (iens1 >= config->ens_offset && iens2 < (config->ens_size + config->ens_offset)) {
-	      for (iens = iens1; iens <= iens2; iens++) 
-		config->ecl_store[iens - config->ens_offset] = store_value;
-	    }
+	    for (iens = iens1; iens <= iens2; iens++)
+	      if (iens2 < config->ens_size) 
+		config->ecl_store[iens] = store_value;
+	    
 	    range_active = false;  
 	  } else 
 	    util_abort("%s: something wrong when parsing: \"%s\" to integer \n",__func__ , token_list[token_index]);
@@ -384,8 +382,7 @@ bool enkf_config_include_static_kw(const enkf_config_type * enkf_config , const 
 
 
 
-static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
-						  bool fmt_file ,
+static enkf_config_type * enkf_config_alloc_empty(bool fmt_file ,
 						  bool unified  ,         
 						  bool endian_swap) {
   enkf_config_type * config = malloc(sizeof * config);
@@ -408,7 +405,6 @@ static enkf_config_type * enkf_config_alloc_empty(int  ens_offset,
   config->start_time           = -1;
   config->ecl_store_path       = NULL;
   config->ens_size             = -1;
-  config->ens_offset           = ens_offset;
   config->ecl_store            = NULL;
   config->obs_config_file      = NULL;
   config->ens_path             = NULL;
@@ -505,7 +501,6 @@ static void enkf_config_post_assert(const enkf_config_type * config , ext_joblis
 enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file , 
 					    enkf_site_config_type * site_config , 
 					    ext_joblist_type * joblist , 
-					    int  ens_offset,
 					    bool fmt_file ,
 					    bool unified  ,         
 					    bool endian_swap) { 
@@ -533,7 +528,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
   
   printf("Loading configuration information from ..: %s \n",config_file);  
   {  
-    enkf_config_type * enkf_config = enkf_config_alloc_empty(ens_offset , fmt_file , unified , endian_swap);
+    enkf_config_type * enkf_config = enkf_config_alloc_empty(fmt_file , unified , endian_swap);
     FILE * stream = util_fopen(config_file , "r");
     char * line;
     bool at_eof = false;
@@ -892,7 +887,6 @@ char * enkf_config_alloc_result_path(const enkf_config_type * config , int repor
 
 
 int    	       enkf_config_get_ens_size  (const enkf_config_type * config) { return config->ens_size; }
-int    	       enkf_config_get_ens_offset(const enkf_config_type * config) { return config->ens_offset; }
 time_t 	       enkf_config_get_start_date(const enkf_config_type * config) { return config->start_time; }
 ecl_store_enum enkf_config_iget_ecl_store(const enkf_config_type * config, int iens) { return config->ecl_store[iens]; }
 

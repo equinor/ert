@@ -2,7 +2,6 @@
 #include <enkf_state.h>
 #include <util.h>
 #include <ecl_static_kw.h>
-#include <ecl_static_kw_config.h>
 #include <ecl_kw.h>
 
 
@@ -13,7 +12,6 @@
 
 struct ecl_static_kw_struct {
   DEBUG_DECLARE
-  const ecl_static_kw_config_type * config;
   ecl_kw_type * ecl_kw;
 
   /*-----------------------------------------------------------------*/
@@ -91,24 +89,33 @@ int ecl_static_kw_get_counter(const ecl_static_kw_type * ecl_static) {
 
 /**
 
+
 */
 
-ecl_static_kw_type * ecl_static_kw_alloc(const ecl_static_kw_config_type * config) {
+ecl_static_kw_type * ecl_static_kw_alloc( ) {  
   ecl_static_kw_type * static_kw = util_malloc(sizeof *static_kw , __func__);
   static_kw->__report_step = -1;
   static_kw->__write_mode  = false;
   static_kw->ecl_kw = NULL;
-  static_kw->config = config;
   DEBUG_ASSIGN(static_kw)
   return static_kw;
 }
+
+/*
+  ptr is pure dummy to satisfy the api.
+*/
+void * ecl_static_kw_alloc__(const void *ptr) {  
+  return ecl_static_kw_alloc( );
+}
+
+
 
 
 ecl_kw_type * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * ecl_static) { return ecl_static->ecl_kw; }
 
 
 ecl_static_kw_type * ecl_static_kw_copyc(const ecl_static_kw_type *src) {
-  ecl_static_kw_type * new = ecl_static_kw_alloc(src->config);
+  ecl_static_kw_type * new = ecl_static_kw_alloc();
   if (src->ecl_kw != NULL)
     new->ecl_kw = ecl_kw_alloc_copy(src->ecl_kw);
   return new;
@@ -169,7 +176,6 @@ void ecl_static_kw_realloc_data(ecl_static_kw_type * ecl_static_kw) {
 
 
 /*****************************************************************/
-VOID_ALLOC(ecl_static_kw)
 VOID_FREE(ecl_static_kw)
 VOID_FREE_DATA(ecl_static_kw)
 VOID_FWRITE (ecl_static_kw)

@@ -146,7 +146,7 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
   const double truncation = 0.99;
   bool  * active_obs;
   double *X ;
-  int mode , istep , ens_stride , obs_stride , iens, nrobs_active;
+  int mode , istep , ens_stride , obs_stride , nrobs_active;
   bool returnE; 
   
   istep      = -1;     /* Must be <= 0 to avoid writing on xpath - which will fail. */

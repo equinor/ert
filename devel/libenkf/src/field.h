@@ -11,6 +11,7 @@ typedef struct field_struct field_type;
 int          field_get_global_index(const field_type * , int  , int  , int );
 void         field_ijk_set(field_type * , int  , int  , int  , const void * );
 void         field_indexed_set(field_type * field, ecl_type_enum , int , const int * , const void * );
+double       field_iget_double(const field_type * , int );
 void         field_ijk_get(const field_type * , int , int  , int , void *);
 bool         field_ijk_valid(const field_type * , int , int , int );
 void         field_ijk_get_if_valid(const field_type * , int  , int  , int , void * , bool *);

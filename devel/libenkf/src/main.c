@@ -84,7 +84,7 @@ int main (int argc , char ** argv) {
     enkf_site_config_type * site_config = enkf_site_config_bootstrap(site_config_file);
     joblist   = ext_joblist_alloc();
 
-    enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(config_file , site_config , joblist , 1 , false , false , true);
+    enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(config_file , site_config , joblist , false , false , true);
     plain_driver_type * dynamic_analyzed 	 = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	      , "%04d/mem%03d/Analyzed");
     plain_driver_type * dynamic_forecast 	 = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	      , "%04d/mem%03d/Forecast");
     plain_driver_parameter_type * parameter      = plain_driver_parameter_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Parameter");
