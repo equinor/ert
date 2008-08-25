@@ -605,9 +605,10 @@ int field_deserialize(field_type * field , int internal_offset , size_t serial_s
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
+  const bool              *iactive     = field_config_get_iactive(config);
   int new_internal_offset;
 
-  new_internal_offset = enkf_util_deserializeII(field->data , ecl_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  new_internal_offset = enkf_util_deserializeII(field->data , ecl_type , iactive , internal_offset , data_size , serial_size , serial_data , offset , stride);
 
   field_truncate(field);
   return new_internal_offset;
@@ -620,9 +621,10 @@ int field_serialize(const field_type *field , int internal_offset , size_t seria
   const field_config_type *config     = field->config;
   ecl_type_enum ecl_type              = field_config_get_ecl_type(config);
   const int                data_size  = field_config_get_data_size(config);
-
+  const bool              *iactive    = field_config_get_iactive(config);
   int elements_added;
-  elements_added = enkf_util_serializeII(field->data , ecl_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+
+  elements_added = enkf_util_serializeII(field->data , ecl_type , iactive , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   return elements_added;
 }
 

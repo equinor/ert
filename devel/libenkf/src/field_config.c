@@ -209,18 +209,76 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->sz = config->nx * config->ny;
 
   
-  config->fmt_file    	      = false;
-  config->endian_swap 	      = true;
-  config->limits_set  	      = false;
-  config->min_value   	      = malloc(config->sizeof_ctype);
-  config->max_value   	      = malloc(config->sizeof_ctype);
-  config->write_compressed    = true;
+  config->fmt_file    	      	   = false;
+  config->endian_swap 	      	   = true;
+  config->limits_set  	      	   = false;
+  config->min_value   	      	   = util_malloc(config->sizeof_ctype , __func__);
+  config->max_value   	      	   = util_malloc(config->sizeof_ctype , __func__);
+  config->write_compressed    	   = true;
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
   config->init_file_fmt            = NULL;
-
+  config->enkf_active              = util_malloc(config->data_size * sizeof * config->enkf_active , __func__);
+  field_config_set_all_active(config);
   return config;
+}
+
+
+static void field_config_set_all_active__(field_config_type * field_config, bool active) {
+  int i; 
+  for (i = 0; i < field_config->data_size; i++)
+    field_config->enkf_active[i] = active;
+  field_config->enkf_all_active = active;
+}
+
+
+
+void field_config_set_all_active(field_config_type * field) {
+  field_config_set_all_active__(field , true);
+}
+
+/*
+  Observe that the indices are zero-based, in contrast to those used
+  by eclipse which are based on one.
+*/
+inline int field_config_global_index(const field_config_type * config , int i , int j , int k) {
+  return config->index_map[ k * config->nx * config->ny + j * config->nx + i];
+}
+
+
+
+/**
+   This function sets the config->enkf_active pointer. The indicies mentioned in
+   active_index_list are set to true, the remaining is set to false.
+
+   Observe that the indices i,j and k are __zero__ based.
+*/
+
+void field_config_set_iactive(field_config_type * config , int num_active , const int * i , const int *j , const int *k) {
+  int index;
+  field_config_set_all_active__(config , false);
+  for (index = 0; index < num_active; index++) {
+    const int global_index = field_config_global_index(config , i[index] , j[index] , k[index]);
+    if (global_index < 0)
+      fprintf(stderr,"** Warning cell: (%d,%d,%d) is inactive\n",i[index] , j[index] , k[index]);
+    else 
+      config->enkf_active[global_index]= true;
+  }
+}
+
+
+/**
+   If ALL cells are active this function returns NULL, which again
+   means that a faster serialize/deserialize routine can be used. If
+   _not_ all cells are active the function will return the enkf_active vector.
+*/
+
+const bool * field_config_get_iactive(const field_config_type * config) {
+  if (config->enkf_all_active)
+    return NULL; /* Allows for a short-circuit in serialize/deserialize */
+  else
+    return config->enkf_active;
 }
 
 
@@ -354,10 +412,11 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 void field_config_free(field_config_type * config) {
   free(config->min_value);
   free(config->max_value);
-  if (config->ecl_kw_name 	       != NULL) free(config->ecl_kw_name);
-  if (config->base_file   	       != NULL) free(config->base_file);
-  if (config->perturbation_config_file != NULL) free(config->perturbation_config_file);
-  if (config->layer_config_file        != NULL) free(config->layer_config_file);
+  util_safe_free(config->ecl_kw_name);
+  util_safe_free(config->base_file);
+  util_safe_free(config->perturbation_config_file);
+  util_safe_free(config->layer_config_file);
+  free(config->enkf_active);
   free(config);
 }
   
@@ -397,13 +456,6 @@ int field_config_get_sizeof_ctype(const field_config_type * config) { return con
 
 
 
-/*
-  Observe that the indices are zero-based, in contrast to those used
-  by eclipse which are based on one.
-*/
-inline int field_config_global_index(const field_config_type * config , int i , int j , int k) {
-  return config->index_map[ k * config->nx * config->ny + j * config->nx + i];
-}
 
 
 
@@ -445,7 +497,7 @@ void field_config_get_ijk(const field_config_type * config , int global_index, i
     fprintf(stderr,"%s: global_index: %d is not in intervale [0,%d) - aborting \n",__func__ , global_index , config->data_size);
     abort();
   }
-
+  
   for (k=0; k < config->nz; k++)
     for (j=0; j < config->ny; j++)
       for (i=0; i < config->nx; i++)

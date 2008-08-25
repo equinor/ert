@@ -50,7 +50,9 @@ struct field_config_struct {
   int sx,sy,sz;                       /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
   int logmode;
   const int *index_map;
-  
+
+  bool        * enkf_active;          /* Whether a certain cell is active or not - EnKF wise.*/
+  bool          enkf_all_active;      /* Performance gain when all cells are active. */
   void 	      * min_value;
   void        * max_value;
   int           sizeof_ctype;
@@ -90,6 +92,7 @@ void                    field_config_set_ecl_type(field_config_type *  , ecl_typ
 void                    field_config_set_eclfile(field_config_type * , const char * );
 void                    field_config_set_limits(field_config_type * , void * , void * );
 void                    field_config_apply_limits(const field_config_type * , void *);
+const bool            * field_config_get_iactive(const field_config_type * );
 int                     field_config_get_byte_size(const field_config_type * );
 int                     field_config_get_active_size(const field_config_type * );
 int                     field_config_get_sizeof_ctype(const field_config_type * );
@@ -99,7 +102,8 @@ bool                    field_config_active_cell(const field_config_type *  , in
 field_init_type         field_config_get_init_type(const field_config_type * );
 char                  * field_config_alloc_init_file(const field_config_type * , int );
 field_file_format_type  field_config_get_ecl_export_format(const field_config_type * );
-
+void                    field_config_set_iactive(field_config_type * , int  , const int *  , const int * , const int *);
+void                    field_config_set_all_active(field_config_type * );
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
