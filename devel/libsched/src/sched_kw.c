@@ -247,15 +247,30 @@ void sched_kw_fprintf_rates(const sched_kw_type * kw , const char *obs_path , co
 }
 
 
+
+/*
+  TODO
+
+  This will break if exposed to TSTEP.
+*/
 void sched_kw_fprintf_days_dat(const sched_kw_type * kw , FILE *stream) {
   if (kw->type == DATES) 
     sched_kw_dates_fprintf_days_dat(kw->data , stream);
 }
 
+
+
+/*
+  TODO
+
+  This will break if exposed to TSTEP.
+*/
 void sched_kw_get_report_step(const sched_kw_type * kw , time_t t , int * report_step) {
   if (kw->type == DATES) 
     sched_kw_dates_get_report_step(kw->data , t , report_step);
 }
+
+
 
 /**
    This function takes a report_step as input, and sets the time_t
@@ -264,6 +279,10 @@ void sched_kw_get_report_step(const sched_kw_type * kw , time_t t , int * report
 
    I.e. the calling scope must monitor the value of t to check whether
    it has been updated.
+
+   TODO
+
+   This will break if exposed to TSTEP.
 */
 void sched_kw_get_time_t(const sched_kw_type * kw , int report_step, time_t *t) {
   if (kw->type == DATES) 
@@ -272,6 +291,11 @@ void sched_kw_get_time_t(const sched_kw_type * kw , int report_step, time_t *t) 
 
 
 
+/*
+   TODO 
+
+   This will break if exposed to TSTEP.
+*/
 void sched_kw_make_history(const sched_kw_type * kw , history_type * history, date_node_type **current_date) {
   if (kw->type == DATES) {
     sched_kw_dates_make_history(kw->data  , history);

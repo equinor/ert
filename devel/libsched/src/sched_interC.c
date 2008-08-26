@@ -70,7 +70,7 @@ static void sched_update_compdat_fprintf_static(const char  * _schedule_dump_fil
     }
     util_double_to_float(permx_4 , permx   , size);
     util_double_to_float(permz_4 , permz   , size);
-    sched_file_set_conn_factor(s , permx_4 , permz_4 , index_map );
+    //sched_file_set_conn_factor(s , permx_4 , permz_4 , index_map );
     free(permx_4);
     free(permz_4);
   }
@@ -165,7 +165,7 @@ void sched_init__(const char * _schedule_file  	   , const int * schedule_file_l
     bool   endian_flip = util_intptr_2bool(endian_flip_int);
     sched_file_type *s = sched_file_alloc( sched_util_make_start_date(start_date) );
     sched_file_parse(s  , schedule_file);
-    sched_file_init_conn_factor(s , init_file , endian_flip , index_map);
+    //sched_file_init_conn_factor(s , init_file , endian_flip , index_map);
     sched_file_fprintf_days_dat(s , "days.dat");
 
     {

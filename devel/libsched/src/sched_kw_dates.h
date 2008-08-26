@@ -18,4 +18,5 @@ void                  sched_kw_dates_fprintf_days_dat(const sched_kw_dates_type 
 void                  sched_kw_dates_get_report_step(const sched_kw_dates_type * , time_t , int * );
 void                  sched_kw_dates_get_time_t(const sched_kw_dates_type *  , int  , time_t *);
 void                  sched_kw_dates_make_history(const sched_kw_dates_type * ,  history_type * );
+int                   sched_kw_dates_get_size(const sched_kw_dates_type *);
 #endif

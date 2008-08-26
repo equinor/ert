@@ -235,6 +235,7 @@ void sched_file_parse(sched_file_type * sched_file , const char * filename) {
   cont        = true;
   record_nr   = 0;
   record_size = -1;
+
   do {
     const char *line = line_list[linenr];
     if (strncmp(line , "END" , 3) == 0) {
@@ -477,7 +478,7 @@ int sched_file_count_report_steps(const sched_file_type * s) {
     const sched_kw_type * sched_kw = list_node_value_ptr(list_node);
 
     if (sched_kw_get_type(sched_kw) == DATES )
-      report_steps++;
+      report_steps += sched_kw_dates_get_size(sched_kw_get_data_ref(sched_kw));
     if (sched_kw_get_type(sched_kw) == TSTEP )
     {
       report_steps += sched_kw_tstep_get_size(sched_kw_get_data_ref(sched_kw));

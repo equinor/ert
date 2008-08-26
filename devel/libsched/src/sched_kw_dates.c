@@ -135,3 +135,8 @@ void sched_kw_dates_make_history(const sched_kw_dates_type * kw , history_type *
   }
 }
 
+
+int sched_kw_dates_get_size(const sched_kw_dates_type * kw)
+{
+  return list_get_size(kw->date_list); 
+}
