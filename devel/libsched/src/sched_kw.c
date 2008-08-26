@@ -251,7 +251,7 @@ void sched_kw_fprintf_rates(const sched_kw_type * kw , const char *obs_path , co
 /*
   TODO
 
-  This will break if exposed to TSTEP.
+  This will create a bug if exposed to TSTEP.
 */
 void sched_kw_fprintf_days_dat(const sched_kw_type * kw , FILE *stream) {
   if (kw->type == DATES) 
@@ -263,7 +263,7 @@ void sched_kw_fprintf_days_dat(const sched_kw_type * kw , FILE *stream) {
 /*
   TODO
 
-  This will break if exposed to TSTEP.
+  This will create a bug if exposed to TSTEP.
 */
 void sched_kw_get_report_step(const sched_kw_type * kw , time_t t , int * report_step) {
   if (kw->type == DATES) 
@@ -282,7 +282,7 @@ void sched_kw_get_report_step(const sched_kw_type * kw , time_t t , int * report
 
    TODO
 
-   This will break if exposed to TSTEP.
+   This will create a bug if exposed to TSTEP.
 */
 void sched_kw_get_time_t(const sched_kw_type * kw , int report_step, time_t *t) {
   if (kw->type == DATES) 
@@ -294,7 +294,8 @@ void sched_kw_get_time_t(const sched_kw_type * kw , int report_step, time_t *t) 
 /*
    TODO 
 
-   This will break if exposed to TSTEP.
+
+   This will create a bug if exposed to TSTEP.
 */
 void sched_kw_make_history(const sched_kw_type * kw , history_type * history, date_node_type **current_date) {
   if (kw->type == DATES) {
