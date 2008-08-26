@@ -80,6 +80,20 @@ typedef enum {store_none     = 0,
 	      store_data     = 4} ecl_store_enum;
 
 
+typedef enum   {undefined   = 0 , 
+		serialized  = 1,
+		forecast    = 2, 
+		analyzed    = 4,
+		both        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
+/**
+   The state == both is used for output purposes (getting both forecast and analyzed).
+*/
+
+
+
+
+
+
 enkf_impl_type    enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(enkf_impl_type );
 enkf_impl_type    enkf_types_check_impl_type(const char * );

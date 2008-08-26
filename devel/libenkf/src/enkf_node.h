@@ -13,10 +13,6 @@
 
 /**********************************/
 
-typedef enum   {undefined , forecast , serialized , analyzed , both} state_enum;
-/**
-   The state == both is used for output purposes (getting both forecast and analyzed).
-*/
 
 
 

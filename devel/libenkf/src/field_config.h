@@ -65,6 +65,7 @@ struct field_config_struct {
   char          * layer_config_file;  
   path_fmt_type * init_file_fmt;
 
+  bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool fmt_file;
   bool endian_swap;
   bool limits_set;
@@ -104,6 +105,9 @@ char                  * field_config_alloc_init_file(const field_config_type * ,
 field_file_format_type  field_config_get_ecl_export_format(const field_config_type * );
 void                    field_config_set_iactive(field_config_type * , int  , const int *  , const int * , const int *);
 void                    field_config_set_all_active(field_config_type * );
+void                    field_config_set_key(field_config_type * , const char *);
+void                    field_config_enkf_OFF(field_config_type * );
+bool                    field_config_enkf_mode(const field_config_type * config);
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);

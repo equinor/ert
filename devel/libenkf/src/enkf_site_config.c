@@ -321,6 +321,7 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       config_init_item( site->__config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
 
       config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      config_init_item( site->__config , "IMAGE_VIEWER"      , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
       
       config_parse(site->__config , config_file , "--");
     }

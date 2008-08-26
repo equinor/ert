@@ -300,6 +300,7 @@ size_t enkf_util_deserializeII(void *     , ecl_type_enum , const bool * , size_
 void   enkf_util_fwrite(const void *, int , int , FILE *, const char * );
 void   enkf_util_fread ( void *, int , int , FILE *, const char * );
 
+void    enkf_util_truncate(void *  , int  , ecl_type_enum  , void *  , void *);
 void 	enkf_util_rand_stdnormal_vector(int  , double *);
 double 	enkf_util_rand_normal(double , double );
 void   	enkf_util_fread_assert_target_type(FILE * , enkf_impl_type );

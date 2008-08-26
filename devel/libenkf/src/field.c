@@ -809,9 +809,26 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
 
 void field_fload_rms(field_type * field , const char * filename) {
   const char * key           = field_config_get_ecl_kw_name(field->config);
+  ecl_type_enum   ecl_type;
   rms_file_type * rms_file   = rms_file_alloc(filename , false);
-  rms_tagkey_type * data_tag = rms_file_fread_alloc_data_tagkey(rms_file , "parameter" , "name" , key);
-  ecl_type_enum   ecl_type   = rms_tagkey_get_ecl_type(data_tag);
+  rms_tagkey_type * data_tag;
+  if (field_config_enkf_mode(field->config)) 
+    data_tag = rms_file_fread_alloc_data_tagkey(rms_file , "parameter" , "name" , key);
+  else {
+    /** 
+	Setting the key - purely to support converting between
+	different types of files, without knowing the key. A usable
+	feature - but not really well defined.
+    */
+
+    rms_tag_type * rms_tag = rms_file_fread_alloc_tag(rms_file , "parameter" , NULL , NULL);
+    const char * parameter_name = rms_tag_get_namekey_name(rms_tag);
+    field_config_set_key( (field_config_type *) field->config , parameter_name );
+    data_tag = rms_tagkey_copyc( rms_tag_get_key(rms_tag , "data") );
+    rms_tag_free(rms_tag);
+  }
+  
+  ecl_type = rms_tagkey_get_ecl_type(data_tag);
   if (rms_tagkey_get_size(data_tag) != field_config_get_volume(field->config)) {
     fprintf(stderr,"%s: trying to import rms_data_tag from:%s with wrong size - aborting \n",__func__ , filename);
     abort();

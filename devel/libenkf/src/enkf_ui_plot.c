@@ -47,8 +47,11 @@ void simple_plot__(void *p) {
 
 
 
+
+
+
 void enkf_ui_plot_menu(void * _arg) {
- 
+  
   void_arg_type   * arg        = void_arg_safe_cast(_arg);
   enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
   enkf_sched_type * enkf_sched = void_arg_get_ptr(arg , 1);

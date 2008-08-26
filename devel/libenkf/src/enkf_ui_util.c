@@ -13,6 +13,7 @@
 #include <field_config.h>
 #include <enkf_state.h>
 #include <enkf_config.h>
+#include <enkf_types.h>
 
 
 /** 
@@ -45,7 +46,7 @@ state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool ac
 	state = forecast;
       else {
 	if (accept_both) {
-	  if (c == 'B')
+	  if (c == 'B') 
 	    state = both;
 	  else
 	    OK = false;
@@ -91,7 +92,7 @@ void enkf_ui_util_scanf_parameter(const enkf_config_type * config , int prompt_l
 	else
 	  *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F]" , prompt_len , false);
       }
-      if (iens != NULL)        *iens  	    = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , enkf_config_get_ens_size(config) - 1);
+      if (iens != NULL)  *iens  	    = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , enkf_config_get_ens_size(config) - 1);
     }
   } while (!kw_exists);
   *key = util_alloc_string_copy(kw);
@@ -136,7 +137,6 @@ bool * enkf_ui_util_scanf_alloc_iens_active(const enkf_config_type * config, int
 
 bool * enkf_ui_util_scanf_alloc_report_active(const enkf_sched_type * enkf_sched , int prompt_len) {
   const int last_step = enkf_sched_get_last_report(enkf_sched);
-  int len = 23;
   bool * iactive = util_malloc((last_step + 1) * sizeof * iactive , __func__);
   int step1 = util_scanf_int_with_limits("First report step" , prompt_len , 0 , last_step);
   int step2 = util_scanf_int_with_limits("Last report step" , prompt_len , step1 , last_step);

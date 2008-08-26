@@ -89,14 +89,15 @@ void enkf_ui_run_restart__(void * _void_arg) {
 
 
 void enkf_ui_run_exp__(void * _void_arg) {
-  void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
-  enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
-  enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
-  int start_report;
-
-  printf("Start from report : ");
-  fscanf(stdin, "%d" , &start_report);
-  
+  /*
+    void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
+    enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
+    enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
+    int start_report;
+    
+    printf("Start from report : ");
+    fscanf(stdin, "%d" , &start_report);
+  */
 }
 
 

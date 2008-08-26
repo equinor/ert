@@ -20,6 +20,12 @@ void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_
 }
 
 
+static void field_config_assert_ijk(const field_config_type * config , int i , int j , int k) {
+  if (i < 0 || i >= config->nx) util_abort("%s: i:%d outside valid range: [0,%d) \n",__func__ , i , config->nx);
+  if (j < 0 || j >= config->ny) util_abort("%s: j:%d outside valid range: [0,%d) \n",__func__ , j , config->ny);
+  if (k < 0 || k >= config->nz) util_abort("%s: k:%d outside valid range: [0,%d) \n",__func__ , k , config->nz);
+}
+
 
 void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_type) {
   config->ecl_type     = ecl_type;
@@ -128,7 +134,7 @@ field_file_format_type field_config_manual_file_type(const char * prompt , bool 
   printf(" %3d: %s.\n" , ecl_grdecl_file , field_config_file_type_string(ecl_grdecl_file));
   printf("----------------------------------------------------------------\n");
   do {
-    int_file_type = util_scanf_int("===> " , 0);
+    int_file_type = util_scanf_int("" , 2);
     if (!field_config_valid_file_type(int_file_type, import))
       int_file_type = unknown_file;
   } while(int_file_type == unknown_file);
@@ -208,7 +214,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->sy = config->nx;
   config->sz = config->nx * config->ny;
 
-  
+  config->__enkf_mode              = true;
   config->fmt_file    	      	   = false;
   config->endian_swap 	      	   = true;
   config->limits_set  	      	   = false;
@@ -243,6 +249,7 @@ void field_config_set_all_active(field_config_type * field) {
   by eclipse which are based on one.
 */
 inline int field_config_global_index(const field_config_type * config , int i , int j , int k) {
+  field_config_assert_ijk(config , i , j , k);
   return config->index_map[ k * config->nx * config->ny + j * config->nx + i];
 }
 
@@ -507,6 +514,7 @@ void field_config_get_ijk(const field_config_type * config , int global_index, i
 	  *_k = k;
 	  return;
 	}
+  util_abort("%s: should not have arrived here - something wrong with the index_map?? \n",__func__);
 }
 
 
@@ -517,6 +525,50 @@ void field_config_get_ijk(const field_config_type * config , int global_index, i
    *nz = config->nz;
 }
 
+
+
+
+/**
+   The field_config and field objects are mainly written for use in
+   the enkf application. In that setting a field instance is *NOT*
+   allowed to write on it's field_config object.
+   
+   However, when used in a stand-alone application, i.e. in the
+   field_convert program, it is desirable for the field object to be
+   allowed to write to / update the field_config object. In an attempt
+   to make this reasonably safe you must first call
+   field_config_enkf_OFF() to signal that you know what you are doing.
+
+   After you have called field_config_enkf_OFF() you can subsequently
+   call field_config_set_key() to change the key of the field_config
+   object. This will typically be interesting when an unknown file is
+   loaded. 
+
+   Currently only the roff loader supports set operations on the
+   key. Also it is essential to observe that this will break **HARD**
+   is the file contains several parameters - so maybe this whole thing
+   is stupid?
+*/
+
+
+void field_config_set_key(field_config_type * config , const char *key) {
+  if (config->__enkf_mode)
+    util_abort("%s: internal error - must call field_config_enkf_OFF() prior to calling: %s()\n",__func__ , __func__);
+  /*
+    Should be locked to protect against concurrent access.
+  */
+  config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , key);
+}
+
+
+void field_config_enkf_OFF(field_config_type * config) {
+  if (config->__enkf_mode)
+    fprintf(stderr , "** Warning: turning off EnKF mode for field:%s - you better know what you are doing! **\n",config->ecl_kw_name);
+  config->__enkf_mode = false;
+}
+
+
+bool field_config_enkf_mode(const field_config_type * config) { return config->__enkf_mode; }
 
 
 /*****************************************************************/
