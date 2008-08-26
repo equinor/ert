@@ -7,6 +7,7 @@
 #include <menu.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
+#include <enkf_node.h>
 #include <void_arg.h>
 #include <void_arg.h>
 #include <field.h>
@@ -69,33 +70,47 @@ state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool ac
      - An integer report step.
      - Whether we are considering the analyzed state or the forecast.
 
-   The values are returned by reference. The keyword is checked for
-   existence; but it is not checked whether the report_step actually
-   exists.
-   
-   If the iens pointer is NULL, the function does not query for iens,
-   and the same with the report_step pointer.
+   The config_node is returned, and in addition the report_step, iens
+   and analysis_state are returned by reference. It is OK the pass in
+   NULL for these pointers; in that case the user is not queried for
+   these values.
+
+   The keyword is checked for existence; but it is not checked whether
+   the report_step actually exists. If impl_type == INVALID, any
+   implementation type will be accepted, otherwise we loop until the
+   keyword is of type impl_type.
 */
 
-void enkf_ui_util_scanf_parameter(const enkf_config_type * config , int prompt_len , bool accept_both , char ** key , int * report_step , state_enum * state , int * iens) {
+const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_type * config , int prompt_len , bool accept_both , enkf_impl_type impl_type ,  int * report_step , state_enum * state , int * iens) {
   char kw[256];
-  bool kw_exists = false;
+  bool OK;
+  const enkf_config_node_type * config_node;
   do {
+    OK = true;
     util_printf_prompt("Keyword" , prompt_len , '=' , "=> ");
     scanf("%s" , kw);
-    kw_exists = enkf_config_has_key(config , kw);
-    if (kw_exists) {
-      if (report_step != NULL) *report_step = util_scanf_int("Report step" , prompt_len);
-      if (state != NULL) {
-	if (accept_both)
-	  *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F|B]" , prompt_len , true);
-	else
-	  *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F]" , prompt_len , false);
+    if (enkf_config_has_key(config , kw)) {
+      config_node = enkf_config_get_node_ref(config , kw);
+      
+      if (impl_type != INVALID) 
+	if (enkf_config_node_get_impl_type(config_node) != impl_type) 
+	  OK = false;
+      
+      if (!OK) 
+	fprintf(stderr,"Error: %s is of type:\"%s\" - you must give a keyword of type: \"%s\" \n",kw,enkf_types_get_impl_name(enkf_config_node_get_impl_type(config_node)) , enkf_types_get_impl_name(impl_type));
+      else {
+	if (report_step != NULL) *report_step = util_scanf_int("Report step" , prompt_len);
+	if (state != NULL) {
+	  if (accept_both)
+	    *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F|B]" , prompt_len , true);
+	  else
+	    *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F]" , prompt_len , false);
+	}
       }
-      if (iens != NULL)  *iens  	    = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , enkf_config_get_ens_size(config) - 1);
-    }
-  } while (!kw_exists);
-  *key = util_alloc_string_copy(kw);
+      if (iens != NULL)  *iens = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , enkf_config_get_ens_size(config) - 1);
+    } else OK = false;
+  } while (!OK);
+  return config_node;
 }
 
 
@@ -193,5 +208,61 @@ int enkf_ui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
   } while (global_index < 0);
   return global_index;
 }
+
+
+
+
+/**
+   This function runs through all the report steps [step1:step2] for
+   member iens, and gets the value of the cell 'get_index'. Current
+   implementation assumes that the config_node/node comination are of
+   field type - this should be generalized to use the enkf_node_iget()
+   function.
+
+   The value is returned (by reference) in y, and the corresponding
+   time (currently report_step) is returned in 'x'.
+*/
+   
+
+void enkf_ui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * config_node, enkf_node_type * node , state_enum analysis_state , int get_index , int step1 , int step2 , int iens , double * x , double * y ) {
+  const char * key = enkf_config_node_get_key_ref(config_node);
+  int report_step;
+  int index = 0;
+  for (report_step = step1; report_step <= step2; report_step++) {
+    
+    if (analysis_state & forecast) {
+      if (enkf_fs_has_node(fs , config_node , report_step , iens , forecast)) {
+	enkf_fs_fread_node(fs , node , report_step , iens , forecast); {
+	  const field_type * field = enkf_node_value_ptr( node );
+	  y[index] = field_iget_double(field , get_index);
+	}
+      } else {
+	fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key  , iens , report_step);
+	y[index] = -1;
+      }
+      x[index] = report_step;
+      index++;
+    }
+    
+    
+    if (analysis_state & analyzed) {
+      if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
+	enkf_fs_fread_node(fs , node , report_step , iens , analyzed); {
+	  const field_type * field = enkf_node_value_ptr( node );
+	  y[index] = field_iget_double(field , get_index);
+	}
+      } else {
+	fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
+	y[index] = -1;
+      }
+      x[index] = report_step;
+      index++;
+    }
+  }
+}
+
+
+
+
 
 

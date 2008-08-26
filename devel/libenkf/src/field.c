@@ -675,6 +675,11 @@ double field_iget_double(const field_type * field , int global_index) {
 }
 
 
+double field_iget(const field_type * field, int global_index) {
+  DEBUG_ASSERT(field);
+  return field_iget_double(field , global_index);
+}
+
 
 void field_ijk_set(field_type * field , int i , int j , int k , const void * value) {
   int global_index = field_config_global_index(field->config , i , j , k);
@@ -994,6 +999,7 @@ VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);
 VOID_CLEAR(field);
+VOID_IGET(field);
 ENSEMBLE_MULX_VECTOR(field);
 
 

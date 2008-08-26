@@ -117,7 +117,10 @@ struct enkf_node_struct {
   isqrt_ftype        		 * isqrt;
   iaddsqr_ftype      		 * iaddsqr;
   ensemble_fprintf_results_ftype * fprintf_results;
-
+  iget_ftype                     * iget;               /* The two last are a pair - the very last is interactive and used first. */
+  get_index_ftype                * get_index;
+  
+  
   serial_state_type  *serial_state;
   char               *node_key;  /* Bør vel bare være i config node */
   void               *data;
@@ -578,6 +581,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->freef          = NULL;
   node->free_data      = NULL;
   node->fprintf_results= NULL;
+  node->iget           = NULL;
+  node->get_index      = NULL;
 
   switch (impl_type) {
   case(GEN_KW):
@@ -684,6 +689,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->deserialize  = field_deserialize__;
     node->freef        = field_free__;
     node->free_data    = field_free_data__;
+    node->iget         = field_iget__;
     break;
   case(EQUIL):
     node->alloc       = equil_alloc__;

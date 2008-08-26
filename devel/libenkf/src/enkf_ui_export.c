@@ -19,26 +19,17 @@
 
 void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_type file_type) {
   const int prompt_len = 35;
-  char * key;
   const enkf_config_node_type * config_node;
   state_enum analysis_state;
   char       analysis_state_char;
   int        iens , report_step;
   
-  do {
-    enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , &key , &report_step , &analysis_state , &iens);
-    if (analysis_state == analyzed)
-      analysis_state_char = 'A';
-    else
-      analysis_state_char = 'F';
-    
-    config_node = enkf_main_get_config_node(enkf_main , key);
-    if (enkf_config_node_get_impl_type(config_node) != FIELD) {
-      printf("** EnKF parameter:%s is not a field - can not be exported this way.\n", key);
-      free(key);
-    }
-  } while (enkf_config_node_get_impl_type(config_node) != FIELD);
-
+  config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD  , &report_step , &analysis_state , &iens);
+  if (analysis_state == analyzed)
+    analysis_state_char = 'A';
+  else
+    analysis_state_char = 'F';
+  
 
   {
     enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
@@ -53,12 +44,10 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
       }
       free(filename);
     } else 
-      printf("** Sorry node:%s does not exist for report step: %d%c.\n",key,report_step,analysis_state_char);
-
+      printf("** Sorry node:%s does not exist for report step: %d%c.\n",enkf_config_node_get_key_ref(config_node),report_step,analysis_state_char);
+    
     enkf_node_free(node);
   } 
-  
-  free(key);
 }
 
 
@@ -108,21 +97,14 @@ void enkf_ui_export_profile(void *_arg) {
     bool * iens_active  ;
     bool * report_active;
 
-    char * key;
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     int        direction;  /* 0: i running, 1: j running, 2: k running */
     int        total_cells;
     int       *cell_list; 
     path_fmt_type * file_fmt;
-    do {
-      enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , &key , NULL , &analysis_state , NULL);
-      config_node = enkf_main_get_config_node(enkf_main , key);
-      if (enkf_config_node_get_impl_type(config_node) != FIELD) {
-	printf("** EnKF parameter:%s is not a field - can not be exported this way.\n", key);
-	free(key);
-      }
-    } while (enkf_config_node_get_impl_type(config_node) != FIELD);  
+
+    config_node    = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD  , NULL , &analysis_state , NULL);
     iens_active    = enkf_ui_util_scanf_alloc_iens_active( enkf_config , prompt_len , &iens1 , &iens2); /* Not used yet ... */
     report_active  = enkf_ui_util_scanf_alloc_report_active( enkf_sched , prompt_len );
     direction      = util_scanf_int_with_limits("Give scan direction 0:i  1:j  2:k" , prompt_len , 0 , 2);
@@ -198,7 +180,7 @@ void enkf_ui_export_profile(void *_arg) {
 		  }		    	      
 		}
 	      } else 
-		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
+		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",enkf_config_node_get_key_ref(config_node) , iens , report_step);
 	    }
 	  }
 	}
@@ -207,7 +189,6 @@ void enkf_ui_export_profile(void *_arg) {
 	free(profile);
       }
     }
-    free(key);
     free(cell_list);
   }
 }
@@ -224,19 +205,11 @@ void enkf_ui_export_cell(void *_arg) {
   const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
   {
     const int prompt_len = 35;
-    char * key;
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     int        cell_nr;
-    do {
-      enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , &key , NULL , &analysis_state , NULL);
-      config_node = enkf_main_get_config_node(enkf_main , key);
-      if (enkf_config_node_get_impl_type(config_node) != FIELD) {
-	printf("** EnKF parameter:%s is not a field - can not be exported this way.\n", key);
-	free(key);
-      }
-    } while (enkf_config_node_get_impl_type(config_node) != FIELD);  
-    
+
+    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD , NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int ens_size    = enkf_config_get_ens_size(enkf_config);
@@ -262,7 +235,7 @@ void enkf_ui_export_cell(void *_arg) {
 		  cell_data[iens] = field_iget_double(field , cell_nr);
 		}
 	      } else {
-		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
+		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",enkf_config_node_get_key_ref(config_node) , iens , report_step);
 		cell_data[iens] = -1;
 	      }
 	    }
@@ -283,9 +256,10 @@ void enkf_ui_export_cell(void *_arg) {
       free(cell_data);
       path_fmt_free(file_fmt);
     }
-    free(key);
   }
 }
+
+
 
 
 void enkf_ui_export_time(void *_arg) {
@@ -295,19 +269,11 @@ void enkf_ui_export_time(void *_arg) {
   const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
   {
     const int prompt_len = 35;
-    char * key;
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     int        cell_nr;
-    do {
-      enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , true , &key , NULL , &analysis_state , NULL);
-      config_node = enkf_main_get_config_node(enkf_main , key);
-      if (enkf_config_node_get_impl_type(config_node) != FIELD) {
-	printf("** EnKF parameter:%s is not a field - can not be exported this way.\n", key);
-	free(key);
-      }
-    } while (enkf_config_node_get_impl_type(config_node) != FIELD);  
-    
+
+    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , true , FIELD , NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int last_report = enkf_sched_get_last_report(enkf_sched);
@@ -315,59 +281,35 @@ void enkf_ui_export_time(void *_arg) {
       const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
       int iens1 , iens2;   
       bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( enkf_config , prompt_len , &iens1 , &iens2); /* Not used yet ... */
-      double * value;
-      int iens , report_step; /* Observe that iens and report_step loops below should be inclusive.*/
+      double * x, *y;
+      int iens; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
       enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
       path_fmt_type * file_fmt = path_fmt_scanf_alloc("Give filename to store line (with %d for report iens) =>" , 0 , NULL , false);
       
       
-      if (analysis_state == both) 
-	value = util_malloc( 2 * (step2 - step1 + 1) * sizeof * value, __func__);
-      else
-	value = util_malloc(     (step2 - step1 + 1) * sizeof * value, __func__);
+      if (analysis_state == both) {
+	x = util_malloc( 2 * (step2 - step1 + 1) * sizeof * x, __func__);
+	y = util_malloc( 2 * (step2 - step1 + 1) * sizeof * y, __func__);
+      }	else {
+	x = util_malloc( (step2 - step1 + 1) * sizeof * x, __func__);
+	y = util_malloc( (step2 - step1 + 1) * sizeof * y, __func__);
+      }
+	
       
       for (iens = iens1; iens <= iens2; iens++) {
-	int index = 0;
-	for (report_step = step1; report_step <= step2; report_step++) {
-	  
-	  if (analysis_state & forecast) {
-	    if (enkf_fs_has_node(fs , config_node , report_step , iens , forecast)) {
-	      enkf_fs_fread_node(fs , node , report_step , iens , forecast); {
-		const field_type * field = enkf_node_value_ptr( node );
-		value[index] = field_iget_double(field , cell_nr);
-	      }
-	    } else {
-	      fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
-	      value[index] = -1;
-	    }
-	    index++;
-	  }
-
-	  if (analysis_state & analyzed) {
-	    if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
-	      enkf_fs_fread_node(fs , node , report_step , iens , analyzed); {
-		const field_type * field = enkf_node_value_ptr( node );
-		value[index] = field_iget_double(field , cell_nr);
-	      }
-	    } else {
-	      fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",key , iens , report_step);
-	      value[index] = -1;
-	    }
-	    index++;
-	  }
-	}
-
+	enkf_ui_util_get_time(fs , config_node , node , analysis_state , cell_nr , step1 , step2 , iens , x ,y);
 	{
 	  char * filename = path_fmt_alloc_file(file_fmt , true , iens);
 	  FILE * stream = util_fopen(filename , "w");
 	  int    index  = 0;
+	  int    report_step;
 	  for (report_step = step1; report_step <= step2; report_step++) {
-	    fprintf(stream , "%d  %g \n",report_step , value[index]);
+	    fprintf(stream , "%g  %g \n",x[index] , y[index]);
 	    index++;
 	    if (analysis_state == both) {
-	      fprintf(stream , "%d  %g \n",report_step , value[index]);
-		index++;
+	      fprintf(stream , "%g  %g \n",x[index] , y[index]);
+	      index++;
 	    }
 	  }
 	  fclose(stream);
@@ -375,10 +317,10 @@ void enkf_ui_export_time(void *_arg) {
 	}
       }
       free(iens_active);
-      free(value);
+      free(x);
+      free(y);
       path_fmt_free(file_fmt);
     }
-    free(key);
   }
 }
 

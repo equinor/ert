@@ -35,8 +35,9 @@ static int __get_report_step(int report_step , state_enum state) {
     return report_step;
   else if (state == forecast) {
     if (report_step == 0) 
-      util_abort("%s: sorry at report_step:0 there is no forecast - aborting \n",__func__);
-    return report_step - 1;
+      return 0;  /* Time step zero is special - we do not differentiate between forecast and analyzed. */
+    else
+      return report_step - 1;
   } else {
     util_abort("%s state:%d - internal error - aborting \n",__func__ , state);
     return -1;  /* Shut up the compiler */

@@ -6,6 +6,14 @@
 #include <basic_driver.h>
 #include <fs_index.h>
 
+/**
+   Observe the following convention: the initial ensemble at report
+   step 0 is supposed to be analyzed. If we ask for the forecast at
+   report_step 0, we should get the analyzed value.
+*/
+
+
+
 
 
 struct enkf_fs_struct {
@@ -39,7 +47,7 @@ enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index,
 
 
 
-static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_config_node_type * config_node , state_enum state) {
+static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_config_node_type * config_node , state_enum state, int report_step) {
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
   basic_driver_type * driver = NULL;
   switch (var_type) {
@@ -55,16 +63,23 @@ static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_
   case(ecl_restart):
     if (state == analyzed)
       driver = fs->dynamic_analyzed;
-    else if (state == forecast)
-      driver = fs->dynamic_forecast;
-    else 
+    else if (state == forecast) {
+      if (report_step == 0)
+	driver = fs->dynamic_analyzed;
+      else
+	driver = fs->dynamic_forecast;
+    } else 
       util_abort("%s: internal error - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
     break;
   case(ecl_summary):
     if (state == analyzed)
       driver = fs->dynamic_analyzed;
-    else if (state == forecast)
-      driver = fs->dynamic_forecast;
+    else if (state == forecast) {
+      if (report_step == 0)
+	driver = fs->dynamic_analyzed;
+      else
+	driver = fs->dynamic_forecast;
+    }
     else 
       util_abort("%s: internal error - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
     break;
@@ -95,22 +110,20 @@ void enkf_fs_free(enkf_fs_type * fs) {
 
 
 void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node_get_config(enkf_node) , state);
+  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node_get_config(enkf_node) , state , report_step);
   driver->save(driver , report_step , iens , state , enkf_node); 
 }
 
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node_get_config(enkf_node) , state);
+  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node_get_config(enkf_node) , state , report_step);
   driver->load(driver , report_step , iens , state , enkf_node); 
 }
 
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , config_node , state);
+  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , config_node , state , report_step);
   return driver->has_node(driver , report_step , iens , state , enkf_config_node_get_key_ref(config_node));
 }
-
-
 
 void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int report_step , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {
   fs_index_add_node(enkf_fs->index , report_step , iens , kw , var_type , impl_type);

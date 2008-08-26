@@ -252,4 +252,10 @@ void prefix ## _assert_type(const prefix ## _type * object) { \
 }
 #define ASSERT_TYPE_HEADER(prefix) void prefix ## _assert_type(const prefix ## _type * );
 
+
+/*****************************************************************/
+
+#define VOID_IGET(prefix)        double prefix ## _iget__(const void * void_arg, int index) { return prefix ## _iget((const prefix ## _type *) void_arg , index); }
+#define VOID_IGET_HEADER(prefix) double prefix ## _iget__(const void * , int ) 
+
 #endif

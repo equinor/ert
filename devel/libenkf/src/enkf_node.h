@@ -38,6 +38,8 @@ typedef int   	      (deserialize_ftype)       (void *       	, /* Node object  
                                                  size_t );        /* Offset of serial data 	*/   
 
 
+typedef double        (iget_ftype)                      (const void * , int);    /* All obejects should support an iget */
+typedef int           (get_index_ftype)                 (const void *); 
 typedef void * 	      (alloc_ftype)                	(const void *);
 typedef void   	      (fread_ftype)                	(      void *  , FILE *);
 typedef void   	      (fwrite_ftype)               	(const void *  , FILE *);
@@ -71,6 +73,7 @@ typedef enum {alloc_func       	   	    = 0,
 	      free_data_func   	   	    = 10,    
 	      ensemble_fprintf_results_func = 11,
               clear_serial_state_func       = 12} node_function_type;
+	      
 
 	      
 
