@@ -21,5 +21,6 @@ int                            enkf_sched_get_last_report(const enkf_sched_type 
 int                            enkf_sched_get_node_index(const enkf_sched_type * , int );
 const enkf_sched_node_type *   enkf_sched_iget_node(const enkf_sched_type * , int);
 void                           enkf_sched_node_get_data(const enkf_sched_node_type * , int * , int * , int * , bool * , stringlist_type ** );
+const stringlist_type        * enkf_sched_get_default_forward_model(const enkf_sched_type * );
 
 #endif

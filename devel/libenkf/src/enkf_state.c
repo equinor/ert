@@ -243,7 +243,7 @@ static member_config_type * member_config_alloc(int iens , path_fmt_type * run_p
   member_config->ecl_store_path = NULL;
   member_config_set_eclbase(member_config        , path_fmt_alloc_path(eclbase_fmt, true , member_config->iens));
   member_config_set_run_path(member_config       , path_fmt_alloc_path(run_path_fmt , true , member_config->iens));
-  member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , true , member_config->iens));
+  if (ecl_store_path_fmt != NULL) member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , true , member_config->iens));
 
   member_config_set_ecl_store(member_config , ecl_store);
 

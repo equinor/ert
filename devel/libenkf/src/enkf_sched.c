@@ -375,6 +375,11 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched ) {
   enkf_sched_add_node(enkf_sched , node);
 }
 
+const stringlist_type * enkf_sched_get_default_forward_model(const enkf_sched_type * enkf_sched) {
+  return enkf_sched->std_forward_model;
+}
+
+
 /*****************************************************************/
 
 void enkf_sched_random_test(enkf_sched_type * enkf_sched) {

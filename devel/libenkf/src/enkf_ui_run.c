@@ -89,15 +89,29 @@ void enkf_ui_run_restart__(void * _void_arg) {
 
 
 void enkf_ui_run_exp__(void * _void_arg) {
-  /*
-    void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
-    enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
-    enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
-    int start_report;
-    
-    printf("Start from report : ");
-    fscanf(stdin, "%d" , &start_report);
-  */
+  void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
+  enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
+  enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
+  const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+  const int ens_size    = enkf_config_get_ens_size(enkf_config);
+  const int last_report = enkf_sched_get_last_report(enkf_sched);
+  int prompt_len = 35;
+
+
+  int start_report = util_scanf_int_with_limits("Initialize static parameters from: ",prompt_len , 0 , last_report );
+  int iens         = util_scanf_int_with_limits("How many members too integrate: ",prompt_len , 1 , ens_size);
+  enkf_main_run(enkf_main , start_report , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+}
+
+
+void enkf_ui_run_screening__(void * _void_arg) {
+  void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
+  enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
+  enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
+  const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+  const int last_report = enkf_sched_get_last_report(enkf_sched);
+
+  enkf_main_run(enkf_main , 0 , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
 }
 
 
@@ -116,6 +130,7 @@ void enkf_ui_run_menu(void * _arg) {
   menu_add_item(menu , "Start EnKF run from beginning"         , "sS" , enkf_ui_run_start__     , run_arg);
   menu_add_item(menu , "Restart EnKF run from arbitrary state" , "rR" , enkf_ui_run_restart__ , run_arg);
   menu_add_item(menu , "Run ensemble experiment"               , "xX" , enkf_ui_run_exp__   , run_arg);
+  menu_add_item(menu , "Run screening experiment"               , "cC" , enkf_ui_run_screening__   , run_arg);
   menu_run(menu);
   menu_free(menu);
 

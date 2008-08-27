@@ -76,6 +76,7 @@ struct enkf_main_struct {
   sched_file_type    *sched_file;
   history_type       *hist;
   enkf_fs_type       *fs;
+  run_mode_type       run_mode;  /* Is this an enkf assimilation, or an ensemble experiment, or .. */
 };
 
 
@@ -119,6 +120,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , j
   enkf_main->job_queue      = job_queue;
   enkf_main->meas_matrix    = meas_matrix_alloc(ens_size);
   enkf_main->ensemble       = malloc(ens_size * sizeof * enkf_main->ensemble);
+  enkf_main->run_mode       = enkf_assimilation;
   {
     int iens , keys , ik;
     char **keylist  = enkf_config_alloc_keylist(config , &keys);
@@ -156,6 +158,8 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , j
     const char * init_file   = enkf_config_get_init_file(config);
     if (init_file == NULL) 
       util_abort("%s: INIT_FILE is not set - must either use INIT_FILE in config_file or EQUIL keyword.",__func__);
+    
+    if (init_file != NULL) 
     {
       char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
       char * DATA_initialize = util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2);

@@ -92,6 +92,39 @@ typedef enum   {undefined   = 0 ,
 
 
 
+/**
+   This enum is used to differentiate between different types of
+   run. The point is that depending on this mode we can be more or
+   less restrictive on the amount of input we require from the user. 
+
+   In mode enkf_assimlation ( which is the default ), we require quite
+   a lot of info, whereas in the case screening_experiment we require
+   a lot less.
+
+   screening_experiment: 
+      - SIZE
+      - RUNPATH
+      - ECLBASE
+      - START_TIME
+      - SCHEDULE_FILE
+      - DATA_FILE
+      - FORWARD_MODEL.
+
+   ensemble_experiment:
+      - ENSPATH
+      - INIT_FILE (or estimation of EQUIL)
+
+   enkf_assmilation:
+      - RESULT_PATH
+
+*/
+
+typedef enum { enkf_assimilation   = 1, 
+	       ensemble_experiment = 2,
+	       screening_experment = 3} run_mode_type;
+
+
+
 
 
 
