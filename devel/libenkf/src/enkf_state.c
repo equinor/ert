@@ -377,8 +377,12 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
   enkf_state->joblist         = joblist;
   enkf_state->meas_vector     = meas_vector;
   enkf_state->data_kw         = hash_alloc();
+  {
+    char * iens_string = util_alloc_sprintf("%d" , iens);
+    enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);
+    free(iens_string);
+  }
   enkf_state_set_state(enkf_state , -1 , undefined);
-  
   enkf_state->my_config   =  member_config_alloc( iens , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
   enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue);
   enkf_state->run_info    = run_info_alloc();
@@ -1011,7 +1015,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     enkf_state_fread(enkf_state , load_mask , run_info->init_step ,run_info-> init_state);
   }
 
-'
   /* 
      Uncertain about this one ...
   */
@@ -1031,18 +1034,24 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file  , fmt_file , -1);
     char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
     char * ecl_base        	= my_config->eclbase;
-    char * step1_s  	= util_alloc_sprintf("%d" , run_info->step1);
-    char * step2_s  	= util_alloc_sprintf("%d" , run_info->step2);
+    char * step1_s  		= util_alloc_sprintf("%d" , run_info->step1);
+    char * step2_s  		= util_alloc_sprintf("%d" , run_info->step2);
 
 
-    hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) 	 , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) 	 , void_arg_free__);
     hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 )  , void_arg_free__);
     hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 )  , void_arg_free__);
     hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   )  , void_arg_free__);
     hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
     hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
-    
+    {
+      char ** key_list = hash_alloc_keylist( enkf_state->data_kw );
+      int i;
+      /*  These are owned by the data_kw hash */
+      for (i = 0; i < hash_get_size(enkf_state->data_kw); i++)
+	hash_insert_ref( context , key_list[i] , hash_get( enkf_state->data_kw , key_list[i]));
+    }
     ext_joblist_python_fprintf( enkf_state->joblist , run_info->forward_model ,my_config->run_path , context);
     
     free(iens);
