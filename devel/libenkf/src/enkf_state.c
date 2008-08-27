@@ -43,39 +43,223 @@
 #include <ext_joblist.h>
 #include <stringlist.h>
 
+#define ENKF_STATE_TYPE_ID 78132
+
+
+/**
+   This struct is a pure utility structure used to pack the various
+   bits and pieces of information needed to start, monitor, and load
+   back results from the forward model simulations. 
+
+   Typcially the values in this struct are set from the enkf_main object
+   before a forward_step starts.
+*/
+
+typedef struct run_info_struct {
+  int               init_step;       /* The report step we initialize from - will often be equal to step1, but can be different. */
+  state_enum        init_state;      /* Whether we should init from a forecast or an analyzed state. */
+  int               step1;           /* The forward model is integrated: step1 -> step2 */
+  int               step2;  	     
+  bool              load_results;    /* Whether the results should be loaded when the forward model is complete. */
+  bool              unlink_run_path; /* Whether the run_path should be unlinked when the forward model is through. */
+  const stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
+  
+  /******************************************************************/
+  /* Return value - set in the called routine!!  */
+  bool              complete_OK;     /* Did the forward model complete OK? */
+} run_info_type;
 
 
 
+/**
+   This struct contains various objects which the enkf_state needs
+   during operation, which the enkf_state_object *DOES NOT* own. The
+   struct only contains pointers to objects owned by (typically) the
+   enkf_main object. 
+
+   If the enkf_state object writes to any of the objects in this
+   struct that can be considered a serious *BUG*.
+*/
+
+typedef struct shared_info_struct {
+  enkf_fs_type          * fs;                /* The filesystem object - used to load and store nodes. */
+  ext_joblist_type      * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
+  sched_file_type       * sched_file;        /* The schedule file. */   
+  job_queue_type        * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
+  bool                    unified;           /* Use unified ECLIPSE files (NO - do not do that) */
+  enkf_obs_type         * obs;               /* The observation struct - used when measuring on the newly loaded state. */
+} shared_info_type;
+
+
+
+
+/**
+   This struct contains information which is private to this
+   member. It is initialized at object boot time, and (typically) not
+   changed during the simulation. [In principle it could change during
+   the simulation, but the current API does not support that.]
+*/ 
+
+typedef struct member_config_struct {
+  bool             unified;           /* Whether unified ECLIPSE files should be used - NO. */
+  char 		 * eclbase;           /* The ECLBASE string used for simulations of this member. */
+  char 		 * run_path;          /* The path where this member will run it's simulations. */
+  int  		   iens;              /* The ensemble member number of this member. */
+  char 		 * ecl_store_path;    /* Where should the ECLIPSE results be copied (can be NULL in case ecl_store == 0). */
+  ecl_store_enum   ecl_store;         /* What should be stored of ECLIPSE results - see enkf_types.h. */
+} member_config_type;
+
+
+
+
+
+/*****************************************************************/
 /** THE MOST IMPORTANT ENKF OBJECT */
 
 struct enkf_state_struct {
+  int                     __id;              /* Funny integer used for run_time type checking. */
   restart_kw_list_type  * restart_kw_list;   /* This is an ordered list of the keywords in the restart file - to be
                                                 able to regenerate restart files with keywords in the right order.*/
-  /*list_type    	   	* node_list;        */
   hash_type    	   	* node_hash;
   hash_type             * data_kw;           /* This a list of key - value pairs which are used in a search-replace
                                                 operation on the ECLIPSE data file. Will at least contain the key "INIT"
                                                 - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
 
-
   meas_vector_type      * meas_vector;       /* The meas_vector will accept measurements performed on this state.*/
   enkf_config_type 	* config;            /* The main config object, which contains all the node config objects. */
-  char             	* eclbase;           /* What is the basename (in ECLIPSE) for this state. */
-  char                  * run_path;          /* Where should the ECLIPSE simulations be run. */ 
-  int                     my_iens;           /* The ensemble number of this instance (not generally zero offset - i.e.
-                                                should *NOT* be used as an index .*/
   state_enum              analysis_state;       
   int                     report_step;       /* The report_step and analysis_state = (analyzed || forecast) say
                                                 what is the current state with respect to enkf of the in-memory
                                                 representation of this enkf_state instance.*/
-  char                  * ecl_store_path;    /* Where should the ECLIPSE results be copied (can be NULL in case ecl_store == 0). */
-  ecl_store_enum          ecl_store;         /* What should be stored of ECLIPSE results - see the definition
-                                                of ecl_store_enum in enkf_types.h. */  
-  enkf_fs_type          * fs;                
-  ext_joblist_type      * joblist;                
+  
+  enkf_fs_type          * fs;                /* The filesystem object - used to load and store nodes. */
+  ext_joblist_type      * joblist;           /* The list of external jobs which are installed - and their running. */     
+  
+  run_info_type         * run_info;          /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
+  shared_info_type      * shared_info;       /* Pointers to shared objects which is needed by the enkf_state object (read only). */
+  member_config_type    * my_config;         /* Private config information for this member; not updated during a simulation. */
 };
 
 /*****************************************************************/
+
+/**
+   Thisfunction sets the run_info parameters. This is typically called
+   (via an enkf_state__ routine) by the external scope handling the forward model.
+
+   When this initialization code has been run we are certain that the
+   enkf_state object has all the information it needs to "run itself"
+   forward.
+*/
+
+
+static void run_info_set(run_info_type * run_info ,int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model, bool OK) {
+  run_info->init_step  	    = init_step;
+  run_info->init_state 	    = init_state;
+  run_info->step1      	    = step1;
+  run_info->step2      	    = step2;
+  run_info->load_results    = load_results;
+  run_info->unlink_run_path = unlink_run_path;
+  run_info->forward_model   = forward_model;
+  run_info->complete_OK     = OK;
+}
+
+
+static run_info_type * run_info_alloc() {
+  run_info_type * run_info = util_malloc(sizeof * run_info , __func__);
+  return run_info;
+}
+
+
+static void run_info_free(run_info_type * run_info) {
+  free(run_info);
+}
+
+
+
+/*****************************************************************/
+
+static shared_info_type * shared_info_alloc(enkf_fs_type * enkf_fs , ext_joblist_type * joblist , sched_file_type * sched_file, enkf_obs_type * obs, job_queue_type * job_queue) {
+  shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
+
+  shared_info->fs         = enkf_fs;
+  shared_info->joblist    = joblist;
+  shared_info->sched_file = sched_file;
+  shared_info->obs        = obs;
+  shared_info->job_queue  = job_queue;
+
+  return shared_info;
+}
+
+
+static void shared_info_free(shared_info_type * shared_info) {
+  /** 
+      Adding something here is a BUG - this object does 
+      not own anything.
+  */
+  free(shared_info);
+}
+
+
+static shared_info_type * shared_info_copyc(const shared_info_type *src) {
+  shared_info_type * new = util_alloc_copy(src , sizeof * src , __func__);
+  return new;
+}
+
+
+
+
+
+/******************************************************************/
+/** Implementation of the member_config struct. All of this implementation
+    is private - however some of it is exportted through the enkf_state object,
+    and it should be perfectly safe to export more of it.
+*/
+
+
+#define MEMBER_CONFIG_SET_PATH(path) \
+static void member_config_set_ ## path(member_config_type * member_config , const char * p) { \
+   member_config->path = util_realloc_string_copy(member_config->path , p); \
+}
+
+MEMBER_CONFIG_SET_PATH(eclbase);
+MEMBER_CONFIG_SET_PATH(run_path);
+MEMBER_CONFIG_SET_PATH(ecl_store_path);
+
+#undef MEMBER_CONFIG_SET_PATH
+
+
+static void member_config_set_ecl_store(member_config_type * member_config , ecl_store_enum ecl_store) {
+  member_config->ecl_store = ecl_store;
+}
+
+static void member_config_free(member_config_type * member_config) {
+  util_safe_free(member_config->eclbase);
+  util_safe_free(member_config->run_path);
+  util_safe_free(member_config->ecl_store_path);
+  free(member_config);
+}
+
+static member_config_type * member_config_alloc(int iens , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , ecl_store_enum ecl_store) {
+  member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
+
+  member_config->unified        = false;
+  member_config->iens           = iens; /* Can only be changed in the allocater. */
+  member_config->run_path 	= NULL;
+  member_config->eclbase  	= NULL;
+  member_config->ecl_store_path = NULL;
+  member_config_set_eclbase(member_config        , path_fmt_alloc_path(eclbase_fmt, true , member_config->iens));
+  member_config_set_run_path(member_config       , path_fmt_alloc_path(run_path_fmt , true , member_config->iens));
+  member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , true , member_config->iens));
+
+  member_config_set_ecl_store(member_config , ecl_store);
+
+  return member_config;
+}
+
+
+
+/*****************************************************************/
+
 
 /**
    This struct is a pure utility structure used to pack the various
@@ -93,11 +277,17 @@ struct enkf_state_struct {
 
    2: The two fields: 'state' and 'complete_OK' are pr. member, the
       rest of the fields are only related to the current integration
-      step , and common to all members.
+      step , and identical for all members.
+
+   3: The fields init_step , init_state , step1 , step2 and
+      forward_model should be set for every step, whereas the other
+      fields are (typically) static for one simulation. 
 */
 
 
-struct enkf_run_info_struct {
+
+
+struct OLD_enkf_run_info_struct {
   int               __type_id;       /* ID to perform runtime checks of casts. */
   enkf_state_type * state;           /* The state we are currently considering. */
   job_queue_type  * job_queue;       /* The job queue which will run the current job. */
@@ -108,7 +298,6 @@ struct enkf_run_info_struct {
   state_enum        init_state;      /* Whether we should init from a forecast or an analyzed state. */
   int               step1;           /* The forward model is integrated: step1 -> step2 */
   int               step2;  	     
-  int               __minus1;        /* What the fuck is this ?? */
   bool              load_results;    /* Whether the results should be loaded when the forward model is complete. */
   bool              unlink_run_path; /* Whether the run_path should be unlinked when the forward model is through. */
   stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
@@ -118,6 +307,7 @@ struct enkf_run_info_struct {
   bool              complete_OK;     /* Did the forward model complete OK? */
 };
 #define ENKF_RUN_INFO_TYPE_ID 45681
+
 
 enkf_run_info_type * enkf_run_info_alloc(enkf_state_type * state      ,	  
 					 job_queue_type  * job_queue  ,   
@@ -133,6 +323,7 @@ enkf_run_info_type * enkf_run_info_alloc(enkf_state_type * state      ,
 					 stringlist_type * forward_model) {
 
   enkf_run_info_type * run_info = util_malloc( sizeof * run_info , __func__);
+  run_info->__type_id   = ENKF_RUN_INFO_TYPE_ID;
   
   run_info->state = state;
   run_info->job_queue = job_queue;
@@ -143,15 +334,31 @@ enkf_run_info_type * enkf_run_info_alloc(enkf_state_type * state      ,
   run_info->init_state = init_state;
   run_info->step1 = step1;
   run_info->step2 = step2;
-  run_info->__minus1 = -1;
   run_info->load_results = load_results;    
   run_info->unlink_run_path = unlink_run_path;
   run_info->forward_model = forward_model;
 
   run_info->complete_OK = false;
-  run_info->__type_id   = ENKF_RUN_INFO_TYPE_ID;
+  
   return run_info;
 }
+
+
+
+/** 
+    This function is used to set the configuration information needed
+    for _one_ forward step. This function will be called (via
+    enkf_state_xx) by the enkf_main object before the integration.
+*/
+
+static void enkf_run_info_set_dynamic(enkf_run_info_type * run_info , int init_step , state_enum init_state , int step1, int step2 , stringlist_type * forward_model) {
+  run_info->init_step  	  = init_step;
+  run_info->init_state 	  = init_state;
+  run_info->step1 	  = step1;
+  run_info->step2 	  = step2;
+  run_info->forward_model = forward_model;
+}
+
 
 
 static enkf_run_info_type * enkf_run_info_safe_cast(void *__run_info) {
@@ -169,11 +376,10 @@ bool enkf_run_info_OK(const enkf_run_info_type * run_info) {
 }
 
 
-
-
 void enkf_run_info_free(enkf_run_info_type * run_info) {
   free(run_info);
 }
+
 #undef ENKF_RUN_INFO_TYPE_ID 
 /* Implementation of enkf_run_info complete */
 /*****************************************************************/
@@ -192,13 +398,14 @@ void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_functi
   {
     char ** key_list    = hash_alloc_keylist(enkf_state->node_hash);
     int ikey;
+    member_config_type * my_config = enkf_state->my_config;
     
     for (ikey = 0; ikey < hash_get_size( enkf_state->node_hash ); ikey++) {
       enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_include_type(enkf_node , mask)) {                       
 	switch(function_type) {
 	case(initialize_func):
-	  enkf_node_initialize(enkf_node , enkf_state->my_iens);
+	  enkf_node_initialize(enkf_node , my_config->iens);
 	  break;
 	case(clear_serial_state_func):
 	  enkf_node_clear_serial_state(enkf_node);
@@ -252,23 +459,30 @@ int enkf_state_fmt_mode(const enkf_state_type * enkf_state) {
 }
 
 
+
+const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) {
+  return enkf_state->my_config->run_path;
+}
+
+
 void enkf_state_set_run_path(enkf_state_type * enkf_state , const char * run_path) {
-  enkf_state->run_path = util_realloc_string_copy(enkf_state->run_path , run_path);
+  member_config_set_run_path(enkf_state->my_config , run_path);
 }
 
 
 void enkf_state_set_eclbase(enkf_state_type * enkf_state , const char * eclbase) {
-  enkf_state->eclbase = util_realloc_string_copy(enkf_state->eclbase , eclbase);
+  member_config_set_eclbase(enkf_state->my_config , eclbase);
 }
 
 
-void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
+/*
+  void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
   enkf_state->my_iens = iens;
-}
-
+  }
+*/
 
 int  enkf_state_get_iens(const enkf_state_type * enkf_state) {
-  return enkf_state->my_iens;
+  return enkf_state->my_config->iens;
 }
 
 
@@ -277,32 +491,40 @@ enkf_fs_type * enkf_state_get_fs_ref(const enkf_state_type * state) {
 }
 
 
-enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , ecl_store_enum ecl_store , enkf_fs_type * fs , ext_joblist_type * joblist , 
-				   const char * run_path , const char * eclbase ,  const char * ecl_store_path , meas_vector_type * meas_vector) {
+static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
+  enkf_state_type * state = (enkf_state_type *) __enkf_state;
+  if (state->__id != ENKF_STATE_TYPE_ID)
+    util_abort("%s: internal error - runtime cast failed - aborting \n",__func__);
+  return state;
+}
+
+
+
+enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , ecl_store_enum ecl_store , enkf_fs_type * fs , ext_joblist_type * joblist , job_queue_type * job_queue , sched_file_type * sched_file , 
+				   path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , meas_vector_type * meas_vector , enkf_obs_type * obs) {
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
+  enkf_state->__id            = ENKF_STATE_TYPE_ID;
   
   enkf_state->config          = (enkf_config_type *) config;
   enkf_state->node_hash       = hash_alloc();
   enkf_state->restart_kw_list = restart_kw_list_alloc();
-  enkf_state_set_iens(enkf_state , iens);
-  enkf_state->run_path        = NULL;
-  enkf_state->eclbase         = NULL;
   enkf_state->fs              = fs;
   enkf_state->joblist         = joblist;
   enkf_state->meas_vector     = meas_vector;
   enkf_state->data_kw         = hash_alloc();
-  enkf_state_set_run_path(enkf_state , run_path);
-  enkf_state_set_eclbase(enkf_state , eclbase);
-  enkf_state->ecl_store_path  = util_alloc_string_copy(ecl_store_path);
-  enkf_state->ecl_store       = ecl_store; 
-  enkf_state_set_state(enkf_state , -1 , forecast);
+  enkf_state_set_state(enkf_state , -1 , undefined);
+  
+  enkf_state->my_config   =  member_config_alloc( iens , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
+  enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue);
+  enkf_state->run_info    = run_info_alloc();
   return enkf_state;
 }
 
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  enkf_state_type * new = enkf_state_alloc(src->config , src->my_iens, src->ecl_store , src->fs , src->joblist , src->run_path , src->eclbase ,  src->ecl_store_path , src->meas_vector);
+  /*
+  enkf_state_type * new = enkf_state_alloc(src->config , src->my_iens, src->ecl_store , src->fs , src->joblist ,sched_file , src->run_path , src->eclbase ,  src->ecl_store_path , src->meas_vector);
   const int num_keys = hash_get_size( src->node_hash ); 
   char ** key_list = hash_alloc_keylist( src->node_hash );
   int ikey;
@@ -315,6 +537,9 @@ enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
   util_free_stringlist( key_list , num_keys);
   
   return new;
+*/
+  util_abort("%s: not implemented \n",__func__);
+return NULL;
 }
 
 
@@ -369,13 +594,15 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 
 static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report_nr1 , int report_nr2) {
   const bool fmt_file  = enkf_state_fmt_file(enkf_state);
+  const member_config_type * my_config = enkf_state->my_config;
   int first_report;
-  if (enkf_state->ecl_store != store_none) {
 
-    util_make_path(enkf_state->ecl_store_path);
-    if (enkf_state->ecl_store & store_data) {
-      char * data_target = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_data_file , true , -1);
-      char * data_src    = ecl_util_alloc_filename(enkf_state->run_path       , enkf_state->eclbase , ecl_data_file , true , -1);
+  if (my_config->ecl_store != store_none) {
+
+    util_make_path(my_config->ecl_store_path);
+    if (my_config->ecl_store & store_data) {
+      char * data_target = ecl_util_alloc_filename(my_config->ecl_store_path , my_config->eclbase , ecl_data_file , true , -1);
+      char * data_src    = ecl_util_alloc_filename(my_config->run_path       , my_config->eclbase , ecl_data_file , true , -1);
       
       util_copy_file(data_src , data_target);
       free(data_target);
@@ -383,18 +610,18 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
     }
 
 
-    if (enkf_state->ecl_store & store_summary) {
+    if (my_config->ecl_store & store_summary) {
       first_report       = report_nr1 + 1;
       {
-	char ** summary_target = ecl_util_alloc_filelist(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
-	char ** summary_src    = ecl_util_alloc_filelist(enkf_state->run_path       , enkf_state->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
-	char  * header_target  = ecl_util_alloc_filename(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
+	char ** summary_target = ecl_util_alloc_filelist(my_config->ecl_store_path , my_config->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
+	char ** summary_src    = ecl_util_alloc_filelist(my_config->run_path       , my_config->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
+	char  * header_target  = ecl_util_alloc_filename(my_config->ecl_store_path , my_config->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
 	int i;
 	for (i=0; i  < report_nr2 - first_report + 1; i++) 
 	  util_copy_file(summary_src[i] , summary_target[i]);
 
 	if (!util_file_exists(header_target)) {
-	  char * header_src = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
+	  char * header_src = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
 	  util_copy_file(header_src , header_target);
 	  free(header_src);
 	}
@@ -404,14 +631,14 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
       }
     }
   
-    if (enkf_state->ecl_store & store_restart) {
+    if (my_config->ecl_store & store_restart) {
       if (report_nr1 == 0)
 	first_report = 0;
       else
 	first_report = report_nr1 + 1;
       {
-	char ** restart_target = ecl_util_alloc_filelist(enkf_state->ecl_store_path , enkf_state->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
-	char ** restart_src    = ecl_util_alloc_filelist(enkf_state->run_path       , enkf_state->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
+	char ** restart_target = ecl_util_alloc_filelist(my_config->ecl_store_path , my_config->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
+	char ** restart_src    = ecl_util_alloc_filelist(my_config->run_path       , my_config->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
 	int i;
 	for (i=0; i  < report_nr2 - first_report + 1; i++) 
 	  util_copy_file(restart_src[i] , restart_target[i]);
@@ -443,6 +670,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
   restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(ecl_block);
   int report_step 		       = ecl_block_get_report_nr(ecl_block);
   const char * block_kw 	       = restart_kw_list_get_first(block_kw_list);
+  const member_config_type * my_config = enkf_state->my_config;
 
   restart_kw_list_reset(enkf_state->restart_kw_list);
   while (block_kw != NULL) {
@@ -485,7 +713,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 	  /*
 	    Static kewyords go straight out ....
 	  */
-	  enkf_fs_fwrite_node(enkf_state->fs , enkf_node , report_step , enkf_state->my_iens , forecast);
+	  enkf_fs_fwrite_node(enkf_state->fs , enkf_node , report_step , my_config->iens , forecast);
 	  enkf_node_free_data(enkf_node);
 	}
       } 
@@ -495,7 +723,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
     free(kw);
     block_kw = restart_kw_list_get_next(block_kw_list);
   }
-  enkf_fs_fwrite_restart_kw_list(enkf_state->fs , report_step , enkf_state->my_iens, enkf_state->restart_kw_list);
+  enkf_fs_fwrite_restart_kw_list(enkf_state->fs , report_step , my_config->iens, enkf_state->restart_kw_list);
 }
 
 
@@ -503,10 +731,11 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 
 void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , int report_step) {
   bool at_eof;
+  member_config_type * my_config = enkf_state->my_config;
   const bool fmt_file  = enkf_state_fmt_file(enkf_state);
   bool endian_swap     = enkf_config_get_endian_swap(enkf_state->config);
   ecl_block_type       * ecl_block;
-  char * restart_file  = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , report_step);
+  char * restart_file  = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
 
   fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap);
   
@@ -529,10 +758,11 @@ void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , 
    
 
 static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_step) {
+  const member_config_type * my_config = enkf_state->my_config;
   const bool fmt_file = enkf_state_fmt_file(enkf_state);
   ecl_sum_type * ecl_sum;
-  char * summary_file     = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_file        , fmt_file ,  report_step);
-  char * header_file      = ecl_util_alloc_exfilename(enkf_state->run_path , enkf_state->eclbase , ecl_summary_header_file , fmt_file , -1);
+  char * summary_file     = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
+  char * header_file      = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
   
   ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
   {
@@ -542,7 +772,7 @@ static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_s
     for (ikey= 0; ikey < num_keys; ikey++) {
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_has_func(enkf_node , ecl_load_func)) 
-	enkf_node_ecl_load(enkf_node , enkf_state->run_path , enkf_state->eclbase , ecl_sum , report_step);
+	enkf_node_ecl_load(enkf_node , my_config->run_path , my_config->eclbase , ecl_sum , report_step);
       
     }                                                                      
     util_free_stringlist(key_list , num_keys);
@@ -560,6 +790,7 @@ static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_s
   nice.
 */
 void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs) {
+  const member_config_type * my_config = enkf_state->my_config;
   char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
 
@@ -570,7 +801,7 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , obs_node_get_state_kw(obs_node));
 
       if (!enkf_node_memory_allocated(enkf_node))
-	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
       
       obs_node_measure(obs_node , enkf_state->report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
     }
@@ -623,14 +854,15 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
 
 
 void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
+  const member_config_type * my_config = enkf_state->my_config;
   bool endian_swap       = enkf_config_get_endian_swap(enkf_state->config);
   const bool fmt_file    = enkf_state_fmt_file(enkf_state);
-  char * restart_file    = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_restart_file , fmt_file , enkf_state->report_step);
+  char * restart_file    = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_restart_file , fmt_file , enkf_state->report_step);
   fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap);
   const char * kw;
 
   if (restart_kw_list_empty(enkf_state->restart_kw_list))
-    enkf_fs_fread_restart_kw_list(enkf_state->fs , enkf_state->report_step , enkf_state->my_iens , enkf_state->restart_kw_list);
+    enkf_fs_fread_restart_kw_list(enkf_state->fs , enkf_state->report_step , my_config->iens , enkf_state->restart_kw_list);
   
 
   kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
@@ -654,7 +886,7 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 	ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , enkf_state->report_step);
 
       if (!enkf_node_memory_allocated(enkf_node))
-	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+	enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
       
       if (var_type == ecl_restart) {
 	/* Pressure and saturations */
@@ -684,6 +916,7 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 */
 
 void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
+  const member_config_type * my_config = enkf_state->my_config;
   int    restart_mask    = 0;
 
   if (mask & ecl_restart) 
@@ -695,7 +928,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
   if (restart_mask > 0 && enkf_state->report_step > 0)
     enkf_state_write_restart_file(enkf_state);
   
-  util_make_path(enkf_state->run_path);
+  util_make_path(my_config->run_path);
   {
     const int num_keys = hash_get_size(enkf_state->node_hash);
     char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
@@ -705,10 +938,10 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
       enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_include_type(enkf_node , mask)) {
 	if (!enkf_node_memory_allocated(enkf_node))
-	  enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+	  enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
       
 	if (enkf_node_include_type(enkf_node , parameter + static_parameter))
-	  enkf_node_ecl_write(enkf_node , enkf_state->run_path);
+	  enkf_node_ecl_write(enkf_node , my_config->run_path);
       }
     }
     util_free_stringlist(key_list , num_keys);
@@ -728,6 +961,7 @@ void enkf_state_fwrite_as(enkf_state_type * enkf_state  , int mask , int report_
 
 
 void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask) {
+  const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
   int ikey;
@@ -735,13 +969,14 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask) {
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_fs_fwrite_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+      enkf_fs_fwrite_node(enkf_state->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
   }                                                                     
   util_free_stringlist(key_list , num_keys);
 }
 
 
 void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
+  const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
   int ikey;
@@ -749,13 +984,14 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+      enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
   }                                                                     
   util_free_stringlist(key_list , num_keys);
 }
 
 
 void enkf_state_swapout(enkf_state_type * enkf_state , int mask ) {
+  const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
   int ikey;
@@ -763,7 +999,7 @@ void enkf_state_swapout(enkf_state_type * enkf_state , int mask ) {
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask)) {
-      enkf_fs_fwrite_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+      enkf_fs_fwrite_node(enkf_state->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
       enkf_node_free_data(enkf_node);
     }
   }                                                                     
@@ -773,6 +1009,7 @@ void enkf_state_swapout(enkf_state_type * enkf_state , int mask ) {
 
 
 void enkf_state_swapin(enkf_state_type * enkf_state , int mask ) {
+  const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
   int ikey;
@@ -781,7 +1018,7 @@ void enkf_state_swapin(enkf_state_type * enkf_state , int mask ) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask)) {
       enkf_node_ensure_memory(enkf_node);
-      enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , enkf_state->my_iens , enkf_state->analysis_state);
+      enkf_fs_fread_node(enkf_state->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
     }
   }                                                                     
   util_free_stringlist(key_list , num_keys);
@@ -813,10 +1050,10 @@ meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *state) {
 void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
   hash_free(enkf_state->data_kw);
-  free(enkf_state->run_path);
   restart_kw_list_free(enkf_state->restart_kw_list);
-  free(enkf_state->eclbase);
-  if (enkf_state->ecl_store_path != NULL) free(enkf_state->ecl_store_path);
+  member_config_free(enkf_state->my_config);
+  run_info_free(enkf_state->run_info);
+  shared_info_free(enkf_state->shared_info);
   free(enkf_state);
 }
 
@@ -871,26 +1108,26 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 
 void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int init_step, state_enum init_state , int report_step1 , int report_step2, const stringlist_type * _forward_model) {
-  
+  const member_config_type * my_config = enkf_state->my_config;  
   if (report_step1 != init_step)
     if (report_step1 > 0)
       util_abort("%s: internal error - when initializing from a different timestep than starting from - the start step must be zero.\n",__func__);
 
   if (report_step1 > 0) {
-    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , enkf_state->eclbase , report_step1);
+    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , report_step1);
     enkf_state_set_data_kw(enkf_state , "INIT" , data_initialize);
     free(data_initialize);
   }
 
-  util_make_path(enkf_state->run_path);
+  util_make_path(my_config->run_path);
   {
-    char * data_file = ecl_util_alloc_filename(enkf_state->run_path , enkf_state->eclbase , ecl_data_file , true , -1);
+    char * data_file = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_data_file , true , -1);
     util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
     free(data_file);
   }
 
   {
-    char * schedule_file = util_alloc_full_path(enkf_state->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
+    char * schedule_file = util_alloc_full_path(my_config->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
     sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
     free(schedule_file);
   }
@@ -908,8 +1145,8 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   enkf_state_set_state(enkf_state , report_step1 , analyzed); 
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
   {
-    char * stdin_file = util_alloc_full_path(enkf_state->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
-    ecl_util_init_stdin( stdin_file , enkf_state->eclbase );
+    char * stdin_file = util_alloc_full_path(my_config->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
+    ecl_util_init_stdin( stdin_file , my_config->eclbase );
     free(stdin_file);
   }
 
@@ -918,11 +1155,11 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
     const char ** forward_model = stringlist_get_argv(_forward_model);
     hash_type * context    	= hash_alloc();
-    char * restart_file1   	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step1);
-    char * restart_file2   	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_restart_file  	   , fmt_file , report_step2);
-    char * smspec_file     	= ecl_util_alloc_filename(NULL , enkf_state->eclbase , ecl_summary_header_file  , fmt_file , -1);
-    char * iens            	= util_alloc_sprintf("%d" , enkf_state->my_iens);
-    char * ecl_base        	= enkf_state->eclbase;
+    char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , report_step1);
+    char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , report_step2);
+    char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file  , fmt_file , -1);
+    char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
+    char * ecl_base        	= my_config->eclbase;
     char * report_step1_s  	= util_alloc_sprintf("%d" , report_step1);
     char * report_step2_s  	= util_alloc_sprintf("%d" , report_step2);
 
@@ -935,7 +1172,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
     hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
     hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
     
-    ext_joblist_python_fprintf( enkf_state->joblist , forward_model , forward_model_length , enkf_state->run_path , context);
+    ext_joblist_python_fprintf( enkf_state->joblist , forward_model , forward_model_length , my_config->run_path , context);
     
     free(iens);
     free(restart_file1);
@@ -978,20 +1215,20 @@ void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * jo
 
 
 void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2 , bool load_results , bool unlink_run_path , bool *job_OK) {
+  const member_config_type * my_config = enkf_state->my_config;
   const int usleep_time = 100000; /* 1/10 of a second */ 
-  const int iens        = enkf_state_get_iens(enkf_state);
   job_status_type final_status;
 
   *job_OK = true;
   while (true) {
-    final_status = job_queue_export_job_status(job_queue , iens);
+    final_status = job_queue_export_job_status(job_queue , my_config->iens);
 
     if (final_status == job_queue_complete_OK) {
       if (load_results)
 	enkf_state_ecl_load(enkf_state , enkf_obs , unified , report_step1 , report_step2);
       break;
     } else if (final_status == job_queue_complete_FAIL) {
-      fprintf(stderr,"** job:%d failed completely - this will break ... \n",enkf_state->my_iens);
+      fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
       *job_OK = false;
       break;
     } else usleep(usleep_time);
@@ -1001,11 +1238,55 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type *
   if ( enkf_config_get_debug(enkf_state->config) == 0) {
     /* In case the job fails, we leave the run_path directory around for debugging. */
     if (unlink_run_path && (final_status == job_queue_complete_OK))
-      util_unlink_path(enkf_state->run_path);
+      util_unlink_path(my_config->run_path);
   }
 }
 
 
+
+  return enkf_state->run_info->complete_OK;
+}
+
+
+
+void * enkf_state_complete_eclipse__(void * __enkf_state) {
+  enkf_state_type * enkf_state = enkf_state_safe_cast(__enkf_state);
+  run_info_type * run_info       = enkf_state->run_info;
+  const shared_info_type * shared_info = enkf_state->shared_info;
+  const member_config_type * my_config = enkf_state->my_config;
+
+  enkf_state_complete_eclipse(enkf_state             , 
+			      shared_info->job_queue , 
+			      shared_info->obs       , 
+			      my_config->unified     , 
+			      run_info->step1 	     , 
+			      run_info->step2 	     ,      
+			      run_info->load_results , 
+			      run_info->unlink_run_path , 
+			      &run_info->complete_OK);
+
+  return NULL ;
+}
+
+
+void * enkf_state_start_eclipse__(void * __enkf_state) {
+  enkf_state_type * enkf_state = enkf_state_safe_cast(__enkf_state);
+  const run_info_type * run_info       = enkf_state->run_info;
+  const shared_info_type * shared_info = enkf_state->shared_info;
+  
+  enkf_state_start_eclipse(enkf_state , 
+			   shared_info->job_queue , 
+			   shared_info->sched_file , 
+			   run_info->init_step , 
+			   run_info->init_state, 
+			   run_info->step1 , 
+			   run_info->step2 , 
+			   run_info->forward_model);
+  return NULL ; 
+}
+
+
+/*
 void * enkf_state_complete_eclipse__(void * __run_info) {
   enkf_run_info_type * run_info = enkf_run_info_safe_cast(__run_info);
   enkf_state_complete_eclipse(run_info->state , 
@@ -1033,7 +1314,7 @@ void * enkf_state_start_eclipse__(void * __run_info) {
 			   run_info->forward_model);
   return NULL ; 
 }
-
+*/
 
 int enkf_state_get_report_step(const enkf_state_type * enkf_state) { 
   return enkf_state->report_step;
@@ -1342,5 +1623,11 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
   free(serial_data);
   enkf_ensemble_free_update_info( info_list , threads );
 }
+
+
+void enkf_state_set_run_parameters(enkf_state_type * state , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
+  run_info_set( state->run_info , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model , false);
+}
+
 
 

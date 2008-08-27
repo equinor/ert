@@ -12,6 +12,7 @@ typedef double (transform_ftype) (double , const void_arg_type *);
 
 typedef double enkf_float_type;
 
+
 /*
   Observe that these are used as bitmask's, i.e. they must be power of 2 series.
 */

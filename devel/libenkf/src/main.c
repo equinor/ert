@@ -29,7 +29,7 @@ void install_SIGNALS(void) {
 void text_splash() {
   int i;
   {
-#include "enkf.inc"
+#include "statoilhydro.inc"
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++)
       printf("%s\n" , splash_text[i]);

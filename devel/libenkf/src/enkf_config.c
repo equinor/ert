@@ -44,6 +44,8 @@
 #include <gen_data_config.h>
 #include <stringlist.h>
 
+
+
 struct enkf_config_struct {
   ecl_grid_type   *grid;
   int  		   ens_size;
@@ -68,7 +70,7 @@ struct enkf_config_struct {
   char *            enkf_sched_file;
   stringlist_type  *forward_model;
   bool              include_all_static_kw;  /* If true all static keywords are stored.*/ 
-  set_type        * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
+  set_type         *static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
 };
 
 
@@ -314,15 +316,22 @@ const char * enkf_config_get_obs_config_file(const enkf_config_type * config) {
 static void enkf_config_set_grid(enkf_config_type * config, const char * grid_file) {
   if (config->grid == NULL) 
     config->grid = ecl_grid_alloc(grid_file , config->endian_swap);
+  else
+    util_exit("%s: sorry - can only have *ONE* GRID occurence in config file. \n",__func__);
 }
+
+
 
 static void enkf_config_set_ens_size(enkf_config_type * config , int ens_size) {
   if (ens_size > 0) {
-    int iens;
-    config->ens_size  = ens_size;
-    config->ecl_store = util_malloc(ens_size * sizeof * config->ecl_store , __func__);
-    for (iens = 0; iens < ens_size; iens++)
-      config->ecl_store[iens] = store_none;
+    if (config->ens_size < 0) {
+      int iens;
+      config->ens_size  = ens_size;
+      config->ecl_store = util_malloc(ens_size * sizeof * config->ecl_store , __func__);
+      for (iens = 0; iens < ens_size; iens++)
+	config->ecl_store[iens] = store_none;
+    } else
+      util_exit("%s: sorry - can only set ensemble size *ONE* time in the config file. \n",__func__);
   } else 
     util_abort("%s: size must be greater than zero - aborting \n",__func__);
 }
@@ -863,23 +872,9 @@ const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * 
 }
 
 
-
-
-char * enkf_config_alloc_ecl_store_path(const enkf_config_type * config , int iens) {
-  if (config->ecl_store_path != NULL)
-    return path_fmt_alloc_path(config->ecl_store_path , true , iens);
-  else
-    return NULL;
-}
-
-
-char * enkf_config_alloc_run_path(const enkf_config_type * config , int iens) {
-  return path_fmt_alloc_path(config->run_path , true , iens);
-}
-
-char * enkf_config_alloc_eclbase(const enkf_config_type * config , int iens) {
-  return path_fmt_alloc_path(config->eclbase , false , iens);
-}
+path_fmt_type * enkf_config_get_run_path_fmt( const enkf_config_type * config) { return config->run_path; }
+path_fmt_type * enkf_config_get_eclbase_fmt ( const enkf_config_type * config) { return config->eclbase; }
+path_fmt_type * enkf_config_get_ecl_store_path_fmt( const enkf_config_type * config) { return config->ecl_store_path; }
 
 char * enkf_config_alloc_result_path(const enkf_config_type * config , int report_step) {
   return path_fmt_alloc_path(config->result_path , true , report_step);

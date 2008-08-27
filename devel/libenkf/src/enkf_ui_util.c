@@ -101,6 +101,11 @@ const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_typ
       else {
 	if (report_step != NULL) *report_step = util_scanf_int("Report step" , prompt_len);
 	if (state != NULL) {
+
+	  if (accept_both)  /* It does not make sense to plot both forecast and updated for parameters.*/
+	    if (!(enkf_node_get_var_type(config_node) & (ecl_restart + ecl_summary)))
+	      accept_both = false;
+
 	  if (accept_both)
 	    *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F|B]" , prompt_len , true);
 	  else

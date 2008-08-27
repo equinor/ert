@@ -9,6 +9,7 @@
 #include <job_queue.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
+#include <path_fmt.h>
 
 typedef struct enkf_config_struct enkf_config_type;
 
@@ -43,10 +44,10 @@ char             ** enkf_config_alloc_keylist(const enkf_config_type * , int *);
 
 const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * , const char * );
 void                          enkf_config_get_grid_dims(const enkf_config_type * , int *, int *, int *, int *);
-char 			    * enkf_config_alloc_run_path(const enkf_config_type * , int );
-char 			    * enkf_config_alloc_eclbase(const enkf_config_type  * , int );
 char                        * enkf_config_alloc_result_path(const enkf_config_type * config , int );
-char 			    * enkf_config_alloc_ecl_store_path(const enkf_config_type  * , int );
+path_fmt_type 		    * enkf_config_get_run_path_fmt(const enkf_config_type * );
+path_fmt_type 		    * enkf_config_get_eclbase_fmt(const enkf_config_type  * );
+path_fmt_type 		    * enkf_config_get_ecl_store_path_fmt(const enkf_config_type  * );
 int                           enkf_config_get_ens_size(const enkf_config_type * );
 void enkf_config_free(enkf_config_type * );
 bool enkf_config_get_unified(const enkf_config_type * );
