@@ -18,13 +18,12 @@
 #include <job_queue.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
-typedef struct OLD_enkf_run_info_struct enkf_run_info_type;
 
 int                enkf_state_get_report_step(const enkf_state_type * );
 void               enkf_state_measure( const enkf_state_type *  , enkf_obs_type * );
 void               enkf_state_set_state(enkf_state_type * , int , state_enum );
 void               enkf_state_set_data_kw(enkf_state_type *, const char * , const char * );
-void               enkf_state_init_eclipse(enkf_state_type *, const sched_file_type * , int , state_enum , int, int, const stringlist_type * );
+void               enkf_state_init_eclipse(enkf_state_type *);
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
 bool               enkf_state_get_analyzed(const enkf_state_type * );
 void               enkf_state_set_analyzed(enkf_state_type * , bool );
@@ -67,22 +66,6 @@ void               enkf_state_initialize(enkf_state_type * );
 void enkf_ensemble_update(enkf_state_type ** , int  , size_t , const double * );
 
 /*****************************************************************/
-void enkf_state_set_run_parameters(enkf_state_type * state , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model);
+void enkf_state_init_run(enkf_state_type * state , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model);
 bool enkf_state_run_OK(const enkf_state_type * );
-
-
-enkf_run_info_type * enkf_run_info_alloc(enkf_state_type * ,
-					 job_queue_type  * ,
-					 enkf_obs_type   * ,
-					 sched_file_type * ,
-                                         bool              ,
-					 int               ,
-					 state_enum        ,
-					 int               ,
-					 int               ,
-					 bool              ,
-					 bool              ,
-					 stringlist_type * );
-bool enkf_run_info_OK(const enkf_run_info_type * );
-void enkf_run_info_free(enkf_run_info_type * );
 #endif

@@ -56,6 +56,7 @@
 */
 
 typedef struct run_info_struct {
+  bool              __ready;         /* An attempt to check the internal state - not active yet. */
   int               init_step;       /* The report step we initialize from - will often be equal to step1, but can be different. */
   state_enum        init_state;      /* Whether we should init from a forecast or an analyzed state. */
   int               step1;           /* The forward model is integrated: step1 -> step2 */
@@ -152,7 +153,7 @@ struct enkf_state_struct {
 */
 
 
-static void run_info_set(run_info_type * run_info ,int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model, bool OK) {
+static void run_info_set(run_info_type * run_info ,int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
   run_info->init_step  	    = init_step;
   run_info->init_state 	    = init_state;
   run_info->step1      	    = step1;
@@ -160,7 +161,8 @@ static void run_info_set(run_info_type * run_info ,int init_step , state_enum in
   run_info->load_results    = load_results;
   run_info->unlink_run_path = unlink_run_path;
   run_info->forward_model   = forward_model;
-  run_info->complete_OK     = OK;
+  run_info->complete_OK     = false;
+  run_info->__ready         = true;
 }
 
 
@@ -199,15 +201,7 @@ static void shared_info_free(shared_info_type * shared_info) {
   free(shared_info);
 }
 
-
-static shared_info_type * shared_info_copyc(const shared_info_type *src) {
-  shared_info_type * new = util_alloc_copy(src , sizeof * src , __func__);
-  return new;
-}
-
-
-
-
+                                         
 
 /******************************************************************/
 /** Implementation of the member_config struct. All of this implementation
@@ -256,138 +250,9 @@ static member_config_type * member_config_alloc(int iens , path_fmt_type * run_p
   return member_config;
 }
 
-
-
 /*****************************************************************/
-
-
-/**
-   This struct is a pure utility structure used to pack the various
-   bits and pieces of information needed to start, monitor, and load
-   back results from the forward model simulations. 
-
-   Ideally this struct should be fully static (ie. invisible outside
-   this file), however the instances are (currently) allocated from
-   the enkf_main file, therefor some functions are exported. 
-
-   Observe the following points:
-
-   1: The struct only contains scalars and pointers to ALREADY
-      EXISTING objects, i.e. no memory is allocated by this struct.
-
-   2: The two fields: 'state' and 'complete_OK' are pr. member, the
-      rest of the fields are only related to the current integration
-      step , and identical for all members.
-
-   3: The fields init_step , init_state , step1 , step2 and
-      forward_model should be set for every step, whereas the other
-      fields are (typically) static for one simulation. 
-*/
-
-
-
-
-struct OLD_enkf_run_info_struct {
-  int               __type_id;       /* ID to perform runtime checks of casts. */
-  enkf_state_type * state;           /* The state we are currently considering. */
-  job_queue_type  * job_queue;       /* The job queue which will run the current job. */
-  enkf_obs_type   * obs;             /* The main enkf observation data. */
-  sched_file_type * sched_file;      /* The schedule file. */   
-  bool              unified;         /* Use unified eclipse files (no - don't do that !) */
-  int               init_step;       /* The report step we initialize from - will often be equal to step1, but can be different. */
-  state_enum        init_state;      /* Whether we should init from a forecast or an analyzed state. */
-  int               step1;           /* The forward model is integrated: step1 -> step2 */
-  int               step2;  	     
-  bool              load_results;    /* Whether the results should be loaded when the forward model is complete. */
-  bool              unlink_run_path; /* Whether the run_path should be unlinked when the forward model is through. */
-  stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
-
-  /******************************************************************/
-  /* Return value - set in the called routine!!  */
-  bool              complete_OK;     /* Did the forward model complete OK? */
-};
-#define ENKF_RUN_INFO_TYPE_ID 45681
-
-
-enkf_run_info_type * enkf_run_info_alloc(enkf_state_type * state      ,	  
-					 job_queue_type  * job_queue  ,   
-					 enkf_obs_type   * obs        ,	  
-					 sched_file_type * sched_file ,   
-                                         bool              unified    ,          
-					 int               init_step  ,       
-					 state_enum        init_state ,      
-					 int               step1      ,           
-					 int               step2      ,   	     
-					 bool              load_results,    
-					 bool              unlink_run_path, 
-					 stringlist_type * forward_model) {
-
-  enkf_run_info_type * run_info = util_malloc( sizeof * run_info , __func__);
-  run_info->__type_id   = ENKF_RUN_INFO_TYPE_ID;
-  
-  run_info->state = state;
-  run_info->job_queue = job_queue;
-  run_info->obs = obs;
-  run_info->sched_file = sched_file;
-  run_info->unified = unified;
-  run_info->init_step = init_step;
-  run_info->init_state = init_state;
-  run_info->step1 = step1;
-  run_info->step2 = step2;
-  run_info->load_results = load_results;    
-  run_info->unlink_run_path = unlink_run_path;
-  run_info->forward_model = forward_model;
-
-  run_info->complete_OK = false;
-  
-  return run_info;
-}
-
-
-
-/** 
-    This function is used to set the configuration information needed
-    for _one_ forward step. This function will be called (via
-    enkf_state_xx) by the enkf_main object before the integration.
-*/
-
-static void enkf_run_info_set_dynamic(enkf_run_info_type * run_info , int init_step , state_enum init_state , int step1, int step2 , stringlist_type * forward_model) {
-  run_info->init_step  	  = init_step;
-  run_info->init_state 	  = init_state;
-  run_info->step1 	  = step1;
-  run_info->step2 	  = step2;
-  run_info->forward_model = forward_model;
-}
-
-
-
-static enkf_run_info_type * enkf_run_info_safe_cast(void *__run_info) {
-  enkf_run_info_type * run_info = (enkf_run_info_type *) __run_info;
-  if (run_info->__type_id != ENKF_RUN_INFO_TYPE_ID) 
-    util_abort("%s: run_time cast failed - aborting \n",__func__);
-  
-  return run_info;
-}
-
-
-
-bool enkf_run_info_OK(const enkf_run_info_type * run_info) {
-  return run_info->complete_OK;
-}
-
-
-void enkf_run_info_free(enkf_run_info_type * run_info) {
-  free(run_info);
-}
-
-#undef ENKF_RUN_INFO_TYPE_ID 
-/* Implementation of enkf_run_info complete */
+/** Helper classes complete - starting on th enkf_state proper object. */
 /*****************************************************************/
-
-
-
-
-                                         
 
 
 static void enkf_state_add_node_internal(enkf_state_type * , const char * , const enkf_node_type * );
@@ -1107,14 +972,21 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 */
 
 
-void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type * sched_file , int init_step, state_enum init_state , int report_step1 , int report_step2, const stringlist_type * _forward_model) {
-  const member_config_type * my_config = enkf_state->my_config;  
-  if (report_step1 != init_step)
-    if (report_step1 > 0)
+void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
+  const shared_info_type    * shared_info = enkf_state->shared_info;
+  const run_info_type       * run_info    = enkf_state->run_info;
+  const member_config_type  * my_config = enkf_state->my_config;  
+
+  if (!run_info->__ready) 
+    util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
+  
+
+  if (run_info->step1 != run_info->init_step)
+    if (run_info->step1 > 0)
       util_abort("%s: internal error - when initializing from a different timestep than starting from - the start step must be zero.\n",__func__);
 
-  if (report_step1 > 0) {
-    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , report_step1);
+  if (run_info->step1 > 0) {
+    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
     enkf_state_set_data_kw(enkf_state , "INIT" , data_initialize);
     free(data_initialize);
   }
@@ -1128,21 +1000,22 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
 
   {
     char * schedule_file = util_alloc_full_path(my_config->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
-    sched_file_fprintf(sched_file , report_step2 , -1 , -1 , schedule_file);
+    sched_file_fprintf(shared_info->sched_file , run_info->step2 , -1 , -1 , schedule_file);
     free(schedule_file);
   }
 
 
   {
     int load_mask = constant + static_parameter + parameter;
-    if (report_step1 > 0) load_mask += ecl_restart; 
-    enkf_state_fread(enkf_state , load_mask , init_step , init_state);
+    if (run_info->step1 > 0) load_mask += ecl_restart; 
+    enkf_state_fread(enkf_state , load_mask , run_info->init_step ,run_info-> init_state);
   }
 
+'
   /* 
      Uncertain about this one ...
   */
-  enkf_state_set_state(enkf_state , report_step1 , analyzed); 
+  enkf_state_set_state(enkf_state , run_info->step1 , analyzed); 
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
   {
     char * stdin_file = util_alloc_full_path(my_config->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
@@ -1151,35 +1024,33 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
   }
 
   {
-    int forward_model_length    = stringlist_get_argc(_forward_model);;
     bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
-    const char ** forward_model = stringlist_get_argv(_forward_model);
     hash_type * context    	= hash_alloc();
-    char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , report_step1);
-    char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , report_step2);
+    char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step1);
+    char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step2);
     char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file  , fmt_file , -1);
     char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
     char * ecl_base        	= my_config->eclbase;
-    char * report_step1_s  	= util_alloc_sprintf("%d" , report_step1);
-    char * report_step2_s  	= util_alloc_sprintf("%d" , report_step2);
+    char * step1_s  	= util_alloc_sprintf("%d" , run_info->step1);
+    char * step2_s  	= util_alloc_sprintf("%d" , run_info->step2);
 
 
-    hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( report_step1_s ) , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( report_step2_s ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) , void_arg_free__);
+    hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) , void_arg_free__);
     hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 )  , void_arg_free__);
     hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 )  , void_arg_free__);
     hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   )  , void_arg_free__);
     hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
     hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
     
-    ext_joblist_python_fprintf( enkf_state->joblist , forward_model , forward_model_length , my_config->run_path , context);
+    ext_joblist_python_fprintf( enkf_state->joblist , run_info->forward_model ,my_config->run_path , context);
     
     free(iens);
     free(restart_file1);
     free(restart_file2);
     free(smspec_file);
-    free(report_step1_s);
-    free(report_step2_s);
+    free(step1_s);
+    free(step2_s);
     hash_free(context);
   }
 }
@@ -1196,40 +1067,44 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state, const sched_file_type 
 
    2: enkf_state_complete_eclipse()
 
-   Because the firstis quite CPU intensive (gunzip), and the number of
-   concurrent threads should be limitied. For the second there are one
-   thread for each ensemble member. This is handeled by the calling scope.
+   Because the first is quite CPU intensive (gunzip), and the number of
+   concurrent threads should be limitied. For the second there is one
+   thread for each ensemble member. This is handled by the calling scope.
 */
 
 
 
-void enkf_state_start_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , const sched_file_type * sched_file , int init_step , state_enum init_state , int report_step1 , int report_step2, const stringlist_type * forward_model) {
-  const int iens        = enkf_state_get_iens(enkf_state);
-  /* 
-     Prepare the job and submit it to the queue
-  */
+void enkf_state_start_eclipse(enkf_state_type * enkf_state) {
+  const shared_info_type    * shared_info = enkf_state->shared_info;
+  const run_info_type       * run_info    = enkf_state->run_info;
+  const member_config_type  * my_config   = enkf_state->my_config;
 
-  enkf_state_init_eclipse(enkf_state , sched_file , init_step , init_state , report_step1 , report_step2, forward_model);
-  job_queue_add_job(job_queue , iens , report_step2);
+  /*
+    Prepare the job and submit it to the queue
+  */
+  enkf_state_init_eclipse(enkf_state);
+  job_queue_add_job(shared_info->job_queue , my_config->iens , run_info->step2);
 }
 
 
-void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type * job_queue , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2 , bool load_results , bool unlink_run_path , bool *job_OK) {
-  const member_config_type * my_config = enkf_state->my_config;
+void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
+  const shared_info_type    * shared_info = enkf_state->shared_info;
+  run_info_type             * run_info    = enkf_state->run_info;
+  const member_config_type  * my_config   = enkf_state->my_config;
   const int usleep_time = 100000; /* 1/10 of a second */ 
   job_status_type final_status;
 
-  *job_OK = true;
+  run_info->complete_OK = true;
   while (true) {
-    final_status = job_queue_export_job_status(job_queue , my_config->iens);
+    final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
 
     if (final_status == job_queue_complete_OK) {
-      if (load_results)
-	enkf_state_ecl_load(enkf_state , enkf_obs , unified , report_step1 , report_step2);
+      if (run_info->load_results)
+	enkf_state_ecl_load(enkf_state , shared_info->obs , my_config->unified , run_info->step1 , run_info->step2);
       break;
     } else if (final_status == job_queue_complete_FAIL) {
       fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
-      *job_OK = false;
+      run_info->complete_OK = false;
       break;
     } else usleep(usleep_time);
   } 
@@ -1237,84 +1112,33 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state , job_queue_type *
 
   if ( enkf_config_get_debug(enkf_state->config) == 0) {
     /* In case the job fails, we leave the run_path directory around for debugging. */
-    if (unlink_run_path && (final_status == job_queue_complete_OK))
+    if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
       util_unlink_path(my_config->run_path);
   }
+  run_info->__ready = false;
 }
 
 
 
-  return enkf_state->run_info->complete_OK;
+bool enkf_state_run_OK(const enkf_state_type * state) {
+  return state->run_info->complete_OK;
 }
 
 
 
 void * enkf_state_complete_eclipse__(void * __enkf_state) {
   enkf_state_type * enkf_state = enkf_state_safe_cast(__enkf_state);
-  run_info_type * run_info       = enkf_state->run_info;
-  const shared_info_type * shared_info = enkf_state->shared_info;
-  const member_config_type * my_config = enkf_state->my_config;
-
-  enkf_state_complete_eclipse(enkf_state             , 
-			      shared_info->job_queue , 
-			      shared_info->obs       , 
-			      my_config->unified     , 
-			      run_info->step1 	     , 
-			      run_info->step2 	     ,      
-			      run_info->load_results , 
-			      run_info->unlink_run_path , 
-			      &run_info->complete_OK);
-
+  enkf_state_complete_eclipse(enkf_state);             
   return NULL ;
 }
 
 
 void * enkf_state_start_eclipse__(void * __enkf_state) {
   enkf_state_type * enkf_state = enkf_state_safe_cast(__enkf_state);
-  const run_info_type * run_info       = enkf_state->run_info;
-  const shared_info_type * shared_info = enkf_state->shared_info;
-  
-  enkf_state_start_eclipse(enkf_state , 
-			   shared_info->job_queue , 
-			   shared_info->sched_file , 
-			   run_info->init_step , 
-			   run_info->init_state, 
-			   run_info->step1 , 
-			   run_info->step2 , 
-			   run_info->forward_model);
+  enkf_state_start_eclipse( enkf_state );
   return NULL ; 
 }
 
-
-/*
-void * enkf_state_complete_eclipse__(void * __run_info) {
-  enkf_run_info_type * run_info = enkf_run_info_safe_cast(__run_info);
-  enkf_state_complete_eclipse(run_info->state , 
-			      run_info->job_queue  , 
-			      run_info->obs   , 
-			      run_info->unified    , 
-			      run_info->step1 , 
-			      run_info->step2 , 
-			      run_info->load_results , 
-			      run_info->unlink_run_path , 
-			      &run_info->complete_OK);
-  return NULL ;
-}
-
-
-void * enkf_state_start_eclipse__(void * __run_info) {
-  enkf_run_info_type * run_info = enkf_run_info_safe_cast(__run_info);
-  enkf_state_start_eclipse(run_info->state , 
-			   run_info->job_queue , 
-			   run_info->sched_file , 
-			   run_info->init_step , 
-			   run_info->init_state, 
-			   run_info->step1 , 
-			   run_info->step2 , 
-			   run_info->forward_model);
-  return NULL ; 
-}
-*/
 
 int enkf_state_get_report_step(const enkf_state_type * enkf_state) { 
   return enkf_state->report_step;
@@ -1625,8 +1449,8 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
 }
 
 
-void enkf_state_set_run_parameters(enkf_state_type * state , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
-  run_info_set( state->run_info , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model , false);
+void enkf_state_init_run(enkf_state_type * state , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
+  run_info_set( state->run_info , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
 }
 
 

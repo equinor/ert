@@ -367,7 +367,6 @@ void enkf_main_update_ensemble(enkf_main_type * enkf_main , int step1 , int step
 void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
   bool  load_results            = true; /** Must have individual switch */
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
-  enkf_run_info_type ** run_info;     
   int iens;
   thread_pool_type * complete_threads;
   
@@ -375,16 +374,6 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_matrix);
 
-  run_info = util_malloc(ens_size * sizeof * run_info , __func__);
-  
-  for (iens = 0; iens < ens_size; iens++) 
-    run_info[iens] = enkf_run_info_alloc(enkf_main->ensemble[iens] , 
-					 enkf_main->job_queue , 
-					 enkf_main->obs , 
-					 enkf_main->sched_file , 
-					 enkf_config_get_unified(enkf_main->config),
-					 init_step    , init_state , step1 , step2 , 
-					 load_results , unlink_run_path , (stringlist_type *) forward_model);
   {
     {
       thread_pool_type * submit_threads;
@@ -398,8 +387,8 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
       submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) 
       {
-	enkf_state_set_run_parameters(enkf_main->ensemble[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
-        thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens] /*run_info[iens]*/);
+	enkf_state_init_run(enkf_main->ensemble[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
+        thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
       }
 
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
@@ -408,7 +397,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
       
       complete_threads = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
-	thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens] /*run_info[iens]*/);
+	thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
       
       thread_pool_join(submit_threads);          /* All jobs have completed and the results have been loaded back. */
       pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.                      */
@@ -431,13 +420,8 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
 	util_exit("The integration failed - check your ECLIPSE runs ...\n");
     }
   }
-
-  /** Opprydding */
-  for (iens = 0; iens < ens_size; iens++) 
-    enkf_run_info_free(run_info[iens]);
-  free(run_info);
-  thread_pool_free(complete_threads);
   
+  thread_pool_free(complete_threads);
   if (load_results) {
     enkf_main_swapin_ensemble(enkf_main , ecl_restart + ecl_summary + parameter);
     enkf_main_set_ensemble_state(enkf_main , step2 , forecast);
