@@ -4,6 +4,7 @@
 #include <util.h>
 #include <hash.h>
 #include <ext_job.h>
+#include <stringlist.h>
 #include <ext_joblist.h>
 
 
@@ -60,16 +61,16 @@ bool ext_joblist_has_job(const ext_joblist_type * joblist , const char * job_nam
 }
 
 
-void ext_joblist_python_fprintf(const ext_joblist_type * joblist , const char ** kw_list , int size , const char * path, const hash_type * context) {
+void ext_joblist_python_fprintf(const ext_joblist_type * joblist , const stringlist_type * kw_list , const char * path, const hash_type * context) {
   char * module_file = util_alloc_full_path(path , MODULE_NAME);
   FILE * stream      = util_fopen(module_file , "w");
   int i;
 
   fprintf(stream , "%s = [" , JOBLIST_NAME);
-  for (i=0; i < size; i++) {
-    const ext_job_type * job = ext_joblist_get_job( joblist , kw_list[i] );
+  for (i=0; i < stringlist_get_size(kw_list); i++) {
+    const ext_job_type * job = ext_joblist_get_job( joblist , stringlist_iget(kw_list , i));
     ext_job_python_fprintf(job , stream , context);
-    if (i < (size - 1))
+    if (i < (stringlist_get_size(kw_list) - 1))
       fprintf(stream,",\n");
   }
   fprintf(stream , "]\n");
