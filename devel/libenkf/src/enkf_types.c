@@ -46,8 +46,8 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
     return "GEN_DATA";
     break;
   default:
-    fprintf(stderr,"%s: internal error - unrecognized implementation type: %d - aborting \n",__func__ , impl_type);
-    abort();
+    util_abort("%s: internal error - unrecognized implementation type: %d - aborting \n",__func__ , impl_type);
+    return NULL;
   }
 }
 
@@ -76,10 +76,9 @@ enkf_impl_type enkf_types_get_impl_type(const char * __impl_type_string) {
   char * impl_type_string = util_alloc_string_copy(__impl_type_string);
   util_strupr(impl_type_string);  
   enkf_impl_type impl_type = enkf_types_get_impl_type__(impl_type_string);
-  if (impl_type == INVALID) {
-    fprintf(stderr,"%s: enkf_type: %s not recognized - aborting \n",__func__ , __impl_type_string);
-    abort();
-  }
+  if (impl_type == INVALID) 
+    util_abort("%s: enkf_type: %s not recognized - aborting \n",__func__ , __impl_type_string);
+  
   free(impl_type_string);
   return impl_type;
 }

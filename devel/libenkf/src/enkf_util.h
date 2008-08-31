@@ -283,9 +283,11 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
     prefix ## _free(tmp);                 	   	 									     \
   }                                       	   	 									     \
   prefix ## _isqrt(std);                           	 									     \
-  *_mean = mean;				   	 									     \
-  *_std  = std; 				   	 									     \
+  if (_mean != NULL)   *_mean = mean;				   	 							     \
+  if (_std != NULL)    *_std  = std; 				   	 							     \
 }
+
+
 
 #define ALLOC_STATS_HEADER(prefix) void prefix ## _alloc_stats(const prefix ## _type ** , int , prefix ## _type ** , prefix ## _type ** );
 /*****************************************************************/

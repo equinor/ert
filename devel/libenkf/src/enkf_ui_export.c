@@ -24,7 +24,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
   char       analysis_state_char;
   int        iens , report_step;
   
-  config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD  , &report_step , &analysis_state , &iens);
+  config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD  , invalid , &report_step , &analysis_state , &iens);
   if (analysis_state == analyzed)
     analysis_state_char = 'A';
   else
@@ -104,7 +104,7 @@ void enkf_ui_export_profile(void *_arg) {
     int       *cell_list; 
     path_fmt_type * file_fmt;
 
-    config_node    = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD  , NULL , &analysis_state , NULL);
+    config_node    = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD , invalid , NULL , &analysis_state , NULL);
     iens_active    = enkf_ui_util_scanf_alloc_iens_active( enkf_config , prompt_len , &iens1 , &iens2); /* Not used yet ... */
     report_active  = enkf_ui_util_scanf_alloc_report_active( enkf_sched , prompt_len );
     direction      = util_scanf_int_with_limits("Give scan direction 0:i  1:j  2:k" , prompt_len , 0 , 2);
@@ -209,7 +209,7 @@ void enkf_ui_export_cell(void *_arg) {
     state_enum analysis_state;
     int        cell_nr;
 
-    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD , NULL , &analysis_state , NULL);
+    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD , invalid, NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int ens_size    = enkf_config_get_ens_size(enkf_config);
@@ -273,7 +273,7 @@ void enkf_ui_export_time(void *_arg) {
     state_enum analysis_state;
     int        cell_nr;
 
-    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , true , FIELD , NULL , &analysis_state , NULL);
+    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , true , FIELD ,invalid ,  NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int last_report = enkf_sched_get_last_report(enkf_sched);

@@ -61,8 +61,8 @@ typedef struct run_info_struct {
   state_enum        init_state;      /* Whether we should init from a forecast or an analyzed state. */
   int               step1;           /* The forward model is integrated: step1 -> step2 */
   int               step2;  	     
-  bool              load_results;    /* Whether the results should be loaded when the forward model is complete. */
-  bool              unlink_run_path; /* Whether the run_path should be unlinked when the forward model is through. */
+  bool              load_results;    	   /* Whether the results should be loaded when the forward model is complete. */
+  bool              unlink_run_path; 	   /* Whether the run_path should be unlinked when the forward model is through. */
   const stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
   
   /******************************************************************/

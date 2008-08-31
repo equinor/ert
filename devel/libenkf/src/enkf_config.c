@@ -83,10 +83,24 @@ enkf_impl_type enkf_config_impl_type(const enkf_config_type *enkf_config, const 
     enkf_config_node_type * node = hash_get(enkf_config->config_hash , ecl_kw_name);
     impl_type = enkf_config_node_get_impl_type(node);
   } else
-    impl_type = STATIC;
+    util_abort("%s: internal error: asked for implementation type of unknown node:%s \n",__func__ , ecl_kw_name);
 
   return impl_type;
 }
+
+
+enkf_var_type enkf_config_var_type(const enkf_config_type *enkf_config, const char * ecl_kw_name) {
+  enkf_var_type var_type;
+
+  if (hash_has_key(enkf_config->config_hash , ecl_kw_name)) {
+    enkf_config_node_type * node = hash_get(enkf_config->config_hash , ecl_kw_name);
+    var_type = enkf_config_node_get_var_type(node);
+  } else
+    util_abort("%s: internal error: asked for implementation type of unknown node:%s \n",__func__ , ecl_kw_name);
+
+  return var_type;
+}
+
 
 int  enkf_config_get_debug(const enkf_config_type * enkf_config)             { return enkf_config->debug_level; }
 void enkf_config_set_debug(enkf_config_type * enkf_config , int debug_level) { enkf_config->debug_level = debug_level; }

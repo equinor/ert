@@ -16,7 +16,8 @@ typedef double enkf_float_type;
 /*
   Observe that these are used as bitmask's, i.e. they must be power of 2 series.
 */
-typedef enum {constant         = 1  , /* A parameter which is constant both in time, and between members                         */
+typedef enum {invalid          = 0  , /**/
+              constant         = 1  , /* A parameter which is constant both in time, and between members                         */
 	      static_parameter = 2  , /* A parameter which is not updated with enkf - can be different between different members */
               parameter        = 4  , /* A parameter which is updated with enkf                                                  */
 	      ecl_restart      = 8  , /* Dynamic data - read from Eclipse restart files, typically PRESSURE and SATURATIONS      */

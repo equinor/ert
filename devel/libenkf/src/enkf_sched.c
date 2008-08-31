@@ -83,7 +83,7 @@ static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , const st
     fprintf(stream , "%4d   %4d   %s   %3d   ",node->report_step1 , node->report_step2 , "OFF" , node->report_stride);
 
   if (node->forward_model != std_forward_model)
-    stringlist_fprintf(node->forward_model , stream);
+    stringlist_fprintf(node->forward_model , " " , stream);
   else
     fprintf(stream, "*");
 

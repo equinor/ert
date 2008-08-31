@@ -304,26 +304,53 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
     enkf_site_config_validate(site);
     */
     {
+      config_item_type * item;
       site->__config = config_alloc( false );
+      item = config_add_item( site->__config , "QUEUE_SYSTEM"      , true  , false ); 
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+      config_item_add_to_selection(item , "LSF");
+      config_item_add_to_selection(item , "LOCAL");
+      config_item_add_to_selection(item , "RSH");
       
-      config_init_item( site->__config , "QUEUE_SYSTEM"      , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
-      config_init_item( site->__config , "JOB_SCRIPT"        , 0 , NULL , true  , false , 0 , NULL , 1 , 1 , NULL /* Validator */ );
-      config_init_item( site->__config , "INSTALL_JOB"       , 0 , NULL , true  , true  , 0 , NULL , 2 ,  2 , NULL );
-      config_init_item( site->__config , "MEX_RESUBMIT"      , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      
-      config_init_item( site->__config , "RSH_HOST_LIST"     , 0 , NULL , false , true  , 0 , NULL , 1 , -1 , NULL );
-      config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "MAX_RUNNING_RSH"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "RSH_COMMAND"       , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
 
-      config_init_item( site->__config , "LSF_QUEUE"         , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "LSF_RESOURCES"     , 0 , NULL , false , false , 0 , NULL , 1 , -1 , NULL );
-      config_init_item( site->__config , "MAX_RUNNING_LSF"   , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
 
-      config_init_item( site->__config , "MAX_RUNNING_LOCAL" , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
-      config_init_item( site->__config , "IMAGE_VIEWER"      , 0 , NULL , false , false , 0 , NULL , 1 ,  1 , NULL );
+      item = config_add_item( site->__config , "JOB_SCRIPT"        , true  , false ); 
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+      item = config_add_item( site->__config , "INSTALL_JOB"       , true  , true  ); 
+      config_item_set_argc_minmax(item , 2 , 2 , NULL);
+
+      item = config_add_item( site->__config , "MEX_RESUBMIT"      , false , false );
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+      item = config_add_item( site->__config , "RSH_HOST_LIST"     , false , true);
+      config_item_set_argc_minmax(item , 1 , -1 , NULL);
+
+      item = config_add_item( site->__config , "MAX_RUNNING_LOCAL" , false , false);
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
       
-      config_parse(site->__config , config_file , "--");
+      item = config_add_item( site->__config , "MAX_RUNNING_RSH"   , false , false);
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+      
+      item = config_add_item( site->__config , "RSH_COMMAND"       , false , false);
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+      item = config_add_item( site->__config , "LSF_QUEUE"         , false , false);
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+      item = config_add_item( site->__config , "LSF_RESOURCES"     , false , false);
+      config_item_set_argc_minmax(item , 1 , -1 , NULL);
+      
+      item = config_add_item( site->__config , "MAX_RUNNING_LSF"   , false , false );
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+      
+      item = config_add_item( site->__config , "MAX_RUNNING_LOCAL" , false , false);
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+      
+      item = config_add_item( site->__config , "IMAGE_VIEWER"      , false , false);
+      config_item_set_argc_minmax(item , 1 , 1 , NULL);
+      
+      config_parse(site->__config , config_file , "--" , true);
     }
     return site;
   } else {

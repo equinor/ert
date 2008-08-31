@@ -11,7 +11,7 @@
 #include <enkf_config_node.h>
 
 
-const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_type *  , int , bool , enkf_impl_type ,  int *  , state_enum * , int *);
+const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_type *  , int , bool , enkf_impl_type ,  enkf_var_type , int *  , state_enum * , int *);
 state_enum		      enkf_ui_util_scanf_state(const char * , int , bool);
 int       		      enkf_ui_util_scanf_ijk(const field_config_type * , int);
 void      		      enkf_ui_util_scanf_ijk__(const field_config_type * , int  , int * , int * , int *);

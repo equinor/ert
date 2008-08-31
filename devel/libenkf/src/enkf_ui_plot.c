@@ -95,7 +95,7 @@ void enkf_ui_plot_time(void *_arg) {
     int        cell_nr;
     int        size;
 
-    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , true , FIELD , NULL , &analysis_state , NULL);
+    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , true , FIELD , invalid , NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int last_report = enkf_sched_get_last_report(enkf_sched);
