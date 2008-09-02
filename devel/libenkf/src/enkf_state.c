@@ -286,17 +286,6 @@ void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_functi
 
 
 
-/**
-   This function initializes all parameters, either by loading
-   from files, or by sampling internally. They are then written to
-   file.
-*/
-
-void enkf_state_initialize(enkf_state_type * enkf_state) {
-  enkf_state_apply_NEW2(enkf_state , parameter , initialize_func , NULL);
-  enkf_state_fwrite_as(enkf_state , all_types - ecl_restart - ecl_summary , 0 , analyzed);
-}
-
 
 
 
@@ -1008,7 +997,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     free(schedule_file);
   }
 
-
+  enkf_state_set_state(enkf_state , run_info->step1 , analyzed); 
   {
     int load_mask = constant + static_parameter + parameter;
     if (run_info->step1 > 0) load_mask += ecl_restart; 
@@ -1018,7 +1007,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
   /* 
      Uncertain about this one ...
   */
-  enkf_state_set_state(enkf_state , run_info->step1 , analyzed); 
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
   {
     char * stdin_file = util_alloc_full_path(my_config->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */

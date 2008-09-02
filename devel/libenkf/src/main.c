@@ -97,7 +97,6 @@ int main (int argc , char ** argv) {
     job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , fs , job_queue , joblist);
     const enkf_sched_type * enkf_sched = enkf_sched_fscanf_alloc( enkf_config_get_enkf_sched_file(enkf_config) , enkf_main_get_sched_file(enkf_main) , joblist , enkf_config_get_forward_model(enkf_config));
-    enkf_main_initialize_ensemble(enkf_main); 
     
     enkf_ui_main_menu(enkf_main , enkf_sched);
         

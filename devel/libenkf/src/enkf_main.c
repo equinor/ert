@@ -312,12 +312,6 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
 }
 
 
-void  enkf_main_initialize_ensemble(enkf_main_type * enkf_main) {
-  int iens;
-  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
-    enkf_state_initialize(enkf_main->ensemble[iens]);
-  enkf_main_fprintf_results(enkf_main);
-}
 
 
 /**

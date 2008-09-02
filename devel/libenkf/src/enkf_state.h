@@ -61,7 +61,6 @@ int                enkf_state_get_iens(const enkf_state_type * );
 const char       * enkf_state_get_run_path(const enkf_state_type * );
 void               enkf_state_set_run_path(enkf_state_type * , const char*);
 void               enkf_state_set_eclbase(enkf_state_type * , const char*);
-void               enkf_state_initialize(enkf_state_type * );
 
 void enkf_ensemble_update(enkf_state_type ** , int  , size_t , const double * );
 

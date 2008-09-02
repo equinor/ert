@@ -48,13 +48,15 @@ typedef enum {INVALID 	   = 0   ,
 	      FIELD   	   = 104 ,       
 	      WELL    	   = 105 ,       
 	      GEN_KW  	   = 107 ,        
-	      RELPERM 	   = 108,       
-	      HAVANA_FAULT = 109,   
-	      SUMMARY      = 110,      
-              TPGZONE      = 111,       
-              GEN_DATA     = 112  } enkf_impl_type;
+	      RELPERM 	   = 108 ,       
+	      HAVANA_FAULT = 109 ,   
+	      SUMMARY      = 110 ,      
+              TPGZONE      = 111 ,       
+              GEN_DATA     = 112 ,
+	      GEN_PARAM    = 113 }  enkf_impl_type;
 /* 
-   Should update the functions enkf_types_get_impl_name() and enkf_types_get_impl_type__() when this enum is updated.
+   Should update the functions enkf_types_get_impl_name() and
+   enkf_types_get_impl_type__() when this enum is updated.
 */
 
 

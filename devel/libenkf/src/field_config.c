@@ -257,7 +257,7 @@ inline int field_config_global_index(const field_config_type * config , int i , 
 
 /**
    This function sets the config->enkf_active pointer. The indicies mentioned in
-   active_index_list are set to true, the remaining is set to false.
+   active_index_list are set to true, the remaining are set to false.
 
    Observe that the indices i,j and k are __zero__ based.
 */

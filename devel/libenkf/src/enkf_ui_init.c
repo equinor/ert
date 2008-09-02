@@ -14,20 +14,30 @@
 #include <enkf_state.h>
 #include <enkf_node.h>
 #include <enkf_fs.h>
+#include <msg.h>
 
 static void enkf_ui_init__(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2) {
   int iens;
   enkf_fs_type * fs = enkf_main_get_fs_ref(enkf_main);
+  msg_type * msg = msg_alloc("Initializing...: " );
+  msg_show(msg);
 
   for (iens = iens1; iens <= iens2; iens++) {
     int ip;
     enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
+    {
+      char * iens_string = util_alloc_sprintf("%04d" , iens);
+      msg_update(msg , iens_string); 
+      free(iens_string);
+    }
     for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
       enkf_node_type * param_node = enkf_state_get_node( state , stringlist_iget( param_list , ip));
       enkf_node_initialize( param_node , iens);
       enkf_fs_fwrite_node(fs , param_node , 0 , iens , analyzed);
     }
+    msg_update(msg , "Done");
   }
+  msg_free(msg , false);
 }
 
 
