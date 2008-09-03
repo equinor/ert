@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   // Get the nr of report steps and dump history ecl style
   num_report_steps = sched_file_get_nr_report_steps(sched_file);
   printf("-- Schedule file \"%s\" had %i report steps.\n", argv[1], num_report_steps);
-  printf("-- Writing all report steps to \"sched_test_out.SCH\"..\n");
+  printf("-- Writing all report steps to \"sched_test_out_01.SCH\"..\n");
   sched_file_fprintf(sched_file, num_report_steps, "sched_test_out_01.SCH");
 
   // Store a binary rep and free the internal rep
