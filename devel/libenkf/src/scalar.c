@@ -67,8 +67,8 @@ void scalar_free_data(scalar_type *scalar) {
 scalar_type * scalar_alloc(const scalar_config_type * scalar_config) {
   scalar_type * scalar  = malloc(sizeof *scalar);
   scalar->config = scalar_config;
-  scalar->data        = NULL;
-  scalar->output_data = NULL;
+  scalar->data        	  = NULL;
+  scalar->output_data 	  = NULL;
   scalar->__output_locked = false;
   scalar_realloc_data(scalar);
   return scalar;

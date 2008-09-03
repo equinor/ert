@@ -67,7 +67,7 @@ void plain_driver_parameter_load_node(void * _driver , int _report_step , int ie
     while (!util_file_exists(filename)) {
       report_step--;
       if (report_step < 0) 
-	util_abort("%s can not find any stored item for ??? \n",__func__);
+	util_abort("%s: can not find any stored item for key:%s. Forgot to initialize ensemble ??? \n",__func__ , enkf_node_get_key_ref(node));
       else {
 	free(filename);
 	filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));

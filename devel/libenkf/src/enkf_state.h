@@ -19,9 +19,9 @@
 
 typedef struct enkf_state_struct    enkf_state_type;
 
+void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
 int                enkf_state_get_report_step(const enkf_state_type * );
 void               enkf_state_measure( const enkf_state_type *  , enkf_obs_type * );
-void               enkf_state_set_state(enkf_state_type * , int , state_enum );
 void               enkf_state_set_data_kw(enkf_state_type *, const char * , const char * );
 void               enkf_state_init_eclipse(enkf_state_type *);
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
@@ -30,8 +30,6 @@ void               enkf_state_set_analyzed(enkf_state_type * , bool );
 void               enkf_state_swapout_node(const enkf_state_type * , const char *);
 void               enkf_state_swapin_node(const enkf_state_type *  , const char *);
 meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *);
-void               enkf_state_swapout(enkf_state_type * , int);
-void               enkf_state_swapin(enkf_state_type * , int);
 enkf_state_type  * enkf_state_copyc(const enkf_state_type * );
 void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
 enkf_state_type  * enkf_state_alloc(const enkf_config_type * , int , ecl_store_enum , enkf_fs_type * , ext_joblist_type * , job_queue_type * , sched_file_type * , path_fmt_type * , path_fmt_type * , path_fmt_type * ,  meas_vector_type * , enkf_obs_type *);

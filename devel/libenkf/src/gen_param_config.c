@@ -29,10 +29,20 @@ struct gen_param_config_struct {
 int gen_param_config_get_data_size(const gen_param_config_type * config) { return config->data_size; }
 
 
-static gen_param_config_type * gen_param_config_alloc__( enkf_var_type var_type , const char * init_file_fmt , const char * template_ecl_file , const char * template_data_key) {
+int gen_param_config_get_byte_size(const gen_param_config_type * config) {
+  return config->data_size * ecl_util_get_sizeof_ctype(config->ecl_type);
+}
+
+ecl_type_enum gen_param_config_get_ecl_type(const gen_param_config_type * config) {
+  return config->ecl_type;
+}
+
+
+static gen_param_config_type * gen_param_config_alloc__( ecl_type_enum ecl_type , enkf_var_type var_type , const char * init_file_fmt , const char * template_ecl_file , const char * template_data_key) {
   gen_param_config_type * config = util_malloc(sizeof * config , __func__);
   config->data_size  	    = 0;
   config->var_type   	    = var_type;
+  config->ecl_type          = ecl_type;
   config->iactive           = NULL;
   if (template_ecl_file != NULL) {
     char *data_ptr;
@@ -55,7 +65,7 @@ static gen_param_config_type * gen_param_config_alloc__( enkf_var_type var_type 
 
 
 gen_param_config_type * gen_param_config_alloc(const char * init_file_fmt , const char * template_ecl_file) {
-  return gen_param_config_alloc__(parameter , init_file_fmt , template_ecl_file , "<DATA>" );
+  return gen_param_config_alloc__(ecl_double_type , parameter , init_file_fmt , template_ecl_file , "<DATA>" );
 }
 
 
@@ -93,8 +103,7 @@ void gen_param_config_assert_size(gen_param_config_type * config , int size) {
 
 const bool * gen_param_config_get_iactive(const gen_param_config_type * config) { return config->iactive; }
 
-
-const char * gen_param_config_alloc_initfile(const gen_param_config_type * config , int iens) {
+char * gen_param_config_alloc_initfile(const gen_param_config_type * config , int iens) {
   return path_fmt_alloc_path(config->init_file_fmt , iens);
 }
 
@@ -115,13 +124,13 @@ const char * gen_param_config_alloc_initfile(const gen_param_config_type * confi
     Header2
     xxxx
     HeaderN
-    <Data>
+    <DATA>
     Tail
     --------
 
     Then the data vector will be inserted at the location of the
-    <Data> string.
-
+    <DATA> string. If more advanced manipulation of the output is
+    required you must install a job in the forward model to handle it.
 */
 
 
@@ -153,3 +162,4 @@ void gen_param_config_ecl_write(const gen_param_config_type * config , const cha
 
 
 VOID_FREE(gen_param_config)
+     

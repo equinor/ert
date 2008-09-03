@@ -207,6 +207,7 @@ void enkf_util_fread_assert_target_type(FILE * stream , enkf_impl_type target_ty
   file_type = util_fread_int(stream);
   if (file_type != target_type) 
     util_abort("%s: wrong target type in file (expected:%d  got:%d)  - aborting \n",__func__ , target_type , file_type);
+
 }
 
 

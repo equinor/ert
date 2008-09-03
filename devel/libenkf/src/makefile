@@ -16,9 +16,9 @@ CFLAGS      	   = -$(MFLAG) -O2 -std=gnu99 -g -Wall
 ARFLAGS     	   = -csr
 LDFLAGS     	   = -rdynamic
 #################################################################
-OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config.o trans_func.o logmode.o multflt_interC.o multz_interC.o enkf_types.o enkf_obs.o obs_data.o obs_node.o well_obs.o field_obs.o meas_op.o meas_vector.o well_config.o well.o enkf_config_node.o field_config.o field.o ecl_static_kw.o equil_config.o equil.o enkf_state.o multflt.o enkf_util.o multflt_config.o enkf_main.o multz.o multz_config.o enkf_node.o enkf_fs.o gen_kw_config.o gen_kw.o gen_kw_interC.o enkf_fs.o basic_driver.o plain_driver.o analysis.o meas_matrix.o fs_index.o enkf_config.o plain_driver_parameter.o relperm.o relperm_config.o relperm_interC.o enkf_site_config.o havana_fault.o havana_fault_config.o summary_obs.o summary.o summary_config.o gen_data_config.o gen_data.o gen_common.o gen_obs.o enkf_sched.o enkf_ui_main.o enkf_ui_run.o enkf_ui_export.o enkf_ui_util.o plain_driver_static.o enkf_ui_plot.o enkf_ui_init.o gen_param_config.o
+OBJECTS           = field_interC.o thist_interC.o thist.o scalar.o scalar_config.o trans_func.o logmode.o multflt_interC.o multz_interC.o enkf_types.o enkf_obs.o obs_data.o obs_node.o well_obs.o field_obs.o meas_op.o meas_vector.o well_config.o well.o enkf_config_node.o field_config.o field.o ecl_static_kw.o equil_config.o equil.o enkf_state.o multflt.o enkf_util.o multflt_config.o enkf_main.o multz.o multz_config.o enkf_node.o enkf_fs.o gen_kw_config.o gen_kw.o gen_kw_interC.o enkf_fs.o basic_driver.o plain_driver.o analysis.o meas_matrix.o fs_index.o enkf_config.o plain_driver_parameter.o relperm.o relperm_config.o relperm_interC.o enkf_site_config.o havana_fault.o havana_fault_config.o summary_obs.o summary.o summary_config.o gen_data_config.o gen_data.o gen_common.o gen_obs.o enkf_sched.o enkf_ui_main.o enkf_ui_run.o enkf_ui_export.o enkf_ui_util.o plain_driver_static.o enkf_ui_plot.o enkf_ui_init.o gen_param_config.o gen_param.o
 
-INC_FILES_INSTALL = thist.h scalar.h scalar_config.h trans_func.h logmode.h enkf_obs.h obs_data.h obs_node.h well_obs.h meas_op.h meas_vector.h well_config.h well.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw.h equil_config.h equil.h enkf_state.h multflt.h enkf_util.h multflt_config.h enkf_main.h multz.h multz_config.h enkf_node.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h plain_driver.h analysis.h meas_matrix.h fs_index.h enkf_config.h plain_driver_parameter.h relperm.h relperm_config.h enkf_site_config.h havana_fault.h havana_fault_config.h summary_obs.h summary_config.h summary_config.o gen_data_config.h gen_data.h gen_common.h gen_obs.h enkf_sched.h enkf_ui_main.h enkf_ui_run.h enkf_ui_export.h enkf_ui_util.h plain_driver_static.h enkf_ui_plot.h enkf_ui_init.h gen_param_config.h
+INC_FILES_INSTALL = thist.h scalar.h scalar_config.h trans_func.h logmode.h enkf_obs.h obs_data.h obs_node.h well_obs.h meas_op.h meas_vector.h well_config.h well.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw.h equil_config.h equil.h enkf_state.h multflt.h enkf_util.h multflt_config.h enkf_main.h multz.h multz_config.h enkf_node.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h plain_driver.h analysis.h meas_matrix.h fs_index.h enkf_config.h plain_driver_parameter.h relperm.h relperm_config.h enkf_site_config.h havana_fault.h havana_fault_config.h summary_obs.h summary_config.h summary_config.o gen_data_config.h gen_data.h gen_common.h gen_obs.h enkf_sched.h enkf_ui_main.h enkf_ui_run.h enkf_ui_export.h enkf_ui_util.h plain_driver_static.h enkf_ui_plot.h enkf_ui_init.h gen_param_config.h gen_param.h
 
 ifeq ($(USE_LSF_LIBRARY),TRUE)
    LSF_LIBS   = -lbat  -llsf -lnsl
@@ -94,7 +94,7 @@ multz_config.o   : enkf_util.h multz_config.c multz_config.h enkf_macros.h logmo
 relperm_config.o : enkf_util.h relperm_config.c relperm_config.h enkf_macros.h logmode.o
 multz.o          : enkf_util.h multz.c multz.h multz_config.o logmode.o
 relperm.o        : enkf_util.h relperm.c relperm.h relperm_config.o logmode.o
-enkf_node.o      : enkf_util.h enkf_node.h enkf_node.c enkf_macros.h gen_param_config.o
+enkf_node.o      : enkf_util.h enkf_node.h enkf_node.c enkf_macros.h gen_param_config.o gen_param.o
 field_interC.o   : field_interC.c field.o field_config.o
 field_obs.o      : field_obs.c field_obs.h field.o field_config.o
 scalar_config.o : scalar_config.c scalar_config.h enkf_macros.h trans_func.o
@@ -128,6 +128,7 @@ enkf_ui_util.o        	 : enkf_ui_util.c enkf_ui_util.h
 enkf_ui_plot.o	         : enkf_ui_plot.c enkf_ui_plot.h enkf_ui_util.o
 enkf_ui_init.o           : enkf_ui_init.c enkf_ui_init.h
 gen_param_config.o       : gen_param_config.c gen_param_config.h
+gen_param.o              : gen_param.c gen_param.h gen_param_config.o enkf_macros.h enkf_util.o
 
 #################################################################
 # Binaries

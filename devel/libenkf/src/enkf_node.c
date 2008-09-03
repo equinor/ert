@@ -77,6 +77,61 @@
         the enkf object types.
 */
 
+/*-----------------------------------------------------------------*/
+
+/**
+   A note on memory 
+   ================ 
+
+   The enkf_nodes can consume large amounts of memory, and for large
+   models/ensembles we have a situation where not all the
+   members/fields can be in memory simultanouesly - such low-memory
+   situations are not really supported at the moment, but we have
+   implemented some support for such problems:
+
+    o All enkf objects should have a xxx_realloc_data() function. This
+      function should be implemented in such a way that it is always
+      safe to call, i.e. if the object already has allocated data the
+      function should just return.
+
+    o All enkf objects should implement a xxx_free_data()
+      function. This function free the data of the object, and set the
+      data pointer to NULL.
+
+
+   The following 'rules' apply to the memory treatment:
+   ----------------------------------------------------
+
+    o Functions writing to memory can always be called, and it is their
+      responsibility to allocate memory before actually writing on it. The
+      writer functions are:
+
+        enkf_node_initialize()
+        enkf_node_fread()
+        enkf_node_ecl_load()  [enkf_node_ecl_load_field() and enkf_node_ecl_load_static()]
+
+      These functions should all start with a call to
+      enkf_node_ensure_memory(). The (re)allocation of data is done at
+      the enkf_node level, and **NOT** in the low level object
+      (altough that is where it is eventually done of course).
+
+    o When it comes to functions reading memory it is a bit more
+      tricky. It could be that if the functions are called without
+      memory, that just means that the object is not active or
+      something (an the function should just return). On the other
+      hand trying to read a NULL pointer does indicate that program
+      logic is not fully up to it? And should therefor maybe be
+      punished?
+
+    o The only memory operation which is exported to 'user-space'
+      (i.e. the enkf_state object) is enkf_node_free_data(). 
+
+    o Currently a call to load a node will always actually do it,
+      however it should be possible to reach a performance gain by
+      keeping track of the last loaded report step, and short circuit
+      loads it it has not changed.
+*/
+
 
 
 
@@ -263,6 +318,24 @@ static void serial_state_init_deserialize(const serial_state_type * serial_state
 */
 
 
+#define FUNC_ASSERT(func) \
+   if (func == NULL) {      \
+      fprintf(stderr,"%s: function handler: %s not registered for node:%s - aborting\n",__func__ , #func , enkf_node->node_key); \
+      abort(); \
+   }
+
+
+
+static void enkf_node_ensure_memory(enkf_node_type * enkf_node) {
+  FUNC_ASSERT(enkf_node->realloc_data);
+  if (!enkf_node->memory_allocated) {
+    enkf_node->realloc_data(enkf_node->data);
+    enkf_node->memory_allocated = true;
+  }
+}
+
+
+
 void enkf_node_alloc_domain_object(enkf_node_type * node) {
   if (node->data != NULL)
     node->freef(node->data);
@@ -311,12 +384,6 @@ enkf_var_type enkf_node_get_var_type(const enkf_node_type * enkf_node) {
 }
 
 
-
-#define FUNC_ASSERT(func) \
-   if (func == NULL) {      \
-      fprintf(stderr,"%s: function handler: %s not registered for node:%s - aborting\n",__func__ , #func , enkf_node->node_key); \
-      abort(); \
-   }
 
 
 
@@ -377,8 +444,24 @@ void enkf_node_ecl_write_fortio(const enkf_node_type *enkf_node , fortio_type * 
 
 void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, int report_step) {
   FUNC_ASSERT(enkf_node->ecl_load);
+  enkf_node_ensure_memory(enkf_node);
   enkf_node->ecl_load(enkf_node->data , run_path   , ecl_base , ecl_sum , report_step);
 }
+
+
+/** Two special case ecl_load functions */
+void enkf_node_ecl_load_field(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {
+  enkf_node_ensure_memory(enkf_node);
+  field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_kw);
+}
+
+
+void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {
+  ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
+  enkf_node->memory_allocated = true;
+}
+
+
 
 
 void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
@@ -390,14 +473,6 @@ void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
   }
 }
 
-
-void enkf_node_ensure_memory(enkf_node_type * enkf_node) {
-  FUNC_ASSERT(enkf_node->realloc_data);
-  if (!enkf_node->memory_allocated) {
-    enkf_node->realloc_data(enkf_node->data);
-    enkf_node->memory_allocated = true;
-  }
-}
 
 
 void enkf_node_ensemble_fprintf_results(const enkf_node_type ** ensemble , int ens_size , int report_step , const char * path) {
@@ -497,6 +572,7 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
 
 void enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
   FUNC_ASSERT(enkf_node->initialize);
+  enkf_node_ensure_memory(enkf_node);
   enkf_node->initialize(enkf_node->data , iens);
 }
 
@@ -782,15 +858,4 @@ enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
 
 
 
-
-
-
-
-void enkf_node_load_static_ecl_kw(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {
-  if (enkf_node_get_impl_type(enkf_node) != STATIC)
-    util_abort("%s: internal error - this function should only be called with static nodes. \n" , __func__);
-
-  ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
-  enkf_node->memory_allocated = true;
-}
 
