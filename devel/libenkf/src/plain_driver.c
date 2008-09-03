@@ -30,7 +30,7 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , state_
   {
     char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "r");
-    enkf_node_fread(node , stream);
+    enkf_node_fread(node , stream , report_step , state);
     fclose(stream);
     free(filename);
   }
@@ -54,7 +54,7 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
   {
     char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "w");
-    enkf_node_fwrite(node , stream);
+    enkf_node_fwrite(node , stream , report_step , state);
     fclose(stream);
     free(filename);
   }

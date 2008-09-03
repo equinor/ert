@@ -118,7 +118,7 @@
     o When it comes to functions reading memory it is a bit more
       tricky. It could be that if the functions are called without
       memory, that just means that the object is not active or
-      something (an the function should just return). On the other
+      something (and the function should just return). On the other
       hand trying to read a NULL pointer does indicate that program
       logic is not fully up to it? And should therefor maybe be
       punished?
@@ -127,7 +127,7 @@
       (i.e. the enkf_state object) is enkf_node_free_data(). 
 
     o Currently a call to load a node will always actually do it,
-      however it should be possible to reach a performance gain by
+      however it should be possible to achieve a performance gain by
       keeping track of the last loaded report step, and short circuit
       loads it it has not changed.
 */
@@ -176,13 +176,47 @@ struct enkf_node_struct {
   get_index_ftype                * get_index;
   
   
-  serial_state_type  *serial_state;
-  char               *node_key;  /* Bør vel bare være i config node */
-  void               *data;
-  bool                memory_allocated;
-  bool                modified;
-  const enkf_config_node_type *config;
+  /******************************************************************/
+  void               *data;                 /* A pointer to the underlying enkf_object, i.e. multflt_type instance, or a field_type instance or ... */
+  const enkf_config_node_type *config;      /* A pointer to a enkf_config_node instance (which againg cointans aponter to the config object of data). */
+  
+
+  serial_state_type  *serial_state;   	    /* A very internal object - containg information about the seralization of the this node .*/
+  char               *node_key;       	    /* The (hash)key this node is identified with. */
+  bool                __memory_allocated;   /* Whether the underlying object (the one pointed to by data) has memory allocated or not. */
+
+
+  bool                __modified;           /* Internal variables trying to record the state of the in-memory reporesntation of the node->data. */ 
+  int                 __report_step;
+  state_enum          __state;
 };
+
+/**
+   The state of a node is manipulated as follows:
+
+   1. It is created with (modified, report_step, state) == (true , -1 , undefined).
+
+   2. After initialization we set report_step -> 0 , state -> analyzed, modified -> true 
+
+   3. After load (both from ensemble and ECLIPSE). We set modified ->
+      false, and report_step and state according to the load arguments.
+      
+   4. After deserialize (i.e. update) we set modified -> true.
+
+   5. After write (to ensemble) we set in the same way as after load.
+  
+   6. After free_data we invalidate according to thenewly allocated status.
+
+   7. In the ens_load routine we check if modified == false and the
+      report_step and state arguments agree with the current
+      values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING THE
+      FILESYSTEM.
+
+*/
+
+
+   
+
 
 
 
@@ -192,12 +226,12 @@ const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) 
 }
 
 /**
-This function returns a pointer to the ensfile of the node. Observe
-that nodes representing static ECLIPSE keywords do not have config
-information, so in this case the hash_key is returned. It is important
-that one does *NOT* return the ecl_kw_header_ref() of the static
-keyword, because that might contain characters (typically '/') which
-can not be part of a filename.
+   This function returns a pointer to the ensfile of the node. Observe
+   that nodes representing static ECLIPSE keywords do not have config
+   information, so in this case the hash_key is returned. It is important
+   that one does *NOT* return the ecl_kw_header_ref() of the static
+   keyword, because that might contain characters (typically '/') which
+   can not be part of a filename.
 */
 
 /*
@@ -328,9 +362,9 @@ static void serial_state_init_deserialize(const serial_state_type * serial_state
 
 static void enkf_node_ensure_memory(enkf_node_type * enkf_node) {
   FUNC_ASSERT(enkf_node->realloc_data);
-  if (!enkf_node->memory_allocated) {
+  if (!enkf_node->__memory_allocated) {
     enkf_node->realloc_data(enkf_node->data);
-    enkf_node->memory_allocated = true;
+    enkf_node->__memory_allocated = true;
   }
 }
 
@@ -340,7 +374,7 @@ void enkf_node_alloc_domain_object(enkf_node_type * node) {
   if (node->data != NULL)
     node->freef(node->data);
   node->data = node->alloc(enkf_config_node_get_ref(node->config));
-  node->memory_allocated = true;
+  node->__memory_allocated = true;
 }
 
 
@@ -446,30 +480,42 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
   enkf_node->ecl_load(enkf_node->data , run_path   , ecl_base , ecl_sum , report_step);
+  enkf_node->__report_step = report_step;
+  enkf_node->__state       = forecast;
+  enkf_node->__modified    = false;
 }
 
 
 /** Two special case ecl_load functions */
-void enkf_node_ecl_load_field(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {
+void enkf_node_ecl_load_field(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step) {
   enkf_node_ensure_memory(enkf_node);
   field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_kw);
+  enkf_node->__report_step = report_step;
+  enkf_node->__state       = forecast;
+  enkf_node->__modified    = false;
 }
 
 
-void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw) {
+void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step) {
   ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
-  enkf_node->memory_allocated = true;
+  enkf_node->__memory_allocated = true;
+  enkf_node->__report_step = report_step;
+  enkf_node->__state       = forecast;
+  enkf_node->__modified    = false;
 }
 
 
 
 
-void enkf_node_fwrite(const enkf_node_type *enkf_node , FILE *stream) {
-  if (!enkf_node->memory_allocated)
+void enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step , state_enum state) {
+  if (!enkf_node->__memory_allocated)
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
   {
     FUNC_ASSERT(enkf_node->fwrite_f);
     enkf_node->fwrite_f(enkf_node->data , stream);
+    enkf_node->__report_step = report_step;
+    enkf_node->__state       = state;
+    enkf_node->__modified    = false;
   }
 }
 
@@ -493,20 +539,27 @@ void enkf_node_ensemble_fprintf_results(const enkf_node_type ** ensemble , int e
 }
 
 
-bool enkf_node_memory_allocated(const enkf_node_type * node) { return node->memory_allocated; }
+bool enkf_node___memory_allocated(const enkf_node_type * node) { return node->__memory_allocated; }
 
 static void enkf_node_assert_memory(const enkf_node_type * enkf_node , const char * caller) {
-  if (!enkf_node_memory_allocated(enkf_node)) {
+  if (!enkf_node___memory_allocated(enkf_node)) {
     printf("Fatal error - no memory ?? \n");
     util_abort("%s:  tried to call:%s without allocated memory for node:%s - internal ERROR - aborting.\n",__func__ , caller , enkf_node->node_key);
   }
 }
 
 
-void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream) {
-  FUNC_ASSERT(enkf_node->fread_f);
-  enkf_node_ensure_memory(enkf_node);
-  enkf_node->fread_f(enkf_node->data , stream);
+void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step , state_enum state) {
+  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && !enkf_node->__modified)
+    return;  /* The in memory representation agrees with the disk image */
+  {
+    FUNC_ASSERT(enkf_node->fread_f);
+    enkf_node_ensure_memory(enkf_node);
+    enkf_node->fread_f(enkf_node->data , stream);
+    enkf_node->__modified    = false;
+    enkf_node->__report_step = report_step;
+    enkf_node->__state       = state;
+  }
 }
 
 
@@ -540,6 +593,7 @@ void enkf_node_deserialize(enkf_node_type *enkf_node , double *serial_data , siz
     serial_state_init_deserialize(enkf_node->serial_state , &internal_offset , &serial_offset, &serial_size );
     new_internal_offset = enkf_node->deserialize(enkf_node->data , internal_offset , serial_size , serial_data , stride , serial_offset);
     serial_state_update_serialized(enkf_node->serial_state , new_internal_offset);
+    enkf_node->__modified = true;
   }
 }
 
@@ -574,13 +628,19 @@ void enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
   FUNC_ASSERT(enkf_node->initialize);
   enkf_node_ensure_memory(enkf_node);
   enkf_node->initialize(enkf_node->data , iens);
+  enkf_node->__report_step = 0;
+  enkf_node->__state       = analyzed;
+  enkf_node->__modified    = true;
 }
 
 
 void enkf_node_free_data(enkf_node_type * enkf_node) {
   FUNC_ASSERT(enkf_node->free_data);
   enkf_node->free_data(enkf_node->data);
-  enkf_node->memory_allocated = false;
+  enkf_node->__memory_allocated = false;
+  enkf_node->__report_step      = -1;
+  enkf_node->__state            = undefined;
+  enkf_node->__modified         = true;
 }
 
 
@@ -637,8 +697,11 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   enkf_node_type * node  = util_malloc(sizeof * node , __func__);
   node->config           = config;
   node->node_key         = util_alloc_string_copy(node_key);
-  node->data             = NULL;
-  node->memory_allocated = false;
+  node->data               = NULL;
+  node->__memory_allocated = false;
+  node->__modified         = true;
+  node->__report_step      = -1;
+  node->__state            = undefined;
 
   /*
      Start by initializing all function pointers
@@ -810,9 +873,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
 }
 
 
-void enkf_node_set_modified(enkf_node_type * node)      { node->modified = true; }
-bool enkf_node_get_modified(const enkf_node_type *node) { return node->modified; }
-
 
 #define CASE_SET(type , func) case(type): has_func = (func != NULL); break;
 bool enkf_node_has_func(const enkf_node_type * node , node_function_type function_type) {
@@ -843,8 +903,7 @@ static enkf_node_type * enkf_node_alloc__(const enkf_config_node_type * config) 
 
   node = enkf_node_alloc_empty(config);
   enkf_node_alloc_domain_object(node);
-
-  enkf_node_set_modified(node);
+  
   return node;
 }
 

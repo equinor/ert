@@ -551,7 +551,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
       /* It is a dynamic restart kw like PRES or SGAS */
       {
 	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-	enkf_node_ecl_load_field(enkf_node , ecl_block_iget_kw(ecl_block , block_kw , 0));
+	enkf_node_ecl_load_field(enkf_node , ecl_block_iget_kw(ecl_block , block_kw , 0) , report_step);
       }
     } else if (impl_type == STATIC) {
       /* It is a static kw like INTEHEAD or SCON */
@@ -569,7 +569,7 @@ static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , con
 	  enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
 	  ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
 	  ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
-	  enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(ecl_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )));
+	  enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(ecl_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , report_step);
 	  /*
 	    Static kewyords go straight out ....
 	  */
