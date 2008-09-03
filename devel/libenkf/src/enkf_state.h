@@ -20,7 +20,6 @@
 typedef struct enkf_state_struct    enkf_state_type;
 
 void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
-int                enkf_state_get_report_step(const enkf_state_type * );
 void               enkf_state_measure( const enkf_state_type *  , enkf_obs_type * );
 void               enkf_state_set_data_kw(enkf_state_type *, const char * , const char * );
 void               enkf_state_init_eclipse(enkf_state_type *);
@@ -46,8 +45,7 @@ void             * enkf_state_complete_eclipse__(void * );
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
 void               enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
 void               enkf_state_sample(enkf_state_type * , int);
-void               enkf_state_fwrite_as(enkf_state_type *  , int  , int  , state_enum );
-void               enkf_state_fwrite(const enkf_state_type * , int );
+void               enkf_state_fwrite(const enkf_state_type *  , int  , int  , state_enum );
 void               enkf_state_ens_read(       enkf_state_type * , const char * , int);
 void               enkf_state_ecl_write(enkf_state_type * , int);
 void               enkf_state_ecl_read(enkf_state_type * , const ecl_block_type *);

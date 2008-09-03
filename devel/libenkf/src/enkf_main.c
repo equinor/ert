@@ -302,7 +302,7 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
 void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
   int iens;
   for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
-    enkf_state_fwrite_as(enkf_main->ensemble[iens] , mask , report_step , state);
+    enkf_state_fwrite(enkf_main->ensemble[iens] , mask , report_step , state);
 }
 
 
@@ -343,9 +343,8 @@ enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main ,
 
 /*****************************************************************/
 
-void enkf_main_fprintf_results(const enkf_main_type * enkf_main) {
+static void enkf_main_fprintf_results(const enkf_main_type * enkf_main , int report_step) {
   const int ens_size     = enkf_config_get_ens_size(enkf_main->config);
-  const int report_step  = enkf_state_get_report_step(enkf_main->ensemble[0]);
   int config_size;
   char ** key_list = enkf_config_alloc_keylist(enkf_main->config , &config_size);
   int ikw;
@@ -438,9 +437,8 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
     
     if (X != NULL) {
-      /* The second to last argument is the number of double
-	 we ask for, to get the number of bytes you must multiply
-	 by eight.
+      /* The second to last argument is the number of doubles we ask
+	 for, to get the number of bytes you must multiply by eight.
 
 	 1024 * 1024 * 128 => 1GB of memory
       */
@@ -452,7 +450,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
   printf("---------------------------------\n");
   if (enkf_update) {
     enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
-    enkf_main_fprintf_results(enkf_main);
+    enkf_main_fprintf_results(enkf_main , step2);
   }
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }

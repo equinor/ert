@@ -32,7 +32,6 @@ void                          enkf_main_add_type(enkf_main_type * , const char *
 void                          enkf_main_add_type0(enkf_main_type * , const char * , int , enkf_var_type , enkf_impl_type );
 void                          enkf_main_add_well(enkf_main_type * , const char * , int , const char ** );
 void                          enkf_main_analysis(enkf_main_type * );
-void                          enkf_main_fprintf_results(const enkf_main_type * );
 void                          enkf_main_free(enkf_main_type * );
 void                          enkf_main_init_eclipse(enkf_main_type * , int , int );
 void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );

@@ -128,17 +128,7 @@ struct enkf_state_struct {
 
   meas_vector_type      * meas_vector;       /* The meas_vector will accept measurements performed on this state.*/
   enkf_config_type 	* config;            /* The main config object, which contains all the node config objects. */
-  state_enum              analysis_state;       
-  int                     report_step;       /* The report_step and analysis_state = (analyzed || forecast) say   
-                                                what is the current state with respect to enkf of the in-memory
-                                                representation of this enkf_state instance.
 
-						This is a very unfortunate implementation, because currently the
-						different nodes in an enkf_state instance can correspond to different
-						report_steps. The report_step / state_enum fields should probably be
-						distributed among the nodes.
-					     */
-  
   run_info_type         * run_info;          /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
   shared_info_type      * shared_info;       /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;         /* Private config information for this member; not updated during a simulation. */
@@ -147,7 +137,7 @@ struct enkf_state_struct {
 /*****************************************************************/
 
 /**
-   Thisfunction sets the run_info parameters. This is typically called
+   This function sets the run_info parameters. This is typically called
    (via an enkf_state__ routine) by the external scope handling the forward model.
 
    When this initialization code has been run we are certain that the
@@ -292,15 +282,7 @@ void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_functi
 
 
 
-state_enum enkf_state_get_analysis_state(const enkf_state_type * enkf_state) {
-  return enkf_state->analysis_state;
-}
 
-
-static void enkf_state_set_state(enkf_state_type * enkf_state , int report_step , state_enum state) {
-  enkf_state->analysis_state = state;
-  enkf_state->report_step    = report_step;
-}
 
 
 bool enkf_state_fmt_file(const enkf_state_type * enkf_state) {
@@ -372,7 +354,6 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
     enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);
     free(iens_string);
   }
-  enkf_state_set_state(enkf_state , -1 , undefined);
   enkf_state->my_config   =  member_config_alloc( iens , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
   enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue);
   enkf_state->run_info    = run_info_alloc();
@@ -654,6 +635,7 @@ static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_s
 */
 void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs) {
   const member_config_type * my_config = enkf_state->my_config;
+  const run_info_type      * run_info  = enkf_state->run_info;
   char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
 
@@ -662,8 +644,8 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
     {
       obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , obs_node_get_state_kw(obs_node));
-      enkf_fs_fread_node(enkf_state->shared_info->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
-      obs_node_measure(obs_node , enkf_state->report_step , enkf_node , enkf_state_get_meas_vector(enkf_state));
+      enkf_fs_fread_node(enkf_state->shared_info->fs , enkf_node , run_info->step2 , my_config->iens , forecast); /* Hardcoded to measure on the forecast */
+      obs_node_measure(obs_node , run_info->step2 , enkf_node , enkf_state_get_meas_vector(enkf_state));
     }
   }
   util_free_stringlist( obs_keys , hash_get_size( enkf_obs->obs_hash ));
@@ -697,14 +679,13 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
 
   if (report_step1 == 0) {
     enkf_state_load_ecl_restart(enkf_state , unified , report_step1);
-    enkf_state_fwrite_as(enkf_state , ecl_restart , report_step1 , analyzed);
+    enkf_state_fwrite(enkf_state , ecl_restart , report_step1 , analyzed);
   }
-  enkf_state_set_state(enkf_state , report_step2 , forecast);
   enkf_state_load_ecl_restart(enkf_state , unified , report_step2);
   enkf_state_apply_ecl_load(enkf_state , report_step2);
   
   /* Burde ha et eget measure flag */
-  enkf_state_fwrite_as(enkf_state , ecl_restart + ecl_summary , report_step2 , forecast);
+  enkf_state_fwrite(enkf_state , ecl_restart + ecl_summary , report_step2 , forecast);
   enkf_state_measure(enkf_state , enkf_obs);  
 }
 
@@ -723,7 +704,7 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const char * kw;
 
   if (restart_kw_list_empty(enkf_state->restart_kw_list))
-    enkf_fs_fread_restart_kw_list(shared_info->fs , enkf_state->report_step , my_config->iens , enkf_state->restart_kw_list);
+    enkf_fs_fread_restart_kw_list(shared_info->fs , run_info->step1 , my_config->iens , enkf_state->restart_kw_list);
   
 
   kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
@@ -746,7 +727,7 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
       if (var_type == ecl_static) 
 	ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
 
-      enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , enkf_state->analysis_state);
+      enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
       
       if (var_type == ecl_restart) {
 	/* Pressure and saturations */
@@ -776,8 +757,9 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 */
 
 void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
-  const member_config_type * my_config = enkf_state->my_config;
-  shared_info_type * shared_info = enkf_state->shared_info;
+  const member_config_type * my_config   = enkf_state->my_config;
+  shared_info_type         * shared_info = enkf_state->shared_info;
+  const run_info_type * run_info         = enkf_state->run_info;
   int    restart_mask    = 0;
 
   if (mask & ecl_restart) 
@@ -786,7 +768,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
     restart_mask += ecl_static;
   mask -= restart_mask;
 
-  if (restart_mask > 0 && enkf_state->report_step > 0)
+  if (restart_mask > 0 && run_info->step1 > 0)
     enkf_state_write_restart_file(enkf_state);
   
   util_make_path(my_config->run_path);
@@ -798,7 +780,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
     for (ikey = 0; ikey < num_keys; ikey++) {
       enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_include_type(enkf_node , mask)) {
-	enkf_fs_fread_node(shared_info->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
+	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
 	enkf_node_ecl_write(enkf_node , my_config->run_path);
       }
     }
@@ -812,13 +794,8 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
   input; the enkf_state instance is set accordingly and written to
   disk.
 */
-void enkf_state_fwrite_as(enkf_state_type * enkf_state  , int mask , int report_step , state_enum state) {
-  enkf_state_set_state(enkf_state , report_step , state);
-  enkf_state_fwrite(enkf_state , mask);
-}
 
-
-void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask) {
+void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
@@ -828,7 +805,7 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask) {
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_fs_fwrite_node(shared_info->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
+      enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
   }                                                                     
   util_free_stringlist(key_list , num_keys);
 }
@@ -841,11 +818,10 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
   int ikey;
   
-  enkf_state_set_state(enkf_state , report_step , state);
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_fs_fread_node(shared_info->fs , enkf_node , enkf_state->report_step , my_config->iens , enkf_state->analysis_state);
+      enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
   }                                                                     
   util_free_stringlist(key_list , num_keys);
 }
@@ -1099,10 +1075,6 @@ void * enkf_state_start_eclipse__(void * __enkf_state) {
   return NULL ; 
 }
 
-
-int enkf_state_get_report_step(const enkf_state_type * enkf_state) { 
-  return enkf_state->report_step;
-}
 
 
 

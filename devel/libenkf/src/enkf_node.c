@@ -126,10 +126,6 @@
     o The only memory operation which is exported to 'user-space'
       (i.e. the enkf_state object) is enkf_node_free_data(). 
 
-    o Currently a call to load a node will always actually do it,
-      however it should be possible to achieve a performance gain by
-      keeping track of the last loaded report step, and short circuit
-      loads it it has not changed.
 */
 
 
@@ -224,24 +220,6 @@ struct enkf_node_struct {
 const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) {
   return node->config;
 }
-
-/**
-   This function returns a pointer to the ensfile of the node. Observe
-   that nodes representing static ECLIPSE keywords do not have config
-   information, so in this case the hash_key is returned. It is important
-   that one does *NOT* return the ecl_kw_header_ref() of the static
-   keyword, because that might contain characters (typically '/') which
-   can not be part of a filename.
-*/
-
-/*
-const char * enkf_node_get_ensfile_ref(const enkf_node_type * node ) {
-  if (node->config == NULL)
-    return node->node_key;
-  else
-    return enkf_config_node_get_ensfile_ref(node->config);
-}
-*/
 
 
 const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_eclfile_ref(node->config); }
