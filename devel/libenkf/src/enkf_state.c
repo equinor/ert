@@ -56,18 +56,21 @@
 */
 
 typedef struct run_info_struct {
-  bool              __ready;         /* An attempt to check the internal state - not active yet. */
-  int               init_step;       /* The report step we initialize from - will often be equal to step1, but can be different. */
-  state_enum        init_state;      /* Whether we should init from a forecast or an analyzed state. */
-  int               step1;           /* The forward model is integrated: step1 -> step2 */
+  bool              __ready;         	   /* An attempt to check the internal state - not active yet. */
+  bool              active;                /* Is this state object active at all - used for instance in ensemble experiments ere only some of the members are integrated. */
+  int               init_step;       	   /* The report step we initialize from - will often be equal to step1, but can be different. */
+  state_enum        init_state;      	   /* Whether we should init from a forecast or an analyzed state. */
+  int               step1;           	   /* The forward model is integrated: step1 -> step2 */
   int               step2;  	     
   bool              load_results;    	   /* Whether the results should be loaded when the forward model is complete. */
   bool              unlink_run_path; 	   /* Whether the run_path should be unlinked when the forward model is through. */
   const stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
   
+
   /******************************************************************/
   /* Return value - set in the called routine!!  */
   bool              complete_OK;     /* Did the forward model complete OK? */
+
 } run_info_type;
 
 
@@ -146,7 +149,8 @@ struct enkf_state_struct {
 */
 
 
-static void run_info_set(run_info_type * run_info ,int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
+static void run_info_set(run_info_type * run_info ,bool active, int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
+  run_info->active          = active;
   run_info->init_step  	    = init_step;
   run_info->init_state 	    = init_state;
   run_info->step1      	    = step1;
@@ -613,7 +617,7 @@ static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_s
     for (ikey= 0; ikey < num_keys; ikey++) {
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_has_func(enkf_node , ecl_load_func)) 
-	enkf_node_ecl_load(enkf_node , my_config->run_path , my_config->eclbase , ecl_sum , report_step);
+	enkf_node_ecl_load(enkf_node , my_config->run_path , my_config->eclbase , ecl_sum , NULL , report_step);
       
     }                                                                      
     util_free_stringlist(key_list , num_keys);
@@ -690,10 +694,14 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
 }
 
 
+/**
+   Observe that this function uses run_info->step1 to load all the nodes which
+   are needed in the restart file. I.e. if you have carefully prepared a funny
+   state with dynamic/static data which do not agree with the current value of
+   run_info->step1 YOUR STATE WILL BE OVERWRITTEN.
+*/
 
-
-
-void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
+static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   shared_info_type * shared_info       = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const run_info_type      * run_info  = enkf_state->run_info;
@@ -719,14 +727,19 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
        before things blow up completely at a later instant.
     */
     
-    if (!enkf_state_has_node(enkf_state , kw)) 
-      enkf_state_add_node(enkf_state , kw , NULL); 
+    if (!enkf_config_has_key(enkf_state->config , kw)) 
+      enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL);
+    
+    if (!enkf_state_has_node(enkf_state , kw)) {
+      const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+      enkf_state_add_node(enkf_state , kw , config_node); 
+    }
+	
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
       if (var_type == ecl_static) 
 	ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
-
       enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
       
       if (var_type == ecl_restart) {
@@ -748,17 +761,15 @@ void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 
 
 /**
-  This function writes out all the files needed by an ECLIPSE
-  simulation, this includes the restart file, and the various INCLUDE
-  files corresponding to parameteres estimated by EnKF.
+  This function writes out all the files needed by an ECLIPSE simulation, this
+  includes the restart file, and the various INCLUDE files corresponding to
+  parameteres estimated by EnKF.
 
-  The writing of restart file is delegated to
-  enkf_state_write_restart_file().
+  The writing of restart file is delegated to enkf_state_write_restart_file().
 */
 
 void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
   const member_config_type * my_config   = enkf_state->my_config;
-  shared_info_type         * shared_info = enkf_state->shared_info;
   const run_info_type * run_info         = enkf_state->run_info;
   int    restart_mask    = 0;
 
@@ -779,10 +790,8 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
     
     for (ikey = 0; ikey < num_keys; ikey++) {
       enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-      if (enkf_node_include_type(enkf_node , mask)) {
-	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
+      if (enkf_node_include_type(enkf_node , mask)) 
 	enkf_node_ecl_write(enkf_node , my_config->run_path);
-      }
     }
     util_free_stringlist(key_list , num_keys);
   }
@@ -790,7 +799,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
 
 
 /**
-  This function takes a report_step and a analyzed|forecast state as
+   This function takes a report_step and a analyzed|forecast state as
   input; the enkf_state instance is set accordingly and written to
   disk.
 */
@@ -886,7 +895,6 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
    the string.
 */
 
-
 void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
   void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
   hash_insert_hash_owned_ref(enkf_state->data_kw , kw , void_arg , void_arg_free__);
@@ -897,7 +905,8 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 /**
    init_step    : The parameters are loaded from this EnKF/report step.
-   report_step1 : The simulation should start from this report step.
+   report_step1 : The simulation should start from this report step; 
+                  dynamic data are loaded from this step.
    report_step2 : The simulation should stop at this report step.
 
    For a normal EnKF run we well have init_step == report_step1, but
@@ -940,13 +949,15 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     free(schedule_file);
   }
 
-  {
-    int load_mask = constant + static_parameter + parameter;
-    if (run_info->step1 > 0) load_mask += ecl_restart; 
-    enkf_state_fread(enkf_state , load_mask , run_info->init_step ,run_info->init_state);
-  }
+  /**
+     This is a bit tricky:
 
+     + Parameters are loaded from the init_step.
+     + Dynamic data (and corresponding static) are loaded from step1 - but that is done in the enkf_state_write_restart_file() routine.
+  */
+  enkf_state_fread(enkf_state , parameter + constant + static_parameter , run_info->init_step , run_info->init_state);
   enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
+  
   {
     char * stdin_file = util_alloc_full_path(my_config->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
     ecl_util_init_stdin( stdin_file , my_config->eclbase );
@@ -1011,45 +1022,55 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 
 
 void enkf_state_start_eclipse(enkf_state_type * enkf_state) {
-  const shared_info_type    * shared_info = enkf_state->shared_info;
   const run_info_type       * run_info    = enkf_state->run_info;
-  const member_config_type  * my_config   = enkf_state->my_config;
-
-  /*
-    Prepare the job and submit it to the queue
-  */
-  enkf_state_init_eclipse(enkf_state);
-  job_queue_add_job(shared_info->job_queue , my_config->iens , run_info->step2);
+  if (run_info->active) {  /* if the job is not active we just return .*/
+    const shared_info_type    * shared_info = enkf_state->shared_info;
+    const member_config_type  * my_config   = enkf_state->my_config;
+    
+    /*
+      Prepare the job and submit it to the queue
+    */
+    enkf_state_init_eclipse(enkf_state);
+    job_queue_add_job(shared_info->job_queue , my_config->iens , run_info->step2);
+  }
 }
 
 
+/** 
+    Observe that if run_info == false, this routine will return with
+    job_completeOK == true, that might be a bit misleading.
+*/
+
 void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
-  const shared_info_type    * shared_info = enkf_state->shared_info;
   run_info_type             * run_info    = enkf_state->run_info;
-  const member_config_type  * my_config   = enkf_state->my_config;
-  const int usleep_time = 100000; /* 1/10 of a second */ 
-  job_status_type final_status;
-
   run_info->complete_OK = true;
-  while (true) {
-    final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
-
-    if (final_status == job_queue_complete_OK) {
-      if (run_info->load_results)
-	enkf_state_ecl_load(enkf_state , shared_info->obs , my_config->unified , run_info->step1 , run_info->step2);
-      break;
-    } else if (final_status == job_queue_complete_FAIL) {
-      fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
-      run_info->complete_OK = false;
-      break;
-    } else usleep(usleep_time);
-  } 
-  
-
-  if ( enkf_config_get_debug(enkf_state->config) == 0) {
-    /* In case the job fails, we leave the run_path directory around for debugging. */
-    if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
-      util_unlink_path(my_config->run_path);
+  if (run_info->active) {
+    const shared_info_type    * shared_info = enkf_state->shared_info;
+    const member_config_type  * my_config   = enkf_state->my_config;
+    const int usleep_time = 100000; /* 1/10 of a second */ 
+    job_status_type final_status;
+    
+    
+    while (true) {
+      final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
+      
+      if (final_status == job_queue_complete_OK) {
+	if (run_info->load_results)
+	  enkf_state_ecl_load(enkf_state , shared_info->obs , my_config->unified , run_info->step1 , run_info->step2);
+	break;
+      } else if (final_status == job_queue_complete_FAIL) {
+	fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
+	run_info->complete_OK = false;
+	break;
+      } else usleep(usleep_time);
+    } 
+    
+    
+    if ( enkf_config_get_debug(enkf_state->config) == 0) {
+      /* In case the job fails, we leave the run_path directory around for debugging. */
+      if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
+	util_unlink_path(my_config->run_path);
+    }
   }
   run_info->__ready = false;
 }
@@ -1381,8 +1402,8 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
 }
 
 
-void enkf_state_init_run(enkf_state_type * state , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
-  run_info_set( state->run_info , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
+void enkf_state_init_run(enkf_state_type * state , bool active , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
+  run_info_set( state->run_info , active , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
 }
 
 

@@ -57,13 +57,15 @@ struct field_config_struct {
   void        * max_value;
   int           sizeof_ctype;
 
-  field_file_format_type  ecl_export_format;
-  ecl_type_enum           ecl_type;
+  field_file_format_type  export_format;
+  field_file_format_type  import_format;    
+  ecl_type_enum           internal_ecl_type;
+  ecl_type_enum           export_ecl_type;
   field_init_type         init_type; 
-  char        	* base_file;
-  char        	* perturbation_config_file;
-  char          * layer_config_file;  
-  path_fmt_type * init_file_fmt;
+  char          	* base_file;
+  char          	* perturbation_config_file;
+  char                  * layer_config_file;  
+  path_fmt_type         * init_file_fmt;
 
   bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool fmt_file;
@@ -102,7 +104,8 @@ void                    field_config_get_ijk(const field_config_type * , int , i
 bool                    field_config_active_cell(const field_config_type *  , int , int , int);
 field_init_type         field_config_get_init_type(const field_config_type * );
 char                  * field_config_alloc_init_file(const field_config_type * , int );
-field_file_format_type  field_config_get_ecl_export_format(const field_config_type * );
+field_file_format_type  field_config_get_export_format(const field_config_type * );
+field_file_format_type  field_config_get_import_format(const field_config_type * );
 void                    field_config_set_iactive(field_config_type * , int  , const int *  , const int * , const int *);
 void                    field_config_set_all_active(field_config_type * );
 void                    field_config_set_key(field_config_type * , const char *);

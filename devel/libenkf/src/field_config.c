@@ -28,7 +28,7 @@ static void field_config_assert_ijk(const field_config_type * config , int i , i
 
 
 void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_type) {
-  config->ecl_type     = ecl_type;
+  config->internal_ecl_type     = ecl_type;
   config->sizeof_ctype = ecl_util_get_sizeof_ctype(ecl_type);
 }
 
@@ -182,8 +182,12 @@ field_file_format_type field_config_guess_file_type(const char * filename , bool
 
 
 
-field_file_format_type field_config_get_ecl_export_format(const field_config_type * field_config) {
-  return field_config->ecl_export_format;
+field_file_format_type field_config_get_export_format(const field_config_type * field_config) {
+  return field_config->export_format;
+}
+
+field_file_format_type field_config_get_import_format(const field_config_type * field_config) {
+  return field_config->import_format;
 }
 
 
@@ -195,10 +199,12 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
     Observe that size is the number of *ACTIVCE* cells,
     and generally *not* equal to nx*ny*nz.
   */
-  config->ecl_export_format        = ecl_kw_file_all_cells; 
+  config->export_format        = ecl_kw_file_all_cells;     /* Hardcoded for e.g. permeability .*/
+  config->import_format        = ecl_kw_file_active_cells;  /* Hardcoded for e.g. pressure - come on is this ugly? */
   /*
-  config->ecl_export_format        = ecl_grdecl_format; 
+    config->ecl_export_format        = ecl_grdecl_format; 
   */
+  
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
@@ -294,7 +300,7 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const 
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid);
   config->logmode           = 0;
   config->init_type         = none;
-  config->ecl_export_format = ecl_kw_file_active_cells;
+  config->export_format     = ecl_kw_file_active_cells;
   return config;
 }
 
@@ -363,13 +369,13 @@ void field_config_set_limits(field_config_type * config , void * min_value , voi
 
 
 void field_config_apply_limits(const field_config_type * config, void * _data) {
-  if (config->ecl_type != ecl_double_type) {
+  if (config->internal_ecl_type != ecl_double_type) {
     fprintf(stderr,"%s: sorry - limits only implemented for double fields currently \n",__func__);
     abort();
   }
 
   if (config->limits_set) {
-    switch (config->ecl_type) {
+    switch (config->internal_ecl_type) {
     case(ecl_double_type):
       {
 	double *data = (double *) _data;
@@ -410,7 +416,7 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
   *fmt_file    = config->fmt_file;
   *endian_swap = config->endian_swap;
   /*
-   *ecl_type    = config->ecl_type;
+   *ecl_type    = config->internal_ecl_type;
    */
 }
 
@@ -436,13 +442,13 @@ int field_config_get_volume(const field_config_type * config) {
 
 
 rms_type_enum field_config_get_rms_type(const field_config_type * config) {
-  return rms_util_convert_ecl_type(config->ecl_type);
+  return rms_util_convert_ecl_type(config->internal_ecl_type);
 }
 
 
 
 ecl_type_enum field_config_get_ecl_type(const field_config_type * config) {
-  return config->ecl_type;
+  return config->internal_ecl_type;
 }
 
 

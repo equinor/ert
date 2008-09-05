@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <enkf_types.h>
+#include <ecl_block.h>
+#include <ecl_sum.h>
 
 #define CONFIG_STD_FIELDS \
 int data_size;            \
@@ -115,11 +117,11 @@ void prefix ## _ecl_write__(const void * void_arg , const char * path) { \
 /*****************************************************************/
 
 #define VOID_ECL_LOAD(prefix) \
-void prefix ## _ecl_load__(void * void_arg , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, int report_step) { \
-   prefix ## _ecl_load((prefix ## _type *) void_arg , run_path , ecl_base , ecl_sum , report_step);      \
+void prefix ## _ecl_load__(void * void_arg , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block, int report_step) { \
+   prefix ## _ecl_load((prefix ## _type *) void_arg , run_path , ecl_base , ecl_sum , restart_block , report_step);      \
 }
 
-#define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const char * , const ecl_sum_type *, int);
+#define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const char * , const ecl_sum_type *, const ecl_block_type * , int);
 
 
 /*****************************************************************/

@@ -75,7 +75,7 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
   const field_config_type * config = field->config;
   int   sizeof_ctype_target = ecl_util_get_sizeof_ctype(target_type);
   
-  switch(config->ecl_type) {
+  switch(config->internal_ecl_type) {
   case(ecl_double_type):
     {
       const double * src_data = (const double *) field->data;
@@ -170,7 +170,7 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
 static void field_import3D(field_type * field , const void *_src_data , bool rms_index_order , ecl_type_enum src_type) {
   const field_config_type * config = field->config;
   
-  switch(config->ecl_type) {
+  switch(config->internal_ecl_type) {
   case(ecl_double_type):
     {
       double * target_data = (double *) field->data;
@@ -484,8 +484,8 @@ void field_fwrite(const field_type * field , FILE * stream) {
     util_fwrite_compressed(field->data , sizeof_ctype * data_size , stream);
   else
     enkf_util_fwrite(field->data    ,   sizeof_ctype , data_size , stream , __func__);
-  
 }
+
 
 
 void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file , bool endian_swap ) {
@@ -559,7 +559,7 @@ void field_export(const field_type * field, const char * file , field_file_forma
 
 
 void field_ecl_write(const field_type * field , const char * file) {
-  field_file_format_type export_format = field_config_get_ecl_export_format(field->config);
+  field_file_format_type export_format = field_config_get_export_format(field->config);
   field_export(field , file , export_format);
 }
 
@@ -796,15 +796,18 @@ int field_get_global_index(const field_type * field , int i , int j  , int k) {
 
 
 
+/**
+   Copying data from a (PACKED) ecl_kw instance down to a fields data.
+*/
+
 void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
   const field_config_type * config = field->config;
   const int data_size      	   = field_config_get_data_size(config);
   ecl_type_enum field_type 	   = field_config_get_ecl_type(field->config);
   ecl_type_enum kw_type            = ecl_kw_get_type(ecl_kw);
-  if (data_size != ecl_kw_get_size(ecl_kw)) {
-    fprintf(stderr,"%s: fatal error - incorrect size for:%s [config:%d , file:%d] - aborting \n",__func__ , config->ecl_kw_name , data_size , ecl_kw_get_size(ecl_kw));
-    abort();
-  } 
+  if (data_size != ecl_kw_get_size(ecl_kw)) 
+    util_abort("%s: fatal error - incorrect size for:%s [config:%d , file:%d] - aborting \n",__func__ , config->ecl_kw_name , data_size , ecl_kw_get_size(ecl_kw));
+  
   ecl_util_memcpy_typed_data(field->data , ecl_kw_get_data_ref(ecl_kw) , field_type , kw_type , ecl_kw_get_size(ecl_kw));
 }
 
@@ -857,17 +860,14 @@ void field_fload_ecl_kw(field_type * field , const char * filename , bool endian
     fortio_fclose(fortio);
   }
   
+
   if (field_config_get_volume(field->config) == ecl_kw_get_size(ecl_kw)) 
     field_import3D(field , ecl_kw_get_data_ref(ecl_kw) , false , ecl_kw_get_type(ecl_kw));
-  else if (field_config_get_active_size(field->config) == ecl_kw_get_size(ecl_kw)) {
-    /* Keyword is already packed - e.g. from a restart file */
-    ecl_type_enum field_type = field_config_get_ecl_type(field->config);
-    ecl_type_enum kw_type    = ecl_kw_get_type(ecl_kw);
-    ecl_util_memcpy_typed_data(field->data , ecl_kw_get_data_ref(ecl_kw) , field_type , kw_type , ecl_kw_get_size(ecl_kw));
-  } else {
-    fprintf(stderr,"%s: trying to import ecl_kw(%s) of wrong size: field:%d  ecl_kw:%d \n",__func__ , ecl_kw_get_header_ref(ecl_kw) , field_config_get_active_size(field->config) , ecl_kw_get_size(ecl_kw));
-    abort();
-  }
+  else 
+    /* Keyword is already packed - e.g. from a restart file. 
+       size is verified in the _copy function.*/
+    field_copy_ecl_kw_data(field , ecl_kw);
+  
   ecl_kw_free(ecl_kw);
 }
 
@@ -971,6 +971,29 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 
 
 
+
+/**
+   This function loads a field from a complete forward run. The
+   original implementation is to load e.g. pressure and saturations
+   from a block of restart data. Current implementation can only
+   handle that, but in principle other possibilities should be
+   possible.
+   
+   Observe that ecl_load loads from a (already loaded) restart_block,
+   and not from a file.
+*/
+
+
+void field_ecl_load(field_type * field , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
+  DEBUG_ASSERT(field)
+  {
+    field_file_format_type import_format = field_config_get_import_format(field->config);
+    if ((import_format == ecl_kw_file_all_cells) || (import_format == ecl_kw_file_active_cells)) {
+      
+    } else 
+      util_abort("%s: sorry import format:%d not supported for fields\n",__func__);
+  }
+}
 
 void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
   field_config_get_dims(field->config , nx , ny ,nz);

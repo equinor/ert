@@ -11,7 +11,7 @@
 #include <enkf_ui_util.h>
 
 
-void enkf_ui_run(enkf_main_type * enkf_main , enkf_sched_type * enkf_sched , int start_report , state_enum __init_state) {
+void enkf_ui_run(enkf_main_type * enkf_main , enkf_sched_type * enkf_sched ,const bool * iactive ,  int start_report , state_enum __init_state) {
   bool analyzed_start;
   bool prev_enkf_on;
   bool unlink_run_path = true;
@@ -52,7 +52,7 @@ void enkf_ui_run(enkf_main_type * enkf_main , enkf_sched_type * enkf_sched , int
       else
 	init_state = forecast;
       
-      enkf_main_run(enkf_main , init_step , init_state , report_step , next_report_step , enkf_on , unlink_run_path , forward_model);
+      enkf_main_run(enkf_main , iactive , init_step , init_state , report_step , next_report_step , enkf_on , unlink_run_path , forward_model);
       report_step  = next_report_step;
       prev_enkf_on = enkf_on;
     } while (next_report_step < report_step2);
@@ -66,8 +66,17 @@ void enkf_ui_run_start__(void * _void_arg) {
   void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
   enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
   enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
+  const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+  const int ens_size           = enkf_config_get_ens_size(enkf_config);
+  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  {
+    int iens;
+    for (iens= 0; iens < ens_size; iens++)
+      iactive[iens] = true;
+  }
 
-  enkf_ui_run(enkf_main , enkf_sched , 0 , analyzed);
+  enkf_ui_run(enkf_main , enkf_sched , iactive , 0 , analyzed);
+  free(iactive);
 }
 
 
@@ -76,15 +85,24 @@ void enkf_ui_run_restart__(void * _void_arg) {
   void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
   enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
   enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
+  const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+  const int ens_size    = enkf_config_get_ens_size(enkf_config);
   const int prompt_len  = 35;
   const int last_report = enkf_sched_get_last_report(enkf_sched);
   int start_report;
   state_enum state;
+  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  {
+    int iens;
+    for (iens= 0; iens < ens_size; iens++)
+      iactive[iens] = true;
+  }
 
   start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
   state        = enkf_ui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
   
-  enkf_ui_run(enkf_main , enkf_sched , start_report , state);
+  enkf_ui_run(enkf_main , enkf_sched , iactive , start_report , state);
+  free(iactive);
 }
 
 
@@ -96,11 +114,21 @@ void enkf_ui_run_exp__(void * _void_arg) {
   const int ens_size    = enkf_config_get_ens_size(enkf_config);
   const int last_report = enkf_sched_get_last_report(enkf_sched);
   int prompt_len = 35;
-
+  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   int start_report = util_scanf_int_with_limits("Initialize static parameters from: ",prompt_len , 0 , last_report );
-  int iens         = util_scanf_int_with_limits("How many members too integrate: ",prompt_len , 1 , ens_size);
-  enkf_main_run(enkf_main , start_report , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+  int small_ens_size = util_scanf_int_with_limits("How many members too integrate: ",prompt_len , 1 , ens_size);
+  {
+    int iens;
+    for (iens= 0; iens < ens_size; iens++) {
+      if (iens < small_ens_size)
+	iactive[iens] = true;
+      else
+	iactive[iens] = false;
+    }
+  }
+  enkf_main_run(enkf_main , iactive , start_report , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+  free(iactive);
 }
 
 
@@ -109,9 +137,18 @@ void enkf_ui_run_screening__(void * _void_arg) {
   enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
   enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
   const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+  const int ens_size    = enkf_config_get_ens_size(enkf_config);
   const int last_report = enkf_sched_get_last_report(enkf_sched);
+  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  {
+    int iens;
+    for (iens= 0; iens < ens_size; iens++)
+      iactive[iens] = true;
+  }
 
-  enkf_main_run(enkf_main , 0 , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+    
+  enkf_main_run(enkf_main , iactive , 0 , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+  free(iactive);
 }
 
 

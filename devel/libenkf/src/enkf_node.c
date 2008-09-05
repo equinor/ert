@@ -128,6 +128,41 @@
 
 */
 
+/**
+   Keeeping track of node state.
+   =============================
+
+   To keep track of the state of the node's data (actually the data of
+   the contained enkf_object, i.e. a field) we have three higly
+   internal variables __state, __modified and __report_step. These
+   three variables are used/updated in the following manner:
+
+    1. The nodes are created with (modified, report_step, state) ==
+       (true , -1 , undefined).
+
+    2. After initialization we set report_step -> 0 , state ->
+       analyzed, modified -> true
+
+    3. After load (both from ensemble and ECLIPSE). We set modified ->
+       false, and report_step and state according to the load
+       arguments.
+      
+    4. After deserialize (i.e. update) we set modified -> true.
+      
+    5. After write (to ensemble) we set in the same way as after load.
+  
+    6. After free_data we invalidate according to the newly allocated
+       status.
+
+    7. In the ens_load routine we check if modified == false and the
+       report_step and state arguments agree with the current
+       values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING
+       THE FILESYSTEM. This is improvement gain is the main point of
+       the whole excercise.
+*/
+
+
+
 
 
 
@@ -136,11 +171,16 @@
 typedef struct serial_state_struct serial_state_type;
 
 
+/**
+   This is a support struct designed to hold information about a
+   partly completed serialization. 
+*/
+
 struct serial_state_struct {
-  int        internal_offset;
-  int        serial_size;
-  size_t     offset;
-  bool       state_complete;
+  int        internal_offset;   /* How long into the nodes data we have completed the serialization. */
+  int        serial_size;       /* The number of elements which have been serialized from this node - in this round. */
+  size_t     offset;            /* The offset into the serial vector. */
+  bool       state_complete;    /* Whether we are done with serialization of this node. */
   state_enum state;
 };
 
@@ -155,8 +195,8 @@ struct enkf_node_struct {
   realloc_data_ftype  *realloc_data;
   free_data_ftype     *free_data;
 
-  serialize_ftype    *serialize;
-  deserialize_ftype  *deserialize;
+  serialize_ftype     *serialize;
+  deserialize_ftype   *deserialize;
 
   initialize_ftype   		 * initialize;
   free_ftype         		 * freef;
@@ -173,45 +213,17 @@ struct enkf_node_struct {
   
   
   /******************************************************************/
-  void               *data;                 /* A pointer to the underlying enkf_object, i.e. multflt_type instance, or a field_type instance or ... */
-  const enkf_config_node_type *config;      /* A pointer to a enkf_config_node instance (which againg cointans aponter to the config object of data). */
-  
-
-  serial_state_type  *serial_state;   	    /* A very internal object - containg information about the seralization of the this node .*/
   char               *node_key;       	    /* The (hash)key this node is identified with. */
-  bool                __memory_allocated;   /* Whether the underlying object (the one pointed to by data) has memory allocated or not. */
-
-
-  bool                __modified;           /* Internal variables trying to record the state of the in-memory reporesntation of the node->data. */ 
-  int                 __report_step;
-  state_enum          __state;
-};
-
-/**
-   The state of a node is manipulated as follows:
-
-   1. It is created with (modified, report_step, state) == (true , -1 , undefined).
-
-   2. After initialization we set report_step -> 0 , state -> analyzed, modified -> true 
-
-   3. After load (both from ensemble and ECLIPSE). We set modified ->
-      false, and report_step and state according to the load arguments.
-      
-   4. After deserialize (i.e. update) we set modified -> true.
-
-   5. After write (to ensemble) we set in the same way as after load.
+  void               *data;                 /* A pointer to the underlying enkf_object, i.e. multflt_type instance, or a field_type instance or ... */
+  const enkf_config_node_type *config;      /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
   
-   6. After free_data we invalidate according to thenewly allocated status.
-
-   7. In the ens_load routine we check if modified == false and the
-      report_step and state arguments agree with the current
-      values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING THE
-      FILESYSTEM.
-
-*/
-
-
-   
+  serial_state_type  *serial_state;   	    /* A very internal object - containg information about the seralization of the this node .*/
+  
+  bool                __memory_allocated;   /* Whether the underlying object (the one pointed to by data) has memory allocated or not. */
+  bool                __modified;           /* __modified, __report_step and __state are internal variables trying  */
+  int                 __report_step;        /* to record the state of the in-memory reporesentation of the node->data. See */ 
+  state_enum          __state;              /* the documentation with heading "Keeping track of node state". */
+};
 
 
 
@@ -454,10 +466,10 @@ void enkf_node_ecl_write_fortio(const enkf_node_type *enkf_node , fortio_type * 
 */
 
 
-void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, int report_step) {
+void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
-  enkf_node->ecl_load(enkf_node->data , run_path   , ecl_base , ecl_sum , report_step);
+  enkf_node->ecl_load(enkf_node->data , run_path   , ecl_base , ecl_sum , restart_block , report_step);
   enkf_node->__report_step = report_step;
   enkf_node->__state       = forecast;
   enkf_node->__modified    = false;
@@ -554,7 +566,7 @@ int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , do
   if (serial_state_do_serialize(enkf_node->serial_state)) {
     int internal_offset = serial_state_get_internal_offset(enkf_node->serial_state);
     int elements_added  = enkf_node->serialize(enkf_node->data , internal_offset , serial_data_size , serial_data , stride , offset , complete);
-
+    
     serial_state_update_forecast(enkf_node->serial_state , offset , elements_added , *complete);
     return elements_added;
   } return 0;

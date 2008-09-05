@@ -132,7 +132,7 @@ double well_get(const well_type * well, const char * var) {
 
 
 
-void well_ecl_load(well_type * well , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, int report_step) {
+void well_ecl_load(well_type * well , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
   DEBUG_ASSERT(well)
   {
     const well_config_type *config       = well->config;

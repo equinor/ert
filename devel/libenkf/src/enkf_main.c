@@ -370,7 +370,7 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 /******************************************************************/
 
-void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
+void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
   bool  load_results            = true; /** Must have individual switch */
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
   int iens;
@@ -393,7 +393,7 @@ void enkf_main_run(enkf_main_type * enkf_main, int init_step , state_enum init_s
       submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) 
       {
-	enkf_state_init_run(enkf_main->ensemble[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
+	enkf_state_init_run(enkf_main->ensemble[iens] , iactive[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
         thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
       }
 
