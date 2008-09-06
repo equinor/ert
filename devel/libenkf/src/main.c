@@ -85,14 +85,13 @@ int main (int argc , char ** argv) {
     joblist   = ext_joblist_alloc();
 
     enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(config_file , site_config , joblist , false , false , true);
-    plain_driver_type * dynamic       	         = plain_driver_dynamic_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
+    plain_driver_dynamic_type * dynamic       	 = plain_driver_dynamic_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
     plain_driver_parameter_type * parameter      = plain_driver_parameter_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Parameter");
     plain_driver_static_type * eclipse_static    = plain_driver_static_alloc(enkf_config_get_ens_path(enkf_config)    , "%04d/mem%03d/Static");
     fs_index_type     * fs_index                 = fs_index_alloc(enkf_config_get_ens_path(enkf_config)               , "%04d/mem%03d/INDEX");
     enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic , eclipse_static , parameter);
 
 
-    plain_driver_README( enkf_config_get_ens_path(enkf_config) );
     job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , fs , job_queue , joblist);
     const enkf_sched_type * enkf_sched = enkf_sched_fscanf_alloc( enkf_config_get_enkf_sched_file(enkf_config) , enkf_main_get_sched_file(enkf_main) , joblist , enkf_config_get_forward_model(enkf_config));

@@ -33,7 +33,7 @@ static plain_driver_dynamic_type * plain_driver_dynamic_safe_cast(void * _driver
 
 
 static char * plain_driver_dynamic_alloc_filename(const plain_driver_dynamic_type * driver , int report_step , int iens , state_enum state , const char * key) {
-  path_fmt_type * path;
+  path_fmt_type * path = NULL;
 
   if (state == analyzed)
     path = driver->analyzed_path;
