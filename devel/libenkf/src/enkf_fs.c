@@ -17,8 +17,7 @@
 
 
 struct enkf_fs_struct {
-  basic_driver_type  * dynamic_analyzed;
-  basic_driver_type  * dynamic_forecast;
+  basic_driver_type  * dynamic;
   basic_driver_type  * eclipse_static;
   basic_driver_type  * parameter;
   fs_index_type      * index;
@@ -28,16 +27,14 @@ struct enkf_fs_struct {
 
 
 enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index, 
-			     void * dynamic_analyzed , void * dynamic_forecast , void * eclipse_static , void * parameter) {
+			     void * dynamic , void * eclipse_static , void * parameter) {
   enkf_fs_type * fs     = util_malloc(sizeof * fs , __func__);
   fs->index             = fs_index;
-  fs->dynamic_analyzed  = (basic_driver_type *) dynamic_analyzed;   
-  fs->dynamic_forecast  = (basic_driver_type *) dynamic_forecast;
+  fs->dynamic           = (basic_driver_type *) dynamic;
   fs->eclipse_static    = (basic_driver_type *) eclipse_static;
   fs->parameter         = (basic_driver_type *) parameter;
   
-  basic_driver_assert_cast(fs->dynamic_analyzed);
-  basic_driver_assert_cast(fs->dynamic_forecast);
+  basic_driver_assert_cast(fs->dynamic);
   basic_driver_assert_cast(fs->eclipse_static);
   basic_driver_assert_cast(fs->parameter);
   
@@ -61,27 +58,10 @@ static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_
     driver = fs->parameter;
     break;
   case(ecl_restart):
-    if (state == analyzed)
-      driver = fs->dynamic_analyzed;
-    else if (state == forecast) {
-      if (report_step == 0)
-	driver = fs->dynamic_analyzed;
-      else
-	driver = fs->dynamic_forecast;
-    } else 
-      util_abort("%s: internal error - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
+    driver = fs->dynamic;
     break;
   case(ecl_summary):
-    if (state == analyzed)
-      driver = fs->dynamic_analyzed;
-    else if (state == forecast) {
-      if (report_step == 0)
-	driver = fs->dynamic_analyzed;
-      else
-	driver = fs->dynamic_forecast;
-    }
-    else 
-      util_abort("%s: internal error - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
+    driver = fs->dynamic;
     break;
   case(ecl_static):
     driver = fs->eclipse_static;
@@ -100,8 +80,7 @@ static void enkf_fs_free_driver(basic_driver_type * driver) {
 
 
 void enkf_fs_free(enkf_fs_type * fs) {
-  enkf_fs_free_driver(fs->dynamic_analyzed);
-  enkf_fs_free_driver(fs->dynamic_forecast);
+  enkf_fs_free_driver(fs->dynamic);
   enkf_fs_free_driver(fs->parameter);
   enkf_fs_free_driver(fs->eclipse_static);
   fs_index_free(fs->index);

@@ -4,7 +4,7 @@
 #include <enkf_site_config.h>
 #include <util.h>
 #include <basic_queue_driver.h>
-#include <plain_driver.h>
+#include <plain_driver_dynamic.h>
 #include <plain_driver_parameter.h>
 #include <plain_driver_static.h>
 #include <config.h>
@@ -85,12 +85,11 @@ int main (int argc , char ** argv) {
     joblist   = ext_joblist_alloc();
 
     enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(config_file , site_config , joblist , false , false , true);
-    plain_driver_type * dynamic_analyzed 	 = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	      , "%04d/mem%03d/Analyzed");
-    plain_driver_type * dynamic_forecast 	 = plain_driver_alloc(enkf_config_get_ens_path(enkf_config) 	      , "%04d/mem%03d/Forecast");
+    plain_driver_type * dynamic       	         = plain_driver_dynamic_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
     plain_driver_parameter_type * parameter      = plain_driver_parameter_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Parameter");
     plain_driver_static_type * eclipse_static    = plain_driver_static_alloc(enkf_config_get_ens_path(enkf_config)    , "%04d/mem%03d/Static");
     fs_index_type     * fs_index                 = fs_index_alloc(enkf_config_get_ens_path(enkf_config)               , "%04d/mem%03d/INDEX");
-    enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic_analyzed, dynamic_forecast , eclipse_static , parameter);
+    enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic , eclipse_static , parameter);
 
 
     plain_driver_README( enkf_config_get_ens_path(enkf_config) );

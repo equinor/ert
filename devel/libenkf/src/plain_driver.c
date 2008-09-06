@@ -1,34 +1,58 @@
 #include <stdlib.h>
 #include <enkf_node.h>
 #include <basic_driver.h>
-#include <plain_driver.h>
+#include <plain_driver_dynamic.h>
 #include <path_fmt.h>
 #include <util.h>
 
-#define PLAIN_DRIVER_ID 1001
+#define PLAIN_DRIVER_DYNAMIC_ID 1001
 
-struct plain_driver_struct {
+struct plain_driver_dynamic_struct {
   BASIC_DRIVER_FIELDS;
-  int             plain_driver_id;
-  path_fmt_type * path;
+  int             __id;
+  path_fmt_type * forecast_path;
+  path_fmt_type * analyzed_path; 
 };
 
 
 
 
 
-static void plain_driver_assert_cast(plain_driver_type * plain_driver) {
-  if (plain_driver->plain_driver_id != PLAIN_DRIVER_ID) 
+
+
+static plain_driver_dynamic_type * plain_driver_dynamic_safe_cast(void * _driver) {
+  plain_driver_dynamic_type * driver = (plain_driver_dynamic_type *) _driver;
+
+  if (driver->__id != PLAIN_DRIVER_DYNAMIC_ID) 
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
+  
+  return driver;
 }
 
 
 
-void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
+
+static char * plain_driver_dynamic_alloc_filename(const plain_driver_dynamic_type * driver , int report_step , int iens , state_enum state , const char * key) {
+  path_fmt_type * path;
+
+  if (state == analyzed)
+    path = driver->analyzed_path;
+  else if (state == forecast) {
+    if (report_step == 0)
+      path = driver->analyzed_path;
+    else
+      path = driver->forecast_path;
+  } else 
+    util_abort("%s: state:%d is invalid \n",__func__ , state);
+
+  return path_fmt_alloc_file(path , false , report_step , iens , key);
+}
+
+
+void plain_driver_dynamic_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+  plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "r");
     enkf_node_fread(node , stream , report_step , state);
     fclose(stream);
@@ -37,22 +61,20 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , state_
 }
 
 
-void plain_driver_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
+void plain_driver_dynamic_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+  plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node));
     util_unlink_existing(filename);
     free(filename);
   }
 }
 
 
-void plain_driver_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
+void plain_driver_dynamic_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+  plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream , report_step , state);
     fclose(stream);
@@ -65,12 +87,11 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
    Return true if we have a on-disk representation of the node.
 */
 
-bool plain_driver_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
+bool plain_driver_dynamic_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
+  plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
     bool has_node;
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , key);
     if (util_file_exists(filename))
       has_node = true;
     else
@@ -83,16 +104,16 @@ bool plain_driver_has_node(void * _driver , int report_step , int iens , state_e
 
 
 
-void plain_driver_free(void *_driver) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
-  path_fmt_free(driver->path);
+void plain_driver_dynamic_free(void *_driver) {
+  plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
+  path_fmt_free(driver->forecast_path);
+  path_fmt_free(driver->analyzed_path);
   free(driver);
 }
 
 
 
-void plain_driver_README(const char * root_path) {
+void plain_driver_dynamic_README(const char * root_path) {
   char * README_file = util_alloc_full_path(root_path , "README.txt");
   util_make_path(root_path);
   {
@@ -107,26 +128,32 @@ void plain_driver_README(const char * root_path) {
 
 /*
   The driver takes a copy of the path object, i.e. it can be deleted
-  in the calling scope after calling plain_driver_alloc().
+  in the calling scope after calling plain_driver_dynamic_alloc().
 */
-void * plain_driver_alloc(const char * root_path , const char * driver_path) {
-  plain_driver_type * driver = malloc(sizeof * driver);
-  driver->load        = plain_driver_load_node;
-  driver->save        = plain_driver_save_node;
-  driver->has_node    = plain_driver_has_node;
-  driver->free_driver = plain_driver_free;
-  driver->unlink_node = plain_driver_unlink_node;
+void * plain_driver_dynamic_alloc(const char * root_path , const char * forecast_path , const char * analyzed_path) {
+  plain_driver_dynamic_type * driver = util_malloc(sizeof * driver , __func__);
+  driver->load        = plain_driver_dynamic_load_node;
+  driver->save        = plain_driver_dynamic_save_node;
+  driver->has_node    = plain_driver_dynamic_has_node;
+  driver->free_driver = plain_driver_dynamic_free;
+  driver->unlink_node = plain_driver_dynamic_unlink_node;
   {
-    char *path;
-    if (root_path != NULL)
-      path = util_alloc_full_path(root_path , driver_path);
-    else
-      path = util_alloc_string_copy(driver_path);
+    char *f_path;
+    char *a_path;
+    if (root_path != NULL) {
+      f_path = util_alloc_full_path(root_path , forecast_path);
+      a_path = util_alloc_full_path(root_path , analyzed_path);
+    } else {
+      f_path = util_alloc_string_copy(forecast_path);
+      a_path = util_alloc_string_copy(analyzed_path);
+    }
     
-    driver->path = path_fmt_alloc_directory_fmt(path );
-    free(path);
+    driver->forecast_path = path_fmt_alloc_directory_fmt( f_path );
+    driver->analyzed_path = path_fmt_alloc_directory_fmt( a_path );
+    free(a_path);
+    free(f_path);
   }
-  driver->plain_driver_id = PLAIN_DRIVER_ID;
+  driver->__id = PLAIN_DRIVER_DYNAMIC_ID;
   {
     basic_driver_type * basic_driver = (basic_driver_type *) driver;
     basic_driver_init(basic_driver);
