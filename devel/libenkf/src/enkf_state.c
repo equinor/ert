@@ -1,4 +1,8 @@
-
+#include <sys/types.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
@@ -111,6 +115,8 @@ typedef struct member_config_struct {
   int  		   iens;              /* The ensemble member number of this member. */
   char 		 * ecl_store_path;    /* Where should the ECLIPSE results be copied (can be NULL in case ecl_store == 0). */
   ecl_store_enum   ecl_store;         /* What should be stored of ECLIPSE results - see enkf_types.h. */
+  int              simlock_fd;        /* File descriptor used to point to a simlock file. */
+  bool             simlock;           /* If true - this member can not start simulations. */
 } member_config_type;
 
 
@@ -131,7 +137,7 @@ struct enkf_state_struct {
 
   meas_vector_type      * meas_vector;       /* The meas_vector will accept measurements performed on this state.*/
   enkf_config_type 	* config;            /* The main config object, which contains all the node config objects. */
-
+  
   run_info_type         * run_info;          /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
   shared_info_type      * shared_info;       /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;         /* Private config information for this member; not updated during a simulation. */
@@ -213,11 +219,43 @@ static void member_config_set_ ## path(member_config_type * member_config , cons
 }
 
 MEMBER_CONFIG_SET_PATH(eclbase);
-MEMBER_CONFIG_SET_PATH(run_path);
 MEMBER_CONFIG_SET_PATH(ecl_store_path);
-
 #undef MEMBER_CONFIG_SET_PATH
 
+
+static void member_config_set_run_path(member_config_type * member_config , const char * run_path) {
+  const char * lockdir = ".locks";
+  char  **path_list;
+  char  * lockfile;
+  int     path_size;
+  
+
+  util_split_string(run_path , UTIL_PATH_SEP_STRING , &path_size , &path_list);
+  {
+    char * tmp        = util_alloc_joined_string((const char **) path_list , path_size - 1 , UTIL_PATH_SEP_STRING);
+    char * lockpath   = util_alloc_sprintf("%c%s%c%s" , UTIL_PATH_SEP_CHAR , tmp , UTIL_PATH_SEP_CHAR , lockdir);
+    util_make_path(lockpath); /* Will get some racing here ... */    lockfile = util_alloc_sprintf("%s%clock-%s" , lockpath , UTIL_PATH_SEP_CHAR , path_list[path_size - 1]);
+
+    free(tmp);
+    free(lockpath);
+  }
+
+  if (member_config->simlock_fd != -1)
+    close(member_config->simlock_fd);
+  
+  if (util_try_lockf(lockfile , S_IWUSR + S_IWGRP, &member_config->simlock_fd))
+    member_config->simlock = false;
+  else {
+    fprintf(stderr,"** Warning: run_path:%s is locked by another EnKF instance - this can not start simulations. \n",run_path);
+    member_config->simlock = true;
+    close(member_config->simlock_fd);
+    member_config->simlock_fd = -1; /* No reason to drag around on this when we don't have a lock anyway. */
+  }
+  
+  free(lockfile);
+  util_free_stringlist(path_list , path_size);
+  member_config->run_path = util_realloc_string_copy(member_config->run_path , run_path);
+}
 
 static void member_config_set_ecl_store(member_config_type * member_config , ecl_store_enum ecl_store) {
   member_config->ecl_store = ecl_store;
@@ -230,14 +268,17 @@ static void member_config_free(member_config_type * member_config) {
   free(member_config);
 }
 
+
 static member_config_type * member_config_alloc(int iens , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , ecl_store_enum ecl_store) {
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
-
+  
+  member_config->simlock        = true;
   member_config->unified        = false;
   member_config->iens           = iens; /* Can only be changed in the allocater. */
   member_config->run_path 	= NULL;
   member_config->eclbase  	= NULL;
   member_config->ecl_store_path = NULL;
+  member_config->simlock_fd     = -1;
   member_config_set_eclbase(member_config        , path_fmt_alloc_path(eclbase_fmt, true , member_config->iens));
   member_config_set_run_path(member_config       , path_fmt_alloc_path(run_path_fmt , true , member_config->iens));
   if (ecl_store_path_fmt != NULL) member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , true , member_config->iens));
@@ -358,7 +399,7 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
     enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);
     free(iens_string);
   }
-  enkf_state->my_config   =  member_config_alloc( iens , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
+  enkf_state->my_config   = member_config_alloc( iens , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
   enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue);
   enkf_state->run_info    = run_info_alloc();
   return enkf_state;
@@ -918,87 +959,90 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 
 void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
-  const shared_info_type    * shared_info = enkf_state->shared_info;
-  const run_info_type       * run_info    = enkf_state->run_info;
   const member_config_type  * my_config = enkf_state->my_config;  
-
-  if (!run_info->__ready) 
-    util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
-  
-
-  if (run_info->step1 != run_info->init_step)
-    if (run_info->step1 > 0)
-      util_abort("%s: internal error - when initializing from a different timestep than starting from - the start step must be zero.\n",__func__);
-
-  if (run_info->step1 > 0) {
-    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
-    enkf_state_set_data_kw(enkf_state , "INIT" , data_initialize);
-    free(data_initialize);
-  }
-
-  util_make_path(my_config->run_path);
+  if (my_config->simlock) 
+    util_abort("%s: this EnKF instance can not start simulations - aborting \n");
   {
-    char * data_file = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_data_file , true , -1);
-    util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
-    free(data_file);
-  }
-
-  {
-    char * schedule_file = util_alloc_full_path(my_config->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
-    sched_file_fprintf(shared_info->sched_file , run_info->step2 , -1 , -1 , schedule_file);
-    free(schedule_file);
-  }
-
-  /**
-     This is a bit tricky:
-
-     + Parameters are loaded from the init_step.
-     + Dynamic data (and corresponding static) are loaded from step1 - but that is done in the enkf_state_write_restart_file() routine.
-  */
-  enkf_state_fread(enkf_state , parameter + constant + static_parameter , run_info->init_step , run_info->init_state);
-  enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
-  
-  {
-    char * stdin_file = util_alloc_full_path(my_config->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
-    ecl_util_init_stdin( stdin_file , my_config->eclbase );
-    free(stdin_file);
-  }
-
-  {
-    bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
-    hash_type * context    	= hash_alloc();
-    char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step1);
-    char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step2);
-    char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file  , fmt_file , -1);
-    char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
-    char * ecl_base        	= my_config->eclbase;
-    char * step1_s  		= util_alloc_sprintf("%d" , run_info->step1);
-    char * step2_s  		= util_alloc_sprintf("%d" , run_info->step2);
-
-
-    hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) 	 , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) 	 , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 )  , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 )  , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   )  , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
-    hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
-    {
-      char ** key_list = hash_alloc_keylist( enkf_state->data_kw );
-      int i;
-      /*  These are owned by the data_kw hash */
-      for (i = 0; i < hash_get_size(enkf_state->data_kw); i++)
-	hash_insert_ref( context , key_list[i] , hash_get( enkf_state->data_kw , key_list[i]));
-    }
-    ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,my_config->run_path , context);
+    const shared_info_type    * shared_info = enkf_state->shared_info;
+    const run_info_type       * run_info    = enkf_state->run_info;
+    if (!run_info->__ready) 
+      util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
     
-    free(iens);
-    free(restart_file1);
-    free(restart_file2);
-    free(smspec_file);
-    free(step1_s);
-    free(step2_s);
-    hash_free(context);
+    
+    if (run_info->step1 != run_info->init_step)
+      if (run_info->step1 > 0)
+	util_abort("%s: internal error - when initializing from a different timestep than starting from - the start step must be zero.\n",__func__);
+    
+    if (run_info->step1 > 0) {
+      char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
+      enkf_state_set_data_kw(enkf_state , "INIT" , data_initialize);
+      free(data_initialize);
+    }
+    
+    util_make_path(my_config->run_path);
+    {
+      char * data_file = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_data_file , true , -1);
+      util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
+      free(data_file);
+    }
+    
+    {
+      char * schedule_file = util_alloc_full_path(my_config->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
+      sched_file_fprintf(shared_info->sched_file , run_info->step2 , -1 , -1 , schedule_file);
+      free(schedule_file);
+    }
+    
+    /**
+       This is a bit tricky:
+       
+       + Parameters are loaded from the init_step.
+       + Dynamic data (and corresponding static) are loaded from step1 - but that is done in the enkf_state_write_restart_file() routine.
+    */
+    enkf_state_fread(enkf_state , parameter + constant + static_parameter , run_info->init_step , run_info->init_state);
+    enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
+    
+    {
+      char * stdin_file = util_alloc_full_path(my_config->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
+      ecl_util_init_stdin( stdin_file , my_config->eclbase );
+      free(stdin_file);
+    }
+    
+    {
+      bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
+      hash_type * context    	= hash_alloc();
+      char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step1);
+      char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step2);
+      char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file  , fmt_file , -1);
+      char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
+      char * ecl_base        	= my_config->eclbase;
+      char * step1_s  		= util_alloc_sprintf("%d" , run_info->step1);
+      char * step2_s  		= util_alloc_sprintf("%d" , run_info->step2);
+      
+      
+      hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) 	 , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) 	 , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 )  , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 )  , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   )  , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
+      {
+	char ** key_list = hash_alloc_keylist( enkf_state->data_kw );
+	int i;
+	/*  These are owned by the data_kw hash */
+	for (i = 0; i < hash_get_size(enkf_state->data_kw); i++)
+	  hash_insert_ref( context , key_list[i] , hash_get( enkf_state->data_kw , key_list[i]));
+      }
+      ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,my_config->run_path , context);
+      
+      free(iens);
+      free(restart_file1);
+      free(restart_file2);
+      free(smspec_file);
+      free(step1_s);
+      free(step2_s);
+      hash_free(context);
+    }
   }
 }
 

@@ -269,12 +269,12 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info) {
 
   {
     char * lockfile = util_alloc_full_path(root_path , "enkf_lock");
-
-    if (util_try_lockf(lockfile , S_IWUSR , &fs->lock_fd))
+    
+    if (util_try_lockf(lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
       fs->read_only = false;
     else {
       fs->read_only = true;
-      fprintf(stderr,"** Warning: another EnKF instance has currently locked the ensemble at %s for writing - this instance will be read-only. ** \n",root_path);
+      fprintf(stderr,"\n** Warning: another EnKF instance has currently locked the ensemble at\n** %s for writing - this instance will be read-only.\n",root_path);
     }
 
     free(lockfile);
@@ -372,6 +372,7 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
     driver->load(driver , report_step , iens , state , enkf_node); 
   }
 }
+
 
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
