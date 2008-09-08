@@ -2,10 +2,11 @@
 #include <enkf_node.h>
 #include <basic_driver.h>
 #include <plain_driver_dynamic.h>
+#include <fs_types.h>
 #include <path_fmt.h>
 #include <util.h>
 
-#define PLAIN_DRIVER_DYNAMIC_ID 1001
+
 
 struct plain_driver_dynamic_struct {
   BASIC_DRIVER_FIELDS;
@@ -47,6 +48,7 @@ static char * plain_driver_dynamic_alloc_filename(const plain_driver_dynamic_typ
 
   return path_fmt_alloc_file(path , false , report_step , iens , key);
 }
+
 
 
 void plain_driver_dynamic_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
@@ -160,3 +162,24 @@ void * plain_driver_dynamic_alloc(const char * root_path , const char * forecast
     return basic_driver;
   }
 }
+
+
+void plain_driver_dynamic_fwrite_mount_info(FILE * stream , const char * forecast_fmt , const char * analyzed_fmt) {
+  util_fwrite_int(DYNAMIC_DRIVER , stream);
+  util_fwrite_int(PLAIN_DRIVER_DYNAMIC_ID , stream);
+  util_fwrite_string(forecast_fmt , stream);
+  util_fwrite_string(analyzed_fmt , stream);
+}
+
+/**
+   The two integers from the mount info have already been read at the enkf_fs level.
+*/
+plain_driver_dynamic_type * plain_driver_dynamic_fread_alloc(const char * root_path , FILE * stream) {
+  char * forecast_fmt = util_fread_alloc_string( stream );
+  char * analyzed_fmt = util_fread_alloc_string( stream );
+  plain_driver_dynamic_type * driver = plain_driver_dynamic_alloc(root_path , forecast_fmt , analyzed_fmt);
+  free(forecast_fmt);
+  free(analyzed_fmt);
+  return driver;
+}
+

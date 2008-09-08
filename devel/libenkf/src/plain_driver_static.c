@@ -4,13 +4,14 @@
 #include <plain_driver_static.h>
 #include <ecl_static_kw.h>
 #include <path_fmt.h>
+#include <fs_types.h>
 #include <util.h>
 
-#define PLAIN_DRIVER_STATIC_ID 1005
+
 
 
 struct plain_driver_static_struct {
-  BASIC_DRIVER_FIELDS;
+  BASIC_STATIC_DRIVER_FIELDS;
   int             plain_driver_static_id;   /* See documentation in plain_driver.c */
   path_fmt_type * path;                     
 };
@@ -55,19 +56,11 @@ static plain_driver_static_type * plain_driver_static_init(void *_driver) {
 
 
 
-char * plain_driver_static_alloc_filename(plain_driver_static_type * driver, int report_step , int iens , state_enum state , enkf_node_type * node , bool auto_mkdir) {
-  ecl_static_kw_type * ecl_static = enkf_node_value_ptr( node );
-  ecl_static_kw_assert_type(ecl_static);
-  return path_fmt_alloc_file(driver->path , auto_mkdir , report_step , iens , enkf_node_get_key_ref(node) , ecl_static_kw_get_counter(ecl_static));
-}
 
-
-
-
-void plain_driver_static_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+void plain_driver_static_load_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node , false);
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
     FILE * stream   = util_fopen(filename , "r");
     enkf_node_fread(node , stream , report_step , state);
     fclose(stream);
@@ -76,10 +69,10 @@ void plain_driver_static_load_node(void * _driver , int report_step , int iens ,
 }
 
 
-void plain_driver_static_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+void plain_driver_static_unlink_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node , false);
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
     FILE * stream   = util_fopen(filename , "w");
     util_unlink_existing(filename);
     fclose(stream);
@@ -88,25 +81,15 @@ void plain_driver_static_unlink_node(void * _driver , int report_step , int iens
 }
 
 
-void plain_driver_static_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+void plain_driver_static_save_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
-    char * filename = plain_driver_static_alloc_filename(driver , report_step , iens , state , node , true);
+    char * filename      = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
     FILE * stream   	 = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream , report_step , state);
     fclose(stream);
     free(filename);
   }
-}
-
-
-/**
-   Return true if we have a on-disk representation of the node.
-*/
-
-bool plain_driver_static_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
-  util_abort("%s: internal error - the filesystem does not support query on static nodes ... \n",__func__);
-  return false;
 }
 
 
@@ -125,7 +108,7 @@ void * plain_driver_static_alloc(const char * root_path , const char * driver_pa
   plain_driver_static_type * driver = malloc(sizeof * driver);
   driver->load        = plain_driver_static_load_node;
   driver->save        = plain_driver_static_save_node;
-  driver->has_node    = plain_driver_static_has_node;
+  driver->has_node    = NULL;
   driver->free_driver = plain_driver_static_free;
   driver->unlink_node = plain_driver_static_unlink_node;
   {
@@ -133,7 +116,7 @@ void * plain_driver_static_alloc(const char * root_path , const char * driver_pa
 
     /**
        The format is:
-
+       
        [root_path]/driver_path/<STATIC-KW>/<INTEGER>
     */
 
@@ -147,8 +130,26 @@ void * plain_driver_static_alloc(const char * root_path , const char * driver_pa
   }
   driver->plain_driver_static_id = PLAIN_DRIVER_STATIC_ID;
   {
-    basic_driver_type * basic_driver = (basic_driver_type *) driver;
-    basic_driver_init(basic_driver);
+    basic_static_driver_type * basic_driver = (basic_static_driver_type *) driver;
+    basic_static_driver_init(basic_driver);
     return basic_driver;
   }
 }
+
+
+void plain_driver_static_fwrite_mount_info(FILE * stream , const char * fmt) {
+  util_fwrite_int(STATIC_DRIVER , stream);
+  util_fwrite_int(PLAIN_DRIVER_STATIC_ID , stream);
+  util_fwrite_string(fmt , stream);
+}
+
+/**
+   The two integers from the mount info have already been read at the enkf_fs level.
+*/
+plain_driver_static_type * plain_driver_static_fread_alloc(const char * root_path , FILE * stream) {
+  char * fmt = util_fread_alloc_string( stream );
+  plain_driver_static_type * driver = plain_driver_static_alloc(root_path , fmt );
+  free(fmt);
+  return driver;
+}
+

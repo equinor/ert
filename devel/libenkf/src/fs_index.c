@@ -5,6 +5,7 @@
 #include <enkf_types.h>
 #include <util.h>
 #include <restart_kw_list.h>
+#include <fs_types.h>
 
 /**
    This should implement an on-disk INDEX, so it should be possible to
@@ -81,6 +82,23 @@ fs_index_type * fs_index_alloc(const char * root_path , const char * index_path)
     free(path);
   }
   return fs_index;
+}
+
+
+
+fs_index_type * fs_index_fread_alloc(const char * root_path , FILE * stream) {
+  char * index_path        = util_fread_alloc_string( stream );
+  fs_index_type * fs_index = fs_index_alloc(root_path , index_path);
+
+  free(index_path);
+  return fs_index;
+}
+
+
+void fs_index_fwrite_mount_info(FILE * stream , const char * fmt) {
+  util_fwrite_int(INDEX_DRIVER          , stream);
+  util_fwrite_int(PLAIN_DRIVER_INDEX_ID , stream);
+  util_fwrite_string(fmt , stream);
 }
 
 

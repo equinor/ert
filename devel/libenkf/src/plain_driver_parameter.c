@@ -2,10 +2,11 @@
 #include <enkf_node.h>
 #include <basic_driver.h>
 #include <plain_driver_parameter.h>
+#include <fs_types.h>
 #include <path_fmt.h>
 #include <util.h>
 
-#define PLAIN_DRIVER_PARAMETER_ID 1003
+
 
 struct plain_driver_parameter_struct {
   BASIC_DRIVER_FIELDS;
@@ -174,4 +175,22 @@ void * plain_driver_parameter_alloc(const char * root_path , const char * driver
     basic_driver_init(basic_driver);
     return basic_driver;
   }
+}
+
+
+
+void plain_driver_parameter_fwrite_mount_info(FILE * stream , const char * fmt ) {
+  util_fwrite_int(PARAMETER_DRIVER , stream);
+  util_fwrite_int(PLAIN_DRIVER_PARAMETER_ID , stream);
+  util_fwrite_string(fmt , stream);
+}
+
+/**
+   The two integers from the mount info have already been read at the enkf_fs level.
+*/
+plain_driver_parameter_type * plain_driver_parameter_fread_alloc(const char * root_path , FILE * stream) {
+  char * fmt = util_fread_alloc_string( stream );
+  plain_driver_parameter_type * driver = plain_driver_parameter_alloc(root_path , fmt );
+  free(fmt);
+  return driver;
 }

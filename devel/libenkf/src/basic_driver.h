@@ -2,13 +2,20 @@
 #define __BASIC_DRIVER_H__
 #include <enkf_node.h>
 
-typedef struct basic_driver_struct basic_driver_type;
+typedef struct basic_driver_struct        basic_driver_type;
+typedef struct basic_static_driver_struct basic_static_driver_type;
+
 
 typedef void (load_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
 typedef void (save_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
 typedef bool (has_node_ftype)     (void * , int , int , state_enum , const char *);
 typedef void (unlink_node_ftype)  (void * , int , int , state_enum , enkf_node_type *); 
 typedef void (free_driver_ftype)  (void *);
+
+typedef void (static_load_node_ftype) 	 (void * , int , int , state_enum , int , enkf_node_type *);
+typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , int , enkf_node_type *);
+typedef bool (static_has_node_ftype)     (void * , int , int , state_enum , int , const char *);
+typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , int , enkf_node_type *); 
 
 
 
@@ -39,17 +46,41 @@ save_node_ftype    * save;    	   \
 has_node_ftype     * has_node;     \
 unlink_node_ftype  * unlink_node;  \
 free_driver_ftype  * free_driver;  \
-int                  basic_type_id
+int                  type_id
 
 
 struct basic_driver_struct {
   BASIC_DRIVER_FIELDS;
 };
 
+/*****************************************************************/
+/* 
+   The static driver complication is because the FU***ING ECLIPSE restart
+   files do not contain unique keywords, and we have to add an extra
+   index (as an afterthought - yes).
+*/
+
+#define BASIC_STATIC_DRIVER_FIELDS   	 \
+static_load_node_ftype    * load;    	 \
+static_save_node_ftype    * save;    	 \
+static_has_node_ftype     * has_node;    \
+static_unlink_node_ftype  * unlink_node; \
+free_driver_ftype         * free_driver; \
+int                  type_id
+
+
+struct basic_static_driver_struct { 
+  BASIC_STATIC_DRIVER_FIELDS; 
+}; 
+
 
 
 void 	 basic_driver_init(basic_driver_type * );
 void 	 basic_driver_assert_cast(const basic_driver_type * );
+basic_driver_type * basic_driver_safe_cast(void * );
 
+void 	 		   basic_static_driver_init(basic_static_driver_type * );
+void 	 		   basic_static_driver_assert_cast(const basic_static_driver_type * );
+basic_static_driver_type * basic_static_driver_safe_cast(void * );
 
 #endif

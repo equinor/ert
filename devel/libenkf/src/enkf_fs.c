@@ -1,3 +1,8 @@
+#include <sys/types.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <util.h>
 #include <enkf_fs.h>
@@ -5,6 +10,155 @@
 #include <enkf_node.h>
 #include <basic_driver.h>
 #include <fs_index.h>
+#include <fs_types.h>
+#include <ecl_static_kw.h>
+#include <plain_driver_parameter.h>
+#include <plain_driver_static.h>
+#include <plain_driver_dynamic.h>
+
+
+/**
+
+  About storage in the EnKF system
+  ================================
+
+  The system for storage in the EnKF system is quite complicated, maybe to
+  complicated. The reason the system is so complext is (at least) twofold:
+
+    1. It is a goal that it should be relatively easy to write new systems
+       (i.e. drivers) for storage. The current suite of drivers
+       (plain_driver_xx) are based on normal (compressed) fread() and fwrite()
+       system calls. But with the current implementation one could write e.g. a
+       MySQL based driver for storage without touching(??) the rest of the EnKF
+       code.
+
+    2. The parametrs / static restart data / dynamic restart data have very
+       different storage characteristics. By splitting the storage up in three
+       different drivers we can write drivers which are specialized for the
+       different types of data.
+
+
+  
+
+  The interface
+  -------------     
+
+  The unit of storage in the enkf_fs system is one enkf_node instance. The
+  interface between the storage system and the rest of the EnKF system is
+  through the enkf_fs functions:
+
+    enkf_fs_fread_node()
+    enkf_fs_has_node()
+    enkf_fs_fwrite_node()
+    enkf_fs_unlink_node() 
+
+  So all these functions (partly except enkf_fs_has_node()) work on a enkf_node
+  instance, and in addition they take the following input:
+
+    - iens        : ensemble member number
+    - report_step : the report_step number we are interested in
+    - state       : whether we are considering an analyzed node or a forecast.  
+
+
+  The drivers
+  -----------
+
+  The enkf_fs layer does not self implement the functions to read and write
+  nodes. Instead what happens is:
+
+    1. We determine the type of the node (static/dynamic/parameter), and select
+       the appropriate driver.
+
+    2. The appropriate driver is called to implement e.g. the fread_node
+       functions.
+
+  The different types of data have different characteristcs, which the driver is
+  implemented to support. The characteristics the drivers support are the
+  following:
+
+
+  dynamic driver
+  --------------
+  This is the simplest driver, all data is stored both in a forecast version and
+  an analyzed version.
+
+
+  parameter driver
+  ----------------
+  This driver utilizes that parameters do not change during the forward model,
+  i.e. (analyzed , t) = (forecast , t - 1). So, only one version of the data is
+  actually stored; if you ask for the forecast you just get the data from the
+  previous report_step. 
+  To support spin-ups and such the driver will actually go backwards in
+  report_time all the way until a node is found on disk.
+
+
+  static driver
+  -------------
+  Like the parameter driver this also only stores one version od the data,
+  however in addition it has to query the node for a ID to support multiply
+  occuring keywords in ECLIPSE restart files.
+
+  Currently only the plain_driver_xxx family has been implemented. Observe that
+  there is no dependencies between the drivers, it is perfectly possible to
+  implement a new driver for storage of static datat only. (There is probably a
+  large amount of static data which is common both between members and for
+  several consecutive report steps; utilizing that one could write a static
+  driver which was admittedly slower, but leaner on the storage.)
+
+  The drivers are allocated prior to allocating the enkf_fs instance, and
+  pointers are passed in when allocating the enkf_fs instance.
+
+
+  Mounting the filesystem
+  -----------------------
+
+  Mounting the filesystem - cool ehh?? Anyway, the important point is
+  that the moment ensemble information has hit the filesystem later
+  versions of the enkf program must support exactly that lay-out,
+  those drivers+++. To ensure this I see two possibilities:
+
+    1. We can freeze the filesystem drivers, and the layout on disk
+       indefinetly.
+
+    2. We can store the information needed to bootstrap the drivers,
+       according to the current layout on disk, in the
+       filesystem. I.e. something like a '/etc/fstab' file.
+
+  We have chosen the second alternative. Currently this implemented as
+  follows:
+
+    1. In main() we query for the file {root-path}/enkf_mount_info. If
+       that file does not exists it is created by calls to the
+       selected drivers xxxx_fwrite_mount_info() functions.
+
+    2. enkf_fs_mount() is called with the enkf_mount_info as input.
+
+  The enkf_mount_info file (BINARY) consists of four records (one for
+  each driver, including the index). The format of each record is:
+
+     DRIVER_CATEGORY   DRIVER_ID    INFO 
+     int               int          void *
+
+  The driver category should be one of the four integer values in
+  fs_driver_type (fs_types.h) and DRIVER_ID is one the integer
+  values in fs_driver_impl. The last void * data is whatever
+  (serialized) info the driver needs to bootstrap. This info is
+  written by the drivers xxxx_fwrite_mount_info() function, and it is
+  used when the driver is allocated with xxxx_fread_alloc().
+
+  The different drivers can be in arbitrary order in the
+  enkf_mount_info file, but when foru records are read it checks that
+  all drivers have been initialized, and aborts if that is not the
+  case.
+  
+  If the enkf_mount_info file is deleted you (might) be fucked. It
+  currently 'protected' with chomd a-w - but that is of course not
+  foolprof.
+*/
+
+
+
 
 /**
    Observe the following convention: the initial ensemble at report
@@ -14,16 +168,24 @@
 
 
 
-
-
 struct enkf_fs_struct {
-  basic_driver_type  * dynamic;
-  basic_driver_type  * eclipse_static;
-  basic_driver_type  * parameter;
-  fs_index_type      * index;
+  basic_driver_type         * dynamic;               /* Implements functions for read/write of dynamic data. */
+  basic_static_driver_type  * eclipse_static;        /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  basic_driver_type  	    * parameter;             /* Implements functions for read/write of parameters. */
+  fs_index_type      	    * index;                 /* Currently only used to write restart_kw_list instances (not properly virtualized). */
+  bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
+  int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
 };
 
 
+
+
+
+/** 
+    Should implement some type of 'superblock' which could be used to determine
+    the driver implementation which had been used, changing on an existing
+    ensemble is **NOT** supported.
+*/
 
 
 enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index, 
@@ -31,22 +193,123 @@ enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index,
   enkf_fs_type * fs     = util_malloc(sizeof * fs , __func__);
   fs->index             = fs_index;
   fs->dynamic           = (basic_driver_type *) dynamic;
-  fs->eclipse_static    = (basic_driver_type *) eclipse_static;
+  fs->eclipse_static    = (basic_static_driver_type *) eclipse_static;
   fs->parameter         = (basic_driver_type *) parameter;
   
-  basic_driver_assert_cast(fs->dynamic);
-  basic_driver_assert_cast(fs->eclipse_static);
-  basic_driver_assert_cast(fs->parameter);
   
+  
+  return fs;
+}
+
+
+enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info) {
+  enkf_fs_type * fs  = util_malloc(sizeof * fs , __func__);
+  fs->index          = NULL;
+  fs->dynamic        = NULL;
+  fs->eclipse_static = NULL;
+  fs->parameter      = NULL;
+  {
+    char * config_file = util_alloc_full_path(root_path , mount_info);
+    FILE * stream      = util_fopen(config_file , "r");
+    int i;
+    
+    for (i=0; i < 4; i++) {
+      void * driver   = NULL;
+      fs_driver_type driver_category = util_fread_int( stream );
+      fs_driver_impl driver_id       = util_fread_int( stream );
+      switch(driver_id) {
+      case(PLAIN_DRIVER_INDEX_ID):
+	driver = fs_index_fread_alloc( root_path , stream );
+	break;
+      case(PLAIN_DRIVER_STATIC_ID):
+	driver = plain_driver_static_fread_alloc( root_path , stream );
+	break;
+      case(PLAIN_DRIVER_DYNAMIC_ID):
+	driver = plain_driver_dynamic_fread_alloc( root_path , stream );
+	break;
+      case(PLAIN_DRIVER_PARAMETER_ID):
+	driver = plain_driver_parameter_fread_alloc( root_path , stream );
+	break;
+      default:
+	util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized \n",__func__ , config_file , driver_id);
+      }
+	
+
+      switch(driver_category) {
+      case(PARAMETER_DRIVER):
+	fs->parameter = driver;
+	break;
+      case(STATIC_DRIVER):
+	fs->eclipse_static = driver;
+	break;
+      case(DYNAMIC_DRIVER):
+	fs->dynamic = driver;
+	break;
+      case(INDEX_DRIVER):
+	fs->index = driver;
+	break;
+      default:
+	util_abort("%s: fatal error in mount_map:%s - driver category:%d not recognized \n",__func__ , config_file , driver_category);
+      }
+    }
+
+    if (fs->parameter  	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , config_file);
+    if (fs->dynamic    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , config_file);
+    if (fs->eclipse_static == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , config_file);
+    if (fs->index          == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , config_file);
+    fclose(stream);
+    free(config_file);
+    
+  }
+  basic_driver_assert_cast(fs->dynamic);
+  basic_static_driver_assert_cast(fs->eclipse_static);
+  basic_driver_assert_cast(fs->parameter);
+    
+
+
+  {
+    char * lockfile = util_alloc_full_path(root_path , "enkf_lock");
+
+    if (util_try_lockf(lockfile , S_IWUSR , &fs->lock_fd))
+      fs->read_only = false;
+    else {
+      fs->read_only = true;
+      fprintf(stderr,"** Warning: another EnKF instance has currently locked the ensemble at %s for writing - this instance will be read-only. ** \n",root_path);
+    }
+
+    free(lockfile);
+  }
+
+
+
   return fs;
 }
 
 
 
 
-static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_config_node_type * config_node , state_enum state, int report_step) {
-  enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-  basic_driver_type * driver = NULL;
+static void enkf_fs_free_driver(basic_driver_type * driver) {
+  driver->free_driver(driver);
+}
+
+static void enkf_fs_free_static_driver(basic_static_driver_type * driver) {
+  driver->free_driver(driver);
+}
+
+
+void enkf_fs_free(enkf_fs_type * fs) {
+  enkf_fs_free_driver(fs->dynamic);
+  enkf_fs_free_driver(fs->parameter);
+  enkf_fs_free_static_driver(fs->eclipse_static);
+  fs_index_free(fs->index);
+  close(fs->lock_fd);
+  free(fs);
+}
+
+
+
+static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type) {
+  void * driver = NULL;
   switch (var_type) {
   case(constant):
     driver = fs->parameter;
@@ -69,40 +332,60 @@ static basic_driver_type * enkf_fs_select_driver(enkf_fs_type * fs , const enkf_
   default:
     util_abort("%s: fatal internal error - could not determine enkf_fs driver for object - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
   }
-  basic_driver_assert_cast(driver);
   return driver;
 }
 
-
-static void enkf_fs_free_driver(basic_driver_type * driver) {
-  driver->free_driver(driver);
-}
-
-
-void enkf_fs_free(enkf_fs_type * fs) {
-  enkf_fs_free_driver(fs->dynamic);
-  enkf_fs_free_driver(fs->parameter);
-  enkf_fs_free_driver(fs->eclipse_static);
-  fs_index_free(fs->index);
-  free(fs);
+static int enkf_fs_get_static_counter(const enkf_node_type * node) {
+  ecl_static_kw_type * ecl_static = enkf_node_value_ptr( node );
+  ecl_static_kw_assert_type(ecl_static);
+  return ecl_static_kw_get_counter(ecl_static);
 }
 
 
 void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node_get_config(enkf_node) , state , report_step);
-  driver->save(driver , report_step , iens , state , enkf_node); 
+  if (enkf_fs->read_only)
+    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
+  {
+    enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
+    void * _driver = enkf_fs_select_driver(enkf_fs , var_type);
+    if (var_type == ecl_static) {
+      basic_static_driver_type * driver = basic_static_driver_safe_cast(_driver);
+      int static_counter = enkf_fs_get_static_counter(enkf_node);
+      driver->save(driver , report_step , iens , state , static_counter , enkf_node); 
+    } else {
+      basic_driver_type * driver = basic_driver_safe_cast(_driver);
+      driver->save(driver , report_step , iens , state , enkf_node); 
+    }
+  }
 }
 
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , enkf_node_get_config(enkf_node) , state , report_step);
-  driver->load(driver , report_step , iens , state , enkf_node); 
+  enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
+  void * _driver = enkf_fs_select_driver(enkf_fs , var_type);
+  if (var_type == ecl_static) {
+    basic_static_driver_type * driver = basic_static_driver_safe_cast(_driver);
+    int static_counter = enkf_fs_get_static_counter(enkf_node);
+    driver->load(driver , report_step , iens , state , static_counter , enkf_node); 
+  } else {
+    basic_driver_type * driver = basic_driver_safe_cast(_driver);
+    driver->load(driver , report_step , iens , state , enkf_node); 
+  }
 }
 
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
-  basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , config_node , state , report_step);
-  return driver->has_node(driver , report_step , iens , state , enkf_config_node_get_key_ref(config_node));
+  enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
+
+  if (var_type == ecl_static) {
+    util_abort("%s: sorry function not implemented for static nodes.\n",__func__);
+    return false; /* Compiler shut-up */
+  } else {
+    const char * key = enkf_config_node_get_key_ref(config_node);
+    basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type));
+    return driver->has_node(driver , report_step , iens , state , key); 
+  }
 }
+
 
 void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int report_step , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {
   fs_index_add_node(enkf_fs->index , report_step , iens , kw , var_type , impl_type);

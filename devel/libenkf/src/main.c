@@ -19,6 +19,10 @@
 #include <enkf_sched.h>
 #include <stringlist.h>
 #include <enkf_ui_main.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 
 void install_SIGNALS(void) {
@@ -67,6 +71,34 @@ void enkf_usage() {
 }
 
 
+
+enkf_fs_type * fs_mount(const char * root_path) {
+  const char * mount_map = "enkf_mount_info";
+  const char * config_file = util_alloc_full_path(root_path , mount_map); /* This file should be protected - at all costs. */
+  
+  if (!util_file_exists(config_file)) {
+    int fd        = open(config_file , O_WRONLY + O_CREAT);
+    FILE * stream = fdopen(fd, "w");
+
+    plain_driver_parameter_fwrite_mount_info(stream , "%04d/mem%03d/Parameter"); 
+    plain_driver_static_fwrite_mount_info(stream    , "%04d/mem%03d/Static"); 
+    plain_driver_dynamic_fwrite_mount_info(stream   , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
+    fs_index_fwrite_mount_info(stream , "%04d/mem%03d/INDEX");
+
+    /* 
+       Changing mode to read-only in an attempt to protect the file.
+       A better solution would be to create the file in a
+       write-protected directory.
+    */
+    fchmod(fd , S_IRUSR + S_IRGRP + S_IROTH); 
+    fclose(stream);
+    close(fd);
+  }
+  
+  return enkf_fs_mount(root_path , mount_map);
+}
+
+
 int main (int argc , char ** argv) {
   text_splash();
   enkf_welcome();
@@ -85,11 +117,7 @@ int main (int argc , char ** argv) {
     joblist   = ext_joblist_alloc();
 
     enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(config_file , site_config , joblist , false , false , true);
-    plain_driver_dynamic_type * dynamic       	 = plain_driver_dynamic_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
-    plain_driver_parameter_type * parameter      = plain_driver_parameter_alloc(enkf_config_get_ens_path(enkf_config) , "%04d/mem%03d/Parameter");
-    plain_driver_static_type * eclipse_static    = plain_driver_static_alloc(enkf_config_get_ens_path(enkf_config)    , "%04d/mem%03d/Static");
-    fs_index_type     * fs_index                 = fs_index_alloc(enkf_config_get_ens_path(enkf_config)               , "%04d/mem%03d/INDEX");
-    enkf_fs_type      * fs = enkf_fs_alloc(fs_index , dynamic , eclipse_static , parameter);
+    enkf_fs_type      * fs = fs_mount( enkf_config_get_ens_path(enkf_config) );
 
 
     job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
