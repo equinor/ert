@@ -443,11 +443,11 @@ void * lsf_driver_alloc(const char * queue_name , int num_resource_request , con
 void lsf_driver_free(lsf_driver_type * driver) {
   free(driver->resource_request);
   free(driver->queue_name);
-  free(driver);
 #ifdef LSF_SYSTEM_DRIVER
   hash_free(driver->status_map);
   hash_free(driver->bjobs_output);
 #endif
+  free(driver);
   driver = NULL;
 }
 
