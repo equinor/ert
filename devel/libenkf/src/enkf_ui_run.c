@@ -12,6 +12,7 @@
 
 
 void enkf_ui_run(enkf_main_type * enkf_main , enkf_sched_type * enkf_sched ,const bool * iactive ,  int start_report , state_enum __init_state) {
+  const bool load_results = true;
   bool analyzed_start;
   bool prev_enkf_on;
   bool unlink_run_path = true;
@@ -52,7 +53,7 @@ void enkf_ui_run(enkf_main_type * enkf_main , enkf_sched_type * enkf_sched ,cons
       else
 	init_state = forecast;
       
-      enkf_main_run(enkf_main , iactive , init_step , init_state , report_step , next_report_step , enkf_on , unlink_run_path , forward_model);
+      enkf_main_run(enkf_main , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , unlink_run_path , forward_model);
       report_step  = next_report_step;
       prev_enkf_on = enkf_on;
     } while (next_report_step < report_step2);
@@ -110,6 +111,7 @@ void enkf_ui_run_exp__(void * _void_arg) {
   void_arg_type   * void_arg   = void_arg_safe_cast(_void_arg);
   enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
   enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
+  const bool load_results = false;
   const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
   const int ens_size    = enkf_config_get_ens_size(enkf_config);
   const int last_report = enkf_sched_get_last_report(enkf_sched);
@@ -127,7 +129,7 @@ void enkf_ui_run_exp__(void * _void_arg) {
 	iactive[iens] = false;
     }
   }
-  enkf_main_run(enkf_main , iactive , start_report , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run(enkf_main , iactive , start_report , analyzed , 0 , last_report , load_results , false , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 
@@ -137,6 +139,7 @@ void enkf_ui_run_screening__(void * _void_arg) {
   enkf_main_type  * enkf_main  = void_arg_get_ptr(void_arg , 0);
   enkf_sched_type * enkf_sched = void_arg_get_ptr(void_arg , 1);
   const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+  const bool load_results = false;
   const int ens_size    = enkf_config_get_ens_size(enkf_config);
   const int last_report = enkf_sched_get_last_report(enkf_sched);
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
@@ -147,7 +150,7 @@ void enkf_ui_run_screening__(void * _void_arg) {
   }
 
     
-  enkf_main_run(enkf_main , iactive , 0 , analyzed , 0 , last_report , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run(enkf_main , iactive , 0 , analyzed , 0 , last_report , load_results , false , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 
@@ -157,17 +160,19 @@ void enkf_ui_run_screening__(void * _void_arg) {
 
 void enkf_ui_run_menu(void * _arg) {
   void_arg_type   * run_arg    = void_arg_safe_cast(_arg);
+  enkf_main_type  * enkf_main  = void_arg_get_ptr(run_arg , 0);
   /*
-    enkf_main_type  * enkf_main  = void_arg_get_ptr(run_arg , 0);
     enkf_sched_type * enkf_sched = void_arg_get_ptr(run_arg , 1);
   */
 
 
   menu_type * menu = menu_alloc("EnKF run menu" , "qQ");
-  menu_add_item(menu , "Start EnKF run from beginning"         , "sS" , enkf_ui_run_start__     , run_arg);
-  menu_add_item(menu , "Restart EnKF run from arbitrary state" , "rR" , enkf_ui_run_restart__ , run_arg);
-  menu_add_item(menu , "Run ensemble experiment"               , "xX" , enkf_ui_run_exp__   , run_arg);
+  menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_ui_run_start__     , run_arg);
+  menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_ui_run_restart__ , run_arg);
+  menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__   , run_arg);
   menu_add_item(menu , "Run screening experiment"               , "cC" , enkf_ui_run_screening__   , run_arg);
+  menu_add_separator(menu);
+  menu_add_item(menu , "Set new value for RUNPATH"              , "pP" , enkf_main_interactive_set_runpath__ , enkf_main);
   menu_run(menu);
   menu_free(menu);
 

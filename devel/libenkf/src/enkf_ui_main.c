@@ -39,6 +39,13 @@ void enkf_ui_main_menu(enkf_main_type * enkf_main , enkf_sched_type * enkf_sched
     menu_add_item(menu , "Run EnKF"                     , "rR" , enkf_ui_run_menu    , run_arg);
     menu_add_item(menu , "Export data to other formats" , "eE" , enkf_ui_export_menu , run_arg);
     menu_add_item(menu , "Plot results"                 , "pP" , enkf_ui_plot_menu   , run_arg);
+
+    if (enkf_main_get_runlock_mode(enkf_main) == lock_file) {
+      menu_add_separator(menu);
+      
+      menu_add_item(menu , "Clear runlocks" , "cC" , enkf_main_clear_locks__  , enkf_main);
+    }
+      
     menu_run(menu);
     menu_free(menu);
   }

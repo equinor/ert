@@ -206,7 +206,7 @@ static void enkf_config_set_eclbase(enkf_config_type * config , const char * ecl
 }
 
 
-static void enkf_config_set_run_path(enkf_config_type * config , const char * run_path) {
+void enkf_config_set_run_path(enkf_config_type * config , const char * run_path) {
   if (config->run_path != NULL)
     path_fmt_free(config->run_path);
   config->run_path = path_fmt_alloc_directory_fmt(run_path);

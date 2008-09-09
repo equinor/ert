@@ -63,9 +63,11 @@ struct config_tmp_files_struct {
    pass it around.
 */
 
+#define ENKF_MAIN_ID 8301
 
 
 struct enkf_main_struct {
+  int                 __id;       /* Used for type-checking run-time casts. */
   enkf_config_type   *config;
   job_queue_type     *job_queue;
   ecl_grid_type      *grid;
@@ -76,8 +78,11 @@ struct enkf_main_struct {
   sched_file_type    *sched_file;
   history_type       *hist;
   enkf_fs_type       *fs;
-  run_mode_type       run_mode;  /* Is this an enkf assimilation, or an ensemble experiment, or .. */
-};
+  run_mode_type       run_mode;      /* Is this an enkf assimilation, or an ensemble experiment, or .. */
+
+  lock_mode_type      runlock_mode;  /* How/if should the runpath directories be locked */
+  char               *lock_path;     /* Path containg lock files for the forward run. */ 
+}; 
 
 
 /*****************************************************************/
@@ -101,15 +106,69 @@ void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
   }
 }
              
+lock_mode_type enkf_main_get_runlock_mode(const enkf_main_type * enkf_main) {
+  return enkf_main->runlock_mode;
+}
 
+enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {
+  enkf_main_type * enkf_main = (enkf_main_type *) __enkf_main;
+  if (enkf_main->__id != ENKF_MAIN_ID)
+    util_abort("%s: run_time cast failed - aborting \n",__func__);
+  return enkf_main;
+}
+
+
+void enkf_main_clear_locks(enkf_main_type * enkf_main) {
+  enkf_config_type * config = enkf_main->config;
+  int ens_size = enkf_config_get_ens_size(config);
+  int iens;
+  for (iens = 0; iens < ens_size; iens++) {
+    char * run_path = path_fmt_alloc_path(enkf_config_get_run_path_fmt(config), false , iens);
+    enkf_state_steal_run_path_lock(enkf_main->ensemble[iens] , enkf_main->runlock_mode , enkf_main->lock_path , run_path);
+    free(run_path);
+  }
+}
+
+
+/* 
+   The runpath is pushed around all over the placce - UGGGGLY
+*/
+
+void enkf_main_interactive_set_runpath(enkf_main_type * enkf_main) {
+  int ens_size = enkf_config_get_ens_size(enkf_main->config);
+  int  iens;
+  char runpath_fmt[512];
+  printf("Give new runpath (with %%d): ===> ");
+  scanf("%s" , runpath_fmt);
+  enkf_config_set_run_path(enkf_main->config , runpath_fmt);
+  job_queue_set_runpath_fmt(enkf_main->job_queue , enkf_config_get_run_path_fmt(enkf_main->config));
+  for (iens = 0; iens < ens_size; iens++) {
+    char * run_path = path_fmt_alloc_path(enkf_config_get_run_path_fmt(enkf_main->config), false , iens);
+    enkf_state_set_run_path(enkf_main->ensemble[iens] , enkf_main->runlock_mode , enkf_main->lock_path , run_path);
+    free(run_path);
+  }
+}
+
+
+void enkf_main_interactive_set_runpath__(void * __enkf_main) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
+  enkf_main_interactive_set_runpath( enkf_main );
+}
+
+
+void enkf_main_clear_locks__(void * __enkf_main) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
+  enkf_main_clear_locks(enkf_main);
+}
 
 
 
 enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_mode , const char * lock_path , enkf_fs_type *fs , job_queue_type * job_queue , ext_joblist_type * joblist) {
   int ens_size               = enkf_config_get_ens_size(config);
-  enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
-  enkf_main->config         = config;
-  enkf_main->sched_file     = sched_file_alloc(enkf_config_get_start_date(config));
+  enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
+  enkf_main->__id            = ENKF_MAIN_ID;
+  enkf_main->config          = config;
+  enkf_main->sched_file      = sched_file_alloc(enkf_config_get_start_date(config));
 
   sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_src_file(config));
 
@@ -121,6 +180,9 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_
   enkf_main->meas_matrix    = meas_matrix_alloc(ens_size);
   enkf_main->ensemble       = malloc(ens_size * sizeof * enkf_main->ensemble);
   enkf_main->run_mode       = enkf_assimilation;
+  enkf_main->runlock_mode   = lock_mode;
+  enkf_main->lock_path      = util_alloc_string_copy(lock_path);
+  util_make_path(enkf_main->lock_path);
   {
     int iens , keys , ik;
     char **keylist  = enkf_config_alloc_keylist(config , &keys);
@@ -129,7 +191,8 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_
     for (iens = 0; iens < ens_size; iens++) {
       msg_update_int(msg , "%03d" , iens);
       enkf_main->ensemble[iens] = enkf_state_alloc(config   , 
-						   iens , lock_mode , lock_path , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
+						   iens , 
+						   enkf_main->runlock_mode , enkf_main->lock_path , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
 						   joblist  , job_queue , 
 						   enkf_main->sched_file ,
 						   enkf_config_get_run_path_fmt(config),
@@ -246,7 +309,8 @@ void enkf_main_free(enkf_main_type * enkf_main) {
       enkf_state_free(enkf_main->ensemble[i]);
     free(enkf_main->ensemble);
   }
-
+  free(enkf_main->lock_path);
+  
   sched_file_free(enkf_main->sched_file);
   history_free(enkf_main->hist);
   meas_matrix_free(enkf_main->meas_matrix);
@@ -371,64 +435,63 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 /******************************************************************/
 
-void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
-  bool  load_results            = true; /** Must have individual switch */
+void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
   const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
   int iens;
-  thread_pool_type * complete_threads;
   
+  if (enkf_update)
+    load_results = true; 
   printf("Starting forward step: %d -> %d \n",step1,step2);
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_matrix);
 
   {
-    {
-      thread_pool_type * submit_threads;
-      pthread_t          queue_thread;
-      void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
-      void_arg_pack_ptr(queue_args , 0 , enkf_main->job_queue);
-      void_arg_pack_int(queue_args , 1 , ens_size);
-      
-      pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
-      
-      submit_threads = thread_pool_alloc(4);
-      for (iens = 0; iens < ens_size; iens++) 
-      {
-	enkf_state_init_run(enkf_main->ensemble[iens] , iactive[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
-        thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
-      }
+    pthread_t          queue_thread;
+    void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
+    void_arg_pack_ptr(queue_args , 0 , enkf_main->job_queue);
+    void_arg_pack_int(queue_args , 1 , ens_size);
+    
+    pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
+    {
+      thread_pool_type * submit_threads = thread_pool_alloc(4);
+      for (iens = 0; iens < ens_size; iens++) {
+	enkf_state_init_run(enkf_main->ensemble[iens] , iactive[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
+	thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
+      }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(submit_threads);
-
-      
-      complete_threads = thread_pool_alloc(ens_size);
-      for (iens = 0; iens < ens_size; iens++) 
-	thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
-      
-      thread_pool_join(submit_threads);          /* All jobs have completed and the results have been loaded back. */
-      pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.                      */
-      job_queue_finalize(enkf_main->job_queue);  /* Must *NOT* be called before all jobs are done.                 */               
-      void_arg_free( queue_args );
     }
     
     {
-      bool complete_OK = true;
-      for (iens = 0; iens < ens_size; iens++) {
-	if (! enkf_state_run_OK(enkf_main->ensemble[iens])) {
-          if ( complete_OK ) {
-            fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
-            complete_OK = false;
-          }
-          fprintf(stderr,"** Error in: %s \n",enkf_state_get_run_path(enkf_main->ensemble[iens]));
-	}
-      }
-      if (!complete_OK) 
-	util_exit("The integration failed - check your ECLIPSE runs ...\n");
+      thread_pool_type * complete_threads = thread_pool_alloc(ens_size);
+      for (iens = 0; iens < ens_size; iens++) 
+	thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
+      
+      thread_pool_join(complete_threads);        /* All jobs have completed and the results have been loaded back. */
+      thread_pool_free(complete_threads);
     }
+
+    pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      */
+    job_queue_finalize(enkf_main->job_queue);  /* Must *NOT* be called before all jobs are done. */               
+    void_arg_free( queue_args );
+  }
+    
+  {
+    bool complete_OK = true;
+    for (iens = 0; iens < ens_size; iens++) {
+      if (! enkf_state_run_OK(enkf_main->ensemble[iens])) {
+	if ( complete_OK ) {
+	  fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
+	  complete_OK = false;
+	}
+	fprintf(stderr,"** Error in: %s \n",enkf_state_get_run_path(enkf_main->ensemble[iens]));
+      }
+    }
+    if (!complete_OK) 
+      util_exit("The integration failed - check your ECLIPSE runs ...\n");
   }
   
-  thread_pool_free(complete_threads);
   if (load_results) 
     enkf_main_load_ensemble(enkf_main , ecl_restart + ecl_summary + parameter , step2 , forecast);
 

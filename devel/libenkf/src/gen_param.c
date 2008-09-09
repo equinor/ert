@@ -129,13 +129,20 @@ void gen_param_fwrite(const gen_param_type * gen_param , FILE * stream) {
 }
 
 
+/* 
+   Observe that this function manipulates memory directly. This should
+   ideally be left to the enkf_node layer, but for this type the data
+   size is determined at load time.
+*/
+
 void gen_param_fread(gen_param_type * gen_param , FILE * stream) {
   DEBUG_ASSERT(gen_param)
   {   
     int size;
     enkf_util_fread_assert_target_type(stream , GEN_PARAM);
     size = util_fread_int(stream);
-    util_fread_compressed(gen_param->data , stream);
+    util_safe_free(gen_param->data);
+    gen_param->data = util_fread_alloc_compressed(stream);
     gen_param_config_assert_size(gen_param->config , size , NULL);
   }
 }

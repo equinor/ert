@@ -257,10 +257,11 @@ static void member_config_release_lock(member_config_type * member_config) {
 
 /**
    This function will unlink all the lockfiles - without any attempt
-   of trying to informt the owning process. 
-
-   Intented to be used in situations where the main application has had
-   an unlcean exit, and lockfiles have left hanging around.
+   of trying to inform the owning process.
+   
+   Intented to be used in situations where the main application has
+   had an unlcean exit, and lockfiles have been left hangin
+   around. (Yes - it does happen!)
 */
    
 
@@ -337,8 +338,12 @@ static member_config_type * member_config_alloc(int iens , lock_mode_type lock_m
   member_config->run_path 	= NULL;
   member_config->eclbase  	= NULL;
   member_config->ecl_store_path = NULL;
-  member_config_set_eclbase(member_config        , path_fmt_alloc_path(eclbase_fmt, true , member_config->iens));
-  member_config_set_run_path(member_config , lock_mode , lock_path      , path_fmt_alloc_path(run_path_fmt , true , member_config->iens));
+  member_config_set_eclbase(member_config  , path_fmt_alloc_path(eclbase_fmt, true , member_config->iens));
+  {
+    char * run_path = path_fmt_alloc_path(run_path_fmt , true , member_config->iens);
+    member_config_set_run_path(member_config , lock_mode , lock_path , run_path);
+    free(run_path);
+  }
   if (ecl_store_path_fmt != NULL) member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , true , member_config->iens));
 
   member_config_set_ecl_store(member_config , ecl_store);
@@ -415,6 +420,7 @@ void enkf_state_set_run_path(enkf_state_type * enkf_state , lock_mode_type lock_
 void enkf_state_steal_run_path_lock(enkf_state_type * enkf_state , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
   if (lock_mode == lock_file) {
     member_config_unlink_lock_file(enkf_state->my_config , lock_path , run_path);
+    member_config_set_run_path(enkf_state->my_config , lock_mode , lock_path , run_path);
   } else
     fprintf(stderr,"Sorry - no locks to unlink \n");
 }

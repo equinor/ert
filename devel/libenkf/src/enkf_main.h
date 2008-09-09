@@ -14,6 +14,7 @@
 #include <ext_joblist.h>
 #include <stringlist.h>
 
+
 /*****************************************************************/
 
 
@@ -37,11 +38,15 @@ void                          enkf_main_init_eclipse(enkf_main_type * , int , in
 void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
 void                          enkf_main_load_ecl_complete_mt(enkf_main_type *);
 void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
-void                          enkf_main_run(enkf_main_type *, const bool * , int, state_enum , int , int, bool, bool, const stringlist_type *);
+void                          enkf_main_run(enkf_main_type *, const bool * , int, state_enum , int , int, bool, bool, bool , const stringlist_type *);
 void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
 void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
 void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
+void                          enkf_main_clear_locks__(void * );
+enkf_main_type              * enkf_main_safe_cast( void * );
+void                          enkf_main_interactive_set_runpath__(void * );
 
+lock_mode_type                enkf_main_get_runlock_mode(const enkf_main_type * );
 enkf_main_type              * enkf_main_alloc(enkf_config_type * , lock_mode_type , const char * , enkf_fs_type *, job_queue_type *, ext_joblist_type * );
 enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
