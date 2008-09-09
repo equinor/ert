@@ -305,7 +305,7 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
     */
     {
       config_item_type * item;
-      site->__config = config_alloc( false );
+      site->__config = config_alloc( );
       item = config_add_item( site->__config , "QUEUE_SYSTEM"      , true  , false ); 
       config_item_set_argc_minmax(item , 1 , 1 , NULL);
       config_item_add_to_selection(item , "LSF");
@@ -350,7 +350,7 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       item = config_add_item( site->__config , "IMAGE_VIEWER"      , false , false);
       config_item_set_argc_minmax(item , 1 , 1 , NULL);
       
-      config_parse(site->__config , config_file , "--" , true);
+      config_parse(site->__config , config_file , "--" , false ,true);
     }
     return site;
   } else {
