@@ -76,6 +76,7 @@ enkf_fs_type * fs_mount(const char * root_path) {
   const char * mount_map = "enkf_mount_info";
   const char * config_file = util_alloc_full_path(root_path , mount_map); /* This file should be protected - at all costs. */
   
+  util_make_path(root_path);
   if (!util_file_exists(config_file)) {
     int fd        = open(config_file , O_WRONLY + O_CREAT);
     FILE * stream = fdopen(fd, "w");
@@ -108,6 +109,7 @@ int main (int argc , char ** argv) {
     enkf_usage();
     exit(1);
   } else {
+    lock_mode_type lock_mode = lock_file;
     const char * site_config_file = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * config_file      = argv[1];
     ext_joblist_type * joblist;
@@ -118,10 +120,11 @@ int main (int argc , char ** argv) {
 
     enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(config_file , site_config , joblist , false , false , true);
     enkf_fs_type      * fs = fs_mount( enkf_config_get_ens_path(enkf_config) );
-
+    char * lock_path = util_alloc_full_path (getenv("CWD") , "locks");
+    util_make_path(lock_path);
 
     job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
-    enkf_main = enkf_main_alloc(enkf_config , fs , job_queue , joblist);
+    enkf_main = enkf_main_alloc(enkf_config , lock_mode , lock_path , fs , job_queue , joblist);
     const enkf_sched_type * enkf_sched = enkf_sched_fscanf_alloc( enkf_config_get_enkf_sched_file(enkf_config) , enkf_main_get_sched_file(enkf_main) , joblist , enkf_config_get_forward_model(enkf_config));
     
     enkf_ui_main_menu(enkf_main , enkf_sched);

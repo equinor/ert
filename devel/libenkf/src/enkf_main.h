@@ -42,7 +42,7 @@ void                          enkf_main_set_data_kw(enkf_main_type * , const cha
 void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
 void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
 
-enkf_main_type              * enkf_main_alloc(enkf_config_type * , enkf_fs_type *, job_queue_type *, ext_joblist_type * );
+enkf_main_type              * enkf_main_alloc(enkf_config_type * , lock_mode_type , const char * , enkf_fs_type *, job_queue_type *, ext_joblist_type * );
 enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
 enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );

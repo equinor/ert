@@ -105,7 +105,7 @@ void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
 
 
 
-enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , job_queue_type * job_queue , ext_joblist_type * joblist) {
+enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_mode , const char * lock_path , enkf_fs_type *fs , job_queue_type * job_queue , ext_joblist_type * joblist) {
   int ens_size               = enkf_config_get_ens_size(config);
   enkf_main_type * enkf_main = malloc(sizeof *enkf_main);
   enkf_main->config         = config;
@@ -128,7 +128,8 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, enkf_fs_type *fs , j
     msg_show(msg);
     for (iens = 0; iens < ens_size; iens++) {
       msg_update_int(msg , "%03d" , iens);
-      enkf_main->ensemble[iens] = enkf_state_alloc(config   , iens , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
+      enkf_main->ensemble[iens] = enkf_state_alloc(config   , 
+						   iens , lock_mode , lock_path , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
 						   joblist  , job_queue , 
 						   enkf_main->sched_file ,
 						   enkf_config_get_run_path_fmt(config),

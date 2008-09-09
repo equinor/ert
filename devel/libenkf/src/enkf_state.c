@@ -115,8 +115,9 @@ typedef struct member_config_struct {
   int  		   iens;              /* The ensemble member number of this member. */
   char 		 * ecl_store_path;    /* Where should the ECLIPSE results be copied (can be NULL in case ecl_store == 0). */
   ecl_store_enum   ecl_store;         /* What should be stored of ECLIPSE results - see enkf_types.h. */
+  char           * simlock_file;      /* Lock file for simulations. */ 
   int              simlock_fd;        /* File descriptor used to point to a simlock file. */
-  bool             simlock;           /* If true - this member can not start simulations. */
+  bool             can_sim;           /* If false - this member can not start simulations. */
 } member_config_type;
 
 
@@ -223,64 +224,102 @@ MEMBER_CONFIG_SET_PATH(ecl_store_path);
 #undef MEMBER_CONFIG_SET_PATH
 
 
-static void member_config_set_run_path(member_config_type * member_config , const char * run_path) {
-  const char * lockdir = ".locks";
-  char  **path_list;
-  char  * lockfile;
-  int     path_size;
-  
-
-  util_split_string(run_path , UTIL_PATH_SEP_STRING , &path_size , &path_list);
+static char * member_config_alloc_simlock(const char * lock_path , const char * run_path) {
+  char * lockfile;
   {
-    char * tmp        = util_alloc_joined_string((const char **) path_list , path_size - 1 , UTIL_PATH_SEP_STRING);
-    char * lockpath   = util_alloc_sprintf("%c%s%c%s" , UTIL_PATH_SEP_CHAR , tmp , UTIL_PATH_SEP_CHAR , lockdir);
-    util_make_path(lockpath); /* Will get some racing here ... */    lockfile = util_alloc_sprintf("%s%clock-%s" , lockpath , UTIL_PATH_SEP_CHAR , path_list[path_size - 1]);
-
-    free(tmp);
-    free(lockpath);
+    char * tmp_path;
+    if (util_is_abs_path(run_path))
+      tmp_path = util_alloc_string_copy( &run_path[1]);
+    else
+      tmp_path = util_alloc_string_copy( run_path );
+    util_string_tr(tmp_path , UTIL_PATH_SEP_CHAR , '.');
+    lockfile = util_alloc_sprintf("%s%clock-%s" , lock_path , UTIL_PATH_SEP_CHAR , tmp_path);
+    free(tmp_path);
   }
-
-  if (member_config->simlock_fd != -1)
-    close(member_config->simlock_fd);
-  
-  if (util_try_lockf(lockfile , S_IWUSR + S_IWGRP, &member_config->simlock_fd))
-    member_config->simlock = false;
-  else {
-    fprintf(stderr,"** Warning: run_path:%s is locked by another EnKF instance - this can not start simulations. \n",run_path);
-    member_config->simlock = true;
-    close(member_config->simlock_fd);
-    member_config->simlock_fd = -1; /* No reason to drag around on this when we don't have a lock anyway. */
-  }
-  
-  free(lockfile);
-  util_free_stringlist(path_list , path_size);
-  member_config->run_path = util_realloc_string_copy(member_config->run_path , run_path);
+  return lockfile;
 }
+
+
+static void member_config_release_lock(member_config_type * member_config) {
+  if (member_config->simlock_fd != -1)
+    close(member_config->simlock_fd); /* Close existing lock files. */
+
+  if (member_config->simlock_file != NULL) {
+    util_unlink_existing( member_config->simlock_file );
+    free(member_config->simlock_file);
+  }
+
+  member_config->simlock_file = NULL;
+  member_config->can_sim      = true;
+  member_config->simlock_fd   = -1;
+}
+
+static void member_config_set_run_path(member_config_type * member_config , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
+  /* Clearing the existing lock (if any) - the mode might have changed.*/
+  
+  member_config_release_lock(member_config);
+  if (lock_mode == lock_none) 
+    member_config->run_path = util_realloc_string_copy(member_config->run_path , run_path);
+  else {
+    member_config->simlock_file = member_config_alloc_simlock( lock_path , run_path);
+    
+    
+  /* Trying to aquire new lock. */
+    if (lock_mode == lock_lockf) {
+      if (util_try_lockf(member_config->simlock_file , S_IRUSR + S_IRGRP + S_IWUSR + S_IWGRP, &member_config->simlock_fd)) 
+	member_config->can_sim = true;
+      else 
+	member_config->can_sim = false;
+    } else if (lock_mode == lock_file) {
+      if (util_file_exists(member_config->simlock_file)) 
+	member_config->can_sim = false;
+      else {
+	FILE * stream = util_fopen(member_config->simlock_file , "w");
+	member_config->can_sim = true;
+	fclose(stream);
+      }
+    }
+    
+    /* Cleaning up - and setting the run_path if we aquired a lock. */
+    if (member_config->can_sim) 
+      member_config->run_path = util_realloc_string_copy(member_config->run_path , run_path);
+    else {
+      fprintf(stderr, "** Warning: could not lock:%s - no simulations\n",run_path);
+      member_config->simlock_file = util_safe_free(member_config->simlock_file);
+      member_config->run_path     = NULL;  /* No chance to submit - we don't even have a path ... */
+    }
+  }
+}
+
+
 
 static void member_config_set_ecl_store(member_config_type * member_config , ecl_store_enum ecl_store) {
   member_config->ecl_store = ecl_store;
 }
 
+
 static void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
   util_safe_free(member_config->run_path);
   util_safe_free(member_config->ecl_store_path);
+  member_config_release_lock(member_config);
   free(member_config);
 }
 
 
-static member_config_type * member_config_alloc(int iens , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , ecl_store_enum ecl_store) {
+static member_config_type * member_config_alloc(int iens , lock_mode_type lock_mode , const char * lock_path , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , ecl_store_enum ecl_store) {
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   
-  member_config->simlock        = true;
+  member_config->simlock_fd     = -1;
+  member_config->simlock_file   = NULL;
+  
   member_config->unified        = false;
   member_config->iens           = iens; /* Can only be changed in the allocater. */
   member_config->run_path 	= NULL;
   member_config->eclbase  	= NULL;
   member_config->ecl_store_path = NULL;
-  member_config->simlock_fd     = -1;
   member_config_set_eclbase(member_config        , path_fmt_alloc_path(eclbase_fmt, true , member_config->iens));
-  member_config_set_run_path(member_config       , path_fmt_alloc_path(run_path_fmt , true , member_config->iens));
+  member_config_set_run_path(member_config , lock_mode , lock_path      , path_fmt_alloc_path(run_path_fmt , true , member_config->iens));
   if (ecl_store_path_fmt != NULL) member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , true , member_config->iens));
 
   member_config_set_ecl_store(member_config , ecl_store);
@@ -349,8 +388,8 @@ const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) {
 }
 
 
-void enkf_state_set_run_path(enkf_state_type * enkf_state , const char * run_path) {
-  member_config_set_run_path(enkf_state->my_config , run_path);
+void enkf_state_set_run_path(enkf_state_type * enkf_state , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
+  member_config_set_run_path(enkf_state->my_config , lock_mode , lock_path , run_path);
 }
 
 
@@ -384,7 +423,8 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 
 
 
-enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , ecl_store_enum ecl_store , enkf_fs_type * fs , ext_joblist_type * joblist , job_queue_type * job_queue , sched_file_type * sched_file , 
+enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , lock_mode_type lock_mode , const char * lock_path , 
+				   ecl_store_enum ecl_store , enkf_fs_type * fs , ext_joblist_type * joblist , job_queue_type * job_queue , sched_file_type * sched_file , 
 				   path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , meas_vector_type * meas_vector , enkf_obs_type * obs) {
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
@@ -399,7 +439,7 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
     enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);
     free(iens_string);
   }
-  enkf_state->my_config   = member_config_alloc( iens , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
+  enkf_state->my_config   = member_config_alloc( iens , lock_mode , lock_path , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
   enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue);
   enkf_state->run_info    = run_info_alloc();
   return enkf_state;
@@ -902,9 +942,11 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
   hash_free(enkf_state->data_kw);
   restart_kw_list_free(enkf_state->restart_kw_list);
+
   member_config_free(enkf_state->my_config);
   run_info_free(enkf_state->run_info);
   shared_info_free(enkf_state->shared_info);
+
   free(enkf_state);
 }
 
@@ -960,8 +1002,8 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
   const member_config_type  * my_config = enkf_state->my_config;  
-  if (my_config->simlock) 
-    util_abort("%s: this EnKF instance can not start simulations - aborting \n");
+  if (!my_config->can_sim)
+    util_abort("%s: this EnKF instance can not start simulations - aborting \n", __func__ );
   {
     const shared_info_type    * shared_info = enkf_state->shared_info;
     const run_info_type       * run_info    = enkf_state->run_info;

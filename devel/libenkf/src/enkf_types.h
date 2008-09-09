@@ -127,6 +127,10 @@ typedef enum { enkf_assimilation   = 1,
 	       screening_experment = 3} run_mode_type;
 
 
+typedef enum { lock_lockf = 1,
+	       lock_file  = 2,
+	       lock_none  = 3 } lock_mode_type;
+
 
 
 
