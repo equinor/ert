@@ -280,16 +280,19 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
   ext_job_type * ext_job = ext_job_alloc(name);
   config_type * config = config_alloc( false );
   
-  config_init_item(config , "STDIN"  	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "STDOUT" 	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "STDERR" 	     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "INIT_CODE"      , 0 , NULL , false , true  , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "PORTABLE_EXE"   , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "TARGET_FILE"    , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "START_FILE"     , 0 , NULL , false , false , 0 , NULL , 1 , 1 , NULL);
-  config_init_item(config , "ENV"            , 0 , NULL , false , true  , 0 , NULL , 2 , 2 , NULL);
-  config_init_item(config , "PLATFORM_EXE"   , 0 , NULL , false , true  , 0 , NULL , 2 , 2 , NULL);
-  config_init_item(config , "ARGLIST"        , 0 , NULL , false , true  , 0 , NULL , 1 ,-1 , NULL);
+  {
+    config_item_type * item;
+    item = config_add_item(config , "STDIN"  	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+    item = config_add_item(config , "STDOUT" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+    item = config_add_item(config , "STDERR" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+    item = config_add_item(config , "INIT_CODE"        , false , true ); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+    item = config_add_item(config , "PORTABLE_EXE"     , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+    item = config_add_item(config , "TARGET_FILE"      , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+    item = config_add_item(config , "START_FILE"       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+    item = config_add_item(config , "ENV"              , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
+    item = config_add_item(config , "PLATFORM_EXE"     , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
+    item = config_add_item(config , "ARGLIST"          , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
+  }
   config_parse(config , filename , "--");
   {
     if (config_item_set(config , "STDIN"))  	  ext_job_set_stdin_file(ext_job , config_get(config  , "STDIN"));
