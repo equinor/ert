@@ -1,3 +1,4 @@
+#include <util.h>
 #include <plot.h>
 #include <plot_dataset.h>
 #include <assert.h>
@@ -114,19 +115,18 @@ void plot_dataset_free(plot_dataset_type * d)
  * it. At the same time you define some detail about how the graph should look.
  */
 void
-plot_dataset_set_data(plot_dataset_type * d, PLFLT * x, PLFLT * y,
+plot_dataset_set_data(plot_dataset_type * d, const PLFLT * x, const PLFLT * y,
 		      int len, plot_color_type c, plot_style_type s)
 {
     assert(d != NULL);
     len = len + 1;
-    d->xvalue = malloc(sizeof(PLFLT) * len);
-    memcpy(d->xvalue, x, sizeof(PLFLT) * len);
-    if (y) {
-	d->yvalue = malloc(sizeof(PLFLT) * len);
-	memcpy(d->yvalue, y, sizeof(PLFLT) * len);
-    } else {
-	d->yvalue = NULL;
-    }
+    d->xvalue = util_alloc_copy(x , len * sizeof * x , __func__);
+    if (y) 
+      d->yvalue = util_alloc_copy(y , len * sizeof * y , __func__);
+    else 
+      d->yvalue = NULL;
+
+
     d->length = len - 1;
     d->color = c;
     d->style = s;

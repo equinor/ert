@@ -278,7 +278,7 @@ static void ext_job_set_hash(hash_type * hash , const char ** key_value_list , i
 
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
   ext_job_type * ext_job = ext_job_alloc(name);
-  config_type * config = config_alloc( false );
+  config_type * config = config_alloc(  );
   
   {
     config_item_type * item;
@@ -293,7 +293,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
     item = config_add_item(config , "PLATFORM_EXE"     , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
     item = config_add_item(config , "ARGLIST"          , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
   }
-  config_parse(config , filename , "--");
+  config_parse(config , filename , "--" , false , true);
   {
     if (config_item_set(config , "STDIN"))  	  ext_job_set_stdin_file(ext_job , config_get(config  , "STDIN"));
     if (config_item_set(config , "STDOUT")) 	  ext_job_set_stdout_file(ext_job , config_get(config , "STDOUT"));

@@ -16,39 +16,40 @@ struct plot_struct {
     list_type *datasets;
     const char *filename; /**< Filename for the plot */
 
-    /** Device name for the plot, where you have the following 
-     * list of choices:
-     * - xwin:       X-Window (Xlib)
-     * - tk:         Tcl/TK Window
-     * - gcw:        Gnome Canvas Widget
-     * - ps:         PostScript File (monochrome)
-     * - psc:        PostScript File (color)
-     * - xfig:       Fig file
-     * - hp7470:     HP 7470 Plotter File (HPGL Cartridge, Small Plotter)
-     * - hp7580:     HP 7580 Plotter File (Large Plotter)
-     * - lj_hpgl:    HP Laserjet III, HPGL emulation mode
-     * - pbm:        PDB (PPM) Driver
-     * - png:        PNG file
-     * - jpeg:       JPEG file
-     * - null:       Null device
-     * - tkwin:      New tk driver
-     * - mem:        User-supplied memory device
-     * - gif:        GIF file
-     * - svg:        Scalable Vector Graphics (SVG 1.1)
-     *
-     * @remarks: this is set with plot_initialize().
-     */
-    const char *device;
-    int stream;	 /**< The plots current stream ID */
-    int *tot_streams;  /**< Keeps strack of total streams */
-
-    const char *xlabel;	 /**< Label for the x-axis */
-    const char *ylabel;	 /**< Label for the y-axis */
-    const char *title;	/**< Plot title */
-    plot_color_type label_color;  /**< Color for the labels */
-
-    int height;	/**< The height of your plot window */
-    int width; /**< The width of your plot window */
+  /** Device name for the plot, where you have the following 
+   * list of choices:
+   * - xwin:       X-Window (Xlib)
+   * - tk:         Tcl/TK Window
+   * - gcw:        Gnome Canvas Widget
+   * - ps:         PostScript File (monochrome)
+   * - psc:        PostScript File (color)
+   * - xfig:       Fig file
+   * - hp7470:     HP 7470 Plotter File (HPGL Cartridge, Small Plotter)
+   * - hp7580:     HP 7580 Plotter File (Large Plotter)
+   * - lj_hpgl:    HP Laserjet III, HPGL emulation mode
+   * - pbm:        PDB (PPM) Driver
+   * - png:        PNG file
+   * - jpeg:       JPEG file
+   * - null:       Null device
+   * - tkwin:      New tk driver
+   * - mem:        User-supplied memory device
+   * - gif:        GIF file
+   * - svg:        Scalable Vector Graphics (SVG 1.1)
+   *
+   * @remarks: this is set with plot_initialize().
+   */
+  
+  const char *device;
+  int stream;	 /**< The plots current stream ID */
+  int *tot_streams;  /**< Keeps strack of total streams */
+  
+  const char *xlabel;	 /**< Label for the x-axis */
+  const char *ylabel;	 /**< Label for the y-axis */
+  const char *title;	/**< Plot title */
+  plot_color_type label_color;  /**< Color for the labels */
+  
+  int height;	/**< The height of your plot window */
+  int width; /**< The width of your plot window */
 };
 
 
