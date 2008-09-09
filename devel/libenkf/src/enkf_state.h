@@ -55,6 +55,7 @@ void               enkf_state_serialize(enkf_state_type * , size_t);
 void               enkf_state_set_iens(enkf_state_type *  , int );
 int                enkf_state_get_iens(const enkf_state_type * );
 const char       * enkf_state_get_run_path(const enkf_state_type * );
+void               enkf_state_steal_run_path_lock(enkf_state_type *  , lock_mode_type  , const char *  , const char * );
 void               enkf_state_set_run_path(enkf_state_type * , lock_mode_type , const char * , const char*);
 void               enkf_state_set_eclbase(enkf_state_type * , const char*);
 

@@ -56,6 +56,7 @@ struct sched_file_struct {
                                        D E F /
                                    /
 				*/
+
   hash_type  *kw_types;         /* A hash table with the keywords we recognize. */
   list_type  *kw_list;          /* The actual data - as a list of sched_kw instances. */
   set_type   *well_set;         /* A set of the wells we have seen. */

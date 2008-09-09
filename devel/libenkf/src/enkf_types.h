@@ -27,18 +27,19 @@ typedef enum {invalid          = 0  , /**/
 
 
 /*
-
-The static can be confusing - because the impl_type STATIC and the
-enkf_var_type ecl_static symbolize perfectly the same thing. */
+  The static can be confusing - because the impl_type STATIC and the
+  enkf_var_type ecl_static symbolize perfectly the same thing.
+*/
 
 /* 
-   For instance the pressure is implemented with a field, and behaves as a ecl_restart variable. The
-   permeability is also implemented as a field, but this is a parameter.
+   For instance the pressure is implemented with a field, and behaves
+   as a ecl_restart variable. The permeability is also implemented as
+   a field, but this is a parameter.
 */
 
 /*
   These correspond to implementation types. The numbers are on disk, and should
-  (preferably) not be updated.
+  NOT BE UPDATED.
 */
 typedef enum {INVALID 	   = 0   , 
 	      STATIC  	   = 100 ,
@@ -57,6 +58,7 @@ typedef enum {INVALID 	   = 0   ,
 /* 
    Should update the functions enkf_types_get_impl_name() and
    enkf_types_get_impl_type__() when this enum is updated.
+   In addition to enkf_config_add_type().
 */
 
 

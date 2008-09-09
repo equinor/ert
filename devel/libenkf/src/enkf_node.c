@@ -17,6 +17,7 @@
 #include <path_fmt.h>
 #include <havana_fault.h>
 #include <gen_data.h>
+#include <gen_param.h>
 
 /**
    A small illustration (says more than thousand words ...) of how the
@@ -853,6 +854,19 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->ecl_load     = gen_data_ecl_load__;
     node->serialize    = gen_data_serialize__;
     node->deserialize  = gen_data_deserialize__;
+    break;
+  case(GEN_PARAM):
+    node->realloc_data = gen_param_realloc_data__;
+    node->alloc        = gen_param_alloc__;
+    node->fread_f      = gen_param_fread__;
+    node->fwrite_f     = gen_param_fwrite__;
+    node->initialize   = gen_param_initialize__;
+    node->copyc        = gen_param_copyc__;
+    node->freef        = gen_param_free__;
+    node->free_data    = gen_param_free_data__;
+    node->ecl_write    = gen_param_ecl_write__;
+    node->serialize    = gen_param_serialize__;
+    node->deserialize  = gen_param_deserialize__;
     break;
   default:
     fprintf(stderr,"%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);

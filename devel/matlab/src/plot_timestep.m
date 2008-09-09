@@ -41,6 +41,7 @@ function plot_timestep(fignr , tstep , show_legend , logy)
         plot(x_a , tstep.analyzed_data , 'ro');
      end
      hold on		
+     disp(sprintf('Average: %10.7f' , mean(tstep.analyzed_data)));
      if plot_mean == 1
         if logy == 1
            semilogy(x_a(1) , mean(tstep.analyzed_data),'-ro','LineWidth',2 , 'MarkerSize',8, 'MarkerEdgeColor','k', 'MarkerFaceColor','g')

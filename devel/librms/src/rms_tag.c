@@ -30,7 +30,7 @@ struct rms_tag_struct {
 rms_tag_type * rms_tag_alloc(const char * name) {
   rms_tag_type *tag = malloc(sizeof *tag);
   tag->name = NULL;
-  tag->key_hash = hash_alloc(10);
+  tag->key_hash = hash_alloc();
   tag->key_list = list_alloc();
   if (name != NULL)
     tag->name = util_alloc_string_copy(name);
@@ -56,7 +56,7 @@ const char * rms_tag_get_name(const rms_tag_type *tag) {
 void rms_tag_fread_header(rms_tag_type *tag , FILE *stream , bool *eof_tag) {
   char *buffer;
   *eof_tag = false;
-  buffer = malloc(4);
+  buffer = util_malloc(4 , __func__);
   if (rms_util_fread_string(buffer , 4 , stream )) {
     if (strcmp(buffer , rms_starttag_string) == 0) {
       /* OK */
@@ -79,6 +79,15 @@ void rms_tag_fread_header(rms_tag_type *tag , FILE *stream , bool *eof_tag) {
 }
 
 
+
+/**
+   This function does a "two-level" comparison. 
+   
+   1. tag->name is compared with tagname.
+   2. Iff test number one succeeds we go further to step2. The second will always suceed if tagkey_name == NULL.
+   
+*/
+   
 bool rms_tag_name_eq(const rms_tag_type *tag , const char * tagname , const char *tagkey_name , const char *keyvalue) {
   bool eq = false;
   if (strcmp(tag->name , tagname) == 0) {

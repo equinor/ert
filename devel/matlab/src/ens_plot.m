@@ -62,7 +62,7 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
    	   end
            [plot_title , var , unit , time_step , prior_dates , history , prior] = ens_load(prior_file);
            prior_size = size(prior , 2);
-        
+           
    
            figure(fig_nr)
 	   plist = [];

@@ -133,7 +133,7 @@ gen_param.o              : gen_param.c gen_param.h gen_param_config.o enkf_macro
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x field_convert.x
+BIN_FILES             = enkf gen_test.x field_convert.x test.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
@@ -145,6 +145,9 @@ main.o	: main.c
 
 enkf:	main.o $(LIB)
 	gcc -$(MFLAG) $(LDFLAGS) main.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
+
+test.x:	test.o $(LIB)
+	gcc -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH)  $(LIB_LINK) 	
 
 gen_test.x:	gen_test.o $(LIB)
 	gcc -$(MFLAG) $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	

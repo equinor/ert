@@ -51,7 +51,7 @@ static gen_param_config_type * gen_param_config_alloc__( ecl_type_enum ecl_type 
     if (data_ptr == NULL) 
       util_abort("%s: template:%s can not be used - could not find data key:%s \n",__func__ , template_ecl_file , template_data_key);
     else {
-      config->template_data_offset = config->template_buffer - data_ptr;
+      config->template_data_offset = data_ptr - config->template_buffer;
       config->template_data_skip   = strlen( template_data_key );
     }
   } else 
@@ -87,14 +87,14 @@ void gen_param_config_free(gen_param_config_type * config) {
 */
 
 
-void gen_param_config_assert_size(gen_param_config_type * config , int size) {
+void gen_param_config_assert_size(gen_param_config_type * config , int size, const char * init_file) {
   pthread_mutex_lock( &config->update_lock );
   {
-    if (config->data_size < 0)
-      config->data_size = size; /* Not yet initialized */
+    if (config->data_size == 0) /* 0 means not yet initialized */
+      config->data_size = size; 
     else 
       if (config->data_size != size)
-	util_abort("%s: internal error - size mismatch.\n",__func__);
+	util_abort("%s: Size mismatch when loading from:%s got %d elements - expected:%d \n",__func__ , init_file , size , config->data_size);
   }
   pthread_mutex_unlock( &config->update_lock );
 }
@@ -104,7 +104,8 @@ void gen_param_config_assert_size(gen_param_config_type * config , int size) {
 const bool * gen_param_config_get_iactive(const gen_param_config_type * config) { return config->iactive; }
 
 char * gen_param_config_alloc_initfile(const gen_param_config_type * config , int iens) {
-  return path_fmt_alloc_path(config->init_file_fmt , iens);
+  char * initfile = path_fmt_alloc_path(config->init_file_fmt , false , iens);
+  return initfile;
 }
 
 
@@ -127,7 +128,7 @@ char * gen_param_config_alloc_initfile(const gen_param_config_type * config , in
     <DATA>
     Tail
     --------
-
+    
     Then the data vector will be inserted at the location of the
     <DATA> string. If more advanced manipulation of the output is
     required you must install a job in the forward model to handle it.

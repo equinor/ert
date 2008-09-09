@@ -13,6 +13,7 @@
 #include <well_config.h>
 #include <field_config.h>
 #include <equil_config.h>
+#include <gen_param_config.h>
 #include <multflt_config.h>
 #include <well_obs.h>
 #include <thread_pool.h>
@@ -678,6 +679,22 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	    }    
 	  } else {
 	    switch(impl_type) {
+	    case(GEN_PARAM):
+	      ASSERT_TOKENS("GEN_PARAM" , active_tokens , 3);
+	      {
+		const char * key         = token_list[1];
+		const char * ecl_file    = token_list[2];
+		const char * init_fmt    = token_list[3];
+		char       * ecl_template;   
+
+		if (active_tokens == 5)
+		  ecl_template = token_list[4];
+		else
+		  ecl_template = NULL;
+		
+		enkf_config_add_type(enkf_config , key , parameter , GEN_PARAM , ecl_file , gen_param_config_alloc( init_fmt , ecl_template ));
+	      }
+	      break;
 	    case(MULTZ):
 	      ASSERT_TOKENS("MULTZ" , active_tokens , 3);
 	      {
@@ -720,7 +737,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      }
 	      break;
 	    case(EQUIL):
-	      ASSERT_TOKENS("EQUIl" , active_tokens , 3);
+	      ASSERT_TOKENS("EQUIL" , active_tokens , 3);
 	      {
 		const char * key         = token_list[1];
 		const char * ecl_file    = token_list[2];
@@ -856,6 +873,9 @@ void enkf_config_add_type(enkf_config_type * enkf_config ,
       break;
     case(GEN_DATA):
       freef             = gen_data_config_free__;
+      break;
+    case(GEN_PARAM):
+      freef             = gen_param_config_free__;
       break;
     default:
       util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);

@@ -254,6 +254,24 @@ static void member_config_release_lock(member_config_type * member_config) {
   member_config->simlock_fd   = -1;
 }
 
+
+/**
+   This function will unlink all the lockfiles - without any attempt
+   of trying to informt the owning process. 
+
+   Intented to be used in situations where the main application has had
+   an unlcean exit, and lockfiles have left hanging around.
+*/
+   
+
+static void member_config_unlink_lock_file(const member_config_type * member_config , const char * lock_path, const char * run_path) {
+  char * lockfile  =  member_config_alloc_simlock( lock_path , run_path);
+  util_unlink_existing( lockfile );
+  free(lockfile);
+}
+
+
+
 static void member_config_set_run_path(member_config_type * member_config , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
   /* Clearing the existing lock (if any) - the mode might have changed.*/
   
@@ -261,15 +279,16 @@ static void member_config_set_run_path(member_config_type * member_config , lock
   if (lock_mode == lock_none) 
     member_config->run_path = util_realloc_string_copy(member_config->run_path , run_path);
   else {
-    member_config->simlock_file = member_config_alloc_simlock( lock_path , run_path);
+    member_config->simlock_file =  member_config_alloc_simlock( lock_path , run_path);
     
     
-  /* Trying to aquire new lock. */
+    /* Trying to aquire new lock. */
     if (lock_mode == lock_lockf) {
       if (util_try_lockf(member_config->simlock_file , S_IRUSR + S_IRGRP + S_IWUSR + S_IWGRP, &member_config->simlock_fd)) 
 	member_config->can_sim = true;
-      else 
+      else {
 	member_config->can_sim = false;
+      }
     } else if (lock_mode == lock_file) {
       if (util_file_exists(member_config->simlock_file)) 
 	member_config->can_sim = false;
@@ -390,6 +409,14 @@ const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) {
 
 void enkf_state_set_run_path(enkf_state_type * enkf_state , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
   member_config_set_run_path(enkf_state->my_config , lock_mode , lock_path , run_path);
+}
+
+
+void enkf_state_steal_run_path_lock(enkf_state_type * enkf_state , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
+  if (lock_mode == lock_file) {
+    member_config_unlink_lock_file(enkf_state->my_config , lock_path , run_path);
+  } else
+    fprintf(stderr,"Sorry - no locks to unlink \n");
 }
 
 
