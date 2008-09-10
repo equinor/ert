@@ -6,6 +6,7 @@
 #include <util.h>
 #include <pthread.h>
 #include <void_arg.h>
+#include <stringlist.h>
 
 /**
    the LSF_LIBRARY_DRIVER uses the lsb/lsf libraries directly; if the
@@ -382,7 +383,7 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
 
 
 
-void * lsf_driver_alloc(const char * queue_name , int num_resource_request , const char ** resource_request_list) {
+void * lsf_driver_alloc(const char * queue_name , const stringlist_type * lsf_resource_list) {
   lsf_driver_type * lsf_driver = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name       = util_alloc_string_copy(queue_name);
   lsf_driver->__lsf_id         = LSF_DRIVER_ID;
@@ -391,7 +392,7 @@ void * lsf_driver_alloc(const char * queue_name , int num_resource_request , con
   lsf_driver->abort_f          = lsf_driver_abort_job;
   lsf_driver->free_job         = lsf_driver_free_job;
   lsf_driver->free_driver      = lsf_driver_free__;
-  lsf_driver->resource_request = util_alloc_joined_string(resource_request_list , num_resource_request , " ");
+  lsf_driver->resource_request = stringlist_alloc_joined_string(lsf_resource_list , " ");
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
   
 #ifdef LSF_LIBRARY_DRIVER

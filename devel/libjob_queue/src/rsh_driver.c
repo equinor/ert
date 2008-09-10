@@ -289,7 +289,7 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
    that the load of the host is *not* consulted.
 */
 
-void * rsh_driver_alloc(const char * rsh_command, int num_hosts , const char ** rsh_host_list) {
+void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_host_list) {
   rsh_driver_type * rsh_driver = util_malloc(sizeof * rsh_driver , __func__);
   rsh_driver->__rsh_id         = RSH_DRIVER_ID;
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
@@ -307,28 +307,29 @@ void * rsh_driver_alloc(const char * rsh_command, int num_hosts , const char ** 
   rsh_driver->last_host_index = 0;
   {
     int ihost;
-    for (ihost = 0; ihost < num_hosts; ihost++) {
+    for (ihost = 0; ihost < stringlist_get_size(rsh_host_list); ihost++) {
+      const char * host = stringlist_iget(rsh_host_list , ihost);
       int pos = 0;
-      while ( pos < strlen(rsh_host_list[ihost]) && rsh_host_list[ihost][pos] != ':') 
+      while ( pos < strlen(host) && host[pos] != ':') 
 	pos++;
 
       {
-	char *host = util_alloc_substring_copy(rsh_host_list[ihost] , pos);
+	char *host_only = util_alloc_substring_copy(host , pos);
 	int max_running;
 
-	if (pos == strlen(rsh_host_list[ihost])) {
-	  fprintf(stderr," ** Warning no \":\" found for host:%s - assuming only one job to this host\n",host);
+	if (pos == strlen(host)) {
+	  fprintf(stderr," ** Warning no \":\" found for host:%s - assuming only one job to this host\n",host_only);
 	  max_running = 1;
 	} else 
-	  if (!util_sscanf_int(&rsh_host_list[ihost][pos+1] , &max_running))
-	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , rsh_host_list[ihost]);
+	  if (!util_sscanf_int(&host[pos+1] , &max_running))
+	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , host);
 	
-	rsh_driver_add_host(rsh_driver , host , max_running);
-	free(host);
+	rsh_driver_add_host(rsh_driver , host_only , max_running);
+	free(host_only);
       }
     }
   }
-    
+  
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) rsh_driver;
     basic_queue_driver_init(basic_driver);

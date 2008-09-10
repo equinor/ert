@@ -452,6 +452,13 @@ void job_queue_add_job(job_queue_type * queue , int external_id, int target_repo
 }
 
 
+void job_queue_set_runpath_fmt(job_queue_type * job_queue , const path_fmt_type * run_path) {
+  if (job_queue->run_path_fmt != NULL)
+    path_fmt_free( job_queue->run_path_fmt );
+  
+  job_queue->run_path_fmt = path_fmt_copyc(run_path);
+}
+
 
 job_queue_type * job_queue_alloc(int size , int max_running , int max_submit , 
 				 const char    	     * submit_cmd      	 , 
@@ -478,7 +485,8 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
       queue->status_list[job_queue_node_get_status(queue->jobs[i])]++;
   }
 
-  queue->run_path_fmt = path_fmt_copyc(run_path_fmt);
+  queue->run_path_fmt = NULL;
+  job_queue_set_runpath_fmt( queue , run_path_fmt);
   queue->job_name_fmt = path_fmt_copyc(job_name_fmt);
 
   queue->driver = driver;
