@@ -33,7 +33,7 @@ static plain_driver_dynamic_type * plain_driver_dynamic_safe_cast(void * _driver
 
 
 
-static char * plain_driver_dynamic_alloc_filename(const plain_driver_dynamic_type * driver , int report_step , int iens , state_enum state , const char * key) {
+static char * plain_driver_dynamic_alloc_filename(const plain_driver_dynamic_type * driver , int report_step , int iens , state_enum state , const char * key, bool auto_mkdir) {
   path_fmt_type * path = NULL;
 
   if (state == analyzed)
@@ -46,7 +46,7 @@ static char * plain_driver_dynamic_alloc_filename(const plain_driver_dynamic_typ
   } else 
     util_abort("%s: state:%d is invalid \n",__func__ , state);
 
-  return path_fmt_alloc_file(path , false , report_step , iens , key);
+  return path_fmt_alloc_file(path , auto_mkdir , report_step , iens , key);
 }
 
 
@@ -54,7 +54,7 @@ static char * plain_driver_dynamic_alloc_filename(const plain_driver_dynamic_typ
 void plain_driver_dynamic_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
-    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node));
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node) , false);
     FILE * stream = util_fopen(filename , "r");
     enkf_node_fread(node , stream , report_step , state);
     fclose(stream);
@@ -66,7 +66,7 @@ void plain_driver_dynamic_load_node(void * _driver , int report_step , int iens 
 void plain_driver_dynamic_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
-    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node));
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node) , false);
     util_unlink_existing(filename);
     free(filename);
   }
@@ -76,7 +76,7 @@ void plain_driver_dynamic_unlink_node(void * _driver , int report_step , int ien
 void plain_driver_dynamic_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
-    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node));
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node) , true);
     FILE * stream = util_fopen(filename , "w");
     enkf_node_fwrite(node , stream , report_step , state);
     fclose(stream);
@@ -93,7 +93,7 @@ bool plain_driver_dynamic_has_node(void * _driver , int report_step , int iens ,
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
     bool has_node;
-    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , key);
+    char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , key , false);
     if (util_file_exists(filename))
       has_node = true;
     else
