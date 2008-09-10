@@ -133,7 +133,7 @@ gen_param.o              : gen_param.c gen_param.h gen_param_config.o enkf_macro
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x field_convert.x test.x
+BIN_FILES             = enkf gen_test.x field_convert.x 
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 

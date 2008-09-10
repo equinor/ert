@@ -115,7 +115,7 @@ void enkf_ui_run_exp__(void * _void_arg) {
   const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
   const int ens_size    = enkf_config_get_ens_size(enkf_config);
   const int last_report = enkf_sched_get_last_report(enkf_sched);
-  int prompt_len = 35;
+  int prompt_len = 45;
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   int start_report = util_scanf_int_with_limits("Initialize static parameters from: ",prompt_len , 0 , last_report );

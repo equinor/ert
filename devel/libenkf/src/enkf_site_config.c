@@ -7,6 +7,7 @@
 #include <enkf_site_config.h>
 #include <config.h>
 #include <ext_joblist.h>
+#include <stringlist.h>
 
 /*
   enkf_site_config_node_type * enkf_site_config_get_node(const enkf_site_config_type * , const char * );
@@ -207,12 +208,8 @@ const char * enkf_site_config_get_value(const enkf_site_config_type * site , con
 }
 
 
-const char ** enkf_site_config_get_argv(const enkf_site_config_type * site , const char * key, int *size) {
-  /*
-    enkf_site_config_node_type * node = enkf_site_config_get_node(site , key);
-    return node->value;
-  */
-  return config_get_argv(site->__config , key , size);
+stringlist_type * enkf_site_config_alloc_argv(const enkf_site_config_type * site , const char * key) {
+  return config_alloc_complete_stringlist( site->__config , key);
 }
 
 
@@ -381,10 +378,13 @@ void enkf_site_config_validate(enkf_site_config_type *site) {
 
 
 void enkf_site_config_install_jobs(const enkf_site_config_type * config , ext_joblist_type * joblist) {
-  int  i , argc;
-  const char ** item_list = config_get_argv(config->__config , "INSTALL_JOB" , &argc);
-  for (i=0; i < argc; i+=2 ) 
-    ext_joblist_add_job(joblist , item_list[i] , item_list[i+1]);
+  int  i;
+  stringlist_type *item_list = config_alloc_complete_stringlist(config->__config , "INSTALL_JOB");
+
+  for (i=0; i < stringlist_get_size(item_list); i+=2) 
+    ext_joblist_add_job(joblist , stringlist_iget(item_list , i) , stringlist_iget(item_list , i + 1));
+  
+  stringlist_free(item_list);
 }
 
 void enkf_site_config_finalize(const enkf_site_config_type * config , ext_joblist_type * joblist) {

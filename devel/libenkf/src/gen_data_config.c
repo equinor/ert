@@ -335,7 +335,7 @@ gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
   config_type * config = config_alloc( );
   config_parse(config , config_file , "--" , true , true);
   {
-    int    iarg , argc;
+    int    iarg;
     int    num_active;
     char **obs_file_list;
 
@@ -343,21 +343,22 @@ gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
     
     for (iarg = 0; iarg < num_active; iarg++) {
       const char  * obs_file = obs_file_list[iarg];
-      const char ** argv     = config_get_argv(config , obs_file , &argc);
+      const stringlist_type * argv = config_get_stringlist_ref(config , obs_file);
       const char  * ecl_file;
       const char  * tag;
       bool  obs_active = false; /* Dummy init */
       int report_step;
-      
+      int argc = stringlist_get_size(argv);
+  
       if (argc <= 2) 
 	util_exit("%s: missing report step / ON|OFF when parsing:%s in %s \n",__func__ , obs_file , config_file);
-
-      ecl_file = argv[0];
-      if (!util_sscanf_int(argv[1] , &report_step)) 
+      
+      ecl_file = stringlist_iget(argv , 0);
+      if (!util_sscanf_int(stringlist_iget(argv , 1) , &report_step)) 
 	util_exit("%s: failed to parse out report_step as integer - aborting \n",__func__);
       
       {
-	char * on_off = util_alloc_string_copy( argv[2] );
+	char * on_off = util_alloc_string_copy( stringlist_iget(argv , 2) );
 	util_strupr( on_off );
 	if (strcmp(on_off , "ON") == 0)
 	  obs_active = true;
@@ -371,7 +372,7 @@ gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
       if (argc == 3)
 	tag = NULL;
       else
-	tag = argv[3];
+	tag = stringlist_iget(argv , 3);
       
       gen_data_config_add_active(gen_config , obs_file , ecl_file , report_step , obs_active , tag);
     }
