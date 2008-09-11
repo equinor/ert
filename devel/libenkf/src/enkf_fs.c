@@ -175,6 +175,7 @@ struct enkf_fs_struct {
   fs_index_type      	    * index;                 /* Currently only used to write restart_kw_list instances (not properly virtualized). */
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
   int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
+  char                      * lockfile; 
 };
 
 
@@ -202,7 +203,7 @@ enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index,
 }
 
 
-enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info) {
+enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
   enkf_fs_type * fs  = util_malloc(sizeof * fs , __func__);
   fs->index          = NULL;
   fs->dynamic        = NULL;
@@ -267,21 +268,18 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info) {
     
 
 
-  {
-    char * lockfile = util_alloc_full_path(root_path , "enkf_lock");
-    
-    if (util_try_lockf(lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
-      fs->read_only = false;
-    else {
-      fs->read_only = true;
-      fprintf(stderr,"\n** Warning: another EnKF instance has currently locked the ensemble at\n** %s for writing - this instance will be read-only.\n",root_path);
-    }
-
-    free(lockfile);
+  fs->lockfile = util_alloc_full_path(lock_path , "ensemble_lock");
+  
+  if (util_try_lockf(fs->lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
+    fs->read_only = false;
+  else {
+    fs->read_only = true;
+    fprintf(stderr,"------------------------------------------------------------------------\n");
+    fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| %s for writing - this instance will be read-only.\n",root_path);
+    fprintf(stderr,"-------------------------------------------------------------------------\n");
   }
-
-
-
+  
+  
   return fs;
 }
 
@@ -303,6 +301,8 @@ void enkf_fs_free(enkf_fs_type * fs) {
   enkf_fs_free_static_driver(fs->eclipse_static);
   fs_index_free(fs->index);
   close(fs->lock_fd);
+  util_unlink_existing(fs->lockfile);
+  free(fs->lockfile);
   free(fs);
 }
 

@@ -72,7 +72,7 @@ void enkf_usage() {
 
 
 
-enkf_fs_type * fs_mount(const char * root_path) {
+enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) {
   const char * mount_map = "enkf_mount_info";
   const char * config_file = util_alloc_full_path(root_path , mount_map); /* This file should be protected - at all costs. */
   
@@ -80,7 +80,7 @@ enkf_fs_type * fs_mount(const char * root_path) {
   if (!util_file_exists(config_file)) {
     int fd        = open(config_file , O_WRONLY + O_CREAT);
     FILE * stream = fdopen(fd, "w");
-
+    
     plain_driver_parameter_fwrite_mount_info(stream , "%04d/mem%03d/Parameter"); 
     plain_driver_static_fwrite_mount_info(stream    , "%04d/mem%03d/Static"); 
     plain_driver_dynamic_fwrite_mount_info(stream   , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
@@ -96,7 +96,7 @@ enkf_fs_type * fs_mount(const char * root_path) {
     close(fd);
   }
   
-  return enkf_fs_mount(root_path , mount_map);
+  return enkf_fs_mount(root_path , mount_map , lock_path);
 }
 
 
@@ -119,9 +119,10 @@ int main (int argc , char ** argv) {
     joblist   = ext_joblist_alloc();
 
     enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(config_file , site_config , joblist , false , false , true);
-    enkf_fs_type      * fs = fs_mount( enkf_config_get_ens_path(enkf_config) );
     char * lock_path = util_alloc_full_path (getenv("CWD") , "locks");
+    enkf_fs_type      * fs ;
     util_make_path(lock_path);
+    fs = fs_mount( enkf_config_get_ens_path(enkf_config) , lock_path);
 
     job_queue = enkf_config_alloc_job_queue(enkf_config , site_config);
     enkf_main = enkf_main_alloc(enkf_config , lock_mode , lock_path , fs , job_queue , joblist);
