@@ -669,7 +669,7 @@ double field_iget_double(const field_type * field , int global_index) {
       return double_value;
     }
   else {
-    util_abort("%s: failed - wrong internaø type \n",__func__);
+    util_abort("%s: failed - wrong internal type \n",__func__);
     return -1;
   }
 }

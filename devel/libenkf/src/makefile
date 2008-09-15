@@ -133,7 +133,7 @@ gen_param.o              : gen_param.c gen_param.h gen_param_config.o enkf_macro
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x field_convert.x 
+BIN_FILES             = enkf gen_test.x field_convert.x snutt.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
@@ -158,3 +158,8 @@ field_convert.x:	field_convert.o $(LIB)
 sched_test.x:	sched_test.o $(LIB)
 	gcc -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
 
+
+#################################################################
+# Seriously ugly stuff, remove when Sigurd's paper is done.
+snutt.x: snutt.o $(LIB)
+	gcc -$(MFLAG) $(LDFLAGS) snutt.o -o snutt.x  $(LIB_PATH) -L$(LIBSAMPLE_HOME)/lib  -lsample_$(MFLAG) -lfftw3_$(MFLAG) -limf $(LIB_LINK)

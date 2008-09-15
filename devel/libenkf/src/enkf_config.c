@@ -19,7 +19,6 @@
 #include <thread_pool.h>
 #include <obs_node.h>
 #include <obs_data.h>
-#include <history.h>
 #include <meas_matrix.h>
 #include <enkf_types.h>
 #include <analysis.h>
