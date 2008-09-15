@@ -109,7 +109,6 @@ void scalar_stream_fwrite(const scalar_type * scalar , FILE * stream) {
   const int data_size = scalar_config_get_data_size(scalar->config);
   fwrite(&data_size     ,   sizeof  data_size     , 1 , stream);
   util_fwrite(scalar->data , sizeof *scalar->data    ,data_size , stream , __func__);
-  
 }
 
 

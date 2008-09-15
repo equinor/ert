@@ -81,11 +81,13 @@ void equil_ecl_write(const equil_type * equil, const char * eclfile) {
 
 
 
-void equil_fwrite(const equil_type * equil, FILE * stream) {
+bool equil_fwrite(const equil_type * equil, FILE * stream) {
   DEBUG_ASSERT(equil);
   enkf_util_fwrite_target_type(stream , EQUIL);
   scalar_stream_fwrite(equil->scalar , stream);
+  return true;
 }
+
 
 void equil_fread(equil_type * equil , FILE * stream) {
   DEBUG_ASSERT(equil);

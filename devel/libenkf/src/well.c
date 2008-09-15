@@ -77,7 +77,7 @@ void well_fread(well_type * well , FILE * stream) {
 
 
 
-void well_fwrite(const well_type * well , FILE * stream) {
+bool well_fwrite(const well_type * well , FILE * stream) {
   DEBUG_ASSERT(well); 
   {
     const  well_config_type * config = well->config;
@@ -87,6 +87,7 @@ void well_fwrite(const well_type * well , FILE * stream) {
     fwrite(&data_size            , sizeof  data_size     , 1 , stream);
     enkf_util_fwrite(well->data  , sizeof *well->data    ,data_size , stream , __func__);
   }
+  return true;
 }
 
 

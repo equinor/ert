@@ -92,8 +92,8 @@ void * prefix ## _alloc__(const void *void_config) {                      \
 /*****************************************************************/
 
 #define VOID_FWRITE(prefix) \
-void prefix ## _fwrite__(const void * void_arg , FILE * stream) { \
-   prefix ## _fwrite((const prefix ## _type *) void_arg , stream);      \
+bool prefix ## _fwrite__(const void * void_arg , FILE * stream) { \
+   return prefix ## _fwrite((const prefix ## _type *) void_arg , stream);      \
 }
 
 #define VOID_FREAD(prefix) \
@@ -101,7 +101,7 @@ void prefix ## _fread__(void * void_arg , FILE * stream) { \
    prefix ## _fread((prefix ## _type *) void_arg , stream);      \
 }
 
-#define VOID_FWRITE_HEADER(prefix) void prefix ## _fwrite__(const void * , FILE *);
+#define VOID_FWRITE_HEADER(prefix) bool prefix ## _fwrite__(const void * , FILE *);
 #define VOID_FREAD_HEADER(prefix) void prefix ## _fread__(void * , FILE *);
 
 

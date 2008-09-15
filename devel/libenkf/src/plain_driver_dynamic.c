@@ -78,8 +78,10 @@ void plain_driver_dynamic_save_node(void * _driver , int report_step , int iens 
   {
     char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node) , true);
     FILE * stream = util_fopen(filename , "w");
-    enkf_node_fwrite(node , stream , report_step , state);
+    bool   data_written = enkf_node_fwrite(node , stream , report_step , state);
     fclose(stream);
+    if (!data_written)
+      unlink(filename);
     free(filename);
   }
 }

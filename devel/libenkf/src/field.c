@@ -471,7 +471,7 @@ void field_ROFF_export(const field_type * field , const char * filename) {
 
 
 
-void field_fwrite(const field_type * field , FILE * stream) {
+bool field_fwrite(const field_type * field , FILE * stream) {
   const int data_size    = field_config_get_data_size(field->config);
   const int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
   bool  write_compressed = field_config_write_compressed(field->config);
@@ -484,6 +484,8 @@ void field_fwrite(const field_type * field , FILE * stream) {
     util_fwrite_compressed(field->data , sizeof_ctype * data_size , stream);
   else
     enkf_util_fwrite(field->data    ,   sizeof_ctype , data_size , stream , __func__);
+  
+  return true;
 }
 
 

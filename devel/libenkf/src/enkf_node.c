@@ -497,16 +497,24 @@ void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * 
 
 
 
+/**
+   Returns true if data is written to disk. If no data is written to
+   disk, and the function returns false, the calling scope is free
+   to skip storage (i.e. unlink an empty file).
+*/
 
-void enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step , state_enum state) {
+bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step , state_enum state) {
   if (!enkf_node->__memory_allocated)
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
   {
     FUNC_ASSERT(enkf_node->fwrite_f);
+    bool data_written = true;
     enkf_node->fwrite_f(enkf_node->data , stream);
     enkf_node->__report_step = report_step;
     enkf_node->__state       = state;
     enkf_node->__modified    = false;
+
+    return data_written;
   }
 }
 

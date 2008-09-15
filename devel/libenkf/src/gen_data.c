@@ -135,21 +135,17 @@ void gen_data_realloc_data(gen_data_type * gen_data) {
 
 
 
-/**
-   Would prefer that this function was not called at all if the
-   gen_data keyword does not (currently) hold data. The current
-   implementation will leave a very small file without data.
-*/
-
-void gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
+bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
   DEBUG_ASSERT(gen_data)
-  enkf_util_fwrite_target_type(stream , GEN_DATA);
-  util_fwrite_bool(gen_data->active , stream);
   if (gen_data->active) {
+    enkf_util_fwrite_target_type(stream , GEN_DATA);
+    util_fwrite_bool(gen_data->active , stream);
     util_fwrite_int(gen_data->size , stream);
     util_fwrite_int(gen_data->ecl_type , stream);
     util_fwrite_compressed(gen_data->data , gen_data->size * ecl_util_get_sizeof_ctype(gen_data->ecl_type) , stream);
-  } 
+    return true;
+  } else 
+    return false;
 }
 
 

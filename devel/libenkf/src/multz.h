@@ -16,7 +16,6 @@ void             multz_free(multz_type *);
 char           * multz_alloc_ensname(const multz_type *);
 char           * multz_alloc_eclname(const multz_type *);
 void             multz_ecl_write(const multz_type * , const char *);
-/*void             multz_direct_ecl_write(const multz_type * , const char *);*/
 void             multz_ens_write(const multz_type * , const char *);
 void             multz_ens_read(multz_type * , const char *);
 void             multz_initialize(multz_type * , int);
@@ -24,7 +23,6 @@ void             multz_truncate(multz_type *);
 multz_type     * multz_alloc_mean(int , const multz_type **);
 void             multz_TEST(void);
 void             multz_fread(multz_type * , FILE * );
-void             multz_fwrite(const multz_type * , FILE * );
 char           * multz_alloc_description(const multz_type * , int );
 
 

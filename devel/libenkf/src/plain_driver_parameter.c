@@ -91,8 +91,10 @@ void plain_driver_parameter_save_node(void * _driver , int _report_step , int ie
   {
     char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
     FILE * stream = util_fopen(filename , "w");
-    enkf_node_fwrite(node , stream  , report_step , state);
+    bool   data_written = enkf_node_fwrite(node , stream , report_step , state);
     fclose(stream);
+    if (!data_written)
+      unlink(filename);
     free(filename);
   }
 }

@@ -91,10 +91,11 @@ multz_type * multz_copyc(const multz_type *multz) {
 }
 
 
-void multz_fwrite(const multz_type *multz , FILE * stream) {
+bool multz_fwrite(const multz_type *multz , FILE * stream) {
   DEBUG_ASSERT(multz);
   enkf_util_fwrite_target_type(stream , MULTZ);
   scalar_stream_fwrite(multz->scalar , stream);
+  return true;
 }
 
 

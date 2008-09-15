@@ -77,7 +77,7 @@ void summary_fread(summary_type * summary , FILE * stream) {
 
 
 
-void summary_fwrite(const summary_type * summary , FILE * stream) {
+bool summary_fwrite(const summary_type * summary , FILE * stream) {
   DEBUG_ASSERT(summary); 
   {
     const  summary_config_type * config = summary->config;
@@ -87,6 +87,7 @@ void summary_fwrite(const summary_type * summary , FILE * stream) {
     fwrite(&data_size            , sizeof  data_size     , 1 , stream);
     enkf_util_fwrite(summary->data  , sizeof *summary->data    ,data_size , stream , __func__);
   }
+  return true;
 }
 
 

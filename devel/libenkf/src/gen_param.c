@@ -116,7 +116,7 @@ void gen_param_free(gen_param_type * gen_param) {
    size (on allocation).
 */
 
-void gen_param_fwrite(const gen_param_type * gen_param , FILE * stream) {
+bool gen_param_fwrite(const gen_param_type * gen_param , FILE * stream) {
   DEBUG_ASSERT(gen_param)
   {
     int size      = gen_param_config_get_data_size(gen_param->config);
@@ -126,6 +126,7 @@ void gen_param_fwrite(const gen_param_type * gen_param , FILE * stream) {
     util_fwrite_int(size , stream);
     util_fwrite_compressed(gen_param->data , byte_size , stream);
   }
+  return true;
 }
 
 
