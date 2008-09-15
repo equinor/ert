@@ -59,7 +59,7 @@ int main(int argc, char * argv[])
 {
   if(argc < 7)
   {
-    printf("Usage: snutt.x ecl_grid_file ecl_restart_file mod_err_file std rng rho.\n");
+    printf("Usage: mod_err.x ecl_grid_file ecl_restart_file mod_err_file std rng rho.\n");
     return 0;
   }
 
@@ -76,7 +76,7 @@ int main(int argc, char * argv[])
   double * pres_dbl;
 
   int nx, ny, nz, active_size;
-  int * index_map;
+  const int * index_map;
 
 
   ecl_grid_type * ecl_grid = ecl_grid_alloc(ecl_grid_file, endian_flip);
