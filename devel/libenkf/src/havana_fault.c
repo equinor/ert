@@ -100,10 +100,11 @@ havana_fault_type * havana_fault_copyc(const havana_fault_type *havana_fault) {
 }
 
 
-void havana_fault_fwrite(const havana_fault_type *havana_fault , FILE * stream) {
+bool havana_fault_fwrite(const havana_fault_type *havana_fault , FILE * stream) {
   DEBUG_ASSERT(havana_fault)
   enkf_util_fwrite_target_type(stream , HAVANA_FAULT);
   scalar_stream_fwrite(havana_fault->scalar , stream);
+  return true;
 }
 
 

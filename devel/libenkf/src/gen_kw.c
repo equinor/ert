@@ -96,10 +96,11 @@ gen_kw_type * gen_kw_copyc(const gen_kw_type *gen_kw) {
 }
 
 
-void gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream) {
+bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream) {
   DEBUG_ASSERT(gen_kw)
   enkf_util_fwrite_target_type(stream , GEN_KW);
   scalar_stream_fwrite(gen_kw->scalar , stream);
+  return true;
 }
 
 

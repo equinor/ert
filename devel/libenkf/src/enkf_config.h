@@ -24,6 +24,13 @@ bool                enkf_config_get_endian_swap(const enkf_config_type * );
 bool                enkf_config_get_fmt_file(const enkf_config_type * );
 const char        * enkf_config_get_data_file(const enkf_config_type * );
 bool                enkf_config_has_key(const enkf_config_type * , const char *);
+void enkf_config_add_type(enkf_config_type * enkf_config , 
+			  const char    * ,
+			  enkf_var_type ,
+			  enkf_impl_type ,
+			  const char   * ,
+			  const char   * ,
+			  const void   * );
 enkf_config_type  * enkf_config_alloc(int ens_size            , 
 				      const int  *  , 
 				      const char *  , 
@@ -32,6 +39,7 @@ enkf_config_type  * enkf_config_alloc(int ens_size            ,
 				      const char * _eclbase   , 
 				      bool fmt_file 	     ,
 				      bool unified  	     ,         
+
 				      bool endian_swap);
 const stringlist_type * enkf_config_get_forward_model(const enkf_config_type *);
 void                enkf_config_add_well(enkf_config_type * , const char * , int , const char ** );

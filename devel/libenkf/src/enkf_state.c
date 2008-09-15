@@ -727,7 +727,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
 	if (enkf_config_include_static_kw(enkf_state->config , kw)) {
 	  restart_kw_list_add(enkf_state->restart_kw_list , kw);
 	  if (!enkf_config_has_key(enkf_state->config , kw)) 
-	    enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL);
+	    enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL , NULL);
 	  
 	  if (!enkf_state_has_node(enkf_state , kw)) {
 	    const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
@@ -840,7 +840,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
     */
     
     if (!enkf_config_has_key(enkf_state->config , kw)) 
-      enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL);
+      enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL , NULL);
     
     if (!enkf_state_has_node(enkf_state , kw)) {
       const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
