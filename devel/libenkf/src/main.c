@@ -100,6 +100,7 @@ enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) {
 }
 
 
+
 int main (int argc , char ** argv) {
   text_splash();
   enkf_welcome();

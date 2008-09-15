@@ -12,13 +12,44 @@
 
 
 
-/*Hmm these two looked suspiciously similar ... */
-typedef enum { unknown_file  		= 0,
+
+/** 
+    The field_file_format_type denotes different ways to store a
+    field. Unfortunately the different elements in the enum definition
+    have somewhat different properties:
+
+
+    1. ecl_kw_file is for input - either pack or unpacked.
+
+    2. ecl_kw_file_active_cells / ecl_kw_file_all_cells are for output.
+
+    3. Except for ecl_restart_block all formats are for A FILE (with a
+       filename), more or less assuming that this field is the only
+       content in the file, whereas ecl_restart_block is for a restart
+       block, and not a file.
+
+    This has some slightly unlogical consequences:
+
+     1. The enum has 'file_format' in the name, but ecl_restart_block
+        is not a file.
+
+     2. The functions which guess/determine a file type can not return
+        all possible values of the enum.
+
+     3. Treatment is not symmetric for input/output.
+
+*/
+    
+
+
+
+typedef enum { undefined_format         = 0,
 	       rms_roff_file 		= 1,
 	       ecl_kw_file   		= 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
 	       ecl_kw_file_active_cells = 3,       /* ecl_kw format, only active cells - used writing to file. */
 	       ecl_kw_file_all_cells    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
-	       ecl_grdecl_file          = 5} field_file_format_type;
+	       ecl_grdecl_file          = 5, 
+               ecl_restart_block        = 6} field_file_format_type;
 
 	        
 /* active_cells currently not really implemented */

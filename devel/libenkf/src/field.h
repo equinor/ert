@@ -51,6 +51,6 @@ VOID_FWRITE_HEADER (field);
 VOID_FREAD_HEADER  (field);
 VOID_CLEAR_HEADER (field);
 VOID_IGET_HEADER(field);
-
+VOID_ECL_LOAD_HEADER(field);
 
 #endif

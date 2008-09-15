@@ -77,7 +77,7 @@ struct enkf_config_struct {
 
 
 enkf_impl_type enkf_config_impl_type(const enkf_config_type *enkf_config, const char * ecl_kw_name) {
-  enkf_impl_type impl_type;
+  enkf_impl_type impl_type = INVALID;
 
   if (hash_has_key(enkf_config->config_hash , ecl_kw_name)) {
     enkf_config_node_type * node = hash_get(enkf_config->config_hash , ecl_kw_name);
@@ -90,7 +90,7 @@ enkf_impl_type enkf_config_impl_type(const enkf_config_type *enkf_config, const 
 
 
 enkf_var_type enkf_config_var_type(const enkf_config_type *enkf_config, const char * ecl_kw_name) {
-  enkf_var_type var_type;
+  enkf_var_type var_type = invalid;
 
   if (hash_has_key(enkf_config->config_hash , ecl_kw_name)) {
     enkf_config_node_type * node = hash_get(enkf_config->config_hash , ecl_kw_name);
@@ -478,6 +478,84 @@ static enkf_config_type * enkf_config_alloc_empty(bool fmt_file ,
 }
 
 
+
+void enkf_config_add_type(enkf_config_type * enkf_config , 
+			  const char    * key      , 
+			  enkf_var_type enkf_type  , 
+			  enkf_impl_type impl_type , 
+			  const char   * enkf_outfile  , 
+			  const char   * enkf_infile ,  
+			  const void   * data) {
+
+  if (enkf_config_has_key(enkf_config , key)) 
+    util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
+  
+  {
+    config_free_ftype * freef = NULL;
+    switch(impl_type) {
+    case(FIELD):
+      freef             = field_config_free__;
+      break;
+    case(MULTZ):
+      freef             = multz_config_free__;
+      break;
+    case(RELPERM):
+      freef             = relperm_config_free__;
+      break;
+    case(WELL):
+      freef             = well_config_free__;
+      break;
+    case(MULTFLT):
+      freef             = multflt_config_free__;
+      break;
+    case(EQUIL):
+      freef             = equil_config_free__;
+      break;
+    case(STATIC):
+      freef             = NULL; 
+      break;
+    case(GEN_KW):
+      freef             = gen_kw_config_free__;
+      break;
+    case(SUMMARY):
+      freef             = summary_config_free__;
+      break;
+    case(HAVANA_FAULT):
+      freef             = havana_fault_config_free__;
+      break;
+    case(GEN_DATA):
+      freef             = gen_data_config_free__;
+      break;
+    case(GEN_PARAM):
+      freef             = gen_param_config_free__;
+      break;
+    default:
+      util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
+    }
+    
+    {
+      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , enkf_outfile , enkf_infile , data , freef);
+      hash_insert_hash_owned_ref(enkf_config->config_hash , key , node , enkf_config_node_free__);
+    }
+  }
+}
+
+
+void enkf_config_add_well(enkf_config_type * enkf_config , const char *well_name , int size, const char ** var_list) {
+  enkf_config_add_type(enkf_config , well_name , ecl_summary , WELL , NULL , NULL , well_config_alloc(well_name , size , var_list));
+}
+
+
+void enkf_config_add_gen_kw(enkf_config_type * enkf_config , const char * config_file) {
+  enkf_config_add_type(enkf_config , "gen_kw" , parameter , GEN_KW , NULL , NULL , gen_kw_config_fscanf_alloc(config_file , NULL));
+}
+
+
+
+
+
+
+
 const stringlist_type * enkf_config_get_forward_model(const enkf_config_type * config) {
   return config->forward_model;
 }
@@ -488,6 +566,9 @@ void enkf_config_set_forward_model(enkf_config_type * config , const char  ** fo
 
   config->forward_model = stringlist_alloc_argv_copy(forward_model , forward_model_length);
 }
+
+
+
 
 
 #define __assert_not_null(p , t , OK) if (p == NULL ) { fprintf(stderr,"The key:%s must be set.\n",t); OK = false; }
@@ -691,7 +772,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		else
 		  ecl_template = NULL;
 		
-		enkf_config_add_type(enkf_config , key , parameter , GEN_PARAM , ecl_file , gen_param_config_alloc( init_fmt , ecl_template ));
+		enkf_config_add_type(enkf_config , key , parameter , GEN_PARAM , ecl_file , NULL , gen_param_config_alloc( init_fmt , ecl_template ));
 	      }
 	      break;
 	    case(MULTZ):
@@ -706,7 +787,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		  util_abort("%s must add grid prior to adding MULTZ - aborting \n",__func__);
 
 		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
-		enkf_config_add_type(enkf_config , key , parameter , MULTZ , ecl_file , multz_config_fscanf_alloc(config_file , nx , ny , nz));
+		enkf_config_add_type(enkf_config , key , parameter , MULTZ , ecl_file , NULL , multz_config_fscanf_alloc(config_file , nx , ny , nz));
 	      }
 	      break;
 	    case(RELPERM):
@@ -715,7 +796,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * ecl_file    = token_list[2];
 		char       * config_file = token_list[3];
 		char       * table_file  = token_list[4];
-		enkf_config_add_type(enkf_config, key,parameter, RELPERM, ecl_file, relperm_config_fscanf_alloc(config_file,table_file));
+		enkf_config_add_type(enkf_config, key,parameter, RELPERM, ecl_file, NULL , relperm_config_fscanf_alloc(config_file,table_file));
 	      }
 	      break;
 	    case(MULTFLT):
@@ -724,7 +805,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * key         = token_list[1];
 		const char * ecl_file    = token_list[2];
 		char       * config_file = token_list[3];
-		enkf_config_add_type(enkf_config , key , parameter , MULTFLT , ecl_file , multflt_config_fscanf_alloc(config_file));
+		enkf_config_add_type(enkf_config , key , parameter , MULTFLT , ecl_file , NULL , multflt_config_fscanf_alloc(config_file));
 	      }
 	      break;
 	    case(HAVANA_FAULT):
@@ -732,7 +813,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      {
 		const char * key         = token_list[1];
 		const char * config_file = token_list[2];
-		enkf_config_add_type(enkf_config , key , parameter , HAVANA_FAULT , NULL , havana_fault_config_fscanf_alloc(config_file));
+		enkf_config_add_type(enkf_config , key , parameter , HAVANA_FAULT , NULL , NULL , havana_fault_config_fscanf_alloc(config_file));
 	      }
 	      break;
 	    case(EQUIL):
@@ -741,7 +822,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * key         = token_list[1];
 		const char * ecl_file    = token_list[2];
 		char       * config_file = token_list[3];
-		enkf_config_add_type(enkf_config , key , parameter , EQUIL , ecl_file , equil_config_fscanf_alloc(config_file));
+		enkf_config_add_type(enkf_config , key , parameter , EQUIL , ecl_file , NULL , equil_config_fscanf_alloc(config_file));
 	      }
 	      break;
 	    case(FIELD):
@@ -756,14 +837,14 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		
 		ecl_grid_get_dims(enkf_config->grid , &nx , &ny , &nz , &active_size);
 		if (strcmp(var_type_string , "DYNAMIC") == 0)
-		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , field_config_alloc_dynamic(key , enkf_config->grid));
+		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , NULL , NULL , field_config_alloc_dynamic(key , enkf_config->grid));
 		else if (strcmp(var_type_string , "PARAMETER") == 0) {
 		  ASSERT_TOKENS("FIELD" , active_tokens , 5);
 		  {
 		    const char * ecl_file = token_list[3];
 		    int init_mode;
 		    if (util_sscanf_int(token_list[4] , &init_mode)) 
-		      enkf_config_add_type(enkf_config , key , parameter   , FIELD , ecl_file , field_config_alloc_parameter(key , 
+		      enkf_config_add_type(enkf_config , key , parameter   , FIELD , ecl_file , NULL , field_config_alloc_parameter(key , 
 															     enkf_config->grid,
 															     0 , init_mode , active_tokens - 5 , (const char **) &token_list[5]));
 		    else 
@@ -779,10 +860,10 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      break;
 	    case(SUMMARY):
 	      ASSERT_TOKENS("SUMMARY" , active_tokens , 2);
-	      enkf_config_add_type(enkf_config , token_list[1] , ecl_summary , SUMMARY , NULL , summary_config_alloc(active_tokens - 2 , (const char **) &token_list[2]));
+	      enkf_config_add_type(enkf_config , token_list[1] , ecl_summary , SUMMARY , NULL , NULL , summary_config_alloc(active_tokens - 2 , (const char **) &token_list[2]));
 	      break;
 	    case(GEN_DATA):
-	      enkf_config_add_type(enkf_config , token_list[1] , ecl_restart , GEN_DATA , NULL , gen_data_config_fscanf_alloc(token_list[2]));
+	      enkf_config_add_type(enkf_config , token_list[1] , ecl_restart , GEN_DATA , NULL , NULL , gen_data_config_fscanf_alloc(token_list[2]));
 	      break;
 	    case(GEN_KW):
 	      ASSERT_TOKENS("GEN_KW" , active_tokens , 4);
@@ -791,7 +872,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		const char * template_file    = token_list[2];
 		const char * target_file      = token_list[3];
 		const char * config_file      = token_list[4];
-		enkf_config_add_type(enkf_config , key , parameter , GEN_KW , target_file , gen_kw_config_fscanf_alloc(config_file , template_file));
+		enkf_config_add_type(enkf_config , key , parameter , GEN_KW , target_file , NULL , gen_kw_config_fscanf_alloc(config_file , template_file));
 	      }
 	      break;
 	    default:
@@ -815,83 +896,7 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 
 
 
-void enkf_config_add_well(enkf_config_type * enkf_config , const char *well_name , int size, const char ** var_list) {
-  enkf_config_add_type(enkf_config , well_name , ecl_summary , WELL , NULL , well_config_alloc(well_name , size , var_list));
-}
 
-
-void enkf_config_add_gen_kw(enkf_config_type * enkf_config , const char * config_file) {
-  enkf_config_add_type(enkf_config , "gen_kw" , parameter , GEN_KW , NULL , gen_kw_config_fscanf_alloc(config_file , NULL));
-}
-
-
-
-
-void enkf_config_add_type(enkf_config_type * enkf_config , 
-		       const char    * key      , 
-		       enkf_var_type enkf_type  , 
-		       enkf_impl_type impl_type , 
-		       const char   * ecl_file  , 
-		       const void   * data) {
-
-  if (enkf_config_has_key(enkf_config , key)) 
-    util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
-  
-  {
-    config_free_ftype * freef = NULL;
-    switch(impl_type) {
-    case(FIELD):
-      freef             = field_config_free__;
-      break;
-    case(MULTZ):
-      freef             = multz_config_free__;
-      break;
-    case(RELPERM):
-      freef             = relperm_config_free__;
-      break;
-    case(WELL):
-      freef             = well_config_free__;
-      break;
-    case(MULTFLT):
-      freef             = multflt_config_free__;
-      break;
-    case(EQUIL):
-      freef             = equil_config_free__;
-      break;
-    case(STATIC):
-      freef             = NULL; 
-      break;
-    case(GEN_KW):
-      freef             = gen_kw_config_free__;
-      break;
-    case(SUMMARY):
-      freef             = summary_config_free__;
-      break;
-    case(HAVANA_FAULT):
-      freef             = havana_fault_config_free__;
-      break;
-    case(GEN_DATA):
-      freef             = gen_data_config_free__;
-      break;
-    case(GEN_PARAM):
-      freef             = gen_param_config_free__;
-      break;
-    default:
-      util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
-    }
-    
-    {
-      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , ecl_file , data , freef);
-      hash_insert_hash_owned_ref(enkf_config->config_hash , key , node , enkf_config_node_free__);
-    }
-  }
-}
-
-
-
-void enkf_config_add_field_config(enkf_config_type * enkf_config) {
-  
-}
 
 
 const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * ens, const char * key) {

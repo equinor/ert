@@ -136,8 +136,8 @@ field_file_format_type field_config_manual_file_type(const char * prompt , bool 
   do {
     int_file_type = util_scanf_int("" , 2);
     if (!field_config_valid_file_type(int_file_type, import))
-      int_file_type = unknown_file;
-  } while(int_file_type == unknown_file);
+      int_file_type = undefined_format;
+  } while(int_file_type == undefined_format);
   return int_file_type;
 }
 
@@ -174,7 +174,7 @@ field_file_format_type field_config_guess_file_type(const char * filename , bool
   else if (ecl_kw_is_grdecl_file(stream))  /* This is the weakest test - and should be last in a cascading if / else hierarchy. */
     file_type = ecl_grdecl_file;
   else 
-    file_type = unknown_file;              /* MUST Check on this return value */
+    file_type = undefined_format;              /* MUST Check on this return value */
 
   fclose(stream);
   return file_type;
@@ -192,18 +192,15 @@ field_file_format_type field_config_get_import_format(const field_config_type * 
 
 
 
-static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , const ecl_grid_type * ecl_grid) {
+static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , const ecl_grid_type * ecl_grid , field_file_format_type import_format , field_file_format_type export_format) {
   field_config_type *config = util_malloc(sizeof *config, __func__);
   
   /*
     Observe that size is the number of *ACTIVCE* cells,
     and generally *not* equal to nx*ny*nz.
   */
-  config->export_format        = ecl_kw_file_all_cells;     /* Hardcoded for e.g. permeability .*/
-  config->import_format        = ecl_kw_file_active_cells;  /* Hardcoded for e.g. pressure - come on is this ugly? */
-  /*
-    config->ecl_export_format        = ecl_grdecl_format; 
-  */
+  config->export_format = export_format;
+  config->import_format = import_format; 
   
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
@@ -297,17 +294,22 @@ const bool * field_config_get_iactive(const field_config_type * config) {
 
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid);
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , undefined_format);
   config->logmode           = 0;
   config->init_type         = none;
   config->export_format     = ecl_kw_file_active_cells;
   return config;
 }
 
+/*
+field_config_type * field_config_alloc_general(const char * ecl_kw_name , const ecl_grid_type * ecl_grid) {
+  
+}
+*/
 
 
 field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, const ecl_grid_type * ecl_grid) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid);
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , undefined_format);
   config->logmode            = 0;
   config->init_type          = none;
   return config;
@@ -317,7 +319,7 @@ field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_nam
 
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
 field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , int logmode , field_init_type init_type , int config_len , const char ** config_files) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid);
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , ecl_kw_file_all_cells);
   config->logmode   = logmode;
   config->init_type = init_type;
   if (init_type == none) {

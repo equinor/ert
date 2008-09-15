@@ -327,6 +327,7 @@ static void member_config_free(member_config_type * member_config) {
 }
 
 
+
 static member_config_type * member_config_alloc(int iens , lock_mode_type lock_mode , const char * lock_path , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , ecl_store_enum ecl_store) {
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   
@@ -338,13 +339,13 @@ static member_config_type * member_config_alloc(int iens , lock_mode_type lock_m
   member_config->run_path 	= NULL;
   member_config->eclbase  	= NULL;
   member_config->ecl_store_path = NULL;
-  member_config_set_eclbase(member_config  , path_fmt_alloc_path(eclbase_fmt, true , member_config->iens));
+  member_config_set_eclbase(member_config  , path_fmt_alloc_path(eclbase_fmt, false , member_config->iens));
   {
-    char * run_path = path_fmt_alloc_path(run_path_fmt , true , member_config->iens);
+    char * run_path = path_fmt_alloc_path(run_path_fmt , false , member_config->iens);
     member_config_set_run_path(member_config , lock_mode , lock_path , run_path);
     free(run_path);
   }
-  if (ecl_store_path_fmt != NULL) member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , true , member_config->iens));
+  if (ecl_store_path_fmt != NULL) member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , member_config->iens));
 
   member_config_set_ecl_store(member_config , ecl_store);
 
@@ -497,7 +498,7 @@ enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
   return new;
 */
   util_abort("%s: not implemented \n",__func__);
-return NULL;
+  return NULL;
 }
 
 
@@ -556,7 +557,6 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
   int first_report;
 
   if (my_config->ecl_store != store_none) {
-
     util_make_path(my_config->ecl_store_path);
     if (my_config->ecl_store & store_data) {
       char * data_target = ecl_util_alloc_filename(my_config->ecl_store_path , my_config->eclbase , ecl_data_file , true , -1);
@@ -608,139 +608,6 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
   }
 }
 
-/**
-   This function iterates over all the keywords in the ecl_block which
-   is input to function. As it iterates it: 
-   
-   1. It (re)builds the restart_kw_list() object, to be sure that
-      we can output these keywords in the correct order.
-
-   2. If the enkf_state does not have a node with the particular kw,
-      it is classified as a static keyword, and added to the
-      enkf_state object.
-
-   3. The actual data is loaded by calling the enkf_node_load_ecl()
-      function.
-*/
-
-
-
-static void enkf_state_load_ecl_restart_block(enkf_state_type * enkf_state , const ecl_block_type *ecl_block) {
-  restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(ecl_block);
-  int report_step 		       = ecl_block_get_report_nr(ecl_block);
-  const char * block_kw 	       = restart_kw_list_get_first(block_kw_list);
-  const member_config_type * my_config = enkf_state->my_config;
-  shared_info_type       * shared_info = enkf_state->shared_info;
-
-  restart_kw_list_reset(enkf_state->restart_kw_list);
-  while (block_kw != NULL) {
-    char * kw = util_alloc_string_copy(block_kw);
-    enkf_impl_type impl_type;
-    ecl_util_escape_kw(kw);
-
-    if (enkf_config_has_key(enkf_state->config , kw)) {
-      const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
-      impl_type = enkf_config_node_get_impl_type(config_node);
-    } else
-      impl_type = STATIC;
-    
-
-    if (impl_type == FIELD) {
-      restart_kw_list_add(enkf_state->restart_kw_list , kw);
-      /* It is a dynamic restart kw like PRES or SGAS */
-      {
-	enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw);
-	enkf_node_ecl_load_field(enkf_node , ecl_block_iget_kw(ecl_block , block_kw , 0) , report_step);
-      }
-    } else if (impl_type == STATIC) {
-      /* It is a static kw like INTEHEAD or SCON */
-      if (enkf_config_include_static_kw(enkf_state->config , kw)) {
-	restart_kw_list_add(enkf_state->restart_kw_list , kw);
-	if (!enkf_config_has_key(enkf_state->config , kw)) 
-	  enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL);
-	
-	if (!enkf_state_has_node(enkf_state , kw)) {
-	  const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
-	  enkf_state_add_node(enkf_state , kw , config_node); 
-	}
-	
-	{
-	  enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
-	  ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
-	  ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
-	  enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(ecl_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , report_step);
-	  /*
-	    Static kewyords go straight out ....
-	  */
-	  enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
-	  enkf_node_free_data(enkf_node);
-	}
-      } 
-    } else
-      util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
-    
-    free(kw);
-    block_kw = restart_kw_list_get_next(block_kw_list);
-  }
-  enkf_fs_fwrite_restart_kw_list(shared_info->fs , report_step , my_config->iens, enkf_state->restart_kw_list);
-}
-
-
-
-
-void enkf_state_load_ecl_restart(enkf_state_type * enkf_state ,  bool unified , int report_step) {
-  bool at_eof;
-  member_config_type * my_config = enkf_state->my_config;
-  const bool fmt_file  = enkf_state_fmt_file(enkf_state);
-  bool endian_swap     = enkf_config_get_endian_swap(enkf_state->config);
-  ecl_block_type       * ecl_block;
-  char * restart_file  = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
-
-  fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap);
-  
-  if (unified)
-    ecl_block_fseek(report_step , fmt_file , true , fortio);
-  
-  ecl_block = ecl_block_alloc(report_step , fmt_file , endian_swap);
-  ecl_block_fread(ecl_block , fortio , &at_eof);
-  fortio_fclose(fortio);
-  enkf_state_load_ecl_restart_block(enkf_state , ecl_block);
-  ecl_block_free(ecl_block);
-  free(restart_file);
-}
-
-
-
-
-
-
-   
-
-static void enkf_state_apply_ecl_load(enkf_state_type * enkf_state, int report_step) {
-  const member_config_type * my_config = enkf_state->my_config;
-  const bool fmt_file = enkf_state_fmt_file(enkf_state);
-  ecl_sum_type * ecl_sum;
-  char * summary_file     = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
-  char * header_file      = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
-  
-  ecl_sum = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
-  {
-    const int num_keys = hash_get_size(enkf_state->node_hash);
-    char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
-    int ikey;
-    for (ikey= 0; ikey < num_keys; ikey++) {
-      enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-      if (enkf_node_has_func(enkf_node , ecl_load_func)) 
-	enkf_node_ecl_load(enkf_node , my_config->run_path , my_config->eclbase , ecl_sum , NULL , report_step);
-      
-    }                                                                      
-    util_free_stringlist(key_list , num_keys);
-  }
-  
-  ecl_sum_free(ecl_sum);
-  free(summary_file);
-  free(header_file);
-}
 
 
 /**
@@ -771,22 +638,153 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
 
 
 
-/*
-  Loading of ECLIPSE results goes like this:
 
-  1. First the restart file is loaded, and the various ecl_kw
-     instances are distributed depending on whether they are static
-     (i.e INTEHEAD and SCONS, ...) or dynamic (i.e. PRESSURE, SWAT ,
-     ...). 
+/**
+   This function loads results from the forward run (i.e. ECLIPSE
+   ...). This process is divided in the following steps:
 
-  2. Then the function enkf_state_apply_ecl_load() is called; this
-     function iterates over all the nodes in the enkf_state(), and
-     calls their respective load_ecl() functions (if they have
-     one). 
+   1. Load an ecl_block instance from the restart file, and a ecl_sum
+      instance from the summary file.
+
+   2. Iterate through the ecl_block instance and:
+
+      * Build a restart_kw_list instance.
+      * Store all static keywords right away.
+
+   3. Iterating through all the nodes, and call their _ecl_load
+      function (through enkf_node_ecl_load).
 */
 
 
+static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , int mask , int report_step) {
+  member_config_type * my_config   = enkf_state->my_config;
+  shared_info_type   * shared_info = enkf_state->shared_info;
+  const bool fmt_file  = enkf_state_fmt_file(enkf_state);
+  bool endian_swap     = enkf_config_get_endian_swap(enkf_state->config);
+  ecl_block_type * restart_block = NULL;
+  ecl_sum_type   * summary       = NULL;
+  
+  
+  /**
+     Loading the restart block.
+  */
+  if (mask & ecl_restart) {
+    char * restart_file  = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
+    fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap);
+    
+    if (unified)
+      ecl_block_fseek(report_step , fmt_file , true , fortio);
+    
+    restart_block = ecl_block_alloc(report_step , fmt_file , endian_swap);
+    ecl_block_fread(restart_block , fortio , NULL);
+    fortio_fclose(fortio);
+    free(restart_file);
+  }
+  
+  
+  /**  
+     Loading the summary information.
+  */
+  if (mask & ecl_summary) {
+    char * summary_file     = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
+    char * header_file      = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
+    summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
+    free(summary_file);
+    free(header_file);
+  } 
+  
+  /*****************************************************************/
+  
+  
+  /**
+     Iterating through the restart block:
+     
+      1. Build up enkf_state->restart_kw_list.
+      2. Send static keywords straight out.
+  */
+  
+  {
+    restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(restart_block);
+    const char * block_kw 	         = restart_kw_list_get_first(block_kw_list);
+    
+    restart_kw_list_reset(enkf_state->restart_kw_list);
+    while (block_kw != NULL) {
+      char * kw = util_alloc_string_copy(block_kw);
+      enkf_impl_type impl_type;
+      ecl_util_escape_kw(kw);
+      
+      if (enkf_config_has_key(enkf_state->config , kw)) {
+	const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+	impl_type = enkf_config_node_get_impl_type(config_node);
+      } else
+	impl_type = STATIC;
+      
 
+      if (impl_type == FIELD) 
+	restart_kw_list_add(enkf_state->restart_kw_list , kw);
+      else if (impl_type == STATIC) {
+	/* It is a static kw like INTEHEAD or SCON */
+	if (enkf_config_include_static_kw(enkf_state->config , kw)) {
+	  restart_kw_list_add(enkf_state->restart_kw_list , kw);
+	  if (!enkf_config_has_key(enkf_state->config , kw)) 
+	    enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL);
+	  
+	  if (!enkf_state_has_node(enkf_state , kw)) {
+	    const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+	    enkf_state_add_node(enkf_state , kw , config_node); 
+	  }
+	  
+	  {
+	    enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
+	    ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
+	    ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
+	    enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(restart_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , report_step);
+	    /*
+	      Static kewyords go straight out ....
+	    */
+	    enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
+	    enkf_node_free_data(enkf_node);
+	  }
+	} 
+      } else
+	util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
+      
+      free(kw);
+      block_kw = restart_kw_list_get_next(block_kw_list);
+    }
+  }
+  
+  /******************************************************************/
+  /** Starting on the enkf_node_ecl_load() function calls. This is
+      where the actual loading (apart from static keywords) is done.*/
+  
+  {
+    const int num_keys = hash_get_size(enkf_state->node_hash);
+    char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
+    int ikey;
+    for (ikey= 0; ikey < num_keys; ikey++) {
+      enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
+      if (enkf_node_has_func(enkf_node , ecl_load_func))
+	if (enkf_node_include_type(enkf_node , mask))
+	  enkf_node_ecl_load(enkf_node , my_config->run_path , my_config->eclbase , summary , restart_block , report_step);
+      
+    }                                                                      
+    util_free_stringlist(key_list , num_keys);
+  }
+  
+
+  /*****************************************************************/
+  /* Cleaning up */
+
+  if (summary != NULL) ecl_sum_free( summary );
+  if (restart_block != NULL) ecl_block_free( restart_block );
+}
+
+
+
+/**
+   The actual loading is done by the function enkf_state_ecl_load2().
+*/
 void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2) {
   enkf_state_ecl_store(enkf_state , report_step1 , report_step2);
 
@@ -796,16 +794,16 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
   */
 
   if (report_step1 == 0) {
-    enkf_state_load_ecl_restart(enkf_state , unified , report_step1);
-    enkf_state_fwrite(enkf_state , ecl_restart , report_step1 , analyzed);
+    enkf_state_ecl_load2(enkf_state , unified , ecl_restart , 0);
+    enkf_state_fwrite(enkf_state , ecl_restart , 0 , analyzed);
   }
-  enkf_state_load_ecl_restart(enkf_state , unified , report_step2);
-  enkf_state_apply_ecl_load(enkf_state , report_step2);
+  enkf_state_ecl_load2(enkf_state , unified , ecl_restart + ecl_summary , report_step2);
   
   /* Burde ha et eget measure flag */
   enkf_state_fwrite(enkf_state , ecl_restart + ecl_summary , report_step2 , forecast);
   enkf_state_measure(enkf_state , enkf_obs);  
 }
+
 
 
 /**

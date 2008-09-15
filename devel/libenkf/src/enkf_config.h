@@ -36,7 +36,6 @@ enkf_config_type  * enkf_config_alloc(int ens_size            ,
 const stringlist_type * enkf_config_get_forward_model(const enkf_config_type *);
 void                enkf_config_add_well(enkf_config_type * , const char * , int , const char ** );
 void                enkf_config_add_gen_kw(enkf_config_type * , const char * );
-void                enkf_config_add_type(enkf_config_type * , const char * , enkf_var_type , enkf_impl_type , const char * , const void *);
 time_t              enkf_config_get_start_date(const enkf_config_type * );
 const        char * enkf_config_get_obs_config_file(const enkf_config_type * );
 const        char * enkf_config_get_ens_path(const enkf_config_type * config);

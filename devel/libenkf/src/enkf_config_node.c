@@ -11,8 +11,9 @@ struct enkf_config_node_struct {
   enkf_impl_type       impl_type;
   enkf_var_type        var_type; 
   char               * key;
-  char 		     * eclfile;          
-  void               * data; /* This points to the config object of the actual implementation. */
+  char               * enkf_infile;    /* Name of file which is written by forward model, and read by EnKF (not in use yet).*/
+  char 		     * enkf_outfile;   /* Name of file which is written by EnKF, and read by the forward model. */
+  void               * data;           /* This points to the config object of the actual implementation. */
 };
 
 
@@ -20,17 +21,21 @@ struct enkf_config_node_struct {
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_type,
 					       enkf_impl_type             impl_type,
 					       const char               * key , 
-					       const char               * eclfile , 
+					       const char               * enkf_outfile , 
+					       const char               * enkf_infile  , 
 					       const void               * data, 
 					       config_free_ftype        * freef) {
   
-  enkf_config_node_type * node = malloc( sizeof *node);
-  node->data       = (void *) data;
-  node->freef      = freef;
-  node->var_type   = var_type;
-  node->impl_type  = impl_type;
-  node->key        = util_alloc_string_copy(key);
-  node->eclfile    = util_alloc_string_copy(eclfile);
+  enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
+
+  node->data       	= (void *) data;
+  node->freef      	= freef;
+  node->var_type   	= var_type;
+  node->impl_type  	= impl_type;
+  node->key        	= util_alloc_string_copy(key);
+  node->enkf_outfile    = util_alloc_string_copy(enkf_outfile);
+  node->enkf_infile     = util_alloc_string_copy(enkf_infile);
+  node->enkf_infile     = NULL;
 
   return node;
 }
@@ -38,7 +43,8 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 
 void enkf_config_node_free(enkf_config_node_type * node) {
   if (node->freef   != NULL) node->freef(node->data);
-  util_safe_free(node->eclfile);
+  util_safe_free(node->enkf_outfile);
+  util_safe_free(node->enkf_infile);
   free(node->key);
   free(node);
 }
@@ -58,6 +64,7 @@ bool enkf_config_node_include_type(const enkf_config_node_type * config_node , i
     return true;
   else
     return false;
+
 }
 
 
@@ -65,12 +72,13 @@ enkf_impl_type enkf_config_node_get_impl_type(const enkf_config_node_type *confi
   return config_node->impl_type; 
 }
 
+
 enkf_var_type enkf_config_node_get_var_type(const enkf_config_node_type *config_node) { 
   return config_node->var_type; 
 }
 
 
-const char * enkf_config_node_get_eclfile_ref(const enkf_config_node_type * config_node) { return config_node->eclfile; }
+const char * enkf_config_node_get_outfile_ref(const enkf_config_node_type * config_node) { return config_node->enkf_outfile; }
 const char * enkf_config_node_get_key_ref(const enkf_config_node_type * config_node) { return config_node->key; }
 
 

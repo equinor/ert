@@ -235,7 +235,7 @@ const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) 
 }
 
 
-const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_eclfile_ref(node->config); }
+const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_outfile_ref(node->config); }
 
 
 
@@ -430,7 +430,7 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
 void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
   FUNC_ASSERT(enkf_node->ecl_write);
   {
-    const char * node_eclfile = enkf_config_node_get_eclfile_ref(enkf_node->config);
+    const char * node_eclfile = enkf_config_node_get_outfile_ref(enkf_node->config);
     if (node_eclfile != NULL) {
       char * target_file = util_alloc_full_path(path , node_eclfile);
       enkf_node->ecl_write(enkf_node->data , target_file);
@@ -811,6 +811,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->realloc_data = field_realloc_data__;
     node->alloc        = field_alloc__;
     node->ecl_write    = field_ecl_write__; /* This is the function suitable for writing PORO / PERM +++ . Pressure ++ uses a field_xxx function directly. */
+    node->ecl_load     = field_ecl_load__;  
     node->fread_f      = field_fread__;
     node->fwrite_f     = field_fwrite__;
     node->copyc        = field_copyc__;

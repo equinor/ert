@@ -624,6 +624,7 @@ int field_serialize(const field_type *field , int internal_offset , size_t seria
   const bool              *iactive    = field_config_get_iactive(config);
   int elements_added;
 
+
   elements_added = enkf_util_serializeII(field->data , ecl_type , iactive , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   return elements_added;
 }
@@ -864,8 +865,8 @@ void field_fload_ecl_kw(field_type * field , const char * filename , bool endian
   if (field_config_get_volume(field->config) == ecl_kw_get_size(ecl_kw)) 
     field_import3D(field , ecl_kw_get_data_ref(ecl_kw) , false , ecl_kw_get_type(ecl_kw));
   else 
-    /* Keyword is already packed - e.g. from a restart file. 
-       size is verified in the _copy function.*/
+    /* Keyword is already packed - e.g. from a restart file. Size is
+       verified in the _copy function.*/
     field_copy_ecl_kw_data(field , ecl_kw);
   
   ecl_kw_free(ecl_kw);
@@ -918,7 +919,7 @@ void field_fload_typed(field_type * field , const char * filename ,  bool endian
 
 void field_fload(field_type * field , const char * filename , bool endian_flip) {
   field_file_format_type file_type = field_config_guess_file_type(filename , endian_flip);
-  if (file_type == unknown_file) file_type = field_config_manual_file_type(filename , true);
+  if (file_type == undefined_format) file_type = field_config_manual_file_type(filename , true);
   field_fload_typed(field , filename , endian_flip , file_type);
 }
 
@@ -983,17 +984,18 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
    and not from a file.
 */
 
-
 void field_ecl_load(field_type * field , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
   DEBUG_ASSERT(field)
   {
     field_file_format_type import_format = field_config_get_import_format(field->config);
-    if ((import_format == ecl_kw_file_all_cells) || (import_format == ecl_kw_file_active_cells)) {
-      
+    if (import_format == ecl_restart_block) {
+      ecl_kw_type * field_kw = ecl_block_iget_kw(restart_block , field_config_get_ecl_kw_name(field->config) , 0);
+      field_copy_ecl_kw_data(field , field_kw);
     } else 
-      util_abort("%s: sorry import format:%d not supported for fields\n",__func__);
+      util_abort("%s: sorry import format:%d not supported for %s.\n",__func__,import_format , __func__);
   }
 }
+
 
 void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
   field_config_get_dims(field->config , nx , ny ,nz);
@@ -1015,6 +1017,7 @@ VOID_FREE(field)
 VOID_FREE_DATA(field)
 VOID_REALLOC_DATA(field)
 VOID_ECL_WRITE (field)
+VOID_ECL_LOAD(field)
 VOID_FWRITE (field)
 VOID_FREAD  (field)
 VOID_COPYC     (field)
