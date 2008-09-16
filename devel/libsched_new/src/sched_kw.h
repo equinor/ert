@@ -39,7 +39,7 @@ void             sched_kw_free(sched_kw_type *);
 void             sched_kw_fwrite(sched_kw_type *, FILE *);
 sched_kw_type *  sched_kw_fread_alloc(FILE *, bool * at_eof);
 
-sched_kw_type ** sched_kw_report_step_split_alloc(const sched_kw_type *, int *);
+sched_kw_type ** sched_kw_restart_file_split_alloc(const sched_kw_type *, int *);
 time_t           sched_kw_get_new_time(const sched_kw_type *, time_t);
               
 #endif

@@ -100,6 +100,7 @@ void sched_kw_wconhist_free(sched_kw_wconhist_type * kw) {
 }
 
 
+
 void sched_kw_wconhist_fwrite(const sched_kw_wconhist_type *kw , FILE *stream) {
   {
     int wconhist_lines = list_get_size(kw->rate_list);
@@ -128,43 +129,6 @@ sched_kw_wconhist_type * sched_kw_wconhist_fread_alloc(FILE *stream) {
   return kw;
 }
   
-
-
-/*
-void sched_kw_wconhist_fprintf_rates(const sched_kw_wconhist_type * kw , const char * _obs_path , const char * obs_file , int current_date_nr) {
-  char *obs_path = malloc(strlen(_obs_path) + 6);
-  char *file     = malloc(strlen(_obs_path) + strlen(obs_file) + 7);
-  FILE *stream;
-  sprintf(obs_path , "%s/%04d" , _obs_path , current_date_nr);
-  printf("%04d",current_date_nr); fflush(stdout);
-  sprintf(file , "%s/%04d/%s" , _obs_path , current_date_nr , obs_file);
-  util_make_path(obs_path);
-  stream = util_fopen(file , "w");
-  {
-    list_node_type *rate_node = list_get_head(kw->rate_list);
-    while (rate_node != NULL) {
-      const rate_type * rate = list_node_value_ptr(rate_node);
-      rate_sched_fprintf_rates(rate , stream);
-      rate_node = list_node_get_next(rate_node);
-    }
-  }
-  fclose(stream);
-  free(file);
-  printf("\b\b\b\b"); fflush(stdout);
-}
-
-
-
-void sched_kw_wconhist_make_history(const sched_kw_wconhist_type * kw , int time_step , history_type * history) {
-  list_node_type *rate_node = list_get_head(kw->rate_list);
-  while (rate_node != NULL) {
-    const rate_type * rate = list_node_value_ptr(rate_node);
-    history_add_rate(history , time_step , rate);
-    rate_node = list_node_get_next(rate_node);
-  }
-}
-*/
-
 
 
 /***********************************************************************/
