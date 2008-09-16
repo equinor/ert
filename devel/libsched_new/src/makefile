@@ -3,10 +3,6 @@ MFLAG = m64
 CC = gcc
 AR = ar
 
-######
-# HACK
-LIBSCHED_HOME     = /h/jgv/Code/EnKF/libsched_new
-######
 
 
 #################################################################

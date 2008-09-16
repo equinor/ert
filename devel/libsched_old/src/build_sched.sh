@@ -1,0 +1,1 @@
+gcc -Wall -g -I../../libecl/include -I./ -I../../libutil/include -I../../libhash/include -m32 sched_file.c sched_util.c sched_kw_dates.c sched_kw_untyped.c sched_kw_wconhist.c sched_kw_compdat.c sched_kw.c -L../../libutil/lib -L../../libecl/lib -L../../libhash/lib -lutil -lhash -lecl -lm
