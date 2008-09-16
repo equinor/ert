@@ -850,8 +850,12 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		    else 
 		      util_abort("%s: init mode must be valid int - aborting \n",__func__);
 		  }
-		} else 
-		  util_abort("%s : aborting \n",__func__);
+		} else if (strcmp(var_type_string , "GENERAL") == 0) {
+		  const char * enkf_outfile = token_list[3];
+		  const char * enkf_infile  = token_list[4];
+		  const char * init_fmt     = token_list[5];
+		  enkf_config_add_type(enkf_config , key , ecl_restart , FIELD , enkf_outfile , enkf_infile , field_config_alloc_general(key , enkf_config->grid , init_fmt));
+		} else util_abort("%s: -- \n",__func__);
 	      }
 	      break;
 	    case(WELL):

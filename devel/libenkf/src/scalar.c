@@ -139,22 +139,22 @@ void scalar_free(scalar_type *scalar) {
 
 
 
-int scalar_deserialize(scalar_type * scalar , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int scalar_deserialize(scalar_type * scalar , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
   const scalar_config_type *config      = scalar->config;
   const bool              *active     = config->active;
   const int                data_size  = scalar_config_get_data_size(config);
-  return enkf_util_deserialize(scalar->data , active , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  return enkf_util_deserializeII(scalar->data , ecl_double_type , active , internal_offset , data_size , serial_size , serial_data , offset , stride);
 }
 
 
 
 
-int scalar_serialize(const scalar_type *scalar , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete) {
+int scalar_serialize(const scalar_type *scalar , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete, serial_state_type * serial_state) {
   const scalar_config_type *config      = scalar->config;
   const bool              *active     = config->active;
   const int                data_size  = scalar_config_get_data_size(config);
   
-  return enkf_util_serialize(scalar->data , active , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  return enkf_util_serializeII(scalar->data , ecl_double_type , active , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
 }
 
 

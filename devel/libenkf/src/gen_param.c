@@ -151,7 +151,7 @@ void gen_param_fread(gen_param_type * gen_param , FILE * stream) {
 
 
 
-int gen_param_serialize(const gen_param_type *gen_param , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete) {
+int gen_param_serialize(const gen_param_type *gen_param , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete, serial_state_type * serial_state) {
   ecl_type_enum ecl_type = gen_param_config_get_ecl_type(gen_param->config);
   const int data_size    = gen_param_config_get_data_size(gen_param->config);
   const bool * iactive   = gen_param_config_get_iactive( gen_param->config );  
@@ -162,7 +162,7 @@ int gen_param_serialize(const gen_param_type *gen_param , int internal_offset , 
 }
 
 
-int gen_param_deserialize(gen_param_type * gen_param , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int gen_param_deserialize(gen_param_type * gen_param , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
   ecl_type_enum ecl_type = gen_param_config_get_ecl_type(gen_param->config);
   const int data_size    = gen_param_config_get_data_size(gen_param->config);
   const bool * iactive   = gen_param_config_get_iactive( gen_param->config );  

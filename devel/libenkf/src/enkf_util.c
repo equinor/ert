@@ -105,6 +105,7 @@ size_t enkf_util_serializeII(const void * __node_data, ecl_type_enum node_type ,
 /*
   Denne maa ta inn type paa node_data.
 */
+/*
 size_t enkf_util_serialize(const double * node_data, const bool * active , size_t node_offset , size_t node_size , double * serial_data , 
 			   size_t serial_size , size_t serial_offset , int serial_stride ,  bool * complete) {
   size_t node_index;
@@ -143,10 +144,17 @@ size_t enkf_util_serialize(const double * node_data, const bool * active , size_
 
   return serial_index;
 }
+*/
 
-
-size_t enkf_util_deserializeII(void * __node_data , ecl_type_enum node_type , const bool * active , size_t node_offset , size_t node_size , size_t node_serial_size , 
-			       const double * serial_data , size_t serial_offset , int serial_stride) {
+size_t enkf_util_deserializeII(void * __node_data      	  , 
+			       ecl_type_enum node_type 	  , 
+			       const bool * active     	  , 
+			       size_t node_offset      	  , 
+			       size_t node_size        	  , 
+			       size_t node_serial_size 	  ,  
+			       const double * serial_data , 
+			       size_t serial_offset       , 
+			       int serial_stride) {
   
   size_t serial_index = 0;
   size_t node_index;
@@ -171,8 +179,14 @@ size_t enkf_util_deserializeII(void * __node_data , ecl_type_enum node_type , co
 
 
 
-size_t enkf_util_deserialize(double * node_data , const bool * active , size_t node_offset , size_t node_size , size_t node_serial_size , 
-			     const double * serial_data , size_t serial_offset , int serial_stride) {
+/*size_t enkf_util_deserialize(double * node_data      	, 
+			     const bool * active     	, 
+			     size_t node_offset      	, 
+			     size_t node_size        	,  
+			     size_t node_serial_size 	,  
+			     const double * serial_data , 
+			     size_t serial_offset       , 
+			     int serial_stride) {
 			     
   size_t serial_index = 0;
   size_t node_index;
@@ -199,7 +213,7 @@ size_t enkf_util_deserialize(double * node_data , const bool * active , size_t n
   
   return new_node_offset;
 }
-
+*/
 
 
 void enkf_util_fread_assert_target_type(FILE * stream , enkf_impl_type target_type) {

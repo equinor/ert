@@ -320,7 +320,7 @@ well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_
 		obs_error_set_block(well_var->error , report1 , report2 , std1 , 0.0  , rel_error , true);
 	      else if (strcmp(error_mode , "RELMIN") == 0) {
 		if (active_tokens >= 8) {
-
+		  
 		  if (sscanf(token_list[7] , "%lg" , &std2) == 1)
 		    obs_error_set_block(well_var->error , report1 , report2 , std1 , std2 , rel_min_abs_error , true);
 		  else 

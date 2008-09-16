@@ -603,7 +603,7 @@ void field_truncate(field_type * field) {
 }
 
 
-int field_deserialize(field_type * field , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int field_deserialize(field_type * field , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset , serial_state_type * serial_state) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
@@ -619,7 +619,7 @@ int field_deserialize(field_type * field , int internal_offset , size_t serial_s
 
 
 
-int field_serialize(const field_type *field , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete) {
+int field_serialize(const field_type *field , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete, serial_state_type * serial_state) {
   const field_config_type *config     = field->config;
   ecl_type_enum ecl_type              = field_config_get_ecl_type(config);
   const int                data_size  = field_config_get_data_size(config);

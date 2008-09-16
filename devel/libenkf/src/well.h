@@ -4,6 +4,7 @@
 #include <ecl_block.h>
 #include <enkf_macros.h>
 #include <enkf_util.h>
+#include <serial_state.h>
 
 typedef struct well_struct well_type;
 

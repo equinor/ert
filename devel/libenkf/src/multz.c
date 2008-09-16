@@ -130,14 +130,14 @@ void multz_free(multz_type *multz) {
 }
 
 
-int multz_serialize(const multz_type *multz , int internal_offset , size_t serial_data_size , double *serial_data , size_t stride , size_t offset, bool * complete) {
+int multz_serialize(const multz_type *multz , int internal_offset , size_t serial_data_size , double *serial_data , size_t stride , size_t offset, bool * complete, serial_state_type * serial_state) {
   DEBUG_ASSERT(multz);
-  return scalar_serialize(multz->scalar , internal_offset , serial_data_size , serial_data , stride , offset , complete);
+  return scalar_serialize(multz->scalar , internal_offset , serial_data_size , serial_data , stride , offset , complete , serial_state);
 }
 
-int multz_deserialize(multz_type *multz , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int multz_deserialize(multz_type *multz , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
   DEBUG_ASSERT(multz);
-  return scalar_deserialize(multz->scalar , internal_offset , serial_size , serial_data , stride , offset);
+  return scalar_deserialize(multz->scalar , internal_offset , serial_size , serial_data , stride , offset , serial_state);
 }
 
 

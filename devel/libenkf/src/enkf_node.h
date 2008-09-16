@@ -26,7 +26,8 @@ typedef int   	      (serialize_ftype)      	(const void * ,  /* Node object    
                                                  double *     ,  /* Serial data             */
                                                  size_t       ,  /* Stride of serial data   */ 
                                                  size_t       ,  /* Offset of serial data   */
-                                                 bool * );       /* Return flag : complete? */
+                                                 bool *       ,  /* Return flag : complete? */
+                                                 serial_state_type *);
 
 
 /* Return value is the updated internal offset  - not relevant if complete*/
@@ -35,7 +36,9 @@ typedef int   	      (deserialize_ftype)       (void *       	, /* Node object  
                                                  size_t       	, /* Serial size (of this node) */
                                                  const double * , /* Serial buffer              */
                                                  size_t         , /* Stride of serial data 	*/
-                                                 size_t );        /* Offset of serial data 	*/   
+                                                 size_t         , /* Offset of serial data 	*/   
+                                                 serial_state_type *); 
+
 
 
 typedef double        (iget_ftype)                      (const void * , int);    /* All obejects should support an iget */

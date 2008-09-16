@@ -6,6 +6,7 @@
 #include <enkf_types.h>
 #include <ecl_block.h>
 #include <ecl_sum.h>
+#include <serial_state.h>
 
 #define CONFIG_STD_FIELDS \
 int data_size;            \
@@ -18,25 +19,9 @@ enkf_var_type var_type;
 #define VOID_CONFIG_FREE_HEADER(prefix)     void prefix ## _config_free__(void *)
 
 /*****************************************************************/
-/*
-#define GET_SERIAL_SIZE(prefix)                                              \
-int prefix ## _config_get_serial_size (const prefix ## _config_type *arg) {  \
-   return arg->serial_size;                                                  \
-}
-#define GET_SERIAL_SIZE_HEADER(prefix)      int prefix ## _config_get_serial_size (const prefix ## _config_type *)
-#define VOID_GET_SERIAL_SIZE(prefix)        int prefix ## _config_get_serial_size__ (const void *void_arg ) { return prefix ## _config_get_serial_size((const prefix ## _config_type *) void_arg); }
-#define VOID_GET_SERIAL_SIZE_HEADER(prefix) int prefix ## _config_get_serial_size__ (const void *)
-*/
-
-/*****************************************************************/
 
 #define GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size (const prefix ## _config_type *arg) { return arg->data_size; }
 #define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *)
-/*
-  #define VOID_GET_DATA_SIZE(prefix)          int prefix ## _config_get_data_size__ (const void *void_arg) { return prefix ## _config_get_data_size((const prefix ## _config_type *) void_arg); }
-  #define VOID_GET_DATA_SIZE_HEADER(prefix)   int prefix ## _config_get_data_size__ (const void *)
-*/
-
 
 /*****************************************************************/
 
@@ -170,19 +155,19 @@ void * prefix ## _copyc__(const void * void_arg) {    \
 
 /*****************************************************************/
 #define VOID_SERIALIZE(prefix)     \
-int prefix ## _serialize__(const void *void_arg, int internal_offset , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool *complete) { \
+int prefix ## _serialize__(const void *void_arg, int internal_offset , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool *complete , serial_state_type * serial_state) { \
    const prefix ## _type  *arg = (const prefix ## _type *) void_arg;       \
-   return prefix ## _serialize (arg , internal_offset , serial_data_size , serial_data , stride , offset , complete);       \
+   return prefix ## _serialize (arg , internal_offset , serial_data_size , serial_data , stride , offset , complete , serial_state);       \
 }
-#define VOID_SERIALIZE_HEADER(prefix) int prefix ## _serialize__(const void *, int , size_t , double *, size_t , size_t , bool *);
+#define VOID_SERIALIZE_HEADER(prefix) int prefix ## _serialize__(const void *, int , size_t , double *, size_t , size_t , bool * , serial_state_type * );
 
 
 #define VOID_DESERIALIZE(prefix)     \
-int prefix ## _deserialize__(void *void_arg, int internal_offset , size_t serial_size , const double *serial_data , size_t stride , size_t offset) { \
+int prefix ## _deserialize__(void *void_arg, int internal_offset , size_t serial_size , const double *serial_data , size_t stride , size_t offset , serial_state_type * serial_state) { \
    prefix ## _type  *arg = (prefix ## _type *) void_arg;       \
-   return prefix ## _deserialize (arg , internal_offset , serial_size , serial_data , stride , offset);       \
+   return prefix ## _deserialize (arg , internal_offset , serial_size , serial_data , stride , offset , serial_state);       \
 }
-#define VOID_DESERIALIZE_HEADER(prefix) int prefix ## _deserialize__(void *, int , size_t , const double *, size_t , size_t);
+#define VOID_DESERIALIZE_HEADER(prefix) int prefix ## _deserialize__(void *, int , size_t , const double *, size_t , size_t , serial_state_type *);
 
 /*****************************************************************/
 #define VOID_INITIALIZE(prefix)     \

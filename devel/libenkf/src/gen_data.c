@@ -214,7 +214,7 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
 }
 
 
-int gen_data_serialize(const gen_data_type *gen_data , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete) {
+int gen_data_serialize(const gen_data_type *gen_data , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete, serial_state_type * serial_state) {
   ecl_type_enum ecl_type = gen_data->ecl_type;
   const int data_size    = gen_data->size;
   int elements_added = 0;
@@ -224,7 +224,7 @@ int gen_data_serialize(const gen_data_type *gen_data , int internal_offset , siz
 }
 
 
-int gen_data_deserialize(gen_data_type * gen_data , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int gen_data_deserialize(gen_data_type * gen_data , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
   ecl_type_enum ecl_type  = gen_data->ecl_type;
   const int data_size     = gen_data->size;
   int new_internal_offset = 0;

@@ -100,21 +100,21 @@ void summary_free(summary_type *summary) {
 
 
 
-int summary_deserialize(const summary_type * summary , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int summary_deserialize(const summary_type * summary , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
   const summary_config_type *config      = summary->config;
   const int                data_size  = summary_config_get_data_size(config);
-
-  return enkf_util_deserialize(&summary->data[internal_offset] , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  
+  return enkf_util_deserializeII(&summary->data[internal_offset] , ecl_double_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
 }
 
 
 
 
-int summary_serialize(const summary_type *summary , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete) {
+int summary_serialize(const summary_type *summary , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete, serial_state_type * serial_state) {
   const summary_config_type *config      = summary->config;
   const int                data_size  = summary_config_get_data_size(config);
   
-  return enkf_util_serialize(summary->data , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  return enkf_util_serializeII(summary->data , ecl_double_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
 }
 
 

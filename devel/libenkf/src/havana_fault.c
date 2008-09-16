@@ -140,15 +140,15 @@ void  havana_fault_initialize(havana_fault_type *havana_fault, int iens) {
 } 
 
 
-int havana_fault_serialize(const havana_fault_type *havana_fault , int internal_offset , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, bool * complete) {
+int havana_fault_serialize(const havana_fault_type *havana_fault , int internal_offset , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, bool * complete, serial_state_type * serial_state) {
   DEBUG_ASSERT(havana_fault);
-  return scalar_serialize(havana_fault->scalar , internal_offset , serial_data_size, serial_data , ens_size , offset , complete);
+  return scalar_serialize(havana_fault->scalar , internal_offset , serial_data_size, serial_data , ens_size , offset , complete , serial_state);
 }
 
 
-int havana_fault_deserialize(havana_fault_type *havana_fault , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int havana_fault_deserialize(havana_fault_type *havana_fault , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
   DEBUG_ASSERT(havana_fault);
-  return scalar_deserialize(havana_fault->scalar , internal_offset , serial_size , serial_data , stride , offset);
+  return scalar_deserialize(havana_fault->scalar , internal_offset , serial_size , serial_data , stride , offset , serial_state);
 }
 
 

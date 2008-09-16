@@ -2,6 +2,7 @@
 #define __SCALAR_H__
 #include <enkf_util.h>
 #include <scalar_config.h>
+#include <serial_state.h>
 #include <stdio.h>
 
 
@@ -23,8 +24,8 @@ void             scalar_ens_read(scalar_type * , const char *);
 void             scalar_sample(scalar_type *);
 void             scalar_truncate(scalar_type *);
 void             scalar_TEST(void);
-int              scalar_serialize(const scalar_type * , int , size_t , double *, size_t , size_t, bool *);
-int              scalar_deserialize(scalar_type * , int , size_t , const double * , size_t , size_t );
+int              scalar_serialize(const scalar_type * , int , size_t , double *, size_t , size_t, bool *, serial_state_type * );
+int              scalar_deserialize(scalar_type * , int , size_t , const double * , size_t , size_t , serial_state_type * );
 void             scalar_stream_fwrite(const scalar_type * scalar , FILE * );
 void             scalar_stream_fread(scalar_type * scalar , FILE * );
 void             scalar_realloc_data(scalar_type * scalar);

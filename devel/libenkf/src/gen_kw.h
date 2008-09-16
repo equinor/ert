@@ -4,6 +4,7 @@
 #include <gen_kw_config.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
+#include <serial_state.h>
 
 typedef struct gen_kw_struct gen_kw_type;
 

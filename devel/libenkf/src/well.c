@@ -100,21 +100,21 @@ void well_free(well_type *well) {
 
 
 
-int well_deserialize(const well_type * well , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset) {
+int well_deserialize(const well_type * well , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset , serial_state_type * serial_state) {
   const well_config_type *config      = well->config;
   const int                data_size  = well_config_get_data_size(config);
 
-  return enkf_util_deserialize(&well->data[internal_offset] , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  return enkf_util_deserializeII(&well->data[internal_offset] , ecl_double_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
 }
 
 
 
 
-int well_serialize(const well_type *well , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete) {
+int well_serialize(const well_type *well , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete , serial_state_type * serial_state) {
   const well_config_type *config      = well->config;
   const int                data_size  = well_config_get_data_size(config);
   
-  return enkf_util_serialize(well->data , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  return enkf_util_serializeII(well->data , ecl_double_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
 }
 
 
