@@ -7,7 +7,7 @@
 #include <list_node.h>
 #include <sched_util.h>
 #include <stdbool.h>
-#include <rate_node.h>
+#include <rate.h>
 #include <sched_macros.h>
 
 

@@ -60,7 +60,23 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
 
 static history_node_type * history_node_copyc_alloc(const history_node_type * history_node)
 {
-  printf("%s: Warning - not implemented.\n", __func__);
+  history_node_type * history_node_new = history_node_alloc_empty();
+  history_node_new->node_start_time = history_node->node_start_time;
+  history_node_new->node_end_time   = history_node->node_end_time;
+
+  {
+    int size = hash_get_size(history_node->rate_hash);
+    char ** keylist = hash_alloc_keylist(history_node->rate_hash);
+
+    for(int i=0; i<size; i++)
+    {
+      
+    }
+
+    util_free_stringlist(keylist, size);
+  }
+  
+
   return NULL;
 }
 
