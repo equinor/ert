@@ -9,6 +9,7 @@
 #include <ecl_sum.h>
 #include <enkf_types.h>
 #include <enkf_util.h>
+#include <enkf_serialize.h>
 
 #define  DEBUG
 #define  TARGET_TYPE SUMMARY
@@ -104,7 +105,7 @@ int summary_deserialize(const summary_type * summary , int internal_offset , siz
   const summary_config_type *config      = summary->config;
   const int                data_size  = summary_config_get_data_size(config);
   
-  return enkf_util_deserializeII(&summary->data[internal_offset] , ecl_double_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  return enkf_deserialize(&summary->data[internal_offset] , ecl_double_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
 }
 
 
@@ -114,7 +115,7 @@ int summary_serialize(const summary_type *summary , int internal_offset , size_t
   const summary_config_type *config      = summary->config;
   const int                data_size  = summary_config_get_data_size(config);
   
-  return enkf_util_serializeII(summary->data , ecl_double_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  return enkf_serialize(summary->data , ecl_double_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
 }
 
 

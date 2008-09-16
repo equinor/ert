@@ -9,6 +9,7 @@
 #include <ecl_sum.h>
 #include <enkf_types.h>
 #include <enkf_util.h>
+#include <enkf_serialize.h>
 
 #define  DEBUG
 #define  TARGET_TYPE WELL
@@ -104,7 +105,7 @@ int well_deserialize(const well_type * well , int internal_offset , size_t seria
   const well_config_type *config      = well->config;
   const int                data_size  = well_config_get_data_size(config);
 
-  return enkf_util_deserializeII(&well->data[internal_offset] , ecl_double_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  return enkf_deserialize(&well->data[internal_offset] , ecl_double_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
 }
 
 
@@ -114,7 +115,7 @@ int well_serialize(const well_type *well , int internal_offset , size_t serial_d
   const well_config_type *config      = well->config;
   const int                data_size  = well_config_get_data_size(config);
   
-  return enkf_util_serializeII(well->data , ecl_double_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  return enkf_serialize(well->data , ecl_double_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
 }
 
 

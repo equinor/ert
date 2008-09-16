@@ -18,7 +18,7 @@
 #include <havana_fault.h>
 #include <gen_data.h>
 #include <gen_param.h>
-#include <serial_state.h>
+#include <enkf_serialize.h>
 
 /**
    A small illustration (says more than thousand words ...) of how the

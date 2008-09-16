@@ -6,7 +6,7 @@
 #include <enkf_types.h>
 #include <ecl_block.h>
 #include <ecl_sum.h>
-#include <serial_state.h>
+#include <enkf_serialize.h>
 
 #define CONFIG_STD_FIELDS \
 int data_size;            \

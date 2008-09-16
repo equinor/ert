@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
-#include <serial_state.h>
+#include <enkf_serialize.h>
 #include <enkf_types.h>
 #include <util.h>
 
@@ -48,7 +48,7 @@ struct serial_state_struct {
 
 
 
- void serial_state_clear(serial_state_type * state) {
+void serial_state_clear(serial_state_type * state) {
   state->internal_offset    = 0;
   state->state              = forecast;
   state->serial_size        = 0;
@@ -122,4 +122,59 @@ serial_state_type * serial_state_alloc() {
   *node_serial_size = serial_state->serial_size;
 }
 
+
+/*****************************************************************/
+
+size_t enkf_serialize(const void * __node_data, ecl_type_enum node_type ,  const bool * active , size_t node_offset , size_t node_size , double * serial_data , 
+		      size_t serial_size , size_t serial_offset , int serial_stride ,  bool * complete) {
+  
+  size_t node_index;
+  size_t serial_index = 0;
+
+  if (node_type == ecl_double_type) {
+    /* Serialize double -> double */
+    const  double * node_data = (const double *) __node_data;
+#include "serialize.h"
+  } else if (node_type == ecl_float_type) {
+    /* Serialize float -> double */
+    const  float * node_data = (const float *) __node_data;
+#include "serialize.h"
+  } else 
+    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+
+  return serial_index;
+
+}
+
+
+size_t enkf_deserialize(void * __node_data      	  , 
+			ecl_type_enum node_type 	  , 
+			const bool * active     	  , 
+			size_t node_offset      	  , 
+			size_t node_size        	  , 
+			size_t node_serial_size 	  ,  
+			const double * serial_data , 
+			size_t serial_offset       , 
+			int serial_stride) {
+  
+  size_t serial_index = 0;
+  size_t node_index;
+  size_t new_node_offset = 0;
+  int    last_node_index = util_int_min(node_size , node_offset + node_serial_size);
+  if (last_node_index < (node_size - 1))
+    new_node_offset = last_node_index;
+  else
+    new_node_offset = 0;
+  
+  if (node_type == ecl_double_type) {
+    double * node_data = (double *) __node_data;
+#include "deserialize.h"
+  } else if (node_type == ecl_float_type) {
+    float * node_data = (float *) __node_data;
+#include "deserialize.h"
+  } else 
+    util_abort("%s: internal error: trying to deserialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+
+  return new_node_offset;
+}
 

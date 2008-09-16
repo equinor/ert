@@ -5,7 +5,7 @@
 #include <enkf_macros.h>
 #include <enkf_util.h>
 #include <field_config.h>
-#include <serial_state.h>
+#include <enkf_serialize.h>
 
 typedef struct field_struct field_type;
 

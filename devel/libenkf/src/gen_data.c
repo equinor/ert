@@ -12,7 +12,7 @@
 #include <gen_data.h>
 #include <gen_common.h>
 #include <enkf_macros.h>
-
+#include <enkf_serialize.h>
 
 
 /**
@@ -219,7 +219,7 @@ int gen_data_serialize(const gen_data_type *gen_data , int internal_offset , siz
   const int data_size    = gen_data->size;
   int elements_added = 0;
   if (data_size > 0) 
-    elements_added = enkf_util_serializeII(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+    elements_added = enkf_serialize(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   return elements_added;
 }
 
@@ -230,7 +230,7 @@ int gen_data_deserialize(gen_data_type * gen_data , int internal_offset , size_t
   int new_internal_offset = 0;
   
   if (data_size > 0)
-    new_internal_offset = enkf_util_deserializeII(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+    new_internal_offset = enkf_deserialize(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
   
   /*
     gen_data_truncate(gen_data);

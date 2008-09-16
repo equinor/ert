@@ -2,7 +2,7 @@
 #define __SCALAR_H__
 #include <enkf_util.h>
 #include <scalar_config.h>
-#include <serial_state.h>
+#include <enkf_serialize.h>
 #include <stdio.h>
 
 

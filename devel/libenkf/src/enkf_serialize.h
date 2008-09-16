@@ -1,6 +1,7 @@
-#ifndef __SERIAL_STATE_H__
-#define __SERIAL_STATE_H__
+#ifndef __ENKF_SERIALIZE_H__
+#define __ENKF_SERIALIZE_H__
 #include <stdbool.h>
+#include <ecl_util.h>
 
 typedef struct serial_state_struct serial_state_type;
 
@@ -14,6 +15,12 @@ int                 serial_state_get_internal_offset(const serial_state_type * )
 void 		    serial_state_update_forecast(serial_state_type * , size_t , int , bool );
 void 		    serial_state_update_serialized(serial_state_type * , int );
 void 		    serial_state_init_deserialize(const serial_state_type * , int * , size_t * , int * );
+
+
+/*****************************************************************/
+
+size_t enkf_serialize(const void * , ecl_type_enum ,  const bool * , size_t , size_t , double * , size_t , size_t , int ,  bool * );
+size_t enkf_deserialize(void *     , ecl_type_enum , const bool * , size_t , size_t , size_t   , const double * , size_t , int );
 
 
 #endif

@@ -14,6 +14,7 @@
 #include <rms_type.h>
 #include <rms_util.h>
 #include <fortio.h>
+#include <enkf_serialize.h>
 
 #define  DEBUG
 #define  TARGET_TYPE FIELD
@@ -610,7 +611,7 @@ int field_deserialize(field_type * field , int internal_offset , size_t serial_s
   const bool              *iactive     = field_config_get_iactive(config);
   int new_internal_offset;
 
-  new_internal_offset = enkf_util_deserializeII(field->data , ecl_type , iactive , internal_offset , data_size , serial_size , serial_data , offset , stride);
+  new_internal_offset = enkf_deserialize(field->data , ecl_type , iactive , internal_offset , data_size , serial_size , serial_data , offset , stride);
 
   field_truncate(field);
   return new_internal_offset;
@@ -627,7 +628,7 @@ int field_serialize(const field_type *field , int internal_offset , size_t seria
   int elements_added;
 
 
-  elements_added = enkf_util_serializeII(field->data , ecl_type , iactive , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  elements_added = enkf_serialize(field->data , ecl_type , iactive , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   return elements_added;
 }
 

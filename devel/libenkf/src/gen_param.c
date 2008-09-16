@@ -12,7 +12,7 @@
 #include <enkf_util.h>
 #include <gen_param_config.h>
 #include <gen_param.h>
-
+#include <enkf_serialize.h>
 
 
 
@@ -157,7 +157,7 @@ int gen_param_serialize(const gen_param_type *gen_param , int internal_offset , 
   const bool * iactive   = gen_param_config_get_iactive( gen_param->config );  
   int elements_added = 0;
   if (data_size > 0) 
-    elements_added = enkf_util_serializeII(gen_param->data , ecl_type , iactive , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+    elements_added = enkf_serialize(gen_param->data , ecl_type , iactive , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
   return elements_added;
 }
 
@@ -169,7 +169,7 @@ int gen_param_deserialize(gen_param_type * gen_param , int internal_offset , siz
   int new_internal_offset = 0;
   
   if (data_size > 0)
-    new_internal_offset = enkf_util_deserializeII(gen_param->data , ecl_type , iactive  , internal_offset , data_size , serial_size , serial_data , offset , stride);
+    new_internal_offset = enkf_deserialize(gen_param->data , ecl_type , iactive  , internal_offset , data_size , serial_size , serial_data , offset , stride);
   
   /*
     gen_param_truncate(gen_param);
