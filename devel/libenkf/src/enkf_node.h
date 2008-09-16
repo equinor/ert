@@ -97,7 +97,6 @@ void             enkf_node_clear_serial_state(enkf_node_type * );
 void             enkf_node_deserialize(enkf_node_type * , double * , size_t );
 
 void             enkf_node_ecl_load  (enkf_node_type *, const char * , const char * , const ecl_sum_type * , const ecl_block_type * , int);
-void             enkf_node_ecl_load_field  (enkf_node_type *, const ecl_kw_type * , int);
 void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int);
 void             enkf_node_ecl_write (const enkf_node_type *, const char *);
 void             enkf_node_initialize(enkf_node_type *enkf_node , int);

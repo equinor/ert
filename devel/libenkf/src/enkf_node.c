@@ -109,7 +109,7 @@
 
         enkf_node_initialize()
         enkf_node_fread()
-        enkf_node_ecl_load()  [enkf_node_ecl_load_field() and enkf_node_ecl_load_static()]
+        enkf_node_ecl_load()  [enkf_node_ecl_load_static()]
 
       These functions should all start with a call to
       enkf_node_ensure_memory(). The (re)allocation of data is done at
@@ -471,16 +471,6 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
   enkf_node->ecl_load(enkf_node->data , run_path   , ecl_base , ecl_sum , restart_block , report_step);
-  enkf_node->__report_step = report_step;
-  enkf_node->__state       = forecast;
-  enkf_node->__modified    = false;
-}
-
-
-/** Two special case ecl_load functions */
-void enkf_node_ecl_load_field(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step) {
-  enkf_node_ensure_memory(enkf_node);
-  field_copy_ecl_kw_data(enkf_node_value_ptr(enkf_node) , ecl_kw);
   enkf_node->__report_step = report_step;
   enkf_node->__state       = forecast;
   enkf_node->__modified    = false;

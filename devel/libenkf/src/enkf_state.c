@@ -1377,6 +1377,7 @@ enkf_update_info_type ** enkf_ensemble_alloc_update_info(enkf_state_type ** ense
   }
 }
 
+
 void enkf_ensemble_free_update_info(enkf_update_info_type ** info_list , int size) {
   int it;
   for (it = 0; it < size; it++) {
@@ -1455,7 +1456,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
   enkf_update_info_type ** info_list = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_size , serial_data);
   int       iens , ithread;
 
-  bool      state_complete = false;
+  bool state_complete = false;
   for (iens = 0; iens < ens_size; iens++)
     enkf_state_apply_NEW2(enkf_ensemble[iens] ,  update_mask , clear_serial_state_func , NULL);
 
