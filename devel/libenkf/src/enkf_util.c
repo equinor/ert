@@ -101,51 +101,6 @@ size_t enkf_util_serializeII(const void * __node_data, ecl_type_enum node_type ,
 }
 
 
-
-/*
-  Denne maa ta inn type paa node_data.
-*/
-/*
-size_t enkf_util_serialize(const double * node_data, const bool * active , size_t node_offset , size_t node_size , double * serial_data , 
-			   size_t serial_size , size_t serial_offset , int serial_stride ,  bool * complete) {
-  size_t node_index;
-  size_t serial_index = 0;
-
-  if (active != NULL) {
-    for (node_index = node_offset; node_index < node_size; node_index++) {
-      if (active[node_index]) {
-	int global_serial_index = serial_offset + serial_stride * serial_index;
-	if (global_serial_index > serial_size)
-	  util_abort("%s:%d fatal error global_serial_index:%d  serial_size:%d \n",__func__ , __LINE__ , global_serial_index , serial_size);
-	serial_data[global_serial_index] = node_data[node_index];
-	serial_index++;
-	
-	if (serial_offset + serial_stride * serial_index >= serial_size) {
-	  if (node_index < (node_size - 1)) *complete = false;
-	  break;
-	}
-	
-      }
-    }
-  } else {
-    for (node_index = node_offset; node_index < node_size; node_index++) {
-      int global_serial_index = serial_offset + serial_stride * serial_index;
-      if (global_serial_index > serial_size || global_serial_index < 0) 
-	util_abort("%s:%d fatal error global_serial_index:%d  serial_size:%d \n",__func__ , __LINE__ , global_serial_index , serial_size);
-      
-      serial_data[global_serial_index] = node_data[node_index];
-      serial_index++;
-      if (serial_offset + serial_stride * serial_index >= serial_size) {
-	if (node_index < (node_size - 1)) *complete = false;
-	break;
-      }
-    }
-  }
-
-  return serial_index;
-}
-*/
-
 size_t enkf_util_deserializeII(void * __node_data      	  , 
 			       ecl_type_enum node_type 	  , 
 			       const bool * active     	  , 
@@ -178,42 +133,6 @@ size_t enkf_util_deserializeII(void * __node_data      	  ,
 }
 
 
-
-/*size_t enkf_util_deserialize(double * node_data      	, 
-			     const bool * active     	, 
-			     size_t node_offset      	, 
-			     size_t node_size        	,  
-			     size_t node_serial_size 	,  
-			     const double * serial_data , 
-			     size_t serial_offset       , 
-			     int serial_stride) {
-			     
-  size_t serial_index = 0;
-  size_t node_index;
-  size_t new_node_offset = 0;
-  int    last_node_index = util_int_min(node_size , node_offset + node_serial_size);
-  if (last_node_index < (node_size - 1))
-    new_node_offset = last_node_index;
-  else
-    new_node_offset = 0;
-  
-  if (active != NULL) {
-    for (node_index = node_offset; node_index < last_node_index; node_index++) {
-      if (active[node_index]) {
-	node_data[node_index - node_offset] = serial_data[serial_index * serial_stride + serial_offset];
-	serial_index++;
-      }
-    }
-  }  else {
-    for (node_index = node_offset; node_index < last_node_index; node_index++) {
-      node_data[node_index - node_offset] = serial_data[serial_index * serial_stride + serial_offset];
-      serial_index++;
-    }
-  }
-  
-  return new_node_offset;
-}
-*/
 
 
 void enkf_util_fread_assert_target_type(FILE * stream , enkf_impl_type target_type) {
