@@ -138,6 +138,12 @@ static void job_queue_initialize_node(job_queue_type * queue , int queue_index ,
     node->job_name       = path_fmt_alloc_path(queue->job_name_fmt , false , external_id);
     node->exit_file      = util_alloc_full_path(node->run_path , EXIT_FILE);
     node->job_data      = NULL;
+    if ( !util_is_abs_path(node->run_path)) {
+      char * tmp_path = node->run_path;
+      node->run_path = util_alloc_realpath(tmp_path);
+      free(tmp_path);
+    }
+    
     if ( !util_path_exists(node->run_path) ) 
       util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
     

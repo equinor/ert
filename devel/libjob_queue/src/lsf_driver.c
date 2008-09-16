@@ -147,6 +147,7 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
 }
 
 
+
 static int lsf_driver_submit_system_job(const char * run_path , const char * job_name , const char * lsf_queue , const char * resource_request , const char * submit_cmd) {
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
