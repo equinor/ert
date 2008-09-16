@@ -872,6 +872,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 }
 
 
+
 /**
   This function writes out all the files needed by an ECLIPSE simulation, this
   includes the restart file, and the various INCLUDE files corresponding to
