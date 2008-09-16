@@ -21,21 +21,17 @@ static const int GRAT_index = 5;
 static const int THP_index  = 8;
 static const int BHP_index  = 9;
 
-const char *well_control_list[] = {"LRAT" , "ORAT" , "RESV"};
-
-
-
 struct rate_struct {
   char             *well;
   well_control_type cmode;
   well_state_type   state;   
-  double 	    ORAT;         
-  double 	    WRAT;    
-  double 	    GRAT;    
+  double            ORAT;         
+  double            WRAT;    
+  double            GRAT;    
   int               VFPTable;
   double            ALift;
-  double 	    THP;	    
-  double 	    BHP;	    
+  double            THP;           
+  double            BHP;           
   double            WGASRAT;
   bool             *def;
 
@@ -226,9 +222,9 @@ rate_type * rate_alloc_from_summary(bool history_mode , const ecl_sum_type * sum
     rate->WGASRAT = -1; /* Fuck this  Kw: WWGPR */
     {
       /*
-	This translates from WMCTL according to the the ECLIPSE
-	documentation of the WMCTL summary variable to the internal
-	representation of control mode - the two are independent.
+       This translates from WMCTL according to the the ECLIPSE
+       documentation of the WMCTL summary variable to the internal
+       representation of control mode - the two are independent.
       */
       switch (cmode) {
       case(0):
@@ -236,42 +232,42 @@ rate_type * rate_alloc_from_summary(bool history_mode , const ecl_sum_type * sum
       rate->state = SHUT;
       break;
       case(1):
-	rate->cmode = __get_well_mode("ORAT");
-	rate->state = OPEN;
-	break;
+       rate->cmode = __get_well_mode("ORAT");
+       rate->state = OPEN;
+       break;
       case(2):
-	rate->cmode = __get_well_mode("WRAT");
-	rate->state = OPEN;
-	break;
+       rate->cmode = __get_well_mode("WRAT");
+       rate->state = OPEN;
+       break;
       case(3):
-	rate->cmode = __get_well_mode("GRAT");
-	rate->state = OPEN;
-	break;
+       rate->cmode = __get_well_mode("GRAT");
+       rate->state = OPEN;
+       break;
       case(4):
-	rate->cmode = __get_well_mode("LRAT");
-	rate->state = OPEN;
-	break;
+       rate->cmode = __get_well_mode("LRAT");
+       rate->state = OPEN;
+       break;
       case(5):
-	rate->cmode = __get_well_mode("RESV");
-	rate->state = OPEN;
-	break;
+       rate->cmode = __get_well_mode("RESV");
+       rate->state = OPEN;
+       break;
       case(6):
-	rate->cmode = __get_well_mode("THP");
-	rate->state = OPEN;
-	break;
+       rate->cmode = __get_well_mode("THP");
+       rate->state = OPEN;
+       break;
       case(7):
-	rate->cmode = __get_well_mode("BHP");
-	rate->state = OPEN;
-	break;
+       rate->cmode = __get_well_mode("BHP");
+       rate->state = OPEN;
+       break;
       default:
-	fprintf(stderr,"%s: WCMTL:%d is not recognized - aborting \n",__func__ , cmode);
-	abort();
+       fprintf(stderr,"%s: WCMTL:%d is not recognized - aborting \n",__func__ , cmode);
+       abort();
       }
     }
     return rate;
   }
 }
-			   
+                        
 
 
 const char * rate_get_well_ref(const rate_type * rate) {
@@ -280,20 +276,20 @@ const char * rate_get_well_ref(const rate_type * rate) {
 
 
 void rate_sched_fwrite(const rate_type *rate , FILE *stream) {
-  util_fwrite(&rate->kw_size	 , sizeof rate->kw_size , 1 , stream , __func__);
+  util_fwrite(&rate->kw_size        , sizeof rate->kw_size , 1 , stream , __func__);
 
   util_fwrite_string(rate->well , stream);
   
-  util_fwrite(&rate->cmode    , sizeof rate->cmode     , 1 	       , stream ,__func__);
-  util_fwrite(&rate->state    , sizeof rate->state     , 1 	       , stream ,__func__);
-  util_fwrite(&rate->ORAT     , sizeof rate->ORAT      , 1 	       , stream ,__func__);
-  util_fwrite(&rate->WRAT     , sizeof rate->WRAT      , 1 	       , stream ,__func__);
-  util_fwrite(&rate->GRAT     , sizeof rate->GRAT      , 1 	       , stream ,__func__);
-  util_fwrite(&rate->VFPTable , sizeof rate->VFPTable  , 1 	       , stream ,__func__);
-  util_fwrite(&rate->ALift    , sizeof rate->ALift     , 1 	       , stream ,__func__);
-  util_fwrite(&rate->THP      , sizeof rate->THP       , 1 	       , stream ,__func__);
-  util_fwrite(&rate->BHP      , sizeof rate->BHP       , 1 	       , stream ,__func__);
-  util_fwrite(&rate->WGASRAT  , sizeof rate->WGASRAT   , 1 	       , stream ,__func__);  
+  util_fwrite(&rate->cmode    , sizeof rate->cmode     , 1               , stream ,__func__);
+  util_fwrite(&rate->state    , sizeof rate->state     , 1               , stream ,__func__);
+  util_fwrite(&rate->ORAT     , sizeof rate->ORAT      , 1               , stream ,__func__);
+  util_fwrite(&rate->WRAT     , sizeof rate->WRAT      , 1               , stream ,__func__);
+  util_fwrite(&rate->GRAT     , sizeof rate->GRAT      , 1               , stream ,__func__);
+  util_fwrite(&rate->VFPTable , sizeof rate->VFPTable  , 1               , stream ,__func__);
+  util_fwrite(&rate->ALift    , sizeof rate->ALift     , 1               , stream ,__func__);
+  util_fwrite(&rate->THP      , sizeof rate->THP       , 1               , stream ,__func__);
+  util_fwrite(&rate->BHP      , sizeof rate->BHP       , 1               , stream ,__func__);
+  util_fwrite(&rate->WGASRAT  , sizeof rate->WGASRAT   , 1               , stream ,__func__);  
   util_fwrite(rate->def       , sizeof * rate->def     , rate->kw_size , stream ,__func__);
   
 }
@@ -309,16 +305,16 @@ rate_type * rate_sched_fread_alloc(FILE *stream) {
   rate  = rate_alloc_empty(kw_size);
   rate->well         = util_fread_alloc_string( stream ); 
   
-  util_fread(&rate->cmode     , sizeof rate->cmode        , 1 		  , stream , __func__);
-  util_fread(&rate->state     , sizeof rate->state 	  , 1 		  , stream , __func__);
-  util_fread(&rate->ORAT      , sizeof rate->ORAT  	  , 1 		  , stream , __func__);
-  util_fread(&rate->WRAT      , sizeof rate->WRAT  	  , 1 		  , stream , __func__);
-  util_fread(&rate->GRAT      , sizeof rate->GRAT  	  , 1 		  , stream , __func__);
-  util_fread(&rate->VFPTable  , sizeof rate->VFPTable     , 1 		  , stream , __func__);
-  util_fread(&rate->ALift     , sizeof rate->ALift        , 1 		  , stream , __func__);
-  util_fread(&rate->THP	      , sizeof rate->THP 	  , 1 		  , stream , __func__);
-  util_fread(&rate->BHP	      , sizeof rate->BHP 	  , 1 		  , stream , __func__);
-  util_fread(&rate->WGASRAT   , sizeof rate->WGASRAT      , 1 		  , stream , __func__);  
+  util_fread(&rate->cmode     , sizeof rate->cmode        , 1                 , stream , __func__);
+  util_fread(&rate->state     , sizeof rate->state          , 1                 , stream , __func__);
+  util_fread(&rate->ORAT      , sizeof rate->ORAT           , 1                 , stream , __func__);
+  util_fread(&rate->WRAT      , sizeof rate->WRAT           , 1                 , stream , __func__);
+  util_fread(&rate->GRAT      , sizeof rate->GRAT           , 1                 , stream , __func__);
+  util_fread(&rate->VFPTable  , sizeof rate->VFPTable     , 1                 , stream , __func__);
+  util_fread(&rate->ALift     , sizeof rate->ALift        , 1                 , stream , __func__);
+  util_fread(&rate->THP             , sizeof rate->THP          , 1                 , stream , __func__);
+  util_fread(&rate->BHP             , sizeof rate->BHP          , 1                 , stream , __func__);
+  util_fread(&rate->WGASRAT   , sizeof rate->WGASRAT      , 1                 , stream , __func__);  
   util_fread(rate->def        , sizeof * rate->def        , rate->kw_size , stream , __func__);
   
   return rate;
@@ -368,9 +364,9 @@ static void rate_set_from_string(rate_type * node , int kw_size , const char **t
     int i;
     for (i=0; i < kw_size; i++) {
       if (token_list[i] == NULL)
-	node->def[i] = true;
+       node->def[i] = true;
       else
-	node->def[i] = false;
+       node->def[i] = false;
     }
   }
   node->well         = util_alloc_string_copy(token_list[0]);
@@ -419,8 +415,8 @@ rate_type * rate_copyc(const rate_type * src) {
   new->GRAT = src->GRAT;    
   new->VFPTable = src->VFPTable;
   new->ALift = src->ALift;
-  new->THP = src->THP;	    
-  new->BHP = src->BHP;	    
+  new->THP = src->THP;           
+  new->BHP = src->BHP;           
   new->WGASRAT = src->WGASRAT;
   memcpy(new->def , src->def , new->kw_size * sizeof * new->def);
   return new;

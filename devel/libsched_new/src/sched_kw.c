@@ -324,7 +324,7 @@ sched_kw_type * sched_kw_fread_alloc(FILE * stream, bool * at_eof)
 
   Note that TIME (ECL300 only) is not supported yet.
 */
-sched_kw_type ** sched_kw_report_step_split_alloc(const sched_kw_type * sched_kw,  int * num_steps)
+sched_kw_type ** sched_kw_restart_file_split_alloc(const sched_kw_type * sched_kw,  int * num_steps)
 {
   switch(sched_kw_get_type(sched_kw))
   {
