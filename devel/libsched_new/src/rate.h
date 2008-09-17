@@ -1,5 +1,5 @@
-#ifndef __RATE_NODE_H__
-#define __RATE_NODE_H__
+#ifndef __RATE_H__
+#define __RATE_H__
 #include <stdbool.h>
 #include <ecl_sum.h>
 #include <ecl_well_vars.h>
@@ -28,8 +28,9 @@ void         rate_sched_fprintf_rates(const rate_type * , FILE *);
 void         rate_free(rate_type *);
 void         rate_free__(void *__rate);
 const char * rate_get_well_ref(const rate_type * );
+rate_type  * rate_copyc(const rate_type *);
 const void * rate_copyc__(const void *);
-const char * rate_node_get_well_ref(const rate_type * );
+const char * rate_get_well_ref(const rate_type * );
 
 double 	   rate_get_ORAT(const rate_type * , bool *);
 double 	   rate_get_GRAT(const rate_type * , bool *);
