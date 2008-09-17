@@ -109,14 +109,14 @@ void equil_free(equil_type *equil) {
 }
 
 
-int equil_serialize(const equil_type *equil , int internal_offset , size_t serial_data_size , double *serial_data , size_t stride , size_t offset, bool * complete, serial_state_type * serial_state) {
+int equil_serialize(const equil_type *equil , size_t serial_data_size , double *serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
   DEBUG_ASSERT(equil);
-  return scalar_serialize(equil->scalar , internal_offset , serial_data_size , serial_data , stride , offset , complete , serial_state);
+  return scalar_serialize(equil->scalar , serial_data_size , serial_data , stride , offset , serial_state);
 }
 
-int equil_deserialize(equil_type *equil , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
+equil_deserialize(equil_type *equil , const double * serial_data , size_t stride , serial_state_type * serial_state) {
   DEBUG_ASSERT(equil);
-  return scalar_deserialize(equil->scalar , internal_offset , serial_size , serial_data , stride , offset , serial_state);
+  scalar_deserialize(equil->scalar , serial_data , stride , serial_state);
 }
 
 

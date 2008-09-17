@@ -1326,9 +1326,14 @@ typedef struct enkf_update_info_struct enkf_update_info_type;
 
 
 /**
-   This function allocates a vector of enkf_update_info_type instances, one for each
-   active thread. The first element becomes the owner of the various allocated resources,
-   the others just point to the ones ine the first.
+   This function allocates a vector of enkf_update_info_type
+   instances, ONE FOR EACH ACTIVE THREAD. The first element becomes
+   the owner of the various allocated resources, the others just point
+   to the ones ine the first.
+
+   Observe that since in general we will have many more ensemble
+   members than threads, each of these info blocks will serve as info
+   containers for many ensemble members.
 */
 
 enkf_update_info_type ** enkf_ensemble_alloc_update_info(enkf_state_type ** ensemble , int ens_size , int update_mask , int num_threads, size_t serial_size , double * serial_data) {
@@ -1456,22 +1461,24 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
   enkf_update_info_type ** info_list = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_size , serial_data);
   int       iens , ithread;
 
+
   bool state_complete = false;
   for (iens = 0; iens < ens_size; iens++)
     enkf_state_apply_NEW2(enkf_ensemble[iens] ,  update_mask , clear_serial_state_func , NULL);
 
   while (!state_complete) {
     for (iens = 0; iens < ens_size; iens++) 
-      info_list[0]->member_serial_size[iens] = 0;
+      info_list[0]->member_serial_size[iens] = 0;  /* Writing only on element[0] - because that is the only member with actual storage. */
     
     for (ithread =  0; ithread < threads; ithread++) 
       thread_pool_add_job(tp , &enkf_ensemble_serialize__ , info_list[ithread]);
     thread_pool_join(tp);
 
     /*
-      This code block is integrity check - we check that the serialization has come
-      equally long with all members. If for instance one member is "larger" than the
-      others this test will fail.
+      This code block is a integrity check - we check that the
+      serialization has come equally long with all members. If for
+      instance one member is "larger" than the others this test will
+      fail.
     */
     {
       bool   * member_complete    = info_list[0]->member_complete;
@@ -1482,7 +1489,6 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
       }
       state_complete = member_complete[0];
     }
-    
     
     {
       enkf_update_info_type * info = info_list[0];

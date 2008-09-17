@@ -604,23 +604,21 @@ void field_truncate(field_type * field) {
 }
 
 
-int field_deserialize(field_type * field , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset , serial_state_type * serial_state) {
+void field_deserialize(field_type * field ,   const double * serial_data , size_t stride , serial_state_type * serial_state) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   const bool              *iactive     = field_config_get_iactive(config);
-  int new_internal_offset;
-
-  new_internal_offset = enkf_deserialize(field->data , ecl_type , iactive , internal_offset , data_size , serial_size , serial_data , offset , stride);
-
+  
+  enkf_deserialize(field->data , data_size , ecl_type , iactive , serial_state , serial_data , stride);
   field_truncate(field);
-  return new_internal_offset;
+
 }
 
 
 
 
-int field_serialize(const field_type *field , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete, serial_state_type * serial_state) {
+int field_serialize(const field_type *field , size_t serial_data_size ,  double *serial_data , size_t serial_stride , size_t serial_offset , serial_state_type * serial_state) {
   const field_config_type *config     = field->config;
   ecl_type_enum ecl_type              = field_config_get_ecl_type(config);
   const int                data_size  = field_config_get_data_size(config);
@@ -628,7 +626,7 @@ int field_serialize(const field_type *field , int internal_offset , size_t seria
   int elements_added;
 
 
-  elements_added = enkf_serialize(field->data , ecl_type , iactive , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+  elements_added = enkf_serialize(field->data , data_size , ecl_type , iactive , serial_state , serial_data , serial_data_size , serial_offset , serial_stride);
   return elements_added;
 }
 

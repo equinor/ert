@@ -214,28 +214,26 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
 }
 
 
-int gen_data_serialize(const gen_data_type *gen_data , int internal_offset , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , bool *complete, serial_state_type * serial_state) {
+int gen_data_serialize(const gen_data_type *gen_data , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , serial_state_type * serial_state) {
   ecl_type_enum ecl_type = gen_data->ecl_type;
   const int data_size    = gen_data->size;
   int elements_added = 0;
   if (data_size > 0) 
-    elements_added = enkf_serialize(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_data , serial_data_size , offset , stride , complete);
+    elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , NULL , serial_state , serial_data , serial_data_size , offset , stride);
   return elements_added;
 }
 
 
-int gen_data_deserialize(gen_data_type * gen_data , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
+void gen_data_deserialize(gen_data_type * gen_data , const double * serial_data , size_t stride , serial_state_type * serial_state) {
   ecl_type_enum ecl_type  = gen_data->ecl_type;
   const int data_size     = gen_data->size;
-  int new_internal_offset = 0;
   
   if (data_size > 0)
-    new_internal_offset = enkf_deserialize(gen_data->data , ecl_type , NULL , internal_offset , data_size , serial_size , serial_data , offset , stride);
+    enkf_deserialize(gen_data->data , data_size , ecl_type , NULL , serial_state , serial_data , stride);
   
   /*
     gen_data_truncate(gen_data);
   */
-  return new_internal_offset;
 }
 
 

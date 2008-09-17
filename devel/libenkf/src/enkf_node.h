@@ -20,24 +20,21 @@
 int internal_offset;
 
 /* Return value is the number of elements added = serial_size */
-typedef int   	      (serialize_ftype)      	(const void * ,  /* Node object     	    */ 
-                                                 int          ,  /* Internal offset 	    */   
-                                                 size_t       ,  /* Size of serial buffer   */
-                                                 double *     ,  /* Serial data             */
-                                                 size_t       ,  /* Stride of serial data   */ 
-                                                 size_t       ,  /* Offset of serial data   */
-                                                 bool *       ,  /* Return flag : complete? */
+typedef int   	      (serialize_ftype)      	(const void * ,  /* Node object.     	       */ 
+                                                 size_t       ,  /* Size of serial buffer.     */
+                                                 double *     ,  /* Serial data.               */
+                                                 size_t       ,  /* Stride of serial data.     */ 
+						 size_t       ,  /* Offset into serial vector. */
                                                  serial_state_type *);
 
 
+
 /* Return value is the updated internal offset  - not relevant if complete*/
-typedef int   	      (deserialize_ftype)       (void *       	, /* Node object     		*/
-                                                 int          	, /* Internal offset 		*/         
-                                                 size_t       	, /* Serial size (of this node) */
-                                                 const double * , /* Serial buffer              */
-                                                 size_t         , /* Stride of serial data 	*/
-                                                 size_t         , /* Offset of serial data 	*/   
-                                                 serial_state_type *); 
+typedef void   	      (deserialize_ftype)       (void *       	,  /* Node object     		*/
+                                                 const double * ,  /* Serial buffer              */
+                                                 size_t         ,  /* Stride of serial data 	*/
+                                                 serial_state_type *);
+                                                 
 
 
 

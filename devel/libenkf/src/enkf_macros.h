@@ -155,19 +155,19 @@ void * prefix ## _copyc__(const void * void_arg) {    \
 
 /*****************************************************************/
 #define VOID_SERIALIZE(prefix)     \
-int prefix ## _serialize__(const void *void_arg, int internal_offset , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool *complete , serial_state_type * serial_state) { \
+int prefix ## _serialize__(const void *void_arg, size_t serial_data_size , double *serial_data , size_t stride , size_t offset , serial_state_type * serial_state) { \
    const prefix ## _type  *arg = (const prefix ## _type *) void_arg;       \
-   return prefix ## _serialize (arg , internal_offset , serial_data_size , serial_data , stride , offset , complete , serial_state);       \
+   return prefix ## _serialize (arg , serial_data_size , serial_data , stride , offset , serial_state);       \
 }
-#define VOID_SERIALIZE_HEADER(prefix) int prefix ## _serialize__(const void *, int , size_t , double *, size_t , size_t , bool * , serial_state_type * );
+#define VOID_SERIALIZE_HEADER(prefix) int prefix ## _serialize__(const void *, size_t , double *, size_t , size_t , serial_state_type * );
 
 
 #define VOID_DESERIALIZE(prefix)     \
-int prefix ## _deserialize__(void *void_arg, int internal_offset , size_t serial_size , const double *serial_data , size_t stride , size_t offset , serial_state_type * serial_state) { \
+void prefix ## _deserialize__(void *void_arg, const double *serial_data , size_t stride , serial_state_type * serial_state) { \
    prefix ## _type  *arg = (prefix ## _type *) void_arg;       \
-   return prefix ## _deserialize (arg , internal_offset , serial_size , serial_data , stride , offset , serial_state);       \
+   return prefix ## _deserialize (arg , serial_data , stride , serial_state);       \
 }
-#define VOID_DESERIALIZE_HEADER(prefix) int prefix ## _deserialize__(void *, int , size_t , const double *, size_t , size_t , serial_state_type *);
+#define VOID_DESERIALIZE_HEADER(prefix) void prefix ## _deserialize__(void *, const double *, size_t , serial_state_type *);
 
 /*****************************************************************/
 #define VOID_INITIALIZE(prefix)     \

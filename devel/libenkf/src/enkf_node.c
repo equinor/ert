@@ -75,7 +75,7 @@
    * All the field objects contain a pointer to a field_config object.
 
 
-   [1]: field is just an example, and could be replaces with any of
+   [1]: field is just an example, and could be replaced with any of
         the enkf object types.
 */
 
@@ -450,31 +450,23 @@ void enkf_node_ens_clear(enkf_node_type *enkf_node) {
 }
 
 
-int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool *complete) {
+int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool * complete) {
   FUNC_ASSERT(enkf_node->serialize);
   enkf_node_assert_memory(enkf_node , __func__);
-  if (serial_state_do_serialize(enkf_node->serial_state)) {
-    int internal_offset = serial_state_get_internal_offset(enkf_node->serial_state);
-    int elements_added  = enkf_node->serialize(enkf_node->data , internal_offset , serial_data_size , serial_data , stride , offset , complete , enkf_node->serial_state);
-    
-    serial_state_update_forecast(enkf_node->serial_state , offset , elements_added , *complete);
+  { 
+    int elements_added = 0;
+    elements_added = enkf_node->serialize(enkf_node->data , serial_data_size , serial_data , stride , offset , enkf_node->serial_state);
+    *complete = serial_state_complete( enkf_node->serial_state );
     return elements_added;
-  } return 0;
+  } 
 }
 
 
 
 void enkf_node_deserialize(enkf_node_type *enkf_node , double *serial_data , size_t stride) {
   FUNC_ASSERT(enkf_node->serialize);
-  if (serial_state_do_deserialize(enkf_node->serial_state)) {
-    int    node_serial_size , internal_offset , new_internal_offset;
-    size_t serial_offset;
-
-    serial_state_init_deserialize(enkf_node->serial_state , &internal_offset , &serial_offset, &node_serial_size );
-    new_internal_offset = enkf_node->deserialize(enkf_node->data , internal_offset , node_serial_size , serial_data , stride , serial_offset , enkf_node->serial_state);
-    serial_state_update_serialized(enkf_node->serial_state , new_internal_offset);
-    enkf_node->__modified = true;
-  }
+  enkf_node->deserialize(enkf_node->data , serial_data , stride , enkf_node->serial_state);
+  enkf_node->__modified = true;
 }
 
 

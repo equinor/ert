@@ -153,15 +153,15 @@ void  multflt_initialize(multflt_type *multflt, int iens) {
 
 
 
-int multflt_serialize(const multflt_type *multflt , int internal_offset , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, bool * complete, serial_state_type * serial_state) {
+int multflt_serialize(const multflt_type *multflt , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, serial_state_type * serial_state) {
   DEBUG_ASSERT(multflt);
-  return scalar_serialize(multflt->scalar , internal_offset , serial_data_size, serial_data , ens_size , offset , complete , serial_state);
+  return scalar_serialize(multflt->scalar , serial_data_size, serial_data , ens_size , offset , serial_state);
 }
 
 
-int multflt_deserialize(multflt_type *multflt , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
-  DEBUG_ASSERT(multflt);
-  return scalar_deserialize(multflt->scalar , internal_offset , serial_size , serial_data , stride , offset , serial_state);
+void multflt_deserialize(multflt_type *multflt , const double * serial_data , size_t stride , serial_state_type * serial_state) {
+  DEBUG_ASSERT(multflt); 
+  scalar_deserialize(multflt->scalar , serial_data , stride , serial_state);
 }
 
 

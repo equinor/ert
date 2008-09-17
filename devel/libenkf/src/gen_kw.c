@@ -138,15 +138,15 @@ void gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
 
 
 
-int gen_kw_serialize(const gen_kw_type *gen_kw , int internal_offset , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, bool * complete, serial_state_type * serial_state) {
+int gen_kw_serialize(const gen_kw_type *gen_kw , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, serial_state_type * serial_state) {
   DEBUG_ASSERT(gen_kw);
-  return scalar_serialize(gen_kw->scalar , internal_offset , serial_data_size, serial_data , ens_size , offset , complete, serial_state);
+  return scalar_serialize(gen_kw->scalar , serial_data_size, serial_data , ens_size , offset , serial_state);
 }
 
 
-int gen_kw_deserialize(gen_kw_type *gen_kw , int internal_offset , size_t serial_size , const double * serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
+void gen_kw_deserialize(gen_kw_type *gen_kw , const double * serial_data , size_t stride , serial_state_type * serial_state) {
   DEBUG_ASSERT(gen_kw);
-  return scalar_deserialize(gen_kw->scalar , internal_offset , serial_size , serial_data , stride , offset , serial_state);
+  scalar_deserialize(gen_kw->scalar , serial_data , stride , serial_state);
 }
 
 

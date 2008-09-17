@@ -65,7 +65,7 @@ $(LIB): $(OBJECTS)
 #################################################################
 
 # Library objects:
-havana_fault.o       : havana_fault.c havana_fault.o enkf_util.o enkf_types.h scalar.o 
+havana_fault.o       : havana_fault.c havana_fault.h enkf_util.o enkf_types.h scalar.o 
 thist_interC.o       : thist.o
 thist.o              : thist.c thist.h
 logmode.o            : logmode.c logmode.h enkf_types.h

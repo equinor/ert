@@ -506,7 +506,9 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
 
 	 1024 * 1024 * 128 => 1GB of memory
       */
-      enkf_ensemble_update(enkf_main->ensemble , ens_size , 1024*1024*256 /* 2GB */, X);   
+      size_t double_size = 1024*1024*256; /* 2GB */
+      /*double_size = ens_size * 10000;*/
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , double_size , X);   
       free(X);
     }
   }
