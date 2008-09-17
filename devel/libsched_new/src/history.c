@@ -97,7 +97,7 @@ static history_node_type * history_node_fread_alloc(FILE * stream)
 
 static void history_node_update_rate_hash(hash_type * rate_hash, const hash_type * rate_hash_diff)
 {
-  util_abort("%s: Not implemented.\n", __func__); 
+  //util_abort("%s: Not implemented.\n", __func__); 
 }
 
 
@@ -129,6 +129,7 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
 static history_node_type * history_node_copyc(const history_node_type * history_node)
 {
   history_node_type * history_node_new = history_node_alloc_empty();
+
   history_node_new->node_start_time    = history_node->node_start_time;
   history_node_new->node_end_time      = history_node->node_end_time;
 
@@ -149,7 +150,7 @@ static history_node_type * history_node_copyc(const history_node_type * history_
   }
   
 
-  return NULL;
+  return history_node_new;
 }
 
 
@@ -210,12 +211,11 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
   history_node_type * history_node = NULL;
   for(int block_nr = 0; block_nr < num_restart_files; block_nr++)
   {
-    if(history_node == NULL)
-      history_node = history_node_alloc_empty();
-    else
+    if(history_node != NULL)
       history_node = history_node_copyc(history_node);
+    else
+      history_node = history_node_alloc_empty();
 
-    history_node_type * history_node = history_node_alloc_empty();
     history_node->node_start_time = sched_file_iget_block_start_time(sched_file, block_nr);
     history_node->node_end_time   = sched_file_iget_block_end_time(sched_file, block_nr);
 

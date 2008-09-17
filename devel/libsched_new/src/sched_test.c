@@ -47,6 +47,7 @@ int main(int argc, char **argv)
 
   // Try to create a history_type object
   history_type * history = history_alloc_from_sched_file(sched_file);
+  history_free(history);
 
   // Clean up
   printf("-- Cleaning up..\n");
