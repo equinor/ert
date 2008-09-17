@@ -1,5 +1,6 @@
-#include <sched_file.h>
 #include <util.h>
+#include <sched_file.h>
+#include <history.h>
 
 int main(int argc, char **argv)
 {
@@ -42,6 +43,12 @@ int main(int argc, char **argv)
   sched_file = sched_file_fread_alloc(stream);
   printf("-- Writing all steps to \"sched_test_out_02.SCH\"..\n");
   sched_file_fprintf_i(sched_file, last_restart_file, "sched_test_out_02.SCH");
+
+
+  // Try to create a history_type object
+  history_type * history = history_alloc_from_sched_file(sched_file);
+
+  // Clean up
   printf("-- Cleaning up..\n");
   sched_file_free(sched_file);
   fclose(stream);
