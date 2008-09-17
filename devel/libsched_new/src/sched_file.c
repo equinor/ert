@@ -248,6 +248,9 @@ void sched_file_parse(sched_file_type * sched_file, time_t start_date, const cha
   sched_kw_type    * current_kw;
   sched_block_type * current_block;
 
+  /* Add the first empty pseudo block. */
+  sched_file_add_block(sched_file, sched_block_alloc_empty());
+
   FILE * stream = util_fopen(filename, "r");
 
   current_block = sched_block_alloc_empty();
