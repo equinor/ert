@@ -3,9 +3,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <hash.h>
 
 typedef enum {WCONHIST, DATES , COMPDAT , TSTEP, TIME, WELSPECS, GRUPTREE,
-              INCLUDE, RPTSCHED, DRSDT, SKIPREST, RPTRST, TUNING, WHISTCTL, UNTYPED 
+              INCLUDE, RPTSCHED, DRSDT, SKIPREST, RPTRST, TUNING, WHISTCTL, UNTYPED, 
+              WCONINJ, WCONINJE, WCONINJH, WCONPROD
               } sched_type_enum;
 
 #define WCONHIST_STRING  "WCONHIST"
@@ -22,6 +24,10 @@ typedef enum {WCONHIST, DATES , COMPDAT , TSTEP, TIME, WELSPECS, GRUPTREE,
 #define RPTRST_STRING    "RPTRST"
 #define TUNING_STRING    "TUNING"
 #define WHISTCTL_STRING  "WHISTCTL"
+#define WCONINJ_STRING   "WCONINJ"
+#define WCONINJE_STRING  "WCONINJE"
+#define WCONINJH_STRING  "WCONINJH"
+#define WCONPROD_STRING  "WCONPROD"
               
 typedef struct sched_kw_struct sched_kw_type;
 
@@ -41,5 +47,7 @@ sched_kw_type *  sched_kw_fread_alloc(FILE *, bool * at_eof);
 
 sched_kw_type ** sched_kw_restart_file_split_alloc(const sched_kw_type *, int *);
 time_t           sched_kw_get_new_time(const sched_kw_type *, time_t);
+hash_type      * sched_kw_rate_hash_copyc(const sched_kw_type *);
+
               
 #endif

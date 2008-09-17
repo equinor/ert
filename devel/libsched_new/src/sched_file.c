@@ -193,6 +193,9 @@ static void sched_file_build_block_dates(sched_file_type * sched_file, time_t st
   int num_restart_files = sched_file_get_nr_restart_files(sched_file);
   time_t curr_time, new_time;
 
+  if(num_restart_files < 1)
+    util_abort("%s: Error - empty sched_file - aborting.\n", __func__);
+
   /* Special case for block 0. */
   sched_block_type * sched_block = sched_file_iget_block_ref(sched_file, 0);
   sched_block->block_start_time  = start_date ;

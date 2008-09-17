@@ -8,7 +8,7 @@
 typedef struct history_node_struct history_node_type;
 
 struct history_node_struct{
-  /* Remember to fix history_node_copyc if you add stuff here. */
+  /* Remember to fix history_node_copyc etc. if you add stuff here. */
 
   hash_type * rate_hash;        /* A hash of rate_type's. */
   time_t      node_start_time;
@@ -20,6 +20,10 @@ struct history_node_struct{
 struct history_struct{
   list_type * nodes;
 };
+
+
+
+/******************************************************************/
 
 
 
@@ -49,22 +53,75 @@ static void history_node_free__(void * node)
 
 static void history_node_fwrite(const history_node_type * node, FILE * stream)
 {
-  util_abort("%s: Not implemented.\n", __func__);  
+  util_fwrite(&node->node_start_time, sizeof node->node_start_time, 1, stream, __func__);
+  util_fwrite(&node->node_end_time,   sizeof node->node_end_time,   1, stream, __func__);
+
+  /* Write rate_hash. */
+  {
+    int size = hash_get_size(node->rate_hash);
+    char ** keylist = hash_alloc_keylist(node->rate_hash);
+
+    util_fwrite(&size, sizeof size, 1, stream, __func__);
+
+    for(int i=0; i<size; i++)
+    {
+      rate_type * rate =  hash_get(node->rate_hash, keylist[i]);
+      rate_fwrite(rate, stream);
+    }
+    util_free_stringlist(keylist, size);
+  }
 }
 
 
 
 static history_node_type * history_node_fread_alloc(FILE * stream)
 {
-  util_abort("%s: Not implemented.\n", __func__);  
-  return NULL;
+  history_node_type * node = history_node_alloc_empty();
+
+  util_fread(&node->node_start_time, sizeof node->node_start_time, 1, stream, __func__);
+  util_fread(&node->node_end_time,   sizeof node->node_end_time,   1, stream, __func__);
+
+  {
+    int size;
+    util_fread(&size, sizeof size, 1, stream, __func__);
+
+    for(int i=0; i<size; i++)
+    {
+      rate_type * rate = rate_fread_alloc(stream);
+      hash_insert_hash_owned_ref(node->rate_hash, rate_get_well_ref(rate), rate, rate_free__);
+    }
+  }
 }
 
 
 
+static void history_node_update_rate_hash(hash_type * rate_hash, const hash_type * rate_hash_diff)
+{
+  util_abort("%s: Not implemented.\n", __func__); 
+}
+
+
+
+/*
+  The function history_node_parse_data_from_sched_kw updates the
+  history_node_type pointer node with data from sched_kw. I.e., if sched_kw
+  indicates that a producer has been turned into an injector, rate
+  information about the producer shall be removed from node if it exists.
+*/
 static void history_node_parse_data_from_sched_kw(history_node_type * node, const sched_kw_type * sched_kw)
 {
-  printf("%s: Warning - not implemented.\n", __func__); 
+  switch(sched_kw_get_type(sched_kw))
+  {
+    case(WCONHIST):
+    {
+      hash_type * rate_hash_diff  = sched_kw_rate_hash_copyc(sched_kw);
+      history_node_update_rate_hash(node->rate_hash, rate_hash_diff); 
+      hash_free(rate_hash_diff);
+      break;
+    }
+    default:
+      break;
+  }
 }
 
 
@@ -75,6 +132,7 @@ static history_node_type * history_node_copyc(const history_node_type * history_
   history_node_new->node_start_time    = history_node->node_start_time;
   history_node_new->node_end_time      = history_node->node_end_time;
 
+  /* Copy rate_hash. */
   {
     int size = hash_get_size(history_node->rate_hash);
     char ** keylist = hash_alloc_keylist(history_node->rate_hash);
@@ -170,5 +228,37 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 
     history_add_node(history, history_node);
   }
+  return history;
+}
+
+
+
+void history_fwrite(const history_type * history, FILE * stream)
+{
+  int size = list_get_size(history->nodes);  
+  util_fwrite(&size, sizeof size, 1, stream, __func__);
+
+  for(int i=0; i<size; i++)
+  {
+    history_node_type * node = list_iget_node_value_ptr(history->nodes, i);
+    history_node_fwrite(node, stream);
+  }
+}
+
+
+
+history_type * history_fread_alloc(FILE * stream)
+{
+  history_type * history = history_alloc_empty();
+
+  int size;
+  util_fread(&size, sizeof size, 1, stream, __func__);
+
+  for(int i=0; i<size; i++)
+  {
+    history_node_type * node = history_node_fread_alloc(stream);
+    list_append_list_owned_ref(history->nodes, node, history_node_free__);
+  }
+
   return history;
 }

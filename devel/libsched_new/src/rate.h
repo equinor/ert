@@ -19,12 +19,11 @@
 typedef struct rate_struct rate_type;
 
 void         rate_fprintf(const rate_type * , FILE * );
-void         rate_sched_fprintf(const rate_type *  , FILE *);
 rate_type *  rate_alloc_from_token_list(int , const char **);
 rate_type *  rate_alloc_from_summary(bool , const ecl_sum_type * , int , const char * );
-void         rate_sched_fwrite(const rate_type *,  FILE *);
-rate_type *  rate_sched_fread_alloc(FILE *);
-void         rate_sched_fprintf_rates(const rate_type * , FILE *);
+void         rate_fwrite(const rate_type *,  FILE *);
+rate_type *  rate_fread_alloc(FILE *);
+void         rate_fprintf_rates(const rate_type * , FILE *);
 void         rate_free(rate_type *);
 void         rate_free__(void *__rate);
 const char * rate_get_well_ref(const rate_type * );

@@ -82,13 +82,17 @@ struct sched_kw_struct {
 
 static sched_type_enum get_sched_type_from_string(char * kw_name)
 {
- if( strcmp(kw_name, GRUPTREE_STRING ) == 0){ return GRUPTREE ;}
- if( strcmp(kw_name, TSTEP_STRING    ) == 0){ return TSTEP    ;}
- if( strcmp(kw_name, TIME_STRING     ) == 0){ return TIME     ;}
- if( strcmp(kw_name, DATES_STRING    ) == 0){ return DATES    ;}
- if( strcmp(kw_name, WCONHIST_STRING ) == 0){ return WCONHIST ;}
- if( strcmp(kw_name, WELSPECS_STRING ) == 0){ return WELSPECS ;}
- else                                       { return UNTYPED  ;}
+  if( strcmp(kw_name, GRUPTREE_STRING ) == 0){ return GRUPTREE ;}
+  if( strcmp(kw_name, TSTEP_STRING    ) == 0){ return TSTEP    ;}
+  if( strcmp(kw_name, TIME_STRING     ) == 0){ return TIME     ;}
+  if( strcmp(kw_name, DATES_STRING    ) == 0){ return DATES    ;}
+  if( strcmp(kw_name, WCONHIST_STRING ) == 0){ return WCONHIST ;}
+  if( strcmp(kw_name, WELSPECS_STRING ) == 0){ return WELSPECS ;}
+  if( strcmp(kw_name, WCONINJ_STRING  ) == 0){ return WCONINJ  ;}
+  if( strcmp(kw_name, WCONINJE_STRING ) == 0){ return WCONINJE ;}
+  if( strcmp(kw_name, WCONINJH_STRING ) == 0){ return WCONINJH ;}
+  if( strcmp(kw_name, WCONPROD_STRING ) == 0){ return WCONPROD ;}
+  else                                       { return UNTYPED  ;}
 }
 
 
@@ -115,7 +119,6 @@ static void sched_kw_name_assert(const char * kw_name)
                  __func__, kw_name);
   }
   sched_util_free_token_list(tokens, token_list);
-  
 }
 
 
@@ -124,6 +127,12 @@ static void sched_kw_name_assert(const char * kw_name)
   This function returns the data_handlers_type for
   a specific sched_type_enum. If you implement a new
   type, be sure to add it here.
+
+  Also, if you can add "untyped" handlers if you do not
+  need a fully fledged internalization (i.e. if you only
+  need to check for the type of kw). A full implementation
+  can then easily be added later.
+
 */
 static data_handlers_type get_data_handlers(sched_type_enum type)
 {
@@ -147,6 +156,18 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
       break;
     case(WELSPECS):
       GET_DATA_HANDLERS(handlers, welspecs);
+      break;
+    case(WCONINJ):
+      GET_DATA_HANDLERS(handlers, untyped);
+      break;
+    case(WCONINJE):
+      GET_DATA_HANDLERS(handlers, untyped);
+      break;
+    case(WCONINJH):
+      GET_DATA_HANDLERS(handlers, untyped);
+      break;
+    case(WCONPROD):
+      GET_DATA_HANDLERS(handlers, untyped);
       break;
     case(UNTYPED):
       GET_DATA_HANDLERS(handlers, untyped);
@@ -228,8 +249,10 @@ sched_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 */
 sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
 {
+  /* We need to assume that we are not and the end of the schedule. */
+  *at_eos = false; 
+
   char * kw_name = NULL;
-  *at_eos = false;
   while(kw_name == NULL && !*at_eos)
   {
     kw_name = sched_util_alloc_line(stream, at_eos);
@@ -363,3 +386,22 @@ time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
        return 0;
   }
 }
+
+
+
+hash_type * sched_kw_rate_hash_copyc(const sched_kw_type * sched_kw)
+{
+  switch(sched_kw_get_type(sched_kw))
+  {
+    case(WCONHIST):
+      return sched_kw_wconhist_rate_hash_copyc( (const sched_kw_wconhist_type *) sched_kw->data);
+    default:
+      util_abort("%s: Internal error - trying to create rate_hash from non-rate kw - aborting.\n", __func__);
+      return NULL;
+  }
+}
+
+
+
+
+

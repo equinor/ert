@@ -13,8 +13,8 @@
 
 
 struct sched_kw_wconhist_struct {
-  int        kw_size;
-  list_type *rate_list;
+  int         kw_size;
+  list_type * rate_list;
 };
 
 
@@ -85,7 +85,7 @@ void sched_kw_wconhist_fprintf(const sched_kw_wconhist_type *kw , FILE *stream) 
     list_node_type *rate_node = list_get_head(kw->rate_list);
     while (rate_node != NULL) {
       const rate_type * rate = list_node_value_ptr(rate_node);
-      rate_sched_fprintf(rate , stream);
+      rate_fprintf(rate , stream);
       rate_node = list_node_get_next(rate_node);
     }
   }
@@ -110,7 +110,7 @@ void sched_kw_wconhist_fwrite(const sched_kw_wconhist_type *kw , FILE *stream) {
     list_node_type *rate_node = list_get_head(kw->rate_list);
     while (rate_node != NULL) {
       const rate_type * rate = list_node_value_ptr(rate_node);
-      rate_sched_fwrite(rate , stream);
+      rate_fwrite(rate , stream);
       rate_node = list_node_get_next(rate_node);
     }
   }
@@ -123,12 +123,28 @@ sched_kw_wconhist_type * sched_kw_wconhist_fread_alloc(FILE *stream) {
   int lines , i;
   util_fread(&lines       , sizeof lines       , 1 , stream , __func__);
   for (i=0; i < lines; i++) {
-    rate_type * rate = rate_sched_fread_alloc(stream);
+    rate_type * rate = rate_fread_alloc(stream);
     list_append_list_owned_ref(kw->rate_list , rate , rate_free__);
   } 
   return kw;
 }
   
+
+
+hash_type * sched_kw_wconhist_rate_hash_copyc(const sched_kw_wconhist_type * kw)
+{
+  int size = list_get_size(kw->rate_list);
+  hash_type * rate_hash = hash_alloc();
+
+  for(int i=0; i<size; i++)
+  {
+    rate_type * rate_ref = list_iget_node_value_ptr(kw->rate_list, i);
+    rate_type * rate_cpy = rate_copyc(rate_ref);
+    hash_insert_hash_owned_ref(rate_hash, rate_get_well_ref(rate_cpy), rate_cpy, rate_free__);
+  }
+  return rate_hash;
+}
+
 
 
 /***********************************************************************/

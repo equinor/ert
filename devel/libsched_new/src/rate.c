@@ -271,7 +271,7 @@ rate_type * rate_alloc_from_summary(bool history_mode , const ecl_sum_type * sum
 
 
 
-void rate_sched_fwrite(const rate_type *rate , FILE *stream) {
+void rate_fwrite(const rate_type *rate , FILE *stream) {
   util_fwrite(&rate->kw_size        , sizeof rate->kw_size , 1 , stream , __func__);
 
   util_fwrite_string(rate->well , stream);
@@ -293,7 +293,7 @@ void rate_sched_fwrite(const rate_type *rate , FILE *stream) {
 
 
 
-rate_type * rate_sched_fread_alloc(FILE *stream) {
+rate_type * rate_fread_alloc(FILE *stream) {
   rate_type *rate;
   int kw_size;
 
@@ -319,7 +319,7 @@ rate_type * rate_sched_fread_alloc(FILE *stream) {
 
 
 
-void rate_sched_fprintf(const rate_type * rate , FILE *stream) {
+void rate_fprintf(const rate_type * rate , FILE *stream) {
   fprintf(stream , "  ");
   sched_util_fprintf_qst(rate->def[0]  , rate->well          , 8 , stream);
   sched_util_fprintf_qst(rate->def[1]  , rate_get_well_state_string(rate) , 4 , stream);
@@ -336,7 +336,7 @@ void rate_sched_fprintf(const rate_type * rate , FILE *stream) {
 }
 
 
-void rate_sched_fprintf_rates(const rate_type * rate , FILE *stream) {
+void rate_fprintf_rates(const rate_type * rate , FILE *stream) {
   fprintf(stream , "  %8s %15.3f %15.3f %15.3f ",rate->well , rate->ORAT , rate->WRAT , rate->GRAT);
   if (rate->def[THP_index])
     fprintf(stream , "%15.3f ",RATE_ERROR);
@@ -349,10 +349,6 @@ void rate_sched_fprintf_rates(const rate_type * rate , FILE *stream) {
   fprintf(stream,"\n");
 }
 
-
-void rate_fprintf(const rate_type * rate , FILE * stream) {
-  fprintf(stream,"%s  ORAT:%g  \n",rate->well , rate->ORAT);
-}
 
 
 static void rate_set_from_string(rate_type * node , int kw_size , const char **token_list) {

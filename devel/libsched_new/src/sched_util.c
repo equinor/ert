@@ -29,30 +29,30 @@ static char * strip_line_alloc(const char * line) {
     pos = offset;
     do {
       if (line[pos] == '\'' || line[pos] == '"')
-	quote_on = !quote_on;
+       quote_on = !quote_on;
       
       if (strip_mode & strip_comment) {
-	if (!quote_on) {
-	  if (line[pos] == comment_char) {
-	    if (dash_on) {
-	      cont   = false;
-	      length = pos - offset - 1;
-	    } else 
-	      dash_on = true;
-	  } else
-	    dash_on = false;
-	}
+       if (!quote_on) {
+         if (line[pos] == comment_char) {
+           if (dash_on) {
+             cont   = false;
+             length = pos - offset - 1;
+           } else 
+             dash_on = true;
+         } else
+           dash_on = false;
+       }
       }
 
       if (cont) {
-	if (pos == (strlen(line) - 1)) {
-	  length = pos - offset + 1;
-	  cont = false;
-	}
+       if (pos == (strlen(line) - 1)) {
+         length = pos - offset + 1;
+         cont = false;
+       }
       }
       
       if (cont)
-	pos++;
+       pos++;
     } while (cont);
 
     /*
@@ -61,8 +61,8 @@ static char * strip_line_alloc(const char * line) {
 
     if (strip_mode & strip_space) {
       if (offset + length > 0) {
-	while (line[offset + length - 1] == ' ') 
-	  length--;
+       while (line[offset + length - 1] == ' ') 
+         length--;
       }
     }
 
@@ -110,8 +110,8 @@ void sched_util_parse_file(const char *filename , int *_lines , char ***_line_li
       lines++;
 
       if (lines == buffer_lines) {
-	buffer_lines *= 2;
-	line_list = realloc(line_list , buffer_lines * sizeof *line_list);
+       buffer_lines *= 2;
+       line_list = realloc(line_list , buffer_lines * sizeof *line_list);
       }
     }
   } while (!at_eof);
@@ -151,9 +151,9 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
       long int items      = strtol(token_string , &star_ptr , 10);
       
       if (star_ptr != token_string && star_ptr[0] == '*') 
-	tokens += items;
+       tokens += items;
       else
-	tokens++;
+       tokens++;
       
       offset += length;                              /* Skipping the token */
       offset += strspn(&line[offset] , delimiters);  /* Skipping the following whitespace */
@@ -178,18 +178,18 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
       long int items = strtol(token_string , &star_ptr , 10);
       
       if (star_ptr != token_string && star_ptr[0] == '*') {
-	int t1 = token;
-	int t2 = token + items;
-	    
-	for (token = t1; token < t2; token++) {
-	  if (strlen(star_ptr) == 1)
-	    token_list[token] = NULL;
-	  else
-	    token_list[token] = strdup(&star_ptr[1]);
-	}
+       int t1 = token;
+       int t2 = token + items;
+           
+       for (token = t1; token < t2; token++) {
+         if (strlen(star_ptr) == 1)
+           token_list[token] = NULL;
+         else
+           token_list[token] = strdup(&star_ptr[1]);
+       }
       } else {
-	token_list[token] = util_alloc_substring_copy(&line[offset] , length);
-	token++;
+       token_list[token] = util_alloc_substring_copy(&line[offset] , length);
+       token++;
       }
       
       offset += length;                              /* Skipping the token */
@@ -210,9 +210,9 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
   for (token = 0; token < tokens; token++) {
     if (token_list[token] != NULL) {
       if (token_list[token][0] == '\'') {
-	char *tmp = util_alloc_substring_copy(&token_list[token][1] , strlen(token_list[token]) - 2);
-	free(token_list[token]);
-	token_list[token] = tmp;
+       char *tmp = util_alloc_substring_copy(&token_list[token][1] , strlen(token_list[token]) - 2);
+       free(token_list[token]);
+       token_list[token] = tmp;
       }
     }
   }
