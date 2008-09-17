@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <rate_node.h>
+#include <rate.h>
 #include <sched_util.h>
 #include <string.h>
 #include <util.h>
@@ -270,10 +270,6 @@ rate_type * rate_alloc_from_summary(bool history_mode , const ecl_sum_type * sum
                         
 
 
-const char * rate_get_well_ref(const rate_type * rate) {
-  return rate->well;
-}
-
 
 void rate_sched_fwrite(const rate_type *rate , FILE *stream) {
   util_fwrite(&rate->kw_size        , sizeof rate->kw_size , 1 , stream , __func__);
@@ -428,7 +424,7 @@ const void * rate_copyc__(const void *void_rate) {
 
 /*****************************************************************/
 
-const char * rate_node_get_well_ref(const rate_type * rate) { return rate->well; }
+const char * rate_get_well_ref(const rate_type * rate) { return rate->well; }
 
 double rate_get_ORAT(const rate_type * rate, bool *def) {
   return rate->ORAT;
