@@ -90,6 +90,15 @@ list_node_type * list_iget_node(const list_type *list, int index) {
 }
 
 
+
+void * list_iget_node_value_ptr(const list_type * list, int index)
+{
+  list_node_type * list_node = list_iget_node(list, index);
+  return list_node_value_ptr(list_node);
+}
+
+
+
 list_node_type * list_iget_node_try(const list_type *list, int index) {
   return list_iget_node_static(list , index, false);
 }

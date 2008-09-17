@@ -12,6 +12,7 @@ void             list_del_node(list_type *list , list_node_type *);
 */
 void             list_free(list_type *);
 list_node_type * list_iget_node(const list_type *, int );
+void           * list_iget_node_value_ptr(const list_type *, int );
 list_node_type * list_get_head(const list_type *);
 list_node_type * list_get_tail(const list_type *);
 list_node_type * list_append_ref(list_type *list , const void *);
