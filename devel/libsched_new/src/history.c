@@ -91,13 +91,25 @@ static history_node_type * history_node_fread_alloc(FILE * stream)
       hash_insert_hash_owned_ref(node->rate_hash, rate_get_well_ref(rate), rate, rate_free__);
     }
   }
+
+  return node;
 }
 
 
 
-static void history_node_update_rate_hash(hash_type * rate_hash, const hash_type * rate_hash_diff)
+static void history_node_update_rate_hash(hash_type * rate_hash, hash_type * rate_hash_diff)
 {
-  //util_abort("%s: Not implemented.\n", __func__); 
+  int size = hash_get_size(rate_hash_diff);
+  char ** keylist = hash_alloc_keylist(rate_hash_diff);
+
+  for(int i=0; i<size; i++)
+  {
+    rate_type * new_ref = hash_get(rate_hash_diff, keylist[i]);
+    rate_type * new_cpy = rate_copyc(new_ref);
+    hash_insert_hash_owned_ref(rate_hash, keylist[i], new_cpy, rate_free__);
+  }
+
+  util_free_stringlist(keylist, size);
 }
 
 
