@@ -3,8 +3,87 @@
 #include <util.h>
 #include <gruptree.h>
 
+
+/*
+  The gruptree struct is made for internalizing the
+  GRUPTREE keyword from a schedule section.
+
+  It provides functions which allows for easy
+  manipulating of, and access to, tree structure.
+
+  Since the gruptree may change during simulation,
+  and the changes are usually only given in differences,
+  i.e. the whole gruptree is NOT restated, we provide a
+  way to easily create a new gruptree to reflect the changes.
+
+
+
+  EXAMPLE:
+
+  Schedule file:
+  ----------------------------
+
+  SKIPREST
+  ....
+  ....
+
+  GRUPTREE
+    GRPA FIELD/
+    GRPB FIELD/
+    INJE GRPA/
+  /
+
+  TSTEP
+    100 /
+  ....
+  ....
+
+  GRUPTREE
+    INJE GRPB /
+    PROD GRPA /
+  /
+
+  TSTEP
+    200 /
+  ...
+  ...
+  ----------------------------
+
+  Now, after the first timestep, INJE is no longer
+  a subgroup of GRPA, but GRPB. However, the rest
+  of the GRUPTREE at the first time step is still
+  valid! Note also that a new group PROD has been
+  added.
+
+  Suppose that you want to create two gruptree's
+  one for each time step. This can be done as follows.
+
+
+  C code:
+  ----------------------------
+
+  gruptree_type * tree_one = gruptree_alloc();
+  gruptree_register_grup(tree_two, "GRPA", "FIELD");
+  gruptree_register_grup(tree_two, "GRPB", "FIELD");
+  gruptree_register_grup(tree_two, "INJE", "GRPA");
+
+  gruptree_type * tree_two = gruptree_copyc(tree_one);
+  gruptree_register_grup(tree_two, "INJE", "GRPB");
+  gruptree_register_grup(tree_two, "PROD", "GRPA");
+  
+  ..... 
+  ..... 
+
+  gruptree_free(tree_one);
+  gruptree_free(tree_two);
+*/
+
+
+
 typedef struct grup_struct grup_type;
 typedef struct well_struct well_type;
+
+
 
 struct grup_struct{
   bool   isleaf;
@@ -18,10 +97,14 @@ struct grup_struct{
                                  grups. */
 };
 
+
+
 struct well_struct{
   char            * name;
   const grup_type * parent;
 };
+
+
 
 struct gruptree_struct{
   hash_type * grups;
@@ -108,15 +191,14 @@ static const char * well_get_parent_name(const well_type * well)
 
 static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * grupname, hash_type * well_hash)
 {
-  /*
-    Be aware!
 
-    This function does not handle grupname "FIELD".
-  */
   if(!hash_has_key(gruptree->grups, grupname))
-    util_abort("%s: Internal error.\n", __func__);
+    util_abort("%s: Internal error - grupname %s is not in hash.\n", __func__, grupname);
   
   grup_type * grup = hash_get(gruptree->grups, grupname);
+  if(grup->isfield)
+    util_abort("%s: Internal error - no support for grups with isfield flag.\n");
+
   if(!grup->isleaf)
   {
     int size = hash_get_size(grup->children);
@@ -323,7 +405,7 @@ void gruptree_fwrite(const gruptree_type * gruptree, FILE * stream)
 
     for(int i=0; i<num_grups; i++)
     {
-      if(strcmp(grup_list[i], "FIELD") == 0)
+      if(strcmp(grup_list[i], "FIELD") == 0) /* Skipping FIELD. */
         continue;
 
       grup_type * grup  = hash_get(gruptree->grups, grup_list[i]);
