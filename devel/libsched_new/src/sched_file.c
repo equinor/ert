@@ -355,7 +355,7 @@ int sched_file_get_restart_file_from_time_t(const sched_file_type * sched_file, 
     }
     else if(block_end_time == time)
     {
-      return i; /* ECLIPSE Counting. */
+      return i; 
     }
   }
 
