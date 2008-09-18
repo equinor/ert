@@ -302,16 +302,16 @@ rate_type * rate_fread_alloc(FILE *stream) {
   rate->well         = util_fread_alloc_string( stream ); 
   
   util_fread(&rate->cmode     , sizeof rate->cmode        , 1                 , stream , __func__);
-  util_fread(&rate->state     , sizeof rate->state          , 1                 , stream , __func__);
-  util_fread(&rate->ORAT      , sizeof rate->ORAT           , 1                 , stream , __func__);
-  util_fread(&rate->WRAT      , sizeof rate->WRAT           , 1                 , stream , __func__);
-  util_fread(&rate->GRAT      , sizeof rate->GRAT           , 1                 , stream , __func__);
+  util_fread(&rate->state     , sizeof rate->state        , 1                 , stream , __func__);
+  util_fread(&rate->ORAT      , sizeof rate->ORAT         , 1                 , stream , __func__);
+  util_fread(&rate->WRAT      , sizeof rate->WRAT         , 1                 , stream , __func__);
+  util_fread(&rate->GRAT      , sizeof rate->GRAT         , 1                 , stream , __func__);
   util_fread(&rate->VFPTable  , sizeof rate->VFPTable     , 1                 , stream , __func__);
   util_fread(&rate->ALift     , sizeof rate->ALift        , 1                 , stream , __func__);
-  util_fread(&rate->THP             , sizeof rate->THP          , 1                 , stream , __func__);
-  util_fread(&rate->BHP             , sizeof rate->BHP          , 1                 , stream , __func__);
+  util_fread(&rate->THP       , sizeof rate->THP          , 1                 , stream , __func__);
+  util_fread(&rate->BHP       , sizeof rate->BHP          , 1                 , stream , __func__);
   util_fread(&rate->WGASRAT   , sizeof rate->WGASRAT      , 1                 , stream , __func__);  
-  util_fread(rate->def        , sizeof * rate->def        , rate->kw_size , stream , __func__);
+  util_fread(rate->def        , sizeof * rate->def        , rate->kw_size     , stream , __func__);
   
   return rate;
 }
@@ -321,9 +321,10 @@ rate_type * rate_fread_alloc(FILE *stream) {
 
 void rate_fprintf(const rate_type * rate , FILE *stream) {
   fprintf(stream , "  ");
-  sched_util_fprintf_qst(rate->def[0]  , rate->well          , 8 , stream);
+  sched_util_fprintf_qst(rate->def[0]  , rate->well                       , 8 , stream);
   sched_util_fprintf_qst(rate->def[1]  , rate_get_well_state_string(rate) , 4 , stream);
   sched_util_fprintf_qst(rate->def[2]  , rate_get_mode_string(rate)       , 4 , stream);
+
   sched_util_fprintf_dbl(rate->def[3]  , rate->ORAT     , 12 , 3 , stream);
   sched_util_fprintf_dbl(rate->def[4]  , rate->WRAT     , 12 , 3 , stream);
   sched_util_fprintf_dbl(rate->def[5]  , rate->GRAT     , 12 , 3 , stream);
@@ -422,6 +423,7 @@ const void * rate_copyc__(const void *void_rate) {
 
 const char * rate_get_well_ref(const rate_type * rate) { return rate->well; }
 
+/*
 double rate_get_ORAT(const rate_type * rate, bool *def) {
   return rate->ORAT;
 }
@@ -516,3 +518,4 @@ double rate_iget(const rate_type * rate , well_var_type var_type , bool *error ,
     abort();
   }
 }
+*/

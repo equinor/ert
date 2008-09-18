@@ -97,7 +97,7 @@ static history_node_type * history_node_fread_alloc(FILE * stream)
 
 
 
-static void history_node_update_rate_hash(hash_type * rate_hash, hash_type * rate_hash_diff)
+static void history_node_update_rate_hash(history_node_type * node, hash_type * rate_hash_diff)
 {
   int size = hash_get_size(rate_hash_diff);
   char ** keylist = hash_alloc_keylist(rate_hash_diff);
@@ -106,7 +106,7 @@ static void history_node_update_rate_hash(hash_type * rate_hash, hash_type * rat
   {
     rate_type * new_ref = hash_get(rate_hash_diff, keylist[i]);
     rate_type * new_cpy = rate_copyc(new_ref);
-    hash_insert_hash_owned_ref(rate_hash, keylist[i], new_cpy, rate_free__);
+    hash_insert_hash_owned_ref(node->rate_hash, keylist[i], new_cpy, rate_free__);
   }
 
   util_free_stringlist(keylist, size);
@@ -127,7 +127,7 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
     case(WCONHIST):
     {
       hash_type * rate_hash_diff  = sched_kw_rate_hash_copyc(sched_kw);
-      history_node_update_rate_hash(node->rate_hash, rate_hash_diff); 
+      history_node_update_rate_hash(node, rate_hash_diff); 
       hash_free(rate_hash_diff);
       break;
     }
