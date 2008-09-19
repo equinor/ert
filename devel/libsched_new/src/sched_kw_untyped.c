@@ -1,13 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <list.h>
 #include <list_node.h>
 #include <util.h>
 #include <sched_kw_untyped.h>
 #include <sched_util.h>
-#include <sched_macros.h>
 
 
 struct sched_kw_untyped_struct {
@@ -190,7 +187,41 @@ sched_kw_untyped_type * sched_kw_untyped_fread_alloc(FILE *stream) {
 }
   
 
+/*
+  This function tries to return the i'th (0 based) entry on each line
+  in the kw.
 
+  EXAMPLE
+  ------------------
+
+
+  Entry:
+  -------------------------
+  WCONPROD
+  -- 0     1       2    ... 
+     WP1  OPEN   ORAT   ... /
+     WP2  OPEN   ORAT   ... /
+  /
+
+  Then sched_kw_untyped_iget_entries_alloc( ... , 0) would return WP1 and WP2.
+*/
+char ** sched_kw_untyped_iget_entries_alloc(const sched_kw_untyped_type * kw, int i, int * kw_size)
+{
+  int size = list_get_size(kw->line_list);
+  char ** kw_entries = util_malloc(size * sizeof * kw_entries, __func__);
+  for(int j=0; j<size; j++)
+  {
+    list_node_type * node = list_iget_node(kw->line_list,j);
+    const char * line = list_node_get_string(node);
+    int tokens;
+    char ** token_list;
+    sched_util_parse_line(line, &tokens, &token_list, i+1, NULL);
+    kw_entries[j] = util_alloc_string_copy(token_list[i]);
+    util_free_stringlist(token_list, tokens);
+  }
+  *kw_size = size;
+  return kw_entries;
+}
 
 /*****************************************************************/
 

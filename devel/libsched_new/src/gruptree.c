@@ -197,7 +197,7 @@ static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * gru
   
   grup_type * grup = hash_get(gruptree->grups, grupname);
   if(grup->isfield)
-    util_abort("%s: Internal error - no support for grups with isfield flag.\n");
+    util_abort("%s: Internal error - no support for grups with isfield flag.\n", __func__);
 
   if(!grup->isleaf)
   {
@@ -264,6 +264,10 @@ void gruptree_register_grup(gruptree_type * gruptree, const char * name, const c
   grup_type * parent;
   grup_type * newgrp;
 
+  //////////////////////////////////////////////////////////
+
+  if(name == NULL)
+    util_abort("%s: Trying to insert group %s with NULL name - aborting.\n", __func__, name);
   if(parent_name == NULL)
     util_abort("%s: Trying to insert group %s with NULL parent - aborting.\n", __func__, name);
   if(strcmp(name, parent_name) == 0)
