@@ -389,19 +389,24 @@ time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
 
 
 
-hash_type * sched_kw_rate_hash_copyc(const sched_kw_type * sched_kw)
+char ** sched_kw_get_well_list(const sched_kw_type * sched_kw, int * num_wells)
 {
   switch(sched_kw_get_type(sched_kw))
   {
-    case(WCONHIST):
-      return sched_kw_wconhist_rate_hash_copyc( (const sched_kw_wconhist_type *) sched_kw->data);
+    case(WCONPROD):
+      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
+    case(WCONINJE):
+      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
+    case(WCONINJ):
+      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
+    case(WCONINJH):
+      // TODO Remove me when WCONINJH is properly implemented.
+      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
     default:
-      util_abort("%s: Internal error - trying to create rate_hash from non-rate kw - aborting.\n", __func__);
-      return NULL;
+       util_abort("%s: Internal error - trying to get well list from non-well kw - aborting.\n", __func__);
+       return NULL;
   }
 }
-
-
 
 
 

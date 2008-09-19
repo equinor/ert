@@ -7,6 +7,15 @@
 #include <sched_util.h>
 #include <sched_macros.h>
 
+
+
+/*
+  TODO
+
+  Create lookup STRING -> ENUM for all types and fix all strcmp!
+
+*/
+
 /*
   Define the maximum number of keywords in a WELSPEC record.
   Note that this includes FrontSim and ECLIPSE 300 KWs.
