@@ -6,7 +6,7 @@
 #include <path_fmt.h>
 #include <fs_types.h>
 #include <util.h>
-
+#include <plain_driver_common.h>
 
 
 
@@ -61,9 +61,7 @@ void plain_driver_static_load_node(void * _driver , int report_step , int iens ,
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
     char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
-    FILE * stream   = util_fopen(filename , "r");
-    enkf_node_fread(node , stream , report_step , state);
-    fclose(stream);
+    plain_driver_common_load_node(filename , report_step , state , node);
     free(filename);
   }
 }
@@ -85,11 +83,7 @@ void plain_driver_static_save_node(void * _driver , int report_step , int iens ,
   plain_driver_static_type * driver = plain_driver_static_init(_driver);
   {
     char * filename      = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
-    FILE * stream   	 = util_fopen(filename , "w");
-    bool   data_written = enkf_node_fwrite(node , stream , report_step , state);
-    fclose(stream);
-    if (!data_written)
-      unlink(filename);
+    plain_driver_common_save_node(filename , report_step , state , node);
     free(filename);
   }
 }

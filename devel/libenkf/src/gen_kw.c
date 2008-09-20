@@ -144,9 +144,9 @@ int gen_kw_serialize(const gen_kw_type *gen_kw , serial_state_type * serial_stat
 }
 
 
-void gen_kw_deserialize(gen_kw_type *gen_kw , const double * serial_data , size_t stride , serial_state_type * serial_state) {
+void gen_kw_deserialize(gen_kw_type *gen_kw , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   DEBUG_ASSERT(gen_kw);
-  scalar_deserialize(gen_kw->scalar , serial_data , stride , serial_state);
+  scalar_deserialize(gen_kw->scalar , serial_state , serial_vector);
 }
 
 

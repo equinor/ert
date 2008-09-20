@@ -2,6 +2,7 @@
 #include <enkf_node.h>
 #include <basic_driver.h>
 #include <plain_driver_dynamic.h>
+#include <plain_driver_common.h>
 #include <fs_types.h>
 #include <path_fmt.h>
 #include <util.h>
@@ -55,9 +56,7 @@ void plain_driver_dynamic_load_node(void * _driver , int report_step , int iens 
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
     char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node) , false);
-    FILE * stream = util_fopen(filename , "r");
-    enkf_node_fread(node , stream , report_step , state);
-    fclose(stream);
+    plain_driver_common_load_node(filename , report_step , state , node);
     free(filename);
   }
 }
@@ -77,11 +76,7 @@ void plain_driver_dynamic_save_node(void * _driver , int report_step , int iens 
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
     char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key_ref(node) , true);
-    FILE * stream = util_fopen(filename , "w");
-    bool   data_written = enkf_node_fwrite(node , stream , report_step , state);
-    fclose(stream);
-    if (!data_written)
-      unlink(filename);
+    plain_driver_common_save_node(filename , report_step , state , node);
     free(filename);
   }
 }

@@ -75,7 +75,7 @@ int relperm_serialize(const relperm_type *relperm , serial_state_type * serial_s
   return scalar_serialize(relperm->scalar , serial_state , serial_offset , serial_vector);
 }
 
-relperm_deserialize(relperm_type *relperm , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
+void  relperm_deserialize(relperm_type *relperm , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   DEBUG_ASSERT(relperm);
   scalar_deserialize(relperm->scalar ,  serial_state , serial_vector);
 }

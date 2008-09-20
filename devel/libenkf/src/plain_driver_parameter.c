@@ -2,6 +2,7 @@
 #include <enkf_node.h>
 #include <basic_driver.h>
 #include <plain_driver_parameter.h>
+#include <plain_driver_common.h>
 #include <fs_types.h>
 #include <path_fmt.h>
 #include <util.h>
@@ -74,11 +75,7 @@ void plain_driver_parameter_load_node(void * _driver , int _report_step , int ie
 	filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
       }
     }
-    {
-      FILE * stream   = util_fopen(filename , "r");
-      enkf_node_fread(node , stream , report_step , state);
-      fclose(stream);
-    }
+    plain_driver_common_load_node(filename , report_step , state , node);
     free(filename);
   }
 }
@@ -90,11 +87,7 @@ void plain_driver_parameter_save_node(void * _driver , int _report_step , int ie
   plain_driver_parameter_assert_cast(driver);
   {
     char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
-    FILE * stream = util_fopen(filename , "w");
-    bool   data_written = enkf_node_fwrite(node , stream , report_step , state);
-    fclose(stream);
-    if (!data_written)
-      unlink(filename);
+    plain_driver_common_save_node(filename , report_step , state , node);
     free(filename);
   }
 }
