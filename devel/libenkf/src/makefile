@@ -95,7 +95,7 @@ multz_config.o   : enkf_util.h multz_config.c multz_config.h enkf_macros.h logmo
 relperm_config.o : enkf_util.h relperm_config.c relperm_config.h enkf_macros.h logmode.o
 multz.o          : enkf_util.h multz.c multz.h multz_config.o logmode.o scalar.o enkf_util.o
 relperm.o        : enkf_util.h relperm.c relperm.h relperm_config.o logmode.o scalar.o
-enkf_node.o      : enkf_util.h enkf_node.h enkf_node.c enkf_macros.h gen_param_config.o gen_param.o enkf_serialize.o
+enkf_node.o      : enkf_util.h enkf_node.h enkf_node.c enkf_macros.h gen_param_config.o gen_param.o enkf_serialize.o havana_fault.o field.o gen_data.o well.o summary.o gen_kw.o multz.o multflt.o equil.o relperm.o
 field_interC.o   : field_interC.c field.o field_config.o
 field_obs.o      : field_obs.c field_obs.h field.o field_config.o
 scalar_config.o : scalar_config.c scalar_config.h enkf_macros.h trans_func.o

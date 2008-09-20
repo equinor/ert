@@ -1,4 +1,6 @@
 {
+   double * serial_data = serial_vector->serial_data;
+   int    serial_stride = serial_vector->serial_stride;
    size_t serial_index = 0;
    size_t node_index;
 

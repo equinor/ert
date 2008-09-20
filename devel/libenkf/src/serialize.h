@@ -1,4 +1,9 @@
 {
+   double * serial_data = serial_vector->serial_data;
+   int    serial_stride = serial_vector->serial_stride;
+   size_t serial_size   = serial_vector->serial_size;
+ 
+   
    size_t node_index;
    size_t serial_index = 0;
    serial_state->node_index2 = node_size;  /* Assuming that we get through the complete object. */ 

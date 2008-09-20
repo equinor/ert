@@ -604,13 +604,13 @@ void field_truncate(field_type * field) {
 }
 
 
-void field_deserialize(field_type * field ,   const double * serial_data , size_t stride , serial_state_type * serial_state) {
+void field_deserialize(field_type * field , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   const bool              *iactive     = field_config_get_iactive(config);
   
-  enkf_deserialize(field->data , data_size , ecl_type , iactive , serial_state , serial_data , stride);
+  enkf_deserialize(field->data , data_size , ecl_type , iactive , serial_state , serial_vector);
   field_truncate(field);
 
 }
@@ -618,15 +618,15 @@ void field_deserialize(field_type * field ,   const double * serial_data , size_
 
 
 
-int field_serialize(const field_type *field , size_t serial_data_size ,  double *serial_data , size_t serial_stride , size_t serial_offset , serial_state_type * serial_state) {
+int field_serialize(const field_type *field , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const field_config_type *config     = field->config;
   ecl_type_enum ecl_type              = field_config_get_ecl_type(config);
   const int                data_size  = field_config_get_data_size(config);
   const bool              *iactive    = field_config_get_iactive(config);
   int elements_added;
 
-
-  elements_added = enkf_serialize(field->data , data_size , ecl_type , iactive , serial_state , serial_data , serial_data_size , serial_offset , serial_stride);
+  
+  elements_added = enkf_serialize(field->data , data_size , ecl_type , iactive , serial_state , serial_offset , serial_vector);
   return elements_added;
 }
 

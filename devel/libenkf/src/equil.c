@@ -10,6 +10,7 @@
 #include <scalar.h>
 #include <scalar_config.h>
 #include <enkf_macros.h>
+#include <enkf_serialize.h>
 
 
 #define  DEBUG
@@ -99,6 +100,7 @@ void equil_fread(equil_type * equil , FILE * stream) {
 
 void equil_initialize(equil_type *equil, int iens) {
   scalar_sample(equil->scalar);
+
 }
 
 
@@ -109,14 +111,15 @@ void equil_free(equil_type *equil) {
 }
 
 
-int equil_serialize(const equil_type *equil , size_t serial_data_size , double *serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
+int equil_serialize(const equil_type *equil , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   DEBUG_ASSERT(equil);
-  return scalar_serialize(equil->scalar , serial_data_size , serial_data , stride , offset , serial_state);
+  return scalar_serialize(equil->scalar , serial_state , serial_offset , serial_vector);
 }
 
-equil_deserialize(equil_type *equil , const double * serial_data , size_t stride , serial_state_type * serial_state) {
+
+void equil_deserialize(equil_type *equil , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   DEBUG_ASSERT(equil);
-  scalar_deserialize(equil->scalar , serial_data , stride , serial_state);
+  scalar_deserialize(equil->scalar , serial_state , serial_vector);
 }
 
 
@@ -138,3 +141,4 @@ VOID_FREAD  (equil)
 VOID_COPYC     (equil)
 VOID_FREE (equil)
 
+     

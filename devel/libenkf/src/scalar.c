@@ -137,22 +137,22 @@ void scalar_free(scalar_type *scalar) {
   free(scalar);
 }
 
-void scalar_deserialize(scalar_type * scalar , const double * serial_data , size_t serial_stride , serial_state_type * serial_state) {
+void scalar_deserialize(scalar_type * scalar , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const scalar_config_type *config    = scalar->config;
   const bool              *active     = config->active;
   const int                data_size  = scalar_config_get_data_size(config);
-  enkf_deserialize(scalar->data , data_size , ecl_double_type , active , serial_state , serial_data , serial_stride);
+  enkf_deserialize(scalar->data , data_size , ecl_double_type , active , serial_state , serial_vector);
 }
 
 
 
 
-int scalar_serialize(const scalar_type *scalar , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , serial_state_type * serial_state) {
+int scalar_serialize(const scalar_type *scalar ,  serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const scalar_config_type *config      = scalar->config;
   const bool              *active     = config->active;
   const int                data_size  = scalar_config_get_data_size(config);
   
-  return enkf_serialize(scalar->data , data_size , ecl_double_type , active , serial_state  , serial_data , serial_data_size , offset , stride);
+  return enkf_serialize(scalar->data , data_size , ecl_double_type , active , serial_state  , serial_offset , serial_vector);
 }
 
 

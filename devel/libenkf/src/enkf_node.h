@@ -10,6 +10,7 @@
 #include <ecl_block.h>
 #include <ecl_sum.h>
 #include <fortio.h>
+#include <enkf_serialize.h>
 
 /**********************************/
 
@@ -17,23 +18,21 @@
 
 
 #define NODE_STD_FIELDS \
-int internal_offset;
+int __internal_offset;
 
 /* Return value is the number of elements added = serial_size */
-typedef int   	      (serialize_ftype)      	(const void * ,  /* Node object.     	       */ 
-                                                 size_t       ,  /* Size of serial buffer.     */
-                                                 double *     ,  /* Serial data.               */
-                                                 size_t       ,  /* Stride of serial data.     */ 
-						 size_t       ,  /* Offset into serial vector. */
-                                                 serial_state_type *);
+typedef int   	      (serialize_ftype)      	(const void *         ,   /* Node object.     	       */ 
+                                                 serial_state_type *  ,   /* Information about serialization of node. */
+						 size_t               ,   /* Current offset into serial vector. */
+						 serial_vector_type * );  /* Object holding the serial vector - with a size and stride. */
+
+                                                 
 
 
 
-/* Return value is the updated internal offset  - not relevant if complete*/
-typedef void   	      (deserialize_ftype)       (void *       	,  /* Node object     		*/
-                                                 const double * ,  /* Serial buffer              */
-                                                 size_t         ,  /* Stride of serial data 	*/
-                                                 serial_state_type *);
+typedef void   	      (deserialize_ftype)       (void *       	       ,  /* Node object     		*/
+						 serial_state_type *   , 
+						 const serial_vector_type * );
                                                  
 
 
@@ -94,15 +93,15 @@ void           * enkf_node_value_ptr(const enkf_node_type * );
 enkf_impl_type   enkf_node_get_impl_type(const enkf_node_type * );
 enkf_var_type    enkf_node_get_var_type(const enkf_node_type * );
 void             enkf_node_clear_serial_state(enkf_node_type * );
-void             enkf_node_deserialize(enkf_node_type * , double * , size_t );
+void             enkf_node_deserialize(enkf_node_type * , const serial_vector_type *);
 
 void             enkf_node_ecl_load  (enkf_node_type *, const char * , const char * , const ecl_sum_type * , const ecl_block_type * , int);
 void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int);
 void             enkf_node_ecl_write (const enkf_node_type *, const char *);
 void             enkf_node_initialize(enkf_node_type *enkf_node , int);
 void             enkf_node_printf(const enkf_node_type *);
-bool              enkf_node_fwrite (enkf_node_type * , FILE * stream, int , state_enum);
-int              enkf_node_serialize(enkf_node_type * , size_t , double * , size_t , size_t , bool *);
+bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, int , state_enum);
+int              enkf_node_serialize(enkf_node_type * , size_t , serial_vector_type *, bool *);
 void             enkf_node_clear     (enkf_node_type *);
 void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , state_enum);
 void             enkf_node_ensemble_fprintf_results(const enkf_node_type ** , int , int , const char * );

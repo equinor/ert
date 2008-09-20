@@ -450,12 +450,12 @@ void enkf_node_ens_clear(enkf_node_type *enkf_node) {
 }
 
 
-int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , double *serial_data , size_t stride , size_t offset , bool * complete) {
+int enkf_node_serialize(enkf_node_type *enkf_node , size_t current_serial_offset ,serial_vector_type * serial_vector, bool * complete) {
   FUNC_ASSERT(enkf_node->serialize);
   enkf_node_assert_memory(enkf_node , __func__);
   { 
     int elements_added = 0;
-    elements_added = enkf_node->serialize(enkf_node->data , serial_data_size , serial_data , stride , offset , enkf_node->serial_state);
+    elements_added = enkf_node->serialize(enkf_node->data , enkf_node->serial_state , current_serial_offset , serial_vector );
     *complete = serial_state_complete( enkf_node->serial_state );
     return elements_added;
   } 
@@ -463,9 +463,9 @@ int enkf_node_serialize(enkf_node_type *enkf_node , size_t serial_data_size , do
 
 
 
-void enkf_node_deserialize(enkf_node_type *enkf_node , double *serial_data , size_t stride) {
+void enkf_node_deserialize(enkf_node_type *enkf_node , const serial_vector_type * serial_vector) {
   FUNC_ASSERT(enkf_node->serialize);
-  enkf_node->deserialize(enkf_node->data , serial_data , stride , enkf_node->serial_state);
+  enkf_node->deserialize(enkf_node->data , enkf_node->serial_state , serial_vector);
   enkf_node->__modified = true;
 }
 

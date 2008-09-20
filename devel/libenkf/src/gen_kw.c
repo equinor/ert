@@ -138,9 +138,9 @@ void gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
 
 
 
-int gen_kw_serialize(const gen_kw_type *gen_kw , size_t serial_data_size , double *serial_data , size_t ens_size , size_t offset, serial_state_type * serial_state) {
+int gen_kw_serialize(const gen_kw_type *gen_kw , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   DEBUG_ASSERT(gen_kw);
-  return scalar_serialize(gen_kw->scalar , serial_data_size, serial_data , ens_size , offset , serial_state);
+  return scalar_serialize(gen_kw->scalar , serial_state , serial_offset , serial_vector);
 }
 
 

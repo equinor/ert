@@ -140,14 +140,14 @@ void  havana_fault_initialize(havana_fault_type *havana_fault, int iens) {
 } 
 
 
-int havana_fault_serialize(const havana_fault_type *havana_fault , size_t serial_data_size , double *serial_data , size_t serial_stride , size_t serial_offset , serial_state_type * serial_state) {
+int havana_fault_serialize(const havana_fault_type *havana_fault , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   DEBUG_ASSERT(havana_fault);
-  return scalar_serialize(havana_fault->scalar , serial_data_size, serial_data , serial_stride , serial_offset , serial_state);
+  return scalar_serialize(havana_fault->scalar , serial_state , serial_offset , serial_vector);
 }
 
-void havana_fault_deserialize(havana_fault_type *havana_fault , const double * serial_data , size_t stride , serial_state_type * serial_state) {
+void havana_fault_deserialize(havana_fault_type *havana_fault , serial_state_type * serial_state, const serial_vector_type * serial_vector) {
   DEBUG_ASSERT(havana_fault);
-  scalar_deserialize(havana_fault->scalar , serial_data , stride , serial_state);
+  scalar_deserialize(havana_fault->scalar , serial_state , serial_vector);
 }
 
 

@@ -70,14 +70,14 @@ relperm_type * relperm_alloc(const relperm_config_type * relperm_config){
   return relperm;
 }
 
-int relperm_serialize(const relperm_type *relperm , size_t serial_data_size , double *serial_data , size_t stride , size_t offset, serial_state_type * serial_state) {
+int relperm_serialize(const relperm_type *relperm , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   DEBUG_ASSERT(relperm);
-  return scalar_serialize(relperm->scalar , serial_data_size , serial_data , stride , offset , serial_state);
+  return scalar_serialize(relperm->scalar , serial_state , serial_offset , serial_vector);
 }
 
-relperm_deserialize(relperm_type *relperm ,  const double * serial_data , size_t stride , serial_state_type * serial_state) {
+relperm_deserialize(relperm_type *relperm , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   DEBUG_ASSERT(relperm);
-  scalar_deserialize(relperm->scalar , serial_data , stride  , serial_state);
+  scalar_deserialize(relperm->scalar ,  serial_state , serial_vector);
 }
 
 void relperm_truncate(relperm_type * relperm) {

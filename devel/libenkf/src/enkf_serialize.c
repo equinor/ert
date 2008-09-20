@@ -94,6 +94,28 @@ vector is to small to hold everything, and repeated calls to serialize
 
 /*****************************************************************/
 
+
+/**
+   This is struct holding the serialized vecor, along with some meta
+   information. Observe that this struct will be read by many threads
+   concurrently, it can therefor only hold static information, and *NOT* any
+   pr. node or pr. member information.
+*/
+
+struct serial_vector_struct {
+  double * serial_data;        /* The actual serialized storage - the ensemble matrix. */
+  size_t   serial_size;        /* The size of serial_vector. */
+  int      serial_stride;      /* The stride in the serial vector. This stride is the distance in the
+				  serialized vector, between elements which are consecutive in the
+				  underlying node object. This stride typically (I guess it is a
+				  requirement ...) equals the number of ensemble members; referring to
+				  the figure above this means that P0 and P1 (for the same member) are
+				  two elements apart, and not only one, as they are in the underlying object. */
+};
+
+
+
+
 /**
    This is a support struct designed to hold information about a
    partly completed serialization. Observe that there are two reasons
@@ -114,6 +136,75 @@ struct serial_state_struct {
   state_enum state;
 };
 
+/*****************************************************************/
+
+
+/**
+  Observe that target_serial_size and _serial_size count the number of
+  double elements, *NOT* the number of bytes, hence it is essential to
+  have a margin to avoid overflow of the size_t datatype (on 32 bit machines).
+*/
+
+serial_vector_type * serial_vector_alloc(size_t target_serial_size, int ens_size) {
+  size_t   serial_size = target_serial_size;
+  double * serial_data;
+
+#ifdef i386
+  /* 
+     33570816 = 2^25 is the maximum number of doubles we will
+     allocate, this corresponds to 2^28 bytes - which it seems
+     we can adress quite safely ...
+  */
+  serial_size = util_int_min(serial_size , 33570816 ); 
+#endif
+  
+  do {
+    serial_data = malloc(serial_size * sizeof * serial_data);
+    if (serial_data == NULL) 
+      serial_size /= 2;
+
+  } while (serial_data == NULL);
+
+  
+  /*
+    Ensure that the allocated memory is an integer times ens_size.
+  */
+  {
+    int serial_size0 = serial_size;
+    {
+      div_t tmp   = div(serial_size , ens_size);
+      serial_size = ens_size * tmp.quot;
+    }
+    if (serial_size != serial_size0) {
+      /* Can not use realloc() here because the temporary memory requirements might be prohibitive. */
+      free(serial_data);
+      serial_data = util_malloc(serial_size * sizeof * serial_data , __func__);
+    }
+  }
+  {
+    serial_vector_type * serial_vector = util_malloc(sizeof * serial_vector , __func__);
+    serial_vector->serial_data = serial_data;
+    serial_vector->serial_size   = serial_size;
+    serial_vector->serial_stride = ens_size;
+
+    return serial_vector;
+  }
+}
+
+
+int serial_vector_get_stride(const serial_vector_type * serial_vector) {
+  return serial_vector->serial_stride;
+}
+
+double * serial_vector_get_data(const serial_vector_type * serial_vector) {
+  return serial_vector->serial_data;
+}
+
+
+void serial_vector_free(serial_vector_type * serial_vector) {
+  free( serial_vector->serial_data );
+  free( serial_vector );
+}
 
 
 /*****************************************************************/
@@ -160,18 +251,16 @@ size_t enkf_serialize(const void * __node_data	       ,   /* The data of the inp
 		      ecl_type_enum node_type 	       ,   /* The underlying data type of __node_data. */
 		      const bool * active     	       ,   /* An active flag for the data - can be NULL if everything is active. */      
 		      serial_state_type * serial_state ,   /* Holding the state of the current serialization of this node. */
-		      /*-- Above: node data --- Below: serial data --*/
-		      double * serial_data ,               /* The large vector which accepts the data. */
-		      size_t serial_size   ,               /* The size of the serial vector. */
-		      size_t serial_offset ,               /* The offset in the serial vector we are starting on. */
-		      int serial_stride) {                 /* The stride in the serial vector.*/
+                      /*-- Above: node data --- Below: serial data --*/
+		      size_t serial_offset ,               /* The offset in the serial vector we are starting on - owned by the node; pointing into the serial vector. */		      
+                      serial_vector_type * serial_vector) {
 
   int    node_index1    = serial_state->node_index1;
   size_t elements_added = 0;
   
   if (!serial_state->complete) {
     /* If the previous _exactly_ used all memory we will have serial_size == serial_offset - and should return immediatebly. */
-    if (serial_offset < serial_size) {  
+    if (serial_offset < serial_vector->serial_size) {  
       if (node_type == ecl_double_type) {
 	/* Serialize double -> double */
 	const  double * node_data = (const double *) __node_data;
@@ -209,8 +298,7 @@ void enkf_deserialize(void * __node_data      	  	, /* The data of the node whic
 		      const bool * active     	  	, /* Active / inactive flag - can be NULL for all elements active. */
 		      serial_state_type * serial_state  , /* Holding the state of the current serialization of this node. */
 		      /*-- Above: node data ---  Below: serial data --*/
-		      const double * serial_data        , /* The serial vector which we will now be reading out of. */     
-		      int serial_stride) {                /* The stride in the serial vector.*/
+		      const serial_vector_type * serial_vector) {
 
   if (serial_state->state == serialized) {
     size_t serial_offset = serial_state->serial_offset;

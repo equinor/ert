@@ -151,24 +151,24 @@ void gen_param_fread(gen_param_type * gen_param , FILE * stream) {
 
 
 
-int gen_param_serialize(const gen_param_type *gen_param , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , serial_state_type * serial_state) {
+int gen_param_serialize(const gen_param_type *gen_param ,serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   ecl_type_enum ecl_type = gen_param_config_get_ecl_type(gen_param->config);
   const int data_size    = gen_param_config_get_data_size(gen_param->config);
   const bool * iactive   = gen_param_config_get_iactive( gen_param->config );  
   int elements_added = 0;
   if (data_size > 0) 
-    elements_added = enkf_serialize(gen_param->data , data_size , ecl_type , iactive , serial_state , serial_data , serial_data_size , offset , stride);
+    elements_added = enkf_serialize(gen_param->data , data_size , ecl_type , iactive , serial_state ,serial_offset , serial_vector);
   return elements_added;
 }
 
 
-void gen_param_deserialize(gen_param_type * gen_param , const double * serial_data , size_t stride , serial_state_type * serial_state) {
+void gen_param_deserialize(gen_param_type * gen_param , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   ecl_type_enum ecl_type = gen_param_config_get_ecl_type(gen_param->config);
   const int data_size    = gen_param_config_get_data_size(gen_param->config);
   const bool * iactive   = gen_param_config_get_iactive( gen_param->config );  
   
   if (data_size > 0)
-    enkf_deserialize(gen_param->data , data_size , ecl_type , iactive  , serial_state , serial_data , stride);
+    enkf_deserialize(gen_param->data , data_size , ecl_type , iactive  , serial_state , serial_vector);
   
   /*
     gen_param_truncate(gen_param);

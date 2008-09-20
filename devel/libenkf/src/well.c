@@ -101,21 +101,21 @@ void well_free(well_type *well) {
 
 
 
-void well_deserialize(const well_type * well , const double * serial_data , size_t stride , serial_state_type * serial_state) {
+void well_deserialize(const well_type * well , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const well_config_type *config      = well->config;
   const int                data_size  = well_config_get_data_size(config);
   
-  enkf_deserialize(well->data , data_size , ecl_double_type , NULL , serial_state , serial_data , stride);
+  enkf_deserialize(well->data , data_size , ecl_double_type , NULL , serial_state , serial_vector);
 }
 
 
 
 
-int well_serialize(const well_type *well , size_t serial_data_size ,  double *serial_data , size_t stride , size_t offset , serial_state_type * serial_state) {
+int well_serialize(const well_type *well , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const well_config_type *config      = well->config;
   const int                data_size  = well_config_get_data_size(config);
   
-  return enkf_serialize(well->data , data_size , ecl_double_type , NULL , serial_state , serial_data , serial_data_size , offset , stride);
+  return enkf_serialize(well->data , data_size , ecl_double_type , NULL , serial_state , serial_offset , serial_vector);
 }
 
 

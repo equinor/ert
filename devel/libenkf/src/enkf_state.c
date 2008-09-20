@@ -1220,71 +1220,41 @@ void * enkf_state_start_eclipse__(void * __enkf_state) {
 /*****************************************************************/
 
 /**
-  Observe that target_serial_size and _serial_size count the number of
-  double elements, *NOT* the number of bytes, hence it is essential to
-  have a margin to avoid overflow of the size_t datatype (on 32 bit machines).
+
+Serial is a matrix:
+
+   x----->
+  y
+  | 
+  |
+ \|/  
+
+
+I have never been good with columns / rows ....
+
 */
 
-static double * enkf_ensemble_alloc_serial_data(int ens_size , size_t target_serial_size , size_t * _serial_size) {
-  size_t   serial_size = target_serial_size;
-  double * serial_data;
-
-#ifdef i386
-  /* 
-     33570816 = 2^25 is the maximum number of doubles we will
-     allocate, this corresponds to 2^28 bytes - which it seems
-     we can adress quite safely ...
-  */
-  serial_size = util_int_min(serial_size , 33570816 ); 
-#endif
-  
-  do {
-    serial_data = malloc(serial_size * sizeof * serial_data);
-    if (serial_data == NULL) 
-      serial_size /= 2;
-
-  } while (serial_data == NULL);
-
-  
-  /*
-    Ensure that the allocated memory is an integer times ens_size.
-  */
-  {
-    int serial_size0 = serial_size;
-    {
-      div_t tmp   = div(serial_size , ens_size);
-      serial_size = ens_size * tmp.quot;
-    }
-    if (serial_size != serial_size0) {
-      /* Can not use realloc() here because the temporary memory requirements might be prohibitive. */
-      free(serial_data);
-      serial_data = util_malloc(serial_size * sizeof * serial_data , __func__);
-    }
-  }
-  *_serial_size = serial_size;
-  return serial_data;
-}
-
-
-
-
-void enkf_ensembleemble_mulX(double * serial_state , int serial_x_stride , int serial_y_stride , int serial_x_size , int serial_y_size , const double * X , int X_x_stride , int X_y_stride) {
-  double * line = malloc(serial_x_size * sizeof * line);
+void enkf_ensemble_mulX(serial_vector_type * serial_vector , int serial_x_size , int serial_y_size , const double * X , int X_x_stride , int X_y_stride) {
+  double * serial_data        = serial_vector_get_data( serial_vector );
+  const int   serial_y_stride = serial_vector_get_stride( serial_vector );
+  const int   serial_x_stride = 1;
+   
+  double * line = util_malloc(serial_x_size * sizeof * line , __func__);
   int ix,iy;
   
   for (iy=0; iy < serial_y_size; iy++) {
     if (serial_x_stride == 1) 
-      memcpy(line , &serial_state[iy * serial_y_stride] , serial_x_size * sizeof * line);
+      memcpy(line , &serial_data[iy * serial_y_stride] , serial_x_size * sizeof * line);
     else
       for (ix = 0; ix < serial_x_size; ix++)
-	line[ix] = serial_state[iy * serial_y_stride + ix * serial_x_stride];
+	line[ix] = serial_data[iy * serial_y_stride + ix * serial_x_stride];
 
     for (ix = 0; ix < serial_x_size; ix++) {
       int k;
       double dot_product = 0;
       for (k = 0; k < serial_x_size; k++)
 	dot_product += line[k] * X[ix * X_x_stride + k*X_y_stride];
-      serial_state[ix * serial_x_stride + iy * serial_y_stride] = dot_product;
+      serial_data[ix * serial_x_stride + iy * serial_y_stride] = dot_product;
     }
 
   }
@@ -1302,23 +1272,21 @@ void enkf_ensembleemble_mulX(double * serial_state , int serial_x_stride , int s
 */
 
 struct enkf_update_info_struct {
-  int      iens1;   	   	 /* The first ensemble member this thread is updating. */
-  int      iens2;   	   	 /* The last ensemble member this thread is updating. */
-  size_t   serial_size;    	 /* The total size of the serial buffer. */
-  int      serial_stride;  	 /* The stride used when accessing the serial buffer. */
-  double  *serial_data;    	 /* The serial buffer - containing the serialized data. */
-  char   **key_list;       	 /* The list of keys in the enkf_state object - shared among all ensemble members. */
-  int      num_keys;             /* The length of the key_list. */ 
-  int     *start_ikey;     	 /* The start index (into key_list) of the current serialization
-			   	    call. Vector with one element for each ensemble member. */
-  int     *next_ikey;      	 /* The start index of the next serialization call. [RETURN VALUE] */
-  size_t  *member_serial_size;   /* The number of elements serialized pr. member (should be equal for all members, 
-                                    else something is seriously broken). [RETURN VALUE] */  
-  bool    *member_complete;      /* Boolean pr. member flag - true if the member has been
-				    completely serialized. [RETURN VALUE] */
-  int      update_mask;          /* An enkf_var_type instance which should be included in the update. */ 
-  enkf_state_type ** ensemble;   /* The actual ensemble. */
-  bool     __data_owner;         /* Whether this instance owns the various pr. ensemble member vectors. */ 
+  int      iens1;   	   	 	/* The first ensemble member this thread is updating. */
+  int      iens2;   	   	 	/* The last ensemble member this thread is updating. */
+  serial_vector_type * serial_vector;   /* The holding struct for the serializ vector. */
+  char   **key_list;       	 	/* The list of keys in the enkf_state object - shared among all ensemble members. */
+  int      num_keys;             	/* The length of the key_list. */ 
+  int     *start_ikey;     	 	/* The start index (into key_list) of the current serialization
+			   	 	   call. Vector with one element for each ensemble member. */
+  int     *next_ikey;      	 	/* The start index of the next serialization call. [RETURN VALUE] */
+  size_t  *member_serial_size;   	/* The number of elements serialized pr. member (should be equal for all members, 
+                                 	   else something is seriously broken). [RETURN VALUE] */  
+  bool    *member_complete;      	/* Boolean pr. member flag - true if the member has been
+				 	   completely serialized. [RETURN VALUE] */
+  int      update_mask;          	/* An enkf_var_type instance which should be included in the update. */ 
+  enkf_state_type ** ensemble;   	/* The actual ensemble. */
+  bool     __data_owner;         	/* Whether this instance owns the various pr. ensemble member vectors. */ 
 };
 
 typedef struct enkf_update_info_struct enkf_update_info_type;
@@ -1336,8 +1304,7 @@ typedef struct enkf_update_info_struct enkf_update_info_type;
    containers for many ensemble members.
 */
 
-enkf_update_info_type ** enkf_ensemble_alloc_update_info(enkf_state_type ** ensemble , int ens_size , int update_mask , int num_threads, size_t serial_size , double * serial_data) {
-  const int serial_stride      = ens_size;
+enkf_update_info_type ** enkf_ensemble_alloc_update_info(enkf_state_type ** ensemble , int ens_size , int update_mask , int num_threads, serial_vector_type * serial_vector) {
   int thread_block_size        = ens_size / num_threads;
   char ** key_list             = hash_alloc_keylist(ensemble[0]->node_hash);
   bool    * member_complete    = util_malloc(ens_size * sizeof * member_complete , __func__);
@@ -1356,11 +1323,9 @@ enkf_update_info_type ** enkf_ensemble_alloc_update_info(enkf_state_type ** ense
       info->next_ikey          = next_ikey;
       info->member_serial_size = member_serial_size;
 
-      info->serial_data        = serial_data;
-      info->serial_size        = serial_size;
+      info->serial_vector      = serial_vector; 
       info->update_mask        = update_mask;
       info->ensemble           = ensemble;
-      info->serial_stride      = serial_stride;
       info->iens1              = it * thread_block_size;
       info->iens2              = info->iens1 + thread_block_size; /* Upper limit is *NOT* inclusive */
 
@@ -1404,32 +1369,31 @@ void enkf_ensemble_free_update_info(enkf_update_info_type ** info_list , int siz
 void * enkf_ensemble_serialize__(void * _info) {
   enkf_update_info_type  * info     = (enkf_update_info_type *) _info;
 
-  int iens1       	      = info->iens1;
-  int iens2       	      = info->iens2;
-  size_t serial_size 	      = info->serial_size;
-  int    serial_stride        = info->serial_stride;
-  double * serial_data        = info->serial_data;
-  enkf_state_type ** ensemble = info->ensemble;
-  int update_mask             = info->update_mask;
-  size_t * member_serial_size = info->member_serial_size;
-  bool * member_complete      = info->member_complete;
-  int * next_ikey  	      = info->next_ikey;
-  int * start_ikey 	      = info->start_ikey;
-  char ** key_list            = info->key_list;
+  int iens1       	      	     = info->iens1;
+  int iens2       	      	     = info->iens2;
+  serial_vector_type * serial_vector = info->serial_vector;
+  enkf_state_type ** ensemble 	     = info->ensemble;
+  int update_mask             	     = info->update_mask;
+  size_t * member_serial_size 	     = info->member_serial_size;
+  bool * member_complete      	     = info->member_complete;
+  int * next_ikey  	      	     = info->next_ikey;
+  int * start_ikey 	      	     = info->start_ikey;
+  char ** key_list            	     = info->key_list;
+  int serial_stride                  = serial_vector_get_stride( serial_vector ); 
   int iens;
   
   for (iens = iens1; iens < iens2; iens++) {
     int ikey               = start_ikey[iens];
     bool node_complete     = true;  
-    size_t   serial_offset = iens;
+    size_t   current_serial_offset = iens;
     enkf_state_type * enkf_state = ensemble[iens];
     
     
     while (node_complete) {                                           
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_include_type(enkf_node , update_mask)) {                       
-	int elements_added        = enkf_node_serialize(enkf_node , serial_size , serial_data , serial_stride , serial_offset , &node_complete);
-	serial_offset            += serial_stride * elements_added;  
+	int elements_added            = enkf_node_serialize(enkf_node , current_serial_offset , serial_vector , &node_complete);
+	current_serial_offset    += serial_stride * elements_added;  
 	member_serial_size[iens] += elements_added;
       }
       
@@ -1457,8 +1421,8 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
   int update_mask   = ecl_summary + ecl_restart + parameter;
   thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
   size_t    serial_size;
-  double *  serial_data   = enkf_ensemble_alloc_serial_data(ens_size , target_serial_size , &serial_size);
-  enkf_update_info_type ** info_list = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_size , serial_data);
+  serial_vector_type  * serial_vector    = serial_vector_alloc( target_serial_size , ens_size);
+  enkf_update_info_type ** info_list     = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_vector);
   int       iens , ithread;
 
 
@@ -1494,7 +1458,9 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
       enkf_update_info_type * info = info_list[0];
 
       /* Update section */
-      enkf_ensembleemble_mulX(serial_data , 1 , ens_size , ens_size , info->member_serial_size[0] , X , ens_size , 1);
+      /*enkf_ensemble_mulX(serial_data , 1 , ens_size , ens_size , info->member_serial_size[0] , X , ens_size , 1);*/
+      enkf_ensemble_mulX(serial_vector , ens_size , info->member_serial_size[0] , X , ens_size , 1); 
+
 
 
       /* deserialize section */
@@ -1506,7 +1472,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
 	while (1) {
 	  enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , info->key_list[ikey]);
 	  if (enkf_node_include_type(enkf_node , update_mask)) 
-	    enkf_node_deserialize(enkf_node , serial_data , info->serial_stride);
+	    enkf_node_deserialize(enkf_node , serial_vector);
 	  
 	  if (ikey == info->next_ikey[iens])
 	    break;
@@ -1522,7 +1488,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
     }
   }
   thread_pool_free(tp);
-  free(serial_data);
+  serial_vector_free( serial_vector );
   enkf_ensemble_free_update_info( info_list , threads );
 }
 
