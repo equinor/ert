@@ -1230,7 +1230,7 @@ Serial is a matrix:
  \|/  
 
 
-I have never been good with columns / rows ....
+ I have never been good with columns / rows ....
 
 */
 
@@ -1416,12 +1416,11 @@ void * enkf_ensemble_serialize__(void * _info) {
 
 
 
-void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size_t target_serial_size , const double * X) {
+void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , serial_vector_type * serial_vector , const double * X) {
   const int threads = 1;
   int update_mask   = ecl_summary + ecl_restart + parameter;
   thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
   size_t    serial_size;
-  serial_vector_type  * serial_vector    = serial_vector_alloc( target_serial_size , ens_size);
   enkf_update_info_type ** info_list     = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_vector);
   int       iens , ithread;
 
@@ -1488,7 +1487,6 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , size
     }
   }
   thread_pool_free(tp);
-  serial_vector_free( serial_vector );
   enkf_ensemble_free_update_info( info_list , threads );
 }
 

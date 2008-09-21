@@ -16,6 +16,7 @@
 #include <ext_joblist.h>
 #include <stringlist.h>
 #include <job_queue.h>
+#include <enkf_serialize.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
 
@@ -59,7 +60,7 @@ void               enkf_state_steal_run_path_lock(enkf_state_type *  , lock_mode
 void               enkf_state_set_run_path(enkf_state_type * , lock_mode_type , const char * , const char*);
 void               enkf_state_set_eclbase(enkf_state_type * , const char*);
 
-void enkf_ensemble_update(enkf_state_type ** , int  , size_t , const double * );
+void enkf_ensemble_update(enkf_state_type ** , int  , serial_vector_type * , const double * );
 
 /*****************************************************************/
 void enkf_state_init_run(enkf_state_type * state , bool active , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model);

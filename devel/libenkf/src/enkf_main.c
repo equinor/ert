@@ -33,6 +33,7 @@
 #include <msg.h>
 #include <stringlist.h>
 #include <enkf_main.h>
+#include <enkf_serialize.h>
 
 
 /**
@@ -489,7 +490,7 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
       }
     }
     if (!complete_OK) 
-      util_exit("The integration failed - check your ECLIPSE runs ...\n");
+      util_exit("The integration failed - check your forward model ...\n");
   }
   
   if (load_results) 
@@ -501,14 +502,18 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
     double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
     
     if (X != NULL) {
-      /* The second to last argument is the number of doubles we ask
+      /* 
+	 The second to last argument is the number of doubles we ask
 	 for, to get the number of bytes you must multiply by eight.
-
+	 
 	 1024 * 1024 * 128 => 1GB of memory
       */
       size_t double_size = 1024*1024*256; /* 2GB */
-      /*double_size = ens_size * 10000;*/
-      enkf_ensemble_update(enkf_main->ensemble , ens_size , double_size , X);   
+      
+      serial_vector_type * serial_vector = serial_vector_alloc( double_size );  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
+      serial_vector_free(serial_vector);
+
       free(X);
     }
   }
