@@ -540,6 +540,106 @@ void field_config_get_ijk(const field_config_type * config , int global_index, i
 }
 
 
+static const char * __parse_number(const char * s , int * value, bool *OK) {
+  if (*OK) {
+    char * error_ptr;
+    *value = strtol(s , &error_ptr , 10);
+    if (error_ptr == s) *OK = false;
+    return error_ptr;
+  } else
+    return NULL;
+}
+
+
+
+static const char * __skip_sep(const char * s, const char * sep_set, bool *OK) {
+  if (*OK) {
+    int sep_length = strspn(s , sep_set);
+    if (sep_length == 0)
+      *OK = false;
+    return &s[sep_length];
+  } else 
+    return NULL;
+}
+/**
+   This function reads a string with i,j,k from the user. All
+   characters in the constant sep_set are allowed to separate the
+   integers. The function will loop until:
+
+   * Three integers have been succesfully parsed.
+   * All numbers are in the (1-nx,1-ny,1-nz) intervals.
+   * IFF active_only - only active cells wll be allowed.
+
+   i,j,k and global_index are returned by reference. All pointers can
+   be NULL, if you are not interested. An invald global_index is
+   returned as -1 (if active_only == false).
+
+   Observe that the user is expected to enter numbers in the interval
+   [1..nx],[1..ny],[1..nz], but internaly they are immediately
+   converted to zero offset.
+*/
+
+
+void field_config_scanf_ijk(const field_config_type * config , bool active_only , const char * _prompt , int prompt_len , int *_i , int *_j , int *_k , int * _global_index) {
+  const char * sep_set = " ,.:"; 
+  char * prompt = util_alloc_sprintf("%s (%d,%d,%d)" , _prompt , config->nx , config->ny , config->nz);
+  bool OK;
+  int i,j,k,global_index;
+  global_index = -1; /* Keep the compiler happy. */
+
+  do {
+    char         *input;
+    const  char  *current_ptr;
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    input = util_alloc_stdin_line();
+
+
+    i = -1;
+    j = -1;
+    k = -1;
+
+    OK = true;
+    current_ptr = input;
+    current_ptr = __parse_number(current_ptr , &i , &OK);  
+    current_ptr = __skip_sep(current_ptr , sep_set , &OK); 
+    current_ptr = __parse_number(current_ptr , &j , &OK);  
+    current_ptr = __skip_sep(current_ptr , sep_set , &OK); 
+    current_ptr = __parse_number(current_ptr , &k , &OK);  
+    if (OK) 
+      if (current_ptr[0] != '\0') OK = false; /* There was something more at the end */
+    
+    /* Now we have three valid integers. */
+  
+    if (OK) {
+      if (i <= 0 || i > config->nx) OK = false;
+      if (j <= 0 || j > config->ny) OK = false;
+      if (k <= 0 || k > config->nz) OK = false;
+      i--; j--; k--;
+    }
+    /* Now we have three integers in the right interval. */
+    
+
+    if (OK) {
+      global_index = field_config_global_index(config , i,j,k);
+      if (active_only) {
+	if (global_index < 0) {
+	  OK = false;
+	  printf("Sorry the point: (%d,%d,%d) corresponds to an inactive cell\n" , i + 1 , j+ 1 , k + 1);
+	}
+      }
+    }
+    free(input);
+  } while (!OK);
+
+  if (_i != NULL) *_i = i;
+  if (_j != NULL) *_j = j;
+  if (_k != NULL) *_k = k;
+  if (_global_index != NULL) *_global_index = global_index;
+
+  free(prompt);
+}
+
+
 
 
 /**

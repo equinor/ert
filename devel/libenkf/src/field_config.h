@@ -143,6 +143,7 @@ void                    field_config_set_all_active(field_config_type * );
 void                    field_config_set_key(field_config_type * , const char *);
 void                    field_config_enkf_OFF(field_config_type * );
 bool                    field_config_enkf_mode(const field_config_type * config);
+void                    field_config_scanf_ijk(const field_config_type *  , bool , const char * , int , int * , int * , int * , int *);
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);

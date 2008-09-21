@@ -185,7 +185,9 @@ bool * enkf_ui_util_scanf_alloc_report_active(const enkf_sched_type * enkf_sched
 
     enkf_ui_util_scanf_ijk__(config , 100 , &i , &j , NULL);
 
-    Will read i and j.
+    Will read i and j. If your are interested in all three coordinates
+    you should use enkf_ui_util_scanf_ijk() which has a more flexible
+    parser.
 */
 
 
@@ -196,13 +198,14 @@ void enkf_ui_util_scanf_ijk__(const field_config_type * config, int prompt_len ,
   if (i != NULL) (*i) = util_scanf_int_with_limits("Give i-index" , prompt_len , 1 , nx) - 1;
   if (j != NULL) (*j) = util_scanf_int_with_limits("Give j-index" , prompt_len , 1 , ny) - 1;
   if (k != NULL) (*k) = util_scanf_int_with_limits("Give k-index" , prompt_len , 1 , nz) - 1;
-  
 }
+
+
 
 
 /**
    The function reads ijk, but it returns a global 1D index. Observe
-   that the user is supposed to enter an index starting at one - that
+   that the user is supposed to enter an index starting at one - whichs
    is immediately shifted down to become zero based.
 
    The function will loop until the user has entered ijk corresponding
@@ -210,14 +213,8 @@ void enkf_ui_util_scanf_ijk__(const field_config_type * config, int prompt_len ,
 */
    
 int enkf_ui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
-  int i,j,k;
   int global_index;
-  do {
-    enkf_ui_util_scanf_ijk__(config , prompt_len , &i,&j,&k);
-    global_index = field_config_global_index(config , i,j,k);
-    if (global_index < 0)
-      printf("Sorry the point: (%d,%d,%d) corresponds to an inactive cell\n" , i + 1 , j+ 1 , k + 1);
-  } while (global_index < 0);
+  field_config_scanf_ijk(config , true , "Give (i,j,k) indices" , prompt_len , NULL , NULL , NULL , &global_index);
   return global_index;
 }
 
