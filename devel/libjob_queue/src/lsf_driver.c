@@ -212,10 +212,9 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
     {
       job_status_type status;
       struct jobInfoEnt *job_info;
-      if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) {
-	fprintf(stderr,"%s: failed to get information about lsf job:%ld - aborting \n",__func__ , job->lsf_jobnr);
-	abort();
-      }
+      if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) 
+	util_abort("%s: failed to get information about lsf job:%ld - aborting \n",__func__ , job->lsf_jobnr);
+      
       job_info = lsb_readjobinfo( NULL );
       lsb_closejobinfo();
       /*
@@ -412,7 +411,7 @@ void * lsf_driver_alloc(const char * queue_name , const stringlist_type * lsf_re
   }
   lsf_driver->lsf_request.options2 = 0;
   if (lsb_init(NULL) != 0) 
-    util_abort("%s failed to initialize LSF environment - aborting\n",__func__);
+    util_abort("%s failed to initialize LSF environment : %s/%d  \n",__func__ , lsb_sysmsg() , lsberrno);
   setenv("BSUB_QUIET" , "yes" , 1);
 #else
   pthread_mutex_init( &lsf_driver->bjobs_lock , NULL );
