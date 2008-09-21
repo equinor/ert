@@ -1232,6 +1232,8 @@ Serial is a matrix:
 
  I have never been good with columns / rows ....
 
+
+ Read the documentation about strides in enkf_serialize.c.
 */
 
 void enkf_ensemble_mulX(serial_vector_type * serial_vector , int serial_x_size , int serial_y_size , const double * X , int X_x_stride , int X_y_stride) {

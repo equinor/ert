@@ -503,8 +503,8 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
     
     if (X != NULL) {
       /* 
-	 The second to last argument is the number of doubles we ask
-	 for, to get the number of bytes you must multiply by eight.
+	 The number of doubles we ask for, to get the number of bytes
+	 you must multiply by eight.
 	 
 	 1024 * 1024 * 128 => 1GB of memory
       */
@@ -513,7 +513,7 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
       serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
       enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
       serial_vector_free(serial_vector);
-
+      
       free(X);
     }
   }

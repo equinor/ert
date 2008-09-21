@@ -25,36 +25,36 @@
                                          
    
   ===============                                    ===============
-  | PORO-1      |                		     | PORO-2      |
+  | PORO-1      |                                    | PORO-2      |
   |--------------                    Member 2        |--------------   
   |             |                    ========        |             |       
-  | P0 ... P10  |        Member 1       |	     | P0 ... P10  |
-  ===============        ========       |	     ===============
+  | P0 ... P10  |        Member 1       |            | P0 ... P10  |
+  ===============        ========       |            ===============
        /|\                   |      -----                 /|\ 
         |                    |      |                      |
         |                   \|/    \|/                     |
-        |                  -------------                   | 
-        |                  | P0     P0 |                   |
-        |                  | P1     P1 |                   |
-        ------------------>| P2     P2 |<-------------------
-                           | P3     P3 |
-                           | P4     P4 |    
-                           | ··········|             ==============     
-                           | R1     R1 |	     | RELPERM-2  |
-  ==============    ------>| R2     R2 |<----------->|------------|
-  | RELPERM-1  |    |      | R3     R3 |	     |            |
-  |------------|<----      | ··········|    	     | R0 ... R5  |
-  |            |	   | F2	    F2 |	     ==============
-  | R0 ... R5  |      ---->| F3	    F3 |
-  ==============      |    | F4	    F4 |<-----
-                      |    | F6	    F6 |     |
-                      |    -------------     |
+        |                                                  | 
+        |                  [ P0     P0 ]                   |
+        |                  [ P1     P1 ]                   |
+        ------------------>[ P2     P2 ]<-------------------
+                           [ P3     P3 ]
+                           [ P4     P4 ]    
+                           [ ··········]             ==============     
+                           [ R1     R1 ]             | RELPERM-2  |
+  ==============    ------>[ R2     R2 ]<----------->|------------|
+  | RELPERM-1  |    |      [ R3     R3 ]             |            |
+  |------------|<----      [ ··········]             | R0 ... R5  |
+  |            |           [ F2     F2 ]             ==============
+  | R0 ... R5  |      ---->[ F3     F3 ]
+  ==============      |    [ F4     F4 ]<-----
+                      |    [ F6     F6 ]     |
+                      |                      |
                       |                      |           ==============
-                      | 	 	     |           | FAULT-1    |
+                      |                      |           | FAULT-1    |
                       |                      ----------->|------------|
-  ==============      |				         |            |
-  | FAULT-1    |      |				         | F0 ... F6  |
-  |------------|<------				         ==============
+  ==============      |                                  |            |
+  | FAULT-1    |      |                                  | F0 ... F6  |
+  |------------|<------                                  ==============
   |            |
   | F0 ... F6  |
   ==============
@@ -89,6 +89,70 @@ have been COMPLETELY serialized. One of the reasons the code is so
 complex is that it is supposed to handle situations where the serial
 vector is to small to hold everything, and repeated calls to serialize
 & deserialize must be performed to complete the thing.
+
+
+About stride
+============
+In the enkf update the ensemble matrix A is just that - a matrix,
+however in this elegant high-level language it is of course
+implemented as one long linear vector. The matrix is implemented such
+that the 'member-direction' is fastest running index.  Consider the
+following ensemble matrix, consisting of five ensemble members:
+
+
+
+             
+
+                           Member 5
+      Member 2 --·           |
+                 |           |
+                 |           |
+Member 1 ----·   |           |
+             |   |           |
+            \|/ \|/         \|/
+           [ P0  P0  P0  P0  P0 ]
+           [ P1  P1  P1  P1  P1 ]
+           [ P2  P2  P2  P2  P2 ]
+           [ P3  P3  P3  P3  P3 ]
+           [ R0  R0  R0  R0  R0 ]
+       A = [ R1  R1  R1  R1  R1 ]
+           [ R2  R2  R2  R2  R2 ]
+           [ F0  F0  F0  F0  F0 ]
+           [ F1  F1  F1  F1  F1 ]
+           [ F2  F2  F2  F2  F2 ]
+           [ F3  F3  F3  F3  F3 ]
+        
+
+The in memory the matrix will look like this:
+
+                                     
+                                      Member 2
+                                          | 
+                            ______________|______________  
+                           /              |              \  
+                           |              |              |
+             ______________|______________|______________|______________
+            /              |              |              |              \
+            |              |              |              |              |
+            |              |              |              |              | 
+           \|/            \|/            \|/            \|/            \|/         ...........    
+   A =[ P0 P0 P0 P0 P0 P1 P1 P1 P1 P1 P2 P2 P2 P2 P2 P3 P3 P3 P3 P3 R0 R0 R0 R0 R0 R1 R1 R1 R1 R1 R2 R2 R2 R2 R2 F0 F0 F0 F0 F0 F1 F1 F1 F1 F1 F2 F2 F2 F2 F2 F3 F3 F3 F3 F3 ...]
+       /|\    X1      /|\    X2      /|\            /|\            /|\              ........
+        |              |              |              |              |
+        |              |              |              |              |
+        \______________|______________|______________|______________/
+                       |              |              | 
+                       |              |              |
+                       \______________|______________/
+                                      |
+                                      | 
+                                  Member 1
+
+The stride in the serial_vector_type object is the number of elements
+between consecutive elements in the same member, i.e. it is five in
+the vector above. (Starting at e.g. P0 for member three (marked with
+X1 in the figure), P1 for the same member is five elements down in the
+vector (marked with X2 above)). Now - that was clear ehhh?
 */
 
 
@@ -96,21 +160,16 @@ vector is to small to hold everything, and repeated calls to serialize
 
 
 /**
-   This is struct holding the serialized vecor, along with some meta
-   information. Observe that this struct will be read by many threads
-   concurrently, it can therefor only hold static information, and *NOT* any
-   pr. node or pr. member information.
+   This is a struct holding the serialized vector, along with some
+   meta information. Observe that this struct will be read by many
+   threads concurrently, it can therefor only hold static information,
+   and *NOT* any pr. node or pr. member information.
 */
 
 struct serial_vector_struct {
   double * serial_data;        /* The actual serialized storage - the ensemble matrix. */
   size_t   serial_size;        /* The size of serial_vector. */
-  int      serial_stride;      /* The stride in the serial vector. This stride is the distance in the
-				  serialized vector, between elements which are consecutive in the
-				  underlying node object. This stride typically (I guess it is a
-				  requirement ...) equals the number of ensemble members; referring to
-				  the figure above this means that P0 and P1 (for the same member) are
-				  two elements apart, and not only one, as they are in the underlying object. */
+  int      serial_stride;      /* The stride in the serial vector. See documentation of stride above.*/
 };
 
 
@@ -142,7 +201,9 @@ struct serial_state_struct {
 /**
   Observe that target_serial_size and _serial_size count the number of
   double elements, *NOT* the number of bytes, hence it is essential to
-  have a margin to avoid overflow of the size_t datatype (on 32 bit machines).
+  have a margin to avoid overflow of the size_t datatype (on 32 bit
+  machines).
+  
 */
 
 serial_vector_type * serial_vector_alloc(size_t target_serial_size, int ens_size) {
@@ -246,13 +307,13 @@ bool serial_state_complete(const serial_state_type * state) { return state->comp
     serial vector which will hold the serialized data.
 */
 
-size_t enkf_serialize(const void * __node_data	       ,   /* The data of the input node - pointer to either float or double */
-		      int           node_size          ,   /* The size (number of elements) of __node_data array. */
-		      ecl_type_enum node_type 	       ,   /* The underlying data type of __node_data. */
-		      const bool * active     	       ,   /* An active flag for the data - can be NULL if everything is active. */      
-		      serial_state_type * serial_state ,   /* Holding the state of the current serialization of this node. */
+size_t enkf_serialize(const void * __node_data         ,   /* The data of the input node - pointer to either float or double */
+                      int           node_size          ,   /* The size (number of elements) of __node_data array. */
+                      ecl_type_enum node_type          ,   /* The underlying data type of __node_data. */
+                      const bool * active              ,   /* An active flag for the data - can be NULL if everything is active. */      
+                      serial_state_type * serial_state ,   /* Holding the state of the current serialization of this node. */
                       /*-- Above: node data --- Below: serial data --*/
-		      size_t serial_offset ,               /* The offset in the serial vector we are starting on - owned by the node; pointing into the serial vector. */		      
+                      size_t serial_offset ,               /* The offset in the serial vector we are starting on - owned by the node; pointing into the serial vector. */                     
                       serial_vector_type * serial_vector) {
 
   int    node_index1    = serial_state->node_index1;
@@ -262,26 +323,26 @@ size_t enkf_serialize(const void * __node_data	       ,   /* The data of the inp
     /* If the previous _exactly_ used all memory we will have serial_size == serial_offset - and should return immediatebly. */
     if (serial_offset < serial_vector->serial_size) {  
       if (node_type == ecl_double_type) {
-	/* Serialize double -> double */
-	const  double * node_data = (const double *) __node_data;
+        /* Serialize double -> double */
+        const  double * node_data = (const double *) __node_data;
 #include "serialize.h"
       } else if (node_type == ecl_float_type) {
-	/* Serialize float -> double */
-	const  float * node_data = (const float *) __node_data;
+        /* Serialize float -> double */
+        const  float * node_data = (const float *) __node_data;
 #include "serialize.h"
       } else 
-	util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+        util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
       
       
       /* 
-	 This is is "all" the information we are going to need in the
-	 subsequent deserialization.
+         This is is "all" the information we are going to need in the
+         subsequent deserialization.
       */
       serial_state->state            = serialized;
       serial_state->serial_node_size = elements_added;
       serial_state->serial_offset    = serial_offset;
       /* 
-	 serial_state->node_index2 and serial_state->complete are set in serialize.h.
+         serial_state->node_index2 and serial_state->complete are set in serialize.h.
       */
     }
   }
@@ -292,13 +353,13 @@ size_t enkf_serialize(const void * __node_data	       ,   /* The data of the inp
 
 
 
-void enkf_deserialize(void * __node_data      	  	, /* The data of the node which will accept updated data. */
-		      int      node_size          	, /* The total size of the node we are updating. */
-		      ecl_type_enum node_type 	  	, /* The underlying type (double || float) of the node's storage. */
-		      const bool * active     	  	, /* Active / inactive flag - can be NULL for all elements active. */
-		      serial_state_type * serial_state  , /* Holding the state of the current serialization of this node. */
-		      /*-- Above: node data ---  Below: serial data --*/
-		      const serial_vector_type * serial_vector) {
+void enkf_deserialize(void * __node_data                , /* The data of the node which will accept updated data. */
+                      int      node_size                , /* The total size of the node we are updating. */
+                      ecl_type_enum node_type           , /* The underlying type (double || float) of the node's storage. */
+                      const bool * active               , /* Active / inactive flag - can be NULL for all elements active. */
+                      serial_state_type * serial_state  , /* Holding the state of the current serialization of this node. */
+                      /*-- Above: node data ---  Below: serial data --*/
+                      const serial_vector_type * serial_vector) {
 
   if (serial_state->state == serialized) {
     size_t serial_offset = serial_state->serial_offset;
