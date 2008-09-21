@@ -510,7 +510,7 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
       */
       size_t double_size = 1024*1024*256; /* 2GB */
       
-      serial_vector_type * serial_vector = serial_vector_alloc( double_size );  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+      serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
       enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
       serial_vector_free(serial_vector);
 
