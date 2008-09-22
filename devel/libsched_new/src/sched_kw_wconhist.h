@@ -15,6 +15,8 @@ void                     sched_kw_wconhist_fprintf(const sched_kw_wconhist_type 
 void                     sched_kw_wconhist_fwrite(const sched_kw_wconhist_type *, FILE *);
 sched_kw_wconhist_type * sched_kw_wconhist_fread_alloc( FILE *);
 
+hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type *);
+
 
 /*******************************************************************/
 

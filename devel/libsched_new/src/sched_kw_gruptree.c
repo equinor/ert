@@ -154,6 +154,23 @@ sched_kw_gruptree_type * sched_kw_gruptree_fread_alloc(FILE * stream)
 
 
 
+void sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type * kw, char *** __children, char *** __parents, int * num_pairs)
+{
+  *num_pairs = hash_get_size(kw->gruptree_hash);
+  char ** children = hash_alloc_keylist(kw->gruptree_hash);
+  char ** parents = util_malloc(*num_pairs * sizeof * parents, __func__);
+
+  for(int child_nr = 0; child_nr < *num_pairs; child_nr++)
+  {
+    parents[child_nr] = util_alloc_string_copy(hash_get_string(kw->gruptree_hash, children[child_nr]));
+  }
+
+  *__children = children;
+  *__parents  = parents;
+}
+
+
+
 /***********************************************************************/
 
 KW_FSCANF_ALLOC_IMPL(gruptree)

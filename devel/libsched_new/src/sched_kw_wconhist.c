@@ -264,6 +264,51 @@ static wconhist_well_type * wconhist_well_alloc_from_string(char ** token_list)
 
 
 
+static hash_type * wconhist_well_export_obs_hash(const wconhist_well_type * well)
+{
+  hash_type * obs_hash = hash_alloc();
+
+  if(!well->def[3])
+    hash_insert_double(obs_hash, "WOPR", well->orat);
+  if(!well->def[4])
+    hash_insert_double(obs_hash, "WWPR", well->wrat);
+  if(!well->def[5])
+    hash_insert_double(obs_hash, "WGPR", well->grat);
+  if(!well->def[8])
+    hash_insert_double(obs_hash, "WTHP", well->thp);
+  if(!well->def[9])
+    hash_insert_double(obs_hash, "WBHP", well->bhp);
+  if(!well->def[10])
+    hash_insert_double(obs_hash, "WWGPR", well->wgrat);
+
+  // Water cut. Is this the correct definition?!
+  if(!well->def[3] && !well->def[4])
+  {
+    double wct;
+    if(well->orat + well->wrat > 0.0)
+      wct = well->wrat / (well->orat + well->wrat);
+    else
+      wct = 0.0;
+
+    hash_insert_double(obs_hash, "WWCT", wct);
+  }
+
+  // Gas oil ratio.
+  if(!well->def[3] && !well->def[5])
+  {
+    double gor;
+    if(well->orat > 0.0)
+    {
+      gor = well->grat / well->orat;
+      hash_insert_double(obs_hash, "WGOR", gor);
+    }
+  }
+
+  return obs_hash;
+}
+
+
+
 static void sched_kw_wconhist_add_line(sched_kw_wconhist_type * kw, const char *line)
 {
   int tokens;
@@ -369,6 +414,31 @@ sched_kw_wconhist_type * sched_kw_wconhist_fread_alloc(FILE * stream)
 
   return kw;
 }
+
+
+
+/***********************************************************************/
+
+
+
+hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type * kw)
+{
+  hash_type * well_hash = hash_alloc();
+
+  int num_wells = list_get_size(kw->wells);
+  
+  for(int well_nr=0; well_nr<num_wells; well_nr++)
+  {
+    wconhist_well_type * well = list_iget_node_value_ptr(kw->wells, well_nr);
+    hash_type * obs_hash = wconhist_well_export_obs_hash(well);
+    hash_insert_hash_owned_ref(well_hash, well->name, obs_hash, hash_free__);
+  }
+
+  return well_hash;
+}
+
+
+
 /***********************************************************************/
 
 KW_FSCANF_ALLOC_IMPL(wconhist)
