@@ -443,6 +443,11 @@ void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** c
       sched_kw_gruptree_alloc_child_parent_list((sched_kw_gruptree_type *) sched_kw->data, children, parents, num_pairs);
       break;
     }
+    case(WELSPECS):
+    {
+      sched_kw_welspecs_alloc_child_parent_list((sched_kw_welspecs_type *) sched_kw->data, children, parents, num_pairs);
+      break;
+    }
     default:
     {
        util_abort("%s: Internal error - trying to get GRUPTREE from non-gruptre kw - aborting.\n", __func__);

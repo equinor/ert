@@ -389,6 +389,8 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
   
   if(!ws->def[1])
     ws->group = util_alloc_string_copy(token_list[1]);
+  else
+    ws->group = util_alloc_string_copy("FIELD");
 
   ws->hh_i = sched_util_atoi(token_list[2]);
   ws->hh_j = sched_util_atoi(token_list[3]);
@@ -546,6 +548,29 @@ sched_kw_welspecs_type * sched_kw_welspecs_fread_alloc(FILE * stream)
 
   return kw;
 };
+
+
+
+void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw, char *** __children, char *** __parents, int * num_pairs)
+{
+  int num_wells = list_get_size(kw->welspec_list);
+  char ** children = util_malloc(num_wells * sizeof * children, __func__);
+  char ** parents  = util_malloc(num_wells * sizeof * parents, __func__);
+
+  for(int well_nr = 0; well_nr < num_wells; well_nr++)
+  {
+    welspec_type * well = list_iget_node_value_ptr(kw->welspec_list, well_nr);
+    children[well_nr] = util_alloc_string_copy(well->name);
+    if(!well->def[1])
+      parents[well_nr] = util_alloc_string_copy(well->group);
+    else
+      parents[well_nr] = util_alloc_string_copy("FIELD");
+  }
+
+  *num_pairs = num_wells;
+  *__children = children;
+  *__parents  = parents;
+}
 
 
 

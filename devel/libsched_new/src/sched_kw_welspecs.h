@@ -16,7 +16,7 @@ void sched_kw_welspecs_free(sched_kw_welspecs_type *);
 void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type *, FILE *);
 void sched_kw_welspecs_fwrite(const sched_kw_welspecs_type *, FILE *);
 
-
+void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type *, char ***, char ***, int *);
 
 /*******************************************************************/
 
