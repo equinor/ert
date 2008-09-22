@@ -226,10 +226,15 @@ static void history_node_delete_wells(history_node_type * node, const char ** we
 static void history_node_update_gruptree_grups(history_node_type * node, char ** children, char ** parents, int num_pairs)
 {
   for(int pair = 0; pair < num_pairs; pair++)
-  {
-    printf("Setting %s as a child of %s.\n", children[pair], parents[pair]);
     gruptree_register_grup(node->gruptree, children[pair], parents[pair]);
-  }
+}
+
+
+
+static void history_node_update_gruptree_wells(history_node_type * node, char ** children, char ** parents, int num_pairs)
+{
+  for(int pair = 0; pair < num_pairs; pair++)
+    gruptree_register_well(node->gruptree, children[pair], parents[pair]);
 }
 
 
@@ -289,6 +294,17 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
       char ** parents = NULL;
       sched_kw_alloc_child_parent_list(sched_kw, &children, &parents, &num_pairs);
       history_node_update_gruptree_grups(node, children, parents, num_pairs);
+      util_free_stringlist(children, num_pairs);
+      util_free_stringlist(parents, num_pairs);
+      break;
+    }
+    case(WELSPECS):
+    {
+      int num_pairs;
+      char ** children = NULL;
+      char ** parents = NULL;
+      sched_kw_alloc_child_parent_list(sched_kw, &children, &parents, &num_pairs);
+      history_node_update_gruptree_wells(node, children, parents, num_pairs);
       util_free_stringlist(children, num_pairs);
       util_free_stringlist(parents, num_pairs);
       break;
