@@ -67,10 +67,11 @@ typedef struct run_info_struct {
   int               step1;           	   /* The forward model is integrated: step1 -> step2 */
   int               step2;  	     
   bool              load_results;    	   /* Whether the results should be loaded when the forward model is complete. */
-  bool              unlink_run_path; 	   /* Whether the run_path should be unlinked when the forward model is through. */
+  bool              unlink_run_path; 	   /* Whether the run_path should be unlinked when the forward model is through.  [Partly in conflict with member_config->keep_runpath]*/
   const stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
+  char             *run_path;              /* The currently used runpath - is realloced / freed for every step. */
+  bool              can_sim;               /* If false - this member can not start simulations. */
   
-
   /******************************************************************/
   /* Return value - set in the called routine!!  */
   bool              complete_OK;     /* Did the forward model complete OK? */
@@ -94,8 +95,9 @@ typedef struct shared_info_struct {
   ext_joblist_type      * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   sched_file_type       * sched_file;        /* The schedule file. */   
   job_queue_type        * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
-  bool                    unified;           /* Use unified ECLIPSE files (NO - do not do that) */
+  bool                    unified;           /* Use unified ECLIPSE files (NO - do not use that) */
   enkf_obs_type         * obs;               /* The observation struct - used when measuring on the newly loaded state. */
+  path_fmt_type         * run_path_fmt;      /* The format specifier for the runpath - when used it is called with integer arguments: iens, report1 , report2 */
 } shared_info_type;
 
 
@@ -111,13 +113,8 @@ typedef struct shared_info_struct {
 typedef struct member_config_struct {
   bool             unified;           /* Whether unified ECLIPSE files should be used - NO. */
   char 		 * eclbase;           /* The ECLBASE string used for simulations of this member. */
-  char 		 * run_path;          /* The path where this member will run it's simulations. */
   int  		   iens;              /* The ensemble member number of this member. */
-  char 		 * ecl_store_path;    /* Where should the ECLIPSE results be copied (can be NULL in case ecl_store == 0). */
-  ecl_store_enum   ecl_store;         /* What should be stored of ECLIPSE results - see enkf_types.h. */
-  char           * simlock_file;      /* Lock file for simulations. */ 
-  int              simlock_fd;        /* File descriptor used to point to a simlock file. */
-  bool             can_sim;           /* If false - this member can not start simulations. */
+  bool             keep_runpath;      /* Should the run-path directory be left around (for this member) [Partly in conflict with run_info->unlink_run_path] */
 } member_config_type;
 
 
@@ -146,6 +143,18 @@ struct enkf_state_struct {
 
 /*****************************************************************/
 
+
+/**
+   Currently no locking is implemented - the lock_mode parameter is not used. 
+*/
+
+static void run_info_set_run_path(run_info_type * run_info , lock_mode_type lock_mode , int iens , path_fmt_type * run_path_fmt) {
+  util_safe_free(run_info->run_path);
+  run_info->run_path = path_fmt_alloc_path(run_path_fmt , true , iens , run_info->step1 , run_info->step2);
+}
+
+
+
 /**
    This function sets the run_info parameters. This is typically called
    (via an enkf_state__ routine) by the external scope handling the forward model.
@@ -156,7 +165,7 @@ struct enkf_state_struct {
 */
 
 
-static void run_info_set(run_info_type * run_info ,bool active, int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
+static void run_info_set(run_info_type * run_info ,bool active, int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model, int iens , path_fmt_type * run_path_fmt) {
   run_info->active          = active;
   run_info->init_step  	    = init_step;
   run_info->init_state 	    = init_state;
@@ -167,31 +176,59 @@ static void run_info_set(run_info_type * run_info ,bool active, int init_step , 
   run_info->forward_model   = forward_model;
   run_info->complete_OK     = false;
   run_info->__ready         = true;
+  run_info->can_sim         = true;
+  run_info_set_run_path(run_info , lock_none , iens , run_path_fmt);
 }
 
 
 static run_info_type * run_info_alloc() {
   run_info_type * run_info = util_malloc(sizeof * run_info , __func__);
+  run_info->run_path = NULL;
   return run_info;
 }
 
 
 static void run_info_free(run_info_type * run_info) {
+  util_safe_free(run_info->run_path);
   free(run_info);
 }
+
+
+static void run_info_complete_run(run_info_type * run_info) {
+  if (run_info->complete_OK)
+    run_info->run_path = util_safe_free(run_info->run_path);
+}
+
+
+static char * __config_alloc_simlock(const char * lock_path , const char * run_path) {
+  char * lockfile;
+  {
+    char * tmp_path;
+    if (util_is_abs_path(run_path))
+      tmp_path = util_alloc_string_copy( &run_path[1]);
+    else
+      tmp_path = util_alloc_string_copy( run_path );
+    util_string_tr(tmp_path , UTIL_PATH_SEP_CHAR , '.');
+    lockfile = util_alloc_sprintf("%s%clock-%s" , lock_path , UTIL_PATH_SEP_CHAR , tmp_path);
+    free(tmp_path);
+  }
+  return lockfile;
+}
+
 
 
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(enkf_fs_type * enkf_fs , ext_joblist_type * joblist , sched_file_type * sched_file, enkf_obs_type * obs, job_queue_type * job_queue) {
+static shared_info_type * shared_info_alloc(enkf_fs_type * enkf_fs , ext_joblist_type * joblist , sched_file_type * sched_file, enkf_obs_type * obs, job_queue_type * job_queue, path_fmt_type * run_path_fmt) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
-  shared_info->fs         = enkf_fs;
-  shared_info->joblist    = joblist;
-  shared_info->sched_file = sched_file;
-  shared_info->obs        = obs;
-  shared_info->job_queue  = job_queue;
+  shared_info->fs           = enkf_fs;
+  shared_info->joblist      = joblist;
+  shared_info->sched_file   = sched_file;
+  shared_info->obs          = obs;
+  shared_info->job_queue    = job_queue;
+  shared_info->run_path_fmt = run_path_fmt;
 
   return shared_info;
 }
@@ -220,134 +257,25 @@ static void member_config_set_ ## path(member_config_type * member_config , cons
 }
 
 MEMBER_CONFIG_SET_PATH(eclbase);
-MEMBER_CONFIG_SET_PATH(ecl_store_path);
 #undef MEMBER_CONFIG_SET_PATH
 
-
-static char * member_config_alloc_simlock(const char * lock_path , const char * run_path) {
-  char * lockfile;
-  {
-    char * tmp_path;
-    if (util_is_abs_path(run_path))
-      tmp_path = util_alloc_string_copy( &run_path[1]);
-    else
-      tmp_path = util_alloc_string_copy( run_path );
-    util_string_tr(tmp_path , UTIL_PATH_SEP_CHAR , '.');
-    lockfile = util_alloc_sprintf("%s%clock-%s" , lock_path , UTIL_PATH_SEP_CHAR , tmp_path);
-    free(tmp_path);
-  }
-  return lockfile;
-}
-
-
-static void member_config_release_lock(member_config_type * member_config) {
-  if (member_config->simlock_fd != -1)
-    close(member_config->simlock_fd); /* Close existing lock files. */
-
-  if (member_config->simlock_file != NULL) {
-    util_unlink_existing( member_config->simlock_file );
-    free(member_config->simlock_file);
-  }
-
-  member_config->simlock_file = NULL;
-  member_config->can_sim      = true;
-  member_config->simlock_fd   = -1;
-}
-
-
-/**
-   This function will unlink all the lockfiles - without any attempt
-   of trying to inform the owning process.
-   
-   Intented to be used in situations where the main application has
-   had an unlcean exit, and lockfiles have been left hangin
-   around. (Yes - it does happen!)
-*/
-   
-
-static void member_config_unlink_lock_file(const member_config_type * member_config , const char * lock_path, const char * run_path) {
-  char * lockfile  =  member_config_alloc_simlock( lock_path , run_path);
-  util_unlink_existing( lockfile );
-  free(lockfile);
-}
-
-
-
-static void member_config_set_run_path(member_config_type * member_config , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
-  /* Clearing the existing lock (if any) - the mode might have changed.*/
-  
-  member_config_release_lock(member_config);
-  if (lock_mode == lock_none) 
-    member_config->run_path = util_realloc_string_copy(member_config->run_path , run_path);
-  else {
-    member_config->simlock_file =  member_config_alloc_simlock( lock_path , run_path);
-    
-    
-    /* Trying to aquire new lock. */
-    if (lock_mode == lock_lockf) {
-      if (util_try_lockf(member_config->simlock_file , S_IRUSR + S_IRGRP + S_IWUSR + S_IWGRP, &member_config->simlock_fd)) 
-	member_config->can_sim = true;
-      else {
-	member_config->can_sim = false;
-      }
-    } else if (lock_mode == lock_file) {
-      if (util_file_exists(member_config->simlock_file)) 
-	member_config->can_sim = false;
-      else {
-	FILE * stream = util_fopen(member_config->simlock_file , "w");
-	member_config->can_sim = true;
-	fclose(stream);
-      }
-    }
-    
-    /* Cleaning up - and setting the run_path if we aquired a lock. */
-    if (member_config->can_sim) 
-      member_config->run_path = util_realloc_string_copy(member_config->run_path , run_path);
-    else {
-      fprintf(stderr, "** Warning: could not lock:%s - no simulations\n",run_path);
-      member_config->simlock_file = util_safe_free(member_config->simlock_file);
-      member_config->run_path     = NULL;  /* No chance to submit - we don't even have a path ... */
-    }
-  }
-}
-
-
-
-static void member_config_set_ecl_store(member_config_type * member_config , ecl_store_enum ecl_store) {
-  member_config->ecl_store = ecl_store;
-}
 
 
 static void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
-  util_safe_free(member_config->run_path);
-  util_safe_free(member_config->ecl_store_path);
-  member_config_release_lock(member_config);
   free(member_config);
 }
 
 
 
-static member_config_type * member_config_alloc(int iens , lock_mode_type lock_mode , const char * lock_path , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , ecl_store_enum ecl_store) {
+static member_config_type * member_config_alloc(int iens , lock_mode_type lock_mode , const char * lock_path , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , bool keep_runpath) {
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
-  
-  member_config->simlock_fd     = -1;
-  member_config->simlock_file   = NULL;
   
   member_config->unified        = false;
   member_config->iens           = iens; /* Can only be changed in the allocater. */
-  member_config->run_path 	= NULL;
   member_config->eclbase  	= NULL;
-  member_config->ecl_store_path = NULL;
+  member_config->keep_runpath   = keep_runpath;
   member_config_set_eclbase(member_config  , path_fmt_alloc_path(eclbase_fmt, false , member_config->iens));
-  {
-    char * run_path = path_fmt_alloc_path(run_path_fmt , false , member_config->iens);
-    member_config_set_run_path(member_config , lock_mode , lock_path , run_path);
-    free(run_path);
-  }
-  if (ecl_store_path_fmt != NULL) member_config_set_ecl_store_path(member_config , path_fmt_alloc_path(ecl_store_path_fmt , member_config->iens));
-
-  member_config_set_ecl_store(member_config , ecl_store);
 
   return member_config;
 }
@@ -407,24 +335,22 @@ int enkf_state_fmt_mode(const enkf_state_type * enkf_state) {
 }
 
 
+/**
+   The run_info->run_path variable is in general NULL. It is given a
+   valid value before a simulation starts, holds on to that value
+   through the simulation, and is then freed (and set to NULL) when
+   the simulation ends.
 
-const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) {
-  return enkf_state->my_config->run_path;
+   The *ONLY* point when an external call to this function should give
+   anything is when the forward model has failed, then
+   run_info_complete_run() has left the run_path intact.
+*/
+
+const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) { 
+  return enkf_state->run_info->run_path; 
 }
 
 
-void enkf_state_set_run_path(enkf_state_type * enkf_state , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
-  member_config_set_run_path(enkf_state->my_config , lock_mode , lock_path , run_path);
-}
-
-
-void enkf_state_steal_run_path_lock(enkf_state_type * enkf_state , lock_mode_type lock_mode , const char * lock_path , const char * run_path) {
-  if (lock_mode == lock_file) {
-    member_config_unlink_lock_file(enkf_state->my_config , lock_path , run_path);
-    member_config_set_run_path(enkf_state->my_config , lock_mode , lock_path , run_path);
-  } else
-    fprintf(stderr,"Sorry - no locks to unlink \n");
-}
 
 
 void enkf_state_set_eclbase(enkf_state_type * enkf_state , const char * eclbase) {
@@ -457,9 +383,9 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 
 
 
-enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , lock_mode_type lock_mode , const char * lock_path , 
-				   ecl_store_enum ecl_store , enkf_fs_type * fs , ext_joblist_type * joblist , job_queue_type * job_queue , sched_file_type * sched_file , 
-				   path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , path_fmt_type * ecl_store_path_fmt , meas_vector_type * meas_vector , enkf_obs_type * obs) {
+enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , lock_mode_type lock_mode , const char * lock_path , bool keep_runpath,
+				   enkf_fs_type * fs , ext_joblist_type * joblist , job_queue_type * job_queue , sched_file_type * sched_file , 
+				   path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , meas_vector_type * meas_vector , enkf_obs_type * obs) {
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
   
@@ -473,8 +399,8 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
     enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);
     free(iens_string);
   }
-  enkf_state->my_config   = member_config_alloc( iens , lock_mode , lock_path , run_path_fmt , eclbase_fmt , ecl_store_path_fmt , ecl_store );
-  enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue);
+  enkf_state->my_config   = member_config_alloc( iens , lock_mode , lock_path , run_path_fmt , eclbase_fmt , keep_runpath);
+  enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue , run_path_fmt);
   enkf_state->run_info    = run_info_alloc();
   return enkf_state;
 }
@@ -482,21 +408,6 @@ enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , 
 
 
 enkf_state_type * enkf_state_copyc(const enkf_state_type * src) {
-  /*
-  enkf_state_type * new = enkf_state_alloc(src->config , src->my_iens, src->ecl_store , src->fs , src->joblist ,sched_file , src->run_path , src->eclbase ,  src->ecl_store_path , src->meas_vector);
-  const int num_keys = hash_get_size( src->node_hash ); 
-  char ** key_list = hash_alloc_keylist( src->node_hash );
-  int ikey;
-
-  for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_type *enkf_node = enkf_state_get_node(src , key_list[ikey]);
-    enkf_node_type *new_node  = enkf_node_copyc(enkf_node);
-    enkf_state_add_node_internal(new , enkf_node_get_key_ref(new_node) , new_node);
-  }
-  util_free_stringlist( key_list , num_keys);
-  
-  return new;
-*/
   util_abort("%s: not implemented \n",__func__);
   return NULL;
 }
@@ -528,29 +439,11 @@ static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const ch
 void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , const enkf_config_node_type * config) {
   enkf_node_type *enkf_node = enkf_node_alloc(config);
   enkf_state_add_node_internal(enkf_state , node_key , enkf_node);    
-  
-  
-  /* All code below here is special code for plurigaussian fields */
-  /*{
-    enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
-    if (impl_type == PGBOX) {
-      const pgbox_config_type * pgbox_config = enkf_config_node_get_ref(config);
-      const char * target_key = pgbox_config_get_target_key(pgbox_config);
-      if (enkf_state_has_node(enkf_state , target_key)) {
-	enkf_node_type * target_node = enkf_state_get_node(enkf_state , target_key);
-	if (enkf_node_get_impl_type(target_node) != FIELD) 
-	  util_abort("%s: target node:%s is not of type field - aborting \n",__func__ , target_key);
-	
-	pgbox_set_target_field(enkf_node_value_ptr(enkf_node) , enkf_node_value_ptr(target_node));
-      } else 
-	util_abort("%s: target field:%s must be added to the state object *BEFORE* the pgbox object - aborting \n" , __func__ , target_key);
-    }
-  }
-  */
 }
 
 
 
+/*
 static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report_nr1 , int report_nr2) {
   const bool fmt_file  = enkf_state_fmt_file(enkf_state);
   const member_config_type * my_config = enkf_state->my_config;
@@ -607,6 +500,9 @@ static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report
     }
   }
 }
+*/
+
+
 
 
 
@@ -659,6 +555,7 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
 static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , int mask , int report_step) {
   member_config_type * my_config   = enkf_state->my_config;
   shared_info_type   * shared_info = enkf_state->shared_info;
+  run_info_type      * run_info    = enkf_state->run_info;
   const bool fmt_file  = enkf_state_fmt_file(enkf_state);
   bool endian_swap     = enkf_config_get_endian_swap(enkf_state->config);
   ecl_block_type * restart_block = NULL;
@@ -669,7 +566,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
      Loading the restart block.
   */
   if (mask & ecl_restart) {
-    char * restart_file  = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
+    char * restart_file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
     fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap);
     
     if (unified)
@@ -686,8 +583,8 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
      Loading the summary information.
   */
   if (mask & ecl_summary) {
-    char * summary_file     = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
-    char * header_file      = ecl_util_alloc_exfilename(my_config->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
+    char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
+    char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
     summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
     free(summary_file);
     free(header_file);
@@ -766,7 +663,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_has_func(enkf_node , ecl_load_func))
 	if (enkf_node_include_type(enkf_node , mask))
-	  enkf_node_ecl_load(enkf_node , my_config->run_path , my_config->eclbase , summary , restart_block , report_step);
+	  enkf_node_ecl_load(enkf_node , run_info->run_path , my_config->eclbase , summary , restart_block , report_step);
       
     }                                                                      
     util_free_stringlist(key_list , num_keys);
@@ -786,8 +683,9 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
    The actual loading is done by the function enkf_state_ecl_load2().
 */
 void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2) {
-  enkf_state_ecl_store(enkf_state , report_step1 , report_step2);
-
+  /*enkf_state_ecl_store(enkf_state , report_step1 , report_step2);*/
+  
+  
   /*
     Loading in the X0000 files containing the initial distribution of
     pressure/saturations/....
@@ -819,7 +717,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const run_info_type      * run_info  = enkf_state->run_info;
   bool endian_swap       = enkf_config_get_endian_swap(enkf_state->config);
   const bool fmt_file    = enkf_state_fmt_file(enkf_state);
-  char * restart_file    = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
+  char * restart_file    = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
   fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap);
   const char * kw;
 
@@ -882,7 +780,6 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 */
 
 void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
-  const member_config_type * my_config   = enkf_state->my_config;
   const run_info_type * run_info         = enkf_state->run_info;
   int    restart_mask    = 0;
 
@@ -895,7 +792,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
   if (restart_mask > 0 && run_info->step1 > 0)
     enkf_state_write_restart_file(enkf_state);
   
-  util_make_path(my_config->run_path);
+  util_make_path(run_info->run_path);
   {
     const int num_keys = hash_get_size(enkf_state->node_hash);
     char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
@@ -904,7 +801,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
     for (ikey = 0; ikey < num_keys; ikey++) {
       enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_include_type(enkf_node , mask)) 
-	enkf_node_ecl_write(enkf_node , my_config->run_path);
+	enkf_node_ecl_write(enkf_node , run_info->run_path);
     }
     util_free_stringlist(key_list , num_keys);
   }
@@ -1034,7 +931,8 @@ void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , con
 
 void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
   const member_config_type  * my_config = enkf_state->my_config;  
-  if (!my_config->can_sim)
+  const run_info_type       * run_info  = enkf_state->run_info;
+  if (!run_info->can_sim)
     util_abort("%s: this EnKF instance can not start simulations - aborting \n", __func__ );
   {
     const shared_info_type    * shared_info = enkf_state->shared_info;
@@ -1053,15 +951,15 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       free(data_initialize);
     }
     
-    util_make_path(my_config->run_path);
+    util_make_path(run_info->run_path);
     {
-      char * data_file = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_data_file , true , -1);
+      char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_data_file , true , -1);
       util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
       free(data_file);
     }
     
     {
-      char * schedule_file = util_alloc_full_path(my_config->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
+      char * schedule_file = util_alloc_full_path(run_info->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
       sched_file_fprintf(shared_info->sched_file , run_info->step2 , -1 , -1 , schedule_file);
       free(schedule_file);
     }
@@ -1076,7 +974,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
     
     {
-      char * stdin_file = util_alloc_full_path(my_config->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
+      char * stdin_file = util_alloc_full_path(run_info->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
       ecl_util_init_stdin( stdin_file , my_config->eclbase );
       free(stdin_file);
     }
@@ -1107,7 +1005,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	for (i = 0; i < hash_get_size(enkf_state->data_kw); i++)
 	  hash_insert_ref( context , key_list[i] , hash_get( enkf_state->data_kw , key_list[i]));
       }
-      ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,my_config->run_path , context);
+      ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,run_info->run_path , context);
       
       free(iens);
       free(restart_file1);
@@ -1149,7 +1047,7 @@ void enkf_state_start_eclipse(enkf_state_type * enkf_state) {
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
-    job_queue_add_job(shared_info->job_queue , my_config->iens , run_info->step2);
+    job_queue_add_job(shared_info->job_queue , run_info->run_path , my_config->eclbase , my_config->iens , run_info->step2);
   }
 }
 
@@ -1183,12 +1081,25 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
       } else usleep(usleep_time);
     } 
     
+    /**
+       We are about to delete the runpath - but there are many tests:
+       
+       1. If debug == TRUE we keep the path.
+       2. If the integration failed we keep tha path.
+       3. If keep_runpath == true we keep the path.
+       4. If unlink_run_path == false we keep th path.
+
+       Some confusion/conflict between the last two ..??
+
+    */
     
     if ( enkf_config_get_debug(enkf_state->config) == 0) {
       /* In case the job fails, we leave the run_path directory around for debugging. */
-      if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
-	util_unlink_path(my_config->run_path);
+      if (!my_config->keep_runpath)
+	if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
+	  util_unlink_path(run_info->run_path);
     }
+    run_info_complete_run(enkf_state->run_info);
   }
   run_info->__ready = false;
 }
@@ -1422,7 +1333,6 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
   const int threads = 1;
   int update_mask   = ecl_summary + ecl_restart + parameter;
   thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
-  size_t    serial_size;
   enkf_update_info_type ** info_list     = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_vector);
   int       iens , ithread;
 
@@ -1494,7 +1404,10 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 
 
 void enkf_state_init_run(enkf_state_type * state , bool active , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
-  run_info_set( state->run_info , active , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
+  member_config_type * my_config    = state->my_config;
+  shared_info_type   * shared_info  = state->shared_info;
+
+  run_info_set( state->run_info , active , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model , my_config->iens , shared_info->run_path_fmt);
 }
 
 

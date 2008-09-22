@@ -42,7 +42,6 @@ void                          enkf_main_run(enkf_main_type *, const bool * , int
 void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
 void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
 void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
-void                          enkf_main_clear_locks__(void * );
 enkf_main_type              * enkf_main_safe_cast( void * );
 void                          enkf_main_interactive_set_runpath__(void * );
 

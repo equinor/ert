@@ -119,6 +119,7 @@ enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {
 }
 
 
+/*
 void enkf_main_clear_locks(enkf_main_type * enkf_main) {
   enkf_config_type * config = enkf_main->config;
   int ens_size = enkf_config_get_ens_size(config);
@@ -129,6 +130,7 @@ void enkf_main_clear_locks(enkf_main_type * enkf_main) {
     free(run_path);
   }
 }
+*/
 
 
 /* 
@@ -139,13 +141,16 @@ void enkf_main_interactive_set_runpath(enkf_main_type * enkf_main) {
   int ens_size = enkf_config_get_ens_size(enkf_main->config);
   int  iens;
   char runpath_fmt[512];
+  util_exit("%s: sorry currently broken\n",__func__);
   printf("Give new runpath (with %%d): ===> ");
   scanf("%s" , runpath_fmt);
   enkf_config_set_run_path(enkf_main->config , runpath_fmt);
-  job_queue_set_runpath_fmt(enkf_main->job_queue , enkf_config_get_run_path_fmt(enkf_main->config));
   for (iens = 0; iens < ens_size; iens++) {
     char * run_path = path_fmt_alloc_path(enkf_config_get_run_path_fmt(enkf_main->config), false , iens);
-    enkf_state_set_run_path(enkf_main->ensemble[iens] , enkf_main->runlock_mode , enkf_main->lock_path , run_path);
+    /*
+      enkf_state_set_run_path(enkf_main->ensemble[iens] , enkf_main->runlock_mode , enkf_main->lock_path , run_path);
+      
+    */
     free(run_path);
   }
 }
@@ -154,12 +159,6 @@ void enkf_main_interactive_set_runpath(enkf_main_type * enkf_main) {
 void enkf_main_interactive_set_runpath__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   enkf_main_interactive_set_runpath( enkf_main );
-}
-
-
-void enkf_main_clear_locks__(void * __enkf_main) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
-  enkf_main_clear_locks(enkf_main);
 }
 
 
@@ -198,7 +197,6 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_
 						   enkf_main->sched_file ,
 						   enkf_config_get_run_path_fmt(config),
 						   enkf_config_get_eclbase_fmt(config),
-						   enkf_config_get_ecl_store_path_fmt(config),
 						   meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
 						   enkf_main->obs);
       

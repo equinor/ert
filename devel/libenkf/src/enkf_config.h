@@ -62,7 +62,7 @@ bool enkf_config_get_unified(const enkf_config_type * );
 void               enkf_config_set_run_path(enkf_config_type * , const char * );
 enkf_config_type * enkf_config_fscanf_alloc(const char *  ,  enkf_site_config_type * , ext_joblist_type * ,  bool  ,  bool   , bool );
 int                enkf_config_get_ens_offset(const enkf_config_type * );
-ecl_store_enum     enkf_config_iget_ecl_store(const enkf_config_type * , int );
+bool               enkf_config_iget_ecl_store(const enkf_config_type * , int );
 job_queue_type   * enkf_config_alloc_job_queue(const enkf_config_type * , const enkf_site_config_type * );
 const char       * enkf_config_get_schedule_target_file(const enkf_config_type * );
 const char       * enkf_config_get_schedule_src_file(const enkf_config_type * );

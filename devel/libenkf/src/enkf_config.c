@@ -55,8 +55,7 @@ struct enkf_config_struct {
   path_fmt_type    *result_path;
   path_fmt_type    *run_path;
   path_fmt_type    *eclbase;
-  path_fmt_type    *ecl_store_path;
-  ecl_store_enum   *ecl_store;
+  bool             *keep_runpath;
   bool              endian_swap;
   bool              fmt_file;
   bool              unified;
@@ -219,13 +218,7 @@ static void enkf_config_set_result_path(enkf_config_type * config , const char *
 }
 
 
-static void enkf_config_set_ecl_store_path(enkf_config_type * config , const char * ecl_store_path) {
-  if (config->ecl_store_path != NULL)
-    path_fmt_free(config->ecl_store_path);
-  config->ecl_store_path = path_fmt_alloc_directory_fmt(ecl_store_path);
-}
-
-static void enkf_config_set_ecl_store(enkf_config_type * config , int store_value , int tokens, const char ** token_list) {
+static void enkf_config_set_ecl_store(enkf_config_type * config , bool keep_runpath , int tokens, const char ** token_list) {
   if (config->ens_size <= 0) 
     util_abort("%s: must set ens_size first - aborting \n",__func__);
   
@@ -253,7 +246,7 @@ static void enkf_config_set_ecl_store(enkf_config_type * config , int store_valu
 	    }
 	    for (iens = iens1; iens <= iens2; iens++)
 	      if (iens2 < config->ens_size) 
-		config->ecl_store[iens] = store_value;
+		config->keep_runpath[iens] = keep_runpath;
 	    
 	    range_active = false;  
 	  } else 
@@ -341,9 +334,10 @@ static void enkf_config_set_ens_size(enkf_config_type * config , int ens_size) {
     if (config->ens_size < 0) {
       int iens;
       config->ens_size  = ens_size;
-      config->ecl_store = util_malloc(ens_size * sizeof * config->ecl_store , __func__);
+      config->keep_runpath = util_malloc(ens_size * sizeof * config->keep_runpath , __func__);
       for (iens = 0; iens < ens_size; iens++)
-	config->ecl_store[iens] = store_none;
+	config->keep_runpath[iens] = false; /* Default is *NOT* to store anything */
+
     } else
       util_exit("%s: sorry - can only set ensemble size *ONE* time in the config file. \n",__func__);
   } else 
@@ -426,9 +420,8 @@ static enkf_config_type * enkf_config_alloc_empty(bool fmt_file ,
   config->schedule_src_file    = NULL;
   config->schedule_target_file = NULL;
   config->start_time           = -1;
-  config->ecl_store_path       = NULL;
   config->ens_size             = -1;
-  config->ecl_store            = NULL;
+  config->keep_runpath         = NULL;
   config->obs_config_file      = NULL;
   config->ens_path             = NULL;
   config->result_path          = NULL;
@@ -730,21 +723,9 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 		  enkf_config_set_schedule_files(enkf_config , token_list[1] , token_list[2]);
 		else 
 		  enkf_config_set_schedule_files(enkf_config , token_list[1] , NULL);
-	      } else if (strcmp(kw , "ECL_STORE_PATH") == 0) {
-		ASSERT_TOKENS("ECL_STORE_PATH" , active_tokens , 1);
-		enkf_config_set_ecl_store_path(enkf_config , token_list[1]);
-	      } else if (strcmp(kw , "ECL_STORE") == 0) {
-		ASSERT_TOKENS("ECL_STORE" , active_tokens , 2);
-		int ecl_store;
-		if (enkf_config->ecl_store_path == NULL) {
-		  fprintf(stderr,"%s: must configure ECL_STORE_PATH prior to ECL_STORE - aborting \n",__func__);
-		  abort();
-		} else {
-		  if (util_sscanf_int(token_list[1] , &ecl_store)) 
-		    enkf_config_set_ecl_store(enkf_config , ecl_store , active_tokens - 2 , (const char **) &token_list[2]);
-		  else 
-		    util_abort("%s: error when parsing: %s to integer - aborting \n",__func__ , token_list[1]);
-		}
+	      } else if (strcmp(kw , "KEEP_RUNPATH") == 0) {
+		ASSERT_TOKENS("KEEP_RUNPATH" , active_tokens , 2);
+		enkf_config_set_ecl_store(enkf_config , true , active_tokens - 1 , (const char **) &token_list[1]);
 	      } else if (strcmp(kw , "GRID") == 0) {
 		ASSERT_TOKENS("GRID" , active_tokens , 1);
 		enkf_config_set_grid(enkf_config , token_list[1]);
@@ -916,16 +897,15 @@ const enkf_config_node_type * enkf_config_get_node_ref(const enkf_config_type * 
 
 path_fmt_type * enkf_config_get_run_path_fmt( const enkf_config_type * config) { return config->run_path; }
 path_fmt_type * enkf_config_get_eclbase_fmt ( const enkf_config_type * config) { return config->eclbase; }
-path_fmt_type * enkf_config_get_ecl_store_path_fmt( const enkf_config_type * config) { return config->ecl_store_path; }
 
 char * enkf_config_alloc_result_path(const enkf_config_type * config , int report_step) {
   return path_fmt_alloc_path(config->result_path , true , report_step);
 }
 
 
-int    	       enkf_config_get_ens_size  (const enkf_config_type * config) { return config->ens_size; }
-time_t 	       enkf_config_get_start_date(const enkf_config_type * config) { return config->start_time; }
-ecl_store_enum enkf_config_iget_ecl_store(const enkf_config_type * config, int iens) { return config->ecl_store[iens]; }
+int    	       enkf_config_get_ens_size  (const enkf_config_type * config) 	     { return config->ens_size; }
+time_t 	       enkf_config_get_start_date(const enkf_config_type * config) 	     { return config->start_time; }
+bool           enkf_config_iget_ecl_store(const enkf_config_type * config, int iens) { return config->keep_runpath[iens]; }
 
 
 
@@ -936,8 +916,6 @@ void enkf_config_free(enkf_config_type * config) {
   path_fmt_free(config->eclbase);
   ecl_grid_free(config->grid);
   free(config->data_file);
-  if (config->ecl_store_path != NULL)
-    path_fmt_free(config->ecl_store_path);
   util_safe_free(config->obs_config_file);
   util_safe_free(config->enkf_sched_file);
   if (config->ens_path != NULL) free(config->ens_path);
@@ -947,7 +925,7 @@ void enkf_config_free(enkf_config_type * config) {
   }
   hash_free(config->data_kw);
   free(config->init_file);
-  free(config->ecl_store);
+  free(config->keep_runpath);
   stringlist_free(config->forward_model);
   set_free(config->static_kw_set);
   free(config);
@@ -987,8 +965,6 @@ job_queue_type * enkf_config_alloc_job_queue(const enkf_config_type * config , c
 				max_running , 
 				max_submit  ,
 				enkf_site_config_get_value(site_config , "JOB_SCRIPT"),
-				config->run_path , 
-				config->eclbase , 
 				queue_driver);
     
   }

@@ -80,12 +80,6 @@ typedef enum {abs_error   = 0  , rel_error = 1 , rel_min_abs_error = 2} enkf_obs
 typedef enum {nolog = 0 , log_input_mask = 1 , log_enkf_mask = 2 , log_output_mask = 4 , log_all = 7} enkf_logmode_enum;
 
 
-typedef enum {store_none     = 0,
-	      store_summary  = 1,
-	      store_restart  = 2, 
-	      store_data     = 4} ecl_store_enum;
-
-
 typedef enum   {undefined   = 0 , 
 		serialized  = 1,
 		forecast    = 2, 
