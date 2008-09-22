@@ -182,6 +182,78 @@ static char * get_hdstat_head_string(hdstat_head_type hd)
 
 
 
+static inflow_eq_type get_inflow_eq_from_string(const char * string)
+{
+    if(strcmp(string     , IE_STD_STRING) == 0)
+      return IE_STD;
+    else if(strcmp(string, IE_NO_STRING)  == 0)
+      return IE_NO;
+    else if(strcmp(string, IE_RG_STRING)  == 0)
+      return IE_RG;
+    else if(strcmp(string, IE_YES_STRING) == 0)
+      return IE_YES;
+    else if(strcmp(string, IE_PP_STRING)  == 0)
+      return IE_PP;
+    else if(strcmp(string, IE_GPP_STRING) == 0)
+      return IE_GPP;
+    else
+      util_abort("%s: Inflow equation %s not recognized - aborting.\n",__func__, string);
+}
+
+
+
+static phase_type get_phase_from_string(const char * string)
+{
+    if(strcmp(string     , PH_OIL_STRING) == 0)
+      return PH_OIL;
+    else if(strcmp(string, PH_WAT_STRING) == 0)
+      return PH_WAT;
+    else if(strcmp(string, PH_GAS_STRING) == 0)
+      return PH_GAS;
+    else if(strcmp(string, PH_LIQ_STRING) == 0)
+      return PH_LIQ;
+    else
+      util_abort("%s: Phase %s not recognized - aborting.\n",__func__,string);
+}
+
+
+
+static auto_shut_type get_auto_shut_from_string(const char * string)
+{
+    if(strcmp(string,     AS_STOP_STRING) == 0)
+      return AS_STOP;
+    else if(strcmp(string,AS_SHUT_STRING) == 0)
+      return AS_SHUT;
+    else
+      util_abort("%s: Automatic shut-in mode %s not recognized - aborting.\n",__func__,string);
+}
+
+
+
+static crossflow_type get_crossflow_from_string(const char * string)
+{
+    if(strcmp(string     ,CF_YES_STRING) == 0)
+      return CF_YES;
+    else if(strcmp(string,CF_NO_STRING) == 0)
+      return CF_NO;
+    else
+      util_abort("%s: Crossflow ability mode %s not recognized - aborting.\n",__func__,string);
+}
+
+
+
+static hdstat_head_type get_hdstat_head_from_string(const char * string)
+{
+    if(strcmp(string     ,HD_SEG_STRING) == 0)
+      return HD_SEG;
+    else if(strcmp(string,HD_AVG_STRING) == 0)
+      return HD_AVG;
+    else
+      util_abort("%s: Hydrostatic head model %s not recognized - aborting.\n",__func__,string);
+}
+
+
+
 static void welspec_sched_fprintf(const welspec_type * ws, FILE * stream)
 {
   fprintf(stream, " ");
@@ -325,72 +397,25 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
     ws->md = sched_util_atof(token_list[4]);
 
   if(!ws->def[5])
-  {
-    if(strcmp(token_list[5]     , PH_OIL_STRING) == 0)
-      ws->phase = PH_OIL;
-    else if(strcmp(token_list[5], PH_WAT_STRING) == 0)
-      ws->phase = PH_WAT;
-    else if(strcmp(token_list[5], PH_GAS_STRING) == 0)
-      ws->phase = PH_GAS;
-    else if(strcmp(token_list[5], PH_LIQ_STRING) == 0)
-      ws->phase = PH_LIQ;
-    else
-      util_abort("%s: error when parsing WELSPECS. Phase %s not recognized - aborting.\n",__func__,token_list[5]);
-  };
+    ws->phase = get_phase_from_string(token_list[5]);
 
   if(!ws->def[6])
     ws->drain_rad = sched_util_atof(token_list[6]);
 
   if(!ws->def[7])
-  {
-    if(strcmp(token_list[7]     ,IE_STD_STRING) == 0)
-      ws->inflow_eq = IE_STD;
-    else if(strcmp(token_list[7],IE_NO_STRING)  == 0)
-      ws->inflow_eq = IE_NO;
-    else if(strcmp(token_list[7],IE_RG_STRING)  == 0)
-      ws->inflow_eq = IE_RG;
-    else if(strcmp(token_list[7],IE_YES_STRING) == 0)
-      ws->inflow_eq = IE_YES;
-    else if(strcmp(token_list[7],IE_PP_STRING)  == 0)
-      ws->inflow_eq = IE_PP;
-    else if(strcmp(token_list[7],IE_GPP_STRING) == 0)
-      ws->inflow_eq = IE_GPP;
-    else
-      util_abort("%s: error when parsing WELSPECS. Inflow equation %s not recognized - aborting.\n",__func__,token_list[7]);
-  }
+    ws->inflow_eq = get_inflow_eq_from_string(token_list[7]);
 
   if(!ws->def[8])
-  {
-    if(strcmp(token_list[8],     AS_STOP_STRING) == 0)
-      ws->auto_shut = AS_STOP;
-    else if(strcmp(token_list[8],AS_SHUT_STRING) == 0)
-      ws->auto_shut = AS_SHUT;
-    else
-      util_abort("%s: error when parsing WELSPECS. Automatic shut-in mode %s not recognized - aborting.\n",__func__,token_list[8]);
-  }
+    ws->auto_shut = get_auto_shut_from_string(token_list[8]);
 
   if(!ws->def[9])
-  {
-    if(strcmp(token_list[9]     ,CF_YES_STRING) == 0)
-      ws->crossflow = CF_YES;
-    else if(strcmp(token_list[9],CF_NO_STRING) == 0)
-      ws->crossflow = CF_NO;
-    else
-      util_abort("%s: error when parsing WELSPECS. Crossflow ability mode %s not recognized - aborting.\n",__func__,token_list[9]);
-  }
+    ws->crossflow = get_crossflow_from_string(token_list[9]);
 
   if(!ws->def[10])
     ws->pvt_region = sched_util_atoi(token_list[10]);
 
   if(!ws->def[11])
-  {
-    if(strcmp(token_list[11]     ,HD_SEG_STRING) == 0)
-      ws->hdstat_head  = HD_SEG;
-    else if(strcmp(token_list[11],HD_AVG_STRING) == 0)
-      ws->hdstat_head  = HD_AVG;
-    else
-      util_abort("%s: error when parsing WELSPECS. Hydrostatic head model %s not recognized - aborting.\n",__func__,token_list[11]);
-  }
+    ws->hdstat_head = get_hdstat_head_from_string(token_list[11]);
 
   if(!ws->def[12])
     ws->fip_region = sched_util_atoi(token_list[12]);

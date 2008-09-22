@@ -11,7 +11,7 @@ void                     sched_kw_gruptree_fprintf     (const sched_kw_gruptree_
 void                     sched_kw_gruptree_fwrite      (const sched_kw_gruptree_type *, FILE *);
 sched_kw_gruptree_type * sched_kw_gruptree_fread_alloc (FILE *);
 
-
+void sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type *, char ***, char ***, int *);
 
 /*******************************************************************/
 

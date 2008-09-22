@@ -47,5 +47,7 @@ sched_kw_type *  sched_kw_fread_alloc(FILE *, bool * at_eof);
 
 sched_kw_type ** sched_kw_restart_file_split_alloc(const sched_kw_type *, int *);
 time_t           sched_kw_get_new_time(const sched_kw_type *, time_t);
-char          ** sched_kw_get_well_list(const sched_kw_type *, int *);
+char          ** sched_kw_alloc_well_list(const sched_kw_type *, int *);
+hash_type      * sched_kw_alloc_well_obs_hash(const sched_kw_type *);
+void             sched_kw_alloc_child_parent_list(const sched_kw_type *, char ***, char ***, int *);
 #endif

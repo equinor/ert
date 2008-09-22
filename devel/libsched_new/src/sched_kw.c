@@ -379,7 +379,7 @@ time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
       return sched_kw_dates_get_time_t((const sched_kw_dates_type *) sched_kw->data);
 
      case(TIME):
-       util_abort("%s: Sorry - no support for TIME kw yet. Please use TSTEP.\n", __func__);
+       util_abort("%s: Sorry - no support for TIME kw. Please use TSTEP.\n", __func__);
        return 0;
      default:
        util_abort("%s: Internal error - trying to get time from non-timing kw - aborting.\n", __func__);
@@ -389,7 +389,7 @@ time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
 
 
 
-char ** sched_kw_get_well_list(const sched_kw_type * sched_kw, int * num_wells)
+char ** sched_kw_alloc_well_list(const sched_kw_type * sched_kw, int * num_wells)
 {
   switch(sched_kw_get_type(sched_kw))
   {
@@ -400,8 +400,15 @@ char ** sched_kw_get_well_list(const sched_kw_type * sched_kw, int * num_wells)
     case(WCONINJ):
       return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
     case(WCONINJH):
-      // TODO Remove me when WCONINJH is properly implemented.
       return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
+    case(WCONHIST):
+    {
+      hash_type * well_obs = sched_kw_wconhist_alloc_well_obs_hash( (sched_kw_wconhist_type *) sched_kw->data);
+      *num_wells = hash_get_size(well_obs);
+      char ** well_list = hash_alloc_keylist(well_obs);
+      hash_free(well_obs);
+      return well_list;
+    }
     default:
        util_abort("%s: Internal error - trying to get well list from non-well kw - aborting.\n", __func__);
        return NULL;
@@ -409,4 +416,37 @@ char ** sched_kw_get_well_list(const sched_kw_type * sched_kw, int * num_wells)
 }
 
 
+hash_type * sched_kw_alloc_well_obs_hash(const sched_kw_type * sched_kw)
+{
+  switch(sched_kw_get_type(sched_kw))
+  {
+    case(WCONHIST):
+    {
+      return sched_kw_wconhist_alloc_well_obs_hash( (sched_kw_wconhist_type *) sched_kw->data);
+    }
+    default:
+    {
+       util_abort("%s: Internal error - trying to get well observations from non-history kw - aborting.\n", __func__);
+       return NULL;
+    }
+  }
+}
+
+
+
+void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** children, char *** parents, int * num_pairs)
+{
+  switch(sched_kw_get_type(sched_kw))
+  {
+    case(GRUPTREE):
+    {
+      sched_kw_gruptree_alloc_child_parent_list((sched_kw_gruptree_type *) sched_kw->data, children, parents, num_pairs);
+      break;
+    }
+    default:
+    {
+       util_abort("%s: Internal error - trying to get GRUPTREE from non-gruptre kw - aborting.\n", __func__);
+    }
+  }
+}
 
