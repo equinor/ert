@@ -13,7 +13,7 @@
    librarie/headers .... are not available for linking we can use the
    lsf_system_driver instead - the latter is based on calling bsub and
    bjobs with system calls, using temporary files and parsing the
-   output.
+   output; the former is of course highly preferred.
 */
 
 
@@ -221,7 +221,6 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
 	int numExHosts;
 	char **exHosts;
       */
-
 
       switch (job_info->status) {
 	case(JOB_STAT_PEND  , job_queue_pending);

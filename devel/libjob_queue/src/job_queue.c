@@ -6,7 +6,6 @@
 #include <msg.h>
 #include <util.h>
 #include <basic_queue_driver.h>
-#include <path_fmt.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <void_arg.h>
@@ -42,7 +41,7 @@ typedef struct {
   int                  	 submit_attempt; 
   char                  *exit_file;
   char                 	*job_name;
-  char                 	*run_path;
+  char                  *run_path;   
   job_status_type  	 job_status;
   basic_queue_job_type 	*job_data;
 } job_queue_node_type;
@@ -72,9 +71,9 @@ static void job_queue_node_set_status(job_queue_node_type * node, job_status_typ
 }
 
 static void job_queue_node_free_data(job_queue_node_type * node) {
-  if (node->exit_file!= NULL)    free(node->exit_file);
-  if (node->job_name != NULL)    free(node->job_name);
-  if (node->run_path != NULL)    free(node->run_path);
+  node->run_path  = util_safe_free(node->run_path);
+  node->job_name  = util_safe_free(node->job_name);
+  node->exit_file = util_safe_free(node->exit_file);
   if (node->job_data != NULL) 
     util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
@@ -115,8 +114,6 @@ struct job_queue_struct {
   int                        max_submit;
   int                        max_running; 
   char                     * submit_cmd;
-  path_fmt_type            * run_path_fmt;
-  path_fmt_type            * job_name_fmt;
   job_queue_node_type     ** jobs;
   basic_queue_driver_type  * driver;
   pthread_mutex_t            active_mutex;
@@ -127,26 +124,24 @@ struct job_queue_struct {
 static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
 
-static void job_queue_initialize_node(job_queue_type * queue , int queue_index , int external_id , int target_report) {
+static void job_queue_initialize_node(job_queue_type * queue , const char * run_path , const char * job_name , int queue_index , int external_id , int target_report) {
   if (external_id < 0) 
     util_abort("%s: external_id must be >= 0 - aborting \n",__func__);
   {
     job_queue_node_type * node = queue->jobs[queue_index];
     node->external_id    = external_id;
     node->submit_attempt = 0;
-    node->run_path       = path_fmt_alloc_path(queue->run_path_fmt , false , external_id);
-    node->job_name       = path_fmt_alloc_path(queue->job_name_fmt , false , external_id);
-    node->exit_file      = util_alloc_full_path(node->run_path , EXIT_FILE);
-    node->job_data      = NULL;
-    if ( !util_is_abs_path(node->run_path)) {
-      char * tmp_path = node->run_path;
-      node->run_path = util_alloc_realpath(tmp_path);
-      free(tmp_path);
-    }
-    
+    node->job_name       = util_alloc_string_copy( job_name );
+    node->job_data       = NULL;
+
+    if (util_is_abs_path(run_path)) 
+      node->run_path = util_alloc_string_copy( run_path );
+    else
+      node->run_path = util_alloc_realpath( run_path );
     if ( !util_path_exists(node->run_path) ) 
       util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
-    
+
+    node->exit_file = util_alloc_full_path(node->run_path , EXIT_FILE);
     job_queue_change_node_status(queue , node , job_queue_waiting);
   }
 }
@@ -444,32 +439,25 @@ void * job_queue_run_jobs__(void * __void_arg) {
   return NULL;
 }
 
-void job_queue_add_job(job_queue_type * queue , int external_id, int target_report) {
+
+void job_queue_add_job(job_queue_type * queue , const char * run_path , const char * job_name , int external_id, int target_report) {
   pthread_mutex_lock( &queue->active_mutex );
   {
     int active_size  = queue->active_size;
     if (active_size == queue->size) 
       util_abort("%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
     
-    job_queue_initialize_node(queue , active_size , external_id , target_report);
+    job_queue_initialize_node(queue , run_path , job_name , active_size , external_id , target_report);
     queue->active_size++;
   }
   pthread_mutex_unlock( &queue->active_mutex );
 }
 
 
-void job_queue_set_runpath_fmt(job_queue_type * job_queue , const path_fmt_type * run_path) {
-  if (job_queue->run_path_fmt != NULL)
-    path_fmt_free( job_queue->run_path_fmt );
-  
-  job_queue->run_path_fmt = path_fmt_copyc(run_path);
-}
-
 
 job_queue_type * job_queue_alloc(int size , int max_running , int max_submit , 
 				 const char    	     * submit_cmd      	 , 
-				 const path_fmt_type * run_path_fmt 	 , 
-				 const path_fmt_type * job_name_fmt , void * driver) {
+				 void * driver) {
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   
   queue->usleep_time     = 200000; /* 1/5 second */
@@ -490,11 +478,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
     for (i=0; i < size; i++) 
       queue->status_list[job_queue_node_get_status(queue->jobs[i])]++;
   }
-
-  queue->run_path_fmt = NULL;
-  job_queue_set_runpath_fmt( queue , run_path_fmt);
-  queue->job_name_fmt = path_fmt_copyc(job_name_fmt);
-
+  
   queue->driver = driver;
   basic_queue_driver_assert_cast(queue->driver);
   pthread_mutex_init( &queue->status_mutex , NULL );
@@ -511,8 +495,6 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
 
 void job_queue_free(job_queue_type * queue) {
   free(queue->submit_cmd);
-  path_fmt_free(queue->run_path_fmt);
-  path_fmt_free(queue->job_name_fmt);
   {
     int i;
     for (i=0; i < queue->size; i++) 
