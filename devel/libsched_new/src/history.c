@@ -109,6 +109,7 @@ static hash_type * well_hash_fread_alloc(FILE * stream)
     }
 
     hash_insert_hash_owned_ref(well_hash, well_name, well_obs_hash, hash_free__);
+    free(well_name);
   }
 
   return well_hash;
@@ -201,8 +202,22 @@ static void history_node_register_wells(history_node_type * node, hash_type * we
 
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
   {
-    hash_type * well_obs_hash = hash_get(well_hash, well_list[well_nr]);
-    hash_insert_hash_owned_ref(node->well_hash, well_list[well_nr], well_obs_hash, hash_free__);
+    if(hash_has_key(node->well_hash, well_list[well_nr]))
+      hash_del(node->well_hash, well_list[well_nr]);
+
+    hash_type * well_obs_ext = hash_get(well_hash, well_list[well_nr]);
+    hash_type * well_obs_int = hash_alloc();
+
+    int num_obs = hash_get_size(well_obs_ext);
+    char ** obs_list = hash_alloc_keylist(well_obs_ext);
+    
+    for(int obs_nr = 0; obs_nr < num_obs; obs_nr++)
+    {
+      double obs = hash_get_double(well_obs_ext, obs_list[obs_nr]);
+      hash_insert_double(well_obs_int, obs_list[obs_nr], obs);
+    }
+    util_free_stringlist(obs_list, num_obs);
+    hash_insert_hash_owned_ref(node->well_hash, well_list[well_nr], well_obs_int, hash_free__);
   }
 
   util_free_stringlist(well_list, num_wells);
@@ -253,6 +268,7 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
     {
       hash_type * well_hash = sched_kw_alloc_well_obs_hash(sched_kw);
       history_node_register_wells(node, well_hash);
+      hash_free(well_hash);
       break;
     }
     case(WCONPROD):
