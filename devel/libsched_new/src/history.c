@@ -29,33 +29,7 @@ struct history_struct{
 
 
 /******************************************************************/
-
-
-
-static history_node_type * history_node_alloc_empty()
-{
-  history_node_type * node = util_malloc(sizeof * node, __func__);
-  node->well_hash          = hash_alloc();
-  node->gruptree           = gruptree_alloc();
-  return node;
-}
-
-
-
-static void history_node_free(history_node_type * node)
-{
-  hash_free(node->well_hash);
-  gruptree_free(node->gruptree);
-  free(node);
-}
-
-
-
-static void history_node_free__(void * node)
-{
-  history_node_free( (history_node_type *) node);
-}
-
+// Functions for manipulating well_hash_type.
 
 
 static void well_hash_fwrite(hash_type * well_hash, FILE * stream)
@@ -168,6 +142,60 @@ static hash_type * well_hash_copyc(hash_type * well_hash_org)
   return well_hash_new;
 }
 
+
+
+static double well_hash_get_var(hash_type * well_hash, const char * well, const char * var, bool * default_used)
+{
+  if(!hash_has_key(well_hash, well))
+  {
+    *default_used = true;
+    return 0.0;
+  }
+
+  hash_type * well_obs = hash_get(well_hash, well);
+  if(!hash_has_key(well_obs, var))
+  {
+    *default_used = true;
+    return 0.0;
+  }
+  else
+  {
+    *default_used = false;
+    return  hash_get_double(well_obs, var);
+  }
+
+}
+
+
+
+
+/******************************************************************/
+// Functions for manipulating history_node_type.
+
+
+static history_node_type * history_node_alloc_empty()
+{
+  history_node_type * node = util_malloc(sizeof * node, __func__);
+  node->well_hash          = hash_alloc();
+  node->gruptree           = gruptree_alloc();
+  return node;
+}
+
+
+
+static void history_node_free(history_node_type * node)
+{
+  hash_free(node->well_hash);
+  gruptree_free(node->gruptree);
+  free(node);
+}
+
+
+
+static void history_node_free__(void * node)
+{
+  history_node_free( (history_node_type *) node);
+}
 
 
 static void history_node_fwrite(const history_node_type * node, FILE * stream)
@@ -348,7 +376,7 @@ static history_node_type * history_node_copyc(const history_node_type * node_org
 
 
 /******************************************************************/
-
+// Static functions for manipulating history_type.
 
 
 static history_type * history_alloc_empty()
@@ -367,8 +395,16 @@ static void history_add_node(history_type * history, history_node_type * node)
 
 
 
-/******************************************************************/
+static history_node_type * history_iget_node_ref(const history_type * history, int i)
+{
+  history_node_type * node = list_iget_node_value_ptr(history->nodes, i);
+  return node;
+}
 
+
+
+/******************************************************************/
+// Exported functions for manipulating history_type. Acess functions further below.
 
 
 void history_free(history_type * history)
@@ -420,7 +456,6 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
       sched_kw_type * sched_kw = sched_file_ijget_block_kw_ref(sched_file, block_nr, kw_nr);
       history_node_parse_data_from_sched_kw(node, sched_kw);
     }
-
     history_add_node(history, node);
   }
   return history;
@@ -456,4 +491,35 @@ history_type * history_fread_alloc(FILE * stream)
   }
 
   return history;
+}
+
+
+
+/******************************************************************/
+// Exported functions for accessing history_type.
+
+
+
+double history_get_well_var(const history_type * history, int restart_num, const char * well, const char * var, bool * default_used)
+{
+  history_node_type * node = history_iget_node_ref(history, restart_num);
+  return well_hash_get_var(node->well_hash, well, var, default_used);
+}
+
+
+double history_get_group_var(const history_type * history, int restart_num, const char * group, const char * var, bool * default_used)
+{
+  history_node_type * node = history_iget_node_ref(history, restart_num);
+
+  if(!gruptree_has_grup(node->gruptree, group));
+  {
+    *default_used = true;
+    return 0.0;
+  }
+
+  // TODO What happens next depends on var. Use multiple functions?
+
+  // TODO Remove this when finished.
+  *default_used = true;
+  return 0.0;
 }
