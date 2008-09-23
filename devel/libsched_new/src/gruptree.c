@@ -336,16 +336,20 @@ void gruptree_register_well(gruptree_type * gruptree, const char * name, const c
 
 
 
-bool gruptree_has_grup(gruptree_type * gruptree, const char * grupname)
+bool gruptree_has_grup(const gruptree_type * gruptree, const char * grupname)
 {
   if(hash_has_key(gruptree->grups, grupname))
+  {
     return true;
+  }
   else
+  {
     return false;
+  }
 }
 
 
-char ** gruptree_alloc_grup_well_names(gruptree_type * gruptree, const char * grupname, int * num_wells)
+char ** gruptree_alloc_grup_well_list(gruptree_type * gruptree, const char * grupname, int * num_wells)
 {
   char ** well_names;
   
@@ -499,7 +503,7 @@ gruptree_type * gruptree_fread_alloc(FILE * stream)
 void gruptree_printf_grup_wells(gruptree_type * gruptree, const char * grupname)
 {
   int num_wells;
-  char ** well_names = gruptree_alloc_grup_well_names(gruptree, grupname, &num_wells);
+  char ** well_names = gruptree_alloc_grup_well_list(gruptree, grupname, &num_wells);
 
   printf("WELLS IN GROUP %s:\n", grupname);
   printf("-----------------------\n");

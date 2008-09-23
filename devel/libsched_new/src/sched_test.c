@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <util.h>
 #include <sched_file.h>
 #include <history.h>
@@ -64,6 +65,11 @@ int main(int argc, char **argv)
   stream = util_fopen("sched_test_stor_02.bin", "r");
   history = history_fread_alloc(stream);
   fclose(stream);
+
+  // Try to access some rates..
+  bool default_used = false;
+  double rate = history_get_group_var(history, last_restart_file , "FIELD", "GOPR", &default_used);
+  printf("-- Oil rate for field at last restart is %f\n", rate);
 
 
 

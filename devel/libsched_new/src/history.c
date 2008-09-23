@@ -1,3 +1,4 @@
+#include <string.h>
 #include <time.h>
 #include <util.h>
 #include <hash.h>
@@ -511,15 +512,33 @@ double history_get_group_var(const history_type * history, int restart_num, cons
 {
   history_node_type * node = history_iget_node_ref(history, restart_num);
 
-  if(!gruptree_has_grup(node->gruptree, group));
+  if(!gruptree_has_grup(node->gruptree, group))
   {
     *default_used = true;
     return 0.0;
   }
 
-  // TODO What happens next depends on var. Use multiple functions?
+  char * wvar = NULL;
+  if(     strcmp(var, "GOPR") == 0)
+    wvar = "WOPR";
+  else if(strcmp(var, "GWPR") == 0)
+    wvar = "WWPR";
+  else if(strcmp(var, "GGPR") == 0)
+    wvar = "WGPR";
+  else
+  {
+    util_abort("%s: No support for calculating group keyword %s from well keywords.\n", __func__);
+  }
 
-  // TODO Remove this when finished.
-  *default_used = true;
-  return 0.0;
+  double obs = 0.0;
+  int num_wells;
+  char ** well_list = gruptree_alloc_grup_well_list(node->gruptree, group, &num_wells);
+  *default_used = false;
+  for(int well_nr = 0; well_nr < num_wells; well_nr++)
+  {
+    double obs_inc = well_hash_get_var(node->well_hash, well_list[well_nr], wvar, default_used);
+    obs = obs + obs_inc;
+  }
+  util_free_stringlist(well_list, num_wells);
+  return obs;
 }

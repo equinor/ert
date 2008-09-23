@@ -20,5 +20,6 @@ history_type * history_alloc_from_sched_file(const sched_file_type *);
 
 
 // Accessors.
+double history_get_well_var(const history_type * , int, const char *, const char *, bool *);
 double history_get_group_var(const history_type *, int, const char *, const char *, bool *);
 #endif
