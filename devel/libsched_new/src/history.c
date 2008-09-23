@@ -403,8 +403,6 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
   history_node_type * node = NULL;
   for(int block_nr = 0; block_nr < num_restart_files; block_nr++)
   {
-    //printf("block_nr: %i\n", block_nr);
-
     if(node != NULL)
     {
       history_node_type * node_cpy = history_node_copyc(node);
@@ -422,8 +420,6 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
       sched_kw_type * sched_kw = sched_file_ijget_block_kw_ref(sched_file, block_nr, kw_nr);
       history_node_parse_data_from_sched_kw(node, sched_kw);
     }
-
-    //well_hash_fprintf(node->well_hash);
 
     history_add_node(history, node);
   }

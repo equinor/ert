@@ -45,6 +45,8 @@ int main(int argc, char **argv)
   sched_file_fprintf_i(sched_file, last_restart_file, "sched_test_out_02.SCH");
   fclose(stream);
 
+
+
   // Try to create a history_type object
   printf("-- Creating history object from \"%s\"..\n", argv[1]);
   history_type * history = history_alloc_from_sched_file(sched_file);
@@ -54,6 +56,8 @@ int main(int argc, char **argv)
   printf("-- Freeing internal representation of history..\n");
   history_free(history);
   fclose(stream);
+
+
 
   // Try to load the history_type oject from disk.
   printf("-- Loading history from \"sched_test_stor_02.bin\"..\n");
