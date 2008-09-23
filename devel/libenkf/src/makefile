@@ -70,13 +70,13 @@ thist.o              : thist.c thist.h
 logmode.o            : logmode.c logmode.h enkf_types.h
 scalar.o               : scalar.h scalar.c enkf_util.o scalar_config.o
 enkf_types.o         : enkf_types.c enkf_types.h
-enkf_obs.o           : enkf_obs.c enkf_obs.h enkf_main.o obs_node.o well_obs.o field_obs.o summary_obs.o
+enkf_obs.o           : enkf_obs.c enkf_obs.h obs_node.o well_obs.o field_obs.o summary_obs.o
 obs_data.o           : obs_data.c obs_data.h
 obs_node.o           : obs_node.c obs_node.h enkf_types.h enkf_util.o well_obs.o summary_obs.o gen_obs.o field_obs.o
 meas_vector.o          : meas_vector.c meas_vector.h enkf_util.o
 well_obs.o           : well_obs.h well_obs.c meas_op.o enkf_macros.h
 meas_op.o            : meas_op.c meas_op.h
-well_config.o        : enkf_main.c enkf_main.h enkf_types.h enkf_macros.h enkf_config_node.o well_config.c well_config.h well_config_private.h
+well_config.o        : enkf_types.h enkf_macros.h enkf_config_node.o well_config.c well_config.h well_config_private.h
 well.o               : well.c well.h well_config.o 
 enkf_config_node.o   : enkf_types.h enkf_macros.h
 field_config.o       : field_config.c field_config.h enkf_types.h
@@ -107,7 +107,7 @@ plain_driver_common.o    : plain_driver_common.c plain_driver_common.h
 fs_index.i            	 : fs_index.h fs_index.c
 enkf_config.o         	 : enkf_config.c enkf_config.h enkf_site_config.o enkf_site_config.o
 enkf_site_config.o    	 : enkf_site_config.h enkf_site_config.c
-enkf_main.o           	 : enkf_main.c enkf_main.h enkf_state.o enkf_config.o enkf_site_config.o
+enkf_main.o           	 : enkf_main.c enkf_main.h enkf_state.o enkf_config.o enkf_site_config.o enkf_obs.o 
 analysis.o            	 : analysis.c meas_matrix.o obs_data.o
 summary_obs.o         	 : summary_obs.h summary_obs.c enkf_util.o
 summary.o             	 : summary.c summary.h

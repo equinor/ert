@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -34,6 +35,7 @@
 #include <stringlist.h>
 #include <enkf_main.h>
 #include <enkf_serialize.h>
+#include <config.h>
 
 
 /**
@@ -432,6 +434,9 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 }
 
 
+
+
+
 /******************************************************************/
 
 void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
@@ -526,5 +531,157 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
 
 
 
-
 const sched_file_type * enkf_main_get_sched_file(const enkf_main_type * enkf_main) { return enkf_main->sched_file; }
+
+
+
+
+void enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
+  const char * site_config = getenv("ENKF_SITE_CONFIG");
+  char       * model_config;
+
+  if (site_config == NULL)
+    site_config = _site_config;
+  
+  if (site_config == NULL) 
+    util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
+  
+  {
+    char * path;
+    char * base;
+    char * ext;
+    util_alloc_file_components(_model_config , &path , &base , &ext);
+    if (path != NULL) {
+      if (chdir(path) != 0) 
+	util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
+
+      printf("Changing to directory ...................: %s \n",path);
+      if (ext != NULL) {
+	model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
+	free(base);
+      } else 
+	model_config = base;
+      free(ext);
+      free(path);
+    } else
+      model_config = util_alloc_string_copy(_model_config);
+  }  
+
+  if (!util_file_exists(site_config)) util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
+  if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
+  {
+    config_type * config = config_alloc();
+    config_item_type * item;
+
+    /*****************************************************************/
+    /** Keywords expected normally found in site_config */
+    item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_item_set_selection_set( item , stringlist_alloc_argv_ref( (const char *[3]) {"LSF" , "LOCAL" , "RSH"} , 3) );
+    
+
+    /* These must be set IFF QUEUE_SYSTEM == LSF */
+    config_add_item(config , "LSF_RESOURCES" , false , true);
+    config_add_item(config , "LSF_QUEUE"     , false , true);
+    item = config_add_item(config , "MAX_RUNNING_LSF" , false , true);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+
+
+    /* These must be set IFF QUEUE_SYSTEM == RSH */
+    config_add_item(config , "RSH_HOST_LIST" , false , true);
+    item = config_add_item(config , "RSH_COMMAND" , false , true);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+    item = config_add_item(config , "MAX_RUNNING_RSH" , false , true);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+    
+    
+    /* These must be set IFF QUEUE_SYSTEM == LOCAL */
+    item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , true);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+
+
+    item = config_add_item(config , "JOB_SCRIPT" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "IMAGE_VIEWER" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+    
+    item = config_add_item(config , "INSTALL_JOB" , true , true);
+    config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+    
+    /*****************************************************************/
+    /* Required keywords from the ordinary model_config file */
+    item = config_add_item(config , "SIZE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+    
+    item = config_add_item(config , "GRID" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "RUNPATH" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+    item = config_add_item(config , "ENSPATH" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+    item = config_add_item(config , "ECLBASE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    
+    item = config_add_item(config , "SCHEDULE_FILE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 2 , (const config_item_types [2]) {CONFIG_EXISTING_FILE , CONFIG_STRING});
+
+    item = config_add_item(config , "START_TIME" , true , false);
+    /*config_item_set_argc_minmax(item , 1 , 2 , (const config_item_types [2]) {CONFIG_EXISTING_FILE , CONFIG_STRING});*/
+
+    item = config_add_item(config , "DATA_FILE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "INIT_FILE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+    
+    item = config_add_item(config , "FORWARD_MODEL" , true , false);
+    config_item_set_argc_minmax(item , 1 , -1 , NULL);
+    /*****************************************************************/
+    /* Optional keywords from the model config file */
+    item = config_add_item(config , "DATA_KW" , false , true);
+    config_item_set_argc_minmax(item , 2 , 2 , NULL);
+
+    item = config_add_item(config , "KEEP_RUNPATH" , false , false);
+    config_item_set_argc_minmax(item , 1 , -1 , NULL);
+
+    item = config_add_item(config , "ADD_STATIC_KW" , false , false);
+    config_item_set_argc_minmax(item , 1 , -1 , NULL);
+
+    item = config_add_item(config , "RESULT_PATH"  , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+    
+    /*****************************************************************/
+    /* Keywords for the estimation                                   */
+    item = config_add_item(config , "MULTZ" , false , true);
+    config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "MULTFLT" , false , true);
+    config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "EQUIL" , false , true);
+    config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "GEN_KW" , false , true);
+    config_item_set_argc_minmax(item , 4 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE});
+    
+    
+    config_parse(config , site_config , "--" , false , false);
+    config_parse(config , model_config , "--" , false , true);
+    config_free(config);
+  }
+  free(model_config);
+}
+    
+    
+    
+
+
+
+  
