@@ -154,22 +154,22 @@ static void job_queue_node_finalize(job_queue_node_type * node) {
        from external scope a new node is not actaully created
        internally, it is just an existing node which is initialized.
 
-       
+    2. The queue can start running before all jobs are added.
 
 */
 
 struct job_queue_struct {
-  int                        active_size; 
-  int                        size;
-  int                        max_submit;
-  int                        max_running; 
-  char                     * submit_cmd;
-  job_queue_node_type     ** jobs;
-  basic_queue_driver_type  * driver;
-  int                        status_list[job_queue_max_state];
+  int                        active_size;   			/* The number of jobs currently added to the queue. */
+  int                        size;          			/* The total number of job slots in the queue. */
+  int                        max_submit;    			/* The maximum number of submit attempts for one job. */
+  int                        max_running;   			/* The maximum number of concurrently running jobs. */
+  char                     * run_cmd;       			/* The command which is run (i.e. path to an executable with arguments). */
+  job_queue_node_type     ** jobs;          			/* A vector of job nodes .*/
+  basic_queue_driver_type  * driver;        			/* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
+  int                        status_list[job_queue_max_state];  /* The number of jobs in the different states (observe that the state is (ab)used as index). */
   
-  unsigned long              usleep_time;
-  pthread_mutex_t            active_mutex;
+  unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
+  pthread_mutex_t            active_mutex;                      /* Two mutexes protecting the jobs array and the status_list array respectively. */
   pthread_mutex_t            status_mutex;
 };
 
@@ -256,7 +256,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
       {
 	basic_queue_job_type * job_data = driver->submit(queue->driver         , 
 							 queue_index           , 
-							 queue->submit_cmd     , 
+							 queue->run_cmd     , 
 							 node->run_path        , 
 							 node->job_name);
 	
@@ -506,8 +506,9 @@ void job_queue_add_job(job_queue_type * queue , const char * run_path , const ch
 
 
 
+
 job_queue_type * job_queue_alloc(int size , int max_running , int max_submit , 
-				 const char    	     * submit_cmd      	 , 
+				 const char    	     * run_cmd      	 , 
 				 void * driver) {
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   
@@ -515,7 +516,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
   queue->max_running     = max_running;
   queue->max_submit      = max_submit;
   queue->size            = size;
-  queue->submit_cmd      = util_alloc_string_copy(submit_cmd);
+  queue->run_cmd      = util_alloc_string_copy(run_cmd);
   
   queue->jobs            = util_malloc(size * sizeof * queue->jobs , __func__);
   {
@@ -545,7 +546,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
 
 
 void job_queue_free(job_queue_type * queue) {
-  free(queue->submit_cmd);
+  free(queue->run_cmd);
   {
     int i;
     for (i=0; i < queue->size; i++) 
