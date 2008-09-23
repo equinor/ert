@@ -336,12 +336,21 @@ void gruptree_register_well(gruptree_type * gruptree, const char * name, const c
 
 
 
+bool gruptree_has_grup(gruptree_type * gruptree, const char * grupname)
+{
+  if(hash_has_key(gruptree->grups, grupname))
+    return true;
+  else
+    return false;
+}
+
+
 char ** gruptree_alloc_grup_well_names(gruptree_type * gruptree, const char * grupname, int * num_wells)
 {
   char ** well_names;
   
   if(!hash_has_key(gruptree->grups, grupname))
-    util_abort("%s: Group %s does not exist.\n", __func__, grupname);
+    util_abort("%s: Group %s is not present in the gruptree.\n", __func__, grupname);
 
   if(strcmp(grupname, "FIELD") == 0)
   {
