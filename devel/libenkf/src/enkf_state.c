@@ -239,14 +239,14 @@ static void shared_info_free(shared_info_type * shared_info) {
       Adding something here is a BUG - this object does 
       not own anything.
   */
-  free(shared_info);
+  free( shared_info );
 }
 
                                          
 
 /******************************************************************/
 /** Implementation of the member_config struct. All of this implementation
-    is private - however some of it is exportted through the enkf_state object,
+    is private - however some of it is exported through the enkf_state object,
     and it should be perfectly safe to export more of it.
 */
 
@@ -1047,7 +1047,7 @@ void enkf_state_start_eclipse(enkf_state_type * enkf_state) {
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
-    job_queue_add_job(shared_info->job_queue , run_info->run_path , my_config->eclbase , my_config->iens , run_info->step2);
+    job_queue_add_job(shared_info->job_queue , run_info->run_path , my_config->eclbase , my_config->iens);
   }
 }
 

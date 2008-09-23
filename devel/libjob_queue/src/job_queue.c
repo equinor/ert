@@ -10,6 +10,42 @@
 #include <unistd.h>
 #include <void_arg.h>
 
+/**
+   The running of external jobs is handled thrugh an abstract
+   job_queue implemented in this file; the job_queue then contains a
+   'driver' which actually runs the job. All drivers must support the
+   following functions
+
+     submit: This will submit a job, and return a pointer to a 
+             newly allocated queue_job instance.
+
+     clean:  This will clear up all resources used by the job.
+
+     abort:  This will stop the job, and then call clean.
+
+     status: This will get the status of the job. 
+
+   The job_queue instance only has a (void *) pointer to the driver
+   instance, i.e. the job_queue doe not know anything of how the
+   driver actually submits/queries/stops/... the jobs. Currently we
+   have implemented three drivers: lsf_driver, local_driver and
+   rsh_driver.
+   
+   Observe that this library also contains the files ext_joblist and
+   ext_job, those files implement a particular way of dispatching
+   external jobs in a series; AFTER THEY HAVE BEEN SUBMITTED. So seen
+   from the this scope those files do not provide any particluar
+   functionality; there is no compile-time dependencies either (ehhh -
+   the EXIT file name is a small link).
+*/
+
+
+
+
+
+
+
+
 /*
   This must match the EXIT_file variable in the job_dispatch script.
 */
@@ -19,31 +55,35 @@
 
 
 
-/**
-
-All queue drivers must support the following functions:
-
-  submit: This will submit a job, and return a pointer to a 
-          newly allocated queue_job instance.
-
-  clean:  This will clear up all resources used by the job.
-
-  abort:  This will stop the job, and then call clean.
-
-  status: This will get the status of the job.
-*/ 
-
-
 typedef enum {submit_OK = 0 , submit_job_FAIL , submit_driver_FAIL} submit_status_type;
 
+
+/**
+   This struct holds the job_queue information about one job. Observe
+   the following:
+
+    1. This struct is purely static - i.e. it is invisible outside of
+       this file-scope.
+
+    2. Typically the driver would like to store some additional
+       information, i.e. the PID of the running process for the local
+       driver; that is stored in a (driver specific) struct under the
+       field job_data.
+
+    3. If the driver detects that a job has failed it leaves an EXIT
+       file, the exit status is (currently) not reliably transferred
+       back to to the job_queue layer.
+       
+*/
+
 typedef struct {
-  int                  	 external_id;
-  int                  	 submit_attempt; 
-  char                  *exit_file;
-  char                 	*job_name;
-  char                  *run_path;   
-  job_status_type  	 job_status;
-  basic_queue_job_type 	*job_data;
+  int                  	 external_id;     /* An id number supplied when submitting; this is used when external functions query for status ++ */
+  int                  	 submit_attempt;  /* Which attempt is this ... */
+  char                  *exit_file;       /* The queue will look for the occurence of this file to detect a failure. */
+  char                 	*job_name;        /* The name of the job. */
+  char                  *run_path;        /* Where the job is run - absolute path. */
+  job_status_type  	 job_status;      /* The current status of the job. */
+  basic_queue_job_type 	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
 } job_queue_node_type;
 
 /*****************************************************************/
@@ -106,9 +146,19 @@ static void job_queue_node_finalize(job_queue_node_type * node) {
 
 /*****************************************************************/
 
+/**
+   This is the struct for a whole queue. Observe the following:
+   
+    1. The number of elements is specified at the allocation time, and
+       all nodes are allocated then; i.e. when xx_add_job() is called
+       from external scope a new node is not actaully created
+       internally, it is just an existing node which is initialized.
+
+       
+
+*/
+
 struct job_queue_struct {
-  int                        target_report;
-  unsigned long              usleep_time;
   int                        active_size; 
   int                        size;
   int                        max_submit;
@@ -116,15 +166,17 @@ struct job_queue_struct {
   char                     * submit_cmd;
   job_queue_node_type     ** jobs;
   basic_queue_driver_type  * driver;
+  int                        status_list[job_queue_max_state];
+  
+  unsigned long              usleep_time;
   pthread_mutex_t            active_mutex;
   pthread_mutex_t            status_mutex;
-  int                        status_list[job_queue_max_state];
 };
 
 static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
 
-static void job_queue_initialize_node(job_queue_type * queue , const char * run_path , const char * job_name , int queue_index , int external_id , int target_report) {
+static void job_queue_initialize_node(job_queue_type * queue , const char * run_path , const char * job_name , int queue_index , int external_id ) {
   if (external_id < 0) 
     util_abort("%s: external_id must be >= 0 - aborting \n",__func__);
   {
@@ -225,7 +277,6 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 }
 
 static void job_queue_print_status(const job_queue_type * queue) {
-  printf("Target report.....: %d \n",queue->target_report);
   printf("active_size ......: %d \n",queue->active_size);
 }
 
@@ -440,14 +491,14 @@ void * job_queue_run_jobs__(void * __void_arg) {
 }
 
 
-void job_queue_add_job(job_queue_type * queue , const char * run_path , const char * job_name , int external_id, int target_report) {
+void job_queue_add_job(job_queue_type * queue , const char * run_path , const char * job_name , int external_id) {
   pthread_mutex_lock( &queue->active_mutex );
   {
     int active_size  = queue->active_size;
     if (active_size == queue->size) 
       util_abort("%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
     
-    job_queue_initialize_node(queue , run_path , job_name , active_size , external_id , target_report);
+    job_queue_initialize_node(queue , run_path , job_name , active_size , external_id);
     queue->active_size++;
   }
   pthread_mutex_unlock( &queue->active_mutex );
