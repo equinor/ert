@@ -432,6 +432,10 @@ hash_type * sched_kw_alloc_well_obs_hash(const sched_kw_type * sched_kw)
     {
       return sched_kw_wconhist_alloc_well_obs_hash( (sched_kw_wconhist_type *) sched_kw->data);
     }
+    case(WCONINJH):
+    {
+      return sched_kw_wconinjh_alloc_well_obs_hash( (sched_kw_wconinjh_type *) sched_kw->data);
+    }
     default:
     {
        util_abort("%s: Internal error - trying to get well observations from non-history kw - aborting.\n", __func__);

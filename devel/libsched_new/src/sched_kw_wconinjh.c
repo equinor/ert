@@ -377,6 +377,7 @@ sched_kw_wconinjh_type * sched_kw_wconinjh_fread_alloc(FILE * stream)
 /***********************************************************************/
 
 
+
 hash_type * sched_kw_wconinjh_alloc_well_obs_hash(const sched_kw_wconinjh_type * kw)
 {
   hash_type * well_hash = hash_alloc();
@@ -391,8 +392,6 @@ hash_type * sched_kw_wconinjh_alloc_well_obs_hash(const sched_kw_wconinjh_type *
   }
 
   return well_hash;
-
-
 }
 
 
