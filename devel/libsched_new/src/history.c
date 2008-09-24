@@ -326,10 +326,9 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
     }
     case(WCONINJH):
     {
-      int num_wells;
-      char ** well_list = sched_kw_alloc_well_list(sched_kw, &num_wells);
-      history_node_delete_wells(node, (const char **) well_list, num_wells); 
-      util_free_stringlist(well_list, num_wells);
+      hash_type * well_hash = sched_kw_alloc_well_obs_hash(sched_kw);
+      history_node_register_wells(node, well_hash);
+      hash_free(well_hash);
       break;
     }
     case(GRUPTREE):
@@ -525,6 +524,12 @@ double history_get_group_var(const history_type * history, int restart_num, cons
     wvar = "WWPR";
   else if(strcmp(var, "GGPR") == 0)
     wvar = "WGPR";
+  else if(strcmp(var, "GOIR") == 0)
+    wvar = "WOIR";
+  else if(strcmp(var, "GWIR") == 0)
+    wvar = "WWIR";
+  else if(strcmp(var, "GGIR") == 0)
+    wvar = "WGIR";
   else
   {
     util_abort("%s: No support for calculating group keyword %s from well keywords.\n", __func__);
