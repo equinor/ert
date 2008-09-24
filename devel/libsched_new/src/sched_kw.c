@@ -11,6 +11,7 @@
 #include <sched_kw_tstep.h>
 #include <sched_kw_dates.h>
 #include <sched_kw_wconhist.h>
+#include <sched_kw_wconinjh.h>
 #include <sched_kw_welspecs.h>
 #include <sched_kw_untyped.h>
 #include <sched_macros.h>
@@ -154,6 +155,9 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
     case(WCONHIST):
       GET_DATA_HANDLERS(handlers, wconhist);
       break;
+    case(WCONINJH):
+      GET_DATA_HANDLERS(handlers, wconinjh);
+      break;
     case(WELSPECS):
       GET_DATA_HANDLERS(handlers, welspecs);
       break;
@@ -161,9 +165,6 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
       GET_DATA_HANDLERS(handlers, untyped);
       break;
     case(WCONINJE):
-      GET_DATA_HANDLERS(handlers, untyped);
-      break;
-    case(WCONINJH):
       GET_DATA_HANDLERS(handlers, untyped);
       break;
     case(WCONPROD):
@@ -399,11 +400,17 @@ char ** sched_kw_alloc_well_list(const sched_kw_type * sched_kw, int * num_wells
       return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
     case(WCONINJ):
       return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
-    case(WCONINJH):
-      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
     case(WCONHIST):
     {
       hash_type * well_obs = sched_kw_wconhist_alloc_well_obs_hash( (sched_kw_wconhist_type *) sched_kw->data);
+      *num_wells = hash_get_size(well_obs);
+      char ** well_list = hash_alloc_keylist(well_obs);
+      hash_free(well_obs);
+      return well_list;
+    }
+    case(WCONINJH):
+    {
+      hash_type * well_obs = sched_kw_wconinjh_alloc_well_obs_hash( (sched_kw_wconinjh_type *) sched_kw->data);
       *num_wells = hash_get_size(well_obs);
       char ** well_list = hash_alloc_keylist(well_obs);
       hash_free(well_obs);
@@ -414,6 +421,7 @@ char ** sched_kw_alloc_well_list(const sched_kw_type * sched_kw, int * num_wells
        return NULL;
   }
 }
+
 
 
 hash_type * sched_kw_alloc_well_obs_hash(const sched_kw_type * sched_kw)

@@ -190,7 +190,7 @@ static sched_block_type * sched_file_iget_block_ref(const sched_file_type * sche
 
 static void sched_file_build_block_dates(sched_file_type * sched_file, time_t start_date)
 {
-  int num_restart_files = sched_file_get_nr_restart_files(sched_file);
+  int num_restart_files = sched_file_get_num_restart_files(sched_file);
   time_t curr_time, new_time;
 
   if(num_restart_files < 1)
@@ -288,7 +288,7 @@ void sched_file_parse(sched_file_type * sched_file, time_t start_date, const cha
 
 
 
-int sched_file_get_nr_restart_files(const sched_file_type * sched_file)
+int sched_file_get_num_restart_files(const sched_file_type * sched_file)
 {
   return list_get_size(sched_file->blocks);
 }
@@ -312,7 +312,7 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
 
 void sched_file_fwrite(const sched_file_type * sched_file, FILE * stream)
 {
-  int len = sched_file_get_nr_restart_files(sched_file);
+  int len = sched_file_get_num_restart_files(sched_file);
 
   util_fwrite(&len, sizeof len, 1, stream, __func__);
 
@@ -345,7 +345,7 @@ sched_file_type * sched_file_fread_alloc(FILE * stream)
 
 int sched_file_get_restart_file_from_time_t(const sched_file_type * sched_file, time_t time)
 {
-  int num_restart_files = sched_file_get_nr_restart_files(sched_file);
+  int num_restart_files = sched_file_get_num_restart_files(sched_file);
   for(int i=0; i<num_restart_files; i++)
   {
     time_t block_end_time = sched_file_iget_block_end_time(sched_file, i);
