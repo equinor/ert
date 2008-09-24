@@ -245,6 +245,7 @@ static void job_queue_update_status(job_queue_type * queue ) {
 }
 
 
+
 static submit_status_type job_queue_submit_job(job_queue_type * queue , int queue_index) {
   submit_status_type submit_status;
   job_queue_assert_queue_index(queue , queue_index);
@@ -276,9 +277,12 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
   }
 }
 
+
+
 static void job_queue_print_status(const job_queue_type * queue) {
   printf("active_size ......: %d \n",queue->active_size);
 }
+
 
 
 job_status_type job_queue_export_job_status(job_queue_type * queue , int external_id) {
