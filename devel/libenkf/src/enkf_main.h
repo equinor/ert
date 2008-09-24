@@ -44,6 +44,7 @@ void                          enkf_main_set_state_run_path(const enkf_main_type 
 void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
 enkf_main_type              * enkf_main_safe_cast( void * );
 void                          enkf_main_interactive_set_runpath__(void * );
+void                          enkf_main_bootstrap(const char * , const char * );
 
 lock_mode_type                enkf_main_get_runlock_mode(const enkf_main_type * );
 enkf_main_type              * enkf_main_alloc(enkf_config_type * , lock_mode_type , const char * , enkf_fs_type *, job_queue_type *, ext_joblist_type * );

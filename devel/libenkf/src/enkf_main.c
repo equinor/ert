@@ -58,6 +58,59 @@ struct config_tmp_files_struct {
 
 
 
+/**
+   This struct contains information which is specific to the site
+   where this enkf instance is running. Pointers to the fields in this
+   structure are passed on to e.g. the enkf_state->shared_info object,
+   but this struct is the *OWNER* of this information, and hence
+   responsible for booting and deleting these objects. 
+*/
+
+typedef struct {
+  ext_joblist_type * joblist;       /* The list of external jobs which have been installed. 
+				       These jobs will be the parts of the forward model. */
+  job_queue_type   * job_queue;     /* The queue instance which will run the external jobs. */
+  char             * image_viewer;  /* String pointing to an executable which can show images. */
+} site_config_type;
+
+
+
+static site_config_type * site_config_alloc() {
+  site_config_type * site_config = util_malloc( sizeof * site_config , __func__);
+
+  site_config->joblist      = NULL;
+  site_config->job_queue    = NULL;
+  site_config->image_viewer = NULL;
+
+  return site_config;
+}
+
+
+static void site_config_set_image_viewer(site_config_type * site_config , const char * image_viewer) {
+  site_config->image_viewer = util_realloc_string_copy(site_config->image_viewer , image_viewer );
+}
+
+
+/*
+void enkf_site_config_install_jobs(const enkf_site_config_type * config , ext_joblist_type * joblist) {
+  int  i;
+  stringlist_type *item_list = config_alloc_complete_stringlist(config->__config , "INSTALL_JOB");
+
+  for (i=0; i < stringlist_get_size(item_list); i+=2) 
+    ext_joblist_add_job(joblist , stringlist_iget(item_list , i) , stringlist_iget(item_list , i + 1));
+  
+  stringlist_free(item_list);
+}
+*/
+
+
+static void site_config_free(site_config_type * site_config) {
+  ext_joblist_free( site_config->joblist );
+  job_queue_free( site_config->job_queue );
+  free(site_config->image_viewer);
+}
+
+
 
 
 /**
@@ -537,6 +590,7 @@ const sched_file_type * enkf_main_get_sched_file(const enkf_main_type * enkf_mai
 
 
 void enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
+  const char * cwd         = util_alloc_cwd();
   const char * site_config = getenv("ENKF_SITE_CONFIG");
   char       * model_config;
 
@@ -578,8 +632,11 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     config_item_set_selection_set( item , stringlist_alloc_argv_ref( (const char *[3]) {"LSF" , "LOCAL" , "RSH"} , 3) );
+    config_item_set_required_children_on_value( item , "LSF"   , stringlist_alloc_argv_ref( (const char *[3]) {"LSF_RESOURCES" , "LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 3));
+    config_item_set_required_children_on_value( item , "RSH"   , stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2));
+    config_item_set_required_children_on_value( item , "LOCAL" , stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1));
     
-
+						
     /* These must be set IFF QUEUE_SYSTEM == LSF */
     config_add_item(config , "LSF_RESOURCES" , false , true);
     config_add_item(config , "LSF_QUEUE"     , false , true);
@@ -656,27 +713,44 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     item = config_add_item(config , "RESULT_PATH"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
+    item = config_add_item(config , "OBS_CONFIG"  , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
     
     /*****************************************************************/
     /* Keywords for the estimation                                   */
     item = config_add_item(config , "MULTZ" , false , true);
     config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-
+    
     item = config_add_item(config , "MULTFLT" , false , true);
     config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-
+    
     item = config_add_item(config , "EQUIL" , false , true);
     config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
 
     item = config_add_item(config , "GEN_KW" , false , true);
     config_item_set_argc_minmax(item , 4 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "GEN_PARAM" , false , true);
+    config_item_set_argc_minmax(item , 3 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "WELL" , false , true);
+    config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
+
+    item = config_add_item(config , "SUMMARY" , false , true);
+    config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
+
+    item = config_add_item(config , "FIELD" , false , true);
+    config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
     
+
     
     config_parse(config , site_config , "--" , false , false);
     config_parse(config , model_config , "--" , false , true);
     config_free(config);
   }
   free(model_config);
+  chdir( cwd ); /* Noninvasive in test mode ... */
 }
     
     

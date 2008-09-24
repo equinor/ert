@@ -33,7 +33,7 @@ void install_SIGNALS(void) {
 void text_splash() {
   int i;
   {
-#include "statoilhydro.inc"
+#include "dilbert_ascii_80.inc"
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++)
       printf("%s\n" , splash_text[i]);
@@ -113,7 +113,7 @@ int main (int argc , char ** argv) {
     lock_mode_type lock_mode = lock_file;
     const char * site_config_file  = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * model_config_file = argv[1];
-    /*enkf_main_bootstrap(site_config_file , model_config_file);*/
+    enkf_main_bootstrap(site_config_file , model_config_file);
     {
       ext_joblist_type * joblist;
       job_queue_type   * job_queue;
