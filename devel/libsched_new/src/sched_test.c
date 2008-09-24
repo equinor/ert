@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
 
   // Get the nr of restart files and dump history ecl style
-  num_restart_files = sched_file_get_nr_restart_files(sched_file);
+  num_restart_files = sched_file_get_num_restart_files(sched_file);
   last_restart_file = num_restart_files - 1;
   printf("-- Schedule file \"%s\" will create %i restart files.\n", argv[1], num_restart_files);
   printf("-- Writing all steps to \"sched_test_out_01.SCH\"..\n");

@@ -435,7 +435,7 @@ void history_free(history_type * history)
 history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 {
   history_type * history = history_alloc_empty();
-  int num_restart_files = sched_file_get_nr_restart_files(sched_file);
+  int num_restart_files = sched_file_get_num_restart_files(sched_file);
 
   history_node_type * node = NULL;
   for(int block_nr = 0; block_nr < num_restart_files; block_nr++)
@@ -536,8 +536,11 @@ double history_get_group_var(const history_type * history, int restart_num, cons
   *default_used = false;
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
   {
-    double obs_inc = well_hash_get_var(node->well_hash, well_list[well_nr], wvar, default_used);
+    bool def = false;
+    double obs_inc = well_hash_get_var(node->well_hash, well_list[well_nr], wvar, &def);
     obs = obs + obs_inc;
+    if(def)
+      *default_used = true;
   }
   util_free_stringlist(well_list, num_wells);
   return obs;
