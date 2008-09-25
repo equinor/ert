@@ -251,13 +251,9 @@ static void shared_info_free(shared_info_type * shared_info) {
 */
 
 
-#define MEMBER_CONFIG_SET_PATH(path) \
-static void member_config_set_ ## path(member_config_type * member_config , const char * p) { \
-   member_config->path = util_realloc_string_copy(member_config->path , p); \
+static void member_config_set_eclbase(member_config_type * member_config , const char * eclbase) {
+  member_config->eclbase = util_realloc_string_copy(member_config->eclbase , eclbase);
 }
-
-MEMBER_CONFIG_SET_PATH(eclbase);
-#undef MEMBER_CONFIG_SET_PATH
 
 
 
@@ -275,7 +271,11 @@ static member_config_type * member_config_alloc(int iens , lock_mode_type lock_m
   member_config->iens           = iens; /* Can only be changed in the allocater. */
   member_config->eclbase  	= NULL;
   member_config->keep_runpath   = keep_runpath;
-  member_config_set_eclbase(member_config  , path_fmt_alloc_path(eclbase_fmt, false , member_config->iens));
+  {
+    char * eclbase = path_fmt_alloc_path(eclbase_fmt, false , member_config->iens);
+    member_config_set_eclbase(member_config  , eclbase);
+    free(eclbase);
+  }
 
   return member_config;
 }

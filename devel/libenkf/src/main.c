@@ -31,12 +31,15 @@ void install_SIGNALS(void) {
 
 
 void text_splash() {
+  const int usleep_time = 10000;
   int i;
   {
-#include "dilbert_ascii_80.inc"
+#include "uncle_sam_100.inc"
     printf("\n\n");
-    for (i = 0; i < SPLASH_LENGTH; i++)
+    for (i = 0; i < SPLASH_LENGTH; i++) {
       printf("%s\n" , splash_text[i]);
+      usleep(usleep_time);
+    }
     printf("\n\n");
 
     sleep(1);
@@ -74,7 +77,7 @@ void enkf_usage() {
 
 enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) {
   const char * mount_map = "enkf_mount_info";
-  const char * config_file = util_alloc_full_path(root_path , mount_map); /* This file should be protected - at all costs. */
+  char * config_file     = util_alloc_full_path(root_path , mount_map); /* This file should be protected - at all costs. */
   
   util_make_path(root_path);
   if (!util_file_exists(config_file)) {
@@ -95,7 +98,7 @@ enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) {
     fclose(stream);
     close(fd);
   }
-  
+  free(config_file);
   return enkf_fs_mount(root_path , mount_map , lock_path);
 }
 
@@ -138,6 +141,8 @@ int main (int argc , char ** argv) {
       
       ext_joblist_free(joblist);
       enkf_fs_free(fs);  /* Takes the drivers as well */
+      free(lock_path);
+      enkf_sched_free( enkf_sched );
     }
   }
 }

@@ -36,6 +36,11 @@
 #include <enkf_main.h>
 #include <enkf_serialize.h>
 #include <config.h>
+#include <local_driver.h>
+#include <rsh_driver.h>
+#include <lsf_driver.h>
+#include <history.h>
+#include <enkf_sched.h>
 
 
 /**
@@ -75,7 +80,32 @@ typedef struct {
 
 
 
-static site_config_type * site_config_alloc() {
+/**
+   This struct contains configuration which is specific to this
+   particular model/run. Much of the information is actually accessed
+   directly through the enkf_state object; but this struct is the
+   owner of the information, and responsible for allocating/freeing
+   it.
+*/
+
+typedef struct {
+  int                 ens_size; 
+  enkf_fs_type      * ensemble_dbase;
+
+  sched_file_type   * sched_file;
+  history_type      * history;
+  time_t              start_time;
+
+  path_fmt_type     * eclbase;
+  path_fmt_type     * result_path;
+  path_fmt_type     * runpath;
+  enkf_sched_type   * enkf_sched;
+} model_config_type;
+
+/*****************************************************************/
+
+
+static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc( sizeof * site_config , __func__);
 
   site_config->joblist      = NULL;
@@ -91,26 +121,107 @@ static void site_config_set_image_viewer(site_config_type * site_config , const 
 }
 
 
-/*
-void enkf_site_config_install_jobs(const enkf_site_config_type * config , ext_joblist_type * joblist) {
+static void site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
+  ext_joblist_add_job(site_config->joblist , job_name , install_file);
+}
+
+
+static void site_config_install_joblist(site_config_type * site_config , const config_type * config) {
   int  i;
-  stringlist_type *item_list = config_alloc_complete_stringlist(config->__config , "INSTALL_JOB");
+
+  site_config->joblist = ext_joblist_alloc();
+  stringlist_type *item_list = config_alloc_complete_stringlist(config , "INSTALL_JOB");
 
   for (i=0; i < stringlist_get_size(item_list); i+=2) 
-    ext_joblist_add_job(joblist , stringlist_iget(item_list , i) , stringlist_iget(item_list , i + 1));
+    site_config_install_job(site_config , stringlist_iget(item_list , i) , stringlist_iget(item_list , i + 1));
   
   stringlist_free(item_list);
 }
-*/
 
 
 static void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
   free(site_config->image_viewer);
+  free(site_config);
+}
+
+/**
+   These functions can be called repeatedly if you should want to
+   change driver characteristics run-time.
+*/
+static void site_config_install_LOCAL_job_queue(site_config_type * site_config , int ens_size , const char * job_script , int max_submit , int max_running) {
+  basic_queue_driver_type * driver = local_driver_alloc();
+  if (site_config->job_queue != NULL)
+    job_queue_free( site_config->job_queue );
+  
+  site_config->job_queue = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
 }
 
 
+
+static void site_config_install_RSH_job_queue(site_config_type * site_config , int ens_size , const char * job_script , int max_submit , int max_running , const char * rsh_command , const stringlist_type * rsh_host_list) {
+  basic_queue_driver_type * driver = rsh_driver_alloc(rsh_command , rsh_host_list);
+  if (site_config->job_queue != NULL)
+    job_queue_free( site_config->job_queue );
+  
+  site_config->job_queue = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
+}
+
+
+
+static void site_config_install_LSF_job_queue(site_config_type * site_config , int ens_size , const char * job_script , int max_submit , int max_running , const char * lsf_queue_name , const stringlist_type * lsf_resource_request) {
+  basic_queue_driver_type * driver = lsf_driver_alloc( lsf_queue_name , lsf_resource_request );
+  if (site_config->job_queue != NULL)
+    job_queue_free( site_config->job_queue );
+  
+  site_config->job_queue = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
+}
+
+
+
+static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , int ens_size) {
+  const char * queue_system = config_get(config , "QUEUE_SYSTEM");
+  const char * job_script   = config_get(config , "JOB_SCRIPT");
+  int   max_submit          = 3;
+  
+  if (strcmp(queue_system , "LSF") == 0) {
+    const char * lsf_queue_name             = config_get(config , "LSF_QUEUE");
+    stringlist_type * resource_request_list = config_alloc_complete_stringlist(config , "LSF_RESOURCES");
+    int max_running;
+    
+    if (!util_sscanf_int(config_get(config , "MAX_RUNNING_LSF") , &max_running))
+      util_abort("%s: internal error - \n",__func__);
+    
+    site_config_install_LSF_job_queue(site_config , ens_size , job_script , max_submit , max_running , lsf_queue_name , resource_request_list);
+    stringlist_free( resource_request_list );
+  } else if (strcmp(queue_system , "RSH") == 0) {
+    const char * rsh_command        = config_get(config , "RSH_COMMAND");
+    stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
+    int max_running;
+    
+    if (!util_sscanf_int(config_get(config , "MAX_RUNNING_RSH") , &max_running))
+      util_abort("%s: internal error - \n",__func__);
+    
+    site_config_install_RSH_job_queue(site_config , ens_size , job_script , max_submit , max_running , rsh_command , rsh_host_list);
+    stringlist_free( rsh_host_list );
+  } else if (strcmp(queue_system , "LOCAL") == 0) {
+    int max_running;
+    
+    if (!util_sscanf_int(config_get(config , "MAX_RUNNING_LOCAL") , &max_running))
+      util_abort("%s: internal error - \n",__func__);
+    site_config_install_LOCAL_job_queue(site_config , ens_size , job_script , max_submit , max_running);
+  }
+}
+
+
+site_config_type * site_config_alloc(const config_type * config , int ens_size) {
+  site_config_type * site_config = site_config_alloc_empty();
+  site_config_install_job_queue(site_config , config , ens_size);
+  site_config_install_joblist(site_config , config);
+  site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
+  return site_config;
+}
 
 
 /**
@@ -257,16 +368,17 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_
       
     }
     msg_free(msg , true);
-    
+
     msg  = msg_alloc("Adding key: ");
     msg_show(msg);
     for (ik = 0; ik < keys; ik++) {
       msg_update(msg , keylist[ik]);
       const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , keylist[ik]);
-      for (iens = 0; iens < ens_size; iens++)
+      for (iens = 0; iens < ens_size; iens++) 
         enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
-      }
+    }
     msg_free(msg , true);
+
 
     util_free_stringlist(keylist , keys);
   }
@@ -590,7 +702,7 @@ const sched_file_type * enkf_main_get_sched_file(const enkf_main_type * enkf_mai
 
 
 void enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
-  const char * cwd         = util_alloc_cwd();
+  char * cwd               = util_alloc_cwd();
   const char * site_config = getenv("ENKF_SITE_CONFIG");
   char       * model_config;
 
@@ -628,32 +740,53 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     config_item_type * item;
 
     /*****************************************************************/
+    /* config_add_item():                                            */
+    /*                                                               */
+    /*  1. boolean - required                                        */
+    /*  2. boolean - append?                                         */
+    /*****************************************************************/
+
+    /*****************************************************************/
     /** Keywords expected normally found in site_config */
     item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_item_set_selection_set( item , stringlist_alloc_argv_ref( (const char *[3]) {"LSF" , "LOCAL" , "RSH"} , 3) );
-    config_item_set_required_children_on_value( item , "LSF"   , stringlist_alloc_argv_ref( (const char *[3]) {"LSF_RESOURCES" , "LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 3));
-    config_item_set_required_children_on_value( item , "RSH"   , stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2));
-    config_item_set_required_children_on_value( item , "LOCAL" , stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1));
+    {
+      stringlist_type * selection  = stringlist_alloc_argv_ref( (const char *[3]) {"LSF" , "LOCAL" , "RSH"} , 3);
+      stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"LSF_RESOURCES" , "LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 3);
+      stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
+      stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
+
+      config_item_set_selection_set( item , selection);
+      config_item_set_required_children_on_value( item , "LSF"   , lsf_dep);
+      config_item_set_required_children_on_value( item , "RSH"   , rsh_dep);
+      config_item_set_required_children_on_value( item , "LOCAL" , local_dep);
+
+      stringlist_free(selection);
+      stringlist_free(lsf_dep);
+      stringlist_free(rsh_dep);
+      stringlist_free(local_dep);
+    }
     
                                                 
     /* These must be set IFF QUEUE_SYSTEM == LSF */
     config_add_item(config , "LSF_RESOURCES" , false , true);
-    config_add_item(config , "LSF_QUEUE"     , false , true);
-    item = config_add_item(config , "MAX_RUNNING_LSF" , false , true);
+    item = config_add_item(config , "LSF_QUEUE"     , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
+    item = config_add_item(config , "MAX_RUNNING_LSF" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
     /* These must be set IFF QUEUE_SYSTEM == RSH */
-    config_add_item(config , "RSH_HOST_LIST" , false , true);
-    item = config_add_item(config , "RSH_COMMAND" , false , true);
+    config_add_item(config , "RSH_HOST_LIST" , false , false);
+    item = config_add_item(config , "RSH_COMMAND" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-    item = config_add_item(config , "MAX_RUNNING_RSH" , false , true);
+    item = config_add_item(config , "MAX_RUNNING_RSH" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     
     
     /* These must be set IFF QUEUE_SYSTEM == LOCAL */
-    item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , true);
+    item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
 
@@ -747,10 +880,20 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     
     config_parse(config , site_config , "--" , false , false);
     config_parse(config , model_config , "--" , false , true);
+
+    {
+      int ens_size = strtol(config_get(config , "SIZE") , NULL , 10);
+      site_config_type * site_config = site_config_alloc(config , ens_size);
+      
+      site_config_free( site_config );
+    }
+
+    
     config_free(config);
   }
   free(model_config);
   chdir( cwd ); /* Noninvasive in test mode ... */
+  free( cwd );  
 }
     
     

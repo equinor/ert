@@ -540,7 +540,6 @@ void enkf_node_free(enkf_node_type *enkf_node) {
   free(enkf_node->node_key);
   serial_state_free(enkf_node->serial_state);
   free(enkf_node);
-  enkf_node = NULL;
 }
 
 
@@ -560,15 +559,13 @@ const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) {
 /*****************************************************************/
 
 
-
-
 /* Manual inheritance - .... */
 static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *config) {
   const char *node_key     = enkf_config_node_get_key_ref(config);
   enkf_impl_type impl_type = enkf_config_node_get_impl_type(config);
-  enkf_node_type * node  = util_malloc(sizeof * node , __func__);
-  node->config           = config;
-  node->node_key         = util_alloc_string_copy(node_key);
+  enkf_node_type * node    = util_malloc(sizeof * node , __func__);
+  node->config             = config;
+  node->node_key           = util_alloc_string_copy(node_key);
   node->data               = NULL;
   node->__memory_allocated = false;
   node->__modified         = true;
@@ -786,10 +783,7 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
 
 static enkf_node_type * enkf_node_alloc__(const enkf_config_node_type * config) {
   enkf_node_type * node    = enkf_node_alloc_empty(config);
-
-  node = enkf_node_alloc_empty(config);
   enkf_node_alloc_domain_object(node);
-  
   return node;
 }
 

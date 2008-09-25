@@ -266,6 +266,7 @@ static void enkf_sched_free_nodelist( enkf_sched_type * enkf_sched) {
 
 void enkf_sched_free( enkf_sched_type * enkf_sched) {
   enkf_sched_free_nodelist( enkf_sched );
+  free( enkf_sched );
 }
 
 
@@ -357,7 +358,7 @@ static void enkf_sched_add_node(enkf_sched_type * enkf_sched , enkf_sched_node_t
 
 
 static enkf_sched_type * enkf_sched_alloc_empty( const sched_file_type * sched_file , const ext_joblist_type * joblist , const stringlist_type * forward_model) {
-  enkf_sched_type * enkf_sched = util_malloc(sizeof * enkf_sched , __func__);
+  enkf_sched_type * enkf_sched     = util_malloc(sizeof * enkf_sched , __func__);
   enkf_sched->node_list 	   = NULL;
   enkf_sched->size      	   = 0;       
   enkf_sched->std_forward_model    = forward_model;
