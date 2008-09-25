@@ -68,8 +68,12 @@ int main(int argc, char **argv)
 
   // Try to access some rates..
   bool default_used = false;
-  double rate = history_get_group_var(history, last_restart_file , "FIELD", "GOPR", &default_used);
-  printf("-- Oil rate for field at last restart is %f\n", rate);
+  double orate = history_get_group_var(history, last_restart_file , "FIELD", "GOPR", &default_used);
+  double grate = history_get_group_var(history, last_restart_file , "FIELD", "GGPR", &default_used);
+  double wrate = history_get_group_var(history, last_restart_file , "FIELD", "GWPR", &default_used);
+  printf("-- Oil rate for field at last restart is   %9.3f\n", orate);
+  printf("-- Water rate for field at last restart is %9.3f\n", wrate);
+  printf("-- Gas rate for field at last restart is   %9.3f\n", grate);
 
 
 

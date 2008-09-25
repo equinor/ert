@@ -24,7 +24,7 @@ struct history_node_struct{
 
 
 struct history_struct{
-  list_type * nodes;
+  list_type   * nodes;
 };
 
 
@@ -141,6 +141,43 @@ static hash_type * well_hash_copyc(hash_type * well_hash_org)
   util_free_stringlist(well_list, num_wells);
 
   return well_hash_new;
+}
+
+
+
+static 
+
+
+
+static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary, const char ** well_list, int num_wells, int restart_nr)
+{
+  hash_type * well_hash = hash_alloc();
+
+  for(int well_nr = 0; well_nr < num_wells; well_nr++)
+  {
+    hash_type * well_obs = hash_alloc();
+
+    inline insert_obs(const char * well_name, const char * obs_name)
+    {
+      if(ecl_sum_has_well_var(summary, well_name, obs_name));
+      {
+        double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
+        hash_insert_double(well_obs, obs_name, obs);
+      }
+    }
+
+    insert_obs(well_list[well_nr], "WOPR");
+    insert_obs(well_list[well_nr], "WWPR");
+    insert_obs(well_list[well_nr], "WGPR");
+    insert_obs(well_list[well_nr], "WBHP");
+    insert_obs(well_list[well_nr], "WTHP");
+    insert_obs(well_list[well_nr], "WWCT");
+    insert_obs(well_list[well_nr], "WGOR");
+
+    hash_insert_hash_owned_ref(well_hash, well_list[well_nr], well_obs, hash_free__);
+  }
+
+  return well_hash;
 }
 
 
@@ -434,6 +471,7 @@ void history_free(history_type * history)
 history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 {
   history_type * history = history_alloc_empty();
+
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
 
   history_node_type * node = NULL;
@@ -459,6 +497,49 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
     history_add_node(history, node);
   }
   return history;
+}
+
+
+
+void history_realloc_well_hash_from_summary(history_type * history, const ecl_sum_type * summary)
+{
+  int first_restart, last_restart, num_restarts;
+  time_t current_time = ecl_sum_get_start_time(sum);
+  ecl_sum_get_report_size(summary, &first_restart, &last_restart);
+  num_restarts = history_get_num_restarts(history);
+
+  // We don't take the pain to support missing restarts.
+  if(first_restart > 0)
+    util_abort("%s: Summary object does not contain the first %d restarts. Aborting.\n", __func__, first_restart);
+
+  // We demand that the summary has been generated from the same schedule.
+  if(last_restart != num_restarts)
+    util_abort("%s: Schedule file had %i restarts and summary file had %i, non-compatible.", __func__, num_restarts, last_restart);
+
+  // OK, we are good to go.
+  int     num_wells = ecl_sum_get_Nwells(summary);
+  char ** well_list = ecl_sum_get_well_names_ref(summary);
+
+  // Special case for the first restart.
+  history_node_type * node = list_iget_node_value_ptr(history->nodes, 0);
+  node->node_start_time = current_time;
+  node->node_end_time   = current_time;
+  //hash_clear(node->well_hash);
+
+  for(int block_nr = 1; block_nr <= last_restart; block_nr++)
+  {
+    node = list_iget_node_value_ptr(history->nodes, 0);
+    node->node_start_time = current_time;
+    current_time = ecl_sum_get_sim_time(sum, block_nr);
+    node->node_end_time = current_time;
+    hash_clear(node->well_hash);
+
+
+  }
+
+
+
+  return history();
 }
 
 
@@ -500,6 +581,13 @@ history_type * history_fread_alloc(FILE * stream)
 
 
 
+int history_get_num_restarts(const history_type * history)
+{
+  return list_get_size(history->nodes);
+}
+
+
+
 double history_get_well_var(const history_type * history, int restart_num, const char * well, const char * var, bool * default_used)
 {
   history_node_type * node = history_iget_node_ref(history, restart_num);
@@ -509,6 +597,8 @@ double history_get_well_var(const history_type * history, int restart_num, const
 
 double history_get_group_var(const history_type * history, int restart_num, const char * group, const char * var, bool * default_used)
 {
+  // TODO
+  // Need to rewrite this to support both summary/schedule alloc'ed histories.
   history_node_type * node = history_iget_node_ref(history, restart_num);
 
   if(!gruptree_has_grup(node->gruptree, group))
