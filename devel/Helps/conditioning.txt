@@ -1,7 +1,0 @@
-
--------------------------------------------------
-Conditioning of the inital ensemble base on
-log data stored in the file "poroobs.$arch".
-The EnKF is used for the conditioning.
--------------------------------------------------
-

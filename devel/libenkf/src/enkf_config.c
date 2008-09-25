@@ -940,6 +940,7 @@ job_queue_type * enkf_config_alloc_job_queue(const enkf_config_type * config , c
   basic_queue_driver_type * queue_driver = NULL;
 
   const char * queue_system = enkf_site_config_get_value(site_config , "QUEUE_SYSTEM");
+  printf("queue_system: %s\n", queue_system);
   if (strcmp(queue_system , "LSF") == 0) {
     stringlist_type * resource_request_list = enkf_site_config_alloc_argv(site_config , "LSF_RESOURCES");
     const char * queue_name                 = enkf_site_config_get_value(site_config , "LSF_QUEUE");

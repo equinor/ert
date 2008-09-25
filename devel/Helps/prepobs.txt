@@ -1,9 +1,0 @@
-
--------------------------------------------------
-This generates a new prepobs.def file given the
-wells in the model and allows for editing of the 
-file.   The file is used to specify which variables
-are assimilated in an experiment.  In addition one
-also gives the measurement error standard dev.
--------------------------------------------------
-

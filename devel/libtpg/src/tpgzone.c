@@ -179,7 +179,7 @@ tpgzone_type * tpgzone_fscanf_alloc(char * config_file, bool endian_flip)
 
       
       ecl_grid_file = util_alloc_string_copy(config_get(config, "ECL_GRID_FILE"));
-      blocks    = tpgzone_alloc_blocks_from_grid(ecl_grid_file, i1, i2, j1, j2, k1, k2, &num_blocks, endian_flip);
+      blocks = tpgzone_alloc_blocks_from_grid(ecl_grid_file, i1, i2, j1, j2, k1, k2, &num_blocks, endian_flip);
 
       tpgzone->ecl_grid_file = ecl_grid_file;
       tpgzone->num_blocks    = num_blocks;

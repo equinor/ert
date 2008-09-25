@@ -17,7 +17,7 @@ void           history_free(history_type *);
 void           history_fwrite(const history_type *, FILE * stream);
 history_type * history_fread_alloc(FILE * stream);
 history_type * history_alloc_from_sched_file(const sched_file_type *);
-void           history_realloc_well_hash_from_summary(history_type *, const ecl_sum_type *);
+void           history_realloc_from_summary(history_type *, const ecl_sum_type *);
 
 
 

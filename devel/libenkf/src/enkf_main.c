@@ -68,7 +68,7 @@ struct config_tmp_files_struct {
 
 typedef struct {
   ext_joblist_type * joblist;       /* The list of external jobs which have been installed. 
-				       These jobs will be the parts of the forward model. */
+                                       These jobs will be the parts of the forward model. */
   job_queue_type   * job_queue;     /* The queue instance which will run the external jobs. */
   char             * image_viewer;  /* String pointing to an executable which can show images. */
 } site_config_type;
@@ -246,14 +246,14 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_
     for (iens = 0; iens < ens_size; iens++) {
       msg_update_int(msg , "%03d" , iens);
       enkf_main->ensemble[iens] = enkf_state_alloc(config   , 
-						   iens , 
-						   enkf_main->runlock_mode , enkf_main->lock_path , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
-						   joblist  , job_queue , 
-						   enkf_main->sched_file ,
-						   enkf_config_get_run_path_fmt(config),
-						   enkf_config_get_eclbase_fmt(config),
-						   meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
-						   enkf_main->obs);
+                                                   iens , 
+                                                   enkf_main->runlock_mode , enkf_main->lock_path , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
+                                                   joblist  , job_queue , 
+                                                   enkf_main->sched_file ,
+                                                   enkf_config_get_run_path_fmt(config),
+                                                   enkf_config_get_eclbase_fmt(config),
+                                                   meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
+                                                   enkf_main->obs);
       
     }
     msg_free(msg , true);
@@ -513,8 +513,8 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
     {
       thread_pool_type * submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) {
-	enkf_state_init_run(enkf_main->ensemble[iens] , iactive[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
-	thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
+        enkf_state_init_run(enkf_main->ensemble[iens] , iactive[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
+        thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(submit_threads);
@@ -523,7 +523,7 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
     {
       thread_pool_type * complete_threads = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
-	thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
+        thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
       
       thread_pool_join(complete_threads);        /* All jobs have completed and the results have been loaded back. */
       thread_pool_free(complete_threads);
@@ -538,11 +538,11 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
     bool complete_OK = true;
     for (iens = 0; iens < ens_size; iens++) {
       if (! enkf_state_run_OK(enkf_main->ensemble[iens])) {
-	if ( complete_OK ) {
-	  fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
-	  complete_OK = false;
-	}
-	fprintf(stderr,"** Error in: %s \n",enkf_state_get_run_path(enkf_main->ensemble[iens]));
+        if ( complete_OK ) {
+          fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
+          complete_OK = false;
+        }
+        fprintf(stderr,"** Error in: %s \n",enkf_state_get_run_path(enkf_main->ensemble[iens]));
       }
     }
     if (!complete_OK) 
@@ -559,10 +559,10 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
     
     if (X != NULL) {
       /* 
-	 The number of doubles we ask for, to get the number of bytes
-	 you must multiply by eight.
-	 
-	 1024 * 1024 * 128 => 1GB of memory
+         The number of doubles we ask for, to get the number of bytes
+         you must multiply by eight.
+         
+         1024 * 1024 * 128 => 1GB of memory
       */
       size_t double_size = 1024*1024*256; /* 2GB */
       
@@ -607,14 +607,14 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     util_alloc_file_components(_model_config , &path , &base , &ext);
     if (path != NULL) {
       if (chdir(path) != 0) 
-	util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
+        util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
 
       printf("Changing to directory ...................: %s \n",path);
       if (ext != NULL) {
-	model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
-	free(base);
+        model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
+        free(base);
       } else 
-	model_config = base;
+        model_config = base;
       free(ext);
       free(path);
     } else
@@ -636,7 +636,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     config_item_set_required_children_on_value( item , "RSH"   , stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2));
     config_item_set_required_children_on_value( item , "LOCAL" , stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1));
     
-						
+                                                
     /* These must be set IFF QUEUE_SYSTEM == LSF */
     config_add_item(config , "LSF_RESOURCES" , false , true);
     config_add_item(config , "LSF_QUEUE"     , false , true);

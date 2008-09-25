@@ -16,6 +16,9 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
 % 
 % The variables out_path and in_device are for saving to file, they are optional, see
 % the documentation of diag_plot() for details.
+   if(nargin == 0)
+      ens_plot -help
+   end
 
 
    if exist(prior_path,'dir') == 0
@@ -70,7 +73,7 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
 	   plot(prior_dates , history , 'ko' , 'MarkerFaceColor','k', 'MarkerSize', psize);
 
            hold on
-           p = plot(prior_dates     , prior(:,1)     , 'b' , 'LineWidth' , lw); 
+           p = plot(prior_dates     , prior(:,1)     , 'Color', [.8,.8,.8] , 'LineWidth' , lw); 
 	   set(p , 'userdata' , 'Prior: 1');
 	   plist = [plist , p];
 
@@ -78,19 +81,20 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
               p = plot(posterior_dates , posterior(:,1) , 'r' , 'LineWidth' , lw);
 	      set(p , 'userdata' , 'Posterior: 1');
 	      plist = [plist , p];
-              legend('History', 'Prior' , 'Posterior')
+             % legend_handle = legend('History', 'Prior' , 'Posterior','Box','off')
+             % set(legend_handle,'Box','off','Location','Best')
            else
-              legend('History', 'Prior')
+             % legend('History', 'Prior')
            end
 
 
 
            xlabel('Date');
            ylabel(sprintf('%s (%s)',var,unit));
-	   title(sprintf('%s',plot_title));
+	   title(sprintf('\\bf %s',plot_title));
 	      
            for i=1:prior_size,
-	      p = plot(prior_dates , prior(:,i) , 'b' , 'LineWidth' , lw) ; 
+	      p = plot(prior_dates , prior(:,i) , 'Color',[.8,.8,.8] , 'LineWidth' , lw) ; 
 	      set(p , 'userdata' , sprintf('Prior: %d',i));
 	      plist = [plist , p];
            end
@@ -109,7 +113,11 @@ function ens_plot(prior_path , posterior_path , well_list , var_list , out_path 
 	   set(gcf,'windowbuttonupfcn','h=findobj(gca,''type'',''text'');delete(h)')
 	   cb='pos=get(gca,''currentpoint'');h = text(pos(1,1),pos(1,2),get(gco,''userdata'')); set(h , ''FontSize'' , 12)';
 	   set(plist , 'buttondownfcn',cb);   
-           datetick('x',1);
+           ax = axis;
+           axis([prior_dates(1),prior_dates(end),ax(3),ax(4)])
+           datetick('x',28,'keeplimits');
+           save_string = lower(sprintf('plots/%s%s%s',well,'_',var));
+           laprint(fig_nr,save_string);
  
            if nargin >= 5,
                if out_path ~= 0,

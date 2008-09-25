@@ -1,8 +1,0 @@
-
--------------------------------------------------
-It is possible to recompute the statistics of the
-ensemble files.  This can be needed in cases where
-the m_ensstat routine is updated to produce additional
-diagnostics etc.
--------------------------------------------------
-

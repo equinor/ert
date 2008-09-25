@@ -281,7 +281,7 @@ static hash_type * wconhist_well_export_obs_hash(const wconhist_well_type * well
   if(!well->def[10])
     hash_insert_double(obs_hash, "WWGPR", well->wgrat);
 
-  // Water cut. Is this the correct definition?!
+  // Water cut.
   if(!well->def[3] && !well->def[4])
   {
     double wct;
