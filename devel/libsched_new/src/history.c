@@ -155,13 +155,21 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
   {
     hash_type * well_obs = hash_alloc();
 
-    // Cleaner than a macro.
+    // Cleaner than macros.
     void insert_obs(const char * well_name, const char * obs_name)
     {
       if(ecl_sum_has_well_var(summary, well_name, obs_name));
       {
         double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
         hash_insert_double(well_obs, obs_name, obs);
+      }
+    }
+    void insert_obs_use_h(const char * well_name, const char * obs_name, const char * obs_ins_name)
+    {
+      if(ecl_sum_has_well_var(summary, well_name, obs_name));
+      {
+        double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
+        hash_insert_double(well_obs, obs_ins_name, obs);
       }
     }
 
@@ -177,13 +185,13 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
     }
     else
     {
-      insert_obs(well_list[well_nr], "WOPRH");
-      insert_obs(well_list[well_nr], "WWPRH");
-      insert_obs(well_list[well_nr], "WGPRH");
-      insert_obs(well_list[well_nr], "WBHPH");
-      insert_obs(well_list[well_nr], "WTHPH");
-      insert_obs(well_list[well_nr], "WWCTH");
-      insert_obs(well_list[well_nr], "WGORH");
+      insert_obs_use_h(well_list[well_nr], "WOPRH", "WOPR");
+      insert_obs_use_h(well_list[well_nr], "WWPRH", "WWPR");
+      insert_obs_use_h(well_list[well_nr], "WGPRH", "WGPR");
+      insert_obs_use_h(well_list[well_nr], "WBHPH", "WBHP");
+      insert_obs_use_h(well_list[well_nr], "WTHPH", "WTHP");
+      insert_obs_use_h(well_list[well_nr], "WWCTH", "WWCT");
+      insert_obs_use_h(well_list[well_nr], "WGORH", "WGOR");
     }
 
     hash_insert_hash_owned_ref(well_hash, well_list[well_nr], well_obs, hash_free__);
