@@ -156,8 +156,3 @@ field_convert.x:	field_convert.o $(LIB)
 sched_test.x:	sched_test.o $(LIB)
 	gcc -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
 
-
-#################################################################
-# Seriously ugly stuff, remove when Sigurd's paper is done.
-mod_err.x: mod_err.o $(LIB)
-	gcc -$(MFLAG) $(LDFLAGS) mod_err.o -o mod_err.x  $(LIB_PATH) -L$(LIBSAMPLE_HOME)/lib  -lsample_$(MFLAG) -lfftw3_$(MFLAG) -limf $(LIB_LINK)
