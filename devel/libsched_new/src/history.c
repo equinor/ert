@@ -153,7 +153,8 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary, co
   {
     hash_type * well_obs = hash_alloc();
 
-    inline void insert_obs(const char * well_name, const char * obs_name)
+    // Cleaner than a macro.
+    void insert_obs(const char * well_name, const char * obs_name)
     {
       if(ecl_sum_has_well_var(summary, well_name, obs_name));
       {
@@ -361,6 +362,7 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
     {
       hash_type * well_hash = sched_kw_alloc_well_obs_hash(sched_kw);
       history_node_register_wells(node, well_hash);
+      well_hash_fprintf(node->well_hash);
       hash_free(well_hash);
       break;
     }
@@ -497,7 +499,7 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 
 
 
-void history_realloc_well_hash_from_summary(history_type * history, const ecl_sum_type * summary)
+void history_realloc_from_summary(history_type * history, const ecl_sum_type * summary)
 {
   int first_restart, last_restart, num_restarts;
   time_t current_time = ecl_sum_get_start_time(summary);
@@ -508,7 +510,7 @@ void history_realloc_well_hash_from_summary(history_type * history, const ecl_su
   if(first_restart > 0)
     util_abort("%s: Summary object does not contain the first %d restarts. Aborting.\n", __func__, first_restart);
 
-  // We demand that the summary has been generated from the same schedule.
+  // We demand that the summary has been generated from the schedule used to alloc history.
   if(last_restart != num_restarts)
     util_abort("%s: Schedule file had %i restarts and summary file had %i, non-compatible.", __func__, num_restarts, last_restart);
 

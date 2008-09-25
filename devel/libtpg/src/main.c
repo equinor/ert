@@ -13,14 +13,20 @@ int main(int argc, char ** argv)
 
   if(argc != 2)
   {
-    printf("Usage: tpgzone_test.x config_file\n");
+    printf("Usage: tpgzone.x config_file\n");
     return 0;
   }
 
-  util_alloc_file_components(argv[1], &path, &config_file, &ext);
-
-  if(path != NULL)
-    chdir(path);
+//  util_alloc_file_components(argv[1], &path, &config_file, &ext);
+//
+//  if(path != NULL)
+//  {
+//    /*
+//      If path is an absolute path, we are running in batch with the same config.
+//    */
+//    if(!util_is_abs_path(path))
+//      chdir(path);
+//  }
 
   config_file = util_strcat_realloc(config_file,".");
   config_file = util_strcat_realloc(config_file,ext);

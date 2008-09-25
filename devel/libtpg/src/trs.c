@@ -146,7 +146,7 @@ trs_type * trs_fscanf_alloc(const char * filename, const hash_type * facies_kw_h
 {
   /*
     We can't use a config_type struct when allocating the truncation scheme from file. The reason being that
-    the order in the file is of paramount importance.
+    the order in the file is crucial.
   */
   
   bool ateof;
@@ -209,7 +209,7 @@ trs_type * trs_fscanf_alloc(const char * filename, const hash_type * facies_kw_h
   fclose(stream); 
 
   if(num_alloced != num_nodes)
-    util_abort("%s: Something is wrong - number of alloc'd nodes does not equal the number of lines in file %s - aborting.\n",__func__,filename);
+    util_abort("%s: Internal error - number of alloc'd nodes does not equal the number of lines in file %s - aborting.\n",__func__,filename);
 
   return trs;
 };

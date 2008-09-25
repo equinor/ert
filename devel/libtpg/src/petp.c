@@ -61,7 +61,7 @@ static petp_item_type * petp_fscanf_alloc_item(const char * ecl_kw, const char *
 {
   int     num_facies = hash_get_size(     facies_kw_hash);
   /*
-    Ugly cast.
+    Ugly cast from const hash_type * to hash_type *..
   */
   char ** facies_kw  = hash_alloc_keylist((hash_type *) facies_kw_hash);
 
@@ -121,6 +121,7 @@ static void petp_item_fwrite(const petp_item_type * petp_item, const int * facie
 
   field_fload_auto(field, petp_item->ecl_filename, endian_flip);
 
+  printf("Writing %s..\n",petp_item->ecl_filename);
   {
     double * data = petp_item_apply_alloc(petp_item, facies, size);
     field_indexed_set(field, ecl_double_type, size, blocks, data);

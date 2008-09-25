@@ -1,8 +1,0 @@
-
--------------------------------------------------
-Computation of the initial ensemble statistics 
-has been seperated out to avoid redoing the
-computation many time in case one need to 
-iterate steps during initialization.
--------------------------------------------------
-
