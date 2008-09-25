@@ -145,10 +145,6 @@ static hash_type * well_hash_copyc(hash_type * well_hash_org)
 
 
 
-static 
-
-
-
 static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary, const char ** well_list, int num_wells, int restart_nr)
 {
   hash_type * well_hash = hash_alloc();
@@ -157,7 +153,7 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary, co
   {
     hash_type * well_obs = hash_alloc();
 
-    inline insert_obs(const char * well_name, const char * obs_name)
+    inline void insert_obs(const char * well_name, const char * obs_name)
     {
       if(ecl_sum_has_well_var(summary, well_name, obs_name));
       {
@@ -504,7 +500,7 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 void history_realloc_well_hash_from_summary(history_type * history, const ecl_sum_type * summary)
 {
   int first_restart, last_restart, num_restarts;
-  time_t current_time = ecl_sum_get_start_time(sum);
+  time_t current_time = ecl_sum_get_start_time(summary);
   ecl_sum_get_report_size(summary, &first_restart, &last_restart);
   num_restarts = history_get_num_restarts(history);
 
@@ -518,28 +514,24 @@ void history_realloc_well_hash_from_summary(history_type * history, const ecl_su
 
   // OK, we are good to go.
   int     num_wells = ecl_sum_get_Nwells(summary);
-  char ** well_list = ecl_sum_get_well_names_ref(summary);
+  const char ** well_list = ecl_sum_get_well_names_ref(summary);
 
   // Special case for the first restart.
   history_node_type * node = list_iget_node_value_ptr(history->nodes, 0);
   node->node_start_time = current_time;
   node->node_end_time   = current_time;
-  //hash_clear(node->well_hash);
+  hash_free(node->well_hash);
+  node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, 0);
 
   for(int block_nr = 1; block_nr <= last_restart; block_nr++)
   {
     node = list_iget_node_value_ptr(history->nodes, 0);
     node->node_start_time = current_time;
-    current_time = ecl_sum_get_sim_time(sum, block_nr);
+    current_time = ecl_sum_get_sim_time(summary, block_nr);
     node->node_end_time = current_time;
-    hash_clear(node->well_hash);
-
-
+    hash_free(node->well_hash);
+    node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, 0);
   }
-
-
-
-  return history();
 }
 
 
