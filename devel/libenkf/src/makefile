@@ -131,7 +131,7 @@ enkf_serialize.o           : enkf_serialize.h enkf_serialize.c
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x field_convert.x mod_err.x
+BIN_FILES             = enkf gen_test.x field_convert.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
