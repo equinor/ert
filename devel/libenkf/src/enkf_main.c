@@ -807,7 +807,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     /* These must be set IFF QUEUE_SYSTEM == RSH */
     config_add_item(config , "RSH_HOST_LIST" , false , false);
     item = config_add_item(config , "RSH_COMMAND" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
     item = config_add_item(config , "MAX_RUNNING_RSH" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     
