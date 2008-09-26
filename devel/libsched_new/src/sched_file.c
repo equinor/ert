@@ -343,7 +343,7 @@ sched_file_type * sched_file_fread_alloc(FILE * stream)
 
 
 
-int sched_file_get_restart_file_from_time_t(const sched_file_type * sched_file, time_t time)
+int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, time_t time)
 {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   for(int i=0; i<num_restart_files; i++)
