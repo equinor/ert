@@ -1,4 +1,4 @@
-		                    Configuration
+                        Configuration
                         =============
 
 
@@ -158,14 +158,14 @@ Table of contents
              vary (slightly) among the members, and then ** ALL HELL
              IS LOOSE **.
 
-	     The following approach to MINPV/MINPVV is suggested:
+             The following approach to MINPV/MINPVV is suggested:
 
-	     1. Run the base case model with the MINPV/MINPVV keywords
+             1. Run the base case model with the MINPV/MINPVV keywords
                 present and produce an EGRID file by using the
                 GRIDFILE keyword. (If you already have an EGRID file
                 you can use that one).
 
-	     2. Remove MINPV/MINPVV from the datafile.
+             2. Remove MINPV/MINPVV from the datafile.
 
              3. Run the following command:
  
@@ -176,8 +176,8 @@ Table of contents
                 OUTPUT_FILE. 
 
              4. In the grid section of the data file, replace
-	        include statements including grdecl/zcorn/actnum with
-	        the following statement:
+                include statements including grdecl/zcorn/actnum with
+                the following statement:
  
                 IMPORT 
                    '<OUTPUT_FILE>' /
@@ -297,8 +297,8 @@ Table of contents
       The following parameter types are (currently) supported (not all
       fully implemented):
 
-	MULTZ, MULTFLT, EQUIL, FIELD , WELL, PGBOX, GEN_KW, RELPERM,
-	HAVANA_FAULT, SUMMARY 
+        MULTZ, MULTFLT, EQUIL, FIELD , WELL, PGBOX, GEN_KW, RELPERM,
+        HAVANA_FAULT, SUMMARY 
       
       Here follows a brief description of each parameter type, and how
       the configuration information should be entered:
