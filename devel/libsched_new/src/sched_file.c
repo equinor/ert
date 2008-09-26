@@ -347,18 +347,18 @@ int sched_file_get_restart_file_from_time_t(const sched_file_type * sched_file, 
 {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   for(int i=0; i<num_restart_files; i++)
-  {
-    time_t block_end_time = sched_file_iget_block_end_time(sched_file, i);
-    if(block_end_time > time)
     {
-      util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
+      time_t block_end_time = sched_file_iget_block_end_time(sched_file, i);
+      if(block_end_time > time)
+	{
+	  util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
+	}
+      else if(block_end_time == time)
+	{
+	  return i; 
+	}
     }
-    else if(block_end_time == time)
-    {
-      return i; 
-    }
-  }
-
+  
   // If we are here, time did'nt correspond a restart file. Abort.
   util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
   return 0;

@@ -22,7 +22,7 @@ void           history_realloc_from_summary(history_type *, const ecl_sum_type *
 
 
 // Accessors.
-int    history_get_num_restarts(const history_type *);
-double history_get_well_var(const history_type * , int, const char *, const char *, bool *);
-double history_get_group_var(const history_type *, int, const char *, const char *, bool *);
+int    	       history_get_num_restarts(const history_type *);
+double 	       history_get_well_var(const history_type * , int, const char *, const char *, bool *);
+double 	       history_get_group_var(const history_type *, int, const char *, const char *, bool *);
 #endif
