@@ -247,7 +247,7 @@ int well_obs_parse_report_nr(const well_obs_type * well_obs , const char * token
   else {
     time_t date;
     if (util_sscanf_date(token , &date)) {
-      report = sched_file_get_restart_file_from_time_t(well_obs->sched_file , date );
+      report = sched_file_get_restart_nr_from_time_t(well_obs->sched_file , date );
       if (report == -1) abort();
     } else { 
       if (!util_sscanf_int(token , &report)) {

@@ -58,8 +58,8 @@ static void obs_node_set_active_mode(obs_node_type * obs_node , int first_report
 static void obs_node_set_active_mode_time_t(obs_node_type * obs_node , const sched_file_type * sched , time_t time1 , time_t time2 , bool active) {
   int report1, report2;
 
-  report1 = sched_file_get_restart_file_from_time_t(sched , time1); 
-  report2 = sched_file_get_restart_file_from_time_t(sched , time2); 
+  report1 = sched_file_get_restart_nr_from_time_t(sched , time1); 
+  report2 = sched_file_get_restart_nr_from_time_t(sched , time2); 
 
   /*
     if (status1 == -1)

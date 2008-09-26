@@ -25,7 +25,7 @@ static int enkf_obs_sscanf_report_step(const enkf_obs_type * enkf_obs , const ch
   if (!util_sscanf_int(meas_time_string , &report_step)) {
     time_t meas_time;
     if ( util_sscanf_date(meas_time_string , &meas_time)) 
-      report_step = sched_file_get_restart_file_from_time_t(enkf_obs->sched_file , meas_time);
+      report_step = sched_file_get_restart_nr_from_time_t(enkf_obs->sched_file , meas_time);
     else
       util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
   }
