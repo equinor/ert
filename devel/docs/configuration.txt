@@ -1,4 +1,4 @@
-			Starting EnKF
+		                    Configuration
                         =============
 
 
