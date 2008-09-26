@@ -1,0 +1,42 @@
+
+                        StatoilHydro EnKF Prototype
+
+------------------------------------------------------------------------------
+                               DISCLAIMER: 
+                  THIS IS RESEARCH CODE, USE AT OWN RISK.
+
+                                LICENSE:
+   THIS CODE IS STATOILHYDRO PROPERTY AND IS TO BE CONSIDERED *CONFIDENTIAL*. 
+------------------------------------------------------------------------------
+
+PURPOSE:
+---------------------
+
+This document shall:
+    - Give an overview of the svn codebase.
+    - Provide a list of software requirements for building the prototype.
+    - Provide a list of software requirements for using the prototype.
+    - Provide the reader with directions to relevant documentation for:
+        o Building the prototype.
+        o Installing the prototype. 
+        o Using a compiled version of the prototype.
+        o Understandig the 
+
+OVERVIEW OF THE CODEBASE:
+-------------------------
+
+
+BUILDING REQUIREMENTS:
+----------------------
+
+    - C and Fortran 90 compilers.
+    - Python interpreter.
+    - BLAS, LAPACK and Plplot libraries.
+
+RUNNING REQUIREMENTS:
+---------------------
+
+    - BLAS, LAPACK and Plplot libraries.
+    - Eclipse reservoir simulator.
+    - LSF cluster (optional, but *strongly* recommended).
+
