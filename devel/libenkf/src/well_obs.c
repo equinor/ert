@@ -213,7 +213,7 @@ static well_obs_type * __well_obs_alloc(const well_config_type * config , const 
   well_obs->sched_file       = sched_file;
   well_obs->config           = config;
   well_obs->var_hash         = hash_alloc(10);
-  well_obs->__num_reports    = history_get_num_reports(hist);
+  well_obs->__num_reports    = history_get_num_restarts(hist);
   return well_obs;
 }
 
@@ -247,7 +247,7 @@ int well_obs_parse_report_nr(const well_obs_type * well_obs , const char * token
   else {
     time_t date;
     if (util_sscanf_date(token , &date)) {
-      report = sched_file_time_t_to_report_step(well_obs->sched_file , date );
+      report = sched_file_get_restart_file_from_time_t(well_obs->sched_file , date );
       if (report == -1) abort();
     } else { 
       if (!util_sscanf_int(token , &report)) {
@@ -354,7 +354,7 @@ well_obs_type * well_obs_fscanf_alloc(const char * filename , const well_config_
 
 static double well_obs_get_observation__(const history_type * hist , int report_step , const char * well_name , const char * var, bool *active) {
   bool default_used;
-  double d = history_get2(hist , report_step , well_name , var , &default_used);
+  double d = history_get_well_var(hist , report_step , well_name , var , &default_used);
   if (default_used || (d == 0.0))
     *active = false;
   else

@@ -56,13 +56,13 @@ static void obs_node_set_active_mode(obs_node_type * obs_node , int first_report
 
 
 static void obs_node_set_active_mode_time_t(obs_node_type * obs_node , const sched_file_type * sched , time_t time1 , time_t time2 , bool active) {
-  int status1 , status2;
-  int report1 , report2;
+  int report1, report2;
 
-  report1 = sched_file_time_t_to_report_step__(sched , time1 , &status1); 
-  report2 = sched_file_time_t_to_report_step__(sched , time2 , &status2); 
+  report1 = sched_file_get_restart_file_from_time_t(sched , time1); 
+  report2 = sched_file_get_restart_file_from_time_t(sched , time2); 
 
-  if (status1 == -1)
+  /*
+    if (status1 == -1)
     report1 = 0;
   else if (status1 == 1) {
     int year , mday , mon;
@@ -79,6 +79,7 @@ static void obs_node_set_active_mode_time_t(obs_node_type * obs_node , const sch
     fprintf(stderr,"%s: *Warning* end time: %02d/%02d/%4d is before simulation start - aborting \n",__func__ , mday , mon , year);
     abort();
   }
+  */
   
   obs_node_set_active_mode(obs_node , report1 , report2 , active);
 }

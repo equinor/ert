@@ -363,7 +363,7 @@ static enkf_sched_type * enkf_sched_alloc_empty( const sched_file_type * sched_f
   enkf_sched->size      	   = 0;       
   enkf_sched->std_forward_model    = forward_model;
   enkf_sched->joblist              = joblist;
-  enkf_sched->schedule_num_reports = sched_file_count_report_steps( sched_file );
+  enkf_sched->schedule_num_reports = sched_file_get_num_restart_files( sched_file );
   enkf_sched->last_report          = 0;
   return enkf_sched;
   

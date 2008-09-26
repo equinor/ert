@@ -41,6 +41,7 @@
 #include <lsf_driver.h>
 #include <history.h>
 #include <enkf_sched.h>
+#include <set.h>
 
 
 /**
@@ -81,6 +82,25 @@ typedef struct {
 
 
 /**
+   Eclipse info
+*/
+
+typedef struct {
+  bool                endian_swap;            /* Should an endian swap be performed - (in general: YES) */
+  bool                fmt_file;
+  bool                unified;
+
+  path_fmt_type     * eclbase;
+  ecl_grid_type     * grid;
+  sched_file_type   * sched_file;
+  bool                include_all_static_kw;  /* If true all static keywords are stored.*/ 
+  set_type          * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
+} eclipse_config_type;
+
+
+
+
+/**
    This struct contains configuration which is specific to this
    particular model/run. Much of the information is actually accessed
    directly through the enkf_state object; but this struct is the
@@ -92,15 +112,44 @@ typedef struct {
   int                 ens_size; 
   enkf_fs_type      * ensemble_dbase;
 
-  sched_file_type   * sched_file;
+  
   history_type      * history;
   time_t              start_time;
 
-  path_fmt_type     * eclbase;
+  
   path_fmt_type     * result_path;
   path_fmt_type     * runpath;
   enkf_sched_type   * enkf_sched;
 } model_config_type;
+
+
+
+/**
+   This object should contain **everything** needed to run a enkf
+   simulation. A way to wrap up all available information/state and
+   pass it around.
+*/
+
+#define ENKF_MAIN_ID 8301
+
+struct enkf_main_struct {
+  int                 __id;       /* Used for type-checking run-time casts. */
+  enkf_config_type   *config;
+  job_queue_type     *job_queue;
+  ecl_grid_type      *grid;
+  enkf_obs_type      *obs;
+  meas_matrix_type   *meas_matrix;
+  obs_data_type      *obs_data;      /* Should ideally contain the hist object. */
+  enkf_state_type   **ensemble;
+  sched_file_type    *sched_file;
+  history_type       *hist;
+  enkf_fs_type       *fs;
+  run_mode_type       run_mode;      /* Is this an enkf assimilation, or an ensemble experiment, or .. */
+
+  lock_mode_type      runlock_mode;  /* How/if should the runpath directories be locked */
+  char               *lock_path;     /* Path containg lock files for the forward run. */ 
+}; 
+
 
 /*****************************************************************/
 
@@ -224,32 +273,6 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size) 
 }
 
 
-/**
-   This object should contain **everything** needed to run a enkf
-   simulation. A way to wrap up all available information/state and
-   pass it around.
-*/
-
-#define ENKF_MAIN_ID 8301
-
-
-struct enkf_main_struct {
-  int                 __id;       /* Used for type-checking run-time casts. */
-  enkf_config_type   *config;
-  job_queue_type     *job_queue;
-  ecl_grid_type      *grid;
-  enkf_obs_type      *obs;
-  meas_matrix_type   *meas_matrix;
-  obs_data_type      *obs_data; /* Should ideally contain the hist object. */
-  enkf_state_type   **ensemble;
-  sched_file_type    *sched_file;
-  history_type       *hist;
-  enkf_fs_type       *fs;
-  run_mode_type       run_mode;      /* Is this an enkf assimilation, or an ensemble experiment, or .. */
-
-  lock_mode_type      runlock_mode;  /* How/if should the runpath directories be locked */
-  char               *lock_path;     /* Path containg lock files for the forward run. */ 
-}; 
 
 
 /*****************************************************************/
@@ -331,14 +354,18 @@ void enkf_main_interactive_set_runpath__(void * __enkf_main) {
 
 enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_mode , const char * lock_path , enkf_fs_type *fs , job_queue_type * job_queue , ext_joblist_type * joblist) {
   int ens_size               = enkf_config_get_ens_size(config);
+
   enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
   enkf_main->__id            = ENKF_MAIN_ID;
   enkf_main->config          = config;
   enkf_main->sched_file      = sched_file_alloc(enkf_config_get_start_date(config));
 
-  sched_file_parse(enkf_main->sched_file , enkf_config_get_schedule_src_file(config));
+  {
+    time_t start_date = -1;
+    sched_file_parse(enkf_main->sched_file , start_date , enkf_config_get_schedule_src_file(config));
+  }
 
-  enkf_main->hist           = history_alloc_from_schedule(enkf_main->sched_file);
+  enkf_main->hist           = history_alloc_from_sched_file(enkf_main->sched_file);
   enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->config , enkf_main->sched_file , enkf_main->hist);
   enkf_main->obs_data       = obs_data_alloc();
   enkf_main->fs             = fs;

@@ -25,7 +25,7 @@ static int enkf_obs_sscanf_report_step(const enkf_obs_type * enkf_obs , const ch
   if (!util_sscanf_int(meas_time_string , &report_step)) {
     time_t meas_time;
     if ( util_sscanf_date(meas_time_string , &meas_time)) 
-      report_step = sched_file_time_t_to_report_step(enkf_obs->sched_file , meas_time);
+      report_step = sched_file_get_restart_file_from_time_t(enkf_obs->sched_file , meas_time);
     else
       util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
   }
@@ -39,7 +39,7 @@ static time_t enkf_obs_sscanf_obs_time(const enkf_obs_type * enkf_obs , const ch
   if (!util_sscanf_date(meas_time_string , &meas_time)) {
     int report_step;
     if (!util_sscanf_int(meas_time_string , &report_step)) 
-      meas_time = sched_file_report_step_to_time_t(enkf_obs->sched_file , report_step);
+      meas_time = sched_file_iget_block_end_time(enkf_obs->sched_file , report_step); /* _end_time / _start_time ?? */
     else
       util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
   }
@@ -56,7 +56,7 @@ static enkf_obs_type * enkf_obs_alloc(const sched_file_type * sched_file , const
   
   enkf_obs->sched_file     = sched_file;
   enkf_obs->hist     	   = hist;
-  enkf_obs->num_reports    = sched_file_count_report_steps(sched_file); /*history_get_num_reports(enkf_obs->hist);*/
+  enkf_obs->num_reports    = sched_file_get_num_restart_files(sched_file); /*history_get_num_reports(enkf_obs->hist);*/
   return enkf_obs;
 }
 
