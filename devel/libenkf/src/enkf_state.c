@@ -649,6 +649,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
       free(kw);
       block_kw = restart_kw_list_get_next(block_kw_list);
     }
+    enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , my_config->iens , enkf_state->restart_kw_list );
   }
   
   /******************************************************************/
@@ -960,7 +961,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     {
       char * schedule_file = util_alloc_full_path(run_info->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
-      sched_file_fprintf(shared_info->sched_file , run_info->step2 , -1 , -1 , schedule_file);
+      sched_file_fprintf_i(shared_info->sched_file , run_info->step2 , schedule_file);
       free(schedule_file);
     }
     
