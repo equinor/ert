@@ -43,7 +43,7 @@ OVERVIEW OF THE CODEBASE:
     libjob_queue |  Library for handling external jobs via LSF, rsh etc.
     libplot      |  Wrapper for the plplot library, facilitates easy plotting.
     librms       |  Library for reading and writing RMS files.
-    libsample    |  Library for sampling of Gaussian random fields with FFT.
+    libsample    |  Library for sampling of Gaussian random fields with FFTW.
     libsched     |  Library for parsing schedule files and summary data.
     libutil      |  Support library.
     old          |  Outdated code and documentation.
@@ -70,3 +70,15 @@ RUNNING REQUIREMENTS:
 
 DOCUMENTATION:
 -------------
+
+  1. Building the prototype:
+        - See docs/building.txt
+  
+  2. Installing the prototype:
+        - No documentation is currently available.
+
+  3. Using the prototype:
+        - See docs/configuration.txt
+
+  4. Information for developers:
+       - See docs/coding_style.txt
