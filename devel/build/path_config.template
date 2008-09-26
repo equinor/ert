@@ -31,7 +31,7 @@ LIBPLOT_HOME      = /h/a152128/EnKF/devel/EnKF/libplot
 EXTERNAL_LIB_PATH = /h/a152128/lib/linux
 EXTERNAL_INC_PATH = /h/a152128/include
 ENKF_BIN_PATH     = /d/proj/bg/enkf/bin
-SITE_CONFIG_FILE  = "/h/a152128/EnKF/devel/EnKF/libenkf/src/site-config"
+SITE_CONFIG_FILE  = /d/proj/bg/enkf/Config/site-config
 USE_LSF_LIBRARY   = TRUE
 SDP_ROOT          = /project/res
 
