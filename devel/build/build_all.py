@@ -24,9 +24,9 @@ def load_path_list(global_config):
 (path_list , path_dict) = load_path_list("global_config")
 
 for path in path_list:
-    print path
     cwd = os.getcwd()
     if os.path.exists("%s/src/makefile" % path):
+        print path
         os.chdir("%s/src" % path)
         os.system("make -s clean")
         nCPU = 4
@@ -34,8 +34,7 @@ for path in path_list:
             nCPU = 1
         elif path.find("analysis") != -1:
             nCPU = 1
-        print "make -s -j %d MFLAG=m64" % (nCPU)
-        os.system("make -s -j %d MFLAG=m64" % (nCPU)) 
+        os.system("make -s -j %d" % (nCPU)) 
         os.chdir(cwd)
 
 
