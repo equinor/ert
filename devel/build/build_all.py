@@ -4,10 +4,10 @@ import glob
 import sys
 import re
 
-def load_path_list(path_config):
+def load_path_list(global_config):
     path_list = []
     path_dict = {}
-    fileH = open(path_config)
+    fileH = open(global_config)
     for line in fileH.readlines():
         comment_start = line.find("#")
         if comment_start > -1:
@@ -21,7 +21,7 @@ def load_path_list(path_config):
 
 
 
-(path_list , path_dict) = load_path_list("path_config")
+(path_list , path_dict) = load_path_list("global_config")
 
 for path in path_list:
     print path

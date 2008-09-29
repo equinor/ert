@@ -43,7 +43,7 @@ OVERVIEW OF THE CODEBASE:
     libjob_queue |  Library for handling external jobs via LSF, rsh etc.
     libplot      |  Wrapper for the plplot library, facilitates easy plotting.
     librms       |  Library for reading and writing RMS files.
-    libsample    |  Library for sampling of Gaussian random fields with FFTW.
+    libsample    |  Library for sampling GRFs with FFT. Optional.
     libsched     |  Library for parsing schedule files and summary data.
     libutil      |  Support library.
     old          |  Outdated code and documentation.
@@ -57,12 +57,14 @@ BUILDING REQUIREMENTS:
     - C and Fortran 90 compilers.
     - Python interpreter (optional, but recommended.).
     - BLAS, LAPACK and Plplot libraries (for linking).
+    - FFTW library (optional, only required for libsample).
 
 
 RUNNING REQUIREMENTS:
 ---------------------
 
     - BLAS, LAPACK and Plplot libraries.
+    - FFTW library (optional, only required for libsample).
     - Eclipse reservoir simulator and reservoir model.
     - Python interpreter (optional, but required if not LSF libraries are used).
     - LSF cluster access (optional, but *strongly* recommended).

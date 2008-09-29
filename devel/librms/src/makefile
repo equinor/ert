@@ -1,4 +1,4 @@
-include path_config
+include global_config
 MFLAG = m64
 CC = gcc
 AR = ar
