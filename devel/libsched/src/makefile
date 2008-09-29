@@ -1,18 +1,8 @@
 include global_config
-MFLAG = m64
-CC = gcc
-AR = ar
-
-
-
 #################################################################
 COMPILE_INCLUDE  = -I$(LIBSCHED_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include
 INSTALL_INC_PATH =   $(LIBSCHED_HOME)/include
 INSTALL_LIB_PATH =   $(LIBSCHED_HOME)/lib
-#################################################################
-CFLAGS  = -O2 -$(MFLAG) -std=gnu99 -g -Wall 
-FFLAGS  = -fpe0 -traceback -warn unused -CB -u -g -real_size 64 -assume byterecl -assume nobuffered_io -convert big_endian
-ARFLAGS = -csr
 #################################################################
 OBJECTS   = sched_kw.o sched_file.o  sched_kw_untyped.o sched_kw_gruptree.o sched_kw_tstep.o sched_kw_dates.o sched_kw_wconhist.o sched_kw_wconinjh.o sched_kw_welspecs.o sched_util.o gruptree.o history.o
 INC_FILES = sched_file.h sched_kw.h sched_kw_untyped.h sched_kw_gruptree.h sched_kw_tstep.h sched_kw_dates.h sched_kw_wconhist.h sched_kw_wconinjh.h sched_kw_welspecs.h sched_util.h gruptree.h history.h

@@ -1,15 +1,8 @@
 include global_config
-MFLAG = m64
-CC = gcc
-AR = ar
 #################################################################
 COMPILE_INCLUDE   = -I$(LIBRMS_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include
 INSTALL_INC_PATH  = $(LIBRMS_HOME)/include
 INSTALL_LIB_PATH  = $(LIBRMS_HOME)/lib
-#################################################################
-CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall 
-LDFLAGS = 
-ARFLAGS = -csr
 #################################################################
 SDP_ROOT      = /project/res/$(shell /private/joaho/bin/res_target.py)
 OBJECTS       = rms_interC.o rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagkey.o rms_stats.o

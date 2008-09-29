@@ -1,17 +1,9 @@
 include global_config
-#m32 -> #define i386 1    m64 -> __x86_64 1
-MFLAG = m64
-CC = gcc
-AR = ar
 #################################################################
 COMPILE_INCLUDE  = -I$(LIBJOB_QUEUE_HOME)/src -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBECL_HOME)/include -I$(EXTERNAL_INC_PATH)
 INSTALL_INC_PATH =  $(LIBJOB_QUEUE_HOME)/include
 INSTALL_LIB_PATH =  $(LIBJOB_QUEUE_HOME)/lib
 SDP_ROOT         = /project/res/$(shell /private/joaho/bin/res_target.py)
-#################################################################
-CFLAGS  = -O2 -$(MFLAG)  -std=gnu99 -g -Wall -fPIC
-LDFLAGS = 
-ARFLAGS = -csr
 #################################################################
 OBJECTS   = job_queue.o basic_queue_driver.o lsf_driver.o local_driver.o rsh_driver.o ext_job.o ext_joblist.o
 INC_FILES = job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h

@@ -1,15 +1,9 @@
 include global_config
-MFLAG = m64
-CC = gcc
-AR = ar
 SDP_ROOT          = /project/res/$(shell /private/joaho/bin/res_target.py)
 #################################################################
 COMPILE_INCLUDE   = -I$(LIBHASH_HOME)/src
 INSTALL_INC_PATH  = $(LIBHASH_HOME)/include
 INSTALL_LIB_PATH  = $(LIBHASH_HOME)/lib
-#################################################################
-CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall -fPIC
-ARFLAGS = -csr
 #################################################################
 OBJECTS       = set.o hash_node.o hash_sll.o hash.o list_node.o list.o node_data.o node_ctype.o
 INC_FILES     = set.h hash.h hash_node.h hash_sll.h list_node.h list.h node_data.h node_ctype.h
