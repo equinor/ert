@@ -518,6 +518,10 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
   This needs to be rewamped or renamed.
   
   The name "get" is misleading in a function that uses a linear lookup in a potentially very large table.
+
+  The "fix" is probably to have an index_map_inv in the ecl_grid type which is alloc'ed simultaneously
+  as the the index map. A global/active_index can then be translated into a "natural ordering" index, from
+  which an ijk triplet quickly can be computed.
 */
 void field_config_get_ijk(const field_config_type * config , int global_index, int *_i , int *_j , int *_k) {
   int i,j,k;
