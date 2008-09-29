@@ -5,8 +5,6 @@
 #EXTERNAL_LIB_PATH is a path where (links to) external librarires like
 #blas and particular compiler libraries+++ can be found.
 
-
-
 # Source
 LIBHASH_HOME  	  = /h/jgv/code/enkf/libhash
 LIBUTIL_HOME  	  = /h/jgv/code/enkf/libutil
@@ -33,3 +31,14 @@ ENKF_BIN_PATH     = /d/proj/bg/enkf/bin
 # Site configuration file
 SITE_CONFIG_FILE  = /d/proj/bg/enkf/Config/site-config
 
+# Compilers and linkers
+AR   = ar
+CC   = gcc
+CF90 = gfortran
+
+# Compiler options
+MFLAG   = m64
+FFLAGS  = -$(MFLAG) -c -g -fimplicit-none -fdefault-real-8 -Wall -Wsurprising -fPIC
+CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall -fPIC
+ARFLAGS = -csr
+LDFLAGS = -rdynamic
