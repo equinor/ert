@@ -9,14 +9,13 @@
 LIBHASH_HOME  	  = /h/jgv/code/enkf/libhash
 LIBUTIL_HOME  	  = /h/jgv/code/enkf/libutil
 LIBECL_HOME   	  = /h/jgv/code/enkf/libecl
-LIBECL_QUEUE_HOME = /h/jgv/code/enkf/libecl_queue
 LIBJOB_QUEUE_HOME = /h/jgv/code/enkf/libjob_queue
 LIBSCHED_HOME 	  = /h/jgv/code/enkf/libsched
 LIBRMS_HOME   	  = /h/jgv/code/enkf/librms
 LIBANALYSIS_HOME  = /h/jgv/code/enkf/libanalysis
 LIBSAMPLE_HOME    = /h/jgv/code/enkf/libsample
-LIBENKF_HOME  	  = /h/jgv/code/enkf/libenkf
 LIBPLOT_HOME      = /h/jgv/code/enkf/libplot
+LIBENKF_HOME  	  = /h/jgv/code/enkf/libenkf
 
 # External libraries
 EXTERNAL_LIB_PATH = /h/a152128/lib/linux
