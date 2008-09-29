@@ -512,6 +512,13 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
 
 
 
+/*
+  TODO
+
+  This needs to be rewamped or renamed.
+  
+  The name "get" is misleading in a function that uses a linear lookup in a potentially very large table.
+*/
 void field_config_get_ijk(const field_config_type * config , int global_index, int *_i , int *_j , int *_k) {
   int i,j,k;
   if (global_index >= config->data_size || global_index < 0) {
