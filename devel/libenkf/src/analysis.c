@@ -57,6 +57,10 @@ void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs
 /**
    The actual routine m_enkfx5_mp_enkfx5_() is written in fortran, and
    found in the library libanalysis.
+
+   TODO
+
+   Should this be renamed? This name is tightly tied to the ifort compilator.
 */
 void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const double * S , const double * D , const double * innov , const int * nrens , 
 			 const int * nrobs , const int * verbose , const double * truncation , const int * mode , const int * update_randrot , const int * istep , const char * xpath);
@@ -237,7 +241,7 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
       printf("\n");
     }
     
-    m_enkfx5_mp_enkfx5_(X , 
+    __m_enkfx5__enkfx5(X , 
 			R , 
 			E , 
 			S , 
