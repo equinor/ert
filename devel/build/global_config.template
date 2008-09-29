@@ -1,0 +1,35 @@
+#This file is an example of a global_config file.
+#
+#You should make your own personal copy of this file, and it should set
+#correct values for the variables listed below. The final variable,
+#EXTERNAL_LIB_PATH is a path where (links to) external librarires like
+#blas and particular compiler libraries+++ can be found.
+
+
+
+# Source
+LIBHASH_HOME  	  = /h/jgv/code/enkf/libhash
+LIBUTIL_HOME  	  = /h/jgv/code/enkf/libutil
+LIBECL_HOME   	  = /h/jgv/code/enkf/libecl
+LIBECL_QUEUE_HOME = /h/jgv/code/enkf/libecl_queue
+LIBJOB_QUEUE_HOME = /h/jgv/code/enkf/libjob_queue
+LIBSCHED_HOME 	  = /h/jgv/code/enkf/libsched
+LIBRMS_HOME   	  = /h/jgv/code/enkf/librms
+LIBSAMPLE_HOME    = /h/jgv/code/enkf/libsample
+LIBANALYSIS_HOME  = /h/jgv/code/enkf/libanalysis
+LIBKERNEL_HOME    = /h/jgv/code/enkf/libkernel
+LIBBFGS_HOME      = /h/jgv/code/enkf/libbfgs
+LIBENKF_HOME  	  = /h/jgv/code/enkf/libenkf
+LIBPLOT_HOME      = /h/jgv/code/enkf/libplot
+LIBTPG_HOME       = /h/jgv/code/enkf/apps/libtpg
+
+# External libraries
+EXTERNAL_LIB_PATH = /h/a152128/lib/linux
+EXTERNAL_INC_PATH = /h/a152128/include
+
+# Binary install path
+ENKF_BIN_PATH     = /d/proj/bg/enkf/bin
+
+# Site configuration file
+SITE_CONFIG_FILE  = /d/proj/bg/enkf/Config/site-config
+
