@@ -1,4 +1,4 @@
-include path_config
+include global_config
 #m32 -> #define i386 1    m64 -> __x86_64 1
 MFLAG = m64
 CC = gcc
