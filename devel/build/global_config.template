@@ -17,7 +17,6 @@ LIBANALYSIS_HOME  = /h/jgv/code/enkf/libanalysis
 LIBSAMPLE_HOME    = /h/jgv/code/enkf/libsample
 LIBENKF_HOME  	  = /h/jgv/code/enkf/libenkf
 LIBPLOT_HOME      = /h/jgv/code/enkf/libplot
-LIBTPG_HOME       = /h/jgv/code/enkf/apps/libtpg
 
 # External libraries
 EXTERNAL_LIB_PATH = /h/a152128/lib/linux
