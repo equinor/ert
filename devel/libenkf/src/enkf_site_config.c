@@ -347,7 +347,7 @@ enkf_site_config_type * enkf_site_config_bootstrap(const char * _config_file) {
       item = config_add_item( site->__config , "IMAGE_VIEWER"      , false , false);
       config_item_set_argc_minmax(item , 1 , 1 , NULL);
       
-      config_parse(site->__config , config_file , "--" , false ,true);
+      config_parse(site->__config , config_file , "--" , NULL , false ,true);
     }
     return site;
   } else {

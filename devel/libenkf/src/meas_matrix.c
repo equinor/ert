@@ -1,6 +1,6 @@
 /**
-See the file README.obs for ducumentation of the varios datatypes
-involved with observations/measurement/+++.
+   See the file README.obs for ducumentation of the varios datatypes
+   involved with observations/measurement/+++.
 */
 
 #include <math.h>
@@ -62,8 +62,8 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type * matrix , int
   if (iens >= 0 && iens < matrix->ens_size) 
     return matrix->meas_vectors[iens];
   else {
-    fprintf(stderr,"%s - aborting \n",__func__);
-    abort();
+    util_abort("%s - aborting \n",__func__);
+    return NULL; /* Compiler shut up */
   }
 }
 
@@ -119,7 +119,7 @@ void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS ,
 
   for (iobs = 0; iobs < nrobs; iobs++) {
     S1[iobs] *= 1.0 / matrix->ens_size;
-    S2[iobs]  = sqrt(S2[iobs] / matrix->ens_size - S1[iobs] * S1[iobs]);
+    S2[iobs]  = sqrt(util_double_max(0 , S2[iobs] / matrix->ens_size - S1[iobs] * S1[iobs]));
   }
   
   *_meanS = S1;

@@ -108,7 +108,7 @@ plain_driver_common.o    : plain_driver_common.c plain_driver_common.h
 fs_index.i            	 : fs_index.h fs_index.c
 enkf_config.o         	 : enkf_config.c enkf_config.h enkf_site_config.o enkf_site_config.o
 enkf_site_config.o    	 : enkf_site_config.h enkf_site_config.c
-enkf_main.o           	 : enkf_main.c enkf_main.h enkf_state.o enkf_config.o enkf_site_config.o enkf_obs.o 
+enkf_main.o           	 : enkf_main.c enkf_main.h enkf_state.o enkf_config.o enkf_site_config.o enkf_obs.o enkf_defaults.h
 analysis.o            	 : analysis.c meas_matrix.o obs_data.o
 summary_obs.o         	 : summary_obs.h summary_obs.c enkf_util.o
 summary.o             	 : summary.c summary.h

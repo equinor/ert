@@ -43,6 +43,8 @@
 #include <enkf_sched.h>
 #include <set.h>
 
+#include "enkf_defaults.h"
+
 
 /**
    This structure contains files which are set during the
@@ -418,7 +420,7 @@ enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_
    <INIT> tag in the data file will be replaced by an 
 
 INCLDUE
-   INIT_FILE
+   EQUIL_INIT_FILE
 
    statement. When considering the possibility of estimating EQUIL this
    require a real understanding of the treatment of paths:
@@ -443,7 +445,7 @@ INCLDUE
   {
     const char * init_file   = enkf_config_get_init_file(config);
     if (init_file == NULL) 
-      util_abort("%s: INIT_FILE is not set - must either use INIT_FILE in config_file or EQUIL keyword.",__func__);
+      util_abort("%s: EQUIL_INIT_FILE is not set - must either use EQUIL_INIT_FILE in config_file or EQUIL keyword.",__func__);
     
     if (init_file != NULL) 
     {
@@ -732,7 +734,9 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
   char * cwd               = util_alloc_cwd();
   const char * site_config = getenv("ENKF_SITE_CONFIG");
   char       * model_config;
-
+  
+  printf("-----------------------------------------------------------------\n");
+  printf("Test code: start \n");
   if (site_config == NULL)
     site_config = _site_config;
   
@@ -905,8 +909,8 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     
 
     
-    config_parse(config , site_config , "--" , false , false);
-    config_parse(config , model_config , "--" , false , true);
+    config_parse(config , site_config  , "--" , "INCLUDE" , false , false);
+    config_parse(config , model_config , "--" , "INCLUDE" , false , true);
 
     {
       int ens_size = strtol(config_get(config , "SIZE") , NULL , 10);
@@ -914,13 +918,16 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
       
       site_config_free( site_config );
     }
-
     
+    printf("Skal kalle config_free .. \n");
     config_free(config);
+    printf("Config_free() complete \n");
   }
   free(model_config);
   chdir( cwd ); /* Noninvasive in test mode ... */
   free( cwd );  
+  printf("Test code: end \n");
+  printf("-----------------------------------------------------------------\n");
 }
     
     

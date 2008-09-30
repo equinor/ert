@@ -333,7 +333,7 @@ void gen_data_config_set_obs_size(gen_data_config_type * config, int obs_size) {
 gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
   gen_data_config_type * gen_config = gen_data_config_alloc_empty( ecl_restart );
   config_type * config = config_alloc( );
-  config_parse(config , config_file , "--" , true , true);
+  config_parse(config , config_file , "--" , NULL , true , true);
   {
     int    iarg;
     int    num_active;

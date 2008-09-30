@@ -161,7 +161,7 @@ static void enkf_config_set_init_file(enkf_config_type * config , const char * i
     free(config->init_file);
 
   if (! util_file_exists(init_file)) 
-    util_abort("%s: Sorry INIT_FILE points to:%s which can not be found. \n",__func__ , init_file);
+    util_abort("%s: Sorry EQUIL_INIT_FILE points to:%s which can not be found. \n",__func__ , init_file);
 
   config->init_file = util_alloc_realpath(init_file);
 }
@@ -684,8 +684,8 @@ enkf_config_type * enkf_config_fscanf_alloc(const char * __config_file ,
 	      } else if (strcmp(kw , "ENSPATH") == 0) {
 		ASSERT_TOKENS("ENSPATH" , active_tokens , 1);
 		enkf_config_set_ens_path(enkf_config , token_list[1]);
-	      } else if (strcmp(kw , "INIT_FILE") == 0) {
-		ASSERT_TOKENS("INIT_FILE" , active_tokens , 1);
+	      } else if (strcmp(kw , "EQUIL_INIT_FILE") == 0) {
+		ASSERT_TOKENS("EQUIL_INIT_FILE" , active_tokens , 1);
 		enkf_config_set_init_file(enkf_config , token_list[1]);
 	      } else if (strcmp(kw , "DATA_KW") == 0) {
 		/* This is later taken over by the enkf_state objects */
