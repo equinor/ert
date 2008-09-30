@@ -466,6 +466,14 @@ static enkf_config_type * enkf_config_alloc_empty(bool fmt_file ,
   enkf_config_add_static_kw(config , "XAAQ");
   enkf_config_add_static_kw(config , "ACAQ");
 
+  enkf_config_add_static_kw(config , "ISEG");
+  enkf_config_add_static_kw(config , "ILBS");
+  enkf_config_add_static_kw(config , "ILBR");
+  enkf_config_add_static_kw(config , "RSEG");
+
+  enkf_config_add_static_kw(config , "ISTHW");
+  enkf_config_add_static_kw(config , "ISTHG");
+
 
   return config;
 }
