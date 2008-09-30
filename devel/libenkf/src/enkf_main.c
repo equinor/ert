@@ -858,7 +858,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     item = config_add_item(config , "DATA_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
-    item = config_add_item(config , "INIT_FILE" , true , false);
+    item = config_add_item(config , "EQUIL_INIT_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
     
     item = config_add_item(config , "FORWARD_MODEL" , true , false);
@@ -919,9 +919,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
       site_config_free( site_config );
     }
     
-    printf("Skal kalle config_free .. \n");
     config_free(config);
-    printf("Config_free() complete \n");
   }
   free(model_config);
   chdir( cwd ); /* Noninvasive in test mode ... */
