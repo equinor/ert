@@ -63,7 +63,7 @@ const char * ext_job_get_name(const ext_job_type * ext_job) {
 static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
   
-  ext_job->__type_id = __TYPE_ID__;
+  ext_job->__type_id    = __TYPE_ID__;
   ext_job->name         = util_alloc_string_copy(name);
   ext_job->portable_exe = NULL;
   ext_job->stdout_file  = NULL;
@@ -273,7 +273,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
     item = config_add_item(config , "PLATFORM_EXE"     , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
     item = config_add_item(config , "ARGLIST"          , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
   }
-  config_parse(config , filename , "--" , false , true);
+  config_parse(config , filename , "--" , NULL , false , true);
   {
     if (config_item_set(config , "STDIN"))  	  ext_job_set_stdin_file(ext_job   , config_get(config  , "STDIN"));
     if (config_item_set(config , "STDOUT")) 	  ext_job_set_stdout_file(ext_job  , config_get(config  , "STDOUT"));

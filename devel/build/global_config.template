@@ -38,3 +38,5 @@ FFLAGS  = -$(MFLAG) -c -g -fimplicit-none -fdefault-real-8 -Wall -Wsurprising -f
 CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall -fPIC
 ARFLAGS = -csr
 LDFLAGS = -rdynamic
+LD      = $(CF90)
+
