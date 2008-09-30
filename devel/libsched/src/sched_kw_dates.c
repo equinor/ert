@@ -46,6 +46,7 @@ static const char * get_month_string_from_int(int month_nr)
     case(12): return "DEC\0";
     default:
       util_abort("%s: Internal error - %i is not a month nr.\n",__func__,month_nr);
+      return "ERR\0";
   }
 
 }

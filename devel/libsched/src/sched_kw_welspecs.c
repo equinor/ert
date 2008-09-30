@@ -198,6 +198,7 @@ static inflow_eq_type get_inflow_eq_from_string(const char * string)
       return IE_GPP;
     else
       util_abort("%s: Inflow equation %s not recognized - aborting.\n",__func__, string);
+      return IE_STD;
 }
 
 
@@ -214,6 +215,7 @@ static phase_type get_phase_from_string(const char * string)
       return PH_LIQ;
     else
       util_abort("%s: Phase %s not recognized - aborting.\n",__func__,string);
+      return 0;
 }
 
 
@@ -226,6 +228,7 @@ static auto_shut_type get_auto_shut_from_string(const char * string)
       return AS_SHUT;
     else
       util_abort("%s: Automatic shut-in mode %s not recognized - aborting.\n",__func__,string);
+      return 0;
 }
 
 
@@ -238,6 +241,7 @@ static crossflow_type get_crossflow_from_string(const char * string)
       return CF_NO;
     else
       util_abort("%s: Crossflow ability mode %s not recognized - aborting.\n",__func__,string);
+      return 0;
 }
 
 
@@ -250,6 +254,7 @@ static hdstat_head_type get_hdstat_head_from_string(const char * string)
       return HD_AVG;
     else
       util_abort("%s: Hydrostatic head model %s not recognized - aborting.\n",__func__,string);
+      return 0;
 }
 
 

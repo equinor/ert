@@ -175,6 +175,7 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
       break;
     default:
       util_abort("%s: Internal error - aborting.\n",__func__);
+      GET_DATA_HANDLERS(handlers, untyped);
   }
   
   return handlers;
