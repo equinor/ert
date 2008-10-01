@@ -83,7 +83,6 @@ equil.o          : equil.c equil_config.o equil.h enkf_macros.h enkf_types.h
 enkf_state.o     : enkf_util.h enkf_state.c enkf_state.h enkf_node.o enkf_macros.h field.o field_config.o multz.o multflt.o equil.o multz_config.o multflt_config.o equil_config.o well.o well_config.o enkf_fs.o analysis.o gen_kw.o enkf_config.o
 multflt_config.o : multflt_config.c multflt_config.h enkf_macros.h
 multflt.o        : enkf_util.h multflt.c multflt.h multflt_config.o enkf_util.o logmode.o scalar.o
-ecl_config.o     : enkf_util.h ecl_config.c ecl_config.h enkf_macros.h enkf_config_node.o
 multz_config.o   : enkf_util.h multz_config.c multz_config.h enkf_macros.h logmode.o
 relperm_config.o : enkf_util.h relperm_config.c relperm_config.h enkf_macros.h logmode.o
 multz.o          : enkf_util.h multz.c multz.h multz_config.o logmode.o scalar.o enkf_util.o
@@ -142,14 +141,14 @@ enkf:	main.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) main.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
 
 test.x:	test.o $(LIB)
-	$(CC) -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH)  $(LIB_LINK) 	
+	$(LD) -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH)  $(LIB_LINK) 	
 
 gen_test.x:	gen_test.o $(LIB)
-	$(CC) -$(MFLAG) $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+	$(LD) -$(MFLAG) $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	
 
 field_convert.x:	field_convert.o $(LIB)
-	$(CC) -$(MFLAG) $(LDFLAGS) field_convert.o -o field_convert.x  $(LIB_PATH)  $(LIB_LINK) 	
+	$(LD) -$(MFLAG) $(LDFLAGS) field_convert.o -o field_convert.x  $(LIB_PATH)  $(LIB_LINK) 	
 
 sched_test.x:	sched_test.o $(LIB)
-	$(CC) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
 

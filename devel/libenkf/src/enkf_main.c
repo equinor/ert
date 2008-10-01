@@ -162,7 +162,7 @@ struct enkf_main_struct {
 
 /*****************************************************************/
 
-static ecl_config_type * ecl_config_alloc( const config_type * config) {
+static ecl_config_type * ecl_config_alloc( const config_type * config , time_t * start_date) {
   
   ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
   ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_ENDIAN_FLIP , DEFAULT_UNIFIED );
@@ -175,14 +175,9 @@ static ecl_config_type * ecl_config_alloc( const config_type * config) {
       set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
   }
   ecl_config->data_file = util_alloc_string_copy(config_get( config , "DATA_FILE" ));
-  {
-    time_t start_date = ecl_util_get_start_date( ecl_config->data_file );
-    {
-      int day,month,year;
-      util_set_date_values(start_date , &day,&month,&year);
-    }
-    ecl_config->sched_file = sched_file_parse_alloc( start_date , config_iget( config , "SCHEDULE_FILE" , 0) );
-  }
+  *start_date = ecl_util_get_start_date( ecl_config->data_file );
+
+  ecl_config->sched_file = sched_file_parse_alloc( *start_date , config_iget( config , "SCHEDULE_FILE" , 0) );
   return ecl_config;
 }
 
@@ -961,8 +956,10 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
       
       site_config_free( site_config );
     }
+    
     {
-      ecl_config_type * ecl_config = ecl_config_alloc( config );
+      time_t start_date;
+      ecl_config_type * ecl_config = ecl_config_alloc( config , &start_date);
       
       ecl_config_free(ecl_config);
     }
