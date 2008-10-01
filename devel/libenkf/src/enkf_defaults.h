@@ -29,8 +29,7 @@
 
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"
-#define NUM_STATIC_KW         3
-
+#define NUM_STATIC_KW         37
 
 
 /* 
@@ -38,10 +37,43 @@
    C-linkage properly.
 */
 #define DEFAULT_STATIC_KW (const char *[NUM_STATIC_KW]) { \
-  "INTEHEAD",                                             \
-  "LOGIHEAD",                                             \
-  "PRESSURE"                                              \
-}
+  "INTEHEAD",   \
+  "LOGIHEAD",   \
+  "DOUBHEAD",   \
+  "IGRP",   	\
+  "SGRP",   	\
+  "XGRP",   	\
+  "ZGRP",   	\
+  "IWEL",   	\
+  "SWEL",   	\
+  "XWEL",   	\
+  "ZWEL",   	\
+  "ICON",   	\
+  "SCON",   	\
+  "XCON",   	\
+  "HIDDEN",     \
+  "STARTSOL",   \
+  "PRESSURE",   \
+  "SWAT",   	\
+  "SGAS",   	\
+  "RS",   	\
+  "RV",   	\
+  "ENDSOL",     \
+  "ICAQNUM",    \
+  "IAAQ",   	\
+  "ICAQ",   	\
+  "SCAQNUM",    \
+  "SAAQ",   	\
+  "SCAQ",   	\
+  "ACAQNUM",    \
+  "XAAQ",   	\
+  "ACAQ",   	\
+  "ISEG",   	\
+  "ILBS",   	\
+  "ILBR",   	\
+  "RSEG",   	\
+  "ISTHW",   	\
+  "ISTHG"}       
 
 
 #endif
