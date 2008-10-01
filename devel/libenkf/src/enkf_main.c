@@ -6,6 +6,7 @@
 #include <hash.h>
 #include <multz_config.h>
 #include <enkf_config_node.h>
+#include <ecl_util.h>
 #include <path_fmt.h>
 #include <ecl_static_kw_config.h>
 #include <enkf_types.h>
@@ -42,6 +43,7 @@
 #include <history.h>
 #include <enkf_sched.h>
 #include <set.h>
+#include <ecl_io_config.h>
 
 #include "enkf_defaults.h"
 
@@ -82,23 +84,28 @@ typedef struct {
 } site_config_type;
 
 
+/* ecl_io_config = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_ENDIAN_FLIP , DEFAULT_UNIFIED ); */
+
 
 /**
-   Eclipse info
+  Eclipse info
+  
+  Pointers to the fields in this structure are passed on to e.g. the
+  enkf_state->shared_info object, but this struct is the *OWNER* of
+  this information, and hence responsible for booting and deleting
+  these objects.
 */
 
 typedef struct {
-  bool                endian_swap;            /* Should an endian swap be performed - (in general: YES) */
-  bool                fmt_file;
-  bool                unified;
-
-  path_fmt_type     * eclbase;
-  ecl_grid_type     * grid;
-  sched_file_type   * sched_file;
-  bool                include_all_static_kw;  /* If true all static keywords are stored.*/ 
-  set_type          * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
-} eclipse_config_type;
-
+  ecl_io_config_type * io_config;              /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
+  
+  path_fmt_type      * eclbase;                /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
+  ecl_grid_type      * grid;                   /* Eclipse grid instance */
+  sched_file_type    * sched_file;
+  bool                 include_all_static_kw;  /* If true all static keywords are stored.*/ 
+  set_type           * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
+  char               * data_file;              /* Eclipse data file. */
+} ecl_config_type;
 
 
 
@@ -116,7 +123,7 @@ typedef struct {
 
   
   history_type      * history;
-  time_t              start_time;
+  time_t              start_date;
 
   
   path_fmt_type     * result_path;
@@ -155,7 +162,44 @@ struct enkf_main_struct {
 
 /*****************************************************************/
 
+static ecl_config_type * ecl_config_alloc( const config_type * config) {
+  
+  ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
+  ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_ENDIAN_FLIP , DEFAULT_UNIFIED );
+  ecl_config->grid      	    = ecl_grid_alloc( config_get(config , "GRID") , ecl_io_config_get_endian_flip(ecl_config->io_config) );
+  ecl_config->eclbase   	    = path_fmt_alloc_path_fmt( config_get(config , "ECLBASE") );
+  ecl_config->include_all_static_kw = false;
+  ecl_config->static_kw_set         = set_alloc_empty();
+  {
+    for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
+      set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
+  }
+  ecl_config->data_file = util_alloc_string_copy(config_get( config , "DATA_FILE" ));
+  {
+    time_t start_date = ecl_util_get_start_date( ecl_config->data_file );
+    {
+      int day,month,year;
+      util_set_date_values(start_date , &day,&month,&year);
+    }
+    ecl_config->sched_file = sched_file_parse_alloc( start_date , config_iget( config , "SCHEDULE_FILE" , 0) );
+  }
+  return ecl_config;
+}
 
+
+static void ecl_config_free(ecl_config_type * ecl_config) {
+  ecl_io_config_free( ecl_config->io_config );
+  ecl_grid_free( ecl_config->grid );
+  path_fmt_free( ecl_config->eclbase );
+  set_free( ecl_config->static_kw_set );
+  free(ecl_config->data_file);
+  sched_file_free(ecl_config->sched_file);
+  free(ecl_config);
+}
+
+
+
+/*****************************************************************/
 static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc( sizeof * site_config , __func__);
 
@@ -868,18 +912,18 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     item = config_add_item(config , "DATA_KW" , false , true);
     config_item_set_argc_minmax(item , 2 , 2 , NULL);
 
-    item = config_add_item(config , "KEEP_RUNPATH" , false , false);
+    item = config_add_item(config , "KEEP_RUNPATH" , false , true);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
-    item = config_add_item(config , "ADD_STATIC_KW" , false , false);
+    item = config_add_item(config , "ADD_STATIC_KW" , false , true);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
-
+    
     item = config_add_item(config , "RESULT_PATH"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
-
+    
     item = config_add_item(config , "OBS_CONFIG"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-
+    
     
     /*****************************************************************/
     /* Keywords for the estimation                                   */
@@ -900,14 +944,13 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
 
     item = config_add_item(config , "WELL" , false , true);
     config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
-
+    
     item = config_add_item(config , "SUMMARY" , false , true);
     config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
 
     item = config_add_item(config , "FIELD" , false , true);
     config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
     
-
     
     config_parse(config , site_config  , "--" , "INCLUDE" , false , false);
     config_parse(config , model_config , "--" , "INCLUDE" , false , true);
@@ -918,6 +961,12 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
       
       site_config_free( site_config );
     }
+    {
+      ecl_config_type * ecl_config = ecl_config_alloc( config );
+      
+      ecl_config_free(ecl_config);
+    }
+
     
     config_free(config);
   }

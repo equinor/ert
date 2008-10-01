@@ -122,7 +122,7 @@ static bool field_config_valid_file_type(field_file_format_type file_type, bool 
 
 field_file_format_type field_config_manual_file_type(const char * prompt , bool import) {
   int int_file_type;
-  printf("%s\n",prompt);
+  printf("\n%s\n",prompt);
   printf("----------------------------------------------------------------\n");
   printf(" %3d: %s.\n" , rms_roff_file   , field_config_file_type_string(rms_roff_file));
   if (import)

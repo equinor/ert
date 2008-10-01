@@ -32,18 +32,18 @@ static const char * get_month_string_from_int(int month_nr)
 {
   switch(month_nr)
   {
-    case(1):  return "JAN\0";
-    case(2):  return "FEB\0";
-    case(3):  return "MAR\0";
-    case(4):  return "APR\0";
-    case(5):  return "MAY\0";
-    case(6):  return "JUN\0";
-    case(7):  return "JUL\0";
-    case(8):  return "AUG\0";
-    case(9):  return "SEP\0";
-    case(10): return "OCT\0";
-    case(11): return "NOV\0";
-    case(12): return "DEC\0";
+    case(1):  return "JAN";
+    case(2):  return "FEB";
+    case(3):  return "MAR";
+    case(4):  return "APR";
+    case(5):  return "MAY";
+    case(6):  return "JUN";
+    case(7):  return "JUL";
+    case(8):  return "AUG";
+    case(9):  return "SEP";
+    case(10): return "OCT";
+    case(11): return "NOV";
+    case(12): return "DEC";
     default:
       util_abort("%s: Internal error - %i is not a month nr.\n",__func__,month_nr);
       return "ERR\0";
@@ -63,7 +63,7 @@ static time_t * alloc_time_t_from_dates_line(const char * line)
   month = util_get_month_nr(token_list[1]);
 
   if (util_sscanf_int(token_list[0] , &mday) && util_sscanf_int(token_list[2] , &year))
-    *time = util_make_time1(mday , month , year);
+    *time = util_make_date(mday , month , year);
   else 
     util_abort("%s: fatal error when extracting date from:%s \n", __func__, line);
   

@@ -350,5 +350,5 @@ time_t sched_util_make_start_date(const int * start_date) {
   if (start_date == NULL)
     return 0;
   else
-    return util_make_time1(start_date[0] , start_date[1] , start_date[2]);
+    return util_make_date(start_date[0] , start_date[1] , start_date[2]);
 }

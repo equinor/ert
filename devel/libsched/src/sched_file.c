@@ -287,6 +287,13 @@ void sched_file_parse(sched_file_type * sched_file, time_t start_date, const cha
 }
 
 
+sched_file_type * sched_file_parse_alloc(time_t start_date , const char * filename) {
+  sched_file_type * sched_file = sched_file_alloc();
+  sched_file_parse(sched_file , start_date , filename);
+  return sched_file;
+}
+
+
 
 int sched_file_get_num_restart_files(const sched_file_type * sched_file)
 {

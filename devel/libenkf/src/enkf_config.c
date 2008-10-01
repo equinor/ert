@@ -357,10 +357,12 @@ static void enkf_config_set_start_date(enkf_config_type * config , const char **
   ok = ok && util_sscanf_int(tokens[2] , &year); 
   if (ok) {
     int month_nr = util_get_month_nr(tokens[1]);
-    config->start_time = util_make_time1( day , month_nr , year );
+    config->start_time = util_make_date( day , month_nr , year );
   } else 
     util_abort("%s: fatal error when parsing start_time: \"%s %s %s\" \n",__func__, tokens[0] , tokens[1] , tokens[2]);
 }
+
+
 
 /**
    This function adds a keyword to the list of restart keywords wich

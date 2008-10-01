@@ -440,7 +440,7 @@ static rms_file_type * field_init_ROFF_export(const field_type * field, const ch
 }
 
 
-static rms_file_type * field_complete_ROFF_export(const field_type * field , rms_file_type * rms_file) {
+static void field_complete_ROFF_export(const field_type * field , rms_file_type * rms_file) {
   rms_file_complete_fwrite(rms_file);
   rms_file_fclose(rms_file);
   rms_file_free(rms_file);

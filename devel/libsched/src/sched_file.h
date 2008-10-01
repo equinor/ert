@@ -8,8 +8,9 @@
 typedef struct sched_file_struct sched_file_type;
 
 sched_file_type * sched_file_alloc();
-void 		          sched_file_free(sched_file_type *);
-void 		          sched_file_parse(sched_file_type *, time_t, const char *);
+void 		  sched_file_free(sched_file_type *);
+void 		  sched_file_parse(sched_file_type *, time_t, const char *);
+sched_file_type * sched_file_parse_alloc(time_t  , const char * );
 void              sched_file_fprintf_i(const sched_file_type *, int, const char *);
 void              sched_file_fwrite(const sched_file_type *, FILE * stream);
 sched_file_type * sched_file_fread_alloc(FILE * stream); 

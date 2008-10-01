@@ -131,7 +131,7 @@ static void thist_node_free(thist_node_type * node) {
 
 
 static void thist_node_set_true_time(thist_node_type * node , int day, int month , int year) {
-  node->true_time = util_make_time1(day , month , year);
+  node->true_time = util_make_date(day , month , year);
   node->use_true_time = true;
 }
 

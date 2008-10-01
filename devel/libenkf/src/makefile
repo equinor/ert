@@ -1,6 +1,5 @@
 include global_config
 #m32 -> #define i386 1    m64 -> __x86_64 1
-LD    = $(CC)
 #################################################################
 MAIN_INCLUDE     = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include -I$(LIBJOB_QUEUE_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBPLOT_HOME)/include
 COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
