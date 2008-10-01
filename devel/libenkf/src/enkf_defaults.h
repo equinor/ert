@@ -25,12 +25,23 @@
 
 
 
-/* Default STATIC keywords */
-#define NUM_STATIC_KW 3
-const char *DEFAULT_STATIC_KW[NUM_STATIC_KW] = {
-  "INTEHEAD",
-  "LOGIHEAD",
-  "PRESSURE"
-};
+
+
+/* The magic string used to signal that *ALL* static keywords should be included. */
+#define DEFAULT_ALL_STATIC_KW "__ALL__"
+#define NUM_STATIC_KW         3
+
+
+
+/* 
+   The whole thing is defined as one literal - just because I don't understand
+   C-linkage properly.
+*/
+#define DEFAULT_STATIC_KW (const char *[NUM_STATIC_KW]) { \
+  "INTEHEAD",                                             \
+  "LOGIHEAD",                                             \
+  "PRESSURE"                                              \
+}
+
 
 #endif
