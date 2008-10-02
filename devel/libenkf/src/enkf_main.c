@@ -851,6 +851,23 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     item = config_add_item(config , "OBS_CONFIG"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
     
+    item = config_add_item(config , "REFCASE" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "HISTORY_SOURCE" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    {
+      stringlist_type * selection   = stringlist_alloc_argv_ref( (const char *[3]) {"SCHEDULE" , "REFCASE_OBSERVED" , "REFCASE_HISTORY"} , 3);
+      stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFACSE"} , 1);
+
+      config_item_set_selection_set(item , selection);
+      config_item_set_required_children_on_value(item , "REFCASE_OBSERVED" , refcase_dep);
+      config_item_set_required_children_on_value(item , "REFCASE_HISTORY" , refcase_dep);
+
+      stringlist_free(selection);
+      stringlist_free(refcase_dep);
+    }
+    config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
     
     /*****************************************************************/
     /* Keywords for the estimation                                   */
@@ -870,9 +887,12 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     {
       time_t start_date;
       ecl_config_type * ecl_config = ecl_config_alloc( config , &start_date);
-      
+      model_config_type * model_config = model_config_alloc(config , start_date);
+
       ecl_config_free(ecl_config);
+      model_config_free(model_config);
     }
+
     
     {
       ensemble_config_type * ensemble_config = ensemble_config_alloc( config );
@@ -880,9 +900,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
       ensemble_config_free( ensemble_config );
     }
 
-    {
-      
-    }
+
 
     
     config_free(config);

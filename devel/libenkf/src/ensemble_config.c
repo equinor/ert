@@ -185,6 +185,9 @@ void ensemble_config_add_config_items(config_type * config) {
   item = config_add_item(config , "GEN_PARAM" , false , true);
   config_item_set_argc_minmax(item , 3 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
   
+  item = config_add_item(config , "GEN_DATA" , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
+  
   item = config_add_item(config , "WELL" , false , true);
   config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
   

@@ -22,6 +22,8 @@
 
 
 
+/* Where the history is coming from */
+#define DEFAULT_HISTORY_SOURCE "SCHEDULE"
 
 
 
