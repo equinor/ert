@@ -214,7 +214,7 @@ void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type
 
 
 
-void enkf_obs_add_summary_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * state_kw , const char * var , const char * data_file) {
+void enkf_obs_add_summary_obs_from_file(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * state_kw , const char * var , const char * data_file) {
   const bool default_active = false;
   summary_obs_type * summary_obs;
   obs_node_type    * obs_node;
@@ -244,6 +244,18 @@ void enkf_obs_add_summary_obs(enkf_obs_type * enkf_obs, const enkf_config_node_t
   enkf_obs_add_obs(enkf_obs , var , obs_node);
   free(report_nr);
 }
+
+
+void enkf_obs_add_summary_obs_from_history(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node, const char * state_kw, const char * var, const history_type * history, bool is_group_kw, const char * config_file)
+{
+  summary_obs_type * summary_obs;
+  obs_node_type    * obs_node;
+  int              * report_nr;
+  int                size;
+  util_abort("%s: Not implemented.\n", __func__);
+}
+
+
 
 /**
   This functions loads block data observations. The return values are
@@ -417,7 +429,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	    const char * var              = token_list[2];
 	    const char * data_file        = token_list[3];
 	    const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , state_kw);
-	    enkf_obs_add_summary_obs(enkf_obs , config_node , state_kw , var , data_file);
+	    enkf_obs_add_summary_obs_from_file(enkf_obs , config_node , state_kw , var , data_file);
 	  } else if (strcmp(kw , "GEN_OBS") == 0) {
 	    ASSERT_TOKENS("GEN_OBS" , active_tokens , 1);
 	    const char * state_kw         = token_list[1];
