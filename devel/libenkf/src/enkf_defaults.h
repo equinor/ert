@@ -33,8 +33,8 @@
 
 
 /* 
-   The whole thing is defined as one literal - just because I don't understand
-   C-linkage properly.
+   The whole thing is defined as one literal - just because I don't
+   understand C-linkage.
 */
 #define DEFAULT_STATIC_KW (const char *[NUM_STATIC_KW]) { \
   "INTEHEAD",   \
