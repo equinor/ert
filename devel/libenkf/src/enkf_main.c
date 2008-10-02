@@ -45,6 +45,8 @@
 #include <set.h>
 #include <ecl_io_config.h>
 #include <ecl_config.h>
+#include <ensemble_config.h>
+#include <model_config.h>
 
 #include "enkf_defaults.h"
 
@@ -90,28 +92,6 @@ typedef struct {
 
 
 
-
-/**
-   This struct contains configuration which is specific to this
-   particular model/run. Much of the information is actually accessed
-   directly through the enkf_state object; but this struct is the
-   owner of the information, and responsible for allocating/freeing
-   it.
-*/
-
-typedef struct {
-  int                 ens_size; 
-  enkf_fs_type      * ensemble_dbase;
-
-  
-  history_type      * history;
-  time_t              start_date;
-
-  
-  path_fmt_type     * result_path;
-  path_fmt_type     * runpath;
-  enkf_sched_type   * enkf_sched;
-} model_config_type;
 
 
 
@@ -822,9 +802,12 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     
     /*****************************************************************/
     /* Required keywords from the ordinary model_config file */
-    item = config_add_item(config , "SIZE" , true , false);
+    item = config_add_item(config , "NUM_REALIZATIONS" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+    config_add_alias(config , "NUM_REALIZATIONS" , "SIZE");
+    /*config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");*/
     
+
     item = config_add_item(config , "GRID" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
@@ -871,29 +854,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     
     /*****************************************************************/
     /* Keywords for the estimation                                   */
-    item = config_add_item(config , "MULTZ" , false , true);
-    config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "MULTFLT" , false , true);
-    config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "EQUIL" , false , true);
-    config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "GEN_KW" , false , true);
-    config_item_set_argc_minmax(item , 4 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "GEN_PARAM" , false , true);
-    config_item_set_argc_minmax(item , 3 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "WELL" , false , true);
-    config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
-    
-    item = config_add_item(config , "SUMMARY" , false , true);
-    config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
-
-    item = config_add_item(config , "FIELD" , false , true);
-    config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
+    ensemble_config_add_config_items(config); 
     
     
     config_parse(config , site_config  , "--" , "INCLUDE" , false , false);
@@ -911,6 +872,16 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
       ecl_config_type * ecl_config = ecl_config_alloc( config , &start_date);
       
       ecl_config_free(ecl_config);
+    }
+    
+    {
+      ensemble_config_type * ensemble_config = ensemble_config_alloc( config );
+      
+      ensemble_config_free( ensemble_config );
+    }
+
+    {
+      
     }
 
     

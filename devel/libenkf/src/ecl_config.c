@@ -24,6 +24,9 @@
   enkf_state->shared_info object, but this struct is the *OWNER* of
   this information, and hence responsible for booting and deleting
   these objects.
+
+   Observe that the distinction of what goes in model_config, and what
+   goes in ecl_config is not entirely clear.
 */
 
 

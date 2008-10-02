@@ -553,12 +553,6 @@ void enkf_config_add_gen_kw(enkf_config_type * enkf_config , const char * config
   enkf_config_add_type(enkf_config , "gen_kw" , parameter , GEN_KW , NULL , NULL , gen_kw_config_fscanf_alloc(config_file , NULL));
 }
 
-
-
-
-
-
-
 const stringlist_type * enkf_config_get_forward_model(const enkf_config_type * config) {
   return config->forward_model;
 }
