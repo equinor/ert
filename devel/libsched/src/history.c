@@ -613,8 +613,6 @@ double history_get_well_var(const history_type * history, int restart_num, const
 
 double history_get_group_var(const history_type * history, int restart_num, const char * group, const char * var, bool * default_used)
 {
-  // TODO
-  // Need to rewrite this to support both summary/schedule alloc'ed histories.
   history_node_type * node = history_iget_node_ref(history, restart_num);
 
   if(!gruptree_has_grup(node->gruptree, group))
