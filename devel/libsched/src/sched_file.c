@@ -33,6 +33,7 @@
 
 */
 
+#define SCHED_FILE_TYPE_ID 677198
 
 typedef struct sched_block_struct sched_block_type;
 
@@ -45,6 +46,7 @@ struct sched_block_struct {
 
 
 struct sched_file_struct {
+  int         __id;        /* Used for safe run-time casting. */
   list_type * blocks;      /* A list of chronologically sorted
                               sched_block_type's. */
 };
@@ -227,8 +229,18 @@ static void sched_file_build_block_dates(sched_file_type * sched_file, time_t st
 sched_file_type * sched_file_alloc()
 {
   sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
+  sched_file->__id   = SCHED_FILE_TYPE_ID;
   sched_file->blocks = list_alloc();
   return sched_file;
+}
+
+
+sched_file_type * sched_file_safe_cast(void * _s) {
+  sched_file_type * s = (sched_file_type *) _s;
+  if (s->__id != SCHED_FILE_TYPE_ID) 
+    util_abort("%s: run_time cast failed - aborting \n",__func__);
+
+  return s;
 }
 
 
