@@ -11,6 +11,7 @@
 #include <enkf_obs.h>
 #include <ecl_rft_node.h>
 #include <well_obs.h>
+#include <ensemble_config.h>
 #include <obs_node.h>
 #include <history.h>
 #include <enkf_util.h>
@@ -368,9 +369,8 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
 
 
 #define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); abort(); }
-enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sched_file_type * sched_file , const history_type * hist) {
+enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file, const ensemble_config_type * ensemble_config , const sched_file_type * sched_file , const history_type * hist) {
   enkf_obs_type * enkf_obs = enkf_obs_alloc(sched_file , hist);
-  const char * config_file = enkf_config_get_obs_config_file(config);
   if (config_file != NULL) {
     FILE * stream = util_fopen(config_file , "r");
     bool   at_eof;
@@ -401,7 +401,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	      const char * well_name   = token_list[1];
 	      char * config_file = token_list[2];
 	      char * obs_label   = NULL;
-	      const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , well_name);
+	      const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , well_name);
 	      enkf_obs_add_well_obs(enkf_obs , config_node , well_name , obs_label , config_file);
 	    }
 	  }
@@ -412,7 +412,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	      const char * field     	    = token_list[2];
 	      const char * meas_time_string = token_list[3];
 	      const char * data_file        = token_list[4];
-	      const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , field);
+	      const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , field);
 	      time_t meas_time = enkf_obs_sscanf_obs_time(enkf_obs , meas_time_string);
 	      enkf_obs_add_field_obs(enkf_obs , config_node , data_file , field , obs_label , meas_time);
 	    }
@@ -428,12 +428,12 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * config , const sc
 	    const char * state_kw         = token_list[1];
 	    const char * var              = token_list[2];
 	    const char * data_file        = token_list[3];
-	    const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , state_kw);
+	    const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , state_kw);
 	    enkf_obs_add_summary_obs_from_file(enkf_obs , config_node , state_kw , var , data_file);
 	  } else if (strcmp(kw , "GEN_OBS") == 0) {
 	    ASSERT_TOKENS("GEN_OBS" , active_tokens , 1);
 	    const char * state_kw         = token_list[1];
-	    enkf_config_node_type * config_node = enkf_config_get_node_ref(config , state_kw);
+	    enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , state_kw);
 	    enkf_obs_add_gen_obs(enkf_obs , state_kw , config_node);
 	  } else
 	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);

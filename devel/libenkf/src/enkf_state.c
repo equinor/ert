@@ -11,6 +11,7 @@
 #include <fortio.h>
 #include <util.h>
 #include <ecl_kw.h>
+#include <ecl_io_config.h>
 #include <ecl_block.h>
 #include <ecl_fstate.h>
 #include <list_node.h>
@@ -38,7 +39,6 @@
 #include <enkf_obs.h>
 #include <obs_node.h>
 #include <basic_driver.h>
-#include <enkf_config.h>
 #include <node_ctype.h>
 #include <job_queue.h>
 #include <sched_file.h>
@@ -46,6 +46,10 @@
 #include <pthread.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
+#include <ensemble_config.h>
+#include <model_config.h>
+#include <site_config.h>
+#include <ecl_config.h>
 
 #define ENKF_STATE_TYPE_ID 78132
 
@@ -93,7 +97,6 @@ typedef struct run_info_struct {
 typedef struct shared_info_struct {
   enkf_fs_type          * fs;                /* The filesystem object - used to load and store nodes. */
   ext_joblist_type      * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
-  sched_file_type       * sched_file;        /* The schedule file. */   
   job_queue_type        * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
   bool                    unified;           /* Use unified ECLIPSE files (NO - do not use that) */
   enkf_obs_type         * obs;               /* The observation struct - used when measuring on the newly loaded state. */
@@ -110,11 +113,11 @@ typedef struct shared_info_struct {
    the simulation, but the current API does not support that.]
 */ 
 
+
 typedef struct member_config_struct {
-  bool             unified;           /* Whether unified ECLIPSE files should be used - NO. */
-  char 		 * eclbase;           /* The ECLBASE string used for simulations of this member. */
-  int  		   iens;              /* The ensemble member number of this member. */
-  bool             keep_runpath;      /* Should the run-path directory be left around (for this member) [Partly in conflict with run_info->unlink_run_path] */
+  int  		        iens;              /* The ensemble member number of this member. */
+  bool                  keep_runpath;      /* Should the run-path directory be left around (for this member) [Partly in conflict with run_info->unlink_run_path] */
+  char 		      * eclbase;           /* The ECLBASE string used for simulations of this member. */
 } member_config_type;
 
 
@@ -133,9 +136,11 @@ struct enkf_state_struct {
                                                 operation on the ECLIPSE data file. Will at least contain the key "INIT"
                                                 - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
 
+
+  const ecl_config_type * ecl_config;        /* ecl_config object - pure reference to the enkf_main object. */
   meas_vector_type      * meas_vector;       /* The meas_vector will accept measurements performed on this state.*/
-  enkf_config_type 	* config;            /* The main config object, which contains all the node config objects. */
-  
+  ensemble_config_type  * ensemble_config;   /* The config nodes for the enkf_node objects contained in node_hash. */
+
   run_info_type         * run_info;          /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
   shared_info_type      * shared_info;       /* Pointers to shared objects which is needed by the enkf_state object (read only). */
   member_config_type    * my_config;         /* Private config information for this member; not updated during a simulation. */
@@ -220,16 +225,15 @@ static char * __config_alloc_simlock(const char * lock_path , const char * run_p
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(enkf_fs_type * enkf_fs , ext_joblist_type * joblist , sched_file_type * sched_file, enkf_obs_type * obs, job_queue_type * job_queue, path_fmt_type * run_path_fmt) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config , enkf_obs_type * enkf_obs) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
-  shared_info->fs           = enkf_fs;
-  shared_info->joblist      = joblist;
-  shared_info->sched_file   = sched_file;
-  shared_info->obs          = obs;
-  shared_info->job_queue    = job_queue;
-  shared_info->run_path_fmt = run_path_fmt;
-
+  shared_info->fs           = model_config_get_fs( model_config );
+  shared_info->run_path_fmt = model_config_get_runpath_fmt( model_config );
+  shared_info->joblist      = site_config_get_installed_jobs( site_config );
+  shared_info->job_queue    = site_config_get_job_queue( site_config );
+  shared_info->obs          = enkf_obs;
+  
   return shared_info;
 }
 
@@ -264,19 +268,18 @@ static void member_config_free(member_config_type * member_config) {
 
 
 
-static member_config_type * member_config_alloc(int iens , lock_mode_type lock_mode , const char * lock_path , path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , bool keep_runpath) {
+static member_config_type * member_config_alloc(int iens , const ecl_config_type * ecl_config , const ensemble_config_type * ensemble_config) {
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   
-  member_config->unified        = false;
   member_config->iens           = iens; /* Can only be changed in the allocater. */
+  member_config->keep_runpath   = ensemble_config_iget_keep_runpath( ensemble_config , iens );
   member_config->eclbase  	= NULL;
-  member_config->keep_runpath   = keep_runpath;
   {
-    char * eclbase = path_fmt_alloc_path(eclbase_fmt, false , member_config->iens);
+    char * eclbase = path_fmt_alloc_path(ecl_config_get_eclbase_fmt(ecl_config), false , member_config->iens);
     member_config_set_eclbase(member_config  , eclbase);
     free(eclbase);
   }
-
+  
   return member_config;
 }
 
@@ -321,18 +324,6 @@ void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_functi
 
 
 
-
-bool enkf_state_fmt_file(const enkf_state_type * enkf_state) {
-  return enkf_config_get_fmt_file(enkf_state->config);
-}
-
-
-int enkf_state_fmt_mode(const enkf_state_type * enkf_state) {
-  if (enkf_state_fmt_file(enkf_state))
-    return ECL_FORMATTED;
-  else
-    return ECL_BINARY;
-}
 
 
 /**
@@ -383,25 +374,81 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 
 
 
-enkf_state_type * enkf_state_alloc(const enkf_config_type * config , int iens , lock_mode_type lock_mode , const char * lock_path , bool keep_runpath,
-				   enkf_fs_type * fs , ext_joblist_type * joblist , job_queue_type * job_queue , sched_file_type * sched_file , 
-				   path_fmt_type * run_path_fmt , path_fmt_type * eclbase_fmt , meas_vector_type * meas_vector , enkf_obs_type * obs) {
+enkf_state_type * enkf_state_alloc(int iens,
+				   const model_config_type * model_config,
+				   ensemble_config_type * ensemble_config,
+				   const site_config_type * site_config,
+				   const ecl_config_type * ecl_config,
+				   const hash_type * data_kw,
+				   meas_vector_type * meas_vector , 
+				   enkf_obs_type * obs) {
+  
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
   
-  enkf_state->config          = (enkf_config_type *) config;
+  enkf_state->ensemble_config          = ensemble_config;
+  enkf_state->ecl_config      = ecl_config;
+  enkf_state->meas_vector     = meas_vector;
+  enkf_state->my_config       = member_config_alloc( iens , ecl_config , ensemble_config);
+  enkf_state->shared_info     = shared_info_alloc(site_config , model_config , obs);
+  enkf_state->run_info        = run_info_alloc();
+
   enkf_state->node_hash       = hash_alloc();
   enkf_state->restart_kw_list = restart_kw_list_alloc();
-  enkf_state->meas_vector     = meas_vector;
+
   enkf_state->data_kw         = hash_alloc();
   {
     char * iens_string = util_alloc_sprintf("%d" , iens);
-    enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);
+    enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);   /* This should be done on use-time ... */
     free(iens_string);
   }
-  enkf_state->my_config   = member_config_alloc( iens , lock_mode , lock_path , run_path_fmt , eclbase_fmt , keep_runpath);
-  enkf_state->shared_info = shared_info_alloc(fs , joblist , sched_file , obs , job_queue , run_path_fmt);
-  enkf_state->run_info    = run_info_alloc();
+  /*
+    The user MUST specify an INIT_FILE, and for the first timestep the
+   <INIT> tag in the data file will be replaced by an 
+
+INCLDUE
+   EQUIL_INIT_FILE
+
+   statement. When considering the possibility of estimating EQUIL this
+   require a real understanding of the treatment of paths:
+
+   * If not estimating the EQUIL contacts, all members should use the
+     same init_file. To ensure this the user must specify the ABSOLUTE
+     PATH to a file containing initialization information.
+
+   * If the user is estimating initial contacts, the INIT_FILE must
+     point to the ecl_file of the EQUIL keyword, this must be a pure
+     filename without any path component (as it will be generated by
+     the EnKF program, and placed in the run_path directory). We could
+     let the EnKF program use the ecl_file of the EQUIL keyword if it
+     is present.
+
+  */  
+  {
+    const char * init_file   = ecl_config_get_equil_init_file(ecl_config);
+    if (init_file == NULL) 
+      util_abort("%s: EQUIL_INIT_FILE is not set - must either use EQUIL_INIT_FILE in config_file or EQUIL keyword.",__func__);
+    
+    if (init_file != NULL) 
+    {
+      char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
+      char * DATA_initialize = util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2);
+
+      enkf_state_set_data_kw(enkf_state , "INIT" , DATA_initialize);
+      
+      free(DATA_initialize);
+      free(tmp_include);
+    }
+  }
+  {
+    char ** key_list;
+    int keys;
+    key_list = hash_alloc_keylist( data_kw );
+    keys     = hash_get_size( data_kw );
+    for (int i = 0; i < keys; i++) 
+      enkf_state_set_data_kw(enkf_state , key_list[i] , hash_get(data_kw , key_list[i]));
+    util_free_stringlist(key_list , keys); 
+  }
   return enkf_state;
 }
 
@@ -556,8 +603,8 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
   member_config_type * my_config   = enkf_state->my_config;
   shared_info_type   * shared_info = enkf_state->shared_info;
   run_info_type      * run_info    = enkf_state->run_info;
-  const bool fmt_file  = enkf_state_fmt_file(enkf_state);
-  bool endian_swap     = enkf_config_get_endian_swap(enkf_state->config);
+  const bool fmt_file  		   = ecl_config_get_formatted(enkf_state->ecl_config);
+  const bool endian_swap           = ecl_config_get_endian_flip(enkf_state->ecl_config);
   ecl_block_type * restart_block = NULL;
   ecl_sum_type   * summary       = NULL;
   
@@ -585,7 +632,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
   if (mask & ecl_summary) {
     char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
     char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
-    summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , enkf_config_get_endian_swap(enkf_state->config));
+    summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , endian_swap);
     free(summary_file);
     free(header_file);
   } 
@@ -609,9 +656,9 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
       char * kw = util_alloc_string_copy(block_kw);
       enkf_impl_type impl_type;
       ecl_util_escape_kw(kw);
-      
-      if (enkf_config_has_key(enkf_state->config , kw)) {
-	const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+
+      if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
+	const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
 	impl_type = enkf_config_node_get_impl_type(config_node);
       } else
 	impl_type = STATIC;
@@ -621,13 +668,13 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
 	restart_kw_list_add(enkf_state->restart_kw_list , kw);
       else if (impl_type == STATIC) {
 	/* It is a static kw like INTEHEAD or SCON */
-	if (enkf_config_include_static_kw(enkf_state->config , kw)) {
+	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
 	  restart_kw_list_add(enkf_state->restart_kw_list , kw);
-	  if (!enkf_config_has_key(enkf_state->config , kw)) 
-	    enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL , NULL);
+	  if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
+	    ensemble_config_add_node(enkf_state->ensemble_config , kw , ecl_static , STATIC , NULL , NULL , NULL);
 	  
 	  if (!enkf_state_has_node(enkf_state , kw)) {
-	    const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+	    const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
 	    enkf_state_add_node(enkf_state , kw , config_node); 
 	  }
 	  
@@ -716,8 +763,8 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   shared_info_type * shared_info       = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const run_info_type      * run_info  = enkf_state->run_info;
-  bool endian_swap       = enkf_config_get_endian_swap(enkf_state->config);
-  const bool fmt_file    = enkf_state_fmt_file(enkf_state);
+  const bool fmt_file  		       = ecl_config_get_formatted(enkf_state->ecl_config);
+  const bool endian_swap               = ecl_config_get_endian_flip(enkf_state->ecl_config);
   char * restart_file    = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
   fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap);
   const char * kw;
@@ -738,11 +785,11 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
        before things blow up completely at a later instant.
     */
     
-    if (!enkf_config_has_key(enkf_state->config , kw)) 
-      enkf_config_add_type(enkf_state->config , kw , ecl_static , STATIC , NULL , NULL , NULL);
+    if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
+      ensemble_config_add_node(enkf_state->ensemble_config , kw , ecl_static , STATIC , NULL , NULL , NULL);
     
     if (!enkf_state_has_node(enkf_state , kw)) {
-      const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_state->config , kw);
+      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
       enkf_state_add_node(enkf_state , kw , config_node); 
     }
 	
@@ -904,8 +951,8 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 
 /**
    The value is string - the hash routine takes a copy of the string,
-   which means that the calling unit is free to whatever it wants with
-   the string.
+   which means that the calling unit is free to do whatever it wants
+   with the string.
 */
 
 void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
@@ -955,13 +1002,13 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     util_make_path(run_info->run_path);
     {
       char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_data_file , true , -1);
-      util_filter_file(enkf_config_get_data_file(enkf_state->config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
+      util_filter_file(ecl_config_get_data_file(enkf_state->ecl_config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
       free(data_file);
     }
     
     {
-      char * schedule_file = util_alloc_full_path(run_info->run_path , enkf_config_get_schedule_target_file(enkf_state->config));
-      sched_file_fprintf_i(shared_info->sched_file , run_info->step2 , schedule_file);
+      char * schedule_file = util_alloc_full_path(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config));
+      sched_file_fprintf_i(ecl_config_get_sched_file(enkf_state->ecl_config) , run_info->step2 , schedule_file);
       free(schedule_file);
     }
     
@@ -981,7 +1028,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     }
     
     {
-      bool  fmt_file              = enkf_config_get_fmt_file(enkf_state->config);
+      const bool fmt_file  	= ecl_config_get_formatted(enkf_state->ecl_config);
       hash_type * context    	= hash_alloc();
       char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step1);
       char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step2);
@@ -1064,6 +1111,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
     const member_config_type  * my_config   = enkf_state->my_config;
+    const bool unified  		    = ecl_config_get_unified(enkf_state->ecl_config);
     const int usleep_time = 100000; /* 1/10 of a second */ 
     job_status_type final_status;
     
@@ -1073,7 +1121,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
       
       if (final_status == job_queue_complete_OK) {
 	if (run_info->load_results)
-	  enkf_state_ecl_load(enkf_state , shared_info->obs , my_config->unified , run_info->step1 , run_info->step2);
+	  enkf_state_ecl_load(enkf_state , shared_info->obs , unified , run_info->step1 , run_info->step2);
 	break;
       } else if (final_status == job_queue_complete_FAIL) {
 	fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
@@ -1085,21 +1133,19 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
     /**
        We are about to delete the runpath - but there are many tests:
        
-       1. If debug == TRUE we keep the path.
-       2. If the integration failed we keep tha path.
-       3. If keep_runpath == true we keep the path.
-       4. If unlink_run_path == false we keep th path.
+       1. If the integration failed we keep tha path.
+       2. If keep_runpath == true we keep the path.
+       3. If unlink_run_path == false we keep th path.
 
        Some confusion/conflict between the last two ..??
 
     */
     
-    if ( enkf_config_get_debug(enkf_state->config) == 0) {
-      /* In case the job fails, we leave the run_path directory around for debugging. */
-      if (!my_config->keep_runpath)
-	if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
-	  util_unlink_path(run_info->run_path);
-    }
+    /* In case the job fails, we leave the run_path directory around for debugging. */
+    if (!my_config->keep_runpath)
+      if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
+	util_unlink_path(run_info->run_path);
+    
     run_info_complete_run(enkf_state->run_info);
   }
   run_info->__ready = false;

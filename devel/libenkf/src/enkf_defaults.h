@@ -22,9 +22,13 @@
 
 
 
-/* Where the history is coming from */
+/* Where the history is coming from - default value for config item: HISTORY_SOURCE */
 #define DEFAULT_HISTORY_SOURCE "SCHEDULE"
 
+
+
+/* The number of times to resubmit - default value for config item: MAX_SUBMIT */
+#define DEFAULT_MAX_SUBMIT "3"
 
 
 

@@ -51,28 +51,6 @@
 #include "enkf_defaults.h"
 
 
-/**
-   This structure contains files which are set during the
-   initialisation process, but not in the rest of the simulation. For
-   instance the user specifies a grid file in the CONFIG_FILE, but
-   after the bootstrapping is complete the EnKF program does not use
-   this filename. Instead the grid information is internalized in an
-   ecl_grid_type structure, and the filename is no longer
-   interesting. Similar with all the other fields in this structure.
-*/
-
-
-struct config_tmp_files_struct {
-  char * schedule_src_file;
-  char * grid_file;
-  char * enkf_sched_file;
-};
-
-
-
-
-
-
 
 
 
@@ -81,20 +59,51 @@ struct config_tmp_files_struct {
 /**
    This object should contain **everything** needed to run a enkf
    simulation. A way to wrap up all available information/state and
-   pass it around.
+   pass it around. An attempt has been made to collect various pieces
+   of related information together in a couple of objects
+   (model_config, ecl_config, site_config and ensemble_config). When
+   it comes to these holding objects the following should be observed:
+
+    1. It not always obvious where a piece of information should be
+       stored, i.e. the grid is a property of the model, however it is
+       an eclipse grid, and hence also belongs to eclipse
+       configuration?? [In this case ecl_config wins out.]
+
+    2. The information stored in these objects is typically passed on
+       to the enkf_state object, where it is used. 
+
+    3. At enkf_state level it is not really consequent - in some cases
+       the enkf_state object takes a scalar copy (i.e. keep_runpath),
+       and in other cases only a pointer down to the underlying
+       enkf_main object is taken.
+       In the former case it is no way to change global behaviour by
+       modifying the enkf_main objects. 
+       
+    4. In the enkf_state object the fields of the member_config,
+       ecl_config, site_config and ensemble_config objects are mixed
+       and matched into other small holding objects defined in
+       enkf_state.c.
+
 */
 
 #define ENKF_MAIN_ID 8301
 
 struct enkf_main_struct {
-  int                 __id;       /* Used for type-checking run-time casts. */
+  int                    __id;             /* Used for type-checking run-time casts. */
+  ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/ 
+  model_config_type    * model_config;
+  ecl_config_type      * ecl_config;
+  site_config_type     * site_config;
+  enkf_obs_type        * obs;
+  obs_data_type        * obs_data;      /* Should ideally contain the hist object. */
+  meas_matrix_type     * meas_matrix;
+  enkf_state_type     ** ensemble;
+  
+#if 0  
   enkf_config_type   *config;
   job_queue_type     *job_queue;
   ecl_grid_type      *grid;
-  enkf_obs_type      *obs;
-  meas_matrix_type   *meas_matrix;
-  obs_data_type      *obs_data;      /* Should ideally contain the hist object. */
-  enkf_state_type   **ensemble;
+  
   sched_file_type    *sched_file;
   history_type       *hist;
   enkf_fs_type       *fs;
@@ -102,6 +111,7 @@ struct enkf_main_struct {
 
   lock_mode_type      runlock_mode;  /* How/if should the runpath directories be locked */
   char               *lock_path;     /* Path containg lock files for the forward run. */ 
+#endif
 }; 
 
 
@@ -110,9 +120,8 @@ struct enkf_main_struct {
 /*****************************************************************/
 
 
-enkf_fs_type * enkf_main_get_fs_ref(const enkf_main_type * ens) { return ens->fs; }
 
-
+/*
 void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
   int ikw, iens , size;
   char ** data_kw_keys = enkf_config_alloc_data_kw_key_list(enkf_main->config , &size);
@@ -127,10 +136,8 @@ void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
     util_free_stringlist(data_kw_keys , size);
   }
 }
-             
-lock_mode_type enkf_main_get_runlock_mode(const enkf_main_type * enkf_main) {
-  return enkf_main->runlock_mode;
-}
+*/
+
 
 enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {
   enkf_main_type * enkf_main = (enkf_main_type *) __enkf_main;
@@ -140,237 +147,59 @@ enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {
 }
 
 
-/*
-void enkf_main_clear_locks(enkf_main_type * enkf_main) {
-  enkf_config_type * config = enkf_main->config;
-  int ens_size = enkf_config_get_ens_size(config);
-  int iens;
-  for (iens = 0; iens < ens_size; iens++) {
-    char * run_path = path_fmt_alloc_path(enkf_config_get_run_path_fmt(config), false , iens);
-    enkf_state_steal_run_path_lock(enkf_main->ensemble[iens] , enkf_main->runlock_mode , enkf_main->lock_path , run_path);
-    free(run_path);
-  }
-}
-*/
-
-
-/* 
-   The runpath is pushed around all over the placce - UGGGGLY
-*/
-
-void enkf_main_interactive_set_runpath(enkf_main_type * enkf_main) {
-  int ens_size = enkf_config_get_ens_size(enkf_main->config);
-  int  iens;
-  char runpath_fmt[512];
-  util_exit("%s: sorry currently broken\n",__func__);
-  printf("Give new runpath (with %%d): ===> ");
-  scanf("%s" , runpath_fmt);
-  enkf_config_set_run_path(enkf_main->config , runpath_fmt);
-  for (iens = 0; iens < ens_size; iens++) {
-    char * run_path = path_fmt_alloc_path(enkf_config_get_run_path_fmt(enkf_main->config), false , iens);
-    /*
-      enkf_state_set_run_path(enkf_main->ensemble[iens] , enkf_main->runlock_mode , enkf_main->lock_path , run_path);
-      
-    */
-    free(run_path);
-  }
+const ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
+  return enkf_main->ensemble_config;
 }
 
 
-void enkf_main_interactive_set_runpath__(void * __enkf_main) {
-  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
-  enkf_main_interactive_set_runpath( enkf_main );
+const enkf_sched_type * enkf_main_get_enkf_sched(const enkf_main_type * enkf_main) {
+  return model_config_get_enkf_sched(enkf_main->model_config);
 }
 
 
-
-enkf_main_type * enkf_main_alloc(enkf_config_type * config, lock_mode_type lock_mode , const char * lock_path , enkf_fs_type *fs , job_queue_type * job_queue , ext_joblist_type * joblist) {
-  int ens_size               = enkf_config_get_ens_size(config);
-
-  enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
-  enkf_main->__id            = ENKF_MAIN_ID;
-  enkf_main->config          = config;
-  enkf_main->sched_file      = sched_file_alloc(enkf_config_get_start_date(config));
-
-  {
-    time_t start_date = -1;
-    sched_file_parse(enkf_main->sched_file , start_date , enkf_config_get_schedule_src_file(config));
-  }
-
-  enkf_main->hist           = history_alloc_from_sched_file(enkf_main->sched_file);
-  enkf_main->obs            = enkf_obs_fscanf_alloc(enkf_main->config , enkf_main->sched_file , enkf_main->hist);
-  enkf_main->obs_data       = obs_data_alloc();
-  enkf_main->fs             = fs;
-  enkf_main->job_queue      = job_queue;
-  enkf_main->meas_matrix    = meas_matrix_alloc(ens_size);
-  enkf_main->ensemble       = malloc(ens_size * sizeof * enkf_main->ensemble);
-  enkf_main->run_mode       = enkf_assimilation;
-  enkf_main->runlock_mode   = lock_mode;
-  enkf_main->lock_path      = util_alloc_string_copy(lock_path);
-  util_make_path(enkf_main->lock_path);
-  {
-    int iens , keys , ik;
-    char **keylist  = enkf_config_alloc_keylist(config , &keys);
-    msg_type * msg  = msg_alloc("Initializing member: ");
-    msg_show(msg);
-    for (iens = 0; iens < ens_size; iens++) {
-      msg_update_int(msg , "%03d" , iens);
-      enkf_main->ensemble[iens] = enkf_state_alloc(config   , 
-                                                   iens , 
-                                                   enkf_main->runlock_mode , enkf_main->lock_path , enkf_config_iget_ecl_store(config , iens) , enkf_main->fs , 
-                                                   joblist  , job_queue , 
-                                                   enkf_main->sched_file ,
-                                                   enkf_config_get_run_path_fmt(config),
-                                                   enkf_config_get_eclbase_fmt(config),
-                                                   meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
-                                                   enkf_main->obs);
-      
-    }
-    msg_free(msg , true);
-
-    msg  = msg_alloc("Adding key: ");
-    msg_show(msg);
-    for (ik = 0; ik < keys; ik++) {
-      msg_update(msg , keylist[ik]);
-      const enkf_config_node_type * config_node = enkf_config_get_node_ref(config , keylist[ik]);
-      for (iens = 0; iens < ens_size; iens++) 
-        enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
-    }
-    msg_free(msg , true);
-
-
-    util_free_stringlist(keylist , keys);
-  }
-  
-
-
-
-  /*
-   The user MUST specify an INIT_FILE, and for the first timestep the
-   <INIT> tag in the data file will be replaced by an 
-
-INCLDUE
-   EQUIL_INIT_FILE
-
-   statement. When considering the possibility of estimating EQUIL this
-   require a real understanding of the treatment of paths:
-
-   * If not estimating the EQUIL contacts, all members should use the
-     same init_file. To ensure this the user must specify the ABSOLUTE
-     PATH to a file containing initialization information.
-
-   * If the user is estimating initial contacts, the INIT_FILE must
-     point to the ecl_file of the EQUIL keyword, this must be a pure
-     filename without any path component (as it will be generated by
-     the EnKF program, and placed in the run_path directory). We could
-     let the EnKF program use the ecl_file of the EQUIL keyword if it
-     is present.
-
-   Since correct behaviour here requires the "cooperation" of both the
-   INIT_FILE keyword and the (possible) EQUIL keyword it is a bit
-   tricky to enforce.
-
-  */
-  
-  {
-    const char * init_file   = enkf_config_get_init_file(config);
-    if (init_file == NULL) 
-      util_abort("%s: EQUIL_INIT_FILE is not set - must either use EQUIL_INIT_FILE in config_file or EQUIL keyword.",__func__);
-    
-    if (init_file != NULL) 
-    {
-      char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
-      char * DATA_initialize = util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2);
-
-      enkf_main_set_data_kw(enkf_main , "INIT" , DATA_initialize);
-      
-      free(DATA_initialize);
-      free(tmp_include);
-    }
-  }
-  enkf_main_insert_data_kw(enkf_main , ens_size);
-  return  enkf_main;
-
+enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
+  return model_config_get_fs( enkf_main->model_config );
 }
 
 
-const enkf_config_type * enkf_main_get_config(const enkf_main_type * enkf_main) {
-  return enkf_main->config;
-}
-
-const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * enkf_main, const char * key) {
-  enkf_config_type * config = enkf_main->config;
-  return enkf_config_get_node_ref(config , key);
-}
-
-
-
-void enkf_main_set_data_kw(enkf_main_type * enkf_main , const char * new_kw , const char * value) {
-  const int ens_size = enkf_config_get_ens_size(enkf_main->config);
-  int iens;
-  for (iens = 0; iens < ens_size; iens++)
-    enkf_state_set_data_kw(enkf_main->ensemble[iens] , new_kw , value);
-}
 
 
 
 
 void enkf_main_measure(enkf_main_type * enkf_main) {
-  const int ens_size = enkf_config_get_ens_size(enkf_main->config);
+  const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;
   meas_matrix_reset(enkf_main->meas_matrix);
   for (iens = 0; iens < ens_size; iens++)
-    enkf_state_measure(enkf_main->ensemble[iens] , enkf_main->obs);
+     enkf_state_measure(enkf_main->ensemble[iens] , enkf_main->obs);
 }
 
 
 
 void enkf_main_free(enkf_main_type * enkf_main) {  
   enkf_obs_free(enkf_main->obs);
-  {
-    const int ens_size = enkf_config_get_ens_size(enkf_main->config);
-    int i;
-    for (i=0; i < ens_size; i++)
+{
+const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
+int i;
+for (i=0; i < ens_size; i++)
       enkf_state_free(enkf_main->ensemble[i]);
-    free(enkf_main->ensemble);
-  }
-  free(enkf_main->lock_path);
-  
-  sched_file_free(enkf_main->sched_file);
-  history_free(enkf_main->hist);
-  meas_matrix_free(enkf_main->meas_matrix);
-  obs_data_free(enkf_main->obs_data);
-  enkf_config_free(enkf_main->config);
+      free(enkf_main->ensemble);
+      }
+
+ecl_config_free(enkf_main->ecl_config);
+model_config_free( enkf_main->model_config);
+site_config_free( enkf_main->site_config);
+  ensemble_config_free( enkf_main->ensemble_config );
   free(enkf_main);
 }
 
 
-/*****************************************************************/
-
-
-static const enkf_config_node_type * enkf_main_assert_obs(const enkf_main_type * enkf_main , const char *obs_key , enkf_impl_type impl_type) {
-  if (enkf_config_has_key(enkf_main->config , obs_key)) {
-    const enkf_config_node_type * config_node = enkf_config_get_node_ref(enkf_main->config , obs_key);
-    if (enkf_config_node_get_impl_type(config_node) == impl_type) 
-      return config_node;
-    else {
-      fprintf(stderr,"%s main object:%s exists - but it is not of correct type - aborting \n",__func__ , obs_key);
-      abort();
-    }
-  } else {
-    fprintf(stderr,"%s: main does not have key: %s - aborting \n",__func__ , obs_key);
-    abort();
-  }
-}
-
-
-
-
 
 /*****************************************************************/
+
 
 void enkf_main_analysis(enkf_main_type * enkf_main) {
-  const int ens_size = enkf_config_get_ens_size(enkf_main->config);
+  const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
   int nrobs          = obs_data_get_nrobs(enkf_main->obs_data);
   
   if (nrobs > 0) {
@@ -383,7 +212,7 @@ void enkf_main_analysis(enkf_main_type * enkf_main) {
 
 void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
   int iens;
-  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
+  for (iens = 0; iens < ensemble_config_get_size(enkf_main->ensemble_config); iens++) 
     enkf_state_fread(enkf_main->ensemble[iens] , mask , report_step , state);
 }
 
@@ -391,7 +220,7 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
 
 void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
   int iens;
-  for (iens = 0; iens < enkf_config_get_ens_size(enkf_main->config); iens++) 
+  for (iens = 0; iens < ensemble_config_get_size(enkf_main->ensemble_config); iens++) 
     enkf_state_fwrite(enkf_main->ensemble[iens] , mask , report_step , state);
 }
 
@@ -421,7 +250,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
 */
 
 enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key) {
-  const int ens_size              = enkf_config_get_ens_size(enkf_main->config);
+  const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
   int iens;
 
@@ -434,16 +263,16 @@ enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main ,
 /*****************************************************************/
 
 static void enkf_main_fprintf_results(const enkf_main_type * enkf_main , int report_step) {
-  const int ens_size     = enkf_config_get_ens_size(enkf_main->config);
+  const int ens_size     = ensemble_config_get_size(enkf_main->ensemble_config);
   int config_size;
-  char ** key_list = enkf_config_alloc_keylist(enkf_main->config , &config_size);
+  char ** key_list = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
   int ikw;
 
   for (ikw=0; ikw < config_size; ikw++) {
     const enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
     if (enkf_node_has_func(node , ensemble_fprintf_results_func)) {
       enkf_node_type ** node_ensemble = enkf_main_get_node_ensemble(enkf_main , key_list[ikw]);
-      char            * path          = enkf_config_alloc_result_path(enkf_main->config , report_step);
+      char            * path          = model_config_alloc_result_path(enkf_main->model_config , report_step);
       enkf_node_ensemble_fprintf_results((const enkf_node_type **) node_ensemble , ens_size , report_step , path);
       free(path);
       free(node_ensemble);
@@ -464,7 +293,7 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 /******************************************************************/
 
 void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
-  const int ens_size            = enkf_config_get_ens_size(enkf_main->config);
+  const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;
   
   if (enkf_update)
@@ -475,8 +304,9 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
 
   {
     pthread_t          queue_thread;
+job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
     void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
-    void_arg_pack_ptr(queue_args , 0 , enkf_main->job_queue);
+    void_arg_pack_ptr(queue_args , 0 , job_queue);
     void_arg_pack_int(queue_args , 1 , ens_size);
     
     pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
@@ -501,7 +331,7 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
     }
 
     pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      */
-    job_queue_finalize(enkf_main->job_queue);  /* Must *NOT* be called before all jobs are done. */               
+    job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
     void_arg_free( queue_args );
   }
     
@@ -555,25 +385,37 @@ void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_s
 
 
 
-const sched_file_type * enkf_main_get_sched_file(const enkf_main_type * enkf_main) { return enkf_main->sched_file; }
+/**
+   This function boots more or less everything needed for running a
+   EnKF application. Very briefly it can be summarized as follows:
+
+    1. A large config object is initalized with all the possible
+       keywords we are looking for.
+
+    2. All the config files are parsed in one go.
+
+    3. The various objects are build up by reading from the config
+       object.
+
+    4. The resulting enkf_main object contains *EVERYTHING*
+       (whoaha...)
+*/
 
 
 
-
-void enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
-  char * cwd               = util_alloc_cwd();
+enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
+  enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
+  
   const char * site_config = getenv("ENKF_SITE_CONFIG");
   char       * model_config;
   
-  printf("-----------------------------------------------------------------\n");
-  printf("Test code: start \n");
   if (site_config == NULL)
     site_config = _site_config;
   
   if (site_config == NULL) 
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
-  
-  {
+  enkf_main->__id            = ENKF_MAIN_ID;
+{
     char * path;
     char * base;
     char * ext;
@@ -609,6 +451,11 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
 
     /*****************************************************************/
     /** Keywords expected normally found in site_config */
+    item = config_add_item(config , "MAX_SUBMIT" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+    config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT});
+    
+
     item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     {
@@ -667,7 +514,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     item = config_add_item(config , "NUM_REALIZATIONS" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     config_add_alias(config , "NUM_REALIZATIONS" , "SIZE");
-    /*config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");*/
+    config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
     
 
     item = config_add_item(config , "GRID" , true , false);
@@ -684,7 +531,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     
     item = config_add_item(config , "SCHEDULE_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 2 , (const config_item_types [2]) {CONFIG_EXISTING_FILE , CONFIG_STRING});
-
+    
     item = config_add_item(config , "START_TIME" , true , false);
     /*config_item_set_argc_minmax(item , 1 , 2 , (const config_item_types [2]) {CONFIG_EXISTING_FILE , CONFIG_STRING});*/
 
@@ -709,11 +556,14 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     
     item = config_add_item(config , "RESULT_PATH"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    
+
     item = config_add_item(config , "OBS_CONFIG"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
     
     item = config_add_item(config , "REFCASE" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "ENKF_SCHED_FILE" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
     item = config_add_item(config , "HISTORY_SOURCE" , false , false);
@@ -729,7 +579,7 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
       stringlist_free(selection);
       stringlist_free(refcase_dep);
     }
-    config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
+      config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
     
     /*****************************************************************/
     /* Keywords for the estimation                                   */
@@ -738,43 +588,76 @@ void enkf_main_bootstrap(const char * _site_config, const char * _model_config) 
     
     config_parse(config , site_config  , "--" , "INCLUDE" , false , false);
     config_parse(config , model_config , "--" , "INCLUDE" , false , true);
+    /*****************************************************************/
+    /* OK - now we have parsed everything - and we are ready to start
+       populating the enkf_main object. 
+    */
+    
+     
+    enkf_main->ecl_config      = ecl_config_alloc(config);
+    enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
+    enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ));
+    enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , ecl_config_get_sched_file(enkf_main->ecl_config));
+
 
     {
-      int ens_size = strtol(config_get(config , "SIZE") , NULL , 10);
-      site_config_type * site_config = site_config_alloc(config , ens_size);
+      const char * obs_config_file;
+      if (config_has_set_item(config , "OBS_CONFIG"))
+	obs_config_file = config_get(config  , "OBS_CONFIG");
+      else
+	obs_config_file = NULL;
       
-      site_config_free( site_config );
+      enkf_main->meas_matrix     = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
+      enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file , enkf_main->ensemble_config ,  ecl_config_get_sched_file(enkf_main->ecl_config) , model_config_get_history(enkf_main->model_config));
+      enkf_main->obs_data        = obs_data_alloc();
     }
     
+    /*****************************************************************/
+    /* Adding ensemble members */
     {
-      time_t start_date;
-      ecl_config_type * ecl_config = ecl_config_alloc( config , &start_date);
-      model_config_type * model_config = model_config_alloc(config , start_date);
-
-      ecl_config_free(ecl_config);
-      model_config_free(model_config);
-    }
-
-    
-    {
-      ensemble_config_type * ensemble_config = ensemble_config_alloc( config );
+      const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
+      hash_type * data_kw = config_alloc_hash(config , "DATA_KW");
+      int iens , keys , ik;
+      char **keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &keys);
+      msg_type * msg  = msg_alloc("Initializing member: ");
+      msg_show(msg);
+      enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
+      for (iens = 0; iens < ens_size; iens++) {
+	msg_update_int(msg , "%03d" , iens);
+	enkf_main->ensemble[iens] = enkf_state_alloc(iens,
+						     enkf_main->model_config   , 
+						     enkf_main->ensemble_config,
+						     enkf_main->site_config    , 
+						     enkf_main->ecl_config     ,
+						     data_kw,
+						     meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
+						     enkf_main->obs);
+	
+      }
+      msg_free(msg , true);
       
-      ensemble_config_free( ensemble_config );
+      msg  = msg_alloc("Adding key: ");
+      msg_show(msg);
+      for (ik = 0; ik < keys; ik++) {
+        msg_update(msg , keylist[ik]);
+	const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , keylist[ik]);
+	for (iens = 0; iens < ens_size; iens++) 
+	  enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
+      }
+      msg_free(msg , true);
+      hash_free(data_kw);
+      util_free_stringlist(keylist , keys);
     }
-
-
-
     
     config_free(config);
   }
   free(model_config);
-  chdir( cwd ); /* Noninvasive in test mode ... */
-  free( cwd );  
-  printf("Test code: end \n");
-  printf("-----------------------------------------------------------------\n");
+  return enkf_main;
 }
     
     
+
+
     
 
 

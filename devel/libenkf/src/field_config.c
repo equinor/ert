@@ -323,6 +323,7 @@ field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_nam
 
 
 
+/* This interface is just to general */
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
 field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , int logmode , field_init_type init_type , int config_len , const char ** config_files) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , ecl_kw_file_all_cells);

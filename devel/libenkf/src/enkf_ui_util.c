@@ -13,7 +13,7 @@
 #include <field.h>
 #include <field_config.h>
 #include <enkf_state.h>
-#include <enkf_config.h>
+#include <ensemble_config.h>
 #include <enkf_types.h>
 
 
@@ -81,7 +81,7 @@ state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool ac
    keyword is of type impl_type.
 */
 
-const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_type * config , int prompt_len , bool accept_both , enkf_impl_type impl_type ,  enkf_var_type var_type , int * report_step , state_enum * state , int * iens) {
+const enkf_config_node_type * enkf_ui_util_scanf_parameter(const ensemble_config_type * config , int prompt_len , bool accept_both , enkf_impl_type impl_type ,  enkf_var_type var_type , int * report_step , state_enum * state , int * iens) {
   char kw[256];
   bool OK;
   const enkf_config_node_type * config_node;
@@ -89,8 +89,8 @@ const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_typ
     OK = true;
     util_printf_prompt("Keyword" , prompt_len , '=' , "=> ");
     scanf("%s" , kw);
-    if (enkf_config_has_key(config , kw)) {
-      config_node = enkf_config_get_node_ref(config , kw);
+    if (ensemble_config_has_key(config , kw)) {
+      config_node = ensemble_config_get_node(config , kw);
       
       if (impl_type != INVALID) 
 	if (enkf_config_node_get_impl_type(config_node) != impl_type) 
@@ -119,7 +119,7 @@ const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_typ
 	    *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F]" , prompt_len , false);
 	}
       }
-      if (iens != NULL)  *iens = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , enkf_config_get_ens_size(config) - 1);
+      if (iens != NULL)  *iens = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , ensemble_config_get_size(config) - 1);
     } else OK = false;
   } while (!OK);
   return config_node;
@@ -138,8 +138,7 @@ const enkf_config_node_type * enkf_ui_util_scanf_parameter(const enkf_config_typ
 */
 
 
-bool * enkf_ui_util_scanf_alloc_iens_active(const enkf_config_type * config, int prompt_len , int * _iens1 , int * _iens2) {
-  const int ens_size = enkf_config_get_ens_size(config);
+bool * enkf_ui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int * _iens1 , int * _iens2) {
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
   int iens1 = util_scanf_int_with_limits("First ensemble member" , prompt_len , 0 , ens_size - 1);
   int iens2 = util_scanf_int_with_limits("Last ensemble member" , prompt_len , iens1 , ens_size - 1);

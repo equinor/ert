@@ -55,15 +55,13 @@ void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs
 
 
 /**
-   The actual routine m_enkfx5_mp_enkfx5_() is written in fortran, and
-   found in the library libanalysis.
-
-   TODO
-
-   Should this be renamed? This name is tightly tied to the ifort compilator.
+   The actual routine __m_enkfx5__enkfx5() is written in fortran, and
+   found in the library libanalysis. Observe that the fortran compiler
+   mangles the names, so with new fortran compiler we will get a new
+   name here ...
 */
-void m_enkfx5_mp_enkfx5_(double * X , const double *R , const double * E , const double * S , const double * D , const double * innov , const int * nrens , 
-			 const int * nrobs , const int * verbose , const double * truncation , const int * mode , const int * update_randrot , const int * istep , const char * xpath);
+void __m_enkfx5__enkfx5(double * X , const double *R , const double * E , const double * S , const double * D , const double * innov , const int * nrens , 
+			const int * nrobs , const int * verbose , const double * truncation , const int * mode , const int * update_randrot , const int * istep , const char * xpath);
 
 
 

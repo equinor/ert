@@ -13,10 +13,15 @@
 #include <meas_vector.h>
 #include <enkf_fs.h>
 #include <sched_file.h>
+#include <hash.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
 #include <job_queue.h>
 #include <enkf_serialize.h>
+#include <model_config.h>
+#include <site_config.h>
+#include <ecl_config.h>
+#include <ensemble_config.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
 
@@ -32,7 +37,6 @@ void               enkf_state_swapin_node(const enkf_state_type *  , const char 
 meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *);
 enkf_state_type  * enkf_state_copyc(const enkf_state_type * );
 void               enkf_state_iset_eclpath(enkf_state_type * , int , const char *);
-enkf_state_type  * enkf_state_alloc(const enkf_config_type * , int , lock_mode_type  , const char * , bool , enkf_fs_type * , ext_joblist_type * , job_queue_type * , sched_file_type * , path_fmt_type * , path_fmt_type * ,  meas_vector_type * , enkf_obs_type *);
 enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
 void               enkf_state_del_node(enkf_state_type * , const char * );
 void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
@@ -41,6 +45,14 @@ void               enkf_state_ecl_load(enkf_state_type * , enkf_obs_type * , boo
 void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_eclipse__(void * );
 void             * enkf_state_complete_eclipse__(void * );
+enkf_state_type * enkf_state_alloc(int ,
+				   const model_config_type * ,
+				   ensemble_config_type * ,
+				   const site_config_type * ,
+				   const ecl_config_type * ,
+				   const hash_type * , 
+				   meas_vector_type * ,
+				   enkf_obs_type * );
 
 
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );

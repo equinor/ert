@@ -1,7 +1,7 @@
 include global_config
 #m32 -> #define i386 1    m64 -> __x86_64 1
 #################################################################
-MAIN_INCLUDE     = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include -I$(LIBJOB_QUEUE_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBPLOT_HOME)/include
+MAIN_INCLUDE     = -I$(LIBCONFIG_HOME)/include -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include -I$(LIBJOB_QUEUE_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBPLOT_HOME)/include
 COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
 INSTALL_INC_PATH =   $(LIBENKF_HOME)/include
 INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
@@ -23,8 +23,8 @@ else
    LSF_LIBS   = 
 endif
 
-LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -ljob_queue_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lanalysis_$(MFLAG) -lplot_$(MFLAG) -lplplotd -lm -lpthread -lz  -llapack -lblas $(LSF_LIBS) -lgfortran 
-LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH)
+LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -ljob_queue_$(MFLAG) -lecl_$(MFLAG) -lconfig_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lanalysis_$(MFLAG) -lplot_$(MFLAG) -lplplotd -lm -lpthread -lz  -llapack -lblas $(LSF_LIBS) -lgfortran 
+LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH)
 LIB_ROOT          = enkf
 LIB               = lib$(LIB_ROOT)_$(MFLAG).a
 TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
@@ -67,7 +67,7 @@ thist.o              : thist.c thist.h
 logmode.o            : logmode.c logmode.h enkf_types.h
 scalar.o               : scalar.h scalar.c enkf_util.o scalar_config.o
 enkf_types.o         : enkf_types.c enkf_types.h
-enkf_obs.o           : enkf_obs.c enkf_obs.h obs_node.o well_obs.o field_obs.o summary_obs.o
+enkf_obs.o           : enkf_obs.c enkf_obs.h obs_node.o well_obs.o field_obs.o summary_obs.o ensemble_config.o
 obs_data.o           : obs_data.c obs_data.h
 obs_node.o           : obs_node.c obs_node.h enkf_types.h enkf_util.o well_obs.o summary_obs.o gen_obs.o field_obs.o
 meas_vector.o          : meas_vector.c meas_vector.h enkf_util.o
@@ -80,7 +80,7 @@ field_config.o       : field_config.c field_config.h enkf_types.h
 field.o              : field.c field.h field_config.o enkf_types.h enkf_macros.h
 equil_config.o   : enkf_util.h equil_config.c equil_config.h enkf_macros.h scalar_config.o
 equil.o          : equil.c equil_config.o equil.h enkf_macros.h enkf_types.h
-enkf_state.o     : enkf_util.h enkf_state.c enkf_state.h enkf_node.o enkf_macros.h field.o field_config.o multz.o multflt.o equil.o multz_config.o multflt_config.o equil_config.o well.o well_config.o enkf_fs.o analysis.o gen_kw.o enkf_config.o ensemble_config.o
+enkf_state.o     : enkf_util.h enkf_state.c enkf_state.h enkf_node.o enkf_macros.h field.o field_config.o multz.o multflt.o equil.o multz_config.o multflt_config.o equil_config.o well.o well_config.o enkf_fs.o analysis.o gen_kw.o enkf_config.o ensemble_config.o ecl_config.o model_config.o site_config.o
 multflt_config.o : multflt_config.c multflt_config.h enkf_macros.h
 multflt.o        : enkf_util.h multflt.c multflt.h multflt_config.o enkf_util.o logmode.o scalar.o
 ecl_config.o     : ecl_config.c ecl_config.h enkf_defaults.o
@@ -118,15 +118,15 @@ main.o                	 : enkf_main.o enkf_types.o enkf_config.o enkf_fs.o fs_in
 enkf_sched.o          	 : enkf_sched.c enkf_sched.h
 enkf_ui_main.o        	 : enkf_ui_main.c enkf_ui_main.h enkf_ui_run.o enkf_ui_export.o enkf_ui_util.o enkf_ui_plot.o enkf_ui_init.o
 enkf_ui_run.o         	 : enkf_ui_run.c enkf_ui_run.h enkf_ui_util.o
-enkf_ui_export.o      	 : enkf_ui_export.c enkf_ui_export.h
-enkf_ui_util.o        	 : enkf_ui_util.c enkf_ui_util.h
+enkf_ui_export.o      	 : enkf_ui_export.c enkf_ui_export.h ensemble_config.o
+enkf_ui_util.o        	 : enkf_ui_util.c enkf_ui_util.h ensemble_config.o enkf_config_node.o
 enkf_ui_plot.o	         : enkf_ui_plot.c enkf_ui_plot.h enkf_ui_util.o
 enkf_ui_init.o           : enkf_ui_init.c enkf_ui_init.h
 gen_param_config.o       : gen_param_config.c gen_param_config.h
 gen_param.o              : gen_param.c gen_param.h gen_param_config.o enkf_macros.h enkf_util.o
 enkf_serialize.o         : enkf_serialize.h enkf_serialize.c
 ensemble_config.o        : ensemble_config.c ensemble_config.h
-model_config.o           : model_config.c model_config.h enkf_sched.o enkf_fs.o
+model_config.o           : model_config.c model_config.h enkf_sched.o enkf_fs.o plain_driver_parameter.o plain_driver_dynamic.o plain_driver_static.o
 site_config.o            : site_config.c site_config.h 
 
 #################################################################

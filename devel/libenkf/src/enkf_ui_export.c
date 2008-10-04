@@ -24,7 +24,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
   char       analysis_state_char;
   int        iens , report_step;
   
-  config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD  , invalid , &report_step , &analysis_state , &iens);
+  config_node = enkf_ui_util_scanf_parameter(enkf_main_get_ensemble_config(enkf_main) , prompt_len , false , FIELD  , invalid , &report_step , &analysis_state , &iens);
   if (analysis_state == analyzed)
     analysis_state_char = 'A';
   else
@@ -32,7 +32,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
   
 
   {
-    enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
+    enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
     enkf_node_type * node = enkf_node_alloc(config_node);
 
     if (enkf_fs_has_node(fs , config_node , report_step , iens , analysis_state)) {
@@ -51,47 +51,34 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
 }
 
 
-void enkf_ui_export_grdecl(void *_arg) {
-  void_arg_type   * arg    = void_arg_safe_cast(_arg);
-  enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
-  
+void enkf_ui_export_grdecl(void * enkf_main) {
   enkf_ui_export_field(enkf_main , ecl_grdecl_file);
 }
 
 
 
-void enkf_ui_export_roff(void *_arg) {
-  void_arg_type   * arg    = void_arg_safe_cast(_arg);
-  enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
-  
+void enkf_ui_export_roff(void * enkf_main) {
   enkf_ui_export_field(enkf_main , rms_roff_file);
 }
 
 
-void enkf_ui_export_restart_active(void *_arg) {
-  void_arg_type   * arg    = void_arg_safe_cast(_arg);
-  enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
-  
+void enkf_ui_export_restart_active(void * enkf_main) {
   enkf_ui_export_field(enkf_main , ecl_kw_file_active_cells);
 }
 
 
-void enkf_ui_export_restart_all(void *_arg) {
-  void_arg_type   * arg    = void_arg_safe_cast(_arg);
-  enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
-  
+void enkf_ui_export_restart_all(void * enkf_main) {
   enkf_ui_export_field(enkf_main , ecl_kw_file_all_cells);
 }
 
 
 
-void enkf_ui_export_profile(void *_arg) {
-  void_arg_type    * arg               = void_arg_safe_cast(_arg);
-  enkf_main_type   * enkf_main         = void_arg_get_ptr(arg , 0);
-  enkf_sched_type  * enkf_sched        = void_arg_get_ptr(arg , 1);
-  const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+void enkf_ui_export_profile(void * enkf_main) {
+  const enkf_sched_type  * enkf_sched  = enkf_main_get_enkf_sched(enkf_main);
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 60;
+    const int ens_size   = ensemble_config_get_size(ensemble_config);
     int iens1 , iens2;
     const int last_report = enkf_sched_get_last_report(enkf_sched);
     bool * iens_active  ;
@@ -104,8 +91,8 @@ void enkf_ui_export_profile(void *_arg) {
     int       *cell_list; 
     path_fmt_type * file_fmt;
 
-    config_node    = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD , invalid , NULL , &analysis_state , NULL);
-    iens_active    = enkf_ui_util_scanf_alloc_iens_active( enkf_config , prompt_len , &iens1 , &iens2); /* Not used yet ... */
+    config_node    = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , FIELD , invalid , NULL , &analysis_state , NULL);
+    iens_active    = enkf_ui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
     report_active  = enkf_ui_util_scanf_alloc_report_active( enkf_sched , prompt_len );
     direction      = util_scanf_int_with_limits("Give scan direction 0:i  1:j  2:k" , prompt_len , 0 , 2);
     
@@ -157,7 +144,7 @@ void enkf_ui_export_profile(void *_arg) {
 	double * profile      = util_malloc(total_cells * sizeof * profile , __func__);
 	int iens , report_step;
 	enkf_node_type * node = enkf_node_alloc( config_node );
-	enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
+	enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
 	
 	for (report_step = 0; report_step <= last_report; report_step++) {
 	  if (report_active[report_step]) {
@@ -198,29 +185,27 @@ void enkf_ui_export_profile(void *_arg) {
 
 
 
-void enkf_ui_export_cell(void *_arg) {
-  void_arg_type   * arg    = void_arg_safe_cast(_arg);
-  enkf_main_type  * enkf_main   = void_arg_get_ptr(arg , 0);
-  enkf_sched_type * enkf_sched  = void_arg_get_ptr(arg , 1);
-  const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+void enkf_ui_export_cell(void * enkf_main) {
+  enkf_sched_type * enkf_sched         = enkf_main_get_enkf_sched(enkf_main);
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 35;
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     int        cell_nr;
 
-    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , false , FIELD , invalid, NULL , &analysis_state , NULL);
+    config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , FIELD , invalid, NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
-      const int ens_size    = enkf_config_get_ens_size(enkf_config);
+      const int ens_size    = ensemble_config_get_size(ensemble_config);
       const int last_report = enkf_sched_get_last_report(enkf_sched);
       int iens1 , iens2;   
-      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( enkf_config , prompt_len , &iens1 , &iens2); /* Not used yet ... */
+      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
       bool * report_active  = enkf_ui_util_scanf_alloc_report_active( enkf_sched , prompt_len);
       double * cell_data    = util_malloc(ens_size * sizeof * cell_data , __func__);
       int iens , report_step; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
-      enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
+      enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
       path_fmt_type * file_fmt = path_fmt_scanf_alloc("Give filename to store historgrams (with %d for report step) =>" , 0 , NULL , false);
 	  
       
@@ -262,29 +247,28 @@ void enkf_ui_export_cell(void *_arg) {
 
 
 
-void enkf_ui_export_time(void *_arg) {
-  void_arg_type   * arg    = void_arg_safe_cast(_arg);
-  enkf_main_type  * enkf_main   = void_arg_get_ptr(arg , 0);
-  enkf_sched_type * enkf_sched  = void_arg_get_ptr(arg , 1);
-  const enkf_config_type * enkf_config = enkf_main_get_config(enkf_main);
+void enkf_ui_export_time(void * enkf_main) {
+  enkf_sched_type * enkf_sched  = enkf_main_get_enkf_sched(enkf_main);
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 35;
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     int        cell_nr;
 
-    config_node = enkf_ui_util_scanf_parameter(enkf_main_get_config(enkf_main) , prompt_len , true , FIELD ,invalid ,  NULL , &analysis_state , NULL);
+    config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , true , FIELD ,invalid ,  NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int last_report = enkf_sched_get_last_report(enkf_sched);
       const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
       const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
+      const int ens_size    = ensemble_config_get_size(ensemble_config);
       int iens1 , iens2;   
-      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( enkf_config , prompt_len , &iens1 , &iens2); /* Not used yet ... */
+      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
       double * x, *y;
       int iens; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
-      enkf_fs_type   * fs   = enkf_main_get_fs_ref(enkf_main);
+      enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
       path_fmt_type * file_fmt = path_fmt_scanf_alloc("Give filename to store line (with %d for report iens) =>" , 0 , NULL , false);
       
       
@@ -329,22 +313,16 @@ void enkf_ui_export_time(void *_arg) {
 
 void enkf_ui_export_menu(void * arg) {
 
-  /*
-    void_arg_type   * arg        = void_arg_safe_cast(_arg);
-    enkf_main_type  * enkf_main  = void_arg_get_ptr(arg , 0);
-    enkf_sched_type * enkf_sched = void_arg_get_ptr(arg , 1);
-  */
-
-  
+  enkf_main_type * enkf_main = enkf_main_safe_cast(arg);
   menu_type * menu = menu_alloc("Export EnKF data to other formats" , "qQ");
-  menu_add_item(menu , "Export fields to RMS Roff format"       , "rR" , enkf_ui_export_roff   , arg);
-  menu_add_item(menu , "Export fields to ECLIPSE grdecl format" , "gG" , enkf_ui_export_grdecl , arg);
-  menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , arg);
-  menu_add_item(menu , "Export fields to ECLIPSE restart format (all cells)"    , "lL" , enkf_ui_export_restart_all   , arg);
+  menu_add_item(menu , "Export fields to RMS Roff format"       		, "rR" , enkf_ui_export_roff   	       , enkf_main);
+  menu_add_item(menu , "Export fields to ECLIPSE grdecl format" 		, "gG" , enkf_ui_export_grdecl 	       , enkf_main);
+  menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , enkf_main);
+  menu_add_item(menu , "Export fields to ECLIPSE restart format (all cells)"    , "lL" , enkf_ui_export_restart_all    , enkf_main);
   menu_add_separator(menu);
-  menu_add_item(menu , "Export cell values to text file(s)"                  , "cC" , enkf_ui_export_cell    , arg);
-  menu_add_item(menu , "Export line profile of a field to text file(s)"      , "pP" , enkf_ui_export_profile , arg);
-  menu_add_item(menu , "Export time development in one cell to text file(s)" , "tT" , enkf_ui_export_time    , arg);
+  menu_add_item(menu , "Export cell values to text file(s)"                  	, "cC" , enkf_ui_export_cell    , enkf_main);
+  menu_add_item(menu , "Export line profile of a field to text file(s)"      	, "pP" , enkf_ui_export_profile , enkf_main);
+  menu_add_item(menu , "Export time development in one cell to text file(s)" 	, "tT" , enkf_ui_export_time    , enkf_main);
   menu_run(menu);
   menu_free(menu);
 }

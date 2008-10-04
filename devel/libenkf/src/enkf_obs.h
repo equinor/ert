@@ -5,7 +5,7 @@
 #include <well_obs.h>
 #include <field_obs.h>
 #include <ecl_rft_node.h>
-#include <enkf_config.h>
+#include <ensemble_config.h>
 #include <enkf_config_node.h>
 
 typedef struct enkf_obs_struct enkf_obs_type;
@@ -20,7 +20,7 @@ struct enkf_obs_struct {
 
 
 void            enkf_obs_free(enkf_obs_type * );
-enkf_obs_type * enkf_obs_fscanf_alloc(const enkf_config_type * , const sched_file_type * ,const history_type * hist);
+enkf_obs_type * enkf_obs_fscanf_alloc(const char * , const ensemble_config_type * , const sched_file_type * ,const history_type * hist);
 
 /*void 		enkf_obs_measure(enkf_obs_type * , int , const enkf_state_type *);*/
 void 		enkf_obs_get_observations(enkf_obs_type * , int , obs_data_type * );

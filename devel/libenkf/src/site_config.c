@@ -102,7 +102,7 @@ static void site_config_install_LSF_job_queue(site_config_type * site_config , i
 static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , int ens_size) {
   const char * queue_system = config_get(config , "QUEUE_SYSTEM");
   const char * job_script   = config_get(config , "JOB_SCRIPT");
-  int   max_submit          = 3;
+  int   max_submit          = strtol(config_get(config , "MAX_SUBMIT") , NULL , 10);
   
   if (strcmp(queue_system , "LSF") == 0) {
     const char * lsf_queue_name             = config_get(config , "LSF_QUEUE");
@@ -149,4 +149,11 @@ void site_config_free(site_config_type * site_config) {
   free(site_config);
 }
 
+ext_joblist_type * site_config_get_installed_jobs( const site_config_type * site_config) {
+  return site_config->joblist;
+}
+
+job_queue_type * site_config_get_job_queue( const site_config_type * site_config) {
+  return site_config->job_queue;
+}
 

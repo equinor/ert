@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <enkf_sched.h>
-#include <sched_file.h>
 #include <stringlist.h>
 #include <ext_joblist.h>
 
@@ -357,13 +356,13 @@ static void enkf_sched_add_node(enkf_sched_type * enkf_sched , enkf_sched_node_t
 
 
 
-static enkf_sched_type * enkf_sched_alloc_empty( const sched_file_type * sched_file , const ext_joblist_type * joblist , const stringlist_type * forward_model) {
+static enkf_sched_type * enkf_sched_alloc_empty( int num_restart_files, const ext_joblist_type * joblist , const stringlist_type * forward_model) {
   enkf_sched_type * enkf_sched     = util_malloc(sizeof * enkf_sched , __func__);
   enkf_sched->node_list 	   = NULL;
   enkf_sched->size      	   = 0;       
   enkf_sched->std_forward_model    = forward_model;
   enkf_sched->joblist              = joblist;
-  enkf_sched->schedule_num_reports = sched_file_get_num_restart_files( sched_file );
+  enkf_sched->schedule_num_reports = num_restart_files - 1;
   enkf_sched->last_report          = 0;
   return enkf_sched;
   
@@ -402,9 +401,9 @@ void enkf_sched_random_test(enkf_sched_type * enkf_sched) {
    enkf_sched_type instance is allocated.
 */
 
-enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , const sched_file_type * sched_file , const ext_joblist_type * joblist, const stringlist_type * default_forward_model) {
+enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num_restart_files , const ext_joblist_type * joblist, const stringlist_type * default_forward_model) {
   
-  enkf_sched_type * enkf_sched = enkf_sched_alloc_empty(sched_file , joblist ,default_forward_model);
+  enkf_sched_type * enkf_sched = enkf_sched_alloc_empty(num_restart_files , joblist ,default_forward_model);
   if (enkf_sched_file == NULL)
     enkf_sched_set_default(enkf_sched);
   else {
@@ -422,6 +421,7 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , const s
   if (enkf_sched->size == 0)
     util_abort("%s: empty enkf_sched instance - aborting \n",__func__);
 
+  enkf_sched_fprintf(enkf_sched , stdout);
   return enkf_sched;
 }
 

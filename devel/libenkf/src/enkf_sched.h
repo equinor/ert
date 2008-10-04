@@ -13,7 +13,7 @@ typedef struct enkf_sched_node_struct enkf_sched_node_type;
 
 
 void               	       enkf_sched_fprintf(const enkf_sched_type *  , FILE * );
-enkf_sched_type *  	       enkf_sched_fscanf_alloc(const char * , const sched_file_type *  , const ext_joblist_type *, const stringlist_type *);
+enkf_sched_type *  	       enkf_sched_fscanf_alloc(const char * , int , const ext_joblist_type *, const stringlist_type *);
 void               	       enkf_sched_free(enkf_sched_type *);
 int                	       enkf_sched_get_num_nodes(const enkf_sched_type *);
 int                	       enkf_sched_get_schedule_num_reports(const enkf_sched_type *);

@@ -34,11 +34,13 @@ struct ecl_config_struct {
   ecl_io_config_type * io_config;              /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
   
   path_fmt_type      * eclbase;                /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
-  ecl_grid_type      * grid;                   /* Eclipse grid instance */
   sched_file_type    * sched_file;
   bool                 include_all_static_kw;  /* If true all static keywords are stored.*/ 
   set_type           * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
   char               * data_file;              /* Eclipse data file. */
+  ecl_grid_type      * grid;                   /* The grid which is active for this model. */
+  char               * schedule_target_file;   /* File name to write schedule info to */
+  char               * equil_init_file;        /* File name for ECLIPSE (EQUIL) initialisation. */
 };
 
 
@@ -46,7 +48,7 @@ struct ecl_config_struct {
 
 
 
-ecl_config_type * ecl_config_alloc( const config_type * config , time_t * start_date) {
+ecl_config_type * ecl_config_alloc( const config_type * config) {
   ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
   ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_ENDIAN_FLIP , DEFAULT_UNIFIED );
   ecl_config->grid      	    = ecl_grid_alloc( config_get(config , "GRID") , ecl_io_config_get_endian_flip(ecl_config->io_config) );
@@ -58,9 +60,31 @@ ecl_config_type * ecl_config_alloc( const config_type * config , time_t * start_
       set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
   }
   ecl_config->data_file = util_alloc_string_copy(config_get( config , "DATA_FILE" ));
-  *start_date = ecl_util_get_start_date( ecl_config->data_file );
+  {
+    time_t start_date = ecl_util_get_start_date( ecl_config->data_file );
+    const stringlist_type * sched_list = config_get_stringlist_ref(config , "SCHEDULE_FILE");
+    const char * schedule_src = stringlist_iget( sched_list , 0);
 
-  ecl_config->sched_file = sched_file_parse_alloc( *start_date , config_iget( config , "SCHEDULE_FILE" , 0) );
+    if (stringlist_get_size(sched_list) == 1) {
+      char * base;  /* The schedule target file will be without any path component */
+      char * ext;
+      util_alloc_file_components(schedule_src , NULL , &base , &ext);
+      ecl_config->schedule_target_file = util_alloc_filename(NULL , base , ext);
+      free(ext);
+      free(base);
+    } else
+      ecl_config->schedule_target_file = stringlist_iget_copy( sched_list , 1);
+
+    ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date);
+  }
+  if (config_has_set_item(config , "EQUIL_INIT_FILE"))
+    ecl_config->equil_init_file = util_alloc_string_copy(config_get(config , "EQUIL_INIT_FILE"));
+  else {
+    if (!config_has_set_item(config , "EQUIL"))
+      util_abort("%s: you must specify how ECLIPSE is initialized - with either EQUIL or EQUIL_INIT_FILE ",__func__);
+    ecl_config->equil_init_file = NULL; 
+  }
+  ecl_config->grid = ecl_grid_alloc( config_get(config , "GRID") , ecl_io_config_get_endian_flip(ecl_config->io_config) );
   return ecl_config;
 }
 
@@ -72,6 +96,8 @@ void ecl_config_free(ecl_config_type * ecl_config) {
   set_free( ecl_config->static_kw_set );
   free(ecl_config->data_file);
   sched_file_free(ecl_config->sched_file);
+  free(ecl_config->schedule_target_file);
+  util_safe_free(ecl_config->equil_init_file);
   free(ecl_config);
 }
 
@@ -114,4 +140,43 @@ bool ecl_config_include_static_kw(const ecl_config_type * ecl_config, const char
   else
     return set_has_key(ecl_config->static_kw_set , kw);
 }
+
+
+const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config) {
+  return ecl_config->grid;
+}
+
+
+ecl_io_config_type * ecl_config_get_io_config(const ecl_config_type * ecl_config) {
+  return ecl_config->io_config;
+}
+
+
+const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * ecl_config) {
+  return ecl_config->eclbase;
+}
+
+sched_file_type * ecl_config_get_sched_file(const ecl_config_type * ecl_config) {
+  return ecl_config->sched_file;
+}
+
+const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
+  return ecl_config->data_file;
+}
+
+const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config) {
+  return ecl_config->equil_init_file;
+}
+
+const char * ecl_config_get_schedule_target(const ecl_config_type * ecl_config) {
+  return ecl_config->schedule_target_file;
+}
+
+int ecl_config_get_num_restart_files(const ecl_config_type * ecl_config) {
+  return sched_file_get_num_restart_files(ecl_config->sched_file);
+}
+
+bool ecl_config_get_endian_flip(const ecl_config_type * ecl_config) { return ecl_io_config_get_endian_flip(ecl_config->io_config); }
+bool ecl_config_get_formatted(const ecl_config_type * ecl_config) { return ecl_io_config_get_formatted(ecl_config->io_config); }
+bool ecl_config_get_unified(const ecl_config_type * ecl_config) { return ecl_io_config_get_unified(ecl_config->io_config); }
 
