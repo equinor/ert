@@ -1,6 +1,6 @@
 include global_config
 #################################################################
-COMPILE_INCLUDE  = -I$(LIBJOB_QUEUE_HOME)/src -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBECL_HOME)/include -I$(EXTERNAL_INC_PATH)
+COMPILE_INCLUDE  = -I$(LIBJOB_QUEUE_HOME)/src -I$(LIBCONFIG_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include -I$(LIBECL_HOME)/include -I$(EXTERNAL_INC_PATH)
 INSTALL_INC_PATH =  $(LIBJOB_QUEUE_HOME)/include
 INSTALL_LIB_PATH =  $(LIBJOB_QUEUE_HOME)/lib
 SDP_ROOT         = /project/res/$(shell /private/joaho/bin/res_target.py)
@@ -9,8 +9,8 @@ OBJECTS   = job_queue.o basic_queue_driver.o lsf_driver.o local_driver.o rsh_dri
 INC_FILES = job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h
 LIB_ROOT  = job_queue
 LIB       = lib$(LIB_ROOT)_$(MFLAG).a
-LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L./
-LIB_LINK  = -l$(LIB_ROOT)_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
+LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L./
+LIB_LINK  = -l$(LIB_ROOT)_$(MFLAG) -lconfig_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
 
 LOCAL: LIB BIN
 	install -d $(INSTALL_INC_PATH)
