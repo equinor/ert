@@ -9,12 +9,13 @@ typedef struct cfg_kw_def_struct cfg_kw_def_type;
 
 
 
-typedef enum {UNIQ, DATA, REQUIRE, KEY} cfg_kw_keys_enum;
+typedef enum {UNIQ, DATA, REQUIRE, KEY, RESTRICT} cfg_kw_keys_enum;
 // These are the primitive keys which are allowed in the definition.
-#define UNIQ_STRING    "unique"
-#define DATA_STRING    "data"
-#define REQUIRE_STRING "require"
-#define KEY_STRING     "key"
+#define UNIQ_STRING     "unique"
+#define DATA_STRING     "data"
+#define REQUIRE_STRING  "require"
+#define KEY_STRING      "key"
+#define RESTRICT_STRING "restrict"
 
 
 
@@ -60,6 +61,7 @@ static cfg_kw_keys_enum get_cfg_kw_keys_enum_from_string(const char * str)
   RETURN_IF_MATCH(DATA);
   RETURN_IF_MATCH(REQUIRE);
   RETURN_IF_MATCH(KEY);
+  RETURN_IF_MATCH(RESTRICT);
 
   util_abort("%s: Key %s is unkown.\n", __func__, str);
   return 0;
@@ -189,7 +191,11 @@ cfg_kw_def_type * cfg_kw_def_fscanf_alloc(FILE * stream, bool * at_eof, const ch
     if(sub_start)
       util_abort("%s: Unexpected '{' %s.\n", __func__, token1);
   
-    /* Ok, we have read a valid key. Now read the value. */
+    /**
+      Ok, we have read a valid key. Now read the value. 
+      
+      Should maybe allow to read "help" kw here?
+    */
 
     token2 = cfg_util_fscanf_alloc_token(stream, &sub_start, &sub_end, at_eof);
 
