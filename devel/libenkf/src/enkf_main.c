@@ -429,17 +429,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     {
-      stringlist_type * selection  = stringlist_alloc_argv_ref( (const char *[3]) {"LSF" , "LOCAL" , "RSH"} , 3);
       stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"LSF_RESOURCES" , "LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 3);
       stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
       stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
 
-      config_item_set_selection_set( item , selection);
+      config_item_set_common_selection_set( item , 3 , (const char *[3]) {"LSF" , "LOCAL" , "RSH"});
       config_item_set_required_children_on_value( item , "LSF"   , lsf_dep);
       config_item_set_required_children_on_value( item , "RSH"   , rsh_dep);
       config_item_set_required_children_on_value( item , "LOCAL" , local_dep);
-
-      stringlist_free(selection);
+      
       stringlist_free(lsf_dep);
       stringlist_free(rsh_dep);
       stringlist_free(local_dep);
@@ -539,14 +537,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "HISTORY_SOURCE" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     {
-      stringlist_type * selection   = stringlist_alloc_argv_ref( (const char *[3]) {"SCHEDULE" , "REFCASE_OBSERVED" , "REFCASE_HISTORY"} , 3);
       stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
 
-      config_item_set_selection_set(item , selection);
+      config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_OBSERVED" , "REFCASE_HISTORY"});
       config_item_set_required_children_on_value(item , "REFCASE_OBSERVED" , refcase_dep);
       config_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
 
-      stringlist_free(selection);
       stringlist_free(refcase_dep);
     }
       config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });

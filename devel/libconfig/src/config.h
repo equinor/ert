@@ -64,11 +64,10 @@ const char      ** config_item_get_argv(const config_item_type * , int * );
 
 /*const char * config_item_iget_argv(const config_item_type * , int );*/
 bool 	     config_item_is_set(const config_item_type * );
-char * 	     config_item_set_arg(config_item_type *  , int , const char **, const char * , const char *);
 /*  int          config_item_get_argc(const config_item_type * );*/
 void         config_item_set_argc_minmax(config_item_type * , int  , int , const config_item_types * );
-void         config_item_set_selection_set(config_item_type * , const stringlist_type *);
-void         config_item_add_to_selection(config_item_type *  , const char *);
+void         config_item_set_common_selection_set(config_item_type * , int argc , const char ** argv);
+void         config_item_set_indexed_selection_set(config_item_type * item , int  , int  , const char ** );
 void         config_item_set_required_children(config_item_type * , stringlist_type * );
 void         config_item_set_required_children_on_value(config_item_type * , const char * , stringlist_type * );
 

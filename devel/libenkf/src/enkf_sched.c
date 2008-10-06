@@ -421,7 +421,6 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num
   if (enkf_sched->size == 0)
     util_abort("%s: empty enkf_sched instance - aborting \n",__func__);
 
-  enkf_sched_fprintf(enkf_sched , stdout);
   return enkf_sched;
 }
 

@@ -14,36 +14,17 @@
 
 
 /**
-   Structure to parse configuration files of this type:
+Structure to parse configuration files of this type:
 
 KEYWORD1  ARG2   ARG2  ARG3
 KEYWORD2  ARG1-2
 ....
-KEYWORDN  
+KEYWORDN  ARG1  ARG2
 
+A keyword can occure many times.
 
-
-Validating
-----------
-The config object implements three different ways of validating the input:
-
- 1. If the xx__argc_minmax() function has been called, a line will not
-    be accepted if the number of arguments is not within this range.
-
- 2. If the type_map has been installed for the item (with the
-    xx_arg_minmax function), it is checked the arguments of the item
-    are in accordance with this typemap.
-
- 3. If the item is added with required_set == true, the validate
-    routine will fail if the item is not set.
-
-Observe that the two first steps are checked when the item is parsed
-(however the error is not reported before after the parsing is
-complete),  whereas the last is checked when the parsing is
-complete. Observe that is ABSOLUTELY ESSENTIAL that the final call
-to config_parse() is with validate == true, otherwise the validation 
-will not be performed / acted upon.
 */
+
 
 
 /**
@@ -112,6 +93,50 @@ corresponding to 'optimize cache=1' would be present.
 
 */
 
+typedef struct validate_struct validate_type;
+
+/** 
+   This is a 'support-struct' holding various pieces of information
+   needed during the validation process. Observe the following about
+   validation:
+
+    1. It is atmoic, in the sense that if you try to an item like this:
+
+         KW  ARG1 ARG2 ARG3
+
+       where ARG1 and ARG2 are valid, whereas there is something wrong
+       with ARG3, NOTHING IS SET.
+
+    2. Validation is a two-step process, the first step is run when an
+       item is parsed. This includes checking:
+
+        o The number of argument.  
+        o That the arguments have the right type.
+        o That the values match the selection set.
+      
+       The second validation step is done when the pasing is complete,
+       in this pass we check dependencies - i.e. required_chldren and
+       required_children_on_value.
+
+
+   Observe that nothing has-to be set in this struct. There are some dependencies:
+
+    1. Only _one_ of common_selection_set and indexed_selection_set
+       can be set.
+
+    2. If setting indexed_selection_set or type_map, you MUST set
+       argc_max first.
+*/
+    
+struct validate_struct {
+  int 		      argc_min;                /* The minimum number of arguments: -1 means no lower limit. */
+  int 		      argc_max;                /* The maximum number of arguments: -1 means no upper limit. */ 
+  set_type          * common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */ 
+  set_type          **indexed_selection_set;   /* A selection set which will apply for specifi (indexed) arguments. */
+  config_item_types * type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
+  stringlist_type   * required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
+  hash_type         * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
+};
 
 
 struct config_struct {
@@ -135,23 +160,120 @@ struct config_item_struct {
   bool                          append_arg;              /* Should the values be appended if a keyword appears several times in the config file. */
   bool                          currently_set;           /* Has a value been assigned to this keyword. */
   bool                          required_set;            
-  stringlist_type             * selection_set;           /* A list of strings which the value(s) must match (can be NULL) (Can currently not differentiate between different arguments) */
   stringlist_type             * required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
   hash_type                   * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
-  int                           argc_min;                /* The minimum number of arguments for this keyword -1 means no lower limit. */
-  int                           argc_max;                /* The maximum number of arguments for this keyword (on one line) -1 means no limit. */   
   config_item_types           * type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
+  validate_type               * validate;                /* Information need during validation. */ 
 };
 
 
 struct config_item_node_struct {
   stringlist_type             * stringlist;              /* The values which have been set. */
-  char                        * config_cwd;              /* The currently active cwd (relative or absolute) of the parser when this item is set. */
+char                        * config_cwd;              /* The currently active cwd (relative or absolute) of the parser when this item is set. */
 };
+
 
 /*****************************************************************/
 
+static void config_add_and_free_error(config_type * config , char * error_message);
 
+/*****************************************************************/
+static validate_type * validate_alloc() {
+  validate_type * validate = util_malloc(sizeof * validate , __func__);
+  validate->argc_min = -1;
+  validate->argc_max = -1;
+  validate->common_selection_set    = NULL;
+  validate->indexed_selection_set   = NULL;
+  validate->type_map                = NULL;
+  validate->required_children       = NULL;
+  validate->required_children_value = NULL;
+  
+  return validate;
+}
+
+
+static void validate_free(validate_type * validate) {
+  if (validate->common_selection_set != NULL) set_free(validate->common_selection_set);
+  if (validate->indexed_selection_set != NULL) {
+    for (int i = 0; i < validate->argc_max; i++)
+      if (validate->indexed_selection_set[i] != NULL)
+	set_free(validate->indexed_selection_set[i]);
+    free(validate->indexed_selection_set);
+  }
+  if (validate->type_map != NULL) free(validate->type_map);
+  if (validate->required_children != NULL) stringlist_free(validate->required_children);
+  if (validate->required_children_value != NULL) hash_free(validate->required_children_value);
+  free(validate);
+}
+
+static void validate_set_argc_minmax(validate_type * validate , int argc_min , int argc_max, const config_item_types * type_map) {
+  if (validate->argc_min != -1)
+    util_abort("%s: sorry - current implementation does not allow repeated calls to: %s \n",__func__ , __func__);
+  
+  if (argc_min == -1)
+    argc_min = 0;
+
+  
+  validate->argc_min = argc_min;
+  validate->argc_max = argc_max;
+  
+  if (argc_max > 0) {
+    if (type_map != NULL)
+      validate->type_map = util_alloc_copy(type_map , argc_max * sizeof * type_map , __func__);
+    validate->indexed_selection_set = util_malloc( argc_max * sizeof * validate->indexed_selection_set , __func__);
+    for (int iarg=0; iarg < argc_max; iarg++)
+      validate->indexed_selection_set[iarg] = NULL;
+  }
+}
+
+static void validate_set_common_selection_set(validate_type * validate , int argc , const char ** argv) {
+  if (validate->common_selection_set != NULL)
+    set_free(validate->common_selection_set);
+  validate->common_selection_set = set_alloc( argc , argv );
+}
+
+
+static void validate_set_indexed_selection_set(validate_type * validate , int index , int argc , const char ** argv) {
+  if (index < (validate->argc_min - 1) || index >= validate->argc_max)
+    util_abort("%s: index:%d invalid. argc_minmax = (%d,%d) \n",__func__ , index , validate->argc_min , validate->argc_max);
+  
+  if (validate->indexed_selection_set == NULL)
+    util_abort("%s: must call xxx_set_argc_minmax() first - aborting \n",__func__);
+  
+  if (validate->indexed_selection_set[index] != NULL)
+    set_free(validate->indexed_selection_set[index]);
+  
+  validate->indexed_selection_set[index] = set_alloc(argc , argv);
+}
+
+
+
+
+static char * __alloc_relocated__(const char * config_cwd , const char * value) {
+  char * file;
+  
+  if (util_is_abs_path(value))
+    file = util_alloc_string_copy( value );
+  else
+    file = util_alloc_full_path(config_cwd , value);
+  
+  return file;
+}
+
+
+
+/**
+   This function asserts that argc_min == argc_max == 1. This must be
+   satisfied to be able to call config_get() without any index.
+*/
+
+static void validate_assert_get(const validate_type * validate) {
+  if (!((validate->argc_min == 1) && (validate->argc_min == 1)))
+    util_abort("%s: before calling config_get() functions *without* index you must set argc_min == argc_max = 1 \n",__func__);
+}
+
+
+/*****************************************************************/
 static void config_item_node_fprintf(config_item_node_type * node , int node_nr , FILE * stream) {
   fprintf(stream , "   %02d: ",node_nr);
   stringlist_fprintf(node->stringlist , " " , stream);
@@ -167,9 +289,12 @@ static config_item_node_type * config_item_node_alloc() {
 }
 
 
-static void config_item_node_append(config_item_node_type * node , const char * arg) {
-  stringlist_append_copy( node->stringlist , arg );
+static void config_item_node_set(config_item_node_type * node , int argc , const char ** argv) {
+  for (int iarg=0; iarg < argc; iarg++)
+    stringlist_append_copy( node->stringlist , argv[iarg] );
 }
+
+
 
 
 static void config_item_node_free(config_item_node_type * node) {
@@ -321,12 +446,8 @@ const char * config_item_iget(const config_item_type * item , int index) {
   This function will fail if we can not satisfy argc_minmax = (1,1).
 */
 const char * config_item_get(const config_item_type * item) {
-  if ((item->argc_min == 1) && (item->argc_max == 1))
-    return config_item_iget(item , 0);
-  else {
-    util_abort("%s: kw:%s sorry - this function requires that argc_minmax = 1,1 \n",__func__ , item->kw);
-    return NULL;
-  }
+  validate_assert_get(item->validate);
+  return config_item_iget(item , 0);
 }
 
 
@@ -424,12 +545,10 @@ config_item_type * config_item_alloc(const char * kw , bool required , bool appe
   item->currently_set           = false;
   item->append_arg              = append_arg;
   item->required_set            = required;
-  item->argc_min          = -1;  /* -1 - not applicable */
-  item->argc_max          = -1;
-  item->selection_set           = NULL;
   item->required_children       = NULL;
   item->required_children_value = NULL;
   item->type_map                = NULL;
+  item->validate                = validate_alloc();
   return item;
 }
 
@@ -474,6 +593,126 @@ static void config_item_clear( config_item_type * item ) {
 }
 
 
+
+/**
+   This function validates the setting of an item. If the item is OK NULL is returned,
+   otherwise an error message is returned.
+*/
+
+static bool config_item_validate_set(config_type * config , const config_item_type * item , int argc , char ** argv ,  const char * config_file, const char * config_cwd) {
+  bool OK = true;
+  return OK;
+
+  if (item->validate->argc_min >= 0) {
+    if (argc < item->validate->argc_min) {
+      OK = false;
+      if (config_file != NULL)
+	config_add_and_free_error(config , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have at least %d arguments.",config_file , item->kw , item->validate->argc_min));
+      else
+	config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have at least %d arguments.",item->kw , item->validate->argc_min));
+    }
+  }
+  if (item->validate->argc_max >= 0) {
+    if (argc > item->validate->argc_max) {
+      OK = false;
+      if (config_file != NULL)
+	config_add_and_free_error(config ,util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->validate->argc_min));
+      else
+	config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->validate->argc_min));
+    }
+  }
+
+  /* OK - now we have verified that the number of argumnets is correct. Then
+     we start actually looking at the values. */
+
+  if (OK) { 
+    /* Validating selection set - first common, then indexed */
+    if (item->validate->common_selection_set) {
+      for (int iarg = 0; iarg < argc; iarg++) {
+	if (!set_has_key(item->validate->common_selection_set , argv[iarg])) {
+	  config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
+	  OK = false;
+	}
+      }
+    } else if (item->validate->indexed_selection_set != NULL) {
+      for (int iarg = 0; iarg < argc; iarg++) {
+	if (item->validate->indexed_selection_set[iarg] != NULL) {
+	  if (!set_has_key(item->validate->indexed_selection_set[iarg] , argv[iarg])) {
+	    config_add_and_free_error(config , util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw));
+	    OK = false;
+	  }
+	}
+      }
+    }
+
+    /*
+      Observe that the following code might rewrite the content of
+      argv for arguments referring to path locations.
+    */
+
+    /* Validate the TYPE of the various argumnents */
+    if (item->validate->type_map != NULL) {
+      for (int iarg = 0; iarg < argc; iarg++) {
+	const char * value = argv[iarg];
+	switch (item->validate->type_map[iarg]) {
+	case(CONFIG_STRING): /* This never fails ... */
+	  break;
+	case(CONFIG_EXECUTABLE):
+	  {
+	    /* Should also use config_cwd */
+	    char * new_exe    = __alloc_relocated__(config_cwd , value);
+	    char * executable = util_alloc_PATH_executable( value );
+	    if (executable == NULL)
+	      config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+	    else 
+	      argv[iarg] = util_realloc_string_copy(argv[iarg] , executable);
+	    free(new_exe);
+	  }
+	  break;
+	case(CONFIG_INT):
+	  if (!util_sscanf_int( value , NULL ))
+	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as an integer.",value));
+	  break;
+	case(CONFIG_FLOAT):
+	  if (!util_sscanf_double( value , NULL ))
+	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a floating point number.", value));
+	  break;
+	case(CONFIG_EXISTING_FILE):
+	  {
+	    char * file = __alloc_relocated__(config_cwd , value);
+	    if (!util_file_exists(file))
+	      config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
+	    else
+	      argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+	  }
+	  break;
+	case(CONFIG_EXISTING_DIR):
+	  {
+	    char * dir = __alloc_relocated__(config_cwd , value);
+	    if (!util_is_directory(value))
+	      config_add_and_free_error(config , util_alloc_sprintf("Can not find directory: %s. ",value));
+	    else
+	      argv[iarg] = util_realloc_string_copy(argv[iarg] , dir);
+	  }
+	  break;
+	case(CONFIG_BOOLEAN):
+	  if (!util_sscanf_bool( value , NULL ))
+	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:%s as a boolean.", value));
+	  break;
+	case(CONFIG_BYTESIZE):
+	  if (!util_sscanf_bytesize( value , NULL))
+	    config_add_and_free_error(config , util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value));
+	  break;
+	default:
+	  util_abort("%s: config_item_type:%d not recognized \n",__func__ , item->validate->type_map[iarg]);
+	}
+      }
+    }
+  }
+  return OK;
+}
+
+
 /*
   The last argument (config_file) is only used for printing
   informative error messages, and can be NULL. The config_cwd is
@@ -484,15 +723,10 @@ static void config_item_clear( config_item_type * item ) {
   calling scope will free it.
 */
 
-char * config_item_set_arg(config_item_type * item , int argc , const char ** argv , const char * config_file , const char * config_cwd) {
+static void config_item_set_arg__(config_type * config , config_item_type * item , int argc , char ** argv , const char * config_file , const char * config_cwd) {
   if (argc == 1 && (strcmp(argv[0] , CLEAR_STRING) == 0)) {
     config_item_clear(item);
-    return NULL;
   } else {
-    char * error_message = NULL;
-    int iarg;
-    bool OK            = true;
-    bool currently_set = false;
     config_item_node_type * node;
     
     if (item->append_arg)
@@ -502,66 +736,29 @@ char * config_item_set_arg(config_item_type * item , int argc , const char ** ar
       config_item_node_clear(node);
     }
     
-    
-    if (item->argc_min >= 0) {
-      if (argc < item->argc_min) {
-        OK = false;
-        
-        if (config_file != NULL)
-          error_message = util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have at least %d arguments.",config_file , item->kw , item->argc_min);
-        else
-          error_message = util_alloc_sprintf("Error:: Keyword:%s must have at least %d arguments.",item->kw , item->argc_min);
-      }
-    }
-    
-    if (item->argc_max >= 0) {
-      if (argc > item->argc_max) {
-        OK = false;
-        if (config_file != NULL)
-          error_message = util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->argc_min);
-        else
-          error_message = util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->argc_min);
-      }
-    }
-    
-    if (OK) {
-      if (argc == 0) /* It is OK to set without arguments */
-        currently_set = true;
-      else {
-        for (iarg = 0; iarg < argc; iarg++) {
-          OK = true;
-	  /*
-	    Selection set is checked here - to not overwrite a valid value with an invalid,
-	    which could happen if selection set was only checked when validating.
-	  */
-          if (item->selection_set != NULL) {
-            if (!stringlist_contains(item->selection_set , argv[iarg])) {
-              error_message = util_alloc_sprintf("%s: is not a valid value for: %s.",argv[iarg] , item->kw);
-              OK = false;
-            } 
-          }
-          if (OK) {
-            config_item_node_append(node , argv[iarg]);
-            currently_set = true;
-          }
-        }
-      }
-    }
-    if (currently_set) {
+    if (config_item_validate_set(config , item , argc , argv , config_file, config_cwd)) {
+      config_item_node_set(node , argc , (const char **) argv);
       item->currently_set = true;
-
+      
       if (config_cwd != NULL)
 	node->config_cwd = util_alloc_string_copy( config_cwd );
       else
 	node->config_cwd = util_alloc_cwd(  );  /* For use from external scope. */
     }
-
-    return error_message;
   }
 }
+ 
 
 
+/**
+   This function counts the number of times a config item has been
+   set. Referring again to the example at the top:
 
+     config_item_get_occurences( "KEY1" )
+
+   will return 2. However, if the item has been added with append_arg
+   set to false, this function can only return zero or one.
+*/
 
 static int config_item_get_occurences(const config_item_type * item) {
   return item->node_size;
@@ -641,10 +838,6 @@ void config_item_fprintf(const config_item_type * item , FILE * stream) {
 
 
 void config_item_free( config_item_type * item) {
-  /*
-    printf("%s / %s: \n",__func__ , item->kw);
-    config_item_fprintf(item , stdout);
-  */
   free(item->kw);
   {
     int i;
@@ -654,8 +847,8 @@ void config_item_free( config_item_type * item) {
   }
   if (item->required_children       != NULL) stringlist_free(item->required_children);
   if (item->required_children_value != NULL) hash_free(item->required_children_value); 
-  if (item->selection_set != NULL)           stringlist_free(item->selection_set);
   util_safe_free(item->type_map);
+  validate_free(item->validate);
   free(item);
 }
 
@@ -676,27 +869,14 @@ bool config_item_is_set(const config_item_type * item) {
   return item->currently_set;
 }
 
-void config_item_set_selection_set(config_item_type * item , const stringlist_type * stringlist) {
-  if (item->selection_set != NULL)
-    stringlist_free(item->selection_set);
-  
-  item->selection_set = stringlist_alloc_deep_copy(stringlist);
+void config_item_set_common_selection_set(config_item_type * item , int argc , const char ** argv) {
+  validate_set_common_selection_set(item->validate , argc , argv);
 }
 
-void config_item_add_to_selection(config_item_type * item , const char *value) {
-  if (item->selection_set == NULL)
-    item->selection_set = stringlist_alloc_new();
-  stringlist_append_copy(item->selection_set , value);
+void config_item_set_indexed_selection_set(config_item_type * item , int index , int argc , const char ** argv) {
+  validate_set_indexed_selection_set(item->validate , index , argc , argv);
 }
 
-static bool config_item_has_selection_item(config_item_type * item, const char * value) {
-  bool has_item = false;
-  if (item->selection_set != NULL) {
-    if (stringlist_contains(item->selection_set , value))
-      has_item = true;
-  }
-  return has_item;
-}
 
 void config_item_set_required_children(config_item_type * item , stringlist_type * stringlist) {
   item->required_children = stringlist_alloc_deep_copy(stringlist);
@@ -714,14 +894,10 @@ void config_item_set_required_children(config_item_type * item , stringlist_type
      
 */        
 
-
 void config_item_set_required_children_on_value(config_item_type * item , const char * value , stringlist_type * child_list) {
-  if (config_item_has_selection_item(item , value)) {
-    if (item->required_children_value == NULL)
-      item->required_children_value = hash_alloc();
-    hash_insert_hash_owned_ref( item->required_children_value , value , stringlist_alloc_deep_copy(child_list) , stringlist_free__);
-  } else 
-    util_abort("%s: must install selection set which includes:%s first \n",__func__ , value);
+  if (item->required_children_value == NULL)
+    item->required_children_value = hash_alloc();
+  hash_insert_hash_owned_ref( item->required_children_value , value , stringlist_alloc_deep_copy(child_list) , stringlist_free__);
 }
 
 
@@ -735,13 +911,7 @@ void config_item_set_required_children_on_value(config_item_type * item , const 
 
 
 void config_item_set_argc_minmax(config_item_type * item , int argc_min , int argc_max, const config_item_types * type_map) {
-  item->argc_min = argc_min;
-  item->argc_max = argc_max;
-
-  util_safe_free(item->type_map);
-  if (type_map != NULL)
-    item->type_map = util_alloc_copy(type_map , argc_max * sizeof * type_map , __func__);
-  
+  validate_set_argc_minmax(item->validate , argc_min , argc_max , type_map);
 }
   
 
@@ -822,9 +992,10 @@ bool config_item_set(const config_type * config , const char * kw) {
 
 
 
-void config_set_arg(config_type * config , const char * kw, int argc , const char **argv) {
-  char * error_message = config_item_set_arg( config_get_item(config , kw) , argc , argv , NULL , NULL);
-  config_add_and_free_error(config , error_message);
+void config_set_arg(config_type * config , const char * kw, int argc , const char **__argv) {
+  char ** argv = util_alloc_stringlist_copy(__argv , argc);  
+  config_item_set_arg__( config , config_get_item(config , kw) , argc , argv , NULL , NULL);
+  util_free_stringlist(argv , argc);
 }
 
 
@@ -989,10 +1160,8 @@ static void config_parse__(config_type * config , const char * config_cwd , cons
 	      config_add_item(config , kw , true , false);  /* Auto created items get append_arg == false, and required == true (which is trivially satisfied). */
 	    
 	    if (config_has_item(config , kw)) {
-	      char * error_message;
 	      config_item_type * item = config_get_item(config , kw);
-	      error_message = config_item_set_arg(item , active_tokens - 1, (const char **) &token_list[1] , config_file , config_cwd);
-	      config_add_and_free_error(config , error_message);
+	      config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd);
 	    } else 
 	      fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s - ignored \n" , kw , config_file);
 	  }
