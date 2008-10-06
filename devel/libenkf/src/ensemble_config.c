@@ -27,10 +27,8 @@
 #include <enkf_fs.h>
 #include <void_arg.h>
 #include <gen_kw_config.h>
-#include <enkf_config.h>
 #include <ecl_grid.h>
 #include <time.h>
-#include <enkf_site_config.h>
 #include <job_queue.h>
 #include <lsf_driver.h>
 #include <local_driver.h>

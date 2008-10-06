@@ -2,7 +2,6 @@
 #define __ENKF_ENSEMBLE_H__
 
 #include <stdbool.h>
-#include <enkf_config.h>
 #include <enkf_config_node.h>
 #include <enkf_types.h>
 #include <enkf_state.h>
@@ -47,7 +46,6 @@ void                          enkf_main_interactive_set_runpath__(void * );
 enkf_main_type              * enkf_main_bootstrap(const char * , const char * );
 
 lock_mode_type                enkf_main_get_runlock_mode(const enkf_main_type * );
-enkf_main_type              * enkf_main_alloc(enkf_config_type * , lock_mode_type , const char * , enkf_fs_type *, job_queue_type *, ext_joblist_type * );
 enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
 enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );

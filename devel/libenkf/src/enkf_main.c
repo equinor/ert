@@ -98,20 +98,6 @@ struct enkf_main_struct {
   obs_data_type        * obs_data;      /* Should ideally contain the hist object. */
   meas_matrix_type     * meas_matrix;
   enkf_state_type     ** ensemble;
-  
-#if 0  
-  enkf_config_type   *config;
-  job_queue_type     *job_queue;
-  ecl_grid_type      *grid;
-  
-  sched_file_type    *sched_file;
-  history_type       *hist;
-  enkf_fs_type       *fs;
-  run_mode_type       run_mode;      /* Is this an enkf assimilation, or an ensemble experiment, or .. */
-
-  lock_mode_type      runlock_mode;  /* How/if should the runpath directories be locked */
-  char               *lock_path;     /* Path containg lock files for the forward run. */ 
-#endif
 }; 
 
 
@@ -121,22 +107,6 @@ struct enkf_main_struct {
 
 
 
-/*
-void enkf_main_insert_data_kw(enkf_main_type * enkf_main , int ens_size) {
-  int ikw, iens , size;
-  char ** data_kw_keys = enkf_config_alloc_data_kw_key_list(enkf_main->config , &size);
-
-  if (size > 0) {
-    for (iens = 0; iens < ens_size; iens++) 
-      for (ikw = 0; ikw < size; ikw++) {
-        const char * key   = data_kw_keys[ikw];
-        const char * value = enkf_config_get_data_kw(enkf_main->config , key);
-        enkf_state_set_data_kw(enkf_main->ensemble[iens] , key, value);
-      }
-    util_free_stringlist(data_kw_keys , size);
-  }
-}
-*/
 
 
 enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {

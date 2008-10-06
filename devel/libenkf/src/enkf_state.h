@@ -4,7 +4,6 @@
 
 #include <fortio.h>
 #include <stdbool.h>
-#include <enkf_config.h>
 #include <enkf_types.h>
 #include <enkf_node.h>
 #include <enkf_util.h>

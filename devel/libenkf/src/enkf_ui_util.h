@@ -2,7 +2,6 @@
 #define __ENKF_UI_UTIL_H__
 
 
-#include <enkf_config.h>
 #include <enkf_types.h>
 #include <field_config.h>
 #include <enkf_sched.h>

@@ -16,7 +16,6 @@
 #include <history.h>
 #include <enkf_util.h>
 #include <sched_file.h>
-#include <enkf_config.h>
 #include <summary_obs.h>
 #include <gen_obs.h>
 

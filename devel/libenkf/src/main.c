@@ -1,12 +1,6 @@
 #include <enkf_fs.h>
 #include <enkf_main.h>
-#include <enkf_config.h>
-#include <enkf_site_config.h>
 #include <util.h>
-#include <basic_queue_driver.h>
-#include <plain_driver_dynamic.h>
-#include <plain_driver_parameter.h>
-#include <plain_driver_static.h>
 #include <config.h>
 #include <hash.h>
 #include <fs_index.h>
@@ -95,38 +89,4 @@ int main (int argc , char ** argv) {
     
     enkf_main_free(enkf_main);
   }
-    
-
-    
-/*     lock_mode_type lock_mode = lock_file; */
-/*     const char * site_config_file  = SITE_CONFIG_FILE;  /\* The variable SITE_CONFIG_FILE should be defined on compilation ... *\/ */
-/*     const char * model_config_file = argv[1]; */
-/*     enkf_main_bootstrap(site_config_file , model_config_file); */
-/*     { */
-/*       ext_joblist_type * joblist; */
-/*       job_queue_type   * job_queue; */
-/*       enkf_main_type   * enkf_main; */
-/*       enkf_site_config_type * site_config = enkf_site_config_bootstrap(site_config_file); */
-/*       joblist   = ext_joblist_alloc(); */
-/*       enkf_config_type  * enkf_config              = enkf_config_fscanf_alloc(model_config_file , site_config , joblist , false , false , true); */
-/*       char * lock_path = util_alloc_full_path (getenv("CWD") , "locks"); */
-/*       enkf_fs_type      * fs ; */
-/*       util_make_path(lock_path); */
-/*       fs = fs_mount( enkf_config_get_ens_path(enkf_config) , lock_path); */
-      
-/*       job_queue = enkf_config_alloc_job_queue(enkf_config , site_config); */
-/*       enkf_main = enkf_main_alloc(enkf_config , lock_mode , lock_path , fs , job_queue , joblist); */
-/*       const enkf_sched_type * enkf_sched = enkf_sched_fscanf_alloc( enkf_config_get_enkf_sched_file(enkf_config) , enkf_main_get_sched_file(enkf_main) , joblist , enkf_config_get_forward_model(enkf_config)); */
-      
-/*       enkf_ui_main_menu(enkf_main , enkf_sched); */
-      
-/*       job_queue_free(job_queue); */
-/*       enkf_main_free(enkf_main); */
-/*       enkf_site_config_free(site_config); /\* Should probably be owned by enkf_main ?? *\/ */
-      
-/*       ext_joblist_free(joblist); */
-/*       enkf_fs_free(fs);  /\* Takes the drivers as well *\/ */
-/*       free(lock_path); */
-/*       enkf_sched_free( enkf_sched ); */
-/*     } */
 }
