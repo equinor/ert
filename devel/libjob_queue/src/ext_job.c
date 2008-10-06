@@ -73,8 +73,8 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->stderr_file  = NULL;
   ext_job->init_code    = NULL;
   ext_job->argv 	= NULL;
-  ext_job->platform_exe = hash_alloc();
-  ext_job->environment  = hash_alloc();
+  ext_job->platform_exe = NULL;  /* These are set with config_hash_alloc() */
+  ext_job->environment  = NULL;
 
   return ext_job;
 }
@@ -93,11 +93,12 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->stdin_file);
   util_safe_free(ext_job->target_file);
   util_safe_free(ext_job->stderr_file);
-  hash_free(ext_job->environment);
-  hash_free(ext_job->platform_exe);
 
-  if (ext_job->argv != NULL)      stringlist_free(ext_job->argv);
-  if (ext_job->init_code != NULL) stringlist_free(ext_job->init_code);
+  if (ext_job->environment != NULL)  hash_free(ext_job->environment);
+  if (ext_job->platform_exe != NULL) hash_free(ext_job->platform_exe);
+  if (ext_job->argv != NULL)         stringlist_free(ext_job->argv);
+  if (ext_job->init_code != NULL)    stringlist_free(ext_job->init_code);
+
   free(ext_job);
 }
 

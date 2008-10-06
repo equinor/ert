@@ -148,18 +148,19 @@ void enkf_main_measure(enkf_main_type * enkf_main) {
 
 void enkf_main_free(enkf_main_type * enkf_main) {  
   enkf_obs_free(enkf_main->obs);
-{
-const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
-int i;
-for (i=0; i < ens_size; i++)
+  {
+    const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
+    int i;
+    for (i=0; i < ens_size; i++)
       enkf_state_free(enkf_main->ensemble[i]);
-      free(enkf_main->ensemble);
-      }
-
-ecl_config_free(enkf_main->ecl_config);
-model_config_free( enkf_main->model_config);
-site_config_free( enkf_main->site_config);
+    free(enkf_main->ensemble);
+  }
+ 
+  ecl_config_free(enkf_main->ecl_config);
+  model_config_free( enkf_main->model_config);
+  site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
+  meas_matrix_free( enkf_main->meas_matrix );
   free(enkf_main);
 }
 
@@ -538,7 +539,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     {
       stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
-
+      
       config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_OBSERVED" , "REFCASE_HISTORY"});
       config_item_set_required_children_on_value(item , "REFCASE_OBSERVED" , refcase_dep);
       config_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);

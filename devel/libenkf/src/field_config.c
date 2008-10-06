@@ -438,6 +438,7 @@ void field_config_free(field_config_type * config) {
   util_safe_free(config->base_file);
   util_safe_free(config->perturbation_config_file);
   util_safe_free(config->layer_config_file);
+  if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
   free(config->enkf_active);
   free(config);
 }

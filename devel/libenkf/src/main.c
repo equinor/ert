@@ -25,7 +25,7 @@ void install_SIGNALS(void) {
 
 
 void text_splash() {
-  const int usleep_time = 10000;
+  const int usleep_time = 2500;
   int i;
   {
 #include "uncle_sam_100.inc"

@@ -229,13 +229,12 @@ void ensemble_config_add_config_items(config_type * config) {
 
   /* 
      The way config info is entered for fields is unfortunate because
-     it is impossible to let the config system do rim time validation
-     of the input.
+     it is difficult/impossible to let the config system handle run time
+     validation of the input.
   */
      
   item = config_add_item(config , "FIELD" , false , true);
   config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
-  
 }
 
 
