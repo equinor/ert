@@ -235,6 +235,16 @@ cfg_kw_def_type * cfg_kw_def_fscanf_alloc(FILE * stream, bool * at_eof, const ch
         hash_insert_hash_owned_ref(cfg_kw_def->children, token2, cfg_kw_def_child, cfg_kw_def_free__);
         break;
       }
+      case(RESTRICT):
+      {
+        stringlist_append_copy(cfg_kw_def->restriction_set, token2);
+        break;
+      }
+      default:
+      {
+        util_abort("%s: Shold not be here - internal error.\n", __func__);
+        break;
+      }
     }
   }
 
