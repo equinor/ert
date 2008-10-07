@@ -121,6 +121,10 @@ const ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type 
   return enkf_main->ensemble_config;
 }
 
+const model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main ) {
+  return enkf_main->model_config;
+}
+
 
 const enkf_sched_type * enkf_main_get_enkf_sched(const enkf_main_type * enkf_main) {
   return model_config_get_enkf_sched(enkf_main->model_config);
@@ -501,12 +505,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "SCHEDULE_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 2 , (const config_item_types [2]) {CONFIG_EXISTING_FILE , CONFIG_STRING});
     
-    item = config_add_item(config , "START_TIME" , true , false);
-    /*config_item_set_argc_minmax(item , 1 , 2 , (const config_item_types [2]) {CONFIG_EXISTING_FILE , CONFIG_STRING});*/
-
     item = config_add_item(config , "DATA_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
+    
     item = config_add_item(config , "EQUIL_INIT_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
     

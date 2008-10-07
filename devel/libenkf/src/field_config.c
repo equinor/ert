@@ -11,6 +11,39 @@
 #include <rms_util.h>
 #include <path_fmt.h>
 
+struct field_config_struct {
+  CONFIG_STD_FIELDS;
+  int nx,ny,nz;                       /* The number of elements in the three directions. */ 
+  int sx,sy,sz;                       /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
+  const int *index_map;
+
+  bool        * enkf_active;          /* Whether a certain cell is active or not - EnKF wise.*/
+  bool          enkf_all_active;      /* Performance gain when all cells are active. */
+  void 	      * min_value;
+  void        * max_value;
+  int           sizeof_ctype;
+
+  field_file_format_type  export_format;
+  field_file_format_type  import_format;    
+  ecl_type_enum           internal_ecl_type;
+  ecl_type_enum           export_ecl_type;
+  field_init_type         init_type; 
+  char          	* base_file;
+  char          	* perturbation_config_file;
+  char                  * layer_config_file;  
+  path_fmt_type         * init_file_fmt;
+
+  bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
+  bool fmt_file;
+  bool endian_swap;
+  bool limits_set;
+  bool write_compressed;
+  bool add_perturbation;
+
+  field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
+};
+
+
 
 /*****************************************************************/
 
@@ -229,8 +262,14 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->layer_config_file        = NULL;
   config->init_file_fmt            = NULL;
   config->enkf_active              = util_malloc(config->data_size * sizeof * config->enkf_active , __func__);
+  config->output_transform         = NULL;
   field_config_set_all_active(config);
   return config;
+}
+
+
+field_config_type * field_config_alloc_complete(const char * ecl_kw_name , ecl_type_enum ecl_type , const ecl_grid_type * ecl_grid , field_file_format_type import_format , field_file_format_type export_format) {
+  return field_config_alloc__(ecl_kw_name , ecl_type , ecl_grid , import_format , export_format);
 }
 
 
@@ -295,7 +334,6 @@ const bool * field_config_get_iactive(const field_config_type * config) {
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , undefined_format);
-  config->logmode           = 0;
   config->init_type         = none;
   config->export_format     = ecl_kw_file_active_cells;
   return config;
@@ -305,7 +343,6 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const 
 
 field_config_type * field_config_alloc_general(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , const char * init_fmt) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , undefined_format);
-  config->logmode           = 0;
   config->init_type         = load_unique;
   config->export_format     = ecl_kw_file_active_cells;
   config->init_file_fmt     = path_fmt_alloc_path_fmt( init_fmt );
@@ -316,7 +353,6 @@ field_config_type * field_config_alloc_general(const char * ecl_kw_name , const 
 
 field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, const ecl_grid_type * ecl_grid) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , undefined_format);
-  config->logmode            = 0;
   config->init_type          = none;
   return config;
 }
@@ -325,9 +361,22 @@ field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_nam
 
 /* This interface is just to general */
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
-field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , int logmode , field_init_type init_type , int config_len , const char ** config_files) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , ecl_kw_file_all_cells);
-  config->logmode   = logmode;
+field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const char * ecl_file , 
+						 const ecl_grid_type * ecl_grid ,field_init_type init_type , int config_len , const char ** config_files) {
+  field_config_type * config;
+  field_file_format_type export_format;
+  {
+    char * extension;
+    util_alloc_file_components(ecl_file , NULL , NULL , &extension);
+    util_strupr( extension );
+    if (strcmp(extension , "GRDECL") == 0)
+      export_format = ecl_grdecl_file;
+    else
+      export_format = ecl_kw_file_all_cells;
+    free(extension);
+  }
+
+  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , export_format);
   config->init_type = init_type;
   if (init_type == none) {
     fprintf(stderr,"%s: invalid init type \n",__func__);
@@ -687,6 +736,10 @@ void field_config_set_key(field_config_type * config , const char *key) {
   config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , key);
 }
 
+const char * field_config_get_key(const field_config_type * field_config) {
+  return field_config->ecl_kw_name;
+}
+
 
 void field_config_enkf_OFF(field_config_type * config) {
   if (config->__enkf_mode)
@@ -696,6 +749,11 @@ void field_config_enkf_OFF(field_config_type * config) {
 
 
 bool field_config_enkf_mode(const field_config_type * config) { return config->__enkf_mode; }
+
+
+field_func_type * field_config_get_output_transform(const field_config_type * config) {
+  return config->output_transform;
+}
 
 
 /*****************************************************************/

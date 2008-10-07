@@ -1143,7 +1143,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
     */
     
     /* In case the job fails, we leave the run_path directory around for debugging. */
-    if (enkf_state->run_info == enkf_assimilation) {
+    if (run_info->run_mode == enkf_assimilation) {
       if ((!my_config->keep_runpath) && (final_status == job_queue_complete_OK))
 	util_unlink_path(run_info->run_path);
     }

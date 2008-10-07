@@ -14,6 +14,7 @@
 #include <ecl_sum.h>
 #include <ecl_util.h>
 #include <ecl_grid.h>
+#include <menu.h>
 #include <enkf_types.h>
 #include <plain_driver_parameter.h>
 #include <plain_driver_static.h>
@@ -74,13 +75,19 @@ static enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) 
 }
 
 
+void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
+  if (model_config->runpath != NULL)
+    path_fmt_free( model_config->runpath );
+  
+  model_config->runpath  = path_fmt_alloc_directory_fmt( fmt );
+}
+
 
 
 model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , const sched_file_type * sched_file) {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
   model_config->result_path    = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
-  model_config->runpath        = path_fmt_alloc_directory_fmt( config_get(config , "RUNPATH") );
   model_config->forward_model  = config_alloc_stringlist( config , "FORWARD_MODEL" );
   model_config->enkf_sched     = enkf_sched_fscanf_alloc( config_safe_get(config , "ENKF_SCHED_FILE") , num_restart_files  , joblist , model_config->forward_model);
   model_config->runlock_mode   = lock_none;
@@ -92,6 +99,8 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   util_make_path( model_config->lock_path );
   model_config->ensemble_dbase = fs_mount( config_get(config , "ENSPATH") , model_config->lock_path);
   model_config->history = history_alloc_from_sched_file(sched_file);
+  model_config->runpath = NULL;
+  model_config_set_runpath_fmt( model_config , config_get(config , "RUNPATH") );
   return model_config;
 }
 
@@ -129,4 +138,21 @@ enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) 
 
 history_type * model_config_get_history(const model_config_type * config) {
   return config->history;
+}
+
+
+void model_config_interactive_set_runpath__(void * arg) {
+  void_arg_type * void_arg = void_arg_safe_cast( arg );
+  model_config_type * model_config = void_arg_get_ptr(void_arg , 0);
+  menu_item_type    * item         = void_arg_get_ptr(void_arg , 1);
+  char runpath_fmt[256];
+  printf("Give runpath format ==> ");
+  scanf("%s" , runpath_fmt);
+  model_config_set_runpath_fmt(model_config , runpath_fmt);
+  {
+    char * menu_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , runpath_fmt);
+    menu_item_set_label( item , menu_label );
+    free(menu_label);
+  }
+
 }

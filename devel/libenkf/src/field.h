@@ -9,6 +9,8 @@
 
 typedef struct field_struct field_type;
 
+
+
 int          field_get_global_index(const field_type * , int  , int  , int );
 void         field_ijk_set(field_type * , int  , int  , int  , const void * );
 void         field_indexed_set(field_type * field, ecl_type_enum , int , const int * , const void * );
@@ -34,7 +36,9 @@ field_type * field_copyc(const field_type *);
 bool         field_cmp(const field_type *  , const field_type * );
 
 double     * field_indexed_get_alloc(const field_type *, int, const int *);
-
+void       * field_get_data(field_type * );
+void         field_apply(field_type *  , field_func_type * );
+void         field_inplace_output_transform(field_type * field);
 
 ENSEMBLE_MULX_VECTOR_HEADER(field);
 MATH_OPS_VOID_HEADER(field);

@@ -77,7 +77,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config) {
     ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date);
   }
   if (config_has_set_item(config , "EQUIL_INIT_FILE"))
-    ecl_config->equil_init_file = util_alloc_string_copy(config_get(config , "EQUIL_INIT_FILE"));
+    ecl_config->equil_init_file = util_alloc_realpath(config_get(config , "EQUIL_INIT_FILE"));
   else {
     if (!config_has_set_item(config , "EQUIL"))
       util_abort("%s: you must specify how ECLIPSE is initialized - with either EQUIL or EQUIL_INIT_FILE ",__func__);

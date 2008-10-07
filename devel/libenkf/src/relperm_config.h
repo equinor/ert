@@ -6,7 +6,6 @@
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <enkf_types.h>
-#include <logmode.h>
 #include <scalar.h>
 #include <scalar_config.h>
 #include <hash.h>

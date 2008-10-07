@@ -83,10 +83,10 @@ int main (int argc , char ** argv) {
   } else {
     const char * site_config_file  = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * model_config_file = argv[1]; 
-    enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file);
 
+    enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file);
     enkf_ui_main_menu(enkf_main); 
-    
     enkf_main_free(enkf_main);
+    
   }
 }

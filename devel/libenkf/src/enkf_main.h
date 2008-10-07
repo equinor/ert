@@ -54,6 +54,7 @@ const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * ,
 const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
 const ensemble_config_type  * enkf_main_get_ensemble_config(const enkf_main_type * );
 const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
+const model_config_type     * enkf_main_get_model_config( const enkf_main_type * );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
 
 #endif

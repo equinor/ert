@@ -75,38 +75,9 @@ typedef enum { none                   = 0  , /* For restart fields */
 
 typedef struct field_config_struct field_config_type;
 
-struct field_config_struct {
-  CONFIG_STD_FIELDS;
-  int nx,ny,nz;                       /* The number of elements in the three directions. */ 
-  int sx,sy,sz;                       /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
-  int logmode;
-  const int *index_map;
+typedef  float  (field_func_type) ( float );
 
-  bool        * enkf_active;          /* Whether a certain cell is active or not - EnKF wise.*/
-  bool          enkf_all_active;      /* Performance gain when all cells are active. */
-  void 	      * min_value;
-  void        * max_value;
-  int           sizeof_ctype;
-
-  field_file_format_type  export_format;
-  field_file_format_type  import_format;    
-  ecl_type_enum           internal_ecl_type;
-  ecl_type_enum           export_ecl_type;
-  field_init_type         init_type; 
-  char          	* base_file;
-  char          	* perturbation_config_file;
-  char                  * layer_config_file;  
-  path_fmt_type         * init_file_fmt;
-
-  bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
-  bool fmt_file;
-  bool endian_swap;
-  bool limits_set;
-  bool write_compressed;
-  bool add_perturbation;
-};
-
-
+field_config_type     * field_config_alloc_complete(const char *  , ecl_type_enum , const ecl_grid_type * , field_file_format_type  , field_file_format_type );
 const char            * field_config_default_extension(field_file_format_type , bool );
 bool                    field_config_get_endian_swap(const field_config_type * );
 bool                    field_config_write_compressed(const field_config_type * );
@@ -117,7 +88,7 @@ rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
 field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid_type *);
 field_config_type     * field_config_alloc_parameter_no_init(const char *, const ecl_grid_type *);
-field_config_type     * field_config_alloc_parameter(const char * , const ecl_grid_type * , int , field_init_type  , int  , const char ** );
+field_config_type     * field_config_alloc_parameter(const char * , const char * , const ecl_grid_type * , field_init_type  , int  , const char ** );
 field_config_type     * field_config_alloc_general(const char *  , const ecl_grid_type *  , const char * );
 void                    field_config_free(field_config_type *);
 void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
@@ -144,6 +115,8 @@ void                    field_config_set_key(field_config_type * , const char *)
 void                    field_config_enkf_OFF(field_config_type * );
 bool                    field_config_enkf_mode(const field_config_type * config);
 void                    field_config_scanf_ijk(const field_config_type *  , bool , const char * , int , int * , int * , int * , int *);
+const char            * field_config_get_key(const field_config_type * );
+field_func_type       * field_config_get_output_transform(const field_config_type * );
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);

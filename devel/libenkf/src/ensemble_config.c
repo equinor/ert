@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -317,7 +318,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       int   num_config_files     = stringlist_get_size(tokens) - 4; 
       int init_mode = -13;
       if (util_sscanf_int(init_string , &init_mode)) 
-	ensemble_config_add_node(ensemble_config , key , parameter   , FIELD , ecl_file , NULL , field_config_alloc_parameter(key , grid , 0 , init_mode , num_config_files , config_files));
+	ensemble_config_add_node(ensemble_config , key , parameter   , FIELD , ecl_file , NULL , field_config_alloc_parameter(key , ecl_file , grid ,init_mode , num_config_files , config_files));
       else 
 	util_abort("%s: init_mode:%s must be a valid integer - aborting \n",__func__ , init_string);
     } else if (strcmp(var_type_string , "GENERAL") == 0) {

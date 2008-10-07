@@ -128,6 +128,7 @@ void enkf_ui_run_exp__(void * enkf_main) {
 }
 
 
+
 void enkf_ui_run_screening__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size  = ensemble_config_get_size(ensemble_config);
@@ -147,7 +148,9 @@ void enkf_ui_run_screening__(void * enkf_main) {
 }
 
 
-
+void enkf_main_interactive_set_runpath__(void *arg) {
+  
+}
 
 
 void enkf_ui_run_menu(void * arg) {
@@ -159,7 +162,19 @@ void enkf_ui_run_menu(void * arg) {
   menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__        , enkf_main);
   menu_add_item(menu , "Run screening experiment"               , "cC" , enkf_ui_run_screening__  , enkf_main);
   menu_add_separator(menu);
-  /*menu_add_item(menu , "Set new value for RUNPATH"              , "pP" , enkf_main_interactive_set_runpath__ , enkf_main);*/
+  {
+    model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+    path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );
+    void_arg_type * void_arg = void_arg_alloc2(void_pointer , void_pointer);
+    char * runpath_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , path_fmt_get_fmt ( runpath_fmt ));
+    
+    void_arg_pack_ptr(void_arg , 0 , model_config);
+    void_arg_pack_ptr(void_arg , 1 , menu_add_item(menu , runpath_label , "pP" , model_config_interactive_set_runpath__ , void_arg));
+    
+    
+    free(runpath_label);
+  }
+
   menu_run(menu);
   menu_free(menu);
 

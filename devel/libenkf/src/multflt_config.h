@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
-#include <logmode.h>
 #include <scalar_config.h>
 #include <scalar.h>
 

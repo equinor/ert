@@ -46,22 +46,26 @@ struct field_struct {
              
   bool   shared_data;                             /* If the data is shared - i.e. managed (xalloc & free) from another scope. */
   int    shared_byte_size;                        /* The size of the shared buffer (if it is shared). */
+  char  *export_data;                             /* IFF an output transform should be applied this pointer will hold the transformed data. */
+  char  *__data;                                  /* IFF an output transform, this pointer will hold the original data during the transform and export. */
 };
 
 
 
 #define EXPORT_MACRO                                                                           	  	  \
 {                                                                                                 	  \
+  int nx,ny,nz;                                                                                           \
+  field_config_get_dims(field->config , &nx , &ny , &nz);                                                 \
   int i,j,k;                                                                                      	  \
-   for (k=0; k < config->nz; k++) {                                                               	  \
-     for (j=0; j < config->ny; j++) {                                                             	  \
-       for (i=0; i < config->nx; i++) {                                                           	  \
+   for (k=0; k < nz; k++) {                                                               	  	  \
+     for (j=0; j < ny; j++) {                                                             	  	  \
+       for (i=0; i < nx; i++) {                                                           	  	  \
          int index1D = field_config_global_index(config , i , j , k);                             	  \
          int index3D;                                                                             	  \
          if (rms_index_order)                                               		     	       	  \
-           index3D = rms_util_global_index_from_eclipse_ijk(config->nx,config->ny,config->nz,i,j,k);      \
+           index3D = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);                              \
          else                                                                       	       	          \
-           index3D = i + j * config->nx + k* config->nx*config->ny;           	               	          \
+           index3D = i + j * nx + k* nx*ny;           	               	                                  \
          if (index1D >= 0)                                                                        	  \
    	   target_data[index3D] = src_data[index1D];                               	       	          \
          else                                                                                     	  \
@@ -74,9 +78,10 @@ struct field_struct {
 
 void field_export3D(const field_type * field , void *_target_data , bool rms_index_order , ecl_type_enum target_type , void *fill_value) {
   const field_config_type * config = field->config;
+  ecl_type_enum ecl_type = field_config_get_ecl_type( config );
   int   sizeof_ctype_target = ecl_util_get_sizeof_ctype(target_type);
   
-  switch(config->internal_ecl_type) {
+  switch(ecl_type) {
   case(ecl_double_type):
     {
       const double * src_data = (const double *) field->data;
@@ -137,16 +142,18 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
 #define IMPORT_MACRO                                                                           	            \
 {                                                                                                           \
   int i,j,k;                                                                                                \
-  for (k=0; k < config->nz; k++) {                                                               	    \
-     for (j=0; j < config->ny; j++) {                                                             	    \
-       for (i=0; i < config->nx; i++) {                                                           	    \
+  int nx,ny,nz;                                                                                             \
+  field_config_get_dims(field->config , &nx , &ny , &nz);                                                   \
+  for (k=0; k < nz; k++) {                                                               	    	    \
+     for (j=0; j < ny; j++) {                                                             	    	    \
+       for (i=0; i < nx; i++) {                                                           	    	    \
          int index1D = field_config_global_index(config , i , j , k);                             	    \
          int index3D;                                                                             	    \
          if (index1D >= 0) {                                                                      	    \
    	   if (rms_index_order)                                               		     	       	    \
-   	     index3D = rms_util_global_index_from_eclipse_ijk(config->nx,config->ny,config->nz,i,j,k); 	    \
+   	     index3D = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k); 	                            \
    	   else                                                                       	       	    	    \
-   	     index3D = i + j * config->nx + k* config->nx*config->ny;           	               	    \
+   	     index3D = i + j * nx + k* nx*ny;           	               	                            \
            target_data[index1D] = src_data[index3D] ;                               	       	    	    \
          }                                                                                         	    \
       }                                                                                           	    \
@@ -170,8 +177,9 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
 
 static void field_import3D(field_type * field , const void *_src_data , bool rms_index_order , ecl_type_enum src_type) {
   const field_config_type * config = field->config;
+  ecl_type_enum ecl_type = field_config_get_ecl_type(config);
   
-  switch(config->internal_ecl_type) {
+  switch(ecl_type) {
   case(ecl_double_type):
     {
       double * target_data = (double *) field->data;
@@ -284,7 +292,7 @@ void field_free_data(field_type *field) {
 
 
 static field_type * __field_alloc(const field_config_type * field_config , void * shared_data , int shared_byte_size) {
-  field_type * field  = malloc(sizeof *field);
+  field_type * field  = util_malloc(sizeof *field, __func__);
   field->config = field_config;
   if (shared_data == NULL) {
     field->data        = NULL;
@@ -299,6 +307,7 @@ static field_type * __field_alloc(const field_config_type * field_config , void 
       abort();
     }
   }
+  field->export_data = NULL;
   DEBUG_ASSIGN(field)
   return field;
 }
@@ -373,7 +382,7 @@ static void * __field_alloc_3D_data(const field_type * field , int data_size , b
 
 
 /**
-   A general comment abourt writing fields to disk:
+   A general comment about writing fields to disk:
 
    The writing of fields to disk can be done in **MANY** different ways:
 
@@ -524,6 +533,51 @@ void field_ecl_grdecl_export(const field_type * field , FILE * stream) {
 }
 
 
+void field_apply(field_type * field , field_func_type * func) {
+  const int data_size          = field_config_get_data_size(field->config);   
+  const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+
+  if (ecl_type == ecl_float_type) {
+    float * data = (float *) field->data;
+    for (int i=0; i < data_size; i++)
+      data[i] = func(data[i]);
+  } else if (ecl_type == ecl_double_type) {
+    double * data = (double *) field->data;
+    for (int i=0; i < data_size; i++)
+      data[i] = func(data[i]);
+  } else 
+    util_abort("%s: only implemented for DOUBLE and FLOAT \n",__func__);
+  
+}
+
+
+
+void  field_inplace_output_transform(field_type * field) {
+  field_func_type * output_transform = field_config_get_output_transform(field->config);
+  if (output_transform != NULL) 
+    field_apply(field , output_transform);
+}
+
+
+
+static void field_output_transform(field_type * field) {
+  field_func_type * output_transform = field_config_get_output_transform(field->config);
+  if (output_transform != NULL) {
+    field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) , __func__);
+    field->__data = field->data;  /* Storing a pointer to the original data. */
+    field->data = field->export_data;
+    field_inplace_output_transform(field);
+  }
+}
+
+
+static void field_revert_output_transform(field_type * field) {
+  field_func_type * output_transform = field_config_get_output_transform(field->config);
+  if (output_transform != NULL) {
+    free(field->export_data);
+    field->data = field->__data; /* Recover the original pointer. */
+  }
+}
 
 
 /**
@@ -560,10 +614,24 @@ void field_export(const field_type * field, const char * file , field_file_forma
     util_abort("%s: internal error file_type = %d - aborting \n",__func__ , file_type);
 }
 
+/**
+   Observe that the output transform is hooked in here, that means
+   that if you call e.g. the ROFF export function directly, the output
+   transform will *NOT* be applied.
 
-void field_ecl_write(const field_type * field , const char * file) {
-  field_file_format_type export_format = field_config_get_export_format(field->config);
-  field_export(field , file , export_format);
+   Observe that the output transform is done one a copy of the data -
+   not in place. When the export is complete the field->data will be
+   unchanged.
+*/
+
+void field_ecl_write(const field_type * __field , const char * file) {
+  field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
+  field_output_transform(field);
+  {
+    field_file_format_type export_format = field_config_get_export_format(field->config);
+    field_export(field , file , export_format);
+  }
+  field_revert_output_transform(field);
 }
 
 
@@ -808,7 +876,7 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
   ecl_type_enum field_type 	   = field_config_get_ecl_type(field->config);
   ecl_type_enum kw_type            = ecl_kw_get_type(ecl_kw);
   if (data_size != ecl_kw_get_size(ecl_kw)) 
-    util_abort("%s: fatal error - incorrect size for:%s [config:%d , file:%d] - aborting \n",__func__ , config->ecl_kw_name , data_size , ecl_kw_get_size(ecl_kw));
+    util_abort("%s: fatal error - incorrect size for:%s [config:%d , file:%d] - aborting \n",__func__ , field_config_get_key(config), data_size , ecl_kw_get_size(ecl_kw));
   
   ecl_util_memcpy_typed_data(field->data , ecl_kw_get_data_ref(ecl_kw) , field_type , kw_type , ecl_kw_get_size(ecl_kw));
 }
@@ -1008,11 +1076,27 @@ void field_apply_limits(field_type * field) {
 }
 
 
+
+/**
+   A serious backdoor - if you need this function you are working on 
+   a fxxxing hack - shame on you.
+*/
+void * field_get_data(field_type * field) {
+  return field->data;
+}
+
+
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
-MATH_OPS(field)
+/*
+  These two functions assume float/double storage; will not work with
+  field which is internally based on char *.
+
+  MATH_OPS(field)
+  ENSEMBLE_MULX_VECTOR(field);
+*/
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_FREE_DATA(field)
@@ -1027,7 +1111,7 @@ VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);
 VOID_CLEAR(field);
 VOID_IGET(field);
-ENSEMBLE_MULX_VECTOR(field);
+
 
 
 

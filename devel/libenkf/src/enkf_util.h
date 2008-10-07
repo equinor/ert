@@ -9,11 +9,18 @@
 
 /*****************************************************************/
 
+/**
+   These math functions assume that the underlying data implementation
+   is double or float - will NOT work for fields. 
+*/
+
+
+
 #define SQR_FUNC(prefix)                            \
 void prefix ## _isqr(void * void_arg) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;\
 const prefix ## _config_type *config = arg->config; \
-const int data_size = config->data_size;            \
+const int data_size = prefix ## _config_get_data_size(arg->config);  \
 int i;                                              \
 for (i=0; i < data_size; i++)                       \
  arg->data[i] = arg->data[i]*arg->data[i];          \
@@ -29,7 +36,7 @@ for (i=0; i < data_size; i++)                       \
 void prefix ## _isqrt(void * void_arg) {            \
 prefix ## _type *arg = (prefix ## _type *) void_arg;\
 const prefix ## _config_type *config = arg->config; \
-const int data_size = config->data_size;            \
+const int data_size = prefix ## _config_get_data_size(arg->config);  \
 int i;                                              \
 for (i=0; i < data_size; i++)                       \
  arg->data[i] = sqrt(arg->data[i]);                 \
@@ -45,9 +52,9 @@ for (i=0; i < data_size; i++)                       \
 void prefix ## _iscale(void *void_arg , double scale_factor) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;                       \
 const prefix ## _config_type *config = arg->config; 			   \
-const int data_size = config->data_size;                      			   \
+const int data_size = prefix ## _config_get_data_size(arg->config);        \
 int i;                                              			   \
-for (i=0; i < data_size; i++)                            			   \
+for (i=0; i < data_size; i++)                            		   \
  arg->data[i] *= scale_factor;                  			   \
 }
 #define SCALE_FUNC_SCALAR(prefix)   void prefix ## _iscale(void * void_arg, double scale_factor) { scalar_iscale(((prefix ## _type *) void_arg)->scalar , scale_factor); }
@@ -60,9 +67,9 @@ for (i=0; i < data_size; i++)                            			   \
 void prefix ## _ireset(void *void_arg) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;                       \
 const prefix ## _config_type *config = arg->config; 			   \
-const int data_size = config->data_size;                      			   \
+const int data_size = prefix ## _config_get_data_size(arg->config);        \
 int i;                                              			   \
-for (i=0; i < data_size; i++)                            			   \
+for (i=0; i < data_size; i++)                                              \
  arg->data[i] = 0;                               			   \
 }
 #define RESET_FUNC_SCALAR(prefix)   void prefix ## _ireset(void * void_arg) { scalar_ireset(((prefix ## _type *) void_arg)->scalar); }
@@ -76,7 +83,7 @@ void prefix ## _iadd(void *void_arg , const void *void_delta) {                \
       prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
 const prefix ## _type *delta = (const prefix ## _type *) void_delta;	       \
 const prefix ## _config_type *config = arg->config; 			       \
-const int data_size = config->data_size;                      			       \
+const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != delta->config) {                                                 \
     fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
@@ -96,7 +103,7 @@ void prefix ## _imul_add(void *void_arg , double scale_factor , const void *void
       prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
 const prefix ## _type *delta = (const prefix ## _type *) void_delta;	       \
 const prefix ## _config_type *config = arg->config; 			       \
-const int data_size = config->data_size;                      			       \
+const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != delta->config) {                                                 \
     fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
@@ -113,18 +120,18 @@ for (i=0; i < data_size; i++)                            			       \
 /*****************************************************************/
 
 #define SUB_FUNC(prefix)                                                       \
-void prefix ## _isub(void *void_arg , const void *void_diff) {                \
+void prefix ## _isub(void *void_arg , const void *void_diff) {                 \
       prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
 const prefix ## _type *diff = (const prefix ## _type *) void_diff;	       \
 const prefix ## _config_type *config = arg->config; 			       \
-const int data_size = config->data_size;                      			       \
+const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
-if (config != diff->config) {                                                 \
+if (config != diff->config) {                                                  \
     fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
-for (i=0; i < data_size; i++)                            			       \
- arg->data[i] -= diff->data[i];                                               \
+for (i=0; i < data_size; i++)                            		       \
+ arg->data[i] -= diff->data[i];                                                \
 }
 
 #define SUB_FUNC_SCALAR(prefix)   void prefix ## _isub(void *void_arg,  const void * void_factor) { scalar_isub( ((prefix ## _type *) void_arg)->scalar , (( const prefix ## _type *) void_factor)->scalar); }
@@ -137,7 +144,7 @@ void prefix ## _imul(void *void_arg , const void *void_factor) {                
       prefix ## _type *arg    = (prefix ## _type *)       void_arg;  	       \
 const prefix ## _type *factor = (const prefix ## _type *) void_factor;	       \
 const prefix ## _config_type *config = arg->config; 			       \
-const int data_size = config->data_size;                      			       \
+const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != factor->config) {                                                 \
     fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
@@ -157,7 +164,7 @@ void prefix ## _iaddsqr(void *void_arg , const void *void_delta) {              
       prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
 const prefix ## _type *delta = (const prefix ## _type *) void_delta;	       \
 const prefix ## _config_type *config = arg->config; 			       \
-const int data_size = config->data_size;                      			       \
+const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != delta->config) {                                                 \
     fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\

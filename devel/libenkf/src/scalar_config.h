@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
-#include <logmode.h>
 #include <void_arg.h>
 
 typedef struct scalar_config_struct scalar_config_type;
@@ -16,7 +15,6 @@ typedef struct scalar_config_struct scalar_config_type;
 struct scalar_config_struct {
   int data_size;            
   int internal_offset;
-  logmode_type    ** logmode;
   double 	   * mean;
   double 	   * std;
   bool   	   * active;
