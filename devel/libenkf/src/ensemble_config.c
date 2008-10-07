@@ -46,9 +46,8 @@
 
 
 struct ensemble_config_struct {
-  int  		   ens_size;        /* The size of the ensemble */
-  hash_type       *config_nodes;    /* A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects. */
-  bool            *keep_runpath;    /* Whether the runpath should be kept for the various members. */
+  int  		   ens_size;        /*  The size of the ensemble  */
+  hash_type       *config_nodes;    /*  A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
 };
 
 
@@ -61,9 +60,6 @@ static ensemble_config_type * ensemble_config_alloc_empty(int ens_size) {
     ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config , __func__);
     ensemble_config->ens_size     = ens_size;
     ensemble_config->config_nodes = hash_alloc();
-    ensemble_config->keep_runpath = util_malloc(ens_size * sizeof * ensemble_config->keep_runpath , __func__);
-    for (int i = 0; i < ens_size; i++)
-      ensemble_config->keep_runpath[i] = false;
     
     return ensemble_config;
   }
@@ -362,7 +358,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const char * key         = stringlist_iget(tokens , 0);
     const char * config_file = stringlist_iget(tokens , 1);
     
-    ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , NULL , NULL , gen_data_config_fscanf_alloc(config_file));
+    ensemble_config_add_node(ensemble_config , key , ecl_restart , GEN_DATA , NULL , NULL , gen_data_config_fscanf_alloc(config_file));
   }
 
 
@@ -377,47 +373,6 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     ensemble_config_add_node(ensemble_config , key , parameter , GEN_KW , target_file , NULL , gen_kw_config_fscanf_alloc(config_file , template_file));
   }
 
-
-  /*****************************************************************/
-  /* KEEP_RUNPATH - this parser is *EXTREMELY* primitive */
-  for (i=0; i < config_get_occurences(config , "KEEP_RUNPATH"); i++) {
-    const stringlist_type * _tokens = config_iget_stringlist_ref(config , "KEEP_RUNPATH" , i);
-    const char ** token_list = stringlist_get_argv(_tokens);
-    int           tokens     = stringlist_get_size(_tokens);
-    
-    int token_index   = 0;
-    int prev_iens     = -1;
-    bool range_active = false;
-    do {
-      if (token_list[token_index][0] == ',')
-	token_index++;
-      else {
-	if (token_list[token_index][0] == '-') {
-	  if (prev_iens == -1) 
-	    util_abort("%s: something rotten - lonesome dash \n",__func__);
-
-	  range_active = true;
-	} else {
-	  int iens,iens1,iens2;
-	  if (util_sscanf_int(token_list[token_index] , &iens2)) {
-	    if (range_active)
-	      iens1 = prev_iens;
-	    else {
-	      iens1     = iens2;
-	      prev_iens = iens2;
-	    }
-	    for (iens = iens1; iens <= iens2; iens++)
-	      if (iens2 < ensemble_config->ens_size) 
-		ensemble_config->keep_runpath[iens] = true;
-	    
-	    range_active = false;  
-	  } else 
-	    util_abort("%s: something wrong when parsing: \"%s\" to integer \n",__func__ , token_list[token_index]);
-	}
-	token_index++;
-      }
-    } while (token_index < tokens);
-  }
   /*****************************************************************/
 
     
@@ -425,14 +380,6 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 }
 
 
-bool ensemble_config_iget_keep_runpath(const ensemble_config_type * config , int iens) {
-  if (iens >= 0 && iens < config->ens_size)
-    return config->keep_runpath[iens];
-  else {
-    util_abort("%s ... \n",__func__);
-    return false; /* Compiler shut up */
-  }
-}
 
 
 char ** ensemble_config_alloc_keylist(const ensemble_config_type * config , int *keys) {

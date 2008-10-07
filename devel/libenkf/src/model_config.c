@@ -105,6 +105,7 @@ void model_config_free(model_config_type * model_config) {
   free(model_config->lock_path);
   enkf_fs_free(model_config->ensemble_dbase);
   history_free(model_config->history);
+  stringlist_free(model_config->forward_model);
   free(model_config);
 }
 

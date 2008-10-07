@@ -71,11 +71,10 @@ typedef struct run_info_struct {
   int               step1;           	   /* The forward model is integrated: step1 -> step2 */
   int               step2;  	     
   bool              load_results;    	   /* Whether the results should be loaded when the forward model is complete. */
-  bool              unlink_run_path; 	   /* Whether the run_path should be unlinked when the forward model is through.  [Partly in conflict with member_config->keep_runpath]*/
   const stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
   char             *run_path;              /* The currently used runpath - is realloced / freed for every step. */
   bool              can_sim;               /* If false - this member can not start simulations. */
-  
+  run_mode_type     run_mode;              /* What type of run this is */
   /******************************************************************/
   /* Return value - set in the called routine!!  */
   bool              complete_OK;     /* Did the forward model complete OK? */
@@ -116,7 +115,7 @@ typedef struct shared_info_struct {
 
 typedef struct member_config_struct {
   int  		        iens;              /* The ensemble member number of this member. */
-  bool                  keep_runpath;      /* Should the run-path directory be left around (for this member) [Partly in conflict with run_info->unlink_run_path] */
+  bool                  keep_runpath;      /* Should the run-path directory be left around (for this member)*/
   char 		      * eclbase;           /* The ECLBASE string used for simulations of this member. */
 } member_config_type;
 
@@ -170,18 +169,18 @@ static void run_info_set_run_path(run_info_type * run_info , lock_mode_type lock
 */
 
 
-static void run_info_set(run_info_type * run_info ,bool active, int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model, int iens , path_fmt_type * run_path_fmt) {
+static void run_info_set(run_info_type * run_info , run_mode_type run_mode , bool active, int init_step , state_enum init_state , int step1 , int step2 , bool load_results , const stringlist_type * forward_model, int iens , path_fmt_type * run_path_fmt) {
   run_info->active          = active;
   run_info->init_step  	    = init_step;
   run_info->init_state 	    = init_state;
   run_info->step1      	    = step1;
   run_info->step2      	    = step2;
   run_info->load_results    = load_results;
-  run_info->unlink_run_path = unlink_run_path;
   run_info->forward_model   = forward_model;
   run_info->complete_OK     = false;
   run_info->__ready         = true;
   run_info->can_sim         = true;
+  run_info->run_mode        = run_mode;
   run_info_set_run_path(run_info , lock_none , iens , run_path_fmt);
 }
 
@@ -267,19 +266,22 @@ static void member_config_free(member_config_type * member_config) {
 }
 
 
+static void member_config_set_keep_runpath(member_config_type * member_config , bool keep_runpath) {
+  member_config->keep_runpath   = keep_runpath;
+}
 
-static member_config_type * member_config_alloc(int iens , const ecl_config_type * ecl_config , const ensemble_config_type * ensemble_config) {
+
+static member_config_type * member_config_alloc(int iens , bool keep_runpath , const ecl_config_type * ecl_config , const ensemble_config_type * ensemble_config) {
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   
   member_config->iens           = iens; /* Can only be changed in the allocater. */
-  member_config->keep_runpath   = ensemble_config_iget_keep_runpath( ensemble_config , iens );
   member_config->eclbase  	= NULL;
   {
     char * eclbase = path_fmt_alloc_path(ecl_config_get_eclbase_fmt(ecl_config), false , member_config->iens);
     member_config_set_eclbase(member_config  , eclbase);
     free(eclbase);
   }
-  
+  member_config_set_keep_runpath(member_config , keep_runpath);
   return member_config;
 }
 
@@ -375,6 +377,7 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 
 
 enkf_state_type * enkf_state_alloc(int iens,
+				   bool  keep_runpath , 
 				   const model_config_type * model_config,
 				   ensemble_config_type * ensemble_config,
 				   const site_config_type * site_config,
@@ -389,7 +392,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->ensemble_config          = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
   enkf_state->meas_vector     = meas_vector;
-  enkf_state->my_config       = member_config_alloc( iens , ecl_config , ensemble_config);
+  enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config);
   enkf_state->shared_info     = shared_info_alloc(site_config , model_config , obs);
   enkf_state->run_info        = run_info_alloc();
 
@@ -1131,21 +1134,19 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
     } 
     
     /**
-       We are about to delete the runpath - but there are many tests:
+       We are about to delete the runpath - but first we test:
+
+       1. That this is enkf_assimilation
+       2. If the integration failed we keep the path.
+       3. If keep_runpath == true we keep the path.
        
-       1. If the integration failed we keep tha path.
-       2. If keep_runpath == true we keep the path.
-       3. If unlink_run_path == false we keep th path.
-
-       Some confusion/conflict between the last two ..??
-
     */
     
     /* In case the job fails, we leave the run_path directory around for debugging. */
-    if (!my_config->keep_runpath)
-      if (run_info->unlink_run_path && (final_status == job_queue_complete_OK))
+    if (enkf_state->run_info == enkf_assimilation) {
+      if ((!my_config->keep_runpath) && (final_status == job_queue_complete_OK))
 	util_unlink_path(run_info->run_path);
-    
+    }
     run_info_complete_run(enkf_state->run_info);
   }
   run_info->__ready = false;
@@ -1450,12 +1451,14 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 }
 
 
-void enkf_state_init_run(enkf_state_type * state , bool active , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool unlink_run_path , const stringlist_type * forward_model) {
+void enkf_state_init_run(enkf_state_type * state , run_mode_type run_mode, bool active , int init_step , state_enum init_state , int step1 , int step2 , bool load_results ,const stringlist_type * forward_model) {
   member_config_type * my_config    = state->my_config;
   shared_info_type   * shared_info  = state->shared_info;
 
-  run_info_set( state->run_info , active , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model , my_config->iens , shared_info->run_path_fmt);
+  run_info_set( state->run_info , run_mode , active , init_step , init_state , step1 , step2 , load_results , forward_model , my_config->iens , shared_info->run_path_fmt);
 }
+
+
 
 
 

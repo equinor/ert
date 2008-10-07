@@ -118,9 +118,9 @@ typedef enum   {undefined   = 0 ,
 
 */
 
-typedef enum { enkf_assimilation   = 1, 
-	       ensemble_experiment = 2,
-	       screening_experment = 3} run_mode_type;
+typedef enum { enkf_assimilation    = 1, 
+	       ensemble_experiment  = 2,
+	       screening_experiment = 3} run_mode_type;
 
 
 typedef enum { lock_lockf = 1,

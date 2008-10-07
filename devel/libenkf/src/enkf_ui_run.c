@@ -16,7 +16,6 @@ void enkf_ui_run(enkf_main_type * enkf_main , const bool * iactive ,  int start_
   const bool load_results = true;
   bool analyzed_start;
   bool prev_enkf_on;
-  bool unlink_run_path = true;
   const enkf_sched_type * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const int num_nodes            = enkf_sched_get_num_nodes(enkf_sched);
   const int schedule_num_reports = enkf_sched_get_schedule_num_reports(enkf_sched);
@@ -55,7 +54,7 @@ void enkf_ui_run(enkf_main_type * enkf_main , const bool * iactive ,  int start_
       else
 	init_state = forecast;
       
-      enkf_main_run(enkf_main , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , unlink_run_path , forward_model);
+      enkf_main_run(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , forward_model);
       report_step  = next_report_step;
       prev_enkf_on = enkf_on;
     } while (next_report_step < report_step2);
@@ -124,7 +123,7 @@ void enkf_ui_run_exp__(void * enkf_main) {
 	iactive[iens] = false;
     }
   }
-  enkf_main_run(enkf_main , iactive , start_report , analyzed , 0 , last_report , load_results , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 
@@ -143,7 +142,7 @@ void enkf_ui_run_screening__(void * enkf_main) {
   }
 
     
-  enkf_main_run(enkf_main , iactive , 0 , analyzed , 0 , last_report , load_results , false , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 

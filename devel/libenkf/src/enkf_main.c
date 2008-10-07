@@ -263,7 +263,7 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 /******************************************************************/
 
-void enkf_main_run(enkf_main_type * enkf_main, const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool enkf_update, bool unlink_run_path , const stringlist_type * forward_model) {
+void enkf_main_run(enkf_main_type * enkf_main, run_mode_type run_mode , const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool enkf_update , const stringlist_type * forward_model) {
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;
   
@@ -285,7 +285,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
     {
       thread_pool_type * submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) {
-        enkf_state_init_run(enkf_main->ensemble[iens] , iactive[iens] , init_step , init_state , step1 , step2 , load_results , unlink_run_path , forward_model);
+        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , load_results , forward_model);
         thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
@@ -566,56 +566,106 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ));
     enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , ecl_config_get_sched_file(enkf_main->ecl_config));
 
-
-    {
-      const char * obs_config_file;
-      if (config_has_set_item(config , "OBS_CONFIG"))
-	obs_config_file = config_get(config  , "OBS_CONFIG");
-      else
-	obs_config_file = NULL;
-      
-      enkf_main->meas_matrix     = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
-      enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file , enkf_main->ensemble_config ,  ecl_config_get_sched_file(enkf_main->ecl_config) , model_config_get_history(enkf_main->model_config));
-      enkf_main->obs_data        = obs_data_alloc();
-    }
-    
     /*****************************************************************/
-    /* Adding ensemble members */
+    /* KEEP_RUNPATH - this parser is *EXTREMELY* primitive */
     {
-      const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
-      hash_type * data_kw = config_alloc_hash(config , "DATA_KW");
-      int iens , keys , ik;
-      char **keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &keys);
-      msg_type * msg  = msg_alloc("Initializing member: ");
-      msg_show(msg);
-      enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
-      for (iens = 0; iens < ens_size; iens++) {
-	msg_update_int(msg , "%03d" , iens);
-	enkf_main->ensemble[iens] = enkf_state_alloc(iens,
-						     enkf_main->model_config   , 
-						     enkf_main->ensemble_config,
-						     enkf_main->site_config    , 
-						     enkf_main->ecl_config     ,
-						     data_kw,
-						     meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
-						     enkf_main->obs);
-	
-      }
-      msg_free(msg , true);
+      const int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
+      int i;
+      bool * keep_runpath = util_malloc( sizeof * keep_runpath * ens_size , __func__);
       
-      msg  = msg_alloc("Adding key: ");
-      msg_show(msg);
-      for (ik = 0; ik < keys; ik++) {
-        msg_update(msg , keylist[ik]);
-	const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , keylist[ik]);
-	for (iens = 0; iens < ens_size; iens++) 
-	  enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
+      for (i = 0; i < ens_size; i++) 
+	keep_runpath[i] = false;
+
+      for (i=0; i < config_get_occurences(config , "KEEP_RUNPATH"); i++) {
+	const stringlist_type * _tokens = config_iget_stringlist_ref(config , "KEEP_RUNPATH" , i);
+	const char ** token_list = stringlist_get_argv(_tokens);
+	int           tokens     = stringlist_get_size(_tokens);
+	
+	int token_index   = 0;
+	int prev_iens     = -1;
+	bool range_active = false;
+	do {
+	if (token_list[token_index][0] == ',')
+	  token_index++;
+	else {
+	  if (token_list[token_index][0] == '-') {
+	    if (prev_iens == -1) 
+	      util_abort("%s: something rotten - lonesome dash \n",__func__);
+	    
+	    range_active = true;
+	  } else {
+	    int iens,iens1,iens2;
+	    if (util_sscanf_int(token_list[token_index] , &iens2)) {
+	      if (range_active)
+		iens1 = prev_iens;
+	      else {
+		iens1     = iens2;
+		prev_iens = iens2;
+	      }
+	      for (iens = iens1; iens <= iens2; iens++)
+		if (iens2 < ens_size) 
+		  keep_runpath[iens] = true;
+	      
+	      range_active = false;  
+	    } else 
+	      util_abort("%s: something wrong when parsing: \"%s\" to integer \n",__func__ , token_list[token_index]);
+	  }
+	  token_index++;
+	}
+	} while (token_index < tokens);
       }
-      msg_free(msg , true);
-      hash_free(data_kw);
-      util_free_stringlist(keylist , keys);
-    }
     
+      {
+	const char * obs_config_file;
+	if (config_has_set_item(config , "OBS_CONFIG"))
+	  obs_config_file = config_get(config  , "OBS_CONFIG");
+	else
+	  obs_config_file = NULL;
+	
+	enkf_main->meas_matrix     = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
+	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file , enkf_main->ensemble_config ,  ecl_config_get_sched_file(enkf_main->ecl_config) , model_config_get_history(enkf_main->model_config));
+	enkf_main->obs_data        = obs_data_alloc();
+      }
+      
+      /*****************************************************************/
+      /* Adding ensemble members */
+      {
+	const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
+	hash_type * data_kw = config_alloc_hash(config , "DATA_KW");
+	int iens , keys , ik;
+	char **keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &keys);
+	msg_type * msg  = msg_alloc("Initializing member: ");
+	msg_show(msg);
+	enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
+	for (iens = 0; iens < ens_size; iens++) {
+	  msg_update_int(msg , "%03d" , iens);
+	  enkf_main->ensemble[iens] = enkf_state_alloc(iens,
+						       keep_runpath[iens],
+						       enkf_main->model_config   , 
+						       enkf_main->ensemble_config,
+						       enkf_main->site_config    , 
+						       enkf_main->ecl_config     ,
+						       data_kw,
+						       meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
+						       enkf_main->obs);
+	  
+	}
+	msg_free(msg , true);
+      
+	msg  = msg_alloc("Adding key: ");
+	msg_show(msg);
+	for (ik = 0; ik < keys; ik++) {
+	  msg_update(msg , keylist[ik]);
+	  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , keylist[ik]);
+	  for (iens = 0; iens < ens_size; iens++) 
+	    enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
+	}
+	msg_free(msg , true);
+	hash_free(data_kw);
+	util_free_stringlist(keylist , keys);
+      }
+      free(keep_runpath);
+    }
     config_free(config);
   }
   free(model_config);
