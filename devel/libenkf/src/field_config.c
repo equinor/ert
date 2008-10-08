@@ -10,6 +10,7 @@
 #include <rms_file.h>
 #include <rms_util.h>
 #include <path_fmt.h>
+#include <math.h>
 
 struct field_config_struct {
   CONFIG_STD_FIELDS;
@@ -361,7 +362,7 @@ field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_nam
 
 /* This interface is just to general */
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
-field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const char * ecl_file , 
+field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const char * ecl_file , const char * output_transform_name, 
 						 const ecl_grid_type * ecl_grid ,field_init_type init_type , int config_len , const char ** config_files) {
   field_config_type * config;
   field_file_format_type export_format;
@@ -408,6 +409,20 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , cons
       config_index++;
     }
   }
+  {
+    char * trans = util_alloc_strupr_copy( output_transform_name );
+    field_func_type * func = NULL;
+    if (strcmp(trans , "NULL") == 0)
+      func = NULL;
+    else if (strcmp(trans , "NONE") == 0)
+      func = NULL;
+    else if (strcmp(trans , "EXP") == 0)
+      func = expf;  /* The most common internal implementation is probably float. */
+    else 
+      util_exit("%s: sorry - function_name:%s not recognized \n",__func__ , output_transform_name); 
+    free(trans);
+  }
+
   return config;
 }
 #undef ASSERT_CONFIG_FILE
@@ -754,6 +769,42 @@ bool field_config_enkf_mode(const field_config_type * config) { return config->_
 field_func_type * field_config_get_output_transform(const field_config_type * config) {
   return config->output_transform;
 }
+
+void field_config_set_output_transform(field_config_type * config , field_func_type * func) {
+  config->output_transform = func;
+}
+
+
+/*
+  This function asserts that a unary function can be applied 
+  to the field - i.e. that the underlying data_type is ecl_float or ecl_double.
+*/
+void field_config_assert_unary( const field_config_type * field_config , const char * caller) {
+  const ecl_type_enum ecl_type = field_config_get_ecl_type(field_config);
+  if (ecl_type == ecl_float_type || ecl_type == ecl_double_type)
+    return;
+  else
+    util_abort("%s: error in:%s unary functions can only be applied on fields of type ecl_float / ecl_double \n",__func__ , caller);
+}
+
+
+/* 
+   Asserts that two fields can be combined in a binary operation.
+*/
+void field_config_assert_binary( const field_config_type * config1 , const field_config_type * config2 , const char * caller) {
+  field_config_assert_unary(config1 , caller);
+  const ecl_type_enum ecl_type1 = config1->internal_ecl_type;
+  const ecl_type_enum ecl_type2 = config2->internal_ecl_type;
+  const int size1               = config1->data_size;
+  const int size2               = config2->data_size;
+
+  if ((ecl_type1 == ecl_type2) && (size1 == size2))
+    return;
+  else
+    util_abort("%s: fields not equal enough - failure in:%s \n",__func__ , caller);
+}
+
+
 
 
 /*****************************************************************/

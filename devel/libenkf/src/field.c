@@ -24,6 +24,7 @@
 
 GET_DATA_SIZE_HEADER(field);
 
+
 /*****************************************************************/
 
 /**
@@ -533,23 +534,6 @@ void field_ecl_grdecl_export(const field_type * field , FILE * stream) {
 }
 
 
-void field_apply(field_type * field , field_func_type * func) {
-  const int data_size          = field_config_get_data_size(field->config);   
-  const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-
-  if (ecl_type == ecl_float_type) {
-    float * data = (float *) field->data;
-    for (int i=0; i < data_size; i++)
-      data[i] = func(data[i]);
-  } else if (ecl_type == ecl_double_type) {
-    double * data = (double *) field->data;
-    for (int i=0; i < data_size; i++)
-      data[i] = func(data[i]);
-  } else 
-    util_abort("%s: only implemented for DOUBLE and FLOAT \n",__func__);
-  
-}
-
 
 
 void  field_inplace_output_transform(field_type * field) {
@@ -682,8 +666,6 @@ void field_deserialize(field_type * field , serial_state_type * serial_state , c
   field_truncate(field);
 
 }
-
-
 
 
 int field_serialize(const field_type *field , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
@@ -1076,10 +1058,53 @@ void field_apply_limits(field_type * field) {
 }
 
 
+void field_apply(field_type * field , field_func_type * func) {
+  field_config_assert_unary(field->config , __func__);
+  {
+    const int data_size          = field_config_get_data_size(field->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+
+    if (ecl_type == ecl_float_type) {
+      float * data = (float *) field->data;
+      for (int i=0; i < data_size; i++)
+	data[i] = func(data[i]);
+    } else if (ecl_type == ecl_double_type) {
+      double * data = (double *) field->data;
+    for (int i=0; i < data_size; i++)
+      data[i] = func(data[i]);
+    } 
+  }
+}
+
+
+
+
+void field_iadd(field_type * field1, const field_type * field2) {
+  field_config_assert_binary(field1->config , field2->config , __func__); 
+  {
+    const int data_size          = field_config_get_data_size(field1->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    int i;
+
+    if (ecl_type == ecl_float_type) {
+      float * data1       = (float *) field1->data;
+      const float * data2 = (const float *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i];
+    } else if (ecl_type == ecl_double_type) {
+      double * data1       = (double *) field1->data;
+      const double * data2 = (const double *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i];
+    }
+  }
+}
+
+
 
 /**
-   A serious backdoor - if you need this function you are working on 
-   a fxxxing hack - shame on you.
+   A serious backdoor - if you need this function you are working on a
+   fxxxing hack - shame on you.
 */
 void * field_get_data(field_type * field) {
   return field->data;

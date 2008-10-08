@@ -39,9 +39,8 @@ double     * field_indexed_get_alloc(const field_type *, int, const int *);
 void       * field_get_data(field_type * );
 void         field_apply(field_type *  , field_func_type * );
 void         field_inplace_output_transform(field_type * field);
+void         field_iadd(field_type * , const field_type *);
 
-ENSEMBLE_MULX_VECTOR_HEADER(field);
-MATH_OPS_VOID_HEADER(field);
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);
 VOID_FREE_DATA_HEADER(field);

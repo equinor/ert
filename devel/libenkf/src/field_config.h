@@ -88,7 +88,7 @@ rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
 field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid_type *);
 field_config_type     * field_config_alloc_parameter_no_init(const char *, const ecl_grid_type *);
-field_config_type     * field_config_alloc_parameter(const char * , const char * , const ecl_grid_type * , field_init_type  , int  , const char ** );
+field_config_type     * field_config_alloc_parameter(const char * , const char * , const char * , const ecl_grid_type * , field_init_type  , int  , const char ** );
 field_config_type     * field_config_alloc_general(const char *  , const ecl_grid_type *  , const char * );
 void                    field_config_free(field_config_type *);
 void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
@@ -117,6 +117,9 @@ bool                    field_config_enkf_mode(const field_config_type * config)
 void                    field_config_scanf_ijk(const field_config_type *  , bool , const char * , int , int * , int * , int * , int *);
 const char            * field_config_get_key(const field_config_type * );
 field_func_type       * field_config_get_output_transform(const field_config_type * );
+void                    field_config_set_output_transform(field_config_type * config , field_func_type * );
+void                    field_config_assert_binary( const field_config_type *  , const field_config_type *  , const char * );
+void                    field_config_assert_unary( const field_config_type *  , const char * );
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
