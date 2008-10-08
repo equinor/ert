@@ -5,8 +5,8 @@ INSTALL_INC_PATH =  $(LIBJOB_QUEUE_HOME)/include
 INSTALL_LIB_PATH =  $(LIBJOB_QUEUE_HOME)/lib
 SDP_ROOT         = /project/res/$(shell /private/joaho/bin/res_target.py)
 #################################################################
-OBJECTS   = job_queue.o basic_queue_driver.o lsf_driver.o local_driver.o rsh_driver.o ext_job.o ext_joblist.o
-INC_FILES = job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h
+OBJECTS   = job_queue.o basic_queue_driver.o lsf_driver.o local_driver.o rsh_driver.o ext_job.o ext_joblist.o lsf_request.o
+INC_FILES = job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h lsf_request.h
 LIB_ROOT  = job_queue
 LIB       = lib$(LIB_ROOT)_$(MFLAG).a
 LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L./
@@ -54,7 +54,7 @@ basic_queue_driver.o : basic_queue_driver.c basic_queue_driver.h
 lsf_driver.o         : lsf_driver.c lsf_driver.h
 local_driver.o       : local_driver.c local_driver.h
 rsh_driver.o         : rsh_driver.c rsh_driver.h
-ext_job.o            : ext_job.c ext_job.h
+ext_job.o            : ext_job.c ext_job.h lsf_request.o
 ext_joblist.o        : ext_joblist.c ext_joblist.h ext_job.o
 
 BIN_FILES  = 

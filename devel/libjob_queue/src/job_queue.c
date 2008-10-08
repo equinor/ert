@@ -25,8 +25,10 @@
 
      status: This will get the status of the job. 
 
+     [set_resource_request: Set the requirements for the job - lsf only.]  
+
    The job_queue instance only has a (void *) pointer to the driver
-   instance, i.e. the job_queue doe not know anything of how the
+   instance, i.e. the job_queue does not know anything of how the
    driver actually submits/queries/stops/... the jobs. Currently we
    have implemented three drivers: lsf_driver, local_driver and
    rsh_driver.
@@ -509,6 +511,15 @@ void job_queue_add_job(job_queue_type * queue , const char * run_path , const ch
 }
 
 
+/**
+   This only applies to the lsf_driver - but that is a quite important
+   special case ...
+*/
+void job_queue_set_resource_request(job_queue_type * queue, const char * resource_request) {
+  basic_queue_driver_type * driver  = queue->driver;
+  if(driver->set_resource_request != NULL)
+    driver->set_resource_request(driver , resource_request);
+}
 
 
 job_queue_type * job_queue_alloc(int size , int max_running , int max_submit , 
@@ -520,8 +531,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
   queue->max_running     = max_running;
   queue->max_submit      = max_submit;
   queue->size            = size;
-  queue->run_cmd      = util_alloc_string_copy(run_cmd);
-  
+  queue->run_cmd         = util_alloc_string_copy(run_cmd);
   queue->jobs            = util_malloc(size * sizeof * queue->jobs , __func__);
   {
     int i;

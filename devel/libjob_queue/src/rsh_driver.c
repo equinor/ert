@@ -296,15 +296,16 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
   pthread_attr_init( &rsh_driver->thread_attr );
   pthread_attr_setdetachstate( &rsh_driver->thread_attr , PTHREAD_CREATE_DETACHED );
 
-  rsh_driver->rsh_command     = util_alloc_string_copy(rsh_command);
-  rsh_driver->submit          = rsh_driver_submit_job;
-  rsh_driver->get_status      = rsh_driver_get_job_status;
-  rsh_driver->abort_f         = rsh_driver_abort_job;
-  rsh_driver->free_job        = rsh_driver_free_job;
-  rsh_driver->free_driver     = rsh_driver_free__;
-  rsh_driver->num_hosts       = 0;
-  rsh_driver->host_list       = NULL;
-  rsh_driver->last_host_index = 0;
+  rsh_driver->rsh_command     	   = util_alloc_string_copy(rsh_command);
+  rsh_driver->submit          	   = rsh_driver_submit_job;
+  rsh_driver->get_status      	   = rsh_driver_get_job_status;
+  rsh_driver->abort_f         	   = rsh_driver_abort_job;
+  rsh_driver->free_job        	   = rsh_driver_free_job;
+  rsh_driver->free_driver     	   = rsh_driver_free__;
+  rsh_driver->set_resource_request = NULL;
+  rsh_driver->num_hosts       	   = 0;
+  rsh_driver->host_list       	   = NULL;
+  rsh_driver->last_host_index 	   = 0;  
   {
     int ihost;
     for (ihost = 0; ihost < stringlist_get_size(rsh_host_list); ihost++) {
