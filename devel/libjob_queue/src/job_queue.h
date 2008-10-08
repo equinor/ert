@@ -12,4 +12,5 @@ void                job_queue_add_job(job_queue_type * , const char * , const ch
 void                job_queue_run_jobs(job_queue_type * , int );
 void *              job_queue_run_jobs__(void * );
 job_status_type     job_queue_export_job_status(job_queue_type * , int );
+void                job_queue_set_resource_request(job_queue_type * , const char * );
 #endif

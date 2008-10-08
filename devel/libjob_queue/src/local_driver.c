@@ -167,11 +167,12 @@ void * local_driver_alloc() {
   pthread_attr_init( &local_driver->thread_attr );
   pthread_attr_setdetachstate( &local_driver->thread_attr , PTHREAD_CREATE_DETACHED );
   
-  local_driver->submit      = local_driver_submit_job;
-  local_driver->get_status  = local_driver_get_job_status;
-  local_driver->abort_f     = local_driver_abort_job;
-  local_driver->free_job    = local_driver_free_job;
-  local_driver->free_driver = local_driver_free__;
+  local_driver->submit      	     = local_driver_submit_job;
+  local_driver->get_status  	     = local_driver_get_job_status;
+  local_driver->abort_f     	     = local_driver_abort_job;
+  local_driver->free_job    	     = local_driver_free_job;
+  local_driver->free_driver 	     = local_driver_free__;
+  local_driver->set_resource_request = NULL;
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) local_driver;
     basic_queue_driver_init(basic_driver);

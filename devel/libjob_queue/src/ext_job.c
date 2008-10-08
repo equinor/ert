@@ -32,13 +32,13 @@ struct ext_job_struct {
   char       * name;
   char 	     * portable_exe;
   char 	     * target_file;
-  char       * start_file;   /* Will not start if not this file is present */
+  char       * start_file;      /* Will not start if not this file is present */
   char 	     * stdout_file;
   char 	     * stdin_file;
   char 	     * stderr_file;
-  stringlist_type * argv;  /* This should *NOT* start with the executable */
+  stringlist_type * argv;      /* This should *NOT* start with the executable */
   stringlist_type * init_code;
-  hash_type  * platform_exe;
+  hash_type  * platform_exe;   /* The hash tables can NOT be NULL. */
   hash_type  * environment;
 };
 
@@ -73,8 +73,6 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->stderr_file  = NULL;
   ext_job->init_code    = NULL;
   ext_job->argv 	= NULL;
-  ext_job->platform_exe = NULL;  /* These are set with config_hash_alloc() */
-  ext_job->environment  = NULL;
 
   return ext_job;
 }
@@ -94,8 +92,9 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->target_file);
   util_safe_free(ext_job->stderr_file);
 
-  if (ext_job->environment != NULL)  hash_free(ext_job->environment);
-  if (ext_job->platform_exe != NULL) hash_free(ext_job->platform_exe);
+  hash_free(ext_job->environment);
+  hash_free(ext_job->platform_exe);
+  
   if (ext_job->argv != NULL)         stringlist_free(ext_job->argv);
   if (ext_job->init_code != NULL)    stringlist_free(ext_job->init_code);
 
@@ -288,12 +287,20 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
     
     if (config_item_set(config , "INIT_CODE")) 
       ext_job->init_code = config_alloc_complete_stringlist(config , "INIT_CODE");
+
+    /**
+       The code assumes that the hash tables are valid, can not be NULL:
+    */
     
     if (config_item_set(config , "ENV")) 
       ext_job->environment = config_alloc_hash(config , "ENV");
-    
+    else
+      ext_job->environment = hash_alloc();
+
     if (config_item_set(config , "PLATFORM_EXE")) 
       ext_job->platform_exe = config_alloc_hash(config , "PLATFORM_EXE");
+    else
+      ext_job->platform_exe = hash_alloc();
     
   }
   config_free(config);
