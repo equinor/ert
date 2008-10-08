@@ -49,9 +49,11 @@ cfg_util.o    : cfg_util.c
 
 #################################################################
 
-BIN: config_test.x
+BIN: config_test.x cfg_util_test.x
 BIN_FILES = config_test.x
  
 config_test.x: config_test.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) config_test.o -o config_test.x     $(LINK_LIB_PATH) $(LIB_LINK) 
 
+cfg_util_test.x: cfg_util_test.o $(LIB)
+	$(LD) -$(MFLAG) $(LDFLAGS) cfg_util_test.o -o cfg_util_test.x     $(LINK_LIB_PATH) $(LIB_LINK) 

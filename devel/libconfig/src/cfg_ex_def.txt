@@ -1,86 +1,30 @@
-key GRIDFILE
+required key GRIDFILE
 {
-  unique key
-  data   filename 
-  help   "The keyword GRIDFILE specifies the Eclipse gridfile to be used."
+  data_type   filename 
+  help_text   "The keyword GRIDFILE specifies the Eclipse gridfile to be used."
 }
 
 
 
-key GENKW
+type GENKW
 {
-  unique keyval
-  data   string
-  help   "The keyword GENKW can be used to parameterize any quantity in the Eclipse data file."
+  help_text   "The keyword GENKW can be used to parameterize any quantity in the Eclipse data file."
 
-  key TEMPLATE_FILE
+  required key TEMPLATE_FILE
   {
-    unique key
-    data   filename
-    help   "Template file used. Matching expressions inside < > brackets are replaced with values."
+    data_type   filename
+    help_text   "Template file used. Matching expressions inside < > brackets are replaced with values."
   }
 
-  key ECL_INC_FILE
+  required key ECL_INC_FILE
   {
-    unique key
-    data   string
-    help   "Filename to use when including during simulations."
+    data_type   string
+    help_text   "Filename to use when including during simulations."
   }
 
-  key CONFIG_FILE
+  required key CONFIG_FILE
   {
-    unique key
-    data   string
-    help   "Filename to the configuration file. See wiki for syntax."
+    data_type   string
+    help_text   "Filename to the configuration file. See wiki for syntax."
   }
-  
-  require TEMPLATE_FILE ECL_INC_FILE CONFIG_FILE
-}
-
-
-
-key WELLOBS
-{
-  unique keyval
-  data   string
-
-  key ITEM
-  {
-    unique keyval
-    data   string
-
-    key  STARTDATE
-    {
-      unique keyval
-      data   date
-    }
-
-    key ENDDATE
-    {
-      unique keyval
-      data   date
-    }
-
-    key ERRORMODEL
-    {
-      unique key
-      data string
-      restriction REL ABS
-    }
-
-    key ERROR
-    {
-      unique key
-      data pos_double
-    }
-
-    key ERROR_LOW_BND
-    {
-      unique key
-      data pos_double
-    }
-    require ERRORMODEL ERROR
-  }
-
-  require ITEM
 }
