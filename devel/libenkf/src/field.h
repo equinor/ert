@@ -39,7 +39,13 @@ double     * field_indexed_get_alloc(const field_type *, int, const int *);
 void       * field_get_data(field_type * );
 void         field_apply(field_type *  , field_func_type * );
 void         field_inplace_output_transform(field_type * field);
+
+void         field_iscale(field_type * , double );
+void         field_isqrt(field_type *);
+void         field_isqr(field_type *);
+void         field_iaddsqr(field_type * , const field_type *);
 void         field_iadd(field_type * , const field_type *);
+void         field_imul_add(field_type * , double , const field_type *);
 
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);

@@ -1101,6 +1101,81 @@ void field_iadd(field_type * field1, const field_type * field2) {
 }
 
 
+void field_iaddsqr(field_type * field1, const field_type * field2) {
+  field_config_assert_binary(field1->config , field2->config , __func__); 
+  {
+    const int data_size          = field_config_get_data_size(field1->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    int i;
+
+    if (ecl_type == ecl_float_type) {
+      float * data1       = (float *) field1->data;
+      const float * data2 = (const float *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i] * data2[i];
+    } else if (ecl_type == ecl_double_type) {
+      double * data1       = (double *) field1->data;
+      const double * data2 = (const double *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i] * data2[i];
+    }
+  }
+}
+
+
+void field_iscale(field_type * field, const double scale_factor) {
+  field_config_assert_unary(field->config, __func__); 
+  {
+    const int data_size          = field_config_get_data_size(field->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+    int i;
+
+    if (ecl_type == ecl_float_type) {
+      float * data       = (float *) field->data;
+      for (i = 0; i < data_size; i++)
+	data[i] *= scale_factor;
+    } else if (ecl_type == ecl_double_type) {
+      double * data       = (double *) field->data;
+      for (i = 0; i < data_size; i++)
+	data[i] *= scale_factor;
+    }
+  }
+}
+
+
+static inline float __sqr(float x) { return x*x; }
+
+void field_isqr(field_type * field) {
+  field_apply(field , __sqr);
+}
+
+
+void field_isqrt(field_type * field) {
+  field_apply(field , sqrtf);
+}
+
+void field_imul_add(field_type * field1 , double factor , const field_type * field2) {
+  field_config_assert_binary(field1->config , field2->config , __func__); 
+  {
+    const int data_size          = field_config_get_data_size(field1->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    int i;
+
+    if (ecl_type == ecl_float_type) {
+      float * data1       = (float *) field1->data;
+      const float * data2 = (const float *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += factor * data2[i];
+    } else if (ecl_type == ecl_double_type) {
+      double * data1       = (double *) field1->data;
+      const double * data2 = (const double *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += factor * data2[i];
+    }
+  }
+}
+
+
 
 /**
    A serious backdoor - if you need this function you are working on a
