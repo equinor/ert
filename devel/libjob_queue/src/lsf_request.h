@@ -7,7 +7,7 @@
 typedef struct lsf_request_struct lsf_request_type;
 
 
-lsf_request_type * lsf_request_alloc(const ext_joblist_type * );
+lsf_request_type * lsf_request_alloc(const ext_joblist_type * , const char *);
 void               lsf_request_free(lsf_request_type *);
 void               lsf_request_reset(lsf_request_type *);   
 void               lsf_request_update(lsf_request_type * , const stringlist_type * , job_queue_type *);

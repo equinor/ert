@@ -51,13 +51,18 @@ bool set_has_key(const set_type * set, const char * key) {
 
 
 void set_fprintf(const set_type * set, FILE * stream) {
+  const int size = set_get_size(set);
   int i;
   char ** key_list = set_alloc_keylist(set);
-  fprintf(stream , " ");
-  for (i=0; i < set_get_size(set); i++) {
-    fprintf(stream , "%s ",key_list[i]);
+  fprintf(stream , "[");
+  for (i=0; i < size; i++) {
+    if (i < (size - 1))
+      fprintf(stream , "\'%s\', ",key_list[i]);
+    else
+      fprintf(stream , "\'%s\'",key_list[i]);
     free(key_list[i]);
   }
+  fprintf(stream , "]");
   free(key_list);
 }
     
@@ -143,7 +148,7 @@ set_type * set_fread_alloc(FILE * stream) {
    set1 and set2.
 */
 
-void set_intersection(set_type * set1 , const set_type * set2) {
+void set_intersect(set_type * set1 , const set_type * set2) {
   char ** key_list1 = set_alloc_keylist(set1);
   int size1 = set_get_size(set1);
   for (int i=0; i < size1; i++) {
@@ -153,6 +158,8 @@ void set_intersection(set_type * set1 , const set_type * set2) {
   }
   free(key_list1);
 }
+
+
 
 
 
