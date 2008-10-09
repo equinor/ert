@@ -98,6 +98,22 @@ static bool is_scope(const char * str)
 
 
 
+static bool is_scope_end(const char * str)
+{
+  if(!strcmp(str, SUB_END_STRING  )) return true;
+  else                               return false;
+}
+
+
+
+static bool is_scope_start(const char * str)
+{
+  if(!strcmp(str, SUB_START_STRING  )) return true;
+  else                               return false;
+}
+
+
+
 static bool is_data_type(const char * str)
 {
   if(     !strcmp(str, DATA_TYPE_STR_STRING     )) return true;
@@ -221,11 +237,43 @@ void cfg_type_def_printf(const cfg_type_def_type * cfg_type_def)
       printf("%i : %s\n", i, sub_types[i]);
   }
   util_free_stringlist(sub_types, num_sub_types);
+
+  int num_required = set_get_size(cfg_type_def->required);
+  char ** required = set_alloc_keylist(cfg_type_def->required);
+  if(num_required > 0)
+  {
+    printf("Required sub keys and types:\n------------------------\n");
+    for(int i=0; i<num_required; i++)
+      printf("%i : %s\n", i, required[i]);
+
+
+  }
 }
 
 
 
-cfg_key_def_type * cfg_key_def_alloc_from_tokens(int num_tokens, const char ** tokens, const char * name)
+static void cfg_key_def_set_data_type_from_buffer(cfg_key_def_type * cfg_key_def, char ** __buffer)
+{
+
+}
+
+
+
+static void cfg_key_def_set_restriction_from_buffer(cfg_key_def_type * cfg_key_def, char ** __buffer)
+{
+
+}
+
+
+
+static void cfg_key_def_set_help_text_from_buffer(cfg_key_def_type * cfg_key_def, char ** __buffer)
+{
+
+}
+
+
+
+cfg_key_def_type * cfg_key_def_alloc_from_buffer(char ** __buffer_pos, const char * name)
 {
   assert(name != NULL);
 
@@ -237,80 +285,51 @@ cfg_key_def_type * cfg_key_def_alloc_from_tokens(int num_tokens, const char ** t
   cfg_key_def->data_type       = DATA_TYPE_STR;
   cfg_key_def->help_text       = NULL;
 
-  int token_nr = 0;
+  /* Current position in the buffer. */
+  char * buffer_pos = *__buffer_pos;
+  
 
-  while(token_nr < num_tokens)
+  for(;;)
   {
-    const char * token = tokens[token_nr];
-    if(!is_key(token))
+    char * token = cfg_util_alloc_next_token(&buffer_pos);
+    assert(token != NULL);
+
+    if(is_scope_end(token))
     {
-      util_abort("%s: Syntax error, expected language key. Got \"%s\".\n", __func__, token);
+      free(token);
+      break;
     }
 
-    key_enum key = get_key_from_string(token);
+    if(!is_key(token))
+      util_abort("%s: Syntax error, expected language identifier. Got \"%s\".\n", __func__, token);
 
+    key_enum key = get_key_from_string(token);
     switch(key)
     {
       case(TYPE):
-      {
         util_abort("%s: Syntax error, type definition not allowed inside key definition!\n", __func__);
         break;
-      }
       case(KEY):
-      {
         util_abort("%s: Syntax error, recursive key definition is not allowed.\n", __func__);
         break;
-      }
       case(DATA_TYPE):
-      {
-        assert(token_nr + 1 < num_tokens);
-        token_nr++;
-        token = tokens[token_nr];
-        if(!is_data_type(token))
-        {
-          util_abort("%s: Syntax error, expected data type definition. Got \"%s\".\n", __func__, token);
-        }
-        cfg_key_def->data_type = get_data_type_from_string(token);
+        cfg_key_def_set_data_type_from_buffer(cfg_key_def, &buffer_pos);
         break;
-      }
       case(RESTRICTION):
-      {
-        assert(token_nr +1 < num_tokens);
-        token_nr++;
-        while(token_nr < num_tokens)
-        {
-          token = tokens[token_nr];
-          if(is_language(token))
-          {
-            token_nr--;
-            break;
-          }
-          else
-          {
-            set_add_key(cfg_key_def->restriction_set, token);
-            token_nr++;
-          }
-        }
+        cfg_key_def_set_restriction_from_buffer(cfg_key_def, &buffer_pos );
         break;
-      }
       case(REQUIRED):
-      {
         util_abort("%s: Syntax error, use of keyword %s is not allowed inside key definition!\n", __func__, REQUIRED_STRING);
         break;
-      }
       case(HELP):
-      {
-        assert(token_nr + 1 < num_tokens);
-        token_nr++;
-        token = tokens[token_nr];
-        cfg_key_def->help_text = util_alloc_string_copy(token);
+        cfg_key_def_set_help_text_from_buffer(cfg_key_def, &buffer_pos);
         break;
-      }
       default:
         util_abort("%s: Internal error.\n", __func__);
     }
-    token_nr++;
+    free(token);
   }
+  __buffer_pos = &buffer_pos;
   return cfg_key_def;
 }
 
@@ -357,7 +376,7 @@ cfg_type_def_type * cfg_type_def_alloc_from_tokens(int num_tokens, const char **
             token = tokens[token_nr_cpy];
             if(is_language(token))
             {
-              util_abort("%s: Syntax error, expected identifier, got \"%s\" which is language.\n", __func__, token);
+              util_abort("%s: Syntax error expected identifier, got \"%s\" which is language.\n", __func__, token);
             }
             else
             {
