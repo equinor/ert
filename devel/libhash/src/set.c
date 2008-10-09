@@ -45,7 +45,7 @@ void set_remove_key(set_type * set, const char * key) {
   hash_del(set->key_hash  , key);
 }
 
-bool set_has_key(set_type * set, const char * key) {
+bool set_has_key(const set_type * set, const char * key) {
   return hash_has_key(set->key_hash, key);
 }
 
@@ -136,4 +136,40 @@ set_type * set_fread_alloc(FILE * stream) {
   set_fread(set , stream);
   return set;
 }
+
+
+/**
+   set1 is updated to *ONLY* contain elements which are both in 
+   set1 and set2.
+*/
+
+void set_intersection(set_type * set1 , const set_type * set2) {
+  char ** key_list1 = set_alloc_keylist(set1);
+  int size1 = set_get_size(set1);
+  for (int i=0; i < size1; i++) {
+    if (!set_has_key(set2 , key_list1[i]))
+      set_remove_key(set1 , key_list1[i]);
+    free(key_list1[i]);
+  }
+  free(key_list1);
+}
+
+
+
+/**
+   set1 is updated to contain all elements which are (originally) in
+   either set1 or set2.
+*/
+
+void set_union(set_type * set1 , const set_type * set2) {
+  char ** key_list2 = set_alloc_keylist(set2);
+  int size2 = set_get_size(set2);
+  for (int i=0; i < size2; i++) {
+    set_add_key(set1 , key_list2[i]);
+    free(key_list2[i]);
+  }
+  free(key_list2);
+}
+
+
 
