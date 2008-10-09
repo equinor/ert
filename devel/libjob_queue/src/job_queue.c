@@ -521,10 +521,22 @@ void job_queue_set_resource_request(job_queue_type * queue, const char * resourc
     driver->set_resource_request(driver , resource_request);
 }
 
+/**
+   Should (in principle) be possible to change driver on a running system whoaaa.
+*/
+
+void job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver) {
+  if (queue->driver != NULL)
+    driver->free_driver(driver);
+
+  queue->driver = driver;
+  basic_queue_driver_assert_cast(queue->driver);
+}
+
 
 job_queue_type * job_queue_alloc(int size , int max_running , int max_submit , 
 				 const char    	     * run_cmd      	 , 
-				 void * driver) {
+				 basic_queue_driver_type * driver) {
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   
   queue->usleep_time     = 200000; /* 1/5 second */
@@ -533,6 +545,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
   queue->size            = size;
   queue->run_cmd         = util_alloc_string_copy(run_cmd);
   queue->jobs            = util_malloc(size * sizeof * queue->jobs , __func__);
+  queue->driver          = NULL;
   {
     int i;
     for (i=0; i < size; i++) 
@@ -545,8 +558,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
       queue->status_list[job_queue_node_get_status(queue->jobs[i])]++;
   }
   
-  queue->driver = driver;
-  basic_queue_driver_assert_cast(queue->driver);
+  job_queue_set_driver(queue , driver);
   pthread_mutex_init( &queue->status_mutex , NULL );
   pthread_mutex_init( &queue->active_mutex , NULL );
   queue->active_size = 0;

@@ -395,7 +395,12 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
 
 
 void lsf_driver_set_resource_request(lsf_driver_type * driver , const char * resource_request) {
+  util_safe_free(driver->resource_request);
+#ifdef LSF_LIBRARY_DRIVER
   driver->resource_request = util_realloc_string_copy(driver->resource_request , resource_request);
+#else
+  driver->resource_request = util_alloc_sprintf("\"%s\"" , resource_request);  /* It is quoted for use with the bsub based driver. */
+#endif
 }
 
 
@@ -454,13 +459,6 @@ void * lsf_driver_alloc(const char * queue_name , const stringlist_type * lsf_re
   hash_insert_int(lsf_driver->status_map , "USUSP"  , job_queue_running);
   hash_insert_int(lsf_driver->status_map , "DONE"   , job_queue_done);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , job_queue_exit); /* Uncertain about this one */
-  {
-    char * tmp_request = util_alloc_string_copy(lsf_driver->resource_request);
-    lsf_driver->resource_request = util_realloc(lsf_driver->resource_request , strlen(tmp_request) + 5 , __func__);
-    sprintf(lsf_driver->resource_request , "\"%s\"" , tmp_request);
-    sprintf(lsf_driver->resource_request , "%s" , tmp_request);  /* Works in Trondheim (I think ...) */
-    free(tmp_request);
-  }
 #endif
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) lsf_driver;
@@ -470,7 +468,6 @@ void * lsf_driver_alloc(const char * queue_name , const stringlist_type * lsf_re
 }
 
 void lsf_driver_free(lsf_driver_type * driver) {
-  free(driver->resource_request);
   free(driver->queue_name);
   util_safe_free(driver->resource_request);
 #ifdef LSF_SYSTEM_DRIVER
