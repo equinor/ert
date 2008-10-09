@@ -102,7 +102,16 @@ static void site_config_install_LSF_job_queue(site_config_type * site_config , i
   
   site_config->job_queue   = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
   if (site_config->lsf_request == NULL)
-    site_config->lsf_request = lsf_request_alloc(site_config->joblist);
+    site_config->lsf_request = lsf_request_alloc(site_config->joblist , NULL);
+}
+
+
+
+void site_config_update_lsf_request(site_config_type * site_config , const stringlist_type * forward_model) {
+  /*
+  if (site_config->lsf_request != NULL) 
+    lsf_request_update(site_config->lsf_request , forward_model , site_config->job_queue);
+  */
 }
 
 
@@ -167,7 +176,3 @@ job_queue_type * site_config_get_job_queue( const site_config_type * site_config
   return site_config->job_queue;
 }
 
-void site_config_update_lsf_request( site_config_type * site_config , const stringlist_type * forward_model) {
-  if (site_config->lsf_request != NULL) {
-  }
-}

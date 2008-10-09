@@ -1,6 +1,7 @@
 #ifndef __EXT_JOB_H__
 #define __EXT_JOB_H__
 #include <hash.h>
+#include <stdio.h>
 
 typedef struct ext_job_struct ext_job_type;
 

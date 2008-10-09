@@ -58,7 +58,11 @@ ext_job.o            : ext_job.c ext_job.h
 ext_joblist.o        : ext_joblist.c ext_joblist.h ext_job.o
 lsf_request.o        : lsf_request.c lsf_request.h ext_job.o ext_joblist.o job_queue.o
 
-BIN_FILES  = 
-BIN	:  
-BIN_FILES_SDP_INSTALL = 
+BIN_FILES  = test.x
+BIN	:  $(BIN_FILES) 
+
+test.x: $(LIB) test.o
+	$(LD) -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH) $(LIB_LINK)
+
+
 

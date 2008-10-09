@@ -275,6 +275,7 @@ void enkf_main_run(enkf_main_type * enkf_main, run_mode_type run_mode , const bo
   if (enkf_update)
     load_results = true; 
   printf("Starting forward step: %d -> %d \n",step1,step2);
+  site_config_update_lsf_request(enkf_main->site_config , forward_model); /* Not yet active */
   enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_matrix);
 
