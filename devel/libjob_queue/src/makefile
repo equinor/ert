@@ -54,8 +54,9 @@ basic_queue_driver.o : basic_queue_driver.c basic_queue_driver.h
 lsf_driver.o         : lsf_driver.c lsf_driver.h
 local_driver.o       : local_driver.c local_driver.h
 rsh_driver.o         : rsh_driver.c rsh_driver.h
-ext_job.o            : ext_job.c ext_job.h lsf_request.o
+ext_job.o            : ext_job.c ext_job.h 
 ext_joblist.o        : ext_joblist.c ext_joblist.h ext_job.o
+lsf_request.o        : lsf_request.c lsf_request.h ext_job.o ext_joblist.o job_queue.o
 
 BIN_FILES  = 
 BIN	:  

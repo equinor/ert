@@ -1037,18 +1037,20 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step2);
       char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file  , fmt_file , -1);
       char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
+      char * iens4            	= util_alloc_sprintf("%04d" , my_config->iens);
       char * ecl_base        	= my_config->eclbase;
       char * step1_s  		= util_alloc_sprintf("%d" , run_info->step1);
       char * step2_s  		= util_alloc_sprintf("%d" , run_info->step2);
       
       
-      hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) 	 , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) 	 , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) 	   , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) 	   , void_arg_free__);
       hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 )  , void_arg_free__);
       hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 )  , void_arg_free__);
       hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   )  , void_arg_free__);
       hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
       hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
+      hash_insert_hash_owned_ref( context , "IENS4"         , void_arg_alloc_ptr( iens4   )        , void_arg_free__);
       {
 	char ** key_list = hash_alloc_keylist( enkf_state->data_kw );
 	int i;
@@ -1056,8 +1058,11 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	for (i = 0; i < hash_get_size(enkf_state->data_kw); i++)
 	  hash_insert_ref( context , key_list[i] , hash_get( enkf_state->data_kw , key_list[i]));
       }
+      /* This is where the job script is created */
       ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,run_info->run_path , context);
-      
+
+
+      free(iens4);
       free(iens);
       free(restart_file1);
       free(restart_file2);

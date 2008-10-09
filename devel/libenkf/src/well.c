@@ -221,8 +221,8 @@ void well_ensemble_fprintf_results(const well_type ** ensemble, int ens_size , c
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-ALLOC_STATS(well)
 MATH_OPS(well)
+ALLOC_STATS(well)
 VOID_ALLOC(well)
 VOID_FREE(well)
 VOID_FREE_DATA(well)

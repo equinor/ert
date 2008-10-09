@@ -79,7 +79,7 @@ for (i=0; i < data_size; i++)                                              \
 /*****************************************************************/
 
 #define ADD_FUNC(prefix)                                                       \
-void prefix ## _iadd__(void *void_arg , const void *void_delta) {                \
+void prefix ## _iadd(void *void_arg , const void *void_delta) {                \
       prefix ## _type *arg   = (prefix ## _type *)       void_arg;  	       \
 const prefix ## _type *delta = (const prefix ## _type *) void_delta;	       \
 const prefix ## _config_type *config = arg->config; 			       \
