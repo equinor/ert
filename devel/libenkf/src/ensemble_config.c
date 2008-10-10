@@ -44,6 +44,7 @@
 #include <stringlist.h>
 #include <ensemble_config.h>
 #include <config.h>
+#include <pthread.h> /* Must have rw locking on the config_nodes ... */
 
 
 struct ensemble_config_struct {
@@ -184,6 +185,10 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
     }
   }
 }
+
+
+
+
 
 
 void ensemble_config_add_well(ensemble_config_type * ensemble_config , const char *well_name , int size, const char ** var_list) {

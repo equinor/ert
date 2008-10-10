@@ -38,7 +38,7 @@ struct lsf_request_struct {
   const stringlist_type  * forward_model;  /* Reference to the current forward model - NOT owned by lsf-request. */
   set_type               * select_set;
   set_type               * rusage;
-  char                   * manual_init;
+  char                   * manual_init;    /* This is resource string which is set from the 'outside', *WITHOUT* parsing the requirements of the external jobs. */
 };
 
 
@@ -50,9 +50,11 @@ lsf_request_type * lsf_request_alloc(const ext_joblist_type * joblist, const cha
 
   lsf_request->rusage      = NULL;
   lsf_request->select_set  = NULL;
-  lsf_request->manual_init = util_alloc_string_copy( manual_init );
+  lsf_request->manual_init = NULL;
+  lsf_request_add_manual_request(lsf_request , manual_init);
   return lsf_request;
 }
+
 
 
 void lsf_request_reset(lsf_request_type * lsf_request) {
@@ -70,13 +72,46 @@ void lsf_request_free(lsf_request_type * lsf_request) {
 }
 
 
-void lsf_request_set_manual_request(lsf_request_type * lsf_request , const char * resource_request) {
+
+/**
+   This function does a very simple string assignment of the the
+   resource request. This can either be called from external scope,
+   with 'resource_request' as some input string. Alternatively it will
+   be called from this scope, when the resource_request has been built
+   dynamically in the lsf_request_update() function.
+
+   This function also call the xx_set_resource_request() function of
+   the queue.
+*/
+
+
+void lsf_request_set_request_string(lsf_request_type * lsf_request , const char * resource_request , job_queue_type * job_queue) {
   lsf_request_reset(lsf_request);
   lsf_request->request = util_alloc_string_copy(resource_request);
+  job_queue_set_resource_request(job_queue , lsf_request->request);
 }
 
 
-/*static*/ void lsf_request_set_request_string(lsf_request_type * lsf_request) {
+
+void lsf_request_add_manual_request(lsf_request_type * lsf_request , const char * new_request) {
+  if (lsf_request->manual_init == NULL)
+    lsf_request->manual_init = util_alloc_string_copy( new_request );
+  else {
+    lsf_request->manual_init = util_realloc(lsf_request->manual_init , 1 + strlen(new_request) , __func__);
+    strcat(lsf_request->manual_init , " ");
+    strcat(lsf_request->manual_init , new_request);
+  }
+}
+
+
+/**
+   This function takes the internal rusage and select sets, and builds
+   a (char *) request_string from it. The final setting is done with
+   the (exported) function lsf_request_set_request_string(), which
+   also calls the job_queue instance.
+*/
+
+/*static*/ void lsf_request_set_request_string__(lsf_request_type * lsf_request , job_queue_type * job_queue) {
   char * select_string = NULL;
   char * rusage_string = NULL;
 
@@ -106,7 +141,7 @@ void lsf_request_set_manual_request(lsf_request_type * lsf_request , const char 
   
   {
     char * resource_request = util_alloc_joined_string((const char *[2]) { rusage_string , select_string} , 2 , " ");
-    lsf_request_set_manual_request( lsf_request , resource_request);
+    lsf_request_set_request_string( lsf_request , resource_request , job_queue);
     util_safe_free(resource_request);
   }
   util_safe_free(select_string);
@@ -229,8 +264,7 @@ void  lsf_request_update(lsf_request_type * lsf_request , const stringlist_type 
       lsf_request_update__(lsf_request , ext_job_get_lsf_resources( ext_job ));
     }
     
-    lsf_request_set_request_string(lsf_request);
-    job_queue_set_resource_request(job_queue , lsf_request->request);
+    lsf_request_set_request_string__(lsf_request , job_queue);
   }
 }
 

@@ -673,6 +673,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
 	/* It is a static kw like INTEHEAD or SCON */
 	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
 	  restart_kw_list_add(enkf_state->restart_kw_list , kw);
+
 	  if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
 	    ensemble_config_add_node(enkf_state->ensemble_config , kw , ecl_static , STATIC , NULL , NULL , NULL);
 	  

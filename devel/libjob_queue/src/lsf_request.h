@@ -12,5 +12,6 @@ void               lsf_request_free(lsf_request_type *);
 void               lsf_request_reset(lsf_request_type *);   
 void               lsf_request_update(lsf_request_type * , const stringlist_type * , job_queue_type *);
 const char *       lsf_request_get(const lsf_request_type *);
+void               lsf_request_add_manual_request(lsf_request_type *  , const char * );
 
 #endif
