@@ -183,7 +183,7 @@ void gen_data_fload(gen_data_type * gen_data , const char * config_tag , const c
 }
 
 
-void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum , const ecl_block_type * restart_block , int report_step) {
+void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const ecl_sum_type * ecl_sum , const ecl_block_type * restart_block , int report_step) {
   DEBUG_ASSERT(gen_data)
   {
     gen_data_config_type * config = gen_data->config;

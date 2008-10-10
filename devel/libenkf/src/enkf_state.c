@@ -714,7 +714,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_has_func(enkf_node , ecl_load_func))
 	if (enkf_node_include_type(enkf_node , mask))
-	  enkf_node_ecl_load(enkf_node , run_info->run_path , my_config->eclbase , summary , restart_block , report_step);
+	  enkf_node_ecl_load(enkf_node , run_info->run_path , summary , restart_block , report_step);
       
     }                                                                      
     util_free_stringlist(key_list , num_keys);
@@ -1384,7 +1384,7 @@ void * enkf_ensemble_serialize__(void * _info) {
 
 void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , serial_vector_type * serial_vector , const double * X) {
   const int threads = 1;
-  int update_mask   = ecl_summary + ecl_restart + parameter;
+  int update_mask   = ecl_summary + ecl_restart + parameter + misc_dynamic;
   thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
   enkf_update_info_type ** info_list     = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_vector);
   int       iens , ithread;

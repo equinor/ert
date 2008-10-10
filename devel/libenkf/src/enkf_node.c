@@ -351,21 +351,35 @@ void enkf_node_ecl_write_fortio(const enkf_node_type *enkf_node , fortio_type * 
 /**
    This function loads (internalizes) ECLIPSE results, the ecl_block
    instance with restart data, and the ecl_sum instance with summary
-   data must be loaded by the calling function.
+   data must already be loaded by the calling function.
+
+   IFF the enkf_node has registered a filename to load from, that is
+   passed to the specifi load function, otherwise the run_path is sent
+   to the load function.
 
    If the node does not have a ecl_load function, the function just
    returns.
 */
 
 
-void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
+void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
-  enkf_node->ecl_load(enkf_node->data , run_path   , ecl_base , ecl_sum , restart_block , report_step);
+  {
+    const char * input_file = enkf_config_node_get_infile(enkf_node->config);
+    char * file = NULL;
+    if (input_file != NULL) {
+      file = util_alloc_full_path( run_path , input_file);
+      enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
+      free(file);
+    } else
+      enkf_node->ecl_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
+  }
   enkf_node->__report_step = report_step;
   enkf_node->__state       = forecast;
   enkf_node->__modified    = false;
 }
+
 
 
 void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step) {

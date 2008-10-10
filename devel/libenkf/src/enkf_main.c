@@ -328,7 +328,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   }
   
   if (load_results) 
-    enkf_main_load_ensemble(enkf_main , ecl_restart + ecl_summary + parameter , step2 , forecast);
+    enkf_main_load_ensemble(enkf_main , misc_dynamic + ecl_restart + ecl_summary + parameter , step2 , forecast);
 
 
   printf("Starter paa oppdatering \n");
@@ -354,7 +354,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
     
   printf("---------------------------------\n");
   if (enkf_update) {
-    enkf_main_fwrite_ensemble(enkf_main , parameter + ecl_restart + ecl_summary , step2 , analyzed);
+    enkf_main_fwrite_ensemble(enkf_main , misc_dynamic + parameter + ecl_restart + ecl_summary , step2 , analyzed);
     enkf_main_fprintf_results(enkf_main , step2);
   }
   printf("%s: ferdig med step: %d \n" , __func__,step2);

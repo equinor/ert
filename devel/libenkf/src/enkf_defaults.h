@@ -28,7 +28,7 @@
 
 
 /* The number of times to resubmit - default value for config item: MAX_SUBMIT */
-#define DEFAULT_MAX_SUBMIT "3"
+#define DEFAULT_MAX_SUBMIT "2"
 
 
 

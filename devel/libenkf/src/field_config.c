@@ -352,8 +352,8 @@ field_config_type * field_config_alloc_general(const char * ecl_kw_name , const 
 
 
 
-field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, const ecl_grid_type * ecl_grid) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , undefined_format);
+field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, const ecl_grid_type * ecl_grid , ecl_type_enum internal_type) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , undefined_format , undefined_format);
   config->init_type          = none;
   return config;
 }

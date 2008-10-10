@@ -102,11 +102,11 @@ void prefix ## _ecl_write__(const void * void_arg , const char * path) { \
 /*****************************************************************/
 
 #define VOID_ECL_LOAD(prefix) \
-void prefix ## _ecl_load__(void * void_arg , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block, int report_step) { \
-   prefix ## _ecl_load((prefix ## _type *) void_arg , run_path , ecl_base , ecl_sum , restart_block , report_step);      \
+void prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block, int report_step) { \
+   prefix ## _ecl_load((prefix ## _type *) void_arg , ecl_file , ecl_sum , restart_block , report_step);      \
 }
 
-#define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const char * , const ecl_sum_type *, const ecl_block_type * , int);
+#define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_block_type * , int);
 
 
 /*****************************************************************/

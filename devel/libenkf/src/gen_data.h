@@ -6,7 +6,7 @@
 
 typedef struct gen_data_struct gen_data_type;
 
-void          	         gen_data_ecl_load(gen_data_type * , const char *  , const char * , const ecl_sum_type * , const ecl_block_type * , int );
+void          	         gen_data_ecl_load(gen_data_type * , const char * , const ecl_sum_type * , const ecl_block_type * , int );
 gen_data_type 	       * gen_data_alloc(const gen_data_config_type *);
 void          	         gen_data_free(gen_data_type * );
 double                   gen_data_iget_double(const gen_data_type * , int );

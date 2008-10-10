@@ -35,7 +35,6 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   node->key        	= util_alloc_string_copy(key);
   node->enkf_outfile    = util_alloc_string_copy(enkf_outfile);
   node->enkf_infile     = util_alloc_string_copy(enkf_infile);
-  node->enkf_infile     = NULL;
 
   return node;
 }
@@ -47,6 +46,16 @@ void enkf_config_node_free(enkf_config_node_type * node) {
   util_safe_free(node->enkf_infile);
   free(node->key);
   free(node);
+}
+
+
+/**
+   This is the filename used when loading from a completed forward
+   model.
+*/
+
+const char * enkf_config_node_get_infile(const enkf_config_node_type * node) {
+  return node->enkf_infile;
 }
 
 

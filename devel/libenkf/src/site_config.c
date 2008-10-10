@@ -109,7 +109,7 @@ static void site_config_install_LSF_job_queue(site_config_type * site_config , i
 
 void site_config_update_lsf_request(site_config_type * site_config , const stringlist_type * forward_model) {
   /*
-  if (site_config->lsf_request != NULL) 
+    if (site_config->lsf_request != NULL) 
     lsf_request_update(site_config->lsf_request , forward_model , site_config->job_queue);
   */
 }

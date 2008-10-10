@@ -797,28 +797,23 @@ void field_indexed_set(field_type * field, ecl_type_enum src_type , int len , co
 
 double * field_indexed_get_alloc(const field_type * field, int len, const int * index_list)
 {
-  double * data = util_malloc(len * sizeof * data, __func__);
+  double * export_data = util_malloc(len * sizeof * export_data, __func__);
   ecl_type_enum src_type = field_config_get_ecl_type(field->config);
-  int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
   
-  if(src_type == ecl_double_type)
-  {
+  if(src_type == ecl_double_type) {
     /* double -> double */
-    int i;
-    for(i=0; i<len; i++)
-      memcpy(&data[i * sizeof_ctype], &field->data[index_list[i] * sizeof_ctype] , sizeof_ctype);
-  }
-  else if(src_type == ecl_float_type) {
+    double * field_data = (double *) field->data;
+    for (int i=0; i<len; i++)
+      export_data[i] = field_data[index_list[i]];
+  } else if (src_type == ecl_float_type) {
     /* float -> double */
-    util_abort("%s: indexing ignored in float -> double converison \n",__func__);
-    util_float_to_double(data, (float *) field->data, len);
-  }
-  else {
-    fprintf(stderr,"%s: existing field must of type float/double - aborting. \n", __func__);
-    abort();
-  }
-
-  return data;
+    float * field_data = (float *) field->data;
+    for (int i=0; i<len; i++)
+      export_data[i] = field_data[index_list[i]];
+  } else
+    util_abort("%s: existing field must of type float/double - aborting. \n", __func__);
+  
+  return export_data;
 }
 
 
@@ -1035,15 +1030,18 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
    and not from a file.
 */
 
-void field_ecl_load(field_type * field , const char * run_path , const char * ecl_base , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
+void field_ecl_load(field_type * field , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
   DEBUG_ASSERT(field)
   {
     field_file_format_type import_format = field_config_get_import_format(field->config);
     if (import_format == ecl_restart_block) {
       ecl_kw_type * field_kw = ecl_block_iget_kw(restart_block , field_config_get_ecl_kw_name(field->config) , 0);
       field_copy_ecl_kw_data(field , field_kw);
-    } else 
-      util_abort("%s: sorry import format:%d not supported for %s.\n",__func__,import_format , __func__);
+    } else {
+      /* Loading from unique file - currently this only applies to the modelerror implementation. */
+      bool __ENDIAN_FLIP__ = true; /* Fuck this ... */
+      field_fload_typed(field , ecl_file , __ENDIAN_FLIP__ , import_format);
+    }
   }
 }
 
