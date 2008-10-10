@@ -2,6 +2,7 @@
 #define __CFG_LANG_H__
 #include <hash.h>
 #include <set.h>
+#include <data_type.h>
 
 
 typedef struct cfg_key_def_struct cfg_key_def_type;
@@ -11,17 +12,6 @@ typedef struct cfg_type_def_struct cfg_type_def_type;
 /**********************************************************************************
   Everything below this comment is only needed for the parsing.
 */
-
-typedef enum {
-              DATA_TYPE_STR,
-              DATA_TYPE_INT,
-              DATA_TYPE_POSINT,
-              DATA_TYPE_FLOAT,
-              DATA_TYPE_POSFLOAT,
-              DATA_TYPE_FILE,
-              DATA_TYPE_DATE
-              } data_type_enum;
-              
 
 
 struct cfg_key_def_struct{
