@@ -297,7 +297,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
 
     if (config_item_set(config , "LSF_RESOURCES")) {
       char * lsf_resources = stringlist_alloc_joined_string(config_get_stringlist_ref(config , "LSF_RESOURCES") , " ");
-      ext_job_set_stdin_file(ext_job   , lsf_resources);
+      ext_job_set_lsf_request(ext_job   , lsf_resources);
       free(lsf_resources);
     }
 
