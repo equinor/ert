@@ -43,7 +43,7 @@ void cfg_free__(void * cfg)
 
 
 
-void * cfg_alloc_key_from_buffer(char ** __buffer_pos, const cfg_key_def_type * cfg_key_def)
+void cfg_alloc_key_from_buffer(cfg_type * cfg, char ** __buffer_pos, const cfg_key_def_type * cfg_key_def)
 {
 
 

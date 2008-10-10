@@ -55,7 +55,7 @@ char * cfg_util_alloc_token_buffer(const char * file, const char * comment, int 
 */
 char * cfg_util_alloc_next_token(char ** buff_pos)
 {
-  char * sep = " \t\r\n";
+  char * sep = " \t\r\n,";
 
   int len_token = 0;
   bool found    = false;

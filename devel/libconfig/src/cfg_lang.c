@@ -4,7 +4,38 @@
 #include <cfg_util.h>
 #include <cfg_lang.h>
 
-// See header for data_type_enum.
+
+// Language primitivies
+#define ASSIGMENT_STRING "="
+#define SUB_START_STRING "{"
+#define SUB_END_STRING   "}"
+
+
+
+bool is_scope_end(const char * str)
+{
+  if(!strcmp(str, SUB_END_STRING)) return true;
+  else                             return false;
+}
+
+
+
+bool is_scope_start(const char * str)
+{
+  if(!strcmp(str, SUB_START_STRING)) return true;
+  else                               return false;
+}
+
+
+
+bool is_assignment(const char * str)
+{
+  if(!strcmp(str, ASSIGMENT_STRING)) return true;
+  else                               return false;
+}
+
+
+/**************************************************************************************/
 #define DATA_TYPE_STR_STRING      "string"
 #define DATA_TYPE_INT_STRING      "int"
 #define DATA_TYPE_POSINT_STRING   "posint"
@@ -15,10 +46,7 @@
 
 
 
-
-
 typedef enum {TYPE, KEY, DATA_TYPE, REQUIRED, RESTRICTION, HELP} key_enum;
-// These are the primitive keys which are allowed in the definition.
 #define TYPE_STRING        "type"
 #define KEY_STRING         "key"
 #define DATA_TYPE_STRING   "data_type"
@@ -26,9 +54,6 @@ typedef enum {TYPE, KEY, DATA_TYPE, REQUIRED, RESTRICTION, HELP} key_enum;
 #define RESTRICTION_STRING "restriction"
 #define HELP_STRING        "help_text"
 
-typedef enum {SUB_START, SUB_END} scope_enum;
-#define SUB_START_STRING "{"
-#define SUB_END_STRING   "}"
 
 
 #define RETURN_TYPE_IF_MATCH(STRING,TYPE) if(strcmp(STRING, TYPE ##_STRING) == 0){ return TYPE;}
@@ -42,17 +67,6 @@ static key_enum get_key_from_string(const char * str)
   RETURN_TYPE_IF_MATCH(str, HELP);
 
   util_abort("%s: Key \"%s\" is unkown.\n", __func__, str);
-  return 0;
-}
-
-
-
-static scope_enum get_scope_from_string(const char * str)
-{
-  RETURN_TYPE_IF_MATCH(str, SUB_START);
-  RETURN_TYPE_IF_MATCH(str, SUB_END);
-
-  util_abort("%s: Scope modifier \"%s\" is unkown.\n", __func__, str);
   return 0;
 }
 
@@ -102,31 +116,6 @@ static bool is_key(const char * str)
 
 
 
-static bool is_scope(const char * str)
-{
-  if(     !strcmp(str, SUB_START_STRING)) return true;
-  else if(!strcmp(str, SUB_END_STRING  )) return true;
-  else                                    return false;
-}
-
-
-
-static bool is_scope_end(const char * str)
-{
-  if(!strcmp(str, SUB_END_STRING  )) return true;
-  else                               return false;
-}
-
-
-
-static bool is_scope_start(const char * str)
-{
-  if(!strcmp(str, SUB_START_STRING  )) return true;
-  else                               return false;
-}
-
-
-
 static bool is_data_type(const char * str)
 {
   if(     !strcmp(str, DATA_TYPE_STR_STRING     )) return true;
@@ -142,10 +131,12 @@ static bool is_data_type(const char * str)
 
 static bool is_language(const char * str)
 {
-  if(     is_key(      str)) return true;
-  else if(is_data_type(str)) return true;
-  else if(is_scope(    str)) return true;
-  else                       return false;
+  if(     is_key(        str)) return true;
+  else if(is_data_type(  str)) return true;
+  else if(is_scope_start(str)) return true;
+  else if(is_scope_end(  str)) return true;
+  else if(is_assignment( str)) return true;
+  else                         return false;
 
 }
 
@@ -246,6 +237,14 @@ void cfg_type_def_printf(const cfg_type_def_type * cfg_type_def)
 
 static void cfg_key_def_set_data_type_from_buffer(cfg_key_def_type * cfg_key_def, char ** __buffer_pos)
 {
+  char * asgnt = cfg_util_alloc_next_token(__buffer_pos);
+  if(asgnt == NULL)
+    util_abort("%s: Syntax error in key definition \"%s\". Expected \"%s\" after \"%s\", got NULL.\n", __func__, cfg_key_def->name, ASSIGMENT_STRING, DATA_TYPE_STRING);
+  else if(!is_assignment(asgnt))
+    util_abort("%s: Syntax error in key definition \"%s\". Expected \"%s\" after \"%s\", got \"%s\".\n", __func__, cfg_key_def->name, ASSIGMENT_STRING, DATA_TYPE_STRING, asgnt);
+  else
+    free(asgnt);
+
   char * token = cfg_util_alloc_next_token(__buffer_pos);
 
   if(!is_data_type(token))
@@ -259,8 +258,15 @@ static void cfg_key_def_set_data_type_from_buffer(cfg_key_def_type * cfg_key_def
 
 static void cfg_key_def_set_restriction_from_buffer(cfg_key_def_type * cfg_key_def, char ** __buffer_pos)
 {
-  char * __buffer_pos_wrk = *__buffer_pos;
+  char * asgnt = cfg_util_alloc_next_token(__buffer_pos);
+  if(asgnt == NULL)
+    util_abort("%s: Syntax error in key definition \"%s\". Expected \"%s\" after \"%s\", got NULL.\n", __func__, cfg_key_def->name, ASSIGMENT_STRING, RESTRICTION_STRING);
+  else if(!is_assignment(asgnt))
+    util_abort("%s: Syntax error in key definition \"%s\". Expected \"%s\" after \"%s\", got \"%s\".\n", __func__, cfg_key_def->name, ASSIGMENT_STRING, RESTRICTION_STRING, asgnt);
+  else
+    free(asgnt);
 
+  char * __buffer_pos_wrk = *__buffer_pos;
   for(;;)
   {
     char * token = cfg_util_alloc_next_token(&__buffer_pos_wrk);  
@@ -275,6 +281,7 @@ static void cfg_key_def_set_restriction_from_buffer(cfg_key_def_type * cfg_key_d
     }
     else
     {
+      printf("adding restriction \"%s\" to key \"%s\".\n", token, cfg_key_def->name);
       set_add_key(cfg_key_def->restriction_set, token);
       free(token);
       *__buffer_pos = __buffer_pos_wrk;
@@ -286,19 +293,21 @@ static void cfg_key_def_set_restriction_from_buffer(cfg_key_def_type * cfg_key_d
 
 static void cfg_key_def_set_help_text_from_buffer(cfg_key_def_type * cfg_key_def, char ** __buffer_pos)
 {
+  char * asgnt = cfg_util_alloc_next_token(__buffer_pos);
+  if(asgnt == NULL)
+    util_abort("%s: Syntax error in key definition \"%s\". Expected \"%s\" after \"%s\", got NULL.\n", __func__, cfg_key_def->name, ASSIGMENT_STRING, HELP_STRING);
+  else if(!is_assignment(asgnt))
+    util_abort("%s: Syntax error in key definition \"%s\". Expected \"%s\" after \"%s\", got \"%s\".\n", __func__, cfg_key_def->name, ASSIGMENT_STRING, HELP_STRING, asgnt);
+  else
+    free(asgnt);
+
   char * token = cfg_util_alloc_next_token(__buffer_pos);
   if(token == NULL)
-  {
     util_abort("%s: Syntax error in key definition \"%s\". Expected argument to \"%s\", got NULL.\n", __func__, cfg_key_def->name, HELP_STRING);
-  }
   else if(is_language(token))
-  {
     util_abort("%s: Syntax error in key definition \"%s\". Expected argument to \"%s\", got language key \"%s\".\n", __func__, cfg_key_def->name, HELP_STRING, token);
-  }
   else
-  {
     cfg_key_def->help_text = token;
-  }
 }
 
 
@@ -357,6 +366,10 @@ cfg_key_def_type * cfg_key_def_alloc_from_buffer(char ** __buffer, char ** __buf
         break;
       }
     }
+    else if(is_assignment(token))
+    {
+      util_abort("%s: Syntax error in keyword %s, unexpected \"%s\".\n", __func__, name, ASSIGMENT_STRING);
+    }
     else if(is_key(token))
     {
       bool end_of_key = false;
@@ -403,9 +416,13 @@ cfg_key_def_type * cfg_key_def_alloc_from_buffer(char ** __buffer, char ** __buf
     }
     else
     {
-      if(scope_start_set)
+      if(scope_start_set && is_language(token))
       {
         util_abort("%s: Syntax error, could not match delimiters in key definition \"%s\".", __func__, name);
+      }
+      else if(!is_language(token))
+      {
+        util_abort("%s: Syntax error, unexpected expression \"%s\" in key definition \"%s\".", __func__, token, name);
       }
       else
       {
@@ -424,6 +441,14 @@ cfg_key_def_type * cfg_key_def_alloc_from_buffer(char ** __buffer, char ** __buf
 
 static void cfg_type_def_set_help_text_from_buffer(cfg_type_def_type * cfg_type_def, char ** __buffer_pos)
 {
+  char * asgnt = cfg_util_alloc_next_token(__buffer_pos);
+  if(asgnt == NULL)
+    util_abort("%s: Syntax error in type definition \"%s\". Expected \"%s\" after \"%s\", got NULL.\n", __func__, cfg_type_def->name, ASSIGMENT_STRING, HELP_STRING);
+  else if(!is_assignment(asgnt))
+    util_abort("%s: Syntax error in type definition \"%s\". Expected \"%s\" after \"%s\", got \"%s\".\n", __func__, cfg_type_def->name, ASSIGMENT_STRING, HELP_STRING, asgnt);
+  else
+    free(asgnt);
+
   char * token = cfg_util_alloc_next_token(__buffer_pos);
   if(token == NULL)
   {
