@@ -35,14 +35,8 @@ bool is_assignment(const char * str)
 }
 
 
+
 /**************************************************************************************/
-#define DATA_TYPE_STR_STRING      "string"
-#define DATA_TYPE_INT_STRING      "int"
-#define DATA_TYPE_POSINT_STRING   "posint"
-#define DATA_TYPE_FLOAT_STRING    "float"
-#define DATA_TYPE_POSFLOAT_STRING "posfloat"
-#define DATA_TYPE_FILE_STRING     "file"
-#define DATA_TYPE_DATE_STRING     "date"
 
 
 
@@ -80,11 +74,13 @@ static bool is_key_key(const char * str)
 }
 
 
+
 static bool is_key_type(const char * str)
 {
   if(     !strcmp(str, TYPE_STRING)) return true;
   else                               return false;
 }
+
 
 
 static bool is_key(const char * str)
@@ -97,6 +93,7 @@ static bool is_key(const char * str)
   else if(!strcmp(str, HELP_STRING       )) return true;
   else                                      return false;
 }
+
 
 
 static bool is_language(const char * str)
@@ -421,17 +418,11 @@ static void cfg_type_def_set_help_text_from_buffer(cfg_type_def_type * cfg_type_
 
   char * token = cfg_util_alloc_next_token(__buffer_pos);
   if(token == NULL)
-  {
     util_abort("%s: Syntax error in type definition \"%s\". Expected argument to \"%s\", got NULL.\n", __func__, cfg_type_def->name, HELP_STRING);
-  }
   else if(is_language(token))
-  {
     util_abort("%s: Syntax error in type definition \"%s\". Expected argument to \"%s\", got language type \"%s\".\n", __func__, cfg_type_def->name, HELP_STRING, token);
-  }
   else
-  {
     cfg_type_def->help_text = token;
-  }
 }
 
 
@@ -444,17 +435,11 @@ static void cfg_type_def_set_required_from_buffer(cfg_type_def_type * cfg_type_d
   char * sub_name  = cfg_util_alloc_next_token(&buffer_pos_fwd);
  
   if(sub_class == NULL || sub_name == NULL)
-  {
     util_abort("%s: Syntax error in type definition \"%s\". Keyword \"%s\" must be follwed by key or type and a name.\n", __func__, cfg_type_def->name, REQUIRED_STRING);
-  }
   else if(!is_key_key(sub_class) && !is_key_type(sub_class))
-  {
     util_abort("%s: Syntax error in type definition \"%s\". Keyword \"%s\" must be follwed by key or type.\n", __func__, cfg_type_def->name, REQUIRED_STRING);
-  }
   else if(is_language(sub_name))
-  {
     util_abort("%s: Syntax error in type definition \"%s\". Expected an identifier, got language \"%s\".\n", __func__, cfg_type_def->name, sub_name);
-  }
   else
   {
     set_add_key(cfg_type_def->required, sub_name);
@@ -575,7 +560,7 @@ cfg_type_def_type * cfg_type_def_alloc_from_buffer(char ** __buffer, char ** __b
       }
     }
     else{
-      util_abort("%s: Syntax error in type definition \"%s\". Expected key or scope, got \"%s\".\n", __func__, name, token);
+      util_abort("%s: Syntax error in type definition \"%s\". Expected language or scope, got \"%s\".\n", __func__, name, token);
     }
     free(token);
   }
