@@ -340,10 +340,9 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
 void enkf_node_ecl_write_fortio(const enkf_node_type *enkf_node , fortio_type * fortio , bool fmt_file , enkf_impl_type impl_type) {
   if (impl_type == STATIC) {
     ecl_kw_type * ecl_kw = ecl_static_kw_ecl_kw_ptr( enkf_node_value_ptr(enkf_node) );
-    ecl_kw_set_fmt_file(ecl_kw , fmt_file);
-    ecl_kw_fwrite(ecl_kw , fortio);
+    ecl_kw_fwrite(ecl_kw , fmt_file , fortio);
   } else if (impl_type == FIELD) {
-    field_ecl_write1D_fortio(enkf_node_value_ptr(enkf_node) , fortio , fmt_file , fortio_get_endian_flip(fortio));
+    field_ecl_write1D_fortio(enkf_node_value_ptr(enkf_node) , fortio , fmt_file);
   } else
     util_abort("%s: internal error - unrecognized type:%d \n",__func__ , impl_type);
 }

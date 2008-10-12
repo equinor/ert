@@ -501,22 +501,32 @@ bool field_fwrite(const field_type * field , FILE * stream) {
 
 
 
-void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file , bool endian_swap ) {
+void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file ) {
   const int data_size = field_config_get_data_size(field->config);
   const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config); 
   
-  ecl_kw_fwrite_param_fortio(fortio , fmt_file , endian_swap , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , field->data);
+  ecl_kw_fwrite_param_fortio(fortio , fmt_file , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , field->data);
 }
 
 
-void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file , bool endian_swap ) {
+void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file  ) {
   const int data_size             = field_config_get_volume(field->config);
   const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
   const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
   void *data = __field_alloc_3D_data(field , data_size , false ,ecl_type , target_type);
 
-  ecl_kw_fwrite_param_fortio(fortio , fmt_file , endian_swap , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , data);
+  ecl_kw_fwrite_param_fortio(fortio , fmt_file ,field_config_get_ecl_kw_name(field->config), ecl_type , data_size , data);
   free(data);
+}
+
+
+static ecl_kw_type * field_alloc_ecl_kw_wrapper__(const field_type * field, void * data) {
+  const int data_size             = field_config_get_volume(field->config);
+  const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
+
+  ecl_kw_type            * ecl_kw = ecl_kw_alloc_complete_shared(field_config_get_ecl_kw_name(field->config) , data_size , target_type , data);
+
+  return ecl_kw;
 }
 
 
@@ -525,15 +535,26 @@ void field_ecl_grdecl_export(const field_type * field , FILE * stream) {
   const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
   const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
   void *data                      = __field_alloc_3D_data(field , data_size , false , ecl_type , target_type );
-  ecl_kw_type            * ecl_kw = ecl_kw_alloc_complete_shared(true , true , field_config_get_ecl_kw_name(field->config) , data_size , target_type , data);
-
+  ecl_kw_type * ecl_kw = field_alloc_ecl_kw_wrapper__(field , data);
   ecl_kw_fprintf_grdecl(ecl_kw , stream);
   ecl_kw_free(ecl_kw);
   free(data);
-
 }
 
 
+/**
+   This allocates a ecl_kw instance representing the field. The
+   size/header/type are copied from the field. whereas the data is
+   *SHARED* with the field->data.
+
+   The ecl_kw instance knows that the data is only shared, and it is
+   safe to call ecl_kw_free() on it.
+*/
+
+ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * field) {
+  ecl_kw_type  * ecl_kw = field_alloc_ecl_kw_wrapper__(field , field->data);
+  return ecl_kw;
+}
 
 
 void  field_inplace_output_transform(field_type * field) {
@@ -583,9 +604,9 @@ void field_export(const field_type * field, const char * file , field_file_forma
     fortio = fortio_fopen(file , "w" , endian_swap);
 
     if (file_type == ecl_kw_file_all_cells)
-      field_ecl_write3D_fortio(field , fortio , fmt_file , endian_swap);
+      field_ecl_write3D_fortio(field , fortio , fmt_file );
     else
-      field_ecl_write1D_fortio(field , fortio , fmt_file , endian_swap);
+      field_ecl_write1D_fortio(field , fortio , fmt_file);
 
     fortio_fclose(fortio);
   } else if (file_type == ecl_grdecl_file) {
@@ -928,7 +949,7 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename , bool en
   ecl_kw_type * ecl_kw;
   {
     FILE * stream = util_fopen(filename , "r");
-    ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type , endian_flip);
+    ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type);
     fclose(stream);
   }
 

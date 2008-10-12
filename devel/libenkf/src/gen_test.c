@@ -12,7 +12,7 @@ int main(int argc , char **argv) {
   gen_data_type * gen_data      = gen_data_alloc(config);
   
   for (i= 0; i < 100; i++)
-    gen_data_ecl_load(gen_data , "./" , NULL , NULL , NULL , i);
+    gen_data_ecl_load(gen_data , "./" , NULL , NULL , i);
   
   gen_data_free(gen_data);
   gen_data_config_free(config);

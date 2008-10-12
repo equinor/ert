@@ -19,8 +19,8 @@ void         field_ijk_get(const field_type * , int , int  , int , void *);
 bool         field_ijk_valid(const field_type * , int , int , int );
 void         field_ijk_get_if_valid(const field_type * , int  , int  , int , void * , bool *);
 void 	     field_ecl_write(const field_type * , const char * );
-void 	     field_ecl_write1D_fortio(const field_type * , fortio_type * , bool , bool );
-void 	     field_ecl_write3D_fortio(const field_type * , fortio_type * , bool , bool );
+void 	     field_ecl_write1D_fortio(const field_type * , fortio_type * , bool  );
+void 	     field_ecl_write3D_fortio(const field_type * , fortio_type * , bool  );
 void         field_ROFF_export(const field_type * , const char * );
 void 	     field_copy_ecl_kw_data(field_type * , const ecl_kw_type * );
 field_type * field_alloc_shared(const field_config_type * , void * , int );
@@ -40,12 +40,14 @@ void       * field_get_data(field_type * );
 void         field_apply(field_type *  , field_func_type * );
 void         field_inplace_output_transform(field_type * field);
 
-void         field_iscale(field_type * , double );
-void         field_isqrt(field_type *);
-void         field_isqr(field_type *);
-void         field_iaddsqr(field_type * , const field_type *);
-void         field_iadd(field_type * , const field_type *);
-void         field_imul_add(field_type * , double , const field_type *);
+void          field_iscale(field_type * , double );
+void          field_isqrt(field_type *);
+void          field_isqr(field_type *);
+void          field_iaddsqr(field_type * , const field_type *);
+void          field_iadd(field_type * , const field_type *);
+void          field_imul_add(field_type * , double , const field_type *);
+ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * );
+
 
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);

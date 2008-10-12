@@ -345,7 +345,12 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const 
 field_config_type * field_config_alloc_general(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , const char * init_fmt) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , undefined_format);
   config->init_type         = load_unique;
+  /*****************************************************************/
+  /* Hardcoded modell error requirements */
   config->export_format     = ecl_kw_file_active_cells;
+  config->import_format     = ecl_kw_file;
+  /*****************************************************************/
+
   config->init_file_fmt     = path_fmt_alloc_path_fmt( init_fmt );
   return config;
 }
