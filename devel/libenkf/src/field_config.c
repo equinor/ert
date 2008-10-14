@@ -425,6 +425,7 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , cons
       func = expf;  /* The most common internal implementation is probably float. */
     else 
       util_exit("%s: sorry - function_name:%s not recognized \n",__func__ , output_transform_name); 
+    field_config_set_output_transform( config , func );
     free(trans);
   }
 

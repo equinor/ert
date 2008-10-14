@@ -557,7 +557,7 @@ ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * field) {
 }
 
 
-void  field_inplace_output_transform(field_type * field) {
+void  field_inplace_output_transform(field_type * field ) {
   field_func_type * output_transform = field_config_get_output_transform(field->config);
   if (output_transform != NULL) 
     field_apply(field , output_transform);
@@ -567,6 +567,8 @@ void  field_inplace_output_transform(field_type * field) {
 
 static void field_output_transform(field_type * field) {
   field_func_type * output_transform = field_config_get_output_transform(field->config);
+  
+  
   if (output_transform != NULL) {
     field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) , __func__);
     field->__data = field->data;  /* Storing a pointer to the original data. */
