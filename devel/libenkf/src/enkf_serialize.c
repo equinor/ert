@@ -244,7 +244,7 @@ serial_vector_type * serial_vector_alloc(size_t target_serial_size, int ens_size
   }
   {
     serial_vector_type * serial_vector = util_malloc(sizeof * serial_vector , __func__);
-    serial_vector->serial_data = serial_data;
+    serial_vector->serial_data   = serial_data;
     serial_vector->serial_size   = serial_size;
     serial_vector->serial_stride = ens_size;
 

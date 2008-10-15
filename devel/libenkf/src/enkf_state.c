@@ -622,8 +622,8 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
     if (unified)
       ecl_block_fseek(report_step , fmt_file , true , fortio);
     
-    restart_block = ecl_block_alloc(report_step , fmt_file , endian_swap);
-    ecl_block_fread(restart_block , fortio , NULL);
+    restart_block = ecl_block_alloc( report_step );
+    ecl_block_fread(restart_block , fmt_file , fortio , NULL);
     fortio_fclose(fortio);
     free(restart_file);
   }
@@ -1359,7 +1359,7 @@ void * enkf_ensemble_serialize__(void * _info) {
     while (node_complete) {                                           
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_include_type(enkf_node , update_mask)) {                       
-	int elements_added            = enkf_node_serialize(enkf_node , current_serial_offset , serial_vector , &node_complete);
+	int elements_added = enkf_node_serialize(enkf_node , current_serial_offset , serial_vector , &node_complete);
 	current_serial_offset    += serial_stride * elements_added;  
 	member_serial_size[iens] += elements_added;
       }
