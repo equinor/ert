@@ -31,7 +31,7 @@ TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
 
 
 
-LOCAL: LIB BIN
+LOCAL: LIB BIN 
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
@@ -42,13 +42,22 @@ SDP_INSTALL: LIB BIN
 	install $(BIN_FILES_SDP_INSTALL) $(__SDP_ROOT)/bin
 	install $(INC_FILES_INSTALL) $(__SDP_ROOT)/include
 
+
+APPS:	LOCAL
+	$(MAKE) -C $(APPLICATION_HOME)
+
 LIB:	$(LIB)
 
-clean:
+clean_enkf: 
+	rm -f $(BIN_FILES)
+
+
+clean:  clean_enkf
 	rm -f *.o *~ 
 	rm -f $(LIB)
 	rm -f $(INSTALL_LIB_PATH)/$(LIB)
 	rm -f $(INSTALL_INC_PATH)/*.h
+
 
 new: 
 	../../Scripts/cdep.py main.c

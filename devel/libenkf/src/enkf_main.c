@@ -343,7 +343,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
          1024 * 1024 * 128 => 1GB of memory
       */
       size_t double_size = 1024*1024*256; /* 2GB */
-     
+      
       /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
       serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
       enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
