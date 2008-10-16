@@ -22,8 +22,12 @@ double *             serial_vector_get_data(const serial_vector_type * );
 
 /*****************************************************************/
 
-size_t enkf_serialize  (const void * , int , ecl_type_enum ,  const bool * , serial_state_type * , size_t , serial_vector_type *);
+void   enkf_deserialize_part(void * , bool , int , int , int , ecl_type_enum , const bool * , serial_state_type * , const serial_vector_type *);
+size_t enkf_serialize_part  (const void * , bool , int , int , int , ecl_type_enum ,  const bool * , serial_state_type * , size_t , serial_vector_type *);
+
+
 void   enkf_deserialize(void * , int , ecl_type_enum , const bool * , serial_state_type * , const serial_vector_type *);
+size_t enkf_serialize  (const void * , int , ecl_type_enum ,  const bool * , serial_state_type * , size_t , serial_vector_type *);
 
 
 #endif
