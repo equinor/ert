@@ -319,22 +319,23 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
 */
 
 void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
-  FUNC_ASSERT(enkf_node->ecl_write);
-  {
+  if (enkf_node->ecl_write) {
     const char * node_eclfile = enkf_config_node_get_outfile_ref(enkf_node->config);
     if (node_eclfile != NULL) {
       char * target_file = util_alloc_full_path(path , node_eclfile);
       enkf_node->ecl_write(enkf_node->data , target_file);
       free(target_file);
-    } else
-      enkf_node->ecl_write(enkf_node->data , path);
+    } else {
+      if (enkf_node_get_impl_type(enkf_node) == GEN_DATA)  /* Fucking special case ... the GEN_DATA implementation is to flexible for it's own good. */
+	enkf_node->ecl_write(enkf_node->data , path);
+    }
   }
 }
 
 
 /**
    This function writes the node data, which must be either a field,
-   or STATIC. Directly to an open fortio instance. No node->function is invoked.
+   or STATIC -  directly to an open fortio instance. No node->function is invoked.
 */
 
 void enkf_node_ecl_write_fortio(const enkf_node_type *enkf_node , fortio_type * fortio , bool fmt_file , enkf_impl_type impl_type) {
@@ -402,8 +403,8 @@ bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
   {
     FUNC_ASSERT(enkf_node->fwrite_f);
-    bool data_written = true;
-    enkf_node->fwrite_f(enkf_node->data , stream);
+    bool data_written = enkf_node->fwrite_f(enkf_node->data , stream);
+
     enkf_node->__report_step = report_step;
     enkf_node->__state       = state;
     enkf_node->__modified    = false;

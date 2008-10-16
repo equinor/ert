@@ -679,6 +679,7 @@ void field_truncate(field_type * field) {
 }
 
 
+
 void field_deserialize(field_type * field , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);

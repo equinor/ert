@@ -328,7 +328,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   }
   
   if (load_results) 
-    enkf_main_load_ensemble(enkf_main , misc_dynamic + ecl_restart + ecl_summary + parameter , step2 , forecast);
+    enkf_main_load_ensemble(enkf_main , dynamic + parameter , step2 , forecast);
 
 
   printf("Starter paa oppdatering \n");
@@ -343,8 +343,9 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
          1024 * 1024 * 128 => 1GB of memory
       */
       size_t double_size = 1024*1024*256; /* 2GB */
-      
-      serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+     
+      /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+      serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
       enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
       serial_vector_free(serial_vector);
       
@@ -354,7 +355,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
     
   printf("---------------------------------\n");
   if (enkf_update) {
-    enkf_main_fwrite_ensemble(enkf_main , misc_dynamic + parameter + ecl_restart + ecl_summary , step2 , analyzed);
+    enkf_main_fwrite_ensemble(enkf_main , dynamic + parameter , step2 , analyzed);
     enkf_main_fprintf_results(enkf_main , step2);
   }
   printf("%s: ferdig med step: %d \n" , __func__,step2);
@@ -363,8 +364,8 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 
 
 /**
-   This function boots more or less everything needed for running a
-   EnKF application. Very briefly it can be summarized as follows:
+   This function boots everything needed for running a EnKF
+   application. Very briefly it can be summarized as follows:
 
     1. A large config object is initalized with all the possible
        keywords we are looking for.
@@ -422,7 +423,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     /*****************************************************************/
     /* config_add_item():                                            */
     /*                                                               */
-    /*  1. boolean - required                                        */
+    /*  1. boolean - required?                                       */
     /*  2. boolean - append?                                         */
     /*****************************************************************/
 

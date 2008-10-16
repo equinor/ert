@@ -602,7 +602,7 @@ void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * en
 */
 
 
-static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , int mask , int report_step) {
+static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , int report_step) {
   member_config_type * my_config   = enkf_state->my_config;
   shared_info_type   * shared_info = enkf_state->shared_info;
   run_info_type      * run_info    = enkf_state->run_info;
@@ -615,7 +615,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
   /**
      Loading the restart block.
   */
-  if (mask & ecl_restart) {
+  {
     char * restart_file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
     fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap);
     
@@ -632,7 +632,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
   /**  
      Loading the summary information.
   */
-  if (mask & ecl_summary) {
+  if (report_step > 0) {
     char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
     char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
     summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , endian_swap);
@@ -714,7 +714,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
     for (ikey= 0; ikey < num_keys; ikey++) {
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_has_func(enkf_node , ecl_load_func))
-	if (enkf_node_include_type(enkf_node , mask))
+	if (enkf_node_include_type(enkf_node , dynamic))
 	  enkf_node_ecl_load(enkf_node , run_info->run_path , summary , restart_block , report_step);
       
     }                                                                      
@@ -744,13 +744,13 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
   */
 
   if (report_step1 == 0) {
-    enkf_state_ecl_load2(enkf_state , unified , ecl_restart , 0);
-    enkf_state_fwrite(enkf_state , ecl_restart , 0 , analyzed);
+    enkf_state_ecl_load2(enkf_state , unified , 0);
+    enkf_state_fwrite(enkf_state , dynamic , 0 , analyzed);
   }
-  enkf_state_ecl_load2(enkf_state , unified , misc_dynamic + ecl_restart + ecl_summary , report_step2);
+  enkf_state_ecl_load2(enkf_state , unified , report_step2);
   
   /* Burde ha et eget measure flag */
-  enkf_state_fwrite(enkf_state  , misc_dynamic + ecl_restart + ecl_summary , report_step2 , forecast);
+  enkf_state_fwrite(enkf_state  , dynamic , report_step2 , forecast);
   enkf_state_measure(enkf_state , enkf_obs);  
 }
 
@@ -780,6 +780,10 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
   while (kw != NULL) {
     /* 
+       Observe that here we are *ONLY* iterating over the
+       restart_kw_list instance, and *NOT* the enkf_state
+       instance. I.e. arbitrary dynamic keys should not show up.
+
        If the restart kw_list asks for a keyword which we do not have,
        we assume it is a static keyword and add it it to the
        enkf_state instance. 
@@ -804,7 +808,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 	ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
       enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
       
-      if (var_type == ecl_restart) {
+      if (var_type == dynamic) {
 	/* Pressure and saturations */
 	if (enkf_node_get_impl_type(enkf_node) == FIELD)
 	  enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , FIELD);
@@ -831,17 +835,10 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   The writing of restart file is delegated to enkf_state_write_restart_file().
 */
 
-void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
+void enkf_state_ecl_write(enkf_state_type * enkf_state) {
   const run_info_type * run_info         = enkf_state->run_info;
-  int    restart_mask    = 0;
-
-  if (mask & ecl_restart) 
-    restart_mask += ecl_restart;
-  if (mask & ecl_static)
-    restart_mask += ecl_static;
-  mask -= restart_mask;
-
-  if (restart_mask > 0 && run_info->step1 > 0)
+  
+  if (run_info->step1 > 0)
     enkf_state_write_restart_file(enkf_state);
   
   util_make_path(run_info->run_path);
@@ -852,8 +849,8 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state ,  int mask) {
     
     for (ikey = 0; ikey < num_keys; ikey++) {
       enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-      if (enkf_node_include_type(enkf_node , mask)) 
-	enkf_node_ecl_write(enkf_node , run_info->run_path);
+      //if (enkf_node_include_type(enkf_node , all_types)) 
+      enkf_node_ecl_write(enkf_node , run_info->run_path); /* No mask */
     }
     util_free_stringlist(key_list , num_keys);
   }
@@ -1022,8 +1019,8 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
        + Parameters are loaded from the init_step.
        + Dynamic data (and corresponding static) are loaded from step1 - but that is done in the enkf_state_write_restart_file() routine.
     */
-    enkf_state_fread(enkf_state , parameter + constant + static_parameter , run_info->init_step , run_info->init_state);
-    enkf_state_ecl_write(enkf_state , constant + static_parameter + parameter + ecl_restart + ecl_static);
+    enkf_state_fread(enkf_state , parameter , run_info->init_step , run_info->init_state);
+    enkf_state_ecl_write( enkf_state );
     
     {
       char * stdin_file = util_alloc_full_path(run_info->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
@@ -1385,7 +1382,7 @@ void * enkf_ensemble_serialize__(void * _info) {
 
 void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , serial_vector_type * serial_vector , const double * X) {
   const int threads = 1;
-  int update_mask   = ecl_summary + ecl_restart + parameter + misc_dynamic;
+  int update_mask   = dynamic + parameter;
   thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
   enkf_update_info_type ** info_list     = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_vector);
   int       iens , ithread;
@@ -1423,9 +1420,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
       enkf_update_info_type * info = info_list[0];
 
       /* Update section */
-      /*enkf_ensemble_mulX(serial_data , 1 , ens_size , ens_size , info->member_serial_size[0] , X , ens_size , 1);*/
       enkf_ensemble_mulX(serial_vector , ens_size , info->member_serial_size[0] , X , ens_size , 1); 
-
 
 
       /* deserialize section */

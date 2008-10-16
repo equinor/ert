@@ -133,7 +133,7 @@ double summary_get(const summary_type * summary, const char * var) {
 
 void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
   DEBUG_ASSERT(summary)
-  {
+  if (ecl_sum != NULL) {  
     const summary_config_type *config    = summary->config;
     const char ** var_list               = summary_config_get_var_list_ref(config);
     int ivar;

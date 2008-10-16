@@ -21,5 +21,5 @@ void plain_driver_common_save_node(const char * filename ,  int report_step , st
   bool data_written = enkf_node_fwrite(node , stream , report_step , state);
   fclose(stream);
   if (!data_written)
-      unlink(filename);
+    unlink(filename);
 }

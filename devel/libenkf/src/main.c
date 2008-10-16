@@ -28,7 +28,7 @@ void text_splash() {
   const int usleep_time = 2500;
   int i;
   {
-#include "uncle_sam_100.inc"
+#include "uncle_sam_100.h"
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++) {
       printf("%s\n" , splash_text[i]);

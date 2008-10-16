@@ -177,6 +177,7 @@ vector of total length length(woc) + length(goc).
 
 
 [1]: Currently the equil_strict is NOT implemented as this, but ....
+*/
 
 /*****************************************************************/
 
@@ -362,14 +363,11 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
     serial_state->current_node_index = node_index1;
   }
   current_node_index = serial_state->current_node_index;
-
-  printf("%s:  first_call:%d \n",__func__ , first_call);
-
+  
   if (!serial_state->complete) {
     if (node_index1 < node_offset + node_size) {
       /* If the previous _exactly_ used all memory we will have serial_size == serial_offset - and should return immediatebly. */
       if (serial_offset < serial_vector->serial_size) {  
-	printf("current_node_index:%d node_index:%d  node_offset:%d  node_size:%d   serial_state->serial_index:%d \n",current_node_index , node_index , node_offset , node_size , serial_state->serial_index);
 	if (node_type == ecl_double_type) {
 	  /* Serialize double -> double */
 	  const  double * node_data = (const double *) __node_data;
@@ -383,10 +381,9 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 	
 	
 	/* 
-	   This is is "all" the information we are going to need in the
+	   This is is the information we are going to need in the
 	   subsequent deserialization.
 	*/
-	printf("node_index:%d  node_offset:%d  node_size:%d \n",node_index , node_offset , node_size);
 	if (node_index < (node_offset + node_size - 1)) 
 	  /* We did not get through the complete object after all ... */
 	  serial_state->node_index2 = node_index + 1;
@@ -400,7 +397,6 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 	  }
 	}
 	serial_state->current_node_index = node_index ;
-	printf("Have serialized: %d - %d \n",serial_state->node_index1 , serial_state->node_index2);
 	serial_state->serial_offset    = serial_offset;
       }
     }
@@ -430,7 +426,7 @@ size_t enkf_serialize(const void * __node_data         ,
   int  node_offset     = 0;
   int  total_node_size = node_size;
 
-  enkf_serialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active , serial_state , serial_offset , serial_vector);
+  return enkf_serialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active , serial_state , serial_offset , serial_vector);
 }
 
 
@@ -478,6 +474,14 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
 }
 
 
+
+/**
+   This function should be used in the default case where a enkf_node
+   object only contains one (double *) / (float *) pointer which
+   should be deserialized.
+
+   It then calls enkf_deserialize_part() with some defaulted arguments.
+*/
 
 void enkf_deserialize(void * __node_data                , 
 		      int      node_size                , 

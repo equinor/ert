@@ -110,7 +110,7 @@ const enkf_config_node_type * enkf_ui_util_scanf_parameter(const ensemble_config
 	if (state != NULL) {
 	  
 	  if (accept_both)  /* It does not make sense to plot both forecast and updated for parameters.*/
-	    if (!(enkf_config_node_get_var_type(config_node) & (ecl_restart + ecl_summary)))
+	    if (!(enkf_config_node_get_var_type(config_node) & dynamic))
 	      accept_both = false;
 
 	  if (accept_both)

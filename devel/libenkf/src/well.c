@@ -136,7 +136,7 @@ double well_get(const well_type * well, const char * var) {
 
 void well_ecl_load(well_type * well , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
   DEBUG_ASSERT(well)
-  {
+  if (ecl_sum != NULL) {
     const well_config_type *config       = well->config;
     const char ** var_list               = well_config_get_var_list_ref(config);
     const char *  well_name              = well_config_get_well_name_ref(config);

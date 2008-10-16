@@ -310,6 +310,7 @@ void enkf_fs_free(enkf_fs_type * fs) {
 
 static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type) {
   void * driver = NULL;
+  /*
   switch (var_type) {
   case(constant):
     driver = fs->parameter;
@@ -327,6 +328,20 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type) 
     driver = fs->dynamic;
     break;
   case(ecl_summary):
+    driver = fs->dynamic;
+    break;
+  case(ecl_static):
+    driver = fs->eclipse_static;
+    break;
+  default:
+    util_abort("%s: fatal internal error - could not determine enkf_fs driver for object - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
+  }
+  */
+  switch (var_type) {
+  case(parameter):
+    driver = fs->parameter;
+    break;
+  case(dynamic):
     driver = fs->dynamic;
     break;
   case(ecl_static):
@@ -357,6 +372,12 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
       driver->save(driver , report_step , iens , state , static_counter , enkf_node); 
     } else {
       basic_driver_type * driver = basic_driver_safe_cast(_driver);
+
+      if (report_step == 0) {
+	enkf_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
+	if (impl_type == WELL || impl_type == SUMMARY) return;    /* For report step == 0 the summary data is just garbage. */
+      }
+
       driver->save(driver , report_step , iens , state , enkf_node); 
     }
   }
@@ -379,14 +400,16 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
 
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-
-  if (var_type == ecl_static) {
-    util_abort("%s: sorry function not implemented for static nodes.\n",__func__);
-    return false; /* Compiler shut-up */
-  } else {
+  {
     const char * key = enkf_config_node_get_key_ref(config_node);
-    basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type));
-    return driver->has_node(driver , report_step , iens , state , key); 
+    if (var_type == ecl_static) {
+      basic_static_driver_type * driver = basic_static_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type));
+      int static_counter = 0; /* This one is impossible to get correctly hold of ... the driver aborts.*/
+      return driver->has_node(driver , report_step , iens , state , static_counter , key); 
+    } else {
+      basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type));
+      return driver->has_node(driver , report_step , iens , state , key); 
+    }
   }
 }
 

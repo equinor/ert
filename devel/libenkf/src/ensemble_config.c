@@ -192,7 +192,7 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
 
 
 void ensemble_config_add_well(ensemble_config_type * ensemble_config , const char *well_name , int size, const char ** var_list) {
-  ensemble_config_add_node(ensemble_config , well_name , ecl_summary , WELL , NULL , NULL , well_config_alloc(well_name , size , var_list));
+  ensemble_config_add_node(ensemble_config , well_name , dynamic , WELL , NULL , NULL , well_config_alloc(well_name , size , var_list));
 }
 
 
@@ -315,7 +315,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const char * var_type_string = stringlist_iget(tokens , 1);
     
     if (strcmp(var_type_string , "DYNAMIC") == 0)
-      ensemble_config_add_node(ensemble_config , key , ecl_restart , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid));
+      ensemble_config_add_node(ensemble_config , key , dynamic , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid));
     else if (strcmp(var_type_string , "PARAMETER") == 0) {
       const char *  ecl_file     	  = stringlist_iget(tokens , 2);
       const char *  init_string  	  = stringlist_iget(tokens , 3);
@@ -332,7 +332,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       const char * enkf_outfile = stringlist_iget(tokens , 2);
       const char * enkf_infile  = stringlist_iget(tokens , 3);
       const char * init_fmt     = stringlist_iget(tokens , 4);
-      ensemble_config_add_node(ensemble_config , key , misc_dynamic , FIELD , enkf_outfile , enkf_infile , field_config_alloc_general(key , grid , init_fmt));
+      ensemble_config_add_node(ensemble_config , key , dynamic , FIELD , enkf_outfile , enkf_infile , field_config_alloc_general(key , grid , init_fmt));
     } else 
       util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
   }
@@ -356,7 +356,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const char ** variables = stringlist_iget_argv(tokens , 1);
     int   num_variables     = stringlist_get_size(tokens) - 1; 
 
-    ensemble_config_add_node(ensemble_config , key , ecl_summary , SUMMARY , NULL , NULL , summary_config_alloc(num_variables , variables));
+    ensemble_config_add_node(ensemble_config , key , dynamic , SUMMARY , NULL , NULL , summary_config_alloc(num_variables , variables));
   }
   
 
@@ -366,7 +366,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const char * key         = stringlist_iget(tokens , 0);
     const char * config_file = stringlist_iget(tokens , 1);
     
-    ensemble_config_add_node(ensemble_config , key , ecl_restart , GEN_DATA , NULL , NULL , gen_data_config_fscanf_alloc(config_file));
+    ensemble_config_add_node(ensemble_config , key , dynamic , GEN_DATA , NULL , NULL , gen_data_config_fscanf_alloc(config_file));
   }
 
 

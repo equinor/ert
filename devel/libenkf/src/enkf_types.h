@@ -10,21 +10,30 @@ typedef double (transform_ftype) (double , const void_arg_type *);
   that is to be able to catch it if a wrong constant is used.
 */
 
-typedef double enkf_float_type;
-
 
 /*
-  Observe that these are used as bitmask's, i.e. they must be power of 2 series.
+  Observe that these are used as bitmask's, i.e. they must be a power of 2 series.
 */
+
+//typedef enum {invalid          =  0  , /**/
+//              constant         =  1  , /* A parameter which is constant both in time, and between members                         */
+//	      static_parameter =  2  , /* A parameter which is not updated with enkf - can be different between different members */
+//              parameter        =  4  , /* A parameter which is updated with enkf                                                  */
+//	      ecl_restart      =  8  , /* Dynamic data - read from Eclipse restart files, typically PRESSURE and SATURATIONS      */
+//	      ecl_summary      =  16 , /* Dynamic data - summary data from Eclipse summary files                                  */ 
+//	      ecl_static       =  32 , /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+//	      misc_dynamic     =  64 , /* Other types of dynamic data - this is falling apart ... */
+//	      all_types        = 127 }  enkf_var_type_OLD;
+
+
 typedef enum {invalid          =  0  , /**/
-              constant         =  1  , /* A parameter which is constant both in time, and between members                         */
-	      static_parameter =  2  , /* A parameter which is not updated with enkf - can be different between different members */
-              parameter        =  4  , /* A parameter which is updated with enkf                                                  */
-	      ecl_restart      =  8  , /* Dynamic data - read from Eclipse restart files, typically PRESSURE and SATURATIONS      */
-	      ecl_summary      =  16 , /* Dynamic data - summary data from Eclipse summary files                                  */ 
-	      ecl_static       =  32 , /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
-	      misc_dynamic     =  64 , /* Other types of dynamic data - this is falling apart ... */
-	      all_types        = 127 }  enkf_var_type;
+              parameter        =  1  , /* A parameter which is updated with enkf                                                  */
+	      dynamic          =  2  , /* Dynamic data */
+	      ecl_static       =  4  , /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+	      all_types        =  7 }  enkf_var_type;
+
+
+
 
 
 
