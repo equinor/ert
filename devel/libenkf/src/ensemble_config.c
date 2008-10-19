@@ -40,6 +40,7 @@
 #include <havana_fault_config.h>
 #include <ext_joblist.h>
 #include <gen_data.h>
+#include <pilot_point_config.h>
 #include <gen_data_config.h>
 #include <stringlist.h>
 #include <ensemble_config.h>
@@ -231,8 +232,8 @@ void ensemble_config_add_config_items(config_type * config) {
 
   /* 
      The way config info is entered for fields is unfortunate because
-     it is difficult/impossible to let the config system handle run time
-     validation of the input.
+     it is difficult/impossible to let the config system handle run
+     time validation of the input.
   */
      
   item = config_add_item(config , "FIELD" , false , true);
@@ -311,12 +312,19 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   /* FIELD */
   for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
     const stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
+    const int    size            = stringlist_get_size(tokens);
     const char * key             = stringlist_iget(tokens , 0);
     const char * var_type_string = stringlist_iget(tokens , 1);
     
-    if (strcmp(var_type_string , "DYNAMIC") == 0)
-      ensemble_config_add_node(ensemble_config , key , dynamic , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid));
-    else if (strcmp(var_type_string , "PARAMETER") == 0) {
+    if (strcmp(var_type_string , "DYNAMIC") == 0) {
+      const char * truncation         = NULL;
+      const char ** truncation_values = NULL;
+      if (size >= 3) {
+	truncation         = stringlist_iget(tokens , 2);
+	truncation_values  = stringlist_iget_argv(tokens , 3);
+      }
+      ensemble_config_add_node(ensemble_config , key , dynamic , FIELD , NULL , NULL , field_config_alloc_dynamic(key , truncation , truncation_values , grid));
+    } else if (strcmp(var_type_string , "PARAMETER") == 0) {
       const char *  ecl_file     	  = stringlist_iget(tokens , 2);
       const char *  init_string  	  = stringlist_iget(tokens , 3);
       const char *  output_transform_name = stringlist_iget(tokens , 4);

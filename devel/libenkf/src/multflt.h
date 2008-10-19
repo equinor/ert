@@ -17,7 +17,7 @@ void             multflt_set_data(multflt_type * , const double * );
 void             multflt_initialize(multflt_type * , int);
 multflt_type   * multflt_alloc(const multflt_config_type * );
 void             multflt_free(multflt_type *);
-void             multflt_ecl_write(const multflt_type * , const char *);
+/*void             multflt_ecl_write(const multflt_type * , const char * , fortio_type *);*/
 /*void             multflt_direct_ecl_write(const multflt_type * , const char *);*/
 void             multflt_ens_write(const multflt_type * , const char *);
 void             multflt_ens_read(multflt_type * , const char *);

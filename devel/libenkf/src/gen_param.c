@@ -239,7 +239,7 @@ void gen_param_initialize(gen_param_type * gen_param , int iens) {
 
 
 
-void gen_param_ecl_write(const gen_param_type * gen_param , const char * eclfile) {
+void gen_param_ecl_write(const gen_param_type * gen_param , const char * eclfile , fortio_type * fortio) {
   DEBUG_ASSERT(gen_param)
   gen_param_config_ecl_write(gen_param->config , eclfile , gen_param->data);
 }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <enkf_types.h>
 #include <enkf_state.h>
+#include <fortio.h>
 #include <util.h>
 #include <havana_fault_config.h>
 #include <havana_fault.h>
@@ -312,7 +313,7 @@ void havana_fault_ensemble_fprintf_results(const havana_fault_type ** ensemble, 
 
 
 
-void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path) {
+void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path , fortio_type * fortio) {
   DEBUG_ASSERT(havana_fault);
   havana_fault_config_run_havana(havana_fault->config , havana_fault->scalar ,  run_path);
 }

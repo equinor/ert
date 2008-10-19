@@ -19,7 +19,7 @@ void             havana_fault_initialize(havana_fault_type *, int);
 havana_fault_type    * havana_fault_alloc(const havana_fault_config_type * );
 
 void             havana_fault_free(havana_fault_type *);
-void             havana_fault_ecl_write(const havana_fault_type * , const char *);
+/*void             havana_fault_ecl_write(const havana_fault_type * , const char *);*/
 void             havana_fault_ens_write(const havana_fault_type * , const char *);
 void             havana_fault_ens_read(havana_fault_type * , const char *);
 void             havana_fault_truncate(havana_fault_type * );

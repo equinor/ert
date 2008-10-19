@@ -15,7 +15,6 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * t
   gen_kw_config_type *gen_kw_config = malloc(sizeof *gen_kw_config);
   gen_kw_config->kw_list       = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
   gen_kw_config->scalar_config = scalar_config_alloc_empty(size);
-  gen_kw_config->var_type      = parameter;
   gen_kw_config->template_file = util_alloc_string_copy(template_file);
   gen_kw_config->executable    = NULL;
 
@@ -80,10 +79,9 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
     config = __gen_kw_config_alloc_empty(size , template_file);
     do {
       char name[128];  /* UGGLY HARD CODED LIMIT */
-      if (fscanf(stream , "%s" , name) != 1) {
-	fprintf(stderr,"%s: something wrong when reading: %s - aborting \n",__func__ , filename);
-	abort();
-      }
+      if (fscanf(stream , "%s" , name) != 1) 
+	util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
+      
       config->kw_list[line_nr] = util_alloc_string_copy(name);
       scalar_config_fscanf_line(config->scalar_config , line_nr , stream);
       line_nr++;

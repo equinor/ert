@@ -1,13 +1,13 @@
 enkf_ui_util.o                      : enkf_ui_util.c enkf_ui_util.h  
 gen_param_config.o                  : gen_param_config.c gen_param_config.h enkf_macros.h  
-relperm.o                           : relperm.c relperm.h relperm_config.o enkf_debug.h  
+relperm.o                           : relperm.c relperm.h relperm_config.o enkf_macros.h enkf_debug.h  
 enkf_fs.o                           : enkf_fs.c enkf_fs.h enkf_node.o fs_index.o fs_types.h  
 obs_node.o                          : obs_node.c obs_node.h enkf_macros.h  
 enkf_config_node.o                  : enkf_config_node.c enkf_config_node.h enkf_types.o enkf_macros.h  
 gen_data.o                          : gen_data.c gen_data.h gen_data_config.o enkf_macros.h enkf_debug.h  
 enkf_defaults.o                     : enkf_defaults.c enkf_defaults.h  
 meas_matrix.o                       : meas_matrix.c meas_matrix.h  
-multz.o                             : multz.c multz.h multz_config.o scalar.o enkf_debug.h  
+multz.o                             : multz.c multz.h enkf_macros.h multz_config.o scalar.o enkf_debug.h  
 ens_config.o                        : ens_config.c ens_config.h  
 enkf_ui_export.o                    : enkf_ui_export.c enkf_ui_export.h  
 gen_param.o                         : gen_param.c gen_param.h enkf_macros.h enkf_debug.h  
@@ -32,7 +32,7 @@ enkf_ui_plot.o                      : enkf_ui_plot.c enkf_ui_plot.h
 enkf_ui_init.o                      : enkf_ui_init.c enkf_ui_init.h  
 field_config.o                      : field_config.c field_config.h enkf_macros.h  
 gen_obs.o                           : gen_obs.c gen_obs.h enkf_macros.h  
-multflt.o                           : multflt.c multflt.h enkf_state.o enkf_debug.h  
+multflt.o                           : multflt.c multflt.h enkf_state.o enkf_macros.h enkf_debug.h  
 meas_op.o                           : meas_op.c meas_op.h  
 model_config.o                      : model_config.c model_config.h enkf_sched.o plain_driver_parameter.o plain_driver_static.o plain_driver_dynamic.o  
 relperm_config.o                    : relperm_config.c relperm_config.h enkf_macros.h  
@@ -41,11 +41,12 @@ enkf_util.o                         : enkf_util.c enkf_util.h
 equil_config.o                      : equil_config.c equil_config.h  
 main.o                              : main.c enkf_fs.o enkf_main.o enkf_ui_main.o uncle_sam_100.h  
 scalar.o                            : scalar.c scalar.h scalar_config.o enkf_serialize.o  
+pilot_point_config.o                : pilot_point_config.c pilot_point_config.h enkf_macros.h  
 summary_config.o                    : summary_config.c summary_config.h enkf_macros.h  
-ensemble_config.o                   : ensemble_config.c ensemble_config.h gen_param_config.o multflt_config.o obs_node.o obs_data.o analysis.o havana_fault_config.o gen_data.o  
+ensemble_config.o                   : ensemble_config.c ensemble_config.h gen_param_config.o multflt_config.o obs_node.o obs_data.o analysis.o havana_fault_config.o gen_data.o pilot_point_config.o  
 gen_data_config.o                   : gen_data_config.c gen_data_config.h gen_common.o enkf_macros.h  
 plain_driver_dynamic.o              : plain_driver_dynamic.c plain_driver_dynamic.h fs_types.h  
-gen_kw.o                            : gen_kw.c gen_kw.h gen_kw_config.o enkf_debug.h  
+gen_kw.o                            : gen_kw.c gen_kw.h gen_kw_config.o enkf_macros.h enkf_debug.h  
 meas_vector.o                       : meas_vector.c meas_vector.h  
 havana_fault_config.o               : havana_fault_config.c havana_fault_config.h enkf_macros.h  
 scalar_config.o                     : scalar_config.c scalar_config.h enkf_macros.h  
@@ -53,7 +54,7 @@ enkf_serialize.o                    : enkf_serialize.c enkf_serialize.h serializ
 equil.o                             : equil.c equil.h equil_config.o enkf_macros.h enkf_debug.h  
 basic_driver.o                      : basic_driver.c basic_driver.h fs_types.h  
 enkf_main.o                         : enkf_main.c enkf_main.h ecl_static_kw_config.h  
-enkf_node.o                         : enkf_node.c enkf_node.h enkf_config_node.o multz.o relperm.o multflt.o havana_fault.o gen_param.o  
+enkf_node.o                         : enkf_node.c enkf_node.h enkf_config_node.o multz.o relperm.o multflt.o pilot_point.o havana_fault.o gen_param.o  
 ecl_config.o                        : ecl_config.c ecl_config.h enkf_defaults.o  
 enkf_ui_run.o                       : enkf_ui_run.c enkf_ui_run.h enkf_ui_util.o  
 trans_func.o                        : trans_func.c trans_func.h  
@@ -61,5 +62,6 @@ gen_common.o                        : gen_common.c gen_common.h
 obs_data.o                          : obs_data.c obs_data.h meas_matrix.o  
 havana_fault.o                      : havana_fault.c havana_fault.h enkf_debug.h  
 multz_config.o                      : multz_config.c multz_config.h enkf_util.o ens_config.o enkf_macros.h trans_func.o  
-ecl_static_kw.o                     : ecl_static_kw.c ecl_static_kw.h enkf_debug.h  
+ecl_static_kw.o                     : ecl_static_kw.c ecl_static_kw.h enkf_macros.h enkf_debug.h  
+pilot_point.o                       : pilot_point.c pilot_point.h enkf_macros.h  
 gen_kw_config.o                     : gen_kw_config.c gen_kw_config.h enkf_macros.h  

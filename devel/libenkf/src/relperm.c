@@ -8,6 +8,8 @@
 #include <relperm.h>
 #include <enkf_util.h>
 #include <scalar.h>
+#include <fortio.h>
+#include <enkf_macros.h>
 
 
 #define  TARGET_TYPE RELPERM
@@ -112,7 +114,7 @@ void relperm_ecl_write_f90test(const relperm_type * relperm, const double * data
     }
 }
 
-void relperm_ecl_write(const relperm_type * relperm , const char * __eclfile) {
+void relperm_ecl_write(const relperm_type * relperm , const char * __eclfile , fortio_type * fortio) {
   DEBUG_ASSERT(relperm)
   {
     printf("Er i relperm_ecl_write_1 \n");

@@ -275,7 +275,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
   else {
     fs->read_only = true;
     fprintf(stderr,"------------------------------------------------------------------------\n");
-    fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| %s for writing - this instance will be read-only.\n",root_path);
+    fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| \'%s\' for writing - this instance will be read-only.\n",root_path);
     fprintf(stderr,"-------------------------------------------------------------------------\n");
   }
   

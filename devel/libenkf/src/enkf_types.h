@@ -49,8 +49,8 @@ typedef enum {invalid          =  0  , /**/
 */
 
 /*
-  These correspond to implementation types. The numbers are on disk, and should
-  NOT BE UPDATED.
+  These correspond to implementation types. The numbers are on disk,
+  and should **NOT BE UPDATED**.
 */
 typedef enum {INVALID 	   = 0   , 
 	      STATIC  	   = 100 ,
@@ -65,7 +65,9 @@ typedef enum {INVALID 	   = 0   ,
 	      SUMMARY      = 110 ,      
               TPGZONE      = 111 ,       
               GEN_DATA     = 112 ,
-	      GEN_PARAM    = 113 }  enkf_impl_type;
+	      GEN_PARAM    = 113 ,
+	      PILOT_POINT  = 114 } enkf_impl_type;
+
 /* 
    Should update the functions enkf_types_get_impl_name() and
    enkf_types_get_impl_type__() when this enum is updated.
@@ -99,6 +101,18 @@ typedef enum   {undefined   = 0 ,
 /**
    The state == both is used for output purposes (getting both forecast and analyzed).
 */
+
+
+
+
+/** 
+    These are 2^n bitmasks - truncate_minmax == truncate_min + truncate_max. 
+*/
+typedef enum {truncate_none   = 0,
+	      truncate_min    = 1,
+	      truncate_max    = 2,
+	      truncate_minmax = 3} truncation_type;
+
 
 
 

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <ecl_kw.h>
 #include <enkf_state.h>
+#include <enkf_macros.h>
 typedef struct ecl_static_kw_struct ecl_static_kw_type;
 
 
@@ -21,5 +22,5 @@ VOID_FREAD_HEADER(ecl_static_kw);
 VOID_COPYC_HEADER(ecl_static_kw);
 VOID_REALLOC_DATA_HEADER(ecl_static_kw);
 ASSERT_TYPE_HEADER(ecl_static_kw);
-
+VOID_ECL_WRITE_HEADER(ecl_static_kw);
 #endif

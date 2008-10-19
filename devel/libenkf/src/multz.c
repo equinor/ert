@@ -4,10 +4,12 @@
 #include <math.h>
 #include <util.h>
 #include <enkf_types.h>
+#include <enkf_macros.h>
 #include <multz_config.h>
 #include <multz.h>
 #include <enkf_util.h>
 #include <scalar.h>
+#include <fortio.h>
 
 
 #define  TARGET_TYPE MULTZ
@@ -107,7 +109,7 @@ void multz_fread(multz_type * multz , FILE * stream) {
 }
 
 
-void multz_ecl_write(const multz_type * multz , const char * eclfile) {
+void multz_ecl_write(const multz_type * multz , const char * eclfile, fortio_type * fortio) {
   DEBUG_ASSERT(multz)
   {
     FILE * stream  = util_fopen(eclfile , "w");
@@ -190,7 +192,7 @@ void multz_TEST() {
       multz_initialize(multz_ens[iens] , 0);
       sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
       util_make_path(path);
-      multz_ecl_write(multz_ens[iens] , path);
+      multz_ecl_write(multz_ens[iens] , path , NULL);
       multz_truncate(multz_ens[iens]);
     }
   }

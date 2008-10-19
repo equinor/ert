@@ -71,7 +71,7 @@ static void equil_get_woc_goc_ref(const equil_type * equil, const double **woc ,
 
 
 
-void equil_ecl_write(const equil_type * equil, const char * eclfile) {
+void equil_ecl_write(const equil_type * equil, const char * eclfile, fortio_type * fortio) {
   FILE * stream   = util_fopen(eclfile , "w");
   const double *woc , *goc;
   equil_output_transform(equil);

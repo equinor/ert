@@ -398,6 +398,16 @@ enkf_state_type * enkf_state_alloc(int iens,
 
   enkf_state->node_hash       = hash_alloc();
   enkf_state->restart_kw_list = restart_kw_list_alloc();
+  /*
+    These keywords are added here, because we must have them in the restart_kw list
+    from the very start - otherwise the enkf_state_ecl_write() function will fail.
+  */
+  restart_kw_list_add(enkf_state->restart_kw_list , "SWAT");
+  restart_kw_list_add(enkf_state->restart_kw_list , "SGAS");
+  restart_kw_list_add(enkf_state->restart_kw_list , "PRESSURE");
+  restart_kw_list_add(enkf_state->restart_kw_list , "RV");
+  restart_kw_list_add(enkf_state->restart_kw_list , "RS");
+  
 
   enkf_state->data_kw         = hash_alloc();
   {
@@ -775,7 +785,6 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 
   if (restart_kw_list_empty(enkf_state->restart_kw_list))
     enkf_fs_fread_restart_kw_list(shared_info->fs , run_info->step1 , my_config->iens , enkf_state->restart_kw_list);
-  
 
   kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
   while (kw != NULL) {
@@ -791,8 +800,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
        This is a bit unfortunate, because a bug/problem of some sort,
        might be masked (seemingly solved) by adding a static keyword,
        before things blow up completely at a later instant.
-    */
-    
+    */  
     if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
       ensemble_config_add_node(enkf_state->ensemble_config , kw , ecl_static , STATIC , NULL , NULL , NULL);
     
@@ -804,21 +812,23 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
-      if (var_type == ecl_static) 
+      if (var_type == ecl_static) {
 	ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
-      enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
+	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
+      }
       
       if (var_type == dynamic) {
 	/* Pressure and saturations */
 	if (enkf_node_get_impl_type(enkf_node) == FIELD)
-	  enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , FIELD);
+	  enkf_node_ecl_write(enkf_node , NULL , fortio);
 	else 
 	  util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
       } else if (var_type == ecl_static) {
-	enkf_node_ecl_write_fortio(enkf_node , fortio , fmt_file , STATIC );
+	enkf_node_ecl_write(enkf_node , NULL , fortio);
 	enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
       } else 
 	util_abort("%s: internal error - should not be here ... \n",__func__);
+
     }
     kw = restart_kw_list_get_next(enkf_state->restart_kw_list);
   }
@@ -848,9 +858,10 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     int ikey;
     
     for (ikey = 0; ikey < num_keys; ikey++) {
-      enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-      //if (enkf_node_include_type(enkf_node , all_types)) 
-      enkf_node_ecl_write(enkf_node , run_info->run_path); /* No mask */
+      if (!restart_kw_list_has_kw(enkf_state->restart_kw_list , key_list[ikey])) {      /* Make sure that the elements in the restart file are not written (again). */
+	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
+	enkf_node_ecl_write(enkf_node , run_info->run_path , NULL); 
+      }
     }
     util_free_stringlist(key_list , num_keys);
   }
@@ -1013,13 +1024,13 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       free(schedule_file);
     }
     
-    /**
-       This is a bit tricky:
-       
-       + Parameters are loaded from the init_step.
-       + Dynamic data (and corresponding static) are loaded from step1 - but that is done in the enkf_state_write_restart_file() routine.
-    */
-    enkf_state_fread(enkf_state , parameter , run_info->init_step , run_info->init_state);
+    
+    {
+      int mask = parameter;
+      if (run_info->init_step > 0)
+	mask += dynamic;
+      enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state);
+    }
     enkf_state_ecl_write( enkf_state );
     
     {

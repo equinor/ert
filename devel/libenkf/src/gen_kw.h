@@ -1,6 +1,7 @@
 #ifndef __GEN_KW_H__
 #define __GEN_KW_H__
 
+#include <fortio.h>
 #include <gen_kw_config.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
@@ -20,7 +21,7 @@ void             gen_kw_initialize(gen_kw_type *, int);
 gen_kw_type    * gen_kw_alloc(const gen_kw_config_type * );
 
 void             gen_kw_free(gen_kw_type *);
-void             gen_kw_ecl_write(const gen_kw_type * , const char *);
+void             gen_kw_ecl_write(const gen_kw_type * , const char * , fortio_type *);
 void             gen_kw_ens_write(const gen_kw_type * , const char *);
 void             gen_kw_ens_read(gen_kw_type * , const char *);
 void             gen_kw_truncate(gen_kw_type * );

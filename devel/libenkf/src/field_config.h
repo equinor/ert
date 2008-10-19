@@ -49,7 +49,7 @@ typedef enum { undefined_format         = 0,
 	       ecl_kw_file_active_cells = 3,       /* ecl_kw format, only active cells - used writing to file. */
 	       ecl_kw_file_all_cells    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
 	       ecl_grdecl_file          = 5, 
-               ecl_restart_block        = 6} field_file_format_type;
+               ecl_restart_block        = 6 /* Assumes packed on export. */}  field_file_format_type; 
 
 	        
 /* active_cells currently not really implemented */
@@ -86,7 +86,7 @@ field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
-field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid_type *);
+field_config_type     * field_config_alloc_dynamic(const char * , const char * , const char ** , const ecl_grid_type *);
 field_config_type     * field_config_alloc_parameter_no_init(const char *, const ecl_grid_type * , ecl_type_enum);
 field_config_type     * field_config_alloc_parameter(const char * , const char * , const char * , const ecl_grid_type * , field_init_type  , int  , const char ** );
 field_config_type     * field_config_alloc_general(const char *  , const ecl_grid_type *  , const char * );
@@ -96,8 +96,6 @@ int                     field_config_get_volume(const field_config_type * );
 void                    field_config_set_ecl_kw_name(field_config_type * , const char * );
 void                    field_config_set_ecl_type(field_config_type *  , ecl_type_enum );
 void                    field_config_set_eclfile(field_config_type * , const char * );
-void                    field_config_set_limits(field_config_type * , void * , void * );
-void                    field_config_apply_limits(const field_config_type * , void *);
 const bool            * field_config_get_iactive(const field_config_type * );
 int                     field_config_get_byte_size(const field_config_type * );
 int                     field_config_get_active_size(const field_config_type * );
@@ -120,6 +118,12 @@ field_func_type       * field_config_get_output_transform(const field_config_typ
 void                    field_config_set_output_transform(field_config_type * config , field_func_type * );
 void                    field_config_assert_binary( const field_config_type *  , const field_config_type *  , const char * );
 void                    field_config_assert_unary( const field_config_type *  , const char * );
+
+
+void            	field_config_set_truncation_from_strings(field_config_type * , const char * , const char **);
+void            	field_config_set_truncation(field_config_type * , truncation_type , double , double );
+truncation_type 	field_config_get_truncation(const field_config_type * , double * , double *);
+
 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);

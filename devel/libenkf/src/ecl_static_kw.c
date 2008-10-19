@@ -3,7 +3,7 @@
 #include <util.h>
 #include <ecl_static_kw.h>
 #include <ecl_kw.h>
-
+#include <enkf_macros.h>
 
 #define  DEBUG
 #define  TARGET_TYPE STATIC
@@ -109,6 +109,10 @@ void * ecl_static_kw_alloc__(const void *ptr) {
 }
 
 
+void ecl_static_kw_ecl_write(const ecl_static_kw_type * ecl_static, const char * path , fortio_type * fortio) {
+  bool __FMT_FILE__ = false;
+  ecl_kw_fwrite(ecl_static->ecl_kw , __FMT_FILE__ , fortio);
+}
 
 
 ecl_kw_type * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * ecl_static) { return ecl_static->ecl_kw; }
@@ -180,6 +184,7 @@ void ecl_static_kw_realloc_data(ecl_static_kw_type * ecl_static_kw) {
 VOID_FREE(ecl_static_kw)
 VOID_FREE_DATA(ecl_static_kw)
 VOID_FWRITE (ecl_static_kw)
+VOID_ECL_WRITE (ecl_static_kw)
 VOID_FREAD  (ecl_static_kw)
 VOID_COPYC(ecl_static_kw)
 VOID_REALLOC_DATA(ecl_static_kw)

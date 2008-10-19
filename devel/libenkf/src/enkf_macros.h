@@ -93,11 +93,11 @@ void prefix ## _fread__(void * void_arg , FILE * stream) { \
 /*****************************************************************/
 
 #define VOID_ECL_WRITE(prefix) \
-void prefix ## _ecl_write__(const void * void_arg , const char * path) { \
-   prefix ## _ecl_write((const prefix ## _type *) void_arg , path);      \
+void prefix ## _ecl_write__(const void * void_arg , const char * path , fortio_type * restart_fortio) { \
+   prefix ## _ecl_write((const prefix ## _type *) void_arg , path , restart_fortio);      \
 }
 
-#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * );
+#define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , fortio_type *);
 
 /*****************************************************************/
 

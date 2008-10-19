@@ -4,11 +4,13 @@
 #include <enkf_types.h>
 #include <enkf_state.h>
 #include <util.h>
+#include <enkf_macros.h>
 #include <multflt_config.h>
 #include <multflt.h>
 #include <enkf_util.h>
 #include <math.h>
 #include <scalar.h>
+#include <fortio.h>
 
 
 #define  DEBUG
@@ -118,7 +120,7 @@ static void __multflt_ecl_write(const multflt_type * multflt, const char * eclfi
 }
 
 
-void multflt_ecl_write(const multflt_type * multflt, const char * eclfile) {
+void multflt_ecl_write(const multflt_type * multflt, const char * eclfile, fortio_type * fortio) {
   __multflt_ecl_write(multflt , eclfile , false);
 }
 
@@ -274,7 +276,7 @@ void multflt_TEST() {
       multflt_initialize(multflt_ens[iens] , 0);
       sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
       util_make_path(path);
-      multflt_ecl_write(multflt_ens[iens] , path);
+      multflt_ecl_write(multflt_ens[iens] , path , NULL);
     }
   }
 }							 

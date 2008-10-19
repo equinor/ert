@@ -12,6 +12,8 @@
 #include <path_fmt.h>
 #include <math.h>
 
+
+
 struct field_config_struct {
   CONFIG_STD_FIELDS;
   int nx,ny,nz;                       /* The number of elements in the three directions. */ 
@@ -20,10 +22,14 @@ struct field_config_struct {
 
   bool        * enkf_active;          /* Whether a certain cell is active or not - EnKF wise.*/
   bool          enkf_all_active;      /* Performance gain when all cells are active. */
-  void 	      * min_value;
-  void        * max_value;
-  int           sizeof_ctype;
 
+
+  truncation_type truncation;           /* How the field should be trunacted before exporting for simulation. */
+  double   	  min_value;            /* The min value used in truncation. */   
+  double   	  max_value;            /* The maximum value used in truncation. */
+
+  int             sizeof_ctype;
+  
   field_file_format_type  export_format;
   field_file_format_type  import_format;    
   ecl_type_enum           internal_ecl_type;
@@ -37,7 +43,6 @@ struct field_config_struct {
   bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool fmt_file;
   bool endian_swap;
-  bool limits_set;
   bool write_compressed;
   bool add_perturbation;
 
@@ -246,7 +251,9 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
 
   ecl_grid_get_dims(ecl_grid , &config->nx , &config->ny , &config->nz , &config->data_size);
   config->index_map = ecl_grid_get_index_map_ref(ecl_grid);
-  
+
+
+  config->truncation = truncate_none;
   config->sx = 1;
   config->sy = config->nx;
   config->sz = config->nx * config->ny;
@@ -254,9 +261,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->__enkf_mode              = true;
   config->fmt_file    	      	   = false;
   config->endian_swap 	      	   = true;
-  config->limits_set  	      	   = false;
-  config->min_value   	      	   = util_malloc(config->sizeof_ctype , __func__);
-  config->max_value   	      	   = util_malloc(config->sizeof_ctype , __func__);
   config->write_compressed    	   = true;
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
@@ -333,24 +337,18 @@ const bool * field_config_get_iactive(const field_config_type * config) {
 
 
 
-field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , undefined_format);
+field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const char * truncation, const char ** truncation_values , const ecl_grid_type * ecl_grid) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , ecl_restart_block);
   config->init_type         = none;
-  config->export_format     = ecl_kw_file_active_cells;
+  field_config_set_truncation_from_strings( config , truncation , truncation_values );
   return config;
 }
 
 
 
 field_config_type * field_config_alloc_general(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , const char * init_fmt) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , undefined_format);
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_kw_file_active_cells , ecl_kw_file);   /* Hardcoded modell error requirements */
   config->init_type         = load_unique;
-  /*****************************************************************/
-  /* Hardcoded modell error requirements */
-  config->export_format     = ecl_kw_file_active_cells;
-  config->import_format     = ecl_kw_file;
-  /*****************************************************************/
-
   config->init_file_fmt     = path_fmt_alloc_path_fmt( init_fmt );
   return config;
 }
@@ -439,55 +437,62 @@ bool field_config_write_compressed(const field_config_type * config) { return co
 
 
 
-void field_config_set_limits(field_config_type * config , void * min_value , void * max_value) {
-  memcpy(config->min_value , min_value , config->sizeof_ctype);
-  memcpy(config->max_value , max_value , config->sizeof_ctype);
-  config->limits_set = true;
+void field_config_set_truncation(field_config_type * config , truncation_type truncation, double min_value, double max_value) {
+  config->truncation = truncation;
+  config->min_value  = min_value;
+  config->max_value  = max_value;
 }
 
 
 
-void field_config_apply_limits(const field_config_type * config, void * _data) {
-  if (config->internal_ecl_type != ecl_double_type) {
-    fprintf(stderr,"%s: sorry - limits only implemented for double fields currently \n",__func__);
-    abort();
-  }
 
-  if (config->limits_set) {
-    switch (config->internal_ecl_type) {
-    case(ecl_double_type):
-      {
-	double *data = (double *) _data;
-	int i;
-	for (i = 0; i < config->data_size; i++) 
-	  util_apply_double_limits(&data[i] , *((double *) config->min_value) , *((double *) config->max_value));
+void field_config_set_truncation_from_strings(field_config_type * config , const char * _truncation_name , const char ** values) {
+  if (_truncation_name != NULL) {
+    char * truncation_name = util_alloc_strupr_copy( _truncation_name ) ;
+    truncation_type truncation = truncate_none;
+
+    if (strcmp(truncation_name , "NONE") == 0)
+      truncation = truncate_none;
+    else if (strcmp(truncation_name , "MIN") == 0)
+      truncation = truncate_min;
+    else if (strcmp(truncation_name , "MAX") == 0)
+      truncation = truncate_max;
+    else if (strcmp(truncation_name , "MINMAX") == 0)
+      truncation = truncate_minmax;
+    else 
+      util_abort("%s: truncation string:%s is not recognized \n",__func__ , _truncation_name);
+    
+    {
+      const char * value_ptr = values[0];
+      double min_value = -1;
+      double max_value = -1;
+
+      if (truncation & truncate_min) {
+	if (!util_sscanf_double(value_ptr , &min_value))
+	  util_abort("%s: failed to parse:%s as double \n",__func__ , value_ptr);
+	if (truncation == truncate_minmax)
+	  value_ptr++;
       }
-      break;
-    case(ecl_float_type):
-      {
-	float *data = (float *) _data;
-	int i;
-	for (i = 0; i < config->data_size; i++) 
-	  util_apply_float_limits(&data[i] , *((float *) config->min_value) , *((float *) config->max_value));
+
+      if (truncation & truncate_max) {
+	if (! util_sscanf_double(value_ptr , &max_value))
+	  util_abort("%s: failed to parse:%s as double \n",__func__ , value_ptr);
       }
-      break;
-    case(ecl_int_type):
-      {
-	int *data = (int *) _data;
-	int i;
-	for (i = 0; i < config->data_size; i++) 
-	  util_apply_int_limits(&data[i] , *((int *) config->min_value) , *((int *) config->max_value));
-      }
-      break;
-    default:
-      fprintf(stderr,"%s field limits only applied for int/double/float fields - aborting \n",__func__);
-      abort();
+
+      field_config_set_truncation(config , truncation , min_value , max_value);
     }
-  } else {
-    fprintf(stderr,"%s: must set limits with a call to : field_config_set_limits() first - aborting \n",__func__);
-    abort();
+    free( truncation_name );
   }
 }
+
+
+truncation_type field_config_get_truncation(const field_config_type * config , double * min_value , double * max_value) {
+  *min_value = config->min_value;
+  *max_value = config->max_value;
+  return config->truncation;
+}
+
+
 
 
 
@@ -502,8 +507,6 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 
 
 void field_config_free(field_config_type * config) {
-  free(config->min_value);
-  free(config->max_value);
   util_safe_free(config->ecl_kw_name);
   util_safe_free(config->base_file);
   util_safe_free(config->perturbation_config_file);

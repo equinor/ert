@@ -15,6 +15,7 @@
 #include <ecl_static_kw.h>
 #include <gen_kw.h>
 #include <path_fmt.h>
+#include <pilot_point.h>
 #include <havana_fault.h>
 #include <gen_data.h>
 #include <gen_param.h>
@@ -318,35 +319,27 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
    wether a full file name is required, or only a path.
 */
 
-void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path) {
-  if (enkf_node->ecl_write) {
+void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fortio_type * restart_fortio) {
+  if (enkf_node->ecl_write != NULL) {
     const char * node_eclfile = enkf_config_node_get_outfile_ref(enkf_node->config);
     if (node_eclfile != NULL) {
       char * target_file = util_alloc_full_path(path , node_eclfile);
-      enkf_node->ecl_write(enkf_node->data , target_file);
+      enkf_node->ecl_write(enkf_node->data , target_file , restart_fortio);
       free(target_file);
-    } else {
-      if (enkf_node_get_impl_type(enkf_node) == GEN_DATA)  /* Fucking special case ... the GEN_DATA implementation is to flexible for it's own good. */
-	enkf_node->ecl_write(enkf_node->data , path);
-    }
+    } else  
+      enkf_node->ecl_write(enkf_node->data , path , restart_fortio);
+    /*
+      This code path is followed by:
+      
+      1. Restart-file elements which use the fortio pointer
+      2. GEN_DATA instances which allocate the filename interanally
+      	 (without useing the enkf_node layer). That implementation is
+      	 to flexible for it's own good....
+    */
   }
 }
 
 
-/**
-   This function writes the node data, which must be either a field,
-   or STATIC -  directly to an open fortio instance. No node->function is invoked.
-*/
-
-void enkf_node_ecl_write_fortio(const enkf_node_type *enkf_node , fortio_type * fortio , bool fmt_file , enkf_impl_type impl_type) {
-  if (impl_type == STATIC) {
-    ecl_kw_type * ecl_kw = ecl_static_kw_ecl_kw_ptr( enkf_node_value_ptr(enkf_node) );
-    ecl_kw_fwrite(ecl_kw , fmt_file , fortio);
-  } else if (impl_type == FIELD) {
-    field_ecl_write1D_fortio(enkf_node_value_ptr(enkf_node) , fortio , fmt_file);
-  } else
-    util_abort("%s: internal error - unrecognized type:%d \n",__func__ , impl_type);
-}
 
 /**
    This function loads (internalizes) ECLIPSE results, the ecl_block
@@ -728,7 +721,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     break;
   case(STATIC):
     node->realloc_data = ecl_static_kw_realloc_data__;
-    node->ecl_write    = NULL; /* ecl_static_kw_ecl_write__; */
+    node->ecl_write    = ecl_static_kw_ecl_write__; 
     node->alloc        = ecl_static_kw_alloc__;
     node->fread_f      = ecl_static_kw_fread__;
     node->fwrite_f     = ecl_static_kw_fwrite__;
