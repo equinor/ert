@@ -398,16 +398,7 @@ enkf_state_type * enkf_state_alloc(int iens,
 
   enkf_state->node_hash       = hash_alloc();
   enkf_state->restart_kw_list = restart_kw_list_alloc();
-  /*
-    These keywords are added here, because we must have them in the restart_kw list
-    from the very start - otherwise the enkf_state_ecl_write() function will fail.
-  */
-  restart_kw_list_add(enkf_state->restart_kw_list , "SWAT");
-  restart_kw_list_add(enkf_state->restart_kw_list , "SGAS");
-  restart_kw_list_add(enkf_state->restart_kw_list , "PRESSURE");
-  restart_kw_list_add(enkf_state->restart_kw_list , "RV");
-  restart_kw_list_add(enkf_state->restart_kw_list , "RS");
-  
+
 
   enkf_state->data_kw         = hash_alloc();
   {
@@ -850,7 +841,19 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
   
   if (run_info->step1 > 0)
     enkf_state_write_restart_file(enkf_state);
-  
+  else {
+    /*
+      These keywords are added here becasue otherwise the main loop
+      below will try to write them with ecl_write - and that will fail
+      (for report_step 0).
+    */
+    restart_kw_list_add(enkf_state->restart_kw_list , "SWAT");
+    restart_kw_list_add(enkf_state->restart_kw_list , "SGAS");
+    restart_kw_list_add(enkf_state->restart_kw_list , "PRESSURE");
+    restart_kw_list_add(enkf_state->restart_kw_list , "RV");
+    restart_kw_list_add(enkf_state->restart_kw_list , "RS");
+  }
+
   util_make_path(run_info->run_path);
   {
     const int num_keys = hash_get_size(enkf_state->node_hash);
