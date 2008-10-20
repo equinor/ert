@@ -21,7 +21,7 @@ int main(int argc , char ** argv) {
     field_file_format_type file_type;
 
     ecl_grid_type * ecl_grid = ecl_grid_alloc(grid_file , true);
-    field_config_type *field_config = field_config_alloc_dynamic("XX" , ecl_grid);
+    field_config_type *field_config = field_config_alloc_dynamic("XX" , NULL , NULL , ecl_grid); 
     field_type * field = field_alloc(field_config);
     field_config_enkf_OFF(field_config);
     

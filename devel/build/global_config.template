@@ -17,7 +17,9 @@ LIBANALYSIS_HOME  = /h/jgv/code/enkf/libanalysis
 LIBSAMPLE_HOME    = /h/jgv/code/enkf/libsample
 LIBPLOT_HOME      = /h/jgv/code/enkf/libplot
 LIBENKF_HOME  	  = /h/jgv/code/enkf/libenkf
+LIBPLPLOT_HOME    = /d/proj/bg/enkf/software
 
+APPLICATION_HOME  = /h/a152128/EnKF/devel/EnKF/apps
 # External libraries
 EXTERNAL_LIB_PATH = /h/a152128/lib/linux
 EXTERNAL_INC_PATH = /h/a152128/include
@@ -38,6 +40,6 @@ MFLAG   = m64
 FFLAGS  = -$(MFLAG) -c -g -fimplicit-none -fdefault-real-8 -Wall -Wsurprising -fPIC
 CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall -fPIC
 ARFLAGS = -csr
-LDFLAGS = -rdynamic
 LD      = $(CC)
+LDFLAGS = -rdynamic -Wl,-rpath $(LIBPLOT_HOME)/lib
 

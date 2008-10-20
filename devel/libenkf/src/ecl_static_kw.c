@@ -110,8 +110,7 @@ void * ecl_static_kw_alloc__(const void *ptr) {
 
 
 void ecl_static_kw_ecl_write(const ecl_static_kw_type * ecl_static, const char * path , fortio_type * fortio) {
-  bool __FMT_FILE__ = false;
-  ecl_kw_fwrite(ecl_static->ecl_kw , __FMT_FILE__ , fortio);
+  ecl_kw_fwrite(ecl_static->ecl_kw , fortio);
 }
 
 

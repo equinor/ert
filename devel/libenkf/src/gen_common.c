@@ -75,7 +75,7 @@ void gen_common_get_file_type(const char * filename , gen_data_file_type * _file
   char buffer[32];
   if (fortio_is_fortran_file(filename , fortran_endian_flip)) {
     int record_length;
-    fortio_type * fortio = fortio_fopen(filename , "r" , *fortran_endian_flip);
+    fortio_type * fortio = fortio_fopen(filename , "r" , *fortran_endian_flip , true);
     record_length = fortio_fread_record(fortio , buffer);
     if (record_length != 6) 
       util_abort("%s: could not locate \'BINARY\' header in %s.\n",__func__ , filename);

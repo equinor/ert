@@ -496,21 +496,21 @@ bool field_fwrite(const field_type * field , FILE * stream) {
 
 
 
-void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file ) {
+void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio) {
   const int data_size = field_config_get_data_size(field->config);
   const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config); 
   
-  ecl_kw_fwrite_param_fortio(fortio , fmt_file , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , field->data);
+  ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , field->data);
 }
 
 
-void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio , bool fmt_file  ) {
+void field_ecl_write3D_fortio(const field_type * field , fortio_type * fortio ) {
   const int data_size             = field_config_get_volume(field->config);
   const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
   const ecl_type_enum ecl_type    = field_config_get_ecl_type(field->config);
   void *data = __field_alloc_3D_data(field , data_size , false ,ecl_type , target_type);
 
-  ecl_kw_fwrite_param_fortio(fortio , fmt_file ,field_config_get_ecl_kw_name(field->config), ecl_type , data_size , data);
+  ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , data);
   free(data);
 }
 
@@ -628,12 +628,12 @@ void field_export(const field_type * field, const char * file , field_file_forma
     bool fmt_file , endian_swap;
 
     field_config_set_io_options(field->config , &fmt_file , &endian_swap);
-    fortio = fortio_fopen(file , "w" , endian_swap);
+    fortio = fortio_fopen(file , "w" , endian_swap , fmt_file);
 
     if (file_type == ecl_kw_file_all_cells)
-      field_ecl_write3D_fortio(field , fortio , fmt_file );
+      field_ecl_write3D_fortio(field , fortio);
     else
-      field_ecl_write1D_fortio(field , fortio , fmt_file);
+      field_ecl_write1D_fortio(field , fortio);
 
     fortio_fclose(fortio);
   } else if (file_type == ecl_grdecl_file) {
@@ -662,11 +662,10 @@ void field_ecl_write(const field_type * __field , const char * file , fortio_typ
   field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
   field_output_transform(field);
   {
-    bool __FMT_FILE__ = false;  /* It is getting very tempting to cache this in the fortio object. */
     field_file_format_type export_format = field_config_get_export_format(field->config);
 
     if (export_format == ecl_restart_block)
-      field_ecl_write1D_fortio( field , restart_fortio , __FMT_FILE__);
+      field_ecl_write1D_fortio( field , restart_fortio);
     else
       field_export(field , file , export_format);
     
@@ -961,9 +960,9 @@ void field_fload_ecl_kw(field_type * field , const char * filename , bool endian
   
   {
     bool fmt_file        = ecl_fstate_fmt_file(filename);
-    fortio_type * fortio = fortio_fopen(filename , "r" , endian_flip);
-    ecl_kw_fseek_kw(key , fmt_file , true , true , fortio);
-    ecl_kw = ecl_kw_fread_alloc(fortio , false);
+    fortio_type * fortio = fortio_fopen(filename , "r" , endian_flip , fmt_file);
+    ecl_kw_fseek_kw(key , true , true , fortio);
+    ecl_kw = ecl_kw_fread_alloc( fortio );
     fortio_fclose(fortio);
   }
   

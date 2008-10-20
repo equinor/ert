@@ -494,66 +494,6 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 
 
 
-/*
-static void enkf_state_ecl_store(const enkf_state_type * enkf_state , int report_nr1 , int report_nr2) {
-  const bool fmt_file  = enkf_state_fmt_file(enkf_state);
-  const member_config_type * my_config = enkf_state->my_config;
-  int first_report;
-
-  if (my_config->ecl_store != store_none) {
-    util_make_path(my_config->ecl_store_path);
-    if (my_config->ecl_store & store_data) {
-      char * data_target = ecl_util_alloc_filename(my_config->ecl_store_path , my_config->eclbase , ecl_data_file , true , -1);
-      char * data_src    = ecl_util_alloc_filename(my_config->run_path       , my_config->eclbase , ecl_data_file , true , -1);
-      
-      util_copy_file(data_src , data_target);
-      free(data_target);
-      free(data_src);
-    }
-
-
-    if (my_config->ecl_store & store_summary) {
-      first_report       = report_nr1 + 1;
-      {
-	char ** summary_target = ecl_util_alloc_filelist(my_config->ecl_store_path , my_config->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
-	char ** summary_src    = ecl_util_alloc_filelist(my_config->run_path       , my_config->eclbase , ecl_summary_file         , fmt_file , first_report, report_nr2);
-	char  * header_target  = ecl_util_alloc_filename(my_config->ecl_store_path , my_config->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
-	int i;
-	for (i=0; i  < report_nr2 - first_report + 1; i++) 
-	  util_copy_file(summary_src[i] , summary_target[i]);
-
-	if (!util_file_exists(header_target)) {
-	  char * header_src = ecl_util_alloc_filename(my_config->run_path , my_config->eclbase , ecl_summary_header_file  , fmt_file , report_nr2);
-	  util_copy_file(header_src , header_target);
-	  free(header_src);
-	}
-	util_free_stringlist(summary_target , report_nr2 - first_report + 1);
-	util_free_stringlist(summary_src    , report_nr2 - first_report + 1);
-	free(header_target);
-      }
-    }
-  
-    if (my_config->ecl_store & store_restart) {
-      if (report_nr1 == 0)
-	first_report = 0;
-      else
-	first_report = report_nr1 + 1;
-      {
-	char ** restart_target = ecl_util_alloc_filelist(my_config->ecl_store_path , my_config->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
-	char ** restart_src    = ecl_util_alloc_filelist(my_config->run_path       , my_config->eclbase , ecl_restart_file , fmt_file , first_report, report_nr2);
-	int i;
-	for (i=0; i  < report_nr2 - first_report + 1; i++) 
-	  util_copy_file(restart_src[i] , restart_target[i]);
-
-	util_free_stringlist(restart_target , report_nr2 - first_report + 1);
-	util_free_stringlist(restart_src    , report_nr2 - first_report + 1);
-      }
-    }
-  }
-}
-*/
-
-
 
 
 
@@ -618,13 +558,13 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
   */
   {
     char * restart_file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
-    fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap);
+    fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap , fmt_file);
     
     if (unified)
-      ecl_block_fseek(report_step , fmt_file , true , fortio);
+      ecl_block_fseek(report_step , true , fortio);
     
     restart_block = ecl_block_alloc( report_step );
-    ecl_block_fread(restart_block , fmt_file , fortio , NULL);
+    ecl_block_fread(restart_block , fortio , NULL);
     fortio_fclose(fortio);
     free(restart_file);
   }
@@ -771,7 +711,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const bool fmt_file  		       = ecl_config_get_formatted(enkf_state->ecl_config);
   const bool endian_swap               = ecl_config_get_endian_flip(enkf_state->ecl_config);
   char * restart_file    = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
-  fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap);
+  fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap , fmt_file);
   const char * kw;
 
   if (restart_kw_list_empty(enkf_state->restart_kw_list))
