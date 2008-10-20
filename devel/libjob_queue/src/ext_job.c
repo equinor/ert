@@ -32,15 +32,15 @@ struct ext_job_struct {
   char       * name;
   char 	     * portable_exe;
   char 	     * target_file;
-  char       * start_file;      /* Will not start if not this file is present */
+  char       * start_file;          /* Will not start if not this file is present */
   char 	     * stdout_file;
   char 	     * stdin_file;
   char 	     * stderr_file;
   char       * lsf_resources;  
-  stringlist_type * argv;      /* This should *NOT* start with the executable */
+  stringlist_type * argv;           /* This should *NOT* start with the executable */
   stringlist_type * init_code;
-  hash_type  * platform_exe;   /* The hash tables can NOT be NULL. */
-  hash_type  * environment;
+  hash_type  	  * platform_exe;   /* The hash tables can NOT be NULL. */
+  hash_type  	  * environment;
 };
 
 
@@ -130,7 +130,7 @@ void ext_job_set_name(ext_job_type * ext_job, const char * name) {
 }
 
 void ext_job_set_lsf_request(ext_job_type * ext_job, const char * lsf_request) {
-  ext_job->name = util_realloc_string_copy(ext_job->name , lsf_request);
+  ext_job->lsf_resources = util_realloc_string_copy(ext_job->lsf_resources , lsf_request);
 }
 
 
