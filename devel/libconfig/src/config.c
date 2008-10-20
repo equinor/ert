@@ -457,6 +457,16 @@ static const stringlist_type * config_item_iget_stringlist_ref(const config_item
 }
 
 
+static char * config_item_alloc_joined_string(const config_item_type * item , const char * sep) {
+  if (item->append_arg) 
+    util_abort("%s: this function can only be used on items added with append_arg == FALSE\n" , __func__);
+  {
+    config_item_node_type * node = config_item_iget_node(item , 0);  
+    return stringlist_alloc_joined_string(node->stringlist , sep);
+  }
+}
+
+
 
 static const stringlist_type * config_item_get_stringlist_ref(const config_item_type * item) {
   if (item->append_arg) 
@@ -763,6 +773,8 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
 static int config_item_get_occurences(const config_item_type * item) {
   return item->node_size;
 }
+
+
 
 
 void config_item_validate(config_type * config , const config_item_type * item) {
@@ -1330,6 +1342,15 @@ stringlist_type * config_alloc_stringlist(const config_type * config , const cha
 }
 
 
+
+
+/**
+   It is enforced that kw-item has been added with append_arg == false.
+*/
+char * config_alloc_joined_string(const config_type * config , const char * kw, const char * sep) {
+  config_item_type * item = config_get_item(config , kw);
+  return config_item_alloc_joined_string(item , sep);
+}
 
 
 /**

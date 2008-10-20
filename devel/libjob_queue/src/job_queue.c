@@ -521,6 +521,7 @@ void job_queue_set_resource_request(job_queue_type * queue, const char * resourc
     driver->set_resource_request(driver , resource_request);
 }
 
+
 /**
    Should (in principle) be possible to change driver on a running system whoaaa.
 */

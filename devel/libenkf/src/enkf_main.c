@@ -437,7 +437,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     {
-      stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"LSF_RESOURCES" , "LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 3);
+      stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
       stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
       stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
 
@@ -453,7 +453,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
                                                 
     /* These must be set IFF QUEUE_SYSTEM == LSF */
-    config_add_item(config , "LSF_RESOURCES" , false , true);
+    config_add_item(config , "LSF_RESOURCES" , false , false);
     item = config_add_item(config , "LSF_QUEUE"     , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
 

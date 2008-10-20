@@ -95,23 +95,21 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config , i
     lsf_request_free(site_config->lsf_request);
 }
 
-static void site_config_install_LSF_job_queue(site_config_type * site_config , int ens_size , const char * job_script , int max_submit , int max_running , const char * lsf_queue_name , const stringlist_type * lsf_resource_request) {
-  basic_queue_driver_type * driver = lsf_driver_alloc( lsf_queue_name , lsf_resource_request );
+static void site_config_install_LSF_job_queue(site_config_type * site_config ,  int ens_size , const char * job_script , int max_submit , int max_running , const char * lsf_queue_name, const char * manual_lsf_request) {
+  basic_queue_driver_type * driver = lsf_driver_alloc( lsf_queue_name );
   if (site_config->job_queue != NULL)
     job_queue_free( site_config->job_queue );
   
   site_config->job_queue   = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
-  if (site_config->lsf_request == NULL)
-    site_config->lsf_request = lsf_request_alloc(site_config->joblist , NULL);
+  if (site_config->lsf_request == NULL) 
+    site_config->lsf_request = lsf_request_alloc(site_config->joblist , manual_lsf_request);
 }
 
 
 
 void site_config_update_lsf_request(site_config_type * site_config , const stringlist_type * forward_model) {
-  /*
-    if (site_config->lsf_request != NULL) 
+  if (site_config->lsf_request != NULL) 
     lsf_request_update(site_config->lsf_request , forward_model , site_config->job_queue);
-  */
 }
 
 
@@ -124,14 +122,17 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
   
   if (strcmp(queue_system , "LSF") == 0) {
     const char * lsf_queue_name             = config_get(config , "LSF_QUEUE");
-    stringlist_type * resource_request_list = config_alloc_complete_stringlist(config , "LSF_RESOURCES");
+    char * lsf_resource_request = NULL;
     int max_running;
     
+
+    if (config_has_set_item(config , "LSF_RESOURCES"))
+      lsf_resource_request = config_alloc_joined_string(config , "LSF_RESOURCES" , " ");
     if (!util_sscanf_int(config_get(config , "MAX_RUNNING_LSF") , &max_running))
       util_abort("%s: internal error - \n",__func__);
     
-    site_config_install_LSF_job_queue(site_config , ens_size , job_script , max_submit , max_running , lsf_queue_name , resource_request_list);
-    stringlist_free( resource_request_list );
+    site_config_install_LSF_job_queue(site_config , ens_size , job_script , max_submit , max_running , lsf_queue_name , lsf_resource_request);
+    util_safe_free(lsf_resource_request);
   } else if (strcmp(queue_system , "RSH") == 0) {
     const char * rsh_command        = config_get(config , "RSH_COMMAND");
     stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");

@@ -154,6 +154,9 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
 
+
+  printf("%s: LSF_RESOURCE_REQUEST:%s \n",__func__ , resource_request);
+
   if (resource_request != NULL)
     util_vfork_exec("bsub" , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
   else
@@ -411,7 +414,7 @@ void lsf_driver_set_resource_request__(basic_queue_driver_type * __driver, const
 }
 
 
-void * lsf_driver_alloc(const char * queue_name , const stringlist_type * lsf_resource_list) {
+void * lsf_driver_alloc(const char * queue_name) {
   lsf_driver_type * lsf_driver 	   = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name       	   = util_alloc_string_copy(queue_name);
   lsf_driver->__lsf_id         	   = LSF_DRIVER_ID;
@@ -423,11 +426,6 @@ void * lsf_driver_alloc(const char * queue_name , const stringlist_type * lsf_re
   lsf_driver->set_resource_request = lsf_driver_set_resource_request__;
   
   lsf_driver->resource_request = NULL;
-  {
-    char * tmp = stringlist_alloc_joined_string(lsf_resource_list , " ");
-    lsf_driver_set_resource_request(lsf_driver , tmp);
-    free(tmp);
-  }
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
   
 #ifdef LSF_LIBRARY_DRIVER

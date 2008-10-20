@@ -19,7 +19,6 @@
 #define SQR_FUNC(prefix)                            \
 void prefix ## _isqr(void * void_arg) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;\
-const prefix ## _config_type *config = arg->config; \
 const int data_size = prefix ## _config_get_data_size(arg->config);  \
 int i;                                              \
 for (i=0; i < data_size; i++)                       \
@@ -35,7 +34,6 @@ for (i=0; i < data_size; i++)                       \
 #define SQRT_FUNC(prefix)                           \
 void prefix ## _isqrt(void * void_arg) {            \
 prefix ## _type *arg = (prefix ## _type *) void_arg;\
-const prefix ## _config_type *config = arg->config; \
 const int data_size = prefix ## _config_get_data_size(arg->config);  \
 int i;                                              \
 for (i=0; i < data_size; i++)                       \
@@ -51,7 +49,6 @@ for (i=0; i < data_size; i++)                       \
 #define SCALE_FUNC(prefix)                                                 \
 void prefix ## _iscale(void *void_arg , double scale_factor) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;                       \
-const prefix ## _config_type *config = arg->config; 			   \
 const int data_size = prefix ## _config_get_data_size(arg->config);        \
 int i;                                              			   \
 for (i=0; i < data_size; i++)                            		   \
@@ -66,7 +63,6 @@ for (i=0; i < data_size; i++)                            		   \
 #define RESET_FUNC(prefix)                                                 \
 void prefix ## _ireset(void *void_arg) {             \
 prefix ## _type *arg = (prefix ## _type *) void_arg;                       \
-const prefix ## _config_type *config = arg->config; 			   \
 const int data_size = prefix ## _config_get_data_size(arg->config);        \
 int i;                                              			   \
 for (i=0; i < data_size; i++)                                              \
