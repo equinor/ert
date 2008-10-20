@@ -818,7 +818,7 @@ static void field_indexed_update(field_type * field, ecl_type_enum src_type , in
       if (src_type == ecl_double_type) {
 	double * src_data = (double *) value;
 	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
-      } if (src_type == ecl_float_type) {
+      } else if (src_type == ecl_float_type) {
 	float * src_data = (float *) value;
 	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
       } else 
@@ -831,7 +831,7 @@ static void field_indexed_update(field_type * field, ecl_type_enum src_type , in
       if (src_type == ecl_double_type) {
 	double * src_data = (double *) value;
 	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
-      } if (src_type == ecl_float_type) {
+      } else if (src_type == ecl_float_type) {
 	float * src_data = (float *) value;
 	INDEXED_UPDATE_MACRO(field_data , src_data , len , index_list , add);
       } else 

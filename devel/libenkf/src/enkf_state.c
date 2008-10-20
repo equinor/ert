@@ -987,7 +987,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       hash_type * context    	= hash_alloc();
       char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step1);
       char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step2);
-      char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file  , fmt_file , -1);
+      char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file      , fmt_file , -1);
       char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
       char * iens4            	= util_alloc_sprintf("%04d" , my_config->iens);
       char * ecl_base        	= my_config->eclbase;
