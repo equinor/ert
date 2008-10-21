@@ -864,8 +864,12 @@ void enkf_state_safe_fread(enkf_state_type * enkf_state , int mask , int report_
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask)) {
-      if (enkf_fs_has_node(shared_info->fs , enkf_node_get_config( enkf_node ) , report_step , my_config->iens , state))
+      printf("Ser etter:%s \n",key_list[ikey]);
+      if (enkf_fs_has_node(shared_info->fs , enkf_node_get_config( enkf_node ) , report_step , my_config->iens , state)) {
+	printf("Loader:%s \n",key_list[ikey]);
 	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
+      } else
+	printf("Fant ikke: %s \n",key_list[ikey]);
     }
   }                                                                     
   util_free_stringlist(key_list , num_keys);
