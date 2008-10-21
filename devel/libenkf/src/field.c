@@ -341,7 +341,17 @@ void field_fread(field_type * field , FILE * stream) {
     util_fread_compressed(field->data , stream);
   else
     enkf_util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
-
+  
+  /*
+    
+  {
+    float * data = (float * ) field->data;
+    printf("%s: ",__func__);
+    for (int i = 0; i < 10; i++)
+      printf("%g ",data[i]);
+    printf("\n");
+  }
+  */
 }
 
 
@@ -661,6 +671,15 @@ void field_export(const field_type * field, const char * file , field_file_forma
 void field_ecl_write(const field_type * __field , const char * file , fortio_type * restart_fortio) {
   field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
   field_output_transform(field);
+  /*
+    {
+    float * data = (float * ) field->data;
+    printf("%s: ",__func__);
+    for (int i = 0; i < 10; i++)
+      printf("%g ",data[i]);
+    printf("\n");
+  }
+  */
   {
     field_file_format_type export_format = field_config_get_export_format(field->config);
 

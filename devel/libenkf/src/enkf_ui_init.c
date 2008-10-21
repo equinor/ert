@@ -51,7 +51,7 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
   stringlist_type * param_list = stringlist_alloc_new();
   int iens1, iens2;
 
-    /* iens2 should be interpreted as __inclusive__ */
+  /* iens2 should be interpreted as __inclusive__ */
   if ( all_members ) {
     iens1 = 0;
     iens2 = ens_size - 1;
@@ -64,13 +64,13 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
     int num_keys;
     char ** tmp_key_list = ensemble_config_alloc_keylist( ensemble_config , &num_keys);
     for (int i = 0; i < num_keys; i++) {
-      if (ensemble_config_var_type(ensemble_config , tmp_key_list[i]) == parameter) 
+      if (ensemble_config_var_type(ensemble_config , tmp_key_list[i]) != ecl_static)
 	stringlist_append_copy(param_list , tmp_key_list[i]);
     }
     util_free_stringlist( tmp_key_list , num_keys );
   } else 
     stringlist_append_copy( param_list , enkf_config_node_get_key_ref(enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , INVALID , parameter , NULL , NULL , NULL)) );
-
+  
 
     
   enkf_ui_init__(enkf_main , param_list , iens1 , iens2);
