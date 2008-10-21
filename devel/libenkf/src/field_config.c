@@ -346,8 +346,25 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const 
 
 
 
-field_config_type * field_config_alloc_general(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , const char * init_fmt) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_kw_file_active_cells , ecl_kw_file);   /* Hardcoded modell error requirements */
+field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , const char * init_fmt) {
+  field_config_type * config;
+  field_file_format_type export_format , import_format;
+  {
+    /* Duplicated code with field_config_alloc_parameter(). */
+    char * extension;
+    util_alloc_file_components(ecl_file , NULL , NULL , &extension);
+    util_strupr( extension );
+    if (strcmp(extension , "GRDECL") == 0) {
+      export_format = ecl_grdecl_file;
+      import_format = ecl_grdecl_file;
+    } else {
+      export_format = ecl_kw_file_all_cells;
+      import_format = ecl_kw_file;
+    }
+    free(extension);
+  }
+
+  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format);
   config->init_type         = load_unique;
   config->init_file_fmt     = path_fmt_alloc_path_fmt( init_fmt );
   return config;

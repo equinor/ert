@@ -849,6 +849,29 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
 }
 
 
+
+/**
+   This function checks that the node exists, and does not fail if it
+   does not .. should be used carefully.
+*/
+void enkf_state_safe_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
+  shared_info_type * shared_info = enkf_state->shared_info;
+  const member_config_type * my_config = enkf_state->my_config;
+  const int num_keys = hash_get_size(enkf_state->node_hash);
+  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
+  int ikey;
+  
+  for (ikey = 0; ikey < num_keys; ikey++) {
+    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
+    if (enkf_node_include_type(enkf_node , mask)) {
+      if (enkf_fs_has_node(shared_info->fs , enkf_node_get_config( enkf_node ) , report_step , my_config->iens , state))
+	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
+    }
+  }                                                                     
+  util_free_stringlist(key_list , num_keys);
+}
+
+
 void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
@@ -967,13 +990,19 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       free(schedule_file);
     }
     
-    
     {
       int mask = parameter;
-      if (run_info->init_step > 0)
+      if (run_info->init_step == 0)
+	/** 
+	    Must be carefull not to fail when trying to load
+	    e.g. PRESSURE which might not exist.
+	*/
+	enkf_state_safe_fread(enkf_state , dynamic , run_info->init_step , run_info->init_state);
+      else
 	mask += dynamic;
       enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state);
     }
+
     enkf_state_ecl_write( enkf_state );
     
     {
