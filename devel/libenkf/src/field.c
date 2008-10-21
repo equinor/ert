@@ -1096,6 +1096,9 @@ void field_ecl_load(field_type * field , const char * ecl_file , const ecl_sum_t
     } else {
       /* Loading from unique file - currently this only applies to the modelerror implementation. */
       bool __ENDIAN_FLIP__ = true; /* Fuck this ... */
+      if (import_format == undefined_format)
+	import_format = field_config_guess_file_type(ecl_file , __ENDIAN_FLIP__);
+      
       field_fload_typed(field , ecl_file , __ENDIAN_FLIP__ , import_format);
     }
   }

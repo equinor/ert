@@ -145,6 +145,25 @@ static bool field_config_valid_file_type(field_file_format_type file_type, bool 
 }
 
 
+static field_file_format_type field_config_default_export_format(const char * filename) {
+  field_file_format_type export_format = ecl_kw_file_all_cells;   /* Suitable for PERMX/PORO/... */
+  char * extension;
+  util_alloc_file_components( filename , NULL , NULL , &extension);
+  if (extension != NULL) {
+    util_strupr(extension);
+
+    if (strcmp(extension , "GRDECL") == 0)
+      export_format = ecl_grdecl_file;
+    else if (strcmp(extension , "ROFF") == 0)
+      export_format = rms_roff_file;
+    
+    free(extension);
+  }
+  
+  return export_format;
+}
+
+
 
 
 /**
@@ -239,7 +258,8 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
     and generally *not* equal to nx*ny*nz.
   */
   config->export_format = export_format;
-  config->import_format = import_format; 
+  config->import_format = import_format;      /* The import format should in general be undefined_format - then the type 
+                                                 will be determined automagically (unless it is restart_block). */
   
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
@@ -346,27 +366,20 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const 
 
 
 
-field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , const char * init_fmt) {
+field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , ecl_type_enum internal_type , const char * init_fmt) {
   field_config_type * config;
-  field_file_format_type export_format , import_format;
-  {
-    /* Duplicated code with field_config_alloc_parameter(). */
-    char * extension;
-    util_alloc_file_components(ecl_file , NULL , NULL , &extension);
-    util_strupr( extension );
-    if (strcmp(extension , "GRDECL") == 0) {
-      export_format = ecl_grdecl_file;
-      import_format = ecl_grdecl_file;
-    } else {
-      export_format = ecl_kw_file_all_cells;
-      import_format = ecl_kw_file;
-    }
-    free(extension);
-  }
+  field_file_format_type import_format = undefined_format;
+  field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format);
-  config->init_type         = load_unique;
-  config->init_file_fmt     = path_fmt_alloc_path_fmt( init_fmt );
+  config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , import_format , export_format);
+  if (init_fmt != NULL) {
+    config->init_type         = load_unique;
+    config->init_file_fmt     = path_fmt_alloc_path_fmt( init_fmt );
+  } else {
+    config->init_type = none;
+    config->init_file_fmt = NULL;
+  }
+    
   return config;
 }
 
@@ -385,19 +398,10 @@ field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_nam
 field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const char * ecl_file , const char * output_transform_name, 
 						 const ecl_grid_type * ecl_grid ,field_init_type init_type , int config_len , const char ** config_files) {
   field_config_type * config;
-  field_file_format_type export_format;
-  {
-    char * extension;
-    util_alloc_file_components(ecl_file , NULL , NULL , &extension);
-    util_strupr( extension );
-    if (strcmp(extension , "GRDECL") == 0)
-      export_format = ecl_grdecl_file;
-    else
-      export_format = ecl_kw_file_all_cells;
-    free(extension);
-  }
+  field_file_format_type import_format = undefined_format;
+  field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , undefined_format , export_format);
+  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , export_format , export_format);
   config->init_type = init_type;
   if (init_type == none) {
     fprintf(stderr,"%s: invalid init type \n",__func__);

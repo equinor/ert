@@ -89,7 +89,7 @@ void                    field_config_get_dims(const field_config_type * , int * 
 field_config_type     * field_config_alloc_dynamic(const char * , const char * , const char ** , const ecl_grid_type *);
 field_config_type     * field_config_alloc_parameter_no_init(const char *, const ecl_grid_type * , ecl_type_enum);
 field_config_type     * field_config_alloc_parameter(const char * , const char * , const char * , const ecl_grid_type * , field_init_type  , int  , const char ** );
-field_config_type     * field_config_alloc_general(const char *  , const char * , const ecl_grid_type *  , const char * );
+field_config_type     * field_config_alloc_general(const char *  , const char * , const ecl_grid_type *  , ecl_type_enum , const char * );
 void                    field_config_free(field_config_type *);
 void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
 int                     field_config_get_volume(const field_config_type * );

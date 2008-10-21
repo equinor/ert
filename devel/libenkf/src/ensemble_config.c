@@ -337,10 +337,10 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       else 
 	util_abort("%s: init_mode:%s must be a valid integer - aborting \n",__func__ , init_string);
     } else if (strcmp(var_type_string , "GENERAL") == 0) {
-      const char * enkf_outfile = stringlist_iget(tokens , 2);
+      const char * enkf_outfile = stringlist_iget(tokens , 2); /* Out before in ?? */
       const char * enkf_infile  = stringlist_iget(tokens , 3);
       const char * init_fmt     = stringlist_iget(tokens , 4);
-      ensemble_config_add_node(ensemble_config , key , dynamic , FIELD , enkf_outfile , enkf_infile , field_config_alloc_general(key , enkf_infile , grid , init_fmt));
+      ensemble_config_add_node(ensemble_config , key , dynamic , FIELD , enkf_outfile , enkf_infile , field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , init_fmt));
     } else 
       util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
   }
