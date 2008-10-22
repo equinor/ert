@@ -153,6 +153,29 @@ typedef enum { lock_lockf = 1,
 	       lock_none  = 3 } lock_mode_type;
 
 
+/*
+  integer, intent(in) :: mode 
+  ! first integer means (EnKF=1, SQRT=2)
+  ! Second integer is pseudo inversion
+  !  1=eigen value pseudo inversion of SS'+(N-1)R
+  !  2=SVD subspace pseudo inversion of SS'+(N-1)R
+  !  3=SVD subspace pseudo inversion of SS'+EE'
+*/
+
+typedef enum {
+  enkf_standard = 10,
+  enkf_sqrt     = 20
+} enkf_mode_type ;
+	       
+
+typedef enum {
+  eigen_SS_N1_R = 1,
+  SVD_SS_N1_R   = 2,
+  SVD_SS_EE     = 3
+} pseudo_inversion_type ;
+
+
+  
 
 
 

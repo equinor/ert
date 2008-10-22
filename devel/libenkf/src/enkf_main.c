@@ -95,6 +95,7 @@ struct enkf_main_struct {
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
+  analysis_config_type * analysis_config;
   enkf_obs_type        * obs;
   obs_data_type        * obs_data;      /* Should ideally contain the hist object. */
   meas_matrix_type     * meas_matrix;
@@ -160,7 +161,8 @@ void enkf_main_free(enkf_main_type * enkf_main) {
       enkf_state_free(enkf_main->ensemble[i]);
     free(enkf_main->ensemble);
   }
- 
+
+  analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
   site_config_free( enkf_main->site_config);
@@ -172,17 +174,6 @@ void enkf_main_free(enkf_main_type * enkf_main) {
 
 
 /*****************************************************************/
-
-
-void enkf_main_analysis(enkf_main_type * enkf_main) {
-  const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
-  int nrobs          = obs_data_get_nrobs(enkf_main->obs_data);
-  
-  if (nrobs > 0) {
-    double * X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
-    free(X);
-  }
-}
 
 
 
@@ -333,7 +324,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 
   printf("Starter paa oppdatering \n");
   if (enkf_update) {
-    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
+    double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
     
     if (X != NULL) {
       /* 
@@ -550,7 +541,23 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       stringlist_free(refcase_dep);
     }
-      config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
+    config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
+    
+    /*****************************************************************/
+    /* Keywords for the analysis - all optional. */
+    item = config_add_item(config , "ENKF_MODE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
+    config_set_arg(config , "ENKF_MODE" , 1 , (const char *[1]) { DEFAULT_ENKF_MODE });
+
+    item = config_add_item(config , "ENKF_ALPHA" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
+    config_set_arg(config , "ENKF_ALPHA" , 1 , (const char *[1]) { DEFAULT_ENKF_ALPHA });
+
+    item = config_add_item(config , "ENKF_TRUNCATION" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
+    config_set_arg(config , "ENKF_TRUNCATION" , 1 , (const char *[1]) { DEFAULT_ENKF_TRUNCATION });
+
     
     /*****************************************************************/
     /* Keywords for the estimation                                   */
@@ -569,6 +576,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
     enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ));
     enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , ecl_config_get_sched_file(enkf_main->ecl_config));
+    enkf_main->analysis_config = analysis_config_alloc(config);
+
 
     /*****************************************************************/
     /* KEEP_RUNPATH - this parser is *EXTREMELY* primitive */

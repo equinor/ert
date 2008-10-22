@@ -392,6 +392,11 @@ field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_nam
 }
 
 
+static float pow10f(float x) {
+  return powf(10.0 , x);
+}
+
+
 
 /* This interface is just to general */
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
@@ -442,6 +447,8 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , cons
       func = NULL;
     else if (strcmp(trans , "EXP") == 0)
       func = expf;  /* The most common internal implementation is probably float. */
+    else if (strcmp(trans , "POW10") == 0)
+      func = pow10f;
     else 
       util_exit("%s: sorry - function_name:%s not recognized \n",__func__ , output_transform_name); 
     field_config_set_output_transform( config , func );

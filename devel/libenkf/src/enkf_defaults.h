@@ -32,6 +32,14 @@
 
 
 
+/* Defaults for the EnKF analysis. */
+#define DEFAULT_ENKF_MODE         "STANDARD"
+#define DEFAULT_ENKF_TRUNCATION   "0.99"    /* NB String */
+#define DEFAULT_ENKF_ALPHA        "1.50"    /* NB String */
+
+
+
+
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"
 #define NUM_STATIC_KW         37

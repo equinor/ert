@@ -41,11 +41,65 @@ subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,
 
 */
 
+#include <string.h>
 #include <stdlib.h>
 #include <util.h>
 #include <obs_data.h>
 #include <meas_matrix.h>
+#include <enkf_types.h>
 #include <math.h>
+#include <analysis.h>
+#include <config.h>
+
+
+struct analysis_config_struct {
+  double 	         truncation;
+  double 	         overlap_alpha;
+  enkf_mode_type         enkf_mode;
+  pseudo_inversion_type  inversion_mode;
+  int                    fortran_enkf_mode; 
+};
+
+
+
+static analysis_config_type * analysis_config_alloc__(double truncation , double overlap_alpha , enkf_mode_type enkf_mode) {
+  analysis_config_type * config = util_malloc( sizeof * config , __func__);
+  
+  config->truncation     = truncation;
+  config->overlap_alpha  = overlap_alpha;
+  config->enkf_mode      = enkf_mode;
+  config->inversion_mode = SVD_SS_N1_R;
+
+  config->fortran_enkf_mode     =   config->enkf_mode + config->inversion_mode;
+  return config;
+}
+
+
+analysis_config_type * analysis_config_alloc(const config_type * config) {
+  double truncation = strtod( config_get(config , "ENKF_TRUNCATION") , NULL);
+  double alpha      = strtod( config_get(config , "ENKF_ALPHA") , NULL);
+  const char * enkf_mode_string = config_get(config , "ENKF_MODE");
+  enkf_mode_type enkf_mode = enkf_sqrt; /* Compiler shut up */
+
+  if (strcmp(enkf_mode_string,"STANDARD") == 0)
+    enkf_mode = enkf_standard;
+  else if (strcmp(enkf_mode_string , "SQRT") == 0)
+    enkf_mode = enkf_sqrt;
+  else
+    util_abort("%s: internal error : enkf_mode:%s not recognized \n",__func__ , enkf_mode_string);
+
+  return analysis_config_alloc__(truncation , alpha , enkf_mode);
+}
+
+
+
+void analysis_config_free(analysis_config_type * config) {
+  free(config);
+}
+
+
+/*****************************************************************/
+
 
 void analysis_set_stride(int ens_size , int nrobs , int * ens_stride , int * obs_stride) {
   *ens_stride = nrobs;
@@ -141,18 +195,18 @@ X = |X5  X14             |
      dimensisons nrobs x nrobs and X has dimensions nrens x nrens.
 */
 
-double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot) {
+double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot , const analysis_config_type * config) {
   int  update_randrot_int, verbose_int;
   const char * xpath 	  = NULL;
-  const double alpha 	  = 1.50;
-  const double truncation = 0.99;
+  const double alpha 	  = config->overlap_alpha;
+  const double truncation = config->truncation;
+  const int    mode       = config->fortran_enkf_mode;  
   bool  * active_obs;
   double *X ;
-  int mode , istep , ens_stride , obs_stride , nrobs_active;
+  int istep , ens_stride , obs_stride , nrobs_active;
   bool returnE; 
   
   istep      = -1;     /* Must be <= 0 to avoid writing on xpath - which will fail. */
-  mode       = 12;
   returnE    = false;  /* Mode = 13 | 23 => returnE = true */
   returnE    = false;
 
