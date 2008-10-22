@@ -162,14 +162,14 @@ struct config_item_struct {
   bool                          required_set;            
   stringlist_type             * required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
   hash_type                   * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
-  config_item_types           * type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
+  //config_item_types           * type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
   validate_type               * validate;                /* Information need during validation. */ 
 };
-
+ 
 
 struct config_item_node_struct {
   stringlist_type             * stringlist;              /* The values which have been set. */
-char                        * config_cwd;              /* The currently active cwd (relative or absolute) of the parser when this item is set. */
+  char                        * config_cwd;              /* The currently active cwd (relative or absolute) of the parser when this item is set. */
 };
 
 
@@ -303,78 +303,80 @@ static void config_item_node_free(config_item_node_type * node) {
   free(node);
 }
 
-static char * __alloc_relocated(const config_item_node_type * node , const char * value) {
-  char * file;
-  
-  if (util_is_abs_path(value))
-    file = util_alloc_string_copy( value );
-  else
-    file = util_alloc_full_path(node->config_cwd , value);
-  
-  return file;
-}
 
-static char * config_item_node_validate( const config_item_node_type * node , const config_item_types * type_map) {
+//static char * __alloc_relocated(const config_item_node_type * node , const char * value) {
+//  char * file;
+//  
+//  if (util_is_abs_path(value))
+//    file = util_alloc_string_copy( value );
+//  else
+//    file = util_alloc_full_path(node->config_cwd , value);
+//  
+//  return file;
+//}
 
-  int i;
-  char * error_message = NULL;
-  for (i = 0; i < stringlist_get_size( node->stringlist ); i++) {
-    const char * value = stringlist_iget(node->stringlist , i);
-    switch (type_map[i]) {
-    case(CONFIG_STRING): /* This never fails ... */
-      break;
-    case(CONFIG_EXECUTABLE):
-      {
-	/* Should also use config_cwd */
-	char * new_exe    = __alloc_relocated(node , value);
-	char * executable = util_alloc_PATH_executable( value );
-	if (executable == NULL) 
-	  error_message = util_alloc_sprintf("Could not locate executable:%s ", value);
-	else 
-	  stringlist_iset_owned_ref(node->stringlist , i , executable);
-	free(new_exe);
-      }
-      break;
-    case(CONFIG_INT):
-      if (!util_sscanf_int( value , NULL ))
-        error_message = util_alloc_sprintf("Failed to parse:%s as an integer.",value);
-      break;
-    case(CONFIG_FLOAT):
-      if (!util_sscanf_double( value , NULL ))
-        error_message = util_alloc_sprintf("Failed to parse:%s as a floating point number.", value);
-      break;
-    case(CONFIG_EXISTING_FILE):
-      {
-	char * file = __alloc_relocated(node , value);
-	if (!util_file_exists(file))
-	  error_message = util_alloc_sprintf("Can not find file %s in %s ",value , node->config_cwd);
-	else
-	  stringlist_iset_owned_ref(node->stringlist , i , file);
-      }
-      break;
-    case(CONFIG_EXISTING_DIR):
-      {
-	char * dir = __alloc_relocated(node , value);
-	if (!util_is_directory(value))
-	  error_message = util_alloc_sprintf("Can not find directory: %s. ",value);
-	else
-	  stringlist_iset_owned_ref(node->stringlist , i , dir);
-      }
-      break;
-    case(CONFIG_BOOLEAN):
-      if (!util_sscanf_bool( value , NULL ))
-        error_message = util_alloc_sprintf("Failed to parse:%s as a boolean.", value);
-      break;
-    case(CONFIG_BYTESIZE):
-      if (!util_sscanf_bytesize( value , NULL))
-        error_message = util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value);
-      break;
-    default:
-      util_abort("%s: config_item_type:%d not recognized \n",__func__ , type_map[i]);
-    }
-  }
-  return error_message;
-}
+
+//static char * config_item_node_validate( const config_item_node_type * node , const config_item_types * type_map) {
+//
+//  int i;
+//  char * error_message = NULL;
+//  for (i = 0; i < stringlist_get_size( node->stringlist ); i++) {
+//    const char * value = stringlist_iget(node->stringlist , i);
+//    switch (type_map[i]) {
+//    case(CONFIG_STRING): /* This never fails ... */
+//      break;
+//    case(CONFIG_EXECUTABLE):
+//      {
+//	/* Should also use config_cwd */
+//	char * new_exe    = __alloc_relocated(node , value);
+//	char * executable = util_alloc_PATH_executable( value );
+//	if (executable == NULL) 
+//	  error_message = util_alloc_sprintf("Could not locate executable:%s ", value);
+//	else 
+//	  stringlist_iset_owned_ref(node->stringlist , i , executable);
+//	free(new_exe);
+//      }
+//      break;
+//    case(CONFIG_INT):
+//      if (!util_sscanf_int( value , NULL ))
+//        error_message = util_alloc_sprintf("Failed to parse:%s as an integer.",value);
+//      break;
+//    case(CONFIG_FLOAT):
+//      if (!util_sscanf_double( value , NULL ))
+//        error_message = util_alloc_sprintf("Failed to parse:%s as a floating point number.", value);
+//      break;
+//    case(CONFIG_EXISTING_FILE):
+//      {
+//	char * file = __alloc_relocated(node , value);
+//	if (!util_file_exists(file))
+//	  error_message = util_alloc_sprintf("Can not find file %s in %s ",value , node->config_cwd);
+//	else
+//	  stringlist_iset_owned_ref(node->stringlist , i , file);
+//      }
+//      break;
+//    case(CONFIG_EXISTING_DIR):
+//      {
+//	char * dir = __alloc_relocated(node , value);
+//	if (!util_is_directory(value))
+//	  error_message = util_alloc_sprintf("Can not find directory: %s. ",value);
+//	else
+//	  stringlist_iset_owned_ref(node->stringlist , i , dir);
+//      }
+//      break;
+//    case(CONFIG_BOOLEAN):
+//      if (!util_sscanf_bool( value , NULL ))
+//        error_message = util_alloc_sprintf("Failed to parse:%s as a boolean.", value);
+//      break;
+//    case(CONFIG_BYTESIZE):
+//      if (!util_sscanf_bytesize( value , NULL))
+//        error_message = util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value);
+//      break;
+//    default:
+//      util_abort("%s: config_item_type:%d not recognized \n",__func__ , type_map[i]);
+//    }
+//  }
+//  return error_message;
+//}
 
 
 
@@ -557,7 +559,7 @@ config_item_type * config_item_alloc(const char * kw , bool required , bool appe
   item->required_set            = required;
   item->required_children       = NULL;
   item->required_children_value = NULL;
-  item->type_map                = NULL;
+  //item->type_map                = NULL;
   item->validate                = validate_alloc();
   return item;
 }
@@ -611,8 +613,7 @@ static void config_item_clear( config_item_type * item ) {
 
 static bool config_item_validate_set(config_type * config , const config_item_type * item , int argc , char ** argv ,  const char * config_file, const char * config_cwd) {
   bool OK = true;
-  return OK;
-
+  
   if (item->validate->argc_min >= 0) {
     if (argc < item->validate->argc_min) {
       OK = false;
@@ -632,8 +633,10 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
     }
   }
 
-  /* OK - now we have verified that the number of argumnets is correct. Then
-     we start actually looking at the values. */
+  /* 
+     OK - now we have verified that the number of arguments is correct. Then
+     we start actually looking at the values. 
+  */
 
   if (OK) { 
     /* Validating selection set - first common, then indexed */
@@ -780,15 +783,15 @@ static int config_item_get_occurences(const config_item_type * item) {
 void config_item_validate(config_type * config , const config_item_type * item) {
   
   if (item->currently_set) {
-    if (item->type_map != NULL) {
-      int inode;
-      for (inode = 0; inode < item->node_size; inode++) {
-        char * error_message = config_item_node_validate(item->nodes[inode] , item->type_map);
-        if (error_message != NULL) {
-          config_add_and_free_error(config , error_message);
-        }
-      }
-    }
+    //if (item->type_map != NULL) {
+    //  int inode;
+    //  for (inode = 0; inode < item->node_size; inode++) {
+    //    char * error_message = config_item_node_validate(item->nodes[inode] , item->type_map);
+    //    if (error_message != NULL) {
+    //      config_add_and_free_error(config , error_message);
+    //    }
+    //  }
+    //}
 
     if (item->required_children != NULL) {
       int i;
@@ -859,7 +862,7 @@ void config_item_free( config_item_type * item) {
   }
   if (item->required_children       != NULL) stringlist_free(item->required_children);
   if (item->required_children_value != NULL) hash_free(item->required_children_value); 
-  util_safe_free(item->type_map);
+  //util_safe_free(item->type_map);
   validate_free(item->validate);
   free(item);
 }
@@ -911,6 +914,7 @@ void config_item_set_required_children_on_value(config_item_type * item , const 
     item->required_children_value = hash_alloc();
   hash_insert_hash_owned_ref( item->required_children_value , value , stringlist_alloc_deep_copy(child_list) , stringlist_free__);
 }
+
 
 
 /**
