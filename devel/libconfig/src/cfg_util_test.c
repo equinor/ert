@@ -1,16 +1,17 @@
 #include <cfg_util.h>
-#include <cfg_lang.h>
+#include <cfg_struct_def.h>
 #include <string.h>
 
 int main()
 {
-  char * pad_keys[] = {"{","}","="};
-  char * buffer = cfg_util_alloc_token_buffer("svada.txt", "--", 3, pad_keys);
+  char * pad_keys[] = {"{","}","=",";"};
+  char * buffer = cfg_util_alloc_token_buffer("svada.txt", "--", 4, pad_keys);
+  char * buffer_pos = buffer;
 
-  printf("buffer : %s\n", buffer);
+  cfg_struct_def_type * cfg_struct_def  = cfg_struct_def_alloc_from_buffer(&buffer_pos, "svada", true);
 
-  cfg_type_def_type * cfg_type_def = cfg_type_def_alloc_from_buffer(&buffer, &buffer, "svada");
+  cfg_struct_def_free(cfg_struct_def);
+  free(buffer);
 
-  cfg_type_def_printf(cfg_type_def);
   return 0;
 }
