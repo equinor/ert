@@ -15,4 +15,6 @@ typedef enum {
 
 data_type_enum get_data_type_from_string(const char *);
 bool is_data_type(const char *);
+bool validate_str_as_data_type(data_type_enum, const char *);
+const char * get_data_type_str_ref(data_type_enum);
 #endif

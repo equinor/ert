@@ -5,9 +5,9 @@
 #include <util.h>
 
 
+static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char **, const char *, bool);
 
 /**************************************************************************************************************************************/
-
 
 
 #define STR_CFG_ASSIGN      "="
@@ -39,6 +39,9 @@ typedef enum {CFG_ASSIGN, CFG_SCOPE_START, CFG_SCOPE_STOP, CFG_END,
 #define RETURN_PRIM_IF_MATCH_MACRO(PRIM, STRING) if(!strcmp(STRING, STR_## PRIM)){return PRIM;}
 static prim_enum get_prim_from_str(const char * str)
 {
+  if(str == NULL)
+    util_abort("%s: Trying to valdiate NULL as a token.\n");
+  
   RETURN_PRIM_IF_MATCH_MACRO(CFG_ASSIGN, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_SCOPE_START, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_SCOPE_STOP, str);
@@ -214,7 +217,7 @@ static void cfg_item_def_set_restriction(cfg_item_def_type * cfg_item_def, char 
 
 
 
-cfg_item_def_type * cfg_item_def_alloc_from_buffer(char ** __buffer_pos, const char * name)
+static cfg_item_def_type * cfg_item_def_alloc_from_buffer(char ** __buffer_pos, const char * name)
 {
   assert(name != NULL);
 
@@ -403,7 +406,7 @@ static void cfg_struct_def_set_help(cfg_struct_def_type * cfg_struct_def, char *
 
 
 
-cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_pos, const char * name, bool is_root)
+static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_pos, const char * name, bool is_root)
 {
   assert(name != NULL);
 
@@ -437,6 +440,7 @@ cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_pos, con
       util_abort("%s: Syntax error in struct \"%s\". Unexpected end of file.\n", __func__, name);
     else if(token == NULL && is_root)
     {
+      struct_finished = true;
       break;
     }
     else if(!str_is_prim(token))
@@ -520,4 +524,22 @@ cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_pos, con
     util_abort("%s: Syntax error. The struct \"%s\" is empty, this is not allowed.\n", __func__, name); 
 
   return cfg_struct_def;
+}
+
+
+
+/**************************************************************************************************************************************/
+
+
+
+cfg_struct_def_type * cfg_struct_def_alloc_from_file(const char * filename)
+{
+  char * pad_keys[] = {"{","}","=",";"};
+  char * buffer = cfg_util_alloc_token_buffer(filename, "--", 4, (const char **) pad_keys);
+  char * buffer_pos = buffer;
+
+  cfg_struct_def_type * cfg_struct_def  = cfg_struct_def_alloc_from_buffer(&buffer_pos, "root", true);
+  free(buffer);
+  return cfg_struct_def;
+  return NULL;
 }

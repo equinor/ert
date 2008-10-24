@@ -1,5 +1,5 @@
-#ifndef __CFG_LANG_H__
-#define __CFG_LANG_H__
+#ifndef __CFG_STRUCT_DEF_H__
+#define __CFG_STRUCT_DEF_H__
 #include <stdbool.h>
 #include <hash.h>
 #include <set.h>
@@ -10,7 +10,7 @@ typedef struct cfg_item_def_struct   cfg_item_def_type;
 typedef struct cfg_struct_def_struct cfg_struct_def_type;
 
 
-cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char **, const char *, bool);
+cfg_struct_def_type * cfg_struct_def_alloc_from_file(const char *);
 void                  cfg_struct_def_free(cfg_struct_def_type *);
 
 

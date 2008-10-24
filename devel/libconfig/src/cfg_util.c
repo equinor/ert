@@ -39,6 +39,9 @@ char * cfg_util_alloc_token_buffer(const char * file, const char * comment, int 
   char * buffer = util_string_replacen_alloc(buffer_wrk, num_pad_keys, pad_keys, (const char **) padded_keys);
   free(buffer_wrk);
   util_free_stringlist(padded_keys, num_pad_keys);
+
+  printf("buffer : \n %s \n", buffer);
+
   return buffer;
 }
 

@@ -7,7 +7,7 @@ INSTALL_INC_PATH = $(LIBCONFIG_HOME)/include
 INSTALL_LIB_PATH = $(LIBCONFIG_HOME)/lib
 #################################################################
 SDP_ROOT          = /project/res/$(shell /private/joaho/bin/res_target.py)
-OBJECTS           = config.o cfg.o cfg_struct_def.o cfg_util.o data_type.o
+OBJECTS           = config.o cfg_struct.o cfg_struct_def.o cfg_util.o data_type.o
 INC_FILES_INSTALL = config.h
 LIB_ROOT          = libconfig
 LIB               = $(LIB_ROOT)_$(MFLAG).a
@@ -42,7 +42,7 @@ $(LIB): $(OBJECTS)
 
 #Library source code:
 config.o          : config.c config.h 
-cfg.o             : cfg.c
+cfg_struct.o      : cfg_struct.c
 cfg_struct_def.o  : cfg_struct_def.c
 cfg_util.o        : cfg_util.c
 data_type.o       : data_type.c
