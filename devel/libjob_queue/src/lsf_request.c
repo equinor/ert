@@ -77,11 +77,12 @@ void lsf_request_free(lsf_request_type * lsf_request) {
 /**
    This function does a very simple string assignment of the the
    resource request. This can either be called from external scope,
-   with 'resource_request' as some input string. Alternatively it will
+   with 'resource_request' as some input string (completely bypassing
+   the resource requests of the forward model). Alternatively it will
    be called from this scope, when the resource_request has been built
    dynamically in the lsf_request_update() function.
 
-   This function also call the xx_set_resource_request() function of
+   This function also calls the xx_set_resource_request() function of
    the queue.
 */
 
@@ -143,7 +144,7 @@ void lsf_request_add_manual_request(lsf_request_type * lsf_request , const char 
   
   if (rusage_string != NULL) {
     if (select_string != NULL) {
-      char * resource_request = util_alloc_joined_string((const char *[2]) { rusage_string , select_string} , 2 , " ");
+      char * resource_request = util_alloc_joined_string((const char *[2]) { select_string , rusage_string} , 2 , " ");
       lsf_request_set_request_string( lsf_request , resource_request , job_queue);
       util_safe_free(resource_request);
     } else       
@@ -235,7 +236,7 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
 	  
 	  /* 
 	     ONLY Understands "||" - this is higly fucked. No free
-	     beers to those who can break this ... 
+	     beers to those who can break it ... 
 	  */
 	  util_split_string( select_string , "|" , &tokens , &token_list);  
 	  for (i = 0; i < tokens; i++) {

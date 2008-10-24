@@ -45,7 +45,7 @@
 #include <stringlist.h>
 #include <ensemble_config.h>
 #include <config.h>
-#include <pthread.h> /* Must have rw locking on the config_nodes ... */
+#include <pthread.h>                /* Must have rw locking on the config_nodes ... */
 
 
 struct ensemble_config_struct {

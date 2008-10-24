@@ -692,7 +692,6 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
   
   /* Burde ha et eget measure flag */
   enkf_state_fwrite(enkf_state  , dynamic , report_step2 , forecast);
-  enkf_state_measure(enkf_state , enkf_obs);  
 }
 
 
