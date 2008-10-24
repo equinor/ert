@@ -319,7 +319,6 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   if (load_results) 
     enkf_main_load_ensemble(enkf_main , dynamic + parameter , step2 , forecast);
 
-
   printf("Starter paa oppdatering \n");
   if (enkf_update) {
     double *X;
