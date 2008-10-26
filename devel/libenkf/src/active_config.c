@@ -1,8 +1,10 @@
-#include < util.h>
 #include <stdlib.h>
+#include <util.h>
 #include <enkf_types.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
+#include <active_config.h>
+#include <active_node.h>
 #include <hash.h>
 
 /**
@@ -44,6 +46,6 @@
 */
 
 struct active_map_struct {
-  
-}
+  int __id;
+};
  

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <enkf_state.h>
 #include <util.h>
 #include <ecl_static_kw.h>
 #include <ecl_kw.h>

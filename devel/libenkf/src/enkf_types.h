@@ -15,15 +15,6 @@ typedef double (transform_ftype) (double , const void_arg_type *);
   Observe that these are used as bitmask's, i.e. they must be a power of 2 series.
 */
 
-//typedef enum {invalid          =  0  , /**/
-//              constant         =  1  , /* A parameter which is constant both in time, and between members                         */
-//	      static_parameter =  2  , /* A parameter which is not updated with enkf - can be different between different members */
-//              parameter        =  4  , /* A parameter which is updated with enkf                                                  */
-//	      ecl_restart      =  8  , /* Dynamic data - read from Eclipse restart files, typically PRESSURE and SATURATIONS      */
-//	      ecl_summary      =  16 , /* Dynamic data - summary data from Eclipse summary files                                  */ 
-//	      ecl_static       =  32 , /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
-//	      misc_dynamic     =  64 , /* Other types of dynamic data - this is falling apart ... */
-//	      all_types        = 127 }  enkf_var_type_OLD;
 
 
 typedef enum {invalid          =  0  , /**/
@@ -153,6 +144,7 @@ typedef enum { lock_lockf = 1,
 	       lock_none  = 3 } lock_mode_type;
 
 
+/*****************************************************************/
 /*
   integer, intent(in) :: mode 
   ! first integer means (EnKF=1, SQRT=2)
@@ -161,6 +153,7 @@ typedef enum { lock_lockf = 1,
   !  2=SVD subspace pseudo inversion of SS'+(N-1)R
   !  3=SVD subspace pseudo inversion of SS'+EE'
 */
+
 
 typedef enum {
   enkf_standard = 10,
@@ -173,6 +166,24 @@ typedef enum {
   SVD_SS_N1_R   = 2,
   SVD_SS_EE     = 3
 } pseudo_inversion_type ;
+
+/*****************************************************************/
+
+/**
+   This enum is used when we are setting up the dependencies between
+   observations and variables. The modes all_active and inactive are
+   sufficient information, for the values partly active we need
+   additional information.
+
+   The same type is used both for variables (PRESSURE/PORO/MULTZ/...)
+   and for observations.
+*/
+
+typedef enum {
+  all_active 	= 1,       /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
+  inactive   	= 2,       /* Fully inactive */
+  partly_active = 3        /* Partly active - must supply additonal type spesific information on what is active.*/
+} active_mode_type; 
 
 
   

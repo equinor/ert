@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <enkf_types.h>
-#include <enkf_state.h>
 #include <util.h>
 #include <enkf_macros.h>
 #include <multflt_config.h>

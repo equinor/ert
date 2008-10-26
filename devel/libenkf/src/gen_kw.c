@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <enkf_types.h>
-#include <enkf_state.h>
 #include <util.h>
 #include <gen_kw_config.h>
 #include <gen_kw.h>

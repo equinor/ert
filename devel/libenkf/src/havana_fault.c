@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <enkf_types.h>
-#include <enkf_state.h>
 #include <fortio.h>
 #include <util.h>
 #include <havana_fault_config.h>

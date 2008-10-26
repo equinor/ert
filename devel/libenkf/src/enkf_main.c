@@ -49,6 +49,7 @@
 #include <ensemble_config.h>
 #include <model_config.h>
 #include <site_config.h>
+#include <active_config.h>
 #include "enkf_defaults.h"
 
 

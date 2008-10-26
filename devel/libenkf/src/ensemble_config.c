@@ -16,14 +16,10 @@
 #include <equil_config.h>
 #include <gen_param_config.h>
 #include <multflt_config.h>
-#include <well_obs.h>
 #include <thread_pool.h>
-#include <obs_node.h>
-#include <obs_data.h>
 #include <meas_matrix.h>
 #include <enkf_types.h>
 #include <analysis.h>
-#include <enkf_obs.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
 #include <void_arg.h>
@@ -46,6 +42,7 @@
 #include <ensemble_config.h>
 #include <config.h>
 #include <pthread.h>                /* Must have rw locking on the config_nodes ... */
+
 
 
 struct ensemble_config_struct {
