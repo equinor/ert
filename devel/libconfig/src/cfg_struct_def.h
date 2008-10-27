@@ -10,8 +10,10 @@ typedef struct cfg_item_def_struct   cfg_item_def_type;
 typedef struct cfg_struct_def_struct cfg_struct_def_type;
 
 
-cfg_struct_def_type * cfg_struct_def_alloc_from_file(const char *);
+cfg_struct_def_type * cfg_struct_def_fscanf_alloc(const char *);
 void                  cfg_struct_def_free(cfg_struct_def_type *);
+
+void                  cfg_item_def_printf_help(cfg_item_def_type *);
 
 
 

@@ -8,7 +8,6 @@
 #include <data_type.h>
 
 
-
 struct cfg_struct_struct
 {
   char * struct_type_name;
@@ -21,6 +20,9 @@ struct cfg_struct_struct
 
 
 
+/*
+  These static functions are called before their implementation. Thus, header info is needed.
+*/
 static cfg_struct_type * cfg_struct_alloc_from_buffer(const cfg_struct_def_type *, char **, char **, const char *, const char *, set_type *, bool);
 
 
@@ -37,12 +39,13 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer(const cfg_struct_def_type 
 #define STR_CFG_SCOPE_STOP  "}"
 #define STR_CFG_END         ";"
 #define STR_CFG_INCLUDE     "include"
+#define STR_CFG_RESET       "reset"
 #define STR_CFG_PAR_START   "("
 #define STR_CFG_PAR_END     ")"
 
 
 
-typedef enum {CFG_ASSIGN, CFG_SCOPE_START, CFG_SCOPE_STOP, CFG_END, CFG_INCLUDE, CFG_PAR_START, CFG_PAR_END, CFG_STRUCT, CFG_ITEM} prim_enum;
+typedef enum {CFG_ASSIGN, CFG_SCOPE_START, CFG_SCOPE_STOP, CFG_END, CFG_INCLUDE, CFG_RESET, CFG_PAR_START, CFG_PAR_END, CFG_STRUCT, CFG_ITEM} prim_enum;
 
 
 
@@ -57,6 +60,7 @@ static prim_enum get_prim_from_str(const cfg_struct_def_type * cfg_struct_def, c
   RETURN_PRIM_IF_MATCH_MACRO(CFG_SCOPE_STOP, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_END, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_INCLUDE, str);
+  RETURN_PRIM_IF_MATCH_MACRO(CFG_RESET, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_PAR_START, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_PAR_END, str);
 
@@ -83,6 +87,7 @@ static bool str_is_prim(const cfg_struct_def_type * cfg_struct_def, const char *
   RETURN_TRUE_IF_MATCH_MACRO(CFG_SCOPE_STOP, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_END, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_INCLUDE, str);
+  RETURN_TRUE_IF_MATCH_MACRO(CFG_RESET, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_PAR_START, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_PAR_END, str);
 
@@ -97,6 +102,9 @@ static bool str_is_prim(const cfg_struct_def_type * cfg_struct_def, const char *
 
 
 
+/*
+  Returns true if token is the string corresponding to the prim_enum prim (i.e. "include" -> CFG_INCLUDE).
+*/
 static bool validate_token(const cfg_struct_def_type * cfg_struct_def, prim_enum prim, const char * token)
 {
   bool   ok = false;
@@ -117,14 +125,17 @@ static bool validate_token(const cfg_struct_def_type * cfg_struct_def, prim_enum
 
 
 
-static void cfg_struct_free__(void * cfg_struct)
-{
-  cfg_struct_free( (cfg_struct_type *) cfg_struct);
-}
+/*
+  This function checks that:
+  1. All required items are set.
+  2. All required sub structs are set.
+  3. That all items obey their data type.
+  4. That all items obey their restriction set.
+  5. Repeats 1-4 for all set sub structs.
 
-
-
-static void cfg_struct_validate(const cfg_struct_def_type * cfg_struct_def, const cfg_struct_type * cfg_struct)
+  Thus, it is suffcient to call this on the root to verify the entire config tree.
+*/
+static bool cfg_struct_validate(const cfg_struct_def_type * cfg_struct_def, const cfg_struct_type * cfg_struct)
 {
   bool ok = true;
   /* Check that required items are set. */
@@ -137,13 +148,45 @@ static void cfg_struct_validate(const cfg_struct_def_type * cfg_struct_def, cons
     {
       printf("\nERROR: Required item \"%s\" has not been set in struct \"%s\" of type \"%s\".\n", req_items[req_item_nr], cfg_struct->name, cfg_struct->struct_type_name);
       cfg_item_def_type * cfg_item_def = hash_get(cfg_struct_def->sub_items, req_items[req_item_nr]);
-      if(cfg_item_def->help != NULL)
-        printf("       Help on item \"%s\":\n       %s\n", req_items[req_item_nr], cfg_item_def->help);
+      cfg_item_def_printf_help(cfg_item_def);
       ok = false;
     }  
   }
 
   util_free_stringlist(req_items, num_req_items);
+
+
+  /* Check that all items obey their restriction set and is parseable to their data_type. */
+  int num_items = hash_get_size(cfg_struct->sub_items);
+  char ** items = hash_alloc_keylist(cfg_struct->sub_items);
+
+  for(int item_nr = 0; item_nr < num_items; item_nr++)
+  {
+    const char * key     = items[item_nr];
+    const char * value   = hash_get_string(cfg_struct->sub_items, items[item_nr]);
+    cfg_item_def_type * cfg_item_def = hash_get(cfg_struct_def->sub_items, key);
+
+    if(!validate_str_as_data_type(cfg_item_def->data_type, value))
+    {
+      printf("\nERROR: Failed to get data or file/folder of type \"%s\" for item \"%s\" from \"%s\".\n", get_data_type_str_ref(cfg_item_def->data_type), key, value);
+      cfg_item_def_printf_help(cfg_item_def);
+      ok = false;
+    }
+
+    int num_restrictions = set_get_size(cfg_item_def->restriction);
+    if( num_restrictions > 0)
+    {
+      if(!set_has_key(cfg_item_def->restriction, value))
+      {
+        printf("\nERROR: \"%s\" is not a valid value for \"%s\".\n", value, key);
+        cfg_item_def_printf_help(cfg_item_def);
+      }
+    }
+
+  }
+
+
+  util_free_stringlist(items, num_items);
 
   /* Check that required structs are set. */
   int     num_req_structs = set_get_size(cfg_struct_def->required_sub_structs);
@@ -156,15 +199,28 @@ static void cfg_struct_validate(const cfg_struct_def_type * cfg_struct_def, cons
       printf("\nERROR: Required struct \"%s\" has not been set in struct \"%s\" of type \"%s\".\n", req_structs[req_struct_nr], cfg_struct->name, cfg_struct->struct_type_name);
       cfg_struct_def_type * cfg_struct_def_sub = hash_get(cfg_struct_def->sub_structs, req_structs[req_struct_nr]);
       if(cfg_struct_def_sub->help != NULL)
-        printf("       Help on struct \"%s\":\n       %s\n", req_structs[req_struct_nr], cfg_struct_def_sub->help);
+        printf("\n       Help on struct \"%s\":\n       %s\n\n", req_structs[req_struct_nr], cfg_struct_def_sub->help);
       ok = false;
     }
   }
 
   util_free_stringlist(req_structs, num_req_structs);
 
-  if(!ok)
-    util_abort("%s: Validation of the configuration failed.\n", __func__);
+  /* Validate all sub structs. */
+  int     num_sub_structs = hash_get_size(cfg_struct->sub_structs);
+  char ** sub_structs     = hash_alloc_keylist(cfg_struct->sub_structs);
+
+  for(int sub_struct_nr = 0; sub_struct_nr < num_sub_structs; sub_struct_nr++)
+  {
+    cfg_struct_type     * cfg_struct_sub     = hash_get(cfg_struct->sub_structs, sub_structs[sub_struct_nr]);
+    cfg_struct_def_type * cfg_struct_def_sub = hash_get(cfg_struct_def->sub_structs, cfg_struct_sub->struct_type_name);
+    if(!cfg_struct_validate(cfg_struct_def_sub, cfg_struct_sub))
+      ok = false;
+  }
+
+  util_free_stringlist(sub_structs, num_sub_structs);
+
+  return ok;
 }
 
 
@@ -181,18 +237,18 @@ static void cfg_struct_set_item
           cfg_struct_type * cfg_struct
 )
 {
-  cfg_item_def_type * cfg_item_def = hash_get(cfg_struct_def->sub_items, item);
-
   char * token = cfg_util_alloc_next_token(__buffer_pos);
   if(!validate_token(cfg_struct_def, CFG_ASSIGN, token))
     util_abort("%s: Syntax error. Expected \"%s\", got \"%s\".\n", __func__, STR_CFG_ASSIGN, token);
 
+  /*
+    Just add the token now. We will check that it obeys the data_type later.
+  */
   free(token);
   token = cfg_util_alloc_next_token(__buffer_pos);
-  if(validate_str_as_data_type(cfg_item_def->data_type, token))
-    hash_insert_string(cfg_struct->sub_items, item, token);
-  else
-    util_abort("%s: Failed to parse \"%s\" to be of type \"%s\".\n", __func__, token, get_data_type_str_ref(cfg_item_def->data_type));
+  if(str_is_prim(cfg_struct_def, token))
+    util_abort("%s: Syntax error. Expected a data value. Got primitive \"%s\".\n", __func__, token);
+  hash_insert_string(cfg_struct->sub_items, item, token);
 
   free(token);
   token = cfg_util_alloc_next_token(__buffer_pos);
@@ -232,6 +288,28 @@ static void cfg_struct_alloc_sub_struct
 
 
 
+/*
+  This function will add items which have a default value set in the definition.
+*/
+static void cfg_struct_add_defaults(const cfg_struct_def_type * cfg_struct_def, cfg_struct_type * cfg_struct)
+{
+  int     num_items = hash_get_size(cfg_struct_def->sub_items);
+  char ** items = hash_alloc_keylist(cfg_struct_def->sub_items);
+
+  for(int item_nr = 0; item_nr < num_items; item_nr++)
+  { 
+    cfg_item_def_type * cfg_item_def = hash_get(cfg_struct_def->sub_items, items[item_nr]);
+    if(cfg_item_def->default_value != NULL)
+    {
+      hash_insert_string(cfg_struct->sub_items, items[item_nr], cfg_item_def->default_value);
+    }
+  }  
+  util_free_stringlist(items, num_items);
+
+}
+
+
+
 
 static cfg_struct_type * cfg_struct_alloc_from_buffer
 (
@@ -253,6 +331,11 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
   cfg_struct->sub_items        = hash_alloc();
   cfg_struct->sub_structs      = hash_alloc();
   cfg_struct->sub_struct_types = set_alloc_empty();
+
+  /*
+    Add defaults.
+  */
+  cfg_struct_add_defaults(cfg_struct_def, cfg_struct);
 
 
 
@@ -296,7 +379,10 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
         struct_finished = true;
         break;
       case(CFG_END):
-        util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_END);
+        if(!scope_start_set)
+          struct_finished = true; 
+        else
+          util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_END);
         break;
       case(CFG_INCLUDE):
         util_abort("%s: Sorry, no support for include yet!.\n");
@@ -319,14 +405,21 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
     }
     free(token);
 
+    /*
+      We've seen the closing "}" of the struct (or EOF if is_root.). Check if it's followed by a ";", which is allowed.
+    */
     if(struct_finished)
     {
       char * buffer_pos = *__buffer_pos;
       token = cfg_util_alloc_next_token(&buffer_pos);
       if(token == NULL)
+      {
         break;
-      if(validate_token(cfg_struct_def, CFG_END, token))
+      }
+      else if(validate_token(cfg_struct_def, CFG_END, token))
+      {
         *__buffer_pos = buffer_pos;
+      }
       free(token);
       break;
     }
@@ -334,25 +427,48 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
   if(scope_start_set != scope_end_set)
     util_abort("%s: Syntax error in struct \"%s\". Could not match delimiters.\n", __func__, name); 
 
-  cfg_struct_validate(cfg_struct_def, cfg_struct);
   return cfg_struct;
 }
+
+
+
+/**************************************************************************************************************************************/
 
 
 
 cfg_struct_type * cfg_struct_alloc_from_file(const char * filename, const cfg_struct_def_type * cfg_struct_def)
 {
   char * pad_keys[] = {"{","}","=",";","(",")"};
-  char * buffer = cfg_util_alloc_token_buffer(filename, "--", 6, (const char **) pad_keys);
+  char * buffer = cfg_util_fscanf_alloc_token_buffer(filename, "--", 6, (const char **) pad_keys);
   char * buffer_pos = buffer;
 
+  // This is used to avoid infinite inclusion.
   set_type * src_files = set_alloc_empty();
   // TODO Should add absolute path.
   set_add_key(src_files, filename);
 
   cfg_struct_type * cfg_struct  = cfg_struct_alloc_from_buffer(cfg_struct_def, &buffer, &buffer_pos, "root", "root", src_files, true);
   free(buffer);
+
+  /* Validate the struct. */
+  if(!cfg_struct_validate(cfg_struct_def, cfg_struct))
+    util_abort("%s: Failed to validate configuration.\n", __func__);
+
+  /* Free the src_files set. */
+  set_free(src_files);
+
   return cfg_struct;
+}
+
+
+
+cfg_struct_type * cfg_struct_get_sub_struct(const cfg_struct_type * cfg_struct, const char * struct_name)
+{
+  if(!cfg_struct_has_sub_struct(cfg_struct, struct_name))
+    util_abort("The struct \"%s\" of type \"%s\" has no sub struct with name \"%s\".\n", cfg_struct->name, cfg_struct->struct_type_name, struct_name);
+
+  cfg_struct_type * cfg_struct_sub = hash_get(cfg_struct->sub_structs, struct_name);
+  return cfg_struct_sub;
 }
 
 
@@ -369,14 +485,16 @@ void cfg_struct_free(cfg_struct_type * cfg_struct)
 
 
 
-
-/**************************************************************************************************************************************/
-
-
-
-bool cfg_struct_has_struct_type(const cfg_struct_type * cfg_struct, const char * struct_type_name)
+void cfg_struct_free__(void * cfg_struct)
 {
-  return set_has_key(cfg_struct->sub_struct_types, struct_type_name);
+  cfg_struct_free( (cfg_struct_type *) cfg_struct);
+}
+
+
+
+bool cfg_struct_has_sub_struct_of_type(const cfg_struct_type * cfg_struct, const char * sub_struct_type_name)
+{
+  return set_has_key(cfg_struct->sub_struct_types, sub_struct_type_name);
 }
 
 
@@ -384,4 +502,64 @@ bool cfg_struct_has_struct_type(const cfg_struct_type * cfg_struct, const char *
 bool cfg_struct_has_item(const cfg_struct_type * cfg_struct, const char * item_name)
 {
   return hash_has_key(cfg_struct->sub_items, item_name);
+}
+
+
+
+bool cfg_struct_has_sub_struct(const cfg_struct_type * cfg_struct, const char * struct_name)
+{
+  return hash_has_key(cfg_struct->sub_structs, struct_name);
+}
+
+
+
+const char * cfg_struct_get_sub_struct_type(const cfg_struct_type * cfg_struct, const char * struct_name)
+{
+  if(!cfg_struct_has_sub_struct(cfg_struct, struct_name))
+    util_abort("The struct \"%s\" of type \"%s\" has no sub struct with name \"%s\".\n", cfg_struct->name, cfg_struct->struct_type_name, struct_name);
+
+  cfg_struct_type * cfg_struct_sub = hash_get(cfg_struct->sub_structs, struct_name);
+  return cfg_struct_sub->struct_type_name;
+}
+
+
+
+int cfg_struct_get_occurences_of_sub_struct_type(const cfg_struct_type * cfg_struct, const char * sub_struct_type_name)
+{
+  if(!set_has_key(cfg_struct->sub_struct_types, sub_struct_type_name))
+    return 0;
+  else
+  {
+    int     num_occurences  = 0;
+    int     num_sub_structs = hash_get_size(cfg_struct->sub_structs);
+    char ** sub_structs     = hash_alloc_keylist(cfg_struct->sub_structs);
+
+    for(int sub_struct_nr = 0; sub_struct_nr < num_sub_structs; sub_struct_nr++)
+    {
+      cfg_struct_type * cfg_struct_sub = hash_get(cfg_struct->sub_structs, sub_structs[sub_struct_nr]);
+      if(strcmp(cfg_struct_sub->struct_type_name, sub_struct_type_name) == 0) 
+        num_occurences++;
+    }
+    util_free_stringlist(sub_structs, num_sub_structs);
+    return num_occurences;
+  }
+}
+
+
+
+stringlist_type * cfg_struct_get_instances_of_sub_struct_type(const cfg_struct_type * cfg_struct, const char * sub_struct_type_name)
+{
+  stringlist_type * stringlist = stringlist_alloc_new();
+
+  int     num_sub_structs = hash_get_size(cfg_struct->sub_structs);
+  char ** sub_structs     = hash_alloc_keylist(cfg_struct->sub_structs);
+  for(int sub_struct_nr = 0; sub_struct_nr < num_sub_structs; sub_struct_nr++)
+  {
+    cfg_struct_type * cfg_struct_sub = hash_get(cfg_struct->sub_structs, sub_structs[sub_struct_nr]);
+    if(strcmp(cfg_struct_sub->struct_type_name, sub_struct_type_name) == 0) 
+      stringlist_append_copy(stringlist, sub_structs[sub_struct_nr]);
+  }
+  util_free_stringlist(sub_structs, num_sub_structs);
+
+  return stringlist;
 }

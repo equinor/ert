@@ -5,6 +5,6 @@
 
 void cfg_util_create_token_list(const char *, const char *, const char *, const char *, int *, char ***);
 int  cfg_util_sub_size(int, const char **, const char *, const char *);
-char * cfg_util_alloc_token_buffer(const char * , const char * , int , const char **);
+char * cfg_util_fscanf_alloc_token_buffer(const char * , const char * , int , const char **);
 char * cfg_util_alloc_next_token(char **);
 #endif

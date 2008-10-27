@@ -180,7 +180,6 @@ static void cfg_item_def_set_default(cfg_item_def_type * cfg_item_def, char ** _
   else
     cfg_item_def->default_value = token;
 
-  free(token);
   token = cfg_util_alloc_next_token(__buffer_pos);
   if(!validate_token(CFG_END, token))
     util_abort("%s: Syntax error. Expected \"%s\", got \"%s\".\n", __func__, STR_CFG_END, token);
@@ -345,7 +344,9 @@ static cfg_item_def_type * cfg_item_def_alloc_from_buffer(char ** __buffer_pos, 
       if(prim == CFG_SCOPE_STOP)
       {
         token = cfg_util_alloc_next_token(&buffer_pos);
-        if(validate_token(CFG_END, token))
+        if(token == NULL)
+          break;
+        else if(validate_token(CFG_END, token))
           *__buffer_pos = buffer_pos;
         free(token);
       }
@@ -575,14 +576,26 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_p
 
 
 
-cfg_struct_def_type * cfg_struct_def_alloc_from_file(const char * filename)
+cfg_struct_def_type * cfg_struct_def_fscanf_alloc(const char * filename)
 {
   char * pad_keys[] = {"{","}","=",";"};
-  char * buffer = cfg_util_alloc_token_buffer(filename, "--", 4, (const char **) pad_keys);
+  char * buffer = cfg_util_fscanf_alloc_token_buffer(filename, "--", 4, (const char **) pad_keys);
   char * buffer_pos = buffer;
 
   cfg_struct_def_type * cfg_struct_def  = cfg_struct_def_alloc_from_buffer(&buffer_pos, "root", true);
   free(buffer);
   return cfg_struct_def;
-  return NULL;
+}
+
+
+
+void cfg_item_def_printf_help(cfg_item_def_type * cfg_item_def)
+{
+      if(cfg_item_def->help != NULL)
+        printf("\n       Help on item \"%s\":\n       %s\n\n", cfg_item_def->name, cfg_item_def->help);
+      int num_restrictions = set_get_size(cfg_item_def->restriction);
+      char ** restrictions = set_alloc_keylist(cfg_item_def->restriction);
+      for(int restriction_nr = 0; restriction_nr < num_restrictions; restriction_nr++)
+        printf("       Allowed value %i: \"%s\"\n",restriction_nr, restrictions[restriction_nr]);
+      util_free_stringlist(restrictions, num_restrictions);
 }

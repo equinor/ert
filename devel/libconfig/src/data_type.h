@@ -9,6 +9,8 @@ typedef enum {
               DATA_TYPE_FLOAT,
               DATA_TYPE_POSFLOAT,
               DATA_TYPE_FILE,
+              DATA_TYPE_EXEC,
+              DATA_TYPE_FOLDER,
               DATA_TYPE_DATE
               } data_type_enum;
 
