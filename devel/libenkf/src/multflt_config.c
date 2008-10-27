@@ -9,40 +9,22 @@
 #include <scalar_config.h>
 
 
-
+#define MULTFLT_CONFIG_ID 881563
 
 static multflt_config_type * __multflt_config_alloc_empty(int size) {
-  multflt_config_type *multflt_config = malloc(sizeof *multflt_config);
-  multflt_config->fault_names   = util_malloc(size * sizeof *multflt_config->fault_names , __func__);
-  multflt_config->scalar_config = scalar_config_alloc_empty(size);
+  multflt_config_type *config   = util_malloc(sizeof * config , __func__);
+  config->__type_id     = MULTFLT_CONFIG_ID;
+  config->fault_names   = util_malloc(size * sizeof * config->fault_names , __func__);
+  config->scalar_config = scalar_config_alloc_empty(size);
 
-  multflt_config->ecl_kw_name = NULL;
-  multflt_config->var_type    = parameter;
+  config->ecl_kw_name = NULL;
+  config->var_type    = parameter;
 
-  return multflt_config;
+  return config;
 }
 
+SAFE_CAST(multflt_config , MULTFLT_CONFIG_ID)
 
-
-/*multflt_config_type * multflt_config_alloc(int size, const char * eclfile , const char * ensfile) {
-  multflt_config_type *multflt_config = __multflt_config_alloc_empty(size , eclfile , ensfile);
-  { 
-    int i;
-    for (i = 0; i < size; i++) {
-      multflt_config->output_transform_name = NULL;
-      multflt_config->mean[i]   = 1.0;
-      multflt_config->std[i]    = 0.25;
-      multflt_config->active[i] = true;
-      multflt_config->fault_names[i] = util_alloc_string_copy("FAULT");
-      if (multflt_config->active[i])
-	multflt_config->serial_size++;
-    }
-  }
-
-  multflt_config_set_output_transform(multflt_config);
-  return multflt_config;
-}
-*/
 
 
 void multflt_config_transform(const multflt_config_type * config , const double * input_data , double * output_data) {
@@ -96,5 +78,11 @@ const char * multflt_config_get_name(const multflt_config_type * config, int fau
 }
 
 
+void multflt_config_activate(multflt_config_type * config , active_mode_type active_mode , void * active_config) {
+  /*
+   */
+}
+
 /*****************************************************************/
 VOID_FREE(multflt_config)
+VOID_CONFIG_ACTIVATE(multflt)

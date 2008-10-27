@@ -128,4 +128,5 @@ truncation_type 	field_config_get_truncation(const field_config_type * , double 
 /*Generated headers */
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
+VOID_CONFIG_ACTIVATE_HEADER(field);
 #endif

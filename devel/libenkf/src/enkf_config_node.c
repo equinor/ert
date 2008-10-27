@@ -7,13 +7,14 @@
 #include <util.h>
 
 struct enkf_config_node_struct {
-  config_free_ftype  * freef;
-  enkf_impl_type       impl_type;
-  enkf_var_type        var_type; 
-  char               * key;
-  char               * enkf_infile;    /* Name of file which is written by forward model, and read by EnKF (not in use yet).*/
-  char 		     * enkf_outfile;   /* Name of file which is written by EnKF, and read by the forward model. */
-  void               * data;           /* This points to the config object of the actual implementation. */
+  config_free_ftype     * freef;
+  config_activate_ftype * activate;
+  enkf_impl_type     	  impl_type;
+  enkf_var_type      	  var_type; 
+  char               	* key;
+  char               	* enkf_infile;    /* Name of file which is written by forward model, and read by EnKF (not in use yet).*/
+  char 		     	* enkf_outfile;   /* Name of file which is written by EnKF, and read by the forward model. */
+  void               	* data;           /* This points to the config object of the actual implementation. */
 };
 
 
@@ -24,18 +25,20 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 					       const char               * enkf_outfile , 
 					       const char               * enkf_infile  , 
 					       const void               * data, 
-					       config_free_ftype        * freef) {
+					       config_free_ftype        * freef,
+					       config_activate_ftype    * activate) {
   
   enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
 
   node->data       	= (void *) data;
   node->freef      	= freef;
+  node->activate        = activate;  
   node->var_type   	= var_type;
   node->impl_type  	= impl_type;
   node->key        	= util_alloc_string_copy(key);
   node->enkf_outfile    = util_alloc_string_copy(enkf_outfile);
   node->enkf_infile     = util_alloc_string_copy(enkf_infile);
-
+  
   return node;
 }
 

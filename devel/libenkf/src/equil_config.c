@@ -7,14 +7,15 @@
 #include <scalar_config.h>
 
 
-
+#define EQUIL_CONFIG_ID 661897
 /*****************************************************************/
+SAFE_CAST(equil_config , EQUIL_CONFIG_ID)
 
 equil_config_type * equil_config_alloc(int size) {
-  equil_config_type *config        = malloc(sizeof *config);
-
+  equil_config_type *config        = util_malloc(sizeof *config , __func__);
+  config->__type_id                = EQUIL_CONFIG_ID;
   config->data_size    	  	   = size;
-                            
+  
   config->datum_depth  	     	   = util_malloc(size * sizeof * config->datum_depth  	       , __func__);
   config->datum_P      	     	   = util_malloc(size * sizeof * config->datum_P      	       , __func__);
   config->oil_water_Pc 	     	   = util_malloc(size * sizeof * config->oil_water_Pc 	       , __func__);
@@ -94,9 +95,14 @@ void equil_config_ecl_write(const equil_config_type * config  , const double * w
 	    config->init_accuracy[ieq]);
 }
 
+void equil_config_activate(equil_config_type * config , active_mode_type active_mode , void * active_config) {
+  /*
+   */
+}
 
 /*****************************************************************/
 
+VOID_CONFIG_ACTIVATE(equil)
 GET_DATA_SIZE(equil)
 VOID_FREE(equil_config)
 

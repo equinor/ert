@@ -9,11 +9,36 @@
 #include <enkf_serialize.h>
 
 #define CONFIG_STD_FIELDS \
+int __type_id;            \
 int data_size;            \
 char * ecl_kw_name;       \
 enkf_var_type var_type;
 
 
+
+
+/*****************************************************************/
+#define SAFE_CAST(prefix , ID) \
+static prefix ## _type * prefix ## _safe_cast(void * __config) {   \
+  prefix ## _type * config = (prefix ## _type *) __config;         \
+  if (config->__type_id != ID)                                     \
+    util_abort("%s: run_time cast failed - aborting \n",__func__); \
+  return config;                                                   \
+}
+
+
+
+/*****************************************************************/
+
+#define VOID_CONFIG_ACTIVATE(prefix) \
+void prefix ## _config_activate__(void * void_config , active_mode_type active_mode , void * active_info) { \
+    prefix ## _config_type * config = prefix ## _config_safe_cast( void_config );                           \
+    prefix ## _config_activate( config , active_mode , active_info);                                        \
+}
+
+#define VOID_CONFIG_ACTIVATE_HEADER(prefix) void prefix ## _config_activate__(void * , active_mode_type , void *);
+
+/*****************************************************************/
 
 #define VOID_CONFIG_FREE(prefix)            void prefix ## _config_free__(void *void_arg) { prefix ## _config_free((prefix ## _config_type *) void_arg); }
 #define VOID_CONFIG_FREE_HEADER(prefix)     void prefix ## _config_free__(void *)

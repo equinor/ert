@@ -10,13 +10,18 @@
 #include <trans_func.h>
 
 
+#define MULTZ_CONFIG_ID 78154
+
+
+SAFE_CAST(multz_config , MULTZ_CONFIG_ID)
 
 /*
   WARNING: Returns the multz_config object in a completely unitialized state.
 */
 static multz_config_type * __multz_config_alloc_empty(int size ) {
   
-  multz_config_type *multz_config = malloc(sizeof *multz_config);
+  multz_config_type *multz_config = util_malloc(sizeof *multz_config , __func__);
+  multz_config->__type_id = MULTZ_CONFIG_ID;
   multz_config->scalar_config = scalar_config_alloc_empty(size);
   
   multz_config->i1   	= util_malloc(size * sizeof *multz_config->i1      , __func__);
@@ -124,9 +129,14 @@ char * multz_config_alloc_description(const multz_config_type * config, int mult
 }
 
 
+void multz_config_activate(multz_config_type * config , active_mode_type active_mode , void * active_config) {
+  /*
+   */
+}
+
 
 /*****************************************************************/
 VOID_FREE(multz_config)
-
+VOID_CONFIG_ACTIVATE(multz)
 							 
 

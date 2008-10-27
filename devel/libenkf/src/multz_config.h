@@ -10,6 +10,7 @@
 #include <scalar_config.h>
 
 typedef struct {
+  int                   __type_id;
   scalar_config_type  * scalar_config;
   int *i1, *i2 , *j1 , *j2 , *k;
   int 	           * area;
@@ -30,5 +31,5 @@ char              * multz_config_alloc_description(const multz_config_type * , i
 /*Generated headers */
 GET_DATA_SIZE_HEADER(multz);
 VOID_FREE_HEADER(multz_config);
-
+VOID_CONFIG_ACTIVATE_HEADER(multz)
 #endif

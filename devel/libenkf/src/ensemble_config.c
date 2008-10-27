@@ -135,13 +135,16 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
   
   {
-    config_free_ftype * freef = NULL;
+    config_free_ftype     * freef = NULL;
+    config_activate_ftype * activate = NULL;
     switch(impl_type) {
     case(FIELD):
       freef             = field_config_free__;
+      activate          = field_config_activate__;
       break;
     case(MULTZ):
       freef             = multz_config_free__;
+      activate          = multz_config_activate__;
       break;
     case(RELPERM):
       freef             = relperm_config_free__;
@@ -151,6 +154,7 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
       break;
     case(MULTFLT):
       freef             = multflt_config_free__;
+      activate          = multflt_config_activate__;
       break;
     case(EQUIL):
       freef             = equil_config_free__;
@@ -178,7 +182,7 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
     }
     
     {
-      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , enkf_outfile , enkf_infile , data , freef);
+      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , enkf_outfile , enkf_infile , data , freef , activate);
       hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
     }
   }

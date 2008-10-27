@@ -4,6 +4,7 @@
 #include <enkf_macros.h>
 
 typedef void   (config_free_ftype)                (void *);
+typedef void   (config_activate_ftype)            (void * , active_mode_type , void *);
 
 typedef struct enkf_config_node_struct enkf_config_node_type;
 
@@ -13,7 +14,8 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       const char          * , 
 					       const char          * , 
 					       const void          * ,
-					       config_free_ftype   *);
+					       config_free_ftype   * , 
+					       config_activate_ftype *);
 
 
 void 		  enkf_config_node_free(enkf_config_node_type * );

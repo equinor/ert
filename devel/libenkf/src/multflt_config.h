@@ -11,6 +11,7 @@
 typedef struct multflt_config_struct multflt_config_type;
 
 struct multflt_config_struct {
+  int                   __type_id;
   char                * ecl_kw_name;      
   enkf_var_type         var_type;  
   scalar_config_type  * scalar_config;
@@ -26,4 +27,5 @@ int                   multflt_config_get_data_size(const multflt_config_type * )
 const char          * multflt_config_get_name(const multflt_config_type * , int );
 
 VOID_FREE_HEADER(multflt_config);
+VOID_CONFIG_ACTIVATE_HEADER(multflt)
 #endif

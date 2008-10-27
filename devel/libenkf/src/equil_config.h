@@ -30,5 +30,5 @@ int                   equil_config_get_nequil(const equil_config_type *);
 equil_config_type   * equil_config_fscanf_alloc(const char * );
 
 VOID_FREE_HEADER(equil_config);
-
+VOID_CONFIG_ACTIVATE_HEADER(equil);
 #endif

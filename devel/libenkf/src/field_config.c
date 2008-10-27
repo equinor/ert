@@ -13,6 +13,7 @@
 #include <math.h>
 
 
+#define FIELD_CONFIG_ID 78269
 
 struct field_config_struct {
   CONFIG_STD_FIELDS;
@@ -53,6 +54,7 @@ struct field_config_struct {
 
 /*****************************************************************/
 
+SAFE_CAST(field_config , FIELD_CONFIG_ID)
 
 void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_kw_name) {
   config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , ecl_kw_name);
@@ -252,7 +254,7 @@ field_file_format_type field_config_get_import_format(const field_config_type * 
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , const ecl_grid_type * ecl_grid , field_file_format_type import_format , field_file_format_type export_format) {
   field_config_type *config = util_malloc(sizeof *config, __func__);
-  
+  config->__type_id = FIELD_CONFIG_ID;
   /*
     Observe that size is the number of *ACTIVCE* cells,
     and generally *not* equal to nx*ny*nz.
@@ -406,7 +408,7 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , cons
   field_file_format_type import_format = undefined_format;
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , export_format , export_format);
+  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format);
   config->init_type = init_type;
   if (init_type == none) {
     fprintf(stderr,"%s: invalid init type \n",__func__);
@@ -620,11 +622,13 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
 
   This needs to be rewamped or renamed.
   
-  The name "get" is misleading in a function that uses a linear lookup in a potentially very large table.
+  The name "get" is misleading in a function that uses a linear lookup
+  in a potentially very large table.
 
-  The "fix" is probably to have an index_map_inv in the ecl_grid type which is alloc'ed simultaneously
-  as the the index map. A global/active_index can then be translated into a "natural ordering" index, from
-  which an ijk triplet quickly can be computed.
+  The "fix" is probably to have an index_map_inv in the ecl_grid type
+  which is alloc'ed simultaneously as the the index map. A
+  global/active_index can then be translated into a "natural ordering"
+  index, from which an ijk triplet quickly can be computed.
 */
 void field_config_get_ijk(const field_config_type * config , int global_index, int *_i , int *_j , int *_k) {
   int i,j,k;
@@ -843,8 +847,14 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 
 
 
+void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
+  /*
+   */
+}
+
 
 /*****************************************************************/
 CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_FREE(field_config)
+VOID_CONFIG_ACTIVATE(field)

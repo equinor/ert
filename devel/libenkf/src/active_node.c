@@ -23,7 +23,7 @@ struct active_var_struct {
   const enkf_config_node_type    * config_node;          /* The enkf_config_node instance this is all about - pointer to *shared* resource. */
   active_mode_type                 active_mode;         
   void                      	 * active_config;        /* An object (type depending on datatype of config_node) used to hold info abourt partly active variable. 
-			    	 			       Owned by this object. If active_mode == all_active or active_mode == inactive, this can be NULL. */
+			    	 			    Owned by this object. If active_mode == all_active or active_mode == inactive, this can be NULL. */
   active_config_destructor_ftype * free_active_config;   /* Destructor for the active_config object, can be NULL if that object is NULL. */
 };
 
@@ -36,7 +36,7 @@ struct active_obs_struct {
   const obs_node_type       	  * obs_node;             /* The obs_node instance this is all about - pointer to *shared* resource. */
   active_mode_type          	    active_mode;         
   void                      	  * active_config;        /* An object (type depending on datatype of obs_node) used to hold info abourt partly active variable. 
-						       Owned by this object. If active_mode == all_active or active_mode == inactive, this can be NULL. */
+                   					     Owned by this object. If active_mode == all_active or active_mode == inactive, this can be NULL. */
   active_config_destructor_ftype  * free_active_config;   /* Destructor for the active_config object, can be NULL if that object is NULL. */
 };
 
