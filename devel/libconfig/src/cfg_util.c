@@ -40,8 +40,6 @@ char * cfg_util_alloc_token_buffer(const char * file, const char * comment, int 
   free(buffer_wrk);
   util_free_stringlist(padded_keys, num_pad_keys);
 
-  printf("buffer : \n %s \n", buffer);
-
   return buffer;
 }
 

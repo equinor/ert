@@ -20,6 +20,7 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char **, const cha
 #define STR_CFG_STRUCT      "struct"
 #define STR_CFG_ITEM        "item"
 #define STR_CFG_REQUIRED    "required"
+#define STR_CFG_DEFAULT     "default"
 #define STR_CFG_RESTRICTION "restrict"
 #define STR_CFG_HELP        "help"
 #define STR_CFG_DATA_TYPE   "data_type"
@@ -27,7 +28,7 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char **, const cha
 
 
 typedef enum {CFG_ASSIGN, CFG_SCOPE_START, CFG_SCOPE_STOP, CFG_END,
-              CFG_STRUCT, CFG_ITEM, CFG_REQUIRED, CFG_RESTRICTION, CFG_HELP, CFG_DATA_TYPE}
+              CFG_STRUCT, CFG_ITEM, CFG_REQUIRED, CFG_DEFAULT, CFG_RESTRICTION, CFG_HELP, CFG_DATA_TYPE}
               prim_enum;
 
 
@@ -49,6 +50,7 @@ static prim_enum get_prim_from_str(const char * str)
   RETURN_PRIM_IF_MATCH_MACRO(CFG_STRUCT, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_ITEM, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_REQUIRED, str);
+  RETURN_PRIM_IF_MATCH_MACRO(CFG_DEFAULT, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_RESTRICTION, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_HELP, str);
   RETURN_PRIM_IF_MATCH_MACRO(CFG_DATA_TYPE, str);
@@ -73,6 +75,7 @@ static bool str_is_prim(const char * str)
   RETURN_TRUE_IF_MATCH_MACRO(CFG_STRUCT, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_ITEM, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_REQUIRED, str);
+  RETURN_TRUE_IF_MATCH_MACRO(CFG_DEFAULT, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_RESTRICTION, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_HELP, str);
   RETURN_TRUE_IF_MATCH_MACRO(CFG_DATA_TYPE, str);
@@ -108,6 +111,7 @@ void cfg_item_def_free(cfg_item_def_type * cfg_item_def)
   free(cfg_item_def->name);
   set_free(cfg_item_def->restriction);
   util_safe_free(cfg_item_def->help);
+  util_safe_free(cfg_item_def->default_value);
   free(cfg_item_def);
 }
 
@@ -125,7 +129,8 @@ void cfg_struct_def_free(cfg_struct_def_type * cfg_struct_def)
   free(cfg_struct_def->name);
   hash_free(cfg_struct_def->sub_items);
   hash_free(cfg_struct_def->sub_structs);
-  set_free(cfg_struct_def->required);
+  set_free(cfg_struct_def->required_sub_items);
+  set_free(cfg_struct_def->required_sub_structs);
   util_safe_free(cfg_struct_def->help);
   free(cfg_struct_def);
 }
@@ -160,6 +165,27 @@ static void cfg_item_def_set_data_type(cfg_item_def_type * cfg_item_def, char **
   free(token);
 }
 
+
+
+static void cfg_item_def_set_default(cfg_item_def_type * cfg_item_def, char ** __buffer_pos)
+{
+  char * token = cfg_util_alloc_next_token(__buffer_pos);
+  if(!validate_token(CFG_ASSIGN, token))
+    util_abort("%s: Syntax error. Expected \"%s\", got \"%s\".\n", __func__, STR_CFG_ASSIGN, token);
+
+  free(token);
+  token = cfg_util_alloc_next_token(__buffer_pos);
+  if(str_is_prim(token))
+    util_abort("%s: Syntax error. Expected a string. Got primitive \"%s\".\n", __func__, token);
+  else
+    cfg_item_def->default_value = token;
+
+  free(token);
+  token = cfg_util_alloc_next_token(__buffer_pos);
+  if(!validate_token(CFG_END, token))
+    util_abort("%s: Syntax error. Expected \"%s\", got \"%s\".\n", __func__, STR_CFG_END, token);
+  free(token);
+}
 
 
 
@@ -224,10 +250,11 @@ static cfg_item_def_type * cfg_item_def_alloc_from_buffer(char ** __buffer_pos, 
   cfg_item_def_type * cfg_item_def = util_malloc(sizeof * cfg_item_def, __func__);
 
   /* Alloc a default type. */
-  cfg_item_def->name         = util_alloc_string_copy(name);
-  cfg_item_def->restriction  = set_alloc_empty();
-  cfg_item_def->data_type    = DATA_TYPE_STR;
-  cfg_item_def->help         = NULL;
+  cfg_item_def->name          = util_alloc_string_copy(name);
+  cfg_item_def->restriction   = set_alloc_empty();
+  cfg_item_def->data_type     = DATA_TYPE_STR;
+  cfg_item_def->default_value = NULL;
+  cfg_item_def->help          = NULL;
 
   char * buffer_pos = *__buffer_pos; 
   bool scope_start_set = false;
@@ -285,6 +312,9 @@ static cfg_item_def_type * cfg_item_def_alloc_from_buffer(char ** __buffer_pos, 
       case(CFG_REQUIRED):
         util_abort("%s: Syntax error in item \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_REQUIRED);
         break;
+      case(CFG_DEFAULT):
+        cfg_item_def_set_default(cfg_item_def, &buffer_pos);
+        break;
       case(CFG_RESTRICTION):
         if(!scope_start_set)
           util_abort("%s: Syntax error after item \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_RESTRICTION);
@@ -330,18 +360,27 @@ static cfg_item_def_type * cfg_item_def_alloc_from_buffer(char ** __buffer_pos, 
 
 static void cfg_struct_def_set_required(cfg_struct_def_type * cfg_struct_def, char ** __buffer_pos)
 {
+  bool   item = false;
   // For this token, we need to purely LOOK a head.
   char * buffer_pos = *__buffer_pos;
   char * token = cfg_util_alloc_next_token(&buffer_pos);
   if(!validate_token(CFG_ITEM, token) && !validate_token(CFG_STRUCT, token))
     util_abort("%s: Syntax error. Expected \"%s\" or \"%s\", got \"%s\".\n", __func__, STR_CFG_ITEM, STR_CFG_STRUCT , token);
 
+  if(validate_token(CFG_ITEM, token))
+    item = true;
+
   free(token);
   token = cfg_util_alloc_next_token(&buffer_pos);
   if(str_is_prim(token))
     util_abort("%s: Syntax error. Expected a string. Got primitive \"%s\".\n", __func__, token);
   else  
-    set_add_key(cfg_struct_def->required, token);
+  {
+    if(item)
+      set_add_key(cfg_struct_def->required_sub_items, token);
+    else
+      set_add_key(cfg_struct_def->required_sub_structs, token);
+  }
 
   free(token);
 }
@@ -412,11 +451,12 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_p
 
   cfg_struct_def_type * cfg_struct_def = util_malloc(sizeof * cfg_struct_def, __func__);
 
-  cfg_struct_def->name        = util_alloc_string_copy(name);
-  cfg_struct_def->sub_items   = hash_alloc();
-  cfg_struct_def->sub_structs = hash_alloc();
-  cfg_struct_def->required    = set_alloc_empty();
-  cfg_struct_def->help        = NULL;
+  cfg_struct_def->name                 = util_alloc_string_copy(name);
+  cfg_struct_def->sub_items            = hash_alloc();
+  cfg_struct_def->sub_structs          = hash_alloc();
+  cfg_struct_def->required_sub_items   = set_alloc_empty();
+  cfg_struct_def->required_sub_structs = set_alloc_empty();
+  cfg_struct_def->help                 = NULL;
 
 
 
@@ -483,6 +523,9 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_p
         if(!scope_start_set && !is_root)
           util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_REQUIRED);
         cfg_struct_def_set_required(cfg_struct_def, &buffer_pos);
+        break;
+      case(CFG_DEFAULT):
+        util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_DEFAULT);
         break;
       case(CFG_RESTRICTION):
       {

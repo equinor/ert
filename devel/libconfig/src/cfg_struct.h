@@ -5,6 +5,7 @@
 
 typedef struct cfg_struct_struct cfg_struct_type;
 
-cfg_struct_type * cfg_struct_alloc_from_file(const char *, cfg_struct_def_type *);
+cfg_struct_type * cfg_struct_alloc_from_file(const char *, const cfg_struct_def_type *);
+void cfg_struct_free(cfg_struct_type *);
 
 #endif

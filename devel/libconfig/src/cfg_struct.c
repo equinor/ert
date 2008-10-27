@@ -11,16 +11,17 @@
 
 struct cfg_struct_struct
 {
-  char * struct_name;
+  char * struct_type_name;
   char * name;
 
-  hash_type * sub_items;   /* Hash indexed with items. All values are strings. */
-  hash_type * sub_structs; /* Hash indexed with names of struct instances. All values are cfg_struct_types. */
+  hash_type * sub_items;        /* Hash indexed with items. All values are strings. */
+  hash_type * sub_structs;      /* Hash indexed with names of struct instances. All values are cfg_struct_types. */
+  set_type  * sub_struct_types; /* Set with the name of the types of the sub structs. */
 };
 
 
 
-static cfg_struct_type * cfg_struct_alloc_from_buffer(cfg_struct_def_type *, char **, char **, const char *, const char *, set_type *, bool);
+static cfg_struct_type * cfg_struct_alloc_from_buffer(const cfg_struct_def_type *, char **, char **, const char *, const char *, set_type *, bool);
 
 
 
@@ -46,7 +47,7 @@ typedef enum {CFG_ASSIGN, CFG_SCOPE_START, CFG_SCOPE_STOP, CFG_END, CFG_INCLUDE,
 
 
 #define RETURN_PRIM_IF_MATCH_MACRO(PRIM, STRING) if(!strcmp(STRING, STR_## PRIM)){return PRIM;}
-static prim_enum get_prim_from_str(cfg_struct_def_type * cfg_struct_def, const char * str)
+static prim_enum get_prim_from_str(const cfg_struct_def_type * cfg_struct_def, const char * str)
 {
   if(str == NULL)
     util_abort("%s: Trying to valdiate NULL as a token.\n");
@@ -72,7 +73,7 @@ static prim_enum get_prim_from_str(cfg_struct_def_type * cfg_struct_def, const c
 
 
 #define RETURN_TRUE_IF_MATCH_MACRO(PRIM, STRING) if(!strcmp(STRING, STR_## PRIM)){return true;}
-static bool str_is_prim(cfg_struct_def_type * cfg_struct_def, const char * str)
+static bool str_is_prim(const cfg_struct_def_type * cfg_struct_def, const char * str)
 {
   if(str == NULL)
     util_abort("%s: Trying to valdiate NULL as a token.\n");
@@ -96,7 +97,7 @@ static bool str_is_prim(cfg_struct_def_type * cfg_struct_def, const char * str)
 
 
 
-static bool validate_token(cfg_struct_def_type * cfg_struct_def, prim_enum prim, const char * token)
+static bool validate_token(const cfg_struct_def_type * cfg_struct_def, prim_enum prim, const char * token)
 {
   bool   ok = false;
   if(token == NULL)
@@ -112,25 +113,58 @@ static bool validate_token(cfg_struct_def_type * cfg_struct_def, prim_enum prim,
 
 
 
-
 /**************************************************************************************************************************************/
 
 
 
-void cfg_struct_free(cfg_struct_type * cfg_struct)
+static void cfg_struct_free__(void * cfg_struct)
 {
-  free(cfg_struct->struct_name);
-  free(cfg_struct->name);
-  hash_free(cfg_struct->sub_items);
-  hash_free(cfg_struct->sub_structs);
-  free(cfg_struct);
+  cfg_struct_free( (cfg_struct_type *) cfg_struct);
 }
 
 
 
-void cfg_struct_free__(void * cfg_struct)
+static void cfg_struct_validate(const cfg_struct_def_type * cfg_struct_def, const cfg_struct_type * cfg_struct)
 {
-  cfg_struct_free( (cfg_struct_type *) cfg_struct);
+  bool ok = true;
+  /* Check that required items are set. */
+  int     num_req_items = set_get_size(cfg_struct_def->required_sub_items);
+  char ** req_items     = set_alloc_keylist(cfg_struct_def->required_sub_items);
+
+  for(int req_item_nr = 0; req_item_nr < num_req_items; req_item_nr++)
+  {
+    if(!hash_has_key(cfg_struct->sub_items, req_items[req_item_nr]))
+    {
+      printf("\nERROR: Required item \"%s\" has not been set in struct \"%s\" of type \"%s\".\n", req_items[req_item_nr], cfg_struct->name, cfg_struct->struct_type_name);
+      cfg_item_def_type * cfg_item_def = hash_get(cfg_struct_def->sub_items, req_items[req_item_nr]);
+      if(cfg_item_def->help != NULL)
+        printf("       Help on item \"%s\":\n       %s\n", req_items[req_item_nr], cfg_item_def->help);
+      ok = false;
+    }  
+  }
+
+  util_free_stringlist(req_items, num_req_items);
+
+  /* Check that required structs are set. */
+  int     num_req_structs = set_get_size(cfg_struct_def->required_sub_structs);
+  char ** req_structs     = set_alloc_keylist(cfg_struct_def->required_sub_structs);
+
+  for(int req_struct_nr = 0; req_struct_nr < num_req_structs; req_struct_nr++)
+  {
+    if(!set_has_key(cfg_struct->sub_struct_types, req_structs[req_struct_nr]))
+    {
+      printf("\nERROR: Required struct \"%s\" has not been set in struct \"%s\" of type \"%s\".\n", req_structs[req_struct_nr], cfg_struct->name, cfg_struct->struct_type_name);
+      cfg_struct_def_type * cfg_struct_def_sub = hash_get(cfg_struct_def->sub_structs, req_structs[req_struct_nr]);
+      if(cfg_struct_def_sub->help != NULL)
+        printf("       Help on struct \"%s\":\n       %s\n", req_structs[req_struct_nr], cfg_struct_def_sub->help);
+      ok = false;
+    }
+  }
+
+  util_free_stringlist(req_structs, num_req_structs);
+
+  if(!ok)
+    util_abort("%s: Validation of the configuration failed.\n", __func__);
 }
 
 
@@ -141,7 +175,7 @@ void cfg_struct_free__(void * cfg_struct)
 
 static void cfg_struct_set_item
 (
-          cfg_struct_def_type * cfg_struct_def,
+          const cfg_struct_def_type * cfg_struct_def,
           const char * item,
           char ** __buffer_pos,
           cfg_struct_type * cfg_struct
@@ -171,22 +205,25 @@ static void cfg_struct_set_item
 
 static void cfg_struct_alloc_sub_struct
 (
-            cfg_struct_def_type * cfg_struct_def,
+            const cfg_struct_def_type * cfg_struct_def,
             char ** __buffer,
             char ** __buffer_pos,
-            const char * struct_name,
+            const char * struct_type_name,
             set_type * src_files,
             cfg_struct_type * cfg_struct
 )
 {
+  set_add_key(cfg_struct->sub_struct_types, struct_type_name);
+
   char * name = cfg_util_alloc_next_token(__buffer_pos);
   if(str_is_prim(cfg_struct_def, name))
     util_abort("%s: Syntax error. Expected a string. Got primitive \"%s\".\n", __func__, name);
-  if(hash_has_key(cfg_struct->sub_structs, name))
-    util_abort("%s: Error, \"%s\" has already been defined.\n", __func__, name);
 
-  cfg_struct_def_type * cfg_struct_def_sub = hash_get(cfg_struct_def->sub_structs, struct_name);
-  cfg_struct_type * cfg_struct_sub = cfg_struct_alloc_from_buffer(cfg_struct_def_sub, __buffer, __buffer_pos, struct_name, name, src_files, false);
+  if(hash_has_key(cfg_struct->sub_structs, name))
+    util_abort("%s: Error, identifier \"%s\" has already been used.\n", __func__, name);
+
+  cfg_struct_def_type * cfg_struct_def_sub = hash_get(cfg_struct_def->sub_structs, struct_type_name);
+  cfg_struct_type * cfg_struct_sub = cfg_struct_alloc_from_buffer(cfg_struct_def_sub, __buffer, __buffer_pos, struct_type_name, name, src_files, false);
 
   hash_insert_hash_owned_ref(cfg_struct->sub_structs, name, cfg_struct_sub, cfg_struct_free__);
   free(name);
@@ -198,10 +235,10 @@ static void cfg_struct_alloc_sub_struct
 
 static cfg_struct_type * cfg_struct_alloc_from_buffer
 (
-                        cfg_struct_def_type * cfg_struct_def,
+                        const cfg_struct_def_type * cfg_struct_def,
                         char ** __buffer,
                         char ** __buffer_pos,
-                        const char * struct_name,
+                        const char * struct_type_name,
                         const char * name,
                         set_type * src_files,
                         bool is_root
@@ -211,10 +248,11 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
 
   cfg_struct_type * cfg_struct = util_malloc(sizeof * cfg_struct, __func__);
   
-  cfg_struct->struct_name = util_alloc_string_copy(struct_name);
-  cfg_struct->name        = util_alloc_string_copy(name);
-  cfg_struct->sub_items   = hash_alloc();
-  cfg_struct->sub_structs = hash_alloc();
+  cfg_struct->struct_type_name = util_alloc_string_copy(struct_type_name);
+  cfg_struct->name             = util_alloc_string_copy(name);
+  cfg_struct->sub_items        = hash_alloc();
+  cfg_struct->sub_structs      = hash_alloc();
+  cfg_struct->sub_struct_types = set_alloc_empty();
 
 
 
@@ -296,13 +334,13 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
   if(scope_start_set != scope_end_set)
     util_abort("%s: Syntax error in struct \"%s\". Could not match delimiters.\n", __func__, name); 
 
-  // TODO Create and call a "cfg_validate_struct" on cfg_struct.
+  cfg_struct_validate(cfg_struct_def, cfg_struct);
   return cfg_struct;
 }
 
 
 
-cfg_struct_type * cfg_struct_alloc_from_file(const char * filename, cfg_struct_def_type * cfg_struct_def)
+cfg_struct_type * cfg_struct_alloc_from_file(const char * filename, const cfg_struct_def_type * cfg_struct_def)
 {
   char * pad_keys[] = {"{","}","=",";","(",")"};
   char * buffer = cfg_util_alloc_token_buffer(filename, "--", 6, (const char **) pad_keys);
@@ -315,4 +353,35 @@ cfg_struct_type * cfg_struct_alloc_from_file(const char * filename, cfg_struct_d
   cfg_struct_type * cfg_struct  = cfg_struct_alloc_from_buffer(cfg_struct_def, &buffer, &buffer_pos, "root", "root", src_files, true);
   free(buffer);
   return cfg_struct;
+}
+
+
+
+void cfg_struct_free(cfg_struct_type * cfg_struct)
+{
+  free(cfg_struct->struct_type_name);
+  free(cfg_struct->name);
+  hash_free(cfg_struct->sub_items);
+  hash_free(cfg_struct->sub_structs);
+  set_free(cfg_struct->sub_struct_types);
+  free(cfg_struct);
+}
+
+
+
+
+/**************************************************************************************************************************************/
+
+
+
+bool cfg_struct_has_struct_type(const cfg_struct_type * cfg_struct, const char * struct_type_name)
+{
+  return set_has_key(cfg_struct->sub_struct_types, struct_type_name);
+}
+
+
+
+bool cfg_struct_has_item(const cfg_struct_type * cfg_struct, const char * item_name)
+{
+  return hash_has_key(cfg_struct->sub_items, item_name);
 }

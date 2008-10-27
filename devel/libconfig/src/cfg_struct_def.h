@@ -24,6 +24,7 @@ struct cfg_item_def_struct{
   data_type_enum   data_type;
   set_type       * restriction;
 
+  char * default_value;
   char * help;
 };
 
@@ -34,7 +35,8 @@ struct cfg_struct_def_struct{
 
   hash_type * sub_items;  
   hash_type * sub_structs;
-  set_type  * required;   
+  set_type  * required_sub_items;
+  set_type  * required_sub_structs;
 
   char * help;
 };
