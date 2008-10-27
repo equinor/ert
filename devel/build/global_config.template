@@ -19,6 +19,7 @@ LIBPLOT_HOME      = /h/jgv/code/enkf/libplot
 LIBENKF_HOME  	  = /h/jgv/code/enkf/libenkf
 LIBPLPLOT_HOME    = /d/proj/bg/enkf/software
 
+USE_LSF_LIBRARY   = TRUE
 APPLICATION_HOME  = /h/a152128/EnKF/devel/EnKF/apps
 # External libraries
 EXTERNAL_LIB_PATH = /h/a152128/lib/linux
