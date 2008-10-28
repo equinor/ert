@@ -43,4 +43,3 @@ struct active_obs_struct {
 
 
 
-void active_node_
