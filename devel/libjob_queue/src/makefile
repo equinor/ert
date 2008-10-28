@@ -12,7 +12,7 @@ LIB       = lib$(LIB_ROOT)_$(MFLAG).a
 LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L./
 LIB_LINK  = -l$(LIB_ROOT)_$(MFLAG) -lconfig_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lbat  -llsf -lnsl 
 
-LOCAL: LIB BIN
+LOCAL: LIB 
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
