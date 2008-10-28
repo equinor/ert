@@ -296,7 +296,6 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
   pthread_attr_init( &rsh_driver->thread_attr );
   pthread_attr_setdetachstate( &rsh_driver->thread_attr , PTHREAD_CREATE_DETACHED );
 
-  printf("Kommer inn med:%s \n",rsh_command);
   rsh_driver->rsh_command     	   = util_alloc_string_copy(rsh_command);
   rsh_driver->submit          	   = rsh_driver_submit_job;
   rsh_driver->get_status      	   = rsh_driver_get_job_status;

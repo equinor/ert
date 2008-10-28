@@ -256,7 +256,7 @@ static char * __alloc_relocated__(const char * config_cwd , const char * value) 
     file = util_alloc_string_copy( value );
   else
     file = util_alloc_full_path(config_cwd , value);
-  
+
   return file;
 }
 
@@ -613,7 +613,6 @@ static void config_item_clear( config_item_type * item ) {
 
 static bool config_item_validate_set(config_type * config , const config_item_type * item , int argc , char ** argv ,  const char * config_file, const char * config_cwd) {
   bool OK = true;
-  
   if (item->validate->argc_min >= 0) {
     if (argc < item->validate->argc_min) {
       OK = false;
@@ -663,6 +662,7 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
       argv for arguments referring to path locations.
     */
 
+
     /* Validate the TYPE of the various argumnents */
     if (item->validate->type_map != NULL) {
       for (int iarg = 0; iarg < argc; iarg++) {
@@ -672,14 +672,31 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
 	  break;
 	case(CONFIG_EXECUTABLE):
 	  {
-	    /* Should also use config_cwd */
-	    char * new_exe    = __alloc_relocated__(config_cwd , value);
-	    char * executable = util_alloc_PATH_executable( value );
-	    if (executable == NULL)
-	      config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
-	    else 
-	      argv[iarg] = util_realloc_string_copy(argv[iarg] , executable);
-	    free(new_exe);
+	    /*
+	      1. If the supplied value is an abolute path - do nothing.
+	      2. If the supplied is _not_ an absolute path:
+
+	         a. Try if the relocated exists - then use that.
+                 b. Else - try if the util_alloc_PATH_executable() exists.
+	    */
+	    if (!util_is_abs_path( value )) {
+	      char * relocated  = __alloc_relocated__(config_cwd , value);
+	      char * path_exe   = util_alloc_PATH_executable( value );
+
+	      if (util_file_exists(relocated)) {
+		if (util_is_executable(relocated))
+		  argv[iarg] = util_realloc_string_copy(argv[iarg] , relocated);
+	      } else if (path_exe != NULL)
+		argv[iarg] = util_realloc_string_copy(argv[iarg] , path_exe);
+	      else
+		config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+	      
+	      free(relocated);
+	      util_safe_free(path_exe);
+	    } else {
+	      if (!util_is_executable( value ))
+		config_add_and_free_error(config , util_alloc_sprintf("Could not locate executable:%s ", value));
+	    }
 	  }
 	  break;
 	case(CONFIG_INT):
@@ -697,6 +714,7 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
 	      config_add_and_free_error(config , util_alloc_sprintf("Can not find file %s in %s ",value , config_cwd));
 	    else
 	      argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+	    free( file );
 	  }
 	  break;
 	case(CONFIG_EXISTING_DIR):
