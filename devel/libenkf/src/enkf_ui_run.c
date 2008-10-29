@@ -12,54 +12,6 @@
 #include <ensemble_config.h>
 
 
-void enkf_ui_run(enkf_main_type * enkf_main , const bool * iactive ,  int start_report , state_enum __init_state) {
-  const bool load_results = true;
-  bool analyzed_start;
-  bool prev_enkf_on;
-  const enkf_sched_type * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-  const int num_nodes            = enkf_sched_get_num_nodes(enkf_sched);
-  const int schedule_num_reports = enkf_sched_get_schedule_num_reports(enkf_sched);
-  const int start_inode          = enkf_sched_get_node_index(enkf_sched , start_report);
-  int inode;
-  
-  if (__init_state == analyzed)
-    analyzed_start = true;
-  else
-    analyzed_start = false;
-
-  
-  prev_enkf_on = analyzed_start;
-  for (inode = start_inode; inode < num_nodes; inode++) {
-    const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-    state_enum init_state;
-    int 	   init_step;
-    int 	   report_step1;
-    int 	   report_step2;
-    int 	   report_stride;
-    int 	   report_step;
-    int 	   next_report_step;
-    bool enkf_on;
-    stringlist_type * forward_model;
-    
-    enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &report_stride , &enkf_on , &forward_model);
-    if (inode == start_inode)
-      report_step = start_report;
-    else
-      report_step = report_step1;
-    do {
-      next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
-      init_step = report_step;
-      if (prev_enkf_on)
-	init_state = analyzed;
-      else
-	init_state = forecast;
-      
-      enkf_main_run(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , forward_model);
-      report_step  = next_report_step;
-      prev_enkf_on = enkf_on;
-    } while (next_report_step < report_step2);
-  }
-}
 
 
 
@@ -74,7 +26,7 @@ void enkf_ui_run_start__(void * enkf_main) {
       iactive[iens] = true;
   }
 
-  enkf_ui_run(enkf_main , iactive , 0 , analyzed);
+  enkf_main_run(enkf_main , iactive , 0 , analyzed);
   free(iactive);
 }
 
@@ -98,7 +50,7 @@ void enkf_ui_run_restart__(void * enkf_main) {
   start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
   state        = enkf_ui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
   
-  enkf_ui_run(enkf_main ,  iactive , start_report , state);
+  enkf_main_run(enkf_main ,  iactive , start_report , state);
   free(iactive);
 }
 
@@ -123,7 +75,7 @@ void enkf_ui_run_exp__(void * enkf_main) {
 	iactive[iens] = false;
     }
   }
-  enkf_main_run(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run_step(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 
@@ -141,9 +93,8 @@ void enkf_ui_run_screening__(void * enkf_main) {
     for (iens= 0; iens < ens_size; iens++)
       iactive[iens] = true;
   }
-
     
-  enkf_main_run(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run_step(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 

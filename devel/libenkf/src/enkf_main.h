@@ -1,6 +1,8 @@
 #ifndef __ENKF_ENSEMBLE_H__
 #define __ENKF_ENSEMBLE_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdbool.h>
 #include <enkf_config_node.h>
 #include <enkf_types.h>
@@ -37,7 +39,8 @@ void                          enkf_main_init_eclipse(enkf_main_type * , int , in
 void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
 void                          enkf_main_load_ecl_complete_mt(enkf_main_type *);
 void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
-void                          enkf_main_run(enkf_main_type *, run_mode_type , const bool * , int, state_enum , int , int, bool, bool, const stringlist_type *);
+void                          enkf_main_run(enkf_main_type * , const bool * ,  int  , state_enum );
+void                          enkf_main_run_step(enkf_main_type *, run_mode_type , const bool * , int, state_enum , int , int, bool, bool, const stringlist_type *);
 void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
 void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
 void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
@@ -57,4 +60,7 @@ const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
 const model_config_type     * enkf_main_get_model_config( const enkf_main_type * );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif
