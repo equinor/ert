@@ -1,5 +1,8 @@
 #ifndef __HASH_SLL_H__
 #define __HASH_SLL_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <hash_node.h>
 
@@ -14,4 +17,7 @@ bool             hash_sll_has_key(const hash_sll_type *, uint32_t , const char *
 bool             hash_sll_empty(const hash_sll_type * hash_sll);
 hash_node_type * hash_sll_get(const hash_sll_type *, uint32_t , const char *);
 hash_node_type * hash_sll_get_head(const hash_sll_type *);
+#ifdef __cplusplus
+}
+#endif
 #endif

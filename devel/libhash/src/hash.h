@@ -1,5 +1,9 @@
 #ifndef __HASH_H__
 #define __HASH_H__
+#ifdef __cplusplus
+extern"C" {
+#endif
+
 #include <stdlib.h>
 typedef struct hash_struct hash_type;
 
@@ -65,4 +69,7 @@ HASH_NODE_AS(hash_node_as_double , double);
 #undef HASH_GET_ARRAY_PTR
 #undef HASH_NODE_AS
 
+#ifdef __cplusplus
+}
+#endif
 #endif

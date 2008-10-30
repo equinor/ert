@@ -1,5 +1,8 @@
 #ifndef __HASH_NODE_H__
 #define __HASH_NODE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdbool.h>
 #include <inttypes.h>
 #include <node_data.h>
@@ -25,4 +28,7 @@ void           * hash_node_value_ptr(const hash_node_type *);
 void             hash_node_free(hash_node_type *);
 uint32_t         hash_node_set_table_index(hash_node_type *, uint32_t );
 void             hash_node_printf_key(const hash_node_type *);
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef __NODE_CTYPE_H__
 #define __NODE_CTYPE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 /*
@@ -19,4 +22,7 @@ typedef enum  {void_buffer  = 0,
 
 
 const char * node_ctype_name(node_ctype );
+#ifdef __cplusplus
+}
+#endif
 #endif
