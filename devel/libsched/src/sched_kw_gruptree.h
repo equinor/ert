@@ -1,5 +1,8 @@
 #ifndef __SCHED_KW_GRUPTREE_H__
 #define __SCHED_KW_GRUPTREE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <sched_macros.h>
 
@@ -24,4 +27,7 @@ KW_FREE_HEADER(gruptree)
 KW_FPRINTF_HEADER(gruptree)
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

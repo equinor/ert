@@ -1,5 +1,8 @@
 #ifndef __HISTORY_H__
 #define __HISTORY_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 #include <stdbool.h>
@@ -25,4 +28,7 @@ void           history_realloc_from_summary(history_type *, const ecl_sum_type *
 int    	       history_get_num_restarts(const history_type *);
 double 	       history_get_well_var(const history_type * , int, const char *, const char *, bool *);
 double 	       history_get_group_var(const history_type *, int, const char *, const char *, bool *);
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef __SCHED_KW_UNTYPED_H__
 #define __SCHED_KW_UNTYPED_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -24,4 +27,7 @@ KW_FWRITE_HEADER(untyped)
 KW_FREAD_ALLOC_HEADER(untyped)
 KW_FREE_HEADER(untyped)
 KW_FPRINTF_HEADER(untyped)
+#ifdef __cplusplus
+}
+#endif
 #endif

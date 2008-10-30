@@ -1,5 +1,8 @@
 #ifndef __SCHED_UTIL_H__
 #define __SCHED_UTIL_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdbool.h>
 #include <time.h>
 
@@ -18,4 +21,7 @@ void   sched_util_fprintf_qst(bool , const char * , int , FILE *);
 void   sched_util_fprintf_days_line(int , time_t , time_t , FILE *);
 time_t sched_util_make_start_date(const int * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

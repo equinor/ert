@@ -1,5 +1,8 @@
 #ifndef __SCHED_KW_WCONINJH_H__
 #define __SCHED_KW_WCONINJH_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 
@@ -27,4 +30,7 @@ KW_FREE_HEADER(wconinjh)
 KW_FPRINTF_HEADER(wconinjh)
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

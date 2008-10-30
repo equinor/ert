@@ -1,5 +1,8 @@
 #ifndef __SCHED_KW_DATES__
 #define __SCHED_KW_DATES__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdbool.h>
 #include <time.h>
 #include <sched_macros.h>
@@ -27,4 +30,7 @@ KW_FREAD_ALLOC_HEADER(dates)
 KW_FREE_HEADER(dates)
 KW_FPRINTF_HEADER(dates)
 
+#ifdef __cplusplus
+}
+#endif
 #endif

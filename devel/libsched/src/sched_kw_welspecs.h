@@ -1,5 +1,8 @@
 #ifndef __SCHED_KW_WELSPECS_H__
 #define __SCHED_KW_WELSPECS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <stdbool.h>
 #include <sched_macros.h>
@@ -29,4 +32,7 @@ KW_FREE_HEADER(welspecs)
 KW_FPRINTF_HEADER(welspecs)
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

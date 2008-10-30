@@ -1,5 +1,8 @@
 #ifndef __SCHED_KW_TSTEP__
 #define __SCHED_KW_TSTEP__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <hash.h>
 #include <time.h>
 #include <sched_macros.h>
@@ -29,4 +32,7 @@ KW_FWRITE_HEADER(tstep)
 KW_FREAD_ALLOC_HEADER(tstep)
 KW_FREE_HEADER(tstep)
 KW_FPRINTF_HEADER(tstep)
+#ifdef __cplusplus
+}
+#endif
 #endif

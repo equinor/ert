@@ -1,5 +1,8 @@
 #ifndef __SCHED_KW_WCONHIST_H__
 #define __SCHED_KW_WCONHIST_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -28,4 +31,7 @@ KW_FREAD_ALLOC_HEADER(wconhist)
 KW_FREE_HEADER(wconhist)
 KW_FPRINTF_HEADER(wconhist)
 
+#ifdef __cplusplus
+}
+#endif
 #endif

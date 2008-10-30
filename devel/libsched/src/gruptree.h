@@ -1,5 +1,8 @@
 #ifndef __GRUPTREE_H__
 #define __GRUPTREE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <hash.h>
@@ -19,4 +22,7 @@ bool            gruptree_has_grup(const gruptree_type *, const char *);
 char         ** gruptree_alloc_grup_well_list(gruptree_type *, const char *, int *);
 void            gruptree_printf_grup_wells(gruptree_type *, const char *);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
