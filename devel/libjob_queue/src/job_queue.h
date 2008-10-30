@@ -1,5 +1,8 @@
 #ifndef __JOB_QUEUE_H__
 #define __JOB_QUEUE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <basic_queue_driver.h>
 #include <path_fmt.h>
 
@@ -13,4 +16,7 @@ void                job_queue_run_jobs(job_queue_type * , int );
 void *              job_queue_run_jobs__(void * );
 job_status_type     job_queue_export_job_status(job_queue_type * , int );
 void                job_queue_set_resource_request(job_queue_type * , const char * );
+#ifdef __cplusplus
+}
+#endif
 #endif

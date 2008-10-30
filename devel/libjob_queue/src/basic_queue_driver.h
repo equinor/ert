@@ -1,5 +1,8 @@
 #ifndef __BASIC_QUEUE_DRIVER_H__
 #define __BASIC_QUEUE_DRIVER_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {job_queue_null          = 0 ,   /* For a queue node which has been allocated - but not "added" with a job_queue_add_job() call. */
 	      job_queue_waiting       = 1 ,   /* A node which is waiting in the internal queue. */
@@ -50,4 +53,7 @@ struct basic_queue_driver_struct {
 
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif
