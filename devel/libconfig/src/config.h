@@ -1,5 +1,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdbool.h>
 #include <stringlist.h>
@@ -94,4 +97,7 @@ const stringlist_type * config_iget_stringlist_ref(const config_type *  , const 
 bool                    config_has_set_item(const config_type *  , const char * );
 
 int                     config_get_occurences(const config_type * , const char * );
+#ifdef __cplusplus
+}
+#endif
 #endif
