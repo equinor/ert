@@ -1,6 +1,8 @@
 #ifndef __SET_H__
 #define __SET_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -24,4 +26,7 @@ void         set_intersect(set_type * , const set_type * );
 void         set_union(set_type * , const set_type * );
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

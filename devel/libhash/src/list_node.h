@@ -1,5 +1,8 @@
 #ifndef __LIST_NODE_H__
 #define __LIST_NODE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdbool.h>
 #include <node_data.h>
 
@@ -23,4 +26,7 @@ LIST_NODE_AS_SCALAR(list_node_as_double , double);
 #undef LIST_NODE_AS_SCALAR
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

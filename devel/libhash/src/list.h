@@ -1,5 +1,8 @@
 #ifndef __LIST_H__
 #define __LIST_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <list_node.h>
 
@@ -20,4 +23,7 @@ list_node_type * list_append_list_owned_ref(list_type *, const void *, del_type 
 int              list_get_size(const list_type *);
 list_node_type * list_append_string_copy(list_type *, const char * );
 list_node_type * list_append_copy(list_type *, const void *, copyc_type *, del_type *);
+#ifdef __cplusplus
+}
+#endif
 #endif
