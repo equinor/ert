@@ -1,5 +1,8 @@
 #ifndef __RSH_DRIVER_H__
 #define __RSH_DRIVER_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stringlist.h>
 
 typedef struct rsh_driver_struct rsh_driver_type;
@@ -10,4 +13,7 @@ void 	  * rsh_driver_alloc(const char *, const stringlist_type *);
 void 	    rsh_driver_free(rsh_driver_type * );
 void        rsh_driver_free__(basic_queue_driver_type * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif 

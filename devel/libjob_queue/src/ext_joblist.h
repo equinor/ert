@@ -1,5 +1,8 @@
 #ifndef __EXT_JOBLIST_H__
 #define __EXT_JOBLIST_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <hash.h>
 #include <ext_job.h>
 #include <stringlist.h>
@@ -14,5 +17,8 @@ void               ext_joblist_python_fprintf(const ext_joblist_type * , const s
 ext_job_type     * ext_joblist_alloc_new(ext_joblist_type * , const char * );
 bool               ext_joblist_has_job(const ext_joblist_type *  , const char * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 

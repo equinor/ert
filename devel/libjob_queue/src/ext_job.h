@@ -1,5 +1,8 @@
 #ifndef __EXT_JOB_H__
 #define __EXT_JOB_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <hash.h>
 #include <stdio.h>
 
@@ -25,4 +28,7 @@ void 	       ext_job_python_fprintf(const ext_job_type * , FILE * , const hash_t
 ext_job_type * ext_job_fscanf_alloc(const char * , const char *);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif
