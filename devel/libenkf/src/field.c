@@ -61,7 +61,7 @@ struct field_struct {
    for (k=0; k < nz; k++) {                                                               	  	  \
      for (j=0; j < ny; j++) {                                                             	  	  \
        for (i=0; i < nx; i++) {                                                           	  	  \
-         int index1D = field_config_global_index(config , i , j , k);                             	  \
+         int index1D = field_config_active_index(config , i , j , k);                             	  \
          int index3D;                                                                             	  \
          if (rms_index_order)                                               		     	       	  \
            index3D = rms_util_global_index_from_eclipse_ijk(nx,ny,nz,i,j,k);                              \
@@ -148,7 +148,7 @@ void field_export3D(const field_type * field , void *_target_data , bool rms_ind
   for (k=0; k < nz; k++) {                                                               	    	    \
      for (j=0; j < ny; j++) {                                                             	    	    \
        for (i=0; i < nx; i++) {                                                           	    	    \
-         int index1D = field_config_global_index(config , i , j , k);                             	    \
+         int index1D = field_config_active_index(config , i , j , k);                             	    \
          int index3D;                                                                             	    \
          if (index1D >= 0) {                                                                      	    \
    	   if (rms_index_order)                                               		     	       	    \
@@ -342,16 +342,6 @@ void field_fread(field_type * field , FILE * stream) {
   else
     enkf_util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
   
-  /*
-    
-  {
-    float * data = (float * ) field->data;
-    printf("%s: ",__func__);
-    for (int i = 0; i < 10; i++)
-      printf("%g ",data[i]);
-    printf("\n");
-  }
-  */
 }
 
 
@@ -764,9 +754,9 @@ int field_serialize(const field_type *field , serial_state_type * serial_state ,
 
 
 void field_ijk_get(const field_type * field , int i , int j , int k , void * value) {
-  int global_index = field_config_global_index(field->config , i , j , k);
+  int active_index = field_config_active_index(field->config , i , j , k);
   int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
-  memcpy(value , &field->data[global_index * sizeof_ctype] , sizeof_ctype);
+  memcpy(value , &field->data[active_index * sizeof_ctype] , sizeof_ctype);
 }
 
 
@@ -777,11 +767,11 @@ void field_ijk_get(const field_type * field , int i , int j , int k , void * val
 */
 
 
-double field_iget_double(const field_type * field , int global_index) {
+double field_iget_double(const field_type * field , int active_index) {
   ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
   int sizeof_ctype 	 = field_config_get_sizeof_ctype(field->config);
   char buffer[8]; /* Enough to hold one double */
-  memcpy(buffer , &field->data[global_index * sizeof_ctype] , sizeof_ctype);
+  memcpy(buffer , &field->data[active_index * sizeof_ctype] , sizeof_ctype);
   if ( ecl_type == ecl_double_type ) 
     return *((double *) buffer);
   else if (ecl_type == ecl_float_type) 
@@ -808,9 +798,9 @@ double field_iget(const field_type * field, int global_index) {
 
 
 void field_ijk_set(field_type * field , int i , int j , int k , const void * value) {
-  int global_index = field_config_global_index(field->config , i , j , k);
+  int active_index = field_config_active_index(field->config , i , j , k);
   int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
-  memcpy(&field->data[global_index * sizeof_ctype] , value , sizeof_ctype);
+  memcpy(&field->data[active_index * sizeof_ctype] , value , sizeof_ctype);
 }
 
 
@@ -898,8 +888,8 @@ double * field_indexed_get_alloc(const field_type * field, int len, const int * 
 
 
 bool field_ijk_valid(const field_type * field , int i , int j , int k) {
-  int global_index = field_config_global_index(field->config , i , j , k);
-  if (global_index >=0)
+  int active_index = field_config_active_index(field->config , i , j , k);
+  if (active_index >=0)
     return true;
   else
     return false;
@@ -907,8 +897,8 @@ bool field_ijk_valid(const field_type * field , int i , int j , int k) {
 
 
 void field_ijk_get_if_valid(const field_type * field , int i , int j , int k , void * value , bool * valid) {
-  int global_index = field_config_global_index(field->config , i , j , k);
-  if (global_index >=0) {
+  int active_index = field_config_active_index(field->config , i , j , k);
+  if (active_index >=0) {
     *valid = true;
     field_ijk_get(field , i , j , k , value);
   } else 
@@ -916,8 +906,8 @@ void field_ijk_get_if_valid(const field_type * field , int i , int j , int k , v
 }
 
 
-int field_get_global_index(const field_type * field , int i , int j  , int k) {
-  return field_config_global_index(field->config , i , j , k);
+int field_get_active_index(const field_type * field , int i , int j  , int k) {
+  return field_config_active_index(field->config , i , j , k);
 }
 
 
@@ -1284,6 +1274,8 @@ VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);
 VOID_CLEAR(field);
 VOID_IGET(field);
+
+
 
 
 

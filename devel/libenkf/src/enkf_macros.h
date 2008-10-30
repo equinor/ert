@@ -19,14 +19,14 @@ enkf_var_type var_type;
 
 /*****************************************************************/
 #define SAFE_CAST(prefix , ID) \
-static prefix ## _type * prefix ## _safe_cast(void * __config) {   \
+prefix ## _type * prefix ## _safe_cast(void * __config) {   \
   prefix ## _type * config = (prefix ## _type *) __config;         \
   if (config->__type_id != ID)                                     \
     util_abort("%s: run_time cast failed - aborting \n",__func__); \
   return config;                                                   \
 }
 
-
+#define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(void * );
 
 /*****************************************************************/
 

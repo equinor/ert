@@ -176,7 +176,7 @@ vector of total length length(woc) + length(goc).
 
 
 
-[1]: Currently the equil_strict is NOT implemented as this, but ....
+[1]: Currently the equil_strict is NOT implemented as this, but it probably should ....
 */
 
 /*****************************************************************/

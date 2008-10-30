@@ -1,5 +1,8 @@
 #ifndef __RELPERM_CONFIG_H__
 #define __RELPERM_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -78,4 +81,7 @@ void relperm_config_table_free(table_type *);
 /*Generated headers */
 GET_DATA_SIZE_HEADER(relperm);
 VOID_FREE_HEADER(relperm_config);
+#ifdef __cplusplus
+}
+#endif
 #endif

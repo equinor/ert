@@ -11,18 +11,19 @@
 #include <rms_util.h>
 #include <path_fmt.h>
 #include <math.h>
+#include <field_active.h>
 
 
 #define FIELD_CONFIG_ID 78269
 
 struct field_config_struct {
   CONFIG_STD_FIELDS;
-  int nx,ny,nz;                       /* The number of elements in the three directions. */ 
-  int sx,sy,sz;                       /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
-  const int *index_map;
+  int nx,ny,nz;                         /* The number of elements in the three directions. */ 
+  int sx,sy,sz;                         /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
+  const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */ 
 
-  bool        * enkf_active;          /* Whether a certain cell is active or not - EnKF wise.*/
-  bool          enkf_all_active;      /* Performance gain when all cells are active. */
+  bool        * enkf_active;            /* Whether a certain cell is active or not - EnKF wise.*/
+  bool          enkf_all_active;        /* Performance gain when all cells are active. */
 
 
   truncation_type truncation;           /* How the field should be trunacted before exporting for simulation. */
@@ -61,12 +62,13 @@ void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_
 }
 
 
+/*
 static void field_config_assert_ijk(const field_config_type * config , int i , int j , int k) {
   if (i < 0 || i >= config->nx) util_abort("%s: i:%d outside valid range: [0,%d) \n",__func__ , i , config->nx);
   if (j < 0 || j >= config->ny) util_abort("%s: j:%d outside valid range: [0,%d) \n",__func__ , j , config->ny);
   if (k < 0 || k >= config->nz) util_abort("%s: k:%d outside valid range: [0,%d) \n",__func__ , k , config->nz);
 }
-
+*/
 
 void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_type) {
   config->internal_ecl_type     = ecl_type;
@@ -259,10 +261,15 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
     Observe that size is the number of *ACTIVCE* cells,
     and generally *not* equal to nx*ny*nz.
   */
+
+  /* 
+     The import format should in general be undefined_format - then
+     the type will be determined automagically (unless it is
+     restart_block).
+  */
   config->export_format = export_format;
-  config->import_format = import_format;      /* The import format should in general be undefined_format - then the type 
-                                                 will be determined automagically (unless it is restart_block). */
-  
+  config->import_format = import_format;      
+  config->grid          = ecl_grid;
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
@@ -272,7 +279,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   field_config_set_ecl_type(config , ecl_type);
 
   ecl_grid_get_dims(ecl_grid , &config->nx , &config->ny , &config->nz , &config->data_size);
-  config->index_map = ecl_grid_get_index_map_ref(ecl_grid);
 
 
   config->truncation = truncate_none;
@@ -313,13 +319,14 @@ void field_config_set_all_active(field_config_type * field) {
   field_config_set_all_active__(field , true);
 }
 
+
 /*
   Observe that the indices are zero-based, in contrast to those used
   by eclipse which are based on one.
 */
-inline int field_config_global_index(const field_config_type * config , int i , int j , int k) {
-  field_config_assert_ijk(config , i , j , k);
-  return config->index_map[ k * config->nx * config->ny + j * config->nx + i];
+
+inline int field_config_active_index(const field_config_type * config , int i , int j , int k) {
+  return ecl_grid_get_active_cell_index( config->grid , i,j,k);
 }
 
 
@@ -335,11 +342,11 @@ void field_config_set_iactive(field_config_type * config , int num_active , cons
   int index;
   field_config_set_all_active__(config , false);
   for (index = 0; index < num_active; index++) {
-    const int global_index = field_config_global_index(config , i[index] , j[index] , k[index]);
-    if (global_index < 0)
+    const int active_index = field_config_active_index(config , i[index] , j[index] , k[index]);
+    if (active_index < 0)
       fprintf(stderr,"** Warning cell: (%d,%d,%d) is inactive\n",i[index] , j[index] , k[index]);
     else 
-      config->enkf_active[global_index]= true;
+      config->enkf_active[active_index]= true;
   }
 }
 
@@ -589,8 +596,8 @@ int field_config_get_sizeof_ctype(const field_config_type * config) { return con
    Returns true / false whether a cell is active. 
 */
 bool field_config_active_cell(const field_config_type * config , int i , int j , int k) {
-  int global_index = field_config_global_index(config , i,j,k);
-  if (global_index >= 0)
+  int active_index = field_config_active_index(config , i,j,k);
+  if (active_index >= 0)
     return true;
   else
     return false;
@@ -617,36 +624,13 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
 
 
 
-/*
-  TODO
-
-  This needs to be rewamped or renamed.
-  
-  The name "get" is misleading in a function that uses a linear lookup
-  in a potentially very large table.
-
-  The "fix" is probably to have an index_map_inv in the ecl_grid type
-  which is alloc'ed simultaneously as the the index map. A
-  global/active_index can then be translated into a "natural ordering"
-  index, from which an ijk triplet quickly can be computed.
+/**
+   This function takes an active index (in the interval [0,size>) and
+   finds the corresponding i,j,k.
 */
-void field_config_get_ijk(const field_config_type * config , int global_index, int *_i , int *_j , int *_k) {
-  int i,j,k;
-  if (global_index >= config->data_size || global_index < 0) {
-    fprintf(stderr,"%s: global_index: %d is not in intervale [0,%d) - aborting \n",__func__ , global_index , config->data_size);
-    abort();
-  }
-  
-  for (k=0; k < config->nz; k++)
-    for (j=0; j < config->ny; j++)
-      for (i=0; i < config->nx; i++)
-	if (field_config_global_index(config , i,j,k) == global_index) {
-	  *_i = i;
-	  *_j = j;
-	  *_k = k;
-	  return;
-	}
-  util_abort("%s: should not have arrived here - something wrong with the index_map?? \n",__func__);
+
+void field_config_get_ijk(const field_config_type * config , int active_index, int *i , int *j , int *k) {
+  ecl_grid_get_ijk_from_active_index(config->grid , active_index , i,j,k);
 }
 
 
@@ -738,7 +722,7 @@ void field_config_scanf_ijk(const field_config_type * config , bool active_only 
     
 
     if (OK) {
-      global_index = field_config_global_index(config , i,j,k);
+      global_index = field_config_active_index(config , i,j,k);
       if (active_only) {
 	if (global_index < 0) {
 	  OK = false;
@@ -848,6 +832,7 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 
 
 void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
+  field_active_type * active = field_active_safe_cast( active_config );
   /*
    */
 }

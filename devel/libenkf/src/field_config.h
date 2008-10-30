@@ -1,5 +1,8 @@
 #ifndef __FIELD_CONFIG_H__
 #define __FIELD_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 #include <stdbool.h>
 #include <enkf_util.h>
@@ -100,7 +103,7 @@ const bool            * field_config_get_iactive(const field_config_type * );
 int                     field_config_get_byte_size(const field_config_type * );
 int                     field_config_get_active_size(const field_config_type * );
 int                     field_config_get_sizeof_ctype(const field_config_type * );
-int                     field_config_global_index(const field_config_type * , int , int , int );
+int                     field_config_active_index(const field_config_type * , int , int , int );
 void                    field_config_get_ijk(const field_config_type * , int , int * , int * , int *);
 bool                    field_config_active_cell(const field_config_type *  , int , int , int);
 field_init_type         field_config_get_init_type(const field_config_type * );
@@ -129,4 +132,7 @@ truncation_type 	field_config_get_truncation(const field_config_type * , double 
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
 VOID_CONFIG_ACTIVATE_HEADER(field);
+#ifdef __cplusplus
+}
+#endif
 #endif

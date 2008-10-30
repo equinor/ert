@@ -1,5 +1,8 @@
 #ifndef __HAVANA_H__
 #define __HAVANA_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <havana_fault_config.h>
 #include <enkf_util.h>
@@ -42,4 +45,7 @@ MATH_OPS_VOID_HEADER(havana_fault);
 VOID_ALLOC_HEADER(havana_fault);
 VOID_ECL_WRITE_HEADER(havana_fault);
 VOID_REALLOC_DATA_HEADER(havana_fault);
+#ifdef __cplusplus
+}
+#endif
 #endif

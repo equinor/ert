@@ -1,5 +1,8 @@
 #ifndef __FIELD_H__
 #define __FIELD_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <fortio.h>
 #include <ecl_kw.h>
 #include <enkf_macros.h>
@@ -66,4 +69,7 @@ VOID_CLEAR_HEADER (field);
 VOID_IGET_HEADER(field);
 VOID_ECL_LOAD_HEADER(field);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

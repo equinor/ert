@@ -1,5 +1,8 @@
 #ifndef __SCALAR_CONFIG_H__
 #define __SCALAR_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -39,4 +42,7 @@ GET_DATA_SIZE_HEADER(scalar);
 CONFIG_SET_ECLFILE_HEADER_VOID(scalar);
 CONFIG_SET_ENSFILE_HEADER_VOID(scalar);
 VOID_FREE_HEADER(scalar_config);
+#ifdef __cplusplus
+}
+#endif
 #endif

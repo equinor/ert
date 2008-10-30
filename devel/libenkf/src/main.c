@@ -52,7 +52,8 @@ void enkf_welcome() {
 void enkf_usage() {
   printf("\n");
   printf(" *********************************************************************\n");
-  printf(" **                       E n K F                                   **\n");
+  printf(" **                                                                 **\n");
+  printf(" **                           E n K F                               **\n");
   printf(" **                                                                 **\n");
   printf(" **-----------------------------------------------------------------**\n");
   printf(" ** You have sucessfully started the EnKF program developed at      **\n");

@@ -134,7 +134,7 @@ void enkf_ui_export_profile(void * enkf_main) {
 	for (i=i1; i<=i2; i++)
 	  for (j= j1; j <=j2; j++)
 	    for (k=k1; k <= k2; k++) {
-	      cell_list[cell_index] = field_config_global_index(field_config , i,j,k);
+	      cell_list[cell_index] = field_config_active_index(field_config , i,j,k);
 	      cell_index++;
 	    }
       }

@@ -573,7 +573,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "ADD_STATIC_KW" , false , true);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
     
-    item = config_add_item(config , "RESULT_PATH"  , false , false);
+    item = config_add_item(config , "RESULT_PATH"  , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
     item = config_add_item(config , "OBS_CONFIG"  , false , false);

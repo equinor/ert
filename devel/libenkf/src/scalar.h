@@ -1,5 +1,8 @@
 #ifndef __SCALAR_H__
 #define __SCALAR_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <enkf_util.h>
 #include <scalar_config.h>
 #include <enkf_serialize.h>
@@ -46,4 +49,7 @@ VOID_COPYC_HEADER      (scalar);
 VOID_ECL_WRITE_HEADER (scalar)
 VOID_INITIALIZE_HEADER(scalar);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

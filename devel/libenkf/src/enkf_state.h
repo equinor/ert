@@ -1,6 +1,8 @@
 #ifndef __ENKF_STATE_H__
 #define __ENKF_STATE_H__
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <fortio.h>
 #include <stdbool.h>
@@ -76,4 +78,7 @@ void enkf_ensemble_update(enkf_state_type ** , int  , serial_vector_type * , con
 /*****************************************************************/
 void enkf_state_init_run(enkf_state_type * state , run_mode_type , bool active , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , const stringlist_type * forward_model);
 bool enkf_state_run_OK(const enkf_state_type * );
+#ifdef __cplusplus
+}
+#endif
 #endif
