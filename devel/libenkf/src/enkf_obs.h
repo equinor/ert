@@ -1,5 +1,8 @@
 #ifndef __ENKF_OBS_H__
 #define __ENKF_OBS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <sched_file.h>
 #include <meas_vector.h>
 #include <well_obs.h>
@@ -26,4 +29,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * , const ensemble_config_type 
 void 		enkf_obs_get_observations(enkf_obs_type * , int , obs_data_type * );
 void            enkf_obs_add_well_obs(enkf_obs_type *   , const enkf_config_node_type * , const char * , const char * , const char * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

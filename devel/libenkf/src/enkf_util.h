@@ -1,5 +1,8 @@
 #ifndef __ENKF_UTIL_H__
 #define __ENKF_UTIL_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -314,4 +317,7 @@ char  * enkf_util_scanf_alloc_filename(const char * , int );
 #define AUTO_MKDIR     4
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

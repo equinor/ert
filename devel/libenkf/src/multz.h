@@ -1,5 +1,8 @@
 
 #ifndef __MULTZ_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define __MULTZ_H__
 #include <enkf_util.h>
 #include <multz_config.h>
@@ -41,4 +44,7 @@ VOID_FWRITE_HEADER (multz)
 VOID_FREAD_HEADER  (multz)
 VOID_INITIALIZE_HEADER(multz)
 
+#ifdef __cplusplus
+}
+#endif
 #endif

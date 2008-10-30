@@ -1,5 +1,8 @@
 #ifndef __ENKF_CONFIG_NODE_H__
 #define __ENKF_CONFIG_NODE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <enkf_types.h>
 #include <enkf_macros.h>
 
@@ -30,4 +33,7 @@ const char     *  enkf_config_node_get_outfile_ref(const enkf_config_node_type *
 
 
 VOID_FREE_HEADER(enkf_config_node);
+#ifdef __cplusplus
+}
+#endif
 #endif

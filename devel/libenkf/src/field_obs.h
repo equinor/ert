@@ -1,5 +1,8 @@
 #ifndef __FIELD_OBS_H__
 #define __FIELD_OBS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <enkf_macros.h>
 #include <obs_data.h>
 #include <meas_vector.h>
@@ -17,4 +20,7 @@ field_obs_type * field_obs_fscanf_alloc(const char * , const field_config_type *
 VOID_FREE_HEADER(field_obs);
 VOID_GET_OBS_HEADER(field_obs);
 VOID_MEASURE_HEADER(field_obs);
+#ifdef __cplusplus
+}
+#endif
 #endif

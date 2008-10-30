@@ -1,5 +1,8 @@
 #ifndef __RELPERM_H__
 #define __RELPERM_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <enkf_util.h>
 #include <relperm_config.h>
 
@@ -31,4 +34,7 @@ VOID_FWRITE_HEADER (relperm)
 VOID_FREAD_HEADER  (relperm)
 VOID_INITIALIZE_HEADER(relperm)
 
+#ifdef __cplusplus
+}
+#endif
 #endif

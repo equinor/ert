@@ -1,5 +1,8 @@
 #ifndef __EQUIL_CONFIG_H__
 #define __EQUIL_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -31,4 +34,7 @@ equil_config_type   * equil_config_fscanf_alloc(const char * );
 
 VOID_FREE_HEADER(equil_config);
 VOID_CONFIG_ACTIVATE_HEADER(equil);
+#ifdef __cplusplus
+}
+#endif
 #endif

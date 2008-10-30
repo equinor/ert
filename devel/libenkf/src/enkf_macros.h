@@ -1,5 +1,8 @@
 #ifndef __ENKF_MACROS_H__
 #define __ENKF_MACROS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -270,4 +273,7 @@ void prefix ## _assert_type(const prefix ## _type * object) { \
 #define VOID_IGET(prefix)        double prefix ## _iget__(const void * void_arg, int index) { return prefix ## _iget((const prefix ## _type *) void_arg , index); }
 #define VOID_IGET_HEADER(prefix) double prefix ## _iget__(const void * , int ) 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

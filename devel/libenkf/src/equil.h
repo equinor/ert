@@ -1,5 +1,8 @@
 #ifndef __EQUIL_H__
 #define __EQUIL_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <enkf_macros.h>
 #include <equil_config.h>
@@ -27,4 +30,7 @@ VOID_ALLOC_HEADER(equil);
 VOID_ECL_WRITE_HEADER(equil);
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

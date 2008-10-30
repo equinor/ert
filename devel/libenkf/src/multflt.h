@@ -1,5 +1,8 @@
 #ifndef __MULTFLT_H__
 #define __MULTFLT_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <multflt_config.h>
 #include <enkf_util.h>
@@ -41,4 +44,7 @@ VOID_REALLOC_DATA_HEADER(multflt);
 ALLOC_STATS_HEADER(multflt);
 VOID_FPRINTF_RESULTS_HEADER(multflt)
 
+#ifdef __cplusplus
+}
+#endif
 #endif

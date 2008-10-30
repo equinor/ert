@@ -1,5 +1,8 @@
 #ifndef __TRANS_FUNC_H__
 #define __TRANS_FUNC_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <enkf_types.h>
 #include <void_arg.h>
 #include <stdio.h>
@@ -16,4 +19,7 @@ double             trans_unif    (double  , const void_arg_type *);
 double             trans_logunif (double  , const void_arg_type *);
 transform_ftype  * trans_func_lookup(FILE * stream, char ** , void_arg_type ** , bool *);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

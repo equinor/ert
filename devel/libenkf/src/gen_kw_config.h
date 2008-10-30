@@ -1,5 +1,8 @@
 #ifndef __GEN_KW_CONFIG_H__
 #define __GEN_KW_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -29,4 +32,7 @@ const char          * gen_kw_config_get_name(const gen_kw_config_type * , int );
 char               ** gen_kw_config_get_name_list(const gen_kw_config_type *);
 
 VOID_FREE_HEADER(gen_kw_config);
+#ifdef __cplusplus
+}
+#endif
 #endif

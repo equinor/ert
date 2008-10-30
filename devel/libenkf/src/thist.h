@@ -1,5 +1,8 @@
 #ifndef __THIST_H__
 #define __THIST_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdbool.h>
 
 typedef struct thist_struct thist_type;
@@ -19,4 +22,7 @@ void         thist_clear(thist_type *);
 void         thist_free(thist_type *);
 void         this_type_set_title(thist_type * , const char * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

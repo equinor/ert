@@ -1,5 +1,8 @@
 #ifndef __BASIC_DRIVER_H__
 #define __BASIC_DRIVER_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <enkf_node.h>
 
 typedef struct basic_driver_struct        basic_driver_type;
@@ -83,4 +86,7 @@ void 	 		   basic_static_driver_init(basic_static_driver_type * );
 void 	 		   basic_static_driver_assert_cast(const basic_static_driver_type * );
 basic_static_driver_type * basic_static_driver_safe_cast(void * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

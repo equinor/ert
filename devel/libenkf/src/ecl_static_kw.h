@@ -1,5 +1,8 @@
 #ifndef  __ECL_STATIC_KW_H__
 #define  __ECL_STATIC_KW_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdbool.h>
 #include <ecl_kw.h>
 #include <enkf_state.h>
@@ -23,4 +26,7 @@ VOID_COPYC_HEADER(ecl_static_kw);
 VOID_REALLOC_DATA_HEADER(ecl_static_kw);
 ASSERT_TYPE_HEADER(ecl_static_kw);
 VOID_ECL_WRITE_HEADER(ecl_static_kw);
+#ifdef __cplusplus
+}
+#endif
 #endif

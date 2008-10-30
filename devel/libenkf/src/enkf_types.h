@@ -1,5 +1,8 @@
 #ifndef __ENKF_TYPES_H__
 #define __ENKF_TYPES_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <void_arg.h>
 typedef double (transform_ftype) (double , const void_arg_type *);
 
@@ -193,4 +196,7 @@ typedef enum {
 enkf_impl_type    enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(enkf_impl_type );
 enkf_impl_type    enkf_types_check_impl_type(const char * );
+#ifdef __cplusplus
+}
+#endif
 #endif

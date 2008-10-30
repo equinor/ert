@@ -1,5 +1,8 @@
 #ifndef __OBS_NODE__
 #define __OBS_NODE__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <enkf_macros.h>
 #include <stdbool.h>
 #include <enkf_types.h>
@@ -30,4 +33,7 @@ void 		obs_node_deactivate_time_t(obs_node_type * , const sched_file_type * , ti
 
 VOID_FREE_HEADER(obs_node);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

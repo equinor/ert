@@ -1,5 +1,8 @@
 #ifndef __GEN_KW_H__
 #define __GEN_KW_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <fortio.h>
 #include <gen_kw_config.h>
@@ -47,4 +50,7 @@ VOID_ALLOC_HEADER(gen_kw);
 VOID_ECL_WRITE_HEADER(gen_kw);
 VOID_REALLOC_DATA_HEADER(gen_kw);
 VOID_FPRINTF_RESULTS_HEADER(gen_kw);
+#ifdef __cplusplus
+}
+#endif
 #endif

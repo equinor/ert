@@ -1,5 +1,8 @@
 #ifndef __MULTFLT_CONFIG_H__
 #define __MULTFLT_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -28,4 +31,7 @@ const char          * multflt_config_get_name(const multflt_config_type * , int 
 
 VOID_FREE_HEADER(multflt_config);
 VOID_CONFIG_ACTIVATE_HEADER(multflt)
+#ifdef __cplusplus
+}
+#endif
 #endif

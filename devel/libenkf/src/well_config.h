@@ -1,5 +1,8 @@
 #ifndef __WELL_CONFIG_H__
 #define __WELL_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -31,4 +34,7 @@ void               well_config_summarize(const well_config_type * );
 
 GET_DATA_SIZE_HEADER(well);
 VOID_CONFIG_FREE_HEADER(well);
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef __WELL_OBS_H__
 #define __WELL_OBS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <history.h>
 #include <enkf_macros.h>
 #include <obs_data.h>
@@ -20,4 +23,7 @@ well_obs_type * well_obs_fscanf_alloc(const char * , const well_config_type *  ,
 VOID_FREE_HEADER(well_obs);
 VOID_GET_OBS_HEADER(well_obs);
 VOID_MEASURE_HEADER(well_obs);
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef __ENKF_FS_H__
 #define __ENKF_FS_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <path_fmt.h>
 #include <basic_driver.h>
 #include <enkf_node.h>
@@ -19,4 +22,7 @@ void           	 enkf_fs_fwrite_restart_kw_list(enkf_fs_type * , int , int , res
 void           	 enkf_fs_fread_restart_kw_list(enkf_fs_type * , int , int , restart_kw_list_type *);
 enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type *  , enkf_config_node_type * , int  , int , state_enum );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef __ENKF_NODE_H__
 #define __ENKF_NODE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdlib.h>
 #include <stdbool.h>
 #include <enkf_util.h>
@@ -116,4 +119,7 @@ const char     *  enkf_node_get_key_ref(const enkf_node_type * );
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);
 bool         	  enkf_node_has_func(const enkf_node_type * , node_function_type );
 /*void              enkf_node_load_static_ecl_kw(enkf_node_type *, const ecl_kw_type *);*/
+#ifdef __cplusplus
+}
+#endif
 #endif

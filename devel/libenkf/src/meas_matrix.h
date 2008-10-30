@@ -1,5 +1,8 @@
 #ifndef __MEAS_MATRIX_H__
 #define __MEAS_MATRIX_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <meas_vector.h>
 #include <stdbool.h>
 
@@ -13,4 +16,7 @@ void               meas_matrix_free(meas_matrix_type * );
 void               meas_matrix_add(meas_matrix_type * , int , double );
 double           * meas_matrix_allocS(const meas_matrix_type * , int , int , int , double ** , const bool *);
 void               meas_matrix_allocS_stats(const meas_matrix_type * , double **, double **);
+#ifdef __cplusplus
+}
+#endif
 #endif

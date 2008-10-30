@@ -1,5 +1,8 @@
 #ifndef __WELL_H__
 #define __WELL_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <ecl_sum.h>
 #include <ecl_block.h>
 #include <enkf_macros.h>
@@ -24,4 +27,7 @@ VOID_DESERIALIZE_HEADER  (well)
 VOID_FWRITE_HEADER (well)
 VOID_FREAD_HEADER  (well)
 VOID_FPRINTF_RESULTS_HEADER(well)
+#ifdef __cplusplus
+}
+#endif
 #endif

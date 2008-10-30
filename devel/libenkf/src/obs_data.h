@@ -1,5 +1,8 @@
 #ifndef __OBS_DATA_H__
 #define __OBS_DATA_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdio.h>
 
 typedef struct obs_data_struct obs_data_type;
@@ -16,4 +19,7 @@ int             obs_data_get_nrobs(const obs_data_type * );
 void            obs_data_deactivate_outliers(obs_data_type * , const double * , const double *, double , double , int * , bool **);
 void            obs_data_fprintf(const obs_data_type * , FILE * , const double * , const double *);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

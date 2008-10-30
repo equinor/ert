@@ -1,5 +1,8 @@
 #ifndef __MEAS_OP_H__
 #define __MEAS_OP_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct meas_op_struct meas_op_type;
 
@@ -8,5 +11,8 @@ void           meas_op_free(meas_op_type *);
 double         meas_op_eval(const meas_op_type * , const double *);
 void           meas_op_set_scalar(meas_op_type * , int );
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 

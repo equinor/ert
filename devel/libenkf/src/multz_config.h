@@ -1,5 +1,8 @@
 #ifndef __MULTZ_CONFIG_H__
 #define __MULTZ_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -32,4 +35,7 @@ char              * multz_config_alloc_description(const multz_config_type * , i
 GET_DATA_SIZE_HEADER(multz);
 VOID_FREE_HEADER(multz_config);
 VOID_CONFIG_ACTIVATE_HEADER(multz)
+#ifdef __cplusplus
+}
+#endif
 #endif
