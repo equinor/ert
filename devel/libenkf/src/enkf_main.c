@@ -178,18 +178,119 @@ void enkf_main_free(enkf_main_type * enkf_main) {
 
 
 
-void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
+static void enkf_main_load_sub_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state, int iens1 , int iens2) {
   int iens;
-  for (iens = 0; iens < ensemble_config_get_size(enkf_main->ensemble_config); iens++) 
+  for (iens = iens1; iens < iens2; iens++)
     enkf_state_fread(enkf_main->ensemble[iens] , mask , report_step , state);
 }
 
 
+static void * enkf_main_load_sub_ensemble__(void * __arg) {
+  void_arg_type * void_arg   = void_arg_safe_cast(__arg);
+  enkf_main_type * enkf_main = void_arg_get_ptr(void_arg , 0);
+  int mask                   = void_arg_get_int(void_arg , 1);
+  int report_step            = void_arg_get_int(void_arg , 2);
+  state_enum state           = void_arg_get_int(void_arg , 3);
+  int iens1                  = void_arg_get_int(void_arg , 4);
+  int iens2                  = void_arg_get_int(void_arg , 5);
+
+  enkf_main_load_sub_ensemble(enkf_main , mask , report_step , state , iens1 , iens2);
+  return NULL;
+}
+
+
+
+void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
+  const   int cpu_threads = 4;
+  int     sub_ens_size    = ensemble_config_get_size(enkf_main->ensemble_config) / cpu_threads;
+  int     icpu;
+  thread_pool_type * tp = thread_pool_alloc( cpu_threads );
+  void_arg_type ** void_arg_list = util_malloc( cpu_threads * sizeof * void_arg_list , __func__);
+  
+  for (icpu = 0; icpu < cpu_threads; icpu++) {
+    void_arg_type * arg = void_arg_alloc6(void_pointer , int_value , int_value , int_value , int_value , int_value);
+    void_arg_pack_ptr(arg , 0 , enkf_main);
+    void_arg_pack_int(arg , 1 , mask);
+    void_arg_pack_int(arg , 2 , report_step);
+    void_arg_pack_int(arg , 3 , state);
+    
+    {
+      int iens1 =  icpu * sub_ens_size;
+      int iens2 = iens1 + sub_ens_size;
+      
+      if (icpu == (cpu_threads - 1))
+	iens2 = ensemble_config_get_size(enkf_main->ensemble_config);
+
+      void_arg_pack_int(arg , 4 , iens1);
+      void_arg_pack_int(arg , 5 , iens2);
+    }
+    thread_pool_add_job( tp , enkf_main_load_sub_ensemble__ , arg);
+    void_arg_list[icpu] = arg;
+  }
+  thread_pool_join( tp );
+  thread_pool_free( tp );
+
+  for (icpu = 0; icpu < cpu_threads; icpu++) 
+    void_arg_free( void_arg_list[icpu]);
+  free(void_arg_list);
+}
+
+
+
+static void enkf_main_fwrite_sub_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state, int iens1 , int iens2) {
+  int iens;
+  for (iens = iens1; iens < iens2; iens++)
+    enkf_state_fwrite(enkf_main->ensemble[iens] , mask , report_step , state);
+}
+
+
+static void * enkf_main_fwrite_sub_ensemble__(void *__arg) {
+  void_arg_type * void_arg   = void_arg_safe_cast(__arg);
+  enkf_main_type * enkf_main = void_arg_get_ptr(void_arg , 0);
+  int mask                   = void_arg_get_int(void_arg , 1);
+  int report_step            = void_arg_get_int(void_arg , 2);
+  state_enum state           = void_arg_get_int(void_arg , 3);
+  int iens1                  = void_arg_get_int(void_arg , 4);
+  int iens2                  = void_arg_get_int(void_arg , 5);
+
+  enkf_main_fwrite_sub_ensemble(enkf_main , mask , report_step , state , iens1 , iens2);
+  return NULL;
+}
+
 
 void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state) {
-  int iens;
-  for (iens = 0; iens < ensemble_config_get_size(enkf_main->ensemble_config); iens++) 
-    enkf_state_fwrite(enkf_main->ensemble[iens] , mask , report_step , state);
+  const   int cpu_threads = 4;
+  int     sub_ens_size    = ensemble_config_get_size(enkf_main->ensemble_config) / cpu_threads;
+  int     icpu;
+  thread_pool_type * tp = thread_pool_alloc( cpu_threads );
+  void_arg_type ** void_arg_list = util_malloc( cpu_threads * sizeof * void_arg_list , __func__);
+  
+  for (icpu = 0; icpu < cpu_threads; icpu++) {
+    void_arg_type * arg = void_arg_alloc6(void_pointer , int_value , int_value , int_value , int_value , int_value);
+    void_arg_pack_ptr(arg , 0 , enkf_main);
+    void_arg_pack_int(arg , 1 , mask);
+    void_arg_pack_int(arg , 2 , report_step);
+    void_arg_pack_int(arg , 3 , state);
+    
+    {
+      int iens1 =  icpu * sub_ens_size;
+      int iens2 = iens1 + sub_ens_size;
+      
+      if (icpu == (cpu_threads - 1))
+	iens2 = ensemble_config_get_size(enkf_main->ensemble_config);
+
+      void_arg_pack_int(arg , 4 , iens1);
+      void_arg_pack_int(arg , 5 , iens2);
+    }
+    thread_pool_add_job( tp , enkf_main_fwrite_sub_ensemble__ , arg);
+    void_arg_list[icpu] = arg;
+  }
+  thread_pool_join( tp );
+  thread_pool_free( tp );
+
+  for (icpu = 0; icpu < cpu_threads; icpu++) 
+    void_arg_free( void_arg_list[icpu]);
+  free(void_arg_list);
 }
 
 
@@ -323,14 +424,14 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   if (load_results) 
     enkf_main_load_ensemble(enkf_main , dynamic + parameter , step2 , forecast);
 
-  printf("Starter paa oppdatering \n");
   if (enkf_update) {
     double *X;
+    printf("Beregner X matrise ..... "); fflush(stdout);
     enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
     meas_matrix_reset(enkf_main->meas_matrix);
     enkf_main_measure(enkf_main);
     X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
-    
+    printf("\n");
     if (X != NULL) {
       /* 
          The number of doubles we ask for, to get the number of bytes
@@ -341,18 +442,20 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
       size_t double_size = 1024*1024*256; /* 2GB */
       
       /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+      printf("Oppdaterer: .... "); fflush(stdout);
       serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
       enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
       serial_vector_free(serial_vector);
-      
+      printf("\n");
       free(X);
     }
   }
     
-  printf("---------------------------------\n");
   if (enkf_update) {
+    printf("Lagrer .... "); fflush(stdout);
     enkf_main_fwrite_ensemble(enkf_main , dynamic + parameter , step2 , analyzed);
     enkf_main_fprintf_results(enkf_main , step2);
+    printf("\n");
   }
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
