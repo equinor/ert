@@ -1,5 +1,8 @@
 #ifndef __RMS_TAG_H__
 #define __RMS_TAG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -26,4 +29,7 @@ const char      * rms_tag_name_ref(const rms_tag_type * );
 rms_tag_type    * rms_tag_alloc_dimensions(int  , int , int );
 void              rms_tag_fwrite_dimensions(int , int , int  , FILE *);
 void              rms_tag_fwrite_parameter(const char *, const rms_tagkey_type *, FILE *);
+#ifdef __cplusplus
+}
+#endif
 #endif

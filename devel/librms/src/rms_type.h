@@ -1,5 +1,8 @@
 #ifndef __RMS_TYPE_H__
 #define __RMS_TYPE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -22,4 +25,7 @@ void          rms_type_free(void *);
 __rms_type  * rms_type_alloc(rms_type_enum , int );
 const void  * rms_type_copyc(const void * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

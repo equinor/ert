@@ -1,5 +1,8 @@
 #ifndef __RMS_FILE_H__
 #define __RMS_FILE_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -34,4 +37,7 @@ FILE               * rms_file_get_FILE(const rms_file_type * );
 void                 rms_file_add_dimensions(rms_file_type * , int , int , int , bool);
 bool                 rms_file_is_roff(FILE * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -1,5 +1,8 @@
 #ifndef __RMS_TAGKEY_H__
 #define __RMS_TAGKEY_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <hash.h>
 #include <stdio.h>
@@ -50,4 +53,7 @@ void rms_tagkey_clear(rms_tagkey_type *  );
 int  rms_tagkey_get_sizeof_ctype(const rms_tagkey_type * );
 void rms_tagkey_max_min(const rms_tagkey_type * , void *, void *);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
