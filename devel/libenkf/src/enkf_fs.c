@@ -268,7 +268,13 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     
 
 
-  fs->lockfile = util_alloc_full_path(lock_path , "ensemble_lock");
+  {
+    char * ens_path    = util_alloc_string_copy(root_path);
+    int    buffer_size = strlen(ens_path) + 1;
+    util_string_replace_inplace( &ens_path , &buffer_size , UTIL_PATH_SEP_STRING , "_" );
+    fs->lockfile = util_alloc_filename(lock_path , ens_path , "ensemble_lock");
+    free(ens_path);
+  }
   
   if (util_try_lockf(fs->lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
     fs->read_only = false;
