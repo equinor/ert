@@ -9,7 +9,7 @@
   GRUPTREE keyword from a schedule section.
 
   It provides functions which allows for easy
-  manipulating of, and access to, tree structure.
+  manipulating of, and access to, the tree structure.
 
   Since the gruptree may change during simulation,
   and the changes are usually only given in differences,
