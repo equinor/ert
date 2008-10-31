@@ -597,6 +597,10 @@ history_type * history_fread_alloc(FILE * stream)
 
 
 
+
+/**
+  Get the number of restart files the underlying schedule file would produce.
+*/
 int history_get_num_restarts(const history_type * history)
 {
   return list_get_size(history->nodes);
@@ -604,16 +608,70 @@ int history_get_num_restarts(const history_type * history)
 
 
 
-double history_get_well_var(const history_type * history, int restart_num, const char * well, const char * var, bool * default_used)
+/**
+  Return true if the string pointed by name is a well at the restart_nr.
+*/
+bool history_str_is_well_name(const history_type * history, int restart_nr, const char * name)
 {
-  history_node_type * node = history_iget_node_ref(history, restart_num);
+  history_node_type * node = history_iget_node_ref(history, restart_nr);
+  return hash_has_key(node->well_hash, name);
+}
+
+
+/**
+  Return true if the string pointed by name is a group at the restart_nr.
+*/
+bool history_str_is_group_name(const history_type * history, int restart_nr, const char * name)
+{
+  history_node_type * node = history_iget_node_ref(history, restart_nr);
+  return gruptree_has_grup(node->gruptree, name);
+}
+
+
+/**
+  This function takes a key in the same format as the summary.x program, e.g. GOPR:GROUPA, 
+  and tries to return the observed value for that key.
+*/
+double history_get_var_from_sum_key(const history_type * history, int restart_nr, const char * sum_key, bool * default_used)
+{
+  int argc;
+  char ** argv;
+  double val = 0.0;
+
+  util_split_string(sum_key, ":", &argc, &argv);
+
+  if(argc != 2)
+    util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, sum_key);
+
+  if(history_str_is_group_name(history, restart_nr, argv[1]))
+    val = history_get_group_var(history, restart_nr, argv[1], argv[0], default_used);
+  else if(history_str_is_well_name(history, restart_nr, argv[1]))
+    val = history_get_well_var(history, restart_nr, argv[1], argv[0], default_used);
+  else
+    *default_used = true;
+
+  util_free_stringlist(argv, argc);
+  return val;
+}
+
+
+/**
+  Get the observed value for a well var.
+*/
+double history_get_well_var(const history_type * history, int restart_nr, const char * well, const char * var, bool * default_used)
+{
+  history_node_type * node = history_iget_node_ref(history, restart_nr);
   return well_hash_get_var(node->well_hash, well, var, default_used);
 }
 
 
-double history_get_group_var(const history_type * history, int restart_num, const char * group, const char * var, bool * default_used)
+
+/**
+  Get the observed value for a group var.
+*/
+double history_get_group_var(const history_type * history, int restart_nr, const char * group, const char * var, bool * default_used)
 {
-  history_node_type * node = history_iget_node_ref(history, restart_num);
+  history_node_type * node = history_iget_node_ref(history, restart_nr);
 
   if(!gruptree_has_grup(node->gruptree, group))
   {
@@ -653,4 +711,42 @@ double history_get_group_var(const history_type * history, int restart_num, cons
   }
   util_free_stringlist(well_list, num_wells);
   return obs;
+}
+
+
+
+/**
+  This function returns a bool vectory of length num_restarts where each element is
+  true iff the history object has data for the summary key (e.g. WOPR:P4) at the
+  restart time corresponding to that element. If __num_restarts != NULL, it will
+  be set to the number of restarts.
+*/
+bool * history_get_time_mask_from_sum_key(const history_type * history, const char * sum_key, int * __num_restarts)
+{
+  int    num_restarts = history_get_num_restarts(history);
+  bool * time_mask    = util_malloc( num_restarts * sizeof * time_mask, __func__); 
+
+  int argc;
+  char ** argv;
+  util_split_string(sum_key, ":", &argc, &argv);
+  if(argc != 2)
+    util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, sum_key);
+
+  for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
+  {
+    double val;
+
+    if(history_str_is_group_name(history, restart_nr, argv[1]))
+      val = history_get_group_var(history, restart_nr, argv[1], argv[0], &time_mask[restart_nr]);
+    else if(history_str_is_well_name(history, restart_nr, argv[1]))
+      val = history_get_well_var(history, restart_nr, argv[1], argv[0], &time_mask[restart_nr]);
+    else
+      time_mask[restart_nr] = false;
+  }
+
+  util_free_stringlist(argv, argc);
+
+  if(__num_restarts != NULL)
+    *__num_restarts = num_restarts;
+  return time_mask;
 }

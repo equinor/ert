@@ -26,8 +26,12 @@ void           history_realloc_from_summary(history_type *, const ecl_sum_type *
 
 // Accessors.
 int    	       history_get_num_restarts(const history_type *);
+bool           history_str_is_well_name(const history_type *, int, const char *);
+bool           history_str_is_group_name(const history_type *, int, const char *);
+double         history_get_var_from_sum_key(const history_type *, int, const char *, bool *);
 double 	       history_get_well_var(const history_type * , int, const char *, const char *, bool *);
 double 	       history_get_group_var(const history_type *, int, const char *, const char *, bool *);
+bool         * history_get_time_mask_from_sum_key(const history_type *, const char *, int *);
 #ifdef __cplusplus
 }
 #endif
