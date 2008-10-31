@@ -296,6 +296,10 @@ static void config_item_node_set(config_item_node_type * node , int argc , const
 
 
 
+static char * config_item_node_alloc_joined_string(const config_item_node_type * node, const char * sep) {
+  return stringlist_alloc_joined_string(node->stringlist , sep);
+}
+
 
 static void config_item_node_free(config_item_node_type * node) {
   stringlist_free(node->stringlist);
@@ -304,79 +308,6 @@ static void config_item_node_free(config_item_node_type * node) {
 }
 
 
-//static char * __alloc_relocated(const config_item_node_type * node , const char * value) {
-//  char * file;
-//  
-//  if (util_is_abs_path(value))
-//    file = util_alloc_string_copy( value );
-//  else
-//    file = util_alloc_full_path(node->config_cwd , value);
-//  
-//  return file;
-//}
-
-
-//static char * config_item_node_validate( const config_item_node_type * node , const config_item_types * type_map) {
-//
-//  int i;
-//  char * error_message = NULL;
-//  for (i = 0; i < stringlist_get_size( node->stringlist ); i++) {
-//    const char * value = stringlist_iget(node->stringlist , i);
-//    switch (type_map[i]) {
-//    case(CONFIG_STRING): /* This never fails ... */
-//      break;
-//    case(CONFIG_EXECUTABLE):
-//      {
-//	/* Should also use config_cwd */
-//	char * new_exe    = __alloc_relocated(node , value);
-//	char * executable = util_alloc_PATH_executable( value );
-//	if (executable == NULL) 
-//	  error_message = util_alloc_sprintf("Could not locate executable:%s ", value);
-//	else 
-//	  stringlist_iset_owned_ref(node->stringlist , i , executable);
-//	free(new_exe);
-//      }
-//      break;
-//    case(CONFIG_INT):
-//      if (!util_sscanf_int( value , NULL ))
-//        error_message = util_alloc_sprintf("Failed to parse:%s as an integer.",value);
-//      break;
-//    case(CONFIG_FLOAT):
-//      if (!util_sscanf_double( value , NULL ))
-//        error_message = util_alloc_sprintf("Failed to parse:%s as a floating point number.", value);
-//      break;
-//    case(CONFIG_EXISTING_FILE):
-//      {
-//	char * file = __alloc_relocated(node , value);
-//	if (!util_file_exists(file))
-//	  error_message = util_alloc_sprintf("Can not find file %s in %s ",value , node->config_cwd);
-//	else
-//	  stringlist_iset_owned_ref(node->stringlist , i , file);
-//      }
-//      break;
-//    case(CONFIG_EXISTING_DIR):
-//      {
-//	char * dir = __alloc_relocated(node , value);
-//	if (!util_is_directory(value))
-//	  error_message = util_alloc_sprintf("Can not find directory: %s. ",value);
-//	else
-//	  stringlist_iset_owned_ref(node->stringlist , i , dir);
-//      }
-//      break;
-//    case(CONFIG_BOOLEAN):
-//      if (!util_sscanf_bool( value , NULL ))
-//        error_message = util_alloc_sprintf("Failed to parse:%s as a boolean.", value);
-//      break;
-//    case(CONFIG_BYTESIZE):
-//      if (!util_sscanf_bytesize( value , NULL))
-//        error_message = util_alloc_sprintf("Failed to parse:\"%s\" as number of bytes." , value);
-//      break;
-//    default:
-//      util_abort("%s: config_item_type:%d not recognized \n",__func__ , type_map[i]);
-//    }
-//  }
-//  return error_message;
-//}
 
 
 
@@ -459,15 +390,17 @@ static const stringlist_type * config_item_iget_stringlist_ref(const config_item
 }
 
 
+static char * config_item_ialloc_joined_string(const config_item_type * item , const char * sep , int occurence) {
+  config_item_node_type * node = config_item_iget_node(item , 0);  
+  return config_item_node_alloc_joined_string(node , sep);
+}
+
+
 static char * config_item_alloc_joined_string(const config_item_type * item , const char * sep) {
   if (item->append_arg) 
     util_abort("%s: this function can only be used on items added with append_arg == FALSE\n" , __func__);
-  {
-    config_item_node_type * node = config_item_iget_node(item , 0);  
-    return stringlist_alloc_joined_string(node->stringlist , sep);
-  }
+  return config_item_ialloc_joined_string(item , sep , 0);
 }
-
 
 
 static const stringlist_type * config_item_get_stringlist_ref(const config_item_type * item) {
@@ -1374,6 +1307,13 @@ char * config_alloc_joined_string(const config_type * config , const char * kw, 
   config_item_type * item = config_get_item(config , kw);
   return config_item_alloc_joined_string(item , sep);
 }
+
+char * config_indexed_alloc_joined_string(const config_type * config , const char * kw, const char * sep, int occurence) {
+  config_item_type * item = config_get_item(config , kw);
+  return config_item_ialloc_joined_string(item , sep , occurence);
+}
+
+
 
 
 /**

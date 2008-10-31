@@ -32,21 +32,12 @@ typedef struct config_item_node_struct config_item_node_type;
 
 
 char       ** 	  config_alloc_active_list(const config_type *, int *);
-/*
-  int           	  config_get_argc(const config_type *  , const char *);
-  const char ** 	  config_get_argv(const config_type *  , const char * , int *);
-  const char *  	  config_get(const config_type *  , const char *);
-  const char *  	  config_iget(const config_type *  , const char *, int);
-*/
 void          	  config_free(config_type *);
 config_type * 	  config_alloc( );
 char       ** 	  config_alloc_active_list(const config_type * , int * );
 void          	  config_parse(config_type * , const char * , const char * , const char * , bool , bool);
 bool          	  config_has_item(const config_type * config , const char * kw);
 void    	  config_set_arg(config_type * config , const char * , int , const char **);
-/*
-  stringlist_type * config_get_stringlist(const config_item_type * );
-*/
 
 /*****************************************************************/
 
@@ -59,16 +50,9 @@ void               config_add_alias(config_type * , const char * , const char * 
 void               config_install_message(config_type * , const char * , const char * );
 const char       * config_safe_get(const config_type * , const char *);
 char             * config_alloc_joined_string(const config_type * , const char * , const char * );
-/*
-const char       * config_iget_arg(const config_item_type * , int);
-int                config_item_get_argc(const config_item_type *);
-const char      ** config_item_get_argv(const config_item_type * , int * );
-*/
+char             * config_indexed_alloc_joined_string(const config_type *  , const char * , const char * , int );
 
-
-/*const char * config_item_iget_argv(const config_item_type * , int );*/
 bool 	     config_item_is_set(const config_item_type * );
-/*  int          config_item_get_argc(const config_item_type * );*/
 void         config_item_set_argc_minmax(config_item_type * , int  , int , const config_item_types * );
 void         config_item_set_common_selection_set(config_item_type * , int argc , const char ** argv);
 void         config_item_set_indexed_selection_set(config_item_type * item , int  , int  , const char ** );
