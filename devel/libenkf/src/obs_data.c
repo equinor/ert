@@ -389,21 +389,21 @@ void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_strid
 
 void obs_data_fprintf(const obs_data_type * obs_data , FILE * stream, const double * meanS , const double * stdS) {
   int iobs;
-  fprintf(stream , "----------------------------------------------------------------------|--------------------------------\n");
-  fprintf(stream , "                     Observed history                                 |         Simulated data         \n");  
-  fprintf(stream , "----------------------------------------------------------------------|--------------------------------\n");
+  fprintf(stream , "|----------------------------------------------------------------------|----------------------------------|\n");
+  fprintf(stream , "|                     Observed history                                 |          Simulated data          |\n");  
+  fprintf(stream , "|----------------------------------------------------------------------|----------------------------------|\n");
   for (iobs = 0; iobs < obs_data->total_size; iobs++) {
-    fprintf(stream , "%-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , obs_data->keyword[iobs] , obs_data->value[iobs] , obs_data->std[iobs]);
+    fprintf(stream , "| %-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , obs_data->keyword[iobs] , obs_data->value[iobs] , obs_data->std[iobs]);
     if (obs_data->obs_active[iobs])
       fprintf(stream , "   Active    |");
     else
       fprintf(stream , "   Inactive  |");
 
     if (meanS != NULL) 
-      fprintf(stream,"   %12.3f +/- %12.3f \n",meanS[iobs] , stdS[iobs]);
+      fprintf(stream,"   %12.3f +/- %12.3f |\n",meanS[iobs] , stdS[iobs]);
     else
-      fprintf(stream , "\n");
+      fprintf(stream , " .... |\n");
     
   }
-  fprintf(stream , "----------------------------------------------------------------------|--------------------------------\n");
+  fprintf(stream , "|----------------------------------------------------------------------|----------------------------------|\n");
 }
