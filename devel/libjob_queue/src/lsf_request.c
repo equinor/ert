@@ -59,8 +59,10 @@ lsf_request_type * lsf_request_alloc(const ext_joblist_type * joblist, const cha
 
 void lsf_request_reset(lsf_request_type * lsf_request) {
   lsf_request->request = util_safe_free( lsf_request->request );
-  if (lsf_request->rusage != NULL)      set_free(lsf_request->rusage);
+  if (lsf_request->rusage     != NULL)  set_free(lsf_request->rusage);
   if (lsf_request->select_set != NULL)  set_free(lsf_request->select_set);
+  lsf_request->rusage     = NULL;
+  lsf_request->select_set = NULL;
 }
 
 
@@ -175,7 +177,7 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
 	util_abort("%s: sorry:\"%s\" is invalid - only *ONE* rusage[] statement \n",__func__ , __resource_request); 
 
     {
-      char * end_ptr;
+      char * end_ptr    = NULL; /* Compiler shut up. */
       char * start_ptr;
     
       if (rusage_ptr != NULL) {
@@ -207,8 +209,9 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
       
       if (select_ptr != NULL) {
 	/* 
-	   Explicitly clearing what we have used/read from the string in
-	   an attempt of improving the chance of detecting errors.
+	   Explicitly clearing what we have used/read from the string
+	   until now.  An attempt of improving the chance of detecting
+	   errors.
 	*/
 	if (rusage_ptr != NULL) {
 	  char * ptr = rusage_ptr;
