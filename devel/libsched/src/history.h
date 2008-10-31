@@ -31,7 +31,7 @@ bool           history_str_is_group_name(const history_type *, int, const char *
 double         history_get_var_from_sum_key(const history_type *, int, const char *, bool *);
 double 	       history_get_well_var(const history_type * , int, const char *, const char *, bool *);
 double 	       history_get_group_var(const history_type *, int, const char *, const char *, bool *);
-bool         * history_get_time_mask_from_sum_key(const history_type *, const char *, int *);
+void           history_alloc_time_series_from_summary_key(const history_type *, const char *, int *, double *, bool *);
 #ifdef __cplusplus
 }
 #endif

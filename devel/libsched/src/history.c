@@ -632,16 +632,16 @@ bool history_str_is_group_name(const history_type * history, int restart_nr, con
   This function takes a key in the same format as the summary.x program, e.g. GOPR:GROUPA, 
   and tries to return the observed value for that key.
 */
-double history_get_var_from_sum_key(const history_type * history, int restart_nr, const char * sum_key, bool * default_used)
+double history_get_var_from_summary_key(const history_type * history, int restart_nr, const char * summary_key, bool * default_used)
 {
   int argc;
   char ** argv;
   double val = 0.0;
 
-  util_split_string(sum_key, ":", &argc, &argv);
+  util_split_string(summary_key, ":", &argc, &argv);
 
   if(argc != 2)
-    util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, sum_key);
+    util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, summary_key);
 
   if(history_str_is_group_name(history, restart_nr, argv[1]))
     val = history_get_group_var(history, restart_nr, argv[1], argv[0], default_used);
@@ -716,37 +716,40 @@ double history_get_group_var(const history_type * history, int restart_nr, const
 
 
 /**
-  This function returns a bool vectory of length num_restarts where each element is
-  true iff the history object has data for the summary key (e.g. WOPR:P4) at the
-  restart time corresponding to that element. If __num_restarts != NULL, it will
-  be set to the number of restarts.
+  This function alloc's two vectors of length num_restarts from a summary key.
+  In the vector value, the observed values or default values for each restart
+  is stored. If the default value is used, the corresponding element in the
+  vector default_used will be true.
 */
-bool * history_get_time_mask_from_sum_key(const history_type * history, const char * sum_key, int * __num_restarts)
+void   history_alloc_time_series_from_summary_key
+(
+                    const history_type * history,
+                    const char         * summary_key,
+                    int                * num_restarts,
+                    double             * value,
+                    bool               * default_used
+)
 {
-  int    num_restarts = history_get_num_restarts(history);
-  bool * time_mask    = util_malloc( num_restarts * sizeof * time_mask, __func__); 
+  *num_restarts = history_get_num_restarts(history);
+
+  value        = util_malloc(*num_restarts * sizeof * value,        __func__);
+  default_used = util_malloc(*num_restarts * sizeof * default_used, __func__);
 
   int argc;
   char ** argv;
-  util_split_string(sum_key, ":", &argc, &argv);
+  util_split_string(summary_key, ":", &argc, &argv);
   if(argc != 2)
-    util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, sum_key);
+    util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, summary_key);
 
-  for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
+  for(int restart_nr = 0; restart_nr < *num_restarts; restart_nr++)
   {
-    double val;
-
     if(history_str_is_group_name(history, restart_nr, argv[1]))
-      val = history_get_group_var(history, restart_nr, argv[1], argv[0], &time_mask[restart_nr]);
+      value[restart_nr] = history_get_group_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
     else if(history_str_is_well_name(history, restart_nr, argv[1]))
-      val = history_get_well_var(history, restart_nr, argv[1], argv[0], &time_mask[restart_nr]);
+      value[restart_nr] = history_get_well_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
     else
-      time_mask[restart_nr] = false;
+      default_used[restart_nr] = true;
   }
 
   util_free_stringlist(argv, argc);
-
-  if(__num_restarts != NULL)
-    *__num_restarts = num_restarts;
-  return time_mask;
 }
