@@ -671,7 +671,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "DATA_KW" , false , true);
     config_item_set_argc_minmax(item , 2 , 2 , NULL);
 
-    item = config_add_item(config , "KEEP_RUNPATH" , false , true);
+    item = config_add_item(config , "KEEP_RUNPATH" , false , false);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
     item = config_add_item(config , "ADD_STATIC_KW" , false , true);
@@ -739,84 +739,18 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
 
     /*****************************************************************/
-    /* KEEP_RUNPATH - this parser is *EXTREMELY* primitive */
     {
       const int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
-      int i;
       bool * keep_runpath = util_malloc( sizeof * keep_runpath * ens_size , __func__);
-      
+
+      int i;
       for (i = 0; i < ens_size; i++) 
 	keep_runpath[i] = false;
 
-      for (i=0; i < config_get_occurences(config , "KEEP_RUNPATH"); i++) {
-	const char * keep_runpath_string = config_indexed_alloc_joined_string(config , "KEEP_RUNPATH" , "" , i);
-	int iens1,iens2;
-	char  * start_ptr = (char *) keep_runpath_string;
-	char  * end_ptr;
-	while (start_ptr != NULL) {
-	  iens1 = strtol(start_ptr , &end_ptr , 10);
-	  if (end_ptr == start_ptr) 
-	    util_abort("%s: failed to parse integer from: %s \n",__func__ , start_ptr);
-	  
-	  /* OK - we have found the first integer, now there are three possibilities:
-
-	       1. The string contains nothing more (except) possibly whitespace.
-	       2. The next characters are " , " - with more or less whitespace.
-	       3. The next characters are " - " - with more or less whitespace.
-
-            Otherwise it is a an invalid string.
-	  */
-	  /*
-	    Starting with skipping whitespace.
-	  */
-	  keep_runpath[iens1] = true;
-	  start_ptr = end_ptr;
-	  while (start_ptr[0] != '\0' && start_ptr[0] == ' ')
-	    start_ptr++;
-
-	  if (start_ptr[0] == '\0') /* We have found the end */
-	    start_ptr = NULL;
-	  else {
-	    /* OK - now we can point at "," or "-" - else malformed string. */
-	    if (start_ptr[0] == ',' || start_ptr[0] == '-') {
-	      if (start_ptr[0] == '-') {
-		start_ptr++; /* Skipping the "-" */
-		while (start_ptr[0] != '\0' && start_ptr[0] == ' ')
-		  start_ptr++;
-		if (start_ptr[0] == '\0')
-		  util_abort("%s[0]: malformed string: %s \n",__func__ , start_ptr);
-		iens2 = strtol(start_ptr , &end_ptr , 10);
-
-		if (end_ptr == start_ptr) 
-		  util_abort("%s[1]: failed to parse integer from: %s \n",__func__ , start_ptr);
-		
-		if (iens2 < iens1)
-		  util_abort("%s[2]: invalid interval - must have increasing range \n",__func__);
-		
-		start_ptr = end_ptr;
-		{ 
-		  int iens;
-		  for (iens = iens1; iens <= iens2; iens++)
-		    keep_runpath[iens] = true;
-		}
-		
-		while (start_ptr[0] != '\0' && start_ptr[0] == ' ')
-		  start_ptr++;
-
-		if (start_ptr[0] == '\0')
-		  start_ptr = NULL; /* We are done */
-		else {
-		  if (start_ptr[0] == ',')
-		    start_ptr++;
-		  else
-		    util_abort("%s[3]: malformed string: %s \n",__func__ , start_ptr);
-		}
-	      } else 
-		start_ptr++;  /* Skipping "," */
-	    } else 
-	      util_abort("%s[4]: malformed string: %s \n",__func__ , start_ptr);
-	  }
-	}
+      if (config_has_set_item(config , "KEEP_RUNPATH")) {
+	char * keep_runpath_string = config_indexed_alloc_joined_string(config , "KEEP_RUNPATH" , "" , i);
+	util_sscanf_active_range(keep_runpath_string , ens_size - 1 , keep_runpath);
+	free( keep_runpath_string );
       }
     
       {
@@ -833,8 +767,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       
       /*****************************************************************/
       /* Adding ensemble members */
+      
       {
-	const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
 	hash_type * data_kw = config_alloc_hash(config , "DATA_KW");
 	int iens , keys , ik;
 	char **keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &keys);
@@ -855,7 +789,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	  
 	}
 	msg_free(msg , true);
-      
+	
 	msg  = msg_alloc("Adding key: ");
 	msg_show(msg);
 	for (ik = 0; ik < keys; ik++) {
