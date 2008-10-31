@@ -11,8 +11,9 @@
 #include <rms_util.h>
 #include <path_fmt.h>
 #include <math.h>
+/*
 #include <field_active.h>
-
+*/
 
 #define FIELD_CONFIG_ID 78269
 
@@ -503,22 +504,23 @@ void field_config_set_truncation_from_strings(field_config_type * config , const
       util_abort("%s: truncation string:%s is not recognized \n",__func__ , _truncation_name);
     
     {
-      const char * value_ptr = values[0];
-      double min_value = -1;
-      double max_value = -1;
+      int    value_index = 0;
+      double min_value 	 = -1;
+      double max_value 	 = -1;
 
       if (truncation & truncate_min) {
-	if (!util_sscanf_double(value_ptr , &min_value))
-	  util_abort("%s: failed to parse:%s as double \n",__func__ , value_ptr);
+	if (!util_sscanf_double(values[value_index] , &min_value))
+	  util_abort("%s: failed to parse:%s as double \n",__func__ , values[value_index]);
+	
 	if (truncation == truncate_minmax)
-	  value_ptr++;
+	  value_index++;
       }
-
+      
       if (truncation & truncate_max) {
-	if (! util_sscanf_double(value_ptr , &max_value))
-	  util_abort("%s: failed to parse:%s as double \n",__func__ , value_ptr);
+	if (! util_sscanf_double(values[value_index] , &max_value))
+	  util_abort("%s: failed to parse:%s as double \n",__func__ , values[value_index]);
       }
-
+      
       field_config_set_truncation(config , truncation , min_value , max_value);
     }
     free( truncation_name );
@@ -830,11 +832,19 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 
 
 
+
+//void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
+//  /*field_active_type * active = field_active_safe_cast( active_config );*/
+//  /*
+//   */
+//}
+
 void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
-  field_active_type * active = field_active_safe_cast( active_config );
   /*
+    field_active_type * active = field_active_safe_cast( active_config );
    */
 }
+
 
 
 /*****************************************************************/
