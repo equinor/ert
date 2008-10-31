@@ -18,6 +18,12 @@ char * ecl_kw_name;       \
 enkf_var_type var_type;
 
 
+/*****************************************************************/
+#define GET_ACTIVE_SIZE(prefix)              int  prefix ## _config_get_active_size(const prefix ## _config_type * config) { return config->active_size; } 
+#define GET_ACTIVE_SIZE_HEADER(prefix)       int  prefix ## _config_get_active_size(const prefix ## _config_type * );
+
+#define GET_ACTIVE_LIST(prefix)        const int *prefix ## _config_get_active_list(const prefix ## _config_type * config) { return config->active_list; } 
+#define GET_ACTIVE_LIST_HEADER(prefix) const int *prefix ## _config_get_active_list(const prefix ## _config_type * );
 
 
 /*****************************************************************/

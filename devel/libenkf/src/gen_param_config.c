@@ -15,7 +15,8 @@
 struct gen_param_config_struct {
   CONFIG_STD_FIELDS;
   ecl_type_enum    ecl_type;          	  /* The underlying type (float | double) of the data in the corresponding gen_param instances. */
-  bool    	 * iactive;           	  /* MAP of active / inactive observations EnKF wise - for all active it can(should) be NULL.*/
+  int              active_size;
+  int            * active_list; 
   char           * template_buffer;   	  /* Buffer containing the content of the template - read and internalized at boot time. */
   int              template_data_offset;  /* The offset into to the template buffer before the data should come. */
   int              template_data_skip;    /* The length of data identifier in the template.*/ 
@@ -43,7 +44,7 @@ static gen_param_config_type * gen_param_config_alloc__( ecl_type_enum ecl_type 
   config->data_size  	    = 0;
   config->var_type   	    = var_type;
   config->ecl_type          = ecl_type;
-  config->iactive           = NULL;
+  config->active_list       = NULL;
   if (template_ecl_file != NULL) {
     char *data_ptr;
     config->template_buffer = util_fread_alloc_file_content( template_ecl_file , NULL , &config->template_buffer_size);
@@ -71,7 +72,7 @@ gen_param_config_type * gen_param_config_alloc(const char * init_file_fmt , cons
 
 
 void gen_param_config_free(gen_param_config_type * config) {
-  util_safe_free(config->iactive);
+  util_safe_free(config->active_list);
   util_safe_free(config->template_buffer);
   path_fmt_free(config->init_file_fmt);
   free(config);
@@ -95,13 +96,13 @@ void gen_param_config_assert_size(gen_param_config_type * config , int size, con
     else 
       if (config->data_size != size)
 	util_abort("%s: Size mismatch when loading from:%s got %d elements - expected:%d \n",__func__ , init_file , size , config->data_size);
+    config->active_size = size; /* All active ... */
   }
   pthread_mutex_unlock( &config->update_lock );
 }
 
 
 
-const bool * gen_param_config_get_iactive(const gen_param_config_type * config) { return config->iactive; }
 
 char * gen_param_config_alloc_initfile(const gen_param_config_type * config , int iens) {
   char * initfile = path_fmt_alloc_path(config->init_file_fmt , false , iens);
@@ -161,6 +162,8 @@ void gen_param_config_ecl_write(const gen_param_config_type * config , const cha
   fclose(stream);
 }
 
+/*****************************************************************/
 
 VOID_FREE(gen_param_config)
-     
+GET_ACTIVE_SIZE(gen_param)
+GET_ACTIVE_LIST(gen_param)

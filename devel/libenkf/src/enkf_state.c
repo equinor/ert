@@ -832,6 +832,7 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask , int repor
 }
 
 
+
 void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
@@ -1402,8 +1403,8 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
       enkf_update_info_type * info = info_list[0];
 
       /* Update section */
-      enkf_ensemble_mulX(serial_vector , ens_size , info->member_serial_size[0] , X , ens_size , 1); 
 
+      enkf_ensemble_mulX(serial_vector , ens_size , info->member_serial_size[0] , X , ens_size , 1); 
 
       /* deserialize section */
       for (iens = 0; iens < ens_size; iens++) {

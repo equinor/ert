@@ -13,6 +13,9 @@ void             	gen_param_config_free(gen_param_config_type * );
 void             	gen_param_config_assert_size(gen_param_config_type *  , int , const char *);
 const bool     * 	gen_param_config_get_iactive(const gen_param_config_type * );
 void                    gen_param_config_ecl_write(const gen_param_config_type *  , const char * , char * );
+
+GET_ACTIVE_SIZE_HEADER(gen_param)
+GET_ACTIVE_LIST_HEADER(gen_param)
 VOID_FREE_HEADER(gen_param_config)
 
 #endif

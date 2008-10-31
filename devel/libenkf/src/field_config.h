@@ -101,7 +101,6 @@ void                    field_config_set_ecl_type(field_config_type *  , ecl_typ
 void                    field_config_set_eclfile(field_config_type * , const char * );
 const bool            * field_config_get_iactive(const field_config_type * );
 int                     field_config_get_byte_size(const field_config_type * );
-int                     field_config_get_active_size(const field_config_type * );
 int                     field_config_get_sizeof_ctype(const field_config_type * );
 int                     field_config_active_index(const field_config_type * , int , int , int );
 void                    field_config_get_ijk(const field_config_type * , int , int * , int * , int *);
@@ -132,6 +131,8 @@ truncation_type 	field_config_get_truncation(const field_config_type * , double 
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
 VOID_CONFIG_ACTIVATE_HEADER(field);
+GET_ACTIVE_SIZE_HEADER(field);
+GET_ACTIVE_LIST_HEADER(field);
 #ifdef __cplusplus
 }
 #endif

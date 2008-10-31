@@ -304,13 +304,10 @@ void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * inno
   for (iobs = 0; iobs < nrobs; iobs++) {
     if (ens_std[iobs] < std_cutoff)
       /*
-	De activated because the ensemble has to little variation for
+	De activated because the ensemble has to small variation for
 	this particular measurement.
       */
-      {
-	printf("stdS : %g \n",ens_std[iobs]);	
-	obs_data_deactivate_obs(obs_data , iobs , "No ensemble variation");
-      }
+      obs_data_deactivate_obs(obs_data , iobs , "No ensemble variation");
     else {
       if (fabs( innov[iobs] ) > alpha * (ens_std[iobs] + obs_data->std[iobs])) 
 	/* OK - this is an outlier ... */

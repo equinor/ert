@@ -102,20 +102,23 @@ void well_free(well_type *well) {
 
 
 void well_deserialize(const well_type * well , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  const well_config_type *config      = well->config;
-  const int                data_size  = well_config_get_data_size(config);
-  
-  enkf_deserialize(well->data , data_size , ecl_double_type , NULL , serial_state , serial_vector);
-}
+  const well_config_type *config       = well->config;
+  const int                data_size   = well_config_get_data_size(config);
+  const int                active_size = well_config_get_active_size(config);
+  const int              * active_list = well_config_get_active_list(config);
 
+  enkf_deserialize(well->data , data_size , ecl_double_type , active_size , active_list , serial_state , serial_vector);
+}
 
 
 
 int well_serialize(const well_type *well , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const well_config_type *config      = well->config;
-  const int                data_size  = well_config_get_data_size(config);
+  const int                data_size   = well_config_get_data_size(config);
+  const int                active_size = well_config_get_active_size(config);
+  const int              * active_list = well_config_get_active_list(config);
   
-  return enkf_serialize(well->data , data_size , ecl_double_type , NULL , serial_state , serial_offset , serial_vector);
+  return enkf_serialize(well->data , data_size , ecl_double_type , active_size , active_list , serial_state , serial_offset , serial_vector);
 }
 
 
@@ -125,7 +128,7 @@ double well_get(const well_type * well, const char * var) {
     const well_config_type *config       = well->config;
     int index                            = well_config_get_var_index(config , var);
     if (index < 0) {
-      fprintf(stderr,"%s: well:%s does not have variable:%s - aborting \n",__func__ , well_config_get_well_name_ref(config) , var);
+      fprintf(stderr,"%s: well:%s does not have variable:%s - aborting \n",__func__ , well_config_get_name(config) , var);
       abort();
     }
     return well->data[index];
@@ -139,7 +142,7 @@ void well_ecl_load(well_type * well , const char * ecl_file , const ecl_sum_type
   if (ecl_sum != NULL) {
     const well_config_type *config       = well->config;
     const char ** var_list               = well_config_get_var_list_ref(config);
-    const char *  well_name              = well_config_get_well_name_ref(config);
+    const char *  well_name              = well_config_get_name(config);
     int ivar;
     
     for (ivar = 0; ivar < well_config_get_data_size(config); ivar++) 

@@ -661,15 +661,6 @@ void field_export(const field_type * field, const char * file , field_file_forma
 void field_ecl_write(const field_type * __field , const char * file , fortio_type * restart_fortio) {
   field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
   field_output_transform(field);
-  /*
-    {
-    float * data = (float * ) field->data;
-    printf("%s: ",__func__);
-    for (int i = 0; i < 10; i++)
-      printf("%g ",data[i]);
-    printf("\n");
-  }
-  */
   {
     field_file_format_type export_format = field_config_get_export_format(field->config);
 
@@ -706,41 +697,27 @@ void field_free(field_type *field) {
 }
 
 
-void field_truncate(field_type * field) {
-  const field_config_type *config     = field->config;
-  ecl_type_enum ecl_type              = field_config_get_ecl_type(config);
-  const int                data_size  = field_config_get_data_size(config);
-  if (ecl_type == ecl_float_type) {
-    float min_value = 0.00001;
-    float max_value = 199999999.0;
-    
-    enkf_util_truncate(field->data , data_size , ecl_type , &min_value , &max_value);
-  }
-}
-
-
 
 void field_deserialize(field_type * field , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
+  const int                active_size = field_config_get_active_size(config);
+  const int               *active_list = field_config_get_active_list(config); 
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
-  const bool              *iactive     = field_config_get_iactive(config);
   
-  enkf_deserialize(field->data , data_size , ecl_type , iactive , serial_state , serial_vector);
-  field_truncate(field);
 
+  enkf_deserialize(field->data , data_size , ecl_type , active_size , active_list , serial_state , serial_vector);
 }
 
 
 int field_serialize(const field_type *field , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  const field_config_type *config     = field->config;
-  ecl_type_enum ecl_type              = field_config_get_ecl_type(config);
-  const int                data_size  = field_config_get_data_size(config);
-  const bool              *iactive    = field_config_get_iactive(config);
-  int elements_added;
-
+  const field_config_type *config      = field->config;
+  const int                data_size   = field_config_get_data_size(config);
+  const int                active_size = field_config_get_active_size(config);
+  const int               *active_list = field_config_get_active_list(config); 
+  ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   
-  elements_added = enkf_serialize(field->data , data_size , ecl_type , iactive , serial_state , serial_offset , serial_vector);
+  int elements_added = enkf_serialize(field->data , data_size , ecl_type , active_size , active_list , serial_state , serial_offset , serial_vector);
   return elements_added;
 }
 

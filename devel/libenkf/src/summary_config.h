@@ -5,11 +5,6 @@
 #include <enkf_macros.h>
 #include <ecl_sum.h>
 
-struct summary_config_struct {
-  CONFIG_STD_FIELDS;
-  char ** var_list;
-};
-
 
 
 typedef struct summary_config_struct summary_config_type;
@@ -27,6 +22,8 @@ bool                   summary_config_has_var(const summary_config_type * , cons
 void                   summary_config_summarize(const summary_config_type * );
 
 
+GET_ACTIVE_SIZE_HEADER(summary);
+GET_ACTIVE_LIST_HEADER(summary);
 GET_DATA_SIZE_HEADER(summary);
 VOID_CONFIG_FREE_HEADER(summary);
 #endif

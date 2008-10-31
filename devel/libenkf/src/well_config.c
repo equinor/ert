@@ -11,6 +11,16 @@
 
 /*****************************************************************/
 
+struct well_config_struct {
+  CONFIG_STD_FIELDS;
+  char  * well_name;
+  char ** var_list;
+  int     active_size;
+  int    *active_list;
+};
+
+
+
 
 int well_config_get_var_index(const well_config_type * config , const char * var) {
   int index , i;
@@ -43,10 +53,9 @@ void well_config_add_var(well_config_type * config , const char * var) {
     fprintf(stderr,"%s: well variable:%s already added to well:%s - nothing done \n",__func__ , var , config->well_name);
     return;
   }
-  /*
-    All variables are (currently) active.
-  */
+
   if (ecl_well_var_valid(var , NULL)) {
+    config->active_size++;
     config->data_size++;
     config->var_list = realloc(config->var_list , config->data_size * sizeof * config->var_list);
     config->var_list[config->data_size - 1] = util_alloc_string_copy(var);
@@ -64,7 +73,9 @@ static well_config_type * __well_config_alloc(const char * well_name) {
 
   config->well_name   	  = util_alloc_string_copy(well_name);
   config->data_size   	  = 0;
+  config->active_size     = 0;
   config->var_list    	  = NULL;
+  config->active_list     = NULL;
   return config;
 }
 
@@ -111,17 +122,19 @@ well_config_type * well_config_fscanf_alloc(const char * well_name , const char 
 
 
 void well_config_free(well_config_type * config) {
-  int i;
+  util_safe_free(config->active_list);
   free(config->well_name);
-  for (i = 0; i < config->data_size; i++)
+
+  for (int i = 0; i < config->data_size; i++)
     free(config->var_list[i]);
+
   free(config->var_list);
   free(config);
 }
 
 
 
-const char * well_config_get_well_name_ref(const well_config_type * config) {
+const char * well_config_get_name(const well_config_type * config) {
   return config->well_name;
 }
 
@@ -139,5 +152,7 @@ void well_config_summarize(const well_config_type * config) {
 /*****************************************************************/
 GET_DATA_SIZE(well)
 VOID_CONFIG_FREE(well)
+GET_ACTIVE_SIZE(well);
+GET_ACTIVE_LIST(well);
 
 

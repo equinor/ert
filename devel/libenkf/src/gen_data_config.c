@@ -44,7 +44,8 @@ struct gen_data_config_struct {
      variables below here are support variables for this
      functionality.
   */
-  bool            * iactive;         /* A map of active / inactive cells in the observation vector (for this report step). */
+  int               active_size;
+  int              *active_list;
   int               __report_step;   /* The current active report_step. */
   int               __report_index; 
   int               __obs_size;      /* Storing the size of (currently active) observation, and comparing with gen_data measurements MUST agree. */
@@ -83,7 +84,7 @@ static gen_data_config_type * gen_data_config_alloc_empty( enkf_var_type var_typ
   config->ecl_file_list  = NULL;
   config->obs_file_list  = NULL;
   config->obs_active     = NULL;    
-  config->iactive        = NULL;
+  config->active_list    = NULL;
   config->__file_tag     = NULL;
   config->__report_step  = -1;
   pthread_mutex_init( &config->update_lock , NULL );
@@ -105,7 +106,7 @@ void gen_data_config_free(gen_data_config_type * config) {
   util_free_stringlist(config->ecl_file_list , config->num_active);
   util_free_stringlist(config->obs_file_list , config->num_active);
   util_safe_free(config->obs_active);
-  util_safe_free(config->iactive);
+  util_safe_free(config->active_list);
   free(config);
 }
 
@@ -126,20 +127,27 @@ void gen_data_config_free(gen_data_config_type * config) {
 
 void gen_data_config_fload_iactive(gen_data_config_type * config ,  FILE * stream , const char * obs_file ,gen_data_file_type  file_type, int size) {
   int i;
-  int * iactive_int = util_malloc(size * sizeof * iactive_int, __func__);
+  int active_size = 0;
+  int * active_list = util_malloc(size * sizeof * active_list , __func__);
+  int * iactive_int = util_malloc(size * sizeof * iactive_int , __func__);
   gen_common_fload_data( stream , obs_file , file_type , ecl_int_type , size , iactive_int );
   
-  config->iactive = util_realloc(config->iactive , size * sizeof * config->iactive , __func__);
   for (i = 0; i < size; i++)
-    if (iactive_int[i] == 0)
-      config->iactive[i] = false;
-    else if (iactive_int[i] == 1)
-      config->iactive[i] = true;
-    else {
-      fprintf(stderr,"Observation file:%s \n",obs_file);
-      util_abort("%s: the active map in the observation file must have ONLY 0:not active and 1:active. %d invalid \n",__func__, iactive_int[i]);
+    if (iactive_int[i] == 1) {
+      active_list[active_size] = i;
+      active_size++;
+    } else {
+      if (iactive_int[i] != 0) {
+	fprintf(stderr,"Observation file:%s \n",obs_file);
+	util_abort("%s: the active map in the observation file must have ONLY 0:not active and 1:active. %d invalid \n",__func__, iactive_int[i]);
+      }
     }
-    free(iactive_int);
+
+  free(iactive_int);
+  util_safe_free(config->active_list);
+  config->active_list = util_alloc_copy(active_list , active_size * sizeof * active_list , __func__);
+  free(active_list);
+  config->active_size = active_size;
 }
 
 
@@ -196,11 +204,12 @@ void gen_data_config_deactivate_metadata(gen_data_config_type * config) {
   pthread_mutex_lock( &config->update_lock );
   {
     if (config->__report_index >= 0) {
-      config->iactive    = util_safe_free(config->iactive);
-      config->__file_tag = util_safe_free(config->__file_tag); 
+      config->active_list    = util_safe_free(config->active_list);
+      config->__file_tag     = util_safe_free(config->__file_tag); 
       config->__report_index = -1;
       config->__report_step  = -1;
       config->data_size      =  0;
+      config->active_size    =  0;
       config->__obs_size     =  -1; /* Invalid */
     }
   }
@@ -246,8 +255,6 @@ static void gen_data_config_add_active(gen_data_config_type * gen_config , const
 }
 
 
-
-const bool * gen_data_config_get_iactive(const gen_data_config_type * config) { return config->iactive; }
 
 
 /*
@@ -383,4 +390,8 @@ gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
 }
 
 
+/*****************************************************************/
+
 VOID_FREE(gen_data_config)
+GET_ACTIVE_SIZE(gen_data)
+GET_ACTIVE_LIST(gen_data)

@@ -77,11 +77,10 @@
     3. At enkf_state level it is not really consequent - in some cases
        the enkf_state object takes a scalar copy (i.e. keep_runpath),
        and in other cases only a pointer down to the underlying
-       enkf_main object is taken.
-       In the former case it is no way to change global behaviour by
-       modifying the enkf_main objects. 
+       enkf_main object is taken. In the former case it is no way to
+       change global behaviour by modifying the enkf_main objects.
        
-    4. In the enkf_state object the fields of the member_config,
+       In the enkf_state object the fields of the member_config,
        ecl_config, site_config and ensemble_config objects are mixed
        and matched into other small holding objects defined in
        enkf_state.c.
@@ -91,7 +90,7 @@
 #define ENKF_MAIN_ID 8301
 
 struct enkf_main_struct {
-  int                    __id;             /* Used for type-checking run-time casts. */
+  int                    __type_id;        /* Used for type-checking run-time casts. */
   ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/ 
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
@@ -99,7 +98,7 @@ struct enkf_main_struct {
   analysis_config_type * analysis_config;
   enkf_obs_type        * obs;
   obs_data_type        * obs_data;      /* Should ideally contain the hist object. */
-  meas_matrix_type     * meas_matrix;
+  meas_matrix_type     * meas_matrix;   /* Should have both forecast and analyzed measurements ... */
   enkf_state_type     ** ensemble;
 }; 
 
@@ -111,13 +110,15 @@ struct enkf_main_struct {
 
 
 
-
-enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {
-  enkf_main_type * enkf_main = (enkf_main_type *) __enkf_main;
-  if (enkf_main->__id != ENKF_MAIN_ID)
-    util_abort("%s: run_time cast failed - aborting \n",__func__);
-  return enkf_main;
-}
+SAFE_CAST(enkf_main , ENKF_MAIN_ID)
+     /*
+       enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {
+       enkf_main_type * enkf_main = (enkf_main_type *) __enkf_main;
+       if (enkf_main->__type_id != ENKF_MAIN_ID)
+       util_abort("%s: run_time cast failed - aborting \n",__func__);
+       return enkf_main;
+       }
+     */
 
 
 const ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
@@ -231,9 +232,11 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
   thread_pool_free( tp );
 
   for (icpu = 0; icpu < cpu_threads; icpu++) 
-    void_arg_free( void_arg_list[icpu]);
+    void_arg_free( void_arg_list[icpu] );
   free(void_arg_list);
 }
+
+
 
 
 
@@ -426,12 +429,10 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 
   if (enkf_update) {
     double *X;
-    printf("Beregner X matrise ..... "); fflush(stdout);
     enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
     meas_matrix_reset(enkf_main->meas_matrix);
     enkf_main_measure(enkf_main);
     X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
-    printf("\n");
     if (X != NULL) {
       /* 
          The number of doubles we ask for, to get the number of bytes
@@ -442,7 +443,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
       size_t double_size = 1024*1024*256; /* 2GB */
       
       /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
-      printf("Oppdaterer: .... "); fflush(stdout);
+      printf("Updating: ...... "); fflush(stdout);
       serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
       enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
       serial_vector_free(serial_vector);
@@ -452,7 +453,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   }
     
   if (enkf_update) {
-    printf("Lagrer .... "); fflush(stdout);
+    printf("Saving: ........ "); fflush(stdout);
     enkf_main_fwrite_ensemble(enkf_main , dynamic + parameter , step2 , analyzed);
     enkf_main_fprintf_results(enkf_main , step2);
     printf("\n");
@@ -541,8 +542,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   
   if (site_config == NULL) 
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
-  enkf_main->__id            = ENKF_MAIN_ID;
-{
+  enkf_main->__type_id  = ENKF_MAIN_ID;
+  {
     char * path;
     char * base;
     char * ext;
@@ -748,42 +749,74 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	keep_runpath[i] = false;
 
       for (i=0; i < config_get_occurences(config , "KEEP_RUNPATH"); i++) {
-	const stringlist_type * _tokens = config_iget_stringlist_ref(config , "KEEP_RUNPATH" , i);
-	const char ** token_list = stringlist_get_argv(_tokens);
-	int           tokens     = stringlist_get_size(_tokens);
-	
-	int token_index   = 0;
-	int prev_iens     = -1;
-	bool range_active = false;
-	do {
-	if (token_list[token_index][0] == ',')
-	  token_index++;
-	else {
-	  if (token_list[token_index][0] == '-') {
-	    if (prev_iens == -1) 
-	      util_abort("%s: something rotten - lonesome dash \n",__func__);
-	    
-	    range_active = true;
-	  } else {
-	    int iens,iens1,iens2;
-	    if (util_sscanf_int(token_list[token_index] , &iens2)) {
-	      if (range_active)
-		iens1 = prev_iens;
-	      else {
-		iens1     = iens2;
-		prev_iens = iens2;
-	      }
-	      for (iens = iens1; iens <= iens2; iens++)
-		if (iens2 < ens_size) 
-		  keep_runpath[iens] = true;
-	      
-	      range_active = false;  
+	const char * keep_runpath_string = config_indexed_alloc_joined_string(config , "KEEP_RUNPATH" , "" , i);
+	int iens1,iens2;
+	char  * start_ptr = (char *) keep_runpath_string;
+	char  * end_ptr;
+	while (start_ptr != NULL) {
+	  iens1 = strtol(start_ptr , &end_ptr , 10);
+	  if (end_ptr == start_ptr) 
+	    util_abort("%s: failed to parse integer from: %s \n",__func__ , start_ptr);
+	  
+	  /* OK - we have found the first integer, now there are three possibilities:
+
+	       1. The string contains nothing more (except) possibly whitespace.
+	       2. The next characters are " , " - with more or less whitespace.
+	       3. The next characters are " - " - with more or less whitespace.
+
+            Otherwise it is a an invalid string.
+	  */
+	  /*
+	    Starting with skipping whitespace.
+	  */
+	  keep_runpath[iens1] = true;
+	  start_ptr = end_ptr;
+	  while (start_ptr[0] != '\0' && start_ptr[0] == ' ')
+	    start_ptr++;
+
+	  if (start_ptr[0] == '\0') /* We have found the end */
+	    start_ptr = NULL;
+	  else {
+	    /* OK - now we can point at "," or "-" - else malformed string. */
+	    if (start_ptr[0] == ',' || start_ptr[0] == '-') {
+	      if (start_ptr[0] == '-') {
+		start_ptr++; /* Skipping the "-" */
+		while (start_ptr[0] != '\0' && start_ptr[0] == ' ')
+		  start_ptr++;
+		if (start_ptr[0] == '\0')
+		  util_abort("%s[0]: malformed string: %s \n",__func__ , start_ptr);
+		iens2 = strtol(start_ptr , &end_ptr , 10);
+
+		if (end_ptr == start_ptr) 
+		  util_abort("%s[1]: failed to parse integer from: %s \n",__func__ , start_ptr);
+		
+		if (iens2 < iens1)
+		  util_abort("%s[2]: invalid interval - must have increasing range \n",__func__);
+		
+		start_ptr = end_ptr;
+		{ 
+		  int iens;
+		  for (iens = iens1; iens <= iens2; iens++)
+		    keep_runpath[iens] = true;
+		}
+		
+		while (start_ptr[0] != '\0' && start_ptr[0] == ' ')
+		  start_ptr++;
+
+		if (start_ptr[0] == '\0')
+		  start_ptr = NULL; /* We are done */
+		else {
+		  if (start_ptr[0] == ',')
+		    start_ptr++;
+		  else
+		    util_abort("%s[3]: malformed string: %s \n",__func__ , start_ptr);
+		}
+	      } else 
+		start_ptr++;  /* Skipping "," */
 	    } else 
-	      util_abort("%s: something wrong when parsing: \"%s\" to integer \n",__func__ , token_list[token_index]);
+	      util_abort("%s[4]: malformed string: %s \n",__func__ , start_ptr);
 	  }
-	  token_index++;
 	}
-	} while (token_index < tokens);
       }
     
       {

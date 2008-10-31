@@ -22,9 +22,8 @@ struct field_config_struct {
   int sx,sy,sz;                         /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
   const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */ 
 
-  bool        * enkf_active;            /* Whether a certain cell is active or not - EnKF wise.*/
-  bool          enkf_all_active;        /* Performance gain when all cells are active. */
-
+  int             active_size; 
+  int            *active_list;
 
   truncation_type truncation;           /* How the field should be trunacted before exporting for simulation. */
   double   	  min_value;            /* The min value used in truncation. */   
@@ -294,7 +293,8 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
   config->init_file_fmt            = NULL;
-  config->enkf_active              = util_malloc(config->data_size * sizeof * config->enkf_active , __func__);
+  config->active_list              = NULL;
+  config->active_size              = config->data_size; /*Default all active */
   config->output_transform         = NULL;
   field_config_set_all_active(config);
   return config;
@@ -306,11 +306,18 @@ field_config_type * field_config_alloc_complete(const char * ecl_kw_name , ecl_t
 }
 
 
+
 static void field_config_set_all_active__(field_config_type * field_config, bool active) {
-  int i; 
-  for (i = 0; i < field_config->data_size; i++)
-    field_config->enkf_active[i] = active;
-  field_config->enkf_all_active = active;
+  if (active) 
+    field_config->active_size = field_config->data_size;
+  else 
+    field_config->active_size = 0;
+  
+  /* 
+     No active list in the special cases all or none active. Must be
+     set to NULL.
+  */
+  field_config->active_list = util_safe_free( field_config->active_list );
 }
 
 
@@ -340,29 +347,25 @@ inline int field_config_active_index(const field_config_type * config , int i , 
 
 void field_config_set_iactive(field_config_type * config , int num_active , const int * i , const int *j , const int *k) {
   int index;
+  int enkf_active_index = 0;
   field_config_set_all_active__(config , false);
+  config->active_list = util_realloc( config->active_list , num_active * sizeof * config->active_list , __func__);
+  
   for (index = 0; index < num_active; index++) {
-    const int active_index = field_config_active_index(config , i[index] , j[index] , k[index]);
-    if (active_index < 0)
+    const int grid_active_index = field_config_active_index(config , i[index] , j[index] , k[index]);
+    
+    if (grid_active_index >= 0) {
+      config->active_list[enkf_active_index] = grid_active_index;
+      enkf_active_index++;
+    } else 
       fprintf(stderr,"** Warning cell: (%d,%d,%d) is inactive\n",i[index] , j[index] , k[index]);
-    else 
-      config->enkf_active[active_index]= true;
+
   }
+  config->active_list = util_realloc( config->active_list , enkf_active_index * sizeof * config->active_list , __func__);
+  config->active_size = enkf_active_index;
 }
 
 
-/**
-   If ALL cells are active this function returns NULL, which again
-   means that a faster serialize/deserialize routine can be used. If
-   _not_ all cells are active the function will return the enkf_active vector.
-*/
-
-const bool * field_config_get_iactive(const field_config_type * config) {
-  if (config->enkf_all_active)
-    return NULL; /* Allows for a short-circuit in serialize/deserialize */
-  else
-    return config->enkf_active;
-}
 
 
 
@@ -544,12 +547,12 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 
 
 void field_config_free(field_config_type * config) {
+  util_safe_free(config->active_list);
   util_safe_free(config->ecl_kw_name);
   util_safe_free(config->base_file);
   util_safe_free(config->perturbation_config_file);
   util_safe_free(config->layer_config_file);
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
-  free(config->enkf_active);
   free(config);
 }
   
@@ -578,10 +581,6 @@ int field_config_get_byte_size(const field_config_type * config) {
 }
 
 
-
-int field_config_get_active_size(const field_config_type * config) {
-  return config->data_size;
-}
 
 
 
@@ -843,3 +842,5 @@ CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_FREE(field_config)
 VOID_CONFIG_ACTIVATE(field)
+GET_ACTIVE_SIZE(field);
+GET_ACTIVE_LIST(field);

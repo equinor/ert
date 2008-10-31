@@ -216,20 +216,26 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * run_path , const 
 
 int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   ecl_type_enum ecl_type = gen_data->ecl_type;
-  const int data_size    = gen_data->size;
+  const int  data_size    = gen_data->size;
+  const int  active_size  = gen_data_config_get_active_size( gen_data->config );
+  const int *active_list  = gen_data_config_get_active_list(gen_data->config ); 
+
   int elements_added = 0;
   if (data_size > 0) 
-    elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , NULL , serial_state , serial_offset , serial_vector);
+    elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_size , active_list , serial_state , serial_offset , serial_vector);
+
   return elements_added;
 }
 
 
 void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_state, const serial_vector_type * serial_vector) {
-  ecl_type_enum ecl_type  = gen_data->ecl_type;
-  const int data_size     = gen_data->size;
+  ecl_type_enum ecl_type = gen_data->ecl_type;
+  const int  data_size    = gen_data->size;
+  const int  active_size  = gen_data_config_get_active_size( gen_data->config );
+  const int *active_list  = gen_data_config_get_active_list(gen_data->config ); 
   
   if (data_size > 0)
-    enkf_deserialize(gen_data->data , data_size , ecl_type , NULL , serial_state , serial_vector);
+    enkf_deserialize(gen_data->data , data_size , ecl_type , active_size , active_list , serial_state , serial_vector);
   
   /*
     gen_data_truncate(gen_data);

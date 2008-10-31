@@ -23,8 +23,8 @@
 
 /**
    A small illustration (says more than thousand words ...) of how the
-   enkf_node, enkf_config_node, field[1] and field_config[1] objects are
-   linked.
+   enkf_node, enkf_config_node, field[1] and field_config[1] objects
+   are linked.
 
 
      ================
@@ -111,7 +111,7 @@
 
         enkf_node_initialize()
         enkf_node_fread()
-        enkf_node_ecl_load()  [enkf_node_ecl_load_static()]
+        enkf_node_ecl_load()  
 
       These functions should all start with a call to
       enkf_node_ensure_memory(). The (re)allocation of data is done at
@@ -160,8 +160,8 @@
     7. In the ens_load routine we check if modified == false and the
        report_step and state arguments agree with the current
        values. IN THAT CASE WE JUST RETURN WITHOUT ACTUALLY HITTING
-       THE FILESYSTEM. This is improvement gain is the main point of
-       the whole excercise.
+       THE FILESYSTEM. This performance gain is the main point of the
+       whole excercise.
 */
 
 

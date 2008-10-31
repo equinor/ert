@@ -50,15 +50,13 @@ gen_obs_type * gen_obs_alloc(gen_data_config_type * config) {
 
 void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , meas_vector_type * meas_vector) {
   const gen_data_config_type * config = gen_obs->config;
-  const int size = gen_data_config_get_data_size(config);
-  if (size > 0) {
-    const bool *iactive = gen_data_config_get_iactive( config );
-    int id;
-  
-    for (id = 0; id < size; id++) {
-      if (iactive[id])
-	meas_vector_add( meas_vector , gen_data_iget_double( gen_data , id ));
-    }
+  const int  active_size = gen_data_config_get_active_size(config);
+  const int *active_list = gen_data_config_get_active_list(config);
+  if (active_size > 0) {
+    
+    for (int id = 0; id < active_size; id++) 
+      meas_vector_add( meas_vector , gen_data_iget_double( gen_data , active_list[id] ));
+    
   }
 }
 
@@ -95,14 +93,15 @@ void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data
     }
   
     {
-      const bool *iactive = gen_data_config_get_iactive( gen_obs->config );
-      int id;
-    
-      for (id = 0; id < size; id++) {
-	if (iactive[id]) {
+      const gen_data_config_type * config = gen_obs->config;
+      const int  active_size = gen_data_config_get_active_size(config);
+      const int *active_list = gen_data_config_get_active_list(config);
+      if (active_size > 0) {
+	int id;
+	for (id = 0; id < active_size; id++) {
 	  char * kw = util_alloc_sprintf("%s/%d" , file_tag , id);
-	  double d  = gen_common_iget_double(id , size , ecl_type , data) ;
-	  double s  = gen_common_iget_double(id , size , ecl_type , std);
+	  double d  = gen_common_iget_double(active_list[id] , size , ecl_type , data) ;
+	  double s  = gen_common_iget_double(active_list[id] , size , ecl_type , std);
 	  obs_data_add(obs_data ,d , s, kw);
 	  free(kw);
 	}

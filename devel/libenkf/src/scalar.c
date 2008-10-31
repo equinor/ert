@@ -115,16 +115,14 @@ void scalar_stream_fwrite(const scalar_type * scalar , FILE * stream) {
 
 
 void scalar_sample(scalar_type *scalar) {
-  const scalar_config_type *config    = scalar->config;
-  const bool              *active    = config->active;
-  const double            *std       = config->std;
-  const double            *mean      = config->mean;
+  const scalar_config_type *config   = scalar->config;
+  const double            *std       = scalar_config_get_std(config);
+  const double            *mean      = scalar_config_get_mean(config);
   const int                data_size = scalar_config_get_data_size(config);
   int i;
   
   for (i=0; i < data_size; i++) 
-    if (active[i])
-      scalar->data[i] = enkf_util_rand_normal(mean[i] , std[i]);
+    scalar->data[i] = enkf_util_rand_normal(mean[i] , std[i]);
   
   scalar->output_valid = false;
 }
@@ -139,38 +137,42 @@ void scalar_free(scalar_type *scalar) {
 
 
 void scalar_deserialize(scalar_type * scalar , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  const scalar_config_type *config    = scalar->config;
-  const bool              *active     = config->active;
-  const int                data_size  = scalar_config_get_data_size(config);
-  enkf_deserialize(scalar->data , data_size ,ecl_double_type , active , serial_state , serial_vector);
+  const scalar_config_type *config      = scalar->config;
+  const int                *active_list = scalar_config_get_active_list(config);
+  const int                data_size    = scalar_config_get_data_size(config);
+  const int                active_size  = scalar_config_get_active_size(config);
+  enkf_deserialize(scalar->data , data_size ,ecl_double_type , active_size , active_list , serial_state , serial_vector);
 }
 
 
 int scalar_serialize(const scalar_type *scalar ,  serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const scalar_config_type *config      = scalar->config;
-  const bool              *active     = config->active;
-  const int                data_size  = scalar_config_get_data_size(config);
+  const int                *active_list = scalar_config_get_active_list(config);
+  const int                data_size    = scalar_config_get_data_size(config);
+  const int                active_size  = scalar_config_get_active_size(config);
   
-  return enkf_serialize(scalar->data , data_size , ecl_double_type , active , serial_state  , serial_offset , serial_vector);
+  return enkf_serialize(scalar->data , data_size , ecl_double_type , active_size , active_list , serial_state  , serial_offset , serial_vector);
 }
 
 
-void scalar_deserialize_part(scalar_type * scalar , serial_state_type * serial_state , bool first_call , int node_offset , int total_node_size , const serial_vector_type * serial_vector) {
-  const scalar_config_type *config    = scalar->config;
-  const bool              *active     = config->active;
-  const int                data_size  = scalar_config_get_data_size(config);
-  enkf_deserialize_part(scalar->data , first_call , data_size , node_offset , total_node_size , ecl_double_type , active , serial_state , serial_vector);
-}
-
-
-
-
-int scalar_serialize_part(const scalar_type *scalar ,  serial_state_type * serial_state , bool first_call , int node_offset , int total_node_size , size_t serial_offset , serial_vector_type * serial_vector) {
+void scalar_deserialize_part(scalar_type * scalar , serial_state_type * serial_state , bool first_call , int node_active_offset , int total_node_active_size , const serial_vector_type * serial_vector) {
   const scalar_config_type *config      = scalar->config;
-  const bool              *active     = config->active;
-  const int                data_size  = scalar_config_get_data_size(config);
+  const int                *active_list = scalar_config_get_active_list(config);
+  const int                data_size    = scalar_config_get_data_size(config);
+  const int                active_size  = scalar_config_get_active_size(config);
   
-  return enkf_serialize_part(scalar->data , first_call , data_size , node_offset , total_node_size , ecl_double_type , active , serial_state  , serial_offset , serial_vector);
+  enkf_deserialize_part(scalar->data , first_call , data_size , node_active_offset , total_node_active_size , ecl_double_type , active_size , active_list , serial_state , serial_vector);
+}
+
+
+
+int scalar_serialize_part(const scalar_type *scalar ,  serial_state_type * serial_state , bool first_call , int node_active_offset , int total_node_active_size , size_t serial_offset , serial_vector_type * serial_vector) {
+  const scalar_config_type *config      = scalar->config;
+  const int                *active_list = scalar_config_get_active_list(config);
+  const int                data_size    = scalar_config_get_data_size(config);
+  const int                active_size  = scalar_config_get_active_size(config);
+    
+  return enkf_serialize_part(scalar->data , first_call , data_size , node_active_offset , total_node_active_size , ecl_double_type , active_size , active_list , serial_state  , serial_offset , serial_vector);
 }
 
 
@@ -210,7 +212,7 @@ static void scalar_unlock_output(scalar_type * scalar) { scalar->__output_locked
 
 void scalar_isqr(scalar_type * scalar) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size = config->data_size;
+  const int data_size = scalar_config_get_data_size(config);
   int i;
 
   scalar_lock_output(scalar);
@@ -222,7 +224,7 @@ void scalar_isqr(scalar_type * scalar) {
 
 void scalar_isqrt(scalar_type * scalar) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size = config->data_size;
+  const int data_size = scalar_config_get_data_size(config);
   int i;
 
   scalar_lock_output(scalar);
@@ -236,7 +238,7 @@ void scalar_isqrt(scalar_type * scalar) {
 
 void scalar_iscale(scalar_type * scalar, double factor) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size = config->data_size;
+  const int data_size = scalar_config_get_data_size(config);
   int i;
 
   scalar_lock_output(scalar);
@@ -247,7 +249,7 @@ void scalar_iscale(scalar_type * scalar, double factor) {
 
 void scalar_iadd(scalar_type * scalar , const scalar_type * delta) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size              = config->data_size;                      			       
+  const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   scalar_lock_output(scalar);
@@ -255,9 +257,10 @@ void scalar_iadd(scalar_type * scalar , const scalar_type * delta) {
     scalar->output_data[i] += delta->output_data[i];
 }
 
+
 void scalar_isub(scalar_type * scalar , const scalar_type * delta) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size              = config->data_size;                      			       
+  const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   scalar_lock_output(scalar);
@@ -268,7 +271,7 @@ void scalar_isub(scalar_type * scalar , const scalar_type * delta) {
 
 void scalar_imul(scalar_type * scalar , const scalar_type * delta) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size              = config->data_size;                      			       
+  const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   scalar_lock_output(scalar);
@@ -279,7 +282,7 @@ void scalar_imul(scalar_type * scalar , const scalar_type * delta) {
 
 void scalar_imul_add(scalar_type * scalar , double scale_factor , const scalar_type * delta) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size              = config->data_size;                      			       
+  const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   scalar_lock_output(scalar);
@@ -290,7 +293,7 @@ void scalar_imul_add(scalar_type * scalar , double scale_factor , const scalar_t
 
 void scalar_iaddsqr(scalar_type * scalar , const scalar_type * delta) {
   const scalar_config_type *config = scalar->config; 			       
-  const int data_size              = config->data_size;                      			       
+  const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   scalar_lock_output(scalar);

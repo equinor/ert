@@ -224,7 +224,7 @@ static void well_obs_add_var(const well_obs_type * well_obs , const char * var) 
     well_var_obs_type * well_var = well_var_obs_alloc(var , well_obs->__num_reports);
     hash_insert_hash_owned_ref(well_obs->var_hash , var , well_var , well_var_obs_free__);
   } else {
-    fprintf(stderr,"%s: well: %s does not have variable:%s - aborting \n",__func__ , well_config_get_well_name_ref(well_obs->config) , var);
+    fprintf(stderr,"%s: well: %s does not have variable:%s - aborting \n",__func__ , well_config_get_name(well_obs->config) , var);
     abort();
   }
 }
@@ -365,7 +365,7 @@ static double well_obs_get_observation__(const history_type * hist , int report_
 
 
 void well_obs_get_observations(const well_obs_type * well_obs , int report_step, obs_data_type * obs_data) {
-  const char *well_name = well_config_get_well_name_ref(well_obs->config);
+  const char *well_name = well_config_get_name(well_obs->config);
   char ** var_list;
   const int kw_len = 16;
   char kw[kw_len+1];
@@ -403,8 +403,10 @@ void well_obs_measure(const well_obs_type * well_obs , const well_type * well_st
     
     for (i=0; i < hash_get_size(well_obs->var_hash); i++) {
       well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
-      if (obs->currently_active) 
+      if (obs->currently_active) {
+	printf("Measuring: %s/%s : %g \n",well_config_get_name(  well_obs->config ) , var_list[i] , well_get(well_state , var_list[i]));
 	meas_vector_add(meas_vector , well_get(well_state , var_list[i]));
+      }
     }
     util_free_stringlist( var_list , hash_get_size( well_obs->var_hash ));
   } 

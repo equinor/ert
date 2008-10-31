@@ -121,12 +121,11 @@ double trans_logunif(double x , const void_arg_type * arg) {
 
 
 
-transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_arg_type **_void_arg , bool *active) {
+transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_arg_type **_void_arg) {
   char            * func_name;
   void_arg_type   * void_arg = NULL;
   transform_ftype * transf   = NULL;
 
-  *active = true;
   func_name = util_fscanf_alloc_token(stream);
   if (func_name == NULL) 
     util_abort("%s: could not locate name of transformation - aborting \n",__func__);
@@ -175,7 +174,6 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , void_ar
     /* CONST value */
     transf   = trans_const;
     void_arg = void_arg_alloc1( double_value );
-    *active  = false;
   } else 
     util_abort("%s: function name:%s not recognized - aborting \n", __func__ , func_name);
   

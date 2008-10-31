@@ -84,10 +84,8 @@ void stupid_plot(int N , const double * x , const double *y) {
 
 
 
-void enkf_ui_plot_time(void *_arg) {
-  void_arg_type   * arg    = void_arg_safe_cast(_arg);
-  enkf_main_type  * enkf_main   = void_arg_get_ptr(arg , 0);
-  enkf_sched_type * enkf_sched  = void_arg_get_ptr(arg , 1);
+void enkf_ui_plot_time(enkf_main_type * enkf_main) {
+  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 35;
@@ -95,7 +93,7 @@ void enkf_ui_plot_time(void *_arg) {
     state_enum analysis_state;
     int        cell_nr;
     int        size;
-
+    
     config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , true , FIELD , invalid , NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
@@ -150,9 +148,11 @@ void enkf_ui_plot_time(void *_arg) {
 
 
 void enkf_ui_plot_menu(void * arg) {
-  
+
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
-  menu_add_item(menu , "Plot time development" , "tT" , enkf_ui_plot_time , arg);
+
+  menu_add_item(menu , "Plot time development" , "tT" , enkf_ui_plot_time , enkf_main );
   menu_run(menu);
   menu_free(menu);
 

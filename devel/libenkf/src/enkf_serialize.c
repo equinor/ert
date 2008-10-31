@@ -176,7 +176,7 @@ vector of total length length(woc) + length(goc).
 
 
 
-[1]: Currently the equil_strict is NOT implemented as this, but it probably should ....
+[1]: Currently the equil_struct is NOT implemented as this, but it probably should ....
 */
 
 /*****************************************************************/
@@ -210,18 +210,21 @@ struct serial_vector_struct {
 */
 
 struct serial_state_struct {
-  int        node_index1;          /* The first node_index which is currently serialized. */
-  int        node_index2;          /* The last node_index which is (not) currently serialized. */
+  int        active_node_index1;          /* The first node_index which is currently serialized. */
+  int        active_node_index2;          /* The last node_index which is (not) currently serialized. */
 
 
-  /* The fields current_node_index and serial_index are only needed to support subnodes, 
-     i.e. explicit use of the xxx_part() functions. */
-  int        current_node_index;   /* The node index we aer currently looking at - holding state between subsequetn calls to xx_part(). */
-  size_t     serial_index;         /* Have to remember serial index (after offset) when subnodes are used. */
-  
-  size_t     serial_offset;        /* The current offset into the serial vector. */
-  bool       complete;             /* Whether we are done with serialization of this node. */
-  state_enum state;                /* enum which says which 'state' : {forecast, serialized, analyzed} the object is currently in. */
+  size_t     serial_offset;        	  /* The current offset into the serial vector. */
+  bool       complete;             	  /* Whether we are done with serialization of this node. */
+  state_enum state;                	  /* enum which says which 'state' : {forecast, serialized, analyzed} the object is currently in. */
+
+
+  /* 
+     The fields current_active_node_index and serial_index are only needed to
+     support subnodes, i.e. explicit use of the xxx_part() functions.
+  */
+  int        current_active_node_index;   /* The node index we are currently looking at - holding state between subsequent calls to xx_part(). */
+  size_t     serial_index;                /* Have to remember serial index (after offset) when subnodes are used. */
 };
 
 /*****************************************************************/
@@ -305,10 +308,10 @@ void serial_vector_free(serial_vector_type * serial_vector) {
 /*****************************************************************/
 
 void serial_state_clear(serial_state_type * state) {
-  state->node_index1         = 0;
-  state->node_index2         = 0;
-  state->serial_offset       = 0;
-  state->current_node_index  = 0;
+  state->active_node_index1  	   = 0;
+  state->active_node_index2  	   = 0;
+  state->serial_offset       	   = 0;  
+  state->current_active_node_index = 0;
   
   state->complete            = false;
   state->state               = forecast;
@@ -344,28 +347,29 @@ bool serial_state_complete(const serial_state_type * state) { return state->comp
 size_t enkf_serialize_part(const void * __node_data         ,   /* The data of the input node - pointer to either float or double */
 			   bool          first_call         ,   /* Always TRUE - except when this is the second++ subnode. */
 			   int           node_size          ,   /* The size (number of elements) of __node_data array. */
-			   int           node_offset        ,   /* The internal offset into the multicompnent node - zero for all simple nodes. */
+			   int           active_node_offset ,   /* The internal offset into the multicomponent node - zero for all simple nodes. */
 			   int           total_node_size    , 
 			   ecl_type_enum node_type          ,   /* The underlying data type of __node_data. */
-			   const bool * active              ,   /* An active flag for the data - can be NULL if everything is active. */      
+			   int           active_size         ,   /* The number of active data points in this node. */ 
+			   const int   * active_list        ,   /* A list of integers denoting the active members - can be NULL if active_size == node_size. */
 			   serial_state_type * serial_state ,   /* Holding the state of the current serialization of this node. */
 			   /*-- Above: node data --- Below: serial data --*/
 			   size_t serial_offset ,               /* The offset in the serial vector we are starting on - owned by the node; pointing into the serial vector. */                     
 			   serial_vector_type * serial_vector) {
 
-  int    node_index1        = serial_state->node_index1;
-  int    current_node_index;
-  size_t node_index         = node_index1;
+  int    active_node_index1 = serial_state->active_node_index1;
+  int    current_active_node_index;
+  size_t active_index       = -1; /* Compiler shut up */
   size_t elements_added     = 0;
 
   if (first_call) {
     serial_state->serial_index = 0;
-    serial_state->current_node_index = node_index1;
+    serial_state->current_active_node_index = active_node_index1;
   }
-  current_node_index = serial_state->current_node_index;
+  current_active_node_index = serial_state->current_active_node_index;
   
   if (!serial_state->complete) {
-    if (node_index1 < node_offset + node_size) {
+    if (active_node_index1 < active_node_offset + active_size) {
       /* If the previous _exactly_ used all memory we will have serial_size == serial_offset - and should return immediatebly. */
       if (serial_offset < serial_vector->serial_size) {  
 	if (node_type == ecl_double_type) {
@@ -384,20 +388,20 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 	   This is is the information we are going to need in the
 	   subsequent deserialization.
 	*/
-	if (node_index < (node_offset + node_size - 1)) 
+	if (active_index < (active_node_offset + active_size - 1)) 
 	  /* We did not get through the complete object after all ... */
-	  serial_state->node_index2 = node_index + 1;
+	  serial_state->active_node_index2 = active_index + 1;
 	else {
 	  /* We made it all the way through the object. */ 
-	  serial_state->node_index2 = node_offset + node_size;
-	  if (serial_state->node_index2 == total_node_size) {
+	  serial_state->active_node_index2 = active_node_offset + active_size;
+	  if (serial_state->active_node_index2 == total_node_size) {
 	    /* We are completely done with this node - including all subnodes. */ 
 	    serial_state->state            = serialized;
 	    serial_state->complete         = true;
 	  }
 	}
-	serial_state->current_node_index = node_index ;
-	serial_state->serial_offset    = serial_offset;
+	serial_state->current_active_node_index = active_index ;
+	serial_state->serial_offset             = serial_offset;
       }
     }
   }
@@ -417,7 +421,8 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 size_t enkf_serialize(const void * __node_data         ,  
                       int           node_size          ,  
 		      ecl_type_enum node_type          ,  
-                      const bool * active              ,  
+		      int           active_size          ,
+		      const int *   active_list         ,
                       serial_state_type * serial_state ,  
                       size_t serial_offset ,              
                       serial_vector_type * serial_vector) {
@@ -426,7 +431,7 @@ size_t enkf_serialize(const void * __node_data         ,
   int  node_offset     = 0;
   int  total_node_size = node_size;
 
-  return enkf_serialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active , serial_state , serial_offset , serial_vector);
+  return enkf_serialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_size , active_list , serial_state , serial_offset , serial_vector);
 }
 
 
@@ -435,26 +440,27 @@ size_t enkf_serialize(const void * __node_data         ,
 void enkf_deserialize_part(void * __node_data                , /* The data of the node which will accept updated data. */
 			   bool     first_call               , /* Always TRUE - except when this is the second++ subnode. */
 			   int      node_size                , /* The total size of the node we are updating. */
-			   int      node_offset              , /* The current offset into the node i.e. how many elements we have serialized. */            
+			   int      active_node_offset       , /* The current offset into the node i.e. how many elements we have serialized. */            
 			   int      total_node_size          , /* The TOTAL size of the node (including inactive ++) */       
 			   ecl_type_enum node_type           , /* The underlying type (double || float) of the node's storage. */
-			   const bool * active               , /* Active / inactive flag - can be NULL for all elements active. */
+			   int           active_size          ,
+			   const int *   active_list         ,
 			   serial_state_type * serial_state  , /* Holding the state of the current serialization of this node. */
 			   /*-- Above: node data ---  Below: serial data --*/
 			   const serial_vector_type * serial_vector) {
   
-  size_t serial_offset = serial_state->serial_offset;
-  int    node_index1   = serial_state->node_index1;
-  int    node_index2   = serial_state->node_index2;
-  int    current_node_index;
+  size_t serial_offset        = serial_state->serial_offset;
+  int    active_node_index1   = serial_state->active_node_index1;
+  int    active_node_index2   = serial_state->active_node_index2;
+  int    current_active_node_index;
   if (first_call) {
     serial_state->serial_index = 0;
-    serial_state->current_node_index = node_index1;
+    serial_state->current_active_node_index = active_node_index1;
   }
-  current_node_index = serial_state->current_node_index;
+  current_active_node_index = serial_state->current_active_node_index;
 
   if (serial_state->state == serialized) {
-    if (node_index1 < node_offset + node_size) {  /* The node we are looking at contains, or follows after, node_index1 */
+    if (active_node_index1 < active_node_offset + active_size) {  /* The node we are looking at contains, or follows after, node_index1 */
       
       if (node_type == ecl_double_type) {
 	double * node_data = (double *) __node_data;
@@ -468,7 +474,7 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
       if (serial_state->complete) 
 	serial_state->state        = analyzed;
       else 
-	serial_state->node_index1  = serial_state->node_index2;  /* This is where the next serialization should start. */
+	serial_state->active_node_index1  = serial_state->active_node_index2;  /* This is where the next serialization should start. */
     }
   }
 }
@@ -486,7 +492,8 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
 void enkf_deserialize(void * __node_data                , 
 		      int      node_size                , 
 		      ecl_type_enum node_type           , 
-		      const bool * active               , 
+		      int           active_size          ,
+		      const int *   active_list         ,
 		      serial_state_type * serial_state  , 
 		      const serial_vector_type * serial_vector) {
 
@@ -494,5 +501,5 @@ void enkf_deserialize(void * __node_data                ,
   int  node_offset     = 0;
   int  total_node_size = node_size;
   
-  enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active , serial_state , serial_vector);
+  enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_size , active_list , serial_state , serial_vector);
 }

@@ -9,7 +9,18 @@
 #include <ecl_well_vars.h>
 
 
+struct summary_config_struct {
+  CONFIG_STD_FIELDS;
+  char ** var_list;
+  int     active_size;
+  int    *active_list;
+};
+
+
 /*****************************************************************/
+
+
+
 
 
 int summary_config_get_var_index(const summary_config_type * config , const char * var) {
@@ -43,10 +54,9 @@ void summary_config_add_var(summary_config_type * config , const char * var) {
     fprintf(stderr,"%s: summary variable:%s already added to summary object - nothing done \n",__func__ , var);
     return;
   }
-  /*
-    All variables are (currently) active.
-  */
+  
   if (true /* variable valid */) {
+    config->active_size++;
     config->data_size++;
     config->var_list = realloc(config->var_list , config->data_size * sizeof * config->var_list);
     config->var_list[config->data_size - 1] = util_alloc_string_copy(var);
@@ -63,7 +73,9 @@ static summary_config_type * __summary_config_alloc( void ) {
   summary_config_type * config = malloc(sizeof *config);
 
   config->data_size   	  = 0;
+  config->active_size     = 0;
   config->var_list    	  = NULL;
+  config->active_list     = NULL;
   return config;
 
 }
@@ -88,6 +100,7 @@ void summary_config_free(summary_config_type * config) {
     free(config->var_list[i]);
   free(config->var_list);
   free(config);
+  util_safe_free(config->active_list);
 }
 
 
@@ -106,5 +119,6 @@ void summary_config_summarize(const summary_config_type * config) {
 /*****************************************************************/
 GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)
-
+GET_ACTIVE_SIZE(summary)
+GET_ACTIVE_LIST(summary)
 
