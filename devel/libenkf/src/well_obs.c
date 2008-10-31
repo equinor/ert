@@ -403,10 +403,8 @@ void well_obs_measure(const well_obs_type * well_obs , const well_type * well_st
     
     for (i=0; i < hash_get_size(well_obs->var_hash); i++) {
       well_var_obs_type * obs = well_obs_get_var(well_obs , var_list[i]);
-      if (obs->currently_active) {
-	printf("Measuring: %s/%s : %g \n",well_config_get_name(  well_obs->config ) , var_list[i] , well_get(well_state , var_list[i]));
+      if (obs->currently_active) 
 	meas_vector_add(meas_vector , well_get(well_state , var_list[i]));
-      }
     }
     util_free_stringlist( var_list , hash_get_size( well_obs->var_hash ));
   } 

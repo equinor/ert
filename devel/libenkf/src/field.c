@@ -587,7 +587,7 @@ static void field_output_transform(field_type * field) {
     
     if (output_transform != NULL)
       field_inplace_output_transform(field);
-
+    
     if (truncation != truncate_none) {
       const int data_size          = field_config_get_data_size(field->config);   
       const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
@@ -597,7 +597,8 @@ static void field_output_transform(field_type * field) {
       } else if (ecl_type == ecl_double_type) {
 	double * data = (double *) field->data;
 	TRUNCATE_MACRO(data_size , data , truncation , min_value , max_value);
-      }
+      } else 
+	util_abort("%s: Field type not supported for truncation \n",__func__);
     }
   }
 }

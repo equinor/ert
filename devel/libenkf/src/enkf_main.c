@@ -745,7 +745,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       int i;
       for (i = 0; i < ens_size; i++) 
-	keep_runpath[i] = false;
+	keep_runpath[i] = true;
 
       if (config_has_set_item(config , "KEEP_RUNPATH")) {
 	char * keep_runpath_string = config_indexed_alloc_joined_string(config , "KEEP_RUNPATH" , "" , i);

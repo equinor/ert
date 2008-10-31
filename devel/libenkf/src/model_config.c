@@ -101,6 +101,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   model_config->history = history_alloc_from_sched_file(sched_file);
   model_config->runpath = NULL;
   model_config_set_runpath_fmt( model_config , config_get(config , "RUNPATH") );
+  
   return model_config;
 }
 

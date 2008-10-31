@@ -362,6 +362,7 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
   size_t active_index       = -1; /* Compiler shut up */
   size_t elements_added     = 0;
 
+
   if (first_call) {
     serial_state->serial_index = 0;
     serial_state->current_active_node_index = active_node_index1;
@@ -453,6 +454,8 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
   int    active_node_index1   = serial_state->active_node_index1;
   int    active_node_index2   = serial_state->active_node_index2;
   int    current_active_node_index;
+
+  
   if (first_call) {
     serial_state->serial_index = 0;
     serial_state->current_active_node_index = active_node_index1;
