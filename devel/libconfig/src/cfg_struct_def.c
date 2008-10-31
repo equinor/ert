@@ -338,20 +338,21 @@ static cfg_item_def_type * cfg_item_def_alloc_from_buffer(char ** __buffer_pos, 
     free(token);
 
 
-    if(item_finished)
+    if(item_finished && scope_end_set)
     {
       *__buffer_pos = buffer_pos;
-      if(prim == CFG_SCOPE_STOP)
-      {
-        token = cfg_util_alloc_next_token(&buffer_pos);
-        if(token == NULL)
-          break;
-        else if(validate_token(CFG_END, token))
-          *__buffer_pos = buffer_pos;
-        free(token);
-      }
+      token = cfg_util_alloc_next_token(&buffer_pos);
+      if(token == NULL)
+        util_abort("%s: Syntax error in item \"%s\". Expected \"%s\", got EOF (end of file).\n", __func__, name, STR_CFG_END);
+      else if(validate_token(CFG_END, token))
+        *__buffer_pos = buffer_pos;
+      else
+        util_abort("%s: Syntax error in item \"%s\". Expected \"%s\", got \"%s\".\n", __func__, name, STR_CFG_END, token);
+      free(token);
       break;
     }
+    else if(item_finished && !scope_end_set)
+      break;
 
   }
   return cfg_item_def;
@@ -465,7 +466,6 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_p
   bool scope_start_set = false;
   bool scope_end_set   = false;
   bool struct_finished = false;
-  bool struct_empty    = true;
 
   /*
     In this loop, it is an error if token is not parseable to a primitive or NULL.
@@ -506,19 +506,20 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_p
         struct_finished = true;
         break;
       case(CFG_END):
-        util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_END);
+        if(scope_start_set)
+          util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_END);
+        else
+          struct_finished = true;
         break;
       case(CFG_STRUCT):
         if(!scope_start_set && !is_root)
           util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_STRUCT);
         cfg_struct_def_alloc_sub_struct(cfg_struct_def, &buffer_pos);
-        struct_empty = false;
         break;
       case(CFG_ITEM):
         if(!scope_start_set && !is_root)
           util_abort("%s: Syntax error in struct \"%s\". Unexpected \"%s\".", __func__, name, STR_CFG_ITEM);
         cfg_struct_def_alloc_sub_item(cfg_struct_def, &buffer_pos);
-        struct_empty = false;
         break;
       case(CFG_REQUIRED):
         if(!scope_start_set && !is_root)
@@ -551,21 +552,30 @@ static cfg_struct_def_type * cfg_struct_def_alloc_from_buffer(char ** __buffer_p
     free(token);
     *__buffer_pos = buffer_pos;
 
-    if(struct_finished)
+    if(struct_finished && scope_end_set)
     {
+      /*
+        We've seen the closing "}" of the struct (or EOF).
+        Check if it's followed by a ";", which is required.
+      */
       token = cfg_util_alloc_next_token(&buffer_pos);
       if(token == NULL)
-        break;
-      if(validate_token(CFG_END, token))
+        util_abort("%s: Syntax error in struct \"%s\". Expected \"%s\", got EOF (end of file).\n", __func__, name, STR_CFG_END);
+      else if(validate_token(CFG_END, token))
         *__buffer_pos = buffer_pos;
+      else
+        util_abort("%s: Syntax error in struct \"%s\". Expected \"%s\", got \"%s\".\n", __func__, name, STR_CFG_END, token);
+
       free(token);
+      break;
+    }
+    else if(struct_finished && !scope_end_set)
+    {
       break;
     }
   }
   if(scope_start_set != scope_end_set)
     util_abort("%s: Syntax error in struct \"%s\". Could not match delimiters.\n", __func__, name); 
-  if(struct_empty)
-    util_abort("%s: Syntax error. The struct \"%s\" is empty, this is not allowed.\n", __func__, name); 
 
   return cfg_struct_def;
 }

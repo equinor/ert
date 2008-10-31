@@ -23,7 +23,7 @@ struct cfg_struct_struct
 /*
   These static functions are called before their implementation. Thus, header info is needed.
 */
-static cfg_struct_type * cfg_struct_alloc_from_buffer(const cfg_struct_def_type *, char **, char **, const char *, const char *, set_type *, bool);
+static cfg_struct_type * cfg_struct_alloc_from_buffer(const cfg_struct_def_type *, char **, char **, const char *, const char *, set_type *);
 
 
 
@@ -279,7 +279,7 @@ static void cfg_struct_alloc_sub_struct
     util_abort("%s: Error, identifier \"%s\" has already been used.\n", __func__, name);
 
   cfg_struct_def_type * cfg_struct_def_sub = hash_get(cfg_struct_def->sub_structs, struct_type_name);
-  cfg_struct_type * cfg_struct_sub = cfg_struct_alloc_from_buffer(cfg_struct_def_sub, __buffer, __buffer_pos, struct_type_name, name, src_files, false);
+  cfg_struct_type * cfg_struct_sub = cfg_struct_alloc_from_buffer(cfg_struct_def_sub, __buffer, __buffer_pos, struct_type_name, name, src_files);
 
   hash_insert_hash_owned_ref(cfg_struct->sub_structs, name, cfg_struct_sub, cfg_struct_free__);
   free(name);
@@ -318,8 +318,7 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
                         char ** __buffer_pos,
                         const char * struct_type_name,
                         const char * name,
-                        set_type * src_files,
-                        bool is_root
+                        set_type * src_files
 )
 {
   assert(name != NULL);
@@ -350,9 +349,9 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
     /*
       First, check if something has gone haywire or if we are at end of buffer.
     */
-    if(token == NULL && !is_root)
+    if(token == NULL && scope_start_set != scope_end_set)
       util_abort("%s: Syntax error in struct \"%s\". Unexpected end of file.\n", __func__, name);
-    else if(token == NULL && is_root)
+    else if(token == NULL)
     {
       struct_finished = true;
       break;
@@ -403,24 +402,34 @@ static cfg_struct_type * cfg_struct_alloc_from_buffer
         util_abort("%s: Syntax error. Expected a primitive token. Got \"%s\".\n", __func__, token);
         break;
     }
-    free(token);
+    util_safe_free(token);
 
-    /*
-      We've seen the closing "}" of the struct (or EOF if is_root.). Check if it's followed by a ";", which is allowed.
-    */
-    if(struct_finished)
+
+    if(struct_finished && scope_end_set)
     {
+      /*
+        We've seen the closing "}" of the struct (or EOF).
+        Check if it's followed by a ";", which is required.
+      */
       char * buffer_pos = *__buffer_pos;
       token = cfg_util_alloc_next_token(&buffer_pos);
       if(token == NULL)
       {
-        break;
+        util_abort("%s: Syntax error in struct \"%s\". Expected \"%s\", got EOF (end of file).\n", __func__, name, STR_CFG_END);
       }
       else if(validate_token(cfg_struct_def, CFG_END, token))
       {
         *__buffer_pos = buffer_pos;
       }
+      else
+      {
+        util_abort("%s: Syntax error in struct \"%s\". Expected \"%s\", got \"%s\".\n", __func__, name, STR_CFG_END, token);
+      }
       free(token);
+      break;
+    }
+    else if(struct_finished && !scope_end_set)
+    {
       break;
     }
   }
@@ -447,7 +456,7 @@ cfg_struct_type * cfg_struct_alloc_from_file(const char * filename, const cfg_st
   // TODO Should add absolute path.
   set_add_key(src_files, filename);
 
-  cfg_struct_type * cfg_struct  = cfg_struct_alloc_from_buffer(cfg_struct_def, &buffer, &buffer_pos, "root", "root", src_files, true);
+  cfg_struct_type * cfg_struct  = cfg_struct_alloc_from_buffer(cfg_struct_def, &buffer, &buffer_pos, "root", "root", src_files);
   free(buffer);
 
   /* Validate the struct. */
@@ -460,6 +469,19 @@ cfg_struct_type * cfg_struct_alloc_from_file(const char * filename, const cfg_st
   return cfg_struct;
 }
 
+
+
+const char * cfg_struct_get_name(const cfg_struct_type * cfg_struct)
+{
+  return cfg_struct->name;
+}
+
+
+
+const char * cfg_struct_get_struct_type_name(const cfg_struct_type * cfg_struct)
+{
+  return cfg_struct->struct_type_name;
+}
 
 
 cfg_struct_type * cfg_struct_get_sub_struct(const cfg_struct_type * cfg_struct, const char * struct_name)
@@ -502,6 +524,16 @@ bool cfg_struct_has_sub_struct_of_type(const cfg_struct_type * cfg_struct, const
 bool cfg_struct_has_item(const cfg_struct_type * cfg_struct, const char * item_name)
 {
   return hash_has_key(cfg_struct->sub_items, item_name);
+}
+
+
+
+const char * cfg_struct_get_item(const cfg_struct_type * cfg_struct, const char * item_name)
+{
+  if(!cfg_struct_has_item(cfg_struct, item_name))
+    util_abort("%s: Struct \"%s\" of type \"%s\" has no item with name \"%s\".\n", __func__, cfg_struct->name, cfg_struct->struct_type_name, item_name);
+  else
+    return hash_get(cfg_struct->sub_items, item);
 }
 
 
