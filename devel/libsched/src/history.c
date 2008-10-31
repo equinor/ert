@@ -324,6 +324,60 @@ static void history_node_delete_wells(history_node_type * node, const char ** we
 
 
 
+static void history_node_add_producer_defaults(history_node_type * node, const char ** well_list, int num_wells)
+{
+  for(int well_nr = 0; well_nr < num_wells; well_nr++)
+  {
+    if(hash_has_key(node->well_hash, well_list[well_nr]))
+    {
+      hash_type * well_obs_hash = hash_get(node->well_hash, well_list[well_nr]);
+      hash_insert_double(well_obs_hash, "WWIR", 0.0);
+      hash_insert_double(well_obs_hash, "WGIR", 0.0);
+      hash_insert_double(well_obs_hash, "WOIR", 0.0);
+    }
+    else
+    {
+      hash_type * well_obs_hash = hash_alloc();
+      hash_insert_double(well_obs_hash, "WWIR", 0.0);
+      hash_insert_double(well_obs_hash, "WGIR", 0.0);
+      hash_insert_double(well_obs_hash, "WOIR", 0.0);
+      hash_insert_hash_owned_ref(node->well_hash, well_list[well_nr], well_obs_hash, hash_free__);
+    }
+  }
+}
+
+
+
+static void history_node_add_injector_defaults(history_node_type * node, const char ** well_list, int num_wells)
+{
+  for(int well_nr = 0; well_nr < num_wells; well_nr++)
+  {
+    if(hash_has_key(node->well_hash, well_list[well_nr]))
+    {
+      hash_type * well_obs_hash = hash_get(node->well_hash, well_list[well_nr]);
+      hash_insert_double(well_obs_hash, "WOPR", 0.0);
+      hash_insert_double(well_obs_hash, "WWPR", 0.0);
+      hash_insert_double(well_obs_hash, "WGPR", 0.0);
+      hash_insert_double(well_obs_hash, "WWGPR", 0.0);
+      hash_insert_double(well_obs_hash, "WWCT", 0.0);
+      hash_insert_double(well_obs_hash, "WGOR", 0.0);
+    }
+    else
+    {
+      hash_type * well_obs_hash = hash_alloc();
+      hash_insert_double(well_obs_hash, "WOPR", 0.0);
+      hash_insert_double(well_obs_hash, "WWPR", 0.0);
+      hash_insert_double(well_obs_hash, "WGPR", 0.0);
+      hash_insert_double(well_obs_hash, "WWGPR", 0.0);
+      hash_insert_double(well_obs_hash, "WWCT", 0.0);
+      hash_insert_double(well_obs_hash, "WGOR", 0.0);
+      hash_insert_hash_owned_ref(node->well_hash, well_list[well_nr], well_obs_hash, hash_free__);
+    }
+  }
+}
+
+
+
 static void history_node_update_gruptree_grups(history_node_type * node, char ** children, char ** parents, int num_pairs)
 {
   for(int pair = 0; pair < num_pairs; pair++)
@@ -354,6 +408,10 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
     {
       hash_type * well_hash = sched_kw_alloc_well_obs_hash(sched_kw);
       history_node_register_wells(node, well_hash);
+      int num_wells = hash_get_size(well_hash);
+      char ** well_list = hash_alloc_keylist(well_hash);
+      history_node_add_producer_defaults(node, (const char **) well_list, num_wells);
+      util_free_stringlist(well_list, num_wells);
       hash_free(well_hash);
       break;
     }
@@ -362,6 +420,7 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
       int num_wells;
       char ** well_list = sched_kw_alloc_well_list(sched_kw, &num_wells);
       history_node_delete_wells(node, (const char **) well_list, num_wells); 
+      history_node_add_producer_defaults(node, (const char **) well_list, num_wells);
       util_free_stringlist(well_list, num_wells);
       break;
     }
@@ -370,6 +429,7 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
       int num_wells;
       char ** well_list = sched_kw_alloc_well_list(sched_kw, &num_wells);
       history_node_delete_wells(node, (const char **) well_list, num_wells); 
+      history_node_add_injector_defaults(node, (const char **) well_list, num_wells);
       util_free_stringlist(well_list, num_wells);
       break;
     }
@@ -378,6 +438,7 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
       int num_wells;
       char ** well_list = sched_kw_alloc_well_list(sched_kw, &num_wells);
       history_node_delete_wells(node, (const char **) well_list, num_wells); 
+      history_node_add_injector_defaults(node, (const char **) well_list, num_wells);
       util_free_stringlist(well_list, num_wells);
       break;
     }
@@ -385,6 +446,10 @@ static void history_node_parse_data_from_sched_kw(history_node_type * node, cons
     {
       hash_type * well_hash = sched_kw_alloc_well_obs_hash(sched_kw);
       history_node_register_wells(node, well_hash);
+      int num_wells = hash_get_size(well_hash);
+      char ** well_list = hash_alloc_keylist(well_hash);
+      history_node_add_injector_defaults(node, (const char **) well_list, num_wells);
+      util_free_stringlist(well_list, num_wells);
       hash_free(well_hash);
       break;
     }
@@ -725,15 +790,15 @@ void   history_alloc_time_series_from_summary_key
 (
                     const history_type * history,
                     const char         * summary_key,
-                    int                * num_restarts,
-                    double             * value,
-                    bool               * default_used
+                    int                * __num_restarts,
+                    double            ** __value,
+                    bool              ** __default_used
 )
 {
-  *num_restarts = history_get_num_restarts(history);
+  int num_restarts = history_get_num_restarts(history);
 
-  value        = util_malloc(*num_restarts * sizeof * value,        __func__);
-  default_used = util_malloc(*num_restarts * sizeof * default_used, __func__);
+  double * value        = util_malloc(num_restarts * sizeof * value,        __func__);
+  bool   * default_used = util_malloc(num_restarts * sizeof * default_used, __func__);
 
   int argc;
   char ** argv;
@@ -741,7 +806,7 @@ void   history_alloc_time_series_from_summary_key
   if(argc != 2)
     util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, summary_key);
 
-  for(int restart_nr = 0; restart_nr < *num_restarts; restart_nr++)
+  for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
   {
     if(history_str_is_group_name(history, restart_nr, argv[1]))
       value[restart_nr] = history_get_group_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
@@ -752,4 +817,7 @@ void   history_alloc_time_series_from_summary_key
   }
 
   util_free_stringlist(argv, argc);
+  *__num_restarts = num_restarts;
+  *__value        = value;
+  *__default_used = default_used;
 }

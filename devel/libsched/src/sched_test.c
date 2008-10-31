@@ -76,6 +76,21 @@ int main(int argc, char **argv)
   printf("-- Gas rate for field at last restart is   %9.3f\n", grate);
 
 
+  // Try to get a time series
+  char   * summary_key = "GOPR:FIELD";
+  bool   * defaults_used;
+  double * values;
+
+  history_alloc_time_series_from_summary_key(history, summary_key, &num_restart_files, &values, &defaults_used);
+
+  for(int restart_nr = 0; restart_nr < num_restart_files; restart_nr++)
+  {
+    printf("KEY: %s VALUE: %9.3f DEFAULT: %i\n", summary_key, values[restart_nr], defaults_used[restart_nr]);
+  }
+
+  free(values);
+  free(defaults_used);
+
 
   // Clean up
   printf("-- Cleaning up..\n");
