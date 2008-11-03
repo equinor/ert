@@ -6,6 +6,7 @@
 #include <ext_job.h>
 #include <config.h>
 #include <stringlist.h>
+#include <subst.h>
 
 /*
 
@@ -151,22 +152,22 @@ void ext_job_add_environment(ext_job_type *ext_job , const char * key , const ch
 }
 
 
-static void __fprintf_python_string(FILE * stream , const char * id , const char * value, const hash_type * context_hash) {
+static void __fprintf_python_string(FILE * stream , const char * id , const char * value, const subst_list_type * subst_list) {
   fprintf(stream , "\"%s\" : " , id);
   if (value == NULL)
     fprintf(stream,"None");
   else {
     
-    if (context_hash != NULL) {
+    if (subst_list != NULL) {
       fprintf(stream,"\"");
-      util_filtered_fprintf( value , strlen(value) , stream , '<' , '>' , context_hash , util_filter_warn0);
+      subst_list_filtered_fprintf( subst_list , value , stream );
       fprintf(stream,"\"");
     } else
       fprintf(stream,"\"%s\"" , value);
   }
 }
 
-static void __fprintf_python_list(FILE * stream , const char * id , const stringlist_type * list , const hash_type * context_hash ) {
+static void __fprintf_python_list(FILE * stream , const char * id , const stringlist_type * list , const subst_list_type * subst_list ) {
   int size;
   int i;
   fprintf(stream , "\"%s\" : " , id);
@@ -179,9 +180,9 @@ static void __fprintf_python_list(FILE * stream , const char * id , const string
   for (i = 0; i < size; i++) {
     const char * value = stringlist_iget(list , i);
     
-    if (context_hash != NULL) {
+    if (subst_list != NULL) {
       fprintf(stream,"\"");
-      util_filtered_fprintf( value , strlen(value) , stream , '<' , '>' , context_hash , util_filter_warn0);
+      subst_list_filtered_fprintf( subst_list , value , stream );
       fprintf(stream,"\"");
     } else
       fprintf(stream,"\"%s\"" , value);
@@ -194,7 +195,7 @@ static void __fprintf_python_list(FILE * stream , const char * id , const string
 
 
 
-static void __fprintf_python_hash(FILE * stream , const char * id , const hash_type * hash, const hash_type * context_hash) {
+static void __fprintf_python_hash(FILE * stream , const char * id , const hash_type * hash, const subst_list_type * subst_list) {
   int i;
   int size = hash_get_size(hash);
   char ** key_list = hash_alloc_keylist( (hash_type *) hash);
@@ -204,9 +205,9 @@ static void __fprintf_python_hash(FILE * stream , const char * id , const hash_t
     const char * value = hash_get(hash , key_list[i]);
 
     fprintf(stream,"\"%s\" : " , key_list[i]);
-    if (context_hash != NULL) {
+    if (subst_list != NULL) {
       fprintf(stream,"\"");
-      util_filtered_fprintf( value , strlen(value) , stream , '<' , '>' , context_hash , util_filter_warn0);
+      subst_list_filtered_fprintf( subst_list , value , stream );
       fprintf(stream,"\"");
     } else
       fprintf(stream,"\"%s\"" , value);
@@ -232,20 +233,20 @@ static void __indent(FILE * stream, int indent) {
 }
 
 
-void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const hash_type * context_hash) { 
+void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * subst_list) {
   fprintf(stream," {");
   __indent(stream, 0); __fprintf_python_string(stream , "name"  	  , ext_job->name , NULL);                    __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , context_hash);    __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	  , ext_job->target_file , context_hash);     __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	  , ext_job->start_file , context_hash);      __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	  , ext_job->stdout_file , context_hash);     __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	  , ext_job->stderr_file , context_hash);     __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	  , ext_job->stdin_file , context_hash);      __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , subst_list);    __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	  , ext_job->target_file , subst_list);     __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	  , ext_job->start_file , subst_list);      __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	  , ext_job->stdout_file , subst_list);     __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	  , ext_job->stderr_file , subst_list);     __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	  , ext_job->stdin_file , subst_list);      __end_line(stream);
 
-  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , ext_job->argv      , context_hash);       __end_line(stream);
-  __indent(stream, 2); __fprintf_python_list(stream   , "init_code"    	  , ext_job->init_code , context_hash);       __end_line(stream);
-  __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	  , ext_job->environment , context_hash);     __end_line(stream);
-  __indent(stream, 2); __fprintf_python_hash(stream   , "platform_exe" 	  , ext_job->platform_exe , context_hash); 
+  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , ext_job->argv      , subst_list);       __end_line(stream);
+  __indent(stream, 2); __fprintf_python_list(stream   , "init_code"    	  , ext_job->init_code , subst_list);       __end_line(stream);
+  __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	  , ext_job->environment , subst_list);     __end_line(stream);
+  __indent(stream, 2); __fprintf_python_hash(stream   , "platform_exe" 	  , ext_job->platform_exe , subst_list); 
   fprintf(stream,"}");
 }
 
