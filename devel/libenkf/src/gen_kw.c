@@ -24,6 +24,7 @@ struct gen_kw_struct {
   DEBUG_DECLARE
   const gen_kw_config_type *config;
   scalar_type              *scalar;
+  subst_list_type          *subst_list;
 };
 
 /*****************************************************************/
@@ -36,6 +37,7 @@ void gen_kw_free_data(gen_kw_type *gen_kw) {
 
 void gen_kw_free(gen_kw_type *gen_kw) {
   scalar_free(gen_kw->scalar);
+  subst_list_free(gen_kw->subst_list);
   free(gen_kw);
 }
 
@@ -76,10 +78,11 @@ const double * gen_kw_get_output_ref(const gen_kw_type * gen_kw) {
 
 
 gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
-  gen_kw_type * gen_kw  = malloc(sizeof *gen_kw);
+  gen_kw_type * gen_kw  = util_malloc(sizeof *gen_kw , __func__);
   gen_kw->config = config;
-  gen_kw->scalar   = scalar_alloc(config->scalar_config); 
+  gen_kw->scalar = scalar_alloc(gen_kw_config_get_scalar_config( config ));
   DEBUG_ASSIGN(gen_kw)
+  gen_kw->subst_list = subst_list_alloc();  
   return gen_kw;
 }
 
@@ -165,18 +168,16 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   if (template_file != NULL) {
     const int size               = gen_kw_config_get_data_size(gen_kw->config);
     const double * output_data   = scalar_get_output_ref(gen_kw->scalar);
-    subst_list_type * subst_list = subst_list_alloc();
+
     int ikw;
     
     gen_kw_output_transform(gen_kw);
     for (ikw = 0; ikw < size; ikw++) {
-      char * key = util_alloc_sprintf("<%s>" , gen_kw_config_get_name(gen_kw->config , ikw));
-      subst_list_insert_owned_ref(subst_list , key , util_alloc_sprintf("%g" , output_data[ikw]));
-      free(key);
+      const char * key = gen_kw_config_get_tagged_name(gen_kw->config , ikw);      
+      subst_list_insert_owned_ref(gen_kw->subst_list , key , util_alloc_sprintf("%g" , output_data[ikw]));
     }
     
-    subst_list_filter_file( subst_list , template_file , target_file);
-    subst_list_free(subst_list);
+    subst_list_filter_file( gen_kw->subst_list , template_file , target_file);
   } else 
     util_abort("%s: internal error - tried to filter gen_kw instance without template file.\n",__func__);
 }

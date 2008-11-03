@@ -81,7 +81,7 @@ havana_fault_type * havana_fault_alloc(const havana_fault_config_type * config) 
   havana_fault_type * havana_fault  = malloc(sizeof * havana_fault);
   havana_fault->config = config;
   gen_kw_config_type * gen_kw_config = config->gen_kw_config;
-  havana_fault->scalar               = scalar_alloc(gen_kw_config->scalar_config); 
+  havana_fault->scalar               = scalar_alloc(gen_kw_config_get_scalar_config( gen_kw_config )); 
   DEBUG_ASSIGN(havana_fault)
   return havana_fault;
 }

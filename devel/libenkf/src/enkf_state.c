@@ -54,6 +54,9 @@
 
 #define ENKF_STATE_TYPE_ID 78132
 
+#define __START_TAG "<"
+#define __END_TAG   ">"
+
 
 /**
    This struct is a pure utility structure used to pack the various
@@ -375,6 +378,19 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
   return state;
 }
 
+/**
+   The value is string - the subst_list routine takes ownership of the
+   reference, i.e. the calling scope should allocate the string - but
+   not free it.
+*/
+
+static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
+  char * tagged_key = util_alloc_sprintf("%s%s%s" , __START_TAG , kw , __END_TAG);
+  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , value);
+  free(tagged_key);
+}
+
+
 
 
 enkf_state_type * enkf_state_alloc(int iens,
@@ -402,10 +418,10 @@ enkf_state_type * enkf_state_alloc(int iens,
 
   enkf_state->subst_list      = subst_list_alloc();
 
-  enkf_state_set_data_kw(enkf_state , "IENS"  	    , util_alloc_sprintf("%d"   , iens));
-  enkf_state_set_data_kw(enkf_state , "IENS4" 	    , util_alloc_sprintf("%04d" , iens));
-  enkf_state_set_data_kw(enkf_state , "ECL_BASE"    , util_alloc_string_copy(enkf_state->my_config->eclbase));  /* Can not change run_time .. */
-  enkf_state_set_data_kw(enkf_state , "SMSPEC_FILE" , ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1));
+  enkf_state_add_subst_kw(enkf_state , "IENS"  	    , util_alloc_sprintf("%d"   , iens));
+  enkf_state_add_subst_kw(enkf_state , "IENS4" 	    , util_alloc_sprintf("%04d" , iens));
+  enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , util_alloc_string_copy(enkf_state->my_config->eclbase));  /* Can not change run_time .. */
+  enkf_state_add_subst_kw(enkf_state , "SMSPEC_FILE" , ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1));
 
 
   /*
@@ -438,7 +454,7 @@ INCLDUE
     if (init_file != NULL) 
     {
       char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
-      enkf_state_set_data_kw(enkf_state , "INIT" , util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2));
+      enkf_state_add_subst_kw(enkf_state , "INIT" , util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2));
       free(tmp_include);
     }
   }
@@ -449,7 +465,7 @@ INCLDUE
     keys     = hash_get_size( data_kw );
     for (int i = 0; i < keys; i++) {
       char * value = util_alloc_string_copy(hash_get(data_kw , key_list[i]));
-      enkf_state_set_data_kw(enkf_state , key_list[i] , value);   /* The subst_list will free it in the end. */
+      enkf_state_add_subst_kw(enkf_state , key_list[i] , value);   /* The subst_list will free it in the end. */
     }
     util_free_stringlist(key_list , keys); 
   }
@@ -927,17 +943,6 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 }
 
 
-/**
-   The value is string - the subst_list routine takes ownership of the
-   reference, i.e. the calling scope should allocate the string - but
-   not free it.
-*/
-
-void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
-  char * tagged_key = util_alloc_sprintf("<%s>" , kw);
-  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , value);
-  free(tagged_key);
-}
 
 
 
@@ -974,7 +979,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     if (run_info->step1 > 0) {
       char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
-      enkf_state_set_data_kw(enkf_state , "INIT" , data_initialize);
+      enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize);
     }
     
     util_make_path(run_info->run_path);
@@ -1012,10 +1017,10 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     {
       const bool fmt_file  	= ecl_config_get_formatted(enkf_state->ecl_config);
-      enkf_state_set_data_kw(enkf_state , "REPORT_STEP1"  , util_alloc_sprintf("%d" , run_info->step1));
-      enkf_state_set_data_kw(enkf_state , "REPORT_STEP2"  , util_alloc_sprintf("%d" , run_info->step2));
-      enkf_state_set_data_kw(enkf_state , "RESTART_FILE1" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1));
-      enkf_state_set_data_kw(enkf_state , "RESTART_FILE2" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step2));
+      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP1"  , util_alloc_sprintf("%d" , run_info->step1));
+      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP2"  , util_alloc_sprintf("%d" , run_info->step2));
+      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1));
+      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step2));
       
       /* This is where the job script is created */
       ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,run_info->run_path , enkf_state->subst_list);

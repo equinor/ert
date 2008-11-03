@@ -8,15 +8,33 @@
 #include <trans_func.h>
 #include <scalar_config.h>
 
+/**
+   These are the tags used to denote a string which should be replaced
+   by a numeric value. 
+*/
+#define __START_TAG "<"
+#define __END_TAG   ">"
+
+
+struct gen_kw_config_struct {
+  char                * executable;
+  char               ** kw_list;
+  char               ** tagged_kw_list;  /* The same keywords - but '<' and '>' */
+  scalar_config_type  * scalar_config;
+  char                * template_file;
+};
+
+
 
 
 
 static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file) {
   gen_kw_config_type *gen_kw_config = malloc(sizeof *gen_kw_config);
-  gen_kw_config->kw_list       = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
-  gen_kw_config->scalar_config = scalar_config_alloc_empty(size);
-  gen_kw_config->template_file = util_alloc_string_copy(template_file);
-  gen_kw_config->executable    = NULL;
+  gen_kw_config->kw_list        = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
+  gen_kw_config->tagged_kw_list = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
+  gen_kw_config->scalar_config  = scalar_config_alloc_empty(size);
+  gen_kw_config->template_file  = util_alloc_string_copy(template_file);
+  gen_kw_config->executable     = NULL;
 
 
   /* 
@@ -82,6 +100,7 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
       if (fscanf(stream , "%s" , name) != 1) 
 	util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
       
+      config->tagged_kw_list[line_nr] = util_alloc_sprintf("%s%s%s" , __START_TAG , name , __END_TAG);
       config->kw_list[line_nr] = util_alloc_string_copy(name);
       scalar_config_fscanf_line(config->scalar_config , line_nr , stream);
       line_nr++;
@@ -95,7 +114,8 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
 
 
 void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
-  util_free_stringlist(gen_kw_config->kw_list , scalar_config_get_data_size(gen_kw_config->scalar_config));
+  util_free_stringlist(gen_kw_config->kw_list        , scalar_config_get_data_size(gen_kw_config->scalar_config));
+  util_free_stringlist(gen_kw_config->tagged_kw_list , scalar_config_get_data_size(gen_kw_config->scalar_config));
   if (gen_kw_config->template_file != NULL)
     free(gen_kw_config->template_file);
   scalar_config_free(gen_kw_config->scalar_config);
@@ -113,8 +133,18 @@ const char * gen_kw_config_get_name(const gen_kw_config_type * config, int kw_nr
   if (kw_nr >= 0 && kw_nr < size) 
     return config->kw_list[kw_nr];
   else {
-    fprintf(stderr,"%s: asked for kw number:%d - valid interval: [0,%d] - aborting \n",__func__ , kw_nr , size - 1);
-    abort();
+    util_abort("%s: asked for kw number:%d - valid interval: [0,%d] - aborting \n",__func__ , kw_nr , size - 1);
+    return NULL;
+  }
+}
+
+const char * gen_kw_config_get_tagged_name(const gen_kw_config_type * config, int kw_nr) {
+  const int size = gen_kw_config_get_data_size(config);
+  if (kw_nr >= 0 && kw_nr < size) 
+    return config->tagged_kw_list[kw_nr];
+  else {
+    util_abort("%s: asked for kw number:%d - valid interval: [0,%d] - aborting \n",__func__ , kw_nr , size - 1);
+    return NULL;
   }
 }
 
@@ -126,6 +156,11 @@ char ** gen_kw_config_get_name_list(const gen_kw_config_type * config) {
 
 const char * gen_kw_config_get_template_ref(const gen_kw_config_type * config) {
   return config->template_file;
+}
+
+
+const scalar_config_type * gen_kw_config_get_scalar_config(const gen_kw_config_type * config) {
+  return config->scalar_config;
 }
 
 
