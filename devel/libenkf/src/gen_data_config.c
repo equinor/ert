@@ -9,7 +9,7 @@
 #include <enkf_macros.h>
 #include <enkf_types.h>
 #include <pthread.h>
-
+#include <stringlist.h>
 
 /**
    Observe that this config object is principally quite different from
@@ -53,7 +53,36 @@ struct gen_data_config_struct {
   char            * __file_tag;      /* Observe that this is a tag found in a gen_data file. The gen_data object
 					has already asserted that it matches the config_tag. */     
   pthread_mutex_t   update_lock;
+
+  /*-----------------------------------------------------------------*/
+  /* The variables below include information of the local analysis update*/
+
+  bool  *local_active;        /*Whether a global or local analysis scheme should be used: local_active=false =>GLOBAL, local_active=true =>LOCAL */
+  char  **local_ana_file_list;      /* The file we load the local analysis info from*/  
+
+  /*------------------------------------------------------------------------------*/
+  /* An example of the input file local_analysis_info.dat:                        */
+  /* 2                                                                            */
+  /* 1 1 1 5 1 2 3 4 5                                                            */
+  /* 1 2 2 3 5 2 3 4 5 6                                                          */
+  /*------------------------------------------------------------------------------*/
+  int   num_local_updates;         /* The total number of local analysis updates */
+  bool  *local_step_active;        /* Whether the specific local update is active - i.e should be used in the EnKF update */
+  int   *num_param;                /* The total number of parameters included in each local update*/ 
+  int   **param_index_i_list;      /* A table which hold the i indexes for the parameters that should be 
+				      included for each local update*/
+  int  **param_index_j_list;       /* A table which hold the j indexes for the parameters that should be
+				      included for each local update*/
+  int  **param_index_k_list;       /* A table which hold the K indexes for the parameters that should be
+				      included for each local update*/
+  int   *num_obs ;            /* The total number of observations/data included in each local update*/ 
+  int   **obs_index_list;           /* A table which hold the indexes for the observations/data 
+				       that should be included for each local update*/
+  int  local_step;           /* Hold the actual local step used in the local analysis (changed in enkf_main.c)*/
 };
+
+
+
 
 
 /**
@@ -76,22 +105,37 @@ static int gen_data_config_get_report_index(const gen_data_config_type * config 
 
 static gen_data_config_type * gen_data_config_alloc_empty( enkf_var_type var_type ) {
   gen_data_config_type * config = util_malloc(sizeof * config , __func__);
-  config->data_size  	 = 0;
-  config->var_type   	 = var_type;
-  config->num_active 	 = 0;
-  config->active_reports = NULL;
+  config->data_size  	    = 0;
+  config->var_type   	    = var_type;
+  config->num_active 	    = 0;
+  config->active_reports    = NULL;
   config->config_tag_list       = NULL;
+
   config->ecl_file_list  = NULL;
   config->obs_file_list  = NULL;
   config->obs_active     = NULL;    
   config->active_list    = NULL;
   config->__file_tag     = NULL;
   config->__report_step  = -1;
+
   pthread_mutex_init( &config->update_lock , NULL );
   {
     config->__report_index = 0;
     gen_data_config_deactivate_metadata(config);
   }
+  config->local_active      = NULL;
+  config->local_ana_file_list = NULL;
+
+  config->num_local_updates = 0;
+  config->local_step_active = NULL;
+  config->num_param = NULL;
+  config->param_index_i_list = NULL;
+  config->param_index_j_list = NULL;
+  config->param_index_k_list = NULL;
+  config->num_obs = NULL;
+  config->obs_index_list = NULL;
+  config->local_step = 0;
+
   return config;
 }
 
@@ -100,6 +144,7 @@ int gen_data_config_get_data_size(const gen_data_config_type * config) { return 
 
 
 void gen_data_config_free(gen_data_config_type * config) {
+  int i;
   util_safe_free(config->active_reports);
   util_safe_free(config->__file_tag);
   util_free_stringlist(config->config_tag_list      , config->num_active);
@@ -107,6 +152,25 @@ void gen_data_config_free(gen_data_config_type * config) {
   util_free_stringlist(config->obs_file_list , config->num_active);
   util_safe_free(config->obs_active);
   util_safe_free(config->active_list);
+
+  util_safe_free(config->local_active);
+  util_free_stringlist(config->local_ana_file_list,config->num_active);
+  util_safe_free(config->local_step_active);
+  
+  util_safe_free(config->num_param);
+  util_safe_free(config->num_obs);
+
+  for(i = 0; i < config->num_local_updates; i++){
+    util_safe_free(config->param_index_i_list[i]);
+    util_safe_free(config->param_index_j_list[i]);
+    util_safe_free(config->param_index_k_list[i]);
+    util_safe_free(config->obs_index_list[i]);
+  }
+  util_safe_free(config->param_index_i_list);
+  util_safe_free(config->param_index_j_list);
+  util_safe_free(config->param_index_k_list);
+  util_safe_free(config->obs_index_list);
+    
   free(config);
 }
 
@@ -192,6 +256,125 @@ void gen_data_config_assert_metadata(gen_data_config_type * config , int report_
 
 
 
+void gen_data_config_read_local_map(gen_data_config_type * config, int report_step){
+  FILE * stream;
+  char * filename;
+  
+  filename = util_alloc_string_copy(config->local_ana_file_list[report_step-1]);
+  
+  if(util_file_exists(filename)){
+    stream = util_fopen(filename,"r");
+    gen_data_config_fload_local_data(stream , config);
+  }
+  else{
+    util_abort("%s: Failed to read local info file",__func__);
+  }
+  
+  fclose(stream);
+  free(filename);
+
+}
+
+void gen_data_config_fload_local_data(FILE * stream, gen_data_config_type * config){
+  int i;
+  int j;
+  int __local_step_active;
+
+  if(fscanf(stream, "%d",&config->num_local_updates) != 1){
+    util_abort("%s: Something wrong with the first input in the local info file \n",__func__);
+  }
+  gen_data_config_realloc_local(config, config->num_local_updates);       
+  for( i=0; i < config->num_local_updates; i++){
+    fscanf(stream,"%d",&__local_step_active);
+    config->local_step_active[i]=gen_data_config_fload_local_step_active(__local_step_active);
+    fscanf(stream, "%d",&config->num_param[i]);
+    config->param_index_i_list[i]=util_malloc(config->num_param[i] * sizeof * config->param_index_i_list[i], __func__);
+    config->param_index_j_list[i]=util_malloc(config->num_param[i] * sizeof * config->param_index_j_list[i], __func__);
+    config->param_index_k_list[i]=util_malloc(config->num_param[i] * sizeof * config->param_index_k_list[i], __func__);
+    for(j=0; j < config->num_param[i];j++){
+      /* Zero based grid cell numbers*/
+      fscanf(stream, "%d",&config->param_index_i_list[i][j]);
+      fscanf(stream, "%d",&config->param_index_j_list[i][j]);
+      fscanf(stream, "%d",&config->param_index_k_list[i][j]);
+    }
+    fscanf(stream, "%d",&config->num_obs[i]);
+    config->obs_index_list[i]=util_malloc(config->num_obs[i] * sizeof * config->obs_index_list[i], __func__);
+    for(j=0; j < config->num_obs[i];j++){
+      fscanf(stream, "%d",&config->obs_index_list[i][j]);
+    } 
+  }
+  printf("num_local_updates %d \n",config->num_local_updates);
+  printf("num_param %d \n",config->num_param[1]);
+  printf("param_index_i_list [0][0] %d \n",config->param_index_i_list[0][0]);
+  printf("param_index_j_list [0][0] %d \n",config->param_index_j_list[0][0]);
+  printf("param_index_k_list [0][0] %d \n",config->param_index_k_list[0][0]);
+  if(config->local_step_active[1]){
+    printf("local_step_active[1] \n");
+  }
+}
+    
+     
+
+bool gen_data_config_fload_local_step_active(int __local_step_active){
+  bool local_step_active;
+  local_step_active = false;
+  if (__local_step_active == 0){
+    local_step_active = false;
+  }
+  else if (__local_step_active == 1){
+    local_step_active = true;
+  }
+  else {
+    util_abort("%s: the active map in the local info file must have ONLY 0:not active and 1:active. %d invalid \n",__func__,__local_step_active );   
+  }
+  
+  return local_step_active;
+}
+
+void gen_data_config_realloc_local(gen_data_config_type * config, int num_local){
+  config->local_step_active = util_realloc(config->local_step_active, num_local * sizeof * config->local_step_active, __func__);
+  config->num_param = util_realloc(config->num_param , num_local * sizeof * config->num_param , __func__);  
+  config->param_index_i_list = util_realloc(config->param_index_i_list , num_local * sizeof * config->param_index_i_list , __func__);  
+  config->param_index_j_list = util_realloc(config->param_index_j_list , num_local * sizeof * config->param_index_j_list , __func__);  
+  config->param_index_k_list = util_realloc(config->param_index_k_list , num_local * sizeof * config->param_index_k_list , __func__);  
+  config->num_obs = util_realloc(config->num_obs , num_local * sizeof * config->num_obs , __func__);  
+  config->obs_index_list = util_realloc(config->obs_index_list , num_local * sizeof * config->obs_index_list , __func__); 
+}
+
+bool gen_data_config_get_local_active(gen_data_config_type * config, int report_step){
+  bool __local_active;
+  __local_active = config->local_active[report_step-1];
+  return __local_active;
+}
+
+/*
+This is a function called from enkf_update for each local update, where 
+the config->iactive is changed in accordance with the local_file input
+*/
+
+void gen_data_config_change_iactive(gen_data_config_type * config, int local_step){
+  int i;
+  
+  if(config->__obs_size > 0 ){
+    for(i = 0; i < config->__obs_size;i++){
+      config->iactive[i]=false;
+    }
+    for(i = 0; i < config->num_obs[local_step]; i++){
+      int index;
+      index = config->obs_index_list[local_step][i];  
+      if(index > 0){
+	config->iactive[index-1]=true;
+      }
+    }
+  }
+  else{
+    printf("obs_size = 0, no change \n");
+  }
+
+}
+
+
+
 
 
 
@@ -232,7 +415,7 @@ bool gen_data_config_is_active(const gen_data_config_type * config , int report_
 
 
 
-static void gen_data_config_add_active(gen_data_config_type * gen_config , const char * obs_file , const char * ecl_file , int report_step , bool obs_active , const char * tag) {
+static void gen_data_config_add_active(gen_data_config_type * gen_config , const char * obs_file , const char * ecl_file , int report_step , bool obs_active, const char * local_file, const char * tag) {
   if (gen_data_config_get_report_index(gen_config , report_step) >= 0)
     util_abort("%s: Report_step must be unique (at least for now...) \n",__func__);
   {
@@ -242,6 +425,8 @@ static void gen_data_config_add_active(gen_data_config_type * gen_config , const
     gen_config->obs_file_list   = util_realloc(gen_config->obs_file_list   , gen_config->num_active * sizeof * gen_config->obs_file_list  , __func__);
     gen_config->config_tag_list = util_realloc(gen_config->config_tag_list , gen_config->num_active * sizeof * gen_config->config_tag_list       , __func__);
     gen_config->obs_active      = util_realloc(gen_config->obs_active      , gen_config->num_active * sizeof * gen_config->obs_active     , __func__);
+    gen_config->local_active    = util_realloc(gen_config->local_active    , gen_config->num_active * sizeof * gen_config->local_active     , __func__);
+    gen_config->local_ana_file_list  = util_realloc(gen_config->local_ana_file_list  , gen_config->num_active * sizeof * gen_config->local_ana_file_list     , __func__);
     
     {
       int report_index = gen_config->num_active - 1;
@@ -250,6 +435,14 @@ static void gen_data_config_add_active(gen_data_config_type * gen_config , const
       gen_config->obs_file_list[report_index]   = util_alloc_string_copy(obs_file);
       gen_config->config_tag_list[report_index] = util_alloc_string_copy(tag);
       gen_config->obs_active[report_index]      = obs_active;
+      if(local_file == NULL ) {
+	gen_config->local_active[report_index] = false;
+	gen_config->local_ana_file_list[report_index] = NULL;
+      }
+      else{
+	gen_config->local_active[report_index] = true;
+	gen_config->local_ana_file_list[report_index] = util_alloc_string_copy(local_file);
+      }
     }
   }
 }
@@ -345,15 +538,17 @@ gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
     int    iarg;
     int    num_active;
     char **obs_file_list;
+    bool local_active;
 
     obs_file_list = config_alloc_active_list(config , &num_active);
-    
+    printf("num_active %d \n",num_active);
     for (iarg = 0; iarg < num_active; iarg++) {
       const char  * obs_file = obs_file_list[iarg];
       const stringlist_type * argv = config_get_stringlist_ref(config , obs_file);
       const char  * ecl_file;
+      const char  * local_ana_file;
       const char  * tag;
-      bool  obs_active = false; /* Dummy init */
+      bool  obs_active = false;   /* Dummy init */
       int report_step;
       int argc = stringlist_get_size(argv);
   
@@ -376,21 +571,75 @@ gen_data_config_type * gen_data_config_fscanf_alloc(const char * config_file) {
 	free( on_off );
       }
       
-      if (argc == 3)
+      
+      local_ana_file = util_alloc_string_copy( stringlist_iget(argv,3 ));
+      if (strcmp(local_ana_file, "GLOBAL") == 0){
+	local_ana_file=NULL;
+      }
+      
+      if (argc == 4)
 	tag = NULL;
       else
-	tag = stringlist_iget(argv , 3);
-      
-      gen_data_config_add_active(gen_config , obs_file , ecl_file , report_step , obs_active , tag);
+
+      tag = stringlist_iget(argv , 4);      
+      printf("obs_file %s \n",obs_file);
+      printf("ecl_file %s \n",ecl_file);
+      printf("report_step %d \n",report_step);
+      printf("tag %s \n",tag);
+      printf("local file %s \n", local_ana_file);
+      gen_data_config_add_active(gen_config , obs_file , ecl_file , report_step , obs_active , local_ana_file, tag);
+
+      /*
+	tag = stringlist_iget(argv , 3);      
+	gen_data_config_add_active(gen_config , obs_file , ecl_file , report_step , obs_active , tag);
+      */
     }
+
+    /*  Test if local analysis should be used. If yes, the code load the local info file*/
+    local_active = gen_data_config_get_local_active(gen_config,1);
+    if(local_active){
+      gen_data_config_read_local_map(gen_config,1);
+    }
+     
     util_free_stringlist(obs_file_list , num_active);
   }
   config_free(config);
   return gen_config;
 }
 
+int gen_data_config_get_num_local_updates(gen_data_config_type * gen_data_config){
+  return gen_data_config->num_local_updates;
+}
+
+
+void gen_data_config_set_local_step(gen_data_config_type * gen_data_config, int __local_step){
+  printf("gen_data_config_set_local_step: %d \n",__local_step);
+  gen_data_config->local_step = __local_step;
+}
+
+int gen_data_config_get_local_step(gen_data_config_type * gen_data_config){
+  return gen_data_config->local_step;
+}
+
+int * gen_data_config_get_param_index_i(const gen_data_config_type * gen_data_config, int local_step){
+  return gen_data_config->param_index_i_list[local_step];
+}
+
+int * gen_data_config_get_param_index_j(const gen_data_config_type * gen_data_config, int local_step){
+  return gen_data_config->param_index_j_list[local_step];
+}
+
+int * gen_data_config_get_param_index_k(const gen_data_config_type * gen_data_config, int local_step){
+  return gen_data_config->param_index_k_list[local_step];
+}
+
+int gen_data_config_get_num_param(const gen_data_config_type * gen_data_config,int local_step){
+  return gen_data_config->num_param[local_step];
+}
+
 
 /*****************************************************************/
+
 
 VOID_FREE(gen_data_config)
 GET_ACTIVE_SIZE(gen_data)
