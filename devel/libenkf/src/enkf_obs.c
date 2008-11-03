@@ -18,6 +18,7 @@
 #include <sched_file.h>
 #include <summary_obs.h>
 #include <gen_obs.h>
+#include <gen_data_config.h>
 
 static int enkf_obs_sscanf_report_step(const enkf_obs_type * enkf_obs , const char * meas_time_string) {
   int report_step;
@@ -389,8 +390,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file, const ensemble_c
 	    if (token_list[i][1] == '-') {
 	      active_tokens = i;
 	      break;
-	    }
-	  }
+	    }	  }
 	}
 	if (active_tokens > 0) {
 	  const char *kw           = token_list[0];
@@ -446,3 +446,38 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file, const ensemble_c
   }
   return enkf_obs;
 }
+
+bool enkf_obs_get_local_active(ensemble_config_type * ensemble_config, int report_step){
+  bool local_active;
+  const gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
+  local_active = gen_data_config_get_local_active(gen_data_config, report_step);
+  return local_active;
+}
+
+/* This function returns a gen_data_config object */
+gen_data_config_type * enkf_obs_get_gen_data_config(ensemble_config_type * ensemble_config){
+  const char * state_gen_data = "AI";
+  const enkf_config_node_type * config_node_gen_data = ensemble_config_get_node(ensemble_config , state_gen_data);
+  gen_data_config_type * gen_data_config = enkf_config_node_get_ref(config_node_gen_data);  
+  return gen_data_config;
+}
+
+void enkf_obs_change_gen_data_config_iactive(ensemble_config_type * ensemble_config, int local_step){
+  gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
+  gen_data_config_change_iactive(gen_data_config,local_step);
+  
+}
+
+
+int enkf_obs_get_num_local_updates(ensemble_config_type * ensemble_config){
+  int num_local_updates;
+  gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
+  num_local_updates = gen_data_config_get_num_local_updates(gen_data_config);
+  return num_local_updates;
+}
+
+void enkf_obs_set_local_step(ensemble_config_type * ensemble_config, int local_step){
+  gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
+  gen_data_config_set_local_step(gen_data_config,local_step);
+}
+
