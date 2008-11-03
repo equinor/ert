@@ -10,6 +10,7 @@ extern "C" {
 #include <ecl_rft_node.h>
 #include <ensemble_config.h>
 #include <enkf_config_node.h>
+#include <gen_data_config.h>
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
@@ -26,8 +27,17 @@ void            enkf_obs_free(enkf_obs_type * );
 enkf_obs_type * enkf_obs_fscanf_alloc(const char * , const ensemble_config_type * , const sched_file_type * ,const history_type * hist);
 
 /*void 		enkf_obs_measure(enkf_obs_type * , int , const enkf_state_type *);*/
+
 void 		enkf_obs_get_observations(enkf_obs_type * , int , obs_data_type * );
 void            enkf_obs_add_well_obs(enkf_obs_type *   , const enkf_config_node_type * , const char * , const char * , const char * );
+
+
+bool            enkf_obs_get_local_active(ensemble_config_type *, int );
+gen_data_config_type * enkf_obs_get_gen_data_config(ensemble_config_type *);
+void            enkf_obs_change_gen_data_config_iactive(ensemble_config_type *,int);
+int             enkf_obs_get_num_local_updates(ensemble_config_type *);
+
+void            enkf_obs_set_local_step(ensemble_config_type *, int);
 
 #ifdef __cplusplus
 }
