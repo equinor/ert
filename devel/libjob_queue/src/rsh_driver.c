@@ -2,6 +2,8 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <basic_queue_driver.h>
 #include <rsh_driver.h>
 #include <util.h>
@@ -56,14 +58,21 @@ struct rsh_driver_struct {
 
 
 static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) {
-  rsh_host_type * host = util_malloc(sizeof * host , __func__);
-  
-  host->host_name   = util_alloc_string_copy(host_name);
-  host->max_running = max_running;
-  host->running     = 0;
-  pthread_mutex_init( &host->host_mutex , NULL );
+  struct addrinfo * result;
+  if (getaddrinfo(host_name , NULL , NULL , &result) == 0) {
+    rsh_host_type * host = util_malloc(sizeof * host , __func__);
+    
+    host->host_name   = util_alloc_string_copy(host_name);
+    host->max_running = max_running;
+    host->running     = 0;
+    pthread_mutex_init( &host->host_mutex , NULL );
 
-  return host;
+    freeaddrinfo( result );
+    return host;
+  } else {
+    fprintf(stderr,"** Warning: could not locate server: %s \n",host_name);
+    return NULL;
+  }
 }
 
 
@@ -330,7 +339,9 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
       }
     }
   }
-  
+  if (rsh_driver->num_hosts == 0) 
+    util_abort("%s: failed to add any valid RSH hosts - aborting \n",__func__);
+
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) rsh_driver;
     basic_queue_driver_init(basic_driver);
