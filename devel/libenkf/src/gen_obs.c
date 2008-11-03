@@ -65,12 +65,14 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 
 void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data) {
   /* Checks if the observation is globally ON or OFF - the enkf_obs_node might be a bit messed up on this question. */ 
+
   if (gen_data_config_obs_on(gen_obs->config , report_step)) {  
     char *file_tag;
     ecl_type_enum      ecl_type;
     int size;
     char * std;
     char * data;
+    int local_step;
     {
       bool               fortran_endian_flip;  
       gen_data_file_type file_type;
@@ -91,7 +93,18 @@ void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data
 	fclose( stream );
       }
     }
-  
+    /* Change iactive if Local analysis */
+
+
+    
+    bool local_active = gen_data_config_get_local_active(gen_obs->config,report_step);
+    printf("local_active in gen_obs: %d\n",local_active);
+      /*bool local_active = false; */
+    if(local_active){      
+      local_step = gen_data_config_get_local_step(gen_obs->config);
+      gen_data_config_change_iactive(gen_obs->config,local_step);
+    }
+
     {
       const gen_data_config_type * config = gen_obs->config;
       const int  active_size = gen_data_config_get_active_size(config);
