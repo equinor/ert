@@ -84,7 +84,8 @@ void stupid_plot(int N , const double * x , const double *y) {
 
 
 
-void enkf_ui_plot_time(enkf_main_type * enkf_main) {
+void enkf_ui_plot_time(void * void_arg) {
+  enkf_main_type             * enkf_main  = enkf_main_safe_cast( void_arg );
   const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {

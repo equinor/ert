@@ -6,7 +6,7 @@
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <assert.h>
-
+#include <subst.h>
 #include <havana_fault_config.h>
 
 /** 
@@ -105,9 +105,9 @@ static  void fault_group_fprintf_ALL_faultlist(const fault_group_type **group_li
 
 
 
-static void fault_group_run_havana(const fault_group_type * group , hash_type * kw_hash , const char * run_path , const char * PFM_path , const char * tmp_PFM_path , const char * havana_executable) {
+static void fault_group_run_havana(const fault_group_type * group , const subst_list_type * subst_list , const char * run_path , const char * PFM_path , const char * tmp_PFM_path , const char * havana_executable) {
   char * target_file = util_alloc_full_path( run_path , group->group_name);
-  util_filter_file( group->modify_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
+  subst_list_filter_file( subst_list , group->modify_template , target_file);
   fault_group_link_faults(group , PFM_path , tmp_PFM_path);
   fault_group_fprintf_faultlist(group , tmp_PFM_path);
 
@@ -216,18 +216,21 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
   char * tmp_fault_output_path = util_alloc_full_path(run_path  , "tmp_havana_output_faults");
   const int size = havana_fault_config_get_data_size(config);
   int igroup;
-  hash_type * kw_hash = hash_alloc();
+  subst_list_type * subst_list = subst_list_alloc();
 
   scalar_transform( scalar_data );
   {
     const double * data = scalar_get_output_ref( scalar_data );
     int ikw;
-    for (ikw = 0; ikw < size; ikw++)
-      hash_insert_hash_owned_ref(kw_hash , havana_fault_config_get_name(config , ikw) , void_arg_alloc_double(data[ikw]) , void_arg_free__);
+    for (ikw = 0; ikw < size; ikw++) {
+      char * tagged_fault = util_alloc_sprintf("<%s>" , havana_fault_config_get_name(config , ikw));
+      subst_list_insert_owned_ref(subst_list , tagged_fault , util_alloc_sprintf("%g" , data[ikw]));
+      free(tagged_fault);
+    }
   }
-  hash_insert_hash_owned_ref( kw_hash , "INPUT_FAULTS"   , void_arg_alloc_ptr(tmp_fault_input_path)          , void_arg_free__);
-  hash_insert_hash_owned_ref( kw_hash , "OUTPUT_FAULTS"  , void_arg_alloc_ptr(tmp_fault_output_path)         , void_arg_free__);
-  hash_insert_hash_owned_ref( kw_hash , "INPUT_ECLIPSE"  , void_arg_alloc_ptr(config->unfaulted_GRDECL_file) , void_arg_free__);  
+  subst_list_insert_owned_ref( subst_list , "<INPUT_FAULTS>"   , tmp_fault_input_path);
+  subst_list_insert_owned_ref( subst_list , "<OUTPUT_FAULTS>"  , tmp_fault_output_path);
+  subst_list_insert_ref( subst_list , "<INPUT_ECLIPSE>"  , config->unfaulted_GRDECL_file);
   util_make_path(tmp_fault_input_path);
   util_make_path(tmp_fault_output_path);
   
@@ -245,25 +248,23 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
   
 
   for (igroup = 0; igroup < config->num_fault_groups; igroup++) 
-    fault_group_run_havana( config->fault_groups[igroup] , kw_hash , run_path , config->input_fault_path , tmp_fault_input_path , config->havana_executable);
-
+    fault_group_run_havana( config->fault_groups[igroup] , subst_list , run_path , config->input_fault_path , tmp_fault_input_path , config->havana_executable);
+  
   /* Before running havana action IntoEclipse, we must set .faultlist to all faults in tmp_havana_output_faults */
   fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , tmp_fault_output_path);
   {
     char * target_file = util_alloc_full_path( run_path , "update" );
     char * stdout_file = util_alloc_full_path( run_path , "havana_stdout" );
     char * stderr_file = util_alloc_full_path( run_path , "havana_stderr" );
-
-    util_filter_file( config->update_template , NULL , target_file , '<' , '>' , kw_hash , util_filter_warn_unknown);
+    
+    subst_list_filter_file( subst_list , config->update_template , target_file);
     util_vfork_exec ( config->havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , run_path , NULL , stdout_file , stderr_file);
     
     free(target_file);
     free(stdout_file);
     free(stderr_file);
   }
-  hash_free(kw_hash);
-  free(tmp_fault_input_path);
-  free(tmp_fault_output_path);
+  subst_list_free(subst_list);
 }
 
 

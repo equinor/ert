@@ -50,6 +50,7 @@
 #include <model_config.h>
 #include <site_config.h>
 #include <ecl_config.h>
+#include <subst.h>
 
 #define ENKF_STATE_TYPE_ID 78132
 
@@ -131,7 +132,7 @@ struct enkf_state_struct {
   restart_kw_list_type  * restart_kw_list;   /* This is an ordered list of the keywords in the restart file - to be
                                                 able to regenerate restart files with keywords in the right order.*/
   hash_type    	   	* node_hash;
-  hash_type             * data_kw;           /* This a list of key - value pairs which are used in a search-replace
+  subst_list_type       * subst_list;        /* This a list of key - value pairs which are used in a search-replace
                                                 operation on the ECLIPSE data file. Will at least contain the key "INIT"
                                                 - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
 
@@ -399,13 +400,14 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->node_hash       = hash_alloc();
   enkf_state->restart_kw_list = restart_kw_list_alloc();
 
+  enkf_state->subst_list      = subst_list_alloc();
 
-  enkf_state->data_kw         = hash_alloc();
-  {
-    char * iens_string = util_alloc_sprintf("%d" , iens);
-    enkf_state_set_data_kw(enkf_state , "IENS" , iens_string);   /* This should be done on use-time ... */
-    free(iens_string);
-  }
+  enkf_state_set_data_kw(enkf_state , "IENS"  	    , util_alloc_sprintf("%d"   , iens));
+  enkf_state_set_data_kw(enkf_state , "IENS4" 	    , util_alloc_sprintf("%04d" , iens));
+  enkf_state_set_data_kw(enkf_state , "ECL_BASE"    , util_alloc_string_copy(enkf_state->my_config->eclbase));  /* Can not change run_time .. */
+  enkf_state_set_data_kw(enkf_state , "SMSPEC_FILE" , ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1));
+
+
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the
    <INIT> tag in the data file will be replaced by an 
@@ -436,11 +438,7 @@ INCLDUE
     if (init_file != NULL) 
     {
       char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
-      char * DATA_initialize = util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2);
-
-      enkf_state_set_data_kw(enkf_state , "INIT" , DATA_initialize);
-      
-      free(DATA_initialize);
+      enkf_state_set_data_kw(enkf_state , "INIT" , util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2));
       free(tmp_include);
     }
   }
@@ -449,8 +447,10 @@ INCLDUE
     int keys;
     key_list = hash_alloc_keylist( data_kw );
     keys     = hash_get_size( data_kw );
-    for (int i = 0; i < keys; i++) 
-      enkf_state_set_data_kw(enkf_state , key_list[i] , hash_get(data_kw , key_list[i]));
+    for (int i = 0; i < keys; i++) {
+      char * value = util_alloc_string_copy(hash_get(data_kw , key_list[i]));
+      enkf_state_set_data_kw(enkf_state , key_list[i] , value);   /* The subst_list will free it in the end. */
+    }
     util_free_stringlist(key_list , keys); 
   }
   return enkf_state;
@@ -895,7 +895,7 @@ meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *state) {
 
 void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
-  hash_free(enkf_state->data_kw);
+  subst_list_free(enkf_state->subst_list);
   restart_kw_list_free(enkf_state->restart_kw_list);
 
   member_config_free(enkf_state->my_config);
@@ -928,14 +928,15 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 
 
 /**
-   The value is string - the hash routine takes a copy of the string,
-   which means that the calling unit is free to do whatever it wants
-   with the string.
+   The value is string - the subst_list routine takes ownership of the
+   reference, i.e. the calling scope should allocate the string - but
+   not free it.
 */
 
 void enkf_state_set_data_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
-  void_arg_type * void_arg = void_arg_alloc_buffer(strlen(value) + 1, value);
-  hash_insert_hash_owned_ref(enkf_state->data_kw , kw , void_arg , void_arg_free__);
+  char * tagged_key = util_alloc_sprintf("<%s>" , kw);
+  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , value);
+  free(tagged_key);
 }
 
 
@@ -974,14 +975,12 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     if (run_info->step1 > 0) {
       char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
       enkf_state_set_data_kw(enkf_state , "INIT" , data_initialize);
-      free(data_initialize);
     }
     
     util_make_path(run_info->run_path);
     {
       char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_data_file , true , -1);
-      util_filter_file(ecl_config_get_data_file(enkf_state->ecl_config) , NULL , data_file , '<' , '>' , enkf_state->data_kw , false);
-      free(data_file);
+      subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(enkf_state->ecl_config) , data_file);
     }
     
     {
@@ -1013,44 +1012,13 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     {
       const bool fmt_file  	= ecl_config_get_formatted(enkf_state->ecl_config);
-      hash_type * context    	= hash_alloc();
-      char * restart_file1   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step1);
-      char * restart_file2   	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file  	   , fmt_file , run_info->step2);
-      char * smspec_file     	= ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_summary_header_file      , fmt_file , -1);
-      char * iens            	= util_alloc_sprintf("%d" , my_config->iens);
-      char * iens4            	= util_alloc_sprintf("%04d" , my_config->iens);
-      char * ecl_base        	= my_config->eclbase;
-      char * step1_s  		= util_alloc_sprintf("%d" , run_info->step1);
-      char * step2_s  		= util_alloc_sprintf("%d" , run_info->step2);
+      enkf_state_set_data_kw(enkf_state , "REPORT_STEP1"  , util_alloc_sprintf("%d" , run_info->step1));
+      enkf_state_set_data_kw(enkf_state , "REPORT_STEP2"  , util_alloc_sprintf("%d" , run_info->step2));
+      enkf_state_set_data_kw(enkf_state , "RESTART_FILE1" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1));
+      enkf_state_set_data_kw(enkf_state , "RESTART_FILE2" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step2));
       
-      
-      hash_insert_hash_owned_ref( context , "REPORT_STEP1"  , void_arg_alloc_ptr( step1_s ) 	   , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "REPORT_STEP2"  , void_arg_alloc_ptr( step2_s ) 	   , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "RESTART_FILE1" , void_arg_alloc_ptr( restart_file1 )  , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "RESTART_FILE2" , void_arg_alloc_ptr( restart_file2 )  , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "SMSPEC_FILE"   , void_arg_alloc_ptr( smspec_file   )  , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "ECL_BASE"      , void_arg_alloc_ptr( ecl_base   )     , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "IENS"          , void_arg_alloc_ptr( iens   )         , void_arg_free__);
-      hash_insert_hash_owned_ref( context , "IENS4"         , void_arg_alloc_ptr( iens4   )        , void_arg_free__);
-      {
-	char ** key_list = hash_alloc_keylist( enkf_state->data_kw );
-	int i;
-	/*  These are owned by the data_kw hash */
-	for (i = 0; i < hash_get_size(enkf_state->data_kw); i++)
-	  hash_insert_ref( context , key_list[i] , hash_get( enkf_state->data_kw , key_list[i]));
-      }
       /* This is where the job script is created */
-      ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,run_info->run_path , context);
-
-
-      free(iens4);
-      free(iens);
-      free(restart_file1);
-      free(restart_file2);
-      free(smspec_file);
-      free(step1_s);
-      free(step2_s);
-      hash_free(context);
+      ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,run_info->run_path , enkf_state->subst_list);
     }
   }
 }

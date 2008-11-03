@@ -10,6 +10,7 @@
 #include <math.h>
 #include <scalar.h>
 #include <assert.h>
+#include <subst.h>
 
 #define  DEBUG
 #define  TARGET_TYPE HAVANA_FAULT
@@ -167,15 +168,18 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
 {
   const int size             = havana_fault_config_get_data_size(havana_fault->config);
   const double * output_data = scalar_get_output_ref(havana_fault->scalar);
-  hash_type * kw_hash = hash_alloc(10);
+  subst_list_type * subst_list = subst_list_alloc();
   int ikw;
   int ntemplates = 0;
   char ** target;
   
   havana_fault_output_transform(havana_fault);
-  for (ikw = 0; ikw < size; ikw++)
-    hash_insert_hash_owned_ref(kw_hash , havana_fault_config_get_name(havana_fault->config , ikw) , void_arg_alloc_double(output_data[ikw]) , void_arg_free__);
-
+  for (ikw = 0; ikw < size; ikw++) {
+    char * tagged_fault = util_alloc_sprintf("<%s>" , havana_fault_config_get_name(havana_fault->config , ikw));
+    subst_list_insert_owned_ref( subst_list , tagged_fault , util_alloc_sprintf( "%g" , output_data[ikw] ));
+    free( tagged_fault );
+  }
+  
 
   /* 
      Scan through the list of template files and create target files. 
@@ -210,19 +214,18 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
 
       printf("%s   %s  \n",template_file,target[i]); 
       
-      util_filter_file(template_file , NULL , target[i] , '<' , '>' , kw_hash , util_filter_warn0 );      
-
+      subst_list_filter_file(subst_list , template_file , target[i]);
       free(target_file_root);
       free(template_file);
-  }
-  fclose(stream);
+   }
+   fclose(stream);
  }
- 
- 
+  
+  
   /* Return values */
   *ntarget_ref     = ntemplates;
   *target_ref      = target;
-  hash_free(kw_hash);
+  subst_list_free(subst_list);
 }
 
 

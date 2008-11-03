@@ -270,8 +270,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
 
   {
     char * ens_path    = util_alloc_string_copy(root_path);
-    int    buffer_size = strlen(ens_path) + 1;
-    util_string_replace_inplace( &ens_path , &buffer_size , UTIL_PATH_SEP_STRING , "_" );
+    util_string_tr( ens_path , UTIL_PATH_SEP_CHAR , '_' );
     fs->lockfile = util_alloc_filename(lock_path , ens_path , "ensemble_lock");
     free(ens_path);
   }
