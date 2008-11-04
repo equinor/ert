@@ -10,20 +10,20 @@
 #include <enkf_types.h>
 #include <enkf_macros.h>
 #include <enkf_util.h>
-#include <gen_param_config.h>
-#include <gen_param.h>
+#include <gen_data_config.h>
+#include <gen_data.h>
 #include <enkf_serialize.h>
 
 
 
 /**
    This file implements a "general parameter" type. The use of
-   gen_param instances is roughly as follows:
+   gen_data instances is roughly as follows:
 
    1. Some external program creates realizations of the parameter.
 
    2. The EnKF program loads the parameters in the initialization
-      step; EnKF has by construction __NO_WAY__ to sample a gen_param
+      step; EnKF has by construction __NO_WAY__ to sample a gen_data
       instance.
 
    3. The parameter is updated by EnKF in the normal way, and then
@@ -33,7 +33,7 @@
 
    This is quite similar to the gen_data type (maybe they should be
    unified), but the latter is targeted at dynamic data. Observe that
-   the gen_param_config object contains less information than most of
+   the gen_data_config object contains less information than most of
    the xxx_config objects.
 */
    
@@ -44,37 +44,37 @@
 #include "enkf_debug.h"
 
 
-struct gen_param_struct {
+struct gen_data_struct {
   DEBUG_DECLARE
-  gen_param_config_type * config;      	      /* Thin config object - mainly contains filename for remote load */
+  gen_data_config_type * config;      	      /* Thin config object - mainly contains filename for remote load */
   char                  * data;        	      /* Actual storage - will be casted to double or float on use. */
 };
 
 
 
 
-gen_param_config_type * gen_param_get_config(const gen_param_type * gen_param) { return gen_param->config; }
+gen_data_config_type * gen_data_get_config(const gen_data_type * gen_data) { return gen_data->config; }
 
 
-void gen_param_realloc_data(gen_param_type * gen_param) {
-  int byte_size = gen_param_config_get_byte_size(gen_param->config);
+void gen_data_realloc_data(gen_data_type * gen_data) {
+  int byte_size = gen_data_config_get_byte_size(gen_data->config);
 
   if (byte_size > 0)
-    gen_param->data = util_realloc(gen_param->data , byte_size , __func__);
+    gen_data->data = util_realloc(gen_data->data , byte_size , __func__);
   else 
-    gen_param->data = util_safe_free( gen_param->data );
+    gen_data->data = util_safe_free( gen_data->data );
     
 }
 
 
 
-gen_param_type * gen_param_alloc(const gen_param_config_type * config) {
-  gen_param_type * gen_param = util_malloc(sizeof * gen_param, __func__);
-  gen_param->config    = (gen_param_config_type *) config;
-  gen_param->data      = NULL;
-  gen_param_realloc_data(gen_param);
-  DEBUG_ASSIGN(gen_param)
-  return gen_param;
+gen_data_type * gen_data_alloc(const gen_data_config_type * config) {
+  gen_data_type * gen_data = util_malloc(sizeof * gen_data, __func__);
+  gen_data->config    = (gen_data_config_type *) config;
+  gen_data->data      = NULL;
+  gen_data_realloc_data(gen_data);
+  DEBUG_ASSIGN(gen_data)
+  return gen_data;
 }
 
 
@@ -83,28 +83,28 @@ gen_param_type * gen_param_alloc(const gen_param_config_type * config) {
 
 */
 
-gen_param_type * gen_param_copyc(const gen_param_type * gen_param) {
-  gen_param_type * copy = gen_param_alloc(gen_param->config);
+gen_data_type * gen_data_copyc(const gen_data_type * gen_data) {
+  gen_data_type * copy = gen_data_alloc(gen_data->config);
   
-  if (gen_param->data != NULL) {
-    int byte_size = gen_param_config_get_byte_size( gen_param->config );
-    copy->data = util_alloc_copy(gen_param->data , byte_size , __func__);
+  if (gen_data->data != NULL) {
+    int byte_size = gen_data_config_get_byte_size( gen_data->config );
+    copy->data = util_alloc_copy(gen_data->data , byte_size , __func__);
   }
   
   return copy;
 }
   
   
-void gen_param_free_data(gen_param_type * gen_param) {
-  util_safe_free(gen_param->data);
-  gen_param->data = NULL;
+void gen_data_free_data(gen_data_type * gen_data) {
+  util_safe_free(gen_data->data);
+  gen_data->data = NULL;
 }
 
 
 
-void gen_param_free(gen_param_type * gen_param) {
-  gen_param_free_data(gen_param);
-  free(gen_param);
+void gen_data_free(gen_data_type * gen_data) {
+  gen_data_free_data(gen_data);
+  free(gen_data);
 }
 
 
@@ -116,15 +116,15 @@ void gen_param_free(gen_param_type * gen_param) {
    size (on allocation).
 */
 
-bool gen_param_fwrite(const gen_param_type * gen_param , FILE * stream) {
-  DEBUG_ASSERT(gen_param)
+bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
+  DEBUG_ASSERT(gen_data)
   {
-    int size      = gen_param_config_get_data_size(gen_param->config);
-    int byte_size = gen_param_config_get_byte_size(gen_param->config);
+    int size      = gen_data_config_get_data_size(gen_data->config);
+    int byte_size = gen_data_config_get_byte_size(gen_data->config);
     
     enkf_util_fwrite_target_type(stream , GEN_PARAM);
     util_fwrite_int(size , stream);
-    util_fwrite_compressed(gen_param->data , byte_size , stream);
+    util_fwrite_compressed(gen_data->data , byte_size , stream);
   }
   return true;
 }
@@ -136,45 +136,45 @@ bool gen_param_fwrite(const gen_param_type * gen_param , FILE * stream) {
    size is determined at load time.
 */
 
-void gen_param_fread(gen_param_type * gen_param , FILE * stream) {
-  DEBUG_ASSERT(gen_param)
+void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
+  DEBUG_ASSERT(gen_data)
   {   
     int size;
     enkf_util_fread_assert_target_type(stream , GEN_PARAM);
     size = util_fread_int(stream);
-    util_safe_free(gen_param->data);
-    gen_param->data = util_fread_alloc_compressed(stream);
-    gen_param_config_assert_size(gen_param->config , size , NULL);
+    util_safe_free(gen_data->data);
+    gen_data->data = util_fread_alloc_compressed(stream);
+    gen_data_config_assert_size(gen_data->config , size , NULL);
   }
 }
 
 
 
 
-int gen_param_serialize(const gen_param_type *gen_param ,serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  ecl_type_enum ecl_type = gen_param_config_get_ecl_type(gen_param->config);
-  const int data_size    = gen_param_config_get_data_size(gen_param->config);
-  const int active_size  = gen_param_config_get_active_size(gen_param->config);
-  const int *active_list = gen_param_config_get_active_list(gen_param->config);
+int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
+  ecl_type_enum ecl_type = gen_data_config_get_ecl_type(gen_data->config);
+  const int data_size    = gen_data_config_get_data_size(gen_data->config);
+  const int active_size  = gen_data_config_get_active_size(gen_data->config);
+  const int *active_list = gen_data_config_get_active_list(gen_data->config);
   
   int elements_added = 0;
   if (data_size > 0) 
-    elements_added = enkf_serialize(gen_param->data , data_size , ecl_type , active_size , active_list , serial_state ,serial_offset , serial_vector);
+    elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_size , active_list , serial_state ,serial_offset , serial_vector);
   return elements_added;
 }
 
 
-void gen_param_deserialize(gen_param_type * gen_param , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  ecl_type_enum ecl_type = gen_param_config_get_ecl_type(gen_param->config);
-  const int data_size    = gen_param_config_get_data_size(gen_param->config);
-  const int active_size  = gen_param_config_get_active_size(gen_param->config);
-  const int *active_list = gen_param_config_get_active_list(gen_param->config);
+void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
+  ecl_type_enum ecl_type = gen_data_config_get_ecl_type(gen_data->config);
+  const int data_size    = gen_data_config_get_data_size(gen_data->config);
+  const int active_size  = gen_data_config_get_active_size(gen_data->config);
+  const int *active_list = gen_data_config_get_active_list(gen_data->config);
   
   if (data_size > 0)
-    enkf_deserialize(gen_param->data , data_size , ecl_type , active_size , active_list  , serial_state , serial_vector);
+    enkf_deserialize(gen_data->data , data_size , ecl_type , active_size , active_list  , serial_state , serial_vector);
   
   /*
-    gen_param_truncate(gen_param);
+    gen_data_truncate(gen_data);
   */
 }
 
@@ -195,12 +195,12 @@ void gen_param_deserialize(gen_param_type * gen_param , serial_state_type * seri
 
 
 
-void gen_param_initialize(gen_param_type * gen_param , int iens) {
-  char * init_file 	 = gen_param_config_alloc_initfile(gen_param->config , iens);
+void gen_data_initialize(gen_data_type * gen_data , int iens) {
+  char * init_file 	 = gen_data_config_alloc_initfile(gen_data->config , iens);
   FILE * stream    	 = util_fopen(init_file , "r");
-  ecl_type_enum ecl_type = gen_param_config_get_ecl_type(gen_param->config);
+  ecl_type_enum ecl_type = gen_data_config_get_ecl_type(gen_data->config);
   int sizeof_ctype       = ecl_util_get_sizeof_ctype(ecl_type);
-  int buffer_elements    = gen_param_config_get_data_size(gen_param->config);
+  int buffer_elements    = gen_data_config_get_data_size(gen_data->config);
   int current_size       = 0;
   int fscanf_return      = 1; /* To keep the compiler happy .*/
   char * buffer ;
@@ -231,9 +231,9 @@ void gen_param_initialize(gen_param_type * gen_param , int iens) {
   if (fscanf_return != EOF) 
     util_abort("%s: scanning of %s before EOF was reached -- fix your file.\n" , __func__ , init_file);
   
-  gen_param_config_assert_size(gen_param->config , current_size , init_file);
-  gen_param_realloc_data(gen_param);
-  memcpy(gen_param->data , buffer , current_size * sizeof_ctype);
+  gen_data_config_assert_size(gen_data->config , current_size , init_file);
+  gen_data_realloc_data(gen_data);
+  memcpy(gen_data->data , buffer , current_size * sizeof_ctype);
   
   free(buffer);
   fclose(stream);
@@ -242,9 +242,9 @@ void gen_param_initialize(gen_param_type * gen_param , int iens) {
 
 
 
-void gen_param_ecl_write(const gen_param_type * gen_param , const char * eclfile , fortio_type * fortio) {
-  DEBUG_ASSERT(gen_param)
-  gen_param_config_ecl_write(gen_param->config , eclfile , gen_param->data);
+void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , fortio_type * fortio) {
+  DEBUG_ASSERT(gen_data)
+  gen_data_config_ecl_write(gen_data->config , eclfile , gen_data->data);
 }
 
 
@@ -254,21 +254,15 @@ void gen_param_ecl_write(const gen_param_type * gen_param , const char * eclfile
 /******************************************************************/
 
 
-VOID_ALLOC(gen_param)
-VOID_FREE(gen_param)
-VOID_FREE_DATA(gen_param)
-VOID_REALLOC_DATA(gen_param)
-VOID_FWRITE    (gen_param)
-VOID_FREAD     (gen_param)
-VOID_COPYC     (gen_param)
-VOID_SERIALIZE(gen_param)
-VOID_DESERIALIZE(gen_param)
-VOID_INITIALIZE(gen_param)
-VOID_ECL_WRITE(gen_param)
+VOID_ALLOC(gen_data)
+VOID_FREE(gen_data)
+VOID_FREE_DATA(gen_data)
+VOID_REALLOC_DATA(gen_data)
+VOID_FWRITE    (gen_data)
+VOID_FREAD     (gen_data)
+VOID_COPYC     (gen_data)
+VOID_SERIALIZE(gen_data)
+VOID_DESERIALIZE(gen_data)
+VOID_INITIALIZE(gen_data)
+VOID_ECL_WRITE(gen_data)
 
-     /*
-       VOID_TRUNCATE(gen_param)
-       VOID_SCALE(gen_param)
-       ENSEMBLE_MULX_VECTOR(gen_param)
-       ENSEMBLE_MULX_VECTOR_VOID(gen_param)
-     */

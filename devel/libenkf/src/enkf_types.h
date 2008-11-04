@@ -58,8 +58,7 @@ typedef enum {INVALID 	   = 0   ,
 	      HAVANA_FAULT = 109 ,   
 	      SUMMARY      = 110 ,      
               TPGZONE      = 111 ,       
-              GEN_DATA     = 112 ,
-	      GEN_PARAM    = 113 ,
+              GEN_DATA     = 113 , /* Mind the gap - a type has been removed. */
 	      PILOT_POINT  = 114 } enkf_impl_type;
 
 /* 

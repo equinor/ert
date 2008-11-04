@@ -45,9 +45,6 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   case GEN_DATA:
     return "GEN_DATA";
     break;
-  case GEN_PARAM:
-    return "GEN_PARAM";
-    break;
   default:
     util_abort("%s: internal error - unrecognized implementation type: %d - aborting \n",__func__ , impl_type);
     return NULL;
@@ -69,7 +66,6 @@ static enkf_impl_type enkf_types_get_impl_type__(const char * impl_type_string) 
   else if_strcmp(GEN_KW);
   else if_strcmp(RELPERM);
   else if_strcmp(GEN_DATA);
-  else if_strcmp(GEN_PARAM);
   else impl_type = INVALID;
   return impl_type;
 }
