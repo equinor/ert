@@ -65,14 +65,14 @@ void plain_driver_parameter_load_node(void * _driver , int _report_step , int ie
   plain_driver_parameter_assert_cast(driver);
   {
     char * filename;
-    filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
+    filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
     while (!util_file_exists(filename)) {
       report_step--;
       if (report_step < 0) 
-	util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , enkf_node_get_key_ref(node),iens);
+	util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , enkf_node_get_key(node),iens);
       else {
 	free(filename);
-	filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node));
+	filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
       }
     }
     plain_driver_common_load_node(filename , report_step , state , node);
@@ -86,7 +86,7 @@ void plain_driver_parameter_save_node(void * _driver , int _report_step , int ie
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node));
     plain_driver_common_save_node(filename , report_step , state , node);
     free(filename);
   }
@@ -98,7 +98,7 @@ void plain_driver_parameter_unlink_node(void * _driver , int _report_step , int 
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node));
     util_unlink_existing(filename);
     free(filename);
   }

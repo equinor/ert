@@ -222,7 +222,9 @@ const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) 
 }
 
 
-const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_outfile_ref(node->config); }
+/*
+  const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_outfile_ref(node->config); }
+*/
 
 
 
@@ -555,7 +557,7 @@ void enkf_node_free__(void *void_node) {
   enkf_node_free((enkf_node_type *) void_node);
 }
 
-const char *enkf_node_get_key_ref(const enkf_node_type * enkf_node) {
+const char *enkf_node_get_key(const enkf_node_type * enkf_node) {
   return enkf_node->node_key;
 }
 

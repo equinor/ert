@@ -768,7 +768,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 	if (enkf_node_get_impl_type(enkf_node) == FIELD)
 	  enkf_node_ecl_write(enkf_node , NULL , fortio);
 	else 
-	  util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key_ref(enkf_node));
+	  util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key(enkf_node));
       } else if (var_type == ecl_static) {
 	enkf_node_ecl_write(enkf_node , NULL , fortio);
 	enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
@@ -896,7 +896,7 @@ void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask)) 
-      enkf_state_del_node(enkf_state , enkf_node_get_key_ref(enkf_node));
+      enkf_state_del_node(enkf_state , enkf_node_get_key(enkf_node));
   }                                                                     
   util_free_stringlist(key_list , num_keys);
 }

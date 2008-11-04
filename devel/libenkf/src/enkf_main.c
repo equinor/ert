@@ -378,7 +378,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
 
   {
     pthread_t          queue_thread;
-job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+    job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
     void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
     void_arg_pack_ptr(queue_args , 0 , job_queue);
     void_arg_pack_int(queue_args , 1 , ens_size);
@@ -427,6 +427,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
   if (load_results) 
     enkf_main_load_ensemble(enkf_main , dynamic + parameter , step2 , forecast);
   
+  
   /* Local analysis starter her, viktig at denne er uavhengig av gen_data keyword dvs kun prod data */  
   /* bool local_active = enkf_obs_get_local_active(enkf_main->ensemble_config,1);  */
   bool local_active = false; 
@@ -445,7 +446,7 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 
       printf("Starter paa oppdatering \n");
       if (enkf_update) {
-	double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
+	double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
     
 	if (X != NULL) {
 	  /* 
@@ -464,22 +465,22 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 	}
       }
     }
-  }
-  
-  else{
-    printf("Starter paa oppdatering \n");
-    if (enkf_update) {
-      double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true);
 
+    if (enkf_update) {
+      double *X;
+      enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
+      meas_matrix_reset(enkf_main->meas_matrix);
+      enkf_main_measure(enkf_main);
+      X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
       if (X != NULL) {
-	/* The second to last argument is the number of doubles we ask
-	   for, to get the number of bytes you must multiply by eight.
+	/* 
+	   The number of doubles we ask for, to get the number of bytes
+	   you must multiply by eight.
 	   
 	   1024 * 1024 * 128 => 1GB of memory
-	   
 	*/
 	size_t double_size = 1024*1024*256; /* 2GB */
-
+	
 	/* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
 	printf("Updating: ...... "); fflush(stdout);
 	serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
@@ -487,11 +488,10 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 	serial_vector_free(serial_vector);
 	printf("\n");
 	free(X);
-	
       }
     }
   }
-  
+
   if (enkf_update) {
     printf("Saving: ........ "); fflush(stdout);
     enkf_main_fwrite_ensemble(enkf_main , dynamic + parameter , step2 , analyzed);
@@ -504,12 +504,12 @@ job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
 
 
 
-
-
 void * enkf_main_get_enkf_config_node_type(ensemble_config_type * ensemble_config, const char * key){
   enkf_config_node_type * config_node_type = ensemble_config_get_node(ensemble_config, key);
   return enkf_config_node_get_ref(config_node_type);
 }
+
+
 
 
 void enkf_main_set_field_config_iactive(ensemble_config_type * ensemble_config, int local_step){
@@ -547,46 +547,47 @@ void enkf_main_set_field_config_iactive(ensemble_config_type * ensemble_config, 
   */ 
 }
 
-}
 
 
 
 
+//What the F*CK:=======
+//What the F*CK:  
+//What the F*CK:  prev_enkf_on = analyzed_start;
+//What the F*CK:  for (inode = start_inode; inode < num_nodes; inode++) {
+//What the F*CK:    const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
+//What the F*CK:    state_enum init_state;
+//What the F*CK:    int 	   init_step;
+//What the F*CK:    int 	   report_step1;
+//What the F*CK:    int 	   report_step2;
+//What the F*CK:    int 	   report_stride;
+//What the F*CK:    int 	   report_step;
+//What the F*CK:    int 	   next_report_step;
+//What the F*CK:    bool enkf_on;
+//What the F*CK:    stringlist_type * forward_model;
+//What the F*CK:    
+//What the F*CK:    enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &report_stride , &enkf_on , &forward_model);
+//What the F*CK:    if (inode == start_inode)
+//What the F*CK:      report_step = start_report;
+//What the F*CK:    else
+//What the F*CK:      report_step = report_step1;
+//What the F*CK:    do {
+//What the F*CK:      next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
+//What the F*CK:      init_step = report_step;
+//What the F*CK:      if (prev_enkf_on)
+//What the F*CK:	init_state = analyzed;
+//What the F*CK:      else
+//What the F*CK:	init_state = forecast;
+//What the F*CK:      
+//What the F*CK:      enkf_main_run_step(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , forward_model);
+//What the F*CK:      report_step  = next_report_step;
+//What the F*CK:      prev_enkf_on = enkf_on;
+//What the F*CK:    } while (next_report_step < report_step2);
+//What the F*CK:  }
+//What the F*CK:}
+//What the F*CK:
+//What the F*CK:>>>>>>> .r1393
 
-=======
-  
-  prev_enkf_on = analyzed_start;
-  for (inode = start_inode; inode < num_nodes; inode++) {
-    const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-    state_enum init_state;
-    int 	   init_step;
-    int 	   report_step1;
-    int 	   report_step2;
-    int 	   report_stride;
-    int 	   report_step;
-    int 	   next_report_step;
-    bool enkf_on;
-    stringlist_type * forward_model;
-    
-    enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &report_stride , &enkf_on , &forward_model);
-    if (inode == start_inode)
-      report_step = start_report;
-    else
-      report_step = report_step1;
-    do {
-      next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
-      init_step = report_step;
-      if (prev_enkf_on)
-	init_state = analyzed;
-      else
-	init_state = forecast;
-      
-      enkf_main_run_step(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , forward_model);
-      report_step  = next_report_step;
-      prev_enkf_on = enkf_on;
-    } while (next_report_step < report_step2);
-  }
-}
 
 void enkf_main_run(enkf_main_type * enkf_main , const bool * iactive ,  int start_report , state_enum __init_state) {
   const bool load_results = true;

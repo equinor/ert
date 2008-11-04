@@ -348,28 +348,28 @@ bool gen_data_config_get_local_active(gen_data_config_type * config, int report_
 }
 
 /*
-This is a function called from enkf_update for each local update, where 
-the config->iactive is changed in accordance with the local_file input
+  This is a function called from enkf_update for each local update, where 
+  the config->iactive is changed in accordance with the local_file input
 */
 
 void gen_data_config_change_iactive(gen_data_config_type * config, int local_step){
   int i;
   
-  if(config->__obs_size > 0 ){
-    for(i = 0; i < config->__obs_size;i++){
-      config->iactive[i]=false;
-    }
-    for(i = 0; i < config->num_obs[local_step]; i++){
-      int index;
-      index = config->obs_index_list[local_step][i];  
-      if(index > 0){
-	config->iactive[index-1]=true;
-      }
-    }
-  }
-  else{
-    printf("obs_size = 0, no change \n");
-  }
+  //if(config->__obs_size > 0 ){
+  //  for(i = 0; i < config->__obs_size;i++){
+  //    config->iactive[i]=false;
+  //  }
+  //  for(i = 0; i < config->num_obs[local_step]; i++){
+  //    int index;
+  //    index = config->obs_index_list[local_step][i];  
+  //    if(index > 0){
+  //	config->iactive[index-1]=true;
+  //    }
+  //  }
+  //}
+  //else{
+  //  printf("obs_size = 0, no change \n");
+  //}
 
 }
 
@@ -378,7 +378,8 @@ void gen_data_config_change_iactive(gen_data_config_type * config, int local_ste
 
 
 
-/** This function does the opposite of gen_data_config_assert_metadata(). When a
+/** 
+    This function does the opposite of gen_data_config_assert_metadata(). When a
     gen_data instance has been deactivated, it calls this function, asserting
     the config object agrees that no data is currently active.
 */

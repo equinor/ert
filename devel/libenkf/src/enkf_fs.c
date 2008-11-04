@@ -313,35 +313,8 @@ void enkf_fs_free(enkf_fs_type * fs) {
 
 
 
-static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type) {
+static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, const char * key) {
   void * driver = NULL;
-  /*
-  switch (var_type) {
-  case(constant):
-    driver = fs->parameter;
-    break;
-  case(static_parameter):
-    driver = fs->parameter;
-    break;
-  case(parameter):
-    driver = fs->parameter;
-    break;
-  case(ecl_restart):
-    driver = fs->dynamic;
-    break;
-  case(misc_dynamic):
-    driver = fs->dynamic;
-    break;
-  case(ecl_summary):
-    driver = fs->dynamic;
-    break;
-  case(ecl_static):
-    driver = fs->eclipse_static;
-    break;
-  default:
-    util_abort("%s: fatal internal error - could not determine enkf_fs driver for object - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
-  }
-  */
   switch (var_type) {
   case(parameter):
     driver = fs->parameter;
@@ -353,7 +326,7 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type) 
     driver = fs->eclipse_static;
     break;
   default:
-    util_abort("%s: fatal internal error - could not determine enkf_fs driver for object - aborting: [%s(%d)]\n",__func__, __FILE__ , __LINE__);
+    util_abort("%s: fatal internal error - could not determine enkf_fs driver for object:%s - aborting.\n",__func__, key);
   }
   return driver;
 }
@@ -370,7 +343,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
     util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
   {
     enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
-    void * _driver = enkf_fs_select_driver(enkf_fs , var_type);
+    void * _driver = enkf_fs_select_driver(enkf_fs , var_type , enkf_node_get_key(enkf_node));
     if (var_type == ecl_static) {
       basic_static_driver_type * driver = basic_static_driver_safe_cast(_driver);
       int static_counter = enkf_fs_get_static_counter(enkf_node);
@@ -391,7 +364,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
-  void * _driver = enkf_fs_select_driver(enkf_fs , var_type);
+  void * _driver = enkf_fs_select_driver(enkf_fs , var_type , enkf_node_get_key(enkf_node));
   if (var_type == ecl_static) {
     basic_static_driver_type * driver = basic_static_driver_safe_cast(_driver);
     int static_counter = enkf_fs_get_static_counter(enkf_node);
@@ -408,11 +381,11 @@ bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * con
   {
     const char * key = enkf_config_node_get_key_ref(config_node);
     if (var_type == ecl_static) {
-      basic_static_driver_type * driver = basic_static_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type));
+      basic_static_driver_type * driver = basic_static_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key));
       int static_counter = 0; /* This one is impossible to get correctly hold of ... the driver aborts.*/
       return driver->has_node(driver , report_step , iens , state , static_counter , key); 
     } else {
-      basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type));
+      basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key));
       return driver->has_node(driver , report_step , iens , state , key); 
     }
   }

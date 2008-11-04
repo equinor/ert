@@ -60,7 +60,7 @@ static plain_driver_static_type * plain_driver_static_safe_cast(void *_driver) {
 void plain_driver_static_load_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node) , static_counter);
     plain_driver_common_load_node(filename , report_step , state , node);
     free(filename);
   }
@@ -70,7 +70,7 @@ void plain_driver_static_load_node(void * _driver , int report_step , int iens ,
 void plain_driver_static_unlink_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
+    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node) , static_counter);
     FILE * stream   = util_fopen(filename , "w");
     util_unlink_existing(filename);
     fclose(stream);
@@ -82,7 +82,7 @@ void plain_driver_static_unlink_node(void * _driver , int report_step , int iens
 void plain_driver_static_save_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
-    char * filename      = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key_ref(node) , static_counter);
+    char * filename      = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node) , static_counter);
     plain_driver_common_save_node(filename , report_step , state , node);
     free(filename);
   }
