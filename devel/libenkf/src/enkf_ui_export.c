@@ -186,7 +186,7 @@ void enkf_ui_export_profile(void * enkf_main) {
 
 
 void enkf_ui_export_cell(void * enkf_main) {
-  enkf_sched_type * enkf_sched         = enkf_main_get_enkf_sched(enkf_main);
+  const enkf_sched_type * enkf_sched           = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 35;
@@ -248,14 +248,14 @@ void enkf_ui_export_cell(void * enkf_main) {
 
 
 void enkf_ui_export_time(void * enkf_main) {
-  enkf_sched_type * enkf_sched  = enkf_main_get_enkf_sched(enkf_main);
+  const enkf_sched_type * enkf_sched           = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 35;
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     int        cell_nr;
-
+    
     config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , true , FIELD ,invalid ,  NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {

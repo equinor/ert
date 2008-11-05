@@ -11,9 +11,7 @@
 #include <rms_util.h>
 #include <path_fmt.h>
 #include <math.h>
-/*
 #include <field_active.h>
-*/
 
 #define FIELD_CONFIG_ID 78269
 
@@ -335,35 +333,6 @@ void field_config_set_all_active(field_config_type * field) {
 
 inline int field_config_active_index(const field_config_type * config , int i , int j , int k) {
   return ecl_grid_get_active_cell_index( config->grid , i,j,k);
-}
-
-
-
-/**
-   This function sets the config->enkf_active pointer. The indicies mentioned in
-   active_index_list are set to true, the remaining are set to false.
-
-   Observe that the indices i,j and k are __zero__ based.
-*/
-
-void field_config_set_iactive(field_config_type * config , int num_active , const int * i , const int *j , const int *k) {
-  int index;
-  int enkf_active_index = 0;
-  field_config_set_all_active__(config , false);
-  config->active_list = util_realloc( config->active_list , num_active * sizeof * config->active_list , __func__);
-  
-  for (index = 0; index < num_active; index++) {
-    const int grid_active_index = field_config_active_index(config , i[index] , j[index] , k[index]);
-    
-    if (grid_active_index >= 0) {
-      config->active_list[enkf_active_index] = grid_active_index;
-      enkf_active_index++;
-    } else 
-      fprintf(stderr,"** Warning cell: (%d,%d,%d) is inactive\n",i[index] , j[index] , k[index]);
-
-  }
-  config->active_list = util_realloc( config->active_list , enkf_active_index * sizeof * config->active_list , __func__);
-  config->active_size = enkf_active_index;
 }
 
 
@@ -833,16 +802,22 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 
 
 
-//void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
-//  /*field_active_type * active = field_active_safe_cast( active_config );*/
-//  /*
-//   */
-//}
 
 void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
-  /*
-    field_active_type * active = field_active_safe_cast( active_config );
-   */
+  field_active_type * active = field_active_safe_cast( active_config );
+  
+  util_safe_free(config->active_list);
+  if (active_mode == all_active)
+    config->active_size = config->data_size;
+  else if (active_mode == inactive)
+    config->active_size = 0;
+  else if (active_mode == partly_active) {
+    config->active_size = field_active_get_active_size( active );
+    config->active_list = field_active_alloc_list_copy( active );
+  } else 
+    util_abort("%s: internal error - active_mode:%d completely invalid \n",__func__ , active_mode);
+    
+
 }
 
 

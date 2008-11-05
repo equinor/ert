@@ -20,16 +20,17 @@ typedef enum {obs_undef = 0, obs_active = 1 , obs_inactive = 2} obs_active_type;
 
 
 struct obs_node_struct {
-  const void       *obs;
-  obs_free_ftype   *freef;
-  obs_get_ftype    *get_obs;
-  obs_meas_ftype   *measure;
-
-  char             *state_kw;  /* This is used to look up the corresponding enkf_state object. */
-  char             *obs_label;
-  int               size;
-  obs_active_type  *active;    
-  bool              default_active;
+  const void         *obs;
+  obs_free_ftype     *freef;
+  obs_get_ftype      *get_obs;
+  obs_meas_ftype     *measure;
+  obs_activate_ftype *activate;  /* This is used to activate / deactivate (parts of) the observation. */ 
+  
+  char               *state_kw;  /* This is used to look up the corresponding enkf_state object. */
+  char               *obs_label;
+  int                 size;
+  obs_active_type    *active;    
+  bool                default_active;
 };
 
 
@@ -109,20 +110,22 @@ static void obs_node_resize(obs_node_type * node , int new_size) {
 
 
 
-obs_node_type * obs_node_alloc(const void      * obs,
-			       const char      * state_kw,
-			       const char      * obs_label,
-			       int               num_reports,
-			       bool              default_active,
-			       obs_get_ftype   * get_obs,
-			       obs_meas_ftype  * measure,
-			       obs_free_ftype  * freef) {
+obs_node_type * obs_node_alloc(const void      	  * obs,
+			       const char      	  * state_kw,
+			       const char      	  * obs_label,
+			       int             	    num_reports,
+			       bool            	    default_active,
+			       obs_get_ftype   	  * get_obs,
+			       obs_meas_ftype  	  * measure,
+			       obs_free_ftype  	  * freef,
+			       obs_activate_ftype * activate) {
 
   obs_node_type * node = malloc( sizeof *node);
   node->obs                = obs;
   node->freef              = freef;
   node->measure            = measure;
   node->get_obs            = get_obs;
+  node->activate           = activate;
   node->size               = 0;
   node->active             = NULL;
   node->default_active     = default_active;

@@ -14,7 +14,7 @@
 #include <well_config.h>
 #include <field_config.h>
 #include <equil_config.h>
-#include <gen_param_config.h>
+#include <gen_data_config.h>
 #include <multflt_config.h>
 #include <thread_pool.h>
 #include <meas_matrix.h>
@@ -41,7 +41,9 @@
 #include <stringlist.h>
 #include <ensemble_config.h>
 #include <config.h>
+#include <gen_data_config.h>
 #include <pthread.h>                /* Must have rw locking on the config_nodes ... */
+
 
 
 
@@ -173,9 +175,7 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
       break;
     case(GEN_DATA):
       freef             = gen_data_config_free__;
-      break;
-    case(GEN_PARAM):
-      freef             = gen_param_config_free__;
+      activate          = gen_data_config_activate__;
       break;
     default:
       util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
@@ -278,14 +278,22 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const char * key         = stringlist_iget(tokens , 0);
     const char * ecl_file    = stringlist_iget(tokens , 1);
     const char * init_fmt    = stringlist_iget(tokens , 2);
-    const char * ecl_template;   
+    const char * template_file;   
 
     if (stringlist_get_size(tokens) == 4)
-      ecl_template = stringlist_iget(tokens , 3);
+      template_file = stringlist_iget(tokens , 3);
     else
-      ecl_template = NULL;
+      template_file = NULL;
     
-    ensemble_config_add_node(ensemble_config , key , parameter , GEN_PARAM , ecl_file , NULL , gen_param_config_alloc( init_fmt , ecl_template ));
+    {
+      gen_data_config_type * gen_data_config;
+      if (template_file == NULL)
+	gen_data_config = gen_data_config_alloc(ASCII , ASCII , init_fmt);
+      else
+	gen_data_config = gen_data_config_alloc_with_template(ASCII , template_file , "<DATA>" , init_fmt);
+
+      ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config);
+    }
   }
   
 
@@ -331,7 +339,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       const char *  output_transform_name = stringlist_iget(tokens , 4);
       const char ** config_files 	  = stringlist_iget_argv(tokens , 5);
       int   num_config_files     	  = stringlist_get_size(tokens) - 5; 
-      int init_mode = -13;
+      int   init_mode = -13;
       if (util_sscanf_int(init_string , &init_mode)) 
 	ensemble_config_add_node(ensemble_config , key , parameter   , FIELD , ecl_file , NULL , 
 				 field_config_alloc_parameter(key , ecl_file , output_transform_name , grid ,init_mode , num_config_files , config_files));

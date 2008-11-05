@@ -2,326 +2,113 @@
 #include <util.h>
 #include <stdio.h>
 #include <string.h>
+#include <gen_data_config.h>
 #include <gen_common.h>
 #include <fortio.h>
 #include <ecl_util.h>
 
 /**
-   This file implements some (very basic) functionality which is
-   common to both the gen_data and gen_obs objects.
+   This file implements some (very basic) functionality which is used
+   by both the gen_data and gen_obs objects.
 */
 
 
-
-/* 
-  This functions reads the start of the file, and determines which
-  type of file it is. The different filetypes are recognized as
-  follows:
-
-  1. fortran_binary - this is recognized by a fortio function, which
-     looks for the special fortran record-start/record-end
-     markers. Altough these markers uniquely identify a binary file,
-     we stille require the file to start with "BINARY".
-
-  2. ASCII files start with the string "ASCII".
-
-  3. Binary files start with the string "BINARY\0".
-
-  The magic strings ASCII / BINARY are NOT case sensitive. Observe
-  that the BINARY string MUST contain the terminating \0; this is
-  mainly to discipline the user when it comes to the TAG, where we
-  just have to read consecutive bytes until we reach a \0.
-
-  If no of these types is unambigously identified, we abort.
-
-
-  Format of the gen_data files should be:
-  ASCII|BINARY
-  KEYWORD
-  DOUBLE|FLOAT
-  <SIZE>
-  d1
-  d2
-  d3
-  d4
-  d5
-  ....
-  ....
-
-  I.e. to write an ascii file (with C):
-
-     fprintf(stream, "ASCII\n");
-     fprintf(stream,"%s\n"keyword);
-     fprintf(stream,"DOUBLE\n");
-     fprintf(stream,"%d\n",elements);
-     for (i = 0; i < elements; i++) {
-
-     }  
-
-  When written in binary with C you *MUST INCLUDE* the terminating \0
-  at the end of the "BINARY", "KEYWORD" and "DOUBLE|FLOAT" strings.
-     
-  When written in binary with Fortran it is not necessary to include
-  any form of termination, but it is essential that the write
-  statement only writes the required number of bytes, with no extra
-  spaces at the end.
-*/
-
-
-
-
-void gen_common_get_file_type(const char * filename , gen_data_file_type * _file_type , bool * fortran_endian_flip) {
-  gen_data_file_type file_type;
-  char buffer[32];
-  if (fortio_is_fortran_file(filename , fortran_endian_flip)) {
-    int record_length;
-    fortio_type * fortio = fortio_fopen(filename , "r" , *fortran_endian_flip , true);
-    record_length = fortio_fread_record(fortio , buffer);
-    if (record_length != 6) 
-      util_abort("%s: could not locate \'BINARY\' header in %s.\n",__func__ , filename);
-    buffer[6] = '\0';
-    util_strupr(buffer);
-    if (strcmp(buffer , "BINARY") != 0)
-      util_abort("%s: could not locate \'BINARY\' header in %s.\n",__func__ , filename);
-    
-    fortio_fclose(fortio);
-    file_type = binary_fortran_file;
-  } else {
-    FILE * stream = util_fopen(filename , "r");
-    long int init_pos = ftell(stream);
-    util_fread(buffer , 1 , 5 , stream , __func__);
-    buffer[5] = '\0';
-    util_strupr(buffer);
-    if (strcmp(buffer , "ASCII") == 0)
-      file_type = ascii_file;
-    else {
-      fseek(stream , init_pos , SEEK_SET);
-      util_fread(buffer , 1 , 7 , stream , __func__);
-      if (buffer[6] != '\0') 
-	util_abort("%s: the \"BINARY\" string identifier has not been \0 terminated - all header string must be \0 terminated\n",__func__);
-
-      util_strupr(buffer);
-      if (strcmp(buffer , "BINARY") == 0) 
-	file_type = binary_C_file;
-      else {
-	util_abort("%s: could not determine BINARY / ASCII status of file:%s. Header: %s not recognized \n",__func__ , filename , buffer);
-	file_type = binary_C_file; /* Dummy */
+void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int * size) {
+  FILE * stream    	  = util_fopen(file , "r");
+  int sizeof_ctype        = ecl_util_get_sizeof_ctype(load_type);
+  int buffer_elements     = *size;
+  int current_size        = 0;
+  int fscanf_return       = 1; /* To keep the compiler happy .*/
+  char * buffer ;
+  
+  if (buffer_elements == 0)
+    buffer_elements = 100;
+  
+  buffer = util_malloc( buffer_elements * sizeof_ctype , __func__);
+  {
+    do {
+      if (load_type == ecl_float_type) {
+	float  * float_buffer = (float *) buffer;
+	fscanf_return = fscanf(stream , "%g" , &float_buffer[current_size]);
+      } else if (load_type == ecl_double_type) {
+	double  * double_buffer = (double *) buffer;
+	fscanf_return = fscanf(stream , "%lg" , &double_buffer[current_size]);
+      } else util_abort("%s: god dammit - internal error \n",__func__);
+      
+      if (fscanf_return == 1)
+	current_size += 1;
+      
+      if (current_size == buffer_elements) {
+	buffer_elements *= 2;
+	buffer = util_realloc( buffer , buffer_elements * sizeof_ctype , __func__);
       }
-    }
-    fclose(stream);
+    } while (fscanf_return == 1);
   }
-  *_file_type = file_type;
-}
-
-
-static void gen_common_fload_ascii_header(FILE * stream , const char * config_tag , char ** _file_tag , int* size, ecl_type_enum * ecl_type) {
-  util_fskip_lines(stream , 1); /* We know the first line contains "ASCII". */
-  {
-    char * file_tag;
-    file_tag = util_fscanf_alloc_token(stream);
-    if (file_tag == NULL)
-      util_abort("%s: could not locate tag. \n" , __func__);
-    
-    util_fskip_lines(stream , 1);
-    *_file_tag = file_tag;
-  }
+  if (fscanf_return != EOF) 
+    util_abort("%s: scanning of %s terminated before EOF was reached -- fix your file.\n" , __func__ , file);
   
-  {
-    char * string_type;
-    string_type = util_fscanf_alloc_token(stream);
-    util_strupr(string_type);
-    if (strcmp(string_type, "DOUBLE") == 0)
-      *ecl_type = ecl_double_type;
-    else if (strcmp(string_type, "FLOAT") == 0)
-      *ecl_type = ecl_float_type;
-    else 
-      util_abort("%s: type identiefier:%s  not recognized - valid values are FLOAT | DOUBLE \n",__func__ , string_type);
-    free(string_type);
-    util_fskip_lines(stream , 1);
-  }
-
-  if (!util_fscanf_int(stream , size))
-    util_abort("%s: Failed to read the number of elements when parsing general data file. \n",__func__);
-}
-
-
-static void gen_common_fload_binary_C_header(FILE * stream , const char * config_tag , char ** _file_tag , int* size, ecl_type_enum * ecl_type) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_common_fload_binary_fortran_header(FILE * stream , const char * config_tag , char ** _file_tag , int* size, ecl_type_enum * ecl_type) {
-  util_exit("%s: not implemented yet ... \n");
+  fclose(stream);
+  *size = current_size;
+  return buffer;
 }
 
 
 
-void gen_common_fload_header(gen_data_file_type file_type , FILE * stream , const char * config_tag , char ** file_tag , int * size, ecl_type_enum * ecl_type) {
-  switch (file_type) {
-  case(ascii_file):
-    gen_common_fload_ascii_header(stream , config_tag , file_tag , size , ecl_type);
-    break;
-  case(binary_C_file):
-    gen_common_fload_binary_C_header(stream , config_tag , file_tag , size , ecl_type);
-    break;
-  case(binary_fortran_file):
-    gen_common_fload_binary_fortran_header(stream , config_tag , file_tag , size , ecl_type);
-    break;
-  default:
-    util_abort("%s: internal error - invalid value in switch statement. \n",__func__);
-  }
-
-  /*
-    Checking that the tags agree.
-  */
+void * gen_common_fread_alloc(const char * file , ecl_type_enum load_type , int * size) {
+  const int max_read_size = 100000;
+  FILE * stream    	  = util_fopen(file , "r");
+  int sizeof_ctype        = ecl_util_get_sizeof_ctype(load_type);
+  int read_size           = 4096; /* Shot in the wild */
+  int current_size        = 0;
+  int buffer_elements;
+  int fread_return;
+  char * buffer;
   
-  if (config_tag != NULL)
-    if (strcmp(*file_tag , config_tag) != 0) 
-      util_abort("%s: tags did not match: Config:%s  CurrentFile:%s \n",__func__ , config_tag , *file_tag);
-
-}
-
-
-
-static void gen_common_fload_binary_C_data(FILE * stream ,const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size, void * data) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_common_fload_binary_fortran_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size, void * data) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_common_fload_ascii_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size, void * _data) {
-  int i;
-  switch (ecl_type) {
-  case(ecl_float_type):
-    {
-      float * data = (float *) _data;
-      for (i=0; i < size; i++)
-	if (fscanf(stream,"%g",&data[i]) != 1)
-	  util_abort("%s: failed to read element %d of %d from %s. \n",__func__ , (i+1), size , src_file);
-    }
-    break;
-  case(ecl_double_type):
-    {
-      double * data = (double *) _data;
-      for (i=0; i < size; i++)
-	if (fscanf(stream,"%lg",&data[i]) != 1)
-	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
-    }
-    break;
-  case(ecl_int_type):
-    {
-      int * data = (int *) _data;
-      for (i=0; i < size; i++) 
-	if (fscanf(stream,"%d" , &data[i]) != 1)
-	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
-    }
-    break;
-  default:
-    util_abort("%s: unrecognized/not supported data_type:%d.\n",__func__ , ecl_type);
+  
+  buffer_elements = read_size;
+  buffer = util_malloc( buffer_elements * sizeof_ctype , __func__);
+  {
+    do {
+      fread_return  = fread( &buffer[ current_size * sizeof_ctype] , sizeof_ctype , read_size , stream);
+      current_size += fread_return;
+      
+      if (!feof(stream)) {
+	/* Allocate more elements. */
+	if (current_size == buffer_elements) {
+	  read_size *= 2;
+	  read_size = util_int_min(read_size , max_read_size);
+	  buffer_elements += read_size;
+	  buffer = util_realloc( buffer , buffer_elements * sizeof_ctype , __func__);
+	} else 
+	  util_abort("%s: internal error ?? \n",__func__);
+      }
+    } while (!feof(stream));
   }
+  *size = current_size;
+  return buffer;
 }
 
 
+/*
+  If the load_format is binary_float or binary_double, the ASCII_type
+  is *NOT* consulted. The load_type is set to float/double depending
+  on what was actually used when the data was loaded.
+*/
 
-void gen_common_fload_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size, void * data) {
-  switch (file_type) {
-  case(ascii_file):
-    gen_common_fload_ascii_data(stream , src_file , file_type , ecl_type , size , data);
-    break;
-  case(binary_C_file):
-    gen_common_fload_binary_C_data(stream , src_file , file_type , ecl_type , size , data);
-    break;
-  case(binary_fortran_file):
-    gen_common_fload_binary_fortran_data(stream , src_file , file_type , ecl_type , size , data);
-    break;
-  default:
-    util_abort("%s: internal error - invalid value in switch statement. \n",__func__);
-  }
-}
+void * gen_common_fload_alloc(const char * file , gen_data_format_type load_format , ecl_type_enum ASCII_type , ecl_type_enum * load_type , int * size) { 
+  void * buffer = NULL;
+  
+  if (load_format == ASCII) {
+    *load_type = ASCII_type;
+    buffer =  gen_common_fscanf_alloc(file , ASCII_type , size);
+  } else if (load_format == binary_float) {
+    *load_type = ecl_float_type;
+    buffer = gen_common_fread_alloc(file , ecl_float_type , size);
+  } else if (load_format == binary_double) {
+    *load_type = ecl_double_type;
+    buffer = gen_common_fread_alloc(file , ecl_double_type , size);
+  } else 
+    util_abort("%s: trying to load with unsupported format ... \n");
 
-
-
-
-static void gen_common_fskip_binary_C_data(FILE * stream ,const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_common_fskip_binary_fortran_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
-  util_exit("%s: not implemented yet ... \n");
-}
-
-
-static void gen_common_fskip_ascii_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
-  int i;
-  switch (ecl_type) {
-  case(ecl_float_type):
-    {
-      float  data;
-      for (i=0; i < size; i++)
-	if (fscanf(stream,"%g",&data) != 1)
-	  util_abort("%s: failed to read element %d of %d from %s. \n",__func__ , (i+1), size , src_file);
-    }
-    break;
-  case(ecl_double_type):
-    {
-      double data;
-      for (i=0; i < size; i++)
-	if (fscanf(stream,"%lg",&data) != 1)
-	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
-    }
-    break;
-  case(ecl_int_type):
-    {
-      int data;
-      for (i=0; i < size; i++)
-	if (fscanf(stream,"%d",&data) != 1)
-	  util_abort("%s: failed to read element %d og %d from %s. \n",__func__ , (i+1), size , src_file);
-    }
-    break;
-  default:
-    util_abort("%s: unrecognized/not supported data_type:%d.\n",__func__ , ecl_type);
-  }
-}
-
-
-
-void gen_common_fskip_data(FILE * stream , const char * src_file , gen_data_file_type file_type , ecl_type_enum ecl_type , int size) {
-  switch (file_type) {
-  case(ascii_file):
-    gen_common_fskip_ascii_data(stream , src_file , file_type , ecl_type , size);
-    break;
-  case(binary_C_file):
-    gen_common_fskip_binary_C_data(stream , src_file , file_type , ecl_type , size);
-    break;
-  case(binary_fortran_file):
-    gen_common_fskip_binary_fortran_data(stream , src_file , file_type , ecl_type , size);
-    break;
-  default:
-    util_abort("%s: internal error - invalid value in switch statement. \n",__func__);
-  }
-}
-
-
-
-double gen_common_iget_double(int index , int size , ecl_type_enum ecl_type , void * _data) {
-  if (index < 0 || index >= size) {
-    util_abort("%s: asked for element:%d - only has:%d elements - aborting \n",__func__ , index , size);
-    return 0; /* Dummy */
-  }
-
-  if (ecl_type == ecl_double_type) {
-    const double * data = (const double * ) _data;
-    return data[index];
-  } else if (ecl_type == ecl_float_type) {
-    const float * data = (const float * ) _data;
-    return (double ) data[index];
-  } else {
-    util_abort("%s: internal error: ecl_type:%d not supported.\n",__func__ , ecl_type);
-    return 0; /* Dummy */
-  }
+  return buffer;
 }

@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <gen_param.h>
-#include <gen_param_config.h>
+#include <gen_data.h>
+#include <gen_data_config.h>
 #include <util.h>
 #include <ecl_grid.h>
 #include <pilot_point_config.h>

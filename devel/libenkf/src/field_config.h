@@ -12,7 +12,7 @@ extern "C" {
 #include <path_fmt.h>
 #include <rms_file.h>
 #include <ecl_grid.h>
-
+#include <field_active.h>
 
 
 
@@ -109,7 +109,6 @@ field_init_type         field_config_get_init_type(const field_config_type * );
 char                  * field_config_alloc_init_file(const field_config_type * , int );
 field_file_format_type  field_config_get_export_format(const field_config_type * );
 field_file_format_type  field_config_get_import_format(const field_config_type * );
-void                    field_config_set_iactive(field_config_type * , int  , const int *  , const int * , const int *);
 void                    field_config_set_all_active(field_config_type * );
 void                    field_config_set_key(field_config_type * , const char *);
 void                    field_config_enkf_OFF(field_config_type * );

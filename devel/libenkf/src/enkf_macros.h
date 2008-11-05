@@ -14,8 +14,7 @@ extern "C" {
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
 int data_size;            \
-char * ecl_kw_name;       \
-enkf_var_type var_type;
+char * ecl_kw_name;       
 
 
 /*****************************************************************/
@@ -46,6 +45,16 @@ void prefix ## _config_activate__(void * void_config , active_mode_type active_m
 }
 
 #define VOID_CONFIG_ACTIVATE_HEADER(prefix) void prefix ## _config_activate__(void * , active_mode_type , void *);
+
+/*****************************************************************/
+
+#define VOID_OBS_ACTIVATE(prefix) \
+void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void * active_info) { \
+    prefix ## _type * obs = prefix ## _safe_cast( void_obs );                           \
+    prefix ## _activate( obs , active_mode , active_info);                                        \
+}
+
+#define VOID_OBS_ACTIVATE_HEADER(prefix) void prefix ## _activate__(void * , active_mode_type , void *);
 
 /*****************************************************************/
 

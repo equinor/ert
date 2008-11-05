@@ -102,7 +102,7 @@ void enkf_ui_plot_time(void * void_arg) {
       const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
       const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
       int iens1 , iens2;   
-      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2); /* Not used yet ... */
+      //bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2); /* Not used yet ... */
       double * x, *y;
       int iens; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
