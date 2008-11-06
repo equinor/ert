@@ -27,14 +27,15 @@
 
 struct gen_obs_struct {
   int                     __type_id;
-  int                     data_size;      /* This is the total size of the observation vector. */ 
-  int                     active_size;    /* This is the number of active indices. */
-  int                   * active_list;    /* This is a a list of indices which are active - can be NULL if all is active. */
-  double                * __obs_buffer;   /* This is the actual storage variable. obs_data and obs_std just point into this vector. */
-  double                * obs_data;       /* The observed data. */
-  double                * obs_std;        /* The observed standard deviation. */ 
-  char                  * obs_file;       /* The file holding the observation. */ 
-  gen_data_format_type    obs_format;     /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
+  int                     data_size;       /* This is the total size of the observation vector. */ 
+  int                     active_size;     /* This is the number of active indices. */
+  int                   * active_list;     /* This is a a list of indices which are active - can be NULL if all is active. */
+  int                   * data_index_list; /*
+  double                * __obs_buffer;    /* This is the actual storage variable. obs_data and obs_std just point into this vector. */
+  double                * obs_data;        /* The observed data. */
+  double                * obs_std;         /* The observed standard deviation. */ 
+  char                  * obs_file;        /* The file holding the observation. */ 
+  gen_data_format_type    obs_format;      /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
 };
 
 /******************************************************************/
@@ -46,6 +47,7 @@ SAFE_CAST(gen_obs , GEN_OBS_TYPE_ID)
 void gen_obs_free(gen_obs_type * gen_obs) {
   util_safe_free(gen_obs->__obs_buffer);
   util_safe_free(gen_obs->obs_file);
+  util_safe_free(gen_obs->data_index_list);
   free(gen_obs);
 }
 
@@ -55,12 +57,13 @@ void gen_obs_free(gen_obs_type * gen_obs) {
 gen_obs_type * gen_obs_alloc(const char * obs_file) {
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
-  obs->__type_id    = GEN_OBS_TYPE_ID;
-  obs->active_size  = 0;
-  obs->active_list  = NULL;
-  obs->__obs_buffer = NULL;
-  obs->obs_file     = util_alloc_string_copy( obs_file );
-  obs->obs_format   = ASCII;
+  obs->__type_id       = GEN_OBS_TYPE_ID;
+  obs->active_size     = 0;
+  obs->active_list     = NULL;
+  obs->__obs_buffer    = NULL;
+  obs->data_index_list = NULL;
+  obs->obs_file        = util_alloc_string_copy( obs_file );
+  obs->obs_format      = ASCII;
   return obs;
 }
 
@@ -69,13 +72,16 @@ gen_obs_type * gen_obs_alloc(const char * obs_file) {
 void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , meas_vector_type * meas_vector) {
   
   int iobs;
+  if (gen_obs->data_index_list == NULL)
+    util_abort("%s: somehow no one allocated the gen_obs->data_index_list popinter - hmmm \n",__func__);
+  
   if (gen_obs->active_size == gen_obs->data_size) {
     for (iobs = 0; iobs < gen_obs->data_size; iobs++)
-      meas_vector_add( meas_vector , gen_data_iget_double( gen_data , iobs ));
+      meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
   } else 
     for (iobs = 0; iobs < gen_obs->active_size; iobs++)
-      meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->active_list[iobs] ));
-
+      meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->active_list[gen_obs->data_index_list[iobs]] ));
+  
 }
 
 
@@ -119,6 +125,18 @@ void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data
       obs_data_add( obs_data , gen_obs->obs_data[gen_obs->active_list[iobs]] , gen_obs->obs_std[gen_obs->active_list[iobs]] , kw);
 
   gen_obs->__obs_buffer = util_safe_free(gen_obs->__obs_buffer);
+
+
+  gen_obs->data_index_list = util_malloc( sizeof * gen_obs->data_inde_list * gen_obs->active_size, __func__);
+
+  /* Defaulting to :
+
+     1. Conformal vectors for observations and data.
+     2. Observing the whole shit.
+     
+  */
+  for (iobs = 0; iobs < gen_obs->data_size; iobs++)
+    gen_obs->data_index_list[iobs] = iobs;
 }
 
 
