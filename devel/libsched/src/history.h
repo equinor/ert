@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <time.h>
 #include <ecl_sum.h>
 #include <sched_file.h>
 
@@ -32,6 +33,9 @@ double         history_get_var_from_sum_key(const history_type *, int, const cha
 double 	       history_get_well_var(const history_type * , int, const char *, const char *, bool *);
 double 	       history_get_group_var(const history_type *, int, const char *, const char *, bool *);
 void           history_alloc_time_series_from_summary_key(const history_type *, const char *, int *, double **, bool **);
+time_t         history_iget_node_start_time(const history_type *, int);
+time_t         history_iget_node_end_time(const history_type *, int);
+int            history_get_restart_nr_from_time_t(const history_type *, time_t);
 #ifdef __cplusplus
 }
 #endif

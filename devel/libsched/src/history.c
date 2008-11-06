@@ -1,5 +1,4 @@
 #include <string.h>
-#include <time.h>
 #include <util.h>
 #include <hash.h>
 #include <list.h>
@@ -820,4 +819,42 @@ void   history_alloc_time_series_from_summary_key
   *__num_restarts = num_restarts;
   *__value        = value;
   *__default_used = default_used;
+}
+
+
+
+time_t history_iget_node_start_time(const history_type * history, int node_nr)
+{
+  history_node_type * history_node = history_iget_node_ref(history, node_nr);
+  return history_node->node_start_time;
+}
+
+
+
+time_t history_iget_node_end_time(const history_type * history, int node_nr)
+{
+  history_node_type * history_node = history_iget_node_ref(history, node_nr);
+  return history_node->node_end_time;
+}
+
+
+int history_get_restart_nr_from_time_t(const history_type * history, time_t time)
+{
+  int num_restart_files = history_get_num_restarts(history);
+  for(int i=0; i<num_restart_files; i++)
+  {
+    time_t node_end_time = history_iget_node_end_time(history, i);
+    if(node_end_time > time)
+	  {
+	    util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
+	  }
+    else if(node_end_time == time)
+	  {
+	   return i; 
+	  }
+  }
+  
+  // If we are here, time did'nt correspond a restart file. Abort.
+  util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
+  return 0;
 }
