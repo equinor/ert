@@ -44,7 +44,7 @@ void equil_realloc_data(equil_type * equil) {
 equil_type * equil_alloc(const equil_config_type * config) {
   equil_type * equil    = malloc(sizeof *equil);
   equil->config         = config;
-  equil->scalar         = scalar_alloc(config->scalar_config);
+  equil->scalar         = scalar_alloc(equil_config_get_scalar_config(config));
   DEBUG_ASSIGN(equil)
   return equil;
 }

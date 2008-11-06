@@ -702,26 +702,23 @@ void field_free(field_type *field) {
 void field_deserialize(field_type * field , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
-  const int                active_size = field_config_get_active_size(config);
-  const int               *active_list = field_config_get_active_list(config); 
+  const active_list_type * active_list = field_config_get_active_list(config); 
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   
 
-  enkf_deserialize(field->data , data_size , ecl_type , active_size , active_list , serial_state , serial_vector);
+  enkf_deserialize(field->data , data_size , ecl_type , active_list , serial_state , serial_vector);
 }
 
 
 int field_serialize(const field_type *field , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const field_config_type *config      = field->config;
   const int                data_size   = field_config_get_data_size(config);
-  const int                active_size = field_config_get_active_size(config);
-  const int               *active_list = field_config_get_active_list(config); 
+  const active_list_type  *active_list = field_config_get_active_list(config); 
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   
-  int elements_added = enkf_serialize(field->data , data_size , ecl_type , active_size , active_list , serial_state , serial_offset , serial_vector);
+  int elements_added = enkf_serialize(field->data , data_size , ecl_type , active_list , serial_state , serial_offset , serial_vector);
   return elements_added;
 }
-
 
 
 

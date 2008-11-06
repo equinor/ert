@@ -7,13 +7,13 @@
 #include <enkf_macros.h>
 #include <util.h>
 #include <ecl_well_vars.h>
+#include <active_list.h>
 
 
 struct summary_config_struct {
   CONFIG_STD_FIELDS;
   char ** var_list;
-  int     active_size;
-  int    *active_list;
+  active_list_type * active_list;
 };
 
 
@@ -56,8 +56,8 @@ void summary_config_add_var(summary_config_type * config , const char * var) {
   }
   
   if (true /* variable valid */) {
-    config->active_size++;
     config->data_size++;
+    active_list_grow(config->active_list , 1);
     config->var_list = realloc(config->var_list , config->data_size * sizeof * config->var_list);
     config->var_list[config->data_size - 1] = util_alloc_string_copy(var);
   } else {
@@ -73,9 +73,8 @@ static summary_config_type * __summary_config_alloc( void ) {
   summary_config_type * config = malloc(sizeof *config);
 
   config->data_size   	  = 0;
-  config->active_size     = 0;
   config->var_list    	  = NULL;
-  config->active_list     = NULL;
+  config->active_list     = active_list_alloc(0);
   return config;
 
 }
@@ -100,7 +99,7 @@ void summary_config_free(summary_config_type * config) {
     free(config->var_list[i]);
   free(config->var_list);
   free(config);
-  util_safe_free(config->active_list);
+  active_list_free(config->active_list);
 }
 
 
@@ -119,6 +118,5 @@ void summary_config_summarize(const summary_config_type * config) {
 /*****************************************************************/
 GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)
-GET_ACTIVE_SIZE(summary)
 GET_ACTIVE_LIST(summary)
 

@@ -6,7 +6,7 @@
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <trans_func.h>
-
+#include <active_list.h>
 
 
 struct scalar_config_struct {
@@ -14,8 +14,7 @@ struct scalar_config_struct {
   int internal_offset;
   double 	   * mean;
   double 	   * std;
-  int                active_size;
-  int              * active_list; 
+  active_list_type * active_list;
   transform_ftype ** output_transform;
   char            ** output_transform_name;
   void_arg_type   ** void_arg;        
@@ -30,8 +29,7 @@ scalar_config_type * scalar_config_alloc_empty(int size) {
   scalar_config->data_size   	       = size;
   scalar_config->mean        	       = util_malloc(size * sizeof *scalar_config->mean        , __func__);
   scalar_config->std         	       = util_malloc(size * sizeof *scalar_config->std         ,  __func__);
-  scalar_config->active_list           = NULL;
-  scalar_config->active_size           = size; /* Default all active */
+  scalar_config->active_list           = active_list_alloc( size );
   scalar_config->output_transform      = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform      , __func__);
   scalar_config->output_transform_name = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform_name , __func__);
   scalar_config->internal_offset       = 0;
@@ -106,7 +104,7 @@ void scalar_config_free(scalar_config_type * scalar_config) {
   int i;
   free(scalar_config->mean);
   free(scalar_config->std);
-  util_safe_free(scalar_config->active_list);
+  active_list_free(scalar_config->active_list);
   util_free_stringlist(scalar_config->output_transform_name , scalar_config->data_size);
   for (i=0; i < scalar_config->data_size; i++)
     if (scalar_config->void_arg[i] != NULL) void_arg_free(scalar_config->void_arg[i]);
@@ -121,6 +119,5 @@ void scalar_config_free(scalar_config_type * scalar_config) {
 /*****************************************************************/
 
 GET_DATA_SIZE(scalar);
-GET_ACTIVE_SIZE(scalar);
 GET_ACTIVE_LIST(scalar);
 VOID_FREE(scalar_config);

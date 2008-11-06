@@ -22,16 +22,9 @@ struct gen_data_active_struct {
 SAFE_CAST(gen_data_active , GEN_DATA_ACTIVE_ID);
 
 
-int gen_data_active_get_active_size( const gen_data_active_type * active) {
-  return active->size;
-}
-
-
-int * gen_data_active_alloc_list_copy(const gen_data_active_type * active ) {
-  return util_alloc_copy( active->active_list , active->size * sizeof * active->active_list , __func__);
-}
-
-const int * gen_data_active_get_active_list(const gen_data_active_type * active ) {
-  return active->active_list;
+void gen_data_active_update_active_list(const gen_data_active_type * gen_data_active , active_list_type * active_list) {
+  int i;
+  for (i=0; i < gen_data_active->size; i++)
+    active_list_add_index(active_list , gen_data_active->active_list[i]);
 }
 

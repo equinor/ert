@@ -12,6 +12,7 @@ extern "C" {
 #include <path_fmt.h>
 #include <rms_file.h>
 #include <ecl_grid.h>
+#include <active_list.h>
 #include <field_active.h>
 
 
@@ -130,7 +131,6 @@ truncation_type 	field_config_get_truncation(const field_config_type * , double 
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
 VOID_CONFIG_ACTIVATE_HEADER(field);
-GET_ACTIVE_SIZE_HEADER(field);
 GET_ACTIVE_LIST_HEADER(field);
 #ifdef __cplusplus
 }

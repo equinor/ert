@@ -26,7 +26,6 @@ bool               well_config_has_var(const well_config_type * , const char * )
 void               well_config_summarize(const well_config_type * );
 
 
-GET_ACTIVE_SIZE_HEADER(well);
 GET_ACTIVE_LIST_HEADER(well);
 GET_DATA_SIZE_HEADER(well);
 VOID_CONFIG_FREE_HEADER(well);

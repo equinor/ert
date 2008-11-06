@@ -7,6 +7,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ecl_util.h>
+#include <active_list.h>
 
 typedef struct serial_state_struct  serial_state_type;
 typedef struct serial_vector_struct serial_vector_type;
@@ -26,12 +27,12 @@ double *             serial_vector_get_data(const serial_vector_type * );
 
 /*****************************************************************/
 
-void   enkf_deserialize_part(void * , bool , int , int , int , ecl_type_enum , int , const int * , serial_state_type * , const serial_vector_type *);
-size_t enkf_serialize_part  (const void * , bool , int , int , int , ecl_type_enum ,  int , const int * , serial_state_type * , size_t , serial_vector_type *);
+void   enkf_deserialize_part(void * , bool , int , int , int , ecl_type_enum , const active_list_type * , serial_state_type * , const serial_vector_type *);
+size_t enkf_serialize_part  (const void * , bool , int , int , int , ecl_type_enum ,  const active_list_type * , serial_state_type * , size_t , serial_vector_type *);
 
 
-void   enkf_deserialize(void * , int , ecl_type_enum , int , const int * , serial_state_type * , const serial_vector_type *);
-size_t enkf_serialize  (const void * , int , ecl_type_enum ,  int , const int * , serial_state_type * , size_t , serial_vector_type *);
+void   enkf_deserialize(void * , int , ecl_type_enum , const active_list_type * , serial_state_type * , const serial_vector_type *);
+size_t enkf_serialize  (const void * , int , ecl_type_enum , const active_list_type * , serial_state_type * , size_t , serial_vector_type *);
 
 
 #ifdef __cplusplus

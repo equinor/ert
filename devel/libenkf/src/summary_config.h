@@ -22,7 +22,6 @@ bool                   summary_config_has_var(const summary_config_type * , cons
 void                   summary_config_summarize(const summary_config_type * );
 
 
-GET_ACTIVE_SIZE_HEADER(summary);
 GET_ACTIVE_LIST_HEADER(summary);
 GET_DATA_SIZE_HEADER(summary);
 VOID_CONFIG_FREE_HEADER(summary);

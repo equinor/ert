@@ -12,6 +12,7 @@
 #include <path_fmt.h>
 #include <math.h>
 #include <field_active.h>
+#include <active_list.h>
 
 #define FIELD_CONFIG_ID 78269
 
@@ -21,9 +22,8 @@ struct field_config_struct {
   int sx,sy,sz;                         /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
   const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */ 
 
-  int             active_size; 
-  int            *active_list;
-
+  active_list_type * active_list;
+  
   truncation_type truncation;           /* How the field should be trunacted before exporting for simulation. */
   double   	  min_value;            /* The min value used in truncation. */   
   double   	  max_value;            /* The maximum value used in truncation. */
@@ -292,8 +292,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
   config->init_file_fmt            = NULL;
-  config->active_list              = NULL;
-  config->active_size              = config->data_size; /*Default all active */
+  config->active_list              = active_list_alloc( config->data_size );
   config->output_transform         = NULL;
   field_config_set_all_active(config);
   return config;
@@ -307,16 +306,12 @@ field_config_type * field_config_alloc_complete(const char * ecl_kw_name , ecl_t
 
 
 static void field_config_set_all_active__(field_config_type * field_config, bool active) {
+
   if (active) 
-    field_config->active_size = field_config->data_size;
+    active_list_set_all_active(field_config->active_list);
   else 
-    field_config->active_size = 0;
-  
-  /* 
-     No active list in the special cases all or none active. Must be
-     set to NULL.
-  */
-  field_config->active_list = util_safe_free( field_config->active_list );
+    active_list_reset(field_config->active_list);
+
 }
 
 
@@ -518,11 +513,12 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 
 
 void field_config_free(field_config_type * config) {
-  util_safe_free(config->active_list);
+  
   util_safe_free(config->ecl_kw_name);
   util_safe_free(config->base_file);
   util_safe_free(config->perturbation_config_file);
   util_safe_free(config->layer_config_file);
+  active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
   free(config);
 }
@@ -805,19 +801,14 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 
 void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
   field_active_type * active = field_active_safe_cast( active_config );
-  
-  util_safe_free(config->active_list);
-  if (active_mode == all_active)
-    config->active_size = config->data_size;
-  else if (active_mode == inactive)
-    config->active_size = 0;
-  else if (active_mode == partly_active) {
-    config->active_size = field_active_get_active_size( active );
-    config->active_list = field_active_alloc_list_copy( active );
-  } else 
-    util_abort("%s: internal error - active_mode:%d completely invalid \n",__func__ , active_mode);
-    
 
+  if (active_mode == all_active)
+    active_list_set_all_active(config->active_list);
+  else {
+    active_list_reset(config->active_list);
+    if (active_mode == partly_active) 
+      field_active_update_active_list( active , config->active_list);
+  }
 }
 
 
@@ -827,5 +818,5 @@ CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_FREE(field_config)
 VOID_CONFIG_ACTIVATE(field)
-GET_ACTIVE_SIZE(field);
 GET_ACTIVE_LIST(field);
+

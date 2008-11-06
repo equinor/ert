@@ -34,7 +34,6 @@ void                    gen_data_config_ecl_write(const gen_data_config_type *  
 void                    gen_data_config_get_template_data( const gen_data_config_type * , char ** , int * , int * , int *);
 gen_data_config_type  * gen_data_config_fscanf_alloc(const char * );
 
-GET_ACTIVE_SIZE_HEADER(gen_data)
 GET_ACTIVE_LIST_HEADER(gen_data)
 VOID_FREE_HEADER(gen_data_config)
 VOID_CONFIG_ACTIVATE_HEADER(gen_data);

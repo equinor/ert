@@ -104,9 +104,8 @@ void summary_free(summary_type *summary) {
 void summary_deserialize(const summary_type * summary , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const summary_config_type *config      = summary->config;
   const int                data_size   = summary_config_get_data_size(config);
-  const int                active_size = summary_config_get_active_size(config);
-  const int               *active_list = summary_config_get_active_list(config);
-  enkf_deserialize(summary->data , data_size , ecl_double_type , active_size , active_list , serial_state , serial_vector);
+  const active_list_type  *active_list = summary_config_get_active_list(config);
+  enkf_deserialize(summary->data , data_size , ecl_double_type , active_list , serial_state , serial_vector);
 }
 
 
@@ -115,10 +114,9 @@ void summary_deserialize(const summary_type * summary , serial_state_type * seri
 int summary_serialize(const summary_type *summary , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const summary_config_type *config      = summary->config;
   const int                data_size   = summary_config_get_data_size(config);
-  const int                active_size = summary_config_get_active_size(config);
-  const int               *active_list = summary_config_get_active_list(config);
+  const active_list_type  *active_list = summary_config_get_active_list(config);
 
-  return enkf_serialize(summary->data , data_size , ecl_double_type , active_size , active_list , serial_state , serial_offset , serial_vector);
+  return enkf_serialize(summary->data , data_size , ecl_double_type , active_list , serial_state , serial_offset , serial_vector);
 }
 
 

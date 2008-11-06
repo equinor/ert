@@ -8,10 +8,7 @@ extern "C" {
 
 typedef struct gen_data_active_struct gen_data_active_type;
 
-
-int  	    gen_data_active_get_active_size( const gen_data_active_type * );
-int    	  * gen_data_active_alloc_list_copy(const gen_data_active_type * );
-const int * gen_data_active_get_active_list(const gen_data_active_type * );
+void gen_data_active_update_active_list(const gen_data_active_type * gen_ , active_list_type * );
 
 SAFE_CAST_HEADER(gen_data_active);
 

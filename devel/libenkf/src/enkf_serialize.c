@@ -3,7 +3,7 @@
 #include <enkf_serialize.h>
 #include <enkf_types.h>
 #include <util.h>
-
+#include <active_list.h>
 
 /** This is heavy shit ... */
 
@@ -350,13 +350,16 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 			   int           active_node_offset ,   /* The internal offset into the multicomponent node - zero for all simple nodes. */
 			   int           total_node_size    , 
 			   ecl_type_enum node_type          ,   /* The underlying data type of __node_data. */
-			   int           active_size         ,   /* The number of active data points in this node. */ 
-			   const int   * active_list        ,   /* A list of integers denoting the active members - can be NULL if active_size == node_size. */
+			   const active_list_type * __active_list , 
 			   serial_state_type * serial_state ,   /* Holding the state of the current serialization of this node. */
 			   /*-- Above: node data --- Below: serial data --*/
 			   size_t serial_offset ,               /* The offset in the serial vector we are starting on - owned by the node; pointing into the serial vector. */                     
 			   serial_vector_type * serial_vector) {
 
+  
+  int           active_size = active_list_get_active_size( __active_list );
+  const int   * active_list = active_list_get_active( __active_list );
+  
   int    active_node_index1 = serial_state->active_node_index1;
   int    current_active_node_index;
   size_t active_index       = -1; /* Compiler shut up */
@@ -422,8 +425,7 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 size_t enkf_serialize(const void * __node_data         ,  
                       int           node_size          ,  
 		      ecl_type_enum node_type          ,  
-		      int           active_size          ,
-		      const int *   active_list         ,
+		      const active_list_type * active_list , 
                       serial_state_type * serial_state ,  
                       size_t serial_offset ,              
                       serial_vector_type * serial_vector) {
@@ -432,7 +434,7 @@ size_t enkf_serialize(const void * __node_data         ,
   int  node_offset     = 0;
   int  total_node_size = node_size;
 
-  return enkf_serialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_size , active_list , serial_state , serial_offset , serial_vector);
+  return enkf_serialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_list , serial_state , serial_offset , serial_vector);
 }
 
 
@@ -444,11 +446,13 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
 			   int      active_node_offset       , /* The current offset into the node i.e. how many elements we have serialized. */            
 			   int      total_node_size          , /* The TOTAL size of the node (including inactive ++) */       
 			   ecl_type_enum node_type           , /* The underlying type (double || float) of the node's storage. */
-			   int           active_size          ,
-			   const int *   active_list         ,
+			   const active_list_type * __active_list ,
 			   serial_state_type * serial_state  , /* Holding the state of the current serialization of this node. */
 			   /*-- Above: node data ---  Below: serial data --*/
 			   const serial_vector_type * serial_vector) {
+
+  int           active_size = active_list_get_active_size( __active_list );
+  const int   * active_list = active_list_get_active( __active_list );
   
   size_t serial_offset        = serial_state->serial_offset;
   int    active_node_index1   = serial_state->active_node_index1;
@@ -495,8 +499,7 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
 void enkf_deserialize(void * __node_data                , 
 		      int      node_size                , 
 		      ecl_type_enum node_type           , 
-		      int           active_size          ,
-		      const int *   active_list         ,
+		      const active_list_type * active_list , 
 		      serial_state_type * serial_state  , 
 		      const serial_vector_type * serial_vector) {
 
@@ -504,5 +507,5 @@ void enkf_deserialize(void * __node_data                ,
   int  node_offset     = 0;
   int  total_node_size = node_size;
   
-  enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_size , active_list , serial_state , serial_vector);
+  enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_list , serial_state , serial_vector);
 }

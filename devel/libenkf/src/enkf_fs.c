@@ -350,7 +350,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
       driver->save(driver , report_step , iens , state , static_counter , enkf_node); 
     } else {
       basic_driver_type * driver = basic_driver_safe_cast(_driver);
-
+      
       if (report_step == 0) {
 	enkf_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
 	if (impl_type == WELL || impl_type == SUMMARY) return;    /* For report step == 0 the summary data is just garbage. */

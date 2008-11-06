@@ -138,41 +138,37 @@ void scalar_free(scalar_type *scalar) {
 
 void scalar_deserialize(scalar_type * scalar , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const scalar_config_type *config      = scalar->config;
-  const int                *active_list = scalar_config_get_active_list(config);
+  const active_list_type   *active_list = scalar_config_get_active_list(config);
   const int                data_size    = scalar_config_get_data_size(config);
-  const int                active_size  = scalar_config_get_active_size(config);
-  enkf_deserialize(scalar->data , data_size ,ecl_double_type , active_size , active_list , serial_state , serial_vector);
+  enkf_deserialize(scalar->data , data_size ,ecl_double_type , active_list , serial_state , serial_vector);
 }
 
 
 int scalar_serialize(const scalar_type *scalar ,  serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const scalar_config_type *config      = scalar->config;
-  const int                *active_list = scalar_config_get_active_list(config);
+  const active_list_type   *active_list = scalar_config_get_active_list(config);
   const int                data_size    = scalar_config_get_data_size(config);
-  const int                active_size  = scalar_config_get_active_size(config);
-  
-  return enkf_serialize(scalar->data , data_size , ecl_double_type , active_size , active_list , serial_state  , serial_offset , serial_vector);
+
+  return enkf_serialize(scalar->data , data_size , ecl_double_type , active_list , serial_state  , serial_offset , serial_vector);
 }
 
 
 void scalar_deserialize_part(scalar_type * scalar , serial_state_type * serial_state , bool first_call , int node_active_offset , int total_node_active_size , const serial_vector_type * serial_vector) {
   const scalar_config_type *config      = scalar->config;
-  const int                *active_list = scalar_config_get_active_list(config);
+  const active_list_type   *active_list = scalar_config_get_active_list(config);
   const int                data_size    = scalar_config_get_data_size(config);
-  const int                active_size  = scalar_config_get_active_size(config);
   
-  enkf_deserialize_part(scalar->data , first_call , data_size , node_active_offset , total_node_active_size , ecl_double_type , active_size , active_list , serial_state , serial_vector);
+  enkf_deserialize_part(scalar->data , first_call , data_size , node_active_offset , total_node_active_size , ecl_double_type , active_list , serial_state , serial_vector);
 }
 
 
 
 int scalar_serialize_part(const scalar_type *scalar ,  serial_state_type * serial_state , bool first_call , int node_active_offset , int total_node_active_size , size_t serial_offset , serial_vector_type * serial_vector) {
   const scalar_config_type *config      = scalar->config;
-  const int                *active_list = scalar_config_get_active_list(config);
+  const active_list_type   *active_list = scalar_config_get_active_list(config);
   const int                data_size    = scalar_config_get_data_size(config);
-  const int                active_size  = scalar_config_get_active_size(config);
-    
-  return enkf_serialize_part(scalar->data , first_call , data_size , node_active_offset , total_node_active_size , ecl_double_type , active_size , active_list , serial_state  , serial_offset , serial_vector);
+  
+  return enkf_serialize_part(scalar->data , first_call , data_size , node_active_offset , total_node_active_size , ecl_double_type , active_list , serial_state  , serial_offset , serial_vector);
 }
 
 

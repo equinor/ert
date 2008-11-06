@@ -90,7 +90,7 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
    are the corresponding standard deviations.
 
    The file is loaded with the gen_common_fload_alloc() function, and
-   can be in formatted qASCII or binary_float / binary_double. Observe
+   can be in formatted ASCII or binary_float / binary_double. Observe
    that there is *NO* header information in this file.
 */
 

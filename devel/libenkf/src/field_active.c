@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <enkf_macros.h>
 #include <field_active.h>
+#include <active_list.h>
 
 
 /**
@@ -21,19 +22,14 @@ struct field_active_struct {
 };
 
 
-SAFE_CAST(field_active , FIELD_ACTIVE_ID)
+SAFE_CAST(field_active , FIELD_ACTIVE_ID);
 
 
-
-int field_active_get_active_size( const field_active_type * active) {
-  return active->size;
+void field_active_update_active_list(const field_active_type * field_active , active_list_type * active_list) {
+  int i;
+  for (i=0; i < field_active->size; i++)
+    active_list_add_index(active_list , field_active->active_list[i]);
 }
-
-
-int * field_active_alloc_list_copy(const field_active_type * active ) {
-  return util_alloc_copy( active->active_list , active->size * sizeof * active->active_list , __func__);
-}
-
 
 
 

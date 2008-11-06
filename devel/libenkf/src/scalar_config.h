@@ -29,7 +29,6 @@ int                   scalar_config_get_active_size(const scalar_config_type *);
 
 GET_DATA_SIZE_HEADER(scalar);
 VOID_FREE_HEADER(scalar_config);
-GET_ACTIVE_SIZE_HEADER(scalar);
 GET_ACTIVE_LIST_HEADER(scalar);
 #ifdef __cplusplus
 }

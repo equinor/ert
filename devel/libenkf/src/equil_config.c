@@ -8,6 +8,23 @@
 
 
 #define EQUIL_CONFIG_ID 661897
+
+struct equil_config_struct {
+  CONFIG_STD_FIELDS;
+
+  double * datum_depth;
+  double * datum_P;
+  double * oil_water_Pc;
+  double * gas_oil_Pc;
+  int    * live_oil_init_mode;
+  int    * black_oil_wgas_init_mode;
+  int    * init_accuracy;
+
+  scalar_config_type * scalar_config;
+};
+
+
+
 /*****************************************************************/
 SAFE_CAST(equil_config , EQUIL_CONFIG_ID)
 
@@ -77,6 +94,10 @@ void equil_config_free(equil_config_type * config) {
   free(config);
 }
 							 
+const scalar_config_type * equil_config_get_scalar_config(const equil_config_type * config) {
+  return config->scalar_config;
+}
+
 
 void equil_config_ecl_write(const equil_config_type * config  , const double * woc , const double * goc , FILE * stream) {
   int nequil = config->data_size;

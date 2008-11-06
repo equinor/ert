@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <path_fmt.h>
 #include <gen_data_active.h>
+#include <active_list.h>
 
 #define GEN_DATA_CONFIG_ID 90051
 
@@ -23,8 +24,8 @@ struct gen_data_config_struct {
   path_fmt_type  	* init_file_fmt;         /* file format for the file used to load the inital values. */
   gen_data_format_type    input_format;          /* The format used for loading gen_data instances when the forward model has completed *AND* for loading the initial files.*/
   gen_data_format_type    output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
-  int              active_size;
-  int            * active_list; 
+
+  active_list_type      * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t  update_lock;
 };
 
@@ -58,7 +59,7 @@ static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_ty
   config->__type_id         = GEN_DATA_CONFIG_ID;
   config->data_size  	    = 0;
   config->internal_type     = internal_type;
-  config->active_list       = NULL;
+  config->active_list       = active_list_alloc(0);
   config->input_format      = input_format;
   config->output_format     = output_format;
 
@@ -114,8 +115,7 @@ gen_data_config_type * gen_data_config_alloc_with_template(gen_data_format_type 
 
 
 void gen_data_config_free(gen_data_config_type * config) {
-  util_safe_free(config->active_list);
-  util_safe_free(config->template_buffer);
+  active_list_free(config->active_list);
   path_fmt_free(config->init_file_fmt);
   free(config);
 }
@@ -142,7 +142,7 @@ void gen_data_config_assert_size(gen_data_config_type * config , int size) {
     else 
       if (config->data_size != size)
 	util_abort("%s: Size mismatch when loading from file got %d elements - expected:%d \n",__func__ , size , config->data_size);
-    config->active_size = size; /* All active ... */
+    active_list_set_data_size( config->active_list , size );
   }
   pthread_mutex_unlock( &config->update_lock );
 }
@@ -177,16 +177,13 @@ void gen_data_config_get_template_data( const gen_data_config_type * config ,
 void gen_data_config_activate(gen_data_config_type * config , active_mode_type active_mode , void * active_config) {
   gen_data_active_type * active = gen_data_active_safe_cast( active_config );
 
-  util_safe_free(config->active_list);
   if (active_mode == all_active)
-    config->active_size = config->data_size;
-  else if (active_mode == inactive)
-    config->active_size = 0;
-  else if (active_mode == partly_active) {
-    config->active_size = gen_data_active_get_active_size( active );
-    config->active_list = gen_data_active_alloc_list_copy( active );
-  } else 
-    util_abort("%s: internal error - active_mode:%d completely invalid \n",__func__ , active_mode);
+    active_list_set_all_active(config->active_list);
+  else {
+    active_list_reset(config->active_list);
+    if (active_mode == partly_active) 
+      gen_data_active_update_active_list( active , config->active_list);
+  }
     
 }
 
@@ -195,6 +192,5 @@ void gen_data_config_activate(gen_data_config_type * config , active_mode_type a
 /*****************************************************************/
 
 VOID_FREE(gen_data_config)
-GET_ACTIVE_SIZE(gen_data)
 GET_ACTIVE_LIST(gen_data)
 VOID_CONFIG_ACTIVATE(gen_data)

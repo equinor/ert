@@ -104,10 +104,9 @@ void well_free(well_type *well) {
 void well_deserialize(const well_type * well , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const well_config_type *config       = well->config;
   const int                data_size   = well_config_get_data_size(config);
-  const int                active_size = well_config_get_active_size(config);
-  const int              * active_list = well_config_get_active_list(config);
+  const active_list_type * active_list = well_config_get_active_list(config);
 
-  enkf_deserialize(well->data , data_size , ecl_double_type , active_size , active_list , serial_state , serial_vector);
+  enkf_deserialize(well->data , data_size , ecl_double_type , active_list , serial_state , serial_vector);
 }
 
 
@@ -115,10 +114,9 @@ void well_deserialize(const well_type * well , serial_state_type * serial_state 
 int well_serialize(const well_type *well , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const well_config_type *config      = well->config;
   const int                data_size   = well_config_get_data_size(config);
-  const int                active_size = well_config_get_active_size(config);
-  const int              * active_list = well_config_get_active_list(config);
-  
-  return enkf_serialize(well->data , data_size , ecl_double_type , active_size , active_list , serial_state , serial_offset , serial_vector);
+  const active_list_type * active_list = well_config_get_active_list(config);  
+
+  return enkf_serialize(well->data , data_size , ecl_double_type , active_list , serial_state , serial_offset , serial_vector);
 }
 
 

@@ -111,13 +111,16 @@ bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
   DEBUG_ASSERT(gen_data)
   {
     int size      = gen_data_config_get_data_size(gen_data->config);
-    int byte_size = gen_data_config_get_byte_size(gen_data->config);
+    if (size > 0) {
+      int byte_size = gen_data_config_get_byte_size(gen_data->config);
     
-    enkf_util_fwrite_target_type(stream , GEN_DATA);
-    util_fwrite_int(size , stream);
-    util_fwrite_compressed(gen_data->data , byte_size , stream);
+      enkf_util_fwrite_target_type(stream , GEN_DATA);
+      util_fwrite_int(size , stream);
+      util_fwrite_compressed(gen_data->data , byte_size , stream);
+      return true;
+    } else
+      return false;   /* When false is returned - the (empty) file will be removed */
   }
-  return true;
 }
 
 
@@ -143,26 +146,24 @@ void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
 
 
 int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  ecl_type_enum ecl_type = gen_data_config_get_internal_type(gen_data->config);
-  const int data_size    = gen_data_config_get_data_size(gen_data->config);
-  const int active_size  = gen_data_config_get_active_size(gen_data->config);
-  const int *active_list = gen_data_config_get_active_list(gen_data->config);
+  ecl_type_enum ecl_type 	       = gen_data_config_get_internal_type(gen_data->config);
+  const int data_size    	       = gen_data_config_get_data_size(gen_data->config);
+  const active_list_type  *active_list = gen_data_config_get_active_list(gen_data->config);
   
   int elements_added = 0;
   if (data_size > 0) 
-    elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_size , active_list , serial_state ,serial_offset , serial_vector);
+    elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_list , serial_state ,serial_offset , serial_vector);
   return elements_added;
 }
 
 
 void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  ecl_type_enum ecl_type = gen_data_config_get_internal_type(gen_data->config);
-  const int data_size    = gen_data_config_get_data_size(gen_data->config);
-  const int active_size  = gen_data_config_get_active_size(gen_data->config);
-  const int *active_list = gen_data_config_get_active_list(gen_data->config);
+  ecl_type_enum ecl_type              = gen_data_config_get_internal_type(gen_data->config);
+  const int data_size    	      = gen_data_config_get_data_size(gen_data->config);
+  const active_list_type *active_list = gen_data_config_get_active_list(gen_data->config);
   
   if (data_size > 0)
-    enkf_deserialize(gen_data->data , data_size , ecl_type , active_size , active_list  , serial_state , serial_vector);
+    enkf_deserialize(gen_data->data , data_size , ecl_type , active_list  , serial_state , serial_vector);
   
 }
 
@@ -243,6 +244,8 @@ void gen_data_initialize(gen_data_type * gen_data , int iens) {
 
 
 
+
+
 static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char * file , gen_data_format_type export_format) {
   FILE * stream   = util_fopen(file , "w");
   char * template_buffer;
@@ -275,6 +278,7 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
   }
   fclose(stream);
 }
+
 
 
 static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const char * file , ecl_type_enum export_type) {

@@ -7,7 +7,7 @@
 #include <enkf_macros.h>
 #include <util.h>
 #include <ecl_well_vars.h>
-
+#include <active_list.h>
 
 /*****************************************************************/
 
@@ -15,8 +15,7 @@ struct well_config_struct {
   CONFIG_STD_FIELDS;
   char  * well_name;
   char ** var_list;
-  int     active_size;
-  int    *active_list;
+  active_list_type * active_list;
 };
 
 
@@ -55,8 +54,8 @@ void well_config_add_var(well_config_type * config , const char * var) {
   }
 
   if (ecl_well_var_valid(var , NULL)) {
-    config->active_size++;
     config->data_size++;
+    active_list_grow(config->active_list , 1);
     config->var_list = realloc(config->var_list , config->data_size * sizeof * config->var_list);
     config->var_list[config->data_size - 1] = util_alloc_string_copy(var);
   } else {
@@ -73,9 +72,8 @@ static well_config_type * __well_config_alloc(const char * well_name) {
 
   config->well_name   	  = util_alloc_string_copy(well_name);
   config->data_size   	  = 0;
-  config->active_size     = 0;
   config->var_list    	  = NULL;
-  config->active_list     = NULL;
+  config->active_list     = active_list_alloc(0);
   return config;
 }
 
@@ -122,7 +120,7 @@ well_config_type * well_config_fscanf_alloc(const char * well_name , const char 
 
 
 void well_config_free(well_config_type * config) {
-  util_safe_free(config->active_list);
+  active_list_free(config->active_list);
   free(config->well_name);
 
   for (int i = 0; i < config->data_size; i++)
@@ -152,7 +150,6 @@ void well_config_summarize(const well_config_type * config) {
 /*****************************************************************/
 GET_DATA_SIZE(well)
 VOID_CONFIG_FREE(well)
-GET_ACTIVE_SIZE(well);
 GET_ACTIVE_LIST(well);
 
 
