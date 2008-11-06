@@ -12,7 +12,7 @@
    here. 
    
    All the xxx_config objects have a pointer to an active_list
-   instance. This is pointer is passed to the enkf_serialize /
+   instance. This pointer is passed to the enkf_serialize /
    enkf_deserialize routines.
 
    Observe that for the special case that all elements are active the
@@ -35,7 +35,7 @@ a fault object. Then the code will be like:
    ....
 
    When this fault object is serialized/deserialized only the elements
-   0,4,5 are updated. Well - in theory at least ...
+   0,4,5 are updated. 
 */
 
 

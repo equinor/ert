@@ -224,7 +224,7 @@ static void enkf_obs_add_field_obs__(enkf_obs_type * enkf_obs, const enkf_config
 
 void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const enkf_config_node_type * config_node , const ecl_rft_node_type * rft_node, const double * p_data , const double * p_std) {
   char * obs_label = util_alloc_string_sum2("RFT/" , ecl_rft_node_well_name_ref(rft_node));
-  enkf_obs_add_field_obs__(enkf_obs , config_node , "PRESSURE" ,  obs_label , ecl_rft_node_get_size(rft_node) , ecl_rft_node_get_i(rft_node), ecl_rft_node_get_j(rft_node), ecl_rft_node_get_k(rft_node) , p_data , p_std , ecl_rft_node_get_recording_time(rft_node));
+  enkf_obs_add_field_obs__(enkf_obs , config_node , "PRESSURE" ,  obs_label , ecl_rft_node_get_size(rft_node) , ecl_rft_node_get_i(rft_node), ecl_rft_node_get_j(rft_node), ecl_rft_node_get_k(rft_node) , p_data , p_std , ecl_rft_node_get_recording_date(rft_node));
   free(obs_label);
 }
 
