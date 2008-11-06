@@ -5,21 +5,44 @@
 
 
 /**
-   This file implements a small simple structure used to denote which
+   This file implements a small structure used to denote which
    elements of a node/observation which is active. At the lowest level
-   the elements in a node are just in a list of integers. This list of
-   integers, with som extra twists is what is implemneted here. 
+   the active elements in a node is just a list of integers. This
+   list of integers, with som extra twists is what is implemented
+   here. 
+   
+   All the xxx_config objects have a pointer to an active_list
+   instance. This is pointer is passed to the enkf_serialize /
+   enkf_deserialize routines.
 
    Observe that for the special case that all elements are active the
    (int *) pointer should not be accessed, and the code here is free
    to return NULL.
+
+
+Example
+-------
+
+Consider a situation where faults number 0,4 and 5 should be active in
+a fault object. Then the code will be like:
+
+
+   ....
+   active_list_reset(multflt_config->active_list);
+   active_list_add_index(multflt_config->active_list , 0);
+   active_list_add_index(multflt_config->active_list , 4);
+   active_list_add_index(multflt_config->active_list , 5);
+   ....
+
+   When this fault object is serialized/deserialized only the elements
+   0,4,5 are updated. Well - in theory at least ...
 */
 
 
 #define ACTIVE_LIST_TYPE_ID 66109
 
 struct active_list_struct {
-  int     __type_id;
+  int     __type_id;      /* Used for checking run_time casting. */
   int     active_size;    /* The number of active elements. */
   int     data_size;      /* The data size of the node in question. */
   int     alloc_size;     /* The allocated size of the  active_list pointer. */
@@ -29,6 +52,7 @@ struct active_list_struct {
 /*****************************************************************/
 
 SAFE_CAST(active_list , ACTIVE_LIST_TYPE_ID)
+
 
 
 static void active_list_realloc_list(active_list_type * active_list , int new_alloc_size) {
@@ -65,8 +89,10 @@ void active_list_set_all_active(active_list_type * active_list) {
 
 
 void active_list_set_data_size(active_list_type * active_list , int data_size) {
-  /* Iff we all_active allready, then we assume that also applies in
-     the new situation. */
+  /* 
+     Iff we have all active already, we assume that also applies in
+     the new situation. 
+  */
 
   if (active_list->active_size == active_list->data_size)
     active_list->active_size = data_size;
@@ -74,11 +100,17 @@ void active_list_set_data_size(active_list_type * active_list , int data_size) {
 }
 
 
+/** 
+    For use with object which can change data_size runtime.
+*/
 void active_list_grow(active_list_type * active_list , int delta) {
   active_list_set_data_size( active_list , delta + active_list->data_size );
 }
 
-
+/*
+  Setting the counter back to zero - i.e. a call to
+  active_list_reset() will mean that we have *NO* active elements.
+*/
 void active_list_reset(active_list_type * active_list) {
   active_list->active_size = 0;
   if (active_list->alloc_size > 100)
