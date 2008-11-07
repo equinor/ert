@@ -30,7 +30,7 @@ struct gen_obs_struct {
   int                     data_size;       /* This is the total size of the observation vector. */ 
   int                     active_size;     /* This is the number of active indices. */
   int                   * active_list;     /* This is a a list of indices which are active - can be NULL if all is active. */
-  int                   * data_index_list; /*
+  int                   * data_index_list; /* The indexes which are observed in the corresponding gen_data instance.*/
   double                * __obs_buffer;    /* This is the actual storage variable. obs_data and obs_std just point into this vector. */
   double                * obs_data;        /* The observed data. */
   double                * obs_std;         /* The observed standard deviation. */ 
@@ -127,7 +127,7 @@ void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data
   gen_obs->__obs_buffer = util_safe_free(gen_obs->__obs_buffer);
 
 
-  gen_obs->data_index_list = util_malloc( sizeof * gen_obs->data_inde_list * gen_obs->active_size, __func__);
+  gen_obs->data_index_list = util_malloc( sizeof * gen_obs->data_index_list * gen_obs->active_size, __func__);
 
   /* Defaulting to :
 
