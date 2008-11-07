@@ -25,6 +25,21 @@ set_type * set_alloc(int size, const char ** keyList) {
 }
 
 
+set_type * set_copyc(const set_type * set)
+{
+  int         size     = set_get_size(set);
+  char     ** keylist  = set_alloc_keylist(set);
+  set_type  * set_copy = set_alloc(size, (const char **) keylist);
+  
+  for(int key_nr = 0; key_nr < size; key_nr++)
+    free(keylist[key_nr]);
+  free(keylist);
+
+  return set_copy;
+}
+
+
+
 set_type * set_alloc_empty() { return set_alloc(0 , NULL); }
 
 
