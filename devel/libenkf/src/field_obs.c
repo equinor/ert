@@ -78,8 +78,13 @@ void field_obs_measure(const field_obs_type * field_obs , const field_type * fie
   /* Should check type of field */
 
   for (i=0; i < field_obs->size; i++) {
-    double value = field_ijk_get_double(field_state , field_obs->i[i] , field_obs->j[i] , field_obs->k[i]);
-    meas_vector_add(meas_vector , value);
+    if (field_ijk_valid(field_state , field_obs->i[i] , field_obs->j[i] , field_obs->k[i])) {
+      double value = field_ijk_get_double(field_state , field_obs->i[i] , field_obs->j[i] , field_obs->k[i]);
+      meas_vector_add(meas_vector , value);
+    } else {
+      printf("Fuck - observing inactive CELL - how ... \n");
+      meas_vector_add(meas_vector , 0.0);
+    }
   }
 }
 

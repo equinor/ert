@@ -14,6 +14,13 @@
 #include <field_active.h>
 #include <active_list.h>
 
+/*
+  Observe the following convention:
+  
+    global_index:  [0 , nx*ny*nz)
+    active_index:  [0 , nactive)
+*/
+
 #define FIELD_CONFIG_ID 78269
 
 struct field_config_struct {
@@ -324,10 +331,12 @@ void field_config_set_all_active(field_config_type * field) {
 /*
   Observe that the indices are zero-based, in contrast to those used
   by eclipse which are based on one.
+
+  This function will return an index in the interval: [0...nactive)
 */
 
 inline int field_config_active_index(const field_config_type * config , int i , int j , int k) {
-  return ecl_grid_get_active_cell_index( config->grid , i,j,k);
+  return ecl_grid_get_active_index( config->grid , i,j,k);
 }
 
 
