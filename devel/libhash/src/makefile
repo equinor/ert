@@ -26,6 +26,8 @@ SDP_INSTALL: LIB BIN
 LIB:	$(LIB)
 
 
+rebuild: clean LOCAL
+
 clean:
 	rm -f *.o *~ 
 	rm -f libhash_*

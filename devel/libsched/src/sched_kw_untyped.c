@@ -2,14 +2,17 @@
 #include <stdlib.h>
 #include <list.h>
 #include <list_node.h>
+#include <ctype.h>
 #include <util.h>
 #include <sched_kw_untyped.h>
 #include <sched_util.h>
 
 
+
+
 struct sched_kw_untyped_struct {
-  char      *kw_name;
-  list_type *line_list;
+  char      *kw_name;  /* The name of the current keyword. */
+  char      *buffer;   /* The content of the keyword is just appended in on char * pointer. */
 };
 
 
@@ -34,40 +37,57 @@ static int get_fixed_record_length(const char * kw_name)
 }
 
 
-
-static sched_kw_untyped_type * sched_kw_untyped_alloc(const char * kw_name) {
-  sched_kw_untyped_type * kw = malloc(sizeof *kw);
-  kw->line_list = list_alloc();
+sched_kw_untyped_type * sched_kw_untyped_alloc(const char * kw_name) {
+  sched_kw_untyped_type * kw = util_malloc(sizeof *kw , __func__);
   kw->kw_name   = util_alloc_string_copy(kw_name);
+  kw->buffer    = NULL; 
   return kw;
 }
 
 
 
-static void sched_kw_untyped_add_line(sched_kw_untyped_type * kw , const char *line) {
-  list_append_string_copy(kw->line_list , line);
+/** This is exported. */
+void sched_kw_untyped_add_line(sched_kw_untyped_type * kw , const char *line, bool * slash_terminated) {
+  /* Seek backwards from the end to look for terminating '/' */
+  
+  if (slash_terminated != NULL) {
+    int    index   = strlen(line) - 1;
+    while (isspace(line[index]))
+      index--;
+
+    if ( line[index] == '/') 
+      *slash_terminated = true;
+    else
+      *slash_terminated = false;
+  }
+  
+  {
+    char * padded_line = util_alloc_sprintf("   %s\n" , line);
+    kw->buffer = util_strcat_realloc(kw->buffer , padded_line);
+    free(padded_line);
+  }
 }
 
 
 
 static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_fixlen(FILE * stream, bool *at_eof, const char * kw_name, int rec_len)
 {
-  int cur_rec = 0;
+  int cur_rec  = 0;
   bool at_eokw = false;
-  char * line;
   sched_kw_untyped_type * kw = sched_kw_untyped_alloc(kw_name);
 
   while(!*at_eof && cur_rec < rec_len)
   {
-    line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
+    char * line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
     if(*at_eof)
     {
       util_abort("%s: Reached EOF before %s was finished - aborting.\n", __func__, kw_name);
     }
     else
     {
-      sched_kw_untyped_add_line(kw, line);
-      cur_rec++;
+      bool slash_terminated;
+      sched_kw_untyped_add_line(kw, line , &slash_terminated);
+      if (slash_terminated) cur_rec++;
       free(line);
     }
   }
@@ -96,7 +116,7 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_varlen(FILE * strea
     }
     else
     {
-      sched_kw_untyped_add_line(kw, line);
+      sched_kw_untyped_add_line(kw, line , NULL);
       free(line);
     }
   }
@@ -126,15 +146,10 @@ sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc(FILE * stream, bool * at_e
 void sched_kw_untyped_fprintf(const sched_kw_untyped_type *kw , FILE *stream) {
   fprintf(stream , "%s \n" , kw->kw_name);
   {
-    list_node_type *line_node = list_get_head(kw->line_list);
-    while (line_node != NULL) {
-      const char * line = list_node_get_string(line_node);
-      fprintf(stream , "   %s\n" , line);
-      line_node = list_node_get_next(line_node);
-    }
-  }
-  {
     int rec_len = get_fixed_record_length(kw->kw_name);
+    if (kw->buffer != NULL)
+      fprintf(stream , "%s" , kw->buffer);
+    
     if(rec_len < 0)
       fprintf(stream , "/\n\n");
     else
@@ -145,7 +160,7 @@ void sched_kw_untyped_fprintf(const sched_kw_untyped_type *kw , FILE *stream) {
 
 
 void sched_kw_untyped_free(sched_kw_untyped_type * kw) {
-  list_free(kw->line_list);
+  util_safe_free(kw->buffer);
   free(kw->kw_name);
   free(kw);
 }
@@ -154,18 +169,7 @@ void sched_kw_untyped_free(sched_kw_untyped_type * kw) {
 
 void sched_kw_untyped_fwrite(const sched_kw_untyped_type *kw , FILE *stream) {
   util_fwrite_string(kw->kw_name , stream);
-  {
-    int lines = list_get_size(kw->line_list);
-    util_fwrite(&lines , sizeof lines , 1, stream , __func__);
-  }
-  {
-    list_node_type *line_node = list_get_head(kw->line_list);
-    while (line_node != NULL) {
-      util_fwrite_string(list_node_get_string(line_node) , stream);
-      /*printf("Skriver: <%s> %d \n",list_node_get_string(line_node) , strlen(list_node_get_string(line_node)));*/
-      line_node = list_node_get_next(line_node);
-    }
-  }
+  util_fwrite_string(kw->buffer , stream);
 }
 
 
@@ -174,54 +178,11 @@ sched_kw_untyped_type * sched_kw_untyped_fread_alloc(FILE *stream) {
   char *kw_name = util_fread_alloc_string(stream);
   {
     sched_kw_untyped_type *kw = sched_kw_untyped_alloc(kw_name);
-    int lines , i;
-    util_fread(&lines       , sizeof lines       , 1 , stream , __func__);
-    for (i=0; i < lines; i++) {
-      char * line = util_fread_alloc_string(stream);
-      list_append_string_copy(kw->line_list , line);
-      free(line);
-    } 
-    free(kw_name);
+    kw->buffer = util_fread_alloc_string(stream);
     return kw;
   }
 }
   
-
-/*
-  This function tries to return the i'th (0 based) entry on each line
-  in the kw.
-
-  EXAMPLE
-  ------------------
-
-
-  Entry:
-  -------------------------
-  WCONPROD
-  -- 0     1       2    ... 
-     WP1  OPEN   ORAT   ... /
-     WP2  OPEN   ORAT   ... /
-  /
-
-  Then sched_kw_untyped_iget_entries_alloc( ... , 0) would return WP1 and WP2.
-*/
-char ** sched_kw_untyped_iget_entries_alloc(const sched_kw_untyped_type * kw, int i, int * kw_size)
-{
-  int size = list_get_size(kw->line_list);
-  char ** kw_entries = util_malloc(size * sizeof * kw_entries, __func__);
-  for(int j=0; j<size; j++)
-  {
-    list_node_type * node = list_iget_node(kw->line_list,j);
-    const char * line = list_node_get_string(node);
-    int tokens;
-    char ** token_list;
-    sched_util_parse_line(line, &tokens, &token_list, i+1, NULL);
-    kw_entries[j] = util_alloc_string_copy(token_list[i]);
-    util_free_stringlist(token_list, tokens);
-  }
-  *kw_size = size;
-  return kw_entries;
-}
 
 /*****************************************************************/
 

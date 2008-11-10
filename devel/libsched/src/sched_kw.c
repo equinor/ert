@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <hash.h>
+#include <ctype.h>
 #include <time.h>
 #include <util.h>
 #include <sched_kw.h>
@@ -13,6 +14,9 @@
 #include <sched_kw_wconhist.h>
 #include <sched_kw_wconinjh.h>
 #include <sched_kw_welspecs.h>
+#include <sched_kw_wconprod.h>
+#include <sched_kw_wconinj.h>
+#include <sched_kw_wconinje.h>
 #include <sched_kw_untyped.h>
 #include <sched_macros.h>
 
@@ -99,27 +103,35 @@ static sched_type_enum get_sched_type_from_string(char * kw_name)
 
 
 /*
-  This tries to check if kw_name is a valid keyword
-  in an ECLIPSE schedule file. Feel free to refine.
-*/
-static void sched_kw_name_assert(const char * kw_name)
-{
-  int tokens;
-  char ** token_list;
+  This tries to check if kw_name is a valid keyword in an ECLIPSE
+  schedule file. It is essentially based on checking that there are
+  not more argeuments on the line:
 
+   OK:
+   -------------------
+   RPTSCHED
+    arg1 arg2 arg2 ....
+
+   
+   Invalid:
+   ------------------- 
+   RPTSCHED arg1 arg2 arg3 ...
+
+   Quite naive .... 
+*/
+static void sched_kw_name_assert(const char * kw_name , FILE * stream)
+{
   if(kw_name == NULL)
   {
+    fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
     util_abort("%s: Internal error - trying to dereference NULL pointer.\n",__func__);
   }
-  
-  sched_util_parse_line(kw_name, &tokens, &token_list, 1, NULL);
 
-  if(tokens != 1)
-  {
-      util_abort("%s: %s is not a valid schedule kw - aborting.\n",
-                 __func__, kw_name);
-  }
-  sched_util_free_token_list(tokens, token_list);
+  for (int i = 0; i < strlen(kw_name); i++)
+    if (isspace(kw_name[i])) {
+      fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
+      util_abort("%s: %s is not a valid schedule kw - aborting.\n",__func__ , kw_name);
+    }
 }
 
 
@@ -162,13 +174,13 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
       GET_DATA_HANDLERS(handlers, welspecs);
       break;
     case(WCONINJ):
-      GET_DATA_HANDLERS(handlers, untyped);
+      GET_DATA_HANDLERS(handlers, wconinj);
       break;
     case(WCONINJE):
-      GET_DATA_HANDLERS(handlers, untyped);
+      GET_DATA_HANDLERS(handlers, wconinje);
       break;
     case(WCONPROD):
-      GET_DATA_HANDLERS(handlers, untyped);
+      GET_DATA_HANDLERS(handlers, wconprod);
       break;
     case(UNTYPED):
       GET_DATA_HANDLERS(handlers, untyped);
@@ -251,10 +263,11 @@ sched_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 */
 sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
 {
+  char * kw_name = NULL;
+
   /* We need to assume that we are not and the end of the schedule. */
   *at_eos = false; 
 
-  char * kw_name = NULL;
   while(kw_name == NULL && !*at_eos)
   {
     kw_name = sched_util_alloc_line(stream, at_eos);
@@ -265,7 +278,7 @@ sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
     return NULL;
   }
 
-  sched_kw_name_assert(kw_name);
+  sched_kw_name_assert(kw_name , stream);
 
   if(strcmp(kw_name,"END") == 0)
   {
@@ -395,13 +408,16 @@ char ** sched_kw_alloc_well_list(const sched_kw_type * sched_kw, int * num_wells
 {
   switch(sched_kw_get_type(sched_kw))
   {
-    case(WCONPROD):
-      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
-    case(WCONINJE):
-      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
-    case(WCONINJ):
-      return sched_kw_untyped_iget_entries_alloc((const sched_kw_untyped_type *) sched_kw->data, 0, num_wells);
-    case(WCONHIST):
+  case(WCONPROD):
+    return sched_kw_wconprod_alloc_wells_copy( (const sched_kw_wconprod_type *) sched_kw->data , num_wells);
+    break;
+  case(WCONINJE):
+    return sched_kw_wconinje_alloc_wells_copy( (const sched_kw_wconinje_type *) sched_kw->data , num_wells);
+    break;
+  case(WCONINJ):
+    return sched_kw_wconinj_alloc_wells_copy( (const sched_kw_wconinj_type *) sched_kw->data , num_wells);
+    break;
+  case(WCONHIST):
     {
       hash_type * well_obs = sched_kw_wconhist_alloc_well_obs_hash( (sched_kw_wconhist_type *) sched_kw->data);
       *num_wells = hash_get_size(well_obs);
@@ -409,7 +425,8 @@ char ** sched_kw_alloc_well_list(const sched_kw_type * sched_kw, int * num_wells
       hash_free(well_obs);
       return well_list;
     }
-    case(WCONINJH):
+    break;
+  case(WCONINJH):
     {
       hash_type * well_obs = sched_kw_wconinjh_alloc_well_obs_hash( (sched_kw_wconinjh_type *) sched_kw->data);
       *num_wells = hash_get_size(well_obs);
@@ -417,7 +434,8 @@ char ** sched_kw_alloc_well_list(const sched_kw_type * sched_kw, int * num_wells
       hash_free(well_obs);
       return well_list;
     }
-    default:
+    break;
+  default:
        util_abort("%s: Internal error - trying to get well list from non-well kw - aborting.\n", __func__);
        return NULL;
   }

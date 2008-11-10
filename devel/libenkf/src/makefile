@@ -55,6 +55,7 @@ clean:  clean_enkf
 	rm -f $(INSTALL_LIB_PATH)/$(LIB)
 	rm -f $(INSTALL_INC_PATH)/*.h
 
+rebuild: clean LOCAL
 
 new: 
 	../../Scripts/cdep.py main.c

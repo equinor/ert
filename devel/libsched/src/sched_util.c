@@ -164,7 +164,7 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
   
   if (tokens < min_tokens)
     tokens = min_tokens;
-  token_list = malloc(tokens * sizeof *token_list);
+  token_list = util_malloc(tokens * sizeof *token_list , __func__);
   for (token = 0; token < tokens; token++) 
     token_list[token] = NULL;
   

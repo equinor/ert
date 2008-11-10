@@ -10,8 +10,8 @@ extern "C" {
 
 typedef enum {WCONHIST, DATES , COMPDAT , TSTEP, TIME, WELSPECS, GRUPTREE,
               INCLUDE, RPTSCHED, DRSDT, SKIPREST, RPTRST, TUNING, WHISTCTL, UNTYPED, 
-              WCONINJ, WCONINJE, WCONINJH, WCONPROD
-              } sched_type_enum;
+              WCONINJ, WCONINJE, WCONINJH, WCONPROD} sched_type_enum;
+              
 
 #define WCONHIST_STRING  "WCONHIST"
 #define DATES_STRING     "DATES"
