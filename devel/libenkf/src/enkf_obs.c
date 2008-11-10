@@ -19,6 +19,12 @@
 #include <summary_obs.h>
 #include <gen_obs.h>
 #include <gen_data_config.h>
+#include <enkf_state.h>
+#include <enkf_node.h>
+#include <meas_vector.h>
+#include <meas_matrix.h>
+#include <enkf_fs.h>
+
 
 static int enkf_obs_sscanf_report_step(const enkf_obs_type * enkf_obs , const char * meas_time_string) {
   int report_step;
@@ -265,6 +271,59 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
   
 }
 
+
+
+
+
+void enkf_obs_measure_on_ensemble(const enkf_obs_type * enkf_obs , enkf_fs_type * fs , int report_step , int ens_size , const enkf_state_type ** ensemble , meas_matrix_type * meas_matrix) {
+  char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
+  int iobs;
+  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
+    const char * kw = obs_keys[iobs];
+    {
+      obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
+      int iens;
+      for (iens = 0; iens < ens_size; iens++) {
+	enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_node_get_state_kw(obs_node));
+	meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
+	enkf_fs_fread_node(fs , enkf_node , report_step , iens , forecast);       /* Hardcoded to measure on the forecast */
+	obs_node_measure(obs_node , report_step , enkf_node , meas_vector);
+      }
+    }
+  }
+  util_free_stringlist( obs_keys , hash_get_size( enkf_obs->obs_hash ));
+}
+
+
+
+
+/**
+  This function iterates over the observations, and as such it requires
+  quite intimate knowledge of enkf_obs_type structure - not quite
+  nice.
+
+  Observe that this _must_ come after writing to file, because the
+  nodes which are measured on are unconditionally loaded from file.
+*/
+
+//void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs) {
+//  const member_config_type * my_config = enkf_state->my_config;
+//  const run_info_type      * run_info  = enkf_state->run_info;
+//  char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
+//  int iobs;
+//
+//  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
+//    const char * kw = obs_keys[iobs];
+//    {
+//      obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
+//      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , obs_node_get_state_kw(obs_node));
+//      enkf_fs_fread_node(enkf_state->shared_info->fs , enkf_node , run_info->step2 , my_config->iens , forecast); /* Hardcoded to measure on the forecast */
+//      obs_node_measure(obs_node , run_info->step2 , enkf_node , enkf_state_get_meas_vector(enkf_state));
+//    }
+//  }
+//  util_free_stringlist( obs_keys , hash_get_size( enkf_obs->obs_hash ));
+//}
+
   
 
 
@@ -347,6 +406,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file, const ensemble_c
   }
   return enkf_obs;
 }
+
 
 
 //bool enkf_obs_get_local_active(ensemble_config_type * ensemble_config, int report_step){

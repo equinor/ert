@@ -35,8 +35,6 @@
 #include <void_arg.h>
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
-#include <meas_vector.h>
-#include <enkf_obs.h>
 #include <obs_node.h>
 #include <basic_driver.h>
 #include <node_ctype.h>
@@ -102,7 +100,6 @@ typedef struct shared_info_struct {
   ext_joblist_type      * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type        * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
   bool                    unified;           /* Use unified ECLIPSE files (NO - do not use that) */
-  enkf_obs_type         * obs;               /* The observation struct - used when measuring on the newly loaded state. */
   path_fmt_type         * run_path_fmt;      /* The format specifier for the runpath - when used it is called with integer arguments: iens, report1 , report2 */
 } shared_info_type;
 
@@ -141,7 +138,6 @@ struct enkf_state_struct {
 
 
   const ecl_config_type * ecl_config;        /* ecl_config object - pure reference to the enkf_main object. */
-  meas_vector_type      * meas_vector;       /* The meas_vector will accept measurements performed on this state.*/
   ensemble_config_type  * ensemble_config;   /* The config nodes for the enkf_node objects contained in node_hash. */
 
   run_info_type         * run_info;          /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
@@ -228,14 +224,13 @@ static char * __config_alloc_simlock(const char * lock_path , const char * run_p
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config , enkf_obs_type * enkf_obs) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
   shared_info->fs           = model_config_get_fs( model_config );
   shared_info->run_path_fmt = model_config_get_runpath_fmt( model_config );
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
-  shared_info->obs          = enkf_obs;
   
   return shared_info;
 }
@@ -399,18 +394,15 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   ensemble_config_type * ensemble_config,
 				   const site_config_type * site_config,
 				   const ecl_config_type * ecl_config,
-				   const hash_type * data_kw,
-				   meas_vector_type * meas_vector , 
-				   enkf_obs_type * obs) {
+				   const hash_type * data_kw) {
   
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
   
   enkf_state->ensemble_config          = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
-  enkf_state->meas_vector     = meas_vector;
   enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config);
-  enkf_state->shared_info     = shared_info_alloc(site_config , model_config , obs);
+  enkf_state->shared_info     = shared_info_alloc(site_config , model_config );
   enkf_state->run_info        = run_info_alloc();
 
   enkf_state->node_hash       = hash_alloc();
@@ -513,31 +505,6 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 
 
 
-/**
-  This function iterates over the observations, and as such it requires
-  quite intimate knowledge of enkf_obs_type structure - not quite
-  nice.
-
-  Observe that this _must_ come after writing to file, because the
-  nodes which are measured on are unconditionally loaded from file.
-*/
-void enkf_state_measure( const enkf_state_type * enkf_state , enkf_obs_type * enkf_obs) {
-  const member_config_type * my_config = enkf_state->my_config;
-  const run_info_type      * run_info  = enkf_state->run_info;
-  char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
-  int iobs;
-
-  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
-    const char * kw = obs_keys[iobs];
-    {
-      obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
-      enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , obs_node_get_state_kw(obs_node));
-      enkf_fs_fread_node(enkf_state->shared_info->fs , enkf_node , run_info->step2 , my_config->iens , forecast); /* Hardcoded to measure on the forecast */
-      obs_node_measure(obs_node , run_info->step2 , enkf_node , enkf_state_get_meas_vector(enkf_state));
-    }
-  }
-  util_free_stringlist( obs_keys , hash_get_size( enkf_obs->obs_hash ));
-}
 
 
 
@@ -691,10 +658,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
 /**
    The actual loading is done by the function enkf_state_ecl_load2().
 */
-void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs , bool unified , int report_step1 , int report_step2) {
-  /*enkf_state_ecl_store(enkf_state , report_step1 , report_step2);*/
-  
-  
+static void enkf_state_ecl_load(enkf_state_type * enkf_state , bool unified , int report_step1 , int report_step2) {
   /*
     Loading in the X0000 files containing the initial distribution of
     pressure/saturations/....
@@ -705,8 +669,6 @@ void enkf_state_ecl_load(enkf_state_type * enkf_state , enkf_obs_type * enkf_obs
     enkf_state_fwrite(enkf_state , dynamic , 0 , analyzed);
   }
   enkf_state_ecl_load2(enkf_state , unified , report_step2);
-  
-  /* Burde ha et eget measure flag */
   enkf_state_fwrite(enkf_state  , dynamic , report_step2 , forecast);
 }
 
@@ -904,9 +866,6 @@ void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
       
 
 
-meas_vector_type * enkf_state_get_meas_vector(const enkf_state_type *state) {
-  return state->meas_vector;
-}
 
 
 void enkf_state_free(enkf_state_type *enkf_state) {
@@ -1083,7 +1042,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
       
       if (final_status == job_queue_complete_OK) {
 	if (run_info->load_results)
-	  enkf_state_ecl_load(enkf_state , shared_info->obs , unified , run_info->step1 , run_info->step2);
+	  enkf_state_ecl_load(enkf_state , unified , run_info->step1 , run_info->step2);
 	break;
       } else if (final_status == job_queue_complete_FAIL) {
 	fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);

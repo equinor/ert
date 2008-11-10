@@ -144,12 +144,10 @@ enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
 
 
 
-void enkf_main_measure(enkf_main_type * enkf_main) {
+void enkf_main_measure(enkf_main_type * enkf_main , int report_step) {
   const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
-  int iens;
   meas_matrix_reset(enkf_main->meas_matrix);
-  for (iens = 0; iens < ens_size; iens++)
-     enkf_state_measure(enkf_main->ensemble[iens] , enkf_main->obs);
+  enkf_obs_measure_on_ensemble( enkf_main->obs , enkf_main_get_fs(enkf_main) , report_step , ens_size , (const enkf_state_type **) enkf_main->ensemble , enkf_main->meas_matrix);
 }
 
 
@@ -441,7 +439,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
       for(local_step =0 ; local_step < num_local_updates; local_step++){
 	enkf_obs_set_local_step(enkf_main->ensemble_config,local_step);
 	enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
-	enkf_main_measure(enkf_main);
+	enkf_main_measure(enkf_main , step2);
 	enkf_main_set_field_config_iactive(enkf_main->ensemble_config,local_step);
 	
 	printf("Starter paa oppdatering \n");
@@ -471,8 +469,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   if (enkf_update) {
     double *X;
     enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
-    meas_matrix_reset(enkf_main->meas_matrix);
-    enkf_main_measure(enkf_main);
+    enkf_main_measure(enkf_main , step2);
     X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
     if (X != NULL) {
       /* 
@@ -893,9 +890,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 						       enkf_main->ensemble_config,
 						       enkf_main->site_config    , 
 						       enkf_main->ecl_config     ,
-						       data_kw,
-						       meas_matrix_iget_vector(enkf_main->meas_matrix , iens),
-						       enkf_main->obs);
+						       data_kw);
 	  
 	}
 	msg_free(msg , true);

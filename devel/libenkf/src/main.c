@@ -21,6 +21,8 @@
 
 void install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);
+  signal(SIGINT  , util_abort_signal);
+  signal(SIGKILL , util_abort_signal);
 }
 
 

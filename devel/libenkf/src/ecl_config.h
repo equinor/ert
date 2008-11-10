@@ -1,6 +1,7 @@
 #ifndef __ECL_CONFIG_H__
 #define __ECL_CONFIG_H__
 #include <config.h>
+#include <ecl_grid.h>
 #include <time.h>
 #include <ecl_io_config.h>
 #include <sched_file.h>
