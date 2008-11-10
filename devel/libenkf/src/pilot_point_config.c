@@ -150,7 +150,7 @@ pilot_point_config_type * pilot_point_config_fscanf_alloc(const char * config_fi
     j -= 1;
     k -= 1;
     
-    grid_index = ecl_grid_safe_get_cell_index(ecl_grid , i,j,k);
+    grid_index = ecl_grid_get_global_index(ecl_grid , i,j,k);
     stringlist_append_copy( config->name_list , name);
     scalar_config_fscanf_line(config->scalar_config , line_nr , stream);
     line_nr++;
