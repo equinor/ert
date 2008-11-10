@@ -34,8 +34,8 @@ static field_obs_type * __field_obs_alloc(const field_config_type * config , con
   field_obs->i               = util_alloc_copy(i 	  , size * sizeof * field_obs->i 	 , __func__);
   field_obs->j               = util_alloc_copy(j 	  , size * sizeof * field_obs->j 	 , __func__);
   field_obs->k               = util_alloc_copy(k 	  , size * sizeof * field_obs->k 	 , __func__);
-  field_obs->obs_value       = util_alloc_copy(obs_value , size * sizeof * field_obs->obs_value , __func__);
-  field_obs->obs_std         = util_alloc_copy(obs_std   , size * sizeof * field_obs->obs_value , __func__);
+  field_obs->obs_value       = util_alloc_copy(obs_value  , size * sizeof * field_obs->obs_value , __func__);
+  field_obs->obs_std         = util_alloc_copy(obs_std    , size * sizeof * field_obs->obs_value , __func__);
   
   return field_obs;
 }
@@ -75,10 +75,10 @@ void field_obs_get_observations(const field_obs_type * field_obs , int report_st
 
 void field_obs_measure(const field_obs_type * field_obs , const field_type * field_state , meas_vector_type * meas_vector) {
   int i;
-  double value;
   /* Should check type of field */
+
   for (i=0; i < field_obs->size; i++) {
-    field_ijk_get(field_state , field_obs->i[i] , field_obs->j[i] , field_obs->k[i] , &value);
+    double value = field_ijk_get_double(field_state , field_obs->i[i] , field_obs->j[i] , field_obs->k[i]);
     meas_vector_add(meas_vector , value);
   }
 }

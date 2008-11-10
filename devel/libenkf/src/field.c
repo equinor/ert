@@ -722,6 +722,7 @@ int field_serialize(const field_type *field , serial_state_type * serial_state ,
 
 
 
+
 /*
   int index05D = config->index_map[ k * config->nx * config->ny + j * config->nx + i];      2
 */
@@ -732,6 +733,13 @@ void field_ijk_get(const field_type * field , int i , int j , int k , void * val
   int active_index = field_config_active_index(field->config , i , j , k);
   int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
   memcpy(value , &field->data[active_index * sizeof_ctype] , sizeof_ctype);
+}
+
+
+
+double field_ijk_get_double(const field_type * field, int i , int j , int k) {
+  int active_index = field_config_active_index(field->config , i , j , k);
+  return field_iget_double( field , active_index );
 }
 
 
@@ -749,27 +757,29 @@ double field_iget_double(const field_type * field , int active_index) {
   memcpy(buffer , &field->data[active_index * sizeof_ctype] , sizeof_ctype);
   if ( ecl_type == ecl_double_type ) 
     return *((double *) buffer);
-  else if (ecl_type == ecl_float_type) 
-    {
-      double double_value;
-      float  float_value;
-      
-      float_value  = *((float *) buffer);
-      double_value = float_value;
-      
-      return double_value;
-    }
-  else {
+  else if (ecl_type == ecl_float_type) {
+    double double_value;
+    float  float_value;
+    
+    float_value  = *((float *) buffer);
+    double_value = float_value;
+    
+    return double_value;
+  } else {
     util_abort("%s: failed - wrong internal type \n",__func__);
     return -1;
   }
 }
 
 
+
+
 double field_iget(const field_type * field, int global_index) {
   DEBUG_ASSERT(field);
   return field_iget_double(field , global_index);
 }
+
+
 
 
 void field_ijk_set(field_type * field , int i , int j , int k , const void * value) {
