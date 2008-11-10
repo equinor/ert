@@ -155,6 +155,7 @@ void obs_node_get_observations(obs_node_type * node , int report_step, obs_data_
 
 
 void obs_node_measure(const obs_node_type * node , int report_step , const void * enkf_node , meas_vector_type * meas_vector) {
+  printf("%s: skal maale .. active:%d   obs_active=%d \n",__func__ , node->active[report_step] , obs_active);
   if (node->active[report_step] == obs_active) 
     node->measure(node->obs , enkf_node_value_ptr(enkf_node) , meas_vector);
 }

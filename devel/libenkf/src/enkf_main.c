@@ -52,12 +52,6 @@
 #include <active_config.h>
 #include "enkf_defaults.h"
 
-
-
-
-
-
-
 /**
    This object should contain **everything** needed to run a enkf
    simulation. A way to wrap up all available information/state and
@@ -97,8 +91,9 @@ struct enkf_main_struct {
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
   enkf_obs_type        * obs;
-  obs_data_type        * obs_data;      /* Should ideally contain the hist object. */
-  meas_matrix_type     * meas_matrix;   /* Should have both forecast and analyzed measurements ... */
+  obs_data_type        * obs_data;          /* Should ideally contain the hist object. */
+  meas_matrix_type     * meas_forecast;     /* Should have both forecast and analyzed measurements ... */
+  meas_matrix_type     * meas_analyzed;
   enkf_state_type     ** ensemble;
 }; 
 
@@ -144,10 +139,17 @@ enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
 
 
 
-void enkf_main_measure(enkf_main_type * enkf_main , int report_step) {
+void enkf_main_measure(enkf_main_type * enkf_main , int report_step , state_enum state) {
   const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
-  meas_matrix_reset(enkf_main->meas_matrix);
-  enkf_obs_measure_on_ensemble( enkf_main->obs , enkf_main_get_fs(enkf_main) , report_step , ens_size , (const enkf_state_type **) enkf_main->ensemble , enkf_main->meas_matrix);
+  meas_matrix_type * meas_matrix;
+
+  if (state == forecast) 
+    meas_matrix = enkf_main->meas_forecast;
+  else
+    meas_matrix = enkf_main->meas_analyzed;
+
+  meas_matrix_reset(meas_matrix);
+  enkf_obs_measure_on_ensemble( enkf_main->obs , enkf_main_get_fs(enkf_main) , report_step , state , ens_size , (const enkf_state_type **) enkf_main->ensemble , meas_matrix);
 }
 
 
@@ -167,7 +169,8 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   model_config_free( enkf_main->model_config);
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
-  meas_matrix_free( enkf_main->meas_matrix );
+  meas_matrix_free( enkf_main->meas_forecast );
+  meas_matrix_free( enkf_main->meas_analyzed );
   free(enkf_main);
 }
 
@@ -439,12 +442,12 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
       for(local_step =0 ; local_step < num_local_updates; local_step++){
 	enkf_obs_set_local_step(enkf_main->ensemble_config,local_step);
 	enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
-	enkf_main_measure(enkf_main , step2);
+	enkf_main_measure(enkf_main , step2 , forecast);
 	enkf_main_set_field_config_iactive(enkf_main->ensemble_config,local_step);
 	
 	printf("Starter paa oppdatering \n");
 	if (enkf_update) {
-	  double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
+	  double *X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
 	  
 	  if (X != NULL) {
 	    /* 
@@ -469,8 +472,8 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   if (enkf_update) {
     double *X;
     enkf_obs_get_observations(enkf_main->obs , step2 , enkf_main->obs_data);
-    enkf_main_measure(enkf_main , step2);
-    X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_matrix , enkf_main->obs_data , false , true , enkf_main->analysis_config);
+    enkf_main_measure(enkf_main , step2 , forecast);
+    X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
     if (X != NULL) {
       /* 
 	 The number of doubles we ask for, to get the number of bytes
@@ -867,7 +870,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	else
 	  obs_config_file = NULL;
 	
-	enkf_main->meas_matrix     = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
+	enkf_main->meas_forecast   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
+	enkf_main->meas_analyzed   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
 	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file , enkf_main->ensemble_config ,  ecl_config_get_sched_file(enkf_main->ecl_config) , model_config_get_history(enkf_main->model_config));
 	enkf_main->obs_data        = obs_data_alloc();
       }

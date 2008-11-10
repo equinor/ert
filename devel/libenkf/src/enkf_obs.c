@@ -9,6 +9,7 @@
 #include <hash.h>
 #include <util.h>
 #include <enkf_obs.h>
+#include <enkf_types.h>
 #include <ecl_rft_node.h>
 #include <well_obs.h>
 #include <ensemble_config.h>
@@ -275,7 +276,7 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
 
 
 
-void enkf_obs_measure_on_ensemble(const enkf_obs_type * enkf_obs , enkf_fs_type * fs , int report_step , int ens_size , const enkf_state_type ** ensemble , meas_matrix_type * meas_matrix) {
+void enkf_obs_measure_on_ensemble(const enkf_obs_type * enkf_obs , enkf_fs_type * fs , int report_step , state_enum state , int ens_size , const enkf_state_type ** ensemble , meas_matrix_type * meas_matrix) {
   char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
   for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
@@ -286,7 +287,7 @@ void enkf_obs_measure_on_ensemble(const enkf_obs_type * enkf_obs , enkf_fs_type 
       for (iens = 0; iens < ens_size; iens++) {
 	enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_node_get_state_kw(obs_node));
 	meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
-	enkf_fs_fread_node(fs , enkf_node , report_step , iens , forecast);       /* Hardcoded to measure on the forecast */
+	enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);       /* Hardcoded to measure on the forecast */
 	obs_node_measure(obs_node , report_step , enkf_node , meas_vector);
       }
     }

@@ -13,6 +13,7 @@ extern "C" {
 #include <gen_data_config.h>
 #include <enkf_state.h>
 #include <enkf_fs.h>
+#include <enkf_types.h>
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
@@ -28,7 +29,7 @@ struct enkf_obs_struct {
 void          	         enkf_obs_free(enkf_obs_type * );
 enkf_obs_type 	       * enkf_obs_fscanf_alloc(const char * , const ensemble_config_type * , const sched_file_type * ,const history_type * hist);
 void                     enkf_obs_get_observations(enkf_obs_type * , int , obs_data_type * );
-void          	         enkf_obs_measure_on_ensemble(const enkf_obs_type * , enkf_fs_type * , int , int , const enkf_state_type ** , meas_matrix_type * );
+void          	         enkf_obs_measure_on_ensemble(const enkf_obs_type * , enkf_fs_type * , int , state_enum , int , const enkf_state_type ** , meas_matrix_type * );
 void          	         enkf_obs_add_well_obs(enkf_obs_type *   , const enkf_config_node_type * , const char * , const char * , const char * );
 bool                     enkf_obs_get_local_active(ensemble_config_type *, int );
 gen_data_config_type   * enkf_obs_get_gen_data_config(ensemble_config_type *);
