@@ -27,7 +27,7 @@ EXTERNAL_INC_PATH = /h/a152128/include
 
 # Binary install path
 ENKF_BIN_PATH     = /d/proj/bg/enkf/bin
-
+SDP_ROOT          = /project/res
 # Site configuration file
 SITE_CONFIG_FILE  = /d/proj/bg/enkf/Config/site-config
 
