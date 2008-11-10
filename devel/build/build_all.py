@@ -29,11 +29,13 @@ for path in path_list:
         print path
         os.chdir("%s/src" % path)
         os.system("make -s clean")
+
         nCPU = 4
         if path.find("sample") != -1:
             nCPU = 1
         elif path.find("analysis") != -1:
             nCPU = 1
+
         os.system("make -s -j %d" % (nCPU)) 
         os.chdir(cwd)
 
