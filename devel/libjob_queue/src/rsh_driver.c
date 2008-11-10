@@ -55,8 +55,6 @@ struct rsh_driver_struct {
 */
 
 
-
-
 static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) {
   struct addrinfo * result;
   if (getaddrinfo(host_name , NULL , NULL , &result) == 0) {
@@ -340,7 +338,7 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
     }
   }
   if (rsh_driver->num_hosts == 0) 
-    util_abort("%s: failed to add any valid RSH hosts - aborting \n",__func__);
+    util_abort("%s: failed to add any valid RSH hosts - aborting.\n",__func__);
 
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) rsh_driver;

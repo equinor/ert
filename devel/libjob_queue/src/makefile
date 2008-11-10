@@ -32,6 +32,8 @@ clean:
 
 LIB:	$(LIB)
 
+rebuild: clean LOCAL
+
 $(LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
 
