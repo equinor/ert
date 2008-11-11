@@ -29,14 +29,14 @@ bool conf_data_validate_string_as_dt_value(
   const char * str);
 
 int conf_data_get_int_from_string(
-  dt_enum dta,
+  dt_enum      dt,
   const char * str);
 
 double conf_data_get_double_from_string(
-  dt_enum dt,
+  dt_enum      dt,
   const char * str);
 
 time_t conf_data_get_time_t_from_string(
-  dt_enum dt,
+  dt_enum      dt,
   const char * str);
 #endif

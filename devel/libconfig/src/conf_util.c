@@ -19,9 +19,9 @@
 */
 static
 char * __conf_util_fscanf_alloc_token_buffer(
-  const char * file,
-  const char * comment,
-  int          num_pad_keys,
+  const char *  file,
+  const char *  comment,
+  int           num_pad_keys,
   const char ** pad_keys)
 {
   char * buffer_wrk = util_fread_alloc_file_content(file, comment, NULL);

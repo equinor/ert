@@ -18,8 +18,8 @@ typedef struct conf_item_struct       conf_item_type;
 
 
 conf_class_type * conf_class_alloc_empty(
-  const char              * class_name,
-  bool                      require_instance);
+  const char * class_name,
+  bool         require_instance);
 
 void conf_class_free(
   conf_class_type * conf_class);
@@ -31,7 +31,7 @@ void conf_class_free__(
 
 conf_instance_type * conf_instance_alloc_default(
   const conf_class_type * conf_class,
-  const char              * name);
+  const char            * name);
 
 conf_instance_type * conf_instance_copyc(
   const conf_instance_type * conf_instance);
@@ -45,9 +45,9 @@ void conf_instance_free__(
 
 
 conf_item_spec_type * conf_item_spec_alloc(
-  char                    * name,        
-  bool                      required_set,
-  dt_enum                   dt);
+  char    * name,        
+  bool      required_set,
+  dt_enum   dt);
 
 void conf_item_spec_free(
   conf_item_spec_type * conf_item_spec);
@@ -59,7 +59,7 @@ void conf_item_spec_free__(
 
 conf_item_type * conf_item_alloc(
   const conf_item_spec_type * conf_item_spec,
-  const char                  * value);
+  const char                * value);
 
 conf_item_type * conf_item_copyc(
   const conf_item_type * conf_item);
@@ -96,8 +96,8 @@ void conf_instance_insert_owned_item(
 
 void conf_instance_insert_item(
   conf_instance_type * conf_instance,
-  const char           * item_name,
-  const char           * value);
+  const char         * item_name,
+  const char         * value);
 
 void conf_instance_overload(
   conf_instance_type       * conf_instance_target,
@@ -111,21 +111,21 @@ void conf_instance_overload(
 
 void conf_class_set_help(
   conf_class_type * conf_class,
-  const char        * help);
+  const char      * help);
 
 
 
 void conf_item_spec_add_restriction(
   conf_item_spec_type * conf_item_spec,
-  const char            * restriction);
+  const char          * restriction);
 
 void conf_item_spec_set_default_value(
   conf_item_spec_type * conf_item_spec,
-  const char            * default_value);
+  const char          * default_value);
 
 void conf_item_spec_set_help(
   conf_item_spec_type * conf_item_spec,
-  const char            * help);
+  const char          * help);
 
 
 
@@ -135,37 +135,37 @@ void conf_item_spec_set_help(
 
 bool conf_class_has_item_spec(
   const conf_class_type * conf_class,
-  const char              * item_name);
+  const char            * item_name);
 
 bool conf_class_has_sub_class(
   const conf_class_type * conf_class,
-  const char              * sub_class_name);
+  const char            * sub_class_name);
 
 const conf_item_spec_type * conf_class_get_item_spec_ref(
   const conf_class_type * conf_class,
-  const char              * item_name);
+  const char            * item_name);
 
 const conf_class_type * conf_class_get_sub_class_ref(
   const conf_class_type * conf_class,
-  const char              * sub_class_name);
+  const char            * sub_class_name);
 
 
 
 bool conf_instance_is_of_class(
   const conf_instance_type * conf_instance,
-  const char                 * class_name);
+  const char               * class_name);
 
 bool conf_instance_has_item(
   const conf_instance_type * conf_instance,
-  const char                 * item_name);
+  const char               * item_name);
 
 bool conf_instance_has_sub_instance(
   const conf_instance_type * conf_instance,
-  const char                 * sub_instance_name);
+  const char               * sub_instance_name);
 
 const conf_instance_type * conf_instance_get_sub_instance_ref(
   const conf_instance_type * conf_instance,
-  const char                 * sub_instance_name);
+  const char               * sub_instance_name);
 
 stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class(
   const conf_instance_type * conf_instance,
@@ -173,7 +173,7 @@ stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class(
 
 stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class_by_name(
   const conf_instance_type * conf_instance,
-  const char                 * sub_class_name);
+  const char               * sub_class_name);
 
 const conf_class_type * conf_instance_get_class_ref(
   const conf_instance_type * conf_instance);
@@ -183,7 +183,7 @@ const char * conf_instance_get_class_name_ref(
 
 const char * conf_instance_get_item_value_ref(
   const conf_instance_type * conf_instance,
-  const char                 * item_name);
+  const char               * item_name);
 
 /** If the dt supports it, these functions will parse the item
     value to the requested types.
@@ -194,15 +194,15 @@ const char * conf_instance_get_item_value_ref(
 */
 int conf_instance_get_item_value_int(
   const conf_instance_type * conf_instance,
-  const char                 * item_name);
+  const char               * item_name);
 
 double conf_instance_get_item_value_double(
   const conf_instance_type * conf_instance,
-  const char                 * item_name);
+  const char               * item_name);
 
 time_t conf_instance_get_item_value_time_t(
   const conf_instance_type * conf_instance,
-  const char                 * item_name);
+  const char               * item_name);
 
 
 
@@ -220,7 +220,7 @@ bool conf_instance_validate(
 
 conf_instance_type * conf_instance_alloc_from_file(
   const conf_class_type * conf_class,
-  const char              * name,
-  const char              * file_name);
+  const char            * name,
+  const char            * file_name);
 
 #endif  

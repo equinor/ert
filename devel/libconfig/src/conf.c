@@ -14,12 +14,12 @@
 struct conf_class_struct
 {
   const conf_class_type * super_class; /** Can be NULL. */
-  char                    * class_name;
-  char                    * help;        /** Can be NULL if not given.   */
-  bool                      require_instance;
+  char                  * class_name;
+  char                  * help;        /** Can be NULL if not given.   */
+  bool                    require_instance;
   
-  hash_type               * sub_classes; /** conf_class_type's    */
-  hash_type               * item_specs;  /** conf_item_spec_types     */
+  hash_type             * sub_classes; /** conf_class_type's    */
+  hash_type             * item_specs;  /** conf_item_spec_types     */
 };
 
 
@@ -27,10 +27,10 @@ struct conf_class_struct
 struct conf_instance_struct
 {
   const conf_class_type * conf_class; 
-  char                    * name;  
+  char                  * name;  
 
-  hash_type               * sub_instances; /** conf_instance_types */
-  hash_type               * items;         /** conf_item_types     */
+  hash_type             * sub_instances; /** conf_instance_types */
+  hash_type             * items;         /** conf_item_types     */
 };
 
 
@@ -38,12 +38,12 @@ struct conf_instance_struct
 struct conf_item_spec_struct
 {
   const conf_class_type * super_class;   /** NULL if not inserted into a class. */
-  char                    * name;
-  bool                      required_set; 
-  char                    * default_value; /** Can be NULL if not given.   */
-  dt_enum                   dt;
-  set_type                * restriction;
-  char                    * help;          /** Can be NULL if not given.   */
+  char                  * name;
+  bool                    required_set; 
+  char                  * default_value; /** Can be NULL if not given.   */
+  dt_enum                 dt;
+  set_type              * restriction;
+  char                  * help;          /** Can be NULL if not given.   */
 };
 
 
@@ -51,7 +51,7 @@ struct conf_item_spec_struct
 struct conf_item_struct
 {
   const conf_item_spec_type * conf_item_spec;
-  char                        * value;
+  char                      * value;
 };
 
 
@@ -61,8 +61,8 @@ struct conf_item_struct
 
 
 conf_class_type * conf_class_alloc_empty(
-  const char              * class_name,
-  bool                      require_instance)
+  const char * class_name,
+  bool         require_instance)
 {
   assert(class_name != NULL);
 
@@ -102,10 +102,10 @@ void conf_class_free__(
 
 conf_instance_type * conf_instance_alloc_default(
   const conf_class_type * conf_class,
-  const char              * name)
+  const char            * name)
 {
   assert(conf_class != NULL);
-  assert(name         != NULL);
+  assert(name       != NULL);
 
   conf_instance_type * conf_instance = util_malloc(sizeof * conf_instance, __func__);
 
@@ -218,9 +218,9 @@ void conf_instance_free__(
 
 
 conf_item_spec_type * conf_item_spec_alloc(
-  char                    * name,
-  bool                      required_set,
-  dt_enum                   dt)
+  char    * name,
+  bool      required_set,
+  dt_enum   dt)
 {
   assert(name != NULL);
 
@@ -261,7 +261,7 @@ void conf_item_spec_free__(
 
 conf_item_type * conf_item_alloc(
   const conf_item_spec_type * conf_item_spec,
-  const char                  * value)
+  const char                * value)
 {
   conf_item_type * conf_item = util_malloc(sizeof * conf_item, __func__);
 
@@ -289,7 +289,6 @@ void conf_item_free(
 {
   free(conf_item->value);
   free(conf_item);
-
 }
 
 
@@ -427,8 +426,8 @@ void conf_instance_insert_owned_item(
 
 void conf_instance_insert_item(
   conf_instance_type * conf_instance,
-  const char           * item_name,
-  const char           * value)
+  const char         * item_name,
+  const char         * value)
 {
   assert(conf_instance != NULL);
   assert(item_name       != NULL);
@@ -472,7 +471,7 @@ void conf_instance_overload(
 
 void conf_class_set_help(
   conf_class_type * conf_class,
-  const char        * help)
+  const char      * help)
 {
   if(conf_class->help != NULL)
     free(conf_class->help);
@@ -486,7 +485,7 @@ void conf_class_set_help(
 
 void conf_item_spec_add_restriction(
   conf_item_spec_type * conf_item_spec,
-  const char            * restriction)
+  const char          * restriction)
 {
   set_add_key(conf_item_spec->restriction, restriction);
 
@@ -496,7 +495,7 @@ void conf_item_spec_add_restriction(
 
 void conf_item_spec_set_default_value(
   conf_item_spec_type * conf_item_spec,
-  const char            * default_value)
+  const char          * default_value)
 {
   if(conf_item_spec->default_value != NULL)
     free(conf_item_spec->default_value);
@@ -510,7 +509,7 @@ void conf_item_spec_set_default_value(
 
 void conf_item_spec_set_help(
   conf_item_spec_type * conf_item_spec,
-  const char            * help)
+  const char          * help)
 {
   if(conf_item_spec->help != NULL)
     free(conf_item_spec->help);
@@ -529,7 +528,7 @@ void conf_item_spec_set_help(
 
 bool conf_class_has_item_spec(
   const conf_class_type * conf_class,
-  const char              * item_name)
+  const char            * item_name)
 {
   if(!hash_has_key(conf_class->item_specs, item_name))
     return false;
@@ -541,7 +540,7 @@ bool conf_class_has_item_spec(
 
 bool conf_class_has_sub_class(
   const conf_class_type * conf_class,
-  const char              * sub_class_name)
+  const char            * sub_class_name)
 {
   if(!hash_has_key(conf_class->sub_classes, sub_class_name))
     return false;
@@ -553,7 +552,7 @@ bool conf_class_has_sub_class(
 
 const conf_item_spec_type * conf_class_get_item_spec_ref(
   const conf_class_type * conf_class,
-  const char              * item_name)
+  const char            * item_name)
 {
   if(!hash_has_key(conf_class->item_specs, item_name))
     util_abort("%s: Internal error.\n", __func__);
@@ -565,7 +564,7 @@ const conf_item_spec_type * conf_class_get_item_spec_ref(
 
 const conf_class_type * conf_class_get_sub_class_ref(
   const conf_class_type * conf_class,
-  const char              * sub_class_name)
+  const char            * sub_class_name)
 {
   if(!hash_has_key(conf_class->sub_classes, sub_class_name))
     util_abort("%s: Internal error.\n", __func__);
@@ -577,7 +576,7 @@ const conf_class_type * conf_class_get_sub_class_ref(
 
 bool conf_instance_is_of_class(
   const conf_instance_type * conf_instance,
-  const char                 * class_name)
+  const char               * class_name)
 {
   if(strcmp(conf_instance->conf_class->class_name, class_name) == 0)
     return true;
@@ -589,7 +588,7 @@ bool conf_instance_is_of_class(
 
 bool conf_instance_has_item(
   const conf_instance_type * conf_instance,
-  const char                 * item_name)
+  const char               * item_name)
 {
   if(!hash_has_key(conf_instance->items, item_name))
     return false;
@@ -601,7 +600,7 @@ bool conf_instance_has_item(
 
 bool conf_instance_has_sub_instance(
   const conf_instance_type * conf_instance,
-  const char                 * sub_instance_name)
+  const char               * sub_instance_name)
 {
   if(!hash_has_key(conf_instance->sub_instances, sub_instance_name))
     return false;
@@ -613,7 +612,7 @@ bool conf_instance_has_sub_instance(
 
 const conf_instance_type * conf_instance_get_sub_instance_ref(
   const conf_instance_type * conf_instance,
-  const char                 * sub_instance_name)
+  const char               * sub_instance_name)
 {
   if(!hash_has_key(conf_instance->sub_instances, sub_instance_name))
   {
@@ -655,7 +654,7 @@ stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class(
 
 stringlist_type * conf_instance_alloc_list_of_sub_instances_of_class_by_name(
   const conf_instance_type * conf_instance,
-  const char                 * sub_class_name)
+  const char               * sub_class_name)
 {
   if(!conf_class_has_sub_class(conf_instance->conf_class, sub_class_name))
     util_abort("%s: Instance \"%s\" is of class \"%s\" which has no sub class with name \"%s\"\n",
@@ -686,7 +685,7 @@ const char * conf_instance_get_class_name_ref(
 
 const char * conf_instance_get_item_value_ref(
   const conf_instance_type * conf_instance,
-  const char                 * item_name)
+  const char               * item_name)
 {
   if(!hash_has_key(conf_instance->items, item_name))
   {
@@ -706,7 +705,7 @@ const char * conf_instance_get_item_value_ref(
 */
 int conf_instance_get_item_value_int(
   const conf_instance_type * conf_instance,
-  const char                 * item_name)
+  const char               * item_name)
 {
   if(!hash_has_key(conf_instance->items, item_name))
     util_abort("%s: Instance %s of type %s has no item %s.\n",
@@ -727,7 +726,7 @@ int conf_instance_get_item_value_int(
 */
 double conf_instance_get_item_value_double(
   const conf_instance_type * conf_instance,
-  const char                 * item_name)
+  const char               * item_name)
 {
   if(!hash_has_key(conf_instance->items, item_name))
     util_abort("%s: Instance %s of type %s has no item %s.\n",
@@ -748,7 +747,7 @@ double conf_instance_get_item_value_double(
 */
 time_t conf_instance_get_item_value_time_t(
   const conf_instance_type * conf_instance,
-  const char                 * item_name)
+  const char               * item_name)
 {
   if(!hash_has_key(conf_instance->items, item_name))
     util_abort("%s: Instance %s of type %s has no item %s.\n",
@@ -1055,8 +1054,8 @@ bool conf_instance_validate(
 static 
 void conf_instance_parser_add_item(
   conf_instance_type  * conf_instance,
-  const char            * item_name,
-  char                 ** buffer_pos)
+  const char          * item_name,
+  char               ** buffer_pos)
 {
   char * token_assign;
   char * token_value;
@@ -1147,9 +1146,9 @@ void conf_instance_parser_skip_unknown_class(
 static
 void conf_instance_add_data_from_token_buffer(
   conf_instance_type  * conf_instance,
-  char                 ** buffer_pos,
-  bool                    allow_inclusion,
-  bool                    is_root)
+  char               ** buffer_pos,
+  bool                  allow_inclusion,
+  bool                  is_root)
 {
   const  conf_class_type * conf_class = conf_instance->conf_class;
   char * token = conf_util_alloc_next_token(buffer_pos);
@@ -1281,8 +1280,8 @@ void conf_instance_add_data_from_token_buffer(
 
 conf_instance_type * conf_instance_alloc_from_file(
   const conf_class_type * conf_class,
-  const char              * name,
-  const char              * file_name)
+  const char            * name,
+  const char            * file_name)
 {
   conf_instance_type * conf_instance = conf_instance_alloc_default(conf_class, name);
 

@@ -148,7 +148,7 @@ bool conf_data_validate_string_as_dt_value(
 
 
 int conf_data_get_int_from_string(
-  dt_enum dt,
+  dt_enum      dt,
   const char * str)
 {
   int  value  = 0;
@@ -176,7 +176,7 @@ int conf_data_get_int_from_string(
 
 
 double conf_data_get_double_from_string(
-  dt_enum dt,
+  dt_enum      dt,
   const char * str)
 {
   double value  = 0;
@@ -210,7 +210,7 @@ double conf_data_get_double_from_string(
 
 
 time_t conf_data_get_time_t_from_string(
-  dt_enum dt,
+  dt_enum      dt,
   const char * str)
 {
   time_t value = 0;
