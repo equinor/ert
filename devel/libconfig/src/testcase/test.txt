@@ -1,0 +1,35 @@
+-- Dette er en OK kommentar.
+
+
+
+HISTORY_OBSERVATION C-17:WOPR
+{
+  ERROR = 0.10;
+  ERROR_MODE = "rel";
+  ERROR_MIN = 0.10;
+};
+
+
+
+HISTORY_OBSERVATION SVADA;
+
+
+
+SUMMARY_OBSERVATION SEP_TEST_2006
+{
+  VALUE = 1;
+  ERROR = 0.1;
+  DATE  = 22/10/2006;
+  KEY   = GOPR:G4;
+};
+
+
+
+BLOCK_OBSERVATION RFT_2005
+{
+  DATE  = 22/10/2005;
+
+  include 'rft_2005.txt';
+
+  FIELD = SWAT;
+};

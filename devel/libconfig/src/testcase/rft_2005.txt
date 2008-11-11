@@ -1,0 +1,12 @@
+  OBS P1   { I=1; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P2   { I=2; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P3   { I=3; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P4   { I=4; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P5   { I=5; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P6   { I=6; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P7   { I=7; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P8   { I=8; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P9   { I=9; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P10  { I=10; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P11  { I=11; J=1; K=1; VALUE=10; ERROR=1;};
+  OBS P12  { I=12; J=1; K=1; VALUE=10; ERROR=1;};

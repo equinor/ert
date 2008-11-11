@@ -7,8 +7,8 @@ INSTALL_INC_PATH = $(LIBCONFIG_HOME)/include
 INSTALL_LIB_PATH = $(LIBCONFIG_HOME)/lib
 #################################################################
 SDP_ROOT          = /project/res/$(shell /private/joaho/bin/res_target.py)
-OBJECTS           = config.o cfg_struct.o cfg_struct_def.o cfg_util.o data_type.o
-INC_FILES_INSTALL = config.h
+OBJECTS           = config.o conf.o conf_util.o conf_data.o
+INC_FILES_INSTALL = config.h conf.h conf_data.h
 LIB_ROOT          = libconfig
 LIB               = $(LIB_ROOT)_$(MFLAG).a
 LIB_LINK          = -lconfig_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lz -lpthread -lm
@@ -42,20 +42,19 @@ $(LIB): $(OBJECTS)
 
 #Library source code:
 config.o          : config.c config.h 
-cfg_struct.o      : cfg_struct.c
-cfg_struct_def.o  : cfg_struct_def.c
-cfg_util.o        : cfg_util.c
-data_type.o       : data_type.c
+conf.o            : conf.c conf.h
+conf_data.o       : conf_data.c conf_data.h
+conf_util.o       : conf_util.c conf_util.h
 
 # Binaries
 
 #################################################################
 
-BIN: config_test.x cfg_util_test.x
+BIN: config_test.x conf_test.x
 BIN_FILES = config_test.x
  
 config_test.x: config_test.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) config_test.o -o config_test.x     $(LINK_LIB_PATH) $(LIB_LINK) 
 
-cfg_util_test.x: cfg_util_test.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) cfg_util_test.o -o cfg_util_test.x     $(LINK_LIB_PATH) $(LIB_LINK) 
+conf_test.x: conf_test.o $(LIB)
+	$(LD) -$(MFLAG) $(LDFLAGS) conf_test.o -o conf_test.x     $(LINK_LIB_PATH) $(LIB_LINK) 
