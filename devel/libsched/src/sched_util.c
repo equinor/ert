@@ -266,8 +266,10 @@ void sched_util_fprintf_dbl(bool def, double value , int width , int dec , FILE 
     fprintf(stream , " 1*");
     for (i=0; i < (width - 2); i++) 
       fputc(' ' , stream);
-  } else 
+  } else {
+    fputc(' ' , stream);
     util_fprintf_double(value , width , dec , 'f' , stream);
+  }
 }
 
 
@@ -278,8 +280,10 @@ void sched_util_fprintf_int(bool def, int value , int width , FILE *stream) {
     fprintf(stream , " 1*");
     for (i=0; i < (width - 2); i++) 
       fputc(' ' , stream);
-  } else 
+  } else {
+    fputc(' ' , stream);
     util_fprintf_int(value , width , stream);
+  }
 }
 
 
@@ -296,7 +300,6 @@ void sched_util_fprintf_qst(bool def, const char *s , int width , FILE *stream) 
       fputc(' ' , stream);
     */
   } else {
-
     for (i=0; i < (width + 1 - strlen(s)); i++) 
       fputc(' ' , stream);
     
