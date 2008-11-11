@@ -189,9 +189,9 @@ void well_ensemble_fprintf_results(const well_type ** ensemble, int ens_size , c
       const double * std_data  = std->data;
       for (ivar = 0; ivar < size; ivar++) {
 	int w = (width[ivar + 1] - 5) / 2;
-	util_fprintf_double(mean_data[ivar] , w , float_precision , stream);
+	util_fprintf_double(mean_data[ivar] , w , float_precision , 'g' , stream);
 	fprintf(stream , " +/- ");
-	util_fprintf_double(std_data[ivar] , w , float_precision , stream);
+	util_fprintf_double(std_data[ivar] , w , float_precision , 'g' , stream);
 	fprintf(stream , "|");
       }
       fprintf(stream , "\n");
@@ -203,7 +203,7 @@ void well_ensemble_fprintf_results(const well_type ** ensemble, int ens_size , c
       fprintf(stream , "|");
       
       for (ivar = 0; ivar < size; ivar++) {
-	util_fprintf_double(data[ivar] , width[ivar + 1] , float_precision , stream);
+	util_fprintf_double(data[ivar] , width[ivar + 1] , float_precision , 'g' , stream);
 	fprintf(stream , "|");
       }
       fprintf(stream , "\n");

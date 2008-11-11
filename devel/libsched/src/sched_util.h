@@ -7,9 +7,8 @@ extern "C" {
 #include <time.h>
 
 char * sched_util_alloc_line(FILE *, bool *);
-void sched_util_parse_line(const char * , int * , char *** , int , bool *);
-void sched_util_free_token_list(int , char **);
-void sched_util_parse_file(const char *, int *, char ***);
+void   sched_util_parse_line(const char * , int * , char *** , int , bool *);
+void   sched_util_parse_file(const char *, int *, char ***);
 
 char * sched_util_alloc_next_entry(FILE *, bool *, bool *);
 

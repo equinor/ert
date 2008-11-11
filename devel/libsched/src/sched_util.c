@@ -4,6 +4,12 @@
 #include <util.h>
 #include <sched_util.h>
 
+/**
+   This file implements small utility functions used by the rest of
+   the libsched library.
+*/
+
+
 static const int strip_comment = 1;
 static const int strip_space   = 2;
 
@@ -125,14 +131,6 @@ void sched_util_parse_file(const char *filename , int *_lines , char ***_line_li
 
 
 
-void sched_util_free_token_list(int size, char **token_list) {
-  int i;
-  for (i=0; i < size; i++) 
-    if (token_list[i] != NULL) free(token_list[i]);
-
-
-  free(token_list);
-}
 
 
 void sched_util_parse_line(const char * line , int *_tokens , char ***_token_list , int min_tokens , bool *slash_term) {
@@ -268,12 +266,8 @@ void sched_util_fprintf_dbl(bool def, double value , int width , int dec , FILE 
     fprintf(stream , " 1*");
     for (i=0; i < (width - 2); i++) 
       fputc(' ' , stream);
-  } else {
-    char fmt[16];
-    fmt[0] = '%';
-    sprintf(&fmt[1] , "%d.%df " , width , dec);
-    fprintf(stream , fmt , value);
-  }
+  } else 
+    util_fprintf_double(value , width , dec , 'f' , stream);
 }
 
 
@@ -284,12 +278,8 @@ void sched_util_fprintf_int(bool def, int value , int width , FILE *stream) {
     fprintf(stream , " 1*");
     for (i=0; i < (width - 2); i++) 
       fputc(' ' , stream);
-  } else {
-    char fmt[16];
-    fmt[0] = '%';
-    sprintf(&fmt[1] , "%dd " , width);
-    fprintf(stream , fmt , value);
-  }
+  } else 
+    util_fprintf_int(value , width , stream);
 }
 
 
@@ -342,6 +332,14 @@ int sched_util_atoi(const char *token) {
 
 
 
+/**
+   This function calculates the difference between two dates, and
+   returns the result as fractional days. Used for: 
+
+     "-- xxxx days from start of simulation ( 1 'OCT' 1979 )"
+
+*/
+
 double sched_util_days_diff(time_t start_time , time_t end_time) {
   int days , hours , minutes , seconds;
   double double_days;
@@ -352,23 +350,3 @@ double sched_util_days_diff(time_t start_time , time_t end_time) {
   return double_days;
 }
       
-
-/*
-void sched_util_fprintf_days_line(int date_nr , time_t t1 , time_t t2 , FILE *stream) {
-  struct tm ts;
-  double days;
-  localtime_r(&t2 , &ts);
-  days = difftime(t2 , t1) / (24 * 3600);
-  fprintf(stream , "%04d  %8.2f %4d %2d %2d\n",date_nr , days , ts.tm_year + 1900 , ts.tm_mon + 1, ts.tm_mday);
-}
-
-
-
-time_t sched_util_make_start_date(const int * start_date) {
-  if (start_date == NULL)
-    return 0;
-  else
-    return util_make_date(start_date[0] , start_date[1] , start_date[2]);
-}
-*/
-

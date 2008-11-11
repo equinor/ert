@@ -26,6 +26,13 @@ double trans_derrf_OE(double x , const void_arg_type * arg) {
    Width  = 1 => uniform
    Width  > 1 => unimodal peaked
    Width  < 1 => bimoal peaks
+
+
+   Skewness < 0 => shifts towards the left
+   Skewness = 0 => symmetric
+   Skewness > 0 => Shifts towards the right
+
+   The width is a relavant scale for the value of skewness.
 */
 
 double trans_errf(double x, const void_arg_type * arg) { 

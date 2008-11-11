@@ -239,9 +239,9 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
       const double * std_data  = scalar_get_output_ref(std->scalar);
       for (ikw = 0; ikw < size; ikw++) {
 	int w = (width[ikw + 1] - 5) / 2;
-	util_fprintf_double(mean_data[ikw] , w , float_precision , stream);
+	util_fprintf_double(mean_data[ikw] , w , float_precision , 'g' , stream);
 	fprintf(stream , " +/- ");
-	util_fprintf_double(std_data[ikw] , w , float_precision , stream);
+	util_fprintf_double(std_data[ikw] , w , float_precision , 'g' , stream);
 	fprintf(stream , "|");
       }
       fprintf(stream , "\n");
@@ -253,7 +253,7 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
       fprintf(stream , "|");
       
       for (ikw = 0; ikw < size; ikw++) {
-	util_fprintf_double(data[ikw] , width[ikw + 1] , float_precision , stream);
+	util_fprintf_double(data[ikw] , width[ikw + 1] , float_precision , 'g' , stream);
 	fprintf(stream , "|");
       }
       fprintf(stream , "\n");

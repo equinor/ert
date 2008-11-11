@@ -33,8 +33,7 @@ static void sched_kw_tstep_add_line(sched_kw_tstep_type *kw , const char *line ,
     if(tstep_list[steps-1][len-1] == '/')
       *complete = true;
   }
-  
-  sched_util_free_token_list(steps , tstep_list);
+  util_free_stringlist(tstep_list , steps);
 }
 
 

@@ -460,7 +460,7 @@ static void sched_kw_welspecs_add_line(sched_kw_welspecs_type * kw, const char *
     welspec_type * ws = welspec_alloc_from_string(token_list);
     list_append_list_owned_ref(kw->welspec_list, ws, welspec_free__);
   }
-  sched_util_free_token_list(tokens,token_list);
+  util_free_stringlist(token_list , tokens);
 };
 
 

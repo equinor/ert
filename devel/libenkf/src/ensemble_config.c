@@ -118,7 +118,7 @@ const enkf_config_node_type * ensemble_config_get_node(const ensemble_config_typ
     enkf_config_node_type * node = hash_get(ensemble_config->config_nodes , key);
     return node;
   } else {
-    util_abort("%s: ens node:%s does not exist \n",__func__ , key);
+    util_abort("%s: ens node:\"%s\" does not exist \n",__func__ , key);
     return NULL; /* Compiler shut up */
   }
 }
