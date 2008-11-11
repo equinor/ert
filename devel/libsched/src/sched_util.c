@@ -260,30 +260,35 @@ char * sched_util_alloc_next_entry(FILE * stream, bool * at_eof, bool * at_eokw)
 
 
 
-void sched_util_fprintf_dbl(bool def, double value , int width , int dec , FILE *stream) {
-  if (def) {
-    int i;
-    fprintf(stream , " 1*");
-    for (i=0; i < (width - 2); i++) 
-      fputc(' ' , stream);
-  } else {
+
+void sched_util_fprintf_default(int width , FILE * stream) {
+  fprintf(stream , "1*");
+  for (int i=0; i < (width - 2); i++) 
     fputc(' ' , stream);
+}
+
+/**
+   All the sched_util_fprintf_xxx() functions start by putting out one
+   ' ', to ensure against overlapping fields.
+*/
+
+
+void sched_util_fprintf_dbl(bool def, double value , int width , int dec , FILE *stream) {
+  fputc(' ' , stream);
+  if (def) 
+    sched_util_fprintf_default( width , stream);
+  else 
     util_fprintf_double(value , width , dec , 'f' , stream);
-  }
 }
 
 
 
 void sched_util_fprintf_int(bool def, int value , int width , FILE *stream) {
+  fputc(' ' , stream);
   if (def) {
-    int i;
-    fprintf(stream , " 1*");
-    for (i=0; i < (width - 2); i++) 
-      fputc(' ' , stream);
-  } else {
-    fputc(' ' , stream);
+    sched_util_fprintf_default( width , stream);
+  } else 
     util_fprintf_int(value , width , stream);
-  }
 }
 
 
@@ -292,15 +297,11 @@ void sched_util_fprintf_int(bool def, int value , int width , FILE *stream) {
 */
 
 void sched_util_fprintf_qst(bool def, const char *s , int width , FILE *stream) {
-  int i;
+  fputc(' ' , stream);
   if (def) {
-    fprintf(stream , "  1*        ");
-    /*
-      for (i=0; i < (width); i++) 
-      fputc(' ' , stream);
-    */
+    sched_util_fprintf_default( width , stream);
   } else {
-    for (i=0; i < (width + 1 - strlen(s)); i++) 
+    for (int i=0; i < (width - strlen(s)); i++) 
       fputc(' ' , stream);
     
     fputc('\'' , stream);

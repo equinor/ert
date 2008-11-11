@@ -165,14 +165,14 @@ static void wconhist_well_fprintf(const wconhist_well_type * well, FILE * stream
   sched_util_fprintf_qst(well->def[0],  well->name                 , 8,     stream);
   sched_util_fprintf_qst(well->def[1],  get_st_string(well->status), 4,     stream);
   sched_util_fprintf_qst(well->def[2],  get_cm_string(well->cmode) , 4,     stream);
-  sched_util_fprintf_dbl(well->def[3],  well->orat                 , 10, 3, stream);
-  sched_util_fprintf_dbl(well->def[4],  well->wrat                 , 10, 3, stream);
-  sched_util_fprintf_dbl(well->def[5],  well->grat                 , 10, 3, stream);
+  sched_util_fprintf_dbl(well->def[3],  well->orat                 , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[4],  well->wrat                 , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[5],  well->grat                 , 11, 3, stream);
   sched_util_fprintf_int(well->def[6],  well->vfptable             , 4 ,    stream);
-  sched_util_fprintf_dbl(well->def[7],  well->alift                , 10, 3, stream);
-  sched_util_fprintf_dbl(well->def[8],  well->thp                  , 10, 3, stream);
-  sched_util_fprintf_dbl(well->def[10], well->bhp                  , 10, 3, stream);
-  sched_util_fprintf_dbl(well->def[10], well->wgrat                , 10, 3, stream);
+  sched_util_fprintf_dbl(well->def[7],  well->alift                , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[8],  well->thp                  , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[9] , well->bhp                  , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[10], well->wgrat                , 11, 3, stream);
   fprintf(stream, "/\n");
 }
 
