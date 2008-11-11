@@ -2,6 +2,7 @@
 #include <list.h>
 #include <util.h>
 #include <sched_file.h>
+#include <sched_util.h>
 
 /* This sched_file.c contains code for internalizing an ECLIPSE
    schedule file.
@@ -47,8 +48,7 @@ struct sched_block_struct {
 
 struct sched_file_struct {
   int         __id;        /* Used for safe run-time casting. */
-  list_type * blocks;      /* A list of chronologically sorted
-                              sched_block_type's. */
+  list_type * blocks;      /* A list of chronologically sorted sched_block_type's. */
 };
 
 
@@ -369,18 +369,30 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
   {
     time_t block_end_time = sched_file_iget_block_end_time(sched_file, i);
     if(block_end_time > time)
-	  {
-	    util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
-	  }
+      {
+	util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
+      }
     else if(block_end_time == time)
-	  {
-	   return i; 
-	  }
+      {
+	return i; 
+      }
   }
   
   // If we are here, time did'nt correspond a restart file. Abort.
   util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
   return 0;
+}
+
+
+/**
+   This function finds the restart_nr for the a number of days after
+   simulation start.
+*/
+
+int sched_file_get_restart_nr_from_days(const sched_file_type * sched_file , double days) {
+  time_t time = sched_file_iget_block_start_time(sched_file, 0);
+  util_inplace_forward_days( &time , days);
+  return sched_file_get_restart_nr_from_time_t(sched_file , time);
 }
 
 
@@ -414,4 +426,31 @@ sched_kw_type * sched_file_ijget_block_kw_ref(const sched_file_type * sched_file
   sched_block_type * block = sched_file_iget_block_ref(sched_file, block_nr);
   sched_kw_type * sched_kw = sched_block_iget_kw_ref(block, kw_nr);
   return sched_kw;
+}
+
+
+
+static void __sched_file_summarize_line(int restart_nr , time_t start_time , time_t t , FILE * stream) {
+
+  double days    = sched_util_days_diff(start_time , t);
+  int mday , month , year;
+  
+  util_set_date_values(t , &mday , &month , &year);
+  fprintf(stream , "%02d/%02d/%04d   %7.1f days     %04d \n", mday , month , year , days , restart_nr);
+}
+
+
+
+
+void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
+  int len = sched_file_get_num_restart_files(sched_file);
+  time_t  start_time = sched_file_iget_block_start_time(sched_file , 0);
+  for(int i=1; i<len; i++) {
+    time_t t = sched_file_iget_block_start_time(sched_file , i);
+    __sched_file_summarize_line(i - 1 , start_time , t , stream);
+  }
+  {
+    time_t t = sched_file_iget_block_end_time(sched_file , len - 1);
+    __sched_file_summarize_line(len - 2 , start_time , t , stream);
+  }
 }

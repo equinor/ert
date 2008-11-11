@@ -78,7 +78,7 @@ static void time_t_to_dates_line_fprintf(const time_t * date, FILE * stream)
 {
   int day, month, year;
   util_set_date_values(*date, &day, &month, &year);
-  fprintf(stream , "  %02d \'%s\' %4d  /\n" , day, get_month_string_from_int(month), year);
+  fprintf(stream , "  %02d \'%s\' %4d  /  \n" , day, get_month_string_from_int(month), year );
 }
 
 
@@ -129,7 +129,7 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
     while (date_node != NULL) {
       const time_t * date = list_node_value_ptr(date_node);
       time_t_to_dates_line_fprintf(date, stream);
-	    date_node = list_node_get_next(date_node);
+      date_node = list_node_get_next(date_node);
     }
     fprintf(stream , "/\n\n");
   }

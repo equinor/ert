@@ -320,22 +320,40 @@ void sched_util_fprintf_qst(bool def, const char *s , int width , FILE *stream) 
 
 
 double sched_util_atof(const char *token) {
-  if (token != NULL)
-    return atof(token);
-  else
+  if (token != NULL) {
+    double value;
+    if (!util_sscanf_double(token , &value))
+      util_abort("%s: failed to parse:\"%s\" as floating point number. \n",__func__ , token);
+    return value;
+  } else
     return 0.0;
 }
 
 
 int sched_util_atoi(const char *token) {
-  if (token != NULL)
-    return atoi(token);
-  else
+  if (token != NULL) {
+    int value;
+    if (!util_sscanf_int(token , &value))
+      util_abort("%s: failed to parse:\"%s\" as integer \n",__func__ , token);
+    return value;
+  } else
     return 0;
 }
 
+
+
+double sched_util_days_diff(time_t start_time , time_t end_time) {
+  int days , hours , minutes , seconds;
+  double double_days;
+
+  util_difftime(start_time , end_time , &days , &hours , &minutes , &seconds);
+  double_days = days + hours/24.0 + minutes/(24 * 60.0) + seconds/(24 * 3600.0);
+  
+  return double_days;
+}
       
 
+/*
 void sched_util_fprintf_days_line(int date_nr , time_t t1 , time_t t2 , FILE *stream) {
   struct tm ts;
   double days;
@@ -352,3 +370,5 @@ time_t sched_util_make_start_date(const int * start_date) {
   else
     return util_make_date(start_date[0] , start_date[1] , start_date[2]);
 }
+*/
+

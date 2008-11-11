@@ -18,6 +18,7 @@ all: $(LIB)
 	install $(LIB) $(INSTALL_LIB_PATH)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) sched_test.c -o sched_test.x $(LIB_PATH) $(LIB_LINK)
 	gcc $(CFLAGS) $(TARGET_INCLUDE) gruptree_test.c -o gruptree_test.x $(LIB_PATH) $(LIB_LINK)
+	gcc $(CFLAGS) $(TARGET_INCLUDE) sched_summary.c -o sched_summary.x $(LIB_PATH) $(LIB_LINK)
 
 
 clean:
