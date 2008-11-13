@@ -25,8 +25,6 @@ char * __conf_util_fscanf_alloc_token_buffer(
   const char ** pad_keys)
 {
   char * buffer_wrk = util_fread_alloc_file_content(file, comment, NULL);
-  
-
   char ** padded_keys = util_malloc(num_pad_keys * sizeof * padded_keys,
                                     __func__);
   for(int key_nr = 0; key_nr < num_pad_keys; key_nr++)
@@ -57,8 +55,8 @@ char * __conf_util_fscanf_alloc_token_buffer(
 char * conf_util_fscanf_alloc_token_buffer(
   const char * file_name)
 {
-  char * pad_keys[] = {"{","}","=",";","(",")"};
-  char * buffer = __conf_util_fscanf_alloc_token_buffer(file_name, "--", 6, (const char **) pad_keys);
+  char * pad_keys[] = {"{","}","=",";"};
+  char * buffer = __conf_util_fscanf_alloc_token_buffer(file_name, "--", 4, (const char **) pad_keys);
   return buffer;
 }
 

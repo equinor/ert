@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <string.h>
 #include <hash.h>
+#include <list.h>
+#include <set.h>
 #include <util.h>
 #include <conf.h>
 #include <conf_util.h>
@@ -13,13 +15,14 @@
 
 struct conf_class_struct
 {
-  const conf_class_type * super_class; /** Can be NULL. */
+  const conf_class_type * super_class; /** Can be NULL.              */
   char                  * class_name;
-  char                  * help;        /** Can be NULL if not given.   */
+  char                  * help;        /** Can be NULL if not given. */
   bool                    require_instance;
   
-  hash_type             * sub_classes; /** conf_class_type's    */
-  hash_type             * item_specs;  /** conf_item_spec_types     */
+  hash_type             * sub_classes;  /** conf_class_types          */
+  hash_type             * item_specs;   /** conf_item_spec_types      */
+  list_type             * item_mutexes; /** item_mutex_types          */
 };
 
 
@@ -56,6 +59,15 @@ struct conf_item_struct
 
 
 
+struct conf_item_mutex_struct
+{
+  const conf_class_type * super_class;
+  bool                    require_one;
+  hash_type             * item_spec_refs;
+};
+
+
+
 /** D E F A U L T   A L L O C / F R E E    F U N C T I O N S */
 
 
@@ -74,6 +86,7 @@ conf_class_type * conf_class_alloc_empty(
   conf_class->require_instance = require_instance;
   conf_class->sub_classes      = hash_alloc();
   conf_class->item_specs       = hash_alloc();
+  conf_class->item_mutexes     = list_alloc();
 
   return conf_class;
 }
@@ -87,6 +100,7 @@ void conf_class_free(
   util_safe_free(conf_class->help);
   hash_free(conf_class->sub_classes);
   hash_free(conf_class->item_specs);
+  list_free(conf_class->item_mutexes);
   free(conf_class);
 }
 
@@ -301,6 +315,39 @@ void conf_item_free__(
 
 
 
+conf_item_mutex_type * conf_item_mutex_alloc(
+  bool require_one)
+{
+  conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex, __func__);
+
+  conf_item_mutex->super_class    = NULL;
+  conf_item_mutex->require_one    = require_one;
+  conf_item_mutex->item_spec_refs = hash_alloc();
+
+  return conf_item_mutex;
+}
+
+
+
+void conf_item_mutex_free(
+  conf_item_mutex_type * conf_item_mutex)
+{
+  hash_free(conf_item_mutex->item_spec_refs);
+  free(conf_item_mutex);
+}
+
+
+
+void conf_item_mutex_free__(
+  void * conf_item_mutex)
+{
+  conf_item_mutex_free( (conf_item_mutex_type *) conf_item_mutex);
+}
+
+
+
+
+
 /** M A N I P U L A T O R S ,   I N S E R T I O N */ 
 
 
@@ -364,7 +411,7 @@ void conf_class_insert_owned_item_spec(
   conf_item_spec_type * item_spec)
 {
   assert(conf_class != NULL);
-  assert(item_spec    != NULL);
+  assert(item_spec  != NULL);
 
   /** Abort if item_spec already has a super class. */
   if(item_spec->super_class != NULL)
@@ -379,6 +426,52 @@ void conf_class_insert_owned_item_spec(
                              item_spec, conf_item_spec_free__);
   
   item_spec->super_class = conf_class;
+}
+
+
+
+void conf_class_insert_owned_item_mutex(
+  conf_class_type      * conf_class,
+  conf_item_mutex_type * conf_item_mutex)
+{
+  assert(conf_class      != NULL);
+  assert(conf_item_mutex != NULL);
+
+  /** Check that the class has the required item_specs. */
+  bool           ok  = true;
+  int     num_items  = hash_get_size(conf_item_mutex->item_spec_refs);
+  char ** item_keys  = hash_alloc_keylist(conf_item_mutex->item_spec_refs);
+
+  for(int item_nr = 0; item_nr < num_items; item_nr++)
+  {
+    const char                * item_key             = item_keys[item_nr];
+    const conf_item_spec_type * conf_item_spec_mutex = hash_get(conf_item_mutex->item_spec_refs, item_key);
+
+    if(!hash_has_key(conf_class->item_specs, item_key))
+    {
+      printf("ERROR: Trying to insert a mutex on item \"%s\", which class \"%s\" does not have.\n",
+             item_key, conf_class->class_name);
+      ok = false;
+    }
+    else
+    {
+      const conf_item_spec_type * conf_item_spec_class = hash_get(conf_class->item_specs, item_key);
+      if(conf_item_spec_class != conf_item_spec_mutex)
+      {
+        ok = false;
+        printf("ERROR: Trying to insert a mutex on item \"%s\", which class \"%s\" has a different implementation of.\n",
+             item_key, conf_class->class_name);
+      }
+    }
+  }
+
+  util_free_stringlist(item_keys, num_items);
+
+  if(!ok)
+    util_abort("%s: Internal error. Trying to insert an invalid item mutex in class \"%s\".\n",
+               __func__, conf_class->class_name);
+
+  list_append_list_owned_ref(conf_class->item_mutexes, conf_item_mutex, conf_item_mutex_free__);
 }
 
 
@@ -461,6 +554,40 @@ void conf_instance_overload(
   
   conf_instance_copy_items(        conf_instance_target, conf_instance_source);
   conf_instance_copy_sub_instances(conf_instance_target, conf_instance_source);
+}
+
+
+
+void conf_item_mutex_add_item_spec(
+  conf_item_mutex_type       * conf_item_mutex,
+  const conf_item_spec_type  * conf_item_spec)
+{
+  if(conf_item_spec->super_class != NULL)
+  {
+    const conf_class_type * conf_class = conf_item_spec->super_class;
+    const char            * item_key   = conf_item_spec->name;
+
+    if(!hash_has_key(conf_class->item_specs, item_key))
+    {
+      util_abort("%s: Internal error. Trying to insert a mutex on item \"%s\", which class \"%s\" does not have.\n",
+                 __func__, item_key, conf_class->class_name);
+    }
+    else
+    {
+      const conf_item_spec_type * conf_item_spec_class = hash_get(conf_class->item_specs, item_key);
+      if(conf_item_spec_class != conf_item_spec)
+      {
+        util_abort("Internal error. Trying to insert a mutex on item \"%s\", which class \"%s\" has a different implementation of.\n",
+                   __func__, item_key, conf_class->class_name);
+      }
+    }
+  }
+
+  if(conf_item_mutex->require_one && conf_item_spec->required_set)
+    util_abort("%s: Trying to add item \"%s\" to a mutex, but it is required set!\n",
+               __func__, conf_item_spec->name);
+
+  hash_insert_ref(conf_item_mutex->item_spec_refs, conf_item_spec->name, conf_item_spec);
 }
 
 
@@ -570,6 +697,14 @@ const conf_class_type * conf_class_get_sub_class_ref(
     util_abort("%s: Internal error.\n", __func__);
 
   return hash_get(conf_class->sub_classes, sub_class_name);
+}
+
+
+
+const char * conf_instance_get_name_ref(
+  const conf_instance_type * conf_instance)
+{
+  return conf_instance->name;
 }
 
 
@@ -776,9 +911,9 @@ void conf_item_spec_printf_help(
 
   printf("\n       Help on item \"%s\" in class \"%s\":\n\n",
          conf_item_spec->name, conf_item_spec->super_class->class_name);
-  printf("       - Data type      : %s\n\n", conf_data_get_dt_name_ref(conf_item_spec->dt));
+  printf("       - Data type    : %s\n\n", conf_data_get_dt_name_ref(conf_item_spec->dt));
   if(conf_item_spec->default_value != NULL)
-    printf("       - Default value: %s\n\n", conf_item_spec->default_value);
+  printf("       - Default value: %s\n\n", conf_item_spec->default_value);
   if(conf_item_spec->help != NULL)
     printf("       - %s\n", conf_item_spec->help);
 
@@ -926,14 +1061,94 @@ bool conf_instance_has_valid_items(
 }
 
 
+static 
+bool conf_instance_check_item_mutex(
+  const conf_instance_type   * conf_instance,
+  const conf_item_mutex_type * conf_item_mutex)
+{
+  bool        ok            = true;
+  int         num_items_set = 0;
+  set_type  * items_set     = set_alloc_empty();
+  int         num_items     = hash_get_size(conf_item_mutex->item_spec_refs);
+  char     ** item_keys     = hash_alloc_keylist(conf_item_mutex->item_spec_refs);
+
+  for(int item_nr = 0; item_nr < num_items; item_nr++)
+  {
+    const char                * item_key = item_keys[item_nr];
+    if(conf_instance_has_item(conf_instance, item_key))
+    {
+      set_add_key(items_set, item_key);
+    }
+  }
+
+  num_items_set = set_get_size(items_set);
+
+  if(num_items_set > 1)
+  {
+    ok = false;
+    char ** items_set_keys = set_alloc_keylist(items_set);
+
+    printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s.\n\n",
+           conf_instance->name, conf_instance->conf_class->class_name);
+    printf("       Only one of the following items may be set:\n");
+    for(int item_nr = 0; item_nr < num_items; item_nr++)
+      printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+
+    printf("\n");
+    printf("       However, all the following item were set:\n");
+    for(int item_nr = 0; item_nr < num_items_set; item_nr++)
+      printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
+    printf("\n");
+
+    util_free_stringlist(items_set_keys, num_items_set);
+  }
+
+  if(num_items_set == 0 && conf_item_mutex->require_one && num_items > 0)
+  {
+    ok = false;
+    printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s.\n\n",
+           conf_instance->name, conf_instance->conf_class->class_name);
+    printf("       One of the following items MUST be set:\n");
+    for(int item_nr = 0; item_nr < num_items; item_nr++)
+      printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+  }
+
+  util_free_stringlist(item_keys, num_items);
+  set_free(items_set);
+
+  return ok;
+}
+
+
+
+static
+bool conf_instance_has_valid_mutexes(
+  const conf_instance_type * conf_instance)
+{
+  bool ok = true;
+  const conf_class_type * conf_class   = conf_instance->conf_class;
+  const list_type       * item_mutexes = conf_class->item_mutexes;
+  int                     num_mutexes  = list_get_size(item_mutexes);
+  
+  for(int mutex_nr = 0; mutex_nr < num_mutexes; mutex_nr++)
+  {
+    const conf_item_mutex_type * conf_item_mutex = list_iget_node_value_ptr(item_mutexes, mutex_nr);
+    if(!conf_instance_check_item_mutex(conf_instance, conf_item_mutex))
+      ok = false;
+  }
+
+  return ok;
+}
+
+
 
 static
 bool conf_instance_has_required_sub_instances(
   const conf_instance_type * conf_instance)
 {
-  /** U G L Y   B U G L Y   U G L Y   B U G LY   U G L Y   B U G LY   U G L Y   B U G LY     */
-  /** This function is really ugly. It could be *MUCH* smoother if set_type supported int's. */
-  /** U G L Y   B U G L Y   U G L Y   B U G LY   U G L Y   B U G LY   U G L Y   B U G LY     */
+  /** U G L Y   B U G L Y   U G L Y   B U G LY   U G L Y   B U G LY   U G L Y   B U G LY        */
+  /** This function is really ugly. It could be smoother if set_type supported size_t's. */
+  /** U G L Y   B U G L Y   U G L Y   B U G LY   U G L Y   B U G LY   U G L Y   B U G LY        */
 
   bool ok = true;
 
@@ -1025,11 +1240,18 @@ bool conf_instance_validate_sub_instances(
 bool conf_instance_validate(
   const conf_instance_type * conf_instance)
 {
-  bool ok = false;
+  bool ok = true;
+
   if(conf_instance == NULL)
+  {
+    printf("%s: Trying to dereference NULL pointer.\n", __func__);
     return false;
+  }
 
   if(!conf_instance_has_required_items(conf_instance))
+    ok = false;
+
+  if(!conf_instance_has_valid_mutexes(conf_instance))
     ok = false;
   
   if(!conf_instance_has_valid_items(conf_instance))
@@ -1043,7 +1265,6 @@ bool conf_instance_validate(
 
   return ok;
 }
-
 
 
 

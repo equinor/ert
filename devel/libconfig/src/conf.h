@@ -10,6 +10,7 @@ typedef struct conf_class_struct      conf_class_type;
 typedef struct conf_instance_struct   conf_instance_type;
 typedef struct conf_item_spec_struct  conf_item_spec_type;
 typedef struct conf_item_struct       conf_item_type;
+typedef struct conf_item_mutex_struct conf_item_mutex_type;
 
 
 
@@ -72,6 +73,17 @@ void conf_item_free__(
 
 
 
+conf_item_mutex_type * conf_item_mutex_alloc(
+  bool require_one);
+
+void conf_item_mutex_free(
+  conf_item_mutex_type * conf_item_mutex);
+
+void conf_item_mutex_free__(
+  void * conf_item_mutex);
+
+
+
 /** M A N I P U L A T O R S ,   I N S E R T I O N */ 
 
 
@@ -83,6 +95,10 @@ void conf_class_insert_owned_sub_class(
 void conf_class_insert_owned_item_spec(
   conf_class_type     * conf_class,
   conf_item_spec_type * item_spec);
+
+void conf_class_insert_owned_item_mutex(
+  conf_class_type      * conf_class,
+  conf_item_mutex_type * conf_item_mutex);
 
 
 
@@ -102,6 +118,12 @@ void conf_instance_insert_item(
 void conf_instance_overload(
   conf_instance_type       * conf_instance_target,
   const conf_instance_type * conf_instance_source);
+
+
+
+void conf_item_mutex_add_item_spec(
+  conf_item_mutex_type       * conf_item_mutex,
+  const conf_item_spec_type  * conf_item_spec);
 
 
 
@@ -150,6 +172,9 @@ const conf_class_type * conf_class_get_sub_class_ref(
   const char            * sub_class_name);
 
 
+
+const char * conf_instance_get_name_ref(
+  const conf_instance_type * conf_instance);
 
 bool conf_instance_is_of_class(
   const conf_instance_type * conf_instance,

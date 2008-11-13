@@ -59,17 +59,36 @@ int main()
     conf_item_spec_set_help(item_spec_error, help_item_spec_error);
 
     const char * help_item_spec_date = "The DATE item gives the date of the observation. Format is dd/mm/yyyy.";
-    conf_item_spec_type * item_spec_date = conf_item_spec_alloc("DATE", true, DT_DATE);
+    conf_item_spec_type * item_spec_date = conf_item_spec_alloc("DATE", false, DT_DATE);
     conf_item_spec_set_help(item_spec_date, help_item_spec_date);
+
+    const char * help_item_spec_days = "The DAYS item gives the observation time as days after simulation start.";
+    conf_item_spec_type * item_spec_days = conf_item_spec_alloc("DAYS", false, DT_POSFLOAT);
+    conf_item_spec_set_help(item_spec_days, help_item_spec_days);
+
+    const char * help_item_spec_restart = "The RESTART item gives the observation time as the ECLIPSE restart nr.";
+    conf_item_spec_type * item_spec_restart = conf_item_spec_alloc("RESTART", false, DT_POSINT);
+    conf_item_spec_set_help(item_spec_restart, help_item_spec_restart);
 
     const char * help_item_spec_sumkey = "The string SUMMARY_KEY is used to look up the simulated value in the summary file. It has the same format as the summary.x program, e.g. WOPR:P4";
     conf_item_spec_type * item_spec_sumkey = conf_item_spec_alloc("KEY", true, DT_STR);
     conf_item_spec_set_help(item_spec_sumkey, help_item_spec_sumkey);
 
+    /** Create a mutex on DATE, DAYS and RESTART. */
+    conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true);
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
+
+
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_value);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_date);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_days);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_restart);
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
+
+    conf_class_insert_owned_item_mutex(summary_observation_class, time_mutex);
 
     conf_class_insert_owned_sub_class(enkf_conf_class, summary_observation_class);
   }
@@ -135,8 +154,8 @@ int main()
 
   /** Try to create an instance of the enkf_conf_class. */
 
-  conf_instance_type * enkf_conf  = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf",  "test.txt");
-  conf_instance_type * enkf_conf2 = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf2", "test2.txt");
+  conf_instance_type * enkf_conf  = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf",  "testcase/test.txt");
+  conf_instance_type * enkf_conf2 = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf2", "testcase/test2.txt");
 
   /** Validate enkf_conf_class. */
 
