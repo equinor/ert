@@ -838,23 +838,34 @@ time_t history_iget_node_end_time(const history_type * history, int node_nr)
 }
 
 
+
 int history_get_restart_nr_from_time_t(const history_type * history, time_t time)
 {
   int num_restart_files = history_get_num_restarts(history);
+
   for(int i=0; i<num_restart_files; i++)
   {
     time_t node_end_time = history_iget_node_end_time(history, i);
-    if(node_end_time > time)
-	  {
-	    util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
-	  }
-    else if(node_end_time == time)
-	  {
-	   return i; 
-	  }
+    if(node_end_time == time)
+      return i; 
   }
+
   
   // If we are here, time did'nt correspond a restart file. Abort.
   util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
   return 0;
+}
+
+
+
+int history_get_restart_nr_from_days(const history_type * history, double days)
+{
+  if(days < 0.0)
+    util_abort("%s: Cannot find a restart nr from a negative production period (days was %f).\n",
+               __func__, days);
+
+  time_t time = history_iget_node_start_time(history, 0);
+  util_inplace_forward_days(&time, days);
+
+  return history_get_restart_nr_from_time_t(history, time);
 }

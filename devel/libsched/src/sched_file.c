@@ -112,6 +112,7 @@ static void sched_block_fwrite(sched_block_type * block, FILE * stream)
   }
 
   util_fwrite(&block->block_start_time, sizeof block->block_start_time, 1, stream, __func__);
+  util_fwrite(&block->block_end_time  , sizeof block->block_end_time,   1, stream, __func__);
 }
 
 
@@ -131,6 +132,7 @@ static sched_block_type * sched_block_fread_alloc(FILE * stream)
   }
  
   util_fread(&block->block_start_time, sizeof block->block_start_time, 1, stream, __func__);
+  util_fread(&block->block_end_time,   sizeof block->block_end_time  , 1, stream, __func__);
   return block;
 }
 
@@ -369,13 +371,9 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
   {
     time_t block_end_time = sched_file_iget_block_end_time(sched_file, i);
     if(block_end_time > time)
-      {
-	util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
-      }
+      util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
     else if(block_end_time == time)
-      {
-	return i; 
-      }
+      return i; 
   }
   
   // If we are here, time did'nt correspond a restart file. Abort.

@@ -9,7 +9,7 @@ WCONHIST
 /
 
 DATES
- 1 'FEB' 2000 /
+ 11 'JAN' 2000 /
 /
 
 WCONHIST

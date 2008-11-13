@@ -36,6 +36,7 @@ void           history_alloc_time_series_from_summary_key(const history_type *, 
 time_t         history_iget_node_start_time(const history_type *, int);
 time_t         history_iget_node_end_time(const history_type *, int);
 int            history_get_restart_nr_from_time_t(const history_type *, time_t);
+int            history_get_restart_nr_from_days(const history_type *, double days);
 #ifdef __cplusplus
 }
 #endif

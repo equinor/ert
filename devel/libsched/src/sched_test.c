@@ -10,12 +10,21 @@ int main(int argc, char **argv)
     printf("Usage: sched_test.x my_sched_file.SCH\n");
     return 0;
   }
+  
+  int    num_restart_files;
+  int    last_restart_file;
+
+  FILE * stream     = NULL;
+  time_t start_time = util_make_date(1,1,2000);
+
+  sched_file_type * sched_file = NULL;
+  history_type    * history    = NULL;
+
 
   // First verify that we can read a SCHEDULE file.
-  int num_restart_files, last_restart_file;
-  sched_file_type * sched_file = sched_file_alloc();
+  sched_file = sched_file_alloc();
   printf("-- Loading %s..\n", argv[1]);
-  sched_file_parse(sched_file, -1, argv[1]);
+  sched_file_parse(sched_file, start_time , argv[1]);
 
 
 
@@ -30,7 +39,7 @@ int main(int argc, char **argv)
 
   // Store a binary rep and free the internal rep
   printf("-- Saving binary representation in \"sched_test_stor_01.bin\"...\n");
-  FILE * stream = util_fopen("sched_test_stor_01.bin","w");
+  stream = util_fopen("sched_test_stor_01.bin","w");
   sched_file_fwrite(sched_file, stream);
   printf("-- Freeing internal representation..\n");
   sched_file_free(sched_file);
@@ -50,7 +59,7 @@ int main(int argc, char **argv)
 
   // Try to create a history_type object
   printf("-- Creating history object from \"%s\"..\n", argv[1]);
-  history_type * history = history_alloc_from_sched_file(sched_file);
+  history = history_alloc_from_sched_file(sched_file);
   printf("-- Saving binary history object to \"sched_test_stor_02.bin\"\n");
   stream = util_fopen("sched_test_stor_02.bin","w");
   history_fwrite(history, stream);
@@ -67,29 +76,41 @@ int main(int argc, char **argv)
   fclose(stream);
 
   // Try to access some rates..
-  bool default_used = false;
-  double orate = history_get_group_var(history, last_restart_file , "FIELD", "GOPR", &default_used);
-  double grate = history_get_group_var(history, last_restart_file , "FIELD", "GGPR", &default_used);
-  double wrate = history_get_group_var(history, last_restart_file , "FIELD", "GWPR", &default_used);
-  printf("-- Oil rate for field at last restart is   %9.3f\n", orate);
-  printf("-- Water rate for field at last restart is %9.3f\n", wrate);
-  printf("-- Gas rate for field at last restart is   %9.3f\n", grate);
+  {
+    bool default_used = false;
+    double orate = history_get_group_var(history, last_restart_file , "FIELD", "GOPR", &default_used);
+    double grate = history_get_group_var(history, last_restart_file , "FIELD", "GGPR", &default_used);
+    double wrate = history_get_group_var(history, last_restart_file , "FIELD", "GWPR", &default_used);
+    printf("-- Oil rate for field at last restart is   %9.3f\n", orate);
+    printf("-- Water rate for field at last restart is %9.3f\n", wrate);
+    printf("-- Gas rate for field at last restart is   %9.3f\n", grate);
+  }
 
 
   // Try to get a time series
-  char   * summary_key = "GOPR:FIELD";
-  bool   * defaults_used;
-  double * values;
-
-  history_alloc_time_series_from_summary_key(history, summary_key, &num_restart_files, &values, &defaults_used);
-
-  for(int restart_nr = 0; restart_nr < num_restart_files; restart_nr++)
   {
-    printf("KEY: %s VALUE: %9.3f DEFAULT: %i\n", summary_key, values[restart_nr], defaults_used[restart_nr]);
+    char   * summary_key = "GOPR:FIELD";
+    bool   * defaults_used;
+    double * values;
+
+    history_alloc_time_series_from_summary_key(history, summary_key, &num_restart_files, &values, &defaults_used);
+
+    for(int restart_nr = 0; restart_nr < num_restart_files; restart_nr++)
+    {
+      printf("KEY: %s VALUE: %9.3f DEFAULT: %i\n", summary_key, values[restart_nr], defaults_used[restart_nr]);
+    }
+
+    free(values);
+    free(defaults_used);
   }
 
-  free(values);
-  free(defaults_used);
+  // Try to get a restart_nr from days.
+  {
+    double days = 10;
+    int restart_nr = history_get_restart_nr_from_days(history, days);
+    printf("days : %f , restart_nr : %i\n", days, restart_nr);
+  }
+
 
 
   // Clean up

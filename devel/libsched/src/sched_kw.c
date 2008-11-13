@@ -385,21 +385,24 @@ sched_kw_type ** sched_kw_restart_file_split_alloc(const sched_kw_type * sched_k
 
 time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
 {
+  time_t new_time = -1;
   switch(sched_kw_get_type(sched_kw))
   {
     case(TSTEP):
-      return sched_kw_tstep_get_new_time((const sched_kw_tstep_type *) sched_kw->data, curr_time);
-
+      new_time = sched_kw_tstep_get_new_time((const sched_kw_tstep_type *) sched_kw->data, curr_time);
+      break;
     case(DATES):
-      return sched_kw_dates_get_time_t((const sched_kw_dates_type *) sched_kw->data);
-
-     case(TIME):
-       util_abort("%s: Sorry - no support for TIME kw. Please use TSTEP.\n", __func__);
-       return 0;
-     default:
-       util_abort("%s: Internal error - trying to get time from non-timing kw - aborting.\n", __func__);
-       return 0;
+      new_time = sched_kw_dates_get_time_t((const sched_kw_dates_type *) sched_kw->data);
+      break;
+    case(TIME):
+      util_abort("%s: Sorry - no support for TIME kw. Please use TSTEP.\n", __func__);
+      break;
+    default:
+      util_abort("%s: Internal error - trying to get time from non-timing kw - aborting.\n", __func__);
+      break;
   }
+
+  return new_time;
 }
 
 
