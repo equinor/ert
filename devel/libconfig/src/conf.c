@@ -471,6 +471,7 @@ void conf_class_insert_owned_item_mutex(
     util_abort("%s: Internal error. Trying to insert an invalid item mutex in class \"%s\".\n",
                __func__, conf_class->class_name);
 
+  conf_item_mutex->super_class = conf_class;
   list_append_list_owned_ref(conf_class->item_mutexes, conf_item_mutex, conf_item_mutex_free__);
 }
 
@@ -562,9 +563,10 @@ void conf_item_mutex_add_item_spec(
   conf_item_mutex_type       * conf_item_mutex,
   const conf_item_spec_type  * conf_item_spec)
 {
-  if(conf_item_spec->super_class != NULL)
+
+  if(conf_item_mutex->super_class != NULL)
   {
-    const conf_class_type * conf_class = conf_item_spec->super_class;
+    const conf_class_type * conf_class = conf_item_mutex->super_class;
     const char            * item_key   = conf_item_spec->name;
 
     if(!hash_has_key(conf_class->item_specs, item_key))
@@ -1088,14 +1090,14 @@ bool conf_instance_check_item_mutex(
     ok = false;
     char ** items_set_keys = set_alloc_keylist(items_set);
 
-    printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s.\n\n",
+    printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
            conf_instance->name, conf_instance->conf_class->class_name);
     printf("       Only one of the following items may be set:\n");
     for(int item_nr = 0; item_nr < num_items; item_nr++)
       printf("       %i : %s\n", item_nr, item_keys[item_nr]);
 
     printf("\n");
-    printf("       However, all the following item were set:\n");
+    printf("       However, all the following items were set:\n");
     for(int item_nr = 0; item_nr < num_items_set; item_nr++)
       printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
     printf("\n");
@@ -1106,11 +1108,12 @@ bool conf_instance_check_item_mutex(
   if(num_items_set == 0 && conf_item_mutex->require_one && num_items > 0)
   {
     ok = false;
-    printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s.\n\n",
+    printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
            conf_instance->name, conf_instance->conf_class->class_name);
     printf("       One of the following items MUST be set:\n");
     for(int item_nr = 0; item_nr < num_items; item_nr++)
       printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+    printf("\n");
   }
 
   util_free_stringlist(item_keys, num_items);

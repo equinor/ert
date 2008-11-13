@@ -19,11 +19,24 @@ HISTORY_OBSERVATION C-17:WWCT;
 
 SUMMARY_OBSERVATION SEP_TEST_2006
 {
-  VALUE = 1;
-  ERROR = 0.1;
-  DATE  = 22/10/2006;
-  DAYS  = 100;
-  KEY   = GOPR:G4;
+  VALUE   = 1;
+  ERROR   = 0.1;
+--  DATE    = 22/10/2006;
+--  DAYS    = 100;
+--  RESTART = 10;
+  KEY     = GOPR:G4;
+};
+
+
+
+SUMMARY_OBSERVATION SEP_TEST_2007
+{
+  VALUE   = 1;
+  ERROR   = 0.1;
+  DATE    = 22/10/2006;
+  DAYS    = 100;
+  RESTART = 10;
+  KEY     = GOPR:G4;
 };
 
 
