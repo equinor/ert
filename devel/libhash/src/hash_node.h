@@ -8,7 +8,7 @@ extern "C" {
 #include <node_data.h>
 
 typedef struct hash_node_struct hash_node_type;
-typedef uint32_t     (hashf_type) (const uint8_t *key, size_t len);
+typedef uint32_t     (hashf_type) (const char *key, size_t len);
 typedef enum          {hash_ref_data , hash_int_data , hash_double_data , hash_string_data} hash_data_type;
 
 
