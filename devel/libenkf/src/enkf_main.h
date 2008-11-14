@@ -60,8 +60,9 @@ const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
 const model_config_type     * enkf_main_get_model_config( const enkf_main_type * );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
 
-void * enkf_main_get_enkf_config_node_type(ensemble_config_type *, const char *);
-void enkf_main_set_field_config_iactive(ensemble_config_type *, int);
+void 	   * enkf_main_get_enkf_config_node_type(ensemble_config_type *, const char *);
+void 	     enkf_main_set_field_config_iactive(ensemble_config_type *, int);
+const char * enkf_main_get_image_viewer(const enkf_main_type * );
 
 #ifdef __cplusplus
 }

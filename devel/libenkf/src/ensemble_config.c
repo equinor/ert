@@ -287,6 +287,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     
     {
       gen_data_config_type * gen_data_config;
+
       if (template_file == NULL)
 	gen_data_config = gen_data_config_alloc(ASCII , ASCII , init_fmt);
       else

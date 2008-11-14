@@ -686,7 +686,7 @@ void field_initialize(field_type *field , int iens) {
     init_type -= load_unique;
     free(filename);
   }
-  if (init_type != 0) 
+  if (init_type != none) 
     util_abort("%s not fully implemented ... \n",__func__);
   
 }

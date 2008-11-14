@@ -119,7 +119,7 @@ void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS ,
 
   for (iobs = 0; iobs < nrobs; iobs++) {
     S1[iobs] *= 1.0 / matrix->ens_size;
-    S2[iobs]  = sqrt(util_double_max(0 , S2[iobs] / matrix->ens_size - S1[iobs] * S1[iobs]));
+    S2[iobs]  = sqrt( util_double_max(0 , S2[iobs] / matrix->ens_size - S1[iobs] * S1[iobs]));
   }
   
   *_meanS = S1;

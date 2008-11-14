@@ -40,7 +40,7 @@ bool              hash_key_list_compare( hash_type * hash1, hash_type * hash2);
 void              hash_insert_hash_owned_ref(hash_type *, const char * , const void *, del_type *);
 
 void 		  hash_iter_finalize(hash_type * );
-int  		  hash_iter_init(hash_type * );
+void  		  hash_iter_init(hash_type * );
 const      char * hash_iter_get_next_key(hash_type * hash);
 void            * hash_iter_get_next_value(hash_type *  , bool * );
 const      char * hash_iter_get_first_key(hash_type * );

@@ -1515,7 +1515,7 @@ conf_instance_type * conf_instance_alloc_from_file(
   conf_instance_add_data_from_token_buffer(conf_instance, &buffer_pos, true, true);
 
   free(buffer);
-
+  
   return conf_instance;
 }
 

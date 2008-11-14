@@ -293,7 +293,6 @@ static void enkf_state_add_node_internal(enkf_state_type * , const char * , cons
 
 
 void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_function_type function_type, void_arg_type * arg) {
-  hash_lock( enkf_state->node_hash );
   {
     char ** key_list    = hash_alloc_keylist(enkf_state->node_hash);
     int ikey;
@@ -315,7 +314,6 @@ void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_functi
       }
     }                                                                      
   }
-  hash_unlock( enkf_state->node_hash );
 }
 
 
@@ -965,7 +963,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	mask += dynamic;
       enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state);
     }
-
     enkf_state_ecl_write( enkf_state );
     
     {

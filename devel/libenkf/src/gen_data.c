@@ -149,12 +149,13 @@ int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial
   ecl_type_enum ecl_type 	       = gen_data_config_get_internal_type(gen_data->config);
   const int data_size    	       = gen_data_config_get_data_size(gen_data->config);
   const active_list_type  *active_list = gen_data_config_get_active_list(gen_data->config);
-  
   int elements_added = 0;
+
   if (data_size > 0) 
     elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_list , serial_state ,serial_offset , serial_vector);
   return elements_added;
 }
+
 
 
 void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
@@ -232,14 +233,19 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
    When the read is complete it is checked/verified with the config
    object that this file was as long as the others we have loaded for
    other members.
+
+   If gen_data_config_alloc_initfile() returns NULL that means that
+   the gen_data instance does not have any init function - that is OK.
 */
 
 
 
 void gen_data_initialize(gen_data_type * gen_data , int iens) {
-  char * init_file 	 = gen_data_config_alloc_initfile(gen_data->config , iens);
-  gen_data_ecl_load(gen_data , init_file , NULL , NULL , 0);
-  free(init_file);
+  char * init_file = gen_data_config_alloc_initfile(gen_data->config , iens);
+  if (init_file != NULL) {
+    gen_data_ecl_load(gen_data , init_file , NULL , NULL , 0);
+    free(init_file);
+  }
 }
 
 

@@ -626,10 +626,6 @@ bool hash_key_list_compare(hash_type * hash1, hash_type * hash2)
         hash_get_first_key() / hash_get_first_value(), which will call
         hash_iter_init().
 
-	Observe that the return value from hash_iter_init() is the
-	number of elements in the hash, this can be used to control
-	the iteration from the calling side.
-
 
      2. Iterate through the hash with hash_iter_get_next_key() and
         hash_iter_get_next_value(). 
@@ -683,6 +679,10 @@ Observe that __get_next_key() and __get_next_value() share the same internal sta
   value2 = hash_iter_get_next_value(hash);
 
 value2 will **NOT** be the value corresponding to key1.
+
+
+Recursive : careful with that!
+
 */
 
 
@@ -722,11 +722,10 @@ void hash_iter_finalize(hash_type * hash) {
      2. Take read-lock - this is held all the time until we call hash_iter_finalize().
      3. Initilize the internal list of keys - __iter_keylist.
      4. Reset the __iter_index.
-     5. Return the number of elements in the hash table.
 
 */
      
-int hash_iter_init(hash_type * hash) {
+void hash_iter_init(hash_type * hash) {
   pthread_rwlock_rdlock( &hash->rwlock );  /* Just for this function. */
   if (hash->__iter_active)
     hash_iter_finalize(hash);
@@ -737,7 +736,6 @@ int hash_iter_init(hash_type * hash) {
     hash->__iter_index   = 0;
     hash->__iter_active  = true;
   }
-  return hash->elements;
   pthread_rwlock_unlock( &hash->rwlock );
 }
 

@@ -52,7 +52,7 @@ void simple_plot__(void *p) {
 
 
 
-void stupid_plot(int N , const double * x , const double *y) {
+void stupid_plot(int N , const double * x , const double *y , const char * image_viewer) {
   plot_type *item;
   
   item = plot_alloc();
@@ -77,7 +77,7 @@ void stupid_plot(int N , const double * x , const double *y) {
   plot_data(item);
   plot_free(item);
   
-  util_vfork_exec("/d/proj/bg/enkf/bin/qiv" , 1 , (const char *[1]) {"test.png"} , false , NULL , NULL , NULL , NULL , NULL);
+  util_vfork_exec(image_viewer , 1 , (const char *[1]) {"test.png"} , false , NULL , NULL , NULL , NULL , NULL);
 }
 
 
@@ -88,6 +88,7 @@ void enkf_ui_plot_time(void * void_arg) {
   enkf_main_type             * enkf_main  = enkf_main_safe_cast( void_arg );
   const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   {
     const int prompt_len = 35;
     const enkf_config_node_type * config_node;
@@ -102,7 +103,7 @@ void enkf_ui_plot_time(void * void_arg) {
       const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
       const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
       int iens1 , iens2;   
-      //bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2); /* Not used yet ... */
+      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2); /* Not used yet ... */
       double * x, *y;
       int iens; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
@@ -120,7 +121,7 @@ void enkf_ui_plot_time(void * void_arg) {
       
       for (iens = iens1; iens <= iens2; iens++) {
 	enkf_ui_util_get_time(fs , config_node , node , analysis_state , cell_nr , step1 , step2 , iens , x ,y);
-	stupid_plot(size , x , y);
+	stupid_plot(size , x , y , viewer);
 	{
 	  char * filename = path_fmt_alloc_file(file_fmt , true , iens);
 	  FILE * stream = util_fopen(filename , "w");

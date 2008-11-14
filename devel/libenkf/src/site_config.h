@@ -6,6 +6,7 @@
 
 typedef struct site_config_struct site_config_type;
 
+const char             * site_config_get_image_viewer(site_config_type * site_config);
 void                     site_config_update_lsf_request(site_config_type *  , const stringlist_type * );
 site_config_type       * site_config_alloc(const config_type * , int);
 void                     site_config_free(site_config_type *); 

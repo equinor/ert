@@ -83,8 +83,11 @@ static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_ty
     }
   } else 
     config->template_buffer = NULL;
-    
-  config->init_file_fmt     = path_fmt_alloc_path_fmt( init_file_fmt );
+
+  if (init_file_fmt != NULL)
+    config->init_file_fmt     = path_fmt_alloc_path_fmt( init_file_fmt );
+  else
+    config->init_file_fmt = NULL;
 
   pthread_mutex_init( &config->update_lock , NULL );
   return config;
@@ -96,7 +99,6 @@ static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_ty
    xxx_alloc_with_template() do *NOT* have to know whether the object
    should subsequently be used as a parameter or as dynamic data.
 */
-
 
 gen_data_config_type * gen_data_config_alloc(gen_data_format_type input_format ,   
 					     gen_data_format_type output_format,
@@ -116,7 +118,7 @@ gen_data_config_type * gen_data_config_alloc_with_template(gen_data_format_type 
 
 void gen_data_config_free(gen_data_config_type * config) {
   active_list_free(config->active_list);
-  path_fmt_free(config->init_file_fmt);
+  if (config->init_file_fmt != NULL) path_fmt_free(config->init_file_fmt);
   free(config);
 }
 
@@ -152,9 +154,13 @@ void gen_data_config_assert_size(gen_data_config_type * config , int size) {
 
 
 char * gen_data_config_alloc_initfile(const gen_data_config_type * config , int iens) {
-  char * initfile = path_fmt_alloc_path(config->init_file_fmt , false , iens);
-  return initfile;
+  if (config->init_file_fmt != NULL) {
+    char * initfile = path_fmt_alloc_path(config->init_file_fmt , false , iens);
+    return initfile;
+  } else
+    return NULL;
 }
+
 
 
 

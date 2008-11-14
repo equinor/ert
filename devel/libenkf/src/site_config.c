@@ -49,6 +49,11 @@ static void site_config_set_image_viewer(site_config_type * site_config , const 
 }
 
 
+const char * site_config_get_image_viewer(site_config_type * site_config) {
+  return site_config->image_viewer;
+}
+
+
 static void site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
   ext_joblist_add_job(site_config->joblist , job_name , install_file);
 }

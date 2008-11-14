@@ -14,15 +14,17 @@ int main()
     conf_class_type * history_observation_class = conf_class_alloc_empty("HISTORY_OBSERVATION", false);
     conf_class_set_help(history_observation_class, help_class_history_observation);
 
+    
     const char * help_item_spec_error_mode = "The string ERROR_MODE gives the error mode for the observation.";
     conf_item_spec_type * item_spec_error_mode = conf_item_spec_alloc("ERROR_MODE", true, DT_STR);
-
+    conf_item_spec_set_help(item_spec_error_mode, help_item_spec_error_mode);
+    
     conf_item_spec_add_restriction(item_spec_error_mode, "rel");
     conf_item_spec_add_restriction(item_spec_error_mode, "abs");
     conf_item_spec_add_restriction(item_spec_error_mode, "relmin");
-
+    
     conf_item_spec_set_default_value(item_spec_error_mode, "rel");
-    conf_item_spec_set_help(item_spec_error_mode, help_item_spec_error_mode);
+    
 
     const char * help_item_spec_error = "The positive floating number ERROR gives the standard deviation (abs) or the relative uncertainty (rel/relmin) of the observations.";
     conf_item_spec_type * item_spec_error     = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT);
@@ -33,7 +35,8 @@ int main()
     conf_item_spec_type * item_spec_error_min = conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT);
     conf_item_spec_set_default_value(item_spec_error_min, "0.10");
     conf_item_spec_set_help(item_spec_error_min, help_item_spec_error_min);
-
+    
+    
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error_mode);
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error);
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error_min);
@@ -151,7 +154,7 @@ int main()
     conf_class_insert_owned_sub_class(enkf_conf_class, block_observation_class);
   }
 
-
+  
 
   /** Try to create an instance of the enkf_conf_class. */
 
@@ -166,7 +169,7 @@ int main()
   /** Overload. */
   conf_instance_overload(enkf_conf, enkf_conf2);
 
-
+  
   /** Print the name of the HISTORY_OBSERVATION instances. */
   {
     stringlist_type * history_observations = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");

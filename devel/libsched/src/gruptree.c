@@ -189,6 +189,9 @@ static const char * well_get_parent_name(const well_type * well)
 
 
 
+/**
+   This function is called recursively ... 
+*/
 static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * grupname, hash_type * well_hash)
 {
 
@@ -203,10 +206,10 @@ static void gruptree_well_hash_iter__(gruptree_type * gruptree, const char * gru
   {
     int size = hash_get_size(grup->children);
     char ** keylist = hash_alloc_keylist(grup->children);
-    for(int i=0; i<size; i++)
-    {
-      gruptree_well_hash_iter__(gruptree, keylist[i], well_hash);
-    }
+
+    for(int i=0; i<size; i++) 
+      gruptree_well_hash_iter__(gruptree, keylist[i], well_hash);  /* Recursive call - should NOT use hash_iter interface.*/
+
     util_free_stringlist(keylist, size);
   }
   else

@@ -148,7 +148,7 @@ void enkf_main_measure(enkf_main_type * enkf_main , int report_step , state_enum
     meas_matrix = enkf_main->meas_forecast;
   else
     meas_matrix = enkf_main->meas_analyzed;
-
+  
   meas_matrix_reset(meas_matrix);
   enkf_obs_measure_on_ensemble( enkf_main->obs , enkf_main_get_fs(enkf_main) , report_step , state , ens_size , (const enkf_state_type **) enkf_main->ensemble , meas_matrix);
 }
@@ -497,8 +497,19 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   if (enkf_update) {
     printf("Saving: ........ "); fflush(stdout);
     enkf_main_fwrite_ensemble(enkf_main , dynamic + parameter , step2 , analyzed);
-    enkf_main_fprintf_results(enkf_main , step2);
     printf("\n");
+    enkf_main_measure(enkf_main , step2 , analyzed);
+    
+    /** Printing update info after analysis. */
+    {
+      double *meanS , *stdS;
+      meas_matrix_allocS_stats(enkf_main->meas_analyzed , &meanS , &stdS);
+      obs_data_fprintf(enkf_main->obs_data , stdout , meanS , stdS);
+      free(meanS);
+      free(stdS);
+    }
+
+    enkf_main_fprintf_results(enkf_main , step2);
   }
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
@@ -535,43 +546,11 @@ void enkf_main_set_field_config_iactive(ensemble_config_type * ensemble_config, 
 
 
 
+const char * enkf_main_get_image_viewer(const enkf_main_type * enkf_main) {
+  return site_config_get_image_viewer(enkf_main->site_config);
+}
 
-//What the F*CK:=======
-//What the F*CK:  
-//What the F*CK:  prev_enkf_on = analyzed_start;
-//What the F*CK:  for (inode = start_inode; inode < num_nodes; inode++) {
-//What the F*CK:    const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-//What the F*CK:    state_enum init_state;
-//What the F*CK:    int 	   init_step;
-//What the F*CK:    int 	   report_step1;
-//What the F*CK:    int 	   report_step2;
-//What the F*CK:    int 	   report_stride;
-//What the F*CK:    int 	   report_step;
-//What the F*CK:    int 	   next_report_step;
-//What the F*CK:    bool enkf_on;
-//What the F*CK:    stringlist_type * forward_model;
-//What the F*CK:    
-//What the F*CK:    enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &report_stride , &enkf_on , &forward_model);
-//What the F*CK:    if (inode == start_inode)
-//What the F*CK:      report_step = start_report;
-//What the F*CK:    else
-//What the F*CK:      report_step = report_step1;
-//What the F*CK:    do {
-//What the F*CK:      next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
-//What the F*CK:      init_step = report_step;
-//What the F*CK:      if (prev_enkf_on)
-//What the F*CK:	init_state = analyzed;
-//What the F*CK:      else
-//What the F*CK:	init_state = forecast;
-//What the F*CK:      
-//What the F*CK:      enkf_main_run_step(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , forward_model);
-//What the F*CK:      report_step  = next_report_step;
-//What the F*CK:      prev_enkf_on = enkf_on;
-//What the F*CK:    } while (next_report_step < report_step2);
-//What the F*CK:  }
-//What the F*CK:}
-//What the F*CK:
-//What the F*CK:>>>>>>> .r1393
+
 
 
 void enkf_main_run(enkf_main_type * enkf_main , const bool * iactive ,  int start_report , state_enum __init_state) {
