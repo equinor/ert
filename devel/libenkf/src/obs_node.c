@@ -27,7 +27,7 @@ struct obs_node_struct {
   obs_activate_ftype *activate;  /* This is used to activate / deactivate (parts of) the observation. */ 
   
   char               *state_kw;  /* This is used to look up the corresponding enkf_state object. */
-  char               *obs_label;
+  char               *obs_label; /* WTF? */
   int                 size;
   obs_active_type    *active;    
   bool                default_active;

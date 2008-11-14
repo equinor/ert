@@ -3,6 +3,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <conf.h>
+#include <history.h>
 #include <enkf_macros.h>
 #include <obs_data.h>
 #include <meas_vector.h>
@@ -11,11 +13,39 @@ extern "C" {
 
 typedef struct field_obs_struct field_obs_type;
 
-field_obs_type * field_obs_alloc(const field_config_type *  , const char *  , int , const int * , const int *, const int * , const double * , const double *);
-void             field_obs_free(field_obs_type * );
-void             field_obs_get_observations(const field_obs_type *  , int , obs_data_type *);
-void             field_obs_measure(const field_obs_type * , const field_type * , meas_vector_type * );
-field_obs_type * field_obs_fscanf_alloc(const char * , const field_config_type *  );
+field_obs_type * field_obs_alloc(
+  const char   * obs_label,
+  const char   * field_name,
+  int            restart_nr,
+  int            size,
+  const int    * i,
+  const int    * j,
+  const int    * k,
+  const double * obs_value,
+  const double * obs_std);
+
+void field_obs_free(
+  field_obs_type * field_obs);
+
+int field_obs_get_restart_nr(
+  const field_obs_type * field_obs);
+
+const char * field_obs_get_field_name_ref(
+  const field_obs_type * field_obs);
+
+void field_obs_get_observations(
+  const field_obs_type * field_obs,
+  int                    restart_nr,
+  obs_data_type        * obs_data);
+
+void field_obs_measure(
+  const field_obs_type * field_obs,
+  const field_type     * field_state,
+  meas_vector_type     * meas_vector);
+
+field_obs_type * field_obs_alloc_from_BLOCK_OBSERVATION(
+  const conf_instance_type * conf_instance,
+  const history_type       * history);
 
 VOID_FREE_HEADER(field_obs);
 VOID_GET_OBS_HEADER(field_obs);

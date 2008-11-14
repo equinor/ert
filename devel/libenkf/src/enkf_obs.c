@@ -4,262 +4,54 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include <hash.h>
 #include <util.h>
+#include <conf.h>
 #include <enkf_obs.h>
-#include <enkf_types.h>
-#include <ecl_rft_node.h>
-#include <well_obs.h>
-#include <ensemble_config.h>
-#include <obs_node.h>
-#include <history.h>
-#include <enkf_util.h>
-#include <sched_file.h>
 #include <summary_obs.h>
-#include <gen_obs.h>
-#include <gen_data_config.h>
-#include <enkf_state.h>
-#include <enkf_node.h>
-#include <meas_vector.h>
-#include <meas_matrix.h>
-#include <enkf_fs.h>
+#include <field_obs.h>
+
+/** TODO This static function header shall be removed when the configuration is unified.... */
+static conf_class_type * enkf_obs_get_obs_conf_class();
 
 
-static int enkf_obs_sscanf_report_step(const enkf_obs_type * enkf_obs , const char * meas_time_string) {
-  int report_step;
-
-  if (!util_sscanf_int(meas_time_string , &report_step)) {
-    time_t meas_time;
-    if ( util_sscanf_date(meas_time_string , &meas_time)) 
-      report_step = sched_file_get_restart_nr_from_time_t(enkf_obs->sched_file , meas_time);
-    else
-      util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
-  }
-
-  return report_step;
-}
-
-
-static time_t enkf_obs_sscanf_obs_time(const enkf_obs_type * enkf_obs , const char * meas_time_string) {
-  time_t meas_time;
-  if (!util_sscanf_date(meas_time_string , &meas_time)) {
-    int report_step;
-    if (!util_sscanf_int(meas_time_string , &report_step)) 
-      meas_time = sched_file_iget_block_end_time(enkf_obs->sched_file , report_step); /* _end_time / _start_time ?? */
-    else
-      util_abort("%s: failed to parse: \"%s\" as a date (Format: DD-MM-YYYY) or report_step.\n",__func__ , meas_time_string);
-  }
-  return meas_time;
-}
-
-
-
-
-static enkf_obs_type * enkf_obs_alloc(const sched_file_type * sched_file , const history_type * hist) {
-  enkf_obs_type * enkf_obs = malloc(sizeof * enkf_obs);
-  enkf_obs->obs_hash 	   = hash_alloc(10);
-  
-  
-  enkf_obs->sched_file     = sched_file;
-  enkf_obs->hist     	   = hist;
-  enkf_obs->num_reports    = sched_file_get_num_restart_files(sched_file); /*history_get_num_reports(enkf_obs->hist);*/
+static
+enkf_obs_type * enkf_obs_alloc(
+)
+{
+  enkf_obs_type * enkf_obs = util_malloc(sizeof * enkf_obs, __func__);
+  enkf_obs->obs_hash       = hash_alloc();
   return enkf_obs;
 }
 
 
 
-
-
-
-
-/*
-  Observe that the keywords used to index into the hash_obs() structure
-  must be the same as is used to get the enkf_node object from the enkf_state.
-*/
-  
-void enkf_obs_add_obs(enkf_obs_type * enkf_obs, const char * key , const obs_node_type * node) {
-  if (hash_has_key(enkf_obs->obs_hash , key)) 
-    util_abort("%s: observation with key:%s already added - aborting \n",__func__ , key);
-
-  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , node , obs_node_free__);
-}
-
-
-
-
-
-
-void enkf_obs_free(enkf_obs_type * enkf_obs) {
+void enkf_obs_free(
+  enkf_obs_type * enkf_obs)
+{
   hash_free(enkf_obs->obs_hash);
   free(enkf_obs);
 }
 
 
-void enkf_obs_add_gen_obs(enkf_obs_type * enkf_obs , const char * key , enkf_config_node_type * config_node , const char * obs_file) {
-  gen_obs_type * gen_obs = gen_obs_alloc( obs_file );
-  enkf_obs_add_obs(enkf_obs , key , obs_node_alloc(gen_obs , key , key , enkf_obs->num_reports , true , gen_obs_get_observations__ , gen_obs_measure__ , gen_obs_free__ , gen_obs_activate__));
-}
-
-
-/*
-  Observations should probably have a name of some sort 
-*/
-
-void enkf_obs_add_well_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * well_name , const char * obs_label , const char * config_file) {
-  bool default_active = true;
-  well_obs_type * well_obs = well_obs_fscanf_alloc(config_file , enkf_config_node_get_ref(config_node) , enkf_obs->hist , enkf_obs->sched_file);
-  enkf_obs_add_obs(enkf_obs , well_name , obs_node_alloc(well_obs , well_name , obs_label , enkf_obs->num_reports , default_active , well_obs_get_observations__ , well_obs_measure__ , well_obs_free__ , NULL));
-}
-
-
-
-/**
-   This function adds a summary observation. 
-*/
-
-
-
-
-void enkf_obs_add_summary_obs_from_file(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * state_kw , const char * var , const char * data_file) {
-  const bool default_active = false;
-  summary_obs_type * summary_obs;
-  obs_node_type    * obs_node;
-  int              * report_nr;
-  int                i , size;
-
-  {
-    double  * value;
-    double  * std;
-    char   ** meas_time_string;
   
-    summary_obs_fscanf_alloc_data(data_file , &size , &meas_time_string , &value , &std);
-    report_nr = util_malloc(size * sizeof * report_nr , __func__);
-    for (i=0; i < size; i++)
-      report_nr[i] = enkf_obs_sscanf_report_step(enkf_obs , meas_time_string[i]);
-    
-    summary_obs = summary_obs_alloc(enkf_config_node_get_ref(config_node) , var , size , report_nr , value , std);
-    free(std);
-    free(value);
-  
-    util_free_stringlist(meas_time_string , size);
-  }
-  obs_node = obs_node_alloc(summary_obs , state_kw , var , enkf_obs->num_reports , default_active , summary_obs_get_observations__ , summary_obs_measure__ , summary_obs_free__ , NULL);
-  for (i=0;  i < size; i++)
-    obs_node_activate_report_step(obs_node , report_nr[i] , report_nr[i]);
-  
-  enkf_obs_add_obs(enkf_obs , var , obs_node);
-  free(report_nr);
-}
-
-
-void enkf_obs_add_summary_obs_from_history(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node, const char * state_kw, const char * var, const history_type * history, bool is_group_kw, const char * config_file)
+void enkf_obs_add_obs(
+  enkf_obs_type       * enkf_obs,
+  const char          * key ,
+  const obs_node_type * node)
 {
-  summary_obs_type * summary_obs;
-  obs_node_type    * obs_node;
-  int              * report_nr;
-  int                size;
-  util_abort("%s: Not implemented.\n", __func__);
+  if (hash_has_key(enkf_obs->obs_hash , key))
+    util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
+  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , node , obs_node_free__);
 }
 
 
 
-/**
-  This functions loads block data observations. The return values are
-  given by references. The format of the file should be as follows:
-
-  i1  j1   k1   value1  std1
-  i2  j2   k2   value2  std2
-  i3  j3   k3   value3  std3
-  ...
-  ...
-
-  Blank lines are *NOT* allowed. 
-*/
-
-
-static void enkf_obs_fscanf_alloc_block_data(const char * filename , int * _size , int ** _i , int ** _j , int ** _k , double ** _data , double ** _std) {
-  int size;
-  int *i , *j , *k;
-  double * data , * std;
-
-  FILE * stream = util_fopen(filename , "r");
-  size = util_count_file_lines(stream);
-  if (size > 0) {
-    i    = util_malloc(size * sizeof * i    , __func__);
-    j    = util_malloc(size * sizeof * j    , __func__);
-    k    = util_malloc(size * sizeof * k    , __func__);
-    data = util_malloc(size * sizeof * data , __func__);
-    std  = util_malloc(size * sizeof * std  , __func__);
-
-    {
-      int line_nr;
-      for (line_nr = 0; line_nr < size; line_nr++) {
-	if (fscanf(stream , "%d %d %d %lg %lg" , &i[line_nr] , &j[line_nr] , &k[line_nr] , &data[line_nr] , &std[line_nr]) != 5) {
-	  char * line;
-	  bool   at_eof;
-	  util_rewind_line(stream);
-	  line = util_fscanf_alloc_line(stream , &at_eof);
-	  util_abort("%s: something failed when reading line %d: \"%s\" in %s. Expected format: \"i  j  k   value   std\".\n",__func__ , line_nr + 1 , line , filename);
-	}
-      }
-    }
-  
-    *_i 	 = i;
-    *_j 	 = j;
-    *_k 	 = k;
-    *_data = data;
-    *_std  = std;
-  }
-  *_size = size;
-  fclose(stream);
-}
-
-
-static void enkf_obs_add_field_obs__(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * ecl_field, const char * obs_label , int size, const int *i , const int *j , const int *k, const double * obs_data , const double * obs_std , time_t meas_time) {
-  bool default_active        		    = false;
-  field_obs_type * field_obs 		    = field_obs_alloc(enkf_config_node_get_ref(config_node) , ecl_field , size , i , j , k , obs_data , obs_std);
-  obs_node_type  * obs_node  		    = obs_node_alloc(field_obs , ecl_field , obs_label , enkf_obs->num_reports , default_active , field_obs_get_observations__ , field_obs_measure__ , field_obs_free__ , NULL);
-
-  if (meas_time != -1)
-    obs_node_activate_time_t(obs_node , enkf_obs->sched_file , meas_time , meas_time);
-  enkf_obs_add_obs(enkf_obs , obs_label , obs_node);
-}
-
-
-
-void enkf_obs_add_rft_obs(enkf_obs_type * enkf_obs , const enkf_config_node_type * config_node , const ecl_rft_node_type * rft_node, const double * p_data , const double * p_std) {
-  char * obs_label = util_alloc_string_sum2("RFT/" , ecl_rft_node_well_name_ref(rft_node));
-  enkf_obs_add_field_obs__(enkf_obs , config_node , "PRESSURE" ,  obs_label , ecl_rft_node_get_size(rft_node) , ecl_rft_node_get_i(rft_node), ecl_rft_node_get_j(rft_node), ecl_rft_node_get_k(rft_node) , p_data , p_std , ecl_rft_node_get_recording_date(rft_node));
-  free(obs_label);
-}
-
-
-void enkf_obs_add_field_obs(enkf_obs_type * enkf_obs, const enkf_config_node_type * config_node , const char * block_file , const char * ecl_field, const char * obs_label , time_t meas_time) {
-  int *i;
-  int *j;
-  int *k;
-  int size;
-  double * data , * std;
-  
-
-  enkf_obs_fscanf_alloc_block_data(block_file , &size , &i , &j , &k , &data , &std);
-  if (size > 0) {
-    enkf_obs_add_field_obs__(enkf_obs , config_node , ecl_field , obs_label , size , i , j , k , data , std , meas_time);
-    free(i);
-    free(j);
-    free(k);
-    free(data);
-    free(std);
-  }
-
-}
-
-
-
-
-void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_data_type * obs_data) {
+void enkf_obs_get_observations(
+  enkf_obs_type * enkf_obs ,
+  int             report_step,
+  obs_data_type * obs_data)
+{
   char ** obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
 
@@ -269,26 +61,32 @@ void enkf_obs_get_observations(enkf_obs_type * enkf_obs , int report_step , obs_
     obs_node_get_observations(obs_node , report_step , obs_data);
   }
   util_free_stringlist( obs_keys , hash_get_size(enkf_obs->obs_hash));
-  
 }
 
 
 
-
-
-void enkf_obs_measure_on_ensemble(const enkf_obs_type * enkf_obs , enkf_fs_type * fs , int report_step , state_enum state , int ens_size , const enkf_state_type ** ensemble , meas_matrix_type * meas_matrix) {
+void enkf_obs_measure_on_ensemble(
+        const enkf_obs_type    * enkf_obs,
+        enkf_fs_type           * fs,
+        int                      report_step,
+        state_enum               state,
+        int                      ens_size,
+        const enkf_state_type ** ensemble ,
+        meas_matrix_type       * meas_matrix)
+{
   char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
-  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
+  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++)
+  {
     const char * kw = obs_keys[iobs];
     {
       obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
       int iens;
       for (iens = 0; iens < ens_size; iens++) {
-	enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_node_get_state_kw(obs_node));
-	meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
-	enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);       /* Hardcoded to measure on the forecast */
-	obs_node_measure(obs_node , report_step , enkf_node , meas_vector);
+        enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_node_get_state_kw(obs_node));
+        meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
+        enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);       /* Hardcoded to measure on the forecast */
+        obs_node_measure(obs_node , report_step , enkf_node , meas_vector);
       }
     }
   }
@@ -296,122 +94,304 @@ void enkf_obs_measure_on_ensemble(const enkf_obs_type * enkf_obs , enkf_fs_type 
 }
 
 
+
+/** TODO
+    When configuration has been unified, this should take a conf_instance_type, not a config_file.
+*/
+enkf_obs_type * enkf_obs_fscanf_alloc(
+  const char         * config_file,
+  const history_type * hist) 
+{
+  int num_restarts = history_get_num_restarts(hist);
+
+  enkf_obs_type      * enkf_obs        = enkf_obs_alloc();
+  conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
+  conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file); 
+
+  
+  if(conf_instance_validate(enkf_conf) == false)
+  {
+    util_abort("Can not proceed with this configuration.\n");
+  }
   
 
 
-#define ASSERT_TOKENS(kw,t,n) if ((t - 1) < (n)) { fprintf(stderr,"%s: when parsing %s must have at least %d arguments - aborting \n",__func__ , kw , (n)); util_abort("%s:",__func__); }
-enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file, const ensemble_config_type * ensemble_config , const sched_file_type * sched_file , const history_type * hist) {
-  enkf_obs_type * enkf_obs = enkf_obs_alloc(sched_file , hist);
-  if (config_file != NULL) {
-    FILE * stream = util_fopen(config_file , "r");
-    bool   at_eof;
-    do {
-      int active_tokens , tokens;
-      char  *line;
-      char **token_list;
-      
-      line  = util_fscanf_alloc_line(stream , &at_eof);
-      if (line != NULL) {
-	int i;
-	util_split_string(line , " " , &tokens , &token_list);
-	
-	active_tokens = tokens;
-	for (i = 0; i < tokens; i++) {
-	  if (token_list[i][0] == '-') {
-	    if (token_list[i][1] == '-') {
-	      active_tokens = i;
-	      break;
-	    }	  }
-	}
-	if (active_tokens > 0) {
-	  const char *kw           = token_list[0];
-	  if (strcmp(kw , "WELL") == 0) {
-	    ASSERT_TOKENS("WELL" , active_tokens , 2);
-	    {
-	      const char * well_name   = token_list[1];
-	      char * config_file = token_list[2];
-	      char * obs_label   = NULL;
-	      const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , well_name);
-	      enkf_obs_add_well_obs(enkf_obs , config_node , well_name , obs_label , config_file);
-	    }
-	  }
-	  else if (strcmp(kw , "BLOCK") == 0) {
-	    ASSERT_TOKENS("BLOCK" , active_tokens , 4);
-	    {
-	      const char * obs_label 	    = token_list[1];
-	      const char * field     	    = token_list[2];
-	      const char * meas_time_string = token_list[3];
-	      const char * data_file        = token_list[4];
-	      const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , field);
-	      time_t meas_time = enkf_obs_sscanf_obs_time(enkf_obs , meas_time_string);
-	      enkf_obs_add_field_obs(enkf_obs , config_node , data_file , field , obs_label , meas_time);
-	    }
-	  } else if (strcmp(kw , "SUMMARY") == 0) {
-	    ASSERT_TOKENS("SUMMARY" , active_tokens , 3);
-	    /*
-	      SUMMARY RPR RPR:2 data_file
 
-	      RPR:    keyword in enkf_state lookup
-	      RPR:2:  summary variable to look up - this will be the unique obs_key
-	    */
-	    
-	    const char * state_kw         = token_list[1];
-	    const char * var              = token_list[2];
-	    const char * data_file        = token_list[3];
-	    const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , state_kw);
-	    enkf_obs_add_summary_obs_from_file(enkf_obs , config_node , state_kw , var , data_file);
-	  } else if (strcmp(kw , "GEN_OBS") == 0) {
-	    ASSERT_TOKENS("GEN_OBS" , active_tokens , 2);
-	    const char * state_kw         = token_list[1];
-	    const char * obs_file         = token_list[2];
-	    enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , state_kw);
-	    enkf_obs_add_gen_obs(enkf_obs , state_kw , config_node , obs_file);
-	  } else
-	    fprintf(stderr," ** Warning ** keyword:%s not recognized when parsing: %s - ignored \n",kw , config_file);
-	  
-	}
-	util_free_stringlist(token_list , tokens);
-	free(line);
+  /** Handle HISTORY_OBSERVATION instances. */
+  {
+    stringlist_type * hist_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "HISTORY_OBSERVATION");
+    int               num_hist_obs  = stringlist_get_size(hist_obs_keys);
+
+    for(int hist_obs_nr = 0; hist_obs_nr < num_hist_obs; hist_obs_nr++)
+    {
+      const char               * sum_key       = stringlist_iget(hist_obs_keys, hist_obs_nr); 
+      const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
+      summary_obs_type         * sum_obs       = summary_obs_alloc_from_HISTORY_OBSERVATION(hist_obs_conf, hist);
+
+      obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, num_restarts, false,
+                                                                summary_obs_get_observations__, summary_obs_measure__,
+                                                                summary_obs_free__, NULL);
+
+      /** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
+      for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
+      {
+        if(!summary_obs_default_used(sum_obs, restart_nr))
+          obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
       }
-    } while ( !at_eof );
-    fclose(stream);
+
+      printf("adding HISTORY_OBSERVATION %s\n", sum_key);
+
+      enkf_obs_add_obs(enkf_obs, sum_key, obs_node);
+    }
+
+    stringlist_free(hist_obs_keys);
   }
+
+
+
+  /** Handle SUMMARY_OBSERVATION instances. */
+  {
+    stringlist_type * sum_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "SUMMARY_OBSERVATION");
+    int               num_sum_obs  = stringlist_get_size(sum_obs_keys);
+
+    for(int sum_obs_nr = 0; sum_obs_nr < num_sum_obs; sum_obs_nr++)
+    {
+      const char               * obs_key      = stringlist_iget(sum_obs_keys, sum_obs_nr);
+      const conf_instance_type * sum_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+      summary_obs_type         * sum_obs      = summary_obs_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf, hist);
+      const char               * sum_key      = summary_obs_get_summary_key_ref(sum_obs);
+
+      obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, num_restarts, false,
+                                                               summary_obs_get_observations__, summary_obs_measure__,
+                                                               summary_obs_free__, NULL);
+
+      /** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
+      for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
+      {
+        if(!summary_obs_default_used(sum_obs, restart_nr))
+          obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
+      }
+
+      printf("adding SUMMARY_OBSERVATION %s\n", obs_key);
+
+      enkf_obs_add_obs(enkf_obs, obs_key, obs_node);
+    }
+
+    stringlist_free(sum_obs_keys);
+  }
+
+
+
+  /** Handle BLOCK_OBSERVATION instances. */
+  {
+    stringlist_type * block_obs_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(enkf_conf, "BLOCK_OBSERVATION");
+    int               num_block_obs  = stringlist_get_size(block_obs_keys);
+
+    for(int block_obs_nr = 0; block_obs_nr < num_block_obs; block_obs_nr++)
+    {
+      const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
+      const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
+      field_obs_type           * block_obs      = field_obs_alloc_from_BLOCK_OBSERVATION(block_obs_conf, hist);
+      const char               * field_name     = field_obs_get_field_name_ref(block_obs);
+      int                        restart_nr     = field_obs_get_restart_nr(block_obs);
+
+      obs_node_type * obs_node                   = obs_node_alloc(block_obs, field_name, obs_key, num_restarts, false,
+                                                                  field_obs_get_observations__, field_obs_measure__,
+                                                                  field_obs_free__, NULL);
+
+      obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
+
+      printf("adding BLOCK_OBSERVATION %s\n", obs_key);
+
+      enkf_obs_add_obs(enkf_obs, obs_key, obs_node);
+    }
+
+
+    stringlist_free(block_obs_keys);
+  }
+
+
+
+  conf_instance_free(enkf_conf      );
+  conf_class_free(   enkf_conf_class);
   return enkf_obs;
 }
 
 
 
-//bool enkf_obs_get_local_active(ensemble_config_type * ensemble_config, int report_step){
-//  bool local_active;
-//  const gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
-//  local_active = gen_data_config_get_local_active(gen_data_config, report_step);
-//  return local_active;
-//}
-//
-///* This function returns a gen_data_config object */
-//gen_data_config_type * enkf_obs_get_gen_data_config(ensemble_config_type * ensemble_config){
-//  const char * state_gen_data = "AI";
-//  const enkf_config_node_type * config_node_gen_data = ensemble_config_get_node(ensemble_config , state_gen_data);
-//  gen_data_config_type * gen_data_config = enkf_config_node_get_ref(config_node_gen_data);  
-//  return gen_data_config;
-//}
-//
-//void enkf_obs_change_gen_data_config_iactive(ensemble_config_type * ensemble_config, int local_step){
-//  gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
-//  gen_data_config_change_iactive(gen_data_config,local_step);
-//  
-//}
-//
-//
-//int enkf_obs_get_num_local_updates(ensemble_config_type * ensemble_config){
-//  int num_local_updates;
-//  gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
-//  num_local_updates = gen_data_config_get_num_local_updates(gen_data_config);
-//  return num_local_updates;
-//}
-//
-//void enkf_obs_set_local_step(ensemble_config_type * ensemble_config, int local_step){
-//  gen_data_config_type * gen_data_config = enkf_obs_get_gen_data_config(ensemble_config);
-//  gen_data_config_set_local_step(gen_data_config,local_step);
-//}
+static 
+conf_class_type * enkf_obs_get_obs_conf_class(
+)
+{
+  const char * enkf_conf_help = "An instance of the class ENKF_CONFIG shall contain neccessary infomation to run the enkf.";
+  conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_CONFIG", true);
+  conf_class_set_help(enkf_conf_class, enkf_conf_help);
+
+
+
+  /** Create and insert HISTORY_OBSERVATION class. */
+  {
+    const char * help_class_history_observation = "The class HISTORY_OBSERVATION is used to condition on a time series from the production history. The name of the an instance is used to define the item to condition on, and should be in summary.x syntax. E.g., creating a HISTORY_OBSERVATION instance with name GOPR:P4 conditions on GOPR for group P4.";
+    conf_class_type * history_observation_class = conf_class_alloc_empty("HISTORY_OBSERVATION", false);
+    conf_class_set_help(history_observation_class, help_class_history_observation);
+
+    const char * help_item_spec_error_mode = "The string ERROR_MODE gives the error mode for the observation.";
+    conf_item_spec_type * item_spec_error_mode = conf_item_spec_alloc("ERROR_MODE", true, DT_STR);
+
+    conf_item_spec_add_restriction(item_spec_error_mode, "rel");
+    conf_item_spec_add_restriction(item_spec_error_mode, "abs");
+    conf_item_spec_add_restriction(item_spec_error_mode, "relmin");
+
+    conf_item_spec_set_default_value(item_spec_error_mode, "rel");
+    conf_item_spec_set_help(item_spec_error_mode, help_item_spec_error_mode);
+
+    const char * help_item_spec_error = "The positive floating number ERROR gives the standard deviation (abs) or the relative uncertainty (rel/relmin) of the observations.";
+    conf_item_spec_type * item_spec_error     = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT);
+    conf_item_spec_set_default_value(item_spec_error, "0.10");
+    conf_item_spec_set_help(item_spec_error, help_item_spec_error);
+
+    const char * help_item_spec_error_min = "The positive floating point number ERROR_MIN gives the minimum value for the standard deviation of the observation when relmin is used.";
+    conf_item_spec_type * item_spec_error_min = conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT);
+    conf_item_spec_set_default_value(item_spec_error_min, "0.10");
+    conf_item_spec_set_help(item_spec_error_min, help_item_spec_error_min);
+
+    conf_class_insert_owned_item_spec(history_observation_class, item_spec_error_mode);
+    conf_class_insert_owned_item_spec(history_observation_class, item_spec_error);
+    conf_class_insert_owned_item_spec(history_observation_class, item_spec_error_min);
+
+    conf_class_insert_owned_sub_class(enkf_conf_class, history_observation_class);
+  }
+
+
+
+  /** Create and insert SUMMARY_OBSERVATION class. */
+  {
+    const char * help_class_summary_observation = "The class SUMMARY_OBSERVATION can be used to condition on any observation whos simulated value is written to the summary file.";
+    conf_class_type * summary_observation_class = conf_class_alloc_empty("SUMMARY_OBSERVATION", false);
+    conf_class_set_help(summary_observation_class, help_class_summary_observation);
+
+    const char * help_item_spec_value = "The floating point number VALUE gives the observed value.";
+    conf_item_spec_type * item_spec_value = conf_item_spec_alloc("VALUE", true, DT_FLOAT);
+    conf_item_spec_set_help(item_spec_value, help_item_spec_value);
+  
+
+    const char * help_item_spec_error = "The positive floating point number ERROR is the standard deviation of the observed value.";
+    conf_item_spec_type * item_spec_error = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT);
+    conf_item_spec_set_help(item_spec_error, help_item_spec_error);
+
+    const char * help_item_spec_date = "The DATE item gives the observation time as the date date it occured. Format is dd/mm/yyyy.";
+    conf_item_spec_type * item_spec_date = conf_item_spec_alloc("DATE", false, DT_DATE);
+    conf_item_spec_set_help(item_spec_date, help_item_spec_date);
+
+    const char * help_item_spec_days = "The DAYS item gives the observation time as days after simulation start.";
+    conf_item_spec_type * item_spec_days = conf_item_spec_alloc("DAYS", false, DT_POSFLOAT);
+    conf_item_spec_set_help(item_spec_days, help_item_spec_days);
+
+    const char * help_item_spec_restart = "The RESTART item gives the observation time as the ECLIPSE restart nr.";
+    conf_item_spec_type * item_spec_restart = conf_item_spec_alloc("RESTART", false, DT_POSINT);
+    conf_item_spec_set_help(item_spec_restart, help_item_spec_restart);
+
+
+    const char * help_item_spec_sumkey = "The string SUMMARY_KEY is used to look up the simulated value in the summary file. It has the same format as the summary.x program, e.g. WOPR:P4";
+    conf_item_spec_type * item_spec_sumkey = conf_item_spec_alloc("KEY", true, DT_STR);
+    conf_item_spec_set_help(item_spec_sumkey, help_item_spec_sumkey);
+
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_value);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_date);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_days);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_restart);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
+
+    /** Create a mutex on DATE, DAYS and RESTART. */
+    conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true);
+    conf_class_insert_owned_item_mutex(summary_observation_class, time_mutex);
+
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
+
+    conf_class_insert_owned_sub_class(enkf_conf_class, summary_observation_class);
+  }
+
+
+
+  /** Create and insert BLOCK_OBSERVATION class. */
+  {
+    const char * help_class_block_observation = "The class BLOCK_OBSERVATION can be used to condition on an observation whos simulated values are block/cell values of a field, e.g. RFT tests.";
+    conf_class_type * block_observation_class = conf_class_alloc_empty("BLOCK_OBSERVATION", false);
+    conf_class_set_help(block_observation_class, help_class_block_observation);
+
+    const char * help_item_spec_field = "The item FIELD gives the observed field. E.g., ECLIPSE fields such as PRESSURE, SGAS or any user defined fields such as PORO or PERMX.";
+    conf_item_spec_type * item_spec_field = conf_item_spec_alloc("FIELD", true, DT_STR);
+    conf_item_spec_set_help(item_spec_field, help_item_spec_field);
+
+    const char * help_item_spec_date = "The DATE item gives the date of the observation. Format is dd/mm/yyyy.";
+    conf_item_spec_type * item_spec_date = conf_item_spec_alloc("DATE", false, DT_DATE);
+    conf_item_spec_set_help(item_spec_date, help_item_spec_date);
+
+    const char * help_item_spec_days = "The DAYS item gives the observation time as days after simulation start.";
+    conf_item_spec_type * item_spec_days = conf_item_spec_alloc("DAYS", false, DT_POSFLOAT);
+    conf_item_spec_set_help(item_spec_days, help_item_spec_days);
+
+    const char * help_item_spec_restart = "The RESTART item gives the observation time as the ECLIPSE restart nr.";
+    conf_item_spec_type * item_spec_restart = conf_item_spec_alloc("RESTART", false, DT_POSINT);
+    conf_item_spec_set_help(item_spec_restart, help_item_spec_restart);
+
+    conf_class_insert_owned_item_spec(block_observation_class, item_spec_field);
+    conf_class_insert_owned_item_spec(block_observation_class, item_spec_date);
+    conf_class_insert_owned_item_spec(block_observation_class, item_spec_days);
+    conf_class_insert_owned_item_spec(block_observation_class, item_spec_restart);
+
+    /** Create a mutex on DATE, DAYS and RESTART. */
+    conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true);
+    conf_class_insert_owned_item_mutex(block_observation_class, time_mutex);
+
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
+    conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
+
+    /** Create and insert the sub class OBS. */
+    {
+      const char * help_class_obs = "The class OBS is used to specify a single observed point.";
+      conf_class_type * obs_class = conf_class_alloc_empty("OBS", true);
+      conf_class_set_help(obs_class, help_class_obs);
+
+      const char * help_item_i = "The item I gives the I index of the block observation.";
+      conf_item_spec_type * item_spec_i = conf_item_spec_alloc("I", true, DT_POSINT);
+      conf_item_spec_set_help(item_spec_i, help_item_i);
+
+      const char * help_item_j = "The item J gives the J index of the block observation.";
+      conf_item_spec_type * item_spec_j = conf_item_spec_alloc("J", true, DT_POSINT);
+      conf_item_spec_set_help(item_spec_j, help_item_j);
+
+      const char * help_item_k = "The item K gives the K index of the block observation.";
+      conf_item_spec_type * item_spec_k = conf_item_spec_alloc("K", true, DT_POSINT);
+      conf_item_spec_set_help(item_spec_k, help_item_k);
+
+      const char * help_item_spec_value = "The floating point number VALUE gives the observed value.";
+      conf_item_spec_type * item_spec_value = conf_item_spec_alloc("VALUE", true, DT_FLOAT);
+      conf_item_spec_set_help(item_spec_value, help_item_spec_value);
+    
+      const char * help_item_spec_error = "The positive floating point number ERROR is the standard deviation of the observed value.";
+      conf_item_spec_type * item_spec_error = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT);
+      conf_item_spec_set_help(item_spec_error, help_item_spec_error);
+
+      conf_class_insert_owned_item_spec(obs_class, item_spec_i);
+      conf_class_insert_owned_item_spec(obs_class, item_spec_j);
+      conf_class_insert_owned_item_spec(obs_class, item_spec_k);
+      conf_class_insert_owned_item_spec(obs_class, item_spec_value);
+      conf_class_insert_owned_item_spec(obs_class, item_spec_error);
+
+      conf_class_insert_owned_sub_class(block_observation_class, obs_class);
+    }
+
+    conf_class_insert_owned_sub_class(enkf_conf_class, block_observation_class);
+  }
+
+  return enkf_conf_class;
+}
+
+
+
 
