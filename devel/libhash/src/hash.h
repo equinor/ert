@@ -30,7 +30,6 @@ void        	* hash_get(const hash_type *, const char *);
 const char      * hash_get_string(const hash_type * , const char *);
 void        	  hash_del(hash_type *, const char *);
 void              hash_clear(hash_type *);
-void        	  hash_printf_keys(hash_type *hash);
 int         	  hash_get_size(const hash_type *);
 void        	  hash_set_keylist(const hash_type * , char **);
 char           ** hash_alloc_keylist(hash_type *);
