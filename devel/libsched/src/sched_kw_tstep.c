@@ -178,7 +178,7 @@ double sched_kw_tstep_get_step(const sched_kw_tstep_type * kw)
 time_t sched_kw_tstep_get_new_time(const sched_kw_tstep_type *kw, time_t curr_time)
 {
   double step_days = sched_kw_tstep_get_step(kw);
-  time_t new_time;
+  time_t new_time = curr_time;
   util_inplace_forward_days(&new_time, step_days);
   return new_time;
 }
