@@ -107,9 +107,9 @@ void field_obs_measure(
   meas_vector_type     * meas_vector)
 {
   for (int i=0; i < field_obs->size; i++) {
-    double value;
-    field_ijk_get(field_state , field_obs->i[i] , field_obs->j[i] , field_obs->k[i] , &value);
+    double value = field_ijk_get_double(field_state , field_obs->i[i] , field_obs->j[i] , field_obs->k[i]);
     meas_vector_add(meas_vector , value);
+    printf("measuring %i, %i, %i :  %f\n", i[i], j[i], k[i], value);
   }
 }
 
