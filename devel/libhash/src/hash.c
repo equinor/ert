@@ -1,36 +1,35 @@
+#define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <dirent.h>
-#include <pthread.h>
 #include <hash.h>
 #include <hash_sll.h>
 #include <hash_node.h>
 #include <node_data.h>
-
+#include <pthread.h>
 
 #define HASH_DEFAULT_SIZE 16
 
-typedef enum {iter_invalid , iter_active , iter_complete} __iter_mode;
-
 
 struct hash_struct {
-  pthread_mutex_t   iter_mutex;
+
   uint32_t          size;
   uint32_t          elements;
   double            resize_fill;
   hash_sll_type   **table;
   hashf_type       *hashf;
-  pthread_mutex_t   writer_lock;    /* This lock is applied when the hash_table changes, insert/delete values. 
-				       It can also be taken by outside code to ensure that the hash stays in
-				       a constant state for an arbitrary amount of time.*/
+  pthread_rwlock_t  rwlock;
   
-  int               read_count;     /* The number of active readers. */
-  char           **iter_keylist;
-  __iter_mode      iter_mode;
-  int              iter_index , iter_size;
+  /** 
+      All variables with __iter prefix are internal variables used to
+      support iteration over the keys in the hash table.
+  */
+  char           ** __iter_keylist;
+  bool              __iter_active;
+  int               __iter_index;
 };
 
 
@@ -99,44 +98,6 @@ typedef struct hash_sort_node {
    I am afraid this has deadlocked - at least once. 
 */
 
-void hash_lock(hash_type * hash) {
-  pthread_mutex_lock( &hash->writer_lock );
-}
-
-void hash_unlock(hash_type * hash) {
-  pthread_mutex_unlock( &hash->writer_lock );
-}
-
-static void hash_lock_reader(hash_type * hash) {
-  /*
-    while (hash->read_count < 0)
-    usleep(1);
-    hash->read_count++;
-  */
-}
-
-static void hash_unlock_reader(hash_type * hash) {
-  /*
-    hash->read_count--;
-  */
-}
-
-
-static void hash_block_reader(hash_type * hash) {
-  /*
-    while (hash->read_count > 0) {
-    usleep(1);
-    }
-    hash->read_count = -1;
-  */
-}
-
-static void hash_unblock_reader(hash_type * hash) {
-  /*
-    hash->read_count = 0;
-  */
-}
-
 
 
 /*****************************************************************/
@@ -173,62 +134,67 @@ static char * alloc_string_copy(const char *src) {
   return new;
 }
 
+/**
+   Takes a write_lock.
+*/
 
-static void * __hash_get_node(const hash_type *hash , const char *key, bool abort_on_error) {
-  const uint32_t global_index = hash->hashf(key , strlen(key));
-  const uint32_t table_index  = (global_index % hash->size);
-
-  hash_node_type *node        = hash_sll_get(hash->table[table_index] , global_index , key);
-  if (node != NULL) {
-    /*hash_node_assert_type(node , data_type); */
-    return node;
-  } else {
-    if (abort_on_error) {
+static void * __hash_get_node(const hash_type *__hash , const char *key, bool abort_on_error) {
+  hash_type * hash = (hash_type *) __hash;  /* The net effect is no change - but .... ?? */
+  hash_node_type * node = NULL;
+  pthread_rwlock_rdlock( &hash->rwlock );
+  {
+    const uint32_t global_index = hash->hashf(key , strlen(key));
+    const uint32_t table_index  = (global_index % hash->size);
+    
+    node = hash_sll_get(hash->table[table_index] , global_index , key);
+    if (node == NULL && abort_on_error) {
       fprintf(stderr,"%s: tried to get from key:%s which does not exist - aborting \n",__func__ , key);
       abort();
-    } else return NULL;
+    }
   }
+  pthread_rwlock_unlock( &hash->rwlock );
+}
+
+
+  
+static void hash_del_unlocked__(hash_type *hash , const char *key) {
+  const uint32_t global_index = hash->hashf(key , strlen(key));
+  const uint32_t table_index  = (global_index % hash->size);
+  hash_node_type *node        = hash_sll_get(hash->table[table_index] , global_index , key);
+  
+  if (node == NULL) {
+    fprintf(stderr,"%s: hash does not contain key:%s - aborting \n",__func__ , key);
+    abort();
+  } else
+    hash_sll_del_node(hash->table[table_index] , node);
+  
+  hash->elements--;
 }
 
 
 
 void hash_del(hash_type *hash , const char *key) {
-  hash_lock( hash );
-  hash_block_reader( hash );
-
-  {
-    const uint32_t global_index = hash->hashf(key , strlen(key));
-    const uint32_t table_index  = (global_index % hash->size);
-    hash_node_type *node        = hash_sll_get(hash->table[table_index] , global_index , key);
-    
-    if (node == NULL) {
-      fprintf(stderr,"%s: hash does not contain key:%s - aborting \n",__func__ , key);
-      abort();
-    } else
-      hash_sll_del_node(hash->table[table_index] , node);
-    
-    hash->elements--;
-    hash->iter_mode = iter_invalid;
-  }
-  hash_unblock_reader( hash );
-  hash_unlock( hash );
+  pthread_rwlock_rdlock( &hash->rwlock );
+  hash_del_unlocked__(hash , key);
+  pthread_rwlock_unlock( &hash->rwlock );
 }
 
 
-/* 
-   Locking is tricky on this one ....
-*/
 void hash_clear(hash_type *hash) {
-  int old_size = hash_get_size(hash);
-  if (old_size > 0) {
-    char **keyList = hash_alloc_keylist(hash);
-    int i;
-    for (i=0; i < old_size; i++) {
-      hash_del(hash , keyList[i]);
-      free(keyList[i]);
+  pthread_rwlock_rdlock( &hash->rwlock );
+  {
+    int old_size = hash_get_size(hash);
+    if (old_size > 0) {
+      char **keyList = hash_alloc_keylist(hash);
+      int i;
+      for (i=0; i < old_size; i++) {
+	hash_del_unlocked__(hash , keyList[i]);
+	free(keyList[i]);
+      }
+      free(keyList);
     }
-    free(keyList);
   }
+  pthread_rwlock_unlock( &hash->rwlock );
 }
 
 
@@ -250,7 +216,7 @@ HASH_GET_ARRAY_PTR(hash_get_int_ptr    , int)
        HASH_NODE_AS(hash_node_as_double , double)
      */
 
-static uint32_t hash_index(const uint8_t *key, size_t len) {
+static uint32_t hash_index(const char *key, size_t len) {
   uint32_t hash = 0;
   size_t i;
 
@@ -275,11 +241,9 @@ static hash_type * __hash_alloc(int size, double resize_fill , hashf_type *hashf
   hash->table 	 = hash_sll_alloc_table(hash->size);
   hash->elements = 0;
   hash->resize_fill  = resize_fill;
-  hash->iter_mode    = iter_invalid;
-  hash->iter_keylist = NULL;
-  hash->read_count   = 0;
-  pthread_mutex_init( &hash->iter_mutex  , NULL);
-  pthread_mutex_init( &hash->writer_lock , NULL);
+  hash->__iter_active  = false;
+  hash->__iter_keylist = NULL;
+  pthread_rwlock_init( &hash->rwlock , NULL);
   return hash;
 }
 
@@ -318,83 +282,86 @@ hash_type * hash_alloc() {
 }
 
 
-static void hash_iter_free_keylist(hash_type * hash) {
-  {
-    int i;
-    if (hash->iter_keylist != NULL) {
-      for (i=0; i < hash->iter_size; i++) {
-		if (hash->iter_keylist[i] != NULL)
-	  		free(hash->iter_keylist[i]);
-      }
-      free(hash->iter_keylist);
-    }
-  }
-  hash->iter_keylist = NULL;
-  hash->iter_mode    = iter_invalid;
-}
+/*****************************************************************/
+
+//iter:static hash_node_type * hash_iter_init(const hash_type *hash) {
+//iter:  
+//iter:}
 
 
-void hash_iter_complete(hash_type * hash) {
-   if (hash->iter_mode == iter_active) {
-     hash->iter_mode = iter_complete;
-     pthread_mutex_unlock( &hash->iter_mutex );
-   }
-}
-	
 
-
-const char * hash_iter_get_next_key(hash_type * hash) {
-  if (hash->iter_mode == iter_active) {
-    if (hash->iter_index == hash_get_size(hash)) {
-      hash_iter_complete(hash);
-      return NULL;
-    } else {
-      const char * key = hash->iter_keylist[hash->iter_index];
-      hash->iter_index++;
-      return key;
-    }
-  } else {
-    fprintf(stderr,"%s: called with iter_mode == iter_complete or iter_invalid - aborting \n",__func__);
-    abort();
-  }
-}
-
-
-const char * hash_iter_get_first_key(hash_type * hash) {
-  if (hash->iter_mode == iter_invalid || hash->iter_mode == iter_complete) 
-    hash_iter_free_keylist(hash);
- 
-  pthread_mutex_lock( &hash->iter_mutex );
-  hash->iter_keylist = hash_alloc_keylist(hash);
-  hash->iter_mode  = iter_active;
-  hash->iter_index = 0;
-  hash->iter_size  = hash_get_size(hash);
-  return hash_iter_get_next_key(hash);
-}
-
-
-void * hash_iter_get_first(hash_type * hash , bool *valid) {
-  const char * key = hash_iter_get_first_key(hash);
-  if (key != NULL) {
-    *valid = true;
-    return hash_get(hash , key);
-  } else {
-    *valid = false;
-    return NULL;
-  }
-}
-
-
-void * hash_iter_get_next(hash_type * hash , bool *valid) {
-  const char * key = hash_iter_get_next_key(hash);
-  if (key != NULL) {
-    *valid = true;
-    return hash_get(hash , key);
-  } else {
-    *valid = false;
-    return NULL;
-  }
-}
+//iter:static void hash_iter_free_keylist(hash_type * hash) {
+//iter:  int i;
+//iter:  if (hash->__iter_keylist != NULL) {
+//iter:    for (i=0; i < hash->size; i++) {
+//iter:      if (hash->__iter_keylist[i] != NULL)
+//iter:	free(hash->__iter_keylist[i]);
+//iter:    }
+//iter:    free(hash->__iter_keylist);
+//iter:  }
+//iter:  hash->__iter_keylist = NULL;
+//iter:  hash->__iter_active  = false;
+//iter:}
+//iter:
+//iter:
+//iter:
+//iter:void hash_iter_complete(hash_type * hash) {
+//iter:  if (hash->__iter_active) {
+//iter:    
+//iter:  }
+//iter:}
+//iter:	
+//iter:
+//iter:const char * hash_iter_get_next_key(hash_type * hash) {
+//iter:  if (hash->__iter_active) {
+//iter:    if (hash->__iter_index == hash_get_size(hash)) {
+//iter:      hash_iter_complete(hash);
+//iter:      return NULL;
+//iter:    } else {
+//iter:      const char * key = hash->__iter_keylist[hash->__iter_index];
+//iter:      hash->__iter_index++;
+//iter:      return key;
+//iter:    }
+//iter:  } else {
+//iter:    fprintf(stderr,"%s: called in invalid mode \n",__func__);
+//iter:    abort();
+//iter:  }
+//iter:}
+//iter:
+//iter:
+//iter:const char * hash_iter_get_first_key(hash_type * hash) {
+//iter:
+//iter:  if (!hash->__iter_active)
+//iter:    hash_iter_init(hash);
+//iter:  else
+//iter:    hash->__iter_index = 0; /* It always allowed to ask for the first - this does *NOT* induce a new locking. */
+//iter:  
+//iter:  return hash_iter_get_next_key(hash);
+//iter:}
+//iter:
+//iter:
+//iter:void * hash_iter_get_first(hash_type * hash , bool *valid) {
+//iter:  const char * key = hash_iter_get_first_key(hash);
+//iter:  if (key != NULL) {
+//iter:    *valid = true;
+//iter:    return hash_get(hash , key);
+//iter:  } else {
+//iter:    *valid = false;
+//iter:    return NULL;
+//iter:  }
+//iter:}
+//iter:
+//iter:
+//iter:void * hash_iter_get_next(hash_type * hash , bool *valid) {
+//iter:  const char * key = hash_iter_get_next_key(hash);
+//iter:  if (key != NULL) {
+//iter:    *valid = true;
+//iter:    return hash_get(hash , key);
+//iter:  } else {
+//iter:    *valid = false;
+//iter:    return NULL;
+//iter:  }
+//iter:}
 
 
 void hash_free(hash_type *hash) {
@@ -402,7 +369,8 @@ void hash_free(hash_type *hash) {
   for (i=0; i < hash->size; i++) 
     hash_sll_free(hash->table[i]);
   free(hash->table);
-  hash_iter_free_keylist(hash);
+  hash_iter_finalize(hash);
+  pthread_rwlock_destroy( &hash->rwlock );
   free(hash);
 }
 
@@ -420,8 +388,7 @@ void hash_free__(void *void_hash) {
 */
    
 static void hash_insert_node(hash_type *hash , hash_node_type *node) {
-  hash_lock( hash );
-  hash_block_reader( hash );
+  pthread_rwlock_wlock( &hash->rwlock );
   {
     uint32_t table_index = hash_node_get_table_index(node);
     {
@@ -440,12 +407,11 @@ static void hash_insert_node(hash_type *hash , hash_node_type *node) {
     hash->elements++;
     if ((1.0 * hash->elements / hash->size) > hash->resize_fill) 
       hash_resize(hash , hash->size * 2);
-    
-    hash->iter_mode = iter_invalid;
   }
-  hash_unblock_reader( hash );
-  hash_unlock( hash );
+  pthread_rwlock_unlock( &hash->rwlock );
 }
+
+
 
 
 static void hash_insert_managed_copy(hash_type *hash, const char *key, const void *value_ptr , int value_size) {
@@ -537,41 +503,8 @@ bool hash_has_key(const hash_type *hash , const char *key) {
 
 
 
-static hash_node_type * hash_iter_init(const hash_type *hash) {
-  uint32_t i = 0;
-  while (i < hash->size && hash_sll_empty(hash->table[i]))
-    i++;
-	
-  if (i < hash->size) 
-    return hash_sll_get_head(hash->table[i]);
-  else
-    return NULL;
-}
 
 
-static hash_node_type * hash_iter_next(const hash_type *hash , const hash_node_type * node) {
-  hash_node_type *next_node = hash_node_get_next(node);
-  if (next_node == NULL) {
-    const uint32_t table_index = hash_node_get_table_index(node);
-    if (table_index < hash->size) {
-      uint32_t i = table_index + 1;
-      while (i < hash->size && hash_sll_empty(hash->table[i]))
-		i++;
-      if (i < hash->size) 
-	next_node = hash_sll_get_head(hash->table[i]);
-    }
-  }
-  return next_node;
-}
-
-
-void hash_printf_keys(hash_type *hash) {
-  const char * key = hash_iter_get_first_key(hash);
-  while (key != NULL) {
-  	printf("%s \n",key);
-  	key = hash_iter_get_next_key(hash);
-  }
-}
 
 
 
@@ -592,19 +525,48 @@ void hash_printf_keys(hash_type *hash) {
    the program might abort() on hash_get operations).
 */
 
+
+/**
+   This is an internal iterator - NOT related to the xxx_iter_xxx()
+   functions.
+*/
+static hash_node_type * hash_internal_iter_next(const hash_type *hash , const hash_node_type * node) {
+  hash_node_type *next_node = hash_node_get_next(node);
+  if (next_node == NULL) {
+    const uint32_t table_index = hash_node_get_table_index(node);
+    if (table_index < hash->size) {
+      uint32_t i = table_index + 1;
+      while (i < hash->size && hash_sll_empty(hash->table[i]))
+	i++;
+
+      if (i < hash->size) 
+	next_node = hash_sll_get_head(hash->table[i]);
+    }
+  }
+  return next_node;
+}
+
    
 char ** hash_alloc_keylist(hash_type *hash) {
   char **keylist;
   hash_lock_reader( hash );
   {
     int i = 0;
-    hash_node_type *node;
+    hash_node_type *node = NULL;
     keylist = calloc(hash->elements , sizeof *keylist);
-    node = hash_iter_init(hash);
+    {
+      uint32_t i = 0;
+      while (i < hash->size && hash_sll_empty(hash->table[i]))
+	i++;
+      
+      if (i < hash->size) 
+	node = hash_sll_get_head(hash->table[i]);
+    }
+    
     while (node != NULL) {
       const char *key = hash_node_get_keyref(node); 
       keylist[i] = alloc_string_copy(key);
-      node = hash_iter_next(hash , node);
+      node = hash_internal_iter_next(hash , node);
       i++;
     }
   }
@@ -614,21 +576,6 @@ char ** hash_alloc_keylist(hash_type *hash) {
 
 
 
-/*
-void hash_set_keylist(const hash_type *hash , char **keylist) {
-  int i = 0;
-  hash_node_type *node;
-  node = hash_iter_init(hash);
-  while (node != NULL) {
-    const char *key = hash_node_get_keyref(node); 
-    int len = strlen(key);
-    strcpy(keylist[i] , key);
-    keylist[i][len] = '\0';
-    node = hash_iter_next(hash , node);
-    i++;
-  }
-}
-*/
 
 int hash_get_size(const hash_type *hash) { 
   return hash->elements; 
