@@ -31,6 +31,7 @@ struct obs_node_struct {
   int                 size;
   obs_active_type    *active;    
   bool                default_active;
+  obs_impl_type       obs_type;
 };
 
 
@@ -106,13 +107,16 @@ static void obs_node_resize(obs_node_type * node , int new_size) {
 
 /*****************************************************************/
 
-
+obs_impl_type obs_node_get_impl_type(const obs_node_type * node) {
+  return node->obs_type;
+}
 
 
 
 obs_node_type * obs_node_alloc(const void      	  * obs,
 			       const char      	  * state_kw,
 			       const char      	  * obs_label,
+			       obs_impl_type        obs_type ,  
 			       int             	    num_reports,
 			       bool            	    default_active,
 			       obs_get_ftype   	  * get_obs,
@@ -131,6 +135,7 @@ obs_node_type * obs_node_alloc(const void      	  * obs,
   node->default_active     = default_active;
   node->obs_label          = util_alloc_string_copy(obs_label);
   node->state_kw           = util_alloc_string_copy(state_kw);
+  node->obs_type           = obs_type;   
   obs_node_resize(node , num_reports); /* +1 here ?? Ohh  - these fucking +/- problems. */
   
   return node;

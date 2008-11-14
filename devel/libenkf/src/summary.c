@@ -21,7 +21,7 @@
 struct summary_struct {
   DEBUG_DECLARE
   const summary_config_type * config;
-  double *data;
+  double *data;    /* Size is always one - but what the fuck ... */
 };
 
 
@@ -120,30 +120,21 @@ int summary_serialize(const summary_type *summary , serial_state_type * serial_s
 }
 
 
-double summary_get(const summary_type * summary, const char * var) {
+double summary_get(const summary_type * summary) {
   DEBUG_ASSERT(summary)
   {
-    const summary_config_type *config    = summary->config;
-    int index                            = summary_config_get_var_index(config , var);
-    if (index < 0) 
-      util_abort("%s: summary instance does not have variable:%s - aborting \n",__func__ , var);
-    
-    return summary->data[index];
+    return summary->data[0]; /* That is all it has got ... */
   }
 }
 
 
 void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
   DEBUG_ASSERT(summary)
-  if (ecl_sum != NULL) {  
-    const summary_config_type *config    = summary->config;
-    const char ** var_list               = summary_config_get_var_list_ref(config);
-    int ivar;
-    
-    for (ivar = 0; ivar < summary_config_get_data_size(config); ivar++) 
-      summary->data[ivar] = ecl_sum_get_general_var(ecl_sum , report_step  , var_list[ivar]);
-  }
+  if (ecl_sum != NULL)
+    summary->data[0] = ecl_sum_get_general_var(ecl_sum , report_step  , summary_config_get_var(summary->config));
 }
+
+
 
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */

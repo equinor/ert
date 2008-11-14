@@ -100,7 +100,7 @@ void summary_obs_measure(
   const summary_type     * summary,
   meas_vector_type       * meas_vector)
 {
-  meas_vector_add(meas_vector , summary_get(summary , obs->summary_key));
+  meas_vector_add(meas_vector , summary_get(summary));
 }
 
 
@@ -119,40 +119,43 @@ summary_obs_type * summary_obs_alloc_from_HISTORY_OBSERVATION(
   double     * std;
   bool       * default_used;
 
-  double       error      = conf_instance_get_item_value_double(conf_instance, "ERROR"     );
-  double       error_min  = conf_instance_get_item_value_double(conf_instance, "ERROR_MIN" );
-  const char * error_mode = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
-  const char * sum_key    = conf_instance_get_name_ref(         conf_instance              );
+  double         error      = conf_instance_get_item_value_double(conf_instance, "ERROR"     );
+  double         error_min  = conf_instance_get_item_value_double(conf_instance, "ERROR_MIN" );
+  const char * __error_mode = conf_instance_get_item_value_ref(   conf_instance, "ERROR_MODE");
+  const char *   sum_key    = conf_instance_get_name_ref(         conf_instance              );
 
 
   // Get time series data from history object and allocate
   history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
   std = util_malloc(size * sizeof * std, __func__);
-
-
-  // Create  the standard deviation vector
-  if(strcmp(error_mode, "abs") == 0)
+  
   {
-    for(int restart_nr = 0; restart_nr < size; restart_nr++)
-      std[restart_nr] = error;
-  }
-  else if(strcmp(error_mode, "rel") == 0)
-  {
-    for(int restart_nr = 0; restart_nr < size; restart_nr++)
-      std[restart_nr] = error * value[restart_nr];
-  }
-  else if(strcmp(error_mode, "relmin") == 0)
-  {
-    for(int restart_nr = 0; restart_nr < size; restart_nr++)
-    {
-      std[restart_nr] = error * value[restart_nr];
-      if(std[restart_nr] < error_min)
-        std[restart_nr] = error_min;
-    }
-  }
-  else
-  {
-    util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
+    char * error_mode = util_alloc_strupr_copy( __error_mode );
+    // Create  the standard deviation vector
+    if(strcmp(error_mode, "ABS") == 0)
+      {
+	for(int restart_nr = 0; restart_nr < size; restart_nr++)
+	  std[restart_nr] = error;
+      }
+    else if(strcmp(error_mode, "REL") == 0)
+      {
+	for(int restart_nr = 0; restart_nr < size; restart_nr++)
+	  std[restart_nr] = error * value[restart_nr];
+      }
+    else if(strcmp(error_mode, "RELMIN") == 0)
+      {
+	for(int restart_nr = 0; restart_nr < size; restart_nr++)
+	  {
+	    std[restart_nr] = error * value[restart_nr];
+	    if(std[restart_nr] < error_min)
+	      std[restart_nr] = error_min;
+	  }
+      }
+    else
+      {
+	util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, __error_mode);
+      }
+    free(error_mode);
   }
 
 

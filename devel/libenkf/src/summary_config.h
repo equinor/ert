@@ -9,10 +9,11 @@
 
 typedef struct summary_config_struct summary_config_type;
 
+const           char * summary_config_get_var(const summary_config_type * );
 void                   summary_config_set_obs_config_file(summary_config_type * , const char * );
 const char           * summary_config_get_config_txt_file_ref(const summary_config_type * );
 summary_config_type  * summary_config_fscanf_alloc(const char * , const char * );
-summary_config_type  * summary_config_alloc(int , const char ** );
+summary_config_type  * summary_config_alloc(const char *);
 void                   summary_config_free(summary_config_type * );
 int                    summary_config_get_active_mask(const summary_config_type *);
 int                    summary_config_get_var_index(const summary_config_type * , const char * );

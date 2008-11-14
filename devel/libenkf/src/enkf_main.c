@@ -11,12 +11,10 @@
 #include <path_fmt.h>
 #include <ecl_static_kw_config.h>
 #include <enkf_types.h>
-#include <well_config.h>
 #include <field_config.h>
 #include <equil_config.h>
 #include <multz_config.h>
 #include <multflt_config.h>
-#include <well_obs.h>
 #include <thread_pool.h>
 #include <obs_node.h>
 #include <obs_data.h>
@@ -832,7 +830,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       const int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
       bool * keep_runpath = util_malloc( sizeof * keep_runpath * ens_size , __func__);
-
       int i;
       for (i = 0; i < ens_size; i++) 
 	keep_runpath[i] = true;
@@ -854,6 +851,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	enkf_main->meas_analyzed   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
 	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file ,model_config_get_history(enkf_main->model_config));
 	enkf_main->obs_data        = obs_data_alloc();
+	{
+	  stringlist_type * summary_vars = enkf_obs_alloc_summary_vars(enkf_main->obs);
+	  for (i=0; i < stringlist_get_size( summary_vars ); i++)
+	    ensemble_config_ensure_summary( enkf_main->ensemble_config , stringlist_iget( summary_vars , i));
+	  
+	  stringlist_free( summary_vars );
+	}
       }
       
       /*****************************************************************/

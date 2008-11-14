@@ -11,6 +11,19 @@
 #include <summary_obs.h>
 #include <field_obs.h>
 
+
+
+/** TODO
+    Currently, this has to be here since enkf_state accesses obs_hash explicitly. 
+
+    THIS SHOULD BE FIXED.
+*/
+struct enkf_obs_struct {
+  /** A hash of obs_node_types indexed by user provided keys. */
+  hash_type              * obs_hash; 
+};
+
+
 /** TODO This static function header shall be removed when the configuration is unified.... */
 static conf_class_type * enkf_obs_get_obs_conf_class();
 
@@ -128,7 +141,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
       const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
       summary_obs_type         * sum_obs       = summary_obs_alloc_from_HISTORY_OBSERVATION(hist_obs_conf, hist);
 
-      obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, num_restarts, false,
+      obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, summary_obs , num_restarts, false,
                                                                 summary_obs_get_observations__, summary_obs_measure__,
                                                                 summary_obs_free__, NULL);
 
@@ -161,7 +174,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
       summary_obs_type         * sum_obs      = summary_obs_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf, hist);
       const char               * sum_key      = summary_obs_get_summary_key_ref(sum_obs);
 
-      obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, num_restarts, false,
+      obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, summary_obs , num_restarts, false,
                                                                summary_obs_get_observations__, summary_obs_measure__,
                                                                summary_obs_free__, NULL);
 
@@ -195,7 +208,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
       const char               * field_name     = field_obs_get_field_name_ref(block_obs);
       int                        restart_nr     = field_obs_get_restart_nr(block_obs);
 
-      obs_node_type * obs_node                   = obs_node_alloc(block_obs, field_name, obs_key, num_restarts, false,
+      obs_node_type * obs_node                   = obs_node_alloc(block_obs, field_name, obs_key, field_obs , num_restarts, false,
                                                                   field_obs_get_observations__, field_obs_measure__,
                                                                   field_obs_free__, NULL);
 
@@ -394,4 +407,20 @@ conf_class_type * enkf_obs_get_obs_conf_class(
 
 
 
+/**
+   Allocates a stringlist of obs keys which correspond to summary
+   observations, these are then added to the state vector in
+   enkf_main.
+*/
+stringlist_type * enkf_obs_alloc_summary_vars(enkf_obs_type * enkf_obs) {
+  stringlist_type * summary_vars = stringlist_alloc_new();
+  char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
+  while ( key != NULL) {
+    obs_node_type * obs_node = hash_get( enkf_obs->obs_hash , key);
+    if (obs_node_get_impl_type(obs_node) == summary_obs) 
+      stringlist_append_ref(summary_vars , obs_node_get_state_kw(obs_node));
+    key = hash_iter_get_next_key( enkf_obs->obs_hash );
+  }
+  return summary_vars;
+}
 

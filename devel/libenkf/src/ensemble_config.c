@@ -11,7 +11,6 @@
 #include <enkf_config_node.h>
 #include <path_fmt.h>
 #include <enkf_types.h>
-#include <well_config.h>
 #include <field_config.h>
 #include <equil_config.h>
 #include <gen_data_config.h>
@@ -151,9 +150,6 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
     case(RELPERM):
       freef             = relperm_config_free__;
       break;
-    case(WELL):
-      freef             = well_config_free__;
-      break;
     case(MULTFLT):
       freef             = multflt_config_free__;
       activate          = multflt_config_activate__;
@@ -193,8 +189,16 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
 
 
 
-void ensemble_config_add_well(ensemble_config_type * ensemble_config , const char *well_name , int size, const char ** var_list) {
-  ensemble_config_add_node(ensemble_config , well_name , dynamic , WELL , NULL , NULL , well_config_alloc(well_name , size , var_list));
+/**
+   This function ensures that object contains a node with 'key' and
+   type == SUMMARY.
+*/
+void ensemble_config_ensure_summary(ensemble_config_type * ensemble_config , const char * key) {
+  if (hash_has_key(ensemble_config->config_nodes, key)) {
+    if (ensemble_config_impl_type(ensemble_config , key) != SUMMARY)
+      util_abort("%s: ensemble key:%s already existst - but it is not of summary type\n",__func__ , key);
+  } else 
+    ensemble_config_add_node(ensemble_config , key , dynamic , SUMMARY , NULL , NULL , summary_config_alloc(key));
 }
 
 
@@ -224,11 +228,8 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_set_argc_minmax(item , 2 , 2 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
 
 
-  item = config_add_item(config , "WELL" , false , true);
-  config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
-  
   item = config_add_item(config , "SUMMARY" , false , true);
-  config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
+  config_item_set_argc_minmax(item , 2 , 2 ,  NULL);
   
 
   /* 
@@ -356,25 +357,13 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   }
 
 
-  /* WELL */
-  for (i=0; i < config_get_occurences(config , "WELL"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "WELL" , i);
-    const char *  well_name   = stringlist_iget(tokens , 0);
-    const char ** variables   = stringlist_iget_argv(tokens , 1);
-    int   num_variables       = stringlist_get_size(tokens) - 1; 
-
-    ensemble_config_add_well(ensemble_config , well_name , num_variables, variables);
-  }
-
 
   /* SUMMARY */
   for (i=0; i < config_get_occurences(config , "SUMMARY"); i++) {
     const stringlist_type * tokens = config_iget_stringlist_ref(config , "SUMMARY" , i);
     const char * key        = stringlist_iget(tokens , 0);
-    const char ** variables = stringlist_iget_argv(tokens , 1);
-    int   num_variables     = stringlist_get_size(tokens) - 1; 
 
-    ensemble_config_add_node(ensemble_config , key , dynamic , SUMMARY , NULL , NULL , summary_config_alloc(num_variables , variables));
+    ensemble_config_ensure_summary(ensemble_config , key );
   }
   
 

@@ -7,7 +7,7 @@
 
 typedef struct summary_struct summary_type;
 
-double    summary_get(const summary_type * , const char * );
+double    summary_get(const summary_type * );
 void      summary_load_data(summary_type * , int , const ecl_block_type * , const ecl_sum_type * );
 
 

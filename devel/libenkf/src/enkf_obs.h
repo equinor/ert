@@ -14,16 +14,6 @@ typedef struct enkf_obs_struct enkf_obs_type;
 
 
 
-/** TODO
-    Currently, this has to be here since enkf_state accesses obs_hash explicitly. 
-
-    THIS SHOULD BE FIXED.
-*/
-struct enkf_obs_struct {
-  /** A hash of obs_node_types indexed by user provided keys. */
-  hash_type              * obs_hash; 
-};
-
 
 
 
@@ -56,6 +46,8 @@ void enkf_obs_measure_on_ensemble(
         int                      ens_size,
         const enkf_state_type ** ensemble ,
         meas_matrix_type       * meas_matrix);
+
+stringlist_type * enkf_obs_alloc_summary_vars(enkf_obs_type * enkf_obs);
 
 #ifdef __cplusplus
 }

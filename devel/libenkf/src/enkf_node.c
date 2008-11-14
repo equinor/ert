@@ -10,7 +10,6 @@
 #include <multflt.h>
 #include <equil.h>
 #include <field.h>
-#include <well.h>
 #include <summary.h>
 #include <ecl_static_kw.h>
 #include <gen_kw.h>
@@ -650,19 +649,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->freef        	  = multflt_free__;
     node->free_data    	  = multflt_free_data__;
     node->fprintf_results = multflt_ensemble_fprintf_results__;
-    break;
-  case(WELL):
-    node->ecl_load        = well_ecl_load__;
-    node->realloc_data 	  = well_realloc_data__;
-    node->alloc        	  = well_alloc__;
-    node->fread_f      	  = well_fread__;
-    node->fwrite_f     	  = well_fwrite__;
-    node->copyc        	  = well_copyc__;
-    node->serialize    	  = well_serialize__;
-    node->deserialize  	  = well_deserialize__;
-    node->freef        	  = well_free__;
-    node->free_data    	  = well_free_data__;
-    node->fprintf_results = well_ensemble_fprintf_results__;
     break;
   case(SUMMARY):
     node->ecl_load     = summary_ecl_load__;

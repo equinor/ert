@@ -26,12 +26,10 @@
 #include <path_fmt.h>
 #include <gen_kw.h>
 #include <ecl_sum.h>
-#include <well.h>
 #include <summary.h>
 #include <multz.h>
 #include <multflt.h>
 #include <equil.h>
-#include <well_config.h>
 #include <void_arg.h>
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
