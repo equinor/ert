@@ -384,7 +384,7 @@ static float pow10f(float x) {
 
 
 static float trunc_pow10f(float x) {
-  y = util_float_max(powf(10.0 , x) , 0.001);
+  return util_float_max(powf(10.0 , x) , 0.001);
 }
 
 
