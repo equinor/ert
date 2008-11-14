@@ -4,6 +4,7 @@ all:
 	$(MAKE) -C $(LIBUTIL_HOME)/src  rebuild
 	$(MAKE) -C $(LIBECL_HOME)/src  rebuild
 	$(MAKE) -C $(LIBRMS_HOME)/src  rebuild	
+	$(MAKE) -C $(LIBCONF_HOME)/src  rebuild	
 	$(MAKE) -C $(LIBSCHED_HOME)/src  rebuild	
 	$(MAKE) -C $(LIBJOB_QUEUE_HOME)/src  rebuild	
 	$(MAKE) -C $(LIBANALYSIS_HOME)/src  rebuild	
