@@ -10,6 +10,7 @@
 #include <hash_node.h>
 #include <node_data.h>
 #include <pthread.h>
+#include <errno.h>
 
 #define HASH_DEFAULT_SIZE 16
 
@@ -64,9 +65,65 @@ static char * alloc_string_copy(const char *src) {
   return new;
 }
 
+/*****************************************************************/
+/*                          locking                              */
+/*****************************************************************/
+
+static void __hash_deadlock_abort(hash_type * hash) {
+  printf("A deadlock condition has been detected in the hash routine - and the program will abort.\n");
+  printf("Currently active hash iterator: ");
+  if (hash->__iter_active) {
+    printf("\n __iter_keys: [");
+    for (int i = 0; i < hash->elements; i++) {
+      printf("\'%s\'" , hash->__iter_keylist[i]);
+      if (i < (hash->elements - 1))
+	printf(", ");
+    }
+    printf("]\n");
+    printf("__iter_index: %d \n",hash->__iter_index);
+  } else printf(" None ??? \n");
+  abort();
+}
+
+
+static void __hash_rdlock(hash_type * hash) {
+  int lock_error = pthread_rwlock_tryrdlock( &hash->rwlock );
+  if (lock_error != 0) {
+    /* We did not get the lock - let us check why: */
+    if (lock_error == EDEADLK)
+      /* A deadlock is detected - we just abort. */
+      __hash_deadlock_abort(hash);
+    else 
+      /* We ignore all other error conditions than DEADLOCK and just try again. */
+      pthread_rwlock_rdlock( &hash->rwlock );
+  }
+  /* Ok - when we are here - we are guranteed to have the lock. */
+}
+
+
+static void __hash_wrlock(hash_type * hash) {
+  int lock_error = pthread_rwlock_trywrlock( &hash->rwlock );
+  if (lock_error != 0) {
+    /* We did not get the lock - let us check why: */
+    if (lock_error == EDEADLK)
+      /* A deadlock is detected - we just abort. */
+      __hash_deadlock_abort(hash);
+    else 
+      /* We ignore all other error conditions than DEADLOCK and just try again. */
+      pthread_rwlock_rdlock( &hash->rwlock );
+  }
+  /* Ok - when we are here - we are guranteed to have the lock. */
+}
+
+
+static void __hash_unlock( hash_type * hash) {
+  pthread_rwlock_unlock( &hash->rwlock );
+}
+
+
 
 /*****************************************************************/
-/*                    Low level functions                        */
+/*                    Low level access functions                 */
 /*****************************************************************/
 
 
@@ -95,9 +152,9 @@ static void * __hash_get_node_unlocked(const hash_type *__hash , const char *key
 
 static void * __hash_get_node(hash_type *hash , const char *key, bool abort_on_error) {
   hash_node_type * node;
-  pthread_rwlock_rdlock( &hash->rwlock );
+  __hash_rdlock( hash );
   node = __hash_get_node_unlocked(hash , key , abort_on_error);
-  pthread_rwlock_unlock( &hash->rwlock );
+  __hash_unlock( hash );
   return node;
 }
 
@@ -141,7 +198,7 @@ static void hash_resize(hash_type *hash, int new_size) {
 */
    
 static void __hash_insert_node(hash_type *hash , hash_node_type *node) {
-  pthread_rwlock_wrlock( &hash->rwlock );
+  __hash_wrlock( hash );
   {
     uint32_t table_index = hash_node_get_table_index(node);
     {
@@ -161,7 +218,7 @@ static void __hash_insert_node(hash_type *hash , hash_node_type *node) {
     if ((1.0 * hash->elements / hash->size) > hash->resize_fill) 
       hash_resize(hash , hash->size * 2);
   }
-  pthread_rwlock_unlock( &hash->rwlock );
+  __hash_unlock( hash );
 }
 
 
@@ -228,7 +285,7 @@ static hash_node_type * hash_internal_iter_next(const hash_type *hash , const ha
 
 static char ** hash_alloc_keylist__(hash_type *hash) {
   char **keylist;
-  pthread_rwlock_rdlock( &hash->rwlock );
+  __hash_rdlock( hash );
   {
     if (hash->elements > 0) {
       int i = 0;
@@ -251,7 +308,7 @@ static char ** hash_alloc_keylist__(hash_type *hash) {
       }
     } else keylist = NULL;
   }
-  pthread_rwlock_unlock( &hash->rwlock );
+  __hash_unlock( hash );
   return keylist;
 }
 
@@ -325,14 +382,14 @@ HASH_GET_ARRAY_PTR(hash_get_int_ptr    , int)
 /*****************************************************************/
 
 void hash_del(hash_type *hash , const char *key) {
-  pthread_rwlock_rdlock( &hash->rwlock );
+  __hash_wrlock( hash );
   hash_del_unlocked__(hash , key);
-  pthread_rwlock_unlock( &hash->rwlock );
+  __hash_unlock( hash );
 }
 
 
 void hash_clear(hash_type *hash) {
-  pthread_rwlock_rdlock( &hash->rwlock );
+  __hash_wrlock( hash );
   {
     int old_size = hash_get_size(hash);
     if (old_size > 0) {
@@ -345,7 +402,7 @@ void hash_clear(hash_type *hash) {
       free(keyList);
     }
   }
-  pthread_rwlock_unlock( &hash->rwlock );
+  __hash_unlock( hash );
 }
 
 
@@ -709,7 +766,7 @@ void hash_iter_finalize(hash_type * hash) {
     }
     hash->__iter_keylist = NULL;
     hash->__iter_active  = false;
-    pthread_rwlock_unlock( &hash->rwlock );
+    __hash_unlock( hash );
   }
 }
 
@@ -726,17 +783,17 @@ void hash_iter_finalize(hash_type * hash) {
 */
      
 void hash_iter_init(hash_type * hash) {
-  pthread_rwlock_rdlock( &hash->rwlock );  /* Just for this function. */
+  __hash_rdlock( hash ); /* Just for this function. */
   if (hash->__iter_active)
     hash_iter_finalize(hash);
   
-  pthread_rwlock_rdlock( &hash->rwlock ); /* Until _finalize */
+  __hash_rdlock( hash ); /* Until _finalize */
   {
     hash->__iter_keylist = hash_alloc_keylist__(hash);
     hash->__iter_index   = 0;
     hash->__iter_active  = true;
   }
-  pthread_rwlock_unlock( &hash->rwlock );
+  __hash_unlock( hash );
 }
 
 
@@ -746,6 +803,11 @@ void hash_iter_init(hash_type * hash) {
    is not an ongoing iteration, the function will fail hard. If the
    iteration is complete, the function will return NULL, and finalize
    the iteration.
+
+   Observe that the calling scope should *NOT* retain a reference to
+   the keys returned from hash_iter_get_next_key() - they will be
+   free'd when the iteration is complete. In that case the calling
+   scope should take a copy of the key.
 */
 
 const char * hash_iter_get_next_key(hash_type * hash) {
@@ -757,7 +819,6 @@ const char * hash_iter_get_next_key(hash_type * hash) {
       key = hash->__iter_keylist[hash->__iter_index];
       hash->__iter_index++;
     }
-    
     return key;
   } else {
     fprintf(stderr,"%s: no iteration active - aborting \n",__func__);
