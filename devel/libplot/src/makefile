@@ -42,6 +42,7 @@ distclean:
 doc:
 	doxygen Doc/libplot.conf
 
+rebuild: clean all
 
 $(LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
