@@ -840,6 +840,16 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	free( keep_runpath_string );
       }
     
+
+      if (config_has_set_item(config , "ADD_STATIC_KW")) {
+	for (i=0; i < config_get_occurences(config , "ADD_STATIC_KW"); i++) {
+	  stringlist_type * static_kw_list = config_iget_stringlist_ref(config , "ADD_STATIC_KW" , i);
+	  int k;
+	  for (k = 0; k < stringlist_get_size(static_kw_list); k++)
+	    ecl_config_add_static_kw(enkf_main->ecl_config , stringlist_iget( static_kw_list , k));
+	}
+      }
+      
       {
 	const char * obs_config_file;
 	if (config_has_set_item(config , "OBS_CONFIG"))
