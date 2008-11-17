@@ -173,6 +173,7 @@ type:
   o The ecl_kw_type instance holding the data is boostrapped on fread().
   
   o The whole ecl_kw_type instances is free'd on free_data.
+
 */
 
 void ecl_static_kw_realloc_data(ecl_static_kw_type * ecl_static_kw) {

@@ -124,7 +124,7 @@ obs_node_type * obs_node_alloc(const void      	  * obs,
 			       obs_free_ftype  	  * freef,
 			       obs_activate_ftype * activate) {
 
-  obs_node_type * node = malloc( sizeof *node);
+  obs_node_type * node     = util_malloc( sizeof *node , __func__);
   node->obs                = obs;
   node->freef              = freef;
   node->measure            = measure;
