@@ -77,6 +77,13 @@ int main()
     conf_item_spec_type * item_spec_sumkey = conf_item_spec_alloc("KEY", true, DT_STR);
     conf_item_spec_set_help(item_spec_sumkey, help_item_spec_sumkey);
 
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_value);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_date);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_days);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_restart);
+    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
+
     /** Create a mutex on DATE, DAYS and RESTART. */
     conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true);
     conf_class_insert_owned_item_mutex(summary_observation_class, time_mutex);
@@ -86,12 +93,6 @@ int main()
     conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
 
 
-    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_value);
-    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_error);
-    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_date);
-    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_days);
-    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_restart);
-    conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
 
 
     conf_class_insert_owned_sub_class(enkf_conf_class, summary_observation_class);

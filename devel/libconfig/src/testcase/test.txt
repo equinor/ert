@@ -3,8 +3,8 @@
 
 
 HISTORY_OBSERVATION C-17:WOPR
-{
   ERROR      = 0.10;
+{
   ERROR_MODE = "rel";
   ERROR_MIN  = 0.10;
 };

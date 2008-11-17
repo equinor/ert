@@ -1382,9 +1382,9 @@ void conf_instance_add_data_from_token_buffer(
 
   while(token != NULL)
   {
-    if(conf_class_has_item_spec(conf_class, token))
+    if(conf_class_has_item_spec(conf_class, token) && (scope_start_set || is_root))
       conf_instance_parser_add_item(conf_instance, token, buffer_pos);
-    else if(conf_class_has_sub_class(conf_class, token))
+    else if(conf_class_has_sub_class(conf_class, token) && (scope_start_set || is_root))
     {
       char                    * name             = conf_util_alloc_next_token(buffer_pos);
       const conf_class_type * sub_conf_class = conf_class_get_sub_class_ref(conf_class, token);  
