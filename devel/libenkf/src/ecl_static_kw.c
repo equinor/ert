@@ -55,6 +55,8 @@ struct ecl_static_kw_struct {
 */
 
 
+
+
 /**
    The input state is defined by the parameters write_mode and
    report_step. If they differ from the currently stored state the
@@ -62,14 +64,16 @@ struct ecl_static_kw_struct {
 */
 
 void ecl_static_kw_inc_counter(ecl_static_kw_type * ecl_static, bool write_mode , int report_step) {
-  if (ecl_static->__write_mode != write_mode)            /* Changing reading <-> writing */
+  
+  if (ecl_static->__write_mode != write_mode)             /* Changing reading <-> writing */
     ecl_static->__kw_count = 0;
-  else if (ecl_static->__report_step != report_step)     /* Changing report_step */
+  else if (ecl_static->__report_step != report_step)      /* Changing report_step */
     ecl_static->__kw_count = 0;
   else
-    ecl_static->__kw_count++;                            /* Increase counter */
+    ecl_static->__kw_count++;                             /* Increase counter */
   
-  ecl_static->__write_mode = write_mode;
+  ecl_static->__write_mode  = write_mode;
+  ecl_static->__report_step = report_step;
 }
 
 

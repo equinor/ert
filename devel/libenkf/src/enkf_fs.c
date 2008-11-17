@@ -355,7 +355,6 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
 	enkf_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
 	if (impl_type == SUMMARY) return;    /* For report step == 0 the summary data is just garbage. */
       }
-
       driver->save(driver , report_step , iens , state , enkf_node); 
     }
   }

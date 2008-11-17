@@ -374,9 +374,9 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
 void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step) {
   ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
   enkf_node->__memory_allocated = true;
-  enkf_node->__report_step = report_step;
-  enkf_node->__state       = forecast;
-  enkf_node->__modified    = false;
+  enkf_node->__report_step 	= report_step;
+  enkf_node->__state       	= forecast;
+  enkf_node->__modified    	= false;
 }
 
 
