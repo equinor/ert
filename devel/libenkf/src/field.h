@@ -20,7 +20,9 @@ void         field_indexed_set(field_type * field, ecl_type_enum , int , const i
 void         field_indexed_add(field_type * field, ecl_type_enum , int , const int * , const void * );
 double       field_iget_double(const field_type * , int );
 double       field_ijk_get_double(const field_type * field, int  , int  , int );
-void         field_ijk_get(const field_type * , int , int  , int , void *);
+float       field_iget_float(const field_type * , int );
+float        field_ijk_get_float(const field_type * field, int  , int  , int );
+void          field_ijk_get(const field_type * , int , int  , int , void *);
 bool         field_ijk_valid(const field_type * , int , int , int );
 void         field_ijk_get_if_valid(const field_type * , int  , int  , int , void * , bool *);
 void 	     field_ecl_write(const field_type * , const char * , fortio_type *);
@@ -31,7 +33,6 @@ void 	     field_copy_ecl_kw_data(field_type * , const ecl_kw_type * );
 field_type * field_alloc_shared(const field_config_type * , void * , int );
 field_type * field_alloc(const field_config_type * );
 void         field_free(field_type *);
-double       field_ijk_lookup(const field_type * , int , int , int);
 void         field_get_dims(const field_type *, int *, int *, int *);
 void         field_fload(field_type * , const char * , bool );
 void         field_fload_auto(field_type * , const char * , bool );

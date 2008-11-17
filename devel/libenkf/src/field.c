@@ -743,13 +743,16 @@ double field_ijk_get_double(const field_type * field, int i , int j , int k) {
 }
 
 
+float field_ijk_get_float(const field_type * field, int i , int j , int k) {
+  int active_index = field_config_active_index(field->config , i , j , k);
+  return field_iget_float( field , active_index );
+}
+
+
 
 /**
-   Takes a global index (counting only active cells) as input, and
-   returns a double.
+   Takes an active index as input, and returns a double.
 */
-
-
 double field_iget_double(const field_type * field , int active_index) {
   ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
   int sizeof_ctype 	 = field_config_get_sizeof_ctype(field->config);
@@ -772,11 +775,36 @@ double field_iget_double(const field_type * field , int active_index) {
 }
 
 
+/**
+   Takes an active index as input, and returns a double.
+*/
+float field_iget_float(const field_type * field , int active_index) {
+  ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+  int sizeof_ctype 	 = field_config_get_sizeof_ctype(field->config);
+  char buffer[8];          /* Enough to hold one double */
+  memcpy(buffer , &field->data[active_index * sizeof_ctype] , sizeof_ctype);
+  if ( ecl_type == ecl_float_type ) 
+    return *((float *) buffer);
+  else if (ecl_type == ecl_double_type) {
+    double double_value;
+    float  float_value;
+    
+    double_value = *((double *) buffer);
+    float_value  = double_value;
+    
+    return float_value;
+  } else {
+    util_abort("%s: failed - wrong internal type \n",__func__);
+    return -1;
+  }
+}
 
 
-double field_iget(const field_type * field, int global_index) {
+
+
+double field_iget(const field_type * field, int active_index) {
   DEBUG_ASSERT(field);
-  return field_iget_double(field , global_index);
+  return field_iget_double(field , active_index);
 }
 
 

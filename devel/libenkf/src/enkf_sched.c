@@ -109,9 +109,9 @@ static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , const st
      as an integer - i.e. only containing digits, you *MUST* enter a
      value for the stride.)
 
-   * If no stride is found, a default stride is used. If the value of
-     enkf_update is on, the default stride equals 1, otherwise it
-     equals report_step2 - report_step1.
+   * If no stride is found, a default stride is used - the default
+     stride is report_step2 - report_step1 (i.e. the whole thing in
+     one go.)
 
    * If no forward_model is found, the default forward model is used.
 
@@ -137,7 +137,7 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream, string
 	util_strupr(token_list[2]);
 	if (strcmp(token_list[2] , "ON") == 0) {
 	  enkf_active = true;
-	  report_stride = 1;
+	  report_stride = report_step2 - report_step1;
 	} else if (strcmp(token_list[2] , "OFF") == 0) {
 	  enkf_active = false;
 	  report_stride = report_step2 - report_step1;
