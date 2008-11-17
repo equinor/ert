@@ -36,7 +36,7 @@ static uint32_t hash_index(const char *key, size_t len) {
 
 
 struct hash_struct {
-  uint32_t          size;            /* This is the size of the internal table **NOT NOT** the number of elements in the table. */
+  uint32_t          size;            /* This is the size of the internal table **NOT**NOT** the number of elements in the table. */
   uint32_t          elements;        /* The number of elements in the hash table. */
   double            resize_fill;
   hash_sll_type   **table;
@@ -110,7 +110,7 @@ static void __hash_wrlock(hash_type * hash) {
       __hash_deadlock_abort(hash);
     else 
       /* We ignore all other error conditions than DEADLOCK and just try again. */
-      pthread_rwlock_rdlock( &hash->rwlock );
+      pthread_rwlock_rwlock( &hash->rwlock );
   }
   /* Ok - when we are here - we are guranteed to have the lock. */
 }
