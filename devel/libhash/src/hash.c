@@ -110,7 +110,7 @@ static void __hash_wrlock(hash_type * hash) {
       __hash_deadlock_abort(hash);
     else 
       /* We ignore all other error conditions than DEADLOCK and just try again. */
-      pthread_rwlock_rwlock( &hash->rwlock );
+      pthread_rwlock_wrlock( &hash->rwlock );
   }
   /* Ok - when we are here - we are guranteed to have the lock. */
 }
