@@ -1,0 +1,28 @@
+Veeery basic build instructions:
+
+1. Check out a pristine copy of the source code with svn, read the
+   section "Initial Checkout" in "svn_help.txt".
+
+2. The EnKF code is based on many different libraries, which are
+   interlinked. The makefiles are based on variables like LIBECL_HOME
+   and LIBUTIL_HOME which indicate where in the filesystem the libecl
+   and libutil librarires can be found, respectively.
+
+   You have to enter this information. To do this go to directory
+   build/ and copy the file global_config.template to a file called
+   global_config. Edit this file, by setting the correct path for all
+   the variables.
+
+   When you have updated the global_config file this must be made
+   available from all the libraries, run the script make_tags.py. This
+   script will create TAGS files for each directory, and most
+   importantly in this context, create a symlink to the global_config
+   file.
+
+3. Now you can invoke make in the build directory, this should build
+   all the libraries in the correct order.
+
+4. After the intial all-over make, you can of course build the
+   libraries individually and independently.
+
+
