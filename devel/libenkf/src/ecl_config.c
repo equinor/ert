@@ -118,7 +118,6 @@ void ecl_config_add_static_kw(ecl_config_type * ecl_config , const char * _kw) {
   else {
     char * kw = util_alloc_string_copy(_kw);
     ecl_util_escape_kw(kw);
-    printf("Adding kw:%s \n",kw);
     set_add_key(ecl_config->static_kw_set , kw);
     free(kw);
   }
