@@ -846,8 +846,8 @@ int history_get_restart_nr_from_time_t(const history_type * history, time_t time
   for(int i=0; i<num_restart_files; i++)
   {
     time_t node_end_time = history_iget_node_end_time(history, i);
-    if(node_end_time == time)
-      return i; 
+    if (abs(node_end_time - time) <= 0)  /* Daylight saving time - what a fucking mess. */
+      return i;
   }
 
   
