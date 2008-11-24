@@ -5,7 +5,6 @@
 #include <lsf_driver.h>
 #include <util.h>
 #include <pthread.h>
-
 #include <stringlist.h>
 
 /**
@@ -38,7 +37,7 @@ struct lsf_job_struct {
   int       num_exec_host;
   char    **exec_host;
 #ifdef LSF_SYSTEM_DRIVER
-  char    * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_output hash table */
+  char     * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_output hash table */
 #endif
 };
 
@@ -60,7 +59,7 @@ struct lsf_driver_struct {
   time_t             last_bjobs_update;
   hash_type         *status_map;
   hash_type         *bjobs_output;
-  pthread_mutex_t    bjobs_lock;
+  pthread_t          update_thread;   /* Only __ONE__ thread actually updates the bjobs_output table. */
 #endif
 };
 
@@ -175,10 +174,7 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
 static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
   util_vfork_exec("bjobs", 1 , (const char *[1]) {"-a"} , true , NULL , NULL , NULL , tmp_file , NULL);
-  
   {
-    int  job_id_int;
-    char *job_id;
     char user[32];
     char status[16];
     FILE *stream = util_fopen(tmp_file , "r");;
@@ -188,10 +184,12 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
     while (!at_eof) {
       char * line = util_fscanf_alloc_line(stream , &at_eof);
       if (line != NULL) {
-	
+	int  job_id_int;
+
 	if (sscanf(line , "%d %s %s", &job_id_int , user , status) == 3) {
-	  job_id = util_alloc_sprintf("%d" , job_id_int);
+	  char * job_id = util_alloc_sprintf("%d" , job_id_int);
 	  hash_insert_int(driver->bjobs_output , job_id , hash_get_int(driver->status_map , status));
+	  free(job_id);
 	}
 	
 	free(line);
@@ -255,18 +253,13 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
 static job_status_type lsf_driver_get_job_status_system(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
   const int bjobs_refresh_time = 5; /* Seconds */
   job_status_type status = job_queue_null;
-
+  
   if (__job != NULL) {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
     lsf_driver_type * driver = (lsf_driver_type *) __driver;
     lsf_driver_assert_cast(driver); 
     lsf_job_assert_cast(job);
     
-
-    /*
-      The hash table driver->bjobs_output must be protected
-    */
-    pthread_mutex_lock( &driver->bjobs_lock ); 
     {
       if (difftime(time(NULL) , driver->last_bjobs_update) > bjobs_refresh_time) {
 	lsf_driver_update_bjobs_table(driver);
@@ -277,12 +270,11 @@ static job_status_type lsf_driver_get_job_status_system(basic_queue_driver_type 
 	status = hash_get_int(driver->bjobs_output , job->lsf_jobnr_char);
       else
 	/* 
-	   It might be running - but sinjec job != NULL it is at least in the queue system.
+	   It might be running - but since job != NULL it is at least in the queue system.
 	*/
 	status = job_queue_pending;
 
     }
-    pthread_mutex_unlock( &driver->bjobs_lock );
   }
   
   return status;
@@ -445,7 +437,6 @@ void * lsf_driver_alloc(const char * queue_name) {
     util_abort("%s failed to initialize LSF environment : %s/%d  \n",__func__ , lsb_sysmsg() , lsberrno);
   setenv("BSUB_QUIET" , "yes" , 1);
 #else
-  pthread_mutex_init( &lsf_driver->bjobs_lock , NULL );
   lsf_driver->last_bjobs_update = time( NULL );
   lsf_driver->bjobs_output 	  = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
