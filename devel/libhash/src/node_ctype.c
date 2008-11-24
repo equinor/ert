@@ -7,9 +7,6 @@
 const char * node_ctype_name(node_ctype ctype) {
   const char * name;
   switch (ctype) {
-  case(void_buffer):
-    name =  "void buffer";
-    break;
   case(void_pointer):
     name =  "void pointer";
     break;

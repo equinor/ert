@@ -8,7 +8,7 @@
 #include <basic_queue_driver.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 
 /**
    The running of external jobs is handled thrugh an abstract
@@ -487,10 +487,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 }
 
 
-void * job_queue_run_jobs__(void * __void_arg) {
-  void_arg_type * void_arg = void_arg_safe_cast(__void_arg);
-  job_queue_type * queue   = void_arg_get_ptr(void_arg , 0);
-  int num_total_run        = void_arg_get_int(void_arg , 1);
+void * job_queue_run_jobs__(void * __arg_pack) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
+  job_queue_type * queue   = arg_pack_iget_ptr(arg_pack , 0);
+  int num_total_run        = arg_pack_iget_int(arg_pack , 1);
   
   job_queue_run_jobs(queue , num_total_run);
   return NULL;

@@ -8,7 +8,7 @@
 #include <rsh_driver.h>
 #include <util.h>
 #include <pthread.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 #include <errno.h>
 
 
@@ -125,16 +125,16 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
 
 
 
-static void * rsh_host_submit_job__(void * __void_arg) {
-  void_arg_type * void_arg = void_arg_safe_cast(__void_arg);
-  char * rsh_cmd 	   = void_arg_get_ptr(void_arg , 0); 
-  rsh_host_type * rsh_host = void_arg_get_ptr(void_arg , 1);
-  char * submit_cmd 	   = void_arg_get_ptr(void_arg , 2); 
-  char * run_path          = void_arg_get_ptr(void_arg , 3); 
-  rsh_job_type * job       = void_arg_get_ptr(void_arg , 4);
+static void * rsh_host_submit_job__(void * __arg_pack) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
+  char * rsh_cmd 	   = arg_pack_iget_ptr(arg_pack , 0); 
+  rsh_host_type * rsh_host = arg_pack_iget_ptr(arg_pack , 1);
+  char * submit_cmd 	   = arg_pack_iget_ptr(arg_pack , 2); 
+  char * run_path          = arg_pack_iget_ptr(arg_pack , 3); 
+  rsh_job_type * job       = arg_pack_iget_ptr(arg_pack , 4);
 
   rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , run_path);
-  void_arg_free( void_arg );
+  arg_pack_free( arg_pack );
   pthread_exit( NULL );
 
 }
@@ -259,17 +259,17 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
     
     if (host != NULL) {
       /* A host is available */
-      void_arg_type * void_arg = void_arg_alloc5( void_pointer , void_pointer , void_pointer , void_pointer , void_pointer);
+      arg_pack_type * arg_pack = arg_pack_alloc();
       rsh_job_type  * job = rsh_job_alloc(node_index , run_path);
   
-      void_arg_pack_ptr(void_arg , 0 ,  driver->rsh_command);
-      void_arg_pack_ptr(void_arg , 1 ,  host);
-      void_arg_pack_ptr(void_arg , 2 , (char *) submit_cmd);
-      void_arg_pack_ptr(void_arg , 3 , (char *) run_path);
-      void_arg_pack_ptr(void_arg , 4 , job);
+      arg_pack_append_ptr(arg_pack ,  driver->rsh_command);
+      arg_pack_append_ptr(arg_pack ,  host);
+      arg_pack_append_ptr(arg_pack , (char *) submit_cmd);
+      arg_pack_append_ptr(arg_pack , (char *) run_path);
+      arg_pack_append_ptr(arg_pack , job);
       
       {
-	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , void_arg);
+	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , arg_pack);
 	if (pthread_return_value != 0) 
 	  util_abort("%s failed to create thread ERROR:%d  \n", __func__ , pthread_return_value);
       }

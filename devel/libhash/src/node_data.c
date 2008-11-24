@@ -22,7 +22,7 @@ node_data_type * node_data_alloc(int byte_size , const void * data) {
   node_data_type * node = malloc(sizeof * node);
   node->data            = (void *) data;
   node->byte_size       = byte_size;
-  node->ctype           = void_buffer;
+  node->ctype           = void_pointer;
   return node;
 }
 
