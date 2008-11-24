@@ -41,7 +41,11 @@ $(LIB): $(OBJECTS)
 ifeq ($(USE_LSF_LIBRARY),TRUE)
    CFLAGS_LSF = $(CFLAGS) -D'USE_LSF_LIBRARY=TRUE'
 else
-   CFLAGS_LSF = $(CFLAGS) 
+   ifeq ($(xStatoil),TRUE)
+      CFLAGS_LSF = $(CFLAGS) -D'xStatoil=TRUE'
+   else
+      CFLAGS_LSF = $(CFLAGS) 
+   endif
 endif
 
 lsf_driver.o : lsf_driver.c
