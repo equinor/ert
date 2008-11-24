@@ -359,6 +359,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
     for (i=0; i < job_queue_max_state; i++)
       old_status_list[i] = -1;
   }
+
   
   do {
     char spinner[4];
