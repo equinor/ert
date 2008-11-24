@@ -283,9 +283,9 @@ static hash_node_type * hash_internal_iter_next(const hash_type *hash , const ha
    If the hash table is empty NULL is returned.
 */
 
-static char ** hash_alloc_keylist__(hash_type *hash) {
+static char ** hash_alloc_keylist__(hash_type *hash , bool lock) {
   char **keylist;
-  __hash_rdlock( hash );
+  if (lock) __hash_rdlock( hash );
   {
     if (hash->elements > 0) {
       int i = 0;
@@ -308,7 +308,7 @@ static char ** hash_alloc_keylist__(hash_type *hash) {
       }
     } else keylist = NULL;
   }
-  __hash_unlock( hash );
+  if (lock) __hash_unlock( hash );
   return keylist;
 }
 
@@ -326,7 +326,6 @@ static void hash_insert_managed_copy(hash_type *hash, const char *key, const voi
   node_data_type *node_data = node_data_alloc(value_size , value_ptr);
   node = hash_node_alloc_new(key , node_data , node_data_copyc , node_data_free , hash->hashf , hash->size);
   __hash_insert_node(hash , node);
-
   /* This only frees the container - actual storage is freed when the hash table is deleted */
   free(node_data);
 }
@@ -393,7 +392,7 @@ void hash_clear(hash_type *hash) {
   {
     int old_size = hash_get_size(hash);
     if (old_size > 0) {
-      char **keyList = hash_alloc_keylist(hash);
+      char **keyList = hash_alloc_keylist__(hash , false);
       int i;
       for (i=0; i < old_size; i++) {
 	hash_del_unlocked__(hash , keyList[i]);
@@ -461,7 +460,7 @@ void hash_free__(void *void_hash) {
 
 
 char ** hash_alloc_keylist(hash_type *hash) {
-  return hash_alloc_keylist__(hash);
+  return hash_alloc_keylist__(hash , true);
 }
 
 
@@ -789,7 +788,7 @@ void hash_iter_init(hash_type * hash) {
   
   __hash_rdlock( hash ); /* Until _finalize */
   {
-    hash->__iter_keylist = hash_alloc_keylist__(hash);
+    hash->__iter_keylist = hash_alloc_keylist__(hash , false);
     hash->__iter_index   = 0;
     hash->__iter_active  = true;
   }
