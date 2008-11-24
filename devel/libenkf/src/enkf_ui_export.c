@@ -7,8 +7,6 @@
 #include <menu.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
-#include <void_arg.h>
-#include <void_arg.h>
 #include <field.h>
 #include <enkf_state.h>
 #include <enkf_fs.h>

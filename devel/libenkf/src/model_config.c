@@ -143,9 +143,9 @@ history_type * model_config_get_history(const model_config_type * config) {
 
 
 void model_config_interactive_set_runpath__(void * arg) {
-  void_arg_type * void_arg = void_arg_safe_cast( arg );
-  model_config_type * model_config = void_arg_get_ptr(void_arg , 0);
-  menu_item_type    * item         = void_arg_get_ptr(void_arg , 1);
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  model_config_type * model_config = arg_pack_iget_ptr(arg_pack , 0);
+  menu_item_type    * item         = arg_pack_iget_ptr(arg_pack , 1);
   char runpath_fmt[256];
   printf("Give runpath format ==> ");
   scanf("%s" , runpath_fmt);

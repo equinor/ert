@@ -5,7 +5,7 @@
 #include <util.h>
 #include <ctype.h>
 #include <menu.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
 #include <enkf_ui_plot.h>
@@ -84,8 +84,8 @@ void stupid_plot(int N , const double * x , const double *y , const char * image
 
 
 
-void enkf_ui_plot_time(void * void_arg) {
-  enkf_main_type             * enkf_main  = enkf_main_safe_cast( void_arg );
+void enkf_ui_plot_time(void * arg_pack) {
+  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg_pack );
   const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );

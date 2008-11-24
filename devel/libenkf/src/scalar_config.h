@@ -8,7 +8,6 @@ extern "C" {
 #include <stdbool.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
-#include <void_arg.h>
 
 typedef struct scalar_config_struct scalar_config_type;
 

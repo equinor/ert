@@ -8,7 +8,7 @@ extern "C" {
 #include <enkf_util.h>
 #include <enkf_types.h>
 #include <enkf_config_node.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 #include <ecl_kw.h>
 #include <ecl_block.h>
 #include <ecl_sum.h>
@@ -82,7 +82,7 @@ typedef enum {alloc_func       	   	    = 0,
 typedef struct enkf_node_struct enkf_node_type;
 
 typedef void          (enkf_node_ftype1)           (enkf_node_type *);
-typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , void_arg_type * );
+typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , arg_pack_type * );
 
 enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
 enkf_node_type * enkf_node_alloc_static(const char *);

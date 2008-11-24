@@ -9,7 +9,6 @@
 #include <enkf_ui_export.h>
 #include <enkf_ui_plot.h>
 #include <enkf_ui_init.h>
-#include <void_arg.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
 

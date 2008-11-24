@@ -17,7 +17,7 @@ struct scalar_config_struct {
   active_list_type * active_list;
   transform_ftype ** output_transform;
   char            ** output_transform_name;
-  void_arg_type   ** void_arg;        
+  arg_pack_type   ** arg_pack;        
 };
 
 
@@ -33,13 +33,13 @@ scalar_config_type * scalar_config_alloc_empty(int size) {
   scalar_config->output_transform      = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform      , __func__);
   scalar_config->output_transform_name = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform_name , __func__);
   scalar_config->internal_offset       = 0;
-  scalar_config->void_arg              = util_malloc(scalar_config->data_size * sizeof * scalar_config->void_arg , __func__);
+  scalar_config->arg_pack              = util_malloc(scalar_config->data_size * sizeof * scalar_config->arg_pack , __func__);
 
   {
     int i;
     for (i=0; i < size; i++) {
       scalar_config->output_transform_name[i] = NULL;
-      scalar_config->void_arg[i]              = NULL;
+      scalar_config->arg_pack[i]              = NULL;
       scalar_config->std[i]                   = 1.0;
       scalar_config->mean[i]                  = 0.0;
     }
@@ -66,7 +66,7 @@ void scalar_config_transform(const scalar_config_type * config , const double * 
     if (config->output_transform[index] == NULL)
       output_data[index] = input_data[index];
     else
-      output_data[index] = config->output_transform[index](input_data[index] , config->void_arg[index]);
+      output_data[index] = config->output_transform[index](input_data[index] , config->arg_pack[index]);
   }
 }
 
@@ -81,7 +81,7 @@ double scalar_config_transform_item(const scalar_config_type * config, double in
   if(config->output_transform[item] == NULL)
     return input_data;
   else
-    return config->output_transform[item](input_data,config->void_arg[item]);
+    return config->output_transform[item](input_data,config->arg_pack[item]);
 }
 
 
@@ -93,7 +93,7 @@ void scalar_config_truncate(const scalar_config_type * config , double *data) {
 
 
 void scalar_config_fscanf_line(scalar_config_type * config , int line_nr , FILE * stream) {
-  config->output_transform[line_nr] = trans_func_lookup(stream , &config->output_transform_name[line_nr] , &config->void_arg[line_nr]);
+  config->output_transform[line_nr] = trans_func_lookup(stream , &config->output_transform_name[line_nr] , &config->arg_pack[line_nr]);
 }
 
 
@@ -107,9 +107,9 @@ void scalar_config_free(scalar_config_type * scalar_config) {
   active_list_free(scalar_config->active_list);
   util_free_stringlist(scalar_config->output_transform_name , scalar_config->data_size);
   for (i=0; i < scalar_config->data_size; i++)
-    if (scalar_config->void_arg[i] != NULL) void_arg_free(scalar_config->void_arg[i]);
+    if (scalar_config->arg_pack[i] != NULL) arg_pack_free(scalar_config->arg_pack[i]);
 
-  free(scalar_config->void_arg);
+  free(scalar_config->arg_pack);
   free(scalar_config->output_transform);
   free(scalar_config);
 }

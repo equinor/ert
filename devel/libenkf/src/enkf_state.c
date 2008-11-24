@@ -30,7 +30,7 @@
 #include <multz.h>
 #include <multflt.h>
 #include <equil.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
 #include <obs_node.h>
@@ -290,7 +290,7 @@ static member_config_type * member_config_alloc(int iens , bool keep_runpath , c
 static void enkf_state_add_node_internal(enkf_state_type * , const char * , const enkf_node_type * );
 
 
-void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_function_type function_type, void_arg_type * arg) {
+void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_function_type function_type, arg_pack_type * arg) {
   {
     char ** key_list    = hash_alloc_keylist(enkf_state->node_hash);
     int ikey;

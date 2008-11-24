@@ -370,7 +370,6 @@ int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, ti
   for(int i=0; i<num_restart_files; i++)
   {
     time_t block_end_time = sched_file_iget_block_end_time(sched_file, i);
-    printf("Comparing: %d - %d \n",block_end_time , time);
     if(block_end_time > time)
       util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
     else if(block_end_time == time)

@@ -8,8 +8,8 @@
 #include <enkf_main.h>
 #include <enkf_sched.h>
 #include <enkf_node.h>
-#include <void_arg.h>
-#include <void_arg.h>
+#include <arg_pack.h>
+#include <arg_pack.h>
 #include <field.h>
 #include <field_config.h>
 #include <enkf_state.h>

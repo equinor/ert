@@ -7,7 +7,7 @@
 #include <menu.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 #include <enkf_ui_util.h>
 #include <ensemble_config.h>
 
@@ -116,11 +116,11 @@ void enkf_ui_run_menu(void * arg) {
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );
     path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );
-    void_arg_type * void_arg = void_arg_alloc2(void_pointer , void_pointer);
+    arg_pack_type * arg_pack = arg_pack_alloc();
     char * runpath_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , path_fmt_get_fmt ( runpath_fmt ));
     
-    void_arg_pack_ptr(void_arg , 0 , model_config);
-    void_arg_pack_ptr(void_arg , 1 , menu_add_item(menu , runpath_label , "pP" , model_config_interactive_set_runpath__ , void_arg));
+    arg_pack_append_ptr(arg_pack , model_config);
+    arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "pP" , model_config_interactive_set_runpath__ , arg_pack));
     
     
     free(runpath_label);

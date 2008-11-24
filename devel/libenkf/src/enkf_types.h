@@ -3,8 +3,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <void_arg.h>
-typedef double (transform_ftype) (double , const void_arg_type *);
+#include <arg_pack.h>
+typedef double (transform_ftype) (double , const arg_pack_type *);
 
 
 

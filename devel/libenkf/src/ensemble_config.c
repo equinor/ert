@@ -21,7 +21,6 @@
 #include <analysis.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
-#include <void_arg.h>
 #include <gen_kw_config.h>
 #include <ecl_grid.h>
 #include <time.h>

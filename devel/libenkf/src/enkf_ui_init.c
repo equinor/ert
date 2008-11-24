@@ -7,7 +7,6 @@
 #include <menu.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
-#include <void_arg.h>
 #include <enkf_types.h>
 #include <enkf_ui_util.h>
 #include <enkf_ui_init.h>

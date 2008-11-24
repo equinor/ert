@@ -6,7 +6,7 @@
 #include <local_driver.h>
 #include <util.h>
 #include <pthread.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 #include <errno.h>
 
 struct local_job_struct {
@@ -115,10 +115,10 @@ void local_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job
 
 
 void * submit_job_thread__(void * __arg) {
-  void_arg_type * void_arg = void_arg_safe_cast(__arg);
-  const char * executable  = void_arg_get_ptr(void_arg , 0);
-  const char * run_path    = void_arg_get_ptr(void_arg , 1);
-  local_job_type * job     = void_arg_get_ptr(void_arg , 2);
+  arg_pack_type * arg_pack = arg_pack_safe_cast(__arg);
+  const char * executable  = arg_pack_iget_ptr(arg_pack , 0);
+  const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);
+  local_job_type * job     = arg_pack_iget_ptr(arg_pack , 2);
 
   util_vfork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL , NULL); 
   job->status = job_queue_done;
@@ -137,12 +137,12 @@ basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __drive
   local_driver_assert_cast(driver); 
   {
     local_job_type * job    = local_job_alloc();
-    void_arg_type  * void_arg = void_arg_alloc3(void_pointer , void_pointer , void_pointer);
-    void_arg_pack_ptr( void_arg , 0 , (char *) submit_cmd);
-    void_arg_pack_ptr( void_arg , 1 , (char *) run_path);
-    void_arg_pack_ptr( void_arg , 2 , job );
+    arg_pack_type  * arg_pack = arg_pack_alloc();
+    arg_pack_append_ptr( arg_pack , (char *) submit_cmd);
+    arg_pack_append_ptr( arg_pack , (char *) run_path);
+    arg_pack_append_ptr( arg_pack , job );
     pthread_mutex_lock( &driver->submit_lock );
-    if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , void_arg) != 0) {
+    if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , arg_pack) != 0) {
       fprintf(stderr,"%s: failed to create run thread - aborting \n",__func__);
       abort();
     }

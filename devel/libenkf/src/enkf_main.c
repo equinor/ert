@@ -25,7 +25,7 @@
 #include <enkf_obs.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
-#include <void_arg.h>
+#include <arg_pack.h>
 #include <gen_kw_config.h>
 #include <gen_data_config.h>
 #include <history.h>
@@ -187,13 +187,13 @@ static void enkf_main_load_sub_ensemble(enkf_main_type * enkf_main , int mask , 
 
 
 static void * enkf_main_load_sub_ensemble__(void * __arg) {
-  void_arg_type * void_arg   = void_arg_safe_cast(__arg);
-  enkf_main_type * enkf_main = void_arg_get_ptr(void_arg , 0);
-  int mask                   = void_arg_get_int(void_arg , 1);
-  int report_step            = void_arg_get_int(void_arg , 2);
-  state_enum state           = void_arg_get_int(void_arg , 3);
-  int iens1                  = void_arg_get_int(void_arg , 4);
-  int iens2                  = void_arg_get_int(void_arg , 5);
+  arg_pack_type * arg_pack   = arg_pack_safe_cast(__arg);
+  enkf_main_type * enkf_main = arg_pack_iget_ptr(arg_pack , 0);
+  int mask                   = arg_pack_iget_int(arg_pack , 1);
+  int report_step            = arg_pack_iget_int(arg_pack , 2);
+  state_enum state           = arg_pack_iget_int(arg_pack , 3);
+  int iens1                  = arg_pack_iget_int(arg_pack , 4);
+  int iens2                  = arg_pack_iget_int(arg_pack , 5);
 
   enkf_main_load_sub_ensemble(enkf_main , mask , report_step , state , iens1 , iens2);
   return NULL;
@@ -206,14 +206,14 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
   int     sub_ens_size    = ensemble_config_get_size(enkf_main->ensemble_config) / cpu_threads;
   int     icpu;
   thread_pool_type * tp = thread_pool_alloc( cpu_threads );
-  void_arg_type ** void_arg_list = util_malloc( cpu_threads * sizeof * void_arg_list , __func__);
+  arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
   
   for (icpu = 0; icpu < cpu_threads; icpu++) {
-    void_arg_type * arg = void_arg_alloc6(void_pointer , int_value , int_value , int_value , int_value , int_value);
-    void_arg_pack_ptr(arg , 0 , enkf_main);
-    void_arg_pack_int(arg , 1 , mask);
-    void_arg_pack_int(arg , 2 , report_step);
-    void_arg_pack_int(arg , 3 , state);
+    arg_pack_type * arg = arg_pack_alloc();
+    arg_pack_append_ptr(arg , enkf_main);
+    arg_pack_append_int(arg , mask);
+    arg_pack_append_int(arg , report_step);
+    arg_pack_append_int(arg , state);
     
     {
       int iens1 =  icpu * sub_ens_size;
@@ -222,18 +222,19 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
       if (icpu == (cpu_threads - 1))
 	iens2 = ensemble_config_get_size(enkf_main->ensemble_config);
 
-      void_arg_pack_int(arg , 4 , iens1);
-      void_arg_pack_int(arg , 5 , iens2);
+      arg_pack_append_int(arg ,  iens1);
+      arg_pack_append_int(arg ,  iens2);
     }
+    arg_pack_list[icpu] = arg;
+    arg_pack_lock( arg );
     thread_pool_add_job( tp , enkf_main_load_sub_ensemble__ , arg);
-    void_arg_list[icpu] = arg;
   }
   thread_pool_join( tp );
   thread_pool_free( tp );
 
   for (icpu = 0; icpu < cpu_threads; icpu++) 
-    void_arg_free( void_arg_list[icpu] );
-  free(void_arg_list);
+    arg_pack_free( arg_pack_list[icpu] );
+  free(arg_pack_list);
 }
 
 
@@ -248,13 +249,13 @@ static void enkf_main_fwrite_sub_ensemble(enkf_main_type * enkf_main , int mask 
 
 
 static void * enkf_main_fwrite_sub_ensemble__(void *__arg) {
-  void_arg_type * void_arg   = void_arg_safe_cast(__arg);
-  enkf_main_type * enkf_main = void_arg_get_ptr(void_arg , 0);
-  int mask                   = void_arg_get_int(void_arg , 1);
-  int report_step            = void_arg_get_int(void_arg , 2);
-  state_enum state           = void_arg_get_int(void_arg , 3);
-  int iens1                  = void_arg_get_int(void_arg , 4);
-  int iens2                  = void_arg_get_int(void_arg , 5);
+  arg_pack_type * arg_pack   = arg_pack_safe_cast(__arg);
+  enkf_main_type * enkf_main = arg_pack_iget_ptr(arg_pack , 0);
+  int mask                   = arg_pack_iget_int(arg_pack , 1);
+  int report_step            = arg_pack_iget_int(arg_pack , 2);
+  state_enum state           = arg_pack_iget_int(arg_pack , 3);
+  int iens1                  = arg_pack_iget_int(arg_pack , 4);
+  int iens2                  = arg_pack_iget_int(arg_pack , 5);
 
   enkf_main_fwrite_sub_ensemble(enkf_main , mask , report_step , state , iens1 , iens2);
   return NULL;
@@ -266,14 +267,14 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
   int     sub_ens_size    = ensemble_config_get_size(enkf_main->ensemble_config) / cpu_threads;
   int     icpu;
   thread_pool_type * tp = thread_pool_alloc( cpu_threads );
-  void_arg_type ** void_arg_list = util_malloc( cpu_threads * sizeof * void_arg_list , __func__);
+  arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
   
   for (icpu = 0; icpu < cpu_threads; icpu++) {
-    void_arg_type * arg = void_arg_alloc6(void_pointer , int_value , int_value , int_value , int_value , int_value);
-    void_arg_pack_ptr(arg , 0 , enkf_main);
-    void_arg_pack_int(arg , 1 , mask);
-    void_arg_pack_int(arg , 2 , report_step);
-    void_arg_pack_int(arg , 3 , state);
+    arg_pack_type * arg = arg_pack_alloc();
+    arg_pack_append_ptr(arg , enkf_main);
+    arg_pack_append_int(arg , mask);
+    arg_pack_append_int(arg , report_step);
+    arg_pack_append_int(arg , state);
     
     {
       int iens1 =  icpu * sub_ens_size;
@@ -282,18 +283,19 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
       if (icpu == (cpu_threads - 1))
 	iens2 = ensemble_config_get_size(enkf_main->ensemble_config);
 
-      void_arg_pack_int(arg , 4 , iens1);
-      void_arg_pack_int(arg , 5 , iens2);
+      arg_pack_append_int(arg , iens1);
+      arg_pack_append_int(arg , iens2);
     }
+    arg_pack_list[icpu] = arg;
+    arg_pack_lock( arg );
     thread_pool_add_job( tp , enkf_main_fwrite_sub_ensemble__ , arg);
-    void_arg_list[icpu] = arg;
   }
   thread_pool_join( tp );
   thread_pool_free( tp );
 
   for (icpu = 0; icpu < cpu_threads; icpu++) 
-    void_arg_free( void_arg_list[icpu]);
-  free(void_arg_list);
+    arg_pack_free( arg_pack_list[icpu]);
+  free(arg_pack_list);
 }
 
 
@@ -379,10 +381,10 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   {
     pthread_t          queue_thread;
     job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-    void_arg_type * queue_args = void_arg_alloc2(void_pointer , int_value);
-    void_arg_pack_ptr(queue_args , 0 , job_queue);
-    void_arg_pack_int(queue_args , 1 , ens_size);
-    
+    arg_pack_type * queue_args = arg_pack_alloc();
+    arg_pack_append_ptr(queue_args , job_queue);
+    arg_pack_append_int(queue_args , ens_size);
+    arg_pack_lock( queue_args );
     pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
     {
@@ -406,7 +408,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
 
     pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      */
     job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
-    void_arg_free( queue_args );
+    arg_pack_free( queue_args );
   }
     
   {
