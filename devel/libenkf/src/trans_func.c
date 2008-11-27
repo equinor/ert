@@ -145,9 +145,9 @@ double trans_logunif(double x , const arg_pack_type * arg) {
 
 
 void trans_logunif_check(const char * func_name , const arg_pack_type * arg) {
-  double log_min = log(arg_pack_iget_double(arg , 0));
-  double log_max = log(arg_pack_iget_double(arg , 1));
-  if (log_min <= 0 || log_max <= 0)
+  double min = arg_pack_iget_double(arg , 0);
+  double max = arg_pack_iget_double(arg , 1);
+  if (min <= 0 || max <= 0)
     util_exit("When using:%s both arguments must be greater than zero.\n",func_name);
 }
 
