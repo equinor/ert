@@ -44,6 +44,10 @@ void scalar_get_data(const scalar_type * scalar , double * data) {
   memcpy(data , scalar->data , scalar_config_get_data_size(scalar->config) * sizeof * data);
 }
 
+double scalar_iget_double(const scalar_type * scalar , int index) {
+  return scalar->output_data[index];
+}
+
 
 void scalar_get_output_data(const scalar_type * scalar , double * output_data) {
   memcpy(output_data , scalar->output_data , scalar_config_get_data_size(scalar->config) * sizeof * output_data);

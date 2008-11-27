@@ -333,6 +333,18 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
 }
 
 
+double enkf_node(enkf_node_type * enkf_node , const char * key , bool * valid) {
+  if (enkf_node->user_get != NULL) {
+    enkf_node_ensure_memory(enkf_node);
+    return enkf_node->user_get(enkf_node->data , key , valid);
+  } else {
+    fprintf("** Warning: node:%s has no user_get implementation \n", enkf_node->node_key);
+    *valid = false;
+    return 0.0;
+  }
+}
+
+
 
 /**
    This function loads (internalizes) ECLIPSE results, the ecl_block
@@ -686,7 +698,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->deserialize  = field_deserialize__;
     node->freef        = field_free__;
     node->free_data    = field_free_data__;
-    node->iget         = field_iget__;
     break;
   case(EQUIL):
     node->alloc       = equil_alloc__;

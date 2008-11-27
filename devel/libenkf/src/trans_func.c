@@ -188,7 +188,6 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     arg_pack_append_int(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
-    trans_dunif_check("DUNIF" , arg_pack);
   } else if (strcmp(func_name , "ERRF") == 0) {
     /* ERRF min max skewness width */
     transf   = trans_errf;
@@ -196,7 +195,6 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
-    trans_errf_check("ERRF" , arg_pack);
   } else if (strcmp(func_name , "DERRF") == 0) {
     /* DERRF distribution */
     /* DUNIF steps min max skewness width */
@@ -211,7 +209,6 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     transf   = trans_logunif;
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
-    trans_logunif_check("LOGUNIF" , arg_pack);
   } else if (strcmp(func_name , "CONST") == 0) {
     /* Constant    */
     /* CONST value */
@@ -225,6 +222,21 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
   
   *_func_name = func_name;
   *_arg_pack  = arg_pack;
+
+  
+  /*******************************************************************/
+  /* Going through one more time to check that the input is valid    */
+  /*******************************************************************/
+  if (strcmp(func_name , "DUNIF") == 0) 
+    trans_dunif_check("DUNIF" , arg_pack);
+  else if (strcmp(func_name , "ERRF") == 0) 
+    trans_errf_check("ERRF" , arg_pack);
+  else if (strcmp(func_name , "DERRF") == 0) 
+    trans_derrf_check("DERRF" , arg_pack);
+  else if (strcmp(func_name , "LOGUNIF") == 0) 
+    trans_logunif_check("LOGUNIF" , arg_pack);
+  
+
   return transf;
 }
 

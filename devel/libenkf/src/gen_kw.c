@@ -274,13 +274,21 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 }
 
 
+
+/**
+   Will return 0.0 on invalid input, and set valid -> false. It is the
+   responsibility of the calling scope to check valid.
+*/
 double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * valid) {
-  bool    have_key = false;
-  int     index;
-  char ** key_list = gen_kw_config_get_name_list(gen_kw->config);
-  
-  
-  
+  int index = gen_kw_config_get_index(gen_kw->config , key);
+  if (index >= 0) {
+    *valid = true;
+    return scalar_iget_double(gen_kw->scalar , index);
+  } else {
+    *valid = false;
+    fprintf(stderr,"** Warning:could not lookup key:%s in gen_kw instance \n",key);
+    return 0.0;
+  }
 }
 
 
@@ -301,4 +309,5 @@ VOID_FREAD  (gen_kw)
 VOID_COPYC  (gen_kw)
 VOID_FREE   (gen_kw)
 VOID_ECL_WRITE(gen_kw)
+VOID_USER_GET(gen_kw)
 VOID_FPRINTF_RESULTS(gen_kw)

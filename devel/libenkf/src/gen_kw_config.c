@@ -98,7 +98,7 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
     do {
       char name[128];  /* UGGLY HARD CODED LIMIT */
       if (fscanf(stream , "%s" , name) != 1) 
-	util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
+        util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
       
       config->tagged_kw_list[line_nr] = util_alloc_sprintf("%s%s%s" , __START_TAG , name , __END_TAG);
       config->kw_list[line_nr] = util_alloc_string_copy(name);
@@ -162,6 +162,30 @@ const char * gen_kw_config_get_template_ref(const gen_kw_config_type * config) {
 const scalar_config_type * gen_kw_config_get_scalar_config(const gen_kw_config_type * config) {
   return config->scalar_config;
 }
+
+
+/**
+   Will return -1 if the index is invalid.
+*/
+int gen_kw_config_get_index(const gen_kw_config_type * config , const char * key) {
+  const int size   = gen_kw_config_get_data_size(config);
+  bool    have_key = false;
+  int     index    = 0;
+  
+  while (index < size && !have_key) {
+    if (strcmp(config->kw_list[index] , key) == 0)
+      have_key = true;
+    else
+      index++;
+  }
+  
+  if (have_key)
+    return index;
+  else
+    return -1;
+}
+
+
 
 
 /*****************************************************************/

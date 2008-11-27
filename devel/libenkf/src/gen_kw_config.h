@@ -25,6 +25,7 @@ const char         	  * gen_kw_config_get_name(const gen_kw_config_type * , int 
 const char         	  * gen_kw_config_get_tagged_name(const gen_kw_config_type * , int );
 char               	 ** gen_kw_config_get_name_list(const gen_kw_config_type *);
 const scalar_config_type  * gen_kw_config_get_scalar_config(const gen_kw_config_type * );
+int                         gen_kw_config_get_index(const gen_kw_config_type *  , const char * );
 
 VOID_FREE_HEADER(gen_kw_config);
 #ifdef __cplusplus

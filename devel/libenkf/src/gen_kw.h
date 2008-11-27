@@ -50,6 +50,7 @@ VOID_ALLOC_HEADER(gen_kw);
 VOID_ECL_WRITE_HEADER(gen_kw);
 VOID_REALLOC_DATA_HEADER(gen_kw);
 VOID_FPRINTF_RESULTS_HEADER(gen_kw);
+VOID_USER_GET_HEADER(gen_kw);
 #ifdef __cplusplus
 }
 #endif

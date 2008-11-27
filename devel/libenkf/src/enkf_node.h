@@ -81,6 +81,7 @@ typedef struct enkf_node_struct enkf_node_type;
 typedef void          (enkf_node_ftype1)           (enkf_node_type *);
 typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , arg_pack_type * );
 
+double           enkf_node(enkf_node_type *  , const char * , bool * );
 enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
 enkf_node_type * enkf_node_alloc_static(const char *);
 enkf_node_type * enkf_node_copyc(const enkf_node_type * );

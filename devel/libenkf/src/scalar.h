@@ -37,6 +37,7 @@ void             scalar_realloc_data(scalar_type * scalar);
 void             scalar_clear(scalar_type * scalar); 
 const double   * scalar_get_output_ref(const scalar_type * );
 const double   * scalar_get_data_ref  (const scalar_type * );
+double           scalar_iget_double(const scalar_type * , int );
 void             scalar_memcpy(scalar_type * , const scalar_type * );
 void             scalar_free_data(scalar_type *);
 
