@@ -247,19 +247,19 @@ conf_class_type * enkf_obs_get_obs_conf_class(
     const char * help_item_spec_error_mode = "The string ERROR_MODE gives the error mode for the observation.";
     conf_item_spec_type * item_spec_error_mode = conf_item_spec_alloc("ERROR_MODE", true, DT_STR);
 
-    conf_item_spec_add_restriction(item_spec_error_mode, "rel");
-    conf_item_spec_add_restriction(item_spec_error_mode, "abs");
-    conf_item_spec_add_restriction(item_spec_error_mode, "relmin");
+    conf_item_spec_add_restriction(item_spec_error_mode, "REL");
+    conf_item_spec_add_restriction(item_spec_error_mode, "ABS");
+    conf_item_spec_add_restriction(item_spec_error_mode, "RELMIN");
 
-    conf_item_spec_set_default_value(item_spec_error_mode, "rel");
+    conf_item_spec_set_default_value(item_spec_error_mode, "RELMIN");
     conf_item_spec_set_help(item_spec_error_mode, help_item_spec_error_mode);
 
-    const char * help_item_spec_error = "The positive floating number ERROR gives the standard deviation (abs) or the relative uncertainty (rel/relmin) of the observations.";
+    const char * help_item_spec_error = "The positive floating number ERROR gives the standard deviation (ABS) or the relative uncertainty (REL/RELMIN) of the observations.";
     conf_item_spec_type * item_spec_error     = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT);
     conf_item_spec_set_default_value(item_spec_error, "0.10");
     conf_item_spec_set_help(item_spec_error, help_item_spec_error);
 
-    const char * help_item_spec_error_min = "The positive floating point number ERROR_MIN gives the minimum value for the standard deviation of the observation when relmin is used.";
+    const char * help_item_spec_error_min = "The positive floating point number ERROR_MIN gives the minimum value for the standard deviation of the observation when RELMIN is used.";
     conf_item_spec_type * item_spec_error_min = conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT);
     conf_item_spec_set_default_value(item_spec_error_min, "0.10");
     conf_item_spec_set_help(item_spec_error_min, help_item_spec_error_min);
