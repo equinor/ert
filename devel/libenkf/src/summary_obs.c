@@ -140,13 +140,13 @@ summary_obs_type * summary_obs_alloc_from_HISTORY_OBSERVATION(
     else if(strcmp(error_mode, "REL") == 0)
       {
 	for(int restart_nr = 0; restart_nr < size; restart_nr++)
-	  std[restart_nr] = error * value[restart_nr];
+	  std[restart_nr] = error * abs(value[restart_nr]);
       }
     else if(strcmp(error_mode, "RELMIN") == 0)
       {
 	for(int restart_nr = 0; restart_nr < size; restart_nr++)
 	  {
-	    std[restart_nr] = error * value[restart_nr];
+	    std[restart_nr] = error * abs(value[restart_nr]);
 	    if(std[restart_nr] < error_min)
 	      std[restart_nr] = error_min;
 	  }
