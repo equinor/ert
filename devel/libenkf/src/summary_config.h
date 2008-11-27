@@ -9,6 +9,7 @@
 
 typedef struct summary_config_struct summary_config_type;
 
+ecl_sum_var_type       summary_config_get_var_type(const summary_config_type * );
 const           char * summary_config_get_var(const summary_config_type * );
 void                   summary_config_set_obs_config_file(summary_config_type * , const char * );
 const char           * summary_config_get_config_txt_file_ref(const summary_config_type * );

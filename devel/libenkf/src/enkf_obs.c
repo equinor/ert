@@ -13,11 +13,7 @@
 
 
 
-/** TODO
-    Currently, this has to be here since enkf_state accesses obs_hash explicitly. 
 
-    THIS SHOULD BE FIXED.
-*/
 struct enkf_obs_struct {
   /** A hash of obs_node_types indexed by user provided keys. */
   hash_type              * obs_hash; 

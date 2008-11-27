@@ -28,10 +28,17 @@ double trans_errf(double x, const arg_pack_type * arg) {
   double max      = arg_pack_iget_double(arg , 1);
   double skewness = arg_pack_iget_double(arg , 2);
   double width    = arg_pack_iget_double(arg , 3);
-  
-  double y = 0.5*(1 + erf((x + skewness)/(width * sqrt(2.0))));
+  double y;
 
+  y = 0.5*(1 + erf((x + skewness)/(width * sqrt(2.0))));
   return min + y * (max - min);
+}
+
+
+void trans_errf_check(const char * func_name , const arg_pack_type * arg) {
+  double width    = arg_pack_iget_double(arg , 3);
+  if (width <= 0)
+    util_exit("In function:%s the witdh must be > 0.",func_name);
 }
 
 
@@ -50,10 +57,24 @@ double trans_derrf(double x , const arg_pack_type * arg) {
   double max      = arg_pack_iget_double(arg , 2);
   double skewness = arg_pack_iget_double(arg , 3);
   double width    = arg_pack_iget_double(arg , 4);
+  double y;
   
-  double y = floor( steps * 0.5*(1 + erf((x + skewness)/(width * sqrt(2.0)))) / (steps - 1) );
+  y = floor( steps * 0.5*(1 + erf((x + skewness)/(width * sqrt(2.0)))) / (steps - 1) );
   return min + y * (max - min);
 }
+
+
+void trans_derrf_check(const char * func_name , const arg_pack_type * arg) {
+  int    steps    = arg_pack_iget_int(arg , 0);
+  double width    = arg_pack_iget_double(arg , 4);
+  if (width <= 0)
+    util_exit("In function:%s the witdh must be > 0.",func_name);
+
+  if (steps <= 1)
+    util_exit("In function:%s the number of steps must be greater than 1.",func_name);
+}
+
+
 
 
 
@@ -75,6 +96,14 @@ double trans_dunif(double x , const arg_pack_type * arg) {
   
   y = 0.5*(1 + erf(x/sqrt(2.0))); /* 0 - 1 */
   return (floor( y * steps) / (steps - 1)) * (max - min) + min;
+}
+
+
+void trans_dunif_check(const char * func_name , const arg_pack_type * arg) {
+  int    steps = arg_pack_iget_int(arg , 0);
+  
+  if (steps <= 1)
+    util_exit("When using function:%s steps must be > 1 \n",func_name);
 }
 
 
@@ -115,6 +144,14 @@ double trans_logunif(double x , const arg_pack_type * arg) {
 }
 
 
+void trans_logunif_check(const char * func_name , const arg_pack_type * arg) {
+  double log_min = log(arg_pack_iget_double(arg , 0));
+  double log_max = log(arg_pack_iget_double(arg , 1));
+  if (log_min <= 0 || log_max <= 0)
+    util_exit("When using:%s both arguments must be greater than zero.\n",func_name);
+}
+
+
 
 transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pack_type **_arg_pack) {
   char            * func_name;
@@ -151,6 +188,7 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     arg_pack_append_int(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
+    trans_dunif_check("DUNIF" , arg_pack);
   } else if (strcmp(func_name , "ERRF") == 0) {
     /* ERRF min max skewness width */
     transf   = trans_errf;
@@ -158,6 +196,7 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
+    trans_errf_check("ERRF" , arg_pack);
   } else if (strcmp(func_name , "DERRF") == 0) {
     /* DERRF distribution */
     /* DUNIF steps min max skewness width */
@@ -172,6 +211,7 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     transf   = trans_logunif;
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
+    trans_logunif_check("LOGUNIF" , arg_pack);
   } else if (strcmp(func_name , "CONST") == 0) {
     /* Constant    */
     /* CONST value */

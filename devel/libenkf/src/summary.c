@@ -85,7 +85,7 @@ bool summary_fwrite(const summary_type * summary , FILE * stream) {
     const int data_size = summary_config_get_data_size(config);
     
     enkf_util_fwrite_target_type(stream , SUMMARY);
-    fwrite(&data_size            , sizeof  data_size     , 1 , stream);
+    fwrite(&data_size , sizeof  data_size     , 1 , stream);
     enkf_util_fwrite(summary->data  , sizeof *summary->data    ,data_size , stream , __func__);
   }
   return true;
@@ -130,8 +130,12 @@ double summary_get(const summary_type * summary) {
 
 void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
   DEBUG_ASSERT(summary)
-  if (ecl_sum != NULL)
+  if (ecl_sum != NULL) {
+    if (summary_config_get_var_type(summary->config) == ecl_sum_well_var) {
+      /* .. check if the well is open.  */
+    }
     summary->data[0] = ecl_sum_get_general_var(ecl_sum , report_step  , summary_config_get_var(summary->config));
+  }
 }
 
 

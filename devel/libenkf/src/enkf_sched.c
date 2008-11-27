@@ -55,6 +55,9 @@ static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int repor
   node->report_stride = report_stride;
   node->enkf_active   = enkf_active;
   node->forward_model = (stringlist_type *) forward_model;
+  if (report_step1 == report_step2) 
+    fprintf(stderr,"** Warning: internal error : allocating enkf_sched_node %d -> %d \n" , report_step1 , report_step2);
+  
   return node;
 }
 
@@ -241,11 +244,16 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream, string
 static void enkf_sched_verify_list__(const enkf_sched_type * enkf_sched) {
   int index;
   for (index = 0; index < (enkf_sched->size - 1); index++) {
-    /*int report1      = enkf_sched->node_list[index]->report_step1;*/
+    int report1      = enkf_sched->node_list[index]->report_step1;
     int report2      = enkf_sched->node_list[index]->report_step2;
     int next_report1 = enkf_sched->node_list[index + 1]->report_step1;
     /*int next_report2 = enkf_sched->node_list[index + 1]->report_step2;*/
     
+    if (report1 == report2) {
+      enkf_sched_fprintf(enkf_sched , stdout);
+      util_abort("%s: enkf_sched step of zero length:%d - %d - that is not allowed \n",__func__ , report1 , report2);
+    }
+
     if (report2 != next_report1) {
       enkf_sched_fprintf(enkf_sched , stdout);
       util_abort("%s - abort \n",__func__);
@@ -328,13 +336,13 @@ static void enkf_sched_add_node(enkf_sched_type * enkf_sched , enkf_sched_node_t
 	    report_index++;
 	  
 	  report2 = report_index;
-
 	  if (index < enkf_sched->size) {
 	    enkf_sched_node_type * node  = enkf_sched->node_list[index];
 	    if (node->forward_model == enkf_sched->std_forward_model)
 	      forward_model = enkf_sched->std_forward_model;	    
 	    else 
 	      forward_model = stringlist_alloc_deep_copy(node->forward_model);
+
 	    new_node_list[new_global_index] = enkf_sched_node_alloc(report1 , report2 , node->report_stride , node->enkf_active ,forward_model);
 	  } else 
 	    new_node_list[new_global_index] = new_node;
@@ -353,6 +361,7 @@ static void enkf_sched_add_node(enkf_sched_type * enkf_sched , enkf_sched_node_t
   enkf_sched_verify_list__(enkf_sched);
   enkf_sched->last_report = util_int_max(enkf_sched->last_report , new_node->report_step2);
 }
+
 
 
 

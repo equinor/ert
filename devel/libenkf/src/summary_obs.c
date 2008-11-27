@@ -41,10 +41,10 @@ summary_obs_type * summary_obs_alloc(
   summary_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
   obs->summary_key   = util_alloc_string_copy(summary_key);
-  obs->size         = size;
-  obs->value        = util_alloc_copy(value       , size * sizeof * value           , __func__);
-  obs->std          = util_alloc_copy(std         , size * sizeof * std             , __func__);
-  obs->default_used = util_alloc_copy(default_used, size * sizeof * default_used    , __func__);
+  obs->size          = size;
+  obs->value         = util_alloc_copy(value       , size * sizeof * value           , __func__);
+  obs->std           = util_alloc_copy(std         , size * sizeof * std             , __func__);
+  obs->default_used  = util_alloc_copy(default_used, size * sizeof * default_used    , __func__);
 
   return obs;
 }
