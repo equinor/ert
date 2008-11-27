@@ -11,6 +11,16 @@
 
 #define MULTFLT_CONFIG_ID 881563
 
+struct multflt_config_struct {
+  int                   __type_id;
+  char                * ecl_kw_name;      
+  enkf_var_type         var_type;  
+  scalar_config_type  * scalar_config;
+  char               ** fault_names;
+};
+
+
+
 static multflt_config_type * __multflt_config_alloc_empty(int size) {
   multflt_config_type *config   = util_malloc(sizeof * config , __func__);
   config->__type_id     = MULTFLT_CONFIG_ID;
@@ -67,6 +77,11 @@ int multflt_config_get_data_size(const multflt_config_type * multflt_config) {
 }
 
 
+const char ** multflt_config_get_names(const multflt_config_type * config) {
+  return (const char **) config->fault_names;
+}
+
+
 const char * multflt_config_get_name(const multflt_config_type * config, int fault_nr) {
   const int size = multflt_config_get_data_size(config);
   if (fault_nr >= 0 && fault_nr < size) 
@@ -82,6 +97,36 @@ void multflt_config_activate(multflt_config_type * config , active_mode_type act
   /*
    */
 }
+
+
+scalar_config_type * multflt_config_get_scalar_config( const multflt_config_type * config) {
+  return config->scalar_config;
+}
+
+
+
+/**
+   Will return -1 if the index is invalid.
+*/
+int multflt_config_get_index(const multflt_config_type * config , const char * fault_name) {
+  const int size   = multflt_config_get_data_size(config);
+  bool    have_fault = false;
+  int     index    = 0;
+  
+  while (index < size && !have_fault) {
+    if (strcmp(config->fault_names[index] , fault_name) == 0)
+      have_fault = true;
+    else
+      index++;
+  }
+  
+  if (have_fault)
+    return index;
+  else
+    return -1;
+}
+
+
 
 /*****************************************************************/
 VOID_FREE(multflt_config)

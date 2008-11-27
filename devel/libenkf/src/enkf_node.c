@@ -338,7 +338,7 @@ double enkf_node(enkf_node_type * enkf_node , const char * key , bool * valid) {
     enkf_node_ensure_memory(enkf_node);
     return enkf_node->user_get(enkf_node->data , key , valid);
   } else {
-    fprintf("** Warning: node:%s has no user_get implementation \n", enkf_node->node_key);
+    fprintf(stderr , "** Warning: node:%s has no user_get implementation \n", enkf_node->node_key);
     *valid = false;
     return 0.0;
   }
@@ -658,6 +658,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->freef        	  = multflt_free__;
     node->free_data    	  = multflt_free_data__;
     node->fprintf_results = multflt_ensemble_fprintf_results__;
+    node->user_get        = multflt_user_get__;
     break;
   case(SUMMARY):
     node->ecl_load     = summary_ecl_load__;

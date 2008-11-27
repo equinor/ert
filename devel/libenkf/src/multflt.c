@@ -77,7 +77,7 @@ const double * multflt_get_output_ref(const multflt_type * multflt) {
 multflt_type * multflt_alloc(const multflt_config_type * config) {
   multflt_type * multflt  = malloc(sizeof *multflt);
   multflt->config = config;
-  multflt->scalar   = scalar_alloc(config->scalar_config); 
+  multflt->scalar = scalar_alloc(multflt_config_get_scalar_config(config)); 
   DEBUG_ASSIGN(multflt)
   return multflt;
 }
@@ -102,7 +102,7 @@ static void __multflt_ecl_write(const multflt_type * multflt, const char * eclfi
   {
     const multflt_config_type *config = multflt->config;
     const int data_size       = multflt_config_get_data_size(config);
-    const char **fault_names  = (const char **) config->fault_names;
+    const char **fault_names  = (const char **) multflt_config_get_names( multflt->config );
     const double *output_data = scalar_get_output_ref(multflt->scalar);
     int k;
     
@@ -286,6 +286,24 @@ const char * multflt_get_name(const multflt_type * multflt, int fault_nr) {
 }
 
 
+/**
+   Will return 0.0 on invalid input, and set valid -> false. It is the
+   responsibility of the calling scope to check valid.
+*/
+double multflt_user_get(const multflt_type * multflt, const char * key , bool * valid) {
+  int index = multflt_config_get_index(multflt->config , key);
+  if (index >= 0) {
+    *valid = true;
+    return scalar_iget_double(multflt->scalar , index);
+  } else {
+    *valid = false;
+    fprintf(stderr,"** Warning:could not lookup key:%s in multflt instance \n",key);
+    return 0.0;
+  }
+}
+
+
+
 
 MATH_OPS_SCALAR(multflt);
 VOID_ALLOC(multflt);
@@ -304,3 +322,4 @@ VOID_FREE(multflt)
 VOID_REALLOC_DATA(multflt)
 ALLOC_STATS_SCALAR(multflt)
 VOID_FPRINTF_RESULTS(multflt)
+VOID_USER_GET(multflt)

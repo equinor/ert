@@ -29,6 +29,8 @@ multflt_type   * multflt_alloc_mean(int , const multflt_type **);
 void             multflt_TEST();
 const char     * multflt_get_name(const multflt_type * , int );
 
+
+VOID_USER_GET_HEADER(multflt)
 VOID_FREE_DATA_HEADER(multflt)
 VOID_ECL_WRITE_HEADER  (multflt)
 VOID_FWRITE_HEADER  (multflt)
