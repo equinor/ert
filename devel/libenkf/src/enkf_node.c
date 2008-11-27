@@ -180,7 +180,7 @@ struct enkf_node_struct {
   fwrite_ftype        *fwrite_f;
   realloc_data_ftype  *realloc_data;
   free_data_ftype     *free_data;
-
+  user_get_ftype      *user_get;
   serialize_ftype     *serialize;
   deserialize_ftype   *deserialize;
 
@@ -194,9 +194,6 @@ struct enkf_node_struct {
   isqrt_ftype        		 * isqrt;
   iaddsqr_ftype      		 * iaddsqr;
   ensemble_fprintf_results_ftype * fprintf_results;
-  iget_ftype                     * iget;               /* The two last are a pair - the very last is interactive and used first. */
-  get_index_ftype                * get_index;
-  
   
   /******************************************************************/
   char               *node_key;       	    /* The (hash)key this node is identified with. */
@@ -580,21 +577,20 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
      Start by initializing all function pointers
      to NULL.
   */
-  node->realloc_data   = NULL;
-  node->alloc          = NULL;
-  node->ecl_write      = NULL;
-  node->ecl_load       = NULL;
-  node->fread_f        = NULL;
-  node->fwrite_f       = NULL;
-  node->copyc          = NULL;
-  node->initialize     = NULL;
-  node->serialize      = NULL;
-  node->deserialize    = NULL;
-  node->freef          = NULL;
-  node->free_data      = NULL;
-  node->fprintf_results= NULL;
-  node->iget           = NULL;
-  node->get_index      = NULL;
+  node->realloc_data   	= NULL;
+  node->alloc          	= NULL;
+  node->ecl_write      	= NULL;
+  node->ecl_load       	= NULL;
+  node->fread_f        	= NULL;
+  node->fwrite_f       	= NULL;
+  node->copyc          	= NULL;
+  node->initialize     	= NULL;
+  node->serialize      	= NULL;
+  node->deserialize    	= NULL;
+  node->freef          	= NULL;
+  node->free_data      	= NULL;
+  node->fprintf_results	= NULL;
+  node->user_get       	= NULL;
 
   switch (impl_type) {
   case(GEN_KW):
@@ -610,6 +606,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->freef        	  = gen_kw_free__;
     node->free_data    	  = gen_kw_free_data__;
     node->fprintf_results = gen_kw_ensemble_fprintf_results__;
+    node->user_get        = gen_kw_user_get__; 
     break;
   case(MULTZ):
     node->realloc_data = multz_realloc_data__;

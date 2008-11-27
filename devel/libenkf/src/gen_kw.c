@@ -268,9 +268,21 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
 }
 #undef PRINT_LINE
 
+
 const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
   return  gen_kw_config_get_name(gen_kw->config , kw_nr);
 }
+
+
+double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * valid) {
+  bool    have_key = false;
+  int     index;
+  char ** key_list = gen_kw_config_get_name_list(gen_kw->config);
+  
+  
+  
+}
+
 
 
 /******************************************************************/
