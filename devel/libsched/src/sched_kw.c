@@ -130,7 +130,7 @@ static void sched_kw_name_assert(const char * kw_name , FILE * stream)
   for (int i = 0; i < strlen(kw_name); i++)
     if (isspace(kw_name[i])) {
       fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
-      util_abort("%s: %s is not a valid schedule kw - aborting.\n",__func__ , kw_name);
+      util_abort("%s: \"%s\" is not a valid schedule kw - aborting.\n",__func__ , kw_name);
     }
 }
 
