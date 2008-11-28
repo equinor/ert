@@ -164,7 +164,7 @@ void prefix ## _free__(void * void_arg) {         \
 
 #define VOID_USER_GET(prefix)                                                     \
 double prefix ## _user_get__(void * void_arg , const char * key , bool * valid) { \
-   prefix ## _user_get((prefix ## _type *) void_arg , key , valid);               \
+   return prefix ## _user_get((prefix ## _type *) void_arg , key , valid);               \
 }
 
 #define VOID_USER_GET_HEADER(prefix) double prefix ## _user_get__(void * , const char * , bool *);
