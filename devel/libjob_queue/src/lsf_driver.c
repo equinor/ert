@@ -147,7 +147,8 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
 }
 
 /*
-  The xStatoil bsub wrapper creates problems for the resource specification.
+  Essential to source /prog/LSF/conf/cshrc.lsf before invoking lf
+  functions on xStatoil.
 */
 
 
@@ -158,15 +159,7 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
 
 
   if (resource_request != NULL) 
-#ifdef xStatoil
-    {
-       char * cmd = util_alloc_sprintf("bsub -o %s -q %s -J %s -R %s %s %s > %s " , lsf_stdout , lsf_queue , job_name , resource_request , submit_cmd , run_path , tmp_file);
-       system(cmd);
-       free(cmd);
-    }
-#else
     util_vfork_exec("bsub" , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
-#endif
   else
     util_vfork_exec("bsub" , 8 , (const char *[8]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
 
