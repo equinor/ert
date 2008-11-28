@@ -131,10 +131,22 @@ double summary_get(const summary_type * summary) {
 void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
   DEBUG_ASSERT(summary)
   if (ecl_sum != NULL) {
-    if (summary_config_get_var_type(summary->config) == ecl_sum_well_var) {
-      /* .. check if the well is open.  */
-    }
-    summary->data[0] = ecl_sum_get_general_var(ecl_sum , report_step  , summary_config_get_var(summary->config));
+    const char * var_key            = summary_config_get_var(summary->config);
+    const ecl_sum_var_type var_type = summary_config_get_var_type(summary->config);
+    if (var_type == ecl_sum_well_var) {
+      /* .. check if the well is defined in the smspec file (i.e. if it is open). */
+      if (ecl_sum_has_general_var(ecl_sum , var_key))
+	summary->data[0] = ecl_sum_get_general_var(ecl_sum , report_step  , var_key);
+      else 
+	/* 
+	   The summary object does not have this well - probably
+	   meaning that it has not yet opened. If the user has
+	   mis-spelled the name, we will go through the whole
+	   simulation without detecting that error.
+	*/
+	summary->data[0] = 0;
+    } else
+      summary->data[0] = ecl_sum_get_general_var(ecl_sum , report_step  ,var_key );
   }
 }
 

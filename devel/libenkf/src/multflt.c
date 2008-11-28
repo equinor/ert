@@ -286,6 +286,7 @@ const char * multflt_get_name(const multflt_type * multflt, int fault_nr) {
 }
 
 
+
 /**
    Will return 0.0 on invalid input, and set valid -> false. It is the
    responsibility of the calling scope to check valid.
@@ -297,7 +298,7 @@ double multflt_user_get(const multflt_type * multflt, const char * key , bool * 
     return scalar_iget_double(multflt->scalar , index);
   } else {
     *valid = false;
-    fprintf(stderr,"** Warning:could not lookup key:%s in multflt instance \n",key);
+    fprintf(stderr,"** Warning:could not lookup fault:%s in multflt instance.\n",key);
     return 0.0;
   }
 }
