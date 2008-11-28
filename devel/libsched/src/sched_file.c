@@ -319,6 +319,10 @@ int sched_file_get_num_restart_files(const sched_file_type * sched_file)
 void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_file, const char * file)
 {
   FILE * stream = util_fopen(file, "w");
+  int num_restart_files = sched_file_get_num_restart_files(sched_file);
+  if(last_restart_file < 0 || last_restart_file >= num_restart_files)
+    util_abort("%s: Restart nr is out of bounds. Got %i, but need integer in [0,%i].\n", __func__, last_restart_file, num_restart_files-1);
+
   for(int i=0; i<=last_restart_file; i++)
   {
     list_node_type * sched_block_node = list_iget_node(sched_file->blocks, i);

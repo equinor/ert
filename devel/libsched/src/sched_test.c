@@ -15,7 +15,6 @@ int main(int argc, char **argv)
   int    last_restart_file;
 
   FILE * stream     = NULL;
-  time_t start_time = util_make_date(1,1,2000);
 
   sched_file_type * sched_file = NULL;
   history_type    * history    = NULL;
@@ -24,7 +23,7 @@ int main(int argc, char **argv)
   // First verify that we can read a SCHEDULE file.
   sched_file = sched_file_alloc();
   printf("-- Loading %s..\n", argv[1]);
-  sched_file_parse(sched_file, start_time , argv[1]);
+  sched_file_parse(sched_file, -1 , argv[1]);
 
 
 
