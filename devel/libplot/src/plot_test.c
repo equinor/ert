@@ -15,7 +15,7 @@ int main(int argc, const char **argv)
     item2 = plot_alloc();
     plot_initialize(item2, "png", "martin.png");
 
-    for (i = 0; i <= N; i++) {
+    for (i = 0; i < N; i++) {
 	x[i] = i * period / N;
 	y[i] = sin(x[i]);
     }
@@ -23,7 +23,7 @@ int main(int argc, const char **argv)
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
     plot_dataset_add(item2, d);
 
-    for (i = 0; i <= N; i++) {
+    for (i = 0; i < N; i++) {
 	x[i] = i * period / N;
 	y[i] = cos(x[i]);
     }
@@ -35,7 +35,7 @@ int main(int argc, const char **argv)
      * Create yet another cos, but with another angular frequency (\omega
      * = 3) 
      */
-    for (i = 0; i <= N; i++) {
+    for (i = 0; i < N; i++) {
 	x[i] = i * period / N;
 	y[i] = cos(3 * x[i]);
     }
@@ -48,7 +48,7 @@ int main(int argc, const char **argv)
      */
     item = plot_alloc();
     plot_initialize(item, "jpeg", "plot.jpg");
-    for (i = 0; i <= N; i++) {
+    for (i = 0; i < N; i++) {
 	x[i] = i * period / N;
 	y[i] = exp(x[i]);
     }
@@ -57,7 +57,7 @@ int main(int argc, const char **argv)
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
     plot_dataset_add(item, d);
     plot_set_labels(item, "x-axis", "y-axis", "f(x) = exp(x)", BROWN);
-
+    
     /* This demonstrates that order doesnt mather when we use 
      * the correct outputstreams, which is handeled by the lib.
      */
