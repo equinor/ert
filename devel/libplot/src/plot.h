@@ -54,7 +54,7 @@ typedef struct plot_struct plot_type;
  */
 typedef enum plot_style_enum {
     BLANK = 0,
-    LINE = 1,
+    LINE  = 1,
     POINT = 2
 } plot_style_type;
 

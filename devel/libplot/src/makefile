@@ -21,9 +21,9 @@ all: $(LIB)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
-	gcc $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) plot_test.c -o plot_test.x $(LIB_PATH) $(LIB_LINK)
-	gcc $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) summary_plot.c -o summary_plot.x $(LIB_PATH) $(LIB_LINK)
-	gcc $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) simple.c -o simple.x $(LIB_PATH) $(LIB_LINK)
+	gcc4  $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) -rdynamic -Wl,-rpath $(LIBPLPLOT_HOME)/lib plot_test.c -o plot_test.x $(LIB_PATH) $(LIB_LINK)
+	gcc4  $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) -rdynamic -Wl,-rpath $(LIBPLPLOT_HOME)/lib summary_plot.c -o summary_plot.x $(LIB_PATH) $(LIB_LINK)
+	gcc4  $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE) $(TARGET_INCLUDE) $(COMPILE_INCLUDE) -rdynamic -Wl,-rpath $(LIBPLPLOT_HOME)/lib simple.c -o simple.x $(LIB_PATH) $(LIB_LINK)
 
 clean:
 	rm -f *.o *~ *.x

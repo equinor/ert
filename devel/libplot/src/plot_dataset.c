@@ -119,7 +119,6 @@ plot_dataset_set_data(plot_dataset_type * d, const PLFLT * x, const PLFLT * y,
 		      int len, plot_color_type c, plot_style_type s)
 {
     assert(d != NULL);
-    len = len + 1;
     d->xvalue = util_alloc_copy(x , len * sizeof * x , __func__);
     if (y) 
       d->yvalue = util_alloc_copy(y , len * sizeof * y , __func__);
@@ -127,7 +126,7 @@ plot_dataset_set_data(plot_dataset_type * d, const PLFLT * x, const PLFLT * y,
       d->yvalue = NULL;
 
 
-    d->length = len - 1;
+    d->length = len;
     d->color = c;
     d->style = s;
     d->step = 0;
