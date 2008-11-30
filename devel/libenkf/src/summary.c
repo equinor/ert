@@ -128,6 +128,15 @@ double summary_get(const summary_type * summary) {
 }
 
 
+double summary_user_get(const summary_type * summary , const char * index_key , bool * valid) {
+  DEBUG_ASSERT(summary)
+  *valid = true;
+  return summary->data[0];
+}
+
+
+
+
 void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
   DEBUG_ASSERT(summary)
   if (ecl_sum != NULL) {
@@ -166,4 +175,4 @@ VOID_COPYC     (summary)
 VOID_SERIALIZE(summary)
 VOID_DESERIALIZE(summary)
 VOID_ECL_LOAD(summary)
-
+VOID_USER_GET(summary)

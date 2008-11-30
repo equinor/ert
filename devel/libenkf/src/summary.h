@@ -22,5 +22,5 @@ VOID_DESERIALIZE_HEADER  (summary)
 VOID_FWRITE_HEADER (summary)
 VOID_FREAD_HEADER  (summary)
 VOID_ECL_LOAD_HEADER(summary);
-
+VOID_USER_GET_HEADER(summary);
 #endif

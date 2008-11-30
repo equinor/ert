@@ -45,6 +45,8 @@ void scalar_get_data(const scalar_type * scalar , double * data) {
 }
 
 double scalar_iget_double(const scalar_type * scalar , int index) {
+  if (!scalar->output_valid)
+    scalar_transform( scalar );
   return scalar->output_data[index];
 }
 

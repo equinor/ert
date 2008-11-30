@@ -333,7 +333,7 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
 }
 
 
-double enkf_node(enkf_node_type * enkf_node , const char * key , bool * valid) {
+double enkf_node_user_get(enkf_node_type * enkf_node , const char * key , bool * valid) {
   if (enkf_node->user_get != NULL) {
     enkf_node_ensure_memory(enkf_node);
     return enkf_node->user_get(enkf_node->data , key , valid);
@@ -671,6 +671,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->deserialize  = summary_deserialize__;
     node->freef        = summary_free__;
     node->free_data    = summary_free_data__;
+    node->user_get     = summary_user_get__; 
     break;
   case(HAVANA_FAULT):
     node->realloc_data 	  = havana_fault_realloc_data__;

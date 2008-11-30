@@ -393,6 +393,48 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   return ensemble_config;
 }
 
+/**
+   This function takes a string like this: "PRESSURE:1,4,7" - it
+   splits the string on ":" and tries to lookup a config object with
+   that key. For the general string A:B:C:D it will try consecutively
+   the keys: A, A:B, A:B:C, A:B:C:D. If a config object is found it is
+   returned, otherwise NULL is returned.
+
+   The last argument is the pointer to a string which will be updated
+   with the node-spesific part of the full key. So for instance with
+   the example "PRESSURE:1,4,7", the index_key will contain
+   "1,4,7". If the full full_key is used to find an object index_key
+   will be NULL, that also applies if no object is found.
+*/
+
+   
+
+const enkf_config_node_type * ensemble_config_user_get_node(const ensemble_config_type * config , const char  * full_key, char ** index_key ) {
+  const enkf_config_node_type * node = NULL;
+  char ** key_list;
+  int     keys;
+  int     key_length = 1;
+  int offset;
+  
+  *index_key = NULL;
+  util_split_string(full_key , ":" , &keys , &key_list);
+  while (node == NULL && key_length <= keys) {
+    char * current_key = util_alloc_joined_string( (const char **) key_list , key_length , ":");
+    if (ensemble_config_has_key(config , current_key))
+      node = ensemble_config_get_node(config , current_key);
+    else
+      key_length++;
+    offset = strlen( current_key );
+    free( current_key );
+  }
+  if (node != NULL) {
+    if (offset < strlen( full_key ))
+      *index_key = util_alloc_string_copy(&full_key[offset+1]);
+  }
+  
+  util_free_stringlist(key_list , keys);
+  return node;
+}
 
 
 
