@@ -148,6 +148,7 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
 	    y[this_size] = enkf_node_user_get( node , key_index , &valid);
 	    if (valid) {
 	      x[this_size] = step;
+	      printf("%02d: %g,%g\n",this_size,x[this_size] , y[this_size]);
 	      this_size++;
 	    }
 	  }
