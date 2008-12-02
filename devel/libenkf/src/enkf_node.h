@@ -38,7 +38,7 @@ typedef void   	      (deserialize_ftype)       (void *       	       ,  /* Node
 						 const serial_vector_type * );
                                                  
 
-typedef double        (user_get_ftype)                  (const void * , const char * , bool *);
+typedef double        (user_get_ftype)                  (void * , const char * , bool *);
 typedef void * 	      (alloc_ftype)                	(const void *);
 typedef void   	      (fread_ftype)                	(      void *  , FILE *);
 typedef bool   	      (fwrite_ftype)               	(const void *  , FILE *);

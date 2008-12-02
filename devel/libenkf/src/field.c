@@ -1255,7 +1255,11 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 
 /**
   Here, index_key is i a tree digit string with the i, j and k indicies of
-  the requested block separated by comma. E.g., 1,1,1
+  the requested block separated by comma. E.g., 1,1,1. 
+
+  The string is supposed to contain indices in the range [1...nx] ,
+  [1..ny] , [1...nz], they are immediately converted to C-based zero
+  offset indices.
 */
 double field_user_get(const field_type * field, const char * index_key, bool * valid)
 {
@@ -1272,7 +1276,7 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
     int i = indices[0] - 1;
     int j = indices[1] - 1;
     int k = indices[2] - 1;
-
+    
     if(field_ijk_valid(field, i, j, k))
       val =  field_ijk_get_double(field, i , j , k);
     else

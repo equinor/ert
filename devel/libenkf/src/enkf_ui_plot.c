@@ -13,7 +13,7 @@
 #include <plot_dataset.h>
 #include <enkf_ui_util.h>
 #include <ensemble_config.h>
-
+#include <msg.h>
 
 
 
@@ -86,6 +86,7 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
     {
       plot_type * plot = __plot_alloc("x-akse","y-akse",user_key);
       bool first = true;
+      msg_type * msg;
       state_enum              plot_state;
       const int last_report = enkf_sched_get_last_report(enkf_sched);
       const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
@@ -121,11 +122,15 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
 
       x = util_malloc( size * sizeof * x, __func__);
       y = util_malloc( size * sizeof * y, __func__);
-
-
+      msg = msg_alloc("Loading member/step: ");
+      msg_show(msg);
       for (iens = iens1; iens <= iens2; iens++) {
+	char label[32];
+
 	int this_size = 0;
 	for (step = step1; step <= step2; step++) {
+	  sprintf(label , "%03d/%03d" , iens , step);
+	  msg_update( msg , label);
 	  /* Skipping forecast. */
 	  if (enkf_fs_has_node(fs , config_node , step , iens , analyzed)) {
 	    bool valid;
@@ -138,10 +143,10 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
 	  }
 	}
 	/*stupid_plot(this_size , x , y , viewer);*/
-	
 	__plot_add_data(plot , this_size , x , y , first);
 	first = false;
       }
+      msg_free(msg , true);
       __plot_show(plot , viewer);
     }
   }

@@ -340,6 +340,17 @@ inline int field_config_active_index(const field_config_type * config , int i , 
 }
 
 
+/** 
+    This function checks that i,j,k are in the intervals [0..nx),
+    [0..ny) and [0..nz). It does *NOT* check if the corresponding
+    index is active.
+*/
+
+
+bool field_config_ijk_valid(const field_config_type * config , int i , int j , int k) {
+  return ecl_grid_ijk_valid(config->grid , i,j,k);
+}
+
 
 
 

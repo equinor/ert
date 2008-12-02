@@ -336,8 +336,8 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
 
    If the user has asked for something which does not exist the
    function SHOULD NOT FAIL. It should set *valid = false, and return
-   0. To check the value *valid is the responsability of the calling
-   scope.
+   0. To check the value of *valid is the responsability of the
+   calling scope.
 */
 
 

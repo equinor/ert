@@ -105,6 +105,7 @@ int                     field_config_get_byte_size(const field_config_type * );
 int                     field_config_get_sizeof_ctype(const field_config_type * );
 int                     field_config_active_index(const field_config_type * , int , int , int );
 void                    field_config_get_ijk(const field_config_type * , int , int * , int * , int *);
+bool                    field_config_ijk_valid(const field_config_type *  , int  , int  , int );
 bool                    field_config_active_cell(const field_config_type *  , int , int , int);
 field_init_type         field_config_get_init_type(const field_config_type * );
 char                  * field_config_alloc_init_file(const field_config_type * , int );
