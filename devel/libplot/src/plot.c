@@ -48,8 +48,10 @@ struct plot_struct {
   const char *title;	/**< Plot title */
   plot_color_type label_color;  /**< Color for the labels */
   
-  int height;	/**< The height of your plot window */
-  int width; /**< The width of your plot window */
+  int 	 height;		/**< The height of your plot window */
+  int 	 width;         	/**< The width of your plot window */
+  double xmin,xmax,ymin,ymax;   /**< Ranges for plot. */ 
+  bool   __use_autorange;       
 };
 
 
@@ -82,8 +84,9 @@ plot_type *plot_alloc()
     item->ylabel = NULL;
     item->title = NULL;
     item->datasets = list_alloc();
-    item->height = DEFAULT_HEIGHT;
-    item->width = DEFAULT_WIDTH;
+    item->height 	  = DEFAULT_HEIGHT;
+    item->width  	  = DEFAULT_WIDTH;
+    item->__use_autorange = true;
     return item;
 }
 
@@ -254,7 +257,7 @@ void plot_errorbar_data(plot_type * item)
 
 	    next_node = list_node_get_next(node);
 	    tmp = list_node_value_ptr(node);
-	    y = plot_datset_get_vector_y(tmp);
+	    y = plot_dataset_get_vector_y(tmp);
 	    if (!flag) {
 		max = y[i];
 		min = y[i];
@@ -276,7 +279,7 @@ void plot_errorbar_data(plot_type * item)
 
     assert(tmp_len > 0);
     assert(ymax != NULL && ymax != NULL);
-    plerry(tmp_len, plot_datset_get_vector_x(ref), ymin, ymax);
+    plerry(tmp_len, plot_dataset_get_vector_x(ref), ymin, ymax);
     util_safe_free(ymin);
     util_safe_free(ymax);
 }
@@ -308,7 +311,7 @@ void plot_std_data(plot_type * item, bool mean)
 
 	    next_node = list_node_get_next(node);
 	    tmp = list_node_value_ptr(node);
-	    y = plot_datset_get_vector_y(tmp);
+	    y = plot_dataset_get_vector_y(tmp);
 	    j++;
 	    vec = realloc(vec, sizeof(PLFLT) * (j + 1));
 	    vec[j] = y[i];
@@ -331,12 +334,12 @@ void plot_std_data(plot_type * item, bool mean)
 
     assert(tmp_len > 0);
     assert(ymax != NULL && ymax != NULL);
-    plerry(tmp_len, plot_datset_get_vector_x(ref), ymin, ymax);
+    plerry(tmp_len, plot_dataset_get_vector_x(ref), ymin, ymax);
     if (mean) {
 	plot_dataset_type *d;
 
 	d = plot_dataset_alloc();
-	plot_dataset_set_data(d, plot_datset_get_vector_x(ref), vec_mean,
+	plot_dataset_set_data(d, plot_dataset_get_vector_x(ref), vec_mean,
 			      tmp_len, RED, LINE);
 	plot_dataset(item, d);
 	plot_dataset_free(d);
@@ -416,52 +419,20 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
  * Find the extrema values in the plot item, checks all added datasets.
  */
 
-void plot_get_extrema(plot_type * item, double *x_max, double *y_max,
-		      double *x_min, double *y_min) {
+void plot_get_extrema(plot_type * item, double *x_min, double *x_max,double *y_min, double *y_max) {
+  bool first_pass = true;
   list_node_type *node, *next_node;
-  double tmp_x_max = 0;
-  double tmp_y_max = 0;
-  double tmp_x_min = 0;
-  double tmp_y_min = 0;
-  double *x, *y;
-  int i;
-  bool flag = false;
- 
   assert(item != NULL);
   node = list_get_head(plot_get_datasets(item));
   while (node != NULL) {
     plot_dataset_type *tmp;
     next_node = list_node_get_next(node);
     tmp = list_node_value_ptr(node);
-    x = plot_datset_get_vector_x(tmp);
-    y = plot_datset_get_vector_y(tmp);
-    for (i = 0; i <= plot_datset_get_length(tmp); i++) {
-      if (!flag) {
-	tmp_y_max = y[i];
-	tmp_y_min = y[i];
-	tmp_x_max = x[i];
-	tmp_x_min = x[i];
-	flag = true;
-      }
-      if (y[i] > tmp_y_max)
-	tmp_y_max = y[i];
-      if (y[i] < tmp_y_min)
-	tmp_y_min = y[i];
-      if (x[i] > tmp_x_max) 
-	tmp_x_max = x[i];
-      if (x[i] < tmp_x_min)
-	tmp_x_min = x[i];
-    }
+    
+    plot_dataset_update_extrema(tmp , first_pass , x_min , x_max , y_min , y_max);
     node = next_node;
+    first_pass = false;
   }
-  if (x_max)
-    *x_max = tmp_x_max;
-  if (y_max)
-    *y_max = tmp_y_max;
-  if (x_min)
-    *x_min = tmp_x_min;
-  if (y_min)
-    *y_min = tmp_y_min;
 }
 
 
