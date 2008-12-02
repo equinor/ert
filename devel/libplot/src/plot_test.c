@@ -19,7 +19,7 @@ int main(int argc, const char **argv)
 	x[i] = i * period / N;
 	y[i] = sin(x[i]);
     }
-    d = plot_dataset_alloc();
+    d = plot_dataset_alloc( false , false);
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
     plot_dataset_add(item2, d);
 
@@ -27,7 +27,7 @@ int main(int argc, const char **argv)
 	x[i] = i * period / N;
 	y[i] = cos(x[i]);
     }
-    d = plot_dataset_alloc();
+    d = plot_dataset_alloc( false , false);
     plot_dataset_set_data(d, x, y, N, CYAN, LINE);
     plot_dataset_add(item2, d);
 
@@ -39,7 +39,7 @@ int main(int argc, const char **argv)
 	x[i] = i * period / N;
 	y[i] = cos(3 * x[i]);
     }
-    d = plot_dataset_alloc();
+    d = plot_dataset_alloc( false , false);
     plot_dataset_set_data(d, x, y, N, RED, POINT);
     plot_dataset_add(item2, d);
 
@@ -53,7 +53,7 @@ int main(int argc, const char **argv)
 	y[i] = exp(x[i]);
     }
 
-    d = plot_dataset_alloc();
+    d = plot_dataset_alloc( false , false);
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
     plot_dataset_add(item, d);
     plot_set_labels(item, "x-axis", "y-axis", "f(x) = exp(x)", BROWN);
@@ -62,8 +62,8 @@ int main(int argc, const char **argv)
      * the correct outputstreams, which is handeled by the lib.
      */
     plot_set_labels(item2, "x-axis", "y-axis", "#frHarmonic waves", BLACK);
-    plot_set_viewport(item2, 0, period, -1, 1);
-    plot_set_viewport(item, 0, period, 0, 250);
+    plot_set_viewport(item2);
+    plot_set_viewport(item);
     plot_data(item);
     plot_free(item);
     plot_data(item2);
