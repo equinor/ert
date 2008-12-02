@@ -24,7 +24,6 @@ struct enkf_obs_struct {
 static conf_class_type * enkf_obs_get_obs_conf_class();
 
 
-static
 enkf_obs_type * enkf_obs_alloc(
 )
 {
@@ -114,6 +113,8 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
   int num_restarts = history_get_num_restarts(hist);
 
   enkf_obs_type      * enkf_obs        = enkf_obs_alloc();
+  if(config_file == NULL)
+    return enkf_obs;
   conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
   conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file); 
 
@@ -408,7 +409,9 @@ conf_class_type * enkf_obs_get_obs_conf_class(
    observations, these are then added to the state vector in
    enkf_main.
 */
-stringlist_type * enkf_obs_alloc_summary_vars(enkf_obs_type * enkf_obs) {
+stringlist_type * enkf_obs_alloc_summary_vars(
+  enkf_obs_type * enkf_obs)
+{
   stringlist_type * summary_vars = stringlist_alloc_new();
   char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
   while ( key != NULL) {

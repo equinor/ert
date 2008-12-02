@@ -1252,6 +1252,36 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 }
 
 
+/**
+  Here, index_key is i a tree digit string with the i, j and k indicies of
+  the requested block separated by comma. E.g., 1,1,1
+
+*/
+double field_user_get(const field_type * field, const char * index_key, bool * valid)
+{
+  double   val = 0.0;
+  int      length;
+  int    * indices = util_sscanf_alloc_active_list(index_key, &length);
+
+  if(length != 3)
+    *valid = false;
+  else
+  {
+    *valid = true;
+
+    int i = indices[0];
+    int j = indices[1];
+    int k = indices[1];
+
+    if(field_ijk_valid(field, i, j, k))
+      val =  field_ijk_get_double(field, i , j , k);
+    else
+      *valid = false;
+  }
+
+  free(indices);
+  return val;
+}
 
 /**
    A serious backdoor - if you need this function you are working on a
@@ -1286,6 +1316,7 @@ VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);
 VOID_CLEAR(field);
+VOID_USER_GET(field)
 
 
 

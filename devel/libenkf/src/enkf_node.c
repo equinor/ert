@@ -700,6 +700,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->deserialize  = field_deserialize__;
     node->freef        = field_free__;
     node->free_data    = field_free_data__;
+    node->user_get     = field_user_get__;
     break;
   case(EQUIL):
     node->alloc       = equil_alloc__;

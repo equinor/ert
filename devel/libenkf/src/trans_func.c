@@ -205,7 +205,7 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);
   } else if (strcmp(func_name , "LOGUNIF") == 0) {
-    /* ULOG min max */
+    /* LOGUNIF min max */
     transf   = trans_logunif;
     arg_pack_append_double(arg_pack , 0);
     arg_pack_append_double(arg_pack , 0);

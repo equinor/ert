@@ -69,6 +69,7 @@ VOID_FWRITE_HEADER (field);
 VOID_FREAD_HEADER  (field);
 VOID_CLEAR_HEADER (field);
 VOID_ECL_LOAD_HEADER(field);
+VOID_USER_GET_HEADER(field);
 
 #ifdef __cplusplus
 }
