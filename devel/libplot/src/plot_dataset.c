@@ -8,14 +8,46 @@
  * @brief Contains information about a dataset.
  */
 struct plot_dataset_struct {
-    PLFLT *xvalue; /**< Vector containing x-axis data */
-    PLFLT *yvalue; /**< Vector containing y-axis data */
-    int length;	/**< Length of the vectors defining the axis */
-    plot_style_type style; /**< The graph style */
-    plot_color_type color; /**< The graph color */
-    int step; /**< Helper value when using animation */
-    bool finished; /**< Helper value when using animation */
+  double *x; 	   	   /**< Vector containing x-axis data */
+  double *y; 	   	   /**< Vector containing y-axis data */
+  double *std;             /**< Vector containing std (of y) - can be NULL. */
+  bool    has_std;         /**/
+  bool    data_owner;      /**< Whether this instance owns x,y,std or just holds a reference. */
+  int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if data_owner == false. */
+  int size;	   	   /**< Length of the vectors defining the axis */
+  plot_style_type style;   /**< The graph style */
+  plot_color_type color;   /**< The graph color */
+  int step;      	   /**< Helper value when using animation */
+  bool finished; 	   /**< Helper value when using animation */
 };
+
+
+static void plot_dataset_realloc_data(plot_dataset_type * d, int new_alloc_size) {
+  d->x = util_realloc(d->x , new_alloc_size * sizeof * d->x , __func__);
+  d->y = util_realloc(d->y , new_alloc_size * sizeof * d->y , __func__);
+  if (d->has_std)
+    d->std = util_realloc(d->std , new_alloc_size * sizeof * d->std , __func__);
+  d->alloc_size = new_alloc_size;
+}
+
+
+static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * std) {
+  if (!d->data_owner) 
+    util_abort("%s: dataset has shared data - can not append \n",__func__);
+
+  if (d->alloc_size < (d->size + size))
+    plot_dataset_realloc_data(d , 2*(d->size + size));
+
+  memcpy(&d->x[d->size] , x , size * sizeof * x);
+  memcpy(&d->y[d->size] , y , size * sizeof * y);
+  if (d->has_std) {
+    if (std != NULL)
+      memcpy(&d->std[d->size] , std , size * sizeof * std);
+    else
+      util_abort("%:s when has_std == true - you must have std != NULL\n",__func__);
+  }
+  d->size += size;
+}
 
 
 void plot_dataset_finished(plot_dataset_type * d, bool flag)
@@ -44,34 +76,40 @@ int plot_dataset_step_next(plot_dataset_type * d)
     return d->step;
 }
 
-int plot_datset_get_length(plot_dataset_type * d)
+int plot_dataset_get_length(plot_dataset_type * d)
 {
     assert(d != NULL);
-    return d->length;
+    return d->size;
 }
 
-plot_color_type plot_datset_get_color(plot_dataset_type * d)
+plot_color_type plot_dataset_get_color(plot_dataset_type * d)
 {
     assert(d != NULL);
     return d->color;
 }
 
-plot_style_type plot_datset_get_style(plot_dataset_type * d)
+plot_style_type plot_dataset_get_style(plot_dataset_type * d)
 {
     assert(d != NULL);
     return d->style;
 }
 
-PLFLT *plot_datset_get_vector_x(plot_dataset_type * d)
+double *plot_dataset_get_vector_x(plot_dataset_type * d)
 {
     assert(d != NULL);
-    return d->xvalue;
+    return d->x;
 }
 
-PLFLT *plot_datset_get_vector_y(plot_dataset_type * d)
+double *plot_dataset_get_vector_std(plot_dataset_type * d)
 {
     assert(d != NULL);
-    return d->yvalue;
+    return d->std;
+}
+
+double *plot_dataset_get_vector_y(plot_dataset_type * d)
+{
+    assert(d != NULL);
+    return d->y;
 }
 
 /**
@@ -83,8 +121,13 @@ PLFLT *plot_datset_get_vector_y(plot_dataset_type * d)
 plot_dataset_type *plot_dataset_alloc()
 {
     plot_dataset_type *d;
-
-    d = malloc(sizeof *d);
+    
+    d = util_malloc(sizeof *d , __func__);
+    d->x   	  = NULL;
+    d->y   	  = NULL;
+    d->std 	  = NULL;
+    d->size       = 0;
+    d->alloc_size = 0;
     return d;
 }
 
@@ -96,10 +139,13 @@ plot_dataset_type *plot_dataset_alloc()
  */
 void plot_dataset_free(plot_dataset_type * d)
 {
-    assert(d != NULL);
-    util_safe_free(d->xvalue);
-    util_safe_free(d->yvalue);
-    util_safe_free(d);
+  assert(d != NULL);
+  if (d->data_owner) {
+    util_safe_free(d->x);
+    util_safe_free(d->y);
+    util_safe_free(d->std);
+  }
+  free(d);
 }
 
 /**
@@ -114,23 +160,17 @@ void plot_dataset_free(plot_dataset_type * d)
  * After collecting your x-y data you have to let the dataset item know about
  * it. At the same time you define some detail about how the graph should look.
  */
-void
-plot_dataset_set_data(plot_dataset_type * d, const PLFLT * x, const PLFLT * y,
-		      int len, plot_color_type c, plot_style_type s)
+void plot_dataset_set_data(plot_dataset_type * d, const double * x, const double * y, int len, plot_color_type c, plot_style_type s)
+     
 {
-    assert(d != NULL);
-    d->xvalue = util_alloc_copy(x , len * sizeof * x , __func__);
-    if (y) 
-      d->yvalue = util_alloc_copy(y , len * sizeof * y , __func__);
-    else 
-      d->yvalue = NULL;
-
-
-    d->length = len;
-    d->color = c;
-    d->style = s;
-    d->step = 0;
-    d->finished = false;
+  assert(d != NULL);
+  plot_dataset_append_vector__(d , len , x , y , NULL);
+  
+  d->size = len;
+  d->color = c;
+  d->style = s;
+  d->step = 0;
+  d->finished = false;
 }
 
 
@@ -140,8 +180,8 @@ void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
 		       int to)
 {
     int i, k, k2;
-    PLFLT *x = d->xvalue;
-    PLFLT *y = d->yvalue;
+    double *x = d->x;
+    double *y = d->y;
 
     assert(item != NULL && d != NULL);
     plsstrm(plot_get_stream(item));
@@ -165,20 +205,20 @@ void plot_dataset(plot_type * item, plot_dataset_type * d)
 {
     assert(item != NULL && d != NULL);
     plsstrm(plot_get_stream(item));
-    plcol0((PLINT) plot_datset_get_color(d));
+    plcol0((PLINT) plot_dataset_get_color(d));
 
 
-    switch (plot_datset_get_style(d)) {
+    switch (plot_dataset_get_style(d)) {
     case LINE:
-      plline(plot_datset_get_length(d),
-	     plot_datset_get_vector_x(d),
-	     plot_datset_get_vector_y(d));
+      plline(plot_dataset_get_length(d),
+	     plot_dataset_get_vector_x(d),
+	     plot_dataset_get_vector_y(d));
 	break;
     case POINT:
       plssym(0, SYMBOL_SIZE);
-      plpoin(plot_datset_get_length(d),
-	     plot_datset_get_vector_x(d),
-	     plot_datset_get_vector_y(d), SYMBOL);
+      plpoin(plot_dataset_get_length(d),
+	     plot_dataset_get_vector_x(d),
+	     plot_dataset_get_vector_y(d), SYMBOL);
       break;
     case BLANK:
 	break;
@@ -206,7 +246,7 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
 	return false;
     }
 
-    if (!d->xvalue || !d->yvalue || !d->length) {
+    if (!d->x || !d->y || !d->size) {
 	fprintf(stderr, "Error: you need to set the data first\n");
 	return false;
     }
@@ -228,47 +268,61 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
  * 
  * Find the extrema values in the plot item, checks all added dataset.
  */
-void plot_dataset_get_extrema(plot_dataset_type * d, double *x_max,
-			      double *y_max, double *x_min, double *y_min)
+void plot_dataset_update_extrema(plot_dataset_type * d, bool first_pass , double *x_min, double *x_max,double *y_min, double *y_max)
 {
-    double tmp_x_max = 0;
-    double tmp_y_max = 0;
-    double tmp_x_min = 0;
-    double tmp_y_min = 0;
-    int i;
-    double *x, *y;
-    bool flag = false;
+  double tmp_x_max = *x_max;
+  double tmp_y_max = *y_max;
+  double tmp_x_min = *x_min;
+  double tmp_y_min = *y_min;
+  int i;
+  double *x, *y , *std;
+  
+  assert(d != NULL);
+  x   = plot_dataset_get_vector_x(d);
+  y   = plot_dataset_get_vector_y(d);
+  std = plot_dataset_get_vector_std(d);
 
-    assert(d != NULL);
-    x = plot_datset_get_vector_x(d);
-    y = plot_datset_get_vector_y(d);
+  if (first_pass) {
+    tmp_x_max = x[0];
+    tmp_x_min = x[0];
 
-    for (i = 0; i <= plot_datset_get_length(d); i++) {
-	if (!flag) {
-	    tmp_x_max = x[i];
-	    tmp_x_min = x[i];
-	    tmp_y_max = y[i];
-	    tmp_y_min = y[i];
-	    flag = true;
-	}
-	if (y[i] > tmp_y_max)
-	    tmp_y_max = y[i];
-	if (y[i] < tmp_y_min)
-	    tmp_y_min = y[i];
-	if (x[i] > tmp_x_max)
-	    tmp_x_max = x[i];
-	if (x[i] < tmp_x_min)
-	    tmp_x_min = x[i];
+    if (d->has_std) {
+      tmp_y_min = y[0] - std[0];
+      tmp_y_max = y[0] + std[0];
+    } else {
+      tmp_y_min = y[0];
+      tmp_y_max = y[0];
     }
-    if (x_max)
-	*x_max = tmp_x_max;
-    if (y_max)
-	*y_max = tmp_y_max;
-    if (x_min)
-	*x_min = tmp_x_min;
-    if (y_min)
-	*y_min = tmp_y_min;
+  }
+  
+  for (i = 0; i <= plot_dataset_get_length(d); i++) {
+    if (d->has_std) {
+      if ((y[i] + std[i]) > tmp_y_max)
+	tmp_y_max = y[i] + std[i];
+      if ((y[i] - std[i]) < tmp_y_min)
+	tmp_y_min = y[i] - std[i];
+    } else {
+      if (y[i] > tmp_y_max)
+	tmp_y_max = y[i];
+      if (y[i] < tmp_y_min)
+	tmp_y_min = y[i];
+    }
+    
+    if (x[i] > tmp_x_max)
+      tmp_x_max = x[i];
+    
+    if (x[i] < tmp_x_min)
+      tmp_x_min = x[i];
+  }
+  
+  *x_max = tmp_x_max;
+  *y_max = tmp_y_max;
+  *x_min = tmp_x_min;
+  *y_min = tmp_y_min;
 }
+
+
+
 
 plot_dataset_type *plot_dataset_get_prominent(plot_type * item, int *len)
 {
@@ -285,7 +339,7 @@ plot_dataset_type *plot_dataset_get_prominent(plot_type * item, int *len)
 
 	next_node = list_node_get_next(node);
 	tmp = list_node_value_ptr(node);
-	len2 = plot_datset_get_length(tmp);
+	len2 = plot_dataset_get_length(tmp);
 	if (len2 > tmp_len) {
 	    ref = tmp;
 	    tmp_len = len2;
