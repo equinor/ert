@@ -11,8 +11,8 @@ struct plot_dataset_struct {
   double *x; 	   	   /**< Vector containing x-axis data */
   double *y; 	   	   /**< Vector containing y-axis data */
   double *std;             /**< Vector containing std (of y) - can be NULL. */
-  bool    has_std;         /**/
-  bool    data_owner;      /**< Whether this instance owns x,y,std or just holds a reference. */
+  bool    with_std;         /**/
+  bool    shared_data;     /**< Whether this instance owns x,y,std or just holds a reference. */
   int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if data_owner == false. */
   int size;	   	   /**< Length of the vectors defining the axis */
   plot_style_type style;   /**< The graph style */
@@ -25,14 +25,14 @@ struct plot_dataset_struct {
 static void plot_dataset_realloc_data(plot_dataset_type * d, int new_alloc_size) {
   d->x = util_realloc(d->x , new_alloc_size * sizeof * d->x , __func__);
   d->y = util_realloc(d->y , new_alloc_size * sizeof * d->y , __func__);
-  if (d->has_std)
+  if (d->with_std)
     d->std = util_realloc(d->std , new_alloc_size * sizeof * d->std , __func__);
   d->alloc_size = new_alloc_size;
 }
 
 
 static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * std) {
-  if (!d->data_owner) 
+  if (d->shared_data) 
     util_abort("%s: dataset has shared data - can not append \n",__func__);
 
   if (d->alloc_size < (d->size + size))
@@ -40,11 +40,11 @@ static void plot_dataset_append_vector__(plot_dataset_type * d , int size , cons
 
   memcpy(&d->x[d->size] , x , size * sizeof * x);
   memcpy(&d->y[d->size] , y , size * sizeof * y);
-  if (d->has_std) {
+  if (d->with_std) {
     if (std != NULL)
       memcpy(&d->std[d->size] , std , size * sizeof * std);
     else
-      util_abort("%:s when has_std == true - you must have std != NULL\n",__func__);
+      util_abort("%s when with_std == true - you must have std != NULL\n",__func__);
   }
   d->size += size;
 }
@@ -112,22 +112,25 @@ double *plot_dataset_get_vector_y(plot_dataset_type * d)
     return d->y;
 }
 
+
 /**
  * @return Returns a new plot_dataset_type pointer.
  * @brief Create a new plot_dataset_type
  *
  * Create a new dataset - allocates the memory.
  */
-plot_dataset_type *plot_dataset_alloc()
+plot_dataset_type *plot_dataset_alloc(bool with_std , bool shared_data)
 {
     plot_dataset_type *d;
     
     d = util_malloc(sizeof *d , __func__);
-    d->x   	  = NULL;
-    d->y   	  = NULL;
-    d->std 	  = NULL;
-    d->size       = 0;
-    d->alloc_size = 0;
+    d->x   	   = NULL;
+    d->y   	   = NULL;
+    d->std 	   = NULL;
+    d->size        = 0;
+    d->alloc_size  = 0;
+    d->shared_data = shared_data;
+    d->with_std     = with_std;
     return d;
 }
 
@@ -140,13 +143,38 @@ plot_dataset_type *plot_dataset_alloc()
 void plot_dataset_free(plot_dataset_type * d)
 {
   assert(d != NULL);
-  if (d->data_owner) {
+  if (!d->shared_data) {
     util_safe_free(d->x);
     util_safe_free(d->y);
     util_safe_free(d->std);
   }
   free(d);
 }
+
+
+void plot_dataset_set_shared_data(plot_dataset_type * d , int size , double *x , double *y , double *std) {
+  if (d->shared_data) {
+    d->x    = x;
+    d->y    = y;
+    d->std  = std;
+    d->size = size;
+  } else
+    util_abort("%s ... \n");
+}
+
+
+void plot_dataset_append_point(plot_dataset_type * d, double x , double y, double std) {
+  if (d->with_std)
+    plot_dataset_append_vector__(d , 1 , &x , &y , &std);
+  else
+    plot_dataset_append_vector__(d , 1 , &x , &y , NULL);
+}
+
+
+void plot_dataset_append_vector(plot_dataset_type * d, int size , const double * x , const double *y , const double * std) {
+  plot_dataset_append_vector__(d , size , x , y , std);
+}
+
 
 /**
  * @brief Set the collected data to the dataset.
@@ -268,7 +296,7 @@ int plot_dataset_add(plot_type * item, plot_dataset_type * d)
  * 
  * Find the extrema values in the plot item, checks all added dataset.
  */
-void plot_dataset_update_extrema(plot_dataset_type * d, bool first_pass , double *x_min, double *x_max,double *y_min, double *y_max)
+void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , double *x_min, double *x_max,double *y_min, double *y_max)
 {
   double tmp_x_max = *x_max;
   double tmp_y_max = *y_max;
@@ -286,7 +314,7 @@ void plot_dataset_update_extrema(plot_dataset_type * d, bool first_pass , double
     tmp_x_max = x[0];
     tmp_x_min = x[0];
 
-    if (d->has_std) {
+    if (d->with_std) {
       tmp_y_min = y[0] - std[0];
       tmp_y_max = y[0] + std[0];
     } else {
@@ -295,8 +323,8 @@ void plot_dataset_update_extrema(plot_dataset_type * d, bool first_pass , double
     }
   }
   
-  for (i = 0; i <= plot_dataset_get_length(d); i++) {
-    if (d->has_std) {
+  for (i = 0; i < plot_dataset_get_length(d); i++) {
+    if (d->with_std) {
       if ((y[i] + std[i]) > tmp_y_max)
 	tmp_y_max = y[i] + std[i];
       if ((y[i] - std[i]) < tmp_y_min)

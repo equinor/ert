@@ -68,6 +68,7 @@ list_type *plot_get_datasets(plot_type * item)
     return item->datasets;
 }
 
+
 /**
  * @return Returns a new plot_type pointer.
  * @brief Create a new plot_type
@@ -208,6 +209,26 @@ void plot_free(plot_type * item)
     util_safe_free(item);
 }
 
+
+static void plot_set_range__(plot_type * plot) {
+  if (plot->__use_autorange)
+    plot_get_extrema(plot , &plot->xmin , &plot->xmax , &plot->ymin , &plot->ymax);
+  
+  
+  plsstrm(plot->stream);
+  
+  plvsta();
+  plwind(plot->xmin, plot->xmax, plot->ymin, plot->ymax);
+  plcol0(BLACK);
+  plschr(0, LABEL_FONTSIZE);
+  plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+
+  plschr(0, LABEL_FONTSIZE);
+  plcol0(plot->label_color);
+  pllab(plot->xlabel, plot->ylabel, plot->title);
+}
+
+
 /**
  * @brief Do the actual plotting
  * @param item your current plot
@@ -217,6 +238,8 @@ void plot_free(plot_type * item)
 void plot_data(plot_type * item)
 {
     list_node_type *node, *next_node;
+    
+    plot_set_range__(item);
 
     assert(item != NULL);
     plsstrm(item->stream);
@@ -284,7 +307,8 @@ void plot_errorbar_data(plot_type * item)
     util_safe_free(ymax);
 }
 
-void plot_std_data(plot_type * item, bool mean)
+
+/*void plot_std_data(plot_type * item, bool mean)
 {
     list_node_type *node, *next_node;
     int tmp_len = 0;
@@ -338,7 +362,7 @@ void plot_std_data(plot_type * item, bool mean)
     if (mean) {
 	plot_dataset_type *d;
 
-	d = plot_dataset_alloc();
+	d = plot_dataset_alloc( false );
 	plot_dataset_set_data(d, plot_dataset_get_vector_x(ref), vec_mean,
 			      tmp_len, RED, LINE);
 	plot_dataset(item, d);
@@ -348,6 +372,7 @@ void plot_std_data(plot_type * item, bool mean)
     util_safe_free(ymin);
     util_safe_free(ymax);
 }
+*/
 
 
 /**
@@ -372,6 +397,22 @@ plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
 }
 
 
+
+/* 
+   This is the low-level function setting the range of the plot.
+*/
+   
+
+
+void plot_set_manual_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax) {
+  plot->__use_autorange = false;
+  plot->xmin = xmin;
+  plot->xmax = xmax;
+  plot->ymin = ymin;
+  plot->ymax = ymax;
+}
+
+
 /**
  * @brief Setup viewport
  * @param item your current plot
@@ -382,28 +423,23 @@ plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel,
  * 
  * Sets up your viewport, defining and the axis, setting up fonts and colors.
  */
-void
-plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
-		  PLFLT ymin, PLFLT ymax)
-{
-    assert(item != NULL);
-    plsstrm(item->stream);
-    pladv(0);
-    plvsta();
-    plwind(xmin, xmax, ymin, ymax);
-    plcol0(BLACK);
+void plot_set_viewport(plot_type * item) {
+  assert(item != NULL);
+  plsstrm(item->stream);
+  pladv(0);
+  plcol0(BLACK);
+  plschr(0, LABEL_FONTSIZE);
+  //plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+  
+  if (!item->xlabel || !item->ylabel || !item->title) {
+    fprintf(stderr,
+	    "ERROR ID[%d]: you need to set lables before setting the viewport!\n",
+	    item->stream);
+  } else {
     plschr(0, LABEL_FONTSIZE);
-    plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
-    
-    if (!item->xlabel || !item->ylabel || !item->title) {
-      fprintf(stderr,
-	      "ERROR ID[%d]: you need to set lables before setting the viewport!\n",
-	      item->stream);
-    } else {
-      plschr(0, LABEL_FONTSIZE);
-      plcol0(item->label_color);
-      pllab(item->xlabel, item->ylabel, item->title);
-    }
+    plcol0(item->label_color);
+    //pllab(item->xlabel, item->ylabel, item->title);
+  }
 }
 
 
@@ -419,7 +455,7 @@ plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
  * Find the extrema values in the plot item, checks all added datasets.
  */
 
-void plot_get_extrema(plot_type * item, double *x_min, double *x_max,double *y_min, double *y_max) {
+ void plot_get_extrema(plot_type * item, double *x_min, double *x_max,double *y_min, double *y_max) {
   bool first_pass = true;
   list_node_type *node, *next_node;
   assert(item != NULL);
@@ -429,7 +465,7 @@ void plot_get_extrema(plot_type * item, double *x_min, double *x_max,double *y_m
     next_node = list_node_get_next(node);
     tmp = list_node_value_ptr(node);
     
-    plot_dataset_update_extrema(tmp , first_pass , x_min , x_max , y_min , y_max);
+    plot_dataset_update_range(tmp , first_pass , x_min , x_max , y_min , y_max);
     node = next_node;
     first_pass = false;
   }

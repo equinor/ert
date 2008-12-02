@@ -40,7 +40,7 @@ int main(int argc, const char **argv)
 			 "/h/masar/EnKF_PUNQS3/PUNQS3/Original/Realizations/PUNQS3_Realization_%d/PUNQS3_%d.DATA",
 			 k, k);
 		plot_summary_collect_data(&x, &y, &N, str, kw);
-		d = plot_dataset_alloc();
+		d = plot_dataset_alloc(false);
 		plot_dataset_set_data(d, x, y, N, BLUE, LINE);
 		plot_dataset_add(item, d);
 		util_safe_free(x);
@@ -49,7 +49,7 @@ int main(int argc, const char **argv)
 		snprintf(str, PATH_MAX,
 			 "/d/proj/bg/enkf/EnKF_PUNQS3/enkf_runs/member_%03d/PUNQS3_%04d.DATA",
 			 k, k);
-		d = plot_dataset_alloc();
+		d = plot_dataset_alloc( false );
 		plot_summary_collect_data(&x, &y, &N, str, kw);
 		plot_dataset_set_data(d, x, y, N, RED, LINE);
 		plot_dataset_add(item, d);

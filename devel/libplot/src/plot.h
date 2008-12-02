@@ -93,8 +93,7 @@ extern void plot_initialize(plot_type * item, const char *dev,
 extern void plot_set_labels(plot_type * item, const char *xlabel,
 			    const char *ylabel, const char *title,
 			    plot_color_type color);
-extern void plot_set_viewport(plot_type * item, PLFLT xmin, PLFLT xmax,
-			      PLFLT ymin, PLFLT ymax);
+extern void plot_set_viewport(plot_type * item);
 extern void plot_errorbar_data(plot_type * item);
 extern void plot_std_data(plot_type * item, bool mean);
 extern void plot_data(plot_type * item);
