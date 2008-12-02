@@ -26,24 +26,16 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
   return plot;
 }
 
+
 static __plot_add_data(plot_type * plot , int N , const double * x , const double *y, bool first) {
-  plot_dataset_type *d = plot_dataset_alloc();
+  plot_dataset_type *d = plot_dataset_alloc( false , false);
   plot_dataset_set_data(d, x, y, N, BLUE, LINE);
   plot_dataset_add(plot, d);
-
-  if (first)
-  {
-    double xmin,xmax;
-    double ymin,ymax;
-    
-    util_double_vector_max_min(N , x , &xmax , &xmin);
-    util_double_vector_max_min(N , y , &ymax , &ymin);
-    plot_set_viewport(plot , xmin , xmax , ymin , ymax);
-  }
 }
 
 
 static __plot_show(plot_type * plot , const char * viewer) {
+  plot_set_viewport( plot );
   plot_data(plot);
   plot_free(plot);
   util_vfork_exec(viewer , 1 , (const char *[1]) {"test.png"} , false , NULL , NULL , NULL , NULL , NULL);
@@ -58,20 +50,13 @@ void stupid_plot(int N , const double * x , const double *y , const char * image
   plot_initialize(item, "png", "test.png");
   
   {
-    plot_dataset_type *d = plot_dataset_alloc();
+    plot_dataset_type *d = plot_dataset_alloc( false , false );
     plot_dataset_set_data(d, x, y, N, BLUE, LINE);
     plot_dataset_add(item, d);
   }
   
   plot_set_labels(item, "x-axis", "y-axis", "y = sinc(x)", BLACK);
-  {
-    double xmin,xmax;
-    double ymin,ymax;
-    
-    util_double_vector_max_min(N , x , &xmax , &xmin);
-    util_double_vector_max_min(N , y , &ymax , &ymin);
-    plot_set_viewport(item, xmin , xmax , ymin , ymax);
-  }
+  plot_set_viewport(item);
   plot_data(item);
   plot_free(item);
   
@@ -148,7 +133,6 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
 	    y[this_size] = enkf_node_user_get( node , key_index , &valid);
 	    if (valid) {
 	      x[this_size] = step;
-	      printf("%02d: %g,%g\n",this_size,x[this_size] , y[this_size]);
 	      this_size++;
 	    }
 	  }

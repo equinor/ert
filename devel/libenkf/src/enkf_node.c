@@ -217,14 +217,6 @@ const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) 
 }
 
 
-/*
-  const char     *  enkf_node_get_eclfile_ref(const enkf_node_type * node ) { return enkf_config_node_get_outfile_ref(node->config); }
-*/
-
-
-
-
-
 /*****************************************************************/
 
 /*
@@ -331,6 +323,22 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
     */
   }
 }
+
+
+
+/**
+   This function takes a string - key - as input an calls a node
+   specific function to look up one scalar based on that key. The key
+   is always a string, but the the type of content will vary for the
+   different objects. For a field, the key will be a string of "i,j,k"
+   for a cell, for a multflt object the key will be the name of a
+   fault, and so on.
+
+   If the user has asked for something which does not exist the
+   function SHOULD NOT FAIL. It should set *valid = false, and return
+   0. To check the value *valid is the responsability of the calling
+   scope.
+*/
 
 
 double enkf_node_user_get(enkf_node_type * enkf_node , const char * key , bool * valid) {
