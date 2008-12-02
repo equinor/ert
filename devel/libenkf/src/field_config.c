@@ -343,6 +343,8 @@ inline int field_config_active_index(const field_config_type * config , int i , 
 
 
 
+
+
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const char * truncation, const char ** truncation_values , const ecl_grid_type * ecl_grid) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , ecl_restart_block);
   config->init_type         = none;
