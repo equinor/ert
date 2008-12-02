@@ -149,8 +149,6 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
           obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
       }
 
-      printf("adding HISTORY_OBSERVATION %s\n", sum_key);
-
       enkf_obs_add_obs(enkf_obs, sum_key, obs_node);
     }
 
@@ -182,8 +180,6 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
           obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
       }
 
-      printf("adding SUMMARY_OBSERVATION %s\n", obs_key);
-
       enkf_obs_add_obs(enkf_obs, obs_key, obs_node);
     }
 
@@ -210,8 +206,6 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
                                                                   field_obs_free__, NULL);
 
       obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
-
-      printf("adding BLOCK_OBSERVATION %s\n", obs_key);
 
       enkf_obs_add_obs(enkf_obs, obs_key, obs_node);
     }
