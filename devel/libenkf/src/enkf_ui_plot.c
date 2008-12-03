@@ -18,10 +18,10 @@
 
 
 
-static plot_type * __plot_alloc(const char * x_label , const char * y_label , const char * title) {
+static plot_type * __plot_alloc(const char * x_label , const char * y_label , const char * title , const char * file) {
   plot_type * plot  = plot_alloc();
   plot_set_window_size(plot , 640, 480);
-  plot_initialize(plot , "png", "test.png");
+  plot_initialize(plot , "png", file);
   plot_set_labels(plot, x_label , y_label , title , BLACK);
   return plot;
 }
@@ -34,11 +34,11 @@ static void __plot_add_data(plot_type * plot , int N , const double * x , const 
 }
 
 
-static void __plot_show(plot_type * plot , const char * viewer) {
+static void __plot_show(plot_type * plot , const char * viewer , const char * file) {
   plot_set_viewport( plot );
   plot_data(plot);
   plot_free(plot);
-  util_vfork_exec(viewer , 1 , (const char *[1]) {"test.png"} , false , NULL , NULL , NULL , NULL , NULL);
+  util_vfork_exec(viewer , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
 }
 
 
@@ -79,26 +79,27 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
     state_enum analysis_state;
     int        cell_nr;
     int        size;
+    char      *plot_file;
     char      *key_index;
     char       user_key[64];
     
     
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
     scanf("%s" , user_key);
+    plot_file = util_alloc_sprintf("/tmp/%s.png" , user_key);
     {
-      plot_type * plot = __plot_alloc("x-akse","y-akse",user_key);
+      plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file);
       bool first = true;
       msg_type * msg;
       state_enum              plot_state;
       const int last_report = enkf_sched_get_last_report(enkf_sched);
-      const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
-      const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
-      int iens1 , iens2;   
+      int iens1 , iens2 , step1 , step2;   
       double * x, *y;
       int iens , step; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node;
       enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
 
+      enkf_ui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
       enkf_ui_util_scanf_iens_range(ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
       if (config_node == NULL) {
@@ -149,7 +150,9 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
 	first = false;
       }
       msg_free(msg , true);
-      __plot_show(plot , viewer);
+      printf("Plot saved in: %s \n",plot_file);
+      __plot_show(plot , viewer , plot_file);
+      free(plot_file);
     }
   }
 }

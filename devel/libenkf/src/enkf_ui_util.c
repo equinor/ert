@@ -190,6 +190,29 @@ void enkf_ui_util_scanf_iens_range(int ens_size , int prompt_len , int * iens1 ,
 }
 
 
+void enkf_ui_util_scanf_report_steps(int last_report , int prompt_len , int * step1 , int * step2) {
+  char * prompt = util_alloc_sprintf("Report steps (0 - %d)" , last_report);
+  bool OK = false;
+
+  util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+  
+  while (!OK) {
+    char * input = util_alloc_stdin_line();
+    const char * current_ptr = input;
+    OK = true;
+
+    current_ptr = util_parse_int(current_ptr , step1 , &OK);
+    current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
+    current_ptr = util_parse_int(current_ptr , step2 , &OK);
+    
+    if (!OK) 
+      printf("Failed to parse two integers from: \"%s\". Example: \"0 - 19\" to get the 20 first report steps.\n",input);
+    free(input);
+  }
+  free(prompt);
+}
+
+
 
 /**
    Similar to enkf_ui_util_scanf_alloc_iens_active(), but based on report steps.
