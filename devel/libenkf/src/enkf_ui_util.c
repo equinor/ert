@@ -128,7 +128,7 @@ const enkf_config_node_type * enkf_ui_util_scanf_parameter(const ensemble_config
 
 /**
    Present the user with the queries:
-
+   
       First ensemble member ==>
       Last ensemble member ===>
   
@@ -155,6 +155,40 @@ bool * enkf_ui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int *
   *_iens2 = iens2;
   return iactive;
 }
+
+
+
+/**
+   Presents the reader with a prompt, and reads a string containing
+   two integers separated by a character(s) in the set: " ,-:".
+
+   Will not return before the user has actually presented a valid
+   string.
+*/
+
+  
+void enkf_ui_util_scanf_iens_range(int ens_size , int prompt_len , int * iens1 , int * iens2) {
+  char * prompt = util_alloc_sprintf("Ensemble members (0 - %d)" , ens_size - 1);
+  bool OK = false;
+
+  util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+  
+  while (!OK) {
+    char * input = util_alloc_stdin_line();
+    const char * current_ptr = input;
+    OK = true;
+
+    current_ptr = util_parse_int(current_ptr , iens1 , &OK);
+    current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
+    current_ptr = util_parse_int(current_ptr , iens2 , &OK);
+    
+    if (!OK) 
+      printf("Failed to parse two integers from: \"%s\". Example: \"0 - 19\" to get the 20 first members.\n",input);
+    free(input);
+  }
+  free(prompt);
+}
+
 
 
 /**
@@ -216,6 +250,11 @@ int enkf_ui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
   field_config_scanf_ijk(config , true , "Give (i,j,k) indices" , prompt_len , NULL , NULL , NULL , &global_index);
   return global_index;
 }
+
+
+
+
+
 
 
 

@@ -27,14 +27,14 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
 }
 
 
-static __plot_add_data(plot_type * plot , int N , const double * x , const double *y, bool first) {
+static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y, bool first) {
   plot_dataset_type *d = plot_dataset_alloc( false , false);
   plot_dataset_set_data(d, x, y, N, BLUE, LINE);
   plot_dataset_add(plot, d);
 }
 
 
-static __plot_show(plot_type * plot , const char * viewer) {
+static void __plot_show(plot_type * plot , const char * viewer) {
   plot_set_viewport( plot );
   plot_data(plot);
   plot_free(plot);
@@ -73,15 +73,17 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   {
-    const int prompt_len = 35;
+    const int prompt_len = 40;
+    const char * prompt  = "What do you want to plot (KEY:INDEX)";
     const enkf_config_node_type * config_node;
     state_enum analysis_state;
     int        cell_nr;
     int        size;
     char      *key_index;
     char       user_key[64];
-
-    printf("What do you want to plot (KEY:INDEX) ==> ");
+    
+    
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
     scanf("%s" , user_key);
     {
       plot_type * plot = __plot_alloc("x-akse","y-akse",user_key);
@@ -92,12 +94,12 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
       const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
       const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
       int iens1 , iens2;   
-      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2); /* Not used yet ... */
       double * x, *y;
       int iens , step; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node;
       enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
 
+      enkf_ui_util_scanf_iens_range(ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
       if (config_node == NULL) {
 	fprintf(stderr,"** Sorry - could not find any nodes with the key:%s \n",user_key);

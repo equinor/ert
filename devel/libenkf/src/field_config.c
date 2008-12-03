@@ -638,27 +638,10 @@ void field_config_get_ijk(const field_config_type * config , int active_index, i
 
 
 
-static const char * __parse_number(const char * s , int * value, bool *OK) {
-  if (*OK) {
-    char * error_ptr;
-    *value = strtol(s , &error_ptr , 10);
-    if (error_ptr == s) *OK = false;
-    return error_ptr;
-  } else
-    return NULL;
-}
 
 
 
-static const char * __skip_sep(const char * s, const char * sep_set, bool *OK) {
-  if (*OK) {
-    int sep_length = strspn(s , sep_set);
-    if (sep_length == 0)
-      *OK = false;
-    return &s[sep_length];
-  } else 
-    return NULL;
-}
+
 /**
    This function reads a string with i,j,k from the user. All
    characters in the constant sep_set are allowed to separate the
@@ -698,11 +681,11 @@ void field_config_scanf_ijk(const field_config_type * config , bool active_only 
 
     OK = true;
     current_ptr = input;
-    current_ptr = __parse_number(current_ptr , &i , &OK);  
-    current_ptr = __skip_sep(current_ptr , sep_set , &OK); 
-    current_ptr = __parse_number(current_ptr , &j , &OK);  
-    current_ptr = __skip_sep(current_ptr , sep_set , &OK); 
-    current_ptr = __parse_number(current_ptr , &k , &OK);  
+    current_ptr = util_parse_int(current_ptr , &i , &OK);  
+    current_ptr = util_skip_sep(current_ptr , sep_set , &OK); 
+    current_ptr = util_parse_int(current_ptr , &j , &OK);  
+    current_ptr = util_skip_sep(current_ptr , sep_set , &OK); 
+    current_ptr = util_parse_int(current_ptr , &k , &OK);  
     if (OK) 
       if (current_ptr[0] != '\0') OK = false; /* There was something more at the end */
     
