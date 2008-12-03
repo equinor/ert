@@ -227,7 +227,6 @@ void enkf_ui_plot_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
 
-  menu_add_item(menu , "Plot time development" , "tT" , enkf_ui_plot_time , enkf_main );
   menu_add_item(menu , "Ensemble plot" , "eE" , enkf_ui_plot_ensemble , enkf_main );
   menu_run(menu);
   menu_free(menu);
