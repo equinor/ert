@@ -1,8 +1,3 @@
-/**
-   See the file README.obs for ducumentation of the varios datatypes
-   involved with observations/measurement/+++.
-*/
-
 #include <stdlib.h>
 #include <hash.h>
 #include <util.h>
@@ -13,6 +8,16 @@
 
 
 
+/** TODO 
+    This static function header shall be removed when the configuration is unified.... 
+*/
+static conf_class_type * enkf_obs_get_obs_conf_class();
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+
 
 struct enkf_obs_struct {
   /** A hash of obs_node_types indexed by user provided keys. */
@@ -20,8 +25,9 @@ struct enkf_obs_struct {
 };
 
 
-/** TODO This static function header shall be removed when the configuration is unified.... */
-static conf_class_type * enkf_obs_get_obs_conf_class();
+
+//////////////////////////////////////////////////////////////////////////////////////
+
 
 
 enkf_obs_type * enkf_obs_alloc(

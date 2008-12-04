@@ -237,6 +237,39 @@ summary_obs_type * summary_obs_alloc_from_SUMMARY_OBSERVATION(
 
 
 
+bool summary_obs_fwrite(
+  const summary_obs_type * summary_obs, 
+  FILE                   * stream)
+{
+  /**
+    TODO
+
+    Should define a SUMMARY_OBS type in enkf_types.h and write it to disk here.
+  */
+  util_fwrite_string(summary_obs->summary_key, stream);
+  util_fwrite_int   (summary_obs->size       , stream);
+
+  util_fwrite       (summary_obs->value,        sizeof *summary_obs->value,        summary_obs->size, stream, __func__);
+  util_fwrite       (summary_obs->std,          sizeof *summary_obs->std,          summary_obs->size, stream, __func__);
+  util_fwrite       (summary_obs->default_used, sizeof *summary_obs->default_used, summary_obs->size, stream, __func__);
+
+  return true;
+}
+
+
+void summary_obs_fread(
+  summary_obs_type * summary_obs,
+  FILE             * stream)
+{
+  summary_obs->summary_key = util_fread_alloc_string(stream);
+  summary_obs->size        = util_fread_int         (stream);
+
+  util_fread(summary_obs->value,        sizeof *summary_obs->value,        summary_obs->size, stream, __func__);
+  util_fread(summary_obs->std,          sizeof *summary_obs->std,          summary_obs->size, stream, __func__);
+  util_fread(summary_obs->default_used, sizeof *summary_obs->default_used, summary_obs->size, stream, __func__);
+}
+
+
 
 
 VOID_FREE(summary_obs)

@@ -187,7 +187,45 @@ field_obs_type * field_obs_alloc_from_BLOCK_OBSERVATION(
 }
 
 
+bool field_obs_fwrite(
+  const field_obs_type * field_obs,
+  FILE                 * stream)
+{
+  util_fwrite_string(field_obs->field_name, stream);
+  util_fwrite_string(field_obs->obs_label , stream);
 
+  util_fwrite_int   (field_obs->restart_nr, stream);
+  util_fwrite_int   (field_obs->size      , stream);
+
+  util_fwrite       (field_obs->i         , sizeof *field_obs->i        , field_obs->size, stream, __func__);
+  util_fwrite       (field_obs->j         , sizeof *field_obs->j        , field_obs->size, stream, __func__);
+  util_fwrite       (field_obs->k         , sizeof *field_obs->k        , field_obs->size, stream, __func__);
+
+  util_fwrite       (field_obs->obs_value , sizeof *field_obs->obs_value, field_obs->size, stream, __func__);
+  util_fwrite       (field_obs->obs_std   , sizeof *field_obs->obs_value, field_obs->size, stream, __func__);
+
+  return true;
+}
+
+
+
+void field_obs_fread(
+  field_obs_type * field_obs,
+  FILE           * stream)
+{
+  field_obs->field_name = util_fread_alloc_string(stream);
+  field_obs->obs_label  = util_fread_alloc_string(stream);
+
+  field_obs->restart_nr = util_fread_int(         stream);
+  field_obs->size       = util_fread_int(         stream);
+
+  util_fread       (field_obs->i         , sizeof *field_obs->i        , field_obs->size, stream, __func__);
+  util_fread       (field_obs->j         , sizeof *field_obs->j        , field_obs->size, stream, __func__);
+  util_fread       (field_obs->k         , sizeof *field_obs->k        , field_obs->size, stream, __func__);
+
+  util_fread       (field_obs->obs_value , sizeof *field_obs->obs_value, field_obs->size, stream, __func__);
+  util_fread       (field_obs->obs_std   , sizeof *field_obs->obs_value, field_obs->size, stream, __func__);
+}
 
 
 VOID_FREE(field_obs)
