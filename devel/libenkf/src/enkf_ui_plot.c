@@ -99,14 +99,15 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
       enkf_node_type * node;
       enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
 
-      enkf_ui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
-      enkf_ui_util_scanf_iens_range(ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
       if (config_node == NULL) {
 	fprintf(stderr,"** Sorry - could not find any nodes with the key:%s \n",user_key);
 	plot_free(plot);
 	return;
       }
+
+      enkf_ui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
+      enkf_ui_util_scanf_iens_range(ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
 	
       node = enkf_node_alloc( config_node );
       {

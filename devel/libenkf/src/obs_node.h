@@ -23,7 +23,7 @@ typedef enum { gen_obs     = 1,
 
 const    char * obs_node_get_state_kw(const obs_node_type * );
 void            obs_node_measure(const obs_node_type *  , int , const void * , meas_vector_type * );
-obs_node_type * obs_node_alloc(const void * , const char * , const char * , obs_impl_type , int , bool , obs_get_ftype * , obs_meas_ftype * , obs_free_ftype * , obs_activate_ftype *);
+obs_node_type * obs_node_alloc(const void * , const char * , const char * , obs_impl_type , int , bool);
 void            obs_node_free(obs_node_type * );
 const void *    obs_node_get_ref(const obs_node_type * );
 void            obs_node_get_observations(obs_node_type * , int , obs_data_type * );

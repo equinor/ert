@@ -68,6 +68,9 @@ typedef enum {INVALID 	   = 0   ,
 
 
 
+
+
+
 /*
   These types are logical types, describing how the parameter behaves in the EnKF
   loop.

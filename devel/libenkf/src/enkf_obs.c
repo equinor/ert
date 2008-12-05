@@ -144,9 +144,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
       const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
       summary_obs_type         * sum_obs       = summary_obs_alloc_from_HISTORY_OBSERVATION(hist_obs_conf, hist);
 
-      obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, summary_obs , num_restarts, false,
-                                                                summary_obs_get_observations__, summary_obs_measure__,
-                                                                summary_obs_free__, NULL);
+      obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, summary_obs , num_restarts, false);
 
       /** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
       for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
@@ -175,9 +173,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
       summary_obs_type         * sum_obs      = summary_obs_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf, hist);
       const char               * sum_key      = summary_obs_get_summary_key_ref(sum_obs);
 
-      obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, summary_obs , num_restarts, false,
-                                                               summary_obs_get_observations__, summary_obs_measure__,
-                                                               summary_obs_free__, NULL);
+      obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, summary_obs , num_restarts, false);
 
       /** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
       for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
@@ -207,10 +203,8 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
       const char               * field_name     = field_obs_get_field_name_ref(block_obs);
       int                        restart_nr     = field_obs_get_restart_nr(block_obs);
 
-      obs_node_type * obs_node                   = obs_node_alloc(block_obs, field_name, obs_key, field_obs , num_restarts, false,
-                                                                  field_obs_get_observations__, field_obs_measure__,
-                                                                  field_obs_free__, NULL);
-
+      obs_node_type * obs_node                   = obs_node_alloc(block_obs, field_name, obs_key, field_obs , num_restarts, false);
+      
       obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
 
       enkf_obs_add_obs(enkf_obs, obs_key, obs_node);

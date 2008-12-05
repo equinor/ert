@@ -1277,10 +1277,17 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
     int j = indices[1] - 1;
     int k = indices[2] - 1;
     
-    if(field_ijk_valid(field, i, j, k))
-      val =  field_ijk_get_double(field, i , j , k);
-    else
+    if(field_config_ijk_valid(field->config, i, j, k)) {
+      int active_index = field_config_active_index(field->config , i,j,k);
+      if (active_index >= 0)
+	val =  field_iget_double(field, active_index);
+      else
+	/* ijk corresponds to an inactive cell. */
+	*valid = false;
+    }  else {
+      fprintf(stderr," ijk: %d , %d, %d is invalid \n",i+1 , j + 1 , k + 1);
       *valid = false;
+    }
   }
 
   free(indices);

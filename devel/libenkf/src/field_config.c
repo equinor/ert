@@ -332,8 +332,10 @@ void field_config_set_all_active(field_config_type * field) {
   Observe that the indices are zero-based, in contrast to those used
   by eclipse which are based on one.
 
-  This function will return an index in the interval: [0...nactive)
+  This function will return an index in the interval: [0...nactive),
+  and -1 if i,j,k correspond to an inactive cell.
 */
+
 
 inline int field_config_active_index(const field_config_type * config , int i , int j , int k) {
   return ecl_grid_get_active_index( config->grid , i,j,k);

@@ -14,7 +14,9 @@
 #include <sched_file.h>
 #include <enkf_util.h>
 #include <enkf_node.h>
-
+#include <summary_obs.h>
+#include <field_obs.h>
+#include <gen_obs.h>
 
 typedef enum {obs_undef = 0, obs_active = 1 , obs_inactive = 2} obs_active_type;
 
@@ -22,8 +24,8 @@ typedef enum {obs_undef = 0, obs_active = 1 , obs_inactive = 2} obs_active_type;
 struct obs_node_struct {
   const void         *obs;
   obs_free_ftype     *freef;
-  obs_get_ftype      *get_obs;
-  obs_meas_ftype     *measure;
+  obs_get_ftype      *get_obs;   /* Function used to build the 'd' vector. */
+  obs_meas_ftype     *measure;   /* Function used to measure on the state, and add to to the S matrix. */
   obs_activate_ftype *activate;  /* This is used to activate / deactivate (parts of) the observation. */ 
   
   char               *state_kw;  /* This is used to look up the corresponding enkf_state object. */
@@ -98,18 +100,39 @@ obs_node_type * obs_node_alloc(const void      	  * obs,
 			       const char      	  * obs_label,
 			       obs_impl_type        obs_type ,  
 			       int             	    num_reports,
-			       bool            	    default_active,
-			       obs_get_ftype   	  * get_obs,
-			       obs_meas_ftype  	  * measure,
-			       obs_free_ftype  	  * freef,
-			       obs_activate_ftype * activate) {
+			       bool            	    default_active) {
 
   obs_node_type * node     = util_malloc( sizeof *node , __func__);
   node->obs                = obs;
-  node->freef              = freef;
-  node->measure            = measure;
-  node->get_obs            = get_obs;
-  node->activate           = activate;
+  /**
+     Starting by setting all function pointers to NULL.
+  */
+  node->freef    = NULL;
+  node->measure  = NULL;
+  node->get_obs  = NULL;
+  node->activate = NULL;
+  
+  switch (obs_type) {
+  case(summary_obs):
+    node->freef   = summary_obs_free__;
+    node->measure = summary_obs_measure__;
+    node->get_obs = summary_obs_get_observations__;
+    break;
+  case(field_obs):
+    node->freef   = field_obs_free__;
+    node->measure = field_obs_measure__;
+    node->get_obs = field_obs_get_observations__;
+    break;
+  case(gen_obs):
+    node->freef   = gen_obs_free__;
+    node->measure = gen_obs_measure__;
+    node->get_obs = gen_obs_get_observations__;
+    break;
+  default:
+    util_abort("%s: internal error - obs_type:%d not recognized \n",__func__ , obs_type);
+  }
+  
+  
   node->size               = 0;
   node->active             = NULL;
   node->default_active     = default_active;
