@@ -188,26 +188,6 @@ struct enkf_fs_struct {
 
 
 
-/** 
-    Should implement some type of 'superblock' which could be used to determine
-    the driver implementation which had been used, changing on an existing
-    ensemble is **NOT** supported.
-*/
-
-
-//enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index, 
-//			     void * dynamic , void * eclipse_static , void * parameter) {
-//  enkf_fs_type * fs     = util_malloc(sizeof * fs , __func__);
-//  fs->index             = fs_index;
-//  fs->dynamic           = (basic_driver_type *) dynamic;
-//  fs->eclipse_static    = (basic_static_driver_type *) eclipse_static;
-//  fs->parameter         = (basic_driver_type *) parameter;
-//
-//  
-//  
-//  return fs;
-//}
-
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
   enkf_fs_type * fs  = util_malloc(sizeof * fs , __func__);
