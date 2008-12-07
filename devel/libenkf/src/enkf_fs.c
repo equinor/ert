@@ -15,6 +15,7 @@
 #include <plain_driver_parameter.h>
 #include <plain_driver_static.h>
 #include <plain_driver_dynamic.h>
+#include <plain_driver_obs.h>
 
 
 /**
@@ -190,6 +191,7 @@ struct enkf_fs_struct {
 
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
+  const int num_drivers = 5;
   enkf_fs_type * fs  = util_malloc(sizeof * fs , __func__);
   fs->index          = NULL;
   fs->dynamic        = NULL;
@@ -201,7 +203,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     FILE * stream      = util_fopen(config_file , "r");
     int i;
     
-    for (i=0; i < 4; i++) {
+    for (i=0; i < num_drivers; i++) {
       void * driver   = NULL;
       fs_driver_type driver_category = util_fread_int( stream );
       fs_driver_impl driver_id       = util_fread_int( stream );
@@ -217,6 +219,9 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
 	break;
       case(PLAIN_DRIVER_PARAMETER_ID):
 	driver = plain_driver_parameter_fread_alloc( root_path , stream );
+	break;
+      case(PLAIN_DRIVER_OBS_ID):
+	driver = plain_driver_obs_fread_alloc( root_path , stream );
 	break;
       default:
 	util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized \n",__func__ , config_file , driver_id);
@@ -236,6 +241,9 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
       case(INDEX_DRIVER):
 	fs->index = driver;
 	break;
+      case(OBS_DRIVER):
+	fs->obs = driver;
+	break;
       default:
 	util_abort("%s: fatal error in mount_map:%s - driver category:%d not recognized \n",__func__ , config_file , driver_category);
       }
@@ -245,6 +253,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     if (fs->dynamic    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , config_file);
     if (fs->eclipse_static == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , config_file);
     if (fs->index          == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , config_file);
+    if (fs->obs            == NULL) util_abort("%s: fatal error - mount map in:%s did not contain obs driver.\n",     __func__ , config_file);
     fclose(stream);
     free(config_file);
     
@@ -252,8 +261,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
   basic_driver_assert_cast(fs->dynamic);
   basic_static_driver_assert_cast(fs->eclipse_static);
   basic_driver_assert_cast(fs->parameter);
-    
-
+  basic_obs_driver_assert_cast(fs->obs);
 
   {
     char * ens_path    = util_alloc_string_copy(root_path);
@@ -286,11 +294,16 @@ static void enkf_fs_free_static_driver(basic_static_driver_type * driver) {
   driver->free_driver(driver);
 }
 
+static void enkf_fs_free_obs_driver(basic_obs_driver_type * driver) {
+  driver->free_driver(driver);
+}
+
 
 void enkf_fs_free(enkf_fs_type * fs) {
   enkf_fs_free_driver(fs->dynamic);
   enkf_fs_free_driver(fs->parameter);
   enkf_fs_free_static_driver(fs->eclipse_static);
+  enkf_fs_free_obs_driver(fs->obs);
   fs_index_free(fs->index);
   close(fs->lock_fd);
   util_unlink_existing(fs->lockfile);
@@ -317,6 +330,7 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
   }
   return driver;
 }
+
 
 static int enkf_fs_get_static_counter(const enkf_node_type * node) {
   ecl_static_kw_type * ecl_static = enkf_node_value_ptr( node );

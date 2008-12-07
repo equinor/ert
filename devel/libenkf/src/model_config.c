@@ -52,14 +52,18 @@ static enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) 
   char * config_file     = util_alloc_full_path(root_path , mount_map); /* This file should be protected - at all costs. */
   
   util_make_path(root_path);
-  if (!util_file_exists(config_file)) {
+  util_unlink_existing( config_file ); /* Format of mount map changed aby adding obs driver at revision 1505 - MUST read this file. */
+  
+  if ( !util_file_exists(config_file)) {  
     int fd        = open(config_file , O_WRONLY + O_CREAT);
     FILE * stream = fdopen(fd, "w");
     
     plain_driver_parameter_fwrite_mount_info(stream , "%04d/mem%03d/Parameter"); 
     plain_driver_static_fwrite_mount_info(stream    , "%04d/mem%03d/Static"); 
     plain_driver_dynamic_fwrite_mount_info(stream   , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
+    plain_driver_obs_fwrite_mount_info(stream , "%04d/Observations");
     fs_index_fwrite_mount_info(stream , "%04d/mem%03d/INDEX");
+    
 
     /* 
        Changing mode to read-only in an attempt to protect the file.

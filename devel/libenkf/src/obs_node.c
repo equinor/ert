@@ -22,7 +22,7 @@ typedef enum {obs_undef = 0, obs_active = 1 , obs_inactive = 2} obs_active_type;
 
 
 struct obs_node_struct {
-  const void         *obs;
+  void               *obs;
   obs_free_ftype     *freef;
   obs_get_ftype      *get_obs;   /* Function used to build the 'd' vector. */
   obs_meas_ftype     *measure;   /* Function used to measure on the state, and add to to the S matrix. */
@@ -31,7 +31,7 @@ struct obs_node_struct {
   obs_fwrite_ftype   *fwrite_f;  /* Function to write (onternal representation of) observation data. */ 
   
   char               *state_kw;  /* This is used to look up the corresponding enkf_state object. */
-  char               *obs_label; /* WTF? */
+  char               *obs_key;   /* The key used to index this observation in the obs_hash. */
   int                 size;
   obs_active_type    *active;    
   bool                default_active;
@@ -99,13 +99,13 @@ obs_impl_type obs_node_get_impl_type(const obs_node_type * node) {
 
 obs_node_type * obs_node_alloc(const void      	  * obs,
 			       const char      	  * state_kw,
-			       const char      	  * obs_label,
+			       const char      	  * obs_key,
 			       obs_impl_type        obs_type ,  
 			       int             	    num_reports,
 			       bool            	    default_active) {
 
   obs_node_type * node     = util_malloc( sizeof *node , __func__);
-  node->obs                = obs;
+  node->obs                = (void *) obs;
   /**
      Starting by setting all function pointers to NULL.
   */
@@ -142,7 +142,7 @@ obs_node_type * obs_node_alloc(const void      	  * obs,
   node->size               = 0;
   node->active             = NULL;
   node->default_active     = default_active;
-  node->obs_label          = util_alloc_string_copy(obs_label);
+  node->obs_key            = util_alloc_string_copy(obs_key);
   node->state_kw           = util_alloc_string_copy(state_kw);
   node->obs_type           = obs_type;   
   obs_node_resize(node , num_reports); /* +1 here ?? Ohh  - these fucking +/- problems. */
@@ -154,7 +154,7 @@ obs_node_type * obs_node_alloc(const void      	  * obs,
 
 void obs_node_free(obs_node_type * node) {
   if (node->freef != NULL) node->freef( (void *) node->obs);
-  if (node->obs_label != NULL) free(node->obs_label);
+  if (node->obs_key != NULL) free(node->obs_key);
   free(node->state_kw);
   free(node->active);
   free(node);
@@ -174,15 +174,15 @@ void obs_node_measure(const obs_node_type * node , int report_step , const void 
 }
 
 
-void obs_node_fwrite(const obs_node_type * node , FILE * stream) {
+bool obs_node_fwrite(const obs_node_type * node , FILE * stream) {
   util_fwrite_int(node->obs_type , stream);
-  node->fwrite_f(node->obs , stream);
+  return node->fwrite_f(node->obs , stream);
 }
 
 
 
 /* What about memory - that is not really clear ?? */
-void obs_node_fread(const obs_node_type * node , FILE * stream) {
+void obs_node_fread(obs_node_type * node , FILE * stream) {
   obs_impl_type file_type = util_fread_int( stream );
   if (file_type != node->obs_type) 
     util_abort("%s: fatal error when loading observation: expected type:%d  got:%d \n",__func__ , node->obs_type , file_type);
@@ -219,6 +219,12 @@ void obs_node_activate_time_t(obs_node_type * obs_node , const sched_file_type *
 void obs_node_deactivate_time_t(obs_node_type * obs_node , const sched_file_type * sched_file , time_t time1 , time_t time2) {
   obs_node_set_active_mode_time_t(obs_node , sched_file, time1 , time2, false);
 }
+
+const char * obs_node_get_key(const obs_node_type * node) {
+  return node->obs_key;
+}
+
+/*****************************************************************/
 
 
 VOID_FREE(obs_node)

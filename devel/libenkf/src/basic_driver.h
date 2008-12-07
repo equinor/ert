@@ -21,6 +21,7 @@ typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , int ,
 typedef bool (static_has_node_ftype)     (void * , int , int , state_enum , int , const char *);
 typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , int , enkf_node_type *); 
 
+typedef void (obs_unlink_node_ftype)     (void * , int , obs_node_type *);
 typedef void (obs_load_node_ftype) 	 (void * , int , obs_node_type *);
 typedef void (obs_save_node_ftype) 	 (void * , int , obs_node_type *);
 typedef bool (obs_has_node_ftype)        (void * , int , const char *);
@@ -86,7 +87,9 @@ struct basic_static_driver_struct {
 obs_load_node_ftype    * load;    	 \
 obs_save_node_ftype    * save;    	 \
 obs_has_node_ftype     * has_node;       \
-int                         type_id;
+obs_unlink_node_ftype  * unlink_node;    \
+free_driver_ftype      * free_driver;    \
+int                      type_id;
 
 struct basic_obs_driver_struct {
   BASIC_OBS_DRIVER_FIELDS;

@@ -23,6 +23,10 @@ typedef enum { gen_obs     = 1,
 	       summary_obs = 2,
 	       field_obs   = 3} obs_impl_type;
 
+
+void            obs_node_fread(obs_node_type * , FILE *);
+bool            obs_node_fwrite(const obs_node_type * , FILE *);
+const    char * obs_node_get_key(const obs_node_type * );
 const    char * obs_node_get_state_kw(const obs_node_type * );
 void            obs_node_measure(const obs_node_type *  , int , const void * , meas_vector_type * );
 obs_node_type * obs_node_alloc(const void * , const char * , const char * , obs_impl_type , int , bool);
