@@ -22,8 +22,8 @@
   About storage in the EnKF system
   ================================
 
-  The system for storage in the EnKF system is quite complicated, maybe to
-  complicated. The reason the system is so complext is (at least) twofold:
+  The system for storage in the EnKF system is quite complicated, maybe too
+  complicated. The reason the system is so complex is (at least) twofold:
 
     1. It is a goal that it should be relatively easy to write new systems
        (i.e. drivers) for storage. The current suite of drivers
@@ -58,6 +58,10 @@
     - iens        : ensemble member number
     - report_step : the report_step number we are interested in
     - state       : whether we are considering an analyzed node or a forecast.  
+
+
+  In addition there is a obs_driver for loading and storing obs_node
+  instances with observed values.
 
 
   The drivers
@@ -153,7 +157,7 @@
   case.
   
   If the enkf_mount_info file is deleted you (might) be fucked. It
-  currently 'protected' with chomd a-w - but that is of course not
+  is currently 'protected' with chomd a-w - but that is of course not
   foolprof.
 */
 
@@ -172,11 +176,13 @@ struct enkf_fs_struct {
   basic_driver_type         * dynamic;               /* Implements functions for read/write of dynamic data. */
   basic_static_driver_type  * eclipse_static;        /* Implements functions for read/write of static elements in ECLIPSE restart files. */
   basic_driver_type  	    * parameter;             /* Implements functions for read/write of parameters. */
+  basic_obs_driver_type     * obs;                   /* Implements functions for read/write of obs_node instances. */
   fs_index_type      	    * index;                 /* Currently only used to write restart_kw_list instances (not properly virtualized). */
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
   int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
   char                      * lockfile; 
 };
+
 
 
 
@@ -189,18 +195,18 @@ struct enkf_fs_struct {
 */
 
 
-enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index, 
-			     void * dynamic , void * eclipse_static , void * parameter) {
-  enkf_fs_type * fs     = util_malloc(sizeof * fs , __func__);
-  fs->index             = fs_index;
-  fs->dynamic           = (basic_driver_type *) dynamic;
-  fs->eclipse_static    = (basic_static_driver_type *) eclipse_static;
-  fs->parameter         = (basic_driver_type *) parameter;
-  
-  
-  
-  return fs;
-}
+//enkf_fs_type * enkf_fs_alloc(fs_index_type * fs_index, 
+//			     void * dynamic , void * eclipse_static , void * parameter) {
+//  enkf_fs_type * fs     = util_malloc(sizeof * fs , __func__);
+//  fs->index             = fs_index;
+//  fs->dynamic           = (basic_driver_type *) dynamic;
+//  fs->eclipse_static    = (basic_static_driver_type *) eclipse_static;
+//  fs->parameter         = (basic_driver_type *) parameter;
+//
+//  
+//  
+//  return fs;
+//}
 
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
@@ -209,6 +215,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
   fs->dynamic        = NULL;
   fs->eclipse_static = NULL;
   fs->parameter      = NULL;
+  fs->obs            = NULL;
   {
     char * config_file = util_alloc_full_path(root_path , mount_info);
     FILE * stream      = util_fopen(config_file , "r");

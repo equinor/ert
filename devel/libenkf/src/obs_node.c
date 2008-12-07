@@ -27,6 +27,8 @@ struct obs_node_struct {
   obs_get_ftype      *get_obs;   /* Function used to build the 'd' vector. */
   obs_meas_ftype     *measure;   /* Function used to measure on the state, and add to to the S matrix. */
   obs_activate_ftype *activate;  /* This is used to activate / deactivate (parts of) the observation. */ 
+  obs_fread_ftype    *fread_f;   /* Function to read (internalized) observation data. */
+  obs_fwrite_ftype   *fwrite_f;  /* Function to write (onternal representation of) observation data. */ 
   
   char               *state_kw;  /* This is used to look up the corresponding enkf_state object. */
   char               *obs_label; /* WTF? */
@@ -111,12 +113,16 @@ obs_node_type * obs_node_alloc(const void      	  * obs,
   node->measure  = NULL;
   node->get_obs  = NULL;
   node->activate = NULL;
+  node->fwrite_f = NULL;
+  node->fread_f  = NULL;
   
   switch (obs_type) {
   case(summary_obs):
-    node->freef   = summary_obs_free__;
-    node->measure = summary_obs_measure__;
-    node->get_obs = summary_obs_get_observations__;
+    node->fread_f  = summary_obs_fread__;
+    node->fwrite_f = summary_obs_fwrite__;
+    node->freef    = summary_obs_free__;
+    node->measure  = summary_obs_measure__;
+    node->get_obs  = summary_obs_get_observations__;
     break;
   case(field_obs):
     node->freef   = field_obs_free__;
@@ -166,6 +172,23 @@ void obs_node_measure(const obs_node_type * node , int report_step , const void 
   if (node->active[report_step] == obs_active) 
     node->measure(node->obs , enkf_node_value_ptr(enkf_node) , meas_vector);
 }
+
+
+void obs_node_fwrite(const obs_node_type * node , FILE * stream) {
+  util_fwrite_int(node->obs_type , stream);
+  node->fwrite_f(node->obs , stream);
+}
+
+
+
+/* What about memory - that is not really clear ?? */
+void obs_node_fread(const obs_node_type * node , FILE * stream) {
+  obs_impl_type file_type = util_fread_int( stream );
+  if (file_type != node->obs_type) 
+    util_abort("%s: fatal error when loading observation: expected type:%d  got:%d \n",__func__ , node->obs_type , file_type);
+  node->fread_f(node->obs , stream);
+}
+
 
 
 const void *  obs_node_get_ref(const obs_node_type * node) { 

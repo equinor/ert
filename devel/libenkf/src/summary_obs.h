@@ -51,6 +51,8 @@ summary_obs_type * summary_obs_alloc_from_SUMMARY_OBSERVATION(
 VOID_FREE_HEADER(summary_obs);
 VOID_GET_OBS_HEADER(summary_obs);
 VOID_MEASURE_HEADER(summary_obs);
+VOID_FREAD_HEADER(summary_obs)
+VOID_FWRITE_HEADER(summary_obs)
 
 
 #endif

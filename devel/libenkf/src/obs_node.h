@@ -15,6 +15,8 @@ typedef void (obs_free_ftype)                (void *);
 typedef void (obs_get_ftype)                 (const void * , int , obs_data_type *);
 typedef void (obs_meas_ftype)                (const void * , const void *, meas_vector_type *);
 typedef void (obs_activate_ftype)            (void * , active_mode_type , void *);
+typedef void (obs_fread_ftype)               (void * , FILE * stream);
+typedef bool (obs_fwrite_ftype)              (const void * , FILE * stream);
 
 typedef struct obs_node_struct obs_node_type;
 typedef enum { gen_obs     = 1,

@@ -1,13 +1,14 @@
 #ifndef __BASIC_DRIVER_H__
-#define __BASIC_DRIVER_H__
+#define __BASIC_DRIVER_H__ 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include <enkf_node.h>
+#include <obs_node.h>
 
 typedef struct basic_driver_struct        basic_driver_type;
 typedef struct basic_static_driver_struct basic_static_driver_type;
-
+typedef struct basic_obs_driver_struct    basic_obs_driver_type; 
 
 typedef void (load_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
 typedef void (save_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
@@ -20,7 +21,9 @@ typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , int ,
 typedef bool (static_has_node_ftype)     (void * , int , int , state_enum , int , const char *);
 typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , int , enkf_node_type *); 
 
-
+typedef void (obs_load_node_ftype) 	 (void * , int , obs_node_type *);
+typedef void (obs_save_node_ftype) 	 (void * , int , obs_node_type *);
+typedef bool (obs_has_node_ftype)        (void * , int , const char *);
 
 /**
    The basic_driver_type contains a number of function pointers
@@ -77,14 +80,31 @@ struct basic_static_driver_struct {
 }; 
 
 
+/*****************************************************************/
 
-void 	 basic_driver_init(basic_driver_type * );
-void 	 basic_driver_assert_cast(const basic_driver_type * );
+#define BASIC_OBS_DRIVER_FIELDS   	 \
+obs_load_node_ftype    * load;    	 \
+obs_save_node_ftype    * save;    	 \
+obs_has_node_ftype     * has_node;       \
+int                         type_id;
+
+struct basic_obs_driver_struct {
+  BASIC_OBS_DRIVER_FIELDS;
+};
+ 
+
+
+void  	 	    basic_driver_init(basic_driver_type * );
+void 	 	    basic_driver_assert_cast(const basic_driver_type * );
 basic_driver_type * basic_driver_safe_cast(void * );
 
 void 	 		   basic_static_driver_init(basic_static_driver_type * );
 void 	 		   basic_static_driver_assert_cast(const basic_static_driver_type * );
 basic_static_driver_type * basic_static_driver_safe_cast(void * );
+
+void 	 		   basic_obs_driver_init(basic_obs_driver_type * );
+void 	 		   basic_obs_driver_assert_cast(const basic_obs_driver_type * );
+basic_obs_driver_type    * basic_obs_driver_safe_cast(void * );
 
 #ifdef __cplusplus
 }
