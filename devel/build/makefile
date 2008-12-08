@@ -1,6 +1,5 @@
 include global_config
 all:
-	$(MAKE) -s -C $(LIBHASH_HOME)/src  rebuild
 	$(MAKE) -s -C $(LIBUTIL_HOME)/src  rebuild
 	$(MAKE) -s -C $(LIBECL_HOME)/src  rebuild
 	$(MAKE) -s -C $(LIBRMS_HOME)/src  rebuild	

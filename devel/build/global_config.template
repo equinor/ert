@@ -6,7 +6,6 @@
 #blas and particular compiler libraries+++ can be found.
 
 # Source
-LIBHASH_HOME  	  = /h/jgv/code/enkf/libhash
 LIBUTIL_HOME  	  = /h/jgv/code/enkf/libutil
 LIBCONFIG_HOME    = /h/jgv/code/enkf/libconfig
 LIBECL_HOME   	  = /h/jgv/code/enkf/libecl
