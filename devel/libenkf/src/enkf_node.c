@@ -408,13 +408,14 @@ bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step
   if (!enkf_node->__memory_allocated)
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
   {
+    bool data_written = false;
     FUNC_ASSERT(enkf_node->fwrite_f);
-    bool data_written = enkf_node->fwrite_f(enkf_node->data , stream);
-
+    data_written = enkf_node->fwrite_f(enkf_node->data , stream);
+    
     enkf_node->__report_step = report_step;
     enkf_node->__state       = state;
     enkf_node->__modified    = false;
-
+    
     return data_written;
   }
 }

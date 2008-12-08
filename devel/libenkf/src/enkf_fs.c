@@ -8,6 +8,7 @@
 #include <enkf_fs.h>
 #include <path_fmt.h>
 #include <enkf_node.h>
+#include <obs_node.h>
 #include <basic_driver.h>
 #include <fs_index.h>
 #include <fs_types.h>
@@ -338,6 +339,41 @@ static int enkf_fs_get_static_counter(const enkf_node_type * node) {
   return ecl_static_kw_get_counter(ecl_static);
 }
 
+/*****************************************************************/
+/* Exported functions for obs_node instances . */
+
+void enkf_fs_fwrite_obs_node(enkf_fs_type * enkf_fs , obs_node_type * obs_node , int report_step) {
+  if (enkf_fs->read_only)
+    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
+  {
+    basic_obs_driver_type * driver = basic_obs_driver_safe_cast(enkf_fs->obs);
+    driver->save(driver , report_step , obs_node); 
+  }
+}
+
+
+void enkf_fs_fread_obs_node(enkf_fs_type * enkf_fs , obs_node_type * obs_node , int report_step) {
+  if (enkf_fs->read_only)
+    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
+  {
+    basic_obs_driver_type * driver = basic_obs_driver_safe_cast(enkf_fs->obs);
+    driver->load(driver , report_step , obs_node); 
+  }
+}
+
+
+bool enkf_fs_has_obs_node(enkf_fs_type * enkf_fs , obs_node_type * obs_node , int report_step) {
+  if (enkf_fs->read_only)
+    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
+  {
+    basic_obs_driver_type * driver = basic_obs_driver_safe_cast(enkf_fs->obs);
+    const char * key = obs_node_get_key(obs_node);
+    return driver->has_node(driver , report_step , key); 
+  }
+}
+
+/*****************************************************************/
+/* Exported functions for enkf_node instances . */
 
 void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   if (enkf_fs->read_only)
@@ -391,6 +427,15 @@ bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * con
   }
 }
 
+enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
+  enkf_node_type * node = enkf_node_alloc(config_node);
+  enkf_fs_fread_node(enkf_fs , node , report_step , iens , state);
+  return node;
+}
+
+
+/*****************************************************************/
+/* Index related functions  . */
 
 void enkf_fs_add_index_node(enkf_fs_type * enkf_fs , int report_step , int iens , const char * kw , enkf_var_type var_type , enkf_impl_type impl_type) {
   fs_index_add_node(enkf_fs->index , report_step , iens , kw , var_type , impl_type);
@@ -407,9 +452,4 @@ void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , in
 }
 
 
-enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
-  enkf_node_type * node = enkf_node_alloc(config_node);
-  enkf_fs_fread_node(enkf_fs , node , report_step , iens , state);
-  return node;
-}
 

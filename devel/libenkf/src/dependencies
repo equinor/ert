@@ -1,6 +1,6 @@
 enkf_ui_util.o                      : enkf_ui_util.c enkf_ui_util.h enkf_main.o enkf_sched.o enkf_node.o field.o field_config.o enkf_state.o ensemble_config.o enkf_types.o  
 relperm.o                           : relperm.c relperm.h enkf_types.o relperm_config.o enkf_util.o scalar.o enkf_macros.h enkf_debug.h  
-enkf_fs.o                           : enkf_fs.c enkf_fs.h enkf_node.o basic_driver.o fs_index.o fs_types.h ecl_static_kw.o plain_driver_parameter.o plain_driver_static.o plain_driver_dynamic.o plain_driver_obs.o  
+enkf_fs.o                           : enkf_fs.c enkf_fs.h enkf_node.o obs_node.o basic_driver.o fs_index.o fs_types.h ecl_static_kw.o plain_driver_parameter.o plain_driver_static.o plain_driver_dynamic.o plain_driver_obs.o  
 obs_node.o                          : obs_node.c obs_node.h enkf_macros.h enkf_types.o enkf_util.o enkf_node.o summary_obs.o field_obs.o gen_obs.o  
 enkf_config_node.o                  : enkf_config_node.c enkf_config_node.h enkf_types.o enkf_macros.h  
 enkf_defaults.o                     : enkf_defaults.c enkf_defaults.h  

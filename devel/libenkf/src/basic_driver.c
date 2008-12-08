@@ -13,6 +13,10 @@
 #define BASIC_OBS_DRIVER_ID       30  
 
 
+/*****************************************************************/
+/* This basic driver implemenatition is common to both dynamic and
+   parameter info. */
+
 void basic_driver_init(basic_driver_type * driver) {
   driver->type_id = BASIC_DRIVER_ID;
 }

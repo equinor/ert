@@ -27,6 +27,7 @@ struct field_obs_struct {
 
 
 
+
 field_obs_type * field_obs_alloc(
   const char   * obs_label,
   const char   * field_name,
@@ -39,7 +40,7 @@ field_obs_type * field_obs_alloc(
   const double * obs_std)
 {
   
-  field_obs_type * field_obs = malloc(sizeof * field_obs);
+  field_obs_type * field_obs = util_malloc(sizeof * field_obs, __func__);
   field_obs->size            = size;
   field_obs->restart_nr      = restart_nr;
   field_obs->field_name      = util_alloc_string_copy(field_name);
@@ -111,6 +112,8 @@ void field_obs_measure(
     meas_vector_add(meas_vector , value);
   }
 }
+
+
 
 
 
