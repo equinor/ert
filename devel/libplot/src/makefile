@@ -9,7 +9,7 @@ INSTALL_LIB_PATH  = $(LIBPLOT_HOME)/lib
 ARFLAGS = -csr
 #################################################################
 OBJECTS        = plot.o plot_dataset.o plot_util.o plot_range.o plot_summary.o
-INC_FILES      = plot.h plot_dataset.h plot_util.h plot_range.h plot_summary.h
+INC_FILES      = plot.h plot_dataset.h plot_util.h plot_range.h plot_summary.h plot_const.h
 LIB            = libplot_$(MFLAG).a 
 LIB_LINK       = -lplot_$(MFLAG) -lutil_$(MFLAG) -lecl_$(MFLAG) -lhash_$(MFLAG) -lz -lm -lplplotd -lpthread 
 LIB_PATH       = -L$(LIBPLOT_HOME)/lib     -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib 

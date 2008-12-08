@@ -226,12 +226,13 @@ static void plot_set_range__(plot_type * plot) {
   plwind(plot->xmin, plot->xmax, plot->ymin, plot->ymax);
   plcol0(BLACK);
   plschr(0, LABEL_FONTSIZE);
-  plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+  plbox("bcnst", 0.0 , 0 , "bcnstv" , 0.0 , 0);
 
   plschr(0, LABEL_FONTSIZE);
   plcol0(plot->label_color);
   pllab(plot->xlabel, plot->ylabel, plot->title);
 }
+
 
 
 /**
