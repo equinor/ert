@@ -1,8 +1,9 @@
+#include <assert.h>
+#include <pthread.h>
 #include <plot.h>
 #include <plot_dataset.h>
 #include <plot_util.h>
-#include <pthread.h>
-#include <assert.h>
+#include <plot_range.h>
 
 
 /**
@@ -52,7 +53,9 @@ struct plot_struct {
   int 	 width;         	/**< The width of your plot window */
   double xmin,xmax,ymin,ymax;   /**< Ranges for plot. */ 
   bool   __use_autorange;       
+  plot_range_type * range;      /**< Range instance (not in use yet). */
 };
+
 
 
 int plot_get_stream(plot_type * item)
@@ -77,18 +80,19 @@ list_type *plot_get_datasets(plot_type * item)
  */
 plot_type *plot_alloc()
 {
-    plot_type *item;
-
-    item = malloc(sizeof *item);
-    item->stream = -1;
-    item->xlabel = NULL;
-    item->ylabel = NULL;
-    item->title = NULL;
-    item->datasets = list_alloc();
-    item->height 	  = DEFAULT_HEIGHT;
-    item->width  	  = DEFAULT_WIDTH;
-    item->__use_autorange = true;
-    return item;
+  plot_type *item;
+  
+  item = util_malloc(sizeof *item , __func__);
+  item->stream = -1;
+  item->xlabel = NULL;
+  item->ylabel = NULL;
+  item->title = NULL;
+  item->datasets = list_alloc();
+  item->height 	  = DEFAULT_HEIGHT;
+  item->width  	  = DEFAULT_WIDTH;
+  item->__use_autorange = true;
+  item->range           = plot_range_alloc();
+  return item;
 }
 
 
@@ -206,6 +210,7 @@ void plot_free(plot_type * item)
       plend();
     
     pthread_mutex_unlock(&update_lock);
+    plot_range_free(item->range);
     util_safe_free(item);
 }
 

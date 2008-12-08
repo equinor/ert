@@ -1,5 +1,9 @@
 #ifndef __PLOT_H__
 #define __PLOT_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*! \mainpage libplot: plotting library based on Plplot
  *
  * \section intro Introduction
@@ -119,4 +123,7 @@ extern void plot_get_extrema(plot_type * item, double *x_max,
  * @}
  */
 
+#ifdef __cplusplus
+}
+#endif
 #endif
