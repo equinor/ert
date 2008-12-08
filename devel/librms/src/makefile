@@ -1,6 +1,6 @@
 include global_config
 #################################################################
-COMPILE_INCLUDE   = -I$(LIBRMS_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include
+COMPILE_INCLUDE   = -I$(LIBRMS_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include 
 INSTALL_INC_PATH  = $(LIBRMS_HOME)/include
 INSTALL_LIB_PATH  = $(LIBRMS_HOME)/lib
 #################################################################
@@ -9,8 +9,8 @@ OBJECTS       = rms_interC.o rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagk
 INC_FILES     = rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h
 LIB_ROOT      = rms
 LIB           = lib$(LIB_ROOT)_$(MFLAG).a
-LIB_LINK      = -l$(LIB_ROOT)_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lm -lz -lpt
-LIB_PATH      = -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib -L./
+LIB_LINK      = -l$(LIB_ROOT)_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lm -lz -lpt
+LIB_PATH      = -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L./
 
 
 LOCAL: LIB BIN

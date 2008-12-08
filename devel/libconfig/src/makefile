@@ -11,7 +11,7 @@ OBJECTS           = config.o conf.o conf_util.o conf_data.o
 INC_FILES_INSTALL = config.h conf.h conf_data.h
 LIB_ROOT          = libconfig
 LIB               = $(LIB_ROOT)_$(MFLAG).a
-LIB_LINK          = -lconfig_$(MFLAG) -lutil_$(MFLAG) -lhash_$(MFLAG) -lz -lpthread -lm
+LIB_LINK          = -lconfig_$(MFLAG) -lutil_$(MFLAG) -lz -lpthread -lm
 LINK_LIB_PATH     = -L./ -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib
 
 LOCAL: LIB BIN
