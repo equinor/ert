@@ -8,8 +8,8 @@ INSTALL_LIB_PATH  = $(LIBPLOT_HOME)/lib
 #################################################################
 ARFLAGS = -csr
 #################################################################
-OBJECTS        = plot.o plot_dataset.o plot_util.o plot_summary.o
-INC_FILES      = plot.h plot_dataset.h plot_util.h plot_summary.h
+OBJECTS        = plot.o plot_dataset.o plot_util.o plot_range.o plot_summary.o
+INC_FILES      = plot.h plot_dataset.h plot_util.h plot_range.h plot_summary.h
 LIB            = libplot_$(MFLAG).a 
 LIB_LINK       = -lplot_$(MFLAG) -lutil_$(MFLAG) -lecl_$(MFLAG) -lhash_$(MFLAG) -lz -lm -lplplotd -lpthread 
 LIB_PATH       = -L$(LIBPLOT_HOME)/lib     -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBHASH_HOME)/lib -L$(LIBECL_HOME)/lib 
@@ -48,7 +48,8 @@ $(LIB): $(OBJECTS)
 %.o : %.c
 	$(CC) -c $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE)  $(COMPILE_INCLUDE) $< -o $@
 
-plot.o          : plot.h
-plot_dataset.o  : plot_dataset.h
-plot_util.o     : plot_util.h
+plot.o             : plot.h plot.c plot_dataset.o
+plot_dataset.o     : plot_dataset.h plot_dataset.c plot_range.o
+plot_range.o       : plot_range.c plot_range.h 
+plot_util.o        : plot_util.h plot_util.c
 plot_summary.o     : plot_summary.h
