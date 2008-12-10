@@ -79,29 +79,37 @@ static void plot_range_set_ymax__(plot_range_type * plot_range , double ymax) {
 double plot_range_get_xmin(const plot_range_type * plot_range) {
   if (plot_range->xmin_set)
     return plot_range->xmin;
-  else
+  else {
     util_abort("%s: tried to get xmin - but that has not been set.\n",__func__);
+    return 0;
+  }
 }
 
 double plot_range_get_xmax(const plot_range_type * plot_range) {
   if (plot_range->xmax_set)
     return plot_range->xmax;
-  else
-    util_abort("%s: tried to get xmax - but that has not been set.\n",__func__);}
+  else {
+    util_abort("%s: tried to get xmax - but that has not been set.\n",__func__);
+    return 0;
+  }
 }
 
 double plot_range_get_ymin(const plot_range_type * plot_range) {
   if (plot_range->ymin_set)
     return plot_range->ymin;
-  else
+  else {
     util_abort("%s: tried to get ymin - but that has not been set.\n",__func__);
+    return 0;
+  }
 }
 
 double plot_range_get_ymax(const plot_range_type * plot_range) {
   if (plot_range->ymax_set)
     return plot_range->ymax;
-  else
+  else {
     util_abort("%s: tried to get ymax - but that has not been set.\n",__func__);
+    return 0;
+  }
 }
 
 /*****************************************************************/
