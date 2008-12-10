@@ -758,7 +758,7 @@ double history_get_group_var(const history_type * history, int restart_nr, const
     wvar = "WGIR";
   else
   {
-    util_abort("%s: No support for calculating group keyword %s from well keywords.\n", __func__);
+    util_abort("%s: No support for calculating group keyword %s for group %s from well keywords.\n", __func__, var, group);
   }
 
   double obs = 0.0;
