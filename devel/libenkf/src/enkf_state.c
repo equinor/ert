@@ -450,6 +450,7 @@ INCLDUE
     while (key != NULL) {
       char * value = util_alloc_string_copy(hash_get(data_kw , key));
       enkf_state_add_subst_kw(enkf_state , key , value);   /* The subst_list will free it in the end. */
+      key = hash_iter_get_next_key( data_kw );
     }
   }
   return enkf_state;
