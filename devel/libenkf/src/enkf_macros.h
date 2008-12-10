@@ -183,6 +183,17 @@ double prefix ## _user_get__(void * void_arg , const char * key , bool * valid) 
 #define VOID_USER_GET_HEADER(prefix) double prefix ## _user_get__(void * , const char * , bool *);
 
 
+
+/*****************************************************************/
+
+#define VOID_USER_GET_OBS(prefix)                                                     \
+void prefix ## _user_get__(void * void_arg , const char * key , double * value, double * std, bool * valid) { \
+   prefix ## _user_get((prefix ## _type *) void_arg , key , value , std , valid);               \
+}
+
+#define VOID_USER_GET_OBS_HEADER(prefix) void prefix ## _user_get__(void * , const char * , double * , double * , bool *);
+
+
 /*****************************************************************/
 
 #define VOID_FREE_DATA(prefix)                        \

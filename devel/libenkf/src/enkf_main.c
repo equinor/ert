@@ -182,7 +182,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
 static void enkf_main_load_sub_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state, int iens1 , int iens2) {
   int iens;
   for (iens = iens1; iens < iens2; iens++)
-    enkf_state_fread(enkf_main->ensemble[iens] , mask , report_step , state);
+    enkf_state_fread(enkf_main->ensemble[iens] , mask , report_step , state , false);
 }
 
 
@@ -824,7 +824,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	
 	enkf_main->meas_forecast   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
 	enkf_main->meas_analyzed   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
-	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file ,model_config_get_history(enkf_main->model_config) , model_config_get_fs(enkf_main->model_config));
+	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file ,model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config);
 	enkf_main->obs_data        = obs_data_alloc();
 	{
 	  stringlist_type * summary_vars = enkf_obs_alloc_summary_vars(enkf_main->obs);

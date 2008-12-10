@@ -155,9 +155,10 @@ void gen_obs_activate(gen_obs_type * obs , active_mode_type active_mode , void *
 }
 
 
-double gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , bool * valid) {
+void gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid) {
   *valid = true;
-  return 1.0;
+  *value = 1.0;
+  *std   = 1.0;
 }
 
 
@@ -169,4 +170,4 @@ VOID_OBS_ACTIVATE(gen_obs)
 VOID_FREE(gen_obs)
 VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs , gen_data)
-VOID_USER_GET(gen_obs)
+VOID_USER_GET_OBS(gen_obs)

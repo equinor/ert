@@ -25,7 +25,7 @@ extern "C" {
 
 typedef struct enkf_state_struct    enkf_state_type;
 
-void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
+void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum , bool);
 void               enkf_state_init_eclipse(enkf_state_type *);
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
 bool               enkf_state_get_analyzed(const enkf_state_type * );
@@ -47,7 +47,7 @@ enkf_state_type * enkf_state_alloc(int ,
 				   ensemble_config_type * ,
 				   const site_config_type * ,
 				   const ecl_config_type * ,
-				   const hash_type *);
+				   hash_type *);
 
 
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );

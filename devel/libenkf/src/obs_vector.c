@@ -14,7 +14,7 @@
 #include <summary_obs.h>
 #include <field_obs.h>
 #include <gen_obs.h>
-
+#include <ensemble_config.h>
 
 
 struct obs_vector_struct {
@@ -354,7 +354,7 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
 
 
 
-obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance,const history_type * history) {
+obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type * conf_instance,const history_type * history, const ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "BLOCK_OBSERVATION"))
     util_abort("%s: internal error. expected \"BLOCK_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
@@ -396,7 +396,11 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
       obs_k    [obs_pt_nr] = conf_instance_get_item_value_int(   obs_instance, "K") - 1;
     }
     
-    block_obs  = field_obs_alloc(obs_label, field_name, num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+    {
+      const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , field_name);
+      const field_config_type     * field_config = enkf_config_node_get_ref( config_node ); 
+      block_obs  = field_obs_alloc(obs_label, field_config , field_name, num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
+    }
     obs_vector = obs_vector_alloc( field_obs , field_name , size );
     obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
     

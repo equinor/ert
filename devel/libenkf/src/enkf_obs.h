@@ -33,7 +33,7 @@ void enkf_obs_get_observations(
 enkf_obs_type * enkf_obs_fscanf_alloc(
   const char         * config_file,
   const history_type * hist,
-  enkf_fs_type       * fs); 
+  const ensemble_config_type * ensemble_config);
 
 void enkf_obs_measure_on_ensemble(
         const enkf_obs_type    * enkf_obs,

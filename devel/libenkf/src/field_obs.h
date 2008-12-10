@@ -15,6 +15,7 @@ typedef struct field_obs_struct field_obs_type;
 
 field_obs_type * field_obs_alloc(
   const char   * obs_label,
+  const field_config_type * field_config,
   const char   * field_name,
   int            size,
   const int    * i,
@@ -51,7 +52,7 @@ IS_INSTANCE_HEADER(field_obs);
 VOID_MEASURE_HEADER(field_obs);
 VOID_FWRITE_HEADER(field_obs);
 VOID_FREAD_HEADER(field_obs);
-VOID_USER_GET_HEADER(field_obs);
+VOID_USER_GET_OBS_HEADER(field_obs);
 
 #ifdef __cplusplus
 }

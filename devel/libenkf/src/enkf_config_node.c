@@ -63,7 +63,7 @@ const char * enkf_config_node_get_infile(const enkf_config_node_type * node) {
 
 
 
-const void *  enkf_config_node_get_ref(const enkf_config_node_type * node) { 
+void *  enkf_config_node_get_ref(const enkf_config_node_type * node) { 
   return node->data; 
 }
 

@@ -130,7 +130,7 @@ void enkf_obs_measure_on_ensemble(
     conf_instance_type, not a config_file.
 */
 
-enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_type * hist, enkf_fs_type * fs) {
+enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_type * hist, const ensemble_config_type * ensemble_config) {
   enkf_obs_type      * enkf_obs        = enkf_obs_alloc();
   if(config_file == NULL)
     return enkf_obs;
@@ -223,7 +223,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
       //
       //obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
       //
-      obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , hist);
+      obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , hist ,   ensemble_config);
       enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
     }
 
@@ -236,26 +236,6 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
   conf_instance_free(enkf_conf      );
   conf_class_free(   enkf_conf_class);
 
-//  
-//  /* 
-//     Before the enkf_obs is returned - it is internalized in the
-//     enkf_fs filesystem. Currently not used .... quite slow process
-//  */
-//  {
-//    char * key = hash_iter_get_first_key(enkf_obs->obs_hash);
-//    msg_type * msg = msg_alloc("Storing observation: ");
-//    msg_show(msg);
-//    while (key != NULL) {
-//      int report_step;
-//      obs_node_type * obs_node = hash_get(enkf_obs->obs_hash , key);
-//      msg_update(msg , key);
-//      for (report_step = 0; report_step < num_restarts; report_step++)
-//	enkf_fs_fwrite_obs_node(fs , obs_node , report_step);
-//      
-//      key = hash_iter_get_next_key( enkf_obs->obs_hash );
-//    }
-//    msg_free(msg , true);
-//  }
 
 
   return enkf_obs;
@@ -444,7 +424,7 @@ stringlist_type * enkf_obs_alloc_summary_vars(
   enkf_obs_type * enkf_obs)
 {
   stringlist_type * summary_vars = stringlist_alloc_new();
-  char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
+  const char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
   while ( key != NULL) {
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
     if (obs_vector_get_impl_type(obs_vector) == summary_obs) 

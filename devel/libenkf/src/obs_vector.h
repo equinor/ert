@@ -8,6 +8,7 @@ extern "C" {
 #include <enkf_types.h>
 #include <enkf_node.h>
 #include <sched_file.h>
+#include <ensemble_config.h>
 #include <history.h>
 #include <time.h>
 #include <obs_data.h>
@@ -20,7 +21,7 @@ typedef void   (obs_free_ftype)                (void *);
 typedef void   (obs_get_ftype)                 (const void * , int , obs_data_type *);
 typedef void   (obs_meas_ftype)                (const void * , const void *, meas_vector_type *);
 typedef void   (obs_activate_ftype)            (void * , active_mode_type , void *);
-typedef double (obs_user_get_ftype)            (void * , const char * , bool *); 
+typedef void   (obs_user_get_ftype)            (void * , const char * , double * , double * , bool *); 
 typedef  bool  (obs_type_check_ftype)          (const void *);
 
 typedef enum { gen_obs     = 1,
@@ -46,7 +47,7 @@ obs_impl_type        obs_vector_get_impl_type(const obs_vector_type * );
 
 obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type *  , const history_type * );
 obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type *  , const history_type * );
-obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *  , const history_type * );
+obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *  , const history_type * , const ensemble_config_type * );
 
 
 VOID_FREE_HEADER(obs_vector);

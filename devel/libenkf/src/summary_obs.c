@@ -249,9 +249,10 @@ bool summary_obs_fwrite(const summary_obs_type * summary_obs , FILE * stream) {
 }
 
 
-double summary_obs_user_get(const summary_obs_type * summary_obs , const char * index_key , bool * valid) {
+void summary_obs_user_get(const summary_obs_type * summary_obs , const char * index_key , double * value , double * std, bool * valid) {
   *valid = true;
-  return summary_obs->value;
+  *value = summary_obs->value;
+  *std   = summary_obs->std;
 }
 
 
@@ -262,5 +263,5 @@ VOID_FREAD(summary_obs)
 VOID_FWRITE(summary_obs)
 VOID_FREE(summary_obs)
 VOID_GET_OBS(summary_obs)
-VOID_USER_GET(summary_obs)
+VOID_USER_GET_OBS(summary_obs)
 VOID_MEASURE(summary_obs , summary)

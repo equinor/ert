@@ -348,13 +348,9 @@ inline int field_config_active_index(const field_config_type * config , int i , 
     index is active.
 */
 
-
 bool field_config_ijk_valid(const field_config_type * config , int i , int j , int k) {
   return ecl_grid_ijk_valid(config->grid , i,j,k);
 }
-
-
-
 
 
 

@@ -389,7 +389,7 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   ensemble_config_type * ensemble_config,
 				   const site_config_type * site_config,
 				   const ecl_config_type * ecl_config,
-				   const hash_type * data_kw) {
+				   hash_type * data_kw) {
   
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
@@ -446,15 +446,11 @@ INCLDUE
     }
   }
   {
-    char ** key_list;
-    int keys;
-    key_list = hash_alloc_keylist( data_kw );
-    keys     = hash_get_size( data_kw );
-    for (int i = 0; i < keys; i++) {
-      char * value = util_alloc_string_copy(hash_get(data_kw , key_list[i]));
-      enkf_state_add_subst_kw(enkf_state , key_list[i] , value);   /* The subst_list will free it in the end. */
+    const char * key = hash_iter_get_first_key( data_kw );
+    while (key != NULL) {
+      char * value = util_alloc_string_copy(hash_get(data_kw , key));
+      enkf_state_add_subst_kw(enkf_state , key , value);   /* The subst_list will free it in the end. */
     }
-    util_free_stringlist(key_list , keys); 
   }
   return enkf_state;
 }
@@ -805,8 +801,10 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask , int repor
 }
 
 
-
-void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
+/**
+   if init_mode == true - it will not try to load summary data - what a hack.
+*/
+void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state , bool init_mode) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
@@ -815,9 +813,14 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
   
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
-  }                                                                     
+    if (enkf_node_include_type(enkf_node , mask)) {
+      if (init_mode) {
+	if (enkf_node_get_impl_type(enkf_node) != SUMMARY)
+	  enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
+      } else 
+	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
+    }     
+  }
   util_free_stringlist(key_list , num_keys);
 }
 
@@ -958,7 +961,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	enkf_state_safe_fread(enkf_state , dynamic , run_info->init_step , run_info->init_state);
       else
 	mask += dynamic;
-      enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state);
+      enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state , true);
     }
     enkf_state_ecl_write( enkf_state );
     
