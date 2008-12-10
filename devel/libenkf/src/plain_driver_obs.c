@@ -44,7 +44,7 @@ void plain_driver_obs_load_node(void * _driver , int report_step , obs_node_type
     char * filename = plain_driver_obs_alloc_filename(driver , report_step , obs_node_get_key(node) , false);
     FILE * stream = util_fopen(filename , "r");
 
-    obs_node_fread(node , stream);
+    obs_node_fread(node , stream , report_step);
 
     fclose(stream);
     free(filename);
@@ -67,10 +67,10 @@ void plain_driver_obs_save_node(void * _driver , int report_step , obs_node_type
   {
     char * filename = plain_driver_obs_alloc_filename(driver , report_step , obs_node_get_key(node) , true);
     FILE * stream = util_fopen(filename , "w");
-
-    obs_node_fwrite(node , stream);
-    
+    bool   data_written = obs_node_fwrite(node , stream , report_step);
     fclose(stream);
+    if (!data_written)
+      util_unlink_existing( filename ); /* remove empty files. */
     free(filename);
   }
 }

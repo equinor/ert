@@ -7,8 +7,8 @@ extern "C" {
 #include <enkf_fs.h>
 #include <enkf_state.h>
 #include <meas_matrix.h>
-#include <obs_node.h>
 #include <obs_data.h>
+
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
@@ -20,10 +20,10 @@ enkf_obs_type * enkf_obs_alloc(
 void enkf_obs_free(
   enkf_obs_type * enkf_obs);
 
-void enkf_obs_add_obs(
-  enkf_obs_type       * enkf_obs,
-  const char          * key ,
-  const obs_node_type * node);
+//void enkf_obs_add_obs(
+//  enkf_obs_type       * enkf_obs,
+//  const char          * key ,
+//  const obs_node_type * node);
 
 void enkf_obs_get_observations(
   enkf_obs_type * enkf_obs ,
@@ -32,7 +32,8 @@ void enkf_obs_get_observations(
 
 enkf_obs_type * enkf_obs_fscanf_alloc(
   const char         * config_file,
-  const history_type * hist);
+  const history_type * hist,
+  enkf_fs_type       * fs); 
 
 void enkf_obs_measure_on_ensemble(
         const enkf_obs_type    * enkf_obs,

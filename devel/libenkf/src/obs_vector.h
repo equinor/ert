@@ -1,0 +1,58 @@
+#ifndef __OBS_VECTOR_H__
+#define __OBS_VECTOR_H__
+
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
+#include <enkf_types.h>
+#include <enkf_node.h>
+#include <sched_file.h>
+#include <history.h>
+#include <time.h>
+#include <obs_data.h>
+#include <meas_vector.h>
+#include <enkf_macros.h>
+#include <conf.h>
+
+
+typedef void   (obs_free_ftype)                (void *);
+typedef void   (obs_get_ftype)                 (const void * , int , obs_data_type *);
+typedef void   (obs_meas_ftype)                (const void * , const void *, meas_vector_type *);
+typedef void   (obs_activate_ftype)            (void * , active_mode_type , void *);
+typedef double (obs_user_get_ftype)            (void * , const char * , bool *); 
+typedef  bool  (obs_type_check_ftype)          (const void *);
+
+typedef enum { gen_obs     = 1,
+	       summary_obs = 2,
+	       field_obs   = 3} obs_impl_type;
+
+
+typedef struct obs_vector_struct obs_vector_type;
+
+
+  //obs_vector_type    * obs_vector_alloc(int);
+void                 obs_vector_free(obs_vector_type * );
+void 		     obs_vector_activate_report_step(obs_vector_type * , int , int );
+void 		     obs_vector_deactivate_report_step(obs_vector_type * , int , int );
+void 		     obs_vector_activate_time_t(obs_vector_type * , const sched_file_type * , time_t , time_t );
+void 		     obs_vector_deactivate_time_t(obs_vector_type * , const sched_file_type * , time_t , time_t );
+int                  obs_vector_get_num_active(const obs_vector_type * );
+bool   	   	     obs_vector_iget_active(const obs_vector_type * , int );
+void                 obs_vector_iget_observations(const obs_vector_type *  , int  , obs_data_type * );
+void                 obs_vector_measure(const obs_vector_type *  , int  ,const enkf_node_type *  ,  meas_vector_type * );
+const char         * obs_vector_get_state_kw(const obs_vector_type * );
+obs_impl_type        obs_vector_get_impl_type(const obs_vector_type * );
+
+obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type *  , const history_type * );
+obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type *  , const history_type * );
+obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *  , const history_type * );
+
+
+VOID_FREE_HEADER(obs_vector);
+
+
+#ifdef __cplusplus 
+}
+#endif
+#endif

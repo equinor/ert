@@ -5,8 +5,10 @@
 #include <enkf_obs.h>
 #include <summary_obs.h>
 #include <field_obs.h>
-
-
+#include <enkf_fs.h>
+#include <obs_vector.h>
+#include <msg.h>
+#include <enkf_state.h>
 
 /** TODO 
     This static function header shall be removed when the configuration is unified.... 
@@ -20,8 +22,8 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 
 
 struct enkf_obs_struct {
-  /** A hash of obs_node_types indexed by user provided keys. */
-  hash_type              * obs_hash; 
+  /** A hash of obs_vector_types indexed by user provided keys. */
+  hash_type * obs_hash; 
 };
 
 
@@ -49,14 +51,25 @@ void enkf_obs_free(
 
 
   
-void enkf_obs_add_obs(
+//void enkf_obs_add_obs(
+//  enkf_obs_type       * enkf_obs,
+//  const char          * key ,
+//  const obs_node_type * node)
+//{
+//  if (hash_has_key(enkf_obs->obs_hash , key))
+//    util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
+//  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , node , obs_node_free__);
+//}
+
+
+void enkf_obs_add_obs_vector(
   enkf_obs_type       * enkf_obs,
   const char          * key ,
-  const obs_node_type * node)
+  const obs_vector_type * node)
 {
   if (hash_has_key(enkf_obs->obs_hash , key))
     util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
-  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , node , obs_node_free__);
+  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , node , obs_vector_free__);
 }
 
 
@@ -71,8 +84,8 @@ void enkf_obs_get_observations(
 
   obs_data_reset(obs_data);
   for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
-    obs_node_type * obs_node = hash_get(enkf_obs->obs_hash , obs_keys[iobs]);
-    obs_node_get_observations(obs_node , report_step , obs_data);
+    obs_vector_type * obs_vector = hash_get(enkf_obs->obs_hash , obs_keys[iobs]);
+    obs_vector_iget_observations(obs_vector , report_step , obs_data);
   }
   util_free_stringlist( obs_keys , hash_get_size(enkf_obs->obs_hash));
 }
@@ -94,13 +107,14 @@ void enkf_obs_measure_on_ensemble(
   {
     const char * kw = obs_keys[iobs];
     {
-      obs_node_type  * obs_node  = hash_get(enkf_obs->obs_hash , kw);
+      obs_vector_type  * obs_vector  = hash_get(enkf_obs->obs_hash , kw);
       int iens;
       for (iens = 0; iens < ens_size; iens++) {
-        enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_node_get_state_kw(obs_node));
+        enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
         meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
-        enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);       /* Hardcoded to measure on the forecast */
-        obs_node_measure(obs_node , report_step , enkf_node , meas_vector);
+
+        enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);      
+        obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector);
       }
     }
   }
@@ -109,26 +123,25 @@ void enkf_obs_measure_on_ensemble(
 
 
 
-/** TODO
-    When configuration has been unified, this should take a conf_instance_type, not a config_file.
-*/
-enkf_obs_type * enkf_obs_fscanf_alloc(
-  const char         * config_file,
-  const history_type * hist) 
-{
-  int num_restarts = history_get_num_restarts(hist);
+/** 
+    TODO 
 
+    When configuration has been unified, this should take a
+    conf_instance_type, not a config_file.
+*/
+
+enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_type * hist, enkf_fs_type * fs) {
   enkf_obs_type      * enkf_obs        = enkf_obs_alloc();
   if(config_file == NULL)
     return enkf_obs;
+  
   conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
   conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file); 
-
   
   if(conf_instance_validate(enkf_conf) == false)
-  {
-    util_abort("Can not proceed with this configuration.\n");
-  }
+    {
+      util_abort("Can not proceed with this configuration.\n");
+    }
   
 
 
@@ -142,18 +155,22 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
     {
       const char               * sum_key       = stringlist_iget(hist_obs_keys, hist_obs_nr); 
       const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
-      summary_obs_type         * sum_obs       = summary_obs_alloc_from_HISTORY_OBSERVATION(hist_obs_conf, hist);
+      //summary_obs_type         * sum_obs       = summary_obs_alloc_from_HISTORY_OBSERVATION(hist_obs_conf, hist);
+      //
+      //obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, summary_obs , num_restarts);
+      //
+      //
+      ///** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
+      //for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
+      //{
+      //  if(!summary_obs_default_used(sum_obs, restart_nr))
+      //    obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
+      //}
+      
+      obs_vector_type * obs_vector = obs_vector_alloc_from_HISTORY_OBSERVATION(hist_obs_conf , hist);  
+      //obs_vector_free( obs_vector );
 
-      obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, summary_obs , num_restarts, false);
-
-      /** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
-      for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
-      {
-        if(!summary_obs_default_used(sum_obs, restart_nr))
-          obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
-      }
-
-      enkf_obs_add_obs(enkf_obs, sum_key, obs_node);
+      enkf_obs_add_obs_vector(enkf_obs, sum_key, obs_vector);
     }
 
     stringlist_free(hist_obs_keys);
@@ -170,19 +187,19 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
     {
       const char               * obs_key      = stringlist_iget(sum_obs_keys, sum_obs_nr);
       const conf_instance_type * sum_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-      summary_obs_type         * sum_obs      = summary_obs_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf, hist);
-      const char               * sum_key      = summary_obs_get_summary_key_ref(sum_obs);
-
-      obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, summary_obs , num_restarts, false);
-
-      /** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
-      for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
-      {
-        if(!summary_obs_default_used(sum_obs, restart_nr))
-          obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
-      }
-
-      enkf_obs_add_obs(enkf_obs, obs_key, obs_node);
+      //summary_obs_type         * sum_obs      = summary_obs_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf, hist);
+      //obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, summary_obs , num_restarts);
+      //
+      ///** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
+      //for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
+      //{
+      //  if(!summary_obs_default_used(sum_obs, restart_nr))
+      //    obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
+      //	
+      //}
+      
+      obs_vector_type * obs_vector = obs_vector_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf , hist);
+      enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
     }
 
     stringlist_free(sum_obs_keys);
@@ -199,15 +216,15 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
     {
       const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
       const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-      field_obs_type           * block_obs      = field_obs_alloc_from_BLOCK_OBSERVATION(block_obs_conf, hist);
-      const char               * field_name     = field_obs_get_field_name_ref(block_obs);
-      int                        restart_nr     = field_obs_get_restart_nr(block_obs);
-
-      obs_node_type * obs_node                   = obs_node_alloc(block_obs, field_name, obs_key, field_obs , num_restarts, false);
-      
-      obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
-
-      enkf_obs_add_obs(enkf_obs, obs_key, obs_node);
+      //field_obs_type           * block_obs      = field_obs_alloc_from_BLOCK_OBSERVATION(block_obs_conf, hist);
+      //const char               * field_name     = field_obs_get_field_name(block_obs);
+      //int                        restart_nr     = field_obs_get_restart_nr(block_obs);
+      //obs_node_type * obs_node                  = obs_node_alloc(block_obs, field_name, obs_key, field_obs , num_restarts);
+      //
+      //obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
+      //
+      obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , hist);
+      enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
     }
 
 
@@ -218,15 +235,35 @@ enkf_obs_type * enkf_obs_fscanf_alloc(
 
   conf_instance_free(enkf_conf      );
   conf_class_free(   enkf_conf_class);
+
+//  
+//  /* 
+//     Before the enkf_obs is returned - it is internalized in the
+//     enkf_fs filesystem. Currently not used .... quite slow process
+//  */
+//  {
+//    char * key = hash_iter_get_first_key(enkf_obs->obs_hash);
+//    msg_type * msg = msg_alloc("Storing observation: ");
+//    msg_show(msg);
+//    while (key != NULL) {
+//      int report_step;
+//      obs_node_type * obs_node = hash_get(enkf_obs->obs_hash , key);
+//      msg_update(msg , key);
+//      for (report_step = 0; report_step < num_restarts; report_step++)
+//	enkf_fs_fwrite_obs_node(fs , obs_node , report_step);
+//      
+//      key = hash_iter_get_next_key( enkf_obs->obs_hash );
+//    }
+//    msg_free(msg , true);
+//  }
+
+
   return enkf_obs;
 }
 
 
 
-static 
-conf_class_type * enkf_obs_get_obs_conf_class(
-)
-{
+static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
   const char * enkf_conf_help = "An instance of the class ENKF_CONFIG shall contain neccessary infomation to run the enkf.";
   conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_CONFIG", true);
   conf_class_set_help(enkf_conf_class, enkf_conf_help);
@@ -409,11 +446,12 @@ stringlist_type * enkf_obs_alloc_summary_vars(
   stringlist_type * summary_vars = stringlist_alloc_new();
   char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
   while ( key != NULL) {
-    obs_node_type * obs_node = hash_get( enkf_obs->obs_hash , key);
-    if (obs_node_get_impl_type(obs_node) == summary_obs) 
-      stringlist_append_ref(summary_vars , obs_node_get_state_kw(obs_node));
+    obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
+    if (obs_vector_get_impl_type(obs_vector) == summary_obs) 
+      stringlist_append_ref(summary_vars , obs_vector_get_state_kw(obs_vector));
     key = hash_iter_get_next_key( enkf_obs->obs_hash );
   }
   return summary_vars;
 }
+
 

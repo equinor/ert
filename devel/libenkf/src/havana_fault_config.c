@@ -268,7 +268,7 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
 }
 
 
-static void havana_fault_config_printf(const havana_fault_config_type * config) {
+void havana_fault_config_printf(const havana_fault_config_type * config) {
   printf("Havana executable.........: %s \n",config->havana_executable);
   printf("Unfaulted grid............: %s \n",config->unfaulted_GRDECL_file);
   printf("Input faults..............: %s \n",config->input_fault_path);

@@ -8,7 +8,6 @@
 #include <enkf_fs.h>
 #include <path_fmt.h>
 #include <enkf_node.h>
-#include <obs_node.h>
 #include <basic_driver.h>
 #include <fs_index.h>
 #include <fs_types.h>
@@ -16,7 +15,6 @@
 #include <plain_driver_parameter.h>
 #include <plain_driver_static.h>
 #include <plain_driver_dynamic.h>
-#include <plain_driver_obs.h>
 
 
 /**
@@ -62,8 +60,6 @@
     - state       : whether we are considering an analyzed node or a forecast.  
 
 
-  In addition there is a obs_driver for loading and storing obs_node
-  instances with observed values.
 
 
   The drivers
@@ -178,7 +174,6 @@ struct enkf_fs_struct {
   basic_driver_type         * dynamic;               /* Implements functions for read/write of dynamic data. */
   basic_static_driver_type  * eclipse_static;        /* Implements functions for read/write of static elements in ECLIPSE restart files. */
   basic_driver_type  	    * parameter;             /* Implements functions for read/write of parameters. */
-  basic_obs_driver_type     * obs;                   /* Implements functions for read/write of obs_node instances. */
   fs_index_type      	    * index;                 /* Currently only used to write restart_kw_list instances (not properly virtualized). */
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
   int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
@@ -192,13 +187,12 @@ struct enkf_fs_struct {
 
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
-  const int num_drivers = 5;
+  const int num_drivers = 4;
   enkf_fs_type * fs  = util_malloc(sizeof * fs , __func__);
   fs->index          = NULL;
   fs->dynamic        = NULL;
   fs->eclipse_static = NULL;
   fs->parameter      = NULL;
-  fs->obs            = NULL;
   {
     char * config_file = util_alloc_full_path(root_path , mount_info);
     FILE * stream      = util_fopen(config_file , "r");
@@ -221,9 +215,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
       case(PLAIN_DRIVER_PARAMETER_ID):
 	driver = plain_driver_parameter_fread_alloc( root_path , stream );
 	break;
-      case(PLAIN_DRIVER_OBS_ID):
-	driver = plain_driver_obs_fread_alloc( root_path , stream );
-	break;
       default:
 	util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized \n",__func__ , config_file , driver_id);
       }
@@ -242,9 +233,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
       case(INDEX_DRIVER):
 	fs->index = driver;
 	break;
-      case(OBS_DRIVER):
-	fs->obs = driver;
-	break;
       default:
 	util_abort("%s: fatal error in mount_map:%s - driver category:%d not recognized \n",__func__ , config_file , driver_category);
       }
@@ -254,7 +242,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     if (fs->dynamic    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , config_file);
     if (fs->eclipse_static == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , config_file);
     if (fs->index          == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , config_file);
-    if (fs->obs            == NULL) util_abort("%s: fatal error - mount map in:%s did not contain obs driver.\n",     __func__ , config_file);
     fclose(stream);
     free(config_file);
     
@@ -262,7 +249,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
   basic_driver_assert_cast(fs->dynamic);
   basic_static_driver_assert_cast(fs->eclipse_static);
   basic_driver_assert_cast(fs->parameter);
-  basic_obs_driver_assert_cast(fs->obs);
 
   {
     char * ens_path    = util_alloc_string_copy(root_path);
@@ -295,16 +281,12 @@ static void enkf_fs_free_static_driver(basic_static_driver_type * driver) {
   driver->free_driver(driver);
 }
 
-static void enkf_fs_free_obs_driver(basic_obs_driver_type * driver) {
-  driver->free_driver(driver);
-}
 
 
 void enkf_fs_free(enkf_fs_type * fs) {
   enkf_fs_free_driver(fs->dynamic);
   enkf_fs_free_driver(fs->parameter);
   enkf_fs_free_static_driver(fs->eclipse_static);
-  enkf_fs_free_obs_driver(fs->obs);
   fs_index_free(fs->index);
   close(fs->lock_fd);
   util_unlink_existing(fs->lockfile);
@@ -339,38 +321,6 @@ static int enkf_fs_get_static_counter(const enkf_node_type * node) {
   return ecl_static_kw_get_counter(ecl_static);
 }
 
-/*****************************************************************/
-/* Exported functions for obs_node instances . */
-
-void enkf_fs_fwrite_obs_node(enkf_fs_type * enkf_fs , obs_node_type * obs_node , int report_step) {
-  if (enkf_fs->read_only)
-    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
-  {
-    basic_obs_driver_type * driver = basic_obs_driver_safe_cast(enkf_fs->obs);
-    driver->save(driver , report_step , obs_node); 
-  }
-}
-
-
-void enkf_fs_fread_obs_node(enkf_fs_type * enkf_fs , obs_node_type * obs_node , int report_step) {
-  if (enkf_fs->read_only)
-    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
-  {
-    basic_obs_driver_type * driver = basic_obs_driver_safe_cast(enkf_fs->obs);
-    driver->load(driver , report_step , obs_node); 
-  }
-}
-
-
-bool enkf_fs_has_obs_node(enkf_fs_type * enkf_fs , obs_node_type * obs_node , int report_step) {
-  if (enkf_fs->read_only)
-    util_abort("%s: attempt to write to read_only filesystem - aborting. \n",__func__);
-  {
-    basic_obs_driver_type * driver = basic_obs_driver_safe_cast(enkf_fs->obs);
-    const char * key = obs_node_get_key(obs_node);
-    return driver->has_node(driver , report_step , key); 
-  }
-}
 
 /*****************************************************************/
 /* Exported functions for enkf_node instances . */

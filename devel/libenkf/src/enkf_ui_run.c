@@ -104,6 +104,11 @@ void enkf_main_interactive_set_runpath__(void *arg) {
 }
 
 
+void enkf_ui_run_analyze__(void * enkf_main) {
+  enkf_main_analysis_update(enkf_main , enkf_ui_util_scanf_report_step(enkf_main , "Which report step to analyze" , 40));
+}
+
+
 void enkf_ui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   
@@ -113,6 +118,7 @@ void enkf_ui_run_menu(void * arg) {
   menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__        , enkf_main);
   menu_add_item(menu , "Run screening experiment"               , "cC" , enkf_ui_run_screening__  , enkf_main);
   menu_add_separator(menu);
+  menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_ui_run_analyze__ , enkf_main);
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );
     path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );

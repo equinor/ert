@@ -4,7 +4,7 @@
 #include <enkf_config_node.h>
 #include <ensemble_config.h>
 #include <active_node.h>
-#include <obs_node.h>
+#include <obs_vector.h>
 
 /**
    This file implements the two most basic objects used in the mapping
@@ -33,7 +33,7 @@ struct active_var_struct {
    Similar to active_var_struct, but for observations.
 */
 struct active_obs_struct {
-  const obs_node_type       	  * obs_node;             /* The obs_node instance this is all about - pointer to *shared* resource. */
+  const obs_vector_type       	  * obs_vector;             /* The obs_node instance this is all about - pointer to *shared* resource. */
   active_mode_type          	    active_mode;         
   void                      	  * active_config;        /* An object (type depending on datatype of obs_node) used to hold info abourt partly active variable. 
                    					     Owned by this object. If active_mode == all_active or active_mode == inactive, this can be NULL. */

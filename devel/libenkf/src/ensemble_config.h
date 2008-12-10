@@ -26,7 +26,7 @@ int                    ensemble_config_get_size(const ensemble_config_type * );
 void ensemble_config_ensure_summary(ensemble_config_type *  , const char * );
 
 void                          ensemble_config_add_config_items(config_type * );
-const enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * , const char * );
+enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );
 char **                       ensemble_config_alloc_keylist(const ensemble_config_type * , int *);
 bool                          ensemble_config_iget_keep_runpath(const ensemble_config_type * , int );
 

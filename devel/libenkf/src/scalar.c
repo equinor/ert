@@ -44,7 +44,8 @@ void scalar_get_data(const scalar_type * scalar , double * data) {
   memcpy(data , scalar->data , scalar_config_get_data_size(scalar->config) * sizeof * data);
 }
 
-double scalar_iget_double(const scalar_type * scalar , int index) {
+
+double scalar_iget_double(scalar_type * scalar , int index) {
   if (!scalar->output_valid)
     scalar_transform( scalar );
   return scalar->output_data[index];
@@ -197,7 +198,7 @@ const double * scalar_get_data_ref  (const scalar_type * scalar) { return scalar
 
 
 static void scalar_lock_output(scalar_type * scalar) { scalar->__output_locked   = true; }
-static void scalar_unlock_output(scalar_type * scalar) { scalar->__output_locked = false; }
+//static void scalar_unlock_output(scalar_type * scalar) { scalar->__output_locked = false; }
 
 /**
    The scalar object must implement it's own mathematical functions,

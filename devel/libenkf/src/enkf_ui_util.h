@@ -18,5 +18,6 @@ bool      		    * enkf_ui_util_scanf_alloc_report_active(const enkf_sched_type *
 bool      		    * enkf_ui_util_scanf_alloc_iens_active(int , int , int * , int *);
 void      		      enkf_ui_util_get_time(enkf_fs_type * , const enkf_config_node_type * , enkf_node_type * , state_enum , int  , int  , int  , int  , double *  , double *  );
 void                          enkf_ui_util_scanf_iens_range(int  , int  , int *  , int * );
+int                           enkf_ui_util_scanf_report_step(const enkf_main_type *  , const char *  , int );
 
 #endif

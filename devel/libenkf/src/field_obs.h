@@ -16,7 +16,6 @@ typedef struct field_obs_struct field_obs_type;
 field_obs_type * field_obs_alloc(
   const char   * obs_label,
   const char   * field_name,
-  int            restart_nr,
   int            size,
   const int    * i,
   const int    * j,
@@ -27,10 +26,7 @@ field_obs_type * field_obs_alloc(
 void field_obs_free(
   field_obs_type * field_obs);
 
-int field_obs_get_restart_nr(
-  const field_obs_type * field_obs);
-
-const char * field_obs_get_field_name_ref(
+const char * field_obs_get_field_name(
   const field_obs_type * field_obs);
 
 void field_obs_get_observations(
@@ -47,9 +43,16 @@ field_obs_type * field_obs_alloc_from_BLOCK_OBSERVATION(
   const conf_instance_type * conf_instance,
   const history_type       * history);
 
+
+SAFE_CAST_HEADER(field_obs);
 VOID_FREE_HEADER(field_obs);
 VOID_GET_OBS_HEADER(field_obs);
+IS_INSTANCE_HEADER(field_obs);
 VOID_MEASURE_HEADER(field_obs);
+VOID_FWRITE_HEADER(field_obs);
+VOID_FREAD_HEADER(field_obs);
+VOID_USER_GET_HEADER(field_obs);
+
 #ifdef __cplusplus
 }
 #endif

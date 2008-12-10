@@ -111,7 +111,7 @@ bool ensemble_config_has_key(const ensemble_config_type * ensemble_config , cons
 
 
 
-const enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * ensemble_config, const char * key) {
+enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * ensemble_config, const char * key) {
   if (hash_has_key(ensemble_config->config_nodes , key)) {
     enkf_config_node_type * node = hash_get(ensemble_config->config_nodes , key);
     return node;

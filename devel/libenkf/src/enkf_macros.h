@@ -24,12 +24,25 @@ char * ecl_kw_name;
 
 
 /*****************************************************************/
+#define IS_INSTANCE(prefix,ID) \
+bool prefix ## _is_instance__(const void * __arg) {             	   \
+  prefix ## _type * arg = (prefix ## _type *) __arg;         	   \
+  if (arg->__type_id != ID)                                        \
+     return false;                                                 \
+  else                                                             \
+     return true;                                                  \
+}
+
+#define IS_INSTANCE_HEADER(prefix)  bool prefix ## _is_instance__(const void * );
+
+/******************************************************************/
+
 #define SAFE_CAST(prefix , ID) \
-prefix ## _type * prefix ## _safe_cast(void * __config) {   \
-  prefix ## _type * config = (prefix ## _type *) __config;         \
-  if (config->__type_id != ID)                                     \
+prefix ## _type * prefix ## _safe_cast(void * __arg) {   \
+  prefix ## _type * arg = (prefix ## _type *) __arg;         \
+  if (arg->__type_id != ID)                                     \
     util_abort("%s: run_time cast failed - aborting \n",__func__); \
-  return config;                                                   \
+  return arg;                                                   \
 }
 
 #define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(void * );

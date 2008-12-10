@@ -332,7 +332,10 @@ void enkf_ui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * con
 }
 
 
-
-
+int enkf_ui_util_scanf_report_step(const enkf_main_type * enkf_main , const char * prompt , int prompt_len) {
+  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
+  const int last_report                   = enkf_sched_get_last_report(enkf_sched);
+  int report_step = util_scanf_int_with_limits(prompt , prompt_len , 0 , last_report);
+}
 
 

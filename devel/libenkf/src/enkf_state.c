@@ -33,7 +33,6 @@
 #include <arg_pack.h>
 #include <restart_kw_list.h>
 #include <enkf_fs.h>
-#include <obs_node.h>
 #include <basic_driver.h>
 #include <node_ctype.h>
 #include <job_queue.h>

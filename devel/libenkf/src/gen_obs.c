@@ -40,9 +40,6 @@ struct gen_obs_struct {
 
 /******************************************************************/
 
-SAFE_CAST(gen_obs , GEN_OBS_TYPE_ID)
-
-
 
 void gen_obs_free(gen_obs_type * gen_obs) {
   util_safe_free(gen_obs->__obs_buffer);
@@ -157,9 +154,19 @@ void gen_obs_activate(gen_obs_type * obs , active_mode_type active_mode , void *
     util_abort("%s: internal error - active_mode:%d completely invalid \n",__func__ , active_mode);
 }
 
+
+double gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , bool * valid) {
+  *valid = true;
+  return 1.0;
+}
+
+
   
 /*****************************************************************/
+SAFE_CAST(gen_obs , GEN_OBS_TYPE_ID)
+IS_INSTANCE(gen_obs , GEN_OBS_TYPE_ID)
 VOID_OBS_ACTIVATE(gen_obs)
 VOID_FREE(gen_obs)
 VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs , gen_data)
+VOID_USER_GET(gen_obs)
