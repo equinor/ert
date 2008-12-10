@@ -263,15 +263,11 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     double  *R , *E , *S , *D;
     
     analysis_set_stride(ens_size , nrobs_active , &ens_stride , &obs_stride);
-    S = meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
-    if (verbose) {
-      printf_matrix(S , nrobs_active , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
-      printf("\n");
-    }
-    
+    S     = meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
     R 	  = obs_data_allocR(obs_data);
     D     = obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , meanS , returnE , &E);
     innov = obs_data_alloc_innov(obs_data , meanS);
+
     obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
     X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
 
@@ -281,15 +277,19 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
   
     if (verbose) {
       printf_matrix(R , nrobs_active , nrobs_active    , 1 , nrobs_active , "R" , " %8.3lg ");
+      fwrite_matrix("enkf_debug_dump_R.txt", R , nrobs_active , nrobs_active    , 1 , nrobs_active , "R" , " %8.3lg ");
       printf("\n");
     
       printf_matrix(D , nrobs_active , ens_size , obs_stride , ens_stride , "D" , " %8.3lg ");
+      fwrite_matrix("enkf_debug_dump_D.txt", D , nrobs_active , ens_size , obs_stride , ens_stride , "D" , " %8.3lg ");
       printf("\n");
     
       printf_matrix(S , nrobs_active , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
+      fwrite_matrix("enkf_debug_dump_S.txt" , S , nrobs_active , ens_size , obs_stride , ens_stride , "S" , " %8.3lg ");
       printf("\n");
 
       printf_matrix(innov , nrobs_active , 1 , 1 , 1 , "Innov" , " %8.3lg ");
+      fwrite_matrix("enkf_debug_dump_innov.txt", innov , nrobs_active , 1 , 1 , 1 , "Innov" , " %8.3lg ");
       printf("\n");
     }
     
@@ -308,8 +308,10 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
 			(const int *) &istep              , 
 			xpath);
   
-    if (verbose) 
+    if (verbose) {
       printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
+      fwrite_matrix("enkf_debug_dump_X.txt", X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
+    }
 
     {
       int col;

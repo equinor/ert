@@ -69,24 +69,37 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type * matrix , int
 
 
 
-void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride_x, const char * name , const char * fmt) {
+void fprintf_matrix(FILE * stream, const double *M, int ny, int nx, int stride_y, int stride_x, const char * name, const char * fmt) {
 
   int ix , iy;
   for (iy=0; iy < ny; iy++) {
     if (iy == ny / 2)
-      printf("%s = ",name);
+      fprintf(stream, "%s = ",name);
     else {
       int i;
       for (i=0; i < strlen(name) + 3; i++)
-	printf(" ");
+	fprintf(stream, " ");
     }
-    printf("|");
+    fprintf(stream, "|");
     for (ix = 0; ix < nx; ix++) {
       int index = iy * stride_y + ix * stride_x;
-      printf(fmt , M[index]);
+      fprintf(stream, fmt , M[index]);
     }
-    printf("|\n");
+    fprintf(stream, "|\n");
   }
+
+}
+
+
+
+void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride_x, const char * name , const char * fmt) {
+        fprintf_matrix(stdout, M, ny, nx, stride_y, stride_x, name, fmt);
+}
+
+void fwrite_matrix(const char * filename, const double *M , int ny , int nx , int stride_y , int stride_x, const char * name , const char * fmt) {
+        FILE * stream = util_fopen(filename, "w");
+        fprintf_matrix(stream, M, ny, nx, stride_y, stride_x, name, fmt);
+        fclose(stream);
 }
 
 
