@@ -10,12 +10,12 @@
  * @brief Contains information about a plotting window.
  */
 struct plot_struct {
-    /**
-     * This is a doubly linked list which contains the datasets
-     * that will be plotted in this plot-window.
-     */
-    list_type *datasets;
-    const char *filename; /**< Filename for the plot */
+  /**
+   * This is a doubly linked list which contains the datasets
+   * that will be plotted in this plot-window.
+   */
+  list_type *datasets;
+  const char *filename; /**< Filename for the plot */
 
   /** Device name for the plot, where you have the following 
    * list of choices:
