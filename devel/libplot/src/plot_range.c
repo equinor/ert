@@ -70,6 +70,42 @@ static void plot_range_set_ymax__(plot_range_type * plot_range , double ymax) {
   plot_range->ymax_set = true;
 }
 
+/*****************************************************************/
+/* 
+   These function will fail if the corresponding value has not
+   been set, either from an automatic set, or manually.
+*/
+
+double plot_range_get_xmin(const plot_range_type * plot_range) {
+  if (plot_range->xmin_set)
+    return plot_range->xmin;
+  else
+    util_abort("%s: tried to get xmin - but that has not been set.\n",__func__);
+}
+
+double plot_range_get_xmax(const plot_range_type * plot_range) {
+  if (plot_range->xmax_set)
+    return plot_range->xmax;
+  else
+    util_abort("%s: tried to get xmax - but that has not been set.\n",__func__);}
+}
+
+double plot_range_get_ymin(const plot_range_type * plot_range) {
+  if (plot_range->ymin_set)
+    return plot_range->ymin;
+  else
+    util_abort("%s: tried to get ymin - but that has not been set.\n",__func__);
+}
+
+double plot_range_get_ymax(const plot_range_type * plot_range) {
+  if (plot_range->ymax_set)
+    return plot_range->ymax;
+  else
+    util_abort("%s: tried to get ymax - but that has not been set.\n",__func__);
+}
+
+/*****************************************************************/
+
 
 /**
    Allocates a plot_range instance, and initializes it to the
@@ -105,6 +141,16 @@ void plot_range_free(plot_range_type * plot_range) {
    This function sets the final range on the output device. Currently
    only PLPLOT.
 */
+
+/* 
+
+Dette skal vaere 'motsatt' - det skal vare:
+
+   plot_driver_set_range(driver , plot_range);
+   
+Altsaa driver som skal vaere i forersetet.
+*/
+
 
 void plot_range_apply(plot_range_type * plot_range , arg_pack_type * plot_data) {
   if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) {
