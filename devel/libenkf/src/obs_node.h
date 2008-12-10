@@ -24,12 +24,12 @@ typedef enum { gen_obs     = 1,
 	       field_obs   = 3} obs_impl_type;
 
 
-void            obs_node_fread(obs_node_type * , FILE *);
-bool            obs_node_fwrite(const obs_node_type * , FILE *);
+void            obs_node_fread(obs_node_type * , FILE * , int);
+bool            obs_node_fwrite(const obs_node_type * , FILE * , int);
 const    char * obs_node_get_key(const obs_node_type * );
 const    char * obs_node_get_state_kw(const obs_node_type * );
 void            obs_node_measure(const obs_node_type *  , int , const void * , meas_vector_type * );
-obs_node_type * obs_node_alloc(const void * , const char * , const char * , obs_impl_type , int , bool);
+obs_node_type * obs_node_alloc(const void * , const char * , const char * , obs_impl_type);
 void            obs_node_free(obs_node_type * );
 const void *    obs_node_get_ref(const obs_node_type * );
 void            obs_node_get_observations(obs_node_type * , int , obs_data_type * );
@@ -38,7 +38,9 @@ void 		obs_node_deactivate_report_step(obs_node_type * , int , int );
 void 		obs_node_activate_time_t(obs_node_type * , const sched_file_type * , time_t , time_t );
 void 		obs_node_deactivate_time_t(obs_node_type * , const sched_file_type * , time_t , time_t );
 obs_impl_type   obs_node_get_impl_type(const obs_node_type * );
-
+int    		obs_node_get_num_active(const obs_node_type * );
+bool   		obs_node_iget_active(const obs_node_type * , int );
+  
 
 VOID_FREE_HEADER(obs_node);
 
