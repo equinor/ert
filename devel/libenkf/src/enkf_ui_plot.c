@@ -9,6 +9,8 @@
 #include <enkf_main.h>
 #include <enkf_sched.h>
 #include <enkf_ui_plot.h>
+#include <enkf_obs.h>
+#include <obs_vector.h>
 #include <plot.h>
 #include <plot_dataset.h>
 #include <enkf_ui_util.h>
@@ -67,8 +69,8 @@ void stupid_plot(int N , const double * x , const double *y , const char * image
 
 
 
-void enkf_ui_plot_ensemble(void * arg_pack) {
-  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg_pack );
+void enkf_ui_plot_ensemble(void * arg) {
+  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
   const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
@@ -112,7 +114,7 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
       node = enkf_node_alloc( config_node );
       {
 	enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-	if (var_type == dynamic)
+	if ((var_type == dynamic_state) || (var_type == dynamic_result))
 	  plot_state = both;
 	else if (var_type == parameter)
 	  plot_state = analyzed;
@@ -144,7 +146,7 @@ void enkf_ui_plot_ensemble(void * arg_pack) {
 	      x[this_size] = step;
 	      this_size++;
 	    }
-	  }
+	  } 
 	}
 	/*stupid_plot(this_size , x , y , viewer);*/
 	__plot_add_data(plot , this_size , x , y , first);
@@ -221,6 +223,21 @@ void enkf_ui_plot_time(void * arg_pack) {
 }
 
 
+void enkf_ui_plot_observation(void * arg) {
+  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs   = enkf_main_get_obs( enkf_main );
+  const char * viewer                     = enkf_main_get_image_viewer( enkf_main );
+  {
+    const int prompt_len = 40;
+    const char * prompt  = "What do you want to plot (KEY:INDEX)";
+    const enkf_config_node_type * config_node;
+    obs_vector_type * obs_vector;
+    char user_key[64];
+    
+    //util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    //scanf("%s" , user_key);
+  }
+}
 
 	
 
@@ -231,7 +248,8 @@ void enkf_ui_plot_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
 
-  menu_add_item(menu , "Ensemble plot" , "eE" , enkf_ui_plot_ensemble , enkf_main );
+  menu_add_item(menu , "Ensemble plot"    , "eE" , enkf_ui_plot_ensemble    , enkf_main );
+  menu_add_item(menu , "Observation plot" , "oO" , enkf_ui_plot_observation , enkf_main);
   menu_run(menu);
   menu_free(menu);
 

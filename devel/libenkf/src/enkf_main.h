@@ -14,7 +14,7 @@ extern "C" {
 #include <job_queue.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
-
+#include <enkf_obs.h>
 
 /*****************************************************************/
 
@@ -59,6 +59,7 @@ const ensemble_config_type  * enkf_main_get_ensemble_config(const enkf_main_type
 const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
       model_config_type     * enkf_main_get_model_config( const enkf_main_type * );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
+enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
 
 void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
 void 	     enkf_main_set_field_config_iactive(const ensemble_config_type *, int);

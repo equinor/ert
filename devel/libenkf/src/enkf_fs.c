@@ -302,7 +302,10 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
   case(parameter):
     driver = fs->parameter;
     break;
-  case(dynamic):
+  case(dynamic_result):
+    driver = fs->dynamic;
+    break;
+  case(dynamic_state):
     driver = fs->dynamic;
     break;
   case(ecl_static):

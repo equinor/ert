@@ -134,6 +134,9 @@ enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
 }
 
 
+enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
+  return enkf_main->obs;
+}
 
 
 
@@ -182,7 +185,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
 static void enkf_main_load_sub_ensemble(enkf_main_type * enkf_main , int mask , int report_step , state_enum state, int iens1 , int iens2) {
   int iens;
   for (iens = iens1; iens < iens2; iens++)
-    enkf_state_fread(enkf_main->ensemble[iens] , mask , report_step , state , false);
+    enkf_state_fread(enkf_main->ensemble[iens] , mask , report_step , state );
 }
 
 
@@ -391,8 +394,9 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
     free(X);
   }
 
+  /* This will write analyzed results to disk anyway - maybe a bit wastefull . */
   printf("Saving: ........ "); fflush(stdout);
-  enkf_main_fwrite_ensemble(enkf_main , dynamic + parameter , report_step , analyzed);
+  enkf_main_fwrite_ensemble(enkf_main , dynamic_state + dynamic_result + parameter , report_step , analyzed);
   printf("\n");
   enkf_main_measure(enkf_main , report_step , analyzed);
   
@@ -470,8 +474,8 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   if (enkf_update)
     enkf_main_analysis_update(enkf_main , step2);
   else {
-    if (load_results)
-      enkf_main_load_ensemble(enkf_main , dynamic + parameter , step2 , forecast);      
+    if (load_results) /* Is this code ever relevant ?? */
+      enkf_main_load_ensemble(enkf_main , dynamic_result + dynamic_state + parameter , step2 , forecast);      
   }
   
   printf("%s: ferdig med step: %d \n" , __func__,step2);

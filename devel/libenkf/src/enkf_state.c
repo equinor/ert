@@ -630,7 +630,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
     for (ikey= 0; ikey < num_keys; ikey++) {
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_has_func(enkf_node , ecl_load_func))
-	if (enkf_node_include_type(enkf_node , dynamic))
+	if (enkf_node_include_type(enkf_node , dynamic_state + dynamic_result))
 	  enkf_node_ecl_load(enkf_node , run_info->run_path , summary , restart_block , report_step);
       
     }                                                                      
@@ -658,10 +658,10 @@ static void enkf_state_ecl_load(enkf_state_type * enkf_state , bool unified , in
 
   if (report_step1 == 0) {
     enkf_state_ecl_load2(enkf_state , unified , 0);
-    enkf_state_fwrite(enkf_state , dynamic , 0 , analyzed);
+    enkf_state_fwrite(enkf_state , dynamic_state , 0 , analyzed);
   }
   enkf_state_ecl_load2(enkf_state , unified , report_step2);
-  enkf_state_fwrite(enkf_state  , dynamic , report_step2 , forecast);
+  enkf_state_fwrite(enkf_state  , dynamic_state + dynamic_result , report_step2 , forecast);
 }
 
 
@@ -717,7 +717,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
       }
       
-      if (var_type == dynamic) {
+      if (var_type == dynamic_state) {
 	/* Pressure and saturations */
 	if (enkf_node_get_impl_type(enkf_node) == FIELD)
 	  enkf_node_ecl_write(enkf_node , NULL , fortio);
@@ -801,11 +801,7 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask , int repor
   util_free_stringlist(key_list , num_keys);
 }
 
-
-/**
-   if init_mode == true - it will not try to load summary data - what a hack.
-*/
-void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state , bool init_mode) {
+void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
@@ -814,13 +810,8 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
   
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask)) {
-      if (init_mode) {
-	if (enkf_node_get_impl_type(enkf_node) != SUMMARY)
-	  enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
-      } else 
-	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
-    }     
+    if (enkf_node_include_type(enkf_node , mask)) 
+      enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
   }
   util_free_stringlist(key_list , num_keys);
 }
@@ -957,12 +948,12 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       if (run_info->init_step == 0)
 	/** 
 	    Must be carefull not to fail when trying to load
-	    e.g. PRESSURE which might not exist.
+	    e.g. PRESSURE which might not exist in the filesystem.
 	*/
-	enkf_state_safe_fread(enkf_state , dynamic , run_info->init_step , run_info->init_state);
+	enkf_state_safe_fread(enkf_state , dynamic_state , run_info->init_step , run_info->init_state);
       else
-	mask += dynamic;
-      enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state , true);
+	mask += dynamic_state;
+      enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state );
     }
     enkf_state_ecl_write( enkf_state );
     
@@ -1295,7 +1286,7 @@ void * enkf_ensemble_serialize__(void * _info) {
 
 void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , serial_vector_type * serial_vector , const double * X) {
   const int threads = 1;
-  int update_mask   = dynamic + parameter;
+  int update_mask   = dynamic_state + dynamic_result + parameter;
   thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
   enkf_update_info_type ** info_list     = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_vector);
   int       iens , ithread;
