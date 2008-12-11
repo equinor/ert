@@ -8,45 +8,41 @@ typedef double (transform_ftype) (double , const arg_pack_type *);
 
 
 
-/*
-  Observe that seemingly random numbers are used in these enum definitions, 
-  that is to be able to catch it if a wrong constant is used.
-*/
 
 
 /*
-  Observe that these are used as bitmask's, i.e. they must be a power of 2 series.
+  The enkf_var_type enum defines logical groups of variables. All
+  variables in the same group, i.e. 'parameter' are typically treated
+  in the same manner. So the reason for creating this type is to be
+  able to say for instance: "Load all dynamic_state variables".
+
+  Observe that these are used as bitmask's, i.e. the numerical values
+  must be a power of 2 series.
 */
-
-
 
 typedef enum {invalid          =  0  , /**/
               parameter        =  1  , /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
 	      dynamic_state    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
 	      dynamic_result   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
 	      ecl_static       =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+  enkf_var_type; 
   
-  
 
 
 
 
-
-/*
-  The static can be confusing - because the impl_type STATIC and the
-  enkf_var_type ecl_static symbolize perfectly the same thing.
-*/
 
 
 /* 
-   For instance the pressure is implemented with a field, and behaves
-   as a ecl_restart variable. The permeability is also implemented as
-   a field, but this is a parameter.
-*/
+   enkf_impl_type are the actual node implementation types. Observe
+   that one enkf_impl_type can be used in several ways as
+   enkf_var_type. For instance the pressure is implemented with a
+   field, and behaves as a dynamic_state variable, on the other hand
+   the permeability is also implemented as a field, but this is a
+   parameter.
 
-/*
-  These correspond to implementation types. The numbers are on disk,
-  and should **NOT BE UPDATED**.
+   These correspond to implementation types. The numbers are on disk,
+   and should **NOT BE UPDATED**.
 */
 typedef enum {INVALID 	   = 0   , 
 	      STATIC  	   = 100 ,

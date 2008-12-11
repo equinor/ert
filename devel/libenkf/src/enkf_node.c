@@ -135,17 +135,20 @@
 
    To keep track of the state of the node's data (actually the data of
    the contained enkf_object, i.e. a field) we have three higly
-   internal variables __state, __modified and __report_step. These
-   three variables are used/updated in the following manner:
+   internal variables __state, __modified , __iens, and
+   __report_step. These three variables are used/updated in the
+   following manner:
+   
 
-    1. The nodes are created with (modified, report_step, state) ==
-       (true , -1 , undefined).
 
-    2. After initialization we set report_step -> 0 , state ->
-       analyzed, modified -> true
+    1. The nodes are created with (modified, report_step, state, iens) ==
+       (true , -1 , undefined , -1).
+
+    2. After initialization we set: report_step -> 0 , state ->
+       analyzed, modified -> true, iens -> -1
 
     3. After load (both from ensemble and ECLIPSE). We set modified ->
-       false, and report_step and state according to the load
+       false, and report_step, state and iens according to the load
        arguments.
       
     4. After deserialize (i.e. update) we set modified -> true.
@@ -161,13 +164,6 @@
        THE FILESYSTEM. This performance gain is the main point of the
        whole excercise.
 */
-
-
-
-
-
-
-
 
 
 
@@ -202,10 +198,13 @@ struct enkf_node_struct {
   
   serial_state_type  *serial_state;   	    /* A very internal object - containg information about the seralization of the this node .*/
   
+  /*****************************************************************/
+  /* The variables below this line are VERY INTERNAL.              */
   bool                __memory_allocated;   /* Whether the underlying object (the one pointed to by data) has memory allocated or not. */
-  bool                __modified;           /* __modified, __report_step and __state are internal variables trying  */
+  bool                __modified;           /* __modified, __report_step, __iens and __state are internal variables trying  */
   int                 __report_step;        /* to record the state of the in-memory reporesentation of the node->data. See */ 
   state_enum          __state;              /* the documentation with heading "Keeping track of node state". */
+  int                 __iens;               /* Observe that this __iens  variable "should not be used" - a node can change __iens value during run. */
 };
 
 
@@ -268,7 +267,7 @@ enkf_node_type * enkf_node_copyc(const enkf_node_type * src) {
     new = enkf_node_alloc(src->config);
 
     printf("%s: not properly implemented ... \n",__func__);
-    abort();
+    util_abort("%s: ",__func__);
     return new;
   }
 }
@@ -368,7 +367,7 @@ double enkf_node_user_get(enkf_node_type * enkf_node , const char * key , bool *
 */
 
 
-void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
+void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step, int iens) {
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
   {
@@ -384,16 +383,18 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
   enkf_node->__report_step = report_step;
   enkf_node->__state       = forecast;
   enkf_node->__modified    = false;
+  enkf_node->__iens        = iens; 
 }
 
 
 
-void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step) {
+void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * ecl_kw, int report_step, int iens) {
   ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
   enkf_node->__memory_allocated = true;
   enkf_node->__report_step 	= report_step;
   enkf_node->__state       	= forecast;
   enkf_node->__modified    	= false;
+  enkf_node->__iens             = iens;
 }
 
 
@@ -404,7 +405,7 @@ void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * 
    to skip storage (i.e. unlink an empty file).
 */
 
-bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step , state_enum state) {
+bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step , int iens , state_enum state) {
   if (!enkf_node->__memory_allocated)
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
   {
@@ -415,7 +416,7 @@ bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step
     enkf_node->__report_step = report_step;
     enkf_node->__state       = state;
     enkf_node->__modified    = false;
-    
+    enkf_node->__iens        = iens;
     return data_written;
   }
 }
@@ -450,9 +451,10 @@ static void enkf_node_assert_memory(const enkf_node_type * enkf_node , const cha
 }
 
 
-void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step , state_enum state) {
-  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && !enkf_node->__modified)
+void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step , int iens , state_enum state) {
+  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified))
     return;  /* The in memory representation agrees with the disk image */
+
   {
     FUNC_ASSERT(enkf_node->fread_f);
     enkf_node_ensure_memory(enkf_node);
@@ -460,6 +462,7 @@ void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step
     enkf_node->__modified    = false;
     enkf_node->__report_step = report_step;
     enkf_node->__state       = state;
+    enkf_node->__iens        = iens;
   }
 }
 

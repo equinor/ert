@@ -212,6 +212,7 @@ static void obs_vector_install_node(obs_vector_type * obs_vector , int index , v
 }
 
 
+
 void obs_vector_delete_node(obs_vector_type * obs_vector , int index) {
   if (obs_vector->nodes[index] != NULL)
     util_abort("%s: missing node for index:%d. \n",__func__ , index);
@@ -219,6 +220,7 @@ void obs_vector_delete_node(obs_vector_type * obs_vector , int index) {
   obs_vector->nodes[index] = NULL;
   obs_vector->num_active--;
 }
+
 
 
 
@@ -258,6 +260,34 @@ int obs_vector_get_num_active(const obs_vector_type * vector) {
 }
 
 
+/**
+   IFF - only one - report step is active this function will return
+   that report step. If more than report step is active, the function
+   ambigous, and will abort. Check with get_num_active first!
+*/
+
+int obs_vector_get_active_report_step(const obs_vector_type * vector) {
+  if (vector->num_active == 1) {
+    int active_step = -1;
+    int i;
+    for (i=0; i < vector->size; i++) {
+      if (vector->nodes[i] != NULL) {
+	if (active_step >= 0)
+	  util_abort("%s: internal error - mismatch in obs_vector->nodes and obs_vector->num_active \n",__func__);
+	active_step = i;
+      }
+    }
+    if (active_step < 0)
+      util_abort("%s: internal error - mismatch in obs_vector->nodes and obs_vector->num_active \n",__func__);
+    
+    return active_step;
+  } else {
+    util_abort("%s: when calling this function the number of active report steps MUST BE 1 - you had: %d \n",__func__ , vector->num_active);
+    return 0; /* Comiler shut up. */
+  }
+}
+
+
 bool obs_vector_iget_active(const obs_vector_type * vector, int index) {
   if (index < 0 || index >= vector->size)
     util_abort("%s: index:%d invald. Limits: [0,%d) \n",__func__ , index , vector->size);
@@ -266,8 +296,13 @@ bool obs_vector_iget_active(const obs_vector_type * vector, int index) {
     return true;
   else
     return false;
-  //return vector->active[index];
 }
+
+
+void obs_vector_user_get(const obs_vector_type * obs_vector , const char * index_key , int report_step , double * value , double * std , bool * valid) {
+  obs_vector->user_get(obs_vector->nodes[report_step] , index_key , value , std , valid);
+}
+
 
 
 /*****************************************************************/

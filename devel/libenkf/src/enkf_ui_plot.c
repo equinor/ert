@@ -224,18 +224,58 @@ void enkf_ui_plot_time(void * arg_pack) {
 
 
 void enkf_ui_plot_observation(void * arg) {
-  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
-  enkf_obs_type              * enkf_obs   = enkf_main_get_obs( enkf_main );
-  const char * viewer                     = enkf_main_get_image_viewer( enkf_main );
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   {
+    const int ens_size = ensemble_config_get_size(ensemble_config);
     const int prompt_len = 40;
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
-    const enkf_config_node_type * config_node;
+    enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
     obs_vector_type * obs_vector;
     char user_key[64];
+    char * index_key;
+
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    scanf("%s" , user_key);
     
-    //util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-    //scanf("%s" , user_key);
+    obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
+    if (obs_vector != NULL) {
+      const char * state_kw               = obs_vector_get_state_kw( obs_vector );
+      enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
+      int   num_active                    = obs_vector_get_num_active( obs_vector );
+      int   report_step;
+      
+      do {
+	if (num_active == 1)
+	  report_step = obs_vector_get_active_report_step( obs_vector );
+	else
+	  report_step = enkf_ui_util_scanf_report_step(enkf_main , "Report step" , prompt_len);
+      } while (!obs_vector_iget_active(obs_vector , report_step));
+      {
+	enkf_node_type * enkf_node = enkf_node_alloc( config_node );
+	double obs_value , obs_std , value;
+	bool   valid;
+	int    iens;
+	obs_vector_user_get( obs_vector , index_key , report_step , &obs_value , &obs_std , &valid);
+	printf("%g +/- %g \n",obs_value , obs_std);
+	for (iens = 0; iens < ens_size; iens++) {
+	  if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
+	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , analyzed);
+	    value = enkf_node_user_get( enkf_node , index_key , &valid);
+	    if (valid)
+	      printf(" %g\n",value);
+	  }
+	}
+	printf("\n");
+	enkf_node_free(enkf_node);
+      }
+      
+
+    } 
+    
+    util_safe_free( index_key );
   }
 }
 

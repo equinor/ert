@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 #include <hash.h>
 #include <util.h>
@@ -65,13 +66,21 @@ void enkf_obs_free(
 void enkf_obs_add_obs_vector(
   enkf_obs_type       * enkf_obs,
   const char          * key ,
-  const obs_vector_type * node)
+  const obs_vector_type * vector)
 {
   if (hash_has_key(enkf_obs->obs_hash , key))
     util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
-  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , node , obs_vector_free__);
+  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , vector , obs_vector_free__);
 }
 
+
+static bool enkf_obs_has_key(const enkf_obs_type * obs , const char * key) {
+  return hash_has_key(obs->obs_hash , key);
+}
+
+static obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * key) {
+  return hash_get(obs->obs_hash , key);
+}
 
 
 void enkf_obs_get_observations(
@@ -432,6 +441,52 @@ stringlist_type * enkf_obs_alloc_summary_vars(
     key = hash_iter_get_next_key( enkf_obs->obs_hash );
   }
   return summary_vars;
+}
+
+
+
+
+/**
+   This function takes a string like this: "PRESSURE:1,4,7" - it
+   splits the string on ":" and tries to lookup a config object with
+   that key. For the general string A:B:C:D it will try consecutively
+   the keys: A, A:B, A:B:C, A:B:C:D. If a config object is found it is
+   returned, otherwise NULL is returned.
+
+   The last argument is the pointer to a string which will be updated
+   with the node-spesific part of the full key. So for instance with
+   the example "PRESSURE:1,4,7", the index_key will contain
+   "1,4,7". If the full full_key is used to find an object index_key
+   will be NULL, that also applies if no object is found.
+*/
+
+   
+
+const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key ) {
+  const obs_vector_type * vector = NULL;
+  char ** key_list;
+  int     keys;
+  int     key_length = 1;
+  int offset;
+  
+  *index_key = NULL;
+  util_split_string(full_key , ":" , &keys , &key_list);
+  while (vector == NULL && key_length <= keys) {
+    char * current_key = util_alloc_joined_string( (const char **) key_list , key_length , ":");
+    if (enkf_obs_has_key(obs , current_key))
+      vector = enkf_obs_get_vector(obs , current_key);
+    else
+      key_length++;
+    offset = strlen( current_key );
+    free( current_key );
+  }
+  if (vector != NULL) {
+    if (offset < strlen( full_key ))
+      *index_key = util_alloc_string_copy(&full_key[offset+1]);
+  }
+  
+  util_free_stringlist(key_list , keys);
+  return vector;
 }
 
 

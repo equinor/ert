@@ -524,8 +524,8 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
   run_info_type      * run_info    = enkf_state->run_info;
   const bool fmt_file  		   = ecl_config_get_formatted(enkf_state->ecl_config);
   const bool endian_swap           = ecl_config_get_endian_flip(enkf_state->ecl_config);
-  ecl_block_type * restart_block = NULL;
-  ecl_sum_type   * summary       = NULL;
+  ecl_block_type * restart_block   = NULL;
+  ecl_sum_type   * summary         = NULL;
   
   
   /**
@@ -602,7 +602,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
 	    enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
 	    ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
 	    ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
-	    enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(restart_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , report_step);
+	    enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(restart_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , report_step , my_config->iens);
 	    /*
 	      Static kewyords go straight out ....
 	    */
@@ -631,7 +631,7 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_has_func(enkf_node , ecl_load_func))
 	if (enkf_node_include_type(enkf_node , dynamic_state + dynamic_result))
-	  enkf_node_ecl_load(enkf_node , run_info->run_path , summary , restart_block , report_step);
+	  enkf_node_ecl_load(enkf_node , run_info->run_path , summary , restart_block , report_step , my_config->iens);
       
     }                                                                      
     util_free_stringlist(key_list , num_keys);

@@ -8,7 +8,7 @@ extern "C" {
 #include <enkf_state.h>
 #include <meas_matrix.h>
 #include <obs_data.h>
-
+#include <obs_vector.h>
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
@@ -46,6 +46,9 @@ void enkf_obs_measure_on_ensemble(
 
 stringlist_type * enkf_obs_alloc_summary_vars(
         enkf_obs_type * enkf_obs);
+
+
+const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );
 
 #ifdef __cplusplus
 }

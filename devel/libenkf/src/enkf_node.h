@@ -96,15 +96,15 @@ enkf_var_type    enkf_node_get_var_type(const enkf_node_type * );
 void             enkf_node_clear_serial_state(enkf_node_type * );
 void             enkf_node_deserialize(enkf_node_type * , const serial_vector_type *);
 
-void             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_block_type * , int);
-void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int);
+void             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_block_type * , int, int );
+void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
 void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * );
 void             enkf_node_initialize(enkf_node_type *enkf_node , int);
 void             enkf_node_printf(const enkf_node_type *);
-bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, int , state_enum);
+bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, int , int , state_enum);
 int              enkf_node_serialize(enkf_node_type * , size_t , serial_vector_type *, bool *);
 void             enkf_node_clear     (enkf_node_type *);
-void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , state_enum);
+void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int , state_enum);
 void             enkf_node_ensemble_fprintf_results(const enkf_node_type ** , int , int , const char * );
 
 void   enkf_node_scale(enkf_node_type *   , double );
@@ -116,7 +116,6 @@ const char     *  enkf_config_node_get_infile(const enkf_config_node_type * );
 const char     *  enkf_node_get_key(const enkf_node_type * );
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);
 bool         	  enkf_node_has_func(const enkf_node_type * , node_function_type );
-/*void              enkf_node_load_static_ecl_kw(enkf_node_type *, const ecl_kw_type *);*/
 #ifdef __cplusplus
 }
 #endif

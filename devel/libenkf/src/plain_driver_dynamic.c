@@ -56,7 +56,7 @@ void plain_driver_dynamic_load_node(void * _driver , int report_step , int iens 
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
     char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key(node) , false);
-    plain_driver_common_load_node(filename , report_step , state , node);
+    plain_driver_common_load_node(filename , report_step , iens , state , node);
     free(filename);
   }
 }
@@ -76,7 +76,7 @@ void plain_driver_dynamic_save_node(void * _driver , int report_step , int iens 
   plain_driver_dynamic_type * driver = plain_driver_dynamic_safe_cast(_driver);
   {
     char * filename = plain_driver_dynamic_alloc_filename(driver , report_step , iens , state , enkf_node_get_key(node) , true);
-    plain_driver_common_save_node(filename , report_step , state , node);
+    plain_driver_common_save_node(filename , report_step , iens , state , node);
     free(filename);
   }
 }
