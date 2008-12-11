@@ -86,9 +86,20 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_fixlen(FILE * strea
     else
     {
       bool slash_terminated;
-      sched_kw_untyped_add_line(kw, line , &slash_terminated);
-      if (slash_terminated) cur_rec++;
-      free(line);
+      if(line != NULL)
+      {
+        sched_kw_untyped_add_line(kw, line , &slash_terminated);
+        free(line);
+      }
+      else
+      {
+        /**
+          Special case for empty lines (e.g. just /) and fixlen kw's.
+        */
+        sched_kw_untyped_add_line(kw, "/" , &slash_terminated);
+      }
+      if(slash_terminated)
+        cur_rec++;
     }
   }
   return kw;
