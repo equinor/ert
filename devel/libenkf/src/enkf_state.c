@@ -793,7 +793,6 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
 	*/
 	
 	if (enkf_node_get_impl_type(enkf_node) == STATIC) {
-	  printf("Dropping: %s \n",key_list[ikey]);
 	  enkf_state_del_node(enkf_state , key_list[ikey]);
 	  /* 
 	     Now we have a config node - and no corresponding state
