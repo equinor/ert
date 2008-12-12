@@ -398,6 +398,17 @@ void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * 
 }
 
 
+/**
+   This function compares the internal __report_step with the input
+   report_step, and return true if they are equal. It is used in the
+   calling scope to discard static nodes which are no longer in use.
+*/
+
+
+bool enkf_node_report_step_equal(const enkf_node_type * enkf_node , int report_step) {
+  return (report_step == enkf_node->__report_step);
+}
+
 
 /**
    Returns true if data is written to disk. If no data is written to

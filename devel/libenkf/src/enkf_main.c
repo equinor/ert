@@ -457,10 +457,10 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
       thread_pool_join(complete_threads);        /* All jobs have completed and the results have been loaded back. */
       thread_pool_free(complete_threads);
     }
-
     pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      */
     job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
     arg_pack_free( queue_args );
+    enkf_main_del_unused_static( enkf_main , step2 );
   }
     
   {
@@ -903,6 +903,24 @@ void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
   ensemble_config_del_node(enkf_main->ensemble_config , key);
 }
 
+
+/*
+  This function will discard all unused static nodes. 
+*/
+void enkf_main_del_unused_static(enkf_main_type * enkf_main , int report_step) {
+  const int ens_size  = ensemble_config_get_size(enkf_main->ensemble_config);
+  int config_size;
+  char ** key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
+  int ikw;
+  
+  for (ikw=0; ikw < config_size; ikw++) {
+    if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key_list[ikw])) == STATIC) {
+      enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
+      if (!enkf_node_report_step_equal(node , report_step))
+	enkf_main_del_node( enkf_main , key_list[ikw] );
+    }
+  }
+}
     
 
 

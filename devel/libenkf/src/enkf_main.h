@@ -21,7 +21,7 @@ extern "C" {
 
 
 typedef struct enkf_main_struct enkf_main_type;
-
+void                          enkf_main_del_unused_static(enkf_main_type * , int );
 const char                  * enkf_main_get_data_file(const enkf_main_type * );
 const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
 

@@ -789,19 +789,14 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
 	       that impl_type of the node is != STATIC. 
 	       
 	   One keyword where this occurs is FIPOIL, which at least can
-	   appear only in the first restart file.
+	   appear only in the first restart file. Unused static
+	   keywords of this type are purged from the enkf_main object
+	   by a call to enkf_main_del_unused().
 	*/
 	
-	if (enkf_node_get_impl_type(enkf_node) == STATIC) {
-	  enkf_state_del_node(enkf_state , key_list[ikey]);
-	  /* 
-	     Now we have a config node - and no corresponding state
-	     nodes.  Can not safely remove config node from here -
-	     then the other nodes might fail (because their config
-	     node has disappeared).
-	  */
-	} else
+	if (enkf_node_get_impl_type(enkf_node) != STATIC) 
 	  enkf_node_ecl_write(enkf_node , run_info->run_path , NULL); 
+
       }
     }
     util_free_stringlist(key_list , num_keys);

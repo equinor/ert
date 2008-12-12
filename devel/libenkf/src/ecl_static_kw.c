@@ -16,7 +16,7 @@ struct ecl_static_kw_struct {
   /*-----------------------------------------------------------------*/
   /* The fields below here are a fuxxxg hack to support multiple
      keywords with the same 'name' - see documentation below. */
-
+  
   int  __kw_count;      /* Which mumber in the series this instance is - starting at 0.*/
   bool __write_mode;    /* Whether we are currently writing (the static keyword to the enkf_fs 'database'). */
   int  __report_step;   /* The currently active report_step .*/
