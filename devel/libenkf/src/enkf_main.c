@@ -899,7 +899,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
   const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;
-  printf("========================= Deleting node:%s \n",key);
   for (iens = 0; iens < ens_size; iens++) 
     enkf_state_del_node(enkf_main->ensemble[iens] , key);
   ensemble_config_del_node(enkf_main->ensemble_config , key);

@@ -30,9 +30,8 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
 
 
 static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y, bool first) {
-  plot_dataset_type *d = plot_dataset_alloc( plot_data_x + plot_data_y , false);
-  plot_dataset_set_data(d, x, y, N, BLUE, LINE);
-  plot_dataset_add(plot, d);
+  plot_dataset_type *d = plot_alloc_new_dataset( plot , plot_xy , false);
+  plot_dataset_append_vector_xy(d, N , x, y);
 }
 
 
@@ -44,26 +43,6 @@ static void __plot_show(plot_type * plot , const char * viewer , const char * fi
 }
 
 
-void stupid_plot(int N , const double * x , const double *y , const char * image_viewer) {
-  plot_type *item;
-  
-  item = plot_alloc();
-  plot_set_window_size(item, 640, 480);
-  plot_initialize(item, "png", "test.png");
-  
-  {
-    plot_dataset_type *d = plot_dataset_alloc( false , false );
-    plot_dataset_set_data(d, x, y, N, BLUE, LINE);
-    plot_dataset_add(item, d);
-  }
-  
-  plot_set_labels(item, "x-axis", "y-axis", "y = sinc(x)", BLACK);
-  plot_set_viewport(item);
-  plot_data(item);
-  plot_free(item);
-  
-  util_vfork_exec(image_viewer , 1 , (const char *[1]) {"test.png"} , false , NULL , NULL , NULL , NULL , NULL);
-}
 
 
 
@@ -148,7 +127,6 @@ void enkf_ui_plot_ensemble(void * arg) {
 	    }
 	  } 
 	}
-	/*stupid_plot(this_size , x , y , viewer);*/
 	__plot_add_data(plot , this_size , x , y , first);
 	first = false;
       }
@@ -161,67 +139,6 @@ void enkf_ui_plot_ensemble(void * arg) {
 }
 		   
 	  
-
-
-void enkf_ui_plot_time(void * arg_pack) {
-  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg_pack );
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
-  {
-    const int prompt_len = 35;
-    const enkf_config_node_type * config_node;
-    state_enum analysis_state;
-    int        cell_nr;
-    int        size;
-    
-    config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , true , FIELD , invalid , NULL , &analysis_state , NULL);
-    cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
-    {
-      const int last_report = enkf_sched_get_last_report(enkf_sched);
-      const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
-      const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
-      int iens1 , iens2;   
-      bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2); /* Not used yet ... */
-      double * x, *y;
-      int iens; /* Observe that iens and report_step loops below should be inclusive.*/
-      enkf_node_type * node = enkf_node_alloc( config_node );
-      enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
-      path_fmt_type * file_fmt = path_fmt_scanf_alloc("Give filename to store line (with %d for report iens) =>" , 0 , NULL , false);
-      
-      
-      if (analysis_state == both) 
-	size = 2 * (step2 - step1 + 1);
-      else
-	size = (step2 - step1 + 1);
-
-      x = util_malloc( size * sizeof * x, __func__);
-      y = util_malloc( size * sizeof * y, __func__);
-      
-      for (iens = iens1; iens <= iens2; iens++) {
-	enkf_ui_util_get_time(fs , config_node , node , analysis_state , cell_nr , step1 , step2 , iens , x ,y);
-	stupid_plot(size , x , y , viewer);
-	{
-	  char * filename = path_fmt_alloc_file(file_fmt , true , iens);
-	  FILE * stream = util_fopen(filename , "w");
-	  int    index  = 0;
-	  int    report_step;
-	  for (report_step = step1; report_step <= step2; report_step++) {
-	    fprintf(stream , "%g  %g \n",x[index] , y[index]);
-	    index++;
-	    if (analysis_state == both) {
-	      fprintf(stream , "%g  %g \n",x[index] , y[index]);
-	      index++;
-	    }
-	  }
-	  fclose(stream);
-	  free(filename);
-	}
-      }
-    }
-  }
-}
-
 
 void enkf_ui_plot_observation(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );

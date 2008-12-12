@@ -606,11 +606,10 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
 
 	     2. At report step n+k that static keyword is no longer active, and it is
 	        consequently no longer part of restart_kw_list().
+		
+	     3. However it is still part of the enkf_state. Not loaded here, and
+	        subsequently purged from enkf_main.
 
-	     3. However - it is still part of the enkf_state, and consequently enkf_state
-	        tries (here) to export that keyword for ECLIPSE. This will fail HARD,
-	        therefor we have to check here that impl_type of the node is != STATIC.
-	     
 	   One keyword where this occurs is FIPOIL, which at least can appear only in the
 	   first restart file. Unused static keywords of this type are purged from the
 	   enkf_main object by a call to enkf_main_del_unused_static(). The purge is based
