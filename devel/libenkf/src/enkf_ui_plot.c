@@ -29,7 +29,7 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
 }
 
 
-static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y, bool first) {
+static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y) {
   plot_dataset_type *d = plot_alloc_new_dataset( plot , plot_xy , false);
   plot_dataset_append_vector_xy(d, N , x, y);
 }
@@ -70,7 +70,6 @@ void enkf_ui_plot_ensemble(void * arg) {
     plot_file = util_alloc_sprintf("/tmp/%s.png" , user_key);
     {
       plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file);
-      bool first = true;
       msg_type * msg;
       state_enum              plot_state;
       const int last_report = enkf_sched_get_last_report(enkf_sched);
@@ -127,8 +126,7 @@ void enkf_ui_plot_ensemble(void * arg) {
 	    }
 	  } 
 	}
-	__plot_add_data(plot , this_size , x , y , first);
-	first = false;
+	__plot_add_data(plot , this_size , x , y );
       }
       msg_free(msg , true);
       printf("Plot saved in: %s \n",plot_file);

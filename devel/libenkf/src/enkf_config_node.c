@@ -5,12 +5,14 @@
 #include <enkf_macros.h>
 #include <enkf_config_node.h> 
 #include <util.h>
+#include <set.h>
 
 struct enkf_config_node_struct {
   config_free_ftype     * freef;
   config_activate_ftype * activate;
   enkf_impl_type     	  impl_type;
   enkf_var_type      	  var_type; 
+
   char               	* key;
   char               	* enkf_infile;    /* Name of file which is written by forward model, and read by EnKF (not in use yet).*/
   char 		     	* enkf_outfile;   /* Name of file which is written by EnKF, and read by the forward model. */
@@ -38,7 +40,6 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   node->key        	= util_alloc_string_copy(key);
   node->enkf_outfile    = util_alloc_string_copy(enkf_outfile);
   node->enkf_infile     = util_alloc_string_copy(enkf_infile);
-  
   return node;
 }
 
@@ -50,6 +51,7 @@ void enkf_config_node_free(enkf_config_node_type * node) {
   free(node->key);
   free(node);
 }
+
 
 
 /**

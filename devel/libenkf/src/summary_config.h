@@ -22,7 +22,7 @@ const char          ** summary_config_get_var_list_ref(const summary_config_type
 void                   summary_config_add_var(summary_config_type *  , const char * );
 bool                   summary_config_has_var(const summary_config_type * , const char * );
 void                   summary_config_summarize(const summary_config_type * );
-
+void                   summary_config_add_obs_key(summary_config_type * , const char * );
 
 GET_ACTIVE_LIST_HEADER(summary);
 GET_DATA_SIZE_HEADER(summary);
