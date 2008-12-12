@@ -25,9 +25,10 @@ typedef enum {
  * you want for that one graph.
  */
 typedef enum plot_style_enum {
-    BLANK = 0,
-    LINE  = 1,
-    POINT = 2
+    BLANK       = 0,
+    LINE        = 1,
+    POINT       = 2,  
+    LINE_POINTS = 3
 } plot_style_type;
 
 
@@ -67,9 +68,10 @@ typedef enum  {
   solid_line = 1,
   short_dash = 2,
   long_dash  = 3
-} plot_line_style_enum;
+} plot_line_style_type;
      
 
+typedef int plot_symbol_type;
 
 #if WITH_TRUETYPE
 #define LABEL_FONTSIZE 0.6
