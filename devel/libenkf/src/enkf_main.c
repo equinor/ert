@@ -894,7 +894,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 /**
    First deleting all the nodes - then the configuration.
 */
-  
+
 void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
   const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;

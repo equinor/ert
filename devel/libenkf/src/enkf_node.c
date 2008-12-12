@@ -546,9 +546,9 @@ void enkf_node_free_data(enkf_node_type * enkf_node) {
   FUNC_ASSERT(enkf_node->free_data);
   enkf_node->free_data(enkf_node->data);
   enkf_node->__memory_allocated = false;
-  enkf_node->__report_step      = -1;
   enkf_node->__state            = undefined;
   enkf_node->__modified         = true;
+  //enkf_node->__report_step      = -1;  /* Must remember this to be able to delete unused static nodes. */
 }
 
 
