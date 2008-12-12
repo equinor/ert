@@ -6,6 +6,18 @@ extern "C" {
 #endif
 
 
+
+
+typedef enum {
+  plot_xy    = 1,     /* Normal xy plot. */
+  plot_xy1y2 = 2,     /* x and y-error bars, from y1 - y2. */
+  plot_x1x2y = 3,     /* x error bars (from x1 to x2) and y. */
+  plot_xline = 4,     /* Vertical lines with fixed x */
+  plot_yline = 5      /* Horizontal lines with fixed y. */
+} plot_data_type;
+
+
+
 /**
  * @brief: Plot style for one single graph/dataset.
  * 
@@ -45,6 +57,18 @@ typedef enum plot_color_enum {
     BLACK   	= 15
 } plot_color_type;
 
+
+  /**
+   pllsty uses predefined line styles.
+   plsty  defines linestyle with pen up/down.
+*/
+
+typedef enum  {
+  solid_line = 1,
+  short_dash = 2,
+  long_dash  = 3
+} plot_line_style_enum;
+     
 
 
 #if WITH_TRUETYPE
