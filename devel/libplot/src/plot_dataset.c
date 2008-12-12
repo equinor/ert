@@ -1,116 +1,101 @@
 #include <util.h>
 #include <plot.h>
 #include <plot_dataset.h>
+#include <plot_const.h>
 #include <assert.h>
+
+
+
 
 
 /**
  * @brief Contains information about a dataset.
  */
 struct plot_dataset_struct {
-  double *x; 	   	   /**< Vector containing x-axis data */
-  double *y; 	   	   /**< Vector containing y-axis data */
-  double *std;             /**< Vector containing std (of y) - can be NULL. */
-  bool    with_std;         /**/
-  bool    shared_data;     /**< Whether this instance owns x,y,std or just holds a reference. */
-  int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if data_owner == false. */
-  int size;	   	   /**< Length of the vectors defining the axis */
+  double  	 *x; 	   	   /**< Vector containing x-axis data */
+  double  	 *y; 	   	   /**< Vector containing y-axis data */
+  double  	 *y1;               
+  double  	 *y2;
+  double  	 *x1;
+  double  	 *x2;
+  int     	  data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
+  plot_data_type type;             
+  
+  bool    shared_data;     /**< Whether this instance owns x,y,x1,... or just holds a reference. */
+  int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if shared_data = true. */
+  int size;	   	   /**< Length of the vectors defining the plot */
   plot_style_type style;   /**< The graph style */
   plot_color_type color;   /**< The graph color */
-  int step;      	   /**< Helper value when using animation */
-  bool finished; 	   /**< Helper value when using animation */
 };
 
 
 static void plot_dataset_realloc_data(plot_dataset_type * d, int new_alloc_size) {
-  d->x = util_realloc(d->x , new_alloc_size * sizeof * d->x , __func__);
-  d->y = util_realloc(d->y , new_alloc_size * sizeof * d->y , __func__);
-  if (d->with_std)
-    d->std = util_realloc(d->std , new_alloc_size * sizeof * d->std , __func__);
+  if (d->data_mask & plot_data_x) d->x = util_realloc(d->x , new_alloc_size * sizeof * d->x , __func__);
+  if (d->data_mask & plot_data_y) d->y = util_realloc(d->y , new_alloc_size * sizeof * d->y , __func__);
+
+  if (d->data_mask & plot_data_x1) d->x1 = util_realloc(d->x1 , new_alloc_size * sizeof * d->x1 , __func__);
+  if (d->data_mask & plot_data_x2) d->x2 = util_realloc(d->x2 , new_alloc_size * sizeof * d->x2 , __func__);
+
+  if (d->data_mask & plot_data_y1) d->y1 = util_realloc(d->y1 , new_alloc_size * sizeof * d->y1 , __func__);
+  if (d->data_mask & plot_data_y2) d->y2 = util_realloc(d->y2 , new_alloc_size * sizeof * d->y2 , __func__);
+
   d->alloc_size = new_alloc_size;
 }
 
 
-static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * std) {
+
+static void __append_vector(double * target , const double * src , int target_offset , int size) {
+  if (src == NULL)
+    util_abort("%s: trying to extract data from NULL pointer\n",__func__);
+  
+  memcpy(&target[target_offset] , src , size * sizeof * src);
+}
+
+
+static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * y1 , const double * y2 , const double *x1 , const double *x2) {
   if (d->shared_data) 
     util_abort("%s: dataset has shared data - can not append \n",__func__);
-
+  
   if (d->alloc_size < (d->size + size))
     plot_dataset_realloc_data(d , 2*(d->size + size));
 
-  memcpy(&d->x[d->size] , x , size * sizeof * x);
-  memcpy(&d->y[d->size] , y , size * sizeof * y);
-  if (d->with_std) {
-    if (std != NULL)
-      memcpy(&d->std[d->size] , std , size * sizeof * std);
-    else
-      util_abort("%s when with_std == true - you must have std != NULL\n",__func__);
-  }
+  if (d->data_mask & plot_data_x)  __append_vector(d->x  , x  , d->size , size);
+  if (d->data_mask & plot_data_x1) __append_vector(d->x1 , x1 , d->size , size);
+  if (d->data_mask & plot_data_x2) __append_vector(d->x2 , x2 , d->size , size);
+
+  if (d->data_mask & plot_data_y)  __append_vector(d->y  , y  , d->size , size);
+  if (d->data_mask & plot_data_y1) __append_vector(d->y1 , y1 , d->size , size);
+  if (d->data_mask & plot_data_y2) __append_vector(d->y2 , y2 , d->size , size);
+  
   d->size += size;
 }
 
 
-void plot_dataset_finished(plot_dataset_type * d, bool flag)
-{
-    assert(d != NULL);
-    d->finished = flag;
-}
-
-
-bool plot_dataset_is_finished(plot_dataset_type * d)
-{
-    assert(d != NULL);
-    return d->finished;
-}
-
-int plot_dataset_get_step(plot_dataset_type * d)
-{
-    assert(d != NULL);
-    return d->step;
-}
-
-int plot_dataset_step_next(plot_dataset_type * d)
-{
-    assert(d != NULL);
-    d->step++;
-    return d->step;
-}
-
 int plot_dataset_get_length(plot_dataset_type * d)
 {
-    assert(d != NULL);
-    return d->size;
+  assert(d != NULL);
+  return d->size;
 }
 
 plot_color_type plot_dataset_get_color(plot_dataset_type * d)
 {
-    assert(d != NULL);
-    return d->color;
+  assert(d != NULL);
+  return d->color;
 }
 
 plot_style_type plot_dataset_get_style(plot_dataset_type * d)
 {
-    assert(d != NULL);
-    return d->style;
+  assert(d != NULL);
+  return d->style;
 }
 
-double *plot_dataset_get_vector_x(plot_dataset_type * d)
-{
-    assert(d != NULL);
-    return d->x;
-}
 
-double *plot_dataset_get_vector_std(plot_dataset_type * d)
-{
-    assert(d != NULL);
-    return d->std;
-}
-
-double *plot_dataset_get_vector_y(plot_dataset_type * d)
-{
-    assert(d != NULL);
-    return d->y;
-}
+double * plot_dataset_get_vector_x(const plot_dataset_type * d)  { return d->x; }
+double * plot_dataset_get_vector_y(const plot_dataset_type * d)  { return d->y; }
+double * plot_dataset_get_vector_x1(const plot_dataset_type * d) { return d->x1; }
+double * plot_dataset_get_vector_y1(const plot_dataset_type * d) { return d->y1; }
+double * plot_dataset_get_vector_x2(const plot_dataset_type * d) { return d->x2; }
+double * plot_dataset_get_vector_y2(const plot_dataset_type * d) { return d->y2; }
 
 
 /**
@@ -119,18 +104,21 @@ double *plot_dataset_get_vector_y(plot_dataset_type * d)
  *
  * Create a new dataset - allocates the memory.
  */
-plot_dataset_type *plot_dataset_alloc(bool with_std , bool shared_data)
+plot_dataset_type *plot_dataset_alloc(int data_mask , bool shared_data)
 {
     plot_dataset_type *d;
     
     d = util_malloc(sizeof *d , __func__);
+    d->data_mask   = data_mask;
     d->x   	   = NULL;
     d->y   	   = NULL;
-    d->std 	   = NULL;
+    d->x1 	   = NULL;
+    d->x2 	   = NULL;
+    d->y1 	   = NULL;
+    d->y2 	   = NULL;
     d->size        = 0;
     d->alloc_size  = 0;
     d->shared_data = shared_data;
-    d->with_std     = with_std;
     return d;
 }
 
@@ -146,33 +134,28 @@ void plot_dataset_free(plot_dataset_type * d)
   if (!d->shared_data) {
     util_safe_free(d->x);
     util_safe_free(d->y);
-    util_safe_free(d->std);
   }
   free(d);
 }
 
 
-void plot_dataset_set_shared_data(plot_dataset_type * d , int size , double *x , double *y , double *std) {
+void plot_dataset_set_shared_data(plot_dataset_type * d , int size , double *x , double *y) {
   if (d->shared_data) {
     d->x    = x;
     d->y    = y;
-    d->std  = std;
     d->size = size;
   } else
     util_abort("%s ... \n");
 }
 
 
-void plot_dataset_append_point(plot_dataset_type * d, double x , double y, double std) {
-  if (d->with_std)
-    plot_dataset_append_vector__(d , 1 , &x , &y , &std);
-  else
-    plot_dataset_append_vector__(d , 1 , &x , &y , NULL);
+void plot_dataset_append_point(plot_dataset_type * d, double x , double y) {
+  plot_dataset_append_vector__(d , 1 , &x , &y , NULL , NULL , NULL , NULL);
 }
 
 
-void plot_dataset_append_vector(plot_dataset_type * d, int size , const double * x , const double *y , const double * std) {
-  plot_dataset_append_vector__(d , size , x , y , std);
+void plot_dataset_append_vector(plot_dataset_type * d, int size , const double * x , const double *y) {
+  plot_dataset_append_vector__(d , size , x , y , NULL , NULL , NULL , NULL);
 }
 
 
@@ -192,13 +175,11 @@ void plot_dataset_set_data(plot_dataset_type * d, const double * x, const double
      
 {
   assert(d != NULL);
-  plot_dataset_append_vector__(d , len , x , y , NULL);
+  plot_dataset_append_vector__(d , len , x , y , NULL , NULL , NULL , NULL);
   
   d->size = len;
   d->color = c;
   d->style = s;
-  d->step = 0;
-  d->finished = false;
 }
 
 
@@ -303,42 +284,28 @@ void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , double *
   double tmp_x_min = *x_min;
   double tmp_y_min = *y_min;
   int i;
-  double *x, *y , *std;
+  double *x, *y;
   
-  assert(d != NULL);
   x   = plot_dataset_get_vector_x(d);
   y   = plot_dataset_get_vector_y(d);
-  std = plot_dataset_get_vector_std(d);
 
   if (first_pass) {
     tmp_x_max = x[0];
     tmp_x_min = x[0];
 
-    if (d->with_std) {
-      tmp_y_min = y[0] - std[0];
-      tmp_y_max = y[0] + std[0];
-    } else {
-      tmp_y_min = y[0];
-      tmp_y_max = y[0];
-    }
+    tmp_y_min = y[0];
+    tmp_y_max = y[0];
   }
   
   for (i = 0; i < plot_dataset_get_length(d); i++) {
-    if (d->with_std) {
-      if ((y[i] + std[i]) > tmp_y_max)
-	tmp_y_max = y[i] + std[i];
-      if ((y[i] - std[i]) < tmp_y_min)
-	tmp_y_min = y[i] - std[i];
-    } else {
-      if (y[i] > tmp_y_max)
-	tmp_y_max = y[i];
-      if (y[i] < tmp_y_min)
-	tmp_y_min = y[i];
-    }
+    if (y[i] > tmp_y_max)
+      tmp_y_max = y[i];
+    if (y[i] < tmp_y_min)
+      tmp_y_min = y[i];
+    
     
     if (x[i] > tmp_x_max)
       tmp_x_max = x[i];
-    
     if (x[i] < tmp_x_min)
       tmp_x_min = x[i];
   }

@@ -43,11 +43,25 @@ void text_splash() {
   }
 }
 
+
+/*
+  SVN_VERSION and COMPILE_TIME_STAMP are env variables set by the makefile.
+*/
 void enkf_welcome() {
+  char * svn_version  = util_alloc_sprintf("svn version......: %s\n",SVN_VERSION);
+  char * compile_time = util_alloc_sprintf("Compile time.....: %s \n",COMPILE_TIME_STAMP);
+
   printf("\n");
-  printf("svn version......: %s \n",SVN_VERSION);
-  printf("Compile time.....: %s \n",COMPILE_TIME_STAMP);
+  printf("%s",svn_version);
+  printf("%s",compile_time);
   printf("\n");
+
+  /* This will be printed if/when util_abort() is called on a later stage. */
+  util_abort_append_version_info(svn_version);
+  util_abort_append_version_info(compile_time);
+
+  free(svn_version);
+  free(compile_time);
 }
 
 

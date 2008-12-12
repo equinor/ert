@@ -21,6 +21,9 @@ struct field_obs_struct {
   char   * obs_label;    /** A user provided label for the observation.      */
   int      size;         /** The number of field cells observed.             */
   int    * index_list;   /** The list indices which are observed - (active indices). */
+  int    * i;            /** The vector of indices i,j,k are equivalent to those in index_list - they are only retained for RFT plotting. */
+  int    * j;
+  int    * k;
   double * obs_value;    /** The observed values.                            */
   double * obs_std;      /** The standard deviation of the observations.     */
   
@@ -68,6 +71,9 @@ field_obs_type * field_obs_alloc(
 	util_abort("%s: sorry: cell (%d,%d,%d) is outside valid range:  \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
     }
   }
+  field_obs->i               = util_alloc_copy(i         , size * sizeof * i                    , __func__);
+  field_obs->j               = util_alloc_copy(j         , size * sizeof * j                    , __func__);
+  field_obs->k               = util_alloc_copy(k         , size * sizeof * k                    , __func__);
   field_obs->obs_value       = util_alloc_copy(obs_value , size * sizeof * field_obs->obs_value , __func__);
   field_obs->obs_std         = util_alloc_copy(obs_std   , size * sizeof * field_obs->obs_value , __func__);
   
@@ -84,6 +90,9 @@ void field_obs_free(
   free(field_obs->obs_std);
   free(field_obs->field_name);
   free(field_obs->obs_label);
+  free(field_obs->i);
+  free(field_obs->j);
+  free(field_obs->k);
   free(field_obs);
 }
 

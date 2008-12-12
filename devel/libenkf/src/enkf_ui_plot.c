@@ -30,7 +30,7 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
 
 
 static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y, bool first) {
-  plot_dataset_type *d = plot_dataset_alloc( false , false);
+  plot_dataset_type *d = plot_dataset_alloc( plot_data_x + plot_data_y , false);
   plot_dataset_set_data(d, x, y, N, BLUE, LINE);
   plot_dataset_add(plot, d);
 }
@@ -265,7 +265,7 @@ void enkf_ui_plot_observation(void * arg) {
 	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , analyzed);
 	    value = enkf_node_user_get( enkf_node , index_key , &valid);
 	    if (valid)
-	      printf(" %g\n",value);
+	      printf(" %g ",value);
 	  }
 	}
 	printf("\n");

@@ -303,6 +303,27 @@ void obs_vector_user_get(const obs_vector_type * obs_vector , const char * index
   obs_vector->user_get(obs_vector->nodes[report_step] , index_key , value , std , valid);
 }
 
+/*
+  This function returns the next active report step, starting with
+  'prev_step + 1'. If no more active steps are found, it will return
+  -1.
+*/
+
+
+int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int prev_step) {
+  if (prev_step >= (obs_vector->size - 1))
+    return -1;
+  else {
+    int next_step = prev_step + 1;
+    while (obs_vector->nodes[next_step] == NULL && next_step < obs_vector->size)
+      next_step++;
+
+    if (next_step == obs_vector->size)
+      return -1; /* No more active steps. */
+    else
+      return next_step;
+  }
+}
 
 
 /*****************************************************************/
