@@ -765,6 +765,12 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
 
   util_make_path(run_info->run_path);
   {
+    /** 
+	This iteration manipulates the hash (thorugh the
+	enkf_state_del_node() call), this will deadlock if the
+	hash_iter API is used.
+    */
+    
     const int num_keys = hash_get_size(enkf_state->node_hash);
     char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
     int ikey;
@@ -772,7 +778,31 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (!restart_kw_list_has_kw(enkf_state->restart_kw_list , key_list[ikey])) {      /* Make sure that the elements in the restart file are not written (again). */
 	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-	enkf_node_ecl_write(enkf_node , run_info->run_path , NULL); 
+	/* 
+	   The following thing can happen:
+	   
+	    1. A static keyword appears at report step n, and is added to the enkf_state object.
+	    2. At report step n+k that static keyword is no longer active, and it is consequently no
+	       longer part of restart_kw_list().
+	    3. However - it is still part of the enkf_state, and consequently enkf_state tries (here)
+	       to export that keyword for ECLIPSE. This will fail HARD, therefor we have to check here
+	       that impl_type of the node is != STATIC. 
+	       
+	   One keyword where this occurs is FIPOIL, which at least can
+	   appear only in the first restart file.
+	*/
+	
+	if (enkf_node_get_impl_type(enkf_node) == STATIC) {
+	  printf("Dropping: %s \n",key_list[ikey]);
+	  enkf_state_del_node(enkf_state , key_list[ikey]);
+	  /* 
+	     Now we have a config node - and no corresponding state
+	     nodes.  Can not safely remove config node from here -
+	     then the other nodes might fail (because their config
+	     node has disappeared).
+	  */
+	} else
+	  enkf_node_ecl_write(enkf_node , run_info->run_path , NULL); 
       }
     }
     util_free_stringlist(key_list , num_keys);

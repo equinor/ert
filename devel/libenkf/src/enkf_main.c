@@ -340,19 +340,26 @@ enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main ,
 /*****************************************************************/
 
 static void enkf_main_fprintf_results(const enkf_main_type * enkf_main , int report_step) {
-  const int ens_size     = ensemble_config_get_size(enkf_main->ensemble_config);
+  const int ens_size  = ensemble_config_get_size(enkf_main->ensemble_config);
   int config_size;
-  char ** key_list = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
+  char ** key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
   int ikw;
 
   for (ikw=0; ikw < config_size; ikw++) {
-    const enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
-    if (enkf_node_has_func(node , ensemble_fprintf_results_func)) {
-      enkf_node_type ** node_ensemble = enkf_main_get_node_ensemble(enkf_main , key_list[ikw]);
-      char            * path          = model_config_alloc_result_path(enkf_main->model_config , report_step);
-      enkf_node_ensemble_fprintf_results((const enkf_node_type **) node_ensemble , ens_size , report_step , path);
-      free(path);
-      free(node_ensemble);
+    /* 
+       Unfortunately we can have config_nodes without actual nodes (in
+       the case) of STATIC. They are not printed anyway.
+    */
+    if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key_list[ikw])) != STATIC) {
+      const enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
+      if (enkf_node_has_func(node , ensemble_fprintf_results_func)) {
+	enkf_node_type ** node_ensemble = enkf_main_get_node_ensemble(enkf_main , key_list[ikw]);
+	char            * path          = model_config_alloc_result_path(enkf_main->model_config , report_step);
+	
+	enkf_node_ensemble_fprintf_results((const enkf_node_type **) node_ensemble , ens_size , report_step , path);
+	free(path);
+	free(node_ensemble);
+      }
     }
   }
   util_free_stringlist(key_list , config_size);
@@ -882,8 +889,19 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   return enkf_main;
 }
     
-    
 
+
+/**
+   First deleting all the nodes - then the configuration.
+*/
+  
+void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
+  const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
+  int iens;
+  for (iens = 0; iens < ens_size; iens++) 
+    enkf_state_del_node(enkf_main->ensemble[iens] , key);
+  ensemble_config_del_node(enkf_main->ensemble_config , key);
+}
 
     
 

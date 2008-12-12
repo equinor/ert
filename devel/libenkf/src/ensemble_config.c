@@ -122,6 +122,22 @@ enkf_config_node_type * ensemble_config_get_node(const ensemble_config_type * en
 }
 
 
+/** 
+    This will remove the config node indexed by key, it will use the
+    function hash_safe_del(), which is thread_safe, and will NOT fail
+    if the node has already been removed from the hash. 
+
+    However - it is extremely important to ensure that all storage
+    nodes (which point to the config nodes) have been deleted before
+    calling this function. That is only assured by using
+    enkf_main_del_node().
+*/
+
+
+void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char * key) {
+  hash_safe_del(ensemble_config->config_nodes , key);
+}
+
 
 void ensemble_config_add_node(ensemble_config_type * ensemble_config , 
 			      const char    * key      	   , 

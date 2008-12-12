@@ -23,8 +23,8 @@ void                     ensemble_config_add_node(ensemble_config_type * ,
 
 int                    ensemble_config_get_size(const ensemble_config_type * );
 
-void ensemble_config_ensure_summary(ensemble_config_type *  , const char * );
-
+void 			      ensemble_config_ensure_summary(ensemble_config_type *  , const char * );
+void 			      ensemble_config_del_node(ensemble_config_type * , const char * );
 void                          ensemble_config_add_config_items(config_type * );
 enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );
 char **                       ensemble_config_alloc_keylist(const ensemble_config_type * , int *);
