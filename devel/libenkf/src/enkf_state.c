@@ -598,6 +598,25 @@ static void enkf_state_ecl_load2(enkf_state_type * enkf_state ,  bool unified , 
 	    enkf_state_add_node(enkf_state , kw , config_node); 
 	  }
 	  
+	  /* 
+	   The following thing can happen:
+	     
+	     1. A static keyword appears at report step n, and is added to the enkf_state
+                object.
+
+	     2. At report step n+k that static keyword is no longer active, and it is
+	        consequently no longer part of restart_kw_list().
+
+	     3. However - it is still part of the enkf_state, and consequently enkf_state
+	        tries (here) to export that keyword for ECLIPSE. This will fail HARD,
+	        therefor we have to check here that impl_type of the node is != STATIC.
+	     
+	   One keyword where this occurs is FIPOIL, which at least can appear only in the
+	   first restart file. Unused static keywords of this type are purged from the
+	   enkf_main object by a call to enkf_main_del_unused_static(). The purge is based
+	   on looking at the internal __report_step state of the static kw.
+	*/
+	  
 	  {
 	    enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
 	    ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
@@ -679,10 +698,10 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const run_info_type      * run_info  = enkf_state->run_info;
   const bool fmt_file  		       = ecl_config_get_formatted(enkf_state->ecl_config);
   const bool endian_swap               = ecl_config_get_endian_flip(enkf_state->ecl_config);
-  char * restart_file    = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
-  fortio_type * fortio   = fortio_fopen(restart_file , "w" , endian_swap , fmt_file);
+  char * restart_file    	       = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
+  fortio_type * fortio   	       = fortio_fopen(restart_file , "w" , endian_swap , fmt_file);
   const char * kw;
-
+  
   if (restart_kw_list_empty(enkf_state->restart_kw_list))
     enkf_fs_fread_restart_kw_list(shared_info->fs , run_info->step1 , my_config->iens , enkf_state->restart_kw_list);
 
@@ -733,6 +752,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
     kw = restart_kw_list_get_next(enkf_state->restart_kw_list);
   }
   fortio_fclose(fortio);
+  free(restart_file);
 }
 
 
@@ -778,25 +798,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (!restart_kw_list_has_kw(enkf_state->restart_kw_list , key_list[ikey])) {      /* Make sure that the elements in the restart file are not written (again). */
 	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-	/* 
-	   The following thing can happen:
-	   
-	    1. A static keyword appears at report step n, and is added to the enkf_state object.
-	    2. At report step n+k that static keyword is no longer active, and it is consequently no
-	       longer part of restart_kw_list().
-	    3. However - it is still part of the enkf_state, and consequently enkf_state tries (here)
-	       to export that keyword for ECLIPSE. This will fail HARD, therefor we have to check here
-	       that impl_type of the node is != STATIC. 
-	       
-	   One keyword where this occurs is FIPOIL, which at least can
-	   appear only in the first restart file. Unused static
-	   keywords of this type are purged from the enkf_main object
-	   by a call to enkf_main_del_unused().
-	*/
-	
-	if (enkf_node_get_impl_type(enkf_node) != STATIC) 
-	  enkf_node_ecl_write(enkf_node , run_info->run_path , NULL); 
-
+	enkf_node_ecl_write(enkf_node , run_info->run_path , NULL); 
       }
     }
     util_free_stringlist(key_list , num_keys);

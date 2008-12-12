@@ -106,7 +106,6 @@ int              enkf_node_serialize(enkf_node_type * , size_t , serial_vector_t
 void             enkf_node_clear     (enkf_node_type *);
 void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int , state_enum);
 void             enkf_node_ensemble_fprintf_results(const enkf_node_type ** , int , int , const char * );
-bool             enkf_node_report_step_equal(const enkf_node_type *  , int);
 
 void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );

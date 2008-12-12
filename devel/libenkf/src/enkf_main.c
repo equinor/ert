@@ -49,6 +49,7 @@
 #include <site_config.h>
 #include <active_config.h>
 #include <field_config.h>
+#include <ecl_static_kw.h>
 #include "enkf_defaults.h"
 
 /**
@@ -898,7 +899,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
   const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;
-  printf("Deleting node:%s \n",key);
+  printf("========================= Deleting node:%s \n",key);
   for (iens = 0; iens < ens_size; iens++) 
     enkf_state_del_node(enkf_main->ensemble[iens] , key);
   ensemble_config_del_node(enkf_main->ensemble_config , key);
@@ -917,12 +918,16 @@ void enkf_main_del_unused_static(enkf_main_type * enkf_main , int report_step) {
   for (ikw=0; ikw < config_size; ikw++) {
     if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key_list[ikw])) == STATIC) {
       enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
-      if (!enkf_node_report_step_equal(node , report_step))
-	enkf_main_del_node( enkf_main , key_list[ikw] );
+      
+      if (enkf_node_get_impl_type(node) == STATIC) {
+	ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(node);
+	if (ecl_static_kw_get_report_step(ecl_static_kw) != report_step) /* This kw has not been loaded for this report step. */
+	  enkf_main_del_node(enkf_main , key_list[ikw] );
+      }
     }
   }
 }
-    
+
 
 
 

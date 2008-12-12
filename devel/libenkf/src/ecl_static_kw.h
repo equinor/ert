@@ -10,6 +10,7 @@ extern "C" {
 typedef struct ecl_static_kw_struct ecl_static_kw_type;
 
 
+int                  ecl_static_kw_get_report_step(const ecl_static_kw_type * );
 void                 ecl_static_kw_inc_counter(ecl_static_kw_type * , bool , int);
 int                  ecl_static_kw_get_counter(const ecl_static_kw_type * );
 ecl_static_kw_type * ecl_static_kw_alloc();

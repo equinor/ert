@@ -12,7 +12,7 @@
 struct ecl_static_kw_struct {
   DEBUG_DECLARE
   ecl_kw_type * ecl_kw;
-
+  
   /*-----------------------------------------------------------------*/
   /* The fields below here are a fuxxxg hack to support multiple
      keywords with the same 'name' - see documentation below. */
@@ -77,6 +77,11 @@ void ecl_static_kw_inc_counter(ecl_static_kw_type * ecl_static, bool write_mode 
 }
 
 
+int ecl_static_kw_get_report_step(const ecl_static_kw_type * ecl_static) {
+  return ecl_static->__report_step;
+}
+
+
 
 /**
    Used by the filessystem function reading/writing spesific instances to disk.
@@ -87,6 +92,8 @@ int ecl_static_kw_get_counter(const ecl_static_kw_type * ecl_static) {
   
   return ecl_static->__kw_count;
 }
+
+
 
 
 

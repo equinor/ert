@@ -405,9 +405,6 @@ void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * 
 */
 
 
-bool enkf_node_report_step_equal(const enkf_node_type * enkf_node , int report_step) {
-  return (report_step == enkf_node->__report_step);
-}
 
 
 /**
@@ -548,7 +545,7 @@ void enkf_node_free_data(enkf_node_type * enkf_node) {
   enkf_node->__memory_allocated = false;
   enkf_node->__state            = undefined;
   enkf_node->__modified         = true;
-  //enkf_node->__report_step      = -1;  /* Must remember this to be able to delete unused static nodes. */
+  enkf_node->__report_step      = -1;  
 }
 
 
