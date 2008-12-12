@@ -1,6 +1,6 @@
 #ifndef __PLOT_DATASET_H__
 #define __PLOT_DATASET_H__
-
+#include <plot_range.h>
 
 /**
    A dataset can have an arbitrary number of these elements: x,y,x1,x2,y1,y2.
@@ -25,10 +25,8 @@ typedef enum {
   plot_data_y  	 =  2,
   plot_data_x1 	 =  4,
   plot_data_x2 	 =  8,
-  plot_data_stdx = 12,  /* == plot_data_x1 + plot_data_x2 */
   plot_data_y1 	 = 16,
   plot_data_y2 	 = 32,
-  plot_data_stdy = 48,  /* == plot_data_y1 + plot_data_y2 */
 } plot_data_types;
 
 
@@ -60,19 +58,13 @@ void plot_dataset_finished(plot_dataset_type * d, bool flag);
 bool plot_dataset_is_finished(plot_dataset_type * d);
 
 
-plot_dataset_type *plot_dataset_alloc( int , bool );
+plot_dataset_type *plot_dataset_alloc( plot_data_type , bool );
 void plot_dataset_free(plot_dataset_type * d);
 void plot_dataset_set_data(plot_dataset_type * d, const double * x,
 				  const double * y, int len,
 				  plot_color_type c, plot_style_type s);
-void plot_dataset_join(plot_type * item, plot_dataset_type * d,
-			      int from, int to);
-void plot_dataset(plot_type * item, plot_dataset_type * d);
-int plot_dataset_add(plot_type * item, plot_dataset_type * d);
-void plot_dataset_update_range(plot_dataset_type * d, bool , double * , double * , double * , double *);
-plot_dataset_type *plot_dataset_get_prominent(plot_type * item,
-						   int *len);
 
+void     plot_dataset_draw(int , plot_dataset_type *  , const plot_range_type * );
 double * plot_dataset_get_vector_x(const plot_dataset_type * d);
 double * plot_dataset_get_vector_y(const plot_dataset_type * d);
 double * plot_dataset_get_vector_x1(const plot_dataset_type * d);

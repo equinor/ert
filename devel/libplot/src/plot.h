@@ -36,14 +36,12 @@ extern "C" {
  *
  * @{
  */
-
+#include <stdbool.h>
 #include <util.h>
-#include <list.h>
-#include <list_node.h>
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>
 #include <plot_const.h>
-
+#include <plot_dataset.h>
 
 
 /**
@@ -53,23 +51,21 @@ typedef struct plot_struct plot_type;
 
 
 
+plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool);
+ plot_type *plot_alloc();
+ int plot_get_stream(plot_type * item);
 
-extern plot_type *plot_alloc();
-extern int plot_get_stream(plot_type * item);
-extern list_type *plot_get_datasets(plot_type * item);
-extern void plot_set_window_size(plot_type * item, int width, int height);
-extern void plot_initialize(plot_type * item, const char *dev,
+ void plot_initialize(plot_type * item, const char *dev,
 			    const char *filename);
-extern void plot_set_labels(plot_type * item, const char *xlabel,
+ void plot_set_labels(plot_type * item, const char *xlabel,
 			    const char *ylabel, const char *title,
 			    plot_color_type color);
-extern void plot_set_viewport(plot_type * item);
-extern void plot_errorbar_data(plot_type * item);
-extern void plot_std_data(plot_type * item, bool mean);
-extern void plot_data(plot_type * item);
-extern void plot_free_all_datasets(plot_type * item);
-extern void plot_free(plot_type * item);
-extern void plot_get_extrema(plot_type * item, double *x_max,
+ void plot_set_viewport(plot_type * item);
+ void plot_errorbar_data(plot_type * item);
+ void plot_std_data(plot_type * item, bool mean);
+ void plot_data(plot_type * item);
+ void plot_free(plot_type * item);
+ void plot_get_extrema(plot_type * item, double *x_max,
 			     double *y_max, double *x_min, double *y_min);
 
 /**

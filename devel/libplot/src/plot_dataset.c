@@ -2,6 +2,7 @@
 #include <plot.h>
 #include <plot_dataset.h>
 #include <plot_const.h>
+#include <plot_range.h>
 #include <assert.h>
 
 
@@ -14,19 +15,153 @@
 struct plot_dataset_struct {
   double  	 *x; 	   	   /**< Vector containing x-axis data */
   double  	 *y; 	   	   /**< Vector containing y-axis data */
-  double  	 *y1;               
+  double  	 *y1;              
   double  	 *y2;
   double  	 *x1;
   double  	 *x2;
   int     	  data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
-  plot_data_type type;             
+  plot_data_type  data_type;       /**< One of the types: plot_xy, plot_xy1y2, plot_x1x2y , plot_xline , plot_yline */      
   
   bool    shared_data;     /**< Whether this instance owns x,y,x1,... or just holds a reference. */
   int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if shared_data = true. */
   int size;	   	   /**< Length of the vectors defining the plot */
-  plot_style_type style;   /**< The graph style */
-  plot_color_type color;   /**< The graph color */
+
+
+
+
+  /* All of these are manipulated through obvious functions - but the default should be sensible. */
+  plot_style_type      style;        /**< The graph style: line|points|line_points */
+  plot_color_type      line_color;   /**< The color for the line part of the plot. */
+  plot_color_type      point_color;  /**< The color for the points in the plot. */
+  plot_symbol_type     symbol_type;  /**< The type of symbol. */
+  plot_line_style_type line_style;   /**< The style for lines. */
+  double               symbol_size;
+  double               line_width;
 };
+
+
+
+
+//int plot_dataset_get_length(plot_dataset_type * d)
+//{
+//  assert(d != NULL);
+//  return d->size;
+//}
+//
+//plot_color_type plot_dataset_get_color(plot_dataset_type * d)
+//{
+//  assert(d != NULL);
+//  return d->color;
+//}
+//
+//plot_style_type plot_dataset_get_style(plot_dataset_type * d)
+//{
+//  assert(d != NULL);
+//  return d->style;
+//}
+
+
+double * plot_dataset_get_vector_x(const plot_dataset_type * d)  { return d->x; }
+double * plot_dataset_get_vector_y(const plot_dataset_type * d)  { return d->y; }
+double * plot_dataset_get_vector_x1(const plot_dataset_type * d) { return d->x1; }
+double * plot_dataset_get_vector_y1(const plot_dataset_type * d) { return d->y1; }
+double * plot_dataset_get_vector_x2(const plot_dataset_type * d) { return d->x2; }
+double * plot_dataset_get_vector_y2(const plot_dataset_type * d) { return d->y2; }
+
+
+static void plot_dataset_assert_type(const plot_dataset_type * d, plot_data_type type) {
+  if (d->data_type != type)
+    util_abort("%s: assert failed - wrong plot type \n",__func__);
+}
+
+
+
+static int  __make_data_mask(plot_data_type data_type) {
+  int mask = 0;
+  switch (data_type) {
+  case(plot_xy):
+    mask = plot_data_x + plot_data_y;
+    break;
+  case(plot_xy1y2):
+    mask = plot_data_x + plot_data_y1 + plot_data_y2;
+    break;
+  case(plot_x1x2y):
+    mask = plot_data_x1 + plot_data_x2 + plot_data_y;
+    break;
+  case(plot_xline):
+    mask = plot_data_x;
+    break;
+  case(plot_yline):
+    mask = plot_data_y;
+    break;
+  default:
+    util_abort("%s: unrecognized value: %d \n",__func__ , data_type);
+  }
+  return mask;
+}
+
+
+
+
+
+/**
+ * @return Returns a new plot_dataset_type pointer.
+ * @brief Create a new plot_dataset_type
+ *
+ * Create a new dataset - allocates the memory.
+ */
+plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_data)
+{
+  plot_dataset_type *d;
+  
+  d = util_malloc(sizeof *d , __func__);
+  d->data_type     = data_type;
+  d->data_mask     = __make_data_mask(data_type);
+  d->x   	   = NULL;
+  d->y   	   = NULL;
+  d->x1 	   = NULL;
+  d->x2 	   = NULL;
+  d->y1 	   = NULL;
+  d->y2 	   = NULL;
+  d->size          = 0;
+  d->alloc_size    = 0;
+  d->shared_data   = shared_data;
+
+
+  /******************************************************************/
+  /* Defaults - could be installed in some way? */
+  d->style       = LINE;
+  d->line_color  = BLUE;
+  d->point_color = BLUE;
+  d->symbol_type = 17;
+  d->line_style  = solid_line;
+  d->symbol_size = 0.70;
+  d->line_width  = 2.00; 
+  return d;
+}
+
+/**
+ * @brief Free your dataset item
+ * @param d your current dataset
+ *
+ * Use this function to free your allocated memory from plot_dataset_alloc().
+ */
+void plot_dataset_free(plot_dataset_type * d)
+{
+  assert(d != NULL);
+  if (!d->shared_data) {
+    util_safe_free(d->x);
+    util_safe_free(d->x1);
+    util_safe_free(d->x2);
+    util_safe_free(d->y);
+    util_safe_free(d->y1);
+    util_safe_free(d->y2);
+  }
+  free(d);
+}
+
+/*****************************************************************/
+/** Here comes functions for setting the data for the dataset. */
 
 
 static void plot_dataset_realloc_data(plot_dataset_type * d, int new_alloc_size) {
@@ -71,201 +206,177 @@ static void plot_dataset_append_vector__(plot_dataset_type * d , int size , cons
 }
 
 
-int plot_dataset_get_length(plot_dataset_type * d)
-{
-  assert(d != NULL);
-  return d->size;
-}
-
-plot_color_type plot_dataset_get_color(plot_dataset_type * d)
-{
-  assert(d != NULL);
-  return d->color;
-}
-
-plot_style_type plot_dataset_get_style(plot_dataset_type * d)
-{
-  assert(d != NULL);
-  return d->style;
-}
-
-
-double * plot_dataset_get_vector_x(const plot_dataset_type * d)  { return d->x; }
-double * plot_dataset_get_vector_y(const plot_dataset_type * d)  { return d->y; }
-double * plot_dataset_get_vector_x1(const plot_dataset_type * d) { return d->x1; }
-double * plot_dataset_get_vector_y1(const plot_dataset_type * d) { return d->y1; }
-double * plot_dataset_get_vector_x2(const plot_dataset_type * d) { return d->x2; }
-double * plot_dataset_get_vector_y2(const plot_dataset_type * d) { return d->y2; }
-
-
-/**
- * @return Returns a new plot_dataset_type pointer.
- * @brief Create a new plot_dataset_type
- *
- * Create a new dataset - allocates the memory.
- */
-plot_dataset_type *plot_dataset_alloc(int data_mask , bool shared_data)
-{
-    plot_dataset_type *d;
-    
-    d = util_malloc(sizeof *d , __func__);
-    d->data_mask   = data_mask;
-    d->x   	   = NULL;
-    d->y   	   = NULL;
-    d->x1 	   = NULL;
-    d->x2 	   = NULL;
-    d->y1 	   = NULL;
-    d->y2 	   = NULL;
-    d->size        = 0;
-    d->alloc_size  = 0;
-    d->shared_data = shared_data;
-    return d;
-}
-
-/**
- * @brief Free your dataset item
- * @param d your current dataset
- *
- * Use this function to free your allocated memory from plot_dataset_alloc().
- */
-void plot_dataset_free(plot_dataset_type * d)
-{
-  assert(d != NULL);
-  if (!d->shared_data) {
-    util_safe_free(d->x);
-    util_safe_free(d->y);
-  }
-  free(d);
-}
-
-
-void plot_dataset_set_shared_data(plot_dataset_type * d , int size , double *x , double *y) {
+static void plot_dataset_set_shared__(plot_dataset_type * d , int size , double *x , double *y, double *y1 , double *y2 , double *x1, double *x2) {
   if (d->shared_data) {
     d->x    = x;
     d->y    = y;
+    d->x1   = x1;
+    d->x2   = x2;
+    d->y1   = y1;
+    d->y2   = y2;
     d->size = size;
   } else
     util_abort("%s ... \n");
 }
 
+/*****************************************************************/
+/* Here comes the exported functions - they all have _xy, _xy1y2,
+   _xline ... suffix. */
 
-void plot_dataset_append_point(plot_dataset_type * d, double x , double y) {
-  plot_dataset_append_vector__(d , 1 , &x , &y , NULL , NULL , NULL , NULL);
-}
 
-
-void plot_dataset_append_vector(plot_dataset_type * d, int size , const double * x , const double *y) {
+void plot_dataset_append_vector_xy(plot_dataset_type *d , int size, const double * x , const double *y) {
+  plot_dataset_assert_type(d , plot_xy);
   plot_dataset_append_vector__(d , size , x , y , NULL , NULL , NULL , NULL);
 }
 
 
-/**
- * @brief Set the collected data to the dataset.
- * @param d your current dataset
- * @param x vector containing x-data
- * @param y vector containing y-data
- * @param len length of vectors
- * @param c color for the graph
- * @param s style for the graph
- *
- * After collecting your x-y data you have to let the dataset item know about
- * it. At the same time you define some detail about how the graph should look.
- */
-void plot_dataset_set_data(plot_dataset_type * d, const double * x, const double * y, int len, plot_color_type c, plot_style_type s)
-     
-{
-  assert(d != NULL);
-  plot_dataset_append_vector__(d , len , x , y , NULL , NULL , NULL , NULL);
+void plot_dataset_append_point_xy(plot_dataset_type *d , double x , double y) {
+  plot_dataset_append_vector_xy(d , 1 , &x , &y);
+}
+
+
+void plot_dataset_set_shared_xy(plot_dataset_type *d , int size, double *x, double *y) {
+  plot_dataset_assert_type(d , plot_xy);
+  plot_dataset_set_shared__(d , size , x , y , NULL , NULL , NULL , NULL);
+}
+
+
+/*----*/
+
+
+void plot_dataset_append_vector_xy1y2(plot_dataset_type *d , int size, const double * x , const double *y1 , const double *y2) {
+  plot_dataset_assert_type(d , plot_xy1y2);
+  plot_dataset_append_vector__(d , size , x , NULL , y1 , y2 , NULL , NULL);
+}
+
+
+void plot_dataset_append_point_xy1y2(plot_dataset_type *d , double x , double y1 , double y2) {
+  plot_dataset_append_vector_xy1y2(d , 1 , &x , &y1, &y2);
+}
+
+
+void plot_dataset_set_shared_xy1y2(plot_dataset_type *d , int size, double *x, double *y1 , double *y2) {
+  plot_dataset_assert_type(d , plot_xy1y2);
+  plot_dataset_set_shared__(d , size , x , NULL , y1 , y2 , NULL , NULL);
+}
+
+/*----*/
+
+void plot_dataset_append_vector_x1x2y(plot_dataset_type *d , int size, const double * x1 , const double *x2 , const double *y) {
+  plot_dataset_assert_type(d , plot_x1x2y);
+  plot_dataset_append_vector__(d , size , NULL , y , NULL , NULL , x1 , x2);
+}
+
+
+void plot_dataset_append_point_x1x2y(plot_dataset_type *d , double x1 , double x2 , double y) {
+  plot_dataset_append_vector_x1x2y(d , 1 , &x1 , &x2 , &y);
+}
+
+
+void plot_dataset_set_shared_x1x2y(plot_dataset_type *d , int size, double *x1, double *x2 , double *y) {
+  plot_dataset_assert_type(d , plot_x1x2y);
+  plot_dataset_set_shared__(d , size , NULL , y , NULL , NULL , x1 , x2);
+}
+
+/*----*/
+
+void plot_dataset_append_vector_xline(plot_dataset_type *d , int size, const double * x) {
+  plot_dataset_assert_type(d , plot_xline);
+  plot_dataset_append_vector__(d , size , x , NULL , NULL , NULL , NULL , NULL);
+}
+
+
+void plot_dataset_append_point_xline(plot_dataset_type *d , double x) {
+  plot_dataset_append_vector_xline(d , 1 , &x);
+}
+
+
+void plot_dataset_set_shared_xline(plot_dataset_type *d , int size, double *x) {
+  plot_dataset_assert_type(d , plot_xline);
+  plot_dataset_set_shared__(d , size , x , NULL , NULL , NULL , NULL , NULL);
+}
+
+
+/*----*/
+
+void plot_dataset_append_vector_yline(plot_dataset_type *d , int size, const double * y) {
+  plot_dataset_assert_type(d , plot_yline);
+  plot_dataset_append_vector__(d , size , NULL , y , NULL , NULL , NULL , NULL );
+}
+
+
+void plot_dataset_append_point_yline(plot_dataset_type *d , double y) {
+  plot_dataset_append_vector_yline(d , 1 , &y);
+}
+
+
+void plot_dataset_set_shared_yline(plot_dataset_type *d , int size, double *y) {
+  plot_dataset_assert_type(d , plot_yline);
+  plot_dataset_set_shared__(d , size , NULL , y , NULL , NULL , NULL , NULL);
+}
+
+/*****************************************************************/
+
+
+
+
+
+void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type * range) {
+  plsstrm(stream);
+  pllsty(d->line_style);       /* Setting solid/dashed/... */
+  plwid(d->line_width);        /* Setting line width.*/
+  plcol0(d->line_color);       /* Setting line color. */
+  plssym(0 , d->symbol_size);  /* Setting the size for the symbols. */
+
   
-  d->size = len;
-  d->color = c;
-  d->style = s;
+  switch (d->data_type) {
+  case(plot_xy):
+    /** Starting with the line */    
+    if (d->style == LINE || d->style == LINE_POINTS) 
+      plline(d->size , d->x , d->y);
+
+    if (d->style == POINT || d->style == LINE_POINTS) {
+      plcol0(d->point_color);       /* Setting the color */
+      plpoin(d->size , d->x , d->y , d->symbol_type);
+    }
+    break;
+  case(plot_xy1y2):
+    plerry(d->size , d->x , d->y1 , d->y2);
+    break;
+  case(plot_x1x2y):
+    plerrx(d->size , d->x1 , d->x2 , d->y);
+    break;
+  case(plot_yline):
+    {
+      double x[2] = {plot_range_get_xmin(range) , plot_range_get_xmax(range)};
+      double y[2];
+      
+      for (int i=0; i < d->size; i++) {
+	y[0] = d->y[i];
+	y[1] = d->y[i];
+	plline(2 , x , y);
+      }
+    }
+    break;
+  case(plot_xline):
+    {
+      double y[2] = {plot_range_get_ymin(range) , plot_range_get_ymax(range)};
+      double x[2];
+      
+      for (int i=0; i < d->size; i++) {
+	x[0] = d->x[i];
+	x[1] = d->x[i];
+	plline(2 , x , y);
+      }
+    }
+    break;
+  default:
+    util_abort("%s: internal error ... \n",__func__);
+    break;
+  }
 }
 
 
-/*
-  This function seems to work only canvas ...
-void plot_dataset_join(plot_type * item, plot_dataset_type * d, int from,
-		       int to)
-{
-    int i, k, k2;
-    double *x = d->x;
-    double *y = d->y;
-
-    assert(item != NULL && d != NULL);
-    plsstrm(plot_get_stream(item));
-    printf("item: %p, dataset: %p, FROM %d\t TO: %d\n", item, d, from, to);
-
-    for (i = 0; i < (to - from); i++) {
-	k = from + i;
-	k2 = k + 1;
-	printf("plotting from %d -> %d: %f, %f to %f, %f\n",
-	       k, k2, x[k], y[k], x[k2], y[k2]);
-	plplot_canvas_join(plot_get_canvas(item),
-			   x[k], y[k], x[k2], y[k2]);
-	plplot_canvas_adv(plot_get_canvas(item), 0);
-    }
-
-}
-*/
-
-
-void plot_dataset(plot_type * item, plot_dataset_type * d)
-{
-    assert(item != NULL && d != NULL);
-    plsstrm(plot_get_stream(item));
-    plcol0((PLINT) plot_dataset_get_color(d));
-
-
-    switch (plot_dataset_get_style(d)) {
-    case LINE:
-      plline(plot_dataset_get_length(d),
-	     plot_dataset_get_vector_x(d),
-	     plot_dataset_get_vector_y(d));
-	break;
-    case POINT:
-      plssym(0, SYMBOL_SIZE);
-      plpoin(plot_dataset_get_length(d),
-	     plot_dataset_get_vector_x(d),
-	     plot_dataset_get_vector_y(d), SYMBOL);
-      break;
-    case BLANK:
-	break;
-    default:
-	break;
-    }
-}
-
-
-/**
- * @brief Add a dataset to the plot 
- * @param item your current plot
- * @param d your current dataset
- *
- * When the data is in place in the dataset you can add it to the plot item,
- * this way it will be included when you do the plot.
- */
-int plot_dataset_add(plot_type * item, plot_dataset_type * d)
-{
-    int i;
-
-    if (!d || !item) {
-	fprintf(stderr,
-		"Error: you need to allocate a new dataset or plot-item.\n");
-	return false;
-    }
-
-    if (!d->x || !d->y || !d->size) {
-	fprintf(stderr, "Error: you need to set the data first\n");
-	return false;
-    }
-
-    i = list_get_size(plot_get_datasets(item));
-    list_append_ref(plot_get_datasets(item), d);
-    assert(i <= list_get_size(plot_get_datasets(item)));
-
-    return true;
-}
 
 /**
  * @brief Get extrema values from one dataset
@@ -297,7 +408,7 @@ void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , double *
     tmp_y_max = y[0];
   }
   
-  for (i = 0; i < plot_dataset_get_length(d); i++) {
+  for (i = 0; i < d->size; i++) {
     if (y[i] > tmp_y_max)
       tmp_y_max = y[i];
     if (y[i] < tmp_y_min)
@@ -317,32 +428,3 @@ void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , double *
 }
 
 
-
-
-plot_dataset_type *plot_dataset_get_prominent(plot_type * item, int *len)
-{
-    list_node_type *node, *next_node;
-    plot_dataset_type *ref = NULL;
-    int tmp_len = 0;
-
-    assert(item != NULL);
-
-    node = list_get_head(plot_get_datasets(item));
-    while (node != NULL) {
-	plot_dataset_type *tmp;
-	int len2;
-
-	next_node = list_node_get_next(node);
-	tmp = list_node_value_ptr(node);
-	len2 = plot_dataset_get_length(tmp);
-	if (len2 > tmp_len) {
-	    ref = tmp;
-	    tmp_len = len2;
-	}
-	node = next_node;
-    }
-    if (len)
-	*len = tmp_len;
-
-    return ref;
-}
