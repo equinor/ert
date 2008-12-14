@@ -1,5 +1,9 @@
 #ifndef __PLOT_DATASET_H__
 #define __PLOT_DATASET_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <plot_range.h>
 
 /**
@@ -46,6 +50,14 @@ typedef enum {
  */
 typedef struct plot_dataset_struct plot_dataset_type;
 
+void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style);
+void plot_dataset_set_line_color(plot_dataset_type *, plot_color_type );
+void plot_dataset_set_point_color(plot_dataset_type *  , plot_color_type );
+void plot_dataset_set_line_style(plot_dataset_type * , plot_line_style_type );
+void plot_dataset_set_symbol_size(plot_dataset_type * , double );
+void plot_dataset_set_line_width(plot_dataset_type *  , double );
+
+
 /* Get functions */
 int plot_dataset_get_length(plot_dataset_type * d);
 plot_color_type plot_dataset_get_color(plot_dataset_type * d);
@@ -71,4 +83,31 @@ double * plot_dataset_get_vector_x1(const plot_dataset_type * d);
 double * plot_dataset_get_vector_y1(const plot_dataset_type * d);
 double * plot_dataset_get_vector_x2(const plot_dataset_type * d);
 double * plot_dataset_get_vector_y2(const plot_dataset_type * d);
+
+/*****************************************************************/
+/* Functions for adding data to the dataset. */
+void plot_dataset_append_point_xy(plot_dataset_type * , double  , double  );
+void plot_dataset_append_vector_xy(plot_dataset_type * , int , const double *  , const double * );
+void plot_dataset_set_shared_xy(plot_dataset_type * , int ,  double *  ,  double *    );
+
+void plot_dataset_append_point_xy1y2(plot_dataset_type * , double  , double  , double );
+void plot_dataset_append_vector_xy1y2(plot_dataset_type * , int , const double *  , const double * , const double *);
+void plot_dataset_set_shared_xy1y2(plot_dataset_type * , int ,  double *  ,  double * ,  double *);
+
+void plot_dataset_append_point_x1x2y(plot_dataset_type * , double  , double  , double );
+void plot_dataset_append_vector_x1x2y(plot_dataset_type * , int , const double *  , const double * , const double *);
+void plot_dataset_set_shared_x1x2y(plot_dataset_type * , int ,  double *  ,  double * ,  double *);
+
+void plot_dataset_append_point_xline(plot_dataset_type * , double   );
+void plot_dataset_append_vector_xline(plot_dataset_type * , int , const double * );
+void plot_dataset_set_shared_xline(plot_dataset_type * , int ,  double * );
+
+void plot_dataset_append_point_yline(plot_dataset_type * , double   );
+void plot_dataset_append_vector_yline(plot_dataset_type * , int , const double * );
+void plot_dataset_set_shared_yline(plot_dataset_type * , int ,  double * );
+
+
+#ifdef __cplusplus
+}
+#endif
 #endif

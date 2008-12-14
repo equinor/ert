@@ -39,27 +39,37 @@ struct plot_dataset_struct {
   double               line_width;
 };
 
+/*****************************************************************/
+/* Set - functions for the style variabels of the dataset. */
+void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style) {
+  /* Only relevant for plot_xy */
+  dataset->style = style;
+}
 
 
+void plot_dataset_set_line_color(plot_dataset_type * dataset , plot_color_type line_color) {
+  dataset->line_color = line_color;
+}
 
-//int plot_dataset_get_length(plot_dataset_type * d)
-//{
-//  assert(d != NULL);
-//  return d->size;
-//}
-//
-//plot_color_type plot_dataset_get_color(plot_dataset_type * d)
-//{
-//  assert(d != NULL);
-//  return d->color;
-//}
-//
-//plot_style_type plot_dataset_get_style(plot_dataset_type * d)
-//{
-//  assert(d != NULL);
-//  return d->style;
-//}
 
+void plot_dataset_set_point_color(plot_dataset_type * dataset , plot_color_type point_color) {
+  dataset->point_color = point_color;
+}
+
+
+void plot_dataset_set_line_style(plot_dataset_type * dataset , plot_line_style_type line_style) {
+  dataset->line_style = line_style;
+}
+
+void plot_dataset_set_symbol_size(plot_dataset_type * dataset , double symbol_size) {
+  dataset->symbol_size = symbol_size;
+}
+
+void plot_dataset_set_line_width(plot_dataset_type * dataset , double line_width) {
+  dataset->symbol_size = line_width;
+}
+
+/*****************************************************************/
 
 double * plot_dataset_get_vector_x(const plot_dataset_type * d)  { return d->x; }
 double * plot_dataset_get_vector_y(const plot_dataset_type * d)  { return d->y; }
@@ -129,14 +139,14 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
 
 
   /******************************************************************/
-  /* Defaults - could be installed in some way? */
+  /* Defaults - should be installed in some way? */
   d->style       = LINE;
   d->line_color  = BLUE;
   d->point_color = BLUE;
   d->symbol_type = 17;
   d->line_style  = solid_line;
   d->symbol_size = 0.70;
-  d->line_width  = 2.00; 
+  d->line_width  = 1.5; 
   return d;
 }
 
@@ -251,6 +261,7 @@ void plot_dataset_append_vector_xy1y2(plot_dataset_type *d , int size, const dou
 
 
 void plot_dataset_append_point_xy1y2(plot_dataset_type *d , double x , double y1 , double y2) {
+  printf("Appending: %g , %g - %g \n",x,y1,y2);
   plot_dataset_append_vector_xy1y2(d , 1 , &x , &y1, &y2);
 }
 
@@ -395,31 +406,52 @@ void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , double *
   double tmp_x_min = *x_min;
   double tmp_y_min = *y_min;
   int i;
-  double *x, *y;
-  
-  x   = plot_dataset_get_vector_x(d);
-  y   = plot_dataset_get_vector_y(d);
+  double *x1 , *x2, *y1 , *y2;
 
-  if (first_pass) {
-    tmp_x_max = x[0];
-    tmp_x_min = x[0];
 
-    tmp_y_min = y[0];
-    tmp_y_max = y[0];
+  x1 = NULL;
+  x2 = NULL;
+  y1 = NULL;
+  y2 = NULL;
+  if (d->data_mask & plot_data_x)  {x1 = d->x;  x2 = d->x; }
+  if (d->data_mask & plot_data_x1)  x1 = d->x1;
+  if (d->data_mask & plot_data_x2)  x2 = d->x2;
+
+  if (d->data_mask & plot_data_y)  {y1 = d->y;  y2 = d->y; }
+  if (d->data_mask & plot_data_y1)  y1 = d->y1;
+  if (d->data_mask & plot_data_y2)  y2 = d->y2;
+
+  if (x1 != NULL) {
+    if (first_pass) {
+      tmp_x_min = x1[0];
+      tmp_x_max = x2[0];
+    }
+      
+    for (i=0; i < d->size; i++) {
+      if (x1[i] < tmp_x_min)
+	tmp_x_min = x1[i];
+
+      if (x2[i] > tmp_x_max)
+	tmp_x_max = x2[i];
+    }
   }
-  
-  for (i = 0; i < d->size; i++) {
-    if (y[i] > tmp_y_max)
-      tmp_y_max = y[i];
-    if (y[i] < tmp_y_min)
-      tmp_y_min = y[i];
-    
-    
-    if (x[i] > tmp_x_max)
-      tmp_x_max = x[i];
-    if (x[i] < tmp_x_min)
-      tmp_x_min = x[i];
+
+
+  if (y1 != NULL) {
+    if (first_pass) {
+      tmp_y_min = y1[0];
+      tmp_y_max = y2[0];
+    }
+      
+    for (i=0; i < d->size; i++) {
+      if (y1[i] < tmp_y_min)
+	tmp_y_min = y1[i];
+
+      if (y2[i] > tmp_y_max)
+	tmp_y_max = y2[i];
+    }
   }
+
   
   *x_max = tmp_x_max;
   *y_max = tmp_y_max;
