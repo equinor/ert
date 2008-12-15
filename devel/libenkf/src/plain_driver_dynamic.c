@@ -131,11 +131,15 @@ void plain_driver_dynamic_README(const char * root_path) {
 */
 void * plain_driver_dynamic_alloc(const char * root_path , const char * forecast_path , const char * analyzed_path) {
   plain_driver_dynamic_type * driver = util_malloc(sizeof * driver , __func__);
-  driver->load        = plain_driver_dynamic_load_node;
-  driver->save        = plain_driver_dynamic_save_node;
-  driver->has_node    = plain_driver_dynamic_has_node;
-  driver->free_driver = plain_driver_dynamic_free;
-  driver->unlink_node = plain_driver_dynamic_unlink_node;
+  driver->load        	= plain_driver_dynamic_load_node;
+  driver->save        	= plain_driver_dynamic_save_node;
+  driver->has_node    	= plain_driver_dynamic_has_node;
+  driver->free_driver 	= plain_driver_dynamic_free;
+  driver->unlink_node 	= plain_driver_dynamic_unlink_node;
+  driver->load_ensemble = NULL;
+  driver->load_ts       = NULL;
+  driver->save_ensemble = NULL;
+  driver->save_ts       = NULL;
   {
     char *f_path;
     char *a_path;

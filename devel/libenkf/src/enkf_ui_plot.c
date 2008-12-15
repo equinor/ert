@@ -31,12 +31,12 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
 
 static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y) {
   plot_dataset_type *d = plot_alloc_new_dataset( plot , plot_xy , false);
+  plot_dataset_set_line_color(d , BLUE);
   plot_dataset_append_vector_xy(d, N , x, y);
 }
 
 
 static void __plot_show(plot_type * plot , const char * viewer , const char * file) {
-  plot_set_viewport( plot );
   plot_data(plot);
   plot_free(plot);
   util_vfork_exec(viewer , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
@@ -157,9 +157,14 @@ void enkf_ui_plot_observation(void * arg) {
     
     obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
     if (obs_vector != NULL) {
+      char * plot_file                    = util_alloc_sprintf("/tmp/%s.png" , user_key);
+      plot_type * plot                    = __plot_alloc("Member nr" , "Value" , user_key , plot_file);   
       const char * state_kw               = obs_vector_get_state_kw( obs_vector );
       enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
       int   num_active                    = obs_vector_get_num_active( obs_vector );
+      plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , plot_yline , false);
+      plot_dataset_type * obs_quant       = plot_alloc_new_dataset(plot , plot_yline , false);
+      plot_dataset_type * data            = plot_alloc_new_dataset(plot , plot_xy    , false);
       int   report_step;
       
       do {
@@ -170,24 +175,50 @@ void enkf_ui_plot_observation(void * arg) {
       } while (!obs_vector_iget_active(obs_vector , report_step));
       {
 	enkf_node_type * enkf_node = enkf_node_alloc( config_node );
-	double obs_value , obs_std , value;
+	msg_type * msg = msg_alloc("Loading realization: ");
+	double y , value , std ;
 	bool   valid;
+	const int    iens1 = 0;
+	const int    iens2 = ens_size - 1;
 	int    iens;
-	obs_vector_user_get( obs_vector , index_key , report_step , &obs_value , &obs_std , &valid);
-	printf("%g +/- %g \n",obs_value , obs_std);
-	for (iens = 0; iens < ens_size; iens++) {
+	char  cens[5];
+
+	obs_vector_user_get( obs_vector , index_key , report_step , &value , &std , &valid);
+	plot_set_soft_ymin( plot , value - 1.5*std);
+	plot_set_soft_ymax( plot , value + 1.5*std);
+	plot_set_soft_xmin( plot , iens1 - 0.5);
+	plot_set_soft_xmax( plot , iens2 + 0.5);
+			    
+	plot_dataset_append_point_yline(obs_value , value);
+	plot_dataset_append_point_yline(obs_quant , value - std);
+	plot_dataset_append_point_yline(obs_quant , value + std);
+	
+	plot_dataset_set_line_color(obs_value , BLACK);
+	plot_dataset_set_line_color(obs_quant , BLACK);
+	plot_dataset_set_line_width(obs_value , 2.5);
+	plot_dataset_set_line_style(obs_quant , long_dash);
+
+	plot_dataset_set_style( data , POINT);
+	plot_dataset_set_point_color( data , RED );
+
+	msg_show(msg);
+	for (iens = iens1; iens <= iens2; iens++) {
+	  sprintf(cens , "%03d" , iens);
+	  msg_update(msg , cens);
 	  if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
 	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , analyzed);
-	    value = enkf_node_user_get( enkf_node , index_key , &valid);
-	    if (valid)
-	      printf(" %g ",value);
+	    y = enkf_node_user_get( enkf_node , index_key , &valid);
+	    if (valid) 
+	      plot_dataset_append_point_xy( data , iens , y);
 	  }
 	}
+	msg_free(msg , true);
 	printf("\n");
 	enkf_node_free(enkf_node);
       }
-      
-
+      __plot_show(plot , viewer , plot_file);
+      printf("Plot saved in: %s \n",plot_file);
+      free(plot_file);
     } 
     
     util_safe_free( index_key );

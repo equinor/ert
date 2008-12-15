@@ -149,11 +149,15 @@ void plain_driver_parameter_free(void *_driver) {
 */
 void * plain_driver_parameter_alloc(const char * root_path , const char * driver_path) {
   plain_driver_parameter_type * driver = malloc(sizeof * driver);
-  driver->load        = plain_driver_parameter_load_node;
-  driver->save        = plain_driver_parameter_save_node;
-  driver->free_driver = plain_driver_parameter_free;
-  driver->unlink_node = plain_driver_parameter_unlink_node;
-  driver->has_node    = plain_driver_parameter_has_node;
+  driver->load        	= plain_driver_parameter_load_node;
+  driver->save        	= plain_driver_parameter_save_node;
+  driver->free_driver 	= plain_driver_parameter_free;
+  driver->unlink_node 	= plain_driver_parameter_unlink_node;
+  driver->has_node    	= plain_driver_parameter_has_node;
+  driver->load_ensemble = NULL;
+  driver->load_ts       = NULL;
+  driver->save_ensemble = NULL;
+  driver->save_ts       = NULL;
   {
     char *path;
     if (root_path != NULL)

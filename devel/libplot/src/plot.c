@@ -49,7 +49,7 @@ struct plot_struct {
   int 	 height;		/**< The height of your plot window */
   int 	 width;         	/**< The width of your plot window */
   bool   __use_autorange;       
-  plot_range_type * range;      /**< Range instance (not in use yet). */
+  plot_range_type * range;       /**< Range instance */
 };
 
 
@@ -91,7 +91,7 @@ plot_type *plot_alloc()
   plot->size       = 0;
   plot->alloc_size = 0; 
   
-  plot->range           = plot_range_alloc();
+  plot->range      = plot_range_alloc();
   return plot;
 }
 
@@ -288,6 +288,21 @@ void plot_set_manual_range(plot_type * plot , double xmin , double xmax , double
 }
 
 
+void plot_set_soft_xmin(plot_type * plot , double xmin) {
+  plot_range_set_soft_xmin(plot->range , xmin);
+}
+
+void plot_set_soft_ymin(plot_type * plot , double ymin) {
+  plot_range_set_soft_ymin(plot->range , ymin);
+}
+
+void plot_set_soft_xmax(plot_type * plot , double xmax) {
+  plot_range_set_soft_xmax(plot->range , xmax);
+}
+
+void plot_set_soft_ymax(plot_type * plot , double ymax) {
+  plot_range_set_soft_ymax(plot->range , ymax);
+}
 
 
 

@@ -122,12 +122,16 @@ void plain_driver_static_free(void *_driver) {
 
 
 void * plain_driver_static_alloc(const char * root_path , const char * driver_path) {
-  plain_driver_static_type * driver = malloc(sizeof * driver);
-  driver->load        = plain_driver_static_load_node;
-  driver->save        = plain_driver_static_save_node;
-  driver->has_node    = plain_driver_static_has_node;
-  driver->free_driver = plain_driver_static_free;
-  driver->unlink_node = plain_driver_static_unlink_node;
+  plain_driver_static_type * driver = util_malloc(sizeof * driver, __func__);
+  driver->load        	= plain_driver_static_load_node;
+  driver->save        	= plain_driver_static_save_node;
+  driver->has_node    	= plain_driver_static_has_node;
+  driver->free_driver 	= plain_driver_static_free;
+  driver->unlink_node 	= plain_driver_static_unlink_node;
+  driver->load_ensemble = NULL;
+  driver->load_ts       = NULL;
+  driver->save_ensemble = NULL;
+  driver->save_ts       = NULL;
   {
     char *path;
 

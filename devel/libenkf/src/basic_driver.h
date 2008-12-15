@@ -3,6 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <enkf_config_node.h>
 #include <enkf_node.h>
 
 typedef struct basic_driver_struct        basic_driver_type;
@@ -13,6 +14,11 @@ typedef void (save_node_ftype) 	  (void * , int , int , state_enum , enkf_node_t
 typedef bool (has_node_ftype)     (void * , int , int , state_enum , const char *);
 typedef void (unlink_node_ftype)  (void * , int , int , state_enum , enkf_node_type *); 
 typedef void (free_driver_ftype)  (void *);
+
+typedef enkf_node_type ** (load_alloc_ensemble_ftype)    (void * , int , int , int , state_enum , enkf_config_node_type *);
+typedef enkf_node_type ** (load_alloc_ts_ftype)          (void * , int , int , int , state_enum , enkf_config_node_type *);
+typedef void              (save_ensemble_ftype)          (void * , int , int , int , state_enum , enkf_node_type **);
+typedef void              (save_ts_ftype)                (void * , int , int , int , state_enum , enkf_node_type **);
 
 typedef void (static_load_node_ftype) 	 (void * , int , int , state_enum , int , enkf_node_type *);
 typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , int , enkf_node_type *);
@@ -41,17 +47,22 @@ typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , int 
 
    
 
-#define BASIC_DRIVER_FIELDS   	   \
-load_node_ftype    * load;    	   \
-save_node_ftype    * save;    	   \
-has_node_ftype     * has_node;     \
-unlink_node_ftype  * unlink_node;  \
-free_driver_ftype  * free_driver;  \
+#define BASIC_DRIVER_FIELDS   	           \
+load_node_ftype    	  * load;    	   \
+save_node_ftype    	  * save;    	   \
+has_node_ftype     	  * has_node;      \
+unlink_node_ftype  	  * unlink_node;   \
+free_driver_ftype  	  * free_driver;   \
+load_alloc_ensemble_ftype * load_ensemble; \
+load_alloc_ts_ftype 	  * load_ts;       \
+save_ensemble_ftype 	  * save_ensemble; \
+save_ts_ftype       	  * save_ts;       \
 int                  type_id
 
 
 struct basic_driver_struct {
   BASIC_DRIVER_FIELDS;
+  
 };
 
 /*****************************************************************/
@@ -67,11 +78,16 @@ static_save_node_ftype    * save;    	 \
 static_has_node_ftype     * has_node;    \
 static_unlink_node_ftype  * unlink_node; \
 free_driver_ftype         * free_driver; \
+void * load_ensemble;\
+void * load_ts;      \
+void * save_ts;      \
+void * save_ensemble;\
 int                  type_id
 
 
 struct basic_static_driver_struct { 
   BASIC_STATIC_DRIVER_FIELDS; 
+
 }; 
 
 

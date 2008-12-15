@@ -385,6 +385,45 @@ enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_n
   enkf_fs_fread_node(enkf_fs , node , report_step , iens , state);
   return node;
 }
+/*****************************************************************/
+/* High level functions to work on an ensemble or a time-series. */
+/* Observe that both for the time_based functions, and the ensemble
+   based functions both limits are INCLUSIVE. */
+   
+
+enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int report_step , int iens1 , int iens2 , state_enum state) {
+  int iens;
+  enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
+  if (var_type == ecl_static) {
+    /* Static drivers *NEVER* have high level functions fall back to simple loop immediately. */
+    enkf_node_type ** node_list = util_malloc( (iens2 - iens1  + 1) * sizeof * node_list , __func__);
+    for (iens = iens1; iens <= iens2; iens++) {
+      if (enkf_fs_has_node(enkf_fs , config_node , report_step , iens , state))
+	node_list[iens - iens1] = enkf_fs_fread_alloc_node(enkf_fs , config_node , report_step , iens , state);
+      else
+	node_list[iens - iens1] = NULL; /* This report_step/iens does not exist in the filesystem. */ 
+    }
+    return node_list;
+  } else {
+    const char * key = enkf_config_node_get_key_ref(config_node);
+    basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key));
+    if (driver->load_ensemble != NULL)
+      return driver->load_ensemble(driver , report_step , iens1 , iens2 , state , config_node);
+    else {
+      enkf_node_type ** node_list = util_malloc( (iens2 - iens1  + 1) * sizeof * node_list , __func__);
+      /* Iterative fallback */
+      for (iens = iens1; iens < iens2; iens++) {
+	if (driver->has_node(driver , report_step , iens , state , key)) {
+	  node_list[iens - iens1] = enkf_node_alloc(config_node);
+	  driver->load( driver , report_step , iens , state , node_list[iens - iens1]);
+	} else
+	  node_list[iens - iens1] = NULL; /* The node does not exist in the filesystem. */
+      }
+      return node_list;
+    }
+  }
+}
+
 
 
 /*****************************************************************/

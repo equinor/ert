@@ -1,3 +1,4 @@
+#include <sys/file.h>
 #include <enkf_types.h>
 #include <enkf_node.h>
 #include <stdio.h>
@@ -10,9 +11,12 @@
 */
 
 void plain_driver_common_load_node(const char * filename ,  int report_step , int iens , state_enum state , enkf_node_type * node ) {
+  //int fd = util_open(filename , O_RDONLY);
+  //FILE * stream = fdopen(fd , "r");
   FILE * stream   = util_fopen(filename , "r");
   enkf_node_fread(node , stream , report_step , iens , state);
   fclose(stream);
+  //close(fd);
 }
 
 
