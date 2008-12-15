@@ -40,7 +40,6 @@ OVERVIEW OF THE CODEBASE:
     libecl       |  Library for reading and writing Eclipse files.
     libconfig    |  Library for reading and parsing configuration files.
     libenkf      |  Main enkf implementation.
-    libhash      |  Portable implementations of hashes, linked lists etc.
     libjob_queue |  Library for handling external jobs via LSF, rsh etc.
     libplot      |  Wrapper for the plplot library, facilitates easy plotting.
     librms       |  Library for reading and writing RMS files.
