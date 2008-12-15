@@ -41,51 +41,79 @@ typedef enum {
 } plot_range_mode_type;
 
 
+#define XMIN 0
+#define XMAX 1
+#define YMIN 2
+#define YMAX 3
 
 struct plot_range_struct {
-  double 	        xmin     , xmax     , ymin     , ymax;      /* The actual min and max values. */
-  bool                  xmin_set , xmax_set , ymin_set , ymax_set;  /* To ensure that all have been set to a valid value before use. */
+
+  double limits[4];
+  double soft_limits[4];
+  bool   set[4];
+  bool   set_soft[4];
+  
   plot_range_mode_type  range_mode;
 };
 
 
 
-static void plot_range_set_xmin__(plot_range_type * plot_range , double xmin) {
-  plot_range->xmin     = xmin;
-  plot_range->xmin_set = true;
-}
 
-static void plot_range_set_xmax__(plot_range_type * plot_range , double xmax) {
-  plot_range->xmax     = xmax;
-  plot_range->xmax_set = true;
-}
-
-static void plot_range_set_ymin__(plot_range_type * plot_range , double ymin) {
-  plot_range->ymin     = ymin;
-  plot_range->ymin_set = true;
-}
-
-static void plot_range_set_ymax__(plot_range_type * plot_range , double ymax) {
-  plot_range->ymax     = ymax;
-  plot_range->ymax_set = true;
+static void plot_range_set__(plot_range_type * plot_range , int index , double value) {
+  plot_range->limits[index] = value;
+  plot_range->set[index] = true;
 }
 
 /*****************************************************************/
 
 void plot_range_set_ymax(plot_range_type * plot_range , double ymax) {
-  plot_range_set_ymax__(plot_range , ymax);
+  plot_range_set__(plot_range , YMAX , ymax);
 }
 
 void plot_range_set_ymin(plot_range_type * plot_range , double ymin) {
-  plot_range_set_ymin__(plot_range , ymin);
+  plot_range_set__(plot_range , YMIN , ymin);
 }
 
 void plot_range_set_xmax(plot_range_type * plot_range , double xmax) {
-  plot_range_set_xmax__(plot_range , xmax);
+  plot_range_set__(plot_range , XMAX , xmax);
 }
 
 void plot_range_set_xmin(plot_range_type * plot_range , double xmin) {
-  plot_range_set_xmin__(plot_range , xmin);
+  plot_range_set__(plot_range , XMIN , xmin);
+}
+
+/*****************************************************************/
+
+static void plot_range_set_soft__(plot_range_type * plot_range , int index , double value , bool lower_limit) {
+  if (!plot_range->set_soft[index]) {
+    plot_range->set_soft[index] = true;
+    plot_range->soft_limits[index] = value;
+  } else {
+    if (lower_limit) {
+      if (value < plot_range->soft_limits[index])
+	plot_range->soft_limits[index] = value;
+    } else {
+      if (value > plot_range->soft_limits[index])
+	plot_range->soft_limits[index] = value;
+    }
+  }
+}
+
+
+void plot_range_set_soft_ymax(plot_range_type * plot_range , double ymax) {
+  plot_range_set_soft__(plot_range , YMAX , ymax , false);
+}
+
+void plot_range_set_soft_ymin(plot_range_type * plot_range , double ymin) {
+  plot_range_set_soft__(plot_range , YMIN , ymin , true);
+}
+
+void plot_range_set_soft_xmax(plot_range_type * plot_range , double xmax) {
+  plot_range_set_soft__(plot_range , XMAX , xmax , false);
+}
+
+void plot_range_set_soft_xmin(plot_range_type * plot_range , double xmin) {
+  plot_range_set_soft__(plot_range , XMIN , xmin , true);
 }
 
 
@@ -95,58 +123,52 @@ void plot_range_set_xmin(plot_range_type * plot_range , double xmin) {
    been set, either from an automatic set, or manually.
 */
 
-double plot_range_get_xmin(const plot_range_type * plot_range) {
-  if (plot_range->xmin_set)
-    return plot_range->xmin;
+static double plot_range_safe_get__(const plot_range_type * plot_range , int index) {
+  return plot_range->limits[index];
+}
+
+static double plot_range_get__(const plot_range_type * plot_range , int index) {
+  if (plot_range->set[index])
+    return plot_range_safe_get__(plot_range , index);
   else {
     util_abort("%s: tried to get xmin - but that has not been set.\n",__func__);
     return 0;
   }
 }
 
+
+double plot_range_get_xmin(const plot_range_type * plot_range) {
+  return plot_range_get__(plot_range , XMIN);
+}
+
 double plot_range_get_xmax(const plot_range_type * plot_range) {
-  if (plot_range->xmax_set)
-    return plot_range->xmax;
-  else {
-    util_abort("%s: tried to get xmax - but that has not been set.\n",__func__);
-    return 0;
-  }
+  return plot_range_get__(plot_range , XMAX);
 }
 
 double plot_range_get_ymin(const plot_range_type * plot_range) {
-  if (plot_range->ymin_set)
-    return plot_range->ymin;
-  else {
-    util_abort("%s: tried to get ymin - but that has not been set.\n",__func__);
-    return 0;
-  }
+  return plot_range_get__(plot_range , YMIN);
 }
 
 double plot_range_get_ymax(const plot_range_type * plot_range) {
-  if (plot_range->ymax_set)
-    return plot_range->ymax;
-  else {
-    util_abort("%s: tried to get ymax - but that has not been set.\n",__func__);
-    return 0;
-  }
+  return plot_range_get__(plot_range , YMAX);
 }
 
 /*****************************************************************/
 
 double plot_range_safe_get_xmin(const plot_range_type * plot_range) {
-  return plot_range->xmin;
+  return plot_range_safe_get__(plot_range , XMIN);
 }
 
 double plot_range_safe_get_xmax(const plot_range_type * plot_range) {
-  return plot_range->xmax;
+  return plot_range_safe_get__(plot_range , XMAX);
 }
 
 double plot_range_safe_get_ymin(const plot_range_type * plot_range) {
-  return plot_range->ymin;
+  return plot_range_safe_get__(plot_range , YMIN);
 }
 
 double plot_range_safe_get_ymax(const plot_range_type * plot_range) {
-  return plot_range->ymax;
+  return plot_range_safe_get__(plot_range , YMAX);
 }
 
 
@@ -162,18 +184,16 @@ double plot_range_safe_get_ymax(const plot_range_type * plot_range) {
 
 plot_range_type * plot_range_alloc() {
   plot_range_type * range = util_malloc(sizeof * range , __func__);
-
+  int i;
   range->range_mode = auto_range;
-  range->xmin       = 0;
-  range->xmax       = 0;
-  range->ymin       = 0;
-  range->ymax       = 0;
 
-  range->xmin_set   = false;
-  range->xmax_set   = false;
-  range->ymin_set   = false;
-  range->ymax_set   = false;
-
+  for (i=0; i < 4; i++) {
+    range->limits[i]      = 0;
+    range->soft_limits[i] = 0;
+    range->set[i]         = false;
+    range->set_soft[i]    = false;
+  }
+  
   return range;
 }
 
@@ -184,47 +204,24 @@ void plot_range_free(plot_range_type * plot_range) {
 }
 
 
-/**
-   This function sets the final range on the output device. Currently
-   only PLPLOT.
-*/
-
-/* 
-
-Dette skal vaere 'motsatt' - det skal vare:
-
-   plot_driver_set_range(driver , plot_range);
-   
-Altsaa driver som skal vaere i forersetet.
-*/
-
-
-//void plot_range_apply(plot_range_type * plot_range , arg_pack_type * plot_data) {
-//  if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) {
-//    int stream = arg_pack_iget_int(plot_data , 0);
-//    plsstrm(stream);
-//    plvsta();  /* Sets up a standard viewport with padding ++ */
-//    plwind(plot_range->xmin, plot_range->xmax, plot_range->ymin, plot_range->ymax);
-//
-//    plcol0(BLACK);
-//    plschr(0, LABEL_FONTSIZE);
-//    plbox("bcnst", 0.0 , 0 , "bcnstv" , 0.0 , 0);
-//  } else
-//    util_abort("%s: internal error - not all range values have been set: (%d,%d,%d,%d) \n",
-//	       plot_range->xmin_set,
-//	       plot_range->xmax_set,
-//	       plot_range->ymin_set,
-//	       plot_range->ymax_set);
-//}
+static double plot_range_combined_get__(const plot_range_type * plot_range , int index , bool lower_limit) {
+  
+  if (plot_range->set_soft[index]) {
+    if (lower_limit)
+      return util_double_min(plot_range_get__(plot_range , index) , plot_range->soft_limits[index]);
+    else
+      return util_double_max(plot_range_get__(plot_range , index) , plot_range->soft_limits[index]);
+  } else
+    return plot_range_get__(plot_range , index);
+  
+}
 
 
 void plot_range_apply(plot_range_type * plot_range) {
-  if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) 
-    plwind(plot_range->xmin, plot_range->xmax, plot_range->ymin, plot_range->ymax);
-  else
-    util_abort("%s: internal error - not all range values have been set: (%d,%d,%d,%d) \n",
-	       plot_range->xmin_set,
-	       plot_range->xmax_set,
-	       plot_range->ymin_set,
-	       plot_range->ymax_set);
+  double xmin = plot_range_combined_get__(plot_range , XMIN , true);
+  double xmax = plot_range_combined_get__(plot_range , XMAX , false);
+  double ymin = plot_range_combined_get__(plot_range , YMIN , true);
+  double ymax = plot_range_combined_get__(plot_range , YMAX , false);
+  
+  plwind(xmin , xmax , ymin , ymax);
 }

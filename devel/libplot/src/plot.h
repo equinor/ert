@@ -50,6 +50,10 @@ extern "C" {
 typedef struct plot_struct plot_type;
 
 
+void plot_set_soft_xmin(plot_type * , double );
+void plot_set_soft_xmax(plot_type * , double );
+void plot_set_soft_ymin(plot_type * , double );
+void plot_set_soft_ymax(plot_type * , double );
 
 plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool);
  plot_type *plot_alloc();
