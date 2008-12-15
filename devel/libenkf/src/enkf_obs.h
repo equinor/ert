@@ -48,6 +48,8 @@ stringlist_type * enkf_obs_alloc_summary_vars(
         enkf_obs_type * enkf_obs);
 
 
+hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs);
+
 const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );
 
 #ifdef __cplusplus

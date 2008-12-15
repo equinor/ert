@@ -218,6 +218,13 @@ void ensemble_config_ensure_summary(ensemble_config_type * ensemble_config , con
 
 
 
+void ensemble_config_add_obs_key(ensemble_config_type * ensemble_config , const char * key, const char * obs_key) {
+  enkf_config_node_type * config_node = hash_get(ensemble_config->config_nodes , key);
+  enkf_config_node_add_obs_key(config_node , obs_key);
+}
+
+
+
 void ensemble_config_add_config_items(config_type * config) {
   config_item_type * item;
 

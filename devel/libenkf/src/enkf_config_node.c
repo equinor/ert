@@ -2,10 +2,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stringlist.h>
 #include <enkf_macros.h>
 #include <enkf_config_node.h> 
 #include <util.h>
-#include <set.h>
+
 
 struct enkf_config_node_struct {
   config_free_ftype     * freef;
@@ -13,6 +14,7 @@ struct enkf_config_node_struct {
   enkf_impl_type     	  impl_type;
   enkf_var_type      	  var_type; 
 
+  stringlist_type       * obs_keys;       /* Keys of observations which observe this node. */
   char               	* key;
   char               	* enkf_infile;    /* Name of file which is written by forward model, and read by EnKF (not in use yet).*/
   char 		     	* enkf_outfile;   /* Name of file which is written by EnKF, and read by the forward model. */
@@ -40,6 +42,7 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   node->key        	= util_alloc_string_copy(key);
   node->enkf_outfile    = util_alloc_string_copy(enkf_outfile);
   node->enkf_infile     = util_alloc_string_copy(enkf_infile);
+  node->obs_keys        = stringlist_alloc_new(); 
   return node;
 }
 
@@ -49,6 +52,7 @@ void enkf_config_node_free(enkf_config_node_type * node) {
   util_safe_free(node->enkf_outfile);
   util_safe_free(node->enkf_infile);
   free(node->key);
+  stringlist_free(node->obs_keys);
   free(node);
 }
 
@@ -95,5 +99,17 @@ enkf_var_type enkf_config_node_get_var_type(const enkf_config_node_type *config_
 const char * enkf_config_node_get_outfile_ref(const enkf_config_node_type * config_node) { return config_node->enkf_outfile; }
 const char * enkf_config_node_get_key_ref(const enkf_config_node_type * config_node) { return config_node->key; }
 
+
+const stringlist_type  * enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
+  return config_node->obs_keys;
+}
+
+
+void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const char * obs_key) {
+  if (!stringlist_contains(config_node->obs_keys , obs_key))
+    stringlist_append_copy(config_node->obs_keys , obs_key);
+}
+
+/*****************************************************************/
 
 VOID_FREE(enkf_config_node)

@@ -78,7 +78,7 @@ static bool enkf_obs_has_key(const enkf_obs_type * obs , const char * key) {
   return hash_has_key(obs->obs_hash , key);
 }
 
-static obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * key) {
+const obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * key) {
   return hash_get(obs->obs_hash , key);
 }
 
@@ -425,8 +425,8 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
 
 
 /**
-   Allocates a stringlist of obs keys which correspond to summary
-   observations, these are then added to the state vector in
+   Allocates a stringlist of obs target keys which correspond to
+   summary observations, these are then added to the state vector in
    enkf_main.
 */
 stringlist_type * enkf_obs_alloc_summary_vars(
@@ -441,6 +441,48 @@ stringlist_type * enkf_obs_alloc_summary_vars(
     key = hash_iter_get_next_key( enkf_obs->obs_hash );
   }
   return summary_vars;
+}
+
+
+
+/**
+   This function allocates a hash table which looks like this:
+
+     {"OBS_KEY1": "STATE_KEY1", "OBS_KEY2": "STATE_KEY2", "OBS_KEY3": "STATE_KEY3", ....}
+
+   where "OBS_KEY" represents the keys in the enkf_obs hash, and the
+   value they are pointing at are the enkf_state keywords they are
+   measuring. For instance if we have an observation with key "RFT_1A"
+   the entry in the table will be:  ... "RFT_1A":  "PRESSURE", ..
+   since an RFT observation observes the pressure. 
+
+   Let us consider the atercut in a well. Then the state_kw will
+   typically be WWCT:P1 for a well named 'P1'. Let us assume that this
+   well is observed both as a normal HISTORY observation from
+   SCHEDULE, and from two separator tests, called S1 and S2. Then the
+   hash table will look like this:
+
+       "WWCT:P1": "WWCT:P1", 
+       "S1"     : "WWCT:P1",
+       "S2"     : "WWCT:P1"
+
+ 
+   I.e. there are three different observations keys, all observing the
+   same state_kw.
+*/
+
+   
+   
+hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
+{
+  hash_type * map = hash_alloc();
+  const char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
+  while ( key != NULL) {
+    obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
+    hash_insert_ref( map , key , obs_vector_get_state_kw(obs_vector));
+    key = hash_iter_get_next_key( enkf_obs->obs_hash );
+  }
+  return map;
 }
 
 

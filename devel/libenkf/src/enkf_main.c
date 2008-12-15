@@ -840,12 +840,25 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	enkf_main->obs_data        = obs_data_alloc();
 	{
 	  stringlist_type * summary_vars = enkf_obs_alloc_summary_vars(enkf_main->obs);
-	  for (i=0; i < stringlist_get_size( summary_vars ); i++)
+	  for (i=0; i < stringlist_get_size( summary_vars ); i++) 
 	    ensemble_config_ensure_summary( enkf_main->ensemble_config , stringlist_iget( summary_vars , i));
-	  
 	  stringlist_free( summary_vars );
 	}
       }
+
+      /******************************************************************/
+      /* Adding inverse observation keys. */
+      {
+	hash_type * map = enkf_obs_alloc_summary_map(enkf_main->obs);
+	const char * obs_key = hash_iter_get_first_key(map);
+	while (obs_key  != NULL) {
+	  const char * state_kw = hash_get(map , obs_key);
+	  ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
+	  obs_key = hash_iter_get_next_key( map );
+	}
+	hash_free(map);
+      }
+      
       
       /*****************************************************************/
       /* Adding ensemble members */

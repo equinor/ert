@@ -50,10 +50,12 @@ static void __plot_show(plot_type * plot , const char * viewer , const char * fi
 
 void enkf_ui_plot_ensemble(void * arg) {
   enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   {
+    const bool add_observations = true;
     const int prompt_len = 40;
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
     const enkf_config_node_type * config_node;
@@ -128,6 +130,34 @@ void enkf_ui_plot_ensemble(void * arg) {
 	}
 	__plot_add_data(plot , this_size , x , y );
       }
+
+      if (add_observations) {
+	if (enkf_config_node_get_impl_type(config_node) == SUMMARY) {/* Adding observations only implemented for summary. */
+	  const stringlist_type * obs_keys = enkf_config_node_get_obs_keys(config_node);
+	  int i;
+	  for (i=0; i < stringlist_get_size( obs_keys ); i++) {
+	    const char * obs_key = stringlist_iget(obs_keys , i);
+	    plot_dataset_type * obs_data = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
+	    obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
+	    double  value , std;
+	    int report_step = -1;
+	    plot_dataset_set_line_color( obs_data , RED);
+	    do {
+	      report_step = obs_vector_get_next_active_step( obs_vector , report_step);
+	      if (report_step != -1) {
+		if (report_step >= step1 && report_step <= step2) {
+		  bool valid;
+		  obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
+		  if (valid)
+		    plot_dataset_append_point_xy1y2( obs_data , report_step , value - std , value + std);
+		}
+	      }
+	    } while (report_step != -1);
+	  }
+	}
+      }
+
+
       msg_free(msg , true);
       printf("Plot saved in: %s \n",plot_file);
       __plot_show(plot , viewer , plot_file);
@@ -164,7 +194,8 @@ void enkf_ui_plot_observation(void * arg) {
       int   num_active                    = obs_vector_get_num_active( obs_vector );
       plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , plot_yline , false);
       plot_dataset_type * obs_quant       = plot_alloc_new_dataset(plot , plot_yline , false);
-      plot_dataset_type * data            = plot_alloc_new_dataset(plot , plot_xy    , false);
+      plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , plot_xy    , false);
+      plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , plot_xy    , false);
       int   report_step;
       
       do {
@@ -198,19 +229,30 @@ void enkf_ui_plot_observation(void * arg) {
 	plot_dataset_set_line_width(obs_value , 2.5);
 	plot_dataset_set_line_style(obs_quant , long_dash);
 
-	plot_dataset_set_style( data , POINT);
-	plot_dataset_set_point_color( data , RED );
-
+	plot_dataset_set_style( forecast_data , POINT);
+	plot_dataset_set_style( analyzed_data , POINT);
+	plot_dataset_set_point_color( forecast_data , BLUE );
+	plot_dataset_set_point_color( analyzed_data , RED  );
+	
 	msg_show(msg);
 	for (iens = iens1; iens <= iens2; iens++) {
 	  sprintf(cens , "%03d" , iens);
 	  msg_update(msg , cens);
+
 	  if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
 	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , analyzed);
 	    y = enkf_node_user_get( enkf_node , index_key , &valid);
 	    if (valid) 
-	      plot_dataset_append_point_xy( data , iens , y);
+	      plot_dataset_append_point_xy( analyzed_data , iens , y);
 	  }
+
+	  if (enkf_fs_has_node(fs , config_node , report_step , iens , forecast)) {
+	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , forecast);
+	    y = enkf_node_user_get( enkf_node , index_key , &valid);
+	    if (valid) 
+	      plot_dataset_append_point_xy( forecast_data , iens , y);
+	  }
+	  
 	}
 	msg_free(msg , true);
 	printf("\n");

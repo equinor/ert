@@ -3,6 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stringlist.h>
 #include <enkf_types.h>
 #include <enkf_macros.h>
 
@@ -20,16 +21,17 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       config_free_ftype   * , 
 					       config_activate_ftype *);
 
-
-void 		  enkf_config_node_free(enkf_config_node_type * );
-bool              enkf_config_node_include_type(const enkf_config_node_type * , int );
-int  		  enkf_config_node_get_serial_size(enkf_config_node_type *, int *);
-bool 		  enkf_config_node_include_type(const enkf_config_node_type * , int);
-enkf_impl_type    enkf_config_node_get_impl_type(const enkf_config_node_type *);
-enkf_var_type     enkf_config_node_get_var_type(const enkf_config_node_type *);
-      void     *  enkf_config_node_get_ref(const enkf_config_node_type * );
-const char     *  enkf_config_node_get_key_ref(const enkf_config_node_type * );
-const char     *  enkf_config_node_get_outfile_ref(const enkf_config_node_type * );
+const stringlist_type * enkf_config_node_get_obs_keys(const enkf_config_node_type *);
+void              	enkf_config_node_add_obs_key(enkf_config_node_type *  , const char * );
+void 		  	enkf_config_node_free(enkf_config_node_type * );
+bool              	enkf_config_node_include_type(const enkf_config_node_type * , int );
+int  		  	enkf_config_node_get_serial_size(enkf_config_node_type *, int *);
+bool 		  	enkf_config_node_include_type(const enkf_config_node_type * , int);
+enkf_impl_type    	enkf_config_node_get_impl_type(const enkf_config_node_type *);
+enkf_var_type     	enkf_config_node_get_var_type(const enkf_config_node_type *);
+      void     *  	enkf_config_node_get_ref(const enkf_config_node_type * );
+const char     *  	enkf_config_node_get_key_ref(const enkf_config_node_type * );
+const char     *  	enkf_config_node_get_outfile_ref(const enkf_config_node_type * );
 
 
 VOID_FREE_HEADER(enkf_config_node);
