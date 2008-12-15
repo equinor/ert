@@ -219,10 +219,9 @@ Altsaa driver som skal vaere i forersetet.
 
 
 void plot_range_apply(plot_range_type * plot_range) {
-  if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) {
-    plvsta();
+  if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) 
     plwind(plot_range->xmin, plot_range->xmax, plot_range->ymin, plot_range->ymax);
-  } else
+  else
     util_abort("%s: internal error - not all range values have been set: (%d,%d,%d,%d) \n",
 	       plot_range->xmin_set,
 	       plot_range->xmax_set,

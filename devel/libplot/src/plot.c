@@ -210,17 +210,7 @@ static void plot_set_range__(plot_type * plot) {
   if (plot->__use_autorange)
     plot_get_extrema(plot , plot->range);
   
-  
-  plsstrm(plot->stream);
   plot_range_apply(plot->range);
-
-  plcol0(BLACK);
-  plschr(0, LABEL_FONTSIZE);
-  plbox("bcnst", 0.0 , 0 , "bcnstv" , 0.0 , 0);
-
-  plschr(0, LABEL_FONTSIZE);
-  plcol0(plot->label_color);
-  pllab(plot->xlabel, plot->ylabel, plot->title);
 }
 
 
@@ -234,138 +224,31 @@ static void plot_set_range__(plot_type * plot) {
 void plot_data(plot_type * plot)
 {
   int iplot;
+  plsstrm(plot->stream);
   
-  plot_set_range__(plot);
-  printf("Range OK \n");
-  plot_set_viewport(plot);
-  printf("View OK \n");
-  
-  
-  for (iplot = 0; iplot < plot->size; iplot++) {
-    printf("Plotter:%d \n",iplot);
-    plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
+  pladv(0);
+
+
+
+  plvsta();
+  plot_set_range__(plot);  // plwind
+  plcol0(BLACK);
+  plschr(0, LABEL_FONTSIZE);
+  plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+
+  if (!plot->xlabel || !plot->ylabel || !plot->title) 
+    fprintf(stderr, "ERROR ID[%d]: you need to set lables before setting the viewport!\n",plot->stream);
+  else {
+    plschr(0, LABEL_FONTSIZE);
+    plcol0(plot->label_color);
+    pllab(plot->xlabel, plot->ylabel, plot->title);
   }
+  
+  for (iplot = 0; iplot < plot->size; iplot++) 
+    plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
+  
+  
 }
-
-
-//void plot_errorbar_data(plot_type * plot)
-//{
-//    list_node_type *node, *next_node;
-//    PLFLT *ymin = NULL;
-//    PLFLT *ymax = NULL;
-//    int tmp_len = 0;
-//    int i;
-//    plot_dataset_type *ref = NULL;
-//
-//    assert(plot != NULL);
-//    plsstrm(plot->stream);
-//    ref = plot_dataset_get_prominent(plot, &tmp_len);
-//
-//    for (i = 0; i <= tmp_len; i++) {
-//	PLFLT max = 0;
-//	PLFLT min = 0;
-//	bool flag = false;
-//
-//	node = list_get_head(plot->datasets);
-//	while (node != NULL) {
-//	    plot_dataset_type *tmp;
-//	    PLFLT *y;
-//
-//	    next_node = list_node_get_next(node);
-//	    tmp = list_node_value_ptr(node);
-//	    y = plot_dataset_get_vector_y(tmp);
-//	    if (!flag) {
-//		max = y[i];
-//		min = y[i];
-//		flag = true;
-//	    }
-//	    if (y[i] > max)
-//		max = y[i];
-//	    if (y[i] < min)
-//		min = y[i];
-//	    node = next_node;
-//	}
-//
-//	assert(i >= 0);
-//	ymin = realloc(ymin, sizeof(PLFLT) * (i + 1));
-//	ymax = realloc(ymax, sizeof(PLFLT) * (i + 1));
-//	ymin[i] = min;
-//	ymax[i] = max;
-//    }
-//
-//    assert(tmp_len > 0);
-//    assert(ymax != NULL && ymax != NULL);
-//    plerry(tmp_len, plot_dataset_get_vector_x(ref), ymin, ymax);
-//    util_safe_free(ymin);
-//    util_safe_free(ymax);
-//}
-//
-//
-///*void plot_std_data(plot_type * plot, bool mean)
-//{
-//    list_node_type *node, *next_node;
-//    int tmp_len = 0;
-//    int i;
-//    plot_dataset_type *ref = NULL;
-//    PLFLT *ymin = NULL;
-//    PLFLT *ymax = NULL;
-//    PLFLT *vec_mean = NULL;
-//
-//    assert(plot != NULL);
-//    plsstrm(plot->stream);
-//    ref = plot_dataset_get_prominent(plot, &tmp_len);
-//
-//    for (i = 0; i <= tmp_len; i++) {
-//	int j = -1;
-//	PLFLT *vec = 0;
-//	PLFLT rms;
-//	PLFLT vec_sum = 0;
-//
-//	node = list_get_head(plot->datasets);
-//	while (node != NULL) {
-//	    plot_dataset_type *tmp;
-//	    PLFLT *y;
-//
-//	    next_node = list_node_get_next(node);
-//	    tmp = list_node_value_ptr(node);
-//	    y = plot_dataset_get_vector_y(tmp);
-//	    j++;
-//	    vec = realloc(vec, sizeof(PLFLT) * (j + 1));
-//	    vec[j] = y[i];
-//	    vec_sum += vec[j];
-//
-//	    node = next_node;
-//	}
-//	rms = plot_util_calc_rms(vec, j);
-//	assert(i >= 0);
-//	ymin = realloc(ymin, sizeof(PLFLT) * (i + 1));
-//	ymax = realloc(ymax, sizeof(PLFLT) * (i + 1));
-//	if (mean) {
-//	    vec_mean = realloc(vec_mean, sizeof(PLFLT) * (i + 1));
-//	    vec_mean[i] = vec_sum / (PLFLT) (j + 1);
-//	}
-//	ymin[i] = (vec_sum / (PLFLT) (j + 1)) - rms;
-//	ymax[i] = (vec_sum / (PLFLT) (j + 1)) + rms;;
-//	util_safe_free(vec);
-//    }
-//
-//    assert(tmp_len > 0);
-//    assert(ymax != NULL && ymax != NULL);
-//    plerry(tmp_len, plot_dataset_get_vector_x(ref), ymin, ymax);
-//    if (mean) {
-//	plot_dataset_type *d;
-//
-//	d = plot_dataset_alloc( false );
-//	plot_dataset_set_data(d, plot_dataset_get_vector_x(ref), vec_mean,
-//			      tmp_len, RED, LINE);
-//	plot_dataset(plot, d);
-//	plot_dataset_free(d);
-//	util_safe_free(vec_mean);
-//    }
-//    util_safe_free(ymin);
-//    util_safe_free(ymax);
-//}
-//*/
 
 
 /**
@@ -382,9 +265,9 @@ void
 plot_set_labels(plot_type * plot, const char *xlabel, const char *ylabel,
 		const char *title, plot_color_type color)
 {
-  plot->xlabel = xlabel;
-  plot->ylabel = ylabel;
-  plot->title = title;
+  plot->xlabel 	    = util_alloc_string_copy(xlabel);
+  plot->ylabel 	    = util_alloc_string_copy(ylabel);
+  plot->title  	    = util_alloc_string_copy(title);
   plot->label_color = color;
 }
 
@@ -405,33 +288,6 @@ void plot_set_manual_range(plot_type * plot , double xmin , double xmax , double
 }
 
 
-/**
- * @brief Setup viewport
- * @param plot your current plot
- * @param xmin minimum value for the x-axis
- * @param xmax maximum value for the x-axis
- * @param ymin minimum value for the y-axis
- * @param ymax maximum value for the y-axis
- * 
- * Sets up your viewport, defining and the axis, setting up fonts and colors.
- */
-void plot_set_viewport(plot_type * plot) {
-  plsstrm(plot->stream);
-  pladv(0);
-  plcol0(BLACK);
-  plschr(0, LABEL_FONTSIZE);
-  //plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
-  
-  if (!plot->xlabel || !plot->ylabel || !plot->title) {
-    fprintf(stderr,
-	    "ERROR ID[%d]: you need to set lables before setting the viewport!\n",
-	    plot->stream);
-  } else {
-    plschr(0, LABEL_FONTSIZE);
-    plcol0(plot->label_color);
-    //pllab(plot->xlabel, plot->ylabel, plot->title);
-  }
-}
 
 
 

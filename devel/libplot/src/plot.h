@@ -60,7 +60,6 @@ plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool)
  void plot_set_labels(plot_type * item, const char *xlabel,
 			    const char *ylabel, const char *title,
 			    plot_color_type color);
- void plot_set_viewport(plot_type * item);
  void plot_errorbar_data(plot_type * item);
  void plot_std_data(plot_type * item, bool mean);
  void plot_data(plot_type * item);

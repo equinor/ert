@@ -28,6 +28,8 @@ void plot_range_set_ymax(plot_range_type *  , double);
 void plot_range_set_xmin(plot_range_type *  , double);
 void plot_range_set_ymin(plot_range_type *  , double);
 
+void plot_range_apply(plot_range_type * );
+
 #ifdef __cplusplus
 }
 #endif

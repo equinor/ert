@@ -77,6 +77,7 @@ void plot_dataset_set_data(plot_dataset_type * d, const double * x,
 				  const double * y, int len,
 				  plot_color_type c, plot_style_type s);
 
+void     plot_dataset_update_range(plot_dataset_type * d, bool first_pass , plot_range_type *);
 void     plot_dataset_draw(int , plot_dataset_type *  , const plot_range_type * );
 double * plot_dataset_get_vector_x(const plot_dataset_type * d);
 double * plot_dataset_get_vector_y(const plot_dataset_type * d);
