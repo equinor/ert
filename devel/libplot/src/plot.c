@@ -48,7 +48,6 @@ struct plot_struct {
   
   int 	 height;		/**< The height of your plot window */
   int 	 width;         	/**< The width of your plot window */
-  double xmin,xmax,ymin,ymax;   /**< Ranges for plot. */ 
   bool   __use_autorange;       
   plot_range_type * range;      /**< Range instance (not in use yet). */
 };
@@ -209,13 +208,12 @@ void plot_free(plot_type * plot)
 
 static void plot_set_range__(plot_type * plot) {
   if (plot->__use_autorange)
-    plot_get_extrema(plot , &plot->xmin , &plot->xmax , &plot->ymin , &plot->ymax);
+    plot_get_extrema(plot , plot->range);
   
   
   plsstrm(plot->stream);
-  
-  plvsta();
-  plwind(plot->xmin, plot->xmax, plot->ymin, plot->ymax);
+  plot_range_apply(plot->range);
+
   plcol0(BLACK);
   plschr(0, LABEL_FONTSIZE);
   plbox("bcnst", 0.0 , 0 , "bcnstv" , 0.0 , 0);
@@ -236,10 +234,17 @@ static void plot_set_range__(plot_type * plot) {
 void plot_data(plot_type * plot)
 {
   int iplot;
-
+  
   plot_set_range__(plot);
-  for (iplot = 0; iplot < plot->size; iplot++) 
+  printf("Range OK \n");
+  plot_set_viewport(plot);
+  printf("View OK \n");
+  
+  
+  for (iplot = 0; iplot < plot->size; iplot++) {
+    printf("Plotter:%d \n",iplot);
     plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
+  }
 }
 
 
@@ -393,10 +398,10 @@ plot_set_labels(plot_type * plot, const char *xlabel, const char *ylabel,
 
 void plot_set_manual_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax) {
   plot->__use_autorange = false;
-  plot->xmin = xmin;
-  plot->xmax = xmax;
-  plot->ymin = ymin;
-  plot->ymax = ymax;
+  plot_range_set_xmin(plot->range , xmin);
+  plot_range_set_xmax(plot->range , xmax);
+  plot_range_set_ymin(plot->range , ymin);
+  plot_range_set_ymax(plot->range , ymax);
 }
 
 
@@ -441,11 +446,11 @@ void plot_set_viewport(plot_type * plot) {
  * Find the extrema values in the plot plot, checks all added datasets.
  */
 
-void plot_get_extrema(plot_type * plot, double *x_min, double *x_max,double *y_min, double *y_max) {
+void plot_get_extrema(plot_type * plot, plot_range_type * range) {
   bool first_pass = true;
   int iplot;
   for (iplot = 0; iplot < plot->size; iplot++) {
-    plot_dataset_update_range(plot->datasets[iplot] , first_pass , x_min , x_max , y_min , y_max);
+    plot_dataset_update_range(plot->datasets[iplot] , first_pass , range);
     first_pass = false;
   }
 }

@@ -399,12 +399,12 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
  * 
  * Find the extrema values in the plot item, checks all added dataset.
  */
-void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , double *x_min, double *x_max,double *y_min, double *y_max)
-{
-  double tmp_x_max = *x_max;
-  double tmp_y_max = *y_max;
-  double tmp_x_min = *x_min;
-  double tmp_y_min = *y_min;
+void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , plot_range_type * range) {
+  double tmp_x_max = plot_range_safe_get_xmax(range);
+  double tmp_y_max = plot_range_safe_get_ymax(range);
+  double tmp_x_min = plot_range_safe_get_xmin(range);
+  double tmp_y_min = plot_range_safe_get_ymin(range);
+
   int i;
   double *x1 , *x2, *y1 , *y2;
 
@@ -452,11 +452,11 @@ void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , double *
     }
   }
 
-  
-  *x_max = tmp_x_max;
-  *y_max = tmp_y_max;
-  *x_min = tmp_x_min;
-  *y_min = tmp_y_min;
+
+  plot_range_set_xmax(range , tmp_x_max);
+  plot_range_set_ymax(range , tmp_y_max);
+  plot_range_set_xmin(range , tmp_x_min);
+  plot_range_set_ymin(range , tmp_y_min);
 }
 
 

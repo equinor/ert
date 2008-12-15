@@ -69,6 +69,7 @@ int plot_dataset_step_next(plot_dataset_type * d);
 void plot_dataset_finished(plot_dataset_type * d, bool flag);
 bool plot_dataset_is_finished(plot_dataset_type * d);
 
+void plot_dataset_update_range(plot_dataset_type * , bool  , plot_range_type * );
 
 plot_dataset_type *plot_dataset_alloc( plot_data_type , bool );
 void plot_dataset_free(plot_dataset_type * d);
@@ -105,6 +106,7 @@ void plot_dataset_set_shared_xline(plot_dataset_type * , int ,  double * );
 void plot_dataset_append_point_yline(plot_dataset_type * , double   );
 void plot_dataset_append_vector_yline(plot_dataset_type * , int , const double * );
 void plot_dataset_set_shared_yline(plot_dataset_type * , int ,  double * );
+
 
 
 #ifdef __cplusplus

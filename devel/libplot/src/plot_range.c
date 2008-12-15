@@ -71,6 +71,25 @@ static void plot_range_set_ymax__(plot_range_type * plot_range , double ymax) {
 }
 
 /*****************************************************************/
+
+void plot_range_set_ymax(plot_range_type * plot_range , double ymax) {
+  plot_range_set_ymax__(plot_range , ymax);
+}
+
+void plot_range_set_ymin(plot_range_type * plot_range , double ymin) {
+  plot_range_set_ymin__(plot_range , ymin);
+}
+
+void plot_range_set_xmax(plot_range_type * plot_range , double xmax) {
+  plot_range_set_xmax__(plot_range , xmax);
+}
+
+void plot_range_set_xmin(plot_range_type * plot_range , double xmin) {
+  plot_range_set_xmin__(plot_range , xmin);
+}
+
+
+/*****************************************************************/
 /* 
    These function will fail if the corresponding value has not
    been set, either from an automatic set, or manually.
@@ -111,6 +130,26 @@ double plot_range_get_ymax(const plot_range_type * plot_range) {
     return 0;
   }
 }
+
+/*****************************************************************/
+
+double plot_range_safe_get_xmin(const plot_range_type * plot_range) {
+  return plot_range->xmin;
+}
+
+double plot_range_safe_get_xmax(const plot_range_type * plot_range) {
+  return plot_range->xmax;
+}
+
+double plot_range_safe_get_ymin(const plot_range_type * plot_range) {
+  return plot_range->ymin;
+}
+
+double plot_range_safe_get_ymax(const plot_range_type * plot_range) {
+  return plot_range->ymax;
+}
+
+
 
 /*****************************************************************/
 
@@ -160,16 +199,29 @@ Altsaa driver som skal vaere i forersetet.
 */
 
 
-void plot_range_apply(plot_range_type * plot_range , arg_pack_type * plot_data) {
-  if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) {
-    int stream = arg_pack_iget_int(plot_data , 0);
-    plsstrm(stream);
-    plvsta();  /* Sets up a standard viewport with padding ++ */
-    plwind(plot_range->xmin, plot_range->xmax, plot_range->ymin, plot_range->ymax);
+//void plot_range_apply(plot_range_type * plot_range , arg_pack_type * plot_data) {
+//  if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) {
+//    int stream = arg_pack_iget_int(plot_data , 0);
+//    plsstrm(stream);
+//    plvsta();  /* Sets up a standard viewport with padding ++ */
+//    plwind(plot_range->xmin, plot_range->xmax, plot_range->ymin, plot_range->ymax);
+//
+//    plcol0(BLACK);
+//    plschr(0, LABEL_FONTSIZE);
+//    plbox("bcnst", 0.0 , 0 , "bcnstv" , 0.0 , 0);
+//  } else
+//    util_abort("%s: internal error - not all range values have been set: (%d,%d,%d,%d) \n",
+//	       plot_range->xmin_set,
+//	       plot_range->xmax_set,
+//	       plot_range->ymin_set,
+//	       plot_range->ymax_set);
+//}
 
-    plcol0(BLACK);
-    plschr(0, LABEL_FONTSIZE);
-    plbox("bcnst", 0.0 , 0 , "bcnstv" , 0.0 , 0);
+
+void plot_range_apply(plot_range_type * plot_range) {
+  if ((plot_range->xmin_set && plot_range->xmax_set) && (plot_range->ymin_set && plot_range->ymax_set)) {
+    plvsta();
+    plwind(plot_range->xmin, plot_range->xmax, plot_range->ymin, plot_range->ymax);
   } else
     util_abort("%s: internal error - not all range values have been set: (%d,%d,%d,%d) \n",
 	       plot_range->xmin_set,

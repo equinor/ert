@@ -65,8 +65,7 @@ plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool)
  void plot_std_data(plot_type * item, bool mean);
  void plot_data(plot_type * item);
  void plot_free(plot_type * item);
- void plot_get_extrema(plot_type * item, double *x_max,
-			     double *y_max, double *x_min, double *y_min);
+ void plot_get_extrema(plot_type * item, plot_range_type * );
 
 /**
  * @}
