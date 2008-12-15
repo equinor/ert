@@ -145,7 +145,7 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
   d->point_color = BLUE;
   d->symbol_type = 17;
   d->line_style  = solid_line;
-  d->symbol_size = 0.70;
+  d->symbol_size = 1.10;
   d->line_width  = 1.5; 
   return d;
 }
