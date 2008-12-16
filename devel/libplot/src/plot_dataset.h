@@ -87,7 +87,8 @@ double * plot_dataset_get_vector_x2(const plot_dataset_type * d);
 double * plot_dataset_get_vector_y2(const plot_dataset_type * d);
 
 /*****************************************************************/
-/* Functions for adding data to the dataset. */
+/* Functions for actually adding data to the dataset.            */
+
 void plot_dataset_append_point_xy(plot_dataset_type * , double  , double  );
 void plot_dataset_append_vector_xy(plot_dataset_type * , int , const double *  , const double * );
 void plot_dataset_set_shared_xy(plot_dataset_type * , int ,  double *  ,  double *    );
