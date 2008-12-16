@@ -28,12 +28,13 @@ void plot_range_set_ymax(plot_range_type *  , double);
 void plot_range_set_xmin(plot_range_type *  , double);
 void plot_range_set_ymin(plot_range_type *  , double);
 
-void plot_range_set_soft_xmax(plot_range_type *  , double);
-void plot_range_set_soft_ymax(plot_range_type *  , double);
-void plot_range_set_soft_xmin(plot_range_type *  , double);
-void plot_range_set_soft_ymin(plot_range_type *  , double);
+void plot_range_set_top_padding(plot_range_type    *  , double );
+void plot_range_set_bottom_padding(plot_range_type *  , double );
+void plot_range_set_left_padding(plot_range_type   *  , double );
+void plot_range_set_right_padding(plot_range_type  *  , double );
 
-
+void plot_range_invert_y_axis(plot_range_type * , bool );
+void plot_range_invert_x_axis(plot_range_type * , bool );
 
 void plot_range_apply(plot_range_type * );
 

@@ -286,22 +286,29 @@ void plot_set_manual_range(plot_type * plot , double xmin , double xmax , double
 }
 
 
-void plot_set_soft_xmin(plot_type * plot , double xmin) {
-  plot_range_set_soft_xmin(plot->range , xmin);
+void plot_set_left_padding(plot_type * plot , double value) {
+  plot_range_set_left_padding(plot->range, value);
 }
 
-void plot_set_soft_ymin(plot_type * plot , double ymin) {
-  plot_range_set_soft_ymin(plot->range , ymin);
+void plot_set_right_padding(plot_type * plot , double value) {
+  plot_range_set_right_padding(plot->range , value);
 }
 
-void plot_set_soft_xmax(plot_type * plot , double xmax) {
-  plot_range_set_soft_xmax(plot->range , xmax);
+void plot_set_top_padding(plot_type * plot , double value) {
+  plot_range_set_top_padding(plot->range , value);
 }
 
-void plot_set_soft_ymax(plot_type * plot , double ymax) {
-  plot_range_set_soft_ymax(plot->range , ymax);
+void plot_set_bottom_padding(plot_type * plot , double value) {
+  plot_range_set_bottom_padding(plot->range , value);
 }
 
+void plot_invert_x_axis(plot_type * plot) {
+  plot_range_invert_x_axis(plot->range , true);
+}
+
+void plot_invert_y_axis(plot_type * plot) {
+  plot_range_invert_y_axis(plot->range , true);
+}
 
 
 /**

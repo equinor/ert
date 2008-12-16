@@ -400,6 +400,8 @@ static float trunc_pow10f(float x) {
 
 
 
+
+
 /* This interface is just to general */
 #define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
 field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const char * ecl_file , const char * output_transform_name, 
@@ -822,6 +824,8 @@ void field_config_activate(field_config_type * config , active_mode_type active_
   }
 }
 
+
+const ecl_grid_type *field_config_get_grid(const field_config_type * config) { return config->grid; }
 
 
 /*****************************************************************/

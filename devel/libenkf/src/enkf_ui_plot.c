@@ -218,10 +218,10 @@ void enkf_ui_plot_observation(void * arg) {
 	char  cens[5];
 
 	obs_vector_user_get( obs_vector , index_key , report_step , &value , &std , &valid);
-	plot_set_soft_ymin( plot , value - 1.5*std);
-	plot_set_soft_ymax( plot , value + 1.5*std);
-	plot_set_soft_xmin( plot , iens1 - 0.5);
-	plot_set_soft_xmax( plot , iens2 + 0.5);
+	plot_set_bottom_padding( plot , 0.10);
+	plot_set_top_padding( plot , 0.10);
+	plot_set_left_padding( plot , 0.05);
+	plot_set_right_padding( plot , 0.05);
 			    
 	plot_dataset_append_point_yline(obs_value , value);
 	plot_dataset_append_point_yline(obs_quant , value - std);
@@ -331,6 +331,7 @@ void enkf_ui_plot_RFT(void * arg) {
 	const int * j 	     = field_obs_get_j(field_obs);
 	const int * k 	     = field_obs_get_k(field_obs);
 	const int   obs_size = field_obs_get_size(field_obs);
+	const ecl_grid_type * grid = field_config_get_grid( field_config );
 	double * depth       = util_malloc( obs_size * sizeof * depth , __func__);
 	double min_depth , max_depth;
 	
@@ -343,8 +344,11 @@ void enkf_ui_plot_RFT(void * arg) {
 	plot_dataset_type *  obs  = plot_alloc_new_dataset( plot , plot_x1x2y , false);
 	node = enkf_node_alloc( config_node );
 	
-	for (l = 0; l < obs_size; l++)
-	  depth[l] = l*1.0; /* Should ask the grid here */
+	for (l = 0; l < obs_size; l++) {
+	  double xpos, ypos,zpos;
+	  ecl_grid_get_pos(grid , i[l] , j[l] , k[l] , &xpos , &ypos , &zpos);
+	  depth[l] = zpos;
+	}
 	
 	max_depth = depth[0];
 	min_depth = depth[0];
@@ -375,6 +379,13 @@ void enkf_ui_plot_RFT(void * arg) {
 	  field_obs_iget(field_obs , l , &value , &std);
 	  plot_dataset_append_point_x1x2y( obs , value - std , value + std , depth[l]);
 	}
+
+	plot_set_bottom_padding( plot , 0.05);
+	plot_set_top_padding( plot , 0.05);
+	plot_set_left_padding( plot , 0.05);
+	plot_set_right_padding( plot , 0.05);
+	plot_invert_y_axis( plot );
+	
 	plot_dataset_set_line_color( obs , RED );
 	free(depth);
 	msg_free(msg , true);
