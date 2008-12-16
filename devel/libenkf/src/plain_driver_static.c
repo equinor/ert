@@ -71,9 +71,7 @@ void plain_driver_static_unlink_node(void * _driver , int report_step , int iens
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
     char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node) , static_counter);
-    FILE * stream   = util_fopen(filename , "w");
     util_unlink_existing(filename);
-    fclose(stream);
     free(filename);
   }
 }

@@ -59,7 +59,12 @@
     - report_step : the report_step number we are interested in
     - state       : whether we are considering an analyzed node or a forecast.  
 
-
+  In addition to the functions enkf_fs_fread_node() and enkf_fs_fwrite_node() there
+  are higher level functions enkf_fs_fread_alloc_ensemble() to load an ensemble of
+  nodes and enkf_fs_fread_alloc_ts() to load a time series of nodes. The driver can
+  implement these functions (to get a performance gain when loading many nodes). It
+  is not necceasry to implement these functions, the enkf_fs layer has simple
+  functions doing repeated calls to the enkf_fs_fread_node() function.
 
 
   The drivers
@@ -385,6 +390,7 @@ enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_n
   enkf_fs_fread_node(enkf_fs , node , report_step , iens , state);
   return node;
 }
+
 /*****************************************************************/
 /* High level functions to work on an ensemble or a time-series. */
 /* Observe that both for the time_based functions, and the ensemble
@@ -397,6 +403,7 @@ enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type * enkf_fs , enkf_con
   if (var_type == ecl_static) {
     /* Static drivers *NEVER* have high level functions fall back to simple loop immediately. */
     enkf_node_type ** node_list = util_malloc( (iens2 - iens1  + 1) * sizeof * node_list , __func__);
+
     for (iens = iens1; iens <= iens2; iens++) {
       if (enkf_fs_has_node(enkf_fs , config_node , report_step , iens , state))
 	node_list[iens - iens1] = enkf_fs_fread_alloc_node(enkf_fs , config_node , report_step , iens , state);
@@ -404,20 +411,86 @@ enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type * enkf_fs , enkf_con
 	node_list[iens - iens1] = NULL; /* This report_step/iens does not exist in the filesystem. */ 
     }
     return node_list;
+
   } else {
     const char * key = enkf_config_node_get_key_ref(config_node);
     basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key));
     if (driver->load_ensemble != NULL)
       return driver->load_ensemble(driver , report_step , iens1 , iens2 , state , config_node);
     else {
-      enkf_node_type ** node_list = util_malloc( (iens2 - iens1  + 1) * sizeof * node_list , __func__);
       /* Iterative fallback */
+      enkf_node_type ** node_list = util_malloc( (iens2 - iens1  + 1) * sizeof * node_list , __func__);
       for (iens = iens1; iens < iens2; iens++) {
 	if (driver->has_node(driver , report_step , iens , state , key)) {
 	  node_list[iens - iens1] = enkf_node_alloc(config_node);
 	  driver->load( driver , report_step , iens , state , node_list[iens - iens1]);
 	} else
 	  node_list[iens - iens1] = NULL; /* The node does not exist in the filesystem. */
+      }
+      return node_list;
+    }
+  }
+}
+
+
+
+/**
+   Observe that this function accepts state_enum == both, in that case it
+   will load interleaved forecast, analyzed, forecast, analyzed , ....
+*/
+
+enkf_node_type ** enkf_fs_fread_alloc_ts(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int step1 , int step2 ,  int iens , state_enum state) {
+  int step;
+  enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
+  if (var_type == ecl_static) {
+    /* Static drivers *NEVER* have high level functions fall back to simple loop immediately. */
+    enkf_node_type ** node_list = util_malloc( (step2 - step1  + 1) * sizeof * node_list , __func__);
+
+    for (step = step1; iens <= step2; step++) {
+      if (enkf_fs_has_node(enkf_fs , config_node , step , iens , state))
+	node_list[step - step1] = enkf_fs_fread_alloc_node(enkf_fs , config_node , step , iens , state);
+      else
+	node_list[step - step1] = NULL; /* This report_step/iens does not exist in the filesystem. */ 
+    }
+    return node_list;
+    
+  } else {
+    const char * key = enkf_config_node_get_key_ref(config_node);
+    basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key));
+    if (driver->load_ts != NULL)
+      return driver->load_ts(driver , step1 , step2  , iens , state , config_node);
+    else {
+      /* Iterative fallback */
+
+      enkf_node_type ** node_list;
+      int node_index = 0;
+
+      if (state == both)
+	node_list = util_malloc( 2 * (step2 - step1  + 1) * sizeof * node_list , __func__);
+      else
+	node_list = util_malloc(     (step2 - step1  + 1) * sizeof * node_list , __func__);
+      
+      
+      for (step = step1; step < step2; step++) {
+	/* Loading forecast */
+	if (state & forecast) {
+	  if (driver->has_node(driver , step , iens , forecast , key)) {
+	    node_list[node_index] = enkf_node_alloc(config_node);
+	    driver->load( driver , step , iens , forecast , node_list[node_index]);
+	  } else
+	    node_list[node_index] = NULL; /* The node does not exist in the filesystem. */
+	  node_index++;
+	}
+	
+	/* Loading analyzed */
+	if (state & analyzed) {
+	  if (driver->has_node(driver , step , iens , analyzed , key)) {
+	    node_list[node_index] = enkf_node_alloc(config_node);
+	    driver->load( driver , step , iens , analyzed , node_list[node_index]);
+	  } else
+	    node_list[node_index] = NULL; /* The node does not exist in the filesystem. */
+	  node_index++;
+	}
       }
       return node_list;
     }

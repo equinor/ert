@@ -74,7 +74,7 @@ void enkf_obs_add_obs_vector(
 }
 
 
-static bool enkf_obs_has_key(const enkf_obs_type * obs , const char * key) {
+bool enkf_obs_has_key(const enkf_obs_type * obs , const char * key) {
   return hash_has_key(obs->obs_hash , key);
 }
 

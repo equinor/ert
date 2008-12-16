@@ -10,6 +10,8 @@
 #include <enkf_sched.h>
 #include <enkf_ui_plot.h>
 #include <enkf_obs.h>
+#include <field_obs.h>
+#include <field_config.h>
 #include <obs_vector.h>
 #include <plot.h>
 #include <plot_dataset.h>
@@ -156,8 +158,7 @@ void enkf_ui_plot_ensemble(void * arg) {
 	  }
 	}
       }
-
-
+      
       msg_free(msg , true);
       printf("Plot saved in: %s \n",plot_file);
       __plot_show(plot , viewer , plot_file);
@@ -165,8 +166,10 @@ void enkf_ui_plot_ensemble(void * arg) {
     }
   }
 }
-		   
+	
+	   
 	  
+
 
 void enkf_ui_plot_observation(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
@@ -226,7 +229,7 @@ void enkf_ui_plot_observation(void * arg) {
 	
 	plot_dataset_set_line_color(obs_value , BLACK);
 	plot_dataset_set_line_color(obs_quant , BLACK);
-	plot_dataset_set_line_width(obs_value , 2.5);
+	plot_dataset_set_line_width(obs_value , 2.0);
 	plot_dataset_set_line_style(obs_quant , long_dash);
 
 	plot_dataset_set_style( forecast_data , POINT);
@@ -267,17 +270,135 @@ void enkf_ui_plot_observation(void * arg) {
   }
 }
 
+
+
+void enkf_ui_plot_RFT(void * arg) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  {
+    const int ens_size = ensemble_config_get_size(ensemble_config);
+    const int prompt_len = 40;
+    const char * prompt  = "Which RFT observation: ";
+    enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
+    obs_vector_type * obs_vector;
+    char obs_key[64];
+    char * index_key;
+    char * plot_file;
+    int   report_step;
+
+    {
+      bool OK = false;
+      while (!OK) {
+	util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+	scanf("%s" , obs_key);
+	if (enkf_obs_has_key(enkf_obs , obs_key)) {
+	  obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
+	  if (obs_vector_get_impl_type( obs_vector ) == field_obs)
+	    OK = true;
+	  else
+	    fprintf(stderr,"Observation key:%s does not correspond to a field observation.\n",obs_key);
+	} else
+	  fprintf(stderr,"Do not have observation key:%s \n",obs_key);
+      }
+    }
+    do {
+      if (obs_vector_get_num_active( obs_vector ) == 1)
+	report_step = obs_vector_get_active_report_step( obs_vector );
+      else
+	report_step = enkf_ui_util_scanf_report_step(enkf_main , "Report step" , prompt_len);
+    } while (!obs_vector_iget_active(obs_vector , report_step));
+    
+    /* OK - when we are here the user has entered a valid key which is a field observation. */
+    {
+      plot_type             * plot;
+      const char            * state_kw    = obs_vector_get_state_kw(obs_vector);
+      enkf_node_type        * node;
+      enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
+      field_config_type * field_config    = enkf_config_node_get_ref( config_node );
+      field_obs_type    * field_obs       = obs_vector_iget_node( obs_vector , report_step );
+      //int   obs_size                      = field_obs_get_size( field_obs );
+      
+      
+      
+      
+      plot_file = util_alloc_sprintf("/tmp/%s.png" , obs_key);
+      plot = __plot_alloc(state_kw , "Depth" , obs_key , plot_file);
+      {
+	msg_type * msg       = msg_alloc("Loading realization: ");
+	const int * i 	     = field_obs_get_i(field_obs);
+	const int * j 	     = field_obs_get_j(field_obs);
+	const int * k 	     = field_obs_get_k(field_obs);
+	const int   obs_size = field_obs_get_size(field_obs);
+	double * depth       = util_malloc( obs_size * sizeof * depth , __func__);
+	double min_depth , max_depth;
 	
+	int l;
+	int iens;
+	int iens1 = 0;        /* Could be user input */
+	int iens2 = ens_size;
+	
+	plot_dataset_type ** data = util_malloc( ens_size * sizeof * data , __func__);
+	plot_dataset_type *  obs  = plot_alloc_new_dataset( plot , plot_x1x2y , false);
+	node = enkf_node_alloc( config_node );
+	
+	for (l = 0; l < obs_size; l++)
+	  depth[l] = l*1.0; /* Should ask the grid here */
+	
+	max_depth = depth[0];
+	min_depth = depth[0];
+	for (l=1; l< obs_size; l++)
+	  util_update_double_max_min( depth[l] , &max_depth , &min_depth);
+	
+	
+	for (iens=iens1; iens <= iens2; iens++)
+	  data[iens - iens1] = plot_alloc_new_dataset( plot , plot_xy , false);
+	
+	msg_show( msg );
+	for (iens=iens1; iens <= iens2; iens++) {
+	  char cens[5];
+	  sprintf(cens , "%03d" , iens);
+	  msg_update(msg , cens);
+
+	  if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
+	    enkf_fs_fread_node(fs , node , report_step , iens , analyzed);
+	    const field_type * field = enkf_node_value_ptr( node );
+	    for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
+	      plot_dataset_append_point_xy(data[iens - iens1] , field_ijk_get_double( field , i[l] , j[l] , k[l]) , depth[l]);
+	    
+	  }
+	}
+	for (l = 0; l < obs_size; l++) {
+	  double value , std;
+	  
+	  field_obs_iget(field_obs , l , &value , &std);
+	  plot_dataset_append_point_x1x2y( obs , value - std , value + std , depth[l]);
+	}
+	plot_dataset_set_line_color( obs , RED );
+	free(depth);
+	msg_free(msg , true);
+      }
+      __plot_show( plot , viewer , plot_file);
+      printf("Plot saved in: %s \n",plot_file);
+      free(plot_file);
+    }
+  }
+}
 
 
 
-void enkf_ui_plot_menu(void * arg) {
 
-  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-  menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
 
-  menu_add_item(menu , "Ensemble plot"    , "eE" , enkf_ui_plot_ensemble    , enkf_main );
-  menu_add_item(menu , "Observation plot" , "oO" , enkf_ui_plot_observation , enkf_main);
+
+ void enkf_ui_plot_menu(void * arg) {
+
+   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+   menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
+
+   menu_add_item(menu , "Ensemble plot"    , "eE" , enkf_ui_plot_ensemble    , enkf_main );
+   menu_add_item(menu , "Observation plot" , "oO" , enkf_ui_plot_observation , enkf_main);
+   menu_add_item(menu , "RFT plot"         , "rR" , enkf_ui_plot_RFT         , enkf_main);
   menu_run(menu);
   menu_free(menu);
 

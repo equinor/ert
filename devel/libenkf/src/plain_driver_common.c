@@ -10,14 +10,19 @@
    all the plain_driver_xxxx drivers. 
 */
 
+
+/**
+   The fopen calls here should probably be issued with
+   util_fopen_lockf() to get exclusive access to the files - but it
+   turned out be a quite massive performance hit by using lockf().
+*/
+
 void plain_driver_common_load_node(const char * filename ,  int report_step , int iens , state_enum state , enkf_node_type * node ) {
-  //int fd = util_open(filename , O_RDONLY);
-  //FILE * stream = fdopen(fd , "r");
-  FILE * stream   = util_fopen(filename , "r");
+  FILE * stream   = util_fopen(filename , "r");  /* locked open */
   enkf_node_fread(node , stream , report_step , iens , state);
   fclose(stream);
-  //close(fd);
 }
+
 
 
 void plain_driver_common_save_node(const char * filename ,  int report_step , int iens , state_enum state , enkf_node_type * node ) {

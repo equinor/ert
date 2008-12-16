@@ -213,6 +213,8 @@ static void obs_vector_install_node(obs_vector_type * obs_vector , int index , v
 
 
 
+
+
 void obs_vector_delete_node(obs_vector_type * obs_vector , int index) {
   if (obs_vector->nodes[index] != NULL)
     util_abort("%s: missing node for index:%d. \n",__func__ , index);
@@ -296,6 +298,17 @@ bool obs_vector_iget_active(const obs_vector_type * vector, int index) {
     return true;
   else
     return false;
+}
+
+
+/* 
+   Will happily return NULL if index is not active. 
+*/
+void * obs_vector_iget_node(const obs_vector_type * vector, int index) {
+  if (index < 0 || index >= vector->size)
+    util_abort("%s: index:%d invald. Limits: [0,%d) \n",__func__ , index , vector->size);
+  
+  return vector->nodes[index]; 
 }
 
 

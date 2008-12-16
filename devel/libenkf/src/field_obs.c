@@ -241,6 +241,14 @@ void field_obs_fread(
 }
 
 
+/**
+   The index is into the the number of active cells which are observed by this observation.
+*/
+void field_obs_iget(const field_obs_type * field_obs, int index , double *value , double * std) {
+  *value = field_obs->obs_value[index];
+  *std   = field_obs->obs_std[index];
+}
+
 
 void field_obs_user_get(const field_obs_type * field_obs , const char * index_key , double *value , double * std, bool * valid) {
   int      length;
@@ -272,6 +280,24 @@ void field_obs_user_get(const field_obs_type * field_obs , const char * index_ke
   }
   
   free(indices);
+}
+
+
+const int * field_obs_get_i(const field_obs_type * field_obs) {
+  return field_obs->i;
+}
+
+const int * field_obs_get_j(const field_obs_type * field_obs) {
+  return field_obs->j;
+}
+
+const int * field_obs_get_k(const field_obs_type * field_obs) {
+  return field_obs->k;
+}
+
+
+int field_obs_get_size(const field_obs_type * field_obs) {
+  return field_obs->size;
 }
 
 

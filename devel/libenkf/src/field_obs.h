@@ -45,6 +45,14 @@ field_obs_type * field_obs_alloc_from_BLOCK_OBSERVATION(
   const history_type       * history);
 
 
+
+
+const int * field_obs_get_i(const field_obs_type * );
+const int * field_obs_get_j(const field_obs_type * );
+const int * field_obs_get_k(const field_obs_type * );
+int         field_obs_get_size(const field_obs_type * );
+void        field_obs_iget(const field_obs_type * field_obs, int  , double * , double * );
+
 SAFE_CAST_HEADER(field_obs);
 VOID_FREE_HEADER(field_obs);
 VOID_GET_OBS_HEADER(field_obs);
