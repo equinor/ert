@@ -258,7 +258,6 @@ void plot_dataset_append_vector_xy1y2(plot_dataset_type *d , int size, const dou
 
 
 void plot_dataset_append_point_xy1y2(plot_dataset_type *d , double x , double y1 , double y2) {
-  printf("Appending: %g , %g - %g \n",x,y1,y2);
   plot_dataset_append_vector_xy1y2(d , 1 , &x , &y1, &y2);
 }
 
