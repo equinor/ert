@@ -73,15 +73,17 @@ typedef enum  {
 
 typedef int plot_symbol_type;
 
-#if WITH_TRUETYPE
-#define LABEL_FONTSIZE 0.6
-#define SYMBOL_SIZE 0.7
-#define LINEWIDTH_SIZE 2	/* integer */
-#else
-#define LABEL_FONTSIZE 0.5
-#define SYMBOL_SIZE 0.8
-#define LINEWIDTH_SIZE 0.9
-#endif
+#define PLOT_DEFAULT_SYMBOL_SIZE     1.10
+#define PLOT_DEFAULT_LINE_WIDTH      1.50
+#define PLOT_DEFAULT_LABEL_FONTSIZE  0.60
+
+//#if WITH_TRUETYPE
+//#define LABEL_FONTSIZE 0.6
+//#else
+//#define LABEL_FONTSIZE 0.5
+//#define SYMBOL_SIZE 0.8
+//#define LINEWIDTH_SIZE 0.9
+//#endif
 
 #define SYMBOL 17
 #define DEFAULT_WIDTH 1024
