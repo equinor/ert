@@ -42,7 +42,6 @@ struct plot_dataset_struct {
 /*****************************************************************/
 /* Set - functions for the style variabels of the dataset. */
 void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style) {
-  /* Only relevant for plot_xy */
   dataset->style = style;
 }
 
@@ -150,15 +149,13 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
   return d;
 }
 
+
 /**
- * @brief Free your dataset item
- * @param d your current dataset
- *
- * Use this function to free your allocated memory from plot_dataset_alloc().
- */
+   This function frees all the memory related to a dataset - normally
+   called automatically from plot_free().
+*/
 void plot_dataset_free(plot_dataset_type * d)
 {
-  assert(d != NULL);
   if (!d->shared_data) {
     util_safe_free(d->x);
     util_safe_free(d->x1);
