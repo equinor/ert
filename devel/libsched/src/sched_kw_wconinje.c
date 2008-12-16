@@ -50,6 +50,7 @@ void sched_kw_wconinje_free(sched_kw_wconinje_type * kw)
 {
   stringlist_free(kw->wells);
   sched_kw_untyped_free(kw->untyped_kw);
+  free(kw);
 }
 
 

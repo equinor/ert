@@ -849,7 +849,6 @@ int history_get_restart_nr_from_time_t(const history_type * history, time_t time
     if (node_end_time == time)  /* Daylight saving time - what a fucking mess. */
       return i;
   }
-
   
   // If we are here, time did'nt correspond a restart file. Abort.
   util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
