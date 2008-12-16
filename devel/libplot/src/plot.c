@@ -228,18 +228,16 @@ void plot_data(plot_type * plot)
   
   pladv(0);
 
-
-
   plvsta();
   plot_set_range__(plot);  // plwind
   plcol0(BLACK);
-  plschr(0, LABEL_FONTSIZE);
+  plschr(0, PLOT_DEFAULT_LABEL_FONTSIZE);
   plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
-
+  
   if (!plot->xlabel || !plot->ylabel || !plot->title) 
     fprintf(stderr, "ERROR ID[%d]: you need to set lables before setting the viewport!\n",plot->stream);
   else {
-    plschr(0, LABEL_FONTSIZE);
+    plschr(0, PLOT_DEFAULT_LABEL_FONTSIZE);
     plcol0(plot->label_color);
     pllab(plot->xlabel, plot->ylabel, plot->title);
   }

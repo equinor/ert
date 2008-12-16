@@ -35,8 +35,8 @@ struct plot_dataset_struct {
   plot_color_type      point_color;  /**< The color for the points in the plot. */
   plot_symbol_type     symbol_type;  /**< The type of symbol. */
   plot_line_style_type line_style;   /**< The style for lines. */
-  double               symbol_size;
-  double               line_width;
+  double               symbol_size;  /**< Scale factor for symbol size : starts with PLOT_DEFAULT_SYMBOL_SIZE */
+  double               line_width;   /**< Scale factor for line width  : starts with PLOT_DEFAULT_LINE_WIDTH */
 };
 
 /*****************************************************************/
@@ -144,8 +144,8 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
   d->point_color = BLUE;
   d->symbol_type = 17;
   d->line_style  = solid_line;
-  d->symbol_size = 1.10;
-  d->line_width  = 1.5; 
+  d->symbol_size = 1.0;  /* Scale factor */
+  d->line_width  = 1.0;  /* Scale factor */
   return d;
 }
 
@@ -331,10 +331,10 @@ void plot_dataset_set_shared_yline(plot_dataset_type *d , int size, double *y) {
 
 void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type * range) {
   plsstrm(stream);
-  pllsty(d->line_style);       /* Setting solid/dashed/... */
-  plwid(d->line_width);        /* Setting line width.*/
-  plcol0(d->line_color);       /* Setting line color. */
-  plssym(0 , d->symbol_size);  /* Setting the size for the symbols. */
+  pllsty(d->line_style);                                  /* Setting solid/dashed/... */
+  plwid(d->line_width * PLOT_DEFAULT_LINE_WIDTH);         /* Setting line width.*/
+  plcol0(d->line_color);                                  /* Setting line color. */
+  plssym(0 , d->symbol_size * PLOT_DEFAULT_SYMBOL_SIZE);  /* Setting the size for the symbols. */
 
   
   switch (d->data_type) {
