@@ -47,12 +47,13 @@ typedef enum {
 #define YMAX 3
 
 struct plot_range_struct {
-
+  double padding[4];
   double limits[4];
   double soft_limits[4];
   bool   set[4];
   bool   set_soft[4];
-  
+  bool   invert_x_axis;
+  bool   invert_y_axis;
   plot_range_mode_type  range_mode;
 };
 
@@ -193,7 +194,9 @@ plot_range_type * plot_range_alloc() {
     range->set[i]         = false;
     range->set_soft[i]    = false;
   }
-  
+  range->invert_x_axis = false;
+  range->invert_y_axis = false;
+
   return range;
 }
 
@@ -222,6 +225,24 @@ void plot_range_apply(plot_range_type * plot_range) {
   double xmax = plot_range_combined_get__(plot_range , XMAX , false);
   double ymin = plot_range_combined_get__(plot_range , YMIN , true);
   double ymax = plot_range_combined_get__(plot_range , YMAX , false);
-  
-  plwind(xmin , xmax , ymin , ymax);
+
+  double x1 , x2 , y1 , y2;
+
+  if (plot_range->invert_x_axis) {
+    x1 = xmax;
+    x2 = xmin;
+  } else {
+    x1 = xmin;
+    x2 = xmax;
+  }
+
+  if (plot_range->invert_y_axis) {
+    y1 = ymax;
+    y2 = ymin;
+  } else {
+    y1 = ymin;
+    y2 = ymax;
+  }
+    
+  plwind(x1,x2,y1,y2);
 }
