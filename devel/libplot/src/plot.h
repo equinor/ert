@@ -50,11 +50,6 @@ extern "C" {
 typedef struct plot_struct plot_type;
 
 
-void plot_set_soft_xmin(plot_type * , double );
-void plot_set_soft_xmax(plot_type * , double );
-void plot_set_soft_ymin(plot_type * , double );
-void plot_set_soft_ymax(plot_type * , double );
-
 plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool);
  plot_type *plot_alloc();
  int plot_get_stream(plot_type * item);
@@ -69,6 +64,16 @@ plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool)
  void plot_data(plot_type * item);
  void plot_free(plot_type * item);
  void plot_get_extrema(plot_type * item, plot_range_type * );
+
+
+void plot_invert_y_axis(plot_type * );
+void plot_invert_x_axis(plot_type * );
+
+void plot_set_top_padding(plot_type    *  , double );
+void plot_set_bottom_padding(plot_type *  , double );
+void plot_set_left_padding(plot_type   *  , double );
+void plot_set_right_padding(plot_type  *  , double );
+
 
 /**
  * @}
