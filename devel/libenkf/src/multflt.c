@@ -102,7 +102,6 @@ static void __multflt_ecl_write(const multflt_type * multflt, const char * eclfi
   {
     const multflt_config_type *config = multflt->config;
     const int data_size       = multflt_config_get_data_size(config);
-    const char **fault_names  = (const char **) multflt_config_get_names( multflt->config );
     const double *output_data = scalar_get_output_ref(multflt->scalar);
     int k;
     
@@ -111,7 +110,7 @@ static void __multflt_ecl_write(const multflt_type * multflt, const char * eclfi
     
     fprintf(stream , "MULTFLT\n");
     for (k=0; k < data_size; k++)
-      fprintf(stream , " \'%s\'      %g  / \n",fault_names[k] , output_data[k]);
+      fprintf(stream , " \'%s\'      %g  / \n", multflt_config_get_name( config , k) , output_data[k]);
     fprintf(stream , "/");
   }
   

@@ -159,6 +159,12 @@ void enkf_ui_plot_ensemble(void * arg) {
 	}
       }
       
+      plot_set_bottom_padding( plot , 0.05);
+      plot_set_top_padding( plot    , 0.05);
+      plot_set_left_padding( plot   , 0.05);
+      plot_set_right_padding( plot  , 0.05);
+
+      
       msg_free(msg , true);
       printf("Plot saved in: %s \n",plot_file);
       __plot_show(plot , viewer , plot_file);
