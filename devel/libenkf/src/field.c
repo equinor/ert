@@ -1009,6 +1009,7 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename , bool en
   ecl_kw_type * ecl_kw;
   {
     FILE * stream = util_fopen(filename , "r");
+    ecl_kw_fseek_kw(key , true , true , stream , filename);
     ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type);
     fclose(stream);
   }
