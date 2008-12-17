@@ -48,7 +48,7 @@ typedef enum {
 
 
 struct plot_range_struct {
-  double padding[4];
+  double padding[4];     
   double limits[4];
   bool   set[4];
   bool   invert_x_axis;
@@ -82,7 +82,7 @@ void plot_range_set_xmin(plot_range_type * plot_range , double xmin) {
 
 /*****************************************************************/
 /* 
-   These function will fail if the corresponding value has not
+   These functions will fail if the corresponding value has not
    been set, either from an automatic set, or manually.
 */
 
@@ -98,7 +98,6 @@ static double plot_range_get__(const plot_range_type * plot_range , int index) {
     return 0;
   }
 }
-
 
 double plot_range_get_xmin(const plot_range_type * plot_range) {
   return plot_range_get__(plot_range , XMIN);
@@ -169,7 +168,6 @@ void plot_range_invert_y_axis(plot_range_type * range, bool invert) {
 
 
 
-
 /*****************************************************************/
 
 
@@ -186,13 +184,12 @@ plot_range_type * plot_range_alloc() {
   
   for (i=0; i < 4; i++) {
     range->limits[i]      = 0;
-    range->set[i]         = false;
     range->padding[i]     = 0;
+    range->set[i]         = false;
   }
+
   range->invert_x_axis = false;
   range->invert_y_axis = false;
-  
-
   return range;
 }
 
@@ -203,13 +200,30 @@ void plot_range_free(plot_range_type * plot_range) {
 }
 
 
-void plot_range_apply(plot_range_type * plot_range) {
+
+/**
+   This function return the final xmin,xmax,ymin and ymax
+   functions. To avvoid filling up plplot specific function calls,
+   this function does not call plwind(), which would have been
+   natural.
+
+   From the calling scope:
+   {
+      double x1,x2,y1,y2;
+      plot_range_apply(range , &x1 , &x2 , &y1 , &y2);
+      plwind( x1,x2,y1,y2);
+   }
+
+*/
+
+   
+void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , double *_y1 , double *_y2) {
   double xmin 	= plot_range_get__(plot_range , XMIN );
   double xmax 	= plot_range_get__(plot_range , XMAX );
   double ymin 	= plot_range_get__(plot_range , YMIN );
   double ymax 	= plot_range_get__(plot_range , YMAX );
-  double width  = abs(xmax - xmin);
-  double height = abs(ymax - ymin);
+  double width  = fabs(xmax - xmin);
+  double height = fabs(ymax - ymin);
 
   double x1 , x2 , y1 , y2;
 
@@ -241,5 +255,9 @@ void plot_range_apply(plot_range_type * plot_range) {
     y2 += height * plot_range->padding[YMAX];
   }
   
-  plwind(x1,x2,y1,y2);
+  *_y1 = y1;
+  *_y2 = y2;
+  *_x1 = x1;
+  *_x2 = x2;
+  
 }

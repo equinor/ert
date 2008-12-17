@@ -36,7 +36,7 @@ void plot_range_set_right_padding(plot_range_type  *  , double );
 void plot_range_invert_y_axis(plot_range_type * , bool );
 void plot_range_invert_x_axis(plot_range_type * , bool );
 
-void plot_range_apply(plot_range_type * );
+void plot_range_apply(plot_range_type * , double * , double * , double * , double *);
 
 #ifdef __cplusplus
 }
