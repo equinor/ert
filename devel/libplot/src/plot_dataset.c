@@ -1,12 +1,10 @@
+#include <string.h>
 #include <util.h>
-#include <plot.h>
-#include <plot_dataset.h>
+#include <plplot/plplot.h>
+#include <plplot/plplotP.h>
 #include <plot_const.h>
 #include <plot_range.h>
-#include <assert.h>
-
-
-
+#include <plot_dataset.h>
 
 
 /**
@@ -24,7 +22,7 @@ struct plot_dataset_struct {
   
   bool    shared_data;     /**< Whether this instance owns x,y,x1,... or just holds a reference. */
   int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if shared_data = true. */
-  int size;	   	   /**< Length of the vectors defining the plot */
+  int size;	   	   /**< Length of the vectors defining the plot - can be less than alloc_size.*/
 
 
 
@@ -40,7 +38,8 @@ struct plot_dataset_struct {
 };
 
 /*****************************************************************/
-/* Set - functions for the style variabels of the dataset. */
+/* Set - functions for the style variabels of the dataset.       */
+
 void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style) {
   dataset->style = style;
 }
@@ -142,7 +141,7 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
   d->style       = LINE;
   d->line_color  = BLUE;
   d->point_color = BLUE;
-  d->symbol_type = 17;
+  d->symbol_type = PLOT_DEFAULT_SYMBOL;
   d->line_style  = solid_line;
   d->symbol_size = 1.0;  /* Scale factor */
   d->line_width  = 1.0;  /* Scale factor */
@@ -447,12 +446,11 @@ void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , plot_ran
 	tmp_y_max = y2[i];
     }
   }
-
-
-  plot_range_set_xmax(range , tmp_x_max);
-  plot_range_set_ymax(range , tmp_y_max);
+  
   plot_range_set_xmin(range , tmp_x_min);
+  plot_range_set_xmax(range , tmp_x_max);
   plot_range_set_ymin(range , tmp_y_min);
+  plot_range_set_ymax(range , tmp_y_max);
 }
 
 

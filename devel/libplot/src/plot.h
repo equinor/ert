@@ -44,23 +44,21 @@ extern "C" {
 #include <plot_dataset.h>
 
 
-/**
- * @brief Contains information about a plotting window.
- */
 typedef struct plot_struct plot_type;
 
 
 plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool);
- plot_type *plot_alloc();
+
+plot_type *plot_alloc();
  int plot_get_stream(plot_type * item);
 
  void plot_initialize(plot_type * item, const char *dev,
 			    const char *filename);
- void plot_set_labels(plot_type * item, const char *xlabel,
-			    const char *ylabel, const char *title,
-			    plot_color_type color);
- void plot_errorbar_data(plot_type * item);
- void plot_std_data(plot_type * item, bool mean);
+ void plot_set_xlabel(plot_type * , const char *);
+ void plot_set_ylabel(plot_type * , const char *);
+ void plot_set_title(plot_type * , const char *);
+ void plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel, const char *title);
+
  void plot_data(plot_type * item);
  void plot_free(plot_type * item);
  void plot_get_extrema(plot_type * item, plot_range_type * );
@@ -74,6 +72,9 @@ void plot_set_bottom_padding(plot_type *  , double );
 void plot_set_left_padding(plot_type   *  , double );
 void plot_set_right_padding(plot_type  *  , double );
 
+void plot_set_label_color(plot_type * , plot_color_type );
+void plot_set_box_color(plot_type *   , plot_color_type );
+void plot_set_label_fontsize(plot_type * , double );
 
 /**
  * @}

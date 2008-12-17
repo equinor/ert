@@ -26,7 +26,7 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
   plot_type * plot  = plot_alloc();
   plot_set_window_size(plot , 640, 480);
   plot_initialize(plot , "png", file);
-  plot_set_labels(plot, x_label , y_label , title , BLACK);
+  plot_set_labels(plot, x_label , y_label , title);
   return plot;
 }
 

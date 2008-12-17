@@ -15,7 +15,6 @@ struct havana_fault_config_struct
   gen_kw_config_type  * gen_kw_config;
   char 	    	      * havana_executable;
   char 	    	      * unfaulted_GRDECL_file;
-  /*char                * faulted_GRDECL_file;*/
   char                * input_fault_path;
   char                * update_template;
   int                   num_fault_groups;

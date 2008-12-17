@@ -73,22 +73,31 @@ typedef enum  {
 
 typedef int plot_symbol_type;
 
-#define PLOT_DEFAULT_SYMBOL_SIZE     1.10
-#define PLOT_DEFAULT_LINE_WIDTH      1.50
-#define PLOT_DEFAULT_LABEL_FONTSIZE  0.60
 
-//#if WITH_TRUETYPE
-//#define LABEL_FONTSIZE 0.6
-//#else
-//#define LABEL_FONTSIZE 0.5
-//#define SYMBOL_SIZE 0.8
-//#define LINEWIDTH_SIZE 0.9
-//#endif
 
-#define SYMBOL 17
-#define DEFAULT_WIDTH 1024
-#define DEFAULT_HEIGHT 768
+/* Here comes defaults which apply to the plot as a whole */
+#define PLOT_DEFAULT_LABEL_FONTSIZE  0.60    /* Scaled */
+#define PLOT_DEFAULT_BOX_COLOR       BLACK
+#define PLOT_DEFAULT_LABEL_COLOR     BLACK
+#define PLOT_DEFAULT_WIDTH           1024
+#define PLOT_DEFAULT_HEIGHT           768
 
+
+/* Here comes defaults which apply to one dataset. */
+#define PLOT_DEFAULT_SYMBOL_SIZE     1.10   /* Scaled */
+#define PLOT_DEFAULT_LINE_WIDTH      1.50   /* Scaled */
+#define PLOT_DEFAULT_SYMBOL            17
+#define PLOT_DEFAULT_LINE_COLOR        BLUE
+#define PLOT_DEFAULT_POINT_COLOR       BLUE
+#define PLOT_DEAFULT_STYLE             LINE
+
+/* For the variables marked with 'scaled', the API is based on scale
+   factors. I.e. to double the symbol size the user would call
+
+     plot_dataset_set_symbol_size(2.0);
+     
+   Which will multiplu PLOT_DEFAULT_SYMBOL_SIZE with 2.0
+*/ 
 
 
 #ifdef __cplusplus 

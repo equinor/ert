@@ -335,6 +335,10 @@ const char * havana_fault_get_name(const havana_fault_type * havana_fault, int k
 }
 
 
+
+
+
+
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/

@@ -49,7 +49,7 @@ static sched_kw_wconinje_type * sched_kw_wconinje_alloc(bool alloc_untyped)
 void sched_kw_wconinje_free(sched_kw_wconinje_type * kw)
 {
   stringlist_free(kw->wells);
-  sched_kw_untyped_free(kw->untyped_kw);
+  if (kw->untyped_kw != NULL) sched_kw_untyped_free(kw->untyped_kw);
   free(kw);
 }
 
@@ -66,9 +66,10 @@ static void sched_kw_wconinje_add_line(sched_kw_wconinje_type * kw , const char 
 
   if (token_list[0] == NULL)
     util_abort("%s: line[%d]: failed to get well name \n",__func__ , util_get_current_linenr(stream));
-
+  
   stringlist_append_copy(kw->wells , token_list[0]);
   sched_kw_untyped_add_line(kw->untyped_kw , line , NULL);
+  util_free_stringlist( token_list , tokens );
 }
 
 

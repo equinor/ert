@@ -9,6 +9,8 @@
 #include <subst.h>
 #include <havana_fault_config.h>
 
+
+
 /** 
     A purely local type
 */
@@ -210,7 +212,15 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
 
 
 
+/*
+  Observe that the running of havana is a two-step process:
 
+    1. Run havana for all the faultgroups (one at a time) with the
+       havana action ModifyPFM.
+
+    2. Run havana for all the faults with the intoeclipse action.
+    
+*/
 void havana_fault_config_run_havana(const havana_fault_config_type * config , scalar_type * scalar_data , const char * run_path) {
   char * tmp_fault_input_path  = util_alloc_full_path(run_path  , "tmp_havana_input_faults");
   char * tmp_fault_output_path = util_alloc_full_path(run_path  , "tmp_havana_output_faults");
@@ -307,7 +317,8 @@ GROUP            G02   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G02.templa
 GROUP            G03   /tmp/Synthetic/sharedfiles/templates/modifyPFM_G03.template FaultA FaultB FaultC FaultD
 
 Each group can contain many faults; but each fault must be in only one
-group. This is not checked for. Note that the last group must correspond to all faults that have no change in displacement
+group. This is not checked for. Note that the last group must
+correspond to all faults that have no change in displacement
 
 Observe that the OUTPUT_ECLIPSE variable should be relative to the
 ECLIPSE run_path. The remaining variables can be both relative to the
@@ -371,6 +382,7 @@ havana_fault_config_type * havana_fault_config_fscanf_alloc(const char * filenam
   return config;
 }
 #undef ASSERT_TOKENS
+
 
 
 
