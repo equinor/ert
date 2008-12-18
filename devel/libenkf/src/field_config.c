@@ -54,6 +54,7 @@ struct field_config_struct {
   bool add_perturbation;
 
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
+  field_func_type         * init_transform;      /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/  
 };
 
 
@@ -67,13 +68,6 @@ void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_
 }
 
 
-/*
-static void field_config_assert_ijk(const field_config_type * config , int i , int j , int k) {
-  if (i < 0 || i >= config->nx) util_abort("%s: i:%d outside valid range: [0,%d) \n",__func__ , i , config->nx);
-  if (j < 0 || j >= config->ny) util_abort("%s: j:%d outside valid range: [0,%d) \n",__func__ , j , config->ny);
-  if (k < 0 || k >= config->nz) util_abort("%s: k:%d outside valid range: [0,%d) \n",__func__ , k , config->nz);
-}
-*/
 
 void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_type) {
   config->internal_ecl_type     = ecl_type;
@@ -183,7 +177,7 @@ static field_file_format_type field_config_default_export_format(const char * fi
    whether) the file contains all cells (i.e. PERMX) or only active
    cells (i.e. pressure).
 
-   If the parameter 'import' is true the user must specify whether we
+   If the parameter 'import' is false the user must specify whether we
    are considering all cells, or only active cells.
 */
 
@@ -263,7 +257,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   field_config_type *config = util_malloc(sizeof *config, __func__);
   config->__type_id = FIELD_CONFIG_ID;
   /*
-    Observe that size is the number of *ACTIVCE* cells,
+    Observe that size is the number of *ACTIVE* cells,
     and generally *not* equal to nx*ny*nz.
   */
 
@@ -272,9 +266,9 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
      the type will be determined automagically (unless it is
      restart_block).
   */
-  config->export_format = export_format;
-  config->import_format = import_format;      
-  config->grid          = ecl_grid;
+  config->export_format 	   = export_format;
+  config->import_format 	   = import_format;      
+  config->grid          	   = ecl_grid;
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
@@ -299,8 +293,9 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
   config->init_file_fmt            = NULL;
-  config->active_list              = active_list_alloc( config->data_size );
   config->output_transform         = NULL;
+  config->init_transform          = NULL;
+  config->active_list              = active_list_alloc( config->data_size );
   field_config_set_all_active(config);
   return config;
 }
@@ -356,7 +351,7 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const char * truncation, const char ** truncation_values , const ecl_grid_type * ecl_grid) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , ecl_restart_block);
-  config->init_type         = none;
+  config->init_type          = none;
   field_config_set_truncation_from_strings( config , truncation , truncation_values );
   return config;
 }
@@ -412,10 +407,9 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , cons
 
   config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format);
   config->init_type = init_type;
-  if (init_type == none) {
-    fprintf(stderr,"%s: invalid init type \n",__func__);
-    abort();
-  }
+  if (init_type == none) 
+    util_abort("%s: invalid init type \n",__func__);
+    
   {
     int config_index = 0;
     if (init_type & load_unique) {
@@ -424,23 +418,24 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , cons
       config_index++;
     }
 
-    if (init_type & load_base_case) {
-      ASSERT_CONFIG_FILE(config_index , config_len);
-      config->base_file = util_alloc_string_copy(config_files[config_index]);
-      config_index++;
-    }
+    //if (init_type & load_base_case) {
+    //  ASSERT_CONFIG_FILE(config_index , config_len);
+    //  config->base_file = util_alloc_string_copy(config_files[config_index]);
+    //  config_index++;
+    //}
+    //
+    //if (init_type & layer_trends) {
+    //  ASSERT_CONFIG_FILE(config_index , config_len);
+    //  config->layer_config_file = util_alloc_string_copy(config_files[config_index]);
+    //  config_index++;
+    //}
+    //
+    //if (init_type & gaussian_perturbations) {
+    //  ASSERT_CONFIG_FILE(config_index , config_len);
+    //  config->perturbation_config_file = util_alloc_string_copy(config_files[config_index]);
+    //  config_index++;
+    //}
 
-    if (init_type & layer_trends) {
-      ASSERT_CONFIG_FILE(config_index , config_len);
-      config->layer_config_file = util_alloc_string_copy(config_files[config_index]);
-      config_index++;
-    }
-
-    if (init_type & gaussian_perturbations) {
-      ASSERT_CONFIG_FILE(config_index , config_len);
-      config->perturbation_config_file = util_alloc_string_copy(config_files[config_index]);
-      config_index++;
-    }
   }
   {
     char * trans = util_alloc_strupr_copy( output_transform_name );
@@ -772,6 +767,10 @@ bool field_config_enkf_mode(const field_config_type * config) { return config->_
 
 field_func_type * field_config_get_output_transform(const field_config_type * config) {
   return config->output_transform;
+}
+
+field_func_type * field_config_get_init_transform(const field_config_type * config) {
+  return config->init_transform;
 }
 
 void field_config_set_output_transform(field_config_type * config , field_func_type * func) {

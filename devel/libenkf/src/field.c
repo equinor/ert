@@ -685,10 +685,22 @@ void field_initialize(field_type *field , int iens) {
     field_fload(field , filename , field_config_get_endian_swap(field->config));
     init_type -= load_unique;
     free(filename);
+
   }
   if (init_type != none) 
     util_abort("%s not fully implemented ... \n",__func__);
-  
+
+
+  /* 
+     Doing the input transform - observe that this is done inplace on
+     the data, not as the output transform which is done on a copy of
+     prior to export.
+  */
+  {
+    field_func_type * init_transform = field_config_get_init_transform(field->config);
+    if (init_transform != NULL) 
+      field_apply(field , init_transform);
+  }
 }
 
 
@@ -1009,7 +1021,7 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename , bool en
   ecl_kw_type * ecl_kw;
   {
     FILE * stream = util_fopen(filename , "r");
-    ecl_kw_fseek_kw(key , true , true , stream , filename);
+    ecl_kw_grdecl_fseek_kw(key , true , true , stream , filename);
     ecl_kw = ecl_kw_fscanf_alloc_grdecl_data(stream , size , ecl_type);
     fclose(stream);
   }

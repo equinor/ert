@@ -62,10 +62,8 @@ typedef enum { undefined_format         = 0,
 
 /* Must be power of two series */
 typedef enum { none                   = 0  , /* For restart fields */
-               load_unique            = 1  , /* path_fmt_type to load from */ 
-               load_base_case         = 2  , /* Filename to load */
-	       layer_trends           = 4  , /* Config file */   
-	       gaussian_perturbations = 8  , /* Config file */   
+               load_unique            = 1    /* path_fmt_type to load from */ 
+
 } field_init_type;
 
 /*
@@ -117,6 +115,7 @@ void                    field_config_enkf_OFF(field_config_type * );
 bool                    field_config_enkf_mode(const field_config_type * config);
 void                    field_config_scanf_ijk(const field_config_type *  , bool , const char * , int , int * , int * , int * , int *);
 const char            * field_config_get_key(const field_config_type * );
+field_func_type       * field_config_get_init_transform(const field_config_type * );
 field_func_type       * field_config_get_output_transform(const field_config_type * );
 void                    field_config_set_output_transform(field_config_type * config , field_func_type * );
 void                    field_config_assert_binary( const field_config_type *  , const field_config_type *  , const char * );
