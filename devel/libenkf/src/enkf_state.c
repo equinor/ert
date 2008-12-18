@@ -678,8 +678,14 @@ static void enkf_state_ecl_load(enkf_state_type * enkf_state , bool unified , in
     enkf_state_ecl_load2(enkf_state , unified , 0);
     enkf_state_fwrite(enkf_state , dynamic_state , 0 , analyzed);
   }
-  enkf_state_ecl_load2(enkf_state , unified , report_step2);
-  enkf_state_fwrite(enkf_state  , dynamic_state + dynamic_result , report_step2 , forecast);
+
+  /**
+    Loading intermediate report steps.
+  */
+  for(int step_nr = report_step1 + 1; step_nr <= report_step2; step_nr++) {
+    enkf_state_ecl_load2(enkf_state , unified , step_nr);
+    enkf_state_fwrite(enkf_state  , dynamic_state + dynamic_result , step_nr , forecast);
+  }
 }
 
 
@@ -1055,8 +1061,10 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
       final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
       
       if (final_status == job_queue_complete_OK) {
-	if (run_info->load_results)
-	  enkf_state_ecl_load(enkf_state , unified , run_info->step1 , run_info->step2);
+	if (run_info->load_results) {
+          for(int step_nr = run_info->step1 + 1; step_nr <= run_info->step2; step_nr++)
+            enkf_state_ecl_load(enkf_state , unified , step_nr - 1 , step_nr);
+        }
 	break;
       } else if (final_status == job_queue_complete_FAIL) {
 	fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
