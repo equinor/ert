@@ -88,7 +88,7 @@ int main(int argc, char **argv)
 
   // Try to get a time series
   {
-    char   * summary_key = "GOPR:FIELD";
+    char   * summary_key = "FOPT:FIELD";
     bool   * defaults_used;
     double * values;
 

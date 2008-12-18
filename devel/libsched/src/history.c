@@ -172,7 +172,7 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
       }
     }
 
-    if(use_h_keywords)
+    if(!use_h_keywords)
     {
       insert_obs(well_list[well_nr], "WOPR");
       insert_obs(well_list[well_nr], "WWPR");
@@ -181,6 +181,13 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
       insert_obs(well_list[well_nr], "WTHP");
       insert_obs(well_list[well_nr], "WWCT");
       insert_obs(well_list[well_nr], "WGOR");
+      insert_obs(well_list[well_nr], "WOPT");
+      insert_obs(well_list[well_nr], "WGPT");
+      insert_obs(well_list[well_nr], "WWPT");
+      insert_obs(well_list[well_nr], "WWIR");
+      insert_obs(well_list[well_nr], "WWIT");
+      insert_obs(well_list[well_nr], "WGIR");
+      insert_obs(well_list[well_nr], "WGIT");
     }
     else
     {
@@ -191,6 +198,13 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
       insert_obs_use_h(well_list[well_nr], "WTHPH", "WTHP");
       insert_obs_use_h(well_list[well_nr], "WWCTH", "WWCT");
       insert_obs_use_h(well_list[well_nr], "WGORH", "WGOR");
+      insert_obs_use_h(well_list[well_nr], "WOPTH", "WOPT");
+      insert_obs_use_h(well_list[well_nr], "WGPTH", "WGPT");
+      insert_obs_use_h(well_list[well_nr], "WWPTH", "WOPT");
+      insert_obs_use_h(well_list[well_nr], "WWIRH", "WWIR");
+      insert_obs_use_h(well_list[well_nr], "WWITH", "WWIT");
+      insert_obs_use_h(well_list[well_nr], "WGIRH", "WGIR");
+      insert_obs_use_h(well_list[well_nr], "WGITH", "WGIT");
     }
 
     hash_insert_hash_owned_ref(well_hash, well_list[well_nr], well_obs, hash_free__);
