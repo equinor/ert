@@ -488,6 +488,14 @@ void conf_instance_insert_owned_sub_instance(
   if(sub_conf_instance->conf_class->super_class != conf_instance->conf_class)
     util_abort("%s: Internal error. Trying to insert instance of unknown type.\n", __func__);
 
+  /** Warn if the sub_instance already exists and is overwritten. */
+  if(hash_has_key(conf_instance->sub_instances, sub_conf_instance->name))
+  {
+    printf("WARNING: Overwriting instance \"%s\" of class \"%s\" in instance \"%s\" of class \"%s\"\n",
+           sub_conf_instance->name, conf_instance_get_class_name_ref(sub_conf_instance),
+           conf_instance->name, conf_instance_get_class_name_ref(conf_instance));
+  }
+
   hash_insert_hash_owned_ref(conf_instance->sub_instances,
                              sub_conf_instance->name,
                              sub_conf_instance,
