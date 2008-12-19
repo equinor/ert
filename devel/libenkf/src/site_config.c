@@ -21,11 +21,11 @@
 */
 
 struct site_config_struct {
-  ext_joblist_type * joblist;       /* The list of external jobs which have been installed. 
-                                       These jobs will be the parts of the forward model. */
-  job_queue_type   * job_queue;     /* The queue instance which will run the external jobs. */
-  char             * image_viewer;  /* String pointing to an executable which can show images. */
-  lsf_request_type * lsf_request;   /* Tracking lsf resource request - NULL if we are not using lsf. */
+  ext_joblist_type 	* joblist;       /* The list of external jobs which have been installed. 
+                   	                    These jobs will be the parts of the forward model. */
+  job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
+  char             	* image_viewer;  /* String pointing to an executable which can show images. */
+  lsf_request_type 	* lsf_request;   /* Tracking lsf resource request - NULL if we are not using lsf. */
 };
 
 
@@ -39,7 +39,7 @@ static site_config_type * site_config_alloc_empty() {
   site_config->job_queue    = NULL;
   site_config->image_viewer = NULL;
   site_config->lsf_request  = NULL;  /* Will be set to a value WHEN (IF) installing the lsf_queue */
-
+  
   return site_config;
 }
 

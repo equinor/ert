@@ -14,7 +14,7 @@ extern "C" {
 #include <ecl_grid.h>
 #include <active_list.h>
 #include <field_active.h>
-
+#include <field_trans.h>
 
 
 /** 
@@ -77,9 +77,7 @@ typedef enum { none                   = 0  , /* For restart fields */
 
 typedef struct field_config_struct field_config_type;
 
-typedef  float  (field_func_type) ( float );
 
-field_config_type     * field_config_alloc_complete(const char *  , ecl_type_enum , const ecl_grid_type * , field_file_format_type  , field_file_format_type );
 const char            * field_config_default_extension(field_file_format_type , bool );
 bool                    field_config_get_endian_swap(const field_config_type * );
 bool                    field_config_write_compressed(const field_config_type * );
@@ -88,10 +86,9 @@ field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
-field_config_type     * field_config_alloc_dynamic(const char * , const char * , const char ** , const ecl_grid_type *);
-field_config_type     * field_config_alloc_parameter_no_init(const char *, const ecl_grid_type * , ecl_type_enum);
-field_config_type     * field_config_alloc_parameter(const char * , const char * , const char * , const ecl_grid_type * , field_init_type  , int  , const char ** );
-field_config_type     * field_config_alloc_general(const char *  , const char * , const ecl_grid_type *  , ecl_type_enum , const char * );
+field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid_type * , field_trans_table_type * , int , const char ** );
+field_config_type     * field_config_alloc_parameter(const char * , const char * , const ecl_grid_type * , field_trans_table_type * , int  , const char ** );
+field_config_type     * field_config_alloc_general(const char *  , const char * , const ecl_grid_type *  , ecl_type_enum , field_trans_table_type * , int , const char **);
 void                    field_config_free(field_config_type *);
 void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
 int                     field_config_get_volume(const field_config_type * );

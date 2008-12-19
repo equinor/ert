@@ -1,5 +1,9 @@
 #ifndef __SITE_CONFIG_H__
 #define __SITE_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <config.h>
 #include <ext_joblist.h>
 #include <stringlist.h>
@@ -13,4 +17,7 @@ void                     site_config_free(site_config_type *);
 ext_joblist_type       * site_config_get_installed_jobs( const site_config_type * );
 job_queue_type         * site_config_get_job_queue( const site_config_type * );
 
+#ifdef __cplusplus
+}
+#endif
 #endif 

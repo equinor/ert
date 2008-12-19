@@ -571,7 +571,23 @@ for (int i=0; i < s; i++) {  		       \
 }
     
 
-
+static void field_apply_truncation(field_type * field) {
+  double min_value, max_value;
+  truncation_type   truncation = field_config_get_truncation(field->config , &min_value , &max_value); 
+  if (truncation != truncate_none) {
+    const int data_size          = field_config_get_data_size(field->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+    if (ecl_type == ecl_float_type) {
+      float * data = (float *) field->data;
+      TRUNCATE_MACRO(data_size , data , truncation , min_value , max_value);
+    } else if (ecl_type == ecl_double_type) {
+      double * data = (double *) field->data;
+      TRUNCATE_MACRO(data_size , data , truncation , min_value , max_value);
+    } else 
+      util_abort("%s: Field type not supported for truncation \n",__func__);
+  }
+}
+  
 /** 
     Does both the explicit output transform *AND* the truncation.
 */
@@ -588,18 +604,7 @@ static void field_output_transform(field_type * field) {
     if (output_transform != NULL)
       field_inplace_output_transform(field);
     
-    if (truncation != truncate_none) {
-      const int data_size          = field_config_get_data_size(field->config);   
-      const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-      if (ecl_type == ecl_float_type) {
-	float * data = (float *) field->data;
-	TRUNCATE_MACRO(data_size , data , truncation , min_value , max_value);
-      } else if (ecl_type == ecl_double_type) {
-	double * data = (double *) field->data;
-	TRUNCATE_MACRO(data_size , data , truncation , min_value , max_value);
-      } else 
-	util_abort("%s: Field type not supported for truncation \n",__func__);
-    }
+    field_apply_truncation(field);
   }
 }
 
@@ -680,22 +685,17 @@ void field_ecl_write(const field_type * __field , const char * file , fortio_typ
 
 void field_initialize(field_type *field , int iens) {
   field_init_type init_type = field_config_get_init_type(field->config);
-  if (init_type & load_unique) {
+  if (init_type == load_unique) {
     char * filename = field_config_alloc_init_file(field->config , iens);
     field_fload(field , filename , field_config_get_endian_swap(field->config));
-    init_type -= load_unique;
     free(filename);
-
   }
-  if (init_type != none) 
-    util_abort("%s not fully implemented ... \n",__func__);
-
-
   /* 
      Doing the input transform - observe that this is done inplace on
      the data, not as the output transform which is done on a copy of
      prior to export.
   */
+  field_apply_truncation(field);
   {
     field_func_type * init_transform = field_config_get_init_transform(field->config);
     if (init_transform != NULL) 

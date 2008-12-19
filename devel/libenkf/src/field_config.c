@@ -13,10 +13,58 @@
 #include <math.h>
 #include <field_active.h>
 #include <active_list.h>
+#include <field_trans.h>
 
-/*
-  Observe the following convention:
-  
+/**
+   About transformations and truncations
+   -------------------------------------
+
+   The values of the fields data can be automagically manipulated through two methods:
+
+   * You can specify a min and a max value which will serve as truncation.
+
+   * You can specify transformation functions which are applied to the field as follows:
+
+     init_transform: This function is applied to the field when the
+        field is loaded the first time, i.e. initialized. It is *NOT*
+        applied under subsequent loads of dynamic fields during the
+        execution.
+
+     output_transform: This function is applied to the field before it
+        is exported to eclipse.
+
+
+                            	                          ___________________________________
+_______________       _________	      ___________	 /                                   \
+               \     /         \     /         	 \	 |  The internal representation      |
+ Geo Modelling |     |Truncate |     | input-    |	 |  of the field. This (should)      |
+ creates a     |==>==|min and  |==>==| transform |===>===|  be a normally distributed        |
+ realization   |     |max.     |     | 	     	 |	 |  variable suitable for updates    |
+_______________/     \_________/     \___________/	 |  with EnKF.                       |
+                               	              		 \___________________________________/   ___
+|<----   This path is ONLY executed during INIT ------->|                  |                     /|\
+                                                                          \|/                     |
+							          _________|__________		  |
+                                                                 /                    \		  |   This code is run
+                                                                 |  Output transform  |		  |   every time a field
+                                                                 \____________________/		  |   is exported from
+                                                                           |			  |   enkf to the forward
+                                                                          \|/			  |   model - i.e. ECLIPSE.
+							          _________|__________		  |
+                                                                 /                    \		  |
+                                                                 | Truncate min/max   | 	  |
+                                                                 \____________________/		  |
+                                                                           |			  |
+                                                                          \|/			  |
+							          _________|__________		  |
+                                                                 /                    \		  |
+                                                                 |    FORWARD MODEL   | 	  |
+                                                                 \____________________/		_\|/_
+
+*/
+
+/*Observe the following convention:
+
     global_index:  [0 , nx*ny*nz)
     active_index:  [0 , nactive)
 */
@@ -25,26 +73,24 @@
 
 struct field_config_struct {
   CONFIG_STD_FIELDS;
-  int nx,ny,nz;                         /* The number of elements in the three directions. */ 
-  int sx,sy,sz;                         /* The stride in the various directions, i.e. when adressed as one long vector in memory you jump sz elements to iterate along the z direction. */ 
-  const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */ 
+  int nx,ny,nz;                         /* The number of elements in the three directions. */
+  const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */
 
   active_list_type * active_list;
-  
-  truncation_type truncation;           /* How the field should be trunacted before exporting for simulation. */
-  double   	  min_value;            /* The min value used in truncation. */   
-  double   	  max_value;            /* The maximum value used in truncation. */
 
+  int             truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. */
+  double   	  min_value;            /* The min value used in truncation. */
+  double   	  max_value;            /* The maximum value used in truncation. */
   int             sizeof_ctype;
-  
+
   field_file_format_type  export_format;
-  field_file_format_type  import_format;    
+  field_file_format_type  import_format;
   ecl_type_enum           internal_ecl_type;
   ecl_type_enum           export_ecl_type;
-  field_init_type         init_type; 
+  field_init_type         init_type;
   char          	* base_file;
   char          	* perturbation_config_file;
-  char                  * layer_config_file;  
+  char                  * layer_config_file;
   path_fmt_type         * init_file_fmt;
 
   bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
@@ -54,7 +100,7 @@ struct field_config_struct {
   bool add_perturbation;
 
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
-  field_func_type         * init_transform;      /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/  
+  field_func_type         * init_transform;      /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
 };
 
 
@@ -113,8 +159,8 @@ static const char * field_config_file_type_string(field_file_format_type file_ty
    It will return UPPERCASE or lowercase depending on the value of the
    second argument.
 */
-   
-   
+
+
 const char * field_config_default_extension(field_file_format_type file_type, bool upper_case) {
   if (file_type == rms_roff_file) {
     if (upper_case)
@@ -123,7 +169,7 @@ const char * field_config_default_extension(field_file_format_type file_type, bo
       return "roff";
   } else if (file_type == ecl_grdecl_file) {
     if (upper_case)
-      return "GRDECL"; 
+      return "GRDECL";
     else
       return "grdecl";
   } else
@@ -159,10 +205,10 @@ static field_file_format_type field_config_default_export_format(const char * fi
       export_format = ecl_grdecl_file;
     else if (strcmp(extension , "ROFF") == 0)
       export_format = rms_roff_file;
-    
+
     free(extension);
   }
-  
+
   return export_format;
 }
 
@@ -170,7 +216,7 @@ static field_file_format_type field_config_default_export_format(const char * fi
 
 
 /**
-   This function prompts the user for a file type. 
+   This function prompts the user for a file type.
 
    If the parameter 'import' is true we provide the alternative
    ecl_kw_file (in that case the program itself will determine
@@ -189,7 +235,7 @@ field_file_format_type field_config_manual_file_type(const char * prompt , bool 
   if (import)
     printf(" %3d: %s.\n" , ecl_kw_file     , field_config_file_type_string(ecl_kw_file));
   else {
-    printf(" %3d: %s.\n" , ecl_kw_file_active_cells  , field_config_file_type_string(ecl_kw_file_active_cells));      
+    printf(" %3d: %s.\n" , ecl_kw_file_active_cells  , field_config_file_type_string(ecl_kw_file_active_cells));
     printf(" %3d: %s.\n" , ecl_kw_file_all_cells     , field_config_file_type_string(ecl_kw_file_all_cells));
   }
   printf(" %3d: %s.\n" , ecl_grdecl_file , field_config_file_type_string(ecl_grdecl_file));
@@ -213,7 +259,7 @@ file. It can determine the following three types of files:
      in eclipse restart files.
 
   rms_roff_file: An rms roff file - obviously.
- 
+
   ecl_grdecl_file: This is a file containing a parameter of the form
      found in eclipse grid declaration files, i.e. formatted, one
      keyword and all elements (active and not).
@@ -234,7 +280,7 @@ field_file_format_type field_config_guess_file_type(const char * filename , bool
     file_type = rms_roff_file;
   else if (ecl_kw_is_grdecl_file(stream))  /* This is the weakest test - and should be last in a cascading if / else hierarchy. */
     file_type = ecl_grdecl_file;
-  else 
+  else
     file_type = undefined_format;              /* MUST Check on this return value */
 
   fclose(stream);
@@ -253,7 +299,15 @@ field_file_format_type field_config_get_import_format(const field_config_type * 
 
 
 
-static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_type_enum ecl_type , const ecl_grid_type * ecl_grid , field_file_format_type import_format , field_file_format_type export_format) {
+
+static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      	   , /* 1: Keyword name */
+						ecl_type_enum ecl_type   	      	   , /* 2: Type of underlying data.*/
+						const ecl_grid_type * ecl_grid        	   , /* 3: The underlying grid */
+						field_file_format_type import_format  	   , /* 4: The format used when loading instances of this field. */
+						field_file_format_type export_format  	   , /* 5: The format used when exporting (for ECLIPSE) instance of this field. */
+						field_trans_table_type * field_trans_table , /* 6: Table of available transformation functions for input/output. */
+						int num_options                            , /* 7: The number of extra options. */
+						const char ** options) {                     /* 8: Extra options in format: MIN:0.001   MAX:0.89 ...  */
   field_config_type *config = util_malloc(sizeof *config, __func__);
   config->__type_id = FIELD_CONFIG_ID;
   /*
@@ -261,30 +315,24 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
     and generally *not* equal to nx*ny*nz.
   */
 
-  /* 
+  /*
      The import format should in general be undefined_format - then
      the type will be determined automagically (unless it is
      restart_block).
   */
   config->export_format 	   = export_format;
-  config->import_format 	   = import_format;      
+  config->import_format 	   = import_format;
   config->grid          	   = ecl_grid;
   config->base_file                = NULL;
   config->perturbation_config_file = NULL;
   config->layer_config_file        = NULL;
-  
+
   config->ecl_kw_name = NULL;
   field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
-
   ecl_grid_get_dims(ecl_grid , &config->nx , &config->ny , &config->nz , &config->data_size);
 
-
   config->truncation = truncate_none;
-  config->sx = 1;
-  config->sy = config->nx;
-  config->sz = config->nx * config->ny;
-
   config->__enkf_mode              = true;
   config->fmt_file    	      	   = false;
   config->endian_swap 	      	   = true;
@@ -294,24 +342,100 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name , ecl_t
   config->layer_config_file        = NULL;
   config->init_file_fmt            = NULL;
   config->output_transform         = NULL;
-  config->init_transform          = NULL;
+  config->init_transform           = NULL;
+  config->init_type                = none;
   config->active_list              = active_list_alloc( config->data_size );
   field_config_set_all_active(config);
+
+  /* Starting on the options. */
+  {
+    int iopt;
+    for (iopt = 0; iopt < num_options; iopt++) {
+      char ** tokens;
+      int     num_tokens;
+      util_split_string(options[iopt] , ":" , &num_tokens , &tokens);
+      if (num_tokens != 2)
+	fprintf(stderr,"** Warning the option: \"%s\" could not be interpredet as \"OPTION:VALUE\" - ignored. \n", options[iopt]);
+      else {
+	bool  option_OK     = false;
+	const char * option = tokens[0];
+	const char * value  = tokens[1];
+
+	/*
+	   This could (should ??) have been implemented with
+	   if-then-else; isolated if-blocks have been chosen for
+	   clarity. Must update option_OK in every block, and check it
+	   at the bottom.
+
+	*/
+
+	if (strcmp(option , "MIN") == 0) {
+	  double min_value;
+	  if (util_sscanf_double( value , &min_value)) {
+	    config->min_value  = min_value;
+	    util_bitmask_on( &config->truncation , truncate_min );
+	  } else
+	    fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid minimum value - ignored \n",options[iopt]);
+	  option_OK = true;
+	}
+
+	if (strcmp(option , "MAX") == 0) {
+	  double max_value;
+	  if (util_sscanf_double( value , &max_value)) {
+	    config->max_value  = max_value;
+	    util_bitmask_on( &config->truncation , truncate_max );
+	  } else
+	    fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid maximum value - ignored \n",options[iopt]);
+	  option_OK = true;
+	}
+
+
+	if (strcmp(option , "OUTPUT_TRANSFORM") == 0) {
+	  if (field_trans_table_has_key( field_trans_table , value))
+	    config->output_transform = field_trans_table_lookup( field_trans_table , value);
+	  else {
+	    fprintf(stderr,"** Warning: function name:%s not recognized - ignored. \n",options[iopt]);
+	    field_trans_table_fprintf(field_trans_table , stderr);
+	  }
+	  option_OK = true;
+	}
+
+
+	if (strcmp(option , "INIT_TRANSFORM") == 0) {
+	  if (field_trans_table_has_key( field_trans_table , value))
+	    config->init_transform = field_trans_table_lookup( field_trans_table , value);
+	  else {
+	    fprintf(stderr,"** Warning: function name:%s not recognized - ignored. \n",options[iopt]);
+	    field_trans_table_fprintf(field_trans_table , stderr);
+	  }
+	  option_OK = true;
+	}
+
+
+	if (strcmp(option , "INIT_FILES") == 0) {
+	  config->init_file_fmt = path_fmt_alloc_path_fmt( value );
+	  config->init_type     = load_unique;
+	  option_OK = true;
+	}
+
+	if (!option_OK)
+	  fprintf(stderr,"** Warning: \"%s\" not recognized - ignored \n",options[iopt]);
+
+      }
+      util_free_stringlist( tokens , num_tokens );
+    }
+  }
+
   return config;
-}
-
-
-field_config_type * field_config_alloc_complete(const char * ecl_kw_name , ecl_type_enum ecl_type , const ecl_grid_type * ecl_grid , field_file_format_type import_format , field_file_format_type export_format) {
-  return field_config_alloc__(ecl_kw_name , ecl_type , ecl_grid , import_format , export_format);
 }
 
 
 
 static void field_config_set_all_active__(field_config_type * field_config, bool active) {
 
-  if (active) 
+  if (active)
     active_list_set_all_active(field_config->active_list);
-  else 
+  else
     active_list_reset(field_config->active_list);
 
 }
@@ -337,7 +461,7 @@ inline int field_config_active_index(const field_config_type * config , int i , 
 }
 
 
-/** 
+/**
     This function checks that i,j,k are in the intervals [0..nx),
     [0..ny) and [0..nz). It does *NOT* check if the corresponding
     index is active.
@@ -349,48 +473,21 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 
 
 
-field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const char * truncation, const char ** truncation_values , const ecl_grid_type * ecl_grid) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , ecl_restart_block);
-  config->init_type          = none;
-  field_config_set_truncation_from_strings( config , truncation , truncation_values );
+field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , int num_options , const char ** options) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , ecl_restart_block , trans_table , num_options , options);
   return config;
 }
 
 
 
-field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , ecl_type_enum internal_type , const char * init_fmt) {
+field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , ecl_type_enum internal_type , field_trans_table_type * trans_table , int num_options , const char ** options) {
   field_config_type * config;
   field_file_format_type import_format = undefined_format;
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , import_format , export_format);
-  if (init_fmt != NULL) {
-    config->init_type         = load_unique;
-    config->init_file_fmt     = path_fmt_alloc_path_fmt( init_fmt );
-  } else {
-    config->init_type = none;
-    config->init_file_fmt = NULL;
-  }
-    
+  config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , import_format , export_format , trans_table ,num_options , options);
+
   return config;
-}
-
-
-
-field_config_type * field_config_alloc_parameter_no_init(const char * ecl_kw_name, const ecl_grid_type * ecl_grid , ecl_type_enum internal_type) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , undefined_format , undefined_format);
-  config->init_type          = none;
-  return config;
-}
-
-
-static float pow10f(float x) {
-  return powf(10.0 , x);
-}
-
-
-static float trunc_pow10f(float x) {
-  return util_float_max(powf(10.0 , x) , 0.001);
 }
 
 
@@ -398,67 +495,23 @@ static float trunc_pow10f(float x) {
 
 
 /* This interface is just to general */
-#define ASSERT_CONFIG_FILE(index , len) if (index >= len) { fprintf(stderr,"%s: lacking configuration information - aborting \n",__func__); abort(); }
-field_config_type * field_config_alloc_parameter(const char * ecl_kw_name , const char * ecl_file , const char * output_transform_name, 
-						 const ecl_grid_type * ecl_grid ,field_init_type init_type , int config_len , const char ** config_files) {
+field_config_type * field_config_alloc_parameter(const char * ecl_kw_name 	      ,
+						 const char * ecl_file    	      ,
+						 const ecl_grid_type * ecl_grid       ,
+						 field_trans_table_type * trans_table ,
+						 int num_options                      ,
+						 const char ** options) {
   field_config_type * config;
   field_file_format_type import_format = undefined_format;
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format);
-  config->init_type = init_type;
-  if (init_type == none) 
+  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format , trans_table , num_options , options);
+  if (config->init_type == none)
     util_abort("%s: invalid init type \n",__func__);
-    
-  {
-    int config_index = 0;
-    if (init_type & load_unique) {
-      ASSERT_CONFIG_FILE(config_index , config_len);
-      config->init_file_fmt = path_fmt_alloc_path_fmt(config_files[config_index]);
-      config_index++;
-    }
 
-    //if (init_type & load_base_case) {
-    //  ASSERT_CONFIG_FILE(config_index , config_len);
-    //  config->base_file = util_alloc_string_copy(config_files[config_index]);
-    //  config_index++;
-    //}
-    //
-    //if (init_type & layer_trends) {
-    //  ASSERT_CONFIG_FILE(config_index , config_len);
-    //  config->layer_config_file = util_alloc_string_copy(config_files[config_index]);
-    //  config_index++;
-    //}
-    //
-    //if (init_type & gaussian_perturbations) {
-    //  ASSERT_CONFIG_FILE(config_index , config_len);
-    //  config->perturbation_config_file = util_alloc_string_copy(config_files[config_index]);
-    //  config_index++;
-    //}
-
-  }
-  {
-    char * trans = util_alloc_strupr_copy( output_transform_name );
-    field_func_type * func = NULL;
-    if (strcmp(trans , "NULL") == 0)
-      func = NULL;
-    else if (strcmp(trans , "NONE") == 0)
-      func = NULL;
-    else if (strcmp(trans , "EXP") == 0)
-      func = expf;  /* The most common internal implementation is probably float. */
-    else if (strcmp(trans , "POW10") == 0)
-      func = pow10f;
-    else if (strcmp(trans , "TRUNC_POW10") == 0)
-      func = trunc_pow10f;
-    else 
-      util_exit("%s: sorry - function_name:%s not recognized \n",__func__ , output_transform_name); 
-    field_config_set_output_transform( config , func );
-    free(trans);
-  }
 
   return config;
 }
-#undef ASSERT_CONFIG_FILE
 
 
 
@@ -475,45 +528,45 @@ void field_config_set_truncation(field_config_type * config , truncation_type tr
 
 
 
-void field_config_set_truncation_from_strings(field_config_type * config , const char * _truncation_name , const char ** values) {
-  if (_truncation_name != NULL) {
-    char * truncation_name = util_alloc_strupr_copy( _truncation_name ) ;
-    truncation_type truncation = truncate_none;
-
-    if (strcmp(truncation_name , "NONE") == 0)
-      truncation = truncate_none;
-    else if (strcmp(truncation_name , "MIN") == 0)
-      truncation = truncate_min;
-    else if (strcmp(truncation_name , "MAX") == 0)
-      truncation = truncate_max;
-    else if (strcmp(truncation_name , "MINMAX") == 0)
-      truncation = truncate_minmax;
-    else 
-      util_abort("%s: truncation string:%s is not recognized \n",__func__ , _truncation_name);
-    
-    {
-      int    value_index = 0;
-      double min_value 	 = -1;
-      double max_value 	 = -1;
-
-      if (truncation & truncate_min) {
-	if (!util_sscanf_double(values[value_index] , &min_value))
-	  util_abort("%s: failed to parse:%s as double \n",__func__ , values[value_index]);
-	
-	if (truncation == truncate_minmax)
-	  value_index++;
-      }
-      
-      if (truncation & truncate_max) {
-	if (! util_sscanf_double(values[value_index] , &max_value))
-	  util_abort("%s: failed to parse:%s as double \n",__func__ , values[value_index]);
-      }
-      
-      field_config_set_truncation(config , truncation , min_value , max_value);
-    }
-    free( truncation_name );
-  }
-}
+//void field_config_set_truncation_from_strings(field_config_type * config , const char * _truncation_name , const char ** values) {
+//  if (_truncation_name != NULL) {
+//    char * truncation_name = util_alloc_strupr_copy( _truncation_name ) ;
+//    truncation_type truncation = truncate_none;
+//
+//    if (strcmp(truncation_name , "NONE") == 0)
+//      truncation = truncate_none;
+//    else if (strcmp(truncation_name , "MIN") == 0)
+//      truncation = truncate_min;
+//    else if (strcmp(truncation_name , "MAX") == 0)
+//      truncation = truncate_max;
+//    else if (strcmp(truncation_name , "MINMAX") == 0)
+//      truncation = truncate_minmax;
+//    else
+//      util_abort("%s: truncation string:%s is not recognized \n",__func__ , _truncation_name);
+//
+//    {
+//      int    value_index = 0;
+//      double min_value 	 = -1;
+//      double max_value 	 = -1;
+//
+//      if (truncation & truncate_min) {
+//	if (!util_sscanf_double(values[value_index] , &min_value))
+//	  util_abort("%s: failed to parse:%s as double \n",__func__ , values[value_index]);
+//
+//	if (truncation == truncate_minmax)
+//	  value_index++;
+//      }
+//
+//      if (truncation & truncate_max) {
+//	if (! util_sscanf_double(values[value_index] , &max_value))
+//	  util_abort("%s: failed to parse:%s as double \n",__func__ , values[value_index]);
+//      }
+//
+//      field_config_set_truncation(config , truncation , min_value , max_value);
+//    }
+//    free( truncation_name );
+//  }
+//}
 
 
 truncation_type field_config_get_truncation(const field_config_type * config , double * min_value , double * max_value) {
@@ -537,7 +590,7 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 
 
 void field_config_free(field_config_type * config) {
-  
+
   util_safe_free(config->ecl_kw_name);
   util_safe_free(config->base_file);
   util_safe_free(config->perturbation_config_file);
@@ -546,7 +599,7 @@ void field_config_free(field_config_type * config) {
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
   free(config);
 }
-  
+
 
 
 int field_config_get_volume(const field_config_type * config) {
@@ -583,7 +636,7 @@ int field_config_get_sizeof_ctype(const field_config_type * config) { return con
 
 
 /**
-   Returns true / false whether a cell is active. 
+   Returns true / false whether a cell is active.
 */
 bool field_config_active_cell(const field_config_type * config , int i , int j , int k) {
   int active_index = field_config_active_index(config , i,j,k);
@@ -657,7 +710,7 @@ void field_config_get_ijk(const field_config_type * config , int active_index, i
 
 
 void field_config_scanf_ijk(const field_config_type * config , bool active_only , const char * _prompt , int prompt_len , int *_i , int *_j , int *_k , int * _global_index) {
-  const char * sep_set = " ,.:"; 
+  const char * sep_set = " ,.:";
   char * prompt = util_alloc_sprintf("%s (%d,%d,%d)" , _prompt , config->nx , config->ny , config->nz);
   bool OK;
   int i,j,k,global_index;
@@ -676,16 +729,16 @@ void field_config_scanf_ijk(const field_config_type * config , bool active_only 
 
     OK = true;
     current_ptr = input;
-    current_ptr = util_parse_int(current_ptr , &i , &OK);  
-    current_ptr = util_skip_sep(current_ptr , sep_set , &OK); 
-    current_ptr = util_parse_int(current_ptr , &j , &OK);  
-    current_ptr = util_skip_sep(current_ptr , sep_set , &OK); 
-    current_ptr = util_parse_int(current_ptr , &k , &OK);  
-    if (OK) 
+    current_ptr = util_parse_int(current_ptr , &i , &OK);
+    current_ptr = util_skip_sep(current_ptr , sep_set , &OK);
+    current_ptr = util_parse_int(current_ptr , &j , &OK);
+    current_ptr = util_skip_sep(current_ptr , sep_set , &OK);
+    current_ptr = util_parse_int(current_ptr , &k , &OK);
+    if (OK)
       if (current_ptr[0] != '\0') OK = false; /* There was something more at the end */
-    
+
     /* Now we have three valid integers. */
-  
+
     if (OK) {
       if (i <= 0 || i > config->nx) OK = false;
       if (j <= 0 || j > config->ny) OK = false;
@@ -693,7 +746,7 @@ void field_config_scanf_ijk(const field_config_type * config , bool active_only 
       i--; j--; k--;
     }
     /* Now we have three integers in the right interval. */
-    
+
 
     if (OK) {
       global_index = field_config_active_index(config , i,j,k);
@@ -722,7 +775,7 @@ void field_config_scanf_ijk(const field_config_type * config , bool active_only 
    The field_config and field objects are mainly written for use in
    the enkf application. In that setting a field instance is *NOT*
    allowed to write on it's field_config object.
-   
+
    However, when used in a stand-alone application, i.e. in the
    field_convert program, it is desirable for the field object to be
    allowed to write to / update the field_config object. In an attempt
@@ -732,7 +785,7 @@ void field_config_scanf_ijk(const field_config_type * config , bool active_only 
    After you have called field_config_enkf_OFF() you can subsequently
    call field_config_set_key() to change the key of the field_config
    object. This will typically be interesting when an unknown file is
-   loaded. 
+   loaded.
 
    Currently only the roff loader supports set operations on the
    key. Also it is essential to observe that this will break **HARD**
@@ -779,7 +832,7 @@ void field_config_set_output_transform(field_config_type * config , field_func_t
 
 
 /*
-  This function asserts that a unary function can be applied 
+  This function asserts that a unary function can be applied
   to the field - i.e. that the underlying data_type is ecl_float or ecl_double.
 */
 void field_config_assert_unary( const field_config_type * field_config , const char * caller) {
@@ -791,7 +844,7 @@ void field_config_assert_unary( const field_config_type * field_config , const c
 }
 
 
-/* 
+/*
    Asserts that two fields can be combined in a binary operation.
 */
 void field_config_assert_binary( const field_config_type * config1 , const field_config_type * config2 , const char * caller) {
@@ -818,7 +871,7 @@ void field_config_activate(field_config_type * config , active_mode_type active_
     active_list_set_all_active(config->active_list);
   else {
     active_list_reset(config->active_list);
-    if (active_mode == partly_active) 
+    if (active_mode == partly_active)
       field_active_update_active_list( active , config->active_list);
   }
 }

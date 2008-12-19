@@ -90,6 +90,34 @@ enkf_impl_type enkf_types_check_impl_type(const char * impl_type_string) {
 }
 
 
+/*****************************************************************/
+/* 
+   These two functions update the truncation variable to ensure that
+   it applies truncate_min and truncate_max respectively. The somewhat
+   involved implementation is to ensure that the functions can be
+   called many times.
+*/
+
+
+void enkf_types_set_truncate_min(truncation_type * __trunc) {
+  truncation_type trunc = *__trunc;
+
+  if (!(trunc & truncate_min))
+    trunc += truncate_min;
+
+  *__trunc = trunc;
+}
+
+
+void enkf_types_set_truncate_max(truncation_type * __trunc) {
+  truncation_type trunc = *__trunc;
+
+  if (!(trunc & truncate_max))
+    trunc += truncate_max;
+
+  *__trunc = trunc;
+}
+
 
 
 

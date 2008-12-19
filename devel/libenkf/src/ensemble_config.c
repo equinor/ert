@@ -41,13 +41,15 @@
 #include <config.h>
 #include <gen_data_config.h>
 #include <pthread.h>                /* Must have rw locking on the config_nodes ... */
+#include <field_trans.h>
 
 
 
 
 struct ensemble_config_struct {
-  int  		   ens_size;        /*  The size of the ensemble  */
-  hash_type       *config_nodes;    /*  A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  int  		  	   ens_size;          /*  The size of the ensemble  */
+  hash_type       	 * config_nodes;      /*  A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
+  field_trans_table_type * field_trans_table; /* A table of the transformations which are available to apply on fields. */
 };
 
 
@@ -95,6 +97,7 @@ enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_conf
 
 void ensemble_config_free(ensemble_config_type * ensemble_config) {
   hash_free(ensemble_config->config_nodes);
+  field_trans_table_free( ensemble_config->field_trans_table );
   free(ensemble_config);
 }
 
@@ -251,7 +254,7 @@ void ensemble_config_add_config_items(config_type * config) {
 
 
   item = config_add_item(config , "SUMMARY" , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 ,  NULL);
+  config_item_set_argc_minmax(item , 1 , 1 ,  NULL);
   
 
   /* 
@@ -265,11 +268,11 @@ void ensemble_config_add_config_items(config_type * config) {
 }
 
 
-
-
 ensemble_config_type * ensemble_config_alloc(const config_type * config , const ecl_grid_type * grid) {
   int i;
   ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( strtol(config_get(config , "NUM_REALIZATIONS") , NULL , 10) );
+  ensemble_config->field_trans_table     = field_trans_table_alloc();
+
 
   /* MULTZ */
   for (i=0; i < config_get_occurences(config , "MULTZ"); i++) {
@@ -343,48 +346,57 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 
 
   /* FIELD */
-  for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
-    const int    size            = stringlist_get_size(tokens);
-    const char * key             = stringlist_iget(tokens , 0);
-    const char * var_type_string = stringlist_iget(tokens , 1);
-    
-    if (strcmp(var_type_string , "DYNAMIC") == 0) {
-      const char * truncation         = NULL;
-      const char ** truncation_values = NULL;
-      if (size >= 3) {
-	truncation         = stringlist_iget(tokens , 2);
-	truncation_values  = stringlist_iget_argv(tokens , 3);
-      }
-      ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , NULL , NULL , field_config_alloc_dynamic(key , truncation , truncation_values , grid));
-    } else if (strcmp(var_type_string , "PARAMETER") == 0) {
-      const char *  ecl_file     	  = stringlist_iget(tokens , 2);
-      const char *  init_string  	  = stringlist_iget(tokens , 3);
-      const char *  output_transform_name = stringlist_iget(tokens , 4);
-      const char ** config_files 	  = stringlist_iget_argv(tokens , 5);
-      int   num_config_files     	  = stringlist_get_size(tokens) - 5; 
-      int   init_mode = -13;
-      if (util_sscanf_int(init_string , &init_mode)) 
-	ensemble_config_add_node(ensemble_config , key , parameter   , FIELD , ecl_file , NULL , 
-				 field_config_alloc_parameter(key , ecl_file , output_transform_name , grid ,init_mode , num_config_files , config_files));
-      else 
-	util_abort("%s: init_mode:%s must be a valid integer - aborting \n",__func__ , init_string);
-    } else if (strcmp(var_type_string , "GENERAL") == 0) {
-      const char * enkf_outfile = stringlist_iget(tokens , 2); /* Out before in ?? */
-      const char * enkf_infile  = stringlist_iget(tokens , 3);
-      const char * init_fmt     = stringlist_iget(tokens , 4);
-      ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , enkf_outfile , enkf_infile , field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , init_fmt));
-    } else 
-      util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
-  }
+  {
+    field_trans_table_type * field_trans_table = ensemble_config->field_trans_table;
+    for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
+      const char *  key             = stringlist_iget(tokens , 0);
+      const char *  var_type_string = stringlist_iget(tokens , 1);
+      
+      if (strcmp(var_type_string , "DYNAMIC") == 0) {
+	int           num_options     = stringlist_get_size(tokens) - 2;
+	const char ** options;
+	if (num_options > 0)
+	  options = stringlist_iget_argv(tokens , 2);
+	else
+	  options = NULL;
 
+	ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , num_options , options));
+      } else if (strcmp(var_type_string , "PARAMETER") == 0) {
+	const char *  ecl_file        = stringlist_iget(tokens , 2);
+	int           num_options     = stringlist_get_size(tokens) - 3;
+	const char ** options;
+	if (num_options > 0)
+	  options = stringlist_iget_argv(tokens , 3);
+	else
+	  options = NULL;
+	
+	ensemble_config_add_node(ensemble_config , key , parameter   , FIELD , ecl_file , NULL , 
+				 field_config_alloc_parameter(key , ecl_file , grid , field_trans_table , num_options , options));
+	
+      } else if (strcmp(var_type_string , "GENERAL") == 0) {
+	const char * enkf_outfile = stringlist_iget(tokens , 2); /* Out before in ?? */
+	const char * enkf_infile  = stringlist_iget(tokens , 3);
+	int           num_options = stringlist_get_size(tokens) - 4;
+	const char ** options;
+	if (num_options > 0)
+	  options = stringlist_iget_argv(tokens , 4);
+	else
+	  options = NULL;
+	
+	ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , enkf_outfile , enkf_infile , 
+			       field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , field_trans_table , num_options , options));
+      } else 
+	util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
+    }
+  }
 
 
   /* SUMMARY */
   for (i=0; i < config_get_occurences(config , "SUMMARY"); i++) {
     const stringlist_type * tokens = config_iget_stringlist_ref(config , "SUMMARY" , i);
     const char * key        = stringlist_iget(tokens , 0);
-
+    
     ensemble_config_ensure_summary(ensemble_config , key );
   }
   

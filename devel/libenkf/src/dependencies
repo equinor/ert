@@ -13,24 +13,25 @@ enkf_ui_main.o                      : enkf_ui_main.c enkf_ui_main.h enkf_ui_run.
 plain_driver_parameter.o            : plain_driver_parameter.c plain_driver_parameter.h enkf_node.o basic_driver.o plain_driver_common.o fs_types.h  
 enkf_main.o                         : enkf_main.c enkf_main.h multz_config.o enkf_config_node.o ecl_static_kw_config.h enkf_types.o field_config.o equil_config.o multz_config.o multflt_config.o obs_data.o meas_matrix.o enkf_state.o analysis.o enkf_obs.o enkf_fs.o gen_kw_config.o gen_data_config.o enkf_serialize.o enkf_sched.o ecl_config.o ensemble_config.o model_config.o site_config.o active_config.o field_config.o ecl_static_kw.o enkf_defaults.o  
 fs_index.o                          : fs_index.c fs_index.h enkf_types.o fs_types.h  
-enkf_ui_plot.o                      : enkf_ui_plot.c enkf_ui_plot.h enkf_main.o enkf_sched.o enkf_obs.o obs_vector.o enkf_ui_util.o ensemble_config.o  
+enkf_ui_plot.o                      : enkf_ui_plot.c enkf_ui_plot.h enkf_main.o enkf_sched.o enkf_obs.o field_obs.o field_config.o obs_vector.o enkf_ui_util.o ensemble_config.o  
 gen_data_active.o                   : gen_data_active.c gen_data_active.h enkf_macros.h  
 gen_kw_config.o                     : gen_kw_config.c gen_kw_config.h ens_config.o enkf_util.o enkf_macros.h trans_func.o scalar_config.o  
 plain_driver_common.o               : plain_driver_common.c plain_driver_common.h enkf_types.o enkf_node.o  
 summary.o                           : summary.c summary.h enkf_macros.h enkf_util.o summary_config.o enkf_types.o enkf_util.o enkf_serialize.o enkf_debug.h  
 enkf_types.o                        : enkf_types.c enkf_types.h  
+analysis.o                          : analysis.c analysis.h obs_data.o meas_matrix.o enkf_types.o  
 model_config.o                      : model_config.c model_config.h enkf_fs.o enkf_sched.o enkf_types.o plain_driver_parameter.o plain_driver_static.o plain_driver_dynamic.o  
 enkf_sched.o                        : enkf_sched.c enkf_sched.h  
 site_config.o                       : site_config.c site_config.h  
-analysis.o                          : analysis.c analysis.h obs_data.o meas_matrix.o enkf_types.o  
+gen_common.o                        : gen_common.c gen_common.h gen_data_config.o  
 multflt_config.o                    : multflt_config.c multflt_config.h ens_config.o enkf_util.o enkf_macros.h trans_func.o scalar_config.o  
 field_active.o                      : field_active.c field_active.h enkf_macros.h active_list.o  
 enkf_obs.o                          : enkf_obs.c enkf_obs.h summary_obs.o field_obs.o enkf_fs.o obs_vector.o enkf_state.o  
 relperm_config.o                    : relperm_config.c relperm_config.h enkf_util.o ens_config.o enkf_macros.h trans_func.o  
 active_config.o                     : active_config.c active_config.h enkf_types.o ensemble_config.o enkf_obs.o active_node.o  
-ensemble_config.o                   : ensemble_config.c ensemble_config.h multz_config.o enkf_config_node.o enkf_types.o field_config.o equil_config.o gen_data_config.o multflt_config.o meas_matrix.o enkf_types.o analysis.o enkf_fs.o gen_kw_config.o relperm_config.o summary.o summary_config.o havana_fault_config.o gen_data.o pilot_point_config.o gen_data_config.o gen_data_config.o  
-gen_common.o                        : gen_common.c gen_common.h gen_data_config.o  
-field_config.o                      : field_config.c field_config.h enkf_types.o enkf_macros.h field_active.o active_list.o  
+ensemble_config.o                   : ensemble_config.c ensemble_config.h multz_config.o enkf_config_node.o enkf_types.o field_config.o equil_config.o gen_data_config.o multflt_config.o meas_matrix.o enkf_types.o analysis.o enkf_fs.o gen_kw_config.o relperm_config.o summary.o summary_config.o havana_fault_config.o gen_data.o pilot_point_config.o gen_data_config.o gen_data_config.o field_trans.o  
+field_trans.o                       : field_trans.c field_trans.h  
+field_config.o                      : field_config.c field_config.h enkf_types.o enkf_macros.h field_active.o active_list.o field_trans.o  
 obs_vector.o                        : obs_vector.c obs_vector.h enkf_fs.o summary_obs.o field_obs.o gen_obs.o ensemble_config.o  
 multflt.o                           : multflt.c multflt.h enkf_types.o enkf_macros.h multflt_config.o enkf_util.o scalar.o enkf_debug.h  
 plain_driver_static.o               : plain_driver_static.c plain_driver_static.h enkf_node.o basic_driver.o ecl_static_kw.o fs_types.h plain_driver_common.o  
