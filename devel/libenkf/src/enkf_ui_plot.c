@@ -92,12 +92,13 @@ void enkf_ui_plot_ensemble(void * arg) {
 
       enkf_ui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
       enkf_ui_util_scanf_iens_range(ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
+      
 	
       node = enkf_node_alloc( config_node );
       {
 	enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-	if ((var_type == dynamic_state) || (var_type == dynamic_result))
-	  plot_state = both;
+	if ((var_type == dynamic_state) || (var_type == dynamic_result)) 
+	  plot_state = enkf_ui_util_scanf_state("Plot Forecast/Analyzed/Both: [F|A|B]" , prompt_len , true);
 	else if (var_type == parameter)
 	  plot_state = analyzed;
 	else
@@ -114,21 +115,37 @@ void enkf_ui_plot_ensemble(void * arg) {
       msg_show(msg);
       for (iens = iens1; iens <= iens2; iens++) {
 	char label[32];
-
+	
 	int this_size = 0;
 	for (step = step1; step <= step2; step++) {
 	  sprintf(label , "%03d/%03d" , iens , step);
 	  msg_update( msg , label);
-	  /* Skipping forecast. */
-	  if (enkf_fs_has_node(fs , config_node , step , iens , analyzed)) {
-	    bool valid;
-	    enkf_fs_fread_node(fs , node , step , iens , analyzed);
-	    y[this_size] = enkf_node_user_get( node , key_index , &valid);
-	    if (valid) {
-	      x[this_size] = step;
-	      this_size++;
-	    }
-	  } 
+	  
+	  /* Forecast block */
+	  if (plot_state & forecast) {
+	    if (enkf_fs_has_node(fs , config_node , step , iens , forecast)) {
+	      bool valid;
+	      enkf_fs_fread_node(fs , node , step , iens , forecast);
+	      y[this_size] = enkf_node_user_get( node , key_index , &valid);
+	      if (valid) {
+		x[this_size] = step;
+		this_size++;
+	      }
+	    } 
+	  }
+	  
+	  /* Analyzed block */
+	  if (plot_state & analyzed) {
+	    if (enkf_fs_has_node(fs , config_node , step , iens , analyzed)) {
+	      bool valid;
+	      enkf_fs_fread_node(fs , node , step , iens , analyzed);
+	      y[this_size] = enkf_node_user_get( node , key_index , &valid);
+	      if (valid) {
+		x[this_size] = step;
+		this_size++;
+	      }
+	    } 
+	  }
 	}
 	__plot_add_data(plot , this_size , x , y );
       }
