@@ -11,8 +11,136 @@
 #include <msg.h>
 #include <enkf_state.h>
 
-/** TODO 
-    This static function header shall be removed when the configuration is unified.... 
+/*
+
+The observation system
+----------------------
+
+The observation system in the EnKF code is a three leayer system. At
+the the top is the enkf_obs_type. The enkf_main object contains one
+enkf_obs instance which has internalized ALL the observation data. In
+enkf_obs the the data is internalized in a hash table, where the keys
+in the table are the keys used the observation file.
+
+The next level is the obs_vector type which is a vector of length
+num_report_steps. Each element in this vector can either point a
+spesific observation instance (which actually contains the data), or
+be NULL, if the observation is not active at this report step. In
+addition the obs_vector contains function pointers to manipulate the
+observation data at the lowest level.
+
+At the lowest level we have spsesific observation instances,
+field_obs, summary_obs and gen_obs. These instances contain the actual
+data.
+
+To summarize we can say:
+
+  1. enkf_obs has ALL the observation data.
+
+  2. obs_vector has the full time series for one observation key,
+     i.e. all the watercuts in well P2.
+
+  3. field_obs/gen_obs/summary_obs instances contain the actual
+     observed data for one (logical) observation and one report step.
+
+
+In the following example we have two observations
+
+ WWCT:OP1 The water cut in well OP1. This is an observation which is
+    active for many report steps, at the lowest level it is
+    implemented as summary_obs.
+
+ RFT_P2 This is an RFT test for one well. Only active at one report
+    step, implemented at the lowest level as a field_obs instance.
+
+
+ In the example below there are in total five report steps, hence all
+ the obs_vector instances have five 'slots'. If there is no active
+ observation for a particular report step, the corresponding pointer
+ in the obs_vector instance is NULL.
+
+
+
+      _____________________           _____________________
+     / 		       	     enkf_obs                      \
+     |							   |
+     |							   |
+     | obs_hash: {"WWCT:OP1" , "RFT_P2"}                   |
+     |   	      |	          |                        |
+     |  	      |	   	  |			   |
+     \________________|___________|________________________/
+		      |		  |
+		      |		  |
+		      |		  |
+		      |		  \--------------------------------------------------------------\
+		      |		  								 |
+		      |										 |
+		     \|/									 |
+ |--- obs_vector: WWCT:OP1 -----------------------------------------------------|		 |
+ | Function pointers:	    --------  --------	--------  --------  --------	|		 |
+ | Pointing to the          |      |  |      |	|      |  |      |  |      |	|		 |
+ | underlying               | NULL |  |  X   |	|  X   |  | NULL |  |  X   |	|		 |
+ | implementation in the    |      |  |  |   |	|  |   |  |      |  |  |   |	|		 |
+ | summary_obs object.      --------  ---|----	---|----  --------  ---|----	|		 |
+ |---------------------------------------|---------|-------------------|--------|		 |
+			       		 |	   |		       |			 |
+			       		\|/	   |		       |			 |
+                                |-- summary_obs -| |		      \|/			 |
+                                | Value: 0.56..	 | |	       |-- summary_obs -|		 |
+			       	| std  : 0.15..	 | |	       | Value: 0.70..  |		 |
+			       	|----------------| |	       | std  : 0.25..  |		 |
+			   			   |	       |----------------|		 |
+  			   			  \|/						 |
+                                          |-- summary_obs -|					 |
+			   		  | Value: 0.62..  |					 |
+			   		  | std  : 0.12..  |					 |
+			   		  |----------------|					 |
+												 |
+												 |
+												 |
+  The observation WWCT:OP1 is an observation of summary type, and the				 |
+  obs_vector conatins pointers to summary_obs instances; along iwth				 |
+  function pointers to manipulate the summary_obs instances. The				 |
+  observation is not active for report steps 0 and 3, so for these				 |
+  report steps the obse vector has a NULL pointer.						 |
+												 |
+												 |
+												 |
+												 |
+												 |
+												 |
+ |--- obs_vector: RFT_P2 -------------------------------------------------------|		 |
+ | Function pointers:	    --------  --------	--------  --------  --------	|		 |
+ | Pointing to the          |      |  |      |	|      |  |      |  |      |	|<---------------/
+ | underlying               | NULL |  | NULL | 	| NULL |  |  X   |  | NULL |	|
+ | implementation in the    |      |  |      | 	|      |  |  |   |  |      |   	|
+ | field_obs object.        --------  --------	--------  ---|----  --------	|
+ |-----------------------------------------------------------|------------------|
+			 				     |
+			 				     |
+							    \|/
+                                        |-- field_obs -----------------------------------|
+                                        | i = 25 , j = 16, k = 10, value = 278, std = 10 |
+                                        | i = 25 , j = 16, k = 11, value = 279, std = 10 |
+                                        | i = 25 , j = 16, k = 12, value = 279, std = 10 |
+                                        | i = 25 , j = 17, k = 12, value = 281, std = 10 |
+                                        | i = 25 , j = 18, k = 12, value = 282, std = 10 |
+				       	|------------------------------------------------|
+
+
+ The observation RFT_P2 is an RFT observation which is only active at
+ one report step, i.e. 4/5 pointers in the obs_vector are just NULL
+ pointers. The oactual observation(s) are stored in a field_obs
+ instance. 
+
+ */
+
+
+/**
+TODO
+
+    This static function header shall be removed when the
+    configuration is unified....
 */
 static conf_class_type * enkf_obs_get_obs_conf_class();
 
@@ -24,7 +152,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 
 struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
-  hash_type * obs_hash; 
+  hash_type * obs_hash;
 };
 
 
@@ -51,16 +179,6 @@ void enkf_obs_free(
 }
 
 
-  
-//void enkf_obs_add_obs(
-//  enkf_obs_type       * enkf_obs,
-//  const char          * key ,
-//  const obs_node_type * node)
-//{
-//  if (hash_has_key(enkf_obs->obs_hash , key))
-//    util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
-//  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , node , obs_node_free__);
-//}
 
 
 void enkf_obs_add_obs_vector(
@@ -122,7 +240,7 @@ void enkf_obs_measure_on_ensemble(
         enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
         meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
 
-        enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);      
+        enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
         obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector);
       }
     }
@@ -132,8 +250,8 @@ void enkf_obs_measure_on_ensemble(
 
 
 
-/** 
-    TODO 
+/**
+    TODO
 
     When configuration has been unified, this should take a
     conf_instance_type, not a config_file.
@@ -143,15 +261,15 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
   enkf_obs_type      * enkf_obs        = enkf_obs_alloc();
   if(config_file == NULL)
     return enkf_obs;
-  
+
   conf_class_type    * enkf_conf_class = enkf_obs_get_obs_conf_class();
-  conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file); 
-  
+  conf_instance_type * enkf_conf       = conf_instance_alloc_from_file(enkf_conf_class, "enkf_conf", config_file);
+
   if(conf_instance_validate(enkf_conf) == false)
     {
       util_abort("Can not proceed with this configuration.\n");
     }
-  
+
 
 
 
@@ -162,22 +280,10 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
 
     for(int hist_obs_nr = 0; hist_obs_nr < num_hist_obs; hist_obs_nr++)
     {
-      const char               * sum_key       = stringlist_iget(hist_obs_keys, hist_obs_nr); 
+      const char               * sum_key       = stringlist_iget(hist_obs_keys, hist_obs_nr);
       const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
-      //summary_obs_type         * sum_obs       = summary_obs_alloc_from_HISTORY_OBSERVATION(hist_obs_conf, hist);
-      //
-      //obs_node_type            * obs_node      = obs_node_alloc(sum_obs, sum_key, sum_key, summary_obs , num_restarts);
-      //
-      //
-      ///** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
-      //for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
-      //{
-      //  if(!summary_obs_default_used(sum_obs, restart_nr))
-      //    obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
-      //}
-      
-      obs_vector_type * obs_vector = obs_vector_alloc_from_HISTORY_OBSERVATION(hist_obs_conf , hist);  
-      //obs_vector_free( obs_vector );
+
+      obs_vector_type * obs_vector = obs_vector_alloc_from_HISTORY_OBSERVATION(hist_obs_conf , hist);
 
       enkf_obs_add_obs_vector(enkf_obs, sum_key, obs_vector);
     }
@@ -196,17 +302,6 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
     {
       const char               * obs_key      = stringlist_iget(sum_obs_keys, sum_obs_nr);
       const conf_instance_type * sum_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-      //summary_obs_type         * sum_obs      = summary_obs_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf, hist);
-      //obs_node_type            * obs_node     = obs_node_alloc(sum_obs, sum_key, obs_key, summary_obs , num_restarts);
-      //
-      ///** This not exactly a sexy solution... obs_node should really just ask for this when it's needed. */
-      //for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
-      //{
-      //  if(!summary_obs_default_used(sum_obs, restart_nr))
-      //    obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
-      //	
-      //}
-      
       obs_vector_type * obs_vector = obs_vector_alloc_from_SUMMARY_OBSERVATION(sum_obs_conf , hist);
       enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
     }
@@ -225,13 +320,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
     {
       const char               * obs_key        = stringlist_iget(block_obs_keys, block_obs_nr);
       const conf_instance_type * block_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, obs_key);
-      //field_obs_type           * block_obs      = field_obs_alloc_from_BLOCK_OBSERVATION(block_obs_conf, hist);
-      //const char               * field_name     = field_obs_get_field_name(block_obs);
-      //int                        restart_nr     = field_obs_get_restart_nr(block_obs);
-      //obs_node_type * obs_node                  = obs_node_alloc(block_obs, field_name, obs_key, field_obs , num_restarts);
-      //
-      //obs_node_activate_report_step(obs_node, restart_nr, restart_nr);
-      //
+
       obs_vector_type * obs_vector = obs_vector_alloc_from_BLOCK_OBSERVATION(block_obs_conf , hist ,   ensemble_config);
       enkf_obs_add_obs_vector(enkf_obs, obs_key, obs_vector);
     }
@@ -240,12 +329,8 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
     stringlist_free(block_obs_keys);
   }
 
-
-
   conf_instance_free(enkf_conf      );
   conf_class_free(   enkf_conf_class);
-
-
 
   return enkf_obs;
 }
@@ -303,7 +388,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     const char * help_item_spec_value = "The floating point number VALUE gives the observed value.";
     conf_item_spec_type * item_spec_value = conf_item_spec_alloc("VALUE", true, DT_FLOAT);
     conf_item_spec_set_help(item_spec_value, help_item_spec_value);
-  
+
 
     const char * help_item_spec_error = "The positive floating point number ERROR is the standard deviation of the observed value.";
     conf_item_spec_type * item_spec_error = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT);
@@ -402,7 +487,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
       const char * help_item_spec_value = "The floating point number VALUE gives the observed value.";
       conf_item_spec_type * item_spec_value = conf_item_spec_alloc("VALUE", true, DT_FLOAT);
       conf_item_spec_set_help(item_spec_value, help_item_spec_value);
-    
+
       const char * help_item_spec_error = "The positive floating point number ERROR is the standard deviation of the observed value.";
       conf_item_spec_type * item_spec_error = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT);
       conf_item_spec_set_help(item_spec_error, help_item_spec_error);
@@ -436,7 +521,7 @@ stringlist_type * enkf_obs_alloc_summary_vars(
   const char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
   while ( key != NULL) {
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
-    if (obs_vector_get_impl_type(obs_vector) == summary_obs) 
+    if (obs_vector_get_impl_type(obs_vector) == summary_obs)
       stringlist_append_ref(summary_vars , obs_vector_get_state_kw(obs_vector));
     key = hash_iter_get_next_key( enkf_obs->obs_hash );
   }
@@ -454,7 +539,7 @@ stringlist_type * enkf_obs_alloc_summary_vars(
    value they are pointing at are the enkf_state keywords they are
    measuring. For instance if we have an observation with key "RFT_1A"
    the entry in the table will be:  ... "RFT_1A":  "PRESSURE", ..
-   since an RFT observation observes the pressure. 
+   since an RFT observation observes the pressure.
 
    Let us consider the atercut in a well. Then the state_kw will
    typically be WWCT:P1 for a well named 'P1'. Let us assume that this
@@ -462,17 +547,17 @@ stringlist_type * enkf_obs_alloc_summary_vars(
    SCHEDULE, and from two separator tests, called S1 and S2. Then the
    hash table will look like this:
 
-       "WWCT:P1": "WWCT:P1", 
+       "WWCT:P1": "WWCT:P1",
        "S1"     : "WWCT:P1",
        "S2"     : "WWCT:P1"
 
- 
+
    I.e. there are three different observations keys, all observing the
    same state_kw.
 */
 
-   
-   
+
+
 hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
 {
   hash_type * map = hash_alloc();
@@ -502,7 +587,7 @@ hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
    will be NULL, that also applies if no object is found.
 */
 
-   
+
 
 const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key ) {
   const obs_vector_type * vector = NULL;
@@ -510,7 +595,7 @@ const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , con
   int     keys;
   int     key_length = 1;
   int offset;
-  
+
   *index_key = NULL;
   util_split_string(full_key , ":" , &keys , &key_list);
   while (vector == NULL && key_length <= keys) {
@@ -526,7 +611,7 @@ const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , con
     if (offset < strlen( full_key ))
       *index_key = util_alloc_string_copy(&full_key[offset+1]);
   }
-  
+
   util_free_stringlist(key_list , keys);
   return vector;
 }

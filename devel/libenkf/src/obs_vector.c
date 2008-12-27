@@ -1,5 +1,5 @@
 /**
-
+   See the overview documentation of the observation system in enkf_obs.c
 */
 #include <obs_vector.h>
 #include <stdlib.h>

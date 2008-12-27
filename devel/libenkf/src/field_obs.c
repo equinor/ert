@@ -1,3 +1,6 @@
+/**
+   See the overview documentation of the observation system in enkf_obs.c
+*/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
