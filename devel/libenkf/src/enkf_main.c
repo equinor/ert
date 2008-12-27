@@ -423,12 +423,10 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
 
 
 
-void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , bool enkf_update , const stringlist_type * forward_model) {
+void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update , const stringlist_type * forward_model) {
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;
   
-  if (enkf_update)
-    load_results = true; 
   printf("Starting forward step: %d -> %d\n",step1 , step2);
   site_config_update_lsf_request(enkf_main->site_config , forward_model);
 
@@ -444,7 +442,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
     {
       thread_pool_type * submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) {
-        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , load_results , forward_model);
+        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2, forward_model);
         thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
@@ -482,10 +480,6 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   
   if (enkf_update)
     enkf_main_analysis_update(enkf_main , step2);
-  else {
-    if (load_results) /* Is this code ever relevant ?? */
-      enkf_main_load_ensemble(enkf_main , dynamic_result + dynamic_state + parameter , step2 , forecast);      
-  }
   
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
@@ -530,7 +524,6 @@ const char * enkf_main_get_image_viewer(const enkf_main_type * enkf_main) {
 
 
 void enkf_main_run(enkf_main_type * enkf_main , const bool * iactive ,  int start_report , state_enum __init_state) {
-  const bool load_results = true;
   bool analyzed_start;
   bool prev_enkf_on;
   const enkf_sched_type * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
@@ -571,7 +564,7 @@ void enkf_main_run(enkf_main_type * enkf_main , const bool * iactive ,  int star
       else
 	init_state = forecast;
       
-      enkf_main_run_step(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , load_results , enkf_on , forward_model);
+      enkf_main_run_step(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , enkf_on , forward_model);
       report_step  = next_report_step;
       prev_enkf_on = enkf_on;
     } while (next_report_step < report_step2);

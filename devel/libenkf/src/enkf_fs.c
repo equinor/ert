@@ -313,7 +313,7 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
   case(dynamic_state):
     driver = fs->dynamic;
     break;
-  case(ecl_static):
+  case(static_state):
     driver = fs->eclipse_static;
     break;
   default:
@@ -339,7 +339,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
   {
     enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
     void * _driver = enkf_fs_select_driver(enkf_fs , var_type , enkf_node_get_key(enkf_node));
-    if (var_type == ecl_static) {
+    if (var_type == static_state) {
       basic_static_driver_type * driver = basic_static_driver_safe_cast(_driver);
       int static_counter = enkf_fs_get_static_counter(enkf_node);
       driver->save(driver , report_step , iens , state , static_counter , enkf_node); 
@@ -359,7 +359,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
   void * _driver = enkf_fs_select_driver(enkf_fs , var_type , enkf_node_get_key(enkf_node));
-  if (var_type == ecl_static) {
+  if (var_type == static_state) {
     basic_static_driver_type * driver = basic_static_driver_safe_cast(_driver);
     int static_counter = enkf_fs_get_static_counter(enkf_node);
     driver->load(driver , report_step , iens , state , static_counter , enkf_node); 
@@ -374,7 +374,7 @@ bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * con
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
   {
     const char * key = enkf_config_node_get_key_ref(config_node);
-    if (var_type == ecl_static) {
+    if (var_type == static_state) {
       basic_static_driver_type * driver = basic_static_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key));
       int static_counter = 0; /* This one is impossible to get correctly hold of ... the driver aborts.*/
       return driver->has_node(driver , report_step , iens , state , static_counter , key); 
@@ -400,7 +400,7 @@ enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_n
 enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int report_step , int iens1 , int iens2 , state_enum state) {
   int iens;
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-  if (var_type == ecl_static) {
+  if (var_type == static_state) {
     /* Static drivers *NEVER* have high level functions fall back to simple loop immediately. */
     enkf_node_type ** node_list = util_malloc( (iens2 - iens1  + 1) * sizeof * node_list , __func__);
 
@@ -442,7 +442,7 @@ enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type * enkf_fs , enkf_con
 enkf_node_type ** enkf_fs_fread_alloc_ts(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int step1 , int step2 ,  int iens , state_enum state) {
   int step;
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-  if (var_type == ecl_static) {
+  if (var_type == static_state) {
     /* Static drivers *NEVER* have high level functions fall back to simple loop immediately. */
     enkf_node_type ** node_list = util_malloc( (step2 - step1  + 1) * sizeof * node_list , __func__);
 

@@ -24,7 +24,7 @@ typedef enum {invalid          =  0  , /**/
               parameter        =  1  , /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
 	      dynamic_state    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
 	      dynamic_result   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
-	      ecl_static       =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+	      static_state     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
   enkf_var_type; 
   
 

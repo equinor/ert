@@ -57,7 +57,6 @@ void enkf_ui_run_restart__(void * enkf_main) {
 
 void enkf_ui_run_exp__(void * enkf_main) {
   const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-  const bool load_results = false;
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
   const int last_report = enkf_sched_get_last_report(enkf_sched);
@@ -75,7 +74,7 @@ void enkf_ui_run_exp__(void * enkf_main) {
 	iactive[iens] = false;
     }
   }
-  enkf_main_run_step(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run_step(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 
@@ -85,7 +84,6 @@ void enkf_ui_run_screening__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size  = ensemble_config_get_size(ensemble_config);
   const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-  const bool load_results = false;
   const int last_report   = enkf_sched_get_last_report(enkf_sched);
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
   {
@@ -94,7 +92,7 @@ void enkf_ui_run_screening__(void * enkf_main) {
       iactive[iens] = true;
   }
     
-  enkf_main_run_step(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , load_results , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run_step(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , false , enkf_sched_get_default_forward_model(enkf_sched));
   free(iactive);
 }
 

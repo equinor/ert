@@ -63,7 +63,7 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
     int num_keys;
     char ** tmp_key_list = ensemble_config_alloc_keylist( ensemble_config , &num_keys);
     for (int i = 0; i < num_keys; i++) {
-      if (ensemble_config_var_type(ensemble_config , tmp_key_list[i]) != ecl_static)
+      if (ensemble_config_var_type(ensemble_config , tmp_key_list[i]) != static_state)
 	stringlist_append_copy(param_list , tmp_key_list[i]);
     }
     util_free_stringlist( tmp_key_list , num_keys );

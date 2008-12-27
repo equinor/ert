@@ -69,7 +69,7 @@ void               enkf_state_set_eclbase(enkf_state_type * , const char*);
 void enkf_ensemble_update(enkf_state_type ** , int  , serial_vector_type * , const double * );
 
 /*****************************************************************/
-void enkf_state_init_run(enkf_state_type * state , run_mode_type , bool active , int init_step , state_enum init_state , int step1 , int step2 , bool load_results , const stringlist_type * forward_model);
+void enkf_state_init_run(enkf_state_type * state , run_mode_type , bool active , int init_step , state_enum init_state , int step1 , int step2 , const stringlist_type * forward_model);
 bool enkf_state_run_OK(const enkf_state_type * );
 #ifdef __cplusplus
 }

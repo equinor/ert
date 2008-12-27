@@ -560,12 +560,6 @@ void enkf_node_printf(const enkf_node_type *enkf_node) {
   printf("%s \n",enkf_node->node_key);
 }
 
-/*
-  char * enkf_node_alloc_ensfile(const enkf_node_type *enkf_node , const char * path) {
-  FUNC_ASSERT(enkf_node , "alloc_ensfile");
-  return enkf_node->alloc_ensfile(enkf_node->data , path);
-}
-*/
 
 void enkf_node_free(enkf_node_type *enkf_node) {
   if (enkf_node->freef != NULL)
