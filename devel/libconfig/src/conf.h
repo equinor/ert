@@ -112,7 +112,8 @@ typedef struct conf_item_mutex_struct conf_item_mutex_type;
 
 conf_class_type * conf_class_alloc_empty(
   const char * class_name,
-  bool         require_instance);
+  bool         require_instance,
+  const char * help);
 
 void conf_class_free(
   conf_class_type * conf_class);
@@ -140,7 +141,8 @@ void conf_instance_free__(
 conf_item_spec_type * conf_item_spec_alloc(
   char    * name,        
   bool      required_set,
-  dt_enum   dt);
+  dt_enum   dt,
+  const char * help);
 
 void conf_item_spec_free(
   conf_item_spec_type * conf_item_spec);

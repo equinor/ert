@@ -74,7 +74,8 @@ struct conf_item_mutex_struct
 
 conf_class_type * conf_class_alloc_empty(
   const char * class_name,
-  bool         require_instance)
+  bool         require_instance,
+  const char * help) 
 {
   assert(class_name != NULL);
 
@@ -87,7 +88,8 @@ conf_class_type * conf_class_alloc_empty(
   conf_class->sub_classes      = hash_alloc();
   conf_class->item_specs       = hash_alloc();
   conf_class->item_mutexes     = list_alloc();
-
+  
+  conf_class_set_help( conf_class , help );
   return conf_class;
 }
 
@@ -234,7 +236,8 @@ void conf_instance_free__(
 conf_item_spec_type * conf_item_spec_alloc(
   char    * name,
   bool      required_set,
-  dt_enum   dt)
+  dt_enum   dt,
+  const char * help) 
 {
   assert(name != NULL);
 
@@ -247,7 +250,7 @@ conf_item_spec_type * conf_item_spec_alloc(
   conf_item_spec->default_value = NULL;
   conf_item_spec->restriction   = set_alloc_empty();
   conf_item_spec->help          = NULL;
-
+  conf_item_spec_set_help( conf_item_spec , help );
   return conf_item_spec;
 }
 
@@ -610,12 +613,7 @@ void conf_class_set_help(
   conf_class_type * conf_class,
   const char      * help)
 {
-  if(conf_class->help != NULL)
-    free(conf_class->help);
-  if(help != NULL)
-    conf_class->help = util_alloc_string_copy(help);
-  else
-    conf_class->help = NULL;
+  conf_class->help = util_realloc_string_copy(conf_class->help , help);
 }
 
 
@@ -648,12 +646,7 @@ void conf_item_spec_set_help(
   conf_item_spec_type * conf_item_spec,
   const char          * help)
 {
-  if(conf_item_spec->help != NULL)
-    free(conf_item_spec->help);
-  if(help != NULL)
-    conf_item_spec->help = util_alloc_string_copy(help);
-  else
-    conf_item_spec->help = NULL;
+  conf_item_spec->help = util_realloc_string_copy( conf_item_spec->help , help);
 }
 
 
