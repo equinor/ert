@@ -916,7 +916,7 @@ void conf_item_spec_printf_help(
          conf_item_spec->name, conf_item_spec->super_class->class_name);
   printf("       - Data type    : %s\n\n", conf_data_get_dt_name_ref(conf_item_spec->dt));
   if(conf_item_spec->default_value != NULL)
-  printf("       - Default value: %s\n\n", conf_item_spec->default_value);
+    printf("       - Default value: %s\n\n", conf_item_spec->default_value);
   if(conf_item_spec->help != NULL)
     printf("       - %s\n", conf_item_spec->help);
 
