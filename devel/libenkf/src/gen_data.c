@@ -19,9 +19,9 @@
 /**
    The file implements a general data type which can be used to update
    arbitrary data which the EnKF system has *ABSOLUTELY NO IDEA* of
-   how the data is organised; how it should be used in the forward
-   model and so on. Similarly to the field objects, the gen_data
-   objects can be treated both as parameters and as dynamic data.
+   how is organised; how it should be used in the forward model and so
+   on. Similarly to the field objects, the gen_data objects can be
+   treated both as parameters and as dynamic data.
 
    Whether the ecl_load function should be called (i.e. it is dynamic
    data) is determined at the enkf_node level, and no busissiness of
@@ -69,11 +69,6 @@ gen_data_type * gen_data_alloc(const gen_data_config_type * config) {
 }
 
 
-/**
-   
-
-*/
-
 gen_data_type * gen_data_copyc(const gen_data_type * gen_data) {
   gen_data_type * copy = gen_data_alloc(gen_data->config);
   
@@ -110,12 +105,14 @@ void gen_data_free(gen_data_type * gen_data) {
 bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
   DEBUG_ASSERT(gen_data)
   {
-    int size      = gen_data_config_get_data_size(gen_data->config);
+    int size        = gen_data_config_get_data_size(gen_data->config);
+    int report_step = gen_data_config_get_report_step(gen_data->config); 
     if (size > 0) {
       int byte_size = gen_data_config_get_byte_size(gen_data->config);
     
       enkf_util_fwrite_target_type(stream , GEN_DATA);
-      util_fwrite_int(size , stream);
+      util_fwrite_int(size        , stream);
+      util_fwrite_int(report_step , stream);
       util_fwrite_compressed(gen_data->data , byte_size , stream);
       return true;
     } else
@@ -134,11 +131,13 @@ void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
   DEBUG_ASSERT(gen_data)
   {   
     int size;
+    int report_step;
     enkf_util_fread_assert_target_type(stream , GEN_DATA);
-    size = util_fread_int(stream);
+    size        = util_fread_int(stream);
+    report_step = util_fread_int(stream);
     util_safe_free(gen_data->data);
     gen_data->data = util_fread_alloc_compressed(stream);
-    gen_data_config_assert_size(gen_data->config , size);
+    gen_data_config_assert_size(gen_data->config , size , report_step);
   }
 }
 
@@ -173,11 +172,11 @@ void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_
 /*
   This function sets the data field of the gen_data instance after the
   data has been loaded from file.
-*/
-static void gen_data_set_data__(gen_data_type * gen_data , int size, ecl_type_enum load_type , const void * data) {
-  gen_data_config_assert_size(gen_data->config , size);
+*/ 
+static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_step , ecl_type_enum load_type , const void * data) {
+  gen_data_config_assert_size(gen_data->config , size, report_step);
   gen_data_realloc_data(gen_data);
-  {
+  if (size > 0) {
     ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
 
     if (load_type == internal_type)
@@ -205,19 +204,25 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, ecl_type_en
 
    When the read is complete it is checked/verified with the config
    object that this file was as long as the others we have loaded for
-   other members.
+   other members; it is perfectly OK for the file to not exist. In
+   which case a size of zero is set, for this report step.
 */
 
 void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
   DEBUG_ASSERT(gen_data)
   {
-    ecl_type_enum internal_type       = gen_data_config_get_internal_type(gen_data->config);
-    gen_data_format_type input_format = gen_data_config_get_input_format( gen_data->config );
+    void * buffer = NULL;
+    int    size   = 0;
     ecl_type_enum load_type;
-    int size;
-    void * buffer = gen_common_fload_alloc( ecl_file , input_format , internal_type , &load_type , &size);
-    gen_data_set_data__(gen_data , size , load_type , buffer);
-    free(buffer);
+    
+    if (util_file_exists(ecl_file)) {
+      ecl_type_enum internal_type            = gen_data_config_get_internal_type(gen_data->config);
+      gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
+      buffer = gen_common_fload_alloc( ecl_file , input_format , internal_type , &load_type , &size);
+    }
+
+    gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
+    util_safe_free(buffer);
   }
 }
 
@@ -240,19 +245,21 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
 
 
 
-void gen_data_initialize(gen_data_type * gen_data , int iens) {
+bool gen_data_initialize(gen_data_type * gen_data , int iens) {
   char * init_file = gen_data_config_alloc_initfile(gen_data->config , iens);
   if (init_file != NULL) {
     gen_data_ecl_load(gen_data , init_file , NULL , NULL , 0);
     free(init_file);
-  }
+    return true;
+  } else
+    return false; /* No init performed ... */
 }
 
 
 
 
 
-static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char * file , gen_data_format_type export_format) {
+static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char * file , gen_data_file_format_type export_format) {
   FILE * stream   = util_fopen(file , "w");
   char * template_buffer;
   int    template_data_offset, template_buffer_size , template_data_skip;
@@ -298,7 +305,7 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , fortio_type * fortio) {
   DEBUG_ASSERT(gen_data)
   {
-    gen_data_format_type export_type = gen_data_config_get_output_format( gen_data->config );
+    gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
     switch (export_type) {
     case(ASCII):
       gen_data_ecl_write_ASCII(gen_data , eclfile , export_type);
@@ -311,6 +318,9 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , 
       break;
     case(binary_float):
       gen_data_ecl_write_binary(gen_data , eclfile , ecl_float_type);
+      break;
+    case(gen_data_no_export):
+      /* No op - e.g. seismic data - not exported from EnKF. */
       break;
     default:
       util_abort("%s: internal error \n",__func__);

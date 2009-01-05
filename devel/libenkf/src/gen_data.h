@@ -1,5 +1,9 @@
 #ifndef __GEN_DATA_H__
 #define __GEN_DATA_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gen_data_config.h>
 #include <ecl_sum.h>
 #include <enkf_macros.h>
@@ -28,4 +32,7 @@ VOID_SERIALIZE_HEADER(gen_data);
 VOID_DESERIALIZE_HEADER(gen_data);
 VOID_INITIALIZE_HEADER(gen_data);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
