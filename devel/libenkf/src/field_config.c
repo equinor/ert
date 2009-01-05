@@ -78,19 +78,18 @@ struct field_config_struct {
 
   active_list_type * active_list;
 
-  int             truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. */
-  double   	  min_value;            /* The min value used in truncation. */
-  double   	  max_value;            /* The maximum value used in truncation. */
-  int             sizeof_ctype;
+  int             	  truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. */
+  double   	  	  min_value;            /* The min value used in truncation. */
+  double   	  	  max_value;            /* The maximum value used in truncation. */
 
   field_file_format_type  export_format;
   field_file_format_type  import_format;
+  int             	  sizeof_ctype;        
   ecl_type_enum           internal_ecl_type;
   ecl_type_enum           export_ecl_type;
-  field_init_type         init_type;
-  char          	* base_file;
-  char          	* perturbation_config_file;
-  char                  * layer_config_file;
+  bool                    enkf_init;  /* Should the field object be initialized by by enkf (by loading a user-provided file)?
+					 Or is the initialization done as part of the forward model (i.e PRESSURE). */
+
   path_fmt_type         * init_file_fmt;
 
   bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
@@ -323,10 +322,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->export_format 	   = export_format;
   config->import_format 	   = import_format;
   config->grid          	   = ecl_grid;
-  config->base_file                = NULL;
-  config->perturbation_config_file = NULL;
-  config->layer_config_file        = NULL;
-
+  
   config->ecl_kw_name = NULL;
   field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
@@ -337,95 +333,85 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->fmt_file    	      	   = false;
   config->endian_swap 	      	   = true;
   config->write_compressed    	   = true;
-  config->base_file                = NULL;
-  config->perturbation_config_file = NULL;
-  config->layer_config_file        = NULL;
   config->init_file_fmt            = NULL;
   config->output_transform         = NULL;
   config->init_transform           = NULL;
-  config->init_type                = none;
+  config->enkf_init                = false;     
   config->active_list              = active_list_alloc( config->data_size );
   field_config_set_all_active(config);
 
   /* Starting on the options. */
   {
-    int iopt;
-    for (iopt = 0; iopt < num_options; iopt++) {
-      char ** tokens;
-      int     num_tokens;
-      util_split_string(options[iopt] , ":" , &num_tokens , &tokens);
-      if (num_tokens != 2)
-	fprintf(stderr,"** Warning the option: \"%s\" could not be interpredet as \"OPTION:VALUE\" - ignored. \n", options[iopt]);
-      else {
-	bool  option_OK     = false;
-	const char * option = tokens[0];
-	const char * value  = tokens[1];
+    hash_type * opt_hash = hash_alloc_from_options( num_options , options );
+    const char * option = hash_iter_get_first_key( opt_hash );
+    while (option != NULL) {
+      const char * value = hash_get( opt_hash , option );
+      bool option_OK     = false;
 
-	/*
-	   This could (should ??) have been implemented with
-	   if-then-else; isolated if-blocks have been chosen for
-	   clarity. Must update option_OK in every block, and check it
-	   at the bottom.
+      /*
+	This could (should ??) have been implemented with
+	if-then-else; isolated if-blocks have been chosen for
+	clarity. Must update option_OK in every block, and check it
+	at the bottom.
+	
+      */
 
-	*/
-
-	if (strcmp(option , "MIN") == 0) {
-	  double min_value;
-	  if (util_sscanf_double( value , &min_value)) {
-	    config->min_value  = min_value;
-	    util_bitmask_on( &config->truncation , truncate_min );
-	  } else
-	    fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid minimum value - ignored \n",options[iopt]);
-	  option_OK = true;
-	}
-
-	if (strcmp(option , "MAX") == 0) {
-	  double max_value;
-	  if (util_sscanf_double( value , &max_value)) {
-	    config->max_value  = max_value;
-	    util_bitmask_on( &config->truncation , truncate_max );
-	  } else
-	    fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid maximum value - ignored \n",options[iopt]);
-	  option_OK = true;
-	}
-
-
-	if (strcmp(option , "OUTPUT_TRANSFORM") == 0) {
-	  if (field_trans_table_has_key( field_trans_table , value))
-	    config->output_transform = field_trans_table_lookup( field_trans_table , value);
-	  else {
-	    fprintf(stderr,"** Warning: function name:%s not recognized - ignored. \n",options[iopt]);
-	    field_trans_table_fprintf(field_trans_table , stderr);
-	  }
-	  option_OK = true;
-	}
-
-
-	if (strcmp(option , "INIT_TRANSFORM") == 0) {
-	  if (field_trans_table_has_key( field_trans_table , value))
-	    config->init_transform = field_trans_table_lookup( field_trans_table , value);
-	  else {
-	    fprintf(stderr,"** Warning: function name:%s not recognized - ignored. \n",options[iopt]);
-	    field_trans_table_fprintf(field_trans_table , stderr);
-	  }
-	  option_OK = true;
-	}
-
-
-	if (strcmp(option , "INIT_FILES") == 0) {
-	  config->init_file_fmt = path_fmt_alloc_path_fmt( value );
-	  config->init_type     = load_unique;
-	  option_OK = true;
-	}
-
-	if (!option_OK)
-	  fprintf(stderr,"** Warning: \"%s\" not recognized - ignored \n",options[iopt]);
-
+      if (strcmp(option , "MIN") == 0) {
+	double min_value;
+	if (util_sscanf_double( value , &min_value)) {
+	  config->min_value  = min_value;
+	  util_bitmask_on( &config->truncation , truncate_min );
+	} else
+	  fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid minimum value - ignored \n",value);
+	option_OK = true;
       }
-      util_free_stringlist( tokens , num_tokens );
-    }
-  }
 
+      if (strcmp(option , "MAX") == 0) {
+	double max_value;
+	if (util_sscanf_double( value , &max_value)) {
+	  config->max_value  = max_value;
+	  util_bitmask_on( &config->truncation , truncate_max );
+	} else
+	  fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid maximum value - ignored \n",value);
+	option_OK = true;
+      }
+
+
+      if (strcmp(option , "OUTPUT_TRANSFORM") == 0) {
+	if (field_trans_table_has_key( field_trans_table , value))
+	  config->output_transform = field_trans_table_lookup( field_trans_table , value);
+	else {
+	  fprintf(stderr,"** Warning: function name:%s not recognized - ignored. \n",value);
+	  field_trans_table_fprintf(field_trans_table , stderr);
+	}
+	option_OK = true;
+      }
+
+
+      if (strcmp(option , "INIT_TRANSFORM") == 0) {
+	if (field_trans_table_has_key( field_trans_table , value))
+	  config->init_transform = field_trans_table_lookup( field_trans_table , value);
+	else {
+	  fprintf(stderr,"** Warning: function name:%s not recognized - ignored. \n",value);
+	  field_trans_table_fprintf(field_trans_table , stderr);
+	}
+	option_OK = true;
+      }
+
+
+      if (strcmp(option , "INIT_FILES") == 0) {
+	config->init_file_fmt = path_fmt_alloc_path_fmt( value );
+	config->enkf_init     = true;
+	option_OK = true;
+      }
+
+      if (!option_OK)
+	fprintf(stderr,"** Warning: \"%s\" not recognized - ignored \n",option);
+            
+      option = hash_iter_get_next_key( opt_hash );
+    }
+    hash_free(opt_hash);
+  }
   return config;
 }
 
@@ -506,8 +492,8 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name 	     
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
   config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format , trans_table , num_options , options);
-  if (config->init_type == none)
-    util_abort("%s: invalid init type \n",__func__);
+  if (!config->enkf_init)
+    util_abort("%s:(INTERNAL ERROR)  invalid init type \n",__func__);
 
 
   return config;
@@ -592,9 +578,6 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 void field_config_free(field_config_type * config) {
 
   util_safe_free(config->ecl_kw_name);
-  util_safe_free(config->base_file);
-  util_safe_free(config->perturbation_config_file);
-  util_safe_free(config->layer_config_file);
   active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
   free(config);
@@ -649,8 +632,8 @@ bool field_config_active_cell(const field_config_type * config , int i , int j ,
 
 
 
-field_init_type field_config_get_init_type(const field_config_type * config) {
-  return config->init_type;
+bool field_config_enkf_init(const field_config_type * config) {
+  return config->enkf_init;
 }
 
 

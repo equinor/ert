@@ -683,25 +683,28 @@ void field_ecl_write(const field_type * __field , const char * file , fortio_typ
 
 
 
-void field_initialize(field_type *field , int iens) {
-  field_init_type init_type = field_config_get_init_type(field->config);
-  if (init_type == load_unique) {
-    char * filename = field_config_alloc_init_file(field->config , iens);
-    field_fload(field , filename , field_config_get_endian_swap(field->config));
-    free(filename);
-  }
-  /* 
-     Doing the input transform - observe that this is done inplace on
-     the data, not as the output transform which is done on a copy of
-     prior to export.
-  */
-  field_apply_truncation(field);
-  {
-    field_func_type * init_transform = field_config_get_init_transform(field->config);
-    if (init_transform != NULL) 
-      field_apply(field , init_transform);
-  }
-}
+bool field_initialize(field_type *field , int iens) {
+  if (field_config_enkf_init(field->config)) {
+    {
+      char * filename = field_config_alloc_init_file(field->config , iens);
+      field_fload(field , filename , field_config_get_endian_swap(field->config));
+      free(filename);
+    }
+    /* 
+       Doing the input transform - observe that this is done inplace on
+       the data, not as the output transform which is done on a copy of
+       prior to export.
+    */
+    field_apply_truncation(field);
+    {
+      field_func_type * init_transform = field_config_get_init_transform(field->config);
+      if (init_transform != NULL) 
+	field_apply(field , init_transform);
+    }
+    return true; 
+  } else 
+    return false;  /* The field is initialized as part of the forward model. */
+} 
 
 
 void field_free(field_type *field) {

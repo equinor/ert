@@ -60,18 +60,6 @@ typedef enum { undefined_format         = 0,
 
 
 
-/* Must be power of two series */
-typedef enum { none                   = 0  , /* For restart fields */
-               load_unique            = 1    /* path_fmt_type to load from */ 
-
-} field_init_type;
-
-/*
-  gaussian_perturbations : Whether gaussian perturbations should be added.
-  layer_trends           : Whether the base case should be baased on layer trends.
-  load_base_case         : Base case loaded from file
-  load_uniqe             : Members loaded from separate files.
-*/
   
 
 
@@ -102,7 +90,7 @@ int                     field_config_active_index(const field_config_type * , in
 void                    field_config_get_ijk(const field_config_type * , int , int * , int * , int *);
 bool                    field_config_ijk_valid(const field_config_type *  , int  , int  , int );
 bool                    field_config_active_cell(const field_config_type *  , int , int , int);
-field_init_type         field_config_get_init_type(const field_config_type * );
+bool                    field_config_enkf_init(const field_config_type * );
 char                  * field_config_alloc_init_file(const field_config_type * , int );
 field_file_format_type  field_config_get_export_format(const field_config_type * );
 field_file_format_type  field_config_get_import_format(const field_config_type * );
