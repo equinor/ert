@@ -135,9 +135,10 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 
 
-void gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
+bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
   DEBUG_ASSERT(gen_kw)
   scalar_sample(gen_kw->scalar);  
+  return true;
 }
 
 
@@ -280,10 +281,11 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
    responsibility of the calling scope to check valid.
 */
 double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * valid) {
+  const bool internal_value = false;
   int index = gen_kw_config_get_index(gen_kw->config , key);
   if (index >= 0) {
     *valid = true;
-    return scalar_iget_double(gen_kw->scalar , index);
+    return scalar_iget_double(gen_kw->scalar , internal_value , index);
   } else {
     *valid = false;
     fprintf(stderr,"** Warning:could not lookup key:%s in gen_kw instance \n",key);

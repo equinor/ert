@@ -210,7 +210,7 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
   const   int cpu_threads = 4;
   int     sub_ens_size    = ensemble_config_get_size(enkf_main->ensemble_config) / cpu_threads;
   int     icpu;
-  thread_pool_type * tp = thread_pool_alloc( cpu_threads );
+  thread_pool_type * tp          = thread_pool_alloc( cpu_threads );
   arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
   
   for (icpu = 0; icpu < cpu_threads; icpu++) {

@@ -135,9 +135,10 @@ void havana_fault_truncate(havana_fault_type * havana_fault) {
 }
 
 
-void  havana_fault_initialize(havana_fault_type *havana_fault, int iens) { 
-   DEBUG_ASSERT(havana_fault) 
-   scalar_sample(havana_fault->scalar);
+bool  havana_fault_initialize(havana_fault_type *havana_fault, int iens) { 
+  DEBUG_ASSERT(havana_fault) 
+  scalar_sample(havana_fault->scalar);
+  return true;
 } 
 
 

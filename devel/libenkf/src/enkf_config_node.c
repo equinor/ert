@@ -16,9 +16,9 @@ struct enkf_config_node_struct {
 
   stringlist_type       * obs_keys;       /* Keys of observations which observe this node. */
   char               	* key;
-  char               	* enkf_infile;    /* Name of file which is written by forward model, and read by EnKF (not in use yet).*/
+  char               	* enkf_infile;    /* Name of file which is written by forward model, and read by EnKF.     */
   char 		     	* enkf_outfile;   /* Name of file which is written by EnKF, and read by the forward model. */
-  void               	* data;           /* This points to the config object of the actual implementation. */
+  void               	* data;           /* This points to the config object of the actual implementation.        */
 };
 
 

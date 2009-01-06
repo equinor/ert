@@ -64,21 +64,20 @@
 
 typedef struct run_info_struct {
   bool              __ready;         	   /* An attempt to check the internal state - not active yet. */
-  bool              active;                /* Is this state object active at all - used for instance in ensemble experiments ere only some of the members are integrated. */
+  bool              active;                /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
   int               init_step;       	   /* The report step we initialize from - will often be equal to step1, but can be different. */
   state_enum        init_state;      	   /* Whether we should init from a forecast or an analyzed state. */
   int               step1;           	   /* The forward model is integrated: step1 -> step2 */
   int               step2;  	     
-  int               load_mask1;            /* What should we load from inetremediate report steps - add: dynamic_state , dynamic_result, static_state */
-  int               load_mask2;            /* What should ww load from the final step? */
+  int               load_mask1;            /* What should we load from interemediate report steps - add: dynamic_state , dynamic_result, static_state */
+  int               load_mask2;            /* What should we load from the final step? */
   const stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
   char             *run_path;              /* The currently used runpath - is realloced / freed for every step. */
   bool              can_sim;               /* If false - this member can not start simulations. */
   run_mode_type     run_mode;              /* What type of run this is */
   /******************************************************************/
-  /* Return value - set in the called routine!!  */
-  bool              complete_OK;     /* Did the forward model complete OK? */
-
+  /* Return value - set by the called routine!!  */
+  bool              complete_OK;           /* Did the forward model complete OK? */
 } run_info_type;
 
 
@@ -283,7 +282,7 @@ static member_config_type * member_config_alloc(int iens , bool keep_runpath , c
 }
 
 /*****************************************************************/
-/** Helper classes complete - starting on th enkf_state proper object. */
+/** Helper classes complete - starting on the enkf_state proper object. */
 /*****************************************************************/
 
 
@@ -313,10 +312,6 @@ void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_functi
     }                                                                      
   }
 }
-
-
-
-
 
 
 

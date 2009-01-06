@@ -17,7 +17,6 @@ const double   * multflt_get_output_ref(const multflt_type * );
 const double   * multflt_get_data_ref(const multflt_type * );
 void             multflt_get_data(const multflt_type * , double * );
 void             multflt_set_data(multflt_type * , const double * );
-void             multflt_initialize(multflt_type * , int);
 multflt_type   * multflt_alloc(const multflt_config_type * );
 void             multflt_free(multflt_type *);
 /*void             multflt_ecl_write(const multflt_type * , const char * , fortio_type *);*/

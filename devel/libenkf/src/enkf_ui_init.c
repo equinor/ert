@@ -47,9 +47,9 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
   const int prompt_len                         = 35;
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   int   ens_size                               = ensemble_config_get_size(ensemble_config);
-  stringlist_type * param_list = stringlist_alloc_new();
+  stringlist_type * param_list                 = stringlist_alloc_new();
   int iens1, iens2;
-
+  
   /* iens2 should be interpreted as __inclusive__ */
   if ( all_members ) {
     iens1 = 0;
@@ -68,7 +68,7 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
     }
     util_free_stringlist( tmp_key_list , num_keys );
   } else 
-    stringlist_append_copy( param_list , enkf_config_node_get_key_ref(enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , INVALID , parameter , NULL , NULL , NULL)) );
+    stringlist_append_copy( param_list , enkf_config_node_get_key_ref(enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , INVALID , invalid , NULL , NULL , NULL)) );
   
 
     

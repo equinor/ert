@@ -21,7 +21,6 @@ char           * multz_alloc_eclname(const multz_type *);
 /*void             multz_ecl_write(const multz_type * , const char *);*/
 void             multz_ens_write(const multz_type * , const char *);
 void             multz_ens_read(multz_type * , const char *);
-void             multz_initialize(multz_type * , int);
 void             multz_truncate(multz_type *);
 multz_type     * multz_alloc_mean(int , const multz_type **);
 void             multz_TEST(void);

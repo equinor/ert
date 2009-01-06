@@ -17,8 +17,9 @@
    turned out be a quite massive performance hit by using lockf().
 */
 
+
 void plain_driver_common_load_node(const char * filename ,  int report_step , int iens , state_enum state , enkf_node_type * node ) {
-  FILE * stream   = util_fopen(filename , "r");  /* locked open */
+  FILE * stream   = util_fopen(filename , "r");  
   enkf_node_fread(node , stream , report_step , iens , state);
   fclose(stream);
 }

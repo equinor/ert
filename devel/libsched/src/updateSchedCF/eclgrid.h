@@ -66,30 +66,30 @@ public:
     int i1,i2,j1,j2; 
     Cell*** cell;
     int*** actnum;
-	long nActiveCells;
+    long nActiveCells;
 
-	double minZ;
-	double 	x_offset,y_offset;
-	bool extended;
-	int* antActive;
+    double minZ;
+    double 	x_offset,y_offset;
+    bool extended;
+    int* antActive;
     char** layerTable;
 
-	EclGrid();
-	EclGrid(int _nI,int _nJ,int _nK);
-	~EclGrid();
-
-	void import_grid(char* name);
-
-	void read_init(char* name);
-
-	// void BuildConnections(CWell* well);
-	
-	void exportAsciiExcel(char* filename,int layer,double xOff,double yOff,int i1,int i2,int j1,int j2);
-
-
-	double*** newInitParam(char* name);
-	double*** getInitParam(char* name);
-	int getNParam();
+    EclGrid();
+    EclGrid(int _nI,int _nJ,int _nK);
+    ~EclGrid();
+    
+    void import_grid(char* name);
+    
+    void read_init(char* name);
+    
+    // void BuildConnections(CWell* well);
+    
+    void exportAsciiExcel(char* filename,int layer,double xOff,double yOff,int i1,int i2,int j1,int j2);
+    
+    
+    double*** newInitParam(char* name);
+    double*** getInitParam(char* name);
+    int getNParam();
 
 
 

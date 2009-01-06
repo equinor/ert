@@ -17,7 +17,6 @@ const double   * havana_fault_get_output_ref(const havana_fault_type * );
 const double   * havana_fault_get_data_ref(const havana_fault_type * );
 void             havana_fault_get_data(const havana_fault_type * , double * );
 void             havana_fault_set_data(havana_fault_type * , const double * );
-void             havana_fault_initialize(havana_fault_type *, int);
 
 havana_fault_type    * havana_fault_alloc(const havana_fault_config_type * );
 

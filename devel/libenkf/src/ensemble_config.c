@@ -247,7 +247,7 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_set_argc_minmax(item , 3 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
   
   item = config_add_item(config , "GEN_DATA" , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 1 , -1 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , "HAVANA_FAULT" , false , true);
   config_item_set_argc_minmax(item , 2 , 2 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
@@ -303,25 +303,43 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
     const char * key         = stringlist_iget(tokens , 0);
     const char * ecl_file    = stringlist_iget(tokens , 1);
-    const char * init_fmt    = stringlist_iget(tokens , 2);
-    const char * template_file;   
-
-    if (stringlist_get_size(tokens) == 4)
-      template_file = stringlist_iget(tokens , 3);
+    int           num_options  = stringlist_get_size(tokens) - 2;
+    const char ** options;
+    if (num_options > 0)
+      options = stringlist_iget_argv(tokens , 2);
     else
-      template_file = NULL;
+      options = NULL;
     
-    {
-      gen_data_config_type * gen_data_config;
-
-      if (template_file == NULL)
-	gen_data_config = gen_data_config_alloc(ASCII , ASCII , init_fmt);
-      else
-	gen_data_config = gen_data_config_alloc_with_template(ASCII , template_file , "<DATA>" , init_fmt);
-
-      ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config);
-    }
+    ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(num_options , options));
   }
+  
+
+  /* 
+     For this datatype the cooperation between the enkf_node layer and
+     the underlying type NOT particularly elegant.
+     
+     The problem is that the enkf_node layer owns the ECLIPSE
+     input/output filenames. However, the node itself knows whether it
+     should import/export ECLIPSE files (and therefore whether it
+     needs the input/output filenames.
+  */
+  
+  /* GEN_DATA */
+  for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
+    const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
+    const char * key           = stringlist_iget(tokens , 0);
+    int           num_options  = stringlist_get_size(tokens) - 1;
+    const char * ecl_file      = NULL;
+    const char ** options;
+    if (num_options > 0)
+      options = stringlist_iget_argv(tokens , 1);
+    else
+      options = NULL;
+    
+    enkf_var_type var_type   = dynamic_state;  /* Whether var_type should be dynamic state or dynamic_result is not obvious. */
+    ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(num_options , options));
+  }
+
   
 
   /* HAVANA_FAULT */
@@ -400,16 +418,6 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     ensemble_config_ensure_summary(ensemble_config , key );
   }
   
-
-  /* GEN_DATA */
-  for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
-    const char * key         = stringlist_iget(tokens , 0);
-    const char * config_file = stringlist_iget(tokens , 1);
-    enkf_var_type var_type   = dynamic_state;  /* Whether var_type should be dynamic state or dynamic_result is not obvious. */
-    
-    ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , NULL , NULL , gen_data_config_fscanf_alloc(config_file));
-  }
 
 
   /* GEN_KW */

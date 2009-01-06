@@ -146,9 +146,10 @@ void multflt_truncate(multflt_type * multflt) {
 
 
 
-void  multflt_initialize(multflt_type *multflt, int iens) {
+bool  multflt_initialize(multflt_type *multflt, int iens) {
   DEBUG_ASSERT(multflt)
   scalar_sample(multflt->scalar);  
+  return true;
 }
 
 
@@ -291,10 +292,11 @@ const char * multflt_get_name(const multflt_type * multflt, int fault_nr) {
    responsibility of the calling scope to check valid.
 */
 double multflt_user_get(const multflt_type * multflt, const char * key , bool * valid) {
+  const bool internal_value = false;
   int index = multflt_config_get_index(multflt->config , key);
   if (index >= 0) {
     *valid = true;
-    return scalar_iget_double(multflt->scalar , index);
+    return scalar_iget_double(multflt->scalar , internal_value , index);
   } else {
     *valid = false;
     fprintf(stderr,"** Warning:could not lookup fault:%s in multflt instance.\n",key);

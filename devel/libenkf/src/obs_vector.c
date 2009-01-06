@@ -55,60 +55,6 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
 
 
 
-
-
-/*****************************************************************/
-
-//static void obs_vector_set_active_mode(obs_vector_type * obs_vector , int first_report , int last_report , bool active) {
-//  int report_nr;
-//  first_report   = util_int_max(0 , first_report);
-//  last_report    = util_int_min(last_report , obs_vector->size - 1);
-//  if (last_report < first_report) 
-//    util_abort("%s: last_report:%d is before first_report:%d - aborting \n",__func__ , last_report , first_report);
-//
-//  for (report_nr = first_report; report_nr <= last_report; report_nr++) {
-//    if (obs_vector->active[report_nr] != active) {
-//      if (active)
-//	obs_vector->num_active++;
-//      else
-//	obs_vector->num_active--;
-//    }
-//    obs_vector->active[report_nr] = active;
-//  }
-//}
-//
-//
-//
-//static void obs_vector_set_active_mode_time_t(obs_vector_type * obs_vector , const sched_file_type * sched , time_t time1 , time_t time2 , bool active) {
-//  int report1, report2;
-//
-//  report1 = sched_file_get_restart_nr_from_time_t(sched , time1); 
-//  report2 = sched_file_get_restart_nr_from_time_t(sched , time2); 
-//  
-//  obs_vector_set_active_mode(obs_vector , report1 , report2 , active);
-//}
-//
-//
-//void obs_vector_activate_report_step(obs_vector_type * obs_vector , int first_report , int last_report) {
-//  obs_vector_set_active_mode(obs_vector , first_report , last_report , true);
-//}
-//
-//
-//void obs_vector_deactivate_report_step(obs_vector_type * obs_vector , int first_report , int last_report) {
-//  obs_vector_set_active_mode(obs_vector , first_report , last_report , false);
-//}
-//
-//
-//void obs_vector_activate_time_t(obs_vector_type * obs_vector , const sched_file_type * sched_file , time_t time1 , time_t time2) {
-//  obs_vector_set_active_mode_time_t(obs_vector , sched_file , time1 , time2 , true);
-//}
-//
-//
-//void obs_vector_deactivate_time_t(obs_vector_type * obs_vector , const sched_file_type * sched_file , time_t time1 , time_t time2) {
-//  obs_vector_set_active_mode_time_t(obs_vector , sched_file, time1 , time2, false);
-//}
-
-
 /*****************************************************************/
 
 
@@ -226,34 +172,6 @@ void obs_vector_delete_node(obs_vector_type * obs_vector , int index) {
 
 
 
-///**
-//   Loads an observation from the (internal) on-disk
-//   representation. The return value is whether the observation is
-//   active or not, that is determined by looking at the in-memory
-//   active vector, and *not* the disk representation.
-//*/
-//
-//
-//bool obs_vector_load_node(obs_vector_type * obs_vector , int report_step , enkf_fs_type * enkf_fs) {
-//  if (obs_vector->active[report_step]) {
-//    enkf_fs_fread_obs_node(enkf_fs, obs_vector->obs_node , report_step);
-//    return true;
-//  } else
-//    return false;
-//}
-//
-//
-///*
-//  Returns true | false if the report_step is active.
-//*/
-//
-//bool obs_vector_save_node(obs_vector_type * obs_vector , int report_step , enkf_fs_type * enkf_fs) {
-//  if (obs_vector->active[report_step]) {
-//    enkf_fs_fwrite_obs_node(enkf_fs, obs_vector->obs_node , report_step);
-//    return true;
-//  } else
-//    return false;
-//}
 
 /*****************************************************************/
 
@@ -358,6 +276,46 @@ obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_
     summary_obs_type * sum_obs   = summary_obs_alloc(sum_key , obs_value , obs_error);
     
     obs_vector_install_node( obs_vector , obs_restart_nr , sum_obs );
+    return obs_vector;
+  }
+}
+
+
+
+
+obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, const ensemble_config_type * ensemble_config) {
+  if(!conf_instance_is_of_class(conf_instance, "GENERAL_OBSERVATION"))
+    util_abort("%s: internal error. expected \"GENERAL_OBSERVATION\" instance, got \"%s\".\n",
+               __func__, conf_instance_get_class_name_ref(conf_instance) );
+  
+  {
+    const char * obs_key         = conf_instance_get_name_ref(conf_instance);
+    const char * obs_file        = conf_instance_get_item_value_ref(   conf_instance, "OBS_FILE" );              
+    const char * state_kw        = conf_instance_get_item_value_ref(   conf_instance, "DATA" );              
+    int          size            = history_get_num_restarts( history );
+    obs_vector_type * obs_vector = obs_vector_alloc( gen_obs , state_kw , size );
+    int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
+    const char * index_file      = NULL;
+    const char * index_list      = NULL;
+    gen_obs_type * gen_obs;
+
+    if (conf_instance_has_item(conf_instance , "INDEX_FILE"))
+      index_file = conf_instance_get_item_value_ref(   conf_instance, "INDEX_FILE" );              
+
+    if (conf_instance_has_item(conf_instance , "INDEX_LIST"))
+      index_list = conf_instance_get_item_value_ref(   conf_instance, "INDEX_LIST" );              
+
+    {
+      const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , state_kw);
+      if (enkf_config_node_get_impl_type(config_node) == GEN_DATA) {
+	gen_obs = gen_obs_alloc(obs_file , index_file , index_list);	
+	obs_vector_install_node( obs_vector , obs_restart_nr , gen_obs );
+      } else {
+	enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
+	util_abort("%s: %s has implementation type:\'%s\' - expected:\'%s\'.\n",__func__ , state_kw , enkf_types_get_impl_name(impl_type) , enkf_types_get_impl_name(GEN_DATA));
+      }
+    }
+    
     return obs_vector;
   }
 }

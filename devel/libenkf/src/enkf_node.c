@@ -528,14 +528,25 @@ void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_nod
 }
 
 
-void enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
+
+/**
+   The return value is whether any initialization has actually taken
+   place. If the function returns false it is for instance not
+   necessary to internalize anything.
+*/
+
+bool enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
   if (enkf_node->initialize != NULL) {
     enkf_node_ensure_memory(enkf_node);
-    enkf_node->initialize(enkf_node->data , iens);
-    enkf_node->__report_step = 0;
-    enkf_node->__state       = analyzed;
-    enkf_node->__modified    = true;
-  }
+    if (enkf_node->initialize(enkf_node->data , iens)) {
+      enkf_node->__report_step = 0;
+      enkf_node->__state       = analyzed;
+      enkf_node->__modified    = true;
+      return true;
+    } else 
+      return false; /* No init performed */
+  } else
+    return false;  /* No init performed */
 }
 
 

@@ -45,11 +45,16 @@ void scalar_get_data(const scalar_type * scalar , double * data) {
 }
 
 
-double scalar_iget_double(scalar_type * scalar , int index) {
-  if (!scalar->output_valid)
-    scalar_transform( scalar );
-  return scalar->output_data[index];
+double scalar_iget_double(scalar_type * scalar , bool internal_value , int index) {
+  if (internal_value)
+    return scalar->data[index];
+  else {
+    if (!scalar->output_valid)
+      scalar_transform( scalar );
+    return scalar->output_data[index];
+  }
 }
+
 
 
 void scalar_get_output_data(const scalar_type * scalar , double * output_data) {

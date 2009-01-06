@@ -246,11 +246,11 @@ void prefix ## _deserialize__(void *void_arg, serial_state_type * serial_state, 
 
 /*****************************************************************/
 #define VOID_INITIALIZE(prefix)     \
-void prefix ## _initialize__(void *void_arg, int iens) {              \
+bool prefix ## _initialize__(void *void_arg, int iens) {              \
    prefix ## _type  *arg = (prefix ## _type *) void_arg;       \
-   prefix ## _initialize (arg , iens);                              \
+   return prefix ## _initialize (arg , iens);                              \
 }
-#define VOID_INITIALIZE_HEADER(prefix) void prefix ## _initialize__(void *, int);
+#define VOID_INITIALIZE_HEADER(prefix) bool prefix ## _initialize__(void *, int);
 
 
 

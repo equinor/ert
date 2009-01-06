@@ -151,9 +151,10 @@ void multz_truncate(multz_type * multz) {
 
 
 
-void  multz_initialize(multz_type *multz, int iens) {
+bool multz_initialize(multz_type *multz, int iens) {
   DEBUG_ASSERT(multz)
   scalar_sample(multz->scalar);  
+  return true;
 }
 
 

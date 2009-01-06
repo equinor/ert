@@ -98,9 +98,9 @@ void equil_fread(equil_type * equil , FILE * stream) {
 
 
 
-void equil_initialize(equil_type *equil, int iens) {
+bool equil_initialize(equil_type *equil, int iens) {
   scalar_sample(equil->scalar);
-
+  return true;
 }
 
 

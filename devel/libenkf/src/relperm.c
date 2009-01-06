@@ -91,11 +91,12 @@ void relperm_clear(relperm_type * relperm) {
   scalar_clear(relperm->scalar);
 }
 
-void relperm_initialize(relperm_type * relperm, int iens) {
+bool relperm_initialize(relperm_type * relperm, int iens) {
   DEBUG_ASSERT(relperm)
   scalar_sample(relperm->scalar);
-
+  return true;
 }
+
 
 void relperm_get_data(const relperm_type * relperm, double * data) {
   scalar_get_data(relperm->scalar,data);

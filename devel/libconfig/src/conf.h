@@ -81,16 +81,9 @@
  *  
  */
 
-
-
-
-
-
-
-
-
-
-
+#ifdef __cplusplus 
+extern "C" {
+#endif
 
 #include <stdbool.h>
 #include <set.h>
@@ -342,4 +335,7 @@ conf_instance_type * conf_instance_alloc_from_file(
   const char            * name,
   const char            * file_name);
 
+#ifdef __cplusplus 
+}
+#endif
 #endif  

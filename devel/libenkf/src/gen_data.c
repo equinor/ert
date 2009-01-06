@@ -100,16 +100,25 @@ void gen_data_free(gen_data_type * gen_data) {
    Observe that this function writes parameter size to disk, that is
    special. The reason is that the config object does not know the
    size (on allocation).
+
+   The function currently writes an empty file (with only a report
+   step and a size == 0) in the case where it does not have data. This
+   is controlled by the value of the variable write_zero_size.
 */
 
 bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
+  const bool write_zero_size = true; /* true:ALWAYS write a file   false:only write files with size > 0. */
   DEBUG_ASSERT(gen_data)
   {
+    bool write      = write_zero_size;
     int size        = gen_data_config_get_data_size(gen_data->config);
     int report_step = gen_data_config_get_report_step(gen_data->config); 
-    if (size > 0) {
+    if (size > 0) 
+      write = true;
+
+    if (write) {
       int byte_size = gen_data_config_get_byte_size(gen_data->config);
-    
+      
       enkf_util_fwrite_target_type(stream , GEN_DATA);
       util_fwrite_int(size        , stream);
       util_fwrite_int(report_step , stream);
@@ -236,9 +245,9 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
    we reach EOF.
    
    When the read is complete it is checked/verified with the config
-   object that this file was as long as the others we have loaded for
+   object that this file was as long as the files we have loaded for
    other members.
-
+   
    If gen_data_config_alloc_initfile() returns NULL that means that
    the gen_data instance does not have any init function - that is OK.
 */
@@ -343,11 +352,36 @@ double gen_data_iget_double(const gen_data_type * gen_data, int index) {
 
 
 
+/**
+   The filesystem will (currently) store gen_data instances which do
+   not hold any data. Therefor it will be quite common to enter this
+   function with an empty instance, we therefor just set valid =>
+   false, and return silently in that case.
+*/
+
+double gen_data_user_get(const gen_data_type * gen_data, const char * index_key, bool * valid)
+{
+  int index;
+
+  if (util_sscanf_int(index_key , &index)) {
+    if (index < gen_data_config_get_data_size(gen_data->config)) {
+      *valid = true;
+      return gen_data_iget_double( gen_data , index );
+    }
+  } 
+
+  *valid = false;
+  return -1; /* Dummy to shut up compiler */
+}
+
+
+
+
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
-
+VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)
 VOID_FREE_DATA(gen_data)

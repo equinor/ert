@@ -588,6 +588,7 @@ static void field_apply_truncation(field_type * field) {
   }
 }
   
+
 /** 
     Does both the explicit output transform *AND* the truncation.
 */
@@ -596,7 +597,7 @@ static void field_output_transform(field_type * field) {
   double min_value , max_value;
   field_func_type * output_transform = field_config_get_output_transform(field->config);
   truncation_type   truncation       = field_config_get_truncation(field->config , &min_value , &max_value); 
-  if (output_transform != NULL || truncation != truncate_none) {
+  if ((output_transform != NULL) || (truncation != truncate_none)) {
     field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) , __func__);
     field->__data = field->data;  /* Storing a pointer to the original data. */
     field->data = field->export_data;
@@ -1278,6 +1279,7 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 */
 double field_user_get(const field_type * field, const char * index_key, bool * valid)
 {
+  const    bool internal_value = false;
   double   val = 0.0;
   int      length;
   int    * indices = util_sscanf_alloc_active_list(index_key, &length);
@@ -1308,6 +1310,11 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
   }
 
   free(indices);
+  if (!internal_value) {
+    field_func_type * output_transform = field_config_get_output_transform(field->config);
+    val = output_transform( val );
+    /* Truncation - ignored for now */
+  }
   return val;
 }
 

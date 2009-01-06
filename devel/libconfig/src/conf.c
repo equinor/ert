@@ -15,9 +15,9 @@
 
 struct conf_class_struct
 {
-  const conf_class_type * super_class; /** Can be NULL.              */
+  const conf_class_type * super_class;  /** Can be NULL.              */
   char                  * class_name;
-  char                  * help;        /** Can be NULL if not given. */
+  char                  * help;         /** Can be NULL if not given. */
   bool                    require_instance;
   
   hash_type             * sub_classes;  /** conf_class_types          */
@@ -318,8 +318,7 @@ void conf_item_free__(
 
 
 
-conf_item_mutex_type * conf_item_mutex_alloc(
-  bool require_one)
+conf_item_mutex_type * conf_item_mutex_alloc( bool require_one )
 {
   conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex, __func__);
 
@@ -416,10 +415,12 @@ void conf_class_insert_owned_item_spec(
   assert(conf_class != NULL);
   assert(item_spec  != NULL);
 
+
   /** Abort if item_spec already has a super class. */
   if(item_spec->super_class != NULL)
-    util_abort("%s: Internal error. item is already assigned to another class.\n", __func__);
+    util_abort("%s: Internal error: item is already assigned to another class.\n", __func__);
 
+  
   /** Abort if the class has a sub class with the same name.. */
   if(hash_has_key(conf_class->sub_classes, item_spec->name))
     util_abort("%s: Internal error. conf class already has a sub class with name \"%s\".\n", __func__, item_spec->name);

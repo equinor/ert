@@ -10,7 +10,6 @@ typedef struct relperm_struct relperm_type;
 
 
 relperm_type * relperm_alloc(const relperm_config_type * );
-void           relperm_initialize(relperm_type *, int iens);
 void           relperm_get_data(const relperm_type *, double *);
 void           relperm_set_data(const relperm_type *, const double *);
 void           relperm_ecl_write_f90test(const relperm_type *,const double *, const char *);
