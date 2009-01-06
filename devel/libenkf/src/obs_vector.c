@@ -36,7 +36,7 @@ struct obs_vector_struct {
 
 static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instance, const char * obs_key , const history_type * history, int size) {
   int obs_restart_nr = -1;  /* To shut up compiler warning. */
-
+  
   if(conf_instance_has_item(conf_instance, "RESTART")) {
     obs_restart_nr = conf_instance_get_item_value_int(conf_instance, "RESTART");
     if(obs_restart_nr > size)
@@ -44,12 +44,12 @@ static int __conf_instance_get_restart_nr(const conf_instance_type * conf_instan
   } else if(conf_instance_has_item(conf_instance, "DATE")) {
     time_t obs_date = conf_instance_get_item_value_time_t(conf_instance, "DATE"  );
     obs_restart_nr  = history_get_restart_nr_from_time_t(history, obs_date);
-  } else if(conf_instance_has_item(conf_instance, "DAYS")) {
+  } else if (conf_instance_has_item(conf_instance, "DAYS")) {
     double days = conf_instance_get_item_value_double(conf_instance, "DAYS");
     obs_restart_nr = history_get_restart_nr_from_days(history, days);
   }  else
     util_abort("%s: Internal error. Invalid conf_instance?\n", __func__);
-
+  
   return obs_restart_nr;
 }
 

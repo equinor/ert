@@ -1312,7 +1312,8 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
   free(indices);
   if (!internal_value) {
     field_func_type * output_transform = field_config_get_output_transform(field->config);
-    val = output_transform( val );
+    if (output_transform != NULL)
+      val = output_transform( val );
     /* Truncation - ignored for now */
   }
   return val;
