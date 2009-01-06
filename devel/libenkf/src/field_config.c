@@ -35,16 +35,16 @@
 
 
                             	                          ___________________________________
-_______________       _________	      ___________	 /                                   \
-               \     /         \     /         	 \	 |  The internal representation      |
- Geo Modelling |     |Truncate |     | input-    |	 |  of the field. This (should)      |
- creates a     |==>==|min and  |==>==| transform |===>===|  be a normally distributed        |
- realization   |     |max.     |     | 	     	 |	 |  variable suitable for updates    |
-_______________/     \_________/     \___________/	 |  with EnKF.                       |
+_______________                       ___________	 /                                   \
+               \                     /         	 \	 |  The internal representation      |
+ Geo Modelling |                     | input-    |	 |  of the field. This (should)      |
+ creates a     |==>===============>==| transform |===>===|  be a normally distributed        |
+ realization   |                     | 	     	 |	 |  variable suitable for updates    |
+_______________/                     \___________/	 |  with EnKF.                       |
                                	              		 \___________________________________/   ___
 |<----   This path is ONLY executed during INIT ------->|                  |                     /|\
-                                                                          \|/                     |
-							          _________|__________		  |
+         Observe that there is no truncation                              \|/                     |
+         on load.					          _________|__________		  |
                                                                  /                    \		  |   This code is run
                                                                  |  Output transform  |		  |   every time a field
                                                                  \____________________/		  |   is exported from
@@ -87,10 +87,7 @@ struct field_config_struct {
   int             	  sizeof_ctype;        
   ecl_type_enum           internal_ecl_type;
   ecl_type_enum           export_ecl_type;
-  bool                    enkf_init;  /* Should the field object be initialized by by enkf (by loading a user-provided file)?
-					 Or is the initialization done as part of the forward model (i.e PRESSURE). */
-
-  path_fmt_type         * init_file_fmt;
+  path_fmt_type         * init_file_fmt; /* The format for loding init_files - if this is NULL the initialization is done by the forward model. */
 
   bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool fmt_file;
@@ -328,7 +325,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   field_config_set_ecl_type(config , ecl_type);
   ecl_grid_get_dims(ecl_grid , &config->nx , &config->ny , &config->nz , &config->data_size);
 
-  config->truncation = truncate_none;
+  config->truncation               = truncate_none;
   config->__enkf_mode              = true;
   config->fmt_file    	      	   = false;
   config->endian_swap 	      	   = true;
@@ -336,7 +333,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->init_file_fmt            = NULL;
   config->output_transform         = NULL;
   config->init_transform           = NULL;
-  config->enkf_init                = false;     
   config->active_list              = active_list_alloc( config->data_size );
   field_config_set_all_active(config);
 
@@ -401,7 +397,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 
       if (strcmp(option , "INIT_FILES") == 0) {
 	config->init_file_fmt = path_fmt_alloc_path_fmt( value );
-	config->enkf_init     = true;
 	option_OK = true;
       }
 
@@ -492,7 +487,7 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name 	     
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
   config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format , trans_table , num_options , options);
-  if (!config->enkf_init)
+  if (config->init_file_fmt == NULL)
     util_abort("%s:(INTERNAL ERROR)  invalid init type \n",__func__);
 
 
@@ -633,8 +628,12 @@ bool field_config_active_cell(const field_config_type * config , int i , int j ,
 
 
 bool field_config_enkf_init(const field_config_type * config) {
-  return config->enkf_init;
+  if (config->init_file_fmt != NULL)
+    return true;
+  else
+    return false;
 }
+
 
 
 

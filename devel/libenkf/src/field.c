@@ -690,14 +690,13 @@ bool field_initialize(field_type *field , int iens) {
       field_fload(field , filename , field_config_get_endian_swap(field->config));
       free(filename);
     }
-    /* 
-       Doing the input transform - observe that this is done inplace on
-       the data, not as the output transform which is done on a copy of
-       prior to export.
-    */
-    field_apply_truncation(field);
     {
-      field_func_type * init_transform = field_config_get_init_transform(field->config);
+      field_func_type * init_transform   = field_config_get_init_transform(field->config);
+      /* 
+	 Doing the input transform - observe that this is done inplace on
+	 the data, not as the output transform which is done on a copy of
+	 prior to export.
+      */
       if (init_transform != NULL) 
 	field_apply(field , init_transform);
     }
