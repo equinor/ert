@@ -78,9 +78,9 @@ const double * havana_fault_get_output_ref(const havana_fault_type * havana_faul
 
 
 havana_fault_type * havana_fault_alloc(const havana_fault_config_type * config) {
-  havana_fault_type * havana_fault  = malloc(sizeof * havana_fault);
+  havana_fault_type * havana_fault  = util_malloc(sizeof * havana_fault , __func__);
   havana_fault->config = config;
-  gen_kw_config_type * gen_kw_config = config->gen_kw_config;
+  gen_kw_config_type * gen_kw_config = havana_fault_config_get_gen_kw_config( config );
   havana_fault->scalar               = scalar_alloc(gen_kw_config_get_scalar_config( gen_kw_config )); 
   DEBUG_ASSIGN(havana_fault)
   return havana_fault;
@@ -309,11 +309,7 @@ void havana_fault_ensemble_fprintf_results(const havana_fault_type ** ensemble, 
   for this function the second argument is a target_path (the
   config_object has been allocated with target_file == NULL).
 
-  Observe that with the current interaction with havanna *ONLY* one
-  instance of this function can run at a time - conflict with the
-  ".faultlist" file - this must be modularized!!
 */
-
 
 
 void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path , fortio_type * fortio) {
@@ -337,6 +333,19 @@ const char * havana_fault_get_name(const havana_fault_type * havana_fault, int k
 
 
 
+double havana_fault_user_get(const havana_fault_type * havana_fault , const char * index_string , bool * valid) {
+  const bool internal_value = false;
+  gen_kw_config_type * gen_kw_config = havana_fault_config_get_gen_kw_config( havana_fault->config );
+  int index                          = gen_kw_config_get_index( gen_kw_config , index_string );
+  if (index < 0) {
+    *valid = false;
+    return 0;
+  } else {
+    *valid = true;
+    return scalar_iget_double(havana_fault->scalar , internal_value , index);
+  }
+}
+
 
 
 
@@ -344,8 +353,10 @@ const char * havana_fault_get_name(const havana_fault_type * havana_fault, int k
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
+
 MATH_OPS_SCALAR(havana_fault);
 ALLOC_STATS(havana_fault);
+VOID_USER_GET(havana_fault);
 VOID_ALLOC(havana_fault);
 VOID_REALLOC_DATA(havana_fault);
 VOID_SERIALIZE (havana_fault);

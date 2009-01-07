@@ -711,6 +711,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->free_data    	  = havana_fault_free_data__;
     node->initialize   	  = havana_fault_initialize__;
     node->fprintf_results = havana_fault_ensemble_fprintf_results__;
+    node->user_get        = havana_fault_user_get__; 
     break;
   case(FIELD):
     node->realloc_data = field_realloc_data__;

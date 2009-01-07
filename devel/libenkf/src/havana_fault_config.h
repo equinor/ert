@@ -10,16 +10,6 @@ typedef struct havana_fault_config_struct  havana_fault_config_type;
 typedef struct fault_group_struct          fault_group_type;
 
 
-struct havana_fault_config_struct 
-{
-  gen_kw_config_type  * gen_kw_config;
-  char 	    	      * havana_executable;
-  char 	    	      * unfaulted_GRDECL_file;
-  char                * input_fault_path;
-  char                * update_template;
-  int                   num_fault_groups;
-  fault_group_type   ** fault_groups;
-};
 
 void                         havana_fault_config_run_havana(const havana_fault_config_type *  , scalar_type *  , const char * );
 const char                 * havana_fault_config_get_template_ref(const havana_fault_config_type * );
@@ -31,6 +21,9 @@ int                	     havana_fault_config_get_data_size(const havana_fault_co
 const char         	   * havana_fault_config_get_name(const havana_fault_config_type * , int );
 char               	  ** havana_fault_config_get_name_list(const havana_fault_config_type *);
 const char         	   * havana_fault_config_get_executable_ref(const havana_fault_config_type * );
+gen_kw_config_type         * havana_fault_config_get_gen_kw_config(const havana_fault_config_type * );
+
 VOID_FREE_HEADER(havana_fault_config);
+
 
 #endif

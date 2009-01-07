@@ -22,6 +22,22 @@ struct fault_group_struct {
   char   *group_name;
 };
 
+
+
+
+struct havana_fault_config_struct 
+{
+  gen_kw_config_type  * gen_kw_config;
+  char 	    	      * havana_executable;
+  char 	    	      * unfaulted_GRDECL_file;
+  char                * input_fault_path;
+  char                * update_template;
+  int                   num_fault_groups;
+  fault_group_type   ** fault_groups;
+};
+
+
+
 /*****************************************************************/
 /** 
    Implementation of fault_group_type follows here. This is just
@@ -437,6 +453,10 @@ void  havana_fault_config_truncate(const havana_fault_config_type * config, scal
     /*    gen_kw_config_truncate(config->gen_kw_config, scalar); */
 }
 
+
+gen_kw_config_type * havana_fault_config_get_gen_kw_config(const havana_fault_config_type * config) {
+  return config->gen_kw_config;
+}
 
 
 
