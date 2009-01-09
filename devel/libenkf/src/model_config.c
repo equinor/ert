@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <util.h>
 #include <stdlib.h>
+#include <string.h>
 #include <enkf_fs.h>
 #include <path_fmt.h>
 #include <enkf_sched.h>
@@ -19,7 +20,7 @@
 #include <plain_driver_parameter.h>
 #include <plain_driver_static.h>
 #include <plain_driver_dynamic.h>
-
+#include <plain_driver_index.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -61,7 +62,7 @@ static enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) 
     plain_driver_parameter_fwrite_mount_info(stream , "%04d/mem%03d/Parameter"); 
     plain_driver_static_fwrite_mount_info(stream    , "%04d/mem%03d/Static"); 
     plain_driver_dynamic_fwrite_mount_info(stream   , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
-    fs_index_fwrite_mount_info(stream , "%04d/mem%03d/INDEX");
+    plain_driver_index_fwrite_mount_info(stream , "%04d/mem%03d/INDEX");
     
 
     /* 
@@ -90,6 +91,7 @@ void model_config_set_runpath_fmt(model_config_type * model_config, const char *
 model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , const sched_file_type * sched_file) {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
+
   model_config->result_path    = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
   model_config->forward_model  = config_alloc_stringlist( config , "FORWARD_MODEL" );
   model_config->enkf_sched     = enkf_sched_fscanf_alloc( config_safe_get(config , "ENKF_SCHED_FILE") , num_restart_files  , joblist , model_config->forward_model);
@@ -101,9 +103,45 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   }
   util_make_path( model_config->lock_path );
   model_config->ensemble_dbase = fs_mount( config_get(config , "ENSPATH") , model_config->lock_path);
-  model_config->history = history_alloc_from_sched_file(sched_file);
   model_config->runpath = NULL;
   model_config_set_runpath_fmt( model_config , config_get(config , "RUNPATH") );
+  model_config->history = history_alloc_from_sched_file(sched_file);  
+  {
+    const char * history_source = config_get(config , "HISTORY_SOURCE");
+    const char * refcase        = NULL;
+    bool  use_history;
+
+    if (strcmp(history_source , "REFCASE_OBSERVED") == 0) {
+      refcase = config_get(config , "REFCASE");
+      use_history = false;
+    } else if (strcmp(history_source , "REFCASE_HISTORY") == 0) {
+      refcase = config_get(config , "REFCASE");
+      use_history = true;
+    }
+
+    if ((refcase != NULL) && (strcmp(history_source , "SCHEDULE") != 0)) {
+      char  * refcase_path;
+      char  * refcase_base;
+      char  * header_file;
+      char ** summary_file_list;
+      int     files;
+      bool    fmt_file ,unified;
+      ecl_sum_type * ecl_sum;
+      
+      util_alloc_file_components( refcase , &refcase_path , &refcase_base , NULL);
+      printf("Loading summary from: %s \n",refcase_path);
+      ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , &summary_file_list , &files , &fmt_file , &unified);
+
+      ecl_sum = ecl_sum_fread_alloc( header_file , files , (const char **) summary_file_list , true , true /* Endian convert */);
+      history_realloc_from_summary( model_config->history , ecl_sum , use_history);        
+      util_safe_free(header_file);
+      util_safe_free(refcase_base);
+      util_safe_free(refcase_path);
+      util_free_stringlist(summary_file_list, files);
+      ecl_sum_free(ecl_sum);
+    }
+  }
+
   
   return model_config;
 }
@@ -158,5 +196,4 @@ void model_config_interactive_set_runpath__(void * arg) {
     menu_item_set_label( item , menu_label );
     free(menu_label);
   }
-
 }

@@ -3,7 +3,6 @@
 #include <util.h>
 #include <config.h>
 #include <hash.h>
-#include <fs_index.h>
 #include <enkf_types.h>
 #include <string.h>
 #include <local_driver.h>
@@ -27,7 +26,7 @@ void install_SIGNALS(void) {
 
 
 void text_splash() {
-  const int usleep_time = 2500;
+  const int usleep_time = 1250;
   int i;
   {
 #include "uncle_sam_100.h"
