@@ -1,0 +1,109 @@
+#include <stdlib.h>
+#include <path_fmt.h>
+#include <util.h>
+#include <fs_types.h>
+#include <restart_kw_list.h>
+#include <plain_driver_index.h>
+#include <basic_driver.h>
+
+
+/*
+  This file implements a plain index driver - it currently only stores
+  the restart_kw_list - i.e. the ordering of keywords in ECLIPSE
+  restart files.
+*/
+
+struct plain_driver_index_struct {
+  BASIC_INDEX_DRIVER_FIELDS;
+  int         __id;     
+  path_fmt_type  * path_fmt;
+  
+  char           * root_path;
+  char           * fmt;
+};
+
+
+static plain_driver_index_type * plain_driver_index_safe_cast(void * __index_driver){
+  plain_driver_index_type * index_driver = (plain_driver_index_type *) __index_driver;
+  if (index_driver->__id != PLAIN_DRIVER_INDEX_ID)
+    util_abort("%s: runtime cast failed \n",__func__);
+  
+  return index_driver;
+}
+  
+  
+
+    
+void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report_step , int iens , restart_kw_list_type * kw_list) {
+  plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
+  {
+    char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , true , report_step , iens , "kw_list");
+    FILE * stream  = util_fopen(kw_file , "w");
+    restart_kw_list_fwrite(kw_list , stream);
+    fclose(stream);
+    free(kw_file);
+  }
+}
+
+
+void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_step, int iens , restart_kw_list_type * kw_list) {
+  plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
+  {
+    char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , false , report_step , iens , "kw_list");
+    FILE * stream  = util_fopen(kw_file , "r");
+    restart_kw_list_fread(kw_list , stream);
+    fclose(stream);
+    free(kw_file);
+  }
+}
+
+
+void plain_driver_index_free(void * __index_driver) {
+  plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
+  {
+    path_fmt_free(index_driver->path_fmt);
+    free(index_driver);
+    index_driver = NULL;
+  }
+}
+
+
+
+void * plain_driver_index_alloc(const char * root_path , const char * index_path) {
+  plain_driver_index_type * plain_driver = util_malloc(sizeof * plain_driver , __func__);
+  {
+    char * path = util_alloc_full_path(root_path , index_path);
+    plain_driver->path_fmt = path_fmt_alloc_directory_fmt(path);
+    free(path);
+  }
+  plain_driver->select_dir  = NULL;
+  plain_driver->save_kwlist = plain_driver_index_fwrite_restart_kw_list;
+  plain_driver->load_kwlist = plain_driver_index_fread_restart_kw_list;
+  plain_driver->free_driver = plain_driver_index_free;
+
+  plain_driver->__id = PLAIN_DRIVER_INDEX_ID;
+  {
+    basic_driver_index_type * basic_driver = (basic_driver_index_type *) plain_driver;
+    basic_driver_index_init(basic_driver);
+    return basic_driver;
+  }
+}
+
+
+
+void * plain_driver_index_fread_alloc(const char * root_path , FILE * stream) {
+  char * index_path        = util_fread_alloc_string( stream );
+  plain_driver_index_type * plain_driver_index = plain_driver_index_alloc(root_path , index_path);
+
+  free(index_path);
+  return plain_driver_index;
+}
+
+
+void plain_driver_index_fwrite_mount_info(FILE * stream , const char * fmt) {
+  util_fwrite_int(DRIVER_INDEX          , stream);
+  util_fwrite_int(PLAIN_DRIVER_INDEX_ID , stream);
+  util_fwrite_string(fmt , stream);
+}
+
+ 
