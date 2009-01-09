@@ -200,74 +200,28 @@ void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list ,
 }
 
 
-#define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
 void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size , const char * filename) {
-  const int float_width     =  9;
-  const int float_precision =  5;
   char    ** kw_list = gen_kw_config_get_name_list(ensemble[0]->config);
   int        size    = gen_kw_config_get_data_size(ensemble[0]->config);
-  int      * width   = util_malloc((size + 1) * sizeof * width , __func__);
-  int        ikw , total_width;
 
-  gen_kw_type * mean;
-  gen_kw_type * std;
+  double  ** data    = util_malloc(size * sizeof * data, __func__);
+  for(int i=0; i<size; i++)
+    data[i] = util_malloc(ens_size * sizeof * data[i], __func__); 
 
-  gen_kw_alloc_stats(ensemble , ens_size , &mean , &std);
-  width[0] = strlen("Member #|");
-  total_width = width[0];
-  for (ikw = 0; ikw < size; ikw++) {
-    width[ikw + 1]  = util_int_max(strlen(kw_list[ikw]), 2 * float_width + 5) + 1;  /* Must accomodate A +/- B */
-    width[ikw + 1] += ( 1 - (width[ikw + 1] & 1)); /* Ensure odd length */
-    total_width += width[ikw + 1] + 1;
+
+  for (int iens = 0; iens < ens_size; iens++) {
+    const double * scalar_data = scalar_get_output_ref(ensemble[iens]->scalar);
+    for (int i = 0; i < size; i++) {
+      data[i][iens] = scalar_data[i];
+    }
   }
 
-  {
-    FILE * stream = util_fopen(filename , "w");
-    int iens;
+  enkf_util_fprintf_data( (const double **) data, (const char **) kw_list, ens_size, size, true, filename);
 
-    util_fprintf_string("Member #|" , width[0] , true , stream);
-    for (ikw = 0; ikw < size; ikw++) {
-      util_fprintf_string(kw_list[ikw] , width[ikw + 1] , center , stream);
-      fprintf(stream , "|");
-    }
-    fprintf(stream , "\n");
-    PRINT_LINE(total_width , '=' , stream);
-
-    util_fprintf_string("Mean" , width[0] - 1 , true , stream);
-    fprintf(stream , "|");
-    {
-      const double * mean_data = scalar_get_output_ref(mean->scalar);
-      const double * std_data  = scalar_get_output_ref(std->scalar);
-      for (ikw = 0; ikw < size; ikw++) {
-	int w = (width[ikw + 1] - 5) / 2;
-	util_fprintf_double(mean_data[ikw] , w , float_precision , 'g' , stream);
-	fprintf(stream , " +/- ");
-	util_fprintf_double(std_data[ikw] , w , float_precision , 'g' , stream);
-	fprintf(stream , "|");
-      }
-      fprintf(stream , "\n");
-    }
-    PRINT_LINE(total_width , '-' , stream);
-    for (iens = 0; iens < ens_size; iens++) {
-      const double * data = scalar_get_output_ref(ensemble[iens]->scalar);
-      util_fprintf_int(iens + 1, width[0] - 1 , stream);   /* This +1 is not general */
-      fprintf(stream , "|");
-      
-      for (ikw = 0; ikw < size; ikw++) {
-	util_fprintf_double(data[ikw] , width[ikw + 1] , float_precision , 'g' , stream);
-	fprintf(stream , "|");
-      }
-      fprintf(stream , "\n");
-    }
-    PRINT_LINE(total_width , '=' , stream);
-    fclose(stream);
-  }
-  
-  gen_kw_free(mean);
-  gen_kw_free(std);
-  free(width);
+  for(int i=0; i<size; i++)
+        free(data[i]);
+  free(data);
 }
-#undef PRINT_LINE
 
 
 const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
