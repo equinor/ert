@@ -310,6 +310,7 @@ void   	enkf_util_fread_assert_target_type(FILE * , enkf_impl_type);
 void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 
 char  * enkf_util_scanf_alloc_filename(const char * , int );
+void    enkf_util_fprintf_data(const double ** , const char ** , int , int , bool , const char * );
 
 /* These #defines are used in the enkf_util_scanf_alloc_filename function. */
 #define EXISTING_FILE  1

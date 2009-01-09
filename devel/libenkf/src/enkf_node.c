@@ -686,17 +686,18 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->user_get        = multflt_user_get__;
     break;
   case(SUMMARY):
-    node->ecl_load     = summary_ecl_load__;
-    node->realloc_data = summary_realloc_data__;
-    node->alloc        = summary_alloc__;
-    node->fread_f      = summary_fread__;
-    node->fwrite_f     = summary_fwrite__;
-    node->copyc        = summary_copyc__;
-    node->serialize    = summary_serialize__;
-    node->deserialize  = summary_deserialize__;
-    node->freef        = summary_free__;
-    node->free_data    = summary_free_data__;
-    node->user_get     = summary_user_get__; 
+    node->ecl_load        = summary_ecl_load__;
+    node->realloc_data    = summary_realloc_data__;
+    node->alloc           = summary_alloc__;
+    node->fread_f         = summary_fread__;
+    node->fwrite_f        = summary_fwrite__;
+    node->copyc           = summary_copyc__;
+    node->serialize       = summary_serialize__;
+    node->deserialize     = summary_deserialize__;
+    node->freef           = summary_free__;
+    node->free_data       = summary_free_data__;
+    node->user_get        = summary_user_get__; 
+    node->fprintf_results = summary_ensemble_fprintf_results__;
     break;
   case(HAVANA_FAULT):
     node->realloc_data 	  = havana_fault_realloc_data__;
