@@ -21,7 +21,15 @@
 #include <msg.h>
 
 
-
+static char * enkf_ui_plot_alloc_plot_file(const enkf_main_type * enkf_main , const char * base_name) {
+  const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+  const char * plot_path  =  model_config_get_plot_path( model_config );
+  const char * extension  =  "png";
+  
+  return util_alloc_filename( plot_path , base_name , extension);
+}
+					   
+					   
 
 static plot_type * __plot_alloc(const char * x_label , const char * y_label , const char * title , const char * file) {
   plot_type * plot  = plot_alloc();
@@ -76,7 +84,7 @@ void enkf_ui_plot_ensemble(void * arg) {
     
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
     scanf("%s" , user_key);
-    plot_file = util_alloc_sprintf("/tmp/%s.png" , user_key);
+    plot_file = enkf_ui_plot_alloc_plot_file(enkf_main , user_key);
     {
       plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file);
       msg_type * msg;
@@ -218,7 +226,7 @@ void enkf_ui_plot_observation(void * arg) {
     
     obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
     if (obs_vector != NULL) {
-      char * plot_file                    = util_alloc_sprintf("/tmp/%s.png" , user_key);
+      char * plot_file                    = enkf_ui_plot_alloc_plot_file(enkf_main , user_key);
       plot_type * plot                    = __plot_alloc("Member nr" , "Value" , user_key , plot_file);   
       const char * state_kw               = obs_vector_get_state_kw( obs_vector );
       enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
@@ -351,7 +359,7 @@ void enkf_ui_plot_RFT(void * arg) {
       
       
       
-      plot_file = util_alloc_sprintf("/tmp/%s.png" , obs_key);
+      plot_file = enkf_ui_plot_alloc_plot_file(enkf_main , obs_key);
       plot = __plot_alloc(state_kw , "Depth" , obs_key , plot_file);
       {
 	msg_type * msg       = msg_alloc("Loading realization: ");
@@ -433,14 +441,20 @@ void enkf_ui_plot_RFT(void * arg) {
 void enkf_ui_plot_menu(void * arg) {
   
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-  menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
-  
-  menu_add_item(menu , "Ensemble plot"    , "eE" , enkf_ui_plot_ensemble    , enkf_main , NULL);
-  menu_add_item(menu , "Observation plot" , "oO" , enkf_ui_plot_observation , enkf_main , NULL);
-  menu_add_item(menu , "RFT plot"         , "rR" , enkf_ui_plot_RFT         , enkf_main , NULL);
-  menu_add_separator(menu);
-  menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
-  menu_run(menu);
-  menu_free(menu);
+  {
+    const model_config_type * model_config = enkf_main_get_model_config( enkf_main );
+    const char * plot_path  =  model_config_get_plot_path( model_config );
+    util_make_path( plot_path );
+  }
 
+  {
+    menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
+    menu_add_item(menu , "Ensemble plot"    , "eE" , enkf_ui_plot_ensemble    , enkf_main , NULL);
+    menu_add_item(menu , "Observation plot" , "oO" , enkf_ui_plot_observation , enkf_main , NULL);
+    menu_add_item(menu , "RFT plot"         , "rR" , enkf_ui_plot_RFT         , enkf_main , NULL);
+    menu_add_separator(menu);
+    menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
+    menu_run(menu);
+    menu_free(menu);
+  }
 }

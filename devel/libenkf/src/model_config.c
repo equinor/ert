@@ -38,6 +38,7 @@ struct model_config_struct {
   stringlist_type   * forward_model;      /* A list of external jobs - which acts as keys into a ext_joblist_type instance. */
   path_fmt_type     * result_path;        /* path_fmt instance for results - should contain one %d which will be replaced report_step */
   path_fmt_type     * runpath;            /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  char              * plot_path;          /* A dumping ground for PLOT files. */
   enkf_sched_type   * enkf_sched;         /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model. */
   char              * lock_path;          /* Path containing lock files */
   lock_mode_type      runlock_mode;       /* Mode for locking run directories - currently not working.*/ 
@@ -63,7 +64,8 @@ void model_config_set_runpath_fmt(model_config_type * model_config, const char *
 model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , const sched_file_type * sched_file) {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
-
+  
+  model_config->plot_path      = NULL;
   model_config->result_path    = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
   model_config->forward_model  = config_alloc_stringlist( config , "FORWARD_MODEL" );
   model_config->enkf_sched     = enkf_sched_fscanf_alloc( config_safe_get(config , "ENKF_SCHED_FILE") , num_restart_files  , joblist , model_config->forward_model);
@@ -113,7 +115,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
       ecl_sum_free(ecl_sum);
     }
   }
-
+  model_config_set_plot_path( model_config , config_get(config , "PLOT_PATH"));
   
   return model_config;
 }
@@ -122,6 +124,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
 
 
 void model_config_free(model_config_type * model_config) {
+  free(model_config->plot_path);
   path_fmt_free(  model_config->result_path );
   path_fmt_free(  model_config->runpath );
   enkf_sched_free( model_config->enkf_sched );
@@ -152,6 +155,15 @@ enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) 
 
 history_type * model_config_get_history(const model_config_type * config) {
   return config->history;
+}
+
+
+void model_config_set_plot_path(model_config_type * config , const char * path) {
+  config->plot_path = util_realloc_string_copy( config->plot_path , path );
+}
+
+const char * model_config_get_plot_path(const model_config_type * config) {
+  return config->plot_path;
 }
 
 

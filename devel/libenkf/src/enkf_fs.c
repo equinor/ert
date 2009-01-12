@@ -256,7 +256,7 @@ static int enkf_fs_get_fs_version__(FILE * stream) {
 
 
 /**
-   -1 : No mount map found.
+   -1 : No mount map found. 
     0 : Old mount map without version info.
     x : Actual version info. 
 */

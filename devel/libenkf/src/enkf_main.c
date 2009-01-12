@@ -761,6 +761,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     }
     config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
     
+    item = config_add_item(config , "PLOT_PATH" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_set_arg(config , "PLOT_PATH" , 1 , (const char *[1]) { DEFAULT_PLOT_PATH });
+
     /*****************************************************************/
     /* Keywords for the analysis - all optional. */
     item = config_add_item(config , "ENKF_MODE" , true , false);
