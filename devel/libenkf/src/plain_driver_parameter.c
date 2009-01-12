@@ -160,7 +160,7 @@ void plain_driver_parameter_free(void *_driver) {
 */
 void plain_driver_parameter_select_dir(void *_driver , const char * directory) {
   plain_driver_parameter_type * driver = plain_driver_parameter_safe_cast(_driver);
-  driver->path = plain_driver_common_realloc_path_fmt(driver->path , driver->root_path , directory , driver->fmt_string);
+  driver->path      = plain_driver_common_realloc_path_fmt(driver->path , driver->root_path , directory , driver->fmt_string);
 }
 
 

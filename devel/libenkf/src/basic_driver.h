@@ -36,7 +36,7 @@ typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , int 
 /**
    The basic_driver_type contains a number of function pointers
    and a type_id used for run-time cast checking.
-
+   
    The basic_driver_type is never actually used, but the point is that
    all drivers must implement the basic driver "interface". In
    practice this is done by including the macro BASIC_DRIVER_FIELDS

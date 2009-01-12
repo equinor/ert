@@ -25,6 +25,8 @@ void enkf_obs_free(
 //  const char          * key ,
 //  const obs_node_type * node);
 
+const obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
+
 void enkf_obs_get_observations(
   enkf_obs_type * enkf_obs ,
   int             report_step,
