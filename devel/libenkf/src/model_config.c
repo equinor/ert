@@ -17,10 +17,7 @@
 #include <ecl_grid.h>
 #include <menu.h>
 #include <enkf_types.h>
-#include <plain_driver_parameter.h>
-#include <plain_driver_static.h>
-#include <plain_driver_dynamic.h>
-#include <plain_driver_index.h>
+#include <plain_driver.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -56,23 +53,19 @@ static enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) 
   util_unlink_existing( config_file ); /* Format of mount map changed aby adding obs driver at revision 1505 - MUST read this file. */
   
   if ( !util_file_exists(config_file)) {  
-    int fd        = open(config_file , O_WRONLY + O_CREAT);
-    FILE * stream = fdopen(fd, "w");
-    
-    plain_driver_parameter_fwrite_mount_info(stream , "%04d/mem%03d/Parameter"); 
-    plain_driver_static_fwrite_mount_info(stream    , "%04d/mem%03d/Static"); 
-    plain_driver_dynamic_fwrite_mount_info(stream   , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
-    plain_driver_index_fwrite_mount_info(stream , "%04d/mem%03d/INDEX");
-    
-
-    /* 
-       Changing mode to read-only in an attempt to protect the file.
-       A better solution would be to create the file in a
-       write-protected directory.
-    */
-    fchmod(fd , S_IRUSR + S_IRGRP + S_IROTH); 
-    fclose(stream);
-    close(fd);
+    enkf_fs_fwrite_new_mount_map( config_file , "enkf" );
+    //int fd        = open(config_file , O_WRONLY + O_CREAT);
+    //FILE * stream = fdopen(fd, "w");
+    //
+    //plain_driver_fwrite_mount_info( stream );
+    ///* 
+    //   Changing mode to read-only in an attempt to protect the file.
+    //   A better solution would be to create the file in a
+    //   write-protected directory.
+    //*/
+    //fchmod(fd , S_IRUSR + S_IRGRP + S_IROTH); 
+    //fclose(stream);
+    //close(fd);
   }
   free(config_file);
   return enkf_fs_mount(root_path , mount_map , lock_path);

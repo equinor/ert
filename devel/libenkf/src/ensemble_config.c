@@ -145,7 +145,7 @@ void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char
 void ensemble_config_add_node(ensemble_config_type * ensemble_config , 
 			      const char    * key      	   , 
 			      enkf_var_type enkf_type  	   , 
-			      enkf_impl_type impl_type 	   ,    
+			      enkf_impl_type impl_type 	   ,
 			      const char   * enkf_outfile  , /* Written by EnKF and read by forward model */
 			      const char   * enkf_infile   , /* Written by forward model and read by EnKF */ 
 			      const void   * data) {
@@ -310,7 +310,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     else
       options = NULL;
     
-    ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(num_options , options));
+    ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(num_options , options , NULL , NULL));
   }
   
 
@@ -329,15 +329,25 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
     const char * key           = stringlist_iget(tokens , 0);
     int           num_options  = stringlist_get_size(tokens) - 1;
-    const char * ecl_file      = NULL;
     const char ** options;
+    gen_data_config_type * gen_data_config;
     if (num_options > 0)
       options = stringlist_iget_argv(tokens , 1);
     else
       options = NULL;
     
     enkf_var_type var_type   = dynamic_state;  /* Whether var_type should be dynamic state or dynamic_result is not obvious. */
-    ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(num_options , options));
+    {
+      char * ecl_file;
+      char * result_file;
+      gen_data_config = gen_data_config_alloc(num_options , options , &ecl_file , &result_file);
+
+      ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
+
+      util_safe_free( ecl_file );
+      util_safe_free( result_file );
+    }
+      
   }
 
   

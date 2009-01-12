@@ -313,7 +313,7 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 
 void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , fortio_type * fortio) {
   DEBUG_ASSERT(gen_data)
-  {
+  if (eclfile != NULL) {  
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
     switch (export_type) {
     case(ASCII):
@@ -327,9 +327,6 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , 
       break;
     case(binary_float):
       gen_data_ecl_write_binary(gen_data , eclfile , ecl_float_type);
-      break;
-    case(gen_data_no_export):
-      /* No op - e.g. seismic data - not exported from EnKF. */
       break;
     default:
       util_abort("%s: internal error \n",__func__);

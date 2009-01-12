@@ -48,6 +48,10 @@ static void __plot_show(plot_type * plot , const char * viewer , const char * fi
 
 
 
+void enkf_ui_plot_ensemble__(void * arg) {
+  
+}
+
 
 
 void enkf_ui_plot_ensemble(void * arg) {

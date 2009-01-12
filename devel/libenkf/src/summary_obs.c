@@ -49,7 +49,7 @@ summary_obs_type * summary_obs_alloc(
   obs->summary_key   = util_alloc_string_copy(summary_key);
   obs->value         = value;
   obs->std           = std;
-
+  
   return obs;
 }
 

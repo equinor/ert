@@ -315,11 +315,20 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
       enkf_node->ecl_write(enkf_node->data , target_file , restart_fortio);
       free(target_file);
     } else  
-      enkf_node->ecl_write(enkf_node->data , path , restart_fortio);
-    /*
-      This code path is followed by Restart-file elements which use
-      the fortio pointer
-    */
+      /*
+	If the node does not have a outfile (i.e. ecl_file), the
+	ecl_write function will be called with file argument NULL. It
+	is then the responsability of the low-level implementation to
+	do "the right thing":
+
+	1. In the case of eclipse restart content, the fortio instance
+           (third argument) will be used.
+
+	2. In most cases the correct action is probably to just
+	   return; that is what gen_data does.
+
+      */
+      enkf_node->ecl_write(enkf_node->data , NULL , restart_fortio);
   }
 }
 

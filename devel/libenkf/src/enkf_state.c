@@ -1377,9 +1377,11 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
     for (iens = 0; iens < ens_size; iens++) 
       info_list[0]->member_serial_size[iens] = 0;  /* Writing only on element[0] - because that is the only member with actual storage. */
     
+    /* Serialize section */
     for (ithread =  0; ithread < threads; ithread++) 
       thread_pool_add_job(tp , &enkf_ensemble_serialize__ , info_list[ithread]);
     thread_pool_join(tp);
+
 
     /*
       This code block is a integrity check - we check that the
@@ -1403,7 +1405,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
       /* Update section */
 
       enkf_ensemble_mulX(serial_vector , ens_size , info->member_serial_size[0] , X , ens_size , 1); 
-
+      
       /* deserialize section */
       for (iens = 0; iens < ens_size; iens++) {
 	enkf_state_type * enkf_state = enkf_ensemble[iens];
@@ -1421,6 +1423,7 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 	  ikey++;
 	  if (ikey == num_keys)
 	    break;
+
 	}
       }
       

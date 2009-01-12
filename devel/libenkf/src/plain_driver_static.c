@@ -13,7 +13,11 @@
 struct plain_driver_static_struct {
   BASIC_STATIC_DRIVER_FIELDS;
   int             plain_driver_static_id;   /* See documentation in plain_driver.c */
-  path_fmt_type * path;                     
+  path_fmt_type * path_fmt;
+
+  /* ---------------------------: The different parts of the path variable is documented in plain_driver_dynamic. */
+  char          * root_path;
+  char          * fmt;
 };
 
 
@@ -53,14 +57,27 @@ static plain_driver_static_type * plain_driver_static_safe_cast(void *_driver) {
 }
 
 
+static char * plain_driver_static_alloc_filename__(plain_driver_static_type * driver , bool auto_mkdir , int report_step , int iens , int static_counter, const char * node_key) {
+  char static_counter_str[16];
+  
+  sprintf(static_counter_str, "%d" , static_counter);
+  return path_fmt_alloc_file(driver->path_fmt , auto_mkdir , report_step , iens , node_key , static_counter_str);
+}
 
 
 
+/**
+   Observe that all these functions use the path_fmt_alloc_file()
+   functions instead of the path_fmt_alloc_file() function. That is
+   because the static format string specifies the full filename, and
+   not only the directory part.
+*/
 
 void plain_driver_static_load_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node) , static_counter);
+    const char * node_key = enkf_node_get_key( node );
+    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , static_counter , node_key);
     plain_driver_common_load_node(filename , report_step , iens , state , node);
     free(filename);
   }
@@ -70,7 +87,8 @@ void plain_driver_static_load_node(void * _driver , int report_step , int iens ,
 void plain_driver_static_unlink_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node) , static_counter);
+    const char * node_key = enkf_node_get_key( node );
+    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , static_counter , node_key);
     util_unlink_existing(filename);
     free(filename);
   }
@@ -80,7 +98,8 @@ void plain_driver_static_unlink_node(void * _driver , int report_step , int iens
 void plain_driver_static_save_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
-    char * filename      = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node) , static_counter);
+    const char * node_key = enkf_node_get_key( node );
+    char * filename = plain_driver_static_alloc_filename__(driver , true , report_step , iens , static_counter , node_key);
     plain_driver_common_save_node(filename , report_step , iens , state , node);
     free(filename);
   }
@@ -95,7 +114,7 @@ bool plain_driver_static_has_node(void * _driver , int report_step , int iens , 
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
     bool has_node;
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key , static_counter);
+    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , static_counter , key);
     if (util_file_exists(filename))
       has_node = true;
     else
@@ -113,9 +132,17 @@ bool plain_driver_static_has_node(void * _driver , int report_step , int iens , 
 
 void plain_driver_static_free(void *_driver) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
-  path_fmt_free(driver->path);
+  path_fmt_free(driver->path_fmt);
+  util_safe_free( driver->root_path );
+  util_safe_free( driver->fmt );
   free(driver);
 }
+
+void plain_driver_static_select_dir(void *_driver , const char * directory) {
+  plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
+  driver->path_fmt = plain_driver_common_realloc_path_fmt(driver->path_fmt , driver->root_path , directory , driver->fmt);
+}
+
 
 
 
@@ -130,34 +157,22 @@ void * plain_driver_static_alloc(const char * root_path , const char * driver_pa
   driver->load_ts       = NULL;
   driver->save_ensemble = NULL;
   driver->save_ts       = NULL;
-  {
-    char *path;
-
-    /**
-       The format is:
-       
-       [root_path]/driver_path/<STATIC-KW>/<INTEGER>
-    */
-
-    if (root_path != NULL) 
-      path = util_alloc_sprintf("%s%c%s%c%s%c%s" , root_path , UTIL_PATH_SEP_CHAR , driver_path , UTIL_PATH_SEP_CHAR , "%s" , UTIL_PATH_SEP_CHAR , "%d");
-    else
-      path = util_alloc_sprintf("%s%c%s%c%s" , driver_path , UTIL_PATH_SEP_CHAR , "%s" , UTIL_PATH_SEP_CHAR , "%d");
-    
-    driver->path = path_fmt_alloc_path_fmt( path );
-    free(path);
-  }
+  driver->select_dir    = plain_driver_static_select_dir;
+  driver->root_path     = util_alloc_string_copy( root_path );
+  driver->fmt           = util_alloc_string_copy( driver_path );
+  driver->path_fmt      = NULL;
   driver->plain_driver_static_id = PLAIN_DRIVER_STATIC_ID;
   {
-    basic_static_driver_type * basic_driver = (basic_static_driver_type *) driver;
-    basic_static_driver_init(basic_driver);
+    basic_driver_static_type * basic_driver = (basic_driver_static_type *) driver;
+    basic_driver_static_init(basic_driver);
     return basic_driver;
   }
 }
 
 
-void plain_driver_static_fwrite_mount_info(FILE * stream , const char * fmt) {
-  util_fwrite_int(STATIC_DRIVER , stream);
+void plain_driver_static_fwrite_mount_info(FILE * stream , bool read , const char * fmt) {
+  util_fwrite_bool(read , stream);
+  util_fwrite_int(DRIVER_STATIC , stream);
   util_fwrite_int(PLAIN_DRIVER_STATIC_ID , stream);
   util_fwrite_string(fmt , stream);
 }

@@ -116,7 +116,6 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
   return vector;
 }
 
-
 obs_impl_type obs_vector_get_impl_type(const obs_vector_type * obs_vector) {
   return obs_vector->obs_type;
 }
@@ -367,7 +366,7 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
       if (!default_used[restart_nr]) {
 	summary_obs_type * sum_obs  = summary_obs_alloc( sum_key , value[restart_nr] , std[restart_nr]);
 	obs_vector_install_node( obs_vector , restart_nr , sum_obs );
-      }
+      } 
     }
     
     free(std);

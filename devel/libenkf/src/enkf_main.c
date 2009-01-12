@@ -853,6 +853,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	hash_free(map);
       }
       
+
       
       /*****************************************************************/
       /* Adding ensemble members */

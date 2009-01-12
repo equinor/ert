@@ -32,8 +32,8 @@ static void enkf_ui_init__(enkf_main_type * enkf_main , const stringlist_type * 
     }
     for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
       enkf_node_type * param_node = enkf_state_get_node( state , stringlist_iget( param_list , ip));
-      enkf_node_initialize( param_node , iens);
-      enkf_fs_fwrite_node(fs , param_node , 0 , iens , analyzed);
+      if (enkf_node_initialize( param_node , iens)) 
+	enkf_fs_fwrite_node(fs , param_node , 0 , iens , analyzed);
     }
     msg_update(msg , "Done");
   }
@@ -69,7 +69,6 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
     util_free_stringlist( tmp_key_list , num_keys );
   } else 
     stringlist_append_copy( param_list , enkf_config_node_get_key_ref(enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , INVALID , invalid , NULL , NULL , NULL)) );
-  
 
     
   enkf_ui_init__(enkf_main , param_list , iens1 , iens2);

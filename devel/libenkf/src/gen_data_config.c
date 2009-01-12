@@ -48,12 +48,24 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
 }
 
 
+
+/**
+   Internal consistency checks:
+
+   1. (ecl_file != NULL)                                 => out_format != gen_data_undefined.
+   2. ((result_file != NULL) || (init_file_fmt != NULL)) => input_format != gen_data_undefined
+   3. (output_format == ASCII_template)                  => (template_ecl_file != NULL) && (template_data_key != NULL)
+   
+*/
+
 static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_type       , 
 						       gen_data_file_format_type input_format ,
 						       gen_data_file_format_type output_format,
 						       const char * init_file_fmt     ,  
 						       const char * template_ecl_file , 
-						       const char * template_data_key ) {
+						       const char * template_data_key ,
+						       const char * ecl_file          ,
+						       const char * result_file) {
 
   gen_data_config_type * config = util_malloc(sizeof * config , __func__);
   config->__type_id         = GEN_DATA_CONFIG_ID;
@@ -63,7 +75,16 @@ static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_ty
   config->input_format      = input_format;
   config->output_format     = output_format;
   config->__report_step     = -1;
-  
+
+  /* Condition 1: */
+  if ((ecl_file != NULL) && (output_format == gen_data_undefined))
+    util_abort("%s: invalid configuration. When ecl_file != NULL you must explicitly specify an output format with OUTPUT_FORMAT:.\n",__func__);
+
+  /* Condition 2: */
+  if (((result_file != NULL) || (init_file_fmt != NULL)) && (input_format == gen_data_undefined))
+    util_abort("%s: invalid configuration. When loading with result_file / init_files you must specify an input format with INPUT_FORMAT: \n",__func__);
+
+  /* Condition 3: */
   if (config->output_format == ASCII_template) {
     if (template_ecl_file == NULL)
       util_abort("%s: internal error - when using format ASCII_template you must supply a temlate file \n",__func__);
@@ -133,18 +154,22 @@ static gen_data_file_format_type __gen_data_config_check_format( const char * fo
    INIT_FILES:/some/path/with/%d
    TEMPLATE:/some/template/file
    KEY:<SomeKeyFoundInTemplate>
+   ECL_FILE:<filename to write EnKF ==> Forward model>
+   RESULT_FILE:<filename to read EnKF <== Forward model> 
 
 */
 
-gen_data_config_type * gen_data_config_alloc(int num_options, const char ** options) {
+gen_data_config_type * gen_data_config_alloc(int num_options, const char ** options , char **__ecl_file , char ** __result_file) {
   const ecl_type_enum internal_type = ecl_double_type;
   gen_data_config_type * config;
   hash_type * opt_hash = hash_alloc_from_options( num_options , options );
+  char * result_file   = NULL;
+  char * ecl_file      = NULL;
 
   /* Parsing options */
   {
     gen_data_file_format_type input_format  = gen_data_undefined;
-    gen_data_file_format_type output_format = gen_data_no_export;
+    gen_data_file_format_type output_format = gen_data_undefined;
     char * template_file = NULL;
     char * template_key  = NULL;
     char * init_file_fmt = NULL;
@@ -171,6 +196,12 @@ gen_data_config_type * gen_data_config_alloc(int num_options, const char ** opti
       
       else if (strcmp(option , "INIT_FILES") == 0)
 	init_file_fmt = util_alloc_string_copy( value );
+
+      else if ((__ecl_file != NULL) && ((strcmp(option , "ECL_FILE") == 0)))
+	ecl_file = util_alloc_string_copy( value );
+      
+      else if ((__result_file != NULL) && ((strcmp(option , "RESULT_FILE") == 0)))
+	result_file = util_alloc_string_copy( value );
       
       else
 	fprintf(stderr , "%s: Warning: \'%s:%s\' not recognized as valid option - ignored \n",__func__ , option , value);
@@ -178,12 +209,16 @@ gen_data_config_type * gen_data_config_alloc(int num_options, const char ** opti
       
       option = hash_iter_get_next_key( opt_hash );
     } 
-    config = gen_data_config_alloc__(internal_type , input_format , output_format , init_file_fmt , template_file , template_key);
+    config = gen_data_config_alloc__(internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file);
     util_safe_free( init_file_fmt );
     util_safe_free( template_file );
     util_safe_free( template_key );
   }
   hash_free(opt_hash);
+
+  /* These must be returned to the enkf_node layer - UGGGLY */
+  if (__ecl_file    != NULL) *__ecl_file    = ecl_file;
+  if (__result_file != NULL) *__result_file = result_file;
   return config;
 }
 

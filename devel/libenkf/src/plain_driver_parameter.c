@@ -13,6 +13,10 @@ struct plain_driver_parameter_struct {
   BASIC_DRIVER_FIELDS;
   int             plain_driver_parameter_id;
   path_fmt_type * path;
+
+  /* ---------------------------: The different parts of the path variable is documented in plain_driver_dynamic. */
+  char          * root_path;
+  char          * fmt_string;
 };
 
 
@@ -21,6 +25,12 @@ static void plain_driver_parameter_assert_cast(plain_driver_parameter_type * pla
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
 }
 
+
+static plain_driver_parameter_type * plain_driver_parameter_safe_cast( void * __driver) {
+  plain_driver_parameter_type * driver = (plain_driver_parameter_type *) __driver;
+  plain_driver_parameter_assert_cast(driver);
+  return driver;
+}
 
 
 /**
@@ -61,8 +71,7 @@ static int __get_report_step(int report_step , state_enum state) {
 
 void plain_driver_parameter_load_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
   int report_step = __get_report_step(_report_step , state);
-  plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
-  plain_driver_parameter_assert_cast(driver);
+  plain_driver_parameter_type * driver = plain_driver_parameter_safe_cast( _driver );
   {
     char * filename;
     filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
@@ -139,35 +148,42 @@ void plain_driver_parameter_free(void *_driver) {
   plain_driver_parameter_type * driver = (plain_driver_parameter_type *) _driver;
   plain_driver_parameter_assert_cast(driver);
   path_fmt_free(driver->path);
+  free( driver->fmt_string );
+  util_safe_free( driver->root_path );
   free(driver);
 }
+
+
+/**
+   The enkf_fs layer has already made certain that this directory is different
+   from the current. 
+*/
+void plain_driver_parameter_select_dir(void *_driver , const char * directory) {
+  plain_driver_parameter_type * driver = plain_driver_parameter_safe_cast(_driver);
+  driver->path = plain_driver_common_realloc_path_fmt(driver->path , driver->root_path , directory , driver->fmt_string);
+}
+
 
 
 /*
   The driver takes a copy of the path object, i.e. it can be deleted
   in the calling scope after calling plain_driver_parameter_alloc().
 */
-void * plain_driver_parameter_alloc(const char * root_path , const char * driver_path) {
+void * plain_driver_parameter_alloc(const char * root_path , const char * fmt) {
   plain_driver_parameter_type * driver = malloc(sizeof * driver);
   driver->load        	= plain_driver_parameter_load_node;
   driver->save        	= plain_driver_parameter_save_node;
   driver->free_driver 	= plain_driver_parameter_free;
   driver->unlink_node 	= plain_driver_parameter_unlink_node;
   driver->has_node    	= plain_driver_parameter_has_node;
+  driver->select_dir    = plain_driver_parameter_select_dir;
   driver->load_ensemble = NULL;
   driver->load_ts       = NULL;
   driver->save_ensemble = NULL;
   driver->save_ts       = NULL;
-  {
-    char *path;
-    if (root_path != NULL)
-      path = util_alloc_full_path(root_path , driver_path);
-    else
-      path = util_alloc_string_copy(driver_path);
-    
-    driver->path        = path_fmt_alloc_directory_fmt(path);
-    free(path);
-  }
+  driver->root_path     = util_alloc_string_copy( root_path );
+  driver->fmt_string    = util_alloc_string_copy( fmt );
+  driver->path          = NULL; 
   driver->plain_driver_parameter_id = PLAIN_DRIVER_PARAMETER_ID;
   {
     basic_driver_type * basic_driver = (basic_driver_type *) driver;
@@ -178,8 +194,11 @@ void * plain_driver_parameter_alloc(const char * root_path , const char * driver
 
 
 
-void plain_driver_parameter_fwrite_mount_info(FILE * stream , const char * fmt ) {
-  util_fwrite_int(PARAMETER_DRIVER , stream);
+
+
+void plain_driver_parameter_fwrite_mount_info(FILE * stream , bool read , const char * fmt ) {
+  util_fwrite_bool(read , stream);
+  util_fwrite_int(DRIVER_PARAMETER , stream);
   util_fwrite_int(PLAIN_DRIVER_PARAMETER_ID , stream);
   util_fwrite_string(fmt , stream);
 }

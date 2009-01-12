@@ -284,7 +284,6 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
       const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
 
       obs_vector_type * obs_vector = obs_vector_alloc_from_HISTORY_OBSERVATION(hist_obs_conf , hist);
-
       enkf_obs_add_obs_vector(enkf_obs, sum_key, obs_vector);
     }
 

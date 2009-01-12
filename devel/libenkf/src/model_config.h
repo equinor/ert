@@ -10,6 +10,7 @@
 
 typedef struct model_config_struct model_config_type;
 
+void                enkf_fs_fwrite_new_mount_map(const char * , const char * );
 model_config_type * model_config_alloc(const config_type * , const ext_joblist_type * , const sched_file_type *);
 void                model_config_free(model_config_type *);
 enkf_fs_type      * model_config_get_fs(const model_config_type * );
