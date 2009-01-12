@@ -49,6 +49,7 @@ struct sched_block_struct {
 struct sched_file_struct {
   int         __id;        /* Used for safe run-time casting. */
   list_type * blocks;      /* A list of chronologically sorted sched_block_type's. */
+  char      * filename;    /* The name of the schedule file. */
 };
 
 
@@ -231,8 +232,9 @@ static void sched_file_build_block_dates(sched_file_type * sched_file, time_t st
 sched_file_type * sched_file_alloc()
 {
   sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
-  sched_file->__id   = SCHED_FILE_TYPE_ID;
-  sched_file->blocks = list_alloc();
+  sched_file->__id     = SCHED_FILE_TYPE_ID;
+  sched_file->blocks   = list_alloc();
+  sched_file->filename = NULL;
   return sched_file;
 }
 
@@ -250,6 +252,7 @@ sched_file_type * sched_file_safe_cast(void * _s) {
 void sched_file_free(sched_file_type * sched_file)
 {
   list_free(sched_file->blocks);
+  util_safe_free(sched_file->filename);
   free(sched_file);
 }
 
@@ -264,9 +267,10 @@ void sched_file_parse(sched_file_type * sched_file, time_t start_date, const cha
 
   /* Add the first empty pseudo block. */
   sched_file_add_block(sched_file, sched_block_alloc_empty());
-
+  
   FILE * stream = util_fopen(filename, "r");
 
+  sched_file->filename = util_alloc_string_copy(filename); 
   current_block = sched_block_alloc_empty();
   current_block->block_start_time = start_date;
   
@@ -296,7 +300,6 @@ void sched_file_parse(sched_file_type * sched_file, time_t start_date, const cha
   } 
   fclose(stream);
   sched_block_free(current_block); /* Free the last non-proper block. */
-
   sched_file_build_block_dates(sched_file, start_date);
 }
 
@@ -366,6 +369,10 @@ sched_file_type * sched_file_fread_alloc(FILE * stream)
   return sched_file;
 }
 
+
+const char * sched_file_get_filename(const sched_file_type * sched_file) {
+  return sched_file->filename;
+}
 
 
 int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, time_t time)

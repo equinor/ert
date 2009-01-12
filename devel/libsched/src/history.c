@@ -2,6 +2,7 @@
 #include <util.h>
 #include <hash.h>
 #include <list.h>
+#include <ecl_sum.h>
 #include <gruptree.h>
 #include <history.h>
 
@@ -10,21 +11,23 @@ typedef struct history_node_struct history_node_type;
 struct history_node_struct{
   /* Remember to fix history_node_copyc etc. if you add stuff here. */
 
-  hash_type * well_hash;        /* A hash indexed with the well names.
-                                   Each element is another hash, indexed
-                                   by observations, where each element
-                                   is a double.
-                                */
+  hash_type     * well_hash;        /* 
+				       A hash indexed with the well names.  Each element is another hash, indexed by
+				       observations, where each element is a double value.
+				    */
   gruptree_type * gruptree;
-  time_t      node_start_time;
-  time_t      node_end_time;
+  time_t      	  node_start_time;
+  time_t      	  node_end_time;
+  int         	  restart_nr;
 };
 
 
 
 struct history_struct{
   list_type   * nodes;
+  char        * schedule_file; /* Name of the schedule file which this object has been allocated from. */
 };
+
 
 
 
@@ -144,31 +147,34 @@ static hash_type * well_hash_copyc(hash_type * well_hash_org)
 
 
 
+/**
+   The list of variables WOPR +++ is compiled in - hmmm.
+*/
+
 static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary, 
                                                 const char ** well_list, int num_wells, int restart_nr,
                                                 bool use_h_keywords)
 {
   hash_type * well_hash = hash_alloc();
-
+  
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
   {
     hash_type * well_obs = hash_alloc();
 
     // Cleaner than macros.
     void insert_obs(const char * well_name, const char * obs_name)
-    {
-      if(ecl_sum_has_well_var(summary, well_name, obs_name));
-      {
+    { 
+      if(ecl_sum_has_well_var(summary, well_name, obs_name)) {
         double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
         hash_insert_double(well_obs, obs_name, obs);
-      }
+      } 
     }
+    
     void insert_obs_use_h(const char * well_name, const char * obs_name, const char * obs_ins_name)
-    {
-      if(ecl_sum_has_well_var(summary, well_name, obs_name));
       {
-        double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
-        hash_insert_double(well_obs, obs_ins_name, obs);
+      if(ecl_sum_has_well_var(summary, well_name, obs_name)) {
+	double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
+	hash_insert_double(well_obs, obs_ins_name, obs);
       }
     }
 
@@ -206,7 +212,7 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
       insert_obs_use_h(well_list[well_nr], "WGIRH", "WGIR");
       insert_obs_use_h(well_list[well_nr], "WGITH", "WGIT");
     }
-
+    
     hash_insert_hash_owned_ref(well_hash, well_list[well_nr], well_obs, hash_free__);
   }
 
@@ -223,16 +229,18 @@ static double well_hash_get_var(hash_type * well_hash, const char * well, const 
     return 0.0;
   }
 
-  hash_type * well_obs = hash_get(well_hash, well);
-  if(!hash_has_key(well_obs, var))
   {
-    *default_used = true;
-    return 0.0;
-  }
-  else
-  {
-    *default_used = false;
-    return  hash_get_double(well_obs, var);
+    hash_type * well_obs = hash_get(well_hash, well);
+    if(!hash_has_key(well_obs, var))
+      {
+	*default_used = true;
+	return 0.0;
+      }
+    else
+      {
+	*default_used = false;
+	return  hash_get_double(well_obs, var);
+      }
   }
 
 }
@@ -249,6 +257,7 @@ static history_node_type * history_node_alloc_empty()
   history_node_type * node = util_malloc(sizeof * node, __func__);
   node->well_hash          = hash_alloc();
   node->gruptree           = gruptree_alloc();
+  node->restart_nr         = 0;
   return node;
 }
 
@@ -501,14 +510,18 @@ static history_node_type * history_node_copyc(const history_node_type * node_org
 
   node_new->node_start_time    = node_org->node_start_time;
   node_new->node_end_time      = node_org->node_end_time;
+  node_new->restart_nr         = node_org->restart_nr; 
 
-  node_new->well_hash = well_hash_copyc(node_org->well_hash);
-  node_new->gruptree  = gruptree_copyc(node_org->gruptree);
+  node_new->well_hash  = well_hash_copyc(node_org->well_hash);
+  node_new->gruptree   = gruptree_copyc(node_org->gruptree);
 
   return node_new;
 }
 
 
+static void history_node_fprintf(const history_node_type * node, FILE * stream) {
+  fprintf(stream , "%03d:  " , node->restart_nr); util_fprintf_date( node->node_start_time , stream); fprintf(stream , " => "); util_fprintf_date(node->node_end_time , stream); fprintf(stream , "\n");
+}
 
 /******************************************************************/
 // Static functions for manipulating history_type.
@@ -518,6 +531,7 @@ static history_type * history_alloc_empty()
 {
   history_type * history = util_malloc(sizeof * history, __func__);
   history->nodes         = list_alloc();
+  history->schedule_file = NULL;
   return history;
 }
 
@@ -545,6 +559,7 @@ static history_node_type * history_iget_node_ref(const history_type * history, i
 void history_free(history_type * history)
 {
   list_free(history->nodes);
+  util_safe_free( history->schedule_file );
   free(history);
 }
 
@@ -568,15 +583,14 @@ void history_free(history_type * history)
 */
 history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 {
-  history_type * history = history_alloc_empty();
+  history_type * history = history_alloc_empty( sched_file_get_filename( sched_file ));
 
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
 
   history_node_type * node = NULL;
   for(int block_nr = 0; block_nr < num_restart_files; block_nr++)
   {
-    if(node != NULL)
-    {
+    if(node != NULL) {
       history_node_type * node_cpy = history_node_copyc(node);
       node = node_cpy;
     }
@@ -585,6 +599,7 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 
     node->node_start_time = sched_file_iget_block_start_time(sched_file, block_nr);
     node->node_end_time   = sched_file_iget_block_end_time(sched_file, block_nr);
+    node->restart_nr      = block_nr;
 
     int num_kws = sched_file_iget_block_size(sched_file, block_nr);
     for(int kw_nr = 0; kw_nr < num_kws; kw_nr++)
@@ -599,40 +614,50 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 
 
 
+
+/** 
+    This function will take an existing history object, which has been allocated
+    from a schedule file, and replace all the rates with the corresponding rates
+    from the summary object.
+    
+    Observe the following:
+
+     1. The time-framework, i.e. when the blocks starts and stops is unchanged,
+        i.e. the values from the original SCHEDULE file are retained.
+
+     2. IFF the summary file has time information (which is essential for
+        queries on dates), it is checked that the dates in the summary object
+        match up with the SCHEDULE file.
+
+     3. All the wells from the summary object are used, along with a (compiled
+        in) list of variables. [This should be more flexible ...]
+    
+*/
+
 void history_realloc_from_summary(history_type * history, const ecl_sum_type * summary, bool use_h_keywords)
 {
-  int first_restart, last_restart, num_restarts;
-  time_t current_time = ecl_sum_get_start_time(summary);
-  ecl_sum_get_report_size(summary, &first_restart, &last_restart);
-  num_restarts = history_get_num_restarts(history);
-
-  // We don't take the pain to support missing restarts.
-  if(first_restart > 0)
-    util_abort("%s: Summary object does not contain the first %d restarts. Aborting.\n", __func__, first_restart);
-
-  // We demand that the summary has been generated from the schedule used to alloc history.
-  if(last_restart != num_restarts)
-    util_abort("%s: Schedule file had %i restarts and summary file had %i, non-compatible.", __func__, num_restarts, last_restart);
-
-  // OK, we are good to go.
-  int     num_wells = ecl_sum_get_Nwells(summary);
+  bool has_sim_time 	  = ecl_sum_has_sim_time( summary );
+  int num_restarts  	  = history_get_num_restarts(history);
+  int     num_wells 	  = ecl_sum_get_Nwells(summary);
   const char ** well_list = ecl_sum_get_well_names_ref(summary);
 
-  // Special case for the first restart.
-  history_node_type * node = list_iget_node_value_ptr(history->nodes, 0);
-  node->node_start_time = current_time;
-  node->node_end_time   = current_time;
-  hash_free(node->well_hash);
-  node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, 0, use_h_keywords);
-
-  for(int block_nr = 1; block_nr <= last_restart; block_nr++)
-  {
-    node = list_iget_node_value_ptr(history->nodes, 0);
-    node->node_start_time = current_time;
-    current_time = ecl_sum_get_sim_time(summary, block_nr);
-    node->node_end_time = current_time;
-    hash_free(node->well_hash);
-    node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, block_nr, use_h_keywords);
+  for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++) {
+    /* The list elements in history->nodes are updated IN-PLACE. */
+    history_node_type * node = list_iget_node_value_ptr(history->nodes, restart_nr);
+    
+    hash_free(node->well_hash);  /* Removing the old information. */
+    if (ecl_sum_has_report_nr(summary , restart_nr)) {
+      if (has_sim_time) {
+	time_t sum_time = ecl_sum_get_sim_time( summary , restart_nr );
+	if (sum_time != node->node_end_time) 
+	  util_abort("%s: hmmm - seems to be timing inconsisentcy between schedule_file:%s and refcase:%s \n",
+		     __func__ , history->schedule_file , ecl_sum_get_simulation_case( summary) );
+      }
+      node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, restart_nr, use_h_keywords);
+    } else {
+      fprintf(stderr,"Warning: refcase: \'%s\' does not have any data for report_step: %d \n", ecl_sum_get_simulation_case( summary ) , restart_nr);
+      node->well_hash = hash_alloc();  
+    }
   }
 }
 
@@ -856,17 +881,25 @@ time_t history_iget_node_end_time(const history_type * history, int node_nr)
 int history_get_restart_nr_from_time_t(const history_type * history, time_t time)
 {
   int num_restart_files = history_get_num_restarts(history);
+  int restart_nr        = 0;
 
-  for(int i=0; i<num_restart_files; i++)
-  {
-    time_t node_end_time = history_iget_node_end_time(history, i);
-    if (node_end_time == time)  /* Daylight saving time - what a fucking mess. */
-      return i;
+  while (restart_nr < num_restart_files) {
+    time_t node_end_time = history_iget_node_end_time(history, restart_nr);
+    
+    if (node_end_time == time)  
+      break;                    /* Got it */
+    else
+      restart_nr++;
   }
   
-  // If we are here, time did'nt correspond a restart file. Abort.
-  util_abort("%s: Time variable does not cooincide with any restart file. Aborting.\n", __func__);
-  return 0;
+  if (restart_nr == num_restart_files) {
+    int sec,min,hour;
+    int mday,year,month;
+    
+    util_set_datetime_values(time , &sec , &min , &hour , &mday , &month , &year);
+    util_abort("%s: Time variable:%02d/%02d/%4d  %02d:%02d:%02d   does not cooincide with any restart file. Aborting.\n", __func__ , mday,month,year,hour,min,sec);
+  }
+  return restart_nr;
 }
 
 
@@ -874,11 +907,21 @@ int history_get_restart_nr_from_time_t(const history_type * history, time_t time
 int history_get_restart_nr_from_days(const history_type * history, double days)
 {
   if(days < 0.0)
-    util_abort("%s: Cannot find a restart nr from a negative production period (days was %f).\n",
+    util_abort("%s: Cannot find a restart nr from a negative production period (days was %g).\n",
                __func__, days);
 
   time_t time = history_iget_node_start_time(history, 0);
   util_inplace_forward_days(&time, days);
 
   return history_get_restart_nr_from_time_t(history, time);
+}
+
+
+void history_fprintf(const history_type * history , FILE * stream) {
+  int item;
+  for (item = 0; item < list_get_size(history->nodes); item++) {
+    const history_node_type * node = list_iget_node_value_ptr(history->nodes , item);
+    history_node_fprintf(node , stream);
+  }
+  
 }

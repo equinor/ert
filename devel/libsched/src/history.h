@@ -26,6 +26,7 @@ void           history_realloc_from_summary(history_type *, const ecl_sum_type *
 
 
 // Accessors.
+void           history_fprintf(const history_type *  , FILE * );
 int    	       history_get_num_restarts(const history_type *);
 bool           history_str_is_well_name(const history_type *, int, const char *);
 bool           history_str_is_group_name(const history_type *, int, const char *);
