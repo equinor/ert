@@ -239,6 +239,7 @@ static void enkf_fs_upgrade(int old_version, const char * config_file, const cha
     } while (dp != NULL);
     closedir(dirH);
   }
+  util_unlink_existing( config_file );
   enkf_fs_fwrite_new_mount_map( config_file , new_dir );  /* Create new blank mount map */
 }
 
