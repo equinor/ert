@@ -8,6 +8,7 @@
 #include <enkf_fs.h>
 #include <enkf_config_node.h>
 #include <ensemble_config.h>
+#include <enkf_main.h>
 
 
 const enkf_config_node_type * enkf_ui_util_scanf_parameter(const ensemble_config_type *  , int , bool , enkf_impl_type ,  enkf_var_type , int *  , state_enum * , int *);

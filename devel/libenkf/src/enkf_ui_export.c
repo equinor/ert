@@ -313,14 +313,14 @@ void enkf_ui_export_menu(void * arg) {
 
   enkf_main_type * enkf_main = enkf_main_safe_cast(arg);
   menu_type * menu = menu_alloc("Export EnKF data to other formats" , "qQ");
-  menu_add_item(menu , "Export fields to RMS Roff format"       		, "rR" , enkf_ui_export_roff   	       , enkf_main);
-  menu_add_item(menu , "Export fields to ECLIPSE grdecl format" 		, "gG" , enkf_ui_export_grdecl 	       , enkf_main);
-  menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , enkf_main);
-  menu_add_item(menu , "Export fields to ECLIPSE restart format (all cells)"    , "lL" , enkf_ui_export_restart_all    , enkf_main);
+  menu_add_item(menu , "Export fields to RMS Roff format"       		, "rR" , enkf_ui_export_roff   	       , enkf_main , NULL);
+  menu_add_item(menu , "Export fields to ECLIPSE grdecl format" 		, "gG" , enkf_ui_export_grdecl 	       , enkf_main , NULL);
+  menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , enkf_main , NULL);
+  menu_add_item(menu , "Export fields to ECLIPSE restart format (all cells)"    , "lL" , enkf_ui_export_restart_all    , enkf_main , NULL);
   menu_add_separator(menu);
-  menu_add_item(menu , "Export cell values to text file(s)"                  	, "cC" , enkf_ui_export_cell    , enkf_main);
-  menu_add_item(menu , "Export line profile of a field to text file(s)"      	, "pP" , enkf_ui_export_profile , enkf_main);
-  menu_add_item(menu , "Export time development in one cell to text file(s)" 	, "tT" , enkf_ui_export_time    , enkf_main);
+  menu_add_item(menu , "Export cell values to text file(s)"                  	, "cC" , enkf_ui_export_cell    , enkf_main , NULL);
+  menu_add_item(menu , "Export line profile of a field to text file(s)"      	, "pP" , enkf_ui_export_profile , enkf_main , NULL);
+  menu_add_item(menu , "Export time development in one cell to text file(s)" 	, "tT" , enkf_ui_export_time    , enkf_main , NULL);
   menu_run(menu);
   menu_free(menu);
 }

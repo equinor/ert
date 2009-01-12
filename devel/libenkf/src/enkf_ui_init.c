@@ -97,10 +97,10 @@ void enkf_ui_init_menu(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(arg);
 
   menu_type * menu = menu_alloc("EnKF initialization menu" , "qQ");
-  menu_add_item(menu , "Initalize all members/all parameters" , "1" , enkf_ui_init1 , enkf_main);
-  menu_add_item(menu , "Initalize all members/one  parameter" , "2" , enkf_ui_init2 , enkf_main);
-  menu_add_item(menu , "Initialize one member/all parameters" , "3" , enkf_ui_init3 , enkf_main);
-  menu_add_item(menu , "Initialize one member/one parameter"  , "4" , enkf_ui_init4 , enkf_main);
+  menu_add_item(menu , "Initalize all members/all parameters" , "1" , enkf_ui_init1 , enkf_main , NULL);
+  menu_add_item(menu , "Initalize all members/one  parameter" , "2" , enkf_ui_init2 , enkf_main , NULL);
+  menu_add_item(menu , "Initialize one member/all parameters" , "3" , enkf_ui_init3 , enkf_main , NULL);
+  menu_add_item(menu , "Initialize one member/one parameter"  , "4" , enkf_ui_init4 , enkf_main , NULL);
   
   menu_run(menu);
   menu_free(menu);

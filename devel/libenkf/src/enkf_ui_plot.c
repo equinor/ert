@@ -9,6 +9,7 @@
 #include <enkf_main.h>
 #include <enkf_sched.h>
 #include <enkf_ui_plot.h>
+#include <enkf_ui_fs.h>
 #include <enkf_obs.h>
 #include <field_obs.h>
 #include <field_config.h>
@@ -429,14 +430,16 @@ void enkf_ui_plot_RFT(void * arg) {
 
 
 
- void enkf_ui_plot_menu(void * arg) {
-
-   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-   menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
-
-   menu_add_item(menu , "Ensemble plot"    , "eE" , enkf_ui_plot_ensemble    , enkf_main );
-   menu_add_item(menu , "Observation plot" , "oO" , enkf_ui_plot_observation , enkf_main);
-   menu_add_item(menu , "RFT plot"         , "rR" , enkf_ui_plot_RFT         , enkf_main);
+void enkf_ui_plot_menu(void * arg) {
+  
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  menu_type * menu = menu_alloc("EnKF plot menu" , "qQ");
+  
+  menu_add_item(menu , "Ensemble plot"    , "eE" , enkf_ui_plot_ensemble    , enkf_main , NULL);
+  menu_add_item(menu , "Observation plot" , "oO" , enkf_ui_plot_observation , enkf_main , NULL);
+  menu_add_item(menu , "RFT plot"         , "rR" , enkf_ui_plot_RFT         , enkf_main , NULL);
+  menu_add_separator(menu);
+  menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
   menu_run(menu);
   menu_free(menu);
 

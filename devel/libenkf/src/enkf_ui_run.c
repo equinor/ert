@@ -9,6 +9,7 @@
 #include <enkf_sched.h>
 #include <arg_pack.h>
 #include <enkf_ui_util.h>
+#include <enkf_ui_fs.h>
 #include <ensemble_config.h>
 
 
@@ -111,24 +112,26 @@ void enkf_ui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   
   menu_type * menu = menu_alloc("EnKF run menu" , "qQ");
-  menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_ui_run_start__      , enkf_main);
-  menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_ui_run_restart__    , enkf_main);
-  menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__        , enkf_main);
-  menu_add_item(menu , "Run screening experiment"               , "cC" , enkf_ui_run_screening__  , enkf_main);
+  menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_ui_run_start__      , enkf_main , NULL);
+  menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_ui_run_restart__    , enkf_main , NULL);
+  menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__        , enkf_main , NULL);
+  menu_add_item(menu , "Run screening experiment"               , "eE" , enkf_ui_run_screening__  , enkf_main , NULL);
   menu_add_separator(menu);
-  menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_ui_run_analyze__ , enkf_main);
+  menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_ui_run_analyze__ , enkf_main , NULL);
+  menu_add_separator(menu);
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );
     path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );
-    arg_pack_type * arg_pack = arg_pack_alloc();
+    arg_pack_type * arg_pack = arg_pack_alloc();  /* This will leak  */
     char * runpath_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , path_fmt_get_fmt ( runpath_fmt ));
     
     arg_pack_append_ptr(arg_pack , model_config);
-    arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "pP" , model_config_interactive_set_runpath__ , arg_pack));
+    arg_pack_append_ptr(arg_pack , menu_add_item(menu , runpath_label , "pP" , model_config_interactive_set_runpath__ , arg_pack , arg_pack_free__));
     
     
     free(runpath_label);
   }
+  menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
 
   menu_run(menu);
   menu_free(menu);

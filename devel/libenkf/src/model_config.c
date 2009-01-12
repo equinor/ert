@@ -47,27 +47,6 @@ struct model_config_struct {
 
 static enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) {
   const char * mount_map = "enkf_mount_info";
-  char * config_file     = util_alloc_full_path(root_path , mount_map); /* This file should be protected - at all costs. */
-  
-  util_make_path(root_path);
-  util_unlink_existing( config_file ); /* Format of mount map changed aby adding obs driver at revision 1505 - MUST read this file. */
-  
-  if ( !util_file_exists(config_file)) {  
-    enkf_fs_fwrite_new_mount_map( config_file , "enkf" );
-    //int fd        = open(config_file , O_WRONLY + O_CREAT);
-    //FILE * stream = fdopen(fd, "w");
-    //
-    //plain_driver_fwrite_mount_info( stream );
-    ///* 
-    //   Changing mode to read-only in an attempt to protect the file.
-    //   A better solution would be to create the file in a
-    //   write-protected directory.
-    //*/
-    //fchmod(fd , S_IRUSR + S_IRGRP + S_IROTH); 
-    //fclose(stream);
-    //close(fd);
-  }
-  free(config_file);
   return enkf_fs_mount(root_path , mount_map , lock_path);
 }
 

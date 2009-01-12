@@ -10,13 +10,23 @@
 #include <path_fmt.h>
 #include <enkf_node.h>
 #include <basic_driver.h>
+#include <dirent.h>
 #include <fs_types.h>
+#include <menu.h>
+#include <arg_pack.h>
 #include <ecl_static_kw.h>
 #include <plain_driver_parameter.h>
 #include <plain_driver_static.h>
 #include <plain_driver_dynamic.h>
 #include <plain_driver_index.h>
 #include <plain_driver.h>
+
+#define FS_MAGIC_ID         123998L
+#define CURRENT_FS_VERSION  100
+/**
+   Version history:
+*/
+
 
 /**
 
@@ -26,17 +36,17 @@
   The system for storage in the EnKF system is quite complicated, maybe too
   complicated. The reason the system is so complex is (at least) twofold:
 
-    1. It is a goal that it should be relatively easy to write new systems
-       (i.e. drivers) for storage. The current suite of drivers
-       (plain_driver_xx) are based on normal (compressed) fread() and fwrite()
-       system calls. But with the current implementation one could write e.g. a
-       MySQL based driver for storage without touching(??) the rest of the EnKF
-       code.
+    1. It is a goal that it should be relatively easy to write new
+       systems (i.e. drivers) for storage. The current suite of
+       drivers (plain_driver_xx) are based on normal (compressed)
+       fread() and fwrite() system calls. But with the current
+       implementation one could write e.g. a MySQL based driver for
+       storage without touching(??) the rest of the EnKF code.
 
-    2. The parametrs / static restart data / dynamic restart data have very
-       different storage characteristics. By splitting the storage up in three
-       different drivers we can write drivers which are specialized for the
-       different types of data.
+    2. The parameters / static restart data / dynamic restart data
+       have very different storage characteristics. By splitting the
+       storage up in different drivers we can write drivers which are
+       specialized for the different types of data.
 
 
   
@@ -194,30 +204,113 @@ struct enkf_fs_struct {
   int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
   char                      * lockfile; 
   set_type                  * dir_set;               /* Set containing the existing directories. */
-  char                      * current_read_dir;      /* The currently active "directory". */
-  char                      * current_write_dir;      
+  char                      * current_read_dir;      /* The currently active "directory" for reading. */
+  char                      * current_write_dir;     /* The currently active directory fro writing. */ 
   char                      * mount_map;             /* Binary file containing all the information the filesystem needs to bootstrap itself. Updated when e.g. new directories are added. */
   int                         __dir_offset;          /* The offset into the mount map where the directory information starts. */
 };
 
+/*****************************************************************/
 
+static void enkf_fs_upgrade(int old_version, const char * config_file, const char * root_path , const char * new_dir) {
+  char * new_path = util_alloc_full_path(root_path , new_dir);
+  printf("Upgrading enkf file system located in: %s\n",root_path);
+  util_make_path( new_path );
+  {
+    DIR * dirH = opendir( root_path );
+    struct dirent * dp;
+    if (dirH == NULL)
+      util_abort("%s: failed to open directory: %s \n",__func__ , root_path);
+    
+    do {
+      dp = readdir(dirH);
+      if (dp != NULL) {
+	if (util_sscanf_int(dp->d_name , NULL)) {
+	  char * old_entry = util_alloc_full_path(root_path , dp->d_name);
+	  char * new_entry = util_alloc_full_path(new_path  , dp->d_name);
 
-
-
-void enkf_fs_add_dir(enkf_fs_type * fs, const char * dir) {
-  set_add_key(fs->dir_set , dir);
+	  rename( old_entry , new_entry );
+	  printf("Moving %s -> %s \n",old_entry , new_entry);
+	  
+	  free( old_entry );
+	  free( new_entry );
+	}
+      } 
+    } while (dp != NULL);
+    closedir(dirH);
+  }
+  enkf_fs_fwrite_new_mount_map( config_file , new_dir );  /* Create new blank mount map */
 }
 
 
-static void enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read) {
+static int enkf_fs_get_fs_version__(FILE * stream) {
+  int version;
+  long fs_tag = util_fread_long( stream );
+  if (fs_tag == FS_MAGIC_ID) 
+    version = util_fread_int(stream);
+  else
+    version = 0;
+  return version;
+}
+
+
+/**
+   -1 : No mount map found.
+    0 : Old mount map without version info.
+    x : Actual version info. 
+*/
+
+static int enkf_fs_get_fs_version(const char * config_file) {
+  int version = -1;
+  if (util_file_exists(config_file)) {
+    FILE * stream = util_fopen(config_file , "r");
+    version = enkf_fs_get_fs_version__(stream);
+    fclose(stream);
+  } 
+  return version;
+}
+
+
+
+static void enkf_fs_update_map(const enkf_fs_type * fs) {
+  FILE * stream = util_fopen(fs->mount_map , "r+");
+  fseek(stream , fs->__dir_offset , SEEK_SET);  /* Skipping all the driver information - which is left untouched. */
+  set_fwrite( fs->dir_set , stream );
+  util_fwrite_string( fs->current_read_dir , stream );
+  util_fwrite_string( fs->current_write_dir , stream );
+  fclose(stream);
+}
+
+
+
+/*****************************************************************/
+
+void enkf_fs_add_dir(enkf_fs_type * fs, const char * dir) {
+  set_add_key(fs->dir_set , dir);
+  enkf_fs_update_map(fs);
+}
+
+bool enkf_fs_has_dir(const enkf_fs_type * fs, const char * dir) {
+  return set_has_key( fs->dir_set , dir );
+}
+
+
+bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool auto_mkdir) {
+  bool has_dir = true;
   if (dir != NULL) {
     if (!set_has_key(fs->dir_set , dir)) {
-      fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
-      fprintf(stderr,"Available: directories: ");
-      set_fprintf(fs->dir_set , stderr);
-      fprintf(stderr,"\n");
-      
-      util_abort("%s: Aborting (make the directory first ...) \n",__func__);
+      if ((!read) && (auto_mkdir)) {
+	enkf_fs_add_dir(fs , dir);
+	has_dir = false;
+      } else {
+	fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
+	fprintf(stderr,"Available: directories: ");
+	set_fprintf(fs->dir_set , stderr);
+	fprintf(stderr,"\n");
+	
+	has_dir = false;
+	util_abort("%s: Aborting (make the directory first ...) \n",__func__);
+      }
     }
   }
 
@@ -235,26 +328,41 @@ static void enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read)
     fs->index_write->select_dir(fs->index_write         	      , dir);    
     fs->eclipse_static_write->select_dir(fs->eclipse_static_write , dir);
   }
+
+  enkf_fs_update_map(fs);
+  return has_dir;
 }
 
 
 void enkf_fs_select_read_dir(enkf_fs_type * fs, const char * dir) {
   if ((fs->current_read_dir == NULL) || (dir == NULL) || (strcmp(fs->current_read_dir , dir) != 0)) {
-    enkf_fs_select_dir__(fs , dir , true);
+    enkf_fs_select_dir__(fs , dir , true , false);
   }
 }
 
 
-void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir) {
+/**
+   If auto_mkdir == true a directory which does not exist will be
+   created; if auto_mkdir == false the function will util_abort() if
+   the directory does not exist.
+
+   Return true if the directory already exists, and false if the
+   directory was created (latter return value only applies when the
+   function is called with auto_mkdir == true).
+*/
+
+bool enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mkdir) {
   if ((fs->current_write_dir == NULL) || (dir == NULL) || (strcmp(fs->current_write_dir , dir) != 0)) {
-    enkf_fs_select_dir__(fs , dir , false);
+    return enkf_fs_select_dir__(fs , dir , false , auto_mkdir);
   }
+  return false;
 }
-
 
 
 void enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir) {
   FILE * stream = util_fopen( mount_map , "w");
+  util_fwrite_long(FS_MAGIC_ID , stream);
+  util_fwrite_int(CURRENT_FS_VERSION , stream);
   plain_driver_fwrite_mount_info( stream );
   {
     set_type * set = set_alloc_empty();
@@ -269,150 +377,162 @@ void enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_d
   
 
 
-/**
-   Observe that all the drivers (dynamic / parameter / static / index)
-   must be of the same 'family', i.e. all must be plain.
-*/
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
-  const int num_drivers    = 8;
-  enkf_fs_type * fs        = util_malloc(sizeof * fs , __func__);
-
-  fs->index_read           = NULL;
-  fs->dynamic_read         = NULL;
-  fs->eclipse_static_read  = NULL;
-  fs->parameter_read       = NULL;
-
-  fs->index_write          = NULL;
-  fs->dynamic_write        = NULL;
-  fs->eclipse_static_write = NULL;
-  fs->parameter_write      = NULL;
-
-  fs->dir_set             = set_alloc_empty();
-  fs->current_read_dir    = NULL; 
-  fs->current_write_dir   = NULL;
-  {
-    fs->mount_map      = util_alloc_full_path(root_path , mount_info);
-    FILE * stream      = util_fopen(fs->mount_map , "r");
-    int i;
-    
+  const char * default_dir = "enkf";
+  char * config_file       = util_alloc_full_path(root_path , mount_info);  /* This file should be protected - at all costs. */
+  int    version           = enkf_fs_get_fs_version( config_file );
   
-    for (i=0; i < num_drivers; i++) {
-      void * driver   = NULL;
-      bool read                      = util_fread_bool( stream );
-      fs_driver_type driver_category = util_fread_int( stream );
-      fs_driver_impl driver_id       = util_fread_int( stream );
+  util_make_path(root_path);                                    	    /* Creating root directory */
+  if (version == -1)
+    enkf_fs_fwrite_new_mount_map( config_file , default_dir );  	    /* Create blank mount map */
+  else if (version != CURRENT_FS_VERSION) 
+    enkf_fs_upgrade(version , config_file , root_path , default_dir);       /* Upgrade disk information - and create new mount map. */
+  
+  version = enkf_fs_get_fs_version( config_file );
+  if (version != CURRENT_FS_VERSION)
+    util_abort("%s: upgrading of filesystem rooted in:%s failed. \n",root_path);
 
-      switch(driver_id) {
-      case(PLAIN_DRIVER_INDEX_ID):
-	driver = plain_driver_index_fread_alloc( root_path , stream );
-	break;
-      case(PLAIN_DRIVER_STATIC_ID):
-	driver = plain_driver_static_fread_alloc( root_path , stream );
-	break;
-      case(PLAIN_DRIVER_DYNAMIC_ID):
-	driver = plain_driver_dynamic_fread_alloc( root_path , stream );
-	break;
-      case(PLAIN_DRIVER_PARAMETER_ID):
-	driver = plain_driver_parameter_fread_alloc( root_path , stream );
-	break;
-      default:
-	util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized \n",__func__ , fs->mount_map , driver_id);
-      }
+
+
+  /** Reading the mount map */
+  {
+    const int num_drivers    = 8;
+    enkf_fs_type * fs        = util_malloc(sizeof * fs , __func__);
+
+    fs->index_read           = NULL;
+    fs->dynamic_read         = NULL;
+    fs->eclipse_static_read  = NULL;
+    fs->parameter_read       = NULL;
+
+    fs->index_write          = NULL;
+    fs->dynamic_write        = NULL;
+    fs->eclipse_static_write = NULL;
+    fs->parameter_write      = NULL;
+
+    fs->dir_set             = set_alloc_empty();
+    fs->current_read_dir    = NULL; 
+    fs->current_write_dir   = NULL;
+    {
+      fs->mount_map      = util_alloc_string_copy( config_file );
+      FILE * stream      = util_fopen(fs->mount_map , "r");
+      int i;
+      
+      enkf_fs_get_fs_version__(stream);   /* Just top skip version header */
+      for (i=0; i < num_drivers; i++) {
+	void * driver   = NULL;
+	bool read                      = util_fread_bool( stream );
+	fs_driver_type driver_category = util_fread_int( stream );
+	fs_driver_impl driver_id       = util_fread_int( stream );
+
+	switch(driver_id) {
+	case(PLAIN_DRIVER_INDEX_ID):
+	  driver = plain_driver_index_fread_alloc( root_path , stream );
+	  break;
+	case(PLAIN_DRIVER_STATIC_ID):
+	  driver = plain_driver_static_fread_alloc( root_path , stream );
+	  break;
+	case(PLAIN_DRIVER_DYNAMIC_ID):
+	  driver = plain_driver_dynamic_fread_alloc( root_path , stream );
+	  break;
+	case(PLAIN_DRIVER_PARAMETER_ID):
+	  driver = plain_driver_parameter_fread_alloc( root_path , stream );
+	  break;
+	default:
+	  util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized \n",__func__ , fs->mount_map , driver_id);
+	}
 	
 
-      switch(driver_category) {
-      case(DRIVER_PARAMETER):
-	if (read)
-	  fs->parameter_read = driver;
-	else
-	  fs->parameter_write = driver;
-	break;
-      case(DRIVER_STATIC):
-	if (read)
-	  fs->eclipse_static_read = driver;
-	else
-	  fs->eclipse_static_write = driver;
-	break;
-      case(DRIVER_DYNAMIC):
-	if (read) 
-	  fs->dynamic_read = driver;
-	else
-	  fs->dynamic_write = driver;
-	break;
-      case(DRIVER_INDEX):
-	if (read)
-	  fs->index_read = driver;
-	else
-	  fs->index_write = driver;
-	break;
-      default:
-	util_abort("%s: fatal error in mount_map:%s - driver category:%d not recognized \n",__func__ , fs->mount_map , driver_category);
+	switch(driver_category) {
+	case(DRIVER_PARAMETER):
+	  if (read)
+	    fs->parameter_read = driver;
+	  else
+	    fs->parameter_write = driver;
+	  break;
+	case(DRIVER_STATIC):
+	  if (read)
+	    fs->eclipse_static_read = driver;
+	  else
+	    fs->eclipse_static_write = driver;
+	  break;
+	case(DRIVER_DYNAMIC):
+	  if (read) 
+	    fs->dynamic_read = driver;
+	  else
+	    fs->dynamic_write = driver;
+	  break;
+	case(DRIVER_INDEX):
+	  if (read)
+	    fs->index_read = driver;
+	  else
+	    fs->index_write = driver;
+	  break;
+	default:
+	  util_abort("%s: fatal error in mount_map:%s - driver category:%d not recognized \n",__func__ , fs->mount_map , driver_category);
+	}
       }
+
+      if (fs->parameter_read  	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
+      if (fs->dynamic_read    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , fs->mount_map);
+      if (fs->eclipse_static_read    == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
+      if (fs->index_read             == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
+
+      if (fs->parameter_write  	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
+      if (fs->dynamic_write    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , fs->mount_map);
+      if (fs->eclipse_static_write   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
+      if (fs->index_write            == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
+
+
+      /* Starting on the directory information. */
+      fs->__dir_offset = ftell(stream);
+      {
+	char * dir = NULL;
+	int num_dir = util_fread_int( stream );
+	if (num_dir == 0) 
+	  util_abort("%s: must have a directory ... \n",__func__);
+
+	/* Loading the set of directories. */
+	for (int i=0; i < num_dir; i++) {
+	  dir = util_fread_realloc_string( dir , stream); 
+	  enkf_fs_add_dir( fs , dir );
+	}
+
+	/* Loading the currently selected read and write directories. */
+	dir = util_fread_realloc_string( dir , stream ); enkf_fs_select_read_dir(fs , dir);
+	dir = util_fread_realloc_string( dir , stream ); enkf_fs_select_write_dir(fs , dir , false);
+	free(dir);
+      }
+      fclose(stream);
     }
+  
+    basic_driver_assert_cast(fs->dynamic_read);
+    basic_driver_static_assert_cast(fs->eclipse_static_read);
+    basic_driver_assert_cast(fs->parameter_read);
+    basic_driver_index_assert_cast(fs->index_read);
 
-    if (fs->parameter_read  	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
-    if (fs->dynamic_read    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , fs->mount_map);
-    if (fs->eclipse_static_read    == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
-    if (fs->index_read             == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
-
-    if (fs->parameter_write  	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
-    if (fs->dynamic_write    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , fs->mount_map);
-    if (fs->eclipse_static_write   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
-    if (fs->index_write            == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
-
-
-    /* Starting on the directory information. */
-    fs->__dir_offset = ftell(stream);
+    basic_driver_assert_cast(fs->dynamic_write);
+    basic_driver_static_assert_cast(fs->eclipse_static_write);
+    basic_driver_assert_cast(fs->parameter_write);
+    basic_driver_index_assert_cast(fs->index_write);
     {
-      char * dir = NULL;
-      int num_dir = util_fread_int( stream );
-      if (num_dir == 0) 
-	util_abort("%s: must have a directory ... \n",__func__);
-
-      /* Loading the set of directories. */
-      for (int i=0; i < num_dir; i++) {
-	dir = util_fread_realloc_string( dir , stream); 
-	enkf_fs_add_dir( fs , dir );
-      }
-
-      /* Loading the currently selected read and write directories. */
-      dir = util_fread_realloc_string( dir , stream ); enkf_fs_select_read_dir(fs , dir);
-      dir = util_fread_realloc_string( dir , stream ); enkf_fs_select_write_dir(fs , dir);
-      free(dir);
+      char * ens_path    = util_alloc_string_copy(root_path);
+      util_string_tr( ens_path , UTIL_PATH_SEP_CHAR , '_' );
+      fs->lockfile = util_alloc_filename(lock_path , ens_path , "ensemble_lock");
+      free(ens_path);
     }
-    fclose(stream);
-  }
   
-  basic_driver_assert_cast(fs->dynamic_read);
-  basic_driver_static_assert_cast(fs->eclipse_static_read);
-  basic_driver_assert_cast(fs->parameter_read);
-  basic_driver_index_assert_cast(fs->index_read);
+    if (util_try_lockf(fs->lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
+      fs->read_only = false;
+    else {
+      fs->read_only = true;
+      fprintf(stderr,"------------------------------------------------------------------------\n");
+      fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| \'%s\' for writing - this instance will be read-only.\n",root_path);
+      fprintf(stderr,"-------------------------------------------------------------------------\n");
+    }
 
-  basic_driver_assert_cast(fs->dynamic_write);
-  basic_driver_static_assert_cast(fs->eclipse_static_write);
-  basic_driver_assert_cast(fs->parameter_write);
-  basic_driver_index_assert_cast(fs->index_write);
-  {
-    char * ens_path    = util_alloc_string_copy(root_path);
-    util_string_tr( ens_path , UTIL_PATH_SEP_CHAR , '_' );
-    fs->lockfile = util_alloc_filename(lock_path , ens_path , "ensemble_lock");
-    free(ens_path);
+    return fs;
   }
-  
-  if (util_try_lockf(fs->lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
-    fs->read_only = false;
-  else {
-    fs->read_only = true;
-    fprintf(stderr,"------------------------------------------------------------------------\n");
-    fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| \'%s\' for writing - this instance will be read-only.\n",root_path);
-    fprintf(stderr,"-------------------------------------------------------------------------\n");
-  }
-  
-
-  enkf_fs_select_read_dir(fs , NULL);
-  enkf_fs_select_write_dir(fs , NULL);
-  return fs;
 }
 
 
@@ -665,6 +785,42 @@ enkf_node_type ** enkf_fs_fread_alloc_ts(enkf_fs_type * enkf_fs , enkf_config_no
   }
 }
 
+/*****************************************************************/
+
+void enkf_fs_interactive_select_directory(void * arg) {
+  arg_pack_type * arg_pack         = arg_pack_safe_cast( arg );
+  enkf_fs_type   * fs              = arg_pack_iget_ptr(arg_pack , 0);  
+  bool read                        = arg_pack_iget_bool(arg_pack , 1); 
+  menu_item_type * item            = arg_pack_iget_ptr(arg_pack , 2);
+
+  char dir[256];
+  if (read)
+    printf("Give directory for reading ==> ");
+  else
+    printf("Give directory for writing ==> ");
+  scanf("%s" , dir);
+  enkf_fs_select_dir__(fs , dir , read , true);
+  
+  {
+    char * menu_label;
+    if (read)
+      menu_label = util_alloc_sprintf("Set new directory for reading:%s" , dir);
+    else
+      menu_label = util_alloc_sprintf("Set new directory for writing:%s" , dir);
+
+    menu_item_set_label( item , menu_label );
+    free(menu_label);
+  }
+}
+
+
+const char * enkf_fs_get_write_dir(const enkf_fs_type * fs) {
+  return fs->current_write_dir;
+}
+
+const char * enkf_fs_get_read_dir(const enkf_fs_type * fs) {
+  return fs->current_read_dir;
+}
 
 
 /*****************************************************************/
@@ -685,6 +841,7 @@ void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , in
   basic_driver_index_type * index = enkf_fs->index_read;
   index->load_kwlist( index , report_step , iens , kw_list );
 }
+
 
 
 
