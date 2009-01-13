@@ -153,6 +153,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
   hash_type * obs_hash;
+  
 };
 
 
@@ -196,7 +197,7 @@ bool enkf_obs_has_key(const enkf_obs_type * obs , const char * key) {
   return hash_has_key(obs->obs_hash , key);
 }
 
-const obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * key) {
+obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * key) {
   return hash_get(obs->obs_hash , key);
 }
 

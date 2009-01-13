@@ -61,6 +61,7 @@ VOID_MEASURE_HEADER(field_obs);
 VOID_FWRITE_HEADER(field_obs);
 VOID_FREAD_HEADER(field_obs);
 VOID_USER_GET_OBS_HEADER(field_obs);
+VOID_CHI2_HEADER(field_obs);
 
 #ifdef __cplusplus
 }

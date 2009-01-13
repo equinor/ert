@@ -22,7 +22,8 @@ typedef void   (obs_get_ftype)                 (const void * , int , obs_data_ty
 typedef void   (obs_meas_ftype)                (const void * , const void *, meas_vector_type *);
 typedef void   (obs_activate_ftype)            (void * , active_mode_type , void *);
 typedef void   (obs_user_get_ftype)            (void * , const char * , double * , double * , bool *); 
-typedef  bool  (obs_type_check_ftype)          (const void *);
+typedef bool   (obs_type_check_ftype)          (const void *);
+typedef double (obs_chi2_ftype)                (const void * , const void *);
 
 typedef enum { gen_obs     = 1,
 	       summary_obs = 2,
@@ -52,7 +53,7 @@ obs_vector_type    * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instan
 obs_vector_type    * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type *  , const history_type * );
 obs_vector_type    * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type *  , const history_type * );
 obs_vector_type    * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_type *  , const history_type * , const ensemble_config_type * );
-
+void                 obs_vector_set_config_node(obs_vector_type *  , const enkf_config_node_type * );
 
 VOID_FREE_HEADER(obs_vector);
 

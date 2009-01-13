@@ -19,16 +19,16 @@
 
 
 struct field_obs_struct {
-  int      __type_id;    /** Id used for runtime type checking. */
-  char   * field_name;   /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
-  char   * obs_label;    /** A user provided label for the observation.      */
-  int      size;         /** The number of field cells observed.             */
-  int    * index_list;   /** The list indices which are observed - (active indices). */
-  int    * i;            /** The vector of indices i,j,k are equivalent to those in index_list - they are only retained for RFT plotting. */
+  int      __type_id;    		  /** Id used for runtime type checking. */
+  char   * field_name;   		  /** The state keyword for the observed field - PRESSURE / SWAT / PORO /...   */
+  char   * obs_label;    		  /** A user provided label for the observation.      */
+  int      size;         		  /** The number of field cells observed.             */
+  int    * index_list;   		  /** The list indices which are observed - (active indices). */
+  int    * i;            		  /** The vector of indices i,j,k are equivalent to those in index_list - they are only retained for RFT plotting. */
   int    * j;
   int    * k;
-  double * obs_value;    /** The observed values.                            */
-  double * obs_std;      /** The standard deviation of the observations.     */
+  double * obs_value;    		  /** The observed values.                            */
+  double * obs_std;      		  /** The standard deviation of the observations.     */
   
   const field_config_type * field_config; /* The config object of the field we are observing - shared reference. */
 };
@@ -137,6 +137,16 @@ void field_obs_measure(
 }
 
 
+double field_obs_chi2(const field_obs_type * field_obs,  const field_type     * field_state) {
+  double sum_chi2 = 0;
+  for (int i=0; i < field_obs->size; i++) {
+    double x = (field_iget_double(field_state , field_obs->index_list[i]) - field_obs->obs_value[i]) / field_obs->obs_std[i];
+    sum_chi2 += x*x;
+  }
+  return sum_chi2;
+}
+
+
 
 bool field_obs_fwrite(
   const field_obs_type * field_obs,
@@ -238,3 +248,4 @@ VOID_FREE(field_obs)
 VOID_GET_OBS(field_obs)
 VOID_MEASURE(field_obs , field)
 VOID_USER_GET_OBS(field_obs)
+VOID_CHI2(field_obs , field)

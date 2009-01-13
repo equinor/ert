@@ -63,7 +63,7 @@ plot_type *plot_alloc();
  void plot_free(plot_type * item);
  void plot_get_extrema(plot_type * item, plot_range_type * );
 
-
+void plot_set_window_size(plot_type * , int , int );
 void plot_invert_y_axis(plot_type * );
 void plot_invert_x_axis(plot_type * );
 

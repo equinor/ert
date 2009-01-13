@@ -276,6 +276,16 @@ void obs_prefix ## _measure__(const void * void_arg ,  const void * state_object
 
 /*****************************************************************/
 
+#define VOID_CHI2(obs_prefix, state_prefix) \
+double obs_prefix ## _chi2__(const void * void_arg ,  const void * state_object) {\
+   return obs_prefix ## _chi2((const obs_prefix ## _type *) void_arg , (const state_prefix ## _type  * ) state_object); \
+}
+
+#define VOID_CHI2_HEADER(obs_prefix) double obs_prefix ## _chi2__(const void * ,  const void *);
+
+
+/*****************************************************************/
+
 #define VOID_TRUNCATE(prefix)         void prefix ## _truncate__(void * void_arg) { prefix ## _truncate( (prefix ## _type *) void_arg); }
 #define VOID_TRUNCATE_HEADER(prefix)  void prefix ## _truncate__(void * )
 
