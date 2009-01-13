@@ -7,8 +7,16 @@
 
 
 void enkf_ui_fs_lsdir(void * arg) {
-  enkf_fs_type * fs = (enkf_fs_type * ) arg;
+  enkf_fs_type    * fs      = (enkf_fs_type * ) arg;
+  stringlist_type * dirlist = enkf_fs_alloc_dirlist( fs );
+  int idir;
 
+  printf("Avaliable enkf directories: ");
+  for (idir = 0; idir < stringlist_get_size( dirlist ); idir++)
+    printf("%s ",stringlist_iget( dirlist , idir ));
+  
+  printf("\n");
+  stringlist_free( dirlist );
 }
 
 

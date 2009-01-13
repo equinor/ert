@@ -181,7 +181,7 @@ char * enkf_util_scanf_alloc_filename(const char * prompt , int options) {
 #define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
 void enkf_util_fprintf_data(const int * index_column , const double ** data, const char * index_name , const char ** column_names, int num_rows, int num_columns, bool summarize, FILE * stream) {
   const int float_width     =  9;
-  const int float_precision =  5;
+  const int float_precision =  4;
 
   int      * width = util_malloc((num_columns + 1) * sizeof * width , __func__);
   int        total_width;
@@ -192,7 +192,7 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
   /* Check the column_names. */
   for(int column_nr = 0; column_nr < num_columns; column_nr++)
   {
-    if(column_names[column_nr] == NULL)
+    if (column_names[column_nr] == NULL)
       util_abort("%s: Trying to dereference NULL pointer.\n", __func__);
   }
 

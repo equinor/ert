@@ -20,6 +20,8 @@
 #include <plain_driver_dynamic.h>
 #include <plain_driver_index.h>
 #include <plain_driver.h>
+#include <stringlist.h>
+
 
 #define FS_MAGIC_ID         123998L
 #define CURRENT_FS_VERSION  100
@@ -200,6 +202,7 @@ struct enkf_fs_struct {
   basic_driver_index_type   * index_read;
   basic_driver_index_type   * index_write;
 
+  bool                        use_locking;           /* */ 
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
   int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
   char                      * lockfile; 
@@ -380,6 +383,7 @@ void enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_d
 
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
+  const bool   use_locking = false;
   const char * default_dir = "enkf";
   char * config_file       = util_alloc_full_path(root_path , mount_info);  /* This file should be protected - at all costs. */
   int    version           = enkf_fs_get_fs_version( config_file );
@@ -401,6 +405,8 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     const int num_drivers    = 8;
     enkf_fs_type * fs        = util_malloc(sizeof * fs , __func__);
 
+    fs->use_locking          = use_locking;
+    fs->lockfile             = NULL;
     fs->index_read           = NULL;
     fs->dynamic_read         = NULL;
     fs->eclipse_static_read  = NULL;
@@ -516,22 +522,27 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     basic_driver_static_assert_cast(fs->eclipse_static_write);
     basic_driver_assert_cast(fs->parameter_write);
     basic_driver_index_assert_cast(fs->index_write);
-    {
-      char * ens_path    = util_alloc_string_copy(root_path);
-      util_string_tr( ens_path , UTIL_PATH_SEP_CHAR , '_' );
-      fs->lockfile = util_alloc_filename(lock_path , ens_path , "ensemble_lock");
-      free(ens_path);
-    }
-  
-    if (util_try_lockf(fs->lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
-      fs->read_only = false;
-    else {
-      fs->read_only = true;
-      fprintf(stderr,"------------------------------------------------------------------------\n");
-      fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| \'%s\' for writing - this instance will be read-only.\n",root_path);
-      fprintf(stderr,"-------------------------------------------------------------------------\n");
-    }
 
+    if (use_locking) {
+      {
+	char * ens_path    = util_alloc_string_copy(root_path);
+	util_string_tr( ens_path , UTIL_PATH_SEP_CHAR , '_' );
+	fs->lockfile = util_alloc_filename(lock_path , ens_path , "ensemble_lock");
+	free(ens_path);
+      }
+      
+      
+      if (util_try_lockf(fs->lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
+	fs->read_only = false;
+      else {
+	fs->read_only = true;
+	fprintf(stderr,"------------------------------------------------------------------------\n");
+	fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| \'%s\' for writing - this instance will be read-only.\n",root_path);
+	fprintf(stderr,"-------------------------------------------------------------------------\n");
+      }
+    } else
+      fs->read_only = false;
+    
     return fs;
   }
 }
@@ -553,6 +564,7 @@ static void enkf_fs_free_index_driver(basic_driver_index_type * driver) {
 }
 
 
+
 void enkf_fs_free(enkf_fs_type * fs) {
   enkf_fs_free_driver(fs->dynamic_read);
   enkf_fs_free_driver(fs->parameter_read);
@@ -564,14 +576,15 @@ void enkf_fs_free(enkf_fs_type * fs) {
   enkf_fs_free_static_driver(fs->eclipse_static_write);
   enkf_fs_free_index_driver(fs->index_write);
 
-
   util_safe_free(fs->current_read_dir);
   util_safe_free(fs->current_write_dir);
   free(fs->mount_map);
   set_free(fs->dir_set);
-  close(fs->lock_fd);
-  util_unlink_existing(fs->lockfile);
-  free(fs->lockfile);
+  if (fs->use_locking) {
+    close(fs->lock_fd);
+    util_unlink_existing(fs->lockfile);
+  }
+  util_safe_free(fs->lockfile);
   free(fs);
 }
 
@@ -814,6 +827,17 @@ void enkf_fs_interactive_select_directory(void * arg) {
   }
 }
 
+/**
+   Checks if the current_read_dir == current_write_dir.
+*/
+
+bool enkf_fs_rw_equal(const enkf_fs_type * fs) {
+  if (strcmp(fs->current_read_dir, fs->current_write_dir) == 0)
+    return true;
+  else
+    return false;
+}
+
 
 const char * enkf_fs_get_write_dir(const enkf_fs_type * fs) {
   return fs->current_write_dir;
@@ -821,6 +845,19 @@ const char * enkf_fs_get_write_dir(const enkf_fs_type * fs) {
 
 const char * enkf_fs_get_read_dir(const enkf_fs_type * fs) {
   return fs->current_read_dir;
+}
+
+
+stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * fs) {
+  stringlist_type * dirlist = stringlist_alloc_new();
+  const char * key;
+
+  key = set_iter_get_first_key( fs->dir_set );
+  while (key != NULL) {
+    stringlist_append_copy( dirlist , key );
+    key = set_iter_get_next_key( fs->dir_set );
+  }
+  return dirlist;
 }
 
 

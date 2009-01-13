@@ -7,9 +7,13 @@ extern "C" {
 #include <basic_driver.h>
 #include <enkf_node.h>
 #include <enkf_config_node.h>
+#include <stringlist.h>
+#include <stdbool.h>
 
 typedef struct enkf_fs_struct enkf_fs_type;
 
+bool             enkf_fs_rw_equal(const enkf_fs_type * );
+stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * );
 const char     * enkf_fs_get_read_dir(const enkf_fs_type * );
 const char     * enkf_fs_get_write_dir(const enkf_fs_type * );
 void             enkf_fs_interactive_select_directory(void * );
