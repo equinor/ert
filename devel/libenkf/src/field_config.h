@@ -105,6 +105,7 @@ field_func_type       * field_config_get_output_transform(const field_config_typ
 void                    field_config_set_output_transform(field_config_type * config , field_func_type * );
 void                    field_config_assert_binary( const field_config_type *  , const field_config_type *  , const char * );
 void                    field_config_assert_unary( const field_config_type *  , const char * );
+void                    field_config_activate(field_config_type *  , active_mode_type  , void * );
 
 
 void            	field_config_set_truncation_from_strings(field_config_type * , const char * , const char **);

@@ -27,6 +27,11 @@
 #define CURRENT_FS_VERSION  100
 /**
    Version history:
+
+   0  : 
+
+   100:
+
 */
 
 
@@ -205,12 +210,13 @@ struct enkf_fs_struct {
   bool                        use_locking;           /* */ 
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
   int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
-  char                      * lockfile; 
+  char                      * lockfile;              /* Filename for lockfile. */
+
   set_type                  * dir_set;               /* Set containing the existing directories. */
   char                      * current_read_dir;      /* The currently active "directory" for reading. */
   char                      * current_write_dir;     /* The currently active directory fro writing. */ 
   char                      * mount_map;             /* Binary file containing all the information the filesystem needs to bootstrap itself. Updated when e.g. new directories are added. */
-  int                         __dir_offset;          /* The offset into the mount map where the directory information starts. */
+  int                         __dir_offset;          /* The offset into the mount map where the directory information starts - very internal. */
 };
 
 /*****************************************************************/

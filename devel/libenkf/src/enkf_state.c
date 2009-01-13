@@ -201,23 +201,6 @@ static void run_info_complete_run(run_info_type * run_info) {
 }
 
 
-static char * __config_alloc_simlock(const char * lock_path , const char * run_path) {
-  char * lockfile;
-  {
-    char * tmp_path;
-    if (util_is_abs_path(run_path))
-      tmp_path = util_alloc_string_copy( &run_path[1]);
-    else
-      tmp_path = util_alloc_string_copy( run_path );
-    util_string_tr(tmp_path , UTIL_PATH_SEP_CHAR , '.');
-    lockfile = util_alloc_sprintf("%s%clock-%s" , lock_path , UTIL_PATH_SEP_CHAR , tmp_path);
-    free(tmp_path);
-  }
-  return lockfile;
-}
-
-
-
 
 /*****************************************************************/
 

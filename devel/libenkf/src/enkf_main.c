@@ -497,10 +497,9 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 
 void enkf_main_set_field_config_iactive(const ensemble_config_type * ensemble_config, int local_step){
   
-  bool * test_field_iactive;
-  const gen_data_config_type * gen_data_config = enkf_main_get_enkf_config_node_type(ensemble_config,"AI"); 
-  
   /*
+    bool * test_field_iactive;
+    const gen_data_config_type * gen_data_config = enkf_main_get_enkf_config_node_type(ensemble_config,"AI"); 
     int num_param = gen_data_config_get_num_param(gen_data_config,local_step);
     int * i= gen_data_config_get_param_index_i(gen_data_config,local_step);
     int * j= gen_data_config_get_param_index_j(gen_data_config,local_step);
@@ -510,7 +509,6 @@ void enkf_main_set_field_config_iactive(const ensemble_config_type * ensemble_co
 
   field_config_type * poro_config = enkf_main_get_enkf_config_node_type(ensemble_config,"PORO");
   field_config_activate(poro_config , partly_active , NULL);
-  
 }
 
 
@@ -818,7 +816,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
       if (config_has_set_item(config , "ADD_STATIC_KW")) {
 	for (i=0; i < config_get_occurences(config , "ADD_STATIC_KW"); i++) {
-	  stringlist_type * static_kw_list = config_iget_stringlist_ref(config , "ADD_STATIC_KW" , i);
+	  const stringlist_type * static_kw_list = config_iget_stringlist_ref(config , "ADD_STATIC_KW" , i);
 	  int k;
 	  for (k = 0; k < stringlist_get_size(static_kw_list); k++)
 	    ecl_config_add_static_kw(enkf_main->ecl_config , stringlist_iget( static_kw_list , k));
@@ -921,7 +919,6 @@ void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
   This function will discard all unused static nodes. 
 */
 void enkf_main_del_unused_static(enkf_main_type * enkf_main , int report_step) {
-  const int ens_size  = ensemble_config_get_size(enkf_main->ensemble_config);
   int config_size;
   char ** key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
   int ikw;
