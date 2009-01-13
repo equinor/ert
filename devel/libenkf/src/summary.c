@@ -162,15 +162,22 @@ void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl
 
 void summary_ensemble_fprintf_results(const summary_type ** ensemble, int ens_size, const char * filename)
 {
-  const char * var  = summary_config_get_var(ensemble[0]->config);
-  double     * data = util_malloc(ens_size * sizeof * data, __func__);
+  int        * index = util_malloc(ens_size * sizeof * index , __func__);
+  const char * var   = summary_config_get_var(ensemble[0]->config);
+  double     * data  = util_malloc(ens_size * sizeof * data , __func__);
 
-  for(int i=0; i<ens_size; i++)
-  {
-    data[i] = *(ensemble[i]->data);
+  for(int i=0; i<ens_size; i++) {
+    data[i]  = *(ensemble[i]->data);
+    index[i] = i;
   }
   
-  enkf_util_fprintf_data( (const double ** ) &data, &var, ens_size, 1, true, filename);
+  {
+    FILE * stream = util_fopen(filename , "w");
+    enkf_util_fprintf_data( index , (const double ** ) &data, "Member #" , &var, ens_size, 1, true, stream);
+    fclose(stream);
+  }
+  
+  free(index);
   free(data);
 }
 

@@ -179,7 +179,7 @@ char * enkf_util_scanf_alloc_filename(const char * prompt , int options) {
   If summarize is true, the mean and standard deviation of each column will be printed.
 */
 #define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
-void enkf_util_fprintf_data(const double ** data, const char ** column_names, int num_rows, int num_columns, bool summarize, const char * filename) {
+void enkf_util_fprintf_data(const int * index_column , const double ** data, const char * index_name , const char ** column_names, int num_rows, int num_columns, bool summarize, FILE * stream) {
   const int float_width     =  9;
   const int float_precision =  5;
 
@@ -197,7 +197,7 @@ void enkf_util_fprintf_data(const double ** data, const char ** column_names, in
   }
 
   /* Calculate the width of each column and the total width. */
-  width[0] = strlen("Member #|");
+  width[0] = strlen(index_name) + 1;
   total_width = width[0];
   for (int column_nr = 0; column_nr < num_columns; column_nr++) {
     if(column_names[column_nr] != NULL)
@@ -213,9 +213,8 @@ void enkf_util_fprintf_data(const double ** data, const char ** column_names, in
   }
 
   {
-    FILE * stream = util_fopen(filename , "w");
 
-    util_fprintf_string("Member #|" , width[0] , true , stream);
+    util_fprintf_string(index_name , width[0] - 1 , true , stream); printf("|");
     for (int column_nr = 0; column_nr < num_columns; column_nr++) {
       util_fprintf_string(column_names[column_nr] , width[column_nr + 1] , center , stream);
       fprintf(stream , "|");
@@ -243,7 +242,7 @@ void enkf_util_fprintf_data(const double ** data, const char ** column_names, in
 
 
     for (int row_nr = 0; row_nr < num_rows; row_nr++) {
-      util_fprintf_int(row_nr + 1, width[0] - 1 , stream);   /* This +1 is not general */
+      util_fprintf_int(index_column[row_nr], width[0] - 1 , stream);   /* This +1 is not general */
       fprintf(stream , "|");
       
       for (int column_nr = 0; column_nr < num_columns; column_nr++) {
@@ -253,7 +252,6 @@ void enkf_util_fprintf_data(const double ** data, const char ** column_names, in
       fprintf(stream , "\n");
     }
     PRINT_LINE(total_width , '=' , stream);
-    fclose(stream);
   }
   
   free(stddev);

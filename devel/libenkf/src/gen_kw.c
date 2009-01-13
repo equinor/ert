@@ -203,6 +203,7 @@ void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list ,
 void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size , const char * filename) {
   char    ** kw_list = gen_kw_config_get_name_list(ensemble[0]->config);
   int        size    = gen_kw_config_get_data_size(ensemble[0]->config);
+  int        * index = util_malloc(ens_size * sizeof * index , __func__);
 
   double  ** data    = util_malloc(size * sizeof * data, __func__);
   for(int i=0; i<size; i++)
@@ -214,13 +215,19 @@ void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size
     for (int i = 0; i < size; i++) {
       data[i][iens] = scalar_data[i];
     }
+    index[iens] = iens;
+  }
+  
+  {
+    FILE * stream = util_fopen(filename , "w");
+    enkf_util_fprintf_data( index , (const double **) data, "Member #" , (const char **) kw_list, ens_size, size, true, stream);
+    fclose(stream);
   }
 
-  enkf_util_fprintf_data( (const double **) data, (const char **) kw_list, ens_size, size, true, filename);
-
   for(int i=0; i<size; i++)
-        free(data[i]);
+    free(data[i]);
   free(data);
+  free(index);
 }
 
 

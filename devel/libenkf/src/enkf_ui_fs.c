@@ -3,6 +3,7 @@
 #include <enkf_ui_util.h>
 #include <enkf_fs.h>
 #include <arg_pack.h>
+#include <util.h>
 
 
 void enkf_ui_fs_lsdir(void * arg) {
