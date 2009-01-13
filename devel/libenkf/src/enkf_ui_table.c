@@ -80,7 +80,7 @@ static void enkf_ui_table__(enkf_main_type * enkf_main , bool ens_plot) {
   }
   
   {
-    state_enum state = analyzed;
+    state_enum state  = forecast;
     int active_length = 0;
     int total_line_count = 0;
     double line[num_keys];
@@ -160,7 +160,7 @@ void enkf_ui_table_menu(void * arg) {
   
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   {
-    menu_type * menu = menu_alloc("EnKF table menu" , "qQ");
+    menu_type * menu = menu_alloc("EnKF table menu" , "Back" , "bB");
     menu_add_item(menu , "Ensemble of parameters"          , "eE"  , enkf_ui_table_ensemble , enkf_main , NULL);
     menu_add_item(menu , "Time development of parameters"  , "tT"  , enkf_ui_table_time     , enkf_main , NULL);
     menu_add_separator(menu);

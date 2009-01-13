@@ -25,7 +25,7 @@ void enkf_ui_fs_menu(void * arg) {
    enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
    enkf_fs_type    * fs         = enkf_main_get_fs( enkf_main );
 
-   menu_type * menu = menu_alloc("EnKF filesystem menu" , "qQ");
+   menu_type * menu = menu_alloc("EnKF filesystem menu" , "Back" , "bB");
    menu_add_item(menu , "List available directories" , "lL" , enkf_ui_fs_lsdir , fs , NULL);
    
    {

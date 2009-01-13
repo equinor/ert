@@ -111,7 +111,7 @@ void enkf_ui_run_analyze__(void * enkf_main) {
 void enkf_ui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   
-  menu_type * menu = menu_alloc("EnKF run menu" , "qQ");
+  menu_type * menu = menu_alloc("EnKF run menu" , "Back" , "bB");
   menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_ui_run_start__      , enkf_main , NULL);
   menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_ui_run_restart__    , enkf_main , NULL);
   menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__        , enkf_main , NULL);

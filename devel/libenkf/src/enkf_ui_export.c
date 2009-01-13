@@ -312,7 +312,7 @@ void enkf_ui_export_time(void * enkf_main) {
 void enkf_ui_export_menu(void * arg) {
 
   enkf_main_type * enkf_main = enkf_main_safe_cast(arg);
-  menu_type * menu = menu_alloc("Export EnKF data to other formats" , "qQ");
+  menu_type * menu = menu_alloc("Export EnKF data to other formats" , "Back" , "bB");
   menu_add_item(menu , "Export fields to RMS Roff format"       		, "rR" , enkf_ui_export_roff   	       , enkf_main , NULL);
   menu_add_item(menu , "Export fields to ECLIPSE grdecl format" 		, "gG" , enkf_ui_export_grdecl 	       , enkf_main , NULL);
   menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , enkf_main , NULL);

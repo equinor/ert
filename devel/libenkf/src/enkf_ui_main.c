@@ -31,7 +31,7 @@
 
 
 void enkf_ui_main_menu(enkf_main_type * enkf_main) {
-  menu_type * menu = menu_alloc("EnKF main menu" , "qQ");
+  menu_type * menu = menu_alloc("EnKF main menu" , "Quit" , "qQ");
   
   menu_add_item(menu , "Initialize EnKF ensemble"     , "iI" , enkf_ui_init_menu   , enkf_main , NULL);
   menu_add_item(menu , "Run EnKF"                     , "rR" , enkf_ui_run_menu    , enkf_main , NULL);

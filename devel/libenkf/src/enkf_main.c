@@ -425,17 +425,23 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
 
 void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update , const stringlist_type * forward_model) {
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
+  int   job_size;
+
   int iens;
   
   printf("Starting forward step: %d -> %d\n",step1 , step2);
   site_config_update_lsf_request(enkf_main->site_config , forward_model);
+
+  job_size = 0;
+  for (iens = 0; iens < ens_size; iens++)
+    if (iactive[iens]) job_size++;
 
   {
     pthread_t          queue_thread;
     job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
     arg_pack_type * queue_args = arg_pack_alloc();
     arg_pack_append_ptr(queue_args , job_queue);
-    arg_pack_append_int(queue_args , ens_size);
+    arg_pack_append_int(queue_args , job_size);
     arg_pack_lock( queue_args );
     pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
@@ -454,7 +460,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
       for (iens = 0; iens < ens_size; iens++) 
         thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
       
-      thread_pool_join(complete_threads);        /* All jobs have completed and the results have been loaded back. */
+      thread_pool_join(complete_threads);      /* All jobs have completed and the results have been loaded back. */
       thread_pool_free(complete_threads);
     }
     pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      */
