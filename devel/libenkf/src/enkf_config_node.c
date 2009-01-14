@@ -45,6 +45,7 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   node->enkf_outfile    = util_alloc_string_copy(enkf_outfile);
   node->enkf_infile     = util_alloc_string_copy(enkf_infile);
   node->obs_keys        = stringlist_alloc_new(); 
+  node->__type_id       = ENKF_CONFIG_NODE_TYPE_ID;
   return node;
 }
 

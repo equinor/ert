@@ -41,19 +41,7 @@ bool prefix ## _is_instance__(const void * __arg) {             	   \
 prefix ## _type * prefix ## _safe_cast(const void * __arg) {   \
   prefix ## _type * arg = (prefix ## _type *) __arg;         \
   if (arg->__type_id != ID)                                     \
-    util_abort("%s: run_time cast failed - aborting \n",__func__); \
-  return arg;                                                   \
-}
-
-#define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(const void * );
-
-/*****************************************************************/
-
-#define SAFE_CAST(prefix , ID) \
-prefix ## _type * prefix ## _safe_cast(const void * __arg) {   \
-  prefix ## _type * arg = (prefix ## _type *) __arg;         \
-  if (arg->__type_id != ID)                                     \
-    util_abort("%s: run_time cast failed - aborting \n",__func__); \
+    util_abort("%s: run_time cast failed: got:%d  expected:%d  - aborting \n",__func__ , arg->__type_id , ID); \
   return arg;                                                   \
 }
 
@@ -304,8 +292,10 @@ void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state ,
 /*****************************************************************/
 
 #define VOID_CHI2(obs_prefix, state_prefix) \
-double obs_prefix ## _chi2__(const void * void_arg ,  const void * state_object) {\
-   return obs_prefix ## _chi2((const obs_prefix ## _type *) void_arg , (const state_prefix ## _type  * ) state_object); \
+double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {   \
+   const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast( void_obs );     \
+   const state_prefix ## _type * state = state_prefix ## _safe_cast( void_state ); \
+   return obs_prefix ## _chi2(obs , state);                                        \
 }
 
 #define VOID_CHI2_HEADER(obs_prefix) double obs_prefix ## _chi2__(const void * ,  const void *);

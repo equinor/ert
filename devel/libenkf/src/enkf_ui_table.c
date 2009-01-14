@@ -150,6 +150,21 @@ static void enkf_ui_table_time(void * arg) {
 }
 
 
+static void enkf_ui_table_misfit( void * arg) {
+  enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
+  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const int ens_size = ensemble_config_get_size(ensemble_config);
+  double * chi2 = util_malloc( ens_size * sizeof * chi2 , __func__);
+  int iens;
+
+  enkf_obs_total_ensemble_chi2( enkf_obs , fs , ens_size , chi2);
+  for (iens = 0; iens < ens_size; iens++)
+    printf("Realization:%03d : %g \n",iens , chi2[iens]);
+
+  free( chi2 );
+}
 
 
 
@@ -163,6 +178,7 @@ void enkf_ui_table_menu(void * arg) {
     menu_type * menu = menu_alloc("EnKF table menu" , "Back" , "bB");
     menu_add_item(menu , "Ensemble of parameters"          , "eE"  , enkf_ui_table_ensemble , enkf_main , NULL);
     menu_add_item(menu , "Time development of parameters"  , "tT"  , enkf_ui_table_time     , enkf_main , NULL);
+    menu_add_item(menu , "Misfit table"                    , "mM"  , enkf_ui_table_misfit   , enkf_main , NULL);
     menu_add_separator(menu);
     menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
     menu_run(menu);

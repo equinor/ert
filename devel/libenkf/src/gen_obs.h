@@ -11,6 +11,7 @@ typedef struct gen_obs_struct gen_obs_type;
 
 gen_obs_type * gen_obs_alloc( const char * , const char * , const char * );
 
+VOID_CHI2_HEADER(gen_obs);
 SAFE_CAST_HEADER(gen_obs);
 IS_INSTANCE_HEADER(gen_obs);
 VOID_OBS_ACTIVATE_HEADER(gen_obs)

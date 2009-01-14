@@ -32,7 +32,6 @@ struct obs_vector_struct {
   
   const enkf_config_node_type    * config_node;  /* The config_node of the node type we are observing - shared reference (NOT USED YET) */
   obs_impl_type    	           obs_type; 
-  //char             	         * state_kw;
   void             	        ** nodes;       /* List of obs_node instances - NULL for all inactive report steps. */
   int              	           size;        /* The number of report_steps. */
   int              	           num_active;  /* The total number of timesteps where this observation is active (i.e. nodes[ ] != NULL) */
@@ -473,6 +472,139 @@ void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,co
 
 
 /*****************************************************************/
+/** Here comes many different functions for misfit calculations. */
+
+/**
+   This is the lowest level function:
+
+   * It is checked that the obs_vector is active for the actual report
+     step; if it is not active 0.0 is returned without any further
+     ado.
+
+   * It is assumed the enkf_node_instance contains valid data for this
+     report_step. This is not checked in this function, and is the
+     responsability of the calling scope.
+
+   * The underlying chi2 function will do a type-check of node - and
+     fail hard if it is not correct.
+
+*/
+
+static double obs_vector_chi2__(const obs_vector_type * obs_vector , int report_step , const enkf_node_type * node) { 
+  if (obs_vector->nodes[report_step] != NULL) 
+    return obs_vector->chi2( obs_vector->nodes[report_step] , enkf_node_value_ptr( node ));
+  else
+    return 0.0;  /* Observation not active for this report step. */
+}
+
+
+
+/**
+   This function will load the node from the filesystem. It will first
+   try to load the analyzed value, then the forecast. The return value
+   will be 'analyzed', 'forecast' or 'undefined' depending on what was
+   actually loaded.
+*/
+   
+static state_enum obs_vector_load_node__(enkf_fs_type * fs , enkf_node_type * node, int report_step , int iens) {
+  state_enum load_state = undefined;
+
+  if (enkf_fs_has_node(fs , enkf_node_get_config(node) , report_step , iens , analyzed)) {
+    enkf_fs_fread_node( fs , node , report_step , iens , analyzed);
+    load_state = analyzed;
+  } else if (enkf_fs_has_node(fs , enkf_node_get_config(node) , report_step , iens , forecast)) {
+    enkf_fs_fread_node( fs , node , report_step , iens , forecast );
+    load_state = forecast;
+  } else 
+    fprintf(stderr , "** Warning could not locate: %s / %d / %d for misfit calculations - defaulting to ZERO misfit \n",enkf_node_get_key(node) , report_step , iens);
+
+  return load_state;
+}
+
+
+
+double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , int report_step , int iens) {
+  enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+  double chi2 = 0;
+
+  if (obs_vector_load_node__(fs , enkf_node , report_step , iens) != undefined) 
+    chi2 = obs_vector_chi2__(obs_vector , report_step , enkf_node);
+  
+  enkf_node_free( enkf_node );
+  return chi2;
+}
+
+
+
+
+/**
+   This function will evaluate the chi2 for a complete ensemble -
+   fixed report step.
+*/
+
+void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, int report_step , int ens_size, double * chi2) {
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    chi2[iens] = 0;
+
+  if (obs_vector->nodes[report_step] == NULL) 
+    fprintf(stderr , "** Warning: observation not active for report_step:%d \n", report_step);
+  else {
+    enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+    
+    for (iens = 0; iens < ens_size; iens++) {
+      if (obs_vector_load_node__(fs , enkf_node , report_step , iens) != undefined) 
+	chi2[iens] = obs_vector_chi2__(obs_vector , report_step , enkf_node);
+    }
+    enkf_node_free( enkf_node );
+  }
+}
+
+
+/**
+   This function will evaluate the total chi2 for one ensemble member
+   (i.e. sum over report steps).
+*/
+
+
+double obs_vector_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , int iens) {
+  int report_step;
+  double sum_chi2 = 0;
+  enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+  for (report_step = 0; report_step < obs_vector->size; report_step++) {
+    if (obs_vector->nodes[report_step] != NULL) {
+      if (obs_vector_load_node__(fs , enkf_node , report_step , iens) != undefined) 
+	sum_chi2 += obs_vector_chi2__(obs_vector , report_step , enkf_node);
+    }
+  }
+  enkf_node_free( enkf_node );
+  return sum_chi2;
+}
+
+
+/* This function will do it all ... */
+
+void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , int ens_size , double * sum_chi2) {
+  int report_step;
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    sum_chi2[iens] = 0;
+
+  enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+  for (report_step = 0; report_step < obs_vector->size; report_step++) {
+    if (obs_vector->nodes[report_step] != NULL) {
+      for (iens = 0; iens < ens_size; iens++) {
+	if (obs_vector_load_node__(fs , enkf_node , report_step , iens) != undefined) 
+	  sum_chi2[iens] += obs_vector_chi2__(obs_vector , report_step , enkf_node);
+      }
+    }
+  }
+  enkf_node_free( enkf_node );
+}
+
+/*****************************************************************/
+
+
 
 VOID_FREE(obs_vector)
 SAFE_CAST(obs_vector , OBS_VECTOR_TYPE_ID)

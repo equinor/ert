@@ -140,6 +140,17 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 }
 
 
+double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_data) {
+  int iobs;
+  double sum_chi2 = 0;
+  for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
+    double x  = (gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs]) - gen_obs->obs_data[iobs]) / gen_obs->obs_std[iobs];
+    sum_chi2 += x*x;
+  }
+  return sum_chi2;
+}
+
+
 
 void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data) {
   int iobs;
@@ -148,6 +159,7 @@ void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data
   for (iobs = 0; iobs < gen_obs->obs_size; iobs++)
     obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , kw);
 }
+
 
 
 
@@ -174,3 +186,4 @@ VOID_FREE(gen_obs)
 VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs , gen_data)
 VOID_USER_GET_OBS(gen_obs)
+VOID_CHI2(gen_obs , gen_data)
