@@ -840,12 +840,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	enkf_main->meas_analyzed   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
 	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file , model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config);
 	enkf_main->obs_data        = obs_data_alloc();
-	{
-	  stringlist_type * summary_vars = enkf_obs_alloc_summary_vars(enkf_main->obs);
-	  for (i=0; i < stringlist_get_size( summary_vars ); i++) 
-	    ensemble_config_ensure_summary( enkf_main->ensemble_config , stringlist_iget( summary_vars , i));
-	  stringlist_free( summary_vars );
-	}
       }
 
       /******************************************************************/
@@ -856,11 +850,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	while (obs_key  != NULL) {
 	  const char * state_kw = hash_get(map , obs_key);
 	  ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
-	  
-	  {
-	    obs_vector_type * obs_vector = enkf_obs_get_vector(enkf_main->obs , obs_key);
-	    obs_vector_set_config_node( obs_vector , ensemble_config_get_node( enkf_main->ensemble_config , state_kw ));
-	  }
 	  obs_key = hash_iter_get_next_key( map );
 	}
 	hash_free(map);

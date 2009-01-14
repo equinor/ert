@@ -55,6 +55,7 @@ void          field_imul_add(field_type * , double , const field_type *);
 ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * );
 
 
+SAFE_CAST_HEADER(field);
 VOID_ALLOC_HEADER(field);
 VOID_FREE_HEADER(field);
 VOID_FREE_DATA_HEADER(field);

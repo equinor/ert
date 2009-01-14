@@ -631,8 +631,7 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
 
 
 static int enkf_fs_get_static_counter(const enkf_node_type * node) {
-  ecl_static_kw_type * ecl_static = enkf_node_value_ptr( node );
-  ecl_static_kw_assert_type(ecl_static);
+  ecl_static_kw_type * ecl_static = ecl_static_kw_safe_cast( enkf_node_value_ptr( node ) );
   return ecl_static_kw_get_counter(ecl_static);
 }
 
@@ -680,7 +679,7 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
   {
-    const char * key = enkf_config_node_get_key_ref(config_node);
+    const char * key = enkf_config_node_get_key(config_node);
     if (var_type == static_state) {
       basic_driver_static_type * driver = basic_driver_static_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key , true));
       int static_counter = 0; /* This one is impossible to get correctly hold of ... the driver aborts.*/
@@ -721,7 +720,7 @@ enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type * enkf_fs , enkf_con
     return node_list;
 
   } else {
-    const char * key = enkf_config_node_get_key_ref(config_node);
+    const char * key = enkf_config_node_get_key(config_node);
     basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key , true));
     if (driver->load_ensemble != NULL)
       return driver->load_ensemble(driver , report_step , iens1 , iens2 , state , config_node);
@@ -763,7 +762,7 @@ enkf_node_type ** enkf_fs_fread_alloc_ts(enkf_fs_type * enkf_fs , enkf_config_no
     return node_list;
     
   } else {
-    const char * key = enkf_config_node_get_key_ref(config_node);
+    const char * key = enkf_config_node_get_key(config_node);
     basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key , true));
     if (driver->load_ts != NULL)
       return driver->load_ts(driver , step1 , step2  , iens , state , config_node);

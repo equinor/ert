@@ -17,6 +17,7 @@ char           * equil_alloc_ensname(const equil_type *);
 char           * equil_alloc_eclname(const equil_type *);
 
 
+SAFE_CAST_HEADER(equil);
 VOID_FREE_DATA_HEADER(equil)
 VOID_SERIALIZE_HEADER(equil);
 VOID_DESERIALIZE_HEADER(equil);

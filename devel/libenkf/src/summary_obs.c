@@ -57,6 +57,7 @@ summary_obs_type * summary_obs_alloc(
 SAFE_CAST(summary_obs   , SUMMARY_OBS_TYPE_ID);
 IS_INSTANCE(summary_obs , SUMMARY_OBS_TYPE_ID);
 
+
 void summary_obs_free(summary_obs_type * summary_obs) {
   free(summary_obs->summary_key);
   free(summary_obs);

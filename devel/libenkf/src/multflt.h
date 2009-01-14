@@ -29,6 +29,7 @@ void             multflt_TEST();
 const char     * multflt_get_name(const multflt_type * , int );
 
 
+SAFE_CAST_HEADER(multflt)
 VOID_USER_GET_HEADER(multflt)
 VOID_FREE_DATA_HEADER(multflt)
 VOID_ECL_WRITE_HEADER  (multflt)

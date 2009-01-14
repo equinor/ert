@@ -29,6 +29,8 @@ havana_fault_type   *  havana_fault_alloc_mean(int , const havana_fault_type **)
 const char     * havana_fault_get_name(const havana_fault_type * , int );
 void             havana_fault_export(const havana_fault_type * , int * , char ***, double **);
 
+
+SAFE_CAST_HEADER(havana_fault)
 VOID_FPRINTF_RESULTS_HEADER(havana_fault)
 ALLOC_STATS_HEADER(havana_fault)
 VOID_USER_GET_HEADER(havana_fault)

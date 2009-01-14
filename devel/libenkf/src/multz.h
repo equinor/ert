@@ -28,6 +28,7 @@ void             multz_fread(multz_type * , FILE * );
 char           * multz_alloc_description(const multz_type * , int );
 
 
+SAFE_CAST_HEADER(multz);
 MATH_OPS_VOID_HEADER(multz);
 ENSEMBLE_MULX_VECTOR_HEADER(multz);
 ENSEMBLE_MULX_VECTOR_VOID_HEADER(multz);

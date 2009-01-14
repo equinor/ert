@@ -12,16 +12,12 @@
 #include <fortio.h>
 
 
-#define  DEBUG
-#define  TARGET_TYPE MULTFLT
-#include "enkf_debug.h"
-
 
 GET_DATA_SIZE_HEADER(multflt);
 
 
 struct multflt_struct {
-  DEBUG_DECLARE
+  int                        __type_id;
   const multflt_config_type *config;
   scalar_type               *scalar;
 };
@@ -75,10 +71,10 @@ const double * multflt_get_output_ref(const multflt_type * multflt) {
 
 
 multflt_type * multflt_alloc(const multflt_config_type * config) {
-  multflt_type * multflt  = malloc(sizeof *multflt);
-  multflt->config = config;
-  multflt->scalar = scalar_alloc(multflt_config_get_scalar_config(config)); 
-  DEBUG_ASSIGN(multflt)
+  multflt_type * multflt  = util_malloc(sizeof *multflt , __func__);
+  multflt->config    	  = config;
+  multflt->scalar    	  = scalar_alloc(multflt_config_get_scalar_config(config)); 
+  multflt->__type_id 	  = MULTFLT;
   return multflt;
 }
 
@@ -124,7 +120,6 @@ void multflt_ecl_write(const multflt_type * multflt, const char * eclfile, forti
 
 
 bool multflt_fwrite(const multflt_type *multflt , FILE * stream) {
-  DEBUG_ASSERT(multflt);
   enkf_util_fwrite_target_type(stream , MULTFLT);
   scalar_stream_fwrite(multflt->scalar , stream);
   return true;
@@ -132,7 +127,6 @@ bool multflt_fwrite(const multflt_type *multflt , FILE * stream) {
 
 
 void multflt_fread(multflt_type * multflt , FILE * stream) {
-  DEBUG_ASSERT(multflt);
   enkf_util_fread_assert_target_type(stream , MULTFLT);
   scalar_stream_fread(multflt->scalar , stream);
 }
@@ -140,14 +134,12 @@ void multflt_fread(multflt_type * multflt , FILE * stream) {
 
 
 void multflt_truncate(multflt_type * multflt) {
-  DEBUG_ASSERT(multflt)
   scalar_truncate( multflt->scalar );  
 }
 
 
 
 bool  multflt_initialize(multflt_type *multflt, int iens) {
-  DEBUG_ASSERT(multflt)
   scalar_sample(multflt->scalar);  
   return true;
 }
@@ -155,13 +147,11 @@ bool  multflt_initialize(multflt_type *multflt, int iens) {
 
 
 int multflt_serialize(const multflt_type *multflt , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(multflt);
   return scalar_serialize(multflt->scalar , serial_state , serial_offset , serial_vector);
 }
 
 
 void multflt_deserialize(multflt_type *multflt , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(multflt); 
   scalar_deserialize(multflt->scalar , serial_state , serial_vector);
 }
 
@@ -315,6 +305,7 @@ VOID_INITIALIZE(multflt);
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
+SAFE_CAST(multflt , MULTFLT)
 VOID_FREE_DATA(multflt);
 VOID_ECL_WRITE (multflt)
 VOID_FWRITE (multflt)

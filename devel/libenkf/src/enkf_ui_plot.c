@@ -84,7 +84,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   x = util_malloc( size * sizeof * x, __func__);
   y = util_malloc( size * sizeof * y, __func__);
   {
-    char * prompt = util_alloc_sprintf("Loading %s member/step: " , enkf_config_node_get_key_ref(config_node));
+    char * prompt = util_alloc_sprintf("Loading %s member/step: " , enkf_config_node_get_key(config_node));
     msg = msg_alloc(prompt);
     free(prompt);
   }

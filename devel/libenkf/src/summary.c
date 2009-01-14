@@ -11,18 +11,14 @@
 #include <enkf_util.h>
 #include <enkf_serialize.h>
 
-#define  DEBUG
-#define  TARGET_TYPE SUMMARY
-#include "enkf_debug.h"
-
-
 /*****************************************************************/
 
 struct summary_struct {
-  DEBUG_DECLARE
-  const summary_config_type * config;
-  double *data;    /* Size is always one - but what the fuck ... */
+  int                          __type_id; /* Only used for run_time checking. */
+  const summary_config_type  * config;
+  double                     * data;         /* Size is always one - but what the fuck ... */
 };
+
 
 
 
@@ -46,11 +42,11 @@ void summary_free_data(summary_type *summary) {
 
 
 summary_type * summary_alloc(const summary_config_type * summary_config) {
-  summary_type * summary  = malloc(sizeof *summary);
+  summary_type * summary  = util_malloc(sizeof *summary , __func__);
+  summary->__type_id      = SUMMARY;
   summary->config = summary_config;
   summary->data = NULL;
   summary_realloc_data(summary);
-  DEBUG_ASSIGN(summary)
   return summary;
 }
 
@@ -67,27 +63,21 @@ summary_type * summary_copyc(const summary_type *summary) {
 
 
 void summary_fread(summary_type * summary , FILE * stream) {
-  DEBUG_ASSERT(summary); 
-  {
-    int  size;
-    enkf_util_fread_assert_target_type(stream , SUMMARY);
-    fread(&size , sizeof  size , 1 , stream);
-    enkf_util_fread(summary->data , sizeof *summary->data , size , stream , __func__);
-  }
+  int  size;
+  enkf_util_fread_assert_target_type(stream , SUMMARY);
+  fread(&size , sizeof  size , 1 , stream);
+  enkf_util_fread(summary->data , sizeof *summary->data , size , stream , __func__);
 }
 
 
 
 bool summary_fwrite(const summary_type * summary , FILE * stream) {
-  DEBUG_ASSERT(summary); 
-  {
-    const  summary_config_type * config = summary->config;
-    const int data_size = summary_config_get_data_size(config);
-    
-    enkf_util_fwrite_target_type(stream , SUMMARY);
-    fwrite(&data_size , sizeof  data_size     , 1 , stream);
-    enkf_util_fwrite(summary->data  , sizeof *summary->data    ,data_size , stream , __func__);
-  }
+  const  summary_config_type * config = summary->config;
+  const int data_size = summary_config_get_data_size(config);
+  
+  enkf_util_fwrite_target_type(stream , SUMMARY);
+  fwrite(&data_size , sizeof  data_size     , 1 , stream);
+  enkf_util_fwrite(summary->data  , sizeof *summary->data    ,data_size , stream , __func__);
   return true;
 }
 
@@ -121,15 +111,11 @@ int summary_serialize(const summary_type *summary , serial_state_type * serial_s
 
 
 double summary_get(const summary_type * summary) {
-  DEBUG_ASSERT(summary)
-  {
-    return summary->data[0]; /* That is all it has got ... */
-  }
+  return summary->data[0]; /* That is all it has got ... */
 }
 
 
 double summary_user_get(const summary_type * summary , const char * index_key , bool * valid) {
-  DEBUG_ASSERT(summary)
   *valid = true;
   return summary->data[0];
 }
@@ -138,7 +124,6 @@ double summary_user_get(const summary_type * summary , const char * index_key , 
 
 
 void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
-  DEBUG_ASSERT(summary)
   if (ecl_sum != NULL) {
     const char * var_key            = summary_config_get_var(summary->config);
     const ecl_sum_var_type var_type = summary_config_get_var_type(summary->config);
@@ -188,6 +173,7 @@ void summary_ensemble_fprintf_results(const summary_type ** ensemble, int ens_si
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
+SAFE_CAST(summary , SUMMARY)
 MATH_OPS(summary)
 VOID_ALLOC(summary)
 VOID_FREE(summary)

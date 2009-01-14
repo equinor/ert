@@ -12,9 +12,6 @@
 #include <assert.h>
 #include <subst.h>
 
-#define  DEBUG
-#define  TARGET_TYPE HAVANA_FAULT
-#include "enkf_debug.h"
 
 
 GET_DATA_SIZE_HEADER(havana_fault);
@@ -22,7 +19,7 @@ GET_DATA_SIZE_HEADER(havana_fault);
 
 struct havana_fault_struct 
 {
-  DEBUG_DECLARE
+  int                             __type_id; 
   const havana_fault_config_type *config;
   scalar_type                    *scalar;
 };
@@ -82,7 +79,7 @@ havana_fault_type * havana_fault_alloc(const havana_fault_config_type * config) 
   havana_fault->config = config;
   gen_kw_config_type * gen_kw_config = havana_fault_config_get_gen_kw_config( config );
   havana_fault->scalar               = scalar_alloc(gen_kw_config_get_scalar_config( gen_kw_config )); 
-  DEBUG_ASSIGN(havana_fault)
+  havana_fault->__type_id = HAVANA_FAULT;
   return havana_fault;
 }
 
@@ -102,7 +99,6 @@ havana_fault_type * havana_fault_copyc(const havana_fault_type *havana_fault) {
 
 
 bool havana_fault_fwrite(const havana_fault_type *havana_fault , FILE * stream) {
-  DEBUG_ASSERT(havana_fault)
   enkf_util_fwrite_target_type(stream , HAVANA_FAULT);
   scalar_stream_fwrite(havana_fault->scalar , stream);
   return true;
@@ -110,7 +106,6 @@ bool havana_fault_fwrite(const havana_fault_type *havana_fault , FILE * stream) 
 
 
 void havana_fault_fread(havana_fault_type * havana_fault , FILE * stream) {
-  DEBUG_ASSERT(havana_fault)
   enkf_util_fread_assert_target_type(stream , HAVANA_FAULT);
   scalar_stream_fread(havana_fault->scalar , stream);
 }
@@ -130,25 +125,21 @@ void havana_fault_swapin(havana_fault_type * havana_fault , FILE * stream) {
 
 
 void havana_fault_truncate(havana_fault_type * havana_fault) {
-  DEBUG_ASSERT(havana_fault)
   scalar_truncate( havana_fault->scalar );  
 }
 
 
 bool  havana_fault_initialize(havana_fault_type *havana_fault, int iens) { 
-  DEBUG_ASSERT(havana_fault) 
   scalar_sample(havana_fault->scalar);
   return true;
 } 
 
 
 int havana_fault_serialize(const havana_fault_type *havana_fault , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(havana_fault);
   return scalar_serialize(havana_fault->scalar , serial_state , serial_offset , serial_vector);
 }
 
 void havana_fault_deserialize(havana_fault_type *havana_fault , serial_state_type * serial_state, const serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(havana_fault);
   scalar_deserialize(havana_fault->scalar , serial_state , serial_vector);
 }
 
@@ -313,7 +304,6 @@ void havana_fault_ensemble_fprintf_results(const havana_fault_type ** ensemble, 
 
 
 void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path , fortio_type * fortio) {
-  DEBUG_ASSERT(havana_fault);
   havana_fault_config_run_havana(havana_fault->config , havana_fault->scalar ,  run_path);
 }
 
@@ -353,7 +343,7 @@ double havana_fault_user_get(const havana_fault_type * havana_fault , const char
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
-
+SAFE_CAST(havana_fault , HAVANA_FAULT);
 MATH_OPS_SCALAR(havana_fault);
 ALLOC_STATS(havana_fault);
 VOID_USER_GET(havana_fault);

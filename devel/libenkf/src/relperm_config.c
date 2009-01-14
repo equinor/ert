@@ -11,6 +11,8 @@
 #include <hash.h>
 #include <math.h>
 
+#define RELPERM_CONFIG_TYPE_ID 77107
+
 static relperm_config_type * __relperm_config_alloc_empty( int size_conf, int size_tab ) {
   
   relperm_config_type *relperm_config = malloc(sizeof *relperm_config);
@@ -27,7 +29,7 @@ static relperm_config_type * __relperm_config_alloc_empty( int size_conf, int si
   relperm_config->ecl_file_hash = hash_alloc();
   
   relperm_config->table_config  = util_malloc(size_tab * sizeof *relperm_config->table_config,__func__); 
-  
+  relperm_config->__type_id     = RELPERM_CONFIG_TYPE_ID;
   return relperm_config;
 }
 
@@ -778,6 +780,7 @@ bool relperm_config_check_ecl_file(hash_type * ecl_file_hash, char * eclipse_fil
   }
   return ecl_file_append;
 }
+
 void relperm_config_free(relperm_config_type * relperm_config){
   util_free_stringlist(relperm_config->kw_list, scalar_config_get_data_size(relperm_config->scalar_config));
   free(relperm_config->index_hash);
@@ -786,6 +789,7 @@ void relperm_config_free(relperm_config_type * relperm_config){
   relperm_config_table_config_free(relperm_config->table_config, relperm_config->num_tab);
   free(relperm_config);
 }
+
 void relperm_config_table_config_free(table_config_type ** table_config,int num_tab){
   int i;
   for(i=0; i<num_tab; i++){
@@ -794,6 +798,7 @@ void relperm_config_table_config_free(table_config_type ** table_config,int num_
   }
   free(table_config);
 }
+
 void relperm_config_table_free(table_type * tab){
   free(tab->swco);
   free(tab->soco);
@@ -809,5 +814,7 @@ void relperm_config_table_free(table_type * tab){
   free(tab->pega);
   free(tab);
 }
+
 /*****************************************************************/
 VOID_FREE(relperm_config)
+SAFE_CAST(relperm_config , RELPERM_CONFIG_TYPE_ID)

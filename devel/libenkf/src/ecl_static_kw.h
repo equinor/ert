@@ -19,14 +19,15 @@ void                 ecl_static_kw_init(ecl_static_kw_type * , const ecl_kw_type
 ecl_kw_type        * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * );
 void               * ecl_static_kw_alloc__(const void *);
 
+SAFE_CAST_HEADER(ecl_static_kw);
 VOID_FREE_HEADER(ecl_static_kw);
 VOID_FREE_DATA_HEADER(ecl_static_kw);
 VOID_FWRITE_HEADER(ecl_static_kw);
 VOID_FREAD_HEADER(ecl_static_kw);
 VOID_COPYC_HEADER(ecl_static_kw);
 VOID_REALLOC_DATA_HEADER(ecl_static_kw);
-ASSERT_TYPE_HEADER(ecl_static_kw);
 VOID_ECL_WRITE_HEADER(ecl_static_kw);
+
 #ifdef __cplusplus
 }
 #endif

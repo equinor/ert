@@ -13,7 +13,6 @@
 #define MULTZ_CONFIG_ID 78154
 
 
-SAFE_CAST(multz_config , MULTZ_CONFIG_ID)
 
 /*
   WARNING: Returns the multz_config object in a completely unitialized state.
@@ -136,6 +135,7 @@ void multz_config_activate(multz_config_type * config , active_mode_type active_
 
 
 /*****************************************************************/
+SAFE_CAST(multz_config , MULTZ_CONFIG_ID)
 VOID_FREE(multz_config)
 VOID_CONFIG_ACTIVATE(multz)
 							 

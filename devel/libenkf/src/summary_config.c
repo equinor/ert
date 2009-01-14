@@ -11,6 +11,8 @@
 #include <ecl_sum.h>
 #include <set.h>
 
+#define SUMMARY_CONFIG_TYPE_ID 63106
+
 struct summary_config_struct {
   CONFIG_STD_FIELDS;
   ecl_sum_var_type   var_type;      /* The type of the variable - according to ecl_summary nomenclature. */
@@ -41,6 +43,7 @@ summary_config_type * summary_config_alloc(const char * var) {
   config->var             = util_alloc_string_copy( var );
   config->var_type        = ecl_sum_identify_var_type ( var ); 
   config->obs_set         = set_alloc_empty(); 
+  config->__type_id       = SUMMARY_CONFIG_TYPE_ID;
   return config;
 }
 
@@ -65,6 +68,7 @@ void summary_config_free(summary_config_type * config) {
 
 
 /*****************************************************************/
+SAFE_CAST(summary_config , SUMMARY_CONFIG_TYPE_ID)
 GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)
 GET_ACTIVE_LIST(summary)

@@ -26,7 +26,6 @@ struct equil_config_struct {
 
 
 /*****************************************************************/
-SAFE_CAST(equil_config , EQUIL_CONFIG_ID)
 
 equil_config_type * equil_config_alloc(int size) {
   equil_config_type *config        = util_malloc(sizeof *config , __func__);
@@ -123,6 +122,7 @@ void equil_config_activate(equil_config_type * config , active_mode_type active_
 
 /*****************************************************************/
 
+SAFE_CAST(equil_config , EQUIL_CONFIG_ID)
 VOID_CONFIG_ACTIVATE(equil)
 GET_DATA_SIZE(equil)
 VOID_FREE(equil_config)

@@ -12,13 +12,9 @@
 #include <enkf_macros.h>
 
 
-#define  TARGET_TYPE RELPERM
-#define  DEBUG
-#include "enkf_debug.h"
-
 /*****************************************************************/
 struct relperm_struct{
-  DEBUG_DECLARE
+  int                          __type_id;
   const relperm_config_type  * config;
   scalar_type                * scalar;
 };
@@ -27,11 +23,10 @@ struct relperm_struct{
 
 void relperm_free(relperm_type * relperm){
   /* Need to check if correct type is sent from enkf_node.c */
-  DEBUG_ASSERT(relperm)
-    {
-      scalar_free(relperm->scalar);
-      free(relperm);
-    }
+  {
+    scalar_free(relperm->scalar);
+    free(relperm);
+  }
 }
 
 void relperm_free_data(relperm_type * relperm){
@@ -43,7 +38,6 @@ void relperm_realloc_data(relperm_type * relperm){
 }
 
 bool relperm_fwrite(const relperm_type * relperm, FILE * stream){
-  DEBUG_ASSERT(relperm);
   enkf_util_fwrite_target_type(stream , RELPERM);
   scalar_stream_fwrite(relperm->scalar , stream);
   return true;
@@ -52,7 +46,6 @@ bool relperm_fwrite(const relperm_type * relperm, FILE * stream){
 
 
 void relperm_fread(relperm_type * relperm , FILE * stream) {
-  DEBUG_ASSERT(relperm); 
   enkf_util_fread_assert_target_type(stream , RELPERM);
   scalar_stream_fread(relperm->scalar , stream);
 }
@@ -67,23 +60,19 @@ relperm_type * relperm_alloc(const relperm_config_type * relperm_config){
   relperm_type * relperm = malloc(sizeof *relperm);
   relperm->config = relperm_config;
   relperm->scalar = scalar_alloc(relperm_config->scalar_config);
-  
-  DEBUG_ASSIGN(relperm);
+  relperm->__type_id = RELPERM;
   return relperm;
 }
 
 int relperm_serialize(const relperm_type *relperm , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(relperm);
   return scalar_serialize(relperm->scalar , serial_state , serial_offset , serial_vector);
 }
 
 void  relperm_deserialize(relperm_type *relperm , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(relperm);
   scalar_deserialize(relperm->scalar ,  serial_state , serial_vector);
 }
 
 void relperm_truncate(relperm_type * relperm) {
-  DEBUG_ASSERT(relperm)
   scalar_truncate( relperm->scalar );  
 }
 
@@ -92,7 +81,6 @@ void relperm_clear(relperm_type * relperm) {
 }
 
 bool relperm_initialize(relperm_type * relperm, int iens) {
-  DEBUG_ASSERT(relperm)
   scalar_sample(relperm->scalar);
   return true;
 }
@@ -107,16 +95,14 @@ void relperm_set_data(const relperm_type * relperm, const double * data){
 }
 
 void relperm_ecl_write_f90test(const relperm_type * relperm, const double * data, const char * path){
-  DEBUG_ASSERT(relperm)
-    {
-      relperm_set_data(relperm,data);
-      relperm_output_transform(relperm);
-      relperm_config_ecl_write_table(relperm->config, relperm_get_output_ref(relperm),path); 
-    }
+  {
+    relperm_set_data(relperm,data);
+    relperm_output_transform(relperm);
+    relperm_config_ecl_write_table(relperm->config, relperm_get_output_ref(relperm),path); 
+  }
 }
 
 void relperm_ecl_write(const relperm_type * relperm , const char * __eclfile , fortio_type * fortio) {
-  DEBUG_ASSERT(relperm)
   {
     printf("Er i relperm_ecl_write_1 \n");
     char * eclfile;
@@ -146,6 +132,7 @@ void relperm_get_output_data(const relperm_type * relperm, double * output_data)
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
+SAFE_CAST(relperm , RELPERM)
 MATH_OPS_SCALAR(relperm)
 VOID_ALLOC(relperm)
 VOID_FREE(relperm)

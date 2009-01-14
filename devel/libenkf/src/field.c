@@ -16,10 +16,6 @@
 #include <fortio.h>
 #include <enkf_serialize.h>
 
-#define  DEBUG
-#define  TARGET_TYPE FIELD
-#include "enkf_debug.h"
-
 
 
 GET_DATA_SIZE_HEADER(field);
@@ -41,7 +37,7 @@ GET_DATA_SIZE_HEADER(field);
 */
 
 struct field_struct {
-  DEBUG_DECLARE                                   /* A type identifier which can be used for run-time checks of casting operations. */
+  int    __type_id;                              
   const  field_config_type * config;              /* The field config object - containing information of active cells++ */
   char  *data;                                    /* The actual storage for the field - suitabley casted to int/float/double on use*/
              
@@ -306,7 +302,7 @@ static field_type * __field_alloc(const field_config_type * field_config , void 
     
   }
   field->export_data = NULL;  /* This NULL is checked for in the revert_output_transform() */
-  DEBUG_ASSIGN(field)
+  field->__type_id   = FIELD;
   return field;
 }
 
@@ -818,7 +814,6 @@ float field_iget_float(const field_type * field , int active_index) {
 
 
 double field_iget(const field_type * field, int active_index) {
-  DEBUG_ASSERT(field);
   return field_iget_double(field , active_index);
 }
 
@@ -1125,7 +1120,6 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 */
 
 void field_ecl_load(field_type * field , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
-  DEBUG_ASSERT(field)
   {
     field_file_format_type import_format = field_config_get_import_format(field->config);
     if (import_format == ecl_restart_block) {
@@ -1339,6 +1333,7 @@ void * field_get_data(field_type * field) {
   MATH_OPS(field)
   ENSEMBLE_MULX_VECTOR(field);
 */
+SAFE_CAST(field , FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_FREE_DATA(field)

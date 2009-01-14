@@ -295,7 +295,7 @@ int enkf_ui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
    
 
 void enkf_ui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * config_node, enkf_node_type * node , state_enum analysis_state , int get_index , int step1 , int step2 , int iens , double * x , double * y ) {
-  const char * key = enkf_config_node_get_key_ref(config_node);
+  const char * key = enkf_config_node_get_key(config_node);
   int report_step;
   int index = 0;
   for (report_step = step1; report_step <= step2; report_step++) {

@@ -42,7 +42,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
       }
       free(filename);
     } else 
-      printf("** Sorry node:%s does not exist for report step: %d%c.\n",enkf_config_node_get_key_ref(config_node),report_step,analysis_state_char);
+      printf("** Sorry node:%s does not exist for report step: %d%c.\n",enkf_config_node_get_key(config_node),report_step,analysis_state_char);
     
     enkf_node_free(node);
   } 
@@ -165,7 +165,7 @@ void enkf_ui_export_profile(void * enkf_main) {
 		  }		    	      
 		}
 	      } else 
-		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",enkf_config_node_get_key_ref(config_node) , iens , report_step);
+		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",enkf_config_node_get_key(config_node) , iens , report_step);
 	    }
 	  }
 	}
@@ -218,7 +218,7 @@ void enkf_ui_export_cell(void * enkf_main) {
 		  cell_data[iens] = field_iget_double(field , cell_nr);
 		}
 	      } else {
-		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",enkf_config_node_get_key_ref(config_node) , iens , report_step);
+		fprintf(stderr," ** Warning field:%s is missing for member,report: %d,%d \n",enkf_config_node_get_key(config_node) , iens , report_step);
 		cell_data[iens] = -1;
 	      }
 	    }

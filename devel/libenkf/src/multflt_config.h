@@ -23,6 +23,7 @@ void                  multflt_config_truncate(const multflt_config_type * , scal
 int                   multflt_config_get_data_size(const multflt_config_type * );
 const char          * multflt_config_get_name(const multflt_config_type * , int );
 
+  SAFE_CAST_HEADER(multflt_config);
 VOID_FREE_HEADER(multflt_config);
 VOID_CONFIG_ACTIVATE_HEADER(multflt)
 #ifdef __cplusplus

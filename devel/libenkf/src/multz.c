@@ -12,9 +12,6 @@
 #include <fortio.h>
 
 
-#define  TARGET_TYPE MULTZ
-#define  DEBUG
-#include "enkf_debug.h"
 
 
 /*****************************************************************/
@@ -22,7 +19,7 @@
 GET_DATA_SIZE_HEADER(multz);
 
 struct multz_struct {
-  DEBUG_DECLARE
+  int                      __type_id;
   const multz_config_type *config;
   scalar_type             *scalar;
 };
@@ -77,10 +74,10 @@ void multz_free_data(multz_type *multz) {
 
 
 multz_type * multz_alloc(const multz_config_type * multz_config) {
-  multz_type * multz  = malloc(sizeof *multz);
-  multz->config = multz_config;
-  multz->scalar = scalar_alloc(multz_config->scalar_config); 
-  DEBUG_ASSIGN(multz)
+  multz_type * multz  = util_malloc(sizeof *multz , __func__);
+  multz->config       = multz_config;
+  multz->scalar       = scalar_alloc(multz_config->scalar_config); 
+  multz->__type_id    = MULTZ;
   return multz;
 }
 
@@ -94,7 +91,6 @@ multz_type * multz_copyc(const multz_type *multz) {
 
 
 bool multz_fwrite(const multz_type *multz , FILE * stream) {
-  DEBUG_ASSERT(multz);
   enkf_util_fwrite_target_type(stream , MULTZ);
   scalar_stream_fwrite(multz->scalar , stream);
   return true;
@@ -103,14 +99,12 @@ bool multz_fwrite(const multz_type *multz , FILE * stream) {
 
 
 void multz_fread(multz_type * multz , FILE * stream) {
-  DEBUG_ASSERT(multz); 
   enkf_util_fread_assert_target_type(stream , MULTZ);
   scalar_stream_fread(multz->scalar , stream);
 }
 
 
 void multz_ecl_write(const multz_type * multz , const char * eclfile, fortio_type * fortio) {
-  DEBUG_ASSERT(multz)
   {
     FILE * stream  = util_fopen(eclfile , "w");
     
@@ -124,7 +118,6 @@ void multz_ecl_write(const multz_type * multz , const char * eclfile, fortio_typ
 
 
 void multz_free(multz_type *multz) {
-  DEBUG_ASSERT(multz)
   {
      scalar_free(multz->scalar);  
      free(multz);
@@ -133,26 +126,22 @@ void multz_free(multz_type *multz) {
 
 
 int multz_serialize(const multz_type *multz , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(multz);
   return scalar_serialize(multz->scalar , serial_state , serial_offset , serial_vector);
 }
 
 
 void multz_deserialize(multz_type *multz ,serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(multz);
   scalar_deserialize(multz->scalar ,serial_state , serial_vector);
 }
 
 
 void multz_truncate(multz_type * multz) {
-  DEBUG_ASSERT(multz)
   scalar_truncate( multz->scalar );  
 }
 
 
 
 bool multz_initialize(multz_type *multz, int iens) {
-  DEBUG_ASSERT(multz)
   scalar_sample(multz->scalar);  
   return true;
 }
@@ -212,7 +201,7 @@ char * multz_alloc_description(const multz_type * multz , int multz_nr) {
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
-
+SAFE_CAST(multz , MULTZ)
 MATH_OPS_SCALAR(multz)
 VOID_ALLOC(multz)
 VOID_FREE(multz)

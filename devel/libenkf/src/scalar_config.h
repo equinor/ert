@@ -25,7 +25,7 @@ const        double * scalar_config_get_mean(const scalar_config_type * );
 const        double * scalar_config_get_std(const scalar_config_type * );
 int                   scalar_config_get_active_size(const scalar_config_type *);
 
-
+SAFE_CAST_HEADER(scalar_config)
 GET_DATA_SIZE_HEADER(scalar);
 VOID_FREE_HEADER(scalar_config);
 GET_ACTIVE_LIST_HEADER(scalar);

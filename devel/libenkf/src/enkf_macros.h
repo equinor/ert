@@ -38,14 +38,28 @@ bool prefix ## _is_instance__(const void * __arg) {             	   \
 /******************************************************************/
 
 #define SAFE_CAST(prefix , ID) \
-prefix ## _type * prefix ## _safe_cast(void * __arg) {   \
+prefix ## _type * prefix ## _safe_cast(const void * __arg) {   \
   prefix ## _type * arg = (prefix ## _type *) __arg;         \
   if (arg->__type_id != ID)                                     \
     util_abort("%s: run_time cast failed - aborting \n",__func__); \
   return arg;                                                   \
 }
 
-#define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(void * );
+#define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(const void * );
+
+/*****************************************************************/
+
+#define SAFE_CAST(prefix , ID) \
+prefix ## _type * prefix ## _safe_cast(const void * __arg) {   \
+  prefix ## _type * arg = (prefix ## _type *) __arg;         \
+  if (arg->__type_id != ID)                                     \
+    util_abort("%s: run_time cast failed - aborting \n",__func__); \
+  return arg;                                                   \
+}
+
+#define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(const void * );
+
+
 
 /*****************************************************************/
 
@@ -120,9 +134,10 @@ void prefix ## _config_set_eclfile__(void *void_config , const char * file) {   
 
 /*****************************************************************/
 
-#define VOID_ALLOC(prefix) \
-void * prefix ## _alloc__(const void *void_config) {                      \
-  return prefix ## _alloc((const prefix ## _config_type *) void_config);  \
+#define VOID_ALLOC(prefix)                                                            \
+void * prefix ## _alloc__(const void *void_config) {                                  \
+  const prefix ## _config_type * config = prefix ## _config_safe_cast( void_config ); \
+  return prefix ## _alloc(config);                                                    \
 }
 
 #define VOID_ALLOC_HEADER(prefix) void * prefix ## _alloc__(const void *)
@@ -130,14 +145,17 @@ void * prefix ## _alloc__(const void *void_config) {                      \
 
 /*****************************************************************/
 
-#define VOID_FWRITE(prefix) \
-bool prefix ## _fwrite__(const void * void_arg , FILE * stream) { \
-   return prefix ## _fwrite((const prefix ## _type *) void_arg , stream);      \
+#define VOID_FWRITE(prefix)                                        \
+bool prefix ## _fwrite__(const void * void_arg , FILE * stream) {  \
+   const prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
+   return prefix ## _fwrite(arg , stream);                         \
 }
 
-#define VOID_FREAD(prefix) \
-void prefix ## _fread__(void * void_arg , FILE * stream) { \
-   prefix ## _fread((prefix ## _type *) void_arg , stream);      \
+
+#define VOID_FREAD(prefix)                                  \
+void prefix ## _fread__(void * void_arg , FILE * stream) {  \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );\
+   prefix ## _fread(arg , stream);                          \
 }
 
 #define VOID_FWRITE_HEADER(prefix) bool prefix ## _fwrite__(const void * , FILE *);
@@ -148,7 +166,8 @@ void prefix ## _fread__(void * void_arg , FILE * stream) { \
 
 #define VOID_ECL_WRITE(prefix) \
 void prefix ## _ecl_write__(const void * void_arg , const char * path , fortio_type * restart_fortio) { \
-   prefix ## _ecl_write((const prefix ## _type *) void_arg , path , restart_fortio);      \
+   const prefix ## _type * arg = prefix ## _safe_cast( void_arg );       \
+   prefix ## _ecl_write(arg , path , restart_fortio);                    \
 }
 
 #define VOID_ECL_WRITE_HEADER(prefix) void prefix ## _ecl_write__(const void * , const char * , fortio_type *);
@@ -157,7 +176,8 @@ void prefix ## _ecl_write__(const void * void_arg , const char * path , fortio_t
 
 #define VOID_ECL_LOAD(prefix) \
 void prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block, int report_step) { \
-   prefix ## _ecl_load((prefix ## _type *) void_arg , ecl_file , ecl_sum , restart_block , report_step);      \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );                         \
+   prefix ## _ecl_load(arg , ecl_file , ecl_sum , restart_block , report_step);      \
 }
 
 #define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_block_type * , int);
@@ -167,7 +187,8 @@ void prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_
 
 #define VOID_FREE(prefix)                        \
 void prefix ## _free__(void * void_arg) {         \
-   prefix ## _free((prefix ## _type *) void_arg); \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
+   prefix ## _free( arg ); \
 }
 
 #define VOID_FREE_HEADER(prefix) void prefix ## _free__(void * );
@@ -177,7 +198,8 @@ void prefix ## _free__(void * void_arg) {         \
 
 #define VOID_USER_GET(prefix)                                                     \
 double prefix ## _user_get__(void * void_arg , const char * key , bool * valid) { \
-   return prefix ## _user_get((prefix ## _type *) void_arg , key , valid);               \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );    		  \
+   return prefix ## _user_get(arg , key , valid);               		  \
 }
 
 #define VOID_USER_GET_HEADER(prefix) double prefix ## _user_get__(void * , const char * , bool *);
@@ -196,27 +218,30 @@ void prefix ## _user_get__(void * void_arg , const char * key , double * value, 
 
 /*****************************************************************/
 
-#define VOID_FREE_DATA(prefix)                        \
-void prefix ## _free_data__(void * void_arg) {         \
-   prefix ## _free_data((prefix ## _type *) void_arg); \
+#define VOID_FREE_DATA(prefix)                         	     \
+void prefix ## _free_data__(void * void_arg) {         	     \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
+   prefix ## _free_data( arg );                              \
 }
 
 #define VOID_FREE_DATA_HEADER(prefix) void prefix ## _free_data__(void * );
 
 /*****************************************************************/
 
-#define VOID_REALLOC_DATA(prefix)                        \
-void prefix ## _realloc_data__(void * void_arg) {         \
-   prefix ## _realloc_data((prefix ## _type *) void_arg); \
+#define VOID_REALLOC_DATA(prefix)                            \
+void prefix ## _realloc_data__(void * void_arg) {            \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
+   prefix ## _realloc_data( arg );                           \
 }
 
 #define VOID_REALLOC_DATA_HEADER(prefix) void prefix ## _realloc_data__(void * );
 
 /*****************************************************************/
 
-#define VOID_COPYC(prefix)                                      \
-void * prefix ## _copyc__(const void * void_arg) {    \
-   return prefix ## _copyc((const prefix ## _type *) void_arg); \
+#define VOID_COPYC(prefix)                                        \
+void * prefix ## _copyc__(const void * void_arg) {                \
+   const prefix ## _type * arg = prefix ## _safe_cast( void_arg );\
+   return prefix ## _copyc( arg );                                \
 }
 
 #define VOID_COPYC_HEADER(prefix) void * prefix ## _copyc__(const void * )
@@ -231,7 +256,7 @@ void * prefix ## _copyc__(const void * void_arg) {    \
 /*****************************************************************/
 #define VOID_SERIALIZE(prefix)     \
 int prefix ## _serialize__(const void *void_arg, serial_state_type * serial_state , size_t offset , serial_vector_type * serial_vector) { \
-   const prefix ## _type  *arg = (const prefix ## _type *) void_arg;       \
+   const prefix ## _type  *arg = prefix ## _safe_cast( void_arg );       \
    return prefix ## _serialize (arg , serial_state , offset , serial_vector);       \
 }
 #define VOID_SERIALIZE_HEADER(prefix) int prefix ## _serialize__(const void *, serial_state_type * , size_t , serial_vector_type *);
@@ -239,20 +264,20 @@ int prefix ## _serialize__(const void *void_arg, serial_state_type * serial_stat
 
 #define VOID_DESERIALIZE(prefix)     \
 void prefix ## _deserialize__(void *void_arg, serial_state_type * serial_state, const serial_vector_type * serial_vector) { \
-   prefix ## _type  *arg = (prefix ## _type *) void_arg;       \
+   prefix ## _type  *arg = prefix ## _safe_cast( void_arg );    \
    prefix ## _deserialize (arg , serial_state , serial_vector); \
 }
 #define VOID_DESERIALIZE_HEADER(prefix) void prefix ## _deserialize__(void *, serial_state_type * , const serial_vector_type *);
 
+
 /*****************************************************************/
+
 #define VOID_INITIALIZE(prefix)     \
-bool prefix ## _initialize__(void *void_arg, int iens) {              \
-   prefix ## _type  *arg = (prefix ## _type *) void_arg;       \
-   return prefix ## _initialize (arg , iens);                              \
+bool prefix ## _initialize__(void *void_arg, int iens) {         \
+   prefix ## _type  *arg = prefix ## _safe_cast(void_arg);       \
+   return prefix ## _initialize (arg , iens);                    \
 }
 #define VOID_INITIALIZE_HEADER(prefix) bool prefix ## _initialize__(void *, int);
-
-
 
 
 /*****************************************************************/
@@ -267,8 +292,10 @@ void prefix ## _get_observations__(const void * void_arg , int report_step, obs_
 /*****************************************************************/
 
 #define VOID_MEASURE(obs_prefix, state_prefix) \
-void obs_prefix ## _measure__(const void * void_arg ,  const void * state_object , meas_vector_type * meas_vector) {         \
-   obs_prefix ## _measure((const obs_prefix ## _type *) void_arg , (const state_prefix ## _type  * ) state_object , meas_vector); \
+void obs_prefix ## _measure__(const void * void_obs ,  const void * void_state , meas_vector_type * meas_vector) {         \
+   const obs_prefix ## _type   * obs   = obs_prefix ## _safe_cast( void_obs );     \
+   const state_prefix ## _type * state = state_prefix ## _safe_cast( void_state ); \
+   obs_prefix ## _measure(obs , state , meas_vector);                              \
 }
 
 #define VOID_MEASURE_HEADER(obs_prefix) void obs_prefix ## _measure__(const void * ,  const void * , meas_vector_type *)
@@ -317,15 +344,6 @@ void prefix ## _ensemble_fprintf_results__(const void ** void_ensemble , int ens
 
 /*****************************************************************/
 
-#define ASSERT_TYPE(prefix) \
-void prefix ## _assert_type(const prefix ## _type * object) { \
-  if (object->__impl_type != TARGET_TYPE)  \
-    util_abort("%s: assert_type failed\n",__func__); \
-}
-#define ASSERT_TYPE_HEADER(prefix) void prefix ## _assert_type(const prefix ## _type * );
-
-
-/*****************************************************************/
 
 #define VOID_IGET(prefix)        double prefix ## _iget__(const void * void_arg, int index) { return prefix ## _iget((const prefix ## _type *) void_arg , index); }
 #define VOID_IGET_HEADER(prefix) double prefix ## _iget__(const void * , int ) 

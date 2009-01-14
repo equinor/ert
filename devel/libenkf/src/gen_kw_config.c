@@ -16,7 +16,10 @@
 #define __END_TAG   ">"
 
 
+#define GEN_KW_CONFIG_TYPE_ID 550761
+
 struct gen_kw_config_struct {
+  int                   __type_id;
   char                * executable;
   char               ** kw_list;
   char               ** tagged_kw_list;  /* The same keywords - but '<' and '>' */
@@ -29,13 +32,13 @@ struct gen_kw_config_struct {
 
 
 static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file) {
-  gen_kw_config_type *gen_kw_config = malloc(sizeof *gen_kw_config);
-  gen_kw_config->kw_list        = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
-  gen_kw_config->tagged_kw_list = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
-  gen_kw_config->scalar_config  = scalar_config_alloc_empty(size);
-  gen_kw_config->template_file  = util_alloc_string_copy(template_file);
-  gen_kw_config->executable     = NULL;
-
+  gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
+  gen_kw_config->kw_list            = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
+  gen_kw_config->tagged_kw_list     = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
+  gen_kw_config->scalar_config      = scalar_config_alloc_empty(size);
+  gen_kw_config->template_file      = util_alloc_string_copy(template_file);
+  gen_kw_config->executable         = NULL;
+  gen_kw_config->__type_id          = GEN_KW_CONFIG_TYPE_ID;
 
   /* 
      Allows for template_file == NULL - as a way to adapt to
@@ -190,4 +193,5 @@ int gen_kw_config_get_index(const gen_kw_config_type * config , const char * key
 
 /*****************************************************************/
 
+SAFE_CAST(gen_kw_config , GEN_KW_CONFIG_TYPE_ID)
 VOID_FREE(gen_kw_config)

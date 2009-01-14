@@ -11,6 +11,7 @@ double    summary_get(const summary_type * );
 void      summary_load_data(summary_type * , int , const ecl_block_type * , const ecl_sum_type * );
 
 
+SAFE_CAST_HEADER(summary);
 MATH_OPS_VOID_HEADER(summary);
 VOID_ALLOC_HEADER(summary);
 VOID_FREE_HEADER(summary);

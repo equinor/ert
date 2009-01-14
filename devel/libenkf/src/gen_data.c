@@ -30,14 +30,10 @@
    
 
 
-#define  DEBUG
-#define  TARGET_TYPE GEN_DATA
-#include "enkf_debug.h"
-
 
 struct gen_data_struct {
-  DEBUG_DECLARE
-  gen_data_config_type * config;    /* Thin config object - mainly contains filename for remote load */
+  int                     __type_id;
+  gen_data_config_type  * config;    /* Thin config object - mainly contains filename for remote load */
   char                  * data;     /* Actual storage - will be casted to double or float on use. */
 };
 
@@ -64,7 +60,7 @@ gen_data_type * gen_data_alloc(const gen_data_config_type * config) {
   gen_data->config    = (gen_data_config_type *) config;
   gen_data->data      = NULL;
   gen_data_realloc_data(gen_data);
-  DEBUG_ASSIGN(gen_data)
+  gen_data->__type_id = GEN_DATA;
   return gen_data;
 }
 
@@ -108,7 +104,6 @@ void gen_data_free(gen_data_type * gen_data) {
 
 bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
   const bool write_zero_size = true; /* true:ALWAYS write a file   false:only write files with size > 0. */
-  DEBUG_ASSERT(gen_data)
   {
     bool write      = write_zero_size;
     int size        = gen_data_config_get_data_size(gen_data->config);
@@ -137,7 +132,6 @@ bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
 */
 
 void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
-  DEBUG_ASSERT(gen_data)
   {   
     int size;
     int report_step;
@@ -218,7 +212,6 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
 */
 
 void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
-  DEBUG_ASSERT(gen_data)
   {
     void * buffer = NULL;
     int    size   = 0;
@@ -312,7 +305,6 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 
 
 void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , fortio_type * fortio) {
-  DEBUG_ASSERT(gen_data)
   if (eclfile != NULL) {  
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
     switch (export_type) {
@@ -378,6 +370,7 @@ double gen_data_user_get(const gen_data_type * gen_data, const char * index_key,
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
+SAFE_CAST(gen_data , GEN_DATA)
 VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)

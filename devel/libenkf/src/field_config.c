@@ -103,8 +103,6 @@ struct field_config_struct {
 
 /*****************************************************************/
 
-SAFE_CAST(field_config , FIELD_CONFIG_ID)
-
 void field_config_set_ecl_kw_name(field_config_type * config , const char * ecl_kw_name) {
   config->ecl_kw_name = util_realloc_string_copy(config->ecl_kw_name , ecl_kw_name);
 }
@@ -863,6 +861,7 @@ const ecl_grid_type *field_config_get_grid(const field_config_type * config) { r
 
 
 /*****************************************************************/
+SAFE_CAST(field_config , FIELD_CONFIG_ID)
 CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
 VOID_FREE(field_config)

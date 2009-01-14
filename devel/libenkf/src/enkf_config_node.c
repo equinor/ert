@@ -7,8 +7,10 @@
 #include <enkf_config_node.h> 
 #include <util.h>
 
+#define ENKF_CONFIG_NODE_TYPE_ID 776104
 
 struct enkf_config_node_struct {
+  int                     __type_id; 
   config_free_ftype     * freef;
   config_activate_ftype * activate;
   enkf_impl_type     	  impl_type;
@@ -97,7 +99,7 @@ enkf_var_type enkf_config_node_get_var_type(const enkf_config_node_type *config_
 
 
 const char * enkf_config_node_get_outfile_ref(const enkf_config_node_type * config_node) { return config_node->enkf_outfile; }
-const char * enkf_config_node_get_key_ref(const enkf_config_node_type * config_node) { return config_node->key; }
+const char * enkf_config_node_get_key(const enkf_config_node_type * config_node) { return config_node->key; }
 
 
 const stringlist_type  * enkf_config_node_get_obs_keys(const enkf_config_node_type *config_node) {
@@ -112,4 +114,5 @@ void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const ch
 
 /*****************************************************************/
 
+SAFE_CAST(enkf_config_node , ENKF_CONFIG_NODE_TYPE_ID)
 VOID_FREE(enkf_config_node)

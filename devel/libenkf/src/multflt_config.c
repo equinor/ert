@@ -33,8 +33,6 @@ static multflt_config_type * __multflt_config_alloc_empty(int size) {
   return config;
 }
 
-SAFE_CAST(multflt_config , MULTFLT_CONFIG_ID)
-
 
 
 void multflt_config_transform(const multflt_config_type * config , const double * input_data , double * output_data) {
@@ -128,5 +126,6 @@ int multflt_config_get_index(const multflt_config_type * config , const char * f
 
 
 /*****************************************************************/
+SAFE_CAST(multflt_config , MULTFLT_CONFIG_ID)
 VOID_FREE(multflt_config)
 VOID_CONFIG_ACTIVATE(multflt)

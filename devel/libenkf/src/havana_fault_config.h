@@ -24,6 +24,6 @@ const char         	   * havana_fault_config_get_executable_ref(const havana_fau
 gen_kw_config_type         * havana_fault_config_get_gen_kw_config(const havana_fault_config_type * );
 
 VOID_FREE_HEADER(havana_fault_config);
-
+SAFE_CAST_HEADER(havana_fault_config);
 
 #endif

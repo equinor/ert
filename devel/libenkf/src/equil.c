@@ -13,17 +13,13 @@
 #include <enkf_serialize.h>
 
 
-#define  DEBUG
-#define  TARGET_TYPE EQUIL
-#include "enkf_debug.h"
-
 GET_DATA_SIZE_HEADER(equil);
 
 /*****************************************************************/
 
 
 struct equil_struct {
-  DEBUG_DECLARE
+  int                      __type_id;
   const equil_config_type *config;
   scalar_type             *scalar;
 };
@@ -42,10 +38,10 @@ void equil_realloc_data(equil_type * equil) {
 
 
 equil_type * equil_alloc(const equil_config_type * config) {
-  equil_type * equil    = malloc(sizeof *equil);
+  equil_type * equil    = util_malloc(sizeof *equil , __func__);
   equil->config         = config;
   equil->scalar         = scalar_alloc(equil_config_get_scalar_config(config));
-  DEBUG_ASSIGN(equil)
+  equil->__type_id      = EQUIL;
   return equil;
 }
 
@@ -83,7 +79,6 @@ void equil_ecl_write(const equil_type * equil, const char * eclfile, fortio_type
 
 
 bool equil_fwrite(const equil_type * equil, FILE * stream) {
-  DEBUG_ASSERT(equil);
   enkf_util_fwrite_target_type(stream , EQUIL);
   scalar_stream_fwrite(equil->scalar , stream);
   return true;
@@ -91,7 +86,6 @@ bool equil_fwrite(const equil_type * equil, FILE * stream) {
 
 
 void equil_fread(equil_type * equil , FILE * stream) {
-  DEBUG_ASSERT(equil);
   enkf_util_fread_assert_target_type(stream , EQUIL);
   scalar_stream_fread(equil->scalar , stream);
 }
@@ -105,20 +99,17 @@ bool equil_initialize(equil_type *equil, int iens) {
 
 
 void equil_free(equil_type *equil) {
-  DEBUG_ASSERT(equil)
   scalar_free(equil->scalar);  
   free(equil);
 }
 
 
 int equil_serialize(const equil_type *equil , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(equil);
   return scalar_serialize(equil->scalar , serial_state , serial_offset , serial_vector);
 }
 
 
 void equil_deserialize(equil_type *equil , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(equil);
   scalar_deserialize(equil->scalar , serial_state , serial_vector);
 }
 
@@ -128,7 +119,7 @@ void equil_deserialize(equil_type *equil , serial_state_type * serial_state , co
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 
-
+SAFE_CAST(equil , EQUIL);
 MATH_OPS_SCALAR(equil);
 VOID_ALLOC(equil);
 VOID_SERIALIZE (equil);

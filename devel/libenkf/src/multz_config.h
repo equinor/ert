@@ -32,6 +32,7 @@ char              * multz_config_alloc_description(const multz_config_type * , i
 
 
 /*Generated headers */
+SAFE_CAST_HEADER(multz_config);
 GET_DATA_SIZE_HEADER(multz);
 VOID_FREE_HEADER(multz_config);
 VOID_CONFIG_ACTIVATE_HEADER(multz)

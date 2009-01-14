@@ -44,7 +44,6 @@ void                          enkf_main_run_step(enkf_main_type *, run_mode_type
 void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
 void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
 void                          enkf_main_set_state_eclbase(const enkf_main_type * , int );
-enkf_main_type              * enkf_main_safe_cast( void * );
 void                          enkf_main_interactive_set_runpath__(void * );
 enkf_main_type              * enkf_main_bootstrap(const char * , const char * );
 
@@ -64,8 +63,9 @@ enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
 void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
 void 	     enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
 const char * enkf_main_get_image_viewer(const enkf_main_type * );
-
 void         enkf_main_analysis_update(enkf_main_type * , int );
+
+SAFE_CAST_HEADER(enkf_main)
 
 #ifdef __cplusplus
 }

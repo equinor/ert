@@ -20,6 +20,7 @@ void                	   equil_config_free(equil_config_type *);
 int                 	   equil_config_get_nequil(const equil_config_type *);
 equil_config_type   	 * equil_config_fscanf_alloc(const char * );
 
+SAFE_CAST_HEADER(equil_config);
 VOID_FREE_HEADER(equil_config);
 VOID_CONFIG_ACTIVATE_HEADER(equil);
 #ifdef __cplusplus

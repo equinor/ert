@@ -24,6 +24,7 @@ bool                   summary_config_has_var(const summary_config_type * , cons
 void                   summary_config_summarize(const summary_config_type * );
 void                   summary_config_add_obs_key(summary_config_type * , const char * );
 
+SAFE_CAST_HEADER(summary_config);
 GET_ACTIVE_LIST_HEADER(summary);
 GET_DATA_SIZE_HEADER(summary);
 VOID_CONFIG_FREE_HEADER(summary);

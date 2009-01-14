@@ -18,6 +18,7 @@ gen_data_config_type   * gen_data_get_config(const gen_data_type * );
 int                      gen_data_get_size(const gen_data_type * );
 double                   gen_data_iget_double(const gen_data_type * , int );
 
+SAFE_CAST_HEADER(gen_data);
 VOID_USER_GET_HEADER(gen_data);
 VOID_ALLOC_HEADER(gen_data);
 VOID_FREE_HEADER(gen_data);

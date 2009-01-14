@@ -12,16 +12,13 @@
 #include <subst.h>
 
 
-#define  DEBUG
-#define  TARGET_TYPE GEN_KW
-#include "enkf_debug.h"
 
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
 
 struct gen_kw_struct {
-  DEBUG_DECLARE
+  int                       __type_id;
   const gen_kw_config_type *config;
   scalar_type              *scalar;
   subst_list_type          *subst_list;
@@ -81,7 +78,7 @@ gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw_type * gen_kw  = util_malloc(sizeof *gen_kw , __func__);
   gen_kw->config = config;
   gen_kw->scalar = scalar_alloc(gen_kw_config_get_scalar_config( config ));
-  DEBUG_ASSIGN(gen_kw)
+  gen_kw->__type_id  = GEN_KW;
   gen_kw->subst_list = subst_list_alloc();  
   return gen_kw;
 }
@@ -101,7 +98,6 @@ gen_kw_type * gen_kw_copyc(const gen_kw_type *gen_kw) {
 
 
 bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream) {
-  DEBUG_ASSERT(gen_kw)
   enkf_util_fwrite_target_type(stream , GEN_KW);
   scalar_stream_fwrite(gen_kw->scalar , stream);
   return true;
@@ -109,7 +105,6 @@ bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream) {
 
 
 void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {
-  DEBUG_ASSERT(gen_kw)
   enkf_util_fread_assert_target_type(stream , GEN_KW);
   scalar_stream_fread(gen_kw->scalar , stream);
 }
@@ -129,14 +124,12 @@ void gen_kw_swapin(gen_kw_type * gen_kw , FILE * stream) {
 
 
 void gen_kw_truncate(gen_kw_type * gen_kw) {
-  DEBUG_ASSERT(gen_kw)
   scalar_truncate( gen_kw->scalar );  
 }
 
 
 
 bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
-  DEBUG_ASSERT(gen_kw)
   scalar_sample(gen_kw->scalar);  
   return true;
 }
@@ -144,13 +137,11 @@ bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
 
 
 int gen_kw_serialize(const gen_kw_type *gen_kw , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(gen_kw);
   return scalar_serialize(gen_kw->scalar , serial_state , serial_offset , serial_vector);
 }
 
 
 void gen_kw_deserialize(gen_kw_type *gen_kw , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  DEBUG_ASSERT(gen_kw);
   scalar_deserialize(gen_kw->scalar , serial_state , serial_vector);
 }
 
@@ -185,7 +176,6 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
 
 
 void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * target_file , fortio_type * fortio) {
-  DEBUG_ASSERT(gen_kw)
   gen_kw_filter_file(gen_kw , target_file);
 }
 
@@ -259,7 +249,7 @@ double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * val
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-
+SAFE_CAST(gen_kw , GEN_KW);
 MATH_OPS_SCALAR(gen_kw);
 VOID_ALLOC(gen_kw);
 VOID_REALLOC_DATA(gen_kw);

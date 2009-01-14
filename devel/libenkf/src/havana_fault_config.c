@@ -23,10 +23,12 @@ struct fault_group_struct {
 };
 
 
+#define HAVANA_FAULT_CONFIG_TYPE_ID 887412
 
 
 struct havana_fault_config_struct 
 {
+  int                   __type_id;
   gen_kw_config_type  * gen_kw_config;
   char 	    	      * havana_executable;
   char 	    	      * unfaulted_GRDECL_file;
@@ -177,6 +179,7 @@ static havana_fault_config_type * __havana_fault_alloc( ) {
   config->update_template       = NULL;
   config->unfaulted_GRDECL_file = NULL;
   config->gen_kw_config         = NULL;
+  config->__type_id             = HAVANA_FAULT_CONFIG_TYPE_ID;
   return config;
 }
 
@@ -462,6 +465,7 @@ gen_kw_config_type * havana_fault_config_get_gen_kw_config(const havana_fault_co
 
 /*****************************************************************/
 
+SAFE_CAST(havana_fault_config , HAVANA_FAULT_CONFIG_TYPE_ID)
 VOID_FREE(havana_fault_config)
 
 

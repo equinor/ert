@@ -44,6 +44,7 @@ struct table_struct{
 };
 
 typedef struct {
+  int             __type_id;
   char         ** kw_list;  /* A list of different keywords defined in column number 1 in relperm_config.txt */
   int            nso;       /* The resoultion of the relperm tables which include oil-saturation */
   int            nsw;       /* The resoultion of the relperm tables which include water-saturation */
@@ -78,9 +79,12 @@ relptab_kw_type relperm_config_set_relptab_kw(char *);
 void relperm_config_free(relperm_config_type *);
 void relperm_config_table_config_free(table_config_type **, int);
 void relperm_config_table_free(table_type *);
+
 /*Generated headers */
 GET_DATA_SIZE_HEADER(relperm);
 VOID_FREE_HEADER(relperm_config);
+SAFE_CAST_HEADER(relperm_config);
+
 #ifdef __cplusplus
 }
 #endif

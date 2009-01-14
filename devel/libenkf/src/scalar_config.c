@@ -8,10 +8,12 @@
 #include <trans_func.h>
 #include <active_list.h>
 
+#define SCALAR_CONFIG_TYPE_ID 877065
 
 struct scalar_config_struct {
-  int data_size;            
-  int internal_offset;
+  int                __type_id;
+  int 		     data_size;            
+  int 		     internal_offset;
   double 	   * mean;
   double 	   * std;
   active_list_type * active_list;
@@ -24,8 +26,8 @@ struct scalar_config_struct {
 
 
 scalar_config_type * scalar_config_alloc_empty(int size) {
-  scalar_config_type *scalar_config = malloc(sizeof *scalar_config);
-
+  scalar_config_type *scalar_config    = util_malloc(sizeof *scalar_config, __func__);
+  scalar_config->__type_id             = SCALAR_CONFIG_TYPE_ID;
   scalar_config->data_size   	       = size;
   scalar_config->mean        	       = util_malloc(size * sizeof *scalar_config->mean        , __func__);
   scalar_config->std         	       = util_malloc(size * sizeof *scalar_config->std         ,  __func__);
@@ -34,7 +36,7 @@ scalar_config_type * scalar_config_alloc_empty(int size) {
   scalar_config->output_transform_name = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform_name , __func__);
   scalar_config->internal_offset       = 0;
   scalar_config->arg_pack              = util_malloc(scalar_config->data_size * sizeof * scalar_config->arg_pack , __func__);
-
+  
   {
     int i;
     for (i=0; i < size; i++) {
@@ -118,6 +120,7 @@ void scalar_config_free(scalar_config_type * scalar_config) {
 
 /*****************************************************************/
 
+SAFE_CAST(scalar_config , SCALAR_CONFIG_TYPE_ID)
 GET_DATA_SIZE(scalar);
 GET_ACTIVE_LIST(scalar);
 VOID_FREE(scalar_config);
