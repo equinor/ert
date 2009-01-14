@@ -160,9 +160,14 @@ static void enkf_ui_table_misfit( void * arg) {
   int iens;
 
   enkf_obs_total_ensemble_chi2( enkf_obs , fs , ens_size , chi2);
-  for (iens = 0; iens < ens_size; iens++)
-    printf("Realization:%03d : %g \n",iens , chi2[iens]);
 
+  printf("\n");
+  printf(" ----------------------------------\n");
+  printf(" Realization  |  Total chi^2 misfit\n");
+  printf(" ----------------------------------\n");
+  for (iens = 0; iens < ens_size; iens++)
+    printf(" %11d  |       %g \n",iens , chi2[iens]);
+  printf(" ----------------------------------\n\n");
   free( chi2 );
 }
 

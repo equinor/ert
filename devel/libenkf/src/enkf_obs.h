@@ -53,7 +53,8 @@ stringlist_type * enkf_obs_alloc_summary_vars(
 hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs);
 
 const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );
-bool enkf_obs_has_key(const enkf_obs_type * , const char * );
+bool 	  enkf_obs_has_key(const enkf_obs_type * , const char * );
+void 	  enkf_obs_total_ensemble_chi2(const enkf_obs_type * , enkf_fs_type *  , int  , double * );
 
 #ifdef __cplusplus
 }

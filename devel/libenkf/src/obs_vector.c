@@ -516,7 +516,7 @@ static state_enum obs_vector_load_node__(enkf_fs_type * fs , enkf_node_type * no
     enkf_fs_fread_node( fs , node , report_step , iens , forecast );
     load_state = forecast;
   } else 
-    fprintf(stderr , "** Warning could not locate: %s / %d / %d for misfit calculations - defaulting to ZERO misfit \n",enkf_node_get_key(node) , report_step , iens);
+    fprintf(stderr , "** Warning could not locate: %s / %d / %d for misfit calculations - defaulting to ZERO misfit. \n",enkf_node_get_key(node) , report_step , iens);
 
   return load_state;
 }
