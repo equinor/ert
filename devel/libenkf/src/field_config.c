@@ -37,7 +37,7 @@
                             	                          ___________________________________
 _______________                       ___________	 /                                   \
                \                     /         	 \	 |  The internal representation      |
- Geo Modelling |                     | input-    |	 |  of the field. This (should)      |
+ Geo Modelling |                     | init-     |	 |  of the field. This (should)      |
  creates a     |==>===============>==| transform |===>===|  be a normally distributed        |
  realization   |                     | 	     	 |	 |  variable suitable for updates    |
 _______________/                     \___________/	 |  with EnKF.                       |

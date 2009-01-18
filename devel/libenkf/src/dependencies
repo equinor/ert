@@ -21,7 +21,7 @@ summary.o                           : summary.c summary.h enkf_macros.h enkf_uti
 enkf_types.o                        : enkf_types.c enkf_types.h  
 plain_driver.o                      : plain_driver.c plain_driver.h plain_driver_parameter.o plain_driver_dynamic.o plain_driver_static.o plain_driver_index.o  
 analysis.o                          : analysis.c analysis.h obs_data.o meas_matrix.o enkf_types.o  
-model_config.o                      : model_config.c model_config.h enkf_fs.o enkf_sched.o enkf_types.o plain_driver.o  
+model_config.o                      : model_config.c model_config.h enkf_fs.o enkf_sched.o enkf_types.o plain_driver.o forward_model.o  
 site_config.o                       : site_config.c site_config.h  
 gen_common.o                        : gen_common.c gen_common.h gen_data_config.o  
 multflt_config.o                    : multflt_config.c multflt_config.h ens_config.o enkf_util.o enkf_macros.h trans_func.o scalar_config.o  
@@ -71,3 +71,4 @@ enkf_ui_export.o                    : enkf_ui_export.c enkf_ui_export.h enkf_mai
 ecl_static_kw.o                     : ecl_static_kw.c ecl_static_kw.h enkf_macros.h  
 pilot_point.o                       : pilot_point.c pilot_point.h enkf_types.o enkf_macros.h scalar.o pilot_point_config.o field.o  
 multz_config.o                      : multz_config.c multz_config.h enkf_util.o ens_config.o enkf_macros.h trans_func.o  
+forward_model.o                     : forward_model.c forward_model.h  

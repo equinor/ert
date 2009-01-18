@@ -151,6 +151,7 @@ static void enkf_ui_table_time(void * arg) {
 
 
 static void enkf_ui_table_misfit( void * arg) {
+  const state_enum load_state = both;
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
@@ -159,7 +160,8 @@ static void enkf_ui_table_misfit( void * arg) {
   double * chi2 = util_malloc( ens_size * sizeof * chi2 , __func__);
   int iens;
 
-  enkf_obs_total_ensemble_chi2( enkf_obs , fs , ens_size , chi2);
+  enkf_obs_total_ensemble_chi2( enkf_obs , fs , ens_size , load_state , chi2);
+  //enkf_obs_ensemble_chi2( enkf_obs , fs , 30 , ens_size , load_state , chi2);
 
   printf("\n");
   printf(" ----------------------------------\n");

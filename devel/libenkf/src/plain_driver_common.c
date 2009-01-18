@@ -31,7 +31,7 @@ void plain_driver_common_save_node(const char * filename ,  int report_step , in
   FILE * stream = util_fopen(filename , "w");
   bool data_written = enkf_node_fwrite(node , stream , report_step , iens , state);
   fclose(stream);
-  if (!data_written)
+  if (!data_written) 
     unlink(filename);  /* The file is empty */
 }
 

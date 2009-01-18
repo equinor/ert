@@ -132,16 +132,14 @@ bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
 */
 
 void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
-  {   
-    int size;
-    int report_step;
-    enkf_util_fread_assert_target_type(stream , GEN_DATA);
-    size        = util_fread_int(stream);
-    report_step = util_fread_int(stream);
-    util_safe_free(gen_data->data);
-    gen_data->data = util_fread_alloc_compressed(stream);
-    gen_data_config_assert_size(gen_data->config , size , report_step);
-  }
+  int size;
+  int report_step;
+  enkf_util_fread_assert_target_type(stream , GEN_DATA);
+  size        = util_fread_int(stream);
+  report_step = util_fread_int(stream);
+  util_safe_free(gen_data->data);
+  gen_data->data = util_fread_alloc_compressed(stream);
+  gen_data_config_assert_size(gen_data->config , size , report_step);
 }
 
 
@@ -151,10 +149,9 @@ int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial
   ecl_type_enum ecl_type 	       = gen_data_config_get_internal_type(gen_data->config);
   const int data_size    	       = gen_data_config_get_data_size(gen_data->config);
   const active_list_type  *active_list = gen_data_config_get_active_list(gen_data->config);
-  int elements_added = 0;
+  int elements_added;
 
-  if (data_size > 0) 
-    elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_list , serial_state ,serial_offset , serial_vector);
+  elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_list , serial_state ,serial_offset , serial_vector);
   return elements_added;
 }
 
@@ -165,9 +162,7 @@ void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_
   const int data_size    	      = gen_data_config_get_data_size(gen_data->config);
   const active_list_type *active_list = gen_data_config_get_active_list(gen_data->config);
   
-  if (data_size > 0)
-    enkf_deserialize(gen_data->data , data_size , ecl_type , active_list  , serial_state , serial_vector);
-  
+  enkf_deserialize(gen_data->data , data_size , ecl_type , active_list  , serial_state , serial_vector);
 }
 
 
@@ -327,15 +322,23 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , 
 }
 
 
+static void gen_data_assert_index(const gen_data_type * gen_data, int index) {
+  if ((index < 0) || (index >= gen_data_config_get_data_size(gen_data->config)))
+    util_abort("%s: index:%d invalid. Valid range: [0,%d) \n",__func__ , index , gen_data_config_get_data_size(gen_data->config));
+}
+
 
 double gen_data_iget_double(const gen_data_type * gen_data, int index) {
-  ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
-  if (internal_type == ecl_double_type) {
-    double * data = (double *) gen_data->data;
-    return data[index];
-  } else {
-    float * data = (float *) gen_data->data;
-    return data[index];
+  gen_data_assert_index(gen_data , index); 
+  {
+    ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+    if (internal_type == ecl_double_type) {
+      double * data = (double *) gen_data->data;
+      return data[index];
+    } else {
+      float * data = (float *) gen_data->data;
+      return data[index];
+    }
   }
 }
 
@@ -363,6 +366,10 @@ double gen_data_user_get(const gen_data_type * gen_data, const char * index_key,
   return -1; /* Dummy to shut up compiler */
 }
 
+
+int gen_data_get_size(const gen_data_type * gen_data) {
+  return gen_data_config_get_data_size( gen_data->config );
+}
 
 
 

@@ -167,6 +167,78 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 
 
 
+void enkf_ui_plot_histogram(void * arg) {
+  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
+  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  const char * plot_path                       = model_config_get_plot_path( model_config );
+  {
+    const int prompt_len = 40;
+    const char * prompt  = "What do you want to plot (KEY:INDEX)";
+    const enkf_config_node_type * config_node;
+    char       user_key[64];
+    
+    
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    scanf("%s" , user_key);
+    {
+      const int ens_size    = ensemble_config_get_size(ensemble_config);
+      state_enum plot_state = analyzed; /* Compiler shut up */
+      char * key_index;
+      const int last_report = enkf_sched_get_last_report(enkf_sched);
+      double * count        = util_malloc(ens_size * sizeof * count , __func__);
+      int iens , report_step;
+      char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , user_key );
+      plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file);
+
+      config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
+      if (config_node == NULL) {
+	fprintf(stderr,"** Sorry - could not find any nodes with the key:%s \n",user_key);
+	util_safe_free(key_index);
+	return;
+      }
+      report_step = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
+      {
+	enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
+	if ((var_type == dynamic_state) || (var_type == dynamic_result)) 
+	  plot_state = enkf_ui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , prompt_len , false);
+	else if (var_type == parameter)
+	  plot_state = analyzed;
+	else
+	  util_abort("%s: can not plot this type \n",__func__);
+      }
+      {
+	int active_size = 0;
+	enkf_node_type * node = enkf_node_alloc( config_node );
+	for (iens = 0; iens < ens_size; iens++) {
+	  if (enkf_fs_has_node(fs , config_node , report_step , iens , plot_state)) {
+	    bool valid;
+	    enkf_fs_fread_node(fs , node , report_step , iens , forecast);
+	    count[active_size] = enkf_node_user_get( node , key_index , &valid);
+	    if (valid) 
+	      active_size++;
+	    
+	  }
+	}
+	enkf_node_free( node );
+	
+	{
+	  plot_dataset_type * d = plot_alloc_new_dataset( plot , plot_hist , true );
+	  plot_dataset_set_shared_hist(d , active_size , count);
+	}
+	__plot_show(plot , viewer , plot_file);
+      }
+      free(count);
+      util_safe_free(key_index);
+    }
+  }
+}
+
+
+
 
 
 void enkf_ui_plot_ensemble(void * arg) {
@@ -522,6 +594,7 @@ void enkf_ui_plot_menu(void * arg) {
     menu_add_item(menu , "Ensemble plot of ALL summary variables"    , "aA" , enkf_ui_plot_all_summary , enkf_main , NULL);
     menu_add_item(menu , "Observation plot" , "oO" 			    , enkf_ui_plot_observation , enkf_main , NULL);
     menu_add_item(menu , "RFT plot"         , "rR" 			    , enkf_ui_plot_RFT         , enkf_main , NULL);
+    menu_add_item(menu , "Histogram"        , "hH"                          , enkf_ui_plot_histogram   , enkf_main , NULL);
     menu_add_separator(menu);
     menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
     menu_run(menu);

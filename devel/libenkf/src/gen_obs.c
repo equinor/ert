@@ -31,15 +31,16 @@
 
 struct gen_obs_struct {
   int                          __type_id;
-  int                          obs_size;        /* This is the total size of the observation vector. */ 
-  int                        * data_index_list; /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
+  int                          obs_size;         /* This is the total size of the observation vector. */ 
+  int                        * data_index_list;  /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
+  bool                         observe_all_data; /* Bool */ 
 
-  double                     * __obs_buffer;    /* This is the actual storage variable. obs_data and obs_std just point into this vector. */
-  double                     * obs_data;        /* The observed data. */
-  double                     * obs_std;         /* The observed standard deviation. */ 
+  double                     * __obs_buffer;     /* This is the actual storage variable. obs_data and obs_std just point into this vector. */
+  double                     * obs_data;         /* The observed data. */
+  double                     * obs_std;          /* The observed standard deviation. */ 
 
-  char                       * obs_file;        /* The file holding the observation. */ 
-  gen_data_file_format_type    obs_format;      /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
+  char                       * obs_file;         /* The file holding the observation. */ 
+  gen_data_file_format_type    obs_format;       /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
 };
 
 /******************************************************************/
@@ -106,22 +107,30 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs) {
 gen_obs_type * gen_obs_alloc(const char * obs_file , const char * data_index_file , const char * data_index_string) {
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
-  obs->__type_id       = GEN_OBS_TYPE_ID;
-  obs->__obs_buffer    = NULL;
-  obs->obs_file        = util_alloc_string_copy( obs_file );
-  obs->obs_format      = ASCII;  /* Hardcoded for now. */
-  
+  obs->__type_id       	= GEN_OBS_TYPE_ID;
+  obs->__obs_buffer    	= NULL;
+  obs->obs_file        	= util_alloc_string_copy( obs_file );
+  obs->obs_format      	= ASCII;  /* Hardcoded for now. */
+
   gen_obs_load_observation(obs); /* The observation data is loaded - and internalized at boot time - even though it might not be needed for a long time. */
 
   if ((data_index_file == NULL) && (data_index_string == NULL)) {
     /* 
        We observe all the elements in the remote (gen_data) instance,
        and the data_index_list just becomes a identity mapping. 
+       
+       At use time we must verify that the size of the observation
+       corresponds to the size of the gen_data_instance; that is
+       indicated by the boolean flag observe_all_data.
     */
+    
+
     obs->data_index_list = util_malloc( obs->obs_size * sizeof * obs->data_index_list , __func__);
     for (int i =0; i < obs->obs_size; i++)
       obs->data_index_list[i] = i;
+    obs->observe_all_data = true;
   } else {
+    obs->observe_all_data = false;
     if (data_index_file != NULL) {
     } else {
     }
@@ -130,24 +139,42 @@ gen_obs_type * gen_obs_alloc(const char * obs_file , const char * data_index_fil
 }
 
 
+static void gen_obs_assert_data_size(const gen_obs_type * gen_obs, const gen_data_type * gen_data) {
+  if (gen_obs->observe_all_data) {
+    int data_size = gen_data_get_size( gen_data );
+    if (gen_obs->obs_size != data_size)
+      util_abort("%s: size mismatch: Observation size:%d   data_size:%d \n" , __func__ , gen_obs->obs_size , data_size);
+    
+  } /*
+      Else the user has explicitly entered indices to observe in the
+      gen_data instances, and we just have to trust them (however the
+      gen_data_iget() does a range check. 
+  */
+}
+
+
 /** Active - not active when it comes to local analysis is *NOT* handled. */
 void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , meas_vector_type * meas_vector) {
-  int iobs;
-  
-  for (iobs = 0; iobs < gen_obs->obs_size; iobs++)
-    meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
-  
+  gen_obs_assert_data_size(gen_obs , gen_data);
+  {
+    int iobs;
+    for (iobs = 0; iobs < gen_obs->obs_size; iobs++)
+      meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
+  }
 }
 
 
 double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_data) {
-  int iobs;
-  double sum_chi2 = 0;
-  for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-    double x  = (gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs]) - gen_obs->obs_data[iobs]) / gen_obs->obs_std[iobs];
-    sum_chi2 += x*x;
+  gen_obs_assert_data_size(gen_obs , gen_data);
+  {
+    int iobs;
+    double sum_chi2 = 0;
+    for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
+      double x  = (gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs]) - gen_obs->obs_data[iobs]) / gen_obs->obs_std[iobs];
+      sum_chi2 += x*x;
+    }
+    return sum_chi2;
   }
-  return sum_chi2;
 }
 
 

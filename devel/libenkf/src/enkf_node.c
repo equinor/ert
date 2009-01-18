@@ -773,6 +773,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->ecl_load     = gen_data_ecl_load__;
     node->serialize    = gen_data_serialize__;
     node->deserialize  = gen_data_deserialize__;
+    node->user_get     = gen_data_user_get__;
     break;
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);

@@ -372,6 +372,7 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
   }
   current_active_node_index = serial_state->current_active_node_index;
   
+  
   if (!serial_state->complete) {
     if (active_node_index1 < active_node_offset + active_size) {
       /* If the previous _exactly_ used all memory we will have serial_size == serial_offset - and should return immediatebly. */
@@ -434,7 +435,14 @@ size_t enkf_serialize(const void * __node_data         ,
   int  node_offset     = 0;
   int  total_node_size = node_size;
 
-  return enkf_serialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_list , serial_state , serial_offset , serial_vector);
+  if (active_list_get_active_size(active_list) > 0)
+    return enkf_serialize_part(__node_data , first_call , node_size , node_offset , 
+			       total_node_size , node_type , active_list , 
+			       serial_state , serial_offset , serial_vector);
+  else {
+    serial_state->complete = true;
+    return 0;  /* No active data. */
+  }
 }
 
 
@@ -506,6 +514,9 @@ void enkf_deserialize(void * __node_data                ,
   bool first_call      = true;
   int  node_offset     = 0;
   int  total_node_size = node_size;
-  
-  enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_list , serial_state , serial_vector);
+
+  if (active_list_get_active_size(active_list) > 0)  
+    enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_list , serial_state , serial_vector);
+  else 
+    serial_state->state = analyzed;
 }

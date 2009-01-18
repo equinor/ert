@@ -18,6 +18,7 @@
 #include <menu.h>
 #include <enkf_types.h>
 #include <plain_driver.h>
+#include <forward_model.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -33,15 +34,16 @@
 
 
 struct model_config_struct {
-  enkf_fs_type      * ensemble_dbase;     /* Where the ensemble files are stored */
-  history_type      * history;            /* The history object. */
-  stringlist_type   * forward_model;      /* A list of external jobs - which acts as keys into a ext_joblist_type instance. */
-  path_fmt_type     * result_path;        /* path_fmt instance for results - should contain one %d which will be replaced report_step */
-  path_fmt_type     * runpath;            /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
-  char              * plot_path;          /* A dumping ground for PLOT files. */
-  enkf_sched_type   * enkf_sched;         /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model. */
-  char              * lock_path;          /* Path containing lock files */
-  lock_mode_type      runlock_mode;       /* Mode for locking run directories - currently not working.*/ 
+  forward_model_type  * __forward_model;    
+  enkf_fs_type        * ensemble_dbase;     /* Where the ensemble files are stored */
+  history_type        * history;            /* The history object. */
+  stringlist_type     * forward_model;      /* A list of external jobs - which acts as keys into a ext_joblist_type instance. */
+  path_fmt_type       * result_path;        /* path_fmt instance for results - should contain one %d which will be replaced report_step */
+  path_fmt_type       * runpath;            /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  char                * plot_path;          /* A dumping ground for PLOT files. */
+  enkf_sched_type     * enkf_sched;         /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model. */
+  char                * lock_path;          /* Path containing lock files */
+  lock_mode_type        runlock_mode;       /* Mode for locking run directories - currently not working.*/ 
 };
 
 

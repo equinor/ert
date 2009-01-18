@@ -668,27 +668,46 @@ const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , con
 /*****************************************************************/
 
 
-void enkf_obs_total_ensemble_chi2(const enkf_obs_type * obs , enkf_fs_type * fs , int ens_size , double * chi2) {
+void enkf_obs_total_ensemble_chi2(const enkf_obs_type * obs , enkf_fs_type * fs , int ens_size , state_enum load_state , double * chi2) {
   const char      * obs_key;
   int iens;
   double          * obs_chi2 = util_malloc( ens_size * sizeof * obs_chi2 , __func__);
-  msg_type        * msg = msg_alloc("Evaluating misfit for: ");
   
   for (iens = 0; iens < ens_size; iens++)
     chi2[iens] = 0;
   
-  msg_show(msg);
   obs_key = hash_iter_get_first_key( obs->obs_hash );
   while (obs_key != NULL) {
     obs_vector_type * obs_vector = hash_get(obs->obs_hash , obs_key);
-    msg_update(msg , obs_key);
 
-    obs_vector_ensemble_total_chi2( obs_vector , fs , ens_size , obs_chi2);
+    obs_vector_ensemble_total_chi2( obs_vector , fs , ens_size , load_state , obs_chi2);
     for (iens = 0; iens < ens_size; iens++)
       chi2[iens] += obs_chi2[iens];
     
     obs_key = hash_iter_get_next_key( obs->obs_hash );
   }
   free(obs_chi2);
-  msg_free(msg , true);
+}
+
+
+
+void enkf_obs_ensemble_chi2(const enkf_obs_type * obs , enkf_fs_type * fs , int report_step , int ens_size , state_enum load_state , double * chi2) {
+  const char      * obs_key;
+  int iens;
+  double          * obs_chi2 = util_malloc( ens_size * sizeof * obs_chi2 , __func__);
+
+  for (iens = 0; iens < ens_size; iens++)
+    chi2[iens] = 0;
+    
+  obs_key = hash_iter_get_first_key( obs->obs_hash );
+  while (obs_key != NULL) {
+    obs_vector_type * obs_vector = hash_get(obs->obs_hash , obs_key);
+
+    obs_vector_ensemble_chi2( obs_vector , fs , report_step , ens_size , load_state , obs_chi2);
+    for (iens = 0; iens < ens_size; iens++)
+      chi2[iens] += obs_chi2[iens];
+    
+    obs_key = hash_iter_get_next_key( obs->obs_hash );
+  }
+  free(obs_chi2);
 }

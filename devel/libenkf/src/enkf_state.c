@@ -1320,7 +1320,7 @@ void * enkf_ensemble_serialize__(void * _info) {
     while (node_complete) {                                           
       enkf_node_type *enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
       if (enkf_node_include_type(enkf_node , update_mask)) {                       
-	int elements_added = enkf_node_serialize(enkf_node , current_serial_offset , serial_vector , &node_complete);
+	int elements_added        = enkf_node_serialize(enkf_node , current_serial_offset , serial_vector , &node_complete);
 	current_serial_offset    += serial_stride * elements_added;  
 	member_serial_size[iens] += elements_added;
       }
@@ -1406,7 +1406,6 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 	  ikey++;
 	  if (ikey == num_keys)
 	    break;
-
 	}
       }
       
