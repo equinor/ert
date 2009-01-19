@@ -57,6 +57,17 @@ ext_job_type * ext_joblist_get_job(const ext_joblist_type * joblist , const char
   }
 }
 
+
+ext_job_type * ext_joblist_get_job_copy(const ext_joblist_type * joblist , const char * job_name) {
+  if (hash_has_key(joblist->jobs , job_name)) 
+    return ext_job_alloc_copy(hash_get(joblist->jobs , job_name));
+  else {
+    util_abort("%s: asked for job:%s which does not exist\n",__func__ , job_name);
+    return NULL;
+  }
+}
+
+
 bool ext_joblist_has_job(const ext_joblist_type * joblist , const char * job_name) {
   return hash_has_key(joblist->jobs , job_name);
 }
