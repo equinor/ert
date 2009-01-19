@@ -102,6 +102,9 @@ static int  __make_data_mask(plot_data_type data_type) {
   case(plot_yline):
     mask = plot_data_y;
     break;
+  case(plot_hist):
+    mask = plot_data_x;
+    break;
   default:
     util_abort("%s: unrecognized value: %d \n",__func__ , data_type);
   }
@@ -321,6 +324,26 @@ void plot_dataset_set_shared_yline(plot_dataset_type *d , int size, double *y) {
   plot_dataset_set_shared__(d , size , NULL , y , NULL , NULL , NULL , NULL);
 }
 
+/*----*/
+
+/*----*/
+
+void plot_dataset_append_vector_hist(plot_dataset_type *d , int size, const double * x) {
+  plot_dataset_assert_type(d , plot_hist);
+  plot_dataset_append_vector__(d , size , x , NULL , NULL , NULL , NULL , NULL );
+}
+
+
+void plot_dataset_append_point_hist(plot_dataset_type *d , double x) {
+  plot_dataset_append_vector_hist(d , 1 , &x);
+}
+
+
+void plot_dataset_set_shared_hist(plot_dataset_type *d , int size, double *x) {
+  plot_dataset_assert_type(d , plot_hist);
+  plot_dataset_set_shared__(d , size , x , NULL , NULL , NULL , NULL , NULL);
+}
+
 /*****************************************************************/
 
 
@@ -328,22 +351,31 @@ void plot_dataset_set_shared_yline(plot_dataset_type *d , int size, double *y) {
 
 
 void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type * range) {
+  
   plsstrm(stream);
   pllsty(d->line_style);                                  /* Setting solid/dashed/... */
   plwid(d->line_width * PLOT_DEFAULT_LINE_WIDTH);         /* Setting line width.*/
   plcol0(d->line_color);                                  /* Setting line color. */
   plssym(0 , d->symbol_size * PLOT_DEFAULT_SYMBOL_SIZE);  /* Setting the size for the symbols. */
-
+  
   
   switch (d->data_type) {
   case(plot_xy):
     /** Starting with the line */    
     if (d->style == LINE || d->style == LINE_POINTS) 
       plline(d->size , d->x , d->y);
-
+    
     if (d->style == POINT || d->style == LINE_POINTS) {
       plcol0(d->point_color);       /* Setting the color */
       plpoin(d->size , d->x , d->y , d->symbol_type);
+    }
+    break;
+  case(plot_hist):
+    {
+      int    bins = (int) sqrt(d->size);
+      double xmin = plot_range_get_xmin(range);
+      double xmax = plot_range_get_xmax(range);
+      plhist(d->size , d->x , xmin , xmax , bins , 0 /* PL_HIST_DEFAULT */);
     }
     break;
   case(plot_xy1y2):
@@ -411,6 +443,8 @@ void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , plot_ran
   if (d->data_mask & plot_data_x)  {x1 = d->x;  x2 = d->x; }
   if (d->data_mask & plot_data_x1)  x1 = d->x1;
   if (d->data_mask & plot_data_x2)  x2 = d->x2;
+  if (d->data_mask & plot_hist)    {x1 = d->x; x2 = d->x; }
+
 
   if (d->data_mask & plot_data_y)  {y1 = d->y;  y2 = d->y; }
   if (d->data_mask & plot_data_y1)  y1 = d->y1;

@@ -13,7 +13,8 @@ typedef enum {
   plot_xy1y2 = 2,     /* x and y-error bars, from y1 - y2. */
   plot_x1x2y = 3,     /* x error bars (from x1 to x2) and y. */
   plot_xline = 4,     /* Vertical lines with fixed x */
-  plot_yline = 5      /* Horizontal lines with fixed y. */
+  plot_yline = 5,     /* Horizontal lines with fixed y. */
+  plot_hist  = 6      /* A list of values - which are binned, and plotted in a histogram. */    
 } plot_data_type;
 
 
