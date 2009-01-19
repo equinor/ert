@@ -29,15 +29,16 @@ jobList = [
 
 
 struct ext_job_struct {
-  int          __type_id;
-  char       * name;
-  char 	     * portable_exe;
-  char 	     * target_file;
-  char       * start_file;          /* Will not start if not this file is present */
-  char 	     * stdout_file;
-  char 	     * stdin_file;
-  char 	     * stderr_file;
-  char       * lsf_resources;  
+  int        	    __type_id;
+  char       	  * name;
+  char 	     	  * portable_exe;
+  char 	     	  * target_file;
+  char       	  * start_file;          /* Will not start if not this file is present */
+  char 	     	  * stdout_file;
+  char 	     	  * stdin_file;
+  char 	     	  * stderr_file;
+  char       	  * lsf_resources;  
+  subst_list_type * input_args;     /* A substitution list of input arguments which is performed before the external substitutions. */
   stringlist_type * argv;           /* This should *NOT* start with the executable */
   stringlist_type * init_code;
   hash_type  	  * platform_exe;   /* The hash tables can NOT be NULL. */
@@ -53,6 +54,7 @@ ext_job_type * ext_job_safe_cast(const void * __ext_job) {
   }  else
     return ext_job;
 }
+
 
 
 const char * ext_job_get_name(const ext_job_type * ext_job) {
@@ -76,7 +78,7 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->init_code      = NULL;
   ext_job->argv 	  = NULL;
   ext_job->lsf_resources  = NULL;
-
+  ext_job->input_args     = subst_list_alloc();
   return ext_job;
 }
 
@@ -85,6 +87,50 @@ static ext_job_type * ext_job_alloc__(const char * name) {
 ext_job_type * ext_job_alloc(const char * name) {
   return ext_job_alloc__(name);
 }
+
+
+
+/**
+   Difficult to make a general hash_alloc_copy() which handles all
+   possible variations of ownership+++ 
+   
+   This is a specialized implementation where it is assumed that all
+   values in the hash are actuall pointers to \0 terminated strings.
+*/
+
+
+static hash_type * ext_job_hash_copyc__(hash_type * h) {
+  hash_type * new_hash = hash_alloc();
+  const char * key = hash_iter_get_first_key( h );
+
+  while (key != NULL) {
+    char * value = hash_get( h , key);
+    hash_insert_hash_owned_ref( new_hash , key , util_alloc_string_copy(value) , free);
+    key = hash_iter_get_next_key( h );
+  }
+  return new_hash;
+}
+
+
+ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
+  ext_job_type * new_job = ext_job_alloc__(src_job->name);
+
+  new_job->portable_exe   = util_alloc_string_copy(src_job->portable_exe);
+  new_job->target_file    = util_alloc_string_copy(src_job->target_file);
+  new_job->start_file     = util_alloc_string_copy(src_job->start_file);
+  new_job->stdout_file    = util_alloc_string_copy(src_job->stdout_file);
+  new_job->stdin_file     = util_alloc_string_copy(src_job->stdin_file);
+  new_job->stderr_file    = util_alloc_string_copy(src_job->stderr_file);
+  new_job->lsf_resources  = util_alloc_string_copy(src_job->lsf_resources);  
+  
+  new_job->argv          = stringlist_alloc_deep_copy( src_job->argv );
+  new_job->init_code     = stringlist_alloc_deep_copy( src_job->init_code );
+  new_job->platform_exe  = ext_job_hash_copyc__( src_job->platform_exe );
+  new_job->platform_exe  = ext_job_hash_copyc__( src_job->environment );
+  new_job->input_args    = subst_list_alloc_deep_copy( src_job->input_args );
+  return new_job;
+}
+
 
 
 void ext_job_free(ext_job_type * ext_job) {
@@ -102,6 +148,7 @@ void ext_job_free(ext_job_type * ext_job) {
   if (ext_job->argv != NULL)         stringlist_free(ext_job->argv);
   if (ext_job->init_code != NULL)    stringlist_free(ext_job->init_code);
 
+  subst_list_free( ext_job->input_args );
   free(ext_job);
 }
 

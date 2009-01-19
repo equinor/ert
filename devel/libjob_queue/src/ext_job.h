@@ -9,7 +9,7 @@ extern "C" {
 
 typedef struct ext_job_struct ext_job_type;
 
-
+ext_job_type * ext_job_alloc_copy(const ext_job_type * );
 ext_job_type * ext_job_alloc(const char * ) ;
 const char   * ext_job_get_name(const ext_job_type * );
 const char   * ext_job_get_lsf_resources(const ext_job_type * );
