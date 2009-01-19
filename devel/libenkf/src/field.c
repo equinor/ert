@@ -1133,6 +1133,12 @@ void field_ecl_load(field_type * field , const char * ecl_file , const ecl_sum_t
       
       field_fload_typed(field , ecl_file , __ENDIAN_FLIP__ , import_format);
     }
+    {
+      field_func_type * input_transform = field_config_get_input_transform(field->config);
+      /* The input transform is done in-place. */
+      if (input_transform != NULL) 
+	field_apply(field , input_transform);
+    }
   }
 }
 

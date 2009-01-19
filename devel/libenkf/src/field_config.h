@@ -102,6 +102,7 @@ void                    field_config_scanf_ijk(const field_config_type *  , bool
 const char            * field_config_get_key(const field_config_type * );
 field_func_type       * field_config_get_init_transform(const field_config_type * );
 field_func_type       * field_config_get_output_transform(const field_config_type * );
+field_func_type       * field_config_get_input_transform(const field_config_type * );
 void                    field_config_set_output_transform(field_config_type * config , field_func_type * );
 void                    field_config_assert_binary( const field_config_type *  , const field_config_type *  , const char * );
 void                    field_config_assert_unary( const field_config_type *  , const char * );

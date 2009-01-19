@@ -33,8 +33,31 @@
      output_transform: This function is applied to the field before it
         is exported to eclipse.
 
+     input_transform: This function is applied each time a field is
+        loaded in from the forward model; i.e. this transformation
+        applies to dynamic fields.
 
-                            	                          ___________________________________
+
+
+ 							    _______________________________         ___
+							   /   	       	 		   \	    /|\
+                                                           | Forward model (i.e. ECLIPSE)  |	     |
+                                                           | generates dynamic fields like |	     |
+                                                           | PRESSURE and SATURATIONS	   |	     |
+							   \_______________________________/	     |	   This code is run
+							   		  |		   	     |	   every time a field
+									  |			     |	   is loaded FROM the
+									 \|/			     |	   forward model into
+									  | 			     |	   EnKF.
+								  ________|_________		     |
+								 /     	       	    \		     |
+								 | Input transform  |		     |
+								 \__________________/		     |
+								    	  |			     |
+								    	  |			     |
+								    	 \|/			     |
+								    	  |			     |
+                            	                          ________________|__________________	   _\|/_
 _______________                       ___________	 /                                   \
                \                     /         	 \	 |  The internal representation      |
  Geo Modelling |                     | init-     |	 |  of the field. This (should)      |
@@ -84,7 +107,7 @@ struct field_config_struct {
 
   field_file_format_type  export_format;
   field_file_format_type  import_format;
-  int             	  sizeof_ctype;        
+  int             	  sizeof_ctype;
   ecl_type_enum           internal_ecl_type;
   ecl_type_enum           export_ecl_type;
   path_fmt_type         * init_file_fmt; /* The format for loding init_files - if this is NULL the initialization is done by the forward model. */
@@ -96,7 +119,8 @@ struct field_config_struct {
   bool add_perturbation;
 
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
-  field_func_type         * init_transform;      /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
+  field_func_type         * init_transform;       /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
+  field_func_type         * input_transform;      /* Function to apply on the data when they are loaded from the forward model - i.e. for dynamic data. */
 };
 
 
@@ -317,7 +341,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->export_format 	   = export_format;
   config->import_format 	   = import_format;
   config->grid          	   = ecl_grid;
-  
+
   config->ecl_kw_name = NULL;
   field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
@@ -331,6 +355,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->init_file_fmt            = NULL;
   config->output_transform         = NULL;
   config->init_transform           = NULL;
+  config->input_transform          = NULL;
   config->active_list              = active_list_alloc( config->data_size );
   field_config_set_all_active(config);
 
@@ -347,7 +372,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	if-then-else; isolated if-blocks have been chosen for
 	clarity. Must update option_OK in every block, and check it
 	at the bottom.
-	
+
       */
 
       if (strcmp(option , "MIN") == 0) {
@@ -381,6 +406,16 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	option_OK = true;
       }
 
+      if (strcmp(option , "INPUT_TRANSFORM") == 0) {
+	if (field_trans_table_has_key( field_trans_table , value))
+	  config->input_transform = field_trans_table_lookup( field_trans_table , value);
+	else {
+	  fprintf(stderr,"** Warning: function name:%s not recognized - ignored. \n",value);
+	  field_trans_table_fprintf(field_trans_table , stderr);
+	}
+	option_OK = true;
+      }
+
 
       if (strcmp(option , "INIT_TRANSFORM") == 0) {
 	if (field_trans_table_has_key( field_trans_table , value))
@@ -400,7 +435,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 
       if (!option_OK)
 	fprintf(stderr,"** Warning: \"%s\" not recognized - ignored \n",option);
-            
+
       option = hash_iter_get_next_key( opt_hash );
     }
     hash_free(opt_hash);
@@ -800,6 +835,10 @@ bool field_config_enkf_mode(const field_config_type * config) { return config->_
 
 field_func_type * field_config_get_output_transform(const field_config_type * config) {
   return config->output_transform;
+}
+
+field_func_type * field_config_get_input_transform(const field_config_type * config) {
+  return config->input_transform;
 }
 
 field_func_type * field_config_get_init_transform(const field_config_type * config) {
