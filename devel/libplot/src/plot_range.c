@@ -255,9 +255,8 @@ void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , 
     y2 += height * plot_range->padding[YMAX];
   }
   
-  *_y1 = y1;
-  *_y2 = y2;
-  *_x1 = x1;
-  *_x2 = x2;
-  
+  if (_y1 != NULL) *_y1 = y1;
+  if (_y2 != NULL) *_y2 = y2;
+  if (_x1 != NULL) *_x1 = x1;
+  if (_x2 != NULL) *_x2 = x2;
 }

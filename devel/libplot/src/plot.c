@@ -33,10 +33,11 @@
 
 struct plot_struct {
   const char *filename; /**< Filename for the plot */    
-  int                  alloc_size; /* The size of the dataset vector - can in general be larger than size. */
-  int                  size;       /* The number of datasets. */
-  plot_dataset_type ** datasets;    /* Pointers to datasets. */
-
+  int                  alloc_size;  	/* The size of the dataset vector - can in general be larger than size. */
+  int                  size;        	/* The number of datasets. */
+  plot_dataset_type ** datasets;    	/* Pointers to datasets. */
+  bool                 is_histogram;    /* If this is true it can only contain histogram datasets. */
+  
   
   const char *device;
   int stream;	     /**< The plots current stream ID */
@@ -99,14 +100,15 @@ plot_type *plot_alloc()
   plot_type *plot;
   
   plot = util_malloc(sizeof *plot , __func__);
-  plot->stream 	  = -1;
-  plot->xlabel 	  = NULL;
-  plot->ylabel 	  = NULL;
-  plot->title  	  = NULL;
+  plot->stream 	  	= -1;
+  plot->xlabel 	  	= NULL;
+  plot->ylabel 	  	= NULL;
+  plot->title  	  	= NULL;
   plot->__use_autorange = true;
-  plot->datasets   = NULL;
-  plot->size       = 0;
-  plot->alloc_size = 0; 
+  plot->datasets     	= NULL;
+  plot->size         	= 0;
+  plot->alloc_size   	= 0; 
+  plot->is_histogram 	= false;
   
   plot->range      = plot_range_alloc();
   plot_set_window_size(plot , PLOT_DEFAULT_WIDTH , PLOT_DEFAULT_HEIGHT);
@@ -126,12 +128,21 @@ plot_type *plot_alloc()
 */
 
 plot_dataset_type * plot_alloc_new_dataset(plot_type * plot , plot_data_type data_type, bool shared_data) {
-  plot_dataset_type * dataset = plot_dataset_alloc(data_type, shared_data);
-  if (plot->size == plot->alloc_size)
-    plot_realloc_datasets(plot , 2*(plot->size + 1));
-  plot->datasets[plot->size] = dataset;
-  plot->size++;
-  return dataset;
+  if (data_type == plot_hist) {
+    if (plot->size > 0)
+      util_abort("%s: sorry - when using histograms you can *only* have one dataset\n",__func__);
+    plot->is_histogram = true;
+  } else if (plot->is_histogram)
+    util_abort("%s: sorry - when using histograms you can *only* have one dataset\n",__func__);
+  
+  {
+    plot_dataset_type * dataset = plot_dataset_alloc(data_type, shared_data);
+    if (plot->size == plot->alloc_size)
+      plot_realloc_datasets(plot , 2*(plot->size + 1));
+    plot->datasets[plot->size] = dataset;
+    plot->size++;
+    return dataset;
+  }
 }  
 
 
@@ -237,8 +248,8 @@ static void plot_set_range__(plot_type * plot, double *x1 , double *x2 , double 
     * All the toolkit dependant functions (i.e. plxxxx in the case of
       plplot) should be assembled here in this function. This can
       somethimes be a bit awkward, but should simplify the process of
-      porting to another toolit for plotting.
-
+      porting to another toolkit for plotting.
+      
     * The exception to this rule is the function plot_dataset_draw()
       which will invoke toolkit spesific functions for drawing
       lines/point/errorbars/...
@@ -248,9 +259,19 @@ static void plot_set_range__(plot_type * plot, double *x1 , double *x2 , double 
 void plot_data(plot_type * plot)
 {
   int iplot;
-
+  
   plsstrm(plot->stream);  
-  pladv(0);
+
+  if (plot->is_histogram) {
+    plot_set_range__(plot , NULL , NULL , NULL , NULL);
+    for (iplot = 0; iplot < plot->size; iplot++) 
+      plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
+    
+    return;
+  } 
+
+
+  pladv(0);  /* And what does this do ... */
   plvsta();
   {
     double x1,x2,y1,y2;
@@ -272,8 +293,6 @@ void plot_data(plot_type * plot)
   
   for (iplot = 0; iplot < plot->size; iplot++) 
     plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
-  
-  
 }
 
 
