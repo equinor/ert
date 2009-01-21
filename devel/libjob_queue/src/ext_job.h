@@ -17,6 +17,8 @@ void 	       ext_job_free(ext_job_type * ) ;
 void 	       ext_job_free__(void * );
 void 	       ext_job_add_environment(ext_job_type *, const char * , const char * ) ;
 
+void           ext_job_fprintf(const ext_job_type * , FILE * stream );
+void           ext_job_set_private_arg(ext_job_type * , const char *  , const char * );
 void 	       ext_job_set_portable_exe(ext_job_type * , const char * );
 void 	       ext_job_set_stdout_file(ext_job_type * , const char * );
 void 	       ext_job_set_stdin_file(ext_job_type * , const char * );

@@ -132,7 +132,8 @@ basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __drive
 					       int   node_index                   , 
 					       const char * submit_cmd  	  , 
 					       const char * run_path    	  , 
-					       const char * job_name) {
+					       const char * job_name              ,
+					       const void * job_arg) {
   local_driver_type * driver = (local_driver_type *) __driver;
   local_driver_assert_cast(driver); 
   {
@@ -172,7 +173,6 @@ void * local_driver_alloc() {
   local_driver->abort_f     	     = local_driver_abort_job;
   local_driver->free_job    	     = local_driver_free_job;
   local_driver->free_driver 	     = local_driver_free__;
-  local_driver->set_resource_request = NULL;
   {
     basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) local_driver;
     basic_queue_driver_init(basic_driver);

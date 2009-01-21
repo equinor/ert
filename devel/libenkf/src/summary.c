@@ -66,7 +66,7 @@ void summary_fread(summary_type * summary , FILE * stream) {
   int  size;
   enkf_util_fread_assert_target_type(stream , SUMMARY);
   fread(&size , sizeof  size , 1 , stream);
-  enkf_util_fread(summary->data , sizeof *summary->data , size , stream , __func__);
+  util_fread(summary->data , sizeof *summary->data , size , stream , __func__);
 }
 
 
@@ -77,7 +77,7 @@ bool summary_fwrite(const summary_type * summary , FILE * stream) {
   
   enkf_util_fwrite_target_type(stream , SUMMARY);
   fwrite(&data_size , sizeof  data_size     , 1 , stream);
-  enkf_util_fwrite(summary->data  , sizeof *summary->data    ,data_size , stream , __func__);
+  util_fwrite(summary->data  , sizeof *summary->data    ,data_size , stream , __func__);
   return true;
 }
 

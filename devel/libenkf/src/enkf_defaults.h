@@ -38,7 +38,6 @@
 #define DEFAULT_ENKF_ALPHA        "1.50"    /* NB String */
 
 
-
 #define DEFAULT_PLOT_PATH "Plots"
 
 
@@ -46,6 +45,26 @@
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"
 #define NUM_STATIC_KW         37
+
+
+
+/* 
+   The string added at the beginning and end of string which should be
+   replaced with the template parser.  
+*/
+
+#define DEFAULT_START_TAG "<"
+#define DEFAULT_END_TAG ">"
+
+
+/*
+  The name of the pyton module - and the variable in the module,
+  used when running the remote jobs.
+*/
+#define DEFAULT_JOB_MODULE   "jobs.py"
+#define DEFAULT_JOBLIST_NAME "jobList"
+
+
 
 
 /* 

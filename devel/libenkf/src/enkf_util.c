@@ -6,26 +6,10 @@
 #include <enkf_util.h>
 #include <util.h>
 #include <ecl_util.h>
+#include <enkf_defaults.h>
 
 
 
-void enkf_util_fwrite(const void *ptr , int item_size, int items , FILE *stream , const char * caller) {
-  if (fwrite(ptr , item_size , items , stream) != items) {
-    fprintf(stderr,"%s: failed to write : %d bytes - aborting \n",caller , (item_size * items));
-    abort();
-  }
-}
-
-
-void enkf_util_fread(void *ptr , int item_size, int items , FILE *stream , const char * caller) {
-  if (fread(ptr , item_size , items , stream) != items) {
-    fprintf(stderr,"%s: failed to read : %d bytes - aborting \n",caller , (item_size * items));
-    abort();
-  }
-}
-
-
-/*****************************************************************/
 
 static void enkf_util_rand_dbl(int N , double max , double *R) {
   int i;
@@ -259,3 +243,8 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
   free(width);
 }
 #undef PRINT_LINE
+
+
+char * enkf_util_alloc_tagged_string(const char * s) {
+  return util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , s , DEFAULT_END_TAG);
+}

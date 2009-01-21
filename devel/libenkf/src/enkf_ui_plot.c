@@ -138,6 +138,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	double  value , std;
 	int report_step = -1;
 	plot_dataset_set_line_color( obs_data , RED);
+	plot_dataset_set_line_width( obs_data , 1.0);
 	do {
 	  report_step = obs_vector_get_next_active_step( obs_vector , report_step);
 	  if (report_step != -1) {

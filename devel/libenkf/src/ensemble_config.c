@@ -336,13 +336,24 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     else
       options = NULL;
     
-    enkf_var_type var_type   = dynamic_state;  /* Whether var_type should be dynamic state or dynamic_result is not obvious. */
+    
     {
       char * ecl_file;
       char * result_file;
+      enkf_var_type var_type;
       gen_data_config = gen_data_config_alloc(num_options , options , &ecl_file , &result_file);
+      if (ecl_file == NULL) /* 
+			       EnKF should not provide the forward model with an instance of this
+			       data => We have dynamic_result.
+			    */
+	var_type = dynamic_result;
+      else
+	var_type = dynamic_state;   
+			       
+	
 
       ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
+
 
       util_safe_free( ecl_file );
       util_safe_free( result_file );

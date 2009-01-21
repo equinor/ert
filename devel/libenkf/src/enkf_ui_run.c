@@ -75,7 +75,7 @@ void enkf_ui_run_exp__(void * enkf_main) {
 	iactive[iens] = false;
     }
   }
-  enkf_main_run_step(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , false , enkf_sched_get_default_forward_model(enkf_sched));
+  enkf_main_run_step(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , false , NULL /* No possibility to use funky forward model */);
   free(iactive);
 }
 
@@ -92,8 +92,8 @@ void enkf_ui_run_screening__(void * enkf_main) {
     for (iens= 0; iens < ens_size; iens++)
       iactive[iens] = true;
   }
-    
-  enkf_main_run_step(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , false , enkf_sched_get_default_forward_model(enkf_sched));
+                                                                                                           
+  enkf_main_run_step(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , false , NULL);
   free(iactive);
 }
 

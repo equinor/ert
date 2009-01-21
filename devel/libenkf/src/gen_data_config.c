@@ -110,7 +110,7 @@ static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_ty
     config->init_file_fmt     = path_fmt_alloc_path_fmt( init_file_fmt );
   else
     config->init_file_fmt = NULL;
-
+  
   pthread_mutex_init( &config->update_lock , NULL );
   return config;
 }
@@ -242,16 +242,25 @@ void gen_data_config_free(gen_data_config_type * config) {
 */
 
 
-void gen_data_config_assert_size(gen_data_config_type * config , int size, int report_step) {
+/**
+   Does not work properly with:
+   
+   1. keep_run_path - the load_file will be left hanging around - and loaded again and again.
+   2. Doing forward several steps - how to (time)index the files?
+     
+*/
+
+void gen_data_config_assert_size(gen_data_config_type * config , int data_size, int report_step) {
   pthread_mutex_lock( &config->update_lock );
   {
     if (report_step != config->__report_step) {
-      config->data_size = size; 
+      config->data_size     = data_size; 
       config->__report_step = report_step;
-    } else 
-      if (config->data_size != size)
-	util_abort("%s: Size mismatch when loading:%s from file - got %d elements - expected:%d [report_step:%d] \n",__func__ , config->ecl_kw_name , size , config->data_size, report_step);
-    active_list_set_data_size( config->active_list , size );
+    } else if (config->data_size != data_size) {
+      pthread_mutex_unlock( &config->update_lock );
+      util_abort("%s: Size mismatch when loading:%s from file - got %d elements - expected:%d [report_step:%d] \n",__func__ , config->ecl_kw_name , data_size , config->data_size, report_step);
+    }
+    active_list_set_data_size( config->active_list , data_size );
   }
   pthread_mutex_unlock( &config->update_lock );
 }

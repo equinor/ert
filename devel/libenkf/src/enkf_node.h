@@ -98,7 +98,7 @@ void             enkf_node_deserialize(enkf_node_type * , const serial_vector_ty
 
 void             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_block_type * , int, int );
 void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
-void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * );
+void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * , int);
 bool             enkf_node_initialize(enkf_node_type *enkf_node , int);
 void             enkf_node_printf(const enkf_node_type *);
 bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, int , int , state_enum);

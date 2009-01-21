@@ -46,11 +46,10 @@
 #include <site_config.h>
 #include <ecl_config.h>
 #include <subst.h>
+#include <forward_model.h>
 
 #define ENKF_STATE_TYPE_ID 78132
 
-#define __START_TAG "<"
-#define __END_TAG   ">"
 
 
 /**
@@ -63,18 +62,18 @@
 */
 
 typedef struct run_info_struct {
-  bool              __ready;         	   /* An attempt to check the internal state - not active yet. */
-  bool              active;                /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
-  int               init_step;       	   /* The report step we initialize from - will often be equal to step1, but can be different. */
-  state_enum        init_state;      	   /* Whether we should init from a forecast or an analyzed state. */
-  int               step1;           	   /* The forward model is integrated: step1 -> step2 */
-  int               step2;  	     
-  int               load_mask1;            /* What should we load from interemediate report steps - add: dynamic_state , dynamic_result, static_state */
-  int               load_mask2;            /* What should we load from the final step? */
-  const stringlist_type * forward_model;   /* The current forward model - as a list of ext_joblist identifiers (i.e. strings) */
-  char             *run_path;              /* The currently used runpath - is realloced / freed for every step. */
-  bool              can_sim;               /* If false - this member can not start simulations. */
-  run_mode_type     run_mode;              /* What type of run this is */
+  bool               	  __ready;         /* An attempt to check the internal state - not active yet. */
+  bool               	  active;          /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
+  int                	  init_step;       /* The report step we initialize from - will often be equal to step1, but can be different. */
+  state_enum         	  init_state;      /* Whether we should init from a forecast or an analyzed state. */
+  int                	  step1;           /* The forward model is integrated: step1 -> step2 */
+  int                	  step2;  	     
+  int                	  load_mask1;      /* What should we load from interemediate report steps - add: dynamic_state , dynamic_result, static_state */
+  int                	  load_mask2;      /* What should we load from the final step? */
+  char            	* run_path;        /* The currently used runpath - is realloced / freed for every step. */
+  bool            	  can_sim;         /* If false - this member can not start simulations. */
+  run_mode_type   	  run_mode;        /* What type of run this is */
+  
   /******************************************************************/
   /* Return value - set by the called routine!!  */
   bool              complete_OK;           /* Did the forward model complete OK? */
@@ -124,21 +123,25 @@ typedef struct member_config_struct {
 /** THE MOST IMPORTANT ENKF OBJECT */
 
 struct enkf_state_struct {
-  int                     __id;              /* Funny integer used for run_time type checking. */
-  restart_kw_list_type  * restart_kw_list;   /* This is an ordered list of the keywords in the restart file - to be
-                                                able to regenerate restart files with keywords in the right order.*/
+  int                     __id;              	   /* Funny integer used for run_time type checking. */
+  restart_kw_list_type  * restart_kw_list;   	   /* This is an ordered list of the keywords in the restart file - to be
+                                             	      able to regenerate restart files with keywords in the right order.*/
   hash_type    	   	* node_hash;
-  subst_list_type       * subst_list;        /* This a list of key - value pairs which are used in a search-replace
-                                                operation on the ECLIPSE data file. Will at least contain the key "INIT"
-                                                - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
-
-
-  const ecl_config_type * ecl_config;        /* ecl_config object - pure reference to the enkf_main object. */
-  ensemble_config_type  * ensemble_config;   /* The config nodes for the enkf_node objects contained in node_hash. */
-
-  run_info_type         * run_info;          /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
-  shared_info_type      * shared_info;       /* Pointers to shared objects which is needed by the enkf_state object (read only). */
-  member_config_type    * my_config;         /* Private config information for this member; not updated during a simulation. */
+  subst_list_type       * subst_list;        	   /* This a list of key - value pairs which are used in a search-replace
+                                             	      operation on the ECLIPSE data file. Will at least contain the key "INIT"
+                                             	      - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
+  
+  
+  const ecl_config_type * ecl_config;        	   /* ecl_config object - pure reference to the enkf_main object. */
+  ensemble_config_type  * ensemble_config;   	   /* The config nodes for the enkf_node objects contained in node_hash. */
+  
+  run_info_type         * run_info;          	   /* Various pieces of information needed by the enkf_state object when running the forward model. Updated for each report step.*/
+  shared_info_type      * shared_info;       	   /* Pointers to shared objects which is needed by the enkf_state object (read only). */
+  member_config_type    * my_config;         	   /* Private config information for this member; not updated during a simulation. */
+  
+  forward_model_type    * default_forward_model;   /* The forward model - owned by this enkf_state instance. */
+  forward_model_type    * special_forward_model;   /* A special forward model for a slected report step - explicitly set with enkf_state_set_special_forward_model. */
+  forward_model_type    * forward_model;           /* */
 };
 
 /*****************************************************************/
@@ -165,7 +168,17 @@ static void run_info_set_run_path(run_info_type * run_info , lock_mode_type lock
 */
 
 
-static void run_info_set(run_info_type * run_info , run_mode_type run_mode , bool active, int init_step , state_enum init_state , int step1 , int step2 ,const stringlist_type * forward_model, int iens , path_fmt_type * run_path_fmt) {
+static void run_info_set(run_info_type * run_info , 
+			 run_mode_type run_mode   , 
+			 bool active              , 
+			 int init_step            , 
+			 state_enum init_state    , 
+			 int step1                , 
+			 int step2                , 
+			 forward_model_type * __forward_model , 
+			 int iens                             , 
+			 path_fmt_type * run_path_fmt ) {
+
   run_info->active          = active;
   run_info->init_step  	    = init_step;
   run_info->init_state 	    = init_state;
@@ -173,12 +186,13 @@ static void run_info_set(run_info_type * run_info , run_mode_type run_mode , boo
   run_info->step2      	    = step2;
   run_info->load_mask1      = dynamic_result;
   run_info->load_mask2      = dynamic_result + dynamic_state + static_state;
-  run_info->forward_model   = forward_model;
+  
   run_info->complete_OK     = false;
   run_info->__ready         = true;
   run_info->can_sim         = true;
   run_info->run_mode        = run_mode;
   run_info_set_run_path(run_info , lock_none , iens , run_path_fmt);
+  
 }
 
 
@@ -269,6 +283,31 @@ static member_config_type * member_config_alloc(int iens , bool keep_runpath , c
 /*****************************************************************/
 
 
+void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
+  member_config_type * member_config = enkf_state->my_config;
+  char * iens_s       	  = util_alloc_sprintf("%d"   , member_config->iens);
+  char * iens4_s      	  = util_alloc_sprintf("%04d" , member_config->iens);
+  char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+  
+  forward_model_set_private_arg(enkf_state->forward_model ,  "IENS"        , iens_s);
+  forward_model_set_private_arg(enkf_state->forward_model ,  "IENS4"       , iens4_s);
+  forward_model_set_private_arg(enkf_state->forward_model ,  "ECL_BASE"    , member_config->eclbase);  /* Can not change run_time .. */
+  forward_model_set_private_arg(enkf_state->forward_model ,  "SMSPEC_FILE" , smspec_file);
+  
+  free(iens_s);
+  free(iens4_s);
+  free(smspec_file);
+}
+
+
+
+void enkf_state_set_special_forward_model(enkf_state_type * enkf_state , forward_model_type * forward_model) {
+  enkf_state->special_forward_model = forward_model_alloc_copy( forward_model );  /* Discarded again at the end of this run */
+  enkf_state->forward_model = enkf_state->special_forward_model;
+  enkf_state_init_forward_model(enkf_state);
+}
+
+
 static void enkf_state_add_node_internal(enkf_state_type * , const char * , const enkf_node_type * );
 
 
@@ -347,15 +386,10 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
   return state;
 }
 
-/**
-   The value is string - the subst_list routine takes ownership of the
-   reference, i.e. the calling scope should allocate the string - but
-   not free it.
-*/
 
 static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
-  char * tagged_key = util_alloc_sprintf("%s%s%s" , __START_TAG , kw , __END_TAG);
-  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , value);
+  char * tagged_key = enkf_util_alloc_tagged_string( kw );
+  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , util_alloc_string_copy(value));
   free(tagged_key);
 }
 
@@ -364,11 +398,12 @@ static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * 
 
 enkf_state_type * enkf_state_alloc(int iens,
 				   bool  keep_runpath , 
-				   const model_config_type * model_config,
-				   ensemble_config_type * ensemble_config,
-				   const site_config_type * site_config,
-				   const ecl_config_type * ecl_config,
-				   hash_type * data_kw) {
+				   const model_config_type   * model_config,
+				   ensemble_config_type      * ensemble_config,
+				   const site_config_type    * site_config,
+				   const ecl_config_type     * ecl_config,
+				   hash_type                 * data_kw,
+				   const forward_model_type  * default_forward_model) { 
   
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
@@ -378,16 +413,25 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config);
   enkf_state->shared_info     = shared_info_alloc(site_config , model_config );
   enkf_state->run_info        = run_info_alloc();
-
-  enkf_state->node_hash       = hash_alloc();
-  enkf_state->restart_kw_list = restart_kw_list_alloc();
+  
+  enkf_state->node_hash       	    = hash_alloc();
+  enkf_state->restart_kw_list 	    = restart_kw_list_alloc();
 
   enkf_state->subst_list      = subst_list_alloc();
+  {
+    char * iens_s      = util_alloc_sprintf("%d"   , iens);
+    char * iens4_s     = util_alloc_sprintf("%04d" , iens);
+    char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
 
-  enkf_state_add_subst_kw(enkf_state , "IENS"  	    , util_alloc_sprintf("%d"   , iens));
-  enkf_state_add_subst_kw(enkf_state , "IENS4" 	    , util_alloc_sprintf("%04d" , iens));
-  enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , util_alloc_string_copy(enkf_state->my_config->eclbase));  /* Can not change run_time .. */
-  enkf_state_add_subst_kw(enkf_state , "SMSPEC_FILE" , ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1));
+    enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s);
+    enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s);
+    enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase);  /* Can not change run_time .. */
+    enkf_state_add_subst_kw(enkf_state , "SMSPEC_FILE" , smspec_file);
+    
+    free(iens_s);
+    free(iens4_s);
+    free(smspec_file);
+  }
 
 
   /*
@@ -419,19 +463,23 @@ INCLDUE
     
     if (init_file != NULL) 
     {
-      char * tmp_include     = util_alloc_joined_string((const char *[4]) {"  " , "'" , init_file , "' /"} , 4 , "");
-      enkf_state_add_subst_kw(enkf_state , "INIT" , util_alloc_multiline_string((const char *[2]) {"INCLUDE" , tmp_include} , 2));
+      char * tmp_include = util_alloc_sprintf("INCLUDE\n   \'%s\' /\n",init_file);
+      enkf_state_add_subst_kw(enkf_state , "INIT" , tmp_include);
       free(tmp_include);
     }
   }
   {
     const char * key = hash_iter_get_first_key( data_kw );
     while (key != NULL) {
-      char * value = util_alloc_string_copy(hash_get(data_kw , key));
-      enkf_state_add_subst_kw(enkf_state , key , value);   /* The subst_list will free it in the end. */
+      enkf_state_add_subst_kw(enkf_state , key , hash_get(data_kw , key));
       key = hash_iter_get_next_key( data_kw );
     }
   }
+
+  enkf_state->special_forward_model = NULL;
+  enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model );
+  enkf_state->forward_model         = enkf_state->default_forward_model;
+  enkf_state_init_forward_model( enkf_state );
   return enkf_state;
 }
 
@@ -561,7 +609,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , int load
       fortio_fclose(fortio);
       free(restart_file);
     }
-    
+  
     /*****************************************************************/
     
     
@@ -574,7 +622,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , int load
     
     {
       restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(restart_block);
-      const char * block_kw 	         = restart_kw_list_get_first(block_kw_list);
+      const char * block_kw 	           = restart_kw_list_get_first(block_kw_list);
       
       restart_kw_list_reset(enkf_state->restart_kw_list);
       while (block_kw != NULL) {
@@ -673,7 +721,6 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , int load
       }                                                                      
     }
 
-    
     /*****************************************************************/
     /* Cleaning up */
     ecl_block_free( restart_block );
@@ -703,7 +750,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , int load
 static void enkf_state_internalize_results(enkf_state_type * enkf_state , int load_mask1 , int load_mask2 , int report_step1 , int report_step2) {
   if (report_step1 == 0)   /* Fucking special case - PRESSURE +++ is initialized by ECLIPSE - loading initial state. */
     enkf_state_internalize_state(enkf_state , dynamic_state + static_state , 0);
-
+  
   {
     int report_step;
 
@@ -775,11 +822,11 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
       if (var_type == dynamic_state) {
 	/* Pressure and saturations */
 	if (enkf_node_get_impl_type(enkf_node) == FIELD)
-	  enkf_node_ecl_write(enkf_node , NULL , fortio);
+	  enkf_node_ecl_write(enkf_node , NULL , fortio , run_info->step1);
 	else 
 	  util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key(enkf_node));
       } else if (var_type == static_state) {
-	enkf_node_ecl_write(enkf_node , NULL , fortio);
+	enkf_node_ecl_write(enkf_node , NULL , fortio , run_info->step1);
 	enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
       } else 
 	util_abort("%s: internal error - should not be here ... \n",__func__);
@@ -834,7 +881,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (!restart_kw_list_has_kw(enkf_state->restart_kw_list , key_list[ikey])) {      /* Make sure that the elements in the restart file are not written (again). */
 	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-	enkf_node_ecl_write(enkf_node , run_info->run_path , NULL); 
+	enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
       }
     }
     util_free_stringlist(key_list , num_keys);
@@ -978,7 +1025,6 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
   if (!run_info->can_sim)
     util_abort("%s: this EnKF instance can not start simulations - aborting \n", __func__ );
   {
-    const shared_info_type    * shared_info = enkf_state->shared_info;
     const run_info_type       * run_info    = enkf_state->run_info;
     if (!run_info->__ready) 
       util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
@@ -991,6 +1037,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     if (run_info->step1 > 0) {
       char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
       enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize);
+      free(data_initialize);
     }
     
     util_make_path(run_info->run_path);
@@ -1027,13 +1074,29 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     {
       const bool fmt_file  	= ecl_config_get_formatted(enkf_state->ecl_config);
-      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP1"  , util_alloc_sprintf("%d" , run_info->step1));
-      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP2"  , util_alloc_sprintf("%d" , run_info->step2));
-      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1));
-      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step2));
+      char * step1_s 	   = util_alloc_sprintf("%d" , run_info->step1);
+      char * step2_s 	   = util_alloc_sprintf("%d" , run_info->step2);
+      char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
+      char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step2);
+	
+      
+      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP1"  , step1_s);
+      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP2"  , step2_s);
+      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1);
+      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2);
+      
+      forward_model_set_private_arg(enkf_state->forward_model , "REPORT_STEP1"  , step1_s);
+      forward_model_set_private_arg(enkf_state->forward_model , "REPORT_STEP2"  , step2_s);
+      forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE1" , restart_file1);
+      forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE2" , restart_file2);
+
+      free(step1_s);
+      free(step2_s);
+      free(restart_file1);
+      free(restart_file2);
       
       /* This is where the job script is created */
-      ext_joblist_python_fprintf( shared_info->joblist , run_info->forward_model ,run_info->run_path , enkf_state->subst_list);
+      forward_model_python_fprintf( enkf_state->forward_model , run_info->run_path , enkf_state->subst_list);
     }
   }
 }
@@ -1051,7 +1114,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
    2: enkf_state_complete_eclipse()
 
    Because the first is quite CPU intensive (gunzip), and the number of
-   concurrent threads should be limitied. For the second there is one
+   concurrent threads should be limited. For the second there is one
    thread for each ensemble member. This is handled by the calling scope.
 */
 
@@ -1067,7 +1130,7 @@ void enkf_state_start_eclipse(enkf_state_type * enkf_state) {
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
-    job_queue_add_job(shared_info->job_queue , run_info->run_path , my_config->eclbase , my_config->iens);
+    job_queue_add_job(shared_info->job_queue , run_info->run_path , my_config->eclbase , my_config->iens , forward_model_get_lsf_request(enkf_state->forward_model));
   }
 }
 
@@ -1083,13 +1146,12 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
     const member_config_type  * my_config   = enkf_state->my_config;
-    const int usleep_time = 100000; /* 1/10 of a second */ 
+    const int usleep_time = 2500000; //100000; /* 1/10 of a second */ 
     job_status_type final_status;
-    
     
     while (true) {
       final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
-      
+  
       if (final_status == job_queue_complete_OK) {
 	enkf_state_internalize_results(enkf_state , run_info->load_mask1 , run_info->load_mask2 , run_info->step1 , run_info->step2); 
 	break;
@@ -1099,7 +1161,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
 	break;
       } else usleep(usleep_time);
     } 
-    
+
     /**
        We are about to delete the runpath - but first we test:
 
@@ -1117,6 +1179,16 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
     run_info_complete_run(enkf_state->run_info);
   }
   run_info->__ready = false;
+
+  /* 
+     If we have used a special forward model for this report step we
+     discard that model, and recover the default forward_model.
+  */
+  if (enkf_state->special_forward_model != NULL) {
+    forward_model_free( enkf_state->special_forward_model );
+    enkf_state->special_forward_model = NULL;
+    enkf_state->forward_model = enkf_state->default_forward_model;
+  }
 }
 
 
@@ -1418,11 +1490,13 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 }
 
 
-void enkf_state_init_run(enkf_state_type * state , run_mode_type run_mode, bool active , int init_step , state_enum init_state , int step1 , int step2 , const stringlist_type * forward_model) {
+
+void enkf_state_init_run(enkf_state_type * state , run_mode_type run_mode, bool active , int init_step , state_enum init_state , int step1 , int step2 , forward_model_type * __forward_model) {
   member_config_type * my_config    = state->my_config;
   shared_info_type   * shared_info  = state->shared_info;
-
-  run_info_set( state->run_info , run_mode , active , init_step , init_state , step1 , step2 , forward_model , my_config->iens , shared_info->run_path_fmt);
+  run_info_set( state->run_info , run_mode , active , init_step , init_state , step1 , step2 , __forward_model , my_config->iens , shared_info->run_path_fmt);
+  if (__forward_model != NULL)
+    enkf_state_set_special_forward_model( state , __forward_model);
 }
 
 

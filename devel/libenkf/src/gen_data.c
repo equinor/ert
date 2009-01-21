@@ -216,8 +216,8 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
       ecl_type_enum internal_type            = gen_data_config_get_internal_type(gen_data->config);
       gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
       buffer = gen_common_fload_alloc( ecl_file , input_format , internal_type , &load_type , &size);
-    }
-
+    } 
+    
     gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
     util_safe_free(buffer);
   }

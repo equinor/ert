@@ -167,7 +167,7 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
   
   havana_fault_output_transform(havana_fault);
   for (ikw = 0; ikw < size; ikw++) {
-    char * tagged_fault = util_alloc_sprintf("<%s>" , havana_fault_config_get_name(havana_fault->config , ikw));
+    char * tagged_fault = enkf_util_alloc_tagged_string( havana_fault_config_get_name(havana_fault->config , ikw) );
     subst_list_insert_owned_ref( subst_list , tagged_fault , util_alloc_sprintf( "%g" , output_data[ikw] ));
     free( tagged_fault );
   }

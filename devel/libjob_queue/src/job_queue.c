@@ -25,7 +25,6 @@
 
      status: This will get the status of the job. 
 
-     [set_resource_request: Set the requirements for the job - lsf only.]  
 
    The job_queue instance only has a (void *) pointer to the driver
    instance, i.e. the job_queue does not know anything of how the
@@ -86,6 +85,7 @@ typedef struct {
   char                  *run_path;        /* Where the job is run - absolute path. */
   job_status_type  	 job_status;      /* The current status of the job. */
   basic_queue_job_type 	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
+  const void            *job_arg;         /* Untyped data which is sent to the submit function as extra argument - can be whatever - fully owned by external scope.*/
 } job_queue_node_type;
 
 /*****************************************************************/
@@ -178,7 +178,7 @@ struct job_queue_struct {
 static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
 
-static void job_queue_initialize_node(job_queue_type * queue , const char * run_path , const char * job_name , int queue_index , int external_id ) {
+static void job_queue_initialize_node(job_queue_type * queue , const char * run_path , const char * job_name , int queue_index , int external_id , const void * job_arg) {
   if (external_id < 0) 
     util_abort("%s: external_id must be >= 0 - aborting \n",__func__);
   {
@@ -187,7 +187,8 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
     node->submit_attempt = 0;
     node->job_name       = util_alloc_string_copy( job_name );
     node->job_data       = NULL;
-
+    node->job_arg        = job_arg;
+    
     if (util_is_abs_path(run_path)) 
       node->run_path = util_alloc_string_copy( run_path );
     else
@@ -259,9 +260,10 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
       {
 	basic_queue_job_type * job_data = driver->submit(queue->driver         , 
 							 queue_index           , 
-							 queue->run_cmd     , 
+							 queue->run_cmd        , 
 							 node->run_path        , 
-							 node->job_name);
+							 node->job_name        , 
+							 node->job_arg);
 	
 	if (job_data != NULL) {
 	  job_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
@@ -498,29 +500,20 @@ void * job_queue_run_jobs__(void * __arg_pack) {
 }
 
 
-void job_queue_add_job(job_queue_type * queue , const char * run_path , const char * job_name , int external_id) {
+void job_queue_add_job(job_queue_type * queue , const char * run_path , const char * job_name , int external_id , const void * job_arg) {
   pthread_mutex_lock( &queue->active_mutex );
   {
     int active_size  = queue->active_size;
     if (active_size == queue->size) 
       util_abort("%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
     
-    job_queue_initialize_node(queue , run_path , job_name , active_size , external_id);
+    job_queue_initialize_node(queue , run_path , job_name , active_size , external_id , job_arg);
     queue->active_size++;
   }
   pthread_mutex_unlock( &queue->active_mutex );
 }
 
 
-/**
-   This only applies to the lsf_driver - but that is a quite important
-   special case ...
-*/
-void job_queue_set_resource_request(job_queue_type * queue, const char * resource_request) {
-  basic_queue_driver_type * driver  = queue->driver;
-  if(driver->set_resource_request != NULL)
-    driver->set_resource_request(driver , resource_request);
-}
 
 
 /**

@@ -22,7 +22,7 @@
 
 /**
    This struct contains configuration which is specific to this
-   particular model/run. Much of the information is actually accessed
+   particular model/run. Such of the information is actually accessed
    directly through the enkf_state object; but this struct is the
    owner of the information, and responsible for allocating/freeing
    it.
@@ -34,10 +34,9 @@
 
 
 struct model_config_struct {
-  forward_model_type  * __forward_model;    
+  forward_model_type  * std_forward_model;  /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
   enkf_fs_type        * ensemble_dbase;     /* Where the ensemble files are stored */
   history_type        * history;            /* The history object. */
-  stringlist_type     * forward_model;      /* A list of external jobs - which acts as keys into a ext_joblist_type instance. */
   path_fmt_type       * result_path;        /* path_fmt instance for results - should contain one %d which will be replaced report_step */
   path_fmt_type       * runpath;            /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
   char                * plot_path;          /* A dumping ground for PLOT files. */
@@ -63,15 +62,16 @@ void model_config_set_runpath_fmt(model_config_type * model_config, const char *
 
 
 
-model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , const sched_file_type * sched_file) {
+model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , const sched_file_type * sched_file , bool use_lsf) {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
   
-  model_config->plot_path      = NULL;
-  model_config->result_path    = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
-  model_config->forward_model  = config_alloc_stringlist( config , "FORWARD_MODEL" );
-  model_config->enkf_sched     = enkf_sched_fscanf_alloc( config_safe_get(config , "ENKF_SCHED_FILE") , num_restart_files  , joblist , model_config->forward_model);
-  model_config->runlock_mode   = lock_none;
+  model_config->plot_path         = NULL;
+  model_config->result_path       = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
+  model_config->std_forward_model = forward_model_alloc( config_alloc_joined_string( config , "FORWARD_MODEL" , " ") , joblist , use_lsf);
+  
+  model_config->enkf_sched      = enkf_sched_fscanf_alloc( config_safe_get(config , "ENKF_SCHED_FILE") , num_restart_files  , joblist , use_lsf);
+  model_config->runlock_mode    = lock_none;
   {
     char * cwd = util_alloc_cwd();
     model_config->lock_path      = util_alloc_full_path(cwd , "locks");
@@ -133,7 +133,7 @@ void model_config_free(model_config_type * model_config) {
   free(model_config->lock_path);
   enkf_fs_free(model_config->ensemble_dbase);
   history_free(model_config->history);
-  stringlist_free(model_config->forward_model);
+  forward_model_free(model_config->std_forward_model);
   free(model_config);
 }
 
@@ -182,4 +182,9 @@ void model_config_interactive_set_runpath__(void * arg) {
     menu_item_set_label( item , menu_label );
     free(menu_label);
   }
+}
+
+
+forward_model_type * model_config_get_std_forward_model( const model_config_type * config) {
+  return config->std_forward_model;
 }

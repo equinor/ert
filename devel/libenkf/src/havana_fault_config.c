@@ -252,14 +252,23 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
     const double * data = scalar_get_output_ref( scalar_data );
     int ikw;
     for (ikw = 0; ikw < size; ikw++) {
-      char * tagged_fault = util_alloc_sprintf("<%s>" , havana_fault_config_get_name(config , ikw));
+      char * tagged_fault = enkf_util_alloc_tagged_string(havana_fault_config_get_name(config , ikw));
       subst_list_insert_owned_ref(subst_list , tagged_fault , util_alloc_sprintf("%g" , data[ikw]));
       free(tagged_fault);
     }
   }
-  subst_list_insert_owned_ref( subst_list , "<INPUT_FAULTS>"   , tmp_fault_input_path);
-  subst_list_insert_owned_ref( subst_list , "<OUTPUT_FAULTS>"  , tmp_fault_output_path);
-  subst_list_insert_ref( subst_list , "<INPUT_ECLIPSE>"  , config->unfaulted_GRDECL_file);
+  {
+    char * input_faults  = enkf_util_alloc_tagged_string("INPUT_FAULTS");
+    char * output_faults = enkf_util_alloc_tagged_string("OUTPUT_FAULTS");
+    char * input_eclipse = enkf_util_alloc_tagged_string("INPUT_ECLIPSE");
+    
+    subst_list_insert_owned_ref( subst_list , input_faults   , tmp_fault_input_path);
+    subst_list_insert_owned_ref( subst_list , output_faults  , tmp_fault_output_path);
+    subst_list_insert_ref( subst_list       , input_eclipse  , config->unfaulted_GRDECL_file);
+    free(input_faults);
+    free(output_faults);
+    free(input_eclipse);
+  }
   util_make_path(tmp_fault_input_path);
   util_make_path(tmp_fault_output_path);
   

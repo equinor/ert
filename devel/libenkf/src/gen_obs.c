@@ -33,7 +33,7 @@ struct gen_obs_struct {
   int                          __type_id;
   int                          obs_size;         /* This is the total size of the observation vector. */ 
   int                        * data_index_list;  /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
-  bool                         observe_all_data; /* Bool */ 
+  bool                         observe_all_data; /* Flag which indiactes whether all data in the gen_data instance should be observed - in that case we must do a size comparizon-check at use time. */
 
   double                     * __obs_buffer;     /* This is the actual storage variable. obs_data and obs_std just point into this vector. */
   double                     * obs_data;         /* The observed data. */
@@ -120,11 +120,10 @@ gen_obs_type * gen_obs_alloc(const char * obs_file , const char * data_index_fil
        and the data_index_list just becomes a identity mapping. 
        
        At use time we must verify that the size of the observation
-       corresponds to the size of the gen_data_instance; that is
-       indicated by the boolean flag observe_all_data.
+       corresponds to the size of the gen_data_instance; that this
+       check is needed is indicated by the boolean flag
+       observe_all_data.
     */
-    
-
     obs->data_index_list = util_malloc( obs->obs_size * sizeof * obs->data_index_list , __func__);
     for (int i =0; i < obs->obs_size; i++)
       obs->data_index_list[i] = i;
@@ -149,7 +148,7 @@ static void gen_obs_assert_data_size(const gen_obs_type * gen_obs, const gen_dat
       Else the user has explicitly entered indices to observe in the
       gen_data instances, and we just have to trust them (however the
       gen_data_iget() does a range check. 
-  */
+    */
 }
 
 

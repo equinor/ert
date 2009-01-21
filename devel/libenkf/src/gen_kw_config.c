@@ -7,13 +7,7 @@
 #include <enkf_macros.h>
 #include <trans_func.h>
 #include <scalar_config.h>
-
-/**
-   These are the tags used to denote a string which should be replaced
-   by a numeric value. 
-*/
-#define __START_TAG "<"
-#define __END_TAG   ">"
+#include <enkf_defaults.h>
 
 
 #define GEN_KW_CONFIG_TYPE_ID 550761
@@ -103,7 +97,7 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
       if (fscanf(stream , "%s" , name) != 1) 
         util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
       
-      config->tagged_kw_list[line_nr] = util_alloc_sprintf("%s%s%s" , __START_TAG , name , __END_TAG);
+      config->tagged_kw_list[line_nr] = util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , name , DEFAULT_END_TAG);
       config->kw_list[line_nr] = util_alloc_string_copy(name);
       scalar_config_fscanf_line(config->scalar_config , line_nr , stream);
       line_nr++;

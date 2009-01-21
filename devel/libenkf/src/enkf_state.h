@@ -22,6 +22,7 @@ extern "C" {
 #include <site_config.h>
 #include <ecl_config.h>
 #include <ensemble_config.h>
+#include <forward_model.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
 
@@ -41,13 +42,14 @@ void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_eclipse__(void * );
 void             * enkf_state_complete_eclipse__(void * );
-enkf_state_type * enkf_state_alloc(int ,
-				   bool , 
-				   const model_config_type * ,
-				   ensemble_config_type * ,
-				   const site_config_type * ,
-				   const ecl_config_type * ,
-				   hash_type *);
+enkf_state_type  * enkf_state_alloc(int ,
+				    bool , 
+				    const model_config_type * ,
+				    ensemble_config_type * ,
+				    const site_config_type * ,
+				    const ecl_config_type * ,
+				    hash_type *,
+				    const forward_model_type *);
 
 
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
@@ -69,7 +71,7 @@ void               enkf_state_set_eclbase(enkf_state_type * , const char*);
 void enkf_ensemble_update(enkf_state_type ** , int  , serial_vector_type * , const double * );
 
 /*****************************************************************/
-void enkf_state_init_run(enkf_state_type * state , run_mode_type , bool active , int init_step , state_enum init_state , int step1 , int step2 , const stringlist_type * forward_model);
+void enkf_state_init_run(enkf_state_type * state , run_mode_type , bool active , int init_step , state_enum init_state , int step1 , int step2 , forward_model_type *);
 bool enkf_state_run_OK(const enkf_state_type * );
 #ifdef __cplusplus
 }

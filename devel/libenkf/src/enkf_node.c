@@ -307,9 +307,9 @@ void * enkf_node_value_ptr(const enkf_node_type * enkf_node) {
    wether a full file name is required, or only a path.
 */
 
-void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fortio_type * restart_fortio) {
+void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fortio_type * restart_fortio , int report_step) {
   if (enkf_node->ecl_write != NULL) {
-    const char * node_eclfile = enkf_config_node_get_outfile_ref(enkf_node->config);
+    char * node_eclfile = enkf_config_node_alloc_outfile(enkf_node->config , report_step);
     if (node_eclfile != NULL) {
       char * target_file = util_alloc_full_path(path , node_eclfile);
       enkf_node->ecl_write(enkf_node->data , target_file , restart_fortio);
@@ -329,6 +329,7 @@ void enkf_node_ecl_write(const enkf_node_type *enkf_node , const char *path , fo
 
       */
       enkf_node->ecl_write(enkf_node->data , NULL , restart_fortio);
+    util_safe_free( node_eclfile );
   }
 }
 
@@ -380,14 +381,14 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
   {
-    const char * input_file = enkf_config_node_get_infile(enkf_node->config);
-    char * file = NULL;
+    char * input_file = enkf_config_node_alloc_infile(enkf_node->config , report_step);
     if (input_file != NULL) {
-      file = util_alloc_full_path( run_path , input_file);
+      char * file = util_alloc_full_path( run_path , input_file);
       enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
       free(file);
     } else
       enkf_node->ecl_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
+    util_safe_free( input_file );
   }
   enkf_node->__report_step = report_step;
   enkf_node->__state       = forecast;

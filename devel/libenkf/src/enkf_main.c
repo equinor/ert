@@ -50,6 +50,7 @@
 #include <active_config.h>
 #include <field_config.h>
 #include <ecl_static_kw.h>
+#include <forward_model.h>
 #include "enkf_defaults.h"
 
 /**
@@ -413,15 +414,15 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
 
 
 
-void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update , const stringlist_type * forward_model) {
+void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update , forward_model_type * __forward_model) {
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   int   job_size;
 
   int iens;
   
   printf("Starting forward step: %d -> %d\n",step1 , step2);
-  site_config_update_lsf_request(enkf_main->site_config , forward_model);
-
+  //site_config_update_lsf_request(enkf_main->site_config , __forward_model);
+  
   job_size = 0;
   for (iens = 0; iens < ens_size; iens++)
     if (iactive[iens]) job_size++;
@@ -438,7 +439,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
     {
       thread_pool_type * submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) {
-        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2, forward_model);
+        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , NULL);
         thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
@@ -545,7 +546,7 @@ void enkf_main_run(enkf_main_type * enkf_main , const bool * iactive ,  int star
       int 	   report_step;
       int 	   next_report_step;
       bool enkf_on;
-      stringlist_type * forward_model;
+      forward_model_type * forward_model;
       
       enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &report_stride , &enkf_on , &forward_model);
       if (inode == start_inode)
@@ -658,9 +659,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       stringlist_free(local_dep);
     }
     
-                                                
+    
     /* These must be set IFF QUEUE_SYSTEM == LSF */
-    config_add_item(config , "LSF_RESOURCES" , false , false);
     item = config_add_item(config , "LSF_QUEUE"     , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
@@ -791,12 +791,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
        populating the enkf_main object. 
     */
     
-     
+    enkf_main->analysis_config = analysis_config_alloc(config);
     enkf_main->ecl_config      = ecl_config_alloc(config);
     enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
-    enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ));
-    enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , ecl_config_get_sched_file(enkf_main->ecl_config));
-    enkf_main->analysis_config = analysis_config_alloc(config);
+    {
+      bool use_lsf;
+      enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
+      enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , ecl_config_get_sched_file(enkf_main->ecl_config) , use_lsf);
+    }
 
 
     /*****************************************************************/
@@ -869,7 +871,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 						       enkf_main->ensemble_config,
 						       enkf_main->site_config    , 
 						       enkf_main->ecl_config     ,
-						       data_kw);
+						       data_kw,
+						       model_config_get_std_forward_model(enkf_main->model_config));
 	  
 	}
 	msg_free(msg , true);

@@ -234,9 +234,10 @@ void rsh_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_t
 basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver, 
 					     int   node_index , 
 					     const char * submit_cmd  	  , 
-					     const char * run_path    	  , 
-					     const char * job_name) {
-  
+					     const char * run_path    	  ,
+					     const char * job_name        ,
+					     const void * job_arg) {
+
   rsh_driver_type * driver = (rsh_driver_type *) __driver;
   rsh_driver_assert_cast(driver); 
   {
@@ -309,7 +310,6 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
   rsh_driver->abort_f         	   = rsh_driver_abort_job;
   rsh_driver->free_job        	   = rsh_driver_free_job;
   rsh_driver->free_driver     	   = rsh_driver_free__;
-  rsh_driver->set_resource_request = NULL;
   rsh_driver->num_hosts       	   = 0;
   rsh_driver->host_list       	   = NULL;
   rsh_driver->last_host_index 	   = 0;  

@@ -300,9 +300,6 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 
 
 
-void   enkf_util_fwrite(const void *, int , int , FILE *, const char * );
-void   enkf_util_fread ( void *, int , int , FILE *, const char * );
-
 void    enkf_util_truncate(void *  , int  , ecl_type_enum  , void *  , void *);
 void 	enkf_util_rand_stdnormal_vector(int  , double *);
 double 	enkf_util_rand_normal(double , double );
@@ -311,6 +308,8 @@ void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 
 char  * enkf_util_scanf_alloc_filename(const char * , int );
 void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , bool , FILE * stream);
+
+char * enkf_util_alloc_tagged_string(const char * );
 
 /* These #defines are used in the enkf_util_scanf_alloc_filename function. */
 #define EXISTING_FILE  1

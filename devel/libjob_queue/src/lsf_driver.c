@@ -49,9 +49,8 @@ struct lsf_driver_struct {
   int __lsf_id;
   char * queue_name;
   pthread_mutex_t    submit_lock;
-  char              *resource_request;
-
-
+  
+  
 #ifdef LSF_LIBRARY_DRIVER
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
@@ -348,21 +347,23 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
 					     int   queue_index , 
 					     const char * submit_cmd  	  , 
 					     const char * run_path    	  , 
-					     const char * job_name) {
+					     const char * job_name,
+					     const void * job_arg) {
   lsf_driver_type * driver = (lsf_driver_type *) __driver;
   lsf_driver_assert_cast(driver); 
   {
-    lsf_job_type * job = lsf_job_alloc();
-    char * lsf_stdout  = util_alloc_joined_string((const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
-    char * command     = util_alloc_joined_string( (const char*[2]) {submit_cmd , run_path} , 2 , " "); 
+    lsf_job_type * job 		  = lsf_job_alloc();
+    char * lsf_stdout  		  = util_alloc_joined_string((const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
+    char * command     		  = util_alloc_joined_string( (const char*[2]) {submit_cmd , run_path} , 2 , " "); 
+    char * resource_request      = (char *) job_arg;
     pthread_mutex_lock( &driver->submit_lock );
     
 #ifdef LSF_LIBRARY_DRIVER
     {
       int options = SUB_QUEUE + SUB_JOB_NAME + SUB_OUT_FILE;
-      if (driver->resource_request != NULL) {
+      if (resource_request != NULL) {
 	options += SUB_RES_REQ;
-	driver->lsf_request.resReq = driver->resource_request;
+	driver->lsf_request.resReq = resource_request;
       }
       driver->lsf_request.options = options;
     }
@@ -371,8 +372,10 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
     driver->lsf_request.command = command;
     job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
 #else
-    job->lsf_jobnr      = lsf_driver_submit_system_job( run_path , job_name , driver->queue_name , driver->resource_request , submit_cmd );
+    char * quoted_resource_request = util_alloc_sprintf("\"%s\"" , resource_request);
+    job->lsf_jobnr      = lsf_driver_submit_system_job( run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd );
     job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
+    free(quoted_resource_request);
 #endif
 
     pthread_mutex_unlock( &driver->submit_lock );
@@ -398,22 +401,21 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
   }
 }
 
-
-void lsf_driver_set_resource_request(lsf_driver_type * driver , const char * resource_request) {
-  util_safe_free(driver->resource_request);
-#ifdef LSF_LIBRARY_DRIVER
-  driver->resource_request = util_realloc_string_copy(driver->resource_request , resource_request);
-#else
-  driver->resource_request = util_alloc_sprintf("\"%s\"" , resource_request);  /* It is quoted for use with the bsub based driver. */
-#endif
-}
-
-
-void lsf_driver_set_resource_request__(basic_queue_driver_type * __driver, const char * resource_request) {  
-  lsf_driver_type * driver = (lsf_driver_type *) __driver;
-  lsf_driver_assert_cast(driver); 
-  lsf_driver_set_resource_request(driver , resource_request);
-}
+//void lsf_driver_set_resource_request(lsf_driver_type * driver , const char * resource_request) {
+//  util_safe_free(driver->resource_request);
+//#ifdef LSF_LIBRARY_DRIVER
+//  driver->resource_request = util_realloc_string_copy(driver->resource_request , resource_request);
+//#else
+//  driver->resource_request = util_alloc_sprintf("\"%s\"" , resource_request);  /* It is quoted for use with the bsub based driver. */
+//#endif
+//}
+//
+//
+//void lsf_driver_set_resource_request__(basic_queue_driver_type * __driver, const char * resource_request) {  
+//  lsf_driver_type * driver = (lsf_driver_type *) __driver;
+//  lsf_driver_assert_cast(driver); 
+//  lsf_driver_set_resource_request(driver , resource_request);
+//}
 
 
 void * lsf_driver_alloc(const char * queue_name) {
@@ -425,9 +427,6 @@ void * lsf_driver_alloc(const char * queue_name) {
   lsf_driver->abort_f          	   = lsf_driver_abort_job;
   lsf_driver->free_job         	   = lsf_driver_free_job;
   lsf_driver->free_driver      	   = lsf_driver_free__;
-  lsf_driver->set_resource_request = lsf_driver_set_resource_request__;
-  
-  lsf_driver->resource_request = NULL;
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
   
 #ifdef LSF_LIBRARY_DRIVER
@@ -468,7 +467,6 @@ void * lsf_driver_alloc(const char * queue_name) {
 
 void lsf_driver_free(lsf_driver_type * driver) {
   free(driver->queue_name);
-  util_safe_free(driver->resource_request);
 #ifdef LSF_SYSTEM_DRIVER
   hash_free(driver->status_map);
   hash_free(driver->bjobs_output);

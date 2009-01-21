@@ -19,12 +19,11 @@ typedef enum {job_queue_null          = 0 ,   /* For a queue node which has been
 typedef struct basic_queue_driver_struct basic_queue_driver_type;
 typedef struct basic_queue_job_struct    basic_queue_job_type;
 
-typedef basic_queue_job_type * (submit_job_ftype)  	    (basic_queue_driver_type * , int , const char * , const char * , const char * );
+typedef basic_queue_job_type * (submit_job_ftype)  	    (basic_queue_driver_type * , int , const char * , const char * , const char * , const void *);
 typedef void                   (abort_job_ftype)   	    (basic_queue_driver_type * , basic_queue_job_type * );
 typedef job_status_type        (get_status_ftype)  	    (basic_queue_driver_type * , basic_queue_job_type * );
 typedef void                   (free_job_ftype)    	    (basic_queue_driver_type * , basic_queue_job_type * );
 typedef void                   (free_queue_driver_ftype)    (basic_queue_driver_type *);
-typedef void                   (set_resource_request_ftype) (basic_queue_driver_type * , const char *); 
 
 void basic_queue_driver_assert_cast(const basic_queue_driver_type * );
 void basic_queue_driver_init(basic_queue_driver_type * );
@@ -42,7 +41,6 @@ free_job_ftype    	   * free_job;      	    \
 abort_job_ftype   	   * abort_f;       	    \
 get_status_ftype  	   * get_status;    	    \
 free_queue_driver_ftype    * free_driver;   	    \
-set_resource_request_ftype * set_resource_request;  \
 int __id;        
 
 

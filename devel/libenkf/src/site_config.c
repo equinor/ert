@@ -25,7 +25,6 @@ struct site_config_struct {
                    	                    These jobs will be the parts of the forward model. */
   job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
   char             	* image_viewer;  /* String pointing to an executable which can show images. */
-  lsf_request_type 	* lsf_request;   /* Tracking lsf resource request - NULL if we are not using lsf. */
 };
 
 
@@ -38,7 +37,6 @@ static site_config_type * site_config_alloc_empty() {
   site_config->joblist      = NULL;
   site_config->job_queue    = NULL;
   site_config->image_viewer = NULL;
-  site_config->lsf_request  = NULL;  /* Will be set to a value WHEN (IF) installing the lsf_queue */
   
   return site_config;
 }
@@ -83,9 +81,6 @@ static void site_config_install_LOCAL_job_queue(site_config_type * site_config ,
     job_queue_free( site_config->job_queue );
   
   site_config->job_queue = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
-  if (site_config->lsf_request != NULL)
-    lsf_request_free(site_config->lsf_request);
-
 }
 
 
@@ -96,9 +91,8 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config , i
     job_queue_free( site_config->job_queue );
   
   site_config->job_queue = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
-  if (site_config->lsf_request != NULL)
-    lsf_request_free(site_config->lsf_request);
 }
+
 
 static void site_config_install_LSF_job_queue(site_config_type * site_config ,  int ens_size , const char * job_script , int max_submit , int max_running , const char * lsf_queue_name, const char * manual_lsf_request) {
   basic_queue_driver_type * driver = lsf_driver_alloc( lsf_queue_name );
@@ -106,31 +100,24 @@ static void site_config_install_LSF_job_queue(site_config_type * site_config ,  
     job_queue_free( site_config->job_queue );
   
   site_config->job_queue   = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
-  if (site_config->lsf_request == NULL) 
-    site_config->lsf_request = lsf_request_alloc(site_config->joblist , manual_lsf_request);
-}
-
-
-
-void site_config_update_lsf_request(site_config_type * site_config , const stringlist_type * forward_model) {
-  if (site_config->lsf_request != NULL) 
-    lsf_request_update(site_config->lsf_request , forward_model , site_config->job_queue);
 }
 
 
 
 
-static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , int ens_size) {
+
+static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , int ens_size, bool * use_lsf) {
   const char * queue_system = config_get(config , "QUEUE_SYSTEM");
   const char * job_script   = config_get(config , "JOB_SCRIPT");
   int   max_submit          = strtol(config_get(config , "MAX_SUBMIT") , NULL , 10);
+  *use_lsf                  = false;
   
   if (strcmp(queue_system , "LSF") == 0) {
-    const char * lsf_queue_name             = config_get(config , "LSF_QUEUE");
+    const char * lsf_queue_name = config_get(config , "LSF_QUEUE");
     char * lsf_resource_request = NULL;
     int max_running;
     
-
+    
     if (config_has_set_item(config , "LSF_RESOURCES"))
       lsf_resource_request = config_alloc_joined_string(config , "LSF_RESOURCES" , " ");
     if (!util_sscanf_int(config_get(config , "MAX_RUNNING_LSF") , &max_running))
@@ -138,6 +125,7 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
     
     site_config_install_LSF_job_queue(site_config , ens_size , job_script , max_submit , max_running , lsf_queue_name , lsf_resource_request);
     util_safe_free(lsf_resource_request);
+    *use_lsf = true;
   } else if (strcmp(queue_system , "RSH") == 0) {
     const char * rsh_command        = config_get(config , "RSH_COMMAND");
     stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
@@ -158,10 +146,10 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
 }
 
 
-site_config_type * site_config_alloc(const config_type * config , int ens_size) {
+site_config_type * site_config_alloc(const config_type * config , int ens_size , bool * use_lsf) {
   site_config_type * site_config = site_config_alloc_empty();
   site_config_install_joblist(site_config , config);
-  site_config_install_job_queue(site_config , config , ens_size);
+  site_config_install_job_queue(site_config , config , ens_size , use_lsf);
   site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
   return site_config;
 }
@@ -170,7 +158,6 @@ void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
   free(site_config->image_viewer);
-  if (site_config->lsf_request != NULL) lsf_request_free( site_config->lsf_request );
   free(site_config);
 }
 

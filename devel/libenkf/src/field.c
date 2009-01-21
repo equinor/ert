@@ -336,7 +336,7 @@ void field_fread(field_type * field , FILE * stream) {
   if (read_compressed)
     util_fread_compressed(field->data , stream);
   else
-    enkf_util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
+    util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
   
 }
 
@@ -485,7 +485,7 @@ bool field_fwrite(const field_type * field , FILE * stream) {
   if (write_compressed)
     util_fwrite_compressed(field->data , sizeof_ctype * data_size , stream);
   else
-    enkf_util_fwrite(field->data    ,   sizeof_ctype , data_size , stream , __func__);
+    util_fwrite(field->data    ,   sizeof_ctype , data_size , stream , __func__);
   
   return true;
 }
