@@ -410,7 +410,7 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
   meas_matrix_reset(enkf_main->meas_analyzed);
   for(int report_step = step1 + 1; report_step <= step2; report_step++)  {
     printf("Fetching simulated responses and observations for step %i.\n", report_step);
-    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
+    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, analyzed, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
   }
 
   
