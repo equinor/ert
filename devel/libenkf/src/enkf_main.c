@@ -376,7 +376,6 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
     printf("Fetching simulated responses and observations for step %i.\n", report_step);
     enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
   }
-
   X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
   if (X != NULL) {
     /* 
@@ -401,7 +400,6 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
   enkf_main_fwrite_ensemble(enkf_main , dynamic_state + dynamic_result + parameter , step2 , analyzed);
   printf("\n");
 
-
   /*
     Collect observations and simulated responses for all steps after step1 up to and
     including step2.
@@ -412,7 +410,6 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
     printf("Fetching simulated responses and observations for step %i.\n", report_step);
     enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, analyzed, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
   }
-
   
   /** Printing update info after analysis. */
   {
