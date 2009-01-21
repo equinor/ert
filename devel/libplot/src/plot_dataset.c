@@ -64,7 +64,7 @@ void plot_dataset_set_symbol_size(plot_dataset_type * dataset , double symbol_si
 }
 
 void plot_dataset_set_line_width(plot_dataset_type * dataset , double line_width) {
-  dataset->symbol_size = line_width;
+  dataset->line_width = line_width;
 }
 
 /*****************************************************************/

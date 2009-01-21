@@ -109,6 +109,8 @@ void plot_dataset_append_point_yline(plot_dataset_type * , double   );
 void plot_dataset_append_vector_yline(plot_dataset_type * , int , const double * );
 void plot_dataset_set_shared_yline(plot_dataset_type * , int ,  double * );
 
+void plot_dataset_set_shared_hist(plot_dataset_type * , int , double *);
+
 
 
 #ifdef __cplusplus
