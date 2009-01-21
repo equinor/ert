@@ -202,38 +202,33 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * ke
 }
 
 
-void enkf_obs_get_observations(
-  enkf_obs_type * enkf_obs ,
-  int             report_step,
-  obs_data_type * obs_data)
-{
-  char ** obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
-  int iobs;
 
-  obs_data_reset(obs_data);
-  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++) {
-    obs_vector_type * obs_vector = hash_get(enkf_obs->obs_hash , obs_keys[iobs]);
-    obs_vector_iget_observations(obs_vector , report_step , obs_data);
-  }
-  util_free_stringlist( obs_keys , hash_get_size(enkf_obs->obs_hash));
-}
-
-
-
-void enkf_obs_measure_on_ensemble(
+/*
+  This will append observations and simulated responses 
+  from report_step to obs_data and meas_matrix.
+  Call obs_data_reset and meas_matrix_reset on
+  obs_data and meas_matrix if you want to use fresh
+  instances.
+*/
+void enkf_obs_get_obs_and_measure(
         const enkf_obs_type    * enkf_obs,
         enkf_fs_type           * fs,
         int                      report_step,
         state_enum               state,
         int                      ens_size,
         const enkf_state_type ** ensemble ,
-        meas_matrix_type       * meas_matrix)
+        meas_matrix_type       * meas_matrix,
+        obs_data_type          * obs_data)
 {
   char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
   int iobs;
   for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++)
   {
     const char * kw = obs_keys[iobs];
+    {
+      obs_vector_type * obs_vector = hash_get(enkf_obs->obs_hash , kw);
+      obs_vector_iget_observations(obs_vector , report_step , obs_data);
+    }
     {
       obs_vector_type  * obs_vector  = hash_get(enkf_obs->obs_hash , kw);
       int iens;

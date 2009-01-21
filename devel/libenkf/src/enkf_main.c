@@ -141,22 +141,6 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
 
 
 
-
-void enkf_main_measure(enkf_main_type * enkf_main , int report_step , state_enum state) {
-  const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
-  meas_matrix_type * meas_matrix;
-
-  if (state == forecast) 
-    meas_matrix = enkf_main->meas_forecast;
-  else
-    meas_matrix = enkf_main->meas_analyzed;
-  
-  meas_matrix_reset(meas_matrix);
-  enkf_obs_measure_on_ensemble( enkf_main->obs , enkf_main_get_fs(enkf_main) , report_step , state , ens_size , (const enkf_state_type **) enkf_main->ensemble , meas_matrix);
-}
-
-
-
 void enkf_main_free(enkf_main_type * enkf_main) {  
   enkf_obs_free(enkf_main->obs);
   obs_data_free(enkf_main->obs_data);
@@ -376,14 +360,20 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 
 
-/******************************************************************/
-
-
 void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   double *X;
-  enkf_obs_get_observations(enkf_main->obs , report_step , enkf_main->obs_data);
-  enkf_main_measure(enkf_main , report_step , forecast);
+  
+  /*
+    Both meas_matrix and obs_data are cummulative, thus we need to reset them.
+  */
+  obs_data_reset(enkf_main->obs_data);
+  meas_matrix_reset(enkf_main->meas_forecast);
+  meas_matrix_reset(enkf_main->meas_analyzed);
+
+
+  enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
+
   X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
   if (X != NULL) {
     /* 
@@ -407,7 +397,7 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
   printf("Saving: ........ "); fflush(stdout);
   enkf_main_fwrite_ensemble(enkf_main , dynamic_state + dynamic_result + parameter , report_step , analyzed);
   printf("\n");
-  enkf_main_measure(enkf_main , report_step , analyzed);
+  enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
   
   /** Printing update info after analysis. */
   {

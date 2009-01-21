@@ -27,24 +27,20 @@ void enkf_obs_free(
 
 obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
 
-void enkf_obs_get_observations(
-  enkf_obs_type * enkf_obs ,
-  int             report_step,
-  obs_data_type * obs_data);
-
 enkf_obs_type * enkf_obs_fscanf_alloc(
   const char         * config_file,
   const history_type * hist,
   ensemble_config_type * ensemble_config);
 
-void enkf_obs_measure_on_ensemble(
+void enkf_obs_get_obs_and_measure(
         const enkf_obs_type    * enkf_obs,
         enkf_fs_type           * fs,
         int                      report_step,
         state_enum               state,
         int                      ens_size,
         const enkf_state_type ** ensemble ,
-        meas_matrix_type       * meas_matrix);
+        meas_matrix_type       * meas_matrix,
+        obs_data_type          * obs_data);
 
 stringlist_type * enkf_obs_alloc_summary_vars(
         enkf_obs_type * enkf_obs);
