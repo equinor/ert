@@ -361,19 +361,21 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 
 
-void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
+void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step2) {
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   double *X;
-  
+
+
   /*
-    Both meas_matrix and obs_data are cummulative, thus we need to reset them.
+    Collect observations and simulated responses for all steps after step1 up to and
+    including step2.
   */
   obs_data_reset(enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_forecast);
-  meas_matrix_reset(enkf_main->meas_analyzed);
-
-
-  enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
+  for(int report_step = step1 + 1; report_step <= step2; report_step++)  {
+    printf("Fetching simulated responses and observations for step %i.\n", report_step);
+    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
+  }
 
   X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
   if (X != NULL) {
@@ -396,9 +398,21 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
 
   /* This will write analyzed results to disk anyway - maybe a bit wastefull . */
   printf("Saving: ........ "); fflush(stdout);
-  enkf_main_fwrite_ensemble(enkf_main , dynamic_state + dynamic_result + parameter , report_step , analyzed);
+  enkf_main_fwrite_ensemble(enkf_main , dynamic_state + dynamic_result + parameter , step2 , analyzed);
   printf("\n");
-  enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
+
+
+  /*
+    Collect observations and simulated responses for all steps after step1 up to and
+    including step2.
+  */
+  obs_data_reset(enkf_main->obs_data);
+  meas_matrix_reset(enkf_main->meas_analyzed);
+  for(int report_step = step1 + 1; report_step <= step2; report_step++)  {
+    printf("Fetching simulated responses and observations for step %i.\n", report_step);
+    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
+  }
+
   
   /** Printing update info after analysis. */
   {
@@ -409,7 +423,7 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int report_step) {
     free(stdS);
   }
   
-  enkf_main_fprintf_results(enkf_main , report_step);
+  enkf_main_fprintf_results(enkf_main , step2);
 }
 
 
@@ -476,7 +490,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   }
   
   if (enkf_update)
-    enkf_main_analysis_update(enkf_main , step2);
+    enkf_main_analysis_update(enkf_main , step1, step2);
   
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
