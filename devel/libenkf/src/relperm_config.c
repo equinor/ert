@@ -256,7 +256,7 @@ int relperm_config_get_data_size(const relperm_config_type * relperm_config) {
   return scalar_config_get_data_size(relperm_config->scalar_config);
 }
 
-void relperm_config_ecl_write(const relperm_config_type * relperm_config,const double * data,  FILE * stream,char * eclpath){
+void relperm_config_ecl_write(const relperm_config_type * relperm_config,const double * data,  FILE * stream, const char * eclpath){
   {
     const int hash_size = hash_get_size( relperm_config->ecl_file_hash );
     char ** key_list    = hash_alloc_keylist( relperm_config->ecl_file_hash );

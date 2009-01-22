@@ -25,7 +25,6 @@ float        field_ijk_get_float(const field_type * field, int  , int  , int );
 void          field_ijk_get(const field_type * , int , int  , int , void *);
 bool         field_ijk_valid(const field_type * , int , int , int );
 void         field_ijk_get_if_valid(const field_type * , int  , int  , int , void * , bool *);
-void 	     field_ecl_write(const field_type * , const char * , fortio_type *);
 void 	     field_ecl_write1D_fortio(const field_type * , fortio_type *);
 void 	     field_ecl_write3D_fortio(const field_type * , fortio_type *);
 void         field_ROFF_export(const field_type * , const char * );
@@ -64,7 +63,6 @@ VOID_COPYC_HEADER      (field);
 VOID_SERIALIZE_HEADER  (field);
 VOID_DESERIALIZE_HEADER (field);
 VOID_INITIALIZE_HEADER(field);
-
 VOID_ECL_WRITE_HEADER (field);
 VOID_FWRITE_HEADER (field);
 VOID_FREAD_HEADER  (field);

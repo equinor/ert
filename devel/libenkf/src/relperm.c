@@ -102,19 +102,17 @@ void relperm_ecl_write_f90test(const relperm_type * relperm, const double * data
   }
 }
 
-void relperm_ecl_write(const relperm_type * relperm , const char * __eclfile , fortio_type * fortio) {
+void relperm_ecl_write(const relperm_type * relperm , const char * run_path , const char * eclfile , fortio_type * fortio) {
+  char * full_path = util_alloc_full_path( run_path , eclfile );
   {
-    printf("Er i relperm_ecl_write_1 \n");
-    char * eclfile;
-    char * eclpath; 
-    FILE * stream  = util_fopen(__eclfile , "w");
+    FILE * stream  = util_fopen(full_path , "w");
     relperm_output_transform(relperm);
-    util_alloc_file_components(__eclfile, &eclpath,&eclfile, NULL);
-    printf("Er i relperm_ecl_write_2 \n");
-    relperm_config_ecl_write(relperm->config , relperm_get_output_ref(relperm) , stream,eclpath);
+    relperm_config_ecl_write(relperm->config , relperm_get_output_ref(relperm) , stream , run_path);
     fclose(stream);
   }
+  free( full_path );
 }
+
 
 void relperm_output_transform(const relperm_type * relperm){
   scalar_transform(relperm->scalar);

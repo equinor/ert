@@ -15,7 +15,7 @@ void           relperm_set_data(const relperm_type *, const double *);
 void           relperm_ecl_write_f90test(const relperm_type *,const double *, const char *);
 void           relperm_output_transform(const relperm_type *);
 const double * relperm_get_output_ref(const relperm_type *);
-void relperm_get_output_data(const relperm_type *, double *);
+void           relperm_get_output_data(const relperm_type *, double *);
 
 SAFE_CAST_HEADER(relperm)
 MATH_OPS_VOID_HEADER(relperm);

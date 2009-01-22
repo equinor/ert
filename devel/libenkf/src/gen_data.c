@@ -299,8 +299,19 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 }
 
 
-void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , fortio_type * fortio) {
+
+/** 
+    It is the enkf_node layer which knows whether the node actually
+    has any data to export. If it is not supposed to write data to the
+    forward model, i.e. it is of enkf_type 'dynamic_result' that is
+    signaled down here with eclfile == NULL.
+*/
+
+
+void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , fortio_type * fortio) {
   if (eclfile != NULL) {  
+    char * full_path = util_alloc_full_path( run_path , eclfile );
+
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
     switch (export_type) {
     case(ASCII):
@@ -318,6 +329,8 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * eclfile , 
     default:
       util_abort("%s: internal error \n",__func__);
     }
+
+    free( full_path );
   }
 }
 

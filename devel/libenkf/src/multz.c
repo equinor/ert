@@ -104,15 +104,15 @@ void multz_fread(multz_type * multz , FILE * stream) {
 }
 
 
-void multz_ecl_write(const multz_type * multz , const char * eclfile, fortio_type * fortio) {
-  {
-    FILE * stream  = util_fopen(eclfile , "w");
+void multz_ecl_write(const multz_type * multz , const char * run_path , const char * eclfile, fortio_type * fortio) {
+  char * full_path = util_alloc_full_path(run_path , eclfile);
+  FILE * stream  = util_fopen(full_path , "w");
     
-    multz_output_transform(multz);
-    multz_config_ecl_write(multz->config , multz_get_output_ref(multz) , stream);
+  multz_output_transform(multz);
+  multz_config_ecl_write(multz->config , multz_get_output_ref(multz) , stream);
     
-    fclose(stream);
-  }
+  fclose(stream);
+  free(full_path);
 }
 
 
@@ -161,32 +161,6 @@ multz_type * multz_alloc_mean(int ens_size , const multz_type **multz_ens) {
 
 /*****************************************************************/
 
-
-void multz_TEST() {
-  const char * config_file = "/tmp/multz_config.txt";
-  FILE * stream = util_fopen(config_file , "w");
-  fprintf(stream , "1 1 10 1 10 0  CONST 1\n");
-  fprintf(stream , "2 1 10         UNIFORM 0 1\n");
-  fprintf(stream , "3     0        DUNIF   5 0 1\n");
-  fclose(stream);
-  
-  {
-    const int ens_size = 1000;
-    char path[64];
-    int iens;
-    multz_config_type  * config    = multz_config_fscanf_alloc(config_file , 10, 10 ,10);
-    multz_type        ** multz_ens = malloc(ens_size * sizeof * multz_ens);
-    
-    for (iens = 0; iens < ens_size; iens++) {
-      multz_ens[iens] = multz_alloc(config);
-      multz_initialize(multz_ens[iens] , 0);
-      sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
-      util_make_path(path);
-      multz_ecl_write(multz_ens[iens] , path , NULL);
-      multz_truncate(multz_ens[iens]);
-    }
-  }
-}
 
 
 char * multz_alloc_description(const multz_type * multz , int multz_nr) {

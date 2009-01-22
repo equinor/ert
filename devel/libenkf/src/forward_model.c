@@ -17,8 +17,6 @@
 
 
 
-
-
 struct forward_model_struct {
   int 	  alloc_size;        	    	    /* The number of elements in the jobs vector. */
   int 	  size;              	    	    /* The number of elements in this forward_model. */

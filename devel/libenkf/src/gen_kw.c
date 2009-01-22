@@ -175,9 +175,12 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
 }
 
 
-void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * target_file , fortio_type * fortio) {
+void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const char * target_file , fortio_type * fortio) {
+  char * full_path = util_alloc_full_path( run_path , target_file );
   gen_kw_filter_file(gen_kw , target_file);
+  free( full_path );
 }
+
 
 
 void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list , double **_output_values) {

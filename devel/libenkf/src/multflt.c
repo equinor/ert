@@ -91,10 +91,9 @@ multflt_type * multflt_copyc(const multflt_type *multflt) {
   return new; 
 }
 
-
-
-static void __multflt_ecl_write(const multflt_type * multflt, const char * eclfile , bool direct) {
-  FILE * stream   = util_fopen(eclfile , "w");
+void  multflt_ecl_write(const multflt_type * multflt, const char * run_path , const char * eclfile , bool direct) {
+  char * full_path = util_alloc_full_path( run_path , eclfile );
+  FILE * stream    = util_fopen(full_path , "w");
   {
     const multflt_config_type *config = multflt->config;
     const int data_size       = multflt_config_get_data_size(config);
@@ -109,14 +108,10 @@ static void __multflt_ecl_write(const multflt_type * multflt, const char * eclfi
       fprintf(stream , " \'%s\'      %g  / \n", multflt_config_get_name( config , k) , output_data[k]);
     fprintf(stream , "/");
   }
-  
   fclose(stream);
+  free(full_path);
 }
 
-
-void multflt_ecl_write(const multflt_type * multflt, const char * eclfile, fortio_type * fortio) {
-  __multflt_ecl_write(multflt , eclfile , false);
-}
 
 
 bool multflt_fwrite(const multflt_type *multflt , FILE * stream) {
@@ -244,31 +239,6 @@ void multflt_ensemble_fprintf_results(const multflt_type ** ensemble, int ens_si
 
 /*****************************************************************/
 
-
-void multflt_TEST() {
-  const char * config_file = "/tmp/multflt_config.txt";
-  FILE * stream = util_fopen(config_file , "w");
-  fprintf(stream , "North  0.00  1.00   0  TANH \n");
-  fprintf(stream , "East   0.00  0.50   2  \n");
-  fprintf(stream , "West   0.00  2.00   0  NULL \n");
-  fclose(stream);
-  
-  {
-    const int ens_size = 1000;
-    char path[64];
-    int iens;
-    multflt_config_type  * config      = multflt_config_fscanf_alloc(config_file);
-    multflt_type        ** multflt_ens = malloc(ens_size * sizeof * multflt_ens);
-    
-    for (iens = 0; iens < ens_size; iens++) {
-      multflt_ens[iens] = multflt_alloc(config);
-      multflt_initialize(multflt_ens[iens] , 0);
-      sprintf(path , "/tmp/%04d/MULTZ.INC" , iens + 1);
-      util_make_path(path);
-      multflt_ecl_write(multflt_ens[iens] , path , NULL);
-    }
-  }
-}							 
 
 
 const char * multflt_get_name(const multflt_type * multflt, int fault_nr) {

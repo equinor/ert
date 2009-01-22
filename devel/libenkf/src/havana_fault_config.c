@@ -287,7 +287,8 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
 
   for (igroup = 0; igroup < config->num_fault_groups; igroup++) 
     fault_group_run_havana( config->fault_groups[igroup] , subst_list , run_path , config->input_fault_path , tmp_fault_input_path , config->havana_executable);
-  
+
+
   /* Before running havana action IntoEclipse, we must set .faultlist to all faults in tmp_havana_output_faults */
   fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , tmp_fault_output_path);
   {

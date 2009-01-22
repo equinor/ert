@@ -67,13 +67,15 @@ static void equil_get_woc_goc_ref(const equil_type * equil, const double **woc ,
 
 
 
-void equil_ecl_write(const equil_type * equil, const char * eclfile, fortio_type * fortio) {
-  FILE * stream   = util_fopen(eclfile , "w");
+void equil_ecl_write(const equil_type * equil, const char * run_path , const char * eclfile, fortio_type * fortio) {
+  char * full_path = util_alloc_full_path( run_path , eclfile );
+  FILE * stream   = util_fopen(full_path , "w");
   const double *woc , *goc;
   equil_output_transform(equil);
   equil_get_woc_goc_ref(equil , &woc , &goc);
   equil_config_ecl_write(equil->config , woc , goc , stream);
   fclose(stream);
+  free(full_path);
 }
 
 

@@ -37,13 +37,18 @@ typedef void   	      (deserialize_ftype)       (void *       	       ,  /* Node
 						 serial_state_type *   , 
 						 const serial_vector_type * );
                                                  
+typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node object */
+						 const char *  ,   /* Directory to write to. */
+                                                 const char *  ,   /* Filename - can be NULL. */
+                                                 fortio_type *);   /* fortio inistance for writing elements in restart files. */
+
+
 
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
 typedef void * 	      (alloc_ftype)                	(const void *);
 typedef void   	      (fread_ftype)                	(      void *  , FILE *);
 typedef bool   	      (fwrite_ftype)               	(const void *  , FILE *);
 typedef bool   	      (initialize_ftype)     	   	(      void *  , int);
-typedef void   	      (ecl_write_ftype)            	(const void *  , const char * , fortio_type *);
 typedef void   	      (ecl_load_ftype)            	(void *  , const char * , const ecl_sum_type * , const ecl_block_type * , int);
 typedef void          (realloc_data_ftype)	   	(void * );
 typedef void          (free_data_ftype)	           	(void * );

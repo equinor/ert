@@ -303,7 +303,7 @@ void havana_fault_ensemble_fprintf_results(const havana_fault_type ** ensemble, 
 */
 
 
-void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path , fortio_type * fortio) {
+void havana_fault_ecl_write(const havana_fault_type * havana_fault , const char * run_path , const char * file /* This is NOT used. */ , fortio_type * fortio) {
   havana_fault_config_run_havana(havana_fault->config , havana_fault->scalar ,  run_path);
 }
 

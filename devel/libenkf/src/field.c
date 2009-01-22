@@ -661,17 +661,19 @@ void field_export(const field_type * field, const char * file , field_file_forma
    unchanged.
 */
 
-void field_ecl_write(const field_type * __field , const char * file , fortio_type * restart_fortio) {
+void field_ecl_write(const field_type * __field , const char * run_path , const char * file , fortio_type * restart_fortio) {
   field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
   field_output_transform(field);
   {
+    char * full_path = util_alloc_full_path( run_path , file );
     field_file_format_type export_format = field_config_get_export_format(field->config);
 
     if (export_format == ecl_restart_block)
       field_ecl_write1D_fortio( field , restart_fortio);
     else
-      field_export(field , file , export_format);
+      field_export(field , full_path , export_format);
     
+    free( full_path );
   }
   field_revert_output_transform(field);
 }

@@ -61,7 +61,7 @@ typedef struct {
 
 relperm_config_type * relperm_config_fscanf_alloc(const char *, const char *);
 void relperm_config_ecl_write_table(const relperm_config_type *, const double *, const char *);
-void relperm_config_ecl_write(const relperm_config_type *, const double *, FILE *,char *);
+void relperm_config_ecl_write(const relperm_config_type *, const double *, FILE *,const char *);
 void relperm_config_ecl_write_swof(FILE * ,const table_type *, const hash_type *, const double *, int, bool,func_type);
 void relperm_config_ecl_write_sgof(FILE * ,const table_type *, const hash_type *, const double *, int, bool, func_type);
 void relperm_config_ecl_write_slgof(FILE * ,const table_type *, const hash_type *, const double *,int,bool,func_type);
