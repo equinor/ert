@@ -30,18 +30,15 @@ typedef int   	      (serialize_ftype)      	(const void *         ,   /* Node o
 						 serial_vector_type * );  /* Object holding the serial vector - with a size and stride. */
 
                                                  
-
-
-
 typedef void   	      (deserialize_ftype)       (void *       	       ,  /* Node object     		*/
 						 serial_state_type *   , 
 						 const serial_vector_type * );
                                                  
+
 typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node object */
 						 const char *  ,   /* Directory to write to. */
                                                  const char *  ,   /* Filename - can be NULL. */
                                                  fortio_type *);   /* fortio inistance for writing elements in restart files. */
-
 
 
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
@@ -79,12 +76,10 @@ typedef enum {alloc_func       	   	    = 0,
               clear_serial_state_func       = 12} node_function_type;
 	      
 
-	      
-
 typedef struct enkf_node_struct enkf_node_type;
-
 typedef void          (enkf_node_ftype1)           (enkf_node_type *);
 typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , arg_pack_type * );
+
 
 double           enkf_node_user_get(enkf_node_type *  , const char * , bool * );
 enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);

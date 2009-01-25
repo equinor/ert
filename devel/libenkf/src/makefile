@@ -59,7 +59,7 @@ clean:  clean_enkf
 rebuild: clean LOCAL
 
 new: 
-	../../Scripts/cdep.py main.c
+	../../Scripts/cdep.py main.c 1
 
 $(LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
