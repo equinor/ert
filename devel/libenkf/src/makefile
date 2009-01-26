@@ -6,7 +6,7 @@ COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
 INSTALL_INC_PATH =   $(LIBENKF_HOME)/include
 INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 #################################################################
-__SDP_ROOT  	   = $(SDP_ROOT)/$(shell res_target.py)
+SDP_ROOT  	   = $(shell get_sdp_root.py)
 SVN_VERSION 	   = $(shell svnversion ./)
 COMPILE_TIME_STAMP = $(shell date)
 #################################################################
@@ -36,9 +36,9 @@ LOCAL: 	LIB BIN
 	install $(LIB) $(INSTALL_LIB_PATH)
 
 SDP_INSTALL: LIB BIN
-	install $(LIB) $(__SDP_ROOT)/lib/lib$(LIB_ROOT).a
-	install $(BIN_FILES_SDP_INSTALL) $(__SDP_ROOT)/bin
-	install $(INC_FILES_INSTALL) $(__SDP_ROOT)/include
+	install $(LIB) $(SDP_ROOT)/lib/lib$(LIB_ROOT).a
+	install $(BIN_FILES_SDP_INSTALL) $(SDP_ROOT)/bin
+	install $(INC_FILES_INSTALL) $(SDP_ROOT)/include
 
 
 APPS:	LOCAL

@@ -1,4 +1,5 @@
 include global_config
+SDP_ROOT          = $(shell get_sdp_root.py)
 #################### PLPLOT LINKING #############################
 WITH_TRUETYPE = 1 # Change this (0-1) when compiling with or without truetype.
 #################################################################
@@ -22,6 +23,9 @@ all: $(LIB)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
 
+SDP_INSTALL: all
+	install $(LIB) $(SDP_ROOT)/lib/$(LIB_ROOT).a
+	install $(INC_FILES_INSTALL) $(SDP_ROOT)/include
 
 clean:
 	rm -f *.o *~ *.x

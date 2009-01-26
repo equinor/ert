@@ -1,4 +1,5 @@
 include global_config
+SDP_ROOT          = $(shell get_sdp_root.py)
 #################################################################
 COMPILE_INCLUDE   = -I./  -I$(LIBUTIL_HOME)/include -I$(LIBHASH_HOME)/include
 COMPILE_LIB_PATH  = -L$(LIBHASH_HOME)/lib -L$(LIBUTIL_HOME)/lib
@@ -6,7 +7,6 @@ COMPILE_LIB_PATH  = -L$(LIBHASH_HOME)/lib -L$(LIBUTIL_HOME)/lib
 INSTALL_INC_PATH = $(LIBCONFIG_HOME)/include
 INSTALL_LIB_PATH = $(LIBCONFIG_HOME)/lib
 #################################################################
-SDP_ROOT          = /project/res/$(shell /private/joaho/bin/res_target.py)
 OBJECTS           = config.o conf.o conf_util.o conf_data.o
 INC_FILES_INSTALL = config.h conf.h conf_data.h
 LIB_ROOT          = libconfig

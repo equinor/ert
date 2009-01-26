@@ -62,18 +62,18 @@ typedef struct {
 relperm_config_type * relperm_config_fscanf_alloc(const char *, const char *);
 void relperm_config_ecl_write_table(const relperm_config_type *, const double *, const char *);
 void relperm_config_ecl_write(const relperm_config_type *, const double *, FILE *,const char *);
-void relperm_config_ecl_write_swof(FILE * ,const table_type *, const hash_type *, const double *, int, bool,func_type);
-void relperm_config_ecl_write_sgof(FILE * ,const table_type *, const hash_type *, const double *, int, bool, func_type);
-void relperm_config_ecl_write_slgof(FILE * ,const table_type *, const hash_type *, const double *,int,bool,func_type);
-void relperm_config_ecl_write_swfn(FILE * ,const table_type *, const hash_type *, const double *, int , bool,func_type);
-void relperm_config_ecl_write_sgfn(FILE * ,const table_type *, const hash_type *, const double *, int, bool,func_type);
-void relperm_config_ecl_write_sof2(FILE * ,const table_type *, const hash_type *, const double *);
-void relperm_config_ecl_write_sof3(FILE * ,const table_type *, const hash_type *, const double *,int, bool,func_type);
+void relperm_config_ecl_write_swof(FILE * ,const table_type  *, hash_type *, const double *, int, bool,func_type);
+void relperm_config_ecl_write_sgof(FILE * ,const table_type  *, hash_type *, const double *, int, bool, func_type);
+void relperm_config_ecl_write_slgof(FILE * ,const table_type *, hash_type *, const double *,int,bool,func_type);
+void relperm_config_ecl_write_swfn(FILE * ,const table_type  *, hash_type *, const double *, int , bool,func_type);
+void relperm_config_ecl_write_sgfn(FILE * ,const table_type  *, hash_type *, const double *, int, bool,func_type);
+void relperm_config_ecl_write_sof2(FILE * ,const table_type  *, hash_type *, const double *);
+void relperm_config_ecl_write_sof3(FILE * ,const table_type  *, hash_type *, const double *,int, bool,func_type);
 table_config_type *  relperm_config_fscanf_table_config_alloc(FILE *,hash_type *);
 table_type * relperm_config_table_alloc(char **, int);
 /* Method that test if the table input in relperm_tab.txt match the input in relperm_config.txt*/
-void relperm_config_check_tab_input(const hash_type *,const table_config_type *,const int); 
-void relperm_config_check_data(const table_type *, const hash_type *, const double *, int);
+void relperm_config_check_tab_input(hash_type *,const table_config_type *,const int); 
+void relperm_config_check_data(const table_type *, hash_type *, const double *, int);
 bool relperm_config_check_ecl_file(hash_type *, char *, relptab_kw_type);
 relptab_kw_type relperm_config_set_relptab_kw(char *);
 void relperm_config_free(relperm_config_type *);

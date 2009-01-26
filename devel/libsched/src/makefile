@@ -1,9 +1,9 @@
 include global_config
+SDP_ROOT          = $(shell get_sdp_root.py)
 #################################################################
 COMPILE_INCLUDE  = -I$(LIBSCHED_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include 
 INSTALL_INC_PATH =   $(LIBSCHED_HOME)/include
 INSTALL_LIB_PATH =   $(LIBSCHED_HOME)/lib
-__SDP_ROOT  	 =   $(SDP_ROOT)/$(shell res_target.py)
 #################################################################
 OBJECTS   = sched_kw.o sched_file.o  sched_kw_untyped.o sched_kw_gruptree.o sched_kw_tstep.o sched_kw_dates.o sched_kw_wconhist.o sched_kw_wconinjh.o sched_kw_welspecs.o sched_util.o gruptree.o history.o sched_kw_wconprod.o sched_kw_wconinj.o sched_kw_wconinje.o
 INC_FILES = sched_file.h sched_kw.h sched_kw_untyped.h sched_kw_gruptree.h sched_kw_tstep.h sched_kw_dates.h sched_kw_wconhist.h sched_kw_wconinjh.h sched_kw_welspecs.h sched_util.h gruptree.h history.h sched_kw_wconprod.h sched_kw_wconinj.h  sched_kw_wconinje.h
@@ -26,9 +26,9 @@ clean:
 
 
 SDP_INSTALL: LIB BIN
-	install $(LIB) $(__SDP_ROOT)/lib/$(LIB_ROOT).a
-	install $(BIN_FILES_SDP_INSTALL) $(__SDP_ROOT)/bin
-	install $(INC_FILES) $(__SDP_ROOT)/include
+	install $(LIB) $(SDP_ROOT)/lib/$(LIB_ROOT).a
+	install $(BIN_FILES_SDP_INSTALL) $(SDP_ROOT)/bin
+	install $(INC_FILES) $(SDP_ROOT)/include
 
 rebuild: clean all
 

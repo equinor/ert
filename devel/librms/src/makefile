@@ -1,10 +1,10 @@
 include global_config
+SDP_ROOT	= $(shell get_sdp_root.py)
 #################################################################
 COMPILE_INCLUDE   = -I$(LIBRMS_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include 
 INSTALL_INC_PATH  = $(LIBRMS_HOME)/include
 INSTALL_LIB_PATH  = $(LIBRMS_HOME)/lib
 #################################################################
-SDP_ROOT      = /project/res/$(shell /private/joaho/bin/res_target.py)
 OBJECTS       = rms_interC.o rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagkey.o rms_stats.o
 INC_FILES     = rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h
 LIB_ROOT      = rms

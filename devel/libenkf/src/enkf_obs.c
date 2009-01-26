@@ -220,28 +220,24 @@ void enkf_obs_get_obs_and_measure(
         meas_matrix_type       * meas_matrix,
         obs_data_type          * obs_data)
 {
-  char **obs_keys = hash_alloc_keylist(enkf_obs->obs_hash);
-  int iobs;
-  for (iobs = 0; iobs < hash_get_size(enkf_obs->obs_hash); iobs++)
-  {
-    const char * kw = obs_keys[iobs];
-    {
-      obs_vector_type * obs_vector = hash_get(enkf_obs->obs_hash , kw);
-      obs_vector_iget_observations(obs_vector , report_step , obs_data);
-    }
-    {
-      obs_vector_type  * obs_vector  = hash_get(enkf_obs->obs_hash , kw);
-      int iens;
-      for (iens = 0; iens < ens_size; iens++) {
-        enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
-        meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
-
-        enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
-        obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector);
+  bool complete;
+  obs_vector_type * obs_vector = hash_iter_get_first_value(enkf_obs->obs_hash , &complete);
+  while ( !complete ) {
+    if (obs_vector_iget_active(obs_vector , report_step)) {              /* The observation is active for this report step. */
+      obs_vector_iget_observations(obs_vector , report_step , obs_data); /*Collect the observed data in the obs_data instance. */
+      {
+	int iens;
+	for (iens = 0; iens < ens_size; iens++) {
+	  enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
+	  meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
+	  
+	  enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
+	  obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector);
+	}
       }
     }
+    obs_vector = hash_iter_get_next_value( enkf_obs->obs_hash , &complete );
   }
-  util_free_stringlist( obs_keys , hash_get_size( enkf_obs->obs_hash ));
 }
 
 

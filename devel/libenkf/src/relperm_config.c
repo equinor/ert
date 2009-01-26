@@ -163,7 +163,7 @@ table_type * relperm_config_table_alloc(char ** token_list, int tokens){
     return tab;
 }
 
-void relperm_config_check_tab_input(const hash_type * index_hash,const table_config_type * tab_config, const int famnr){
+void relperm_config_check_tab_input(hash_type * index_hash,const table_config_type * tab_config, const int famnr){
 
   
   if(famnr == 1){
@@ -333,7 +333,7 @@ void relperm_config_ecl_write_table(const relperm_config_type * config, const do
 }
 
 
-void relperm_config_ecl_write_swof(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data, int nsw, bool ecl_file_append, func_type func){
+void relperm_config_ecl_write_swof(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data, int nsw, bool ecl_file_append, func_type func){
   /* The SWOF keyword may be used in runs containing both oil and water as active phases, to input 
      tables of water relative permeability. The table consists of 4 columns of data. 
      Column 1: The water saturation, 
@@ -388,7 +388,7 @@ void relperm_config_ecl_write_swof(FILE * relp_ecl_stream, const table_type * ta
   free(swof4);  
 }
 
-void relperm_config_ecl_write_sgof(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data, int nso, bool ecl_file_append, func_type func){
+void relperm_config_ecl_write_sgof(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data, int nso, bool ecl_file_append, func_type func){
   /* The SGOF keyword may be used in runs containing both oil and gas as active phases, to input tables of gas relperm, 
      oil-in-gas relperm and oil-gas and oil-gas capillary pressure as function of gas saturation.
      Column 1: The gas saturation
@@ -440,7 +440,7 @@ void relperm_config_ecl_write_sgof(FILE * relp_ecl_stream, const table_type * ta
   free(sgof4);
 }
 
-void relperm_config_ecl_write_slgof(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data,int nso, bool ecl_file_append, func_type func ){
+void relperm_config_ecl_write_slgof(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data,int nso, bool ecl_file_append, func_type func ){
   /* The SLGOF keyword may be used in runs containing both oil and gas as active phase, to input tables of 
      gas relperm, oil-in-gas relperm and oil-gas capillary pressure as a function of the liquid saturation.
      Column 1: The liquid saturation
@@ -490,7 +490,7 @@ void relperm_config_ecl_write_slgof(FILE * relp_ecl_stream, const table_type * t
   free(slgof3);
   free(slgof4);
 }
-void relperm_config_ecl_write_swfn(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data,int nsw, bool ecl_file_append, func_type func){
+void relperm_config_ecl_write_swfn(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data,int nsw, bool ecl_file_append, func_type func){
   /* Water saturation functions 
      Column 1: The water saturation
      Column 2: The corresponding water relperm
@@ -530,7 +530,7 @@ void relperm_config_ecl_write_swfn(FILE * relp_ecl_stream, const table_type * ta
   free(swfn3);
 }
 
-void relperm_config_ecl_write_sgfn(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data,int nsg, bool ecl_file_append, func_type func){
+void relperm_config_ecl_write_sgfn(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data,int nsg, bool ecl_file_append, func_type func){
   /* Gas saturation functions
      Column 1: The gas saturation
      Column 2: The corresponding gas relperm
@@ -571,11 +571,13 @@ void relperm_config_ecl_write_sgfn(FILE * relp_ecl_stream, const table_type * ta
   free(sgfn2);
   free(sgfn3);
 }
-void relperm_config_ecl_write_sof2(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data){
- fprintf(stderr,"%s: Not yet implemented",__func__);
- abort();
+void relperm_config_ecl_write_sof2(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data){
+  fprintf(stderr,"%s: Not yet implemented",__func__);
+  abort();
 }
-void relperm_config_ecl_write_sof3(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data,int nso, bool ecl_file_append, func_type func){
+
+
+void relperm_config_ecl_write_sof3(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data,int nso, bool ecl_file_append, func_type func){
   /* Oil saturation functions (three phase) 
      Column 1: The oil saturation
      Column 2: The corresponding oil relperm for regions where only oil and water are present
@@ -622,7 +624,7 @@ void relperm_config_ecl_write_sof3(FILE * relp_ecl_stream, const table_type * ta
   free(sof32);
   free(sof33);
 }
-void relperm_config_ecl_write_sof32d(FILE * relp_ecl_stream, const table_type * tab, const hash_type * index_hash, const double * data){
+void relperm_config_ecl_write_sof32d(FILE * relp_ecl_stream, const table_type * tab, hash_type * index_hash, const double * data){
  fprintf(stderr,"%s: Not yet implemented",__func__);
  abort();
 }
@@ -661,7 +663,7 @@ relptab_kw_type relperm_config_set_relptab_kw(char * relptab_kw_name){
   return relptab_kw;
 }
 
-void relperm_config_check_data(const table_type * tab, const hash_type * index_hash, const double * data, int famnr){
+void relperm_config_check_data(const table_type * tab, hash_type * index_hash, const double * data, int famnr){
   double swco,soco,sgco,sorg;
   double ewat,egas,eowa,eogw;
   double scwa,scga,scoi;
