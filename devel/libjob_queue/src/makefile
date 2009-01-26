@@ -3,7 +3,7 @@ include global_config
 COMPILE_INCLUDE  = -I$(LIBJOB_QUEUE_HOME)/src -I$(LIBCONFIG_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBECL_HOME)/include -I$(EXTERNAL_INC_PATH)
 INSTALL_INC_PATH =  $(LIBJOB_QUEUE_HOME)/include
 INSTALL_LIB_PATH =  $(LIBJOB_QUEUE_HOME)/lib
-SDP_ROOT         = /project/res/$(shell /private/joaho/bin/res_target.py)
+SDP_ROOT 	 = $(shell get_sdp_root.py)
 #################################################################
 OBJECTS   = job_queue.o basic_queue_driver.o lsf_driver.o local_driver.o rsh_driver.o ext_job.o ext_joblist.o lsf_request.o
 INC_FILES = job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h lsf_request.h
