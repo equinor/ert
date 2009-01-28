@@ -243,9 +243,6 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
   }
 }
 
-
-
-
 void  lsf_request_update(lsf_request_type * lsf_request , const ext_job_type * ext_job , bool last_job) {
   lsf_request_update__(lsf_request , ext_job_get_lsf_resources( ext_job ));
   if (last_job)
