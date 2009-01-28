@@ -57,12 +57,6 @@
 #define DEFAULT_END_TAG ">"
 
 
-/*
-  The name of the pyton module - and the variable in the module,
-  used when running the remote jobs.
-*/
-#define DEFAULT_JOB_MODULE   "jobs.py"
-#define DEFAULT_JOBLIST_NAME "jobList"
 
 
 

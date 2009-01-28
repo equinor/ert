@@ -623,32 +623,40 @@ static void field_revert_output_transform(field_type * field) {
   * Restart format - only active cells (field_ecl_write1D_fortio).
   * Restart format - all cells         (field_ecl_write3D_fortio).
   * GRDECL  format                     (field_ecl_grdecl_export)
+
+  Observe that the output transform is hooked in here, that means
+  that if you call e.g. the ROFF export function directly, the output
+  transform will *NOT* be applied.
 */  
 
-void field_export(const field_type * field, const char * file , field_file_format_type file_type) {
-  if ((file_type == ecl_kw_file_all_cells) || (file_type == ecl_kw_file_active_cells)) {
-    fortio_type * fortio;
-    bool fmt_file , endian_swap;
-
-    field_config_set_io_options(field->config , &fmt_file , &endian_swap);
-    fortio = fortio_fopen(file , "w" , endian_swap , fmt_file);
-
-    if (file_type == ecl_kw_file_all_cells)
-      field_ecl_write3D_fortio(field , fortio);
+void field_export(const field_type * __field, const char * file , field_file_format_type file_type, bool output_transform) {
+  field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
+  if (output_transform)   field_output_transform(field);
+  {
+    if ((file_type == ecl_kw_file_all_cells) || (file_type == ecl_kw_file_active_cells)) {
+      fortio_type * fortio;
+      bool fmt_file , endian_swap;
+      
+      field_config_set_io_options(field->config , &fmt_file , &endian_swap);
+      fortio = fortio_fopen(file , "w" , endian_swap , fmt_file);
+      
+      if (file_type == ecl_kw_file_all_cells)
+	field_ecl_write3D_fortio(field , fortio);
+      else
+	field_ecl_write1D_fortio(field , fortio);
+      
+      fortio_fclose(fortio);
+    } else if (file_type == ecl_grdecl_file) {
+      FILE * stream = util_fopen(file , "w");
+      field_ecl_grdecl_export(field , stream);
+      fclose(stream);
+    } else if (file_type == rms_roff_file) 
+      field_ROFF_export(field , file);
     else
-      field_ecl_write1D_fortio(field , fortio);
-
-    fortio_fclose(fortio);
-  } else if (file_type == ecl_grdecl_file) {
-    FILE * stream = util_fopen(file , "w");
-    field_ecl_grdecl_export(field , stream);
-    fclose(stream);
-  } else if (file_type == rms_roff_file) 
-    field_ROFF_export(field , file);
-  else
-    util_abort("%s: internal error file_type = %d - aborting \n",__func__ , file_type);
+      util_abort("%s: internal error file_type = %d - aborting \n",__func__ , file_type);
+  }
+  if (output_transform) field_revert_output_transform(field);
 }
-
 
 
 /**
@@ -671,7 +679,7 @@ void field_ecl_write(const field_type * __field , const char * run_path , const 
     if (export_format == ecl_restart_block)
       field_ecl_write1D_fortio( field , restart_fortio);
     else
-      field_export(field , full_path , export_format);
+      field_export(field , full_path , export_format , false);
     
     free( full_path );
   }

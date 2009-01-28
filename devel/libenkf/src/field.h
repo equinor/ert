@@ -36,7 +36,7 @@ void         field_get_dims(const field_type *, int *, int *, int *);
 void         field_fload(field_type * , const char * , bool );
 void         field_fload_auto(field_type * , const char * , bool );
 void         field_export3D(const field_type * , void *, bool , ecl_type_enum , void *);
-void         field_export(const field_type * , const char * , field_file_format_type );
+void         field_export(const field_type * , const char * , field_file_format_type , bool);
 field_type * field_copyc(const field_type *);
 bool         field_cmp(const field_type *  , const field_type * );
 

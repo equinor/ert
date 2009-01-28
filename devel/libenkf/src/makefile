@@ -21,10 +21,9 @@ else
    LSF_LIBS   = 
 endif
 
-LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -ljob_queue_$(MFLAG) -lecl_$(MFLAG) -lconfig_$(MFLAG) -lutil_$(MFLAG) -lanalysis_$(MFLAG) -lplot_$(MFLAG) -lplplotd -lm -lpthread -lz  -llapack -lblas $(LSF_LIBS) -lgfortran 
+LIB_LINK          = -lenkf -lsched -lrms -ljob_queue -lecl -lconfig -lutil -lanalysis -lplot -lplplotd -lm -lpthread -lz  -llapack -lblas $(LSF_LIBS) -lgfortran 
 LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L$(LIBPLPLOT_HOME)/lib
-LIB_ROOT          = enkf
-LIB               = lib$(LIB_ROOT)_$(MFLAG).a
+LIB               = libenkf.a
 TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
 
 
