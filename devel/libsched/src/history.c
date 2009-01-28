@@ -951,3 +951,36 @@ void history_fprintf(const history_type * history , FILE * stream) {
   }
   
 }
+
+
+
+char ** history_alloc_well_list(const history_type * history, int * num_wells)
+{
+  char      ** well_list;
+  hash_type  * wells        = hash_alloc();
+  int          num_restarts = history_get_num_restarts(history);
+
+  for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
+  {
+    history_node_type * node  = history_iget_node_ref(history, restart_nr);
+    int     num_current_wells = hash_get_size(node->well_hash);
+    char ** current_wells     = hash_alloc_keylist(node->well_hash);
+    
+    for(int well_nr = 0; well_nr < num_current_wells; well_nr++)
+    {
+      if(!hash_has_key(wells, current_wells[well_nr]))
+        hash_insert_int(wells, current_wells[well_nr], 0);
+    }
+    util_free_stringlist(current_wells, num_current_wells);
+  }
+
+  if(num_wells == NULL)
+    util_abort("%s: Trying to dereference NULL pointer.\n", __func__);
+
+  *num_wells = hash_get_size(wells);
+  well_list  = hash_alloc_keylist(wells);
+  hash_free(wells);
+  return well_list;
+}
+
+

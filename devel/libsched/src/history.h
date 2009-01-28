@@ -38,6 +38,7 @@ time_t         history_iget_node_start_time(const history_type *, int);
 time_t         history_iget_node_end_time(const history_type *, int);
 int            history_get_restart_nr_from_time_t(const history_type *, time_t);
 int            history_get_restart_nr_from_days(const history_type *, double days);
+char **        history_alloc_well_list(const history_type * , int * );
 #ifdef __cplusplus
 }
 #endif

@@ -48,13 +48,16 @@ $(LIB): $(OBJECTS)
 
 
 
-BIN_FILES = sched_test.x gruptree_test.x sched_summary.x
+BIN_FILES = sched_test.x gruptree_test.x sched_summary.x get_well_list.x
 BIN	: $(BIN_FILES)
-BIN_FILES_SDP_INSTALL = sched_summary.x
+BIN_FILES_SDP_INSTALL = sched_summary.x get_well_list.x
 
 
 sched_test.x: $(LIB) sched_test.o
 	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x $(LIB_PATH) $(LIB_LINK)
+
+get_well_list.x: $(LIB) get_well_list.o
+	$(LD) -$(MFLAG) $(LDFLAGS) get_well_list.o -o get_well_list.x $(LIB_PATH) $(LIB_LINK)
 
 gruptree_test.x: $(LIB) gruptree_test.o
 	$(LD) -$(MFLAG) $(LDFLAGS) gruptree_test.o -o gruptree_test.x $(LIB_PATH) $(LIB_LINK)
