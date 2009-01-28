@@ -9,7 +9,6 @@
 #include <subst.h>
 #include <enkf_util.h>
 #include <lsf_request.h>
-#include "enkf_defaults.h"
 
 /**
    This file implements a 'forward-model' object. I
@@ -207,6 +206,13 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
 
 /*****************************************************************/
 
+/*
+  The name of the pyton module - and the variable in the module,
+  used when running the remote jobs.
+*/
+#define DEFAULT_JOB_MODULE   "jobs.py"
+#define DEFAULT_JOBLIST_NAME "jobList"
+
 void forward_model_python_fprintf(const forward_model_type * forward_model , const char * path, const subst_list_type * global_args) {
   char * module_file = util_alloc_full_path(path , DEFAULT_JOB_MODULE);
   FILE * stream      = util_fopen(module_file , "w");
@@ -224,6 +230,8 @@ void forward_model_python_fprintf(const forward_model_type * forward_model , con
   free(module_file);
 }
 
+#undef DEFAULT_JOB_MODULE   
+#undef DEFAULT_JOBLIST_NAME 
 
 
 
