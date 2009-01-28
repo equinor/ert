@@ -12,9 +12,9 @@ struct history_node_struct{
   /* Remember to fix history_node_copyc etc. if you add stuff here. */
 
   hash_type     * well_hash;        /* 
-				       A hash indexed with the well names.  Each element is another hash, indexed by
-				       observations, where each element is a double value.
-				    */
+                                       A hash indexed with the well names.  Each element is another hash, indexed by
+                                       observations, where each element is a double value.
+                                    */
   gruptree_type * gruptree;
   time_t      	  node_start_time;
   time_t      	  node_end_time;
@@ -232,15 +232,15 @@ static double well_hash_get_var(hash_type * well_hash, const char * well, const 
   {
     hash_type * well_obs = hash_get(well_hash, well);
     if(!hash_has_key(well_obs, var))
-      {
-	*default_used = true;
-	return 0.0;
-      }
+    {
+      *default_used = true;
+      return 0.0;
+    }
     else
-      {
-	*default_used = false;
-	return  hash_get_double(well_obs, var);
-      }
+    {
+      *default_used = false;
+      return  hash_get_double(well_obs, var);
+    }
   }
 
 }
@@ -303,6 +303,11 @@ static history_node_type * history_node_fread_alloc(FILE * stream)
 
 
 
+/*
+  This function will add the observations from well_hash to the well_hash in
+  the history_node. If the wells are already in the history_node, their data
+  is replaced with the data from well_hash.
+*/
 static void history_node_register_wells(history_node_type * node, hash_type * well_hash)
 {
   int num_wells = hash_get_size(well_hash);
@@ -346,6 +351,12 @@ static void history_node_delete_wells(history_node_type * node, const char ** we
 
 
 
+/*
+  This function will add default observations for production wells. This is neccessary, since
+  the well_hash has no concept of well status.
+
+  If some of the wells in well_list are not present, they are created.
+*/
 static void history_node_add_producer_defaults(history_node_type * node, const char ** well_list, int num_wells)
 {
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
@@ -370,6 +381,12 @@ static void history_node_add_producer_defaults(history_node_type * node, const c
 
 
 
+/*
+  This function will add default observations for injection wells. This is neccessary, since
+  the well_hash has no concept of well status.
+
+  If some of the wells in well_list are not present, they are created.
+*/
 static void history_node_add_injector_defaults(history_node_type * node, const char ** well_list, int num_wells)
 {
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
@@ -523,8 +540,11 @@ static void history_node_fprintf(const history_node_type * node, FILE * stream) 
   fprintf(stream , "%03d:  " , node->restart_nr); util_fprintf_date( node->node_start_time , stream); fprintf(stream , " => "); util_fprintf_date(node->node_end_time , stream); fprintf(stream , "\n");
 }
 
+
+
 /******************************************************************/
 // Static functions for manipulating history_type.
+
 
 
 static history_type * history_alloc_empty()
@@ -636,25 +656,31 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 
 void history_realloc_from_summary(history_type * history, const ecl_sum_type * summary, bool use_h_keywords)
 {
-  bool has_sim_time 	  = ecl_sum_has_sim_time( summary );
-  int num_restarts  	  = history_get_num_restarts(history);
-  int     num_wells 	  = ecl_sum_get_Nwells(summary);
-  const char ** well_list = ecl_sum_get_well_names_ref(summary);
+  bool          has_sim_time  = ecl_sum_has_sim_time( summary );
+  int           num_restarts  = history_get_num_restarts(history);
+  int           num_wells     = ecl_sum_get_Nwells(summary);
+  const char ** well_list     = ecl_sum_get_well_names_ref(summary);
 
   for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++) {
     /* The list elements in history->nodes are updated IN-PLACE. */
     history_node_type * node = list_iget_node_value_ptr(history->nodes, restart_nr);
-    
     hash_free(node->well_hash);  /* Removing the old information. */
-    if (ecl_sum_has_report_nr(summary , restart_nr)) {
-      if (has_sim_time) {
-	time_t sum_time = ecl_sum_get_sim_time( summary , restart_nr );
-	if (sum_time != node->node_end_time) 
-	  util_abort("%s: hmmm - seems to be timing inconsisentcy between schedule_file:%s and refcase:%s \n",
-		     __func__ , history->schedule_file , ecl_sum_get_simulation_case( summary) );
+
+
+    if (ecl_sum_has_report_nr(summary , restart_nr)) 
+    {
+      if (has_sim_time) 
+      {
+        time_t sum_time = ecl_sum_get_sim_time( summary , restart_nr );
+        if (sum_time != node->node_end_time) 
+          util_abort("%s: hmmm - seems to be timing inconsisentcy between schedule_file:%s and refcase:%s \n",
+                      __func__ , history->schedule_file , ecl_sum_get_simulation_case( summary) );
       }
+
       node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, restart_nr, use_h_keywords);
-    } else {
+    } 
+    else 
+    {
       fprintf(stderr,"Warning: refcase: \'%s\' does not have any data for report_step: %d \n", ecl_sum_get_simulation_case( summary ) , restart_nr);
       node->well_hash = hash_alloc();  
     }
