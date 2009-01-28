@@ -22,7 +22,7 @@ else
 endif
 
 LIB_LINK          = -lenkf_$(MFLAG) -lsched_$(MFLAG) -lrms_$(MFLAG) -ljob_queue_$(MFLAG) -lecl_$(MFLAG) -lconfig_$(MFLAG) -lutil_$(MFLAG) -lanalysis_$(MFLAG) -lplot_$(MFLAG) -lplplotd -lm -lpthread -lz  -llapack -lblas $(LSF_LIBS) -lgfortran 
-LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH)
+LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L$(LIBPLPLOT_HOME)/lib
 LIB_ROOT          = enkf
 LIB               = lib$(LIB_ROOT)_$(MFLAG).a
 TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
@@ -74,7 +74,7 @@ include dependencies
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x test.x
+BIN_FILES             = enkf gen_test.x test.x run_ensemble.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
@@ -99,3 +99,8 @@ field_convert.x:	field_convert.o $(LIB)
 sched_test.x:	sched_test.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
 
+run_ensemble.o	: run_ensemble.c
+	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
+
+run_ensemble.x:	run_ensemble.o $(LIB)
+	$(LD) -$(MFLAG) $(LDFLAGS) run_ensemble.o -o run_ensemble.x  $(LIB_PATH)  $(LIB_LINK) 	
