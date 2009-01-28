@@ -8,6 +8,7 @@
 #include <forward_model.h>
 #include <subst.h>
 #include <lsf_request.h>
+#include <vector.h>
 
 /**
    This file implements a 'forward-model' object. I
@@ -16,9 +17,7 @@
 
 
 struct forward_model_struct {
-  int 	  alloc_size;        	    	    /* The number of elements in the jobs vector. */
-  int 	  size;              	    	    /* The number of elements in this forward_model. */
-  ext_job_type             ** jobs;         /* The actual jobs. */
+  vector_type               * jobs;         /* The actual jobs in this forward model. */
   const ext_joblist_type    * ext_joblist;  /* This is the list of external jobs which have been installed - which we can choose from. */
   lsf_request_type          * lsf_request;  /* The lsf_requests needed for this forward model == NULL if we are not using lsf. */
 };
@@ -38,25 +37,12 @@ static char * __alloc_tagged_string(const char * s) {
 
 /*****************************************************************/
 
-static void forward_model_realloc(forward_model_type * forward_model , int new_alloc_size) {
-  forward_model->jobs = util_realloc(forward_model->jobs , new_alloc_size * sizeof * forward_model->jobs, __func__);
-  {
-    /* Initializing the new node pointers. */
-    int i;
-    for (i=forward_model->alloc_size; i < new_alloc_size; i++)
-      forward_model->jobs[i] = NULL;
-  }
-  forward_model->alloc_size = new_alloc_size;
-}
-
 
 
 static forward_model_type * forward_model_alloc__(const ext_joblist_type * ext_joblist, bool use_lsf) {
   forward_model_type * forward_model = util_malloc( sizeof * forward_model , __func__);
 
-  forward_model->alloc_size  = 0;
-  forward_model->size        = 0;
-  forward_model->jobs        = NULL; 
+  forward_model->jobs        = vector_alloc_new();
   forward_model->ext_joblist = ext_joblist;
   if (use_lsf)
     forward_model->lsf_request = lsf_request_alloc(NULL , NULL);
@@ -74,23 +60,14 @@ static forward_model_type * forward_model_alloc__(const ext_joblist_type * ext_j
 */
 
 ext_job_type * forward_model_add_job(forward_model_type * forward_model , const char * job_name) {
-  if (forward_model->size == forward_model->size)
-    forward_model_realloc(forward_model , 2 * (forward_model->alloc_size + 1));
-  {
-    ext_job_type * new_job = ext_joblist_get_job_copy(forward_model->ext_joblist , job_name);
-    forward_model->jobs[forward_model->size] = new_job;
-    forward_model->size++;
-    return new_job;
-  }
+  ext_job_type * new_job = ext_joblist_get_job_copy(forward_model->ext_joblist , job_name);
+  vector_append_owned_ref( forward_model->jobs , new_job , ext_job_free__);
+  return new_job;
 }
 
 
 void forward_model_free( forward_model_type * forward_model) {
-  int ijob;
-  for (ijob = 0; ijob < forward_model->size; ijob++)
-    ext_job_free( forward_model->jobs[ijob] );
-  
-  util_safe_free(forward_model->jobs);
+  vector_free( forward_model->jobs );
   if (forward_model->lsf_request != NULL) 
     lsf_request_free(forward_model->lsf_request);
   free(forward_model);
@@ -103,11 +80,12 @@ static void forward_model_update_lsf_request(forward_model_type * forward_model)
   if (forward_model->lsf_request != NULL) {
     int ijob;
     lsf_request_reset( forward_model->lsf_request );
-    for (ijob = 0; ijob < forward_model->size; ijob++) {
+    for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
       bool last_job = false;
-      if (ijob == (forward_model->size - 1))
+      const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
+      if (ijob == (vector_get_size(forward_model->jobs) - 1))
 	last_job = true;
-      lsf_request_update(forward_model->lsf_request , forward_model->jobs[ijob] , last_job);
+      lsf_request_update(forward_model->lsf_request , job , last_job);
     }
   }
 }
@@ -129,7 +107,7 @@ static void forward_model_update_lsf_request(forward_model_type * forward_model)
 
 forward_model_type * forward_model_alloc(const char * input_string , const ext_joblist_type * ext_joblist, bool use_lsf) {
   forward_model_type * forward_model = forward_model_alloc__(ext_joblist , use_lsf);
-  char * p1                          = input_string;
+  char * p1                          = (char *) input_string;
   while (true) {
     char         * job_name;
     ext_job_type * job;
@@ -228,10 +206,10 @@ void forward_model_python_fprintf(const forward_model_type * forward_model , con
   int i;
 
   fprintf(stream , "%s = [" , DEFAULT_JOBLIST_NAME);
-  for (i=0; i < forward_model->size; i++) {
-    const ext_job_type * job = forward_model->jobs[i];
+  for (i=0; i < vector_get_size(forward_model->jobs); i++) {
+    const ext_job_type * job = vector_iget_const(forward_model->jobs , i);
     ext_job_python_fprintf(job , stream , global_args);
-    if (i < (forward_model->size - 1))
+    if (i < (vector_get_size( forward_model->jobs ) - 1))
       fprintf(stream,",\n");
   }
   fprintf(stream , "]\n");
@@ -253,10 +231,10 @@ forward_model_type * forward_model_alloc_copy(const forward_model_type * forward
   if (forward_model->lsf_request != NULL)
     use_lsf = true;
   new = forward_model_alloc__(forward_model->ext_joblist , use_lsf);
-  forward_model_realloc(new , forward_model->alloc_size);
-  for (ijob = 0; ijob < forward_model->size; ijob++)
-    new->jobs[ijob] = ext_job_alloc_copy( forward_model->jobs[ijob] );
-  new->size = forward_model->size;
+  for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
+    const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
+    vector_append_owned_ref( new->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
+  }
   forward_model_update_lsf_request(new);
   
   return new;
@@ -265,8 +243,8 @@ forward_model_type * forward_model_alloc_copy(const forward_model_type * forward
 
 void forward_model_fprintf(const forward_model_type * forward_model , FILE * stream) {
   int ijob;
-  for (ijob = 0; ijob < forward_model->size; ijob++) {
-    ext_job_fprintf( forward_model->jobs[ijob] , stream);
+  for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
+    ext_job_fprintf( vector_iget(forward_model->jobs , ijob) , stream);
     fprintf(stream , "  ");
   }
   fprintf(stream , "\n");
@@ -277,8 +255,8 @@ void forward_model_set_private_arg(forward_model_type * forward_model , const ch
   int ijob;
   char * tagged_key = __alloc_tagged_string( key );
  
-  for (ijob = 0; ijob < forward_model->size; ijob++) {
-    ext_job_type * ext_job = forward_model->jobs[ijob];
+  for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
+    ext_job_type * ext_job = vector_iget(forward_model->jobs , ijob);
     ext_job_set_private_arg(ext_job , tagged_key , value);
   }
   
