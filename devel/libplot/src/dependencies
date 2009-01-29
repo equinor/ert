@@ -1,0 +1,4 @@
+plot.o                              : plot.c plot.h plot_dataset.o plot_range.o plot_const.h  
+plot_dataset.o                      : plot_dataset.c plot_dataset.h plot_const.h plot_range.o  
+plot_range.o                        : plot_range.c plot_range.h plot_const.h  
+all_include.h                       : plot_const.h  

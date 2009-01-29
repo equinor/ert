@@ -11,8 +11,8 @@ ARFLAGS = -csr
 #################################################################
 OBJECTS        = plot.o plot_dataset.o  plot_range.o 
 INC_FILES      = plot.h plot_dataset.h  plot_range.h plot_const.h
-LIB            = libplot_$(MFLAG).a 
-LIB_LINK       = -lplot_$(MFLAG) -lutil_$(MFLAG) -lecl_$(MFLAG) -lz -lm -lplplotd -lpthread 
+LIB            = libplot.a 
+LIB_LINK       = -lplot -lutil -lecl -lz -lm -lplplotd -lpthread 
 LIB_PATH       = -L$(LIBPLOT_HOME)/lib     -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib 
 TARGET_INCLUDE = -I$(LIBPLOT_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBUTIL_HOME)/include -I$(LIBECL_HOME)/include
 
@@ -24,20 +24,20 @@ all: $(LIB)
 	install $(LIB) $(INSTALL_LIB_PATH)
 
 SDP_INSTALL: all
-	install $(LIB) $(SDP_ROOT)/lib/$(LIB_ROOT).a
-	install $(INC_FILES_INSTALL) $(SDP_ROOT)/include
+	install $(LIB) $(SDP_ROOT)/lib
+	install $(INC_FILES) $(SDP_ROOT)/include
 
 clean:
 	rm -f *.o *~ *.x
-	rm -f libplot_$(MFLAG).a
-	rm -f $(INSTALL_LIB_PATH)/libplot_$(MFLAG).a
+	rm -f $(LIB)
+	rm -f $(INSTALL_LIB_PATH)/$(LIB)
 	rm -f $(INSTALL_INC_PATH)/*.h
 
 
 distclean:
 	rm -f *.o *~ *.x
-	rm -f libplot_$(MFLAG).a
-	rm -f $(INSTALL_LIB_PATH)/libplot_$(MFLAG).a
+	rm -f $(LIB)
+	rm -f $(INSTALL_LIB_PATH)/$(LIB)
 	rm -f $(INSTALL_INC_PATH)/*.h
 	rm -rf Doc/html Doc/latex
 
@@ -52,8 +52,7 @@ $(LIB): $(OBJECTS)
 %.o : %.c
 	$(CC) -c $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE)  $(COMPILE_INCLUDE) $< -o $@
 
-plot.o             : plot.h plot.c plot_dataset.o
-plot_dataset.o     : plot_dataset.h plot_dataset.c plot_range.o
-plot_range.o       : plot_range.c plot_range.h 
-plot_util.o        : plot_util.h plot_util.c
-plot_summary.o     : plot_summary.h
+new: 
+	../../Scripts/cdep.py all_include.h 0
+
+include dependencies

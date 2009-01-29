@@ -58,9 +58,10 @@ typedef enum plot_color_enum {
     SALMON  	= 14,
     BLACK   	= 15
 } plot_color_type;
+#define PLOT_NUM_COLORS 16   /* The number of colors - used for alternating colors. */
 
 
-  /**
+/**
    pllsty uses predefined line styles.
    plsty  defines linestyle with pen up/down.
 */
