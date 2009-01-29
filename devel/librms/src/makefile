@@ -7,9 +7,8 @@ INSTALL_LIB_PATH  = $(LIBRMS_HOME)/lib
 #################################################################
 OBJECTS       = rms_interC.o rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagkey.o rms_stats.o
 INC_FILES     = rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h
-LIB_ROOT      = rms
-LIB           = lib$(LIB_ROOT)_$(MFLAG).a
-LIB_LINK      = -l$(LIB_ROOT)_$(MFLAG) -lecl_$(MFLAG) -lutil_$(MFLAG) -lm -lz -lpt
+LIB	      = librms.a
+LIB_LINK      = -lrms -lecl -lutil -lm -lz -lpt
 LIB_PATH      = -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L./
 
 
@@ -42,14 +41,10 @@ $(LIB): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
 
+new: 
+	../../Scripts/cdep.py all_include.h 0
 
-rms_stats.o  : rms_stats.c rms_stats.h
-rms_type.o   : rms_type.c rms_type.h
-rms_util.o   : rms_util.c rms_util.h
-rms_tagkey.o : rms_tagkey.c rms_tagkey.h rms_type.o rms_util.o
-rms_tag.o    : rms_tag.c rms_tag.h rms_tagkey.o rms_util.o
-rms_file.o   : rms_file.c rms_file.h rms_util.o rms_tag.o rms_tagkey.o
-rms_interC.o : rms_interC.c rms_file.o
+include dependencies
 
 #################################################################
 # Binaries
@@ -65,18 +60,18 @@ rms_extract.o : rms_extract.c
 rms_setname.o : rms_setname.c
 
 roff_tags.x:	tag_list.o $(LIB)
-	gcc -$(MFLAG) $(LDFLAGS) tag_list.o -o roff_tags.x $(LIB_PATH)  $(LIB_LINK) 	
+	$(CC) -$(MFLAG) $(LDFLAGS) tag_list.o -o roff_tags.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms.x:	rms_test.o $(LIB)
-	gcc -$(MFLAG) $(LDFLAGS) rms_test.o -o rms.x $(LIB_PATH)  $(LIB_LINK) 	
+	$(CC) -$(MFLAG) $(LDFLAGS) rms_test.o -o rms.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms_stat.x: rms_stat.o $(LIB)
-	gcc -$(MFLAG) $(LDFLAGS) rms_stat.o -o rms_stat.x $(LIB_PATH)  $(LIB_LINK) 	
+	$(CC) -$(MFLAG) $(LDFLAGS) rms_stat.o -o rms_stat.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms_extract.x: rms_extract.o $(LIB)
-	gcc -$(MFLAG) $(LDFLAGS) rms_extract.o -o rms_extract.x $(LIB_PATH)  $(LIB_LINK) 	
+	$(CC) -$(MFLAG) $(LDFLAGS) rms_extract.o -o rms_extract.x $(LIB_PATH)  $(LIB_LINK) 	
 
 rms_setname.x: rms_setname.o $(LIB)
-	gcc -$(MFLAG) $(LDFLAGS) rms_setname.o -o rms_setname.x $(LIB_PATH)  $(LIB_LINK) 	
+	$(CC) -$(MFLAG) $(LDFLAGS) rms_setname.o -o rms_setname.x $(LIB_PATH)  $(LIB_LINK) 	
 
 
