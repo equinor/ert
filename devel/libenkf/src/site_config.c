@@ -156,8 +156,14 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
       const char * var               = stringlist_iget( tokens , 0);
       const char * value             = stringlist_iget( tokens , 1);
 
-      printf("Setting: %s = %s \n",var,value);
       setenv( var , value , 1);
+    }
+    for (i=0; i < config_get_occurences( config, "UPDATE_PATH"); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref(config , "SETENV" , i);
+      const char * path              = stringlist_iget( tokens , 0);
+      const char * value             = stringlist_iget( tokens , 1);
+
+      util_update_path_var( path , value , false);
     }
   }
   /* When LSF is used several enviroment variables must be set - i.e.

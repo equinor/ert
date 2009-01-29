@@ -672,9 +672,20 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       stringlist_free(local_dep);
     }
     
-    /* You can set environment variables which will be applied
-       to the run-time environment. */
+    /* 
+       You can set environment variables which will be applied to the
+       run-time environment. Can unfortunately not use constructions
+       like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
+    */
     item = config_add_item(config , "SETENV" , false , true);
+    config_item_set_argc_minmax(item , 2 , 2 , NULL);
+
+    /**
+       UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
+
+       Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
+    */
+    item = config_add_item(config , "UPDATE_PATH" , false , true);
     config_item_set_argc_minmax(item , 2 , 2 , NULL);
     
 
