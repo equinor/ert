@@ -149,8 +149,6 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
 site_config_type * site_config_alloc(const config_type * config , int ens_size , bool * use_lsf) {
   site_config_type * site_config = site_config_alloc_empty();
   site_config_install_joblist(site_config , config);
-  site_config_install_job_queue(site_config , config , ens_size , use_lsf);
-  site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
   {
     int i;
     for (i = 0; i < config_get_occurences( config , "SETENV"); i++) {
@@ -162,6 +160,10 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
       setenv( var , value , 1);
     }
   }
+  /* When LSF is used several enviroment variables must be set - i.e.
+     the calls to SETENV must come first. */
+  site_config_install_job_queue(site_config , config , ens_size , use_lsf);
+  site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
   return site_config;
 }
 
