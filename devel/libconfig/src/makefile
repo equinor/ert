@@ -41,11 +41,10 @@ $(LIB): $(OBJECTS)
 %.o : %.c
 	$(CC) -c $(CFLAGS) $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
-#Library source code:
-config.o          : config.c config.h 
-conf.o            : conf.c conf.h
-conf_data.o       : conf_data.c conf_data.h
-conf_util.o       : conf_util.c conf_util.h
+new: 
+	../../Scripts/cdep.py all_include.h 0
+
+include dependencies
 
 # Binaries
 
