@@ -157,7 +157,8 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
       const stringlist_type * tokens = config_iget_stringlist_ref(config , "SETENV" , i);
       const char * var               = stringlist_iget( tokens , 0);
       const char * value             = stringlist_iget( tokens , 1);
-      
+
+      printf("Setting: %s = %s \n",var,value);
       setenv( var , value , 1);
     }
   }
