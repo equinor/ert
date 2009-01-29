@@ -53,7 +53,7 @@ typedef enum { undefined_format         = 0,
 	       ecl_kw_file_active_cells = 3,       /* ecl_kw format, only active cells - used writing to file. */
 	       ecl_kw_file_all_cells    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
 	       ecl_grdecl_file          = 5, 
-               ecl_restart_block        = 6 /* Assumes packed on export. */}  field_file_format_type; 
+               ecl_restart_block        = 6        /* Assumes packed on export. */}  field_file_format_type; 
 
 	        
 /* active_cells currently not really implemented */

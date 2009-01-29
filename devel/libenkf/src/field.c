@@ -629,10 +629,13 @@ static void field_revert_output_transform(field_type * field) {
   transform will *NOT* be applied.
 */  
 
-void field_export(const field_type * __field, const char * file , field_file_format_type file_type, bool output_transform) {
+void field_export(const field_type * __field, const char * file , fortio_type * restart_fortio , field_file_format_type file_type, bool output_transform) {
   field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
+
   if (output_transform)   field_output_transform(field);
   {
+    
+    /*  Writes the field to in ecl_kw format to a new file.  */
     if ((file_type == ecl_kw_file_all_cells) || (file_type == ecl_kw_file_active_cells)) {
       fortio_type * fortio;
       bool fmt_file , endian_swap;
@@ -647,11 +650,16 @@ void field_export(const field_type * __field, const char * file , field_file_for
       
       fortio_fclose(fortio);
     } else if (file_type == ecl_grdecl_file) {
+      /* Writes the field to a new grdecl file. */
       FILE * stream = util_fopen(file , "w");
       field_ecl_grdecl_export(field , stream);
       fclose(stream);
     } else if (file_type == rms_roff_file) 
+      /* Roff export */
       field_ROFF_export(field , file);
+    else if (file_type == ecl_restart_block) 
+      /* This entry point is used by the ecl_write() function to write to an ALREADY OPENED eclipse restart file. */
+      field_ecl_write1D_fortio( field , restart_fortio);
     else
       util_abort("%s: internal error file_type = %d - aborting \n",__func__ , file_type);
   }
@@ -669,21 +677,16 @@ void field_export(const field_type * __field, const char * file , field_file_for
    unchanged.
 */
 
-void field_ecl_write(const field_type * __field , const char * run_path , const char * file , fortio_type * restart_fortio) {
-  field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
-  field_output_transform(field);
-  {
+void field_ecl_write(const field_type * field , const char * run_path , const char * file , fortio_type * restart_fortio) {
+  field_file_format_type export_format = field_config_get_export_format(field->config);
+  
+  if (export_format == ecl_restart_block)
+    field_export(field , NULL , restart_fortio , export_format , true); 
+  else {
     char * full_path = util_alloc_full_path( run_path , file );
-    field_file_format_type export_format = field_config_get_export_format(field->config);
-
-    if (export_format == ecl_restart_block)
-      field_ecl_write1D_fortio( field , restart_fortio);
-    else
-      field_export(field , full_path , export_format , false);
-    
+    field_export(field , full_path , NULL , export_format , true);
     free( full_path );
   }
-  field_revert_output_transform(field);
 }
 
 

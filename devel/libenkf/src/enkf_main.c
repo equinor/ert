@@ -672,6 +672,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       stringlist_free(local_dep);
     }
     
+    /* You can set environment variables which will be applied
+       to the run-time environment. */
+    item = config_add_item(config , "SETENV" , false , true);
+    config_item_set_argc_minmax(item , 2 , 2 , NULL);
+    
+
+
     
     /* These must be set IFF QUEUE_SYSTEM == LSF */
     item = config_add_item(config , "LSF_QUEUE"     , false , false);

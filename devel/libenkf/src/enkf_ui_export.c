@@ -39,7 +39,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
       enkf_fs_fread_node(fs , node , report_step , iens , analysis_state);
       {
 	const field_type     * field = enkf_node_value_ptr(node);
-	field_export(field , filename , file_type , output_transform);
+	field_export(field , filename , NULL , file_type , output_transform);
       }
       free(filename);
     } else 

@@ -151,6 +151,16 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
   site_config_install_joblist(site_config , config);
   site_config_install_job_queue(site_config , config , ens_size , use_lsf);
   site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
+  {
+    int i;
+    for (i = 0; i < config_get_occurences( config , "SETENV"); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref(config , "SETENV" , i);
+      const char * var               = stringlist_iget( tokens , 0);
+      const char * value             = stringlist_iget( tokens , 1);
+      
+      setenv( var , value , 1);
+    }
+  }
   return site_config;
 }
 
