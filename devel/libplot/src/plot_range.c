@@ -56,6 +56,12 @@ struct plot_range_struct {
   plot_range_mode_type  range_mode;
 };
 
+/*****************************************************************/
+
+void plot_range_fprintf(const plot_range_type * range, FILE * stream) {
+  printf("x1: %g    x2:%g   y1:%g   y2:%g \n",range->limits[XMIN] , range->limits[XMAX] , range->limits[YMIN] , range->limits[YMAX]);
+}
+
 
 /*****************************************************************/
 
@@ -260,3 +266,6 @@ void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , 
   if (_x1 != NULL) *_x1 = x1;
   if (_x2 != NULL) *_x2 = x2;
 }
+
+
+

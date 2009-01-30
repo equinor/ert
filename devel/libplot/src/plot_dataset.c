@@ -426,65 +426,69 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
  * 
  * Find the extrema values in the plot item, checks all added dataset.
  */
-void plot_dataset_update_range(plot_dataset_type * d, bool first_pass , plot_range_type * range) {
-  double tmp_x_max = plot_range_safe_get_xmax(range);
-  double tmp_y_max = plot_range_safe_get_ymax(range);
-  double tmp_x_min = plot_range_safe_get_xmin(range);
-  double tmp_y_min = plot_range_safe_get_ymin(range);
+void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_range_type * range) {
+  if (d->size > 0) {
+    double tmp_x_max = plot_range_safe_get_xmax(range);
+    double tmp_y_max = plot_range_safe_get_ymax(range);
+    double tmp_x_min = plot_range_safe_get_xmin(range);
+    double tmp_y_min = plot_range_safe_get_ymin(range);
 
-  int i;
-  double *x1 , *x2, *y1 , *y2;
+    int i;
+    double *x1 , *x2, *y1 , *y2;
+
+    
+    x1 = NULL;
+    x2 = NULL;
+    y1 = NULL;
+    y2 = NULL;
+    
+    if (d->data_mask & plot_data_x)  	{x1 = d->x;  x2 = d->x; }
+    if (d->data_mask & plot_data_x1) 	 x1 = d->x1;
+    if (d->data_mask & plot_data_x2) 	 x2 = d->x2;
 
 
-  x1 = NULL;
-  x2 = NULL;
-  y1 = NULL;
-  y2 = NULL;
-  if (d->data_mask & plot_data_x)  {x1 = d->x;  x2 = d->x; }
-  if (d->data_mask & plot_data_x1)  x1 = d->x1;
-  if (d->data_mask & plot_data_x2)  x2 = d->x2;
-  if (d->data_mask & plot_hist)    {x1 = d->x; x2 = d->x; }
+    if (d->data_mask & plot_data_y)  {y1 = d->y;  y2 = d->y; }
+    if (d->data_mask & plot_data_y1)  y1 = d->y1;
+    if (d->data_mask & plot_data_y2)  y2 = d->y2;
 
-
-  if (d->data_mask & plot_data_y)  {y1 = d->y;  y2 = d->y; }
-  if (d->data_mask & plot_data_y1)  y1 = d->y1;
-  if (d->data_mask & plot_data_y2)  y2 = d->y2;
-
-  if (x1 != NULL) {
-    if (first_pass) {
-      tmp_x_min = x1[0];
-      tmp_x_max = x2[0];
-    }
+    if (x1 != NULL) {
+      if (*first_pass) {
+	tmp_x_min = x1[0];
+	tmp_x_max = x2[0];
+      }
       
-    for (i=0; i < d->size; i++) {
-      if (x1[i] < tmp_x_min)
-	tmp_x_min = x1[i];
+      for (i=0; i < d->size; i++) {
+	if (x1[i] < tmp_x_min)
+	  tmp_x_min = x1[i];
 
-      if (x2[i] > tmp_x_max)
-	tmp_x_max = x2[i];
-    }
-  }
+	if (x2[i] > tmp_x_max)
+	  tmp_x_max = x2[i];
+      }
+    } 
 
 
-  if (y1 != NULL) {
-    if (first_pass) {
-      tmp_y_min = y1[0];
-      tmp_y_max = y2[0];
-    }
+    if (y1 != NULL) {
+      if (*first_pass) {
+	tmp_y_min = y1[0];
+	tmp_y_max = y2[0];
+      }
       
-    for (i=0; i < d->size; i++) {
-      if (y1[i] < tmp_y_min)
-	tmp_y_min = y1[i];
+      for (i=0; i < d->size; i++) {
+	if (y1[i] < tmp_y_min)
+	  tmp_y_min = y1[i];
 
-      if (y2[i] > tmp_y_max)
-	tmp_y_max = y2[i];
+	if (y2[i] > tmp_y_max)
+	  tmp_y_max = y2[i];
+      }
     }
-  }
   
-  plot_range_set_xmin(range , tmp_x_min);
-  plot_range_set_xmax(range , tmp_x_max);
-  plot_range_set_ymin(range , tmp_y_min);
-  plot_range_set_ymax(range , tmp_y_max);
+    plot_range_set_xmin(range , tmp_x_min);
+    plot_range_set_xmax(range , tmp_x_max);
+    plot_range_set_ymin(range , tmp_y_min);
+    plot_range_set_ymax(range , tmp_y_max);
+    
+    *first_pass = false;
+  }
 }
 
 
