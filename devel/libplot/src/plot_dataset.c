@@ -67,6 +67,11 @@ void plot_dataset_set_line_width(plot_dataset_type * dataset , double line_width
   dataset->line_width = line_width;
 }
 
+void plot_dataset_set_symbol_type(plot_dataset_type * dataset, plot_symbol_type symbol_type) {
+  dataset->symbol_type = symbol_type;
+}
+
+
 /*****************************************************************/
 
 double * plot_dataset_get_vector_x(const plot_dataset_type * d)  { return d->x; }

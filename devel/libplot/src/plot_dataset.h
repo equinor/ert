@@ -51,6 +51,7 @@ typedef enum {
  */
 typedef struct plot_dataset_struct plot_dataset_type;
 
+void plot_dataset_set_symbol_type(plot_dataset_type * , plot_symbol_type );
 void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style);
 void plot_dataset_set_line_color(plot_dataset_type *, plot_color_type );
 void plot_dataset_set_point_color(plot_dataset_type *  , plot_color_type );
