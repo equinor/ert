@@ -184,7 +184,7 @@ static void run_info_set(run_info_type * run_info ,
   run_info->init_state 	    = init_state;
   run_info->step1      	    = step1;
   run_info->step2      	    = step2;
-  run_info->load_mask1      = dynamic_result;
+  run_info->load_mask1      = dynamic_result + dynamic_state;
   run_info->load_mask2      = dynamic_result + dynamic_state + static_state;
   
   run_info->complete_OK     = false;
@@ -747,7 +747,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , int load
 */
    
 
-static void enkf_state_internalize_results(enkf_state_type * enkf_state , int load_mask1 , int load_mask2 , int report_step1 , int report_step2) {
+void enkf_state_internalize_results(enkf_state_type * enkf_state , int load_mask1 , int load_mask2 , int report_step1 , int report_step2) {
   if (report_step1 == 0)   /* Fucking special case - PRESSURE +++ is initialized by ECLIPSE - loading initial state. */
     enkf_state_internalize_state(enkf_state , dynamic_state + static_state , 0);
   

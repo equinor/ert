@@ -16,7 +16,7 @@ struct enkf_config_node_struct {
   config_activate_ftype * activate;
   enkf_impl_type     	  impl_type;
   enkf_var_type      	  var_type; 
-
+  
   stringlist_type       * obs_keys;         /* Keys of observations which observe this node. */
   char               	* key;
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */

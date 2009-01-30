@@ -236,7 +236,7 @@ void plot_free(plot_type * plot)
 static void plot_set_range__(plot_type * plot, double *x1 , double *x2 , double *y1 ,double *y2) {
   if (plot->__use_autorange)
     plot_get_extrema(plot , plot->range);
-
+  
   plot_range_apply(plot->range , x1 , x2 , y1 , y2);
 }
 
@@ -294,6 +294,9 @@ void plot_data(plot_type * plot)
   for (iplot = 0; iplot < plot->size; iplot++) 
     plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
 }
+
+
+
 
 
 void plot_set_xlabel(plot_type * plot , const char * xlabel) {
@@ -389,10 +392,8 @@ void plot_set_label_fontsize(plot_type * plot , double label_font_size_scale) {
 void plot_get_extrema(plot_type * plot, plot_range_type * range) {
   bool first_pass = true;
   int iplot;
-  for (iplot = 0; iplot < plot->size; iplot++) {
-    plot_dataset_update_range(plot->datasets[iplot] , first_pass , range);
-    first_pass = false;
-  }
+  for (iplot = 0; iplot < plot->size; iplot++) 
+    plot_dataset_update_range(plot->datasets[iplot] , &first_pass , range);
 }
 
 

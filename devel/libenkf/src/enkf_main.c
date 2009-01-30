@@ -966,5 +966,11 @@ void enkf_main_del_unused_static(enkf_main_type * enkf_main , int report_step) {
 
 
 
+enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
+  return enkf_main->ensemble;
+}
+
+
+
 
   

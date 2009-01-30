@@ -31,6 +31,7 @@ typedef enum {
   plot_data_x2 	 =  8,
   plot_data_y1 	 = 16,
   plot_data_y2 	 = 32,
+  plot_data_hist = 1   /* == plot_data_x */
 } plot_data_types;
 
 
@@ -69,7 +70,7 @@ int plot_dataset_step_next(plot_dataset_type * d);
 void plot_dataset_finished(plot_dataset_type * d, bool flag);
 bool plot_dataset_is_finished(plot_dataset_type * d);
 
-void plot_dataset_update_range(plot_dataset_type * , bool  , plot_range_type * );
+void plot_dataset_update_range(plot_dataset_type * , bool * , plot_range_type * );
 
 plot_dataset_type *plot_dataset_alloc( plot_data_type , bool );
 void plot_dataset_free(plot_dataset_type * d);
@@ -77,7 +78,6 @@ void plot_dataset_set_data(plot_dataset_type * d, const double * x,
 				  const double * y, int len,
 				  plot_color_type c, plot_style_type s);
 
-void     plot_dataset_update_range(plot_dataset_type * d, bool first_pass , plot_range_type *);
 void     plot_dataset_draw(int , plot_dataset_type *  , const plot_range_type * );
 double * plot_dataset_get_vector_x(const plot_dataset_type * d);
 double * plot_dataset_get_vector_y(const plot_dataset_type * d);

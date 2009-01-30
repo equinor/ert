@@ -448,6 +448,94 @@ void enkf_ui_plot_observation(void * arg) {
 }
 
 
+void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const model_config_type * model_config , const ensemble_config_type * ensemble_config , const obs_vector_type * obs_vector , const char * obs_key , int report_step) {
+  const char * plot_path              = model_config_get_plot_path( model_config );
+  plot_type             * plot;
+  const char            * state_kw    = obs_vector_get_state_kw(obs_vector);
+  enkf_node_type        * node;
+  const int ens_size                  = ensemble_config_get_size(ensemble_config);
+  enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
+  field_config_type * field_config    = enkf_config_node_get_ref( config_node );
+  field_obs_type    * field_obs       = obs_vector_iget_node( obs_vector , report_step );
+  char * plot_file;
+  
+  plot_file = enkf_ui_plot_alloc_plot_file(plot_path , obs_key);
+  plot = __plot_alloc(state_kw , "Depth" , obs_key , plot_file);
+  {
+    msg_type * msg       = msg_alloc("Loading realization: ");
+    const int * i 	     = field_obs_get_i(field_obs);
+    const int * j 	     = field_obs_get_j(field_obs);
+    const int * k 	     = field_obs_get_k(field_obs);
+    const int   obs_size = field_obs_get_size(field_obs);
+    const ecl_grid_type * grid = field_config_get_grid( field_config );
+    double * depth       = util_malloc( obs_size * sizeof * depth , __func__);
+    double min_depth , max_depth;
+    
+    int l;
+    int iens;
+    int iens1 = 0;        /* Could be user input */
+    int iens2 = ens_size;
+    
+    plot_dataset_type *  obs  = plot_alloc_new_dataset( plot , plot_x1x2y , false);
+    node = enkf_node_alloc( config_node );
+    
+    for (l = 0; l < obs_size; l++) {
+      double xpos, ypos,zpos;
+      ecl_grid_get_pos(grid , i[l] , j[l] , k[l] , &xpos , &ypos , &zpos);
+      depth[l] = zpos;
+    }
+    
+    max_depth = depth[0];
+    min_depth = depth[0];
+    for (l=1; l< obs_size; l++)
+      util_update_double_max_min( depth[l] , &max_depth , &min_depth);
+    
+    
+    msg_show( msg );
+    for (iens=iens1; iens <= iens2; iens++) {
+      char cens[5];
+      sprintf(cens , "%03d" , iens);
+      msg_update(msg , cens);
+      bool has_node = true;
+
+      if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) /* Trying analyzed first. */
+	enkf_fs_fread_node(fs , node , report_step , iens , analyzed);
+      else if (enkf_fs_has_node(fs , config_node , report_step , iens , forecast))
+	enkf_fs_fread_node(fs , node , report_step , iens , forecast);
+      else 
+	has_node = false;
+      
+      if (has_node) {
+	const field_type * field = enkf_node_value_ptr( node );
+	plot_dataset_type * data = plot_alloc_new_dataset( plot , plot_xy , false);
+	plot_dataset_set_style( data , LINE_POINTS );
+	plot_dataset_set_symbol_size( data , 1.25 );
+	for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
+	  plot_dataset_append_point_xy(data , field_ijk_get_double( field , i[l] , j[l] , k[l]) , depth[l]);
+      } else printf("No data found for :%d/%d \n",iens, report_step);
+    }
+    for (l = 0; l < obs_size; l++) {
+      double value , std;
+      
+      field_obs_iget(field_obs , l , &value , &std);
+      plot_dataset_append_point_x1x2y( obs , value - std , value + std , depth[l]);
+    }
+    
+    plot_set_bottom_padding( plot , 0.05);
+    plot_set_top_padding( plot , 0.05);
+    plot_set_left_padding( plot , 0.05);
+    plot_set_right_padding( plot , 0.05);
+    plot_invert_y_axis( plot );
+    
+    plot_dataset_set_line_color( obs , RED );
+    free(depth);
+    msg_free(msg , true);
+  }
+  __plot_show( plot , viewer , plot_file);
+  printf("Plot saved in: %s \n",plot_file);
+  free(plot_file);
+}
+
 
 void enkf_ui_plot_RFT(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
@@ -455,15 +543,12 @@ void enkf_ui_plot_RFT(void * arg) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
-  const char * plot_path                       = model_config_get_plot_path( model_config );
   {
-    const int ens_size = ensemble_config_get_size(ensemble_config);
     const int prompt_len = 40;
     const char * prompt  = "Which RFT observation: ";
     enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
     const obs_vector_type * obs_vector;
     char obs_key[64];
-    char * plot_file;
     int   report_step;
 
     {
@@ -489,93 +574,48 @@ void enkf_ui_plot_RFT(void * arg) {
     } while (!obs_vector_iget_active(obs_vector , report_step));
     
     /* OK - when we are here the user has entered a valid key which is a field observation. */
-    {
-      plot_type             * plot;
-      const char            * state_kw    = obs_vector_get_state_kw(obs_vector);
-      enkf_node_type        * node;
-      enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
-      field_config_type * field_config    = enkf_config_node_get_ref( config_node );
-      field_obs_type    * field_obs       = obs_vector_iget_node( obs_vector , report_step );
-      //int   obs_size                      = field_obs_get_size( field_obs );
-      
-      
-      
-      
-      plot_file = enkf_ui_plot_alloc_plot_file(plot_path , obs_key);
-      plot = __plot_alloc(state_kw , "Depth" , obs_key , plot_file);
-      {
-	msg_type * msg       = msg_alloc("Loading realization: ");
-	const int * i 	     = field_obs_get_i(field_obs);
-	const int * j 	     = field_obs_get_j(field_obs);
-	const int * k 	     = field_obs_get_k(field_obs);
-	const int   obs_size = field_obs_get_size(field_obs);
-	const ecl_grid_type * grid = field_config_get_grid( field_config );
-	double * depth       = util_malloc( obs_size * sizeof * depth , __func__);
-	double min_depth , max_depth;
-	
-	int l;
-	int iens;
-	int iens1 = 0;        /* Could be user input */
-	int iens2 = ens_size;
-	
-	plot_dataset_type ** data = util_malloc( ens_size * sizeof * data , __func__);
-	plot_dataset_type *  obs  = plot_alloc_new_dataset( plot , plot_x1x2y , false);
-	node = enkf_node_alloc( config_node );
-	
-	for (l = 0; l < obs_size; l++) {
-	  double xpos, ypos,zpos;
-	  ecl_grid_get_pos(grid , i[l] , j[l] , k[l] , &xpos , &ypos , &zpos);
-	  depth[l] = zpos;
-	}
-	
-	max_depth = depth[0];
-	min_depth = depth[0];
-	for (l=1; l< obs_size; l++)
-	  util_update_double_max_min( depth[l] , &max_depth , &min_depth);
-	
-	
-	for (iens=iens1; iens <= iens2; iens++)
-	  data[iens - iens1] = plot_alloc_new_dataset( plot , plot_xy , false);
-	
-	msg_show( msg );
-	for (iens=iens1; iens <= iens2; iens++) {
-	  char cens[5];
-	  sprintf(cens , "%03d" , iens);
-	  msg_update(msg , cens);
-
-	  if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
-	    enkf_fs_fread_node(fs , node , report_step , iens , analyzed);
-	    const field_type * field = enkf_node_value_ptr( node );
-	    for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
-	      plot_dataset_append_point_xy(data[iens - iens1] , field_ijk_get_double( field , i[l] , j[l] , k[l]) , depth[l]);
-	    
-	  }
-	}
-	for (l = 0; l < obs_size; l++) {
-	  double value , std;
-	  
-	  field_obs_iget(field_obs , l , &value , &std);
-	  plot_dataset_append_point_x1x2y( obs , value - std , value + std , depth[l]);
-	}
-
-	plot_set_bottom_padding( plot , 0.05);
-	plot_set_top_padding( plot , 0.05);
-	plot_set_left_padding( plot , 0.05);
-	plot_set_right_padding( plot , 0.05);
-	plot_invert_y_axis( plot );
-	
-	plot_dataset_set_line_color( obs , RED );
-	free(depth);
-	msg_free(msg , true);
-      }
-      __plot_show( plot , viewer , plot_file);
-      printf("Plot saved in: %s \n",plot_file);
-      free(plot_file);
-    }
+    enkf_ui_plot_RFT__(fs , viewer , model_config , ensemble_config , obs_vector , obs_key , report_step);
   }
 }
 
 
+/**
+   This function plots all the RFT's - observe that 'RFT' is no
+   fundamental type in the enkf_obs type system. It will plot all
+   BLOCK_OBS observations, they will typically (99% ??) be Pressure
+   observations, but could in principle also be saturation observatioons.
+*/
+
+
+
+void enkf_ui_plot_all_RFT( void * arg) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  {
+    const int prompt_len  = 30;
+    enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
+    int iobs , report_step;
+    stringlist_type * RFT_keys = enkf_obs_alloc_typed_keylist(enkf_obs , field_obs);
+    
+    for (iobs = 0; iobs < stringlist_get_size( RFT_keys ); iobs++) {
+      const char * obs_key = stringlist_iget( RFT_keys , iobs);
+      const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
+      
+      do {
+	if (obs_vector_get_num_active( obs_vector ) == 1)
+	  report_step = obs_vector_get_active_report_step( obs_vector );
+	else 
+	  /* An RFT should really be active at only one report step - but ... */
+	  report_step = enkf_ui_util_scanf_report_step(enkf_main , "Report step" , prompt_len);
+      } while (!obs_vector_iget_active(obs_vector , report_step));
+      
+      enkf_ui_plot_RFT__(fs , viewer , model_config , ensemble_config , obs_vector , obs_key , report_step);
+    }
+  }
+}
 
 
 
@@ -595,6 +635,7 @@ void enkf_ui_plot_menu(void * arg) {
     menu_add_item(menu , "Ensemble plot of ALL summary variables"    , "aA" , enkf_ui_plot_all_summary , enkf_main , NULL);
     menu_add_item(menu , "Observation plot" , "oO" 			    , enkf_ui_plot_observation , enkf_main , NULL);
     menu_add_item(menu , "RFT plot"         , "rR" 			    , enkf_ui_plot_RFT         , enkf_main , NULL);
+    menu_add_item(menu , "RFT plot of all RFT"  , "fF" 			    , enkf_ui_plot_all_RFT     , enkf_main , NULL);
     menu_add_item(menu , "Histogram"        , "hH"                          , enkf_ui_plot_histogram   , enkf_main , NULL);
     menu_add_separator(menu);
     menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);

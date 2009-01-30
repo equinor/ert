@@ -42,10 +42,7 @@ void enkf_obs_get_obs_and_measure(
         meas_matrix_type       * meas_matrix,
         obs_data_type          * obs_data);
 
-stringlist_type * enkf_obs_alloc_summary_vars(
-        enkf_obs_type * enkf_obs);
-
-
+stringlist_type * enkf_obs_alloc_typed_keylist( enkf_obs_type * enkf_obs , obs_impl_type );
 hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs);
 
 const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );

@@ -118,10 +118,37 @@ void enkf_ui_run_smooth__(void * enkf_main) {
 }
 
 
+
+
+/**
+   This implementation is NOT compatible with the general case where
+   RUNPATH contains STEP1 and STEP2.
+*/
+
+//void enkf_ui_run_manual_internalize__(void * arg ) {
+//  int load_mask1 = dynamic_state + dynamic_result + static_state;
+//  int load_mask2 = dynamic_state + dynamic_result + static_state;
+//  int step1 = 0;
+//  int step2 = 30; /* inclusive */
+//  int iens1 = 0;
+//  int iens2 = 9; /* inclusive */
+//  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+//  enkf_state_type ** ensemble = enkf_main_get_ensemble( enkf_main );
+//  int iens;
+//
+//  for (iens = iens1; iens <= iens2; iens++) {
+//    printf("Loading for member: %d \n",iens);
+//    enkf_state_init_run( ensemble[iens] , enkf_assimilation , true , step1 , analyzed , step1 , step2 , NULL);
+//    enkf_state_internalize_results( ensemble[iens] , load_mask1 , load_mask2 , step1 , step2);
+//  }
+//}
+
+
+
 void enkf_ui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   
-  menu_type * menu = menu_alloc("EnKF run menu" , "Back" , "bB");
+  menu_type * menu = menu_alloc("Run menu" , "Back" , "bB");
   menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_ui_run_start__      , enkf_main , NULL);
   menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_ui_run_restart__    , enkf_main , NULL);
   menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__        , enkf_main , NULL);
@@ -129,6 +156,8 @@ void enkf_ui_run_menu(void * arg) {
   menu_add_separator(menu);
   menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_ui_run_analyze__ , enkf_main , NULL);
   menu_add_item(menu , "Analyze interval manually" , "iI" , enkf_ui_run_smooth__  , enkf_main , NULL);
+  //menu_add_separator(menu);
+  //menu_add_item(menu , "Manually load simulation results" , "mM" , enkf_ui_run_manual_internalize__ , enkf_main , NULL);
   menu_add_separator(menu);
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );

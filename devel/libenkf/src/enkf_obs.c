@@ -552,18 +552,16 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
    summary observations, these are then added to the state vector in
    enkf_main.
 */
-stringlist_type * enkf_obs_alloc_summary_vars(
-  enkf_obs_type * enkf_obs)
-{
-  stringlist_type * summary_vars = stringlist_alloc_new();
+stringlist_type * enkf_obs_alloc_typed_keylist(enkf_obs_type * enkf_obs , obs_impl_type obs_type) {
+  stringlist_type * vars = stringlist_alloc_new();
   const char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
   while ( key != NULL) {
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
-    if (obs_vector_get_impl_type(obs_vector) == summary_obs)
-      stringlist_append_ref(summary_vars , obs_vector_get_state_kw(obs_vector));
+    if (obs_vector_get_impl_type(obs_vector) == obs_type)
+      stringlist_append_copy(vars , key);
     key = hash_iter_get_next_key( enkf_obs->obs_hash );
   }
-  return summary_vars;
+  return vars;
 }
 
 

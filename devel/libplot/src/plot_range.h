@@ -3,6 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stdio.h>
 
 
 typedef struct plot_range_struct plot_range_type;
@@ -11,7 +12,7 @@ typedef struct plot_range_struct plot_range_type;
 plot_range_type     * plot_range_alloc();
 void                  plot_range_free(plot_range_type *);
 
-
+void plot_range_fprintf(const plot_range_type * , FILE * );
 
 double plot_range_get_xmax(const plot_range_type * );
 double plot_range_get_ymax(const plot_range_type * );
