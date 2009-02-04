@@ -150,6 +150,8 @@ void trans_logunif_check(const char * func_name , const arg_pack_type * arg) {
   double max = arg_pack_iget_double(arg , 1);
   if (min >= max )
     util_exit("When using:%s frist argument must be less than second.\n",func_name);
+  if(min <= 0)  
+    util_exit("When using:%s both arguments must be greater than zero.\n",func_name);
 }
 
 
