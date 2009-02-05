@@ -24,8 +24,7 @@ struct history_node_struct{
 
 
 struct history_struct{
-  list_type   * nodes;
-  char        * schedule_file; /* Name of the schedule file which this object has been allocated from. */
+  list_type       * nodes;
 };
 
 
@@ -551,7 +550,6 @@ static history_type * history_alloc_empty()
 {
   history_type * history = util_malloc(sizeof * history, __func__);
   history->nodes         = list_alloc();
-  history->schedule_file = NULL;
   return history;
 }
 
@@ -579,7 +577,6 @@ static history_node_type * history_iget_node_ref(const history_type * history, i
 void history_free(history_type * history)
 {
   list_free(history->nodes);
-  util_safe_free( history->schedule_file );
   free(history);
 }
 
@@ -603,7 +600,7 @@ void history_free(history_type * history)
 */
 history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 {
-  history_type * history = history_alloc_empty( sched_file_get_filename( sched_file ));
+  history_type * history = history_alloc_empty( );
 
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
 
@@ -673,8 +670,7 @@ void history_realloc_from_summary(history_type * history, const ecl_sum_type * s
       {
         time_t sum_time = ecl_sum_get_sim_time( summary , restart_nr );
         if (sum_time != node->node_end_time) 
-          util_abort("%s: hmmm - seems to be timing inconsisentcy between schedule_file:%s and refcase:%s \n",
-                      __func__ , history->schedule_file , ecl_sum_get_simulation_case( summary) );
+          util_abort("%s: hmmm - seems to be timing inconsisentcy between schedule_file and refcase:%s \n",  __func__ , ecl_sum_get_simulation_case( summary) );
       }
 
       node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, restart_nr, use_h_keywords);

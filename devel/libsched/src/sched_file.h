@@ -10,10 +10,11 @@ extern "C" {
 
 typedef struct sched_file_struct sched_file_type;
 
-sched_file_type * sched_file_alloc();
+sched_file_type * sched_file_alloc(time_t);
 sched_file_type * sched_file_safe_cast(void * );
 void 		  sched_file_free(sched_file_type *);
 void 		  sched_file_parse(sched_file_type *, time_t, const char *);
+void              sched_file_parse_append(sched_file_type *  , const char * );
 sched_file_type * sched_file_parse_alloc(const char * , time_t);
 void              sched_file_fprintf_i(const sched_file_type *, int, const char *);
 void              sched_file_fwrite(const sched_file_type *, FILE * stream);
@@ -29,7 +30,7 @@ time_t            sched_file_iget_block_end_time(const sched_file_type *, int);
 sched_kw_type *   sched_file_ijget_block_kw_ref(const sched_file_type *, int, int);
 int               sched_file_get_restart_file_from_time_t(const sched_file_type * , time_t );
 void              sched_file_summarize(const sched_file_type *  , FILE * );
-const      char * sched_file_get_filename(const sched_file_type * );
+  //const      char * sched_file_get_filename(const sched_file_type * );
 
 #ifdef __cplusplus
 }

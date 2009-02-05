@@ -41,6 +41,7 @@ struct ecl_config_struct {
   ecl_grid_type      * grid;                   /* The grid which is active for this model. */
   char               * schedule_target_file;   /* File name to write schedule info to */
   char               * equil_init_file;        /* File name for ECLIPSE (EQUIL) initialisation. */
+  int                  history_length;         /* The number of report steps in the SCHEDULE_FILE. */
 };
 
 
@@ -74,7 +75,12 @@ ecl_config_type * ecl_config_alloc( const config_type * config) {
     } else
       ecl_config->schedule_target_file = stringlist_iget_copy( sched_list , 1);
 
-    ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date);
+    ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date );
+    ecl_config->history_length = sched_file_get_num_restart_files( ecl_config->sched_file );   /* We keep track of this - so we can stop assimilation at the
+												  end of HISTORY. */
+    if (config_has_set_item(config , "SCHEDULE_PREDICTION_FILE"))
+      sched_file_parse_append( ecl_config->sched_file , config_get(config , "SCHEDULE_PREDICTION_FILE"));
+
   }
   if (config_has_set_item(config , "EQUIL_INIT_FILE"))
     ecl_config->equil_init_file = util_alloc_realpath(config_get(config , "EQUIL_INIT_FILE"));

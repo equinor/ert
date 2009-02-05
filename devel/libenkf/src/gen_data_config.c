@@ -55,10 +55,12 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
    1. (ecl_file != NULL)                                 => out_format != gen_data_undefined.
    2. ((result_file != NULL) || (init_file_fmt != NULL)) => input_format != gen_data_undefined
    3. (output_format == ASCII_template)                  => (template_ecl_file != NULL) && (template_data_key != NULL)
-   
+   4. as_param == true                                   => init_file_fmt != NULL
+   5. input_format == ASCII_template                     => INVALID
 */
 
-static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_type       , 
+static gen_data_config_type * gen_data_config_alloc__( bool as_param, 
+						       ecl_type_enum internal_type       , 
 						       gen_data_file_format_type input_format ,
 						       gen_data_file_format_type output_format,
 						       const char * init_file_fmt     ,  
@@ -92,7 +94,16 @@ static gen_data_config_type * gen_data_config_alloc__( ecl_type_enum internal_ty
     if (template_ecl_file != NULL)
       util_abort("%s: internal error have template and format mismatch \n",__func__);
   
-
+  /* Condition 4: */
+  if (as_param)
+    if (init_file_fmt == NULL)
+      util_abort("%s: when adding a parameter you must supply files to initialize from with INIT_FILES:/path/to/files/with%d \n",__func__);
+  
+  /* Condition 5: */
+  if (input_format == ASCII_template)
+    util_abort("%s: Format ASCII_TEMPLATE is not valid as INPUT_FORMAT \n",__func__);
+  
+  
   if (template_ecl_file != NULL) {
     char *data_ptr;
     config->template_buffer = util_fread_alloc_file_content( template_ecl_file , NULL , &config->template_buffer_size);
@@ -154,12 +165,12 @@ static gen_data_file_format_type __gen_data_config_check_format( const char * fo
    INIT_FILES:/some/path/with/%d
    TEMPLATE:/some/template/file
    KEY:<SomeKeyFoundInTemplate>
-   ECL_FILE:<filename to write EnKF ==> Forward model>
+   ECL_FILE:<filename to write EnKF ==> Forward model>  (In the case of gen_param - this is extracted in the calling scope).
    RESULT_FILE:<filename to read EnKF <== Forward model> 
 
 */
 
-gen_data_config_type * gen_data_config_alloc(int num_options, const char ** options , char **__ecl_file , char ** __result_file) {
+gen_data_config_type * gen_data_config_alloc(bool as_param , int num_options, const char ** options , char **__ecl_file , char ** __result_file) {
   const ecl_type_enum internal_type = ecl_double_type;
   gen_data_config_type * config;
   hash_type * opt_hash = hash_alloc_from_options( num_options , options );
@@ -187,7 +198,7 @@ gen_data_config_type * gen_data_config_alloc(int num_options, const char ** opti
       
       else if (strcmp(option , "OUTPUT_FORMAT") == 0)
 	output_format = __gen_data_config_check_format( value );
-
+      
       else if (strcmp(option , "TEMPLATE") == 0)
 	template_file = util_alloc_string_copy( value );
       
@@ -209,7 +220,7 @@ gen_data_config_type * gen_data_config_alloc(int num_options, const char ** opti
       
       option = hash_iter_get_next_key( opt_hash );
     } 
-    config = gen_data_config_alloc__(internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file);
+    config = gen_data_config_alloc__(as_param , internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file);
     util_safe_free( init_file_fmt );
     util_safe_free( template_file );
     util_safe_free( template_key );

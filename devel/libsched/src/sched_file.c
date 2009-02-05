@@ -1,5 +1,6 @@
 #include <hash.h>
 #include <list.h>
+#include <stringlist.h>
 #include <util.h>
 #include <sched_file.h>
 #include <sched_util.h>
@@ -47,9 +48,10 @@ struct sched_block_struct {
 
 
 struct sched_file_struct {
-  int         __id;        /* Used for safe run-time casting. */
-  list_type * blocks;      /* A list of chronologically sorted sched_block_type's. */
-  char      * filename;    /* The name of the schedule file. */
+  int               __id;        /* Used for safe run-time casting. */
+  list_type       * blocks;      /* A list of chronologically sorted sched_block_type's. */
+  stringlist_type * files;       /* The name of the files which have been parsed to generate this sched_file instance. */
+  time_t            start_time;  /* The start of the simulation. */
 };
 
 
@@ -193,7 +195,7 @@ static sched_block_type * sched_file_iget_block_ref(const sched_file_type * sche
 
 
 
-static void sched_file_build_block_dates(sched_file_type * sched_file, time_t start_date)
+static void sched_file_build_block_dates(sched_file_type * sched_file)
 {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   time_t curr_time, new_time;
@@ -203,25 +205,26 @@ static void sched_file_build_block_dates(sched_file_type * sched_file, time_t st
 
   /* Special case for block 0. */
   sched_block_type * sched_block = sched_file_iget_block_ref(sched_file, 0);
-  sched_block->block_start_time  = start_date ;
-  sched_block->block_end_time    = start_date ;
+  sched_block->block_start_time  = sched_file->start_time ;
+  sched_block->block_end_time    = sched_file->start_time ;
 
-  curr_time = start_date;
+  curr_time = sched_file->start_time;
   for(int i=1; i<num_restart_files; i++)
   {
-      sched_block = sched_file_iget_block_ref(sched_file, i);
-      sched_block->block_start_time = curr_time;
-
-      sched_kw_type * timing_kw = sched_block_get_last_kw_ref(sched_block);
-      new_time = sched_kw_get_new_time(timing_kw, curr_time);
-
-      if(curr_time > new_time)
-        util_abort("%s: Schedule file contains negative timesteps - aborting.\n",__func__);
-
-      curr_time = new_time;
-      sched_block->block_end_time = curr_time;
+    sched_block = sched_file_iget_block_ref(sched_file, i);
+    sched_block->block_start_time = curr_time;
+    
+    sched_kw_type * timing_kw = sched_block_get_last_kw_ref(sched_block);
+    new_time = sched_kw_get_new_time(timing_kw, curr_time);
+    
+    if(curr_time > new_time)
+      util_abort("%s: Schedule file contains negative timesteps - aborting.\n",__func__);
+    
+    curr_time = new_time;
+    sched_block->block_end_time = curr_time;
   }
 }
+
 
 
 
@@ -229,12 +232,13 @@ static void sched_file_build_block_dates(sched_file_type * sched_file, time_t st
 
 
 
-sched_file_type * sched_file_alloc()
+sched_file_type * sched_file_alloc(time_t start_time)
 {
   sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
-  sched_file->__id     = SCHED_FILE_TYPE_ID;
-  sched_file->blocks   = list_alloc();
-  sched_file->filename = NULL;
+  sched_file->__id     	 = SCHED_FILE_TYPE_ID;
+  sched_file->blocks   	 = list_alloc();
+  sched_file->files    	 = stringlist_alloc_new();
+  sched_file->start_time = start_time;
   return sched_file;
 }
 
@@ -252,28 +256,27 @@ sched_file_type * sched_file_safe_cast(void * _s) {
 void sched_file_free(sched_file_type * sched_file)
 {
   list_free(sched_file->blocks);
-  util_safe_free(sched_file->filename);
+  stringlist_free( sched_file->files );
   free(sched_file);
 }
 
 
 
-void sched_file_parse(sched_file_type * sched_file, time_t start_date, const char * filename)
-{
-  bool at_eof = false;
+/**
+   This function parses 'further', i.e typically adding another schedule
+   file to the sched_file instance.
+*/
 
+
+void sched_file_parse_append(sched_file_type * sched_file , const char * filename) {
+  bool at_eof = false;
   sched_kw_type    * current_kw;
   sched_block_type * current_block;
 
-  /* Add the first empty pseudo block. */
-  sched_file_add_block(sched_file, sched_block_alloc_empty());
-  
   FILE * stream = util_fopen(filename, "r");
-
-  sched_file->filename = util_alloc_string_copy(filename); 
-  current_block = sched_block_alloc_empty();
-  current_block->block_start_time = start_date;
   
+  stringlist_append_copy( sched_file->files , filename);
+  current_block = sched_block_alloc_empty();
   current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
   while(!at_eof)
   { 
@@ -300,12 +303,22 @@ void sched_file_parse(sched_file_type * sched_file, time_t start_date, const cha
   } 
   fclose(stream);
   sched_block_free(current_block); /* Free the last non-proper block. */
-  sched_file_build_block_dates(sched_file, start_date);
+  sched_file_build_block_dates(sched_file);
+}
+
+
+void sched_file_parse(sched_file_type * sched_file, time_t start_date, const char * filename)
+{
+  /* 
+     Add the first empty pseudo block - this runs from time -infty:start_date.
+  */
+  sched_file_add_block(sched_file , sched_block_alloc_empty());
+  sched_file_parse_append( sched_file , filename );
 }
 
 
 sched_file_type * sched_file_parse_alloc(const char * filename , time_t start_date) {
-  sched_file_type * sched_file = sched_file_alloc();
+  sched_file_type * sched_file = sched_file_alloc( start_date );
   sched_file_parse(sched_file , start_date , filename);
   return sched_file;
 }
@@ -341,7 +354,8 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
 void sched_file_fwrite(const sched_file_type * sched_file, FILE * stream)
 {
   int len = sched_file_get_num_restart_files(sched_file);
-
+  
+  util_fwrite(&sched_file->start_time , sizeof sched_file->start_time , 1 , stream , __func__);
   util_fwrite(&len, sizeof len, 1, stream, __func__);
 
   for(int i=0; i<len; i++)
@@ -356,23 +370,30 @@ void sched_file_fwrite(const sched_file_type * sched_file, FILE * stream)
 sched_file_type * sched_file_fread_alloc(FILE * stream)
 {
 
-  int len;
-  sched_file_type * sched_file = sched_file_alloc();
-  util_fread(&len, sizeof len, 1, stream, __func__);
-
-  for(int i=0; i<len; i++)
+  time_t start_time;
+  util_fwrite(&start_time , sizeof start_time , 1 , stream , __func__);
   {
-    sched_block_type * block = sched_block_fread_alloc(stream);
-    sched_file_add_block(sched_file, block);
+    int len;
+    
+    sched_file_type * sched_file = sched_file_alloc( start_time );
+    util_fread(&len, sizeof len, 1, stream, __func__);
+    
+    for(int i=0; i<len; i++)
+      {
+	sched_block_type * block = sched_block_fread_alloc(stream);
+	sched_file_add_block(sched_file, block);
+      }
+    
+    return sched_file;
   }
-
-  return sched_file;
 }
 
 
-const char * sched_file_get_filename(const sched_file_type * sched_file) {
+/*
+  const char * sched_file_get_filename(const sched_file_type * sched_file) {
   return sched_file->filename;
-}
+  }
+*/
 
 
 int sched_file_get_restart_nr_from_time_t(const sched_file_type * sched_file, time_t time)

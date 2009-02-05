@@ -251,8 +251,7 @@ sched_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 
   The function will abort under the following circumstances:
     1. If a valid kw is started, but EOF is reached prematurely.
-    2. On encountering syntax errors in the schedule file, expect
-       for missing END as the last keyword.
+
 
 
   *************************************************************

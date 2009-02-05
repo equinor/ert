@@ -244,7 +244,7 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_set_argc_minmax(item , 4 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE});
   
   item = config_add_item(config , "GEN_PARAM" , false , true);
-  config_item_set_argc_minmax(item , 3 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 5 , 7 ,  NULL);
   
   item = config_add_item(config , "GEN_DATA" , false , true);
   config_item_set_argc_minmax(item , 1 , -1 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
@@ -310,7 +310,18 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     else
       options = NULL;
     
-    ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(num_options , options , NULL , NULL));
+    /* 
+       Required options:
+       	* INPUT_FORMAT 
+       	* INPUT_FILES
+       	* INIT_FILES
+        * OUTPUT_FORMAT
+
+       Optional:
+        * TEMPLATE
+        * KEY
+    */
+    ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(true , num_options , options , NULL , NULL));
   }
   
 
@@ -341,7 +352,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       char * ecl_file;
       char * result_file;
       enkf_var_type var_type;
-      gen_data_config = gen_data_config_alloc(num_options , options , &ecl_file , &result_file);
+      gen_data_config = gen_data_config_alloc(false , num_options , options , &ecl_file , &result_file);
       if (ecl_file == NULL) /* 
 			       EnKF should not provide the forward model with an instance of this
 			       data => We have dynamic_result.

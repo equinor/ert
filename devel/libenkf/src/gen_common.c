@@ -33,7 +33,11 @@ void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int
       } else if (load_type == ecl_double_type) {
 	double  * double_buffer = (double *) buffer;
 	fscanf_return = fscanf(stream , "%lg" , &double_buffer[current_size]);
-      } else util_abort("%s: god dammit - internal error \n",__func__);
+      } else if (load_type == ecl_int_type) {
+	int * int_buffer = (int *) buffer;
+	fscanf_return = fscanf(stream , "%d" , &int_buffer[current_size]);
+      }  else 
+	util_abort("%s: god dammit - internal error \n",__func__);
       
       if (fscanf_return == 1)
 	current_size += 1;

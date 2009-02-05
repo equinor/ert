@@ -32,7 +32,7 @@ ecl_type_enum         	     gen_data_config_get_internal_type(const gen_data_con
 int                   	     gen_data_config_get_byte_size(const gen_data_config_type * );
 int                   	     gen_data_config_get_data_size(const gen_data_config_type * );
 int                          gen_data_config_get_report_step(const gen_data_config_type *);
-gen_data_config_type  	   * gen_data_config_alloc(int , const char ** , char ** , char **);
+gen_data_config_type  	   * gen_data_config_alloc(bool , int , const char ** , char ** , char **);
 void                         gen_data_config_free(gen_data_config_type * );
 void                         gen_data_config_assert_size(gen_data_config_type *  , int , int);
 const bool     *             gen_data_config_get_iactive(const gen_data_config_type * );

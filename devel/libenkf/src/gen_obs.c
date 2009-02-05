@@ -130,9 +130,12 @@ gen_obs_type * gen_obs_alloc(const char * obs_file , const char * data_index_fil
     obs->observe_all_data = true;
   } else {
     obs->observe_all_data = false;
-    if (data_index_file != NULL) {
-    } else {
-    }
+    if (data_index_file != NULL) 
+      /* Parsing an a file with integers. */
+      obs->data_index_list = gen_common_fscanf_alloc( data_index_file , ecl_int_type , &obs->obs_size);
+    else   
+      /* Parsing a string of the type "1,3,5,9-100,200,202,300-1000" */
+      obs->data_index_list = util_sscanf_alloc_active_list(data_index_string , &obs->obs_size);
   }
   return obs;
 }
