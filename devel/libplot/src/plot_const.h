@@ -28,7 +28,7 @@ typedef enum {
 typedef enum plot_style_enum {
     BLANK       = 0,
     LINE        = 1,
-    POINT       = 2,  
+    POINTS      = 2,  
     LINE_POINTS = 3
 } plot_style_type;
 

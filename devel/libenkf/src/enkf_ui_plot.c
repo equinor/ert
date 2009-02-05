@@ -409,8 +409,8 @@ void enkf_ui_plot_observation(void * arg) {
 	plot_dataset_set_line_width(obs_value , 2.0);
 	plot_dataset_set_line_style(obs_quant , long_dash);
 
-	plot_dataset_set_style( forecast_data , POINT);
-	plot_dataset_set_style( analyzed_data , POINT);
+	plot_dataset_set_style( forecast_data , POINTS);
+	plot_dataset_set_style( analyzed_data , POINTS);
 	plot_dataset_set_point_color( forecast_data , BLUE );
 	plot_dataset_set_point_color( analyzed_data , RED  );
 	
@@ -462,7 +462,7 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const model_con
   plot_file = enkf_ui_plot_alloc_plot_file(plot_path , obs_key);
   plot = __plot_alloc(state_kw , "Depth" , obs_key , plot_file);
   {
-    msg_type * msg       = msg_alloc("Loading realization: ");
+    msg_type * msg           = msg_alloc("Loading realization: ");
     const int * i 	     = field_obs_get_i(field_obs);
     const int * j 	     = field_obs_get_j(field_obs);
     const int * k 	     = field_obs_get_k(field_obs);
@@ -508,7 +508,7 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const model_con
       if (has_node) {
 	const field_type * field = enkf_node_value_ptr( node );
 	plot_dataset_type * data = plot_alloc_new_dataset( plot , plot_xy , false);
-	plot_dataset_set_style( data , LINE_POINTS );
+	plot_dataset_set_style( data , POINTS );
 	plot_dataset_set_symbol_size( data , 1.25 );
 	for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
 	  plot_dataset_append_point_xy(data , field_ijk_get_double( field , i[l] , j[l] , k[l]) , depth[l]);
