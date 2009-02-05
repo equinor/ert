@@ -370,7 +370,7 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
     if (d->style == LINE || d->style == LINE_POINTS) 
       plline(d->size , d->x , d->y);
     
-    if (d->style == POINT || d->style == LINE_POINTS) {
+    if (d->style == POINTS || d->style == LINE_POINTS) {
       plcol0(d->point_color);       /* Setting the color */
       plpoin(d->size , d->x , d->y , d->symbol_type);
     }
