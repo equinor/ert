@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 
 
   // First verify that we can read a SCHEDULE file.
-  sched_file = sched_file_alloc();
+  sched_file = sched_file_alloc(-1);
   printf("-- Loading %s..\n", argv[1]);
   sched_file_parse(sched_file, -1 , argv[1]);
 
