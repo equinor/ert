@@ -306,13 +306,13 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
   
   {
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
-    const char * obs_file        = conf_instance_get_item_value_ref(   conf_instance, "OBS_FILE" );              
     const char * state_kw        = conf_instance_get_item_value_ref(   conf_instance, "DATA" );              
     int          size            = history_get_num_restarts( history );
     obs_vector_type * obs_vector = obs_vector_alloc( gen_obs , obs_key , ensemble_config_get_node(ensemble_config , state_kw ) , size );
     int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
     const char * index_file      = NULL;
     const char * index_list      = NULL;
+    const char * obs_file        = NULL;
     
     if (conf_instance_has_item(conf_instance , "INDEX_FILE"))
       index_file = conf_instance_get_item_value_ref(   conf_instance, "INDEX_FILE" );              
@@ -320,10 +320,24 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
     if (conf_instance_has_item(conf_instance , "INDEX_LIST"))
       index_list = conf_instance_get_item_value_ref(   conf_instance, "INDEX_LIST" );              
 
+    if (conf_instance_has_item(conf_instance , "OBS_FILE"))
+      obs_file = conf_instance_get_item_value_ref(   conf_instance, "OBS_FILE" );              
+    
+    
     {
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , state_kw);
       if (enkf_config_node_get_impl_type(config_node) == GEN_DATA) {
-	gen_obs_type * gen_obs = gen_obs_alloc(obs_file , index_file , index_list);	
+	double scalar_error = -1;
+	double scalar_value = -1;
+	gen_obs_type * gen_obs ;
+
+	if (conf_instance_has_item(conf_instance , "VALUE")) {
+	  scalar_value = conf_instance_get_item_value_double(conf_instance , "VALUE");
+	  scalar_error = conf_instance_get_item_value_double(conf_instance , "ERROR");
+	}
+
+	/** The config system has ensured that we have either OBS_FILE or (VALUE and ERROR). */
+	gen_obs = gen_obs_alloc(obs_file , scalar_value , scalar_error , index_file , index_list);	
 	obs_vector_install_node( obs_vector , obs_restart_nr , gen_obs );
       } else {
 	enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);

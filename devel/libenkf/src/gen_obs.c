@@ -71,12 +71,20 @@ void gen_obs_free(gen_obs_type * gen_obs) {
 */
 
 
-static void gen_obs_load_observation(gen_obs_type * gen_obs) {
+static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value , double scalar_error) {
   ecl_type_enum load_type;
   util_safe_free( gen_obs->__obs_buffer );
   
   gen_obs->obs_size = 0;
-  gen_obs->__obs_buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ecl_double_type , &load_type , &gen_obs->obs_size);
+  if (gen_obs->obs_file != NULL)
+    gen_obs->__obs_buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ecl_double_type , &load_type , &gen_obs->obs_size);
+  else {
+    gen_obs->__obs_buffer = util_malloc(2 * sizeof * gen_obs->__obs_buffer , __func__);
+    gen_obs->__obs_buffer[0] = scalar_value;
+    gen_obs->__obs_buffer[1] = scalar_error;
+    load_type         = ecl_double_type;
+    gen_obs->obs_size = 2;
+  }
   
   /** Ensure that the data is of type double. */
   if (load_type == ecl_float_type) {
@@ -104,7 +112,7 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs) {
 */
 
 
-gen_obs_type * gen_obs_alloc(const char * obs_file , const char * data_index_file , const char * data_index_string) {
+gen_obs_type * gen_obs_alloc(const char * obs_file , double scalar_value , double scalar_error , const char * data_index_file , const char * data_index_string) {
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
   obs->__type_id       	= GEN_OBS_TYPE_ID;
@@ -112,8 +120,7 @@ gen_obs_type * gen_obs_alloc(const char * obs_file , const char * data_index_fil
   obs->obs_file        	= util_alloc_string_copy( obs_file );
   obs->obs_format      	= ASCII;  /* Hardcoded for now. */
 
-  gen_obs_load_observation(obs); /* The observation data is loaded - and internalized at boot time - even though it might not be needed for a long time. */
-
+  gen_obs_load_observation(obs , scalar_value , scalar_error); /* The observation data is loaded - and internalized at boot time - even though it might not be needed for a long time. */
   if ((data_index_file == NULL) && (data_index_string == NULL)) {
     /* 
        We observe all the elements in the remote (gen_data) instance,

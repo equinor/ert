@@ -619,6 +619,149 @@ void enkf_ui_plot_all_RFT( void * arg) {
 
 
 
+void enkf_ui_plot_sensitivity(void * arg) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  const char * plot_path                       = model_config_get_plot_path( model_config );
+  
+  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
+  const int last_report                        = enkf_sched_get_last_report(enkf_sched);
+  const int ens_size    		       = ensemble_config_get_size(ensemble_config);
+  const int prompt_len  		       = 45;                   
+  const enkf_config_node_type * config_node_x;
+  const enkf_config_node_type * config_node_y;
+  double * x 	 = util_malloc( ens_size * sizeof * x , __func__);
+  double * y 	 = util_malloc( ens_size * sizeof * y , __func__);
+  bool   * valid = util_malloc( ens_size * sizeof * valid , __func__);
+  state_enum state_x = both;
+  state_enum state_y = both; 
+  int report_step_x = 0;
+  int report_step_y;
+  int iens;
+  char * user_key_y;
+  char * user_key_x  = NULL;
+      
+
+    
+  /* Loading the parameter on the x-axis */
+  {
+    char * key_index_x = NULL;
+    util_printf_prompt("Parameter on the x-axis (blank for iens): " , prompt_len , '=' , "=> ");
+    user_key_x = util_alloc_stdin_line();
+    if (strlen(user_key_x) == 0) {
+      user_key_x = util_realloc_string_copy(user_key_x , "Ensemble member");
+      config_node_x = NULL;
+    } else {
+      config_node_x = ensemble_config_user_get_node( ensemble_config , user_key_x , &key_index_x);
+      if (config_node_x == NULL) {
+	fprintf(stderr,"** Sorry - could not find any nodes with the key:%s \n",user_key_x);
+	util_safe_free(key_index_x);
+	free(x);
+	free(y);
+	free(valid);
+	free(user_key_x);
+	return;
+      }
+    }
+
+    if (config_node_x == NULL) {
+      /* x-axis just contains iens. */
+      for (iens = 0; iens < ens_size; iens++) {
+	x[iens]     = iens;
+	valid[iens] = true;
+      }
+    } else {
+      enkf_node_type * node = enkf_node_alloc( config_node_x );
+      for (iens = 0; iens < ens_size; iens++) {
+	if (enkf_fs_try_fread_node(fs , node , report_step_x , iens , state_x)) 
+	  x[iens] = enkf_node_user_get(node , key_index_x , &valid[iens]);
+	else
+	  valid[iens] = false;
+      }
+      enkf_node_free( node );
+    }
+    util_safe_free(key_index_x);
+  }
+
+  /* OK - all the x-data has been loaded. */
+  /* Here we should select a new filesystem for reading results. */
+  /* enkf_fs_select_read_dir(fs , dir); */
+
+  
+  {
+    char * key_index_y;
+    util_printf_prompt("Result on the y-axis: " , prompt_len , '=' , "=> ");
+    user_key_y    = util_alloc_stdin_line();
+    report_step_y = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
+    
+    {
+      config_node_y = ensemble_config_user_get_node( ensemble_config , user_key_y , &key_index_y);
+      if (config_node_y == NULL) {
+	fprintf(stderr,"** Sorry - could not find any nodes with the key:%s \n",user_key_y);
+	util_safe_free(key_index_y);
+	free(x);
+	free(y);
+	free(valid);
+	free(user_key_y);
+	return;
+      }
+    }
+    {
+      enkf_node_type * node = enkf_node_alloc( config_node_y );
+      
+      for (iens = 0; iens < ens_size; iens++) {
+	if (valid[iens]) {
+	  if (enkf_fs_try_fread_node(fs , node , report_step_y , iens , state_y)) 
+	    y[iens] = enkf_node_user_get(node , key_index_y , &valid[iens]);
+	  else
+	    valid[iens] = false;
+	}
+      }
+      
+      enkf_node_free( node );
+    }
+    util_safe_free(key_index_y);
+  }
+  /*****************************************************************/
+  /* OK - now we have x[], y[] and valid[] - ready for plotting.   */
+  
+  {
+    char * basename  	      = util_alloc_sprintf("%s-%s" , user_key_x , user_key_y);
+    char * plot_file 	      = enkf_ui_plot_alloc_plot_file( plot_path , basename);
+    plot_type * plot 	      = __plot_alloc(user_key_x , user_key_y , "Sensitivity plot" , plot_file);
+    plot_dataset_type  * data = plot_alloc_new_dataset( plot , plot_xy , false);
+    
+    for (iens = 0; iens < ens_size; iens++) {
+      if (valid[iens]) 
+	plot_dataset_append_point_xy( data , x[iens] , y[iens]);
+    }
+      
+    plot_dataset_set_style( data , POINTS);
+    plot_set_bottom_padding( plot , 0.05);
+    plot_set_top_padding( plot    , 0.05);
+    plot_set_left_padding( plot   , 0.05);
+    plot_set_right_padding( plot  , 0.05);
+
+    printf("Plot saved in: %s \n",plot_file);
+    __plot_show(plot , viewer , plot_file); /* Frees the plot - logical ehhh. */
+    free(basename);
+    free(plot_file);
+  }
+  
+
+  util_safe_free(user_key_y);
+  util_safe_free(user_key_x);
+  free(x);
+  free(y);
+  free(valid);
+}
+
+
+
+
 
 void enkf_ui_plot_menu(void * arg) {
   
@@ -636,6 +779,7 @@ void enkf_ui_plot_menu(void * arg) {
     menu_add_item(menu , "Observation plot" , "oO" 			    , enkf_ui_plot_observation , enkf_main , NULL);
     menu_add_item(menu , "RFT plot"         , "rR" 			    , enkf_ui_plot_RFT         , enkf_main , NULL);
     menu_add_item(menu , "RFT plot of all RFT"  , "fF" 			    , enkf_ui_plot_all_RFT     , enkf_main , NULL);
+    menu_add_item(menu , "Sensitivity plot"     , "sS"                      , enkf_ui_plot_sensitivity , enkf_main , NULL); 
     menu_add_item(menu , "Histogram"        , "hH"                          , enkf_ui_plot_histogram   , enkf_main , NULL);
     menu_add_separator(menu);
     menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);

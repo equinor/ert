@@ -65,15 +65,14 @@ ecl_config_type * ecl_config_alloc( const config_type * config) {
     const stringlist_type * sched_list = config_get_stringlist_ref(config , "SCHEDULE_FILE");
     const char * schedule_src = stringlist_iget( sched_list , 0);
 
-    if (stringlist_get_size(sched_list) == 1) {
+    {
       char * base;  /* The schedule target file will be without any path component */
       char * ext;
       util_alloc_file_components(schedule_src , NULL , &base , &ext);
       ecl_config->schedule_target_file = util_alloc_filename(NULL , base , ext);
       free(ext);
       free(base);
-    } else
-      ecl_config->schedule_target_file = stringlist_iget_copy( sched_list , 1);
+    } 
 
     ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date );
     ecl_config->history_length = sched_file_get_num_restart_files( ecl_config->sched_file );   /* We keep track of this - so we can stop assimilation at the

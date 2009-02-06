@@ -30,6 +30,7 @@ bool 	       	 enkf_fs_has_node(enkf_fs_type  * , const enkf_config_node_type * 
 void           	 enkf_fs_fwrite_restart_kw_list(enkf_fs_type * , int , int , restart_kw_list_type *);
 void           	 enkf_fs_fread_restart_kw_list(enkf_fs_type * , int , int , restart_kw_list_type *);
 enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type *  , enkf_config_node_type * , int  , int , state_enum );
+bool             enkf_fs_try_fread_node(enkf_fs_type *  , enkf_node_type *  , int  , int  , state_enum );
 
 enkf_node_type ** enkf_fs_fread_alloc_ts(enkf_fs_type * , enkf_config_node_type * , int , int ,  int  , state_enum );
 enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type *  , enkf_config_node_type *  , int  , int  , int , state_enum );

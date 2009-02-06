@@ -698,6 +698,36 @@ enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_n
 }
 
 
+/**
+   This function will load a node from the filesystem if it is
+   available; if not it will just return false.
+
+   The state argument can be 'both' - in which case it will first try
+   the analyzed, and then subsequently the forecast before giving up
+   and returning false. If the function returns true with state ==
+   'both' it is no way to determine which version was actually loaded.
+*/
+
+bool enkf_fs_try_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * node , int report_step , int iens , state_enum state) {
+  if (state == both) {
+    bool analyzed_return = enkf_fs_try_fread_node(enkf_fs , node , report_step , iens , analyzed);
+    if (analyzed_return)
+      return true;
+    else
+      return enkf_fs_try_fread_node(enkf_fs , node , report_step , iens , forecast);
+  } else {
+
+    if (enkf_fs_has_node(enkf_fs , enkf_node_get_config(node) , report_step , iens , state)) {
+      enkf_fs_fread_node(enkf_fs , node , report_step , iens , state);
+      return true;
+    } else
+      return false;
+  }
+
+}
+
+
+
 /*****************************************************************/
 /* High level functions to work on an ensemble or a time-series. */
 /* Observe that both for the time_based functions, and the ensemble
