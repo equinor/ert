@@ -35,7 +35,7 @@ Initial checkout
 Before you start using subversion you must 'check out' the sources. In
 our case this will typically be done with the command:
 
-   bash% svn co http://tr-linapp03.tr.statoil.no/reservoir/EnKF/devel EnKF
+   bash% svn co http://sdp.statoil.no/reservoir/EnKF/devel EnKF
 
 Which will extract the directory starting with devel/ in the
 repository, and make the same directory structure locally. In
