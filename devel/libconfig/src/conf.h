@@ -91,12 +91,11 @@ extern "C" {
 #include <stringlist.h>
 
 
-typedef struct conf_class_struct      conf_class_type;
-typedef struct conf_instance_struct   conf_instance_type;
-typedef struct conf_item_spec_struct  conf_item_spec_type;
-typedef struct conf_item_struct       conf_item_type;
-typedef struct conf_item_mutex_struct conf_item_mutex_type;
-
+typedef struct conf_class_struct      	   conf_class_type;
+typedef struct conf_instance_struct   	   conf_instance_type;
+typedef struct conf_item_spec_struct  	   conf_item_spec_type;
+typedef struct conf_item_struct       	   conf_item_type;
+typedef struct conf_item_mutex_struct 	   conf_item_mutex_type;
 
 
 /** D E F A U L T   A L L O C / F R E E    F U N C T I O N S */
@@ -161,7 +160,7 @@ void conf_item_free__(
 
 
 conf_item_mutex_type * conf_item_mutex_alloc(
-  bool require_one);
+  bool require_one , bool inverse);
 
 void conf_item_mutex_free(
   conf_item_mutex_type * conf_item_mutex);

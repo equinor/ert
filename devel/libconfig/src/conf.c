@@ -6,7 +6,7 @@
 #include <util.h>
 #include <conf.h>
 #include <conf_util.h>
-
+#include <vector.h>
 
 
 /** S T R U C T   D E F I N I T I O N S */ 
@@ -15,14 +15,14 @@
 
 struct conf_class_struct
 {
-  const conf_class_type * super_class;  /** Can be NULL.              */
+  const conf_class_type * super_class;        /** Can be NULL.              */
   char                  * class_name;
-  char                  * help;         /** Can be NULL if not given. */
+  char                  * help;               /** Can be NULL if not given. */
   bool                    require_instance;
   
-  hash_type             * sub_classes;  /** conf_class_types          */
-  hash_type             * item_specs;   /** conf_item_spec_types      */
-  list_type             * item_mutexes; /** item_mutex_types          */
+  hash_type             * sub_classes;        /** conf_class_types          */
+  hash_type             * item_specs;         /** conf_item_spec_types      */
+  list_type             * item_mutexes;       /** item_mutex_types          */
 };
 
 
@@ -63,6 +63,7 @@ struct conf_item_mutex_struct
 {
   const conf_class_type * super_class;
   bool                    require_one;
+  bool                    inverse;       /* if inverse == true the 'mutex' implements: if A then ALSO B, C and D. */
   hash_type             * item_spec_refs;
 };
 
@@ -318,12 +319,13 @@ void conf_item_free__(
 
 
 
-conf_item_mutex_type * conf_item_mutex_alloc( bool require_one )
+conf_item_mutex_type * conf_item_mutex_alloc( bool require_one , bool inverse)
 {
   conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex, __func__);
-
+  
   conf_item_mutex->super_class    = NULL;
   conf_item_mutex->require_one    = require_one;
+  conf_item_mutex->inverse        = inverse;
   conf_item_mutex->item_spec_refs = hash_alloc();
 
   return conf_item_mutex;
@@ -345,6 +347,7 @@ void conf_item_mutex_free__(
 {
   conf_item_mutex_free( (conf_item_mutex_type *) conf_item_mutex);
 }
+
 
 
 
@@ -442,38 +445,31 @@ void conf_class_insert_owned_item_mutex(
   assert(conf_item_mutex != NULL);
 
   /** Check that the class has the required item_specs. */
-  bool           ok  = true;
-  int     num_items  = hash_get_size(conf_item_mutex->item_spec_refs);
-  char ** item_keys  = hash_alloc_keylist(conf_item_mutex->item_spec_refs);
-
-  for(int item_nr = 0; item_nr < num_items; item_nr++)
-  {
-    const char                * item_key             = item_keys[item_nr];
+  bool              ok  = true;
+  const char * item_key = hash_iter_get_first_key( conf_item_mutex->item_spec_refs );
+  while (item_key != NULL) {
     const conf_item_spec_type * conf_item_spec_mutex = hash_get(conf_item_mutex->item_spec_refs, item_key);
-
-    if(!hash_has_key(conf_class->item_specs, item_key))
-    {
+    
+    if(!hash_has_key(conf_class->item_specs, item_key)) {
       printf("ERROR: Trying to insert a mutex on item \"%s\", which class \"%s\" does not have.\n",
              item_key, conf_class->class_name);
       ok = false;
     }
     else
-    {
-      const conf_item_spec_type * conf_item_spec_class = hash_get(conf_class->item_specs, item_key);
-      if(conf_item_spec_class != conf_item_spec_mutex)
       {
-        ok = false;
-        printf("ERROR: Trying to insert a mutex on item \"%s\", which class \"%s\" has a different implementation of.\n",
-             item_key, conf_class->class_name);
+	const conf_item_spec_type * conf_item_spec_class = hash_get(conf_class->item_specs, item_key);
+	if(conf_item_spec_class != conf_item_spec_mutex)
+	  {
+	    ok = false;
+	    printf("ERROR: Trying to insert a mutex on item \"%s\", which class \"%s\" has a different implementation of.\n",
+		   item_key, conf_class->class_name);
+	  }
       }
-    }
+    item_key = hash_iter_get_next_key( conf_item_mutex->item_spec_refs );
   }
-
-  util_free_stringlist(item_keys, num_items);
-
+  
   if(!ok)
-    util_abort("%s: Internal error. Trying to insert an invalid item mutex in class \"%s\".\n",
-               __func__, conf_class->class_name);
+    util_abort("%s: Internal error. Trying to insert an invalid item mutex in class \"%s\".\n",__func__, conf_class->class_name);
 
   conf_item_mutex->super_class = conf_class;
   list_append_list_owned_ref(conf_class->item_mutexes, conf_item_mutex, conf_item_mutex_free__);
@@ -1086,25 +1082,34 @@ bool conf_instance_check_item_mutex(
   }
 
   num_items_set = set_get_size(items_set);
-
-  if(num_items_set > 1)
-  {
-    ok = false;
-    char ** items_set_keys = set_alloc_keylist(items_set);
-
-    printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
-           conf_instance->name, conf_instance->conf_class->class_name);
-    printf("       Only one of the following items may be set:\n");
-    for(int item_nr = 0; item_nr < num_items; item_nr++)
-      printf("       %i : %s\n", item_nr, item_keys[item_nr]);
-
-    printf("\n");
-    printf("       However, all the following items were set:\n");
-    for(int item_nr = 0; item_nr < num_items_set; item_nr++)
-      printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
-    printf("\n");
-
-    util_free_stringlist(items_set_keys, num_items_set);
+  
+  if (conf_item_mutex->inverse) {
+    /** This is an inverse mutex - all (or none) items should be set. */
+    if (!((num_items_set == 0) || (num_items_set == num_items))) {
+      ok = false;
+      printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
+	     conf_instance->name, conf_instance->conf_class->class_name);
+    }
+  } else {
+    if(num_items_set > 1)
+      {
+	ok = false;
+	char ** items_set_keys = set_alloc_keylist(items_set);
+	
+	printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
+	       conf_instance->name, conf_instance->conf_class->class_name);
+	printf("       Only one of the following items may be set:\n");
+	for(int item_nr = 0; item_nr < num_items; item_nr++)
+	  printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+	
+	printf("\n");
+	printf("       However, all the following items were set:\n");
+	for(int item_nr = 0; item_nr < num_items_set; item_nr++)
+	  printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
+	printf("\n");
+	
+	util_free_stringlist(items_set_keys, num_items_set);
+      }
   }
 
   if(num_items_set == 0 && conf_item_mutex->require_one && num_items > 0)
