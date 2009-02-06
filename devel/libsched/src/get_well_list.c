@@ -18,7 +18,7 @@ int main(int argc, char **argv)
   history_type    * history    = NULL;
 
 
-  sched_file = sched_file_alloc();
+  sched_file = sched_file_alloc(-1);
   printf("-- Loading %s..\n", argv[1]);
   sched_file_parse(sched_file, -1 , argv[1]);
 
