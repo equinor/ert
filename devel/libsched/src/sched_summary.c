@@ -14,10 +14,12 @@ int main (int argc , char ** argv) {
   {
     const char * data_file       = argv[1];
     const char * schedule_file   = argv[2];
-    sched_file_type * sched_file = sched_file_alloc();
     start_time = ecl_util_get_start_date( data_file );
-    sched_file_parse(sched_file , start_time , schedule_file);
-    sched_file_summarize(sched_file , stdout);
-    sched_file_free(sched_file);
+    {
+      sched_file_type * sched_file = sched_file_alloc(start_time);
+      sched_file_parse(sched_file , start_time , schedule_file);
+      sched_file_summarize(sched_file , stdout);
+      sched_file_free(sched_file);
+    }
   }
 }
