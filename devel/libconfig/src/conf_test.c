@@ -85,8 +85,7 @@ int main()
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
 
     /** Create a mutex on DATE, DAYS and RESTART. */
-    conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true , false);
-    conf_class_insert_owned_item_mutex(summary_observation_class, time_mutex);
+    conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(summary_observation_class , true , false);
 
     conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
     conf_item_mutex_add_item_spec(time_mutex, item_spec_days);

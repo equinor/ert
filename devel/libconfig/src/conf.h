@@ -159,9 +159,6 @@ void conf_item_free__(
 
 
 
-conf_item_mutex_type * conf_item_mutex_alloc(
-  bool require_one , bool inverse);
-
 void conf_item_mutex_free(
   conf_item_mutex_type * conf_item_mutex);
 
@@ -182,9 +179,8 @@ void conf_class_insert_owned_item_spec(
   conf_class_type     * conf_class,
   conf_item_spec_type * item_spec);
 
-void conf_class_insert_owned_item_mutex(
-  conf_class_type      * conf_class,
-  conf_item_mutex_type * conf_item_mutex);
+conf_item_mutex_type * conf_class_new_item_mutex(conf_class_type      * conf_class, bool require_one , bool inverse);
+
 
 
 

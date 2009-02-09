@@ -319,11 +319,11 @@ void conf_item_free__(
 
 
 
-conf_item_mutex_type * conf_item_mutex_alloc( bool require_one , bool inverse)
+static conf_item_mutex_type * conf_item_mutex_alloc(const conf_class_type * super_class , bool require_one , bool inverse)
 {
   conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex, __func__);
   
-  conf_item_mutex->super_class    = NULL;
+  conf_item_mutex->super_class    = super_class;
   conf_item_mutex->require_one    = require_one;
   conf_item_mutex->inverse        = inverse;
   conf_item_mutex->item_spec_refs = hash_alloc();
@@ -437,42 +437,12 @@ void conf_class_insert_owned_item_spec(
 
 
 
-void conf_class_insert_owned_item_mutex(
-  conf_class_type      * conf_class,
-  conf_item_mutex_type * conf_item_mutex)
+conf_item_mutex_type * conf_class_new_item_mutex(conf_class_type * conf_class , bool require_one , bool inverse)
 {
-  assert(conf_class      != NULL);
-  assert(conf_item_mutex != NULL);
-
-  /** Check that the class has the required item_specs. */
-  bool              ok  = true;
-  const char * item_key = hash_iter_get_first_key( conf_item_mutex->item_spec_refs );
-  while (item_key != NULL) {
-    const conf_item_spec_type * conf_item_spec_mutex = hash_get(conf_item_mutex->item_spec_refs, item_key);
-    
-    if(!hash_has_key(conf_class->item_specs, item_key)) {
-      printf("ERROR: Trying to insert a mutex on item \"%s\", which class \"%s\" does not have.\n",
-             item_key, conf_class->class_name);
-      ok = false;
-    }
-    else
-      {
-	const conf_item_spec_type * conf_item_spec_class = hash_get(conf_class->item_specs, item_key);
-	if(conf_item_spec_class != conf_item_spec_mutex)
-	  {
-	    ok = false;
-	    printf("ERROR: Trying to insert a mutex on item \"%s\", which class \"%s\" has a different implementation of.\n",
-		   item_key, conf_class->class_name);
-	  }
-      }
-    item_key = hash_iter_get_next_key( conf_item_mutex->item_spec_refs );
-  }
-  
-  if(!ok)
-    util_abort("%s: Internal error. Trying to insert an invalid item mutex in class \"%s\".\n",__func__, conf_class->class_name);
-
-  conf_item_mutex->super_class = conf_class;
-  list_append_list_owned_ref(conf_class->item_mutexes, conf_item_mutex, conf_item_mutex_free__);
+  assert(conf_class != NULL);
+  conf_item_mutex_type * mutex = conf_item_mutex_alloc( conf_class , require_one , inverse);
+  list_append_list_owned_ref(conf_class->item_mutexes, mutex, conf_item_mutex_free__);
+  return mutex;
 }
 
 
