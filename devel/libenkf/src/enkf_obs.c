@@ -412,8 +412,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     conf_class_insert_owned_item_spec(summary_observation_class, item_spec_sumkey);
 
     /** Create a mutex on DATE, DAYS and RESTART. */
-    conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true , false);
-    conf_class_insert_owned_item_mutex(summary_observation_class, time_mutex);
+    conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(summary_observation_class , true , false);
 
     conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
     conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
@@ -448,9 +447,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     conf_class_insert_owned_item_spec(block_observation_class, item_spec_restart);
 
     /** Create a mutex on DATE, DAYS and RESTART. */
-    conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true , false);
-    conf_class_insert_owned_item_mutex(block_observation_class, time_mutex);
-
+    conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(block_observation_class , true , false);
     conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
     conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
     conf_item_mutex_add_item_spec(time_mutex, item_spec_restart);
@@ -507,8 +504,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     conf_class_insert_owned_item_spec(gen_obs_class, item_spec_restart);
     /** Create a mutex on DATE, DAYS and RESTART. */
     {
-      conf_item_mutex_type * time_mutex = conf_item_mutex_alloc(true , false);
-      conf_class_insert_owned_item_mutex(gen_obs_class, time_mutex);
+      conf_item_mutex_type * time_mutex = conf_class_new_item_mutex(gen_obs_class , true , false);
       
       conf_item_mutex_add_item_spec(time_mutex, item_spec_date);
       conf_item_mutex_add_item_spec(time_mutex, item_spec_days);
@@ -517,10 +513,10 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     
     {
       conf_item_spec_type * item_spec_obs_file = conf_item_spec_alloc("OBS_FILE" , false , DT_FILE , "The name of an (ascii) file with observation values.");
-      conf_item_spec_type * item_spec_value = conf_item_spec_alloc("VALUE" , false , DT_FLOAT , "One scalar observation value.");
-      conf_item_spec_type * item_spec_error = conf_item_spec_alloc("ERROR" , false , DT_FLOAT , "One scalar observation error.");
-      conf_item_mutex_type * value_mutex       = conf_item_mutex_alloc( true  , false);
-      conf_item_mutex_type * value_error_mutex = conf_item_mutex_alloc( false , true);
+      conf_item_spec_type * item_spec_value    = conf_item_spec_alloc("VALUE" , false , DT_FLOAT , "One scalar observation value.");
+      conf_item_spec_type * item_spec_error    = conf_item_spec_alloc("ERROR" , false , DT_FLOAT , "One scalar observation error.");
+      conf_item_mutex_type * value_mutex       = conf_class_new_item_mutex( gen_obs_class , true  , false);
+      conf_item_mutex_type * value_error_mutex = conf_class_new_item_mutex( gen_obs_class , false , true);
 
       conf_class_insert_owned_item_spec(gen_obs_class , item_spec_obs_file);
       conf_class_insert_owned_item_spec(gen_obs_class , item_spec_value);
@@ -530,11 +526,9 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
       /* If the observation is in terms of VALUE - we must also have ERROR.
 	 The conf system does not (currently ??) enforce this dependency. */
 	 
-      conf_class_insert_owned_item_mutex( gen_obs_class  , value_mutex );
       conf_item_mutex_add_item_spec( value_mutex , item_spec_value);
       conf_item_mutex_add_item_spec( value_mutex , item_spec_obs_file);
 
-      conf_class_insert_owned_item_mutex( gen_obs_class  , value_error_mutex );
       conf_item_mutex_add_item_spec( value_error_mutex , item_spec_value);
       conf_item_mutex_add_item_spec( value_error_mutex , item_spec_error);
     }
@@ -548,12 +542,12 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     {
       conf_item_spec_type * item_spec_index_list = conf_item_spec_alloc("INDEX_LIST" , false , DT_STR  , "A list of indicies - possibly with ranges which should be observed in the target field.");
       conf_item_spec_type * item_spec_index_file = conf_item_spec_alloc("INDEX_FILE" , false , DT_FILE , "An ASCII file containing a list of indices which should be observed in the target field.");
-      conf_item_mutex_type * index_mutex    = conf_item_mutex_alloc( false , false);
-  
-      conf_item_mutex_add_item_spec(index_mutex , item_spec_index_list);
-      conf_item_mutex_add_item_spec(index_mutex , item_spec_index_file);
+      conf_item_mutex_type * index_mutex         = conf_class_new_item_mutex( gen_obs_class , false , false);
+      
       conf_class_insert_owned_item_spec(gen_obs_class, item_spec_index_list);
       conf_class_insert_owned_item_spec(gen_obs_class, item_spec_index_file);
+      conf_item_mutex_add_item_spec(index_mutex , item_spec_index_list);
+      conf_item_mutex_add_item_spec(index_mutex , item_spec_index_file);
     }
     
     conf_class_insert_owned_sub_class(enkf_conf_class, gen_obs_class);

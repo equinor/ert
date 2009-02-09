@@ -35,7 +35,6 @@ struct gen_obs_struct {
   int                        * data_index_list;  /* The indexes which are observed in the corresponding gen_data instance - of length obs_size. */
   bool                         observe_all_data; /* Flag which indiactes whether all data in the gen_data instance should be observed - in that case we must do a size comparizon-check at use time. */
 
-  double                     * __obs_buffer;     /* This is the actual storage variable. obs_data and obs_std just point into this vector. */
   double                     * obs_data;         /* The observed data. */
   double                     * obs_std;          /* The observed standard deviation. */ 
 
@@ -47,7 +46,8 @@ struct gen_obs_struct {
 
 
 void gen_obs_free(gen_obs_type * gen_obs) {
-  util_safe_free(gen_obs->__obs_buffer);
+  util_safe_free(gen_obs->obs_data);
+  util_safe_free(gen_obs->obs_std);
   util_safe_free(gen_obs->obs_file);
   util_safe_free(gen_obs->data_index_list);
   free(gen_obs);
@@ -73,15 +73,16 @@ void gen_obs_free(gen_obs_type * gen_obs) {
 
 static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value , double scalar_error) {
   ecl_type_enum load_type;
-  util_safe_free( gen_obs->__obs_buffer );
+  void * buffer;
   
   gen_obs->obs_size = 0;
   if (gen_obs->obs_file != NULL)
-    gen_obs->__obs_buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ecl_double_type , &load_type , &gen_obs->obs_size);
+    buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ecl_double_type , &load_type , &gen_obs->obs_size);
   else {
-    gen_obs->__obs_buffer = util_malloc(2 * sizeof * gen_obs->__obs_buffer , __func__);
-    gen_obs->__obs_buffer[0] = scalar_value;
-    gen_obs->__obs_buffer[1] = scalar_error;
+    double * double_buffer = util_malloc(2 * sizeof * double_buffer , __func__);
+    buffer = double_buffer;
+    double_buffer[0] = scalar_value;
+    double_buffer[1] = scalar_error;
     load_type         = ecl_double_type;
     gen_obs->obs_size = 2;
   }
@@ -89,14 +90,24 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
   /** Ensure that the data is of type double. */
   if (load_type == ecl_float_type) {
     double * double_data = util_malloc(gen_obs->obs_size * sizeof * double_data , __func__);
-    util_float_to_double(double_data , (const float *) gen_obs->__obs_buffer , gen_obs->obs_size);
-    free(gen_obs->__obs_buffer);
-    gen_obs->__obs_buffer = double_data;
+    util_float_to_double(double_data , (const float *) buffer , gen_obs->obs_size);
+    free(buffer);
+    buffer = double_data;
   }
   
   gen_obs->obs_size /= 2; /* Originally contains BOTH data and std. */
-  gen_obs->obs_data   =  gen_obs->__obs_buffer;
-  gen_obs->obs_std    = &gen_obs->__obs_buffer[gen_obs->obs_size];
+  gen_obs->obs_data = util_realloc(gen_obs->obs_data , gen_obs->obs_size * sizeof * gen_obs->obs_data , __func__);
+  gen_obs->obs_std  = util_realloc(gen_obs->obs_std , gen_obs->obs_size * sizeof * gen_obs->obs_std , __func__);
+  {
+    int iobs;
+    double * double_buffer = (double * ) buffer;
+    for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
+      gen_obs->obs_data[iobs] =  double_buffer[2*iobs];
+      gen_obs->obs_std[iobs]  =  double_buffer[2*iobs + 1];
+    }
+     
+  } 
+  free(buffer);
 }
 
 
@@ -116,7 +127,8 @@ gen_obs_type * gen_obs_alloc(const char * obs_file , double scalar_value , doubl
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
   obs->__type_id       	= GEN_OBS_TYPE_ID;
-  obs->__obs_buffer    	= NULL;
+  obs->obs_data    	= NULL;
+  obs->obs_std    	= NULL;
   obs->obs_file        	= util_alloc_string_copy( obs_file );
   obs->obs_format      	= ASCII;  /* Hardcoded for now. */
 
