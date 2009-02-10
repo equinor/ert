@@ -29,6 +29,12 @@ typedef enum {invalid          =  0  , /**/
   
 
 
+typedef enum { default_keep    = 0,    /* Remove for enkf assimilation - keep for ensemble experiments. */
+	       explicit_delete = 1,    /* Remove unconditionally */
+	       explicit_keep   = 2}    /* keep unconditionally */
+  keep_runpath_type;
+
+
 
 
 

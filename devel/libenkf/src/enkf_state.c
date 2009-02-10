@@ -259,12 +259,12 @@ static void member_config_free(member_config_type * member_config) {
 }
 
 
-static void member_config_set_keep_runpath(member_config_type * member_config , bool keep_runpath) {
+static void member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath) {
   member_config->keep_runpath   = keep_runpath;
 }
 
 
-static member_config_type * member_config_alloc(int iens , bool keep_runpath , const ecl_config_type * ecl_config , const ensemble_config_type * ensemble_config) {
+static member_config_type * member_config_alloc(int iens , keep_runpath_type keep_runpath , const ecl_config_type * ecl_config , const ensemble_config_type * ensemble_config) {
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   
   member_config->iens           = iens; /* Can only be changed in the allocater. */
@@ -397,7 +397,7 @@ static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * 
 
 
 enkf_state_type * enkf_state_alloc(int iens,
-				   bool  keep_runpath , 
+				   keep_runpath_type keep_runpath , 
 				   const model_config_type   * model_config,
 				   ensemble_config_type      * ensemble_config,
 				   const site_config_type    * site_config,
@@ -1161,19 +1161,25 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
 	break;
       } else usleep(usleep_time);
     } 
-
-    /**
-       We are about to delete the runpath - but first we test:
-
-       1. That this is enkf_assimilation
-       2. If the integration failed we keep the path.
-       3. If keep_runpath == true we keep the path.
-       
-    */
     
     /* In case the job fails, we leave the run_path directory around for debugging. */
-    if (run_info->run_mode == enkf_assimilation) {
-      if ((!my_config->keep_runpath) && (final_status == job_queue_complete_OK))
+    if (final_status == job_queue_complete_OK) {
+      bool unlink_runpath;
+      if (my_config->keep_runpath == default_keep) {
+	if (run_info->run_mode == enkf_assimilation)
+	  unlink_runpath = true;   /* For assimilation the default is to unlink. */
+	else
+	  unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
+      } else {
+	/* We have explcitly set a value for the keep_runpath variable - with either KEEP_RUNAPTH or DELETE_RUNPATH. */
+	if (my_config->keep_runpath == explicit_keep)
+	  unlink_runpath = false;
+	else if (my_config->keep_runpath == explicit_delete)
+	  unlink_runpath = true;
+	else
+	  util_abort("%s: internal error \n",__func__);
+      }
+      if (unlink_runpath)
 	util_unlink_path(run_info->run_path);
     }
     run_info_complete_run(enkf_state->run_info);

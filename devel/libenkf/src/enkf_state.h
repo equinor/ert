@@ -43,7 +43,7 @@ void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_eclipse__(void * );
 void             * enkf_state_complete_eclipse__(void * );
 enkf_state_type  * enkf_state_alloc(int ,
-				    bool , 
+				    keep_runpath_type , 
 				    const model_config_type * ,
 				    ensemble_config_type * ,
 				    const site_config_type * ,

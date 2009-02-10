@@ -765,6 +765,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "KEEP_RUNPATH" , false , false);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
+    item = config_add_item(config , "DELETE_RUNPATH" , false , false);
+    config_item_set_argc_minmax(item , 1 , -1 , NULL);
+
     item = config_add_item(config , "ADD_STATIC_KW" , false , true);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
     
@@ -836,17 +839,57 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
 
     /*****************************************************************/
+    /**
+       To keep or not to keep the runpath directories? The problem is
+       that the default behavior is different depending on the run_mode:
+
+       	 enkf_mode: In this case the default behaviour is to delete the
+       	    runpath directories. You can explicitly say that you want to
+       	    keep runpath directories with the KEEP_RUNPATH
+       	    directive. 
+
+         experiments: In this case the default is to keep the runpath
+            directories around, but you can explicitly say that you
+            want to remove the directories by using the DELETE_RUNPATH
+            option.
+
+       The final decision is performed in enkf_state().
+    */
     {
       const int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
-      bool * keep_runpath = util_malloc( sizeof * keep_runpath * ens_size , __func__);
+      keep_runpath_type * keep_runpath = util_malloc( ens_size * sizeof * keep_runpath , __func__);
+      
       int i;
       for (i = 0; i < ens_size; i++) 
-	keep_runpath[i] = true;
+	keep_runpath[i] = default_keep;
 
       if (config_has_set_item(config , "KEEP_RUNPATH")) {
 	char * keep_runpath_string = config_indexed_alloc_joined_string(config , "KEEP_RUNPATH" , "" , i);
-	util_sscanf_active_range(keep_runpath_string , ens_size - 1 , keep_runpath);
+	bool * flag                = util_malloc( sizeof * flag * ens_size , __func__);
+
+	util_sscanf_active_range(keep_runpath_string , ens_size - 1 , flag);
+	for (i = 0; i < ens_size; i++)
+	  if (flag[i]) keep_runpath[i] = explicit_keep;
+	
+	free( flag );
 	free( keep_runpath_string );
+      }
+
+      if (config_has_set_item(config , "DELETE_RUNPATH")) {
+	char * delete_runpath_string = config_indexed_alloc_joined_string(config , "DELETE_RUNPATH" , "" , i);
+	bool * flag                = util_malloc( sizeof * flag * ens_size , __func__);
+	
+	util_sscanf_active_range(delete_runpath_string , ens_size - 1 , flag);
+	for (i = 0; i < ens_size; i++) {
+	  if (flag[i]) {
+	    if (keep_runpath[i] == explicit_keep)
+	      util_abort("%s: Inconsistent use of KEEP_RUNPATH / DELETE_RUNPATH - trying to both keep and delete member:%d \n",__func__ , i);
+	    keep_runpath[i] = explicit_delete;
+	  }
+	}
+
+	free(flag );
+	free( delete_runpath_string );
       }
     
 
