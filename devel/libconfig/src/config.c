@@ -7,7 +7,7 @@
 #include <hash.h>
 #include <stringlist.h>
 #include <set.h>
-
+#include <subst.h>
 
 #define CLEAR_STRING "__RESET__"
 
@@ -290,7 +290,7 @@ static config_item_node_type * config_item_node_alloc() {
 
 
 static void config_item_node_set(config_item_node_type * node , int argc , const char ** argv) {
-  for (int iarg=0; iarg < argc; iarg++)
+  for (int iarg=0; iarg < argc; iarg++) 
     stringlist_append_copy( node->stringlist , argv[iarg] );
 }
 
@@ -688,7 +688,7 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
   calling scope will free it.
 */
 
-static void config_item_set_arg__(config_type * config , config_item_type * item , int argc , char ** argv , const char * config_file , const char * config_cwd) {
+static void config_item_set_arg__(config_type * config , config_item_type * item , int argc , char ** argv , const char * config_file , const char * config_cwd , subst_list_type * subst_list) {
   if (argc == 1 && (strcmp(argv[0] , CLEAR_STRING) == 0)) {
     config_item_clear(item);
   } else {
@@ -699,6 +699,17 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
     else {
       node = config_item_get_first_node(item);
       config_item_node_clear(node);
+    }
+
+
+    /* Filtering ... */
+    if ((subst_list != NULL) && (subst_list_get_size( subst_list ))) {
+      int iarg;
+      for (iarg = 0; iarg < argc; iarg++) {
+	char * filtered_copy = subst_list_alloc_filtered_string( subst_list , argv[iarg] );
+	free( argv[iarg] );
+	argv[iarg] = filtered_copy;
+      }
     }
     
     if (config_item_validate_set(config , item , argc , argv , config_file, config_cwd)) {
@@ -962,7 +973,7 @@ bool config_item_set(const config_type * config , const char * kw) {
 
 void config_set_arg(config_type * config , const char * kw, int argc , const char **__argv) {
   char ** argv = util_alloc_stringlist_copy(__argv , argc);  
-  config_item_set_arg__( config , config_get_item(config , kw) , argc , argv , NULL , NULL);
+  config_item_set_arg__( config , config_get_item(config , kw) , argc , argv , NULL , NULL , NULL);
   util_free_stringlist(argv , argc);
 }
 
@@ -1047,10 +1058,54 @@ static void config_validate(config_type * config, const char * filename) {
    validate: whether we should validate when complete, that should
              typically only be done at the last parsing.
 
+      
+   define_kw: This a string which can serve as a "#define" for the
+   parsing. The define_kw keyword should have two arguments - a key
+   and a value. If the define_kw is present all __subsequent__
+   occurences of 'key' are replaced with 'value'.  alloc_new_key
+   is an optinal function (can be NULL) which is used to alloc a new
+   key, i.e. add leading and trailing 'magic' characters.
+
+
+   Example:  
+   --------
+
+   char * add_angular_brackets(const char * key) {
+       char * new_key = util_alloc_sprintf("<%s>" , key);
+   }
+
+
+
+   config_parse(... , "myDEF" , add_angular_brackets , ...) 
+
+
+   Config file:
+   -------------
+   myDEF   Name         BJARNE
+   myDEF   sexual-pref  Dogs
+   ...
+   ... 
+   PERSON  <Name> 28 <sexual-pref>      
+   ...
+   ------------
+
+   After parsing we will have an entry: "NAME" , "Bjarne" , "28" , "Dogs".
+
+   The key-value pairs internalized during the config parsing are NOT
+   returned to the calling scope in any way.
 */
 
 
-static void config_parse__(config_type * config , const char * config_cwd , const char * _config_file, const char * comment_string , const char * include_kw ,bool auto_add , bool validate) {
+static void config_parse__(config_type * config , 
+			   const char * config_cwd , 
+			   const char * _config_file, 
+			   const char * comment_string , 
+			   const char * include_kw ,
+			   const char * define_kw , 
+			   alloc_new_key_ftype * alloc_new_key,
+			   subst_list_type * subst_list , 
+			   bool auto_add , 
+			   bool validate) {
   char * config_file  = util_alloc_full_path(config_cwd , _config_file);
   char * abs_filename = util_alloc_realpath(config_file);
   
@@ -1087,6 +1142,8 @@ static void config_parse__(config_type * config , const char * config_cwd , cons
 
         if (active_tokens > 0) {
           const char * kw = token_list[0];
+
+	  /*Treating the include keyword. */
 	  if (include_kw != NULL && (strcmp(include_kw , kw) == 0)) {
 	    if (active_tokens != 2) 
 	      util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ ,include_kw);
@@ -1116,9 +1173,23 @@ static void config_parse__(config_type * config , const char * config_cwd , cons
 		free(tmp_path);
 	      }
 
-	      config_parse__(config , include_path , include_file , comment_string , include_kw , auto_add , false); /* Recursive call */
+	      config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , alloc_new_key , subst_list , auto_add , false); /* Recursive call */
 	      util_safe_free(include_file);
 	      util_safe_free(include_path);
+	    }
+	  } else if (define_kw != NULL && (strcmp(define_kw , kw) == 0)) {
+	    if (active_tokens != 3) 
+	      util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ , define_kw);
+	    {
+	      char * key   ;
+	      char * value = token_list[2];
+	      if (alloc_new_key != NULL)
+		key = alloc_new_key( token_list[1] );  
+	      else
+		key = util_alloc_string_copy( token_list[1] );
+	      
+	      subst_list_insert_copy( subst_list , key , value);
+	      free(key);
 	    }
 	  } else {
 	    if (hash_has_key(config->messages , kw))
@@ -1129,7 +1200,7 @@ static void config_parse__(config_type * config , const char * config_cwd , cons
 	    
 	    if (config_has_item(config , kw)) {
 	      config_item_type * item = config_get_item(config , kw);
-	      config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd);
+	      config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd , subst_list);
 	    } else 
 	      fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s - ignored \n" , kw , config_file);
 	  }
@@ -1146,20 +1217,29 @@ static void config_parse__(config_type * config , const char * config_cwd , cons
 }
 
 
-void config_parse(config_type * config , const char * filename, const char * comment_string , const char * include_kw ,bool auto_add , bool validate) {
+void config_parse(config_type * config , 
+		  const char * filename, 
+		  const char * comment_string , 
+		  const char * include_kw ,
+		  const char * define_kw , 
+		  alloc_new_key_ftype * alloc_new_key,
+		  bool auto_add , 
+		  bool validate) {
   char * config_path;
   char * config_file;
   char * tmp_file;
   char * extension;
+  subst_list_type * subst_list = subst_list_alloc(); 
 
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
   config_file = util_alloc_filename(NULL , tmp_file , extension);
-  config_parse__(config , config_path , config_file , comment_string , include_kw , auto_add , validate);
+  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , alloc_new_key ,  subst_list , auto_add , validate);
 
   util_safe_free(tmp_file);
   util_safe_free(extension);
   util_safe_free(config_path);
   util_safe_free(config_file);
+  subst_list_free(subst_list);
 }
 
 

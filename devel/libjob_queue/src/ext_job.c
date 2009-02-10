@@ -353,7 +353,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
     item = config_add_item(config , "ARGLIST"          , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
     item = config_add_item(config , "LSF_RESOURCES"    , false , false); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
   }
-  config_parse(config , filename , "--" , NULL , false , true);
+  config_parse(config , filename , "--" , NULL , NULL , NULL , false , true);
   {
     if (config_item_set(config , "STDIN"))  	    ext_job_set_stdin_file(ext_job   , config_get(config  , "STDIN"));
     if (config_item_set(config , "STDOUT")) 	    ext_job_set_stdout_file(ext_job  , config_get(config  , "STDOUT"));

@@ -818,8 +818,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     ensemble_config_add_config_items(config); 
     
     
-    config_parse(config , site_config  , "--" , "INCLUDE" , false , false);
-    config_parse(config , model_config , "--" , "INCLUDE" , false , true);
+    config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , false);
+    config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , true);
     /*****************************************************************/
     /* OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object. 
