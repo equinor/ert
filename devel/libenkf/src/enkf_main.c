@@ -489,7 +489,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   }
   
   if (enkf_update)
-    enkf_main_analysis_update(enkf_main , step1, step2);
+    enkf_main_analysis_update(enkf_main , step2, step2);
   
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
