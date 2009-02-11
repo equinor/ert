@@ -868,8 +868,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	bool * flag                = util_malloc( sizeof * flag * ens_size , __func__);
 
 	util_sscanf_active_range(keep_runpath_string , ens_size - 1 , flag);
-	for (i = 0; i < ens_size; i++)
-	  if (flag[i]) keep_runpath[i] = explicit_keep;
+	for (i = 0; i < ens_size; i++) {
+	  if (flag[i]) 
+	    keep_runpath[i] = explicit_keep;
+	}
 	
 	free( flag );
 	free( keep_runpath_string );

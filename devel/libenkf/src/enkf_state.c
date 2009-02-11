@@ -111,7 +111,7 @@ typedef struct shared_info_struct {
 
 typedef struct member_config_struct {
   int  		        iens;              /* The ensemble member number of this member. */
-  bool                  keep_runpath;      /* Should the run-path directory be left around (for this member)*/
+  keep_runpath_type     keep_runpath;      /* Should the run-path directory be left around (for this member)*/
   char 		      * eclbase;           /* The ECLBASE string used for simulations of this member. */
 } member_config_type;
 
@@ -1176,8 +1176,10 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
 	  unlink_runpath = false;
 	else if (my_config->keep_runpath == explicit_delete)
 	  unlink_runpath = true;
-	else
+	else {
 	  util_abort("%s: internal error \n",__func__);
+	  unlink_runpath = false; /* Compiler .. */
+	}
       }
       if (unlink_runpath)
 	util_unlink_path(run_info->run_path);
