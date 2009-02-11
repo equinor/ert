@@ -87,7 +87,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
     const char * refcase        = NULL;
     bool  use_history;
 
-    if (strcmp(history_source , "REFCASE_OBSERVED") == 0) {
+    if (strcmp(history_source , "REFCASE_SIMULATED") == 0) {
       refcase = config_get(config , "REFCASE");
       use_history = false;
     } else if (strcmp(history_source , "REFCASE_HISTORY") == 0) {

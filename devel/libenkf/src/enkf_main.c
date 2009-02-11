@@ -788,8 +788,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
       
-      config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_OBSERVED" , "REFCASE_HISTORY"});
-      config_item_set_required_children_on_value(item , "REFCASE_OBSERVED" , refcase_dep);
+      config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
+      config_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
       config_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
 
       stringlist_free(refcase_dep);
