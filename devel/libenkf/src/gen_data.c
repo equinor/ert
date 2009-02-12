@@ -315,16 +315,16 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path ,
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
     switch (export_type) {
     case(ASCII):
-      gen_data_ecl_write_ASCII(gen_data , eclfile , export_type);
+      gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
       break;
     case(ASCII_template):
-      gen_data_ecl_write_ASCII(gen_data , eclfile , export_type);
+      gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
       break;
     case(binary_double):
-      gen_data_ecl_write_binary(gen_data , eclfile , ecl_double_type);
+      gen_data_ecl_write_binary(gen_data , full_path , ecl_double_type);
       break;
     case(binary_float):
-      gen_data_ecl_write_binary(gen_data , eclfile , ecl_float_type);
+      gen_data_ecl_write_binary(gen_data , full_path , ecl_float_type);
       break;
     default:
       util_abort("%s: internal error \n",__func__);
