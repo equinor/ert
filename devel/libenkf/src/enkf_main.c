@@ -362,19 +362,26 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 
 void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step2) {
-  const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
+  bool include_internal_observations = false;     
+  const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
   double *X;
+  int start_step , end_step;
 
-
-  /*
-    Collect observations and simulated responses for all steps after step1 up to and
-    including step2.
-  */
+  if (include_internal_observations) {
+    start_step = step1 + 1;
+    end_step   = step2;
+  } else {
+    start_step = step2;
+    end_step   = step2;
+  }
+    
+  
   obs_data_reset(enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_forecast);
-  for(int report_step = step1 + 1; report_step <= step2; report_step++)  {
+  for(int report_step = start_step; report_step <= end_step; report_step++)  {
     printf("Fetching simulated responses and observations for step %i.\n", report_step);
-    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
+    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
+				 (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
   }
   X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
   if (X != NULL) {
@@ -407,7 +414,7 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
 
 
   /** Printing update info after analysis - does not work with multi step updates.*/
-  if (false) {
+  if (start_step == end_step) {
     obs_data_reset(enkf_main->obs_data);
     meas_matrix_reset(enkf_main->meas_analyzed);
     for(int report_step = step1 + 1; report_step <= step2; report_step++)  {
@@ -489,7 +496,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , con
   }
   
   if (enkf_update)
-    enkf_main_analysis_update(enkf_main , step2, step2);
+    enkf_main_analysis_update(enkf_main , step1 , step2);
   
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
