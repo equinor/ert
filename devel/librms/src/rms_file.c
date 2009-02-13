@@ -436,7 +436,7 @@ void rms_file_2eclipse(const char * rms_file , const char * ecl_path, bool ecl_f
 	    char       * ecl_file;
 	    
 	    sprintf(ecl_base , "%s_%04d" , tagname , ecl_file_nr);
-	    ecl_file = util_alloc_full_path(ecl_path , ecl_base);
+	    ecl_file = util_alloc_filename(ecl_path , ecl_base , NULL);
 	    if (util_same_file(ecl_file , rms_file)) {
 	      fprintf(stderr,"%s: attempt to overwrite %s -> %s - aborting \n",__func__ , rms_file , ecl_file);
 	      abort();

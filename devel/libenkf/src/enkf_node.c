@@ -368,7 +368,7 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
   {
     char * input_file = enkf_config_node_alloc_infile(enkf_node->config , report_step);
     if (input_file != NULL) {
-      char * file = util_alloc_full_path( run_path , input_file);
+      char * file = util_alloc_filename( run_path , input_file , NULL);
       enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
       free(file);
     } else
@@ -432,7 +432,7 @@ void enkf_node_ensemble_fprintf_results(const enkf_node_type ** ensemble , int e
   */
   {
     void ** data_pointers = util_malloc(ens_size * sizeof * data_pointers , __func__);
-    char * filename       = util_alloc_full_path(path , ensemble[0]->node_key);
+    char * filename       = util_alloc_filename(path , ensemble[0]->node_key, NULL);
     int iens;
     for (iens=0; iens < ens_size; iens++)
       data_pointers[iens] = ensemble[iens]->data;

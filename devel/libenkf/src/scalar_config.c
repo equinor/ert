@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
-#include <ens_config.h>
 #include <scalar_config.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>

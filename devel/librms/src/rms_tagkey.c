@@ -390,7 +390,7 @@ rms_tagkey_type * rms_tagkey_copyc(const rms_tagkey_type *tagkey) {
 }
 
 
-const void * rms_tagkey_copyc_(const void * _tagkey) {
+void * rms_tagkey_copyc_(const void * _tagkey) {
   const  rms_tagkey_type * tagkey = (const rms_tagkey_type *) _tagkey;
   return rms_tagkey_copyc(tagkey);
 }

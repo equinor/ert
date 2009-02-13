@@ -201,7 +201,7 @@ void havana_fault_filter_file(const havana_fault_type * havana_fault , const cha
       target_file_root = util_fscanf_alloc_token(stream);
       /* printf("%s\n",target_file_root); */
 
-      target[i] = util_alloc_full_path(run_path , target_file_root);
+      target[i] = util_alloc_filename(run_path , target_file_root , NULL);
 
 
       printf("%s   %s  \n",template_file,target[i]); 

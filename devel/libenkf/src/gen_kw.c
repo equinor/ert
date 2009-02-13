@@ -176,7 +176,7 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
 
 
 void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const char * base_file , fortio_type * fortio) {
-  char * target_file = util_alloc_full_path( run_path , base_file );
+  char * target_file = util_alloc_filename( run_path , base_file  , NULL);
   gen_kw_filter_file(gen_kw , target_file);
   free( target_file );
 }

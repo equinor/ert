@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <enkf_util.h>
 #include <util.h>
-#include <ens_config.h>
 #include <enkf_macros.h>
 #include <multz_config.h>
 #include <util.h>

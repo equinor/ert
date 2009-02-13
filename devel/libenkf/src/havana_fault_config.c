@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
-#include <ens_config.h>
 #include <gen_kw_config.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
@@ -86,8 +85,8 @@ static void fault_group_faultlist_append(const fault_group_type * group , FILE *
 static void fault_group_link_faults(const fault_group_type * group , const char * PFM_path , const char * tmp_PFM_path) {
   int i;
   for (i =  0; i < group->size; i++) {
-    char * target = util_alloc_full_path(PFM_path     , group->fault_names[i]);
-    char * link   = util_alloc_full_path(tmp_PFM_path , group->fault_names[i]);
+    char * target = util_alloc_filename(PFM_path     , group->fault_names[i] , NULL);
+    char * link   = util_alloc_filename(tmp_PFM_path , group->fault_names[i] , NULL);
     util_make_slink(target , link);
     free(target);
     free(link);
@@ -96,7 +95,7 @@ static void fault_group_link_faults(const fault_group_type * group , const char 
 
 
 static void fault_group_fprintf_faultlist(const fault_group_type * group , const char * PFM_path) {
-  char * filename = util_alloc_full_path(PFM_path , ".faultlist");
+  char * filename = util_alloc_filename(PFM_path , ".faultlist" , NULL);
   FILE * stream   = util_fopen(filename , "w");
   fprintf(stream , "%d\n",group->size);
   fault_group_faultlist_append(group , stream);
@@ -111,7 +110,7 @@ static  void fault_group_fprintf_ALL_faultlist(const fault_group_type **group_li
   for (igroup = 0; igroup < num_fault_groups; igroup++) 
     total_faults += group_list[igroup]->size;
   {
-    char * filename = util_alloc_full_path(PFM_path , ".faultlist");
+    char * filename = util_alloc_filename(PFM_path , ".faultlist" , NULL);
     FILE * stream = util_fopen(filename , "w");
     fprintf(stream , "%d\n", total_faults);
     
@@ -126,14 +125,14 @@ static  void fault_group_fprintf_ALL_faultlist(const fault_group_type **group_li
 
 
 static void fault_group_run_havana(const fault_group_type * group , const subst_list_type * subst_list , const char * run_path , const char * PFM_path , const char * tmp_PFM_path , const char * havana_executable) {
-  char * target_file = util_alloc_full_path( run_path , group->group_name);
+  char * target_file = util_alloc_filename( run_path , group->group_name , NULL);
   subst_list_filter_file( subst_list , group->modify_template , target_file);
   fault_group_link_faults(group , PFM_path , tmp_PFM_path);
   fault_group_fprintf_faultlist(group , tmp_PFM_path);
 
   {
-    char * stdout_file = util_alloc_full_path(run_path , "havana_stdout");
-    char * stderr_file = util_alloc_full_path(run_path , "havana_stderr");
+    char * stdout_file = util_alloc_filename(run_path , "havana_stdout" , NULL);
+    char * stderr_file = util_alloc_filename(run_path , "havana_stderr" , NULL);
     util_vfork_exec ( havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , run_path , NULL , stdout_file , stderr_file);
     free(stderr_file);
     free(stdout_file);
@@ -241,8 +240,8 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
     
 */
 void havana_fault_config_run_havana(const havana_fault_config_type * config , scalar_type * scalar_data , const char * run_path) {
-  char * tmp_fault_input_path  = util_alloc_full_path(run_path  , "tmp_havana_input_faults");
-  char * tmp_fault_output_path = util_alloc_full_path(run_path  , "tmp_havana_output_faults");
+  char * tmp_fault_input_path  = util_alloc_filename(run_path  , "tmp_havana_input_faults" , NULL);
+  char * tmp_fault_output_path = util_alloc_filename(run_path  , "tmp_havana_output_faults" , NULL);
   const int size = havana_fault_config_get_data_size(config);
   int igroup;
   subst_list_type * subst_list = subst_list_alloc();
@@ -292,9 +291,9 @@ void havana_fault_config_run_havana(const havana_fault_config_type * config , sc
   /* Before running havana action IntoEclipse, we must set .faultlist to all faults in tmp_havana_output_faults */
   fault_group_fprintf_ALL_faultlist( (const fault_group_type **) config->fault_groups , config->num_fault_groups , tmp_fault_output_path);
   {
-    char * target_file = util_alloc_full_path( run_path , "update" );
-    char * stdout_file = util_alloc_full_path( run_path , "havana_stdout" );
-    char * stderr_file = util_alloc_full_path( run_path , "havana_stderr" );
+    char * target_file = util_alloc_filename( run_path , "update"  , NULL);
+    char * stdout_file = util_alloc_filename( run_path , "havana_stdout"  , NULL);
+    char * stderr_file = util_alloc_filename( run_path , "havana_stderr"  , NULL);
     
     subst_list_filter_file( subst_list , config->update_template , target_file);
     util_vfork_exec ( config->havana_executable , 1 , (const char *[1]) {target_file} , true , NULL , run_path , NULL , stdout_file , stderr_file);

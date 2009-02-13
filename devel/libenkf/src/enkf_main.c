@@ -362,11 +362,17 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 
 void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step2) {
+  /* 
+     If include_internal_observations is true all observations in the
+     time interval [step1+1,step2] will be used, otherwise only the
+     last observation at step2 will be used.
+  */
   bool include_internal_observations = false;     
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
   double *X;
   int start_step , end_step;
-
+  
+  /* Observe that end_step is inclusive. */
   if (include_internal_observations) {
     start_step = step1 + 1;
     end_step   = step2;

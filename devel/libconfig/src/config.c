@@ -255,7 +255,7 @@ static char * __alloc_relocated__(const char * config_cwd , const char * value) 
   if (util_is_abs_path(value))
     file = util_alloc_string_copy( value );
   else
-    file = util_alloc_full_path(config_cwd , value);
+    file = util_alloc_filename(config_cwd , value , NULL);
 
   return file;
 }
@@ -1106,7 +1106,7 @@ static void config_parse__(config_type * config ,
 			   subst_list_type * subst_list , 
 			   bool auto_add , 
 			   bool validate) {
-  char * config_file  = util_alloc_full_path(config_cwd , _config_file);
+  char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
   char * abs_filename = util_alloc_realpath(config_file);
   
   if (!set_add_key(config->parsed_files , abs_filename)) 
@@ -1159,7 +1159,7 @@ static void config_parse__(config_type * config ,
 
 		/* Allocating a new path with current config_cwd and the (relative) path to the new config_file */
 		if (!util_is_abs_path(tmp_path)) 
-		  include_path = util_alloc_full_path(config_cwd , tmp_path);
+		  include_path = util_alloc_filename(config_cwd , tmp_path , NULL);
 		else
 		  include_path = util_alloc_string_copy(tmp_path);
 		

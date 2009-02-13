@@ -74,7 +74,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   model_config->runlock_mode    = lock_none;
   {
     char * cwd = util_alloc_cwd();
-    model_config->lock_path      = util_alloc_full_path(cwd , "locks");
+    model_config->lock_path      = util_alloc_filename(cwd , "locks" , NULL);
     free(cwd);
   }
   util_make_path( model_config->lock_path );

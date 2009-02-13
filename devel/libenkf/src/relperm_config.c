@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <enkf_util.h>
 #include <util.h>
-#include <ens_config.h>
 #include <enkf_macros.h>
 #include <relperm_config.h>
 #include <util.h>
@@ -279,7 +278,7 @@ void relperm_config_ecl_write_table(const relperm_config_type * config, const do
     FILE * relp_ecl_stream;
     char * relpfile;
     
-    relpfile = util_alloc_full_path(path,table_config[ik]->eclipse_file);
+    relpfile = util_alloc_filename(path,table_config[ik]->eclipse_file , NULL);
 
     /* ecl_file_append = relperm_config_check_ecl_file(config->ecl_file_hash,table_config[ik]->eclipse_file,table_config[ik]->relptab_kw);*/
     if(table_config[ik]->ecl_file_append){

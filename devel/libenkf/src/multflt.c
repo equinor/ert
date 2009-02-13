@@ -92,7 +92,7 @@ multflt_type * multflt_copyc(const multflt_type *multflt) {
 }
 
 void  multflt_ecl_write(const multflt_type * multflt, const char * run_path , const char * eclfile , bool direct) {
-  char * full_path = util_alloc_full_path( run_path , eclfile );
+  char * full_path = util_alloc_filename( run_path , eclfile  , NULL);
   FILE * stream    = util_fopen(full_path , "w");
   {
     const multflt_config_type *config = multflt->config;

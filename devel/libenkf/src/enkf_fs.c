@@ -222,7 +222,7 @@ struct enkf_fs_struct {
 /*****************************************************************/
 
 static void enkf_fs_upgrade(int old_version, const char * config_file, const char * root_path , const char * new_dir) {
-  char * new_path = util_alloc_full_path(root_path , new_dir);
+  char * new_path = util_alloc_filename(root_path , new_dir , NULL);
   printf("Upgrading enkf file system located in: %s\n",root_path);
   util_make_path( new_path );
   {
@@ -235,8 +235,8 @@ static void enkf_fs_upgrade(int old_version, const char * config_file, const cha
       dp = readdir(dirH);
       if (dp != NULL) {
 	if (util_sscanf_int(dp->d_name , NULL)) {
-	  char * old_entry = util_alloc_full_path(root_path , dp->d_name);
-	  char * new_entry = util_alloc_full_path(new_path  , dp->d_name);
+	  char * old_entry = util_alloc_filename(root_path , dp->d_name , NULL);
+	  char * new_entry = util_alloc_filename(new_path  , dp->d_name , NULL);
 
 	  rename( old_entry , new_entry );
 	  printf("Moving %s -> %s \n",old_entry , new_entry);
@@ -391,7 +391,7 @@ void enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_d
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
   const bool   use_locking = false;
   const char * default_dir = "enkf";
-  char * config_file       = util_alloc_full_path(root_path , mount_info);  /* This file should be protected - at all costs. */
+  char * config_file       = util_alloc_filename(root_path , mount_info , NULL);  /* This file should be protected - at all costs. */
   int    version           = enkf_fs_get_fs_version( config_file );
   
   util_make_path(root_path);                                    	    /* Creating root directory */

@@ -1047,7 +1047,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     }
     
     {
-      char * schedule_file = util_alloc_full_path(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config));
+      char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config) , NULL);
       sched_file_fprintf_i(ecl_config_get_sched_file(enkf_state->ecl_config) , run_info->step2 , schedule_file);
       free(schedule_file);
     }
@@ -1067,7 +1067,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     enkf_state_ecl_write( enkf_state );
     
     {
-      char * stdin_file = util_alloc_full_path(run_info->run_path , "eclipse.stdin" );  /* The name eclipse.stdin must be mathched when the job is dispatched. */
+      char * stdin_file = util_alloc_filename(run_info->run_path , "eclipse"  , "stdin");  /* The name eclipse.stdin must be mathched when the job is dispatched. */
       ecl_util_init_stdin( stdin_file , my_config->eclbase );
       free(stdin_file);
     }

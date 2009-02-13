@@ -39,6 +39,7 @@ GET_DATA_SIZE_HEADER(field);
 struct field_struct {
   int    __type_id;                              
   const  field_config_type * config;              /* The field config object - containing information of active cells++ */
+  bool   private_config;
   char  *data;                                    /* The actual storage for the field - suitabley casted to int/float/double on use*/
              
   bool   shared_data;                             /* If the data is shared - i.e. managed (xalloc & free) from another scope. */
@@ -289,6 +290,7 @@ void field_free_data(field_type *field) {
 static field_type * __field_alloc(const field_config_type * field_config , void * shared_data , int shared_byte_size) {
   field_type * field  = util_malloc(sizeof *field, __func__);
   field->config = field_config;
+  field->private_config = false;
   if (shared_data == NULL) {
     field->data        = NULL;
     field->shared_data = false;
@@ -683,7 +685,7 @@ void field_ecl_write(const field_type * field , const char * run_path , const ch
   if (export_format == ecl_restart_block)
     field_export(field , NULL , restart_fortio , export_format , true); 
   else {
-    char * full_path = util_alloc_full_path( run_path , file );
+    char * full_path = util_alloc_filename( run_path , file  , NULL);
     field_export(field , full_path , NULL , export_format , true);
     free( full_path );
   }

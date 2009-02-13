@@ -103,7 +103,7 @@ void relperm_ecl_write_f90test(const relperm_type * relperm, const double * data
 }
 
 void relperm_ecl_write(const relperm_type * relperm , const char * run_path , const char * eclfile , fortio_type * fortio) {
-  char * full_path = util_alloc_full_path( run_path , eclfile );
+  char * full_path = util_alloc_filename( run_path , eclfile  , NULL);
   {
     FILE * stream  = util_fopen(full_path , "w");
     relperm_output_transform(relperm);

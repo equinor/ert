@@ -68,7 +68,7 @@ void rms_stats_update_ens(const char *prior_path , const char *posterior_path , 
   prior = malloc(ens_size * sizeof * prior);
   printf("Loading: ");
   for (iens = 0; iens < ens_size; iens++) {
-    char * file_name         = util_alloc_full_path(prior_path , file_list[iens]);
+    char * file_name         = util_alloc_filename(prior_path , file_list[iens] , NULL);
     printf("%s",file_name); fflush(stdout);
     {
       rms_file_type * rms_file = rms_file_alloc(file_name , false);
@@ -95,7 +95,7 @@ void rms_stats_update_ens(const char *prior_path , const char *posterior_path , 
       rms_tagkey_inplace_add_scaled(post , prior[j] , X[iens][j]);
     
     {
-      char * file_name    = util_alloc_full_path(posterior_path , file_list[iens]);
+      char * file_name    = util_alloc_filename(posterior_path , file_list[iens] , NULL);
       rms_file_type *file = rms_file_alloc(file_name , false);
       FILE *stream        = rms_file_fopen_w(file);
 

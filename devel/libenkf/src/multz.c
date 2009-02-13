@@ -105,7 +105,7 @@ void multz_fread(multz_type * multz , FILE * stream) {
 
 
 void multz_ecl_write(const multz_type * multz , const char * run_path , const char * eclfile, fortio_type * fortio) {
-  char * full_path = util_alloc_full_path(run_path , eclfile);
+  char * full_path = util_alloc_filename(run_path , eclfile , NULL);
   FILE * stream  = util_fopen(full_path , "w");
     
   multz_output_transform(multz);

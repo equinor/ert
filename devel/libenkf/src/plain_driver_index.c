@@ -81,7 +81,7 @@ void plain_driver_index_free(void * __index_driver) {
 void * plain_driver_index_alloc(const char * root_path , const char * index_path) {
   plain_driver_index_type * plain_driver = util_malloc(sizeof * plain_driver , __func__);
   {
-    char * path = util_alloc_full_path(root_path , index_path);
+    char * path = util_alloc_filename(root_path , index_path , NULL);
     plain_driver->path_fmt = path_fmt_alloc_directory_fmt(path);
     free(path);
   }

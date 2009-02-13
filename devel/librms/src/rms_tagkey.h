@@ -25,7 +25,7 @@ void              rms_tagkey_set_data(rms_tagkey_type * , const void * );
 
 bool              rms_tagkey_char_eq(const rms_tagkey_type *, const char *);
 void              rms_tagkey_free_(void *);
-const      void * rms_tagkey_copyc_(const void *);
+void            * rms_tagkey_copyc_(const void *);
 void              rms_tagkey_load(rms_tagkey_type *, bool , FILE *, hash_type *);
 void            * rms_tagkey_get_data_ref(const rms_tagkey_type *);
 void              rms_tagkey_fwrite(const rms_tagkey_type * , FILE *);

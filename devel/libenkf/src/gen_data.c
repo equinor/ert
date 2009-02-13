@@ -310,7 +310,7 @@ static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const cha
 
 void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , fortio_type * fortio) {
   if (eclfile != NULL) {  
-    char * full_path = util_alloc_full_path( run_path , eclfile );
+    char * full_path = util_alloc_filename( run_path , eclfile  , NULL);
 
     gen_data_file_format_type export_type = gen_data_config_get_output_format( gen_data->config );
     switch (export_type) {

@@ -196,7 +196,7 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
     if ( !util_path_exists(node->run_path) ) 
       util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
 
-    node->exit_file = util_alloc_full_path(node->run_path , EXIT_FILE);
+    node->exit_file = util_alloc_filename(node->run_path , EXIT_FILE , NULL);
     job_queue_change_node_status(queue , node , job_queue_waiting);
   }
 }

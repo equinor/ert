@@ -201,7 +201,7 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
 */
 
 void forward_model_python_fprintf(const forward_model_type * forward_model , const char * path, const subst_list_type * global_args) {
-  char * module_file = util_alloc_full_path(path , DEFAULT_JOB_MODULE);
+  char * module_file = util_alloc_filename(path , DEFAULT_JOB_MODULE , NULL);
   FILE * stream      = util_fopen(module_file , "w");
   int i;
 

@@ -84,6 +84,11 @@ _______________/                     \___________/	 |  with EnKF.               
                                                                  |    FORWARD MODEL   | 	  |
                                                                  \____________________/		_\|/_
 
+
+
+
+
+
 */
 
 /*Observe the following convention:
@@ -98,6 +103,7 @@ struct field_config_struct {
   CONFIG_STD_FIELDS;
   int nx,ny,nz;                         /* The number of elements in the three directions. */
   const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */
+  bool  private_grid;
 
   active_list_type * active_list;
 
@@ -112,7 +118,7 @@ struct field_config_struct {
   ecl_type_enum           export_ecl_type;
   path_fmt_type         * init_file_fmt; /* The format for loding init_files - if this is NULL the initialization is done by the forward model. */
 
-  bool __enkf_mode;  /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
+  bool __enkf_mode;                      /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool fmt_file;
   bool endian_swap;
   bool write_compressed;
@@ -316,6 +322,12 @@ field_file_format_type field_config_get_import_format(const field_config_type * 
 }
 
 
+void field_config_set_grid(field_config_type * config, const ecl_grid_type * grid , bool private_grid) {
+  config->grid         = grid;
+  config->private_grid = private_grid;
+  ecl_grid_get_dims(grid , &config->nx , &config->ny , &config->nz , &config->data_size);
+}
+
 
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      	   , /* 1: Keyword name */
@@ -340,12 +352,11 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   */
   config->export_format 	   = export_format;
   config->import_format 	   = import_format;
-  config->grid          	   = ecl_grid;
-
+  
+  field_config_set_grid(config , ecl_grid , false);
   config->ecl_kw_name = NULL;
   field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
-  ecl_grid_get_dims(ecl_grid , &config->nx , &config->ny , &config->nz , &config->data_size);
 
   config->truncation               = truncate_none;
   config->__enkf_mode              = true;
