@@ -74,7 +74,7 @@ bool ext_joblist_has_job(const ext_joblist_type * joblist , const char * job_nam
 
 
 void ext_joblist_python_fprintf(const ext_joblist_type * joblist , const stringlist_type * kw_list , const char * path, const subst_list_type * subst_list) {
-  char * module_file = util_alloc_full_path(path , MODULE_NAME);
+  char * module_file = util_alloc_filename(path , MODULE_NAME , NULL);
   FILE * stream      = util_fopen(module_file , "w");
   int i;
 
