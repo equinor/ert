@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <util.h>
 #include <hash.h>
@@ -670,7 +671,7 @@ void history_realloc_from_summary(history_type * history, const ecl_sum_type * s
       {
         time_t sum_time = ecl_sum_get_sim_time( summary , restart_nr );
         if (sum_time != node->node_end_time) 
-          util_abort("%s: hmmm - seems to be timing inconsisentcy between schedule_file and refcase:%s \n",  __func__ , ecl_sum_get_simulation_case( summary) );
+          util_abort("%s: Timing inconsisentcy between schedule_file and refcase:%s at restart %i\n. Did you remember the DATE keyword in the SUMMARY section?", __func__, ecl_sum_get_simulation_case( summary), restart_nr );
       }
 
       node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, restart_nr, use_h_keywords);

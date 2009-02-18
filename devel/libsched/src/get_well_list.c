@@ -19,11 +19,9 @@ int main(int argc, char **argv)
 
 
   sched_file = sched_file_alloc(-1);
-  printf("-- Loading %s..\n", argv[1]);
   sched_file_parse(sched_file, -1 , argv[1]);
 
 
-  printf("-- Creating history object from \"%s\"..\n", argv[1]);
   history = history_alloc_from_sched_file(sched_file);
 
   well_list = history_alloc_well_list(history, &num_wells);
@@ -31,7 +29,6 @@ int main(int argc, char **argv)
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
     printf("%s\n", well_list[well_nr]);
 
-  printf("-- Cleaning up..\n");
   history_free(history);
   sched_file_free(sched_file);
   util_free_stringlist(well_list, num_wells);
