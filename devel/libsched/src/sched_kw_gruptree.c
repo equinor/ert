@@ -170,6 +170,18 @@ void sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type * kw
 }
 
 
+sched_kw_gruptree_type * sched_kw_gruptree_alloc_copy(const sched_kw_gruptree_type * src) {
+  sched_kw_gruptree_type * target = sched_kw_gruptree_alloc();
+  const char * kw = hash_iter_get_first_key( src->gruptree_hash );
+  while (kw != NULL) {
+    char * parent_name = hash_get_string(src->gruptree_hash , kw);
+    hash_insert_string( target->gruptree_hash , kw , parent_name);
+    kw = hash_iter_get_next_key( src->gruptree_hash );
+  }
+  return target;
+}
+
+
 
 /***********************************************************************/
 
@@ -178,3 +190,4 @@ KW_FWRITE_IMPL(gruptree)
 KW_FREAD_ALLOC_IMPL(gruptree)
 KW_FREE_IMPL(gruptree)
 KW_FPRINTF_IMPL(gruptree)
+KW_ALLOC_COPY_IMPL(gruptree)

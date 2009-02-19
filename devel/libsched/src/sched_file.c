@@ -139,6 +139,21 @@ static sched_block_type * sched_block_fread_alloc(FILE * stream)
 
 
 
+static sched_block_type * sched_block_alloc_copy( const sched_block_type * src ) {
+  sched_block_type * target = sched_block_alloc_empty();
+  target->block_start_time  = src->block_start_time;
+  target->block_end_time    = src->block_end_time;
+  for(int i=0; i < vector_get_size(src->kw_list); i++)
+  {
+    sched_kw_type * sched_kw = vector_iget(src->kw_list , i);
+    sched_block_add_kw(target , sched_kw_alloc_copy(sched_kw));
+  }
+  return target;
+}
+
+
+
+
 static void sched_block_fprintf(const sched_block_type * block, FILE * stream)
 {
   int i;
@@ -476,8 +491,21 @@ void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
 }
 
 
-sched_file_type * sched_file_alloc_deep_copy(const sched_file_type * src) {
+/** 
+    deep_copy is NOT implemented. With shallow_copy you get a new
+    container (i.e. vector) , but the node content is unchanged.
+*/
+
+sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_copy) {
   sched_file_type * target = sched_file_alloc(src->start_time);
-  
+  target->files  = stringlist_alloc_deep_copy(src->files);
+  target->blocks = vector_alloc_new();
+  for (int i=0; i < vector_get_size( src->blocks ); i++) {
+    sched_block_type * block = vector_iget(src->blocks , i);
+    if (deep_copy)
+      sched_file_add_block(target , sched_block_alloc_copy( block ));
+    else
+      vector_append_ref( target->blocks , block);
+  }
   return target;
 }

@@ -57,9 +57,9 @@
 typedef void * (data_fscanf_alloc_proto)( FILE *, bool *,  const char *);
 typedef void   (data_free_proto)(         void *);
 typedef void   (data_fprintf_proto)(const void *, FILE *);
-typedef void   (data_fwrite_proto)( const void *, FILE *);
-typedef void * (data_fread_proto)(        FILE * );
-
+typedef void   (data_fwrite_proto) ( const void *, FILE *);
+typedef void * (data_fread_proto)  (        FILE * );
+typedef void * (alloc_copy_proto)  (const void *);
 
 typedef struct data_handlers_struct data_handlers_type;
 
@@ -69,6 +69,7 @@ struct data_handlers_struct {
   data_fprintf_proto      * fprintf;
   data_fwrite_proto       * fwrite;
   data_fread_proto        * fread_alloc;
+  alloc_copy_proto        * alloc_copy;
 };
 
 
@@ -488,3 +489,10 @@ void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** c
   }
 }
 
+
+
+sched_kw_type * sched_kw_alloc_copy(const sched_kw_type * src) {
+  sched_kw_type * target = NULL;
+  
+  return target;
+}

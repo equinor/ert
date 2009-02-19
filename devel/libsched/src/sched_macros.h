@@ -23,7 +23,8 @@ DH.fscanf_alloc = KW_FSCANF_ALLOC(KWNAME) ; \
 DH.free         = KW_FREE(        KWNAME) ; \
 DH.fprintf      = KW_FPRINTF(     KWNAME) ; \
 DH.fwrite       = KW_FWRITE(      KWNAME) ; \
-DH.fread_alloc  = KW_FREAD_ALLOC( KWNAME)   \
+DH.fread_alloc  = KW_FREAD_ALLOC( KWNAME) ; \
+DH.alloc_copy   = NULL/*KW_ALLOC_COPY(KWNAME)*/   ;
 
 /*******************************************************************/
 
@@ -56,6 +57,13 @@ void   __sched_kw_## KW ##_free(void * kw)              \
 {                                                       \
   sched_kw_## KW ##_free((sched_kw_## KW ##_type *) kw);\
 }                                                       \
+
+
+#define KW_ALLOC_COPY_IMPL(KW)                           \
+void * __sched_kw_## KW ##_alloc_copy(const void * kw)  {\
+   return sched_kw_ ## KW ## _alloc_copy(kw);            \
+}
+
 
 /*******************************************************************/
 

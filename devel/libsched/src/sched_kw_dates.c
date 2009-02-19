@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include <list.h>
-#include <hash.h>
+#include <time_t_vector.h>
 #include <time.h>
 #include <util.h>
 #include <sched_util.h>
@@ -10,7 +9,7 @@
 
 
 struct sched_kw_dates_struct {
-  list_type *date_list; /* A list of time_t's. */
+  time_t_vector_type  * date_list;
 };
 
 
@@ -21,8 +20,8 @@ struct sched_kw_dates_struct {
 
 static sched_kw_dates_type * sched_kw_dates_alloc()
 {
-  sched_kw_dates_type *dates = malloc(sizeof *dates);
-  dates->date_list     = list_alloc();
+  sched_kw_dates_type *dates = util_malloc(sizeof *dates , __func__);
+  dates->date_list           = time_t_vector_alloc(10 , -1);
   return dates;
 }
 
@@ -53,17 +52,17 @@ static const char * get_month_string_from_int(int month_nr)
 
 
 
-static time_t * alloc_time_t_from_dates_line(const char * line)
+static time_t parse_time_t_from_dates_line(const char * line)
 {
   int mday , month , year, tokens;
   char **token_list;
-  time_t * time = util_malloc(sizeof * time, __func__);
+  time_t time = -1;
 
   sched_util_parse_line(line ,&tokens ,&token_list , 3, NULL);
   month = util_get_month_nr(token_list[1]);
 
   if (util_sscanf_int(token_list[0] , &mday) && util_sscanf_int(token_list[2] , &year))
-    *time = util_make_date(mday , month , year);
+    time = util_make_date(mday , month , year);
   else 
     util_abort("%s: fatal error when extracting date from:%s \n", __func__, line);
   
@@ -74,18 +73,18 @@ static time_t * alloc_time_t_from_dates_line(const char * line)
 
 
 
-static void time_t_to_dates_line_fprintf(const time_t * date, FILE * stream)
+static void time_t_to_dates_line_fprintf(time_t date, FILE * stream)
 {
   int day, month, year;
-  util_set_date_values(*date, &day, &month, &year);
+  util_set_date_values(date, &day, &month, &year);
   fprintf(stream , "  %02d \'%s\' %4d  /  \n" , day, get_month_string_from_int(month), year );
 }
 
 
 
 static void sched_kw_dates_add_line(sched_kw_dates_type *kw, const char *line) {
-  time_t * date = alloc_time_t_from_dates_line(line);
-  list_append_list_owned_ref(kw->date_list , date, free);
+  time_t date = parse_time_t_from_dates_line(line);
+  time_t_vector_append(kw->date_list , date);
 }
 
 
@@ -125,11 +124,10 @@ sched_kw_dates_type  * sched_kw_dates_fscanf_alloc(FILE * stream, bool * at_eof,
 void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
   fprintf(stream,"DATES\n");
   {
-    list_node_type *date_node = list_get_head(kw->date_list);
-    while (date_node != NULL) {
-      const time_t * date = list_node_value_ptr(date_node);
-      time_t_to_dates_line_fprintf(date, stream);
-      date_node = list_node_get_next(date_node);
+    int i;
+    for (i=0; i < time_t_vector_size( kw->date_list ); i++) {
+      const time_t date = time_t_vector_iget( kw->date_list , i);
+      time_t_to_dates_line_fprintf(date , stream);
     }
     fprintf(stream , "/\n\n");
   }
@@ -138,48 +136,50 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
 
 
 void sched_kw_dates_free(sched_kw_dates_type * kw) {
-  list_free(kw->date_list);
+  time_t_vector_free(kw->date_list);
   free(kw);
 }
 
 
 
 void sched_kw_dates_fwrite(const sched_kw_dates_type *kw , FILE * stream) {
-  {
-    int date_lines = list_get_size(kw->date_list);
-    util_fwrite(&date_lines , sizeof date_lines , 1, stream , __func__);
-  }
-  {
-    list_node_type *date_node = list_get_head(kw->date_list);
-    while (date_node != NULL) {
-      const time_t * date = list_node_value_ptr(date_node);
-      util_fwrite(date, sizeof *date, 1, stream, __func__);
-      date_node = list_node_get_next(date_node);
-    }
-  }
+//  {
+//    int date_lines = list_get_size(kw->date_list);
+//    util_fwrite(&date_lines , sizeof date_lines , 1, stream , __func__);
+//  }
+//  {
+//    list_node_type *date_node = list_get_head(kw->date_list);
+//    while (date_node != NULL) {
+//      const time_t * date = list_node_value_ptr(date_node);
+//      util_fwrite(date, sizeof *date, 1, stream, __func__);
+//      date_node = list_node_get_next(date_node);
+//    }
+//  }
+//
 }
 
 
 
 sched_kw_dates_type * sched_kw_dates_fread_alloc(FILE * stream) {
-  int lines , line_nr;
-  sched_kw_dates_type *kw = sched_kw_dates_alloc() ;
-  util_fread(&lines, sizeof lines, 1, stream, __func__);
-  line_nr = 0;
-  while (line_nr < lines) {
-    time_t * date = util_malloc(sizeof * date, __func__);
-    util_fread(date, sizeof *date, 1, stream, __func__);
-    list_append_list_owned_ref(kw->date_list, date, free);
-    line_nr++;
-  } 
-  return kw;
+//  int lines , line_nr;
+//  sched_kw_dates_type *kw = sched_kw_dates_alloc() ;
+//  util_fread(&lines, sizeof lines, 1, stream, __func__);
+//  line_nr = 0;
+//  while (line_nr < lines) {
+//    time_t * date = util_malloc(sizeof * date, __func__);
+//    util_fread(date, sizeof *date, 1, stream, __func__);
+//    list_append_list_owned_ref(kw->date_list, date, free);
+//    line_nr++;
+//  } 
+//  return kw;
+  return NULL;
 }
 
 
 
 int sched_kw_dates_get_size(const sched_kw_dates_type * kw)
 {
-  return list_get_size(kw->date_list);
+  return time_t_vector_size(kw->date_list);
 }
 
 
@@ -187,9 +187,7 @@ int sched_kw_dates_get_size(const sched_kw_dates_type * kw)
 sched_kw_dates_type * sched_kw_dates_alloc_from_time_t(time_t date)
 {
   sched_kw_dates_type * kw = sched_kw_dates_alloc();
-  time_t * date_stor = util_malloc(sizeof * date_stor, __func__);
-  *date_stor = date;
-  list_append_list_owned_ref(kw->date_list, date_stor, free);
+  time_t_vector_append(kw->date_list , date );
   return kw;
 }
 
@@ -197,14 +195,7 @@ sched_kw_dates_type * sched_kw_dates_alloc_from_time_t(time_t date)
 
 time_t sched_kw_dates_iget_time_t(const sched_kw_dates_type * kw, int i)
 {
-  time_t date;
-  time_t * date_stor;
-
-  list_node_type * date_node = list_iget_node(kw->date_list, i);
-  date_stor = (time_t *) list_node_value_ptr(date_node);
-  date = *date_stor;
-
-  return date;
+  return time_t_vector_iget( kw->date_list , i);
 }
 
 
@@ -213,7 +204,7 @@ time_t sched_kw_dates_get_time_t(const sched_kw_dates_type * kw)
 {
   if(sched_kw_dates_get_size(kw) > 1)
     util_abort("%s: Internal error, must use scehd_kw_dates_iget_time_t - aborting.\n", __func__);
-
+  
   return sched_kw_dates_iget_time_t(kw, 0);
 }
 
