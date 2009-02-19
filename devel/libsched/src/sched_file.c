@@ -1,9 +1,9 @@
 #include <hash.h>
-#include <list.h>
 #include <stringlist.h>
 #include <util.h>
 #include <sched_file.h>
 #include <sched_util.h>
+#include <vector.h>
 
 /* This sched_file.c contains code for internalizing an ECLIPSE
    schedule file.
@@ -40,16 +40,16 @@
 typedef struct sched_block_struct sched_block_type;
 
 struct sched_block_struct {
-  list_type * kw_list;      /* A list of sched_kw's in the block.   */
-  time_t      block_start_time;
-  time_t      block_end_time;
+  vector_type * kw_list;           /* A list of sched_kw's in the block.   */
+  time_t        block_start_time;  
+  time_t        block_end_time;
 };
 
 
 
 struct sched_file_struct {
   int               __id;        /* Used for safe run-time casting. */
-  list_type       * blocks;      /* A list of chronologically sorted sched_block_type's. */
+  vector_type     * blocks;      /* A list of chronologically sorted sched_block_type's. */
   stringlist_type * files;       /* The name of the files which have been parsed to generate this sched_file instance. */
   time_t            start_time;  /* The start of the simulation. */
 };
@@ -64,7 +64,7 @@ static sched_block_type * sched_block_alloc_empty()
 {
   sched_block_type * block = util_malloc(sizeof * block, __func__);
   
-  block->kw_list = list_alloc();
+  block->kw_list = vector_alloc_new();
 
   return block;
 }
@@ -73,7 +73,7 @@ static sched_block_type * sched_block_alloc_empty()
 
 static void sched_block_free(sched_block_type * block)
 {
-  list_free(block->kw_list);
+  vector_free(block->kw_list);
 
   free(block);
 }
@@ -89,23 +89,21 @@ static void sched_block_free__(void * block)
 
 static void sched_block_add_kw(sched_block_type * block, sched_kw_type * kw)
 {
-  list_append_list_owned_ref(block->kw_list, kw, sched_kw_free__);
+  vector_append_owned_ref(block->kw_list , kw , sched_kw_free__);
 }
 
 
 
 static sched_kw_type * sched_block_iget_kw(sched_block_type * block, int i)
 {
-  list_node_type * sched_kw_node = list_iget_node(block->kw_list, i);
-  sched_kw_type * sched_kw  = list_node_value_ptr(sched_kw_node);
-  return sched_kw;
+  return vector_iget( block->kw_list , i);
 }
 
 
 
 static void sched_block_fwrite(sched_block_type * block, FILE * stream)
 {
-  int len = list_get_size(block->kw_list);
+  int len = vector_get_size(block->kw_list);
   util_fwrite(&len, sizeof len, 1, stream, __func__);
 
   for(int i=0; i<len; i++)
@@ -143,12 +141,10 @@ static sched_block_type * sched_block_fread_alloc(FILE * stream)
 
 static void sched_block_fprintf(const sched_block_type * block, FILE * stream)
 {
-  list_node_type * sched_kw_node = list_get_head(block->kw_list);
-  while(sched_kw_node != NULL)
-  {
-    const sched_kw_type * sched_kw = list_node_value_ptr(sched_kw_node);
+  int i;
+  for (i=0; i < vector_get_size(block->kw_list); i++) {
+    const sched_kw_type * sched_kw = vector_iget_const( block->kw_list , i);
     sched_kw_fprintf(sched_kw, stream);
-    sched_kw_node = list_node_get_next(sched_kw_node);
   }
 }
 
@@ -156,41 +152,36 @@ static void sched_block_fprintf(const sched_block_type * block, FILE * stream)
 
 static int sched_block_get_size(const sched_block_type * block)
 {
-  return list_get_size(block->kw_list);
+  return vector_get_size(block->kw_list);
 }
 
 
 
 static sched_kw_type * sched_block_iget_kw_ref(const sched_block_type * block, int i)
 {
-  list_node_type * sched_kw_node = list_iget_node(block->kw_list, i);
-  sched_kw_type * sched_kw = list_node_value_ptr(sched_kw_node);
-  return sched_kw;
+  return vector_iget(block->kw_list , i);
 }
 
 
 
 static sched_kw_type * sched_block_get_last_kw_ref(const sched_block_type * block)
 {
-  list_node_type * sched_kw_node = list_get_tail(block->kw_list);
-  sched_kw_type  * sched_kw = (sched_kw_type *) list_node_value_ptr(sched_kw_node);
-  return sched_kw;
+  int last_index = vector_get_size( block->kw_list ) - 1;
+  return sched_block_iget_kw_ref( block , last_index );
 }
 
 
 
 static void sched_file_add_block(sched_file_type * sched_file, sched_block_type * block)
 {
-  list_append_list_owned_ref(sched_file->blocks, block, sched_block_free__);
+  vector_append_owned_ref(sched_file->blocks , block , sched_block_free__);
 }
 
 
 
 static sched_block_type * sched_file_iget_block_ref(const sched_file_type * sched_file, int i)
 {
-  list_node_type * sched_block_node = list_iget_node(sched_file->blocks, i);
-  sched_block_type * sched_block  = list_node_value_ptr(sched_block_node);
-  return sched_block;
+  return vector_iget(sched_file->blocks , i);
 }
 
 
@@ -235,10 +226,10 @@ static void sched_file_build_block_dates(sched_file_type * sched_file)
 sched_file_type * sched_file_alloc(time_t start_time)
 {
   sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
-  sched_file->__id     	 = SCHED_FILE_TYPE_ID;
-  sched_file->blocks   	 = list_alloc();
-  sched_file->files    	 = stringlist_alloc_new();
-  sched_file->start_time = start_time;
+  sched_file->__id     	       = SCHED_FILE_TYPE_ID;
+  sched_file->blocks   	       = vector_alloc_new();
+  sched_file->files    	       = stringlist_alloc_new();
+  sched_file->start_time       = start_time;
   return sched_file;
 }
 
@@ -255,7 +246,7 @@ sched_file_type * sched_file_safe_cast(void * _s) {
 
 void sched_file_free(sched_file_type * sched_file)
 {
-  list_free(sched_file->blocks);
+  vector_free(sched_file->blocks);
   stringlist_free( sched_file->files );
   free(sched_file);
 }
@@ -327,7 +318,7 @@ sched_file_type * sched_file_parse_alloc(const char * filename , time_t start_da
 
 int sched_file_get_num_restart_files(const sched_file_type * sched_file)
 {
-  return list_get_size(sched_file->blocks);
+  return vector_get_size(sched_file->blocks);
 }
 
 
@@ -341,8 +332,7 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
 
   for(int i=0; i<=last_restart_file; i++)
   {
-    list_node_type * sched_block_node = list_iget_node(sched_file->blocks, i);
-    const sched_block_type * sched_block = list_node_value_ptr(sched_block_node);
+    const sched_block_type * sched_block = vector_iget_const( sched_file->blocks , i);
     sched_block_fprintf(sched_block, stream);
   }
   fprintf(stream, "END\n");
@@ -483,4 +473,11 @@ void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
     time_t t = sched_file_iget_block_end_time(sched_file , len - 1);
     __sched_file_summarize_line(len - 2 , start_time , t , stream);
   }
+}
+
+
+sched_file_type * sched_file_alloc_deep_copy(const sched_file_type * src) {
+  sched_file_type * target = sched_file_alloc(src->start_time);
+  
+  return target;
 }

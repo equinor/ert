@@ -31,6 +31,7 @@ sched_kw_type *   sched_file_ijget_block_kw_ref(const sched_file_type *, int, in
 int               sched_file_get_restart_file_from_time_t(const sched_file_type * , time_t );
 void              sched_file_summarize(const sched_file_type *  , FILE * );
   //const      char * sched_file_get_filename(const sched_file_type * );
+sched_file_type * sched_file_alloc_deep_copy(const sched_file_type * );
 
 #ifdef __cplusplus
 }
