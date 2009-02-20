@@ -698,6 +698,36 @@ enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_n
 }
 
 
+void enkf_fs_copy_node(enkf_fs_type * enkf_fs, enkf_config_node_type * config_node, int report_step_from, int iens_from, state_enum state_from, int report_step_to, int iens_to, state_enum state_to) {
+  enkf_node_type * enkf_node = enkf_fs_fread_alloc_node(enkf_fs, config_node, report_step_from, iens_from, state_from);
+  enkf_fs_fwrite_node(enkf_fs, enkf_node, report_step_to, iens_to, state_to);
+  enkf_node_free(enkf_node);
+}
+
+
+/**
+  Copy an ensemble of nodes. Note that the limits are inclusive.
+*/
+void enkf_fs_copy_ensemble(enkf_fs_type * enkf_fs, enkf_config_node_type * config_node, int report_step_from, state_enum state_from, int report_step_to, state_enum state_to, int iens1, int iens2)
+{
+  for(int iens = iens1; iens <= iens2; iens++)
+    enkf_fs_copy_node(enkf_fs, config_node, report_step_from, iens, state_from, report_step_to, iens, state_to);
+}
+
+
+
+/**
+  Scatter a node. Note that the limits are inclusive.
+*/
+void enkf_fs_scatter_node(enkf_fs_type * enkf_fs, enkf_config_node_type * config_node, int report_step, int iens_source, state_enum state, int iens1, int iens2)
+{
+  enkf_node_type * enkf_node = enkf_fs_fread_alloc_node(enkf_fs, config_node, report_step, iens_source, state);
+  for(int i = iens1; i <= iens2; i++)
+    enkf_fs_fwrite_node(enkf_fs, enkf_node, report_step, i, state);
+  enkf_node_free(enkf_node);
+}
+
+
 /**
    This function will load a node from the filesystem if it is
    available; if not it will just return false.
@@ -732,6 +762,8 @@ bool enkf_fs_try_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * node , int
 /* High level functions to work on an ensemble or a time-series. */
 /* Observe that both for the time_based functions, and the ensemble
    based functions both limits are INCLUSIVE. */
+
+
    
 
 enkf_node_type ** enkf_fs_fread_alloc_ensemble(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int report_step , int iens1 , int iens2 , state_enum state) {
@@ -874,9 +906,7 @@ bool enkf_fs_rw_equal(const enkf_fs_type * fs) {
 }
 
 
-const char * enkf_fs_get_write_dir(const enkf_fs_type * fs) {
-  return fs->current_write_dir;
-}
+const char * enkf_fs_get_write_dir(const enkf_fs_type * fs) { return fs->current_write_dir; }
 
 const char * enkf_fs_get_read_dir(const enkf_fs_type * fs) {
   return fs->current_read_dir;

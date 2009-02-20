@@ -13,6 +13,10 @@
 #include <stdbool.h>
 
 
+/* Set the default forward model to ECLIPSE 100. */
+#define DEFAULT_FORWARD_MODEL "ECLIPSE100"
+
+
 
 
 /* Eclipse IO  related stuff */
@@ -38,7 +42,11 @@
 #define DEFAULT_ENKF_ALPHA        "1.50"    /* NB String */
 
 
-#define DEFAULT_PLOT_PATH "Plots"
+/* Default directories. */
+#define DEFAULT_PLOT_PATH   "plots"
+#define DEFAULT_RESULT_PATH "results/step_%d"
+#define DEFAULT_RUNPATH     "simulations/realization-%d-step-%d-to-%d"
+#define DEFAULT_ENSPATH     "storage"
 
 
 
