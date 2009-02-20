@@ -1104,17 +1104,19 @@ enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
 
      1. We internalize the initial dynamic state.
 
-     2. For all the end-points in the current enkf_sched instance. 
+     2. For all the end-points in the current enkf_sched instance we
+        internalize the state.
 
      3. store_results is set to true for all report steps irrespective
         of run_mode.
 
      4. We iterate over all the observations, and ensure that the
-        observed nodes are internalized (irrespective of whether they
-        are of type dynamic_state or dynamic_result).
+        observed nodes (i.e. the pressure for an RFT) are internalized
+        (irrespective of whether they are of type dynamic_state or
+        dynamic_result).
 
    Observe that this cascade can result in some nodes, i.e. a rate we
-   are observing, to be marked for internalization several times.
+   are observing, to be marked for internalization several times - that is no problem.
     
    -----
    
@@ -1123,7 +1125,12 @@ enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
    summary are loaded from disk, otherwise no loading is
    performed. This implies that if we do not want to internalize the
    full state but for instance the pressure (i.e. for an RFT) we must
-   set the __load_state variable for the actual report step to true.
+   set the __load_state variable for the actual report step to
+   true. For this reason calls enkf_config_node_internalize() must be
+   accompanied by calls to model_config_set_load_state|results() -
+   this is ensured when using this function to manipulate the
+   configuration of internalization.
+
 */
 
 
