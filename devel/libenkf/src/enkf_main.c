@@ -792,9 +792,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
     item = config_add_item(config , "RUNPATH" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_set_arg(config , "RUNPATH" , 1 , (const char *[1]) { DEFAULT_RUNPATH });
 
     item = config_add_item(config , "ENSPATH" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
 
     item = config_add_item(config , "ECLBASE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -829,6 +831,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
     item = config_add_item(config , "RESULT_PATH"  , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_set_arg(config , "RESULT_PATH" , 1 , (const char *[1]) { DEFAULT_RESULT_PATH });
 
     item = config_add_item(config , "OBS_CONFIG"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
