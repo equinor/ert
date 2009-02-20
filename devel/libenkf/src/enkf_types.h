@@ -71,42 +71,22 @@ typedef enum {INVALID 	   = 0   ,
 */
 
 
-
-
-
-
-/*
-  These types are logical types, describing how the parameter behaves in the EnKF
-  loop.
-*/
-
-
-typedef enum {active_off = 200 , active_on , active_at , active_after , active_before} enkf_active_type;
-typedef enum {abs_error   = 0  , rel_error = 1 , rel_min_abs_error = 2} enkf_obs_error_type; /* Should not have enkf_ prefix */
-
-
-/*
-  typedef enum {WELL_OBS = 0 , POINT_OBS = 1} enkf_obs_type;
-*/
-
-typedef enum {nolog = 0 , log_input_mask = 1 , log_enkf_mask = 2 , log_output_mask = 4 , log_all = 7} enkf_logmode_enum;
-
-
 typedef enum   {undefined   = 0 , 
 		serialized  = 1,
 		forecast    = 2, 
 		analyzed    = 4,
 		both        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
-/**
-   The state == both is used for output purposes (getting both forecast and analyzed).
-*/
+  /**
+     The state == both is used for output purposes (getting both forecast and analyzed).
+  */
 
 
 
 
-/** 
-    These are 2^n bitmasks - truncate_minmax == truncate_min + truncate_max. 
-*/
+  /** 
+      These are 2^n bitmasks - truncate_minmax == truncate_min + truncate_max. 
+  */
+
 typedef enum {truncate_none   = 0,
 	      truncate_min    = 1,
 	      truncate_max    = 2,
@@ -122,13 +102,12 @@ typedef enum {truncate_none   = 0,
 
    In mode enkf_assimlation ( which is the default ), we require quite
    a lot of info, whereas in the case screening_experiment we require
-   a lot less.
+   less.
 
    screening_experiment: 
       - SIZE
       - RUNPATH
       - ECLBASE
-      - START_TIME
       - SCHEDULE_FILE
       - DATA_FILE
       - FORWARD_MODEL.

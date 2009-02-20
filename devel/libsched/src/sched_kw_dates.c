@@ -203,7 +203,7 @@ time_t sched_kw_dates_iget_time_t(const sched_kw_dates_type * kw, int i)
 time_t sched_kw_dates_get_time_t(const sched_kw_dates_type * kw)
 {
   if(sched_kw_dates_get_size(kw) > 1)
-    util_abort("%s: Internal error, must use scehd_kw_dates_iget_time_t - aborting.\n", __func__);
+    util_abort("%s: Internal error, must use scehd_kw_dates_iget_time_t - aborting size:%d .\n", __func__ , sched_kw_dates_get_size(kw));
   
   return sched_kw_dates_iget_time_t(kw, 0);
 }

@@ -261,17 +261,23 @@ void gen_data_config_free(gen_data_config_type * config) {
      
 */
 
+/* Locking is completelt broken here ... */
 void gen_data_config_assert_size(gen_data_config_type * config , int data_size, int report_step) {
   pthread_mutex_lock( &config->update_lock );
   {
+
     if (report_step != config->__report_step) {
       config->data_size     = data_size; 
       config->__report_step = report_step;
+      active_list_set_data_size( config->active_list , data_size );
     } else if (config->data_size != data_size) {
-      pthread_mutex_unlock( &config->update_lock );
-      util_abort("%s: Size mismatch when loading:%s from file - got %d elements - expected:%d [report_step:%d] \n",__func__ , config->ecl_kw_name , data_size , config->data_size, report_step);
+      util_abort("%s: Size mismatch when loading from file - got %d elements - expected:%d [report_step:%d] \n",
+		 __func__ , 
+		 data_size , 
+		 config->data_size, 
+		 report_step);
     }
-    active_list_set_data_size( config->active_list , data_size );
+
   }
   pthread_mutex_unlock( &config->update_lock );
 }

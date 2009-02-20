@@ -163,7 +163,7 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
       const stringlist_type * tokens = config_iget_stringlist_ref(config , "UPDATE_PATH" , i);
       const char * path              = stringlist_iget( tokens , 0);
       const char * value             = stringlist_iget( tokens , 1);
-
+      
       util_update_path_var( path , value , false);
     }
   }

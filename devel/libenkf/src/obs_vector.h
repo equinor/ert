@@ -60,6 +60,7 @@ double               obs_vector_chi2(const obs_vector_type *  , enkf_fs_type *  
 void                 obs_vector_ensemble_chi2(const obs_vector_type *  , enkf_fs_type * , int  , int , state_enum , double * );
 double               obs_vector_total_chi2(const obs_vector_type * , enkf_fs_type * , int , state_enum  );
 void                 obs_vector_ensemble_total_chi2(const obs_vector_type *  , enkf_fs_type *  , int  , state_enum , double * );
+enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * );
 
 SAFE_CAST_HEADER(obs_vector);
 VOID_FREE_HEADER(obs_vector);

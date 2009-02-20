@@ -68,8 +68,6 @@ typedef struct run_info_struct {
   state_enum         	  init_state;      /* Whether we should init from a forecast or an analyzed state. */
   int                	  step1;           /* The forward model is integrated: step1 -> step2 */
   int                	  step2;  	     
-  int                	  load_mask1;      /* What should we load from interemediate report steps - add: dynamic_state , dynamic_result, static_state */
-  int                	  load_mask2;      /* What should we load from the final step? */
   char            	* run_path;        /* The currently used runpath - is realloced / freed for every step. */
   bool            	  can_sim;         /* If false - this member can not start simulations. */
   run_mode_type   	  run_mode;        /* What type of run this is */
@@ -92,10 +90,11 @@ typedef struct run_info_struct {
 */
 
 typedef struct shared_info_struct {
-  enkf_fs_type          * fs;                /* The filesystem object - used to load and store nodes. */
-  ext_joblist_type      * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
-  job_queue_type        * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
-  path_fmt_type         * run_path_fmt;      /* The format specifier for the runpath - when used it is called with integer arguments: iens, report1 , report2 */
+  const model_config_type     * model_config;      /* .... */
+  enkf_fs_type                * fs;                /* The filesystem object - used to load and store nodes. */
+  ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
+  job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
+  path_fmt_type               * run_path_fmt;      /* The format specifier for the runpath - when used it is called with integer arguments: iens, report1 , report2 */
 } shared_info_type;
 
 
@@ -110,9 +109,11 @@ typedef struct shared_info_struct {
 
 
 typedef struct member_config_struct {
-  int  		        iens;              /* The ensemble member number of this member. */
-  keep_runpath_type     keep_runpath;      /* Should the run-path directory be left around (for this member)*/
-  char 		      * eclbase;           /* The ECLBASE string used for simulations of this member. */
+  int  		        iens;                /* The ensemble member number of this member. */
+  keep_runpath_type     keep_runpath;        /* Should the run-path directory be left around (for this member)*/
+  char 		      * eclbase;             /* The ECLBASE string used for simulations of this member. */
+  sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
+  bool                  private_sched_file;  /* Is the member config holding a private schedule file? */ 
 } member_config_type;
 
 
@@ -184,9 +185,6 @@ static void run_info_set(run_info_type * run_info ,
   run_info->init_state 	    = init_state;
   run_info->step1      	    = step1;
   run_info->step2      	    = step2;
-  run_info->load_mask1      = dynamic_result + dynamic_state;
-  run_info->load_mask2      = dynamic_result + dynamic_state + static_state;
-  
   run_info->complete_OK     = false;
   run_info->__ready         = true;
   run_info->can_sim         = true;
@@ -225,6 +223,7 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info->run_path_fmt = model_config_get_runpath_fmt( model_config );
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
+  shared_info->model_config = model_config;
   
   return shared_info;
 }
@@ -255,6 +254,8 @@ static void member_config_set_eclbase(member_config_type * member_config , const
 
 static void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
+  if (member_config->private_sched_file)
+    sched_file_free( member_config->sched_file );
   free(member_config);
 }
 
@@ -264,7 +265,11 @@ static void member_config_set_keep_runpath(member_config_type * member_config , 
 }
 
 
-static member_config_type * member_config_alloc(int iens , keep_runpath_type keep_runpath , const ecl_config_type * ecl_config , const ensemble_config_type * ensemble_config) {
+static member_config_type * member_config_alloc(int iens , 
+						keep_runpath_type keep_runpath , 
+						const ecl_config_type * ecl_config , 
+						const ensemble_config_type * ensemble_config) {
+						
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
   
   member_config->iens           = iens; /* Can only be changed in the allocater. */
@@ -275,6 +280,18 @@ static member_config_type * member_config_alloc(int iens , keep_runpath_type kee
     free(eclbase);
   }
   member_config_set_keep_runpath(member_config , keep_runpath);
+  {
+    char * schedule_prediction_file = ecl_config_alloc_schedule_prediction_file(ecl_config , iens);
+    if (schedule_prediction_file != NULL) {
+      member_config->sched_file = sched_file_alloc_copy( ecl_config_get_sched_file( ecl_config ) , false);
+      sched_file_parse_append( member_config->sched_file , schedule_prediction_file );
+      member_config->private_sched_file = true;
+      free( schedule_prediction_file );
+    } else {
+      member_config->sched_file         = ecl_config_get_sched_file( ecl_config );
+      member_config->private_sched_file = false;
+    }
+  }
   return member_config;
 }
 
@@ -410,7 +427,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   
   enkf_state->ensemble_config          = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
-  enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config);
+  enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config );
   enkf_state->shared_info     = shared_info_alloc(site_config , model_config );
   enkf_state->run_info        = run_info_alloc();
   
@@ -525,10 +542,6 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
    This function loads the dynamic results from one report step. In
    ECLIPSE speak this implies loading the summary data. Observe the following:
 
-    1. This functions starts by consulting the load_mask to check
-       whether dynamic_results should be loaded, i.e. the function
-       should alwasy be called.
-
     2. When loading results from several report_steps consecutively
        the whole thing could be speeded up by doing it one go. That is
        currently not implemented.
@@ -536,41 +549,50 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
    The results are immediately stored in the enkf_fs filesystem.
 */
   
-
-static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , int load_mask , int report_step) {
+/* 
+   When we arrive in this function we *KNOW* that summary should be
+   loaded from disk.
+*/
+static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step) {
   /* IFF reservoir_simulator == ECLIPSE ... */
-  if (load_mask & dynamic_result) {
-    if (report_step > 0) {
-      const shared_info_type   * shared_info = enkf_state->shared_info;
-      const member_config_type * my_config   = enkf_state->my_config;
-      const run_info_type   * run_info       = enkf_state->run_info;
-      const ecl_config_type * ecl_config     = enkf_state->ecl_config;
-      const bool fmt_file  		     = ecl_config_get_formatted(ecl_config);
-      const bool endian_swap                 = ecl_config_get_endian_flip(ecl_config);
-      const int  iens                        = my_config->iens;
+  if (report_step > 0) {
+    const shared_info_type   * shared_info = enkf_state->shared_info;
+    const member_config_type * my_config   = enkf_state->my_config;
+    const run_info_type   * run_info       = enkf_state->run_info;
+    const ecl_config_type * ecl_config     = enkf_state->ecl_config;
+    const bool fmt_file  		   = ecl_config_get_formatted(ecl_config);
+    const bool endian_swap                 = ecl_config_get_endian_flip(ecl_config);
+    const bool internalize_all             = model_config_internalize_results( model_config , report_step );
+    const int  iens                        = my_config->iens;
+    
+    char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
+    char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
+    ecl_sum_type * summary  = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , endian_swap);
+    
+    /* The actual loading */
+    {
+      bool complete;
+      enkf_node_type * node = hash_iter_get_first_value( enkf_state->node_hash , &complete);
+      while (!complete) {
+	if (enkf_node_get_var_type(node) == dynamic_result) {
+	  bool internalize = internalize_all;
+	  if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
+	    internalize = enkf_node_internalize(node , report_step);
 
-      char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
-      char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
-      ecl_sum_type * summary  = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , endian_swap);
-
-      /* The actual loading */
-      {
-	bool complete;
-	enkf_node_type * node = hash_iter_get_first_value( enkf_state->node_hash , &complete);
-	while (!complete) {
-	  if (enkf_node_get_var_type(node) == dynamic_result) {
+	  if (internalize) {
 	    enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens);    /* Loading/internalizing */
 	    enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , forecast);            /* Saving to disk */
 	  } 
-	  node = hash_iter_get_next_value( enkf_state->node_hash , &complete);
+
 	}
+	node = hash_iter_get_next_value( enkf_state->node_hash , &complete);
       }
-      
-      ecl_sum_free( summary );
-      free(summary_file);
-      free(header_file);
     }
-  } 
+    
+    ecl_sum_free( summary );
+    free(summary_file);
+    free(header_file);
+  }
 }
 
 
@@ -583,148 +605,157 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
    When the state has been loaded it goes straight to disk.
 */
 
-static void enkf_state_internalize_state(enkf_state_type * enkf_state , int load_mask , int report_step)   {
-  if (load_mask & (dynamic_state + static_state)) {
-    member_config_type * my_config   = enkf_state->my_config;
-    shared_info_type   * shared_info = enkf_state->shared_info;
-    run_info_type      * run_info    = enkf_state->run_info;
-    const bool fmt_file              = ecl_config_get_formatted(enkf_state->ecl_config);
-    const bool endian_swap           = ecl_config_get_endian_flip(enkf_state->ecl_config);
-    const bool unified               = ecl_config_get_unified(enkf_state->ecl_config);
-    ecl_block_type * restart_block;
-    
-    
-    /**
-       Loading the restart block.
-    */
-    {
-      char * restart_file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
-      fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap , fmt_file);
-      
-      if (unified)
-	ecl_block_fseek(report_step , true , fortio);
-      
-      restart_block = ecl_block_alloc( report_step );
-      ecl_block_fread(restart_block , fortio , NULL);
-      fortio_fclose(fortio);
-      free(restart_file);
-    }
+static void enkf_state_internalize_state(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step)   {
+  member_config_type * my_config   = enkf_state->my_config;
+  shared_info_type   * shared_info = enkf_state->shared_info;
+  run_info_type      * run_info    = enkf_state->run_info;
+  const bool fmt_file              = ecl_config_get_formatted(enkf_state->ecl_config);
+  const bool endian_swap           = ecl_config_get_endian_flip(enkf_state->ecl_config);
+  const bool unified               = ecl_config_get_unified(enkf_state->ecl_config);
+  const bool internalize_state     = model_config_internalize_state( model_config , report_step );
+  ecl_block_type * restart_block;
   
-    /*****************************************************************/
+  
+  /**
+     Loading the restart block.
+  */
+  {
+    char * restart_file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
+    fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap , fmt_file);
     
+    if (unified)
+      ecl_block_fseek(report_step , true , fortio);
     
-    /**
-       Iterating through the restart block:
-       
-       1. Build up enkf_state->restart_kw_list.
-       2. Send static keywords straight out.
-    */
+    restart_block = ecl_block_alloc( report_step );
+    ecl_block_fread(restart_block , fortio , NULL);
+    fortio_fclose(fortio);
+    free(restart_file);
+  }
+  
+  /*****************************************************************/
+  
+  
+  /**
+     Iterating through the restart block:
+     
+     1. Build up enkf_state->restart_kw_list.
+     2. Send static keywords straight out.
+  */
+  
+  {
+    restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(restart_block);
+    const char * block_kw 	         = restart_kw_list_get_first(block_kw_list);
     
-    {
-      restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(restart_block);
-      const char * block_kw 	           = restart_kw_list_get_first(block_kw_list);
+    restart_kw_list_reset(enkf_state->restart_kw_list);
+    while (block_kw != NULL) {
+      char * kw = util_alloc_string_copy(block_kw);
+      enkf_impl_type impl_type;
+      ecl_util_escape_kw(kw);
       
-      restart_kw_list_reset(enkf_state->restart_kw_list);
-      while (block_kw != NULL) {
-	char * kw = util_alloc_string_copy(block_kw);
-	enkf_impl_type impl_type;
-	ecl_util_escape_kw(kw);
-	
-	if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
-	  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
-	  impl_type = enkf_config_node_get_impl_type(config_node);
-	} else
-	  impl_type = STATIC;
-	
-	/*
-	  Observe that the keywords are added to the restart_kw_list
-	  irrespective of whether they are actually internalized
-	  afterwards or not.
-	*/
-	
-	if (impl_type == FIELD) 
+      if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
+	const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
+	impl_type = enkf_config_node_get_impl_type(config_node);
+      } else
+	impl_type = STATIC;
+      
+      /*
+	Observe that the keywords are added to the restart_kw_list
+	irrespective of whether they are actually internalized
+	afterwards or not. CAN THAT BE RIGHT????
+      */
+      
+      if (impl_type == FIELD) 
+	restart_kw_list_add(enkf_state->restart_kw_list , kw);
+      else if (impl_type == STATIC) {
+	/* It is a static kw like INTEHEAD or SCON */
+	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
 	  restart_kw_list_add(enkf_state->restart_kw_list , kw);
-	else if (impl_type == STATIC) {
-	  /* It is a static kw like INTEHEAD or SCON */
-	  if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
-	    restart_kw_list_add(enkf_state->restart_kw_list , kw);
+
+	  /* Observe that for static keywords we do NOT ask the node 'privately' if internalize_state is false: It is
+	     impossible to single out static keywords for internalization. */
+	     
+	  if (internalize_state) {  
+	    if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
+	      ensemble_config_add_node(enkf_state->ensemble_config , kw , static_state , STATIC , NULL , NULL , NULL);
 	    
-	    if (load_mask & static_state) {  /* Does the mask tell us to keep the static keywords ?? */
-	      if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-		ensemble_config_add_node(enkf_state->ensemble_config , kw , static_state , STATIC , NULL , NULL , NULL);
-	    
-	      if (!enkf_state_has_node(enkf_state , kw)) {
-		const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
-		enkf_state_add_node(enkf_state , kw , config_node); 
-	      }
-	    
-	      /* 
-		 The following thing can happen:
-	       
-		 1. A static keyword appears at report step n, and is added to the enkf_state
-	    	    object.
-	       
-		 2. At report step n+k that static keyword is no longer active, and it is
-		    consequently no longer part of restart_kw_list().
-	       
-		 3. However it is still part of the enkf_state. Not loaded here, and subsequently
-		    purged from enkf_main.
-	       
-		 One keyword where this occurs is FIPOIL, which at least can appear only in the
-		 first restart file. Unused static keywords of this type are purged from the
-		 enkf_main object by a call to enkf_main_del_unused_static(). The purge is based on
-		 looking at the internal __report_step state of the static kw.
-	      */
-	    
-	      {
-		enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
-		ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
-		ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
-		enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(restart_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , 
-					  report_step , my_config->iens);
-		/*
-		  Static kewyords go straight out ....
-		*/
-		enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
-		enkf_node_free_data(enkf_node);
-	      }
+	    if (!enkf_state_has_node(enkf_state , kw)) {
+	      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
+	      enkf_state_add_node(enkf_state , kw , config_node); 
 	    }
-	  } 
-	} else
-	  util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
-	
-	free(kw);
-	block_kw = restart_kw_list_get_next(block_kw_list);
-      }
-      enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , my_config->iens , enkf_state->restart_kw_list );
+	    
+	    /* 
+	       The following thing can happen:
+	       
+	       1. A static keyword appears at report step n, and is added to the enkf_state
+	          object.
+	       
+	       2. At report step n+k that static keyword is no longer active, and it is
+	          consequently no longer part of restart_kw_list().
+	       
+	       3. However it is still part of the enkf_state. Not loaded here, and subsequently
+	          purged from enkf_main.
+	       
+	       One keyword where this occurs is FIPOIL, which at least can appear only in the
+	       first restart file. Unused static keywords of this type are purged from the
+	       enkf_main object by a call to enkf_main_del_unused_static(). The purge is based on
+	       looking at the internal __report_step state of the static kw.
+	    */
+	    
+	    {
+	      enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
+	      ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
+	      ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
+	      enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(restart_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , 
+					report_step , my_config->iens);
+	      /*
+		Static kewyords go straight out ....
+	      */
+	      enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
+	      enkf_node_free_data(enkf_node);
+	    }
+	  }
+	} 
+      } else
+	util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
+      
+      free(kw);
+      block_kw = restart_kw_list_get_next(block_kw_list);
     }
-    
-    /******************************************************************/
-    /** Starting on the enkf_node_ecl_load() function calls. This is where the
-	actual loading (apart from static keywords) is done. Observe that this
-	loading might involve other load functions than the ones used for
-	loading PRESSURE++ from ECLIPSE restart files (e.g. for loading seismic
-	results..)
-    */
-    
-    if (load_mask & dynamic_state) {
-      bool complete;
-      enkf_node_type * enkf_node = hash_iter_get_first_value(enkf_state->node_hash , &complete);
-      while (!complete) {
-	if (enkf_node_get_var_type(enkf_node) == dynamic_state) {
+    enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , my_config->iens , enkf_state->restart_kw_list );
+  }
+  
+  /******************************************************************/
+  /** 
+      Starting on the enkf_node_ecl_load() function calls. This is where the
+      actual loading (apart from static keywords) is done. Observe that this
+      loading might involve other load functions than the ones used for
+      loading PRESSURE++ from ECLIPSE restart files (e.g. for loading seismic
+      results..)
+  */
+  
+  {
+    bool complete;
+    enkf_node_type * enkf_node = hash_iter_get_first_value(enkf_state->node_hash , &complete);
+    while (!complete) {
+      if (enkf_node_get_var_type(enkf_node) == dynamic_state) {
+	bool internalize_kw = internalize_state;
+	if (!internalize_kw)
+	  internalize_kw = enkf_node_internalize(enkf_node , report_step);
+	
+	if (internalize_kw) {
 	  if (enkf_node_has_func(enkf_node , ecl_load_func)) {
 	    enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_block , report_step , my_config->iens);
 	    enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
 	  }
 	}
-	enkf_node = hash_iter_get_next_value(enkf_state->node_hash , &complete);
-      }                                                                      
-    }
-
-    /*****************************************************************/
-    /* Cleaning up */
-    ecl_block_free( restart_block );
+      }
+      enkf_node = hash_iter_get_next_value(enkf_state->node_hash , &complete);
+    }                                                                      
   }
+  
+  /*****************************************************************/
+  /* Cleaning up */
+  ecl_block_free( restart_block );
 }
 
 
@@ -734,35 +765,27 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , int load
 
 /**
    This function loads the results from a forward simulations from report_step1
-   to report_step2. The integer variable load_mask should be a sum of the
-   integer masks:
-
-     * dynamic_results
-     * dynamic_state
-     * static_state
- 
-   To control what we want to load and internalize. load_mask1 is applied for
-   the report steps [report_step1 + 1, report_step2 - 1], and load_mask2 is
-   applied for report_step2.
+   to report_step2. The details of what to load are in model_config and the
+   spesific nodes for special cases.
 */
    
 
-void enkf_state_internalize_results(enkf_state_type * enkf_state , int load_mask1 , int load_mask2 , int report_step1 , int report_step2) {
-  if (report_step1 == 0)   /* Fucking special case - PRESSURE +++ is initialized by ECLIPSE - loading initial state. */
-    enkf_state_internalize_state(enkf_state , dynamic_state + static_state , 0);
-  
+static void enkf_state_internalize_results(enkf_state_type * enkf_state , int __report_step1 , int report_step2) {
+  int report_step , report_step1;
+  /* Fucking special case - PRESSURE +++ is initialized by ECLIPSE - loading initial state. */
+  if (__report_step1 == 0)
+    report_step1 = 0;
+  else
+    report_step1 = __report_step1 + 1;
   {
-    int report_step;
-
-    /* Loading intermediate results. */
-    for (report_step = report_step1 + 1; report_step < report_step2; report_step++) {
-      enkf_state_internalize_state(enkf_state , load_mask1 , report_step);
-      enkf_state_internalize_dynamic_results(enkf_state , load_mask1 , report_step);
+    const model_config_type * model_config = enkf_state->shared_info->model_config;
+    for (report_step = report_step1; report_step <= report_step2; report_step++) {
+      if (model_config_load_state( model_config , report_step)) 
+	enkf_state_internalize_state(enkf_state , model_config , report_step);
+      
+      if (model_config_load_results( model_config , report_step)) 
+	enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step);
     }
-    
-    /* Loading the final results. */
-    enkf_state_internalize_state(enkf_state , load_mask2 , report_step2);
-    enkf_state_internalize_dynamic_results(enkf_state , load_mask2 , report_step2);
   }
 }
 
@@ -1048,7 +1071,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     {
       char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config) , NULL);
-      sched_file_fprintf_i(ecl_config_get_sched_file(enkf_state->ecl_config) , run_info->step2 , schedule_file);
+      sched_file_fprintf_i(my_config->sched_file , run_info->step2 , schedule_file);
       free(schedule_file);
     }
     
@@ -1153,7 +1176,7 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
       final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
   
       if (final_status == job_queue_complete_OK) {
-	enkf_state_internalize_results(enkf_state , run_info->load_mask1 , run_info->load_mask2 , run_info->step1 , run_info->step2); 
+	enkf_state_internalize_results(enkf_state , run_info->step1 , run_info->step2); 
 	break;
       } else if (final_status == job_queue_complete_FAIL) {
 	fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);

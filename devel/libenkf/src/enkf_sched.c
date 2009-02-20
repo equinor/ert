@@ -3,19 +3,19 @@
 #include <util.h>
 #include <string.h>
 #include <stdio.h>
+#include <enkf_types.h>
 #include <enkf_sched.h>
 #include <stringlist.h>
 #include <ext_joblist.h>
 #include <forward_model.h>
-
+#include <vector.h>
 
 
 struct enkf_sched_node_struct {
   int    	       report_step1;
   int    	       report_step2;
-  int                  report_stride; 
   bool                 enkf_active;
-  forward_model_type * forward_model;   /* Will mostly b eNULL */
+  forward_model_type * forward_model;   /* Will mostly be NULL */
 };
 
 
@@ -23,22 +23,18 @@ struct enkf_sched_node_struct {
 
 
 struct enkf_sched_struct {
-  int    alloc_size;                                   /* Allocated size - internal variable. */  
-  int    size;                                         /* Number of elements in the node_list */
-  enkf_sched_node_type          ** node_list;
-  
-  
-  int                          	 schedule_num_reports; /* The number of DATES / TSTEP keywords in the currently active SCHEDULE file. */
-  int                          	 last_report;          /* The last report_step in the enkf_sched instance - can be greater than schedule_num_reports .*/
+  vector_type    *nodes;                 /* Vector consisting of enkf_sched_node_type instances. */
+  int             schedule_num_reports;  /* The number of DATES / TSTEP keywords in the currently active SCHEDULE file. */
+  int             last_report;           /* The last report_step in the enkf_sched instance - can be greater than schedule_num_reports .*/
 };
 
 
 
-static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int report_step2 , int report_stride , bool enkf_active , forward_model_type * forward_model) {
+
+static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int report_step2 , bool enkf_active , forward_model_type * forward_model) {
   enkf_sched_node_type * node = util_malloc(sizeof * node , __func__);
   node->report_step1  = report_step1;
   node->report_step2  = report_step2;
-  node->report_stride = report_stride;
   node->enkf_active   = enkf_active;
   if (forward_model != NULL) 
     util_abort("%s : Sorry - support for special forward models has been (temporarily) removed\n",__func__);
@@ -49,12 +45,15 @@ static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int repor
 
 
 
-void enkf_sched_node_get_data(const enkf_sched_node_type * node , int * report_step1 , int * report_step2 , int * report_stride , bool * enkf_on , forward_model_type ** forward_model) {
+void enkf_sched_node_get_data(const enkf_sched_node_type * node , int * report_step1 , int * report_step2 , bool * enkf_on , forward_model_type ** forward_model) {
   *report_step1    = node->report_step1;
   *report_step2    = node->report_step2;
-  *report_stride   = node->report_stride;
   *enkf_on         = node->enkf_active;
   *forward_model   = node->forward_model;
+}
+
+int enkf_sched_node_get_last_step(const enkf_sched_node_type * node) {
+  return node->report_step2;
 }
 
 
@@ -66,12 +65,18 @@ static void enkf_sched_node_free(enkf_sched_node_type * node) {
   free(node);
 }
 
+static void enkf_sched_node_free__(void * arg) {
+  enkf_sched_node_free( (enkf_sched_node_type *) arg );
+}
+
+
+
 
 static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , FILE * stream) {
   if (node->enkf_active)
-    fprintf(stream , "%4d   %4d   %s   %3d   ",node->report_step1 , node->report_step2 , "ON " , node->report_stride);
+    fprintf(stream , "%4d   %4d   %s     ",node->report_step1 , node->report_step2 , "ON ");
   else
-    fprintf(stream , "%4d   %4d   %s   %3d   ",node->report_step1 , node->report_step2 , "OFF" , node->report_stride);
+    fprintf(stream , "%4d   %4d   %s     ",node->report_step1 , node->report_step2 , "OFF");
   
   if (node->forward_model != NULL)
     forward_model_fprintf( node->forward_model  , stream );
@@ -85,6 +90,12 @@ static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , FILE * s
 
 
 /*****************************************************************/
+
+static void enkf_sched_append_node(enkf_sched_type * enkf_sched , enkf_sched_node_type * new_node) {
+  vector_append_owned_ref(enkf_sched->nodes , new_node , enkf_sched_node_free__);
+  enkf_sched->last_report = new_node->report_step2;
+}
+
 
 /**
    This function scans a stream for the info it needs to allocate a
@@ -108,11 +119,11 @@ static void enkf_sched_node_fprintf(const enkf_sched_node_type * node , FILE * s
    * If no forward_model is found, the default forward model is used.
 
    * If the stream is positioned at an empty line NULL is returned. No
-     comments (at present).
+     comments are supported.
 */
 
 
-static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream , const ext_joblist_type * joblist , bool use_lsf , bool * at_eof) {
+static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE * stream , const ext_joblist_type * joblist , bool use_lsf , bool * at_eof) {
   forward_model_type * forward_model = NULL;
   enkf_sched_node_type * sched_node  = NULL;
   char ** token_list;
@@ -126,13 +137,13 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream , const
     if (tokens >= 3) {
       if (util_sscanf_int(token_list[0] , &report_step1) && util_sscanf_int(token_list[1] , &report_step2)) {
 	util_strupr(token_list[2]);
-	if (strcmp(token_list[2] , "ON") == 0) {
+		  
+	report_stride = report_step2 - report_step1;
+	if (strcmp(token_list[2] , "ON") == 0) 
 	  enkf_active = true;
-	  report_stride = report_step2 - report_step1;
-	} else if (strcmp(token_list[2] , "OFF") == 0) {
+	else if (strcmp(token_list[2] , "OFF") == 0) 
 	  enkf_active = false;
-	  report_stride = report_step2 - report_step1;
-	} else 
+	else 
 	  util_abort("%s: failed to interpret %s as ON || OFF \n",__func__ , token_list[2]);
 	
 	if (tokens > 3) {
@@ -151,13 +162,22 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream , const
 	}
       } else
 	util_abort("%s: failed to parse %s and %s as integers\n",__func__ , token_list[0] , token_list[1]);
-
-      sched_node = enkf_sched_node_alloc(report_step1 , report_step2 , report_stride , enkf_active , forward_model);
+      {
+	/* Adding node(s): */
+	int step1 = report_step1;
+	int step2;
+	
+	do {
+	  step2 = util_int_min(step1 + report_stride , report_step2);
+	  sched_node = enkf_sched_node_alloc(step1 , step2 , enkf_active , forward_model);
+	  step1 = step2;
+	  enkf_sched_append_node( enkf_sched , sched_node);
+	} while (step2 < report_step2);
+      }
     }
     util_free_stringlist(token_list , tokens);
     free(line);
   } 
-  return sched_node;
 }
 
 
@@ -167,14 +187,16 @@ static enkf_sched_node_type * enkf_sched_node_fscanf_alloc(FILE * stream , const
 
 static void enkf_sched_verify__(const enkf_sched_type * enkf_sched) {
   int index;
-  /* Verify that first node starts at zero. */
-  if (enkf_sched->node_list[0]->report_step1 != 0)
+  const enkf_sched_node_type * first_node = vector_iget_const( enkf_sched->nodes , 0);
+  if (first_node->report_step1 != 0)
     util_abort("%s: must start at report-step 0 \n",__func__);
-
-  for (index = 0; index < (enkf_sched->size - 1); index++) {
-    int report1      = enkf_sched->node_list[index]->report_step1;
-    int report2      = enkf_sched->node_list[index]->report_step2;
-    int next_report1 = enkf_sched->node_list[index + 1]->report_step1;
+  
+  for (index = 0; index < (vector_get_size(enkf_sched->nodes) - 1); index++) {
+    const enkf_sched_node_type * node1 = vector_iget_const( enkf_sched->nodes , index );
+    const enkf_sched_node_type * node2 = vector_iget_const( enkf_sched->nodes , index + 1);
+    int report1      = node1->report_step1;
+    int report2      = node1->report_step2;
+    int next_report1 = node2->report_step1;
     
     if (report1 >= report2) {
       enkf_sched_fprintf(enkf_sched , stdout);
@@ -189,59 +211,33 @@ static void enkf_sched_verify__(const enkf_sched_type * enkf_sched) {
 
   /* Verify that report_step2 > report_step1 also for the last node. */
   {
-    index = enkf_sched->size - 1;
-    int report1      = enkf_sched->node_list[index]->report_step1;
-    int report2      = enkf_sched->node_list[index]->report_step2;
+    index = vector_get_size(enkf_sched->nodes) - 1;
+    const enkf_sched_node_type * node1 = vector_iget_const( enkf_sched->nodes , index );
+    int report1      = node1->report_step1;
+    int report2      = node1->report_step2;
+    
     if (report2 <= report1)
       util_abort("%s: enkf_sched step of zero/negative length:%d - %d - that is not allowed \n",__func__ , report1 , report2);
       
   }
-
 }
 
 
 
-static void enkf_sched_free_nodelist( enkf_sched_type * enkf_sched) {
-  int i;
-  for (i=0; i < enkf_sched->size; i++)
-    enkf_sched_node_free(enkf_sched->node_list[i]);
-  free(enkf_sched->node_list);
-}
 
 
 void enkf_sched_free( enkf_sched_type * enkf_sched) {
-  enkf_sched_free_nodelist( enkf_sched );
+  vector_free( enkf_sched->nodes );
   free( enkf_sched );
 }
 
 
 
-static void enkf_sched_realloc(enkf_sched_type * enkf_sched, int new_alloc_size) {
-  int i;
-  enkf_sched->node_list = util_realloc(enkf_sched->node_list , new_alloc_size * sizeof * enkf_sched->node_list , __func__);
-  for (i=enkf_sched->alloc_size; i < new_alloc_size; i++)
-    enkf_sched->node_list[i] = NULL;
-  enkf_sched->alloc_size = new_alloc_size;
-}
-
-
-
-static void enkf_sched_append_node(enkf_sched_type * enkf_sched , enkf_sched_node_type * new_node) {
-  if (enkf_sched->size == enkf_sched->alloc_size)
-    enkf_sched_realloc(enkf_sched , 2 * (enkf_sched->alloc_size + 1));
-
-  enkf_sched->node_list[enkf_sched->size] = new_node;
-  enkf_sched->last_report  = new_node->report_step2;
-  enkf_sched->size++;
-}
-
 
 
 static enkf_sched_type * enkf_sched_alloc_empty( int num_restart_files) {
   enkf_sched_type * enkf_sched     = util_malloc(sizeof * enkf_sched , __func__);
-  enkf_sched->node_list 	   = NULL;
-  enkf_sched->size      	   = 0;       
-  enkf_sched->alloc_size           = 0;
+  enkf_sched->nodes                = vector_alloc_new();  
   enkf_sched->schedule_num_reports = num_restart_files - 1;
   enkf_sched->last_report          = 0;
   return enkf_sched;
@@ -249,9 +245,22 @@ static enkf_sched_type * enkf_sched_alloc_empty( int num_restart_files) {
 
 
 
-static void  enkf_sched_set_default(enkf_sched_type * enkf_sched ) {
-  enkf_sched_node_type * node = enkf_sched_node_alloc(0 , enkf_sched->schedule_num_reports , 1 , true , NULL);
-  enkf_sched_append_node(enkf_sched , node);
+static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , run_mode_type run_mode) {
+  enkf_sched_node_type * node;
+
+  if (run_mode == enkf_assimilation) {
+    /* Default enkf: stride one - active at all report steps. */
+    /* Have to explicitly add all these nodes. */
+    int report_step;
+    for (report_step = 0; report_step < enkf_sched->schedule_num_reports; report_step++) {
+      node = enkf_sched_node_alloc(report_step , report_step + 1, true , NULL);
+      enkf_sched_append_node(enkf_sched , node);
+    }
+  } else {
+    /* experiment: Do the whole thing in ONE go - off at all report steps. */
+    node = enkf_sched_node_alloc(0 , enkf_sched->schedule_num_reports , false , NULL); 
+    enkf_sched_append_node(enkf_sched , node);
+  }
 }
 
 
@@ -262,21 +271,22 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched ) {
    enkf_sched_type instance is allocated.
 */
 
-enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num_restart_files , const ext_joblist_type * joblist , bool use_lsf) {
+enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num_restart_files , int * last_report_step , run_mode_type run_mode, const ext_joblist_type * joblist , bool use_lsf) {
   enkf_sched_type * enkf_sched = enkf_sched_alloc_empty(num_restart_files);
   if (enkf_sched_file == NULL)
-    enkf_sched_set_default(enkf_sched);
+    enkf_sched_set_default(enkf_sched , run_mode);
   else {
     FILE * stream = util_fopen(enkf_sched_file , "r");
-    enkf_sched_node_type * node;
     bool at_eof;
     do { 
-      node = enkf_sched_node_fscanf_alloc(stream , joblist , use_lsf , &at_eof);
-      if (node != NULL)
-	enkf_sched_append_node(enkf_sched , node);
+      enkf_sched_fscanf_alloc_nodes(enkf_sched , stream , joblist , use_lsf , &at_eof);
     } while (!at_eof);
     
     fclose( stream );
+  }
+  {
+    enkf_sched_node_type * last_node = vector_get_last( enkf_sched->nodes );
+    *last_report_step = last_node->report_step2;
   }
   enkf_sched_verify__(enkf_sched);
   return enkf_sched;
@@ -286,8 +296,9 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num
 
 void enkf_sched_fprintf(const enkf_sched_type * enkf_sched , FILE * stream) {
   int i;
-  for (i=0; i < enkf_sched->size; i++)
-    enkf_sched_node_fprintf(enkf_sched->node_list[i] , stream );
+  for (i=0; i < vector_get_size( enkf_sched->nodes ); i++) 
+    enkf_sched_node_fprintf(vector_iget_const( enkf_sched->nodes , i) , stream );
+  
 }
 
 
@@ -302,7 +313,7 @@ int enkf_sched_get_last_report(const enkf_sched_type * enkf_sched) {
 }
 
 int enkf_sched_get_num_nodes(const enkf_sched_type * enkf_sched) {
-  return enkf_sched->size;
+  return vector_get_size( enkf_sched->nodes );
 }
 
 
@@ -310,18 +321,18 @@ int enkf_sched_get_num_nodes(const enkf_sched_type * enkf_sched) {
 /**
    This function takes a report number, and returns the index of
    enkf_sched_node which contains (in the half-open interval: [...>)
-   this report number. 
-   
-   The function will return -1 if the report number can not be
-   found. 
+   this report number. The function will abort if the node can be found.
 */
 int enkf_sched_get_node_index(const enkf_sched_type * enkf_sched , int report_step) {
-  if (report_step < 0 || report_step >= enkf_sched->last_report)
+  if (report_step < 0 || report_step >= enkf_sched->last_report) {
+    printf("Looking for report_step:%d \n", report_step);
+    enkf_sched_fprintf(enkf_sched , stdout);
+    util_abort("%s: could not find it ... \n",__func__);
     return -1;
-  else {
+  } else {
     int index = 0;
     while (1) {
-      const enkf_sched_node_type * node = enkf_sched->node_list[index];
+      const enkf_sched_node_type * node = vector_iget_const(enkf_sched->nodes , index);
       if (node->report_step1 <= report_step && node->report_step2 > report_step)
 	break;
       index++;
@@ -332,8 +343,5 @@ int enkf_sched_get_node_index(const enkf_sched_type * enkf_sched , int report_st
 
 
 const enkf_sched_node_type * enkf_sched_iget_node(const enkf_sched_type * enkf_sched , int index) {
-  if (index < 0 || index >= enkf_sched->size)
-    util_abort("%s: Go fix your code - lazy bastartd ... \n",__func__);
-
-  return enkf_sched->node_list[index];
+  return vector_iget_const( enkf_sched->nodes , index );
 }

@@ -7,6 +7,7 @@
 #include <enkf_config_node.h> 
 #include <util.h>
 #include <path_fmt.h>
+#include <bool_vector.h>
 
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
@@ -16,7 +17,8 @@ struct enkf_config_node_struct {
   config_activate_ftype * activate;
   enkf_impl_type     	  impl_type;
   enkf_var_type      	  var_type; 
-  
+
+  bool_vector_type      * internalize;      /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a hight level - without consulting this variable. Can be NULL. */ 
   stringlist_type       * obs_keys;         /* Keys of observations which observe this node. */
   char               	* key;
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
@@ -36,7 +38,8 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 					       config_activate_ftype    * activate) {
   
   enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
-  
+
+  node->internalize     = NULL;
   node->data       	= (void *) data;
   node->freef      	= freef;
   node->activate        = activate;  
@@ -69,7 +72,31 @@ void enkf_config_node_free(enkf_config_node_type * node) {
 
   if (node->enkf_outfile_fmt != NULL) 
     path_fmt_free( node->enkf_outfile_fmt );
+
+  if (node->internalize != NULL)
+    bool_vector_free( node->internalize );
   free(node);
+}
+
+
+void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step) {
+  if (node->internalize == NULL)
+    node->internalize = bool_vector_alloc(report_step , false);
+  bool_vector_iset( node->internalize , report_step , true);
+}
+
+
+void enkf_config_node_init_internalization(enkf_config_node_type * node) {
+  if (node->internalize != NULL)
+    bool_vector_reset( node->internalize );
+}
+
+/* Query function: */
+bool enkf_config_node_internalize(const enkf_config_node_type * node, int report_step) {
+  if (node->internalize == NULL)
+    return false;
+  else
+    return bool_vector_safe_iget( node->internalize , report_step); /* Will return default value if report_step is beyond size. */
 }
 
 

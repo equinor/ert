@@ -195,7 +195,6 @@ struct enkf_node_struct {
   char               *node_key;       	    /* The (hash)key this node is identified with. */
   void               *data;                 /* A pointer to the underlying enkf_object, i.e. multflt_type instance, or a field_type instance or ... */
   const enkf_config_node_type *config;      /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
-  
   serial_state_type  *serial_state;   	    /* A very internal object - containg information about the seralization of the this node .*/
   
   /*****************************************************************/
@@ -808,6 +807,11 @@ enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
   return enkf_node_alloc__(config);
 }
 
+
+
+bool enkf_node_internalize(const enkf_node_type * node, int report_step) {
+  return enkf_config_node_internalize( node->config , report_step );
+}
 
 
 

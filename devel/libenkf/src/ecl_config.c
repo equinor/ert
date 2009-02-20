@@ -31,17 +31,16 @@
 
 
 struct ecl_config_struct {
-  ecl_io_config_type * io_config;              /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
-  
-  path_fmt_type      * eclbase;                /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
-  sched_file_type    * sched_file;
-  bool                 include_all_static_kw;  /* If true all static keywords are stored.*/ 
-  set_type           * static_kw_set;          /* Minimum set of static keywords which must be included to make valid restart files. */
-  char               * data_file;              /* Eclipse data file. */
-  ecl_grid_type      * grid;                   /* The grid which is active for this model. */
-  char               * schedule_target_file;   /* File name to write schedule info to */
-  char               * equil_init_file;        /* File name for ECLIPSE (EQUIL) initialisation. */
-  int                  history_length;         /* The number of report steps in the SCHEDULE_FILE. */
+  ecl_io_config_type * io_config;              	   /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
+  path_fmt_type      * eclbase;                	   /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
+  sched_file_type    * sched_file;             	   /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
+  path_fmt_type      * prediction_sched_file_fmt;  /* A format variable for schedule prediction files - can be NULL. */
+  bool                 include_all_static_kw;  	   /* If true all static keywords are stored.*/ 
+  set_type           * static_kw_set;          	   /* Minimum set of static keywords which must be included to make valid restart files. */
+  char               * data_file;              	   /* Eclipse data file. */
+  ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
+  char               * schedule_target_file;   	   /* File name to write schedule info to */
+  char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation. */
 };
 
 
@@ -49,7 +48,7 @@ struct ecl_config_struct {
 
 
 
-ecl_config_type * ecl_config_alloc( const config_type * config) {
+ecl_config_type * ecl_config_alloc( const config_type * config , int * history_length) {
   ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
   ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_ENDIAN_FLIP , DEFAULT_UNIFIED );
   ecl_config->eclbase   	    = path_fmt_alloc_path_fmt( config_get(config , "ECLBASE") );
@@ -75,10 +74,12 @@ ecl_config_type * ecl_config_alloc( const config_type * config) {
     } 
 
     ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date );
-    ecl_config->history_length = sched_file_get_num_restart_files( ecl_config->sched_file );   /* We keep track of this - so we can stop assimilation at the
+    *history_length = sched_file_get_num_restart_files( ecl_config->sched_file );   /* We keep track of this - so we can stop assimilation at the
 												  end of HISTORY. */
     if (config_has_set_item(config , "SCHEDULE_PREDICTION_FILE"))
-      sched_file_parse_append( ecl_config->sched_file , config_get(config , "SCHEDULE_PREDICTION_FILE"));
+      ecl_config->prediction_sched_file_fmt = path_fmt_alloc_path_fmt( config_get(config , "SCHEDULE_PREDICTION_FILE") );
+    else
+      ecl_config->prediction_sched_file_fmt = NULL;
 
   }
   if (config_has_set_item(config , "EQUIL_INIT_FILE"))
@@ -102,6 +103,9 @@ void ecl_config_free(ecl_config_type * ecl_config) {
   sched_file_free(ecl_config->sched_file);
   free(ecl_config->schedule_target_file);
   util_safe_free(ecl_config->equil_init_file);
+  if (ecl_config->prediction_sched_file_fmt != NULL)
+    path_fmt_free(ecl_config->prediction_sched_file_fmt);
+  
   free(ecl_config);
 }
 
@@ -163,6 +167,14 @@ const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * ecl_con
 sched_file_type * ecl_config_get_sched_file(const ecl_config_type * ecl_config) {
   return ecl_config->sched_file;
 }
+
+char * ecl_config_alloc_schedule_prediction_file(const ecl_config_type * ecl_config, int iens) {
+  if (ecl_config->prediction_sched_file_fmt != NULL)
+    return path_fmt_alloc_path(ecl_config->prediction_sched_file_fmt , false , iens);
+  else
+    return NULL;
+}
+
 
 const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
   return ecl_config->data_file;

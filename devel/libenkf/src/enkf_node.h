@@ -116,6 +116,8 @@ const char     *  enkf_config_node_get_infile(const enkf_config_node_type * );
 const char     *  enkf_node_get_key(const enkf_node_type * );
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);
 bool         	  enkf_node_has_func(const enkf_node_type * , node_function_type );
+bool              enkf_node_internalize(const enkf_node_type * , int );
+
 #ifdef __cplusplus
 }
 #endif

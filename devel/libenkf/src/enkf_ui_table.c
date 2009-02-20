@@ -7,7 +7,6 @@
 #include <menu.h>
 #include <arg_pack.h>
 #include <enkf_main.h>
-#include <enkf_sched.h>
 #include <enkf_ui_plot.h>
 #include <enkf_ui_fs.h>
 #include <enkf_obs.h>
@@ -27,11 +26,10 @@
 	   
 
 static void enkf_ui_table__(enkf_main_type * enkf_main , bool ens_plot) {
-  const enkf_sched_type      * enkf_sched      = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const int ens_size = ensemble_config_get_size(ensemble_config);
-  const int last_report = enkf_sched_get_last_report(enkf_sched);
+  const int last_report = enkf_main_get_total_length( enkf_main );
   int iens1, iens2, step1 , step2;
   int num_keys , ikey;
   int length;

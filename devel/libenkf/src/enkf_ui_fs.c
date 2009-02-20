@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <menu.h>
 #include <enkf_ui_util.h>
+#include <enkf_main.h>
 #include <enkf_fs.h>
 #include <arg_pack.h>
 #include <util.h>

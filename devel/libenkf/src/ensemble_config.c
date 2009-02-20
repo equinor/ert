@@ -520,17 +520,29 @@ char ** ensemble_config_alloc_keylist(const ensemble_config_type * config , int 
 }
 
 
-
-stringlist_type * ensemble_config_alloc_typed_keylist(const ensemble_config_type * config , enkf_impl_type impl_type) {
+stringlist_type * ensemble_config_alloc_var_typed_keylist(const ensemble_config_type * config , enkf_var_type var_type) {
   stringlist_type * key_list = stringlist_alloc_new();
   const char * key = hash_iter_get_first_key( config->config_nodes );
   while (key != NULL) {
-    if (enkf_config_node_get_impl_type( hash_get(config->config_nodes , key)) == impl_type)
+    if (enkf_config_node_get_var_type( hash_get(config->config_nodes , key)) == var_type)
       stringlist_append_copy( key_list , key );
     
     key = hash_iter_get_next_key( config->config_nodes );
   }
   return key_list;
 }
+
+
+
+
+void ensemble_config_init_internalization( ensemble_config_type * config ) {
+  const char * key = hash_iter_get_first_key( config->config_nodes );
+  while (key != NULL) {
+    enkf_config_node_init_internalization( hash_get(config->config_nodes , key));
+    key = hash_iter_get_next_key( config->config_nodes );
+  }
+}
+
+
 
 

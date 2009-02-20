@@ -10,12 +10,13 @@
 
 typedef struct ecl_config_struct ecl_config_type;
 
-ecl_config_type     * ecl_config_alloc( const config_type * );
+ecl_config_type     * ecl_config_alloc( const config_type * , int * );
 void                  ecl_config_free( ecl_config_type *);
 bool                  ecl_config_include_static_kw(const ecl_config_type * , const char * );
 void                  ecl_config_add_static_kw(ecl_config_type *, const char *); 
 ecl_io_config_type  * ecl_config_get_io_config(const ecl_config_type * );
 sched_file_type     * ecl_config_get_sched_file(const ecl_config_type * );
+char                * ecl_config_alloc_schedule_prediction_file(const ecl_config_type * , int );
 bool 		      ecl_config_get_endian_flip(const ecl_config_type * );
 bool 		      ecl_config_get_formatted(const ecl_config_type * );
 bool 		      ecl_config_get_unified(const ecl_config_type * );

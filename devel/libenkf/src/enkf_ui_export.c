@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <menu.h>
 #include <enkf_main.h>
-#include <enkf_sched.h>
 #include <field.h>
 #include <enkf_state.h>
 #include <enkf_fs.h>
@@ -73,13 +72,12 @@ void enkf_ui_export_restart_all(void * enkf_main) {
 
 
 void enkf_ui_export_profile(void * enkf_main) {
-  const enkf_sched_type  * enkf_sched  = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 60;
     const int ens_size   = ensemble_config_get_size(ensemble_config);
     int iens1 , iens2;
-    const int last_report = enkf_sched_get_last_report(enkf_sched);
+    const int last_report = enkf_main_get_total_length( enkf_main );
     bool * iens_active  ;
     bool * report_active;
 
@@ -92,7 +90,7 @@ void enkf_ui_export_profile(void * enkf_main) {
 
     config_node    = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , FIELD , invalid , NULL , &analysis_state , NULL);
     iens_active    = enkf_ui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
-    report_active  = enkf_ui_util_scanf_alloc_report_active( enkf_sched , prompt_len );
+    report_active  = enkf_ui_util_scanf_alloc_report_active( last_report , prompt_len );
     direction      = util_scanf_int_with_limits("Give scan direction 0:i  1:j  2:k" , prompt_len , 0 , 2);
     
     {
@@ -185,7 +183,6 @@ void enkf_ui_export_profile(void * enkf_main) {
 
 
 void enkf_ui_export_cell(void * enkf_main) {
-  const enkf_sched_type * enkf_sched           = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 35;
@@ -197,10 +194,10 @@ void enkf_ui_export_cell(void * enkf_main) {
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
-      const int last_report = enkf_sched_get_last_report(enkf_sched);
+      const int last_report = enkf_main_get_total_length( enkf_main );
       int iens1 , iens2;   
       bool * iens_active    = enkf_ui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
-      bool * report_active  = enkf_ui_util_scanf_alloc_report_active( enkf_sched , prompt_len);
+      bool * report_active  = enkf_ui_util_scanf_alloc_report_active( last_report , prompt_len);
       double * cell_data    = util_malloc(ens_size * sizeof * cell_data , __func__);
       int iens , report_step; /* Observe that iens and report_step loops below should be inclusive.*/
       enkf_node_type * node = enkf_node_alloc( config_node );
@@ -247,7 +244,6 @@ void enkf_ui_export_cell(void * enkf_main) {
 
 
 void enkf_ui_export_time(void * enkf_main) {
-  const enkf_sched_type * enkf_sched           = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   {
     const int prompt_len = 35;
@@ -258,7 +254,7 @@ void enkf_ui_export_time(void * enkf_main) {
     config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , true , FIELD ,invalid ,  NULL , &analysis_state , NULL);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
-      const int last_report = enkf_sched_get_last_report(enkf_sched);
+      const int last_report = enkf_main_get_total_length( enkf_main );
       const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
       const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
       const int ens_size    = ensemble_config_get_size(ensemble_config);

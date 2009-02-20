@@ -103,18 +103,11 @@ struct enkf_main_struct {
 
 /*****************************************************************/
 
+void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 
-
+/*****************************************************************/
 
 SAFE_CAST(enkf_main , ENKF_MAIN_ID)
-     /*
-       enkf_main_type * enkf_main_safe_cast( void * __enkf_main) {
-       enkf_main_type * enkf_main = (enkf_main_type *) __enkf_main;
-       if (enkf_main->__type_id != ENKF_MAIN_ID)
-       util_abort("%s: run_time cast failed - aborting \n",__func__);
-       return enkf_main;
-       }
-     */
 
 
 const ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
@@ -126,9 +119,18 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
 }
 
 
-const enkf_sched_type * enkf_main_get_enkf_sched(const enkf_main_type * enkf_main) {
-  return model_config_get_enkf_sched(enkf_main->model_config);
+int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
+  return model_config_get_history_length( enkf_main->model_config);
 }
+
+int enkf_main_get_total_length( const enkf_main_type * enkf_main) {
+  return model_config_get_total_length( enkf_main->model_config);
+}
+
+
+//const enkf_sched_type * enkf_main_get_enkf_sched(const enkf_main_type * enkf_main) {
+//return model_config_get_enkf_sched(enkf_main->model_config);
+//}
 
 
 enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
@@ -440,14 +442,21 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
 
 
 
-void enkf_main_run_step(enkf_main_type * enkf_main, run_mode_type run_mode , const bool * iactive , int init_step , state_enum init_state , int step1 , int step2 , bool enkf_update , forward_model_type * __forward_model) {
+void enkf_main_run_step(enkf_main_type * enkf_main, 
+			run_mode_type    run_mode , 
+			const bool * iactive      , 
+			int init_step             , 
+			state_enum init_state     , 
+			int step1                 , 
+			int step2                 , 
+			bool enkf_update          , 
+			forward_model_type * __forward_model) {
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   int   job_size;
 
   int iens;
   
   printf("Starting forward step: %d -> %d\n",step1 , step2);
-  //site_config_update_lsf_request(enkf_main->site_config , __forward_model);
   
   job_size = 0;
   for (iens = 0; iens < ens_size; iens++)
@@ -542,61 +551,95 @@ const char * enkf_main_get_image_viewer(const enkf_main_type * enkf_main) {
 }
 
 
+/**
+   This function will initialize the necessary enkf_main structures
+   before a run. Currently this means:
+
+     1. Set the enkf_sched instance - either by loading from file or
+        by using the default.
+	 
+     2. Set up the configuration of what should be internalized.
+
+*/
 
 
-void enkf_main_run(enkf_main_type * enkf_main , const bool * iactive ,  int start_report , state_enum __init_state) {
-  enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-  if (enkf_fs_rw_equal(fs)) {
-    bool analyzed_start;
-    bool prev_enkf_on;
-    const enkf_sched_type * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-    const int num_nodes            = enkf_sched_get_num_nodes(enkf_sched);
-    const int schedule_num_reports = enkf_sched_get_schedule_num_reports(enkf_sched);
-    const int start_inode          = enkf_sched_get_node_index(enkf_sched , start_report);
-    int inode;
-    
-    if (__init_state == analyzed)
-      analyzed_start = true;
-    else
-      analyzed_start = false;
-    
-    
-    prev_enkf_on = analyzed_start;
-    for (inode = start_inode; inode < num_nodes; inode++) {
-      const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-      state_enum init_state;
-      int 	   init_step;
-      int 	   report_step1;
-      int 	   report_step2;
-      int 	   report_stride;
-      int 	   report_step;
-      int 	   next_report_step;
-      bool enkf_on;
-      forward_model_type * forward_model;
-      
-      enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &report_stride , &enkf_on , &forward_model);
-      if (inode == start_inode)
-	report_step = start_report;
-      else
-	report_step = report_step1;
-      do {
-	next_report_step = util_int_min(schedule_num_reports , util_int_min(report_step + report_stride , report_step2));
-	init_step = report_step;
-	if (prev_enkf_on)
-	  init_state = analyzed;
-	else
-	  init_state = forecast;
-	
-	enkf_main_run_step(enkf_main , enkf_assimilation , iactive , init_step , init_state , report_step , next_report_step , enkf_on , forward_model);
-	report_step  = next_report_step;
-	prev_enkf_on = enkf_on;
-      } while (next_report_step < report_step2);
-    }
-  } else
-    fprintf(stderr , "\n** Error: when running EnKF read and write directories must be equal.\n\n");
+
+void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
+  const ext_joblist_type * joblist = site_config_get_installed_jobs( enkf_main->site_config);
+
+  model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode);
+  enkf_main_init_internalization(enkf_main , run_mode);
 }
 
 
+/**
+   The main RUN function - will run both enkf assimilations and experiments.
+*/
+void enkf_main_run(enkf_main_type * enkf_main , 
+		   run_mode_type    run_mode  , 
+		   const bool     * iactive   ,  
+		   int parameter_init_report  , 
+		   int start_report           , 
+		   state_enum start_state) {
+  
+  enkf_main_init_run( enkf_main , run_mode);  
+  {
+    enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
+    if (run_mode == enkf_assimilation) {
+      if (enkf_fs_rw_equal(fs)) {
+	bool analyzed_start = false;
+	bool prev_enkf_on;
+	const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
+	const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
+	const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
+	int inode;
+	
+	if (start_state == analyzed)
+	  analyzed_start = true;
+	else if (start_state == forecast)
+	  analyzed_start = false;
+	else
+	  util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
+	
+	prev_enkf_on = analyzed_start;
+	for (inode = start_inode; inode < num_nodes; inode++) {
+	  const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
+	  state_enum init_state;
+	  int 	   report_step1;
+	  int 	   report_step2;
+	  bool enkf_on;
+	  forward_model_type * forward_model;
+	  
+	  enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on , &forward_model);
+	  if (inode == start_inode) 
+	    report_step1 = start_report;  /* If we are restarting from somewhere. */
+	  
+	  if (prev_enkf_on)
+	    init_state = analyzed;
+	  else
+	    init_state = forecast;
+	  
+	  enkf_main_run_step(enkf_main , enkf_assimilation , iactive , report_step1 , init_state , report_step1 , report_step2 , enkf_on , forward_model);
+	  prev_enkf_on = enkf_on;
+	}
+      } else
+	fprintf(stderr , "\n** Error: when running EnKF read and write directories must be equal.\n\n");
+    } else {
+      /* It is an experiment */
+      const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
+      const int last_report              = enkf_sched_get_last_report(enkf_sched);
+      if (run_mode == ensemble_experiment) {
+	/* No possibility to use funky forward model */
+	enkf_main_run_step(enkf_main , ensemble_experiment , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
+      } else if (run_mode == screening_experiment) {
+	enkf_main_run_step(enkf_main , screening_experiment , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
+      } else 
+	util_abort("%s: internal error - invalid value for run_mode:%d \n",__func__ , run_mode);
+    }
+  }
+}
+
+  
 /**
    This function boots everything needed for running a EnKF
    application. Very briefly it can be summarized as follows:
@@ -842,12 +885,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     */
     
     enkf_main->analysis_config = analysis_config_alloc(config);
-    enkf_main->ecl_config      = ecl_config_alloc(config);
-    enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
     {
+      int history_length;
       bool use_lsf;
+      enkf_main->ecl_config      = ecl_config_alloc(config , &history_length);
+      enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
-      enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , ecl_config_get_sched_file(enkf_main->ecl_config) , use_lsf);
+      enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , history_length , ecl_config_get_sched_file(enkf_main->ecl_config) , use_lsf);
     }
 
 
@@ -1031,6 +1075,116 @@ enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
   return enkf_main->ensemble;
 }
 
+
+
+/**
+   In this function we initialize the the variables which control
+   which nodes are internalized (i.e. loaded from the forward
+   simulation and stored in the enkf_fs 'database'). The system is
+   based on two-levels:
+
+   * Should we store the state? This is goverened by the variable
+     model_config->internalize_state. If this is true we will
+     internalize all nodes which have enkf_var_type = {dynamic_state ,
+     static_state}. In the same way the variable
+     model_config->internalize_results governs whether the dynamic
+     results (i.e. summary variables in ECLIPSE speak) should be
+     internalized.
+
+   * In addition we have fine-grained control in the enkf_config_node
+     objects where we can explicitly say that, altough we do not want
+     to internalize the full state, we want to internalize e.g. the
+     pressure field.
+ 
+   * All decisions on internalization are based on a per report step
+     basis.
+   
+   The user-space API for manipulating this is (extremely)
+   limited. What is implemented here is the following:
+
+     1. We internalize the initial dynamic state.
+
+     2. For all the end-points in the current enkf_sched instance. 
+
+     3. store_results is set to true for all report steps irrespective
+        of run_mode.
+
+     4. We iterate over all the observations, and ensure that the
+        observed nodes are internalized (irrespective of whether they
+        are of type dynamic_state or dynamic_result).
+
+   Observe that this cascade can result in some nodes, i.e. a rate we
+   are observing, to be marked for internalization several times.
+    
+   -----
+   
+   For performance reason model_config contains two bool vectors
+   __load_state and __load_result; if they are true the state and
+   summary are loaded from disk, otherwise no loading is
+   performed. This implies that if we do not want to internalize the
+   full state but for instance the pressure (i.e. for an RFT) we must
+   set the __load_state variable for the actual report step to true.
+*/
+
+
+void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type run_mode ) {
+  /* Clearing old internalize flags. */
+  model_config_init_internalization( enkf_main->model_config );
+  ensemble_config_init_internalization( enkf_main->ensemble_config );
+
+  /* Internalizing the initial state. */
+  model_config_set_internalize_state( enkf_main->model_config , 0);
+  
+  
+  /* We internalize all the endpoints in the enkf_sched. */
+  {
+    int inode;
+    enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
+    for (inode = 0; inode < enkf_sched_get_num_nodes( enkf_sched ); inode++) {
+      const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
+      int report_step2            = enkf_sched_node_get_last_step( node );
+      model_config_set_internalize_state( enkf_main->model_config , report_step2);
+      model_config_set_internalize_results( enkf_main->model_config , report_step2);
+    }
+  }
+
+  
+  /* We internalize all the results - for all the report steps (beyond zero). */
+  {
+    int report_step;
+    for (report_step = 1; report_step < enkf_main_get_total_length(enkf_main); report_step++)
+      model_config_set_internalize_results( enkf_main->model_config , report_step);
+  }
+
+  
+  /* Make sure we internalize at all observation times.*/
+  {
+    hash_type * map = enkf_obs_alloc_summary_map(enkf_main->obs);
+    const char * obs_key = hash_iter_get_first_key( map );
+    
+    while (obs_key != NULL) {
+      obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_main->obs , obs_key );
+      enkf_config_node_type * data_node = obs_vector_get_config_node( obs_vector );
+      int active_step = -1;
+      do {
+	active_step = obs_vector_get_next_active_step( obs_vector , active_step );
+	if (active_step >= 0) {
+	  enkf_config_node_set_internalize( data_node , active_step );
+	  {
+	    enkf_var_type var_type = enkf_config_node_get_var_type( data_node );
+	    if (var_type == dynamic_state)
+	      model_config_set_load_state( enkf_main->model_config , active_step);
+	    else if (var_type == dynamic_result)
+	      model_config_set_load_results( enkf_main->model_config , active_step);
+	  }
+	}
+      } while (active_step >= 0);
+      obs_key = hash_iter_get_next_key( map );
+    }
+    hash_free(map);
+  }
+}
+  
 
 
 

@@ -27,18 +27,17 @@ void enkf_ui_run_start__(void * enkf_main) {
       iactive[iens] = true;
   }
 
-  enkf_main_run(enkf_main , iactive , 0 , analyzed);
+  enkf_main_run(enkf_main , enkf_assimilation , iactive , -1 , 0 , analyzed);
   free(iactive);
 }
 
 
 
 void enkf_ui_run_restart__(void * enkf_main) {
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
   const int prompt_len  = 35;
-  const int last_report = enkf_sched_get_last_report(enkf_sched);
+  const int last_report = enkf_main_get_total_length( enkf_main );
   int start_report;
   state_enum state;
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
@@ -51,21 +50,22 @@ void enkf_ui_run_restart__(void * enkf_main) {
   start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
   state        = enkf_ui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
   
-  enkf_main_run(enkf_main ,  iactive , start_report , state);
+  enkf_main_run(enkf_main , enkf_assimilation , iactive , -1 , start_report  , state);
   free(iactive);
 }
 
 
 void enkf_ui_run_exp__(void * enkf_main) {
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
-  const int last_report = enkf_sched_get_last_report(enkf_sched);
   int prompt_len = 45;
+  const int last_report   = enkf_main_get_total_length( enkf_main );
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
-  int start_report = util_scanf_int_with_limits("Initialize static parameters from: ",prompt_len , 0 , last_report );
-  int small_ens_size = util_scanf_int_with_limits("How many members too integrate: ",prompt_len , 1 , ens_size);
+  state_enum init_state = analyzed; 
+  int start_report   	= 0;
+  int init_report    	= util_scanf_int_with_limits("Initialize static parameters from: ",prompt_len , 0 , last_report );
+  int small_ens_size 	= util_scanf_int_with_limits("How many members too integrate: ",prompt_len , 1 , ens_size);
   {
     int iens;
     for (iens= 0; iens < ens_size; iens++) {
@@ -75,7 +75,8 @@ void enkf_ui_run_exp__(void * enkf_main) {
 	iactive[iens] = false;
     }
   }
-  enkf_main_run_step(enkf_main , ensemble_experiment , iactive , start_report , analyzed , 0 , last_report , false , NULL /* No possibility to use funky forward model */);
+
+  enkf_main_run(enkf_main , ensemble_experiment , iactive , init_report , start_report , init_state);
   free(iactive);
 }
 
@@ -83,17 +84,18 @@ void enkf_ui_run_exp__(void * enkf_main) {
 
 void enkf_ui_run_screening__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size  = ensemble_config_get_size(ensemble_config);
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-  const int last_report   = enkf_sched_get_last_report(enkf_sched);
-  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+  const int ens_size      = ensemble_config_get_size(ensemble_config);
+  bool * iactive          = util_malloc(ens_size * sizeof * iactive , __func__);
+  int init_report  = 0;
+  int start_report = 0;
+  state_enum init_state = analyzed;
   {
     int iens;
     for (iens= 0; iens < ens_size; iens++)
       iactive[iens] = true;
   }
-                                                                                                           
-  enkf_main_run_step(enkf_main , screening_experiment , iactive , 0 , analyzed , 0 , last_report , false , NULL);
+  
+  enkf_main_run(enkf_main , screening_experiment , iactive , init_report , start_report , init_state);
   free(iactive);
 }
 
@@ -104,14 +106,15 @@ void enkf_main_interactive_set_runpath__(void *arg) {
 
 
 void enkf_ui_run_analyze__(void * enkf_main) {
-  int report_step = enkf_ui_util_scanf_report_step(enkf_main , "Which report step to analyze" , 40);
+  int report_step = enkf_ui_util_scanf_report_step(enkf_main_get_total_length(enkf_main) , "Which report step to analyze" , 40);
   enkf_main_analysis_update(enkf_main , report_step - 1, report_step );
 }
 
 
 void enkf_ui_run_smooth__(void * enkf_main) {
-  int step1 = enkf_ui_util_scanf_report_step(enkf_main , "First report step" , 20);
-  int step2 = enkf_ui_util_scanf_report_step(enkf_main , "Last report step" , 20);
+  int last_report = enkf_main_get_total_length( enkf_main ) ;
+  int step1 = enkf_ui_util_scanf_report_step(last_report , "First report step" , 20);
+  int step2 = enkf_ui_util_scanf_report_step(last_report , "Last report step" , 20);
 
   if(step1 >= step2)
     enkf_main_analysis_update(enkf_main , step1, step2 );

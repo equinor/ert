@@ -19,6 +19,7 @@
 #include <enkf_types.h>
 #include <plain_driver.h>
 #include <forward_model.h>
+#include <bool_vector.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -34,15 +35,23 @@
 
 
 struct model_config_struct {
-  forward_model_type  * std_forward_model;  /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
-  enkf_fs_type        * ensemble_dbase;     /* Where the ensemble files are stored */
-  history_type        * history;            /* The history object. */
-  path_fmt_type       * result_path;        /* path_fmt instance for results - should contain one %d which will be replaced report_step */
-  path_fmt_type       * runpath;            /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
-  char                * plot_path;          /* A dumping ground for PLOT files. */
-  enkf_sched_type     * enkf_sched;         /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model. */
-  char                * lock_path;          /* Path containing lock files */
-  lock_mode_type        runlock_mode;       /* Mode for locking run directories - currently not working.*/ 
+  forward_model_type  * std_forward_model;   /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
+  bool                  use_lsf;             /* The forward models need to know whether we are using lsf. */  
+  enkf_fs_type        * ensemble_dbase;      /* Where the ensemble files are stored */
+  history_type        * history;             /* The history object. */
+  path_fmt_type       * result_path;         /* path_fmt instance for results - should contain one %d which will be replaced report_step */
+  path_fmt_type       * runpath;             /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  char                * plot_path;           /* A dumping ground for PLOT files. */
+  enkf_sched_type     * enkf_sched;          /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
+  char                * enkf_sched_file;     /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
+  int                   history_length;      /* The number of restart files with historical data. */
+  int                   total_length;        /* The total number of dates in the schedule file - can be greater than history_length if prediction is included at the end. */  
+  char                * lock_path;           /* Path containing lock files */
+  lock_mode_type        runlock_mode;        /* Mode for locking run directories - currently not working.*/ 
+  bool_vector_type    * internalize_state;   /* Should the (full) state be internalized (at this report_step). */
+  bool_vector_type    * internalize_results; /* Should the results (i.e. summary in ECLIPSE speak) be intrenalized at this report_step? */
+  bool_vector_type    * __load_state;        /* Internal variable: is it necessary to load the state? */
+  bool_vector_type    * __load_results;      /* Internal variable: is it necessary to load the results? */
 };
 
 
@@ -60,18 +69,41 @@ void model_config_set_runpath_fmt(model_config_type * model_config, const char *
   model_config->runpath  = path_fmt_alloc_directory_fmt( fmt );
 }
 
+/**
+   This function is not called at bootstrap time, but rather as part of an initialization
+   just before the run. Can be called maaaanye times for one application invokation.
+
+   Observe that the 'total' length is set as as the return value from this function.
+*/
 
 
-model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , const sched_file_type * sched_file , bool use_lsf) {
-  int num_restart_files = sched_file_get_num_restart_files(sched_file);
+void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode) {
+  int history_length    = model_config_get_history_length( model_config );
+
+  if (model_config->enkf_sched != NULL)
+    enkf_sched_free( model_config->enkf_sched );
+    
+  if (run_mode == enkf_assimilation) 
+    model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file  , history_length  , &model_config->total_length , run_mode , joblist , model_config->use_lsf );
+  else
+    model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file  , model_config->total_length , &model_config->total_length  , run_mode , joblist , model_config->use_lsf );
+  
+}
+
+
+void model_config_set_enkf_sched_file(model_config_type * model_config , const char * enkf_sched_file) {
+  model_config->enkf_sched_file = util_realloc_string_copy( model_config->enkf_sched_file , enkf_sched_file);
+}
+
+
+model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , int history_length , const sched_file_type * sched_file , bool use_lsf) {
   model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
-  
-  model_config->plot_path         = NULL;
-  model_config->result_path       = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
-  model_config->std_forward_model = forward_model_alloc( config_alloc_joined_string( config , "FORWARD_MODEL" , " ") , joblist , use_lsf);
-  
-  model_config->enkf_sched      = enkf_sched_fscanf_alloc( config_safe_get(config , "ENKF_SCHED_FILE") , num_restart_files  , joblist , use_lsf);
-  model_config->runlock_mode    = lock_none;
+
+  model_config->use_lsf            = use_lsf;
+  model_config->plot_path          = NULL;
+  model_config->result_path        = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
+  model_config->std_forward_model  = forward_model_alloc( config_alloc_joined_string( config , "FORWARD_MODEL" , " ") , joblist , model_config->use_lsf);
+  model_config->runlock_mode       = lock_none;
   {
     char * cwd = util_alloc_cwd();
     model_config->lock_path      = util_alloc_filename(cwd , "locks" , NULL);
@@ -79,9 +111,14 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   }
   util_make_path( model_config->lock_path );
   model_config->ensemble_dbase = fs_mount( config_get(config , "ENSPATH") , model_config->lock_path);
-  model_config->runpath = NULL;
+  model_config->runpath         = NULL;
+  model_config->enkf_sched      = NULL;
+  model_config->enkf_sched_file = NULL;
+  model_config_set_enkf_sched_file(model_config , config_safe_get(config , "ENKF_SCHED_FILE"));
   model_config_set_runpath_fmt( model_config , config_get(config , "RUNPATH") );
   model_config->history = history_alloc_from_sched_file(sched_file);  
+  model_config->history_length = history_length;
+  model_config->total_length   = sched_file_get_num_restart_files(sched_file) - 1;  /* +/- 1 ohhhh  fuck me ..*/
   {
     const char * history_source = config_get(config , "HISTORY_SOURCE");
     const char * refcase        = NULL;
@@ -117,8 +154,15 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
       ecl_sum_free(ecl_sum);
     }
   }
+  {
+    int num_restart = history_get_num_restarts(model_config->history);
+    model_config->internalize_state   = bool_vector_alloc( num_restart , false);
+    model_config->internalize_results = bool_vector_alloc( num_restart , false);
+    model_config->__load_state        = bool_vector_alloc( num_restart , false); 
+    model_config->__load_results      = bool_vector_alloc( num_restart , false);
+  }
   model_config_set_plot_path( model_config , config_get(config , "PLOT_PATH"));
-  
+
   return model_config;
 }
 
@@ -129,11 +173,17 @@ void model_config_free(model_config_type * model_config) {
   free(model_config->plot_path);
   path_fmt_free(  model_config->result_path );
   path_fmt_free(  model_config->runpath );
-  enkf_sched_free( model_config->enkf_sched );
+  if (model_config->enkf_sched != NULL)
+    enkf_sched_free( model_config->enkf_sched );
+  util_safe_free( model_config->enkf_sched_file );
   free(model_config->lock_path);
   enkf_fs_free(model_config->ensemble_dbase);
   history_free(model_config->history);
   forward_model_free(model_config->std_forward_model);
+  bool_vector_free(model_config->internalize_results);
+  bool_vector_free(model_config->internalize_state);
+  bool_vector_free(model_config->__load_state);
+  bool_vector_free(model_config->__load_results);
   free(model_config);
 }
 
@@ -157,6 +207,15 @@ enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) 
 
 history_type * model_config_get_history(const model_config_type * config) {
   return config->history;
+}
+
+
+int model_config_get_history_length(const model_config_type * config) {
+  return config->history_length;
+}
+
+int model_config_get_total_length(const model_config_type * config) {
+  return config->total_length;
 }
 
 
@@ -188,3 +247,63 @@ void model_config_interactive_set_runpath__(void * arg) {
 forward_model_type * model_config_get_std_forward_model( const model_config_type * config) {
   return config->std_forward_model;
 }
+
+
+/*****************************************************************/
+
+/* Setting everything back to the default value: false. */
+void model_config_init_internalization( model_config_type * config ) {
+  bool_vector_reset(config->internalize_state);
+  bool_vector_reset(config->__load_state);
+  bool_vector_reset(config->internalize_results);
+  bool_vector_reset(config->__load_results);
+}
+
+
+/**
+   This function sets the internalize_state flag to true for
+   report_step. Because of the coupling to the __load_state variable
+   this function can __ONLY__ be used to set internalize to true. 
+*/
+
+void model_config_set_internalize_state( model_config_type * config , int report_step) {
+  bool_vector_iset(config->internalize_state , report_step , true);
+  bool_vector_iset(config->__load_state      , report_step , true);
+}
+
+
+void model_config_set_internalize_results( model_config_type * config , int report_step) {
+  bool_vector_iset(config->internalize_results , report_step , true);
+  bool_vector_iset(config->__load_results      , report_step , true);
+}
+
+void model_config_set_load_results( model_config_type * config , int report_step) {
+  bool_vector_iset(config->__load_results , report_step , true);
+}
+
+void model_config_set_load_state( model_config_type * config , int report_step) {
+  bool_vector_iset(config->__load_state , report_step , true);
+}
+
+
+
+/* Query functions. */
+
+bool model_config_internalize_state( const model_config_type * config , int report_step) {
+  return bool_vector_iget(config->internalize_state , report_step);
+}
+
+bool model_config_internalize_results( const model_config_type * config , int report_step) {
+  return bool_vector_iget(config->internalize_results , report_step);
+}
+
+
+bool model_config_load_state( const model_config_type * config , int report_step) {
+  return bool_vector_iget(config->__load_state , report_step);
+}
+
+bool model_config_load_results( const model_config_type * config , int report_step) {
+  return bool_vector_iget(config->__load_results , report_step);
+}
+
+

@@ -7,7 +7,6 @@
 #include <menu.h>
 #include <arg_pack.h>
 #include <enkf_main.h>
-#include <enkf_sched.h>
 #include <enkf_ui_plot.h>
 #include <enkf_ui_fs.h>
 #include <enkf_obs.h>
@@ -170,7 +169,6 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 
 void enkf_ui_plot_histogram(void * arg) {
   enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
@@ -189,7 +187,7 @@ void enkf_ui_plot_histogram(void * arg) {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
       state_enum plot_state = analyzed; /* Compiler shut up */
       char * key_index;
-      const int last_report = enkf_sched_get_last_report(enkf_sched);
+      const int last_report = enkf_main_get_total_length( enkf_main );
       double * count        = util_malloc(ens_size * sizeof * count , __func__);
       int iens , report_step;
       char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , user_key );
@@ -245,7 +243,6 @@ void enkf_ui_plot_histogram(void * arg) {
 void enkf_ui_plot_ensemble(void * arg) {
   enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
@@ -263,7 +260,7 @@ void enkf_ui_plot_ensemble(void * arg) {
     {
       state_enum plot_state = analyzed; /* Compiler shut up */
       char * key_index;
-      const int last_report = enkf_sched_get_last_report(enkf_sched);
+      const int last_report = enkf_main_get_total_length( enkf_main );
       int iens1 , iens2 , step1 , step2;   
             
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
@@ -307,7 +304,6 @@ void enkf_ui_plot_ensemble(void * arg) {
 void enkf_ui_plot_all_summary(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  const enkf_sched_type      * enkf_sched      = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
@@ -316,16 +312,16 @@ void enkf_ui_plot_all_summary(void * arg) {
   
   const int iens1        = 0;
   const int iens2        = ensemble_config_get_size(ensemble_config) - 1;
-  const int last_report  = enkf_sched_get_last_report(enkf_sched);
+  const int last_report  = enkf_main_get_total_length( enkf_main );
   const int first_report = 0;
   
   {
-    stringlist_type * summary_keys = ensemble_config_alloc_typed_keylist(ensemble_config , dynamic_result);
+    stringlist_type * summary_keys = ensemble_config_alloc_var_typed_keylist(ensemble_config , dynamic_result);
     int ikey;
     
     for (ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
       const char * key = stringlist_iget( summary_keys , ikey);
-
+      
       enkf_ui_plot_ensemble__(fs , 
 			      enkf_obs , 
 			      ensemble_config_get_node( ensemble_config , key ),
@@ -382,7 +378,7 @@ void enkf_ui_plot_observation(void * arg) {
 	if (num_active == 1)
 	  report_step = obs_vector_get_active_report_step( obs_vector );
 	else
-	  report_step = enkf_ui_util_scanf_report_step(enkf_main , "Report step" , prompt_len);
+	  report_step = enkf_ui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
       } while (!obs_vector_iget_active(obs_vector , report_step));
       {
 	enkf_node_type * enkf_node = enkf_node_alloc( config_node );
@@ -570,7 +566,7 @@ void enkf_ui_plot_RFT(void * arg) {
       if (obs_vector_get_num_active( obs_vector ) == 1)
 	report_step = obs_vector_get_active_report_step( obs_vector );
       else
-	report_step = enkf_ui_util_scanf_report_step(enkf_main , "Report step" , prompt_len);
+	report_step = enkf_ui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
     } while (!obs_vector_iget_active(obs_vector , report_step));
     
     /* OK - when we are here the user has entered a valid key which is a field observation. */
@@ -609,7 +605,7 @@ void enkf_ui_plot_all_RFT( void * arg) {
 	  report_step = obs_vector_get_active_report_step( obs_vector );
 	else 
 	  /* An RFT should really be active at only one report step - but ... */
-	  report_step = enkf_ui_util_scanf_report_step(enkf_main , "Report step" , prompt_len);
+	  report_step = enkf_ui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
       } while (!obs_vector_iget_active(obs_vector , report_step));
       
       enkf_ui_plot_RFT__(fs , viewer , model_config , ensemble_config , obs_vector , obs_key , report_step);
@@ -621,14 +617,13 @@ void enkf_ui_plot_all_RFT( void * arg) {
 
 void enkf_ui_plot_sensitivity(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
   
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
-  const int last_report                        = enkf_sched_get_last_report(enkf_sched);
+  const int last_report                        = enkf_main_get_total_length( enkf_main );
   const int ens_size    		       = ensemble_config_get_size(ensemble_config);
   const int prompt_len  		       = 45;                   
   const enkf_config_node_type * config_node_x;

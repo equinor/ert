@@ -32,7 +32,7 @@ struct obs_vector_struct {
   
 
   char                           * obs_key;     /* The key this observation vector has in the enkf_obs layer. */ 
-  const enkf_config_node_type    * config_node; /* The config_node of the node type we are observing - shared reference (NOT USED YET) */
+  enkf_config_node_type          * config_node; /* The config_node of the node type we are observing - shared reference (NOT USED YET) */
   obs_impl_type    	           obs_type; 
   void             	        ** nodes;       /* List of obs_node instances - NULL for all inactive report steps. */
   int              	           size;        /* The number of report_steps. */
@@ -78,7 +78,7 @@ static void obs_vector_resize(obs_vector_type * vector , int new_size) {
 
 
 
-static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , const enkf_config_node_type * config_node ,int num_reports) {
+static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node ,int num_reports) {
   obs_vector_type * vector = util_malloc(sizeof * vector , __func__);
   
   vector->__type_id  = OBS_VECTOR_TYPE_ID;
@@ -143,6 +143,11 @@ obs_impl_type obs_vector_get_impl_type(const obs_vector_type * obs_vector) {
 
 const char * obs_vector_get_state_kw(const obs_vector_type * obs_vector) {
   return enkf_config_node_get_key( obs_vector->config_node );
+}
+
+
+enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * obs_vector) {
+  return obs_vector->config_node;
 }
 
 
@@ -252,7 +257,6 @@ void obs_vector_user_get(const obs_vector_type * obs_vector , const char * index
   'prev_step + 1'. If no more active steps are found, it will return
   -1.
 */
-
 
 int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int prev_step) {
   if (prev_step >= (obs_vector->size - 1))

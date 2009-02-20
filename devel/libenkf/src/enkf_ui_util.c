@@ -5,8 +5,6 @@
 #include <util.h>
 #include <ctype.h>
 #include <menu.h>
-#include <enkf_main.h>
-#include <enkf_sched.h>
 #include <enkf_node.h>
 #include <arg_pack.h>
 #include <arg_pack.h>
@@ -218,8 +216,7 @@ void enkf_ui_util_scanf_report_steps(int last_report , int prompt_len , int * st
    Similar to enkf_ui_util_scanf_alloc_iens_active(), but based on report steps.
 */
 
-bool * enkf_ui_util_scanf_alloc_report_active(const enkf_sched_type * enkf_sched , int prompt_len) {
-  const int last_step = enkf_sched_get_last_report(enkf_sched);
+bool * enkf_ui_util_scanf_alloc_report_active(int last_step, int prompt_len) {
   bool * iactive = util_malloc((last_step + 1) * sizeof * iactive , __func__);
   int step1 = util_scanf_int_with_limits("First report step" , prompt_len , 0 , last_step);
   int step2 = util_scanf_int_with_limits("Last report step" , prompt_len , step1 , last_step);
@@ -332,9 +329,7 @@ void enkf_ui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * con
 }
 
 
-int enkf_ui_util_scanf_report_step(const enkf_main_type * enkf_main , const char * prompt , int prompt_len) {
-  const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-  const int last_report                   = enkf_sched_get_last_report(enkf_sched);
+int enkf_ui_util_scanf_report_step(int last_report, const char * prompt , int prompt_len) {
   int report_step                         = util_scanf_int_with_limits(prompt , prompt_len , 0 , last_report);
   return report_step;
 }

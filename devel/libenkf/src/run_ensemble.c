@@ -63,9 +63,7 @@ int main (int argc , char ** argv) {
     
     {
       const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-      const int ens_size           = ensemble_config_get_size(ensemble_config);
-      const enkf_sched_type      * enkf_sched = enkf_main_get_enkf_sched(enkf_main);
-      
+      const int ens_size                           = ensemble_config_get_size(ensemble_config);
       const int enopt_stop = enopt_start + 1 ;
 
       printf("ENS_SIZE: %d\n", ens_size);

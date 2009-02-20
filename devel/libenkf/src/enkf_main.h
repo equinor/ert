@@ -40,7 +40,7 @@ void                          enkf_main_init_eclipse(enkf_main_type * , int , in
 void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
 void                          enkf_main_load_ecl_complete_mt(enkf_main_type *);
 void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
-void                          enkf_main_run(enkf_main_type * , const bool * ,  int  , state_enum );
+void                          enkf_main_run(enkf_main_type * , run_mode_type , const bool * ,  int  , int , state_enum );
 void                          enkf_main_run_step(enkf_main_type *, run_mode_type , const bool * , int, state_enum , int , int, bool, forward_model_type *);
 void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
 void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
@@ -56,7 +56,9 @@ enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int 
 const enkf_config_node_type * enkf_main_get_config_node(const enkf_main_type * , const char *);
 const sched_file_type       * enkf_main_get_sched_file(const enkf_main_type *);
 const ensemble_config_type  * enkf_main_get_ensemble_config(const enkf_main_type * );
-const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
+int   enkf_main_get_total_length( const enkf_main_type * );
+int   enkf_main_get_history_length( const enkf_main_type * );
+//const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
       model_config_type     * enkf_main_get_model_config( const enkf_main_type * );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
 enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );

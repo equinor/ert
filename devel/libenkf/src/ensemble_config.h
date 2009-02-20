@@ -23,14 +23,14 @@ void                     ensemble_config_add_node(ensemble_config_type * ,
 						const char   * ,
 						const void   * );
 
-int                    ensemble_config_get_size(const ensemble_config_type * );
-
+int                           ensemble_config_get_size(const ensemble_config_type * );
+void                          ensemble_config_init_internalization( ensemble_config_type * );
 void 			      ensemble_config_ensure_summary(ensemble_config_type *  , const char * );
 void 			      ensemble_config_del_node(ensemble_config_type * , const char * );
 void                          ensemble_config_add_config_items(config_type * );
 enkf_config_node_type       * ensemble_config_get_node(const ensemble_config_type * , const char * );
 char **                       ensemble_config_alloc_keylist(const ensemble_config_type * , int *);
-stringlist_type             * ensemble_config_alloc_typed_keylist(const ensemble_config_type *  , enkf_impl_type );
+stringlist_type             * ensemble_config_alloc_var_typed_keylist(const ensemble_config_type *  , enkf_var_type );
 bool                          ensemble_config_iget_keep_runpath(const ensemble_config_type * , int );
 
 #endif
