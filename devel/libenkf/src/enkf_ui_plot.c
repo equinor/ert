@@ -20,9 +20,19 @@
 #include <msg.h>
 
 
-static char * enkf_ui_plot_alloc_plot_file(const char * plot_path, const char * base_name) {
+/**
+   The final plot path consists of three parts: plot_path/case_name/wopr.png
+*/
+static char * enkf_ui_plot_alloc_plot_file(const char * plot_path, const char * case_name , const char * base_name) {
   const char * extension  =  "png";
-  return util_alloc_filename( plot_path , base_name , extension);
+  {
+    char * path      = util_alloc_filename(plot_path , case_name , NULL); /* It is really a path - but what the fuck. */ 
+    char * plot_file = util_alloc_filename(path , base_name , extension);
+    
+    util_make_path( path );  /* Ensure that the path where the plots are stored exists. */
+    free(path);
+    return plot_file;
+  }
 }
 					   
 					   
@@ -67,7 +77,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 				    const char * viewer) {
 
   const bool add_observations = true;
-  char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , user_key );
+  char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), user_key );
   plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file);
   enkf_node_type * node;
   msg_type * msg;
@@ -174,6 +184,7 @@ void enkf_ui_plot_histogram(void * arg) {
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
+  const char                 * case_name       = enkf_fs_get_read_dir( fs );     
   {
     const int prompt_len = 40;
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
@@ -190,7 +201,7 @@ void enkf_ui_plot_histogram(void * arg) {
       const int last_report = enkf_main_get_total_length( enkf_main );
       double * count        = util_malloc(ens_size * sizeof * count , __func__);
       int iens , report_step;
-      char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , user_key );
+      char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , case_name , user_key );
       plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file);
 
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
@@ -363,7 +374,7 @@ void enkf_ui_plot_observation(void * arg) {
     
     obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
     if (obs_vector != NULL) {
-      char * plot_file                    = enkf_ui_plot_alloc_plot_file(plot_path , user_key);
+      char * plot_file                    = enkf_ui_plot_alloc_plot_file(plot_path , enkf_fs_get_read_dir(fs), user_key);
       plot_type * plot                    = __plot_alloc("Member nr" , "Value" , user_key , plot_file);   
       const char * state_kw               = obs_vector_get_state_kw( obs_vector );
       enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
@@ -455,7 +466,7 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const model_con
   field_obs_type    * field_obs       = obs_vector_iget_node( obs_vector , report_step );
   char * plot_file;
   
-  plot_file = enkf_ui_plot_alloc_plot_file(plot_path , obs_key);
+  plot_file = enkf_ui_plot_alloc_plot_file(plot_path , enkf_fs_get_read_dir(fs), obs_key);
   plot = __plot_alloc(state_kw , "Depth" , obs_key , plot_file);
   {
     msg_type * msg           = msg_alloc("Loading realization: ");
@@ -725,7 +736,7 @@ void enkf_ui_plot_sensitivity(void * arg) {
   
   {
     char * basename  	      = util_alloc_sprintf("%s-%s" , user_key_x , user_key_y);
-    char * plot_file 	      = enkf_ui_plot_alloc_plot_file( plot_path , basename);
+    char * plot_file 	      = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), basename);
     plot_type * plot 	      = __plot_alloc(user_key_x , user_key_y , "Sensitivity plot" , plot_file);
     plot_dataset_type  * data = plot_alloc_new_dataset( plot , plot_xy , false);
     

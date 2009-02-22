@@ -55,20 +55,6 @@
 #define NUM_STATIC_KW         37
 
 
-
-/* 
-   The string added at the beginning and end of string which should be
-   replaced with the template parser.  
-*/
-
-#define DEFAULT_START_TAG "<"
-#define DEFAULT_END_TAG ">"
-
-
-
-
-
-
 /* 
    The whole thing is defined as one literal - just because I don't
    understand C-linkage.
@@ -111,6 +97,20 @@
   "RSEG",   	\
   "ISTHW",   	\
   "ISTHG"}       
+
+
+
+
+/* 
+   The string added at the beginning and end of string which should be
+   replaced with the template parser.  
+*/
+
+#define DEFAULT_START_TAG "<"
+#define DEFAULT_END_TAG ">"
+
+
+
 
 
 #endif

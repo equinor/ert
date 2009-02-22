@@ -67,7 +67,17 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
     Read user input and set read/write cases.
   */
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
-  state_from       = enkf_ui_util_scanf_state("Source analyzed/forecast [A/F]" , prompt_len , false);
+  state_from       = enkf_ui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
+
+
+  /* 
+     Simplify with some defaults. 
+  */
+  report_step_to = 0;
+  if (report_step_to == 0)
+    state_to = analyzed;
+  else
+    state_to = forecast;
 
   printf("Target case ==> ");
   scanf("%s", target_case);
@@ -84,7 +94,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
     {
       const char * key = stringlist_iget(parameters, i);
       enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
-      enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, 0, forecast, 0, ens_size - 1);
+      enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , 0, ens_size - 1);
     }
 
     stringlist_free(parameters);
