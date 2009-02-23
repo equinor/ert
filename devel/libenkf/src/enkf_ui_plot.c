@@ -794,8 +794,6 @@ void enkf_ui_plot_menu(void * arg) {
     menu_add_item(menu , "RFT plot of all RFT"  , "fF" 			    , enkf_ui_plot_all_RFT     , enkf_main , NULL);
     menu_add_item(menu , "Sensitivity plot"     , "sS"                      , enkf_ui_plot_sensitivity , enkf_main , NULL); 
     menu_add_item(menu , "Histogram"        , "hH"                          , enkf_ui_plot_histogram   , enkf_main , NULL);
-    menu_add_separator(menu);
-    menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);
   }

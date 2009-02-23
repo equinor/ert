@@ -174,8 +174,6 @@ void enkf_ui_run_menu(void * arg) {
     
     free(runpath_label);
   }
-  menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
-
   menu_run(menu);
   menu_free(menu);
 
