@@ -121,7 +121,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
     /**
       Copy that shit.
     */
-    stringlist_type * parameters = ensemble_config_alloc_var_typed_keylist(config, parameter);
+    stringlist_type * parameters = ensemble_config_alloc_keylist_from_var_type(config, parameter);
     int num_parameters = stringlist_get_size(parameters);
 
     for(int i = 0; i < num_parameters; i++)
@@ -210,7 +210,7 @@ void enkf_ui_fs_menu(void * arg) {
    enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
    enkf_fs_type    * fs         = enkf_main_get_fs( enkf_main );
 
-   const char * menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_fs_get_read_dir(fs));
+   const char * menu_title = util_alloc_sprintf("Manage cases - clurrent: %s", enkf_fs_get_read_dir(fs));
    menu_type * menu = menu_alloc(menu_title , "Back" , "bB");
 
    menu_add_item(menu , "List available cases" , "lL" , enkf_ui_fs_ls_case , fs , NULL);

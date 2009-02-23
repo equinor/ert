@@ -21,8 +21,15 @@
 
 
 /**
-   The final plot path consists of three parts: plot_path/case_name/wopr.png
+   The final plot path consists of three parts: 
+
+    plot_path: This is the PLOT_PATH option given in main configuration file.
+
+    case_name: This the name of the currently active case.
+
+    base_name: The filename of the current plot.
 */
+
 static char * enkf_ui_plot_alloc_plot_file(const char * plot_path, const char * case_name , const char * base_name) {
   const char * extension  =  "png";
   {
@@ -327,7 +334,7 @@ void enkf_ui_plot_all_summary(void * arg) {
   const int first_report = 0;
   
   {
-    stringlist_type * summary_keys = ensemble_config_alloc_var_typed_keylist(ensemble_config , dynamic_result);
+    stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
     int ikey;
     
     for (ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
