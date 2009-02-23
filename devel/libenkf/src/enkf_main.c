@@ -810,8 +810,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "DATA_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
     
-    item = config_add_item(config , "EQUIL_INIT_FILE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+    item = config_add_item(config , "INIT_SECTION" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
+    config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE"); 
     
     item = config_add_item(config , "FORWARD_MODEL" , true , false);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);

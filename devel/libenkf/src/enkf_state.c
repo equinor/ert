@@ -474,9 +474,9 @@ INCLDUE
 
   */  
   {
-    const char * init_file   = ecl_config_get_equil_init_file(ecl_config);
+    const char * init_file = ecl_config_get_equil_init_file(ecl_config);
     if (init_file == NULL) 
-      util_abort("%s: EQUIL_INIT_FILE is not set - must either use EQUIL_INIT_FILE in config_file or EQUIL keyword.",__func__);
+      util_abort("%s: INIT_SECTION is not set - must either use INIT_SECTION in config_file or EQUIL keyword.",__func__);
     
     if (init_file != NULL) 
     {

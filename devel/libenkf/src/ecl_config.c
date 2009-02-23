@@ -82,9 +82,45 @@ ecl_config_type * ecl_config_alloc( const config_type * config , int * history_l
       ecl_config->prediction_sched_file_fmt = NULL;
 
   }
-  if (config_has_set_item(config , "EQUIL_INIT_FILE"))
-    ecl_config->equil_init_file = util_alloc_realpath(config_get(config , "EQUIL_INIT_FILE"));
-  else {
+
+  if (config_has_set_item(config , "INIT_SECTION")) {
+    /* The semantic regarding INIT_SECTION is as follows:
+
+       1. If the INIT_SECTION points to an existing file - the
+          ecl_config->equil_init_file is set to the absolute path of
+          this file.
+
+       2. If the INIT_SECTION points to a not existing file:
+
+          a. We assert that INIT_SECTION points to a pure filename,
+             i.e. /some/path/which/does/not/exist is NOT accepted.
+          b. The ecl_config->equil_init_file is set to point to this
+             file.
+          c. WE TRUST THE USER TO SUPPLY CONTENT (THROUGH SOME FUNKY
+             FORWARD MODEL) IN THE RUNPATH. This can unfortunately not
+             be checked/verified.
+    */
+    const char * init_section = config_get(config , "INIT_SECTION");
+    if (util_file_exists( init_section ))
+      ecl_config->equil_init_file = util_alloc_realpath(init_section);
+    else {
+      char * filename;
+      char * basename;
+      char * extension;
+      
+      util_alloc_file_components( init_section , NULL , &basename , &extension);
+      filename = util_alloc_filename( NULL , basename , extension);
+      if (strcmp( filename , init_section) == 0) 
+	ecl_config->equil_init_file = filename;
+      else {
+	util_abort("%s: When INIT_SECTION:%s is set to a non-existing file - you can not have any path components.\n",__func__ , init_section);
+	util_safe_free( filename );
+      }
+      
+      util_safe_free( basename );
+      util_safe_free( extension );
+    }
+  } else {
     if (!config_has_set_item(config , "EQUIL"))
       util_abort("%s: you must specify how ECLIPSE is initialized - with either EQUIL or EQUIL_INIT_FILE ",__func__);
     ecl_config->equil_init_file = NULL; 

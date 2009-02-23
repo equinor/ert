@@ -98,7 +98,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
   last_report  = enkf_main_get_total_length( enkf_main );
 
   /**
-    Read user input and set read/write cases.
+     Read user input and set read/write cases.
   */
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
   state_from       = enkf_ui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
@@ -119,7 +119,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
 
   {
     /**
-      Copy that shit.
+       Copy that shit.
     */
     stringlist_type * parameters = ensemble_config_alloc_keylist_from_var_type(config, parameter);
     int num_parameters = stringlist_get_size(parameters);
