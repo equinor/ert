@@ -7,6 +7,7 @@
 #include <util.h>
 #include <set.h>
 #include <enkf_fs.h>
+#include <enkf_defaults.h>
 #include <path_fmt.h>
 #include <enkf_node.h>
 #include <basic_driver.h>
@@ -390,7 +391,7 @@ void enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_d
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
   const bool   use_locking = false;
-  const char * default_dir = "enkf";
+  const char * default_dir = DEFAULT_CASE;
   char * config_file       = util_alloc_filename(root_path , mount_info , NULL);  /* This file should be protected - at all costs. */
   int    version           = enkf_fs_get_fs_version( config_file );
   

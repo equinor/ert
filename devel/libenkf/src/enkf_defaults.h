@@ -110,6 +110,13 @@
 #define DEFAULT_END_TAG ">"
 
 
+/**
+  Name of the default case.
+*/
+
+#define DEFAULT_CASE "default"
+
+
 
 
 
