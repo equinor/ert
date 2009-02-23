@@ -18,6 +18,7 @@ extern "C" {
 typedef enum {CONFIG_STRING 	   = 0,
 	      CONFIG_INT    	   = 1,
 	      CONFIG_FLOAT  	   = 2,   
+	      CONFIG_FILE          = 9,  /* These file does not need to exist - but includes are handled. */
 	      CONFIG_EXISTING_FILE = 3,
 	      CONFIG_EXISTING_DIR  = 4,
               CONFIG_BOOLEAN       = 5,

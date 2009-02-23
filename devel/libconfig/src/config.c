@@ -650,6 +650,13 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
 	    free( file );
 	  }
 	  break;
+	case(CONFIG_FILE):
+	  {
+	    char * file = __alloc_relocated__(config_cwd , value);
+	    argv[iarg] = util_realloc_string_copy(argv[iarg] , file);
+	    free( file );
+	  }
+	  break;
 	case(CONFIG_EXISTING_DIR):
 	  {
 	    char * dir = __alloc_relocated__(config_cwd , value);
