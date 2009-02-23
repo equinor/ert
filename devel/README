@@ -80,7 +80,7 @@ DOCUMENTATION:
         - No documentation is currently available.
 
   3. Using the prototype:
-        - See docs/configuration.txt
+        - See http://sdp.statoil.no/wiki/index.php/Res:Enkf.
 
   4. Information for developers:
        - See docs/coding_style.txt
