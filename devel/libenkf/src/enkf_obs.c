@@ -346,7 +346,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
 
 static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
   const char * enkf_conf_help = "An instance of the class ENKF_CONFIG shall contain neccessary infomation to run the enkf.";
-  conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_CONFIG", true , enkf_conf_help);
+  conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_CONFIG", true , false , enkf_conf_help);
   conf_class_set_help(enkf_conf_class, enkf_conf_help);
 
 
@@ -355,7 +355,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
   {
     const char * help_class_history_observation = "The class HISTORY_OBSERVATION is used to condition on a time series from the production history. The name of the an instance is used to define the item to condition on, and should be in summary.x syntax. E.g., creating a HISTORY_OBSERVATION instance with name GOPR:P4 conditions on GOPR for group P4.";
 
-    conf_class_type * history_observation_class = conf_class_alloc_empty("HISTORY_OBSERVATION", false , help_class_history_observation);
+    conf_class_type * history_observation_class = conf_class_alloc_empty("HISTORY_OBSERVATION", false , false, help_class_history_observation);
 
     conf_item_spec_type * item_spec_error_mode = conf_item_spec_alloc("ERROR_MODE", true, DT_STR , "The string ERROR_MODE gives the error mode for the observation.");
 
@@ -382,7 +382,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
   /** Create and insert SUMMARY_OBSERVATION class. */
   {
     const char * help_class_summary_observation = "The class SUMMARY_OBSERVATION can be used to condition on any observation whos simulated value is written to the summary file.";
-    conf_class_type * summary_observation_class = conf_class_alloc_empty("SUMMARY_OBSERVATION", false , help_class_summary_observation);
+    conf_class_type * summary_observation_class = conf_class_alloc_empty("SUMMARY_OBSERVATION", false , false, help_class_summary_observation);
 
     const char * help_item_spec_value = "The floating point number VALUE gives the observed value.";
     conf_item_spec_type * item_spec_value = conf_item_spec_alloc("VALUE", true, DT_FLOAT , help_item_spec_value);
@@ -426,7 +426,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
   /** Create and insert BLOCK_OBSERVATION class. */
   {
     const char * help_class_block_observation = "The class BLOCK_OBSERVATION can be used to condition on an observation whos simulated values are block/cell values of a field, e.g. RFT tests.";
-    conf_class_type * block_observation_class = conf_class_alloc_empty("BLOCK_OBSERVATION", false , help_class_block_observation);
+    conf_class_type * block_observation_class = conf_class_alloc_empty("BLOCK_OBSERVATION", false , false, help_class_block_observation);
 
     const char * help_item_spec_field = "The item FIELD gives the observed field. E.g., ECLIPSE fields such as PRESSURE, SGAS or any user defined fields such as PORO or PERMX.";
     conf_item_spec_type * item_spec_field = conf_item_spec_alloc("FIELD", true, DT_STR , help_item_spec_field);
@@ -455,7 +455,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     /** Create and insert the sub class OBS. */
     {
       const char * help_class_obs = "The class OBS is used to specify a single observed point.";
-      conf_class_type * obs_class = conf_class_alloc_empty("OBS", true , help_class_obs);
+      conf_class_type * obs_class = conf_class_alloc_empty("OBS", true , false, help_class_obs);
 
       const char * help_item_i = "The item I gives the I index of the block observation.";
       conf_item_spec_type * item_spec_i = conf_item_spec_alloc("I", true, DT_POSINT , help_item_i);
@@ -491,7 +491,7 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     const char * help_item_spec_date = "The DATE item gives the observation time as the date date it occured. Format is dd/mm/yyyy.";
     const char * help_item_spec_days = "The DAYS item gives the observation time as days after simulation start.";
   
-    conf_class_type * gen_obs_class = conf_class_alloc_empty("GENERAL_OBSERVATION" , false , "The class general_observation is used for general observations");
+    conf_class_type * gen_obs_class = conf_class_alloc_empty("GENERAL_OBSERVATION" , false , false, "The class general_observation is used for general observations");
 
     conf_item_spec_type * item_spec_field   = conf_item_spec_alloc("DATA", true, DT_STR , help_item_spec_field);
     conf_item_spec_type * item_spec_date    = conf_item_spec_alloc("DATE", false, DT_DATE , help_item_spec_date);
