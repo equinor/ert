@@ -6,6 +6,7 @@
 #include <util.h>
 #include <sched_kw_untyped.h>
 #include <sched_util.h>
+#include <subst.h>
 
 
 

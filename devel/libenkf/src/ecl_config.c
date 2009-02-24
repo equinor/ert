@@ -98,8 +98,9 @@ ecl_config_type * ecl_config_alloc( const config_type * config , int * history_l
              file.
           c. WE TRUST THE USER TO SUPPLY CONTENT (THROUGH SOME FUNKY
              FORWARD MODEL) IN THE RUNPATH. This can unfortunately not
-             be checked/verified.
+             be checked/verified before the ECLIPSE simulation fails.
     */
+    
     const char * init_section = config_get(config , "INIT_SECTION");
     if (util_file_exists( init_section ))
       ecl_config->equil_init_file = util_alloc_realpath(init_section);

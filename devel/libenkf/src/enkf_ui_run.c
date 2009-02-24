@@ -65,14 +65,17 @@ void enkf_ui_run_exp__(void * enkf_main) {
   state_enum init_state = analyzed; 
   int start_report   	= 0;
   int init_report    	= util_scanf_int_with_limits("Initialize static parameters from: ",prompt_len , 0 , last_report );
-  int small_ens_size 	= util_scanf_int_with_limits("How many members too integrate: ",prompt_len , 1 , ens_size);
+  int first_member      = util_scanf_int_with_limits("First member to integrate : ",prompt_len , 0 , ens_size - 1);
+  int last_member 	= util_scanf_int_with_limits("Last member to integrate : " ,prompt_len , first_member , ens_size - 1);
   {
     int iens;
     for (iens= 0; iens < ens_size; iens++) {
-      if (iens < small_ens_size)
-	iactive[iens] = true;
-      else
+      if (iens < first_member)
 	iactive[iens] = false;
+      else if (iens > last_member)
+	iactive[iens] = false;
+      else
+	iactive[iens] = true;
     }
   }
 

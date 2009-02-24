@@ -46,10 +46,11 @@ void text_splash() {
 /*
   SVN_VERSION and COMPILE_TIME_STAMP are env variables set by the makefile.
 */
-void enkf_welcome() {
-  char * svn_version  = util_alloc_sprintf("svn version......: %s\n",SVN_VERSION);
-  char * compile_time = util_alloc_sprintf("Compile time.....: %s \n",COMPILE_TIME_STAMP);
-
+void enkf_welcome(const char * config_file) {
+  char * svn_version  	 = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
+  char * compile_time 	 = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
+  char * abs_path     	 = util_alloc_realpath( config_file );
+  char * config_file_msg = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
   printf("\n");
   printf("%s",svn_version);
   printf("%s",compile_time);
@@ -58,7 +59,10 @@ void enkf_welcome() {
   /* This will be printed if/when util_abort() is called on a later stage. */
   util_abort_append_version_info(svn_version);
   util_abort_append_version_info(compile_time);
+  util_abort_append_version_info(config_file_msg);
 
+  free(config_file_msg);
+  free(abs_path);
   free(svn_version);
   free(compile_time);
 }
@@ -90,7 +94,6 @@ void enkf_usage() {
 
 int main (int argc , char ** argv) {
   text_splash();
-  enkf_welcome();
   install_SIGNALS();
 
   if (argc != 2) {
@@ -99,7 +102,8 @@ int main (int argc , char ** argv) {
   } else {
     const char * site_config_file  = SITE_CONFIG_FILE;  /* The variable SITE_CONFIG_FILE should be defined on compilation ... */
     const char * model_config_file = argv[1]; 
-
+    
+    enkf_welcome( model_config_file );
     enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file);
     enkf_ui_main_menu(enkf_main); 
     enkf_main_free(enkf_main);

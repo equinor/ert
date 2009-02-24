@@ -342,10 +342,14 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
 {
   FILE * stream = util_fopen(file, "w");
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
-  if(last_restart_file < 0 || last_restart_file >= num_restart_files)
-    util_abort("%s: Restart nr is out of bounds. Got %i, but need integer in [0,%i].\n", __func__, last_restart_file, num_restart_files-1);
+  
 
-  for(int i=0; i<=last_restart_file; i++)
+  if (last_restart_file > num_restart_files) {
+    util_abort("%s: you asked for restart nr:%d - the last available restart nr is: %d \n",__func__ , last_restart_file , num_restart_files);
+    /* Must abort here because the calling scope is expecting to find last_restart_file.  */
+  }
+  
+  for(int i=0; i<= last_restart_file; i++)
   {
     const sched_block_type * sched_block = vector_iget_const( sched_file->blocks , i);
     sched_block_fprintf(sched_block, stream);
