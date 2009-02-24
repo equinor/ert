@@ -3,15 +3,20 @@
 int main()
 {
   const char * enkf_conf_help = "The main enkf conf shall contain neccessary infomation to run the enkf.";
-  conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_conf", true, enkf_conf_help);
+  conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_conf", true, false, enkf_conf_help);
   conf_class_set_help(enkf_conf_class, enkf_conf_help);
 
+  /** Create and insert SINGLETON class. */
+  {
+    conf_class_type * singleton_class = conf_class_alloc_empty("SINGLETON", false, true, NULL);
+    conf_class_insert_owned_sub_class(enkf_conf_class, singleton_class);
+  }
 
 
   /** Create and insert HISTORY_OBSERVATION class. */
   {
     const char * help_class_history_observation = "The class HISTORY_OBSERVATION is used to condition on a time series from the production history. The name of the an instance is used to define the item to condition on, and should be in summary.x syntax. E.g., creating a HISTORY_OBSERVATION instance with name GOPR:P4 conditions on GOPR for group P4.";
-    conf_class_type * history_observation_class = conf_class_alloc_empty("HISTORY_OBSERVATION", false, help_class_history_observation);
+    conf_class_type * history_observation_class = conf_class_alloc_empty("HISTORY_OBSERVATION", false, false, help_class_history_observation);
     conf_class_set_help(history_observation_class, help_class_history_observation);
 
     
@@ -49,7 +54,7 @@ int main()
   /** Create and insert SUMMARY_OBSERVATION class. */
   {
     const char * help_class_summary_observation = "The class SUMMARY_OBSERVATION can be used to condition on any observation whos simulated value is written to the summary file.";
-    conf_class_type * summary_observation_class = conf_class_alloc_empty("SUMMARY_OBSERVATION", false, help_class_summary_observation);
+    conf_class_type * summary_observation_class = conf_class_alloc_empty("SUMMARY_OBSERVATION", false, false, help_class_summary_observation);
     conf_class_set_help(summary_observation_class, help_class_summary_observation);
 
     const char * help_item_spec_value = "The floating point number VALUE gives the observed value.";
@@ -102,7 +107,7 @@ int main()
   /** Create and insert BLOCK_OBSERVATION class. */
   {
     const char * help_class_block_observation = "The class BLOCK_OBSERVATION can be used to condition on an observation whos simulated values are block/cell values of a field, e.g. RFT tests.";
-    conf_class_type * block_observation_class = conf_class_alloc_empty("BLOCK_OBSERVATION", false, help_class_block_observation);
+    conf_class_type * block_observation_class = conf_class_alloc_empty("BLOCK_OBSERVATION", false, false, help_class_block_observation);
     conf_class_set_help(block_observation_class, help_class_block_observation);
 
     const char * help_item_spec_field = "The item FIELD gives the observed field. E.g., ECLIPSE fields such as PRESSURE, SGAS or any user defined fields such as PORO or PERMX.";
@@ -119,7 +124,7 @@ int main()
     /** Create and insert the sub class OBS. */
     {
       const char * help_class_obs = "The class OBS is used to specify a single observed point.";
-      conf_class_type * obs_class = conf_class_alloc_empty("OBS", true, help_class_obs);
+      conf_class_type * obs_class = conf_class_alloc_empty("OBS", true, false, help_class_obs);
       conf_class_set_help(obs_class, help_class_obs);
 
       const char * help_item_i = "The item I gives the I index of the block observation.";

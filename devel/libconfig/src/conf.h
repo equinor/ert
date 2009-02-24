@@ -105,6 +105,7 @@ typedef struct conf_item_mutex_struct 	   conf_item_mutex_type;
 conf_class_type * conf_class_alloc_empty(
   const char * class_name,
   bool         require_instance,
+  bool         singleton,
   const char * help);
 
 void conf_class_free(
@@ -179,11 +180,6 @@ void conf_class_insert_owned_item_spec(
   conf_class_type     * conf_class,
   conf_item_spec_type * item_spec);
 
-conf_item_mutex_type * conf_class_new_item_mutex(conf_class_type      * conf_class, bool require_one , bool inverse);
-
-
-
-
 void conf_instance_insert_owned_sub_instance(
   conf_instance_type * conf_instance,
   conf_instance_type * sub_conf_instance);
@@ -201,7 +197,10 @@ void conf_instance_overload(
   conf_instance_type       * conf_instance_target,
   const conf_instance_type * conf_instance_source);
 
-
+conf_item_mutex_type * conf_class_new_item_mutex(
+  conf_class_type  * conf_class,
+  bool               require_one,
+  bool inverse);
 
 void conf_item_mutex_add_item_spec(
   conf_item_mutex_type       * conf_item_mutex,

@@ -19,6 +19,7 @@ struct conf_class_struct
   char                  * class_name;
   char                  * help;               /** Can be NULL if not given. */
   bool                    require_instance;
+  bool                    singleton;
   
   hash_type             * sub_classes;        /** conf_class_types          */
   hash_type             * item_specs;         /** conf_item_spec_types      */
@@ -76,6 +77,7 @@ struct conf_item_mutex_struct
 conf_class_type * conf_class_alloc_empty(
   const char * class_name,
   bool         require_instance,
+  bool         singleton,
   const char * help) 
 {
   assert(class_name != NULL);
@@ -86,6 +88,7 @@ conf_class_type * conf_class_alloc_empty(
   conf_class->class_name       = util_alloc_string_copy(class_name);
   conf_class->help             = NULL;
   conf_class->require_instance = require_instance;
+  conf_class->singleton        = singleton;
   conf_class->sub_classes      = hash_alloc();
   conf_class->item_specs       = hash_alloc();
   conf_class->item_mutexes     = list_alloc();
@@ -319,7 +322,11 @@ void conf_item_free__(
 
 
 
-static conf_item_mutex_type * conf_item_mutex_alloc(const conf_class_type * super_class , bool require_one , bool inverse)
+static
+conf_item_mutex_type * conf_item_mutex_alloc(
+  const conf_class_type * super_class,
+  bool require_one,
+  bool inverse)
 {
   conf_item_mutex_type * conf_item_mutex = util_malloc(sizeof * conf_item_mutex, __func__);
   
@@ -457,6 +464,26 @@ void conf_instance_insert_owned_sub_instance(
   /** Abort if the instance is of unknown type. */
   if(sub_conf_instance->conf_class->super_class != conf_instance->conf_class)
     util_abort("%s: Internal error. Trying to insert instance of unknown type.\n", __func__);
+
+
+  /** Check if the instance's class is singleton. If so, remove the old instance. */
+  if(sub_conf_instance->conf_class->singleton)
+  {
+    stringlist_type * instances = conf_instance_alloc_list_of_sub_instances_of_class(conf_instance,
+                                    sub_conf_instance->conf_class);
+    int num_instances = stringlist_get_size(instances);
+
+    for(int i = 0; i < num_instances; i++)
+    {
+      const char * key = stringlist_iget(instances, i);
+      printf("WARNING: Class \"%s\" is of singleton type. Overwriting instance \"%s\" with \"%s\".\n",
+             sub_conf_instance->conf_class->class_name, key, sub_conf_instance->name);
+      hash_del(conf_instance->sub_instances, key);
+    }
+
+    stringlist_free(instances);
+  }
+
 
   /** Warn if the sub_instance already exists and is overwritten. */
   if(hash_has_key(conf_instance->sub_instances, sub_conf_instance->name))
