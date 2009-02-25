@@ -790,6 +790,25 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "GRID" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
+    item = config_add_item(config , "ECLBASE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    
+    item = config_add_item(config , "SCHEDULE_FILE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "DATA_FILE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+    
+    item = config_add_item(config , "INIT_SECTION" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
+    config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE"); 
+    
+    /*****************************************************************/
+    /* Optional keywords from the model config file */
+
+    item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
     item = config_add_item(config , "RUNPATH" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     config_set_arg(config , "RUNPATH" , 1 , (const char *[1]) { DEFAULT_RUNPATH });
@@ -798,26 +817,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
 
-    item = config_add_item(config , "ECLBASE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    
-    item = config_add_item(config , "SCHEDULE_FILE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "DATA_FILE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "INIT_SECTION" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
-    config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE"); 
-    
     item = config_add_item(config , "FORWARD_MODEL" , true , false);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
-    /*****************************************************************/
-    /* Optional keywords from the model config file */
+    config_set_arg(config , "FORWARD_MODEL" , 1 , (const char *[1]) { DEFAULT_FORWARD_MODEL });
+
     item = config_add_item(config , "DATA_KW" , false , true);
     config_item_set_argc_minmax(item , 2 , 2 , NULL);
 
