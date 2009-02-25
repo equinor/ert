@@ -74,7 +74,7 @@ char * conf_util_fscanf_alloc_token_buffer(
 char * conf_util_alloc_next_token(
   char ** buff_pos)
 {
-  char * sep = " \t\r\n,";
+  char * sep = " \t\r\n";
 
   int len_token = 0;
   bool found    = false;
