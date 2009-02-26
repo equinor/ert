@@ -44,7 +44,7 @@ typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node objec
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
 typedef void * 	      (alloc_ftype)                	(const void *);
 typedef void   	      (fread_ftype)                	(      void *  , FILE *);
-typedef bool   	      (fwrite_ftype)               	(const void *  , FILE *);
+typedef bool   	      (fwrite_ftype)               	(const void *  , FILE * , bool);
 typedef bool   	      (initialize_ftype)     	   	(      void *  , int);
 typedef void   	      (ecl_load_ftype)            	(void *  , const char * , const ecl_sum_type * , const ecl_block_type * , int);
 typedef void          (realloc_data_ftype)	   	(void * );
@@ -101,7 +101,7 @@ void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type
 void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * , int);
 bool             enkf_node_initialize(enkf_node_type *enkf_node , int);
 void             enkf_node_printf(const enkf_node_type *);
-bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, int , int , state_enum);
+bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, bool , int , int , state_enum);
 int              enkf_node_serialize(enkf_node_type * , size_t , serial_vector_type *, bool *);
 void             enkf_node_clear     (enkf_node_type *);
 void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int , state_enum);

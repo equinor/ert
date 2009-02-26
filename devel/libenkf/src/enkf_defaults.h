@@ -37,10 +37,10 @@
 
 
 /* Defaults for the EnKF analysis. */
-#define DEFAULT_ENKF_MODE         "STANDARD"
-#define DEFAULT_ENKF_TRUNCATION   "0.99"    /* NB String */
-#define DEFAULT_ENKF_ALPHA        "1.50"    /* NB String */
-
+#define DEFAULT_ENKF_MODE          "STANDARD"
+#define DEFAULT_ENKF_TRUNCATION    "0.99"    /* NB String */
+#define DEFAULT_ENKF_ALPHA         "1.50"    /* NB String */
+#define DEFAULT_MERGE_OBSERVATIONS "False"   /* NB - string representation of TRUE|FALSE */
 
 /* Default directories. */
 #define DEFAULT_PLOT_PATH   "plots"

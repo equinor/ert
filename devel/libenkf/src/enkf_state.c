@@ -113,7 +113,7 @@ typedef struct member_config_struct {
   keep_runpath_type     keep_runpath;        /* Should the run-path directory be left around (for this member)*/
   char 		      * eclbase;             /* The ECLBASE string used for simulations of this member. */
   sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
-  bool                  private_sched_file;  /* Is the member config holding a private schedule file? */ 
+  bool                  private_sched_file;  /* Is the member config holding a private schedule file - just relevant when freeing up? */ 
 } member_config_type;
 
 
@@ -250,7 +250,10 @@ static void member_config_set_eclbase(member_config_type * member_config , const
   member_config->eclbase = util_realloc_string_copy(member_config->eclbase , eclbase);
 }
 
-
+static int member_config_get_last_restart_nr( const member_config_type * member_config) {
+  return sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
+}
+				   
 
 static void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
@@ -266,8 +269,8 @@ static void member_config_set_keep_runpath(member_config_type * member_config , 
 
 
 static member_config_type * member_config_alloc(int iens , 
-						keep_runpath_type keep_runpath , 
-						const ecl_config_type * ecl_config , 
+						keep_runpath_type            keep_runpath , 
+						const ecl_config_type      * ecl_config , 
 						const ensemble_config_type * ensemble_config) {
 						
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
@@ -412,6 +415,15 @@ static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * 
 
 
 
+/**
+   With three DATES keywords in the SCHEDULE file this will
+   return "2".
+*/
+
+int enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state ) {
+  return member_config_get_last_restart_nr( enkf_state->my_config );
+}
+
 
 enkf_state_type * enkf_state_alloc(int iens,
 				   keep_runpath_type keep_runpath , 
@@ -431,8 +443,8 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->shared_info     = shared_info_alloc(site_config , model_config );
   enkf_state->run_info        = run_info_alloc();
   
-  enkf_state->node_hash       	    = hash_alloc();
-  enkf_state->restart_kw_list 	    = restart_kw_list_alloc();
+  enkf_state->node_hash       = hash_alloc();
+  enkf_state->restart_kw_list = restart_kw_list_alloc();
 
   enkf_state->subst_list      = subst_list_alloc();
   {

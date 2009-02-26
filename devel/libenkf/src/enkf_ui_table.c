@@ -185,7 +185,7 @@ void enkf_ui_table_menu(void * arg) {
     menu_add_item(menu , "Time development of parameters"  , "tT"  , enkf_ui_table_time     , enkf_main , NULL);
     menu_add_item(menu , "Misfit table"                    , "mM"  , enkf_ui_table_misfit   , enkf_main , NULL);
     menu_add_separator(menu);
-    menu_add_item(menu , "Change directories for reading and writing" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
+    menu_add_item(menu , "Manage cases" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);
   }

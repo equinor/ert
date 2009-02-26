@@ -98,9 +98,9 @@ havana_fault_type * havana_fault_copyc(const havana_fault_type *havana_fault) {
 }
 
 
-bool havana_fault_fwrite(const havana_fault_type *havana_fault , FILE * stream) {
+bool havana_fault_fwrite(const havana_fault_type *havana_fault , FILE * stream , bool internal_state) {
   enkf_util_fwrite_target_type(stream , HAVANA_FAULT);
-  scalar_stream_fwrite(havana_fault->scalar , stream);
+  scalar_stream_fwrite(havana_fault->scalar , stream , internal_state);
   return true;
 }
 
@@ -110,18 +110,6 @@ void havana_fault_fread(havana_fault_type * havana_fault , FILE * stream) {
   scalar_stream_fread(havana_fault->scalar , stream);
 }
 
-
-
-void havana_fault_swapout(havana_fault_type * havana_fault , FILE * stream) {
-  havana_fault_fwrite(havana_fault , stream);
-  havana_fault_free_data(havana_fault);
-}
-
-
-void havana_fault_swapin(havana_fault_type * havana_fault , FILE * stream) {
-  havana_fault_realloc_data(havana_fault);
-  havana_fault_fread(havana_fault , stream);
-}
 
 
 void havana_fault_truncate(havana_fault_type * havana_fault) {

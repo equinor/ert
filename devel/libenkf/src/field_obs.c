@@ -148,36 +148,36 @@ double field_obs_chi2(const field_obs_type * field_obs,  const field_type     * 
 
 
 
-bool field_obs_fwrite(
-  const field_obs_type * field_obs,
-  FILE                 * stream) {
-  util_fwrite_string(field_obs->field_name, stream);
-  util_fwrite_string(field_obs->obs_label , stream);
-
-  util_fwrite_int   (field_obs->size      , stream);
-
-  util_fwrite       (field_obs->index_list , sizeof *field_obs->index_list , field_obs->size, stream, __func__);
-  util_fwrite       (field_obs->obs_value  , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-  util_fwrite       (field_obs->obs_std    , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-
-  return true;
-}
-
-
-
-void field_obs_fread(
-  field_obs_type * field_obs,
-  FILE           * stream)
-{
-  field_obs->field_name = util_fread_alloc_string(stream);
-  field_obs->obs_label  = util_fread_alloc_string(stream);
-
-  field_obs->size       = util_fread_int(         stream);
-
-  util_fread       (field_obs->index_list , sizeof *field_obs->index_list , field_obs->size, stream, __func__);
-  util_fread       (field_obs->obs_value  , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-  util_fread       (field_obs->obs_std    , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
-}
+//bool field_obs_fwrite(
+//  const field_obs_type * field_obs,
+//  FILE                 * stream) {
+//  util_fwrite_string(field_obs->field_name, stream);
+//  util_fwrite_string(field_obs->obs_label , stream);
+//
+//  util_fwrite_int   (field_obs->size      , stream);
+//
+//  util_fwrite       (field_obs->index_list , sizeof *field_obs->index_list , field_obs->size, stream, __func__);
+//  util_fwrite       (field_obs->obs_value  , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
+//  util_fwrite       (field_obs->obs_std    , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
+//
+//  return true;
+//}
+//
+//
+//
+//void field_obs_fread(
+//  field_obs_type * field_obs,
+//  FILE           * stream)
+//{
+//  field_obs->field_name = util_fread_alloc_string(stream);
+//  field_obs->obs_label  = util_fread_alloc_string(stream);
+//
+//  field_obs->size       = util_fread_int(         stream);
+//
+//  util_fread       (field_obs->index_list , sizeof *field_obs->index_list , field_obs->size, stream, __func__);
+//  util_fread       (field_obs->obs_value  , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
+//  util_fread       (field_obs->obs_std    , sizeof *field_obs->obs_value  , field_obs->size, stream, __func__);
+//}
 
 
 /**
@@ -242,8 +242,6 @@ int field_obs_get_size(const field_obs_type * field_obs) {
 
 /*****************************************************************/
 
-VOID_FREAD(field_obs)
-VOID_FWRITE(field_obs)
 VOID_FREE(field_obs)
 VOID_GET_OBS(field_obs)
 VOID_MEASURE(field_obs , field)

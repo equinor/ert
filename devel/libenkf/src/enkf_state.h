@@ -51,7 +51,7 @@ enkf_state_type  * enkf_state_alloc(int ,
 				    hash_type *,
 				    const forward_model_type *);
 
-
+int                enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state );
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );
 void               enkf_state_load_ecl_restart(enkf_state_type * , bool , int );
 void               enkf_state_sample(enkf_state_type * , int);

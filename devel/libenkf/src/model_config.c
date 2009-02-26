@@ -35,23 +35,24 @@
 
 
 struct model_config_struct {
-  forward_model_type  * std_forward_model;   /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
-  bool                  use_lsf;             /* The forward models need to know whether we are using lsf. */  
-  enkf_fs_type        * ensemble_dbase;      /* Where the ensemble files are stored */
-  history_type        * history;             /* The history object. */
-  path_fmt_type       * result_path;         /* path_fmt instance for results - should contain one %d which will be replaced report_step */
-  path_fmt_type       * runpath;             /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
-  char                * plot_path;           /* A dumping ground for PLOT files. */
-  enkf_sched_type     * enkf_sched;          /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
-  char                * enkf_sched_file;     /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
-  int                   history_length;      /* The number of restart files with historical data. */
-  int                   total_length;        /* The total number of dates in the schedule file - can be greater than history_length if prediction is included at the end. */  
-  char                * lock_path;           /* Path containing lock files */
-  lock_mode_type        runlock_mode;        /* Mode for locking run directories - currently not working.*/ 
-  bool_vector_type    * internalize_state;   /* Should the (full) state be internalized (at this report_step). */
-  bool_vector_type    * internalize_results; /* Should the results (i.e. summary in ECLIPSE speak) be intrenalized at this report_step? */
-  bool_vector_type    * __load_state;        /* Internal variable: is it necessary to load the state? */
-  bool_vector_type    * __load_results;      /* Internal variable: is it necessary to load the results? */
+  forward_model_type  * std_forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
+  bool                  use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
+  enkf_fs_type        * ensemble_dbase;      	    /* Where the ensemble files are stored */
+  history_type        * history;             	    /* The history object. */
+  path_fmt_type       * result_path;         	    /* path_fmt instance for results - should contain one %d which will be replaced report_step */
+  path_fmt_type       * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  char                * plot_path;           	    /* A dumping ground for PLOT files. */
+  enkf_sched_type     * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
+  char                * enkf_sched_file;     	    /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
+  int                   last_history_restart;    /* The end of the history. */
+  int                   abs_last_restart;           /* The total end of schedule file - will be updated with enkf_sched_file. */  
+  bool                  has_prediction;      	    /* Is the SCHEDULE_PREDICTION_FILE option set ?? */
+  char                * lock_path;           	    /* Path containing lock files */
+  lock_mode_type        runlock_mode;        	    /* Mode for locking run directories - currently not working.*/ 
+  bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
+  bool_vector_type    * internalize_results; 	    /* Should the results (i.e. summary in ECLIPSE speak) be intrenalized at this report_step? */
+  bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
+  bool_vector_type    * __load_results;      	    /* Internal variable: is it necessary to load the results? */
 };
 
 
@@ -78,16 +79,15 @@ void model_config_set_runpath_fmt(model_config_type * model_config, const char *
 
 
 void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode) {
-  int history_length    = model_config_get_history_length( model_config );
-
   if (model_config->enkf_sched != NULL)
     enkf_sched_free( model_config->enkf_sched );
-    
-  if (run_mode == enkf_assimilation) 
-    model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file  , history_length  , &model_config->total_length , run_mode , joblist , model_config->use_lsf );
-  else
-    model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file  , model_config->total_length , &model_config->total_length  , run_mode , joblist , model_config->use_lsf );
   
+  model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file       , 
+						      model_config->last_history_restart  , 
+						      model_config->abs_last_restart     , 
+						      run_mode                            , 
+						      joblist                             , 
+						      model_config->use_lsf );
 }
 
 
@@ -96,7 +96,7 @@ void model_config_set_enkf_sched_file(model_config_type * model_config , const c
 }
 
 
-model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , int history_length , const sched_file_type * sched_file , bool use_lsf) {
+model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , int last_history_restart , const sched_file_type * sched_file , bool use_lsf) {
   model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
 
   model_config->use_lsf            = use_lsf;
@@ -116,9 +116,25 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   model_config->enkf_sched_file = NULL;
   model_config_set_enkf_sched_file(model_config , config_safe_get(config , "ENKF_SCHED_FILE"));
   model_config_set_runpath_fmt( model_config , config_get(config , "RUNPATH") );
-  model_config->history = history_alloc_from_sched_file(sched_file);  
-  model_config->history_length = history_length;
-  model_config->total_length   = sched_file_get_num_restart_files(sched_file) - 1;  /* +/- 1 ohhhh  fuck me ..*/
+  model_config->history                 = history_alloc_from_sched_file(sched_file);  
+
+  /**
+     last_history_restart and abs_last_restart are inclusive upper limits.
+  */
+  model_config->last_history_restart = last_history_restart;
+  
+  /* 
+     Currently only the historical part - if a prediction file is in use, 
+     the extended length is pushed from enkf_state.
+  */
+  model_config->abs_last_restart     = last_history_restart;
+
+  
+  if (config_item_set(config ,  "SCHEDULE_PREDICTION_FILE"))
+    model_config->has_prediction = true;
+  else
+    model_config->has_prediction = false;
+  
   {
     const char * history_source = config_get(config , "HISTORY_SOURCE");
     const char * refcase        = NULL;
@@ -210,12 +226,28 @@ history_type * model_config_get_history(const model_config_type * config) {
 }
 
 
-int model_config_get_history_length(const model_config_type * config) {
-  return config->history_length;
+/**
+   Because the different enkf_state instances can have different
+   schedule prediction files they can in principle have different
+   number of dates. This variable only records the longest.
+*/
+void model_config_update_last_restart(model_config_type * config, int last_restart) {
+  if (config->abs_last_restart < last_restart)
+    config->abs_last_restart = last_restart;
 }
 
-int model_config_get_total_length(const model_config_type * config) {
-  return config->total_length;
+
+
+int model_config_get_last_history_restart(const model_config_type * config) {
+  return config->last_history_restart;
+}
+
+int model_config_get_abs_last_restart(const model_config_type * config) {
+  return config->abs_last_restart;
+}
+
+bool model_config_has_prediction(const model_config_type * config) {
+  return config->has_prediction;
 }
 
 

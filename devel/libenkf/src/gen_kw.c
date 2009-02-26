@@ -97,9 +97,9 @@ gen_kw_type * gen_kw_copyc(const gen_kw_type *gen_kw) {
 }
 
 
-bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream) {
+bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream, bool internal_state) {
   enkf_util_fwrite_target_type(stream , GEN_KW);
-  scalar_stream_fwrite(gen_kw->scalar , stream);
+  scalar_stream_fwrite(gen_kw->scalar , stream , internal_state);
   return true;
 }
 
@@ -110,17 +110,6 @@ void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {
 }
 
 
-
-void gen_kw_swapout(gen_kw_type * gen_kw , FILE * stream) {
-  gen_kw_fwrite(gen_kw , stream);
-  gen_kw_free_data(gen_kw);
-}
-
-
-void gen_kw_swapin(gen_kw_type * gen_kw , FILE * stream) {
-  gen_kw_realloc_data(gen_kw);
-  gen_kw_fread(gen_kw , stream);
-}
 
 
 void gen_kw_truncate(gen_kw_type * gen_kw) {

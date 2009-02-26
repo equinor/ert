@@ -80,9 +80,9 @@ void equil_ecl_write(const equil_type * equil, const char * run_path , const cha
 
 
 
-bool equil_fwrite(const equil_type * equil, FILE * stream) {
+bool equil_fwrite(const equil_type * equil, FILE * stream , bool internal_state) {
   enkf_util_fwrite_target_type(stream , EQUIL);
-  scalar_stream_fwrite(equil->scalar , stream);
+  scalar_stream_fwrite(equil->scalar , stream , internal_state);
   return true;
 }
 

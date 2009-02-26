@@ -10,7 +10,7 @@
 
 typedef struct ecl_config_struct ecl_config_type;
 
-ecl_config_type     * ecl_config_alloc( const config_type * , int * );
+ecl_config_type     * ecl_config_alloc( const config_type * );
 void                  ecl_config_free( ecl_config_type *);
 bool                  ecl_config_include_static_kw(const ecl_config_type * , const char * );
 void                  ecl_config_add_static_kw(ecl_config_type *, const char *); 
@@ -26,5 +26,6 @@ const char          * ecl_config_get_equil_init_file(const ecl_config_type * );
 const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * );
 int                   ecl_config_get_num_restart_files(const ecl_config_type * );
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * );
+int                   ecl_config_get_num_history_restart_files( const ecl_config_type * );
 
 #endif

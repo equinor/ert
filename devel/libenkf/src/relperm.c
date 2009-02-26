@@ -37,9 +37,9 @@ void relperm_realloc_data(relperm_type * relperm){
   scalar_realloc_data(relperm->scalar);
 }
 
-bool relperm_fwrite(const relperm_type * relperm, FILE * stream){
+bool relperm_fwrite(const relperm_type * relperm, FILE * stream , bool internal_state){
   enkf_util_fwrite_target_type(stream , RELPERM);
-  scalar_stream_fwrite(relperm->scalar , stream);
+  scalar_stream_fwrite(relperm->scalar , stream , internal_state);
   return true;
 }
 

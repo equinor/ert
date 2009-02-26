@@ -160,7 +160,7 @@ void ecl_static_kw_fread(ecl_static_kw_type * ecl_static_kw , FILE * stream) {
 }
 
 
-bool ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stream) {
+bool ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stream , bool internal_state) {
   enkf_util_fwrite_target_type(stream , STATIC);
   ecl_kw_fwrite_compressed(ecl_static_kw->ecl_kw , stream);
   return true;

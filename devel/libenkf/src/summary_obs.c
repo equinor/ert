@@ -103,25 +103,6 @@ double summary_obs_chi2(const summary_obs_type * obs,
 
 
 
-/**
-   This function want to store the observation for one report step, 
-   which is somewhat orthogonal to the design. Currently a no-op.
-*/
-   
-void summary_obs_fread(summary_obs_type * summary_obs , FILE * stream) {
-
-}
-
-
-
-/**
-   The return value is whether something is actually written to disk. 
-*/
-bool summary_obs_fwrite(const summary_obs_type * summary_obs , FILE * stream) {
-  util_fwrite_double(1.0 , stream);
-  util_fwrite_double(1.0 , stream);
-  return true;
-}
 
 
 void summary_obs_user_get(const summary_obs_type * summary_obs , const char * index_key , double * value , double * std, bool * valid) {
@@ -134,8 +115,6 @@ void summary_obs_user_get(const summary_obs_type * summary_obs , const char * in
 
 /*****************************************************************/
 
-VOID_FREAD(summary_obs)
-VOID_FWRITE(summary_obs)
 VOID_FREE(summary_obs)
 VOID_GET_OBS(summary_obs)
 VOID_USER_GET_OBS(summary_obs)

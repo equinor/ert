@@ -22,7 +22,10 @@ void                  model_config_set_internalize_results( model_config_type * 
 void                  model_config_set_load_state( model_config_type *  , int );
 void                  model_config_set_load_results( model_config_type *  , int ) ;
 int 		      model_config_get_history_length(const model_config_type * );
-int 		      model_config_get_total_length(const model_config_type * );
+bool                  model_config_has_prediction(const model_config_type * );
+int                   model_config_get_last_history_restart(const model_config_type * );
+int                   model_config_get_abs_last_restart(const model_config_type * );
+void                  model_config_update_last_restart(model_config_type * , int );
 void                  model_config_set_plot_path(model_config_type * , const char *);
 const char          * model_config_get_plot_path(const model_config_type * );
 void                  enkf_fs_fwrite_new_mount_map(const char * , const char * );

@@ -475,7 +475,7 @@ void field_ROFF_export(const field_type * field , const char * filename) {
 
 
 
-bool field_fwrite(const field_type * field , FILE * stream) {
+bool field_fwrite(const field_type * field , FILE * stream , bool internal_state) {
   const int data_size    = field_config_get_data_size(field->config);
   const int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
   bool  write_compressed = field_config_write_compressed(field->config);

@@ -41,14 +41,23 @@ struct ecl_config_struct {
   ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
   char               * schedule_target_file;   	   /* File name to write schedule info to */
   char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation. */
+  int                  num_history_restart_files;  
 };
 
 
 /*****************************************************************/
 
 
+/**
+   Could look up the sched_file instance directly - because the
+   ecl_config will never be the owner of a file with predictions.
+*/
 
-ecl_config_type * ecl_config_alloc( const config_type * config , int * history_length) {
+int ecl_config_get_num_history_restart_files( const ecl_config_type * ecl_config ) {
+  return ecl_config->num_history_restart_files;
+}
+
+ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
   ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_ENDIAN_FLIP , DEFAULT_UNIFIED );
   ecl_config->eclbase   	    = path_fmt_alloc_path_fmt( config_get(config , "ECLBASE") );
@@ -74,8 +83,8 @@ ecl_config_type * ecl_config_alloc( const config_type * config , int * history_l
     } 
 
     ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date );
-    *history_length = sched_file_get_num_restart_files( ecl_config->sched_file );   /* We keep track of this - so we can stop assimilation at the
-												  end of HISTORY. */
+    ecl_config->num_history_restart_files = sched_file_get_num_restart_files( ecl_config->sched_file );   /* We keep track of this - so we can stop assimilation at the
+													     end of HISTORY. */
     if (config_has_set_item(config , "SCHEDULE_PREDICTION_FILE"))
       ecl_config->prediction_sched_file_fmt = path_fmt_alloc_path_fmt( config_get(config , "SCHEDULE_PREDICTION_FILE") );
     else
@@ -84,6 +93,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config , int * history_l
   }
 
   if (config_has_set_item(config , "INIT_SECTION")) {
+
     /* The semantic regarding INIT_SECTION is as follows:
 
        1. If the INIT_SECTION points to an existing file - the

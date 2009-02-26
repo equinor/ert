@@ -71,7 +71,7 @@ void summary_fread(summary_type * summary , FILE * stream) {
 
 
 
-bool summary_fwrite(const summary_type * summary , FILE * stream) {
+bool summary_fwrite(const summary_type * summary , FILE * stream , bool internal_state) {
   const  summary_config_type * config = summary->config;
   const int data_size = summary_config_get_data_size(config);
   

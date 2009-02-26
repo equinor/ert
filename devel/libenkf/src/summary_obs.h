@@ -57,8 +57,6 @@ void summary_obs_set(summary_obs_type * , double , double );
 VOID_FREE_HEADER(summary_obs);
 VOID_GET_OBS_HEADER(summary_obs);
 VOID_MEASURE_HEADER(summary_obs);
-VOID_FREAD_HEADER(summary_obs)
-VOID_FWRITE_HEADER(summary_obs)
 SAFE_CAST_HEADER(summary_obs);
 IS_INSTANCE_HEADER(summary_obs);
 VOID_USER_GET_OBS_HEADER(summary_obs);

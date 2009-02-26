@@ -15,6 +15,7 @@ double * analysis_allocX(int , int , const meas_matrix_type * , obs_data_type * 
 
 analysis_config_type * analysis_config_alloc(const config_type * );
 void                   analysis_config_free( analysis_config_type * );
+bool                   analysis_config_merge_observations(const analysis_config_type * );
 
 #ifdef __cplusplus
 }

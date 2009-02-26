@@ -53,6 +53,7 @@ subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,
 
 
 struct analysis_config_struct {
+  bool                   merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
   double 	         truncation;
   double 	         overlap_alpha;
   enkf_mode_type         enkf_mode;
@@ -62,22 +63,24 @@ struct analysis_config_struct {
 
 
 
-static analysis_config_type * analysis_config_alloc__(double truncation , double overlap_alpha , enkf_mode_type enkf_mode) {
+static analysis_config_type * analysis_config_alloc__(double truncation , double overlap_alpha , enkf_mode_type enkf_mode , bool merge_observations) {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
-  
-  config->truncation     = truncation;
-  config->overlap_alpha  = overlap_alpha;
-  config->enkf_mode      = enkf_mode;
-  config->inversion_mode = SVD_SS_N1_R;
 
-  config->fortran_enkf_mode     =   config->enkf_mode + config->inversion_mode;
+  config->merge_observations = merge_observations;
+  config->truncation         = truncation;
+  config->overlap_alpha      = overlap_alpha;
+  config->enkf_mode          = enkf_mode;
+  config->inversion_mode     = SVD_SS_N1_R;
+  
+  config->fortran_enkf_mode  = config->enkf_mode + config->inversion_mode;
   return config;
 }
 
 
 analysis_config_type * analysis_config_alloc(const config_type * config) {
-  double truncation = strtod( config_get(config , "ENKF_TRUNCATION") , NULL);
-  double alpha      = strtod( config_get(config , "ENKF_ALPHA") , NULL);
+  double truncation 	    = strtod( config_get(config , "ENKF_TRUNCATION") , NULL);
+  double alpha      	    = strtod( config_get(config , "ENKF_ALPHA") , NULL);
+  bool   merge_observations = config_get_as_bool(config , "ENKF_MERGE_OBSERVATIONS");
   const char * enkf_mode_string = config_get(config , "ENKF_MODE");
   enkf_mode_type enkf_mode = enkf_sqrt; /* Compiler shut up */
 
@@ -88,9 +91,13 @@ analysis_config_type * analysis_config_alloc(const config_type * config) {
   else
     util_abort("%s: internal error : enkf_mode:%s not recognized \n",__func__ , enkf_mode_string);
 
-  return analysis_config_alloc__(truncation , alpha , enkf_mode);
+  return analysis_config_alloc__(truncation , alpha , enkf_mode , merge_observations);
 }
 
+
+bool analysis_config_merge_observations(const analysis_config_type * config) {
+  return config->merge_observations;
+}
 
 
 void analysis_config_free(analysis_config_type * config) {

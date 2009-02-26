@@ -227,7 +227,11 @@ int obs_vector_get_active_report_step(const obs_vector_type * vector) {
 
 
 bool obs_vector_iget_active(const obs_vector_type * vector, int index) {
-  if (index < 0 || index >= vector->size)
+  /* We accept this ... */
+  if (index >= vector->size)
+    return false;
+
+  if (index < 0) 
     util_abort("%s: index:%d invald. Limits: [0,%d) \n",__func__ , index , vector->size);
 
   if (vector->nodes[index] != NULL)

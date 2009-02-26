@@ -104,7 +104,7 @@ void gen_data_free(gen_data_type * gen_data) {
    changed.
 */
 
-bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
+bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream , bool internal_state) {
   const bool write_zero_size = true; /* true:ALWAYS write a file   false:only write files with size > 0. */
   {
     bool write      = write_zero_size;
@@ -115,16 +115,6 @@ bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream) {
 
     if (write) {
       int byte_size = gen_data_config_get_byte_size(gen_data->config);
-      
-      /*{
-	double * data = (double *) gen_data->data;
-	int i;
-	printf("%s: Writing gen_data instance size:%d  report_step:%d \n",__func__ , size , report_step);
-	for (i=0; i < size; i++)
-	  printf("%g ",data[i]);
-	printf("\n");
-      }
-      */
       
       enkf_util_fwrite_target_type(stream , GEN_DATA);
       util_fwrite_int(size        , stream);

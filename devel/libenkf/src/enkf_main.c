@@ -120,12 +120,17 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
 
 
 int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
-  return model_config_get_history_length( enkf_main->model_config);
+  return model_config_get_last_history_restart( enkf_main->model_config);
 }
 
 int enkf_main_get_total_length( const enkf_main_type * enkf_main) {
-  return model_config_get_total_length( enkf_main->model_config);
+  return model_config_get_abs_last_restart( enkf_main->model_config );
 }
+
+bool enkf_main_has_prediction( const enkf_main_type * enkf_main ) {
+  return model_config_has_prediction( enkf_main->model_config );
+}
+
 
 
 //const enkf_sched_type * enkf_main_get_enkf_sched(const enkf_main_type * enkf_main) {
@@ -369,7 +374,7 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
      time interval [step1+1,step2] will be used, otherwise only the
      last observation at step2 will be used.
   */
-  bool include_internal_observations = false;     
+  bool include_internal_observations = analysis_config_merge_observations( enkf_main->analysis_config );
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
   double *X;
   int start_step , end_step;
@@ -569,6 +574,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 
   model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode);
   enkf_main_init_internalization(enkf_main , run_mode);
+
 }
 
 
@@ -669,6 +675,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   
   if (site_config == NULL) 
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
+  
   enkf_main->__type_id  = ENKF_MAIN_ID;
   {
     char * path;
@@ -677,14 +684,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     util_alloc_file_components(_model_config , &path , &base , &ext);
     if (path != NULL) {
       if (chdir(path) != 0) 
-        util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
+	util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
 
       printf("Changing to directory ...................: %s \n",path);
       if (ext != NULL) {
-        model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
-        free(base);
+	model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
+	free(base);
       } else 
-        model_config = base;
+	model_config = base;
       free(ext);
       free(path);
     } else
@@ -795,7 +802,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
     item = config_add_item(config , "SCHEDULE_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
+    
+    item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    
     item = config_add_item(config , "DATA_FILE" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
     
@@ -878,7 +888,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
     config_set_arg(config , "ENKF_TRUNCATION" , 1 , (const char *[1]) { DEFAULT_ENKF_TRUNCATION });
 
-    
+    item = config_add_item(config , "ENKF_MERGE_OBSERVATIONS" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
+    config_set_arg(config , "ENKF_MERGE_OBSERVATIONS" , 1 , (const char *[1]) { DEFAULT_MERGE_OBSERVATIONS });
+        
     /*****************************************************************/
     /* Keywords for the estimation                                   */
     ensemble_config_add_config_items(config); 
@@ -893,12 +906,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
     enkf_main->analysis_config = analysis_config_alloc(config);
     {
-      int history_length;
       bool use_lsf;
-      enkf_main->ecl_config      = ecl_config_alloc(config , &history_length);
+      enkf_main->ecl_config      = ecl_config_alloc( config );
       enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
-      enkf_main->model_config    = model_config_alloc(config , site_config_get_installed_jobs(enkf_main->site_config) , history_length , ecl_config_get_sched_file(enkf_main->ecl_config) , use_lsf);
+      enkf_main->model_config    = model_config_alloc(config , 
+						      site_config_get_installed_jobs(enkf_main->site_config) , 
+						      ecl_config_get_num_history_restart_files( enkf_main->ecl_config) , 
+						      ecl_config_get_sched_file(enkf_main->ecl_config) , use_lsf);
     }
 
 
@@ -907,15 +922,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
        To keep or not to keep the runpath directories? The problem is
        that the default behavior is different depending on the run_mode:
 
-       	 enkf_mode: In this case the default behaviour is to delete the
-       	    runpath directories. You can explicitly say that you want to
-       	    keep runpath directories with the KEEP_RUNPATH
-       	    directive. 
+       enkf_mode: In this case the default behaviour is to delete the
+       runpath directories. You can explicitly say that you want to
+       keep runpath directories with the KEEP_RUNPATH
+       directive. 
 
-         experiments: In this case the default is to keep the runpath
-            directories around, but you can explicitly say that you
-            want to remove the directories by using the DELETE_RUNPATH
-            option.
+       experiments: In this case the default is to keep the runpath
+       directories around, but you can explicitly say that you
+       want to remove the directories by using the DELETE_RUNPATH
+       option.
 
        The final decision is performed in enkf_state().
     */
@@ -1016,7 +1031,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 						       enkf_main->ecl_config     ,
 						       data_kw,
 						       model_config_get_std_forward_model(enkf_main->model_config));
-	  
+
+	  /** This is the time we tell the model config object about our 'maximum report step' - possibly including predictions. */
+	  model_config_update_last_restart(enkf_main->model_config , enkf_state_get_last_restart_nr( enkf_main->ensemble[iens] ));
 	}
 	msg_free(msg , true);
 	

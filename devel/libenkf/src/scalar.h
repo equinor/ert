@@ -31,7 +31,7 @@ int              scalar_serialize(const scalar_type * , serial_state_type * , si
 void             scalar_deserialize(scalar_type * , serial_state_type * , const serial_vector_type *);
 int              scalar_serialize_part(const scalar_type * , serial_state_type * , bool , int , int , size_t , serial_vector_type *);
 void             scalar_deserialize_part(scalar_type * , serial_state_type * , bool , int , int, const serial_vector_type *);
-void             scalar_stream_fwrite(const scalar_type * scalar , FILE * );
+void             scalar_stream_fwrite(const scalar_type * scalar , FILE * , bool);
 void             scalar_stream_fread(scalar_type * scalar , FILE * );
 void             scalar_realloc_data(scalar_type * scalar);
 void             scalar_clear(scalar_type * scalar); 

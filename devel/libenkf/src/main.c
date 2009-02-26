@@ -44,27 +44,30 @@ void text_splash() {
 
 
 /*
-  SVN_VERSION and COMPILE_TIME_STAMP are env variables set by the makefile.
+  SVN_VERSION and COMPILE_TIME_STAMP are env variables set by the
+  makefile. Will exit if the config file does not exist.
 */
 void enkf_welcome(const char * config_file) {
-  char * svn_version  	 = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
-  char * compile_time 	 = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
-  char * abs_path     	 = util_alloc_realpath( config_file );
-  char * config_file_msg = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
-  printf("\n");
-  printf("%s",svn_version);
-  printf("%s",compile_time);
-  printf("\n");
-
-  /* This will be printed if/when util_abort() is called on a later stage. */
-  util_abort_append_version_info(svn_version);
-  util_abort_append_version_info(compile_time);
-  util_abort_append_version_info(config_file_msg);
-
-  free(config_file_msg);
-  free(abs_path);
-  free(svn_version);
-  free(compile_time);
+  if (util_file_exists( config_file )) {
+    char * svn_version  	 = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
+    char * compile_time 	 = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
+    char * abs_path     	 = util_alloc_realpath( config_file );
+    char * config_file_msg = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
+    printf("\n");
+    printf("%s",svn_version);
+    printf("%s",compile_time);
+    printf("\n");
+    
+    /* This will be printed if/when util_abort() is called on a later stage. */
+    util_abort_append_version_info(svn_version);
+    util_abort_append_version_info(compile_time);
+    util_abort_append_version_info(config_file_msg);
+    
+    free(config_file_msg);
+    free(abs_path);
+    free(svn_version);
+    free(compile_time);
+  } else util_exit(" ** Sorry: can not locate configuration file: %s \n\n" , config_file);
 }
 
 

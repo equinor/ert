@@ -1,7 +1,7 @@
 enkf_ui_util.o                      : enkf_ui_util.c enkf_ui_util.h enkf_node.o field.o field_config.o enkf_state.o ensemble_config.o enkf_types.o  
 meas_op.o                           : meas_op.c meas_op.h  
 relperm.o                           : relperm.c relperm.h enkf_types.o relperm_config.o enkf_util.o scalar.o enkf_macros.h  
-enkf_fs.o                           : enkf_fs.c enkf_fs.h enkf_node.o basic_driver.o fs_types.h ecl_static_kw.o plain_driver_parameter.o plain_driver_static.o plain_driver_dynamic.o plain_driver_index.o plain_driver.o  
+enkf_fs.o                           : enkf_fs.c enkf_fs.h enkf_defaults.o enkf_node.o basic_driver.o fs_types.h ecl_static_kw.o plain_driver_parameter.o plain_driver_static.o plain_driver_dynamic.o plain_driver_index.o plain_driver.o  
 enkf_config_node.o                  : enkf_config_node.c enkf_config_node.h enkf_types.o enkf_macros.h  
 enkf_defaults.o                     : enkf_defaults.c enkf_defaults.h  
 gen_data.o                          : gen_data.c gen_data.h enkf_serialize.o enkf_types.o enkf_macros.h enkf_util.o gen_data_config.o gen_common.o  
@@ -49,7 +49,7 @@ gen_kw.o                            : gen_kw.c gen_kw.h enkf_types.o gen_kw_conf
 gen_obs.o                           : gen_obs.c gen_obs.h enkf_util.o enkf_types.o enkf_macros.h meas_vector.o obs_data.o gen_data.o gen_common.o gen_obs_active.o  
 meas_vector.o                       : meas_vector.c meas_vector.h enkf_util.o  
 havana_fault_config.o               : havana_fault_config.c havana_fault_config.h gen_kw_config.o enkf_util.o enkf_macros.h  
-enkf_ui_fs.o                        : enkf_ui_fs.c enkf_ui_fs.h enkf_ui_util.o enkf_main.o enkf_fs.o  
+enkf_ui_fs.o                        : enkf_ui_fs.c enkf_ui_fs.h enkf_ui_util.o enkf_main.o enkf_types.o enkf_fs.o  
 scalar_config.o                     : scalar_config.c scalar_config.h enkf_util.o enkf_macros.h trans_func.o active_list.o  
 main.o                              : main.c enkf_fs.o enkf_main.o enkf_types.o enkf_sched.o enkf_ui_main.o uncle_sam_100.h  
 equil.o                             : equil.c equil.h enkf_types.o equil_config.o enkf_util.o scalar.o scalar_config.o enkf_macros.h enkf_serialize.o  

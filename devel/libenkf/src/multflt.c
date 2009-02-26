@@ -114,9 +114,9 @@ void  multflt_ecl_write(const multflt_type * multflt, const char * run_path , co
 
 
 
-bool multflt_fwrite(const multflt_type *multflt , FILE * stream) {
+bool multflt_fwrite(const multflt_type *multflt , FILE * stream, bool internal_state) {
   enkf_util_fwrite_target_type(stream , MULTFLT);
-  scalar_stream_fwrite(multflt->scalar , stream);
+  scalar_stream_fwrite(multflt->scalar , stream , internal_state);
   return true;
 }
 

@@ -407,13 +407,13 @@ void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * 
    to skip storage (i.e. unlink an empty file).
 */
 
-bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , int report_step , int iens , state_enum state) {
+bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , bool internal_state , int report_step , int iens , state_enum state) {
   if (!enkf_node->__memory_allocated)
     util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
   {
     bool data_written = false;
     FUNC_ASSERT(enkf_node->fwrite_f);
-    data_written = enkf_node->fwrite_f(enkf_node->data , stream);
+    data_written = enkf_node->fwrite_f(enkf_node->data , stream , internal_state);
     
     enkf_node->__report_step = report_step;
     enkf_node->__state       = state;

@@ -10,6 +10,107 @@
 #include <forward_model.h>
 #include <vector.h>
 
+/**
+   How long is the simulation?
+   ===========================
+   
+   There are some many configuration variables and usage patterns
+   control the length of the simulation that you can seriously get
+   dizzy - they all come with their own potential for +/- 1
+   misunderstandings. 
+
+   User options:
+   -------------
+
+     SCHEDULE_FILE: This is basically the schedule file given by the
+        user which controls the historical period. This schedule file
+        is guranteed to provide all members with the same DATES /
+        TSTEP keywords.
+
+     PREDICTION_SCHEDULE_FILE: This is optional file which the user
+        can supply for predictions. It will be parsed and appended to
+        the internal sched_file instance. Observe that the
+        PREDICTION_SCHEDULE_FILE can be per. member, hence for the
+        prediction part there is no longer a guarantee that all
+        member simulations are equally long.
+
+     ENKF_SCHED_FILE: With this configuration option the user can have
+        reasonably fine-grained control on the time steps in the
+        simulation. The simulation will be controlled by an enkf_sched
+        instance (implemented in this file), to supply a
+        ENKF_SCHED_FILE is optional, if no file is supplied by the
+        user a default enkf_sched instance is allocated.
+
+
+   Usage patterns:
+   ---------------
+   
+
+
+
+
+   
+   Offset +/- 1 convention:
+   ------------------------
+   
+   The main 'master' of this information is the sched_file instance,
+   that provides the function sched_file_get_num_restart_files() which
+   returns the total number of restart files from a full simulation:
+
+
+      schedule_file.inc
+      -----------------
+      --- Simulation START 1. JAN 2000  
+
+      DATES 
+        1  'FEB' 2000  /
+      /
+
+      
+      DATES
+        1  'MAR' 2000 /
+      /
+
+
+      DATES
+        1  'APR' 2000 /
+      /
+      END
+
+   This schedule file produce the following restart files when a full
+   simulation is run:
+
+      Restart_file   |    Corresponding date
+      --------------------------------------
+      BASE.X0000     |       1. JAN  2000
+      BASE.X0001     |       1. FEB  2000
+      BASE.X0002     |       1. MAR  2000
+      BASE.X0003     |       1. APR  2000
+      --------------------------------------
+
+   So in this case the function sched_file_get_num_restarts() will
+   return 4, but the last valid restart file has number '0003'. 
+
+
+   Observe that there is one immediate glaring inconsistency on these
+   matters:
+
+     1. The input to enkf_sched_fscanf_alloc() is the output from
+        sched_file_get_num_restarts(), i.e. it would be 4 for the
+        example above.
+
+     2. The enkf_sched_node_type instances which this file is based on
+        considers inclusive simulation steps, i.e. report_step2 in the
+        final node should be 3 for this example, yielding default
+        assimilation steps:
+
+	  0   1
+          1   2
+          2   3 
+     
+*/
+
+
 
 struct enkf_sched_node_struct {
   int    	       report_step1;
@@ -23,9 +124,8 @@ struct enkf_sched_node_struct {
 
 
 struct enkf_sched_struct {
-  vector_type    *nodes;                 /* Vector consisting of enkf_sched_node_type instances. */
-  int             schedule_num_reports;  /* The number of DATES / TSTEP keywords in the currently active SCHEDULE file. */
-  int             last_report;           /* The last report_step in the enkf_sched instance - can be greater than schedule_num_reports .*/
+  vector_type    *nodes;                  /* Vector consisting of enkf_sched_node_type instances. */
+  int             last_report;            /* The last report_step in this enkf_sched instance - internal convenience variable. */
 };
 
 
@@ -235,33 +335,48 @@ void enkf_sched_free( enkf_sched_type * enkf_sched) {
 
 
 
-static enkf_sched_type * enkf_sched_alloc_empty( int num_restart_files) {
-  enkf_sched_type * enkf_sched     = util_malloc(sizeof * enkf_sched , __func__);
-  enkf_sched->nodes                = vector_alloc_new();  
-  enkf_sched->schedule_num_reports = num_restart_files - 1;
-  enkf_sched->last_report          = 0;
+static enkf_sched_type * enkf_sched_alloc_empty( ) {
+  enkf_sched_type * enkf_sched      = util_malloc(sizeof * enkf_sched , __func__);
+  enkf_sched->nodes                 = vector_alloc_new();  
+  enkf_sched->last_report           = 0;
   return enkf_sched;
 }
 
 
 
-static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , run_mode_type run_mode) {
+static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int num_history_restart , int total_num_restart , run_mode_type run_mode) {
   enkf_sched_node_type * node;
 
   if (run_mode == enkf_assimilation) {
     /* Default enkf: stride one - active at all report steps. */
     /* Have to explicitly add all these nodes. */
     int report_step;
-    for (report_step = 0; report_step < enkf_sched->schedule_num_reports; report_step++) {
+    for (report_step = 0; report_step < (num_history_restart - 1); report_step++) {   
       node = enkf_sched_node_alloc(report_step , report_step + 1, true , NULL);
       enkf_sched_append_node(enkf_sched , node);
     }
+    /* Okay we are doing assimilation and prediction in one go - fair enough. */
+    
+    if (total_num_restart > num_history_restart) {
+      /* We have prediction. */
+      node = enkf_sched_node_alloc(num_history_restart - 1 , total_num_restart - 1 , false , NULL);
+      enkf_sched_append_node(enkf_sched , node);
+    }
   } else {
-    /* experiment: Do the whole thing in ONE go - off at all report steps. */
-    node = enkf_sched_node_alloc(0 , enkf_sched->schedule_num_reports , false , NULL); 
+    /* 
+       experiment: Do the whole thing in two steps, 
+       first the whole history, and then subsequently the prediction part (if there is any).
+    */
+    node = enkf_sched_node_alloc(0 , num_history_restart - 1, false , NULL); 
     enkf_sched_append_node(enkf_sched , node);
+    if (total_num_restart > num_history_restart) {
+      /* We have prediction. */
+      node = enkf_sched_node_alloc(num_history_restart - 1 , total_num_restart - 1 , false , NULL);
+      enkf_sched_append_node(enkf_sched , node);
+    }
   }
 }
+
 
 
 
@@ -271,10 +386,10 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , run_mode_type
    enkf_sched_type instance is allocated.
 */
 
-enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num_restart_files , int * last_report_step , run_mode_type run_mode, const ext_joblist_type * joblist , bool use_lsf) {
-  enkf_sched_type * enkf_sched = enkf_sched_alloc_empty(num_restart_files);
+enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num_history_restart , int total_num_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool use_lsf) {
+  enkf_sched_type * enkf_sched = enkf_sched_alloc_empty( );
   if (enkf_sched_file == NULL)
-    enkf_sched_set_default(enkf_sched , run_mode);
+    enkf_sched_set_default(enkf_sched , num_history_restart , total_num_restart , run_mode);
   else {
     FILE * stream = util_fopen(enkf_sched_file , "r");
     bool at_eof;
@@ -284,11 +399,8 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num
     
     fclose( stream );
   }
-  {
-    enkf_sched_node_type * last_node = vector_get_last( enkf_sched->nodes );
-    *last_report_step = last_node->report_step2;
-  }
   enkf_sched_verify__(enkf_sched);
+  enkf_sched_fprintf( enkf_sched , stdout );
   return enkf_sched;
 }
 
@@ -301,11 +413,6 @@ void enkf_sched_fprintf(const enkf_sched_type * enkf_sched , FILE * stream) {
   
 }
 
-
-
-int enkf_sched_get_schedule_num_reports(const enkf_sched_type * enkf_sched) {
-  return enkf_sched->schedule_num_reports;
-}
 
 
 int enkf_sched_get_last_report(const enkf_sched_type * enkf_sched) {

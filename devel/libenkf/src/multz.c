@@ -90,9 +90,9 @@ multz_type * multz_copyc(const multz_type *multz) {
 }
 
 
-bool multz_fwrite(const multz_type *multz , FILE * stream) {
+bool multz_fwrite(const multz_type *multz , FILE * stream , bool internal_state) {
   enkf_util_fwrite_target_type(stream , MULTZ);
-  scalar_stream_fwrite(multz->scalar , stream);
+  scalar_stream_fwrite(multz->scalar , stream , internal_state);
   return true;
 }
 

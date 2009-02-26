@@ -490,7 +490,7 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const model_con
     int iens1 = 0;        /* Could be user input */
     int iens2 = ens_size;
     
-    plot_dataset_type *  obs  = plot_alloc_new_dataset( plot , plot_x1x2y , false);
+    plot_dataset_type *  obs;
     node = enkf_node_alloc( config_node );
     
     for (l = 0; l < obs_size; l++) {
@@ -523,11 +523,13 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const model_con
 	const field_type * field = enkf_node_value_ptr( node );
 	plot_dataset_type * data = plot_alloc_new_dataset( plot , plot_xy , false);
 	plot_dataset_set_style( data , POINTS );
-	plot_dataset_set_symbol_size( data , 1.25 );
+	plot_dataset_set_symbol_size( data , 1.00 );
 	for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
 	  plot_dataset_append_point_xy(data , field_ijk_get_double( field , i[l] , j[l] , k[l]) , depth[l]);
       } else printf("No data found for :%d/%d \n",iens, report_step);
     }
+    
+    obs = plot_alloc_new_dataset( plot , plot_x1x2y , false);
     for (l = 0; l < obs_size; l++) {
       double value , std;
       
