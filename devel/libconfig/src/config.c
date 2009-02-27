@@ -100,7 +100,7 @@ typedef struct validate_struct validate_type;
    needed during the validation process. Observe the following about
    validation:
 
-    1. It is atmoic, in the sense that if you try to an item like this:
+    1. It is atomic, in the sense that if you try to an item like this:
 
          KW  ARG1 ARG2 ARG3
 
@@ -375,12 +375,31 @@ const char * config_item_iget(const config_item_type * item , int index) {
   }
 }
 
+void config_item_assure_type(const config_item_type * item , int index , config_item_types item_type) {
+  bool OK = false;
+
+  if (item->validate->type_map != NULL)
+    if (item->validate->type_map[index] == item_type)
+      OK = true;
+
+  if (!OK)
+    util_abort("%s: failed - wrong installed type \n" , __func__);
+}
+
 /*
   This function will fail if we can not satisfy argc_minmax = (1,1).
 */
 const char * config_item_get(const config_item_type * item) {
   validate_assert_get(item->validate);
   return config_item_iget(item , 0);
+}
+
+bool config_item_get_as_bool(const config_item_type * item) {
+  bool value;
+  validate_assert_get(item->validate);
+  config_item_assure_type(item , 0 , CONFIG_BOOLEAN);
+  util_sscanf_bool( config_item_iget(item , 0) , &value );
+  return value;
 }
 
 
@@ -1303,6 +1322,13 @@ const char * config_get(const config_type * config , const char * kw) {
   config_item_type * item = config_get_item(config , kw);
 
   return config_item_get(item);
+}
+
+
+
+bool config_get_as_bool(const config_type * config , const char * kw) {
+  config_item_type * item = config_get_item(config , kw);
+  return config_item_get_as_bool(item);
 }
 
 
