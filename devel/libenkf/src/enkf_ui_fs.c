@@ -85,9 +85,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
   int ens_size;
   int last_report;
   int report_step_from;
-  int report_step_to;
   state_enum state_from;
-  state_enum state_to;
 
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
@@ -103,19 +101,9 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
   */
   printf("Source case ==> ");
   scanf("%s", source_case);
-  enkf_fs_select_write_dir( fs, source_case, true );
+  enkf_fs_select_read_dir( fs, source_case);
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
   state_from       = enkf_ui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
-
-
-  /* 
-     Simplify with some defaults. 
-  */
-  report_step_to = 0;
-  if (report_step_to == 0)
-    state_to = analyzed;
-  else
-    state_to = forecast;
 
   enkf_fs_select_read_dir( fs, source_case );
 
@@ -130,7 +118,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
     {
       const char * key = stringlist_iget(parameters, i);
       enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
-      enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , 0, ens_size - 1);
+      enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, 0 , analyzed , 0, ens_size - 1);
     }
 
     stringlist_free(parameters);
