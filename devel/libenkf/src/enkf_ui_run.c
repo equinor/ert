@@ -145,12 +145,6 @@ void enkf_ui_run_predictions__(void * __enkf_main) {
     fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");
   
 
-  //int last_report = enkf_main_get_total_length( enkf_main ) ;
-  //int step1 = enkf_ui_util_scanf_report_step(last_report , "First report step" , 20);
-  //int step2 = enkf_ui_util_scanf_report_step(last_report , "Last report step" , 20);
-  //
-  //if(step1 >= step2)
-  //  enkf_main_analysis_update(enkf_main , step1, step2 );
 }
 
 

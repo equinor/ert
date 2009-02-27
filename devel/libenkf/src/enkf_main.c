@@ -912,7 +912,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
       enkf_main->model_config    = model_config_alloc(config , 
 						      site_config_get_installed_jobs(enkf_main->site_config) , 
-						      ecl_config_get_num_history_restart_files( enkf_main->ecl_config) , 
+						      ecl_config_get_last_history_restart( enkf_main->ecl_config ), 
 						      ecl_config_get_sched_file(enkf_main->ecl_config) , use_lsf);
     }
 

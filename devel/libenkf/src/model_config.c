@@ -31,6 +31,8 @@
    Observe that the distinction of what goes in model_config, and what
    goes in ecl_config is not entirely clear; ECLIPSE is unfortunately
    not (yet ??) exactly 'any' reservoir simulator in this context.
+
+   Read the documentation about restart numbering in enkf_sched.c
 */
 
 
@@ -44,7 +46,7 @@ struct model_config_struct {
   char                * plot_path;           	    /* A dumping ground for PLOT files. */
   enkf_sched_type     * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
   char                * enkf_sched_file;     	    /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
-  int                   last_history_restart;    /* The end of the history. */
+  int                   last_history_restart;       /* The end of the history - this is inclusive.*/
   int                   abs_last_restart;           /* The total end of schedule file - will be updated with enkf_sched_file. */  
   bool                  has_prediction;      	    /* Is the SCHEDULE_PREDICTION_FILE option set ?? */
   char                * lock_path;           	    /* Path containing lock files */
@@ -122,12 +124,11 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
      last_history_restart and abs_last_restart are inclusive upper limits.
   */
   model_config->last_history_restart = last_history_restart;
-  
   /* 
      Currently only the historical part - if a prediction file is in use, 
      the extended length is pushed from enkf_state.
   */
-  model_config->abs_last_restart     = last_history_restart;
+  model_config->abs_last_restart = model_config->last_history_restart;
 
   
   if (config_item_set(config ,  "SCHEDULE_PREDICTION_FILE"))
@@ -229,8 +230,16 @@ history_type * model_config_get_history(const model_config_type * config) {
 /**
    Because the different enkf_state instances can have different
    schedule prediction files they can in principle have different
-   number of dates. This variable only records the longest.
+   number of dates. This variable only records the longest. Observe
+   that the input is assumed to be transformed to the "Number of last
+   restart file" domain. I.e. in the case of four restart files:
+   
+      num_restart_files = 4 => "0000","0001","0002","0003"
+
+   This function expects to get the input three.           
+
 */
+
 void model_config_update_last_restart(model_config_type * config, int last_restart) {
   if (config->abs_last_restart < last_restart)
     config->abs_last_restart = last_restart;

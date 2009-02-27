@@ -89,25 +89,16 @@
       --------------------------------------
 
    So in this case the function sched_file_get_num_restarts() will
-   return 4, but the last valid restart file has number '0003'. 
+   return 4, but the last valid restart file has number '0003'. The
+   fundamental query in this functionality is to query the sched_file
+   instance, and that will return 4 in the example shown above. On the
+   other hand most of the API and user interface in this application
+   is based on an inclusive upper limit, i.e. we translate
 
+      "Total number of restart files: 4" ==> "Number of the last restart file: 3"
 
-   Observe that there is one immediate glaring inconsistency on these
-   matters:
-
-     1. The input to enkf_sched_fscanf_alloc() is the output from
-        sched_file_get_num_restarts(), i.e. it would be 4 for the
-        example above.
-
-     2. The enkf_sched_node_type instances which this file is based on
-        considers inclusive simulation steps, i.e. report_step2 in the
-        final node should be 3 for this example, yielding default
-        assimilation steps:
-
-	  0   1
-          1   2
-          2   3 
-     
+   This translation is done 'immediately' the sched_file routine
+   returns 4, and that should be immediately converted to three.
 */
 
 
@@ -344,22 +335,22 @@ static enkf_sched_type * enkf_sched_alloc_empty( ) {
 
 
 
-static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int num_history_restart , int total_num_restart , run_mode_type run_mode) {
+static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_history_restart , int abs_last_restart , run_mode_type run_mode) {
   enkf_sched_node_type * node;
 
   if (run_mode == enkf_assimilation) {
     /* Default enkf: stride one - active at all report steps. */
     /* Have to explicitly add all these nodes. */
     int report_step;
-    for (report_step = 0; report_step < (num_history_restart - 1); report_step++) {   
+    for (report_step = 0; report_step < last_history_restart; report_step++) {   
       node = enkf_sched_node_alloc(report_step , report_step + 1, true , NULL);
       enkf_sched_append_node(enkf_sched , node);
     }
     /* Okay we are doing assimilation and prediction in one go - fair enough. */
     
-    if (total_num_restart > num_history_restart) {
+    if (abs_last_restart > last_history_restart) {
       /* We have prediction. */
-      node = enkf_sched_node_alloc(num_history_restart - 1 , total_num_restart - 1 , false , NULL);
+      node = enkf_sched_node_alloc(last_history_restart , abs_last_restart , false , NULL);
       enkf_sched_append_node(enkf_sched , node);
     }
   } else {
@@ -367,11 +358,11 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int num_histo
        experiment: Do the whole thing in two steps, 
        first the whole history, and then subsequently the prediction part (if there is any).
     */
-    node = enkf_sched_node_alloc(0 , num_history_restart - 1, false , NULL); 
+    node = enkf_sched_node_alloc(0 , last_history_restart , false , NULL); 
     enkf_sched_append_node(enkf_sched , node);
-    if (total_num_restart > num_history_restart) {
+    if (abs_last_restart > last_history_restart) {
       /* We have prediction. */
-      node = enkf_sched_node_alloc(num_history_restart - 1 , total_num_restart - 1 , false , NULL);
+      node = enkf_sched_node_alloc(last_history_restart , abs_last_restart , false , NULL);
       enkf_sched_append_node(enkf_sched , node);
     }
   }
@@ -386,10 +377,10 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int num_histo
    enkf_sched_type instance is allocated.
 */
 
-enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int num_history_restart , int total_num_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool use_lsf) {
+enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int last_history_restart , int abs_last_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool use_lsf) {
   enkf_sched_type * enkf_sched = enkf_sched_alloc_empty( );
   if (enkf_sched_file == NULL)
-    enkf_sched_set_default(enkf_sched , num_history_restart , total_num_restart , run_mode);
+    enkf_sched_set_default(enkf_sched , last_history_restart , abs_last_restart , run_mode);
   else {
     FILE * stream = util_fopen(enkf_sched_file , "r");
     bool at_eof;

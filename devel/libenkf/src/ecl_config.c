@@ -41,7 +41,7 @@ struct ecl_config_struct {
   ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
   char               * schedule_target_file;   	   /* File name to write schedule info to */
   char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation. */
-  int                  num_history_restart_files;  
+  int                  last_history_restart;
 };
 
 
@@ -53,8 +53,8 @@ struct ecl_config_struct {
    ecl_config will never be the owner of a file with predictions.
 */
 
-int ecl_config_get_num_history_restart_files( const ecl_config_type * ecl_config ) {
-  return ecl_config->num_history_restart_files;
+int ecl_config_get_last_history_restart( const ecl_config_type * ecl_config ) {
+  return ecl_config->last_history_restart;
 }
 
 ecl_config_type * ecl_config_alloc( const config_type * config ) {
@@ -83,7 +83,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
     } 
 
     ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date );
-    ecl_config->num_history_restart_files = sched_file_get_num_restart_files( ecl_config->sched_file );   /* We keep track of this - so we can stop assimilation at the
+    ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the
 													     end of HISTORY. */
     if (config_has_set_item(config , "SCHEDULE_PREDICTION_FILE"))
       ecl_config->prediction_sched_file_fmt = path_fmt_alloc_path_fmt( config_get(config , "SCHEDULE_PREDICTION_FILE") );

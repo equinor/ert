@@ -26,6 +26,6 @@ const char          * ecl_config_get_equil_init_file(const ecl_config_type * );
 const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * );
 int                   ecl_config_get_num_restart_files(const ecl_config_type * );
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * );
-int                   ecl_config_get_num_history_restart_files( const ecl_config_type * );
+int                   ecl_config_get_last_history_restart( const ecl_config_type * );
 
 #endif

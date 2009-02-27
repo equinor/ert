@@ -963,10 +963,13 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
 
 
 /**
-   This function checks that the node exists, and does not fail if it
-   does not .. should be used carefully.
+   This is a special function which is only used to load the initial
+   state of dynamic_state nodes. It checks if the enkf_config_node has
+   set a valid value for input_file, in that case that means we should
+   also have an internalized representation of it, otherwise it will
+   just return (i.e. for PRESSURE / SWAT).
 */
-void enkf_state_safe_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
+static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
@@ -975,9 +978,15 @@ void enkf_state_safe_fread(enkf_state_type * enkf_state , int mask , int report_
   
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_include_type(enkf_node , mask)) {
-      if (enkf_fs_has_node(shared_info->fs , enkf_node_get_config( enkf_node ) , report_step , my_config->iens , state)) 
-	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
+    if (enkf_node_get_var_type(enkf_node) == dynamic_state) {
+      const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
+
+      /* Just checked for != NULL */
+      char * load_file = enkf_config_node_alloc_infile( config_node , 0);
+      if (load_file != NULL) 
+	enkf_fs_fread_node(shared_info->fs , enkf_node , 0 , my_config->iens , analyzed);
+
+      util_safe_free( load_file );
     }
   }                                                                     
   util_free_stringlist(key_list , num_keys);
@@ -1094,7 +1103,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	    Must be carefull not to fail when trying to load
 	    e.g. PRESSURE which might not exist in the filesystem.
 	*/
-	enkf_state_safe_fread(enkf_state , dynamic_state , run_info->init_step , run_info->init_state);
+	enkf_state_fread_initial_state(enkf_state);
       else
 	mask += dynamic_state;
       enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state );
