@@ -788,7 +788,7 @@ void enkf_ui_plot_menu(void * arg) {
   }
 
   {
-    menu_type * menu = menu_alloc("EnKF plot menu" , "Back" , "bB");
+    menu_type * menu = menu_alloc("Plot results" , "Back" , "bB");
     menu_add_item(menu , "Ensemble plot"    , "eE"                          , enkf_ui_plot_ensemble    , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of ALL summary variables"    , "aA" , enkf_ui_plot_all_summary , enkf_main , NULL);
     menu_add_item(menu , "Observation plot" , "oO" 			    , enkf_ui_plot_observation , enkf_main , NULL);

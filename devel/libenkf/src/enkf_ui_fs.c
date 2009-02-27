@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <menu.h>
 #include <enkf_ui_util.h>
+#include <enkf_ui_init.h>
 #include <enkf_main.h>
 #include <enkf_types.h>
 #include <enkf_fs.h>
@@ -80,7 +81,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
 {
   int prompt_len = 35;
   char * current_case;
-  char target_case[256];
+  char source_case[256];
   int ens_size;
   int last_report;
   int report_step_from;
@@ -100,6 +101,9 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
   /**
      Read user input and set read/write cases.
   */
+  printf("Source case ==> ");
+  scanf("%s", source_case);
+  enkf_fs_select_write_dir( fs, source_case, true );
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
   state_from       = enkf_ui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
 
@@ -113,9 +117,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
   else
     state_to = forecast;
 
-  printf("Target case ==> ");
-  scanf("%s", target_case);
-  enkf_fs_select_write_dir( fs, target_case, true );
+  enkf_fs_select_read_dir( fs, source_case );
 
   {
     /**
@@ -138,7 +140,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg)
   /**
     Revert to original case.
   */
-  enkf_fs_select_write_dir(fs, current_case, false);
+  enkf_fs_select_read_dir(fs, current_case);
   free(current_case);
 }
 
@@ -210,7 +212,7 @@ void enkf_ui_fs_menu(void * arg) {
    enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
    enkf_fs_type    * fs         = enkf_main_get_fs( enkf_main );
 
-   const char * menu_title = util_alloc_sprintf("Manage cases - clurrent: %s", enkf_fs_get_read_dir(fs));
+   const char * menu_title = util_alloc_sprintf("Manage cases - current: %s", enkf_fs_get_read_dir(fs));
    menu_type * menu = menu_alloc(menu_title , "Back" , "bB");
 
    menu_add_item(menu , "List available cases" , "lL" , enkf_ui_fs_ls_case , fs , NULL);
@@ -219,7 +221,7 @@ void enkf_ui_fs_menu(void * arg) {
      arg_pack_type * arg_pack = arg_pack_alloc();
      arg_pack_append_ptr(arg_pack  , fs);
      arg_pack_append_ptr(arg_pack  , menu);
-     menu_add_item(menu , "Create case" , "cC" , enkf_ui_fs_create_case, arg_pack , arg_pack_free__);
+     menu_add_item(menu , "Create new case" , "cC" , enkf_ui_fs_create_case, arg_pack , arg_pack_free__);
    }
 
    {
@@ -229,8 +231,12 @@ void enkf_ui_fs_menu(void * arg) {
      menu_add_item(menu , "Select case" , "sS" , enkf_ui_fs_select_case, arg_pack , arg_pack_free__);
    }
 
-   menu_add_item(menu, "Copy parameters to new case", "pP", enkf_ui_fs_copy_all_parameters, enkf_main, NULL); 
-   menu_add_item(menu, "Copy ensemble", "eE", enkf_ui_fs_copy_ensemble, enkf_main, NULL); 
+   menu_add_separator(menu);
+   menu_add_item(menu, "Initialize case from scratch", "iI", enkf_ui_init_menu, enkf_main, NULL); 
+   menu_add_item(menu, "Initialize case from another", "aA", enkf_ui_fs_copy_all_parameters, enkf_main, NULL); 
+
+   menu_add_separator(menu);
+   menu_add_item(menu, "Copy to another case", "eE", enkf_ui_fs_copy_ensemble, enkf_main, NULL); 
 
    menu_run(menu);
    menu_free(menu);

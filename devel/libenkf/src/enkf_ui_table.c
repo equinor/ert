@@ -180,12 +180,10 @@ void enkf_ui_table_menu(void * arg) {
   
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   {
-    menu_type * menu = menu_alloc("EnKF table menu" , "Back" , "bB");
+    menu_type * menu = menu_alloc("Table of results" , "Back" , "bB");
     menu_add_item(menu , "Ensemble of parameters"          , "eE"  , enkf_ui_table_ensemble , enkf_main , NULL);
     menu_add_item(menu , "Time development of parameters"  , "tT"  , enkf_ui_table_time     , enkf_main , NULL);
     menu_add_item(menu , "Misfit table"                    , "mM"  , enkf_ui_table_misfit   , enkf_main , NULL);
-    menu_add_separator(menu);
-    menu_add_item(menu , "Manage cases" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);
   }

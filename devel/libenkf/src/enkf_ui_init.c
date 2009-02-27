@@ -96,7 +96,7 @@ static void enkf_ui_init4(void * enkf_main) {
 void enkf_ui_init_menu(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(arg);
 
-  menu_type * menu = menu_alloc("EnKF initialization menu" , "Back" , "bB");
+  menu_type * menu = menu_alloc("Initialize from scratch" , "Back" , "bB");
   menu_add_item(menu , "Initalize all members/all parameters" , "1" , enkf_ui_init1 , enkf_main , NULL);
   menu_add_item(menu , "Initalize all members/one  parameter" , "2" , enkf_ui_init2 , enkf_main , NULL);
   menu_add_item(menu , "Initialize one member/all parameters" , "3" , enkf_ui_init3 , enkf_main , NULL);
