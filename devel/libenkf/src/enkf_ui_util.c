@@ -165,8 +165,8 @@ bool * enkf_ui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int *
 */
 
   
-void enkf_ui_util_scanf_iens_range(int ens_size , int prompt_len , int * iens1 , int * iens2) {
-  char * prompt = util_alloc_sprintf("Ensemble members (0 - %d)" , ens_size - 1);
+void enkf_ui_util_scanf_iens_range(const char * prompt_fmt , int ens_size , int prompt_len , int * iens1 , int * iens2) {
+  char * prompt = util_alloc_sprintf(prompt_fmt , ens_size - 1);
   bool OK = false;
 
   util_printf_prompt(prompt , prompt_len , '=' , "=> ");

@@ -7,6 +7,7 @@
 #include <summary.h>
 #include <summary_config.h>
 #include <ecl_sum.h>
+#include <ecl_smspec.h> /* ??? */
 #include <enkf_types.h>
 #include <enkf_util.h>
 #include <enkf_serialize.h>
@@ -125,12 +126,14 @@ double summary_user_get(const summary_type * summary , const char * index_key , 
 
 void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
   if (ecl_sum != NULL) {
-    const char * var_key            = summary_config_get_var(summary->config);
-    const ecl_sum_var_type var_type = summary_config_get_var_type(summary->config);
-    if (var_type == ecl_sum_well_var) {
+    const char * var_key               = summary_config_get_var(summary->config);
+    const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config);
+    int ministep2;
+    ecl_sum_report2ministep_range(ecl_sum , report_step , NULL , &ministep2);
+    if (var_type == ecl_smspec_well_var) {
       /* .. check if the well is defined in the smspec file (i.e. if it is open). */
       if (ecl_sum_has_general_var(ecl_sum , var_key))
-	summary->data[0] = ecl_sum_get_general_var(ecl_sum , report_step  , var_key);
+	summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  , var_key);
       else 
 	/* 
 	   The summary object does not have this well - probably
@@ -140,7 +143,7 @@ void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl
 	*/
 	summary->data[0] = 0;
     } else
-      summary->data[0] = ecl_sum_get_general_var(ecl_sum , report_step  ,var_key );
+      summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  ,var_key );
   }
 }
 

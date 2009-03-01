@@ -162,7 +162,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
       printf("Loading summary from: %s \n",refcase_path);
       ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , &summary_file_list , &files , &fmt_file , &unified);
 
-      ecl_sum = ecl_sum_fread_alloc( header_file , files , (const char **) summary_file_list , true , true /* Endian convert */);
+      ecl_sum = ecl_sum_fread_alloc( header_file , files , (const char **) summary_file_list , true /* Endian convert */);
       history_realloc_from_summary( model_config->history , ecl_sum , use_history);        
       util_safe_free(header_file);
       util_safe_free(refcase_base);

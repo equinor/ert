@@ -579,7 +579,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     
     char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
     char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
-    ecl_sum_type * summary  = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , true , endian_swap);
+    ecl_sum_type * summary  = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , endian_swap);
     
     /* The actual loading */
     {
@@ -904,9 +904,11 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
   util_make_path(run_info->run_path);
   {
     /** 
-	This iteration manipulates the hash (thorugh the
-	enkf_state_del_node() call), this will deadlock if the
-	hash_iter API is used.
+	This iteration manipulates the hash (thorugh the enkf_state_del_node() call) 
+	
+	-----------------------------------------------------------------------------------------
+	T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
+	-----------------------------------------------------------------------------------------
     */
     
     const int num_keys = hash_get_size(enkf_state->node_hash);

@@ -17,7 +17,7 @@ void      		      enkf_ui_util_scanf_ijk__(const field_config_type * , int  , in
 bool      		    * enkf_ui_util_scanf_alloc_report_active(int , int );
 bool      		    * enkf_ui_util_scanf_alloc_iens_active(int , int , int * , int *);
 void      		      enkf_ui_util_get_time(enkf_fs_type * , const enkf_config_node_type * , enkf_node_type * , state_enum , int  , int  , int  , int  , double *  , double *  );
-void                          enkf_ui_util_scanf_iens_range(int  , int  , int *  , int * );
+void                          enkf_ui_util_scanf_iens_range(const char * , int  , int  , int *  , int * );
 int                           enkf_ui_util_scanf_report_step(int , const char *  , int );
 
 #endif

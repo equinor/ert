@@ -165,15 +165,24 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
     void insert_obs(const char * well_name, const char * obs_name)
     { 
       if(ecl_sum_has_well_var(summary, well_name, obs_name)) {
-        double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
+	int ministep2;
+	double obs;
+
+	ecl_sum_report2ministep_range( summary , restart_nr , NULL , &ministep2);
+        obs = ecl_sum_get_well_var(summary, ministep2, well_name, obs_name);
         hash_insert_double(well_obs, obs_name, obs);
+
       } 
     }
     
     void insert_obs_use_h(const char * well_name, const char * obs_name, const char * obs_ins_name)
       {
       if(ecl_sum_has_well_var(summary, well_name, obs_name)) {
-	double obs = ecl_sum_get_well_var(summary, restart_nr, well_name, obs_name);
+	int ministep2;
+	double obs;
+	
+	ecl_sum_report2ministep_range( summary , restart_nr , NULL , &ministep2);
+	obs = ecl_sum_get_well_var(summary, ministep2, well_name, obs_name);
 	hash_insert_double(well_obs, obs_ins_name, obs);
       }
     }
@@ -654,10 +663,9 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
 
 void history_realloc_from_summary(history_type * history, const ecl_sum_type * summary, bool use_h_keywords)
 {
-  bool          has_sim_time  = ecl_sum_has_sim_time( summary );
   int           num_restarts  = history_get_num_restarts(history);
-  int           num_wells     = ecl_sum_get_Nwells(summary);
-  const char ** well_list     = ecl_sum_get_well_names_ref(summary);
+  int           num_wells     = ecl_sum_get_num_wells(summary);
+  const char ** well_list     = ecl_sum_get_well_names(summary);
 
   for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++) {
     /* The list elements in history->nodes are updated IN-PLACE. */
@@ -665,13 +673,16 @@ void history_realloc_from_summary(history_type * history, const ecl_sum_type * s
     hash_free(node->well_hash);  /* Removing the old information. */
 
 
-    if (ecl_sum_has_report_nr(summary , restart_nr)) 
+    if (ecl_sum_has_report_step(summary , restart_nr)) 
     {
-      if (has_sim_time) 
       {
-        time_t sum_time = ecl_sum_get_sim_time( summary , restart_nr );
-        if (sum_time != node->node_end_time) 
-          util_abort("%s: Timing inconsisentcy between schedule_file and refcase:%s at restart %i\n. Did you remember the DATE keyword in the SUMMARY section?", __func__, ecl_sum_get_simulation_case( summary), restart_nr );
+	time_t sum_time;
+	int    ministep2;
+	
+	ecl_sum_report2ministep_range( summary , restart_nr , NULL , &ministep2);
+	sum_time = ecl_sum_get_sim_time( summary , ministep2 );
+        if (sum_time != node->node_end_time)
+	  util_abort("%s: Timing inconsisentcy between schedule_file and refcase:%s at restart %i\n. Did you remember the DATE keyword in the SUMMARY section?", __func__, ecl_sum_get_simulation_case( summary), restart_nr );
       }
 
       node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, restart_nr, use_h_keywords);

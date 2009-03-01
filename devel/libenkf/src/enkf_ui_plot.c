@@ -289,7 +289,7 @@ void enkf_ui_plot_ensemble(void * arg) {
       }
 
       enkf_ui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
-      enkf_ui_util_scanf_iens_range(ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
+      enkf_ui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
       
       {
 	enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
