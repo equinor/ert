@@ -6,29 +6,33 @@
 #blas and particular compiler libraries+++ can be found.
 
 # Source
-LIBUTIL_HOME  	  = /h/jgv/code/enkf/libutil
-LIBCONFIG_HOME    = /h/jgv/code/enkf/libconfig
-LIBECL_HOME   	  = /h/jgv/code/enkf/libecl
-LIBJOB_QUEUE_HOME = /h/jgv/code/enkf/libjob_queue
-LIBSCHED_HOME 	  = /h/jgv/code/enkf/libsched
-LIBRMS_HOME   	  = /h/jgv/code/enkf/librms
-LIBANALYSIS_HOME  = /h/jgv/code/enkf/libanalysis
-LIBSAMPLE_HOME    = /h/jgv/code/enkf/libsample
-LIBPLOT_HOME      = /h/jgv/code/enkf/libplot
-LIBENKF_HOME  	  = /h/jgv/code/enkf/libenkf
+LIBUTIL_HOME  	  = /private/shortname/code/enkf/libutil
+LIBCONFIG_HOME    = /private/shortname/code/enkf/libconfig
+LIBECL_HOME   	  = /private/shortname/code/enkf/libecl
+LIBJOB_QUEUE_HOME = /private/shortname/code/enkf/libjob_queue
+LIBSCHED_HOME 	  = /private/shortname/code/enkf/libsched
+LIBRMS_HOME   	  = /private/shortname/code/enkf/librms
+LIBANALYSIS_HOME  = /private/shortname/code/enkf/libanalysis
+LIBSAMPLE_HOME    = /private/shortname/code/enkf/libsample
+LIBPLOT_HOME      = /private/shortname/code/enkf/libplot
+LIBENKF_HOME  	  = /private/shortname/code/enkf/libenkf
 LIBPLPLOT_HOME    = /project/res/x86_64_RH_4
 
 USE_LSF_LIBRARY   = TRUE
-APPLICATION_HOME  = /h/a152128/EnKF/devel/EnKF/apps
+APPLICATION_HOME  = /private/joaho/EnKF/devel/EnKF/apps
 # External libraries
-EXTERNAL_LIB_PATH = /h/a152128/lib/linux
-EXTERNAL_INC_PATH = /h/a152128/include
+EXTERNAL_LIB_PATH = /private/joaho/lib/linux
+EXTERNAL_INC_PATH = /private/joaho/include
 
 # Binary install path
 ENKF_BIN_PATH     = /d/proj/bg/enkf/bin
 SDP_ROOT          = /project/res
-# Site configuration file
-SITE_CONFIG_FILE  = /d/proj/bg/enkf/Config/site-config
+
+# Site configuration file xHydro
+#SITE_CONFIG_FILE  = /d/proj/bg/enkf/Config/site-config
+
+# Site configuration file xStatoil
+SITE_CONFIG_FILE  = /project/res/etc/enkf/site-config
 
 # Compilers and linkers
 AR   = ar
@@ -41,5 +45,5 @@ FFLAGS  = -$(MFLAG) -c -g -fimplicit-none -fdefault-real-8 -Wall -Wsurprising -f
 CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall -fPIC
 ARFLAGS = -csr
 LD      = $(CC)
-LDFLAGS = -rdynamic -Wl,-rpath $(LIBPLOT_HOME)/lib
+LDFLAGS = -rdynamic -Wl,-rpath $(LIBPLPLOT_HOME)/lib
 
