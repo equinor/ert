@@ -99,8 +99,8 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_fixlen(FILE * strea
         */
         sched_kw_untyped_add_line(kw, "/" , &slash_terminated);
       }
-      if(slash_terminated)
-        cur_rec++;
+      //if(slash_terminated || at_eokw)
+      cur_rec++;
     }
   }
   return kw;
