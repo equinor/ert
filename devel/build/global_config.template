@@ -21,7 +21,7 @@ LIBPLPLOT_HOME    = /project/res/x86_64_RH_4
 USE_LSF_LIBRARY   = TRUE
 APPLICATION_HOME  = /private/joaho/EnKF/devel/EnKF/apps
 # External libraries
-EXTERNAL_LIB_PATH = /private/joaho/lib/linux
+EXTERNAL_LIB_PATH = /private/joaho/lib/
 EXTERNAL_INC_PATH = /private/joaho/include
 
 # Binary install path
