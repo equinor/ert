@@ -119,7 +119,7 @@ void enkf_ui_run_smooth__(void * enkf_main) {
   int step1 = enkf_ui_util_scanf_report_step(last_report , "First report step" , 20);
   int step2 = enkf_ui_util_scanf_report_step(last_report , "Last report step" , 20);
 
-  if(step1 >= step2)
+  if(step1 <= step2)
     enkf_main_analysis_update(enkf_main , step1, step2 );
 }
 
