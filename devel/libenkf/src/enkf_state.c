@@ -94,7 +94,6 @@ typedef struct shared_info_struct {
   enkf_fs_type                * fs;                /* The filesystem object - used to load and store nodes. */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
-  path_fmt_type               * run_path_fmt;      /* The format specifier for the runpath - when used it is called with integer arguments: iens, report1 , report2 */
 } shared_info_type;
 
 
@@ -220,7 +219,6 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
   shared_info->fs           = model_config_get_fs( model_config );
-  shared_info->run_path_fmt = model_config_get_runpath_fmt( model_config );
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
   shared_info->model_config = model_config;
@@ -1548,7 +1546,8 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 void enkf_state_init_run(enkf_state_type * state , run_mode_type run_mode, bool active , int init_step , state_enum init_state , int step1 , int step2 , forward_model_type * __forward_model) {
   member_config_type * my_config    = state->my_config;
   shared_info_type   * shared_info  = state->shared_info;
-  run_info_set( state->run_info , run_mode , active , init_step , init_state , step1 , step2 , __forward_model , my_config->iens , shared_info->run_path_fmt);
+
+  run_info_set( state->run_info , run_mode , active , init_step , init_state , step1 , step2 , __forward_model , my_config->iens ,  model_config_get_runpath_fmt( shared_info->model_config ) );
   if (__forward_model != NULL)
     enkf_state_set_special_forward_model( state , __forward_model);
 }

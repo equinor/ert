@@ -267,7 +267,7 @@ int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int pre
     return -1;
   else {
     int next_step = prev_step + 1;
-    while (obs_vector->nodes[next_step] == NULL && next_step < obs_vector->size)
+    while (( next_step < obs_vector->size) && (obs_vector->nodes[next_step] == NULL))
       next_step++;
 
     if (next_step == obs_vector->size)

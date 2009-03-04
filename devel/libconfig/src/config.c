@@ -1213,8 +1213,12 @@ static void config_parse__(config_type * config ,
 		key = alloc_new_key( token_list[1] );  
 	      else
 		key = util_alloc_string_copy( token_list[1] );
-	      
-	      subst_list_insert_copy( subst_list , key , value);
+
+	      {
+		char * filtered_value = subst_list_alloc_filtered_string( subst_list , value);
+		subst_list_insert_copy( subst_list , key , filtered_value);
+		free( filtered_value );
+	      }
 	      free(key);
 	    }
 	  } else {

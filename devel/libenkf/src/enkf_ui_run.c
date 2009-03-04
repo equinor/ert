@@ -196,7 +196,7 @@ void enkf_ui_run_menu(void * arg) {
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );
     path_fmt_type     * runpath_fmt  = model_config_get_runpath_fmt( model_config );
-    arg_pack_type * arg_pack = arg_pack_alloc();  /* This will leak  */
+    arg_pack_type * arg_pack = arg_pack_alloc();  
     char * runpath_label = util_alloc_sprintf("Set new value for RUNPATH:%s" , path_fmt_get_fmt ( runpath_fmt ));
     
     arg_pack_append_ptr(arg_pack , model_config);

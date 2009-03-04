@@ -99,6 +99,11 @@
 
    This translation is done 'immediately' the sched_file routine
    returns 4, and that should be immediately converted to three.
+
+
+
+   Observe that the functions in this file are run - not at system
+   bootstrap, but when starting a simulation.
 */
 
 
@@ -107,7 +112,7 @@ struct enkf_sched_node_struct {
   int    	       report_step1;
   int    	       report_step2;
   bool                 enkf_active;
-  forward_model_type * forward_model;   /* Will mostly be NULL */
+  forward_model_type * forward_model;   /* Will be different from NULL only for updates which have a 'special' forward model. */
 };
 
 
@@ -127,8 +132,10 @@ static enkf_sched_node_type * enkf_sched_node_alloc(int report_step1 , int repor
   node->report_step1  = report_step1;
   node->report_step2  = report_step2;
   node->enkf_active   = enkf_active;
-  if (forward_model != NULL) 
+  /*
+    if (forward_model != NULL) 
     util_abort("%s : Sorry - support for special forward models has been (temporarily) removed\n",__func__);
+  */
   
   node->forward_model = forward_model; 
   return node;
@@ -244,6 +251,7 @@ static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE *
 	    model_start  = 4;
 	  else
 	    model_start = 3;
+
 	  model_length = tokens - model_start;
 	  if (model_length > 0) {
 	    char * input_string = util_alloc_joined_string( (const char **) &token_list[model_start] , model_length , " ");
@@ -391,7 +399,6 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int las
     fclose( stream );
   }
   enkf_sched_verify__(enkf_sched);
-  enkf_sched_fprintf( enkf_sched , stdout );
   return enkf_sched;
 }
 
