@@ -11,6 +11,7 @@
 #include <enkf_fs.h>
 #include <enkf_ui_util.h>
 #include <field_config.h>
+#include <msg.h>
 
 
 
@@ -325,9 +326,12 @@ void enkf_ui_export_time(void * enkf_main) {
 
     3. The text import wizard from excel should pop up:
 
-       1. Select (*) Delimited - press next.
-       2. Select delimiter "Comma" - press next.
-       3. press finish.
+         1. Select (*) Delimited - press next.
+         2. Select delimiter "Comma" - press next.
+         3. press finish.
+  
+      Finally you are asked where in the excel workbook you want to
+      insert the data.
 */
 
 
@@ -384,7 +388,7 @@ void enkf_ui_export_scalar2csv(void * arg) {
       enkf_fs_type * fs     = enkf_main_get_fs(enkf_main);
       enkf_node_type * node = enkf_node_alloc( config_node );
       FILE * stream         = util_fopen( csv_file , "w");
-      
+      msg_type * msg        = msg_alloc("Exporting report_step/member: ");
       
       /* Header line */
       fprintf(stream , "\"Report step\"");
@@ -392,15 +396,17 @@ void enkf_ui_export_scalar2csv(void * arg) {
 	fprintf(stream , "%s\"%s(%d)\"" , CSV_SEP , user_key , iens);
       fprintf(stream , CSV_NEWLINE);
       
-      
+      msg_show(msg);
       for (report_step = first_report; report_step <= last_report; report_step++) {
 	fprintf(stream , "%6d" , report_step);
 	for (iens = iens1; iens <= iens2; iens++) {
+	  char label[32];
 	  /* 
 	     Have not implemented a choice on forecast/analyzed. Tries
 	     analyzed first, then forecast.
 	  */
-	     
+	  sprintf(label , "%03d/%03d" , report_step , iens);
+	  msg_update( msg , label);
 	  if (enkf_fs_try_fread_node(fs , node , report_step , iens , both)) {
 	    bool   valid;
 	    double value = enkf_node_user_get( node , key_index , &valid);
@@ -413,7 +419,8 @@ void enkf_ui_export_scalar2csv(void * arg) {
 	}
 	fprintf(stream , CSV_NEWLINE);
       }
-      
+
+      msg_free( msg , true );
       enkf_node_free( node );
       fclose(stream);
     }

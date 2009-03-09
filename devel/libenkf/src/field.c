@@ -6,7 +6,7 @@
 #include <string.h>
 #include <fortio.h>
 #include <ecl_kw.h>
-#include <ecl_fstate.h>
+#include <ecl_util.h>
 #include <field_config.h>
 #include <rms_file.h>
 #include <rms_tagkey.h>
@@ -1006,7 +1006,7 @@ void field_fload_ecl_kw(field_type * field , const char * filename , bool endian
   ecl_kw_type * ecl_kw;
   
   {
-    bool fmt_file        = ecl_fstate_fmt_file(filename);
+    bool fmt_file        = ecl_util_fmt_file(filename);
     fortio_type * fortio = fortio_fopen(filename , "r" , endian_flip , fmt_file);
     ecl_kw_fseek_kw(key , true , true , fortio);
     ecl_kw = ecl_kw_fread_alloc( fortio );
