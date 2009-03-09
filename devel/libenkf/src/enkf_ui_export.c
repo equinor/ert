@@ -305,11 +305,138 @@ void enkf_ui_export_time(void * enkf_main) {
 
 
 
+/**
+   This is a very simple function for exporting a scalar value for all
+   member/report steps to a CSV file. The file is characterized by:
+
+    * Missing elements are represented with an empty string.
+
+    * The header strings are quoted with "".
+
+    * End of line is \r\n
+
+   Unfortunately Excel does not seem to recognize the csv format, and
+   it is necessary to go through a text import wizard in excel. To
+   import this file you go through the following hoops in excel:
+
+    1. [Data> - [Import external data> - [Import data>
+
+    2. Select the file to import from.
+
+    3. The text import wizard from excel should pop up:
+
+       1. Select (*) Delimited - press next.
+       2. Select delimiter "Comma" - press next.
+       3. press finish.
+*/
+
+
+#define CSV_NEWLINE        "\r\n"
+#define CSV_MISSING_VALUE  ""
+#define CSV_SEP            ","
+
+
+void enkf_ui_export_scalar2csv(void * arg) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const enkf_config_node_type * config_node;
+  const int prompt_len  = 60;
+  char * user_key, *key_index;
+  
+  util_printf_prompt("Scalar to export (KEY:INDEX)" , prompt_len , '=' , "=> "); user_key = util_alloc_stdin_line();
+  config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
+  if (config_node != NULL) {
+    int    report_step , first_report, last_report;
+    int    iens1 , iens2, iens;
+    char * csv_file;
+    
+    iens2 	 = ensemble_config_get_size(ensemble_config) - 1;
+    iens1 	 = 0;   
+    first_report = 0;
+    last_report  = enkf_main_get_total_length( enkf_main );
+    {
+      char * path;
+      char * prompt = util_alloc_sprintf("File to store \'%s\'", user_key);
+      util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+      csv_file = util_alloc_stdin_line();
+
+      util_alloc_file_components( csv_file , &path , NULL , NULL);
+      if (path != NULL) {
+	if (util_path_exists( path )) {
+	  if (!util_is_directory( path )) {
+	    /* The path component already exists in the filesystem - and it is not a directory - we leave the building. */
+	    fprintf(stderr,"Sorry: %s already exists - and is not a directory.\n",path);
+	    free(path);
+	    free(csv_file);
+            free(user_key);
+            return ;
+	  }
+	} else {
+	  /* The path does not exist - we make it. */
+	  enkf_ui_util_msg("Creating new directory: %s\n" , path);
+	  util_make_path( path );
+	}
+      }
+      free(prompt);
+    }
+    {
+      /* Seriously manual creation of csv file. */
+      enkf_fs_type * fs     = enkf_main_get_fs(enkf_main);
+      enkf_node_type * node = enkf_node_alloc( config_node );
+      FILE * stream         = util_fopen( csv_file , "w");
+      
+      
+      /* Header line */
+      fprintf(stream , "\"Report step\"");
+      for (iens = iens1; iens <= iens2; iens++) 
+	fprintf(stream , "%s\"%s(%d)\"" , CSV_SEP , user_key , iens);
+      fprintf(stream , CSV_NEWLINE);
+      
+      
+      for (report_step = first_report; report_step <= last_report; report_step++) {
+	fprintf(stream , "%6d" , report_step);
+	for (iens = iens1; iens <= iens2; iens++) {
+	  /* 
+	     Have not implemented a choice on forecast/analyzed. Tries
+	     analyzed first, then forecast.
+	  */
+	     
+	  if (enkf_fs_try_fread_node(fs , node , report_step , iens , both)) {
+	    bool   valid;
+	    double value = enkf_node_user_get( node , key_index , &valid);
+	    if (valid)
+	      fprintf(stream , "%s%g" , CSV_SEP , value);
+	    else
+	      fprintf(stream , "%s%s" , CSV_SEP , CSV_MISSING_VALUE);
+	  } else
+	    fprintf(stream , "%s%s" , CSV_SEP , CSV_MISSING_VALUE);
+	}
+	fprintf(stream , CSV_NEWLINE);
+      }
+      
+      enkf_node_free( node );
+      fclose(stream);
+    }
+  } else 
+    fprintf(stderr,"Sorry - could not find any nodes with key:%s\n",user_key);
+  
+  free(user_key);
+}
+
+
+#undef CSV_NEWLINE        
+#undef CSV_MISSING_VALUE  
+#undef CSV_SEP
+
+
+
 
 void enkf_ui_export_menu(void * arg) {
 
   enkf_main_type * enkf_main = enkf_main_safe_cast(arg);
   menu_type * menu = menu_alloc("Export data to other formats" , "Back" , "bB");
+  menu_add_item(menu , "Export scalar value to CSV file"                        , "xX" , enkf_ui_export_scalar2csv     , enkf_main , NULL);
+  menu_add_separator(menu);
   menu_add_item(menu , "Export fields to RMS Roff format"       		, "rR" , enkf_ui_export_roff   	       , enkf_main , NULL);
   menu_add_item(menu , "Export fields to ECLIPSE grdecl format" 		, "gG" , enkf_ui_export_grdecl 	       , enkf_main , NULL);
   menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , enkf_main , NULL);

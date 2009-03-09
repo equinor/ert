@@ -335,3 +335,15 @@ int enkf_ui_util_scanf_report_step(int last_report, const char * prompt , int pr
 }
 
 
+/*****************************************************************/
+
+
+/* Minimum wrapping of vfprintf */
+void enkf_ui_util_msg(const char * fmt , ...) {
+  va_list ap;
+  va_start(ap , fmt);
+  vfprintf(stdout , fmt , ap);
+  va_end(ap);
+}
+
+

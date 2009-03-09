@@ -455,8 +455,8 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
 			int step1                 , 
 			int step2                 , 
 			bool enkf_update          , 
-			forward_model_type * __forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
-  const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
+			forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
+  const int ens_size    = ensemble_config_get_size(enkf_main->ensemble_config);
   int   job_size;
 
   int iens;
@@ -479,7 +479,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
     {
       thread_pool_type * submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) {
-        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , __forward_model);
+        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , forward_model);
         thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
