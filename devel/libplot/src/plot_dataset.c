@@ -367,15 +367,21 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
   switch (d->data_type) {
   case(plot_xy):
     {
-      plot_style_type style = d->style;
-      
-      /* Special case: 
+      plot_style_type style       = d->style;
+      plot_color_type point_color = d->point_color;
+
+      /* 
+	 Special case: 
 	 -------------
-         If only one single point AND plot_style == LINE, we effectively
-	 change the plot_style to POINTS - otherwise it will not be visible.
+         If only one single point AND plot_style == LINE, we
+	 effectively change the plot_style to POINTS (and use the
+	 line_color) - otherwise the sinle point will not be visible.
+	 
       */
-      if (d->size == 1)
-	style = POINTS;
+      if ((d->size == 1) && (style == LINE)) {
+	style       = POINTS;
+	point_color = d->line_color;
+      }
       
       /** Starting with the line */    
       if (style == LINE || style == LINE_POINTS) 
@@ -383,7 +389,7 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
 
       /** Then the points. */
       if (style == POINTS || style == LINE_POINTS) {
-	plcol0(d->point_color);       /* Setting the color */
+	plcol0(point_color);       /* Setting the color */
 	plpoin(d->size , d->x , d->y , d->symbol_type);
       }
     }
