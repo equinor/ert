@@ -375,12 +375,13 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
 	 -------------
          If only one single point AND plot_style == LINE, we
 	 effectively change the plot_style to POINTS (and use the
-	 line_color) - otherwise the sinle point will not be visible.
+	 line_color) - otherwise the single point will not be visible.
 	 
       */
       if ((d->size == 1) && (style == LINE)) {
 	style       = POINTS;
 	point_color = d->line_color;
+	/* The point style will remain at default value. */
       }
       
       /** Starting with the line */    

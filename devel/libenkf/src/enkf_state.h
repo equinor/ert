@@ -9,7 +9,7 @@ extern "C" {
 #include <enkf_types.h>
 #include <enkf_node.h>
 #include <enkf_util.h>
-#include <ecl_block.h>
+#include <ecl_file.h>
 #include <meas_vector.h>
 #include <enkf_fs.h>
 #include <sched_file.h>
@@ -58,7 +58,6 @@ void               enkf_state_sample(enkf_state_type * , int);
 void               enkf_state_fwrite(const enkf_state_type *  , int  , int  , state_enum );
 void               enkf_state_ens_read(       enkf_state_type * , const char * , int);
 void               enkf_state_ecl_write(enkf_state_type *);
-void               enkf_state_ecl_read(enkf_state_type * , const ecl_block_type *);
 void               enkf_state_free(enkf_state_type * );
 void               enkf_state_apply(enkf_state_type * , enkf_node_ftype1 * , int );
 void               enkf_state_serialize(enkf_state_type * , size_t);

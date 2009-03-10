@@ -10,7 +10,7 @@ extern "C" {
 #include <enkf_config_node.h>
 #include <arg_pack.h>
 #include <ecl_kw.h>
-#include <ecl_block.h>
+#include <ecl_file.h>
 #include <ecl_sum.h>
 #include <fortio.h>
 #include <enkf_serialize.h>
@@ -46,7 +46,7 @@ typedef void * 	      (alloc_ftype)                	(const void *);
 typedef void   	      (fread_ftype)                	(      void *  , FILE *);
 typedef bool   	      (fwrite_ftype)               	(const void *  , FILE * , bool);
 typedef bool   	      (initialize_ftype)     	   	(      void *  , int);
-typedef void   	      (ecl_load_ftype)            	(void *  , const char * , const ecl_sum_type * , const ecl_block_type * , int);
+typedef void   	      (ecl_load_ftype)            	(void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int);
 typedef void          (realloc_data_ftype)	   	(void * );
 typedef void          (free_data_ftype)	           	(void * );
 typedef void   	      (free_ftype)       	   	(      void *);
@@ -96,7 +96,7 @@ enkf_var_type    enkf_node_get_var_type(const enkf_node_type * );
 void             enkf_node_clear_serial_state(enkf_node_type * );
 void             enkf_node_deserialize(enkf_node_type * , const serial_vector_type *);
 
-void             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_block_type * , int, int );
+void             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
 void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
 void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * , int);
 bool             enkf_node_initialize(enkf_node_type *enkf_node , int);

@@ -348,7 +348,7 @@ double enkf_node_user_get(enkf_node_type * enkf_node , const char * key , bool *
 
 
 /**
-   This function loads (internalizes) ECLIPSE results, the ecl_block
+   This function loads (internalizes) ECLIPSE results, the ecl_file
    instance with restart data, and the ecl_sum instance with summary
    data must already be loaded by the calling function.
 
@@ -361,7 +361,7 @@ double enkf_node_user_get(enkf_node_type * enkf_node , const char * key , bool *
 */
 
 
-void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step, int iens) {
+void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step, int iens) {
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
   {

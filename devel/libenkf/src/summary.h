@@ -1,14 +1,13 @@
 #ifndef __SUMMARY_H__
 #define __SUMMARY_H__
 #include <ecl_sum.h>
-#include <ecl_block.h>
+#include <ecl_file.h>
 #include <enkf_macros.h>
 #include <enkf_util.h>
 
 typedef struct summary_struct summary_type;
 
 double    summary_get(const summary_type * );
-void      summary_load_data(summary_type * , int , const ecl_block_type * , const ecl_sum_type * );
 
 
 SAFE_CAST_HEADER(summary);

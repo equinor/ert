@@ -7,7 +7,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <enkf_types.h>
-#include <ecl_block.h>
+#include <ecl_file.h>
 #include <ecl_sum.h>
 #include <enkf_serialize.h>
 #include <active_list.h>
@@ -163,12 +163,12 @@ void prefix ## _ecl_write__(const void * void_arg , const char * path , const ch
 /*****************************************************************/
 
 #define VOID_ECL_LOAD(prefix) \
-void prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block, int report_step) { \
+void prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                         \
-   prefix ## _ecl_load(arg , ecl_file , ecl_sum , restart_block , report_step);      \
+   prefix ## _ecl_load(arg , ecl_file , ecl_sum , restart_file , report_step);      \
 }
 
-#define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_block_type * , int);
+#define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int);
 
 
 /*****************************************************************/

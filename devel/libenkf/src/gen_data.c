@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <util.h>
 #include <ecl_sum.h>
+#include <ecl_file.h>
 #include <fortio.h>
 #include <ecl_util.h>
 #include <enkf_serialize.h>
@@ -208,7 +209,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
    which case a size of zero is set, for this report step.
 */
 
-void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
+void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
   {
     void * buffer = NULL;
     int    size   = 0;

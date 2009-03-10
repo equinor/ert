@@ -6,6 +6,7 @@
 #include <string.h>
 #include <fortio.h>
 #include <ecl_kw.h>
+#include <ecl_file.h>
 #include <ecl_util.h>
 #include <field_config.h>
 #include <rms_file.h>
@@ -659,7 +660,7 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
     } else if (file_type == rms_roff_file) 
       /* Roff export */
       field_ROFF_export(field , file);
-    else if (file_type == ecl_restart_block) 
+    else if (file_type == ecl_file) 
       /* This entry point is used by the ecl_write() function to write to an ALREADY OPENED eclipse restart file. */
       field_ecl_write1D_fortio( field , restart_fortio);
     else
@@ -682,7 +683,7 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
 void field_ecl_write(const field_type * field , const char * run_path , const char * file , fortio_type * restart_fortio) {
   field_file_format_type export_format = field_config_get_export_format(field->config);
   
-  if (export_format == ecl_restart_block)
+  if (export_format == ecl_file)
     field_export(field , NULL , restart_fortio , export_format , true); 
   else {
     char * full_path = util_alloc_filename( run_path , file  , NULL);
@@ -1134,19 +1135,19 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
    and not from a file.
 */
 
-void field_ecl_load(field_type * field , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * restart_block , int report_step) {
+void field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
   {
     field_file_format_type import_format = field_config_get_import_format(field->config);
-    if (import_format == ecl_restart_block) {
-      ecl_kw_type * field_kw = ecl_block_iget_kw(restart_block , field_config_get_ecl_kw_name(field->config) , 0);
+    if (import_format == ecl_file) {
+      ecl_kw_type * field_kw = ecl_file_iget_named_kw(restart_file , field_config_get_ecl_kw_name(field->config) , 0);
       field_copy_ecl_kw_data(field , field_kw);
     } else {
       /* Loading from unique file - currently this only applies to the modelerror implementation. */
       bool __ENDIAN_FLIP__ = true; /* Fuck this ... */
       if (import_format == undefined_format)
-	import_format = field_config_guess_file_type(ecl_file , __ENDIAN_FLIP__);
+	import_format = field_config_guess_file_type(ecl_file_name , __ENDIAN_FLIP__);
       
-      field_fload_typed(field , ecl_file , __ENDIAN_FLIP__ , import_format);
+      field_fload_typed(field , ecl_file_name , __ENDIAN_FLIP__ , import_format);
     }
     {
       field_func_type * input_transform = field_config_get_input_transform(field->config);

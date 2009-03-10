@@ -12,7 +12,7 @@
 #include <util.h>
 #include <ecl_kw.h>
 #include <ecl_io_config.h>
-#include <ecl_block.h>
+#include <ecl_file.h>
 #include <list_node.h>
 #include <enkf_node.h>
 #include <enkf_state.h>
@@ -622,43 +622,38 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   const bool endian_swap           = ecl_config_get_endian_flip(enkf_state->ecl_config);
   const bool unified               = ecl_config_get_unified(enkf_state->ecl_config);
   const bool internalize_state     = model_config_internalize_state( model_config , report_step );
-  ecl_block_type * restart_block;
+  ecl_file_type  * restart_file;
   
   
   /**
      Loading the restart block.
   */
+
+  if (unified) 
+    util_abort("%s: sorry - unified restart files are not supported \n",__func__);
   {
-    char * restart_file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
-    fortio_type * fortio = fortio_fopen(restart_file , "r" , endian_swap , fmt_file);
-    
-    if (unified)
-      ecl_block_fseek(report_step , true , fortio);
-    
-    restart_block = ecl_block_alloc( report_step );
-    ecl_block_fread(restart_block , fortio , NULL);
-    fortio_fclose(fortio);
-    free(restart_file);
+    char * file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
+    restart_file = ecl_file_fread_alloc(file , endian_swap);
+    free(file);
   }
   
   /*****************************************************************/
   
   
   /**
-     Iterating through the restart block:
+     Iterating through the restart file:
      
      1. Build up enkf_state->restart_kw_list.
      2. Send static keywords straight out.
   */
-  
+
+  restart_kw_list_reset(enkf_state->restart_kw_list);
   {
-    restart_kw_list_type * block_kw_list = ecl_block_get_restart_kw_list(restart_block);
-    const char * block_kw 	         = restart_kw_list_get_first(block_kw_list);
-    
-    restart_kw_list_reset(enkf_state->restart_kw_list);
-    while (block_kw != NULL) {
-      char * kw = util_alloc_string_copy(block_kw);
+    int ikw; 
+    for (ikw =0; ikw < ecl_file_get_num_kw( restart_file ); ikw++) {
       enkf_impl_type impl_type;
+      const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
+      char * kw = ecl_kw_alloc_strip_header( ecl_kw );
       ecl_util_escape_kw(kw);
       
       if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
@@ -680,8 +675,12 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
 	  restart_kw_list_add(enkf_state->restart_kw_list , kw);
 
-	  /* Observe that for static keywords we do NOT ask the node 'privately' if internalize_state is false: It is
-	     impossible to single out static keywords for internalization. */
+	  /* 
+	     Observe that for static keywords we do NOT ask the node
+	     'privately' if internalize_state is false: It is
+	     impossible to single out static keywords for
+	     internalization.
+	  */
 	     
 	  if (internalize_state) {  
 	    if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
@@ -714,8 +713,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	      enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
 	      ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
 	      ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
-	      enkf_node_ecl_load_static(enkf_node , ecl_block_iget_kw(restart_block , block_kw , ecl_static_kw_get_counter( ecl_static_kw )) , 
-					report_step , my_config->iens);
+	      enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , my_config->iens);
 	      /*
 		Static kewyords go straight out ....
 	      */
@@ -728,7 +726,6 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
       
       free(kw);
-      block_kw = restart_kw_list_get_next(block_kw_list);
     }
     enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , my_config->iens , enkf_state->restart_kw_list );
   }
@@ -753,7 +750,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	
 	if (internalize_kw) {
 	  if (enkf_node_has_func(enkf_node , ecl_load_func)) {
-	    enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_block , report_step , my_config->iens);
+	    enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , my_config->iens);
 	    enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
 	  }
 	}
@@ -764,7 +761,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   
   /*****************************************************************/
   /* Cleaning up */
-  ecl_block_free( restart_block );
+  ecl_file_free( restart_file );
 }
 
 

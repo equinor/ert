@@ -499,7 +499,7 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , int num_options , const char ** options) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_restart_block , ecl_restart_block , trans_table , num_options , options);
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_file , ecl_file , trans_table , num_options , options);
   return config;
 }
 

@@ -7,7 +7,8 @@
 #include <summary.h>
 #include <summary_config.h>
 #include <ecl_sum.h>
-#include <ecl_smspec.h> /* ??? */
+#include <ecl_smspec.h> 
+#include <ecl_file.h>
 #include <enkf_types.h>
 #include <enkf_util.h>
 #include <enkf_serialize.h>
@@ -124,7 +125,7 @@ double summary_user_get(const summary_type * summary , const char * index_key , 
 
 
 
-void summary_ecl_load(summary_type * summary , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_block_type * ecl_block , int report_step) {
+void summary_ecl_load(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step) {
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
     const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config);

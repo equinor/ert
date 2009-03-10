@@ -240,6 +240,6 @@ int ecl_config_get_num_restart_files(const ecl_config_type * ecl_config) {
 }
 
 bool ecl_config_get_endian_flip(const ecl_config_type * ecl_config) { return ecl_io_config_get_endian_flip(ecl_config->io_config); }
-bool ecl_config_get_formatted(const ecl_config_type * ecl_config) { return ecl_io_config_get_formatted(ecl_config->io_config); }
-bool ecl_config_get_unified(const ecl_config_type * ecl_config) { return ecl_io_config_get_unified(ecl_config->io_config); }
+bool ecl_config_get_formatted(const ecl_config_type * ecl_config)   { return ecl_io_config_get_formatted(ecl_config->io_config); }
+bool ecl_config_get_unified(const ecl_config_type * ecl_config)     { return ecl_io_config_get_unified(ecl_config->io_config); }
 

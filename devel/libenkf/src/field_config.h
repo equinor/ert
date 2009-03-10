@@ -27,14 +27,14 @@ extern "C" {
 
     2. ecl_kw_file_active_cells / ecl_kw_file_all_cells are for output.
 
-    3. Except for ecl_restart_block all formats are for A FILE (with a
+    3. Except for ecl_restart_file all formats are for A FILE (with a
        filename), more or less assuming that this field is the only
-       content in the file, whereas ecl_restart_block is for a restart
+       content in the file, whereas ecl_restart_file is for a restart
        block, and not a file.
 
     This has some slightly unlogical consequences:
 
-     1. The enum has 'file_format' in the name, but ecl_restart_block
+     1. The enum has 'file_format' in the name, but ecl_restart_file
         is not a file.
 
      2. The functions which guess/determine a file type can not return
@@ -53,7 +53,7 @@ typedef enum { undefined_format         = 0,
 	       ecl_kw_file_active_cells = 3,       /* ecl_kw format, only active cells - used writing to file. */
 	       ecl_kw_file_all_cells    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
 	       ecl_grdecl_file          = 5, 
-               ecl_restart_block        = 6        /* Assumes packed on export. */}  field_file_format_type; 
+               ecl_file                 = 6        /* Assumes packed on export. */}  field_file_format_type; 
 
 	        
 /* active_cells currently not really implemented */
