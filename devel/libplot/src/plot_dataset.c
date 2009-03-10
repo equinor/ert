@@ -366,13 +366,26 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
   
   switch (d->data_type) {
   case(plot_xy):
-    /** Starting with the line */    
-    if (d->style == LINE || d->style == LINE_POINTS) 
-      plline(d->size , d->x , d->y);
-    
-    if (d->style == POINTS || d->style == LINE_POINTS) {
-      plcol0(d->point_color);       /* Setting the color */
-      plpoin(d->size , d->x , d->y , d->symbol_type);
+    {
+      plot_style_type style = d->style;
+      
+      /* Special case: 
+	 -------------
+         If only one single point AND plot_style == LINE, we effectively
+	 change the plot_style to POINTS - otherwise it will not be visible.
+      */
+      if (d->size == 1)
+	style = POINTS;
+      
+      /** Starting with the line */    
+      if (style == LINE || style == LINE_POINTS) 
+	plline(d->size , d->x , d->y);
+
+      /** Then the points. */
+      if (style == POINTS || style == LINE_POINTS) {
+	plcol0(d->point_color);       /* Setting the color */
+	plpoin(d->size , d->x , d->y , d->symbol_type);
+      }
     }
     break;
   case(plot_hist):

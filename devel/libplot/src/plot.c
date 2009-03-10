@@ -276,6 +276,18 @@ void plot_data(plot_type * plot)
   {
     double x1,x2,y1,y2;
     plot_set_range__(plot , &x1 , &x2 , &y1 , &y2);  
+    
+    /* Special case for only one point. */
+    if (x1 == x2) {
+      x1 -= 0.05 * x1;
+      x2 += 0.05 * x1;
+    }
+
+    /* Special case for only one point. */
+    if (y1 == y2) {
+      y1 -= 0.05 * y1;
+      y2 += 0.05 * y2;
+    }
     plwind(x1,x2,y1,y2);
   }
   
