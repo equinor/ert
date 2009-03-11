@@ -35,6 +35,8 @@
 #include <ensemble_config.h>
 #include <config.h>
 #include <gen_data_config.h>
+#include <multflt_config.h>
+#include <havana_fault_config.h>
 #include <pthread.h>                /* Must have rw locking on the config_nodes ... */
 #include <field_trans.h>
 
@@ -165,6 +167,13 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
     case(SUMMARY):
       freef             = summary_config_free__;
       break;
+    case(MULTFLT):
+      freef             = multflt_config_free__;
+      activate          = multflt_config_activate__;
+      break;
+    case(HAVANA_FAULT):
+      freef             = havana_fault_config_free__;
+      break;
     case(GEN_DATA):
       freef             = gen_data_config_free__;
       activate          = gen_data_config_activate__;
@@ -251,7 +260,27 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( strtol(config_get(config , "NUM_REALIZATIONS") , NULL , 10) );
   ensemble_config->field_trans_table     = field_trans_table_alloc();
 
+  /* MULTFLT */
+  for (i=0; i < config_get_occurences(config , "MULTFLT"); i++) {
+    const stringlist_type * tokens = config_iget_stringlist_ref(config , "MULTFLT" , i);
+    const char * key         = stringlist_iget(tokens , 0);
+    const char * ecl_file    = stringlist_iget(tokens , 1);
+    const char * config_file = stringlist_iget(tokens , 2);
 
+    ensemble_config_add_node(ensemble_config , key , parameter , MULTFLT , ecl_file , NULL , multflt_config_fscanf_alloc(config_file));
+  }
+
+
+  /* HAVANA_FAULT */
+  for (i=0; i < config_get_occurences(config , "HAVANA_FAULT"); i++) {
+    const stringlist_type * tokens = config_iget_stringlist_ref(config , "HAVANA_FAULT" , i);
+    const char * key         = stringlist_iget(tokens , 0);
+    const char * config_file = stringlist_iget(tokens , 1);
+    
+    ensemble_config_add_node(ensemble_config , key , parameter , HAVANA_FAULT , NULL , NULL , havana_fault_config_fscanf_alloc(config_file));
+  }
+  
+  
   /* GEN_PARAM */
   for (i=0; i < config_get_occurences(config , "GEN_PARAM"); i++) {
     const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
