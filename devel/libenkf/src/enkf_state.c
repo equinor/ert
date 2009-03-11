@@ -26,9 +26,6 @@
 #include <gen_kw.h>
 #include <ecl_sum.h>
 #include <summary.h>
-#include <multz.h>
-#include <multflt.h>
-#include <equil.h>
 #include <arg_pack.h>
 #include <enkf_fs.h>
 #include <basic_driver.h>

@@ -3,8 +3,6 @@
 #include <enkf_state.h>
 #include <enkf_node.h>
 #include <enkf_config.h>
-#include <multz_config.h>
-#include <multz.h>
 #include <equil_config.h>
 #include <equil.h>
 #include <ecl_kw.h>
@@ -75,9 +73,6 @@ int main(void) {
   enkf_fs = enkf_fs_alloc( plain_driver_alloc("path1") , plain_driver_alloc("path2") , plain_driver_alloc("path3") , plain_driver_alloc("path4"));
 
   config = enkf_config_alloc("RunPATH/tmpdir_%04d" , "Ensemble/%04d/Static/mem%04d" , "Ensemble/%04d/Parameters/mem%04d" , "Ensemble/%04d/Dynamic/Forecast/mem%04d" , "Ensemble/%04d/Dynamic/Analyzed/mem%04d" , true);
-  enkf_config_add_type(config , "MULTZ" , 
-		       parameter , MULTZ, 
-		       multz_config_fscanf_alloc("Config/multz" , 100 , 100 , 100));
   
   enkf_config_add_type(config , "EQUIL" , 
 		       parameter , EQUIL, 
@@ -130,7 +125,6 @@ int main(void) {
     
     for (i=0; i < 100; i++) {
       state[i] = enkf_state_alloc(config , "ECLIPSE" , i , NULL , false);
-      enkf_state_add_node(state[i] , "MULTZ"); 
       enkf_state_add_node(state[i] , "EQUIL");
       enkf_state_add_node(state[i] , "PERMX");
       enkf_state_add_node(state[i] , "PG");

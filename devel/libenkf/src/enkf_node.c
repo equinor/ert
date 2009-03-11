@@ -5,17 +5,12 @@
 #include <enkf_node.h>
 #include <enkf_config_node.h>
 #include <util.h>
-#include <multz.h>
-#include <relperm.h>
-#include <multflt.h>
-#include <equil.h>
 #include <field.h>
 #include <summary.h>
 #include <ecl_static_kw.h>
 #include <gen_kw.h>
 #include <path_fmt.h>
 #include <pilot_point.h>
-#include <havana_fault.h>
 #include <gen_data.h>
 #include <enkf_serialize.h>
 
@@ -639,46 +634,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->fprintf_results = gen_kw_ensemble_fprintf_results__;
     node->user_get        = gen_kw_user_get__; 
     break;
-  case(MULTZ):
-    node->realloc_data = multz_realloc_data__;
-    node->alloc        = multz_alloc__;
-    node->ecl_write    = multz_ecl_write__;
-    node->fread_f      = multz_fread__;
-    node->fwrite_f     = multz_fwrite__;
-    node->copyc        = multz_copyc__;
-    node->initialize   = multz_initialize__;
-    node->serialize    = multz_serialize__;
-    node->deserialize  = multz_deserialize__;
-    node->freef        = multz_free__;
-    node->free_data    = multz_free_data__;
-    break;
-  case(RELPERM):
-    node->alloc       = relperm_alloc__;
-    node->ecl_write   = relperm_ecl_write__;
-    node->fread_f     = relperm_fread__;
-    node->fwrite_f    = relperm_fwrite__;
-    node->copyc       = relperm_copyc__;
-    node->initialize  = relperm_initialize__;
-    node->serialize   = relperm_serialize__;
-    node->deserialize = relperm_deserialize__;
-    node->freef       = relperm_free__;
-    node->free_data   = relperm_free_data__;
-    break;
-  case(MULTFLT):
-    node->realloc_data 	  = multflt_realloc_data__;
-    node->alloc        	  = multflt_alloc__;
-    node->ecl_write    	  = multflt_ecl_write__;
-    node->fread_f      	  = multflt_fread__;
-    node->fwrite_f     	  = multflt_fwrite__;
-    node->copyc        	  = multflt_copyc__;
-    node->initialize   	  = multflt_initialize__;
-    node->serialize    	  = multflt_serialize__;
-    node->deserialize  	  = multflt_deserialize__;
-    node->freef        	  = multflt_free__;
-    node->free_data    	  = multflt_free_data__;
-    node->fprintf_results = multflt_ensemble_fprintf_results__;
-    node->user_get        = multflt_user_get__;
-    break;
   case(SUMMARY):
     node->ecl_load        = summary_ecl_load__;
     node->realloc_data    = summary_realloc_data__;
@@ -692,21 +647,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->free_data       = summary_free_data__;
     node->user_get        = summary_user_get__; 
     node->fprintf_results = summary_ensemble_fprintf_results__;
-    break;
-  case(HAVANA_FAULT):
-    node->realloc_data 	  = havana_fault_realloc_data__;
-    node->alloc        	  = havana_fault_alloc__;
-    node->ecl_write    	  = havana_fault_ecl_write__;
-    node->fread_f      	  = havana_fault_fread__;
-    node->fwrite_f     	  = havana_fault_fwrite__;
-    node->copyc        	  = havana_fault_copyc__;
-    node->serialize    	  = havana_fault_serialize__;
-    node->deserialize  	  = havana_fault_deserialize__;
-    node->freef        	  = havana_fault_free__;
-    node->free_data    	  = havana_fault_free_data__;
-    node->initialize   	  = havana_fault_initialize__;
-    node->fprintf_results = havana_fault_ensemble_fprintf_results__;
-    node->user_get        = havana_fault_user_get__; 
     break;
   case(FIELD):
     node->realloc_data = field_realloc_data__;
@@ -722,18 +662,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->freef        = field_free__;
     node->free_data    = field_free_data__;
     node->user_get     = field_user_get__;
-    break;
-  case(EQUIL):
-    node->alloc       = equil_alloc__;
-    node->ecl_write   = equil_ecl_write__;
-    node->fread_f     = equil_fread__;
-    node->fwrite_f    = equil_fwrite__;
-    node->copyc       = equil_copyc__;
-    node->initialize  = equil_initialize__;
-    node->serialize   = equil_serialize__;
-    node->deserialize = equil_deserialize__;
-    node->freef       = equil_free__;
-    node->free_data   = equil_free_data__;
     break;
   case(STATIC):
     node->realloc_data = ecl_static_kw_realloc_data__;

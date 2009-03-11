@@ -5,16 +5,12 @@
 #include <stdbool.h>
 #include <util.h>
 #include <hash.h>
-#include <multz_config.h>
 #include <enkf_config_node.h>
 #include <ecl_util.h>
 #include <path_fmt.h>
 #include <ecl_static_kw_config.h>
 #include <enkf_types.h>
 #include <field_config.h>
-#include <equil_config.h>
-#include <multz_config.h>
-#include <multflt_config.h>
 #include <thread_pool.h>
 #include <obs_data.h>
 #include <history.h>
