@@ -9,6 +9,8 @@ import os.path
 #
 
 umask = os.umask(002)
+os.system('chmod o+r *.h')
+os.system('chmod ug+rw *.h')
 
 
 #
@@ -22,7 +24,7 @@ bindir = instdir + '/bin'
 libdir = instdir + '/lib'
 incdir = instdir + '/inc'
 
-Alias('install',[bindir])
+Alias('install',[libdir,incdir])
 
 # -----------------------------------------------
 
@@ -36,8 +38,11 @@ lib_list = ['ecl','plot','util','plplotd','m','z','pthread']
 
 object_files  = opt.Object('plot.c') 
 object_files += opt.Object('plot_dataset.c') 
-object_files += opt.Object('plot_range.c') 
+object_files += opt.Object('plot_range.c')
+
+header_files = ['plot.h','plot_dataset.h','plot_range.h','plot_const.h']
 
 newlibs = opt.Library('plot',object_files)
 
-#Install(libdir,newlibs)
+Install(libdir,newlibs)
+Install(incdir,header_files)
