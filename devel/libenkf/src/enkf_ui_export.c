@@ -42,7 +42,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
     enkf_node_type * node = enkf_node_alloc(config_node);
 
     for (iens = iens1; iens <= iens2; iens++) {
-      if (enkf_fs_has_node(fs , config_node , report_step , iens , analysis_state)) {
+      if (enkf_fs_try_fread_node(fs , node , report_step , iens , both)) {
 	char * filename = path_fmt_alloc_path( export_path , false , iens);
 	{
 	  char * path;
@@ -50,7 +50,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
 	  util_make_path( path );
 	  free( path );
 	}
-	enkf_fs_fread_node(fs , node , report_step , iens , analysis_state);
+
 	{
 	  const field_type * field = enkf_node_value_ptr(node);
 	  field_export(field , filename , NULL , file_type , output_transform);
