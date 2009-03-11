@@ -29,7 +29,7 @@ void text_splash() {
   const int usleep_time = 1250;
   int i;
   {
-#include "uncle_sam_100.h"
+#include "statoilhydro.h"
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++) {
       printf("%s\n" , splash_text[i]);
@@ -53,10 +53,6 @@ void enkf_welcome(const char * config_file) {
     char * compile_time 	 = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
     char * abs_path     	 = util_alloc_realpath( config_file );
     char * config_file_msg = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
-    printf("\n");
-    printf("%s",svn_version);
-    printf("%s",compile_time);
-    printf("\n");
     
     /* This will be printed if/when util_abort() is called on a later stage. */
     util_abort_append_version_info(svn_version);
@@ -75,10 +71,10 @@ void enkf_usage() {
   printf("\n");
   printf(" *********************************************************************\n");
   printf(" **                                                                 **\n");
-  printf(" **                           E n K F                               **\n");
+  printf(" **                           e n k f                               **\n");
   printf(" **                                                                 **\n");
   printf(" **-----------------------------------------------------------------**\n");
-  printf(" ** You have sucessfully started the EnKF program developed at      **\n");
+  printf(" ** You have sucessfully started the enkf program developed at      **\n");
   printf(" ** StatoilHydro. Before you can actually start using the program,  **\n");
   printf(" ** you must create a configuration file. When the configuration    **\n");
   printf(" ** file has been created, you can start the enkf application with: **\n");
@@ -86,7 +82,7 @@ void enkf_usage() {
   printf(" **   bash> enkf config_file                                        **\n");
   printf(" **                                                                 **\n");
   printf(" ** Instructions on how to create the configuration file can be     **\n");
-  printf(" ** found at: http://sdp.statoil.no/wiki/index.php/Res:Setup-EnKF   **\n");
+  printf(" ** found at: http://sdp.statoil.no/wiki/index.php/res:enkf         **\n");
   printf(" *********************************************************************\n");
 }
 
@@ -97,6 +93,10 @@ void enkf_usage() {
 
 int main (int argc , char ** argv) {
   text_splash();
+  printf("\n");
+  printf("svn version : %s \n",SVN_VERSION);
+  printf("compile time: %s \n",COMPILE_TIME_STAMP);
+  printf("\n");
   install_SIGNALS();
 
   if (argc != 2) {
