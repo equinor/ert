@@ -241,7 +241,6 @@ static void plot_set_range__(plot_type * plot, double *x1 , double *x2 , double 
 }
 
 
-
 /**
    This function does the actual plotting. Observe the following design principle:
 
@@ -409,3 +408,10 @@ void plot_get_extrema(plot_type * plot, plot_range_type * range) {
 }
 
 
+int plot_get_num_datasets(plot_type* plot) {
+  return plot->size ;
+} ;
+
+plot_dataset_type** plot_get_datasets(plot_type* plot) {
+  return plot->datasets ;
+} ;

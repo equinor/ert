@@ -1,0 +1,43 @@
+# -*-python-*-
+#
+ 
+import os
+import os.path
+
+# 
+# Set umask and file rights so that things are built and installed readable by others
+#
+
+umask = os.umask(002)
+
+
+#
+# Create variables instdir, bindir, libdir, and incdir, and alias install:
+#
+
+basedir = os.environ['SDP_BINDIST_ROOT'] # directory for "binary" distribution
+instdir = os.environ['SDP_BINDIST']      # install directory 
+ 
+bindir = instdir + '/bin'
+libdir = instdir + '/lib'
+incdir = instdir + '/inc'
+
+Alias('install',[bindir])
+
+# -----------------------------------------------
+
+
+opt = Environment(CXXFLAGS = '-O3' ,
+                  CFLAGS   = '-O2 -std=gnu99 -g -Wall -fPIC' ,
+                  CPPPATH = ['.',incdir] ,
+                  LIBPATH = ['.', libdir])
+
+lib_list = ['ecl','plot','util','plplotd','m','z','pthread']
+
+object_files  = opt.Object('plot.c') 
+object_files += opt.Object('plot_dataset.c') 
+object_files += opt.Object('plot_range.c') 
+
+newlibs = opt.Library('plot',object_files)
+
+#Install(libdir,newlibs)
