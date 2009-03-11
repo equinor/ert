@@ -106,6 +106,41 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   }
   msg_show(msg);
   
+
+  /** 
+      Plotting the observations first - to ensure that the simulated
+      results come ON TOP of the observations. Whether it is best to
+      have the simulated results or the observations on top will vary
+      from case to case ....
+  */
+
+  if (add_observations) {
+    if (enkf_config_node_get_impl_type(config_node) == SUMMARY) {/* Adding observations only implemented for summary. */
+      const stringlist_type * obs_keys = enkf_config_node_get_obs_keys(config_node);
+      int i;
+      for (i=0; i < stringlist_get_size( obs_keys ); i++) {
+	const char * obs_key = stringlist_iget(obs_keys , i);
+	plot_dataset_type * obs_data = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
+	const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
+	double  value , std;
+	int report_step = -1;
+	plot_dataset_set_line_color( obs_data , RED);
+	plot_dataset_set_line_width( obs_data , 1.0);
+	do {
+	  report_step = obs_vector_get_next_active_step( obs_vector , report_step);
+	  if (report_step != -1) {
+	    if (report_step >= step1 && report_step <= step2) {
+	      bool valid;
+	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
+	      if (valid)
+		plot_dataset_append_point_xy1y2( obs_data , report_step , value - std , value + std);
+	    }
+	  }
+	} while (report_step != -1);
+      }
+    }
+  }
+
   for (iens = iens1; iens <= iens2; iens++) {
     char label[32];
 	
@@ -143,33 +178,6 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
     __plot_add_data(plot , this_size , x , y );
   }
 
-  if (add_observations) {
-    if (enkf_config_node_get_impl_type(config_node) == SUMMARY) {/* Adding observations only implemented for summary. */
-      const stringlist_type * obs_keys = enkf_config_node_get_obs_keys(config_node);
-      int i;
-      for (i=0; i < stringlist_get_size( obs_keys ); i++) {
-	const char * obs_key = stringlist_iget(obs_keys , i);
-	plot_dataset_type * obs_data = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
-	const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
-	double  value , std;
-	int report_step = -1;
-	plot_dataset_set_line_color( obs_data , RED);
-	plot_dataset_set_line_width( obs_data , 1.0);
-	do {
-	  report_step = obs_vector_get_next_active_step( obs_vector , report_step);
-	  if (report_step != -1) {
-	    if (report_step >= step1 && report_step <= step2) {
-	      bool valid;
-	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
-	      if (valid)
-		plot_dataset_append_point_xy1y2( obs_data , report_step , value - std , value + std);
-	    }
-	  }
-	} while (report_step != -1);
-      }
-    }
-  }
-      
   plot_set_bottom_padding( plot , 0.05);
   plot_set_top_padding( plot    , 0.05);
   plot_set_left_padding( plot   , 0.05);

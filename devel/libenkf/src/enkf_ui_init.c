@@ -68,7 +68,7 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
     }
     util_free_stringlist( tmp_key_list , num_keys );
   } else 
-    stringlist_append_copy( param_list , enkf_config_node_get_key(enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , INVALID , invalid , NULL , NULL , NULL)) );
+    stringlist_append_copy( param_list , enkf_config_node_get_key(enkf_ui_util_scanf_key(ensemble_config , prompt_len , INVALID , invalid)) );
 
     
   enkf_ui_init__(enkf_main , param_list , iens1 , iens2);

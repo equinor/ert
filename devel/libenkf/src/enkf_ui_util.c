@@ -79,7 +79,7 @@ state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool ac
    keyword is of type impl_type.
 */
 
-const enkf_config_node_type * enkf_ui_util_scanf_parameter(const ensemble_config_type * config , int prompt_len , bool accept_both , enkf_impl_type impl_type ,  enkf_var_type var_type , int * report_step , state_enum * state , int * iens) {
+const enkf_config_node_type * enkf_ui_util_scanf_key(const ensemble_config_type * config , int prompt_len , enkf_impl_type impl_type ,  enkf_var_type var_type) {
   char kw[256];
   bool OK;
   const enkf_config_node_type * config_node;
@@ -97,27 +97,6 @@ const enkf_config_node_type * enkf_ui_util_scanf_parameter(const ensemble_config
       if (var_type != invalid)
 	if (enkf_config_node_get_var_type(config_node) != var_type) 
 	  OK = false;
-      
-      /*if (!OK) 
-	fprintf(stderr,"Error: %s is of type:\"%s\" - you must give a keyword of type: \"%s\" \n",kw,enkf_types_get_impl_name(enkf_config_node_get_impl_type(config_node)) , enkf_types_get_impl_name(impl_type));
-      */
-      if (!OK)
-	fprintf(stderr,"ERROR: %s has wrong type \n",kw);
-      else {
-	if (report_step != NULL) *report_step = util_scanf_int("Report step" , prompt_len);
-	if (state != NULL) {
-	  
-	  if (accept_both)  /* It does not make sense to plot both forecast and updated for parameters.*/
-	    if (!(enkf_config_node_get_var_type(config_node) & (dynamic_result + dynamic_state)))
-	      accept_both = false;
-
-	  if (accept_both)
-	    *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F|B]" , prompt_len , true);
-	  else
-	    *state = enkf_ui_util_scanf_state("Analyzed/forecast [A|F]" , prompt_len , false);
-	}
-      }
-      if (iens != NULL)  *iens = util_scanf_int_with_limits("Ensemble member" , prompt_len , 0 , ensemble_config_get_size(config) - 1);
     } else OK = false;
   } while (!OK);
   return config_node;

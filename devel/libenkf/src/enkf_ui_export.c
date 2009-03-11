@@ -16,35 +16,48 @@
 
 
 void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_type file_type) {
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const bool output_transform = true;
-  const int prompt_len = 35;
+  const int prompt_len = 45;
   const enkf_config_node_type * config_node;
   state_enum analysis_state;
-  char       analysis_state_char;
-  int        iens , report_step;
+  const int last_report = enkf_main_get_total_length( enkf_main );
+  int        iens1 , iens2 , iens , report_step;
+  path_fmt_type * export_path;
   
-  config_node = enkf_ui_util_scanf_parameter(enkf_main_get_ensemble_config(enkf_main) , prompt_len , false , FIELD  , invalid , &report_step , &analysis_state , &iens);
-  if (analysis_state == analyzed)
-    analysis_state_char = 'A';
-  else
-    analysis_state_char = 'F';
+  analysis_state = analyzed;
+  config_node    = enkf_ui_util_scanf_key(enkf_main_get_ensemble_config(enkf_main) , prompt_len ,  FIELD  , invalid );
   
-
+  report_step = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
+  enkf_ui_util_scanf_iens_range("Realizations members to export(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
+  {
+    char path_fmt[128];
+    util_printf_prompt("Filename to store files in (with %d) in: " , prompt_len , '=' , "=> ");
+    scanf("%s" , path_fmt);
+    export_path = path_fmt_alloc_path_fmt( path_fmt );
+  }
+  
   {
     enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
     enkf_node_type * node = enkf_node_alloc(config_node);
 
-    if (enkf_fs_has_node(fs , config_node , report_step , iens , analysis_state)) {
-      char * filename = enkf_util_scanf_alloc_filename("File to store field in =>" , AUTO_MKDIR);
-      enkf_fs_fread_node(fs , node , report_step , iens , analysis_state);
-      {
-	const field_type     * field = enkf_node_value_ptr(node);
-	field_export(field , filename , NULL , file_type , output_transform);
+    for (iens = iens1; iens <= iens2; iens++) {
+      if (enkf_fs_has_node(fs , config_node , report_step , iens , analysis_state)) {
+	char * filename = path_fmt_alloc_path( export_path , false , iens);
+	{
+	  char * path;
+	  util_alloc_file_components(filename , &path , NULL , NULL);
+	  util_make_path( path );
+	  free( path );
+	}
+	enkf_fs_fread_node(fs , node , report_step , iens , analysis_state);
+	{
+	  const field_type * field = enkf_node_value_ptr(node);
+	  field_export(field , filename , NULL , file_type , output_transform);
+	}
+	free(filename);
       }
-      free(filename);
-    } else 
-      printf("** Sorry node:%s does not exist for report step: %d%c.\n",enkf_config_node_get_key(config_node),report_step,analysis_state_char);
-    
+    } 
     enkf_node_free(node);
   } 
 }
@@ -89,7 +102,8 @@ void enkf_ui_export_profile(void * enkf_main) {
     int       *cell_list; 
     path_fmt_type * file_fmt;
 
-    config_node    = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , FIELD , invalid , NULL , &analysis_state , NULL);
+    analysis_state = analyzed; /* */
+    config_node    = enkf_ui_util_scanf_key(ensemble_config , prompt_len ,  FIELD , invalid);
     iens_active    = enkf_ui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
     report_active  = enkf_ui_util_scanf_alloc_report_active( last_report , prompt_len );
     direction      = util_scanf_int_with_limits("Give scan direction 0:i  1:j  2:k" , prompt_len , 0 , 2);
@@ -191,7 +205,8 @@ void enkf_ui_export_cell(void * enkf_main) {
     state_enum analysis_state;
     int        cell_nr;
 
-    config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , false , FIELD , invalid, NULL , &analysis_state , NULL);
+    analysis_state = analyzed;
+    config_node = enkf_ui_util_scanf_key(ensemble_config , prompt_len , FIELD , invalid);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
@@ -252,7 +267,8 @@ void enkf_ui_export_time(void * enkf_main) {
     state_enum analysis_state;
     int        cell_nr;
     
-    config_node = enkf_ui_util_scanf_parameter(ensemble_config , prompt_len , true , FIELD ,invalid ,  NULL , &analysis_state , NULL);
+    analysis_state = analyzed;
+    config_node = enkf_ui_util_scanf_key(ensemble_config , prompt_len , FIELD ,invalid);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int last_report = enkf_main_get_total_length( enkf_main );

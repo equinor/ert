@@ -15,12 +15,12 @@ typedef struct basic_index_driver_struct   basic_driver_index_type;
 typedef void (save_kwlist_ftype)  (void * , int , int , const stringlist_type *);  /* Functions used to load/store restart_kw_list instances. */
 typedef void (load_kwlist_ftype)  (void * , int , int , stringlist_type *);
 
-typedef void (select_dir_ftype)   (void * , const char *);
-typedef void (load_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
-typedef void (save_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);
-typedef bool (has_node_ftype)     (void * , int , int , state_enum , const char *);
-typedef void (unlink_node_ftype)  (void * , int , int , state_enum , enkf_node_type *); 
-typedef void (free_driver_ftype)  (void *);
+typedef void (select_dir_ftype)   (void * driver, const char * dir);
+typedef void (load_node_ftype) 	  (void * driver, int , int , state_enum , enkf_node_type *);
+typedef void (save_node_ftype) 	  (void * driver, int , int , state_enum , enkf_node_type *);
+typedef bool (has_node_ftype)     (void * driver, int , int , state_enum , const char *);
+typedef void (unlink_node_ftype)  (void * driver, int , int , state_enum , enkf_node_type *); 
+typedef void (free_driver_ftype)  (void * driver);
 
 typedef enkf_node_type ** (load_alloc_ensemble_ftype)    (void * , int , int , int , state_enum , enkf_config_node_type *);
 typedef enkf_node_type ** (load_alloc_ts_ftype)          (void * , int , int , int , state_enum , enkf_config_node_type *);
@@ -71,7 +71,7 @@ int                  type_id
 
 struct basic_driver_struct {
   BASIC_DRIVER_FIELDS;
-  
+  /* Fill in whatever here - i.e. dbase state. */
 };
 
 /*****************************************************************/

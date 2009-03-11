@@ -27,6 +27,8 @@ void plain_driver_common_load_node(const char * filename ,  int report_step , in
 
 
 
+
+
 void plain_driver_common_save_node(const char * filename ,  int report_step , int iens , state_enum state , enkf_node_type * node ) {
   bool   internal_state = true;
   FILE * stream     	= util_fopen(filename , "w");

@@ -651,9 +651,10 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
     for (ikw =0; ikw < ecl_file_get_num_kw( restart_file ); ikw++) {
       enkf_impl_type impl_type;
       const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
-      char * kw = ecl_kw_alloc_strip_header( ecl_kw );
+      int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
+      char * kw                  = ecl_kw_alloc_strip_header( ecl_kw );
+
       ecl_util_escape_kw(kw);
-      
       if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
 	const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
 	impl_type = enkf_config_node_get_impl_type(config_node);
@@ -669,18 +670,18 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
       if (impl_type == FIELD) 
 	stringlist_append_copy(enkf_state->restart_kw_list , kw);
       else if (impl_type == STATIC) {
-	/* It is a static kw like INTEHEAD or SCON */
 	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
-	  stringlist_append_copy( enkf_state->restart_kw_list , kw);
-
-	  /* 
-	     Observe that for static keywords we do NOT ask the node
-	     'privately' if internalize_state is false: It is
-	     impossible to single out static keywords for
-	     internalization.
-	  */
+	/* It is a static kw like INTEHEAD or SCON */
+	/* 
+	   Observe that for static keywords we do NOT ask the node
+	   'privately' if internalize_state is false: It is
+	   impossible to single out static keywords for
+	   internalization.
+	*/
 	     
 	  if (internalize_state) {  
+	    stringlist_append_copy( enkf_state->restart_kw_list , kw);
+
 	    if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
 	      ensemble_config_add_node(enkf_state->ensemble_config , kw , static_state , STATIC , NULL , NULL , NULL);
 	    
@@ -701,7 +702,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	       3. However it is still part of the enkf_state. Not loaded here, and subsequently
 	          purged from enkf_main.
 	       
-	       One keyword where this occurs is FIPOIL, which at least can appear only in the
+	       One keyword where this occurs is FIPOIL, which at least might appear only in the
 	       first restart file. Unused static keywords of this type are purged from the
 	       enkf_main object by a call to enkf_main_del_unused_static(). The purge is based on
 	       looking at the internal __report_step state of the static kw.
