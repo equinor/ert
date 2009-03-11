@@ -1,5 +1,5 @@
 /*
- * $Id:$
+ * $Id$
  */
 
 #ifndef __PLOT_CONST_HXX__
