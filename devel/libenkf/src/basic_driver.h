@@ -5,15 +5,15 @@ extern "C" {
 #endif
 #include <enkf_config_node.h>
 #include <enkf_node.h>
-#include <restart_kw_list.h>
+#include <stringlist.h>
 
 typedef struct basic_driver_struct         basic_driver_type;
 typedef struct basic_static_driver_struct  basic_driver_static_type;
 typedef struct basic_index_driver_struct   basic_driver_index_type;
 
 
-typedef void (save_kwlist_ftype)  (void * , int , int , restart_kw_list_type *);  /* Functions used to load/store restart_kw_list instances. */
-typedef void (load_kwlist_ftype)  (void * , int , int , restart_kw_list_type *);
+typedef void (save_kwlist_ftype)  (void * , int , int , const stringlist_type *);  /* Functions used to load/store restart_kw_list instances. */
+typedef void (load_kwlist_ftype)  (void * , int , int , stringlist_type *);
 
 typedef void (select_dir_ftype)   (void * , const char *);
 typedef void (load_node_ftype) 	  (void * , int , int , state_enum , enkf_node_type *);

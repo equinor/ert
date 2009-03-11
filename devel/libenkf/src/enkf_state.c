@@ -30,7 +30,6 @@
 #include <multflt.h>
 #include <equil.h>
 #include <arg_pack.h>
-#include <restart_kw_list.h>
 #include <enkf_fs.h>
 #include <basic_driver.h>
 #include <node_ctype.h>
@@ -123,8 +122,7 @@ typedef struct member_config_struct {
 
 struct enkf_state_struct {
   int                     __id;              	   /* Funny integer used for run_time type checking. */
-  restart_kw_list_type  * restart_kw_list;   	   /* This is an ordered list of the keywords in the restart file - to be
-                                             	      able to regenerate restart files with keywords in the right order.*/
+  stringlist_type       * restart_kw_list;
   hash_type    	   	* node_hash;
   subst_list_type       * subst_list;        	   /* This a list of key - value pairs which are used in a search-replace
                                              	      operation on the ECLIPSE data file. Will at least contain the key "INIT"
@@ -441,7 +439,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->run_info        = run_info_alloc();
   
   enkf_state->node_hash       = hash_alloc();
-  enkf_state->restart_kw_list = restart_kw_list_alloc();
+  enkf_state->restart_kw_list = stringlist_alloc_new();
 
   enkf_state->subst_list      = subst_list_alloc();
   {
@@ -647,7 +645,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
      2. Send static keywords straight out.
   */
 
-  restart_kw_list_reset(enkf_state->restart_kw_list);
+  stringlist_clear( enkf_state->restart_kw_list );
   {
     int ikw; 
     for (ikw =0; ikw < ecl_file_get_num_kw( restart_file ); ikw++) {
@@ -669,11 +667,11 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
       */
       
       if (impl_type == FIELD) 
-	restart_kw_list_add(enkf_state->restart_kw_list , kw);
+	stringlist_append_copy(enkf_state->restart_kw_list , kw);
       else if (impl_type == STATIC) {
 	/* It is a static kw like INTEHEAD or SCON */
 	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
-	  restart_kw_list_add(enkf_state->restart_kw_list , kw);
+	  stringlist_append_copy( enkf_state->restart_kw_list , kw);
 
 	  /* 
 	     Observe that for static keywords we do NOT ask the node
@@ -813,12 +811,13 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   char * restart_file    	       = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
   fortio_type * fortio   	       = fortio_fopen(restart_file , "w" , endian_swap , fmt_file);
   const char * kw;
-  
-  if (restart_kw_list_empty(enkf_state->restart_kw_list))
+  int          ikw;
+
+  if (stringlist_get_size(enkf_state->restart_kw_list) == 0)
     enkf_fs_fread_restart_kw_list(shared_info->fs , run_info->step1 , my_config->iens , enkf_state->restart_kw_list);
 
-  kw = restart_kw_list_get_first(enkf_state->restart_kw_list);
-  while (kw != NULL) {
+  for (ikw = 0; ikw < stringlist_get_size(enkf_state->restart_kw_list); ikw++) {
+    kw = stringlist_iget( enkf_state->restart_kw_list , ikw);
     /* 
        Observe that here we are *ONLY* iterating over the
        restart_kw_list instance, and *NOT* the enkf_state
@@ -861,7 +860,6 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
 	util_abort("%s: internal error - should not be here ... \n",__func__);
 
     }
-    kw = restart_kw_list_get_next(enkf_state->restart_kw_list);
   }
   fortio_fclose(fortio);
   free(restart_file);
@@ -888,11 +886,11 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
       below will try to write them with ecl_write - and that will fail
       (for report_step 0).
     */
-    restart_kw_list_add(enkf_state->restart_kw_list , "SWAT");
-    restart_kw_list_add(enkf_state->restart_kw_list , "SGAS");
-    restart_kw_list_add(enkf_state->restart_kw_list , "PRESSURE");
-    restart_kw_list_add(enkf_state->restart_kw_list , "RV");
-    restart_kw_list_add(enkf_state->restart_kw_list , "RS");
+    stringlist_append_copy(enkf_state->restart_kw_list , "SWAT");
+    stringlist_append_copy(enkf_state->restart_kw_list , "SGAS");
+    stringlist_append_copy(enkf_state->restart_kw_list , "PRESSURE");
+    stringlist_append_copy(enkf_state->restart_kw_list , "RV");
+    stringlist_append_copy(enkf_state->restart_kw_list , "RS");
   }
 
   util_make_path(run_info->run_path);
@@ -910,7 +908,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     int ikey;
     
     for (ikey = 0; ikey < num_keys; ikey++) {
-      if (!restart_kw_list_has_kw(enkf_state->restart_kw_list , key_list[ikey])) {      /* Make sure that the elements in the restart file are not written (again). */
+      if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {      /* Make sure that the elements in the restart file are not written (again). */
 	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
 	enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
       }
@@ -1010,7 +1008,7 @@ void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
 void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
-  restart_kw_list_free(enkf_state->restart_kw_list);
+  stringlist_free(enkf_state->restart_kw_list);
 
   member_config_free(enkf_state->my_config);
   run_info_free(enkf_state->run_info);

@@ -2,7 +2,7 @@
 #include <path_fmt.h>
 #include <util.h>
 #include <fs_types.h>
-#include <restart_kw_list.h>
+#include <stringlist.h>
 #include <plain_driver_common.h>
 #include <plain_driver_index.h>
 #include <basic_driver.h>
@@ -41,24 +41,24 @@ void plain_driver_index_select_dir(void *_driver , const char * directory) {
   
 
     
-void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report_step , int iens , restart_kw_list_type * kw_list) {
+void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report_step , int iens , const stringlist_type * kw_list) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
     char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , true , report_step , iens , "kw_list");
     FILE * stream  = util_fopen(kw_file , "w");
-    restart_kw_list_fwrite(kw_list , stream);
+    stringlist_fwrite(kw_list , stream);
     fclose(stream);
     free(kw_file);
   }
 }
 
 
-void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_step, int iens , restart_kw_list_type * kw_list) {
+void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_step, int iens , stringlist_type * kw_list) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
     char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , false , report_step , iens , "kw_list");
     FILE * stream  = util_fopen(kw_file , "r");
-    restart_kw_list_fread(kw_list , stream);
+    stringlist_fread(kw_list , stream);
     fclose(stream);
     free(kw_file);
   }

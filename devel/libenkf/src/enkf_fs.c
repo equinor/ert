@@ -935,13 +935,13 @@ stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * fs) {
 //}
 
 
-void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, restart_kw_list_type * kw_list) {
+void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, const stringlist_type * kw_list) {
   basic_driver_index_type * index = enkf_fs->index_read;
   index->save_kwlist( index , report_step , iens , kw_list );
 }
 
 
-void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, restart_kw_list_type * kw_list) {
+void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, stringlist_type * kw_list) {
   basic_driver_index_type * index = enkf_fs->index_read;
   index->load_kwlist( index , report_step , iens , kw_list );
 }
