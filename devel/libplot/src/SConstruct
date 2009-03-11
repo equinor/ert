@@ -39,10 +39,14 @@ lib_list = ['ecl','plot','util','plplotd','m','z','pthread']
 object_files  = opt.Object('plot.c') 
 object_files += opt.Object('plot_dataset.c') 
 object_files += opt.Object('plot_range.c')
+object_files += opt.Object('plot_const_cxx.cxx')
 
-header_files = ['plot.h','plot_dataset.h','plot_range.h','plot_const.h']
+header_files  = ['plot.h','plot_dataset.h','plot_range.h','plot_const.h']
+header_files += ['plot.hxx','plot_range.hxx']
 
 newlibs = opt.Library('plot',object_files)
+
+test_progs = opt.Program('testplot_cxx', 'testplot_cxx.cc' , LIBS=lib_list)
 
 Install(libdir,newlibs)
 Install(incdir,header_files)
