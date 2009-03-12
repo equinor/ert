@@ -64,3 +64,5 @@ enkf_ui_export.o                    : enkf_ui_export.c enkf_ui_export.h enkf_mai
 ecl_static_kw.o                     : ecl_static_kw.c ecl_static_kw.h enkf_macros.h  
 pilot_point.o                       : pilot_point.c pilot_point.h enkf_types.o enkf_macros.h scalar.o pilot_point_config.o field.o  
 gen_kw_config.o                     : gen_kw_config.c gen_kw_config.h enkf_util.o enkf_macros.h trans_func.o scalar_config.o enkf_defaults.o  
+sqlite3.o                           : sqlite3.h sqlite3.c
+sqlite3_driver.o                    : sqlite3.o sqlite3.h sqlite3_driver.c sqlite3_driver.h
