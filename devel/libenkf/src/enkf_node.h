@@ -35,6 +35,7 @@ typedef void   	      (deserialize_ftype)       (void *       	       ,  /* Node
 						 const serial_vector_type * );
                                                  
 
+
 typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node object */
 						 const char *  ,   /* Directory to write to. */
                                                  const char *  ,   /* Filename - can be NULL. */

@@ -26,13 +26,14 @@
 
 #define FS_MAGIC_ID         123998L
 #define CURRENT_FS_VERSION  100
+
 /**
    Version history:
 
    0  : 
 
-   100:
-
+   100: First version with subdirectories for different cases.
+   
 */
 
 

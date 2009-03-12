@@ -389,6 +389,7 @@ int gen_data_get_size(const gen_data_type * gen_data) {
 
 
 
+
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/

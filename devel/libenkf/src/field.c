@@ -1335,13 +1335,6 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
   return val;
 }
 
-/**
-   A serious backdoor - if you need this function you are working on a
-   fxxxing hack - shame on you.
-*/
-void * field_get_data(field_type * field) {
-  return field->data;
-}
 
 
 /******************************************************************/
@@ -1370,7 +1363,6 @@ VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);
 VOID_CLEAR(field);
 VOID_USER_GET(field)
-
 
 
 

@@ -176,6 +176,7 @@ struct enkf_node_struct {
   user_get_ftype      *user_get;
   serialize_ftype     *serialize;
   deserialize_ftype   *deserialize;
+  
 
   initialize_ftype   		 * initialize;
   free_ftype         		 * freef;
@@ -602,8 +603,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->__state            = undefined;
 
   /*
-     Start by initializing all function pointers
-     to NULL.
+    Start by initializing all function pointers to NULL.
   */
   node->realloc_data   	= NULL;
   node->alloc          	= NULL;

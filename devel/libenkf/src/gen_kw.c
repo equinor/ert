@@ -54,25 +54,6 @@ void gen_kw_set_data(gen_kw_type * gen_kw , const double * data) {
 }
 
 
-void gen_kw_get_data(const gen_kw_type * gen_kw , double * data) {
-  scalar_get_data(gen_kw->scalar , data);
-}
-
-void gen_kw_get_output_data(const gen_kw_type * gen_kw , double * output_data) {
-  scalar_get_output_data(gen_kw->scalar , output_data);
-}
-
-
-const double * gen_kw_get_data_ref(const gen_kw_type * gen_kw) {
-  return scalar_get_data_ref(gen_kw->scalar);
-}
-
-
-const double * gen_kw_get_output_ref(const gen_kw_type * gen_kw) {
-  return scalar_get_output_ref(gen_kw->scalar);
-}
-
-
 
 gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw_type * gen_kw  = util_malloc(sizeof *gen_kw , __func__);
@@ -235,6 +216,7 @@ double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * val
     return 0.0;
   }
 }
+
 
 
 

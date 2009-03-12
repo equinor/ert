@@ -79,46 +79,6 @@ void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void
 #define GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size (const prefix ## _config_type *arg) { return arg->data_size; }
 #define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *)
 
-/*****************************************************************/
-
-
-#define CONFIG_SET_ECLFILE(prefix)                                                            \
-void prefix ## _config_set_eclfile(prefix ## _config_type *config , const char * file) {      \
-  if (file != NULL) {                                                                         \
-     config->eclfile = realloc(config->eclfile , strlen(file) + 1);                           \
-     strcpy(config->eclfile , file);                                                          \
-  } else config->eclfile = NULL; 							      \
-}
-
-
-#define CONFIG_SET_ENSFILE(prefix)                                                           \
-void prefix ## _config_set_ensfile(prefix ## _config_type *config , const char * file) {     \
-  if (file != NULL) {                                                                        \
-     config->ensfile = realloc(config->ensfile , strlen(file) + 1);                          \
-     strcpy(config->ensfile , file);                                                         \
-  } else config->ensfile = NULL;                                                             \
-}
-
-
-#define CONFIG_SET_ENSFILE_VOID(prefix)                                            \
-void prefix ## _config_set_ensfile__(void *void_config , const char * file) {       \
-   prefix ## _config_type * config = (prefix ## _config_type *) void_config;        \
-   prefix ## _config_set_ensfile(config , file);                                    \
-}
-
-#define CONFIG_SET_ECLFILE_VOID(prefix)                                            \
-void prefix ## _config_set_eclfile__(void *void_config , const char * file) {       \
-   prefix ## _config_type * config = (prefix ## _config_type *) void_config;        \
-   prefix ## _config_set_eclfile(config , file);                                    \
-}
-
-/*****************************************************************/
-
-#define CONFIG_SET_ECLFILE_HEADER(prefix) 	void prefix ## _config_set_eclfile  (prefix ## _config_type *, const char * );
-#define CONFIG_SET_ENSFILE_HEADER(prefix) 	void prefix ## _config_set_ensfile  (prefix ## _config_type *, const char * );
-#define CONFIG_SET_ECLFILE_HEADER_VOID(prefix) void prefix ## _config_set_eclfile__(void *, const char * );
-#define CONFIG_SET_ENSFILE_HEADER_VOID(prefix) void prefix ## _config_set_ensfile__(void *, const char * );
-
 
 /*****************************************************************/
 
@@ -129,7 +89,6 @@ void * prefix ## _alloc__(const void *void_config) {                            
 }
 
 #define VOID_ALLOC_HEADER(prefix) void * prefix ## _alloc__(const void *)
-
 
 /*****************************************************************/
 

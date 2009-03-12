@@ -658,12 +658,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
       } else
 	impl_type = STATIC;
       
-      /*
-	Observe that the keywords are added to the restart_kw_list
-	irrespective of whether they are actually internalized
-	afterwards or not. CAN THAT BE RIGHT????
-      */
-      
+
       if (impl_type == FIELD) 
 	stringlist_append_copy(enkf_state->restart_kw_list , kw);
       else if (impl_type == STATIC) {

@@ -17,7 +17,7 @@ void             gen_kw_output_transform(const gen_kw_type * );
 void             gen_kw_get_output_data(const gen_kw_type * , double * );
 const double   * gen_kw_get_output_ref(const gen_kw_type * );
 const double   * gen_kw_get_data_ref(const gen_kw_type * );
-void             gen_kw_get_data(const gen_kw_type * , double * );
+  //void             gen_kw_get_data(const gen_kw_type * , double * );
 void             gen_kw_set_data(gen_kw_type * , const double * );
 
 gen_kw_type    * gen_kw_alloc(const gen_kw_config_type * );
