@@ -35,7 +35,7 @@ Alias('install', [ib, il])
 
 
 opt = Environment(CXXFLAGS = '-O3' ,
-                  CFLAGS   = '-O2 -std=gnu99 -g -Wall -fPIC' ,
+                  CFLAGS   = '-O2 -std=gnu99 -g -Wall -fPIC -DWITH_TRUETYPE=1' ,
                   CPPPATH = ['.',incdir] ,
                   LIBPATH = ['.', libdir]#,
 #                  LINKFLAGS= '-Wl,-rpath ' + libdir + ' -Wl,-rpath ' + basedir + '/x86_64_RH_4/lib/plplot5.9.0/driversd/'
