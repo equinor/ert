@@ -9,15 +9,16 @@ INSTALL_LIB_PATH  = $(LIBPLOT_HOME)/lib
 #################################################################
 ARFLAGS = -csr
 #################################################################
-OBJECTS        = plot.o plot_dataset.o  plot_range.o 
-INC_FILES      = plot.h plot_dataset.h  plot_range.h plot_const.h
+OBJECTS        = plot.o plot_dataset.o  plot_range.o plot_const_cxx.o
+INC_FILES      = plot.h plot_dataset.h  plot_range.h plot_const.h plot_const.hxx
 LIB            = libplot.a 
 LIB_LINK       = -lplot -lutil -lecl -lz -lm -lplplotd -lpthread 
 LIB_PATH       = -L$(LIBPLOT_HOME)/lib     -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib 
 TARGET_INCLUDE = -I$(LIBPLOT_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBUTIL_HOME)/include -I$(LIBECL_HOME)/include
 
 
-all: $(LIB)
+
+all: $(LIB) testplot_cxx
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
@@ -51,6 +52,15 @@ $(LIB): $(OBJECTS)
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) -DWITH_TRUETYPE=$(WITH_TRUETYPE)  $(COMPILE_INCLUDE) $< -o $@
+
+%.o : %.cc
+	$(CPP) -c $(CPPFLAGS) $(COMPILE_INCLUDE) $< -o $@
+
+%.o : %.cxx
+	$(CPP) -c $(CPPFLAGS) $(COMPILE_INCLUDE) $< -o $@
+
+testplot_cxx : testplot_cxx.o $(LIB)
+	$(CPP) -o testplot_cxx testplot_cxx.o -L. $(LIB_PATH) $(LIB_LINK)
 
 new: 
 	../../Scripts/cdep.py all_include.h 0
