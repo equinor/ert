@@ -16,10 +16,13 @@ static const char SQL_CREATE_TABLE_fs[]     = "CREATE TABLE IF NOT EXISTS fs  "
   "(id TEXT NOT NULL, casename TEXT NOT NULL, realization_nr INTEGER NOT NULL,"
   "restart_nr INTEGER NOT NULL, state INTEGER NOT NULL, data BLOB NOT NULL,   "
   "UNIQUE (id, casename, realization_nr, restart_nr, state));                 ";
+
 static const char SQL_INSERT_INTO_fs[]      = "REPLACE INTO fs (id, casename, "
   "realization_nr, restart_nr, state, data) values (?, ?, ?, ?, ?, ?);        ";
+
 static const char SQL_SELECT_DATA_FROM_fs[] = "SELECT data FROM fs WHERE id=? "
   "AND casename=? AND realization_nr=? AND restart_nr=? AND state=?;          ";
+
 static const char SQL_DELETE_FROM_fs[] = "DELETE FROM fs WHERE id=?           "
   "AND casename=? AND realization_nr=? AND restart_nr=? AND state=?;          ";
 
@@ -64,9 +67,9 @@ int get_bytesize(
 */
 static
 void bind_int(
-  sqlite3_stmt * stmt,
-  int            index,
-  int            value)
+  sqlite3_stmt * stmt,    /* Prepared sqlite3 SQL statement.              */
+  int            index,   /* Position of '?' to replace. Starting at 1.   */
+  int            value)   /* Integer value to substitute.                 */
 {
   int result = sqlite3_bind_int(stmt, index, value);
   if(result != SQLITE_OK)
@@ -85,13 +88,13 @@ void bind_int(
 
   For efficiency, this function does *NOT* take a local copy
   of "text". Thus, it is the calling scope's responsibility to
-  ensure that "text" is not free'd before stmt.
+  ensure that "text" is not free'd before stmt is finalized.
 */
 static
 void bind_text(
-  sqlite3_stmt * stmt,
-  int            index,
-  const char   * text)
+  sqlite3_stmt * stmt,  /* Prepared sqlite3 SQL statement.              */
+  int            index, /* Position of '?' to replace. Starting at 1.   */
+  const char   * text)  /* \0 terminated string to substitute.          */
 {
   int result = sqlite3_bind_text(stmt, index, text, get_bytesize(text), SQLITE_STATIC);
   if(result != SQLITE_OK)
@@ -110,14 +113,14 @@ void bind_text(
 
   For efficiency, this function does *NOT* take a local copy
   of "data". Thus, it is the calling scope's responsibility to
-  ensure that "data" is not free'd before stmt.
+  ensure that "data" is not free'd before stmt is finalized.
 */
 static
 void bind_blob(
-  sqlite3_stmt * stmt,
-  int            index,
-  const void   * data,
-  int            bytesize_data)
+  sqlite3_stmt * stmt,          /* Prepared sqlite3 SQL statement.            */
+  int            index,         /* Position of '?' to replace. Starting at 1. */
+  const void   * data,          /* Binary value to substitute.                */
+  int            bytesize_data) /* Bytesize of the binary value.              */
 {
   int result = sqlite3_bind_blob(stmt, index, data, bytesize_data, SQLITE_STATIC);
   if(result != SQLITE_OK)
@@ -162,7 +165,8 @@ sqlite3 * open_db(
   int       result;
   sqlite3 * db;
 
-  result = sqlite3_open_v2(db_file, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+  result = sqlite3_open_v2(db_file, &db,
+                           SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
   if(result != SQLITE_OK)
   {
     fprintf(stderr, "Error when trying to open \"%s\". Error number %d: %s\n",
@@ -257,7 +261,8 @@ void sqlite3_driver_save_node(
   sqlite3_stmt * stmt          = NULL;
   const char   * casename      = driver->casename; 
 
-  result = sqlite3_prepare_v2(db, SQL_INSERT_INTO_fs, strlen(SQL_INSERT_INTO_fs), &stmt, NULL);
+  result = sqlite3_prepare_v2(db, SQL_INSERT_INTO_fs,
+                              strlen(SQL_INSERT_INTO_fs), &stmt, NULL);
   if(result != SQLITE_OK)
   {
     fprintf(stderr, "Error preparing statement \"%s\". Error number %d: %s\n", 
@@ -280,7 +285,8 @@ void sqlite3_driver_save_node(
   result = sqlite3_step(stmt);
   if(result != SQLITE_DONE)
   {
-    fprintf(stderr, "Internal error, giving up. Error number %d: %s\n", result, sqlite3_errmsg(db));
+    fprintf(stderr, "Internal error, giving up. Error number %d: %s\n",
+            result, sqlite3_errmsg(db));
     sqlite3_close(db);
     util_abort("%s: Internal error.\n", __func__);
   }
@@ -288,8 +294,8 @@ void sqlite3_driver_save_node(
   result = sqlite3_finalize(stmt);
   if(result != SQLITE_OK )
   {
-    fprintf(stderr, "Failed to finalize SQL statement. Error number %d: %s\n", result,
-            sqlite3_errmsg(db));
+    fprintf(stderr, "Failed to finalize SQL statement. Error number %d: %s\n",
+            result, sqlite3_errmsg(db));
     sqlite3_close(db);
     util_abort("%s: Internal error.\n", __func__);
   }
@@ -320,8 +326,8 @@ bool sqlite3_driver_load_node(
   sqlite3_stmt * stmt          = NULL;
   const char   * casename      = driver->casename;
 
-  result = sqlite3_prepare_v2(db, SQL_SELECT_DATA_FROM_fs, strlen(SQL_SELECT_DATA_FROM_fs),
-                              &stmt, NULL);
+  result = sqlite3_prepare_v2(db, SQL_SELECT_DATA_FROM_fs,
+                              strlen(SQL_SELECT_DATA_FROM_fs), &stmt, NULL);
   if(result != SQLITE_OK)
   {
     fprintf(stderr, "Error preparing statement \"%s\". Error number %d: %s\n",
@@ -342,8 +348,8 @@ bool sqlite3_driver_load_node(
 
 
   /**
-    Check if we have the requested node. Since there is a UNIQUE lock in SQL_CREATE_TABLE_fs,
-    there can be at most one result.
+    Check if we have the requested node. Since there is a UNIQUE lock in
+    SQL_CREATE_TABLE_fs, there can be at most one result.
   */
   result = sqlite3_step(stmt);
   if(result == SQLITE_DONE)
@@ -352,7 +358,8 @@ bool sqlite3_driver_load_node(
     has_node = true;
   else
   {
-    fprintf(stderr, "Internal error, giving up. Error number %d: %s\n", result, sqlite3_errmsg(db));
+    fprintf(stderr, "Internal error, giving up. Error number %d: %s\n",
+            result, sqlite3_errmsg(db));
     sqlite3_close(db);
     util_abort("%s: Internal error.\n", __func__);
   }
@@ -403,8 +410,8 @@ void sqlite3_driver_unlink_node(
   const char          * casename = driver->casename;
 
 
-  result = sqlite3_prepare_v2(db, SQL_DELETE_FROM_fs, strlen(SQL_DELETE_FROM_fs),
-                              &stmt, NULL);
+  result = sqlite3_prepare_v2(db, SQL_DELETE_FROM_fs,
+                              strlen(SQL_DELETE_FROM_fs), &stmt, NULL);
   if(result != SQLITE_OK)
   {
     fprintf(stderr, "Error preparing statement \"%s\". Error number %d: %s\n",
@@ -427,7 +434,8 @@ void sqlite3_driver_unlink_node(
   result = sqlite3_step(stmt);
   if(result != SQLITE_DONE)
   {
-    fprintf(stderr, "Internal error, giving up. Error number %d: %s\n", result, sqlite3_errmsg(db));
+    fprintf(stderr, "Internal error, giving up. Error number %d: %s\n",
+            result, sqlite3_errmsg(db));
     sqlite3_close(db);
     util_abort("%s: Internal error.\n", __func__);
   }
@@ -454,5 +462,6 @@ bool sqlite3_driver_has_node(
   int          restart_nr,
   int          state)
 {
-  return sqlite3_driver_load_node(_driver, id, realization_nr, restart_nr, state, NULL, NULL);
+  return sqlite3_driver_load_node(_driver, id, realization_nr, restart_nr,
+                                  state, NULL, NULL);
 }
