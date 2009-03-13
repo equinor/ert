@@ -206,6 +206,10 @@ void create_fs_table_if_not_exists(
 
   This function will also create the fs table in the
   db_file if it does not already exist.
+
+  TODO
+
+  Need to set the function pointers properly!
 */
 sqlite3_driver_type * sqlite3_driver_alloc(
   const char * db_file,
@@ -464,4 +468,17 @@ bool sqlite3_driver_has_node(
 {
   return sqlite3_driver_load_node(_driver, id, realization_nr, restart_nr,
                                   state, NULL, NULL);
+}
+
+
+/**
+  Change casename.
+*/
+void sqlite3_driver_change_casename(
+  void * _driver,
+  const char * casename)
+{
+  sqlite3_driver_type * driver = sqlite3_driver_safe_cast( _driver );
+  free(driver->casename);
+  driver->casename = util_alloc_string_copy(casename);
 }

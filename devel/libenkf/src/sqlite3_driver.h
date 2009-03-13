@@ -77,4 +77,12 @@ bool sqlite3_driver_has_node(
   int          restart_nr,
   int          state);
 
+
+/**
+  Change casename.
+*/
+void sqlite3_driver_change_casename(
+  void * _driver,
+  const char * casename);
+
 #endif

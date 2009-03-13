@@ -48,7 +48,6 @@ int main(
   else
     printf("Successfully deleted node.\n");
 
-
   sqlite3_driver_free( _driver );
   return 0;
 };
