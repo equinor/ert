@@ -11,6 +11,8 @@ import os.path
 umask = os.umask(002)
 os.system('chmod o+r *.h')
 os.system('chmod ug+rw *.h')
+os.system('chmod o+r *.hxx')
+os.system('chmod ug+rw *.hxx')
 
 
 #
@@ -35,7 +37,9 @@ Alias('install', [ib, il])
 opt = Environment(CXXFLAGS = '-O3' ,
                   CFLAGS   = '-O2 -std=gnu99 -g -Wall -fPIC' ,
                   CPPPATH = ['.',incdir] ,
-                  LIBPATH = ['.', libdir])
+                  LIBPATH = ['.', libdir]#,
+#                  LINKFLAGS= '-Wl,-rpath ' + libdir + ' -Wl,-rpath ' + basedir + '/x86_64_RH_4/lib/plplot5.9.0/driversd/'
+                  )
 
 lib_list = ['ecl','plot','util','plplotd','m','z','pthread']
 
