@@ -1080,33 +1080,48 @@ bool conf_instance_check_item_mutex(
 
   num_items_set = set_get_size(items_set);
   
-  if (conf_item_mutex->inverse) {
+  if (conf_item_mutex->inverse)
+  {
     /** This is an inverse mutex - all (or none) items should be set. */
-    if (!((num_items_set == 0) || (num_items_set == num_items))) {
+    if (!((num_items_set == 0) || (num_items_set == num_items)))
+    {
       ok = false;
-      printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
-	     conf_instance->name, conf_instance->conf_class->class_name);
+      char ** items_set_keys = set_alloc_keylist(items_set);
+      printf("ERROR: Failed to validate mutal inclusion in instance \"%s\" of class \"%s\".\n\n",
+             conf_instance->name, conf_instance->conf_class->class_name);
+      printf("       When using one or more of the following items, all must be set:\n");
+      for(int item_nr = 0; item_nr < num_items; item_nr++)
+        printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+      printf("\n");
+      printf("       However, only the following items were set:\n");
+      for(int item_nr = 0; item_nr < num_items_set; item_nr++)
+        printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
+      printf("\n");
+      
+      util_free_stringlist(items_set_keys, num_items_set);
     }
-  } else {
+  }
+  else
+  {
     if(num_items_set > 1)
-      {
-	ok = false;
-	char ** items_set_keys = set_alloc_keylist(items_set);
-	
-	printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
-	       conf_instance->name, conf_instance->conf_class->class_name);
-	printf("       Only one of the following items may be set:\n");
-	for(int item_nr = 0; item_nr < num_items; item_nr++)
-	  printf("       %i : %s\n", item_nr, item_keys[item_nr]);
-	
-	printf("\n");
-	printf("       However, all the following items were set:\n");
-	for(int item_nr = 0; item_nr < num_items_set; item_nr++)
-	  printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
-	printf("\n");
-	
-	util_free_stringlist(items_set_keys, num_items_set);
-      }
+    {
+      ok = false;
+      char ** items_set_keys = set_alloc_keylist(items_set);
+      
+      printf("ERROR: Failed to validate mutex in instance \"%s\" of class \"%s\".\n\n",
+             conf_instance->name, conf_instance->conf_class->class_name);
+      printf("       Only one of the following items may be set:\n");
+      for(int item_nr = 0; item_nr < num_items; item_nr++)
+        printf("       %i : %s\n", item_nr, item_keys[item_nr]);
+      
+      printf("\n");
+      printf("       However, all the following items were set:\n");
+      for(int item_nr = 0; item_nr < num_items_set; item_nr++)
+        printf("       %i : %s\n", item_nr, items_set_keys[item_nr]);
+      printf("\n");
+      
+      util_free_stringlist(items_set_keys, num_items_set);
+    }
   }
 
   if(num_items_set == 0 && conf_item_mutex->require_one && num_items > 0)
