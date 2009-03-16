@@ -85,9 +85,19 @@ bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream, bool internal_stat
 }
 
 
+
+/**
+   As of 17/03/09 MULTFLT has been depreceated, and GEN_KW has been
+   inserted as a 'drop-in-replacement'. This implies that existing
+   storage labeled with implemantation type 'MULTFLT' should be
+   silently 'upgraded' to 'GEN_KW'.
+*/
+
 void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {
-  enkf_util_fread_assert_target_type(stream , GEN_KW);
-  scalar_stream_fread(gen_kw->scalar , stream);
+  enkf_impl_type file_type;
+  file_type = util_fread_int(stream);
+  if ((file_type == GEN_KW) || (file_type == MULTFLT))
+    scalar_stream_fread(gen_kw->scalar , stream);
 }
 
 

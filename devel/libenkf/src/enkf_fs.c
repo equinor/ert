@@ -37,6 +37,7 @@
    File system version            | First svn version     |  Last svn version
    --------------------------------------------------------------------------
    100                            |                       |  1799
+   101                            |   1810                | 
    --------------------------------------------------------------------------
 
 
@@ -413,9 +414,11 @@ static void enkf_fs_upgrade_101(const char * config_file, const char * root_path
   printf("**  remember which case you used last - apart from that everything should  **\n");
   printf("**  be unchanged.                                                          **\n");
   printf("*****************************************************************************\n");
-  printf("Storing backup in: %s ....... ",backup_path); fflush(stdout);
-  util_copy_directory( root_path , backup_path ); 
-  printf("\n");
+  {
+    char * prompt = util_alloc_sprintf("Storing backup in: %s ==> " , backup_path);
+    util_copy_directory( root_path , backup_path , prompt); 
+    free( prompt );
+  }
   free( backup_path );
   
   {

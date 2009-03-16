@@ -260,14 +260,29 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( strtol(config_get(config , "NUM_REALIZATIONS") , NULL , 10) );
   ensemble_config->field_trans_table     = field_trans_table_alloc();
 
-  /* MULTFLT */
-  for (i=0; i < config_get_occurences(config , "MULTFLT"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "MULTFLT" , i);
-    const char * key         = stringlist_iget(tokens , 0);
-    const char * ecl_file    = stringlist_iget(tokens , 1);
-    const char * config_file = stringlist_iget(tokens , 2);
-
-    ensemble_config_add_node(ensemble_config , key , parameter , MULTFLT , ecl_file , NULL , multflt_config_fscanf_alloc(config_file));
+  {
+    /* MULTFLT depreceation warning added 17/03/09. */
+    if (config_get_occurences(config , "MULTFLT") > 0) {
+      printf("*****************************************************************\n");
+      printf("**                    W A R N I N G                            **\n");
+      printf("** ----------------------------------------------------------  **\n");
+      printf("** You have used the keyword \'MULTFLT\' for estimating fault    **\n");
+      printf("** transmissibility multipliers. This will be disabled in the  **\n");
+      printf("** future. Instead you should use the GEN_KW keyword, look at  **\n");
+      printf("** GEN_KW documentation for an example of how to use GEN_KW    **\n");
+      printf("** to estimate fault transmissibility multipliers.             **\n");
+      printf("*****************************************************************\n");
+    }
+    
+    /* MULTFLT */
+    for (i=0; i < config_get_occurences(config , "MULTFLT"); i++) {
+      const stringlist_type * tokens = config_iget_stringlist_ref(config , "MULTFLT" , i);
+      const char * key         = stringlist_iget(tokens , 0);
+      const char * ecl_file    = stringlist_iget(tokens , 1);
+      const char * config_file = stringlist_iget(tokens , 2);
+      
+      ensemble_config_add_node(ensemble_config , key , parameter , MULTFLT , ecl_file , NULL , multflt_config_fscanf_alloc(config_file));
+    }
   }
 
 
