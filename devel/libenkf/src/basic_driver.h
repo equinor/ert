@@ -27,10 +27,10 @@ typedef enkf_node_type ** (load_alloc_ts_ftype)          (void * , int , int , i
 typedef void              (save_ensemble_ftype)          (void * , int , int , int , state_enum , enkf_node_type **);
 typedef void              (save_ts_ftype)                (void * , int , int , int , state_enum , enkf_node_type **);
 
-typedef void (static_load_node_ftype) 	 (void * , int , int , state_enum , int , enkf_node_type *);
-typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , int , enkf_node_type *);
-typedef bool (static_has_node_ftype)     (void * , int , int , state_enum , int , const char *);
-typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , int , enkf_node_type *); 
+typedef void (static_load_node_ftype) 	 (void * , int , int , state_enum , enkf_node_type *);
+typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , enkf_node_type *);
+typedef bool (static_has_node_ftype)     (void * , int , int , state_enum , const char *);
+typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , enkf_node_type *); 
 
 
 /**

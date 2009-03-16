@@ -344,6 +344,26 @@ void field_fread(field_type * field , FILE * stream) {
 }
 
 
+void field_set_data(field_type * field , const void * data) {
+  char * ptr = (char *) data;
+  
+  int  data_size , sizeof_ctype;
+  bool read_compressed;
+  enkf_util_fread_assert_target_type_from_buffer(&ptr , FIELD );
+
+  util_fread_from_buffer(&data_size        , sizeof  data_size        , 1 , &ptr);
+  util_fread_from_buffer(&sizeof_ctype 	   , sizeof  sizeof_ctype     , 1 , &ptr);
+  util_fread_from_buffer(&read_compressed  , sizeof  read_compressed  , 1 , &ptr);
+  
+  /*
+    if (read_compressed)
+    util_fread_compressed(field->data , stream);
+    else
+    util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
+  */
+}
+
+
 
 
 

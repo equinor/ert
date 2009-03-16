@@ -33,6 +33,11 @@ typedef int   	      (serialize_ftype)      	(const void *         ,   /* Node o
 typedef void   	      (deserialize_ftype)       (void *       	       ,  /* Node object     		*/
 						 serial_state_type *   , 
 						 const serial_vector_type * );
+
+
+typedef void   	      (set_data_ftype)          (void *       	       ,  /* Node object     		*/
+						 const void *);           /* The data - which is written in on the node. */
+
                                                  
 
 

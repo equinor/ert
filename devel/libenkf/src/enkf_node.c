@@ -176,6 +176,7 @@ struct enkf_node_struct {
   user_get_ftype      *user_get;
   serialize_ftype     *serialize;
   deserialize_ftype   *deserialize;
+  set_data_ftype      *set_data;
   
 
   initialize_ftype   		 * initialize;
@@ -423,6 +424,23 @@ bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , bool internal_s
 
 
 
+void enkf_node_set_data(enkf_node_type *enkf_node , const void * data , int report_step , int iens , state_enum state) {
+  if (!enkf_node->__memory_allocated)
+    util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
+  {
+    FUNC_ASSERT(enkf_node->set_data);
+    enkf_node->set_data(enkf_node->data , data);
+    
+    enkf_node->__report_step = report_step;
+    enkf_node->__state       = state;
+    enkf_node->__modified    = false;
+    enkf_node->__iens        = iens;
+  }
+}
+
+
+
+
 void enkf_node_ensemble_fprintf_results(const enkf_node_type ** ensemble , int ens_size , int report_step , const char * path) {
   /*
     FUNC_ASSERT(ensemble[0]->fprintf_results);
@@ -619,6 +637,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->free_data      	= NULL;
   node->fprintf_results	= NULL;
   node->user_get       	= NULL;
+  node->set_data        = NULL;
 
   switch (impl_type) {
   case(HAVANA_FAULT):

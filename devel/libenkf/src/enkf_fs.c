@@ -8,6 +8,7 @@
 #include <set.h>
 #include <enkf_fs.h>
 #include <enkf_defaults.h>
+#include <msg.h>
 #include <path_fmt.h>
 #include <enkf_node.h>
 #include <basic_driver.h>
@@ -25,14 +26,36 @@
 
 
 #define FS_MAGIC_ID         123998L
-#define CURRENT_FS_VERSION  100
+#define CURRENT_FS_VERSION  101
 
 /**
    Version history:
 
    0  : 
 
-   100: First version with subdirectories for different cases.
+   
+   File system version            | First svn version     |  Last svn version
+   --------------------------------------------------------------------------
+   100                            |                       |  1799
+   --------------------------------------------------------------------------
+
+
+   Version: 100
+   ------------
+   First version with subdirectories for different cases.
+
+   
+   Version: 101
+   ------------
+
+   Have changed the format for storing static keywords. Instead of a
+   directory with numbered files in them, the keywords get an integer
+   appended:
+
+     INTEHEAD/0   ==>  INTEHEAD_0
+
+     
+
    
 */
 
@@ -218,12 +241,46 @@ struct enkf_fs_struct {
   char                      * current_read_dir;      /* The currently active "directory" for reading. */
   char                      * current_write_dir;     /* The currently active directory fro writing. */ 
   char                      * mount_map;             /* Binary file containing all the information the filesystem needs to bootstrap itself. Updated when e.g. new directories are added. */
-  int                         __dir_offset;          /* The offset into the mount map where the directory information starts - very internal. */
+  long int                     __dir_offset;         /* The offset into the mount map where the directory information starts - very internal. */
 };
 
 /*****************************************************************/
 
-static void enkf_fs_upgrade(int old_version, const char * config_file, const char * root_path , const char * new_dir) {
+
+/** Returns the __dir_offset. */
+long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir) {
+  long int  __dir_offset;
+  FILE * stream = util_fopen( mount_map , "w");
+  util_fwrite_long(FS_MAGIC_ID , stream);
+  util_fwrite_int(CURRENT_FS_VERSION , stream);
+  plain_driver_fwrite_mount_info( stream );
+  __dir_offset = ftell( stream );
+  {
+    set_type * set = set_alloc_empty();
+    set_add_key( set , default_dir );
+    set_fwrite( set , stream);
+    set_free( set );
+  }
+  util_fwrite_string( default_dir , stream );   /* Read directory  */
+  util_fwrite_string( default_dir , stream );   /* Write directory */ 
+  fclose(stream);
+  return __dir_offset;
+}
+  
+
+
+static void __fs_update_map(const char * config_file , long int __dir_offset , set_type * cases , const char * current_read_case, const char * current_write_case) {
+  FILE * stream = util_fopen(config_file , "r+");
+  fseek(stream , __dir_offset , SEEK_SET);  /* Skipping all the driver information - which is left untouched. */
+  set_fwrite( cases , stream );
+  util_fwrite_string( current_read_case , stream );
+  util_fwrite_string( current_write_case , stream );
+  fclose(stream);
+}
+
+/*****************************************************************/
+
+static void enkf_fs_upgrade_100(int old_version, const char * config_file, const char * root_path , const char * new_dir) {
   char * new_path = util_alloc_filename(root_path , new_dir , NULL);
   printf("Upgrading enkf file system located in: %s\n",root_path);
   util_make_path( new_path );
@@ -255,6 +312,147 @@ static void enkf_fs_upgrade(int old_version, const char * config_file, const cha
 }
 
 
+/*****************************************************************/
+/** Functions for upgrading filesystem layout from version 100 -> 101. */
+
+
+void enkf_fs_upgrade_101_static( const char * static_root_path , const char * kw_path , msg_type * msg) {
+  DIR * dirH = opendir( kw_path );
+  if (dirH != NULL) {
+    struct dirent * dp;
+    do {
+      dp = readdir(dirH);
+      if (dp != NULL) {
+	if (dp->d_name[0] != '.') {	  
+	  char * new_path;
+	  char * old_path = util_alloc_filename( kw_path , dp->d_name , NULL);
+	  int    occurence;
+	  util_sscanf_int( dp->d_name , &occurence);
+	  new_path = util_alloc_sprintf("%s_%d" , kw_path , occurence);
+	  rename( old_path , new_path );
+	  msg_update(msg ,  old_path );
+	  rmdir( kw_path );
+	  free(new_path);
+	  free(old_path);
+	}
+      }
+    } while (dp != NULL);
+    closedir( dirH );
+  }
+}
+
+
+
+
+/* iterating over all static keywords. */
+static void enkf_fs_upgrade_101_member( const char * root_path , msg_type * msg) {
+  char * static_path = util_alloc_filename(root_path , "Static" , NULL);
+  DIR * dirH = opendir( static_path );
+  if (dirH != NULL) {
+    struct dirent * dp;
+    do {
+      dp = readdir(dirH);
+      if (dp != NULL) {
+	char * full_path = util_alloc_filename( static_path , dp->d_name , NULL);
+	if (util_is_directory(full_path)) 
+	  if (dp->d_name[0] != '.') 
+	    enkf_fs_upgrade_101_static( static_path , full_path , msg);
+	free(full_path);
+      }
+    } while (dp != NULL);
+    closedir( dirH );
+  }
+}
+
+
+/* Iterating over all members */
+static void enkf_fs_upgrade_101_timestep( const char * root_path , msg_type * msg) {
+  DIR * dirH = opendir( root_path );
+  struct dirent * dp;
+  do {
+    dp = readdir(dirH);
+    if (dp != NULL) {
+      char * full_path = util_alloc_filename( root_path , dp->d_name , NULL);
+      if (util_is_directory(full_path)) 
+	if (dp->d_name[0] != '.')
+	  enkf_fs_upgrade_101_member( full_path , msg);
+      free(full_path);
+    }
+  } while (dp != NULL);
+  closedir( dirH );
+}
+
+
+/* Iterating over all timesteps */
+static void enkf_fs_upgrade_101_case( const char * root_path , msg_type * msg) {
+  DIR * dirH = opendir( root_path );
+  struct dirent * dp;
+  do {
+    dp = readdir(dirH);
+    if (dp != NULL) {
+      char * full_path = util_alloc_filename( root_path , dp->d_name , NULL);
+      if (util_is_directory(full_path)) 
+	if (dp->d_name[0] != '.')
+	  enkf_fs_upgrade_101_timestep( full_path , msg);
+      free(full_path);
+    }
+  } while (dp != NULL);
+  closedir( dirH );
+}
+
+
+
+static void enkf_fs_upgrade_101(const char * config_file, const char * root_path) {
+  char * backup_path;
+  backup_path = util_alloc_tmp_file("/tmp" , "enkf-backup" , true);
+
+  printf("*****************************************************************************\n");
+  printf("**  The filesystem for storage in the enkf has been upgraded. enkf will    **\n"); 
+  printf("**  now upgrade your database, it takes some TIME, but everything should   **\n");
+  printf("**  happen automatically. Observe that when enkf starts it will not        **\n");
+  printf("**  remember which case you used last - apart from that everything should  **\n");
+  printf("**  be unchanged.                                                          **\n");
+  printf("*****************************************************************************\n");
+  printf("Storing backup in: %s ....... ",backup_path); fflush(stdout);
+  util_copy_directory( root_path , backup_path ); 
+  printf("\n");
+  free( backup_path );
+  
+  {
+    char     * current_case = NULL;
+    set_type * cases        = set_alloc_empty();
+    msg_type * msg 	    = msg_alloc("Upgrading: ");
+    DIR * dirH     	    = opendir( root_path );
+    struct dirent * dp;
+    msg_show(msg);
+    do {
+      dp = readdir(dirH);
+      if (dp != NULL) {
+	char * full_path = util_alloc_filename( root_path , dp->d_name , NULL);
+	if (util_is_directory(full_path)) 
+	  if (dp->d_name[0] != '.') {
+	    set_add_key( cases , dp->d_name );
+	    enkf_fs_upgrade_101_case( full_path , msg);
+	    if (current_case == NULL)
+	      current_case = util_alloc_string_copy( dp->d_name );
+	  }
+	free( full_path );
+      }
+    } while (dp != NULL);
+    closedir( dirH );
+    msg_free(msg , true);
+    {
+      long int __dir_offset = enkf_fs_fwrite_new_mount_map( config_file , "DUMMY");         /* Create new blank mount map - have lost the cases.*/
+      __fs_update_map( config_file , __dir_offset , cases , current_case , current_case );  /* Recovering the cases - the current is random. */
+    }
+    free(current_case);
+    printf("Upgrading of %s is complete - continuing with normal boot process.\n" , root_path);
+  }
+}
+
+
+
+
 static int enkf_fs_get_fs_version__(FILE * stream) {
   int version;
   long fs_tag = util_fread_long( stream );
@@ -284,13 +482,11 @@ static int enkf_fs_get_fs_version(const char * config_file) {
 
 
 
+
+
+
 static void enkf_fs_update_map(const enkf_fs_type * fs) {
-  FILE * stream = util_fopen(fs->mount_map , "r+");
-  fseek(stream , fs->__dir_offset , SEEK_SET);  /* Skipping all the driver information - which is left untouched. */
-  set_fwrite( fs->dir_set , stream );
-  util_fwrite_string( fs->current_read_dir , stream );
-  util_fwrite_string( fs->current_write_dir , stream );
-  fclose(stream);
+  __fs_update_map( fs->mount_map , fs->__dir_offset , fs->dir_set , fs->current_read_dir , fs->current_write_dir);
 }
 
 
@@ -371,23 +567,6 @@ bool enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mk
 }
 
 
-void enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir) {
-  FILE * stream = util_fopen( mount_map , "w");
-  util_fwrite_long(FS_MAGIC_ID , stream);
-  util_fwrite_int(CURRENT_FS_VERSION , stream);
-  plain_driver_fwrite_mount_info( stream );
-  {
-    set_type * set = set_alloc_empty();
-    set_add_key( set , default_dir );
-    set_fwrite( set , stream);
-    set_free( set );
-  }
-  util_fwrite_string( default_dir , stream );   /* Read directory  */
-  util_fwrite_string( default_dir , stream );   /* Write directory */ 
-  fclose(stream);
-}
-  
-
 
 
 enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
@@ -396,18 +575,32 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
   char * config_file       = util_alloc_filename(root_path , mount_info , NULL);  /* This file should be protected - at all costs. */
   int    version           = enkf_fs_get_fs_version( config_file );
   
-  util_make_path(root_path);                                    	    /* Creating root directory */
-  if (version == -1)
-    enkf_fs_fwrite_new_mount_map( config_file , default_dir );  	    /* Create blank mount map */
-  else if (version != CURRENT_FS_VERSION) 
-    enkf_fs_upgrade(version , config_file , root_path , default_dir);       /* Upgrade disk information - and create new mount map. */
   
+  if (version > CURRENT_FS_VERSION)
+    util_exit("The ensemble at %s has FILE_SYSTEM_VERSION:%d  -  the current enkf FILE_SYSTEM_VERSION is:%d - UPGRADE enkf \n", root_path , version , CURRENT_FS_VERSION);
+  
+  util_make_path(root_path);                                    	    	  /* Creating root directory */
+  if (version == -1)
+    enkf_fs_fwrite_new_mount_map( config_file , default_dir );  	    	  /* Create blank mount map */
+  
+  else if (version < CURRENT_FS_VERSION) {
+    
+    if (version == 0) {
+      enkf_fs_upgrade_100(version , config_file , root_path , default_dir);       /* Upgrade disk information - and create new mount map. */
+      version = 100;
+    }
+    
+    if (version == 100) {
+      enkf_fs_upgrade_101( config_file , root_path );
+      version = 101;
+    }
+  }
+
   version = enkf_fs_get_fs_version( config_file );
   if (version != CURRENT_FS_VERSION)
     util_abort("%s: upgrading of filesystem rooted in:%s failed. \n",root_path);
 
-
-
+  
   /** Reading the mount map */
   {
     const int num_drivers    = 8;
@@ -632,10 +825,10 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
 }
 
 
-static int enkf_fs_get_static_counter(const enkf_node_type * node) {
-  ecl_static_kw_type * ecl_static = ecl_static_kw_safe_cast( enkf_node_value_ptr( node ) );
-  return ecl_static_kw_get_counter(ecl_static);
-}
+//static int enkf_fs_get_static_counter(const enkf_node_type * node) {
+//  ecl_static_kw_type * ecl_static = ecl_static_kw_safe_cast( enkf_node_value_ptr( node ) );
+//  return ecl_static_kw_get_counter(ecl_static);
+//}
 
 
 /*****************************************************************/
@@ -649,8 +842,7 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
     void * _driver = enkf_fs_select_driver(enkf_fs , var_type , enkf_node_get_key(enkf_node) , false);
     if (var_type == static_state) {
       basic_driver_static_type * driver = basic_driver_static_safe_cast(_driver);
-      int static_counter = enkf_fs_get_static_counter(enkf_node);
-      driver->save(driver , report_step , iens , state , static_counter , enkf_node); 
+      driver->save(driver , report_step , iens , state , enkf_node); 
     } else {
       basic_driver_type * driver = basic_driver_safe_cast(_driver);
       
@@ -669,8 +861,7 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
   void * _driver = enkf_fs_select_driver(enkf_fs , var_type , enkf_node_get_key(enkf_node) , true);
   if (var_type == static_state) {
     basic_driver_static_type * driver = basic_driver_static_safe_cast(_driver);
-    int static_counter = enkf_fs_get_static_counter(enkf_node);
-    driver->load(driver , report_step , iens , state , static_counter , enkf_node); 
+    driver->load(driver , report_step , iens , state , enkf_node); 
   } else {
     basic_driver_type * driver = basic_driver_safe_cast(_driver);
     driver->load(driver , report_step , iens , state , enkf_node); 
@@ -684,8 +875,7 @@ bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * con
     const char * key = enkf_config_node_get_key(config_node);
     if (var_type == static_state) {
       basic_driver_static_type * driver = basic_driver_static_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key , true));
-      int static_counter = 0; /* This one is impossible to get correctly hold of ... the driver aborts.*/
-      return driver->has_node(driver , report_step , iens , state , static_counter , key); 
+      return driver->has_node(driver , report_step , iens , state , key); 
     } else {
       basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , key , true));
       return driver->has_node(driver , report_step , iens , state , key); 

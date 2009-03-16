@@ -601,6 +601,15 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 
 
 
+static char * __realloc_static_kw(char * kw , int occurence) {
+  char * new_kw = util_alloc_sprintf("%s_%d" , kw , occurence);
+  free(kw);
+  ecl_util_escape_kw(new_kw);  
+  return new_kw;
+}
+
+
+
 /**
    This function loads the STATE from a forward simulation. In ECLIPSE
    speak that means to load the solution vectors (PRESSURE/SWAT/..)
@@ -650,11 +659,32 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
       const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
       int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
       char * kw                  = ecl_kw_alloc_strip_header( ecl_kw );
-
-      ecl_util_escape_kw(kw);
+      /** 
+	  Observe that this test will never succeed for static keywords,
+	  because the internalized key has appended a _<occurence>.
+      */
       if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
-	const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
-	impl_type = enkf_config_node_get_impl_type(config_node);
+	/**
+	   This is poor-mans treatment of LGR. When LGR is used the restart file
+	   will contain repeated occurences of solution vectors, like
+	   PRESSURE. The first occurence of PRESSURE will be for the ordinary
+	   grid, and then there will be subsequent PRESSURE sections for each
+	   LGR section. The way this is implemented here is as follows:
+	   
+  	    1. The first occurence of pressure is internalized as the enkf_node
+  	       pressure (if ww indeed have a pressure node).
+
+	    2. The consecutive pressure nodes are internalized as static
+	       parameters.
+	   
+	   The variable 'occurence' is the key here.
+	*/
+	
+	if (occurence == 0) {
+	  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
+	  impl_type = enkf_config_node_get_impl_type(config_node);
+	} else 
+	  impl_type = STATIC;
       } else
 	impl_type = STATIC;
       
@@ -663,14 +693,16 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	stringlist_append_copy(enkf_state->restart_kw_list , kw);
       else if (impl_type == STATIC) {
 	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
-	/* It is a static kw like INTEHEAD or SCON */
-	/* 
-	   Observe that for static keywords we do NOT ask the node
-	   'privately' if internalize_state is false: It is
-	   impossible to single out static keywords for
-	   internalization.
-	*/
-	     
+	  /* It is a static kw like INTEHEAD or SCON */
+	  /* 
+	     Observe that for static keywords we do NOT ask the node 'privately' if
+	     internalize_state is false: It is impossible to single out static keywords for
+	     internalization.
+	  */
+
+	  /* Now we mangle the static keyword .... */
+	  kw = __realloc_static_kw(kw , occurence);
+
 	  if (internalize_state) {  
 	    stringlist_append_copy( enkf_state->restart_kw_list , kw);
 

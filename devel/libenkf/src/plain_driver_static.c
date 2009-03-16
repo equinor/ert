@@ -57,11 +57,8 @@ static plain_driver_static_type * plain_driver_static_safe_cast(void *_driver) {
 }
 
 
-static char * plain_driver_static_alloc_filename__(plain_driver_static_type * driver , bool auto_mkdir , int report_step , int iens , int static_counter, const char * node_key) {
-  char static_counter_str[16];
-  
-  sprintf(static_counter_str, "%d" , static_counter);
-  return path_fmt_alloc_file(driver->path_fmt , auto_mkdir , report_step , iens , node_key , static_counter_str);
+static char * plain_driver_static_alloc_filename__(plain_driver_static_type * driver , bool auto_mkdir , int report_step , int iens , const char * node_key) {
+  return path_fmt_alloc_file(driver->path_fmt , auto_mkdir , report_step , iens , node_key);
 }
 
 
@@ -73,33 +70,33 @@ static char * plain_driver_static_alloc_filename__(plain_driver_static_type * dr
    not only the directory part.
 */
 
-void plain_driver_static_load_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
+void plain_driver_static_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
     const char * node_key = enkf_node_get_key( node );
-    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , static_counter , node_key);
+    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , node_key);
     plain_driver_common_load_node(filename , report_step , iens , state , node);
     free(filename);
   }
 }
 
 
-void plain_driver_static_unlink_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
+void plain_driver_static_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
     const char * node_key = enkf_node_get_key( node );
-    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , static_counter , node_key);
+    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , node_key);
     util_unlink_existing(filename);
     free(filename);
   }
 }
 
 
-void plain_driver_static_save_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , enkf_node_type * node) {
+void plain_driver_static_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
     const char * node_key = enkf_node_get_key( node );
-    char * filename = plain_driver_static_alloc_filename__(driver , true , report_step , iens , static_counter , node_key);
+    char * filename = plain_driver_static_alloc_filename__(driver , true , report_step , iens , node_key);
     plain_driver_common_save_node(filename , report_step , iens , state , node);
     free(filename);
   }
@@ -110,11 +107,11 @@ void plain_driver_static_save_node(void * _driver , int report_step , int iens ,
    Return true if we have a on-disk representation of the node.
 */
 
-bool plain_driver_static_has_node(void * _driver , int report_step , int iens , state_enum state , int static_counter , const char * key) {
+bool plain_driver_static_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
   plain_driver_static_type * driver = plain_driver_static_safe_cast(_driver);
   {
     bool has_node;
-    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , static_counter , key);
+    char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , key);
     if (util_file_exists(filename))
       has_node = true;
     else
