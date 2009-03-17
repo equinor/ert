@@ -113,6 +113,7 @@ void            	field_config_set_truncation_from_strings(field_config_type * , 
 void            	field_config_set_truncation(field_config_type * , truncation_type , double , double );
 truncation_type 	field_config_get_truncation(const field_config_type * , double * , double *);
 const ecl_grid_type   * field_config_get_grid(const field_config_type * );
+const char            * field_config_get_grid_name( const field_config_type * );
 
 /*Generated headers */
 SAFE_CAST_HEADER(field_config);

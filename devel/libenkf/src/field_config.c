@@ -329,6 +329,10 @@ void field_config_set_grid(field_config_type * config, const ecl_grid_type * gri
 }
 
 
+const char * field_config_get_grid_name( const field_config_type * config) {
+  return ecl_grid_get_filename( config->grid );
+}
+
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      	   , /* 1: Keyword name */
 						ecl_type_enum ecl_type   	      	   , /* 2: Type of underlying data.*/

@@ -980,8 +980,14 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
   const int data_size      	   = field_config_get_data_size(config);
   ecl_type_enum field_type 	   = field_config_get_ecl_type(field->config);
   ecl_type_enum kw_type            = ecl_kw_get_type(ecl_kw);
-  if (data_size != ecl_kw_get_size(ecl_kw)) 
-    util_abort("%s: fatal error - incorrect size for:%s [config:%d , file:%d] - aborting \n",__func__ , field_config_get_key(config), data_size , ecl_kw_get_size(ecl_kw));
+
+  if (data_size != ecl_kw_get_size(ecl_kw)) {
+    fprintf(stderr," ** Fatal error - the number of active cells has changed \n");
+    fprintf(stderr," **   Grid:%s has %d active cells. \n",field_config_get_grid_name( config ) , data_size);
+    fprintf(stderr," **   %s loaded from file has %d active cells.\n",field_config_get_key(config), ecl_kw_get_size(ecl_kw));
+    fprintf(stderr," ** MINPV / MINPVV problem?? \n");
+    util_abort("%s: Aborting \n",__func__ );
+  }
   
   ecl_util_memcpy_typed_data(field->data , ecl_kw_get_data_ref(ecl_kw) , field_type , kw_type , ecl_kw_get_size(ecl_kw));
 }

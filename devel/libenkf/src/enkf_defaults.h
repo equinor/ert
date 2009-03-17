@@ -52,7 +52,7 @@
 
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"
-#define NUM_STATIC_KW         37
+#define NUM_STATIC_KW         53
 
 
 /* 
@@ -96,7 +96,23 @@
   "ILBR",   	\
   "RSEG",   	\
   "ISTHW",   	\
-  "ISTHG"}       
+  "ISTHG",      \
+  "INODE",      \
+  "RNODE",      \
+  "IBRAN",      \
+  "INOBR",      \
+  "RBRAN",      \
+  "LGRNAMES",   \
+  "LGR",        \
+  "LGRHEADI",   \
+  "LGRHEADQ",   \
+  "LGRHEADD",   \
+  "IOWC",       \
+  "OWC",        \
+  "EOWC",       \
+  "PRESROCC",   \
+  "THRESHPR",   \
+  "REGDIMS"}
 
 
 

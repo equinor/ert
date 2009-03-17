@@ -417,8 +417,10 @@ static void  enkf_fs_upgrade_kwlist_101(const char * path , const char * file , 
       fclose(stream);
     }
 
+    
+    /* Updating the list in place */
     for (i=0; i < stringlist_get_size( kw_list ); i++) {
-      char * kw = stringlist_iget( kw_list , i);
+      const char * kw = stringlist_iget( kw_list , i);
       bool dynamic = false;
       if (strcmp(kw , "PRESSURE") == 0) dynamic = true;
       if (strcmp(kw , "SGAS") == 0) dynamic = true;
@@ -431,6 +433,7 @@ static void  enkf_fs_upgrade_kwlist_101(const char * path , const char * file , 
       }
     }
 
+    
     /* Writing */
     {
       FILE * stream = util_fopen( full_path , "w");
