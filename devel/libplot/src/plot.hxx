@@ -9,6 +9,7 @@
 #include "plot_dataset.h"
 
 #include "plot_range.hxx"
+#include "plot_const_cxx.hxx"
 
 #include <string>
 #include <vector>

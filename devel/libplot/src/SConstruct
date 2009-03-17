@@ -37,8 +37,7 @@ Alias('install', [ib, il])
 opt = Environment(CXXFLAGS = '-O3' ,
                   CFLAGS   = '-O2 -std=gnu99 -g -Wall -fPIC -DWITH_TRUETYPE=1' ,
                   CPPPATH = ['.',incdir] ,
-                  LIBPATH = ['.', libdir]#,
-#                  LINKFLAGS= '-Wl,-rpath ' + libdir + ' -Wl,-rpath ' + basedir + '/x86_64_RH_4/lib/plplot5.9.0/driversd/'
+                  LIBPATH = ['.', libdir]
                   )
 
 lib_list = ['ecl','plot','util','plplotd','m','z','pthread']
@@ -49,7 +48,7 @@ object_files += opt.Object('plot_range.c')
 object_files += opt.Object('plot_const_cxx.cxx')
 
 header_files  = ['plot.h','plot_dataset.h','plot_range.h','plot_const.h']
-header_files += ['plot.hxx','plot_range.hxx','plot_const.hxx']
+header_files += ['plot.hxx','plot_range.hxx','plot_const_cxx.hxx']
 
 newlibs = opt.Library('plot',object_files)
 

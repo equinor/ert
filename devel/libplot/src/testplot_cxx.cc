@@ -1,5 +1,4 @@
 #include "plot.hxx"
-#include "plot_const_cxx.hxx"
 
 #include <vector>
 #include <cstdlib>
