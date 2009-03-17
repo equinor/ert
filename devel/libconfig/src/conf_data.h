@@ -4,6 +4,9 @@
 #include <time.h>
 #include <int_vector.h>
 #include <double_vector.h>
+#include <time_t_vector.h>
+
+#define DT_VECTOR_SEP " \t\r\n,"
 
 typedef enum {
               DT_STR,
@@ -34,6 +37,11 @@ bool conf_data_validate_string_as_dt_value(
   dt_enum      dt,
   const char * str);
 
+bool conf_data_validate_string_as_dt_vector(
+  dt_enum      dt,
+  const char * str,
+  int        * num_elem);
+
 int conf_data_get_int_from_string(
   dt_enum      dt,
   const char * str);
@@ -47,10 +55,15 @@ time_t conf_data_get_time_t_from_string(
   const char * str);
 
 int_vector_type * conf_data_get_int_vector_from_string(
-  dt_enum      dt,
+  dt_enum dt,
   const char * str);
 
-double_vector_type * conf_data_get_dobule_vector_from_string(
-  dt_enum      dt,
+double_vector_type * conf_data_get_double_vector_from_string(
+  dt_enum dt,
   const char * str);
+
+time_t_vector_type * conf_data_get_time_t_vector_from_string(
+  dt_enum dt,
+  const char * str);
+
 #endif

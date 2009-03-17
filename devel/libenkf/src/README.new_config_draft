@@ -240,3 +240,12 @@ STATE region_pressure;
   UPDATE_SPACE = LOG10;
 };
 
+
+
+SUMMARY_OBSERVATION foobar
+{
+  KEY      =   WOPR:P1;
+  RESTARTS =  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  VALUES   =  [0, 0, 0, 1, 1, 1, 1, 1, 1, 1];
+  ERRORS   =  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+}
