@@ -403,6 +403,45 @@ static void enkf_fs_upgrade_101_case( const char * root_path , msg_type * msg) {
 
 
 
+static void  enkf_fs_upgrade_kwlist_101(const char * path , const char * file , void * arg) {
+   if (strcmp(file , "kw_list") == 0) {
+    /** This is a kw_list file which should be upgraded. */
+    int i;
+    char * full_path = util_alloc_filename( path , file , NULL);
+    stringlist_type * kw_list;
+
+    /* Reading */
+    {
+      FILE * stream = util_fopen( full_path , "r");
+      kw_list = stringlist_fread_alloc( stream );
+      fclose(stream);
+    }
+
+    for (i=0; i < stringlist_get_size( kw_list ); i++) {
+      char * kw = stringlist_iget( kw_list , i);
+      bool dynamic = false;
+      if (strcmp(kw , "PRESSURE") == 0) dynamic = true;
+      if (strcmp(kw , "SGAS") == 0) dynamic = true;
+      if (strcmp(kw , "SWAT") == 0) dynamic = true;
+      if (strcmp(kw , "RS") == 0) dynamic = true;
+      if (strcmp(kw , "RV") == 0) dynamic = true;
+      if (!dynamic) {
+	char * new_kw = util_alloc_sprintf("%s_0" , kw);
+	stringlist_iset_owned_ref( kw_list , i , new_kw);
+      }
+    }
+
+    /* Writing */
+    {
+      FILE * stream = util_fopen( full_path , "w");
+      stringlist_fwrite( kw_list , stream);
+      fclose(stream);
+    }
+    free(full_path);
+  }
+}
+
+
 static void enkf_fs_upgrade_101(const char * config_file, const char * root_path) {
   char * backup_path;
   backup_path = util_alloc_tmp_file("/tmp" , "enkf-backup" , true);
@@ -420,7 +459,7 @@ static void enkf_fs_upgrade_101(const char * config_file, const char * root_path
     free( prompt );
   }
   free( backup_path );
-  
+  util_walk_directory( root_path , enkf_fs_upgrade_kwlist_101 , NULL);
   {
     char     * current_case = NULL;
     set_type * cases        = set_alloc_empty();

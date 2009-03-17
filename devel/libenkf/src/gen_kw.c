@@ -87,10 +87,10 @@ bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream, bool internal_stat
 
 
 /**
-   As of 17/03/09 MULTFLT has been depreceated, and GEN_KW has been
-   inserted as a 'drop-in-replacement'. This implies that existing
-   storage labeled with implemantation type 'MULTFLT' should be
-   silently 'upgraded' to 'GEN_KW'.
+   As of 17/03/09 (svn 1811) MULTFLT has been depreceated, and GEN_KW
+   has been inserted as a 'drop-in-replacement'. This implies that
+   existing storage labeled with implemantation type 'MULTFLT' should
+   be silently 'upgraded' to 'GEN_KW'.
 */
 
 void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {

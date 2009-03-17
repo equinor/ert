@@ -45,7 +45,7 @@
 /* Default directories. */
 #define DEFAULT_PLOT_PATH   "plots"
 #define DEFAULT_RESULT_PATH "results/step_%d"
-#define DEFAULT_RUNPATH     "simulations/realization-%d-step-%d-to-%d"
+#define DEFAULT_RUNPATH     "simulations/realization%d"
 #define DEFAULT_ENSPATH     "storage"
 
 

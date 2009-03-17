@@ -1,4 +1,4 @@
-#include "plot_const.hxx"
+#include "plot_const_cxx.hxx"
 
 #include <boost/assign/list_of.hpp> // for 'map_list_of()'
 

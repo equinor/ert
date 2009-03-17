@@ -261,7 +261,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   ensemble_config->field_trans_table     = field_trans_table_alloc();
 
   {
-    /* MULTFLT depreceation warning added 17/03/09. */
+    /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
     if (config_get_occurences(config , "MULTFLT") > 0) {
       printf("*****************************************************************\n");
       printf("**                    W A R N I N G                            **\n");

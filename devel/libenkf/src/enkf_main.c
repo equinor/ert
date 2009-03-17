@@ -787,6 +787,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "NUM_REALIZATIONS" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     config_add_alias(config , "NUM_REALIZATIONS" , "SIZE");
+    config_add_alias(config , "NUM_REALIZATIONS" , "NUM_REALISATIONS");
     config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
     
 

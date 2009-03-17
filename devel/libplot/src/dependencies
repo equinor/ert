@@ -1,5 +1,5 @@
+all_include.o                       : plot_const.h  
 plot.o                              : plot.c plot.h plot_dataset.o plot_range.o plot_const.h  
 plot_dataset.o                      : plot_dataset.c plot_dataset.h plot_const.h plot_range.o  
 plot_range.o                        : plot_range.c plot_range.h plot_const.h  
-all_include.h                       : plot_const.h  
-plot_const_cxx.o                    : plot_const_cxx.cxx  plot_const.hxx plot_const.h
+plot_const_cxx.o                    : plot_const_cxx.cxx plot_const_cxx.hxx  
