@@ -292,6 +292,10 @@ const char * conf_instance_get_item_value_ref(
   const conf_instance_type * conf_instance,
   const char               * item_name);
 
+stringlist_type * conf_instance_get_item_value_elements(
+  const conf_instance_type * conf_instance,
+  const char               * item_name);
+
 /** If the dt supports it, these functions will parse the item
     value to the requested types.
 

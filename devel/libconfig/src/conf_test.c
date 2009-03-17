@@ -223,6 +223,14 @@ int main()
     double_vector_free(doublevec);
   }
 
+  /** Try to print DOUBLEVEC using stringlist. */
+  if(conf_instance_has_item(enkf_conf, "DOUBLEVEC"))
+  {
+    stringlist_type * elements = conf_instance_get_item_value_elements(enkf_conf, "DOUBLEVEC");
+    for(int i=0; i<stringlist_get_size(elements); i++)
+      printf("DOUBLEVEC[%d] as string: %s\n", i, stringlist_iget(elements, i));
+  }
+
   /** Clean up. */
 
   conf_instance_free(enkf_conf);
