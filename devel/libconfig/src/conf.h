@@ -310,7 +310,13 @@ time_t conf_instance_get_item_value_time_t(
   const conf_instance_type * conf_instance,
   const char               * item_name);
 
+int_vector_type * conf_instance_get_item_value_int_vector(
+  const conf_instance_type * conf_instance,
+  const char               * item_name);
 
+double_vector_type * conf_instance_get_item_value_double_vector(
+  const conf_instance_type * conf_instance,
+  const char               * item_name);
 
 /** V A L I D A T O R S */
 

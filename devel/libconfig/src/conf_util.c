@@ -106,6 +106,17 @@ char * conf_util_alloc_next_token(
         len_token=0;
       }
     }
+    else if(*buff_pos[0] == '[')
+    {
+      quoted = true;
+      *buff_pos += 1;
+      len_token = strcspn(*buff_pos, "]");
+      if(len_token == strspn(*buff_pos, sep))
+      {
+        *buff_pos += len_token;
+        len_token=0;
+      }
+    }
     else
     {
       quoted = false;

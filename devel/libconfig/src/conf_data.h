@@ -2,6 +2,8 @@
 #define __CONF_DATA_H__
 #include <stdbool.h>
 #include <time.h>
+#include <int_vector.h>
+#include <double_vector.h>
 
 typedef enum {
               DT_STR,
@@ -9,6 +11,10 @@ typedef enum {
               DT_POSINT,
               DT_FLOAT,
               DT_POSFLOAT,
+              DT_INT_VECTOR,
+              DT_POSINT_VECTOR,
+              DT_FLOAT_VECTOR,
+              DT_POSFLOAT_VECTOR,
               DT_FILE,
               DT_EXEC,
               DT_FOLDER,
@@ -37,6 +43,14 @@ double conf_data_get_double_from_string(
   const char * str);
 
 time_t conf_data_get_time_t_from_string(
+  dt_enum      dt,
+  const char * str);
+
+int_vector_type * conf_data_get_int_vector_from_string(
+  dt_enum      dt,
+  const char * str);
+
+double_vector_type * conf_data_get_dobule_vector_from_string(
   dt_enum      dt,
   const char * str);
 #endif

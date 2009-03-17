@@ -5,6 +5,18 @@ int main()
   const char * enkf_conf_help = "The main enkf conf shall contain neccessary infomation to run the enkf.";
   conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_conf", true, false, enkf_conf_help);
   conf_class_set_help(enkf_conf_class, enkf_conf_help);
+  
+  /** Create and insert INTVEC item. */
+  {
+    conf_item_spec_type * intvec_spec = conf_item_spec_alloc("INTVEC", false, DT_INT_VECTOR, NULL);
+    conf_class_insert_owned_item_spec(enkf_conf_class, intvec_spec);
+  }
+
+  /** Create and insert DOUBLEVEC item. */
+  {
+    conf_item_spec_type * dobulevec_spec = conf_item_spec_alloc("DOUBLEVEC", false, DT_FLOAT_VECTOR, NULL);
+    conf_class_insert_owned_item_spec(enkf_conf_class, dobulevec_spec);
+  }
 
   /** Create and insert SINGLETON class. */
   {
@@ -190,6 +202,25 @@ int main()
     }
 
     stringlist_free(history_observations);
+  }
+
+  /** Try to print INTVEC. */
+  if(conf_instance_has_item(enkf_conf, "INTVEC"))
+  {
+    int_vector_type * intvec = conf_instance_get_item_value_int_vector(enkf_conf, "INTVEC");
+    for(int i=0; i<int_vector_size(intvec); i++)
+      printf("INTVEC[%d] = %d\n", i, int_vector_iget(intvec, i));
+
+    int_vector_free(intvec);
+  }
+  /** Try to print DOUBLEVEC. */
+  if(conf_instance_has_item(enkf_conf, "DOUBLEVEC"))
+  {
+    double_vector_type * doublevec = conf_instance_get_item_value_double_vector(enkf_conf, "DOUBLEVEC");
+    for(int i=0; i<double_vector_size(doublevec); i++)
+      printf("DOUBLEVEC[%d] = %f\n", i, double_vector_iget(doublevec, i));
+    
+    double_vector_free(doublevec);
   }
 
   /** Clean up. */

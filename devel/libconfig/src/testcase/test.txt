@@ -60,9 +60,8 @@ BLOCK_OBSERVATION RFT_2005
   FIELD = SWAT;
 };
 
+INTVEC = [0, 1, ,2, 3];
+
+DOUBLEVEC = [0.1, 0.2, 10.1, 3.14];
 
 SINGLETON svada;
-
-SINGLETON kølle;
-
-SINGLETON tull;

@@ -895,6 +895,48 @@ time_t conf_instance_get_item_value_time_t(
 
 
 
+/** If the dt supports it, this function shall return the item value as a int_vector.
+    If the dt does not support it, the function will abort.
+*/
+int_vector_type * conf_instance_get_item_value_int_vector(
+  const conf_instance_type * conf_instance,
+  const char               * item_name)
+{
+  if(!hash_has_key(conf_instance->items, item_name))
+    util_abort("%s: Instance %s of type %s has no item %s.\n",
+               __func__, conf_instance->name,
+               conf_instance->conf_class->class_name,
+               item_name);
+
+  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
+  const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
+
+  return conf_data_get_int_vector_from_string(conf_item_spec->dt, conf_item->value);
+}
+
+
+
+/** If the dt supports it, this function shall return the item value as a double_vector.
+    If the dt does not support it, the function will abort.
+*/
+double_vector_type * conf_instance_get_item_value_double_vector(
+  const conf_instance_type * conf_instance,
+  const char               * item_name)
+{
+  if(!hash_has_key(conf_instance->items, item_name))
+    util_abort("%s: Instance %s of type %s has no item %s.\n",
+               __func__, conf_instance->name,
+               conf_instance->conf_class->class_name,
+               item_name);
+
+  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
+  const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
+
+  return conf_data_get_dobule_vector_from_string(conf_item_spec->dt, conf_item->value);
+}
+
+
+
 /** V A L I D A T O R S */
 
 
