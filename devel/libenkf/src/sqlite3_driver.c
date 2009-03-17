@@ -376,7 +376,7 @@ bool sqlite3_driver_load_node(
   {
     const void * my_blob = sqlite3_column_blob(stmt, 0);
     int bytesize_my_blob = sqlite3_column_bytes(stmt, 0);
-    *data = malloc(bytesize_my_blob);
+    *data = util_malloc(bytesize_my_blob, __func__);
     memcpy(*data, my_blob, bytesize_my_blob);
     *bytesize_data = bytesize_my_blob;
   }

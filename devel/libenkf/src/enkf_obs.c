@@ -374,6 +374,36 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error);
     conf_class_insert_owned_item_spec(history_observation_class, item_spec_error_min);
 
+    /** Sub class segment. */
+    {
+      const char * help_class_segment = "The class SEGMENT is used to fine tune the error model.";
+      conf_class_type * segment_class = conf_class_alloc_empty("SEGMENT", false , false, help_class_segment);
+
+      conf_item_spec_type * item_spec_start_segment = conf_item_spec_alloc("START", true, DT_INT, "The first restart in the segment.");
+      conf_item_spec_type * item_spec_stop_segment  = conf_item_spec_alloc("STOP", true, DT_INT, "The last restart in the segment.");
+
+      conf_item_spec_type * item_spec_error_mode_segment = conf_item_spec_alloc("ERROR_MODE", true, DT_STR , "The string ERROR_MODE gives the error mode for the observation.");
+      conf_item_spec_add_restriction(item_spec_error_mode_segment, "REL");
+      conf_item_spec_add_restriction(item_spec_error_mode_segment, "ABS");
+      conf_item_spec_add_restriction(item_spec_error_mode_segment, "RELMIN");
+      conf_item_spec_set_default_value(item_spec_error_mode_segment, "RELMIN");
+
+      conf_item_spec_type * item_spec_error_segment     = conf_item_spec_alloc("ERROR", true, DT_POSFLOAT , "The positive floating number ERROR gives the standard deviation (ABS) or the relative uncertainty (REL/RELMIN) of the observations.");
+      conf_item_spec_set_default_value(item_spec_error_segment, "0.10");
+
+      conf_item_spec_type * item_spec_error_min_segment = conf_item_spec_alloc("ERROR_MIN", true, DT_POSFLOAT , "The positive floating point number ERROR_MIN gives the minimum value for the standard deviation of the observation when RELMIN is used.");
+      conf_item_spec_set_default_value(item_spec_error_min_segment, "0.10");
+
+  
+      conf_class_insert_owned_item_spec(segment_class, item_spec_start_segment);
+      conf_class_insert_owned_item_spec(segment_class, item_spec_stop_segment);
+      conf_class_insert_owned_item_spec(segment_class, item_spec_error_mode_segment);
+      conf_class_insert_owned_item_spec(segment_class, item_spec_error_segment);
+      conf_class_insert_owned_item_spec(segment_class, item_spec_error_min_segment);
+
+      conf_class_insert_owned_sub_class(history_observation_class, segment_class);
+    }
+
     conf_class_insert_owned_sub_class(enkf_conf_class, history_observation_class);
   }
 

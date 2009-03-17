@@ -386,25 +386,82 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
     // Create  the standard deviation vector
     if(strcmp(error_mode, "ABS") == 0) {
       for( restart_nr = 0; restart_nr < size; restart_nr++)
-	std[restart_nr] = error;
+       std[restart_nr] = error;
     } else if(strcmp(error_mode, "REL") == 0) {
       for( restart_nr = 0; restart_nr < size; restart_nr++)
-	std[restart_nr] = error * abs(value[restart_nr]);
+       std[restart_nr] = error * abs(value[restart_nr]);
     } 
     else if(strcmp(error_mode, "RELMIN") == 0) {
       for(restart_nr = 0; restart_nr < size; restart_nr++) {
-	std[restart_nr] = error * abs(value[restart_nr]);
-	if(std[restart_nr] < error_min)
-	  std[restart_nr] = error_min;
+       std[restart_nr] = error * abs(value[restart_nr]);
+       if(std[restart_nr] < error_min)
+         std[restart_nr] = error_min;
       }
     } else
       util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
+
+    // Handle SEGMENTs that can customize the observation error.
+    stringlist_type * segment_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "SEGMENT");
+    stringlist_sort(segment_keys);
+
+    int num_segments = stringlist_get_size(segment_keys);
+
+    for(int segment_nr = 0; segment_nr < num_segments; segment_nr++)
+    {
+      const char * segment_name = stringlist_iget(segment_keys, segment_nr);
+      const conf_instance_type * segment_conf = conf_instance_get_sub_instance_ref(conf_instance, segment_name);
+
+      int start                         = conf_instance_get_item_value_int(   segment_conf, "START"     );
+      int stop                          = conf_instance_get_item_value_int(   segment_conf, "STOP"      );
+      double         error_segment      = conf_instance_get_item_value_double(segment_conf, "ERROR"     );
+      double         error_min_segment  = conf_instance_get_item_value_double(segment_conf, "ERROR_MIN" );
+      const char *   error_mode_segment = conf_instance_get_item_value_ref(   segment_conf, "ERROR_MODE");
+
+      if(start < 0)
+      {
+        printf("%s: WARNING - Segment out of bounds. Truncating start of segment to 0.\n", __func__);
+        start = 0;
+      }
+
+      if(stop >= size)
+      {
+        printf("%s: WARNING - Segment out of bounds. Truncating end of segment to %d.\n", __func__, size - 1);
+        stop = size -1;
+      }
+
+      if(start > stop)
+      {
+        printf("%s: WARNING - Segment start after stop. Truncating end of segment to %d.\n", __func__, start );
+        stop = start;
+      }
+
+      // Create  the standard deviation vector
+      if(strcmp(error_mode_segment, "ABS") == 0) {
+        for( restart_nr = start; restart_nr <= stop; restart_nr++)
+         std[restart_nr] = error_segment;
+      } else if(strcmp(error_mode_segment, "REL") == 0) {
+        for( restart_nr = start; restart_nr <= stop; restart_nr++)
+         std[restart_nr] = error_segment * abs(value[restart_nr]);
+      } 
+      else if(strcmp(error_mode_segment, "RELMIN") == 0) {
+        for(restart_nr = start; restart_nr <= stop ; restart_nr++) {
+         std[restart_nr] = error_segment * abs(value[restart_nr]);
+         if(std[restart_nr] < error_min_segment)
+           std[restart_nr] = error_min_segment;
+        }
+      } else
+        util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
+    }
+
+    stringlist_free(segment_keys);
     
 
-    for (restart_nr = 0; restart_nr < size; restart_nr++) {
-      if (!default_used[restart_nr]) {
-	summary_obs_type * sum_obs  = summary_obs_alloc( sum_key , value[restart_nr] , std[restart_nr]);
-	obs_vector_install_node( obs_vector , restart_nr , sum_obs );
+    for (restart_nr = 0; restart_nr < size; restart_nr++) 
+    {
+      if (!default_used[restart_nr]) 
+      {
+       summary_obs_type * sum_obs  = summary_obs_alloc( sum_key , value[restart_nr] , std[restart_nr]);
+       obs_vector_install_node( obs_vector , restart_nr , sum_obs );
       } 
     }
     
