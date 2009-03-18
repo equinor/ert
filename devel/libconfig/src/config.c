@@ -441,9 +441,9 @@ static stringlist_type * config_item_alloc_complete_stringlist(const config_item
   for (inode = 0; inode < item->node_size; inode++) {
 
     if (copy)
-      stringlist_insert_stringlist_copy( stringlist , item->nodes[inode]->stringlist );
+      stringlist_append_stringlist_copy( stringlist , item->nodes[inode]->stringlist );
     else
-      stringlist_insert_stringlist_ref( stringlist , item->nodes[inode]->stringlist );  
+      stringlist_append_stringlist_ref( stringlist , item->nodes[inode]->stringlist );  
     
   }
 
@@ -465,9 +465,9 @@ static stringlist_type * config_item_alloc_stringlist(const config_item_type * i
     stringlist_type * stringlist = stringlist_alloc_new();
 
     if (copy)
-      stringlist_insert_stringlist_copy( stringlist , item->nodes[0]->stringlist );
+      stringlist_append_stringlist_copy( stringlist , item->nodes[0]->stringlist );
     else
-      stringlist_insert_stringlist_ref( stringlist , item->nodes[0]->stringlist );  
+      stringlist_append_stringlist_ref( stringlist , item->nodes[0]->stringlist );  
     
     return stringlist;
   }
