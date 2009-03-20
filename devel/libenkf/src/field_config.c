@@ -340,8 +340,8 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 						field_file_format_type import_format  	   , /* 4: The format used when loading instances of this field. */
 						field_file_format_type export_format  	   , /* 5: The format used when exporting (for ECLIPSE) instance of this field. */
 						field_trans_table_type * field_trans_table , /* 6: Table of available transformation functions for input/output. */
-						int num_options                            , /* 7: The number of extra options. */
-						const char ** options) {                     /* 8: Extra options in format: MIN:0.001   MAX:0.89 ...  */
+						const stringlist_type * options) {           /* 7: Extra options in format: MIN:0.001   MAX:0.89 ...  */
+  
   field_config_type *config = util_malloc(sizeof *config, __func__);
   config->__type_id = FIELD_CONFIG_ID;
   /*
@@ -376,7 +376,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 
   /* Starting on the options. */
   {
-    hash_type * opt_hash = hash_alloc_from_options( num_options , options );
+    hash_type * opt_hash = hash_alloc_from_options( options );
     const char * option = hash_iter_get_first_key( opt_hash );
     while (option != NULL) {
       const char * value = hash_get( opt_hash , option );
@@ -502,19 +502,19 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 
 
 
-field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , int num_options , const char ** options) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_file , ecl_file , trans_table , num_options , options);
+field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , const stringlist_type * options) {
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_file , ecl_file , trans_table , options);
   return config;
 }
 
 
 
-field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , ecl_type_enum internal_type , field_trans_table_type * trans_table , int num_options , const char ** options) {
+field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , ecl_type_enum internal_type , field_trans_table_type * trans_table , const stringlist_type * options) {
   field_config_type * config;
   field_file_format_type import_format = undefined_format;
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , import_format , export_format , trans_table ,num_options , options);
+  config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , import_format , export_format , trans_table , options);
 
   return config;
 }
@@ -528,13 +528,12 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name 	     
 						 const char * ecl_file    	      ,
 						 const ecl_grid_type * ecl_grid       ,
 						 field_trans_table_type * trans_table ,
-						 int num_options                      ,
-						 const char ** options) {
+						 const stringlist_type * options) {
   field_config_type * config;
   field_file_format_type import_format = undefined_format;
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format , trans_table , num_options , options);
+  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format , trans_table ,options);
   if (config->init_file_fmt == NULL)
     util_abort("%s:(INTERNAL ERROR)  invalid init type \n",__func__);
 

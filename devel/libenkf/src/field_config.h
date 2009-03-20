@@ -15,7 +15,7 @@ extern "C" {
 #include <active_list.h>
 #include <field_active.h>
 #include <field_trans.h>
-
+#include <stringlist.h>
 
 /** 
     The field_file_format_type denotes different ways to store a
@@ -74,9 +74,9 @@ field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
-field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid_type * , field_trans_table_type * , int , const char ** );
-field_config_type     * field_config_alloc_parameter(const char * , const char * , const ecl_grid_type * , field_trans_table_type * , int  , const char ** );
-field_config_type     * field_config_alloc_general(const char *  , const char * , const ecl_grid_type *  , ecl_type_enum , field_trans_table_type * , int , const char **);
+field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid_type * , field_trans_table_type * , const stringlist_type *);
+field_config_type     * field_config_alloc_parameter(const char * , const char * , const ecl_grid_type * , field_trans_table_type * , const stringlist_type *);
+field_config_type     * field_config_alloc_general(const char *  , const char * , const ecl_grid_type *  , ecl_type_enum , field_trans_table_type * , const stringlist_type *);
 void                    field_config_free(field_config_type *);
 void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
 int                     field_config_get_volume(const field_config_type * );

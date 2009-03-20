@@ -403,7 +403,7 @@ bool config_item_get_as_bool(const config_item_type * item) {
 }
 
 
-static const stringlist_type * config_item_iget_stringlist_ref(const config_item_type * item, int occurence) {
+static stringlist_type * config_item_iget_stringlist_ref(const config_item_type * item, int occurence) {
   config_item_node_type * node = config_item_iget_node(item , occurence);  
   return node->stringlist;
 }
@@ -1378,7 +1378,7 @@ const stringlist_type * config_get_stringlist_ref(const config_type * config , c
 
 
 
-const stringlist_type * config_iget_stringlist_ref(const config_type * config , const char * kw, int occurence) {
+stringlist_type * config_iget_stringlist_ref(const config_type * config , const char * kw, int occurence) {
   config_item_type * item = config_get_item(config , kw);
   
   return config_item_iget_stringlist_ref(item , occurence);

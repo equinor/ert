@@ -13,6 +13,7 @@
 #include <stdbool.h>
 
 
+
 /* Set the default forward model to ECLIPSE 100. */
 #define DEFAULT_FORWARD_MODEL "ECLIPSE100"
 
@@ -52,7 +53,7 @@
 
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"
-#define NUM_STATIC_KW         53
+#define NUM_STATIC_KW          56
 
 
 /* 
@@ -60,60 +61,62 @@
    understand C-linkage.
 */
 #define DEFAULT_STATIC_KW (const char *[NUM_STATIC_KW]) { \
-  "INTEHEAD",   \
-  "LOGIHEAD",   \
+  "ACAQ",   	\
+  "ACAQNUM",    \
   "DOUBHEAD",   \
-  "IGRP",   	\
-  "SGRP",   	\
-  "XGRP",   	\
-  "ZGRP",   	\
-  "IWEL",   	\
-  "SWEL",   	\
-  "XWEL",   	\
-  "ZWEL",   	\
-  "ICON",   	\
-  "SCON",   	\
-  "XCON",   	\
-  "HIDDEN",     \
-  "STARTSOL",   \
-  "PRESSURE",   \
-  "SWAT",   	\
-  "SGAS",   	\
-  "RS",   	\
-  "RV",   	\
   "ENDSOL",     \
-  "ICAQNUM",    \
+  "HIDDEN",     \
   "IAAQ",   	\
   "ICAQ",   	\
-  "SCAQNUM",    \
+  "ICAQNUM",    \
+  "ICON",   	\
+  "IGRP",   	\
+  "ILBR",   	\
+  "ILBS",   	\
+  "INTEHEAD",   \
+  "ISEG",   	\
+  "ISTHG",      \
+  "ISTHW",   	\
+  "IWEL",   	\
+  "LOGIHEAD",   \
+  "PRESSURE",   \
+  "RS",   	\
+  "RSEG",   	\
+  "RV",   	\
   "SAAQ",   	\
   "SCAQ",   	\
-  "ACAQNUM",    \
+  "SCAQNUM",    \
+  "SCON",   	\
+  "SGAS",   	\
+  "SGRP",   	\
+  "STARTSOL",   \
+  "SWAT",   	\
+  "SWEL",   	\
   "XAAQ",   	\
-  "ACAQ",   	\
-  "ISEG",   	\
-  "ILBS",   	\
-  "ILBR",   	\
-  "RSEG",   	\
-  "ISTHW",   	\
-  "ISTHG",      \
-  "INODE",      \
-  "RNODE",      \
-  "IBRAN",      \
-  "INOBR",      \
-  "RBRAN",      \
-  "LGRNAMES",   \
+  "XCON",   	\
+  "XGRP",   	\
+  "XWEL",   	\
+  "ZGRP",   	\
+  "ZWEL",       \
+  "ENDLGR",     \
   "LGR",        \
+  "LGRHEADD",   \
   "LGRHEADI",   \
   "LGRHEADQ",   \
-  "LGRHEADD",   \
-  "IOWC",       \
-  "OWC",        \
-  "EOWC",       \
+  "LGRNAMES",   \
+  "EOWC"    ,   \
+  "IOWC"    ,   \
+  "OWC"     ,   \
+  "ZNODE"   ,   \
+  "INODE"   ,   \
+  "RNODE"   ,   \
+  "LGWEL"   ,   \
+  "IBRAN"   ,   \
+  "INOBR"   ,   \
+  "RBRAN"   ,   \
   "PRESROCC",   \
-  "THRESHPR",   \
-  "REGDIMS"}
-
+  "REGDIMS" ,   \
+  "THRESHPR"}
 
 
 

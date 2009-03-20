@@ -446,6 +446,7 @@ static void  enkf_fs_upgrade_kwlist_101(const char * path , const char * file , 
 
 
 static void enkf_fs_upgrade_101(const char * config_file, const char * root_path) {
+  bool   backup = false;
   char * backup_path;
   backup_path = util_alloc_tmp_file("/tmp" , "enkf-backup" , true);
 
@@ -456,7 +457,8 @@ static void enkf_fs_upgrade_101(const char * config_file, const char * root_path
   printf("**  remember which case you used last - apart from that everything should  **\n");
   printf("**  be unchanged.                                                          **\n");
   printf("*****************************************************************************\n");
-  {
+
+  if (backup) {
     char * prompt = util_alloc_sprintf("Storing backup in: %s ==> " , backup_path);
     util_copy_directory( root_path , backup_path , prompt); 
     free( prompt );

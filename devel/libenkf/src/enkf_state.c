@@ -300,12 +300,15 @@ void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
   char * iens_s       	  = util_alloc_sprintf("%d"   , member_config->iens);
   char * iens4_s      	  = util_alloc_sprintf("%04d" , member_config->iens);
   char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+  char * cwd              = util_alloc_cwd();
   
   forward_model_set_private_arg(enkf_state->forward_model ,  "IENS"        , iens_s);
+  forward_model_set_private_arg(enkf_state->forward_model ,  "CWD"         , cwd);
   forward_model_set_private_arg(enkf_state->forward_model ,  "IENS4"       , iens4_s);
   forward_model_set_private_arg(enkf_state->forward_model ,  "ECL_BASE"    , member_config->eclbase);  /* Can not change run_time .. */
   forward_model_set_private_arg(enkf_state->forward_model ,  "SMSPEC_FILE" , smspec_file);
   
+  free(cwd);
   free(iens_s);
   free(iens4_s);
   free(smspec_file);
@@ -443,12 +446,15 @@ enkf_state_type * enkf_state_alloc(int iens,
     char * iens_s      = util_alloc_sprintf("%d"   , iens);
     char * iens4_s     = util_alloc_sprintf("%04d" , iens);
     char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+    char * cwd         = util_alloc_cwd();
 
+    enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd); 
     enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s);
     enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s);
     enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase);  /* Can not change run_time .. */
     enkf_state_add_subst_kw(enkf_state , "SMSPEC_FILE" , smspec_file);
     
+    free(cwd);
     free(iens_s);
     free(iens4_s);
     free(smspec_file);
@@ -881,9 +887,12 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
       } else if (var_type == static_state) {
 	enkf_node_ecl_write(enkf_node , NULL , fortio , run_info->step1);
 	enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
-      } else 
+      } else {
+	fprintf(stderr,"var_type: %d \n",var_type);
+	fprintf(stderr,"node    : %s \n",enkf_node_get_key(enkf_node));
 	util_abort("%s: internal error - should not be here ... \n",__func__);
-
+      }
+      
     }
   }
   fortio_fclose(fortio);

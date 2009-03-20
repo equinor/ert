@@ -298,30 +298,29 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   
   /* GEN_PARAM */
   for (i=0; i < config_get_occurences(config , "GEN_PARAM"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
-    const char * key         = stringlist_iget(tokens , 0);
-    const char * ecl_file    = stringlist_iget(tokens , 1);
-    int           num_options  = stringlist_get_size(tokens) - 2;
-    const char ** options;
-    if (num_options > 0)
-      options = stringlist_iget_argv(tokens , 2);
-    else
-      options = NULL;
-    
-    /* 
-       Required options:
-       	* INPUT_FORMAT 
-       	* INPUT_FILES
-       	* INIT_FILES
-        * OUTPUT_FORMAT
-
-       Optional:
-        * TEMPLATE
-        * KEY
-    */
-    ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(true , num_options , options , NULL , NULL));
+    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
+    char * key           = stringlist_iget_copy(tokens , 0);
+    char * ecl_file      = stringlist_iget_copy(tokens , 1);
+    stringlist_idel( tokens , 0 );
+    stringlist_idel( tokens , 0 );
+    {
+      
+      /* 
+	 Required options:
+	 * INPUT_FORMAT 
+	 * INPUT_FILES
+	 * INIT_FILES
+	 * OUTPUT_FORMAT
+	 
+	 Optional:
+	 * TEMPLATE
+	 * KEY
+	 */
+      ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(true , tokens , NULL , NULL));
+    }
+    free( key );
+    free( ecl_file );
   }
-  
 
   /* 
      For this datatype the cooperation between the enkf_node layer and
@@ -335,84 +334,66 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   
   /* GEN_DATA */
   for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
-    const char * key           = stringlist_iget(tokens , 0);
-    int           num_options  = stringlist_get_size(tokens) - 1;
-    const char ** options;
+    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
+    char * key               = stringlist_iget_copy(tokens , 0);
     gen_data_config_type * gen_data_config;
-    if (num_options > 0)
-      options = stringlist_iget_argv(tokens , 1);
-    else
-      options = NULL;
-    
-    
     {
-      char * ecl_file;
-      char * result_file;
-      enkf_var_type var_type;
-      gen_data_config = gen_data_config_alloc(false , num_options , options , &ecl_file , &result_file);
-      if (ecl_file == NULL) /* 
-			       EnKF should not provide the forward model with an instance of this
-			       data => We have dynamic_result.
-			    */
-	var_type = dynamic_result;
-      else
-	var_type = dynamic_state;   
-			       
+      stringlist_idel(tokens , 0);
+      {
+	char * ecl_file;
+	char * result_file;
+	enkf_var_type var_type;
+	gen_data_config = gen_data_config_alloc(false , tokens , &ecl_file , &result_file);
+	if (ecl_file == NULL) /* 
+				 EnKF should not provide the forward model with an instance of this
+				 data => We have dynamic_result.
+			      */
+	  var_type = dynamic_result;
+	else
+	  var_type = dynamic_state;   
 	
-
-      ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
-
-
-      util_safe_free( ecl_file );
-      util_safe_free( result_file );
+	ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
+	
+	util_safe_free( ecl_file );
+	util_safe_free( result_file );
+      }
     }
-      
+    free(key);
   }
 
   /* FIELD */
   {
     field_trans_table_type * field_trans_table = ensemble_config->field_trans_table;
     for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
-      const char *  key             = stringlist_iget(tokens , 0);
-      const char *  var_type_string = stringlist_iget(tokens , 1);
+      stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
+      char *  key             = stringlist_iget_copy(tokens , 0);
+      char *  var_type_string = stringlist_iget_copy(tokens , 1);
+      stringlist_idel( tokens , 0 );   
+      stringlist_idel( tokens , 0 );
       
       if (strcmp(var_type_string , "DYNAMIC") == 0) {
-	int           num_options     = stringlist_get_size(tokens) - 2;
-	const char ** options;
-	if (num_options > 0)
-	  options = stringlist_iget_argv(tokens , 2);
-	else
-	  options = NULL;
-
-	ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , num_options , options));
+	ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , tokens));
       } else if (strcmp(var_type_string , "PARAMETER") == 0) {
-	const char *  ecl_file        = stringlist_iget(tokens , 2);
-	int           num_options     = stringlist_get_size(tokens) - 3;
-	const char ** options;
-	if (num_options > 0)
-	  options = stringlist_iget_argv(tokens , 3);
-	else
-	  options = NULL;
+	char *  ecl_file        = stringlist_iget_copy(tokens , 0);
+	stringlist_idel( tokens , 0 );
 	
 	ensemble_config_add_node(ensemble_config , key , parameter   , FIELD , ecl_file , NULL , 
-				 field_config_alloc_parameter(key , ecl_file , grid , field_trans_table , num_options , options));
-	
+				 field_config_alloc_parameter(key , ecl_file , grid , field_trans_table , tokens));
+	free(ecl_file);
       } else if (strcmp(var_type_string , "GENERAL") == 0) {
-	const char * enkf_outfile = stringlist_iget(tokens , 2); /* Out before in ?? */
-	const char * enkf_infile  = stringlist_iget(tokens , 3);
-	int           num_options = stringlist_get_size(tokens) - 4;
-	const char ** options;
-	if (num_options > 0)
-	  options = stringlist_iget_argv(tokens , 4);
-	else
-	  options = NULL;
+	char * enkf_outfile = stringlist_iget_copy(tokens , 0); /* Out before in ?? */
+	char * enkf_infile  = stringlist_iget_copy(tokens , 1);
+	stringlist_idel( tokens , 0 );
+	stringlist_idel( tokens , 0 );
 	
 	ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , enkf_outfile , enkf_infile , 
-			       field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , field_trans_table , num_options , options));
+				 field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , field_trans_table , tokens));
+	free(enkf_outfile);
+	free(enkf_infile);
       } else 
 	util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
+      free( key );
+      free( var_type_string );
     }
   }
 

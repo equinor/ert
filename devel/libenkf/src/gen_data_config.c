@@ -170,10 +170,10 @@ static gen_data_file_format_type __gen_data_config_check_format( const char * fo
 
 */
 
-gen_data_config_type * gen_data_config_alloc(bool as_param , int num_options, const char ** options , char **__ecl_file , char ** __result_file) {
+gen_data_config_type * gen_data_config_alloc(bool as_param , const stringlist_type * options , char **__ecl_file , char ** __result_file) {
   const ecl_type_enum internal_type = ecl_double_type;
   gen_data_config_type * config;
-  hash_type * opt_hash = hash_alloc_from_options( num_options , options );
+  hash_type * opt_hash = hash_alloc_from_options( options );
   char * result_file   = NULL;
   char * ecl_file      = NULL;
 

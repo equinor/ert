@@ -55,18 +55,28 @@ void enkf_ui_run_restart__(void * enkf_main) {
 }
 
 
+/** 
+    Experiments will always start with the parameters at time == 0; if
+    you want to simulate with updated (posterior) parameters, you
+    ensure that by initializing from a report_step > 0 from an
+    existing case.
+
+    Prediction part is included if it exists.
+*/
+
+
+
 void enkf_ui_run_exp__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
   int prompt_len = 45;
-  const int last_report   = enkf_main_get_total_length( enkf_main );
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   state_enum init_state = analyzed; 
   int start_report   	= 0;
-  int init_report    	= util_scanf_int_with_limits("Initialize static parameters from: ",prompt_len , 0 , last_report );
+  int init_report    	= 0;
   int iens1,iens2;
-  enkf_ui_util_scanf_iens_range("Realizations to simulate (0 - %d): " , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
+  enkf_ui_util_scanf_iens_range("Which realizations to simulate (0 - %d): " , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
   {
     int iens;
     for (iens= 0; iens < ens_size; iens++) {
@@ -85,22 +95,22 @@ void enkf_ui_run_exp__(void * enkf_main) {
 
 
 
-void enkf_ui_run_screening__(void * enkf_main) {
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size      = ensemble_config_get_size(ensemble_config);
-  bool * iactive          = util_malloc(ens_size * sizeof * iactive , __func__);
-  int init_report  = 0;
-  int start_report = 0;
-  state_enum init_state = analyzed;
-  {
-    int iens;
-    for (iens= 0; iens < ens_size; iens++)
-      iactive[iens] = true;
-  }
-  
-  enkf_main_run(enkf_main , screening_experiment , iactive , init_report , start_report , init_state);
-  free(iactive);
-}
+//void enkf_ui_run_screening__(void * enkf_main) {
+//  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+//  const int ens_size      = ensemble_config_get_size(ensemble_config);
+//  bool * iactive          = util_malloc(ens_size * sizeof * iactive , __func__);
+//  int init_report  = 0;
+//  int start_report = 0;
+//  state_enum init_state = analyzed;
+//  {
+//    int iens;
+//    for (iens= 0; iens < ens_size; iens++)
+//      iactive[iens] = true;
+//  }
+//  
+//  enkf_main_run(enkf_main , screening_experiment , iactive , init_report , start_report , init_state);
+//  free(iactive);
+//}
 
 
 void enkf_main_interactive_set_runpath__(void *arg) {
@@ -181,7 +191,6 @@ void enkf_ui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   
   menu_type * menu = menu_alloc("Run menu" , "Back" , "bB");
-  menu_add_item(menu , "Run screening experiment"               , "eE" , enkf_ui_run_screening__   , enkf_main , NULL);
   menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__         , enkf_main , NULL);
   menu_add_separator( menu );
   menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_ui_run_start__       , enkf_main , NULL);
