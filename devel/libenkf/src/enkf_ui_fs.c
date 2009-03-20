@@ -146,6 +146,7 @@ void enkf_ui_fs_copy_all_parameters(void * arg) {
   enkf_ui_fs_copy_all_parameters__( enkf_main , false );
 }
 
+
 void enkf_ui_fs_copy_all_parameters_prediction(void * arg) {
   enkf_main_type * enkf_main= enkf_main_safe_cast( arg );
   enkf_ui_fs_copy_all_parameters__( enkf_main , true ); 
@@ -240,7 +241,7 @@ void enkf_ui_fs_menu(void * arg) {
    menu_add_separator(menu);
    menu_add_item(menu, "Initialize case from scratch"      		   , "iI" , enkf_ui_init_menu, enkf_main, NULL); 
    menu_add_item(menu, "Initialize case from existing case"		   , "aA" , enkf_ui_fs_copy_all_parameters, enkf_main, NULL); 
-   menu_add_item(menu, "Initialize case FOR PREDICTIONS from existing case", "pP" , enkf_ui_fs_copy_all_parameters, enkf_main, NULL); 
+   menu_add_item(menu, "Initialize case FOR PREDICTIONS from existing case", "pP" , enkf_ui_fs_copy_all_parameters_prediction, enkf_main, NULL); 
 
    menu_add_separator(menu);
    menu_add_item(menu, "Copy to another case", "eE", enkf_ui_fs_copy_ensemble, enkf_main, NULL); 
