@@ -669,6 +669,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	  Observe that this test will never succeed for static keywords,
 	  because the internalized key has appended a _<occurence>.
       */
+      printf("Internalizing: %s \n",kw);
       if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
 	/**
 	   This is poor-mans treatment of LGR. When LGR is used the restart file

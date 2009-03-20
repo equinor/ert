@@ -13,6 +13,7 @@
 #include <field_obs.h>
 #include <field_config.h>
 #include <obs_vector.h>
+#include <bool_vector.h>
 #include <plot.h>
 #include <plot_dataset.h>
 #include <enkf_ui_util.h>
@@ -89,6 +90,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   enkf_node_type * node;
   msg_type * msg;
   double *x , *y;
+  bool_vector_type * has_data = bool_vector_alloc(100 , false);
   int     size, iens , step;
 
   node = enkf_node_alloc( config_node );
@@ -106,6 +108,45 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   }
   msg_show(msg);
   
+
+  for (iens = iens1; iens <= iens2; iens++) {
+    char label[32];
+	
+    int this_size = 0;
+    for (step = step1; step <= step2; step++) {
+      sprintf(label , "%03d/%03d" , iens , step);
+      msg_update( msg , label);
+	  
+      /* Forecast block */
+      if (plot_state & forecast) {
+	if (enkf_fs_has_node(fs , config_node , step , iens , forecast)) {
+	  bool valid;
+	  enkf_fs_fread_node(fs , node , step , iens , forecast);
+	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
+	  bool_vector_iset(has_data , step , true);
+	  if (valid) {
+	    x[this_size] = step;
+	    this_size++;
+	  }
+	} 
+      }
+	  
+      /* Analyzed block */
+      if (plot_state & analyzed) {
+	if (enkf_fs_has_node(fs , config_node , step , iens , analyzed)) {
+	  bool valid;
+	  enkf_fs_fread_node(fs , node , step , iens , analyzed);
+	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
+	  bool_vector_iset(has_data , step , true);
+	  if (valid) {
+	    x[this_size] = step;
+	    this_size++;
+	  }
+	} 
+      }
+    }
+    __plot_add_data(plot , this_size , x , y );
+  }
 
   /** 
       Plotting the observations first - to ensure that the simulated
@@ -129,7 +170,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	do {
 	  report_step = obs_vector_get_next_active_step( obs_vector , report_step);
 	  if (report_step != -1) {
-	    if (report_step >= step1 && report_step <= step2) {
+	    if (bool_vector_safe_iget( has_data , report_step)) {   /* Not plotting an observation if we do not have any simulartions at the same time. */
 	      bool valid;
 	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
 	      if (valid)
@@ -141,42 +182,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
     }
   }
 
-  for (iens = iens1; iens <= iens2; iens++) {
-    char label[32];
-	
-    int this_size = 0;
-    for (step = step1; step <= step2; step++) {
-      sprintf(label , "%03d/%03d" , iens , step);
-      msg_update( msg , label);
-	  
-      /* Forecast block */
-      if (plot_state & forecast) {
-	if (enkf_fs_has_node(fs , config_node , step , iens , forecast)) {
-	  bool valid;
-	  enkf_fs_fread_node(fs , node , step , iens , forecast);
-	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
-	  if (valid) {
-	    x[this_size] = step;
-	    this_size++;
-	  }
-	} 
-      }
-	  
-      /* Analyzed block */
-      if (plot_state & analyzed) {
-	if (enkf_fs_has_node(fs , config_node , step , iens , analyzed)) {
-	  bool valid;
-	  enkf_fs_fread_node(fs , node , step , iens , analyzed);
-	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
-	  if (valid) {
-	    x[this_size] = step;
-	    this_size++;
-	  }
-	} 
-      }
-    }
-    __plot_add_data(plot , this_size , x , y );
-  }
+
 
   plot_set_bottom_padding( plot , 0.05);
   plot_set_top_padding( plot    , 0.05);
@@ -188,6 +194,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   printf("Plot saved in: %s \n",plot_file);
   __plot_show(plot , viewer , plot_file); /* Frees the plot - logical ehhh. */
   free(plot_file);
+  bool_vector_free( has_data );
 }
 
 
