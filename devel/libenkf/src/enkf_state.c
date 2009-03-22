@@ -669,7 +669,6 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	  Observe that this test will never succeed for static keywords,
 	  because the internalized key has appended a _<occurence>.
       */
-      printf("Internalizing: %s \n",kw);
       if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
 	/**
 	   This is poor-mans treatment of LGR. When LGR is used the restart file
@@ -741,8 +740,6 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	    
 	    {
 	      enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
-	      ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(enkf_node);
-	      ecl_static_kw_inc_counter(ecl_static_kw , true , report_step);
 	      enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , my_config->iens);
 	      /*
 		Static kewyords go straight out ....
@@ -853,7 +850,8 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
     /* 
        Observe that here we are *ONLY* iterating over the
        restart_kw_list instance, and *NOT* the enkf_state
-       instance. I.e. arbitrary dynamic keys should not show up.
+       instance. I.e. arbitrary dynamic keys, and no-longer-active
+       static kewyords should not show up.
 
        If the restart kw_list asks for a keyword which we do not have,
        we assume it is a static keyword and add it it to the
@@ -874,10 +872,9 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
-      if (var_type == static_state) {
-	ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
+      if (var_type == static_state) 
+	//ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
 	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
-      }
       
       if (var_type == dynamic_state) {
 	/* Pressure and saturations */
@@ -943,9 +940,10 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     int ikey;
     
     for (ikey = 0; ikey < num_keys; ikey++) {
-      if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {      /* Make sure that the elements in the restart file are not written (again). */
+      if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {          /* Make sure that the elements in the restart file are not written (again). */
 	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-	enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+	if (enkf_node_get_var_type( enkf_node ) != static_state)                          /* Ensure that no-longer-active static keywords do not create problems. */
+	  enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
       }
     }
     util_free_stringlist(key_list , num_keys);

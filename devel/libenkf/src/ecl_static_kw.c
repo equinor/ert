@@ -2,6 +2,7 @@
 #include <util.h>
 #include <ecl_static_kw.h>
 #include <ecl_kw.h>
+#include <enkf_util.h>
 #include <enkf_macros.h>
 
 
@@ -60,36 +61,36 @@ struct ecl_static_kw_struct {
    counter is reset to 0, otherwise it is increased.
 */
 
-void ecl_static_kw_inc_counter(ecl_static_kw_type * ecl_static, bool write_mode , int report_step) {
-  
-  if (ecl_static->__write_mode != write_mode)             /* Changing reading <-> writing */
-    ecl_static->__kw_count = 0;
-  else if (ecl_static->__report_step != report_step)      /* Changing report_step */
-    ecl_static->__kw_count = 0;
-  else
-    ecl_static->__kw_count++;                             /* Increase counter */
-  
-  ecl_static->__write_mode  = write_mode;
-  ecl_static->__report_step = report_step;
-}
-
-
-int ecl_static_kw_get_report_step(const ecl_static_kw_type * ecl_static) {
-  return ecl_static->__report_step;
-}
-
-
-
-/**
-   Used by the filessystem function reading/writing spesific instances to disk.
-*/
-int ecl_static_kw_get_counter(const ecl_static_kw_type * ecl_static) {
-  if (ecl_static->__kw_count < 0)
-    util_abort("%s: internal error: __kw_count = %d \n",__func__ , ecl_static->__kw_count);
-  
-  return ecl_static->__kw_count;
-}
-
+//void ecl_static_kw_inc_counter(ecl_static_kw_type * ecl_static, bool write_mode , int report_step) {
+//  
+//  if (ecl_static->__write_mode != write_mode)             /* Changing reading <-> writing */
+//    ecl_static->__kw_count = 0;
+//  else if (ecl_static->__report_step != report_step)      /* Changing report_step */
+//    ecl_static->__kw_count = 0;
+//  else
+//    ecl_static->__kw_count++;                             /* Increase counter */
+//  
+//  ecl_static->__write_mode  = write_mode;
+//  ecl_static->__report_step = report_step;
+//}
+//
+//
+//int ecl_static_kw_get_report_step(const ecl_static_kw_type * ecl_static) {
+//  return ecl_static->__report_step;
+//}
+//
+//
+//
+///**
+//   Used by the filessystem function reading/writing spesific instances to disk.
+//*/
+//int ecl_static_kw_get_counter(const ecl_static_kw_type * ecl_static) {
+//  if (ecl_static->__kw_count < 0)
+//    util_abort("%s: internal error: __kw_count = %d \n",__func__ , ecl_static->__kw_count);
+//  
+//  return ecl_static->__kw_count;
+//}
+//
 
 
 

@@ -1073,21 +1073,21 @@ void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
   This function will discard all unused static nodes. 
 */
 void enkf_main_del_unused_static(enkf_main_type * enkf_main , int report_step) {
-  int config_size;
-  char ** key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
-  int ikw;
-  
-  for (ikw=0; ikw < config_size; ikw++) {
-    if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key_list[ikw])) == STATIC) {
-      enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
-      
-      if (enkf_node_get_impl_type(node) == STATIC) {
-	ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(node);
-	if (ecl_static_kw_get_report_step(ecl_static_kw) != report_step) /* This kw has not been loaded for this report step. */
-	  enkf_main_del_node(enkf_main , key_list[ikw] );
-      }
-    }
-  }
+  //int config_size;
+  //char ** key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
+  //int ikw;
+  //
+  //for (ikw=0; ikw < config_size; ikw++) {
+  //  if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key_list[ikw])) == STATIC) {
+  //    enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
+  //    
+  //    if (enkf_node_get_impl_type(node) == STATIC) {
+  //	//ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(node);
+  //	//if (ecl_static_kw_get_report_step(ecl_static_kw) != report_step) /* This kw has not been loaded for this report step. */
+  //	//enkf_main_del_node(enkf_main , key_list[ikw] );
+  //    }
+  //  }
+  //}
 }
 
 

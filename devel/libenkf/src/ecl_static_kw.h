@@ -5,14 +5,10 @@ extern "C" {
 #endif
 #include <stdbool.h>
 #include <ecl_kw.h>
-#include <enkf_state.h>
 #include <enkf_macros.h>
 typedef struct ecl_static_kw_struct ecl_static_kw_type;
 
 
-int                  ecl_static_kw_get_report_step(const ecl_static_kw_type * );
-void                 ecl_static_kw_inc_counter(ecl_static_kw_type * , bool , int);
-int                  ecl_static_kw_get_counter(const ecl_static_kw_type * );
 ecl_static_kw_type * ecl_static_kw_alloc();
 void                 ecl_static_kw_free(ecl_static_kw_type *ecl_static_kw);
 void                 ecl_static_kw_init(ecl_static_kw_type * , const ecl_kw_type * );
