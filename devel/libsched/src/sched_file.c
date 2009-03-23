@@ -451,6 +451,24 @@ time_t sched_file_iget_block_end_time(const sched_file_type * sched_file, int i)
 }
 
 
+double sched_file_iget_block_start_days(const sched_file_type * sched_file, int i)
+{
+  sched_block_type * block = sched_file_iget_block_ref(sched_file, i);
+  return util_difftime_days( sched_file->start_time , block->block_start_time );
+}
+
+
+double sched_file_iget_block_end_days(const sched_file_type * sched_file, int i)
+{
+  sched_block_type * block = sched_file_iget_block_ref(sched_file, i);
+  return util_difftime_days( sched_file->start_time , block->block_end_time );
+}
+
+double sched_file_get_sim_days(const sched_file_type * sched_file , int report_step) {
+  return sched_file_iget_block_end_days( sched_file , report_step );
+}
+
+
 
 int sched_file_iget_block_size(const sched_file_type * sched_file, int block_nr)
 {
