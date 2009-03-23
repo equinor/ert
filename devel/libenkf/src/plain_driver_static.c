@@ -112,10 +112,12 @@ bool plain_driver_static_has_node(void * _driver , int report_step , int iens , 
   {
     bool has_node;
     char * filename = plain_driver_static_alloc_filename__(driver , false , report_step , iens , key);
+
     if (util_file_exists(filename))
       has_node = true;
     else
       has_node = false;
+
     free(filename);
 
     /* The static counter is hardcoded to zero from the calling scope - that is why we abort. */
@@ -173,6 +175,7 @@ void plain_driver_static_fwrite_mount_info(FILE * stream , bool read , const cha
   util_fwrite_int(PLAIN_DRIVER_STATIC_ID , stream);
   util_fwrite_string(fmt , stream);
 }
+
 
 /**
    The two integers from the mount info have already been read at the enkf_fs level.

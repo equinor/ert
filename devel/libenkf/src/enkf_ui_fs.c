@@ -111,7 +111,6 @@ static void enkf_ui_fs_copy_all_parameters__(enkf_main_type * enkf_main , bool f
     target_state     = analyzed;
     target_step      = 0;
   }
-
   enkf_fs_select_read_dir( fs, source_case );
 
   {
@@ -125,15 +124,16 @@ static void enkf_ui_fs_copy_all_parameters__(enkf_main_type * enkf_main , bool f
     {
       const char * key = stringlist_iget(parameters, i);
       enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
+      printf("Copying:%s \n",key);
       enkf_fs_copy_ensemble(fs, config_node, src_step , src_state , target_step , target_state, 0, ens_size - 1);
     }
 
     stringlist_free(parameters);
   }
-
-
+  
+  
   /**
-    Revert to original case.
+     Revert to original case.
   */
   enkf_fs_select_read_dir(fs, current_case);
   free(current_case);
@@ -151,6 +151,7 @@ void enkf_ui_fs_copy_all_parameters_prediction(void * arg) {
   enkf_main_type * enkf_main= enkf_main_safe_cast( arg );
   enkf_ui_fs_copy_all_parameters__( enkf_main , true ); 
 }
+
 
 
 void enkf_ui_fs_copy_ensemble(void * arg)

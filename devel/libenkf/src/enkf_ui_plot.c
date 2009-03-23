@@ -19,6 +19,40 @@
 #include <enkf_ui_util.h>
 #include <ensemble_config.h>
 #include <msg.h>
+#include <vector.h>
+#include <enkf_state.h>
+
+
+
+/**
+   This vector of sched_file instances is used to translate from
+   report_step to simulation days on the x-axis of the ensemble
+   plots. This is a bit awkward for two reasons:
+
+    * Most of the plot functions only relate to the ensemble_config
+      and the enkf_fs filesystem; _not_ the enkf_state
+      instances. These sched_file pointers break that premise. Should
+      probably get the sim_time directly from the file-system?
+
+    * The implementation supports the use of member-specific schedule
+      files, and for this reason we must have member specific files
+      her as well, this increases the complexity for something which
+      is probably only used in 1/1000 cases.
+
+*/
+
+static vector_type * enkf_ui_alloc_sched_vector( const enkf_main_type * enkf_main ) {
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const int ens_size                           = ensemble_config_get_size( ensemble_config );
+
+  int iens;
+  vector_type * vector = vector_alloc_new();
+  for (iens = 0; iens < ens_size; iens++)
+    vector_append_ref( vector , enkf_state_get_sched_file ( enkf_main_iget_state( enkf_main , iens )));
+  
+  return vector;
+}
+
 
 
 /**
@@ -78,6 +112,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 				    const enkf_config_node_type * config_node , 
 				    const char * user_key  ,
 				    const char * key_index ,
+				    const vector_type * sched_vector , 
 				    int step1 , int step2  , 
 				    int iens1 , int iens2  , 
 				    state_enum plot_state  ,
@@ -86,7 +121,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 
   const bool add_observations = true;
   char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), user_key );
-  plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file);
+  plot_type * plot = __plot_alloc("Simulation days","y-akse",user_key,plot_file);
   enkf_node_type * node;
   msg_type * msg;
   double *x , *y;
@@ -114,6 +149,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	
     int this_size = 0;
     for (step = step1; step <= step2; step++) {
+      double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens) , step );
       sprintf(label , "%03d/%03d" , iens , step);
       msg_update( msg , label);
 	  
@@ -125,7 +161,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
 	  bool_vector_iset(has_data , step , true);
 	  if (valid) {
-	    x[this_size] = step;
+	    x[this_size] = sim_days;
 	    this_size++;
 	  }
 	} 
@@ -139,7 +175,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
 	  bool_vector_iset(has_data , step , true);
 	  if (valid) {
-	    x[this_size] = step;
+	    x[this_size] = sim_days;
 	    this_size++;
 	  }
 	} 
@@ -173,8 +209,10 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	    if (bool_vector_safe_iget( has_data , report_step)) {   /* Not plotting an observation if we do not have any simulartions at the same time. */
 	      bool valid;
 	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
-	      if (valid)
-		plot_dataset_append_point_xy1y2( obs_data , report_step , value - std , value + std);
+	      if (valid) {
+		double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens1) , report_step );
+		plot_dataset_append_point_xy1y2( obs_data , sim_days , value - std , value + std);
+	      }
 	    }
 	  }
 	} while (report_step != -1);
@@ -281,6 +319,7 @@ void enkf_ui_plot_ensemble(void * arg) {
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
+  vector_type * sched_vector                   = enkf_ui_alloc_sched_vector( enkf_main );
   {
     const int prompt_len = 40;
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
@@ -320,6 +359,7 @@ void enkf_ui_plot_ensemble(void * arg) {
 			      config_node , 
 			      user_key , 
 			      key_index , 
+			      sched_vector , 
 			      step1 , 
 			      step2 , 
 			      iens1 , 
@@ -330,6 +370,7 @@ void enkf_ui_plot_ensemble(void * arg) {
       util_safe_free(key_index);
     }
   }
+  vector_free( sched_vector );
 }
 	
 	   
@@ -342,7 +383,7 @@ void enkf_ui_plot_all_summary(void * arg) {
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
-  
+  vector_type * sched_vector                   = enkf_ui_alloc_sched_vector( enkf_main );  
   const int iens1        = 0;
   const int iens2        = ensemble_config_get_size(ensemble_config) - 1;
   const int last_report  = enkf_main_get_total_length( enkf_main );
@@ -360,6 +401,7 @@ void enkf_ui_plot_all_summary(void * arg) {
 			      ensemble_config_get_node( ensemble_config , key ),
 			      key , 
 			      NULL , 
+			      sched_vector , 
 			      first_report , last_report , 
 			      iens1 , iens2 , 
 			      both  , 
@@ -369,6 +411,7 @@ void enkf_ui_plot_all_summary(void * arg) {
     }
     stringlist_free( summary_keys );
   }
+  vector_free( sched_vector );
 }
 
 

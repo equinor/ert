@@ -937,17 +937,26 @@ enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_n
 }
 
 
-void enkf_fs_copy_node(enkf_fs_type * enkf_fs, enkf_config_node_type * config_node, int report_step_from, int iens_from, state_enum state_from, int report_step_to, int iens_to, state_enum state_to) {
+void enkf_fs_copy_node(enkf_fs_type * enkf_fs, 
+		       enkf_config_node_type * config_node, 
+		       int report_step_from, int iens_from, state_enum state_from, /* src state */
+		       int report_step_to  , int iens_to  , state_enum state_to) { /* target state */
+
   enkf_node_type * enkf_node = enkf_fs_fread_alloc_node(enkf_fs, config_node, report_step_from, iens_from, state_from);
   enkf_fs_fwrite_node(enkf_fs, enkf_node, report_step_to, iens_to, state_to);
   enkf_node_free(enkf_node);
+
 }
 
 
 /**
   Copy an ensemble of nodes. Note that the limits are inclusive.
 */
-void enkf_fs_copy_ensemble(enkf_fs_type * enkf_fs, enkf_config_node_type * config_node, int report_step_from, state_enum state_from, int report_step_to, state_enum state_to, int iens1, int iens2)
+void enkf_fs_copy_ensemble(enkf_fs_type * enkf_fs, 
+			   enkf_config_node_type * config_node,               
+			   int report_step_from, state_enum state_from,  /* src state */
+			   int report_step_to, state_enum state_to,      /* target state */
+			   int iens1, int iens2)                         /* realizations */
 {
   for(int iens = iens1; iens <= iens2; iens++)
     enkf_fs_copy_node(enkf_fs, config_node, report_step_from, iens, state_from, report_step_to, iens, state_to);

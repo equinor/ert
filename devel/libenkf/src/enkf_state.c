@@ -46,7 +46,6 @@
 #define ENKF_STATE_TYPE_ID 78132
 
 
-
 /**
    This struct is a pure utility structure used to pack the various
    bits and pieces of information needed to start, monitor, and load
@@ -242,6 +241,7 @@ static void member_config_set_eclbase(member_config_type * member_config , const
   member_config->eclbase = util_realloc_string_copy(member_config->eclbase , eclbase);
 }
 
+
 static int member_config_get_last_restart_nr( const member_config_type * member_config) {
   return sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
 }
@@ -258,6 +258,7 @@ static void member_config_free(member_config_type * member_config) {
 static void member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath) {
   member_config->keep_runpath   = keep_runpath;
 }
+
 
 
 static member_config_type * member_config_alloc(int iens , 
@@ -288,6 +289,12 @@ static member_config_type * member_config_alloc(int iens ,
     }
   }
   return member_config;
+}
+
+
+
+static const sched_file_type * member_config_get_sched_file( const member_config_type * member_config) {
+  return member_config->sched_file;
 }
 
 /*****************************************************************/
@@ -482,7 +489,7 @@ INCLDUE
      let the EnKF program use the ecl_file of the EQUIL keyword if it
      is present.
 
-  */  
+  */
   {
     const char * init_file = ecl_config_get_equil_init_file(ecl_config);
     if (init_file == NULL) 
@@ -608,6 +615,22 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
   }
 }
 
+
+
+/**
+   The ECLIPSE restart files can contain several instances of the same
+   keyword, e.g. AQUIFER info can come several times with identical
+   headers, also when LGR is in use the same header for
+   e.g. PRESSURE/SWAT/INTEHEAD/... wilkl occur several times. The
+   enkf_state/ensembl_config objects require unique keys.
+
+   This function takes keyword string and an occurence number, and
+   combine them to one new string like this:
+
+     __realloc_static_kw("INTEHEAD" , 0) ==>  "INTEHEAD_0"
+
+   In the enkf layer the key used will then be INTEHEAD_0. 
+*/
 
 
 static char * __realloc_static_kw(char * kw , int occurence) {
@@ -1584,6 +1607,12 @@ void enkf_state_init_run(enkf_state_type * state , run_mode_type run_mode, bool 
 }
 
 
+
+/*****************************************************************/
+
+const sched_file_type * enkf_state_get_sched_file(const enkf_state_type * enkf_state) {
+  return member_config_get_sched_file(enkf_state->my_config);
+}
 
 
 

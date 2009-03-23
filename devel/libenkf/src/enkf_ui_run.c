@@ -141,7 +141,7 @@ void enkf_ui_run_predictions__(void * __enkf_main) {
     const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
     const int ens_size     			 = ensemble_config_get_size(ensemble_config);
     bool * iactive         			 = util_malloc(ens_size * sizeof * iactive , __func__);
-    int        history_end 			 = enkf_main_get_history_length( enkf_main ) - 1;
+    int        history_end 			 = enkf_main_get_history_length( enkf_main );
     state_enum start_state 			 = analyzed;           
     {
       int iens;
@@ -160,30 +160,6 @@ void enkf_ui_run_predictions__(void * __enkf_main) {
 
 
 
-
-
-/**
-   This implementation is NOT compatible with the general case where
-   RUNPATH contains STEP1 and STEP2.
-*/
-
-//void enkf_ui_run_manual_internalize__(void * arg ) {
-//  int load_mask1 = dynamic_state + dynamic_result + static_state;
-//  int load_mask2 = dynamic_state + dynamic_result + static_state;
-//  int step1 = 0;
-//  int step2 = 30; /* inclusive */
-//  int iens1 = 0;
-//  int iens2 = 9; /* inclusive */
-//  enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
-//  enkf_state_type ** ensemble = enkf_main_get_ensemble( enkf_main );
-//  int iens;
-//
-//  for (iens = iens1; iens <= iens2; iens++) {
-//    printf("Loading for member: %d \n",iens);
-//    enkf_state_init_run( ensemble[iens] , enkf_assimilation , true , step1 , analyzed , step1 , step2 , NULL);
-//    enkf_state_internalize_results( ensemble[iens] , load_mask1 , load_mask2 , step1 , step2);
-//  }
-//}
 
 
 

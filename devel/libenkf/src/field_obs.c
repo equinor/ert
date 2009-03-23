@@ -10,7 +10,6 @@
 #include <field_obs.h> 
 #include <field_config.h>
 #include <obs_data.h>
-#include <meas_op.h>
 #include <meas_vector.h>
 #include <field_config.h>
 #include <field.h>
