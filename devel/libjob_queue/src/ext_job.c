@@ -107,15 +107,16 @@ ext_job_type * ext_job_alloc(const char * name) {
 
 static hash_type * ext_job_hash_copyc__(hash_type * h) {
   if (h != NULL) {
-    hash_type * new_hash = hash_alloc();
-    const char * key = hash_iter_get_first_key( h );
+    hash_type      * new_hash = hash_alloc();
+    hash_iter_type * iter     = hash_iter_alloc( h);
+    const char * key = hash_iter_get_next_key(iter);
     
     while (key != NULL) {
       char * value = hash_get( h , key);
       hash_insert_hash_owned_ref( new_hash , key , util_alloc_string_copy(value) , free);
-      key = hash_iter_get_next_key( h );
+      key = hash_iter_get_next_key(iter);
     }
-  
+    hash_iter_free(iter); 
     return new_hash;
   } else return NULL;
 }
@@ -264,7 +265,8 @@ static void __fprintf_python_hash(FILE * stream , const char * id , hash_type * 
   if (hash != NULL) {
     int   hash_size = hash_get_size(hash);
     int   counter   = 0;
-    const char * key = hash_iter_get_first_key( hash );
+    hash_iter_type * iter = hash_iter_alloc(hash);
+    const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
       const char * value = hash_get(hash , key);
 
@@ -274,7 +276,7 @@ static void __fprintf_python_hash(FILE * stream , const char * id , hash_type * 
       if (counter < (hash_size - 1))
 	fprintf(stream,",");
       
-      key = hash_iter_get_next_key( hash );
+      key = hash_iter_get_next_key(iter);
     }
   }
   fprintf(stream,"}");
