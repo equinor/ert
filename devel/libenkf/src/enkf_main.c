@@ -996,13 +996,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /******************************************************************/
       /* Adding inverse observation keys, and config_nodes to the obs_vectors. */
       {
-	hash_type * map = enkf_obs_alloc_summary_map(enkf_main->obs);
-	const char * obs_key = hash_iter_get_first_key(map);
+	hash_type      * map = enkf_obs_alloc_summary_map(enkf_main->obs);
+        hash_iter_type * iter = hash_iter_alloc(map);
+	const char * obs_key = hash_iter_get_next_key(iter);
 	while (obs_key  != NULL) {
 	  const char * state_kw = hash_get(map , obs_key);
 	  ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
-	  obs_key = hash_iter_get_next_key( map );
+	  obs_key = hash_iter_get_next_key(iter);
 	}
+        hash_iter_free(iter);
 	hash_free(map);
       }
       
@@ -1187,8 +1189,9 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   
   /* Make sure we internalize at all observation times.*/
   {
-    hash_type * map = enkf_obs_alloc_summary_map(enkf_main->obs);
-    const char * obs_key = hash_iter_get_first_key( map );
+    hash_type      * map  = enkf_obs_alloc_summary_map(enkf_main->obs);
+    hash_iter_type * iter = hash_iter_alloc(map); 
+    const char * obs_key = hash_iter_get_next_key(iter);
     
     while (obs_key != NULL) {
       obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_main->obs , obs_key );
@@ -1207,8 +1210,9 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 	  }
 	}
       } while (active_step >= 0);
-      obs_key = hash_iter_get_next_key( map );
+      obs_key = hash_iter_get_next_key(iter);
     }
+    hash_iter_free(iter);
     hash_free(map);
   }
 }

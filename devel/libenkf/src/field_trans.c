@@ -88,14 +88,16 @@ void field_trans_table_add(field_trans_table_type * table , const char * _key , 
 
 
 void field_trans_table_fprintf(const field_trans_table_type * table , FILE * stream) {
-  const char * key = hash_iter_get_first_key( table->function_table ); 
+  hash_iter_type * iter = hash_iter_alloc(table->function_table);
+  const char * key = hash_iter_get_next_key(iter); 
   fprintf(stream,"==========================================================================================\n");
   while (key != NULL) {
     field_func_node_type * func_node = hash_get(table->function_table , key);
     field_func_node_fprintf(func_node , stream);
-    key = hash_iter_get_next_key( table->function_table );
+    key = hash_iter_get_next_key(iter);
   }
   fprintf(stream,"==========================================================================================\n");
+  hash_iter_free(iter);
 }
 
 

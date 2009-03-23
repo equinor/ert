@@ -221,8 +221,10 @@ void enkf_obs_get_obs_and_measure(
         obs_data_type          * obs_data)
 {
   bool complete;
-  obs_vector_type * obs_vector = hash_iter_get_first_value(enkf_obs->obs_hash , &complete);
-  while ( !complete ) {
+  hash_iter_type * iter = hash_iter_alloc(enkf_obs->obs_hash);
+  obs_vector_type * obs_vector = hash_iter_get_next_value(iter);
+  while ( !hash_iter_is_complete(iter) ) {
+    obs_vector_type * obs_vector = hash_iter_get_next_value(iter);
     if (obs_vector_iget_active(obs_vector , report_step)) {              /* The observation is active for this report step. */
       obs_vector_iget_observations(obs_vector , report_step , obs_data); /*Collect the observed data in the obs_data instance. */
       {
@@ -236,8 +238,8 @@ void enkf_obs_get_obs_and_measure(
 	}
       }
     }
-    obs_vector = hash_iter_get_next_value( enkf_obs->obs_hash , &complete );
   }
+  hash_iter_free(iter);
 }
 
 
@@ -596,13 +598,15 @@ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
 */
 stringlist_type * enkf_obs_alloc_typed_keylist(enkf_obs_type * enkf_obs , obs_impl_type obs_type) {
   stringlist_type * vars = stringlist_alloc_new();
-  const char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
+  hash_iter_type  * iter = hash_iter_alloc(enkf_obs->obs_hash); 
+  const char * key = hash_iter_get_next_key(iter);
   while ( key != NULL) {
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
     if (obs_vector_get_impl_type(obs_vector) == obs_type)
       stringlist_append_copy(vars , key);
-    key = hash_iter_get_next_key( enkf_obs->obs_hash );
+    key = hash_iter_get_next_key(iter);
   }
+  hash_iter_free(iter);
   return vars;
 }
 
@@ -638,12 +642,13 @@ stringlist_type * enkf_obs_alloc_typed_keylist(enkf_obs_type * enkf_obs , obs_im
 
 hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
 {
-  hash_type * map = hash_alloc();
-  const char * key = hash_iter_get_first_key( enkf_obs->obs_hash );
+  hash_type      * map = hash_alloc();
+  hash_iter_type * iter = hash_iter_alloc(enkf_obs->obs_hash); 
+  const char * key = hash_iter_get_next_key(iter);
   while ( key != NULL) {
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , key);
     hash_insert_ref( map , key , obs_vector_get_state_kw(obs_vector));
-    key = hash_iter_get_next_key( enkf_obs->obs_hash );
+    key = hash_iter_get_next_key(iter);
   }
   return map;
 }
@@ -707,7 +712,8 @@ void enkf_obs_total_ensemble_chi2(const enkf_obs_type * obs , enkf_fs_type * fs 
   for (iens = 0; iens < ens_size; iens++)
     chi2[iens] = 0;
   
-  obs_key = hash_iter_get_first_key( obs->obs_hash );
+  hash_iter_type * iter = hash_iter_alloc(obs->obs_hash);
+  obs_key = hash_iter_get_next_key(iter);
   while (obs_key != NULL) {
     obs_vector_type * obs_vector = hash_get(obs->obs_hash , obs_key);
 
@@ -715,8 +721,9 @@ void enkf_obs_total_ensemble_chi2(const enkf_obs_type * obs , enkf_fs_type * fs 
     for (iens = 0; iens < ens_size; iens++)
       chi2[iens] += obs_chi2[iens];
     
-    obs_key = hash_iter_get_next_key( obs->obs_hash );
+    obs_key = hash_iter_get_next_key(iter);
   }
+  hash_iter_free(iter);
   free(obs_chi2);
 }
 
@@ -730,7 +737,8 @@ void enkf_obs_ensemble_chi2(const enkf_obs_type * obs , enkf_fs_type * fs , int 
   for (iens = 0; iens < ens_size; iens++)
     chi2[iens] = 0;
     
-  obs_key = hash_iter_get_first_key( obs->obs_hash );
+  hash_iter_type * iter = hash_iter_alloc(obs->obs_hash);
+  obs_key = hash_iter_get_next_key(iter);
   while (obs_key != NULL) {
     obs_vector_type * obs_vector = hash_get(obs->obs_hash , obs_key);
 
@@ -738,7 +746,8 @@ void enkf_obs_ensemble_chi2(const enkf_obs_type * obs , enkf_fs_type * fs , int 
     for (iens = 0; iens < ens_size; iens++)
       chi2[iens] += obs_chi2[iens];
     
-    obs_key = hash_iter_get_next_key( obs->obs_hash );
+    obs_key = hash_iter_get_next_key(iter);
   }
   free(obs_chi2);
+  hash_iter_free(iter);
 }

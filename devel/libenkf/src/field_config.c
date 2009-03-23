@@ -377,7 +377,8 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   /* Starting on the options. */
   {
     hash_type * opt_hash = hash_alloc_from_options( options );
-    const char * option = hash_iter_get_first_key( opt_hash );
+    hash_iter_type * iter = hash_iter_alloc(opt_hash);
+    const char * option = hash_iter_get_next_key(iter);
     while (option != NULL) {
       const char * value = hash_get( opt_hash , option );
       bool option_OK     = false;
@@ -451,8 +452,9 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
       if (!option_OK)
 	fprintf(stderr,"** Warning: \"%s\" not recognized - ignored \n",option);
 
-      option = hash_iter_get_next_key( opt_hash );
+      option = hash_iter_get_next_key(iter);
     }
+    hash_iter_free(iter);
     hash_free(opt_hash);
   }
   return config;

@@ -185,7 +185,8 @@ gen_data_config_type * gen_data_config_alloc(bool as_param , const stringlist_ty
     char * template_key  = NULL;
     char * init_file_fmt = NULL;
 
-    const char * option = hash_iter_get_first_key( opt_hash );
+    hash_iter_type * iter = hash_iter_alloc(opt_hash);
+    const char * option = hash_iter_get_next_key(iter);
     while (option != NULL) {
       const char * value = hash_get(opt_hash , option);
 
@@ -218,7 +219,7 @@ gen_data_config_type * gen_data_config_alloc(bool as_param , const stringlist_ty
 	fprintf(stderr , "%s: Warning: \'%s:%s\' not recognized as valid option - ignored \n",__func__ , option , value);
 
       
-      option = hash_iter_get_next_key( opt_hash );
+      option = hash_iter_get_next_key(iter);
     } 
     config = gen_data_config_alloc__(as_param , internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file);
     util_safe_free( init_file_fmt );

@@ -496,11 +496,13 @@ INCLDUE
     }
   }
   {
-    const char * key = hash_iter_get_first_key( data_kw );
+    hash_iter_type * iter = hash_iter_alloc(data_kw);
+    const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
       enkf_state_add_subst_kw(enkf_state , key , hash_get(data_kw , key));
-      key = hash_iter_get_next_key( data_kw );
+      key = hash_iter_get_next_key(iter);
     }
+    hash_iter_free(iter);
   }
 
   enkf_state->special_forward_model = NULL;
@@ -582,8 +584,9 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     /* The actual loading */
     {
       bool complete;
-      enkf_node_type * node = hash_iter_get_first_value( enkf_state->node_hash , &complete);
-      while (!complete) {
+      hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
+      while ( !hash_iter_is_complete(iter) ) {
+        enkf_node_type * node = hash_iter_get_next_value(iter);
 	if (enkf_node_get_var_type(node) == dynamic_result) {
 	  bool internalize = internalize_all;
 	  if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
@@ -595,8 +598,8 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 	  } 
 
 	}
-	node = hash_iter_get_next_value( enkf_state->node_hash , &complete);
       }
+      hash_iter_free(iter);
     }
     
     ecl_sum_free( summary );
@@ -768,8 +771,9 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   
   {
     bool complete;
-    enkf_node_type * enkf_node = hash_iter_get_first_value(enkf_state->node_hash , &complete);
-    while (!complete) {
+    hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
+    while ( !hash_iter_is_complete(iter) ) {
+      enkf_node_type * enkf_node = hash_iter_get_next_value(iter);
       if (enkf_node_get_var_type(enkf_node) == dynamic_state) {
 	bool internalize_kw = internalize_state;
 	if (!internalize_kw)
@@ -782,8 +786,8 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	  }
 	}
       }
-      enkf_node = hash_iter_get_next_value(enkf_state->node_hash , &complete);
     }                                                                      
+    hash_iter_free(iter);
   }
   
   /*****************************************************************/

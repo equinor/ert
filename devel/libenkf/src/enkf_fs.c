@@ -1154,13 +1154,10 @@ const char * enkf_fs_get_read_dir(const enkf_fs_type * fs) {
 
 stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * fs) {
   stringlist_type * dirlist = stringlist_alloc_new();
-  const char * key;
-
-  key = set_iter_get_first_key( fs->dir_set );
-  while (key != NULL) {
-    stringlist_append_copy( dirlist , key );
-    key = set_iter_get_next_key( fs->dir_set );
-  }
+  int           num_keys = set_get_size(fs->dir_set); 
+  const char ** keylist  = set_alloc_keylist(fs->dir_set);
+  for(int i=0; i<num_keys; i++)
+    stringlist_append_owned_ref(dirlist, keylist[i]);
   return dirlist;
 }
 
