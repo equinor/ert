@@ -278,14 +278,24 @@ void plot_data(plot_type * plot)
     
     /* Special case for only one point. */
     if (x1 == x2) {
-      x1 -= 0.05 * x1;
-      x2 += 0.05 * x1;
+      if (x1 == 0) {
+	x1 = -0.50;
+	x2 =  0.50;
+      } else {
+	x1 -= 0.05 * abs(x1);
+	x2 += 0.05 * abs(x2);
+      }
     }
 
     /* Special case for only one point. */
     if (y1 == y2) {
-      y1 -= 0.05 * y1;
-      y2 += 0.05 * y2;
+      if (y1 == 0.0) {
+	y1 = -0.50;
+	y2 =  0.50;
+      } else {
+	y1 -= 0.05 * abs(y1);
+	y2 += 0.05 * abs(y2);
+      }
     }
     plwind(x1,x2,y1,y2);
   }
