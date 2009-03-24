@@ -1,0 +1,25 @@
+import os
+from build_config import *
+from build_support import * 
+
+# For building Doxygen documentation for enkf
+
+#Creating help text from build_support.py
+Help(getHelpString(archs))
+
+#Creating environments
+env = Environment(ENV = os.environ)
+for key in envvars:
+	env = checkEnv(env,key,envvars[key])
+
+#Checking for arguments passed to scons
+doc = ARGUMENTS.get('doc',0)
+if doc:
+	if GetOption('clean'):
+		print "Removing Doxygen documents..."
+		exitvalue=os.system('rm -rf doc/html && rm -rf doc/latex')
+	else:
+		exitvalue=os.system("doxygen") 
+		if not exitvalue==0:
+			print "Could not build Doxygen documents\n"
+			Exit() 
