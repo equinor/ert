@@ -40,10 +40,6 @@ distclean:
 	rm -f $(LIB)
 	rm -f $(INSTALL_LIB_PATH)/$(LIB)
 	rm -f $(INSTALL_INC_PATH)/*.h
-	rm -rf Doc/html Doc/latex
-
-doc:
-	doxygen Doc/libplot.conf
 
 rebuild: clean all
 
