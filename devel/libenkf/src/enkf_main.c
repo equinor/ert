@@ -331,19 +331,19 @@ enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main ,
 
 static void enkf_main_fprintf_results(const enkf_main_type * enkf_main , int report_step) {
   const int ens_size  = ensemble_config_get_size(enkf_main->ensemble_config);
-  int config_size;
-  char ** key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
-  int ikw;
+  stringlist_type * key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config);
+  int config_size = stringlist_get_size(key_list);
 
-  for (ikw=0; ikw < config_size; ikw++) {
+  for (int ikw=0; ikw < config_size; ikw++) {
     /* 
        Unfortunately we can have config_nodes without actual nodes (in
        the case) of STATIC. They are not printed anyway.
     */
-    if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key_list[ikw])) != STATIC) {
-      const enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
+    const char * key = stringlist_iget(key_list, ikw);
+    if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key)) != STATIC) {
+      const enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key);
       if (enkf_node_has_func(node , ensemble_fprintf_results_func)) {
-	enkf_node_type ** node_ensemble = enkf_main_get_node_ensemble(enkf_main , key_list[ikw]);
+	enkf_node_type ** node_ensemble = enkf_main_get_node_ensemble(enkf_main , key);
 	char            * path          = model_config_alloc_result_path(enkf_main->model_config , report_step);
 	
 	enkf_node_ensemble_fprintf_results((const enkf_node_type **) node_ensemble , ens_size , report_step , path);
@@ -352,7 +352,7 @@ static void enkf_main_fprintf_results(const enkf_main_type * enkf_main , int rep
       }
     }
   }
-  util_free_stringlist(key_list , config_size);
+  stringlist_free(key_list);
 }
 
 
@@ -1014,13 +1014,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /* Adding ensemble members */
       
       {
-	hash_type * data_kw = config_alloc_hash(config , "DATA_KW");
-	int iens , keys , ik;
-	char **keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &keys);
+	hash_type       * data_kw  =  config_alloc_hash(config , "DATA_KW");
+	stringlist_type * keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config);
+
+        int keys = stringlist_get_size(keylist);
+
 	msg_type * msg  = msg_alloc("Initializing member: ");
 	msg_show(msg);
 	enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
-	for (iens = 0; iens < ens_size; iens++) {
+	for (int iens = 0; iens < ens_size; iens++) {
 	  msg_update_int(msg , "%03d" , iens);
 	  enkf_main->ensemble[iens] = enkf_state_alloc(iens,
 						       keep_runpath[iens],
@@ -1038,15 +1040,16 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	
 	msg  = msg_alloc("Adding key: ");
 	msg_show(msg);
-	for (ik = 0; ik < keys; ik++) {
-	  msg_update(msg , keylist[ik]);
-	  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , keylist[ik]);
-	  for (iens = 0; iens < ens_size; iens++) 
-	    enkf_state_add_node(enkf_main->ensemble[iens] , keylist[ik] , config_node);
+	for (int ik = 0; ik < keys; ik++) {
+          const char * key = stringlist_iget(keylist, ik);
+	  msg_update(msg , key);
+	  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , key);
+	  for (int iens = 0; iens < ens_size; iens++) 
+	    enkf_state_add_node(enkf_main->ensemble[iens] , key , config_node);
 	}
 	msg_free(msg , true);
 	hash_free(data_kw);
-	util_free_stringlist(keylist , keys);
+        stringlist_free(keylist);
       }
       free(keep_runpath);
     }
