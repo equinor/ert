@@ -299,7 +299,7 @@ void sched_util_fprintf_int(bool def, int value , int width , FILE *stream) {
 void sched_util_fprintf_qst(bool def, const char *s , int width , FILE *stream) {
   fputc(' ' , stream);
   if (def) {
-    sched_util_fprintf_default( width , stream);
+    sched_util_fprintf_default( width , stream );
   } else {
     for (int i=0; i < (width - strlen(s)); i++) 
       fputc(' ' , stream);

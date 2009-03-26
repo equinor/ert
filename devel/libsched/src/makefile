@@ -12,7 +12,7 @@ LIB_LINK  = -lsched -lecl -lutil -lm -lz -lpthread
 LIB_PATH  = -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib
 TARGET_INCLUDE = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBSCHED_HOME)/include
 
-all: LIB
+all: LIB 
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
@@ -52,13 +52,16 @@ include dependencies
 
 
 
-BIN_FILES = sched_test.x gruptree_test.x sched_summary.x get_well_list.x
+BIN_FILES = sched_test.x gruptree_test.x sched_summary.x get_well_list.x update_ir.x
 BIN	: $(BIN_FILES)
-BIN_FILES_SDP_INSTALL = sched_summary.x get_well_list.x
+BIN_FILES_SDP_INSTALL = sched_summary.x get_well_list.x update_ir.x
 
 
 sched_test.x: $(LIB) sched_test.o
 	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x $(LIB_PATH) $(LIB_LINK)
+
+update_ir.x: $(LIB) update_ir.o
+	$(LD) -$(MFLAG) $(LDFLAGS) update_ir.o -o update_ir.x $(LIB_PATH) $(LIB_LINK)
 
 get_well_list.x: $(LIB) get_well_list.o
 	$(LD) -$(MFLAG) $(LDFLAGS) get_well_list.o -o get_well_list.x $(LIB_PATH) $(LIB_LINK)

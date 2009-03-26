@@ -54,6 +54,8 @@ time_t           sched_kw_get_new_time(const sched_kw_type *, time_t);
 char          ** sched_kw_alloc_well_list(const sched_kw_type *, int *);
 hash_type      * sched_kw_alloc_well_obs_hash(const sched_kw_type *);
 void             sched_kw_alloc_child_parent_list(const sched_kw_type *, char ***, char ***, int *);
+void           * sched_kw_get_data( sched_kw_type * kw);
+
 #ifdef __cplusplus
 }
 #endif

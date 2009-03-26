@@ -1,8 +1,8 @@
 #include <string.h>
-#include <list.h>
 #include <util.h>
 #include <sched_kw_wconhist.h>
 #include <sched_util.h>
+#include <vector.h>
 
 /*
   Define the maximum number of keywords in a WCONHIST record.
@@ -10,7 +10,8 @@
   by ECL 300.
 */
 
-#define WCONHIST_NUM_KW 11
+#define WCONHIST_NUM_KW       11
+#define SCHED_KW_WCONHIST_ID  771054  /* Very random intgere for checking type-cast. */
 #define ECL_DEFAULT_KW "*"
 
 
@@ -27,18 +28,12 @@ typedef enum {ORAT, WRAT, GRAT, LRAT, RESV} cm_flag_type;
 #define CM_RESV_STRING "RESV"
 
 
-struct sched_kw_wconhist_struct{
-  list_type * wells;
-};
-
-
-
 typedef struct wconhist_well_struct wconhist_well_type;
 
 
 
 struct wconhist_well_struct{
-  /*
+  /* 
     def: Read as defaulted, not defined!
   */
   bool          def[WCONHIST_NUM_KW];
@@ -55,6 +50,15 @@ struct wconhist_well_struct{
   double        bhp;
   double        wgrat;
 };
+
+
+
+struct sched_kw_wconhist_struct{
+  int           __type_id;          
+  vector_type * wells;
+};
+
+
 
 
 
@@ -323,7 +327,7 @@ static void sched_kw_wconhist_add_line(sched_kw_wconhist_type * kw, const char *
   sched_util_parse_line(line, &tokens, &token_list, WCONHIST_NUM_KW, NULL);
 
   well = wconhist_well_alloc_from_string(token_list);
-  list_append_list_owned_ref(kw->wells, well, wconhist_well_free__);
+  vector_append_owned_ref(kw->wells, well, wconhist_well_free__);
 
   util_free_stringlist(token_list, tokens);
 }
@@ -332,10 +336,21 @@ static void sched_kw_wconhist_add_line(sched_kw_wconhist_type * kw, const char *
 static sched_kw_wconhist_type * sched_kw_wconhist_alloc()
 {
   sched_kw_wconhist_type * kw = util_malloc(sizeof * kw, __func__);
-  kw->wells = list_alloc();
+  kw->wells     = vector_alloc_new();
+  kw->__type_id = SCHED_KW_WCONHIST_ID;
   return kw;
 }
 
+
+sched_kw_wconhist_type * sched_kw_wconhist_safe_cast( void * arg ) {
+  sched_kw_wconhist_type * kw = (sched_kw_wconhist_type * ) arg;
+  if (kw->__type_id == SCHED_KW_WCONHIST_ID)
+    return kw;
+  else {
+    util_abort("%s: runtime cast failed \n",__func__);
+    return NULL;
+  }
+}
 
 
 /***********************************************************************/
@@ -372,7 +387,7 @@ sched_kw_wconhist_type * sched_kw_wconhist_fscanf_alloc(FILE * stream, bool * at
 
 void sched_kw_wconhist_free(sched_kw_wconhist_type * kw)
 {
-  list_free(kw->wells);
+  vector_free(kw->wells);
   free(kw);
 }
 
@@ -380,12 +395,12 @@ void sched_kw_wconhist_free(sched_kw_wconhist_type * kw)
 
 void sched_kw_wconhist_fprintf(const sched_kw_wconhist_type * kw, FILE * stream)
 {
-  int size = list_get_size(kw->wells);
+  int size = vector_get_size(kw->wells);
 
   fprintf(stream, "WCONHIST\n");
   for(int i=0; i<size; i++)
   {
-    wconhist_well_type * well = list_iget_node_value_ptr(kw->wells, i);
+    const wconhist_well_type * well = vector_iget_const(kw->wells, i);
     wconhist_well_fprintf(well, stream);
   }
   fprintf(stream,"/\n\n");
@@ -395,11 +410,11 @@ void sched_kw_wconhist_fprintf(const sched_kw_wconhist_type * kw, FILE * stream)
 
 void sched_kw_wconhist_fwrite(const sched_kw_wconhist_type * kw, FILE * stream)
 {
-  int size = list_get_size(kw->wells);
+  int size = vector_get_size(kw->wells);
   util_fwrite(&size, sizeof size, 1, stream, __func__);
   for(int i=0; i<size; i++)
   {
-    wconhist_well_type * well = list_iget_node_value_ptr(kw->wells, i);
+    const wconhist_well_type * well = vector_iget_const(kw->wells, i);
     wconhist_well_fwrite(well, stream);
   }
 }
@@ -414,7 +429,7 @@ sched_kw_wconhist_type * sched_kw_wconhist_fread_alloc(FILE * stream)
   for(int i=0; i<size; i++)
   {
     wconhist_well_type * well = wconhist_well_fread_alloc(stream);
-    list_append_list_owned_ref(kw->wells, well, wconhist_well_free__);
+    vector_append_owned_ref(kw->wells, well, wconhist_well_free__);
   }
 
   return kw;
@@ -430,11 +445,11 @@ hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type *
 {
   hash_type * well_hash = hash_alloc();
 
-  int num_wells = list_get_size(kw->wells);
+  int num_wells = vector_get_size(kw->wells);
   
   for(int well_nr=0; well_nr<num_wells; well_nr++)
   {
-    wconhist_well_type * well = list_iget_node_value_ptr(kw->wells, well_nr);
+    wconhist_well_type * well = vector_iget(kw->wells, well_nr);
     hash_type * obs_hash = wconhist_well_export_obs_hash(well);
     hash_insert_hash_owned_ref(well_hash, well->name, obs_hash, hash_free__);
   }
@@ -442,9 +457,59 @@ hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type *
   return well_hash;
 }
 
-
-
 /***********************************************************************/
+/* Functions exported for the sched_file_update api.                   */
+
+
+
+/** Will return NULL if the well is not present. */
+static wconhist_well_type * sched_kw_wconhist_get_well( const sched_kw_wconhist_type * kw , const char * well_name) {
+  int size = vector_get_size(kw->wells);
+  wconhist_well_type * well = NULL;
+  int index = 0;
+  do {
+    wconhist_well_type * iwell = vector_iget( kw->wells , index);
+    if (strcmp( well_name , iwell->name ) == 0) 
+      well = iwell;
+    
+    index++;
+  } while ((well == NULL) && (index < size));
+  return well;
+}
+
+
+
+double sched_kw_wconhist_get_orat( const sched_kw_wconhist_type * kw , const char * well_name) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    return well->orat;
+  else
+    return -1;
+}
+
+void sched_kw_wconhist_scale_orat( const sched_kw_wconhist_type * kw , const char * well_name, double factor) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    well->orat *= factor;
+}
+
+void sched_kw_wconhist_set_surface_flow( const sched_kw_wconhist_type * kw , const char * well_name , double orat) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    well->orat = orat;
+}
+
+
+bool sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char * well_name) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well == NULL)
+    return false;
+  else
+    return true;
+}
+
+
+
 
 KW_FSCANF_ALLOC_IMPL(wconhist)
 KW_FWRITE_IMPL(wconhist)

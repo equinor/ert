@@ -20,6 +20,13 @@ sched_kw_wconhist_type * sched_kw_wconhist_fread_alloc( FILE *);
 
 hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type *);
 
+sched_kw_wconhist_type * sched_kw_wconhist_safe_cast( void * arg );
+
+double 	 		 sched_kw_wconhist_get_orat( const sched_kw_wconhist_type * kw , const char * well_name);
+void   	 		 sched_kw_wconhist_scale_orat( const sched_kw_wconhist_type * kw , const char * well_name, double factor);
+void   	 		 sched_kw_wconhist_set_surface_flow( const sched_kw_wconhist_type * kw , const char * well_name , double orat);
+bool   	 		 sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char * well_name);
+
 
 /*******************************************************************/
 

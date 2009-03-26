@@ -33,6 +33,8 @@ struct sched_kw_wconinj_struct {
 
 
 
+
+
 static sched_kw_wconinj_type * sched_kw_wconinj_alloc(bool alloc_untyped)
 {
   sched_kw_wconinj_type * kw = util_malloc(sizeof * kw, __func__);

@@ -358,6 +358,13 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
   fclose(stream);
 }
 
+/* Writes the complete schedule file. */
+void sched_file_fprintf(const sched_file_type * sched_file, const char * file)
+{
+  int num_restart_files = sched_file_get_num_restart_files(sched_file);
+  sched_file_fprintf_i( sched_file , num_restart_files - 1 , file);
+}
+
 
 
 void sched_file_fwrite(const sched_file_type * sched_file, FILE * stream)
@@ -530,4 +537,92 @@ sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_
       vector_append_ref( target->blocks , block);
   }
   return target;
+}
+
+
+/*****************************************************************/
+
+
+static void sched_file_update_block(sched_block_type * block , 
+				    int restart_nr, 
+				    sched_type_enum kw_type , 
+				    sched_file_callback_ftype * callback,
+				    void * arg) {
+  int ikw;
+  for (ikw = 0; ikw < vector_get_size(block->kw_list); ikw++) {
+    sched_kw_type * sched_kw = sched_block_iget_kw( block , ikw);
+    if (sched_kw_get_type( sched_kw ) == kw_type)
+      callback( sched_kw_get_data( sched_kw) , restart_nr , arg);  /* Calling back to 'user-space' to actually do the update. */
+  }
+}
+
+
+
+/**
+   This function is designed to facilitate 'user-space' update of the
+   keywords in the schedule file based on callbacks. The function is
+   called with two report steps, a type ID of the sched_kw type which
+   should be updated, and a function pointer which will be invoked on
+   all the relevant keywords. 
+*/
+
+
+
+void sched_file_update_blocks(sched_file_type * sched_file, 
+			      int restart1 , 
+			      int restart2 , 
+			      sched_type_enum kw_type,
+			      sched_file_callback_ftype * callback,
+			      void * callback_arg) {
+
+  int restart_nr;
+  if (restart2 > sched_file_get_num_restart_files(sched_file))
+    restart2 = sched_file_get_num_restart_files(sched_file) - 1;
+  
+  for (restart_nr = restart1; restart_nr <= restart2; restart_nr++) {
+    sched_block_type * sched_block = sched_file_iget_block_ref( sched_file , restart_nr );
+    sched_file_update_block( sched_block , restart_nr , kw_type , callback , callback_arg);
+  }
+}
+
+
+/** 
+    Update a complete schedule file by using callbacks to
+    'user-space'. Say for instance you want to scale up the oilrate in
+    well P1. This could be achieved with the following code:
+
+       -- This function is written by the user of the library - in a remote scope.
+
+       void increase_orat_callback(void * void_kw , int restart_nr , void * arg) {
+          double scale_factor  = *(( double * ) arg);
+	  sched_kw_wconhist_type * kw = sched_kw_wconhist_safe_cast( void_kw );
+          sched_kw_wconhist_scale_orat( wconhist_kw , "P1" , scale_factor);
+       }
+
+       ....
+       ....
+       
+       sched_file_update(sched_file , WCONHIST , increase_orat_callback , &scale_factor);
+
+    Observe the following about the callback:
+  
+      * The sched_kw input argument comes as a void pointer, and an
+        sched_kw_xxx_safe_cast() function should be used on input to
+        check.
+
+      * The user-space level does *NOT* have access to the internals
+        of the sched_kw_xxxx type, so the library must provide
+       	functions for the relevant state modifications.
+
+      *	The last argumnt (void * arg) - can of course be anything and
+        his brother.
+
+*/
+
+
+void sched_file_update(sched_file_type * sched_file, 
+		       sched_type_enum kw_type,
+		       sched_file_callback_ftype * callback,
+		       void * callback_arg) {
+  sched_file_update_blocks(sched_file , 1 , sched_file_get_num_restart_files(sched_file) - 1 , kw_type , callback , callback_arg);
 }

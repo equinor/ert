@@ -496,3 +496,15 @@ sched_kw_type * sched_kw_alloc_copy(const sched_kw_type * src) {
   
   return target;
 }
+
+
+/*
+  Returns an untyped poiniter to the spesific implementation. Used by
+  the sched_file_update system. A bit careful with this one...
+*/
+
+void * sched_kw_get_data( sched_kw_type * kw) {
+  return kw->data;
+}
+
+
