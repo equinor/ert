@@ -150,7 +150,10 @@ bool field_trans_table_has_key(field_trans_table_type * table , const char * _ke
 
 void field_trans_table_free(field_trans_table_type * table ) {
   hash_free( table->function_table );
+  free( table );
 }
+
+
 
 
 /*****************************************************************/

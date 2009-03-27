@@ -104,7 +104,11 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   model_config->use_lsf            = use_lsf;
   model_config->plot_path          = NULL;
   model_config->result_path        = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
-  model_config->std_forward_model  = forward_model_alloc( config_alloc_joined_string( config , "FORWARD_MODEL" , " ") , joblist , model_config->use_lsf);
+  {
+    char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
+    model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , model_config->use_lsf);
+    free(config_string);
+  }
   model_config->runlock_mode       = lock_none;
   {
     char * cwd = util_alloc_cwd();

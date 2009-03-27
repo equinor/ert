@@ -1067,11 +1067,10 @@ void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
   stringlist_free(enkf_state->restart_kw_list);
-
   member_config_free(enkf_state->my_config);
   run_info_free(enkf_state->run_info);
   shared_info_free(enkf_state->shared_info);
-
+  forward_model_free(enkf_state->default_forward_model);
   free(enkf_state);
 }
 

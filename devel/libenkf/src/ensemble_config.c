@@ -471,10 +471,7 @@ const enkf_config_node_type * ensemble_config_user_get_node(const ensemble_confi
 
 
 stringlist_type * ensemble_config_alloc_keylist(const ensemble_config_type * config) {
-  int num_keys = hash_get_size(config->config_nodes);
-  char ** keys = hash_alloc_keylist(config->config_nodes);
-  // Cast to shutup compiler.
-  return stringlist_alloc_argv_owned_ref((const char ** ) keys, num_keys);
+  return hash_alloc_stringlist( config->config_nodes );
 }
 
 

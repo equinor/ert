@@ -118,7 +118,7 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
     }
     job = forward_model_add_job(forward_model , job_name);
 
-    if (*p1 == '(') {  /* The function has argument. */
+    if (*p1 == '(') {  /* The function has arguments. */
       int arg_length = strcspn(p1 , ")");
       if (arg_length == strlen(p1))
 	util_abort("%s: paranthesis not terminated for job:%s \n",__func__ , job_name);
@@ -183,9 +183,11 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
        Now p1 should point at the next character after the job, 
        or after the ')' if the job has arguments.
     */
-    if (*p1 == '\0')  /* We have parsed the whole string. */
+    
+    if (*p1 == '\0') { /* We have parsed the whole string. */
+      free(job_name);
       break;   
-    free(job_name);
+    }
   }
   forward_model_update_lsf_request(forward_model);
   return forward_model;

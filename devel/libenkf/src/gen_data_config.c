@@ -228,6 +228,7 @@ gen_data_config_type * gen_data_config_alloc(bool as_param , const stringlist_ty
     util_safe_free( init_file_fmt );
     util_safe_free( template_file );
     util_safe_free( template_key );
+    hash_iter_free( iter );
   }
   hash_free(opt_hash);
 

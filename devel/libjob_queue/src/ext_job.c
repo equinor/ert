@@ -80,18 +80,24 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->init_code      = NULL;
   ext_job->argv 	  = NULL;
   ext_job->lsf_resources  = NULL;
-  ext_job->private_args   = subst_list_alloc();
   ext_job->platform_exe   = NULL;
   ext_job->environment    = NULL;
   ext_job->argv           = NULL;
   ext_job->init_code      = NULL;
+  /* 
+     ext_job->private_args is set explicitly in the ext_job_alloc() 
+     and ext_job_alloc_copy() functions. 
+  */
   return ext_job;
 }
 
 
+
 /* Exported function - must have name != NULL */
 ext_job_type * ext_job_alloc(const char * name) {
-  return ext_job_alloc__(name);
+  ext_job_type * ext_job = ext_job_alloc__(name);
+  ext_job->private_args  = subst_list_alloc();
+  return ext_job;
 }
 
 
@@ -122,7 +128,7 @@ static hash_type * ext_job_hash_copyc__(hash_type * h) {
 }
 
 ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
-  ext_job_type * new_job = ext_job_alloc__(src_job->name);
+  ext_job_type * new_job  = ext_job_alloc__(src_job->name);
 
   new_job->portable_exe   = util_alloc_string_copy(src_job->portable_exe);
   new_job->target_file    = util_alloc_string_copy(src_job->target_file);
@@ -211,7 +217,6 @@ void ext_job_add_platform_exe(ext_job_type *ext_job , const char * platform , co
 void ext_job_add_environment(ext_job_type *ext_job , const char * key , const char * value) {
   hash_insert_hash_owned_ref( ext_job->environment , key , util_alloc_string_copy( value ) , free);
 }
-
 
 
 static void __fprintf_string(FILE * stream , const char * s , const subst_list_type * private_args, const subst_list_type * global_args) {
