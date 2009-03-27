@@ -18,6 +18,7 @@ double                   gen_data_iget_double(const gen_data_type * , int );
 gen_data_config_type   * gen_data_get_config(const gen_data_type * );
 int                      gen_data_get_size(const gen_data_type * );
 double                   gen_data_iget_double(const gen_data_type * , int );
+void                     gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path , const char * eclfile , fortio_type * fortio);
 
 SAFE_CAST_HEADER(gen_data);
 VOID_USER_GET_HEADER(gen_data);

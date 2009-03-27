@@ -220,9 +220,7 @@ void enkf_obs_get_obs_and_measure(
         meas_matrix_type       * meas_matrix,
         obs_data_type          * obs_data)
 {
-  bool complete;
   hash_iter_type * iter = hash_iter_alloc(enkf_obs->obs_hash);
-  obs_vector_type * obs_vector = hash_iter_get_next_value(iter);
   while ( !hash_iter_is_complete(iter) ) {
     obs_vector_type * obs_vector = hash_iter_get_next_value(iter);
     if (obs_vector_iget_active(obs_vector , report_step)) {              /* The observation is active for this report step. */

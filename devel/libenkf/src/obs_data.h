@@ -4,6 +4,7 @@
 extern "C" {
 #endif
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef struct obs_data_struct obs_data_type;
 

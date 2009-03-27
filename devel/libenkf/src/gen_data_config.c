@@ -103,7 +103,6 @@ static gen_data_config_type * gen_data_config_alloc__( bool as_param,
   if (input_format == ASCII_template)
     util_abort("%s: Format ASCII_TEMPLATE is not valid as INPUT_FORMAT \n",__func__);
   
-  
   if (template_ecl_file != NULL) {
     char *data_ptr;
     config->template_buffer = util_fread_alloc_file_content( template_ecl_file , NULL , &config->template_buffer_size);
@@ -123,6 +122,10 @@ static gen_data_config_type * gen_data_config_alloc__( bool as_param,
     config->init_file_fmt = NULL;
   
   pthread_mutex_init( &config->update_lock , NULL );
+
+  
+  if (config->output_format == gen_data_undefined) 
+    config->output_format = config->input_format;
   return config;
 }
 

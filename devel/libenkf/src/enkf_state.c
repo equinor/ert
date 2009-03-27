@@ -590,7 +590,6 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     
     /* The actual loading */
     {
-      bool complete;
       hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
       while ( !hash_iter_is_complete(iter) ) {
         enkf_node_type * node = hash_iter_get_next_value(iter);
@@ -793,7 +792,6 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   */
   
   {
-    bool complete;
     hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
     while ( !hash_iter_is_complete(iter) ) {
       enkf_node_type * enkf_node = hash_iter_get_next_value(iter);

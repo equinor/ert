@@ -9,7 +9,7 @@
 #include <string.h>
 #include <meas_vector.h>
 #include <util.h>
-
+#include <matrix.h>
 
 struct meas_matrix_struct {
   int ens_size;
@@ -142,9 +142,57 @@ void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS ,
 
 
  
+
+matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix , int nrobs_active , double ** _meanS , const bool * active_obs) {
+  matrix_type * S;
+  double * meanS;
+  int iens , active_iobs;
+  const int nrobs_total = meas_vector_get_nrobs(matrix->meas_vectors[0]);
+  S     = matrix_alloc( nrobs_active , matrix->ens_size);
+  meanS = util_malloc(nrobs_active * sizeof * meanS , __func__);
+  
+  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
+    meanS[active_iobs] = 0;
+
+  for (iens = 0; iens < matrix->ens_size; iens++) {
+    const meas_vector_type * vector = matrix->meas_vectors[iens];
+    if (nrobs_total != meas_vector_get_nrobs(vector)) 
+      util_abort("%s: fatal internal error - not all measurement vectors equally long - aborting \n",__func__);
+    
+    {
+      const double * meas_data = meas_vector_get_data_ref(vector);
+      int total_iobs;
+      active_iobs = 0;
+      for (total_iobs = 0; total_iobs < nrobs_total; total_iobs++) {
+	if (active_obs[total_iobs]) {
+	  matrix_iset(S , active_iobs , iens , meas_data[total_iobs]);
+	  meanS[active_iobs] += meas_data[total_iobs];
+	  active_iobs++;
+	}
+      }
+    }
+  }
+
+  /*
+    Subtracting the (ensemble mean) of each measurement.
+  */
+  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
+    meanS[active_iobs] /= matrix->ens_size;
+
+  for (iens = 0; iens < matrix->ens_size; iens++) 
+    for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++) 
+      matrix_iadd( S , active_iobs , iens , -meanS[active_iobs]);
+  
+  /** Let that leak for now. */
+  // *_meanS = meanS;
+      
+  return S;
+}
+
+
 /**
-  In the return value S - the mean value has been subtracted. _meanS
-  is "returned by reference"
+   In the return value S - the mean value has been subtracted. _meanS
+   is "returned by reference"
 */
 
 double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , int ens_stride , int obs_stride, double ** _meanS , const bool * active_obs) {
@@ -179,7 +227,6 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , 
       }
     }
   }
-
 
   /*
     Subtracting the (ensemble mean) of each measurement.

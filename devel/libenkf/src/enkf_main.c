@@ -47,6 +47,7 @@
 #include <field_config.h>
 #include <ecl_static_kw.h>
 #include <forward_model.h>
+#include <enkf_analysis.h>
 #include "enkf_defaults.h"
 
 /**
@@ -106,7 +107,7 @@ void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 SAFE_CAST(enkf_main , ENKF_MAIN_ID)
 
 
-const ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
+ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
   return enkf_main->ensemble_config;
 }
 

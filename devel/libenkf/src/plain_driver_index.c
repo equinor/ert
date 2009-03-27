@@ -38,9 +38,9 @@ void plain_driver_index_select_dir(void *_driver , const char * directory) {
   driver->path_fmt = plain_driver_common_realloc_path_fmt(driver->path_fmt , driver->root_path , directory , driver->fmt_string);
 }
 
-  
 
-    
+
+
 void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report_step , int iens , const stringlist_type * kw_list) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {

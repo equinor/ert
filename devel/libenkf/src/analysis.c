@@ -50,6 +50,7 @@ subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,
 #include <math.h>
 #include <analysis.h>
 #include <config.h>
+#include <matrix.h>
 
 
 struct analysis_config_struct {
@@ -103,6 +104,16 @@ bool analysis_config_merge_observations(const analysis_config_type * config) {
 void analysis_config_free(analysis_config_type * config) {
   free(config);
 }
+
+
+static int __C2f90_bool(bool c_bool) {
+  /* This is true for the ifort compiler ... */
+  if (c_bool)
+    return -1;
+  else
+    return 0;
+}  
+
 
 
 /*****************************************************************/
@@ -176,7 +187,7 @@ X = |X5  X14             |
     |X9  X18             |
      --------------------
 
-
+     
      The C part of the code is written with strides, and (should) work
      for any low-level layout of the matrices, however the Fortran
      code insists on Fortran layout, i.e. the column index running
@@ -271,6 +282,18 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     
     analysis_set_stride(ens_size , nrobs_active , &ens_stride , &obs_stride);
     S     = meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
+    
+    /* Just a check of the matrix based routines */
+    {
+      matrix_type * __S;
+      __S   = meas_matrix_allocS__(meas_matrix , nrobs_active , NULL /*&meanS*/ , active_obs);
+      
+      if (memcmp( S , matrix_get_data(__S) , nrobs_active * ens_size * sizeof * S) != 0)
+	util_abort("%s: matrixS error \n");
+      
+      matrix_free( __S );
+    }
+    
     R 	  = obs_data_allocR(obs_data);
     D     = obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , meanS , returnE , &E);
     innov = obs_data_alloc_innov(obs_data , meanS);
@@ -279,8 +302,8 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     X 	= util_malloc(ens_size * ens_size * sizeof * X, __func__);
 
   
-    verbose_int        = util_C2f90_bool(verbose);
-    update_randrot_int = util_C2f90_bool(update_randrot);
+    verbose_int        = __C2f90_bool(verbose);
+    update_randrot_int = __C2f90_bool(update_randrot);
   
     if (verbose) {
       printf_matrix(R , nrobs_active , nrobs_active    , 1 , nrobs_active , "R" , " %8.3lg ");

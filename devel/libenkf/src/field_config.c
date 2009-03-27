@@ -511,9 +511,14 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const 
 
 
 
-field_config_type * field_config_alloc_general(const char * ecl_kw_name , const char * ecl_file , const ecl_grid_type * ecl_grid , ecl_type_enum internal_type , field_trans_table_type * trans_table , const stringlist_type * options) {
+field_config_type * field_config_alloc_general(const char * ecl_kw_name , 
+					       const char * ecl_file    , 
+					       const ecl_grid_type * ecl_grid , 
+					       ecl_type_enum internal_type , 
+					       field_trans_table_type * trans_table , 
+					       const stringlist_type * options) {
   field_config_type * config;
-  field_file_format_type import_format = undefined_format;
+  field_file_format_type import_format = undefined_format;   /* undefined_format -> automagic guessing of format. */
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
   config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , import_format , export_format , trans_table , options);

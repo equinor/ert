@@ -330,7 +330,7 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path ,
       gen_data_ecl_write_binary(gen_data , full_path , ecl_float_type);
       break;
     default:
-      util_abort("%s: internal error \n",__func__);
+      util_abort("%s: internal error - export type is not set.\n",__func__);
     }
 
     free( full_path );

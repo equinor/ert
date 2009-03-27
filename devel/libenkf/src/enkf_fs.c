@@ -403,45 +403,46 @@ static void enkf_fs_upgrade_101_case( const char * root_path , msg_type * msg) {
 
 
 
-static void  enkf_fs_upgrade_kwlist_101(const char * path , const char * file , void * arg) {
+static void  enkf_fs_upgrade_101_kwlist(const char * path , const char * file , void * arg) {
    if (strcmp(file , "kw_list") == 0) {
-    /** This is a kw_list file which should be upgraded. */
-    int i;
-    char * full_path = util_alloc_filename( path , file , NULL);
-    stringlist_type * kw_list;
-
-    /* Reading */
-    {
-      FILE * stream = util_fopen( full_path , "r");
-      kw_list = stringlist_fread_alloc( stream );
-      fclose(stream);
-    }
-
-    
-    /* Updating the list in place */
-    for (i=0; i < stringlist_get_size( kw_list ); i++) {
-      const char * kw = stringlist_iget( kw_list , i);
-      bool dynamic = false;
-      if (strcmp(kw , "PRESSURE") == 0) dynamic = true;
-      if (strcmp(kw , "SGAS") == 0) dynamic = true;
-      if (strcmp(kw , "SWAT") == 0) dynamic = true;
-      if (strcmp(kw , "RS") == 0) dynamic = true;
-      if (strcmp(kw , "RV") == 0) dynamic = true;
-      if (!dynamic) {
-	char * new_kw = util_alloc_sprintf("%s_0" , kw);
-	stringlist_iset_owned_ref( kw_list , i , new_kw);
-      }
-    }
-
-    
+     /** This is a kw_list file which should be upgraded. */
+     int i;
+     char * full_path = util_alloc_filename( path , file , NULL);
+     stringlist_type * kw_list;
+     
+     /* Reading */
+     {
+       FILE * stream = util_fopen( full_path , "r");
+       kw_list = stringlist_fread_alloc( stream );
+       fclose(stream);
+     }
+     
+     
+     /* Updating the list in place */
+     for (i=0; i < stringlist_get_size( kw_list ); i++) {
+       const char * kw = stringlist_iget( kw_list , i);
+       bool dynamic = false;
+       /* Nothing like some good old hard-coding. */
+       if (strcmp(kw , "PRESSURE") == 0) dynamic = true;
+       if (strcmp(kw , "SGAS")     == 0) dynamic = true;
+       if (strcmp(kw , "SWAT")     == 0) dynamic = true;
+       if (strcmp(kw , "RS") 	   == 0) dynamic = true;
+       if (strcmp(kw , "RV") 	   == 0) dynamic = true;
+       if (!dynamic) {
+	 char * new_kw = util_alloc_sprintf("%s_0" , kw);
+	 stringlist_iset_owned_ref( kw_list , i , new_kw);
+       }
+     }
+     
+     
     /* Writing */
-    {
-      FILE * stream = util_fopen( full_path , "w");
-      stringlist_fwrite( kw_list , stream);
-      fclose(stream);
-    }
-    free(full_path);
-  }
+     {
+       FILE * stream = util_fopen( full_path , "w");
+       stringlist_fwrite( kw_list , stream);
+       fclose(stream);
+     }
+     free(full_path);
+   }
 }
 
 
@@ -464,7 +465,7 @@ static void enkf_fs_upgrade_101(const char * config_file, const char * root_path
     free( prompt );
   }
   free( backup_path );
-  util_walk_directory( root_path , enkf_fs_upgrade_kwlist_101 , NULL);
+  util_walk_directory( root_path , enkf_fs_upgrade_101_kwlist , NULL);
   {
     char     * current_case = NULL;
     set_type * cases        = set_alloc_empty();
@@ -1164,8 +1165,8 @@ const char * enkf_fs_get_read_dir(const enkf_fs_type * fs) {
 stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * fs) {
   stringlist_type * dirlist = stringlist_alloc_new();
   int           num_keys = set_get_size(fs->dir_set); 
-  const char ** keylist  = set_alloc_keylist(fs->dir_set);
-  for(int i=0; i<num_keys; i++)
+  char ** keylist  = set_alloc_keylist(fs->dir_set);
+  for (int i=0; i<num_keys; i++)
     stringlist_append_owned_ref(dirlist, keylist[i]);
   return dirlist;
 }
@@ -1180,7 +1181,7 @@ stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * fs) {
 
 
 void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, const stringlist_type * kw_list) {
-  basic_driver_index_type * index = enkf_fs->index_read;
+  basic_driver_index_type * index = enkf_fs->index_write;
   index->save_kwlist( index , report_step , iens , kw_list );
 }
 
