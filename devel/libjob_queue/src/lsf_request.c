@@ -240,6 +240,7 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
 	}
       }
     }
+    free( resource_request );
   }
 }
 
