@@ -374,7 +374,7 @@ char ** sched_kw_wconinje_alloc_wells_copy( const sched_kw_wconinje_type * kw , 
     const wconinje_well_type * well = vector_iget_const(kw->wells, i);
     well_names[i] = util_alloc_string_copy(well->name);
   }
-  
+  *num_wells = size;
   return well_names;
 }
 

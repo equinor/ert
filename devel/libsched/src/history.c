@@ -120,27 +120,25 @@ static void well_hash_fprintf(hash_type * well_hash)
 static hash_type * well_hash_copyc(hash_type * well_hash_org)
 {
   hash_type * well_hash_new = hash_alloc();
+  hash_iter_type * well_iter = hash_iter_alloc( well_hash_org );
 
-  int num_wells = hash_get_size(well_hash_org);
-  char ** well_list = hash_alloc_keylist(well_hash_org);
-
-  for(int well_nr = 0; well_nr < num_wells; well_nr++)
-  {
-    hash_type * well_obs_org = hash_get(well_hash_org, well_list[well_nr]);
-    hash_type * well_obs_new = hash_alloc();
-
-    int num_obs = hash_get_size(well_obs_org);
-    char ** obs_list = hash_alloc_keylist(well_obs_org);
-    for(int obs_nr = 0; obs_nr < num_obs; obs_nr++)
-    {
-      double obs = hash_get_double(well_obs_org, obs_list[obs_nr]);
-      hash_insert_double(well_obs_new, obs_list[obs_nr], obs);
+  while ( !hash_iter_is_complete(well_iter)) {
+    const char * well = hash_iter_get_next_key( well_iter );
+    hash_type * well_obs_org  = hash_get(well_hash_org, well);
+    hash_type * well_obs_new  = hash_alloc();
+    hash_iter_type * org_iter = hash_iter_alloc( hash_safe_cast(well_obs_org) );
+    
+    while (!hash_iter_is_complete( org_iter )) {
+      const char * key = hash_iter_get_next_key( org_iter );
+      {
+	double obs = hash_get_double(well_obs_org, key);
+	hash_insert_double(well_obs_new, key , obs);
+      }
     }
-    hash_insert_hash_owned_ref(well_hash_new, well_list[well_nr], well_obs_new, hash_free__);
-
-    util_free_stringlist(obs_list, num_obs);
+    hash_insert_hash_owned_ref(well_hash_new, well , well_obs_new, hash_free__);
+    hash_iter_free( org_iter );
   }
-  util_free_stringlist(well_list, num_wells);
+  hash_iter_free( well_iter );
 
   return well_hash_new;
 }
