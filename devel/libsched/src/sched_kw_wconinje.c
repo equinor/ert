@@ -234,16 +234,16 @@ static wconinje_well_type * wconinje_well_alloc_from_string(char ** token_list)
     well->reservoir_flow = sched_util_atof(token_list[5]); 
 
   if(!well->def[6])
-    well->BHP_target = sched_util_atof(token_list[7]);
+    well->BHP_target = sched_util_atof(token_list[6]);
 
   if(!well->def[7])
-    well->THP_target = sched_util_atof(token_list[8]);
+    well->THP_target = sched_util_atof(token_list[7]);
   
   if(!well->def[8])
-    well->vfp_table_nr = sched_util_atoi(token_list[9]);
+    well->vfp_table_nr = sched_util_atoi(token_list[8]);
   
   if(!well->def[9])
-    well->vapoil_conc = sched_util_atof(token_list[10]);
+    well->vapoil_conc = sched_util_atof(token_list[9]);
 
   return well;
 }
