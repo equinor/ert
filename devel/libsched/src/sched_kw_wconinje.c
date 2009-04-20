@@ -54,7 +54,7 @@ typedef struct {
   bool                       def[WCONINJE_NUM_KW];            /* Has the item been defaulted? */
 
   char                      * name;               /* This does NOT support well_name_root or well list notation. */
-  wconinje_injector_enum      injector_type;      /* njecting GAS/WATER/OIL */
+  wconinje_injector_enum      injector_type;      /* Injecting GAS/WATER/OIL */
   wconinje_status_enum        status;             /* Well is open/shut/??? */
   wconinje_control_enum       control;            /* How is the well controlled? */
   double                      surface_flow;       
@@ -150,7 +150,7 @@ static wconinje_injector_enum get_type_from_string(const char * type_string) {
   else if (strcmp(type_string , TYPE_OIL_STRING) == 0)
     return OIL;
   else {
-    util_abort("%s: Could not recognize:%s as injector phase \n",__func__ , type_string);
+    util_abort("%s: Could not recognize:%s as injector phase. Valid values are: [%s, %s, %s] \n",__func__ , type_string , TYPE_WATER_STRING , TYPE_GAS_STRING , TYPE_OIL_STRING);
     return 0;
   }
 }
@@ -171,7 +171,8 @@ static wconinje_control_enum get_cmode_from_string(const char * cm_string)
     return GRUP;
   else
   {
-    util_abort("%s: Could not recognize %s as a control mode.\n", __func__, cm_string);
+    util_abort("%s: Could not recognize %s as a control mode. Valid values are: [%s, %s, %s, %s, %s] \n", __func__, cm_string, 
+	       CONTROL_RATE_STRING , CONTROL_RESV_STRING , CONTROL_BHP_STRING, CONTROL_THP_STRING, CONTROL_GRUP_STRING);
     return 0;
   }
 }
