@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <menu.h>
 #include <enkf_main.h>
+#include <enkf_fs.h>
 #include <enkf_sched.h>
 #include <arg_pack.h>
 #include <enkf_ui_util.h>
@@ -80,7 +81,7 @@ void enkf_ui_run_exp__(void * enkf_main) {
   {
     int iens;
     for (iens= 0; iens < ens_size; iens++) {
-      if (iens < iens)
+      if (iens < iens1)
 	iactive[iens] = false;
       else if (iens > iens2)
 	iactive[iens] = false;
@@ -165,13 +166,19 @@ void enkf_ui_run_predictions__(void * __enkf_main) {
 
 void enkf_ui_run_menu(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
-  
-  menu_type * menu = menu_alloc("Run menu" , "Back" , "bB");
+  menu_type       * menu;
+  {
+    char            * title      = util_alloc_sprintf("Run menu [case:%s]" , enkf_fs_get_read_dir(  enkf_main_get_fs( enkf_main ))) ;
+    menu = menu_alloc(title , "Back" , "bB");
+    free(title);
+  }
   menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_ui_run_exp__         , enkf_main , NULL);
   menu_add_separator( menu );
   menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_ui_run_start__       , enkf_main , NULL);
   menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_ui_run_restart__     , enkf_main , NULL);
+  menu_add_separator(menu);
   menu_add_item(menu , "Start predictions from end of history"  , "pP" , enkf_ui_run_predictions__ , enkf_main , NULL);
+  menu_add_separator(menu);
   menu_add_separator(menu);
   menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_ui_run_analyze__ , enkf_main , NULL);
   menu_add_item(menu , "Analyze interval manually" , "iI" , enkf_ui_run_smooth__  , enkf_main , NULL);

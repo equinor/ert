@@ -103,7 +103,7 @@ static void enkf_ui_fs_copy_ensemble__(
   
   stringlist_type * nodes;
   if(only_parameters)
-    nodes = ensemble_config_alloc_keylist_from_var_type(config, parameter);
+    nodes = ensemble_config_alloc_keylist_from_var_type(config, PARAMETER);
   else {
     /* Must explicitly load the static nodes. */
     
@@ -113,7 +113,7 @@ static void enkf_ui_fs_copy_ensemble__(
     for (i = 0; i < stringlist_get_size( restart_kw_list ); i++) {
       const char * kw = stringlist_iget( restart_kw_list , i);
       if (!ensemble_config_has_key(config , kw)) 
-	ensemble_config_add_node(config , kw , static_state , STATIC , NULL , NULL , NULL);
+	ensemble_config_add_node(config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
     }
     for (i=0; i < ens_size; i++) 
       enkf_fs_fwrite_restart_kw_list(fs , report_step_to , i , restart_kw_list);

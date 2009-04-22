@@ -388,6 +388,11 @@ int gen_data_get_size(const gen_data_type * gen_data) {
 }
 
 
+const char * gen_data_get_key( const gen_data_type * gen_data) {
+  return gen_data_config_get_key( gen_data->config );
+}
+
+
 
 
 /******************************************************************/

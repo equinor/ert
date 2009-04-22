@@ -14,8 +14,8 @@ extern "C" {
 
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
-int data_size;            \
-char * ecl_kw_name;       
+int data_size;
+
 
 
 /*****************************************************************/

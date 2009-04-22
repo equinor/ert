@@ -262,10 +262,14 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     */
 
     double *_meanS , *_stdS , *_innov; 
-
+    
+    printf("%s: 1 \n",__func__);
     meas_matrix_allocS_stats(meas_matrix , &_meanS , &_stdS);
+    printf("%s: 2 \n",__func__);
     _innov = obs_data_alloc_innov(obs_data , _meanS);
+    printf("%s: 3 \n",__func__);
     obs_data_deactivate_outliers(obs_data , _innov , _stdS , 1e-6 , alpha , &nrobs_active , &active_obs);
+    printf("%s: 4 \n",__func__);
     obs_data_fprintf(obs_data , stdout , _meanS , _stdS);
     printf("**** Observations: %d -> %d \n", nrobs_total , nrobs_active);
 

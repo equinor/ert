@@ -389,10 +389,11 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
   obs_data_reset(enkf_main->obs_data);
   meas_matrix_reset(enkf_main->meas_forecast);
   for(int report_step = start_step; report_step <= end_step; report_step++)  {
-    printf("Fetching simulated responses and observations for step %i.\n", report_step);
+    printf("Fetching simulated responses and observations for step %i.\n", report_step); 
     enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
 				 (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
   }
+  printf("Skal allokere X \n");
   X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
   if (X != NULL) {
     /* 
@@ -414,7 +415,7 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
 
   /* This will write analyzed results to disk anyway - maybe a bit wastefull . */
   printf("Saving: ........ "); fflush(stdout);
-  enkf_main_fwrite_ensemble(enkf_main , dynamic_state + dynamic_result + parameter , step2 , analyzed);
+  enkf_main_fwrite_ensemble(enkf_main , DYNAMIC_STATE + DYNAMIC_RESULT + PARAMETER , step2 , analyzed);
   printf("\n");
 
   /*
@@ -427,11 +428,12 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
   if (start_step == end_step) {
     obs_data_reset(enkf_main->obs_data);
     meas_matrix_reset(enkf_main->meas_analyzed);
+
   for(int report_step = start_step; report_step <= end_step; report_step++)  {
-      printf("Fetching simulated responses and observations for step %i.\n", report_step);
-      enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, analyzed, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
-    }
-    {
+    printf("Fetching simulated responses and observations for step %i.\n", report_step);
+    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, analyzed, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
+  }
+  {
       double *meanS , *stdS;
       meas_matrix_allocS_stats(enkf_main->meas_analyzed , &meanS , &stdS);
       obs_data_fprintf(enkf_main->obs_data , stdout , meanS , stdS);
@@ -1207,9 +1209,9 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 	  enkf_config_node_set_internalize( data_node , active_step );
 	  {
 	    enkf_var_type var_type = enkf_config_node_get_var_type( data_node );
-	    if (var_type == dynamic_state)
+	    if (var_type == DYNAMIC_STATE)
 	      model_config_set_load_state( enkf_main->model_config , active_step);
-	    else if (var_type == dynamic_result)
+	    else if (var_type == DYNAMIC_RESULT)
 	      model_config_set_load_results( enkf_main->model_config , active_step);
 	  }
 	}

@@ -115,6 +115,8 @@ truncation_type 	field_config_get_truncation(const field_config_type * , double 
 const ecl_grid_type   * field_config_get_grid(const field_config_type * );
 const char            * field_config_get_grid_name( const field_config_type * );
 
+int                     field_config_parse_user_key(const field_config_type * config, const char * index_key , int *_i , int *_j , int *_k);
+
 /*Generated headers */
 SAFE_CAST_HEADER(field_config);
 CONFIG_GET_ECL_KW_NAME_HEADER(field);

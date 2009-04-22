@@ -189,36 +189,39 @@ void field_obs_iget(const field_obs_type * field_obs, int index , double *value 
 
 
 void field_obs_user_get(const field_obs_type * field_obs , const char * index_key , double *value , double * std, bool * valid) {
-  int      length;
-  int    * indices = util_sscanf_alloc_active_list(index_key, &length);
-  *valid = false;
-  if(length != 3)
-    fprintf(stderr,"%s: must have three indices: \"%s\" invalid \n",__func__ , index_key);
-  else
-  {
-    int i = indices[0] - 1;
-    int j = indices[1] - 1;
-    int k = indices[2] - 1;
+  int      i,j,k;
+  int      parse_user_key = field_config_parse_user_key(field_obs->field_config , index_key , &i, &j , &k);
 
-    if (field_config_ijk_valid(field_obs->field_config , i,j , k)) {
-      int active_index = field_config_active_index(field_obs->field_config , i, j,k);
-      int l = 0;
-      while (!(*valid) && l < field_obs->size) {
-	if (field_obs->index_list[l] == active_index) {
-	  *value = field_obs->obs_value[l];
-	  *std   = field_obs->obs_std[l];
-	  *valid = true;
-	}
-	l++;
+  *valid = false;
+  if (parse_user_key == 0) {
+    int active_index = field_config_active_index(field_obs->field_config , i,j,k);
+    int l = 0;
+    /* iterating through all the cells the observation is observing. */
+    while (!(*valid) && l < field_obs->size) {
+      if (field_obs->index_list[l] == active_index) {
+	*value = field_obs->obs_value[l];
+	*std   = field_obs->obs_std[l];
+	*valid = true;
       }
-      if (!(*valid))
-	fprintf(stderr,": observation object does not observe index:%d,%d,%d \n",i+1,j+1,k+1);
-    } else 
-      fprintf(stderr,": INVALID: observation object does not observe index:%d,%d,%d \n",i+1,j+1,k+1);
+      l++;
+    }
+    //if (!(*valid))
+    // fprintf(stderr,": observation object does not observe index:%d,%d,%d \n",i+1,j+1,k+1);
+  } else {
+    /*
+      if (parse_user_key == 1)
+      fprintf(stderr,"Failed to parse \"%s\" as three integers \n",index_key);
+    else if (parse_user_key == 2)
+      fprintf(stderr," ijk: %d , %d, %d is invalid \n",i+1 , j + 1 , k + 1);
+    else if (parse_user_key == 3)
+      fprintf(stderr," ijk: %d , %d, %d is an inactive cell. \n",i+1 , j + 1 , k + 1);
+    else
+      util_abort("%s: internal error -invalid value:%d \n",__func__ , parse_user_key);
+    */
   }
-  
-  free(indices);
 }
+
+
 
 
 const int * field_obs_get_i(const field_obs_type * field_obs) {
@@ -231,6 +234,17 @@ const int * field_obs_get_j(const field_obs_type * field_obs) {
 
 const int * field_obs_get_k(const field_obs_type * field_obs) {
   return field_obs->k;
+}
+
+
+/*
+  Returns by reference i,j,k for observation point nr block_nr.
+*/
+
+void field_obs_iget_ijk(const field_obs_type * field_obs , int block_nr , int * i , int * j , int * k) {
+  *i = field_obs->i[block_nr];
+  *j = field_obs->j[block_nr];
+  *k = field_obs->k[block_nr];
 }
 
 

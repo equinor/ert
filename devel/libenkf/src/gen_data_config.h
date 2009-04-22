@@ -33,13 +33,14 @@ ecl_type_enum         	     gen_data_config_get_internal_type(const gen_data_con
 int                   	     gen_data_config_get_byte_size(const gen_data_config_type * );
 int                   	     gen_data_config_get_data_size(const gen_data_config_type * );
 int                          gen_data_config_get_report_step(const gen_data_config_type *);
-gen_data_config_type  	   * gen_data_config_alloc(bool , const stringlist_type * , char ** , char **);
+gen_data_config_type  	   * gen_data_config_alloc(const char * key , bool , const stringlist_type * , char ** , char **);
 void                         gen_data_config_free(gen_data_config_type * );
 void                         gen_data_config_assert_size(gen_data_config_type *  , int , int);
 const bool     *             gen_data_config_get_iactive(const gen_data_config_type * );
 void                  	     gen_data_config_ecl_write(const gen_data_config_type *  , const char * , char * );
 void                  	     gen_data_config_get_template_data( const gen_data_config_type * , char ** , int * , int * , int *);
 gen_data_config_type  	   * gen_data_config_fscanf_alloc(const char * );
+const char  *                gen_data_config_get_key( const gen_data_config_type * config);
 
 SAFE_CAST_HEADER(gen_data_config)
 GET_ACTIVE_LIST_HEADER(gen_data)

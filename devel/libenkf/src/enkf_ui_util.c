@@ -94,7 +94,7 @@ const enkf_config_node_type * enkf_ui_util_scanf_key(const ensemble_config_type 
 	if (enkf_config_node_get_impl_type(config_node) != impl_type) 
 	  OK = false;
       
-      if (var_type != invalid)
+      if (var_type != INVALID_VAR)
 	if (enkf_config_node_get_var_type(config_node) != var_type) 
 	  OK = false;
     } else OK = false;

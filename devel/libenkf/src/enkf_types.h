@@ -20,11 +20,11 @@ typedef double (transform_ftype) (double , const arg_pack_type *);
   must be a power of 2 series.
 */
 
-typedef enum {invalid          =  0  , /**/
-              parameter        =  1  , /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
-	      dynamic_state    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
-	      dynamic_result   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
-	      static_state     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
+typedef enum {INVALID_VAR      =  0  , /**/
+              PARAMETER        =  1  , /* A parameter which is updated with enkf: PORO , MULTFLT , ..*/
+	      DYNAMIC_STATE    =  2  , /* Dynamic data which are needed for a restart - i.e. pressure and saturations.  */
+	      DYNAMIC_RESULT   =  4  , /* Dynamic results which are NOT needed for a restart - i.e. well rates. */
+	      STATIC_STATE     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
   enkf_var_type; 
   
 

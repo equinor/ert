@@ -52,6 +52,7 @@ const int * field_obs_get_j(const field_obs_type * );
 const int * field_obs_get_k(const field_obs_type * );
 int         field_obs_get_size(const field_obs_type * );
 void        field_obs_iget(const field_obs_type * field_obs, int  , double * , double * );
+void        field_obs_iget_ijk(const field_obs_type * field_obs , int block_nr , int * i , int * j , int * k);
 
 SAFE_CAST_HEADER(field_obs);
 VOID_FREE_HEADER(field_obs);

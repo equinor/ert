@@ -121,7 +121,7 @@ struct enkf_state_struct {
   stringlist_type       * restart_kw_list;
   hash_type    	   	* node_hash;
   subst_list_type       * subst_list;        	   /* This a list of key - value pairs which are used in a search-replace
-                                             	      operation on the ECLIPSE data file. Will at least contain the key "INIT"
+                                             	      operation on the ECLIPSE data file. Will at least contain the key INIT"
                                              	      - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
   
   
@@ -310,9 +310,10 @@ void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
   char * cwd              = util_alloc_cwd();
   
   forward_model_set_private_arg(enkf_state->forward_model ,  "IENS"        , iens_s);
-  forward_model_set_private_arg(enkf_state->forward_model ,  "CWD"         , cwd);
   forward_model_set_private_arg(enkf_state->forward_model ,  "IENS4"       , iens4_s);
+  forward_model_set_private_arg(enkf_state->forward_model ,  "CWD"         , cwd);
   forward_model_set_private_arg(enkf_state->forward_model ,  "ECL_BASE"    , member_config->eclbase);  /* Can not change run_time .. */
+  forward_model_set_private_arg(enkf_state->forward_model ,  "ECLBASE"     , member_config->eclbase);  /* Can not change run_time .. */
   forward_model_set_private_arg(enkf_state->forward_model ,  "SMSPEC_FILE" , smspec_file);
   
   free(cwd);
@@ -459,6 +460,7 @@ enkf_state_type * enkf_state_alloc(int iens,
     enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s);
     enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s);
     enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase);  /* Can not change run_time .. */
+    enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , enkf_state->my_config->eclbase);  /* Can not change run_time .. */
     enkf_state_add_subst_kw(enkf_state , "SMSPEC_FILE" , smspec_file);
     
     free(cwd);
@@ -593,7 +595,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
       hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
       while ( !hash_iter_is_complete(iter) ) {
         enkf_node_type * node = hash_iter_get_next_value(iter);
-	if (enkf_node_get_var_type(node) == dynamic_result) {
+	if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
 	  bool internalize = internalize_all;
 	  if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
 	    internalize = enkf_node_internalize(node , report_step);
@@ -738,7 +740,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	    stringlist_append_copy( enkf_state->restart_kw_list , kw);
 
 	    if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-	      ensemble_config_add_node(enkf_state->ensemble_config , kw , static_state , STATIC , NULL , NULL , NULL);
+	      ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
 	    
 	    if (!enkf_state_has_node(enkf_state , kw)) {
 	      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
@@ -795,7 +797,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
     hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
     while ( !hash_iter_is_complete(iter) ) {
       enkf_node_type * enkf_node = hash_iter_get_next_value(iter);
-      if (enkf_node_get_var_type(enkf_node) == dynamic_state) {
+      if (enkf_node_get_var_type(enkf_node) == DYNAMIC_STATE) {
 	bool internalize_kw = internalize_state;
 	if (!internalize_kw)
 	  internalize_kw = enkf_node_internalize(enkf_node , report_step);
@@ -887,7 +889,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
        before things blow up completely at a later instant.
     */  
     if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-      ensemble_config_add_node(enkf_state->ensemble_config , kw , static_state , STATIC , NULL , NULL , NULL);
+      ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
     
     if (!enkf_state_has_node(enkf_state , kw)) {
       const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
@@ -897,17 +899,17 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
-      if (var_type == static_state) 
+      if (var_type == STATIC_STATE) 
 	//ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
 	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
       
-      if (var_type == dynamic_state) {
+      if (var_type == DYNAMIC_STATE) {
 	/* Pressure and saturations */
 	if (enkf_node_get_impl_type(enkf_node) == FIELD)
 	  enkf_node_ecl_write(enkf_node , NULL , fortio , run_info->step1);
 	else 
 	  util_abort("%s: internal error wrong implementetion type:%d - node:%s aborting \n",__func__ , enkf_node_get_impl_type(enkf_node) , enkf_node_get_key(enkf_node));
-      } else if (var_type == static_state) {
+      } else if (var_type == STATIC_STATE) {
 	enkf_node_ecl_write(enkf_node , NULL , fortio , run_info->step1);
 	enkf_node_free_data(enkf_node); /* Just immediately discard the static data. */
       } else {
@@ -967,7 +969,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {          /* Make sure that the elements in the restart file are not written (again). */
 	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-	if (enkf_node_get_var_type( enkf_node ) != static_state)                          /* Ensure that no-longer-active static keywords do not create problems. */
+	if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE)                          /* Ensure that no-longer-active static keywords do not create problems. */
 	  enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
       }
     }
@@ -1030,7 +1032,7 @@ static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
   
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-    if (enkf_node_get_var_type(enkf_node) == dynamic_state) {
+    if (enkf_node_get_var_type(enkf_node) == DYNAMIC_STATE) {
       const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
 
       /* Just checked for != NULL */
@@ -1148,7 +1150,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     }
     
     {
-      int mask = parameter;
+      int mask = PARAMETER;
       if (run_info->init_step == 0)
 	/** 
 	    Must be carefull not to fail when trying to load
@@ -1156,7 +1158,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	*/
 	enkf_state_fread_initial_state(enkf_state);
       else
-	mask += dynamic_state;
+	mask += DYNAMIC_STATE;
       enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state );
     }
     enkf_state_ecl_write( enkf_state );
@@ -1171,22 +1173,28 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       const bool fmt_file  	= ecl_config_get_formatted(enkf_state->ecl_config);
       char * step1_s 	   = util_alloc_sprintf("%d" , run_info->step1);
       char * step2_s 	   = util_alloc_sprintf("%d" , run_info->step2);
+      char * step1_s04 	   = util_alloc_sprintf("%04d" , run_info->step1);
+      char * step2_s04 	   = util_alloc_sprintf("%04d" , run_info->step2);
       char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
       char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step2);
 	
       
-      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP1"  , step1_s);
-      enkf_state_add_subst_kw(enkf_state , "REPORT_STEP2"  , step2_s);
+      enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	, step1_s);
+      enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	, step2_s);
+      enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"  , step1_s04);
+      enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"  , step2_s04);
       enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1);
       enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2);
       
-      forward_model_set_private_arg(enkf_state->forward_model , "REPORT_STEP1"  , step1_s);
-      forward_model_set_private_arg(enkf_state->forward_model , "REPORT_STEP2"  , step2_s);
+      forward_model_set_private_arg(enkf_state->forward_model , "TSTEP1"  , step1_s);
+      forward_model_set_private_arg(enkf_state->forward_model , "TSTEP2"  , step2_s);
       forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE1" , restart_file1);
       forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE2" , restart_file2);
 
       free(step1_s);
       free(step2_s);
+      free(step1_s04);
+      free(step2_s04);
       free(restart_file1);
       free(restart_file2);
       
@@ -1521,7 +1529,7 @@ void * enkf_ensemble_serialize__(void * _info) {
 
 void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , serial_vector_type * serial_vector , const double * X) {
   const int threads = 1;
-  int update_mask   = dynamic_state + dynamic_result + parameter;
+  int update_mask   = DYNAMIC_STATE + DYNAMIC_RESULT + PARAMETER;
   thread_pool_type * tp = thread_pool_alloc(0 /* threads */);
   enkf_update_info_type ** info_list     = enkf_ensemble_alloc_update_info(enkf_ensemble , ens_size , update_mask , threads , serial_vector);
   int       iens , ithread;

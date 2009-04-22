@@ -177,10 +177,6 @@ void * plain_driver_dynamic_alloc(const char * root_path , const char * forecast
   driver->has_node    	= plain_driver_dynamic_has_node;
   driver->free_driver 	= plain_driver_dynamic_free;
   driver->unlink_node 	= plain_driver_dynamic_unlink_node;
-  driver->load_ensemble = NULL;
-  driver->load_ts       = NULL;
-  driver->save_ensemble = NULL;
-  driver->save_ts       = NULL;
   driver->root_path     = util_alloc_string_copy( root_path    );
   driver->forecast_fmt  = util_alloc_string_copy( forecast_fmt );
   driver->analyzed_fmt  = util_alloc_string_copy( analyzed_fmt ); 

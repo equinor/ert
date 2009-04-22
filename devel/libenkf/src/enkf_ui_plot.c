@@ -192,17 +192,17 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   */
 
   if (add_observations) {
-    if (enkf_config_node_get_impl_type(config_node) == SUMMARY) {/* Adding observations only implemented for summary. */
+    enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
+    if ((impl_type == SUMMARY) || (impl_type == FIELD)) {
       const stringlist_type * obs_keys = enkf_config_node_get_obs_keys(config_node);
       int i;
       for (i=0; i < stringlist_get_size( obs_keys ); i++) {
+	bool  has_dataset = false;
 	const char * obs_key = stringlist_iget(obs_keys , i);
-	plot_dataset_type * obs_data = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
+	plot_dataset_type * obs_data = NULL;
 	const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
 	double  value , std;
 	int report_step = -1;
-	plot_dataset_set_line_color( obs_data , RED);
-	plot_dataset_set_line_width( obs_data , 1.0);
 	do {
 	  report_step = obs_vector_get_next_active_step( obs_vector , report_step);
 	  if (report_step != -1) {
@@ -211,6 +211,12 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
 	      if (valid) {
 		double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens1) , report_step );
+		if (!has_dataset) {
+		  obs_data  = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
+		  plot_dataset_set_line_color( obs_data , RED);
+		  plot_dataset_set_line_width( obs_data , 1.0);
+		  has_dataset = true;
+		}
 		plot_dataset_append_point_xy1y2( obs_data , sim_days , value - std , value + std);
 	      }
 	    }
@@ -219,8 +225,6 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
       }
     }
   }
-
-
 
   plot_set_bottom_padding( plot , 0.05);
   plot_set_top_padding( plot    , 0.05);
@@ -241,8 +245,8 @@ void enkf_ui_plot_histogram(void * arg) {
   enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
-  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
   const char                 * case_name       = enkf_fs_get_read_dir( fs );     
   {
@@ -273,9 +277,9 @@ void enkf_ui_plot_histogram(void * arg) {
       report_step = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
       {
 	enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-	if ((var_type == dynamic_state) || (var_type == dynamic_result)) 
+	if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) 
 	  plot_state = enkf_ui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , prompt_len , false);
-	else if (var_type == parameter)
+	else if (var_type == PARAMETER)
 	  plot_state = analyzed;
 	else
 	  util_abort("%s: can not plot this type \n",__func__);
@@ -312,7 +316,7 @@ void enkf_ui_plot_histogram(void * arg) {
 
 
 void enkf_ui_plot_ensemble(void * arg) {
-  enkf_main_type             * enkf_main  = enkf_main_safe_cast( arg );
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
@@ -347,9 +351,9 @@ void enkf_ui_plot_ensemble(void * arg) {
       
       {
 	enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
-	if ((var_type == dynamic_state) || (var_type == dynamic_result)) 
+	if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) 
 	  plot_state = enkf_ui_util_scanf_state("Plot Forecast/Analyzed/Both: [F|A|B]" , prompt_len , true);
-	else if (var_type == parameter)
+	else if (var_type == PARAMETER)
 	  plot_state = analyzed;
 	else
 	  util_abort("%s: can not plot this type \n",__func__);
@@ -611,25 +615,20 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const model_con
 }
 
 
-void enkf_ui_plot_RFT(void * arg) {
-  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+static void enkf_ui_plot_select_RFT(const enkf_main_type * enkf_main , char ** _obs_key , int * _report_step) {
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
-  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   {
     const int prompt_len = 40;
     const char * prompt  = "Which RFT observation: ";
-    enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
-    const obs_vector_type * obs_vector;
-    char obs_key[64];
-    int   report_step;
 
+    const obs_vector_type * obs_vector;
+    char  *obs_key;
+    int    report_step;
     {
       bool OK = false;
       while (!OK) {
 	util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-	scanf("%s" , obs_key);
+	obs_key = util_alloc_stdin_line( );
 	if (enkf_obs_has_key(enkf_obs , obs_key)) {
 	  obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
 	  if (obs_vector_get_impl_type( obs_vector ) == field_obs)
@@ -646,11 +645,84 @@ void enkf_ui_plot_RFT(void * arg) {
       else
 	report_step = enkf_ui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
     } while (!obs_vector_iget_active(obs_vector , report_step));
-    
-    /* OK - when we are here the user has entered a valid key which is a field observation. */
-    enkf_ui_plot_RFT__(fs , viewer , model_config , ensemble_config , obs_vector , obs_key , report_step);
+    *_obs_key = obs_key;
+    *_report_step = report_step;
   }
 }
+
+
+
+void enkf_ui_plot_RFT_depth(void * arg) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  enkf_fs_type   * fs                          = enkf_main_get_fs(enkf_main);    
+  {
+    char * obs_key;
+    int report_step;
+    obs_vector_type * obs_vector;
+
+    enkf_ui_plot_select_RFT(enkf_main , &obs_key , &report_step);
+    obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
+    enkf_ui_plot_RFT__(fs , viewer , model_config , ensemble_config , obs_vector , obs_key , report_step);
+    free( obs_key );
+    
+  }
+}
+
+
+
+void enkf_ui_plot_RFT_time(void * arg) {
+  enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  const char * plot_path                       = model_config_get_plot_path( model_config );
+  enkf_fs_type   * fs                          = enkf_main_get_fs(enkf_main);    
+  vector_type * sched_vector                   = enkf_ui_alloc_sched_vector( enkf_main );
+  {
+    const char * state_kw;
+    char * index_key = NULL;
+    char * user_key  = NULL;
+    char * obs_key;
+    int report_step;
+    obs_vector_type       * obs_vector;
+    enkf_config_node_type * config_node;
+    int step1 , step2;
+    int iens1 , iens2;
+    state_enum plot_state;
+
+    enkf_ui_plot_select_RFT(enkf_main , &obs_key , &report_step);
+    obs_vector  = enkf_obs_get_vector( enkf_obs , obs_key );
+    config_node = obs_vector_get_config_node( obs_vector );
+
+    /* Could be user input ... */
+    step1      = 0;
+    step2      = enkf_main_get_total_length( enkf_main );
+    iens1      = 0;
+    iens2      = ensemble_config_get_size(ensemble_config) - 1;
+    plot_state = both;
+    state_kw   = enkf_config_node_get_key( config_node );
+    {
+      int block_nr,i,j,k;
+      const field_obs_type * field_obs = obs_vector_iget_node( obs_vector , report_step );
+      for (block_nr = 0; block_nr < field_obs_get_size( field_obs ); block_nr++) {
+	field_obs_iget_ijk( field_obs , block_nr , &i , &j , &k);
+	index_key = util_realloc_sprintf( index_key , "%d,%d,%d"    , i+1,j+1,k+1);
+	user_key  = util_realloc_sprintf( user_key  , "%s:%d,%d,%d" , state_kw , i+1,j+1,k+1);
+	enkf_ui_plot_ensemble__(fs , enkf_obs , config_node , user_key , index_key , sched_vector , step1 , step2 , iens1 , iens2 , plot_state , plot_path , viewer);
+      }
+    }
+    free( obs_key );
+    free( index_key );
+    free( user_key );
+  }
+}
+
+
 
 
 /**
@@ -850,7 +922,8 @@ void enkf_ui_plot_menu(void * arg) {
     menu_add_item(menu , "Ensemble plot"    , "eE"                          , enkf_ui_plot_ensemble    , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of ALL summary variables"    , "aA" , enkf_ui_plot_all_summary , enkf_main , NULL);
     menu_add_item(menu , "Observation plot" , "oO" 			    , enkf_ui_plot_observation , enkf_main , NULL);
-    menu_add_item(menu , "RFT plot"         , "rR" 			    , enkf_ui_plot_RFT         , enkf_main , NULL);
+    menu_add_item(menu , "RFT depth plot"   , "rR" 			    , enkf_ui_plot_RFT_depth   , enkf_main , NULL);
+    menu_add_item(menu , "RFT time plot"    , "tT"                          , enkf_ui_plot_RFT_time    , enkf_main , NULL);
     menu_add_item(menu , "RFT plot of all RFT"  , "fF" 			    , enkf_ui_plot_all_RFT     , enkf_main , NULL);
     menu_add_item(menu , "Sensitivity plot"     , "sS"                      , enkf_ui_plot_sensitivity , enkf_main , NULL); 
     menu_add_item(menu , "Histogram"        , "hH"                          , enkf_ui_plot_histogram   , enkf_main , NULL);

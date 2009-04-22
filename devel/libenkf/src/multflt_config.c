@@ -13,7 +13,6 @@
 struct multflt_config_struct {
   int                   __type_id;
   char                * ecl_kw_name;      
-  enkf_var_type         var_type;  
   scalar_config_type  * scalar_config;
   stringlist_type     * fault_names;
 };
@@ -27,7 +26,6 @@ static multflt_config_type * __multflt_config_alloc_empty(int size) {
   config->scalar_config = scalar_config_alloc_empty(size);
   
   config->ecl_kw_name = NULL;
-  config->var_type    = parameter;
 
   return config;
 }

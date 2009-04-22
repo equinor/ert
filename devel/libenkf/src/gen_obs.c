@@ -38,6 +38,7 @@ struct gen_obs_struct {
   double                     * obs_data;         /* The observed data. */
   double                     * obs_std;          /* The observed standard deviation. */ 
 
+  char                       * obs_key;          /* The key this observation is held by - in the enkf_obs structur (only for debug messages). */  
   char                       * obs_file;         /* The file holding the observation. */ 
   gen_data_file_format_type    obs_format;       /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
 };
@@ -50,6 +51,7 @@ void gen_obs_free(gen_obs_type * gen_obs) {
   util_safe_free(gen_obs->obs_std);
   util_safe_free(gen_obs->obs_file);
   util_safe_free(gen_obs->data_index_list);
+  util_safe_free(gen_obs->obs_key);
   free(gen_obs);
 }
 
@@ -123,7 +125,7 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
 */
 
 
-gen_obs_type * gen_obs_alloc(const char * obs_file , double scalar_value , double scalar_error , const char * data_index_file , const char * data_index_string) {
+gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , double scalar_value , double scalar_error , const char * data_index_file , const char * data_index_string) {
   gen_obs_type * obs = util_malloc(sizeof * obs , __func__);
   
   obs->__type_id       	= GEN_OBS_TYPE_ID;
@@ -131,6 +133,7 @@ gen_obs_type * gen_obs_alloc(const char * obs_file , double scalar_value , doubl
   obs->obs_std    	= NULL;
   obs->obs_file        	= util_alloc_string_copy( obs_file );
   obs->obs_format      	= ASCII;  /* Hardcoded for now. */
+  obs->obs_key          = util_alloc_string_copy( obs_key );   
 
   gen_obs_load_observation(obs , scalar_value , scalar_error); /* The observation data is loaded - and internalized at boot time - even though it might not be needed for a long time. */
   if ((data_index_file == NULL) && (data_index_string == NULL)) {
@@ -160,17 +163,19 @@ gen_obs_type * gen_obs_alloc(const char * obs_file , double scalar_value , doubl
 }
 
 
+
 static void gen_obs_assert_data_size(const gen_obs_type * gen_obs, const gen_data_type * gen_data) {
   if (gen_obs->observe_all_data) {
     int data_size = gen_data_get_size( gen_data );
-    if (gen_obs->obs_size != data_size)
-      util_abort("%s: size mismatch: Observation size:%d   data_size:%d \n" , __func__ , gen_obs->obs_size , data_size);
+    if (gen_obs->obs_size != data_size) 
+      util_abort("%s: size mismatch: Observation: %s:%d      Data: %s:%d \n" , __func__ , gen_obs->obs_key , gen_obs->obs_size , gen_data_get_key( gen_data ) , data_size);
     
-  } /*
-      Else the user has explicitly entered indices to observe in the
-      gen_data instances, and we just have to trust them (however the
-      gen_data_iget() does a range check. 
-    */
+  } 
+  /*
+    Else the user has explicitly entered indices to observe in the
+    gen_data instances, and we just have to trust them (however the
+    gen_data_iget() does a range check. 
+  */
 }
 
 
@@ -179,7 +184,7 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
     int iobs;
-    for (iobs = 0; iobs < gen_obs->obs_size; iobs++)
+    for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
       meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
   }
 }
@@ -202,10 +207,12 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 
 void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data) {
   int iobs;
-  const char * kw = "GEN_OBS";
-
-  for (iobs = 0; iobs < gen_obs->obs_size; iobs++)
+  char * kw = NULL;
+  for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
+    kw = util_realloc_sprintf(kw , "%s:%d" , gen_obs->obs_key , iobs);
     obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , kw);
+  }
+  util_safe_free( kw );
 }
 
 
@@ -219,10 +226,18 @@ void gen_obs_activate(gen_obs_type * obs , active_mode_type active_mode , void *
 
 
 void gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid) {
-  *valid = true;
-  *value = 1.0;
-  *std   = 1.0;
+  int index;
+  *valid = false;
+  
+  if (util_sscanf_int( index_key , &index)) {
+    if ((index >= 0) && (index < gen_obs->obs_size)) {
+      *valid = true;
+      *value = gen_obs->obs_data[ index ];
+      *std   = gen_obs->obs_std[ index ];
+    }
+  }
 }
+
 
 
   

@@ -11,9 +11,10 @@
 */
 typedef enum {
   PLAIN_DRIVER_INDEX_ID      = 1001,
-  PLAIN_DRIVER_STATIC_ID     = 1002,
-  PLAIN_DRIVER_DYNAMIC_ID    = 1003,
-  PLAIN_DRIVER_PARAMETER_ID  = 1004} fs_driver_impl;
+  PLAIN_DRIVER_STATIC_ID     = 1002,  /* Depreceated */
+  PLAIN_DRIVER_DYNAMIC_ID    = 1003,  /* Depreceated */
+  PLAIN_DRIVER_PARAMETER_ID  = 1004,  /* Depreceated */
+  PLAIN_DRIVER_ID            = 1005} fs_driver_impl;
 
 
 
@@ -30,10 +31,12 @@ typedef enum {
 */
 
 typedef enum {
-  DRIVER_PARAMETER  = 1,
-  DRIVER_STATIC     = 2,
-  DRIVER_DYNAMIC    = 3,
-  DRIVER_INDEX      = 4} fs_driver_type;
+  DRIVER_PARAMETER  	  = 1,
+  DRIVER_STATIC     	  = 2,
+  DRIVER_DYNAMIC    	  = 3, /* Depreceated */
+  DRIVER_INDEX      	  = 4,  
+  DRIVER_DYNAMIC_FORECAST = 5,
+  DRIVER_DYNAMIC_ANALYZED = 6} fs_driver_type;
 
 
 #endif

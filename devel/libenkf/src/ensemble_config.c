@@ -79,7 +79,7 @@ enkf_impl_type ensemble_config_impl_type(const ensemble_config_type *ensemble_co
 
 
 enkf_var_type ensemble_config_var_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
-  enkf_var_type var_type = invalid;
+  enkf_var_type var_type = INVALID_VAR;
 
   if (hash_has_key(ensemble_config->config_nodes , ecl_kw_name)) {
     enkf_config_node_type * node = hash_get(ensemble_config->config_nodes , ecl_kw_name);
@@ -203,7 +203,7 @@ void ensemble_config_ensure_summary(ensemble_config_type * ensemble_config , con
     if (ensemble_config_impl_type(ensemble_config , key) != SUMMARY)
       util_abort("%s: ensemble key:%s already existst - but it is not of summary type\n",__func__ , key);
   } else 
-    ensemble_config_add_node(ensemble_config , key , dynamic_result , SUMMARY , NULL , NULL , summary_config_alloc(key));
+    ensemble_config_add_node(ensemble_config , key , DYNAMIC_RESULT , SUMMARY , NULL , NULL , summary_config_alloc(key));
 }
 
 
@@ -281,7 +281,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       const char * ecl_file    = stringlist_iget(tokens , 1);
       const char * config_file = stringlist_iget(tokens , 2);
       
-      ensemble_config_add_node(ensemble_config , key , parameter , MULTFLT , ecl_file , NULL , multflt_config_fscanf_alloc(config_file));
+      ensemble_config_add_node(ensemble_config , key , PARAMETER , MULTFLT , ecl_file , NULL , multflt_config_fscanf_alloc(config_file));
     }
   }
 
@@ -292,7 +292,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const char * key         = stringlist_iget(tokens , 0);
     const char * config_file = stringlist_iget(tokens , 1);
     
-    ensemble_config_add_node(ensemble_config , key , parameter , HAVANA_FAULT , NULL , NULL , havana_fault_config_fscanf_alloc(config_file));
+    ensemble_config_add_node(ensemble_config , key , PARAMETER , HAVANA_FAULT , NULL , NULL , havana_fault_config_fscanf_alloc(config_file));
   }
   
   
@@ -316,7 +316,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 	 * TEMPLATE
 	 * KEY
 	 */
-      ensemble_config_add_node(ensemble_config , key , parameter , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(true , tokens , NULL , NULL));
+      ensemble_config_add_node(ensemble_config , key , PARAMETER , GEN_DATA , ecl_file , NULL , gen_data_config_alloc(key , true , tokens , NULL , NULL));
     }
     free( key );
     free( ecl_file );
@@ -343,14 +343,14 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 	char * ecl_file;
 	char * result_file;
 	enkf_var_type var_type;
-	gen_data_config = gen_data_config_alloc(false , tokens , &ecl_file , &result_file);
+	gen_data_config = gen_data_config_alloc(key , false , tokens , &ecl_file , &result_file);
 	if (ecl_file == NULL) /* 
 				 EnKF should not provide the forward model with an instance of this
 				 data => We have dynamic_result.
 			      */
-	  var_type = dynamic_result;
+	  var_type = DYNAMIC_RESULT;
 	else
-	  var_type = dynamic_state;   
+	  var_type = DYNAMIC_STATE;   
 	
 	ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
 	
@@ -372,12 +372,12 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       stringlist_idel( tokens , 0 );
       
       if (strcmp(var_type_string , "DYNAMIC") == 0) {
-	ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , tokens));
+	ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , tokens));
       } else if (strcmp(var_type_string , "PARAMETER") == 0) {
 	char *  ecl_file        = stringlist_iget_copy(tokens , 0);
 	stringlist_idel( tokens , 0 );
 	
-	ensemble_config_add_node(ensemble_config , key , parameter   , FIELD , ecl_file , NULL , 
+	ensemble_config_add_node(ensemble_config , key , PARAMETER   , FIELD , ecl_file , NULL , 
 				 field_config_alloc_parameter(key , ecl_file , grid , field_trans_table , tokens));
 	free(ecl_file);
       } else if (strcmp(var_type_string , "GENERAL") == 0) {
@@ -386,7 +386,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 	stringlist_idel( tokens , 0 );
 	stringlist_idel( tokens , 0 );
 	
-	ensemble_config_add_node(ensemble_config , key , dynamic_state , FIELD , enkf_outfile , enkf_infile , 
+	ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , enkf_outfile , enkf_infile , 
 				 field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , field_trans_table , tokens));
 	free(enkf_outfile);
 	free(enkf_infile);
@@ -416,7 +416,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     const char * target_file   = stringlist_iget(tokens , 2);
     const char * config_file   = stringlist_iget(tokens , 3);
     
-    ensemble_config_add_node(ensemble_config , key , parameter , GEN_KW , target_file , NULL , gen_kw_config_fscanf_alloc(config_file , template_file));
+    ensemble_config_add_node(ensemble_config , key , PARAMETER , GEN_KW , target_file , NULL , gen_kw_config_fscanf_alloc(config_file , template_file));
   }
 
   /*****************************************************************/

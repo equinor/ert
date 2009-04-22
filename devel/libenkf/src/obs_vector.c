@@ -32,7 +32,7 @@ struct obs_vector_struct {
   
 
   char                           * obs_key;     /* The key this observation vector has in the enkf_obs layer. */ 
-  enkf_config_node_type          * config_node; /* The config_node of the node type we are observing - shared reference (NOT USED YET) */
+  enkf_config_node_type          * config_node; /* The config_node of the node type we are observing - shared reference */
   obs_impl_type    	           obs_type; 
   void             	        ** nodes;       /* List of obs_node instances - NULL for all inactive report steps. */
   int              	           size;        /* The number of report_steps. */
@@ -345,7 +345,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 	}
 
 	/** The config system has ensured that we have either OBS_FILE or (VALUE and ERROR). */
-	gen_obs = gen_obs_alloc(obs_file , scalar_value , scalar_error , index_file , index_list);	
+	gen_obs = gen_obs_alloc(obs_key , obs_file , scalar_value , scalar_error , index_file , index_list);	
 	obs_vector_install_node( obs_vector , obs_restart_nr , gen_obs );
       } else {
 	enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);

@@ -1311,6 +1311,7 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 
 
 
+
 /**
   Here, index_key is i a tree digit string with the i, j and k indicies of
   the requested block separated by comma. E.g., 1,1,1. 
@@ -1323,36 +1324,26 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
 {
   const    bool internal_value = false;
   double   val = 0.0;
-  int      length;
-  int    * indices = util_sscanf_alloc_active_list(index_key, &length);
+  int      i,j,k;
+  int      parse_user_key = field_config_parse_user_key(field->config , index_key , &i, &j , &k);
 
-  if(length != 3)
-    *valid = false;
-  else
-  {
+  if (parse_user_key == 0) {
+    int active_index = field_config_active_index(field->config , i,j,k);
+    val =  field_iget_double(field, active_index);
     *valid = true;
-
-    int i = indices[0] - 1;
-    int j = indices[1] - 1;
-    int k = indices[2] - 1;
-    
-    if(field_config_ijk_valid(field->config, i, j, k)) {
-      int active_index = field_config_active_index(field->config , i,j,k);
-      if (active_index >= 0)
-	val =  field_iget_double(field, active_index);
-      else {
-	/* ijk corresponds to an inactive cell. */
-	*valid = false;
-	fprintf(stderr," ijk: %d , %d, %d is an inactive cell. \n",i+1 , j + 1 , k + 1);
-      }
-    }  else {
+  } else {
+    if (parse_user_key == 1)
+      fprintf(stderr,"Failed to parse \"%s\" as three integers \n",index_key);
+    else if (parse_user_key == 2)
       fprintf(stderr," ijk: %d , %d, %d is invalid \n",i+1 , j + 1 , k + 1);
-      *valid = false;
-    }
+    else if (parse_user_key == 3)
+      fprintf(stderr," ijk: %d , %d, %d is an inactive cell. \n",i+1 , j + 1 , k + 1);
+    else
+      util_abort("%s: internal error -invalid value:%d \n",__func__ , parse_user_key);
+    *valid = false;
   }
-
-  free(indices);
-  if (!internal_value) {
+  
+  if (!internal_value && (*valid)) {
     field_func_type * output_transform = field_config_get_output_transform(field->config);
     if (output_transform != NULL)
       val = output_transform( val );

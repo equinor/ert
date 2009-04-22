@@ -22,10 +22,12 @@ typedef bool (has_node_ftype)     (void * driver, int , int , state_enum , const
 typedef void (unlink_node_ftype)  (void * driver, int , int , state_enum , enkf_node_type *); 
 typedef void (free_driver_ftype)  (void * driver);
 
-typedef enkf_node_type ** (load_alloc_ensemble_ftype)    (void * , int , int , int , state_enum , enkf_config_node_type *);
-typedef enkf_node_type ** (load_alloc_ts_ftype)          (void * , int , int , int , state_enum , enkf_config_node_type *);
-typedef void              (save_ensemble_ftype)          (void * , int , int , int , state_enum , enkf_node_type **);
-typedef void              (save_ts_ftype)                (void * , int , int , int , state_enum , enkf_node_type **);
+  /*
+    typedef enkf_node_type ** (load_alloc_ensemble_ftype)    (void * , int , int , int , state_enum , enkf_config_node_type *);
+    typedef enkf_node_type ** (load_alloc_ts_ftype)          (void * , int , int , int , state_enum , enkf_config_node_type *);
+    typedef void              (save_ensemble_ftype)          (void * , int , int , int , state_enum , enkf_node_type **);
+    typedef void              (save_ts_ftype)                (void * , int , int , int , state_enum , enkf_node_type **);
+  */
 
 typedef void (static_load_node_ftype) 	 (void * , int , int , state_enum , enkf_node_type *);
 typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , enkf_node_type *);
@@ -62,10 +64,6 @@ save_node_ftype    	  * save;    	   \
 has_node_ftype     	  * has_node;      \
 unlink_node_ftype  	  * unlink_node;   \
 free_driver_ftype  	  * free_driver;   \
-load_alloc_ensemble_ftype * load_ensemble; \
-load_alloc_ts_ftype 	  * load_ts;       \
-save_ensemble_ftype 	  * save_ensemble; \
-save_ts_ftype       	  * save_ts;       \
 int                  type_id
 
 

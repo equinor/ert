@@ -101,6 +101,7 @@ _______________/                     \___________/	 |  with EnKF.               
 
 struct field_config_struct {
   CONFIG_STD_FIELDS;
+  char                * ecl_kw_name;    /* Name/key ... */
   int nx,ny,nz;                         /* The number of elements in the three directions. */
   const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */
   bool  private_grid;
@@ -915,6 +916,53 @@ void field_config_activate(field_config_type * config , active_mode_type active_
       field_active_update_active_list( active , config->active_list);
   }
 }
+
+
+
+/**
+   Parses a string of the type "1,5,6", and returns the indices i,j,k
+   by reference. The return value of the function as a whole is
+   whether the string constitutes a valid cell:
+
+      0: All is OK.
+      1: The string could not pe parsed to three valid integers.
+      2: ijk are not in the grid.
+      3: ijk correspond to an inactive cell.
+
+   In cases 2 & 3 the i,j,k are valid (in the string-parsing sense).
+*/
+   
+
+
+int field_config_parse_user_key(const field_config_type * config, const char * index_key , int *_i , int *_j , int *_k) {
+  int      return_value = 0;
+  int      length;
+  int    * indices = util_sscanf_alloc_active_list(index_key, &length);
+  
+  if(length != 3)
+    return_value = 1;
+  else
+  {
+    
+    int i = indices[0] - 1;
+    int j = indices[1] - 1;
+    int k = indices[2] - 1;
+    
+    if(field_config_ijk_valid(config, i, j, k)) {
+      int active_index = field_config_active_index(config , i,j,k);
+      if (active_index < 0)
+	return_value = 3;  	/* ijk corresponds to an inactive cell. */
+    }  else 
+      return_value = 2;         /* ijk is outside the grid. */
+
+    *_i = i;
+    *_j = j;
+    *_k = k;
+  }
+  free(indices);
+  return return_value;
+}
+
 
 
 const ecl_grid_type *field_config_get_grid(const field_config_type * config) { return config->grid; }

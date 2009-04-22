@@ -9,6 +9,7 @@
 #include <ext_joblist.h>
 #include <forward_model.h>
 #include <vector.h>
+#include <tokenizer.h>
 
 /**
    How long is the simulation?

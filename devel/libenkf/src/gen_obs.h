@@ -9,7 +9,7 @@
 
 typedef struct gen_obs_struct gen_obs_type;
 
-gen_obs_type * gen_obs_alloc( const char * , double , double , const char * , const char * );
+gen_obs_type * gen_obs_alloc( const char * obs_key , const char * , double , double , const char * , const char * );
 
 VOID_CHI2_HEADER(gen_obs);
 SAFE_CAST_HEADER(gen_obs);

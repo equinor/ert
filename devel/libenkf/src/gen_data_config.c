@@ -15,6 +15,7 @@
 #define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
   CONFIG_STD_FIELDS;
+  char                         * key;                   /* The key this gen_data instance is known under - needed for debugging. */
   ecl_type_enum  	         internal_type;         /* The underlying type (float | double) of the data in the corresponding gen_data instances. */
   char           	       * template_buffer;       /* Buffer containing the content of the template - read and internalized at boot time. */
   int            	         template_data_offset;  /* The offset into the template buffer before the data should come. */
@@ -59,18 +60,20 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
    5. input_format == ASCII_template                     => INVALID
 */
 
-static gen_data_config_type * gen_data_config_alloc__( bool as_param, 
-						       ecl_type_enum internal_type       , 
-						       gen_data_file_format_type input_format ,
-						       gen_data_file_format_type output_format,
-						       const char * init_file_fmt     ,  
-						       const char * template_ecl_file , 
-						       const char * template_data_key ,
+static gen_data_config_type * gen_data_config_alloc__(const char * key,  
+						      bool as_param, 
+						      ecl_type_enum internal_type       , 
+						      gen_data_file_format_type input_format ,
+						      gen_data_file_format_type output_format,
+						      const char * init_file_fmt     ,  
+						      const char * template_ecl_file , 
+						      const char * template_data_key ,
 						       const char * ecl_file          ,
-						       const char * result_file) {
-
+						      const char * result_file) {
+  
   gen_data_config_type * config = util_malloc(sizeof * config , __func__);
   config->__type_id         = GEN_DATA_CONFIG_ID;
+  config->key               = util_alloc_string_copy( key );
   config->data_size  	    = 0;
   config->internal_type     = internal_type;
   config->active_list       = active_list_alloc(0);
@@ -173,7 +176,7 @@ static gen_data_file_format_type __gen_data_config_check_format( const char * fo
 
 */
 
-gen_data_config_type * gen_data_config_alloc(bool as_param , const stringlist_type * options , char **__ecl_file , char ** __result_file) {
+gen_data_config_type * gen_data_config_alloc(const char * key , bool as_param , const stringlist_type * options , char **__ecl_file , char ** __result_file) {
   const ecl_type_enum internal_type = ecl_double_type;
   gen_data_config_type * config;
   hash_type * opt_hash = hash_alloc_from_options( options );
@@ -224,7 +227,7 @@ gen_data_config_type * gen_data_config_alloc(bool as_param , const stringlist_ty
       
       option = hash_iter_get_next_key(iter);
     } 
-    config = gen_data_config_alloc__(as_param , internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file);
+    config = gen_data_config_alloc__(key , as_param , internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file);
     util_safe_free( init_file_fmt );
     util_safe_free( template_file );
     util_safe_free( template_key );
@@ -244,6 +247,7 @@ gen_data_config_type * gen_data_config_alloc(bool as_param , const stringlist_ty
 void gen_data_config_free(gen_data_config_type * config) {
   active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free(config->init_file_fmt);
+  util_safe_free( config->key );
   free(config);
 }
 
@@ -331,6 +335,10 @@ void gen_data_config_activate(gen_data_config_type * config , active_mode_type a
     
 }
 
+
+const char * gen_data_config_get_key( const gen_data_config_type * config) {
+  return config->key;
+}
 
 
 /*****************************************************************/

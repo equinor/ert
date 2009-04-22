@@ -27,7 +27,7 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
   path_fmt_type * export_path;
   
   analysis_state = analyzed;  /* Hardcoded analyzed */
-  config_node    = enkf_ui_util_scanf_key(enkf_main_get_ensemble_config(enkf_main) , prompt_len ,  FIELD  , invalid );
+  config_node    = enkf_ui_util_scanf_key(enkf_main_get_ensemble_config(enkf_main) , prompt_len ,  FIELD  , INVALID_VAR );
   
   report_step = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
   enkf_ui_util_scanf_iens_range("Realizations members to export(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
@@ -99,11 +99,11 @@ void enkf_ui_export_gen_data(void * arg) {
     state_enum state;
     path_fmt_type * file_fmt;
 
-    config_node    = enkf_ui_util_scanf_key(ensemble_config , prompt_len ,  GEN_DATA , invalid);
+    config_node    = enkf_ui_util_scanf_key(ensemble_config , prompt_len ,  GEN_DATA , INVALID_VAR);
     var_type       = enkf_config_node_get_var_type(config_node);
-    if ((var_type == dynamic_state) || (var_type == dynamic_result)) 
+    if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) 
       state = enkf_ui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , prompt_len , false);
-    else if (var_type == parameter)
+    else if (var_type == PARAMETER)
       state = analyzed;
     
     
@@ -168,7 +168,7 @@ void enkf_ui_export_profile(void * enkf_main) {
     path_fmt_type * file_fmt;
 
     analysis_state = analyzed; /* */
-    config_node    = enkf_ui_util_scanf_key(ensemble_config , prompt_len ,  FIELD , invalid);
+    config_node    = enkf_ui_util_scanf_key(ensemble_config , prompt_len ,  FIELD , INVALID_VAR);
     iens_active    = enkf_ui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
     report_active  = enkf_ui_util_scanf_alloc_report_active( last_report , prompt_len );
     direction      = util_scanf_int_with_limits("Give scan direction 0:i  1:j  2:k" , prompt_len , 0 , 2);
@@ -271,7 +271,7 @@ void enkf_ui_export_cell(void * enkf_main) {
     int        cell_nr;
 
     analysis_state = analyzed;
-    config_node = enkf_ui_util_scanf_key(ensemble_config , prompt_len , FIELD , invalid);
+    config_node = enkf_ui_util_scanf_key(ensemble_config , prompt_len , FIELD , INVALID_VAR);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
@@ -333,7 +333,7 @@ void enkf_ui_export_time(void * enkf_main) {
     int        cell_nr;
     
     analysis_state = analyzed;
-    config_node = enkf_ui_util_scanf_key(ensemble_config , prompt_len , FIELD ,invalid);
+    config_node = enkf_ui_util_scanf_key(ensemble_config , prompt_len , FIELD ,INVALID_VAR);
     cell_nr = enkf_ui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int last_report = enkf_main_get_total_length( enkf_main );

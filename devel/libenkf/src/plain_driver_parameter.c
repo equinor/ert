@@ -177,10 +177,6 @@ void * plain_driver_parameter_alloc(const char * root_path , const char * fmt) {
   driver->unlink_node 	= plain_driver_parameter_unlink_node;
   driver->has_node    	= plain_driver_parameter_has_node;
   driver->select_dir    = plain_driver_parameter_select_dir;
-  driver->load_ensemble = NULL;
-  driver->load_ts       = NULL;
-  driver->save_ensemble = NULL;
-  driver->save_ts       = NULL;
   driver->root_path     = util_alloc_string_copy( root_path );
   driver->fmt_string    = util_alloc_string_copy( fmt );
   driver->path          = NULL; 

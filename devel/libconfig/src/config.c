@@ -1204,11 +1204,11 @@ static void config_parse__(config_type * config ,
 	      util_safe_free(include_path);
 	    }
 	  } else if (define_kw != NULL && (strcmp(define_kw , kw) == 0)) {
-	    if (active_tokens != 3) 
-	      util_abort("%s: keyword:%s must have exactly one argument. \n",__func__ , define_kw);
+	    if (active_tokens < 3) 
+	      util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
 	    {
 	      char * key   ;
-	      char * value = token_list[2];
+	      char * value = util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ");
 	      if (alloc_new_key != NULL)
 		key = alloc_new_key( token_list[1] );  
 	      else
@@ -1220,6 +1220,7 @@ static void config_parse__(config_type * config ,
 		free( filtered_value );
 	      }
 	      free(key);
+	      free(value);
 	    }
 	  } else {
 	    if (hash_has_key(config->messages , kw))
