@@ -77,7 +77,7 @@ static void time_t_to_dates_line_fprintf(time_t date, FILE * stream)
 {
   int day, month, year;
   util_set_date_values(date, &day, &month, &year);
-  fprintf(stream , "  %02d \'%s\' %4d  /  \n" , day, get_month_string_from_int(month), year );
+  fprintf(stream , "  %d \'%s\' %4d  /  \n" , day, get_month_string_from_int(month), year );
 }
 
 
