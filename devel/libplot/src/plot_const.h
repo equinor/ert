@@ -67,13 +67,18 @@ typedef enum plot_color_enum {
 */
 
 typedef enum  {
-  solid_line = 1,
-  short_dash = 2,
-  long_dash  = 3
+  PLOT_LINESTYLE_SOLID_LINE  = 1,
+  PLOT_LINESTYLE_SHORT_DASH  = 2,
+  PLOT_LINESTYLE_LONG_DASH   = 3
 } plot_line_style_type;
      
 
-typedef int plot_symbol_type;
+/* The set of symbols is seemingly extremely limited. */
+typedef enum {
+  PLOT_SYMBOL_X     	     = 5,
+  PLOT_SYMBOL_HDASH 	     = 45,
+  PLOT_SYMBOL_FILLED_CIRCLE  = 17 } plot_symbol_type;
+  
 
 
 
@@ -88,7 +93,7 @@ typedef int plot_symbol_type;
 /* Here comes defaults which apply to one dataset. */
 #define PLOT_DEFAULT_SYMBOL_SIZE     1.10   /* Scaled */
 #define PLOT_DEFAULT_LINE_WIDTH      1.50   /* Scaled */
-#define PLOT_DEFAULT_SYMBOL            17
+#define PLOT_DEFAULT_SYMBOL            17   /* PLOT_SYMBOL_FILLED_CIRCLE */
 #define PLOT_DEFAULT_LINE_COLOR        BLUE
 #define PLOT_DEFAULT_POINT_COLOR       BLUE
 #define PLOT_DEAFULT_STYLE             LINE

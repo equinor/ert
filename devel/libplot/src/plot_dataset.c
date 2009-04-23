@@ -150,7 +150,7 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
   d->line_color  = BLUE;
   d->point_color = BLUE;
   d->symbol_type = PLOT_DEFAULT_SYMBOL;
-  d->line_style  = solid_line;
+  d->line_style  = PLOT_LINESTYLE_SOLID_LINE;
   d->symbol_size = 1.0;  /* Scale factor */
   d->line_width  = 1.0;  /* Scale factor */
   return d;

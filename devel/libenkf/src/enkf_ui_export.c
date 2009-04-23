@@ -96,7 +96,7 @@ void enkf_ui_export_gen_data(void * arg) {
     const int last_report = enkf_main_get_total_length( enkf_main );
 
     const enkf_config_node_type * config_node;
-    state_enum state;
+    state_enum state = analyzed;
     path_fmt_type * file_fmt;
 
     config_node    = enkf_ui_util_scanf_key(ensemble_config , prompt_len ,  GEN_DATA , INVALID_VAR);
@@ -105,6 +105,8 @@ void enkf_ui_export_gen_data(void * arg) {
       state = enkf_ui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , prompt_len , false);
     else if (var_type == PARAMETER)
       state = analyzed;
+    else 
+      util_abort("%s: internal error \n",__func__);
     
     
     report_step = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);

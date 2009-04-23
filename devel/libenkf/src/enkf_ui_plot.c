@@ -119,6 +119,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 				    const char * plot_path , 
 				    const char * viewer) {
 
+  const int errorbar_max_obsnr = 10;
   const bool add_observations = true;
   char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), user_key );
   plot_type * plot = __plot_alloc("Simulation days","y-akse",user_key,plot_file);
@@ -184,22 +185,29 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
     __plot_add_data(plot , this_size , x , y );
   }
 
-  /** 
-      Plotting the observations first - to ensure that the simulated
-      results come ON TOP of the observations. Whether it is best to
-      have the simulated results or the observations on top will vary
-      from case to case ....
-  */
-
   if (add_observations) {
     enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
     if ((impl_type == SUMMARY) || (impl_type == FIELD)) {
-      const stringlist_type * obs_keys = enkf_config_node_get_obs_keys(config_node);
+      /*
+	These three double vectors are used to assemble
+	all observations.
+      */
+      double_vector_type * sim_days     = double_vector_alloc(10 , 0);
+      double_vector_type * obs_value    = double_vector_alloc(10 , 0);
+      double_vector_type * obs_std      = double_vector_alloc(10 , 0);
+
+      const stringlist_type * obs_keys  = enkf_config_node_get_obs_keys(config_node);
+      int obs_size = 0;
       int i;
       for (i=0; i < stringlist_get_size( obs_keys ); i++) {
-	bool  has_dataset = false;
 	const char * obs_key = stringlist_iget(obs_keys , i);
-	plot_dataset_type * obs_data = NULL;
+	const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
+	obs_size += obs_vector_get_num_active( obs_vector );
+      }
+      
+      for (i=0; i < stringlist_get_size( obs_keys ); i++) {
+	const char * obs_key = stringlist_iget(obs_keys , i);
+	
 	const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
 	double  value , std;
 	int report_step = -1;
@@ -210,19 +218,71 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	      bool valid;
 	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
 	      if (valid) {
-		double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens1) , report_step );
-		if (!has_dataset) {
-		  obs_data  = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
-		  plot_dataset_set_line_color( obs_data , RED);
-		  plot_dataset_set_line_width( obs_data , 1.0);
-		  has_dataset = true;
-		}
-		plot_dataset_append_point_xy1y2( obs_data , sim_days , value - std , value + std);
+		  double_vector_append( sim_days  , sched_file_get_sim_days( vector_iget( sched_vector , iens1) , report_step ));
+		  double_vector_append( obs_value , value );
+		  double_vector_append( obs_std , std );
 	      }
 	    }
 	  }
 	} while (report_step != -1);
       }
+      if (double_vector_size( sim_days ) > 0) {
+	if (obs_size > errorbar_max_obsnr) {
+	  /* 
+	     There are very many observations - to increase
+	     readability of the plots we plot an upper and lower limit
+	     as dashed lines, instead of plotting each individual
+	     error bar.
+	  */
+	     
+	  plot_dataset_type * data_value = plot_alloc_new_dataset( plot , plot_xy , false);
+	  plot_dataset_type * data_lower = plot_alloc_new_dataset( plot , plot_xy , false);
+	  plot_dataset_type * data_upper = plot_alloc_new_dataset( plot , plot_xy , false);
+	  
+	  plot_dataset_set_style( data_value , POINTS );
+	  plot_dataset_set_style( data_upper , LINE );
+	  plot_dataset_set_style( data_lower , LINE );
+	  
+	  plot_dataset_set_line_style( data_upper , PLOT_LINESTYLE_LONG_DASH );
+	  plot_dataset_set_line_style( data_lower , PLOT_LINESTYLE_LONG_DASH );
+	  plot_dataset_set_line_color( data_upper , RED);
+	  plot_dataset_set_line_color( data_lower , RED);
+	  
+	  plot_dataset_set_point_color( data_value , BLACK);
+	  plot_dataset_set_symbol_type( data_value , PLOT_SYMBOL_FILLED_CIRCLE);
+
+	  {
+	    int * perm = double_vector_alloc_sort_perm( sim_days );
+	    double_vector_permute( sim_days  , perm );
+	    double_vector_permute( obs_value , perm );
+	    double_vector_permute( obs_std   , perm );
+	    free( perm );
+	  }
+	  
+	  for (i = 0; i < double_vector_size( sim_days ); i++) {
+	    double days  = double_vector_iget( sim_days  , i);
+	    double value = double_vector_iget( obs_value , i);
+	    double std   = double_vector_iget( obs_std   , i);
+	    
+	    plot_dataset_append_point_xy( data_value , days , value);
+	    plot_dataset_append_point_xy( data_lower , days , value - std);
+	    plot_dataset_append_point_xy( data_upper , days , value + std);
+	  }
+	} else {
+	  plot_dataset_type * obs_errorbar  = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
+	  plot_dataset_set_line_color( obs_errorbar , RED);
+	  plot_dataset_set_line_width( obs_errorbar , 1.0);
+	  for (i = 0; i < double_vector_size( sim_days ); i++) {
+	    double days  = double_vector_iget( sim_days  , i);
+	    double value = double_vector_iget( obs_value , i);
+	    double std   = double_vector_iget( obs_std   , i);
+	    plot_dataset_append_point_xy1y2( obs_errorbar , days , value - std , value + std);
+	  }
+	}
+      }
+      double_vector_free( sim_days );
+      double_vector_free( obs_std );
+      double_vector_free( obs_value );
     }
   }
 
@@ -483,7 +543,7 @@ void enkf_ui_plot_observation(void * arg) {
 	plot_dataset_set_line_color(obs_value , BLACK);
 	plot_dataset_set_line_color(obs_quant , BLACK);
 	plot_dataset_set_line_width(obs_value , 2.0);
-	plot_dataset_set_line_style(obs_quant , long_dash);
+	plot_dataset_set_line_style(obs_quant , PLOT_LINESTYLE_LONG_DASH);
 
 	plot_dataset_set_style( forecast_data , POINTS);
 	plot_dataset_set_style( analyzed_data , POINTS);
