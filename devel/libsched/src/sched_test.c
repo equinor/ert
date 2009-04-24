@@ -31,7 +31,7 @@ int main(int argc, char **argv)
   sched_file = sched_file_alloc(-1);
   printf("-- Loading %s..\n", argv[1]);
   sched_file_parse(sched_file, -1 , argv[1]);
-  sched_file_update(sched_file , 1 , 62 , WCONINJE , shut_injectors , NULL);
+  sched_file_update_blocks(sched_file , 1 , 62 , WCONINJE , shut_injectors , NULL);
   sched_file_fprintf_i(sched_file , 60 , "/tmp/target.SCH");
   
   return 0;
