@@ -8,7 +8,6 @@ extern "C" {
 #include <stringlist.h>
 
 typedef struct basic_driver_struct         basic_driver_type;
-typedef struct basic_static_driver_struct  basic_driver_static_type;
 typedef struct basic_index_driver_struct   basic_driver_index_type;
 
 
@@ -22,17 +21,6 @@ typedef bool (has_node_ftype)     (void * driver, int , int , state_enum , const
 typedef void (unlink_node_ftype)  (void * driver, int , int , state_enum , enkf_node_type *); 
 typedef void (free_driver_ftype)  (void * driver);
 
-  /*
-    typedef enkf_node_type ** (load_alloc_ensemble_ftype)    (void * , int , int , int , state_enum , enkf_config_node_type *);
-    typedef enkf_node_type ** (load_alloc_ts_ftype)          (void * , int , int , int , state_enum , enkf_config_node_type *);
-    typedef void              (save_ensemble_ftype)          (void * , int , int , int , state_enum , enkf_node_type **);
-    typedef void              (save_ts_ftype)                (void * , int , int , int , state_enum , enkf_node_type **);
-  */
-
-typedef void (static_load_node_ftype) 	 (void * , int , int , state_enum , enkf_node_type *);
-typedef void (static_save_node_ftype) 	 (void * , int , int , state_enum , enkf_node_type *);
-typedef bool (static_has_node_ftype)     (void * , int , int , state_enum , const char *);
-typedef void (static_unlink_node_ftype)  (void * , int , int , state_enum , enkf_node_type *); 
 
 
 /**
@@ -64,38 +52,14 @@ save_node_ftype    	  * save;    	   \
 has_node_ftype     	  * has_node;      \
 unlink_node_ftype  	  * unlink_node;   \
 free_driver_ftype  	  * free_driver;   \
-int                  type_id
+int                         type_id
+
 
 
 struct basic_driver_struct {
   BASIC_DRIVER_FIELDS;
   /* Fill in whatever here - i.e. dbase state. */
 };
-
-/*****************************************************************/
-/* 
-   The static driver complication is because the FU***ING ECLIPSE restart
-   files do not contain unique keywords, and we have to add an extra
-   index (as an afterthought - yes).
-*/
-
-#define BASIC_STATIC_DRIVER_FIELDS   	 \
-select_dir_ftype          * select_dir;  \
-static_load_node_ftype    * load;    	 \
-static_save_node_ftype    * save;    	 \
-static_has_node_ftype     * has_node;    \
-static_unlink_node_ftype  * unlink_node; \
-free_driver_ftype         * free_driver; \
-void * load_ensemble;\
-void * load_ts;      \
-void * save_ts;      \
-void * save_ensemble;\
-int                  type_id
-
-
-struct basic_static_driver_struct { 
-  BASIC_STATIC_DRIVER_FIELDS;
-}; 
 
 
 
@@ -122,10 +86,6 @@ struct basic_index_driver_struct {
 void  	 	  	   basic_driver_init(basic_driver_type * );
 void 	 	  	   basic_driver_assert_cast(const basic_driver_type * );
 basic_driver_type 	 * basic_driver_safe_cast(void * );
-
-void 	 		   basic_driver_static_init(basic_driver_static_type * );
-void 	 		   basic_driver_static_assert_cast(const basic_driver_static_type * );
-basic_driver_static_type * basic_driver_static_safe_cast(void * );
 
 void 	 		   basic_driver_index_init(basic_driver_index_type * );
 void 	 		   basic_driver_index_assert_cast(const basic_driver_index_type * );

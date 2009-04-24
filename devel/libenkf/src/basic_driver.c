@@ -9,7 +9,6 @@
    yo verify run-time casts.
 */
 #define BASIC_DRIVER_ID           10
-#define BASIC_DRIVER_STATIC_ID    20
 #define BASIC_DRIVER_INDEX_ID     30
 
 
@@ -33,26 +32,6 @@ basic_driver_type * basic_driver_safe_cast(void * __driver) {
     util_abort("%s: runtime cast failed. \n",__func__);
   return driver;
 }
-
-/*****************************************************************/
-
-void basic_driver_static_init(basic_driver_static_type * driver) {
-  driver->type_id = BASIC_DRIVER_STATIC_ID;
-}
-
-void basic_driver_static_assert_cast(const basic_driver_static_type * driver) {
-  if (driver->type_id != BASIC_DRIVER_STATIC_ID) 
-    util_abort("%s: internal error - incorrect cast() - aborting \n" , __func__);
-}
-
-
-basic_driver_static_type * basic_driver_static_safe_cast(void * __driver) {
-  basic_driver_static_type * driver = (basic_driver_static_type *) __driver;
-  if (driver->type_id != BASIC_DRIVER_STATIC_ID)
-    util_abort("%s: runtime cast failed. \n",__func__);
-  return driver;
-}
-
 
 /*****************************************************************/
 

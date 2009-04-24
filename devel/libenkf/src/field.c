@@ -989,7 +989,7 @@ void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
     util_abort("%s: Aborting \n",__func__ );
   }
   
-  ecl_util_memcpy_typed_data(field->data , ecl_kw_get_data_ref(ecl_kw) , field_type , kw_type , ecl_kw_get_size(ecl_kw));
+  ecl_util_memcpy_typed_data(field->data , ecl_kw_get_void_ptr(ecl_kw) , field_type , kw_type , ecl_kw_get_size(ecl_kw));
 }
 
 
@@ -1042,7 +1042,7 @@ void field_fload_ecl_kw(field_type * field , const char * filename , bool endian
   
 
   if (field_config_get_volume(field->config) == ecl_kw_get_size(ecl_kw)) 
-    field_import3D(field , ecl_kw_get_data_ref(ecl_kw) , false , ecl_kw_get_type(ecl_kw));
+    field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , ecl_kw_get_type(ecl_kw));
   else 
     /* Keyword is already packed - e.g. from a restart file. Size is
        verified in the _copy function.*/
@@ -1069,7 +1069,7 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename , bool en
   if (strncmp(key , ecl_kw_get_header_ref(ecl_kw) , strlen(key)) != 0) 
     util_abort("%s: did not load keyword:%s from file:%s - seek() is not implemented for grdecl files - aborting \n",__func__ , key , filename);
   
-  field_import3D(field , ecl_kw_get_data_ref(ecl_kw) , false , ecl_kw_get_type(ecl_kw));
+  field_import3D(field , ecl_kw_get_void_ptr(ecl_kw) , false , ecl_kw_get_type(ecl_kw));
   ecl_kw_free(ecl_kw);
 }
 

@@ -77,7 +77,7 @@ static char * enkf_ui_plot_alloc_plot_file(const char * plot_path, const char * 
   }
 }
 					   
-					   
+
 
 static plot_type * __plot_alloc(const char * x_label , const char * y_label , const char * title , const char * file) {
   plot_type * plot  = plot_alloc();

@@ -17,16 +17,13 @@
 #include <menu.h>
 #include <arg_pack.h>
 #include <ecl_static_kw.h>
-#include <plain_driver_parameter.h>
-#include <plain_driver_static.h>
-#include <plain_driver_dynamic.h>
 #include <plain_driver_index.h>
 #include <plain_driver.h>
 #include <stringlist.h>
 
 
 #define FS_MAGIC_ID         123998L
-#define CURRENT_FS_VERSION  101
+#define CURRENT_FS_VERSION  102
 
 /**
    Version history:
@@ -38,6 +35,7 @@
    --------------------------------------------------------------------------
    100                            |                       |  1799
    101                            |   1810                | 
+   102                            |   
    --------------------------------------------------------------------------
 
 
@@ -45,10 +43,10 @@
    ------------
    First version with subdirectories for different cases.
 
+
    
    Version: 101
    ------------
-
    Have changed the format for storing static keywords. Instead of a
    directory with numbered files in them, the keywords get an integer
    appended:
@@ -57,7 +55,19 @@
 
    The actual changing of keyword is done in the function
    __realloc_static_kw() in enkf_state.c.
-   
+
+
+
+   Version: 102 
+   ------------ 
+   Have removed the type spesific plain drivers, now it is only
+   plain_driver and plain_driver index. The special functionality for
+   parameters/static/dynamic is now implemented at the enkf_fs level.
+   The upgrade from 101 only involves the mount info and the
+   implementation, the actual stored files are not touched by this
+   upgrade.
+
+
 */
 
 
@@ -228,17 +238,17 @@ struct enkf_fs_struct {
   basic_driver_type         * dynamic_read_analyzed;
   basic_driver_type         * dynamic_write_analyzed;
 
-  basic_driver_type         * dynamic_read;          /* Implements functions for read/write of dynamic data. */
-  basic_driver_type         * dynamic_write;         /* Implements functions for read/write of dynamic data. */
+  //basic_driver_type         * dynamic_read;          /* Implements functions for read/write of dynamic data. */
+  //basic_driver_type         * dynamic_write;         /* Implements functions for read/write of dynamic data. */
 
   basic_driver_type  	    * parameter_read;        /* Implements functions for read/write of parameters. */
   basic_driver_type  	    * parameter_write;       /* Implements functions for read/write of parameters. */
   
-  basic_driver_static_type  * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
-  basic_driver_static_type  * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  //basic_driver_static_type  * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  //basic_driver_static_type  * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
 
-  //basic_driver_type  * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
-  //basic_driver_type  * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  basic_driver_type  * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  basic_driver_type  * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
 
   basic_driver_index_type   * index_read;
   basic_driver_index_type   * index_write;
@@ -268,7 +278,19 @@ long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * defau
   FILE * stream = util_fopen( mount_map , "w");
   util_fwrite_long(FS_MAGIC_ID , stream);
   util_fwrite_int(CURRENT_FS_VERSION , stream);
-  plain_driver_fwrite_mount_info( stream );
+  
+  plain_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	   , true , DEFAULT_PARAMETER_PATH);
+  plain_driver_fwrite_mount_info( stream , DRIVER_STATIC    	   , true , DEFAULT_STATIC_PATH);
+  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , true , DEFAULT_DYNAMIC_FORECAST_PATH);
+  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , true , DEFAULT_DYNAMIC_ANALYZED_PATH);
+  plain_driver_index_fwrite_mount_info( stream ,                     true , DEFAULT_INDEX_PATH);
+
+  plain_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	   , false , DEFAULT_PARAMETER_PATH);
+  plain_driver_fwrite_mount_info( stream , DRIVER_STATIC    	   , false , DEFAULT_STATIC_PATH);
+  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , false , DEFAULT_DYNAMIC_FORECAST_PATH);
+  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , false , DEFAULT_DYNAMIC_ANALYZED_PATH);
+  plain_driver_index_fwrite_mount_info( stream ,                     false , DEFAULT_INDEX_PATH);
+  
   __dir_offset = ftell( stream );
   {
     set_type * set = set_alloc_empty();
@@ -358,20 +380,20 @@ static void enkf_fs_upgrade_100(int old_version, const char * config_file, const
 
 static void enkf_fs_upgrade_102(const char * config_file , const char * root_path) {
   set_type * cases = set_alloc_empty();
-  char * read_case;
-  char * write_case;
-  char * parameter_read_fmt;
-  char * static_read_fmt;
-  char * dynamic_analyzed_read_fmt;
-  char * dynamic_forecast_read_fmt;
-  char * index_read_fmt;
-
-  char * parameter_write_fmt;
-  char * static_write_fmt;
-  char * dynamic_analyzed_write_fmt;
-  char * dynamic_forecast_write_fmt;
-  char * index_write_fmt;
-
+  char * read_case = NULL;
+  char * write_case = NULL;
+  char * parameter_read_fmt = NULL;
+  char * static_read_fmt = NULL;
+  char * dynamic_analyzed_read_fmt = NULL;
+  char * dynamic_forecast_read_fmt = NULL;
+  char * index_read_fmt = NULL;
+  
+  char * parameter_write_fmt = NULL;
+  char * static_write_fmt = NULL;
+  char * dynamic_analyzed_write_fmt = NULL;
+  char * dynamic_forecast_write_fmt = NULL;
+  char * index_write_fmt = NULL;
+  
   {
     char * backup_file = util_alloc_sprintf("%s.backup" , config_file);
     util_copy_file( config_file , backup_file);
@@ -385,11 +407,13 @@ static void enkf_fs_upgrade_102(const char * config_file , const char * root_pat
   /* Reading in the old content. */
   {
     FILE * stream    = util_fopen(config_file , "r"); 
+    util_fskip_long( stream );  /* FS tag */
+    util_fskip_int( stream );   /* version id */
     int i;
     for (i=0; i < 8; i++) {
       bool read                      = util_fread_bool( stream );
       fs_driver_type driver_category = util_fread_int( stream );
-      fs_driver_impl driver_id       = util_fread_int( stream );
+      util_fskip_int( stream ); /* driver id */
       
       
       switch(driver_category) {
@@ -421,7 +445,7 @@ static void enkf_fs_upgrade_102(const char * config_file , const char * root_pat
 	  index_write_fmt = util_fread_alloc_string( stream );
 	break;
       default:
-	util_abort("%s: fatal error\n",__func__);
+	util_abort("%s: fatal error driver_category:%d not recognized. \n",__func__);
       }
     }
 
@@ -438,6 +462,9 @@ static void enkf_fs_upgrade_102(const char * config_file , const char * root_pat
   
   {
     FILE * stream = util_fopen( config_file , "w");
+    
+    util_fwrite_long(FS_MAGIC_ID , stream);
+    util_fwrite_int(CURRENT_FS_VERSION , stream);
     util_fwrite_bool( true , stream);
     util_fwrite_int( DRIVER_PARAMETER , stream);
     util_fwrite_int( PLAIN_DRIVER_ID , stream);
@@ -783,13 +810,15 @@ bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool 
 
   if (read) {
     fs->current_read_dir = util_realloc_string_copy( fs->current_read_dir , dir );
-    fs->dynamic_read->select_dir(fs->dynamic_read     , dir);
+    fs->dynamic_read_forecast->select_dir(fs->dynamic_read_forecast     , dir);
+    fs->dynamic_read_analyzed->select_dir(fs->dynamic_read_analyzed     , dir);
     fs->parameter_read->select_dir(fs->parameter_read 	      , dir);
     fs->index_read->select_dir(fs->index_read         	      , dir);    
     fs->eclipse_static_read->select_dir(fs->eclipse_static_read , dir);
   } else {
     fs->current_write_dir = util_realloc_string_copy( fs->current_write_dir , dir );
-    fs->dynamic_write->select_dir(fs->dynamic_write     , dir);
+    fs->dynamic_write_forecast->select_dir(fs->dynamic_write_forecast     , dir);
+    fs->dynamic_write_analyzed->select_dir(fs->dynamic_write_analyzed     , dir);
     fs->parameter_write->select_dir(fs->parameter_write 	      , dir);
     fs->index_write->select_dir(fs->index_write         	      , dir);    
     fs->eclipse_static_write->select_dir(fs->eclipse_static_write , dir);
@@ -846,16 +875,18 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
       enkf_fs_upgrade_100(version , config_file , root_path , default_dir);       /* Upgrade disk information - and create new mount map. */
       version = 100;
     }
+
     
     if (version == 100) {
       enkf_fs_upgrade_101( config_file , root_path );
       version = 101;
     }
+    
 
-    //if (version == 101) {
-    //  enkf_fs_upgrade_102( config_file , root_path );
-    //  version = 102;
-    //} 
+    if (version == 101) {
+      enkf_fs_upgrade_102( config_file , root_path );
+      version = 102;
+    } 
 
   }
 
@@ -866,7 +897,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
   
   /** Reading the mount map */
   {
-    const int num_drivers    = 8;
+    const int num_drivers    = 10;
     enkf_fs_type * fs        = util_malloc(sizeof * fs , __func__);
 
     fs->use_locking          = use_locking;
@@ -875,14 +906,12 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     fs->index_read            = NULL;
     fs->eclipse_static_read   = NULL;
     fs->parameter_read        = NULL;
-    fs->dynamic_read          = NULL;
     fs->dynamic_read_forecast = NULL;
     fs->dynamic_read_analyzed = NULL;
 
     fs->index_write            = NULL;
     fs->eclipse_static_write   = NULL;
     fs->parameter_write        = NULL;
-    fs->dynamic_write          = NULL;
     fs->dynamic_write_forecast = NULL;
     fs->dynamic_write_analyzed = NULL;
 
@@ -906,14 +935,8 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
 	case(PLAIN_DRIVER_INDEX_ID):
 	  driver = plain_driver_index_fread_alloc( root_path , stream );
 	  break;
-	case(PLAIN_DRIVER_STATIC_ID):
-	  driver = plain_driver_static_fread_alloc( root_path , stream );
-	  break;
-	case(PLAIN_DRIVER_DYNAMIC_ID):
-	  driver = plain_driver_dynamic_fread_alloc( root_path , stream );
-	  break;
-	case(PLAIN_DRIVER_PARAMETER_ID):
-	  driver = plain_driver_parameter_fread_alloc( root_path , stream );
+	case(PLAIN_DRIVER_ID):
+	  driver = plain_driver_fread_alloc( root_path , stream );
 	  break;
 	default:
 	  util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized \n",__func__ , fs->mount_map , driver_id);
@@ -932,12 +955,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
 	    fs->eclipse_static_read = driver;
 	  else
 	    fs->eclipse_static_write = driver;
-	  break;
-	case(DRIVER_DYNAMIC):
-	  if (read) 
-	    fs->dynamic_read = driver;
-	  else
-	    fs->dynamic_write = driver;
 	  break;
 	case(DRIVER_DYNAMIC_FORECAST):
 	  if (read) 
@@ -963,19 +980,17 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
       }
 
       if (fs->parameter_read	     == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
-      if (fs->dynamic_read    	     == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , fs->mount_map);
       if (fs->eclipse_static_read    == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
       if (fs->index_read             == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
-      //if (fs->dynamic_read_forecast  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic forecast driver.\n",     __func__ , fs->mount_map);
-      //if (fs->dynamic_read_analyzed  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic analyzed driver.\n",     __func__ , fs->mount_map);
+      if (fs->dynamic_read_forecast  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic forecast driver.\n",     __func__ , fs->mount_map);
+      if (fs->dynamic_read_analyzed  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic analyzed driver.\n",     __func__ , fs->mount_map);
 
 
       if (fs->parameter_write  	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
-      if (fs->dynamic_write    	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic driver.\n",   __func__ , fs->mount_map);
       if (fs->eclipse_static_write   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
       if (fs->index_write            == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
-      //if (fs->dynamic_write_forecast  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic forecast driver.\n",     __func__ , fs->mount_map);
-      //if (fs->dynamic_write_analyzed  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic analyzed driver.\n",     __func__ , fs->mount_map);
+      if (fs->dynamic_write_forecast  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic forecast driver.\n",     __func__ , fs->mount_map);
+      if (fs->dynamic_write_analyzed  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic analyzed driver.\n",     __func__ , fs->mount_map);
       
       
       /* Starting on the directory information. */
@@ -1001,17 +1016,15 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     }
   
 
-    //basic_driver_assert_cast(fs->dynamic_read_analyzed);
-    //basic_driver_assert_cast(fs->dynamic_read_forecast);
-    basic_driver_assert_cast(fs->dynamic_read);
-    basic_driver_static_assert_cast(fs->eclipse_static_read);
+    basic_driver_assert_cast(fs->dynamic_read_analyzed);
+    basic_driver_assert_cast(fs->dynamic_read_forecast);
+    basic_driver_assert_cast(fs->eclipse_static_read);
     basic_driver_assert_cast(fs->parameter_read);
     basic_driver_index_assert_cast(fs->index_read);
 
-    //basic_driver_assert_cast(fs->dynamic_write_analyzed);
-    //basic_driver_assert_cast(fs->dynamic_write_forecast);
-    basic_driver_assert_cast(fs->dynamic_write);
-    basic_driver_static_assert_cast(fs->eclipse_static_write);
+    basic_driver_assert_cast(fs->dynamic_write_analyzed);
+    basic_driver_assert_cast(fs->dynamic_write_forecast);
+    basic_driver_assert_cast(fs->eclipse_static_write);
     basic_driver_assert_cast(fs->parameter_write);
     basic_driver_index_assert_cast(fs->index_write);
 
@@ -1046,11 +1059,6 @@ static void enkf_fs_free_driver(basic_driver_type * driver) {
   driver->free_driver(driver);
 }
 
-static void enkf_fs_free_static_driver(basic_driver_static_type * driver) {
-  driver->free_driver(driver);
-}
-
-
 static void enkf_fs_free_index_driver(basic_driver_index_type * driver) {
   driver->free_driver(driver);
 }
@@ -1058,19 +1066,17 @@ static void enkf_fs_free_index_driver(basic_driver_index_type * driver) {
 
 
 void enkf_fs_free(enkf_fs_type * fs) {
-  //enkf_fs_free_driver(fs->dynamic_read_forecast);
-  //enkf_fs_free_driver(fs->dynamic_write_forecast);
-  //enkf_fs_free_driver(fs->dynamic_read_analyzed);
-  //enkf_fs_free_driver(fs->dynamic_write_analyzed);
+  enkf_fs_free_driver(fs->dynamic_read_forecast);
+  enkf_fs_free_driver(fs->dynamic_write_forecast);
+  enkf_fs_free_driver(fs->dynamic_read_analyzed);
+  enkf_fs_free_driver(fs->dynamic_write_analyzed);
 
-  enkf_fs_free_driver(fs->dynamic_read);
   enkf_fs_free_driver(fs->parameter_read);
-  enkf_fs_free_static_driver(fs->eclipse_static_read);
+  enkf_fs_free_driver(fs->eclipse_static_read);
   enkf_fs_free_index_driver(fs->index_read);
 
-  enkf_fs_free_driver(fs->dynamic_write);
   enkf_fs_free_driver(fs->parameter_write);
-  enkf_fs_free_static_driver(fs->eclipse_static_write);
+  enkf_fs_free_driver(fs->eclipse_static_write);
   enkf_fs_free_index_driver(fs->index_write);
 
   util_safe_free(fs->current_read_dir);
@@ -1086,6 +1092,24 @@ void enkf_fs_free(enkf_fs_type * fs) {
 }
 
 
+static void * select_dynamic_driver(enkf_fs_type * fs , state_enum state , bool read) {
+  void * driver = NULL;
+  if (state == analyzed) {
+    if (read)
+      driver = fs->dynamic_read_analyzed;
+    else
+      driver = fs->dynamic_write_analyzed;
+  } else if (state == forecast) {
+    if (read)
+      driver = fs->dynamic_read_forecast;
+    else
+      driver = fs->dynamic_write_forecast;
+  } else
+    util_abort("%s: fatal internal error \n",__func__);
+  
+  return driver;
+}
+
 
 static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, state_enum state , const char * key, bool read) {
   void * driver = NULL;
@@ -1097,17 +1121,10 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
       driver = fs->parameter_write;
     break;
   case(DYNAMIC_RESULT):
-    if (read)
-      driver = fs->dynamic_read;
-    else
-      driver = fs->dynamic_write;
+    driver = select_dynamic_driver( fs , state , read );
     break;
   case(DYNAMIC_STATE):
-    if (read)
-      driver = fs->dynamic_read;
-    else
-      driver = fs->dynamic_write;
-    break;
+    driver = select_dynamic_driver( fs , state , read );break;
   case(STATIC_STATE):
     if (read)
       driver = fs->eclipse_static_read;
@@ -1131,12 +1148,8 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
   {
     enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
     void * _driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) , false);
-    if (var_type == STATIC_STATE) {
-      basic_driver_static_type * driver = basic_driver_static_safe_cast(_driver);
-      driver->save(driver , report_step , iens , state , enkf_node); 
-    } else {
+    {
       basic_driver_type * driver = basic_driver_safe_cast(_driver);
-      
       if (report_step == 0) {
 	enkf_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
 	if (impl_type == SUMMARY) return;    /* For report step == 0 the summary data is just garbage. */
@@ -1158,13 +1171,15 @@ static int __get_parameter_report_step( int report_step , state_enum state) {
   if (state == forecast) {
     if (report_step > 0) /* Time step zero is special - we do not differentiate between forecast and analyzed. */
       report_step--;
-  } else if (state != forecast)
+  } else if (state != analyzed)
     util_abort("%s: asked for state:%d - internal error \n",__func__ , state);
 
   return report_step;
 }
 
-void enkf_fs_fread_node_new(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
+
+
+void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
   basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) , true);
 
@@ -1174,11 +1189,18 @@ void enkf_fs_fread_node_new(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node 
     /*
       Observe that if we do not find the filename we are looking for, we
       seek backwards through the report numbers, all the way back to
-      report_nr 0.
+      report_nr 0. The direct motivation for this functionality is the
+      following situation:
+      
+        1. We do a spin-up from report 0 to report R1.
+      
+        2. We start the assimulation from R1, then we have to go all the
+           way back to report 0 to get hold of the parameter.
     */
     {
       const char * key = enkf_node_get_key( enkf_node );
       while (!driver->has_node( driver , report_step , iens , state , key)) {
+	printf("Spinning report_step backwards .... \n");
 	report_step--;
 	if (report_step < 0)
 	  util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , key , iens);
@@ -1190,27 +1212,11 @@ void enkf_fs_fread_node_new(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node 
 }
 
 
-void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
-  void * _driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) , true);
-  if (var_type == STATIC_STATE) {
-    basic_driver_static_type * driver = basic_driver_static_safe_cast(_driver);
-    driver->load(driver , report_step , iens , state , enkf_node); 
-  } else {
-    basic_driver_type * driver = basic_driver_safe_cast(_driver);
-    driver->load(driver , report_step , iens , state , enkf_node); 
-  }
-}
-
-
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
   {
     const char * key = enkf_config_node_get_key(config_node);
-    if (var_type == STATIC_STATE) {
-      basic_driver_static_type * driver = basic_driver_static_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , key , true));
-      return driver->has_node(driver , report_step , iens , state , key); 
-    } else {
+    {
       basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , key , true));
       return driver->has_node(driver , report_step , iens , state , key); 
     }

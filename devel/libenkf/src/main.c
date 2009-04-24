@@ -19,9 +19,9 @@
 
 
 void install_SIGNALS(void) {
-  signal(SIGSEGV , util_abort_signal);
-  signal(SIGINT  , util_abort_signal);
-  signal(SIGKILL , util_abort_signal);
+  signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
+  signal(SIGINT  , util_abort_signal);    /* Control C */
+  signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. Killing with SIGKILL (-9) will not give a backtrace.*/
 }
 
 
@@ -30,6 +30,7 @@ void text_splash() {
   int i;
   {
 #include "statoilhydro.h"
+
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++) {
       printf("%s\n" , splash_text[i]);
@@ -52,7 +53,7 @@ void enkf_welcome(const char * config_file) {
     char * svn_version  	 = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
     char * compile_time 	 = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
     char * abs_path     	 = util_alloc_realpath( config_file );
-    char * config_file_msg = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
+    char * config_file_msg       = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
     
     /* This will be printed if/when util_abort() is called on a later stage. */
     util_abort_append_version_info(svn_version);
