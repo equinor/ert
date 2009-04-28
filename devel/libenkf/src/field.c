@@ -581,10 +581,10 @@ void  field_inplace_output_transform(field_type * field ) {
 
 #define TRUNCATE_MACRO(s , d , t , min , max)  \
 for (int i=0; i < s; i++) {  		       \
-  if ( t & truncate_min )    		       \
+  if ( t & TRUNCATE_MIN )    		       \
     if (d[i] < min)          		       \
       d[i] = min;            		       \
-  if ( t & truncate_max )    		       \
+  if ( t & TRUNCATE_MAX )    		       \
     if (d[i] > max)          		       \
       d[i] = max;            		       \
 }
@@ -593,7 +593,7 @@ for (int i=0; i < s; i++) {  		       \
 static void field_apply_truncation(field_type * field) {
   double min_value, max_value;
   truncation_type   truncation = field_config_get_truncation(field->config , &min_value , &max_value); 
-  if (truncation != truncate_none) {
+  if (truncation != TRUNCATE_NONE) {
     const int data_size          = field_config_get_data_size(field->config);   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
     if (ecl_type == ecl_float_type) {
@@ -616,7 +616,7 @@ static void field_output_transform(field_type * field) {
   double min_value , max_value;
   field_func_type * output_transform = field_config_get_output_transform(field->config);
   truncation_type   truncation       = field_config_get_truncation(field->config , &min_value , &max_value); 
-  if ((output_transform != NULL) || (truncation != truncate_none)) {
+  if ((output_transform != NULL) || (truncation != TRUNCATE_NONE)) {
     field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) , __func__);
     field->__data = field->data;  /* Storing a pointer to the original data. */
     field->data = field->export_data;

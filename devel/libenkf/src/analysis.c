@@ -83,12 +83,12 @@ analysis_config_type * analysis_config_alloc(const config_type * config) {
   double alpha      	    = strtod( config_get(config , "ENKF_ALPHA") , NULL);
   bool   merge_observations = config_get_as_bool(config , "ENKF_MERGE_OBSERVATIONS");
   const char * enkf_mode_string = config_get(config , "ENKF_MODE");
-  enkf_mode_type enkf_mode = enkf_sqrt; /* Compiler shut up */
+  enkf_mode_type enkf_mode = ENKF_SQRT; /* Compiler shut up */
 
   if (strcmp(enkf_mode_string,"STANDARD") == 0)
-    enkf_mode = enkf_standard;
+    enkf_mode = ENKF_STANDARD;
   else if (strcmp(enkf_mode_string , "SQRT") == 0)
-    enkf_mode = enkf_sqrt;
+    enkf_mode = ENKF_SQRT;
   else
     util_abort("%s: internal error : enkf_mode:%s not recognized \n",__func__ , enkf_mode_string);
 

@@ -683,7 +683,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
      1. Build up enkf_state->restart_kw_list.
      2. Send static keywords straight out.
   */
-
+  
   stringlist_clear( enkf_state->restart_kw_list );
   {
     int ikw; 
@@ -999,6 +999,7 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask , int repor
   util_free_stringlist(key_list , num_keys);
 }
 
+
 void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
@@ -1268,16 +1269,16 @@ void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
     /* In case the job fails, we leave the run_path directory around for debugging. */
     if (final_status == job_queue_complete_OK) {
       bool unlink_runpath;
-      if (my_config->keep_runpath == default_keep) {
-	if (run_info->run_mode == enkf_assimilation)
+      if (my_config->keep_runpath == DEFAULT_KEEP) {
+	if (run_info->run_mode == ENKF_ASSIMILATION)
 	  unlink_runpath = true;   /* For assimilation the default is to unlink. */
 	else
 	  unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
       } else {
 	/* We have explcitly set a value for the keep_runpath variable - with either KEEP_RUNAPTH or DELETE_RUNPATH. */
-	if (my_config->keep_runpath == explicit_keep)
+	if (my_config->keep_runpath == EXPLICIT_KEEP)
 	  unlink_runpath = false;
-	else if (my_config->keep_runpath == explicit_delete)
+	else if (my_config->keep_runpath == EXPLICIT_DELETE)
 	  unlink_runpath = true;
 	else {
 	  util_abort("%s: internal error \n",__func__);

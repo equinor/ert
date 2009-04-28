@@ -28,7 +28,7 @@ void enkf_ui_run_start__(void * enkf_main) {
       iactive[iens] = true;
   }
 
-  enkf_main_run(enkf_main , enkf_assimilation , iactive , -1 , 0 , analyzed);
+  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , -1 , 0 , analyzed);
   free(iactive);
 }
 
@@ -51,7 +51,7 @@ void enkf_ui_run_restart__(void * enkf_main) {
   start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
   state        = enkf_ui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
   
-  enkf_main_run(enkf_main , enkf_assimilation , iactive , -1 , start_report  , state);
+  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , -1 , start_report  , state);
   free(iactive);
 }
 
@@ -90,7 +90,7 @@ void enkf_ui_run_exp__(void * enkf_main) {
     }
   }
 
-  enkf_main_run(enkf_main , ensemble_experiment , iactive , init_report , start_report , init_state);
+  enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_report , start_report , init_state);
   free(iactive);
 }
 
@@ -149,7 +149,7 @@ void enkf_ui_run_predictions__(void * __enkf_main) {
       for (iens= 0; iens < ens_size; iens++)
 	iactive[iens] = true;
     }
-    enkf_main_run(enkf_main , ensemble_experiment , iactive , history_end , history_end  , start_state);
+    enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , history_end , history_end  , start_state);
     free( iactive );
 
   } else

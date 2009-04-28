@@ -7,7 +7,7 @@ extern "C" {
 #include <scalar_config.h>
 #include <enkf_serialize.h>
 #include <stdio.h>
-
+#include <buffer.h>
 
 typedef struct scalar_struct scalar_type;
 
@@ -33,6 +33,8 @@ int              scalar_serialize_part(const scalar_type * , serial_state_type *
 void             scalar_deserialize_part(scalar_type * , serial_state_type * , bool , int , int, const serial_vector_type *);
 void             scalar_stream_fwrite(const scalar_type * scalar , FILE * , bool);
 void             scalar_stream_fread(scalar_type * scalar , FILE * );
+void             scalar_buffer_fload(scalar_type * scalar , buffer_type * buffer);
+void             scalar_buffer_fsave(const scalar_type * scalar , buffer_type * buffer , bool internal_state);
 void             scalar_realloc_data(scalar_type * scalar);
 void             scalar_clear(scalar_type * scalar); 
 const double   * scalar_get_output_ref(const scalar_type * );

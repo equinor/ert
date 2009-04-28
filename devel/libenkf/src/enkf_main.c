@@ -89,9 +89,6 @@ struct enkf_main_struct {
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
   enkf_obs_type        * obs;
-  obs_data_type        * obs_data;          /* Should ideally contain the hist object. */
-  meas_matrix_type     * meas_forecast;     /* Should have both forecast and analyzed measurements ... */
-  meas_matrix_type     * meas_analyzed;
   enkf_state_type     ** ensemble;
 }; 
 
@@ -148,7 +145,6 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
 
 void enkf_main_free(enkf_main_type * enkf_main) {  
   enkf_obs_free(enkf_main->obs);
-  obs_data_free(enkf_main->obs_data);
   {
     const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
     int i;
@@ -162,8 +158,6 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   model_config_free( enkf_main->model_config);
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
-  meas_matrix_free( enkf_main->meas_forecast );
-  meas_matrix_free( enkf_main->meas_analyzed );
   free(enkf_main);
 }
 
@@ -386,61 +380,78 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
   }
     
   
-  obs_data_reset(enkf_main->obs_data);
-  meas_matrix_reset(enkf_main->meas_forecast);
-  for(int report_step = start_step; report_step <= end_step; report_step++)  {
-    printf("Fetching simulated responses and observations for step %i.\n", report_step); 
-    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
-				 (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_forecast, enkf_main->obs_data);
-  }
-  printf("Skal allokere X \n");
-  X = analysis_allocX(ens_size , obs_data_get_nrobs(enkf_main->obs_data) , enkf_main->meas_forecast , enkf_main->obs_data , false , true , enkf_main->analysis_config);
-  if (X != NULL) {
-    /* 
-       The number of doubles we ask for, to get the number of bytes
-       you must multiply by eight.
-       
-       1024 * 1024 * 128 => 1GB of memory
-    */
-    size_t double_size = 1024*1024*256; /* 2GB */
-    
-    /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
-    printf("Updating: ...... "); fflush(stdout);
-    serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
-    enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
-    serial_vector_free(serial_vector);
-    printf("\n");
-    free(X);
-  }
-
-  /* This will write analyzed results to disk anyway - maybe a bit wastefull . */
-  printf("Saving: ........ "); fflush(stdout);
-  enkf_main_fwrite_ensemble(enkf_main , DYNAMIC_STATE + DYNAMIC_RESULT + PARAMETER , step2 , analyzed);
-  printf("\n");
-
-  /*
-    Collect observations and simulated responses for all steps after step1 up to and
-    including step2.
-  */
-
-
-  /** Printing update info after analysis - does not work with multi step updates.*/
-  if (start_step == end_step) {
-    obs_data_reset(enkf_main->obs_data);
-    meas_matrix_reset(enkf_main->meas_analyzed);
-
-  for(int report_step = start_step; report_step <= end_step; report_step++)  {
-    printf("Fetching simulated responses and observations for step %i.\n", report_step);
-    enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, analyzed, ens_size, (const enkf_state_type **) enkf_main->ensemble, enkf_main->meas_analyzed, enkf_main->obs_data);
-  }
   {
-      double *meanS , *stdS;
-      meas_matrix_allocS_stats(enkf_main->meas_analyzed , &meanS , &stdS);
-      obs_data_fprintf(enkf_main->obs_data , stdout , meanS , stdS);
-      free(meanS);
-      free(stdS);
+    /*
+      Observations and measurements are collected in these temporary
+      structures. obs_data is a precursor for the 'd' vector, and
+      meas_forecast is a precursor for the 'S' matrix'
+
+      The reason for gong via these temporary structures is to support
+      deactivating observations which can not be used in the update
+      process.
+    */
+    
+    
+    obs_data_type    * obs_data      = obs_data_alloc();
+    meas_matrix_type * meas_forecast = meas_matrix_alloc( ens_size );
+    meas_matrix_type * meas_analyzed = meas_matrix_alloc( ens_size );
+
+    for(int report_step = start_step; report_step <= end_step; report_step++)  {
+      printf("Fetching simulated responses and observations for step %i.\n", report_step); 
+      enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
+				   (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data);
     }
-    enkf_main_fprintf_results(enkf_main , step2);
+    printf("Skal allokere X \n");
+    X = analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
+    if (X != NULL) {
+      /* 
+	 The number of doubles we ask for, to get the number of bytes
+	 you must multiply by eight.
+	 
+	 1024 * 1024 * 128 => 1GB of memory
+      */
+      size_t double_size = 1024*1024*256; /* 2GB */
+      
+      /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+      printf("Updating: ...... "); fflush(stdout);
+      serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
+      enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
+      serial_vector_free(serial_vector);
+      printf("\n");
+      free(X);
+    }
+    
+    /* This will write analyzed results to disk anyway - maybe a bit wastefull . */
+    printf("Saving: ........ "); fflush(stdout);
+    enkf_main_fwrite_ensemble(enkf_main , DYNAMIC_STATE + DYNAMIC_RESULT + PARAMETER , step2 , analyzed);
+    printf("\n");
+    
+    /*
+      Collect observations and simulated responses for all steps after step1 up to and
+      including step2.
+    */
+    
+    
+    /** Printing update info after analysis - does not work with multi step updates.*/
+    if (start_step == end_step) {
+      obs_data_reset(obs_data);
+      
+      for(int report_step = start_step; report_step <= end_step; report_step++)  {
+	printf("Fetching simulated responses and observations for step %i.\n", report_step);
+	enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, analyzed, ens_size, (const enkf_state_type **) enkf_main->ensemble, meas_analyzed, obs_data);
+      }
+      {
+	double *meanS , *stdS;
+	meas_matrix_allocS_stats(meas_analyzed , &meanS , &stdS);
+	obs_data_fprintf(obs_data , stdout , meanS , stdS);
+	free(meanS);
+	free(stdS);
+      }
+      enkf_main_fprintf_results(enkf_main , step2);
+    }
+    obs_data_free( obs_data );
+    meas_matrix_free( meas_forecast );
+    meas_matrix_free( meas_analyzed );
   }
 }
 
@@ -530,21 +541,9 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 
 
 
-
 void enkf_main_set_field_config_iactive(const ensemble_config_type * ensemble_config, int local_step){
-  
-  /*
-    bool * test_field_iactive;
-    const gen_data_config_type * gen_data_config = enkf_main_get_enkf_config_node_type(ensemble_config,"AI"); 
-    int num_param = gen_data_config_get_num_param(gen_data_config,local_step);
-    int * i= gen_data_config_get_param_index_i(gen_data_config,local_step);
-    int * j= gen_data_config_get_param_index_j(gen_data_config,local_step);
-    int * k= gen_data_config_get_param_index_k(gen_data_config,local_step);
-    printf("num_param:%d, i:%d,j:%d,k:%d", num_param,i[0],j[0],k[0]);
-  */
-
   field_config_type * poro_config = enkf_main_get_enkf_config_node_type(ensemble_config,"PORO");
-  field_config_activate(poro_config , partly_active , NULL);
+  field_config_activate(poro_config , PARTLY_ACTIVE , NULL);
 }
 
 
@@ -590,7 +589,7 @@ void enkf_main_run(enkf_main_type * enkf_main ,
   enkf_main_init_run( enkf_main , run_mode);  
   {
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
-    if (run_mode == enkf_assimilation) {
+    if (run_mode == ENKF_ASSIMILATION) {
       if (enkf_fs_rw_equal(fs)) {
 	bool analyzed_start = false;
 	bool prev_enkf_on;
@@ -624,7 +623,7 @@ void enkf_main_run(enkf_main_type * enkf_main ,
 	  else
 	    init_state = forecast;
 	  
-	  enkf_main_run_step(enkf_main , enkf_assimilation , iactive , report_step1 , init_state , report_step1 , report_step2 , enkf_on , forward_model);
+	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , report_step1 , init_state , report_step1 , report_step2 , enkf_on , forward_model);
 	  prev_enkf_on = enkf_on;
 	}
       } else
@@ -633,11 +632,11 @@ void enkf_main_run(enkf_main_type * enkf_main ,
       /* It is an experiment */
       const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
       const int last_report              = enkf_sched_get_last_report(enkf_sched);
-      if (run_mode == ensemble_experiment) {
+      if (run_mode == ENSEMBLE_EXPERIMENT) {
 	/* No possibility to use funky forward model */
-	enkf_main_run_step(enkf_main , ensemble_experiment , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
-      } else if (run_mode == screening_experiment) {
-	enkf_main_run_step(enkf_main , screening_experiment , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
+	enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
+      } else if (run_mode == SCREENING_EXPERIMENT) {
+	enkf_main_run_step(enkf_main , SCREENING_EXPERIMENT , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
       } else 
 	util_abort("%s: internal error - invalid value for run_mode:%d \n",__func__ , run_mode);
     }
@@ -940,7 +939,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       
       int i;
       for (i = 0; i < ens_size; i++) 
-	keep_runpath[i] = default_keep;
+	keep_runpath[i] = DEFAULT_KEEP;
 
       if (config_has_set_item(config , "KEEP_RUNPATH")) {
 	char * keep_runpath_string = config_indexed_alloc_joined_string(config , "KEEP_RUNPATH" , "" , i);
@@ -949,7 +948,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	util_sscanf_active_range(keep_runpath_string , ens_size - 1 , flag);
 	for (i = 0; i < ens_size; i++) {
 	  if (flag[i]) 
-	    keep_runpath[i] = explicit_keep;
+	    keep_runpath[i] = EXPLICIT_KEEP;
 	}
 	
 	free( flag );
@@ -963,9 +962,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	util_sscanf_active_range(delete_runpath_string , ens_size - 1 , flag);
 	for (i = 0; i < ens_size; i++) {
 	  if (flag[i]) {
-	    if (keep_runpath[i] == explicit_keep)
+	    if (keep_runpath[i] == EXPLICIT_KEEP)
 	      util_abort("%s: Inconsistent use of KEEP_RUNPATH / DELETE_RUNPATH - trying to both keep and delete member:%d \n",__func__ , i);
-	    keep_runpath[i] = explicit_delete;
+	    keep_runpath[i] = EXPLICIT_DELETE;
 	  }
 	}
 
@@ -990,10 +989,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	else
 	  obs_config_file = NULL;
 	
-	enkf_main->meas_forecast   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
-	enkf_main->meas_analyzed   = meas_matrix_alloc(ensemble_config_get_size(enkf_main->ensemble_config));
 	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file , model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config);
-	enkf_main->obs_data        = obs_data_alloc();
       }
 
       /******************************************************************/

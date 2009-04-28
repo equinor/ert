@@ -27,11 +27,11 @@ typedef enum {INVALID_VAR      =  0  , /**/
 	      STATIC_STATE     =  8 }  /* Keywords like XCON++ from eclipse restart files - which are just dragged along          */ 
   enkf_var_type; 
   
+  
 
-
-typedef enum { default_keep    = 0,    /* Remove for enkf assimilation - keep for ensemble experiments. */
-	       explicit_delete = 1,    /* Remove unconditionally */
-	       explicit_keep   = 2}    /* keep unconditionally */
+typedef enum { DEFAULT_KEEP    = 0,    /* Remove for enkf assimilation - keep for ensemble experiments. */
+	       EXPLICIT_DELETE = 1,    /* Remove unconditionally */
+	       EXPLICIT_KEEP   = 2}    /* keep unconditionally */
   keep_runpath_type;
 
 
@@ -87,10 +87,10 @@ typedef enum   {undefined   = 0 ,
       These are 2^n bitmasks - truncate_minmax == truncate_min + truncate_max. 
   */
 
-typedef enum {truncate_none   = 0,
-	      truncate_min    = 1,
-	      truncate_max    = 2,
-	      truncate_minmax = 3} truncation_type;
+typedef enum {TRUNCATE_NONE   = 0,
+	      TRUNCATE_MIN    = 1,
+	      TRUNCATE_MAX    = 2,
+	      TRUNCATE_MINMAX = 3} truncation_type;
 
 
 
@@ -121,9 +121,9 @@ typedef enum {truncate_none   = 0,
 
 */
 
-typedef enum { enkf_assimilation    = 1, 
-	       ensemble_experiment  = 2,
-	       screening_experiment = 3} run_mode_type;
+typedef enum { ENKF_ASSIMILATION    = 1, 
+	       ENSEMBLE_EXPERIMENT  = 2,
+	       SCREENING_EXPERIMENT = 3} run_mode_type;
 
 
 typedef enum { lock_lockf = 1,
@@ -143,13 +143,13 @@ typedef enum { lock_lockf = 1,
 
 
 typedef enum {
-  enkf_standard = 10,
-  enkf_sqrt     = 20
+  ENKF_STANDARD = 10,
+  ENKF_SQRT     = 20
 } enkf_mode_type ;
 	       
 
 typedef enum {
-  eigen_SS_N1_R = 1,
+  EIGEN_SS_N1_R = 1,
   SVD_SS_N1_R   = 2,
   SVD_SS_EE     = 3
 } pseudo_inversion_type ;
@@ -167,9 +167,9 @@ typedef enum {
 */
 
 typedef enum {
-  all_active 	= 1,       /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
-  inactive   	= 2,       /* Fully inactive */
-  partly_active = 3        /* Partly active - must supply additonal type spesific information on what is active.*/
+  ALL_ACTIVE 	= 1,       /* The variable/observation is fully active, i.e. all cells/all faults/all .. */
+  INACTIVE   	= 2,       /* Fully inactive */
+  PARTLY_ACTIVE = 3        /* Partly active - must supply additonal type spesific information on what is active.*/
 } active_mode_type; 
 
 

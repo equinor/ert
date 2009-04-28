@@ -102,8 +102,8 @@ enkf_impl_type enkf_types_check_impl_type(const char * impl_type_string) {
 void enkf_types_set_truncate_min(truncation_type * __trunc) {
   truncation_type trunc = *__trunc;
 
-  if (!(trunc & truncate_min))
-    trunc += truncate_min;
+  if (!(trunc & TRUNCATE_MIN))
+    trunc += TRUNCATE_MIN;
 
   *__trunc = trunc;
 }
@@ -112,8 +112,8 @@ void enkf_types_set_truncate_min(truncation_type * __trunc) {
 void enkf_types_set_truncate_max(truncation_type * __trunc) {
   truncation_type trunc = *__trunc;
 
-  if (!(trunc & truncate_max))
-    trunc += truncate_max;
+  if (!(trunc & TRUNCATE_MAX))
+    trunc += TRUNCATE_MAX;
 
   *__trunc = trunc;
 }

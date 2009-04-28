@@ -325,11 +325,11 @@ void gen_data_config_get_template_data( const gen_data_config_type * config ,
 void gen_data_config_activate(gen_data_config_type * config , active_mode_type active_mode , void * active_config) {
   gen_data_active_type * active = gen_data_active_safe_cast( active_config );
 
-  if (active_mode == all_active)
+  if (active_mode == ALL_ACTIVE)
     active_list_set_all_active(config->active_list);
   else {
     active_list_reset(config->active_list);
-    if (active_mode == partly_active) 
+    if (active_mode == PARTLY_ACTIVE) 
       gen_data_active_update_active_list( active , config->active_list);
   }
     

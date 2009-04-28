@@ -4,6 +4,7 @@
 #include <util.h>
 #include <path_fmt.h>
 #include <fs_types.h>
+#include <buffer.h>
 #include <basic_driver.h>
 #include <plain_driver.h>
 #include <plain_driver_index.h>
@@ -44,6 +45,7 @@ struct plain_driver_struct {
 };
 
 
+
 static void plain_driver_assert_cast(plain_driver_type * plain_driver) {
   if (plain_driver->plain_driver_id != PLAIN_DRIVER_ID) 
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
@@ -57,32 +59,8 @@ static plain_driver_type * plain_driver_safe_cast( void * __driver) {
 }
 
 
-/**
-   The convention is that if we ask for the analyzed, we get the
-   report step according to input, if we ask for the forecast the
-   report step is set one back.
 
-   This means that the function will fail hard if we ask for the
-   forecast at report_step == 0 - which is maybe fair enough.
-*/
-
-static int __get_report_step(int report_step , state_enum state) {
-  if (state == analyzed)
-    return report_step;
-  else if (state == forecast) {
-    if (report_step == 0) 
-      return 0;  /* Time step zero is special - we do not differentiate between forecast and analyzed. */
-    else
-      return report_step - 1;
-  } else {
-    util_abort("%s state:%d - internal error - aborting \n",__func__ , state);
-    return -1;  /* Shut up the compiler */
-  }
-}
-
-
-void plain_driver_load_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
-  int report_step = __get_report_step(_report_step , state);
+void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = plain_driver_safe_cast( _driver );
   {
     char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
@@ -90,6 +68,15 @@ void plain_driver_load_node(void * _driver , int _report_step , int iens , state
     
     enkf_node_fread(node , stream , report_step, iens , state);
     fclose(stream);
+
+    /*
+      {
+      buffer_type * buffer = buffer_fread_alloc( filename );
+      printf("Have loaded buffer from file:%s  \n",filename);
+      free( buffer );
+      }
+    */
+    
     free(filename);
   }
 }
@@ -101,8 +88,7 @@ void plain_driver_load_node(void * _driver , int _report_step , int iens , state
    turned out be a quite massive performance hit by using lockf().
 */
 
-void plain_driver_save_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
-  int report_step = __get_report_step(_report_step , state);
+void plain_driver_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -114,6 +100,7 @@ void plain_driver_save_node(void * _driver , int _report_step , int iens , state
       data_written 	= enkf_node_fwrite(node , stream , internal_state , report_step , iens , state);
       fclose(stream);
     }
+
     if (!data_written) 
       unlink(filename);  /* The file is empty */
     free(filename);
@@ -121,8 +108,7 @@ void plain_driver_save_node(void * _driver , int _report_step , int iens , state
 }
 
 
-void plain_driver_unlink_node(void * _driver , int _report_step , int iens , state_enum state , enkf_node_type * node) {
-  int report_step = __get_report_step(_report_step , state);
+void plain_driver_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -144,8 +130,7 @@ void plain_driver_unlink_node(void * _driver , int _report_step , int iens , sta
      instead return false if the report_step we ask for is not present.
 */
 
-bool plain_driver_has_node(void * _driver , int _report_step , int iens , state_enum state , const char * key) {
-  int report_step = __get_report_step(_report_step , state);
+bool plain_driver_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {

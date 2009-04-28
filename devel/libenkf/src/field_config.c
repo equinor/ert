@@ -363,7 +363,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
 
-  config->truncation               = truncate_none;
+  config->truncation               = TRUNCATE_NONE;
   config->__enkf_mode              = true;
   config->fmt_file    	      	   = false;
   config->endian_swap 	      	   = true;
@@ -396,7 +396,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	double min_value;
 	if (util_sscanf_double( value , &min_value)) {
 	  config->min_value  = min_value;
-	  util_bitmask_on( &config->truncation , truncate_min );
+	  util_bitmask_on( &config->truncation , TRUNCATE_MIN );
 	} else
 	  fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid minimum value - ignored \n",value);
 	option_OK = true;
@@ -406,7 +406,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	double max_value;
 	if (util_sscanf_double( value , &max_value)) {
 	  config->max_value  = max_value;
-	  util_bitmask_on( &config->truncation , truncate_max );
+	  util_bitmask_on( &config->truncation , TRUNCATE_MAX );
 	} else
 	  fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid maximum value - ignored \n",value);
 	option_OK = true;
@@ -908,11 +908,11 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
   field_active_type * active = field_active_safe_cast( active_config );
 
-  if (active_mode == all_active)
+  if (active_mode == ALL_ACTIVE)
     active_list_set_all_active(config->active_list);
   else {
     active_list_reset(config->active_list);
-    if (active_mode == partly_active)
+    if (active_mode == PARTLY_ACTIVE)
       field_active_update_active_list( active , config->active_list);
   }
 }
