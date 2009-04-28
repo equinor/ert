@@ -33,6 +33,9 @@ static int get_fixed_record_length(const char * kw_name)
    if( strcmp(kw_name, "TUNING"  ) == 0) { return  3;}
    if( strcmp(kw_name, "WHISTCTL") == 0) { return  1;}
    if( strcmp(kw_name, "TIME"    ) == 0) { return  1;}
+   if( strcmp(kw_name, "VAPPARS" ) == 0) { return  1;}
+   if( strcmp(kw_name, "NETBALAN") == 0) { return  1;}
+   if( strcmp(kw_name, "WPAVE"   ) == 0) { return  1;}
     
    return -1;
 }
