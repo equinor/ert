@@ -15,7 +15,8 @@
 #define SUMMARY_CONFIG_TYPE_ID 63106
 
 struct summary_config_struct {
-  CONFIG_STD_FIELDS;
+  int                   __type_id;
+  int                   data_size;
   ecl_smspec_var_type   var_type;    /* The type of the variable - according to ecl_summary nomenclature. */
   char * var;                        /* This is ONE variable of summary.x format - i.e. WOPR:OP_2, RPR:4, ... */
   active_list_type * active_list;    /* overkill with a list here but ... */ 
@@ -38,7 +39,7 @@ ecl_smspec_var_type summary_config_get_var_type(const summary_config_type * conf
 
 
 summary_config_type * summary_config_alloc(const char * var) {
-  summary_config_type * config = malloc(sizeof *config);
+  summary_config_type * config = util_malloc(sizeof *config , __func__);
   config->data_size   	  = 1;
   config->active_list     = active_list_alloc(1);
   config->var             = util_alloc_string_copy( var );
@@ -62,6 +63,11 @@ void summary_config_free(summary_config_type * config) {
   free(config);
 }
 
+
+
+int summary_config_get_byte_size(const summary_config_type * config) {
+  return config->data_size * sizeof(double);
+}
 
 
 

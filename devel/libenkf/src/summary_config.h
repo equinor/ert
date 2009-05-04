@@ -23,6 +23,7 @@ void                   summary_config_add_var(summary_config_type *  , const cha
 bool                   summary_config_has_var(const summary_config_type * , const char * );
 void                   summary_config_summarize(const summary_config_type * );
 void                   summary_config_add_obs_key(summary_config_type * , const char * );
+int                    summary_config_get_byte_size(const summary_config_type * );
 
 SAFE_CAST_HEADER(summary_config);
 GET_ACTIVE_LIST_HEADER(summary);

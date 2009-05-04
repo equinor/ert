@@ -8,7 +8,7 @@ extern "C" {
 #include <stdbool.h>
 #include <enkf_types.h>
 #include <ecl_util.h>
-
+#include <buffer.h>
 
 /*****************************************************************/
 
@@ -305,7 +305,7 @@ void 	enkf_util_rand_stdnormal_vector(int  , double *);
 double 	enkf_util_rand_normal(double , double );
 void   	enkf_util_fread_assert_target_type(FILE * , enkf_impl_type);
 void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
-void    enkf_util_fread_assert_target_type_from_buffer(char ** , enkf_impl_type );
+void    enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type);
 
 char  * enkf_util_scanf_alloc_filename(const char * , int );
 void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , bool , FILE * stream);

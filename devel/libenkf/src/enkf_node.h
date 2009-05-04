@@ -14,6 +14,7 @@ extern "C" {
 #include <ecl_sum.h>
 #include <fortio.h>
 #include <enkf_serialize.h>
+#include <buffer.h>
 
 /**********************************/
 
@@ -45,6 +46,9 @@ typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node objec
 						 const char *  ,   /* Directory to write to. */
                                                  const char *  ,   /* Filename - can be NULL. */
                                                  fortio_type *);   /* fortio inistance for writing elements in restart files. */
+
+typedef void   	      (load_ftype)                	(      void *  , buffer_type *);
+typedef bool   	      (store_ftype)                	(const void *  , buffer_type * , bool);
 
 
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
@@ -112,6 +116,9 @@ int              enkf_node_serialize(enkf_node_type * , size_t , serial_vector_t
 void             enkf_node_clear     (enkf_node_type *);
 void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int , state_enum);
 void             enkf_node_ensemble_fprintf_results(const enkf_node_type ** , int , int , const char * );
+
+void             enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state);
+bool             enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state);
 
 void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );

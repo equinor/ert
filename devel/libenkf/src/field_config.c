@@ -489,7 +489,7 @@ void field_config_set_all_active(field_config_type * field) {
 
 
 inline int field_config_active_index(const field_config_type * config , int i , int j , int k) {
-  return ecl_grid_get_active_index( config->grid , i,j,k);
+  return ecl_grid_get_active_index3( config->grid , i,j,k);
 }
 
 

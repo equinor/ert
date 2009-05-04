@@ -43,6 +43,9 @@ VOID_ALLOC_HEADER(multflt);
 VOID_REALLOC_DATA_HEADER(multflt);
 ALLOC_STATS_HEADER(multflt);
 VOID_FPRINTF_RESULTS_HEADER(multflt)
+VOID_STORE_HEADER(multflt)
+VOID_LOAD_HEADER(multflt)
+
 
 #ifdef __cplusplus
 }

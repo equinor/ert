@@ -127,6 +127,20 @@ void multflt_fread(multflt_type * multflt , FILE * stream) {
 }
 
 
+bool multflt_store(const multflt_type *multflt , buffer_type * buffer,  bool internal_state) {
+  buffer_fwrite_int( buffer , MULTFLT );
+  scalar_buffer_fsave(multflt->scalar , buffer , internal_state);
+  return true;
+}
+
+
+void multflt_load(multflt_type * multflt , buffer_type * buffer) {
+  enkf_util_assert_buffer_type( buffer , MULTFLT);
+  scalar_buffer_fload( multflt->scalar , buffer);
+}
+
+
+
 
 void multflt_truncate(multflt_type * multflt) {
   scalar_truncate( multflt->scalar );  
@@ -286,3 +300,5 @@ VOID_REALLOC_DATA(multflt)
 ALLOC_STATS_SCALAR(multflt)
 VOID_FPRINTF_RESULTS(multflt)
 VOID_USER_GET(multflt)
+VOID_STORE(multflt)
+VOID_LOAD(multflt)

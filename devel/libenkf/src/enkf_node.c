@@ -15,6 +15,7 @@
 #include <enkf_serialize.h>
 #include <havana_fault.h>
 #include <multflt.h>
+#include <buffer.h>
 
 /**
    A small illustration (says more than thousand words ...) of how the
@@ -178,7 +179,9 @@ struct enkf_node_struct {
   deserialize_ftype   *deserialize;
   set_data_ftype      *set_data;
   
-
+  load_ftype          *load;
+  store_ftype         *store;
+  
   initialize_ftype   		 * initialize;
   free_ftype         		 * freef;
   clear_ftype        		 * clear;
@@ -399,6 +402,23 @@ void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * 
 
 
 
+bool enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state) {
+  if (!enkf_node->__memory_allocated)
+    util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
+  {
+    bool data_written = false;
+    FUNC_ASSERT(enkf_node->store);
+    data_written = enkf_node->store(enkf_node->data , buffer , internal_state);
+    
+    enkf_node->__report_step = report_step;
+    enkf_node->__state       = state;
+    enkf_node->__modified    = false;
+    enkf_node->__iens        = iens;
+    return data_written;
+  }
+}
+
+
 
 /**
    Returns true if data is written to disk. If no data is written to
@@ -467,6 +487,25 @@ static void enkf_node_assert_memory(const enkf_node_type * enkf_node , const cha
     util_abort("%s:  tried to call:%s without allocated memory for node:%s - internal ERROR - aborting.\n",__func__ , caller , enkf_node->node_key);
   }
 }
+
+
+
+void enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state) {
+  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified))
+    return;  /* The in memory representation agrees with the buffer values */
+  
+  {
+    FUNC_ASSERT(enkf_node->load);
+    enkf_node_ensure_memory(enkf_node);
+    enkf_node->load(enkf_node->data , buffer);
+    enkf_node->__modified    = false;
+    enkf_node->__report_step = report_step;
+    enkf_node->__state       = state;
+    enkf_node->__iens        = iens;
+  }
+}
+
+
 
 
 void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step , int iens , state_enum state) {
@@ -638,6 +677,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->fprintf_results	= NULL;
   node->user_get       	= NULL;
   node->set_data        = NULL;
+  node->load            = NULL;
+  node->store           = NULL;
 
   switch (impl_type) {
   case(HAVANA_FAULT):
@@ -654,6 +695,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->free_data    	  = havana_fault_free_data__;
     node->fprintf_results = havana_fault_ensemble_fprintf_results__;
     node->user_get        = havana_fault_user_get__; 
+    node->load            = havana_fault_load__;
+    node->store           = havana_fault_store__;
     break;
   case(GEN_KW):
     node->realloc_data 	  = gen_kw_realloc_data__;
@@ -669,6 +712,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->free_data    	  = gen_kw_free_data__;
     node->fprintf_results = gen_kw_ensemble_fprintf_results__;
     node->user_get        = gen_kw_user_get__; 
+    node->store           = gen_kw_store__;
+    node->load            = gen_kw_load__;
     break;
   case(MULTFLT):
     node->realloc_data 	  = multflt_realloc_data__;
@@ -684,6 +729,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->free_data    	  = multflt_free_data__;
     node->fprintf_results = multflt_ensemble_fprintf_results__;
     node->user_get        = multflt_user_get__; 
+    node->load            = multflt_load__;
+    node->store           = multflt_store__;
     break;
   case(SUMMARY):
     node->ecl_load        = summary_ecl_load__;
@@ -698,6 +745,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->free_data       = summary_free_data__;
     node->user_get        = summary_user_get__; 
     node->fprintf_results = summary_ensemble_fprintf_results__;
+    node->load            = summary_load__;
+    node->store           = summary_store__;
     break;
   case(FIELD):
     node->realloc_data = field_realloc_data__;
@@ -713,6 +762,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->freef        = field_free__;
     node->free_data    = field_free_data__;
     node->user_get     = field_user_get__;
+    node->load         = field_load__;
+    node->store        = field_store__;
     break;
   case(STATIC):
     node->realloc_data = ecl_static_kw_realloc_data__;
@@ -723,6 +774,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->copyc        = ecl_static_kw_copyc__;
     node->freef        = ecl_static_kw_free__;
     node->free_data    = ecl_static_kw_free_data__;
+    node->load         = ecl_static_kw_load__;
+    node->store        = ecl_static_kw_store__;
     break;
   case(GEN_DATA):
     node->realloc_data = gen_data_realloc_data__;
@@ -738,6 +791,8 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->serialize    = gen_data_serialize__;
     node->deserialize  = gen_data_deserialize__;
     node->user_get     = gen_data_user_get__;
+    node->load         = gen_data_load__;
+    node->store        = gen_data_store__;
     break;
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);

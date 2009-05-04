@@ -23,7 +23,14 @@
 
 
 #define FS_MAGIC_ID         123998L
+
+#ifdef __EXPERIMENTAL__
+#define CURRENT_FS_VERSION  103
+#else
 #define CURRENT_FS_VERSION  102
+#endif
+
+
 
 /**
    Version history:
@@ -34,8 +41,8 @@
    File system version            | First svn version     |  Last svn version
    --------------------------------------------------------------------------
    100                            |                       |  1799
-   101                            |   1810                |  
-   102                            |   
+   101                            |   1810                |  1886
+   102                            |   1887/1902           | 
    --------------------------------------------------------------------------
 
 
@@ -66,6 +73,7 @@
    The upgrade from 101 only involves the mount info and the
    implementation, the actual stored files are not touched by this
    upgrade.
+
 
 
 */
@@ -237,18 +245,10 @@ struct enkf_fs_struct {
   basic_driver_type         * dynamic_write_forecast;
   basic_driver_type         * dynamic_read_analyzed;
   basic_driver_type         * dynamic_write_analyzed;
-
-  //basic_driver_type         * dynamic_read;          /* Implements functions for read/write of dynamic data. */
-  //basic_driver_type         * dynamic_write;         /* Implements functions for read/write of dynamic data. */
-
   basic_driver_type  	    * parameter_read;        /* Implements functions for read/write of parameters. */
   basic_driver_type  	    * parameter_write;       /* Implements functions for read/write of parameters. */
-  
-  //basic_driver_static_type  * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
-  //basic_driver_static_type  * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
-
-  basic_driver_type  * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
-  basic_driver_type  * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  basic_driver_type  	    * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  basic_driver_type  	    * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
 
   basic_driver_index_type   * index_read;
   basic_driver_index_type   * index_write;

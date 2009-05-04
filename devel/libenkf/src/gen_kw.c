@@ -86,12 +86,12 @@ bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream, bool internal_stat
 }
 
 
-bool gen_kw_fsave(const gen_kw_type *gen_kw , buffer_type * buffer,  bool internal_state) {
+
+bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  bool internal_state) {
   buffer_fwrite_int( buffer , GEN_KW );
   scalar_buffer_fsave(gen_kw->scalar , buffer , internal_state);
   return true;
 }
-
 
 
 
@@ -110,7 +110,7 @@ void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {
 }
 
 
-void gen_kw_fload(gen_kw_type * gen_kw , buffer_type * buffer) {
+void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer) {
   enkf_impl_type file_type;
   file_type = buffer_fread_int(buffer);
   if ((file_type == GEN_KW) || (file_type == MULTFLT))
@@ -263,3 +263,5 @@ VOID_FREE   (gen_kw)
 VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)
 VOID_FPRINTF_RESULTS(gen_kw)
+VOID_STORE(gen_kw)
+VOID_LOAD(gen_kw)

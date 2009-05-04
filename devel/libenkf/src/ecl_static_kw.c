@@ -4,7 +4,7 @@
 #include <ecl_kw.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
-
+#include <buffer.h>
 
 
 struct ecl_static_kw_struct {
@@ -82,7 +82,24 @@ bool ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stre
 
 
 
+void ecl_static_kw_load(ecl_static_kw_type * ecl_static_kw , buffer_type * buffer) {
+  enkf_util_assert_buffer_type( buffer , STATIC );
+  if (ecl_static_kw->ecl_kw != NULL)
+    util_abort("%s: internal error: trying to assign ecl_kw to ecl_static_kw which is already set.\n",__func__);
+  ecl_static_kw->ecl_kw = ecl_kw_buffer_alloc( buffer );
+}
+
+
+bool ecl_static_kw_store(const ecl_static_kw_type * ecl_static_kw , buffer_type * buffer, bool internal_state) {
+  buffer_fwrite_int( buffer , STATIC );
+  ecl_kw_buffer_store( ecl_static_kw->ecl_kw , buffer);
+  return true;
+}
+
+
+
 /**
+
 This is a pure dummy, memory is handled differently for this object
 type:
 
@@ -108,3 +125,5 @@ VOID_ECL_WRITE (ecl_static_kw)
 VOID_FREAD  (ecl_static_kw)
 VOID_COPYC(ecl_static_kw)
 VOID_REALLOC_DATA(ecl_static_kw)
+VOID_LOAD(ecl_static_kw)
+VOID_STORE(ecl_static_kw)

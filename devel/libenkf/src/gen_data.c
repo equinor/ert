@@ -128,6 +128,30 @@ bool gen_data_fwrite(const gen_data_type * gen_data , FILE * stream , bool inter
 }
 
 
+bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , bool internal_state) {
+  const bool write_zero_size = true; /* true:ALWAYS write a file   false:only write files with size > 0. */
+  {
+    bool write      = write_zero_size;
+    int size        = gen_data_config_get_data_size(gen_data->config);
+    int report_step = gen_data_config_get_report_step(gen_data->config); 
+    if (size > 0) 
+      write = true;
+
+    if (write) {
+      int byte_size = gen_data_config_get_byte_size(gen_data->config);
+      
+      buffer_fwrite_int( buffer , GEN_DATA );
+      buffer_fwrite_int( buffer , size );
+      buffer_fwrite_int( buffer , report_step);
+      buffer_fwrite_compressed( buffer , gen_data->data , byte_size);
+      buffer_summarize( buffer );
+      return true;
+    } else
+      return false;   /* When false is returned - the (empty) file will be removed */
+  }
+}
+
+
 /* 
    Observe that this function manipulates memory directly. This should
    ideally be left to the enkf_node layer, but for this type the data
@@ -142,6 +166,26 @@ void gen_data_fread(gen_data_type * gen_data , FILE * stream) {
   report_step = util_fread_int(stream);
   util_safe_free(gen_data->data);
   gen_data->data = util_fread_alloc_compressed(stream);
+  gen_data_config_assert_size(gen_data->config , size , report_step);
+}
+
+
+
+void gen_data_load(gen_data_type * gen_data , buffer_type * buffer) {
+  int size;
+  int report_step;
+
+  enkf_util_assert_buffer_type(buffer , GEN_DATA);
+  size           = buffer_fread_int(buffer);
+  report_step    = buffer_fread_int(buffer);
+  {
+    size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
+    size_t compressed_size = buffer_get_remaining_size( buffer ); 
+    gen_data->data         = util_realloc( gen_data->data , byte_size , __func__);
+    printf("%s: compressed_size: %d \n",__func__ , compressed_size );
+    buffer_summarize( buffer );
+    buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size);
+  }
   gen_data_config_assert_size(gen_data->config , size , report_step);
 }
 
@@ -413,4 +457,5 @@ VOID_DESERIALIZE(gen_data)
 VOID_INITIALIZE(gen_data)
 VOID_ECL_WRITE(gen_data)
 VOID_ECL_LOAD(gen_data)
-
+VOID_LOAD(gen_data);
+VOID_STORE(gen_data);

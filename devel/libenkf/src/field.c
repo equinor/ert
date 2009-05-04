@@ -16,6 +16,7 @@
 #include <rms_util.h>
 #include <fortio.h>
 #include <enkf_serialize.h>
+#include <buffer.h>
 
 
 
@@ -344,27 +345,11 @@ void field_fread(field_type * field , FILE * stream) {
 }
 
 
-void field_set_data(field_type * field , const void * data) {
-  char * ptr = (char *) data;
-  
-  int  data_size , sizeof_ctype;
-  bool read_compressed;
-  enkf_util_fread_assert_target_type_from_buffer(&ptr , FIELD );
-
-  util_fread_from_buffer(&data_size        , sizeof  data_size        , 1 , &ptr);
-  util_fread_from_buffer(&sizeof_ctype 	   , sizeof  sizeof_ctype     , 1 , &ptr);
-  util_fread_from_buffer(&read_compressed  , sizeof  read_compressed  , 1 , &ptr);
-  
-  /*
-    if (read_compressed)
-    util_fread_compressed(field->data , stream);
-    else
-    util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
-  */
+void field_load(field_type * field , buffer_type * buffer) {
+  int byte_size = field_config_get_byte_size( field->config );
+  enkf_util_assert_buffer_type(buffer , FIELD);
+  buffer_fread_compressed(buffer , buffer_get_remaining_size( buffer ) , field->data , byte_size);
 }
-
-
-
 
 
 static void * __field_alloc_3D_data(const field_type * field , int data_size , bool rms_index_order , ecl_type_enum ecl_type , ecl_type_enum target_type) {
@@ -510,6 +495,15 @@ bool field_fwrite(const field_type * field , FILE * stream , bool internal_state
   else
     util_fwrite(field->data    ,   sizeof_ctype , data_size , stream , __func__);
   
+  return true;
+}
+
+
+
+bool field_store(const field_type * field , buffer_type * buffer , bool internal_state) {
+  int byte_size = field_config_get_byte_size( field->config );
+  buffer_fwrite_int( buffer , FIELD );
+  buffer_fwrite_compressed( buffer , field->data , byte_size );
   return true;
 }
 
@@ -1380,7 +1374,8 @@ VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);
 VOID_CLEAR(field);
 VOID_USER_GET(field)
-
+VOID_LOAD(field)
+VOID_STORE(field)
 
 
 

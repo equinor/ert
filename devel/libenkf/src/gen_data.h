@@ -8,6 +8,7 @@ extern "C" {
 #include <ecl_sum.h>
 #include <enkf_macros.h>
 #include <ecl_file.h>
+#include <buffer.h>
 
 typedef struct gen_data_struct gen_data_type;
 
@@ -35,6 +36,8 @@ VOID_ECL_LOAD_HEADER(gen_data);
 VOID_SERIALIZE_HEADER(gen_data);
 VOID_DESERIALIZE_HEADER(gen_data);
 VOID_INITIALIZE_HEADER(gen_data);
+VOID_LOAD_HEADER(gen_data);
+VOID_STORE_HEADER(gen_data);
 
 #ifdef __cplusplus
 }

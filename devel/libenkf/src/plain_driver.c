@@ -60,6 +60,21 @@ static plain_driver_type * plain_driver_safe_cast( void * __driver) {
 
 
 
+void plain_driver_load_node_NEW(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+  plain_driver_type * driver = plain_driver_safe_cast( _driver );
+  {
+    char * filename      = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
+    buffer_type * buffer = buffer_fread_alloc( filename );
+    
+    enkf_node_load(node , buffer , report_step, iens , state);
+    
+    free(buffer);
+    free(filename);
+  }
+}
+
+
+
 void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = plain_driver_safe_cast( _driver );
   {
@@ -68,14 +83,6 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , state_
     
     enkf_node_fread(node , stream , report_step, iens , state);
     fclose(stream);
-
-    /*
-      {
-      buffer_type * buffer = buffer_fread_alloc( filename );
-      printf("Have loaded buffer from file:%s  \n",filename);
-      free( buffer );
-      }
-    */
     
     free(filename);
   }
@@ -104,6 +111,26 @@ void plain_driver_save_node(void * _driver , int report_step , int iens , state_
     if (!data_written) 
       unlink(filename);  /* The file is empty */
     free(filename);
+  }
+}
+
+
+void plain_driver_save_node_NEW(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+  plain_driver_type * driver = (plain_driver_type *) _driver;
+  plain_driver_assert_cast(driver);
+  {
+    bool   internal_state = true;
+    bool   data_written;
+    buffer_type * buffer = buffer_alloc(100);
+    data_written 	 = enkf_node_store(node , buffer , internal_state , report_step , iens , state);  /* <- Even this could (should) be done at the enkf_fs level. */
+    
+    if (data_written) {
+      char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node));
+      buffer_store( buffer , filename );
+      free(filename);
+    }
+    
+    free( buffer );
   }
 }
 
@@ -169,14 +196,26 @@ void plain_driver_select_dir(void *_driver , const char * directory) {
 
 
 
-/*
+
+
+/**
   The driver takes a copy of the path object, i.e. it can be deleted
   in the calling scope after calling plain_driver_alloc().
+
+  This is where the various function pointers are initialized.
 */
 void * plain_driver_alloc(const char * root_path , const char * fmt) {
   plain_driver_type * driver = malloc(sizeof * driver);
+
+#ifdef __EXPERIMENTAL__
+  driver->load        	= plain_driver_load_node_NEW;
+  driver->save        	= plain_driver_save_node_NEW;
+#else
   driver->load        	= plain_driver_load_node;
   driver->save        	= plain_driver_save_node;
+#endif
+
+
   driver->free_driver 	= plain_driver_free;
   driver->unlink_node 	= plain_driver_unlink_node;
   driver->has_node    	= plain_driver_has_node;
@@ -214,19 +253,3 @@ plain_driver_type * plain_driver_fread_alloc(const char * root_path , FILE * str
 }
 
 
-
-//
-//void plain_driver_fwrite_mount_info(FILE * stream) {
-//  /* The read drivers */
-//  plain_driver_fwrite_mount_info(stream , true , "%04d/mem%03d/Parameter"); 
-//  plain_driver_static_fwrite_mount_info(stream    , true , "%04d/mem%03d/Static"); 
-//  plain_driver_dynamic_fwrite_mount_info(stream   , true , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
-//  plain_driver_index_fwrite_mount_info(stream     , true , "%04d/mem%03d/INDEX");
-//
-//  
-//  /* The write drivers */
-//  plain_driver_fwrite_mount_info(stream , false , "%04d/mem%03d/Parameter"); 
-//  plain_driver_static_fwrite_mount_info(stream    , false , "%04d/mem%03d/Static"); 
-//  plain_driver_dynamic_fwrite_mount_info(stream   , false , "%04d/mem%03d/Forecast", "%04d/mem%03d/Analyzed");
-//  plain_driver_index_fwrite_mount_info(stream     , false , "%04d/mem%03d/INDEX");
-//}

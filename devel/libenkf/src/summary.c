@@ -72,6 +72,13 @@ void summary_fread(summary_type * summary , FILE * stream) {
 }
 
 
+void summary_load(summary_type * summary , buffer_type * buffer) {
+  int  size = summary_config_get_data_size( summary->config );
+  enkf_util_assert_buffer_type( buffer , SUMMARY );
+  buffer_fread( buffer , summary->data , sizeof * summary->data , size);
+}
+
+
 
 bool summary_fwrite(const summary_type * summary , FILE * stream , bool internal_state) {
   const  summary_config_type * config = summary->config;
@@ -83,6 +90,13 @@ bool summary_fwrite(const summary_type * summary , FILE * stream , bool internal
   return true;
 }
 
+
+bool summary_store(const summary_type * summary , buffer_type * buffer, bool internal_state) {
+  int  size = summary_config_get_data_size( summary->config );
+  buffer_fwrite_int( buffer , SUMMARY );
+  buffer_fwrite( buffer , summary->data , sizeof * summary->data , size);
+  return true;
+}
 
 
 void summary_free(summary_type *summary) {
@@ -191,3 +205,5 @@ VOID_DESERIALIZE(summary)
 VOID_ECL_LOAD(summary)
 VOID_USER_GET(summary)
 VOID_FPRINTF_RESULTS(summary)
+VOID_STORE(summary)
+VOID_LOAD(summary)

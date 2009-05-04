@@ -108,6 +108,24 @@ void prefix ## _fread__(void * void_arg , FILE * stream) {  \
 #define VOID_FWRITE_HEADER(prefix) bool prefix ## _fwrite__(const void * , FILE * , bool);
 #define VOID_FREAD_HEADER(prefix) void prefix ## _fread__(void * , FILE *);
 
+/*****************************************************************/
+
+#define VOID_STORE(prefix)                                        \
+bool prefix ## _store__(const void * void_arg , buffer_type * buffer , bool internal_state) {  \
+   const prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
+   return prefix ## _store(arg , buffer , internal_state);        \
+}
+
+
+#define VOID_LOAD(prefix)                                          \
+void prefix ## _load__(void * void_arg , buffer_type * buffer) {  \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );\
+   prefix ## _load(arg , buffer);                          \
+}
+
+#define VOID_STORE_HEADER(prefix) bool prefix ## _store__(const void * , buffer_type * , bool);
+#define VOID_LOAD_HEADER(prefix) void prefix ## _load__(void * , buffer_type *);
+
 
 /*****************************************************************/
 

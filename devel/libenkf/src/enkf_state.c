@@ -306,7 +306,7 @@ void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
   member_config_type * member_config = enkf_state->my_config;
   char * iens_s       	  = util_alloc_sprintf("%d"   , member_config->iens);
   char * iens4_s      	  = util_alloc_sprintf("%04d" , member_config->iens);
-  char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+  char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
   char * cwd              = util_alloc_cwd();
   
   forward_model_set_private_arg(enkf_state->forward_model ,  "IENS"        , iens_s);
@@ -453,7 +453,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   {
     char * iens_s      = util_alloc_sprintf("%d"   , iens);
     char * iens4_s     = util_alloc_sprintf("%04d" , iens);
-    char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ecl_summary_header_file , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+    char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
     char * cwd         = util_alloc_cwd();
 
     enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd); 
@@ -586,8 +586,8 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     const bool internalize_all             = model_config_internalize_results( model_config , report_step );
     const int  iens                        = my_config->iens;
     
-    char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_file        , fmt_file ,  report_step);
-    char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_summary_header_file , fmt_file , -1);
+    char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE        , fmt_file ,  report_step);
+    char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
     ecl_sum_type * summary  = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , endian_swap);
     
     /* The actual loading */
@@ -669,7 +669,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   if (unified) 
     util_abort("%s: sorry - unified restart files are not supported \n",__func__);
   {
-    char * file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , report_step);
+    char * file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_RESTART_FILE , fmt_file , report_step);
     restart_file = ecl_file_fread_alloc(file , endian_swap);
     free(file);
   }
@@ -864,7 +864,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const run_info_type      * run_info  = enkf_state->run_info;
   const bool fmt_file  		       = ecl_config_get_formatted(enkf_state->ecl_config);
   const bool endian_swap               = ecl_config_get_endian_flip(enkf_state->ecl_config);
-  char * restart_file    	       = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
+  char * restart_file    	       = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step1);
   fortio_type * fortio   	       = fortio_fopen(restart_file , "w" , endian_swap , fmt_file);
   const char * kw;
   int          ikw;
@@ -1140,7 +1140,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     util_make_path(run_info->run_path);
     {
-      char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ecl_data_file , true , -1);
+      char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ECL_DATA_FILE , true , -1);
       subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(enkf_state->ecl_config) , data_file);
     }
     
@@ -1176,8 +1176,8 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       char * step2_s 	   = util_alloc_sprintf("%d" , run_info->step2);
       char * step1_s04 	   = util_alloc_sprintf("%04d" , run_info->step1);
       char * step2_s04 	   = util_alloc_sprintf("%04d" , run_info->step2);
-      char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step1);
-      char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ecl_restart_file , fmt_file , run_info->step2);
+      char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step1);
+      char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step2);
 	
       
       enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	, step1_s);

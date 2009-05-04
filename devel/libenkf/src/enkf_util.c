@@ -74,6 +74,14 @@ void enkf_util_fread_assert_target_type(FILE * stream , enkf_impl_type target_ty
 
 }
 
+void enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type) {
+  enkf_impl_type file_type;
+  file_type = buffer_fread_int(buffer);
+  if (file_type != target_type) 
+    util_abort("%s: wrong target type in file (expected:%d  got:%d)  - aborting \n",__func__ , target_type , file_type);
+
+}
+
 
 void enkf_util_fread_assert_target_type_from_buffer(char ** ptr , enkf_impl_type target_type) {
   enkf_impl_type file_type;

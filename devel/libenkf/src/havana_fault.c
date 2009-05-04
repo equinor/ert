@@ -111,6 +111,18 @@ void havana_fault_fread(havana_fault_type * havana_fault , FILE * stream) {
 }
 
 
+void havana_fault_load(havana_fault_type * havana_fault , buffer_type * buffer) {
+  enkf_util_assert_buffer_type( buffer , HAVANA_FAULT );
+  scalar_buffer_fload( havana_fault->scalar , buffer);
+}
+
+
+bool havana_fault_store(const havana_fault_type *havana_fault , buffer_type * buffer,  bool internal_state) {
+  buffer_fwrite_int( buffer , HAVANA_FAULT );
+  scalar_buffer_fsave(havana_fault->scalar , buffer , internal_state);
+  return true;
+}
+
 
 void havana_fault_truncate(havana_fault_type * havana_fault) {
   scalar_truncate( havana_fault->scalar );  
@@ -347,6 +359,6 @@ VOID_COPYC  (havana_fault)
 VOID_FREE   (havana_fault)
 VOID_ECL_WRITE(havana_fault)
 VOID_FPRINTF_RESULTS(havana_fault)
-
-
+VOID_LOAD(havana_fault)
+VOID_STORE(havana_fault)
 

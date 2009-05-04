@@ -23,6 +23,8 @@ VOID_FREAD_HEADER(ecl_static_kw);
 VOID_COPYC_HEADER(ecl_static_kw);
 VOID_REALLOC_DATA_HEADER(ecl_static_kw);
 VOID_ECL_WRITE_HEADER(ecl_static_kw);
+VOID_LOAD_HEADER(ecl_static_kw);
+VOID_STORE_HEADER(ecl_static_kw);
 
 #ifdef __cplusplus
 }
