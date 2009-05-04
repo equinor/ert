@@ -141,7 +141,7 @@
 #define DEFAULT_PARAMETER_PATH 	      "%04d/mem%03d/Parameter"
 #define DEFAULT_STATIC_PATH    	      "%04d/mem%03d/Static"
 #define DEFAULT_DYNAMIC_FORECAST_PATH "%04d/mem%03d/Forecast"
-#define DEFAULT_DYNAMIC_ANALYZED_PATH "%04d/mem%03d/Forecast"
+#define DEFAULT_DYNAMIC_ANALYZED_PATH "%04d/mem%03d/Analyzed"
 #define DEFAULT_INDEX_PATH            "%04d/mem%03d/INDEX"
 
 
