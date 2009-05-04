@@ -827,6 +827,12 @@ double history_get_group_var(const history_type * history, int restart_nr, const
     wvar = "WWIR";
   else if(strcmp(var, "GGIR") == 0)
     wvar = "WGIR";
+  else if(strcmp(var, "GOPT") == 0)
+    wvar = "WOPT";
+  else if(strcmp(var, "GWPT") == 0)
+    wvar = "WWPT";
+  else if(strcmp(var, "GGPT") == 0)
+    wvar = "WGPT";
   else
   {
     util_abort("%s: No support for calculating group keyword %s for group %s from well keywords.\n", __func__, var, group);
