@@ -122,7 +122,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   const int errorbar_max_obsnr = 10;
   const bool add_observations = true;
   char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), user_key );
-  plot_type * plot = __plot_alloc("Simulation days","y-akse",user_key,plot_file);
+  plot_type * plot = __plot_alloc("Simulation time / Days","",user_key,plot_file);
   enkf_node_type * node;
   msg_type * msg;
   double *x , *y;
@@ -448,10 +448,12 @@ void enkf_ui_plot_all_summary(void * arg) {
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
   vector_type * sched_vector                   = enkf_ui_alloc_sched_vector( enkf_main );  
-  const int iens1        = 0;
-  const int iens2        = ensemble_config_get_size(ensemble_config) - 1;
-  const int last_report  = enkf_main_get_total_length( enkf_main );
-  const int first_report = 0;
+  int last_report                              = enkf_main_get_total_length( enkf_main );
+  const int prompt_len = 40;
+  int iens1 , iens2 , step1 , step2;   
+        
+  enkf_ui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
+  enkf_ui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
   
   {
     stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
@@ -466,7 +468,7 @@ void enkf_ui_plot_all_summary(void * arg) {
 			      key , 
 			      NULL , 
 			      sched_vector , 
-			      first_report , last_report , 
+			      step1 , step2 , 
 			      iens1 , iens2 , 
 			      both  , 
 			      plot_path , 
