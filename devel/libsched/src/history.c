@@ -213,7 +213,7 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
       insert_obs_use_h(well_list[well_nr], "WGORH", "WGOR");
       insert_obs_use_h(well_list[well_nr], "WOPTH", "WOPT");
       insert_obs_use_h(well_list[well_nr], "WGPTH", "WGPT");
-      insert_obs_use_h(well_list[well_nr], "WWPTH", "WOPT");
+      insert_obs_use_h(well_list[well_nr], "WWPTH", "WWPT");
       insert_obs_use_h(well_list[well_nr], "WWIRH", "WWIR");
       insert_obs_use_h(well_list[well_nr], "WWITH", "WWIT");
       insert_obs_use_h(well_list[well_nr], "WGIRH", "WGIR");
