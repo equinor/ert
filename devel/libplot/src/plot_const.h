@@ -87,7 +87,8 @@ typedef enum {
 #define PLOT_DEFAULT_BOX_COLOR       BLACK
 #define PLOT_DEFAULT_LABEL_COLOR     BLACK
 #define PLOT_DEFAULT_WIDTH           1024
-#define PLOT_DEFAULT_HEIGHT           768
+#define PLOT_DEFAULT_HEIGHT          768
+
 
 
 /* Here comes defaults which apply to one dataset. */
@@ -103,7 +104,7 @@ typedef enum {
 
      plot_dataset_set_symbol_size(2.0);
      
-   Which will multiplu PLOT_DEFAULT_SYMBOL_SIZE with 2.0
+   Which will multiply PLOT_DEFAULT_SYMBOL_SIZE with 2.0
 */ 
 
 
