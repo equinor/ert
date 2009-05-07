@@ -16,7 +16,7 @@
 #include <history.h>
 #include <meas_matrix.h>
 #include <enkf_state.h>  
-#include <analysis.h>
+#include <old_analysis.h>
 #include <enkf_obs.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
@@ -47,7 +47,6 @@
 #include <field_config.h>
 #include <ecl_static_kw.h>
 #include <forward_model.h>
-#include <enkf_analysis.h>
 #include "enkf_defaults.h"
 
 /**
@@ -401,7 +400,7 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
       enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
 				   (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data);
     }
-    X = analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
+    X = old_analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
     if (X != NULL) {
       /* 
 	 The number of doubles we ask for, to get the number of bytes

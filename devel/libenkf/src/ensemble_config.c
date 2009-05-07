@@ -15,7 +15,6 @@
 #include <thread_pool.h>
 #include <meas_matrix.h>
 #include <enkf_types.h>
-#include <analysis.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
 #include <gen_kw_config.h>

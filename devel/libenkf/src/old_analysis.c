@@ -48,7 +48,7 @@ subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,
 #include <meas_matrix.h>
 #include <enkf_types.h>
 #include <math.h>
-#include <analysis.h>
+#include <old_analysis.h>
 #include <config.h>
 #include <matrix.h>
 
@@ -237,7 +237,7 @@ X = |X5  X14             |
 */
 
 
-double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot , const analysis_config_type * config) {
+double * old_analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot , const analysis_config_type * config) {
   int  update_randrot_int, verbose_int;
   const char * xpath 	  = NULL;
   const double alpha 	  = config->overlap_alpha;
