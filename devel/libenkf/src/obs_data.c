@@ -43,8 +43,6 @@ Matrices: S, D, E and various internal variables.
 */
 
 
-
-
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -54,43 +52,81 @@ Matrices: S, D, E and various internal variables.
 #include <meas_matrix.h>
 #include <matrix.h>
 
+
+/* Small internal type holding one observation */
+
+typedef struct {
+  double  value;
+  double  std;
+  char   *keyword;
+} obs_data_node_type;
+
+
+static obs_data_node_type * obs_data_node_alloc( double value , double std , const char * keyword) {
+  obs_data_node_type * node = util_malloc( sizeof * node , __func__);
+  node->value   = value;
+  node->std     = std;
+  node->keyword = util_alloc_string_copy( keyword );
+  return node;
+}
+
+
+static void obs_data_node_free( obs_data_node_type * node ) {
+  util_safe_free( node->keyword );
+  free( node );
+}
+  
+
+//static void obs_data_node_free__( void * node ){
+//  obs_data_node_free( (obs_data_node_type * ) node );
+//}
+
+
+
+/*****************************************************************/
+
+
 struct obs_data_struct {
   int       total_size;     /* The number of measurements which have been added with obs_data_add. */
   int       active_size;    /* The number of the measurements which are active (some might have been deactivated). */ 
   int       alloc_size;     /* The size of the value and std buffers. */ 
   int       target_size;    /* We aim for this size of the buffers - if alloc_size is currently larger, it will shrink on reset. */ 
-  double   *value;
-  double   *std;
-  char    **keyword;
-  bool     *obs_active;     /* A map of the true|false of the currentobeservations. */ 
+
+  obs_data_node_type ** data;
+  //double   *value;
+  //double   *std;
+  //char    **keyword;
+  bool                * obs_active;     /* A map of the true|false of the current obeservations. */ 
 }; 
 
 
 static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) {
   int old_alloc_size      = obs_data->alloc_size;
   obs_data->alloc_size    = new_alloc_size;
-  obs_data->value         = util_realloc(obs_data->value         , new_alloc_size * sizeof * obs_data->value   	  , __func__);
-  obs_data->std           = util_realloc(obs_data->std           , new_alloc_size * sizeof * obs_data->std     	  , __func__);
-  obs_data->keyword       = util_realloc(obs_data->keyword       , new_alloc_size * sizeof * obs_data->keyword 	  , __func__);
+  obs_data->data          = util_realloc(obs_data->data          , new_alloc_size * sizeof * obs_data->data   	  , __func__);
+  //obs_data->value         = util_realloc(obs_data->value         , new_alloc_size * sizeof * obs_data->value   	  , __func__);
+  //obs_data->std           = util_realloc(obs_data->std           , new_alloc_size * sizeof * obs_data->std     	  , __func__);
+  //obs_data->keyword       = util_realloc(obs_data->keyword       , new_alloc_size * sizeof * obs_data->keyword 	  , __func__);
   obs_data->obs_active    = util_realloc(obs_data->obs_active    , new_alloc_size * sizeof * obs_data->obs_active    , __func__);
   {
     int i;
     for (i= old_alloc_size; i < new_alloc_size; i++)
-      obs_data->keyword[i] = NULL;
+      obs_data->data[i] = NULL;
   }
 }
-
 
 int obs_data_get_nrobs(const obs_data_type * obs_data) { return obs_data->total_size; }
 
 obs_data_type * obs_data_alloc() {
   obs_data_type * obs_data = malloc(sizeof * obs_data);
-  obs_data->target_size   = 32;
   obs_data->alloc_size    = 0;
-  obs_data->value      	  = NULL;
-  obs_data->std        	  = NULL;
-  obs_data->keyword    	  = NULL;
+  obs_data->target_size   = 0;
+  obs_data->data          = NULL;
+  //obs_data->value      	  = NULL;
+  //obs_data->std        	  = NULL;
+  //obs_data->keyword    	  = NULL;
   obs_data->obs_active    = NULL;
+  
 
   obs_data_realloc_data(obs_data , obs_data->target_size);
   obs_data_reset(obs_data);
@@ -104,6 +140,7 @@ void obs_data_reset(obs_data_type * obs_data) {
   obs_data->active_size = 0; 
   if (obs_data->alloc_size > obs_data->target_size)
     obs_data_realloc_data(obs_data , obs_data->target_size);
+
 }
 
 
@@ -112,9 +149,11 @@ void obs_data_add(obs_data_type * obs_data, double value, double std , const cha
     obs_data_realloc_data(obs_data , 2*obs_data->alloc_size + 2);
   {
     int index = obs_data->total_size;
-    obs_data->value[index]   	  = value;
-    obs_data->std[index]     	  = std;
-    obs_data->keyword[index]      = util_realloc_string_copy(obs_data->keyword[index] , kw);
+    obs_data_node_type * node = obs_data_node_alloc( value , std , kw );
+    obs_data->data[index]     = node;
+    //obs_data->value[index]   	  = value;
+    //obs_data->std[index]     	  = std;
+    //obs_data->keyword[index]      = util_realloc_string_copy(obs_data->keyword[index] , kw);
     obs_data->obs_active[index]   = true;
   }
   obs_data->total_size++;
@@ -124,10 +163,16 @@ void obs_data_add(obs_data_type * obs_data, double value, double std , const cha
 
 
 void obs_data_free(obs_data_type * obs_data) {
-  free(obs_data->value);
-  free(obs_data->std);
+  //free(obs_data->value);
+  //free(obs_data->std);
+  //util_free_stringlist(obs_data->keyword , obs_data->total_size);
+  int i;
+  for (i=0; i < obs_data->alloc_size; i++) {
+    if (obs_data->data[i] != NULL)
+      obs_data_node_free( obs_data->data[i] );
+  }
+  free(obs_data->data);
   free(obs_data->obs_active);
-  util_free_stringlist(obs_data->keyword , obs_data->total_size);
   free(obs_data);
 }
 
@@ -185,7 +230,8 @@ const int nrobs_active = obs_data->active_size;
       int iobs_active = 0;
       for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
 	if (obs_data->obs_active[iobs_total]) {
-	  matrix_imul(E , iobs_active , iens , obs_data->std[iobs_total] * sqrt(ens_size / pert_var[iobs_active]));
+	  obs_data_node_type * node = obs_data->data[iobs_total];
+	  matrix_imul(E , iobs_active , iens , node->std * sqrt(ens_size / pert_var[iobs_active]));
 	  iobs_active++;
 	}
       }
@@ -199,7 +245,7 @@ const int nrobs_active = obs_data->active_size;
 }
 
 
-static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_stride, int obs_stride) {
+double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_stride, int obs_stride) {
   const int nrobs_active = obs_data->active_size;
   const int nrobs_total  = obs_data->total_size;
   double *pert_mean , *pert_var;
@@ -243,7 +289,8 @@ static double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, i
       for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
 	if (obs_data->obs_active[iobs_total]) {
 	  int index = iens * ens_stride + iobs_active * obs_stride;
-	  E[index] *= obs_data->std[iobs_total] * sqrt(ens_size / pert_var[iobs_active]);
+	  obs_data_node_type * node = obs_data->data[iobs_total];
+	  E[index] *= node->std * sqrt(ens_size / pert_var[iobs_active]);
 	  iobs_active++;
 	}
       }
@@ -270,7 +317,8 @@ matrix_type * obs_data_allocD__(const obs_data_type * obs_data , const matrix_ty
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
       if (obs_data->obs_active[iobs_total]) {
-	matrix_iset(D , iobs_active , iens , matrix_iget(E , iobs_active , iens)  - matrix_iget(S, iobs_active , iens) + obs_data->value[iobs_total] - meanS[iobs_active]);
+	obs_data_node_type * node = obs_data->data[iobs_total];
+	matrix_iset(D , iobs_active , iens , matrix_iget(E , iobs_active , iens)  - matrix_iget(S, iobs_active , iens) + node->value - meanS[iobs_active]);
 	iobs_active++;
       }
     }
@@ -284,41 +332,30 @@ matrix_type * obs_data_allocD__(const obs_data_type * obs_data , const matrix_ty
 /**
   The D matrix 
   
-  Observe that this code assumes that the ensemble mean has *not* 
-  been subtracted from S. This is in contrast to the original
-  fortran code, where it was assumed that ensemble mean was shifted 
-  from S.
+  Observe that it is assumed that the mean has been shifted away from
+  S.
 */
-double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , const double * S , const double * meanS , bool returnE , double **_E) {
+double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , const double * E , const double * S , const double * meanS) {
   const int nrobs_active = obs_data->active_size;
   const int nrobs_total  = obs_data->total_size;
   int iobs_active, iobs_total;
   int iens;
   double *D = NULL;
-  double *E = NULL;
 
 
-  E  = obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
   D  = util_malloc(nrobs_active * ens_size * sizeof * D , __func__);
-
   for  (iens = 0; iens < ens_size; iens++) {
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
       if (obs_data->obs_active[iobs_total]) {
 	int index = iens * ens_stride + iobs_active * obs_stride;
-	D[index]  = obs_data->value[iobs_total] + E[index] - S[index] - meanS[iobs_active];
+	obs_data_node_type * node = obs_data->data[iobs_total];
+	D[index] = node->value + E[index] - S[index] - meanS[iobs_active];
 	iobs_active++;
       }
     }
   }
-
-  if (returnE)
-    *_E = E;
-  else {
-    free(E);
-    *_E = NULL;
-  }
-
+  
   return D;
 }
 
@@ -343,7 +380,8 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , const double *mea
   innov = util_malloc(nrobs_active * sizeof * innov , __func__);
   for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
     if (obs_data->obs_active[iobs_total]) {
-      innov[iobs_active] = obs_data->value[iobs_total] - meanS[iobs_active];
+      obs_data_node_type * node = obs_data->data[iobs_total];
+      innov[iobs_active] = node->value - meanS[iobs_active];
       iobs_active++;
     }
   }
@@ -359,9 +397,10 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , const double *mea
 */
 static void obs_data_deactivate_obs(obs_data_type * obs_data , int iobs,const char * msg) {
   if (obs_data->obs_active[iobs]) {
+    obs_data_node_type * node = obs_data->data[iobs];
     obs_data->obs_active[iobs] = false;
     obs_data->active_size--;
-    printf("Deactivating:%s : %s \n",obs_data->keyword[iobs] , msg);
+    printf("Deactivating:%s : %s \n",node->keyword , msg);
   }
 }
 
@@ -396,7 +435,8 @@ void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * inno
       */
       obs_data_deactivate_obs(obs_data , iobs , "No ensemble variation");
     else {
-      if (fabs( innov[iobs] ) > alpha * (ens_std[iobs] + obs_data->std[iobs])) 
+      obs_data_node_type * node = obs_data->data[iobs];
+      if (fabs( innov[iobs] ) > alpha * (ens_std[iobs] + node->std))
 	/* OK - this is an outlier ... */
 	obs_data_deactivate_obs(obs_data , iobs , "No overlap");
     }
@@ -422,7 +462,8 @@ double * obs_data_allocR(obs_data_type * obs_data) {
 
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
       if (obs_data->obs_active[iobs_total]) {
-	double std = obs_data->std[iobs_total];
+	obs_data_node_type * node = obs_data->data[iobs_total];
+	double std = node->std;
 	R[iobs_active * (nrobs_active + 1)] = std * std;
 	iobs_active++;
       }
@@ -446,7 +487,8 @@ matrix_type * obs_data_allocR__(obs_data_type * obs_data) {
 
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
       if (obs_data->obs_active[iobs_total]) {
-	double std = obs_data->std[iobs_total];
+	obs_data_node_type * node = obs_data->data[iobs_total];
+	double std = node->std;
 	matrix_iset(R , iobs_active , iobs_active , std * std);
 	iobs_active++;
       }
@@ -469,7 +511,8 @@ void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_strid
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
       if (obs_data->obs_active[iobs_total]) {
-	scale_factor[iobs_active] = 1.0 / obs_data->std[iobs_total];
+	obs_data_node_type * node = obs_data->data[iobs_total];
+	scale_factor[iobs_active] = 1.0 / node->std;
 	iobs_active++;
       }
     }
@@ -510,7 +553,8 @@ void obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_t
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
       if (obs_data->obs_active[iobs_total]) {
-	scale_factor[iobs_active] = 1.0 / obs_data->std[iobs_total];
+	obs_data_node_type * node = obs_data->data[iobs_total];
+	scale_factor[iobs_active] = 1.0 / node->std;
 	iobs_active++;
       }
     }
@@ -545,7 +589,8 @@ void obs_data_fprintf(const obs_data_type * obs_data , FILE * stream, const doub
   fprintf(stream , "|                          Observed history                             |         Simulated data          |\n");  
   fprintf(stream , "|-----------------------------------------------------------------------|---------------------------------|\n");
   for (iobs = 0; iobs < obs_data->total_size; iobs++) {
-    fprintf(stream , "| %-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , obs_data->keyword[iobs] , obs_data->value[iobs] , obs_data->std[iobs]);
+    obs_data_node_type * node = obs_data->data[iobs];
+    fprintf(stream , "| %-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , node->keyword , node->value , node->std);
     if (obs_data->obs_active[iobs])
       fprintf(stream , "   Active    |");
     else

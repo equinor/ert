@@ -26,6 +26,7 @@ const char         	  * gen_kw_config_get_tagged_name(const gen_kw_config_type *
 char               	 ** gen_kw_config_get_name_list(const gen_kw_config_type *);
 const scalar_config_type  * gen_kw_config_get_scalar_config(const gen_kw_config_type * );
 int                         gen_kw_config_get_index(const gen_kw_config_type *  , const char * );
+char                      * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , const char * key , int kw_nr);
 
 SAFE_CAST_HEADER(gen_kw_config);
 VOID_FREE_HEADER(gen_kw_config);

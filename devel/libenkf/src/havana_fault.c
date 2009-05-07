@@ -116,6 +116,25 @@ void havana_fault_load(havana_fault_type * havana_fault , buffer_type * buffer) 
   scalar_buffer_fload( havana_fault->scalar , buffer);
 }
 
+void havana_fault_upgrade_103(const char * filename) {
+  FILE * stream            = util_fopen( filename , "r");
+  enkf_impl_type impl_type = util_fread_int( stream );
+  int size                 = util_fread_int( stream );
+  double * data            = util_malloc( size * sizeof * data , __func__ ); 
+  util_fread( data , sizeof * data , size , stream , __func__);
+  fclose( stream );
+  {
+    buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_int( buffer , impl_type );
+    buffer_fwrite(buffer , data , sizeof * data    ,size);
+    buffer_store( buffer , filename);
+    buffer_free( buffer );
+  }
+  free( data );
+}
+
+
+
 
 bool havana_fault_store(const havana_fault_type *havana_fault , buffer_type * buffer,  bool internal_state) {
   buffer_fwrite_int( buffer , HAVANA_FAULT );

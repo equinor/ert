@@ -401,7 +401,6 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
       enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
 				   (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data);
     }
-    printf("Skal allokere X \n");
     X = analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
     if (X != NULL) {
       /* 
@@ -507,7 +506,6 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
     pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      */
     job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
     arg_pack_free( queue_args );
-    enkf_main_del_unused_static( enkf_main , step2 );
   }
     
   {
@@ -551,6 +549,10 @@ void enkf_main_set_field_config_iactive(const ensemble_config_type * ensemble_co
 
 const char * enkf_main_get_image_viewer(const enkf_main_type * enkf_main) {
   return site_config_get_image_viewer(enkf_main->site_config);
+}
+
+const char * enkf_main_get_image_type(const enkf_main_type * enkf_main) {
+  return site_config_get_image_type(enkf_main->site_config);
 }
 
 
@@ -779,6 +781,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "IMAGE_VIEWER" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
+    item = config_add_item(config , "IMAGE_TYPE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
+    config_set_arg(config , "IMAGE_TYPE" , 1 , (const char *[1]) { DEFAULT_IMAGE_TYPE });
+
+    item = config_add_item(config , "PLOT_PATH" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_set_arg(config , "PLOT_PATH" , 1 , (const char *[1]) { DEFAULT_PLOT_PATH });
+
     
     item = config_add_item(config , "INSTALL_JOB" , true , true);
     config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
@@ -868,10 +879,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     }
     config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
     
-    item = config_add_item(config , "PLOT_PATH" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_set_arg(config , "PLOT_PATH" , 1 , (const char *[1]) { DEFAULT_PLOT_PATH });
-
+    
     /*****************************************************************/
     /* Keywords for the analysis - all optional. */
     item = config_add_item(config , "ENKF_MODE" , true , false);
@@ -1073,27 +1081,6 @@ void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
 }
 
 
-/*
-  This function will discard all unused static nodes. 
-*/
-void enkf_main_del_unused_static(enkf_main_type * enkf_main , int report_step) {
-  //int config_size;
-  //char ** key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config , &config_size);
-  //int ikw;
-  //
-  //for (ikw=0; ikw < config_size; ikw++) {
-  //  if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key_list[ikw])) == STATIC) {
-  //    enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key_list[ikw]);
-  //    
-  //    if (enkf_node_get_impl_type(node) == STATIC) {
-  //	//ecl_static_kw_type * ecl_static_kw = enkf_node_value_ptr(node);
-  //	//if (ecl_static_kw_get_report_step(ecl_static_kw) != report_step) /* This kw has not been loaded for this report step. */
-  //	//enkf_main_del_node(enkf_main , key_list[ikw] );
-  //    }
-  //  }
-  //}
-}
-
 
 
 enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
@@ -1141,7 +1128,8 @@ enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
         dynamic_result).
 
    Observe that this cascade can result in some nodes, i.e. a rate we
-   are observing, to be marked for internalization several times - that is no problem.
+   are observing, to be marked for internalization several times -
+   that is no problem.
     
    -----
    
@@ -1163,7 +1151,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   /* Clearing old internalize flags. */
   model_config_init_internalization( enkf_main->model_config );
   ensemble_config_init_internalization( enkf_main->ensemble_config );
-
+  
   /* Internalizing the initial state. */
   model_config_set_internalize_state( enkf_main->model_config , 0);
   

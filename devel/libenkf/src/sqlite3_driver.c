@@ -5,6 +5,7 @@
 #include <util.h>
 #include <basic_driver.h>
 #include <sqlite3_driver.h>
+#include <buffer.h>
 
 /**
   THIS ID IS TEMPORARY AND SHALL BE MOVED TO fs_types.h

@@ -14,19 +14,19 @@
 struct meas_matrix_struct {
   int ens_size;
   meas_vector_type ** meas_vectors;
+  bool              * active;  
 };
 
 
 
 meas_matrix_type * meas_matrix_alloc(int ens_size) {
   meas_matrix_type * meas = malloc(sizeof * meas);
-  if (ens_size <= 0) {
-    fprintf(stderr,"%s: ens_size must be > 0 - aborting \n",__func__);
-    abort();
-  }
-  
+  if (ens_size <= 0) 
+    util_abort("%s: ens_size must be > 0 - aborting \n",__func__);
+
   meas->ens_size     = ens_size;
-  meas->meas_vectors = malloc(ens_size * sizeof * meas->meas_vectors);
+  meas->meas_vectors = util_malloc(ens_size * sizeof * meas->meas_vectors , __func__);
+  meas->active       = NULL;
   {
     int i;
     for (i = 0; i < meas->ens_size; i++)
@@ -41,6 +41,7 @@ void meas_matrix_free(meas_matrix_type * matrix) {
   for (i=0; i < matrix->ens_size; i++)
     meas_vector_free(matrix->meas_vectors[i]);
   free(matrix->meas_vectors);
+  util_safe_free( matrix->active );
   free(matrix);
 }
 
@@ -202,7 +203,7 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , 
   const int nrobs_total = meas_vector_get_nrobs(matrix->meas_vectors[0]);
   S     = util_malloc(nrobs_active * matrix->ens_size * sizeof * S     , __func__);
   meanS = util_malloc(nrobs_active *                    sizeof * meanS , __func__);
-
+  
   for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
     meanS[active_iobs] = 0;
 

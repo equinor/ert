@@ -80,6 +80,27 @@ void summary_load(summary_type * summary , buffer_type * buffer) {
 
 
 
+void summary_upgrade_103( const char * filename ) {
+  FILE * stream            = util_fopen(filename , "r");
+  enkf_impl_type impl_type = util_fread_int( stream );
+  int            size      = util_fread_int( stream );
+  double * data            = util_malloc( size * sizeof * data , __func__);
+  util_fread(data , sizeof * data , size , stream , __func__);
+  fclose(stream);
+  
+  {
+    buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_int( buffer , impl_type );
+    buffer_fwrite( buffer , data , sizeof * data , size);
+    buffer_store( buffer , filename );
+    buffer_free( buffer );
+  }
+  free( data );
+}
+
+
+
+
 bool summary_fwrite(const summary_type * summary , FILE * stream , bool internal_state) {
   const  summary_config_type * config = summary->config;
   const int data_size = summary_config_get_data_size(config);

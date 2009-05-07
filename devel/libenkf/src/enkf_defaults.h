@@ -50,6 +50,9 @@
 #define DEFAULT_ENSPATH     "storage"
 
 
+#define DEFAULT_PLOT_WIDTH   1024
+#define DEFAULT_PLOT_HEIGHT   768
+#define DEFAULT_IMAGE_TYPE   "png"
 
 /* The magic string used to signal that *ALL* static keywords should be included. */
 #define DEFAULT_ALL_STATIC_KW "__ALL__"

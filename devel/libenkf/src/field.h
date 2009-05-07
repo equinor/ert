@@ -52,6 +52,7 @@ void          field_iadd(field_type * , const field_type *);
 void          field_imul_add(field_type * , double , const field_type *);
 ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * );
 
+void          field_upgrade_103(const char * filename);
 
 SAFE_CAST_HEADER(field);
 VOID_ALLOC_HEADER(field);

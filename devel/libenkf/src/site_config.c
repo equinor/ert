@@ -25,6 +25,7 @@ struct site_config_struct {
                    	                    These jobs will be the parts of the forward model. */
   job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
   char             	* image_viewer;  /* String pointing to an executable which can show images. */
+  char                  * image_type;
 };
 
 
@@ -37,6 +38,7 @@ static site_config_type * site_config_alloc_empty() {
   site_config->joblist      = NULL;
   site_config->job_queue    = NULL;
   site_config->image_viewer = NULL;
+  site_config->image_type   = NULL;
   
   return site_config;
 }
@@ -49,6 +51,15 @@ static void site_config_set_image_viewer(site_config_type * site_config , const 
 
 const char * site_config_get_image_viewer(site_config_type * site_config) {
   return site_config->image_viewer;
+}
+
+static void site_config_set_image_type(site_config_type * site_config , const char * image_type) {
+  site_config->image_type = util_realloc_string_copy(site_config->image_type , image_type );
+}
+
+
+const char * site_config_get_image_type(site_config_type * site_config) {
+  return site_config->image_type;
 }
 
 
@@ -171,6 +182,7 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
      the calls to SETENV must come first. */
   site_config_install_job_queue(site_config , config , ens_size , use_lsf);
   site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
+  site_config_set_image_type(site_config , config_get(config , "IMAGE_TYPE"));
   return site_config;
 }
 
@@ -178,6 +190,7 @@ void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
   free(site_config->image_viewer);
+  free(site_config->image_type);
   free(site_config);
 }
 

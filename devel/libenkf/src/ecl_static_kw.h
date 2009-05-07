@@ -14,6 +14,7 @@ void                 ecl_static_kw_free(ecl_static_kw_type *ecl_static_kw);
 void                 ecl_static_kw_init(ecl_static_kw_type * , const ecl_kw_type * );
 ecl_kw_type        * ecl_static_kw_ecl_kw_ptr(const ecl_static_kw_type * );
 void               * ecl_static_kw_alloc__(const void *);
+void                 ecl_static_kw_upgrade_103( const char * filename );
 
 SAFE_CAST_HEADER(ecl_static_kw);
 VOID_FREE_HEADER(ecl_static_kw);

@@ -144,7 +144,6 @@ bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , bool
       buffer_fwrite_int( buffer , size );
       buffer_fwrite_int( buffer , report_step);
       buffer_fwrite_compressed( buffer , gen_data->data , byte_size);
-      buffer_summarize( buffer );
       return true;
     } else
       return false;   /* When false is returned - the (empty) file will be removed */
@@ -182,11 +181,30 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer) {
     size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
     size_t compressed_size = buffer_get_remaining_size( buffer ); 
     gen_data->data         = util_realloc( gen_data->data , byte_size , __func__);
-    printf("%s: compressed_size: %d \n",__func__ , compressed_size );
-    buffer_summarize( buffer );
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size);
   }
   gen_data_config_assert_size(gen_data->config , size , report_step);
+}
+
+
+void gen_data_upgrade_103(const char * filename) {
+  FILE * stream               = util_fopen(filename , "r");
+  enkf_impl_type impl_type    = util_fread_int( stream );
+  int 		 size         = util_fread_int( stream );
+  int 		 report_step  = util_fread_int( stream );
+  size_t byte_size            = util_fread_sizeof_compressed( stream );
+  void		  * data      = util_fread_alloc_compressed( stream );
+  fclose(stream);
+  {
+    buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_int( buffer , impl_type );
+    buffer_fwrite_int( buffer , size );
+    buffer_fwrite_int( buffer , report_step );
+    buffer_fwrite_compressed( buffer , data , byte_size);
+    
+    buffer_store( buffer , filename );
+    buffer_free( buffer );
+  }
 }
 
 

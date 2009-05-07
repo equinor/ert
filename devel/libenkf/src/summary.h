@@ -8,7 +8,7 @@
 typedef struct summary_struct summary_type;
 
 double    summary_get(const summary_type * );
-
+void      summary_upgrade_103( const char * filename );
 
 SAFE_CAST_HEADER(summary);
 MATH_OPS_VOID_HEADER(summary);

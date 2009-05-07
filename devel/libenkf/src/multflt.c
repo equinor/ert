@@ -140,6 +140,25 @@ void multflt_load(multflt_type * multflt , buffer_type * buffer) {
 }
 
 
+void multflt_upgrade_103(const char * filename) {
+  FILE * stream            = util_fopen( filename , "r");
+  enkf_impl_type impl_type = util_fread_int( stream );
+  int size                 = util_fread_int( stream );
+  double * data            = util_malloc( size * sizeof * data , __func__ ); 
+  util_fread( data , sizeof * data , size , stream , __func__);
+  fclose( stream );
+  
+  {
+    buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_int( buffer , impl_type );
+    buffer_fwrite(buffer , data , sizeof * data    ,size);
+    buffer_store( buffer , filename);
+    buffer_free( buffer );
+  }
+  free( data );
+  
+}
+
 
 
 void multflt_truncate(multflt_type * multflt) {
@@ -286,9 +305,11 @@ VOID_ALLOC(multflt);
 VOID_SERIALIZE (multflt);
 VOID_DESERIALIZE (multflt);
 VOID_INITIALIZE(multflt);
+
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
+
 SAFE_CAST(multflt , MULTFLT)
 VOID_FREE_DATA(multflt);
 VOID_ECL_WRITE (multflt)

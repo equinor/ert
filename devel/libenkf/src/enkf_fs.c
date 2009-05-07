@@ -20,6 +20,7 @@
 #include <plain_driver_index.h>
 #include <plain_driver.h>
 #include <stringlist.h>
+#include <arg_pack.h>
 
 
 #define FS_MAGIC_ID         123998L
@@ -245,10 +246,10 @@ struct enkf_fs_struct {
   basic_driver_type         * dynamic_write_forecast;
   basic_driver_type         * dynamic_read_analyzed;
   basic_driver_type         * dynamic_write_analyzed;
-  basic_driver_type  	    * parameter_read;        /* Implements functions for read/write of parameters. */
-  basic_driver_type  	    * parameter_write;       /* Implements functions for read/write of parameters. */
-  basic_driver_type  	    * eclipse_static_read;   /* Implements functions for read/write of static elements in ECLIPSE restart files. */
-  basic_driver_type  	    * eclipse_static_write;  /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  basic_driver_type  	    * parameter_read;          /* Implements functions for read/write of parameters. */
+  basic_driver_type  	    * parameter_write;         /* Implements functions for read/write of parameters. */
+  basic_driver_type  	    * eclipse_static_read;     /* Implements functions for read/write of static elements in ECLIPSE restart files. */
+  basic_driver_type  	    * eclipse_static_write;    /* Implements functions for read/write of static elements in ECLIPSE restart files. */
 
   basic_driver_index_type   * index_read;
   basic_driver_index_type   * index_write;
@@ -351,6 +352,98 @@ static void enkf_fs_upgrade_100(int old_version, const char * config_file, const
   util_unlink_existing( config_file );
   enkf_fs_fwrite_new_mount_map( config_file , new_dir );  /* Create new blank mount map */
 }
+
+/*****************************************************************/
+/** Function for upgrading filesystem layout from version 102 -> 103. */
+/* 
+   This is a quite extensive upgrade, touching all the files except
+   the index nodes. The upgrade involves changing from the (FILE *) based 
+   reading/writing of nodes, to an approach based on (buffer_type *).
+   
+   This upgrade is quite extensive, there is a
+   enkf_node_upgrade_file_103() function, and even special
+   xxx_upgrade_103 functions for all the node types.
+*/
+
+
+static void upgrade_file_103(const char * root_path , const char * file , void * arg) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  int   total_files        = arg_pack_iget_int( arg_pack , 0);
+  int * files              = arg_pack_iget_adress( arg_pack , 1);
+  msg_type * msg           = arg_pack_iget_ptr( arg_pack , 2 );    
+
+  enkf_impl_type impl;
+  {
+    char * filename          = util_alloc_filename( root_path , file , NULL );
+    FILE * stream       = util_fopen( filename , "r");
+    impl = util_fread_int( stream );
+    fclose(stream);
+    free(filename);
+  }
+  
+  (*files) += 1;
+  enkf_node_upgrade_file_103( root_path , file , impl , 100 * (*files) / total_files ,  msg);
+}
+
+
+
+static void file_count(const char * path, const char * file , void * arg) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  int   * file_count       = arg_pack_iget_adress( arg_pack , 0);
+  msg_type * msg           = arg_pack_iget_ptr( arg_pack , 2 );    
+  char txt[32];
+
+  (*file_count)    += 1;
+  if (((*file_count) % 100) == 0) {
+    sprintf(txt , "Counting files: %d" , *file_count);
+    msg_update(msg , txt);
+  }
+}
+
+
+
+static void enkf_fs_upgrade_103(const char * config_file , const char * root_path) {
+  printf("\n*****************************************************************\n");
+  printf("** Upgrading the enkf filesystem from version 102 to 103,      **\n");
+  printf("** this will take some time. There will be a .backup directory **\n");
+  printf("** in every directory containing the original 102 files. These **\n");
+  printf("** directories can be removed when everything is OK.           **\n");
+  printf("**                                                             **\n");       
+  printf("**   Hold on to your helmet :-)                                **\n");
+  printf("**                                                             **\n");       
+  printf("*****************************************************************\n");
+  {
+    msg_type * msg = msg_alloc("Upgrading: ");
+    int file_count__ = 0;
+    arg_pack_type * arg_pack = arg_pack_alloc();
+    msg_show( msg );
+
+    arg_pack_append_int( arg_pack , file_count__ );  
+    arg_pack_append_int( arg_pack , 0 );
+    arg_pack_append_ptr( arg_pack , msg );
+
+    util_walk_directory(root_path , file_count , arg_pack);
+    util_walk_directory(root_path , upgrade_file_103 , arg_pack);
+    msg_free( msg , true );
+    arg_pack_free( arg_pack );
+  }
+
+  /* 
+     OK - have gone through all files in the filesystems - just write
+     an updated mount map, with the version number and return.
+  */
+  {
+    buffer_type * buffer = buffer_fread_alloc( config_file );
+    buffer_fskip( buffer , sizeof( long ));            /* Skpping the FS_MAGIC_IC */
+    buffer_fwrite_int( buffer , CURRENT_FS_VERSION );  /* inplace update of the buffer */
+    buffer_store( buffer , config_file );
+    buffer_free( buffer );
+  }
+}
+
+
+
+
 
 /*****************************************************************/
 /** Function for upgrading filesystem layout from version 101 -> 102. */
@@ -888,6 +981,11 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
       version = 102;
     } 
 
+    if (version == 102) {
+      enkf_fs_upgrade_103( config_file , root_path );
+      //version = 103;
+    }
+
   }
 
   version = enkf_fs_get_fs_version( config_file );
@@ -939,7 +1037,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
 	  driver = plain_driver_fread_alloc( root_path , stream );
 	  break;
 	default:
-	  util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized \n",__func__ , fs->mount_map , driver_id);
+	  util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized. Driver nr:%d \n",__func__ , fs->mount_map , driver_id , i);
 	}
 	
 
@@ -1200,7 +1298,6 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
     {
       const char * key = enkf_node_get_key( enkf_node );
       while (!driver->has_node( driver , report_step , iens , state , key)) {
-	printf("Spinning report_step backwards .... \n");
 	report_step--;
 	if (report_step < 0)
 	  util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , key , iens);

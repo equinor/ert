@@ -710,7 +710,7 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
 */
 
 void field_config_get_ijk(const field_config_type * config , int active_index, int *i , int *j , int *k) {
-  ecl_grid_get_ijk_from_active_index(config->grid , active_index , i,j,k);
+  ecl_grid_get_ijk1A(config->grid , active_index , i,j,k);
 }
 
 

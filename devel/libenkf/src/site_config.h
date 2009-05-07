@@ -11,6 +11,7 @@ extern "C" {
 
 typedef struct site_config_struct site_config_type;
 
+const char             * site_config_get_image_type(site_config_type * site_config);
 const char             * site_config_get_image_viewer(site_config_type * site_config);
 void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);
 site_config_type       * site_config_alloc(const config_type * , int , bool *);

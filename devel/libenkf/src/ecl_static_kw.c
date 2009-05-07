@@ -82,6 +82,24 @@ bool ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stre
 
 
 
+void ecl_static_kw_upgrade_103( const char * filename ) {
+  FILE * stream  = util_fopen(filename , "r");
+  enkf_impl_type impl_type = util_fread_int( stream );
+  ecl_kw_type * ecl_kw     = ecl_kw_fread_alloc_compressed( stream );
+  fclose( stream );
+
+  {
+    buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_int( buffer , impl_type );
+    ecl_kw_buffer_store( ecl_kw , buffer );
+    
+    buffer_store( buffer , filename );
+  }
+}
+
+
+
+
 void ecl_static_kw_load(ecl_static_kw_type * ecl_static_kw , buffer_type * buffer) {
   enkf_util_assert_buffer_type( buffer , STATIC );
   if (ecl_static_kw->ecl_kw != NULL)

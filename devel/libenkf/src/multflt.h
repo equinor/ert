@@ -23,8 +23,8 @@ void             multflt_ens_write(const multflt_type * , const char *);
 void             multflt_ens_read(multflt_type * , const char *);
 void             multflt_truncate(multflt_type * );
 multflt_type   * multflt_alloc_mean(int , const multflt_type **);
-void             multflt_TEST();
 const char     * multflt_get_name(const multflt_type * , int );
+void             multflt_upgrade_103(const char * filename);
 
 
 SAFE_CAST_HEADER(multflt)

@@ -28,6 +28,7 @@ void             havana_fault_truncate(havana_fault_type * );
 havana_fault_type   *  havana_fault_alloc_mean(int , const havana_fault_type **);
 const char     * havana_fault_get_name(const havana_fault_type * , int );
 void             havana_fault_export(const havana_fault_type * , int * , char ***, double **);
+void             havana_fault_upgrade_103(const char * filename);
 
 
 SAFE_CAST_HEADER(havana_fault)

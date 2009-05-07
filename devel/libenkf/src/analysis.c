@@ -115,6 +115,29 @@ static int __C2f90_bool(bool c_bool) {
 }  
 
 
+/*****************************************************************/
+
+void analysis_X5(matrix_type * X      , 
+		 const matrix_type * R,
+		 const matrix_type * E,
+		 const matrix_type * S,
+		 const matrix_type * D, 
+		 const matrix_type * innov) {
+  
+  const int ens_size     = matrix_get_columns( S );
+  const int nrobs_active = matrix_get_rows( S );
+  
+}
+
+
+
+void analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_type * meas_matrix) {
+
+}
+
+   
+
+
 
 /*****************************************************************/
 
@@ -213,6 +236,7 @@ X = |X5  X14             |
      dimensisons nrobs x nrobs and X has dimensions nrens x nrens.
 */
 
+
 double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot , const analysis_config_type * config) {
   int  update_randrot_int, verbose_int;
   const char * xpath 	  = NULL;
@@ -222,11 +246,8 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
   bool  * active_obs;
   double *X ;
   int istep , ens_stride , obs_stride , nrobs_active;
-  bool returnE; 
   
   istep      = -1;     /* Must be <= 0 to avoid writing on xpath - which will fail. */
-  returnE    = false;  /* Mode = 13 | 23 => returnE = true */
-  returnE    = false;
 
   
   /*
@@ -253,30 +274,39 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
   {
     /*
       This code block is used deactivate measurements with:
-      * Zero ensemble variation
-      * Too large deviation between ensemble and observation
+
+       1. Zero ensemble variation
+       2. Too large deviation between ensemble and observation
 
       The variables _meanS, _stdS and _innov are computed for *ALL*
       observations, whereas the variables meanS, and innov further
       down only contain the active observations.
     */
-
+    
     double *_meanS , *_stdS , *_innov; 
     
-    printf("%s: 1 \n",__func__);
     meas_matrix_allocS_stats(meas_matrix , &_meanS , &_stdS);
-    printf("%s: 2 \n",__func__);
     _innov = obs_data_alloc_innov(obs_data , _meanS);
-    printf("%s: 3 \n",__func__);
     obs_data_deactivate_outliers(obs_data , _innov , _stdS , 1e-6 , alpha , &nrobs_active , &active_obs);
-    printf("%s: 4 \n",__func__);
     obs_data_fprintf(obs_data , stdout , _meanS , _stdS);
-    printf("**** Observations: %d -> %d \n", nrobs_total , nrobs_active);
 
     free(_innov);
     free(_meanS);
     free(_stdS);
   }
+
+  /**
+     
+     0. Deaktiver outliers.
+     1. Alloker S og <S> fra obs_data / meas_matrix   
+     2. Alloker R fra obs_data.
+     3. Allokerer E fra obs_data.
+     4. Alloker D fra obs_data , E, S og <S>. (Denne trenger egentlig selve S)
+     5. Alloker innov fra obs_data og <S>.   Etter punkt 5 kan man slippe <S>.
+     6. Skaler S,D,E,R,innov fra obs_data.
+     7. Beregn X(S,D,E,R,innov);
+  
+  */
 
 
   if (nrobs_active > 0) {
@@ -285,7 +315,7 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     double  *R , *E , *S , *D;
     
     analysis_set_stride(ens_size , nrobs_active , &ens_stride , &obs_stride);
-    S     = meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
+    S = meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
     
     /* Just a check of the matrix based routines */
     {
@@ -299,7 +329,8 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     }
     
     R 	  = obs_data_allocR(obs_data);
-    D     = obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , S , meanS , returnE , &E);
+    E     = obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);
+    D     = obs_data_allocD(obs_data , ens_size , ens_stride , obs_stride , E , S , meanS);
     innov = obs_data_alloc_innov(obs_data , meanS);
 
     obs_data_scale(obs_data , ens_size  , ens_stride , obs_stride, S , E , D , R , innov);
@@ -332,16 +363,16 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
 			E , 
 			S , 
 			D , 
-			innov , 
-			(const int *) &ens_size        	, 
-			(const int *) &nrobs_active     , 
-			(const int *) &verbose_int  	, 
-			(const double *) &truncation 	, 
-			(const int *) &mode         	,     
-			(const int *) &update_randrot_int , 
-			(const int *) &istep              , 
-			xpath);
-  
+		       innov , 
+		       (const int *) &ens_size        	, 
+		       (const int *) &nrobs_active     , 
+		       (const int *) &verbose_int  	, 
+		       (const double *) &truncation 	, 
+		       (const int *) &mode         	,     
+		       (const int *) &update_randrot_int , 
+		       (const int *) &istep              , 
+		       xpath);
+    
     if (verbose) {
       printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
       fwrite_matrix("enkf_debug_dump_X.txt", X , ens_size , ens_size , 1 , ens_size , "X" , " %8.3lg" );
@@ -362,11 +393,9 @@ double * analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type
     }
     
       
-    
-
-
+    free(E);
     free(innov);
-    free(D);  if (E != NULL) free(E);
+    free(D);  
     free(R);
     free(meanS);
     free(S);

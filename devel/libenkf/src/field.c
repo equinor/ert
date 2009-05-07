@@ -352,6 +352,33 @@ void field_load(field_type * field , buffer_type * buffer) {
 }
 
 
+void field_upgrade_103(const char * filename) {
+  FILE * stream = util_fopen(filename , "r");
+  enkf_impl_type impl_type    = util_fread_int( stream );
+  int            size         = util_fread_int( stream );
+  int            sizeof_ctype = util_fread_int( stream );
+  bool           compressed   = util_fread_bool( stream );
+  void * data                 = util_malloc( size * sizeof_ctype , __func__);
+
+  if (compressed)
+    util_fread_compressed( data , stream );
+  else
+    util_fread(data , sizeof_ctype , size , stream , __func__);
+  fclose(stream);
+  
+  
+  {
+    buffer_type * buffer = buffer_alloc(100);
+    buffer_fwrite_int( buffer , impl_type );
+    buffer_fwrite_compressed( buffer , data , size * sizeof_ctype );
+    buffer_store( buffer , filename );
+    buffer_free( buffer );
+  }
+  free( data );  
+}
+
+
+
 static void * __field_alloc_3D_data(const field_type * field , int data_size , bool rms_index_order , ecl_type_enum ecl_type , ecl_type_enum target_type) {
   void * data = util_malloc(data_size * ecl_util_get_sizeof_ctype(target_type) , __func__);
   if (ecl_type == ecl_double_type) {

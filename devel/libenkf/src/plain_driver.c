@@ -62,15 +62,16 @@ static plain_driver_type * plain_driver_safe_cast( void * __driver) {
 
 void plain_driver_load_node_NEW(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = plain_driver_safe_cast( _driver );
+  buffer_type * buffer       = buffer_alloc(100);
   {
     char * filename      = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
-    buffer_type * buffer = buffer_fread_alloc( filename );
+    buffer_fread_realloc( buffer , filename );
     
     enkf_node_load(node , buffer , report_step, iens , state);
     
-    free(buffer);
     free(filename);
   }
+  buffer_free( buffer );
 }
 
 
@@ -83,7 +84,6 @@ void plain_driver_load_node(void * _driver , int report_step , int iens , state_
     
     enkf_node_fread(node , stream , report_step, iens , state);
     fclose(stream);
-    
     free(filename);
   }
 }
@@ -130,7 +130,7 @@ void plain_driver_save_node_NEW(void * _driver , int report_step , int iens , st
       free(filename);
     }
     
-    free( buffer );
+    buffer_free( buffer );
   }
 }
 
@@ -230,7 +230,6 @@ void * plain_driver_alloc(const char * root_path , const char * fmt) {
     return basic_driver;
   }
 }
-
 
 
 

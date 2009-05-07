@@ -119,8 +119,15 @@ void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
 }
 
 
+
 int gen_kw_config_get_data_size(const gen_kw_config_type * gen_kw_config) {
   return scalar_config_get_data_size(gen_kw_config->scalar_config);
+}
+
+
+char * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , const char * key , int kw_nr) {
+  char * user_key = util_alloc_sprintf("%s:%s" , key ,gen_kw_config_get_name( config , kw_nr ));
+  return user_key;
 }
 
 
@@ -133,6 +140,9 @@ const char * gen_kw_config_get_name(const gen_kw_config_type * config, int kw_nr
     return NULL;
   }
 }
+
+
+
 
 const char * gen_kw_config_get_tagged_name(const gen_kw_config_type * config, int kw_nr) {
   const int size = gen_kw_config_get_data_size(config);

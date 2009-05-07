@@ -118,9 +118,7 @@ void scalar_stream_fread(scalar_type * scalar , FILE * stream) {
 
 
 void scalar_buffer_fload(scalar_type * scalar , buffer_type * buffer) {
-  
-  int  size = buffer_fread_int( buffer );
-  
+  int size = scalar_config_get_data_size( scalar->config );
   buffer_fread(buffer , scalar->data , sizeof *scalar->data , size);
   scalar->output_valid = false;
 }
@@ -138,7 +136,6 @@ void scalar_stream_fwrite(const scalar_type * scalar , FILE * stream , bool inte
 void scalar_buffer_fsave(const scalar_type * scalar , buffer_type * buffer , bool internal_state) {
   
   const int data_size = scalar_config_get_data_size(scalar->config);
-  buffer_fwrite_int( buffer , data_size );
   buffer_fwrite(buffer , scalar->data , sizeof *scalar->data    ,data_size);
 
 }

@@ -15,6 +15,7 @@ extern "C" {
 #include <fortio.h>
 #include <enkf_serialize.h>
 #include <buffer.h>
+#include <msg.h>
 
 /**********************************/
 
@@ -130,6 +131,8 @@ const char     *  enkf_node_get_key(const enkf_node_type * );
 const char     *  enkf_node_get_swapfile(const enkf_node_type *);
 bool         	  enkf_node_has_func(const enkf_node_type * , node_function_type );
 bool              enkf_node_internalize(const enkf_node_type * , int );
+
+void              enkf_node_upgrade_file_103( const char * path , const char * file , enkf_impl_type impl_type , int perc_complete , msg_type * msg);
 
 #ifdef __cplusplus
 }
