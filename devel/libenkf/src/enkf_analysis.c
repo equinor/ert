@@ -130,7 +130,7 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
   svdS(S , U0 , sig0 , truncation);
   lowrankCee( B , nrens , R , U0 , sig0);
   eigC( R , Z , eig );
-
+  
   
   {
     int i,j;

@@ -77,10 +77,6 @@ static void obs_data_node_free( obs_data_node_type * node ) {
 }
   
 
-//static void obs_data_node_free__( void * node ){
-//  obs_data_node_free( (obs_data_node_type * ) node );
-//}
-
 
 
 /*****************************************************************/
@@ -93,9 +89,6 @@ struct obs_data_struct {
   int       target_size;    /* We aim for this size of the buffers - if alloc_size is currently larger, it will shrink on reset. */ 
 
   obs_data_node_type ** data;
-  //double   *value;
-  //double   *std;
-  //char    **keyword;
   bool                * obs_active;     /* A map of the true|false of the current obeservations. */ 
 }; 
 
@@ -104,9 +97,6 @@ static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) 
   int old_alloc_size      = obs_data->alloc_size;
   obs_data->alloc_size    = new_alloc_size;
   obs_data->data          = util_realloc(obs_data->data          , new_alloc_size * sizeof * obs_data->data   	  , __func__);
-  //obs_data->value         = util_realloc(obs_data->value         , new_alloc_size * sizeof * obs_data->value   	  , __func__);
-  //obs_data->std           = util_realloc(obs_data->std           , new_alloc_size * sizeof * obs_data->std     	  , __func__);
-  //obs_data->keyword       = util_realloc(obs_data->keyword       , new_alloc_size * sizeof * obs_data->keyword 	  , __func__);
   obs_data->obs_active    = util_realloc(obs_data->obs_active    , new_alloc_size * sizeof * obs_data->obs_active    , __func__);
   {
     int i;
@@ -122,9 +112,6 @@ obs_data_type * obs_data_alloc() {
   obs_data->alloc_size    = 0;
   obs_data->target_size   = 0;
   obs_data->data          = NULL;
-  //obs_data->value      	  = NULL;
-  //obs_data->std        	  = NULL;
-  //obs_data->keyword    	  = NULL;
   obs_data->obs_active    = NULL;
   
 
@@ -151,9 +138,6 @@ void obs_data_add(obs_data_type * obs_data, double value, double std , const cha
     int index = obs_data->total_size;
     obs_data_node_type * node = obs_data_node_alloc( value , std , kw );
     obs_data->data[index]     = node;
-    //obs_data->value[index]   	  = value;
-    //obs_data->std[index]     	  = std;
-    //obs_data->keyword[index]      = util_realloc_string_copy(obs_data->keyword[index] , kw);
     obs_data->obs_active[index]   = true;
   }
   obs_data->total_size++;
@@ -163,9 +147,6 @@ void obs_data_add(obs_data_type * obs_data, double value, double std , const cha
 
 
 void obs_data_free(obs_data_type * obs_data) {
-  //free(obs_data->value);
-  //free(obs_data->std);
-  //util_free_stringlist(obs_data->keyword , obs_data->total_size);
   int i;
   for (i=0; i < obs_data->alloc_size; i++) {
     if (obs_data->data[i] != NULL)
@@ -178,7 +159,7 @@ void obs_data_free(obs_data_type * obs_data) {
 
 
 
-static matrix_type * obs_data_allocE__(const obs_data_type * obs_data , int ens_size) {
+matrix_type * obs_data_allocE__(const obs_data_type * obs_data , int ens_size) {
 const int nrobs_active = obs_data->active_size;
   const int nrobs_total  = obs_data->total_size;
   double *pert_mean , *pert_var;
@@ -243,6 +224,8 @@ const int nrobs_active = obs_data->active_size;
   free(pert_var);
   return E;
 }
+
+
 
 
 double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_stride, int obs_stride) {
@@ -312,6 +295,7 @@ matrix_type * obs_data_allocD__(const obs_data_type * obs_data , const matrix_ty
   int iobs_active, iobs_total;
   int iens;
   
+  printf("nrobs_active:%d  ens_size:%d \n",nrobs_active , ens_size);
   matrix_type * D = matrix_alloc( nrobs_active , ens_size);
   for  (iens = 0; iens < ens_size; iens++) {
     iobs_active = 0;

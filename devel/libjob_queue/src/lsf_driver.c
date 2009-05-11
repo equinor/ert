@@ -372,10 +372,15 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
     driver->lsf_request.command = command;
     job->lsf_jobnr = lsb_submit( &driver->lsf_request , &driver->lsf_reply );
 #else
-    char * quoted_resource_request = util_alloc_sprintf("\"%s\"" , resource_request);
-    job->lsf_jobnr      = lsf_driver_submit_system_job( run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd );
-    job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
-    free(quoted_resource_request);
+    {
+      char * quoted_resource_request = NULL;
+      if (resource_request != NULL)
+	quoted_resource_request = util_alloc_sprintf("\"%s\"" , resource_request);
+
+      job->lsf_jobnr      = lsf_driver_submit_system_job( run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd );
+      job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
+      util_safe_free(quoted_resource_request);
+    }
 #endif
 
     pthread_mutex_unlock( &driver->submit_lock );

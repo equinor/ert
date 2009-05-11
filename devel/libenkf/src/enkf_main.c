@@ -47,6 +47,7 @@
 #include <field_config.h>
 #include <ecl_static_kw.h>
 #include <forward_model.h>
+#include <enkf_analysis.h>
 #include "enkf_defaults.h"
 
 /**
