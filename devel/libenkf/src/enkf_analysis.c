@@ -21,7 +21,7 @@ static void genX3(matrix_type * X3 , const matrix_type * W , const matrix_type *
   for (i=0; i < nrmin; i++)
     for (j=0; j < nrobs; j++)
       matrix_iset(X1 , i , j , eig[i] * matrix_iget(W , j , i));
-
+  
   matrix_matmul(X2 , X1 , D);
   matrix_matmul(X3 , W  , X2);   /* <- skal bare ha en del av X2 ??? */
   
@@ -73,7 +73,7 @@ static void svdS(matrix_type * S , matrix_type * U0 , double * sig0, double trun
 
     /* Explicitly setting the insignificant singular values to zero. */
     for (i=num_significant; i < num_singular_values; i++)
-      sig0[0] = 0;                                     
+      sig0[i] = 0;                                     
     
     /* Inverting the significant singular values */
     for (i = 0; i < num_significant; i++)
@@ -122,15 +122,14 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
   const int nrens = matrix_get_columns( S );
   const int nrmin = util_int_min( nrobs , nrens );
   
-  matrix_type * B  = matrix_alloc( nrmin , nrmin );
-  matrix_type * U0 = matrix_alloc( nrobs , nrmin );
-  matrix_type * Z  = matrix_alloc( nrmin , nrmin );
-  double * sig0    = util_malloc( nrmin * sizeof * sig0 , __func__);
+  matrix_type * B    = matrix_alloc( nrmin , nrmin );
+  matrix_type * U0   = matrix_alloc( nrobs , nrmin );
+  matrix_type * Z    = matrix_alloc( nrmin , nrmin );
+  double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
     
   svdS(S , U0 , sig0 , truncation);
   lowrankCee( B , nrens , R , U0 , sig0);
-  eigC( R , Z , eig );
-  
+  eigC( B , Z , eig );
   
   {
     int i,j;
@@ -142,7 +141,8 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
 	matrix_imul(Z , i , j , sig0[i]);
   }
   
-  
+  matrix_matmul(W , U0 , Z);
+
   free( sig0 );
   matrix_free( U0 );
   matrix_free( B  );
@@ -158,7 +158,7 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
 
 
 
-void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , const matrix_type * E , matrix_type * S , const matrix_type * D , double truncation) {
+void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , matrix_type * S , const matrix_type * D , double truncation) {
   const int nrobs   = matrix_get_rows( S );
   const int nrens   = matrix_get_columns( S );
   const int nrmin   = util_int_min( nrobs , nrens );
@@ -169,7 +169,18 @@ void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , con
   
   
   lowrankCinv( S , R , W , eig , truncation );
+  //{
+  //  int i;
+  //  printf("EigenValues: ");
+  //  for (i = 0; i < nrmin; i++)
+  //    printf("%12.4f " , eig[i]);
+  //  printf("\n");
+  //}
+  //matrix_pretty_print(S , " S ", " %7.4f "); printf("\n\n");
+  //matrix_pretty_print(R , " R ", " %7.4f "); printf("\n\n");
+  //matrix_pretty_print(W , " W ", " %7.4f "); printf("\n\n");
   genX3(X3 , W , D , eig );
+  //matrix_pretty_print(X3 , " X3 ", " %7.4f "); printf("\n\n");
   matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = T(S) * X3 */
   {
     int i;

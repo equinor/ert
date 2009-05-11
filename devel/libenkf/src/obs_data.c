@@ -525,6 +525,9 @@ void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_strid
 
 
 
+
+
+
 void obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov) {
   const int nrobs_total  = obs_data->total_size;
   const int nrobs_active = obs_data->active_size;
