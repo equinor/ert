@@ -56,12 +56,12 @@ lsf_request_type * lsf_request_alloc() {
 
 
 void lsf_request_reset(lsf_request_type * lsf_request) {
-  lsf_request->request = util_safe_free( lsf_request->request );
+  lsf_request->request         = util_safe_free( lsf_request->request );
   if (lsf_request->rusage     != NULL)  set_free(lsf_request->rusage);
   if (lsf_request->select_set != NULL)  set_free(lsf_request->select_set);
   lsf_request->rusage          = NULL;
   lsf_request->select_set      = NULL;
-  lsf_request->__valid_request = false;
+  lsf_request->__valid_request = true; 
 }
 
 
@@ -242,7 +242,9 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
     }
     free( resource_request );
   }
+  lsf_request->__valid_request = false;
 }
+
 
 void  lsf_request_update(lsf_request_type * lsf_request , const ext_job_type * ext_job , bool last_job) {
   lsf_request_update__(lsf_request , ext_job_get_lsf_resources( ext_job ));
@@ -256,7 +258,7 @@ const char * lsf_request_get(const lsf_request_type * lsf_request) {
   if (lsf_request->__valid_request)
     return lsf_request->request;
   else {
-    util_abort("%s: internal error - tried to acces an LSF_RESOURCE which was in an invalid state. \n",__func__);
+    util_abort("%s: internal error - tried to acces an LSF_RESOURCE which was in an invalid state: \"%s\" \n",__func__, lsf_request->request);
     return NULL;
   }
 }
