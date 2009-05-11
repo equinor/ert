@@ -127,9 +127,9 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
   matrix_type * Z    = matrix_alloc( nrmin , nrmin );
   double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
     
-  svdS(S , U0 , sig0 , truncation);
-  lowrankCee( B , nrens , R , U0 , sig0);
-  eigC( B , Z , eig );
+  svdS(S , U0 , sig0 , truncation);             
+  lowrankCee( B , nrens , R , U0 , sig0);       
+  eigC( B , Z , eig );                          
   
   {
     int i,j;
@@ -142,6 +142,7 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
   }
   
   matrix_matmul(W , U0 , Z);
+
 
   free( sig0 );
   matrix_free( U0 );
@@ -158,7 +159,7 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
 
 
 
-void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , matrix_type * S , const matrix_type * D , double truncation) {
+void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , const matrix_type * S , const matrix_type * D , double truncation) {
   const int nrobs   = matrix_get_rows( S );
   const int nrens   = matrix_get_columns( S );
   const int nrmin   = util_int_min( nrobs , nrens );
@@ -167,25 +168,24 @@ void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , mat
   matrix_type * W   = matrix_alloc(nrobs , nrmin);
   double      * eig = util_malloc( sizeof * eig * nrmin , __func__);
   
+  {
+    /* 
+       The svd routine called in lowrankCinv will destroy the contents
+       of the input matrix, we therefor have to store a copy of S
+       befor calling it. The fortran implementation seems to handle
+       this automagically??
+    */
+    matrix_type * workS = matrix_alloc_copy( S );  
+    lowrankCinv( workS , R , W , eig , truncation );
+    matrix_free( workS );
+  }
   
-  lowrankCinv( S , R , W , eig , truncation );
-  //{
-  //  int i;
-  //  printf("EigenValues: ");
-  //  for (i = 0; i < nrmin; i++)
-  //    printf("%12.4f " , eig[i]);
-  //  printf("\n");
-  //}
-  //matrix_pretty_print(S , " S ", " %7.4f "); printf("\n\n");
-  //matrix_pretty_print(R , " R ", " %7.4f "); printf("\n\n");
-  //matrix_pretty_print(W , " W ", " %7.4f "); printf("\n\n");
-  genX3(X3 , W , D , eig );
-  //matrix_pretty_print(X3 , " X3 ", " %7.4f "); printf("\n\n");
+  genX3(X3 , W , D , eig );     
   matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = T(S) * X3 */
   {
     int i;
     for (i = 0; i < nrens; i++)
-      matrix_iadd( X5 , i ,i , 1.0);
+      matrix_iadd( X5 , i , i , 1.0);
   }
   
   free( eig );

@@ -5,7 +5,7 @@
 
 
 
-void       enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , matrix_type * S , const matrix_type * D , double truncation);
+void       enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , const matrix_type * S , const matrix_type * D , double truncation);
 
 
 #endif

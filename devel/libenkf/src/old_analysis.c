@@ -373,37 +373,30 @@ double * old_analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_
 		       (const int *) &istep              , 
 		       xpath);
 
-    //
-    //{
-    //  matrix_type * __S = meas_matrix_allocS__(meas_matrix , nrobs_active , NULL , active_obs);
-    //  matrix_type * __R = obs_data_allocR__( obs_data );
-    //  matrix_type * __E = obs_data_allocE__( obs_data , ens_size );
-    //  matrix_type * __D = obs_data_allocD__( obs_data , __E , __S , meanS);
-    //  matrix_type * __X5 = matrix_alloc(ens_size , ens_size);
-    //  
-    //  obs_data_scale__(obs_data , __S , __E , __D , __R , innov);
-    //  
-    //  memcpy( matrix_get_data( __D ) , D , sizeof * D * ens_size * nrobs_active);  /* Copy the perturbations */
-    //  //memcpy( matrix_get_data( __E ) , E , sizeof * E * ens_size * nrobs_active);  /* Copy the perturbations */
-    //  
-    //  matrix_pretty_print(__R , "R" , " %10.6f"); printf("\n");
-    //  matrix_pretty_print(__D , "D" , " %10.6f"); printf("\n");
-    //  matrix_pretty_print(__S , "S" , " %10.6f"); printf("\n");
-    //
-    //  enkf_analysis_standard_lowrankCinv(__X5 , __R , __S , __D , truncation );
-    //  printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %10.6f" );
-    //  matrix_pretty_print(__X5 , "X5" , " %10.6f");
-    //  
-    //  if (memcmp( X  , matrix_get_data( __X5) , ens_size * ens_size * sizeof * X) != 0)
-    //	util_abort("%s: X5 error \n",__func__);
-    //  
-    //  matrix_free( __X5);
-    //  matrix_free( __S );
-    //  matrix_free( __R );
-    //  matrix_free( __E );
-    //  matrix_free( __D );
-    //}
-
+    /*
+    {
+      matrix_type * __S = meas_matrix_allocS__(meas_matrix , nrobs_active , NULL , active_obs);
+      matrix_type * __R = obs_data_allocR__( obs_data );
+      matrix_type * __E = obs_data_allocE__( obs_data , ens_size );
+      matrix_type * __D = obs_data_allocD__( obs_data , __E , __S , meanS);
+      matrix_type * __X5 = matrix_alloc(ens_size , ens_size);
+      
+      obs_data_scale__(obs_data , __S , __E , __D , __R , innov);
+      
+      enkf_analysis_standard_lowrankCinv(__X5 , __R , __S , __D , truncation );
+      printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %10.6f" );
+      matrix_pretty_print(__X5 , "X5" , " %10.6f");
+      
+      //if (memcmp( X  , matrix_get_data( __X5) , ens_size * ens_size * sizeof * X) != 0)
+      //util_abort("%s: X5 error \n",__func__);
+	
+      matrix_free( __X5);
+      matrix_free( __S );
+      matrix_free( __R );
+      matrix_free( __E );
+      matrix_free( __D );
+      }
+    */
     
     if (verbose) {
       printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %10.6f" );
