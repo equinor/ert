@@ -36,6 +36,7 @@ time_t            sched_file_iget_block_end_time(const sched_file_type *, int);
 double            sched_file_iget_block_start_days(const sched_file_type * sched_file, int i);
 double            sched_file_iget_block_end_days(const sched_file_type * sched_file, int i);
 double            sched_file_get_sim_days(const sched_file_type * sched_file , int report_step);
+time_t            sched_file_get_sim_time(const sched_file_type * sched_file , int report_step);
 
 sched_kw_type *   sched_file_ijget_block_kw_ref(const sched_file_type *, int, int);
 int               sched_file_get_restart_file_from_time_t(const sched_file_type * , time_t );
