@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <string.h>
 #include <plot.h>
 #include <plot_dataset.h>
 #include <plot_range.h>
@@ -32,6 +33,9 @@
  */
 
 struct plot_struct {
+  char       *timefmt; 
+  char       *plbox_xopt;
+  char       *plbox_yopt;
   const char *filename; /**< Filename for the plot */    
   int                  alloc_size;  	/* The size of the dataset vector - can in general be larger than size. */
   int                  size;        	/* The number of datasets. */
@@ -89,6 +93,57 @@ void plot_set_window_size(plot_type * plot, int width, int height)
 
 
 
+
+void plot_set_plbox_xopt(plot_type * plot , const char * xopt) {
+  plot->plbox_xopt = util_realloc_string_copy( plot->plbox_xopt , xopt);
+}
+
+
+void plot_set_plbox_yopt(plot_type * plot , const char * yopt) {
+  plot->plbox_yopt = util_realloc_string_copy( plot->plbox_yopt , yopt);
+}
+
+
+void plot_set_timefmt(plot_type * plot , const char * timefmt) {
+  if (strchr( plot->plbox_xopt , 'd') == NULL) {
+    /* The axis is not set up with date formatting - add a "d" to the plbox_xopt 
+       variable.    */
+    char * new_xopt = util_alloc_sprintf("%s%c" , plot->plbox_xopt , 'd');
+    plot_set_plbox_xopt(plot , new_xopt);
+    free(new_xopt);
+  }
+  plot->timefmt = util_realloc_string_copy( plot->timefmt , timefmt );
+}
+
+
+/**
+   This will try to guess a reasonable format string to send to
+   plot_set_timefmt() based on the time difference between t1 and
+   t2. This will obviously be quite heuristic.
+*/
+
+void plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) {
+  const int minute = 60;
+  const int hour   = minute * 60;
+  const int day    = hour   * 24;
+  const int week   = day    * 7;
+  const int month  = day    * 30;
+  const int year   = day    * 365; 
+    
+  double diff_time = difftime(t2 , t1);
+  
+  if (diff_time < day) 
+    plot_set_timefmt(plot , "%H:%M");       /* Hour:Minute */ 
+  else if (diff_time < week)
+    plot_set_timefmt(plot , "%a: %H:%M");   /* Weekday  Hour:Minute */
+  else if (diff_time < year)
+    plot_set_timefmt(plot , "%d/%m");       /* Monthday/month */
+  else
+    plot_set_timefmt(plot , "%b %Y");       /* Short month-name Year */
+}
+
+
+
 /**
  * @return Returns a new plot_type pointer.
  * @brief Create a new plot_type
@@ -116,6 +171,12 @@ plot_type *plot_alloc()
   plot_set_label_color(plot , PLOT_DEFAULT_LABEL_COLOR);
   plot_set_label_fontsize(plot , 1.0);
   plot_set_labels(plot , "" , "" , ""); /* Initializeing with empty labels. */
+
+  plot->plbox_xopt = NULL;
+  plot->plbox_yopt = NULL;
+  plot_set_plbox_xopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
+  plot_set_plbox_yopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
+  plot->timefmt = NULL;
   return plot;
 }
 
@@ -229,6 +290,9 @@ void plot_free(plot_type * plot)
     plend();
   
   plot_range_free(plot->range);
+  free(plot->plbox_xopt);
+  free(plot->plbox_yopt);
+  util_safe_free(plot->timefmt);
   util_safe_free(plot);
 }
 
@@ -302,7 +366,9 @@ void plot_data(plot_type * plot)
   
   plcol0(plot->label_color);
   plschr(0, plot->label_font_size * PLOT_DEFAULT_LABEL_FONTSIZE);
-  plbox("bcnst", 0.0, 0, "bcnstv", 0.0, 0);
+  if (plot->timefmt != NULL)
+    pltimefmt(plot->timefmt);
+  plbox(plot->plbox_xopt, 0.0, 0, plot->plbox_yopt , 0.0, 0);
   
   if (!plot->xlabel || !plot->ylabel || !plot->title) 
     fprintf(stderr, "ERROR ID[%d]: you need to set lables before setting the viewport!\n",plot->stream);
