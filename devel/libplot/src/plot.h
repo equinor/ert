@@ -53,10 +53,11 @@ void plot_set_bottom_padding(plot_type *  , double );
 void plot_set_left_padding(plot_type   *  , double );
 void plot_set_right_padding(plot_type  *  , double );
 
-void plot_set_label_color(plot_type * , plot_color_type );
-void plot_set_box_color(plot_type *   , plot_color_type );
-void plot_set_label_fontsize(plot_type * , double );
-void plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2);
+void 	      plot_set_label_color(plot_type * , plot_color_type );
+void 	      plot_set_box_color(plot_type *   , plot_color_type );
+void 	      plot_set_label_fontsize(plot_type * , double );
+const char *  plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2);
+void          plot_set_timefmt(plot_type * plot , const char * timefmt);
 
 
 /**
