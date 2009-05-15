@@ -104,6 +104,11 @@ void plot_set_plbox_yopt(plot_type * plot , const char * yopt) {
 }
 
 
+/** 
+    Observe that this function also tells the plot driver that date
+    labels should be used on the x-axis.
+*/
+
 void plot_set_timefmt(plot_type * plot , const char * timefmt) {
   if (strchr( plot->plbox_xopt , 'd') == NULL) {
     /* The axis is not set up with date formatting - add a "d" to the plbox_xopt 
@@ -116,13 +121,18 @@ void plot_set_timefmt(plot_type * plot , const char * timefmt) {
 }
 
 
+
 /**
    This will try to guess a reasonable format string to send to
    plot_set_timefmt() based on the time difference between t1 and
    t2. This will obviously be quite heuristic.
+
+   The selected timefmt is returned for the calling scope to inspect,
+   but the calling scope SHOULD NOT touch this return value (and is of
+   course free to ignore it).
 */
 
-void plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) {
+const char * plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) {
   const int minute = 60;
   const int hour   = minute * 60;
   const int day    = hour   * 24;
@@ -140,6 +150,8 @@ void plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) {
     plot_set_timefmt(plot , "%d/%m");       /* Monthday/month */
   else
     plot_set_timefmt(plot , "%b %Y");       /* Short month-name Year */
+
+  return plot->timefmt;
 }
 
 
