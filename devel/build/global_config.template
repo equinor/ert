@@ -1,11 +1,27 @@
-#This file is an example of a global_config file.
+# This file is an example of a global_config file.
 #
-#You should make your own personal copy of this file, and it should set
-#correct values for the variables listed below. The final variable,
-#EXTERNAL_LIB_PATH is a path where (links to) external librarires like
-#blas and particular compiler libraries+++ can be found
+# You should make your own personal copy of this file, and it should set
+# correct values for the variables listed below. 
+#
+# The variables EXTERNAL_LIB_PATH and EXTERNAL_INC_PATH should be
+# directories which contain (symlinks to) various libraries/headers
+# which:
+#
+#   1. Are not part of the enkf distribution.
+#   2. Which are not located in standard locations like /usr/lib.
+#
+# Libraries/headers which should be linked in this way include the lsf
+# libraries, blas/lapack (unless they are in /usr/lib), compiler
+# runtime libraries and libraries for plotting.
+#
+# Observe that libraries in EXTERNAL_LIB_PATH are linked in with the
+# -rpath option to the linker, this ensures that the libraries are found
+# run-time.
+##################################################################
 
-# Source
+# Source librarires which are built as part of the enkf installation
+# process. The final executable is statically linked.
+
 LIBUTIL_HOME  	  = /private/shortname/code/enkf/libutil
 LIBCONFIG_HOME    = /private/shortname/code/enkf/libconfig
 LIBECL_HOME   	  = /private/shortname/code/enkf/libecl
@@ -16,10 +32,11 @@ LIBANALYSIS_HOME  = /private/shortname/code/enkf/libanalysis
 LIBSAMPLE_HOME    = /private/shortname/code/enkf/libsample
 LIBPLOT_HOME      = /private/shortname/code/enkf/libplot
 LIBENKF_HOME  	  = /private/shortname/code/enkf/libenkf
-LIBPLPLOT_HOME    = /project/res/x86_64_RH_4
 
 USE_LSF_LIBRARY   = FALSE
 APPLICATION_HOME  = /private/joaho/EnKF/devel/EnKF/apps
+
+##################################################################
 # External libraries
 EXTERNAL_LIB_PATH = /private/joaho/lib/
 EXTERNAL_INC_PATH = /private/joaho/include
@@ -45,5 +62,5 @@ FFLAGS  = -$(MFLAG) -c -g -fimplicit-none -fdefault-real-8 -Wall -Wsurprising -f
 CFLAGS  = -$(MFLAG) -O2 -std=gnu99 -g -Wall -fPIC
 ARFLAGS = -csr
 LD      = $(CC)
-LDFLAGS = -rdynamic -Wl,-rpath $(LIBPLPLOT_HOME)/lib
+LDFLAGS = -rdynamic -Wl,-rpath $(EXTERNAL_LIB_PATH)
 
