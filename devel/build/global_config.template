@@ -3,7 +3,7 @@
 #You should make your own personal copy of this file, and it should set
 #correct values for the variables listed below. The final variable,
 #EXTERNAL_LIB_PATH is a path where (links to) external librarires like
-#blas and particular compiler libraries+++ can be found.
+#blas and particular compiler libraries+++ can be found
 
 # Source
 LIBUTIL_HOME  	  = /private/shortname/code/enkf/libutil
@@ -18,7 +18,7 @@ LIBPLOT_HOME      = /private/shortname/code/enkf/libplot
 LIBENKF_HOME  	  = /private/shortname/code/enkf/libenkf
 LIBPLPLOT_HOME    = /project/res/x86_64_RH_4
 
-USE_LSF_LIBRARY   = TRUE
+USE_LSF_LIBRARY   = FALSE
 APPLICATION_HOME  = /private/joaho/EnKF/devel/EnKF/apps
 # External libraries
 EXTERNAL_LIB_PATH = /private/joaho/lib/
