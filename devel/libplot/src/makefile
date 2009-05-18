@@ -9,8 +9,8 @@ INSTALL_LIB_PATH  = $(LIBPLOT_HOME)/lib
 #################################################################
 ARFLAGS = -csr
 #################################################################
-OBJECTS        = plot.o plot_dataset.o  plot_range.o plot_const_cxx.o
-INC_FILES      = plot.h plot_dataset.h  plot_range.h plot_const.h plot_const_cxx.hxx plot.hxx  plot_range.hxx
+OBJECTS        = plot.o plot_dataset.o  plot_range.o 
+INC_FILES      = plot.h plot_dataset.h  plot_range.h plot_const.h 
 LIB            = libplot.a 
 LIB_LINK       = -lplot -lutil -lecl -lz -lm -lplplotd -lpthread 
 LIB_PATH       = -L$(LIBPLOT_HOME)/lib     -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib 
@@ -18,7 +18,7 @@ TARGET_INCLUDE = -I$(LIBPLOT_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBUTIL_HO
 
 
 
-all: $(LIB) testplot_cxx
+all: $(LIB) 
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
