@@ -7,6 +7,22 @@
 #include <plot_dataset.h>
 
 
+struct line_attribute_struct {
+  plot_color_type      line_color;   /**< The color for the line part of the plot. */
+  plot_line_style_type line_style;   /**< The style for lines. */
+  double               line_width;   /**< Scale factor for line width  : starts with PLOT_DEFAULT_LINE_WIDTH */
+};
+
+
+
+
+
+struct point_attribute_struct {
+  plot_color_type      point_color;  /**< The color for the points in the plot. */
+  plot_symbol_type     symbol_type;  /**< The type of symbol. */
+  double               symbol_size;  /**< Scale factor for symbol size : starts with PLOT_DEFAULT_SYMBOL_SIZE */
+};
+
 
 
 
@@ -28,14 +44,10 @@ struct plot_dataset_struct {
   int size;	   	   /**< Length of the vectors defining the plot - can be less than alloc_size.*/
 
 
-  /* All of these are manipulated through obvious functions - but the default should be sensible. */
-  plot_style_type      style;        /**< The graph style: line|points|line_points */
-  plot_color_type      line_color;   /**< The color for the line part of the plot. */
-  plot_color_type      point_color;  /**< The color for the points in the plot. */
-  plot_symbol_type     symbol_type;  /**< The type of symbol. */
-  plot_line_style_type line_style;   /**< The style for lines. */
-  double               symbol_size;  /**< Scale factor for symbol size : starts with PLOT_DEFAULT_SYMBOL_SIZE */
-  double               line_width;   /**< Scale factor for line width  : starts with PLOT_DEFAULT_LINE_WIDTH */
+  plot_style_type       style;        /**< The graph style: line|points|line_points */
+
+  line_attribute_type   line_attr;
+  point_attribute_type  point_attr;
 };
 
 /*****************************************************************/
@@ -47,29 +59,29 @@ void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style)
 
 
 void plot_dataset_set_line_color(plot_dataset_type * dataset , plot_color_type line_color) {
-  dataset->line_color = line_color;
+  dataset->line_attr.line_color = line_color;
 }
 
 
 void plot_dataset_set_point_color(plot_dataset_type * dataset , plot_color_type point_color) {
-  dataset->point_color = point_color;
+  dataset->point_attr.point_color = point_color;
 }
 
 
 void plot_dataset_set_line_style(plot_dataset_type * dataset , plot_line_style_type line_style) {
-  dataset->line_style = line_style;
+  dataset->line_attr.line_style = line_style;
 }
 
 void plot_dataset_set_symbol_size(plot_dataset_type * dataset , double symbol_size) {
-  dataset->symbol_size = symbol_size;
+  dataset->point_attr.symbol_size = symbol_size;
 }
 
 void plot_dataset_set_line_width(plot_dataset_type * dataset , double line_width) {
-  dataset->line_width = line_width;
+  dataset->line_attr.line_width = line_width;
 }
 
 void plot_dataset_set_symbol_type(plot_dataset_type * dataset, plot_symbol_type symbol_type) {
-  dataset->symbol_type = symbol_type;
+  dataset->point_attr.symbol_type = symbol_type;
 }
 
 
@@ -146,14 +158,16 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
 
 
   /******************************************************************/
-  /* Defaults - should be installed in some way? */
+  /* Defaults                                                       */
   d->style       = LINE;
-  d->line_color  = BLUE;
-  d->point_color = BLUE;
-  d->symbol_type = PLOT_DEFAULT_SYMBOL;
-  d->line_style  = PLOT_LINESTYLE_SOLID_LINE;
-  d->symbol_size = 1.0;  /* Scale factor */
-  d->line_width  = 1.0;  /* Scale factor */
+  {
+    line_attribute_type  line_attr  = {.line_color  = PLOT_DEFAULT_LINE_COLOR  , .line_style  = PLOT_DEFAULT_LINE_STYLE , .line_width  = 1.0};  
+    point_attribute_type point_attr = {.point_color = PLOT_DEFAULT_POINT_COLOR , .symbol_type = PLOT_DEFAULT_SYMBOL     , .symbol_size = 1.0};
+    
+    d->line_attr   = line_attr;
+    d->point_attr  = point_attr;
+  }
+  
   return d;
 }
 
@@ -359,17 +373,17 @@ void plot_dataset_set_shared_hist(plot_dataset_type *d , int size, double *x) {
 void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type * range) {
   
   plsstrm(stream);
-  pllsty(d->line_style);                                  /* Setting solid/dashed/... */
-  plwid(d->line_width * PLOT_DEFAULT_LINE_WIDTH);         /* Setting line width.*/
-  plcol0(d->line_color);                                  /* Setting line color. */
-  plssym(0 , d->symbol_size * PLOT_DEFAULT_SYMBOL_SIZE);  /* Setting the size for the symbols. */
+  pllsty(d->line_attr.line_style);                                  /* Setting solid/dashed/... */
+  plwid(d->line_attr.line_width * PLOT_DEFAULT_LINE_WIDTH);         /* Setting line width.*/
+  plcol0(d->line_attr.line_color);                                  /* Setting line color. */
+  plssym(0 , d->point_attr.symbol_size * PLOT_DEFAULT_SYMBOL_SIZE);  /* Setting the size for the symbols. */
   
   
   switch (d->data_type) {
   case(plot_xy):
     {
       plot_style_type style       = d->style;
-      plot_color_type point_color = d->point_color;
+      plot_color_type point_color = d->point_attr.point_color;
 
       /* 
 	 Special case: 
@@ -381,7 +395,7 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
       */
       if ((d->size == 1) && (style == LINE)) {
 	style       = POINTS;
-	point_color = d->line_color;
+	point_color = d->line_attr.line_color;
 	/* The point style will remain at default value. */
       }
       
@@ -392,7 +406,7 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
       /** Then the points. */
       if (style == POINTS || style == LINE_POINTS) {
 	plcol0(point_color);       /* Setting the color */
-	plpoin(d->size , d->x , d->y , d->symbol_type);
+	plpoin(d->size , d->x , d->y , d->point_attr.symbol_type);
       }
     }
     break;

@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 #include <stdio.h>
-
+#include <stdbool.h>
 
 typedef struct plot_range_struct plot_range_type;
 
