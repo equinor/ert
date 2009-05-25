@@ -4,6 +4,9 @@
 #include <plot_dataset.h>
 #include <plot_range.h>
 #include <plot_const.h>
+#include <plot_driver.h>
+#include <plplot_driver.h>
+
 
   /** Device name for the plot, where you have the following 
    * list of choices:
@@ -33,15 +36,6 @@
  */
 
 
-typedef void (set_range_ftype) (void * driver , double xmin , double xmax , double ymin , double ymax);
-
-typedef struct plot_driver_struct plot_driver_type;
-
-
-struct plot_driver_struct {
-  void             * state;
-  set_range_ftype  * set_range;  
-};
 
 
 
@@ -72,13 +66,8 @@ struct plot_struct {
   
   plot_range_type * range;       /**< Range instance */
   /******************************************************************/
-  void            * driver;
-  set_range_ftype * set_range; 
+  plot_driver_type * driver;
 };
-
-
-static void plplot_set_range( void * driver , double xmin , double xmax , double ymin , double ymax);
-
 
 
 int plot_get_stream(plot_type * plot) {
@@ -194,7 +183,7 @@ plot_type *plot_alloc()
   plot->alloc_size   	= 0; 
   plot->is_histogram 	= false;
   
-  plot->range      = plot_range_alloc();
+  plot->range = plot_range_alloc();
   plot_set_window_size(plot , PLOT_DEFAULT_WIDTH , PLOT_DEFAULT_HEIGHT);
   plot_set_box_color(plot , PLOT_DEFAULT_BOX_COLOR);
   plot_set_label_color(plot , PLOT_DEFAULT_LABEL_COLOR);
@@ -206,9 +195,19 @@ plot_type *plot_alloc()
   plot_set_plbox_xopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
   plot_set_plbox_yopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
 
-  plot->timefmt     = NULL;
-  plot->driver = NULL;
-  plot->set_range   = plplot_set_range;
+  plot->timefmt = NULL;
+  {
+    plot_driver_enum driver = PLPLOT;
+
+    switch (driver) {
+    case(PLPLOT):
+      plot->driver  = plplot_driver_alloc();
+      break;
+    default:
+      util_abort("%s: plot driver not implemented ... \n");
+    }
+  }
+
   return plot;
 }
 
@@ -276,12 +275,8 @@ void plot_initialize(plot_type * plot, const char *dev, const char *filename) {
   plscol0(WHITE, 255, 255, 255);
   plscol0(BLACK, 0, 0, 0);
   
-  {
-    char * geometry = util_alloc_sprintf("%dx%d", plot->width, plot->height);
-    plsetopt("geometry", geometry);
-    free(geometry);
-  }
-  
+  plot->driver->set_window_size( plot->driver , plot->width , plot->height );
+
   plfontld(0);
   plinit();
   
@@ -292,16 +287,17 @@ void plot_initialize(plot_type * plot, const char *dev, const char *filename) {
 
 
 
-static void plot_free_all_datasets(plot_type * plot)
-{
+static void plot_free_all_datasets(plot_type * plot) {
   int i;
   for (i=0; i < plot->size; i++)
     plot_dataset_free(plot->datasets[i]);
+  
   util_safe_free(plot->datasets);
   plot->datasets   = NULL;
   plot->alloc_size = 0;
   plot->size       = 0;
 }
+
 
 /**
  * @brief Free your plot plot
@@ -324,6 +320,7 @@ void plot_free(plot_type * plot)
   plot_range_free(plot->range);
   free(plot->plbox_xopt);
   free(plot->plbox_yopt);
+  plot->driver->free_driver( plot->driver );
   util_safe_free(plot->timefmt);
   util_safe_free(plot);
 }
@@ -358,10 +355,6 @@ void plot_free(plot_type * plot)
 */
 
 
-static void plplot_set_range( void * driver , double xmin , double xmax , double ymin , double ymax) {
-  plwind(xmin,xmax,ymin,ymax);
-}
-
 
 static void plot_set_range__(plot_type * plot) {
   double x1,x2,y1,y2;
@@ -370,7 +363,7 @@ static void plot_set_range__(plot_type * plot) {
     plot_get_extrema(plot , plot->range);
   
   plot_range_apply(plot->range , &x1 , &x2 , &y1 , &y2);
-  plot->set_range(plot->driver , x1 , x2 , y1 , y2);
+  plot->driver->set_range(plot->driver , x1 , x2 , y1 , y2);
 }
 
 

@@ -5,6 +5,11 @@
 extern "C" {
 #endif
 
+typedef enum {
+  PLPLOT = 1
+} plot_driver_enum;
+
+
 
 
 
@@ -98,6 +103,7 @@ typedef enum {
 #define PLOT_DEFAULT_LINE_COLOR        BLUE
 #define PLOT_DEFAULT_POINT_COLOR       BLUE
 #define PLOT_DEAFULT_STYLE             LINE
+#define PLOT_DEFAULT_LINE_STYLE        PLOT_LINESTYLE_SOLID_LINE
 
 /* For the variables marked with 'scaled', the API is based on scale
    factors. I.e. to double the symbol size the user would call

@@ -4,7 +4,14 @@
 extern "C" {
 #endif
 
+#include <plot_const.h>
 #include <plot_range.h>
+
+
+typedef struct line_attribute_struct  line_attribute_type;
+typedef struct point_attribute_struct point_attribute_type;
+
+
 
 /**
    A dataset can have an arbitrary number of these elements: x,y,x1,x2,y1,y2.
