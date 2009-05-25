@@ -7,6 +7,9 @@
 #include <plot_dataset.h>
 
 
+
+
+
 /**
  * @brief Contains information about a dataset.
  */
@@ -23,8 +26,6 @@ struct plot_dataset_struct {
   bool    shared_data;     /**< Whether this instance owns x,y,x1,... or just holds a reference. */
   int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if shared_data = true. */
   int size;	   	   /**< Length of the vectors defining the plot - can be less than alloc_size.*/
-
-
 
 
   /* All of these are manipulated through obvious functions - but the default should be sensible. */

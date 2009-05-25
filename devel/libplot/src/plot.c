@@ -32,6 +32,19 @@
  * @brief Contains information about a plotting window.
  */
 
+
+typedef void (set_range_ftype) (void * driver , double xmin , double xmax , double ymin , double ymax);
+
+typedef struct plot_driver_struct plot_driver_type;
+
+
+struct plot_driver_struct {
+  void             * state;
+  set_range_ftype  * set_range;  
+};
+
+
+
 struct plot_struct {
   char       *timefmt; 
   char       *plbox_xopt;
@@ -56,10 +69,15 @@ struct plot_struct {
   double label_font_size;       /**< Scale factor for label font size. */ 
   int 	 height;		/**< The height of your plot window */
   int 	 width;         	/**< The width of your plot window */
-
-  bool   __use_autorange;       
+  
   plot_range_type * range;       /**< Range instance */
+  /******************************************************************/
+  void            * driver;
+  set_range_ftype * set_range; 
 };
+
+
+static void plplot_set_range( void * driver , double xmin , double xmax , double ymin , double ymax);
 
 
 
@@ -171,7 +189,6 @@ plot_type *plot_alloc()
   plot->xlabel 	  	= NULL;
   plot->ylabel 	  	= NULL;
   plot->title  	  	= NULL;
-  plot->__use_autorange = true;
   plot->datasets     	= NULL;
   plot->size         	= 0;
   plot->alloc_size   	= 0; 
@@ -188,7 +205,10 @@ plot_type *plot_alloc()
   plot->plbox_yopt = NULL;
   plot_set_plbox_xopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
   plot_set_plbox_yopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
-  plot->timefmt = NULL;
+
+  plot->timefmt     = NULL;
+  plot->driver = NULL;
+  plot->set_range   = plplot_set_range;
   return plot;
 }
 
@@ -309,11 +329,48 @@ void plot_free(plot_type * plot)
 }
 
 
-static void plot_set_range__(plot_type * plot, double *x1 , double *x2 , double *y1 ,double *y2) {
-  if (plot->__use_autorange)
+
+/**
+   The function does the following:
+   
+   Automatic range
+   ===============
+
+    1. Looping through all the datasets to find the minimum and
+       maximum values of x and y, these are set in the plot_range
+       struct.
+
+    2. The plot_range() methods are used to calculate final range
+       xmin,xmax,ymin,ymax values based on the extremal values from
+       point 1, padding values and invert_axis flags.
+
+    3. The final xmin,xmax,ymin,ymax values are returned by reference.
+
+   Manual range 
+   ============
+    
+    1. The (already manually set) xmin,xmax,ymin,ymax values are
+       returned by reference.
+
+       
+
+
+*/
+
+
+static void plplot_set_range( void * driver , double xmin , double xmax , double ymin , double ymax) {
+  plwind(xmin,xmax,ymin,ymax);
+}
+
+
+static void plot_set_range__(plot_type * plot) {
+  double x1,x2,y1,y2;
+  
+  if (plot_range_get_mode(plot->range) == AUTO_RANGE)
     plot_get_extrema(plot , plot->range);
   
-  plot_range_apply(plot->range , x1 , x2 , y1 , y2);
+  plot_range_apply(plot->range , &x1 , &x2 , &y1 , &y2);
+  plot->set_range(plot->driver , x1 , x2 , y1 , y2);
 }
 
 
@@ -321,9 +378,10 @@ static void plot_set_range__(plot_type * plot, double *x1 , double *x2 , double 
    This function does the actual plotting. Observe the following design principle:
 
     * All the toolkit dependant functions (i.e. plxxxx in the case of
-      plplot) should be assembled here in this function. This can
-      somethimes be a bit awkward, but should simplify the process of
-      porting to another toolkit for plotting.
+      plplot) should be assembled here in this "region", and have a
+      toolkit spesific suffix. This will hopefully simplify future
+      porting to another toolkit.
+
       
     * The exception to this rule is the function plot_dataset_draw()
       which will invoke toolkit spesific functions for drawing
@@ -338,7 +396,7 @@ void plot_data(plot_type * plot)
   plsstrm(plot->stream);  
 
   if (plot->is_histogram) {
-    plot_set_range__(plot , NULL , NULL , NULL , NULL);
+    //plot_set_range__(plot , NULL , NULL , NULL , NULL);
     for (iplot = 0; iplot < plot->size; iplot++) 
       plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
     
@@ -348,47 +406,8 @@ void plot_data(plot_type * plot)
 
   pladv(0);  /* And what does this do ... */
   plvsta();
-  {
-    double x1,x2,y1,y2;
-    if (plot->__use_autorange) {
-      plot_set_range__(plot , &x1 , &x2 , &y1 , &y2);  
-      
-      /* Special case for only one point. */
-      if (x1 == x2) {
-	if (x1 == 0) {
-	  x1 = -0.50;
-	x2 =  0.50;
-	} else {
-	  x1 -= 0.05 * abs(x1);
-	  x2 += 0.05 * abs(x2);
-	}
-      }
-      
-      /* Special case for only one point. */
-      if (y1 == y2) {
-	if (y1 == 0.0) {
-	  y1 = -0.50;
-	  y2 =  0.50;
-	} else {
-	y1 -= 0.05 * abs(y1);
-	y2 += 0.05 * abs(y2);
-	}
-      }
-      plwind(x1,x2,y1,y2);
-    } else {
-      printf("Calling plwind: (%g,%g) , (%g,%g) \n",
-	     plot_range_get_xmin(plot->range),
-	     plot_range_get_xmax(plot->range),
-	     plot_range_get_ymin(plot->range),
-	     plot_range_get_ymax(plot->range));
-      
-      plwind(plot_range_get_xmin(plot->range),
-	     plot_range_get_xmax(plot->range),
-	     plot_range_get_ymin(plot->range),
-	     plot_range_get_ymax(plot->range));
-    }
-    
-  }
+  plot_set_range__(plot);
+  
   
   plcol0(plot->label_color);
   plschr(0, plot->label_font_size * PLOT_DEFAULT_LABEL_FONTSIZE);
@@ -441,12 +460,7 @@ void plot_set_labels(plot_type * plot, const char *xlabel, const char *ylabel, c
 
 
 void plot_set_manual_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax) {
-  plot->__use_autorange = false;
-
-  plot_range_set_xmin(plot->range , xmin);
-  plot_range_set_xmax(plot->range , xmax);
-  plot_range_set_ymin(plot->range , ymin);
-  plot_range_set_ymax(plot->range , ymax);
+  plot_range_set_manual_range(plot->range , xmin , xmax , ymin , ymax);
 }
 
 

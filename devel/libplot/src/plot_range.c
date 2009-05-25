@@ -29,16 +29,6 @@
     documented in the enum below must be satisfied.
 */
 
-typedef enum {
-  manual_range =  1,      /* NO bitwise overlap with any of the other fields. */
-  auto_xmin    =  2,      /* 2^n */
-  auto_xmax    =  4,      /* 2^n */
-  auto_x       =  6,      /* auto_x = auto_xmin + auto_xmax */
-  auto_ymin    =  8,      /* 2^n */
-  auto_ymax    = 16,      /* 2^n */
-  auto_y       = 24,      /* auto_y = auto_ymin + auto_ymax */ 
-  auto_range   = 30       /* auto_range == auto_x + auto_y */
-} plot_range_mode_type;
 
 
 #define XMIN 0
@@ -53,7 +43,7 @@ struct plot_range_struct {
   bool   set[4];
   bool   invert_x_axis;
   bool   invert_y_axis;
-  plot_range_mode_type  range_mode;
+  plot_range_mode_type  mode;
 };
 
 /*****************************************************************/
@@ -186,14 +176,14 @@ void plot_range_invert_y_axis(plot_range_type * range, bool invert) {
 plot_range_type * plot_range_alloc() {
   plot_range_type * range = util_malloc(sizeof * range , __func__);
   int i;
-  range->range_mode = auto_range;
+  range->mode = AUTO_RANGE;
   
   for (i=0; i < 4; i++) {
     range->limits[i]      = 0;
     range->padding[i]     = 0;
     range->set[i]         = false;
   }
-
+  
   range->invert_x_axis = false;
   range->invert_y_axis = false;
   return range;
@@ -205,6 +195,14 @@ void plot_range_free(plot_range_type * plot_range) {
   free(plot_range);
 }
 
+
+void plot_range_set_manual_range( plot_range_type * range , double xmin , double xmax , double ymin , double ymax) {
+  range->mode = MANUAL_RANGE;
+  plot_range_set_xmin(range , xmin);
+  plot_range_set_xmax(range , xmax);
+  plot_range_set_ymin(range , ymin);
+  plot_range_set_ymax(range , ymax);
+}
 
 
 /**
@@ -224,48 +222,87 @@ void plot_range_free(plot_range_type * plot_range) {
 
    
 void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , double *_y1 , double *_y2) {
-  double xmin 	= plot_range_get__(plot_range , XMIN );
-  double xmax 	= plot_range_get__(plot_range , XMAX );
-  double ymin 	= plot_range_get__(plot_range , YMIN );
-  double ymax 	= plot_range_get__(plot_range , YMAX );
-  double width  = fabs(xmax - xmin);
-  double height = fabs(ymax - ymin);
+  double x1 = 0;
+  double x2 = 0;
+  double y1 = 0;
+  double y2 = 0;
+  if (plot_range->mode == AUTO_RANGE) {
+    double xmin 	= plot_range_get__(plot_range , XMIN );
+    double xmax 	= plot_range_get__(plot_range , XMAX );
+    double ymin 	= plot_range_get__(plot_range , YMIN );
+    double ymax 	= plot_range_get__(plot_range , YMAX );
+    double width  = fabs(xmax - xmin);
+    double height = fabs(ymax - ymin);
+    
+    if (plot_range->invert_x_axis) {
+      x1 = xmax;
+      x2 = xmin;
+      
+      x1 += width * plot_range->padding[XMAX];
+      x2 -= width * plot_range->padding[XMIN];
+    } else {
+      x1 = xmin;
+      x2 = xmax;
+      
+      x1 -= width * plot_range->padding[XMIN];
+      x2 += width * plot_range->padding[XMAX];
+    }
+    
+    if (plot_range->invert_y_axis) {
+      y1 = ymax;
+      y2 = ymin;
+      
+      y1 += height * plot_range->padding[YMAX];
+      y2 -= height * plot_range->padding[YMIN];
+    } else {
+      y1 = ymin;
+      y2 = ymax;
+      
+      y1 -= height * plot_range->padding[YMIN];
+      y2 += height * plot_range->padding[YMAX];
+    }
+  } else if (plot_range->mode == MANUAL_RANGE) {
+    y1 = plot_range_get__(plot_range , YMIN );
+    y2 = plot_range_get__(plot_range , YMAX );
+    x1 = plot_range_get__(plot_range , XMIN );
+    x2 = plot_range_get__(plot_range , XMAX );
+  } else 
+    util_exit("%s: sorry only MANUAL_RANGE and AUTO_RANGE implemented \n",__func__);
 
-  double x1 , x2 , y1 , y2;
-
-  if (plot_range->invert_x_axis) {
-    x1 = xmax;
-    x2 = xmin;
-
-    x1 += width * plot_range->padding[XMAX];
-    x2 -= width * plot_range->padding[XMIN];
-  } else {
-    x1 = xmin;
-    x2 = xmax;
-
-    x1 -= width * plot_range->padding[XMIN];
-    x2 += width * plot_range->padding[XMAX];
-  }
-
-  if (plot_range->invert_y_axis) {
-    y1 = ymax;
-    y2 = ymin;
-
-    y1 += height * plot_range->padding[YMAX];
-    y2 -= height * plot_range->padding[YMIN];
-  } else {
-    y1 = ymin;
-    y2 = ymax;
-
-    y1 -= height * plot_range->padding[YMIN];
-    y2 += height * plot_range->padding[YMAX];
-  }
   
-  if (_y1 != NULL) *_y1 = y1;
-  if (_y2 != NULL) *_y2 = y2;
-  if (_x1 != NULL) *_x1 = x1;
-  if (_x2 != NULL) *_x2 = x2;
+  /* Special case for only one point. */
+  {
+    if (x1 == x2) {
+      if (x1 == 0) {
+	x1 = -0.50;
+	x2 =  0.50;
+      } else {
+	x1 -= 0.05 * abs(x1);
+	x2 += 0.05 * abs(x2);
+      }
+    }
+    
+    if (y1 == y2) {
+      if (y1 == 0.0) {
+	y1 = -0.50;
+	y2 =  0.50;
+      } else {
+	y1 -= 0.05 * abs(y1);
+	y2 += 0.05 * abs(y2);
+      }
+    }
+  }
+
+  *_y1 = y1;
+  *_y2 = y2;
+  *_x1 = x1;
+  *_x2 = x2;
 }
 
+
+
+plot_range_mode_type plot_range_get_mode( const plot_range_type * range ) {
+  return range->mode;
+}
 
 
