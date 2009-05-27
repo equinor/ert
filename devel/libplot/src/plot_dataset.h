@@ -6,10 +6,8 @@ extern "C" {
 
 #include <plot_const.h>
 #include <plot_range.h>
+#include <plot_driver.h>
 
-
-typedef struct line_attribute_struct  line_attribute_type;
-typedef struct point_attribute_struct point_attribute_type;
 
 
 

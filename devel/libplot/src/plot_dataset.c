@@ -5,23 +5,7 @@
 #include <plot_const.h>
 #include <plot_range.h>
 #include <plot_dataset.h>
-
-
-struct line_attribute_struct {
-  plot_color_type      line_color;   /**< The color for the line part of the plot. */
-  plot_line_style_type line_style;   /**< The style for lines. */
-  double               line_width;   /**< Scale factor for line width  : starts with PLOT_DEFAULT_LINE_WIDTH */
-};
-
-
-
-
-
-struct point_attribute_struct {
-  plot_color_type      point_color;  /**< The color for the points in the plot. */
-  plot_symbol_type     symbol_type;  /**< The type of symbol. */
-  double               symbol_size;  /**< Scale factor for symbol size : starts with PLOT_DEFAULT_SYMBOL_SIZE */
-};
+#include <plot_driver.h>
 
 
 
