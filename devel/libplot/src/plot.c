@@ -169,7 +169,7 @@ const char * plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) 
  *
  * Create a new plot - allocates the memory.
  */
-plot_type *plot_alloc()
+plot_type * plot_alloc()
 {
   plot_type *plot;
   
