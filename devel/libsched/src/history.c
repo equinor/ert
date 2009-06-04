@@ -4,6 +4,7 @@
 #include <hash.h>
 #include <list.h>
 #include <ecl_sum.h>
+#include <ecl_util.h>
 #include <gruptree.h>
 #include <history.h>
 
@@ -25,7 +26,9 @@ struct history_node_struct{
 
 
 struct history_struct{
-  list_type       * nodes;
+  list_type    * nodes;
+  ecl_sum_type * ecl_sum;        /* ecl_sum instance used when the data are taken from a summary instance . */
+  bool           use_historical; /* If the the data are taken from an ecl_sum instance AND this is true, the 'H' keywords are used. */
 };
 
 
@@ -145,17 +148,19 @@ static hash_type * well_hash_copyc(hash_type * well_hash_org)
 
 
 
+
 /**
    The list of variables WOPR +++ is compiled in - hmmm.
 */
 
 static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary, 
-                                                const char ** well_list, int num_wells, int restart_nr,
+                                                const stringlist_type * wells , 
+						int restart_nr,
                                                 bool use_h_keywords)
 {
   hash_type * well_hash = hash_alloc();
   
-  for(int well_nr = 0; well_nr < num_wells; well_nr++)
+  for(int well_nr = 0; well_nr < stringlist_get_size( wells ); well_nr++)
   {
     hash_type * well_obs = hash_alloc();
 
@@ -185,42 +190,45 @@ static hash_type * well_hash_alloc_from_summary(const ecl_sum_type * summary,
       }
     }
 
-    if(!use_h_keywords)
     {
-      insert_obs(well_list[well_nr], "WOPR");
-      insert_obs(well_list[well_nr], "WWPR");
-      insert_obs(well_list[well_nr], "WGPR");
-      insert_obs(well_list[well_nr], "WBHP");
-      insert_obs(well_list[well_nr], "WTHP");
-      insert_obs(well_list[well_nr], "WWCT");
-      insert_obs(well_list[well_nr], "WGOR");
-      insert_obs(well_list[well_nr], "WOPT");
-      insert_obs(well_list[well_nr], "WGPT");
-      insert_obs(well_list[well_nr], "WWPT");
-      insert_obs(well_list[well_nr], "WWIR");
-      insert_obs(well_list[well_nr], "WWIT");
-      insert_obs(well_list[well_nr], "WGIR");
-      insert_obs(well_list[well_nr], "WGIT");
+      const char * well = stringlist_iget( wells , well_nr );
+      if(!use_h_keywords)
+	{
+	  insert_obs(well, "WOPR");
+	  insert_obs(well, "WWPR");
+	  insert_obs(well, "WGPR");
+	  insert_obs(well, "WBHP");
+	  insert_obs(well, "WTHP");
+	  insert_obs(well, "WWCT");
+	  insert_obs(well, "WGOR");
+	  insert_obs(well, "WOPT");
+	  insert_obs(well, "WGPT");
+	  insert_obs(well, "WWPT");
+	  insert_obs(well, "WWIR");
+	  insert_obs(well, "WWIT");
+	  insert_obs(well, "WGIR");
+	  insert_obs(well, "WGIT");
+	}
+      else
+	{
+	  insert_obs_use_h(well, "WOPRH", "WOPR");
+	  insert_obs_use_h(well, "WWPRH", "WWPR");
+	  insert_obs_use_h(well, "WGPRH", "WGPR");
+	  insert_obs_use_h(well, "WBHPH", "WBHP");
+	  insert_obs_use_h(well, "WTHPH", "WTHP");
+	  insert_obs_use_h(well, "WWCTH", "WWCT");
+	  insert_obs_use_h(well, "WGORH", "WGOR");
+	  insert_obs_use_h(well, "WOPTH", "WOPT");
+	  insert_obs_use_h(well, "WGPTH", "WGPT");
+	  insert_obs_use_h(well, "WWPTH", "WOPT");
+	  insert_obs_use_h(well, "WWIRH", "WWIR");
+	  insert_obs_use_h(well, "WWITH", "WWIT");
+	  insert_obs_use_h(well, "WGIRH", "WGIR");
+	  insert_obs_use_h(well, "WGITH", "WGIT");
+	}
+      
+      hash_insert_hash_owned_ref(well_hash, well, well_obs, hash_free__);
     }
-    else
-    {
-      insert_obs_use_h(well_list[well_nr], "WOPRH", "WOPR");
-      insert_obs_use_h(well_list[well_nr], "WWPRH", "WWPR");
-      insert_obs_use_h(well_list[well_nr], "WGPRH", "WGPR");
-      insert_obs_use_h(well_list[well_nr], "WBHPH", "WBHP");
-      insert_obs_use_h(well_list[well_nr], "WTHPH", "WTHP");
-      insert_obs_use_h(well_list[well_nr], "WWCTH", "WWCT");
-      insert_obs_use_h(well_list[well_nr], "WGORH", "WGOR");
-      insert_obs_use_h(well_list[well_nr], "WOPTH", "WOPT");
-      insert_obs_use_h(well_list[well_nr], "WGPTH", "WGPT");
-      insert_obs_use_h(well_list[well_nr], "WWPTH", "WWPT");
-      insert_obs_use_h(well_list[well_nr], "WWIRH", "WWIR");
-      insert_obs_use_h(well_list[well_nr], "WWITH", "WWIT");
-      insert_obs_use_h(well_list[well_nr], "WGIRH", "WGIR");
-      insert_obs_use_h(well_list[well_nr], "WGITH", "WGIT");
-    }
-    
-    hash_insert_hash_owned_ref(well_hash, well_list[well_nr], well_obs, hash_free__);
   }
 
   return well_hash;
@@ -558,6 +566,7 @@ static history_type * history_alloc_empty()
 {
   history_type * history = util_malloc(sizeof * history, __func__);
   history->nodes         = list_alloc();
+  history->ecl_sum       = NULL; 
   return history;
 }
 
@@ -585,6 +594,8 @@ static history_node_type * history_iget_node_ref(const history_type * history, i
 void history_free(history_type * history)
 {
   list_free(history->nodes);
+  if (history->ecl_sum != NULL)
+    ecl_sum_free( history->ecl_sum );
   free(history);
 }
 
@@ -659,40 +670,66 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
     
 */
 
-void history_realloc_from_summary(history_type * history, const ecl_sum_type * summary, bool use_h_keywords)
-{
-  int           num_restarts  = history_get_num_restarts(history);
-  int           num_wells     = ecl_sum_get_num_wells(summary);
-  const char ** well_list     = ecl_sum_get_well_names(summary);
+void history_realloc_from_summary(history_type * history, const char * refcase , bool use_h_keywords) {
+  char  * refcase_path;
+  char  * refcase_base;
+  char  * header_file;
+  char ** summary_file_list;
+  int     files;
+  bool    fmt_file ,unified;
+  ecl_sum_type * summary;
 
-  for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++) {
-    /* The list elements in history->nodes are updated IN-PLACE. */
-    history_node_type * node = list_iget_node_value_ptr(history->nodes, restart_nr);
-    hash_free(node->well_hash);  /* Removing the old information. */
-
-
-    if (ecl_sum_has_report_step(summary , restart_nr)) 
-    {
-      {
-	time_t sum_time;
-	int    ministep2;
-	
-	ecl_sum_report2ministep_range( summary , restart_nr , NULL , &ministep2);
-	sum_time = ecl_sum_get_sim_time( summary , ministep2 );
-        if (sum_time != node->node_end_time)
-	  util_abort("%s: Timing inconsisentcy between schedule_file and refcase:%s at restart %i\n. Did you remember the DATE keyword in the SUMMARY section?", __func__, ecl_sum_get_simulation_case( summary), restart_nr );
-      }
-
-      node->well_hash = well_hash_alloc_from_summary(summary, well_list, num_wells, restart_nr, use_h_keywords);
-    } 
-    else 
-    {
-      fprintf(stderr,"Warning: refcase: \'%s\' does not have any data for report_step: %d \n", ecl_sum_get_simulation_case( summary ) , restart_nr);
-      node->well_hash = hash_alloc();  
+  util_alloc_file_components( refcase , &refcase_path , &refcase_base , NULL);
+  ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , &summary_file_list , &files , &fmt_file , &unified);
+  
+  summary = ecl_sum_fread_alloc( header_file , files , (const char **) summary_file_list , true /* Endian convert */);
+  {
+    int           num_restarts  = history_get_num_restarts(history);
+    stringlist_type * wells     = ecl_sum_alloc_well_list( summary );
+    bool          time_error    = false;  
+    
+    for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++) {
+      /* The list elements in history->nodes are updated IN-PLACE. */
+      history_node_type * node = list_iget_node_value_ptr(history->nodes, restart_nr);
+      hash_free(node->well_hash);  /* Removing the old information. */
+      
+      
+      if (ecl_sum_has_report_step(summary , restart_nr)) 
+	{
+	  {
+	    time_t sum_time;
+	    int    ministep2;
+	    
+	    ecl_sum_report2ministep_range( summary , restart_nr , NULL , &ministep2);
+	    sum_time = ecl_sum_get_sim_time( summary , ministep2 ); 
+	    if (sum_time != node->node_end_time) {
+	      int sec,min,hour,mday,month,year;
+	      printf("Report_step:%3d  " , restart_nr);  
+	      util_set_datetime_values( sum_time , &sec , &min , &hour , &mday , &month , &year);
+	      printf("summary: %02d/%02d/%4d  %02d:%02d:%02d  || ", mday,month,year,hour,min,sec);
+	      util_set_datetime_values( node->node_end_time , &sec , &min , &hour , &mday , &month , &year);
+	      printf("schedule: %02d/%02d/%4d  %02d:%02d:%02d  || difference: %d seconds \n", mday,month,year,hour,min,sec , sum_time - node->node_end_time);
+	      time_error = true;
+	    }
+	  }
+	  node->well_hash = well_hash_alloc_from_summary(summary, wells , restart_nr, use_h_keywords);
+	} 
+      else 
+	{
+	  fprintf(stderr,"Warning: refcase: \'%s\' does not have any data for report_step: %d \n", ecl_sum_get_simulation_case( summary ) , restart_nr);
+	  node->well_hash = hash_alloc();  
+	}
     }
+    if (time_error)
+      util_exit("Sorry - time inconsistencies between refcase and schedule file\n");
+    stringlist_free(wells);
   }
+  history->ecl_sum = summary;
+  util_safe_free(header_file);
+  util_safe_free(refcase_base);
+  util_safe_free(refcase_path);
+  util_free_stringlist(summary_file_list, files);
 }
-
 
 
 void history_fwrite(const history_type * history, FILE * stream)
