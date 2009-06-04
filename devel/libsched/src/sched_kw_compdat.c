@@ -389,10 +389,5 @@ sched_kw_compdat_type * sched_kw_compdat_fread_alloc(FILE *stream) {
 
 
 /*****************************************************************/
-KW_FSCANF_ALLOC_IMPL(compdat)
-KW_FWRITE_IMPL(compdat)
-KW_FREAD_ALLOC_IMPL(compdat)
-KW_FREE_IMPL(compdat)
-KW_FPRINTF_IMPL(compdat)
-
+KW_IMPL(compdat)
 

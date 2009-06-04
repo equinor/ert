@@ -580,8 +580,4 @@ void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw
 
 /***********************************************************************/
 
-KW_FSCANF_ALLOC_IMPL(welspecs)
-KW_FWRITE_IMPL(welspecs)
-KW_FREAD_ALLOC_IMPL(welspecs)
-KW_FREE_IMPL(welspecs)
-KW_FPRINTF_IMPL(welspecs)
+KW_IMPL(welspecs)

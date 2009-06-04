@@ -24,11 +24,7 @@ time_t                sched_kw_dates_get_time_t(const sched_kw_dates_type *);
 
 
 
-KW_FSCANF_ALLOC_HEADER(dates)
-KW_FWRITE_HEADER(dates)
-KW_FREAD_ALLOC_HEADER(dates)
-KW_FREE_HEADER(dates)
-KW_FPRINTF_HEADER(dates)
+KW_HEADER(dates)
 
 #ifdef __cplusplus
 }

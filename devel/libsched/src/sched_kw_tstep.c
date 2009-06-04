@@ -186,10 +186,6 @@ time_t sched_kw_tstep_get_new_time(const sched_kw_tstep_type *kw, time_t curr_ti
 
 /*****************************************************************/
 
-KW_FSCANF_ALLOC_IMPL(tstep)
-KW_FWRITE_IMPL(tstep)
-KW_FREAD_ALLOC_IMPL(tstep)
-KW_FREE_IMPL(tstep)
-KW_FPRINTF_IMPL(tstep)
+KW_IMPL(tstep)
 
 

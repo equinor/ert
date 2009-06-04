@@ -23,11 +23,7 @@ char **                 sched_kw_untyped_iget_entries_alloc(const sched_kw_untyp
 /*******************************************************************/
 
 
-KW_FSCANF_ALLOC_HEADER(untyped)
-KW_FWRITE_HEADER(untyped)
-KW_FREAD_ALLOC_HEADER(untyped)
-KW_FREE_HEADER(untyped)
-KW_FPRINTF_HEADER(untyped)
+KW_HEADER(untyped)
 #ifdef __cplusplus
 }
 #endif

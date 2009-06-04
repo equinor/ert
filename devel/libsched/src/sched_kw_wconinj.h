@@ -17,11 +17,7 @@ char ** sched_kw_wconinj_alloc_wells_copy( const sched_kw_wconinj_type * , int *
 
 
 
-KW_FSCANF_ALLOC_HEADER(wconinj)
-KW_FWRITE_HEADER(wconinj)
-KW_FREAD_ALLOC_HEADER(wconinj)
-KW_FREE_HEADER(wconinj)
-KW_FPRINTF_HEADER(wconinj)
+KW_HEADER(wconinj)
 
 
 

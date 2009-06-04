@@ -23,11 +23,7 @@ sched_kw_wconinje_type * sched_kw_wconinje_safe_cast( void * arg );
 
 
 
-KW_FSCANF_ALLOC_HEADER(wconinje)
-KW_FWRITE_HEADER(wconinje)
-KW_FREAD_ALLOC_HEADER(wconinje)
-KW_FREE_HEADER(wconinje)
-KW_FPRINTF_HEADER(wconinje)
+KW_HEADER(wconinje)
 
 
 

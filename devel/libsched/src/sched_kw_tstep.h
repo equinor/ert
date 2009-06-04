@@ -27,11 +27,7 @@ time_t                sched_kw_tstep_get_new_time(const sched_kw_tstep_type *, t
 
 
 
-KW_FSCANF_ALLOC_HEADER(tstep)
-KW_FWRITE_HEADER(tstep)
-KW_FREAD_ALLOC_HEADER(tstep)
-KW_FREE_HEADER(tstep)
-KW_FPRINTF_HEADER(tstep)
+KW_HEADER(tstep)
 #ifdef __cplusplus
 }
 #endif

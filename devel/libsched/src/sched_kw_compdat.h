@@ -17,11 +17,7 @@ sched_kw_compdat_type * sched_kw_compdat_fread_alloc(FILE *stream);
 void                    sched_kw_compdat_fwrite(const sched_kw_compdat_type * , FILE *stream);
 
 
-KW_FSCANF_ALLOC_HEADER(compdat)
-KW_FWRITE_HEADER(compdat)
-KW_FREAD_ALLOC_HEADER(compdat)
-KW_FREE_HEADER(compdat)
-KW_FPRINTF_HEADER(compdat)
+KW_HEADER(compdat)
 
 
 #endif

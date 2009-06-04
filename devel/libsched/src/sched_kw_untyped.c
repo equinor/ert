@@ -201,11 +201,7 @@ sched_kw_untyped_type * sched_kw_untyped_fread_alloc(FILE *stream) {
 
 /*****************************************************************/
 
-KW_FSCANF_ALLOC_IMPL(untyped)
-KW_FWRITE_IMPL(untyped)
-KW_FREAD_ALLOC_IMPL(untyped)
-KW_FREE_IMPL(untyped)
-KW_FPRINTF_IMPL(untyped)
+KW_IMPL(untyped)
 
 
 

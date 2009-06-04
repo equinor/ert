@@ -25,12 +25,7 @@ void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type *, c
 
 
 
-KW_FSCANF_ALLOC_HEADER(welspecs)
-KW_FWRITE_HEADER(welspecs)
-KW_FREAD_ALLOC_HEADER(welspecs)
-KW_FREE_HEADER(welspecs)
-KW_FPRINTF_HEADER(welspecs)
-
+KW_HEADER(welspecs)
 
 #ifdef __cplusplus
 }

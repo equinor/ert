@@ -214,8 +214,4 @@ time_t sched_kw_dates_get_time_t(const sched_kw_dates_type * kw)
 
 
 
-KW_FSCANF_ALLOC_IMPL(dates)
-KW_FWRITE_IMPL(dates)
-KW_FREAD_ALLOC_IMPL(dates)
-KW_FREE_IMPL(dates)
-KW_FPRINTF_IMPL(dates)
+KW_IMPL(dates)

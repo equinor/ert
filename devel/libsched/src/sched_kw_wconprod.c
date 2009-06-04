@@ -122,8 +122,4 @@ char ** sched_kw_wconprod_alloc_wells_copy( const sched_kw_wconprod_type * kw , 
 
 /*****************************************************************/
 
-KW_FSCANF_ALLOC_IMPL(wconprod)
-KW_FWRITE_IMPL(wconprod)
-KW_FREAD_ALLOC_IMPL(wconprod)
-KW_FREE_IMPL(wconprod)
-KW_FPRINTF_IMPL(wconprod)
+KW_IMPL(wconprod)

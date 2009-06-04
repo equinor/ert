@@ -17,6 +17,8 @@ Macros for "voidifications" of the data handlers.
 #define KW_FREAD_ALLOC(KW)  __sched_kw_## KW ##_fread_alloc
 #define KW_FREE(KW)         __sched_kw_## KW ##_free
 #define KW_FPRINTF(KW)      __sched_kw_## KW ##_fprintf
+#define KW_ALLOC_COPY(KW)   __sched_kw_## KW ##_alloc_copy
+
 
 #define GET_DATA_HANDLERS(DH, KWNAME) \
 DH.fscanf_alloc = KW_FSCANF_ALLOC(KWNAME) ; \
@@ -64,11 +66,20 @@ void * __sched_kw_## KW ##_alloc_copy(const void * kw)  {\
    return sched_kw_ ## KW ## _alloc_copy(kw);            \
 }
 
+#define KW_IMPL(KW)      \
+KW_FREE_IMPL(KW)         \
+KW_FPRINTF_IMPL(KW)      \
+KW_FSCANF_ALLOC_IMPL(KW) \
+KW_FWRITE_IMPL(KW)       \
+KW_FREAD_ALLOC_IMPL(KW)
 
 /*******************************************************************/
 
 #define KW_FSCANF_ALLOC_HEADER(KW)                                      \
 void * __sched_kw_## KW ##_fscanf_alloc(FILE * , bool *, const char *); \
+
+#define KW_ALLOC_COPY_HEADER(KW)                                      \
+void * __sched_kw_## KW ##_alloc_copy(const void *);                  \
 
 #define KW_FWRITE_HEADER(KW)                                    \
 void   __sched_kw_## KW ##_fwrite(const void * , FILE *);       \
@@ -83,3 +94,11 @@ void   __sched_kw_## KW ##_fprintf(const void *, FILE * ); \
 void   __sched_kw_## KW ##_free(void *); \
 
 #endif
+
+
+#define KW_HEADER(KW)      \
+KW_FREE_HEADER(KW)         \
+KW_FPRINTF_HEADER(KW)      \
+KW_FSCANF_ALLOC_HEADER(KW) \
+KW_FWRITE_HEADER(KW)       \
+KW_FREAD_ALLOC_HEADER(KW)

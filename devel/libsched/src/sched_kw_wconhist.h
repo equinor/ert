@@ -32,11 +32,7 @@ bool   	 		 sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , cons
 
 
 
-KW_FSCANF_ALLOC_HEADER(wconhist)
-KW_FWRITE_HEADER(wconhist)
-KW_FREAD_ALLOC_HEADER(wconhist)
-KW_FREE_HEADER(wconhist)
-KW_FPRINTF_HEADER(wconhist)
+KW_HEADER(wconhist)
 
 #ifdef __cplusplus
 }

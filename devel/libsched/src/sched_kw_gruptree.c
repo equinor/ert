@@ -187,9 +187,5 @@ sched_kw_gruptree_type * sched_kw_gruptree_alloc_copy(const sched_kw_gruptree_ty
 
 /***********************************************************************/
 
-KW_FSCANF_ALLOC_IMPL(gruptree)
-KW_FWRITE_IMPL(gruptree)
-KW_FREAD_ALLOC_IMPL(gruptree)
-KW_FREE_IMPL(gruptree)
-KW_FPRINTF_IMPL(gruptree)
+KW_IMPL(gruptree)
 KW_ALLOC_COPY_IMPL(gruptree)

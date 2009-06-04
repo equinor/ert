@@ -20,11 +20,7 @@ void sched_kw_gruptree_alloc_child_parent_list(const sched_kw_gruptree_type *, c
 
 
 
-KW_FSCANF_ALLOC_HEADER(gruptree)
-KW_FWRITE_HEADER(gruptree)
-KW_FREAD_ALLOC_HEADER(gruptree)
-KW_FREE_HEADER(gruptree)
-KW_FPRINTF_HEADER(gruptree)
+KW_HEADER(gruptree)
 
 
 #ifdef __cplusplus

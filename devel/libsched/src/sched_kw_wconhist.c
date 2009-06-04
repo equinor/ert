@@ -510,9 +510,4 @@ bool sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char 
 
 
 
-
-KW_FSCANF_ALLOC_IMPL(wconhist)
-KW_FWRITE_IMPL(wconhist)
-KW_FREAD_ALLOC_IMPL(wconhist)
-KW_FREE_IMPL(wconhist)
-KW_FPRINTF_IMPL(wconhist)
+KW_IMPL(wconhist)

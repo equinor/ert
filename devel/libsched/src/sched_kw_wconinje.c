@@ -435,8 +435,4 @@ bool sched_kw_wconinje_has_well( const sched_kw_wconinje_type * kw , const char 
 
 /*****************************************************************/
 
-KW_FSCANF_ALLOC_IMPL(wconinje)
-KW_FWRITE_IMPL(wconinje)
-KW_FREAD_ALLOC_IMPL(wconinje)
-KW_FREE_IMPL(wconinje)
-KW_FPRINTF_IMPL(wconinje)
+KW_IMPL(wconinje)
