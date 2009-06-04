@@ -90,7 +90,6 @@ typedef struct
   char           * fs_kw1;
   char           * fs_kw2;
   char           * ecl300_kw;
-
 } welspec_type;
 
 

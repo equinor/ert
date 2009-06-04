@@ -17,6 +17,7 @@
 #include <sched_kw_wconprod.h>
 #include <sched_kw_wconinj.h>
 #include <sched_kw_wconinje.h>
+#include <sched_kw_compdat.h>
 #include <sched_kw_untyped.h>
 #include <sched_macros.h>
 
@@ -63,6 +64,7 @@ typedef void * (alloc_copy_proto)  (const void *);
 
 typedef struct data_handlers_struct data_handlers_type;
 
+
 struct data_handlers_struct {
   data_fscanf_alloc_proto * fscanf_alloc;
   data_free_proto         * free;
@@ -71,7 +73,6 @@ struct data_handlers_struct {
   data_fread_proto        * fread_alloc;
   alloc_copy_proto        * alloc_copy;
 };
-
 
 
 struct sched_kw_struct {
@@ -98,6 +99,7 @@ static sched_type_enum get_sched_type_from_string(char * kw_name)
   if( strcmp(kw_name, WCONINJE_STRING ) == 0){ return WCONINJE ;}
   if( strcmp(kw_name, WCONINJH_STRING ) == 0){ return WCONINJH ;}
   if( strcmp(kw_name, WCONPROD_STRING ) == 0){ return WCONPROD ;}
+  //if( strcmp(kw_name, COMPDAT_STRING  ) == 0){ return COMPDAT  ;}   COMPDAT goes as untyped for NOW
   else                                       { return UNTYPED  ;}
 }
 
@@ -153,42 +155,45 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
   data_handlers_type handlers;
   
   switch(type) {
-    case(GRUPTREE):
-      GET_DATA_HANDLERS(handlers, gruptree);
-      break;
-    case(TSTEP):
-      GET_DATA_HANDLERS(handlers, tstep);
-      break;
-    case(TIME):
-      GET_DATA_HANDLERS(handlers, untyped);
-      break;
-    case(DATES):
-      GET_DATA_HANDLERS(handlers, dates);
-      break;
-    case(WCONHIST):
-      GET_DATA_HANDLERS(handlers, wconhist);
-      break;
-    case(WCONINJH):
-      GET_DATA_HANDLERS(handlers, wconinjh);
-      break;
-    case(WELSPECS):
-      GET_DATA_HANDLERS(handlers, welspecs);
-      break;
-    case(WCONINJ):
-      GET_DATA_HANDLERS(handlers, wconinj);
-      break;
-    case(WCONINJE):
-      GET_DATA_HANDLERS(handlers, wconinje);
-      break;
-    case(WCONPROD):
-      GET_DATA_HANDLERS(handlers, wconprod);
-      break;
-    case(UNTYPED):
-      GET_DATA_HANDLERS(handlers, untyped);
-      break;
-    default:
-      util_abort("%s: Internal error - aborting.\n",__func__);
-      GET_DATA_HANDLERS(handlers, untyped);
+  case(GRUPTREE):
+    GET_DATA_HANDLERS(handlers, gruptree);
+    break;
+  case(COMPDAT):
+    GET_DATA_HANDLERS(handlers, compdat);
+    break;
+  case(TSTEP):
+    GET_DATA_HANDLERS(handlers, tstep);
+    break;
+  case(TIME):
+    GET_DATA_HANDLERS(handlers, untyped);
+    break;
+  case(DATES):
+    GET_DATA_HANDLERS(handlers, dates);
+    break;
+  case(WCONHIST):
+    GET_DATA_HANDLERS(handlers, wconhist);
+    break;
+  case(WCONINJH):
+    GET_DATA_HANDLERS(handlers, wconinjh);
+    break;
+  case(WELSPECS):
+    GET_DATA_HANDLERS(handlers, welspecs);
+    break;
+  case(WCONINJ):
+    GET_DATA_HANDLERS(handlers, wconinj);
+    break;
+  case(WCONINJE):
+    GET_DATA_HANDLERS(handlers, wconinje);
+    break;
+  case(WCONPROD):
+    GET_DATA_HANDLERS(handlers, wconprod);
+    break;
+  case(UNTYPED):
+    GET_DATA_HANDLERS(handlers, untyped);
+    break;
+  default:
+    util_abort("%s: Internal error - aborting.\n",__func__);
+    GET_DATA_HANDLERS(handlers, untyped);
   }
   
   return handlers;
