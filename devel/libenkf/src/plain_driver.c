@@ -207,15 +207,8 @@ void plain_driver_select_dir(void *_driver , const char * directory) {
 void * plain_driver_alloc(const char * root_path , const char * fmt) {
   plain_driver_type * driver = malloc(sizeof * driver);
 
-#ifdef __EXPERIMENTAL__
   driver->load        	= plain_driver_load_node_NEW;
   driver->save        	= plain_driver_save_node_NEW;
-#else
-  driver->load        	= plain_driver_load_node;
-  driver->save        	= plain_driver_save_node;
-#endif
-
-
   driver->free_driver 	= plain_driver_free;
   driver->unlink_node 	= plain_driver_unlink_node;
   driver->has_node    	= plain_driver_has_node;
