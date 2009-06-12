@@ -150,6 +150,7 @@ void multflt_upgrade_103(const char * filename) {
   
   {
     buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_time_t( buffer , time(NULL));
     buffer_fwrite_int( buffer , impl_type );
     buffer_fwrite(buffer , data , sizeof * data    ,size);
     buffer_store( buffer , filename);
@@ -182,6 +183,17 @@ int multflt_serialize(const multflt_type *multflt , serial_state_type * serial_s
 void multflt_deserialize(multflt_type *multflt , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   scalar_deserialize(multflt->scalar , serial_state , serial_vector);
 }
+
+
+void multflt_matrix_serialize(const multflt_type *multflt , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  scalar_matrix_serialize(multflt->scalar , active_list , A , row_offset , column);
+}
+
+
+void multflt_matrix_deserialize(multflt_type *multflt , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  scalar_matrix_deserialize(multflt->scalar , active_list , A , row_offset , column);
+}
+
 
 
 
@@ -323,3 +335,5 @@ VOID_FPRINTF_RESULTS(multflt)
 VOID_USER_GET(multflt)
 VOID_STORE(multflt)
 VOID_LOAD(multflt)
+VOID_MATRIX_SERIALIZE(multflt)
+VOID_MATRIX_DESERIALIZE(multflt)

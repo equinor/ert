@@ -476,7 +476,7 @@ gen_kw_config_type * havana_fault_config_get_gen_kw_config(const havana_fault_co
 
 SAFE_CAST(havana_fault_config , HAVANA_FAULT_CONFIG_TYPE_ID)
 VOID_FREE(havana_fault_config)
-
+VOID_GET_DATA_SIZE(havana_fault)
 
 
 

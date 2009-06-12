@@ -36,7 +36,6 @@ SAFE_CAST(gen_data_config , GEN_DATA_CONFIG_ID)
 gen_data_file_format_type gen_data_config_get_input_format ( const gen_data_config_type * config) { return config->input_format; }
 gen_data_file_format_type gen_data_config_get_output_format( const gen_data_config_type * config) { return config->output_format; }
 
-int gen_data_config_get_data_size(const gen_data_config_type * config)   { return config->data_size;     }
 int gen_data_config_get_report_step(const gen_data_config_type * config) { return config->__report_step; }
 
 
@@ -76,7 +75,7 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
   config->key               = util_alloc_string_copy( key );
   config->data_size  	    = 0;
   config->internal_type     = internal_type;
-  config->active_list       = active_list_alloc(0);
+  config->active_list       = active_list_alloc( ALL_ACTIVE );
   config->input_format      = input_format;
   config->output_format     = output_format;
   config->__report_step     = -1;
@@ -270,6 +269,7 @@ void gen_data_config_free(gen_data_config_type * config) {
      
 */
 
+
 /* Locking is completelt broken here ... */
 void gen_data_config_assert_size(gen_data_config_type * config , int data_size, int report_step) {
   pthread_mutex_lock( &config->update_lock );
@@ -278,7 +278,6 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
     if (report_step != config->__report_step) {
       config->data_size     = data_size; 
       config->__report_step = report_step;
-      active_list_set_data_size( config->active_list , data_size );
     } else if (config->data_size != data_size) {
       util_abort("%s: Size mismatch when loading from file - got %d elements - expected:%d [report_step:%d] \n",
 		 __func__ , 
@@ -322,18 +321,6 @@ void gen_data_config_get_template_data( const gen_data_config_type * config ,
 
 
 
-void gen_data_config_activate(gen_data_config_type * config , active_mode_type active_mode , void * active_config) {
-  gen_data_active_type * active = gen_data_active_safe_cast( active_config );
-
-  if (active_mode == ALL_ACTIVE)
-    active_list_set_all_active(config->active_list);
-  else {
-    active_list_reset(config->active_list);
-    if (active_mode == PARTLY_ACTIVE) 
-      gen_data_active_update_active_list( active , config->active_list);
-  }
-    
-}
 
 
 const char * gen_data_config_get_key( const gen_data_config_type * config) {
@@ -345,4 +332,5 @@ const char * gen_data_config_get_key( const gen_data_config_type * config) {
 
 VOID_FREE(gen_data_config)
 GET_ACTIVE_LIST(gen_data)
-VOID_CONFIG_ACTIVATE(gen_data)
+GET_DATA_SIZE(gen_data)
+VOID_GET_DATA_SIZE(gen_data) 

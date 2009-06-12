@@ -50,6 +50,8 @@ VOID_ECL_WRITE_HEADER(havana_fault);
 VOID_REALLOC_DATA_HEADER(havana_fault);
 VOID_LOAD_HEADER(havana_fault)
 VOID_STORE_HEADER(havana_fault)
+VOID_MATRIX_SERIALIZE_HEADER(havana_fault)
+VOID_MATRIX_DESERIALIZE_HEADER(havana_fault)
 #ifdef __cplusplus
 }
 #endif

@@ -72,6 +72,7 @@ void summary_fread(summary_type * summary , FILE * stream) {
 }
 
 
+
 void summary_load(summary_type * summary , buffer_type * buffer) {
   int  size = summary_config_get_data_size( summary->config );
   enkf_util_assert_buffer_type( buffer , SUMMARY );
@@ -90,6 +91,7 @@ void summary_upgrade_103( const char * filename ) {
   
   {
     buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_time_t( buffer , time(NULL));
     buffer_fwrite_int( buffer , impl_type );
     buffer_fwrite( buffer , data , sizeof * data , size);
     buffer_store( buffer , filename );
@@ -136,15 +138,31 @@ void summary_deserialize(const summary_type * summary , serial_state_type * seri
 }
 
 
-
-
 int summary_serialize(const summary_type *summary , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  const summary_config_type *config      = summary->config;
+  const summary_config_type *config    = summary->config;
   const int                data_size   = summary_config_get_data_size(config);
   const active_list_type  *active_list = summary_config_get_active_list(config);
-
+  
   return enkf_serialize(summary->data , data_size , ecl_double_type , active_list , serial_state , serial_offset , serial_vector);
 }
+
+
+void summary_matrix_serialize(const summary_type * summary , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  const summary_config_type *config  = summary->config;
+  const int                data_size = summary_config_get_data_size(config);
+  
+  enkf_matrix_serialize( summary->data , data_size , ecl_double_type , active_list , A , row_offset , column);
+}
+
+
+void summary_matrix_deserialize(summary_type * summary , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  const summary_config_type *config  = summary->config;
+  const int                data_size = summary_config_get_data_size(config);
+  
+  enkf_matrix_deserialize( summary->data , data_size , ecl_double_type , active_list , A , row_offset , column);
+}
+
+
 
 
 double summary_get(const summary_type * summary) {
@@ -166,20 +184,23 @@ void summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
     const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config);
     int ministep2;
     ecl_sum_report2ministep_range(ecl_sum , report_step , NULL , &ministep2);
-    if (var_type == ecl_smspec_well_var) {
-      /* .. check if the well is defined in the smspec file (i.e. if it is open). */
+    if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
+      /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
       if (ecl_sum_has_general_var(ecl_sum , var_key))
 	summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  , var_key);
       else 
 	/* 
-	   The summary object does not have this well - probably
+	   The summary object does not have this well/group - probably
 	   meaning that it has not yet opened. If the user has
 	   mis-spelled the name, we will go through the whole
-	   simulation without detecting that error.
+	   simulation without detecting that error. 
 	*/
 	summary->data[0] = 0;
-    } else
+    } else {
+      if (!ecl_sum_has_general_var(ecl_sum , var_key))
+	util_abort("%s: sorry - could not find variable: \"%s\" in summary files. \n",__func__ , var_key);
       summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  ,var_key );
+    }
   }
 }
 
@@ -228,3 +249,5 @@ VOID_USER_GET(summary)
 VOID_FPRINTF_RESULTS(summary)
 VOID_STORE(summary)
 VOID_LOAD(summary)
+VOID_MATRIX_SERIALIZE(summary)
+VOID_MATRIX_DESERIALIZE(summary)

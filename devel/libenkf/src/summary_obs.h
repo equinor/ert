@@ -14,6 +14,7 @@ extern "C" {
 #include <meas_matrix.h>
 #include <summary_config.h>
 #include <summary.h>
+#include <active_list.h>
 
 typedef struct summary_obs_struct summary_obs_type;
 
@@ -36,7 +37,8 @@ const char * summary_obs_get_summary_key(
 void summary_obs_get_observations(
   const summary_obs_type * summary_obs,
   int                      restart_nr,
-  obs_data_type          * obs_data);
+  obs_data_type          * obs_data,
+  const active_list_type * active_list); 
 
 void summary_obs_measure(
   const summary_obs_type * obs,

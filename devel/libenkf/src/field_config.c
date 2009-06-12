@@ -105,7 +105,7 @@ struct field_config_struct {
   int nx,ny,nz;                         /* The number of elements in the three directions. */
   const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */
   bool  private_grid;
-
+  
   active_list_type * active_list;
 
   int             	  truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. */
@@ -149,19 +149,19 @@ void field_config_set_ecl_type(field_config_type * config , ecl_type_enum ecl_ty
 
 static const char * field_config_file_type_string(field_file_format_type file_type) {
   switch (file_type) {
-  case(rms_roff_file):
+  case(RMS_ROFF_FILE):
     return "Binary ROFF file from RMS";
     break;
-  case(ecl_kw_file):
+  case(ECL_KW_FILE):
     return "ECLIPSE file in restart format";
     break;
-  case(ecl_kw_file_all_cells):
+  case(ECL_KW_FILE_ALL_CELLS):
     return "ECLIPSE file in restart format (all cells)";
     break;
-  case(ecl_kw_file_active_cells):
+  case(ECL_KW_FILE_ACTIVE_CELLS):
     return "ECLIPSE file in restart format (active cells)";
     break;
-  case(ecl_grdecl_file):
+  case(ECL_GRDECL_FILE):
     return "ECLIPSE file in grdecl format";
     break;
   default:
@@ -187,12 +187,12 @@ static const char * field_config_file_type_string(field_file_format_type file_ty
 
 
 const char * field_config_default_extension(field_file_format_type file_type, bool upper_case) {
-  if (file_type == rms_roff_file) {
+  if (file_type == RMS_ROFF_FILE) {
     if (upper_case)
       return "ROFF";
     else
       return "roff";
-  } else if (file_type == ecl_grdecl_file) {
+  } else if (file_type == ECL_GRDECL_FILE) {
     if (upper_case)
       return "GRDECL";
     else
@@ -206,12 +206,12 @@ const char * field_config_default_extension(field_file_format_type file_type, bo
 
 static bool field_config_valid_file_type(field_file_format_type file_type, bool import) {
   if (import) {
-    if (file_type == rms_roff_file || file_type == ecl_kw_file || file_type == ecl_grdecl_file)
+    if (file_type == RMS_ROFF_FILE || file_type == ECL_KW_FILE || file_type == ECL_GRDECL_FILE)
       return true;
     else
       return false;
   } else {
-    if (file_type == rms_roff_file || file_type == ecl_kw_file_active_cells || file_type == ecl_kw_file_all_cells || file_type == ecl_grdecl_file)
+    if (file_type == RMS_ROFF_FILE || file_type == ECL_KW_FILE_ACTIVE_CELLS || file_type == ECL_KW_FILE_ALL_CELLS || file_type == ECL_GRDECL_FILE)
       return true;
     else
       return false;
@@ -220,16 +220,16 @@ static bool field_config_valid_file_type(field_file_format_type file_type, bool 
 
 
 static field_file_format_type field_config_default_export_format(const char * filename) {
-  field_file_format_type export_format = ecl_kw_file_all_cells;   /* Suitable for PERMX/PORO/... */
+  field_file_format_type export_format = ECL_KW_FILE_ALL_CELLS;   /* Suitable for PERMX/PORO/... */
   char * extension;
   util_alloc_file_components( filename , NULL , NULL , &extension);
   if (extension != NULL) {
     util_strupr(extension);
 
     if (strcmp(extension , "GRDECL") == 0)
-      export_format = ecl_grdecl_file;
+      export_format = ECL_GRDECL_FILE;
     else if (strcmp(extension , "ROFF") == 0)
-      export_format = rms_roff_file;
+      export_format = RMS_ROFF_FILE;
 
     free(extension);
   }
@@ -256,20 +256,20 @@ field_file_format_type field_config_manual_file_type(const char * prompt , bool 
   int int_file_type;
   printf("\n%s\n",prompt);
   printf("----------------------------------------------------------------\n");
-  printf(" %3d: %s.\n" , rms_roff_file   , field_config_file_type_string(rms_roff_file));
+  printf(" %3d: %s.\n" , RMS_ROFF_FILE   , field_config_file_type_string(RMS_ROFF_FILE));
   if (import)
-    printf(" %3d: %s.\n" , ecl_kw_file     , field_config_file_type_string(ecl_kw_file));
+    printf(" %3d: %s.\n" , ECL_KW_FILE     , field_config_file_type_string(ECL_KW_FILE));
   else {
-    printf(" %3d: %s.\n" , ecl_kw_file_active_cells  , field_config_file_type_string(ecl_kw_file_active_cells));
-    printf(" %3d: %s.\n" , ecl_kw_file_all_cells     , field_config_file_type_string(ecl_kw_file_all_cells));
+    printf(" %3d: %s.\n" , ECL_KW_FILE_ACTIVE_CELLS  , field_config_file_type_string(ECL_KW_FILE_ACTIVE_CELLS));
+    printf(" %3d: %s.\n" , ECL_KW_FILE_ALL_CELLS     , field_config_file_type_string(ECL_KW_FILE_ALL_CELLS));
   }
-  printf(" %3d: %s.\n" , ecl_grdecl_file , field_config_file_type_string(ecl_grdecl_file));
+  printf(" %3d: %s.\n" , ECL_GRDECL_FILE , field_config_file_type_string(ECL_GRDECL_FILE));
   printf("----------------------------------------------------------------\n");
   do {
     int_file_type = util_scanf_int("" , 2);
     if (!field_config_valid_file_type(int_file_type, import))
-      int_file_type = undefined_format;
-  } while(int_file_type == undefined_format);
+      int_file_type = UNDEFINED_FORMAT;
+  } while(int_file_type == UNDEFINED_FORMAT);
   return int_file_type;
 }
 
@@ -300,13 +300,13 @@ field_file_format_type field_config_guess_file_type(const char * filename , bool
 
   field_file_format_type file_type;
   if (ecl_kw_is_kw_file(stream , fmt_file , endian_flip))
-    file_type = ecl_kw_file;
+    file_type = ECL_KW_FILE;
   else if (rms_file_is_roff(stream))
-    file_type = rms_roff_file;
+    file_type = RMS_ROFF_FILE;
   else if (ecl_kw_is_grdecl_file(stream))  /* This is the weakest test - and should be last in a cascading if / else hierarchy. */
-    file_type = ecl_grdecl_file;
+    file_type = ECL_GRDECL_FILE;
   else
-    file_type = undefined_format;              /* MUST Check on this return value */
+    file_type = UNDEFINED_FORMAT;              /* MUST Check on this return value */
 
   fclose(stream);
   return file_type;
@@ -331,7 +331,7 @@ void field_config_set_grid(field_config_type * config, const ecl_grid_type * gri
 
 
 const char * field_config_get_grid_name( const field_config_type * config) {
-  return ecl_grid_get_filename( config->grid );
+  return ecl_grid_get_name( config->grid );
 }
 
 
@@ -372,8 +372,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->output_transform         = NULL;
   config->init_transform           = NULL;
   config->input_transform          = NULL;
-  config->active_list              = active_list_alloc( config->data_size );
-  field_config_set_all_active(config);
+  config->active_list              = active_list_alloc( ALL_ACTIVE );
 
   /* Starting on the options. */
   {
@@ -463,22 +462,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 
 
 
-static void field_config_set_all_active__(field_config_type * field_config, bool active) {
-
-  if (active)
-    active_list_set_all_active(field_config->active_list);
-  else
-    active_list_reset(field_config->active_list);
-
-}
-
-
-
-void field_config_set_all_active(field_config_type * field) {
-  field_config_set_all_active__(field , true);
-}
-
-
 /*
   Observe that the indices are zero-based, in contrast to those used
   by eclipse which are based on one.
@@ -506,7 +489,7 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , const stringlist_type * options) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ecl_file , ecl_file , trans_table , options);
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ECL_FILE , ECL_FILE , trans_table , options);
   return config;
 }
 
@@ -519,7 +502,7 @@ field_config_type * field_config_alloc_general(const char * ecl_kw_name ,
 					       field_trans_table_type * trans_table , 
 					       const stringlist_type * options) {
   field_config_type * config;
-  field_file_format_type import_format = undefined_format;   /* undefined_format -> automagic guessing of format. */
+  field_file_format_type import_format = UNDEFINED_FORMAT;   /* undefined_format -> automagic guessing of format. */
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
   config = field_config_alloc__(ecl_kw_name , internal_type , ecl_grid , import_format , export_format , trans_table , options);
@@ -538,7 +521,7 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name 	     
 						 field_trans_table_type * trans_table ,
 						 const stringlist_type * options) {
   field_config_type * config;
-  field_file_format_type import_format = undefined_format;
+  field_file_format_type import_format = UNDEFINED_FORMAT;
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
   config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format , trans_table ,options);
@@ -905,17 +888,17 @@ void field_config_assert_binary( const field_config_type * config1 , const field
 
 
 
-void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
-  field_active_type * active = field_active_safe_cast( active_config );
-
-  if (active_mode == ALL_ACTIVE)
-    active_list_set_all_active(config->active_list);
-  else {
-    active_list_reset(config->active_list);
-    if (active_mode == PARTLY_ACTIVE)
-      field_active_update_active_list( active , config->active_list);
-  }
-}
+//void field_config_activate(field_config_type * config , active_mode_type active_mode , void * active_config) {
+//  field_active_type * active = field_active_safe_cast( active_config );
+//
+//  if (active_mode == ALL_ACTIVE)
+//    active_list_set_all_active(config->active_list);
+//  else {
+//    active_list_reset(config->active_list);
+//    if (active_mode == PARTLY_ACTIVE)
+//      field_active_update_active_list( active , config->active_list);
+//  }
+//}
 
 
 
@@ -972,7 +955,7 @@ const ecl_grid_type *field_config_get_grid(const field_config_type * config) { r
 SAFE_CAST(field_config , FIELD_CONFIG_ID)
 CONFIG_GET_ECL_KW_NAME(field);
 GET_DATA_SIZE(field)
+VOID_GET_DATA_SIZE(field)
 VOID_FREE(field_config)
-VOID_CONFIG_ACTIVATE(field)
 GET_ACTIVE_LIST(field);
 

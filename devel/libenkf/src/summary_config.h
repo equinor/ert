@@ -28,5 +28,6 @@ int                    summary_config_get_byte_size(const summary_config_type * 
 SAFE_CAST_HEADER(summary_config);
 GET_ACTIVE_LIST_HEADER(summary);
 GET_DATA_SIZE_HEADER(summary);
+VOID_GET_DATA_SIZE_HEADER(summary);
 VOID_CONFIG_FREE_HEADER(summary);
 #endif

@@ -11,8 +11,7 @@
 #include <enkf_macros.h>
 #include <subst.h>
 #include <buffer.h>
-
-
+#include <matrix.h>
 
 
 GET_DATA_SIZE_HEADER(gen_kw);
@@ -127,6 +126,7 @@ void gen_kw_upgrade_103( const char * filename ) {
   
   {
     buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_time_t( buffer , time(NULL));
     buffer_fwrite_int( buffer , impl_type );
     buffer_fwrite(buffer , data , sizeof * data    ,size);
     buffer_store( buffer , filename);
@@ -157,6 +157,20 @@ int gen_kw_serialize(const gen_kw_type *gen_kw , serial_state_type * serial_stat
 void gen_kw_deserialize(gen_kw_type *gen_kw , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   scalar_deserialize(gen_kw->scalar , serial_state , serial_vector);
 }
+
+
+
+void gen_kw_matrix_serialize(const gen_kw_type *gen_kw , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  scalar_matrix_serialize(gen_kw->scalar , active_list , A , row_offset , column);
+}
+
+
+void gen_kw_matrix_deserialize(gen_kw_type *gen_kw , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  scalar_matrix_deserialize(gen_kw->scalar , active_list , A , row_offset , column);
+}
+
+
+
 
 
 /**
@@ -283,3 +297,5 @@ VOID_USER_GET(gen_kw)
 VOID_FPRINTF_RESULTS(gen_kw)
 VOID_STORE(gen_kw)
 VOID_LOAD(gen_kw)
+VOID_MATRIX_SERIALIZE(gen_kw)
+VOID_MATRIX_DESERIALIZE(gen_kw)

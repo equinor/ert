@@ -40,6 +40,9 @@ VOID_DESERIALIZE_HEADER(gen_data);
 VOID_INITIALIZE_HEADER(gen_data);
 VOID_LOAD_HEADER(gen_data);
 VOID_STORE_HEADER(gen_data);
+VOID_MATRIX_SERIALIZE_HEADER(gen_data)
+VOID_MATRIX_DESERIALIZE_HEADER(gen_data)
+
 
 #ifdef __cplusplus
 }

@@ -53,9 +53,8 @@ typedef enum { DEFAULT_KEEP    = 0,    /* Remove for enkf assimilation - keep fo
 typedef enum {INVALID 	   = 0   , 
 	      STATIC  	   = 100 ,
 	      MULTZ   	   = 101 ,
-	      MULTFLT 	   = 102 ,      
-	      EQUIL   	   = 103 ,         
-	      FIELD   	   = 104 ,       /* WELL has been removed */
+	      MULTFLT 	   = 102 ,       /* EQUIL has been removed */
+	      FIELD   	   = 104 ,       /* WELL has been removed  */
 	      GEN_KW  	   = 107 ,        
 	      RELPERM 	   = 108 ,       
 	      HAVANA_FAULT = 109 ,   
@@ -143,8 +142,9 @@ typedef enum { lock_lockf = 1,
 
 
 typedef enum {
-  ENKF_STANDARD = 10,
-  ENKF_SQRT     = 20
+  ENKF_STANDARD    = 10,
+  ENKF_SQRT        = 20,
+  ENKF_KALMAN_GAIN = 30   /* No support for this yet ... */
 } enkf_mode_type ;
 	       
 

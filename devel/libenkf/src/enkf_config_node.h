@@ -7,19 +7,22 @@ extern "C" {
 #include <enkf_types.h>
 #include <enkf_macros.h>
 
-typedef void   (config_free_ftype)                (void *);
-typedef void   (config_activate_ftype)            (void * , active_mode_type , void *);
+typedef void   (config_free_ftype)   (void *);
+typedef int    (get_data_size_ftype) (const void *);
+
 
 typedef struct enkf_config_node_struct enkf_config_node_type;
+
+
 
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       enkf_impl_type        ,
 					       const char          * ,
 					       const char          * , 
 					       const char          * , 
-					       const void          * ,
-					       config_free_ftype   * , 
-					       config_activate_ftype *);
+					       const void          * );
+
+int enkf_config_node_get_data_size( const enkf_config_node_type * node);					
 
 char                  * enkf_config_node_alloc_infile(const enkf_config_node_type * , int );
 char                  * enkf_config_node_alloc_outfile(const enkf_config_node_type * , int );

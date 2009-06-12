@@ -7,6 +7,7 @@
 #include <menu.h>
 #include <enkf_main.h>
 #include <field.h>
+#include <field_config.h>
 #include <enkf_state.h>
 #include <enkf_fs.h>
 #include <enkf_ui_util.h>
@@ -28,14 +29,15 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
   
   analysis_state = analyzed;  /* Hardcoded analyzed */
   config_node    = enkf_ui_util_scanf_key(enkf_main_get_ensemble_config(enkf_main) , prompt_len ,  FIELD  , INVALID_VAR );
-  
+
   report_step = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
   enkf_ui_util_scanf_iens_range("Realizations members to export(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
   {
-    char path_fmt[128];
+    char * path_fmt;
     util_printf_prompt("Filename to store files in (with %d) in: " , prompt_len , '=' , "=> ");
-    scanf("%s" , path_fmt);
+    path_fmt = util_alloc_stdin_line();
     export_path = path_fmt_alloc_path_fmt( path_fmt );
+    free( path_fmt );
   }
   
   {
@@ -57,7 +59,8 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
 	  field_export(field , filename , NULL , file_type , output_transform);
 	}
 	free(filename);
-      }
+      } else 
+	printf("Warning: could not load realization:%d \n", iens);
     } 
     enkf_node_free(node);
   } 
@@ -65,23 +68,23 @@ void enkf_ui_export_field(const enkf_main_type * enkf_main , field_file_format_t
 
 
 void enkf_ui_export_grdecl(void * enkf_main) {
-  enkf_ui_export_field(enkf_main , ecl_grdecl_file);
+  enkf_ui_export_field(enkf_main , ECL_GRDECL_FILE);
 }
 
 
 
 void enkf_ui_export_roff(void * enkf_main) {
-  enkf_ui_export_field(enkf_main , rms_roff_file);
+  enkf_ui_export_field(enkf_main , RMS_ROFF_FILE);
 }
 
 
 void enkf_ui_export_restart_active(void * enkf_main) {
-  enkf_ui_export_field(enkf_main , ecl_kw_file_active_cells);
+  enkf_ui_export_field(enkf_main , ECL_KW_FILE_ACTIVE_CELLS);
 }
 
 
 void enkf_ui_export_restart_all(void * enkf_main) {
-  enkf_ui_export_field(enkf_main , ecl_kw_file_all_cells);
+  enkf_ui_export_field(enkf_main , ECL_KW_FILE_ALL_CELLS);
 }
 
 
@@ -388,6 +391,57 @@ void enkf_ui_export_time(void * enkf_main) {
 }
 
 
+void enkf_ui_export_fieldP(void * arg) {
+  enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg ); 
+  const int prompt_len                         = 45;
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  state_enum analysis_state   	      	       = analyzed;  /* Hardcoded analyzed */
+  const enkf_config_node_type * config_node    = enkf_ui_util_scanf_key(ensemble_config , prompt_len ,  FIELD  , INVALID_VAR );
+  int iens1                   	      	       = 0;
+  int iens2                   	      	       = ensemble_config_get_size(ensemble_config);
+  const int last_report                        = enkf_main_get_total_length( enkf_main );
+  int report_step                              = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
+  double lower_limit                           = util_scanf_double("Lower limit", prompt_len);
+  double upper_limit                           = util_scanf_double("Upper limit", prompt_len);
+  char * export_file;
+  util_printf_prompt("Filename to store file: " , prompt_len , '=' , "=> ");
+  export_file = util_alloc_stdin_line();
+  {
+    enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
+    enkf_node_type ** ensemble = enkf_fs_fread_alloc_ensemble( fs , config_node , report_step , iens1 , iens2 , analysis_state );
+    enkf_node_type *  sum      = enkf_node_alloc( config_node );
+    int iens;
+    
+    enkf_node_clear( sum );
+    {
+      /* OK going low level */
+      field_type * sum_field = enkf_node_value_ptr( sum );
+
+      for (iens = iens1; iens < iens2; iens++) {
+	field_type * field     = enkf_node_value_ptr( ensemble[iens - iens1] );
+	field_update_sum( sum_field , field , lower_limit , upper_limit);
+      }
+      field_iscale( sum_field , 1.0 / ( iens2 - iens1 ));
+      {
+	char * path;
+	util_alloc_file_components( export_file , &path , NULL , NULL);
+	util_make_path( path );
+	free( path );
+      }
+      field_export(sum_field , export_file , NULL , RMS_ROFF_FILE , false);
+    }
+    
+    for (iens = iens1; iens < iens2; iens++)
+      enkf_node_free( ensemble[iens - iens1] );
+    free( ensemble );
+    enkf_node_free( sum );
+  }
+  free( export_file );
+}
+
+
+/*****************************************************************/
+
 
 /**
    This is a very simple function for exporting a scalar value for all
@@ -531,6 +585,8 @@ void enkf_ui_export_menu(void * arg) {
   menu_add_item(menu , "Export fields to ECLIPSE grdecl format" 		, "gG" , enkf_ui_export_grdecl 	       , enkf_main , NULL);
   menu_add_item(menu , "Export fields to ECLIPSE restart format (active cells)" , "aA" , enkf_ui_export_restart_active , enkf_main , NULL);
   menu_add_item(menu , "Export fields to ECLIPSE restart format (all cells)"    , "lL" , enkf_ui_export_restart_all    , enkf_main , NULL);
+  menu_add_separator(menu);
+  menu_add_item(menu , "Export P( a =< x < b )" , "sS" , enkf_ui_export_fieldP , enkf_main , NULL);                 
   menu_add_separator(menu);
   menu_add_item(menu , "Export cell values to text file(s)"                  	, "cC" , enkf_ui_export_cell    , enkf_main , NULL);
   menu_add_item(menu , "Export line profile of a field to text file(s)"      	, "pP" , enkf_ui_export_profile , enkf_main , NULL);

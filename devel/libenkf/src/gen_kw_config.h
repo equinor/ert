@@ -30,6 +30,7 @@ char                      * gen_kw_config_alloc_user_key(const gen_kw_config_typ
 
 SAFE_CAST_HEADER(gen_kw_config);
 VOID_FREE_HEADER(gen_kw_config);
+VOID_GET_DATA_SIZE_HEADER(gen_kw);
 #ifdef __cplusplus
 }
 #endif

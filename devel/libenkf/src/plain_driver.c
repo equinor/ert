@@ -66,9 +66,8 @@ void plain_driver_load_node_NEW(void * _driver , int report_step , int iens , st
   {
     char * filename      = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
     buffer_fread_realloc( buffer , filename );
-    
+    buffer_fskip_time_t( buffer );
     enkf_node_load(node , buffer , report_step, iens , state);
-    
     free(filename);
   }
   buffer_free( buffer );
@@ -122,6 +121,7 @@ void plain_driver_save_node_NEW(void * _driver , int report_step , int iens , st
     bool   internal_state = true;
     bool   data_written;
     buffer_type * buffer = buffer_alloc(100);
+    buffer_fwrite_time_t( buffer , time(NULL));
     data_written 	 = enkf_node_store(node , buffer , internal_state , report_step , iens , state);  /* <- Even this could (should) be done at the enkf_fs level. */
     
     if (data_written) {

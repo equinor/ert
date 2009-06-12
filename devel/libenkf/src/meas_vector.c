@@ -71,3 +71,7 @@ const double * meas_vector_get_data_ref(const meas_vector_type * vector) {
   return vector->data;
 }
 
+
+int meas_vector_get_size( const meas_vector_type * vector ) {
+  return vector->size;
+}

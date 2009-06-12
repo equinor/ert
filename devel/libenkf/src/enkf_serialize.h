@@ -8,6 +8,7 @@ extern "C" {
 #include <stdbool.h>
 #include <ecl_util.h>
 #include <active_list.h>
+#include <matrix.h>
 
 typedef struct serial_state_struct  serial_state_type;
 typedef struct serial_vector_struct serial_vector_type;
@@ -33,6 +34,26 @@ size_t enkf_serialize_part  (const void * , bool , int , int , int , ecl_type_en
 
 void   enkf_deserialize(void * , int , ecl_type_enum , const active_list_type * , serial_state_type * , const serial_vector_type *);
 size_t enkf_serialize  (const void * , int , ecl_type_enum , const active_list_type * , serial_state_type * , size_t , serial_vector_type *);
+
+
+/*****************************************************************/
+
+void enkf_matrix_serialize(const void * __node_data 	   	, 
+			   int node_size    	   	        ,      
+			   ecl_type_enum node_type 	        ,           
+			   const active_list_type * __active_list , 
+			   matrix_type * A,
+			   int row_offset, 
+			   int column);
+
+
+void enkf_matrix_deserialize(void * __node_data 	   	, 
+			     int node_size    	   	        ,      
+			     ecl_type_enum node_type 	        ,           
+			     const active_list_type * __active_list , 
+			     const matrix_type * A,
+			     int row_offset,
+			     int column);
 
 
 #ifdef __cplusplus

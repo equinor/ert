@@ -10,6 +10,7 @@
 #include <obs_data.h>
 #include <meas_matrix.h>
 #include <summary.h>
+#include <active_list.h>
 
 
 #define SUMMARY_OBS_TYPE_ID 66103
@@ -76,11 +77,10 @@ const char * summary_obs_get_summary_key(const summary_obs_type * summary_obs)
 
 
 
-void summary_obs_get_observations(
-  const summary_obs_type * summary_obs,
-  int                      restart_nr,
-  obs_data_type          * obs_data)
-{
+void summary_obs_get_observations(const summary_obs_type * summary_obs,
+				  int                      restart_nr,
+				  obs_data_type          * obs_data,
+				  const active_list_type * active_list) {
   char * obs_key = util_alloc_sprintf("%s:%d" , summary_obs->summary_key , restart_nr);
   obs_data_add(obs_data , summary_obs->value , summary_obs->std , obs_key);
   free( obs_key );

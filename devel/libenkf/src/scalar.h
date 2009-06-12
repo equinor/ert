@@ -42,6 +42,11 @@ const double   * scalar_get_data_ref  (const scalar_type * );
 double           scalar_iget_double(scalar_type * , bool , int );
 void             scalar_memcpy(scalar_type * , const scalar_type * );
 void             scalar_free_data(scalar_type *);
+void 		 scalar_matrix_deserialize(scalar_type * scalar , const active_list_type * active_list , const matrix_type * A , int row_offset , int column);
+void 		 scalar_matrix_serialize(const scalar_type *scalar ,  const active_list_type * active_list , matrix_type * A , int row_offset , int column);
+
+
+
 
 MATH_OPS_HEADER(scalar);
 VOID_ALLOC_HEADER(scalar);

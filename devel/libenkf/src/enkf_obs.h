@@ -9,6 +9,8 @@ extern "C" {
 #include <meas_matrix.h>
 #include <obs_data.h>
 #include <obs_vector.h>
+#include <hash.h>
+#include <local_ministep.h>
 
 typedef struct enkf_obs_struct enkf_obs_type;
 
@@ -40,7 +42,9 @@ void enkf_obs_get_obs_and_measure(
         int                      ens_size,
         const enkf_state_type ** ensemble ,
         meas_matrix_type       * meas_matrix,
-        obs_data_type          * obs_data);
+        obs_data_type          * obs_data,
+	const local_ministep_type * ministep);
+
 
 stringlist_type * enkf_obs_alloc_typed_keylist( enkf_obs_type * enkf_obs , obs_impl_type );
 hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs);
@@ -49,6 +53,8 @@ const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , con
 bool 	  enkf_obs_has_key(const enkf_obs_type * , const char * );
 void 	  enkf_obs_total_ensemble_chi2(const enkf_obs_type * , enkf_fs_type *  , int  , state_enum , double * );
 void      enkf_obs_ensemble_chi2(const enkf_obs_type *  , enkf_fs_type *  , int  , int  , state_enum  , double * );
+
+hash_iter_type * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
 
 #ifdef __cplusplus
 }

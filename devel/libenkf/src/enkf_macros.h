@@ -11,6 +11,7 @@ extern "C" {
 #include <ecl_sum.h>
 #include <enkf_serialize.h>
 #include <active_list.h>
+#include <matrix.h>
 
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
@@ -49,17 +50,6 @@ prefix ## _type * prefix ## _safe_cast(const void * __arg) {   \
 
 
 
-/*****************************************************************/
-
-#define VOID_CONFIG_ACTIVATE(prefix) \
-void prefix ## _config_activate__(void * void_config , active_mode_type active_mode , void * active_info) { \
-    prefix ## _config_type * config = prefix ## _config_safe_cast( void_config );                           \
-    prefix ## _config_activate( config , active_mode , active_info);                                        \
-}
-
-#define VOID_CONFIG_ACTIVATE_HEADER(prefix) void prefix ## _config_activate__(void * , active_mode_type , void *);
-
-/*****************************************************************/
 
 #define VOID_OBS_ACTIVATE(prefix) \
 void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void * active_info) { \
@@ -78,6 +68,12 @@ void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void
 
 #define GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size (const prefix ## _config_type *arg) { return arg->data_size; }
 #define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *)
+
+#define VOID_GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size__ (const void * arg) {\
+   prefix ## _config_type * config = prefix ## _config_safe_cast( arg ); \
+   return prefix ## _config_get_data_size( config );                     \
+}
+#define VOID_GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size__ (const void * arg);
 
 
 /*****************************************************************/
@@ -237,6 +233,26 @@ void prefix ## _deserialize__(void *void_arg, serial_state_type * serial_state, 
 
 /*****************************************************************/
 
+#define VOID_MATRIX_SERIALIZE(prefix)     \
+void prefix ## _matrix_serialize__(const void *void_arg, const active_list_type * active_list , matrix_type * A , int row_offset , int column) {\
+   const prefix ## _type  *arg = prefix ## _safe_cast( void_arg );                         				      \
+   prefix ## _matrix_serialize (arg , active_list , A , row_offset , column);                 				      \
+}
+#define VOID_MATRIX_SERIALIZE_HEADER(prefix) void prefix ## _matrix_serialize__(const void * , const active_list_type * , matrix_type *  , int , int);
+
+
+#define VOID_MATRIX_DESERIALIZE(prefix)     \
+void prefix ## _matrix_deserialize__(void *void_arg, const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {\
+   prefix ## _type  *arg = prefix ## _safe_cast( void_arg );                         				      \
+   prefix ## _matrix_deserialize (arg , active_list , A , row_offset , column);                 				      \
+}
+#define VOID_MATRIX_DESERIALIZE_HEADER(prefix) void prefix ## _matrix_deserialize__(void * , const active_list_type * , const matrix_type *  , int , int);
+
+
+
+
+/*****************************************************************/
+
 #define VOID_INITIALIZE(prefix)     \
 bool prefix ## _initialize__(void *void_arg, int iens) {         \
    prefix ## _type  *arg = prefix ## _safe_cast(void_arg);       \
@@ -248,11 +264,11 @@ bool prefix ## _initialize__(void *void_arg, int iens) {         \
 /*****************************************************************/
 
 #define VOID_GET_OBS(prefix)   \
-void prefix ## _get_observations__(const void * void_arg , int report_step, obs_data_type * obs_data) {   \
-   prefix ## _get_observations((prefix ## _type *) void_arg , report_step , obs_data); \
+void prefix ## _get_observations__(const void * void_arg , int report_step, obs_data_type * obs_data, const active_list_type * active_list) {   \
+   prefix ## _get_observations((prefix ## _type *) void_arg , report_step , obs_data , active_list); \
 }
 
-#define VOID_GET_OBS_HEADER(prefix) void prefix ## _get_observations__(const void * , int , obs_data_type *)
+#define VOID_GET_OBS_HEADER(prefix) void prefix ## _get_observations__(const void * , int , obs_data_type * , const active_list_type * )
 
 /*****************************************************************/
 

@@ -1,8 +1,8 @@
 include global_config
 #m32 -> #define i386 1    m64 -> __x86_64 1
 #################################################################
-MAIN_INCLUDE     = -I$(LIBCONFIG_HOME)/include -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include -I$(LIBJOB_QUEUE_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBPLOT_HOME)/include
-COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE)
+MAIN_INCLUDE     = -I$(LIBCONFIG_HOME)/include -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBSCHED_HOME)/include -I$(LIBRMS_HOME)/include -I$(LIBJOB_QUEUE_HOME)/include -I$(LIBPLOT_HOME)/include -I$(EXTERNAL_INC_PATH) 
+COMPILE_INCLUDE  = -I$(LIBENKF_HOME)/src $(MAIN_INCLUDE) 
 INSTALL_INC_PATH =   $(LIBENKF_HOME)/include
 INSTALL_LIB_PATH =   $(LIBENKF_HOME)/lib
 #################################################################
@@ -10,9 +10,9 @@ SDP_ROOT  	   = $(shell get_sdp_root.py)
 SVN_VERSION 	   = $(shell svnversion ./)
 COMPILE_TIME_STAMP = $(shell date)
 #################################################################
-OBJECTS           = scalar.o scalar_config.o trans_func.o enkf_types.o enkf_obs.o obs_data.o field_obs.o meas_vector.o enkf_config_node.o field_config.o field.o ecl_static_kw.o enkf_state.o enkf_util.o enkf_main.o enkf_node.o enkf_fs.o gen_kw_config.o gen_kw.o enkf_fs.o basic_driver.o old_analysis.o meas_matrix.o summary_obs.o summary.o summary_config.o gen_data_config.o gen_data.o gen_common.o gen_obs.o enkf_sched.o enkf_ui_main.o enkf_ui_run.o enkf_ui_export.o enkf_ui_util.o enkf_ui_plot.o enkf_ui_init.o enkf_serialize.o plain_driver_common.o ecl_config.o enkf_defaults.o ensemble_config.o model_config.o site_config.o pilot_point.o pilot_point_config.o active_node.o active_config.o gen_data_active.o gen_obs_active.o field_active.o active_list.o obs_vector.o field_trans.o plain_driver_index.o plain_driver.o enkf_ui_fs.o enkf_ui_table.o havana_fault.o havana_fault_config.o multflt_config.o multflt.o sqlite3.o sqlite3_driver.o config_parser.o enkf_analysis.o
+OBJECTS           = scalar.o scalar_config.o trans_func.o enkf_types.o enkf_obs.o obs_data.o field_obs.o meas_vector.o enkf_config_node.o field_config.o field.o ecl_static_kw.o enkf_state.o enkf_util.o enkf_main.o enkf_node.o enkf_fs.o gen_kw_config.o gen_kw.o enkf_fs.o basic_driver.o old_analysis.o meas_matrix.o summary_obs.o summary.o summary_config.o gen_data_config.o gen_data.o gen_common.o gen_obs.o enkf_sched.o enkf_ui_main.o enkf_ui_run.o enkf_ui_export.o enkf_ui_util.o enkf_ui_plot.o enkf_ui_init.o enkf_serialize.o plain_driver_common.o ecl_config.o enkf_defaults.o ensemble_config.o model_config.o site_config.o pilot_point.o pilot_point_config.o gen_data_active.o gen_obs_active.o field_active.o active_list.o obs_vector.o field_trans.o plain_driver_index.o plain_driver.o enkf_ui_fs.o enkf_ui_table.o havana_fault.o havana_fault_config.o multflt_config.o multflt.o sqlite3.o sqlite3_driver.o config_parser.o enkf_analysis.o local_ministep.o local_reportstep.o local_config.o analysis_config.o
 
-INC_FILES_INSTALL = scalar.h scalar_config.h trans_func.h enkf_obs.h obs_data.h meas_vector.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw.h enkf_state.h enkf_util.h enkf_main.h enkf_node.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h old_analysis.h meas_matrix.h summary_obs.h summary_config.h summary_config.o gen_data_config.h gen_data.h gen_common.h gen_obs.h enkf_sched.h enkf_ui_main.h enkf_ui_run.h enkf_ui_export.h enkf_ui_util.h enkf_ui_plot.h enkf_ui_init.h fs_types.h enkf_serialize.h plain_driver_common.h ecl_config.h ensemble_config.h model_config.h site_config.h pilot_point.h pilot_point_config.h active_node.h active_config.h gen_data_active.h gen_obs_active.h field_active.h active_list.h obs_vector.h field_trans.h plain_driver_index.h plain_driver.h enkf_ui_fs.h enkf_ui_table.h havana_fault.h havana_fault_config.h multflt_config.h multflt.h sqlite3.h sqlite3_driver.h config_parser.h enkf_analysis.h
+INC_FILES_INSTALL = scalar.h scalar_config.h trans_func.h enkf_obs.h obs_data.h meas_vector.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw.h enkf_state.h enkf_util.h enkf_main.h enkf_node.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h old_analysis.h meas_matrix.h summary_obs.h summary_config.h summary_config.o gen_data_config.h gen_data.h gen_common.h gen_obs.h enkf_sched.h enkf_ui_main.h enkf_ui_run.h enkf_ui_export.h enkf_ui_util.h enkf_ui_plot.h enkf_ui_init.h fs_types.h enkf_serialize.h plain_driver_common.h ecl_config.h ensemble_config.h model_config.h site_config.h pilot_point.h pilot_point_config.h gen_data_active.h gen_obs_active.h field_active.h active_list.h obs_vector.h field_trans.h plain_driver_index.h plain_driver.h enkf_ui_fs.h enkf_ui_table.h havana_fault.h havana_fault_config.h multflt_config.h multflt.h sqlite3.h sqlite3_driver.h config_parser.h enkf_analysis.h local_ministep.h local_reportstep.h local_config.h analysis_config.h
 
 
 ifeq ($(USE_LSF_LIBRARY),TRUE)
@@ -22,7 +22,7 @@ else
 endif
 
 LIB_LINK          = -lenkf -lsched -lrms -ljob_queue -lecl -lconfig -lutil -lanalysis -lplot -lplplotd -lm -lpthread -lz  -llapack -lblas $(LSF_LIBS) -lgfortran 
-LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) -L$(LIBPLPLOT_HOME)/lib
+LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) 
 LIB               = libenkf.a
 TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
 
@@ -55,7 +55,7 @@ clean:  clean_enkf
 	rm -f $(INSTALL_LIB_PATH)/$(LIB)
 	rm -f $(INSTALL_INC_PATH)/*.h
 
-rebuild: clean LOCAL
+rebuild: clean new LOCAL
 
 new: 
 	../../Scripts/cdep.py main.c 1

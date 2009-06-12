@@ -150,41 +150,8 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
   
   {
-    config_free_ftype     * freef = NULL;
-    config_activate_ftype * activate = NULL;
-    switch(impl_type) {
-    case(FIELD):
-      freef             = field_config_free__;
-      activate          = field_config_activate__;
-      break;
-    case(STATIC):
-      freef             = NULL; 
-      break;
-    case(GEN_KW):
-      freef             = gen_kw_config_free__;
-      break;
-    case(SUMMARY):
-      freef             = summary_config_free__;
-      break;
-    case(MULTFLT):
-      freef             = multflt_config_free__;
-      activate          = multflt_config_activate__;
-      break;
-    case(HAVANA_FAULT):
-      freef             = havana_fault_config_free__;
-      break;
-    case(GEN_DATA):
-      freef             = gen_data_config_free__;
-      activate          = gen_data_config_activate__;
-      break;
-    default:
-      util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
-    }
-    
-    {
-      enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , enkf_outfile , enkf_infile , data , freef , activate);
-      hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
-    }
+    enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , enkf_outfile , enkf_infile , data );
+    hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
   }
 }
 
@@ -221,9 +188,6 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
   
   item = config_add_item(config , "MULTFLT" , false , true);
-  config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-  
-  item = config_add_item(config , "EQUIL" , false , true);
   config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
   
   item = config_add_item(config , "GEN_KW" , false , true);
@@ -474,12 +438,19 @@ stringlist_type * ensemble_config_alloc_keylist(const ensemble_config_type * con
 }
 
 
-stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type * config , enkf_var_type var_type) {
+/**
+   Observe that var_type here is an integer - naturally written as a
+   sum of enkf_var_type values:
+
+     ensemble_config_alloc_keylist_from_var_type( config , PARAMETER + DYNAMIC_STATE);
+*/
+   
+stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_config_type * config , int var_type) {
   stringlist_type * key_list = stringlist_alloc_new();
   hash_iter_type * iter = hash_iter_alloc(config->config_nodes);
   const char * key = hash_iter_get_next_key(iter);
   while (key != NULL) {
-    if (enkf_config_node_get_var_type( hash_get(config->config_nodes , key)) == var_type)
+    if (enkf_config_node_get_var_type( hash_get(config->config_nodes , key)) & var_type)
       stringlist_append_copy( key_list , key );
     
     key = hash_iter_get_next_key(iter);
@@ -487,6 +458,7 @@ stringlist_type * ensemble_config_alloc_keylist_from_var_type(const ensemble_con
   hash_iter_free(iter);
   return key_list;
 }
+
 
 
 stringlist_type * ensemble_config_alloc_keylist_from_impl_type(const ensemble_config_type * config , enkf_impl_type impl_type) {

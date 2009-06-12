@@ -16,14 +16,15 @@ extern "C" {
 #include <enkf_serialize.h>
 #include <buffer.h>
 #include <msg.h>
+#include <matrix.h>
+#include <active_list.h>
 
 /**********************************/
 
 
+typedef void (matrix_serialize_ftype)   (const void * , const active_list_type *  ,       matrix_type * , int , int);
+typedef void (matrix_deserialize_ftype) (      void * , const active_list_type *  , const matrix_type * , int , int);
 
-
-#define NODE_STD_FIELDS \
-int __internal_offset;
 
 /* Return value is the number of elements added = serial_size */
 typedef int   	      (serialize_ftype)      	(const void *         ,   /* Node object.     	       */ 
@@ -84,7 +85,9 @@ typedef enum {alloc_func       	   	    = 0,
 	      free_func        	   	    = 9,
 	      free_data_func   	   	    = 10,    
 	      ensemble_fprintf_results_func = 11,
-              clear_serial_state_func       = 12} node_function_type;
+              clear_serial_state_func       = 12,
+	      matrix_serialize              = 13,
+	      matrix_deserialize            = 14} node_function_type;
 	      
 
 typedef struct enkf_node_struct enkf_node_type;
@@ -106,6 +109,8 @@ enkf_impl_type   enkf_node_get_impl_type(const enkf_node_type * );
 enkf_var_type    enkf_node_get_var_type(const enkf_node_type * );
 void             enkf_node_clear_serial_state(enkf_node_type * );
 void             enkf_node_deserialize(enkf_node_type * , const serial_vector_type *);
+void             enkf_node_matrix_serialize(enkf_node_type *enkf_node , const active_list_type * active_list , matrix_type * A , int row_offset , int column);
+void             enkf_node_matrix_deserialize(enkf_node_type *enkf_node , const active_list_type * active_list , const matrix_type * A , int row_offset , int column);
 
 void             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
 void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);

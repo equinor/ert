@@ -51,59 +51,8 @@ subroutine enkfX5(X5, R, E, S, D, innov, nrens, nrobs, verbose, truncation,mode,
 #include <old_analysis.h>
 #include <config.h>
 #include <matrix.h>
+#include <analysis_config.h>
 
-
-struct analysis_config_struct {
-  bool                   merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
-  double 	         truncation;
-  double 	         overlap_alpha;
-  enkf_mode_type         enkf_mode;
-  pseudo_inversion_type  inversion_mode;
-  int                    fortran_enkf_mode; 
-};
-
-
-
-static analysis_config_type * analysis_config_alloc__(double truncation , double overlap_alpha , enkf_mode_type enkf_mode , bool merge_observations) {
-  analysis_config_type * config = util_malloc( sizeof * config , __func__);
-
-  config->merge_observations = merge_observations;
-  config->truncation         = truncation;
-  config->overlap_alpha      = overlap_alpha;
-  config->enkf_mode          = enkf_mode;
-  config->inversion_mode     = SVD_SS_N1_R;
-  
-  config->fortran_enkf_mode  = config->enkf_mode + config->inversion_mode;
-  return config;
-}
-
-
-analysis_config_type * analysis_config_alloc(const config_type * config) {
-  double truncation 	    = strtod( config_get(config , "ENKF_TRUNCATION") , NULL);
-  double alpha      	    = strtod( config_get(config , "ENKF_ALPHA") , NULL);
-  bool   merge_observations = config_get_as_bool(config , "ENKF_MERGE_OBSERVATIONS");
-  const char * enkf_mode_string = config_get(config , "ENKF_MODE");
-  enkf_mode_type enkf_mode = ENKF_SQRT; /* Compiler shut up */
-
-  if (strcmp(enkf_mode_string,"STANDARD") == 0)
-    enkf_mode = ENKF_STANDARD;
-  else if (strcmp(enkf_mode_string , "SQRT") == 0)
-    enkf_mode = ENKF_SQRT;
-  else
-    util_abort("%s: internal error : enkf_mode:%s not recognized \n",__func__ , enkf_mode_string);
-
-  return analysis_config_alloc__(truncation , alpha , enkf_mode , merge_observations);
-}
-
-
-bool analysis_config_merge_observations(const analysis_config_type * config) {
-  return config->merge_observations;
-}
-
-
-void analysis_config_free(analysis_config_type * config) {
-  free(config);
-}
 
 
 static int __C2f90_bool(bool c_bool) {
@@ -240,9 +189,9 @@ X = |X5  X14             |
 double * old_analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_type * meas_matrix, obs_data_type * obs_data , bool verbose , bool update_randrot , const analysis_config_type * config) {
   int  update_randrot_int, verbose_int;
   const char * xpath 	  = NULL;
-  const double alpha 	  = config->overlap_alpha;
-  const double truncation = config->truncation;
-  const int    mode       = config->fortran_enkf_mode;  
+  const double alpha 	  = analysis_config_get_alpha( config );
+  const double truncation = analysis_config_get_truncation( config );
+  const int    mode       = analysis_config_get_fortran_enkf_mode( config );
   bool  * active_obs;
   double *X ;
   int istep , ens_stride , obs_stride , nrobs_active;
@@ -296,7 +245,6 @@ double * old_analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_
   }
 
   /**
-     
      0. Deaktiver outliers.
      1. Alloker S og <S> fra obs_data / meas_matrix   
      2. Alloker R fra obs_data.
@@ -305,7 +253,6 @@ double * old_analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_
      5. Alloker innov fra obs_data og <S>.   Etter punkt 5 kan man slippe <S>.
      6. Skaler S,D,E,R,innov fra obs_data.
      7. Beregn X(S,D,E,R,innov);
-  
   */
 
 
@@ -315,18 +262,7 @@ double * old_analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_
     double  *R , *E , *S , *D;
     
     analysis_set_stride(ens_size , nrobs_active , &ens_stride , &obs_stride);
-    S = meas_matrix_allocS(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
-    
-    /* Just a check of the matrix based routines */
-    {
-      matrix_type * __S;
-      __S   = meas_matrix_allocS__(meas_matrix , nrobs_active , NULL /*&meanS*/ , active_obs);
-      
-      if (memcmp( S , matrix_get_data(__S) , nrobs_active * ens_size * sizeof * S) != 0)
-	util_abort("%s: matrixS error \n");
-      
-      matrix_free( __S );
-    }
+    S = meas_matrix_allocS_OLD(meas_matrix , nrobs_active , ens_stride , obs_stride , &meanS , active_obs);
     
     R 	  = obs_data_allocR(obs_data);
     E     = obs_data_allocE(obs_data , ens_size , ens_stride , obs_stride);

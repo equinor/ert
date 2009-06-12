@@ -14,7 +14,10 @@
 struct meas_matrix_struct {
   int ens_size;
   meas_vector_type ** meas_vectors;
-  bool              * active;  
+  int                 active_count; /* The number of active elements - initialized in meas_matrix_calculate_ens_stats(). */
+  bool              * active;       /* */
+  double            * ens_mean;     /* Mean over all ensemble members - explicitly calculated with meas_matrix_calculate_ens_stats() */
+  double            * ens_std;      /* Std  over all ensemble members - explicitly calculated with meas_matrix_calculate_ens_stats() */
 };
 
 
@@ -27,6 +30,8 @@ meas_matrix_type * meas_matrix_alloc(int ens_size) {
   meas->ens_size     = ens_size;
   meas->meas_vectors = util_malloc(ens_size * sizeof * meas->meas_vectors , __func__);
   meas->active       = NULL;
+  meas->ens_mean     = NULL;
+  meas->ens_std      = NULL;
   {
     int i;
     for (i = 0; i < meas->ens_size; i++)
@@ -36,12 +41,21 @@ meas_matrix_type * meas_matrix_alloc(int ens_size) {
 }
 
 
+void meas_matrix_deactivate(meas_matrix_type * meas_matrix, int index) {
+  meas_matrix->active[index] = false;
+  meas_matrix->active_count -= 1;
+}
+
+
+
 void meas_matrix_free(meas_matrix_type * matrix) {
   int i;
   for (i=0; i < matrix->ens_size; i++)
     meas_vector_free(matrix->meas_vectors[i]);
   free(matrix->meas_vectors);
   util_safe_free( matrix->active );
+  util_safe_free( matrix->ens_std );
+  util_safe_free( matrix->ens_mean );
   free(matrix);
 }
 
@@ -56,6 +70,9 @@ void meas_matrix_reset(meas_matrix_type * matrix) {
   int iens;
   for (iens = 0; iens < matrix->ens_size; iens++) 
     meas_vector_reset(matrix->meas_vectors[iens]);
+  matrix->active       = util_safe_free( matrix->active );
+  matrix->ens_mean     = util_safe_free( matrix->ens_mean );
+  matrix->ens_std      = util_safe_free( matrix->ens_std  );
 }
 
 
@@ -97,11 +114,93 @@ void printf_matrix(const double *M , int ny , int nx , int stride_y , int stride
         fprintf_matrix(stdout, M, ny, nx, stride_y, stride_x, name, fmt);
 }
 
+
+
 void fwrite_matrix(const char * filename, const double *M , int ny , int nx , int stride_y , int stride_x, const char * name , const char * fmt) {
         FILE * stream = util_fopen(filename, "w");
         fprintf_matrix(stream, M, ny, nx, stride_y, stride_x, name, fmt);
         fclose(stream);
 }
+
+
+
+/** 
+    This function calculates the ensemble mean and standard deviation
+    of the S matrix. The internal variables ens_mean and ens_std are
+    allocated, and then filled with content in this function.
+
+    This function M U S T be called before calling the
+    meas_matrix_iget_ens_std()/meas_matrix_iget_ens_mean() functions.
+*/
+
+void meas_matrix_calculate_ens_stats(meas_matrix_type * matrix) {
+  int nrobs        = meas_vector_get_size( matrix->meas_vectors[0] );
+
+  matrix->active       = util_realloc( matrix->active   , sizeof * matrix->active   * nrobs , __func__);
+  matrix->ens_std      = util_realloc( matrix->ens_std  , sizeof * matrix->ens_std  * nrobs , __func__);
+  matrix->ens_mean     = util_realloc( matrix->ens_mean , sizeof * matrix->ens_mean * nrobs , __func__);
+  {
+    int iobs, iens;
+    double *S1 = matrix->ens_mean;
+    double *S2 = matrix->ens_std;
+    
+    for (iobs = 0; iobs < nrobs; iobs++) {
+      S1[iobs] = 0;
+      S2[iobs] = 0;
+    }
+    
+    for (iens = 0; iens < matrix->ens_size; iens++) {
+      const meas_vector_type * vector = matrix->meas_vectors[iens];
+      const double        * meas_data = meas_vector_get_data_ref(vector);
+      
+      for (iobs = 0; iobs < nrobs; iobs++) {
+	S1[iobs] += meas_data[iobs];
+	S2[iobs] += meas_data[iobs] * meas_data[iobs];
+      }
+    }
+    
+    for (iobs = 0; iobs < nrobs; iobs++) {
+      S1[iobs] *= 1.0 / matrix->ens_size;
+      S2[iobs]  = sqrt( util_double_max(0 , S2[iobs] / matrix->ens_size - S1[iobs] * S1[iobs]));
+    }
+    
+    matrix->ens_mean = S1;
+    matrix->ens_std  = S2;
+  
+    /* Initializing all observations to active */
+    matrix->active_count = 0;
+    for (iobs = 0; iobs < nrobs; iobs++) {
+      matrix->active[iobs] = true;
+      matrix->active_count += 1;
+    }
+  }
+}
+
+
+
+/**
+   Observe that the functions meas_matrix_calculate_ens_stats() 
+
+      M U S T 
+ 
+   be called before calling any of these three functions:
+*/
+
+
+double meas_matrix_iget_ens_mean(const meas_matrix_type * matrix , int index) {
+  return matrix->ens_mean[index];
+}
+
+
+double meas_matrix_iget_ens_std(const meas_matrix_type * matrix , int index) {
+  return matrix->ens_std[index];
+}
+
+void meas_matrix_iget_ens_mean_std( const meas_matrix_type * matrix , int index , double * mean , double * std) {
+  *mean = matrix->ens_mean[index];
+  *std  = matrix->ens_std[index];
+}
+
 
 
 /**
@@ -144,16 +243,11 @@ void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS ,
 
  
 
-matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix , int nrobs_active , double ** _meanS , const bool * active_obs) {
-  matrix_type * S;
-  double * meanS;
-  int iens , active_iobs;
+matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix) {
   const int nrobs_total = meas_vector_get_nrobs(matrix->meas_vectors[0]);
-  S     = matrix_alloc( nrobs_active , matrix->ens_size);
-  meanS = util_malloc(nrobs_active * sizeof * meanS , __func__);
-  
-  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
-    meanS[active_iobs] = 0;
+  matrix_type * S;
+  int iens , active_iobs;
+  S     = matrix_alloc( matrix->active_count , matrix->ens_size);
 
   for (iens = 0; iens < matrix->ens_size; iens++) {
     const meas_vector_type * vector = matrix->meas_vectors[iens];
@@ -165,9 +259,8 @@ matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix , int nrobs_a
       int total_iobs;
       active_iobs = 0;
       for (total_iobs = 0; total_iobs < nrobs_total; total_iobs++) {
-	if (active_obs[total_iobs]) {
+	if (matrix->active[total_iobs]) {
 	  matrix_iset(S , active_iobs , iens , meas_data[total_iobs]);
-	  meanS[active_iobs] += meas_data[total_iobs];
 	  active_iobs++;
 	}
       }
@@ -175,18 +268,9 @@ matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix , int nrobs_a
   }
 
   /*
-    Subtracting the (ensemble mean) of each measurement.
+    The previous implementation substracted the ensemble mean here;
+    the current implementation does not do that any longer.
   */
-  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
-    meanS[active_iobs] /= matrix->ens_size;
-
-  for (iens = 0; iens < matrix->ens_size; iens++) 
-    for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++) 
-      matrix_iadd( S , active_iobs , iens , -meanS[active_iobs]);
-  
-  /** Let that leak for now. */
-  // *_meanS = meanS;
-      
   return S;
 }
 
@@ -196,7 +280,7 @@ matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix , int nrobs_a
    is "returned by reference"
 */
 
-double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , int ens_stride , int obs_stride, double ** _meanS , const bool * active_obs) {
+double * meas_matrix_allocS_OLD(const meas_matrix_type * matrix, int nrobs_active , int ens_stride , int obs_stride, double ** _meanS , const bool * active_obs) {
   double * S;
   double * meanS;
   int iens , active_iobs;
@@ -245,3 +329,7 @@ double * meas_matrix_allocS(const meas_matrix_type * matrix, int nrobs_active , 
   return S;
 }
 
+
+int meas_matrix_get_ens_size( const meas_matrix_type * meas_matrix ) {
+  return meas_matrix->ens_size;
+}

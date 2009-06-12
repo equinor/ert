@@ -47,13 +47,13 @@ extern "C" {
 
 
 
-typedef enum { undefined_format         = 0,
-	       rms_roff_file 		= 1,
-	       ecl_kw_file   		= 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
-	       ecl_kw_file_active_cells = 3,       /* ecl_kw format, only active cells - used writing to file. */
-	       ecl_kw_file_all_cells    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
-	       ecl_grdecl_file          = 5, 
-               ecl_file                 = 6        /* Assumes packed on export. */}  field_file_format_type; 
+typedef enum { UNDEFINED_FORMAT         = 0,
+	       RMS_ROFF_FILE 		= 1,
+	       ECL_KW_FILE   		= 2,       /* ecl_kw format either packed (i.e. active cells) *or* all cells - used when reading from file. */
+	       ECL_KW_FILE_ACTIVE_CELLS = 3,       /* ecl_kw format, only active cells - used writing to file. */
+	       ECL_KW_FILE_ALL_CELLS    = 4,       /* ecl_kw_format, all cells - used when writing to file. */
+	       ECL_GRDECL_FILE          = 5, 
+               ECL_FILE                 = 6        /* Assumes packed on export. */}  field_file_format_type; 
 
 	        
 /* active_cells currently not really implemented */
@@ -121,8 +121,8 @@ int                     field_config_parse_user_key(const field_config_type * co
 SAFE_CAST_HEADER(field_config);
 CONFIG_GET_ECL_KW_NAME_HEADER(field);
 VOID_FREE_HEADER(field_config);
-VOID_CONFIG_ACTIVATE_HEADER(field);
 GET_ACTIVE_LIST_HEADER(field);
+VOID_GET_DATA_SIZE_HEADER(field);
 #ifdef __cplusplus
 }
 #endif

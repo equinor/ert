@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include <sqlite3_driver.h>
 #include <stdio.h>
 

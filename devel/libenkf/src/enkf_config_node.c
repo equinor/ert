@@ -8,13 +8,17 @@
 #include <util.h>
 #include <path_fmt.h>
 #include <bool_vector.h>
+#include <field_config.h>
+#include <multflt_config.h>
+#include <gen_data_config.h>
+#include <gen_kw_config.h>
+#include <summary_config.h>
+#include <havana_fault_config.h>
 
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
 struct enkf_config_node_struct {
   int                     __type_id; 
-  config_free_ftype     * freef;
-  config_activate_ftype * activate;
   enkf_impl_type     	  impl_type;
   enkf_var_type      	  var_type; 
 
@@ -24,6 +28,11 @@ struct enkf_config_node_struct {
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
   path_fmt_type	     	* enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
   void               	* data;             /* This points to the config object of the actual implementation.        */
+
+  /*****************************************************************/
+  /* Function pointers to methods working on the underlying config object. */
+  get_data_size_ftype   * get_data_size;    /* Function pointer to ask the underlying config object of the size - i.e. number of elements. */
+  config_free_ftype     * freef;
 };
 
 
@@ -33,16 +42,13 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 					       const char               * key , 
 					       const char               * enkf_outfile_fmt , 
 					       const char               * enkf_infile_fmt  , 
-					       const void               * data, 
-					       config_free_ftype        * freef,
-					       config_activate_ftype    * activate) {
+					       const void               * data) {
+
   
   enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
 
   node->internalize     = NULL;
   node->data       	= (void *) data;
-  node->freef      	= freef;
-  node->activate        = activate;  
   node->var_type   	= var_type;
   node->impl_type  	= impl_type;
   node->key        	= util_alloc_string_copy(key);
@@ -58,11 +64,57 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   else
     node->enkf_outfile_fmt = NULL;
   
+
+  /* Some manual inheritance: */
+  node->get_data_size = NULL;
+  node->freef         = NULL; 
+
+  {  
+    switch(impl_type) {
+    case(FIELD):
+      node->freef             = field_config_free__;
+      node->get_data_size     = field_config_get_data_size__;  
+      break;
+    case(STATIC):
+      break;
+    case(GEN_KW):
+      node->freef             = gen_kw_config_free__;
+      node->get_data_size     = gen_kw_config_get_data_size__;
+      break;
+    case(SUMMARY):
+      node->freef             = summary_config_free__;
+      node->get_data_size     = summary_config_get_data_size__;
+      break;
+    case(MULTFLT):
+      node->freef             = multflt_config_free__;
+      node->get_data_size     = multflt_config_get_data_size__;
+      break;
+    case(HAVANA_FAULT):
+      node->freef             = havana_fault_config_free__;
+      node->get_data_size     = havana_fault_config_get_data_size__;
+      break;
+    case(GEN_DATA):
+      node->freef             = gen_data_config_free__;
+      node->get_data_size     = gen_data_config_get_data_size__;
+      break;
+    default:
+      util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
+    }
+  }
   return node;
 }
 
 
+/**
+   Invokes the get_data_size() function of the underlying node object.
+*/
+
+int enkf_config_node_get_data_size( const enkf_config_node_type * node) {
+  return node->get_data_size( node->data );
+}
+
 void enkf_config_node_free(enkf_config_node_type * node) {
+  /* Freeing the underlying node object. */
   if (node->freef   != NULL) node->freef(node->data);
   free(node->key);
   stringlist_free(node->obs_keys);
@@ -75,6 +127,7 @@ void enkf_config_node_free(enkf_config_node_type * node) {
 
   if (node->internalize != NULL)
     bool_vector_free( node->internalize );
+
   free(node);
 }
 

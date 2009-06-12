@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <menu.h>
 #include <enkf_ui_util.h>
 #include <enkf_ui_init.h>
@@ -48,33 +49,55 @@ void enkf_ui_fs_create_case(void * arg)
 }
 
 
+/**
+   Return NULL if no action should be performed.
+*/
+static char * enkf_ui_fs_alloc_existing_case(enkf_fs_type * fs , const char * prompt , int prompt_len) {
+  char * name;
+  while (true) {
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    name = util_alloc_stdin_line();
+
+    if (name == NULL)  /* The user entered a blank string */
+      break;
+    else {
+      if (enkf_fs_has_dir(fs , name)) 
+	break;
+      else {
+	printf("** Can not find case: \"%s\" \n",name);
+	free(name);
+      }
+    } 
+
+  }
+  
+  return name;
+}
+
+
+
 
 void enkf_ui_fs_select_case(void * arg)
 {
-  char dir[256];
+  int    prompt_len = 40;
+  char * new_case;
   char * menu_title;
 
   arg_pack_type  * arg_pack = arg_pack_safe_cast( arg );
   enkf_fs_type   * enkf_fs  = arg_pack_iget_ptr(arg_pack, 0);
   menu_type      * menu     = arg_pack_iget_ptr(arg_pack, 1);
-
-  printf("Name of case ==> ");
-  scanf("%s", dir);
-  
-  if(!enkf_fs_has_dir(enkf_fs, dir))
-  {
-    printf("** ERROR **: Case \"%s\" does not exist.\n", dir);
-  }
-  else
-  {
-    enkf_fs_select_write_dir(enkf_fs, dir, false);
-    enkf_fs_select_read_dir( enkf_fs, dir      );
-
+  new_case = enkf_ui_fs_alloc_existing_case( enkf_fs , "Name of case" , prompt_len);
+  if (new_case != NULL) {
+    enkf_fs_select_write_dir(enkf_fs, new_case, false);
+    enkf_fs_select_read_dir( enkf_fs, new_case      );
+    
     menu_title = util_alloc_sprintf("Manage cases. Current: %s", enkf_fs_get_read_dir(enkf_fs));
     menu_set_title(menu, menu_title);
     free(menu_title);
+    free(new_case);
   }
 }
+
 
 
 
@@ -96,6 +119,11 @@ static void enkf_ui_fs_copy_ensemble__(
   /* Store current selections */
   char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( fs));
   char * user_write_dir = util_alloc_string_copy(enkf_fs_get_write_dir(fs));
+  
+  
+  /* If the current target_case does not exist it is automatically created by the select_write_dir function */
+  if( !enkf_fs_has_dir(fs, target_case)) 
+    printf("Creating new case: %s \n",target_case);  
   
   enkf_fs_select_write_dir(fs, target_case, true );
   enkf_fs_select_read_dir( fs, source_case       );
@@ -150,8 +178,7 @@ static void enkf_ui_fs_copy_ensemble__(
 void enkf_ui_fs_initialize_case_from_copy(void * arg) 
 {
   int prompt_len =50;
-  char * current_case;
-  char source_case[256];
+  char * source_case;
   int ens_size;
   int last_report;
   int src_step, target_step;
@@ -163,19 +190,21 @@ void enkf_ui_fs_initialize_case_from_copy(void * arg)
   const ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   ens_size = ensemble_config_get_size(config);
 
-  current_case = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
+  
   last_report  = enkf_main_get_total_length( enkf_main );
 
-  util_printf_prompt("Initialize from case" , prompt_len , '=' , "=> ");
-  scanf("%s", source_case);
-  src_step         = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
-  src_state        = enkf_ui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
-  target_state     = analyzed;
-  target_step      = 0;
-
-  enkf_ui_fs_copy_ensemble__(enkf_main, source_case, current_case, src_step, src_state, 0, analyzed, true);
-
-  free(current_case);
+  source_case = enkf_ui_fs_alloc_existing_case( fs , "Initialize from case" , prompt_len);
+  if (source_case != NULL) {                                              
+    char * current_case = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
+    src_step         = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
+    src_state        = enkf_ui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
+    target_state     = analyzed;
+    target_step      = 0;
+    
+    enkf_ui_fs_copy_ensemble__(enkf_main, source_case, current_case, src_step, src_state, 0, analyzed, true);
+    free(current_case);
+  }
+  util_safe_free( source_case );
 }
 
 

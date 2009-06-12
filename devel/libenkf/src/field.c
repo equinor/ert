@@ -369,6 +369,7 @@ void field_upgrade_103(const char * filename) {
   
   {
     buffer_type * buffer = buffer_alloc(100);
+    buffer_fwrite_time_t( buffer , time(NULL));
     buffer_fwrite_int( buffer , impl_type );
     buffer_fwrite_compressed( buffer , data , size * sizeof_ctype );
     buffer_store( buffer , filename );
@@ -680,28 +681,28 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
   {
     
     /*  Writes the field to in ecl_kw format to a new file.  */
-    if ((file_type == ecl_kw_file_all_cells) || (file_type == ecl_kw_file_active_cells)) {
+    if ((file_type == ECL_KW_FILE_ALL_CELLS) || (file_type == ECL_KW_FILE_ACTIVE_CELLS)) {
       fortio_type * fortio;
       bool fmt_file , endian_swap;
       
       field_config_set_io_options(field->config , &fmt_file , &endian_swap);
       fortio = fortio_fopen(file , "w" , endian_swap , fmt_file);
       
-      if (file_type == ecl_kw_file_all_cells)
+      if (file_type == ECL_KW_FILE_ALL_CELLS)
 	field_ecl_write3D_fortio(field , fortio);
       else
 	field_ecl_write1D_fortio(field , fortio);
       
       fortio_fclose(fortio);
-    } else if (file_type == ecl_grdecl_file) {
+    } else if (file_type == ECL_GRDECL_FILE) {
       /* Writes the field to a new grdecl file. */
       FILE * stream = util_fopen(file , "w");
       field_ecl_grdecl_export(field , stream);
       fclose(stream);
-    } else if (file_type == rms_roff_file) 
+    } else if (file_type == RMS_ROFF_FILE) 
       /* Roff export */
       field_ROFF_export(field , file);
-    else if (file_type == ecl_file) 
+    else if (file_type == ECL_FILE) 
       /* This entry point is used by the ecl_write() function to write to an ALREADY OPENED eclipse restart file. */
       field_ecl_write1D_fortio( field , restart_fortio);
     else
@@ -724,7 +725,7 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
 void field_ecl_write(const field_type * field , const char * run_path , const char * file , fortio_type * restart_fortio) {
   field_file_format_type export_format = field_config_get_export_format(field->config);
   
-  if (export_format == ecl_file)
+  if (export_format == ECL_FILE)
     field_export(field , NULL , restart_fortio , export_format , true); 
   else {
     char * full_path = util_alloc_filename( run_path , file  , NULL);
@@ -789,11 +790,23 @@ int field_serialize(const field_type *field , serial_state_type * serial_state ,
 }
 
 
+void field_matrix_serialize(const field_type * field , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  const field_config_type *config      = field->config;
+  const int                data_size   = field_config_get_data_size(config);
+  ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
+  
+  enkf_matrix_serialize( field->data , data_size , ecl_type , active_list , A , row_offset , column);
+}
 
 
-/*
-  int index05D = config->index_map[ k * config->nx * config->ny + j * config->nx + i];      2
-*/
+void field_matrix_deserialize(field_type * field , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  const field_config_type *config      = field->config;
+  const int                data_size   = field_config_get_data_size(config);
+  ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
+  
+  enkf_matrix_deserialize( field->data , data_size , ecl_type , active_list , A , row_offset , column);
+}
+
 
 
 
@@ -1098,13 +1111,13 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename , bool en
 
 void field_fload_typed(field_type * field , const char * filename ,  bool endian_flip , field_file_format_type file_type) {
   switch (file_type) {
-  case(rms_roff_file):
+  case(RMS_ROFF_FILE):
     field_fload_rms(field , filename );
     break;
-  case(ecl_kw_file):
+  case(ECL_KW_FILE):
     field_fload_ecl_kw(field , filename  , endian_flip);
     break;
-  case(ecl_grdecl_file):
+  case(ECL_GRDECL_FILE):
     field_fload_ecl_grdecl(field , filename  , endian_flip);
     break;
   default:
@@ -1117,7 +1130,7 @@ void field_fload_typed(field_type * field , const char * filename ,  bool endian
 
 void field_fload(field_type * field , const char * filename , bool endian_flip) {
   field_file_format_type file_type = field_config_guess_file_type(filename , endian_flip);
-  if (file_type == undefined_format) file_type = field_config_manual_file_type(filename , true);
+  if (file_type == UNDEFINED_FORMAT) file_type = field_config_manual_file_type(filename , true);
   field_fload_typed(field , filename , endian_flip , file_type);
 }
 
@@ -1185,13 +1198,13 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 void field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
   {
     field_file_format_type import_format = field_config_get_import_format(field->config);
-    if (import_format == ecl_file) {
+    if (import_format == ECL_FILE) {
       ecl_kw_type * field_kw = ecl_file_iget_named_kw(restart_file , field_config_get_ecl_kw_name(field->config) , 0);
       field_copy_ecl_kw_data(field , field_kw);
     } else {
       /* Loading from unique file - currently this only applies to the modelerror implementation. */
       bool __ENDIAN_FLIP__ = true; /* Fuck this ... */
-      if (import_format == undefined_format)
+      if (import_format == UNDEFINED_FORMAT)
 	import_format = field_config_guess_file_type(ecl_file_name , __ENDIAN_FLIP__);
       
       field_fload_typed(field , ecl_file_name , __ENDIAN_FLIP__ , import_format);
@@ -1331,6 +1344,33 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 }
 
 
+void field_update_sum(field_type * sum , const field_type * field , double lower_limit , double upper_limit) {
+  field_output_transform( field );
+  {
+    const int data_size          = field_config_get_data_size(field->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
+    int i;
+    
+    if (ecl_type == ecl_float_type) {
+      float * data       = (float *) field->data;
+      float * sum_data   = (float *) sum->data;
+      for (i = 0; i < data_size; i++) {
+	if (data[i] >= lower_limit)
+	  if (data[i] < upper_limit)
+	    sum_data[i] += 1;
+      } 
+    } else if (ecl_type == ecl_double_type) {
+	double * data       = (double *) field->data;
+	float * sum_data    = (double *) sum->data;
+	for (i = 0; i < data_size; i++) {
+	  if (data[i] >= lower_limit)
+	    if (data[i] < upper_limit)
+	      sum_data[i] += 1;
+	}
+    }
+  } 
+  field_revert_output_transform( field );
+}
 
 
 /**
@@ -1399,11 +1439,12 @@ VOID_COPYC     (field)
 VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);
-VOID_CLEAR(field);
 VOID_USER_GET(field)
 VOID_LOAD(field)
 VOID_STORE(field)
-
+VOID_CLEAR(field)
+VOID_MATRIX_SERIALIZE(field)
+VOID_MATRIX_DESERIALIZE(field)
 
 
 

@@ -53,13 +53,14 @@ Matrices: S, D, E and various internal variables.
 #include <matrix.h>
 
 
-/* Small internal type holding one observation */
+/* Small type holding one observation  - could be enhanced for non-diagonal covariance observation errors.*/
 
-typedef struct {
+struct obs_data_node_struct {
   double  value;
   double  std;
   char   *keyword;
-} obs_data_node_type;
+  bool    active;
+};
 
 
 static obs_data_node_type * obs_data_node_alloc( double value , double std , const char * keyword) {
@@ -67,6 +68,7 @@ static obs_data_node_type * obs_data_node_alloc( double value , double std , con
   node->value   = value;
   node->std     = std;
   node->keyword = util_alloc_string_copy( keyword );
+  node->active  = true;
   return node;
 }
 
@@ -77,7 +79,23 @@ static void obs_data_node_free( obs_data_node_type * node ) {
 }
   
 
+const char * obs_data_node_get_keyword( const obs_data_node_type * node ) {
+  return node->keyword;
+}
 
+
+double obs_data_node_get_std( const obs_data_node_type * node ) {
+  return node->std;
+}
+
+double obs_data_node_get_value( const obs_data_node_type * node ) {
+  return node->value;
+}
+
+
+bool obs_data_node_active( const obs_data_node_type * node ) {
+  return node->active;
+}
 
 /*****************************************************************/
 
@@ -89,15 +107,13 @@ struct obs_data_struct {
   int       target_size;    /* We aim for this size of the buffers - if alloc_size is currently larger, it will shrink on reset. */ 
 
   obs_data_node_type ** data;
-  bool                * obs_active;     /* A map of the true|false of the current obeservations. */ 
 }; 
 
 
 static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) {
   int old_alloc_size      = obs_data->alloc_size;
   obs_data->alloc_size    = new_alloc_size;
-  obs_data->data          = util_realloc(obs_data->data          , new_alloc_size * sizeof * obs_data->data   	  , __func__);
-  obs_data->obs_active    = util_realloc(obs_data->obs_active    , new_alloc_size * sizeof * obs_data->obs_active    , __func__);
+  obs_data->data          = util_realloc(obs_data->data , new_alloc_size * sizeof * obs_data->data   	  , __func__);
   {
     int i;
     for (i= old_alloc_size; i < new_alloc_size; i++)
@@ -107,12 +123,13 @@ static void obs_data_realloc_data(obs_data_type * obs_data, int new_alloc_size) 
 
 int obs_data_get_nrobs(const obs_data_type * obs_data) { return obs_data->total_size; }
 
+
+
 obs_data_type * obs_data_alloc() {
   obs_data_type * obs_data = malloc(sizeof * obs_data);
   obs_data->alloc_size    = 0;
   obs_data->target_size   = 0;
   obs_data->data          = NULL;
-  obs_data->obs_active    = NULL;
   
 
   obs_data_realloc_data(obs_data , obs_data->target_size);
@@ -120,6 +137,17 @@ obs_data_type * obs_data_alloc() {
   return obs_data;
 }
 
+
+void obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std) {
+  obs_data_node_type * node = obs_data->data[index];
+  *value = node->value;
+  *std   = node->std;
+}
+
+
+obs_data_node_type * obs_data_iget_node( const obs_data_type * obs_data , int index ) {
+  return obs_data->data[index];
+}
 
 
 void obs_data_reset(obs_data_type * obs_data) { 
@@ -136,9 +164,8 @@ void obs_data_add(obs_data_type * obs_data, double value, double std , const cha
     obs_data_realloc_data(obs_data , 2*obs_data->alloc_size + 2);
   {
     int index = obs_data->total_size;
-    obs_data_node_type * node = obs_data_node_alloc( value , std , kw );
-    obs_data->data[index]     = node;
-    obs_data->obs_active[index]   = true;
+    obs_data_node_type * node 	 = obs_data_node_alloc( value , std , kw );
+    obs_data->data[index]     	 = node;
   }
   obs_data->total_size++;
   obs_data->active_size++;
@@ -153,7 +180,6 @@ void obs_data_free(obs_data_type * obs_data) {
       obs_data_node_free( obs_data->data[i] );
   }
   free(obs_data->data);
-  free(obs_data->obs_active);
   free(obs_data);
 }
 
@@ -210,7 +236,8 @@ const int nrobs_active = obs_data->active_size;
     for (iens = 0; iens < ens_size; iens++) {
       int iobs_active = 0;
       for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-	if (obs_data->obs_active[iobs_total]) {
+	const obs_data_node_type * node = obs_data->data[iobs_total];
+	if (node->active) {
 	  obs_data_node_type * node = obs_data->data[iobs_total];
 	  matrix_imul(E , iobs_active , iens , node->std * sqrt(ens_size / pert_var[iobs_active]));
 	  iobs_active++;
@@ -270,9 +297,9 @@ double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_
     for (iens = 0; iens < ens_size; iens++) {
       int iobs_active = 0;
       for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-	if (obs_data->obs_active[iobs_total]) {
+	obs_data_node_type * node = obs_data->data[iobs_total];
+	if (node->active) {
 	  int index = iens * ens_stride + iobs_active * obs_stride;
-	  obs_data_node_type * node = obs_data->data[iobs_total];
 	  E[index] *= node->std * sqrt(ens_size / pert_var[iobs_active]);
 	  iobs_active++;
 	}
@@ -288,7 +315,7 @@ double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_
 
 
 
-matrix_type * obs_data_allocD__(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S , const double * meanS ) {
+matrix_type * obs_data_allocD__(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S) {
   const int nrobs_active = obs_data->active_size;
   const int nrobs_total  = obs_data->total_size;
   int ens_size           = matrix_get_columns( S );              
@@ -300,9 +327,9 @@ matrix_type * obs_data_allocD__(const obs_data_type * obs_data , const matrix_ty
   for  (iens = 0; iens < ens_size; iens++) {
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      if (obs_data->obs_active[iobs_total]) {
-	obs_data_node_type * node = obs_data->data[iobs_total];
-	matrix_iset(D , iobs_active , iens , matrix_iget(E , iobs_active , iens)  - matrix_iget(S, iobs_active , iens) + node->value - meanS[iobs_active]);
+      obs_data_node_type * node = obs_data->data[iobs_total];
+      if (node->active) {
+	matrix_iset(D , iobs_active , iens , matrix_iget(E , iobs_active , iens)  - matrix_iget(S, iobs_active , iens) + node->value);
 	iobs_active++;
       }
     }
@@ -331,9 +358,9 @@ double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_
   for  (iens = 0; iens < ens_size; iens++) {
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      if (obs_data->obs_active[iobs_total]) {
+      obs_data_node_type * node = obs_data->data[iobs_total];
+      if (node->active) {
 	int index = iens * ens_stride + iobs_active * obs_stride;
-	obs_data_node_type * node = obs_data->data[iobs_total];
 	D[index] = node->value + E[index] - S[index] - meanS[iobs_active];
 	iobs_active++;
       }
@@ -363,8 +390,8 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , const double *mea
 
   innov = util_malloc(nrobs_active * sizeof * innov , __func__);
   for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-    if (obs_data->obs_active[iobs_total]) {
-      obs_data_node_type * node = obs_data->data[iobs_total];
+    obs_data_node_type * node = obs_data->data[iobs_total];
+    if (node->active) {
       innov[iobs_active] = node->value - meanS[iobs_active];
       iobs_active++;
     }
@@ -379,10 +406,10 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , const double *mea
   This function deactivates obsveration iobs, and decrements the total
   number of active observations.
 */
-static void obs_data_deactivate_obs(obs_data_type * obs_data , int iobs,const char * msg) {
-  if (obs_data->obs_active[iobs]) {
-    obs_data_node_type * node = obs_data->data[iobs];
-    obs_data->obs_active[iobs] = false;
+void obs_data_deactivate_obs(obs_data_type * obs_data , int iobs,const char * msg) {
+  obs_data_node_type * node = obs_data->data[iobs];
+  if (node->active) {
+    node->active = false;
     obs_data->active_size--;
     printf("Deactivating:%s : %s \n",node->keyword , msg);
   }
@@ -426,7 +453,9 @@ void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * inno
     }
   }
   *nrobs_active = obs_data->active_size;
-  *active_obs   = obs_data->obs_active;
+  {
+    *active_obs = NULL; /* This will break on old code. */
+  }
 }
 
 
@@ -445,8 +474,8 @@ double * obs_data_allocR(obs_data_type * obs_data) {
     iobs_active = 0;
 
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      if (obs_data->obs_active[iobs_total]) {
-	obs_data_node_type * node = obs_data->data[iobs_total];
+      obs_data_node_type * node = obs_data->data[iobs_total];
+      if (node->active) {
 	double std = node->std;
 	R[iobs_active * (nrobs_active + 1)] = std * std;
 	iobs_active++;
@@ -470,8 +499,8 @@ matrix_type * obs_data_allocR__(obs_data_type * obs_data) {
     iobs_active = 0;
 
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      if (obs_data->obs_active[iobs_total]) {
-	obs_data_node_type * node = obs_data->data[iobs_total];
+      obs_data_node_type * node = obs_data->data[iobs_total];
+      if (node->active) {
 	double std = node->std;
 	matrix_iset(R , iobs_active , iobs_active , std * std);
 	iobs_active++;
@@ -494,8 +523,8 @@ void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_strid
     int iobs_total;
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      if (obs_data->obs_active[iobs_total]) {
-	obs_data_node_type * node = obs_data->data[iobs_total];
+      obs_data_node_type * node = obs_data->data[iobs_total];
+      if (node->active) {
 	scale_factor[iobs_active] = 1.0 / node->std;
 	iobs_active++;
       }
@@ -539,8 +568,8 @@ void obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_t
     int iobs_total;
     iobs_active = 0;
     for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      if (obs_data->obs_active[iobs_total]) {
-	obs_data_node_type * node = obs_data->data[iobs_total];
+      obs_data_node_type * node = obs_data->data[iobs_total];
+      if (node->active) {
 	scale_factor[iobs_active] = 1.0 / node->std;
 	iobs_active++;
       }
@@ -556,13 +585,13 @@ void obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_t
     }
   }
   
-  for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
-    innov[iobs_active] *= scale_factor[iobs_active];
+  if (innov != NULL)
+    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
+      innov[iobs_active] *= scale_factor[iobs_active];
   
   {
-    int i,j;
-    for (i=0; i < nrobs_active; i++)
-      for (j=0; j < nrobs_active; j++)
+    for (int i=0; i < nrobs_active; i++)
+      for (int j=0; j < nrobs_active; j++)
 	matrix_imul(R , i , j , scale_factor[i] * scale_factor[j]);
   }
   free(scale_factor);
@@ -578,7 +607,7 @@ void obs_data_fprintf(const obs_data_type * obs_data , FILE * stream, const doub
   for (iobs = 0; iobs < obs_data->total_size; iobs++) {
     obs_data_node_type * node = obs_data->data[iobs];
     fprintf(stream , "| %-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , node->keyword , node->value , node->std);
-    if (obs_data->obs_active[iobs])
+    if (node->active)
       fprintf(stream , "   Active    |");
     else
       fprintf(stream , "   Inactive  |");
@@ -591,5 +620,7 @@ void obs_data_fprintf(const obs_data_type * obs_data , FILE * stream, const doub
   }
   fprintf(stream , "\\-----------------------------------------------------------------------|---------------------------------/\n");
 }
+
+
 
 

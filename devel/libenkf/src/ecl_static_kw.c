@@ -90,6 +90,7 @@ void ecl_static_kw_upgrade_103( const char * filename ) {
 
   {
     buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_time_t( buffer , time(NULL));
     buffer_fwrite_int( buffer , impl_type );
     ecl_kw_buffer_store( ecl_kw , buffer );
     

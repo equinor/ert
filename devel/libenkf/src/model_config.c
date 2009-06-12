@@ -154,25 +154,8 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
     }
 
     if ((refcase != NULL) && (strcmp(history_source , "SCHEDULE") != 0)) {
-      char  * refcase_path;
-      char  * refcase_base;
-      char  * header_file;
-      char ** summary_file_list;
-      int     files;
-      bool    fmt_file ,unified;
-      ecl_sum_type * ecl_sum;
-      
-      util_alloc_file_components( refcase , &refcase_path , &refcase_base , NULL);
-      printf("Loading summary from: %s \n",refcase_path);
-      ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , &summary_file_list , &files , &fmt_file , &unified);
-
-      ecl_sum = ecl_sum_fread_alloc( header_file , files , (const char **) summary_file_list , true /* Endian convert */);
-      history_realloc_from_summary( model_config->history , ecl_sum , use_history);        
-      util_safe_free(header_file);
-      util_safe_free(refcase_base);
-      util_safe_free(refcase_path);
-      util_free_stringlist(summary_file_list, files);
-      ecl_sum_free(ecl_sum);
+      printf("Loading summary from: %s \n",refcase);
+      history_realloc_from_summary( model_config->history , refcase , use_history);        
     }
   }
   {

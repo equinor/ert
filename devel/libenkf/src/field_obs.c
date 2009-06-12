@@ -13,6 +13,7 @@
 #include <meas_vector.h>
 #include <field_config.h>
 #include <field.h>
+#include <active_list.h>
 
 #define FIELD_OBS_TYPE_ID 661098
 
@@ -115,10 +116,12 @@ const char * field_obs_get_field_name(
 void field_obs_get_observations(
   const field_obs_type * field_obs,
   int                    restart_nr,
-  obs_data_type        * obs_data)
-{
+  obs_data_type        * obs_data,
+  const active_list_type * active_list) {
+
   for (int i=0; i < field_obs->size; i++)
     obs_data_add(obs_data , field_obs->obs_value[i] , field_obs->obs_std[i] , field_obs->field_name);
+  
 }
 
 

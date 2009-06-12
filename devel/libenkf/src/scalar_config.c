@@ -30,7 +30,7 @@ scalar_config_type * scalar_config_alloc_empty(int size) {
   scalar_config->data_size   	       = size;
   scalar_config->mean        	       = util_malloc(size * sizeof *scalar_config->mean        , __func__);
   scalar_config->std         	       = util_malloc(size * sizeof *scalar_config->std         ,  __func__);
-  scalar_config->active_list           = active_list_alloc( size );
+  scalar_config->active_list           = active_list_alloc( ALL_ACTIVE );
   scalar_config->output_transform      = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform      , __func__);
   scalar_config->output_transform_name = util_malloc(scalar_config->data_size * sizeof * scalar_config->output_transform_name , __func__);
   scalar_config->internal_offset       = 0;

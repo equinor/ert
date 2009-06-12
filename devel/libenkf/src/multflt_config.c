@@ -125,4 +125,4 @@ int multflt_config_get_index(const multflt_config_type * config , const char * f
 /*****************************************************************/
 SAFE_CAST(multflt_config , MULTFLT_CONFIG_ID)
 VOID_FREE(multflt_config)
-VOID_CONFIG_ACTIVATE(multflt)
+VOID_GET_DATA_SIZE(multflt)

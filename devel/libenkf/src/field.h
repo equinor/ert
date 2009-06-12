@@ -51,6 +51,8 @@ void          field_iaddsqr(field_type * , const field_type *);
 void          field_iadd(field_type * , const field_type *);
 void          field_imul_add(field_type * , double , const field_type *);
 ecl_kw_type * field_alloc_ecl_kw_wrapper(const field_type * );
+void          field_update_sum(field_type * sum , const field_type * field , double lower_limit , double upper_limit);
+
 
 void          field_upgrade_103(const char * filename);
 
@@ -71,6 +73,9 @@ VOID_ECL_LOAD_HEADER(field);
 VOID_USER_GET_HEADER(field);
 VOID_LOAD_HEADER(field);
 VOID_STORE_HEADER(field);
+VOID_MATRIX_SERIALIZE_HEADER(field);
+VOID_MATRIX_DESERIALIZE_HEADER(field);
+VOID_CLEAR_HEADER(field);
 
 #ifdef __cplusplus
 }

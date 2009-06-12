@@ -8,9 +8,7 @@
 #include <enkf_config_node.h>
 #include <ecl_util.h>
 #include <path_fmt.h>
-#include <ecl_static_kw_config.h>
 #include <enkf_types.h>
-#include <field_config.h>
 #include <thread_pool.h>
 #include <obs_data.h>
 #include <history.h>
@@ -21,8 +19,6 @@
 #include <sched_file.h>
 #include <enkf_fs.h>
 #include <arg_pack.h>
-#include <gen_kw_config.h>
-#include <gen_data_config.h>
 #include <history.h>
 #include <node_ctype.h>
 #include <pthread.h>
@@ -31,7 +27,7 @@
 #include <stringlist.h>
 #include <enkf_main.h>
 #include <enkf_serialize.h>
-#include <config.h>
+#include <config.h>  
 #include <local_driver.h>
 #include <rsh_driver.h>
 #include <lsf_driver.h>
@@ -44,10 +40,11 @@
 #include <model_config.h>
 #include <site_config.h>
 #include <active_config.h>
-#include <field_config.h>
-#include <ecl_static_kw.h>
 #include <forward_model.h>
 #include <enkf_analysis.h>
+#include <local_ministep.h>
+#include <local_reportstep.h>
+#include <local_config.h>
 #include "enkf_defaults.h"
 
 /**
@@ -90,6 +87,7 @@ struct enkf_main_struct {
   analysis_config_type * analysis_config;
   enkf_obs_type        * obs;
   enkf_state_type     ** ensemble;
+  local_config_type    * local_config;     /* Holding all the information about local analysis. */
 }; 
 
 
@@ -158,6 +156,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   model_config_free( enkf_main->model_config);
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
+  local_config_free( enkf_main->local_config );
   free(enkf_main);
 }
 
@@ -293,7 +292,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
    This function returns a (enkf_node_type ** ) pointer, which points
    to all the instances with the same keyword, i.e.
 
-     enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
+   enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
   
    Will return an ensemble of pressure nodes. Observe that apart from
    the list of pointers, *now new storage* is allocated, all the
@@ -302,7 +301,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
    free() function to match this, just free() the result.
 
    Example:
-
+   
    enkf_node_type ** pressure_nodes = enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
  
    Do something with the pressure nodes ... 
@@ -311,7 +310,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
 
 */
 
-enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key) {
+static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key) {
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
   int iens;
@@ -357,6 +356,212 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 
 
 
+static int __get_active_size(const enkf_config_node_type * config_node , const active_list_type * active_list) {
+  active_mode_type active_mode = active_list_get_mode( active_list );
+  int active_size;
+  if (active_mode == INACTIVE)
+    active_size = 0;
+  else if (active_mode == ALL_ACTIVE)
+    active_size = enkf_config_node_get_data_size( config_node );
+  else if (active_mode == PARTLY_ACTIVE)
+    active_size = active_list_get_active_size( active_list );
+  else {
+    util_abort("%s: internal error .. \n",__func__); 
+    active_size = -1; /* Compiler shut up */
+  }
+  return active_size;
+}
+
+
+
+void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 , const local_ministep_type * ministep, int report_step , hash_type * use_count) {
+  int       matrix_size              = 1000;  /* Starting with this */
+  const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
+  enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main ); 
+  matrix_type * A = matrix_alloc(matrix_size , ens_size);
+  msg_type  * msg = msg_alloc("Updating: ");
+  stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
+  const int num_kw  = stringlist_get_size( update_keys );
+  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
+  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
+  int ikw           = 0;
+  bool complete     = false;
+  
+  msg_show( msg );
+  do {
+    bool first_kw    	     = true;
+    bool add_more_kw 	     = true;
+    int ikw1 	     	     = ikw;
+    int ikw2 	     	     = ikw;  
+    int current_row_offset   = 0;
+    matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
+    do {
+      const char             * key              = stringlist_iget(update_keys , ikw);
+      const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+
+      active_size[ikw] = __get_active_size( config_node , active_list );
+      row_offset[ikw]  = current_row_offset;
+
+      if ((active_size[ikw] + current_row_offset) > matrix_size) {
+	/* Not enough space in A */
+	if (first_kw) {
+	  /* Try to grow the matrix */
+	  if (!matrix_safe_resize(A , active_size[ikw] , ens_size , false)) 
+	    util_exit("%s: sorry failed to allocate %d doubles for the inner enkf update. Need more memory \n",__func__ , active_size[ikw] * ens_size);
+	  matrix_size = active_size[ikw];
+	} else
+	  /* Do not try to grow the matrix unless we are at the first kw. */
+	  add_more_kw = false;
+      }
+      
+      
+
+      if (add_more_kw) {
+	if (active_size[ikw] > 0) {
+	  state_enum load_state;
+	  
+	  if (hash_inc_counter( use_count , key) == 0)
+	    load_state = forecast;   /* This is the first time this keyword is updated for this reportstep */
+	  else
+	    load_state = analyzed;
+
+	  /** This could be multi-threaded */
+	  for (int iens = 0; iens < ens_size; iens++) {
+	    enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
+	    enkf_fs_fread_node( fs , node , report_step , iens , load_state);
+	    enkf_node_matrix_serialize( node , active_list , A , row_offset[ikw] , iens);
+	  }
+	  current_row_offset += active_size[ikw];
+
+	}
+	
+	ikw++;
+	if (ikw == num_kw)
+	  add_more_kw = false;
+      }
+      //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
+      first_kw = false;
+      {
+	char * label = util_alloc_sprintf("serializing: %s" , key);
+	msg_update( msg , label);
+	free(label);
+      }
+    } while (add_more_kw);
+    ikw2 = ikw;
+    matrix_shrink_header( A , current_row_offset , ens_size );
+    if (current_row_offset > 0) {
+      /* The actual update */
+      msg_update(msg , " matrix multiplication");
+      matrix_inplace_matmul_mt( A , X5 , 4 );  /* Four CPU threads - nothing like a little hardcoding ... */
+      /* Deserialize */
+      {
+	for (int i = ikw1; i < ikw2; i++) {
+	  const char             * key              = stringlist_iget(update_keys , i);
+	  const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+	  {
+	    char * label = util_alloc_sprintf("deserializing: %s" , key);
+	    msg_update( msg , label);
+	    free(label);
+	  }
+	  
+	  for (int iens = 0; iens < ens_size; iens++) {
+	    enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
+	    enkf_node_matrix_deserialize(node , active_list , A , row_offset[i] , iens);
+	    enkf_fs_fwrite_node( fs , node , report_step , iens , analyzed);
+	  }
+	}
+      }
+    }
+    
+    if (ikw2 == num_kw)
+      complete = true;
+  } while ( !complete );
+
+  free(active_size);
+  free(row_offset);
+  msg_free( msg , true );
+  matrix_free( A );
+}
+
+
+
+
+/**
+   This is  T H E  EnKF update routine. 
+*/
+
+
+void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
+  /* 
+     If include_internal_observations is true all observations in the
+     time interval [step1+1,step2] will be used, otherwise only the
+     last observation at step2 will be used.
+  */
+  bool include_internal_observations = analysis_config_merge_observations( enkf_main->analysis_config );
+  double alpha                       = analysis_config_get_alpha( enkf_main->analysis_config ); 
+  double std_cutoff                  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
+  const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
+  int start_step , end_step;
+  
+  /* Observe that end_step is inclusive. */
+  if (include_internal_observations) {
+    start_step = step1 + 1;
+    end_step   = step2;
+  } else {
+    start_step = step2;
+    end_step   = step2;
+  }
+    
+  
+  {
+    /*
+      Observations and measurements are collected in these temporary
+      structures. obs_data is a precursor for the 'd' vector, and
+      meas_forecast is a precursor for the 'S' matrix'.
+      
+      The reason for gong via these temporary structures is to support
+      deactivating observations which should not be used in the update
+      process.
+    */
+    
+    obs_data_type     	  	* obs_data      = obs_data_alloc();
+    meas_matrix_type  	  	* meas_forecast = meas_matrix_alloc( ens_size );
+    meas_matrix_type  	  	* meas_analyzed = meas_matrix_alloc( ens_size );
+    local_config_type 	  	* local_config  = enkf_main->local_config;
+    const local_reportstep_type * reportstep    = local_config_iget_reportstep( local_config , step2 );  /* Only step2 considered */
+    hash_type                   * use_count     = hash_alloc();                                          
+    
+    for (int ministep_nr = 0; ministep_nr < local_reportstep_get_num_ministep( reportstep ); ministep_nr++) {
+      for(int report_step = start_step; report_step <= end_step; report_step++)  {
+	local_ministep_type   * ministep      = local_reportstep_iget_ministep( reportstep , ministep_nr );      
+	
+	printf("Fetching simulated responses and observations for step %i.\n", report_step); 
+	enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
+				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
+
+	meas_matrix_calculate_ens_stats( meas_forecast );
+	enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
+	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast , stdout );
+	
+	if (analysis_config_Xbased( enkf_main->analysis_config )) {
+	  matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data );
+	  
+	  enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
+
+	  matrix_free( X );
+	}
+      }
+    }
+
+    hash_free( use_count );
+    obs_data_free( obs_data );
+    meas_matrix_free( meas_forecast );
+    meas_matrix_free( meas_analyzed );
+  }
+}
+
+
 
 
 void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step2) {
@@ -392,67 +597,56 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
     */
     
     
-    obs_data_type    * obs_data      = obs_data_alloc();
-    meas_matrix_type * meas_forecast = meas_matrix_alloc( ens_size );
-    meas_matrix_type * meas_analyzed = meas_matrix_alloc( ens_size );
-
-    for(int report_step = start_step; report_step <= end_step; report_step++)  {
-      printf("Fetching simulated responses and observations for step %i.\n", report_step); 
-      enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
-				   (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data);
-    }
-    X = old_analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
-    if (X != NULL) {
-      /* 
-	 The number of doubles we ask for, to get the number of bytes
-	 you must multiply by eight.
-	 
-	 1024 * 1024 * 128 => 1GB of memory
-      */
-      size_t double_size = 1024*1024*256; /* 2GB */
-      
-      /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
-      printf("Updating: ...... "); fflush(stdout);
-      serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
-      enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
-      serial_vector_free(serial_vector);
-      printf("\n");
-      free(X);
-    }
-    
-    /* This will write analyzed results to disk anyway - maybe a bit wastefull . */
-    printf("Saving: ........ "); fflush(stdout);
-    enkf_main_fwrite_ensemble(enkf_main , DYNAMIC_STATE + DYNAMIC_RESULT + PARAMETER , step2 , analyzed);
-    printf("\n");
-    
-    /*
-      Collect observations and simulated responses for all steps after step1 up to and
-      including step2.
-    */
-    
-    
-    /** Printing update info after analysis - does not work with multi step updates.*/
-    if (start_step == end_step) {
-      obs_data_reset(obs_data);
-      
-      for(int report_step = start_step; report_step <= end_step; report_step++)  {
-	printf("Fetching simulated responses and observations for step %i.\n", report_step);
-	enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, analyzed, ens_size, (const enkf_state_type **) enkf_main->ensemble, meas_analyzed, obs_data);
+    obs_data_type    	  	* obs_data      = obs_data_alloc();
+    meas_matrix_type 	  	* meas_forecast = meas_matrix_alloc( ens_size );
+    meas_matrix_type 	  	* meas_analyzed = meas_matrix_alloc( ens_size );
+    local_config_type 	  	* local_config  = enkf_main->local_config;
+    const local_reportstep_type * reportstep    = local_config_iget_reportstep( local_config , step2 );  /* Only step2 considered */
+    hash_type                   * use_count     = hash_alloc();
+    /* Iterating over the local ministeps. */
+    {
+      for (int ministep_nr = 0; ministep_nr < local_reportstep_get_num_ministep( reportstep ); ministep_nr++) {
+	local_ministep_type   * ministep      = local_reportstep_iget_ministep( reportstep , ministep_nr );      
+	obs_data_reset( obs_data );
+	meas_matrix_reset( meas_forecast );
+	
+	for(int report_step = start_step; report_step <= end_step; report_step++)  {
+	  printf("Fetching simulated responses and observations for step %i/%s.\n", report_step , local_ministep_get_name( ministep )); 
+	  enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
+				       (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
+	}
+	X = old_analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
+	if (X != NULL) {
+	  /* 
+	     The number of doubles we ask for, to get the number of bytes
+	     you must multiply by eight.
+	     
+	     1024 * 1024 * 128 => 1GB of memory
+	     size_t double_size = 1024*1024*256; // 2 GB
+	  */
+	  
+	  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+	  //printf("Updating: ...... "); fflush(stdout);
+	  //serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
+	  //enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
+	  //serial_vector_free(serial_vector);
+	  //printf("\n");
+	  {
+	    matrix_type * X5 = matrix_alloc_steal_data( ens_size , ens_size , X , ens_size * ens_size );
+	    enkf_main_update_mulX( enkf_main , X5 , ministep , step2 , use_count);
+	  }
+	  free(X);  
+	}
       }
-      {
-	double *meanS , *stdS;
-	meas_matrix_allocS_stats(meas_analyzed , &meanS , &stdS);
-	obs_data_fprintf(obs_data , stdout , meanS , stdS);
-	free(meanS);
-	free(stdS);
-      }
-      enkf_main_fprintf_results(enkf_main , step2);
+      obs_data_free( obs_data );
+      meas_matrix_free( meas_forecast );
+      meas_matrix_free( meas_analyzed );
+      hash_free( use_count );
     }
-    obs_data_free( obs_data );
-    meas_matrix_free( meas_forecast );
-    meas_matrix_free( meas_analyzed );
   }
 }
+
+
 
 
 
@@ -488,8 +682,10 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
     {
       thread_pool_type * submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) {
-        enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , forward_model);
-        thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
+	if (iactive[iens]) {
+	  enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , forward_model);
+	  thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
+	}
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(submit_threads);
@@ -498,7 +694,8 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
     {
       thread_pool_type * complete_threads = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
-        thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
+	if (iactive[iens]) 
+	  thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
       
       thread_pool_join(complete_threads);      /* All jobs have completed and the results have been loaded back. */
       thread_pool_free(complete_threads);
@@ -524,7 +721,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
   }
   
   if (enkf_update)
-    enkf_main_analysis_update(enkf_main , step1 , step2);
+    enkf_main_UPDATE(enkf_main , step1 , step2);
   
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
@@ -536,14 +733,6 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
   enkf_config_node_type * config_node_type = ensemble_config_get_node(ensemble_config, key);
   return enkf_config_node_get_ref(config_node_type);
 }
-
-
-
-void enkf_main_set_field_config_iactive(const ensemble_config_type * ensemble_config, int local_step){
-  field_config_type * poro_config = enkf_main_get_enkf_config_node_type(ensemble_config,"PORO");
-  field_config_activate(poro_config , PARTLY_ACTIVE , NULL);
-}
-
 
 
 
@@ -1058,6 +1247,84 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	hash_free(data_kw);
         stringlist_free(keylist);
       }
+
+      /*****************************************************************/
+      /* Installing a default local_config object where all observations/nodes are
+	 fully active. */
+      {
+	enkf_main->local_config = local_config_alloc( model_config_get_last_history_restart( enkf_main->model_config ) );
+	local_reportstep_type * reportstep_all_active = local_config_alloc_reportstep( enkf_main->local_config , "ALL_ACTIVE");
+	local_ministep_type   * ministep_all_active   = local_config_alloc_ministep( enkf_main->local_config , "ALL_ACTIVE");
+	
+	local_reportstep_add_ministep( reportstep_all_active , ministep_all_active );  
+	
+	/* Adding all observation keys */
+	{
+	  hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
+	  while ( !hash_iter_is_complete(obs_iter) ) {
+	    const char * obs_key = hash_iter_get_next_key( obs_iter );
+	    local_ministep_add_obs( ministep_all_active , obs_key );
+	  }
+	  hash_iter_free( obs_iter );
+	}
+	
+	/* Adding all node which can be updated. */
+	{
+	  stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
+	  int i;
+	  for (i = 0; i < stringlist_get_size( keylist ); i++)
+	    local_ministep_add_node( ministep_all_active , stringlist_iget( keylist , i));
+	  stringlist_free( keylist);
+	}
+	
+	/* Install the ALL_ACTIVE step as the default. */
+	local_config_set_default_reportstep( enkf_main->local_config , "ALL_ACTIVE");
+
+
+	//{
+	//  local_reportstep_type * reportstep12 = local_config_alloc_reportstep( enkf_main->local_config , "REPORTSTEP12");
+	//  local_ministep_type * ministep1 = local_config_alloc_ministep_copy(enkf_main->local_config , "ALL_ACTIVE" , "UPDATE1");
+	//  local_ministep_type * ministep2 = local_config_alloc_ministep(enkf_main->local_config , "UPDATE2");
+	//
+	//  local_ministep_clear_observations( ministep1 );
+	//  local_ministep_add_obs( ministep1 , "WWCT:OP_1");
+	//  local_ministep_add_obs( ministep1 , "WWCT:OP_2");
+	//  local_ministep_add_obs( ministep1 , "WWCT:OP_3");
+	//  local_ministep_del_node(ministep1 , "FLUID_PARAMS");
+	//  local_ministep_del_node(ministep1 , "WGOR:OP_4");
+	//  local_ministep_del_node(ministep1 , "WGOR:OP_5");
+	//  {
+	//    const ecl_grid_type * ecl_grid = ecl_config_get_grid( enkf_main->ecl_config );
+	//    active_list_type * active_swat = local_ministep_get_node_active_list( ministep1 , "SWAT");
+	//    active_list_type * active_pres = local_ministep_get_node_active_list( ministep1 , "PRESSURE");
+	//    int nx,ny,nz,active_size;
+	//    int i,j,k;
+	//    ecl_grid_get_dims( ecl_grid , &nx , &ny , &nz , &active_size);
+	//    for (i=0; i < nx; i++)
+	//      for (j=0; j< ny; j++)
+	//	for (k=0; k < 3; k++) {
+	//	  int active_index = ecl_grid_get_active_index3( ecl_grid , i,j,k);
+	//	  if (active_index >= 0) {
+	//	    active_list_add_index( active_swat , active_index );
+	//	    active_list_add_index( active_pres , active_index );
+	//	    
+	//	  }
+	//	}
+	//  }
+	//
+	//  local_ministep_add_obs( ministep2 , "WGOR:OP_4");
+	//  local_ministep_add_obs( ministep2 , "WGOR:OP_5");  /* This is _only_ observed. */
+	//  local_ministep_add_node(ministep2 , "FLUID_PARAMS");
+	//  local_ministep_add_node(ministep2 , "WGOR:OP_4");
+	//  
+	//  
+	//  local_reportstep_add_ministep( reportstep12 , ministep1 );
+	//  local_reportstep_add_ministep( reportstep12 , ministep2 );
+	//  local_config_set_default_reportstep( enkf_main->local_config , "REPORTSTEP12");
+	//}
+	//#include "local_config_grane.c"
+      }
+      
       free(keep_runpath);
     }
     config_free(config);
@@ -1156,6 +1423,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   model_config_set_internalize_state( enkf_main->model_config , 0);
   
   
+  
   /* We internalize all the endpoints in the enkf_sched. */
   {
     int inode;
@@ -1167,6 +1435,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
       model_config_set_internalize_results( enkf_main->model_config , report_step2);
     }
   }
+
 
   
   /* We internalize all the results - for all the report steps (beyond zero). */

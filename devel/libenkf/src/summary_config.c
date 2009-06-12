@@ -41,7 +41,7 @@ ecl_smspec_var_type summary_config_get_var_type(const summary_config_type * conf
 summary_config_type * summary_config_alloc(const char * var) {
   summary_config_type * config = util_malloc(sizeof *config , __func__);
   config->data_size   	  = 1;
-  config->active_list     = active_list_alloc(1);
+  config->active_list     = active_list_alloc( ALL_ACTIVE );
   config->var             = util_alloc_string_copy( var );
   config->var_type        = ecl_smspec_identify_var_type ( var ); 
   config->obs_set         = set_alloc_empty(); 
@@ -77,6 +77,7 @@ int summary_config_get_byte_size(const summary_config_type * config) {
 /*****************************************************************/
 SAFE_CAST(summary_config , SUMMARY_CONFIG_TYPE_ID)
 GET_DATA_SIZE(summary)
+VOID_GET_DATA_SIZE(summary)
 VOID_CONFIG_FREE(summary)
 GET_ACTIVE_LIST(summary)
 

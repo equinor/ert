@@ -45,7 +45,7 @@ const char  *                gen_data_config_get_key( const gen_data_config_type
 SAFE_CAST_HEADER(gen_data_config)
 GET_ACTIVE_LIST_HEADER(gen_data)
 VOID_FREE_HEADER(gen_data_config)
-VOID_CONFIG_ACTIVATE_HEADER(gen_data);
+VOID_GET_DATA_SIZE_HEADER(gen_data);
 
 #ifdef __cplusplus
 }

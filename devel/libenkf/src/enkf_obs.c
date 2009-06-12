@@ -10,6 +10,9 @@
 #include <obs_vector.h>
 #include <msg.h>
 #include <enkf_state.h>
+#include <local_ministep.h>
+#include <local_reportstep.h>
+#include <local_config.h>
 
 /*
 
@@ -153,7 +156,6 @@ static conf_class_type * enkf_obs_get_obs_conf_class();
 struct enkf_obs_struct {
   /** A hash of obs_vector_types indexed by user provided keys. */
   hash_type * obs_hash;
-  
 };
 
 
@@ -218,13 +220,19 @@ void enkf_obs_get_obs_and_measure(
         int                      ens_size,
         const enkf_state_type ** ensemble ,
         meas_matrix_type       * meas_matrix,
-        obs_data_type          * obs_data)
-{
-  hash_iter_type * iter = hash_iter_alloc(enkf_obs->obs_hash);
+        obs_data_type          * obs_data,
+	const local_ministep_type  * mstep) {
+  
+  hash_iter_type * iter = local_ministep_alloc_obs_iter( mstep );
+  obs_data_reset( obs_data );
+  meas_matrix_reset( meas_matrix );
+
   while ( !hash_iter_is_complete(iter) ) {
-    obs_vector_type * obs_vector = hash_iter_get_next_value(iter);
-    if (obs_vector_iget_active(obs_vector , report_step)) {              /* The observation is active for this report step. */
-      obs_vector_iget_observations(obs_vector , report_step , obs_data); /*Collect the observed data in the obs_data instance. */
+    const char * obs_key         = hash_iter_get_next_key( iter );
+    obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , obs_key );
+    if (obs_vector_iget_active(obs_vector , report_step)) {                            /* The observation is active for this report step.     */
+      const active_list_type * active_list = local_ministep_get_obs_active_list( mstep , obs_key );
+      obs_vector_iget_observations(obs_vector , report_step , obs_data , active_list); /* Collect the observed data in the obs_data instance. */
       {
 	int iens;
 	for (iens = 0; iens < ens_size; iens++) {
@@ -232,7 +240,7 @@ void enkf_obs_get_obs_and_measure(
 	  meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
 	  
 	  enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
-	  obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector);
+	  obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector , active_list);
 	}
       }
     }
@@ -344,7 +352,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
 
 
 
-static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
+ static conf_class_type * enkf_obs_get_obs_conf_class( void ) {
   const char * enkf_conf_help = "An instance of the class ENKF_CONFIG shall contain neccessary infomation to run the enkf.";
   conf_class_type * enkf_conf_class = conf_class_alloc_empty("ENKF_CONFIG", true , false , enkf_conf_help);
   conf_class_set_help(enkf_conf_class, enkf_conf_help);
@@ -651,6 +659,10 @@ hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
   return map;
 }
 
+
+hash_iter_type * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs ) {
+  return hash_iter_alloc(enkf_obs->obs_hash);
+}
 
 
 

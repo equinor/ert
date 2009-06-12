@@ -14,6 +14,7 @@
 #include <gen_data_config.h>
 #include <gen_data.h>
 #include <gen_common.h>
+#include <matrix.h>
 
 
 
@@ -197,6 +198,7 @@ void gen_data_upgrade_103(const char * filename) {
   fclose(stream);
   {
     buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_time_t( buffer , time(NULL));
     buffer_fwrite_int( buffer , impl_type );
     buffer_fwrite_int( buffer , size );
     buffer_fwrite_int( buffer , report_step );
@@ -229,6 +231,26 @@ void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_
   
   enkf_deserialize(gen_data->data , data_size , ecl_type , active_list  , serial_state , serial_vector);
 }
+
+
+
+void gen_data_matrix_serialize(const gen_data_type * gen_data , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  const gen_data_config_type *config      = gen_data->config;
+  const int                data_size   = gen_data_config_get_data_size(config);
+  ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
+  
+  enkf_matrix_serialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
+}
+
+
+void gen_data_matrix_deserialize(gen_data_type * gen_data , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  const gen_data_config_type *config      = gen_data->config;
+  const int                data_size   = gen_data_config_get_data_size(config);
+  ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
+  
+  enkf_matrix_deserialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
+}
+
 
 
 
@@ -477,3 +499,5 @@ VOID_ECL_WRITE(gen_data)
 VOID_ECL_LOAD(gen_data)
 VOID_LOAD(gen_data);
 VOID_STORE(gen_data);
+VOID_MATRIX_SERIALIZE(gen_data)
+VOID_MATRIX_DESERIALIZE(gen_data)

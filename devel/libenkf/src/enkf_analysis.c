@@ -3,6 +3,9 @@
 #include <matrix.h>
 #include <matrix_lapack.h>
 #include <matrix_blas.h>
+#include <meas_matrix.h>
+#include <obs_data.h>
+#include <analysis_config.h>
 
 /**
    The static functions at the top are identical to the old fortran
@@ -23,7 +26,7 @@ static void genX3(matrix_type * X3 , const matrix_type * W , const matrix_type *
       matrix_iset(X1 , i , j , eig[i] * matrix_iget(W , j , i));
   
   matrix_matmul(X2 , X1 , D);
-  matrix_matmul(X3 , W  , X2);   /* <- skal bare ha en del av X2 ??? */
+  matrix_matmul(X3 , W  , X2);   
   
   matrix_free( X1 );
   matrix_free( X2 );
@@ -126,11 +129,11 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
   matrix_type * U0   = matrix_alloc( nrobs , nrmin );
   matrix_type * Z    = matrix_alloc( nrmin , nrmin );
   double * sig0      = util_malloc( nrmin * sizeof * sig0 , __func__);
-    
+
   svdS(S , U0 , sig0 , truncation);             
   lowrankCee( B , nrens , R , U0 , sig0);       
+ 
   eigC( B , Z , eig );                          
-  
   {
     int i,j;
     for (i=0; i < nrmin; i++) 
@@ -140,9 +143,7 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
       for (i=0; i < nrmin; i++)
 	matrix_imul(Z , i , j , sig0[i]);
   }
-  
   matrix_matmul(W , U0 , Z);
-
 
   free( sig0 );
   matrix_free( U0 );
@@ -158,16 +159,24 @@ static void lowrankCinv(matrix_type * S , matrix_type * R , matrix_type * W , do
 /*****************************************************************/
 
 
+/**
+   Observe the following about the S matrix:
 
-void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , const matrix_type * S , const matrix_type * D , double truncation) {
+   1. On input the matrix is supposed to contain actual measurement values.
+   2. On return the ensemble mean has been shifted away ...
+   
+*/
+
+
+static void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , matrix_type * S , const matrix_type * D , double truncation) {
   const int nrobs   = matrix_get_rows( S );
   const int nrens   = matrix_get_columns( S );
   const int nrmin   = util_int_min( nrobs , nrens );
   
-  matrix_type * X3  = matrix_alloc(nrobs , nrens);
-  matrix_type * W   = matrix_alloc(nrobs , nrmin);
-  double      * eig = util_malloc( sizeof * eig * nrmin , __func__);
-  
+  matrix_type * X3    = matrix_alloc(nrobs , nrens);
+  matrix_type * W     = matrix_alloc(nrobs , nrmin);
+  double      * eig   = util_malloc( sizeof * eig * nrmin , __func__);
+  matrix_subtract_row_mean( S );  /* Subtracting the ensemble mean */
   {
     /* 
        The svd routine called in lowrankCinv will destroy the contents
@@ -183,8 +192,7 @@ void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , con
   genX3(X3 , W , D , eig );     
   matrix_dgemm( X5 , S , X3 , true , false , 1.0 , 0.0);  /* X5 = T(S) * X3 */
   {
-    int i;
-    for (i = 0; i < nrens; i++)
+    for (int i = 0; i < nrens; i++)
       matrix_iadd( X5 , i , i , 1.0);
   }
   
@@ -193,3 +201,113 @@ void enkf_analysis_standard_lowrankCinv(matrix_type * X5 , matrix_type * R , con
   matrix_free( X3 );
 }
 
+
+
+/*****************************************************************/
+
+
+void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , FILE * stream ) {
+  int iobs;
+  fprintf(stream , "/-----------------------------------------------------------------------|---------------------------------\\\n");
+  fprintf(stream , "|                          Observed history                             |         Simulated data          |\n");  
+  fprintf(stream , "|-----------------------------------------------------------------------|---------------------------------|\n");
+  for (iobs = 0; iobs < obs_data_get_nrobs(obs_data); iobs++) {
+    obs_data_node_type * node = obs_data_iget_node( obs_data , iobs);
+    
+
+    fprintf(stream , "| %-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , 
+	    obs_data_node_get_keyword(node),
+	    obs_data_node_get_value(node),
+	    obs_data_node_get_std(node));
+    
+    if (obs_data_node_active( node )) 
+      fprintf(stream , "   Active    |");
+    else
+      fprintf(stream , "   Inactive  |");
+    {
+      double mean,std;
+      meas_matrix_iget_ens_mean_std( meas_matrix , iobs , &mean , &std);
+      fprintf(stream , "   %12.3f +/- %12.3f |\n", mean , std);
+    }
+  }
+  fprintf(stream , "\\-----------------------------------------------------------------------|---------------------------------/\n");
+}
+
+
+
+
+void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_type * meas_matrix , double std_cutoff , double alpha) {
+  int nrobs = obs_data_get_nrobs( obs_data );
+  int iobs;
+  for (iobs = 0; iobs < nrobs; iobs++) {
+    if (meas_matrix_iget_ens_std( meas_matrix , iobs) < std_cutoff) {
+      /*
+	De activated because the ensemble has to small variation for
+	this particular measurement.
+      */
+      
+      obs_data_deactivate_obs(obs_data , iobs , "No ensemble variation");
+      meas_matrix_deactivate( meas_matrix , iobs );
+    } else {
+      double obs_value , obs_std;
+      double ens_value , ens_std;
+      double innov     ;
+      
+      obs_data_iget_value_std( obs_data , iobs , &obs_value , &obs_std);
+      meas_matrix_iget_ens_mean_std( meas_matrix , iobs , &ens_value , &ens_std);
+      innov = obs_value - ens_value;
+      
+      /* 
+	 Deactivated because the distance between the observed data
+	 and the ensemble prediction is to large. Keeping these
+	 outliers will lead to numerical problems.
+      */
+      if (fabs( innov ) > alpha * (ens_std + obs_std)) {
+	obs_data_deactivate_obs(obs_data , iobs , "No overlap");
+	meas_matrix_deactivate(meas_matrix , iobs);
+      }
+    }
+  }
+}
+
+
+
+
+
+matrix_type * enkf_analysis_allocX( const analysis_config_type * config , meas_matrix_type * meas_matrix , obs_data_type * obs_data ) {
+  double truncation = 0.95;
+  
+  {
+    enkf_mode_type        enkf_mode       = analysis_config_get_enkf_mode( config );
+    pseudo_inversion_type inversion_mode  = analysis_config_get_inversion_mode( config );
+    
+    int ens_size    = meas_matrix_get_ens_size( meas_matrix );
+    matrix_type * X = matrix_alloc( ens_size , ens_size );
+    matrix_type * S = meas_matrix_allocS__( meas_matrix );
+    matrix_type * R = obs_data_allocR__(obs_data);
+    matrix_type * E = obs_data_allocE__(obs_data , ens_size);
+    matrix_type * D = obs_data_allocD__(obs_data , E , S);
+    
+    obs_data_scale__(obs_data , S , E , D , R, NULL /* innov */);
+
+    if (enkf_mode == ENKF_STANDARD) {
+      switch (inversion_mode) {
+      case(SVD_SS_N1_R):
+	enkf_analysis_standard_lowrankCinv(X , R , S , D , truncation );
+	break;
+      default:
+	util_abort("%s: inversion mode:%d not supported \n",__func__ , inversion_mode);
+      }
+    } else if (enkf_mode == ENKF_SQRT) {
+      util_abort("%s: enkf mode:%d not supported \n",__func__ , enkf_mode);
+    } else
+      util_abort("%s: INTERNAL ERROR \n",__func__);
+    
+    matrix_free( R );
+    matrix_free( E );
+    matrix_free( S );
+    matrix_free( D );
+
+    return X;
+  }
+}

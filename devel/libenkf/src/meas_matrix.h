@@ -17,9 +17,15 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type *, int );
 meas_matrix_type * meas_matrix_alloc( int );
 void               meas_matrix_free(meas_matrix_type * );
 void               meas_matrix_add(meas_matrix_type * , int , double );
-double           * meas_matrix_allocS(const meas_matrix_type * , int , int , int , double ** , const bool *);
+double           * meas_matrix_allocS_OLD(const meas_matrix_type * , int , int , int , double ** , const bool *);
 void               meas_matrix_allocS_stats(const meas_matrix_type * , double **, double **);
-matrix_type      * meas_matrix_allocS__(const meas_matrix_type * matrix , int nrobs_active , double ** _meanS , const bool * active_obs);
+matrix_type      * meas_matrix_allocS__(const meas_matrix_type * matrix);
+void               meas_matrix_deactivate(meas_matrix_type * meas_matrix, int index);
+void               meas_matrix_calculate_ens_stats(meas_matrix_type * matrix);
+double             meas_matrix_iget_ens_mean(const meas_matrix_type * matrix , int index);
+double             meas_matrix_iget_ens_std(const meas_matrix_type * matrix , int index);
+void               meas_matrix_iget_ens_mean_std( const meas_matrix_type * matrix , int index , double * mean , double * std);
+int                meas_matrix_get_ens_size( const meas_matrix_type * meas_matrix );
 #ifdef __cplusplus
 }
 #endif

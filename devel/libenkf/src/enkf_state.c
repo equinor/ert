@@ -1018,13 +1018,43 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
 
 
 /**
+   Which state to load on the next step must be much more
+   fine-grained. This is a fucking hack.
+*/
+
+static void enkf_state_try_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum load_state) {
+  shared_info_type * shared_info = enkf_state->shared_info;
+  const member_config_type * my_config = enkf_state->my_config;
+  const int num_keys = hash_get_size(enkf_state->node_hash);
+  char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
+  int ikey;
+  
+  for (ikey = 0; ikey < num_keys; ikey++) {
+    enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
+    if (enkf_node_include_type(enkf_node , mask)) {
+      enkf_var_type var_type = enkf_node_get_var_type( enkf_node );
+      if ((var_type == PARAMETER) || (var_type == STATIC_STATE))
+	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , load_state);
+      else {
+	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , both)) 
+	  util_abort("%s: failed to load node:%s \n",__func__ , key_list[ikey]);
+      }
+    }
+  }
+  util_free_stringlist(key_list , num_keys);
+}
+
+
+
+
+/**
    This is a special function which is only used to load the initial
    state of dynamic_state nodes. It checks if the enkf_config_node has
    set a valid value for input_file, in that case that means we should
    also have an internalized representation of it, otherwise it will
    just return (i.e. for PRESSURE / SWAT).
 */
-static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
+  static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
@@ -1160,7 +1190,8 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	enkf_state_fread_initial_state(enkf_state);
       else
 	mask += DYNAMIC_STATE;
-      enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state );
+      //enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state );
+      enkf_state_try_fread(enkf_state , mask, run_info->init_step , run_info->init_state);
     }
     enkf_state_ecl_write( enkf_state );
     
@@ -1523,6 +1554,17 @@ void * enkf_ensemble_serialize__(void * _info) {
 
   return NULL;
 }
+
+
+//void enkf_state_matrix_serialize(enkf_state_type * enkf_state , const char * key , const active_list_type * active_list, matrix_type * A , int row_offset , int column) {
+//  enkf_node_type * enkf_node = enkf_state_get_node( enkf_state , key );
+//  enkf_node_matrix_serialize( enkf_node , active_list , A , row_offset , column );
+//}
+//
+//void enkf_state_matrix_deserialize(enkf_state_type * enkf_state , const char * key , const active_list_type * active_list, const matrix_type * A , int row_offset , int column) {
+//  enkf_node_type * enkf_node = enkf_state_get_node( enkf_state , key );
+//  enkf_node_matrix_deserialize( enkf_node , active_list , A , row_offset , column );
+//}
 
 
 

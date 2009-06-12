@@ -119,17 +119,24 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 				    const char * plot_path , 
 				    const char * viewer,
 				    const char * image_type) {
-
-  const int errorbar_max_obsnr = 10;
-  const bool add_observations = true;
+  
+  bool  plot_dates             = true;
+  const int errorbar_max_obsnr = 25;
+  const bool add_observations  = true;
+  bool  show_plot              = false;
   char * plot_file = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), user_key , image_type);
-  plot_type * plot = __plot_alloc("Simulation time (days) ", /* y akse */ "" ,user_key,plot_file , image_type);
+  plot_type * plot ;
   enkf_node_type * node;
   msg_type * msg;
   double *x , *y;
   bool_vector_type * has_data = bool_vector_alloc(100 , false);
   int     size, iens , step;
 
+  if (plot_dates)
+    plot =  __plot_alloc("" , /* y akse */ "" ,user_key,plot_file , image_type);
+  else
+    plot =  __plot_alloc("Simulation time (days) ", /* y akse */ "" ,user_key,plot_file , image_type);
+  
   node = enkf_node_alloc( config_node );
   if (plot_state == both) 
     size = 2 * (step2 - step1 + 1);
@@ -152,6 +159,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
     int this_size = 0;
     for (step = step1; step <= step2; step++) {
       double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens) , step );
+      time_t sim_time = sched_file_get_sim_time( vector_iget( sched_vector , iens) , step );
       sprintf(label , "%03d/%03d" , iens , step);
       msg_update( msg , label);
 	  
@@ -163,7 +171,10 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
 	  bool_vector_iset(has_data , step , true);
 	  if (valid) {
-	    x[this_size] = sim_days;
+	    if (plot_dates)
+	      x[this_size] = sim_time;
+	    else
+	      x[this_size] = sim_days;
 	    this_size++;
 	  }
 	} 
@@ -177,12 +188,21 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
 	  bool_vector_iset(has_data , step , true);
 	  if (valid) {
-	    x[this_size] = sim_days;
+	    if (plot_dates)
+	      x[this_size] = sim_time;
+	    else
+	      x[this_size] = sim_days;
 	    this_size++;
 	  }
 	} 
       }
     }
+    if (this_size > 0)
+      show_plot = true;
+    
+    if (plot_dates) 
+      plot_set_default_timefmt( plot , (time_t) x[0] , (time_t) x[this_size - 1]);
+    
     __plot_add_data(plot , this_size , x , y );
   }
 
@@ -193,7 +213,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	These three double vectors are used to assemble
 	all observations.
       */
-      double_vector_type * sim_days     = double_vector_alloc(10 , 0);
+      double_vector_type * sim_time     = double_vector_alloc(10 , 0);
       double_vector_type * obs_value    = double_vector_alloc(10 , 0);
       double_vector_type * obs_std      = double_vector_alloc(10 , 0);
 
@@ -219,15 +239,20 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	      bool valid;
 	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
 	      if (valid) {
-		  double_vector_append( sim_days  , sched_file_get_sim_days( vector_iget( sched_vector , iens1) , report_step ));
-		  double_vector_append( obs_value , value );
-		  double_vector_append( obs_std , std );
+
+		if (plot_dates)
+		  double_vector_append( sim_time  , sched_file_get_sim_time( vector_iget( sched_vector , iens1) , report_step ));  
+		else
+		  double_vector_append( sim_time  , sched_file_get_sim_days( vector_iget( sched_vector , iens1) , report_step ));
+		
+		double_vector_append( obs_value , value );
+		double_vector_append( obs_std , std );
 	      }
 	    }
 	  }
 	} while (report_step != -1);
       }
-      if (double_vector_size( sim_days ) > 0) {
+      if (double_vector_size( sim_time ) > 0) {
 	if (obs_size > errorbar_max_obsnr) {
 	  /* 
 	     There are very many observations - to increase
@@ -248,20 +273,22 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	  plot_dataset_set_line_style( data_lower , PLOT_LINESTYLE_LONG_DASH );
 	  plot_dataset_set_line_color( data_upper , RED);
 	  plot_dataset_set_line_color( data_lower , RED);
-	  
+	  plot_dataset_set_line_width( data_upper , 1.50 );
+	  plot_dataset_set_line_width( data_lower , 1.50 );
+
 	  plot_dataset_set_point_color( data_value , BLACK);
 	  plot_dataset_set_symbol_type( data_value , PLOT_SYMBOL_FILLED_CIRCLE);
 
 	  {
-	    int * perm = double_vector_alloc_sort_perm( sim_days );
-	    double_vector_permute( sim_days  , perm );
+	    int * perm = double_vector_alloc_sort_perm( sim_time );
+	    double_vector_permute( sim_time  , perm );
 	    double_vector_permute( obs_value , perm );
 	    double_vector_permute( obs_std   , perm );
 	    free( perm );
 	  }
 	  
-	  for (i = 0; i < double_vector_size( sim_days ); i++) {
-	    double days  = double_vector_iget( sim_days  , i);
+	  for (i = 0; i < double_vector_size( sim_time ); i++) {
+	    double days  = double_vector_iget( sim_time  , i);
 	    double value = double_vector_iget( obs_value , i);
 	    double std   = double_vector_iget( obs_std   , i);
 	    
@@ -272,16 +299,16 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	} else {
 	  plot_dataset_type * obs_errorbar  = plot_alloc_new_dataset( plot , plot_xy1y2 , false);
 	  plot_dataset_set_line_color( obs_errorbar , RED);
-	  plot_dataset_set_line_width( obs_errorbar , 1.0);
-	  for (i = 0; i < double_vector_size( sim_days ); i++) {
-	    double days  = double_vector_iget( sim_days  , i);
+	  plot_dataset_set_line_width( obs_errorbar , 1.5);
+	  for (i = 0; i < double_vector_size( sim_time ); i++) {
+	    double days  = double_vector_iget( sim_time  , i);
 	    double value = double_vector_iget( obs_value , i);
 	    double std   = double_vector_iget( obs_std   , i);
 	    plot_dataset_append_point_xy1y2( obs_errorbar , days , value - std , value + std);
 	  }
 	}
       }
-      double_vector_free( sim_days );
+      double_vector_free( sim_time );
       double_vector_free( obs_std );
       double_vector_free( obs_value );
     }
@@ -294,8 +321,14 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 
   enkf_node_free(node);
   msg_free(msg , true);
-  printf("Plot saved in: %s \n",plot_file);
-  __plot_show(plot , viewer , plot_file); /* Frees the plot - logical ehhh. */
+  if (show_plot) {
+    printf("Plot saved in: %s \n",plot_file);
+    __plot_show(plot , viewer , plot_file); /* Frees the plot - logical ehhh. */
+  } else {
+    printf("No data to plot \n");
+    plot_free(plot);
+  }
+	   
   free(plot_file);
   bool_vector_free( has_data );
 }
@@ -332,23 +365,31 @@ void enkf_ui_plot_GEN_KW(void * arg) {
     const int prompt_len = 50;
     const char * prompt  = "Which GEN_KW parameter do you want to plot";
     const enkf_config_node_type * config_node = NULL;
-    char       node_key[64];
+    bool  exit_loop = false;
 
     do {
+      char *node_key;
       util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-      scanf("%s" , node_key);
-      if (!ensemble_config_has_key( ensemble_config , node_key ))
-	printf("Could not find node:%s \n",node_key);
-      else {
-	config_node = ensemble_config_get_node( ensemble_config , node_key );
-	if (enkf_config_node_get_impl_type( config_node ) != GEN_KW) {
-	  printf("%s is not a GEN_KW parameter \n",node_key);
-	  config_node = NULL;
+      node_key = util_alloc_stdin_line();
+
+      if (node_key != NULL) {
+	if (!ensemble_config_has_key( ensemble_config , node_key ))
+	  printf("Could not find node:%s \n",node_key);
+	else {
+	  config_node = ensemble_config_get_node( ensemble_config , node_key );
+	  if (enkf_config_node_get_impl_type( config_node ) == GEN_KW) 
+	    exit_loop = true;
+	  else {
+	    printf("%s is not a GEN_KW parameter \n",node_key);
+	    config_node = NULL;
+	  }
 	}
-      }
-    } while (config_node == NULL);
-    
-    {
+      } else
+	exit_loop = true;
+      util_safe_free( node_key );
+    } while (!exit_loop);
+
+    if (config_node != NULL) {
       int iens1 , iens2 , step1 , step2;   
       vector_type * sched_vector = enkf_ui_alloc_sched_vector( enkf_main );
       const int last_report      = enkf_main_get_total_length( enkf_main );
@@ -404,12 +445,12 @@ void enkf_ui_plot_histogram(void * arg) {
     const int prompt_len = 40;
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
     const enkf_config_node_type * config_node;
-    char       user_key[64];
+    char       * user_key;
     
     
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-    scanf("%s" , user_key);
-    {
+    user_key = util_alloc_stdin_line();
+    if (user_key != NULL) {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
       state_enum plot_state = analyzed; /* Compiler shut up */
       char * key_index;
@@ -459,6 +500,7 @@ void enkf_ui_plot_histogram(void * arg) {
       free(count);
       util_safe_free(key_index);
     }
+    util_safe_free( user_key );
   }
 }
 
@@ -480,12 +522,11 @@ void enkf_ui_plot_ensemble(void * arg) {
     const int prompt_len = 40;
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
     const enkf_config_node_type * config_node;
-    char       user_key[64];
-    
+    char * user_key;
     
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-    scanf("%s" , user_key);
-    {
+    user_key = util_alloc_stdin_line();
+    if (user_key != NULL) {
       state_enum plot_state = analyzed; /* Compiler shut up */
       char * key_index;
       const int last_report = enkf_main_get_total_length( enkf_main );
@@ -526,6 +567,7 @@ void enkf_ui_plot_ensemble(void * arg) {
 			      image_type);
       util_safe_free(key_index);
     }
+    util_safe_free( user_key );
   }
   vector_free( sched_vector );
 }
@@ -994,9 +1036,6 @@ void enkf_ui_plot_sensitivity(void * arg) {
   }
 
   /* OK - all the x-data has been loaded. */
-  /* Here we should select a new filesystem for reading results. */
-  /* enkf_fs_select_read_dir(fs , dir); */
-
   
   {
     char * key_index_y;
@@ -1036,24 +1075,32 @@ void enkf_ui_plot_sensitivity(void * arg) {
   /* OK - now we have x[], y[] and valid[] - ready for plotting.   */
   
   {
+    int valid_count           = 0;
     char * basename  	      = util_alloc_sprintf("%s-%s" , user_key_x , user_key_y);
     char * plot_file 	      = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), basename , image_type);
     plot_type * plot 	      = __plot_alloc(user_key_x , user_key_y , "Sensitivity plot" , plot_file, image_type);
     plot_dataset_type  * data = plot_alloc_new_dataset( plot , plot_xy , false);
     
     for (iens = 0; iens < ens_size; iens++) {
-      if (valid[iens]) 
+      if (valid[iens]) {
 	plot_dataset_append_point_xy( data , x[iens] , y[iens]);
+	valid_count++;
+      }
     }
-      
+    
     plot_dataset_set_style( data , POINTS);
     plot_set_bottom_padding( plot , 0.05);
     plot_set_top_padding( plot    , 0.05);
     plot_set_left_padding( plot   , 0.05);
     plot_set_right_padding( plot  , 0.05);
 
-    printf("Plot saved in: %s \n",plot_file);
-    __plot_show(plot , viewer , plot_file); /* Frees the plot - logical ehhh. */
+    if (valid_count > 0) {
+      printf("Plot saved in: %s \n",plot_file);
+      __plot_show(plot , viewer , plot_file); /* Frees the plot - logical ehhh. */
+    } else {
+      printf("Ehh - no data to plot \n");
+      plot_free( plot );
+    }
     free(basename);
     free(plot_file);
   }
@@ -1080,7 +1127,12 @@ void enkf_ui_plot_menu(void * arg) {
   }
 
   {
-    menu_type * menu = menu_alloc("Plot results" , "Back" , "bB");
+    menu_type * menu;
+    {
+      char            * title      = util_alloc_sprintf("Plot results [case:%s]" , enkf_fs_get_read_dir(  enkf_main_get_fs( enkf_main ))) ;
+      menu = menu_alloc(title , "Back" , "bB");
+      free(title);
+    }
     menu_add_item(menu , "Ensemble plot"    , "eE"                          , enkf_ui_plot_ensemble    , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of ALL summary variables"     , "aA" , enkf_ui_plot_all_summary , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of GEN_KW parameter"          , "g"  , enkf_ui_plot_GEN_KW      , enkf_main , NULL);

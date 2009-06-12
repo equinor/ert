@@ -16,6 +16,7 @@
 #include <gen_obs.h>
 #include <ensemble_config.h>
 #include <msg.h>
+#include <active_list.h>
 
 
 #define OBS_VECTOR_TYPE_ID 120086
@@ -539,13 +540,13 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
 }
 /*****************************************************************/
 
-void obs_vector_iget_observations(const obs_vector_type * obs_vector , int report_step , obs_data_type * obs_data) {
+void obs_vector_iget_observations(const obs_vector_type * obs_vector , int report_step , obs_data_type * obs_data, const active_list_type * active_list) {
   if (obs_vector->nodes[report_step] != NULL)
-    obs_vector->get_obs(obs_vector->nodes[report_step] , report_step , obs_data);
+    obs_vector->get_obs(obs_vector->nodes[report_step] , report_step , obs_data , active_list);
 }
 
 
-void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,const enkf_node_type * enkf_node ,  meas_vector_type * meas_vector) {
+void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,const enkf_node_type * enkf_node ,  meas_vector_type * meas_vector, const active_list_type * active_list) {
   if (obs_vector->nodes[report_step] != NULL)
     obs_vector->measure(obs_vector->nodes[report_step] , enkf_node_value_ptr(enkf_node) , meas_vector);
 }

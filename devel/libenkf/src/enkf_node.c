@@ -179,6 +179,9 @@ struct enkf_node_struct {
   serialize_ftype     *serialize;
   deserialize_ftype   *deserialize;
   set_data_ftype      *set_data;
+
+  matrix_serialize_ftype   * matrix_serialize;
+  matrix_deserialize_ftype * matrix_deserialize;
   
   load_ftype          *load;
   store_ftype         *store;
@@ -225,11 +228,7 @@ const enkf_config_node_type * enkf_node_get_config(const enkf_node_type * node) 
 */
 
 
-#define FUNC_ASSERT(func) \
-   if (func == NULL) {      \
-      fprintf(stderr,"%s: function handler: %s not registered for node:%s - aborting\n",__func__ , #func , enkf_node->node_key); \
-      abort(); \
-   }
+#define FUNC_ASSERT(func) if (func == NULL) util_abort("%s: function handler: %s not registered for node:%s - aborting\n",__func__ , #func , enkf_node->node_key); 
 
 
 
@@ -492,7 +491,7 @@ static void enkf_node_assert_memory(const enkf_node_type * enkf_node , const cha
 
 
 void enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state) {
-  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified))
+  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified)) 
     return;  /* The in memory representation agrees with the buffer values */
   
   {
@@ -526,12 +525,6 @@ void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step
 
 
 
-void enkf_node_ens_clear(enkf_node_type *enkf_node) {
-  FUNC_ASSERT(enkf_node->clear);
-  enkf_node->clear(enkf_node->data);
-}
-
-
 int enkf_node_serialize(enkf_node_type *enkf_node , size_t current_serial_offset ,serial_vector_type * serial_vector, bool * complete) {
   FUNC_ASSERT(enkf_node->serialize);
   enkf_node_assert_memory(enkf_node , __func__);
@@ -550,6 +543,22 @@ void enkf_node_deserialize(enkf_node_type *enkf_node , const serial_vector_type 
   enkf_node->deserialize(enkf_node->data , enkf_node->serial_state , serial_vector);
   enkf_node->__modified = true;
 }
+
+
+void enkf_node_matrix_serialize(enkf_node_type *enkf_node , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  FUNC_ASSERT(enkf_node->matrix_serialize);
+  enkf_node_assert_memory(enkf_node , __func__);
+  enkf_node->matrix_serialize(enkf_node->data , active_list , A , row_offset , column);
+}
+
+
+
+void enkf_node_matrix_deserialize(enkf_node_type *enkf_node , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  FUNC_ASSERT(enkf_node->matrix_deserialize);
+  enkf_node->matrix_deserialize(enkf_node->data , active_list , A , row_offset , column);
+  enkf_node->__modified = true;
+}
+
 
 
 void enkf_node_sqrt(enkf_node_type *enkf_node) {
@@ -610,15 +619,9 @@ void enkf_node_free_data(enkf_node_type * enkf_node) {
 }
 
 
-
 void enkf_node_clear(enkf_node_type *enkf_node) {
   FUNC_ASSERT(enkf_node->clear);
   enkf_node->clear(enkf_node->data);
-}
-
-
-void enkf_node_printf(const enkf_node_type *enkf_node) {
-  printf("%s \n",enkf_node->node_key);
 }
 
 
@@ -663,108 +666,122 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   /*
     Start by initializing all function pointers to NULL.
   */
-  node->realloc_data   	= NULL;
-  node->alloc          	= NULL;
-  node->ecl_write      	= NULL;
-  node->ecl_load       	= NULL;
-  node->fread_f        	= NULL;
-  node->fwrite_f       	= NULL;
-  node->copyc          	= NULL;
-  node->initialize     	= NULL;
-  node->serialize      	= NULL;
-  node->deserialize    	= NULL;
-  node->freef          	= NULL;
-  node->free_data      	= NULL;
-  node->fprintf_results	= NULL;
-  node->user_get       	= NULL;
-  node->set_data        = NULL;
-  node->load            = NULL;
-  node->store           = NULL;
+  node->realloc_data   	   = NULL;
+  node->alloc          	   = NULL;
+  node->ecl_write      	   = NULL;
+  node->ecl_load       	   = NULL;
+  node->fread_f        	   = NULL;
+  node->fwrite_f       	   = NULL;
+  node->copyc          	   = NULL;
+  node->initialize     	   = NULL;
+  node->serialize      	   = NULL;
+  node->deserialize    	   = NULL;
+  node->freef          	   = NULL;
+  node->free_data      	   = NULL;
+  node->fprintf_results	   = NULL;
+  node->user_get       	   = NULL;
+  node->set_data           = NULL;
+  node->load               = NULL;
+  node->store              = NULL;
+  node->matrix_serialize   = NULL; 
+  node->matrix_deserialize = NULL;
+  node->clear              = NULL;
 
   switch (impl_type) {
   case(HAVANA_FAULT):
-    node->realloc_data 	  = havana_fault_realloc_data__;
-    node->alloc        	  = havana_fault_alloc__;
-    node->ecl_write    	  = havana_fault_ecl_write__;
-    node->fread_f      	  = havana_fault_fread__;
-    node->fwrite_f     	  = havana_fault_fwrite__;
-    node->copyc        	  = havana_fault_copyc__;
-    node->initialize   	  = havana_fault_initialize__;
-    node->serialize    	  = havana_fault_serialize__;
-    node->deserialize  	  = havana_fault_deserialize__;
-    node->freef        	  = havana_fault_free__;
-    node->free_data    	  = havana_fault_free_data__;
-    node->fprintf_results = havana_fault_ensemble_fprintf_results__;
-    node->user_get        = havana_fault_user_get__; 
-    node->load            = havana_fault_load__;
-    node->store           = havana_fault_store__;
+    node->realloc_data 	     = havana_fault_realloc_data__;
+    node->alloc        	     = havana_fault_alloc__;
+    node->ecl_write    	     = havana_fault_ecl_write__;
+    node->fread_f      	     = havana_fault_fread__;
+    node->fwrite_f     	     = havana_fault_fwrite__;
+    node->copyc        	     = havana_fault_copyc__;
+    node->initialize   	     = havana_fault_initialize__;
+    node->serialize    	     = havana_fault_serialize__;
+    node->deserialize  	     = havana_fault_deserialize__;
+    node->freef        	     = havana_fault_free__;
+    node->free_data    	     = havana_fault_free_data__;
+    node->fprintf_results    = havana_fault_ensemble_fprintf_results__;
+    node->user_get           = havana_fault_user_get__; 
+    node->load               = havana_fault_load__;
+    node->store              = havana_fault_store__;
+    node->matrix_serialize   = havana_fault_matrix_serialize__;
+    node->matrix_deserialize = havana_fault_matrix_deserialize__;
     break;
   case(GEN_KW):
-    node->realloc_data 	  = gen_kw_realloc_data__;
-    node->alloc        	  = gen_kw_alloc__;
-    node->ecl_write    	  = gen_kw_ecl_write__;
-    node->fread_f      	  = gen_kw_fread__;
-    node->fwrite_f     	  = gen_kw_fwrite__;
-    node->copyc        	  = gen_kw_copyc__;
-    node->initialize   	  = gen_kw_initialize__;
-    node->serialize    	  = gen_kw_serialize__;
-    node->deserialize  	  = gen_kw_deserialize__;
-    node->freef        	  = gen_kw_free__;
-    node->free_data    	  = gen_kw_free_data__;
-    node->fprintf_results = gen_kw_ensemble_fprintf_results__;
-    node->user_get        = gen_kw_user_get__; 
-    node->store           = gen_kw_store__;
-    node->load            = gen_kw_load__;
+    node->realloc_data 	     = gen_kw_realloc_data__;
+    node->alloc        	     = gen_kw_alloc__;
+    node->ecl_write    	     = gen_kw_ecl_write__;
+    node->fread_f      	     = gen_kw_fread__;
+    node->fwrite_f     	     = gen_kw_fwrite__;
+    node->copyc        	     = gen_kw_copyc__;
+    node->initialize   	     = gen_kw_initialize__;
+    node->serialize    	     = gen_kw_serialize__;
+    node->deserialize  	     = gen_kw_deserialize__;
+    node->freef        	     = gen_kw_free__;
+    node->free_data    	     = gen_kw_free_data__;
+    node->fprintf_results    = gen_kw_ensemble_fprintf_results__;
+    node->user_get           = gen_kw_user_get__; 
+    node->store              = gen_kw_store__;
+    node->load               = gen_kw_load__;
+    node->matrix_serialize   = gen_kw_matrix_serialize__;
+    node->matrix_deserialize = gen_kw_matrix_deserialize__;
     break;
   case(MULTFLT):
-    node->realloc_data 	  = multflt_realloc_data__;
-    node->alloc        	  = multflt_alloc__;
-    node->ecl_write    	  = multflt_ecl_write__;
-    node->fread_f      	  = multflt_fread__;
-    node->fwrite_f     	  = multflt_fwrite__;
-    node->copyc        	  = multflt_copyc__;
-    node->initialize   	  = multflt_initialize__;
-    node->serialize    	  = multflt_serialize__;
-    node->deserialize  	  = multflt_deserialize__;
-    node->freef        	  = multflt_free__;
-    node->free_data    	  = multflt_free_data__;
-    node->fprintf_results = multflt_ensemble_fprintf_results__;
-    node->user_get        = multflt_user_get__; 
-    node->load            = multflt_load__;
-    node->store           = multflt_store__;
+    node->realloc_data 	     = multflt_realloc_data__;
+    node->alloc        	     = multflt_alloc__;
+    node->ecl_write    	     = multflt_ecl_write__;
+    node->fread_f      	     = multflt_fread__;
+    node->fwrite_f     	     = multflt_fwrite__;
+    node->copyc        	     = multflt_copyc__;
+    node->initialize   	     = multflt_initialize__;
+    node->serialize    	     = multflt_serialize__;
+    node->deserialize  	     = multflt_deserialize__;
+    node->freef        	     = multflt_free__;
+    node->free_data    	     = multflt_free_data__;
+    node->fprintf_results    = multflt_ensemble_fprintf_results__;
+    node->user_get           = multflt_user_get__; 
+    node->load               = multflt_load__;
+    node->store              = multflt_store__;
+    node->matrix_serialize   = multflt_matrix_serialize__;
+    node->matrix_deserialize = multflt_matrix_deserialize__;
     break;
   case(SUMMARY):
-    node->ecl_load        = summary_ecl_load__;
-    node->realloc_data    = summary_realloc_data__;
-    node->alloc           = summary_alloc__;
-    node->fread_f         = summary_fread__;
-    node->fwrite_f        = summary_fwrite__;
-    node->copyc           = summary_copyc__;
-    node->serialize       = summary_serialize__;
-    node->deserialize     = summary_deserialize__;
-    node->freef           = summary_free__;
-    node->free_data       = summary_free_data__;
-    node->user_get        = summary_user_get__; 
-    node->fprintf_results = summary_ensemble_fprintf_results__;
-    node->load            = summary_load__;
-    node->store           = summary_store__;
+    node->ecl_load           = summary_ecl_load__;
+    node->realloc_data       = summary_realloc_data__;
+    node->alloc              = summary_alloc__;
+    node->fread_f            = summary_fread__;
+    node->fwrite_f           = summary_fwrite__;
+    node->copyc              = summary_copyc__;
+    node->serialize          = summary_serialize__;
+    node->deserialize        = summary_deserialize__;
+    node->freef              = summary_free__;
+    node->free_data          = summary_free_data__;
+    node->user_get           = summary_user_get__; 
+    node->fprintf_results    = summary_ensemble_fprintf_results__;
+    node->load               = summary_load__;
+    node->store              = summary_store__;
+    node->matrix_serialize   = summary_matrix_serialize__;
+    node->matrix_deserialize = summary_matrix_deserialize__;
     break;
   case(FIELD):
-    node->realloc_data = field_realloc_data__;
-    node->alloc        = field_alloc__;
-    node->ecl_write    = field_ecl_write__; 
-    node->ecl_load     = field_ecl_load__;  
-    node->fread_f      = field_fread__;
-    node->fwrite_f     = field_fwrite__;
-    node->copyc        = field_copyc__;
-    node->initialize   = field_initialize__;
-    node->serialize    = field_serialize__;
-    node->deserialize  = field_deserialize__;
-    node->freef        = field_free__;
-    node->free_data    = field_free_data__;
-    node->user_get     = field_user_get__;
-    node->load         = field_load__;
-    node->store        = field_store__;
+    node->realloc_data 	     = field_realloc_data__;
+    node->alloc        	     = field_alloc__;
+    node->ecl_write    	     = field_ecl_write__; 
+    node->ecl_load     	     = field_ecl_load__;  
+    node->fread_f      	     = field_fread__;
+    node->fwrite_f     	     = field_fwrite__;
+    node->copyc        	     = field_copyc__;
+    node->initialize   	     = field_initialize__;
+    node->serialize    	     = field_serialize__;
+    node->deserialize  	     = field_deserialize__;
+    node->freef        	     = field_free__;
+    node->free_data    	     = field_free_data__;
+    node->user_get     	     = field_user_get__;
+    node->load         	     = field_load__;
+    node->store        	     = field_store__;
+    node->matrix_serialize   = field_matrix_serialize__;
+    node->matrix_deserialize = field_matrix_deserialize__;
+    node->clear              = field_clear__; 
     break;
   case(STATIC):
     node->realloc_data = ecl_static_kw_realloc_data__;
@@ -779,21 +796,23 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->store        = ecl_static_kw_store__;
     break;
   case(GEN_DATA):
-    node->realloc_data = gen_data_realloc_data__;
-    node->alloc        = gen_data_alloc__;
-    node->fread_f      = gen_data_fread__;
-    node->fwrite_f     = gen_data_fwrite__;
-    node->initialize   = gen_data_initialize__;
-    node->copyc        = gen_data_copyc__;
-    node->freef        = gen_data_free__;
-    node->free_data    = gen_data_free_data__;
-    node->ecl_write    = gen_data_ecl_write__;
-    node->ecl_load     = gen_data_ecl_load__;
-    node->serialize    = gen_data_serialize__;
-    node->deserialize  = gen_data_deserialize__;
-    node->user_get     = gen_data_user_get__;
-    node->load         = gen_data_load__;
-    node->store        = gen_data_store__;
+    node->realloc_data 	     = gen_data_realloc_data__;
+    node->alloc        	     = gen_data_alloc__;
+    node->fread_f      	     = gen_data_fread__;
+    node->fwrite_f     	     = gen_data_fwrite__;
+    node->initialize   	     = gen_data_initialize__;
+    node->copyc        	     = gen_data_copyc__;
+    node->freef        	     = gen_data_free__;
+    node->free_data    	     = gen_data_free_data__;
+    node->ecl_write    	     = gen_data_ecl_write__;
+    node->ecl_load     	     = gen_data_ecl_load__;
+    node->serialize    	     = gen_data_serialize__;
+    node->deserialize  	     = gen_data_deserialize__;
+    node->user_get     	     = gen_data_user_get__;
+    node->load         	     = gen_data_load__;
+    node->store        	     = gen_data_store__;
+    node->matrix_serialize   = gen_data_matrix_serialize__;
+    node->matrix_deserialize = gen_data_matrix_deserialize__;
     break;
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);

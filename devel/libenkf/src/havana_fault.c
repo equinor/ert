@@ -125,6 +125,7 @@ void havana_fault_upgrade_103(const char * filename) {
   fclose( stream );
   {
     buffer_type * buffer = buffer_alloc( 100 );
+    buffer_fwrite_time_t( buffer , time(NULL));
     buffer_fwrite_int( buffer , impl_type );
     buffer_fwrite(buffer , data , sizeof * data    ,size);
     buffer_store( buffer , filename);
@@ -161,6 +162,18 @@ int havana_fault_serialize(const havana_fault_type *havana_fault , serial_state_
 void havana_fault_deserialize(havana_fault_type *havana_fault , serial_state_type * serial_state, const serial_vector_type * serial_vector) {
   scalar_deserialize(havana_fault->scalar , serial_state , serial_vector);
 }
+
+
+void havana_fault_matrix_serialize(const havana_fault_type *havana_fault , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
+  scalar_matrix_serialize(havana_fault->scalar , active_list , A , row_offset , column);
+}
+
+
+void havana_fault_matrix_deserialize(havana_fault_type *havana_fault , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
+  scalar_matrix_deserialize(havana_fault->scalar , active_list , A , row_offset , column);
+}
+
+
 
 
 
@@ -380,4 +393,6 @@ VOID_ECL_WRITE(havana_fault)
 VOID_FPRINTF_RESULTS(havana_fault)
 VOID_LOAD(havana_fault)
 VOID_STORE(havana_fault)
+VOID_MATRIX_SERIALIZE(havana_fault)
+VOID_MATRIX_DESERIALIZE(havana_fault)
 

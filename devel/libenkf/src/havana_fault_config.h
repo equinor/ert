@@ -25,5 +25,6 @@ gen_kw_config_type         * havana_fault_config_get_gen_kw_config(const havana_
 
 VOID_FREE_HEADER(havana_fault_config);
 SAFE_CAST_HEADER(havana_fault_config);
+VOID_GET_DATA_SIZE_HEADER(havana_fault);
 
 #endif

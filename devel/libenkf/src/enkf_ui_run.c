@@ -12,6 +12,7 @@
 #include <enkf_ui_util.h>
 #include <enkf_ui_fs.h>
 #include <ensemble_config.h>
+#include <enkf_analysis.h>
 
 
 
@@ -121,7 +122,7 @@ void enkf_main_interactive_set_runpath__(void *arg) {
 
 void enkf_ui_run_analyze__(void * enkf_main) {
   int report_step = enkf_ui_util_scanf_report_step(enkf_main_get_total_length(enkf_main) , "Which report step to analyze" , 40);
-  enkf_main_analysis_update(enkf_main , report_step - 1, report_step );
+  enkf_main_UPDATE(enkf_main , report_step - 1, report_step );
 }
 
 
@@ -131,7 +132,7 @@ void enkf_ui_run_smooth__(void * enkf_main) {
   int step2 = enkf_ui_util_scanf_report_step(last_report , "Last report step" , 20);
 
   if(step1 <= step2)
-    enkf_main_analysis_update(enkf_main , step1, step2 );
+    enkf_main_UPDATE(enkf_main , step1, step2 );
 }
 
 

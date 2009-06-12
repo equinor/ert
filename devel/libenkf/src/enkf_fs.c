@@ -406,8 +406,9 @@ static void enkf_fs_upgrade_103(const char * config_file , const char * root_pat
   printf("\n*****************************************************************\n");
   printf("** Upgrading the enkf filesystem from version 102 to 103,      **\n");
   printf("** this will take some time. There will be a .backup directory **\n");
-  printf("** in every directory containing the original 102 files. These **\n");
-  printf("** directories can be removed when everything is OK.           **\n");
+  printf("** in every directory containing the original version 102      **\n");
+  printf("** files. These directories can be removed when the upgrade has**\n");
+  printf("** completed successfully.                                     **\n"),
   printf("**                                                             **\n");       
   printf("**   Hold on to your helmet :-)                                **\n");
   printf("**                                                             **\n");       
@@ -1222,7 +1223,8 @@ static void * enkf_fs_select_driver(enkf_fs_type * fs , enkf_var_type var_type, 
     driver = select_dynamic_driver( fs , state , read );
     break;
   case(DYNAMIC_STATE):
-    driver = select_dynamic_driver( fs , state , read );break;
+    driver = select_dynamic_driver( fs , state , read );
+    break;
   case(STATIC_STATE):
     if (read)
       driver = fs->eclipse_static_read;
@@ -1280,7 +1282,7 @@ static int __get_parameter_report_step( int report_step , state_enum state) {
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
   basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) , true);
-
+  
   if (var_type == PARAMETER) {
     report_step = __get_parameter_report_step( report_step , state );
     
@@ -1320,11 +1322,12 @@ bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * con
   }
 }
 
-enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
+enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens, state_enum state) {
   enkf_node_type * node = enkf_node_alloc(config_node);
   enkf_fs_fread_node(enkf_fs , node , report_step , iens , state);
   return node;
 }
+
 
 
 void enkf_fs_copy_node(enkf_fs_type * enkf_fs, 
@@ -1393,6 +1396,23 @@ bool enkf_fs_try_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * node , int
   }
 
 }
+
+
+/**
+
+*/
+
+enkf_node_type ** enkf_fs_fread_alloc_ensemble( enkf_fs_type * fs , const enkf_config_node_type * config_node , int report_step , int iens1 , int iens2 , state_enum state) {
+  enkf_node_type ** ensemble = util_malloc( (iens2 - iens1) * sizeof * ensemble , __func__);
+  for (int iens = iens1; iens < iens2; iens++) {
+    ensemble[iens - iens1] = NULL;
+    ensemble[iens - iens1] = enkf_fs_fread_alloc_node(fs , config_node , report_step , iens , state);
+  }
+  
+  return ensemble;
+}
+
+
 
 /*****************************************************************/
 

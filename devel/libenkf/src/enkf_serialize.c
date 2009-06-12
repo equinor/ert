@@ -356,14 +356,26 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 			   size_t serial_offset ,               /* The offset in the serial vector we are starting on - owned by the node; pointing into the serial vector. */                     
 			   serial_vector_type * serial_vector) {
 
-  
-  int           active_size = active_list_get_active_size( __active_list );
-  const int   * active_list = active_list_get_active( __active_list );
-  
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  int           active_size;
+  const int   * active_list;
+
   int    active_node_index1 = serial_state->active_node_index1;
   int    current_active_node_index;
   size_t active_index       = -1; /* Compiler shut up */
   size_t elements_added     = 0;
+
+
+  if (active_mode == ALL_ACTIVE) {
+    active_size = node_size;
+    active_list = NULL;
+  } else if (active_mode == INACTIVE) {
+    active_size = 0;
+    active_list = NULL;
+  } else {
+    active_size    = active_list_get_active_size( __active_list );
+    active_list    = active_list_get_active( __active_list );
+  }
 
 
   if (first_call) {
@@ -434,8 +446,17 @@ size_t enkf_serialize(const void * __node_data         ,
   bool first_call      = true;
   int  node_offset     = 0;
   int  total_node_size = node_size;
+  int  active_size;
+  active_mode_type active_mode = active_list_get_mode( active_list );
 
-  if (active_list_get_active_size(active_list) > 0)
+  if (active_mode == ALL_ACTIVE) 
+    active_size = node_size;
+  else if (active_mode == INACTIVE) 
+    active_size = 0;
+  else 
+    active_size    = active_list_get_active_size( active_list );
+    
+  if (active_size > 0)
     return enkf_serialize_part(__node_data , first_call , node_size , node_offset , 
 			       total_node_size , node_type , active_list , 
 			       serial_state , serial_offset , serial_vector);
@@ -458,14 +479,27 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
 			   serial_state_type * serial_state  , /* Holding the state of the current serialization of this node. */
 			   /*-- Above: node data ---  Below: serial data --*/
 			   const serial_vector_type * serial_vector) {
-
-  int           active_size = active_list_get_active_size( __active_list );
-  const int   * active_list = active_list_get_active( __active_list );
+  
+  
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  int active_size;
+  const int * active_list;
   
   size_t serial_offset        = serial_state->serial_offset;
   int    active_node_index1   = serial_state->active_node_index1;
   int    active_node_index2   = serial_state->active_node_index2;
   int    current_active_node_index;
+
+  if (active_mode == ALL_ACTIVE) {
+    active_size = node_size;
+    active_list = NULL;
+  } else if (active_mode == INACTIVE) {
+    active_size = 0;
+    active_list = NULL;
+  } else {
+    active_size    = active_list_get_active_size( __active_list );
+    active_list    = active_list_get_active( __active_list );
+  }
 
   
   if (first_call) {
@@ -512,11 +546,131 @@ void enkf_deserialize(void * __node_data                ,
 		      const serial_vector_type * serial_vector) {
 
   bool first_call      = true;
+  int active_size;
   int  node_offset     = 0;
   int  total_node_size = node_size;
+  active_mode_type active_mode = active_list_get_mode( active_list );
 
-  if (active_list_get_active_size(active_list) > 0)  
+  if (active_mode == ALL_ACTIVE) 
+    active_size = node_size;
+  else if (active_mode == INACTIVE) 
+    active_size = 0;
+  else 
+    active_size    = active_list_get_active_size( active_list );
+    
+  if (active_size > 0)
     enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_list , serial_state , serial_vector);
   else 
     serial_state->state = analyzed;
 }
+
+
+/*****************************************************************/
+
+
+/* 
+   It will be very costly to make it thread-safe if we manipulate the
+   shape of the A matrix from here.
+*/
+   
+
+void enkf_matrix_serialize(const void * __node_data 	   	 , 
+			   int node_size    	   	         ,      
+			   ecl_type_enum node_type 	         ,           
+			   const active_list_type * __active_list , 
+			   matrix_type * A                        ,
+			   int row_offset,
+			   int column) {
+  
+  int active_size;
+  const int   * active_list    = active_list_get_active( __active_list ); 
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  if (active_mode == ALL_ACTIVE)
+    active_size = node_size;
+  else
+    active_size = active_list_get_active_size( __active_list );
+
+  if (node_type == ecl_double_type) {
+    const double * node_data = (const double *) __node_data;
+    if (active_size == node_size) /** All elements active */
+      matrix_set_many_on_column( A , row_offset , node_size , node_data , column);
+    else {
+      int row_index;
+      int node_index;
+      for (row_index = 0; row_index < active_size; row_index++) {
+	node_index = active_list[ row_index ];
+	matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
+      }
+    }
+    
+  } else if (node_type == ecl_float_type) {
+    const float * node_data = (const float *) __node_data;
+    int row_index;
+    if (active_size == node_size) {/** All elements active */
+      for (row_index = 0; row_index < node_size; row_index++)
+	matrix_iset( A , row_index + row_offset , column , node_data[ row_index ]);  /* Must have float -> double conversion; can not use memcpy() based approach */
+    } else {
+      int row_index;
+      int node_index;
+      for (row_index = 0; row_index < active_size; row_index++) {
+	node_index = active_list[ row_index ];
+	matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
+	}
+    }      
+  } else 
+      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+}
+
+
+void enkf_matrix_deserialize(void * __node_data 	   	, 
+			     int node_size    	   	        ,      
+			     ecl_type_enum node_type 	        ,           
+			     const active_list_type * __active_list , 
+			     const matrix_type * A,
+			     int row_offset,
+			     int column) {
+  
+  int active_size;
+  const int   * active_list    = active_list_get_active( __active_list ); 
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  if (active_mode == ALL_ACTIVE)
+    active_size = node_size;
+  else
+    active_size = active_list_get_active_size( __active_list );
+    
+  if (node_type == ecl_double_type) {
+    double * node_data = (double *) __node_data;
+
+    if (active_size == node_size) { /** All elements active */
+      int row_index;
+      for (row_index = 0; row_index < active_size; row_index++) 
+	node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
+    } else {
+      int row_index;
+      int node_index;
+      for (row_index = 0; row_index < active_size; row_index++) {
+	node_index = active_list[ row_index ];
+	node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
+      }
+    }
+    
+  } else if (node_type == ecl_float_type) {
+    float * node_data = (float *) __node_data;
+    
+    if (active_size == node_size) { /** All elements active */
+      int row_index;
+      for (row_index = 0; row_index < active_size; row_index++) 
+	node_data[row_index] = matrix_iget( A , row_index + row_offset , column);
+    } else {
+      int row_index;
+      int node_index;
+      for (row_index = 0; row_index < active_size; row_index++) {
+	node_index = active_list[ row_index ];
+	node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
+      }
+    }
+
+  } else 
+    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+}
+			   

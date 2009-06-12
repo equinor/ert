@@ -80,13 +80,13 @@ state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool ac
 */
 
 const enkf_config_node_type * enkf_ui_util_scanf_key(const ensemble_config_type * config , int prompt_len , enkf_impl_type impl_type ,  enkf_var_type var_type) {
-  char kw[256];
+  char * kw;
   bool OK;
   const enkf_config_node_type * config_node;
   do {
     OK = true;
     util_printf_prompt("Keyword" , prompt_len , '=' , "=> ");
-    scanf("%s" , kw);
+    kw = util_alloc_stdin_line();
     if (ensemble_config_has_key(config , kw)) {
       config_node = ensemble_config_get_node(config , kw);
       
@@ -98,6 +98,7 @@ const enkf_config_node_type * enkf_ui_util_scanf_key(const ensemble_config_type 
 	if (enkf_config_node_get_var_type(config_node) != var_type) 
 	  OK = false;
     } else OK = false;
+    free(kw);
   } while (!OK);
   return config_node;
 }

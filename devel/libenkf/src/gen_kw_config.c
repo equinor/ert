@@ -198,3 +198,4 @@ int gen_kw_config_get_index(const gen_kw_config_type * config , const char * key
 
 SAFE_CAST(gen_kw_config , GEN_KW_CONFIG_TYPE_ID)
 VOID_FREE(gen_kw_config)
+VOID_GET_DATA_SIZE(gen_kw)

@@ -14,6 +14,7 @@
 #include <gen_obs.h>
 #include <gen_common.h>
 #include <gen_obs_active.h>
+#include <active_list.h>
 
 /**
    This file implemenets a structure for general observations. A
@@ -205,7 +206,7 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 
 
 
-void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data) {
+void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data, const active_list_type * active_list) {
   int iobs;
   char * kw = NULL;
   for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
