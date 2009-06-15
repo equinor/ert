@@ -14,12 +14,12 @@ typedef enum {
 
 
 typedef enum {
-  plot_xy    = 1,     /* Normal xy plot. */
-  plot_xy1y2 = 2,     /* x and y-error bars, from y1 - y2. */
-  plot_x1x2y = 3,     /* x error bars (from x1 to x2) and y. */
-  plot_xline = 4,     /* Vertical lines with fixed x */
-  plot_yline = 5,     /* Horizontal lines with fixed y. */
-  plot_hist  = 6      /* A list of values - which are binned, and plotted in a histogram. */    
+  PLOT_XY    = 1,     /* Normal xy plot. */
+  PLOT_XY1Y2 = 2,     /* x and y-error bars, from y1 - y2. */
+  PLOT_X1X2Y = 3,     /* x error bars (from x1 to x2) and y. */
+  PLOT_XLINE = 4,     /* Vertical lines with fixed x */
+  PLOT_YLINE = 5,     /* Horizontal lines with fixed y. */
+  PLOT_HIST  = 6      /* A list of values - which are binned, and plotted in a histogram. */    
 } plot_data_type;
 
 

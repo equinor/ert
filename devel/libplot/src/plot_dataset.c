@@ -29,7 +29,6 @@ struct plot_dataset_struct {
   double_vector_type  *x2;
   int     	      data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
   plot_data_type      data_type;       /**< One of the types: plot_xy, plot_xy1y2, plot_x1x2y , plot_xline , plot_yline */      
-  int                 size;
 
   plot_style_type       style;        /**< The graph style: line|points|line_points */
 
@@ -43,7 +42,16 @@ struct plot_dataset_struct {
 /* Set - functions for the style variabels of the dataset.       */
 
 int plot_dataset_get_size( const plot_dataset_type * dataset ) {
-  return dataset->size;
+
+  if (dataset->data_mask & PLOT_DATA_X)  return double_vector_size( dataset->x );
+  if (dataset->data_mask & PLOT_DATA_Y)  return double_vector_size( dataset->y );
+  if (dataset->data_mask & PLOT_DATA_X1) return double_vector_size( dataset->x1 );
+  if (dataset->data_mask & PLOT_DATA_Y1) return double_vector_size( dataset->y1 );
+  if (dataset->data_mask & PLOT_DATA_X2) return double_vector_size( dataset->x2 );
+  if (dataset->data_mask & PLOT_DATA_Y2) return double_vector_size( dataset->y2 );
+  
+  util_abort("%s: internal error\n",__func__);
+  return -1;
 }
 
 void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style) {
@@ -98,23 +106,23 @@ static void plot_dataset_assert_type(const plot_dataset_type * d, plot_data_type
 static int  __make_data_mask(plot_data_type data_type) {
   int mask = 0;
   switch (data_type) {
-  case(plot_xy):
-    mask = plot_data_x + plot_data_y;
+  case(PLOT_XY):
+    mask = PLOT_DATA_X + PLOT_DATA_Y;
     break;
-  case(plot_xy1y2):
-    mask = plot_data_x + plot_data_y1 + plot_data_y2;
+  case(PLOT_XY1Y2):
+    mask = PLOT_DATA_X + PLOT_DATA_Y1 + PLOT_DATA_Y2;
     break;
-  case(plot_x1x2y):
-    mask = plot_data_x1 + plot_data_x2 + plot_data_y;
+  case(PLOT_X1X2Y):
+    mask = PLOT_DATA_X1 + PLOT_DATA_X2 + PLOT_DATA_Y;
     break;
-  case(plot_xline):
-    mask = plot_data_x;
+  case(PLOT_XLINE):
+    mask = PLOT_DATA_X;
     break;
-  case(plot_yline):
-    mask = plot_data_y;
+  case(PLOT_YLINE):
+    mask = PLOT_DATA_Y;
     break;
-  case(plot_hist):
-    mask = plot_data_x;
+  case(PLOT_HIST):
+    mask = PLOT_DATA_X;
     break;
   default:
     util_abort("%s: unrecognized value: %d \n",__func__ , data_type);
@@ -127,7 +135,7 @@ static int  __make_data_mask(plot_data_type data_type) {
 void plot_dataset_fprintf(const plot_dataset_type * dataset , FILE * stream) {
   fprintf(stream , "    x              y            x1            x2            y1           y2 \n");
   fprintf(stream , "----------------------------------------------------------------------------\n");
-  for (int i = 0; i < dataset->size; i++) {
+  for (int i = 0; i < plot_dataset_get_size(dataset); i++) {
     fprintf(stream , "%12.7f  %12.7f  %12.7f  %12.7f  %12.7f  %12.7f\n",
 	    double_vector_safe_iget(dataset->x , i ),
 	    double_vector_safe_iget(dataset->y , i ),
@@ -162,7 +170,6 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , const char* lab
   d->y1 	   = double_vector_alloc( 0 , -1 );
   d->y2 	   = double_vector_alloc( 0 , -1 );
   d->label         = util_alloc_string_copy( label );
-  d->size          = 0;
   /******************************************************************/
   /* Defaults                                                       */
   d->style       = LINE;
@@ -221,25 +228,24 @@ static void __append_vector(double_vector_type * target, const double * src , co
 
 /**
    Before a tuple, i.e. (x,y), (x,y1,y2) , (x1,x2,y), ... is added to
-   the dataset we verify that the test isfinite(·) return true for all
-   the elements in the tuple. 
-   This functionality is implemented with the boolean vector mask.
-*/
+   the dataset we verify that the test isfinite(·) returns true for
+   all the elements in the tuple.  
 
+   This functionality is implemented with the boolean vector 'mask'.
+*/
 
 void __update_mask( bool_vector_type * mask , const double * data) {
   if (data != NULL) {
     for (int index = 0; index < bool_vector_size( mask ); index++)
-      if (!isfinite(data[index])) {
-	bool_vector_iset( mask , index , false );
-	//fprintf(stderr,"Discarding invalid value: %g \n",data[index]);
-      }
+      if (!isfinite(data[index])) 
+	/* This datapoint is marked as invalid - and not added to the proper datavectors. */
+	bool_vector_iset( mask , index , false );  
   }
 }
 
 
 static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * y1 , const double * y2 , const double *x1 , const double *x2) {
-  bool_vector_type * mask = bool_vector_alloc( size , true ); 
+  bool_vector_type * mask = bool_vector_alloc( size , true );   /* Initialize to all true */
   
   __update_mask(mask , x);
   __update_mask(mask , y);
@@ -248,18 +254,12 @@ static void plot_dataset_append_vector__(plot_dataset_type * d , int size , cons
   __update_mask(mask , x1);
   __update_mask(mask , x2);
     
-  if (d->data_mask & plot_data_x)  __append_vector(d->x  , x  ,  mask);
-  if (d->data_mask & plot_data_x1) __append_vector(d->x1 , x1 ,  mask);
-  if (d->data_mask & plot_data_x2) __append_vector(d->x2 , x2 ,  mask);
-
-								
-  if (d->data_mask & plot_data_y)  __append_vector(d->y  , y  ,  mask);
-  if (d->data_mask & plot_data_y1) __append_vector(d->y1 , y1 ,  mask);
-  if (d->data_mask & plot_data_y2) __append_vector(d->y2 , y2 ,  mask);
-
-  for (int index = 0; index < bool_vector_size( mask ); index++)
-    if (bool_vector_iget( mask , index))
-      d->size++;
+  if (d->data_mask & PLOT_DATA_X)  __append_vector(d->x  , x  ,  mask);
+  if (d->data_mask & PLOT_DATA_X1) __append_vector(d->x1 , x1 ,  mask);
+  if (d->data_mask & PLOT_DATA_X2) __append_vector(d->x2 , x2 ,  mask);
+  if (d->data_mask & PLOT_DATA_Y)  __append_vector(d->y  , y  ,  mask);
+  if (d->data_mask & PLOT_DATA_Y1) __append_vector(d->y1 , y1 ,  mask);
+  if (d->data_mask & PLOT_DATA_Y2) __append_vector(d->y2 , y2 ,  mask);
 
   bool_vector_free(mask);
 }
@@ -272,7 +272,7 @@ static void plot_dataset_append_vector__(plot_dataset_type * d , int size , cons
 
 
 void plot_dataset_append_vector_xy(plot_dataset_type *d , int size, const double * x , const double *y) {
-  plot_dataset_assert_type(d , plot_xy);
+  plot_dataset_assert_type(d , PLOT_XY);
   plot_dataset_append_vector__(d , size , x , y , NULL , NULL , NULL , NULL);
 }
 
@@ -282,13 +282,11 @@ void plot_dataset_append_point_xy(plot_dataset_type *d , double x , double y) {
 }
 
 
-
-
 /*----*/
 
 
 void plot_dataset_append_vector_xy1y2(plot_dataset_type *d , int size, const double * x , const double *y1 , const double *y2) {
-  plot_dataset_assert_type(d , plot_xy1y2);
+  plot_dataset_assert_type(d , PLOT_XY1Y2);
   plot_dataset_append_vector__(d , size , x , NULL , y1 , y2 , NULL , NULL);
 }
 
@@ -302,7 +300,7 @@ void plot_dataset_append_point_xy1y2(plot_dataset_type *d , double x , double y1
 /*----*/
 
 void plot_dataset_append_vector_x1x2y(plot_dataset_type *d , int size, const double * x1 , const double *x2 , const double *y) {
-  plot_dataset_assert_type(d , plot_x1x2y);
+  plot_dataset_assert_type(d , PLOT_X1X2Y);
   plot_dataset_append_vector__(d , size , NULL , y , NULL , NULL , x1 , x2);
 }
 
@@ -315,7 +313,7 @@ void plot_dataset_append_point_x1x2y(plot_dataset_type *d , double x1 , double x
 /*----*/
 
 void plot_dataset_append_vector_xline(plot_dataset_type *d , int size, const double * x) {
-  plot_dataset_assert_type(d , plot_xline);
+  plot_dataset_assert_type(d , PLOT_XLINE);
   plot_dataset_append_vector__(d , size , x , NULL , NULL , NULL , NULL , NULL);
 }
 
@@ -330,7 +328,7 @@ void plot_dataset_append_point_xline(plot_dataset_type *d , double x) {
 /*----*/
 
 void plot_dataset_append_vector_yline(plot_dataset_type *d , int size, const double * y) {
-  plot_dataset_assert_type(d , plot_yline);
+  plot_dataset_assert_type(d , PLOT_YLINE);
   plot_dataset_append_vector__(d , size , NULL , y , NULL , NULL , NULL , NULL );
 }
 
@@ -346,7 +344,7 @@ void plot_dataset_append_point_yline(plot_dataset_type *d , double y) {
 /*----*/
 
 void plot_dataset_append_vector_hist(plot_dataset_type *d , int size, const double * x) {
-  plot_dataset_assert_type(d , plot_hist);
+  plot_dataset_assert_type(d , PLOT_HIST);
   plot_dataset_append_vector__(d , size , x , NULL , NULL , NULL , NULL , NULL );
 }
 
@@ -372,7 +370,7 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
   
   
   switch (d->data_type) {
-  case(plot_xy):
+  case(PLOT_XY):
     {
       plot_style_type style       = d->style;
       plot_color_type point_color = d->point_attr.point_color;
@@ -402,7 +400,7 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
       }
     }
     break;
-  case(plot_hist):
+  case(PLOT_HIST):
     {
       int    bins = (int) sqrt( size );
       double xmin = plot_range_get_xmin(range);
@@ -410,13 +408,13 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
       plhist(size , double_vector_get_ptr(d->x) , xmin , xmax , bins , 0 /* PL_HIST_DEFAULT */);
     }
     break;
-  case(plot_xy1y2):
+  case(PLOT_XY1Y2):
     plerry(size , double_vector_get_ptr(d->x) , double_vector_get_ptr(d->y1) , double_vector_get_ptr(d->y2));
     break;
-  case(plot_x1x2y):
+  case(PLOT_X1X2Y):
     plerrx(size , double_vector_get_ptr(d->x1) , double_vector_get_ptr(d->x2) , double_vector_get_ptr(d->y) );
     break;
-  case(plot_yline):
+  case(PLOT_YLINE):
     {
       double x[2] = {plot_range_get_xmin(range) , plot_range_get_xmax(range)};
       double y[2];
@@ -428,7 +426,7 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
       }
     }
     break;
-  case(plot_xline):
+  case(PLOT_XLINE):
     {
       double y[2] = {plot_range_get_ymin(range) , plot_range_get_ymax(range)};
       double x[2];
@@ -475,14 +473,14 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
     y1 = NULL;
     y2 = NULL;
     
-    if (d->data_mask & plot_data_x)  	{x1 = double_vector_get_ptr(d->x);  x2 = double_vector_get_ptr(d->x); }
-    if (d->data_mask & plot_data_x1) 	 x1 = double_vector_get_ptr(d->x1);
-    if (d->data_mask & plot_data_x2) 	 x2 = double_vector_get_ptr(d->x2);
+    if (d->data_mask & PLOT_DATA_X)  	{x1 = double_vector_get_ptr(d->x);  x2 = double_vector_get_ptr(d->x); }
+    if (d->data_mask & PLOT_DATA_X1) 	 x1 = double_vector_get_ptr(d->x1);
+    if (d->data_mask & PLOT_DATA_X2) 	 x2 = double_vector_get_ptr(d->x2);
 
 
-    if (d->data_mask & plot_data_y)  {y1 = double_vector_get_ptr(d->y) ;  y2 = double_vector_get_ptr(d->y) ; }
-    if (d->data_mask & plot_data_y1)  y1 = double_vector_get_ptr(d->y1) ;
-    if (d->data_mask & plot_data_y2)  y2 = double_vector_get_ptr(d->y2) ;
+    if (d->data_mask & PLOT_DATA_Y)  {y1 = double_vector_get_ptr(d->y) ;  y2 = double_vector_get_ptr(d->y) ; }
+    if (d->data_mask & PLOT_DATA_Y1)  y1 = double_vector_get_ptr(d->y1) ;
+    if (d->data_mask & PLOT_DATA_Y2)  y2 = double_vector_get_ptr(d->y2) ;
 
     if (x1 != NULL) {
       if (*first_pass) {

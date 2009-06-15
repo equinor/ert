@@ -30,13 +30,13 @@ extern "C" {
    2^n values (apart from the composite values plot_data_stdy and plot_data_stdx).
 */
 typedef enum {
-  plot_data_x  	 =  1,
-  plot_data_y  	 =  2,
-  plot_data_x1 	 =  4,
-  plot_data_x2 	 =  8,
-  plot_data_y1 	 = 16,
-  plot_data_y2 	 = 32,
-  plot_data_hist = 1   /* == plot_data_x */
+  PLOT_DATA_X  	 =  1,
+  PLOT_DATA_Y  	 =  2,
+  PLOT_DATA_X1 	 =  4,
+  PLOT_DATA_X2 	 =  8,
+  PLOT_DATA_Y1 	 = 16,
+  PLOT_DATA_Y2 	 = 32,
+  PLOT_DATA_HIST = 1     /* == plot_data_x */
 } plot_data_types;
 
 
