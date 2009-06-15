@@ -108,6 +108,8 @@ lsf_job_type * lsf_job_alloc() {
 
 
 void lsf_job_fprintf(const lsf_job_type * lsf_job) {
+  if (lsf_job->num_exec_host != 0)
+    printf("%s ",lsf_job->exec_host[0]);
   printf("LSF_ID: %ld \n",lsf_job->lsf_jobnr);
 }
 
@@ -227,28 +229,39 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
     {
       job_status_type status;
       struct jobInfoEnt *job_info;
-      if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) 
-	util_abort("%s: failed to get information about lsf job:%ld - aborting \n",__func__ , job->lsf_jobnr);
-      
-      job_info = lsb_readjobinfo( NULL );
-      lsb_closejobinfo();
-      /*
-	int numExHosts;
-	char **exHosts;
-      */
+      if (lsb_openjobinfo(job->lsf_jobnr , NULL , NULL , NULL , NULL , ALL_JOB) != 1) {
+	/* 
+	   Failed to get information about the job - we boldly assume
+	   the following situation has occured:
 
-      switch (job_info->status) {
-	case(JOB_STAT_PEND  , job_queue_pending);
-	case(JOB_STAT_SSUSP , job_queue_running);
-	case(JOB_STAT_RUN   , job_queue_running);
-	case(JOB_STAT_EXIT  , job_queue_exit);
-	case(JOB_STAT_DONE  , job_queue_done);
-	case(JOB_STAT_PDONE , job_queue_done);
-	case(JOB_STAT_PERR  , job_queue_exit);
-	case(192            , job_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
-      default:
-	fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
-	status = job_queue_done; /* ????  */
+	     1. The job is running happily along.
+	     2. The lsf deamon is not responding for a long time.
+	     3. The job finishes, and is eventually expired from the LSF job database.
+	     4. The lsf deamon answers again - but can not find the job...
+	*/
+	fprintf(stderr,"Warning: failed to get status information for job:%ld - assuming it is finished. \n", job->lsf_jobnr);
+	status = job_queue_done;
+      } else {
+	job_info = lsb_readjobinfo( NULL );
+	lsb_closejobinfo();
+	if (job->num_exec_host == 0) {
+	  job->num_exec_host = job_info->numExHosts;
+	  job->exec_host = util_alloc_stringlist_copy( (const char **) job_info->exHosts , job->num_exec_host);
+	}
+	
+	switch (job_info->status) {
+	  case(JOB_STAT_PEND  , job_queue_pending);
+	  case(JOB_STAT_SSUSP , job_queue_running);
+	  case(JOB_STAT_RUN   , job_queue_running);
+	  case(JOB_STAT_EXIT  , job_queue_exit);
+	  case(JOB_STAT_DONE  , job_queue_done);
+	  case(JOB_STAT_PDONE , job_queue_done);
+	  case(JOB_STAT_PERR  , job_queue_exit);
+	  case(192            , job_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
+	default:
+	  fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
+	  status = job_queue_done; /* ????  */
+	}
       }
       
       return status;
