@@ -2,6 +2,9 @@
 #include <util.h>
 #include <plplot/plplot.h>
 #include <plplot/plplotP.h>
+#include <math.h>
+#include <double_vector.h>
+#include <bool_vector.h>
 #include <plot_const.h>
 #include <plot_range.h>
 #include <plot_dataset.h>
@@ -16,20 +19,17 @@
  * @brief Contains information about a dataset.
  */
 struct plot_dataset_struct {
-  int             __type_id;
-  char           *label;           /* Label for the dataset - used as hash key in the plot instance. */ 
-  double  	 *x; 	   	   /**< Vector containing x-axis data */
-  double  	 *y; 	   	   /**< Vector containing y-axis data */
-  double  	 *y1;              
-  double  	 *y2;
-  double  	 *x1;
-  double  	 *x2;
-  int     	  data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
-  plot_data_type  data_type;       /**< One of the types: plot_xy, plot_xy1y2, plot_x1x2y , plot_xline , plot_yline */      
-  
-  int alloc_size;          /**< The allocated size of x,y (std) */
-  int size;	   	   /**< Length of the vectors defining the plot - can be less than alloc_size.*/
-
+  UTIL_TYPE_ID_DECLARATION;
+  char                *label;             /* Label for the dataset - used as hash key in the plot instance. */ 
+  double_vector_type  *x; 	   	   /**< Vector containing x-axis data */
+  double_vector_type  *y; 	   	   /**< Vector containing y-axis data */
+  double_vector_type  *y1;              
+  double_vector_type  *y2;
+  double_vector_type  *x1;
+  double_vector_type  *x2;
+  int     	      data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
+  plot_data_type      data_type;       /**< One of the types: plot_xy, plot_xy1y2, plot_x1x2y , plot_xline , plot_yline */      
+  int                 size;
 
   plot_style_type       style;        /**< The graph style: line|points|line_points */
 
@@ -41,6 +41,10 @@ struct plot_dataset_struct {
 
 /*****************************************************************/
 /* Set - functions for the style variabels of the dataset.       */
+
+int plot_dataset_get_size( const plot_dataset_type * dataset ) {
+  return dataset->size;
+}
 
 void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style) {
   dataset->style = style;
@@ -76,12 +80,12 @@ void plot_dataset_set_symbol_type(plot_dataset_type * dataset, plot_symbol_type 
 
 /*****************************************************************/
 
-double * plot_dataset_get_vector_x(const plot_dataset_type * d)  { return d->x; }
-double * plot_dataset_get_vector_y(const plot_dataset_type * d)  { return d->y; }
-double * plot_dataset_get_vector_x1(const plot_dataset_type * d) { return d->x1; }
-double * plot_dataset_get_vector_y1(const plot_dataset_type * d) { return d->y1; }
-double * plot_dataset_get_vector_x2(const plot_dataset_type * d) { return d->x2; }
-double * plot_dataset_get_vector_y2(const plot_dataset_type * d) { return d->y2; }
+//double * plot_dataset_get_vector_x(const plot_dataset_type * d)  { return d->x; }
+//double * plot_dataset_get_vector_y(const plot_dataset_type * d)  { return d->y; }
+//double * plot_dataset_get_vector_x1(const plot_dataset_type * d) { return d->x1; }
+//double * plot_dataset_get_vector_y1(const plot_dataset_type * d) { return d->y1; }
+//double * plot_dataset_get_vector_x2(const plot_dataset_type * d) { return d->x2; }
+//double * plot_dataset_get_vector_y2(const plot_dataset_type * d) { return d->y2; }
 
 
 static void plot_dataset_assert_type(const plot_dataset_type * d, plot_data_type type) {
@@ -120,6 +124,22 @@ static int  __make_data_mask(plot_data_type data_type) {
 
 
 
+void plot_dataset_fprintf(const plot_dataset_type * dataset , FILE * stream) {
+  fprintf(stream , "    x              y            x1            x2            y1           y2 \n");
+  fprintf(stream , "----------------------------------------------------------------------------\n");
+  for (int i = 0; i < dataset->size; i++) {
+    fprintf(stream , "%12.7f  %12.7f  %12.7f  %12.7f  %12.7f  %12.7f\n",
+	    double_vector_safe_iget(dataset->x , i ),
+	    double_vector_safe_iget(dataset->y , i ),
+	    double_vector_safe_iget(dataset->x1 , i),
+	    double_vector_safe_iget(dataset->x2 , i),
+	    double_vector_safe_iget(dataset->y1 , i ),
+	    double_vector_safe_iget(dataset->y2 , i));
+  }
+  fprintf(stream , "----------------------------------------------------------------------------\n");
+}
+
+
 
 
 /**
@@ -131,19 +151,18 @@ static int  __make_data_mask(plot_data_type data_type) {
 plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , const char* label) {
   plot_dataset_type *d;
   
-  d = util_malloc(sizeof *d , __func__);
-  d->__type_id     = PLOT_DATASET_TYPE_ID;
+  d                = util_malloc(sizeof *d , __func__);
+  UTIL_TYPE_ID_INIT(d , PLOT_DATASET_TYPE_ID);
   d->data_type     = data_type;
   d->data_mask     = __make_data_mask(data_type);
-  d->x   	   = NULL;
-  d->y   	   = NULL;
-  d->x1 	   = NULL;
-  d->x2 	   = NULL;
-  d->y1 	   = NULL;
-  d->y2 	   = NULL;
-  d->size          = 0;
-  d->alloc_size    = 0;
+  d->x   	   = double_vector_alloc(0,-1);
+  d->y   	   = double_vector_alloc(0,-1);
+  d->x1 	   = double_vector_alloc(0,-1);
+  d->x2 	   = double_vector_alloc(0,-1);
+  d->y1 	   = double_vector_alloc(0,-1);
+  d->y2 	   = double_vector_alloc(0,-1);
   d->label         = util_alloc_string_copy( label );
+  d->size          = 0;
   /******************************************************************/
   /* Defaults                                                       */
   d->style       = LINE;
@@ -167,12 +186,12 @@ UTIL_SAFE_CAST_FUNCTION(plot_dataset , PLOT_DATASET_TYPE_ID)
 */
 void plot_dataset_free(plot_dataset_type * d)
 {
-  util_safe_free(d->x);
-  util_safe_free(d->x1);
-  util_safe_free(d->x2);
-  util_safe_free(d->y);
-  util_safe_free(d->y1);
-  util_safe_free(d->y2);
+  double_vector_free(d->x);
+  double_vector_free(d->x1);
+  double_vector_free(d->x2);
+  double_vector_free(d->y);
+  double_vector_free(d->y1);
+  double_vector_free(d->y2);
   free(d->label);
   free(d);
 }
@@ -186,42 +205,56 @@ void plot_dataset_free__(void * d) {
 /** Here comes functions for setting the data for the dataset. */
 
 
-static void plot_dataset_realloc_data(plot_dataset_type * d, int new_alloc_size) {
-  if (d->data_mask & plot_data_x) d->x = util_realloc(d->x , new_alloc_size * sizeof * d->x , __func__);
-  if (d->data_mask & plot_data_y) d->y = util_realloc(d->y , new_alloc_size * sizeof * d->y , __func__);
 
-  if (d->data_mask & plot_data_x1) d->x1 = util_realloc(d->x1 , new_alloc_size * sizeof * d->x1 , __func__);
-  if (d->data_mask & plot_data_x2) d->x2 = util_realloc(d->x2 , new_alloc_size * sizeof * d->x2 , __func__);
 
-  if (d->data_mask & plot_data_y1) d->y1 = util_realloc(d->y1 , new_alloc_size * sizeof * d->y1 , __func__);
-  if (d->data_mask & plot_data_y2) d->y2 = util_realloc(d->y2 , new_alloc_size * sizeof * d->y2 , __func__);
-
-  d->alloc_size = new_alloc_size;
+static void __append_vector(double_vector_type * target, const double * src , const bool_vector_type * mask) {
+  if (src == NULL)
+    util_abort("%s: trying to extract data from NULL pointer\n",__func__);
+  
+  
+  for (int index = 0; index < bool_vector_size( mask ); index++) 
+    if (bool_vector_iget(mask , index)) 
+      double_vector_append( target , src[index] );
 }
 
 
 
-static void __append_vector(double * target , const double * src , int target_offset , int size) {
-  if (src == NULL)
-    util_abort("%s: trying to extract data from NULL pointer\n",__func__);
-  
-  memcpy(&target[target_offset] , src , size * sizeof * src);
+void __update_mask( bool_vector_type * mask , const double * data) {
+  if (data != NULL) {
+    for (int index = 0; index < bool_vector_size( mask ); index++)
+      if (!isfinite(data[index])) {
+	bool_vector_iset( mask , index , false );
+	//fprintf(stderr,"Discarding invalid value: %g \n",data[index]);
+      }
+  }
 }
 
 
 static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * y1 , const double * y2 , const double *x1 , const double *x2) {
-  if (d->alloc_size < (d->size + size))
-    plot_dataset_realloc_data(d , 2*(d->size + size));
-
-  if (d->data_mask & plot_data_x)  __append_vector(d->x  , x  , d->size , size);
-  if (d->data_mask & plot_data_x1) __append_vector(d->x1 , x1 , d->size , size);
-  if (d->data_mask & plot_data_x2) __append_vector(d->x2 , x2 , d->size , size);
-
-  if (d->data_mask & plot_data_y)  __append_vector(d->y  , y  , d->size , size);
-  if (d->data_mask & plot_data_y1) __append_vector(d->y1 , y1 , d->size , size);
-  if (d->data_mask & plot_data_y2) __append_vector(d->y2 , y2 , d->size , size);
+  bool_vector_type * mask = bool_vector_alloc( size , true ); 
+  bool_vector_iset( mask , size - 1 , true );
   
-  d->size += size;
+  __update_mask(mask , x);
+  __update_mask(mask , y);
+  __update_mask(mask , y1);
+  __update_mask(mask , y2);
+  __update_mask(mask , x1);
+  __update_mask(mask , x2);
+    
+  if (d->data_mask & plot_data_x)  __append_vector(d->x  , x  ,  mask);
+  if (d->data_mask & plot_data_x1) __append_vector(d->x1 , x1 ,  mask);
+  if (d->data_mask & plot_data_x2) __append_vector(d->x2 , x2 ,  mask);
+
+								
+  if (d->data_mask & plot_data_y)  __append_vector(d->y  , y  ,  mask);
+  if (d->data_mask & plot_data_y1) __append_vector(d->y1 , y1 ,  mask);
+  if (d->data_mask & plot_data_y2) __append_vector(d->y2 , y2 ,  mask);
+
+  for (int index = 0; index < bool_vector_size( mask ); index++)
+    if (bool_vector_iget( mask , index))
+      d->size++;
+
+  bool_vector_free(mask);
 }
 
 
@@ -323,7 +356,7 @@ void plot_dataset_append_point_hist(plot_dataset_type *d , double x) {
 
 
 void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type * range) {
-  
+  const int size = plot_dataset_get_size( d );
   plsstrm(stream);
   pllsty(d->line_attr.line_style);                                  /* Setting solid/dashed/... */
   plwid(d->line_attr.line_width * PLOT_DEFAULT_LINE_WIDTH);         /* Setting line width.*/
@@ -345,7 +378,8 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
 	 line_color) - otherwise the single point will not be visible.
 	 
       */
-      if ((d->size == 1) && (style == LINE)) {
+      
+      if ((style == LINE) && (size == 1)) {
 	style       = POINTS;
 	point_color = d->line_attr.line_color;
 	/* The point style will remain at default value. */
@@ -353,37 +387,36 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
       
       /** Starting with the line */    
       if (style == LINE || style == LINE_POINTS) 
-	plline(d->size , d->x , d->y);
-
+	plline(size , double_vector_get_ptr(d->x) , double_vector_get_ptr(d->y));
       /** Then the points. */
       if (style == POINTS || style == LINE_POINTS) {
 	plcol0(point_color);       /* Setting the color */
-	plpoin(d->size , d->x , d->y , d->point_attr.symbol_type);
+	plpoin(size , double_vector_get_ptr(d->x) , double_vector_get_ptr(d->y) , d->point_attr.symbol_type);
       }
     }
     break;
   case(plot_hist):
     {
-      int    bins = (int) sqrt(d->size);
+      int    bins = (int) sqrt( size );
       double xmin = plot_range_get_xmin(range);
       double xmax = plot_range_get_xmax(range);
-      plhist(d->size , d->x , xmin , xmax , bins , 0 /* PL_HIST_DEFAULT */);
+      plhist(size , double_vector_get_ptr(d->x) , xmin , xmax , bins , 0 /* PL_HIST_DEFAULT */);
     }
     break;
   case(plot_xy1y2):
-    plerry(d->size , d->x , d->y1 , d->y2);
+    plerry(size , double_vector_get_ptr(d->x) , double_vector_get_ptr(d->y1) , double_vector_get_ptr(d->y2));
     break;
   case(plot_x1x2y):
-    plerrx(d->size , d->x1 , d->x2 , d->y);
+    plerrx(size , double_vector_get_ptr(d->x1) , double_vector_get_ptr(d->x2) , double_vector_get_ptr(d->y) );
     break;
   case(plot_yline):
     {
       double x[2] = {plot_range_get_xmin(range) , plot_range_get_xmax(range)};
       double y[2];
       
-      for (int i=0; i < d->size; i++) {
-	y[0] = d->y[i];
-	y[1] = d->y[i];
+      for (int i=0; i < size; i++) {
+	y[0] = double_vector_iget(d->y , i);
+	y[1] = double_vector_iget(d->y , i);
 	plline(2 , x , y);
       }
     }
@@ -393,9 +426,9 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
       double y[2] = {plot_range_get_ymin(range) , plot_range_get_ymax(range)};
       double x[2];
       
-      for (int i=0; i < d->size; i++) {
-	x[0] = d->x[i];
-	x[1] = d->x[i];
+      for (int i=0; i < size; i++) {
+	x[0] = double_vector_iget(d->x , i);
+	x[1] = double_vector_iget(d->x , i);
 	plline(2 , x , y);
       }
     }
@@ -419,7 +452,8 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
  * Find the extrema values in the plot item, checks all added dataset.
  */
 void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_range_type * range) {
-  if (d->size > 0) {
+  const int size = plot_dataset_get_size( d );
+  if (size > 0) {
     double tmp_x_max = plot_range_safe_get_xmax(range);
     double tmp_y_max = plot_range_safe_get_ymax(range);
     double tmp_x_min = plot_range_safe_get_xmin(range);
@@ -434,14 +468,14 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
     y1 = NULL;
     y2 = NULL;
     
-    if (d->data_mask & plot_data_x)  	{x1 = d->x;  x2 = d->x; }
-    if (d->data_mask & plot_data_x1) 	 x1 = d->x1;
-    if (d->data_mask & plot_data_x2) 	 x2 = d->x2;
+    if (d->data_mask & plot_data_x)  	{x1 = double_vector_get_ptr(d->x);  x2 = double_vector_get_ptr(d->x); }
+    if (d->data_mask & plot_data_x1) 	 x1 = double_vector_get_ptr(d->x1);
+    if (d->data_mask & plot_data_x2) 	 x2 = double_vector_get_ptr(d->x2);
 
 
-    if (d->data_mask & plot_data_y)  {y1 = d->y;  y2 = d->y; }
-    if (d->data_mask & plot_data_y1)  y1 = d->y1;
-    if (d->data_mask & plot_data_y2)  y2 = d->y2;
+    if (d->data_mask & plot_data_y)  {y1 = double_vector_get_ptr(d->y) ;  y2 = double_vector_get_ptr(d->y) ; }
+    if (d->data_mask & plot_data_y1)  y1 = double_vector_get_ptr(d->y1) ;
+    if (d->data_mask & plot_data_y2)  y2 = double_vector_get_ptr(d->y2) ;
 
     if (x1 != NULL) {
       if (*first_pass) {
@@ -449,14 +483,14 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
 	tmp_x_max = x2[0];
       }
       
-      for (i=0; i < d->size; i++) {
+      for (i=0; i < size; i++) {
 	if (x1[i] < tmp_x_min)
 	  tmp_x_min = x1[i];
-
+	
 	if (x2[i] > tmp_x_max)
 	  tmp_x_max = x2[i];
       }
-    } 
+    }
 
 
     if (y1 != NULL) {
@@ -465,10 +499,10 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
 	tmp_y_max = y2[0];
       }
       
-      for (i=0; i < d->size; i++) {
+      for (i=0; i < size; i++) {
 	if (y1[i] < tmp_y_min)
 	  tmp_y_min = y1[i];
-
+	
 	if (y2[i] > tmp_y_max)
 	  tmp_y_max = y2[i];
       }
