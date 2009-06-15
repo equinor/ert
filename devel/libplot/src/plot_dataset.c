@@ -10,10 +10,14 @@
 
 
 
+#define PLOT_DATASET_TYPE_ID 661409
+
 /**
  * @brief Contains information about a dataset.
  */
 struct plot_dataset_struct {
+  int             __type_id;
+  char           *label;           /* Label for the dataset - used as hash key in the plot instance. */ 
   double  	 *x; 	   	   /**< Vector containing x-axis data */
   double  	 *y; 	   	   /**< Vector containing y-axis data */
   double  	 *y1;              
@@ -23,8 +27,7 @@ struct plot_dataset_struct {
   int     	  data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
   plot_data_type  data_type;       /**< One of the types: plot_xy, plot_xy1y2, plot_x1x2y , plot_xline , plot_yline */      
   
-  bool    shared_data;     /**< Whether this instance owns x,y,x1,... or just holds a reference. */
-  int alloc_size;          /**< The allocated size of x,y (std) - will be 0 if shared_data = true. */
+  int alloc_size;          /**< The allocated size of x,y (std) */
   int size;	   	   /**< Length of the vectors defining the plot - can be less than alloc_size.*/
 
 
@@ -33,6 +36,8 @@ struct plot_dataset_struct {
   line_attribute_type   line_attr;
   point_attribute_type  point_attr;
 };
+
+
 
 /*****************************************************************/
 /* Set - functions for the style variabels of the dataset.       */
@@ -123,11 +128,11 @@ static int  __make_data_mask(plot_data_type data_type) {
  *
  * Create a new dataset - allocates the memory.
  */
-plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_data)
-{
+plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , const char* label) {
   plot_dataset_type *d;
   
   d = util_malloc(sizeof *d , __func__);
+  d->__type_id     = PLOT_DATASET_TYPE_ID;
   d->data_type     = data_type;
   d->data_mask     = __make_data_mask(data_type);
   d->x   	   = NULL;
@@ -138,9 +143,7 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
   d->y2 	   = NULL;
   d->size          = 0;
   d->alloc_size    = 0;
-  d->shared_data   = shared_data;
-
-
+  d->label         = util_alloc_string_copy( label );
   /******************************************************************/
   /* Defaults                                                       */
   d->style       = LINE;
@@ -155,6 +158,8 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
   return d;
 }
 
+UTIL_SAFE_CAST_FUNCTION(plot_dataset , PLOT_DATASET_TYPE_ID)
+
 
 /**
    This function frees all the memory related to a dataset - normally
@@ -162,16 +167,20 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , bool shared_dat
 */
 void plot_dataset_free(plot_dataset_type * d)
 {
-  if (!d->shared_data) {
-    util_safe_free(d->x);
-    util_safe_free(d->x1);
-    util_safe_free(d->x2);
-    util_safe_free(d->y);
-    util_safe_free(d->y1);
-    util_safe_free(d->y2);
-  }
+  util_safe_free(d->x);
+  util_safe_free(d->x1);
+  util_safe_free(d->x2);
+  util_safe_free(d->y);
+  util_safe_free(d->y1);
+  util_safe_free(d->y2);
+  free(d->label);
   free(d);
 }
+
+void plot_dataset_free__(void * d) {
+  plot_dataset_free( plot_dataset_safe_cast( d ));
+}
+
 
 /*****************************************************************/
 /** Here comes functions for setting the data for the dataset. */
@@ -201,9 +210,6 @@ static void __append_vector(double * target , const double * src , int target_of
 
 
 static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * y1 , const double * y2 , const double *x1 , const double *x2) {
-  if (d->shared_data) 
-    util_abort("%s: dataset has shared data - can not append \n",__func__);
-  
   if (d->alloc_size < (d->size + size))
     plot_dataset_realloc_data(d , 2*(d->size + size));
 
@@ -219,18 +225,6 @@ static void plot_dataset_append_vector__(plot_dataset_type * d , int size , cons
 }
 
 
-static void plot_dataset_set_shared__(plot_dataset_type * d , int size , double *x , double *y, double *y1 , double *y2 , double *x1, double *x2) {
-  if (d->shared_data) {
-    d->x    = x;
-    d->y    = y;
-    d->x1   = x1;
-    d->x2   = x2;
-    d->y1   = y1;
-    d->y2   = y2;
-    d->size = size;
-  } else
-    util_abort("%s ... \n");
-}
 
 /*****************************************************************/
 /* Here comes the exported functions - they all have _xy, _xy1y2,
@@ -248,10 +242,6 @@ void plot_dataset_append_point_xy(plot_dataset_type *d , double x , double y) {
 }
 
 
-void plot_dataset_set_shared_xy(plot_dataset_type *d , int size, double *x, double *y) {
-  plot_dataset_assert_type(d , plot_xy);
-  plot_dataset_set_shared__(d , size , x , y , NULL , NULL , NULL , NULL);
-}
 
 
 /*----*/
@@ -268,10 +258,6 @@ void plot_dataset_append_point_xy1y2(plot_dataset_type *d , double x , double y1
 }
 
 
-void plot_dataset_set_shared_xy1y2(plot_dataset_type *d , int size, double *x, double *y1 , double *y2) {
-  plot_dataset_assert_type(d , plot_xy1y2);
-  plot_dataset_set_shared__(d , size , x , NULL , y1 , y2 , NULL , NULL);
-}
 
 /*----*/
 
@@ -286,11 +272,6 @@ void plot_dataset_append_point_x1x2y(plot_dataset_type *d , double x1 , double x
 }
 
 
-void plot_dataset_set_shared_x1x2y(plot_dataset_type *d , int size, double *x1, double *x2 , double *y) {
-  plot_dataset_assert_type(d , plot_x1x2y);
-  plot_dataset_set_shared__(d , size , NULL , y , NULL , NULL , x1 , x2);
-}
-
 /*----*/
 
 void plot_dataset_append_vector_xline(plot_dataset_type *d , int size, const double * x) {
@@ -304,10 +285,6 @@ void plot_dataset_append_point_xline(plot_dataset_type *d , double x) {
 }
 
 
-void plot_dataset_set_shared_xline(plot_dataset_type *d , int size, double *x) {
-  plot_dataset_assert_type(d , plot_xline);
-  plot_dataset_set_shared__(d , size , x , NULL , NULL , NULL , NULL , NULL);
-}
 
 
 /*----*/
@@ -323,10 +300,6 @@ void plot_dataset_append_point_yline(plot_dataset_type *d , double y) {
 }
 
 
-void plot_dataset_set_shared_yline(plot_dataset_type *d , int size, double *y) {
-  plot_dataset_assert_type(d , plot_yline);
-  plot_dataset_set_shared__(d , size , NULL , y , NULL , NULL , NULL , NULL);
-}
 
 /*----*/
 
@@ -342,11 +315,6 @@ void plot_dataset_append_point_hist(plot_dataset_type *d , double x) {
   plot_dataset_append_vector_hist(d , 1 , &x);
 }
 
-
-void plot_dataset_set_shared_hist(plot_dataset_type *d , int size, double *x) {
-  plot_dataset_assert_type(d , plot_hist);
-  plot_dataset_set_shared__(d , size , x , NULL , NULL , NULL , NULL , NULL);
-}
 
 /*****************************************************************/
 

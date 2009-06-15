@@ -25,7 +25,7 @@ extern "C" {
 typedef struct plot_struct plot_type;
 
 
-plot_dataset_type * plot_alloc_new_dataset(plot_type *  , plot_data_type , bool);
+plot_dataset_type * plot_alloc_new_dataset(plot_type *  , const char * __label , plot_data_type );
 
 plot_type *plot_alloc();
 int plot_get_stream(plot_type * item);
@@ -41,8 +41,7 @@ int plot_get_stream(plot_type * item);
  void plot_free(plot_type * item);
  void plot_get_extrema(plot_type * item, plot_range_type * );
 
-  int plot_get_num_datasets(plot_type* item) ;
-  plot_dataset_type** plot_get_datasets(plot_type* item) ;
+int plot_get_num_datasets(plot_type* item) ;
 
 void plot_set_window_size(plot_type * , int , int );
 void plot_invert_y_axis(plot_type * );
