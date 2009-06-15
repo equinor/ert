@@ -588,7 +588,14 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     
     char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE        , fmt_file ,  report_step);
     char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
-    ecl_sum_type * summary  = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , endian_swap);
+    ecl_sum_type * summary;
+
+    if ((summary_file != NULL) && (header_file != NULL)) {
+      summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , endian_swap);
+      free( summary_file );
+      free( header_file );
+    } else
+      summary = NULL;  /* OK - no summary data was found on the disk. */
     
     /* The actual loading */
     {
@@ -610,9 +617,8 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
       hash_iter_free(iter);
     }
     
-    ecl_sum_free( summary );
-    free(summary_file);
-    free(header_file);
+    if (summary != NULL)
+      ecl_sum_free( summary );
   }
 }
 
@@ -647,7 +653,7 @@ static char * __realloc_static_kw(char * kw , int occurence) {
    This function loads the STATE from a forward simulation. In ECLIPSE
    speak that means to load the solution vectors (PRESSURE/SWAT/..)
    and the necessary static keywords.
-
+   
    When the state has been loaded it goes straight to disk.
 */
 
@@ -670,8 +676,11 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
     util_abort("%s: sorry - unified restart files are not supported \n",__func__);
   {
     char * file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_RESTART_FILE , fmt_file , report_step);
-    restart_file = ecl_file_fread_alloc(file , endian_swap);
-    free(file);
+    if (file != NULL) {
+      restart_file = ecl_file_fread_alloc(file , endian_swap);
+      free(file);
+    } else
+      restart_file = NULL;   /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
   }
   
   /*****************************************************************/
@@ -684,104 +693,105 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
      2. Send static keywords straight out.
   */
   
-  stringlist_clear( enkf_state->restart_kw_list );
-  {
-    int ikw; 
-    for (ikw =0; ikw < ecl_file_get_num_kw( restart_file ); ikw++) {
-      enkf_impl_type impl_type;
-      const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
-      int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
-      char * kw                  = ecl_kw_alloc_strip_header( ecl_kw );
-      /** 
-	  Observe that this test will never succeed for static keywords,
-	  because the internalized key has appended a _<occurence>.
-      */
-      if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
-	/**
-	   This is poor-mans treatment of LGR. When LGR is used the restart file
-	   will contain repeated occurences of solution vectors, like
-	   PRESSURE. The first occurence of PRESSURE will be for the ordinary
-	   grid, and then there will be subsequent PRESSURE sections for each
-	   LGR section. The way this is implemented here is as follows:
-	   
-  	    1. The first occurence of pressure is internalized as the enkf_node
-  	       pressure (if ww indeed have a pressure node).
-
-	    2. The consecutive pressure nodes are internalized as static
-	       parameters.
-	   
-	   The variable 'occurence' is the key here.
+  if (restart_file != NULL) {
+    stringlist_clear( enkf_state->restart_kw_list );
+    {
+      int ikw; 
+      for (ikw =0; ikw < ecl_file_get_num_kw( restart_file ); ikw++) {
+	enkf_impl_type impl_type;
+	const ecl_kw_type * ecl_kw = ecl_file_iget_kw( restart_file , ikw);
+	int occurence              = ecl_file_iget_occurence( restart_file , ikw ); /* This is essentially the static counter value. */
+	char * kw                  = ecl_kw_alloc_strip_header( ecl_kw );
+	/** 
+	    Observe that this test will never succeed for static keywords,
+	    because the internalized key has appended a _<occurence>.
 	*/
-	
-	if (occurence == 0) {
-	  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
-	  impl_type = enkf_config_node_get_impl_type(config_node);
-	} else 
-	  impl_type = STATIC;
-      } else
-	impl_type = STATIC;
-      
-
-      if (impl_type == FIELD) 
-	stringlist_append_copy(enkf_state->restart_kw_list , kw);
-      else if (impl_type == STATIC) {
-	if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
-	  /* It is a static kw like INTEHEAD or SCON */
-	  /* 
-	     Observe that for static keywords we do NOT ask the node 'privately' if
-	     internalize_state is false: It is impossible to single out static keywords for
-	     internalization.
+	if (ensemble_config_has_key(enkf_state->ensemble_config , kw)) {
+	  /**
+	     This is poor-mans treatment of LGR. When LGR is used the restart file
+	     will contain repeated occurences of solution vectors, like
+	     PRESSURE. The first occurence of PRESSURE will be for the ordinary
+	     grid, and then there will be subsequent PRESSURE sections for each
+	     LGR section. The way this is implemented here is as follows:
+	     
+	     1. The first occurence of pressure is internalized as the enkf_node
+	        pressure (if ww indeed have a pressure node).
+	     
+	     2. The consecutive pressure nodes are internalized as static
+	        parameters.
+	   
+	     The variable 'occurence' is the key here.
 	  */
-
-	  /* Now we mangle the static keyword .... */
-	  kw = __realloc_static_kw(kw , occurence);
-
-	  if (internalize_state) {  
-	    stringlist_append_copy( enkf_state->restart_kw_list , kw);
-
-	    if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-	      ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
-	    
-	    if (!enkf_state_has_node(enkf_state , kw)) {
-	      const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
-	      enkf_state_add_node(enkf_state , kw , config_node); 
-	    }
-	    
+	  
+	  if (occurence == 0) {
+	    const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
+	    impl_type = enkf_config_node_get_impl_type(config_node);
+	  } else 
+	    impl_type = STATIC;
+	} else
+	  impl_type = STATIC;
+	
+	
+	if (impl_type == FIELD) 
+	  stringlist_append_copy(enkf_state->restart_kw_list , kw);
+	else if (impl_type == STATIC) {
+	  if (ecl_config_include_static_kw(enkf_state->ecl_config , kw)) {
+	    /* It is a static kw like INTEHEAD or SCON */
 	    /* 
-	       The following thing can happen:
-	       
-	       1. A static keyword appears at report step n, and is added to the enkf_state
-	          object.
-	       
-	       2. At report step n+k that static keyword is no longer active, and it is
-	          consequently no longer part of restart_kw_list().
-	       
-	       3. However it is still part of the enkf_state. Not loaded here, and subsequently
-	          purged from enkf_main.
-	       
-	       One keyword where this occurs is FIPOIL, which at least might appear only in the
-	       first restart file. Unused static keywords of this type are purged from the
-	       enkf_main object by a call to enkf_main_del_unused_static(). The purge is based on
-	       looking at the internal __report_step state of the static kw.
+	       Observe that for static keywords we do NOT ask the node 'privately' if
+	       internalize_state is false: It is impossible to single out static keywords for
+	       internalization.
 	    */
 	    
-	    {
-	      enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
-	      enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , my_config->iens);
-	      /*
-		Static kewyords go straight out ....
+	    /* Now we mangle the static keyword .... */
+	    kw = __realloc_static_kw(kw , occurence);
+	    
+	    if (internalize_state) {  
+	      stringlist_append_copy( enkf_state->restart_kw_list , kw);
+	      
+	      if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
+		ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
+	      
+	      if (!enkf_state_has_node(enkf_state , kw)) {
+		const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
+		enkf_state_add_node(enkf_state , kw , config_node); 
+	      }
+	      
+	      /* 
+		 The following thing can happen:
+		 
+		 1. A static keyword appears at report step n, and is added to the enkf_state
+		    object.
+		 
+		 2. At report step n+k that static keyword is no longer active, and it is
+		    consequently no longer part of restart_kw_list().
+		 
+		 3. However it is still part of the enkf_state. Not loaded here, and subsequently
+	            purged from enkf_main.
+	       
+		 One keyword where this occurs is FIPOIL, which at least might appear only in the
+		 first restart file. Unused static keywords of this type are purged from the
+		 enkf_main object by a call to enkf_main_del_unused_static(). The purge is based on
+		 looking at the internal __report_step state of the static kw.
 	      */
-	      enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
-	      enkf_node_free_data(enkf_node);
+	      
+	      {
+		enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
+		enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , my_config->iens);
+		/*
+		  Static kewyords go straight out ....
+		*/
+		enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
+		enkf_node_free_data(enkf_node);
+	      }
 	    }
-	  }
-	} 
-      } else
-	util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
-      
-      free(kw);
+	  } 
+	} else
+	  util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
+	free(kw);
+      }
+      enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , my_config->iens , enkf_state->restart_kw_list );
     }
-    enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , my_config->iens , enkf_state->restart_kw_list );
   }
   
   /******************************************************************/
@@ -815,7 +825,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   
   /*****************************************************************/
   /* Cleaning up */
-  ecl_file_free( restart_file );
+  if (restart_file != NULL) ecl_file_free( restart_file );
 }
 
 
@@ -830,13 +840,12 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 */
    
 
-static void enkf_state_internalize_results(enkf_state_type * enkf_state , int __report_step1 , int report_step2) {
-  int report_step , report_step1;
+static void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2) {
+  int report_step;
   /* Fucking special case - PRESSURE +++ is initialized by ECLIPSE - loading initial state. */
-  if (__report_step1 == 0)
-    report_step1 = 0;
-  else
-    report_step1 = __report_step1 + 1;
+  if (report_step1 > 0)
+    report_step1 += 1;
+  
   {
     const model_config_type * model_config = enkf_state->shared_info->model_config;
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
@@ -1147,7 +1156,7 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 */
 
 
-void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
+static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
   const member_config_type  * my_config = enkf_state->my_config;  
   const run_info_type       * run_info  = enkf_state->run_info;
   if (!run_info->can_sim)
@@ -1202,14 +1211,14 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     }
     
     {
-      const bool fmt_file  	= ecl_config_get_formatted(enkf_state->ecl_config);
+      const bool fmt_file  = ecl_config_get_formatted(enkf_state->ecl_config);
       char * step1_s 	   = util_alloc_sprintf("%d" , run_info->step1);
       char * step2_s 	   = util_alloc_sprintf("%d" , run_info->step2);
       char * step1_s04 	   = util_alloc_sprintf("%04d" , run_info->step1);
       char * step2_s04 	   = util_alloc_sprintf("%04d" , run_info->step2);
       char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step1);
       char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step2);
-	
+      
       
       enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	, step1_s);
       enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	, step2_s);
@@ -1242,11 +1251,11 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 
 
 /**
-   xx_run_eclipse() has been split in two functions:
+   xx_run_forward_model() has been split in two functions:
 
-   1: enkf_state_start_eclipse()
+   1: enkf_state_start_forward_model()
 
-   2: enkf_state_complete_eclipse()
+   2: enkf_state_complete_forward_model()
 
    Because the first is quite CPU intensive (gunzip), and the number of
    concurrent threads should be limited. For the second there is one
@@ -1255,7 +1264,7 @@ void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 
 
 
-void enkf_state_start_eclipse(enkf_state_type * enkf_state) {
+static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
   const run_info_type       * run_info    = enkf_state->run_info;
   if (run_info->active) {  /* if the job is not active we just return .*/
     const shared_info_type    * shared_info = enkf_state->shared_info;
@@ -1275,7 +1284,7 @@ void enkf_state_start_eclipse(enkf_state_type * enkf_state) {
     job_completeOK == true, that might be a bit misleading.
 */
 
-void enkf_state_complete_eclipse(enkf_state_type * enkf_state) {
+static void enkf_state_complete_forward_model(enkf_state_type * enkf_state) {
   run_info_type             * run_info    = enkf_state->run_info;
   run_info->complete_OK = true;
   if (run_info->active) {
@@ -1342,16 +1351,16 @@ bool enkf_state_run_OK(const enkf_state_type * state) {
 
 
 
-void * enkf_state_complete_eclipse__(void * __enkf_state) {
+void * enkf_state_complete_forward_model__(void * __enkf_state) {
   enkf_state_type * enkf_state = enkf_state_safe_cast(__enkf_state);
-  enkf_state_complete_eclipse(enkf_state);             
+  enkf_state_complete_forward_model(enkf_state);             
   return NULL ;
 }
 
 
-void * enkf_state_start_eclipse__(void * __enkf_state) {
+void * enkf_state_start_forward_model__(void * __enkf_state) {
   enkf_state_type * enkf_state = enkf_state_safe_cast(__enkf_state);
-  enkf_state_start_eclipse( enkf_state );
+  enkf_state_start_forward_model( enkf_state );
   return NULL ; 
 }
 

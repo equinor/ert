@@ -64,6 +64,8 @@ typedef enum { UNDEFINED_FORMAT         = 0,
 
 
 typedef struct field_config_struct field_config_type;
+typedef struct field_struct        field_type;
+
 
 
 const char            * field_config_default_extension(field_file_format_type , bool );

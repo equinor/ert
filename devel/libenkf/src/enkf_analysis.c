@@ -271,6 +271,17 @@ void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_ty
 }
 
 
+/**
+   Checking that the sum through one row in the X matrix is one.
+*/
+
+static void enkf_analysis_checkX(const matrix_type * X) {
+  for (int icol = 0; icol < matrix_get_columns( X ); icol++) {
+    double col_sum = matrix_get_column_sum(X , icol);
+    if (fabs(col_sum - 1.0) > 0.0001) 
+      util_abort("%s: something is seriously broken. col:%d  col_sum = %g != 1.0 - ABORTING\n",__func__ , icol , col_sum);
+  }
+}
 
 
 
@@ -302,6 +313,8 @@ matrix_type * enkf_analysis_allocX( const analysis_config_type * config , meas_m
       util_abort("%s: enkf mode:%d not supported \n",__func__ , enkf_mode);
     } else
       util_abort("%s: INTERNAL ERROR \n",__func__);
+
+    enkf_analysis_checkX(X);
     
     matrix_free( R );
     matrix_free( E );

@@ -10,9 +10,7 @@ extern "C" {
 #include <field_config.h>
 #include <enkf_serialize.h>
 
-typedef struct field_struct field_type;
-
-
+/* Typedef field_type moved to field_config.h */
 
 int          field_get_global_index(const field_type * , int  , int  , int );
 void         field_ijk_set(field_type * , int  , int  , int  , const void * );

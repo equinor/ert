@@ -338,7 +338,7 @@ double * old_analysis_allocX(int ens_size , int nrobs_total , const meas_matrix_
       printf_matrix(X , ens_size , ens_size , 1 , ens_size , "X" , " %10.6f" );
       fwrite_matrix("enkf_debug_dump_X.txt", X , ens_size , ens_size , 1 , ens_size , "X" , " %10.6f" );
     }
-
+    
     {
       int col;
       for (col = 0; col < ens_size; col ++) {

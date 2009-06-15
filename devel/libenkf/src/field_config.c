@@ -128,6 +128,7 @@ struct field_config_struct {
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
   field_func_type         * init_transform;       /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
   field_func_type         * input_transform;      /* Function to apply on the data when they are loaded from the forward model - i.e. for dynamic data. */
+  field_type              * min_variance;
 };
 
 

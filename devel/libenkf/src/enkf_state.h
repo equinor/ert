@@ -28,7 +28,6 @@ extern "C" {
 typedef struct enkf_state_struct    enkf_state_type;
 
 void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
-void               enkf_state_init_eclipse(enkf_state_type *);
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
 bool               enkf_state_get_analyzed(const enkf_state_type * );
 void               enkf_state_set_analyzed(enkf_state_type * , bool );
@@ -41,8 +40,8 @@ enkf_node_type   * enkf_state_get_node(const enkf_state_type * , const char * );
 void               enkf_state_del_node(enkf_state_type * , const char * );
 void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void             * enkf_state_run_eclipse__(void * );
-void             * enkf_state_start_eclipse__(void * );
-void             * enkf_state_complete_eclipse__(void * );
+void             * enkf_state_start_forward_model__(void * );
+void             * enkf_state_complete_forward_model__(void * );
 enkf_state_type  * enkf_state_alloc(int ,
 				    keep_runpath_type , 
 				    const model_config_type * ,

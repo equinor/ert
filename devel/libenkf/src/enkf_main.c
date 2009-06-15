@@ -684,7 +684,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
       for (iens = 0; iens < ens_size; iens++) {
 	if (iactive[iens]) {
 	  enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , forward_model);
-	  thread_pool_add_job(submit_threads , enkf_state_start_eclipse__ , enkf_main->ensemble[iens]);
+	  thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
 	}
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
@@ -695,7 +695,7 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
       thread_pool_type * complete_threads = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
 	if (iactive[iens]) 
-	  thread_pool_add_job(complete_threads , enkf_state_complete_eclipse__ , enkf_main->ensemble[iens]);
+	  thread_pool_add_job(complete_threads , enkf_state_complete_forward_model__ , enkf_main->ensemble[iens]);
       
       thread_pool_join(complete_threads);      /* All jobs have completed and the results have been loaded back. */
       thread_pool_free(complete_threads);
