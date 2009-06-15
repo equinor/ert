@@ -61,6 +61,10 @@ struct sched_kw_compdat_struct {
 
 
 
+/**
+   make_lookup comp_get_state_string comp_get_state_from_string comp_state_type AUTO COMP_AUTO_STRING OPEN COMP_OPEN_STRING SHUT COMP_SHUT_STRING
+*/
+
 
 
 static char * comp_get_state_string(comp_state_type state) {
@@ -125,10 +129,13 @@ static comp_state_type comp_get_state_from_string(const char * state) {
   else if (strcmp(state , COMP_SHUT_STRING) == 0)
     return SHUT;
   else {
-    util_abort("%s: internal fuckup \n",__func__);
+    util_abort("%s: did not recognize:%s as valid completion state: (%s|%s|%s) \n",__func__ , state , COMP_AUTO_STRING , COMP_OPEN_STRING , COMP_SHUT_STRING);
     return -1;
   }
 }
+
+
+
 
 
 
@@ -163,8 +170,7 @@ static void comp_set_from_string(comp_type * node , const char **token_list ) {
 	node->def[i] = false;
     }
   }
-
-
+  
   node->well         = util_alloc_string_copy(token_list[0]);
   node->i            = sched_util_atoi(token_list[1]);
   node->j            = sched_util_atoi(token_list[2]);
@@ -192,7 +198,7 @@ static void comp_set_from_string(comp_type * node , const char **token_list ) {
 
 
 static comp_type * comp_alloc_empty( ) {
-  comp_type *node = util_malloc(sizeof *node , __func__);
+  comp_type *node = util_malloc(sizeof * node , __func__);
   node->well      = NULL;
   return node;
 }

@@ -133,8 +133,12 @@ void sched_util_parse_file(const char *filename , int *_lines , char ***_line_li
 
 
 
+/**
+   Added delimiter on "'" - not well tested.
+*/
+
 void sched_util_parse_line(const char * line , int *_tokens , char ***_token_list , int min_tokens , bool *slash_term) {
-  const char *delimiters = " ";
+  const char *delimiters = " \'";
   int    token,tokens,offset,length;
   char **token_list;
   
@@ -336,21 +340,18 @@ int sched_util_atoi(const char *token) {
 
 
 
-/**
-   This function calculates the difference between two dates, and
-   returns the result as fractional days. Used for: 
-
-     "-- xxxx days from start of simulation ( 1 'OCT' 1979 )"
-
-*/
-
-double sched_util_days_diff(time_t start_time , time_t end_time) {
-  int days , hours , minutes , seconds;
-  double double_days;
-
-  util_difftime(start_time , end_time , &days , &hours , &minutes , &seconds);
-  double_days = days + hours/24.0 + minutes/(24 * 60.0) + seconds/(24 * 3600.0);
-  
-  return double_days;
+/* Simple utility function used for debugging. */
+void sched_util_fprintf_tokenlist(int num_token , const char ** token_list , const bool * def) {
+  int i;
+  for (i = 0; i < num_token; i++) {
+    if (def[i])
+      fprintf(stdout , " \'*\' " );
+    else
+      fprintf(stdout , " \'%s\' " , token_list[i]);
+  }
+  fprintf(stdout , "\n");
 }
-      
+
+
+
+

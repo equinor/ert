@@ -155,12 +155,12 @@ plot_dataset_type *plot_dataset_alloc(plot_data_type data_type , const char* lab
   UTIL_TYPE_ID_INIT(d , PLOT_DATASET_TYPE_ID);
   d->data_type     = data_type;
   d->data_mask     = __make_data_mask(data_type);
-  d->x   	   = double_vector_alloc(0,-1);
-  d->y   	   = double_vector_alloc(0,-1);
-  d->x1 	   = double_vector_alloc(0,-1);
-  d->x2 	   = double_vector_alloc(0,-1);
-  d->y1 	   = double_vector_alloc(0,-1);
-  d->y2 	   = double_vector_alloc(0,-1);
+  d->x   	   = double_vector_alloc( 0 , -1 );
+  d->y   	   = double_vector_alloc( 0 , -1 );
+  d->x1 	   = double_vector_alloc( 0 , -1 );
+  d->x2 	   = double_vector_alloc( 0 , -1 );
+  d->y1 	   = double_vector_alloc( 0 , -1 );
+  d->y2 	   = double_vector_alloc( 0 , -1 );
   d->label         = util_alloc_string_copy( label );
   d->size          = 0;
   /******************************************************************/
@@ -219,6 +219,14 @@ static void __append_vector(double_vector_type * target, const double * src , co
 
 
 
+/**
+   Before a tuple, i.e. (x,y), (x,y1,y2) , (x1,x2,y), ... is added to
+   the dataset we verify that the test isfinite(·) return true for all
+   the elements in the tuple. 
+   This functionality is implemented with the boolean vector mask.
+*/
+
+
 void __update_mask( bool_vector_type * mask , const double * data) {
   if (data != NULL) {
     for (int index = 0; index < bool_vector_size( mask ); index++)
@@ -232,7 +240,6 @@ void __update_mask( bool_vector_type * mask , const double * data) {
 
 static void plot_dataset_append_vector__(plot_dataset_type * d , int size , const double * x , const double * y , const double * y1 , const double * y2 , const double *x1 , const double *x2) {
   bool_vector_type * mask = bool_vector_alloc( size , true ); 
-  bool_vector_iset( mask , size - 1 , true );
   
   __update_mask(mask , x);
   __update_mask(mask , y);

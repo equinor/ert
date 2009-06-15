@@ -23,6 +23,7 @@
 #include <enkf_state.h>
 #include <gen_kw_config.h>
 #include <enkf_defaults.h>
+#include <math.h>
 
 
 /**
@@ -129,7 +130,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
   enkf_node_type * node;
   msg_type * msg;
   double *x , *y;
-  bool_vector_type * has_data = bool_vector_alloc(100 , false);
+  bool_vector_type * has_data = bool_vector_alloc( step2 + 1 , false );
   int     size, iens , step;
 
   if (plot_dates)
@@ -169,6 +170,13 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	  bool valid;
 	  enkf_fs_fread_node(fs , node , step , iens , forecast);
 	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
+
+	  if ((iens == 2) && (step == 10))
+	    y[this_size] = NAN;
+	  
+	  if ((iens == 2) && (step == 20))
+	    y[this_size] = INFINITY;
+
 	  bool_vector_iset(has_data , step , true);
 	  if (valid) {
 	    if (plot_dates)
@@ -213,9 +221,9 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	These three double vectors are used to assemble
 	all observations.
       */
-      double_vector_type * sim_time     = double_vector_alloc(10 , 0);
-      double_vector_type * obs_value    = double_vector_alloc(10 , 0);
-      double_vector_type * obs_std      = double_vector_alloc(10 , 0);
+      double_vector_type * sim_time     = double_vector_alloc( 0 , 0 );
+      double_vector_type * obs_value    = double_vector_alloc( 0 , 0 );
+      double_vector_type * obs_std      = double_vector_alloc( 0 , 0 );
 
       const stringlist_type * obs_keys  = enkf_config_node_get_obs_keys(config_node);
       int obs_size = 0;

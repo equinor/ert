@@ -503,8 +503,7 @@ sched_kw_type * sched_file_ijget_block_kw_ref(const sched_file_type * sched_file
 
 
 static void __sched_file_summarize_line(int restart_nr , time_t start_time , time_t t , FILE * stream) {
-
-  double days    = sched_util_days_diff(start_time , t);
+  double days    = util_difftime( start_time , t , NULL , NULL , NULL , NULL) / (24 * 3600);
   int mday , month , year;
   
   util_set_date_values(t , &mday , &month , &year);

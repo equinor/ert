@@ -17,7 +17,7 @@ void   sched_util_fprintf_dbl(bool , double , int , int , FILE *);
 double sched_util_atof(const char *);
 int    sched_util_atoi(const char *);
 void   sched_util_fprintf_qst(bool , const char * , int , FILE *);
-double sched_util_days_diff(time_t  , time_t );
+void   sched_util_fprintf_tokenlist(int num_token , const char ** token_list , const bool * def);
 
 #ifdef __cplusplus
 }

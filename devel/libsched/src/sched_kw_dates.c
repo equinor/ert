@@ -21,7 +21,7 @@ struct sched_kw_dates_struct {
 static sched_kw_dates_type * sched_kw_dates_alloc()
 {
   sched_kw_dates_type *dates = util_malloc(sizeof *dates , __func__);
-  dates->date_list           = time_t_vector_alloc(10 , -1);
+  dates->date_list           = time_t_vector_alloc(0 , -1);
   return dates;
 }
 

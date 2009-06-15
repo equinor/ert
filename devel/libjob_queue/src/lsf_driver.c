@@ -238,6 +238,7 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
 	     2. The lsf deamon is not responding for a long time.
 	     3. The job finishes, and is eventually expired from the LSF job database.
 	     4. The lsf deamon answers again - but can not find the job...
+	     
 	*/
 	fprintf(stderr,"Warning: failed to get status information for job:%ld - assuming it is finished. \n", job->lsf_jobnr);
 	status = job_queue_done;

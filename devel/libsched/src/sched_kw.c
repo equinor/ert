@@ -99,7 +99,7 @@ static sched_type_enum get_sched_type_from_string(char * kw_name)
   if( strcmp(kw_name, WCONINJE_STRING ) == 0){ return WCONINJE ;}
   if( strcmp(kw_name, WCONINJH_STRING ) == 0){ return WCONINJH ;}
   if( strcmp(kw_name, WCONPROD_STRING ) == 0){ return WCONPROD ;}
-  //if( strcmp(kw_name, COMPDAT_STRING  ) == 0){ return COMPDAT  ;}   COMPDAT goes as untyped for NOW
+  if( strcmp(kw_name, COMPDAT_STRING  ) == 0){ return COMPDAT  ;}   //COMPDAT goes as untyped for NOW
   else                                       { return UNTYPED  ;}
 }
 

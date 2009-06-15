@@ -134,7 +134,7 @@ void enkf_config_node_free(enkf_config_node_type * node) {
 
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step) {
   if (node->internalize == NULL)
-    node->internalize = bool_vector_alloc(report_step , false);
+    node->internalize = bool_vector_alloc( 0 , false );
   bool_vector_iset( node->internalize , report_step , true);
 }
 

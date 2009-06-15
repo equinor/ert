@@ -160,10 +160,10 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   }
   {
     int num_restart = history_get_num_restarts(model_config->history);
-    model_config->internalize_state   = bool_vector_alloc( num_restart , false);
-    model_config->internalize_results = bool_vector_alloc( num_restart , false);
-    model_config->__load_state        = bool_vector_alloc( num_restart , false); 
-    model_config->__load_results      = bool_vector_alloc( num_restart , false);
+    model_config->internalize_state   = bool_vector_alloc( num_restart , false );
+    model_config->internalize_results = bool_vector_alloc( num_restart , false );
+    model_config->__load_state        = bool_vector_alloc( num_restart , false ); 
+    model_config->__load_results      = bool_vector_alloc( num_restart , false );
   }
   model_config_set_plot_path( model_config , config_get(config , "PLOT_PATH"));
 
