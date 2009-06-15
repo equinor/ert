@@ -124,10 +124,10 @@ void enkf_config_node_free(enkf_config_node_type * node) {
 
   if (node->enkf_outfile_fmt != NULL) 
     path_fmt_free( node->enkf_outfile_fmt );
-
+  
   if (node->internalize != NULL)
     bool_vector_free( node->internalize );
-
+  
   free(node);
 }
 

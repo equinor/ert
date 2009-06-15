@@ -64,9 +64,9 @@ struct plot_struct {
   int 	 height;		/**< The height of your plot window */
   int 	 width;         	/**< The width of your plot window */
   
-  plot_range_type * range;       /**< Range instance */
+  plot_range_type  * range;       /**< Range instance */
   /******************************************************************/
-  plot_driver_type * driver;
+  plot_driver_type * driver;    /* Not there yet ... */
 };
 
 
@@ -212,7 +212,7 @@ plot_type * plot_alloc()
 */
 
 plot_dataset_type * plot_alloc_new_dataset(plot_type * plot , const char * __label , plot_data_type data_type) {
-  if (data_type == plot_hist) {
+  if (data_type == PLOT_HIST) {
     if (vector_get_size( plot->dataset) > 0)
       util_abort("%s: sorry - when using histograms you can *only* have one dataset\n",__func__);
     plot->is_histogram = true;

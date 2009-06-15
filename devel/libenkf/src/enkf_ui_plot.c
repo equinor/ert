@@ -90,7 +90,7 @@ static plot_type * __plot_alloc(const char * x_label , const char * y_label , co
 
 
 static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y) {
-  plot_dataset_type *d = plot_alloc_new_dataset( plot , NULL , plot_xy );
+  plot_dataset_type *d = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
   plot_dataset_set_line_color(d , BLUE);
   plot_dataset_append_vector_xy(d, N , x, y);
 }
@@ -269,9 +269,9 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	     error bar.
 	  */
 	     
-	  plot_dataset_type * data_value = plot_alloc_new_dataset( plot , NULL , plot_xy );
-	  plot_dataset_type * data_lower = plot_alloc_new_dataset( plot , NULL , plot_xy );
-	  plot_dataset_type * data_upper = plot_alloc_new_dataset( plot , NULL , plot_xy );
+	  plot_dataset_type * data_value = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
+	  plot_dataset_type * data_lower = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
+	  plot_dataset_type * data_upper = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
 	  
 	  plot_dataset_set_style( data_value , POINTS );
 	  plot_dataset_set_style( data_upper , LINE );
@@ -305,7 +305,7 @@ static void enkf_ui_plot_ensemble__(enkf_fs_type * fs       ,
 	    plot_dataset_append_point_xy( data_upper , days , value + std);
 	  }
 	} else {
-	  plot_dataset_type * obs_errorbar  = plot_alloc_new_dataset( plot , NULL , plot_xy1y2 );
+	  plot_dataset_type * obs_errorbar  = plot_alloc_new_dataset( plot , NULL , PLOT_XY1Y2 );
 	  plot_dataset_set_line_color( obs_errorbar , RED);
 	  plot_dataset_set_line_width( obs_errorbar , 1.5);
 	  for (i = 0; i < double_vector_size( sim_time ); i++) {
@@ -500,7 +500,7 @@ void enkf_ui_plot_histogram(void * arg) {
 	enkf_node_free( node );
 	
 	{
-	  plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , plot_hist);
+	  plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
 	  plot_dataset_append_vector_hist(d , active_size , count);
 	}
 	__plot_show(plot , viewer , plot_file);
@@ -656,10 +656,10 @@ void enkf_ui_plot_observation(void * arg) {
       const char * state_kw               = obs_vector_get_state_kw( obs_vector );
       enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
       int   num_active                    = obs_vector_get_num_active( obs_vector );
-      plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , NULL , plot_yline );
-      plot_dataset_type * obs_quant       = plot_alloc_new_dataset(plot , NULL , plot_yline );
-      plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , NULL , plot_xy    );
-      plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , NULL , plot_xy    );
+      plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
+      plot_dataset_type * obs_quant       = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
+      plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , NULL , PLOT_XY    );
+      plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , NULL , PLOT_XY    );
       int   report_step;
       
       do {
@@ -791,7 +791,7 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const char * im
       
       if (has_node) {
 	const field_type * field = enkf_node_value_ptr( node );
-	plot_dataset_type * data = plot_alloc_new_dataset( plot , NULL , plot_xy);
+	plot_dataset_type * data = plot_alloc_new_dataset( plot , NULL , PLOT_XY);
 	plot_dataset_set_style( data , POINTS );
 	plot_dataset_set_symbol_size( data , 1.00 );
 	for (l = 0; l < obs_size; l++)  /* l : kind of ran out of indices ... */
@@ -799,7 +799,7 @@ void enkf_ui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const char * im
       } else printf("No data found for :%d/%d \n",iens, report_step);
     }
     
-    obs = plot_alloc_new_dataset( plot , NULL , plot_x1x2y );
+    obs = plot_alloc_new_dataset( plot , NULL , PLOT_X1X2Y );
     for (l = 0; l < obs_size; l++) {
       double value , std;
       
@@ -1087,7 +1087,7 @@ void enkf_ui_plot_sensitivity(void * arg) {
     char * basename  	      = util_alloc_sprintf("%s-%s" , user_key_x , user_key_y);
     char * plot_file 	      = enkf_ui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), basename , image_type);
     plot_type * plot 	      = __plot_alloc(user_key_x , user_key_y , "Sensitivity plot" , plot_file, image_type);
-    plot_dataset_type  * data = plot_alloc_new_dataset( plot , NULL , plot_xy );
+    plot_dataset_type  * data = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
     
     for (iens = 0; iens < ens_size; iens++) {
       if (valid[iens]) {
