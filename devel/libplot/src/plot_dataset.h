@@ -78,7 +78,8 @@ bool plot_dataset_is_finished(plot_dataset_type * d);
 
 void plot_dataset_update_range(plot_dataset_type * , bool * , plot_range_type * );
 
-plot_dataset_type *plot_dataset_alloc( plot_data_type , bool );
+plot_dataset_type *plot_dataset_alloc( plot_data_type , const char * label );
+void plot_dataset_free__(void * d); 
 void plot_dataset_free(plot_dataset_type * d);
 void plot_dataset_set_data(plot_dataset_type * d, const double * x,
 				  const double * y, int len,
@@ -97,26 +98,20 @@ double * plot_dataset_get_vector_y2(const plot_dataset_type * d);
 
 void plot_dataset_append_point_xy(plot_dataset_type * , double  , double  );
 void plot_dataset_append_vector_xy(plot_dataset_type * , int , const double *  , const double * );
-void plot_dataset_set_shared_xy(plot_dataset_type * , int ,  double *  ,  double *    );
 
 void plot_dataset_append_point_xy1y2(plot_dataset_type * , double  , double  , double );
 void plot_dataset_append_vector_xy1y2(plot_dataset_type * , int , const double *  , const double * , const double *);
-void plot_dataset_set_shared_xy1y2(plot_dataset_type * , int ,  double *  ,  double * ,  double *);
 
 void plot_dataset_append_point_x1x2y(plot_dataset_type * , double  , double  , double );
 void plot_dataset_append_vector_x1x2y(plot_dataset_type * , int , const double *  , const double * , const double *);
-void plot_dataset_set_shared_x1x2y(plot_dataset_type * , int ,  double *  ,  double * ,  double *);
 
 void plot_dataset_append_point_xline(plot_dataset_type * , double   );
 void plot_dataset_append_vector_xline(plot_dataset_type * , int , const double * );
-void plot_dataset_set_shared_xline(plot_dataset_type * , int ,  double * );
 
 void plot_dataset_append_point_yline(plot_dataset_type * , double   );
 void plot_dataset_append_vector_yline(plot_dataset_type * , int , const double * );
-void plot_dataset_set_shared_yline(plot_dataset_type * , int ,  double * );
 
-void plot_dataset_set_shared_hist(plot_dataset_type * , int , double *);
-
+void plot_dataset_append_vector_hist(plot_dataset_type *d , int size, const double * x);
 
 
 #ifdef __cplusplus

@@ -6,7 +6,8 @@
 #include <plot_const.h>
 #include <plot_driver.h>
 #include <plplot_driver.h>
-
+#include <hash.h>
+#include <vector.h>
 
   /** Device name for the plot, where you have the following 
    * list of choices:
@@ -44,9 +45,8 @@ struct plot_struct {
   char       *plbox_xopt;
   char       *plbox_yopt;
   const char *filename; /**< Filename for the plot */    
-  int                  alloc_size;  	/* The size of the dataset vector - can in general be larger than size. */
-  int                  size;        	/* The number of datasets. */
-  plot_dataset_type ** datasets;    	/* Pointers to datasets. */
+  vector_type        * dataset;         /* Vector of datasets to plot. */ 
+  hash_type          * dataset_hash;    /* Hash table of the datasets - indexed by label. */
   bool                 is_histogram;    /* If this is true it can only contain histogram datasets. */
   
   
@@ -75,13 +75,6 @@ int plot_get_stream(plot_type * plot) {
 }
 
 
-static void plot_realloc_datasets(plot_type * plot, int new_alloc_size) {
-  int i;
-  plot->datasets = util_realloc(plot->datasets , new_alloc_size * sizeof * plot->datasets, __func__);
-  plot->alloc_size = new_alloc_size;
-  for (i = plot->size; i < plot->alloc_size; i++)
-    plot->datasets[i] = NULL;
-}
 
 
 /**
@@ -178,10 +171,9 @@ plot_type * plot_alloc()
   plot->xlabel 	  	= NULL;
   plot->ylabel 	  	= NULL;
   plot->title  	  	= NULL;
-  plot->datasets     	= NULL;
-  plot->size         	= 0;
-  plot->alloc_size   	= 0; 
   plot->is_histogram 	= false;
+  plot->dataset         = vector_alloc_new();
+  plot->dataset_hash    = hash_alloc();
   
   plot->range = plot_range_alloc();
   plot_set_window_size(plot , PLOT_DEFAULT_WIDTH , PLOT_DEFAULT_HEIGHT);
@@ -219,21 +211,31 @@ plot_type * plot_alloc()
    function.
 */
 
-plot_dataset_type * plot_alloc_new_dataset(plot_type * plot , plot_data_type data_type, bool shared_data) {
+plot_dataset_type * plot_alloc_new_dataset(plot_type * plot , const char * __label , plot_data_type data_type) {
   if (data_type == plot_hist) {
-    if (plot->size > 0)
+    if (vector_get_size( plot->dataset) > 0)
       util_abort("%s: sorry - when using histograms you can *only* have one dataset\n",__func__);
     plot->is_histogram = true;
   } else if (plot->is_histogram)
     util_abort("%s: sorry - when using histograms you can *only* have one dataset\n",__func__);
   
   {
-    plot_dataset_type * dataset = plot_dataset_alloc(data_type, shared_data);
-    if (plot->size == plot->alloc_size)
-      plot_realloc_datasets(plot , 2*(plot->size + 1));
-    plot->datasets[plot->size] = dataset;
-    plot->size++;
-    return dataset;
+    char * label;
+    if (__label == NULL)
+      label = util_alloc_sprintf("data_%d" , vector_get_size( plot->dataset ));
+    else
+      label = (char *) __label;
+    
+    if (hash_has_key( plot->dataset_hash , label))
+      util_abort("%s: sorry - the label %s is already in use - must be unique \n",__func__ , label);
+    {
+      plot_dataset_type * dataset = plot_dataset_alloc(data_type, label );
+      vector_append_owned_ref(plot->dataset , dataset , plot_dataset_free__);
+      hash_insert_ref( plot->dataset_hash , label , dataset);
+      if (__label == NULL)
+	free(label);
+      return dataset;
+    }
   }
 }  
 
@@ -288,14 +290,8 @@ void plot_initialize(plot_type * plot, const char *dev, const char *filename) {
 
 
 static void plot_free_all_datasets(plot_type * plot) {
-  int i;
-  for (i=0; i < plot->size; i++)
-    plot_dataset_free(plot->datasets[i]);
-  
-  util_safe_free(plot->datasets);
-  plot->datasets   = NULL;
-  plot->alloc_size = 0;
-  plot->size       = 0;
+  vector_clear( plot->dataset );
+  hash_clear( plot->dataset_hash );
 }
 
 
@@ -390,8 +386,8 @@ void plot_data(plot_type * plot)
 
   if (plot->is_histogram) {
     //plot_set_range__(plot , NULL , NULL , NULL , NULL);
-    for (iplot = 0; iplot < plot->size; iplot++) 
-      plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
+    for (iplot = 0; iplot < vector_get_size( plot->dataset ); iplot++) 
+      plot_dataset_draw(plot->stream , vector_iget(plot->dataset , iplot) , plot->range);
     
     return;
   } 
@@ -416,8 +412,9 @@ void plot_data(plot_type * plot)
     pllab(plot->xlabel, plot->ylabel, plot->title);
   }
   
-  for (iplot = 0; iplot < plot->size; iplot++) 
-    plot_dataset_draw(plot->stream , plot->datasets[iplot] , plot->range);
+
+  for (iplot = 0; iplot < vector_get_size( plot->dataset ); iplot++) 
+    plot_dataset_draw(plot->stream , vector_iget(plot->dataset , iplot) , plot->range);
 }
 
 
@@ -513,15 +510,12 @@ void plot_set_label_fontsize(plot_type * plot , double label_font_size_scale) {
 void plot_get_extrema(plot_type * plot, plot_range_type * range) {
   bool first_pass = true;
   int iplot;
-  for (iplot = 0; iplot < plot->size; iplot++) 
-    plot_dataset_update_range(plot->datasets[iplot] , &first_pass , range);
+  for (iplot = 0; iplot < vector_get_size( plot->dataset  ); iplot++) 
+    plot_dataset_update_range(vector_iget(plot->dataset , iplot) , &first_pass , range);
 }
 
 
 int plot_get_num_datasets(plot_type* plot) {
-  return plot->size ;
+  return vector_get_size( plot->dataset );
 } ;
 
-plot_dataset_type** plot_get_datasets(plot_type* plot) {
-  return plot->datasets ;
-} ;
