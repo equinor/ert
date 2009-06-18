@@ -42,8 +42,8 @@ struct plot_range_struct {
   double limits[4];
   bool   set[4];
   bool   invert_x_axis;
-  bool   invert_y_axis;
-  plot_range_mode_type  mode;
+  bool   invert_y_axis; 
+  bool   auto_range[4];
 };
 
 /*****************************************************************/
@@ -56,9 +56,12 @@ void plot_range_fprintf(const plot_range_type * range, FILE * stream) {
 /*****************************************************************/
 
 static void plot_range_set__(plot_range_type * plot_range , int index , double value) {
-  plot_range->limits[index] = value;
-  plot_range->set[index] = true;
+  plot_range->limits[index] 	= value;
+  plot_range->set[index]    	= true;
+  plot_range->auto_range[index] = false;
+  plot_range->padding[index]    = 0;   /* If you are explicitly setting a limit - you get no padding. */
 }
+
 
 void plot_range_set_ymax(plot_range_type * plot_range , double ymax) {
   plot_range_set__(plot_range , YMAX , ymax);
@@ -77,18 +80,45 @@ void plot_range_set_xmin(plot_range_type * plot_range , double xmin) {
 }
 
 /*****************************************************************/
+
+/**
+   The set_auto functions can always be called, but if the range in
+   question has been set manually, the function just returns without
+   doing anything.
+*/
+
+static void plot_range_set_auto__(plot_range_type * plot_range , int index , double value) {
+  if (plot_range->auto_range[index]) {
+    plot_range->limits[index] 	= value;
+    plot_range->set[index]    	= true;
+  }
+}
+
+void plot_range_set_auto_ymax(plot_range_type * plot_range , double ymax) {
+  plot_range_set_auto__(plot_range , YMAX , ymax);
+}
+
+void plot_range_set_auto_ymin(plot_range_type * plot_range , double ymin) {
+  plot_range_set_auto__(plot_range , YMIN , ymin);
+}
+
+void plot_range_set_auto_xmax(plot_range_type * plot_range , double xmax) {
+  plot_range_set_auto__(plot_range , XMAX , xmax);
+}
+
+void plot_range_set_auto_xmin(plot_range_type * plot_range , double xmin) {
+  plot_range_set_auto__(plot_range , XMIN , xmin);
+}
+
+/*****************************************************************/
 /* 
    These functions will fail if the corresponding value has not
    been set, either from an automatic set, or manually.
 */
 
-static double plot_range_safe_get__(const plot_range_type * plot_range , int index) {
-  return plot_range->limits[index];
-}
-
 static double plot_range_get__(const plot_range_type * plot_range , int index) {
   if (plot_range->set[index])
-    return plot_range_safe_get__(plot_range , index);
+    return plot_range->limits[index];
   else {
     util_abort("%s: tried to get xmin - but that has not been set.\n",__func__);
     return 0;
@@ -112,6 +142,16 @@ double plot_range_get_ymax(const plot_range_type * plot_range) {
 }
 
 /*****************************************************************/
+/*
+  The _safe_ functions will return the value of range->limits[]
+  irrespective of whether it has been set with a sensible value or
+  not.
+*/
+
+static double plot_range_safe_get__(const plot_range_type * plot_range , int index) {
+  return plot_range->limits[index];
+}
+
 
 double plot_range_safe_get_xmin(const plot_range_type * plot_range) {
   return plot_range_safe_get__(plot_range , XMIN);
@@ -176,12 +216,12 @@ void plot_range_invert_y_axis(plot_range_type * range, bool invert) {
 plot_range_type * plot_range_alloc() {
   plot_range_type * range = util_malloc(sizeof * range , __func__);
   int i;
-  range->mode = AUTO_RANGE;
   
   for (i=0; i < 4; i++) {
     range->limits[i]      = 0;
-    range->padding[i]     = 0;
+    range->padding[i]     = 0.025;  /* Default add some padding */
     range->set[i]         = false;
+    range->auto_range[i]  = true;
   }
   
   range->invert_x_axis = false;
@@ -196,8 +236,7 @@ void plot_range_free(plot_range_type * plot_range) {
 }
 
 
-void plot_range_set_manual_range( plot_range_type * range , double xmin , double xmax , double ymin , double ymax) {
-  range->mode = MANUAL_RANGE;
+void plot_range_set_range( plot_range_type * range , double xmin , double xmax , double ymin , double ymax) {
   plot_range_set_xmin(range , xmin);
   plot_range_set_xmax(range , xmax);
   plot_range_set_ymin(range , ymin);
@@ -226,49 +265,44 @@ void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , 
   double x2 = 0;
   double y1 = 0;
   double y2 = 0;
-  if (plot_range->mode == AUTO_RANGE) {
-    double xmin 	= plot_range_get__(plot_range , XMIN );
-    double xmax 	= plot_range_get__(plot_range , XMAX );
-    double ymin 	= plot_range_get__(plot_range , YMIN );
-    double ymax 	= plot_range_get__(plot_range , YMAX );
+  {
+    double xmin   = plot_range_get__(plot_range , XMIN );
+    double xmax   = plot_range_get__(plot_range , XMAX );
+    double ymin   = plot_range_get__(plot_range , YMIN );
+    double ymax   = plot_range_get__(plot_range , YMAX );
     double width  = fabs(xmax - xmin);
     double height = fabs(ymax - ymin);
+    
     
     if (plot_range->invert_x_axis) {
       x1 = xmax;
       x2 = xmin;
       
-      x1 += width * plot_range->padding[XMAX];
-      x2 -= width * plot_range->padding[XMIN];
+      if (plot_range->auto_range[XMAX]) x1 += width * plot_range->padding[XMAX];
+      if (plot_range->auto_range[XMIN]) x2 -= width * plot_range->padding[XMIN];
     } else {
       x1 = xmin;
       x2 = xmax;
       
-      x1 -= width * plot_range->padding[XMIN];
-      x2 += width * plot_range->padding[XMAX];
+      if (plot_range->auto_range[XMIN]) x1 -= width * plot_range->padding[XMIN];
+      if (plot_range->auto_range[XMAX]) x2 += width * plot_range->padding[XMAX];
     }
     
     if (plot_range->invert_y_axis) {
       y1 = ymax;
       y2 = ymin;
       
-      y1 += height * plot_range->padding[YMAX];
-      y2 -= height * plot_range->padding[YMIN];
+      if (plot_range->auto_range[YMAX]) y1 += height * plot_range->padding[YMAX];
+      if (plot_range->auto_range[YMIN]) y2 -= height * plot_range->padding[YMIN];
     } else {
       y1 = ymin;
       y2 = ymax;
       
-      y1 -= height * plot_range->padding[YMIN];
-      y2 += height * plot_range->padding[YMAX];
+      if (plot_range->auto_range[YMIN]) y1 -= height * plot_range->padding[YMIN];
+      if (plot_range->auto_range[YMAX]) y2 += height * plot_range->padding[YMAX];
     }
-  } else if (plot_range->mode == MANUAL_RANGE) {
-    y1 = plot_range_get__(plot_range , YMIN );
-    y2 = plot_range_get__(plot_range , YMAX );
-    x1 = plot_range_get__(plot_range , XMIN );
-    x2 = plot_range_get__(plot_range , XMAX );
-  } else 
-    util_exit("%s: sorry only MANUAL_RANGE and AUTO_RANGE implemented \n",__func__);
-
+  } 
+  
   
   /* Special case for only one point. */
   {
@@ -301,8 +335,5 @@ void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , 
 
 
 
-plot_range_mode_type plot_range_get_mode( const plot_range_type * range ) {
-  return range->mode;
-}
 
 

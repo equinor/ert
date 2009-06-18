@@ -484,6 +484,7 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
 
     if (x1 != NULL) {
       if (*first_pass) {
+	/* To ensure sensible initialisation */
 	tmp_x_min = x1[0];
 	tmp_x_max = x2[0];
       }
@@ -513,10 +514,10 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
       }
     }
   
-    plot_range_set_xmin(range , tmp_x_min);
-    plot_range_set_xmax(range , tmp_x_max);
-    plot_range_set_ymin(range , tmp_y_min);
-    plot_range_set_ymax(range , tmp_y_max);
+    plot_range_set_auto_xmin(range , tmp_x_min);
+    plot_range_set_auto_xmax(range , tmp_x_max);
+    plot_range_set_auto_ymin(range , tmp_y_min);
+    plot_range_set_auto_ymax(range , tmp_y_max);
     
     *first_pass = false;
   }

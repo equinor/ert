@@ -345,9 +345,6 @@ void plot_free(plot_type * plot)
     1. The (already manually set) xmin,xmax,ymin,ymax values are
        returned by reference.
 
-       
-
-
 */
 
 
@@ -355,9 +352,7 @@ void plot_free(plot_type * plot)
 static void plot_set_range__(plot_type * plot) {
   double x1,x2,y1,y2;
   
-  if (plot_range_get_mode(plot->range) == AUTO_RANGE)
-    plot_get_extrema(plot , plot->range);
-  
+  plot_get_extrema(plot , plot->range);
   plot_range_apply(plot->range , &x1 , &x2 , &y1 , &y2);
   plot->driver->set_range(plot->driver , x1 , x2 , y1 , y2);
 }
@@ -447,10 +442,27 @@ void plot_set_labels(plot_type * plot, const char *xlabel, const char *ylabel, c
    This is the low-level function setting the range of the plot.
 */
    
+/*****************************************************************/
 
 
-void plot_set_manual_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax) {
-  plot_range_set_manual_range(plot->range , xmin , xmax , ymin , ymax);
+void plot_set_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax) {
+  plot_range_set_range(plot->range , xmin , xmax , ymin , ymax);
+}
+
+void plot_set_xmin(plot_type * plot , double xmin) {
+  plot_range_set_xmin( plot->range , xmin );
+}
+
+void plot_set_xmax(plot_type * plot , double xmax) {
+  plot_range_set_xmax( plot->range , xmax );
+}
+
+void plot_set_ymin(plot_type * plot , double ymin) {
+  plot_range_set_ymin( plot->range , ymin );
+}
+
+void plot_set_ymax(plot_type * plot , double ymax) {
+  plot_range_set_ymax( plot->range , ymax );
 }
 
 
@@ -469,6 +481,14 @@ void plot_set_top_padding(plot_type * plot , double value) {
 void plot_set_bottom_padding(plot_type * plot , double value) {
   plot_range_set_bottom_padding(plot->range , value);
 }
+
+void plot_set_padding(plot_type * plot , double padding) {
+  plot_set_left_padding  ( plot , padding );
+  plot_set_right_padding ( plot , padding );
+  plot_set_top_padding   ( plot , padding );
+  plot_set_bottom_padding( plot , padding );
+}
+
 
 /*****************************************************************/
 
@@ -517,5 +537,5 @@ void plot_get_extrema(plot_type * plot, plot_range_type * range) {
 
 int plot_get_num_datasets(plot_type* plot) {
   return vector_get_size( plot->dataset );
-} ;
+};
 
