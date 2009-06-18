@@ -52,7 +52,12 @@ void plot_set_bottom_padding(plot_type *  , double );
 void plot_set_left_padding(plot_type   *  , double );
 void plot_set_right_padding(plot_type  *  , double );
 
-void          plot_set_manual_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax);
+void plot_set_xmin(plot_type * plot , double xmin);
+void plot_set_xmax(plot_type * plot , double xmax);
+void plot_set_ymin(plot_type * plot , double ymin);
+void plot_set_ymax(plot_type * plot , double ymax);
+
+void          plot_set_range(plot_type * plot , double xmin , double xmax , double ymin , double ymax);
 void 	      plot_set_label_color(plot_type * , plot_color_type );
 void 	      plot_set_box_color(plot_type *   , plot_color_type );
 void 	      plot_set_label_fontsize(plot_type * , double );
