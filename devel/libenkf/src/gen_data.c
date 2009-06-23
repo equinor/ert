@@ -235,10 +235,10 @@ void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_
 
 
 void gen_data_matrix_serialize(const gen_data_type * gen_data , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
-  const gen_data_config_type *config      = gen_data->config;
+  const gen_data_config_type *config   = gen_data->config;
   const int                data_size   = gen_data_config_get_data_size(config);
   ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
-  
+
   enkf_matrix_serialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
 }
 

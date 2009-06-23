@@ -27,9 +27,9 @@ typedef void   (obs_user_get_ftype)            (void * , const char * , double *
 typedef bool   (obs_type_check_ftype)          (const void *);
 typedef double (obs_chi2_ftype)                (const void * , const void *);
 
-typedef enum { gen_obs     = 1,
-	       summary_obs = 2,
-	       field_obs   = 3} obs_impl_type;
+typedef enum { GEN_OBS     = 1,
+	       SUMMARY_OBS = 2,
+	       FIELD_OBS   = 3} obs_impl_type;
 
 
 typedef struct obs_vector_struct obs_vector_type;
@@ -62,6 +62,7 @@ void                 obs_vector_ensemble_chi2(const obs_vector_type *  , enkf_fs
 double               obs_vector_total_chi2(const obs_vector_type * , enkf_fs_type * , int , state_enum  );
 void                 obs_vector_ensemble_total_chi2(const obs_vector_type *  , enkf_fs_type *  , int  , state_enum , double * );
 enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * );
+const char            * obs_vector_get_obs_key( const obs_vector_type * obs_vector);
 
 SAFE_CAST_HEADER(obs_vector);
 VOID_FREE_HEADER(obs_vector);

@@ -622,5 +622,9 @@ void obs_data_fprintf(const obs_data_type * obs_data , FILE * stream, const doub
 }
 
 
+int obs_data_get_active_size( const obs_data_type  * obs_data ) {
+  return obs_data->active_size;
+}
+
 
 

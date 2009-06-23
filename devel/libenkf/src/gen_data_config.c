@@ -162,6 +162,7 @@ static gen_data_file_format_type __gen_data_config_check_format( const char * fo
   return type;
 }
 
+
 /**
    The valid options are:
 
@@ -270,11 +271,10 @@ void gen_data_config_free(gen_data_config_type * config) {
 */
 
 
-/* Locking is completelt broken here ... */
+/* Locking is completely broken here ... */
 void gen_data_config_assert_size(gen_data_config_type * config , int data_size, int report_step) {
   pthread_mutex_lock( &config->update_lock );
   {
-
     if (report_step != config->__report_step) {
       config->data_size     = data_size; 
       config->__report_step = report_step;
@@ -285,7 +285,6 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
 		 config->data_size, 
 		 report_step);
     }
-
   }
   pthread_mutex_unlock( &config->update_lock );
 }

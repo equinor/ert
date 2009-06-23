@@ -45,6 +45,7 @@
 #include <local_ministep.h>
 #include <local_reportstep.h>
 #include <local_config.h>
+#include <misfit_table.h>
 #include "enkf_defaults.h"
 
 /**
@@ -79,13 +80,14 @@
 #define ENKF_MAIN_ID 8301
 
 struct enkf_main_struct {
-  int                    __type_id;        /* Used for type-checking run-time casts. */
+  UTIL_TYPE_ID_DECLARATION;
   ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/ 
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
   enkf_obs_type        * obs;
+  misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;
   local_config_type    * local_config;     /* Holding all the information about local analysis. */
 }; 
@@ -157,6 +159,8 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   site_config_free( enkf_main->site_config);
   ensemble_config_free( enkf_main->ensemble_config );
   local_config_free( enkf_main->local_config );
+  if (enkf_main->misfit_table != NULL)
+    misfit_table_free( enkf_main->misfit_table );
   free(enkf_main);
 }
 
@@ -400,6 +404,22 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
 
+
+      /** 
+	  This is very awkward; the problem is that for the GEN_DATA
+	  type the config object does not really own the size. Instead
+	  the size is pushed (on load time) from gen_data instances to
+	  the gen_data_config instance. Therefor we have to assert
+	  that at least one gen_data instance has been loaded (and
+	  consequently updated the gen_data_config instance) before we
+	  query for the size.
+      */
+      {
+	if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
+	  enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[0] , key);
+	  enkf_fs_fread_node( fs , node , report_step , 0 , forecast);
+	}
+      }
       active_size[ikw] = __get_active_size( config_node , active_list );
       row_offset[ikw]  = current_row_offset;
 
@@ -414,8 +434,6 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	  /* Do not try to grow the matrix unless we are at the first kw. */
 	  add_more_kw = false;
       }
-      
-      
 
       if (add_more_kw) {
 	if (active_size[ikw] > 0) {
@@ -450,6 +468,11 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     } while (add_more_kw);
     ikw2 = ikw;
     matrix_shrink_header( A , current_row_offset , ens_size );
+    {
+      FILE * stream = util_fopen("/tmp/A.txt" , "w");
+      matrix_pretty_fprint( A , " A " , "%12.7f " , stream);
+      fclose( stream );
+    }
     if (current_row_offset > 0) {
       /* The actual update */
       msg_update(msg , " matrix multiplication");
@@ -542,14 +565,15 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 
 	meas_matrix_calculate_ens_stats( meas_forecast );
 	enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
-	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast , stdout );
-	
-	if (analysis_config_Xbased( enkf_main->analysis_config )) {
-	  matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data );
-	  
-	  enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
-
-	  matrix_free( X );
+	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , stdout );
+	if (obs_data_get_active_size(obs_data) > 0) {
+	  if (analysis_config_Xbased( enkf_main->analysis_config )) {
+	    matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data );
+	    
+	    enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
+	    
+	    matrix_free( X );
+	  }
 	}
       }
     }
@@ -865,7 +889,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (site_config == NULL) 
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   
-  enkf_main->__type_id  = ENKF_MAIN_ID;
+  UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   {
     char * path;
     char * base;
@@ -1026,9 +1050,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
 
-    item = config_add_item(config , "FORWARD_MODEL" , true , false);
+    item = config_add_item(config , "FORWARD_MODEL" , true , true);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
-    config_set_arg(config , "FORWARD_MODEL" , 1 , (const char *[1]) { DEFAULT_FORWARD_MODEL });
 
     item = config_add_item(config , "DATA_KW" , false , true);
     config_item_set_argc_minmax(item , 2 , 2 , NULL);
@@ -1279,7 +1302,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	
 	/* Install the ALL_ACTIVE step as the default. */
 	local_config_set_default_reportstep( enkf_main->local_config , "ALL_ACTIVE");
-
+	
 
 	//{
 	//  local_reportstep_type * reportstep12 = local_config_alloc_reportstep( enkf_main->local_config , "REPORTSTEP12");
@@ -1330,6 +1353,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_free(config);
   }
   free(model_config);
+  enkf_main->misfit_table = NULL;
+  /*
+  enkf_main->misfit_table = misfit_table_alloc( model_config_get_last_history_restart( enkf_main->model_config ) + 1,
+						ensemble_config_get_size( enkf_main->ensemble_config ),
+						enkf_main->obs);
+  */
   return enkf_main;
 }
     

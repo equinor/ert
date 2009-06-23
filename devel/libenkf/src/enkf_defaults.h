@@ -14,10 +14,6 @@
 
 
 
-/* Set the default forward model to ECLIPSE 100. */
-#define DEFAULT_FORWARD_MODEL "ECLIPSE100"
-
-
 
 
 /* Eclipse IO  related stuff */

@@ -839,7 +839,7 @@ static void enkf_ui_plot_select_RFT(const enkf_main_type * enkf_main , char ** _
 	obs_key = util_alloc_stdin_line( );
 	if (enkf_obs_has_key(enkf_obs , obs_key)) {
 	  obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-	  if (obs_vector_get_impl_type( obs_vector ) == field_obs)
+	  if (obs_vector_get_impl_type( obs_vector ) == FIELD_OBS)
 	    OK = true;
 	  else
 	    fprintf(stderr,"Observation key:%s does not correspond to a field observation.\n",obs_key);
@@ -955,7 +955,7 @@ void enkf_ui_plot_all_RFT( void * arg) {
     const int prompt_len  = 30;
     enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
     int iobs , report_step;
-    stringlist_type * RFT_keys = enkf_obs_alloc_typed_keylist(enkf_obs , field_obs);
+    stringlist_type * RFT_keys = enkf_obs_alloc_typed_keylist(enkf_obs , FIELD_OBS);
     
     for (iobs = 0; iobs < stringlist_get_size( RFT_keys ); iobs++) {
       const char * obs_key = stringlist_iget( RFT_keys , iobs);

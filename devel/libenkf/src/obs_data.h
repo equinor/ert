@@ -35,6 +35,7 @@ void          	     obs_data_deactivate_outliers(obs_data_type * , const double 
 void          	     obs_data_fprintf(const obs_data_type * , FILE * , const double * , const double *);
 void          	     obs_data_iget_value_std(const obs_data_type * obs_data , int index , double * value ,  double * std);
 void          	     obs_data_deactivate_obs(obs_data_type * obs_data , int iobs,const char * msg);
+int                  obs_data_get_active_size( const obs_data_type  * obs_data );
 
 #ifdef __cplusplus
 }

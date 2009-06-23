@@ -10,6 +10,7 @@
 #include <enkf_ui_plot.h>
 #include <enkf_ui_table.h>
 #include <enkf_ui_fs.h>
+#include <enkf_ui_ranking.h>
 #include <enkf_main.h>
 #include <enkf_sched.h>
 
@@ -34,6 +35,7 @@ void enkf_ui_main_menu(enkf_main_type * enkf_main) {
   menu_add_item(menu , "Manage cases" , "cC" , enkf_ui_fs_menu , enkf_main , NULL);
   menu_add_item(menu , "Run or restart experiment"    , "rR" , enkf_ui_run_menu    , enkf_main , NULL);
   menu_add_item(menu , "Plot results"                 , "pP" , enkf_ui_plot_menu   , enkf_main , NULL);
+  menu_add_item(menu , "Rank results"                 , "aA" , enkf_ui_ranking_menu, enkf_main , NULL);
   menu_add_item(menu , "Export data to other formats" , "eE" , enkf_ui_export_menu , enkf_main , NULL);
   menu_add_item(menu , "Table of results"             , "tT" , enkf_ui_table_menu  , enkf_main , NULL);
   menu_run(menu);

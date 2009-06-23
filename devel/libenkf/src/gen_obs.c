@@ -194,9 +194,8 @@ void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_da
 double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_data) {
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
-    int iobs;
     double sum_chi2 = 0;
-    for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
+    for (int iobs = 0; iobs < gen_obs->obs_size; iobs++) {
       double x  = (gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs]) - gen_obs->obs_data[iobs]) / gen_obs->obs_std[iobs];
       sum_chi2 += x*x;
     }

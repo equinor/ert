@@ -315,6 +315,7 @@ void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
   forward_model_set_private_arg(enkf_state->forward_model ,  "ECL_BASE"    , member_config->eclbase);  /* Can not change run_time .. */
   forward_model_set_private_arg(enkf_state->forward_model ,  "ECLBASE"     , member_config->eclbase);  /* Can not change run_time .. */
   forward_model_set_private_arg(enkf_state->forward_model ,  "SMSPEC_FILE" , smspec_file);
+  forward_model_set_private_arg(enkf_state->forward_model ,  "RUNPATH"     , enkf_state->run_info->run_path);
   
   free(cwd);
   free(iens_s);
@@ -455,7 +456,8 @@ enkf_state_type * enkf_state_alloc(int iens,
     char * iens4_s     = util_alloc_sprintf("%04d" , iens);
     char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
     char * cwd         = util_alloc_cwd();
-
+    
+    enkf_state_add_subst_kw(enkf_state , "RUNPATH"     , enkf_state->run_info->run_path);
     enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd); 
     enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s);
     enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s);

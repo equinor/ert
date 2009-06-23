@@ -22,7 +22,7 @@
 #define OBS_VECTOR_TYPE_ID 120086
 
 struct obs_vector_struct {
-  int                   __type_id;
+  UTIL_TYPE_ID_DECLARATION;
   obs_free_ftype       *freef;        /* Function used to free an observation node. */
   obs_get_ftype        *get_obs;      /* Function used to build the 'd' vector. */
   obs_meas_ftype       *measure;      /* Function used to measure on the state, and add to to the S matrix. */
@@ -82,7 +82,7 @@ static void obs_vector_resize(obs_vector_type * vector , int new_size) {
 static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * obs_key , enkf_config_node_type * config_node ,int num_reports) {
   obs_vector_type * vector = util_malloc(sizeof * vector , __func__);
   
-  vector->__type_id  = OBS_VECTOR_TYPE_ID;
+  UTIL_TYPE_ID_INIT( vector , OBS_VECTOR_TYPE_ID);
   vector->freef      = NULL;
   vector->measure    = NULL;
   vector->get_obs    = NULL;
@@ -92,7 +92,7 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
   vector->chi2       = NULL;
   
   switch (obs_type) {
-  case(summary_obs):
+  case(SUMMARY_OBS):
     vector->freef      = summary_obs_free__;
     vector->measure    = summary_obs_measure__;
     vector->get_obs    = summary_obs_get_observations__;
@@ -100,7 +100,7 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
     vector->user_get   = summary_obs_user_get__;
     vector->chi2       = summary_obs_chi2__;
     break;
-  case(field_obs):
+  case(FIELD_OBS):
     vector->freef      = field_obs_free__;
     vector->measure    = field_obs_measure__;
     vector->get_obs    = field_obs_get_observations__;
@@ -108,7 +108,7 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
     vector->user_get   = field_obs_user_get__;
     vector->chi2       = field_obs_chi2__;
     break;
-  case(gen_obs):
+  case(GEN_OBS):
     vector->freef      = gen_obs_free__;
     vector->measure    = gen_obs_measure__;
     vector->get_obs    = gen_obs_get_observations__;
@@ -298,7 +298,7 @@ obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_
     summary_obs_type * sum_obs;
 
     ensemble_config_ensure_summary( ensemble_config , sum_key );
-    obs_vector = obs_vector_alloc( summary_obs , obs_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
+    obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     sum_obs = summary_obs_alloc(sum_key , obs_value , obs_error);
     obs_vector_install_node( obs_vector , obs_restart_nr , sum_obs );
     return obs_vector;
@@ -317,7 +317,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
     const char * obs_key         = conf_instance_get_name_ref(conf_instance);
     const char * state_kw        = conf_instance_get_item_value_ref(   conf_instance, "DATA" );              
     int          size            = history_get_num_restarts( history );
-    obs_vector_type * obs_vector = obs_vector_alloc( gen_obs , obs_key , ensemble_config_get_node(ensemble_config , state_kw ) , size );
+    obs_vector_type * obs_vector = obs_vector_alloc( GEN_OBS , obs_key , ensemble_config_get_node(ensemble_config , state_kw ) , size );
     int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
     const char * index_file      = NULL;
     const char * index_list      = NULL;
@@ -382,7 +382,7 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
     history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
     ensemble_config_ensure_summary( ensemble_config , sum_key );
     std = util_malloc(size * sizeof * std, __func__);
-    obs_vector = obs_vector_alloc( summary_obs , sum_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
+    obs_vector = obs_vector_alloc( SUMMARY_OBS , sum_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     
     // Create  the standard deviation vector
     if(strcmp(error_mode, "ABS") == 0) {
@@ -522,7 +522,7 @@ obs_vector_type * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance_ty
       const enkf_config_node_type * config_node  = ensemble_config_get_node( ensemble_config , field_name);
       const field_config_type     * field_config = enkf_config_node_get_ref( config_node ); 
       field_obs_type * block_obs  = field_obs_alloc(obs_label, field_config , field_name, num_obs_pts, obs_i, obs_j, obs_k, obs_value, obs_std);
-      obs_vector = obs_vector_alloc( field_obs , obs_label , ensemble_config_get_node(ensemble_config , field_name) , size );
+      obs_vector = obs_vector_alloc( FIELD_OBS , obs_label , ensemble_config_get_node(ensemble_config , field_name) , size );
       
       obs_vector_install_node( obs_vector , obs_restart_nr , block_obs);
     }
@@ -715,6 +715,11 @@ void obs_vector_ensemble_total_chi2(const obs_vector_type * obs_vector , enkf_fs
     util_safe_free( msg_text );
   }
 }
+
+const char * obs_vector_get_obs_key( const obs_vector_type * obs_vector) {
+  return obs_vector->obs_key;
+}
+
 
 /*****************************************************************/
 
