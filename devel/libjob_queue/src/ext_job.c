@@ -174,7 +174,12 @@ void ext_job_free__(void * __ext_job) {
 
 
 void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
-  ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , portable_exe);
+  char * full_path = util_alloc_realpath( portable_exe );
+  if (!util_is_executable( full_path ))
+    util_exit("%s: The program: %s -> %s is not executable \n",__func__ , portable_exe , full_path);
+  else
+    ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , full_path);
+  free(full_path);
 }
 
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
