@@ -64,6 +64,7 @@ static void sched_kw_wconprod_add_line(sched_kw_wconprod_type * kw , const char 
 
   stringlist_append_copy(kw->wells , token_list[0]);
   sched_kw_untyped_add_line(kw->untyped_kw , line , NULL);
+  util_free_stringlist( token_list , tokens );
 }
 
 
