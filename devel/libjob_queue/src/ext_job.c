@@ -175,12 +175,15 @@ void ext_job_free__(void * __ext_job) {
 
 void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
   /**
+
      The portable exe can be a <...> string, i.e. not ready yet. Then
      we just have to trust the user to provide something sane in the
-     end. If on the other and portable points to an existing file we:
+     end. If on the other hand portable_exe points to an existing file
+     we:
 
-     1. Call util_alloc_realpth() to get the full absolute path.
-     2. Require that it is a executable file.
+      1. Call util_alloc_realpth() to get the full absolute path.
+      2. Require that it is a executable file.
+  
   */
   if (util_file_exists( portable_exe )) {
     char * full_path = util_alloc_realpath( portable_exe );
