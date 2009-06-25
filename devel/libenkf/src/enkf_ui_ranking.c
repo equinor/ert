@@ -4,7 +4,7 @@
 #include <enkf_main.h>
 #include <menu.h>
 #include <enkf_obs.h>
-
+#include <enkf_ui_util.h>
 
 
 
@@ -25,23 +25,24 @@ static void enkf_ui_ranking_create( void * arg ) {
   enkf_main_type    * enkf_main       = enkf_main_safe_cast( arg );  
   enkf_obs_type     * enkf_obs        = enkf_main_get_obs( enkf_main );
   misfit_table_type * misfit_table    = enkf_main_get_misfit( enkf_main );
-
+  
   if (misfit_table == NULL) {
     fprintf(stderr,"Sorry: must create a misfit table first \n");
     return;
   } else {
-    int step1 = 0;
-    int step2 = 62;
-    const int prompt_len = 50;
+    const int history_length    = enkf_main_get_history_length( enkf_main );
+    const int    prompt_len = 50;
     const char * prompt1  = "Observations to use for ranking";
     const char * prompt2  = "Name to store ranking under";
+    int step1,step2;
     stringlist_type * ranking_keys;
     char * obs_keys_input;
     char * ranking_key;
     util_printf_prompt(prompt1 , prompt_len , '=' , "=> ");
     obs_keys_input = util_alloc_stdin_line();
     ranking_keys   = enkf_obs_alloc_matching_keylist( enkf_obs , obs_keys_input );
-
+    enkf_ui_util_scanf_report_steps(history_length , prompt_len , &step1 , &step2);
+    
     util_printf_prompt(prompt2 , prompt_len , '=' , "=> ");
     ranking_key = util_alloc_stdin_line();
     if (ranking_key == NULL) 
