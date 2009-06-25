@@ -12,7 +12,7 @@ extern "C" {
 #include <scalar.h>
 
 typedef struct gen_kw_config_struct gen_kw_config_type;
-
+typedef struct gen_kw_struct        gen_kw_type;
 
 
 const char         	  * gen_kw_config_get_template_ref(const gen_kw_config_type * );

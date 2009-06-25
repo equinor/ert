@@ -617,6 +617,39 @@ stringlist_type * enkf_obs_alloc_typed_keylist(enkf_obs_type * enkf_obs , obs_im
 }
 
 
+/**
+ */
+
+stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string) {
+  stringlist_type  *  matching_keys = stringlist_alloc_new();
+  stringlist_type  *  obs_keys      = hash_alloc_stringlist( enkf_obs->obs_hash );
+  char 		   ** input_keys;
+  int  		      num_keys;
+  
+  
+  util_split_string( input_string , " " , &num_keys , &input_keys);
+  for (int i=0; i < num_keys; i++) {
+    bool key_found = false;
+
+    const char * input_key = input_keys[i];
+    for (int j = 0; j < stringlist_get_size( obs_keys ); j++) {
+      const char * obs_key = stringlist_iget( obs_keys , j);
+      
+      if (util_string_match( obs_key , input_key)) {
+	if (!stringlist_contains( matching_keys , obs_key ))
+	  stringlist_append_copy( matching_keys , obs_key);
+	key_found = true;
+      }
+    }
+  }
+  
+  
+  util_free_stringlist( input_keys , num_keys );
+  stringlist_free( obs_keys );
+  return matching_keys;
+}
+
+
 
 /**
    This function allocates a hash table which looks like this:
@@ -648,7 +681,7 @@ stringlist_type * enkf_obs_alloc_typed_keylist(enkf_obs_type * enkf_obs , obs_im
 
 hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
 {
-  hash_type      * map = hash_alloc();
+  hash_type      * map  = hash_alloc();
   hash_iter_type * iter = hash_iter_alloc(enkf_obs->obs_hash); 
   const char * key = hash_iter_get_next_key(iter);
   while ( key != NULL) {
@@ -656,6 +689,7 @@ hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
     hash_insert_ref( map , key , obs_vector_get_state_kw(obs_vector));
     key = hash_iter_get_next_key(iter);
   }
+  hash_iter_free( iter );
   return map;
 }
 

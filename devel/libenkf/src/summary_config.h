@@ -8,6 +8,8 @@
 
 
 typedef struct summary_config_struct summary_config_type;
+typedef struct summary_struct        summary_type;
+
 
 ecl_smspec_var_type    summary_config_get_var_type(const summary_config_type * );
 const           char * summary_config_get_var(const summary_config_type * );

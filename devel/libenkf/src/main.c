@@ -97,7 +97,6 @@ int main (int argc , char ** argv) {
   printf("\n");
   printf("svn version : %s \n",SVN_VERSION);
   printf("compile time: %s \n",COMPILE_TIME_STAMP);
-  printf("\n");
   install_SIGNALS();
 
   if (argc != 2) {
@@ -112,5 +111,6 @@ int main (int argc , char ** argv) {
     enkf_ui_main_menu(enkf_main); 
     enkf_main_free(enkf_main);
     
+    util_abort_free_version_info(); /* No fucking leaks ... */
   }
 }

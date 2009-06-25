@@ -572,6 +572,7 @@ void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,co
 
 */
 
+
 static double obs_vector_chi2__(const obs_vector_type * obs_vector , int report_step , const enkf_node_type * node) { 
   if (obs_vector->nodes[report_step] != NULL) 
     return obs_vector->chi2( obs_vector->nodes[report_step] , enkf_node_value_ptr( node ));
@@ -636,24 +637,34 @@ double obs_vector_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs , 
 
 
 /**
-   This function will evaluate the chi2 for a complete ensemble -
-   fixed report step.
+   This function will evaluate the chi2 for the ensemble members
+   [iens1,iens2) and report steps [step1,step2).
+
+   Observe that the chi2 pointer is assumed to be allocated for the
+   complete ensemble, altough this function only operates on part of
+   it.
 */
 
-void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, int report_step , int ens_size, state_enum load_state , double * chi2) {
-  int iens;
-  for (iens = 0; iens < ens_size; iens++)
-    chi2[iens] = 0;
 
-  if (obs_vector->nodes[report_step] != NULL) {
-    enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
-    
-    for (iens = 0; iens < ens_size; iens++) {
-      if (obs_vector_load_node__(fs , enkf_node , load_state ,report_step , iens) != undefined) 
-	chi2[iens] = obs_vector_chi2__(obs_vector , report_step , enkf_node);
+void obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, int step1 , int step2 , int iens1 , int iens2 , state_enum load_state , double ** chi2) {
+  int step;
+
+  enkf_node_type * enkf_node = enkf_node_alloc( obs_vector->config_node );
+  for (step = step1; step < step2; step++) {
+    int iens;
+    if (obs_vector->nodes[step] != NULL) {
+      for (iens = iens1; iens < iens2; iens++) {
+	if (obs_vector_load_node__(fs , enkf_node , load_state ,step , iens) != undefined) 
+	  chi2[step][iens] = obs_vector_chi2__(obs_vector , step , enkf_node);
+	else
+	  chi2[step][iens] = 0;
+      }
+    } else {
+      for (iens = iens1; iens < iens2; iens++) 
+	chi2[step][iens] = 0;
     }
-    enkf_node_free( enkf_node );
   }
+  enkf_node_free( enkf_node );
 }
 
 

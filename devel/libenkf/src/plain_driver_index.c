@@ -68,7 +68,7 @@ void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_
 void plain_driver_index_free(void * __index_driver) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
-    path_fmt_free(index_driver->path_fmt);
+    path_fmt_free( index_driver->path_fmt );
     util_safe_free( index_driver->root_path );
     util_safe_free( index_driver->fmt_string );
     free(index_driver);
@@ -80,11 +80,6 @@ void plain_driver_index_free(void * __index_driver) {
 
 void * plain_driver_index_alloc(const char * root_path , const char * index_path) {
   plain_driver_index_type * plain_driver = util_malloc(sizeof * plain_driver , __func__);
-  {
-    char * path = util_alloc_filename(root_path , index_path , NULL);
-    plain_driver->path_fmt = path_fmt_alloc_directory_fmt(path);
-    free(path);
-  }
   plain_driver->select_dir  = plain_driver_index_select_dir;
   plain_driver->save_kwlist = plain_driver_index_fwrite_restart_kw_list;
   plain_driver->load_kwlist = plain_driver_index_fread_restart_kw_list;

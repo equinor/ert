@@ -39,7 +39,7 @@ int plot_get_stream(plot_type * item);
 
  void plot_data(plot_type * item);
  void plot_free(plot_type * item);
- void plot_get_extrema(plot_type * item, plot_range_type * );
+ void plot_update_range(plot_type * item, plot_range_type * );
 
 int plot_get_num_datasets(plot_type* item) ;
 

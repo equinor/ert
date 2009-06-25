@@ -215,6 +215,7 @@ void ensemble_config_add_config_items(config_type * config) {
      
   item = config_add_item(config , "FIELD" , false , true);
   config_item_set_argc_minmax(item , 2 , -1 ,  NULL);
+  config_item_add_required_children(item , "GRID");   /* If you are using a FIELD - you must have a grid. */
 }
 
 

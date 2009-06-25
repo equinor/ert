@@ -10,11 +10,11 @@ extern "C" {
 #include <gen_data_active.h>
 #include <stringlist.h>
 
-typedef enum { gen_data_undefined = 0,  
+typedef enum { GEN_DATA_UNDEFINED = 0,  
 	       ASCII           	  = 1,   /*   The file is ASCII file with a vector of numbers formatted with "%g".       */
-	       ASCII_template  	  = 2,   /*   The data is inserted into a user defined template file.    		 */
-	       binary_double   	  = 3,   /*   The data is in a binary file with doubles. 		       		 */
-	       binary_float    	  = 4}   /*   The data is in a binary file with floats.  		       		 */          
+	       ASCII_TEMPLATE  	  = 2,   /*   The data is inserted into a user defined template file.    		 */
+	       BINARY_DOUBLE   	  = 3,   /*   The data is in a binary file with doubles. 		       		 */
+	       BINARY_FLOAT    	  = 4}   /*   The data is in a binary file with floats.  		       		 */          
 
 gen_data_file_format_type;
 	       
@@ -25,6 +25,8 @@ gen_data_file_format_type;
 */
 
 typedef struct gen_data_config_struct gen_data_config_type;
+typedef struct gen_data_struct        gen_data_type;
+
 
 gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );
 gen_data_file_format_type    gen_data_config_get_output_format ( const gen_data_config_type * );

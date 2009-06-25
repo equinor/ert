@@ -352,9 +352,10 @@ void plot_free(plot_type * plot)
 static void plot_set_range__(plot_type * plot) {
   double x1,x2,y1,y2;
   
-  plot_get_extrema(plot , plot->range);
+  plot_update_range(plot , plot->range);
   plot_range_apply(plot->range , &x1 , &x2 , &y1 , &y2);
   plot->driver->set_range(plot->driver , x1 , x2 , y1 , y2);
+  
 }
 
 
@@ -527,7 +528,7 @@ void plot_set_label_fontsize(plot_type * plot , double label_font_size_scale) {
  * Find the extrema values in the plot plot, checks all added datasets.
  */
 
-void plot_get_extrema(plot_type * plot, plot_range_type * range) {
+void plot_update_range(plot_type * plot, plot_range_type * range) {
   bool first_pass = true;
   int iplot;
   for (iplot = 0; iplot < vector_get_size( plot->dataset  ); iplot++) 

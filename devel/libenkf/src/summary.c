@@ -16,9 +16,10 @@
 /*****************************************************************/
 
 struct summary_struct {
-  int                          __type_id; /* Only used for run_time checking. */
+  int                          __type_id;    /* Only used for run_time checking. */
   const summary_config_type  * config;
   double                     * data;         /* Size is always one - but what the fuck ... */
+  summary_type               * min_variance;
 };
 
 

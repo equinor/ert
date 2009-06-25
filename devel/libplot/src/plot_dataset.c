@@ -514,6 +514,10 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
       }
     }
   
+    /**
+       If the range value has been set manually these functions
+       just return without doing anything.
+    */
     plot_range_set_auto_xmin(range , tmp_x_min);
     plot_range_set_auto_xmax(range , tmp_x_max);
     plot_range_set_auto_ymin(range , tmp_y_min);

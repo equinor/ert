@@ -105,10 +105,10 @@ void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load
   if (load_format == ASCII) {
     *load_type = ASCII_type;
     buffer =  gen_common_fscanf_alloc(file , ASCII_type , size);
-  } else if (load_format == binary_float) {
+  } else if (load_format == BINARY_FLOAT) {
     *load_type = ecl_float_type;
     buffer = gen_common_fread_alloc(file , ecl_float_type , size);
-  } else if (load_format == binary_double) {
+  } else if (load_format == BINARY_DOUBLE) {
     *load_type = ecl_double_type;
     buffer = gen_common_fread_alloc(file , ecl_double_type , size);
   } else 

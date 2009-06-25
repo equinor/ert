@@ -58,7 +58,7 @@ obs_vector_type    * obs_vector_alloc_from_BLOCK_OBSERVATION(const conf_instance
 void                 obs_vector_set_config_node(obs_vector_type *  , const enkf_config_node_type * );
 
 double               obs_vector_chi2(const obs_vector_type *  , enkf_fs_type *  , int  , int , state_enum);
-void                 obs_vector_ensemble_chi2(const obs_vector_type *  , enkf_fs_type * , int  , int , state_enum , double * );
+void                 obs_vector_ensemble_chi2(const obs_vector_type * obs_vector , enkf_fs_type * fs, int step1 , int step2 , int iens1 , int iens2 , state_enum load_state , double ** chi2);
 double               obs_vector_total_chi2(const obs_vector_type * , enkf_fs_type * , int , state_enum  );
 void                 obs_vector_ensemble_total_chi2(const obs_vector_type *  , enkf_fs_type *  , int  , state_enum , double * );
 enkf_config_node_type * obs_vector_get_config_node(obs_vector_type * );

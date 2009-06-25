@@ -51,6 +51,7 @@ local_reportstep_type * local_reportstep_alloc_copy( const local_reportstep_type
 void local_reportstep_free( local_reportstep_type * reportstep) {
   free( reportstep->name );
   vector_free( reportstep->ministep );
+  free( reportstep );
 }
 
 

@@ -10,7 +10,6 @@ extern "C" {
 #include <ecl_file.h>
 #include <buffer.h>
 
-typedef struct gen_data_struct gen_data_type;
 
 void          	         gen_data_ecl_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
 gen_data_type 	       * gen_data_alloc(const gen_data_config_type *);

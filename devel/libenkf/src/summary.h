@@ -4,8 +4,7 @@
 #include <ecl_file.h>
 #include <enkf_macros.h>
 #include <enkf_util.h>
-
-typedef struct summary_struct summary_type;
+#include <summary_config.h>
 
 double    summary_get(const summary_type * );
 void      summary_upgrade_103( const char * filename );

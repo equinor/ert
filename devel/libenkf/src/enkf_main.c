@@ -142,6 +142,11 @@ enkf_obs_type * enkf_main_get_obs(const enkf_main_type * enkf_main) {
 }
 
 
+misfit_table_type * enkf_main_get_misfit(const enkf_main_type * enkf_main) {
+  return enkf_main->misfit_table;
+}
+
+
 
 void enkf_main_free(enkf_main_type * enkf_main) {  
   enkf_obs_free(enkf_main->obs);
@@ -888,7 +893,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   
   if (site_config == NULL) 
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
-  
+  printf("site config : %s \n\n",site_config);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   {
     char * path;
@@ -911,7 +916,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       model_config = util_alloc_string_copy(_model_config);
   }  
 
-  if (!util_file_exists(site_config)) util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
+  if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
     config_type * config = config_alloc();
@@ -1017,7 +1022,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
     
 
-    item = config_add_item(config , "GRID" , true , false);
+    item = config_add_item(config , "GRID" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
     item = config_add_item(config , "ECLBASE" , true , false);
@@ -1050,7 +1055,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
 
-    item = config_add_item(config , "FORWARD_MODEL" , true , true);
+    item = config_add_item(config , "FORWARD_MODEL" , true , false);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
     item = config_add_item(config , "DATA_KW" , false , true);
@@ -1215,7 +1220,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /******************************************************************/
       /* Adding inverse observation keys, and config_nodes to the obs_vectors. */
       {
-	hash_type      * map = enkf_obs_alloc_summary_map(enkf_main->obs);
+	hash_type      * map  = enkf_obs_alloc_summary_map(enkf_main->obs);
         hash_iter_type * iter = hash_iter_alloc(map);
 	const char * obs_key = hash_iter_get_next_key(iter);
 	while (obs_key  != NULL) {
@@ -1362,6 +1367,27 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   return enkf_main;
 }
     
+
+/**
+   Sets the misfit_table of the enkf_main object. If a misfit table is
+   already installed the currently installed misfit table is freed first. 
+
+   The enkf_main object takes ownership of the input misfit table,
+   i.e. the calling scope should not free the table.
+*/
+
+void enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit) {
+  if (enkf_main->misfit_table != NULL)
+    misfit_table_free( enkf_main->misfit_table );
+
+  enkf_main->misfit_table = misfit;
+}
+
+
+misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main ) {
+  return enkf_main->misfit_table;
+}
+
 
 
 /**

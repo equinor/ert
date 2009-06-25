@@ -1102,7 +1102,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
 	  enkf_fs_add_dir( fs , dir );
 	}
 
-	/* Loading the currently selected read and write directories. */
+	/* Loading and selecting the currently selected read and write directories. */
 	dir = util_fread_realloc_string( dir , stream ); enkf_fs_select_read_dir(fs , dir);
 	dir = util_fread_realloc_string( dir , stream ); enkf_fs_select_write_dir(fs , dir , false);
 	free(dir);
@@ -1143,6 +1143,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
     } else
       fs->read_only = false;
     
+    free( config_file );
     return fs;
   }
 }
@@ -1344,11 +1345,27 @@ void enkf_fs_copy_node(enkf_fs_type * enkf_fs,
 void enkf_fs_copy_ensemble(enkf_fs_type * enkf_fs, 
 			   enkf_config_node_type * config_node,               
 			   int report_step_from, state_enum state_from,  /* src state */
-			   int report_step_to, state_enum state_to,      /* target state */
-			   int iens1, int iens2)                         /* realizations */
-{
-  for(int iens = iens1; iens <= iens2; iens++)
-    enkf_fs_copy_node(enkf_fs, config_node, report_step_from, iens, state_from, report_step_to, iens, state_to);
+			   int report_step_to  , state_enum state_to,      /* target state */
+			   int ens_size, 
+			   const int * __permutations) {
+  
+  int * permutations;
+  if (__permutations == NULL) {
+    /* No reordering of ensemble members. */
+    permutations = util_malloc( ens_size * sizeof * permutations , __func__);
+    for (int i = 0; i < ens_size; i++)
+      permutations[i] = i;
+  } else
+    permutations = (int *) __permutations;
+
+  
+  for(int iens_from =0; iens_from < ens_size; iens_from++) {
+    int iens_to = permutations[iens_from];
+    enkf_fs_copy_node(enkf_fs, config_node, report_step_from, iens_from , state_from, report_step_to, iens_to , state_to);
+  }
+
+  if (__permutations == NULL) 
+    free( permutations );
 }
 
 

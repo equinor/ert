@@ -10,7 +10,6 @@ extern "C" {
 #include <enkf_macros.h>
 #include <enkf_serialize.h>
 
-typedef struct gen_kw_struct gen_kw_type;
 
 
 void             gen_kw_output_transform(const gen_kw_type * );

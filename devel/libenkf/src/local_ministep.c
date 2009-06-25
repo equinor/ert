@@ -83,6 +83,7 @@ void local_ministep_free(local_ministep_type * ministep) {
   free(ministep->name);
   hash_free( ministep->observations );
   hash_free( ministep-> nodes );
+  free( ministep );
 }
 
 

@@ -348,7 +348,7 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
   char * template_buffer;
   int    template_data_offset, template_buffer_size , template_data_skip;
 
-  if (export_format == ASCII_template) {
+  if (export_format == ASCII_TEMPLATE) {
     gen_data_config_get_template_data( gen_data->config , &template_buffer , &template_data_offset , &template_buffer_size , &template_data_skip);
     util_fwrite( template_buffer , 1 , template_data_offset , stream , __func__);
   }
@@ -369,7 +369,7 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
       util_abort("%s: internal error - wrong type \n",__func__);
   }
   
-  if (export_format == ASCII_template) {
+  if (export_format == ASCII_TEMPLATE) {
     int new_offset = template_data_offset + template_data_skip;
     util_fwrite( &template_buffer[new_offset] , 1 , template_buffer_size - new_offset , stream , __func__);
   }
@@ -404,13 +404,13 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path ,
     case(ASCII):
       gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
       break;
-    case(ASCII_template):
+    case(ASCII_TEMPLATE):
       gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
       break;
-    case(binary_double):
+    case(BINARY_DOUBLE):
       gen_data_ecl_write_binary(gen_data , full_path , ecl_double_type);
       break;
-    case(binary_float):
+    case(BINARY_FLOAT):
       gen_data_ecl_write_binary(gen_data , full_path , ecl_float_type);
       break;
     default:

@@ -136,22 +136,30 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       util_abort("%s: you must specify how ECLIPSE is initialized - with either EQUIL or EQUIL_INIT_FILE ",__func__);
     ecl_config->equil_init_file = NULL; 
   }
-  ecl_config->grid = ecl_grid_alloc( config_get(config , "GRID") , ecl_io_config_get_endian_flip(ecl_config->io_config) );
+  if (config_item_set(config , "GRID"))
+    ecl_config->grid = ecl_grid_alloc( config_get(config , "GRID") , ecl_io_config_get_endian_flip(ecl_config->io_config) );
+  else
+    ecl_config->grid = NULL;
+
   return ecl_config;
 }
 
 
 void ecl_config_free(ecl_config_type * ecl_config) {
   ecl_io_config_free( ecl_config->io_config );
-  ecl_grid_free( ecl_config->grid );
   path_fmt_free( ecl_config->eclbase );
   set_free( ecl_config->static_kw_set );
   free(ecl_config->data_file);
   sched_file_free(ecl_config->sched_file);
   free(ecl_config->schedule_target_file);
+
   util_safe_free(ecl_config->equil_init_file);
+
   if (ecl_config->prediction_sched_file_fmt != NULL)
     path_fmt_free(ecl_config->prediction_sched_file_fmt);
+
+  if (ecl_config->grid != NULL)
+    ecl_grid_free( ecl_config->grid );
   
   free(ecl_config);
 }

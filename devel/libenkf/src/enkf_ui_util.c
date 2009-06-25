@@ -37,6 +37,8 @@ state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool ac
     OK = true;
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
     scanf("%s" , analyzed_string);
+    getchar(); /* Discards trailing <RETURN> from standard input buffer? */
+    
     if (strlen(analyzed_string) == 1) {
       char c = toupper(analyzed_string[0]);
       if (c == 'A')

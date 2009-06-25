@@ -12,12 +12,13 @@
 #define GEN_KW_CONFIG_TYPE_ID 550761
 
 struct gen_kw_config_struct {
-  int                   __type_id;
+  UTIL_TYPE_ID_DECLARATION;
   char                * executable;
   char               ** kw_list;
   char               ** tagged_kw_list;  /* The same keywords - but '<' and '>' */
   scalar_config_type  * scalar_config;
   char                * template_file;
+  gen_kw_type         * min_variance;
 };
 
 
@@ -26,12 +27,12 @@ struct gen_kw_config_struct {
 
 static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file) {
   gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
+  UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
   gen_kw_config->kw_list            = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
   gen_kw_config->tagged_kw_list     = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
   gen_kw_config->scalar_config      = scalar_config_alloc_empty(size);
   gen_kw_config->template_file      = util_alloc_string_copy(template_file);
   gen_kw_config->executable         = NULL;
-  gen_kw_config->__type_id          = GEN_KW_CONFIG_TYPE_ID;
 
   /* 
      Allows for template_file == NULL - as a way to adapt to

@@ -52,7 +52,9 @@ hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs);
 const obs_vector_type * enkf_obs_user_get_vector(const enkf_obs_type * obs , const char  * full_key, char ** index_key );
 bool 	  enkf_obs_has_key(const enkf_obs_type * , const char * );
 
-hash_iter_type * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
+hash_iter_type  * enkf_obs_alloc_iter( const enkf_obs_type * enkf_obs );
+
+stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs , const char * input_string);
 
 #ifdef __cplusplus
 }

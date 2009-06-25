@@ -27,6 +27,7 @@ struct gen_data_config_struct {
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
   int                            __report_step;         /* Internal variable used for run_time checking that all instances have the same size (at the same report_step). */
+  gen_data_type                * min_variance;
 };
 
 /*****************************************************************/
@@ -81,15 +82,15 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
   config->__report_step     = -1;
 
   /* Condition 1: */
-  if ((ecl_file != NULL) && (output_format == gen_data_undefined))
+  if ((ecl_file != NULL) && (output_format == GEN_DATA_UNDEFINED))
     util_abort("%s: invalid configuration. When ecl_file != NULL you must explicitly specify an output format with OUTPUT_FORMAT:.\n",__func__);
 
   /* Condition 2: */
-  if (((result_file != NULL) || (init_file_fmt != NULL)) && (input_format == gen_data_undefined))
+  if (((result_file != NULL) || (init_file_fmt != NULL)) && (input_format == GEN_DATA_UNDEFINED))
     util_abort("%s: invalid configuration. When loading with result_file / init_files you must specify an input format with INPUT_FORMAT: \n",__func__);
 
   /* Condition 3: */
-  if (config->output_format == ASCII_template) {
+  if (config->output_format == ASCII_TEMPLATE) {
     if (template_ecl_file == NULL)
       util_abort("%s: internal error - when using format ASCII_template you must supply a temlate file \n",__func__);
   } else
@@ -102,7 +103,7 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
       util_abort("%s: when adding a parameter you must supply files to initialize from with INIT_FILES:/path/to/files/with%d \n",__func__);
   
   /* Condition 5: */
-  if (input_format == ASCII_template)
+  if (input_format == ASCII_TEMPLATE)
     util_abort("%s: Format ASCII_TEMPLATE is not valid as INPUT_FORMAT \n",__func__);
   
   if (template_ecl_file != NULL) {
@@ -126,7 +127,7 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
   pthread_mutex_init( &config->update_lock , NULL );
 
   
-  if (config->output_format == gen_data_undefined) 
+  if (config->output_format == GEN_DATA_UNDEFINED) 
     config->output_format = config->input_format;
   return config;
 }
@@ -145,18 +146,18 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
 
 
 static gen_data_file_format_type __gen_data_config_check_format( const char * format ) {
-  gen_data_file_format_type type = gen_data_undefined;
+  gen_data_file_format_type type = GEN_DATA_UNDEFINED;
 
   if (strcmp(format , "ASCII") == 0)
     type = ASCII;
   else if (strcmp(format , "ASCII_TEMPLATE") == 0)
-    type = ASCII_template;
+    type = ASCII_TEMPLATE;
   else if (strcmp(format , "BINARY_DOUBLE") == 0)
-    type = binary_double;
+    type = BINARY_DOUBLE;
   else if (strcmp(format , "BINARY_FLOAT") == 0)
-    type = binary_float;
+    type = BINARY_FLOAT;
   
-  if (type == gen_data_undefined)
+  if (type == GEN_DATA_UNDEFINED)
     util_exit("Sorry: format:\"%s\" not recognized - valid values: ASCII / ASCII_TEMPLATE / BINARY_DOUBLE / BINARY_FLOAT \n", format);
   
   return type;
@@ -185,8 +186,8 @@ gen_data_config_type * gen_data_config_alloc(const char * key , bool as_param , 
 
   /* Parsing options */
   {
-    gen_data_file_format_type input_format  = gen_data_undefined;
-    gen_data_file_format_type output_format = gen_data_undefined;
+    gen_data_file_format_type input_format  = GEN_DATA_UNDEFINED;
+    gen_data_file_format_type output_format = GEN_DATA_UNDEFINED;
     char * template_file = NULL;
     char * template_key  = NULL;
     char * init_file_fmt = NULL;

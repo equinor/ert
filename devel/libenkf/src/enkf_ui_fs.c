@@ -27,6 +27,7 @@ void enkf_ui_fs_ls_case(void * arg) {
 
 void enkf_ui_fs_create_case(void * arg)
 {
+  int prompt_len = 50;
   char dir[256];
   char * menu_title;
 
@@ -34,7 +35,7 @@ void enkf_ui_fs_create_case(void * arg)
   enkf_fs_type   * enkf_fs  = arg_pack_iget_ptr(arg_pack, 0);
   menu_type      * menu     = arg_pack_iget_ptr(arg_pack, 1);
 
-  printf("Name of case ==> ");
+  util_printf_prompt("Name of new case" , prompt_len , '=' , "=> ");
   scanf("%s", dir);
   
   if(enkf_fs_has_dir(enkf_fs, dir))
@@ -111,64 +112,81 @@ static void enkf_ui_fs_copy_ensemble__(
   state_enum       state_to,
   bool             only_parameters)
 {
-  enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
-  msg_type       * msg       = msg_alloc("Copying: ");
+  enkf_fs_type   * fs        	= enkf_main_get_fs(enkf_main);
+  msg_type       * msg       	= msg_alloc("Copying: ");
   ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
-  int ens_size = ensemble_config_get_size(config);
-
-  /* Store current selections */
-  char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( fs));
-  char * user_write_dir = util_alloc_string_copy(enkf_fs_get_write_dir(fs));
+  int ens_size                  = ensemble_config_get_size(config);
+  char * ranking_key;
+  int  * ranking_permutation = NULL;
   
   
-  /* If the current target_case does not exist it is automatically created by the select_write_dir function */
-  if( !enkf_fs_has_dir(fs, target_case)) 
-    printf("Creating new case: %s \n",target_case);  
+  misfit_table_type * misfit_table = enkf_main_get_misfit( enkf_main );
   
-  enkf_fs_select_write_dir(fs, target_case, true );
-  enkf_fs_select_read_dir( fs, source_case       );
-
-  
-  stringlist_type * nodes;
-  if(only_parameters)
-    nodes = ensemble_config_alloc_keylist_from_var_type(config, PARAMETER);
-  else {
-    /* Must explicitly load the static nodes. */
-    
-    stringlist_type * restart_kw_list = stringlist_alloc_new();
-    int i;
-    enkf_fs_fread_restart_kw_list(fs , report_step_from , 0 , restart_kw_list);  
-    for (i = 0; i < stringlist_get_size( restart_kw_list ); i++) {
-      const char * kw = stringlist_iget( restart_kw_list , i);
-      if (!ensemble_config_has_key(config , kw)) 
-	ensemble_config_add_node(config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
+  if (misfit_table != NULL) {
+    util_printf_prompt("Name of ranking to resort by (or blank)" , 50  , '=' , "=> ");
+    ranking_key = util_alloc_stdin_line();
+    if (misfit_table_has_ranking( misfit_table , ranking_key )) 
+      ranking_permutation = misfit_table_get_ranking_permutation( misfit_table , ranking_key );
+    else {
+      fprintf(stderr," Sorry: ranking:%s does not exist \n", ranking_key );
+      return;
     }
-    for (i=0; i < ens_size; i++) 
-      enkf_fs_fwrite_restart_kw_list(fs , report_step_to , i , restart_kw_list);
-    
-    stringlist_free( restart_kw_list );
-    nodes = ensemble_config_alloc_keylist(config);
   }
-
-  int num_nodes = stringlist_get_size(nodes);
-
-  msg_show(msg);
-  for(int i = 0; i < num_nodes; i++)
+   
   {
-    const char * key = stringlist_iget(nodes, i);
-    enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
-    msg_update(msg , key);
-    enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , 0, ens_size - 1);
+    /* Store current selections */
+    char * user_read_dir  = util_alloc_string_copy(enkf_fs_get_read_dir( fs));
+    char * user_write_dir = util_alloc_string_copy(enkf_fs_get_write_dir(fs));
+    
+    /* If the current target_case does not exist it is automatically created by the select_write_dir function */
+    if( !enkf_fs_has_dir(fs, target_case)) 
+      printf("Creating new case: %s \n",target_case);  
+    
+    enkf_fs_select_write_dir(fs, target_case, true );
+    enkf_fs_select_read_dir( fs, source_case       );
+
+    
+    stringlist_type * nodes;
+    if(only_parameters)
+      nodes = ensemble_config_alloc_keylist_from_var_type(config, PARAMETER);
+    else {
+      /* Must explicitly load the static nodes. */
+      
+      stringlist_type * restart_kw_list = stringlist_alloc_new();
+      int i;
+      enkf_fs_fread_restart_kw_list(fs , report_step_from , 0 , restart_kw_list);  
+      for (i = 0; i < stringlist_get_size( restart_kw_list ); i++) {
+	const char * kw = stringlist_iget( restart_kw_list , i);
+	if (!ensemble_config_has_key(config , kw)) 
+	  ensemble_config_add_node(config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
+      }
+      for (i=0; i < ens_size; i++) 
+	enkf_fs_fwrite_restart_kw_list(fs , report_step_to , i , restart_kw_list);
+      
+      stringlist_free( restart_kw_list );
+      nodes = ensemble_config_alloc_keylist(config);
+    }
+    
+    int num_nodes = stringlist_get_size(nodes);
+    
+    msg_show(msg);
+    for(int i = 0; i < num_nodes; i++)
+      {
+	const char * key = stringlist_iget(nodes, i);
+	enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
+	msg_update(msg , key);
+	enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , ens_size , NULL);
+      }
+    
+    msg_free(msg , true);
+    stringlist_free(nodes);
+    
+    /* Recover initial selections. */
+    enkf_fs_select_write_dir(fs, user_write_dir, false);
+    enkf_fs_select_read_dir( fs, user_read_dir        );
+    free(user_read_dir);
+    free(user_write_dir);
   }
-
-  msg_free(msg , true);
-  stringlist_free(nodes);
-
-  /* Recover initial selections. */
-  enkf_fs_select_write_dir(fs, user_write_dir, false);
-  enkf_fs_select_read_dir( fs, user_read_dir        );
-  free(user_read_dir);
-  free(user_write_dir);
 }
 
 
@@ -183,7 +201,7 @@ void enkf_ui_fs_initialize_case_from_copy(void * arg)
   int last_report;
   int src_step, target_step;
   state_enum src_state, target_state;
-
+  
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
@@ -321,7 +339,7 @@ void enkf_ui_fs_menu(void * arg) {
      arg_pack_type * arg_pack = arg_pack_alloc();
      arg_pack_append_ptr(arg_pack  , fs);
      arg_pack_append_ptr(arg_pack  , menu);
-     menu_add_item(menu , "Create new case" , "cC" , enkf_ui_fs_create_case, arg_pack , arg_pack_free__);
+     menu_add_item(menu , "Create and select new case" , "cC" , enkf_ui_fs_create_case, arg_pack , arg_pack_free__);
    }
 
    {
@@ -337,8 +355,9 @@ void enkf_ui_fs_menu(void * arg) {
    menu_add_item(menu, "Initialize case FOR PREDICTIONS from existing case", "pP" , enkf_ui_fs_initialize_case_for_predictions , enkf_main , NULL); 
 
    menu_add_separator(menu);
+   /* Are these two in use??? */
    menu_add_item(menu, "Copy full ensemble to another case", "eE", enkf_ui_fs_copy_ensemble, enkf_main, NULL); 
-   menu_add_item(menu, "Copy ensemble of parmaters to another case", "oO", enkf_ui_fs_copy_ensemble_of_parameters, enkf_main, NULL); 
+   menu_add_item(menu, "Copy ensemble of parameters to another case", "oO", enkf_ui_fs_copy_ensemble_of_parameters, enkf_main, NULL); 
 
    menu_run(menu);
    menu_free(menu);

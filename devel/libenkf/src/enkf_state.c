@@ -249,8 +249,10 @@ static int member_config_get_last_restart_nr( const member_config_type * member_
 
 static void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
+
   if (member_config->private_sched_file)
     sched_file_free( member_config->sched_file );
+  
   free(member_config);
 }
 
@@ -279,7 +281,7 @@ static member_config_type * member_config_alloc(int iens ,
   {
     char * schedule_prediction_file = ecl_config_alloc_schedule_prediction_file(ecl_config , iens);
     if (schedule_prediction_file != NULL) {
-      member_config->sched_file = sched_file_alloc_copy( ecl_config_get_sched_file( ecl_config ) , false);
+      member_config->sched_file = sched_file_alloc_copy( ecl_config_get_sched_file( ecl_config ) , false); /* The historic part is a shallow copy. */
       sched_file_parse_append( member_config->sched_file , schedule_prediction_file );
       member_config->private_sched_file = true;
       free( schedule_prediction_file );

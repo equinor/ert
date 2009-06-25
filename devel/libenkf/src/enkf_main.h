@@ -16,12 +16,14 @@ extern "C" {
 #include <stringlist.h>
 #include <enkf_obs.h>
 #include <forward_model.h>
+#include <misfit_table.h>
   
 /*****************************************************************/
 
 
 
 typedef struct enkf_main_struct enkf_main_type;
+misfit_table_type           * enkf_main_get_misfit(const enkf_main_type * enkf_main);
 void                          enkf_main_del_unused_static(enkf_main_type * , int );
 const char                  * enkf_main_get_data_file(const enkf_main_type * );
 const char                 ** enkf_main_get_well_list_ref(const enkf_main_type * , int *);
@@ -70,6 +72,10 @@ const char * enkf_main_get_image_viewer(const enkf_main_type * );
 void         enkf_main_analysis_update(enkf_main_type * , int , int );
 const char * enkf_main_get_image_type(const enkf_main_type * enkf_main);
 void         enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2);
+
+void                enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit);
+misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main );
+
 
 SAFE_CAST_HEADER(enkf_main)
 

@@ -89,8 +89,8 @@ void plot_range_set_xmin(plot_range_type * plot_range , double xmin) {
 
 static void plot_range_set_auto__(plot_range_type * plot_range , int index , double value) {
   if (plot_range->auto_range[index]) {
-    plot_range->limits[index] 	= value;
-    plot_range->set[index]    	= true;
+    plot_range->limits[index] = value;
+    plot_range->set[index]    = true;
   }
 }
 

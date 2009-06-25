@@ -886,6 +886,13 @@ void config_item_set_required_children(config_item_type * item , stringlist_type
   item->required_children = stringlist_alloc_deep_copy(stringlist);
 }
 
+void config_item_add_required_children(config_item_type * item , const char * child_key) {
+  if (item->required_children == NULL)
+    item->required_children = stringlist_alloc_new();
+  
+  stringlist_append_copy( item->required_children , child_key );
+}
+
 
 
 /**
