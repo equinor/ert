@@ -48,7 +48,7 @@ struct sched_block_struct {
 
 
 struct sched_file_struct {
-  int               __id;        /* Used for safe run-time casting. */
+  UTIL_TYPE_ID_DECLARATION;
   vector_type     * blocks;      /* A list of chronologically sorted sched_block_type's. */
   stringlist_type * files;       /* The name of the files which have been parsed to generate this sched_file instance. */
   time_t            start_time;  /* The start of the simulation. */
@@ -241,22 +241,14 @@ static void sched_file_build_block_dates(sched_file_type * sched_file)
 sched_file_type * sched_file_alloc(time_t start_time)
 {
   sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
-  sched_file->__id     	       = SCHED_FILE_TYPE_ID;
+  UTIL_TYPE_ID_INIT( sched_file , SCHED_FILE_TYPE_ID);
   sched_file->blocks   	       = vector_alloc_new();
   sched_file->files    	       = stringlist_alloc_new();
   sched_file->start_time       = start_time;
   return sched_file;
 }
 
-
-sched_file_type * sched_file_safe_cast(void * _s) {
-  sched_file_type * s = (sched_file_type *) _s;
-  if (s->__id != SCHED_FILE_TYPE_ID) 
-    util_abort("%s: run_time cast failed - aborting \n",__func__);
-
-  return s;
-}
-
+UTIL_SAFE_CAST_FUNCTION(sched_file , SCHED_FILE_TYPE_ID);
 
 
 void sched_file_free(sched_file_type * sched_file)
@@ -534,15 +526,30 @@ void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
 
 sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_copy) {
   sched_file_type * target = sched_file_alloc(src->start_time);
-  target->files  = stringlist_alloc_deep_copy(src->files);
-  target->blocks = vector_alloc_new();
-  for (int i=0; i < vector_get_size( src->blocks ); i++) {
-    sched_block_type * block = vector_iget(src->blocks , i);
-    if (deep_copy)
-      sched_file_add_block(target , sched_block_alloc_copy( block ));
-    else
-      vector_append_ref( target->blocks , block);
+  
+  {
+    int i;
+    for (i=0; i < vector_get_size( src->blocks ); i++) {
+      sched_block_type * block = vector_iget(src->blocks , i);
+      if (deep_copy) 
+	/* 
+	   sched_block_alloc_copy will invoke the kw copy constructors,
+	   and they are not all implemented.
+	*/
+	sched_file_add_block(target , sched_block_alloc_copy( block ));
+      else 
+	vector_append_ref( target->blocks , block);
+    }
+    
+
+    for (i = 0; i < stringlist_get_size( src->files ); i++) {
+      if (deep_copy)
+	stringlist_append_copy( target->files , stringlist_iget(src->files , i));
+      else
+	stringlist_append_ref( target->files , stringlist_iget(src->files , i));
+    }
   }
+  
   return target;
 }
 
