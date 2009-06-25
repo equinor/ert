@@ -149,7 +149,6 @@ void lsf_request_set_request_string(lsf_request_type * lsf_request , const char 
 
 
 void lsf_request_update__(lsf_request_type * lsf_request , const char * __resource_request) {
-  printf("%s:  %s \n",__func__ , __resource_request);
   if (__resource_request != NULL) {
     char * resource_request = util_alloc_string_copy( __resource_request );
     char * select_ptr = strstr(resource_request , "select");
