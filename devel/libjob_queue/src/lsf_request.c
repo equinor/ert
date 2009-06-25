@@ -46,7 +46,7 @@ struct lsf_request_struct {
 
 lsf_request_type * lsf_request_alloc() {
   lsf_request_type * lsf_request = util_malloc(sizeof * lsf_request , __func__);
-  lsf_request->request = NULL;
+  lsf_request->request         = NULL;
   lsf_request->rusage          = NULL;
   lsf_request->select_set      = NULL;
   lsf_request_reset(lsf_request);
@@ -101,11 +101,16 @@ void lsf_request_set_request_string(lsf_request_type * lsf_request , const char 
   char * rusage_string = NULL;
 
 
-  if ( lsf_request->select_set != NULL) {
+  if ( lsf_request->select_set != NULL ) {
     char ** select_keys = set_alloc_keylist(lsf_request->select_set);
     int     keys        = set_get_size(lsf_request->select_set);
-    if (keys == 0) 
+    if (keys == 0) {
+      fprintf(stderr," The LSF_REQUEST select[] statements can not be satisfied, \n");
+      fprintf(stderr," this situation is typically because one job has select[A] \n");
+      fprintf(stderr," and the other job select[B]; those statements can not both\n");
+      fprintf(stderr," be satisfied - and the job will fail.\n");
       util_abort("%s: the selection set is the empty set - \n",__func__);
+    }
     {
       char * tmp = util_alloc_joined_string((const char **) select_keys , keys , "||");
       select_string = util_alloc_sprintf("select[%s]" , tmp);
@@ -144,6 +149,7 @@ void lsf_request_set_request_string(lsf_request_type * lsf_request , const char 
 
 
 void lsf_request_update__(lsf_request_type * lsf_request , const char * __resource_request) {
+  printf("%s:  %s \n",__func__ , __resource_request);
   if (__resource_request != NULL) {
     char * resource_request = util_alloc_string_copy( __resource_request );
     char * select_ptr = strstr(resource_request , "select");
@@ -182,7 +188,7 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
 	  for (int i = 0; i < tokens; i++)
 	    set_add_key(lsf_request->rusage , token_list[i]);
 	  
-	  free(token_list);
+	  util_free_stringlist( token_list , tokens );
 	  free(rusage_string);
 	}
       }
@@ -223,10 +229,8 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
 	     beers to those who can break it ... 
 	  */
 	  util_split_string( select_string , "|" , &tokens , &token_list);  
-	  for (i = 0; i < tokens; i++) {
+	  for (i = 0; i < tokens; i++) 
 	    set_add_key(select_set , token_list[i]);
-	    free(token_list[i]);
-	  }
 	  
 	  if (lsf_request->select_set == NULL)
 	    lsf_request->select_set = select_set;
@@ -235,14 +239,14 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
 	    set_free(select_set);
 	  }
 	  
-	  free(token_list);
+	  util_free_stringlist(token_list , tokens);
 	  free(select_string);
 	}
       }
     }
     free( resource_request );
+    lsf_request->__valid_request = false;
   }
-  lsf_request->__valid_request = false;
 }
 
 
