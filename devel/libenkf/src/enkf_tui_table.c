@@ -7,15 +7,15 @@
 #include <menu.h>
 #include <arg_pack.h>
 #include <enkf_main.h>
-#include <enkf_ui_plot.h>
-#include <enkf_ui_fs.h>
+#include <enkf_tui_plot.h>
+#include <enkf_tui_fs.h>
 #include <enkf_obs.h>
 #include <field_obs.h>
 #include <field_config.h>
 #include <obs_vector.h>
 #include <plot.h>
 #include <plot_dataset.h>
-#include <enkf_ui_util.h>
+#include <enkf_tui_util.h>
 #include <ensemble_config.h>
 #include <msg.h>
 
@@ -25,7 +25,7 @@
 	
 	   
 
-static void enkf_ui_table__(enkf_main_type * enkf_main , bool ens_plot) {
+static void enkf_tui_table__(enkf_main_type * enkf_main , bool ens_plot) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const int ens_size = ensemble_config_get_size(ensemble_config);
@@ -136,28 +136,28 @@ static void enkf_ui_table__(enkf_main_type * enkf_main , bool ens_plot) {
 
 
 
-static void enkf_ui_table_ensemble(void * arg) {
+static void enkf_tui_table_ensemble(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-  enkf_ui_table__(enkf_main , true);
+  enkf_tui_table__(enkf_main , true);
 }
 
 
-static void enkf_ui_table_time(void * arg) {
+static void enkf_tui_table_time(void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
-  enkf_ui_table__(enkf_main , false);
+  enkf_tui_table__(enkf_main , false);
 }
 
 
 
 
 
-void enkf_ui_table_menu(void * arg) {
+void enkf_tui_table_menu(void * arg) {
   
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   {
     menu_type * menu = menu_alloc("Table of results" , "Back" , "bB");
-    menu_add_item(menu , "Ensemble of parameters"          , "eE"  , enkf_ui_table_ensemble , enkf_main , NULL);
-    menu_add_item(menu , "Time development of parameters"  , "tT"  , enkf_ui_table_time     , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble of parameters"          , "eE"  , enkf_tui_table_ensemble , enkf_main , NULL);
+    menu_add_item(menu , "Time development of parameters"  , "tT"  , enkf_tui_table_time     , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);
   }

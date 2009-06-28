@@ -29,7 +29,7 @@
 */
 
 
-state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool accept_both) {
+state_enum enkf_tui_util_scanf_state(const char * prompt, int prompt_len, bool accept_both) {
   char analyzed_string[64];
   bool OK;
   state_enum state;
@@ -81,7 +81,7 @@ state_enum enkf_ui_util_scanf_state(const char * prompt, int prompt_len, bool ac
    keyword is of type impl_type.
 */
 
-const enkf_config_node_type * enkf_ui_util_scanf_key(const ensemble_config_type * config , int prompt_len , enkf_impl_type impl_type ,  enkf_var_type var_type) {
+const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type * config , int prompt_len , enkf_impl_type impl_type ,  enkf_var_type var_type) {
   char * kw;
   bool OK;
   const enkf_config_node_type * config_node;
@@ -118,7 +118,7 @@ const enkf_config_node_type * enkf_ui_util_scanf_key(const ensemble_config_type 
 */
 
 
-bool * enkf_ui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int * _iens1 , int * _iens2) {
+bool * enkf_tui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int * _iens1 , int * _iens2) {
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
   int iens1 = util_scanf_int_with_limits("First ensemble member" , prompt_len , 0 , ens_size - 1);
   int iens2 = util_scanf_int_with_limits("Last ensemble member" , prompt_len , iens1 , ens_size - 1);
@@ -147,7 +147,7 @@ bool * enkf_ui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int *
 */
 
   
-void enkf_ui_util_scanf_iens_range(const char * prompt_fmt , int ens_size , int prompt_len , int * iens1 , int * iens2) {
+void enkf_tui_util_scanf_iens_range(const char * prompt_fmt , int ens_size , int prompt_len , int * iens1 , int * iens2) {
   char * prompt = util_alloc_sprintf(prompt_fmt , ens_size - 1);
   bool OK = false;
 
@@ -170,7 +170,7 @@ void enkf_ui_util_scanf_iens_range(const char * prompt_fmt , int ens_size , int 
 }
 
 
-void enkf_ui_util_scanf_report_steps(int last_report , int prompt_len , int * __step1 , int * __step2) {
+void enkf_tui_util_scanf_report_steps(int last_report , int prompt_len , int * __step1 , int * __step2) {
   char * prompt = util_alloc_sprintf("Report steps (0 - %d)" , last_report);
   bool OK = false;
 
@@ -204,10 +204,10 @@ void enkf_ui_util_scanf_report_steps(int last_report , int prompt_len , int * __
 
 
 /**
-   Similar to enkf_ui_util_scanf_alloc_iens_active(), but based on report steps.
+   Similar to enkf_tui_util_scanf_alloc_iens_active(), but based on report steps.
 */
 
-bool * enkf_ui_util_scanf_alloc_report_active(int last_step, int prompt_len) {
+bool * enkf_tui_util_scanf_alloc_report_active(int last_step, int prompt_len) {
   bool * iactive = util_malloc((last_step + 1) * sizeof * iactive , __func__);
   int step1 = util_scanf_int_with_limits("First report step" , prompt_len , 0 , last_step);
   int step2 = util_scanf_int_with_limits("Last report step" , prompt_len , step1 , last_step);
@@ -227,15 +227,15 @@ bool * enkf_ui_util_scanf_alloc_report_active(int last_step, int prompt_len) {
     This functions reads i,j,k and returns them be reference; if the
     reference pointer is NULL, that coordinate is skipped. I.e.
 
-    enkf_ui_util_scanf_ijk__(config , 100 , &i , &j , NULL);
+    enkf_tui_util_scanf_ijk__(config , 100 , &i , &j , NULL);
 
     Will read i and j. If your are interested in all three coordinates
-    you should use enkf_ui_util_scanf_ijk() which has a more flexible
+    you should use enkf_tui_util_scanf_ijk() which has a more flexible
     parser.
 */
 
 
-void enkf_ui_util_scanf_ijk__(const field_config_type * config, int prompt_len , int *i , int *j , int *k) {
+void enkf_tui_util_scanf_ijk__(const field_config_type * config, int prompt_len , int *i , int *j , int *k) {
   int nx,ny,nz;
 
   field_config_get_dims(config , &nx , &ny , &nz);
@@ -256,7 +256,7 @@ void enkf_ui_util_scanf_ijk__(const field_config_type * config, int prompt_len ,
    to an active cell.
 */
    
-int enkf_ui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
+int enkf_tui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
   int global_index;
   field_config_scanf_ijk(config , true , "Give (i,j,k) indices" , prompt_len , NULL , NULL , NULL , &global_index);
   return global_index;
@@ -282,7 +282,7 @@ int enkf_ui_util_scanf_ijk(const field_config_type * config, int prompt_len) {
 */
    
 
-void enkf_ui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * config_node, enkf_node_type * node , state_enum analysis_state , int get_index , int step1 , int step2 , int iens , double * x , double * y ) {
+void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * config_node, enkf_node_type * node , state_enum analysis_state , int get_index , int step1 , int step2 , int iens , double * x , double * y ) {
   const char * key = enkf_config_node_get_key(config_node);
   int report_step;
   int index = 0;
@@ -320,7 +320,7 @@ void enkf_ui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * con
 }
 
 
-int enkf_ui_util_scanf_report_step(int last_report, const char * prompt , int prompt_len) {
+int enkf_tui_util_scanf_report_step(int last_report, const char * prompt , int prompt_len) {
   int report_step                         = util_scanf_int_with_limits(prompt , prompt_len , 0 , last_report);
   return report_step;
 }
@@ -330,7 +330,7 @@ int enkf_ui_util_scanf_report_step(int last_report, const char * prompt , int pr
 
 
 /* Minimum wrapping of vfprintf */
-void enkf_ui_util_msg(const char * fmt , ...) {
+void enkf_tui_util_msg(const char * fmt , ...) {
   va_list ap;
   va_start(ap , fmt);
   vfprintf(stdout , fmt , ap);

@@ -8,15 +8,15 @@
 #include <enkf_main.h>
 #include <enkf_sched.h>
 #include <enkf_types.h>
-#include <enkf_ui_util.h>
-#include <enkf_ui_init.h>
+#include <enkf_tui_util.h>
+#include <enkf_tui_init.h>
 #include <enkf_state.h>
 #include <enkf_node.h>
 #include <enkf_fs.h>
 #include <msg.h>
 #include <ensemble_config.h>
 
-static void enkf_ui_init__(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2) {
+static void enkf_tui_init__(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2) {
   int iens;
   enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
   msg_type * msg = msg_alloc("Initializing...: " );
@@ -43,7 +43,7 @@ static void enkf_ui_init__(enkf_main_type * enkf_main , const stringlist_type * 
 
 
 
-void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parameters) {
+void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_parameters) {
   const int prompt_len                         = 35;
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   int   ens_size                               = ensemble_config_get_size(ensemble_config);
@@ -68,39 +68,39 @@ void enkf_ui_init(enkf_main_type * enkf_main, bool all_members , bool all_parame
     }
     stringlist_free(tmp_key_list);
   } else 
-    stringlist_append_copy( param_list , enkf_config_node_get_key(enkf_ui_util_scanf_key(ensemble_config , prompt_len , INVALID , INVALID_VAR)) );
+    stringlist_append_copy( param_list , enkf_config_node_get_key(enkf_tui_util_scanf_key(ensemble_config , prompt_len , INVALID , INVALID_VAR)) );
 
     
-  enkf_ui_init__(enkf_main , param_list , iens1 , iens2);
+  enkf_tui_init__(enkf_main , param_list , iens1 , iens2);
   stringlist_free( param_list );
 }
 
 
-static void enkf_ui_init1(void * enkf_main) {
-  enkf_ui_init(enkf_main, true , true);
+static void enkf_tui_init1(void * enkf_main) {
+  enkf_tui_init(enkf_main, true , true);
 }
 
-static void enkf_ui_init2(void * enkf_main) {
-  enkf_ui_init(enkf_main , true , false);
+static void enkf_tui_init2(void * enkf_main) {
+  enkf_tui_init(enkf_main , true , false);
 }
 
-static void enkf_ui_init3(void * enkf_main) {
-  enkf_ui_init(enkf_main , false , true );
+static void enkf_tui_init3(void * enkf_main) {
+  enkf_tui_init(enkf_main , false , true );
 }
 
-static void enkf_ui_init4(void * enkf_main) {
-  enkf_ui_init(enkf_main , false , false);
+static void enkf_tui_init4(void * enkf_main) {
+  enkf_tui_init(enkf_main , false , false);
 }
 
 
-void enkf_ui_init_menu(void * arg) {
+void enkf_tui_init_menu(void * arg) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(arg);
 
   menu_type * menu = menu_alloc("Initialize from scratch" , "Back" , "bB");
-  menu_add_item(menu , "Initialize all members/all parameters" , "1" , enkf_ui_init1 , enkf_main , NULL);
-  menu_add_item(menu , "Initialize all members/one  parameter" , "2" , enkf_ui_init2 , enkf_main , NULL);
-  menu_add_item(menu , "Initialize one member/all parameters" , "3" , enkf_ui_init3 , enkf_main , NULL);
-  menu_add_item(menu , "Initialize one member/one parameter"  , "4" , enkf_ui_init4 , enkf_main , NULL);
+  menu_add_item(menu , "Initialize all members/all parameters" , "1" , enkf_tui_init1 , enkf_main , NULL);
+  menu_add_item(menu , "Initialize all members/one  parameter" , "2" , enkf_tui_init2 , enkf_main , NULL);
+  menu_add_item(menu , "Initialize one member/all parameters" , "3" , enkf_tui_init3 , enkf_main , NULL);
+  menu_add_item(menu , "Initialize one member/one parameter"  , "4" , enkf_tui_init4 , enkf_main , NULL);
   
   menu_run(menu);
   menu_free(menu);

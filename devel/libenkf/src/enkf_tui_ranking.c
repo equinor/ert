@@ -4,11 +4,11 @@
 #include <enkf_main.h>
 #include <menu.h>
 #include <enkf_obs.h>
-#include <enkf_ui_util.h>
+#include <enkf_tui_util.h>
 
 
 
-static void enkf_ui_ranking_make_misfit_table( void * arg) {
+static void enkf_tui_ranking_make_misfit_table( void * arg) {
   const state_enum load_state  		       = both;
   enkf_main_type  * enkf_main  		       = enkf_main_safe_cast( arg );  
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
@@ -21,7 +21,7 @@ static void enkf_ui_ranking_make_misfit_table( void * arg) {
 }
 
 
-static void enkf_ui_ranking_create( void * arg ) {
+static void enkf_tui_ranking_create( void * arg ) {
   enkf_main_type    * enkf_main       = enkf_main_safe_cast( arg );  
   enkf_obs_type     * enkf_obs        = enkf_main_get_obs( enkf_main );
   misfit_table_type * misfit_table    = enkf_main_get_misfit( enkf_main );
@@ -41,7 +41,7 @@ static void enkf_ui_ranking_create( void * arg ) {
     util_printf_prompt(prompt1 , prompt_len , '=' , "=> ");
     obs_keys_input = util_alloc_stdin_line();
     ranking_keys   = enkf_obs_alloc_matching_keylist( enkf_obs , obs_keys_input );
-    enkf_ui_util_scanf_report_steps(history_length , prompt_len , &step1 , &step2);
+    enkf_tui_util_scanf_report_steps(history_length , prompt_len , &step1 , &step2);
     
     util_printf_prompt(prompt2 , prompt_len , '=' , "=> ");
     ranking_key = util_alloc_stdin_line();
@@ -61,7 +61,7 @@ static void enkf_ui_ranking_create( void * arg ) {
 }
 
 
-static void enkf_ui_ranking_display( void * arg ) {
+static void enkf_tui_ranking_display( void * arg ) {
   enkf_main_type    * enkf_main       = enkf_main_safe_cast( arg );  
   misfit_table_type * misfit_table    = enkf_main_get_misfit( enkf_main );
 
@@ -87,15 +87,15 @@ static void enkf_ui_ranking_display( void * arg ) {
 }
 
 
-void enkf_ui_ranking_menu(void * arg) {
+void enkf_tui_ranking_menu(void * arg) {
     
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );  
   {
     menu_type * menu = menu_alloc("Ranking of results" , "Back" , "bB");
-    menu_add_item(menu , "Create/update misfit table" , "cC"  , enkf_ui_ranking_make_misfit_table   , enkf_main , NULL);
+    menu_add_item(menu , "Create/update misfit table" , "cC"  , enkf_tui_ranking_make_misfit_table   , enkf_main , NULL);
     menu_add_separator( menu );
-    menu_add_item(menu , "New ranking" , "nN" , enkf_ui_ranking_create  , enkf_main , NULL);
-    menu_add_item(menu , "Display ranking"    , "dD" , enkf_ui_ranking_display , enkf_main , NULL);
+    menu_add_item(menu , "New ranking" , "nN" , enkf_tui_ranking_create  , enkf_main , NULL);
+    menu_add_item(menu , "Display ranking"    , "dD" , enkf_tui_ranking_display , enkf_main , NULL);
     
     menu_run(menu);
     menu_free(menu);

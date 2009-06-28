@@ -3,7 +3,7 @@
 #include <enkf_main.h>
 
 
-void enkf_ui_main_menu(enkf_main_type *);
+void enkf_tui_main_menu(enkf_main_type *);
 
 
 #endif
