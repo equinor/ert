@@ -790,7 +790,7 @@ const char * enkf_main_get_image_type(const enkf_main_type * enkf_main) {
 void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
   const ext_joblist_type * joblist = site_config_get_installed_jobs( enkf_main->site_config);
 
-  model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode);
+  model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode , site_config_get_statoil_mode( enkf_main->site_config ));
   enkf_main_init_internalization(enkf_main , run_mode);
 
 }
@@ -931,6 +931,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
     /*****************************************************************/
     /** Keywords expected normally found in site_config */
+    item = config_add_item(config , "HOST_TYPE" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
+    config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
+    
+
     item = config_add_item(config , "MAX_SUBMIT" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT});
@@ -1128,6 +1134,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
        populating the enkf_main object. 
     */
     
+
     enkf_main->analysis_config = analysis_config_alloc(config);
     {
       bool use_lsf;
@@ -1137,7 +1144,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main->model_config    = model_config_alloc(config , 
 						      site_config_get_installed_jobs(enkf_main->site_config) , 
 						      ecl_config_get_last_history_restart( enkf_main->ecl_config ), 
-						      ecl_config_get_sched_file(enkf_main->ecl_config) , use_lsf);
+						      ecl_config_get_sched_file(enkf_main->ecl_config) , 
+						      site_config_get_statoil_mode( enkf_main->site_config ),
+						      use_lsf);
     }
 
 
@@ -1359,11 +1368,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   }
   free(model_config);
   enkf_main->misfit_table = NULL;
-  /*
-  enkf_main->misfit_table = misfit_table_alloc( model_config_get_last_history_restart( enkf_main->model_config ) + 1,
-						ensemble_config_get_size( enkf_main->ensemble_config ),
-						enkf_main->obs);
-  */
   return enkf_main;
 }
     

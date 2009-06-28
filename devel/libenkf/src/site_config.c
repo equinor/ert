@@ -26,10 +26,13 @@ struct site_config_struct {
   job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
   char             	* image_viewer;  /* String pointing to an executable which can show images. */
   char                  * image_type;
+  bool                    statoil_mode;  /* Quite obtrusive hack to support statoil_mode in the lsf_request. */
 };
 
 
-
+bool site_config_get_statoil_mode(const site_config_type * site_config ) {
+  return site_config->statoil_mode;
+}
 
 
 static site_config_type * site_config_alloc_empty() {
@@ -122,6 +125,7 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
   const char * job_script   = config_get(config , "JOB_SCRIPT");
   int   max_submit          = strtol(config_get(config , "MAX_SUBMIT") , NULL , 10);
   *use_lsf                  = false;
+
   
   if (strcmp(queue_system , "LSF") == 0) {
     const char * lsf_queue_name = config_get(config , "LSF_QUEUE");
@@ -158,6 +162,7 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
 
 
 site_config_type * site_config_alloc(const config_type * config , int ens_size , bool * use_lsf) {
+  const char * host_type    = config_get(config , "HOST_TYPE");
   site_config_type * site_config = site_config_alloc_empty();
   site_config_install_joblist(site_config , config);
   {
@@ -178,11 +183,19 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
       util_update_path_var( path , value , false);
     }
   }
-  /* When LSF is used several enviroment variables must be set - i.e.
-     the calls to SETENV must come first. */
+  /* 
+     When LSF is used several enviroment variables must be set - i.e.
+     the calls to SETENV must come first. 
+  */
+  if (strcmp(host_type , "STATOIL") == 0) 
+    site_config->statoil_mode = true;
+  else
+    site_config->statoil_mode = false;
+  
   site_config_install_job_queue(site_config , config , ens_size , use_lsf);
   site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
   site_config_set_image_type(site_config , config_get(config , "IMAGE_TYPE"));
+  
   return site_config;
 }
 

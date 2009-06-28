@@ -80,7 +80,7 @@ void model_config_set_runpath_fmt(model_config_type * model_config, const char *
 */
 
 
-void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode) {
+void model_config_set_enkf_sched(model_config_type * model_config , const ext_joblist_type * joblist , run_mode_type run_mode , bool statoil_mode) {
   if (model_config->enkf_sched != NULL)
     enkf_sched_free( model_config->enkf_sched );
   
@@ -89,6 +89,7 @@ void model_config_set_enkf_sched(model_config_type * model_config , const ext_jo
 						      model_config->abs_last_restart     , 
 						      run_mode                            , 
 						      joblist                             , 
+						      statoil_mode , 
 						      model_config->use_lsf );
 }
 
@@ -98,7 +99,7 @@ void model_config_set_enkf_sched_file(model_config_type * model_config , const c
 }
 
 
-model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , int last_history_restart , const sched_file_type * sched_file , bool use_lsf) {
+model_config_type * model_config_alloc(const config_type * config , const ext_joblist_type * joblist , int last_history_restart , const sched_file_type * sched_file , bool statoil_mode , bool use_lsf) {
   model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
 
   model_config->use_lsf            = use_lsf;
@@ -106,7 +107,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   model_config->result_path        = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
-    model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , model_config->use_lsf);
+    model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , statoil_mode , model_config->use_lsf);
     free(config_string);
   }
   model_config->runlock_mode       = lock_none;

@@ -222,7 +222,7 @@ static void enkf_sched_append_node(enkf_sched_type * enkf_sched , enkf_sched_nod
 */
 
 
-static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE * stream , const ext_joblist_type * joblist , bool use_lsf , bool * at_eof) {
+static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE * stream , const ext_joblist_type * joblist , bool statoil_mode , bool use_lsf , bool * at_eof) {
   forward_model_type * forward_model = NULL;
   enkf_sched_node_type * sched_node  = NULL;
   char ** token_list;
@@ -256,7 +256,7 @@ static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE *
 	  model_length = tokens - model_start;
 	  if (model_length > 0) {
 	    char * input_string = util_alloc_joined_string( (const char **) &token_list[model_start] , model_length , " ");
-	    forward_model = forward_model_alloc( input_string , joblist , use_lsf );
+	    forward_model = forward_model_alloc( input_string , joblist , statoil_mode , use_lsf );
 	    free( input_string );
 	  }
 	}
@@ -386,7 +386,7 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
    enkf_sched_type instance is allocated.
 */
 
-enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int last_history_restart , int abs_last_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool use_lsf) {
+enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int last_history_restart , int abs_last_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool statoil_mode , bool use_lsf) {
   enkf_sched_type * enkf_sched = enkf_sched_alloc_empty( );
   if (enkf_sched_file == NULL)
     enkf_sched_set_default(enkf_sched , last_history_restart , abs_last_restart , run_mode);
@@ -394,7 +394,7 @@ enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int las
     FILE * stream = util_fopen(enkf_sched_file , "r");
     bool at_eof;
     do { 
-      enkf_sched_fscanf_alloc_nodes(enkf_sched , stream , joblist , use_lsf , &at_eof);
+      enkf_sched_fscanf_alloc_nodes(enkf_sched , stream , joblist , statoil_mode , use_lsf , &at_eof);
     } while (!at_eof);
     
     fclose( stream );

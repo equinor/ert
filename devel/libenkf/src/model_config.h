@@ -29,7 +29,7 @@ void                  model_config_update_last_restart(model_config_type * , int
 void                  model_config_set_plot_path(model_config_type * , const char *);
 const char          * model_config_get_plot_path(const model_config_type * );
   //void                  enkf_fs_fwrite_new_mount_map(const char * , const char * );
-model_config_type   * model_config_alloc(const config_type * , const ext_joblist_type * , int , const sched_file_type * , bool);
+model_config_type   * model_config_alloc(const config_type * , const ext_joblist_type * , int , const sched_file_type * , bool , bool);
 void                  model_config_free(model_config_type *);
 enkf_fs_type        * model_config_get_fs(const model_config_type * );
 path_fmt_type       * model_config_get_runpath_fmt(const model_config_type * );
@@ -42,7 +42,7 @@ bool                  model_config_internalize_state( const model_config_type *,
 bool                  model_config_internalize_results( const model_config_type *, int );
 bool                  model_config_load_state( const model_config_type *, int );
 bool                  model_config_load_results( const model_config_type *, int );
-void                  model_config_set_enkf_sched(model_config_type *  , const ext_joblist_type * , run_mode_type);
+void                  model_config_set_enkf_sched(model_config_type *  , const ext_joblist_type * , run_mode_type , bool);
 
 #ifdef __cplusplus 
 }

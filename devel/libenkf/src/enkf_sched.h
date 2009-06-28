@@ -14,7 +14,7 @@ typedef struct enkf_sched_node_struct enkf_sched_node_type;
 
 
 void               	       enkf_sched_fprintf(const enkf_sched_type *  , FILE * );
-enkf_sched_type *  	       enkf_sched_fscanf_alloc(const char * , int , int  , run_mode_type , const ext_joblist_type * , bool);
+enkf_sched_type *  	       enkf_sched_fscanf_alloc(const char * , int , int  , run_mode_type , const ext_joblist_type * , bool , bool);
 void               	       enkf_sched_free(enkf_sched_type *);
 int                	       enkf_sched_get_num_nodes(const enkf_sched_type *);
 int                            enkf_sched_get_last_report(const enkf_sched_type * enkf_sched);

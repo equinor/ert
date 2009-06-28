@@ -88,6 +88,7 @@ typedef struct shared_info_struct {
   enkf_fs_type                * fs;                /* The filesystem object - used to load and store nodes. */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
+  bool                          statoil_mode;      /* Fucking hack - should be removed. */
 } shared_info_type;
 
 
@@ -215,7 +216,8 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
   shared_info->model_config = model_config;
-  
+  shared_info->statoil_mode = site_config_get_statoil_mode( site_config );
+
   return shared_info;
 }
 
@@ -328,7 +330,7 @@ void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
 
 
 void enkf_state_set_special_forward_model(enkf_state_type * enkf_state , forward_model_type * forward_model) {
-  enkf_state->special_forward_model = forward_model_alloc_copy( forward_model );  /* Discarded again at the end of this run */
+  enkf_state->special_forward_model = forward_model_alloc_copy( forward_model , enkf_state->shared_info->statoil_mode);  /* Discarded again at the end of this run */
   enkf_state->forward_model = enkf_state->special_forward_model;
   enkf_state_init_forward_model(enkf_state);
 }
@@ -519,7 +521,7 @@ INCLDUE
   }
 
   enkf_state->special_forward_model = NULL;
-  enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model );
+  enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model , site_config_get_statoil_mode(site_config));
   enkf_state->forward_model         = enkf_state->default_forward_model;
   enkf_state_init_forward_model( enkf_state );
   return enkf_state;

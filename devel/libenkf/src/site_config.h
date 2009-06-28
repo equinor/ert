@@ -8,9 +8,11 @@ extern "C" {
 #include <ext_joblist.h>
 #include <stringlist.h>
 #include <forward_model.h>
+#include <stdbool.h>
 
 typedef struct site_config_struct site_config_type;
 
+bool                     site_config_get_statoil_mode(const site_config_type * site_config );
 const char             * site_config_get_image_type(site_config_type * site_config);
 const char             * site_config_get_image_viewer(site_config_type * site_config);
 void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);

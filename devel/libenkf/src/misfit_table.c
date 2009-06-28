@@ -39,6 +39,7 @@ struct misfit_table_struct {
   vector_type 	      * ensemble;       /* Vector of misfit_node_type instances - one for each ensemble member. */
   hash_type   	      * ranking_list;   /* A hash table of stored permutation vectors. */
   const enkf_obs_type * enkf_obs;       /* A pointer to the active enkf_obs instance - NOT owned by the misfit_table. */
+  char                * current_case;   /* The (filesystem) case which was used when building the misfit table. */
 };
 
 
@@ -229,6 +230,7 @@ static void misfit_table_update( misfit_table_type * misfit_table , const ensemb
 
 misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , enkf_fs_type * fs , int history_length , int ens_size , const enkf_obs_type * enkf_obs ) {
   misfit_table_type * table = util_malloc( sizeof * table , __func__);
+  table->current_case   = util_alloc_string_copy( enkf_fs_get_read_dir( fs ));
   table->history_length = history_length;
   table->ensemble       = vector_alloc_new();
   {
@@ -301,5 +303,6 @@ void misfit_table_create_ranking(misfit_table_type * table , const stringlist_ty
 void misfit_table_free(misfit_table_type * table ) {
   hash_free( table->ranking_list );
   vector_free( table->ensemble );
+  free( table->current_case );
   free( table );
 }

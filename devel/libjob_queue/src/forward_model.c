@@ -39,13 +39,13 @@ static char * __alloc_tagged_string(const char * s) {
 
 
 
-static forward_model_type * forward_model_alloc__(const ext_joblist_type * ext_joblist, bool use_lsf) {
+static forward_model_type * forward_model_alloc__(const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf) {
   forward_model_type * forward_model = util_malloc( sizeof * forward_model , __func__);
 
   forward_model->jobs        = vector_alloc_new();
   forward_model->ext_joblist = ext_joblist;
   if (use_lsf)
-    forward_model->lsf_request = lsf_request_alloc(NULL , NULL);
+    forward_model->lsf_request = lsf_request_alloc(statoil_mode);
   else
     forward_model->lsf_request = NULL;
   
@@ -105,8 +105,8 @@ static void forward_model_update_lsf_request(forward_model_type * forward_model)
    
 */
 
-forward_model_type * forward_model_alloc(const char * input_string , const ext_joblist_type * ext_joblist, bool use_lsf) {
-  forward_model_type * forward_model = forward_model_alloc__(ext_joblist , use_lsf);
+forward_model_type * forward_model_alloc(const char * input_string , const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf) {
+  forward_model_type * forward_model = forward_model_alloc__(ext_joblist , statoil_mode , use_lsf);
   char * p1                          = (char *) input_string;
   while (true) {
     char         * job_name;
@@ -225,14 +225,14 @@ void forward_model_python_fprintf(const forward_model_type * forward_model , con
 
 
 
-forward_model_type * forward_model_alloc_copy(const forward_model_type * forward_model) {
+forward_model_type * forward_model_alloc_copy(const forward_model_type * forward_model , bool statoil_mode) {
   int ijob;
   bool use_lsf = false;
   forward_model_type * new;
 
   if (forward_model->lsf_request != NULL)
     use_lsf = true;
-  new = forward_model_alloc__(forward_model->ext_joblist , use_lsf);
+  new = forward_model_alloc__(forward_model->ext_joblist , statoil_mode , use_lsf);
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
     const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
     vector_append_owned_ref( new->jobs , ext_job_alloc_copy( job ) , ext_job_free__);

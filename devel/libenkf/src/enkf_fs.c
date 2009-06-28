@@ -73,6 +73,16 @@
 
 
 
+   Version: 103
+   ------------
+   Have changed the reading/writing to go through the buffer
+   type. This should simplify introducing other drivers than the
+   simple plain file based driver.  
+
+   The upgrade to version is 103 is quite extensive - all node types
+   have specific _103_ functions.
+
+
 */
 
 

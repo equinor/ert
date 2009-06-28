@@ -31,7 +31,7 @@ field_trans.o                       : field_trans.c field_trans.h
 field_config.o                      : field_config.c field_config.h enkf_types.o enkf_macros.h field_active.o active_list.o field_trans.o  
 obs_vector.o                        : obs_vector.c obs_vector.h enkf_fs.o summary_obs.o field_obs.o gen_obs.o ensemble_config.o active_list.o  
 multflt.o                           : multflt.c multflt.h enkf_types.o enkf_macros.h multflt_config.o enkf_util.o scalar.o  
-enkf_ui_ranking.o                   : enkf_ui_ranking.c enkf_ui_ranking.h enkf_main.o enkf_obs.o  
+enkf_ui_ranking.o                   : enkf_ui_ranking.c enkf_ui_ranking.h enkf_main.o enkf_obs.o enkf_ui_util.o  
 enkf_util.o                         : enkf_util.c enkf_util.h enkf_defaults.o  
 enkf_serialize.o                    : enkf_serialize.c enkf_serialize.h enkf_types.o active_list.o serialize.h serialize.h deserialize.h deserialize.h  
 scalar.o                            : scalar.c scalar.h enkf_types.o scalar_config.o enkf_util.o enkf_serialize.o  

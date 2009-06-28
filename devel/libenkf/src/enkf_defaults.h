@@ -12,7 +12,7 @@
 #define __ENKF_DEFAULT__
 #include <stdbool.h>
 
-
+#define DEFAULT_HOST_TYPE "STATOIL"
 
 
 

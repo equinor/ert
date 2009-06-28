@@ -32,6 +32,7 @@
 
 
 struct lsf_request_struct {
+  bool                     statoil_mode;
   bool                     __valid_request; /* Internal variable which keeps track of whether the request string is valid (usable). */
   char                   * request;         /* The current string representation of the complete request. */
   set_type               * select_set;
@@ -44,8 +45,9 @@ struct lsf_request_struct {
 
 
 
-lsf_request_type * lsf_request_alloc() {
+lsf_request_type * lsf_request_alloc(bool statoil_mode) {
   lsf_request_type * lsf_request = util_malloc(sizeof * lsf_request , __func__);
+  lsf_request->statoil_mode    = statoil_mode;
   lsf_request->request         = NULL;
   lsf_request->rusage          = NULL;
   lsf_request->select_set      = NULL;
@@ -102,23 +104,27 @@ void lsf_request_set_request_string(lsf_request_type * lsf_request , const char 
 
 
   if ( lsf_request->select_set != NULL ) {
-    char ** select_keys = set_alloc_keylist(lsf_request->select_set);
-    int     keys        = set_get_size(lsf_request->select_set);
-    if (keys == 0) {
-      fprintf(stderr," The LSF_REQUEST select[] statements can not be satisfied, \n");
-      fprintf(stderr," this situation is typically because one job has select[A] \n");
-      fprintf(stderr," and the other job select[B]; those statements can not both\n");
-      fprintf(stderr," be satisfied - and the job will fail.\n");
-      util_abort("%s: the selection set is the empty set - \n",__func__);
+    if (lsf_request->statoil_mode) {
+      select_string = util_alloc_string_copy("select[cs,x86_64Linux]");
+    } else {
+      char ** select_keys = set_alloc_keylist(lsf_request->select_set);
+      int     keys        = set_get_size(lsf_request->select_set);
+      if (keys == 0) {
+	fprintf(stderr," The LSF_REQUEST select[] statements can not be satisfied, \n");
+	fprintf(stderr," this situation is typically because one job has select[A] \n");
+	fprintf(stderr," and the other job select[B]; those statements can not both\n");
+	fprintf(stderr," be satisfied - and the job will fail.\n");
+	util_abort("%s: the selection set is the empty set - \n",__func__);
+      }
+      {
+	char * tmp = util_alloc_joined_string((const char **) select_keys , keys , "||");
+	select_string = util_alloc_sprintf("select[%s]" , tmp);
+	free(tmp);
+      }
+      util_free_stringlist(select_keys , keys);
     }
-    {
-      char * tmp = util_alloc_joined_string((const char **) select_keys , keys , "||");
-      select_string = util_alloc_sprintf("select[%s]" , tmp);
-      free(tmp);
-    }
-    util_free_stringlist(select_keys , keys);
   }
-  
+    
   if (lsf_request->rusage != NULL) {
     char ** rusage_keys = set_alloc_keylist(lsf_request->rusage);
     int     keys        = set_get_size(lsf_request->rusage);
@@ -162,6 +168,7 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
       if (strstr( &rusage_ptr[1] , "rusage") != NULL)
 	util_abort("%s: sorry:\"%s\" is invalid - only *ONE* rusage[] statement \n",__func__ , __resource_request); 
 
+    /** Parsing the rusage[] string. */
     {
       char * end_ptr    = NULL; /* Compiler shut up. */
       char * start_ptr;
@@ -192,7 +199,7 @@ void lsf_request_update__(lsf_request_type * lsf_request , const char * __resour
 	}
       }
       
-      
+      /** Parsing select[] */
       if (select_ptr != NULL) {
 	/* 
 	   Explicitly clearing what we have used/read from the string
@@ -258,9 +265,10 @@ void  lsf_request_update(lsf_request_type * lsf_request , const ext_job_type * e
 
 
 const char * lsf_request_get(const lsf_request_type * lsf_request) {
-  if (lsf_request->__valid_request)
+  if (lsf_request->__valid_request) {
+    printf("Returning: %s \n",lsf_request->request);
     return lsf_request->request;
-  else {
+  } else {
     util_abort("%s: internal error - tried to acces an LSF_RESOURCE which was in an invalid state: \"%s\" \n",__func__, lsf_request->request);
     return NULL;
   }
