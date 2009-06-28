@@ -265,10 +265,9 @@ void  lsf_request_update(lsf_request_type * lsf_request , const ext_job_type * e
 
 
 const char * lsf_request_get(const lsf_request_type * lsf_request) {
-  if (lsf_request->__valid_request) {
-    printf("Returning: %s \n",lsf_request->request);
+  if (lsf_request->__valid_request) 
     return lsf_request->request;
-  } else {
+  else {
     util_abort("%s: internal error - tried to acces an LSF_RESOURCE which was in an invalid state: \"%s\" \n",__func__, lsf_request->request);
     return NULL;
   }
