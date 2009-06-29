@@ -108,7 +108,7 @@ int main (int argc , char ** argv) {
     
     enkf_welcome( model_config_file );
     enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file);
-    enkf_ui_main_menu(enkf_main); 
+    enkf_tui_main_menu(enkf_main); 
     enkf_main_free(enkf_main);
     
     util_abort_free_version_info(); /* No fucking leaks ... */

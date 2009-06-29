@@ -77,18 +77,14 @@ void enkf_tui_run_exp__(void * enkf_main) {
   state_enum init_state = analyzed; 
   int start_report   	= 0;
   int init_report    	= 0;
-  int iens1,iens2;
-  enkf_tui_util_scanf_iens_range("Which realizations to simulate (0 - %d): " , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
   {
-    int iens;
-    for (iens= 0; iens < ens_size; iens++) {
-      if (iens < iens1)
-	iactive[iens] = false;
-      else if (iens > iens2)
-	iactive[iens] = false;
-      else
-	iactive[iens] = true;
-    }
+    char * prompt = util_alloc_sprintf("Which realizations to simulate: ");
+    char * select_string;
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    select_string = util_alloc_stdin_line();
+    util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+    free( prompt );
+    free( select_string );
   }
 
   enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_report , start_report , init_state);

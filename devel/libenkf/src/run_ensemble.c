@@ -12,7 +12,7 @@
 #include <ext_joblist.h>
 #include <enkf_sched.h>
 #include <stringlist.h>
-#include <enkf_ui_main.h>
+#include <enkf_tui_main.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

@@ -1205,6 +1205,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 	enkf_state_fread_initial_state(enkf_state);
       else
 	mask += DYNAMIC_STATE;
+
       //enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state );
       enkf_state_try_fread(enkf_state , mask, run_info->init_step , run_info->init_state);
     }
