@@ -7,6 +7,11 @@
 #include <config.h>
 #include <stringlist.h>
 #include <subst.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
 
 /*
 
@@ -362,58 +367,72 @@ const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
 
 
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
-  ext_job_type * ext_job = ext_job_alloc(name);
-  config_type * config   = config_alloc(  );
-  
-  {
-    config_item_type * item;
-    item = config_add_item(config , "STDIN"  	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-    item = config_add_item(config , "STDOUT" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-    item = config_add_item(config , "STDERR" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-    item = config_add_item(config , "INIT_CODE"        , false , true ); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-    item = config_add_item(config , "PORTABLE_EXE"     , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-    item = config_add_item(config , "TARGET_FILE"      , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-    item = config_add_item(config , "START_FILE"       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-    item = config_add_item(config , "ENV"              , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
-    item = config_add_item(config , "PLATFORM_EXE"     , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
-    item = config_add_item(config , "ARGLIST"          , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
-    item = config_add_item(config , "LSF_RESOURCES"    , false , false); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
-  }
-  config_parse(config , filename , "--" , NULL , NULL , NULL , false , true);
-  {
-    if (config_item_set(config , "STDIN"))  	    ext_job_set_stdin_file(ext_job   , config_get(config  , "STDIN"));
-    if (config_item_set(config , "STDOUT")) 	    ext_job_set_stdout_file(ext_job  , config_get(config  , "STDOUT"));
-    if (config_item_set(config , "STDERR")) 	    ext_job_set_stderr_file(ext_job  , config_get(config  , "STDERR"));
-    if (config_item_set(config , "TARGET_FILE"))    ext_job_set_target_file(ext_job  , config_get(config  , "TARGET_FILE"));
-    if (config_item_set(config , "START_FILE"))     ext_job_set_start_file(ext_job   , config_get(config  , "START_FILE"));
-    if (config_item_set(config , "PORTABLE_EXE"))   ext_job_set_portable_exe(ext_job , config_get(config  , "PORTABLE_EXE"));
-
-    if (config_item_set(config , "LSF_RESOURCES")) {
-      char * lsf_resources = stringlist_alloc_joined_string(config_get_stringlist_ref(config , "LSF_RESOURCES") , " ");
-      ext_job_set_lsf_request(ext_job   , lsf_resources);
-      free(lsf_resources);
+  if (getuid() == util_get_file_uid( filename )) {
+    mode_t mode        = util_get_file_mode( filename );
+    mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;
+    if (mode != target_mode) {
+      printf("** Updating mode on :\'%s\' to %d \n",filename , target_mode);
+      chmod( filename , target_mode );
     }
-
-    if (config_item_set(config , "ARGLIST")) 
-      ext_job->argv = config_alloc_complete_stringlist(config , "ARGLIST");
-        
-    if (config_item_set(config , "INIT_CODE")) 
-      ext_job->init_code = config_alloc_complete_stringlist(config , "INIT_CODE");
-
-    /**
-       The code assumes that the hash tables are valid, can not be NULL:
-    */
-    
-    if (config_item_set(config , "ENV")) 
-      ext_job->environment = config_alloc_hash(config , "ENV");
-
-    if (config_item_set(config , "PLATFORM_EXE")) 
-      ext_job->platform_exe = config_alloc_hash(config , "PLATFORM_EXE");
-    
   }
-  config_free(config);
-  ext_job_assert(ext_job);
-  return ext_job;
+  
+  if (util_file_readable( filename )) {
+    ext_job_type * ext_job = ext_job_alloc(name);
+    config_type * config   = config_alloc(  );
+  
+    {
+      config_item_type * item;
+      item = config_add_item(config , "STDIN"  	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "STDOUT" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "STDERR" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "INIT_CODE"        , false , true ); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "PORTABLE_EXE"     , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "TARGET_FILE"      , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "START_FILE"       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "ENV"              , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
+      item = config_add_item(config , "PLATFORM_EXE"     , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
+      item = config_add_item(config , "ARGLIST"          , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
+      item = config_add_item(config , "LSF_RESOURCES"    , false , false); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
+    }
+    config_parse(config , filename , "--" , NULL , NULL , NULL , false , true);
+    {
+      if (config_item_set(config , "STDIN"))  	    ext_job_set_stdin_file(ext_job   , config_get(config  , "STDIN"));
+      if (config_item_set(config , "STDOUT")) 	    ext_job_set_stdout_file(ext_job  , config_get(config  , "STDOUT"));
+      if (config_item_set(config , "STDERR")) 	    ext_job_set_stderr_file(ext_job  , config_get(config  , "STDERR"));
+      if (config_item_set(config , "TARGET_FILE"))    ext_job_set_target_file(ext_job  , config_get(config  , "TARGET_FILE"));
+      if (config_item_set(config , "START_FILE"))     ext_job_set_start_file(ext_job   , config_get(config  , "START_FILE"));
+      if (config_item_set(config , "PORTABLE_EXE"))   ext_job_set_portable_exe(ext_job , config_get(config  , "PORTABLE_EXE"));
+
+      if (config_item_set(config , "LSF_RESOURCES")) {
+        char * lsf_resources = stringlist_alloc_joined_string(config_get_stringlist_ref(config , "LSF_RESOURCES") , " ");
+        ext_job_set_lsf_request(ext_job   , lsf_resources);
+        free(lsf_resources);
+      }
+
+      if (config_item_set(config , "ARGLIST")) 
+        ext_job->argv = config_alloc_complete_stringlist(config , "ARGLIST");
+        
+      if (config_item_set(config , "INIT_CODE")) 
+        ext_job->init_code = config_alloc_complete_stringlist(config , "INIT_CODE");
+
+      /**
+         The code assumes that the hash tables are valid, can not be NULL:
+      */
+    
+      if (config_item_set(config , "ENV")) 
+        ext_job->environment = config_alloc_hash(config , "ENV");
+
+      if (config_item_set(config , "PLATFORM_EXE")) 
+        ext_job->platform_exe = config_alloc_hash(config , "PLATFORM_EXE");
+    
+    }
+    config_free(config);
+    ext_job_assert(ext_job);
+    return ext_job;
+  } else {
+    fprintf(stderr,"** Warning: you do not have permission to read file:\'%s\' - job:%s not available. \n", filename , name);
+    return NULL;
+  }
 }
 
 

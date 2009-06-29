@@ -42,8 +42,9 @@ ext_job_type * ext_joblist_alloc_new(ext_joblist_type * joblist , const char * n
 
 
 ext_job_type * ext_joblist_add_job(ext_joblist_type * joblist , const char * name , const char * config_file) {
-  ext_job_type * new_job = ext_job_fscanf_alloc(name , config_file);
-  hash_insert_hash_owned_ref(joblist->jobs , name , new_job , ext_job_free__);
+  ext_job_type * new_job = ext_job_fscanf_alloc(name , config_file); /* Return NULL if you did not have permission to read file. */
+  if (new_job != NULL) 
+    hash_insert_hash_owned_ref(joblist->jobs , name , new_job , ext_job_free__);
   return new_job;
 }
 
