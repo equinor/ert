@@ -86,10 +86,13 @@ struct enkf_main_struct {
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
+  local_config_type    * local_config;     /* Holding all the information about local analysis. */
+  
+  /*-------------------------*/
+  
   enkf_obs_type        * obs;
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;
-  local_config_type    * local_config;     /* Holding all the information about local analysis. */
 }; 
 
 
@@ -855,10 +858,7 @@ void enkf_main_run(enkf_main_type * enkf_main ,
       if (run_mode == ENSEMBLE_EXPERIMENT) {
 	/* No possibility to use funky forward model */
 	enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
-      } else if (run_mode == SCREENING_EXPERIMENT) {
-	enkf_main_run_step(enkf_main , SCREENING_EXPERIMENT , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
-      } else 
-	util_abort("%s: internal error - invalid value for run_mode:%d \n",__func__ , run_mode);
+      } 
     }
   }
 }

@@ -57,17 +57,24 @@ int ecl_config_get_last_history_restart( const ecl_config_type * ecl_config ) {
   return ecl_config->last_history_restart;
 }
 
+
+void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file) {
+  ecl_config->data_file = util_realloc_string_copy( ecl_config->data_file , data_file );
+}
+
+
 ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
   ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_ENDIAN_FLIP , DEFAULT_UNIFIED );
   ecl_config->eclbase   	    = path_fmt_alloc_path_fmt( config_get(config , "ECLBASE") );
   ecl_config->include_all_static_kw = false;
   ecl_config->static_kw_set         = set_alloc_empty();
+  ecl_config->data_file             = NULL;
   {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
       set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
   }
-  ecl_config->data_file = util_alloc_string_copy(config_get( config , "DATA_FILE" ));
+  ecl_config_set_data_file( ecl_config , config_get( config , "DATA_FILE" ));
   {
     time_t start_date = ecl_util_get_start_date( ecl_config->data_file );
     const stringlist_type * sched_list = config_get_stringlist_ref(config , "SCHEDULE_FILE");

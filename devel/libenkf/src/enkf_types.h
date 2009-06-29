@@ -120,9 +120,10 @@ typedef enum {TRUNCATE_NONE   = 0,
 
 */
 
-typedef enum { ENKF_ASSIMILATION    = 1, 
-	       ENSEMBLE_EXPERIMENT  = 2,
-	       SCREENING_EXPERIMENT = 3} run_mode_type;
+typedef enum { ENKF_ASSIMILATION       = 1, 
+	       ENSEMBLE_EXPERIMENT     = 2,
+               ENKF_ASSIMILATION_RERUN = 3 }
+	       
 
 
 typedef enum { lock_lockf = 1,
