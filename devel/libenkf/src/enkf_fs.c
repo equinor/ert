@@ -1422,14 +1422,27 @@ bool enkf_fs_try_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * node , int
 
 
 /**
-
+   Will hav NULL values if the member can not be found.
 */
 
 enkf_node_type ** enkf_fs_fread_alloc_ensemble( enkf_fs_type * fs , const enkf_config_node_type * config_node , int report_step , int iens1 , int iens2 , state_enum state) {
   enkf_node_type ** ensemble = util_malloc( (iens2 - iens1) * sizeof * ensemble , __func__);
   for (int iens = iens1; iens < iens2; iens++) {
+    state_enum load_state;
     ensemble[iens - iens1] = NULL;
-    ensemble[iens - iens1] = enkf_fs_fread_alloc_node(fs , config_node , report_step , iens , state);
+
+    if (state == both) {
+      if (enkf_fs_has_node( fs , config_node , report_step , iens , analyzed))
+        load_state = analyzed;
+      else if (enkf_fs_has_node( fs , config_node , report_step , iens , forecast))
+        load_state = forecast;
+      else
+        load_state = undefined;
+    } else 
+      load_state = state;
+
+    if (load_state != undefined)
+      ensemble[iens - iens1] = enkf_fs_fread_alloc_node(fs , config_node , report_step , iens , load_state);
   }
   
   return ensemble;

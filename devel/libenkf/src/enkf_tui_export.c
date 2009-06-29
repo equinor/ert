@@ -50,8 +50,10 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
 	{
 	  char * path;
 	  util_alloc_file_components(filename , &path , NULL , NULL);
-	  util_make_path( path );
-	  free( path );
+          if (path != NULL) {
+            util_make_path( path );
+            free( path );
+          }
 	}
 
 	{
@@ -464,7 +466,7 @@ void enkf_tui_export_fieldP(void * arg) {
   enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg ); 
   const int prompt_len                         = 45;
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  state_enum analysis_state   	      	       = analyzed;  /* Hardcoded analyzed */
+  state_enum analysis_state   	      	       = both;
   const enkf_config_node_type * config_node    = enkf_tui_util_scanf_key(ensemble_config , prompt_len ,  FIELD  , INVALID_VAR );
   int iens1                   	      	       = 0;
   int iens2                   	      	       = ensemble_config_get_size(ensemble_config);
@@ -479,6 +481,7 @@ void enkf_tui_export_fieldP(void * arg) {
     enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
     enkf_node_type ** ensemble = enkf_fs_fread_alloc_ensemble( fs , config_node , report_step , iens1 , iens2 , analysis_state );
     enkf_node_type *  sum      = enkf_node_alloc( config_node );
+    int active_ens_size        = 0;
     int iens;
     
     enkf_node_clear( sum );
@@ -487,21 +490,31 @@ void enkf_tui_export_fieldP(void * arg) {
       field_type * sum_field = enkf_node_value_ptr( sum );
 
       for (iens = iens1; iens < iens2; iens++) {
-	field_type * field     = enkf_node_value_ptr( ensemble[iens - iens1] );
-	field_update_sum( sum_field , field , lower_limit , upper_limit);
+        if (ensemble[iens - iens1] != NULL) {
+          field_type * field     = enkf_node_value_ptr( ensemble[iens - iens1] );
+          field_update_sum( sum_field , field , lower_limit , upper_limit);
+          active_ens_size++;
+        }
       }
-      field_iscale( sum_field , 1.0 / ( iens2 - iens1 ));
-      {
-	char * path;
-	util_alloc_file_components( export_file , &path , NULL , NULL);
-	util_make_path( path );
-	free( path );
-      }
-      field_export(sum_field , export_file , NULL , RMS_ROFF_FILE , false);
-    }
+      if (active_ens_size > 0) {
+        field_iscale( sum_field , 1.0 / active_ens_size );
+        {
+          char * path;
+          util_alloc_file_components( export_file , &path , NULL , NULL);
+          if (path != NULL) {
+            util_make_path( path );
+            free( path );
+          }
+        }
+        field_export(sum_field , export_file , NULL , RMS_ROFF_FILE , false);
+      } else fprintf(stderr,"Warning: no data found \n");
+    }    
     
-    for (iens = iens1; iens < iens2; iens++)
-      enkf_node_free( ensemble[iens - iens1] );
+    for (iens = iens1; iens < iens2; iens++) {
+      if (ensemble[iens - iens1] != NULL)
+        enkf_node_free( ensemble[iens - iens1] );
+    }
+
     free( ensemble );
     enkf_node_free( sum );
   }

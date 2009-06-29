@@ -78,7 +78,7 @@ void enkf_tui_run_exp__(void * enkf_main) {
   int start_report   	= 0;
   int init_report    	= 0;
   {
-    char * prompt = util_alloc_sprintf("Which realizations to simulate: ");
+    char * prompt = util_alloc_sprintf("Which realizations to simulate[ensemble size:%d] : " , ens_size);
     char * select_string;
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
     select_string = util_alloc_stdin_line();

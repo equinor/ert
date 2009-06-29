@@ -56,15 +56,15 @@
 */
 
 typedef struct run_info_struct {
-  bool               	  __ready;         /* An attempt to check the internal state - not active yet. */
-  bool               	  active;          /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
-  int                	  init_step;       /* The report step we initialize from - will often be equal to step1, but can be different. */
-  state_enum         	  init_state;      /* Whether we should init from a forecast or an analyzed state. */
-  int                	  step1;           /* The forward model is integrated: step1 -> step2 */
-  int                	  step2;  	     
-  char            	* run_path;        /* The currently used runpath - is realloced / freed for every step. */
-  bool            	  can_sim;         /* If false - this member can not start simulations. */
-  run_mode_type   	  run_mode;        /* What type of run this is */
+  bool               	  __ready;              /* An attempt to check the internal state - not active yet. */
+  bool               	  active;               /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
+  int                	  init_step_parameters; /* The report step we initialize parameters from - will often be equal to step1, but can be different. */
+  state_enum         	  init_state;           /* Whether we should init from a forecast or an analyzed state. */
+  int                	  step1;                /* The forward model is integrated: step1 -> step2 */
+  int                	  step2;  	          
+  char            	* run_path;             /* The currently used runpath - is realloced / freed for every step. */
+  bool            	  can_sim;              /* If false - this member can not start simulations. */
+  run_mode_type   	  run_mode;             /* What type of run this is */
   
   /******************************************************************/
   /* Return value - set by the called routine!!  */
@@ -165,7 +165,7 @@ static void run_info_set_run_path(run_info_type * run_info , lock_mode_type lock
 static void run_info_set(run_info_type * run_info , 
 			 run_mode_type run_mode   , 
 			 bool active              , 
-			 int init_step            , 
+			 int init_step_parameters , 
 			 state_enum init_state    , 
 			 int step1                , 
 			 int step2                , 
@@ -173,17 +173,16 @@ static void run_info_set(run_info_type * run_info ,
 			 int iens                             , 
 			 path_fmt_type * run_path_fmt ) {
 
-  run_info->active          = active;
-  run_info->init_step  	    = init_step;
-  run_info->init_state 	    = init_state;
-  run_info->step1      	    = step1;
-  run_info->step2      	    = step2;
-  run_info->complete_OK     = false;
-  run_info->__ready         = true;
-  run_info->can_sim         = true;
-  run_info->run_mode        = run_mode;
+  run_info->active               = active;
+  run_info->init_step_parameters = init_step_parameters;
+  run_info->init_state 	         = init_state;
+  run_info->step1      	         = step1;
+  run_info->step2      	         = step2;
+  run_info->complete_OK          = false;
+  run_info->__ready              = true;
+  run_info->can_sim              = true;
+  run_info->run_mode             = run_mode;
   run_info_set_run_path(run_info , lock_none , iens , run_path_fmt);
-  
 }
 
 
@@ -1069,7 +1068,8 @@ static void enkf_state_try_fread(enkf_state_type * enkf_state , int mask , int r
    also have an internalized representation of it, otherwise it will
    just return (i.e. for PRESSURE / SWAT).
 */
-  static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
+
+static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
   const int num_keys = hash_get_size(enkf_state->node_hash);
@@ -1172,11 +1172,6 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     if (!run_info->__ready) 
       util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
     
-    
-    if (run_info->step1 != run_info->init_step)
-      if (run_info->step1 > 0)
-	util_abort("%s: internal error - when initializing from a different timestep than starting from - the start step must be zero.\n",__func__);
-    
     if (run_info->step1 > 0) {
       char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
       enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize);
@@ -1194,21 +1189,23 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       sched_file_fprintf_i(my_config->sched_file , run_info->step2 , schedule_file);
       free(schedule_file);
     }
-    
-    {
-      int mask = PARAMETER;
-      if (run_info->init_step == 0)
-	/** 
-	    Must be carefull not to fail when trying to load
-	    e.g. PRESSURE which might not exist in the filesystem.
-	*/
-	enkf_state_fread_initial_state(enkf_state);
-      else
-	mask += DYNAMIC_STATE;
 
-      //enkf_state_fread(enkf_state , mask, run_info->init_step , run_info->init_state );
-      enkf_state_try_fread(enkf_state , mask, run_info->init_step , run_info->init_state);
-    }
+    /**
+       For reruns of various kinds the parameters and the state are
+       generally loaded from different timesteps:
+    */
+
+    /* Loading parameter information: loaded from timestep: run_info->init_step_parameters. */
+    enkf_state_fread(enkf_state , PARAMETER , run_info->init_step_parameters , run_info->init_state);
+    
+    
+    /* Loading state information: loaded from timestep: run_info->step1 */
+    if (run_info->step1 == 0)
+      enkf_state_fread_initial_state(enkf_state); 
+    else
+      enkf_state_try_fread(enkf_state , DYNAMIC_STATE + STATIC_STATE , run_info->step1 , run_info->init_state);
+    
+    
     enkf_state_ecl_write( enkf_state );
     
     {
