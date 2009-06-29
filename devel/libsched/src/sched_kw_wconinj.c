@@ -60,7 +60,7 @@ static void sched_kw_wconinj_add_line(sched_kw_wconinj_type * kw , const char * 
   int tokens;
   char ** token_list;
   bool    slash_term;
-
+  
   sched_util_parse_line(line , &tokens , &token_list , 1 , &slash_term);
   if (!slash_term) 
     util_abort("%s: line[%d]: \"%s\" not properly terminated with \'/\' \n",__func__ , util_get_current_linenr(stream) , line);
@@ -69,7 +69,7 @@ static void sched_kw_wconinj_add_line(sched_kw_wconinj_type * kw , const char * 
     util_abort("%s: line[%d]: failed to get well name \n",__func__ , util_get_current_linenr(stream));
 
   stringlist_append_copy(kw->wells , token_list[0]);
-  sched_kw_untyped_add_line(kw->untyped_kw , line , NULL);
+  sched_kw_untyped_add_line(kw->untyped_kw , line , true , NULL);
   util_free_stringlist( token_list , tokens );
 }
 

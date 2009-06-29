@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <util.h>
 #include <sched_util.h>
+#include <buffer.h>
 
 /**
    This file implements small utility functions used by the rest of
@@ -223,6 +224,52 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
   *_token_list = token_list;
 }
 
+
+/*****************************************************************/
+/**
+   This function reads up to the next '/'. 
+
+   It has been a quite strong assumption in this code that each line
+   (in text-file meaning of the word) should be one complete '/'
+   terminated record; however suddenly the following keyword comes in
+   from the blue:
+
+     RPTSCHED
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+         0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+         0 0 0 0 0 /
+
+   I.e. the keyword has only one 'logical' line, however it spans
+   several newlines in the file. This function reads file content up
+   until the next '/'; the file content is read verbatim, no comment
+   discarding or anything is performed.
+ 
+    o If no  '/'  is found the function will fail HARD.
+    o If the '/' is the first character the at_eokw variable is set to true.
+
+*/
+   
+
+char * sched_util_alloc_slash_terminated_line(FILE * stream) {
+  buffer_type * buffer = buffer_alloc( 256 );
+  int c;
+  buffer_clear( buffer );
+  while (true) {
+    c = fgetc(stream);
+    if (c == EOF)
+      util_abort("%s: fatal error when parsing SCHEDULE file. Line:%d - not terminated by: \'/\'\n",__func__ , util_get_current_linenr( stream ));
+    buffer_fwrite_char( buffer , ( char ) c );
+    if (c == '/')
+      break;
+
+  }
+  buffer_fwrite_char( buffer , '\0' );  /* Ensure \0 termination. */
+  {
+    char * line = buffer_alloc_data_copy( buffer );
+    buffer_free( buffer );
+    return line;
+  }
+}
 
 
 /*****************************************************************/

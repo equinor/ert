@@ -16,7 +16,7 @@ void                    sched_kw_untyped_fprintf(const sched_kw_untyped_type *, 
 void                    sched_kw_untyped_free(sched_kw_untyped_type * );
 sched_kw_untyped_type * sched_kw_untyped_fread_alloc(FILE *);
 void                    sched_kw_untyped_fwrite(const sched_kw_untyped_type * , FILE *);
-void                    sched_kw_untyped_add_line(sched_kw_untyped_type *  , const char *, bool * );
+void                    sched_kw_untyped_add_line(sched_kw_untyped_type *  , const char *, bool , bool * );
 char **                 sched_kw_untyped_iget_entries_alloc(const sched_kw_untyped_type *, int, int *);
 
 

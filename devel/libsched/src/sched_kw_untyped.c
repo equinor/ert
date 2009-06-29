@@ -51,7 +51,7 @@ sched_kw_untyped_type * sched_kw_untyped_alloc(const char * kw_name) {
 
 
 /** This is exported. */
-void sched_kw_untyped_add_line(sched_kw_untyped_type * kw , const char *line, bool * slash_terminated) {
+void sched_kw_untyped_add_line(sched_kw_untyped_type * kw , const char *line, bool pad , bool * slash_terminated) {
   /* Seek backwards from the end to look for terminating '/' */
   
   if (slash_terminated != NULL) {
@@ -64,47 +64,32 @@ void sched_kw_untyped_add_line(sched_kw_untyped_type * kw , const char *line, bo
     else
       *slash_terminated = false;
   }
-  
-  {
+
+  if (pad) {
     char * padded_line = util_alloc_sprintf("   %s\n" , line);
     kw->buffer = util_strcat_realloc(kw->buffer , padded_line);
     free(padded_line);
-  }
+  } else
+    kw->buffer = util_strcat_realloc(kw->buffer , line);
 }
 
 
 
 static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_fixlen(FILE * stream, bool *at_eof, const char * kw_name, int rec_len)
 {
-  int cur_rec  = 0;
-  bool at_eokw = false;
+  int cur_rec                = 0;
   sched_kw_untyped_type * kw = sched_kw_untyped_alloc(kw_name);
-
-  while(!*at_eof && cur_rec < rec_len)
-  {
-    char * line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
-    if(*at_eof)
-    {
-      util_abort("%s: Reached EOF before %s was finished - aborting.\n", __func__, kw_name);
-    }
-    else
-    {
-      bool slash_terminated;
-      if(line != NULL)
-      {
-        sched_kw_untyped_add_line(kw, line , &slash_terminated);
-        free(line);
-      }
-      else
-      {
-        /**
-          Special case for empty lines (e.g. just /) and fixlen kw's.
-        */
-        sched_kw_untyped_add_line(kw, "/" , &slash_terminated);
-      }
-      //if(slash_terminated || at_eokw)
-      cur_rec++;
-    }
+  
+  while(cur_rec < rec_len) {
+    char * line = sched_util_alloc_slash_terminated_line(stream);
+    bool slash_terminated;
+    if(line != NULL) {
+      sched_kw_untyped_add_line(kw, line , false , &slash_terminated);
+      free(line);
+    } else 
+      util_exit("Something fishy - sched_util_alloc_slash_terminated() has returned NULL \n");
+    
+    cur_rec++;
   }
   return kw;
 }
@@ -131,7 +116,7 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_varlen(FILE * strea
     }
     else
     {
-      sched_kw_untyped_add_line(kw, line , NULL);
+      sched_kw_untyped_add_line(kw, line , true , NULL);
       free(line);
     }
   }
