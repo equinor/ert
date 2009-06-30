@@ -171,8 +171,6 @@ struct enkf_node_struct {
   alloc_ftype         *alloc;
   ecl_write_ftype     *ecl_write;
   ecl_load_ftype      *ecl_load;
-  fread_ftype         *fread_f;
-  fwrite_ftype        *fwrite_f;
   realloc_data_ftype  *realloc_data;
   free_data_ftype     *free_data;
   user_get_ftype      *user_get;
@@ -420,27 +418,27 @@ bool enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool int
 
 
 
-/**
-   Returns true if data is written to disk. If no data is written to
-   disk, and the function returns false, the calling scope is free
-   to skip storage (i.e. unlink an empty file).
-*/
-
-bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , bool internal_state , int report_step , int iens , state_enum state) {
-  if (!enkf_node->__memory_allocated)
-    util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
-  {
-    bool data_written = false;
-    FUNC_ASSERT(enkf_node->fwrite_f);
-    data_written = enkf_node->fwrite_f(enkf_node->data , stream , internal_state);
-    
-    enkf_node->__report_step = report_step;
-    enkf_node->__state       = state;
-    enkf_node->__modified    = false;
-    enkf_node->__iens        = iens;
-    return data_written;
-  }
-}
+///**
+//   Returns true if data is written to disk. If no data is written to
+//   disk, and the function returns false, the calling scope is free
+//   to skip storage (i.e. unlink an empty file).
+//*/
+//
+//bool enkf_node_fwrite(enkf_node_type *enkf_node , FILE *stream , bool internal_state , int report_step , int iens , state_enum state) {
+//  if (!enkf_node->__memory_allocated)
+//    util_abort("%s: fatal internal error: tried to save node:%s - memory is not allocated - aborting.\n",__func__ , enkf_node->node_key);
+//  {
+//    bool data_written = false;
+//    FUNC_ASSERT(enkf_node->fwrite_f);
+//    data_written = enkf_node->fwrite_f(enkf_node->data , stream , internal_state);
+//    
+//    enkf_node->__report_step = report_step;
+//    enkf_node->__state       = state;
+//    enkf_node->__modified    = false;
+//    enkf_node->__iens        = iens;
+//    return data_written;
+//  }
+//}
 
 
 
@@ -508,20 +506,20 @@ void enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int repor
 
 
 
-void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step , int iens , state_enum state) {
-  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified))
-    return;  /* The in memory representation agrees with the disk image */
-
-  {
-    FUNC_ASSERT(enkf_node->fread_f);
-    enkf_node_ensure_memory(enkf_node);
-    enkf_node->fread_f(enkf_node->data , stream);
-    enkf_node->__modified    = false;
-    enkf_node->__report_step = report_step;
-    enkf_node->__state       = state;
-    enkf_node->__iens        = iens;
-  }
-}
+//void enkf_node_fread(enkf_node_type *enkf_node , FILE * stream , int report_step , int iens , state_enum state) {
+//  if ((report_step == enkf_node->__report_step) && (state == enkf_node->__state) && (enkf_node->__iens == iens) && (!enkf_node->__modified))
+//    return;  /* The in memory representation agrees with the disk image */
+//
+//  {
+//    FUNC_ASSERT(enkf_node->fread_f);
+//    enkf_node_ensure_memory(enkf_node);
+//    enkf_node->fread_f(enkf_node->data , stream);
+//    enkf_node->__modified    = false;
+//    enkf_node->__report_step = report_step;
+//    enkf_node->__state       = state;
+//    enkf_node->__iens        = iens;
+//  }
+//}
 
 
 
@@ -670,8 +668,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->alloc          	   = NULL;
   node->ecl_write      	   = NULL;
   node->ecl_load       	   = NULL;
-  node->fread_f        	   = NULL;
-  node->fwrite_f       	   = NULL;
   node->copyc          	   = NULL;
   node->initialize     	   = NULL;
   node->serialize      	   = NULL;
@@ -692,8 +688,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->realloc_data 	     = havana_fault_realloc_data__;
     node->alloc        	     = havana_fault_alloc__;
     node->ecl_write    	     = havana_fault_ecl_write__;
-    node->fread_f      	     = havana_fault_fread__;
-    node->fwrite_f     	     = havana_fault_fwrite__;
     node->copyc        	     = havana_fault_copyc__;
     node->initialize   	     = havana_fault_initialize__;
     node->serialize    	     = havana_fault_serialize__;
@@ -711,8 +705,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->realloc_data 	     = gen_kw_realloc_data__;
     node->alloc        	     = gen_kw_alloc__;
     node->ecl_write    	     = gen_kw_ecl_write__;
-    node->fread_f      	     = gen_kw_fread__;
-    node->fwrite_f     	     = gen_kw_fwrite__;
     node->copyc        	     = gen_kw_copyc__;
     node->initialize   	     = gen_kw_initialize__;
     node->serialize    	     = gen_kw_serialize__;
@@ -730,8 +722,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->realloc_data 	     = multflt_realloc_data__;
     node->alloc        	     = multflt_alloc__;
     node->ecl_write    	     = multflt_ecl_write__;
-    node->fread_f      	     = multflt_fread__;
-    node->fwrite_f     	     = multflt_fwrite__;
     node->copyc        	     = multflt_copyc__;
     node->initialize   	     = multflt_initialize__;
     node->serialize    	     = multflt_serialize__;
@@ -749,8 +739,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->ecl_load           = summary_ecl_load__;
     node->realloc_data       = summary_realloc_data__;
     node->alloc              = summary_alloc__;
-    node->fread_f            = summary_fread__;
-    node->fwrite_f           = summary_fwrite__;
     node->copyc              = summary_copyc__;
     node->serialize          = summary_serialize__;
     node->deserialize        = summary_deserialize__;
@@ -768,8 +756,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->alloc        	     = field_alloc__;
     node->ecl_write    	     = field_ecl_write__; 
     node->ecl_load     	     = field_ecl_load__;  
-    node->fread_f      	     = field_fread__;
-    node->fwrite_f     	     = field_fwrite__;
     node->copyc        	     = field_copyc__;
     node->initialize   	     = field_initialize__;
     node->serialize    	     = field_serialize__;
@@ -787,8 +773,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->realloc_data = ecl_static_kw_realloc_data__;
     node->ecl_write    = ecl_static_kw_ecl_write__; 
     node->alloc        = ecl_static_kw_alloc__;
-    node->fread_f      = ecl_static_kw_fread__;
-    node->fwrite_f     = ecl_static_kw_fwrite__;
     node->copyc        = ecl_static_kw_copyc__;
     node->freef        = ecl_static_kw_free__;
     node->free_data    = ecl_static_kw_free_data__;
@@ -798,8 +782,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   case(GEN_DATA):
     node->realloc_data 	     = gen_data_realloc_data__;
     node->alloc        	     = gen_data_alloc__;
-    node->fread_f      	     = gen_data_fread__;
-    node->fwrite_f     	     = gen_data_fwrite__;
     node->initialize   	     = gen_data_initialize__;
     node->copyc        	     = gen_data_copyc__;
     node->freef        	     = gen_data_free__;
@@ -830,8 +812,6 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
     CASE_SET(alloc_func        		    , node->alloc);
     CASE_SET(ecl_write_func    		    , node->ecl_write);
     CASE_SET(ecl_load_func                  , node->ecl_load);
-    CASE_SET(fread_func        		    , node->fread_f);
-    CASE_SET(fwrite_func       		    , node->fwrite_f);
     CASE_SET(copyc_func        		    , node->copyc);
     CASE_SET(initialize_func   		    , node->initialize);
     CASE_SET(serialize_func    		    , node->serialize);

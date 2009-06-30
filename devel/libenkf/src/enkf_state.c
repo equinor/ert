@@ -59,7 +59,9 @@ typedef struct run_info_struct {
   bool               	  __ready;              /* An attempt to check the internal state - not active yet. */
   bool               	  active;               /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
   int                	  init_step_parameters; /* The report step we initialize parameters from - will often be equal to step1, but can be different. */
-  state_enum         	  init_state;           /* Whether we should init from a forecast or an analyzed state. */
+  state_enum         	  init_state_parameter; /* Whether we should init from a forecast or an analyzed state - parameters. */
+  state_enum              init_state_dynamic;   /* Whether we should init from a forecast or an analyzed state - dynamic state variables. */
+  int                     load_start;           /* When loading back results - start at this step. */
   int                	  step1;                /* The forward model is integrated: step1 -> step2 */
   int                	  step2;  	          
   char            	* run_path;             /* The currently used runpath - is realloced / freed for every step. */
@@ -162,26 +164,40 @@ static void run_info_set_run_path(run_info_type * run_info , lock_mode_type lock
 */
 
 
-static void run_info_set(run_info_type * run_info , 
-			 run_mode_type run_mode   , 
-			 bool active              , 
-			 int init_step_parameters , 
-			 state_enum init_state    , 
-			 int step1                , 
-			 int step2                , 
+
+static void run_info_summarize( const run_info_type * run_info ) {
+  printf("Activ.....................: %d \n",run_info->active);
+  printf("Loading parameters from...: %d \n",run_info->init_step_parameters);
+  printf("Loading state from........: %d \n",run_info->step1);
+  printf("Simulating to.............: %d \n",run_info->step2);
+  printf("Loading from step.........: %d \n\n",run_info->load_start);
+}
+
+
+static void run_info_set(run_info_type * run_info        , 
+			 run_mode_type run_mode          , 
+			 bool active                     , 
+			 int init_step_parameters        ,      
+			 state_enum init_state_parameter ,
+                         state_enum init_state_dynamic   ,
+                         int load_start                  , 
+			 int step1                       , 
+			 int step2                       ,      
 			 forward_model_type * __forward_model , 
 			 int iens                             , 
 			 path_fmt_type * run_path_fmt ) {
 
   run_info->active               = active;
   run_info->init_step_parameters = init_step_parameters;
-  run_info->init_state 	         = init_state;
+  run_info->init_state_parameter = init_state_parameter;
+  run_info->init_state_dynamic = init_state_dynamic;
   run_info->step1      	         = step1;
   run_info->step2      	         = step2;
   run_info->complete_OK          = false;
   run_info->__ready              = true;
   run_info->can_sim              = true;
   run_info->run_mode             = run_mode;
+  run_info->load_start           = load_start;
   run_info_set_run_path(run_info , lock_none , iens , run_path_fmt);
 }
 
@@ -847,10 +863,6 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 
 static void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2) {
   int report_step;
-  /* Fucking special case - PRESSURE +++ is initialized by ECLIPSE - loading initial state. */
-  if (report_step1 > 0)
-    report_step1 += 1;
-  
   {
     const model_config_type * model_config = enkf_state->shared_info->model_config;
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
@@ -915,7 +927,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
       if (var_type == STATIC_STATE) 
 	//ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
-	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state);
+	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state_dynamic);
       
       if (var_type == DYNAMIC_STATE) {
 	/* Pressure and saturations */
@@ -1196,14 +1208,14 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     */
 
     /* Loading parameter information: loaded from timestep: run_info->init_step_parameters. */
-    enkf_state_fread(enkf_state , PARAMETER , run_info->init_step_parameters , run_info->init_state);
+    enkf_state_fread(enkf_state , PARAMETER , run_info->init_step_parameters , run_info->init_state_parameter);
     
     
     /* Loading state information: loaded from timestep: run_info->step1 */
     if (run_info->step1 == 0)
       enkf_state_fread_initial_state(enkf_state); 
     else
-      enkf_state_try_fread(enkf_state , DYNAMIC_STATE + STATIC_STATE , run_info->step1 , run_info->init_state);
+      enkf_state_try_fread(enkf_state , DYNAMIC_STATE + STATIC_STATE , run_info->step1 , run_info->init_state_dynamic);
     
     
     enkf_state_ecl_write( enkf_state );
@@ -1235,7 +1247,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       forward_model_set_private_arg(enkf_state->forward_model , "TSTEP2"  , step2_s);
       forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE1" , restart_file1);
       forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE2" , restart_file2);
-
+      
       free(step1_s);
       free(step2_s);
       free(step1_s04);
@@ -1301,7 +1313,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state) {
       final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
   
       if (final_status == job_queue_complete_OK) {
-	enkf_state_internalize_results(enkf_state , run_info->step1 , run_info->step2); 
+	enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2); 
 	break;
       } else if (final_status == job_queue_complete_FAIL) {
 	fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
@@ -1658,11 +1670,33 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 
 
 
-void enkf_state_init_run(enkf_state_type * state , run_mode_type run_mode, bool active , int init_step , state_enum init_state , int step1 , int step2 , forward_model_type * __forward_model) {
+void enkf_state_init_run(enkf_state_type * state , 
+                         run_mode_type run_mode  , 
+                         bool active             , 
+                         int init_step_parameter         , 
+                         state_enum init_state_parameter , 
+                         state_enum init_state_dynamic   , 
+                         int load_start          , 
+                         int step1               , 
+                         int step2               , 
+                         forward_model_type * __forward_model) {
+
   member_config_type * my_config    = state->my_config;
   shared_info_type   * shared_info  = state->shared_info;
 
-  run_info_set( state->run_info , run_mode , active , init_step , init_state , step1 , step2 , __forward_model , my_config->iens ,  model_config_get_runpath_fmt( shared_info->model_config ) );
+  run_info_set( state->run_info , 
+                run_mode        , 
+                active          , 
+                init_step_parameter , 
+                init_state_parameter , 
+                init_state_dynamic  , 
+                load_start , 
+                step1 , 
+                step2 , 
+                __forward_model , 
+                my_config->iens ,  
+                model_config_get_runpath_fmt( shared_info->model_config ) );
+
   if (__forward_model != NULL)
     enkf_state_set_special_forward_model( state , __forward_model);
 }

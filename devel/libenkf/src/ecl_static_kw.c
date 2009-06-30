@@ -66,20 +66,6 @@ void ecl_static_kw_init(ecl_static_kw_type * ecl_static_kw, const ecl_kw_type * 
 }
 
 
-void ecl_static_kw_fread(ecl_static_kw_type * ecl_static_kw , FILE * stream) {
-  enkf_util_fread_assert_target_type(stream , STATIC);
-  if (ecl_static_kw->ecl_kw != NULL)
-    util_abort("%s: internal error: trying to assign ecl_kw to ecl_static_kw which is already set.\n",__func__);
-  ecl_static_kw->ecl_kw = ecl_kw_fread_alloc_compressed(stream);
-}
-
-
-bool ecl_static_kw_fwrite(const ecl_static_kw_type * ecl_static_kw , FILE * stream , bool internal_state) {
-  enkf_util_fwrite_target_type(stream , STATIC);
-  ecl_kw_fwrite_compressed(ecl_static_kw->ecl_kw , stream);
-  return true;
-}
-
 
 
 void ecl_static_kw_upgrade_103( const char * filename ) {
@@ -139,9 +125,7 @@ void ecl_static_kw_realloc_data(ecl_static_kw_type * ecl_static_kw) {
 SAFE_CAST(ecl_static_kw , STATIC)
 VOID_FREE(ecl_static_kw)
 VOID_FREE_DATA(ecl_static_kw)
-VOID_FWRITE (ecl_static_kw)
 VOID_ECL_WRITE (ecl_static_kw)
-VOID_FREAD  (ecl_static_kw)
 VOID_COPYC(ecl_static_kw)
 VOID_REALLOC_DATA(ecl_static_kw)
 VOID_LOAD(ecl_static_kw)

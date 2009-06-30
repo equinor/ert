@@ -114,17 +114,7 @@ void  multflt_ecl_write(const multflt_type * multflt, const char * run_path , co
 
 
 
-bool multflt_fwrite(const multflt_type *multflt , FILE * stream, bool internal_state) {
-  enkf_util_fwrite_target_type(stream , MULTFLT);
-  scalar_stream_fwrite(multflt->scalar , stream , internal_state);
-  return true;
-}
 
-
-void multflt_fread(multflt_type * multflt , FILE * stream) {
-  enkf_util_fread_assert_target_type(stream , MULTFLT);
-  scalar_stream_fread(multflt->scalar , stream);
-}
 
 
 bool multflt_store(const multflt_type *multflt , buffer_type * buffer,  bool internal_state) {
@@ -325,8 +315,6 @@ VOID_INITIALIZE(multflt);
 SAFE_CAST(multflt , MULTFLT)
 VOID_FREE_DATA(multflt);
 VOID_ECL_WRITE (multflt)
-VOID_FWRITE (multflt)
-VOID_FREAD  (multflt)
 VOID_COPYC  (multflt)
 VOID_FREE(multflt)
 VOID_REALLOC_DATA(multflt)

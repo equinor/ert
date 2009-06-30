@@ -1273,7 +1273,6 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
   forecast that is achieved by subtracting one.
 */
 
-  
 static int __get_parameter_report_step( int report_step , state_enum state) {
   if (state == forecast) {
     if (report_step > 0) /* Time step zero is special - we do not differentiate between forecast and analyzed. */

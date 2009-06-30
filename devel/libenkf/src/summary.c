@@ -65,13 +65,6 @@ summary_type * summary_copyc(const summary_type *summary) {
 }
 
 
-void summary_fread(summary_type * summary , FILE * stream) {
-  int  size;
-  enkf_util_fread_assert_target_type(stream , SUMMARY);
-  fread(&size , sizeof  size , 1 , stream);
-  util_fread(summary->data , sizeof *summary->data , size , stream , __func__);
-}
-
 
 
 void summary_load(summary_type * summary , buffer_type * buffer) {
@@ -103,16 +96,6 @@ void summary_upgrade_103( const char * filename ) {
 
 
 
-
-bool summary_fwrite(const summary_type * summary , FILE * stream , bool internal_state) {
-  const  summary_config_type * config = summary->config;
-  const int data_size = summary_config_get_data_size(config);
-  
-  enkf_util_fwrite_target_type(stream , SUMMARY);
-  fwrite(&data_size , sizeof  data_size     , 1 , stream);
-  util_fwrite(summary->data  , sizeof *summary->data    ,data_size , stream , __func__);
-  return true;
-}
 
 
 bool summary_store(const summary_type * summary , buffer_type * buffer, bool internal_state) {
@@ -242,8 +225,6 @@ VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_FREE_DATA(summary)
 VOID_REALLOC_DATA(summary)
-VOID_FWRITE (summary)
-VOID_FREAD  (summary)
 VOID_COPYC     (summary)
 VOID_SERIALIZE(summary)
 VOID_DESERIALIZE(summary)

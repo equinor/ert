@@ -330,19 +330,6 @@ field_type * field_copyc(const field_type *field) {
 
 
 
-void field_fread(field_type * field , FILE * stream) {
-  int  data_size , sizeof_ctype;
-  bool read_compressed;
-  enkf_util_fread_assert_target_type(stream , FIELD );
-  fread(&data_size     	  , sizeof  data_size        , 1 , stream);
-  fread(&sizeof_ctype 	  , sizeof  sizeof_ctype     , 1 , stream);
-  fread(&read_compressed  , sizeof  read_compressed  , 1 , stream);
-  if (read_compressed)
-    util_fread_compressed(field->data , stream);
-  else
-    util_fread(field->data , sizeof_ctype , data_size , stream , __func__);
-  
-}
 
 
 void field_load(field_type * field , buffer_type * buffer) {
@@ -505,25 +492,6 @@ void field_ROFF_export(const field_type * field , const char * filename) {
   rms_file_type * rms_file = field_init_ROFF_export(field , filename);
   field_ROFF_export__(field , rms_file);             /* Should now be possible to several calls to field_ROFF_export__() */
   field_complete_ROFF_export(field , rms_file);
-}
-
-
-
-bool field_fwrite(const field_type * field , FILE * stream , bool internal_state) {
-  const int data_size    = field_config_get_data_size(field->config);
-  const int sizeof_ctype = field_config_get_sizeof_ctype(field->config);
-  bool  write_compressed = field_config_write_compressed(field->config);
-  
-  enkf_util_fwrite_target_type(stream , FIELD);
-  fwrite(&data_size               ,   sizeof  data_size        , 1 , stream);
-  fwrite(&sizeof_ctype            ,   sizeof  sizeof_ctype     , 1 , stream);
-  fwrite(&write_compressed        ,   sizeof  write_compressed , 1 , stream);
-  if (write_compressed)
-    util_fwrite_compressed(field->data , sizeof_ctype * data_size , stream);
-  else
-    util_fwrite(field->data    ,   sizeof_ctype , data_size , stream , __func__);
-  
-  return true;
 }
 
 
@@ -1436,8 +1404,6 @@ VOID_FREE_DATA(field)
 VOID_REALLOC_DATA(field)
 VOID_ECL_WRITE (field)
 VOID_ECL_LOAD(field)
-VOID_FWRITE (field)
-VOID_FREAD  (field)
 VOID_COPYC     (field)
 VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);

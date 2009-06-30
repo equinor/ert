@@ -88,24 +88,6 @@ void * prefix ## _alloc__(const void *void_config) {                            
 
 /*****************************************************************/
 
-#define VOID_FWRITE(prefix)                                        \
-bool prefix ## _fwrite__(const void * void_arg , FILE * stream , bool internal_state) {  \
-   const prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
-   return prefix ## _fwrite(arg , stream , internal_state);        \
-}
-
-
-#define VOID_FREAD(prefix)                                  \
-void prefix ## _fread__(void * void_arg , FILE * stream) {  \
-   prefix ## _type * arg = prefix ## _safe_cast( void_arg );\
-   prefix ## _fread(arg , stream);                          \
-}
-
-#define VOID_FWRITE_HEADER(prefix) bool prefix ## _fwrite__(const void * , FILE * , bool);
-#define VOID_FREAD_HEADER(prefix) void prefix ## _fread__(void * , FILE *);
-
-/*****************************************************************/
-
 #define VOID_STORE(prefix)                                        \
 bool prefix ## _store__(const void * void_arg , buffer_type * buffer , bool internal_state) {  \
    const prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \

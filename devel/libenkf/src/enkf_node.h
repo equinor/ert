@@ -55,8 +55,6 @@ typedef bool   	      (store_ftype)                	(const void *  , buffer_type
 
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
 typedef void * 	      (alloc_ftype)                	(const void *);
-typedef void   	      (fread_ftype)                	(      void *  , FILE *);
-typedef bool   	      (fwrite_ftype)               	(const void *  , FILE * , bool);
 typedef bool   	      (initialize_ftype)     	   	(      void *  , int);
 typedef void   	      (ecl_load_ftype)            	(void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int);
 typedef void          (realloc_data_ftype)	   	(void * );

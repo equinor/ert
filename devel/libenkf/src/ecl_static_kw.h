@@ -19,8 +19,6 @@ void                 ecl_static_kw_upgrade_103( const char * filename );
 SAFE_CAST_HEADER(ecl_static_kw);
 VOID_FREE_HEADER(ecl_static_kw);
 VOID_FREE_DATA_HEADER(ecl_static_kw);
-VOID_FWRITE_HEADER(ecl_static_kw);
-VOID_FREAD_HEADER(ecl_static_kw);
 VOID_COPYC_HEADER(ecl_static_kw);
 VOID_REALLOC_DATA_HEADER(ecl_static_kw);
 VOID_ECL_WRITE_HEADER(ecl_static_kw);

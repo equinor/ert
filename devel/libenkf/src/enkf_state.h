@@ -76,7 +76,7 @@ void enkf_ensemble_update(enkf_state_type ** , int  , serial_vector_type * , con
 
 /*****************************************************************/
 const sched_file_type * enkf_state_get_sched_file(const enkf_state_type * enkf_state);
-void enkf_state_init_run(enkf_state_type * state , run_mode_type , bool active , int init_step , state_enum init_state , int step1 , int step2 , forward_model_type *);
+void enkf_state_init_run(enkf_state_type * state , run_mode_type , bool active , int init_step_parameter , state_enum init_state_parameter , state_enum init_state_dynamic , int load_start , int step1 , int step2 , forward_model_type *);
 bool enkf_state_run_OK(const enkf_state_type * );
 #ifdef __cplusplus
 }

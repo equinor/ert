@@ -75,7 +75,9 @@ int main (int argc , char ** argv) {
         for (iens= 0; iens < ens_size; iens++)
           iactive[iens] = true;
       }
-      enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , enopt_start , analyzed , enopt_start , enopt_stop , load_results, false );
+      
+      // Joakim har gjort run_step static?
+      // enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , enopt_start , analyzed , enopt_start , enopt_stop , load_results, false );
       free(iactive);
     }
 

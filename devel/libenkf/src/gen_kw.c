@@ -78,12 +78,6 @@ gen_kw_type * gen_kw_copyc(const gen_kw_type *gen_kw) {
 }
 
 
-bool gen_kw_fwrite(const gen_kw_type *gen_kw , FILE * stream, bool internal_state) {
-  enkf_util_fwrite_target_type(stream , GEN_KW);
-  scalar_stream_fwrite(gen_kw->scalar , stream , internal_state);
-  return true;
-}
-
 
 
 bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  bool internal_state) {
@@ -100,13 +94,6 @@ bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  bool intern
    existing storage labeled with implemantation type 'MULTFLT' should
    be silently 'upgraded' to 'GEN_KW'.
 */
-
-void gen_kw_fread(gen_kw_type * gen_kw , FILE * stream) {
-  enkf_impl_type file_type;
-  file_type = util_fread_int(stream);
-  if ((file_type == GEN_KW) || (file_type == MULTFLT))
-    scalar_stream_fread(gen_kw->scalar , stream);
-}
 
 
 void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer) {
@@ -288,8 +275,6 @@ VOID_SERIALIZE (gen_kw);
 VOID_DESERIALIZE (gen_kw);
 VOID_INITIALIZE(gen_kw);
 VOID_FREE_DATA(gen_kw)
-VOID_FWRITE (gen_kw)
-VOID_FREAD  (gen_kw)
 VOID_COPYC  (gen_kw)
 VOID_FREE   (gen_kw)
 VOID_ECL_WRITE(gen_kw)

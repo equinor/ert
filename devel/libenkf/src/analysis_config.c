@@ -11,6 +11,8 @@
 
 struct analysis_config_struct {
   bool                   merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
+  bool                   rerun;               /* Should we rerun the simulator when the parameters have been updated? */
+  int                    rerun_start;         /* When rerunning - from where should we start? */
   double 	         truncation;
   double 	         overlap_alpha;
   double                 std_cutoff;
@@ -36,6 +38,27 @@ static analysis_config_type * analysis_config_alloc__(double truncation , double
 }
 
 
+void analysis_config_set_rerun(analysis_config_type * config , bool rerun) {
+  config->rerun = rerun;
+}
+
+
+void analysis_config_set_rerun_start( analysis_config_type * config , int rerun_start ) {
+  config->rerun_start = rerun_start;
+}
+
+
+bool analysis_config_get_rerun(const analysis_config_type * config) {
+  return config->rerun;
+}
+
+
+int analysis_config_get_rerun_start(const analysis_config_type * config) {
+  return config->rerun_start;
+}
+
+
+
 analysis_config_type * analysis_config_alloc(const config_type * config) {
   double truncation 	    = strtod( config_get(config , "ENKF_TRUNCATION") , NULL);
   double alpha      	    = strtod( config_get(config , "ENKF_ALPHA") , NULL);
@@ -49,8 +72,14 @@ analysis_config_type * analysis_config_alloc(const config_type * config) {
     enkf_mode = ENKF_SQRT;
   else
     util_abort("%s: internal error : enkf_mode:%s not recognized \n",__func__ , enkf_mode_string);
-
-  return analysis_config_alloc__(truncation , alpha , enkf_mode , merge_observations);
+  
+  {
+    analysis_config_type * analysis = analysis_config_alloc__(truncation , alpha , enkf_mode , merge_observations);
+    analysis_config_set_rerun( analysis , config_get_as_bool(config , "ENKF_RERUN"));
+    analysis_config_set_rerun_start( analysis , config_get_as_int( config , "RERUN_START" ));
+    
+    return analysis;
+  }
 }
 
 

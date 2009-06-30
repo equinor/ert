@@ -60,7 +60,7 @@ static plain_driver_type * plain_driver_safe_cast( void * __driver) {
 
 
 
-void plain_driver_load_node_NEW(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+static void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = plain_driver_safe_cast( _driver );
   buffer_type * buffer       = buffer_alloc(100);
   {
@@ -75,46 +75,8 @@ void plain_driver_load_node_NEW(void * _driver , int report_step , int iens , st
 
 
 
-void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
-  plain_driver_type * driver = plain_driver_safe_cast( _driver );
-  {
-    char * filename = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
-    FILE * stream   = util_fopen(filename , "r");  
-    
-    enkf_node_fread(node , stream , report_step, iens , state);
-    fclose(stream);
-    free(filename);
-  }
-}
 
-
-/**
-   The fopen calls here should probably be issued with
-   util_fopen_lockf() to get exclusive access to the files - but it
-   turned out be a quite massive performance hit by using lockf().
-*/
-
-void plain_driver_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
-  plain_driver_type * driver = (plain_driver_type *) _driver;
-  plain_driver_assert_cast(driver);
-  {
-    bool   internal_state = true;
-    bool   data_written;
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node));
-    {
-      FILE * stream     = util_fopen(filename , "w");
-      data_written 	= enkf_node_fwrite(node , stream , internal_state , report_step , iens , state);
-      fclose(stream);
-    }
-
-    if (!data_written) 
-      unlink(filename);  /* The file is empty */
-    free(filename);
-  }
-}
-
-
-void plain_driver_save_node_NEW(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+static void plain_driver_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -207,8 +169,8 @@ void plain_driver_select_dir(void *_driver , const char * directory) {
 void * plain_driver_alloc(const char * root_path , const char * fmt) {
   plain_driver_type * driver = malloc(sizeof * driver);
 
-  driver->load        	= plain_driver_load_node_NEW;
-  driver->save        	= plain_driver_save_node_NEW;
+  driver->load        	= plain_driver_load_node;
+  driver->save        	= plain_driver_save_node;
   driver->free_driver 	= plain_driver_free;
   driver->unlink_node 	= plain_driver_unlink_node;
   driver->has_node    	= plain_driver_has_node;

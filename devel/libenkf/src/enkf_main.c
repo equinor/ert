@@ -682,15 +682,18 @@ void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step
 
 
 
-void enkf_main_run_step(enkf_main_type * enkf_main, 
-			run_mode_type    run_mode , 
-			const bool * iactive      , 
-			int init_step             , 
-			state_enum init_state     , 
-			int step1                 , 
-			int step2                 , 
-			bool enkf_update          , 
-			forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
+static void enkf_main_run_step(enkf_main_type * enkf_main      , 
+                               run_mode_type    run_mode       , 
+                               const bool * iactive            , 
+                               int load_start, 
+                               int init_step_parameter         ,     
+                               state_enum init_state_parameter     , 
+                               state_enum init_state_dynamic       , 
+                               int step1                 , 
+                               int step2                 , 
+                               bool enkf_update          , 
+                               forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
+  
   const int ens_size    = ensemble_config_get_size(enkf_main->ensemble_config);
   int   job_size;
 
@@ -715,7 +718,21 @@ void enkf_main_run_step(enkf_main_type * enkf_main,
       thread_pool_type * submit_threads = thread_pool_alloc(4);
       for (iens = 0; iens < ens_size; iens++) {
 	if (iactive[iens]) {
-	  enkf_state_init_run(enkf_main->ensemble[iens] , run_mode , iactive[iens] , init_step , init_state , step1 , step2 , forward_model);
+          int load_start = step1;
+          if (step1 > 0)
+            load_start++;
+          
+	  enkf_state_init_run(enkf_main->ensemble[iens] , 
+                              run_mode , 
+                              iactive[iens] , 
+                              init_step_parameter , 
+                              init_state_parameter,
+                              init_state_dynamic, 
+                              load_start , 
+                              step1 , 
+                              step2 , 
+                              forward_model);
+          
 	  thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
 	}
       }
@@ -802,13 +819,16 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 /**
    The main RUN function - will run both enkf assimilations and experiments.
 */
-void enkf_main_run(enkf_main_type * enkf_main , 
-		   run_mode_type    run_mode  , 
-		   const bool     * iactive   ,  
-		   int parameter_init_report  , 
-		   int start_report           , 
-		   state_enum start_state) {
-  
+void enkf_main_run(enkf_main_type * enkf_main            , 
+		   run_mode_type    run_mode             , 
+		   const bool     * iactive              ,          
+		   int              init_step_parameters ,
+		   int              start_report         , 
+		   state_enum       start_state) {
+
+  bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
+  int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
+
   enkf_main_init_run( enkf_main , run_mode);  
   {
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
@@ -831,7 +851,9 @@ void enkf_main_run(enkf_main_type * enkf_main ,
 	prev_enkf_on = analyzed_start;
 	for (inode = start_inode; inode < num_nodes; inode++) {
 	  const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
-	  state_enum init_state;
+	  state_enum init_state_parameter;
+          state_enum init_state_dynamic;
+          int      load_start;
 	  int 	   report_step1;
 	  int 	   report_step2;
 	  bool enkf_on;
@@ -840,13 +862,27 @@ void enkf_main_run(enkf_main_type * enkf_main ,
 	  enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on , &forward_model);
 	  if (inode == start_inode) 
 	    report_step1 = start_report;  /* If we are restarting from somewhere. */
+
 	  
-	  if (prev_enkf_on)
-	    init_state = analyzed;
-	  else
-	    init_state = forecast;
-	  
-	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , report_step1 , init_state , report_step1 , report_step2 , enkf_on , forward_model);
+          if (rerun) {
+            /** rerun ... */
+            load_start           = init_step_parameters; /* +1 below */
+            init_state_dynamic   = forecast;
+            init_state_parameter = analyzed;
+            report_step1 = rerun_start;
+          } else {
+            if (prev_enkf_on)
+              init_state_dynamic = analyzed;
+            else
+              init_state_dynamic = forecast;
+            init_state_parameter = init_state_dynamic;
+            
+            load_start = report_step1;
+          }
+
+          if (load_start > 0)
+            load_start++;
+	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
 	  prev_enkf_on = enkf_on;
 	}
       } else
@@ -857,7 +893,10 @@ void enkf_main_run(enkf_main_type * enkf_main ,
       const int last_report              = enkf_sched_get_last_report(enkf_sched);
       if (run_mode == ENSEMBLE_EXPERIMENT) {
 	/* No possibility to use funky forward model */
-	enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , parameter_init_report , start_state , start_report , last_report , false , NULL );
+        int load_start = start_report;
+        state_enum init_state_parameter = start_state;
+        state_enum init_state_dynamic   = start_state;
+	enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
       } 
     }
   }
@@ -1122,6 +1161,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
     config_set_arg(config , "ENKF_MERGE_OBSERVATIONS" , 1 , (const char *[1]) { DEFAULT_MERGE_OBSERVATIONS });
         
+    item = config_add_item(config , "ENKF_RERUN" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
+    config_set_arg(config , "ENKF_RERUN" , 1 , (const char *[1]) { DEFAULT_RERUN });
+    
+    item = config_add_item(config , "RERUN_START" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_INT });
+    config_set_arg(config , "RERUN_START" , 1 , (const char *[1]) { DEFAULT_RERUN_START });
+    
     /*****************************************************************/
     /* Keywords for the estimation                                   */
     ensemble_config_add_config_items(config); 

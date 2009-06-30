@@ -38,6 +38,9 @@
 #define DEFAULT_ENKF_TRUNCATION    "0.99"    /* NB String */
 #define DEFAULT_ENKF_ALPHA         "1.50"    /* NB String */
 #define DEFAULT_MERGE_OBSERVATIONS "False"   /* NB - string representation of TRUE|FALSE */
+#define DEFAULT_RERUN              "False"
+#define DEFAULT_RERUN_START        "0"   
+
 
 /* Default directories. */
 #define DEFAULT_PLOT_PATH   "plots"

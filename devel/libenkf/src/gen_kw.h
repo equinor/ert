@@ -36,8 +36,6 @@ char           * gen_kw_alloc_user_key(const gen_kw_config_type *  , const char 
 SAFE_CAST_HEADER(gen_kw);
 ALLOC_STATS_HEADER(gen_kw)
 VOID_ECL_WRITE_HEADER  (gen_kw)
-VOID_FWRITE_HEADER  (gen_kw)
-VOID_FREAD_HEADER   (gen_kw)
 VOID_COPYC_HEADER      (gen_kw);
 VOID_SERIALIZE_HEADER  (gen_kw);
 VOID_DESERIALIZE_HEADER  (gen_kw);

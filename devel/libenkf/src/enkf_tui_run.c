@@ -29,7 +29,7 @@ void enkf_tui_run_start__(void * enkf_main) {
       iactive[iens] = true;
   }
 
-  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , -1 , 0 , analyzed);
+  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , 0 , 0 , analyzed);
   free(iactive);
 }
 
@@ -52,7 +52,7 @@ void enkf_tui_run_restart__(void * enkf_main) {
   start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
   state        = enkf_tui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
   
-  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , -1 , start_report  , state);
+  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , 0 , start_report  , state);
   free(iactive);
 }
 
@@ -74,9 +74,9 @@ void enkf_tui_run_exp__(void * enkf_main) {
   int prompt_len = 45;
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
-  state_enum init_state = analyzed; 
-  int start_report   	= 0;
-  int init_report    	= 0;
+  state_enum init_state    = analyzed; 
+  int start_report   	   = 0;
+  int init_step_parameters = 0;
   {
     char * prompt = util_alloc_sprintf("Which realizations to simulate[ensemble size:%d] : " , ens_size);
     char * select_string;
@@ -87,28 +87,11 @@ void enkf_tui_run_exp__(void * enkf_main) {
     free( select_string );
   }
 
-  enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_report , start_report , init_state);
+  enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
   free(iactive);
 }
 
 
-
-//void enkf_tui_run_screening__(void * enkf_main) {
-//  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-//  const int ens_size      = ensemble_config_get_size(ensemble_config);
-//  bool * iactive          = util_malloc(ens_size * sizeof * iactive , __func__);
-//  int init_report  = 0;
-//  int start_report = 0;
-//  state_enum init_state = analyzed;
-//  {
-//    int iens;
-//    for (iens= 0; iens < ens_size; iens++)
-//      iactive[iens] = true;
-//  }
-//  
-//  enkf_main_run(enkf_main , screening_experiment , iactive , init_report , start_report , init_state);
-//  free(iactive);
-//}
 
 
 void enkf_main_interactive_set_runpath__(void *arg) {
