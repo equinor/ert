@@ -12,7 +12,8 @@
 #define __ENKF_DEFAULT__
 #include <stdbool.h>
 
-#define DEFAULT_HOST_TYPE "STATOIL"
+#define DEFAULT_HOST_TYPE  "STATOIL"
+#define DEFAULT_DBASE_TYPE "PLAIN"
 
 
 
@@ -140,12 +141,17 @@
 
 #define DEFAULT_CASE "default"
 
-#define DEFAULT_PARAMETER_PATH 	      "%04d/mem%03d/Parameter"
-#define DEFAULT_STATIC_PATH    	      "%04d/mem%03d/Static"
-#define DEFAULT_DYNAMIC_FORECAST_PATH "%04d/mem%03d/Forecast"
-#define DEFAULT_DYNAMIC_ANALYZED_PATH "%04d/mem%03d/Analyzed"
-#define DEFAULT_INDEX_PATH            "%04d/mem%03d/INDEX"
+#define DEFAULT_PLAIN_PARAMETER_PATH 	      "%04d/mem%03d/Parameter"
+#define DEFAULT_PLAIN_STATIC_PATH    	      "%04d/mem%03d/Static"
+#define DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH "%04d/mem%03d/Forecast"
+#define DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH "%04d/mem%03d/Analyzed"
+#define DEFAULT_PLAIN_INDEX_PATH            "%04d/mem%03d/INDEX"
 
+
+#define DEFAULT_SQLITE_PARAMETER_DBFILE  	 "Parameter.sqlite_db"
+#define DEFAULT_SQLITE_STATIC_DBFILE     	 "Static.sqlite_db"
+#define DEFAULT_SQLITE_DYNAMIC_FORECAST_DBFILE   "Forecast.sqlite_db"
+#define DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE   "Analyzed.sqlite_db"
 
 
 

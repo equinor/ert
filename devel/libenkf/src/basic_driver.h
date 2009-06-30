@@ -3,8 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <enkf_config_node.h>
-#include <enkf_node.h>
+#include <buffer.h>
 #include <stringlist.h>
 
 typedef struct basic_driver_struct         basic_driver_type;
@@ -15,10 +14,10 @@ typedef void (save_kwlist_ftype)  (void * , int , int , const stringlist_type *)
 typedef void (load_kwlist_ftype)  (void * , int , int , stringlist_type *);
 
 typedef void (select_dir_ftype)   (void * driver, const char * dir);
-typedef void (load_node_ftype) 	  (void * driver, int , int , state_enum , enkf_node_type *);
-typedef void (save_node_ftype) 	  (void * driver, int , int , state_enum , enkf_node_type *);
-typedef bool (has_node_ftype)     (void * driver, int , int , state_enum , const char *);
-typedef void (unlink_node_ftype)  (void * driver, int , int , state_enum , enkf_node_type *); 
+typedef void (load_node_ftype) 	  (void * driver, const char * , int , int , buffer_type * );
+typedef void (save_node_ftype) 	  (void * driver, const char * , int , int , buffer_type * );
+typedef void (unlink_node_ftype)  (void * driver, const char * , int , int );
+typedef bool (has_node_ftype)     (void * driver, const char * , int , int );
 typedef void (free_driver_ftype)  (void * driver);
 
 

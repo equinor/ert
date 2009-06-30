@@ -10,6 +10,7 @@ extern "C" {
 #include <stringlist.h>
 #include <stdbool.h>
 #include <stringlist.h>
+#include <fs_types.h>
 
 typedef struct enkf_fs_struct enkf_fs_type;
 
@@ -22,7 +23,7 @@ void 		  enkf_fs_add_dir(enkf_fs_type * , const char * );
 bool 		  enkf_fs_has_dir(const enkf_fs_type * , const char * );
 bool              enkf_fs_select_write_dir(enkf_fs_type * , const char * , bool);
 void              enkf_fs_select_read_dir(enkf_fs_type * , const char * );
-enkf_fs_type *    enkf_fs_mount(const char * , const char * , const char *);
+enkf_fs_type *    enkf_fs_mount(const char * , fs_driver_impl , const char * , const char *);
 void           	  enkf_fs_free(enkf_fs_type *);
 void           	  enkf_fs_add_index_node(enkf_fs_type *  , int , int , const char * , enkf_var_type, enkf_impl_type);
 void 	       	  enkf_fs_fwrite_node(enkf_fs_type * , enkf_node_type * , int , int , state_enum );

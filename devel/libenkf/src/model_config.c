@@ -20,6 +20,7 @@
 #include <plain_driver.h>
 #include <forward_model.h>
 #include <bool_vector.h>
+#include <fs_types.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -59,9 +60,9 @@ struct model_config_struct {
 
 
 
-static enkf_fs_type * fs_mount(const char * root_path , const char * lock_path) {
+static enkf_fs_type * fs_mount(const char * root_path , const char * driver_name , const char * lock_path) {
   const char * mount_map = "enkf_mount_info";
-  return enkf_fs_mount(root_path , mount_map , lock_path);
+  return enkf_fs_mount(root_path , fs_types_lookup_string_name( driver_name ) , mount_map , lock_path);
 }
 
 
@@ -117,7 +118,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
     free(cwd);
   }
   util_make_path( model_config->lock_path );
-  model_config->ensemble_dbase = fs_mount( config_get(config , "ENSPATH") , model_config->lock_path);
+  model_config->ensemble_dbase = fs_mount( config_get(config , "ENSPATH") , config_get(config , "DBASE_TYPE") , model_config->lock_path);
   model_config->runpath         = NULL;
   model_config->enkf_sched      = NULL;
   model_config->enkf_sched_file = NULL;

@@ -403,6 +403,15 @@ bool config_item_get_as_bool(const config_item_type * item) {
 }
 
 
+int config_item_get_as_int(const config_item_type * item) {
+  int value;
+  validate_assert_get(item->validate);
+  config_item_assure_type(item , 0 , CONFIG_INT);
+  util_sscanf_int( config_item_iget(item , 0) , &value );
+  return value;
+}
+
+
 static stringlist_type * config_item_iget_stringlist_ref(const config_item_type * item, int occurence) {
   config_item_node_type * node = config_item_iget_node(item , occurence);  
   return node->stringlist;
@@ -1341,6 +1350,12 @@ const char * config_get(const config_type * config , const char * kw) {
 bool config_get_as_bool(const config_type * config , const char * kw) {
   config_item_type * item = config_get_item(config , kw);
   return config_item_get_as_bool(item);
+}
+
+
+int config_get_as_int(const config_type * config , const char * kw) {
+  config_item_type * item = config_get_item(config , kw);
+  return config_item_get_as_int(item);
 }
 
 

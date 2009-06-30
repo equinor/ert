@@ -1100,6 +1100,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
 
+    item = config_add_item(config , "DBASE_TYPE" , true , false);
+    config_item_set_argc_minmax(item , 1, 1 , NULL);
+    config_item_set_common_selection_set(item , 2 , (const char *[2]) {"PLAIN" , "SQLITE"});
+    config_set_arg(config , "DBASE_TYPE" , 1 , (const char *[1] ) { DEFAULT_DBASE_TYPE });
+
     item = config_add_item(config , "FORWARD_MODEL" , true , false);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
 

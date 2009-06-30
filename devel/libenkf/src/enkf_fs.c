@@ -19,6 +19,7 @@
 #include <ecl_static_kw.h>
 #include <plain_driver_index.h>
 #include <plain_driver.h>
+#include <sqlite3_driver.h>
 #include <stringlist.h>
 #include <arg_pack.h>
 
@@ -80,7 +81,8 @@
    simple plain file based driver.  
 
    The upgrade to version is 103 is quite extensive - all node types
-   have specific _103_ functions.
+   have specific _103_ functions. The xxx_fread() and xxx_fwrite()
+   functions were removed in svn:2046.
 
 
 */
@@ -280,23 +282,40 @@ struct enkf_fs_struct {
     mount map is found. Returns the __dir_offset.
 */
 
-long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir) {
+long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir, fs_driver_impl driver_impl) {
   long int  __dir_offset;
   FILE * stream = util_fopen( mount_map , "w");
   util_fwrite_long(FS_MAGIC_ID , stream);
   util_fwrite_int(CURRENT_FS_VERSION , stream);
   
-  plain_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	   , true , DEFAULT_PARAMETER_PATH);
-  plain_driver_fwrite_mount_info( stream , DRIVER_STATIC    	   , true , DEFAULT_STATIC_PATH);
-  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , true , DEFAULT_DYNAMIC_FORECAST_PATH);
-  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , true , DEFAULT_DYNAMIC_ANALYZED_PATH);
-  plain_driver_index_fwrite_mount_info( stream ,                     true , DEFAULT_INDEX_PATH);
-
-  plain_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	   , false , DEFAULT_PARAMETER_PATH);
-  plain_driver_fwrite_mount_info( stream , DRIVER_STATIC    	   , false , DEFAULT_STATIC_PATH);
-  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , false , DEFAULT_DYNAMIC_FORECAST_PATH);
-  plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , false , DEFAULT_DYNAMIC_ANALYZED_PATH);
-  plain_driver_index_fwrite_mount_info( stream ,                     false , DEFAULT_INDEX_PATH);
+  if (driver_impl == PLAIN_DRIVER_ID) {
+    /* Writing the mount map for brand new PLAIN - fs. */
+    plain_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	     , true , DEFAULT_PLAIN_PARAMETER_PATH);
+    plain_driver_fwrite_mount_info( stream , DRIVER_STATIC    	     , true , DEFAULT_PLAIN_STATIC_PATH);
+    plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , true , DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH);
+    plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , true , DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH);
+    plain_driver_index_fwrite_mount_info( stream ,                     true , DEFAULT_PLAIN_INDEX_PATH);
+    
+    plain_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	     , false , DEFAULT_PLAIN_PARAMETER_PATH);
+    plain_driver_fwrite_mount_info( stream , DRIVER_STATIC    	     , false , DEFAULT_PLAIN_STATIC_PATH);
+    plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , false , DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH);
+    plain_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , false , DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH);
+    plain_driver_index_fwrite_mount_info( stream ,                     false , DEFAULT_PLAIN_INDEX_PATH);
+  } else if (driver_impl == SQLITE_DRIVER_ID) {
+    /* Writing a new mount map for a SQLite based approach. */
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_PARAMETER        , true , DEFAULT_SQLITE_PARAMETER_DBFILE);
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_STATIC           , true , DEFAULT_SQLITE_STATIC_DBFILE);
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , true , DEFAULT_SQLITE_DYNAMIC_FORECAST_DBFILE);
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , true , DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE);
+    plain_driver_index_fwrite_mount_info( stream ,                       true , DEFAULT_PLAIN_INDEX_PATH);   /* Using the plain index driver. */
+    
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	   , false , DEFAULT_SQLITE_PARAMETER_DBFILE);
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_STATIC    	   , false , DEFAULT_SQLITE_STATIC_DBFILE);
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST 	   , false , DEFAULT_SQLITE_DYNAMIC_FORECAST_DBFILE);
+    sqlite3_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED 	   , false , DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE);
+    plain_driver_index_fwrite_mount_info( stream ,                           false , DEFAULT_PLAIN_INDEX_PATH);
+  } else
+    util_abort("%s: unrecognized driver id \n",__func__);
   
   __dir_offset = ftell( stream );
   {
@@ -356,7 +375,7 @@ static void enkf_fs_upgrade_100(int old_version, const char * config_file, const
     closedir(dirH);
   }
   util_unlink_existing( config_file );
-  enkf_fs_fwrite_new_mount_map( config_file , new_dir );  /* Create new blank mount map */
+  enkf_fs_fwrite_new_mount_map( config_file , new_dir , PLAIN_DRIVER_ID);  /* Create new blank mount map */
 }
 
 /*****************************************************************/
@@ -827,7 +846,7 @@ static void enkf_fs_upgrade_101(const char * config_file, const char * root_path
     closedir( dirH );
     msg_free(msg , true);
     {
-      long int __dir_offset = enkf_fs_fwrite_new_mount_map( config_file , "DUMMY");         /* Create new blank mount map - have lost the cases.*/
+      long int __dir_offset = enkf_fs_fwrite_new_mount_map( config_file , "DUMMY" , PLAIN_DRIVER_ID);         /* Create new blank mount map - have lost the cases.*/
       __fs_update_map( config_file , __dir_offset , cases , current_case , current_case );  /* Recovering the cases - the current is random. */
     }
     free(current_case);
@@ -956,7 +975,7 @@ bool enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mk
 
 
 
-enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , const char * lock_path) {
+enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl, const char *mount_info , const char * lock_path) {
   const bool   use_locking = false;
   const char * default_dir = DEFAULT_CASE;
   char * config_file       = util_alloc_filename(root_path , mount_info , NULL);  /* This file should be protected - at all costs. */
@@ -968,7 +987,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
   
   util_make_path(root_path);                                    	    	  /* Creating root directory */
   if (version == -1)
-    enkf_fs_fwrite_new_mount_map( config_file , default_dir );  	    	  /* Create blank mount map */
+    enkf_fs_fwrite_new_mount_map( config_file , default_dir ,driver_impl);  	    	  /* Create blank mount map */
   else if (version < CURRENT_FS_VERSION) {  /* Upgrade file system layout */
     
     if (version == 0) {
@@ -1042,6 +1061,9 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , const char *mount_info , c
 	  break;
 	case(PLAIN_DRIVER_ID):
 	  driver = plain_driver_fread_alloc( root_path , stream );
+	  break;
+	case(SQLITE_DRIVER_ID):
+	  driver = sqlite3_driver_fread_alloc( root_path , stream );
 	  break;
 	default:
 	  util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized. Driver nr:%d \n",__func__ , fs->mount_map , driver_id , i);
@@ -1261,7 +1283,18 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
 	enkf_impl_type impl_type = enkf_node_get_impl_type(enkf_node);
 	if (impl_type == SUMMARY) return;    /* For report step == 0 the summary data is just garbage. */
       }
-      driver->save(driver , report_step , iens , state , enkf_node); 
+      {
+	bool   internal_state = true;
+	bool   data_written;
+	buffer_type * buffer = buffer_alloc(100);
+	buffer_fwrite_time_t( buffer , time(NULL));
+	data_written = enkf_node_store(enkf_node , buffer , internal_state , report_step , iens , state); 
+	if (data_written) {
+	  const char * key = enkf_node_get_key(enkf_node);
+	  driver->save(driver , key , report_step , iens , buffer);
+	}
+	buffer_free( buffer );
+      }
     }
   }
 }
@@ -1286,9 +1319,10 @@ static int __get_parameter_report_step( int report_step , state_enum state) {
 
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  enkf_var_type var_type = enkf_node_get_var_type(enkf_node);
+  enkf_var_type var_type     = enkf_node_get_var_type(enkf_node);
   basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) , true);
-  
+  const char * key           = enkf_node_get_key( enkf_node );
+
   if (var_type == PARAMETER) {
     report_step = __get_parameter_report_step( report_step , state );
     
@@ -1303,17 +1337,20 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
         2. We start the assimulation from R1, then we have to go all the
            way back to report 0 to get hold of the parameter.
     */
-    {
-      const char * key = enkf_node_get_key( enkf_node );
-      while (!driver->has_node( driver , report_step , iens , state , key)) {
-	report_step--;
-	if (report_step < 0)
-	  util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , key , iens);
-      }
+    while (!driver->has_node( driver , key , report_step , iens )) {
+      report_step--;
+      if (report_step < 0)
+	util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , key , iens);
     }
   }
-  
-  driver->load(driver , report_step , iens , state , enkf_node);
+
+  {
+    buffer_type * buffer = buffer_alloc(100);
+    driver->load(driver ,key ,  report_step , iens , buffer);
+    buffer_fskip_time_t( buffer );
+    enkf_node_load(enkf_node , buffer , report_step, iens , state);
+    buffer_free( buffer );
+  }
 }
 
 
@@ -1323,7 +1360,7 @@ bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * con
     const char * key = enkf_config_node_get_key(config_node);
     {
       basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , key , true));
-      return driver->has_node(driver , report_step , iens , state , key); 
+      return driver->has_node(driver , key , report_step , iens ); 
     }
   }
 }

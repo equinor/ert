@@ -59,49 +59,34 @@ static plain_driver_type * plain_driver_safe_cast( void * __driver) {
 }
 
 
-
-static void plain_driver_load_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+static void plain_driver_load_node(void * _driver , const char * key , int report_step , int iens ,  buffer_type * buffer) {
   plain_driver_type * driver = plain_driver_safe_cast( _driver );
-  buffer_type * buffer       = buffer_alloc(100);
   {
-    char * filename      = path_fmt_alloc_file(driver->path , false , report_step , iens , enkf_node_get_key(node));
+    char * filename      = path_fmt_alloc_file(driver->path , false , report_step , iens , key);
     buffer_fread_realloc( buffer , filename );
-    buffer_fskip_time_t( buffer );
-    enkf_node_load(node , buffer , report_step, iens , state);
     free(filename);
   }
-  buffer_free( buffer );
 }
 
 
 
 
-static void plain_driver_save_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+static void plain_driver_save_node(void * _driver , const char * key , int report_step , int iens ,  buffer_type * buffer) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    bool   internal_state = true;
-    bool   data_written;
-    buffer_type * buffer = buffer_alloc(100);
-    buffer_fwrite_time_t( buffer , time(NULL));
-    data_written 	 = enkf_node_store(node , buffer , internal_state , report_step , iens , state);  /* <- Even this could (should) be done at the enkf_fs level. */
-    
-    if (data_written) {
-      char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node));
-      buffer_store( buffer , filename );
-      free(filename);
-    }
-    
-    buffer_free( buffer );
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
+    buffer_store( buffer , filename );
+    free(filename);
   }
 }
 
 
-void plain_driver_unlink_node(void * _driver , int report_step , int iens , state_enum state , enkf_node_type * node) {
+void plain_driver_unlink_node(void * _driver , const char * key , int report_step , int iens ) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_node_get_key(node));
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
     util_unlink_existing(filename);
     free(filename);
   }
@@ -119,7 +104,7 @@ void plain_driver_unlink_node(void * _driver , int report_step , int iens , stat
      instead return false if the report_step we ask for is not present.
 */
 
-bool plain_driver_has_node(void * _driver , int report_step , int iens , state_enum state , const char * key) {
+bool plain_driver_has_node(void * _driver , const char * key , int report_step , int iens ) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
@@ -167,7 +152,7 @@ void plain_driver_select_dir(void *_driver , const char * directory) {
   This is where the various function pointers are initialized.
 */
 void * plain_driver_alloc(const char * root_path , const char * fmt) {
-  plain_driver_type * driver = malloc(sizeof * driver);
+  plain_driver_type * driver = util_malloc(sizeof * driver , __func__);
 
   driver->load        	= plain_driver_load_node;
   driver->save        	= plain_driver_save_node;

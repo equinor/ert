@@ -76,6 +76,7 @@ bool config_has_keys(const config_type *,
 
 const char            * config_iget(const config_type * , const char * , int );
 bool                    config_get_as_bool(const config_type * , const char *);
+int                     config_get_as_int(const config_type * , const char *);
 const char            * config_get(const config_type * , const char * );
 stringlist_type       * config_alloc_complete_stringlist(const config_type*  , const char * );
 stringlist_type       * config_alloc_stringlist(const config_type * config , const char * );

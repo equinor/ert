@@ -1,7 +1,8 @@
 #ifndef __SQLITE_DRIVER_H__
 #define __SQLITE_DRIVER_H__
 #include <stdbool.h>
-
+#include <buffer.h>
+#include <fs_types.h>
 
 typedef struct sqlite3_driver_struct sqlite3_driver_type;
 
@@ -11,9 +12,7 @@ typedef struct sqlite3_driver_struct sqlite3_driver_type;
   This function will also create the fs table in the
   db_file if it does not already exist.
 */
-sqlite3_driver_type * sqlite3_driver_alloc(
-  const char * db_file,
-  const char * casename);
+void * sqlite3_driver_alloc(const char * root_path , const char * db_file);
 
 
 /**
@@ -31,12 +30,10 @@ void sqlite3_driver_free(
 */
 void sqlite3_driver_save_node(
   void       * _driver,
-  const char * id,
-  int          realization_nr,
-  int          restart_nr,
-  int          state,
-  const void * data,
-  int          bytesize_data);
+  const char *  id,
+  int           realization_nr,
+  int           restart_nr,
+  buffer_type * buffer);
 
 
 /**
@@ -47,13 +44,11 @@ void sqlite3_driver_save_node(
   responsibility to free the alloc'd data.
 */
 bool sqlite3_driver_load_node(
-  void       * _driver,
-  const char * id,
-  int          realization_nr,
-  int          restart_nr,
-  int          state,
-  void      ** data,
-  int        * bytesize_data);
+  void        * _driver,
+  const char  * id,
+  int           realization_nr,
+  int           restart_nr,
+  buffer_type * buffer);
 
 
 /**
@@ -63,8 +58,7 @@ void sqlite3_driver_unlink_node(
   void       * _driver,
   const char * id,
   int          realization_nr,
-  int          restart_nr,
-  int          state);
+  int          restart_nr);
 
 
 /**
@@ -74,8 +68,7 @@ bool sqlite3_driver_has_node(
   void       * _driver,
   const char * id,
   int          realization_nr,
-  int          restart_nr,
-  int          state);
+  int          restart_nr);
 
 
 /**
@@ -84,5 +77,14 @@ bool sqlite3_driver_has_node(
 void sqlite3_driver_change_casename(
   void * _driver,
   const char * casename);
+
+
+void sqlite3_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , bool read , const char * db_file );
+
+/**
+   The two integers from the mount info have already been read at the enkf_fs level.
+*/
+sqlite3_driver_type * sqlite3_driver_fread_alloc(const char * root_path , FILE * stream);
+
 
 #endif

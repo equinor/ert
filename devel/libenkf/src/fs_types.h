@@ -10,11 +10,13 @@
   must be updated.
 */
 typedef enum {
+  INVALID_DRIVER_ID          = 0,
   PLAIN_DRIVER_INDEX_ID      = 1001,
   PLAIN_DRIVER_STATIC_ID     = 1002,  /* Depreceated */
   PLAIN_DRIVER_DYNAMIC_ID    = 1003,  /* Depreceated */
   PLAIN_DRIVER_PARAMETER_ID  = 1004,  /* Depreceated */
-  PLAIN_DRIVER_ID            = 1005} fs_driver_impl;
+  PLAIN_DRIVER_ID            = 1005,
+  SQLITE_DRIVER_ID           = 2001} fs_driver_impl;
 
 
 
@@ -37,6 +39,10 @@ typedef enum {
   DRIVER_INDEX      	  = 4,  
   DRIVER_DYNAMIC_FORECAST = 5,
   DRIVER_DYNAMIC_ANALYZED = 6} fs_driver_type;
+
+
+
+fs_driver_impl   fs_types_lookup_string_name(const char * driver_name);
 
 
 #endif

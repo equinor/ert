@@ -6,26 +6,23 @@
 #include <basic_driver.h>
 #include <sqlite3_driver.h>
 #include <buffer.h>
+#include <fs_types.h>
 
-/**
-  THIS ID IS TEMPORARY AND SHALL BE MOVED TO fs_types.h
-*/
-static int SQLITE3_DRIVER_ID = 99792683;
 
 
 static const char SQL_CREATE_TABLE_fs[]     = "CREATE TABLE IF NOT EXISTS fs  "
   "(id TEXT NOT NULL, casename TEXT NOT NULL, realization_nr INTEGER NOT NULL,"
-  "restart_nr INTEGER NOT NULL, state INTEGER NOT NULL, data BLOB NOT NULL,   "
-  "UNIQUE (id, casename, realization_nr, restart_nr, state));                 ";
+  "restart_nr INTEGER NOT NULL, data BLOB NOT NULL,   "
+  "UNIQUE (id, casename, realization_nr, restart_nr));                 ";
 
 static const char SQL_INSERT_INTO_fs[]      = "REPLACE INTO fs (id, casename, "
-  "realization_nr, restart_nr, state, data) values (?, ?, ?, ?, ?, ?);        ";
+  "realization_nr, restart_nr, data) values (?, ?, ?, ?, ?);        ";
 
 static const char SQL_SELECT_DATA_FROM_fs[] = "SELECT data FROM fs WHERE id=? "
-  "AND casename=? AND realization_nr=? AND restart_nr=? AND state=?;          ";
+  "AND casename=? AND realization_nr=? AND restart_nr=? ;          ";
 
 static const char SQL_DELETE_FROM_fs[] = "DELETE FROM fs WHERE id=?           "
-  "AND casename=? AND realization_nr=? AND restart_nr=? AND state=?;          ";
+  "AND casename=? AND realization_nr=? AND restart_nr=? ;          ";
 
 
 
@@ -44,7 +41,7 @@ sqlite3_driver_type * sqlite3_driver_safe_cast(
   void * _driver)
 {
   sqlite3_driver_type * driver = (sqlite3_driver_type *) _driver;
-  if(driver->__id != SQLITE3_DRIVER_ID)
+  if(driver->__id != SQLITE_DRIVER_ID)
     util_abort("%s: internal error - cast failed.\n", __func__);
 
   return driver;
@@ -136,10 +133,7 @@ void bind_blob(
 /**
   Execute a plain SQL string on db. Useful for creating tables etc.
 */
-static
-int execute_plain_sql(
-  sqlite3    * db,
-  const char * sql)
+static int execute_plain_sql(sqlite3    * db,  const char * sql)
 {
   char * err_msg;
   int result = sqlite3_exec(db, sql, NULL, NULL, &err_msg);
@@ -207,26 +201,30 @@ void create_fs_table_if_not_exists(
 
   This function will also create the fs table in the
   db_file if it does not already exist.
-
-  TODO
-
-  Need to set the function pointers properly!
 */
-sqlite3_driver_type * sqlite3_driver_alloc(
-  const char * db_file,
-  const char * casename)
-{
+void * sqlite3_driver_alloc(const char * root_path , const char * db_file) {
   sqlite3_driver_type * driver = util_malloc(sizeof * driver, __func__);
 
-  driver->__id     = SQLITE3_DRIVER_ID;
-  driver->db_file  = util_alloc_string_copy(db_file);
-  driver->casename = util_alloc_string_copy(casename);
+  driver->__id     = SQLITE_DRIVER_ID;
+  driver->db_file  = util_alloc_filename( root_path , db_file , NULL);
+  driver->casename = NULL;
   driver->db       = open_db(driver->db_file);
-
   create_fs_table_if_not_exists(driver->db);
 
-  return driver;
+
+  driver->load 	      = sqlite3_driver_load_node;
+  driver->save 	      = sqlite3_driver_save_node;
+  driver->has_node    = sqlite3_driver_has_node;
+  driver->unlink_node = sqlite3_driver_unlink_node;
+  driver->free_driver = sqlite3_driver_free;
+  driver->select_dir  = sqlite3_driver_change_casename;
+  {
+    basic_driver_type * basic_driver = (basic_driver_type *) driver;
+    basic_driver_init( basic_driver );
+    return basic_driver;
+  }
 }
+
 
 
 
@@ -256,10 +254,8 @@ void sqlite3_driver_save_node(
   const char * id,
   int          realization_nr,
   int          restart_nr,
-  int          state,
-  const void * data,
-  int          bytesize_data)
-{
+  buffer_type * buffer) {
+
   int result; 
   sqlite3_driver_type * driver = sqlite3_driver_safe_cast(_driver);
   sqlite3      * db            = driver->db;
@@ -283,8 +279,7 @@ void sqlite3_driver_save_node(
   bind_text(stmt, 2, casename           );
   bind_int( stmt, 3, realization_nr     );
   bind_int( stmt, 4, restart_nr         );
-  bind_int( stmt, 5, state              );
-  bind_blob(stmt, 6, data, bytesize_data);
+  bind_blob(stmt, 5, buffer_get_data( buffer ) , buffer_get_size( buffer ));
 
 
   result = sqlite3_step(stmt);
@@ -320,9 +315,7 @@ bool sqlite3_driver_load_node(
   const char * id,
   int          realization_nr,
   int          restart_nr,
-  int          state,
-  void      ** data,
-  int        * bytesize_data)
+  buffer_type * buffer) 
 {
   int  result; 
   bool has_node = false;
@@ -349,7 +342,6 @@ bool sqlite3_driver_load_node(
   bind_text(stmt, 2, casename      );
   bind_int( stmt, 3, realization_nr);
   bind_int( stmt, 4, restart_nr    );
-  bind_int( stmt, 5, state         );
 
 
   /**
@@ -373,13 +365,11 @@ bool sqlite3_driver_load_node(
   /**
     Copy the result if wanted.
   */
-  if(data != NULL && bytesize_data != NULL && has_node)
-  {
+  if(buffer != NULL && has_node) {
     const void * my_blob = sqlite3_column_blob(stmt, 0);
     int bytesize_my_blob = sqlite3_column_bytes(stmt, 0);
-    *data = util_malloc(bytesize_my_blob, __func__);
-    memcpy(*data, my_blob, bytesize_my_blob);
-    *bytesize_data = bytesize_my_blob;
+    buffer_fwrite( buffer , my_blob , 1 , bytesize_my_blob);
+    buffer_fseek( buffer , 0L , SEEK_SET);
   }
 
 
@@ -405,8 +395,7 @@ void sqlite3_driver_unlink_node(
   void       * _driver,
   const char * id,
   int          realization_nr,
-  int          restart_nr,
-  int          state)
+  int          restart_nr)
 {
   int  result; 
   sqlite3_driver_type * driver   = sqlite3_driver_safe_cast(_driver);
@@ -433,7 +422,6 @@ void sqlite3_driver_unlink_node(
   bind_text(stmt, 2, casename      );
   bind_int( stmt, 3, realization_nr);
   bind_int( stmt, 4, restart_nr    );
-  bind_int( stmt, 5, state         );
 
 
   result = sqlite3_step(stmt);
@@ -464,22 +452,38 @@ bool sqlite3_driver_has_node(
   void       * _driver,
   const char * id,
   int          realization_nr,
-  int          restart_nr,
-  int          state)
+  int          restart_nr ) 
 {
-  return sqlite3_driver_load_node(_driver, id, realization_nr, restart_nr,
-                                  state, NULL, NULL);
+  return sqlite3_driver_load_node(_driver, id, realization_nr, restart_nr, NULL);
 }
 
 
 /**
   Change casename.
 */
-void sqlite3_driver_change_casename(
-  void * _driver,
-  const char * casename)
-{
+void sqlite3_driver_change_casename(  void * _driver,  const char * casename) {
   sqlite3_driver_type * driver = sqlite3_driver_safe_cast( _driver );
-  free(driver->casename);
-  driver->casename = util_alloc_string_copy(casename);
+  driver->casename = util_realloc_string_copy(driver->casename, casename);
 }
+
+
+/*****************************************************************/
+
+
+void sqlite3_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , bool read , const char * db_file ) {
+  util_fwrite_bool(read , stream);
+  util_fwrite_int(driver_type , stream);
+  util_fwrite_int(SQLITE_DRIVER_ID , stream);
+  util_fwrite_string(db_file , stream);
+}
+
+/**
+   The two integers from the mount info have already been read at the enkf_fs level.
+*/
+sqlite3_driver_type * sqlite3_driver_fread_alloc(const char * root_path , FILE * stream) {
+  char * db_file = util_fread_alloc_string( stream );
+  sqlite3_driver_type * driver = sqlite3_driver_alloc(root_path , db_file );
+  free(db_file);
+  return driver;
+}
+
