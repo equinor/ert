@@ -136,7 +136,7 @@ void bind_blob(
 static int execute_plain_sql(sqlite3    * db,  const char * sql)
 {
   char * err_msg;
-  int result = sqlite3_exec(db, sql, NULL, NULL, &err_msg);
+  int    result  = sqlite3_exec(db, sql, NULL, NULL, &err_msg);
 
   if(result != SQLITE_OK)
   {
@@ -261,7 +261,7 @@ void sqlite3_driver_save_node(
   sqlite3      * db            = driver->db;
   sqlite3_stmt * stmt          = NULL;
   const char   * casename      = driver->casename; 
-
+  
   result = sqlite3_prepare_v2(db, SQL_INSERT_INTO_fs,
                               strlen(SQL_INSERT_INTO_fs), &stmt, NULL);
   if(result != SQLITE_OK)

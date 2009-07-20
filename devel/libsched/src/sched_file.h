@@ -11,7 +11,7 @@ extern "C" {
 typedef struct sched_file_struct sched_file_type;
 
 
-  typedef void * (sched_file_callback_ftype)( void * sched_kw , int restart_nr , void * arg);
+typedef void * (sched_file_callback_ftype)( void * sched_kw , int restart_nr , void * arg);
 
 
 sched_file_type * sched_file_alloc(time_t);

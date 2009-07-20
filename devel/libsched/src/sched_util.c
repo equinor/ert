@@ -21,7 +21,7 @@ static char * strip_line_alloc(const char * line) {
   const int strip_mode = strip_comment + strip_space;
   char * new_line = NULL;
   int offset, length,pos;
-  bool cont , quote_on , dash_on;
+  bool cont , quote_on , dash_on;   /* The quote_on variable protects againts premature termination based on '/' in path specifications. */
   
   if (strip_mode & strip_space)
     offset   = strspn(line , space);
@@ -281,7 +281,6 @@ char * sched_util_alloc_next_entry(FILE * stream, bool * at_eof, bool * at_eokw)
   for(;;)
   {
     line = sched_util_alloc_line(stream, at_eof);
-
     if(line == NULL)
     {
       if(*at_eof)

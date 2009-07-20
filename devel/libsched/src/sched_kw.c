@@ -19,6 +19,7 @@
 #include <sched_kw_wconinje.h>
 #include <sched_kw_compdat.h>
 #include <sched_kw_untyped.h>
+#include <sched_kw_include.h>
 #include <sched_macros.h>
 
 
@@ -85,22 +86,30 @@ struct sched_kw_struct {
 
 /*****************************************************************/
 
-
+/**
+   This function does a direct translation of a string name to
+   implementation type - i.e. an enum instance. Observe that
+   (currently) no case-normalization is performed.
+*/
 
 static sched_type_enum get_sched_type_from_string(char * kw_name)
 {
-  if( strcmp(kw_name, GRUPTREE_STRING ) == 0){ return GRUPTREE ;}
-  if( strcmp(kw_name, TSTEP_STRING    ) == 0){ return TSTEP    ;}
-  if( strcmp(kw_name, TIME_STRING     ) == 0){ return TIME     ;}
-  if( strcmp(kw_name, DATES_STRING    ) == 0){ return DATES    ;}
-  if( strcmp(kw_name, WCONHIST_STRING ) == 0){ return WCONHIST ;}
-  if( strcmp(kw_name, WELSPECS_STRING ) == 0){ return WELSPECS ;}
-  if( strcmp(kw_name, WCONINJ_STRING  ) == 0){ return WCONINJ  ;}
-  if( strcmp(kw_name, WCONINJE_STRING ) == 0){ return WCONINJE ;}
-  if( strcmp(kw_name, WCONINJH_STRING ) == 0){ return WCONINJH ;}
-  if( strcmp(kw_name, WCONPROD_STRING ) == 0){ return WCONPROD ;}
-  if( strcmp(kw_name, COMPDAT_STRING  ) == 0){ return COMPDAT  ;}   //COMPDAT goes as untyped for NOW
-  else                                       { return UNTYPED  ;}
+  sched_type_enum kw_type = UNTYPED;
+
+  if     ( strcmp(kw_name, GRUPTREE_STRING ) == 0) kw_type = GRUPTREE ;
+  else if( strcmp(kw_name, TSTEP_STRING    ) == 0) kw_type = TSTEP    ;
+  //else if( strcmp(kw_name, INCLUDE_STRING  ) == 0) kw_type = INCLUDE  ;
+  else if( strcmp(kw_name, TIME_STRING     ) == 0) kw_type = TIME     ;
+  else if( strcmp(kw_name, DATES_STRING    ) == 0) kw_type = DATES    ;
+  else if( strcmp(kw_name, WCONHIST_STRING ) == 0) kw_type = WCONHIST ;
+  else if( strcmp(kw_name, WELSPECS_STRING ) == 0) kw_type = WELSPECS ;
+  else if( strcmp(kw_name, WCONINJ_STRING  ) == 0) kw_type = WCONINJ  ;
+  else if( strcmp(kw_name, WCONINJE_STRING ) == 0) kw_type = WCONINJE ;
+  else if( strcmp(kw_name, WCONINJH_STRING ) == 0) kw_type = WCONINJH ;
+  else if( strcmp(kw_name, WCONPROD_STRING ) == 0) kw_type = WCONPROD ;
+  else if( strcmp(kw_name, COMPDAT_STRING  ) == 0) kw_type = COMPDAT  ;   //COMPDAT goes as untyped for NOW
+  
+  return kw_type;
 }
 
 
@@ -153,7 +162,9 @@ static void sched_kw_name_assert(const char * kw_name , FILE * stream)
 static data_handlers_type get_data_handlers(sched_type_enum type)
 {
   data_handlers_type handlers;
-  
+  /*
+    The GET_DATA_HANDLERS macro is implemented in sched_macros.h 
+  */
   switch(type) {
   case(GRUPTREE):
     GET_DATA_HANDLERS(handlers, gruptree);
@@ -190,6 +201,9 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
     break;
   case(UNTYPED):
     GET_DATA_HANDLERS(handlers, untyped);
+    break;
+  case(INCLUDE):
+    GET_DATA_HANDLERS(handlers , include);
     break;
   default:
     util_abort("%s: Internal error - aborting.\n",__func__);

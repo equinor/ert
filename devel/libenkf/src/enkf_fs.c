@@ -41,6 +41,7 @@
    101                            |   1810                |  1886
    102                            |   1887/1902           |  1996 
    103                            |   1997                |
+                                  |   2047: sqlite added  |
    --------------------------------------------------------------------------
 
 
@@ -84,6 +85,9 @@
    have specific _103_ functions. The xxx_fread() and xxx_fwrite()
    functions were removed in svn:2046.
 
+   A very experimental version of the sqlite driver was added in
+   svn:2047. When (if ??) this stabilizes it should probably lead to
+   an upgrade to version 104.
 
 */
 

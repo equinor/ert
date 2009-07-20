@@ -476,11 +476,6 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     } while (add_more_kw);
     ikw2 = ikw;
     matrix_shrink_header( A , current_row_offset , ens_size );
-    {
-      FILE * stream = util_fopen("/tmp/A.txt" , "w");
-      matrix_pretty_fprint( A , " A " , "%12.7f " , stream);
-      fclose( stream );
-    }
     if (current_row_offset > 0) {
       /* The actual update */
       msg_update(msg , " matrix multiplication");
