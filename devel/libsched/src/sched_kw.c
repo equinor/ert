@@ -98,7 +98,7 @@ static sched_type_enum get_sched_type_from_string(char * kw_name)
 
   if     ( strcmp(kw_name, GRUPTREE_STRING ) == 0) kw_type = GRUPTREE ;
   else if( strcmp(kw_name, TSTEP_STRING    ) == 0) kw_type = TSTEP    ;
-  //else if( strcmp(kw_name, INCLUDE_STRING  ) == 0) kw_type = INCLUDE  ;
+  else if( strcmp(kw_name, INCLUDE_STRING  ) == 0) kw_type = INCLUDE  ;
   else if( strcmp(kw_name, TIME_STRING     ) == 0) kw_type = TIME     ;
   else if( strcmp(kw_name, DATES_STRING    ) == 0) kw_type = DATES    ;
   else if( strcmp(kw_name, WCONHIST_STRING ) == 0) kw_type = WCONHIST ;
@@ -107,7 +107,7 @@ static sched_type_enum get_sched_type_from_string(char * kw_name)
   else if( strcmp(kw_name, WCONINJE_STRING ) == 0) kw_type = WCONINJE ;
   else if( strcmp(kw_name, WCONINJH_STRING ) == 0) kw_type = WCONINJH ;
   else if( strcmp(kw_name, WCONPROD_STRING ) == 0) kw_type = WCONPROD ;
-  else if( strcmp(kw_name, COMPDAT_STRING  ) == 0) kw_type = COMPDAT  ;   //COMPDAT goes as untyped for NOW
+  else if( strcmp(kw_name, COMPDAT_STRING  ) == 0) kw_type = COMPDAT  ;   
   
   return kw_type;
 }

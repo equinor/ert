@@ -251,24 +251,12 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
    
 
 char * sched_util_alloc_slash_terminated_line(FILE * stream) {
-  buffer_type * buffer = buffer_alloc( 256 );
-  int c;
-  buffer_clear( buffer );
-  while (true) {
-    c = fgetc(stream);
-    if (c == EOF)
-      util_abort("%s: fatal error when parsing SCHEDULE file. Line:%d - not terminated by: \'/\'\n",__func__ , util_get_current_linenr( stream ));
-    buffer_fwrite_char( buffer , ( char ) c );
-    if (c == '/')
-      break;
+  char * line = util_fscanf_alloc_upto(stream , "/");
 
-  }
-  buffer_fwrite_char( buffer , '\0' );  /* Ensure \0 termination. */
-  {
-    char * line = buffer_alloc_data_copy( buffer );
-    buffer_free( buffer );
-    return line;
-  }
+  if (line == NULL) 
+    util_abort("%s: fatal error when parsing SCHEDULE file. Line:%d - not terminated by: \'/\'\n",__func__ , util_get_current_linenr( stream ));
+  
+  return line;
 }
 
 

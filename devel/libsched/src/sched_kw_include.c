@@ -7,6 +7,7 @@
 #include <sched_util.h>
 #include <sched_kw_include.h>
 #include <sched_macros.h>
+#include <tokenizer.h>
 
 /**
    This file implemtents support for the INCLUDE keyword in the
@@ -48,51 +49,25 @@ static void sched_kw_include_set_file( sched_kw_include_type * kw , const char *
 
 sched_kw_include_type * sched_kw_include_fscanf_alloc(FILE * stream , bool * at_eof , const char * kw_name) {
   sched_kw_include_type * kw = sched_kw_include_alloc_empty();
-  bool at_eokw;  
-  char                  * line = sched_util_alloc_next_entry( stream , at_eof , &at_eokw);   /* This will break on unquoted filenames */
-
+  char * line = util_fscanf_alloc_upto(stream , "\n");
+  if (line == NULL)
+    util_abort("%s: something fishy ... \n",__func__);
+  
   /**
      line will now typically be a string containing a (possibly) ' or
      " quoted filename, terminated with /. We remove the quotes, and
      the terminating / before we internalize the filename.
   */
-  {
-    char * include_file;
-    char * end_pos;
-    char * start      = line;
-    char   quote_char = 0;   
-    /* Remove leading space. */
-    printf(" Line: <%s> \n",line);
-    while (isspace( *start ))
-      start++;
-
-    
-    /* Determine the quoter, and remove it. */
-    if (*start == '\'')
-      quote_char = '\'';
-    else if (*start == '\"')
-      quote_char = '\"';
-    
-    if (quote_char != 0)
-      start++;      
-    
-    if (quote_char != 0) {
-      /* Wee seek to the closing quote, and that is it. */
-      end_pos = strchr(start , quote_char);
-      if (end_pos == NULL)
-        util_abort("%s: Could not find closing quote in line:%s \n",__func__ , line);
-    } else {
-      /* The filename is not quoted - we seek to the end and then backwards. */
-      end_pos = strrchr(start , '/');
-      end_pos--;
-      while (isspace( *end_pos ))
-        end_pos--;
-    }
-    include_file = util_alloc_substring_copy( start , end_pos - start );
-    sched_kw_include_set_file( kw , include_file );
-    free( include_file );
+ 
+ {
+    tokenizer_type  * tokenizer = tokenizer_alloc(" \t\r\n" , "\"\'" , NULL , "--" , "\n");
+    stringlist_type * tokens    = tokenize_buffer( tokenizer , line , true );
+    sched_kw_include_set_file( kw , stringlist_iget( tokens , 0) );
+    tokenizer_free( tokenizer );
+    stringlist_free( tokens );
   }
   free(line);
+
   return kw;
 }
 
