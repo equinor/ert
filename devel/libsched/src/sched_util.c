@@ -23,11 +23,13 @@ static char * strip_line_alloc(const char * line) {
   int offset, length,pos;
   bool cont , quote_on , dash_on;   /* The quote_on variable protects againts premature termination based on '/' in path specifications. */
   
+  /* Strip intial white-space */
   if (strip_mode & strip_space)
     offset   = strspn(line , space);
   else
     offset = 0;
 
+  
   dash_on  = false;
   quote_on = false;
   cont     = true;
@@ -250,6 +252,7 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
 */
    
 
+
 char * sched_util_alloc_slash_terminated_line(FILE * stream) {
   char * line = util_fscanf_alloc_upto(stream , "/");
 
@@ -305,6 +308,7 @@ void sched_util_fprintf_default(int width , FILE * stream) {
     fputc(' ' , stream);
 }
 
+
 /**
    All the sched_util_fprintf_xxx() functions start by putting out one
    ' ', to ensure against overlapping fields.
@@ -342,9 +346,7 @@ void sched_util_fprintf_qst(bool def, const char *s , int width , FILE *stream) 
     for (int i=0; i < (width - strlen(s)); i++) 
       fputc(' ' , stream);
     
-    fputc('\'' , stream);
-    fprintf(stream , "%s" , s);
-    fputc('\'' , stream);
+    fprintf(stream , "\'%s\'" , s);
   }
 }
 

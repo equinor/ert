@@ -114,6 +114,24 @@ static sched_type_enum get_sched_type_from_string(char * kw_name)
 
 
 
+static const char * get_name_from_type(sched_type_enum kw_type) {
+  if      ( kw_type == GRUPTREE ) return GRUPTREE_STRING ;
+  else if ( kw_type == TSTEP    ) return TSTEP_STRING    ;
+  else if ( kw_type == INCLUDE  ) return INCLUDE_STRING  ;
+  else if ( kw_type == TIME     ) return TIME_STRING     ;
+  else if ( kw_type == DATES    ) return DATES_STRING    ;
+  else if ( kw_type == WCONHIST ) return WCONHIST_STRING ;
+  else if ( kw_type == WELSPECS ) return WELSPECS_STRING ;
+  else if ( kw_type == WCONINJ  ) return WCONINJ_STRING  ;
+  else if ( kw_type == WCONINJE ) return WCONINJE_STRING ;
+  else if ( kw_type == WCONINJH ) return WCONINJH_STRING ;
+  else if ( kw_type == WCONPROD ) return WCONPROD_STRING ;
+  else if ( kw_type == COMPDAT  ) return COMPDAT_STRING  ;   
+
+  return UNTYPED_STRING; /* Unknown type */
+}
+
+
 /*
   This tries to check if kw_name is a valid keyword in an ECLIPSE
   schedule file. It is essentially based on checking that there are
@@ -310,6 +328,7 @@ sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
     sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
     sched_kw->type           = get_sched_type_from_string(kw_name);
     sched_kw->data_handlers  = get_data_handlers(sched_kw->type);
+    //printf("Loading %d: %8s : %8s \n",sched_kw->type , get_name_from_type(sched_kw->type) , kw_name);
     sched_kw->data           = sched_kw->data_handlers.fscanf_alloc(stream, at_eos, kw_name); 
 
     free(kw_name);

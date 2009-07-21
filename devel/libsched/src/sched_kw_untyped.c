@@ -50,21 +50,8 @@ sched_kw_untyped_type * sched_kw_untyped_alloc(const char * kw_name) {
 
 
 
-/** This is exported. */
-void sched_kw_untyped_add_line(sched_kw_untyped_type * kw , const char *line, bool pad , bool * slash_terminated) {
-  /* Seek backwards from the end to look for terminating '/' */
-  
-  if (slash_terminated != NULL) {
-    int    index   = strlen(line) - 1;
-    while (isspace(line[index]))
-      index--;
-
-    if ( line[index] == '/') 
-      *slash_terminated = true;
-    else
-      *slash_terminated = false;
-  }
-
+/** This is exported for the keywords  which are just a minimum extension of untyped. */
+void sched_kw_untyped_add_line(sched_kw_untyped_type * kw , const char *line, bool pad) {
   if (pad) {
     char * padded_line = util_alloc_sprintf("   %s\n" , line);
     kw->buffer = util_strcat_realloc(kw->buffer , padded_line);
@@ -82,9 +69,11 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_fixlen(FILE * strea
   
   while(cur_rec < rec_len) {
     char * line = sched_util_alloc_slash_terminated_line(stream);
-    bool slash_terminated;
+    fseek(stream , 1 , SEEK_CUR); /* Skip the trailing '/' */
     if(line != NULL) {
-      sched_kw_untyped_add_line(kw, line , false , &slash_terminated);
+      /** Add the terminating '/' explicitly ... */
+      line = util_strcat_realloc(line , "/\n");
+      sched_kw_untyped_add_line(kw, line , false );
       free(line);
     } else 
       util_exit("Something fishy - sched_util_alloc_slash_terminated() has returned NULL \n");
@@ -116,7 +105,7 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_varlen(FILE * strea
     }
     else
     {
-      sched_kw_untyped_add_line(kw, line , true , NULL);
+      sched_kw_untyped_add_line(kw, line , true );
       free(line);
     }
   }

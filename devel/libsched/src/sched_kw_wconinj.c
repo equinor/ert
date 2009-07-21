@@ -69,7 +69,7 @@ static void sched_kw_wconinj_add_line(sched_kw_wconinj_type * kw , const char * 
     util_abort("%s: line[%d]: failed to get well name \n",__func__ , util_get_current_linenr(stream));
 
   stringlist_append_copy(kw->wells , token_list[0]);
-  sched_kw_untyped_add_line(kw->untyped_kw , line , true , NULL);
+  sched_kw_untyped_add_line(kw->untyped_kw , line , true );
   util_free_stringlist( token_list , tokens );
 }
 

@@ -31,6 +31,8 @@ typedef enum {WCONHIST, DATES , COMPDAT , TSTEP, TIME, WELSPECS, GRUPTREE,
 #define WCONINJE_STRING  "WCONINJE"
 #define WCONINJH_STRING  "WCONINJH"
 #define WCONPROD_STRING  "WCONPROD"
+
+#define UNTYPED_STRING   "UNTYPED"
               
 typedef struct sched_kw_struct sched_kw_type;
 
