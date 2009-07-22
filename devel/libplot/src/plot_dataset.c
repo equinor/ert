@@ -363,9 +363,10 @@ void plot_dataset_append_point_hist(plot_dataset_type *d , double x) {
 void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type * range) {
   const int size = plot_dataset_get_size( d );
   plsstrm(stream);
-  pllsty(d->line_attr.line_style);                                  /* Setting solid/dashed/... */
-  plwid(d->line_attr.line_width * PLOT_DEFAULT_LINE_WIDTH);         /* Setting line width.*/
-  plcol0(d->line_attr.line_color);                                  /* Setting line color. */
+  
+  pllsty(d->line_attr.line_style);                                   /* Setting solid/dashed/... */
+  plwid(d->line_attr.line_width * PLOT_DEFAULT_LINE_WIDTH);          /* Setting line width.*/
+  plcol0(d->line_attr.line_color);                                   /* Setting line color. */
   plssym(0 , d->point_attr.symbol_size * PLOT_DEFAULT_SYMBOL_SIZE);  /* Setting the size for the symbols. */
   
   
@@ -403,9 +404,44 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
   case(PLOT_HIST):
     {
       int    bins = (int) sqrt( size );
-      double xmin = plot_range_get_xmin(range);
-      double xmax = plot_range_get_xmax(range);
-      plhist(size , double_vector_get_ptr(d->x) , xmin , xmax , bins , 0 /* PL_HIST_DEFAULT */);
+      double xmin = plot_range_get_xmin( range );
+      double xmax = plot_range_get_xmax( range );
+      {
+        /*
+          Could for some fuxxxing reason not get the plhist() function
+          to work, and had to resort to the low level plbin function.
+        */
+        double * limits = util_malloc(sizeof * limits * (bins + 1) , __func__);
+        double * x = util_malloc(sizeof * x * bins , __func__); 
+        double * y = util_malloc(sizeof * y * bins , __func__);
+        int i;
+        double delta = (xmax - xmin) / bins;
+        
+        for (i= 0; i <= bins; i++)
+          limits[i] = xmin + i*delta;
+        
+        for (i=0; i < bins; i++) {
+          y[i] = 0;
+          x[i] = 0.50 * (limits[i] + limits[i + 1]);
+        }
+        
+        
+        for (i=0; i < size; i++) {
+          double value = double_vector_iget(d->x , i);
+          int j;
+          for (j = 1; j <= bins; j++)
+            if (value < limits[j]) {
+              y[j-1]++;
+              break;
+            }
+        }
+        
+        plbin(bins , x , y , PL_BIN_CENTRED + PL_BIN_NOEXPAND);
+        free(x);
+        free(y);
+        free(limits);
+      }
+      //plhist(size , double_vector_get_ptr(d->x) , xmin , xmax , bins , 0 /* PL_HIST_DEFAULT */);
     }
     break;
   case(PLOT_XY1Y2):
@@ -444,6 +480,14 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
   }
 }
 
+
+void plot_dataset_update_range_histogram(plot_dataset_type * d, plot_range_type * range) {
+  plot_range_set_auto_xmin(range , double_vector_get_min( d->x ));
+  plot_range_set_auto_xmax(range , double_vector_get_max( d->x ));
+  plot_range_set_auto_ymin(range , 0 );
+  plot_range_set_auto_ymax(range , double_vector_size( d->x ) / 4);  /* Pure heuristics. */
+    
+}
 
 
 /**
@@ -513,7 +557,7 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
 	  tmp_y_max = y2[i];
       }
     }
-  
+    
     /**
        If the range value has been set manually these functions
        just return without doing anything.
@@ -526,5 +570,7 @@ void plot_dataset_update_range(plot_dataset_type * d, bool * first_pass , plot_r
     *first_pass = false;
   }
 }
+
+
 
 

@@ -379,21 +379,10 @@ void plot_data(plot_type * plot)
   int iplot;
   
   plsstrm(plot->stream);  
-
-  if (plot->is_histogram) {
-    //plot_set_range__(plot , NULL , NULL , NULL , NULL);
-    for (iplot = 0; iplot < vector_get_size( plot->dataset ); iplot++) 
-      plot_dataset_draw(plot->stream , vector_iget(plot->dataset , iplot) , plot->range);
-    
-    return;
-  } 
-
-
   pladv(0);  /* And what does this do ... */
   plvsta();
+
   plot_set_range__(plot);
-  
-  
   plcol0(plot->label_color);
   plschr(0, plot->label_font_size * PLOT_DEFAULT_LABEL_FONTSIZE);
   if (plot->timefmt != NULL)
@@ -529,10 +518,14 @@ void plot_set_label_fontsize(plot_type * plot , double label_font_size_scale) {
  */
 
 void plot_update_range(plot_type * plot, plot_range_type * range) {
-  bool first_pass = true;
-  int iplot;
-  for (iplot = 0; iplot < vector_get_size( plot->dataset  ); iplot++) 
-    plot_dataset_update_range(vector_iget(plot->dataset , iplot) , &first_pass , range);
+  if (plot->is_histogram) 
+    plot_dataset_update_range_histogram( vector_iget(plot->dataset , 0) , range);
+  else {
+    bool first_pass = true;
+    int iplot;
+    for (iplot = 0; iplot < vector_get_size( plot->dataset  ); iplot++) 
+      plot_dataset_update_range(vector_iget(plot->dataset , iplot) , &first_pass , range);
+  }
 }
 
 
