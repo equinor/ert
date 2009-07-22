@@ -336,4 +336,3 @@ void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , 
 
 
 
-
