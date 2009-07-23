@@ -12,9 +12,53 @@
 #include <unistd.h>
 
 
+/*
+  About arguments
+  ---------------
+  How a job is run is defined in terms of the following variables:
+
+   o stdout_file / stdin_file / stderr_file
+   o arglist
+   o ....
+
+  These variables will then contain string values from when the job
+  configuration is read in, for example this little job 
+
+    STDOUT   my_stdout
+    STDERR   my_stderr
+    ARGLIST  my_job_input   my_job_output
+
+  stdout & stderr are redirected to the files 'my_stdout' and
+  'my_stderr' respectively, and when invoked with an exec() call the
+  job is given the argumentlist:
+
+       my_job_input   my_job_output
+
+  This implies that _every_time_ this job is invoked the argumentlist
+  will be identical; that is clearly quite limiting! To solve this we
+  have the possibility of performing string substitutions on the
+  strings in the job defintion prior to executing the job, this is
+  handled with the privat_args substitutions. The definition for a
+  copy-file job:
+
+
+    PORTABLE_EXE /bin/cp
+    ARGLIST      <SRC_FILE>  <TARGET_FILE>
+
+
+  This can then be invoked several times, with different key=value
+  arguments for the SRC_FILE and TARGET_FILE:
+ 
+  
+      COPY_FILE(SRC_FILE = file1 , TARGET_FILE = /tmp/file1)
+      COPY_FILE(SRC_FILE = file2 , TARGET_FILE = /tmp/file2)
+
+*/
+
+
 
 /*
-
+ 
 
 jobList = [
     {"portable_exe" : None, 
@@ -44,7 +88,8 @@ struct ext_job_struct {
   char 	     	  * stdin_file;
   char 	     	  * stderr_file;
   char       	  * lsf_resources;  
-  subst_list_type * private_args;     /* A substitution list of input arguments which is performed before the external substitutions. */
+  subst_list_type * private_args;     /* A substitution list of input arguments which is performed before the external substitutions - 
+                                         these are the arguments supplied as key=value pairs in the forward model call. */
   stringlist_type * argv;             /* This should *NOT* start with the executable */
   stringlist_type * init_code;
   hash_type  	  * platform_exe;     /* The hash tables can NOT be NULL. */

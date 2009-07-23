@@ -9,7 +9,7 @@
 #include <subst.h>
 #include <lsf_request.h>
 #include <vector.h>
-
+#include <tokenizer.h>
 /**
    This file implements a 'forward-model' object. I
 */
@@ -34,9 +34,7 @@ static char * __alloc_tagged_string(const char * s) {
 }
 
 
-
 /*****************************************************************/
-
 
 
 static forward_model_type * forward_model_alloc__(const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf) {
@@ -107,6 +105,11 @@ static void forward_model_update_lsf_request(forward_model_type * forward_model)
 
 forward_model_type * forward_model_alloc(const char * input_string , const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf) {
   forward_model_type * forward_model = forward_model_alloc__(ext_joblist , statoil_mode , use_lsf);
+  //tokenizer_type * tokenizer_alloc(" " , "\'\"" , ",=()" , NULL , NULL);
+  //stringlist_type * tokens = tokenizer_buffer( tokenizer , input_string , true);
+  //stringlist_free( tokens );
+  //tokenizer_free( tokenizer );
+
   char * p1                          = (char *) input_string;
   while (true) {
     char         * job_name;
@@ -117,7 +120,7 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
       p1 += job_length;
     }
     job = forward_model_add_job(forward_model , job_name);
-
+    
     if (*p1 == '(') {  /* The function has arguments. */
       int arg_length = strcspn(p1 , ")");
       if (arg_length == strlen(p1))
@@ -250,19 +253,6 @@ void forward_model_fprintf(const forward_model_type * forward_model , FILE * str
     fprintf(stream , "  ");
   }
   fprintf(stream , "\n");
-}
-
-
-void forward_model_set_private_arg(forward_model_type * forward_model , const char * key , const char * value) {
-  int ijob;
-  char * tagged_key = __alloc_tagged_string( key );
- 
-  for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
-    ext_job_type * ext_job = vector_iget(forward_model->jobs , ijob);
-    ext_job_set_private_arg(ext_job , tagged_key , value);
-  }
-  
-  free( tagged_key );
 }
 
 

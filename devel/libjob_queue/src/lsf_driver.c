@@ -125,27 +125,22 @@ void lsf_job_free(lsf_job_type * job) {
 
 #ifdef LSF_SYSTEM_DRIVER
 static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
-  int jobid;
+  int     jobid = -1;
   FILE * stream = util_fopen(stdout_file , "r");
-  {
-    char buffer[16];
-    int c;
-    int i;
-    do {
-      c = fgetc(stream);
-    } while (c != '<');
-
-    i = -1;
-    do {
-      i++;
-      buffer[i] = fgetc(stream);
-    } while(buffer[i] != '>');
-    buffer[i] = '\0';
-    jobid = atoi(buffer);
-  }
-  fclose(stream);
+  if (util_fseek_string(stream , "<" , true)) {
+    char * jobid_string = util_fscanf_alloc_upto(stream , ">" , false);
+    if (jobid_string != NULL) {
+      jobid = atoi( jobid_string );
+      free( jobid_string );
+    } else
+      util_abort("%s: Could not extract job id from bsub submit_file:%s \n",__func__ , stdout_file );
+  } else
+    util_abort("%s: Could not extract job id from bsub submit_file:%s \n",__func__ , stdout_file );
+  
+  fclose( stream );
   return jobid;
 }
+
 
 /*
   Essential to source /prog/LSF/conf/cshrc.lsf before invoking lf
