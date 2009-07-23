@@ -5,8 +5,8 @@ COMPILE_INCLUDE   = -I$(LIBRMS_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HO
 INSTALL_INC_PATH  = $(LIBRMS_HOME)/include
 INSTALL_LIB_PATH  = $(LIBRMS_HOME)/lib
 #################################################################
-OBJECTS       = rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagkey.o rms_stats.o
-INC_FILES     = rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h
+OBJECTS       = rms_file.o rms_util.o rms_tag.o rms_type.o rms_tagkey.o rms_stats.o rms_export.o
+INC_FILES     = rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h rms_export.h
 LIB	      = librms.a
 LIB_LINK      = -lrms -lecl -lutil -lm -lz -lpthread
 LIB_PATH      = -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L./
