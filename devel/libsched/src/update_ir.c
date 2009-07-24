@@ -28,7 +28,7 @@ void scale_injectors(void * void_kw , int report_step , void * arg) {
 
 
 static hash_type * parse_multir( const char * multir_file ) {
-  tokenizer_type  * tokenizer = tokenizer_alloc(" \n\t",NULL ,NULL ,  NULL , NULL);
+  tokenizer_type  * tokenizer = tokenizer_alloc(" \n\t",NULL ,NULL ,  NULL , NULL , NULL);
   stringlist_type * tokens    = tokenize_file ( tokenizer , multir_file , true );
   hash_type * hash = hash_alloc();
   int i;

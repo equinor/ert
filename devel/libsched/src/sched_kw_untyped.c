@@ -69,10 +69,7 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_fixlen(FILE * strea
   
   while(cur_rec < rec_len) {
     char * line = sched_util_alloc_slash_terminated_line(stream);
-    fseek(stream , 1 , SEEK_CUR); /* Skip the trailing '/' */
     if(line != NULL) {
-      /** Add the terminating '/' explicitly ... */
-      line = util_strcat_realloc(line , "/\n");
       sched_kw_untyped_add_line(kw, line , false );
       free(line);
     } else 

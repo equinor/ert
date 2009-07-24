@@ -49,7 +49,7 @@ static void sched_kw_include_set_file( sched_kw_include_type * kw , const char *
 
 sched_kw_include_type * sched_kw_include_fscanf_alloc(FILE * stream , bool * at_eof , const char * kw_name) {
   sched_kw_include_type * kw = sched_kw_include_alloc_empty();
-  char * line = util_fscanf_alloc_upto(stream , "\n");
+  char * line = util_fscanf_alloc_upto(stream , "\n" , true);  /* Will break with commented out lines immediately following INCLUDE */
   if (line == NULL)
     util_abort("%s: something fishy ... \n",__func__);
   
@@ -60,7 +60,7 @@ sched_kw_include_type * sched_kw_include_fscanf_alloc(FILE * stream , bool * at_
   */
  
  {
-    tokenizer_type  * tokenizer = tokenizer_alloc(" \t\r\n" , "\"\'" , NULL , "--" , "\n");
+    tokenizer_type  * tokenizer = tokenizer_alloc(" \t\r\n" , "\"\'" , NULL , NULL , "--" , "\n");
     stringlist_type * tokens    = tokenize_buffer( tokenizer , line , true );
     sched_kw_include_set_file( kw , stringlist_iget( tokens , 0) );
     tokenizer_free( tokenizer );

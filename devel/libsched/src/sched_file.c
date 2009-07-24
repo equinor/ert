@@ -4,6 +4,7 @@
 #include <sched_file.h>
 #include <sched_util.h>
 #include <vector.h>
+#include <tokenizer.h>
 
 /* This sched_file.c contains code for internalizing an ECLIPSE
    schedule file.
@@ -265,45 +266,63 @@ void sched_file_free(sched_file_type * sched_file)
    file to the sched_file instance.
 */
 
-
 void sched_file_parse_append(sched_file_type * sched_file , const char * filename) {
-  bool at_eof = false;
-  sched_kw_type    * current_kw;
-  sched_block_type * current_block;
+  /* 
+     We start by writing a new copy of the file with all comments
+     stripped out. The remaining parsing is done on this file with no
+     comments.
+  */
+  char * tmp_base             = util_alloc_sprintf("enkf-schedule:%s" , filename);
+  char * tmp_file             = util_alloc_tmp_file( "/tmp" , tmp_base , true);
+  {
+    tokenizer_type  * tokenizer = tokenizer_alloc(" \t" , "\'\"" , "\n\r" , NULL , "--" , "\n");
+    stringlist_type * tokens    = tokenize_file( tokenizer , filename , false );
+    FILE * stream               = util_fopen(tmp_file , "w");
 
-  FILE * stream = util_fopen(filename, "r");
+    stringlist_fprintf( tokens , " " , stream );
+    tokenizer_free( tokenizer );
+    stringlist_free( tokens );
+    fclose(stream);
+  }
   
-  stringlist_append_copy( sched_file->files , filename);
-  current_block = sched_block_alloc_empty();
-  current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
-  while(!at_eof)
-  { 
-    sched_type_enum type = sched_kw_get_type(current_kw);
 
-    if(type == DATES || type == TSTEP || type == TIME)
-    {
-      int num_steps;
-      sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
-      sched_kw_free(current_kw);
-      for(int i=0; i<num_steps; i++)
-      {
-        sched_block_add_kw(current_block, sched_kw_dates[i]);
-        sched_file_add_block(sched_file, current_block);
-        current_block = sched_block_alloc_empty();
-      }
-      free(sched_kw_dates); /* Note: This is *not* the storage! */
-    }
-    else{
-      sched_block_add_kw(current_block, current_kw);
-    }
-
+  {
+    bool at_eof        = false;
+    sched_kw_type    * current_kw;
+    sched_block_type * current_block;
+    
+    FILE * stream = util_fopen(tmp_file , "r");
+    stringlist_append_copy( sched_file->files , filename);
+    current_block = sched_block_alloc_empty();
     current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
-  } 
-  fclose(stream);
-  sched_block_free(current_block); /* Free the last non-proper block. */
-  sched_file_build_block_dates(sched_file);
-}
+    while(!at_eof) {
+      sched_type_enum type = sched_kw_get_type(current_kw);
+      
+      if(type == DATES || type == TSTEP || type == TIME) {
+        int num_steps;
+        sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
+        sched_kw_free(current_kw);
+        for(int i=0; i<num_steps; i++) {
+          sched_block_add_kw(current_block, sched_kw_dates[i]);
+          sched_file_add_block(sched_file, current_block);
+          current_block = sched_block_alloc_empty();
+        }
+        free(sched_kw_dates); /* Note: This is *not* the storage! */
+      } else{
+        sched_block_add_kw(current_block, current_kw);
+      }
+      current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
+    } 
 
+    fclose(stream);
+    sched_block_free(current_block); /* Free the last non-proper block. */
+    sched_file_build_block_dates(sched_file);
+  }
+  /* Should delete the tmp file - but we keep it around just in case ... */
+  // unlink_existing_file( tmp_file );
+  free( tmp_base );
+  free( tmp_file );
+}
 
 void sched_file_parse(sched_file_type * sched_file, time_t start_date, const char * filename)
 {

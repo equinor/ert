@@ -254,7 +254,7 @@ void sched_util_parse_line(const char * line , int *_tokens , char ***_token_lis
 
 
 char * sched_util_alloc_slash_terminated_line(FILE * stream) {
-  char * line = util_fscanf_alloc_upto(stream , "/");
+  char * line = util_fscanf_alloc_upto(stream , "/" , true);  /* Will be fucked by comments. */
 
   if (line == NULL) 
     util_abort("%s: fatal error when parsing SCHEDULE file. Line:%d - not terminated by: \'/\'\n",__func__ , util_get_current_linenr( stream ));
