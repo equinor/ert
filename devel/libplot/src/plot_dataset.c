@@ -412,8 +412,8 @@ void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type
           to work, and had to resort to the low level plbin function.
         */
         double * limits = util_malloc(sizeof * limits * (bins + 1) , __func__);
-        double * x = util_malloc(sizeof * x * bins , __func__); 
-        double * y = util_malloc(sizeof * y * bins , __func__);
+        double * x      = util_malloc(sizeof * x * bins , __func__); 
+        double * y      = util_malloc(sizeof * y * bins , __func__);
         int i;
         double delta = (xmax - xmin) / bins;
         

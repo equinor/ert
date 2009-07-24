@@ -29,7 +29,6 @@ LIBJOB_QUEUE_HOME = /private/shortname/code/enkf/libjob_queue
 LIBSCHED_HOME 	  = /private/shortname/code/enkf/libsched
 LIBRMS_HOME   	  = /private/shortname/code/enkf/librms
 LIBANALYSIS_HOME  = /private/shortname/code/enkf/libanalysis
-LIBSAMPLE_HOME    = /private/shortname/code/enkf/libsample
 LIBPLOT_HOME      = /private/shortname/code/enkf/libplot
 LIBENKF_HOME  	  = /private/shortname/code/enkf/libenkf
 
