@@ -17,7 +17,7 @@
 #define RMS_OUT "rms.roff"
 
 void ecl_rms_export_keywords(const char *roff_filename, ecl_grid_type *ecl_grid, ecl_kw_type **ecl_kw) {
-
+  
 }
 
 

@@ -402,6 +402,8 @@ double * obs_data_alloc_innov(const obs_data_type * obs_data , const double *mea
 
 
 
+
+
 /**
   This function deactivates obsveration iobs, and decrements the total
   number of active observations.
@@ -513,6 +515,9 @@ matrix_type * obs_data_allocR__(obs_data_type * obs_data) {
 
 
 
+
+
+
 void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , double *S , double *E , double *D , double *R , double *innov) {
   const int nrobs_total  = obs_data->total_size;
   const int nrobs_active = obs_data->active_size;
@@ -554,6 +559,25 @@ void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_strid
 
 
 
+double * obs_data_alloc_innov__(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix) {
+  double *innov;
+  int nrobs_total  = obs_data->total_size;
+  int nrobs_active = obs_data->active_size;
+  int iobs_total;
+  int iobs_active = 0;
+
+  innov = util_malloc(nrobs_active * sizeof * innov , __func__);
+  for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
+    obs_data_node_type * node = obs_data->data[iobs_total];
+    if (node->active) {
+      innov[iobs_active] = node->value - meas_matrix_iget_ens_mean( meas_matrix , iobs_total );
+      iobs_active++;
+    }
+  }
+
+  return innov;
+}
+
 
 
 
@@ -579,7 +603,10 @@ void obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_t
   for  (iens = 0; iens < ens_size; iens++) {
     for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
       matrix_imul(S , iobs_active , iens , scale_factor[iobs_active]);
-      matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
+
+      if (D != NULL)
+        matrix_imul(D , iobs_active , iens , scale_factor[iobs_active]);
+
       if (E != NULL)
 	matrix_imul(E , iobs_active , iens , scale_factor[iobs_active]);
     }

@@ -18,6 +18,7 @@ enkf_mode_type         analysis_config_get_enkf_mode( const analysis_config_type
 pseudo_inversion_type  analysis_config_get_inversion_mode( const analysis_config_type * config );
 double                 analysis_config_get_std_cutoff(const analysis_config_type * config);
 bool                   analysis_config_get_rerun(const analysis_config_type * config);
+bool                   analysis_config_get_random_rotation(const analysis_config_type * config);
 int                    analysis_config_get_rerun_start(const analysis_config_type * config);
 void                   analysis_config_set_rerun(analysis_config_type * config , bool rerun);
 void                   analysis_config_set_rerun_start( analysis_config_type * config , int rerun_start );

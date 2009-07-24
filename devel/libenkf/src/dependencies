@@ -10,7 +10,7 @@ field_obs.o                         : field_obs.c field_obs.h enkf_util.o field_
 summary_obs.o                       : summary_obs.c summary_obs.h obs_data.o meas_matrix.o summary.o active_list.o  
 enkf_tui_init.o                     : enkf_tui_init.c enkf_tui_init.h enkf_main.o enkf_sched.o enkf_types.o enkf_tui_util.o enkf_state.o enkf_node.o enkf_fs.o ensemble_config.o  
 enkf_tui_ranking.o                  : enkf_tui_ranking.c enkf_tui_ranking.h enkf_main.o enkf_obs.o enkf_tui_util.o  
-enkf_main.o                         : enkf_main.c enkf_main.h enkf_config_node.o enkf_types.o obs_data.o meas_matrix.o enkf_state.o old_analysis.o enkf_obs.o enkf_fs.o enkf_serialize.o enkf_sched.o ecl_config.o ensemble_config.o model_config.o site_config.o active_config.o enkf_analysis.o local_ministep.o local_reportstep.o local_config.o misfit_table.o enkf_defaults.o  
+enkf_main.o                         : enkf_main.c enkf_main.h enkf_config_node.o enkf_types.o obs_data.o meas_matrix.o enkf_state.o enkf_obs.o enkf_fs.o enkf_serialize.o enkf_sched.o ecl_config.o ensemble_config.o model_config.o site_config.o active_config.o enkf_analysis.o local_ministep.o local_reportstep.o local_config.o misfit_table.o enkf_defaults.o  
 plain_driver_common.o               : plain_driver_common.c plain_driver_common.h enkf_types.o enkf_node.o  
 gen_kw.o                            : gen_kw.c gen_kw.h enkf_types.o gen_kw_config.o enkf_util.o scalar.o enkf_macros.h  
 active_node.o                       : active_node.c active_node.h enkf_types.o enkf_config_node.o ensemble_config.o obs_vector.o  
@@ -18,7 +18,7 @@ enkf_sched.o                        : enkf_sched.c enkf_sched.h enkf_types.o
 summary.o                           : summary.c summary.h enkf_macros.h enkf_util.o summary_config.o enkf_types.o enkf_util.o enkf_serialize.o  
 enkf_types.o                        : enkf_types.c enkf_types.h  
 plain_driver.o                      : plain_driver.c plain_driver.h fs_types.o basic_driver.o plain_driver_index.o plain_driver_common.o  
-model_config.o                      : model_config.c model_config.h enkf_fs.o enkf_sched.o enkf_types.o plain_driver.o  
+model_config.o                      : model_config.c model_config.h enkf_fs.o enkf_sched.o enkf_types.o plain_driver.o fs_types.o  
 fs_types.o                          : fs_types.c fs_types.h  
 site_config.o                       : site_config.c site_config.h  
 misfit_table.o                      : misfit_table.c misfit_table.h enkf_obs.o enkf_fs.o  
@@ -35,15 +35,15 @@ obs_vector.o                        : obs_vector.c obs_vector.h enkf_fs.o summar
 multflt.o                           : multflt.c multflt.h enkf_types.o enkf_macros.h multflt_config.o enkf_util.o scalar.o  
 enkf_tui_export.o                   : enkf_tui_export.c enkf_tui_export.h enkf_main.o field.o field_config.o enkf_state.o enkf_fs.o enkf_tui_util.o field_config.o gen_data.o  
 enkf_tui_table.o                    : enkf_tui_table.c enkf_tui_table.h enkf_main.o enkf_tui_plot.o enkf_tui_fs.o enkf_obs.o field_obs.o field_config.o obs_vector.o enkf_tui_util.o ensemble_config.o  
-enkf_tui_main.o                     : enkf_tui_main.c enkf_tui_main.h enkf_tui_run.o enkf_tui_export.o enkf_tui_plot.o enkf_tui_table.o enkf_tui_fs.o enkf_tui_ranking.o enkf_main.o enkf_sched.o  
+enkf_tui_main.o                     : enkf_tui_main.c enkf_tui_main.h enkf_tui_run.o enkf_tui_export.o enkf_tui_plot.o enkf_tui_table.o enkf_tui_fs.o enkf_tui_ranking.o enkf_tui_misc.o enkf_main.o enkf_sched.o  
 enkf_util.o                         : enkf_util.c enkf_util.h enkf_defaults.o  
 enkf_serialize.o                    : enkf_serialize.c enkf_serialize.h enkf_types.o active_list.o serialize.h serialize.h deserialize.h deserialize.h  
 scalar.o                            : scalar.c scalar.h enkf_types.o scalar_config.o enkf_util.o enkf_serialize.o  
+enkf_tui_misc.o                     : enkf_tui_misc.c enkf_tui_misc.h enkf_types.o enkf_main.o enkf_state.o  
 enkf_tui_plot.o                     : enkf_tui_plot.c enkf_tui_plot.h enkf_main.o enkf_tui_fs.o enkf_obs.o field_obs.o field_config.o obs_vector.o enkf_tui_util.o ensemble_config.o enkf_state.o gen_kw_config.o enkf_defaults.o  
 summary_config.o                    : summary_config.c summary_config.h enkf_types.o enkf_util.o enkf_macros.h active_list.o  
 meas_matrix.o                       : meas_matrix.c meas_matrix.h meas_vector.o  
 gen_data_config.o                   : gen_data_config.c gen_data_config.h enkf_macros.h enkf_types.o gen_data_active.o active_list.o  
-old_analysis.o                      : old_analysis.c old_analysis.h obs_data.o meas_matrix.o enkf_types.o analysis_config.o  
 active_list.o                       : active_list.c active_list.h enkf_macros.h  
 gen_data_active.o                   : gen_data_active.c gen_data_active.h enkf_macros.h  
 gen_obs.o                           : gen_obs.c gen_obs.h enkf_util.o enkf_types.o enkf_macros.h meas_vector.o obs_data.o gen_data.o gen_common.o gen_obs_active.o active_list.o  
@@ -63,7 +63,7 @@ local_config.o                      : local_config.c local_config.h local_minist
 obs_data.o                          : obs_data.c obs_data.h enkf_util.o meas_matrix.o  
 havana_fault.o                      : havana_fault.c havana_fault.h enkf_types.o havana_fault_config.o enkf_util.o scalar.o  
 plain_driver_index.o                : plain_driver_index.c plain_driver_index.h fs_types.o plain_driver_common.o basic_driver.o  
-enkf_analysis.o                     : enkf_analysis.c enkf_analysis.h meas_matrix.o obs_data.o analysis_config.o  
+enkf_analysis.o                     : enkf_analysis.c enkf_analysis.h meas_matrix.o obs_data.o analysis_config.o enkf_util.o  
 field.o                             : field.c field.h field_config.o enkf_serialize.o  
 ecl_static_kw.o                     : ecl_static_kw.c ecl_static_kw.h enkf_util.o enkf_macros.h  
 local_ministep.o                    : local_ministep.c local_ministep.h active_list.o enkf_macros.h  

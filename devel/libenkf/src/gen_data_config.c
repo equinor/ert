@@ -108,7 +108,7 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
   
   if (template_ecl_file != NULL) {
     char *data_ptr;
-    config->template_buffer = util_fread_alloc_file_content( template_ecl_file , NULL , &config->template_buffer_size);
+    config->template_buffer = util_fread_alloc_file_content( template_ecl_file , &config->template_buffer_size);
     data_ptr = strstr(config->template_buffer , template_data_key);
     if (data_ptr == NULL) 
       util_abort("%s: template:%s can not be used - could not find data key:%s \n",__func__ , template_ecl_file , template_data_key);

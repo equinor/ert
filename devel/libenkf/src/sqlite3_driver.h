@@ -1,8 +1,12 @@
 #ifndef __SQLITE_DRIVER_H__
 #define __SQLITE_DRIVER_H__
+
+#include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <buffer.h>
 #include <fs_types.h>
+
 
 typedef struct sqlite3_driver_struct sqlite3_driver_type;
 

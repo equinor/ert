@@ -126,7 +126,7 @@ struct enkf_state_struct {
   subst_list_type       * subst_list;        	   /* This a list of key - value pairs which are used in a search-replace
                                              	      operation on the ECLIPSE data file. Will at least contain the key INIT"
                                              	      - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
-  
+  hash_type             * subst_description;      /* A table of description of the various subst_list keys. */
   
   const ecl_config_type * ecl_config;        	   /* ecl_config object - pure reference to the enkf_main object. */
   ensemble_config_type  * ensemble_config;   	   /* The config nodes for the enkf_node objects contained in node_hash. */
@@ -328,14 +328,6 @@ void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
   char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
   char * cwd              = util_alloc_cwd();
   
-  forward_model_set_private_arg(enkf_state->forward_model ,  "IENS"        , iens_s);
-  forward_model_set_private_arg(enkf_state->forward_model ,  "IENS4"       , iens4_s);
-  forward_model_set_private_arg(enkf_state->forward_model ,  "CWD"         , cwd);
-  forward_model_set_private_arg(enkf_state->forward_model ,  "ECL_BASE"    , member_config->eclbase);  /* Can not change run_time .. */
-  forward_model_set_private_arg(enkf_state->forward_model ,  "ECLBASE"     , member_config->eclbase);  /* Can not change run_time .. */
-  forward_model_set_private_arg(enkf_state->forward_model ,  "SMSPEC_FILE" , smspec_file);
-  forward_model_set_private_arg(enkf_state->forward_model ,  "RUNPATH"     , enkf_state->run_info->run_path);
-  
   free(cwd);
   free(iens_s);
   free(iens4_s);
@@ -430,9 +422,17 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 }
 
 
-static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value) {
+
+static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value , const char * description) {
   char * tagged_key = enkf_util_alloc_tagged_string( kw );
   subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , util_alloc_string_copy(value));
+  if (description != NULL) 
+    hash_insert_hash_owned_ref( enkf_state->subst_description , tagged_key , util_alloc_string_copy( description ) , free);
+  else {
+    if (!hash_has_key( enkf_state->subst_description , tagged_key))
+      util_abort("%s: must provide documentation for subst key:%s \n",__func__ , kw);
+  }
+    
   free(tagged_key);
 }
 
@@ -448,6 +448,35 @@ int enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state ) {
 }
 
 
+
+/**
+   Sets all the static subst keywords which will not change during the simulation.
+*/
+static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
+  char * iens_s      = util_alloc_sprintf("%d"   , enkf_state->my_config->iens);
+  char * iens4_s     = util_alloc_sprintf("%04d" , enkf_state->my_config->iens);
+  char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+  char * cwd         = util_alloc_cwd();
+    
+
+  enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd , NULL); 
+  enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s , NULL);
+  enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s , NULL);
+  enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
+  enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
+  enkf_state_add_subst_kw(enkf_state , "SMSPEC"      , smspec_file , NULL);
+  
+  free(cwd);
+  free(iens_s);
+  free(iens4_s);
+  free(smspec_file);
+}
+
+
+
+
+
+
 enkf_state_type * enkf_state_alloc(int iens,
 				   keep_runpath_type keep_runpath , 
 				   const model_config_type   * model_config,
@@ -460,7 +489,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
   
-  enkf_state->ensemble_config          = ensemble_config;
+  enkf_state->ensemble_config = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
   enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config );
   enkf_state->shared_info     = shared_info_alloc(site_config , model_config );
@@ -469,28 +498,9 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->node_hash       = hash_alloc();
   enkf_state->restart_kw_list = stringlist_alloc_new();
 
-  enkf_state->subst_list      = subst_list_alloc();
-  {
-    char * iens_s      = util_alloc_sprintf("%d"   , iens);
-    char * iens4_s     = util_alloc_sprintf("%04d" , iens);
-    char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
-    char * cwd         = util_alloc_cwd();
-    
-    enkf_state_add_subst_kw(enkf_state , "RUNPATH"     , enkf_state->run_info->run_path);
-    enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd); 
-    enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s);
-    enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s);
-    enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase);  /* Can not change run_time .. */
-    enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , enkf_state->my_config->eclbase);  /* Can not change run_time .. */
-    enkf_state_add_subst_kw(enkf_state , "SMSPEC_FILE" , smspec_file);
-    
-    free(cwd);
-    free(iens_s);
-    free(iens4_s);
-    free(smspec_file);
-  }
-
-
+  enkf_state->subst_list        = subst_list_alloc();
+  enkf_state->subst_description = hash_alloc();
+  
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the
    <INIT> tag in the data file will be replaced by an 
@@ -512,33 +522,46 @@ INCLDUE
      let the EnKF program use the ecl_file of the EQUIL keyword if it
      is present.
 
+   The <INIT> key is actually initialized in the
+   enkf_state_set_dynamic_subst_kw() function.
   */
-  {
-    const char * init_file = ecl_config_get_equil_init_file(ecl_config);
-    if (init_file == NULL) 
-      util_abort("%s: INIT_SECTION is not set - must either use INIT_SECTION in config_file or EQUIL keyword.",__func__);
-    
-    if (init_file != NULL) 
-    {
-      char * tmp_include = util_alloc_sprintf("INCLUDE\n   \'%s\' /\n",init_file);
-      enkf_state_add_subst_kw(enkf_state , "INIT" , tmp_include);
-      free(tmp_include);
-    }
-  }
+
+  /**
+     Adding all the subst_kw keywords here, with description. Listing
+     all of them here in one go guarantees that we have control over
+     the ordering (which is interesting because the substititions are
+     done in cacade like fashion).
+  */
+  enkf_state_add_subst_kw(enkf_state , "CWD"           , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
+  enkf_state_add_subst_kw(enkf_state , "IENS"          , "---" , "The realisation number for this realization.");
+  enkf_state_add_subst_kw(enkf_state , "IENS4"         , "---" , "The realization number for this realization - formated with %04d.");
+  enkf_state_add_subst_kw(enkf_state , "ECLBASE"       , "---" , "The ECLIPSE basename for this realization.");
+  enkf_state_add_subst_kw(enkf_state , "ECL_BASE"      , "---" , "Depreceated - use ECLBASE instead.");
+  enkf_state_add_subst_kw(enkf_state , "INIT"          , "---" , "The string which will be inserted instead of <INIT> in the ECLIPSE data file.");
+  enkf_state_add_subst_kw(enkf_state , "SMSPEC"        , "---" , "The ECLIPSE SMSPEC file for this realization.");
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , "---" , "The initial report step for this simulation.");
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2"        , "---" , "The final report step for this simulation.");
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , "---" , "The initial report step for this simulation - formated with %04d.");
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , "---" , "The final report step for this simulation - formated withh %04d.");
+  enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , "---" , "The ECLIPSE restart file this simulation starts with.");
+  enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , "---" , "The ECLIPSE restart file this simulation should end with.");
+
   {
     hash_iter_type * iter = hash_iter_alloc(data_kw);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      enkf_state_add_subst_kw(enkf_state , key , hash_get(data_kw , key));
+      enkf_state_add_subst_kw(enkf_state , key , hash_get(data_kw , key) , "Supplied by the user in the enkf configuration file");
       key = hash_iter_get_next_key(iter);
     }
     hash_iter_free(iter);
   }
+  enkf_state_set_static_subst_kw(  enkf_state );
 
   enkf_state->special_forward_model = NULL;
   enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model , site_config_get_statoil_mode(site_config));
   enkf_state->forward_model         = enkf_state->default_forward_model;
   enkf_state_init_forward_model( enkf_state );
+  
   return enkf_state;
 }
 
@@ -1126,6 +1149,7 @@ void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
 void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
+  hash_free(enkf_state->subst_description);
   stringlist_free(enkf_state->restart_kw_list);
   member_config_free(enkf_state->my_config);
   run_info_free(enkf_state->run_info);
@@ -1156,7 +1180,78 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 }
 
 
+/**
+   This function will set all the subst_kw key=value pairs which
+   change with report step.
+*/
 
+static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int step1 , int step2) {
+  const member_config_type  * my_config = enkf_state->my_config;  
+  const bool fmt_file  = ecl_config_get_formatted(enkf_state->ecl_config);
+  char * step1_s 	   = util_alloc_sprintf("%d" , step1);
+  char * step2_s 	   = util_alloc_sprintf("%d" , step2);
+  char * step1_s04 	   = util_alloc_sprintf("%04d" , step1);
+  char * step2_s04 	   = util_alloc_sprintf("%04d" , step2);
+  char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step1);
+  char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step2);
+  
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	   , step1_s , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	   , step2_s , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , step1_s04 , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , step2_s04 , NULL);
+  enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1 , NULL);
+  enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2 , NULL);
+
+
+  /**
+     The <INIT> magic string:
+  */
+  if (step1 == 0) {
+    const char * init_file = ecl_config_get_equil_init_file(enkf_state->ecl_config);
+    if (init_file == NULL) 
+      util_abort("%s: INIT_SECTION is not set - must either use INIT_SECTION in config_file or EQUIL keyword.",__func__);
+    
+    if (init_file != NULL) {
+      char * tmp_include = util_alloc_sprintf("INCLUDE\n   \'%s\' /\n",init_file);
+      enkf_state_add_subst_kw(enkf_state , "INIT" , tmp_include , NULL);
+      free(tmp_include);
+    }
+  } else {
+    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , step1);
+    enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize , NULL);
+    free(data_initialize);
+  }
+
+  
+  free(step1_s);
+  free(step2_s);
+  free(step1_s04);
+  free(step2_s04);
+  free(restart_file1);
+  free(restart_file2);
+}
+
+
+
+void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int step2) {
+  int ikw;
+  const char * fmt_string = "%-16s %-40s :: %s\n";
+  printf("\n\n");
+  printf(fmt_string , "Key" , "Current value" , "Description");
+  printf("------------------------------------------------------------------------------------------------------------------------\n");
+  if (step1 >= 0)
+    enkf_state_set_dynamic_subst_kw(enkf_state , step1 , step2);
+
+  for (ikw = 0; ikw < subst_list_get_size( enkf_state->subst_list ); ikw++) {
+    const char * key   = subst_list_iget_key( enkf_state->subst_list , ikw);
+    const char * value = subst_list_iget_value( enkf_state->subst_list , ikw);
+    const char * desc  = hash_get( enkf_state->subst_description , key);
+    
+    printf(fmt_string , key , value , desc);
+  }
+  printf("------------------------------------------------------------------------------------------------------------------------\n");
+  
+}
 
 
 
@@ -1184,18 +1279,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     if (!run_info->__ready) 
       util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
     
-    if (run_info->step1 > 0) {
-      char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , run_info->step1);
-      enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize);
-      free(data_initialize);
-    }
-    
     util_make_path(run_info->run_path);
-    {
-      char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ECL_DATA_FILE , true , -1);
-      subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(enkf_state->ecl_config) , data_file);
-    }
-    
     {
       char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config) , NULL);
       sched_file_fprintf_i(my_config->sched_file , run_info->step2 , schedule_file);
@@ -1226,38 +1310,16 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       free(stdin_file);
     }
     
+    enkf_state_set_dynamic_subst_kw(  enkf_state , run_info->step1 , run_info->step2);
+    
+    /* Writing the ECLIPSE data file. */
     {
-      const bool fmt_file  = ecl_config_get_formatted(enkf_state->ecl_config);
-      char * step1_s 	   = util_alloc_sprintf("%d" , run_info->step1);
-      char * step2_s 	   = util_alloc_sprintf("%d" , run_info->step2);
-      char * step1_s04 	   = util_alloc_sprintf("%04d" , run_info->step1);
-      char * step2_s04 	   = util_alloc_sprintf("%04d" , run_info->step2);
-      char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step1);
-      char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step2);
-      
-      
-      enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	, step1_s);
-      enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	, step2_s);
-      enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"  , step1_s04);
-      enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"  , step2_s04);
-      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1);
-      enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2);
-      
-      forward_model_set_private_arg(enkf_state->forward_model , "TSTEP1"  , step1_s);
-      forward_model_set_private_arg(enkf_state->forward_model , "TSTEP2"  , step2_s);
-      forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE1" , restart_file1);
-      forward_model_set_private_arg(enkf_state->forward_model , "RESTART_FILE2" , restart_file2);
-      
-      free(step1_s);
-      free(step2_s);
-      free(step1_s04);
-      free(step2_s04);
-      free(restart_file1);
-      free(restart_file2);
-      
-      /* This is where the job script is created */
-      forward_model_python_fprintf( enkf_state->forward_model , run_info->run_path , enkf_state->subst_list);
+      char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ECL_DATA_FILE , true , -1);
+      subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(enkf_state->ecl_config) , data_file);
     }
+    
+    /* This is where the job script is created */
+    forward_model_python_fprintf( enkf_state->forward_model , run_info->run_path , enkf_state->subst_list);
   }
 }
 

@@ -6,6 +6,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 #include <matrix.h>
+#include <meas_matrix.h>
 
 typedef struct obs_data_struct      obs_data_type;
 typedef struct obs_data_node_struct obs_data_node_type;
@@ -26,6 +27,7 @@ matrix_type   	   * obs_data_allocD__(const obs_data_type * obs_data , const mat
 double        	   * obs_data_allocR(obs_data_type *);
 matrix_type   	   * obs_data_allocR__(obs_data_type * obs_data);
 double        	   * obs_data_alloc_innov(const obs_data_type * , const double *);
+double             * obs_data_alloc_innov__(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix);
 double        	   * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_stride, int obs_stride);
 matrix_type   	   * obs_data_allocE__(const obs_data_type * obs_data , int ens_size);
 void          	     obs_data_scale(const obs_data_type * , int , int , int , double * , double *, double *, double * , double *);

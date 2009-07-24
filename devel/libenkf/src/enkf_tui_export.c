@@ -117,7 +117,7 @@ void enkf_tui_export_gen_data(void * arg) {
     report_step = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
     enkf_tui_util_scanf_iens_range("Realizations members to export(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
     {
-      char path_fmt[128];
+      char path_fmt[512];
       util_printf_prompt("Filename to store files in (with %d) in: " , prompt_len , '=' , "=> ");
       scanf("%s" , path_fmt);
       file_fmt = path_fmt_alloc_path_fmt( path_fmt );

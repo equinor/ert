@@ -14,7 +14,7 @@
 #include <history.h>
 #include <meas_matrix.h>
 #include <enkf_state.h>  
-#include <old_analysis.h>
+//#include <old_analysis.h>
 #include <enkf_obs.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
@@ -557,7 +557,11 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     local_config_type 	  	* local_config  = enkf_main->local_config;
     const local_reportstep_type * reportstep    = local_config_iget_reportstep( local_config , step2 );  /* Only step2 considered */
     hash_type                   * use_count     = hash_alloc();                                          
-    
+    matrix_type                 * randrot       = NULL;
+
+    if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
+      randrot = enkf_analysis_alloc_mp_randrot( ens_size ); 
+
     for (int ministep_nr = 0; ministep_nr < local_reportstep_get_num_ministep( reportstep ); ministep_nr++) {
       for(int report_step = start_step; report_step <= end_step; report_step++)  {
 	local_ministep_type   * ministep      = local_reportstep_iget_ministep( reportstep , ministep_nr );      
@@ -571,7 +575,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , stdout );
 	if (obs_data_get_active_size(obs_data) > 0) {
 	  if (analysis_config_Xbased( enkf_main->analysis_config )) {
-	    matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data );
+	    matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
 	    
 	    enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
 	    
@@ -581,6 +585,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
       }
     }
 
+    if (randrot != NULL)
+      matrix_free( randrot );
+    
     hash_free( use_count );
     obs_data_free( obs_data );
     meas_matrix_free( meas_forecast );
@@ -590,88 +597,91 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 
 
 
+/*
+  The oooold update
+*/
 
-void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step2) {
-  /* 
-     If include_internal_observations is true all observations in the
-     time interval [step1+1,step2] will be used, otherwise only the
-     last observation at step2 will be used.
-  */
-  bool include_internal_observations = analysis_config_merge_observations( enkf_main->analysis_config );
-  const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
-  double *X;
-  int start_step , end_step;
-  
-  /* Observe that end_step is inclusive. */
-  if (include_internal_observations) {
-    start_step = step1 + 1;
-    end_step   = step2;
-  } else {
-    start_step = step2;
-    end_step   = step2;
-  }
-    
-  
-  {
-    /*
-      Observations and measurements are collected in these temporary
-      structures. obs_data is a precursor for the 'd' vector, and
-      meas_forecast is a precursor for the 'S' matrix'
-
-      The reason for gong via these temporary structures is to support
-      deactivating observations which can not be used in the update
-      process.
-    */
-    
-    
-    obs_data_type    	  	* obs_data      = obs_data_alloc();
-    meas_matrix_type 	  	* meas_forecast = meas_matrix_alloc( ens_size );
-    meas_matrix_type 	  	* meas_analyzed = meas_matrix_alloc( ens_size );
-    local_config_type 	  	* local_config  = enkf_main->local_config;
-    const local_reportstep_type * reportstep    = local_config_iget_reportstep( local_config , step2 );  /* Only step2 considered */
-    hash_type                   * use_count     = hash_alloc();
-    /* Iterating over the local ministeps. */
-    {
-      for (int ministep_nr = 0; ministep_nr < local_reportstep_get_num_ministep( reportstep ); ministep_nr++) {
-	local_ministep_type   * ministep      = local_reportstep_iget_ministep( reportstep , ministep_nr );      
-	obs_data_reset( obs_data );
-	meas_matrix_reset( meas_forecast );
-	
-	for(int report_step = start_step; report_step <= end_step; report_step++)  {
-	  printf("Fetching simulated responses and observations for step %i/%s.\n", report_step , local_ministep_get_name( ministep )); 
-	  enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
-				       (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
-	}
-	X = old_analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
-	if (X != NULL) {
-	  /* 
-	     The number of doubles we ask for, to get the number of bytes
-	     you must multiply by eight.
-	     
-	     1024 * 1024 * 128 => 1GB of memory
-	     size_t double_size = 1024*1024*256; // 2 GB
-	  */
-	  
-	  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
-	  //printf("Updating: ...... "); fflush(stdout);
-	  //serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
-	  //enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
-	  //serial_vector_free(serial_vector);
-	  //printf("\n");
-	  {
-	    matrix_type * X5 = matrix_alloc_steal_data( ens_size , ens_size , X , ens_size * ens_size );
-	    enkf_main_update_mulX( enkf_main , X5 , ministep , step2 , use_count);
-	  }
-	  free(X);  
-	}
-      }
-      obs_data_free( obs_data );
-      meas_matrix_free( meas_forecast );
-      meas_matrix_free( meas_analyzed );
-      hash_free( use_count );
-    }
-  }
-}
+//void enkf_main_analysis_update(enkf_main_type * enkf_main , int step1 , int step2) {
+//  /* 
+//     If include_internal_observations is true all observations in the
+//     time interval [step1+1,step2] will be used, otherwise only the
+//     last observation at step2 will be used.
+//  */
+//  bool include_internal_observations = analysis_config_merge_observations( enkf_main->analysis_config );
+//  const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
+//  double *X;
+//  int start_step , end_step;
+//  
+//  /* Observe that end_step is inclusive. */
+//  if (include_internal_observations) {
+//    start_step = step1 + 1;
+//    end_step   = step2;
+//  } else {
+//    start_step = step2;
+//    end_step   = step2;
+//  }
+//    
+//  
+//  {
+//    /*
+//      Observations and measurements are collected in these temporary
+//      structures. obs_data is a precursor for the 'd' vector, and
+//      meas_forecast is a precursor for the 'S' matrix'
+//
+//      The reason for gong via these temporary structures is to support
+//      deactivating observations which can not be used in the update
+//      process.
+//    */
+//    
+//    
+//    obs_data_type    	  	* obs_data      = obs_data_alloc();
+//    meas_matrix_type 	  	* meas_forecast = meas_matrix_alloc( ens_size );
+//    meas_matrix_type 	  	* meas_analyzed = meas_matrix_alloc( ens_size );
+//    local_config_type 	  	* local_config  = enkf_main->local_config;
+//    const local_reportstep_type * reportstep    = local_config_iget_reportstep( local_config , step2 );  /* Only step2 considered */
+//    hash_type                   * use_count     = hash_alloc();
+//    /* Iterating over the local ministeps. */
+//    {
+//      for (int ministep_nr = 0; ministep_nr < local_reportstep_get_num_ministep( reportstep ); ministep_nr++) {
+//	local_ministep_type   * ministep      = local_reportstep_iget_ministep( reportstep , ministep_nr );      
+//	obs_data_reset( obs_data );
+//	meas_matrix_reset( meas_forecast );
+//	
+//	for(int report_step = start_step; report_step <= end_step; report_step++)  {
+//	  printf("Fetching simulated responses and observations for step %i/%s.\n", report_step , local_ministep_get_name( ministep )); 
+//	  enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
+//				       (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
+//	}
+//	X = old_analysis_allocX(ens_size , obs_data_get_nrobs(obs_data) , meas_forecast , obs_data , false , true , enkf_main->analysis_config);
+//	if (X != NULL) {
+//	  /* 
+//	     The number of doubles we ask for, to get the number of bytes
+//	     you must multiply by eight.
+//	     
+//	     1024 * 1024 * 128 => 1GB of memory
+//	     size_t double_size = 1024*1024*256; // 2 GB
+//	  */
+//	  
+//	  /* DANGER DANGER DANGER - might go fatally low on memory when the serial_vector is held. */
+//	  //printf("Updating: ...... "); fflush(stdout);
+//	  //serial_vector_type * serial_vector = serial_vector_alloc( double_size , ens_size );  
+//	  //enkf_ensemble_update(enkf_main->ensemble , ens_size , serial_vector , X);   
+//	  //serial_vector_free(serial_vector);
+//	  //printf("\n");
+//	  {
+//	    matrix_type * X5 = matrix_alloc_steal_data( ens_size , ens_size , X , ens_size * ens_size );
+//	    enkf_main_update_mulX( enkf_main , X5 , ministep , step2 , use_count);
+//	  }
+//	  free(X);  
+//	}
+//      }
+//      obs_data_free( obs_data );
+//      meas_matrix_free( meas_forecast );
+//      meas_matrix_free( meas_analyzed );
+//      hash_free( use_count );
+//    }
+//  }
+//}
 
 
 

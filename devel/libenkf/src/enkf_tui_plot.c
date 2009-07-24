@@ -466,7 +466,7 @@ void enkf_tui_plot_histogram(void * arg) {
       double * count        = util_malloc(ens_size * sizeof * count , __func__);
       int iens , report_step;
       char * plot_file = enkf_tui_plot_alloc_plot_file( plot_path , case_name , user_key , image_type);
-      plot_type * plot = __plot_alloc("x-akse","y-akse",user_key,plot_file ,image_type);
+      plot_type * plot = __plot_alloc(user_key , "#" ,user_key,plot_file ,image_type);
 
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
       if (config_node == NULL) {
@@ -503,6 +503,7 @@ void enkf_tui_plot_histogram(void * arg) {
 	  plot_dataset_type * d = plot_alloc_new_dataset( plot , NULL , PLOT_HIST);
 	  plot_dataset_append_vector_hist(d , active_size , count);
 	}
+        
 	__plot_show(plot , viewer , plot_file);
       }
       free(count);

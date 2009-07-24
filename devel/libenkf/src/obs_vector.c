@@ -380,6 +380,11 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
     
     // Get time series data from history object and allocate
     history_alloc_time_series_from_summary_key(history, sum_key, &size, &value, &default_used);
+    
+
+
+
+
     ensemble_config_ensure_summary( ensemble_config , sum_key );
     std = util_malloc(size * sizeof * std, __func__);
     obs_vector = obs_vector_alloc( SUMMARY_OBS , sum_key , ensemble_config_get_node(ensemble_config , sum_key) , size );

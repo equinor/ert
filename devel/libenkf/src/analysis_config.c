@@ -13,6 +13,7 @@ struct analysis_config_struct {
   bool                   merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
   bool                   rerun;               /* Should we rerun the simulator when the parameters have been updated? */
   int                    rerun_start;         /* When rerunning - from where should we start? */
+  bool                   random_rotation;     /* When using the SQRT scheme - should a random rotation be performed?? */
   double 	         truncation;
   double 	         overlap_alpha;
   double                 std_cutoff;
@@ -32,6 +33,7 @@ static analysis_config_type * analysis_config_alloc__(double truncation , double
   config->enkf_mode          = enkf_mode;
   config->inversion_mode     = SVD_SS_N1_R;
   config->std_cutoff         = 1e-6;
+  config->random_rotation    = true;
   
   config->fortran_enkf_mode  = config->enkf_mode + config->inversion_mode;
   return config;
@@ -57,6 +59,13 @@ int analysis_config_get_rerun_start(const analysis_config_type * config) {
   return config->rerun_start;
 }
 
+
+bool analysis_config_get_random_rotation(const analysis_config_type * config) {
+  if (config->enkf_mode == ENKF_SQRT)
+    return config->random_rotation;
+  else
+    return false;
+}
 
 
 analysis_config_type * analysis_config_alloc(const config_type * config) {
