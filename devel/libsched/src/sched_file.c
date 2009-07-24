@@ -273,9 +273,9 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
      comments.
   */
   char * tmp_base             = util_alloc_sprintf("enkf-schedule:%s" , filename);
-  char * tmp_file             = util_alloc_tmp_file( "/tmp" , tmp_base , true);
+  char * tmp_file             = util_alloc_tmp_file("/tmp" , tmp_base , true);
   {
-    tokenizer_type  * tokenizer = tokenizer_alloc(" \t" , "\'\"" , "\n\r" , NULL , "--" , "\n");
+    tokenizer_type  * tokenizer = tokenizer_alloc(" \t" , "\'\"" , "\n" , "\r" , "--" , "\n");
     stringlist_type * tokens    = tokenize_file( tokenizer , filename , false );
     FILE * stream               = util_fopen(tmp_file , "w");
 
@@ -284,7 +284,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     stringlist_free( tokens );
     fclose(stream);
   }
-  
+  //printf("tmp_file stored in:%s \n",tmp_file);
 
   {
     bool at_eof        = false;

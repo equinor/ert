@@ -58,9 +58,9 @@ sched_kw_include_type * sched_kw_include_fscanf_alloc(FILE * stream , bool * at_
      " quoted filename, terminated with /. We remove the quotes, and
      the terminating / before we internalize the filename.
   */
- 
- {
-    tokenizer_type  * tokenizer = tokenizer_alloc(" \t\r\n" , "\"\'" , NULL , NULL , "--" , "\n");
+  
+  {
+    tokenizer_type  * tokenizer = tokenizer_alloc(NULL , "\"\'" , NULL , " \t" , "--" , "\n");
     stringlist_type * tokens    = tokenize_buffer( tokenizer , line , true );
     sched_kw_include_set_file( kw , stringlist_iget( tokens , 0) );
     tokenizer_free( tokenizer );

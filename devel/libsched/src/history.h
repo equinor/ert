@@ -12,6 +12,14 @@ extern "C" {
 #include <sched_file.h>
 
 
+     
+typedef enum {
+  SCHEDULE          = 0,
+  REFCASE_SIMULATED = 1,   /* ecl_sum_get_well_var( "WWCT" );  */
+  REFCASE_HISTORY   = 2    /* ecl_sum_get_well_var( "WWCTH" ); */
+} history_source_type;
+
+
 
 typedef struct history_struct history_type;
 

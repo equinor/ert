@@ -105,7 +105,7 @@ static void forward_model_update_lsf_request(forward_model_type * forward_model)
 
 forward_model_type * forward_model_alloc(const char * input_string , const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf) {
   forward_model_type * forward_model = forward_model_alloc__(ext_joblist , statoil_mode , use_lsf);
-  //tokenizer_type * tokenizer_alloc(" " , "\'\"" , ",=()" , NULL , NULL);
+  //tokenizer_type * tokenizer_alloc(" " , "\'\"" , ",=()" , NUlL , NULL , NULL);
   //stringlist_type * tokens = tokenizer_buffer( tokenizer , input_string , true);
   //stringlist_free( tokens );
   //tokenizer_free( tokenizer );

@@ -2,7 +2,7 @@
 #include <util.h>
 #include <string.h>
 #include <conf_util.h>
-
+#include <tokenizer.h>
 
 
 /*
@@ -24,7 +24,7 @@ char * __conf_util_fscanf_alloc_token_buffer(
   int           num_pad_keys,
   const char ** pad_keys)
 {
-  char * buffer_wrk = util_fread_alloc_file_content(file, comment, NULL);
+  char * buffer_wrk   = tokenizer_fread_alloc_file_content( file , NULL /* quote_set */  , NULL /* delete_set */ , "--" /* Comment start*/ , "\n" /* Comment end */);
   char ** padded_keys = util_malloc(num_pad_keys * sizeof * padded_keys,
                                     __func__);
   for(int key_nr = 0; key_nr < num_pad_keys; key_nr++)
