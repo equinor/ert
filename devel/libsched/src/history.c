@@ -809,10 +809,11 @@ bool history_str_is_group_name(const history_type * history, int restart_nr, con
 */
 double history_get_var_from_summary_key(const history_type * history, int restart_nr, const char * summary_key, bool * default_used)
 {
+  double value = 0.0;
+
   if (history->source == SCHEDULE) {
     int argc;
     char ** argv;
-    double val = 0.0;
     
     util_split_string(summary_key, ":", &argc, &argv);
     
@@ -820,20 +821,35 @@ double history_get_var_from_summary_key(const history_type * history, int restar
     util_abort("%s: Key \"%s\" does not appear to be a valid summary key.\n", __func__, summary_key);
     
     if(history_str_is_group_name(history, restart_nr, argv[1]))
-      val = history_get_group_var(history, restart_nr, argv[1], argv[0], default_used);
+      value = history_get_group_var(history, restart_nr, argv[1], argv[0], default_used);
     else if(history_str_is_well_name(history, restart_nr, argv[1]))
-      val = history_get_well_var(history, restart_nr, argv[1], argv[0], default_used);
+      value = history_get_well_var(history, restart_nr, argv[1], argv[0], default_used);
     else
     *default_used = true;
     
     util_free_stringlist(argv, argc);
-    return val;
+    return value;
   } else {
+
     /** 100% plain ecl_sum_get... */
 
     *default_used = false;  /* Do not have control over this when using the ecl_sum interface. */
     int ministep  = ecl_sum_get_report_ministep_end( history->ecl_sum , restart_nr );
-    return ecl_sum_get_general_var( history->ecl_sum , ministep , summary_key );
+    char * gen_key = (char *) summary_key;
+    if (history->source == REFCASE_HISTORY) {
+      /* Must add H to make keywords into history version: */
+      int argc;
+      char ** argv;
+    
+      util_split_string(summary_key, ":", &argc, &argv); 
+      argv[0] = util_strcat_realloc(argv[0] , "H");
+      gen_key = util_alloc_joined_string( (const char **) argv , argc , ":");
+      util_free_stringlist( argv , argc );
+    }
+    value = ecl_sum_get_general_var( history->ecl_sum , ministep , gen_key );
+    if (history->source == REFCASE_HISTORY)
+      free( gen_key );
+    return value;
   }
 }
 
@@ -921,8 +937,8 @@ void   history_alloc_time_series_from_summary_key
 {
   int num_restarts = history_get_num_restarts(history);
 
-  double * value        = util_malloc(num_restarts * sizeof * value,        __func__);
-  bool   * default_used = util_malloc(num_restarts * sizeof * default_used, __func__);
+  double * value        = util_malloc(num_restarts * sizeof * value ,        __func__);
+  bool   * default_used = util_malloc(num_restarts * sizeof * default_used , __func__);
 
   int argc;
   char ** argv;
@@ -932,12 +948,14 @@ void   history_alloc_time_series_from_summary_key
 
   for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++)
   {
-    if(history_str_is_group_name(history, restart_nr, argv[1]))
-      value[restart_nr] = history_get_group_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
-    else if(history_str_is_well_name(history, restart_nr, argv[1]))
-      value[restart_nr] = history_get_well_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
-    else
-      default_used[restart_nr] = true;
+
+    value[restart_nr] = history_get_var_from_summary_key( history , restart_nr , summary_key , &default_used[restart_nr]);
+    //if(history_str_is_group_name(history, restart_nr, argv[1]))
+    //  value[restart_nr] = history_get_group_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
+    //else if(history_str_is_well_name(history, restart_nr, argv[1]))
+    //  value[restart_nr] = history_get_well_var(history, restart_nr, argv[1], argv[0], &default_used[restart_nr]);
+    //else
+    //  default_used[restart_nr] = true;
   }
 
   util_free_stringlist(argv, argc);
