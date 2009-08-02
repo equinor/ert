@@ -203,42 +203,6 @@ void meas_matrix_iget_ens_mean_std( const meas_matrix_type * matrix , int index 
 
 
 
-/**
-   This function computes the ensemble mean and ensemble std of the
-   various observables. The data are returned (by reference) in two
-   vectors allocated in this function.
-*/
-
-void meas_matrix_allocS_stats(const meas_matrix_type * matrix, double **_meanS , double **_stdS) {
-  const int nrobs = meas_vector_get_nrobs(matrix->meas_vectors[0]);
-  int   iobs , iens;
-  double * S1 = util_malloc(nrobs * sizeof * S1 , __func__);
-  double * S2 = util_malloc(nrobs * sizeof * S2 , __func__);
-  
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    S1[iobs] = 0;
-    S2[iobs] = 0;
-  }
-  
-  for (iens = 0; iens < matrix->ens_size; iens++) {
-    const meas_vector_type * vector = matrix->meas_vectors[iens];
-    const double        * meas_data = meas_vector_get_data_ref(vector);
-
-    for (iobs = 0; iobs < nrobs; iobs++) {
-      S1[iobs] += meas_data[iobs];
-      S2[iobs] += meas_data[iobs] * meas_data[iobs];
-    }
-  }
-
-  for (iobs = 0; iobs < nrobs; iobs++) {
-    S1[iobs] *= 1.0 / matrix->ens_size;
-    S2[iobs]  = sqrt( util_double_max(0 , S2[iobs] / matrix->ens_size - S1[iobs] * S1[iobs]));
-  }
-  
-  *_meanS = S1;
-  *_stdS  = S2;
-}
-
 
 
  
@@ -275,59 +239,6 @@ matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix) {
 }
 
 
-/**
-   In the return value S - the mean value has been subtracted. _meanS
-   is "returned by reference"
-*/
-
-double * meas_matrix_allocS_OLD(const meas_matrix_type * matrix, int nrobs_active , int ens_stride , int obs_stride, double ** _meanS , const bool * active_obs) {
-  double * S;
-  double * meanS;
-  int iens , active_iobs;
-  const int nrobs_total = meas_vector_get_nrobs(matrix->meas_vectors[0]);
-  S     = util_malloc(nrobs_active * matrix->ens_size * sizeof * S     , __func__);
-  meanS = util_malloc(nrobs_active *                    sizeof * meanS , __func__);
-  
-  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
-    meanS[active_iobs] = 0;
-
-  for (iens = 0; iens < matrix->ens_size; iens++) {
-    const meas_vector_type * vector = matrix->meas_vectors[iens];
-    if (nrobs_total != meas_vector_get_nrobs(vector)) {
-      fprintf(stderr,"%s: fatal internal error - not all measurement vectors equally long - aborting \n",__func__);
-      abort();
-    }
-    
-    {
-      const double * meas_data = meas_vector_get_data_ref(vector);
-      int total_iobs;
-      active_iobs = 0;
-      for (total_iobs = 0; total_iobs < nrobs_total; total_iobs++) {
-	if (active_obs[total_iobs]) {
-	  int index = active_iobs * obs_stride  +  iens * ens_stride;
-	  S[index]            = meas_data[total_iobs];
-	  meanS[active_iobs] += meas_data[total_iobs];
-	  active_iobs++;
-	}
-      }
-    }
-  }
-
-  /*
-    Subtracting the (ensemble mean) of each measurement.
-  */
-  for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++)
-    meanS[active_iobs] /= matrix->ens_size;
-
-  for (iens = 0; iens < matrix->ens_size; iens++) 
-    for (active_iobs = 0; active_iobs < nrobs_active; active_iobs++) {
-      int index = active_iobs * obs_stride  +  iens * ens_stride;
-      S[index] -= meanS[active_iobs];
-    }
-  *_meanS = meanS;
-      
-  return S;
-}
 
 
 int meas_matrix_get_ens_size( const meas_matrix_type * meas_matrix ) {

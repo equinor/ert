@@ -255,63 +255,6 @@ const int nrobs_active = obs_data->active_size;
 
 
 
-double * obs_data_allocE(const obs_data_type * obs_data , int ens_size, int ens_stride, int obs_stride) {
-  const int nrobs_active = obs_data->active_size;
-  const int nrobs_total  = obs_data->total_size;
-  double *pert_mean , *pert_var;
-  double *E;
-  int iens, iobs_active;
-  
-  E = util_malloc(nrobs_active * ens_size * sizeof * E         , __func__);
-
-  pert_mean = util_malloc(nrobs_active            * sizeof * pert_mean , __func__);
-  pert_var  = util_malloc(nrobs_active            * sizeof * pert_var  , __func__);
-  enkf_util_rand_stdnormal_vector(nrobs_active * ens_size , E);
-  
-  for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
-    pert_mean[iobs_active] = 0;
-    pert_var[iobs_active]  = 0;
-  }
-  
-  for (iens = 0; iens < ens_size; iens++) {
-    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
-      int index = iens * ens_stride + iobs_active * obs_stride;
-      pert_mean[iobs_active] += E[index];
-    }
-  }
-  
-  
-  for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
-    pert_mean[iobs_active] /= ens_size;
-
-  for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
-      int index = iens * ens_stride + iobs_active * obs_stride;
-      E[index] -= pert_mean[iobs_active];
-      pert_var[iobs_active] += E[index] * E[index];
-    }
-  }
-
-  {
-    int iobs_total;
-    for (iens = 0; iens < ens_size; iens++) {
-      int iobs_active = 0;
-      for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-	obs_data_node_type * node = obs_data->data[iobs_total];
-	if (node->active) {
-	  int index = iens * ens_stride + iobs_active * obs_stride;
-	  E[index] *= node->std * sqrt(ens_size / pert_var[iobs_active]);
-	  iobs_active++;
-	}
-      }
-    }
-  }
-  
-
-  free(pert_mean);
-  free(pert_var);
-  return E;
-}
 
 
 
@@ -339,66 +282,6 @@ matrix_type * obs_data_allocD__(const obs_data_type * obs_data , const matrix_ty
 }
 
 
-
-/**
-  The D matrix 
-  
-  Observe that it is assumed that the mean has been shifted away from
-  S.
-*/
-double * obs_data_allocD(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , const double * E , const double * S , const double * meanS) {
-  const int nrobs_active = obs_data->active_size;
-  const int nrobs_total  = obs_data->total_size;
-  int iobs_active, iobs_total;
-  int iens;
-  double *D = NULL;
-
-
-  D  = util_malloc(nrobs_active * ens_size * sizeof * D , __func__);
-  for  (iens = 0; iens < ens_size; iens++) {
-    iobs_active = 0;
-    for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      obs_data_node_type * node = obs_data->data[iobs_total];
-      if (node->active) {
-	int index = iens * ens_stride + iobs_active * obs_stride;
-	D[index] = node->value + E[index] - S[index] - meanS[iobs_active];
-	iobs_active++;
-      }
-    }
-  }
-  
-  return D;
-}
-
-
-
-/**
-  Observe that this function is called two times; first with all
-  measurements active, and then with (possibly) some measurements
-  deactivated.
-
-  The input vector meanS should contain the same number of elements
-  as is currently active.
-*/
-
-double * obs_data_alloc_innov(const obs_data_type * obs_data , const double *meanS) {
-  double *innov;
-  int nrobs_total  = obs_data->total_size;
-  int nrobs_active = obs_data->active_size;
-  int iobs_total;
-  int iobs_active = 0;
-
-  innov = util_malloc(nrobs_active * sizeof * innov , __func__);
-  for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-    obs_data_node_type * node = obs_data->data[iobs_total];
-    if (node->active) {
-      innov[iobs_active] = node->value - meanS[iobs_active];
-      iobs_active++;
-    }
-  }
-
-  return innov;
-}
 
 
 
@@ -461,34 +344,6 @@ void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * inno
 }
 
 
-double * obs_data_allocR(obs_data_type * obs_data) {
-  const int nrobs_total  = obs_data->total_size;
-  const int nrobs_active = obs_data->active_size;
-  double *R;
-  int iobs_active;
-
-  R = util_malloc( nrobs_active * nrobs_active * sizeof * R , __func__);
-  for (iobs_active = 0; iobs_active < nrobs_active * nrobs_active; iobs_active++)
-    R[iobs_active] = 0;
-  
-  {
-    int iobs_total;
-    iobs_active = 0;
-
-    for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      obs_data_node_type * node = obs_data->data[iobs_total];
-      if (node->active) {
-	double std = node->std;
-	R[iobs_active * (nrobs_active + 1)] = std * std;
-	iobs_active++;
-      }
-    }
-  }
-  
-  return R;
-}
-
-
 matrix_type * obs_data_allocR__(obs_data_type * obs_data) {
   const int nrobs_total  = obs_data->total_size;
   const int nrobs_active = obs_data->active_size;
@@ -514,48 +369,6 @@ matrix_type * obs_data_allocR__(obs_data_type * obs_data) {
 }
 
 
-
-
-
-
-void obs_data_scale(const obs_data_type * obs_data , int ens_size, int ens_stride , int obs_stride , double *S , double *E , double *D , double *R , double *innov) {
-  const int nrobs_total  = obs_data->total_size;
-  const int nrobs_active = obs_data->active_size;
-  double * scale_factor  = util_malloc(nrobs_active * sizeof * scale_factor , __func__);
-  int iens, iobs_active;
-  
-  {
-    int iobs_total;
-    iobs_active = 0;
-    for (iobs_total = 0; iobs_total < nrobs_total; iobs_total++) {
-      obs_data_node_type * node = obs_data->data[iobs_total];
-      if (node->active) {
-	scale_factor[iobs_active] = 1.0 / node->std;
-	iobs_active++;
-      }
-    }
-  }
-  
-  for  (iens = 0; iens < ens_size; iens++) {
-    for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) {
-      int index                = iens * ens_stride + iobs_active * obs_stride;
-      S[index]  	      *= scale_factor[iobs_active];
-      D[index]  	      *= scale_factor[iobs_active];
-      if (E != NULL) E[index] *= scale_factor[iobs_active];
-    }
-  }
-  
-  for (iobs_active = 0; iobs_active < nrobs_active; iobs_active++) 
-    innov[iobs_active] *= scale_factor[iobs_active];
-  
-  {
-    int i,j;
-    for (i=0; i < nrobs_active; i++)
-      for (j=0; j < nrobs_active; j++)
-	R[i*nrobs_active + j] *= (scale_factor[i] * scale_factor[j]);
-  }
-  free(scale_factor);
-}
 
 
 
