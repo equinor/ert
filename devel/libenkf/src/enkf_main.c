@@ -335,31 +335,7 @@ static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf
 
 /*****************************************************************/
 
-static void enkf_main_fprintf_results(const enkf_main_type * enkf_main , int report_step) {
-  const int ens_size  = ensemble_config_get_size(enkf_main->ensemble_config);
-  stringlist_type * key_list    = ensemble_config_alloc_keylist(enkf_main->ensemble_config);
-  int config_size = stringlist_get_size(key_list);
 
-  for (int ikw=0; ikw < config_size; ikw++) {
-    /* 
-       Unfortunately we can have config_nodes without actual nodes (in
-       the case) of STATIC. They are not printed anyway.
-    */
-    const char * key = stringlist_iget(key_list, ikw);
-    if (enkf_config_node_get_impl_type(ensemble_config_get_node(enkf_main->ensemble_config , key)) != STATIC) {
-      const enkf_node_type * node = enkf_state_get_node(enkf_main->ensemble[0] , key);
-      if (enkf_node_has_func(node , ensemble_fprintf_results_func)) {
-	enkf_node_type ** node_ensemble = enkf_main_get_node_ensemble(enkf_main , key);
-	char            * path          = model_config_alloc_result_path(enkf_main->model_config , report_step);
-	
-	enkf_node_ensemble_fprintf_results((const enkf_node_type **) node_ensemble , ens_size , report_step , path);
-	free(path);
-	free(node_ensemble);
-      }
-    }
-  }
-  stringlist_free(key_list);
-}
 
 
 enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int iens) {
@@ -1125,10 +1101,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "ADD_STATIC_KW" , false , true);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
     
-    item = config_add_item(config , "RESULT_PATH"  , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_set_arg(config , "RESULT_PATH" , 1 , (const char *[1]) { DEFAULT_RESULT_PATH });
-
     item = config_add_item(config , "OBS_CONFIG"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
     

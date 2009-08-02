@@ -193,7 +193,6 @@ struct enkf_node_struct {
   imul_ftype         		 * imul;
   isqrt_ftype        		 * isqrt;
   iaddsqr_ftype      		 * iaddsqr;
-  ensemble_fprintf_results_ftype * fprintf_results;
   
   /******************************************************************/
   char               *node_key;       	    /* The (hash)key this node is identified with. */
@@ -459,24 +458,6 @@ void enkf_node_set_data(enkf_node_type *enkf_node , const void * data , int repo
 
 
 
-void enkf_node_ensemble_fprintf_results(const enkf_node_type ** ensemble , int ens_size , int report_step , const char * path) {
-  /*
-    FUNC_ASSERT(ensemble[0]->fprintf_results);
-  */
-  {
-    void ** data_pointers = util_malloc(ens_size * sizeof * data_pointers , __func__);
-    char * filename       = util_alloc_filename(path , ensemble[0]->node_key, NULL);
-    int iens;
-    for (iens=0; iens < ens_size; iens++)
-      data_pointers[iens] = ensemble[iens]->data;
-
-    ensemble[0]->fprintf_results((const void **) data_pointers , ens_size , filename);
-    free(filename);
-    free(data_pointers);
-  }
-}
-
-
 bool enkf_node___memory_allocated(const enkf_node_type * node) { return node->__memory_allocated; }
 
 static void enkf_node_assert_memory(const enkf_node_type * enkf_node , const char * caller) {
@@ -674,7 +655,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->deserialize    	   = NULL;
   node->freef          	   = NULL;
   node->free_data      	   = NULL;
-  node->fprintf_results	   = NULL;
   node->user_get       	   = NULL;
   node->set_data           = NULL;
   node->load               = NULL;
@@ -694,7 +674,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->deserialize  	     = havana_fault_deserialize__;
     node->freef        	     = havana_fault_free__;
     node->free_data    	     = havana_fault_free_data__;
-    node->fprintf_results    = havana_fault_ensemble_fprintf_results__;
     node->user_get           = havana_fault_user_get__; 
     node->load               = havana_fault_load__;
     node->store              = havana_fault_store__;
@@ -711,7 +690,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->deserialize  	     = gen_kw_deserialize__;
     node->freef        	     = gen_kw_free__;
     node->free_data    	     = gen_kw_free_data__;
-    node->fprintf_results    = gen_kw_ensemble_fprintf_results__;
     node->user_get           = gen_kw_user_get__; 
     node->store              = gen_kw_store__;
     node->load               = gen_kw_load__;
@@ -728,7 +706,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->deserialize  	     = multflt_deserialize__;
     node->freef        	     = multflt_free__;
     node->free_data    	     = multflt_free_data__;
-    node->fprintf_results    = multflt_ensemble_fprintf_results__;
     node->user_get           = multflt_user_get__; 
     node->load               = multflt_load__;
     node->store              = multflt_store__;
@@ -745,7 +722,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->freef              = summary_free__;
     node->free_data          = summary_free_data__;
     node->user_get           = summary_user_get__; 
-    node->fprintf_results    = summary_ensemble_fprintf_results__;
     node->load               = summary_load__;
     node->store              = summary_store__;
     node->matrix_serialize   = summary_matrix_serialize__;
@@ -818,7 +794,6 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
     CASE_SET(deserialize_func  		    , node->deserialize);
     CASE_SET(free_func         		    , node->freef);
     CASE_SET(free_data_func    		    , node->free_data);
-    CASE_SET(ensemble_fprintf_results_func  , node->fprintf_results);
   default:
     fprintf(stderr,"%s: node_function_identifier: %d not recognized - aborting \n",__func__ , function_type);
   }

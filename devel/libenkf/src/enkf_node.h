@@ -68,7 +68,6 @@ typedef void   	      (iadd_ftype)       	   	(      void *  , const void *);
 typedef void   	      (imul_ftype)       	   	(      void *  , const void *);
 typedef void   	      (iaddsqr_ftype)    	   	(      void *  , const void *);
 typedef void          (ensemble_mulX_vector_ftype) 	(      void *  , int , const void ** , const double *);
-typedef void          (ensemble_fprintf_results_ftype)  (const void ** , int , const char *);
 
 
 typedef enum {alloc_func       	   	    = 0, 
@@ -82,10 +81,9 @@ typedef enum {alloc_func       	   	    = 0,
 	      deserialize_func 	   	    = 8,
 	      free_func        	   	    = 9,
 	      free_data_func   	   	    = 10,    
-	      ensemble_fprintf_results_func = 11,
-              clear_serial_state_func       = 12,
-	      matrix_serialize              = 13,
-	      matrix_deserialize            = 14} node_function_type;
+              clear_serial_state_func       = 11,  
+	      matrix_serialize              = 12,
+	      matrix_deserialize            = 13} node_function_type;
 	      
 
 typedef struct enkf_node_struct enkf_node_type;
@@ -119,7 +117,6 @@ bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, bool , int 
 int              enkf_node_serialize(enkf_node_type * , size_t , serial_vector_type *, bool *);
 void             enkf_node_clear     (enkf_node_type *);
 void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int , state_enum);
-void             enkf_node_ensemble_fprintf_results(const enkf_node_type ** , int , int , const char * );
 
 void             enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state);
 bool             enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state);
