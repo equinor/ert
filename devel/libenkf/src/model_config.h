@@ -14,6 +14,8 @@ extern "C" {
 #include <path_fmt.h>
 #include <forward_model.h>
 #include <enkf_types.h>
+#include <sched_file.h>
+#include <stdbool.h>
 
 typedef struct model_config_struct model_config_type;
 void                  model_config_init_internalization( model_config_type * );
@@ -33,6 +35,7 @@ model_config_type   * model_config_alloc(const config_type * , const ext_joblist
 void                  model_config_free(model_config_type *);
 enkf_fs_type        * model_config_get_fs(const model_config_type * );
 path_fmt_type       * model_config_get_runpath_fmt(const model_config_type * );
+path_fmt_type       * model_config_get_result_path_fmt(const model_config_type * model_config);
 char                * model_config_alloc_result_path(const model_config_type *  , int );
 enkf_sched_type     * model_config_get_enkf_sched(const model_config_type * );
 history_type        * model_config_get_history(const model_config_type * );

@@ -114,6 +114,9 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
   return enkf_main->model_config;
 }
 
+ecl_config_type *enkf_main_get_ecl_config(const enkf_main_type * enkf_main) {
+	return enkf_main->ecl_config;
+}
 
 int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
   return model_config_get_last_history_restart( enkf_main->model_config);

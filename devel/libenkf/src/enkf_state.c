@@ -104,14 +104,13 @@ typedef struct shared_info_struct {
 */ 
 
 
-typedef struct member_config_struct {
+struct member_config_struct {
   int  		        iens;                /* The ensemble member number of this member. */
   keep_runpath_type     keep_runpath;        /* Should the run-path directory be left around (for this member)*/
   char 		      * eclbase;             /* The ECLBASE string used for simulations of this member. */
   sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
   bool                  private_sched_file;  /* Is the member config holding a private schedule file - just relevant when freeing up? */ 
-} member_config_type;
-
+};
 
 
 
@@ -316,6 +315,11 @@ static const sched_file_type * member_config_get_sched_file( const member_config
   return member_config->sched_file;
 }
 
+keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config) {
+	return member_config->keep_runpath;
+}
+
+
 /*****************************************************************/
 /** Helper classes complete - starting on the enkf_state proper object. */
 /*****************************************************************/
@@ -406,6 +410,10 @@ void enkf_state_set_eclbase(enkf_state_type * enkf_state , const char * eclbase)
 
 int  enkf_state_get_iens(const enkf_state_type * enkf_state) {
   return enkf_state->my_config->iens;
+}
+
+member_config_type *enkf_state_get_member_config(const enkf_state_type * enkf_state) {
+	return enkf_state->my_config;
 }
 
 

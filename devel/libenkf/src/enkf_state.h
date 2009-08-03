@@ -26,6 +26,9 @@ extern "C" {
 #include <matrix.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
+typedef struct member_config_struct member_config_type;
+
+keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config);
 
 void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
@@ -63,6 +66,7 @@ void               enkf_state_apply(enkf_state_type * , enkf_node_ftype1 * , int
 void               enkf_state_serialize(enkf_state_type * , size_t);
 void               enkf_state_set_iens(enkf_state_type *  , int );
 int                enkf_state_get_iens(const enkf_state_type * );
+member_config_type *enkf_state_get_member_config(const enkf_state_type * enkf_state);
 const char       * enkf_state_get_run_path(const enkf_state_type * );
 void               enkf_state_steal_run_path_lock(enkf_state_type *  , lock_mode_type  , const char *  , const char * );
 void               enkf_state_set_eclbase(enkf_state_type * , const char*);

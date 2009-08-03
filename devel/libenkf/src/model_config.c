@@ -203,6 +203,10 @@ path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_con
   return model_config->runpath;
 }
 
+path_fmt_type * model_config_get_result_path_fmt(const model_config_type * model_config) {
+  return model_config->result_path;
+}
+
 char * model_config_alloc_result_path(const model_config_type * config , int report_step) {
   return path_fmt_alloc_path(config->result_path , true , report_step);
 }
