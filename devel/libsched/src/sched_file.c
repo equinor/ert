@@ -4,7 +4,7 @@
 #include <sched_file.h>
 #include <sched_util.h>
 #include <vector.h>
-#include <tokenizer.h>
+#include <parser.h>
 
 /* This sched_file.c contains code for internalizing an ECLIPSE
    schedule file.
@@ -275,12 +275,12 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
   char * tmp_base             = util_alloc_sprintf("enkf-schedule:%s" , filename);
   char * tmp_file             = util_alloc_tmp_file("/tmp" , tmp_base , true);
   {
-    tokenizer_type  * tokenizer = tokenizer_alloc(" \t" , "\'\"" , "\n" , "\r" , "--" , "\n");
-    stringlist_type * tokens    = tokenize_file( tokenizer , filename , false );
+    parser_type     * parser    = parser_alloc(" \t" , "\'\"" , "\n" , "\r" , "--" , "\n");
+    stringlist_type * tokens    = parser_tokenize_file( parser , filename , false );
     FILE * stream               = util_fopen(tmp_file , "w");
 
     stringlist_fprintf( tokens , " " , stream );
-    tokenizer_free( tokenizer );
+    parser_free( parser );
     stringlist_free( tokens );
     fclose(stream);
   }

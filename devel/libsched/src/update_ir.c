@@ -6,7 +6,7 @@
 #include <sched_kw_wconinje.h>
 #include <hash.h>
 #include <ecl_util.h>
-#include <tokenizer.h>
+#include <parser.h>
 #include <stringlist.h>
 
 void scale_injectors(void * void_kw , int report_step , void * arg) {
@@ -28,8 +28,8 @@ void scale_injectors(void * void_kw , int report_step , void * arg) {
 
 
 static hash_type * parse_multir( const char * multir_file ) {
-  tokenizer_type  * tokenizer = tokenizer_alloc(" \n\t",NULL ,NULL ,  NULL , NULL , NULL);
-  stringlist_type * tokens    = tokenize_file ( tokenizer , multir_file , true );
+  tokenizer_type  * parser = parser_alloc(" \n\t",NULL ,NULL ,  NULL , NULL , NULL);
+  stringlist_type * tokens    = parser_tokenize_file ( parser , multir_file , true );
   hash_type * hash = hash_alloc();
   int i;
 
@@ -45,7 +45,7 @@ static hash_type * parse_multir( const char * multir_file ) {
     
   }
   stringlist_free( tokens );
-  tokenizer_free( tokenizer );
+  parser_free( parser );
   return hash;
 }
 

@@ -680,7 +680,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     meas_matrix_free( meas_forecast );
     meas_matrix_free( meas_analyzed );
   }
-  //enkf_main_inflate( enkf_main , 2.0 );
+  /* enkf_main_inflate( enkf_main , 2.0 ); */
 }
 
 

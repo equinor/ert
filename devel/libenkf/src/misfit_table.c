@@ -74,9 +74,28 @@ struct misfit_vector_struct {
 static misfit_vector_type * misfit_vector_alloc(int history_length) {
   misfit_vector_type * misfit_vector = util_malloc( sizeof * misfit_vector , __func__);
   UTIL_TYPE_ID_INIT(misfit_vector , MISFIT_VECTOR_TYPE_ID);
-  misfit_vector->data = double_vector_alloc( history_length + 1 , 0 );
+
+  if (history_length > 0)
+    misfit_vector->data = double_vector_alloc( history_length + 1 , 0 );
+  else
+    misfit_vector->data = NULL;  /* Used by the xxx_fread_alloc() function below. */
+
   return misfit_vector;
 }
+
+
+static misfit_vector_type * misfit_vector_buffer_fread_alloc( buffer_type * buffer ) {
+  misfit_vector_type * misfit_vector = misfit_vector_alloc( 0 );
+  if (misfit_vector->data == NULL)
+    misfit_vector->data = double_vector_buffer_fread_alloc( buffer);
+  return misfit_vector;
+}
+
+
+static void misfit_vector_buffer_fwrite( const misfit_vector_type * misfit_vector , buffer_type * buffer ) {
+  double_vector_buffer_fwrite( misfit_vector->data , buffer );
+}
+
 
 static UTIL_SAFE_CAST_FUNCTION(misfit_vector , MISFIT_VECTOR_TYPE_ID);
 
@@ -146,11 +165,17 @@ static void misfit_node_free__( void * node ) {
 }
 
 
+static void misfit_node_install_vector( misfit_node_type * node , const char * key , misfit_vector_type * vector ) {
+  hash_insert_hash_owned_ref( node->obs, key , vector , misfit_vector_free__ );
+}
+
+
 static misfit_vector_type * misfit_node_safe_get_vector( misfit_node_type * node , const char * obs_key , int history_length) {
   if (!hash_has_key( node->obs , obs_key ))
-    hash_insert_hash_owned_ref( node->obs, obs_key , misfit_vector_alloc( history_length ) , misfit_vector_free__);
+    misfit_node_install_vector(node , obs_key , misfit_vector_alloc( history_length ) );
   return hash_get( node->obs , obs_key );
 }
+
 
 static misfit_vector_type * misfit_node_get_vector( misfit_node_type * node , const char * obs_key ) {
   return hash_get( node->obs , obs_key );
@@ -177,19 +202,37 @@ static void misfit_node_eval_ranking_misfit( misfit_node_type * node , const str
 
 static void misfit_node_buffer_fwrite( const misfit_node_type * node , buffer_type * buffer ) {
   buffer_fwrite_int( buffer , node->my_iens );
+  buffer_fwrite_int( buffer , hash_get_size( node->obs ));
   {
     hash_iter_type * obs_iter = hash_iter_alloc( node->obs );
     while ( !hash_iter_is_complete( obs_iter )) {
       const char * key                   = hash_iter_get_next_key( obs_iter );
       misfit_vector_type * misfit_vector = hash_get( node->obs , key );
-      
       buffer_fwrite_string( buffer , key );
-      double_vector_buffer_fwrite( misfit_vector->data , buffer );
+      misfit_vector_buffer_fwrite( misfit_vector , buffer);
     }
     
     hash_iter_free( obs_iter );
   }
 }
+
+
+static misfit_node_type * misfit_node_buffer_fread_alloc( buffer_type * buffer ) {
+  misfit_node_type * node;
+  int my_iens   = buffer_fread_int( buffer );
+  int hash_size = buffer_fread_int( buffer );
+  node = misfit_node_alloc( my_iens );
+  {
+    int iobs;
+    for (iobs = 0; iobs < hash_size; iobs++) {
+      const char         * key           = buffer_fread_string( buffer );
+      misfit_vector_type * misfit_vector = misfit_vector_buffer_fread_alloc( buffer );
+      misfit_node_install_vector( node , key , misfit_vector );
+    }
+  }
+  return node;
+}
+
 
 
 /*****************************************************************/
@@ -259,6 +302,7 @@ void misfit_table_buffer_fwrite( const misfit_table_type * misfit_table , buffer
   /* Writing the sorted permutation keys. */
   {
     hash_iter_type * ranking_iter = hash_iter_alloc( misfit_table->ranking_list );
+    buffer_fwrite_int( buffer , hash_get_size( misfit_table->ranking_list ));
     while (! hash_iter_is_complete( ranking_iter )) {
       const char * ranking_key  = hash_iter_get_next_key( ranking_iter );
       const int  * ranking_perm = hash_get( misfit_table->ranking_list , ranking_key );
@@ -282,27 +326,63 @@ void misfit_table_fwrite( const misfit_table_type * misfit_table , const char * 
 }
 
 
+/**
+   Observe that the object is NOT in a valid state when leaving this function, 
+   must finalize in either misfit_table_alloc() or misfit_table_fread_alloc().
+*/
+
+static misfit_table_type * misfit_table_alloc_empty(const enkf_obs_type * enkf_obs) {
+  misfit_table_type * table = util_malloc( sizeof * table , __func__);
+  table->enkf_obs           = enkf_obs;
+  table->ensemble           = vector_alloc_new();
+  table->ranking_list       = hash_alloc();
+  return table;
+}
 
 
+
+misfit_table_type * misfit_table_fread_alloc( const char * filename , const enkf_obs_type * enkf_obs) {
+  misfit_table_type * misfit_table = misfit_table_alloc_empty( enkf_obs );
+  buffer_type * buffer = buffer_fread_alloc( filename );
+  int ens_size;
+  
+  misfit_table->current_case   = buffer_fread_alloc_string( buffer );
+  misfit_table->history_length = buffer_fread_int( buffer );
+  ens_size                     = buffer_fread_int( buffer );
+  {
+    for (int iens = 0; iens < ens_size; iens++) {
+      misfit_node_type * node = misfit_node_buffer_fread_alloc( buffer );
+      vector_append_owned_ref( misfit_table->ensemble , node , misfit_node_free__);
+    }
+  }
+  {
+    int hash_size = buffer_fread_int( buffer );
+    for (int ir = 0; ir < hash_size; ir++) {
+      const char * ranking_key  = buffer_fread_string( buffer );
+      int        * ranking_perm = util_malloc( sizeof * ranking_perm * ens_size , __func__);
+      buffer_fread( buffer , ranking_perm , sizeof * ranking_perm , ens_size );
+      hash_insert_hash_owned_ref( misfit_table->ranking_list , ranking_key , ranking_perm , free );
+    }
+  }
+  buffer_free( buffer );
+  return misfit_table;
+}
 
 
 
 misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , enkf_fs_type * fs , int history_length , int ens_size , const enkf_obs_type * enkf_obs ) {
-  misfit_table_type * table = util_malloc( sizeof * table , __func__);
-  table->current_case   = util_alloc_string_copy( enkf_fs_get_read_dir( fs ));
-  table->history_length = history_length;
-  table->ensemble       = vector_alloc_new();
+  misfit_table_type * table = misfit_table_alloc_empty( enkf_obs );
+  table->current_case       = util_alloc_string_copy( enkf_fs_get_read_dir( fs ));
+  table->history_length     = history_length;
   {
     int iens;
     for (iens = 0; iens < ens_size; iens++) 
       vector_append_owned_ref( table->ensemble , misfit_node_alloc( iens ) , misfit_node_free__);
   }
-  table->ranking_list = hash_alloc();
-  table->enkf_obs = enkf_obs;
-  
   misfit_table_update(table , config , fs);
   return table;
 }
+
 
 
 void misfit_table_display_ranking( const misfit_table_type * table , const char * ranking_key ) {

@@ -7,7 +7,7 @@
 #include <sched_util.h>
 #include <sched_kw_include.h>
 #include <sched_macros.h>
-#include <tokenizer.h>
+#include <parser.h>
 
 /**
    This file implemtents support for the INCLUDE keyword in the
@@ -60,10 +60,10 @@ sched_kw_include_type * sched_kw_include_fscanf_alloc(FILE * stream , bool * at_
   */
   
   {
-    tokenizer_type  * tokenizer = tokenizer_alloc(NULL , "\"\'" , NULL , " \t" , "--" , "\n");
-    stringlist_type * tokens    = tokenize_buffer( tokenizer , line , true );
+    parser_type  * parser    = parser_alloc(NULL , "\"\'" , NULL , " \t" , "--" , "\n");
+    stringlist_type * tokens = parser_tokenize_buffer( parser , line , true );
     sched_kw_include_set_file( kw , stringlist_iget( tokens , 0) );
-    tokenizer_free( tokenizer );
+    parser_free( parser );
     stringlist_free( tokens );
   }
   free(line);
