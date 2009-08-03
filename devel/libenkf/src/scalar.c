@@ -254,16 +254,7 @@ static void scalar_lock_output(scalar_type * scalar) { scalar->__output_locked  
    with these functions will result in a fatal error.
 */
 
-
-void scalar_isqr(scalar_type * scalar) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
-  int i;
-
-  scalar_lock_output(scalar);
-  for (i=0; i < data_size; i++) 
-    scalar->output_data[i] = scalar->output_data[i] * scalar->output_data[i];
-}
+// Changed all thes functions to work on the scalar->data and NOT the output data - as of 02.08.2009.
 
 
 
@@ -271,24 +262,19 @@ void scalar_isqrt(scalar_type * scalar) {
   const scalar_config_type *config = scalar->config; 			       
   const int data_size = scalar_config_get_data_size(config);
   int i;
+  
+  for (i=0; i < data_size; i++) 
+    scalar->data[i] = sqrt( scalar->data[i] );
 
-  scalar_lock_output(scalar);
-  for (i=0; i < data_size; i++) {
-    if (scalar->output_data[i] < 0) 
-      fprintf(stderr,"%s: ** Warning ** sqrt(%g) \n",__func__ , scalar->output_data[i]);
-    scalar->output_data[i] = sqrt(scalar->output_data[i]);
-  }
 }
 
 
-void scalar_iscale(scalar_type * scalar, double factor) {
+void scalar_scale(scalar_type * scalar, double factor) {
   const scalar_config_type *config = scalar->config; 			       
   const int data_size = scalar_config_get_data_size(config);
   int i;
-
-  scalar_lock_output(scalar);
   for (i=0; i < data_size; i++) 
-    scalar->output_data[i] *= factor;
+    scalar->data[i] *= factor;
 }
 
 
@@ -297,21 +283,20 @@ void scalar_iadd(scalar_type * scalar , const scalar_type * delta) {
   const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
-  scalar_lock_output(scalar);
   for (i=0; i < data_size; i++) 
-    scalar->output_data[i] += delta->output_data[i];
+    scalar->data[i] += delta->data[i];
 }
 
 
-void scalar_isub(scalar_type * scalar , const scalar_type * delta) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
-  int i;                                              			       
-  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
-  scalar_lock_output(scalar);
-  for (i=0; i < data_size; i++) 
-    scalar->output_data[i] -= delta->output_data[i];
-}
+//void scalar_isub(scalar_type * scalar , const scalar_type * delta) {
+//  const scalar_config_type *config = scalar->config; 			       
+//  const int data_size = scalar_config_get_data_size(config);
+//  int i;                                              			       
+//  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
+//  scalar_lock_output(scalar);
+//  for (i=0; i < data_size; i++) 
+//    scalar->output_data[i] -= delta->output_data[i];
+//}
 
 
 void scalar_imul(scalar_type * scalar , const scalar_type * delta) {
@@ -319,21 +304,20 @@ void scalar_imul(scalar_type * scalar , const scalar_type * delta) {
   const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
-  scalar_lock_output(scalar);
   for (i=0; i < data_size; i++) 
-    scalar->output_data[i] *= delta->output_data[i];
+    scalar->data[i] *= delta->data[i];
 }
 
 
-void scalar_imul_add(scalar_type * scalar , double scale_factor , const scalar_type * delta) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
-  int i;                                              			       
-  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
-  scalar_lock_output(scalar);
-  for (i=0; i < data_size; i++) 
-    scalar->output_data[i] += scale_factor * delta->output_data[i];
-}
+//void scalar_imul_add(scalar_type * scalar , double scale_factor , const scalar_type * delta) {
+//  const scalar_config_type *config = scalar->config; 			       
+//  const int data_size = scalar_config_get_data_size(config);
+//  int i;                                              			       
+//  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
+//  scalar_lock_output(scalar);
+//  for (i=0; i < data_size; i++) 
+//    scalar->output_data[i] += scale_factor * delta->output_data[i];
+//}
 
 
 void scalar_iaddsqr(scalar_type * scalar , const scalar_type * delta) {
@@ -341,19 +325,21 @@ void scalar_iaddsqr(scalar_type * scalar , const scalar_type * delta) {
   const int data_size = scalar_config_get_data_size(config);
   int i;                                              			       
   if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
-  scalar_lock_output(scalar);
   for (i=0; i < data_size; i++) 
-    scalar->output_data[i] += delta->output_data[i] * delta->output_data[i];
+    scalar->data[i] += delta->data[i] * delta->data[i];
 }
 
 
 
+/**
+   Operates on the underlying normally distributed variable.
+*/
 
-
-
-/*****************************************************************/
-
-
-void scalar_TEST() {
-  return ;
+void scalar_set_inflation(scalar_type * inflation , const scalar_type * std , const scalar_type * min_std) {
+  const scalar_config_type *config = inflation->config; 			       
+  const int data_size = scalar_config_get_data_size(config);
+  
+  for (int i=0; i < data_size; i++)
+    inflation->data[i] = util_double_max( 1.0 , min_std->data[i] / std->data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
 }
+

@@ -18,7 +18,6 @@ struct gen_kw_config_struct {
   char               ** tagged_kw_list;  /* The same keywords - but '<' and '>' */
   scalar_config_type  * scalar_config;
   char                * template_file;
-  gen_kw_type         * min_variance;
 };
 
 

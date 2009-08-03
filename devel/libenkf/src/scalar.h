@@ -26,7 +26,6 @@ void             scalar_ens_write(const scalar_type * , const char *);
 void             scalar_ens_read(scalar_type * , const char *);
 void             scalar_sample(scalar_type *);
 void             scalar_truncate(scalar_type *);
-void             scalar_TEST(void);
 int              scalar_serialize(const scalar_type * , serial_state_type * , size_t , serial_vector_type *);
 void             scalar_deserialize(scalar_type * , serial_state_type * , const serial_vector_type *);
 int              scalar_serialize_part(const scalar_type * , serial_state_type * , bool , int , int , size_t , serial_vector_type *);
@@ -44,7 +43,7 @@ void             scalar_memcpy(scalar_type * , const scalar_type * );
 void             scalar_free_data(scalar_type *);
 void 		 scalar_matrix_deserialize(scalar_type * scalar , const active_list_type * active_list , const matrix_type * A , int row_offset , int column);
 void 		 scalar_matrix_serialize(const scalar_type *scalar ,  const active_list_type * active_list , matrix_type * A , int row_offset , int column);
-
+void             scalar_set_inflation(scalar_type * inflation , const scalar_type * std , const scalar_type * min_std);
 
 
 

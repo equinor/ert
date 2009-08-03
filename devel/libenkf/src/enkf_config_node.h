@@ -12,6 +12,7 @@ typedef int    (get_data_size_ftype) (const void *);
 
 
 typedef struct enkf_config_node_struct enkf_config_node_type;
+typedef struct enkf_node_struct        enkf_node_type;
 
 
 
@@ -41,6 +42,12 @@ void enkf_config_node_init_internalization(enkf_config_node_type * );
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step);
 bool enkf_config_node_internalize(const enkf_config_node_type * node, int report_step);
 
+/*
+  The enkf_node_free() function declaration is in the enkf_config_node.h header,
+  because the enkf_config_node needs to know how to free the min_std node.
+*/
+void             enkf_node_free(enkf_node_type *enkf_node);
+const enkf_node_type * enkf_config_node_get_min_std( const enkf_config_node_type * config_node );
 
 SAFE_CAST_HEADER(enkf_config_node);
 VOID_FREE_HEADER(enkf_config_node);

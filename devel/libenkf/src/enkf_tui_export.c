@@ -497,7 +497,7 @@ void enkf_tui_export_fieldP(void * arg) {
         }
       }
       if (active_ens_size > 0) {
-        field_iscale( sum_field , 1.0 / active_ens_size );
+        field_scale( sum_field , 1.0 / active_ens_size );
         {
           char * path;
           util_alloc_file_components( export_file , &path , NULL , NULL);

@@ -53,6 +53,10 @@ typedef void   	      (load_ftype)                	(      void *  , buffer_type 
 typedef bool   	      (store_ftype)                	(const void *  , buffer_type * , bool);
 
 
+typedef void          (set_inflation_ftype)             (void *       ,  /* Node object which is used for storing inflation factors. */
+                                                         const void * ,  /* Node object with the ensemble standard deviation. */
+                                                         const void *);  /* Node object with the minimum standard deviation - supplied by the user. */
+
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
 typedef void * 	      (alloc_ftype)                	(const void *);
 typedef bool   	      (initialize_ftype)     	   	(      void *  , int);
@@ -86,7 +90,6 @@ typedef enum {alloc_func       	   	    = 0,
 	      matrix_deserialize            = 13} node_function_type;
 	      
 
-typedef struct enkf_node_struct enkf_node_type;
 typedef void          (enkf_node_ftype1)           (enkf_node_type *);
 typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , arg_pack_type * );
 
@@ -95,7 +98,12 @@ double           enkf_node_user_get(enkf_node_type *  , const char * , bool * );
 enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
 enkf_node_type * enkf_node_alloc_static(const char *);
 enkf_node_type * enkf_node_copyc(const enkf_node_type * );
-void             enkf_node_free(enkf_node_type *enkf_node);
+/*
+  The enkf_node_free() function declaration is in the enkf_config_node.h header,
+  because the enkf_config_node needs to know how to free the min_std node.
+
+  void             enkf_node_free(enkf_node_type *enkf_node);
+*/
 void             enkf_node_free_data(enkf_node_type * );
 void             enkf_node_free__(void *);
 void             enkf_initialize    (enkf_node_type * , int);
@@ -121,6 +129,8 @@ void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int 
 void             enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state);
 bool             enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state);
 
+void   enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std);
+void   enkf_node_sqrt(enkf_node_type *enkf_node);
 void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );
 void   enkf_node_iaddsqr(enkf_node_type * , const enkf_node_type * );

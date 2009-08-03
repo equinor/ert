@@ -165,7 +165,7 @@ void gen_kw_matrix_deserialize(gen_kw_type *gen_kw , const active_list_type * ac
   two new instances to hold the mean and standard deviation
   respectively. The return values are returned by reference.
 */
-ALLOC_STATS_SCALAR(gen_kw)  
+//ALLOC_STATS_SCALAR(gen_kw)  
 
 
 
@@ -207,35 +207,6 @@ void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list ,
 }
 
 
-void gen_kw_ensemble_fprintf_results(const gen_kw_type ** ensemble, int ens_size , const char * filename) {
-  char    ** kw_list = gen_kw_config_get_name_list(ensemble[0]->config);
-  int        size    = gen_kw_config_get_data_size(ensemble[0]->config);
-  int        * index = util_malloc(ens_size * sizeof * index , __func__);
-
-  double  ** data    = util_malloc(size * sizeof * data, __func__);
-  for(int i=0; i<size; i++)
-    data[i] = util_malloc(ens_size * sizeof * data[i], __func__); 
-
-
-  for (int iens = 0; iens < ens_size; iens++) {
-    const double * scalar_data = scalar_get_output_ref(ensemble[iens]->scalar);
-    for (int i = 0; i < size; i++) {
-      data[i][iens] = scalar_data[i];
-    }
-    index[iens] = iens;
-  }
-  
-  {
-    FILE * stream = util_fopen(filename , "w");
-    enkf_util_fprintf_data( index , (const double **) data, "Member #" , (const char **) kw_list, ens_size, size, true, stream);
-    fclose(stream);
-  }
-
-  for(int i=0; i<size; i++)
-    free(data[i]);
-  free(data);
-  free(index);
-}
 
 
 const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
@@ -263,12 +234,36 @@ double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * val
 
 
 
+void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std) {
+  scalar_set_inflation( inflation->scalar , std->scalar , min_std->scalar );
+}
+
+void gen_kw_iadd( gen_kw_type * gen_kw , const gen_kw_type * delta) {
+  scalar_iadd( gen_kw->scalar , delta->scalar );
+}
+
+void gen_kw_iaddsqr( gen_kw_type * gen_kw , const gen_kw_type * delta) {
+  scalar_iaddsqr( gen_kw->scalar , delta->scalar );
+}
+
+void gen_kw_imul( gen_kw_type * gen_kw , const gen_kw_type * delta) {
+  scalar_imul( gen_kw->scalar , delta->scalar );
+}
+
+void gen_kw_scale( gen_kw_type * gen_kw , double scale_factor) {
+  scalar_scale( gen_kw->scalar , scale_factor );
+}
+
+void gen_kw_isqrt( gen_kw_type * gen_kw ) {
+  scalar_isqrt( gen_kw->scalar );
+}
+
 
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 SAFE_CAST(gen_kw , GEN_KW);
-MATH_OPS_SCALAR(gen_kw);
+SAFE_CONST_CAST(gen_kw , GEN_KW);
 VOID_ALLOC(gen_kw);
 VOID_REALLOC_DATA(gen_kw);
 VOID_SERIALIZE (gen_kw);
@@ -279,8 +274,14 @@ VOID_COPYC  (gen_kw)
 VOID_FREE   (gen_kw)
 VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)
-VOID_FPRINTF_RESULTS(gen_kw)
 VOID_STORE(gen_kw)
 VOID_LOAD(gen_kw)
 VOID_MATRIX_SERIALIZE(gen_kw)
 VOID_MATRIX_DESERIALIZE(gen_kw)
+VOID_SET_INFLATION(gen_kw)
+VOID_CLEAR(gen_kw)
+VOID_IADD(gen_kw)
+VOID_SCALE(gen_kw)
+VOID_IMUL(gen_kw)
+VOID_IADDSQR(gen_kw)
+VOID_ISQRT(gen_kw)

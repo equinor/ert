@@ -15,7 +15,7 @@
 #include <gen_data.h>
 #include <gen_common.h>
 #include <matrix.h>
-
+#include <math.h>
 
 
 /**
@@ -36,7 +36,7 @@
 struct gen_data_struct {
   int                     __type_id;
   gen_data_config_type  * config;    /* Thin config object - mainly contains filename for remote load */
-  char                  * data;     /* Actual storage - will be casted to double or float on use. */
+  char                  * data;      /* Actual storage - will be casted to double or float on use. */
 };
 
 
@@ -443,12 +443,159 @@ const char * gen_data_get_key( const gen_data_type * gen_data) {
 }
 
 
+void gen_data_clear( gen_data_type * gen_data ) {
+  const gen_data_config_type * config = gen_data->config;
+  ecl_type_enum internal_type         = gen_data_config_get_internal_type( config );
+  const int data_size                 = gen_data_config_get_data_size( config );   
+
+  if (internal_type == ecl_float_type) {
+    float * data = (float * ) gen_data->data;
+    for (int i = 0; i < data_size; i++)
+      data[i] = 0;
+  } else if (internal_type == ecl_double_type) {
+    double * data = (double * ) gen_data->data;
+    for (int i = 0; i < data_size; i++)
+      data[i] = 0;
+  } 
+}
+
+
+
+void gen_data_isqrt(gen_data_type * gen_data) {
+  const int data_size          = gen_data_config_get_data_size(gen_data->config);   
+  const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+  
+  if (internal_type == ecl_float_type) {
+    float * data = (float *) gen_data->data;
+    for (int i=0; i < data_size; i++)
+      data[i] = sqrtf( data[i] );
+  } else if (internal_type == ecl_double_type) {
+    double * data = (double *) gen_data->data;
+    for (int i=0; i < data_size; i++)
+      data[i] = sqrt( data[i] );
+  }
+}
+
+
+
+
+void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
+  //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
+  {
+    const int data_size          = gen_data_config_get_data_size(gen_data1->config);   
+    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
+    int i;
+
+    if (internal_type == ecl_float_type) {
+      float * data1       = (float *) gen_data1->data;
+      const float * data2 = (const float *) gen_data2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i];
+    } else if (internal_type == ecl_double_type) {
+      double * data1       = (double *) gen_data1->data;
+      const double * data2 = (const double *) gen_data2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i];
+    }
+  }
+}
+
+
+void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
+  //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
+  {
+    const int data_size          = gen_data_config_get_data_size(gen_data1->config);   
+    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
+    int i;
+
+    if (internal_type == ecl_float_type) {
+      float * data1       = (float *) gen_data1->data;
+      const float * data2 = (const float *) gen_data2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] *= data2[i];
+    } else if (internal_type == ecl_double_type) {
+      double * data1       = (double *) gen_data1->data;
+      const double * data2 = (const double *) gen_data2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] *= data2[i];
+    }
+  }
+}
+
+
+void gen_data_iaddsqr(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
+  //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
+  {
+    const int data_size          = gen_data_config_get_data_size(gen_data1->config);   
+    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
+    int i;
+
+    if (internal_type == ecl_float_type) {
+      float * data1       = (float *) gen_data1->data;
+      const float * data2 = (const float *) gen_data2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i] * data2[i];
+    } else if (internal_type == ecl_double_type) {
+      double * data1       = (double *) gen_data1->data;
+      const double * data2 = (const double *) gen_data2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] += data2[i] * data2[i];
+    }
+  }
+}
+
+
+void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
+  //gen_data_config_assert_unary(gen_data->config, __func__); 
+  {
+    const int data_size          = gen_data_config_get_data_size(gen_data->config);   
+    const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
+    int i;
+
+    if (internal_type == ecl_float_type) {
+      float * data       = (float *) gen_data->data;
+      for (i = 0; i < data_size; i++)
+	data[i] *= scale_factor;
+    } else if (internal_type == ecl_double_type) {
+      double * data       = (double *) gen_data->data;
+      for (i = 0; i < data_size; i++)
+	data[i] *= scale_factor;
+    }
+  }
+}
+
+
+
+
+void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std) {
+  const gen_data_config_type * config = inflation->config;
+  ecl_type_enum internal_type         = gen_data_config_get_internal_type( config );
+  const int data_size                 = gen_data_config_get_data_size( config );   
+
+  if (internal_type == ecl_float_type) {
+    float       * inflation_data = (float *)       inflation->data;
+    const float * std_data       = (const float *) std->data;
+    const float * min_std_data   = (const float *) min_std->data;
+
+    for (int i=0; i < data_size; i++)
+      inflation_data[i] = util_float_max( 1.0 , min_std_data[i] / std_data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
+    
+  } else {
+    double       * inflation_data = (double *)       inflation->data;
+    const double * std_data       = (const double *) std->data;
+    const double * min_std_data   = (const double *) min_std->data;
+    
+    for (int i=0; i < data_size; i++)
+      inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
+  }
+}
+
 
 
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
-
+SAFE_CONST_CAST(gen_data , GEN_DATA)
 SAFE_CAST(gen_data , GEN_DATA)
 VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
@@ -465,3 +612,10 @@ VOID_LOAD(gen_data);
 VOID_STORE(gen_data);
 VOID_MATRIX_SERIALIZE(gen_data)
 VOID_MATRIX_DESERIALIZE(gen_data)
+VOID_SET_INFLATION(gen_data)
+VOID_CLEAR(gen_data)
+VOID_SCALE(gen_data)
+VOID_IMUL(gen_data)
+VOID_IADD(gen_data)
+VOID_IADDSQR(gen_data)
+VOID_ISQRT(gen_data)

@@ -177,6 +177,7 @@ struct enkf_node_struct {
   serialize_ftype     *serialize;
   deserialize_ftype   *deserialize;
   set_data_ftype      *set_data;
+  set_inflation_ftype *set_inflation;
 
   matrix_serialize_ftype   * matrix_serialize;
   matrix_deserialize_ftype * matrix_deserialize;
@@ -540,6 +541,14 @@ void enkf_node_matrix_deserialize(enkf_node_type *enkf_node , const active_list_
 
 
 
+void enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std) {
+  {
+    enkf_node_type * enkf_node = inflation;
+    FUNC_ASSERT(enkf_node->set_inflation);
+  }
+  inflation->set_inflation( inflation->data , std->data , min_std->data);
+}
+
 void enkf_node_sqrt(enkf_node_type *enkf_node) {
   FUNC_ASSERT(enkf_node->isqrt);
   enkf_node->isqrt(enkf_node->data);
@@ -662,6 +671,14 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->matrix_serialize   = NULL; 
   node->matrix_deserialize = NULL;
   node->clear              = NULL;
+  node->set_inflation      = NULL;
+
+  /* Math operations: */
+  node->iadd               = NULL;
+  node->scale              = NULL;
+  node->isqrt              = NULL;
+  node->iaddsqr            = NULL;
+  node->imul               = NULL;
 
   switch (impl_type) {
   case(HAVANA_FAULT):
@@ -695,6 +712,12 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->load               = gen_kw_load__;
     node->matrix_serialize   = gen_kw_matrix_serialize__;
     node->matrix_deserialize = gen_kw_matrix_deserialize__;
+    node->clear              = gen_kw_clear__;
+    node->iadd               = gen_kw_iadd__;
+    node->scale              = gen_kw_scale__;
+    node->iaddsqr            = gen_kw_iaddsqr__;
+    node->imul               = gen_kw_imul__;
+    node->isqrt              = gen_kw_isqrt__;
     break;
   case(MULTFLT):
     node->realloc_data 	     = multflt_realloc_data__;
@@ -711,6 +734,12 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->store              = multflt_store__;
     node->matrix_serialize   = multflt_matrix_serialize__;
     node->matrix_deserialize = multflt_matrix_deserialize__;
+    node->clear              = multflt_clear__;
+    node->iadd               = multflt_iadd__;
+    node->scale              = multflt_scale__;
+    node->iaddsqr            = multflt_iaddsqr__;
+    node->imul               = multflt_imul__;
+    node->isqrt              = multflt_isqrt__;
     break;
   case(SUMMARY):
     node->ecl_load           = summary_ecl_load__;
@@ -726,6 +755,12 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->store              = summary_store__;
     node->matrix_serialize   = summary_matrix_serialize__;
     node->matrix_deserialize = summary_matrix_deserialize__;
+    node->clear              = summary_clear__;
+    node->iadd               = summary_iadd__;
+    node->scale              = summary_scale__;
+    node->iaddsqr            = summary_iaddsqr__;
+    node->imul               = summary_imul__;
+    node->isqrt              = summary_isqrt__;
     break;
   case(FIELD):
     node->realloc_data 	     = field_realloc_data__;
@@ -743,7 +778,14 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->store        	     = field_store__;
     node->matrix_serialize   = field_matrix_serialize__;
     node->matrix_deserialize = field_matrix_deserialize__;
+
     node->clear              = field_clear__; 
+    node->set_inflation      = field_set_inflation__;
+    node->iadd               = field_iadd__;
+    node->scale              = field_scale__;
+    node->iaddsqr            = field_iaddsqr__;
+    node->imul               = field_imul__; 
+    node->isqrt              = field_isqrt__;
     break;
   case(STATIC):
     node->realloc_data = ecl_static_kw_realloc_data__;
@@ -771,6 +813,14 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->store        	     = gen_data_store__;
     node->matrix_serialize   = gen_data_matrix_serialize__;
     node->matrix_deserialize = gen_data_matrix_deserialize__;
+    node->set_inflation      = gen_data_set_inflation__;
+
+    node->clear              = gen_data_clear__; 
+    node->iadd               = gen_data_iadd__;
+    node->scale              = gen_data_scale__;
+    node->iaddsqr            = gen_data_iaddsqr__;
+    node->imul               = gen_data_imul__;
+    node->isqrt              = gen_data_isqrt__;
     break;
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);

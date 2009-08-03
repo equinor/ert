@@ -42,7 +42,6 @@ struct model_config_struct {
   bool                  use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
   enkf_fs_type        * ensemble_dbase;      	    /* Where the ensemble files are stored */
   history_type        * history;             	    /* The history object. */
-  path_fmt_type       * result_path;         	    /* path_fmt instance for results - should contain one %d which will be replaced report_step */
   path_fmt_type       * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
   char                * plot_path;           	    /* A dumping ground for PLOT files. */
   enkf_sched_type     * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
@@ -105,7 +104,6 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
 
   model_config->use_lsf            = use_lsf;
   model_config->plot_path          = NULL;
-  model_config->result_path        = path_fmt_alloc_directory_fmt( config_get(config , "RESULT_PATH") );
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
     model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , statoil_mode , model_config->use_lsf);
@@ -177,7 +175,6 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
 
 void model_config_free(model_config_type * model_config) {
   free(model_config->plot_path);
-  path_fmt_free(  model_config->result_path );
   path_fmt_free(  model_config->runpath );
   if (model_config->enkf_sched != NULL)
     enkf_sched_free( model_config->enkf_sched );
@@ -203,13 +200,6 @@ path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_con
   return model_config->runpath;
 }
 
-path_fmt_type * model_config_get_result_path_fmt(const model_config_type * model_config) {
-  return model_config->result_path;
-}
-
-char * model_config_alloc_result_path(const model_config_type * config , int report_step) {
-  return path_fmt_alloc_path(config->result_path , true , report_step);
-}
 
 enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) {
   return config->enkf_sched;

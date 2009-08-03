@@ -27,7 +27,8 @@ const char     * multflt_get_name(const multflt_type * , int );
 void             multflt_upgrade_103(const char * filename);
 
 
-SAFE_CAST_HEADER(multflt)
+SAFE_CAST_HEADER(multflt);
+SAFE_CONST_CAST_HEADER(multflt);
 VOID_USER_GET_HEADER(multflt)
 VOID_FREE_DATA_HEADER(multflt)
 VOID_ECL_WRITE_HEADER  (multflt)
@@ -36,15 +37,19 @@ VOID_SERIALIZE_HEADER  (multflt);
 VOID_DESERIALIZE_HEADER  (multflt);
 VOID_INITIALIZE_HEADER(multflt);
 VOID_FREE_HEADER(multflt);
-MATH_OPS_VOID_HEADER(multflt);
 VOID_ALLOC_HEADER(multflt);
 VOID_REALLOC_DATA_HEADER(multflt);
-ALLOC_STATS_HEADER(multflt);
-VOID_FPRINTF_RESULTS_HEADER(multflt)
-VOID_STORE_HEADER(multflt)
+VOID_STORE_HEADER(multflt);
 VOID_LOAD_HEADER(multflt)
 VOID_MATRIX_SERIALIZE_HEADER(multflt)
 VOID_MATRIX_DESERIALIZE_HEADER(multflt)
+       VOID_SET_INFLATION_HEADER(multflt);
+       VOID_CLEAR_HEADER(multflt);
+       VOID_IADD_HEADER(multflt);
+       VOID_SCALE_HEADER(multflt);
+       VOID_IMUL_HEADER(multflt);
+       VOID_IADDSQR_HEADER(multflt);
+       VOID_ISQRT_HEADER(multflt);
 
 #ifdef __cplusplus
 }

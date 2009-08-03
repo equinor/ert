@@ -8,6 +8,7 @@
 #include <misfit_table.h>
 #include <enkf_fs.h>
 #include <msg.h>
+#include <buffer.h>
 
 /**
    This file implements a type misfit_table which is used to rank the
@@ -48,10 +49,10 @@ struct misfit_table_struct {
 struct misfit_node_struct {
   UTIL_TYPE_ID_DECLARATION;
   int          my_iens;
-  double       sort_value;  /* misfit value used for sorting/ranking of this ensemble member. */
-  hash_type   *obs; 	    /* hash table of misfit_vector_type instances - indexed by observation keys. The structure
-		    	       of this hash table is duplicated for each ensemble member; that feels like a violation
-		    	       of the DRY principle ... */
+  double       __sort_value;  /* misfit value temporarily used for sorting/ranking of this ensemble member. */
+  hash_type   *obs; 	      /* hash table of misfit_vector_type instances - indexed by observation keys. The structure
+		    	         of this hash table is duplicated for each ensemble member; that feels like a violation
+		    	         of the DRY principle ... */
 };
 
 
@@ -125,7 +126,7 @@ static misfit_node_type * misfit_node_alloc(int iens) {
   misfit_node_type * node = util_malloc( sizeof * node , __func__);
   UTIL_TYPE_ID_INIT( node , MISFIT_NODE_TYPE_ID);
   node->my_iens    = iens;
-  node->sort_value = 0;
+  node->__sort_value = 0;
   node->obs        = hash_alloc();
   return node;
 }
@@ -165,12 +166,28 @@ static void misfit_node_update( misfit_node_type * node , const char * obs_key ,
 
 static void misfit_node_eval_ranking_misfit( misfit_node_type * node , const stringlist_type * sort_keys , int step1 , int step2) {
   int ikey;
-  node->sort_value = 0;
+  node->__sort_value = 0;
 
   for (ikey = 0; ikey < stringlist_get_size( sort_keys ); ikey++) {
     const char * obs_key        = stringlist_iget( sort_keys , ikey );
     misfit_vector_type * vector = misfit_node_get_vector( node , obs_key );
-    node->sort_value += misfit_vector_eval( vector , step1 , step2 );
+    node->__sort_value += misfit_vector_eval( vector , step1 , step2 );
+  }
+}
+
+static void misfit_node_buffer_fwrite( const misfit_node_type * node , buffer_type * buffer ) {
+  buffer_fwrite_int( buffer , node->my_iens );
+  {
+    hash_iter_type * obs_iter = hash_iter_alloc( node->obs );
+    while ( !hash_iter_is_complete( obs_iter )) {
+      const char * key                   = hash_iter_get_next_key( obs_iter );
+      misfit_vector_type * misfit_vector = hash_get( node->obs , key );
+      
+      buffer_fwrite_string( buffer , key );
+      double_vector_buffer_fwrite( misfit_vector->data , buffer );
+    }
+    
+    hash_iter_free( obs_iter );
   }
 }
 
@@ -226,6 +243,48 @@ static void misfit_table_update( misfit_table_type * misfit_table , const ensemb
 }
 
 
+void misfit_table_buffer_fwrite( const misfit_table_type * misfit_table , buffer_type * buffer ) {
+  int ens_size = vector_get_size( misfit_table->ensemble);
+  buffer_fwrite_string(buffer , misfit_table->current_case );
+  buffer_fwrite_int( buffer , misfit_table->history_length );
+  buffer_fwrite_int( buffer , vector_get_size( misfit_table->ensemble ));
+
+  /* Writing the nodes - one for each ensemble member */
+  {
+    int iens;
+    for (iens = 0; iens < ens_size; iens++) 
+      misfit_node_buffer_fwrite( vector_iget( misfit_table->ensemble , iens ) , buffer ); 
+  }
+  
+  /* Writing the sorted permutation keys. */
+  {
+    hash_iter_type * ranking_iter = hash_iter_alloc( misfit_table->ranking_list );
+    while (! hash_iter_is_complete( ranking_iter )) {
+      const char * ranking_key  = hash_iter_get_next_key( ranking_iter );
+      const int  * ranking_perm = hash_get( misfit_table->ranking_list , ranking_key );
+      
+      buffer_fwrite_string( buffer , ranking_key );
+      buffer_fwrite( buffer , ranking_perm , sizeof * ranking_perm , ens_size );
+    }
+  }
+}
+
+
+/**
+   Dumps a misfit table to file.
+*/
+
+void misfit_table_fwrite( const misfit_table_type * misfit_table , const char * filename ) {
+  buffer_type * buffer = buffer_alloc( 1024 );
+  misfit_table_buffer_fwrite( misfit_table , buffer );
+  buffer_store( buffer , filename );
+  buffer_free( buffer );
+}
+
+
+
+
+
 
 
 misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , enkf_fs_type * fs , int history_length , int ens_size , const enkf_obs_type * enkf_obs ) {
@@ -257,7 +316,7 @@ void misfit_table_display_ranking( const misfit_table_type * table , const char 
   for (i = 0; i < ens_size; i++) {
     int iens = ranking[i];
     misfit_node_type * node = vector_iget( table->ensemble , iens );
-    printf("%3d    %3d               %10.3f  \n",i,iens,node->sort_value);
+    printf("%3d    %3d               %10.3f  \n",i,iens,node->__sort_value);
   }
   printf("-----------------------------------\n");
 }
@@ -290,7 +349,7 @@ void misfit_table_create_ranking(misfit_table_type * table , const stringlist_ty
     double_vector_type * rank_values = double_vector_alloc( ens_size , 0 );
     for (iens = 0; iens < ens_size; iens++) {
       misfit_node_type * node = vector_iget( table->ensemble , iens );
-      double_vector_iset( rank_values , iens , node->sort_value );
+      double_vector_iset( rank_values , iens , node->__sort_value );
     }
     hash_insert_hash_owned_ref(table->ranking_list , ranking_key , double_vector_alloc_sort_perm( rank_values ) , free);
     double_vector_free( rank_values );

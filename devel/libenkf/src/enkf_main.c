@@ -324,14 +324,15 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
 
 */
 
-static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key) {
+static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state) {
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
   int iens;
 
-  for (iens = 0; iens < ens_size; iens++)
+  for (iens = 0; iens < ens_size; iens++) {
     node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
-  
+    //enkf_fs_fread_node( enkf_main->fs , 
+  }
   return node_ensemble;
 }
 
@@ -343,6 +344,114 @@ static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf
 enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int iens) {
   return enkf_main->ensemble[iens];
 }
+
+
+
+void enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean ) {
+  int iens;
+  enkf_node_clear( mean );
+  for (iens = 0; iens < ens_size; iens++) 
+    enkf_node_iadd( mean , ensemble[iens] );
+    
+  enkf_node_scale( mean , 1.0 / ens_size );
+}
+
+
+/**
+   This function calculates the node standard deviation from the
+   ensemble. The mean can be NULL, in which case it is assumed that
+   the mean has already been shifted away from the ensemble. 
+*/
+
+
+void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std) {
+  int iens;
+  enkf_node_clear( std );
+  for (iens = 0; iens < ens_size; iens++) 
+    enkf_node_iaddsqr( std , ensemble[iens] );
+
+  if (mean != NULL) {
+    enkf_node_scale( std , -1 );
+    enkf_node_iaddsqr( std , mean );
+    enkf_node_scale( std , -1 );
+  }
+
+  enkf_node_sqrt( std );
+}
+
+/**
+   The inflation can be in two forms:
+     1. A scalar inflation factor is applied to the whole node.  
+     2. A node-inflation factor is applied which will allow for much
+        greater flexibility.
+
+        
+*/
+
+void enkf_main_inflate_node(enkf_main_type * enkf_main , const char * key , double inflation_factor) {
+  int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
+  const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key); 
+  enkf_node_type ** ensemble                = NULL; //enkf_main_get_node_ensemble( enkf_main , key );
+  enkf_node_type *  mean                    = enkf_node_alloc( config_node );
+  enkf_node_type *  std                     = enkf_node_alloc( config_node );
+  int iens;
+
+  enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
+  /* Shifting away the mean */
+  enkf_node_scale( mean , -1 );
+  for (iens = 0; iens < ens_size; iens++) 
+    enkf_node_iadd( ensemble[iens] , mean );
+  enkf_node_scale( mean , -1 );
+
+
+  enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , NULL , std );
+  /*****************************************************************/
+  /*
+    Now we have the ensemble represented as a mean and an ensemble of
+    deviations from the mean. This is the form suitable for actually
+    doing the inflation.
+  */
+  {
+    bool scalar_inflation          = true;
+    const enkf_node_type * min_std = enkf_config_node_get_min_std( config_node );
+    if (min_std != NULL)
+      scalar_inflation = false;
+    
+    if (scalar_inflation) {
+      printf("Scalar inflation on:%s \n",key);
+      for (iens = 0; iens < ens_size; iens++) 
+        enkf_node_scale( ensemble[iens] , inflation_factor );
+    } else {
+      enkf_node_type * inflation = enkf_node_alloc( config_node );
+      enkf_node_set_inflation( inflation , std , min_std );
+      
+      for (iens = 0; iens < ens_size; iens++) 
+        enkf_node_imul( ensemble[iens] , inflation );
+      
+      enkf_node_free( inflation );
+    }
+  }
+
+  /* Add the mean back in */
+  for (iens = 0; iens < ens_size; iens++) 
+    enkf_node_iadd( ensemble[iens] , mean );
+
+  enkf_node_free( mean );
+  enkf_node_free( std );
+  free( ensemble );
+}
+
+
+
+void enkf_main_inflate(enkf_main_type * enkf_main , double scalar_inflation) {
+  stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
+
+  for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++)
+    enkf_main_inflate_node(enkf_main , stringlist_iget( keys  , ikey ) , scalar_inflation );
+  
+  stringlist_free( keys );
+}
+
 
 
 
@@ -363,8 +472,8 @@ static int __get_active_size(const enkf_config_node_type * config_node , const a
 }
 
 
-
 void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 , const local_ministep_type * ministep, int report_step , hash_type * use_count) {
+
   int       matrix_size              = 1000;  /* Starting with this */
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main ); 
@@ -376,7 +485,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
   int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
   int ikw           = 0;
   bool complete     = false;
-  
+
   msg_show( msg );
   do {
     bool first_kw    	     = true;
@@ -571,6 +680,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     meas_matrix_free( meas_forecast );
     meas_matrix_free( meas_analyzed );
   }
+  //enkf_main_inflate( enkf_main , 2.0 );
 }
 
 

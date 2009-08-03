@@ -15,6 +15,7 @@
 #include <summary_config.h>
 #include <havana_fault_config.h>
 
+
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
 struct enkf_config_node_struct {
@@ -28,6 +29,7 @@ struct enkf_config_node_struct {
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
   path_fmt_type	     	* enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
   void               	* data;             /* This points to the config object of the actual implementation.        */
+  enkf_node_type        * min_std;
 
   /*****************************************************************/
   /* Function pointers to methods working on the underlying config object. */
@@ -53,6 +55,7 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   node->impl_type  	= impl_type;
   node->key        	= util_alloc_string_copy(key);
   node->obs_keys        = stringlist_alloc_new(); 
+  node->min_std         = NULL;
   node->__type_id       = ENKF_CONFIG_NODE_TYPE_ID;
   if (enkf_infile_fmt != NULL)
     node->enkf_infile_fmt = path_fmt_alloc_path_fmt(enkf_infile_fmt);
@@ -128,8 +131,18 @@ void enkf_config_node_free(enkf_config_node_type * node) {
   if (node->internalize != NULL)
     bool_vector_free( node->internalize );
   
+  if (node->min_std != NULL)
+    enkf_node_free( node->min_std );
+  
   free(node);
 }
+
+
+
+const enkf_node_type * enkf_config_node_get_min_std( const enkf_config_node_type * config_node ) {
+  return config_node->min_std;
+}
+
 
 
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step) {

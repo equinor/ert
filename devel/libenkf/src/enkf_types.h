@@ -130,6 +130,22 @@ typedef enum { lock_lockf = 1,
 	       lock_none  = 3 } lock_mode_type;
 
 
+
+/**
+   This enum enumerates the different types of inflation which should
+   be used. Observe that the actual variable used is not en enum
+   instance, but rather an ordinary integer which is in general a sum
+   of of the values listed in this enum.
+   
+*/
+
+
+typedef enum { NO_INFLATION     = 0,
+               SCALAR_INFLATION = 1,
+               LOCAL_INFLATION  = 2} inflation_mode_type;
+
+
+
 /*****************************************************************/
 /*
   integer, intent(in) :: mode 

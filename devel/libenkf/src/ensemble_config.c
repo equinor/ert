@@ -184,9 +184,6 @@ void ensemble_config_add_obs_key(ensemble_config_type * ensemble_config , const 
 void ensemble_config_add_config_items(config_type * config) {
   config_item_type * item;
 
-  item = config_add_item(config , "MULTZ" , false , true);
-  config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
-  
   item = config_add_item(config , "MULTFLT" , false , true);
   config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
   

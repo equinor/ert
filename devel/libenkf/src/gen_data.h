@@ -39,8 +39,13 @@ VOID_LOAD_HEADER(gen_data);
 VOID_STORE_HEADER(gen_data);
 VOID_MATRIX_SERIALIZE_HEADER(gen_data)
 VOID_MATRIX_DESERIALIZE_HEADER(gen_data)
-
-
+VOID_SET_INFLATION_HEADER(gen_data);
+VOID_CLEAR_HEADER(gen_data);
+VOID_IMUL_HEADER(gen_data);
+VOID_IADD_HEADER(gen_data);
+VOID_IADDSQR_HEADER(gen_data);
+VOID_SCALE_HEADER(gen_data);
+VOID_ISQRT_HEADER(gen_data);
 #ifdef __cplusplus
 }
 #endif

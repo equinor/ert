@@ -191,25 +191,43 @@ void summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
 
 
 
-void summary_ensemble_fprintf_results(const summary_type ** ensemble, int ens_size, const char * filename)
-{
-  int        * index = util_malloc(ens_size * sizeof * index , __func__);
-  const char * var   = summary_config_get_var(ensemble[0]->config);
-  double     * data  = util_malloc(ens_size * sizeof * data , __func__);
+void summary_set_inflation(summary_type * inflation , const summary_type * std , const summary_type * min_std) {
+  int size = 1;
+  for (int i = 0; i < size; i++) 
+    inflation->data[i] = util_double_max( 1.0 , min_std->data[i] / std->data[i]);
+}
 
-  for(int i=0; i<ens_size; i++) {
-    data[i]  = *(ensemble[i]->data);
-    index[i] = i;
-  }
-  
-  {
-    FILE * stream = util_fopen(filename , "w");
-    enkf_util_fprintf_data( index , (const double ** ) &data, "Member #" , &var, ens_size, 1, true, stream);
-    fclose(stream);
-  }
-  
-  free(index);
-  free(data);
+
+void summary_iadd( summary_type * summary , const summary_type * delta) {
+  int size = 1;
+  for (int i = 0; i < size; i++) 
+    summary->data[i] += delta->data[i];
+}
+
+
+void summary_iaddsqr( summary_type * summary , const summary_type * delta) {
+  int size = 1;
+  for (int i = 0; i < size; i++) 
+    summary->data[i] += delta->data[i] * delta->data[i];
+}
+
+
+void summary_imul( summary_type * summary , const summary_type * delta) {
+  int size = 1;
+  for (int i = 0; i < size; i++) 
+    summary->data[i] *= delta->data[i];
+}
+
+void summary_scale( summary_type * summary , double scale_factor) {
+  int size = 1;
+  for (int i = 0; i < size; i++) 
+    summary->data[i] *= scale_factor;
+}
+
+void summary_isqrt( summary_type * summary ) {
+  int size = 1;
+  for (int i = 0; i < size; i++) 
+    summary->data[i] = sqrt( summary->data[i] );
 }
 
 
@@ -220,7 +238,7 @@ void summary_ensemble_fprintf_results(const summary_type ** ensemble, int ens_si
 /* Anonumously generated functions used by the enkf_node object   */
 /******************************************************************/
 SAFE_CAST(summary , SUMMARY)
-MATH_OPS(summary)
+SAFE_CONST_CAST(summary , SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_FREE_DATA(summary)
@@ -230,8 +248,14 @@ VOID_SERIALIZE(summary)
 VOID_DESERIALIZE(summary)
 VOID_ECL_LOAD(summary)
 VOID_USER_GET(summary)
-VOID_FPRINTF_RESULTS(summary)
 VOID_STORE(summary)
 VOID_LOAD(summary)
 VOID_MATRIX_SERIALIZE(summary)
 VOID_MATRIX_DESERIALIZE(summary)
+VOID_SET_INFLATION(summary)
+VOID_CLEAR(summary)
+VOID_IADD(summary)
+VOID_SCALE(summary)
+VOID_IMUL(summary)
+VOID_IADDSQR(summary)
+VOID_ISQRT(summary)

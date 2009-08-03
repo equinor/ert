@@ -49,6 +49,18 @@ prefix ## _type * prefix ## _safe_cast(const void * __arg) {   \
 #define SAFE_CAST_HEADER(prefix) prefix ## _type * prefix ## _safe_cast(const void * );
 
 
+#define SAFE_CONST_CAST(prefix , ID) \
+const prefix ## _type * prefix ## _safe_const_cast(const void * __arg) {   \
+  const prefix ## _type * arg = (prefix ## _type *) __arg;         \
+  if (arg->__type_id != ID)                                     \
+    util_abort("%s: run_time cast failed: got:%d  expected:%d  - aborting \n",__func__ , arg->__type_id , ID); \
+  return arg;                                                   \
+}
+
+#define SAFE_CONST_CAST_HEADER(prefix) const prefix ## _type * prefix ## _safe_const_cast(const void * );
+
+/*****************************************************************/
+
 
 
 #define VOID_OBS_ACTIVATE(prefix) \
@@ -62,12 +74,12 @@ void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void
 /*****************************************************************/
 
 #define VOID_CONFIG_FREE(prefix)            void prefix ## _config_free__(void *void_arg) { prefix ## _config_free((prefix ## _config_type *) void_arg); }
-#define VOID_CONFIG_FREE_HEADER(prefix)     void prefix ## _config_free__(void *)
+#define VOID_CONFIG_FREE_HEADER(prefix)     void prefix ## _config_free__(void *);
 
 /*****************************************************************/
 
 #define GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size (const prefix ## _config_type *arg) { return arg->data_size; }
-#define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *)
+#define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *);
 
 #define VOID_GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size__ (const void * arg) {\
    prefix ## _config_type * config = prefix ## _config_safe_cast( arg ); \
@@ -84,7 +96,7 @@ void * prefix ## _alloc__(const void *void_config) {                            
   return prefix ## _alloc(config);                                                    \
 }
 
-#define VOID_ALLOC_HEADER(prefix) void * prefix ## _alloc__(const void *)
+#define VOID_ALLOC_HEADER(prefix) void * prefix ## _alloc__(const void *);
 
 /*****************************************************************/
 
@@ -187,7 +199,7 @@ void * prefix ## _copyc__(const void * void_arg) {                \
    return prefix ## _copyc( arg );                                \
 }
 
-#define VOID_COPYC_HEADER(prefix) void * prefix ## _copyc__(const void * )
+#define VOID_COPYC_HEADER(prefix) void * prefix ## _copyc__(const void * );
 
 /*****************************************************************/
 
@@ -242,6 +254,14 @@ bool prefix ## _initialize__(void *void_arg, int iens) {         \
 }
 #define VOID_INITIALIZE_HEADER(prefix) bool prefix ## _initialize__(void *, int);
 
+/*****************************************************************/
+
+#define VOID_SET_INFLATION(prefix) \
+void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std) {                                               \
+   prefix ## _set_inflation( prefix ## _safe_cast( void_inflation ) , prefix ## _safe_const_cast( void_std ) , prefix ## _safe_const_cast( void_min_std )); \
+}
+
+#define VOID_SET_INFLATION_HEADER(prefix) void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std);
 
 /*****************************************************************/
 
@@ -282,14 +302,43 @@ double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {
 #define VOID_TRUNCATE_HEADER(prefix)  void prefix ## _truncate__(void * )
 
 /*****************************************************************/
-
-#define VOID_SCALE(prefix)        void prefix ## _scale(void * void_arg) { prefix ## _scale( (prefix ## _type *) void_arg); }
-#define VOID_SCALE_HEADER(prefix) void prefix ## _scale(void * );
+#define VOID_SCALE(prefix)        void prefix ## _scale__(void * void_arg , double scale_factor) { prefix ## _scale( prefix ## _safe_cast( void_arg ) , scale_factor ); }
+#define VOID_SCALE_HEADER(prefix) void prefix ## _scale__(void *  , double );
 
 /*****************************************************************/
 
-#define VOID_CLEAR(prefix)         void prefix ## _clear__(void * void_arg) { prefix ## _clear( (prefix ## _type *) void_arg); }
+#define VOID_CLEAR(prefix)         void prefix ## _clear__(void * void_arg) { prefix ## _clear( prefix ## _safe_cast( void_arg )); }
 #define VOID_CLEAR_HEADER(prefix)  void prefix ## _clear__(void * )
+
+/*****************************************************************/
+
+
+#define VOID_ISQRT(prefix)         void prefix ## _isqrt__(void * void_arg) { prefix ## _isqrt( prefix ## _safe_cast( void_arg )); }
+#define VOID_ISQRT_HEADER(prefix)  void prefix ## _isqrt__(void * )
+
+/*****************************************************************/
+
+#define VOID_IADD(prefix)   void prefix ## _iadd__( void * void_arg , const void * void_delta ) { \
+   prefix ## _iadd( prefix ## _safe_cast( void_arg ) , prefix ## _safe_const_cast( void_delta ) ); \
+} 
+
+#define VOID_IADD_HEADER(prefix)   void prefix ## _iadd__( void * void_arg , const void * void_delta );
+
+/*****************************************************************/
+
+#define VOID_IMUL(prefix)   void prefix ## _imul__( void * void_arg , const void * void_delta ) { \
+   prefix ## _imul( prefix ## _safe_cast( void_arg ) , prefix ## _safe_const_cast( void_delta ) ); \
+} 
+
+#define VOID_IMUL_HEADER(prefix)   void prefix ## _imul__( void * void_arg , const void * void_delta );
+
+/*****************************************************************/
+
+#define VOID_IADDSQR(prefix)   void prefix ## _iaddsqr__( void * void_arg , const void * void_delta ) { \
+   prefix ## _iaddsqr( prefix ## _safe_cast( void_arg ) , prefix ## _safe_const_cast( void_delta ) ); \
+} 
+
+#define VOID_IADDSQR_HEADER(prefix)   void prefix ## _iaddsqr__( void * void_arg , const void * void_delta );
 
 /*****************************************************************/
 
@@ -299,16 +348,6 @@ double obs_prefix ## _chi2__(const void * void_obs ,  const void * void_state) {
 #define CONFIG_GET_ECLFILE_HEADER(prefix)       const char * prefix ## _config_get_eclfile_ref(const prefix ## _config_type * )
 
 /*****************************************************************/
-
-#define VOID_FPRINTF_RESULTS(prefix) \
-void prefix ## _ensemble_fprintf_results__(const void ** void_ensemble , int ens_size , const char * filename) { \
-   const prefix ## _type ** ensemble = (const prefix ## _type **) void_ensemble;                                          \
-   prefix ## _ensemble_fprintf_results( ensemble , ens_size , filename) ;                                                  \
-}
-#define VOID_FPRINTF_RESULTS_HEADER(prefix) void prefix ## _ensemble_fprintf_results__(const void ** , int , const char * );
-
-/*****************************************************************/
-
 
 #define VOID_IGET(prefix)        double prefix ## _iget__(const void * void_arg, int index) { return prefix ## _iget((const prefix ## _type *) void_arg , index); }
 #define VOID_IGET_HEADER(prefix) double prefix ## _iget__(const void * , int ) 

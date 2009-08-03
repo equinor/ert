@@ -32,7 +32,6 @@ void             havana_fault_upgrade_103(const char * filename);
 
 
 SAFE_CAST_HEADER(havana_fault)
-VOID_FPRINTF_RESULTS_HEADER(havana_fault)
 ALLOC_STATS_HEADER(havana_fault)
 VOID_USER_GET_HEADER(havana_fault)
 VOID_ECL_WRITE_HEADER  (havana_fault)

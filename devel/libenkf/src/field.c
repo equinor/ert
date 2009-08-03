@@ -1240,6 +1240,28 @@ void field_iadd(field_type * field1, const field_type * field2) {
 }
 
 
+void field_imul(field_type * field1, const field_type * field2) {
+  field_config_assert_binary(field1->config , field2->config , __func__); 
+  {
+    const int data_size          = field_config_get_data_size(field1->config);   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    int i;
+
+    if (ecl_type == ecl_float_type) {
+      float * data1       = (float *) field1->data;
+      const float * data2 = (const float *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] *= data2[i];
+    } else if (ecl_type == ecl_double_type) {
+      double * data1       = (double *) field1->data;
+      const double * data2 = (const double *) field2->data;
+      for (i = 0; i < data_size; i++)
+	data1[i] *= data2[i];
+    }
+  }
+}
+
+
 void field_iaddsqr(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__); 
   {
@@ -1262,7 +1284,7 @@ void field_iaddsqr(field_type * field1, const field_type * field2) {
 }
 
 
-void field_iscale(field_type * field, const double scale_factor) {
+void field_scale(field_type * field, double scale_factor) {
   field_config_assert_unary(field->config, __func__); 
   {
     const int data_size          = field_config_get_data_size(field->config);   
@@ -1344,6 +1366,7 @@ void field_update_sum(field_type * sum , const field_type * field , double lower
 }
 
 
+
 /**
   Here, index_key is i a tree digit string with the i, j and k indicies of
   the requested block separated by comma. E.g., 1,1,1. 
@@ -1385,6 +1408,30 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
 }
 
 
+void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std) {
+  const field_config_type * config = inflation->config;
+  ecl_type_enum ecl_type           = field_config_get_ecl_type( config );
+  const int data_size              = field_config_get_data_size( config );   
+
+  if (ecl_type == ecl_float_type) {
+    float       * inflation_data = (float *)       inflation->data;
+    const float * std_data       = (const float *) std->data;
+    const float * min_std_data   = (const float *) min_std->data;
+
+    for (int i=0; i < data_size; i++)
+      inflation_data[i] = util_float_max( 1.0 , min_std_data[i] / std_data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
+    
+  } else {
+    double       * inflation_data = (double *)       inflation->data;
+    const double * std_data       = (const double *) std->data;
+    const double * min_std_data   = (const double *) min_std->data;
+    
+    for (int i=0; i < data_size; i++)
+      inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
+  }
+}
+
+
 
 /******************************************************************/
 /* Anonumously generated functions used by the enkf_node object   */
@@ -1398,6 +1445,7 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
   ENSEMBLE_MULX_VECTOR(field);
 */
 SAFE_CAST(field , FIELD)
+SAFE_CONST_CAST(field , FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
 VOID_FREE_DATA(field)
@@ -1414,7 +1462,9 @@ VOID_STORE(field)
 VOID_CLEAR(field)
 VOID_MATRIX_SERIALIZE(field)
 VOID_MATRIX_DESERIALIZE(field)
-
-
-
-
+VOID_SET_INFLATION(field)
+VOID_IADD(field)
+VOID_SCALE(field)
+VOID_IADDSQR(field)
+VOID_IMUL(field)
+VOID_ISQRT(field)

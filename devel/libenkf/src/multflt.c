@@ -188,85 +188,85 @@ void multflt_matrix_deserialize(multflt_type *multflt , const active_list_type *
 
 
 
-multflt_type * multflt_alloc_mean(int ens_size , const multflt_type **multflt_ens) {
-  int iens;
-  multflt_type * avg_multflt = multflt_copyc(multflt_ens[0]);
-  for (iens = 1; iens < ens_size; iens++) 
-    multflt_iadd(avg_multflt , multflt_ens[iens]);
-  multflt_iscale(avg_multflt , 1.0 / ens_size);
-  return avg_multflt;
-}
+//multflt_type * multflt_alloc_mean(int ens_size , const multflt_type **multflt_ens) {
+//  int iens;
+//  multflt_type * avg_multflt = multflt_copyc(multflt_ens[0]);
+//  for (iens = 1; iens < ens_size; iens++) 
+//    multflt_iadd(avg_multflt , multflt_ens[iens]);
+//  multflt_iscale(avg_multflt , 1.0 / ens_size);
+//  return avg_multflt;
+//}
 
 
 
-#define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
-void multflt_ensemble_fprintf_results(const multflt_type ** ensemble, int ens_size , const char * filename) {
-  const multflt_config_type * config = ensemble[0]->config;
-  const int float_width     =  9;
-  const int float_precision =  5;
-  int        size    = multflt_config_get_data_size(ensemble[0]->config);
-  int      * width   = util_malloc((size + 1) * sizeof * width , __func__);
-  int        ikw , total_width;
-
-  multflt_type * mean;
-  multflt_type * std;
-
-  multflt_alloc_stats(ensemble , ens_size , &mean , &std);
-  width[0] = strlen("Member #|");
-  total_width = width[0];
-  for (ikw = 0; ikw < size; ikw++) {
-    width[ikw + 1]  = util_int_max(strlen(multflt_config_get_name(config , ikw)), 2 * float_width + 5) + 1;  /* Must accomodate A +/- B */
-    width[ikw + 1] += ( 1 - (width[ikw + 1] & 1)); /* Ensure odd length */
-    total_width += width[ikw + 1] + 1;
-  }
-
-  {
-    FILE * stream = util_fopen(filename , "w");
-    int iens;
-
-    util_fprintf_string("Member #|" , width[0] , true , stream);
-    for (ikw = 0; ikw < size; ikw++) {
-      util_fprintf_string(multflt_config_get_name(config , ikw) , width[ikw + 1] , center , stream);
-      fprintf(stream , "|");
-    }
-    fprintf(stream , "\n");
-    PRINT_LINE(total_width , '=' , stream);
-
-    util_fprintf_string("Mean" , width[0] - 1 , true , stream);
-    fprintf(stream , "|");
-    {
-      const double * mean_data = scalar_get_output_ref(mean->scalar);
-      const double * std_data  = scalar_get_output_ref(std->scalar);
-      for (ikw = 0; ikw < size; ikw++) {
-	int w = (width[ikw + 1] - 5) / 2;
-	util_fprintf_double(mean_data[ikw] , w , float_precision , 'g' , stream);
-	fprintf(stream , " +/- ");
-	util_fprintf_double(std_data[ikw] , w , float_precision , 'g' , stream);
-	fprintf(stream , "|");
-      }
-      fprintf(stream , "\n");
-    }
-    PRINT_LINE(total_width , '-' , stream);
-    for (iens = 0; iens < ens_size; iens++) {
-      const double * data = scalar_get_output_ref(ensemble[iens]->scalar);
-      util_fprintf_int(iens + 1, width[0] - 1 , stream);
-      fprintf(stream , "|");
-      
-      for (ikw = 0; ikw < size; ikw++) {
-	util_fprintf_double(data[ikw] , width[ikw + 1] , float_precision , 'g' , stream);
-	fprintf(stream , "|");
-      }
-      fprintf(stream , "\n");
-    }
-    PRINT_LINE(total_width , '=' , stream);
-    fclose(stream);
-  }
-  
-  multflt_free(mean);
-  multflt_free(std);
-  free(width);
-}
-#undef PRINT_LINE
+//#define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
+//void multflt_ensemble_fprintf_results(const multflt_type ** ensemble, int ens_size , const char * filename) {
+//  const multflt_config_type * config = ensemble[0]->config;
+//  const int float_width     =  9;
+//  const int float_precision =  5;
+//  int        size    = multflt_config_get_data_size(ensemble[0]->config);
+//  int      * width   = util_malloc((size + 1) * sizeof * width , __func__);
+//  int        ikw , total_width;
+//
+//  multflt_type * mean;
+//  multflt_type * std;
+//
+//  multflt_alloc_stats(ensemble , ens_size , &mean , &std);
+//  width[0] = strlen("Member #|");
+//  total_width = width[0];
+//  for (ikw = 0; ikw < size; ikw++) {
+//    width[ikw + 1]  = util_int_max(strlen(multflt_config_get_name(config , ikw)), 2 * float_width + 5) + 1;  /* Must accomodate A +/- B */
+//    width[ikw + 1] += ( 1 - (width[ikw + 1] & 1)); /* Ensure odd length */
+//    total_width += width[ikw + 1] + 1;
+//  }
+//
+//  {
+//    FILE * stream = util_fopen(filename , "w");
+//    int iens;
+//
+//    util_fprintf_string("Member #|" , width[0] , true , stream);
+//    for (ikw = 0; ikw < size; ikw++) {
+//      util_fprintf_string(multflt_config_get_name(config , ikw) , width[ikw + 1] , center , stream);
+//      fprintf(stream , "|");
+//    }
+//    fprintf(stream , "\n");
+//    PRINT_LINE(total_width , '=' , stream);
+//
+//    util_fprintf_string("Mean" , width[0] - 1 , true , stream);
+//    fprintf(stream , "|");
+//    {
+//      const double * mean_data = scalar_get_output_ref(mean->scalar);
+//      const double * std_data  = scalar_get_output_ref(std->scalar);
+//      for (ikw = 0; ikw < size; ikw++) {
+//	int w = (width[ikw + 1] - 5) / 2;
+//	util_fprintf_double(mean_data[ikw] , w , float_precision , 'g' , stream);
+//	fprintf(stream , " +/- ");
+//	util_fprintf_double(std_data[ikw] , w , float_precision , 'g' , stream);
+//	fprintf(stream , "|");
+//      }
+//      fprintf(stream , "\n");
+//    }
+//    PRINT_LINE(total_width , '-' , stream);
+//    for (iens = 0; iens < ens_size; iens++) {
+//      const double * data = scalar_get_output_ref(ensemble[iens]->scalar);
+//      util_fprintf_int(iens + 1, width[0] - 1 , stream);
+//      fprintf(stream , "|");
+//      
+//      for (ikw = 0; ikw < size; ikw++) {
+//	util_fprintf_double(data[ikw] , width[ikw + 1] , float_precision , 'g' , stream);
+//	fprintf(stream , "|");
+//      }
+//      fprintf(stream , "\n");
+//    }
+//    PRINT_LINE(total_width , '=' , stream);
+//    fclose(stream);
+//  }
+//  
+//  multflt_free(mean);
+//  multflt_free(std);
+//  free(width);
+//}
+//#undef PRINT_LINE
 
 
 
@@ -302,7 +302,32 @@ double multflt_user_get(const multflt_type * multflt, const char * key , bool * 
 
 
 
-MATH_OPS_SCALAR(multflt);
+void multflt_set_inflation(multflt_type * inflation , const multflt_type * std , const multflt_type * min_std) {
+  scalar_set_inflation( inflation->scalar , std->scalar , min_std->scalar );
+}
+
+void multflt_iadd( multflt_type * multflt , const multflt_type * delta) {
+  scalar_iadd( multflt->scalar , delta->scalar );
+}
+
+void multflt_iaddsqr( multflt_type * multflt , const multflt_type * delta) {
+  scalar_iaddsqr( multflt->scalar , delta->scalar );
+}
+
+void multflt_imul( multflt_type * multflt , const multflt_type * delta) {
+  scalar_imul( multflt->scalar , delta->scalar );
+}
+
+void multflt_scale( multflt_type * multflt , double scale_factor) {
+  scalar_scale( multflt->scalar , scale_factor );
+}
+
+void multflt_isqrt( multflt_type * multflt ) {
+  scalar_isqrt( multflt->scalar );
+}
+
+
+
 VOID_ALLOC(multflt);
 VOID_SERIALIZE (multflt);
 VOID_DESERIALIZE (multflt);
@@ -313,15 +338,21 @@ VOID_INITIALIZE(multflt);
 /******************************************************************/
 
 SAFE_CAST(multflt , MULTFLT)
+SAFE_CONST_CAST(multflt , MULTFLT);
 VOID_FREE_DATA(multflt);
 VOID_ECL_WRITE (multflt)
 VOID_COPYC  (multflt)
 VOID_FREE(multflt)
 VOID_REALLOC_DATA(multflt)
-ALLOC_STATS_SCALAR(multflt)
-VOID_FPRINTF_RESULTS(multflt)
 VOID_USER_GET(multflt)
 VOID_STORE(multflt)
 VOID_LOAD(multflt)
 VOID_MATRIX_SERIALIZE(multflt)
 VOID_MATRIX_DESERIALIZE(multflt)
+VOID_SET_INFLATION(multflt)
+VOID_CLEAR(multflt)
+VOID_IADD(multflt)
+VOID_SCALE(multflt)
+VOID_IMUL(multflt)
+VOID_IADDSQR(multflt)
+VOID_ISQRT(multflt)

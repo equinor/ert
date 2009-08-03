@@ -27,7 +27,6 @@ struct gen_data_config_struct {
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
   int                            __report_step;         /* Internal variable used for run_time checking that all instances have the same size (at the same report_step). */
-  gen_data_type                * min_variance;
 };
 
 /*****************************************************************/
