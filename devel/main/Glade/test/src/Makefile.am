@@ -34,4 +34,3 @@ test_LDADD = @PACKAGE_LIBS@ $(INTLLIBS) \
 			 -L/d/proj/bg/enkf/software/lib \
 			 -L/d/proj/bg/enkf/software/include \
 			 -L/private/joaho/EnKF/devel/EnKF/librms/lib -lrms -lm -lpthread -lz  -llapack -lblas  -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lgdk_pixbuf-2.0 -lm -lpangoxft-1.0 -lpangox-1.0 -lpango-1.0 -lgobject-2.0 -lgmodule-2.0 -ldl -lgthread-2.0 -lglib-2.0
-
