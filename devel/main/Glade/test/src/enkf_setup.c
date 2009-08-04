@@ -67,11 +67,13 @@ enkf_setup_bootstrap(const char *enkf_config, GtkWidget * win)
 
     {
 	path_fmt_type  *result_path_fmt;
+        /*
 
 	result_path_fmt = model_config_get_result_path_fmt(model_config);
 	entry = lookup_widget(GTK_WIDGET(win), "entry29");
 	gtk_entry_set_text(GTK_ENTRY(entry),
 			   path_fmt_get_fmt(result_path_fmt));
+                           */
     }
 
     {
