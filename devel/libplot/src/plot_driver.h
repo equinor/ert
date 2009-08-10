@@ -6,10 +6,28 @@
 #include <double_vector.h>
 
 
-typedef struct plot_dataset_struct plot_dataset_type;
+typedef struct plot_dataset_struct    plot_dataset_type;
 typedef struct line_attribute_struct  line_attribute_type;
 typedef struct point_attribute_struct point_attribute_type;
 typedef struct plot_driver_struct     plot_driver_type;
+
+
+struct line_attribute_struct {
+  plot_color_type      line_color;   /**< The color for the line part of the plot. */
+  plot_line_style_type line_style;   /**< The style for lines. */
+  double               line_width;   /**< Scale factor for line width  : starts with PLOT_DEFAULT_LINE_WIDTH */
+};
+
+
+
+
+struct point_attribute_struct {
+  plot_color_type      point_color;  /**< The color for the points in the plot. */
+  plot_symbol_type     symbol_type;  /**< The type of symbol. */
+  double               symbol_size;  /**< Scale factor for symbol size : starts with PLOT_DEFAULT_SYMBOL_SIZE */
+};
+
+
 
 typedef void (set_labels_ftype)       (plot_driver_type * driver , const char *title , const char * xlabel , const char * ylabel, plot_color_type label_color , double label_font_size);
 typedef void (window_size_ftype)      (plot_driver_type * driver , int width , int heigth);
@@ -37,23 +55,6 @@ struct plot_driver_struct {
   plot_xy1y2_ftype        * plot_xy1y2;
   plot_x1x2y_ftype        * plot_x1x2y;
   plot_hist_ftype         * plot_hist;
-};
-
-
-
-struct line_attribute_struct {
-  plot_color_type      line_color;   /**< The color for the line part of the plot. */
-  plot_line_style_type line_style;   /**< The style for lines. */
-  double               line_width;   /**< Scale factor for line width  : starts with PLOT_DEFAULT_LINE_WIDTH */
-};
-
-
-
-
-struct point_attribute_struct {
-  plot_color_type      point_color;  /**< The color for the points in the plot. */
-  plot_symbol_type     symbol_type;  /**< The type of symbol. */
-  double               symbol_size;  /**< Scale factor for symbol size : starts with PLOT_DEFAULT_SYMBOL_SIZE */
 };
 
 
