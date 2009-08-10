@@ -5,13 +5,6 @@
 extern "C" {
 #endif
 
-typedef enum {
-  PLPLOT = 1
-} plot_driver_enum;
-
-
-
-
 
 typedef enum {
   PLOT_XY    = 1,     /* Normal xy plot. */
