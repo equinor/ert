@@ -164,13 +164,13 @@ void text_plot_hist( plot_driver_type * driver, const char * label , const doubl
    
 
 plot_driver_type * text_driver_alloc(void * init_arg) {
-  plot_driver_type * driver = plot_driver_alloc_empty(PLPLOT , "TEXT");
-  driver->state           = text_state_alloc( init_arg );
+  plot_driver_type * driver = plot_driver_alloc_empty("TEXT");
+  driver->state             = text_state_alloc( init_arg );
   
-  driver->close_driver 	  = text_close_driver;
-  driver->plot_xy         = text_plot_xy;
-  driver->plot_xy1y2      = text_plot_xy1y2;
-  driver->plot_x1x2y      = text_plot_x1x2y;
-  driver->plot_hist       = text_plot_hist;
+  driver->close_driver 	    = text_close_driver;
+  driver->plot_xy           = text_plot_xy;
+  driver->plot_xy1y2        = text_plot_xy1y2;
+  driver->plot_x1x2y        = text_plot_x1x2y;
+  driver->plot_hist         = text_plot_hist;
   return driver;
 }

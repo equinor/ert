@@ -63,10 +63,9 @@
 
 
 
-plot_driver_type * plot_driver_alloc_empty(plot_driver_enum driver_id , const char * driver_name) {
+plot_driver_type * plot_driver_alloc_empty(const char * driver_name) {
   plot_driver_type * driver = util_malloc(sizeof * driver , __func__);
   driver->driver_name       = util_alloc_string_copy( driver_name );
-  driver->driver_id   	    = driver_id;
 
   driver->state       	    = NULL;	       
   driver->set_labels  	    = NULL;     

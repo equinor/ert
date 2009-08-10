@@ -270,7 +270,7 @@ void plplot_plot_hist( plot_driver_type * driver, const char * label , const dou
 */
 
 plot_driver_type * plplot_driver_alloc(void * init_arg) {
-  plot_driver_type * driver = plot_driver_alloc_empty(PLPLOT , "PLPLOT");
+  plot_driver_type * driver = plot_driver_alloc_empty("PLPLOT");
   driver->state           = plplot_state_alloc( init_arg );
   
   driver->close_driver 	  = plplot_close_driver;
