@@ -27,11 +27,9 @@ typedef struct plot_struct plot_type;
 
 plot_dataset_type * plot_alloc_new_dataset(plot_type *  , const char * __label , plot_data_type );
 
-plot_type *plot_alloc();
+plot_type * plot_alloc(const char * __driver_type , void * init_arg);
 int plot_get_stream(plot_type * item);
 
- void plot_initialize(plot_type * item, const char *dev,
-			    const char *filename);
  void plot_set_xlabel(plot_type * , const char *);
  void plot_set_ylabel(plot_type * , const char *);
  void plot_set_title(plot_type * , const char *);
@@ -40,8 +38,6 @@ int plot_get_stream(plot_type * item);
  void plot_data(plot_type * item);
  void plot_free(plot_type * item);
  void plot_update_range(plot_type * item, plot_range_type * );
-
-int plot_get_num_datasets(plot_type* item) ;
 
 void plot_set_window_size(plot_type * , int , int );
 void plot_invert_y_axis(plot_type * );
@@ -61,6 +57,7 @@ void          plot_set_range(plot_type * plot , double xmin , double xmax , doub
 void 	      plot_set_label_color(plot_type * , plot_color_type );
 void 	      plot_set_box_color(plot_type *   , plot_color_type );
 void 	      plot_set_label_fontsize(plot_type * , double );
+  void          plot_set_axis_fontsize(plot_type * plot , double axis_font_size_scale);
 const char *  plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2);
 void          plot_set_timefmt(plot_type * plot , const char * timefmt);
 

@@ -34,7 +34,7 @@ typedef enum plot_style_enum {
     BLANK       = 0,
     LINE        = 1,
     POINTS      = 2,  
-    LINE_POINTS = 3
+    LINE_POINTS = 3     /* It is essential that LINE_POINTS == LINE + POINTS */
 } plot_style_type;
 
 

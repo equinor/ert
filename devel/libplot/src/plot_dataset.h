@@ -51,10 +51,11 @@ typedef enum {
  * @{
  */
 
-/**
- * @brief Contains information about a dataset.
- */
-typedef struct plot_dataset_struct plot_dataset_type;
+/*
+  This typedef is located in the plot_driver.h file:
+  
+  typedef struct plot_dataset_struct plot_dataset_type;
+*/
 
 void plot_dataset_set_symbol_type(plot_dataset_type * , plot_symbol_type );
 void plot_dataset_set_style(plot_dataset_type * dataset , plot_style_type style);
@@ -86,7 +87,7 @@ void plot_dataset_set_data(plot_dataset_type * d, const double * x,
 				  const double * y, int len,
 				  plot_color_type c, plot_style_type s);
 
-void     plot_dataset_draw(int , plot_dataset_type *  , const plot_range_type * );
+void     plot_dataset_draw(plot_dataset_type * d , plot_driver_type * driver, const plot_range_type * range);
 double * plot_dataset_get_vector_x(const plot_dataset_type * d);
 double * plot_dataset_get_vector_y(const plot_dataset_type * d);
 double * plot_dataset_get_vector_x1(const plot_dataset_type * d);
@@ -106,11 +107,8 @@ void plot_dataset_append_vector_xy1y2(plot_dataset_type * , int , const double *
 void plot_dataset_append_point_x1x2y(plot_dataset_type * , double  , double  , double );
 void plot_dataset_append_vector_x1x2y(plot_dataset_type * , int , const double *  , const double * , const double *);
 
-void plot_dataset_append_point_xline(plot_dataset_type * , double   );
-void plot_dataset_append_vector_xline(plot_dataset_type * , int , const double * );
-
-void plot_dataset_append_point_yline(plot_dataset_type * , double   );
-void plot_dataset_append_vector_yline(plot_dataset_type * , int , const double * );
+void plot_dataset_set_xline(plot_dataset_type * , double   );
+void plot_dataset_set_yline(plot_dataset_type * , double   );
 
 void plot_dataset_append_vector_hist(plot_dataset_type *d , int size, const double * x);
 
