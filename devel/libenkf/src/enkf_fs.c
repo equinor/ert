@@ -1013,7 +1013,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
 
     if (version == 102) {
       enkf_fs_upgrade_103( config_file , root_path );
-      //version = 103;
+      version = 103;
     }
 
   }
@@ -1117,9 +1117,9 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
       if (fs->dynamic_read_analyzed  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic analyzed driver.\n",     __func__ , fs->mount_map);
 
 
-      if (fs->parameter_write  	   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
-      if (fs->eclipse_static_write   == NULL) util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
-      if (fs->index_write            == NULL) util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
+      if (fs->parameter_write  	   == NULL)    util_abort("%s: fatal error - mount map in:%s did not contain parameter driver.\n", __func__ , fs->mount_map);
+      if (fs->eclipse_static_write   == NULL)  util_abort("%s: fatal error - mount map in:%s did not contain ecl_static driver.\n",__func__ , fs->mount_map);
+      if (fs->index_write            == NULL)  util_abort("%s: fatal error - mount map in:%s did not contain index driver.\n",     __func__ , fs->mount_map);
       if (fs->dynamic_write_forecast  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic forecast driver.\n",     __func__ , fs->mount_map);
       if (fs->dynamic_write_analyzed  == NULL) util_abort("%s: fatal error - mount map in:%s did not contain dynamic analyzed driver.\n",     __func__ , fs->mount_map);
       
@@ -1294,8 +1294,8 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
 	buffer_fwrite_time_t( buffer , time(NULL));
 	data_written = enkf_node_store(enkf_node , buffer , internal_state , report_step , iens , state); 
 	if (data_written) {
-	  const char * key = enkf_node_get_key(enkf_node);
-	  driver->save(driver , key , report_step , iens , buffer);
+          const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
+	  driver->save(driver , config_node , report_step , iens , buffer);
 	}
 	buffer_free( buffer );
       }
@@ -1323,10 +1323,10 @@ static int __get_parameter_report_step( int report_step , state_enum state) {
 
 
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
-  enkf_var_type var_type     = enkf_node_get_var_type(enkf_node);
+  const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
+  enkf_var_type var_type     = enkf_config_node_get_var_type(config_node);
   basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) , true);
-  const char * key           = enkf_node_get_key( enkf_node );
-
+  
   if (var_type == PARAMETER) {
     report_step = __get_parameter_report_step( report_step , state );
     
@@ -1341,16 +1341,16 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
         2. We start the assimulation from R1, then we have to go all the
            way back to report 0 to get hold of the parameter.
     */
-    while (!driver->has_node( driver , key , report_step , iens )) {
+    while (!driver->has_node( driver , config_node , report_step , iens )) {
       report_step--;
       if (report_step < 0)
-	util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , key , iens);
+	util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , enkf_node_get_key( enkf_node ) , iens);
     }
   }
 
   {
     buffer_type * buffer = buffer_alloc(100);
-    driver->load(driver ,key ,  report_step , iens , buffer);
+    driver->load(driver , config_node ,  report_step , iens , buffer);
     buffer_fskip_time_t( buffer );
     enkf_node_load(enkf_node , buffer , report_step, iens , state);
     buffer_free( buffer );
@@ -1361,13 +1361,11 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
 bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens , state_enum state) {
   enkf_var_type var_type = enkf_config_node_get_var_type(config_node);
   {
-    const char * key = enkf_config_node_get_key(config_node);
-    {
-      basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , key , true));
-      return driver->has_node(driver , key , report_step , iens ); 
-    }
+    basic_driver_type * driver = basic_driver_safe_cast(enkf_fs_select_driver(enkf_fs , var_type , state , enkf_config_node_get_key( config_node ) , true));
+    return driver->has_node(driver , config_node , report_step , iens ); 
   }
 }
+
 
 enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens, state_enum state) {
   enkf_node_type * node = enkf_node_alloc(config_node);
@@ -1552,13 +1550,20 @@ stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * fs) {
 
 void enkf_fs_fwrite_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, const stringlist_type * kw_list) {
   basic_driver_index_type * index = enkf_fs->index_write;
-  index->save_kwlist( index , report_step , iens , kw_list );
+  buffer_type * buffer = buffer_alloc(1024);
+  stringlist_buffer_fwrite( kw_list , buffer );
+  index->save_kwlist( index , report_step , iens , buffer );
+  buffer_free( buffer );
 }
+
 
 
 void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , int iens, stringlist_type * kw_list) {
   basic_driver_index_type * index = enkf_fs->index_read;
-  index->load_kwlist( index , report_step , iens , kw_list );
+  buffer_type * buffer = buffer_alloc(1024);
+  index->load_kwlist( index , report_step , iens , buffer  );
+  stringlist_buffer_fread( kw_list , buffer );
+  buffer_free( buffer );
 }
 
 

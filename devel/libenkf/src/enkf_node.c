@@ -10,7 +10,6 @@
 #include <ecl_static_kw.h>
 #include <gen_kw.h>
 #include <path_fmt.h>
-#include <pilot_point.h>
 #include <gen_data.h>
 #include <enkf_serialize.h>
 #include <havana_fault.h>
@@ -552,26 +551,32 @@ void enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type 
 void enkf_node_sqrt(enkf_node_type *enkf_node) {
   FUNC_ASSERT(enkf_node->isqrt);
   enkf_node->isqrt(enkf_node->data);
+  enkf_node->__modified = true;
 }
+
 
 void enkf_node_scale(enkf_node_type *enkf_node , double scale_factor) {
   FUNC_ASSERT(enkf_node->scale);
   enkf_node->scale(enkf_node->data , scale_factor);
+  enkf_node->__modified = true;
 }
 
 void enkf_node_iadd(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
   FUNC_ASSERT(enkf_node->iadd);
   enkf_node->iadd(enkf_node->data , delta_node->data);
+  enkf_node->__modified = true;
 }
 
 void enkf_node_iaddsqr(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
   FUNC_ASSERT(enkf_node->iaddsqr);
   enkf_node->iaddsqr(enkf_node->data , delta_node->data);
+  enkf_node->__modified = true;
 }
 
 void enkf_node_imul(enkf_node_type *enkf_node , const enkf_node_type * delta_node) {
   FUNC_ASSERT(enkf_node->imul);
   enkf_node->imul(enkf_node->data , delta_node->data);
+  enkf_node->__modified = true;
 }
 
 

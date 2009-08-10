@@ -41,25 +41,21 @@ void plain_driver_index_select_dir(void *_driver , const char * directory) {
 
 
 
-void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report_step , int iens , const stringlist_type * kw_list) {
+void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report_step , int iens , buffer_type * buffer) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
     char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , true , report_step , iens , "kw_list");
-    FILE * stream  = util_fopen(kw_file , "w");
-    stringlist_fwrite(kw_list , stream);
-    fclose(stream);
+    buffer_store( buffer , kw_file );
     free(kw_file);
   }
 }
 
 
-void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_step, int iens , stringlist_type * kw_list) {
+void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_step, int iens , buffer_type * buffer) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
     char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , false , report_step , iens , "kw_list");
-    FILE * stream  = util_fopen(kw_file , "r");
-    stringlist_fread(kw_list , stream);
-    fclose(stream);
+    buffer_fread_realloc( buffer , kw_file );
     free(kw_file);
   }
 }

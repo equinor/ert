@@ -18,10 +18,11 @@ GET_DATA_SIZE_HEADER(gen_kw);
 
 
 struct gen_kw_struct {
-  int                       __type_id;
-  const gen_kw_config_type *config;
-  scalar_type              *scalar;
-  subst_list_type          *subst_list;
+  int                        __type_id;
+  const gen_kw_config_type * config;
+  scalar_type              * scalar;
+  subst_list_type          * private_subst_list;
+  const subst_list_type    * global_subst_list;   /* This is owned by the enkf_state object holding this gen_kw instance. */
 };
 
 /*****************************************************************/
@@ -34,7 +35,7 @@ void gen_kw_free_data(gen_kw_type *gen_kw) {
 
 void gen_kw_free(gen_kw_type *gen_kw) {
   scalar_free(gen_kw->scalar);
-  subst_list_free(gen_kw->subst_list);
+  subst_list_free(gen_kw->private_subst_list);
   free(gen_kw);
 }
 
@@ -60,7 +61,8 @@ gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw->config = config;
   gen_kw->scalar = scalar_alloc(gen_kw_config_get_scalar_config( config ));
   gen_kw->__type_id  = GEN_KW;
-  gen_kw->subst_list = subst_list_alloc();  
+  gen_kw->private_subst_list = subst_list_alloc();  
+  gen_kw->global_subst_list  = NULL;
   return gen_kw;
 }
 
@@ -160,15 +162,6 @@ void gen_kw_matrix_deserialize(gen_kw_type *gen_kw , const active_list_type * ac
 
 
 
-/**
-  This function takes an ensmeble of gen_kw instances, and allocates
-  two new instances to hold the mean and standard deviation
-  respectively. The return values are returned by reference.
-*/
-//ALLOC_STATS_SCALAR(gen_kw)  
-
-
-
 void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   const char * template_file = gen_kw_config_get_template_ref(gen_kw->config);
   if (template_file != NULL) {
@@ -180,10 +173,12 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
     gen_kw_output_transform(gen_kw);
     for (ikw = 0; ikw < size; ikw++) {
       const char * key = gen_kw_config_get_tagged_name(gen_kw->config , ikw);      
-      subst_list_insert_owned_ref(gen_kw->subst_list , key , util_alloc_sprintf("%g" , output_data[ikw]));
+      subst_list_insert_owned_ref(gen_kw->private_subst_list , key , util_alloc_sprintf("%g" , output_data[ikw]));
     }
     
-    subst_list_filter_file( gen_kw->subst_list , template_file , target_file);
+    subst_list_filter_file( gen_kw->private_subst_list  , template_file  , target_file);
+    if (gen_kw->global_subst_list != NULL)
+      subst_list_filter_file( gen_kw->global_subst_list   ,  target_file   , target_file );
   } else 
     util_abort("%s: internal error - tried to filter gen_kw instance without template file.\n",__func__);
 }
@@ -232,6 +227,10 @@ double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * val
   }
 }
 
+
+void gen_kw_set_global_subst_list(gen_kw_type * gen_kw , const subst_list_type * global_subst_list) {
+  gen_kw->global_subst_list = global_subst_list;
+}
 
 
 void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std) {

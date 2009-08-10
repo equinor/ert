@@ -29,8 +29,8 @@ void text_splash() {
   const int usleep_time = 1250;
   int i;
   {
-#include "statoilhydro.h"
-
+    //#include "statoilhydro.h"
+#include "ERT.h"
     printf("\n\n");
     for (i = 0; i < SPLASH_LENGTH; i++) {
       printf("%s\n" , splash_text[i]);

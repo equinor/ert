@@ -325,13 +325,14 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
 */
 
 static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state) {
+  enkf_fs_type * fs               = enkf_main_get_fs( enkf_main );
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
   int iens;
 
   for (iens = 0; iens < ens_size; iens++) {
     node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
-    //enkf_fs_fread_node( enkf_main->fs , 
+    enkf_fs_fread_node( fs , node_ensemble[iens] , report_step , iens ,load_state);
   }
   return node_ensemble;
 }
@@ -381,17 +382,18 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
 
 /**
    The inflation can be in two forms:
-     1. A scalar inflation factor is applied to the whole node.  
-     2. A node-inflation factor is applied which will allow for much
-        greater flexibility.
+   
+   1. A scalar inflation factor is applied to the whole node.  
+   2. A node-inflation factor is applied which will allow for much
+      greater flexibility.
 
         
 */
 
-void enkf_main_inflate_node(enkf_main_type * enkf_main , const char * key , double inflation_factor) {
+void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , double inflation_factor) {
   int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
   const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key); 
-  enkf_node_type ** ensemble                = NULL; //enkf_main_get_node_ensemble( enkf_main , key );
+  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , forecast/* analyzed */ );
   enkf_node_type *  mean                    = enkf_node_alloc( config_node );
   enkf_node_type *  std                     = enkf_node_alloc( config_node );
   int iens;
@@ -432,9 +434,11 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , const char * key , doub
     }
   }
 
-  /* Add the mean back in */
-  for (iens = 0; iens < ens_size; iens++) 
+  /* Add the mean back in - and store the updated node to disk.*/
+  for (iens = 0; iens < ens_size; iens++) {
     enkf_node_iadd( ensemble[iens] , mean );
+    enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , analyzed );
+  }
 
   enkf_node_free( mean );
   enkf_node_free( std );
@@ -443,11 +447,11 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , const char * key , doub
 
 
 
-void enkf_main_inflate(enkf_main_type * enkf_main , double scalar_inflation) {
+void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , double scalar_inflation) {
   stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
 
   for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++)
-    enkf_main_inflate_node(enkf_main , stringlist_iget( keys  , ikey ) , scalar_inflation );
+    enkf_main_inflate_node(enkf_main , report_step , stringlist_iget( keys  , ikey ) , scalar_inflation );
   
   stringlist_free( keys );
 }
@@ -680,8 +684,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     meas_matrix_free( meas_forecast );
     meas_matrix_free( meas_analyzed );
   }
-  /* enkf_main_inflate( enkf_main , 2.0 ); */
+  //enkf_main_inflate( enkf_main , step2 , 2.0 ); 
 }
+
 
 
 
@@ -876,7 +881,9 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
   return enkf_config_node_get_ref(config_node_type);
 }
 
-
+const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main ) {
+  return site_config_get_plot_driver( enkf_main->site_config );
+}
 
 const char * enkf_main_get_image_viewer(const enkf_main_type * enkf_main) {
   return site_config_get_image_viewer(enkf_main->site_config);
@@ -1141,6 +1148,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
     config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
     config_set_arg(config , "IMAGE_TYPE" , 1 , (const char *[1]) { DEFAULT_IMAGE_TYPE });
+
+    item = config_add_item(config , "PLOT_DRIVER" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
+    config_set_arg(config , "PLOT_DRIVER" , 1 , (const char *[1]) { DEFAULT_PLOT_DRIVER });
 
     item = config_add_item(config , "PLOT_PATH" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);

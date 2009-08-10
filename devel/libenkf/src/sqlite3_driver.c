@@ -7,6 +7,7 @@
 #include <sqlite3_driver.h>
 #include <buffer.h>
 #include <fs_types.h>
+#include <enkf_config_node.h>
 
 
 
@@ -196,34 +197,6 @@ void create_fs_table_if_not_exists(
 
 
 
-/**
-  Allocate a sqlite3_driver_type.
-
-  This function will also create the fs table in the
-  db_file if it does not already exist.
-*/
-void * sqlite3_driver_alloc(const char * root_path , const char * db_file) {
-  sqlite3_driver_type * driver = util_malloc(sizeof * driver, __func__);
-
-  driver->__id     = SQLITE_DRIVER_ID;
-  driver->db_file  = util_alloc_filename( root_path , db_file , NULL);
-  driver->casename = NULL;
-  driver->db       = open_db(driver->db_file);
-  create_fs_table_if_not_exists(driver->db);
-
-
-  driver->load 	      = sqlite3_driver_load_node;
-  driver->save 	      = sqlite3_driver_save_node;
-  driver->has_node    = sqlite3_driver_has_node;
-  driver->unlink_node = sqlite3_driver_unlink_node;
-  driver->free_driver = sqlite3_driver_free;
-  driver->select_dir  = sqlite3_driver_change_casename;
-  {
-    basic_driver_type * basic_driver = (basic_driver_type *) driver;
-    basic_driver_init( basic_driver );
-    return basic_driver;
-  }
-}
 
 
 
@@ -249,12 +222,11 @@ void sqlite3_driver_free(
   If a node with identical id, casename, realization_nr, restart_nr and state
   exists in the same table, it is overwritten.
 */
-void sqlite3_driver_save_node(
-  void       * _driver,
-  const char * id,
-  int          realization_nr,
-  int          restart_nr,
-  buffer_type * buffer) {
+void sqlite3_driver_save_node(void                        * _driver,
+                              const enkf_config_node_type * config_node , 
+                              int          report_step,
+                              int          iens,
+                              buffer_type * buffer) {
 
   int result; 
   sqlite3_driver_type * driver = sqlite3_driver_safe_cast(_driver);
@@ -275,10 +247,10 @@ void sqlite3_driver_save_node(
   /**
     Bind data to the '?' placeholders in the SQL_INSERT_INTO_fs statement.
   */
-  bind_text(stmt, 1, id                 );
+  bind_text(stmt, 1, enkf_config_node_get_key( config_node ) );
   bind_text(stmt, 2, casename           );
-  bind_int( stmt, 3, realization_nr     );
-  bind_int( stmt, 4, restart_nr         );
+  bind_int( stmt, 3, iens     );
+  bind_int( stmt, 4, report_step         );
   bind_blob(stmt, 5, buffer_get_data( buffer ) , buffer_get_size( buffer ));
 
 
@@ -310,13 +282,7 @@ void sqlite3_driver_save_node(
   bytesize are copied to these fields. It is the calling scope's
   responsibility to free the alloc'd data.
 */
-bool sqlite3_driver_load_node(
-  void       * _driver,
-  const char * id,
-  int          realization_nr,
-  int          restart_nr,
-  buffer_type * buffer) 
-{
+bool sqlite3_driver_load_node(void * _driver, const enkf_config_node_type * config_node, int report_step ,  int iens , buffer_type * buffer) {
   int  result; 
   bool has_node = false;
   sqlite3_driver_type * driver = sqlite3_driver_safe_cast(_driver);
@@ -338,11 +304,11 @@ bool sqlite3_driver_load_node(
   /**
     Bind data to the '?' placeholders in the SQL_SELECT_DATA_FROM_fs.
   */
-  bind_text(stmt, 1, id            );
-  bind_text(stmt, 2, casename      );
-  bind_int( stmt, 3, realization_nr);
-  bind_int( stmt, 4, restart_nr    );
-
+  bind_text(stmt, 1, enkf_config_node_get_key( config_node ) );
+  bind_text(stmt, 2, casename );
+  bind_int( stmt, 3, iens );
+  bind_int( stmt, 4, report_step );
+  
 
   /**
     Check if we have the requested node. Since there is a UNIQUE lock in
@@ -393,7 +359,7 @@ bool sqlite3_driver_load_node(
 */
 void sqlite3_driver_unlink_node(
   void       * _driver,
-  const char * id,
+  const enkf_config_node_type * config_node,
   int          realization_nr,
   int          restart_nr)
 {
@@ -418,7 +384,7 @@ void sqlite3_driver_unlink_node(
   /**
     Bind data to the '?' placeholders in the SQL_DELETE_FROM_fs.
   */
-  bind_text(stmt, 1, id            );
+  bind_text(stmt, 1, enkf_config_node_get_key( config_node ) );
   bind_text(stmt, 2, casename      );
   bind_int( stmt, 3, realization_nr);
   bind_int( stmt, 4, restart_nr    );
@@ -450,11 +416,11 @@ void sqlite3_driver_unlink_node(
 */
 bool sqlite3_driver_has_node(
   void       * _driver,
-  const char * id,
+  const enkf_config_node_type * config_node , 
   int          realization_nr,
   int          restart_nr ) 
 {
-  return sqlite3_driver_load_node(_driver, id, realization_nr, restart_nr, NULL);
+  return sqlite3_driver_load_node(_driver, config_node , realization_nr, restart_nr, NULL);
 }
 
 
@@ -485,5 +451,35 @@ sqlite3_driver_type * sqlite3_driver_fread_alloc(const char * root_path , FILE *
   sqlite3_driver_type * driver = sqlite3_driver_alloc(root_path , db_file );
   free(db_file);
   return driver;
+}
+
+
+/**
+  Allocate a sqlite3_driver_type.
+
+  This function will also create the fs table in the
+  db_file if it does not already exist.
+*/
+void * sqlite3_driver_alloc(const char * root_path , const char * db_file) {
+  sqlite3_driver_type * driver = util_malloc(sizeof * driver, __func__);
+
+  driver->__id     = SQLITE_DRIVER_ID;
+  driver->db_file  = util_alloc_filename( root_path , db_file , NULL);
+  driver->casename = NULL;
+  driver->db       = open_db(driver->db_file);
+  create_fs_table_if_not_exists(driver->db);
+
+  
+  driver->load 	      = sqlite3_driver_load_node;  /* This returns bool - whereas the funtion prototype is void. */
+  driver->save 	      = sqlite3_driver_save_node;
+  driver->has_node    = sqlite3_driver_has_node;
+  driver->unlink_node = sqlite3_driver_unlink_node;
+  driver->free_driver = sqlite3_driver_free;
+  driver->select_dir  = sqlite3_driver_change_casename;
+  {
+    basic_driver_type * basic_driver = (basic_driver_type *) driver;
+    basic_driver_init( basic_driver );
+    return basic_driver;
+  }
 }
 

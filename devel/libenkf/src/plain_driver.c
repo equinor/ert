@@ -9,6 +9,7 @@
 #include <plain_driver.h>
 #include <plain_driver_index.h>
 #include <plain_driver_common.h>
+#include <enkf_node.h>
 
 
 
@@ -59,9 +60,10 @@ static plain_driver_type * plain_driver_safe_cast( void * __driver) {
 }
 
 
-static void plain_driver_load_node(void * _driver , const char * key , int report_step , int iens ,  buffer_type * buffer) {
+static void plain_driver_load_node(void * _driver , const enkf_config_node_type * config_node , int report_step , int iens ,  buffer_type * buffer) {
   plain_driver_type * driver = plain_driver_safe_cast( _driver );
   {
+    const char * key     = enkf_config_node_get_key( config_node );
     char * filename      = path_fmt_alloc_file(driver->path , false , report_step , iens , key);
     buffer_fread_realloc( buffer , filename );
     free(filename);
@@ -71,22 +73,22 @@ static void plain_driver_load_node(void * _driver , const char * key , int repor
 
 
 
-static void plain_driver_save_node(void * _driver , const char * key , int report_step , int iens ,  buffer_type * buffer) {
+static void plain_driver_save_node(void * _driver , const enkf_config_node_type * config_node , int report_step , int iens ,  buffer_type * buffer) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_config_node_get_key( config_node ));
     buffer_store( buffer , filename );
     free(filename);
   }
 }
 
 
-void plain_driver_unlink_node(void * _driver , const char * key , int report_step , int iens ) {
+void plain_driver_unlink_node(void * _driver , const enkf_config_node_type * config_node , int report_step , int iens ) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_config_node_get_key( config_node ));
     util_unlink_existing(filename);
     free(filename);
   }
@@ -104,12 +106,12 @@ void plain_driver_unlink_node(void * _driver , const char * key , int report_ste
      instead return false if the report_step we ask for is not present.
 */
 
-bool plain_driver_has_node(void * _driver , const char * key , int report_step , int iens ) {
+bool plain_driver_has_node(void * _driver , const enkf_config_node_type * config_node , int report_step , int iens ) {
   plain_driver_type * driver = (plain_driver_type *) _driver;
   plain_driver_assert_cast(driver);
   {
     bool has_node;
-    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , key);
+    char * filename = path_fmt_alloc_file(driver->path , true , report_step , iens , enkf_config_node_get_key( config_node ));
     if (util_file_exists(filename))
       has_node = true;
     else

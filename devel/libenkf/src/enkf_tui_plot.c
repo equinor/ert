@@ -40,7 +40,7 @@
       files, and for this reason we must have member specific files
       her as well, this increases the complexity for something which
       is probably only used in 1/1000 cases.
-
+      
 */
 
 static vector_type * enkf_tui_alloc_sched_vector( const enkf_main_type * enkf_main ) {
@@ -68,29 +68,51 @@ static vector_type * enkf_tui_alloc_sched_vector( const enkf_main_type * enkf_ma
 */
 
 static char * enkf_tui_plot_alloc_plot_file(const char * plot_path, const char * case_name , const char * base_name, const char * plot_extension) {
-  {
-    char * path      = util_alloc_filename(plot_path , case_name , NULL); /* It is really a path - but what the fuck. */ 
-    char * plot_file = util_alloc_filename(path , base_name , plot_extension);
-    
-    util_make_path( path );  /* Ensure that the path where the plots are stored exists. */
-    free(path);
-    return plot_file;
-  }
+  char * path      = util_alloc_filename(plot_path , case_name , NULL); /* It is really a path - but what the fuck. */ 
+  char * plot_file = util_alloc_filename(path , base_name , plot_extension);
+  
+  util_make_path( path );  /* Ensure that the path where the plots are stored exists. */
+  free(path);
+  return plot_file;
 }
 					   
 
 
-static plot_type * __plot_alloc(const char * x_label , const char * y_label , const char * title , const char * file, const char * image_type) {
-  plot_type * plot  = plot_alloc();
+static plot_type * __plot_alloc(const char * driver_type , const char * x_label , const char * y_label , const char * title , const char * file, const char * image_type) {
+  
+  arg_pack_type * arg_pack = arg_pack_alloc();
+  plot_type * plot;
+
+  if (util_string_equal( driver_type , "PLPLOT")) {
+    arg_pack_append_ptr( arg_pack , file );
+    arg_pack_append_ptr( arg_pack , image_type );
+  } else if (util_string_equal( driver_type , "TEXT")) {
+
+    char * plot_path, *basename;
+    char * path;
+    printf("Splitting:%s \n",file);
+    util_alloc_file_components( file , &plot_path , &basename , NULL);
+    
+    path = util_alloc_filename( plot_path , basename , NULL);
+    arg_pack_append_owned_ptr( arg_pack , path , free);
+    
+    free( plot_path );
+    free( basename );
+  } else 
+    util_abort("%s: unrecognized driver type: %s \n",__func__ , driver_type);
+  
+  plot = plot_alloc(driver_type , arg_pack);
+  
   plot_set_window_size(plot , DEFAULT_PLOT_WIDTH , DEFAULT_PLOT_HEIGHT);
-  plot_initialize(plot , image_type , file);
   plot_set_labels(plot, x_label , y_label , title);
+  arg_pack_free( arg_pack );
+  
   return plot;
 }
 
 
-static void __plot_add_data(plot_type * plot , int N , const double * x , const double *y) {
-  plot_dataset_type *d = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
+static void __plot_add_data(plot_type * plot , const char * label , int N , const double * x , const double *y) {
+  plot_dataset_type *d = plot_alloc_new_dataset( plot , label , PLOT_XY );
   plot_dataset_set_line_color(d , BLUE);
   plot_dataset_append_vector_xy(d, N , x, y);
 }
@@ -99,7 +121,13 @@ static void __plot_add_data(plot_type * plot , int N , const double * x , const 
 static void __plot_show(plot_type * plot , const char * viewer , const char * file) {
   plot_data(plot);
   plot_free(plot);
-  util_vfork_exec(viewer , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
+  if (util_file_exists( file )) {
+    printf("Plot saved in: %s \n",file);
+    util_vfork_exec(viewer , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
+  }
+  /*
+    else: the file does not exist - that might be OK?
+  */
 }
 
 
@@ -109,18 +137,19 @@ static void __plot_show(plot_type * plot , const char * viewer , const char * fi
 
 
 static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       , 
-				    enkf_obs_type * enkf_obs, 
-				    const enkf_config_node_type * config_node , 
-				    const char * user_key  ,
-				    const char * key_index ,
-				    const vector_type * sched_vector , 
-				    int step1 , int step2  , 
-				    int iens1 , int iens2  , 
-				    state_enum plot_state  ,
-				    const char * plot_path , 
-				    const char * viewer,
-				    const char * image_type) {
-  
+                                     enkf_obs_type * enkf_obs, 
+                                     const enkf_config_node_type * config_node , 
+                                     const char * user_key  ,
+                                     const char * key_index ,
+                                     const vector_type * sched_vector , 
+                                     int step1 , int step2  , 
+                                     int iens1 , int iens2  , 
+                                     state_enum plot_state  ,
+                                     const char * plot_path ,
+                                     const char * driver_type , 
+                                     const char * viewer,
+                                     const char * image_type) {
+
   bool  plot_dates             = true;
   const int errorbar_max_obsnr = 25;
   const bool add_observations  = true;
@@ -134,9 +163,9 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
   int     size, iens , step;
 
   if (plot_dates)
-    plot =  __plot_alloc("" , /* y akse */ "" ,user_key,plot_file , image_type);
+    plot =  __plot_alloc(driver_type , "" , /* y akse */ "" ,user_key,plot_file , image_type);
   else
-    plot =  __plot_alloc("Simulation time (days) ", /* y akse */ "" ,user_key,plot_file , image_type);
+    plot =  __plot_alloc(driver_type , "Simulation time (days) ", /* y akse */ "" ,user_key,plot_file , image_type);
   
   node = enkf_node_alloc( config_node );
   if (plot_state == both) 
@@ -155,14 +184,15 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
   
 
   for (iens = iens1; iens <= iens2; iens++) {
-    char label[32];
-	
+    char msg_label[32];
+    char plot_label[32];
+
     int this_size = 0;
     for (step = step1; step <= step2; step++) {
       double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens) , step );
       time_t sim_time = sched_file_get_sim_time( vector_iget( sched_vector , iens) , step );
-      sprintf(label , "%03d/%03d" , iens , step);
-      msg_update( msg , label);
+      sprintf(msg_label , "%03d/%03d" , iens , step);
+      msg_update( msg , msg_label);
 	  
       /* Forecast block */
       if (plot_state & forecast) {
@@ -211,9 +241,14 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
     if (plot_dates) 
       plot_set_default_timefmt( plot , (time_t) x[0] , (time_t) x[this_size - 1]);
     
-    __plot_add_data(plot , this_size , x , y );
+    sprintf(plot_label , "mem_%03d" , iens);
+    __plot_add_data(plot , plot_label ,this_size , x , y );
   }
 
+
+  /*
+    Observe that all the observations are 'flattened'.
+  */
   if (add_observations) {
     enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
     if ((impl_type == SUMMARY) || (impl_type == FIELD)) {
@@ -260,6 +295,7 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
 	  }
 	} while (report_step != -1);
       }
+
       if (double_vector_size( sim_time ) > 0) {
 	if (obs_size > errorbar_max_obsnr) {
 	  /* 
@@ -269,9 +305,9 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
 	     error bar.
 	  */
 	     
-	  plot_dataset_type * data_value = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
-	  plot_dataset_type * data_lower = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
-	  plot_dataset_type * data_upper = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
+	  plot_dataset_type * data_value = plot_alloc_new_dataset( plot , "observation"       , PLOT_XY );
+	  plot_dataset_type * data_lower = plot_alloc_new_dataset( plot , "observation_lower" , PLOT_XY );
+	  plot_dataset_type * data_upper = plot_alloc_new_dataset( plot , "observation_upper" , PLOT_XY );
 	  
 	  plot_dataset_set_style( data_value , POINTS );
 	  plot_dataset_set_style( data_upper , LINE );
@@ -305,7 +341,7 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
 	    plot_dataset_append_point_xy( data_upper , days , value + std);
 	  }
 	} else {
-	  plot_dataset_type * obs_errorbar  = plot_alloc_new_dataset( plot , NULL , PLOT_XY1Y2 );
+	  plot_dataset_type * obs_errorbar  = plot_alloc_new_dataset( plot , "observations" , PLOT_XY1Y2 );
 	  plot_dataset_set_line_color( obs_errorbar , RED);
 	  plot_dataset_set_line_width( obs_errorbar , 1.5);
 	  for (i = 0; i < double_vector_size( sim_time ); i++) {
@@ -329,10 +365,9 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
 
   enkf_node_free(node);
   msg_free(msg , true);
-  if (show_plot) {
-    printf("Plot saved in: %s \n",plot_file);
+  if (show_plot) 
     __plot_show(plot , viewer , plot_file); /* Frees the plot - logical ehhh. */
-  } else {
+  else {
     printf("No data to plot \n");
     plot_free(plot);
   }
@@ -349,6 +384,7 @@ void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_
   const model_config_type    * model_config = enkf_main_get_model_config( enkf_main );
   const char * image_type                   = enkf_main_get_image_type( enkf_main );
   const char * viewer                       = enkf_main_get_image_viewer( enkf_main );
+  const char * plot_driver                  = enkf_main_get_plot_driver( enkf_main );
   const char * plot_path                    = model_config_get_plot_path( model_config );
   gen_kw_config_type * gen_kw_config 	    = enkf_config_node_get_ref( config_node );
   int num_kw                         	    = gen_kw_config_get_data_size( gen_kw_config );
@@ -360,7 +396,7 @@ void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_
   for (ikw = 0; ikw < num_kw; ikw++) {
     char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , node_key , ikw);
     enkf_tui_plot_ensemble__( fs , enkf_obs , config_node , user_key , key_list[ikw] , sched_vector,
-			     step1 , step2 , iens1 , iens2 , analyzed , plot_path , viewer , image_type);
+                              step1 , step2 , iens1 , iens2 , analyzed , plot_path , plot_driver , viewer , image_type);
     free( user_key );
   }
 }
@@ -445,6 +481,7 @@ void enkf_tui_plot_histogram(void * arg) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main );
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
@@ -466,7 +503,7 @@ void enkf_tui_plot_histogram(void * arg) {
       double * count        = util_malloc(ens_size * sizeof * count , __func__);
       int iens , report_step;
       char * plot_file = enkf_tui_plot_alloc_plot_file( plot_path , case_name , user_key , image_type);
-      plot_type * plot = __plot_alloc(user_key , "#" ,user_key,plot_file ,image_type);
+      plot_type * plot = __plot_alloc(driver_type , user_key , "#" ,user_key,plot_file ,image_type);
 
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
       if (config_node == NULL) {
@@ -523,6 +560,7 @@ void enkf_tui_plot_ensemble(void * arg) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main );
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
@@ -572,8 +610,9 @@ void enkf_tui_plot_ensemble(void * arg) {
 			      iens2 , 
 			      plot_state , 
 			      plot_path,
+                               driver_type, 
 			      viewer,
-			      image_type);
+                              image_type);
       util_safe_free(key_index);
     }
     util_safe_free( user_key );
@@ -589,6 +628,7 @@ void enkf_tui_plot_all_summary(void * arg) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main ); 
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
@@ -608,17 +648,18 @@ void enkf_tui_plot_all_summary(void * arg) {
       const char * key = stringlist_iget( summary_keys , ikey);
       
       enkf_tui_plot_ensemble__(fs , 
-			      enkf_obs , 
-			      ensemble_config_get_node( ensemble_config , key ),
-			      key , 
-			      NULL , 
-			      sched_vector , 
-			      step1 , step2 , 
-			      iens1 , iens2 , 
-			      both  , 
-			      plot_path , 
-			      viewer,
-			      image_type);
+                               enkf_obs , 
+                               ensemble_config_get_node( ensemble_config , key ),
+                               key , 
+                               NULL , 
+                               sched_vector , 
+                               step1 , step2 , 
+                               iens1 , iens2 , 
+                               both  , 
+                               plot_path , 
+                               driver_type,
+                               viewer,
+                               image_type);
       
     }
     stringlist_free( summary_keys );
@@ -635,6 +676,7 @@ void enkf_tui_plot_observation(void * arg) {
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main );
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
@@ -653,12 +695,13 @@ void enkf_tui_plot_observation(void * arg) {
     obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
     if (obs_vector != NULL) {
       char * plot_file                    = enkf_tui_plot_alloc_plot_file(plot_path , enkf_fs_get_read_dir(fs), user_key,image_type);
-      plot_type * plot                    = __plot_alloc("Member nr" , "Value" , user_key , plot_file, image_type);   
+      plot_type * plot                    = __plot_alloc(driver_type , "Member nr" , "Value" , user_key , plot_file, image_type);   
       const char * state_kw               = obs_vector_get_state_kw( obs_vector );
       enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
       int   num_active                    = obs_vector_get_num_active( obs_vector );
       plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
-      plot_dataset_type * obs_quant       = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
+      plot_dataset_type * obs_quant_lower = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
+      plot_dataset_type * obs_quant_upper = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
       plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , NULL , PLOT_XY    );
       plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , NULL , PLOT_XY    );
       int   report_step;
@@ -685,14 +728,18 @@ void enkf_tui_plot_observation(void * arg) {
 	plot_set_left_padding( plot , 0.05);
 	plot_set_right_padding( plot , 0.05);
 			    
-	plot_dataset_append_point_yline(obs_value , value);
-	plot_dataset_append_point_yline(obs_quant , value - std);
-	plot_dataset_append_point_yline(obs_quant , value + std);
+	plot_dataset_set_yline(obs_value       , value);
+	plot_dataset_set_yline(obs_quant_lower , value - std);
+	plot_dataset_set_yline(obs_quant_upper , value + std);
 	
-	plot_dataset_set_line_color(obs_value , BLACK);
-	plot_dataset_set_line_color(obs_quant , BLACK);
+	plot_dataset_set_line_color(obs_value       , BLACK);
+	plot_dataset_set_line_color(obs_quant_lower , BLACK);
+	plot_dataset_set_line_color(obs_quant_upper , BLACK);
 	plot_dataset_set_line_width(obs_value , 2.0);
-	plot_dataset_set_line_style(obs_quant , PLOT_LINESTYLE_LONG_DASH);
+	plot_dataset_set_line_style(obs_quant_lower , PLOT_LINESTYLE_LONG_DASH);
+        plot_dataset_set_line_style(obs_quant_upper , PLOT_LINESTYLE_LONG_DASH);
+
+
 
 	plot_dataset_set_style( forecast_data , POINTS);
 	plot_dataset_set_style( analyzed_data , POINTS);
@@ -724,7 +771,6 @@ void enkf_tui_plot_observation(void * arg) {
 	enkf_node_free(enkf_node);
       }
       __plot_show(plot , viewer , plot_file);
-      printf("Plot saved in: %s \n",plot_file);
       free(plot_file);
     } 
     
@@ -733,7 +779,7 @@ void enkf_tui_plot_observation(void * arg) {
 }
 
 
-void enkf_tui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const char * image_type , const model_config_type * model_config , const ensemble_config_type * ensemble_config , const obs_vector_type * obs_vector , const char * obs_key , int report_step) {
+void enkf_tui_plot_RFT__(enkf_fs_type * fs, const char * driver_type , const char * viewer , const char * image_type , const model_config_type * model_config , const ensemble_config_type * ensemble_config , const obs_vector_type * obs_vector , const char * obs_key , int report_step) {
   const char * plot_path              = model_config_get_plot_path( model_config );
   plot_type             * plot;
   const char            * state_kw    = obs_vector_get_state_kw(obs_vector);
@@ -745,7 +791,7 @@ void enkf_tui_plot_RFT__(enkf_fs_type * fs, const char * viewer , const char * i
   char * plot_file;
   
   plot_file = enkf_tui_plot_alloc_plot_file(plot_path , enkf_fs_get_read_dir(fs), obs_key ,image_type);
-  plot = __plot_alloc(state_kw , "Depth" , obs_key , plot_file, image_type);
+  plot = __plot_alloc(driver_type , state_kw , "Depth" , obs_key , plot_file, image_type);
   {
     msg_type * msg           = msg_alloc("Loading realization: ");
     const int * i 	     = field_obs_get_i(field_obs);
@@ -867,6 +913,7 @@ void enkf_tui_plot_RFT_depth(void * arg) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   enkf_fs_type   * fs                          = enkf_main_get_fs(enkf_main);    
   {
@@ -876,7 +923,7 @@ void enkf_tui_plot_RFT_depth(void * arg) {
 
     enkf_tui_plot_select_RFT(enkf_main , &obs_key , &report_step);
     obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-    enkf_tui_plot_RFT__(fs , viewer , image_type , model_config , ensemble_config , obs_vector , obs_key , report_step);
+    enkf_tui_plot_RFT__(fs , driver_type , viewer , image_type , model_config , ensemble_config , obs_vector , obs_key , report_step);
     free( obs_key );
     
   }
@@ -892,6 +939,7 @@ void enkf_tui_plot_RFT_time(void * arg) {
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
   const char * plot_path                       = model_config_get_plot_path( model_config );
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main );
   enkf_fs_type   * fs                          = enkf_main_get_fs(enkf_main);    
   vector_type * sched_vector                   = enkf_tui_alloc_sched_vector( enkf_main );
   {
@@ -924,7 +972,7 @@ void enkf_tui_plot_RFT_time(void * arg) {
 	field_obs_iget_ijk( field_obs , block_nr , &i , &j , &k);
 	index_key = util_realloc_sprintf( index_key , "%d,%d,%d"    , i+1,j+1,k+1);
 	user_key  = util_realloc_sprintf( user_key  , "%s:%d,%d,%d" , state_kw , i+1,j+1,k+1);
-	enkf_tui_plot_ensemble__(fs , enkf_obs , config_node , user_key , index_key , sched_vector , step1 , step2 , iens1 , iens2 , plot_state , plot_path , viewer, image_type);
+	enkf_tui_plot_ensemble__(fs , enkf_obs , config_node , user_key , index_key , sched_vector , step1 , step2 , iens1 , iens2 , plot_state , plot_path , driver_type , viewer, image_type);
       }
     }
     free( obs_key );
@@ -951,6 +999,7 @@ void enkf_tui_plot_all_RFT( void * arg) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
   {
     const int prompt_len  = 30;
@@ -970,7 +1019,7 @@ void enkf_tui_plot_all_RFT( void * arg) {
 	  report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
       } while (!obs_vector_iget_active(obs_vector , report_step));
       
-      enkf_tui_plot_RFT__(fs , viewer , image_type , model_config , ensemble_config , obs_vector , obs_key , report_step);
+      enkf_tui_plot_RFT__(fs , driver_type , viewer , image_type , model_config , ensemble_config , obs_vector , obs_key , report_step);
     }
   }
 }
@@ -980,6 +1029,7 @@ void enkf_tui_plot_all_RFT( void * arg) {
 void enkf_tui_plot_sensitivity(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const char * driver_type                     = enkf_main_get_plot_driver( enkf_main );
   const char * viewer                          = enkf_main_get_image_viewer( enkf_main );
   const char * image_type                      = enkf_main_get_image_type( enkf_main );
   const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
@@ -1087,7 +1137,7 @@ void enkf_tui_plot_sensitivity(void * arg) {
     int valid_count           = 0;
     char * basename  	      = util_alloc_sprintf("%s-%s" , user_key_x , user_key_y);
     char * plot_file 	      = enkf_tui_plot_alloc_plot_file( plot_path , enkf_fs_get_read_dir(fs), basename , image_type);
-    plot_type * plot 	      = __plot_alloc(user_key_x , user_key_y , "Sensitivity plot" , plot_file, image_type);
+    plot_type * plot 	      = __plot_alloc( driver_type , user_key_x , user_key_y , "Sensitivity plot" , plot_file, image_type);
     plot_dataset_type  * data = plot_alloc_new_dataset( plot , NULL , PLOT_XY );
     
     for (iens = 0; iens < ens_size; iens++) {

@@ -48,20 +48,22 @@ typedef enum { DEFAULT_KEEP    = 0,    /* Remove for enkf assimilation - keep fo
    parameter.
 
    These correspond to implementation types. The numbers are on disk,
-   and should **NOT BE UPDATED**.
+   and should **NOT BE UPDATED**. The __MIN_TYPE and __MAX_TYPE
+   identifiers are needed for the block_fs_driver.
 */
+
 typedef enum {INVALID 	   = 0   , 
-	      STATIC  	   = 100 ,
-	      MULTZ   	   = 101 ,
+              __MIN_TYPE   = 100,
+	      STATIC  	   = 100 ,       /* MULTZ has been removed */ 
 	      MULTFLT 	   = 102 ,       /* EQUIL has been removed */
 	      FIELD   	   = 104 ,       /* WELL has been removed  */
 	      GEN_KW  	   = 107 ,        
-	      RELPERM 	   = 108 ,       
-	      HAVANA_FAULT = 109 ,   
-	      SUMMARY      = 110 ,      
-              TPGZONE      = 111 ,       
-              GEN_DATA     = 113 , /* Mind the gap - a type has been removed. */
-	      PILOT_POINT  = 114 } enkf_impl_type;
+	      HAVANA_FAULT = 109 ,       /* RELPERM has been removed */
+	      SUMMARY      = 110 ,       /* TPGZONE has been removed */
+              GEN_DATA     = 113 ,       /* PILOT_POINT has been removed */
+              __MAX_TYPE   = 113 } enkf_impl_type;
+
+  
 
 /* 
    Should update the functions enkf_types_get_impl_name() and

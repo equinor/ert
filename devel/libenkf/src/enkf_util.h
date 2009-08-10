@@ -299,6 +299,8 @@ void prefix ## _alloc_stats(const prefix ## _type ** ensemble , int ens_size , p
 /*****************************************************************/
 
 
+double enkf_util_random_uniform();
+int    enkf_util_random_int();
 
 void    enkf_util_truncate(void *  , int  , ecl_type_enum  , void *  , void *);
 void 	enkf_util_rand_stdnormal_vector(int  , double *);

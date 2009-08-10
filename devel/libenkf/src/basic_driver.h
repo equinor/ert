@@ -5,19 +5,22 @@ extern "C" {
 #endif
 #include <buffer.h>
 #include <stringlist.h>
+#include <enkf_node.h>
+#include <enkf_config_node.h>
+
 
 typedef struct basic_driver_struct         basic_driver_type;
 typedef struct basic_index_driver_struct   basic_driver_index_type;
 
 
-typedef void (save_kwlist_ftype)  (void * , int , int , const stringlist_type *);  /* Functions used to load/store restart_kw_list instances. */
-typedef void (load_kwlist_ftype)  (void * , int , int , stringlist_type *);
+typedef void (save_kwlist_ftype)  (void * , int , int , buffer_type * buffer);  /* Functions used to load/store restart_kw_list instances. */
+typedef void (load_kwlist_ftype)  (void * , int , int , buffer_type * buffer);          
 
 typedef void (select_dir_ftype)   (void * driver, const char * dir);
-typedef void (load_node_ftype) 	  (void * driver, const char * , int , int , buffer_type * );
-typedef void (save_node_ftype) 	  (void * driver, const char * , int , int , buffer_type * );
-typedef void (unlink_node_ftype)  (void * driver, const char * , int , int );
-typedef bool (has_node_ftype)     (void * driver, const char * , int , int );
+typedef void (load_node_ftype) 	  (void * driver, const enkf_config_node_type * , int , int , buffer_type * );
+typedef void (save_node_ftype) 	  (void * driver, const enkf_config_node_type * , int , int , buffer_type * );
+typedef void (unlink_node_ftype)  (void * driver, const enkf_config_node_type * , int , int );
+typedef bool (has_node_ftype)     (void * driver, const enkf_config_node_type * , int , int );
 typedef void (free_driver_ftype)  (void * driver);
 
 

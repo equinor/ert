@@ -12,6 +12,7 @@ extern "C" {
 
 typedef struct site_config_struct site_config_type;
 
+const char             * site_config_get_plot_driver(site_config_type * site_config);
 bool                     site_config_get_statoil_mode(const site_config_type * site_config );
 const char             * site_config_get_image_type(site_config_type * site_config);
 const char             * site_config_get_image_viewer(site_config_type * site_config);

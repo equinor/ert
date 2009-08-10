@@ -11,10 +11,23 @@
 
 
 
+static inline int randint() {
+  return rand();
+}
+
+double enkf_util_random_uniform() {
+  return randint() * 1.0 / RAND_MAX;
+}
+
+int enkf_util_random_int() {
+  return randint();
+}
+
+
 static void enkf_util_rand_dbl(int N , double max , double *R) {
   int i;
   for (i=0; i < N; i++) 
-    R[i] = rand() * max / RAND_MAX;
+    R[i] = randint() * max / RAND_MAX;
 }
 
 

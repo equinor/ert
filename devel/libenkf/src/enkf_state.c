@@ -553,7 +553,9 @@ INCLDUE
   enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , "---" , "The final report step for this simulation - formated withh %04d.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , "---" , "The ECLIPSE restart file this simulation starts with.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , "---" , "The ECLIPSE restart file this simulation should end with.");
-
+  enkf_state_add_subst_kw(enkf_state , "RANDINT"       , "---" , "Random integer value");
+  enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , "---" , "Random float value");
+  
   {
     hash_iter_type * iter = hash_iter_alloc(data_kw);
     const char * key = hash_iter_get_next_key(iter);
@@ -596,17 +598,15 @@ static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char 
 */
 
 
-static void enkf_state_add_node_internal(enkf_state_type * enkf_state , const char * node_key , const enkf_node_type * node) {
-  if (enkf_state_has_node(enkf_state , node_key)) 
-    util_abort("%s: node:%s already added  - aborting \n",__func__ , node_key);
-  hash_insert_hash_owned_ref(enkf_state->node_hash , node_key , node, enkf_node_free__);
-}
-
-
-
 void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , const enkf_config_node_type * config) {
   enkf_node_type *enkf_node = enkf_node_alloc(config);
-  enkf_state_add_node_internal(enkf_state , node_key , enkf_node);    
+  if (enkf_state_has_node(enkf_state , node_key)) 
+    util_abort("%s: node:%s already added  - aborting \n",__func__ , node_key);
+  hash_insert_hash_owned_ref(enkf_state->node_hash , node_key , enkf_node, enkf_node_free__);
+  
+  /* Setting the global subst list so that the GEN_KW templates can contain e.g. <IENS> and <CWD>. */
+  if (enkf_node_get_impl_type( enkf_node ) == GEN_KW)
+    gen_kw_set_global_subst_list( enkf_node_value_ptr( enkf_node ) , enkf_state->subst_list );
 }
 
 
@@ -1200,16 +1200,20 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int s
   char * step2_s 	   = util_alloc_sprintf("%d" , step2);
   char * step1_s04 	   = util_alloc_sprintf("%04d" , step1);
   char * step2_s04 	   = util_alloc_sprintf("%04d" , step2);
-  char * restart_file1 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step1);
-  char * restart_file2 = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step2);
+  char * restart_file1     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step1);
+  char * restart_file2     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step2);
+  char * randint_s         = util_alloc_sprintf("%d"      , enkf_util_random_int());
+  char * randfloat_s       = util_alloc_sprintf("%12.10f" , enkf_util_random_uniform()); 
+
   
-  enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	   , step1_s , NULL);
-  enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	   , step2_s , NULL);
-  enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , step1_s04 , NULL);
-  enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , step2_s04 , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	   , step1_s   , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	   , step2_s   , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , step1_s04     , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , step2_s04     , NULL);
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1 , NULL);
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2 , NULL);
-
+  enkf_state_add_subst_kw(enkf_state , "RANDINT"       , randint_s     , NULL);
+  enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , randfloat_s   , NULL); 
 
   /**
      The <INIT> magic string:
@@ -1230,7 +1234,8 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int s
     free(data_initialize);
   }
 
-  
+  free(randfloat_s);
+  free(randint_s);
   free(step1_s);
   free(step2_s);
   free(step1_s04);
@@ -1310,6 +1315,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       enkf_state_try_fread(enkf_state , DYNAMIC_STATE + STATIC_STATE , run_info->step1 , run_info->init_state_dynamic);
     
     
+    enkf_state_set_dynamic_subst_kw(  enkf_state , run_info->step1 , run_info->step2);
     enkf_state_ecl_write( enkf_state );
     
     {
@@ -1317,8 +1323,6 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       ecl_util_init_stdin( stdin_file , my_config->eclbase );
       free(stdin_file);
     }
-    
-    enkf_state_set_dynamic_subst_kw(  enkf_state , run_info->step1 , run_info->step2);
     
     /* Writing the ECLIPSE data file. */
     {
