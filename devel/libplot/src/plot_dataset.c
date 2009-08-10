@@ -30,7 +30,7 @@ struct plot_dataset_struct {
   int     	      data_mask;       /**< An integer value written as a sum of values from the enum plot_data_types - says which type of data (x/y/...) is supplied. */
   plot_data_type      data_type;       /**< One of the types: plot_xy, plot_xy1y2, plot_x1x2y , plot_xline , plot_yline */      
 
-  plot_style_type       style;        /**< The graph style: line|points|line_points */
+  plot_style_type       style;         /**< The graph style: line|points|line_points */
 
   line_attribute_type   line_attr;
   point_attribute_type  point_attr;
@@ -312,29 +312,26 @@ void plot_dataset_append_point_x1x2y(plot_dataset_type *d , double x1 , double x
 
 /*----*/
 
-void plot_dataset_append_vector_xline(plot_dataset_type *d , int size, const double * x) {
-  plot_dataset_assert_type(d , PLOT_XLINE);
-  plot_dataset_append_vector__(d , size , x , NULL , NULL , NULL , NULL , NULL);
+
+/**
+   The xline and yline datasets can only be used to plot
+   _one_single_line_. If you want more than one vertical/horizontal
+   line you must instantiate one plot_dataset for each line.
+*/
+
+
+void plot_dataset_set_xline(plot_dataset_type *d , double x) {
+  if (isfinite(x))
+    double_vector_iset( d->x , 0 , x );
 }
-
-
-void plot_dataset_append_point_xline(plot_dataset_type *d , double x) {
-  plot_dataset_append_vector_xline(d , 1 , &x);
-}
-
-
 
 
 /*----*/
 
-void plot_dataset_append_vector_yline(plot_dataset_type *d , int size, const double * y) {
-  plot_dataset_assert_type(d , PLOT_YLINE);
-  plot_dataset_append_vector__(d , size , NULL , y , NULL , NULL , NULL , NULL );
-}
 
-
-void plot_dataset_append_point_yline(plot_dataset_type *d , double y) {
-  plot_dataset_append_vector_yline(d , 1 , &y);
+void plot_dataset_set_yline(plot_dataset_type *d , double y) {
+  if (isfinite(y))
+    double_vector_iset( d->y , 0 , y );
 }
 
 
@@ -349,6 +346,8 @@ void plot_dataset_append_vector_hist(plot_dataset_type *d , int size, const doub
 }
 
 
+
+
 void plot_dataset_append_point_hist(plot_dataset_type *d , double x) {
   plot_dataset_append_vector_hist(d , 1 , &x);
 }
@@ -360,119 +359,26 @@ void plot_dataset_append_point_hist(plot_dataset_type *d , double x) {
 
 
 
-void plot_dataset_draw(int stream, plot_dataset_type * d , const plot_range_type * range) {
-  const int size = plot_dataset_get_size( d );
-  plsstrm(stream);
-  
-  pllsty(d->line_attr.line_style);                                   /* Setting solid/dashed/... */
-  plwid(d->line_attr.line_width * PLOT_DEFAULT_LINE_WIDTH);          /* Setting line width.*/
-  plcol0(d->line_attr.line_color);                                   /* Setting line color. */
-  plssym(0 , d->point_attr.symbol_size * PLOT_DEFAULT_SYMBOL_SIZE);  /* Setting the size for the symbols. */
-  
-  
+void plot_dataset_draw(plot_dataset_type * d , plot_driver_type * driver, const plot_range_type * range) {
+
   switch (d->data_type) {
   case(PLOT_XY):
-    {
-      plot_style_type style       = d->style;
-      plot_color_type point_color = d->point_attr.point_color;
-
-      /* 
-	 Special case: 
-	 -------------
-         If only one single point AND plot_style == LINE, we
-	 effectively change the plot_style to POINTS (and use the
-	 line_color) - otherwise the single point will not be visible.
-	 
-      */
-      
-      if ((style == LINE) && (size == 1)) {
-	style       = POINTS;
-	point_color = d->line_attr.line_color;
-	/* The point style will remain at default value. */
-      }
-      
-      /** Starting with the line */    
-      if (style == LINE || style == LINE_POINTS) 
-	plline(size , double_vector_get_ptr(d->x) , double_vector_get_ptr(d->y));
-      /** Then the points. */
-      if (style == POINTS || style == LINE_POINTS) {
-	plcol0(point_color);       /* Setting the color */
-	plpoin(size , double_vector_get_ptr(d->x) , double_vector_get_ptr(d->y) , d->point_attr.symbol_type);
-      }
-    }
+    plot_driver_plot_xy( driver , d->label , d->x , d->y , d->style , d->line_attr , d->point_attr);
     break;
   case(PLOT_HIST):
-    {
-      int    bins = (int) sqrt( size );
-      double xmin = plot_range_get_xmin( range );
-      double xmax = plot_range_get_xmax( range );
-      {
-        /*
-          Could for some fuxxxing reason not get the plhist() function
-          to work, and had to resort to the low level plbin function.
-        */
-        double * limits = util_malloc(sizeof * limits * (bins + 1) , __func__);
-        double * x      = util_malloc(sizeof * x * bins , __func__); 
-        double * y      = util_malloc(sizeof * y * bins , __func__);
-        int i;
-        double delta = (xmax - xmin) / bins;
-        
-        for (i= 0; i <= bins; i++)
-          limits[i] = xmin + i*delta;
-        
-        for (i=0; i < bins; i++) {
-          y[i] = 0;
-          x[i] = 0.50 * (limits[i] + limits[i + 1]);
-        }
-        
-        
-        for (i=0; i < size; i++) {
-          double value = double_vector_iget(d->x , i);
-          int j;
-          for (j = 1; j <= bins; j++)
-            if (value < limits[j]) {
-              y[j-1]++;
-              break;
-            }
-        }
-        
-        plbin(bins , x , y , PL_BIN_CENTRED + PL_BIN_NOEXPAND);
-        free(x);
-        free(y);
-        free(limits);
-      }
-      //plhist(size , double_vector_get_ptr(d->x) , xmin , xmax , bins , 0 /* PL_HIST_DEFAULT */);
-    }
+    plot_driver_plot_hist( driver , d->label , d->x , d->line_attr );
     break;
   case(PLOT_XY1Y2):
-    plerry(size , double_vector_get_ptr(d->x) , double_vector_get_ptr(d->y1) , double_vector_get_ptr(d->y2));
+    plot_driver_plot_xy1y2( driver , d->label , d->x , d->y1 , d->y2 , d->line_attr);
     break;
   case(PLOT_X1X2Y):
-    plerrx(size , double_vector_get_ptr(d->x1) , double_vector_get_ptr(d->x2) , double_vector_get_ptr(d->y) );
+    plot_driver_plot_x1x2y( driver , d->label , d->x1 , d->x2 , d->y , d->line_attr);
     break;
   case(PLOT_YLINE):
-    {
-      double x[2] = {plot_range_get_xmin(range) , plot_range_get_xmax(range)};
-      double y[2];
-      
-      for (int i=0; i < size; i++) {
-	y[0] = double_vector_iget(d->y , i);
-	y[1] = double_vector_iget(d->y , i);
-	plline(2 , x , y);
-      }
-    }
+    plot_driver_plot_yline( driver , d->label , plot_range_get_xmin(range) , plot_range_get_xmax(range) , double_vector_iget( d->y , 0) , d->line_attr);
     break;
   case(PLOT_XLINE):
-    {
-      double y[2] = {plot_range_get_ymin(range) , plot_range_get_ymax(range)};
-      double x[2];
-      
-      for (int i=0; i < size; i++) {
-	x[0] = double_vector_iget(d->x , i);
-	x[1] = double_vector_iget(d->x , i);
-	plline(2 , x , y);
-      }
-    }
+    plot_driver_plot_xline( driver , d->label , double_vector_iget( d->x , 0) , plot_range_get_ymin(range) , plot_range_get_ymax(range) , d->line_attr);
     break;
   default:
     util_abort("%s: internal error ... \n",__func__);
@@ -485,9 +391,10 @@ void plot_dataset_update_range_histogram(plot_dataset_type * d, plot_range_type 
   plot_range_set_auto_xmin(range , double_vector_get_min( d->x ));
   plot_range_set_auto_xmax(range , double_vector_get_max( d->x ));
   plot_range_set_auto_ymin(range , 0 );
-  plot_range_set_auto_ymax(range , double_vector_size( d->x ) / 4);  /* Pure heuristics. */
-    
+  plot_range_set_auto_ymax(range , double_vector_size( d->x ) );  /* Pure heuristics. */
 }
+
+
 
 
 /**

@@ -6,85 +6,64 @@
 #include <plot_const.h>
 #include <plot_driver.h>
 #include <plplot_driver.h>
+#include <text_driver.h>
 #include <hash.h>
 #include <vector.h>
 
-  /** Device name for the plot, where you have the following 
-   * list of choices:
-   * - xwin:       X-Window (Xlib)
-   * - tk:         Tcl/TK Window
-   * - gcw:        Gnome Canvas Widget
-   * - ps:         PostScript File (monochrome)
-   * - psc:        PostScript File (color)
-   * - xfig:       Fig file
-   * - hp7470:     HP 7470 Plotter File (HPGL Cartridge, Small Plotter)
-   * - hp7580:     HP 7580 Plotter File (Large Plotter)
-   * - lj_hpgl:    HP Laserjet III, HPGL emulation mode
-   * - pbm:        PDB (PPM) Driver
-   * - png:        PNG file
-   * - jpeg:       JPEG file
-   * - null:       Null device
-   * - tkwin:      New tk driver
-   * - mem:        User-supplied memory device
-   * - gif:        GIF file
-   * - svg:        Scalable Vector Graphics (SVG 1.1)
-   *
-   * @remarks: this is set with plot_initialize().
-   */
-
 /**
- * @brief Contains information about a plotting window.
- */
+   The plotting functionality is centered around the plot_type
+   struct. The plot_type object contains essentially three things:
+
+   1. It contains all the data which should be plotted; this is
+      handled as a vector of plot_dataset instances. 
+
+   2. It contains configurutaion options which are common to 'all'
+      plots; i.e. labels colors e.t.c.
+
+   3. It contains a plot_driver instance - this is a struct containing
+      function pointers, and optionally state information. The
+      functions in plot_driver do the actual plotting. See the
+      documentation in plot_driver.c for the various functions and
+      how/when they are called.
+
+*/
+
 
 
 
 
 
 struct plot_struct {
-  char       *timefmt; 
-  char       *plbox_xopt;
-  char       *plbox_yopt;
-  const char *filename; /**< Filename for the plot */    
-  vector_type        * dataset;         /* Vector of datasets to plot. */ 
-  hash_type          * dataset_hash;    /* Hash table of the datasets - indexed by label. */
-  bool                 is_histogram;    /* If this is true it can only contain histogram datasets. */
+  char               * timefmt;          /* The format string used to convert from time_t -> strtime on the x-axis; NULL if not used. */
+  vector_type        * dataset;          /* Vector of datasets to plot. */ 
+  hash_type          * dataset_hash;     /* Hash table of the datasets - indexed by label. */
+  bool                 is_histogram;     /* If this is true it can only contain histogram datasets. */
   
-  
-  const char *device;
-  int stream;	     /**< The plots current stream ID */
-  int *tot_streams;  /**< Keeps strack of total streams */
-  
-  char *xlabel;	 /**< Label for the x-axis */
-  char *ylabel;	 /**< Label for the y-axis */
-  char *title;	/**< Plot title */
+  char               * xlabel;	         /* Label for the x-axis */
+  char               * ylabel;	         /* Label for the y-axis */
+  char               * title;	         /* Plot title */      
 
-  plot_color_type label_color;  /**< Color for the labels */
-  plot_color_type box_color;    /**< Color for the axis / box surrounding the plot. */
-  double label_font_size;       /**< Scale factor for label font size. */ 
-  int 	 height;		/**< The height of your plot window */
-  int 	 width;         	/**< The width of your plot window */
+  plot_color_type      label_color;      /* Color for the labels */
+  plot_color_type      box_color;        /* Color for the axis / box surrounding the plot. */
+  double               axis_font_size;   /* Scale factor for the font used on the axes. */
+  double               label_font_size;  /* Scale factor for label font size. */ 
+  int 	               height;	         /* The height of your plot window */
+  int 	               width;            /* The width of your plot window */
   
-  plot_range_type  * range;       /**< Range instance */
-  /******************************************************************/
-  plot_driver_type * driver;    /* Not there yet ... */
+  plot_range_type    * range;            /* Range instance - keeping control over the min/max values on the x and y axis.*/
+  /*****************************************************************/
+  plot_driver_type   * driver;           /* Plot driver - mainly list of function pointers to 'actually do it'. */
 };
 
 
-int plot_get_stream(plot_type * plot) {
-  return plot->stream;
-}
 
 
+/*
+  Internalizes the size of the window; the window size will be
+  actually set at a later stage with a call to the driver function
+  driver->set_window_size.
+*/
 
-
-/**
- * @brief Setup window size.
- * @param plot your current plot
- * @param width the width of your window.
- * @param height the height of you window.
- * 
- * Sets up your window geometry. This has to be set before initializing the window, else default size is set.
- */
 void plot_set_window_size(plot_type * plot, int width, int height)
 {
   plot->width  = width;
@@ -93,30 +72,12 @@ void plot_set_window_size(plot_type * plot, int width, int height)
 
 
 
-
-void plot_set_plbox_xopt(plot_type * plot , const char * xopt) {
-  plot->plbox_xopt = util_realloc_string_copy( plot->plbox_xopt , xopt);
-}
-
-
-void plot_set_plbox_yopt(plot_type * plot , const char * yopt) {
-  plot->plbox_yopt = util_realloc_string_copy( plot->plbox_yopt , yopt);
-}
-
-
 /** 
     Observe that this function also tells the plot driver that date
     labels should be used on the x-axis.
 */
 
 void plot_set_timefmt(plot_type * plot , const char * timefmt) {
-  if (strchr( plot->plbox_xopt , 'd') == NULL) {
-    /* The axis is not set up with date formatting - add a "d" to the plbox_xopt 
-       variable.    */
-    char * new_xopt = util_alloc_sprintf("%s%c" , plot->plbox_xopt , 'd');
-    plot_set_plbox_xopt(plot , new_xopt);
-    free(new_xopt);
-  }
   plot->timefmt = util_realloc_string_copy( plot->timefmt , timefmt );
 }
 
@@ -155,50 +116,54 @@ const char * plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) 
 }
 
 
-
 /**
- * @return Returns a new plot_type pointer.
- * @brief Create a new plot_type
- *
- * Create a new plot - allocates the memory.
- */
-plot_type * plot_alloc()
+   This function allocates the plot handle. The first argument is a
+   string, which identifies the driver, and the second argument is
+   passed directly on the to driver allocation routine.
+*/
+
+plot_type * plot_alloc(const char * __driver_type , void * init_arg)
 {
-  plot_type *plot;
-  
-  plot = util_malloc(sizeof *plot , __func__);
-  plot->stream 	  	= -1;
-  plot->xlabel 	  	= NULL;
-  plot->ylabel 	  	= NULL;
-  plot->title  	  	= NULL;
+  plot_type * plot = util_malloc(sizeof *plot , __func__);
+  {
+    /*
+      Loading the driver:
+    */
+    char * driver_type = util_alloc_string_copy( __driver_type );
+    util_strupr( driver_type );
+
+    if (util_string_equal( driver_type , "PLPLOT"))
+      plot->driver  = plplot_driver_alloc(init_arg);
+    else if (util_string_equal( driver_type , "TEXT"))
+      plot->driver  = text_driver_alloc(init_arg);
+    else
+      util_abort("%s: plot driver:%s not implemented ... \n",__func__ , __driver_type);
+    
+    plot_driver_assert( plot->driver );
+
+    free( driver_type );
+  }
+
+  /* Initializing plot data which is common to all drivers. */
   plot->is_histogram 	= false;
   plot->dataset         = vector_alloc_new();
   plot->dataset_hash    = hash_alloc();
+  plot->range           = plot_range_alloc();
+  plot->timefmt         = NULL;
+  plot->xlabel          = NULL;
+  plot->ylabel          = NULL;
+  plot->title           = NULL;
   
-  plot->range = plot_range_alloc();
+  /* 
+     These functions only manipulate the internal plot_state
+     variables, and do not call the driver functions.
+  */
   plot_set_window_size(plot , PLOT_DEFAULT_WIDTH , PLOT_DEFAULT_HEIGHT);
   plot_set_box_color(plot , PLOT_DEFAULT_BOX_COLOR);
   plot_set_label_color(plot , PLOT_DEFAULT_LABEL_COLOR);
   plot_set_label_fontsize(plot , 1.0);
+  plot_set_axis_fontsize(plot , 1.0);
   plot_set_labels(plot , "" , "" , ""); /* Initializeing with empty labels. */
-
-  plot->plbox_xopt = NULL;
-  plot->plbox_yopt = NULL;
-  plot_set_plbox_xopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
-  plot_set_plbox_yopt(plot , PLOT_DEFAULT_PLBOX_XOPT);
-
-  plot->timefmt = NULL;
-  {
-    plot_driver_enum driver = PLPLOT;
-
-    switch (driver) {
-    case(PLPLOT):
-      plot->driver  = plplot_driver_alloc();
-      break;
-    default:
-      util_abort("%s: plot driver not implemented ... \n");
-    }
-  }
 
   return plot;
 }
@@ -240,55 +205,6 @@ plot_dataset_type * plot_alloc_new_dataset(plot_type * plot , const char * __lab
 }  
 
 
-
-
-
-/**
- * @brief Initialize a new plot
- * @param plot your current plot
- * @param dev the output device
- * @param filename the output filename 
- * @param w define it we are plotting to a canvas or normal
- * 
- * This function has to be called before you set any other information
- * on the plot_type *plot. This is because plinit() is called inside
- * this function.
- */
-
-void plot_initialize(plot_type * plot, const char *dev, const char *filename) {
-  static int output_stream = 0;
-  static int tot_streams   = 0;
-
-  
-  plot->stream      = output_stream;
-  plot->tot_streams = &tot_streams;
-  plot->device      = dev;
-  plot->filename    = filename;
-  plsstrm(plot->stream);
-  
-  if (dev) {
-    if (strcmp(plot->device, "xwin"))
-      plsfnam(plot->filename);
-  }
-  if (dev)
-    plsdev(plot->device);
-
-  /** This color initialization must be here - do not really understand what for. */
-  plscol0(WHITE, 255, 255, 255);
-  plscol0(BLACK, 0, 0, 0);
-  
-  plot->driver->set_window_size( plot->driver , plot->width , plot->height );
-
-  plfontld(0);
-  plinit();
-  
-  /* Use another input stream next time */
-  output_stream++;
-  tot_streams++;
-}
-
-
-
 static void plot_free_all_datasets(plot_type * plot) {
   vector_clear( plot->dataset );
   hash_clear( plot->dataset_hash );
@@ -296,27 +212,14 @@ static void plot_free_all_datasets(plot_type * plot) {
 
 
 /**
- * @brief Free your plot plot
- * @param plot your current plot
- * 
- * Use this function to free your allocated memory from plot_alloc().
- */
+   This function will close all pending/halfopen plot operations and
+   free all resources used by the plot.
+*/
 void plot_free(plot_type * plot)
 {
-  
+  plot_driver_free( plot->driver );
   plot_free_all_datasets(plot);
-  
-  plsstrm(plot->stream);
-  plend1();
-  
-  --*plot->tot_streams;
-  if (!*plot->tot_streams) 
-    plend();
-  
   plot_range_free(plot->range);
-  free(plot->plbox_xopt);
-  free(plot->plbox_yopt);
-  plot->driver->free_driver( plot->driver );
   util_safe_free(plot->timefmt);
   util_safe_free(plot);
 }
@@ -347,84 +250,34 @@ void plot_free(plot_type * plot)
 
 */
 
-
-
 static void plot_set_range__(plot_type * plot) {
-  double x1,x2,y1,y2;
-  
   plot_update_range(plot , plot->range);
-  plot_range_apply(plot->range , &x1 , &x2 , &y1 , &y2);
-  plot->driver->set_range(plot->driver , x1 , x2 , y1 , y2);
-  
+  plot_range_apply( plot->range );
 }
+
+
 
 
 /**
-   This function does the actual plotting. Observe the following design principle:
-
-    * All the toolkit dependant functions (i.e. plxxxx in the case of
-      plplot) should be assembled here in this "region", and have a
-      toolkit spesific suffix. This will hopefully simplify future
-      porting to another toolkit.
-
-      
-    * The exception to this rule is the function plot_dataset_draw()
-      which will invoke toolkit spesific functions for drawing
-      lines/point/errorbars/...
-
+   This were the plot is finally made.
 */
-
 void plot_data(plot_type * plot)
 {
   int iplot;
+  plot_driver_type * driver = plot->driver;
   
-  plsstrm(plot->stream);  
-  pladv(0);  /* And what does this do ... */
-  plvsta();
-
   plot_set_range__(plot);
-  plcol0(plot->label_color);
-  plschr(0, plot->label_font_size * PLOT_DEFAULT_LABEL_FONTSIZE);
-  if (plot->timefmt != NULL)
-    pltimefmt(plot->timefmt);
-  plbox(plot->plbox_xopt, 0.0, 0, plot->plbox_yopt , 0.0, 0);
   
-  if (!plot->xlabel || !plot->ylabel || !plot->title) 
-    fprintf(stderr, "ERROR ID[%d]: you need to set lables before setting the viewport!\n",plot->stream);
-  else {
-    plcol0(plot->label_color);
-    plschr(0, plot->label_font_size * PLOT_DEFAULT_LABEL_FONTSIZE);
-    pllab(plot->xlabel, plot->ylabel, plot->title);
-  }
+  plot_driver_set_window_size( driver , plot->width , plot->height );
+  plot_driver_set_labels( driver , plot->title , plot->xlabel  , plot->ylabel , plot->label_color , plot->label_font_size);
+  plot_driver_set_axis( driver , plot->range , plot->timefmt , plot->box_color , plot->axis_font_size );
   
-
   for (iplot = 0; iplot < vector_get_size( plot->dataset ); iplot++) 
-    plot_dataset_draw(plot->stream , vector_iget(plot->dataset , iplot) , plot->range);
+    plot_dataset_draw(vector_iget(plot->dataset , iplot) , driver , plot->range);
 }
 
 
 
-
-
-void plot_set_xlabel(plot_type * plot , const char * xlabel) {
-  plot->xlabel = util_realloc_string_copy(plot->xlabel , xlabel);
-}
-
-void plot_set_ylabel(plot_type * plot , const char * ylabel) {
-  plot->ylabel = util_realloc_string_copy(plot->ylabel , ylabel);
-}
-
-void plot_set_title(plot_type * plot , const char * title) {
-  plot->title = util_realloc_string_copy(plot->title , title);
-}
-
-
-void plot_set_labels(plot_type * plot, const char *xlabel, const char *ylabel, const char *title)
-{
-  plot_set_xlabel(plot , xlabel);
-  plot_set_ylabel(plot , ylabel);
-  plot_set_title(plot , title);
-}
 
 
 
@@ -505,6 +358,32 @@ void plot_set_label_fontsize(plot_type * plot , double label_font_size_scale) {
   plot->label_font_size = label_font_size_scale;
 }
 
+void plot_set_axis_fontsize(plot_type * plot , double axis_font_size_scale) {
+  plot->axis_font_size = axis_font_size_scale;
+}
+
+void plot_set_xlabel(plot_type * plot , const char * xlabel) {
+  plot->xlabel = util_realloc_string_copy(plot->xlabel , xlabel);
+}
+
+void plot_set_ylabel(plot_type * plot , const char * ylabel) {
+  plot->ylabel = util_realloc_string_copy(plot->ylabel , ylabel);
+}
+
+void plot_set_title(plot_type * plot , const char * title) {
+  plot->title = util_realloc_string_copy(plot->title , title);
+}
+
+
+void plot_set_labels(plot_type * plot, const char *xlabel, const char *ylabel, const char *title)
+{
+  plot_set_xlabel(plot , xlabel);
+  plot_set_ylabel(plot , ylabel);
+  plot_set_title(plot , title);
+}
+
+
+
 
 /**
  * @brief Get extrema values
@@ -528,8 +407,4 @@ void plot_update_range(plot_type * plot, plot_range_type * range) {
   }
 }
 
-
-int plot_get_num_datasets(plot_type* plot) {
-  return vector_get_size( plot->dataset );
-};
 

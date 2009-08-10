@@ -40,6 +40,8 @@
 struct plot_range_struct {
   double padding[4];     
   double limits[4];
+  double final[4];  
+  bool   final_set[4];
   bool   set[4];
   bool   invert_x_axis;
   bool   invert_y_axis; 
@@ -109,6 +111,39 @@ void plot_range_set_auto_xmax(plot_range_type * plot_range , double xmax) {
 void plot_range_set_auto_xmin(plot_range_type * plot_range , double xmin) {
   plot_range_set_auto__(plot_range , XMIN , xmin);
 }
+
+/*****************************************************************/
+/* 
+   These functions will fail if the corresponding value has not
+   been set, either from an automatic set, or manually.
+*/
+
+static double plot_range_get_final__(const plot_range_type * plot_range , int index) {
+  if (plot_range->final_set[index])
+    return plot_range->limits[index];
+  else {
+    util_abort("%s: tried to get xmin - but that has not been set.\n",__func__);
+    return 0;
+  }
+}
+
+double plot_range_get_final_xmin(const plot_range_type * plot_range) {
+  return plot_range_get_final__(plot_range , XMIN);
+}
+
+double plot_range_get_final_xmax(const plot_range_type * plot_range) {
+  return plot_range_get_final__(plot_range , XMAX);
+}
+
+double plot_range_get_final_ymin(const plot_range_type * plot_range) {
+  return plot_range_get_final__(plot_range , YMIN);
+}
+
+double plot_range_get_final_ymax(const plot_range_type * plot_range) {
+  return plot_range_get_final__(plot_range , YMAX);
+}
+
+
 
 /*****************************************************************/
 /* 
@@ -221,6 +256,7 @@ plot_range_type * plot_range_alloc() {
     range->limits[i]      = 0;
     range->padding[i]     = 0.025;  /* Default add some padding */
     range->set[i]         = false;
+    range->final_set[i]   = false;
     range->auto_range[i]  = true;
   }
   
@@ -260,7 +296,7 @@ void plot_range_set_range( plot_range_type * range , double xmin , double xmax ,
 */
 
    
-void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , double *_y1 , double *_y2) {
+void plot_range_apply(plot_range_type * plot_range) {
   double x1 = 0;
   double x2 = 0;
   double y1 = 0;
@@ -326,11 +362,16 @@ void plot_range_apply(plot_range_type * plot_range, double *_x1 , double *_x2 , 
       }
     }
   }
-
-  *_y1 = y1;
-  *_y2 = y2;
-  *_x1 = x1;
-  *_x2 = x2;
+  {
+    int i;
+    for (i=0; i < 4; i++)
+      plot_range->final_set[i] = true;
+  }
+  
+  plot_range->final[XMIN] = x1;
+  plot_range->final[XMAX] = x2;
+  plot_range->final[YMIN] = y1;
+  plot_range->final[YMAX] = y2;
 }
 
 
