@@ -146,7 +146,22 @@ void text_plot_hist( plot_driver_type * driver, const char * label , const doubl
 }
 
 
+/**
+   init_arg should be an arg_pack instance with one string; the string
+   should be the name of a directory, wherein all the plot files will
+   be put. If the directory does not exist, it will be created.
 
+   Example from calling scope:
+   ---------------------------
+   {
+      arg_pack_type * arg_pack = arg_pack_alloc();
+      arg_pack_append_ptr( arg_pack , plot_path );
+
+      plot = plot_alloc( "TEXT" , arg_pack );
+      arg_pack_free( arg_pack );
+   }
+*/
+   
 
 plot_driver_type * text_driver_alloc(void * init_arg) {
   plot_driver_type * driver = plot_driver_alloc_empty(PLPLOT , "TEXT");

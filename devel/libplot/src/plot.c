@@ -118,8 +118,10 @@ const char * plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) 
 
 /**
    This function allocates the plot handle. The first argument is a
-   string, which identifies the driver, and the second argument is
-   passed directly on the to driver allocation routine.
+   string, which identifies the driver, the second argument is passed
+   directly on the to driver allocation routine; and you must check
+   the documentation of the specific driver allocation routine to see
+   what init_arg should be like.
 */
 
 plot_type * plot_alloc(const char * __driver_type , void * init_arg)

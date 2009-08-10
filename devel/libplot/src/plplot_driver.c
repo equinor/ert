@@ -251,6 +251,24 @@ void plplot_plot_hist( plot_driver_type * driver, const char * label , const dou
 
 
 
+/**
+   This function allocates a plplot based plot driver. The init_arg
+   pointer should point to an arg_pack instance containing two
+   strings; the first should be the filename for the plot file
+   created, and the second the device type (i.e. png|jgg|..).
+
+   Example from calling scope:
+   ---------------------------
+   {
+      arg_pack_type * arg_pack = arg_pack_alloc();
+      arg_pack_append_ptr( arg_pack , filename );
+      arg_pack_append_ptr( arg_pack , "png");
+
+      plot = plot_alloc( "PLPLOT" , arg_pack );
+      arg_pack_free( arg_pack );
+   }
+*/
+
 plot_driver_type * plplot_driver_alloc(void * init_arg) {
   plot_driver_type * driver = plot_driver_alloc_empty(PLPLOT , "PLPLOT");
   driver->state           = plplot_state_alloc( init_arg );
