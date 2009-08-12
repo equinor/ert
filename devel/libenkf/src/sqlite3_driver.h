@@ -75,15 +75,15 @@ void sqlite3_driver_free(
 //  int          restart_nr);
 
 
-/**
-  Change casename.
-*/
-void sqlite3_driver_change_casename(
-  void * _driver,
-  const char * casename);
+///**
+//  Change casename.
+//*/
+//void sqlite3_driver_change_casename(
+//  void * _driver,
+//  const char * casename);
 
 
-void sqlite3_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , bool read , const char * db_file );
+void sqlite3_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , const char * db_file );
 
 /**
    The two integers from the mount info have already been read at the enkf_fs level.

@@ -162,8 +162,10 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
   transform_ftype * transf   = NULL;
 
   func_name = util_fscanf_alloc_token(stream);
-  if (func_name == NULL) 
+  if (func_name == NULL) {
+    fprintf(stderr,"Problem at file:line: %s:%d \n",util_alloc_filename_from_stream( stream ) , util_get_current_linenr( stream ));
     util_abort("%s: could not locate name of transformation - aborting \n",__func__);
+  }
   
   arg_pack = arg_pack_alloc();
   if (strcmp(func_name , "NORMAL") == 0) {

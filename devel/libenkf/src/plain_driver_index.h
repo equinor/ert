@@ -5,6 +5,6 @@
 typedef struct plain_driver_index_struct plain_driver_index_type;
 
 void * plain_driver_index_fread_alloc(const char *  , FILE * );
-void   plain_driver_index_fwrite_mount_info(FILE *  , bool , const char * );
+void   plain_driver_index_fwrite_mount_info(FILE *  , const char * );
 
 #endif

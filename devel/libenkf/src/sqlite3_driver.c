@@ -425,9 +425,9 @@ bool sqlite3_driver_has_node(
 
 
 /**
-  Change casename.
+   Change casename.
 */
-void sqlite3_driver_change_casename(  void * _driver,  const char * casename) {
+void sqlite3_driver_change_casename(  void * _driver,  const char * casename, bool read) {
   sqlite3_driver_type * driver = sqlite3_driver_safe_cast( _driver );
   driver->casename = util_realloc_string_copy(driver->casename, casename);
 }
@@ -436,8 +436,7 @@ void sqlite3_driver_change_casename(  void * _driver,  const char * casename) {
 /*****************************************************************/
 
 
-void sqlite3_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , bool read , const char * db_file ) {
-  util_fwrite_bool(read , stream);
+void sqlite3_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , const char * db_file ) {
   util_fwrite_int(driver_type , stream);
   util_fwrite_int(SQLITE_DRIVER_ID , stream);
   util_fwrite_string(db_file , stream);

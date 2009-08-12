@@ -24,6 +24,8 @@
 #include <gen_kw_config.h>
 #include <enkf_defaults.h>
 #include <math.h>
+#include <time.h>
+
 
 
 /**
@@ -176,7 +178,7 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
   x = util_malloc( size * sizeof * x, __func__);
   y = util_malloc( size * sizeof * y, __func__);
   {
-    char * prompt = util_alloc_sprintf("Loading %s member/step: " , enkf_config_node_get_key(config_node));
+    char * prompt = util_alloc_sprintf("Loading %s member: " , enkf_config_node_get_key(config_node));
     msg = msg_alloc(prompt);
     free(prompt);
   }
@@ -186,13 +188,12 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
   for (iens = iens1; iens <= iens2; iens++) {
     char msg_label[32];
     char plot_label[32];
-
     int this_size = 0;
+    //sprintf(msg_label , "%03" , iens );
+    //msg_update( msg , msg_label);
     for (step = step1; step <= step2; step++) {
       double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens) , step );
       time_t sim_time = sched_file_get_sim_time( vector_iget( sched_vector , iens) , step );
-      sprintf(msg_label , "%03d/%03d" , iens , step);
-      msg_update( msg , msg_label);
 	  
       /* Forecast block */
       if (plot_state & forecast) {
@@ -636,6 +637,7 @@ void enkf_tui_plot_all_summary(void * arg) {
   int last_report                              = enkf_main_get_total_length( enkf_main );
   const int prompt_len = 40;
   int iens1 , iens2 , step1 , step2;   
+
         
   enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
   enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
@@ -643,6 +645,10 @@ void enkf_tui_plot_all_summary(void * arg) {
   {
     stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);
     int ikey;
+    time_t start_time , end_time;
+    start_time = time( NULL );
+    clock_t end_clock;
+    clock_t start_clock = clock();
     
     for (ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
       const char * key = stringlist_iget( summary_keys , ikey);
@@ -662,7 +668,12 @@ void enkf_tui_plot_all_summary(void * arg) {
                                image_type);
       
     }
+    end_clock = clock();
+    end_time = time( NULL );
+    
     stringlist_free( summary_keys );
+    //printf("Total plot time: %d \n", end_time  - start_time);
+    //printf("Total plot time: %d \n", end_clock - start_clock);
   }
   vector_free( sched_vector );
 }

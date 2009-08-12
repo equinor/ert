@@ -1207,7 +1207,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
     item = config_add_item(config , "DBASE_TYPE" , true , false);
     config_item_set_argc_minmax(item , 1, 1 , NULL);
-    config_item_set_common_selection_set(item , 2 , (const char *[2]) {"PLAIN" , "SQLITE"});
+    config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
     config_set_arg(config , "DBASE_TYPE" , 1 , (const char *[1] ) { DEFAULT_DBASE_TYPE });
 
     item = config_add_item(config , "FORWARD_MODEL" , true , false);

@@ -52,16 +52,16 @@ typedef enum { DEFAULT_KEEP    = 0,    /* Remove for enkf assimilation - keep fo
    identifiers are needed for the block_fs_driver.
 */
 
-typedef enum {INVALID 	   = 0   , 
-              __MIN_TYPE   = 100,
-	      STATIC  	   = 100 ,       /* MULTZ has been removed */ 
-	      MULTFLT 	   = 102 ,       /* EQUIL has been removed */
-	      FIELD   	   = 104 ,       /* WELL has been removed  */
-	      GEN_KW  	   = 107 ,        
-	      HAVANA_FAULT = 109 ,       /* RELPERM has been removed */
-	      SUMMARY      = 110 ,       /* TPGZONE has been removed */
-              GEN_DATA     = 113 ,       /* PILOT_POINT has been removed */
-              __MAX_TYPE   = 113 } enkf_impl_type;
+typedef enum {INVALID 	       = 0   , 
+              IMPL_TYPE_OFFSET = 100,
+	      STATIC  	       = 100 ,       /* MULTZ has been removed */ 
+	      MULTFLT 	       = 102 ,       /* EQUIL has been removed */
+	      FIELD   	       = 104 ,       /* WELL has been removed  */
+	      GEN_KW  	       = 107 ,        
+	      HAVANA_FAULT     = 109 ,       /* RELPERM has been removed */
+	      SUMMARY          = 110 ,       /* TPGZONE has been removed */
+              GEN_DATA         = 113 ,       /* PILOT_POINT has been removed */
+              MAX_IMPL_TYPE    = 113 } enkf_impl_type;
 
   
 

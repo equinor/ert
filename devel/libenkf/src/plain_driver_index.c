@@ -17,7 +17,8 @@
 struct plain_driver_index_struct {
   BASIC_INDEX_DRIVER_FIELDS;
   int         __id;     
-  path_fmt_type  * path_fmt;
+  path_fmt_type  * read_path_fmt;
+  path_fmt_type  * write_path_fmt;
 
   /* ---------------------------: The different parts of the path variable is documented in plain_driver_dynamic. */  
   char           * root_path;
@@ -32,11 +33,16 @@ static plain_driver_index_type * plain_driver_index_safe_cast(void * __index_dri
   
   return index_driver;
 }
+
   
-void plain_driver_index_select_dir(void *_driver , const char * directory) {
+void plain_driver_index_select_dir(void *_driver , const char * directory, bool read) {
   plain_driver_index_type * driver = plain_driver_index_safe_cast(_driver);
-  driver->path_fmt = plain_driver_common_realloc_path_fmt(driver->path_fmt , driver->root_path , directory , driver->fmt_string);
+  if (read)
+    driver->read_path_fmt = plain_driver_common_realloc_path_fmt(driver->read_path_fmt , driver->root_path , directory , driver->fmt_string);
+  else
+    driver->write_path_fmt = plain_driver_common_realloc_path_fmt(driver->write_path_fmt , driver->root_path , directory , driver->fmt_string);
 }
+
 
 
 
@@ -44,7 +50,7 @@ void plain_driver_index_select_dir(void *_driver , const char * directory) {
 void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report_step , int iens , buffer_type * buffer) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
-    char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , true , report_step , iens , "kw_list");
+    char * kw_file = path_fmt_alloc_file(index_driver->write_path_fmt , true , report_step , iens , "kw_list");
     buffer_store( buffer , kw_file );
     free(kw_file);
   }
@@ -54,7 +60,7 @@ void plain_driver_index_fwrite_restart_kw_list(void * __index_driver, int report
 void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_step, int iens , buffer_type * buffer) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
-    char * kw_file = path_fmt_alloc_file(index_driver->path_fmt , false , report_step , iens , "kw_list");
+    char * kw_file = path_fmt_alloc_file(index_driver->read_path_fmt , false , report_step , iens , "kw_list");
     buffer_fread_realloc( buffer , kw_file );
     free(kw_file);
   }
@@ -64,7 +70,8 @@ void plain_driver_index_fread_restart_kw_list(void * __index_driver, int report_
 void plain_driver_index_free(void * __index_driver) {
   plain_driver_index_type * index_driver = plain_driver_index_safe_cast(__index_driver);
   {
-    path_fmt_free( index_driver->path_fmt );
+    path_fmt_free( index_driver->read_path_fmt );
+    path_fmt_free( index_driver->write_path_fmt );
     util_safe_free( index_driver->root_path );
     util_safe_free( index_driver->fmt_string );
     free(index_driver);
@@ -81,9 +88,10 @@ void * plain_driver_index_alloc(const char * root_path , const char * index_path
   plain_driver->load_kwlist = plain_driver_index_fread_restart_kw_list;
   plain_driver->free_driver = plain_driver_index_free;
 
-  plain_driver->root_path  = util_alloc_string_copy( root_path );
-  plain_driver->fmt_string = util_alloc_string_copy( index_path );  
-  plain_driver->path_fmt   = NULL;   
+  plain_driver->root_path      = util_alloc_string_copy( root_path );
+  plain_driver->fmt_string     = util_alloc_string_copy( index_path );  
+  plain_driver->read_path_fmt  = NULL;   
+  plain_driver->write_path_fmt = NULL;   
   
   plain_driver->__id = PLAIN_DRIVER_INDEX_ID;
   {
@@ -104,8 +112,7 @@ void * plain_driver_index_fread_alloc(const char * root_path , FILE * stream) {
 }
 
 
-void plain_driver_index_fwrite_mount_info(FILE * stream , bool read , const char * fmt) {
-  util_fwrite_bool(read                  , stream); 
+void plain_driver_index_fwrite_mount_info(FILE * stream , const char * fmt) {
   util_fwrite_int(DRIVER_INDEX          , stream);
   util_fwrite_int(PLAIN_DRIVER_INDEX_ID , stream);
   util_fwrite_string(fmt , stream);
