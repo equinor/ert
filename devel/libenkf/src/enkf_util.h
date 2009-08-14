@@ -305,7 +305,6 @@ int    enkf_util_random_int();
 void    enkf_util_truncate(void *  , int  , ecl_type_enum  , void *  , void *);
 void 	enkf_util_rand_stdnormal_vector(int  , double *);
 double 	enkf_util_rand_normal(double , double );
-void   	enkf_util_fread_assert_target_type(FILE * , enkf_impl_type);
 void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 void    enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type);
 

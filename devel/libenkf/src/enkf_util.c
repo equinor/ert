@@ -77,16 +77,6 @@ void enkf_util_truncate(void * void_data , int size , ecl_type_enum ecl_type , v
 
 
 
-
-
-void enkf_util_fread_assert_target_type(FILE * stream , enkf_impl_type target_type) {
-  enkf_impl_type file_type;
-  file_type = util_fread_int(stream);
-  if (file_type != target_type) 
-    util_abort("%s: wrong target type in file (expected:%d  got:%d)  - aborting \n",__func__ , target_type , file_type);
-
-}
-
 void enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type) {
   enkf_impl_type file_type;
   file_type = buffer_fread_int(buffer);

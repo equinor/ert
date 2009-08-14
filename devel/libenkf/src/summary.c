@@ -186,7 +186,7 @@ void summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
       summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  ,var_key );
     }
   } else 
-    util_abort("%:s fatal error when trying to internalize:%s - no summary data loaded from disk \n",__func__ , summary_config_get_var( summary->config ));
+    util_abort("%s fatal error when trying to internalize:%s - no summary data loaded from disk \n",__func__ , summary_config_get_var( summary->config ));
 }
 
 
