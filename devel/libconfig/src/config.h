@@ -52,7 +52,6 @@ void               config_add_alias(config_type * , const char * , const char * 
 void               config_install_message(config_type * , const char * , const char * );
 const char       * config_safe_get(const config_type * , const char *);
 char             * config_alloc_joined_string(const config_type * , const char * , const char * );
-char             * config_indexed_alloc_joined_string(const config_type *  , const char * , const char * , int );
 
 bool 	     	   config_item_is_set(const config_item_type * );
 void         	   config_item_set_argc_minmax(config_item_type * , int  , int , const config_item_types * );

@@ -419,15 +419,41 @@ static stringlist_type * config_item_iget_stringlist_ref(const config_item_type 
 
 
 static char * config_item_ialloc_joined_string(const config_item_type * item , const char * sep , int occurence) {
-  config_item_node_type * node = config_item_iget_node(item , 0);  
+  config_item_node_type * node = config_item_iget_node(item , occurence);  
   return config_item_node_alloc_joined_string(node , sep);
+}
+
+/**
+   This function counts the number of times a config item has been
+   set. Referring again to the example at the top:
+
+     config_item_get_occurences( "KEY1" )
+
+   will return 2. However, if the item has been added with append_arg
+   set to false, this function can only return zero or one.
+*/
+
+
+static int config_item_get_occurences(const config_item_type * item) {
+  return item->node_size;
 }
 
 
 static char * config_item_alloc_joined_string(const config_item_type * item , const char * sep) {
-  if (item->append_arg) 
+  const int occurences = config_item_get_occurences( item );
+  char * joined_string = NULL;
+  /*
+    if (item->append_arg) 
     util_abort("%s: this function can only be used on items added with append_arg == FALSE\n" , __func__);
-  return config_item_ialloc_joined_string(item , sep , 0);
+  */
+  
+  for (int i =0; i < occurences ; i++) {
+    joined_string = util_strcat_realloc( joined_string , config_item_ialloc_joined_string(item , sep , i));
+    if (i < (occurences - 1))
+      joined_string = util_strcat_realloc( joined_string , sep );
+  }
+  
+  return joined_string;
 }
 
 
@@ -761,19 +787,6 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
  
 
 
-/**
-   This function counts the number of times a config item has been
-   set. Referring again to the example at the top:
-
-     config_item_get_occurences( "KEY1" )
-
-   will return 2. However, if the item has been added with append_arg
-   set to false, this function can only return zero or one.
-*/
-
-static int config_item_get_occurences(const config_item_type * item) {
-  return item->node_size;
-}
 
 
 
@@ -1438,20 +1451,16 @@ stringlist_type * config_alloc_stringlist(const config_type * config , const cha
 }
 
 
-
-
 /**
-   It is enforced that kw-item has been added with append_arg == false.
+   Now accepts kw-items which have not been added with append_arg == false.
 */
+
 char * config_alloc_joined_string(const config_type * config , const char * kw, const char * sep) {
   config_item_type * item = config_get_item(config , kw);
   return config_item_alloc_joined_string(item , sep);
 }
 
-char * config_indexed_alloc_joined_string(const config_type * config , const char * kw, const char * sep, int occurence) {
-  config_item_type * item = config_get_item(config , kw);
-  return config_item_ialloc_joined_string(item , sep , occurence);
-}
+
 
 
 
