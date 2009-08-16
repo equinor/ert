@@ -107,6 +107,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
     model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , statoil_mode , model_config->use_lsf);
+    printf("Config_string:%s \n",config_string);
     free(config_string);
   }
   model_config->runlock_mode       = lock_none;

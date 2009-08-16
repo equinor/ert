@@ -1406,12 +1406,9 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
 
   {
     buffer_type * buffer = buffer_alloc(100);
-    //pthread_mutex_lock( &read_mutex );
-    //printf("Skal loade:%s %d \n",enkf_config_node_get_key( config_node ) , iens);
     driver->load(driver , config_node ,  report_step , iens , buffer);
     buffer_fskip_time_t( buffer );
     enkf_node_load(enkf_node , buffer , report_step, iens , state);
-    //pthread_mutex_unlock( &read_mutex );
     buffer_free( buffer );
   }
 }

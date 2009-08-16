@@ -1210,7 +1210,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
     config_set_arg(config , "DBASE_TYPE" , 1 , (const char *[1] ) { DEFAULT_DBASE_TYPE });
 
-    item = config_add_item(config , "FORWARD_MODEL" , true , false);
+    item = config_add_item(config , "FORWARD_MODEL" , true , true);
     config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
     item = config_add_item(config , "DATA_KW" , false , true);
@@ -1329,7 +1329,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	keep_runpath[i] = DEFAULT_KEEP;
 
       if (config_has_set_item(config , "KEEP_RUNPATH")) {
-	char * keep_runpath_string = config_indexed_alloc_joined_string(config , "KEEP_RUNPATH" , "" , i);
+	char * keep_runpath_string = config_alloc_joined_string(config , "KEEP_RUNPATH" , "");
 	bool * flag                = util_malloc( sizeof * flag * ens_size , __func__);
 
 	util_sscanf_active_range(keep_runpath_string , ens_size - 1 , flag);
@@ -1343,7 +1343,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
       if (config_has_set_item(config , "DELETE_RUNPATH")) {
-	char * delete_runpath_string = config_indexed_alloc_joined_string(config , "DELETE_RUNPATH" , "" , i);
+	char * delete_runpath_string = config_alloc_joined_string(config , "DELETE_RUNPATH" , "");
 	bool * flag                = util_malloc( sizeof * flag * ens_size , __func__);
 	
 	util_sscanf_active_range(delete_runpath_string , ens_size - 1 , flag);
