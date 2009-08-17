@@ -1,8 +1,10 @@
+#include <stdlib.h>
 #include <string.h>
 #include <list.h>
 #include <util.h>
 #include <sched_kw_wconinjh.h>
 #include <sched_util.h>
+#include <hash.h>
 
 /*
   Define the maximum number of keywords in a WCONINJH record.

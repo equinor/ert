@@ -4,6 +4,7 @@
 #include <basic_queue_driver.h>
 #include <lsf_driver.h>
 #include <util.h>
+#include <hash.h>
 #include <pthread.h>
 #include <stringlist.h>
 

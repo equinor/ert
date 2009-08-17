@@ -1,8 +1,10 @@
+#include <stdlib.h>
 #include <string.h>
 #include <util.h>
 #include <sched_kw_wconhist.h>
 #include <sched_util.h>
 #include <vector.h>
+#include <hash.h>
 
 /*
   Define the maximum number of keywords in a WCONHIST record.

@@ -5,7 +5,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stdio.h>
+#include <stdbool.h>
 #include <sched_macros.h>
+#include <hash.h>
 
 
 typedef struct sched_kw_wconinj_struct sched_kw_wconinj_type;
@@ -15,11 +18,7 @@ char ** sched_kw_wconinj_alloc_wells_copy( const sched_kw_wconinj_type * , int *
 
 /*******************************************************************/
 
-
-
 KW_HEADER(wconinj)
-
-
 
 #ifdef __cplusplus
 }
