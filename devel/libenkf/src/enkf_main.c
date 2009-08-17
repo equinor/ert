@@ -329,7 +329,7 @@ static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
   int iens;
-
+  
   for (iens = 0; iens < ens_size; iens++) {
     node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
     enkf_fs_fread_node( fs , node_ensemble[iens] , report_step , iens ,load_state);
@@ -851,9 +851,10 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
     job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
     arg_pack_free( queue_args );
   }
-    
+  
   {
-    bool complete_OK = true;
+    bool complete_OK   = true;
+    
     for (iens = 0; iens < ens_size; iens++) {
       if (! enkf_state_run_OK(enkf_main->ensemble[iens])) {
         if ( complete_OK ) {
@@ -863,8 +864,33 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
         fprintf(stderr,"** Error in: %s \n",enkf_state_get_run_path(enkf_main->ensemble[iens]));
       }
     }
-    if (!complete_OK) 
-      util_exit("The integration failed - check your forward model ...\n");
+
+    /** A retry is recursive */
+    if (!complete_OK) {
+      if ((step1 == 0) && (model_config_resample_when_fail(enkf_main->model_config))) {
+        /** We resample the failed members and try again - RECURSIVE CALL */
+        bool * iactive_retry = util_malloc( ens_size * sizeof * iactive_retry , __func__);
+        
+        printf("Resampling ... \n");
+        
+        for (iens = 0; iens < ens_size; iens++) 
+          iactive_retry[iens] = !enkf_state_run_OK(enkf_main->ensemble[iens]);
+        
+        {
+          stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , DYNAMIC_STATE + PARAMETER );
+          for (iens = 0; iens < ens_size; iens++) 
+            if (iactive_retry[iens]) enkf_state_initialize( enkf_main->ensemble[iens] , init_keys );
+          
+          stringlist_free( init_keys );
+        }
+
+        /* RECURSIVE CALL: */
+        enkf_main_run_step(enkf_main , run_mode , iactive_retry , load_start , init_step_parameter , init_state_parameter , init_state_dynamic , step1 , step2 , enkf_update , forward_model);
+        
+        free( iactive_retry );
+      } else
+        util_exit("The integration failed - check your forward model ...\n");
+    }
   }
   
   if (enkf_update)
@@ -904,7 +930,6 @@ const char * enkf_main_get_image_type(const enkf_main_type * enkf_main) {
      2. Set up the configuration of what should be internalized.
 
 */
-
 
 
 void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
@@ -1002,6 +1027,28 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
   }
 }
 
+
+
+void enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_type * param_list , int iens1 , int iens2) {
+  int iens;
+  msg_type * msg = msg_alloc("Initializing...: " );
+  msg_show(msg);
+
+  for (iens = iens1; iens <= iens2; iens++) {
+    enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
+    {
+      char * iens_string = util_alloc_sprintf("%04d" , iens);
+      msg_update(msg , iens_string); 
+      free(iens_string);
+    }
+    enkf_state_initialize( state , param_list );
+    msg_update(msg , "Done");
+  }
+  msg_free(msg , false);
+}
+
+
+
   
 /**
    This function boots everything needed for running a EnKF
@@ -1080,6 +1127,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT});
     
+    item = config_add_item(config , "RESAMPLE_WHEN_FAIL" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_BOOLEAN});
+    config_set_arg(config , "RESAMPLE_WHEN_FAIL" , 1 , (const char *[1]) { DEFAULT_RESAMPLE_WHEN_FAIL});
 
     item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);

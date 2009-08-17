@@ -21,6 +21,7 @@
 #include <plain_driver.h>
 #include <sqlite3_driver.h>
 #include <block_fs_driver.h>
+#include <block_fs_driver_index.h>
 #include <stringlist.h>
 #include <arg_pack.h>
 #include <pthread.h>
@@ -44,6 +45,7 @@
    103                            |   1997                |
                                   |   2047: sqlite added  |  2125
    104                            |   2127                |
+                                  |   2140: block_fs_index added
    --------------------------------------------------------------------------
 
 
@@ -320,7 +322,8 @@ long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * defau
     block_fs_driver_fwrite_mount_info( stream , DRIVER_STATIC    	);
     block_fs_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST );
     block_fs_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED );
-    plain_driver_index_fwrite_mount_info( stream ,                     DEFAULT_PLAIN_INDEX_PATH);
+    //plain_driver_index_fwrite_mount_info( stream ,                     DEFAULT_PLAIN_INDEX_PATH);
+    block_fs_driver_index_fwrite_mount_info( stream );
   } else
     util_abort("%s: unrecognized driver id:%d \n",__func__ , driver_impl);
   
@@ -1167,6 +1170,9 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
 	  break;
 	case(BLOCK_FS_DRIVER_ID):
 	  driver = block_fs_driver_fread_alloc( root_path , stream );
+	  break;
+        case(BLOCK_FS_DRIVER_INDEX_ID):
+	  driver = block_fs_driver_index_fread_alloc( root_path , stream );
 	  break;
 	default:
 	  util_abort("%s: fatal error in mount_map:%s - driver ID:%d not recognized. Driver nr:%d \n",__func__ , fs->mount_map , driver_id , i);

@@ -30,6 +30,7 @@ typedef struct member_config_struct member_config_type;
 
 keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config);
 
+void               enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type * param_list);
 void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
 enkf_fs_type     * enkf_state_get_fs_ref(const enkf_state_type *);
 bool               enkf_state_get_analyzed(const enkf_state_type * );

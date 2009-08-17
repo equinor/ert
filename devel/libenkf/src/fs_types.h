@@ -17,7 +17,8 @@ typedef enum {
   PLAIN_DRIVER_PARAMETER_ID  = 1004,  /* Depreceated */
   PLAIN_DRIVER_ID            = 1005,
   SQLITE_DRIVER_ID           = 2001,
-  BLOCK_FS_DRIVER_ID         = 3001 } fs_driver_impl;
+  BLOCK_FS_DRIVER_ID         = 3001,
+  BLOCK_FS_DRIVER_INDEX_ID   = 3002 } fs_driver_impl;
 
 
 

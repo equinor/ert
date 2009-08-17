@@ -185,9 +185,9 @@ struct enkf_node_struct {
   store_ftype         *store;
   
   initialize_ftype   		 * initialize;
-  free_ftype         		 * freef;
+  node_free_ftype                * freef;
   clear_ftype        		 * clear;
-  copyc_ftype        		 * copyc;
+  node_copyc_ftype               * copyc;
   scale_ftype        		 * scale;
   iadd_ftype         		 * iadd;
   imul_ftype         		 * imul;

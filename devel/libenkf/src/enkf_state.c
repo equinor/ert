@@ -325,6 +325,18 @@ keep_runpath_type member_config_get_keep_runpath(const member_config_type * memb
 /*****************************************************************/
 
 
+
+void enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type * param_list) {
+  int ip;
+  for (ip = 0; ip < stringlist_get_size(param_list); ip++) {
+    int iens = enkf_state_get_iens( enkf_state );
+    enkf_node_type * param_node = enkf_state_get_node( enkf_state , stringlist_iget( param_list , ip));
+    if (enkf_node_initialize( param_node , iens))
+      enkf_fs_fwrite_node(enkf_state_get_fs_ref( enkf_state ) , param_node , 0 , iens , analyzed);
+  }
+}
+
+
 void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
   member_config_type * member_config = enkf_state->my_config;
   char * iens_s       	  = util_alloc_sprintf("%d"   , member_config->iens);
@@ -480,10 +492,19 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
   free(smspec_file);
 }
 
+/**
+   Two small callback functions used to return (string representation)
+   of random integer and random float. The memorty allocated by these
+   functions will be freed by the calling scope.
+*/
 
+static char * enkf_state_subst_randint(const char * key , void * arg) {
+  return util_alloc_sprintf("%d" , rand());
+}
 
-
-
+static char * enkf_state_subst_randfloat(const char * key , void * arg) {
+  return util_alloc_sprintf("%12.10f" , 1.0 * rand() / RAND_MAX);
+}
 
 enkf_state_type * enkf_state_alloc(int iens,
 				   keep_runpath_type keep_runpath , 
@@ -553,9 +574,19 @@ INCLDUE
   enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , "---" , "The final report step for this simulation - formated withh %04d.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , "---" , "The ECLIPSE restart file this simulation starts with.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , "---" , "The ECLIPSE restart file this simulation should end with.");
-  enkf_state_add_subst_kw(enkf_state , "RANDINT"       , "---" , "Random integer value");
-  enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , "---" , "Random float value");
-  
+  enkf_state_add_subst_kw(enkf_state , "RANDINT"       , NULL  , "Random integer value");
+  enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , NULL  , "Random float value");
+
+  {
+    /** Adding substitute callbacks */
+    char * tagged_randint   = enkf_util_alloc_tagged_string( "RANDINT" );
+    char * tagged_randfloat = enkf_util_alloc_tagged_string( "RANDFLOAT" );
+    subst_list_insert_callback( enkf_state->subst_list , tagged_randint   , enkf_state_subst_randint   , NULL , NULL);
+    subst_list_insert_callback( enkf_state->subst_list , tagged_randfloat , enkf_state_subst_randfloat , NULL , NULL);
+    free( tagged_randint );
+    free( tagged_randfloat );
+  }
+
   {
     hash_iter_type * iter = hash_iter_alloc(data_kw);
     const char * key = hash_iter_get_next_key(iter);
@@ -1202,9 +1233,6 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int s
   char * step2_s04 	   = util_alloc_sprintf("%04d" , step2);
   char * restart_file1     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step1);
   char * restart_file2     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step2);
-  char * randint_s         = util_alloc_sprintf("%d"      , enkf_util_random_int());
-  char * randfloat_s       = util_alloc_sprintf("%12.10f" , enkf_util_random_uniform()); 
-
   
   enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	   , step1_s   , NULL);
   enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	   , step2_s   , NULL);
@@ -1212,8 +1240,6 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int s
   enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , step2_s04     , NULL);
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1 , NULL);
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , restart_file2 , NULL);
-  enkf_state_add_subst_kw(enkf_state , "RANDINT"       , randint_s     , NULL);
-  enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , randfloat_s   , NULL); 
 
   /**
      The <INIT> magic string:
@@ -1233,9 +1259,8 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int s
     enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize , NULL);
     free(data_initialize);
   }
+  
 
-  free(randfloat_s);
-  free(randint_s);
   free(step1_s);
   free(step2_s);
   free(step1_s04);
@@ -1260,7 +1285,10 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
     const char * value = subst_list_iget_value( enkf_state->subst_list , ikw);
     const char * desc  = hash_get( enkf_state->subst_description , key);
     
-    printf(fmt_string , key , value , desc);
+    if (value != NULL)
+      printf(fmt_string , key , value , desc);
+    else
+      printf(fmt_string , key , "[Not set]" , desc);
   }
   printf("------------------------------------------------------------------------------------------------------------------------\n");
   

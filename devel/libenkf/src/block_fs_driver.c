@@ -12,7 +12,7 @@
 
 struct block_fs_driver_struct {
   BASIC_DRIVER_FIELDS;
-  int                block_fs_driver_id;
+  int                __id;
   fs_driver_type     driver_type;
   char             * mount_prefix;     /* ANALYZED | FORECAST | PARAMETER | STATIC : a string representation of the role this driver instance has. */
   block_fs_type   ** read_fs;
@@ -33,7 +33,7 @@ struct block_fs_driver_struct {
 
 
 static void block_fs_driver_assert_cast(block_fs_driver_type * block_fs_driver) {
-  if (block_fs_driver->block_fs_driver_id != BLOCK_FS_DRIVER_ID) 
+  if (block_fs_driver->__id != BLOCK_FS_DRIVER_ID) 
     util_abort("%s: internal error - cast failed - aborting \n",__func__);
 }
 
@@ -144,12 +144,11 @@ static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , base , "mnt" );
     driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , internal_index, external_index , preload );
-    free( mount_file );
   } else {
     mount_file = util_alloc_filename( driver->write_path , base , "mnt" );
     driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , internal_index, external_index , preload );
-    free( mount_file );
   }
+  free( mount_file );
   free( base );
 }
 
@@ -359,7 +358,7 @@ static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driv
   driver->root_path     = util_alloc_string_copy( root_path );
   driver->read_path     = NULL;
   driver->write_path    = NULL;
-  driver->block_fs_driver_id = BLOCK_FS_DRIVER_ID;
+  driver->__id          = BLOCK_FS_DRIVER_ID;
   driver->driver_type        = driver_type;
 
   switch (driver_type) {

@@ -33,6 +33,8 @@
 #define DEFAULT_MAX_SUBMIT "2"
 
 
+#define DEFAULT_RESAMPLE_WHEN_FAIL "FALSE"
+
 
 /* Defaults for the EnKF analysis. */
 #define DEFAULT_ENKF_MODE          "STANDARD"
