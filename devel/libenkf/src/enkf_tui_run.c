@@ -5,6 +5,7 @@
 #include <util.h>
 #include <ctype.h>
 #include <menu.h>
+#include <thread_pool.h>
 #include <enkf_main.h>
 #include <enkf_fs.h>
 #include <enkf_sched.h>
@@ -86,7 +87,6 @@ void enkf_tui_run_exp__(void * enkf_main) {
     free( prompt );
     free( select_string );
   }
-
   enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
   free(iactive);
 }
@@ -139,6 +139,58 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
 }
 
 
+void enkf_tui_run_manual_load__( void * arg ) {
+  const int prompt_len                         = 60;
+  enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
+  const int last_report                        = enkf_main_get_total_length( enkf_main );
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const int ens_size                           = ensemble_config_get_size(ensemble_config);
+  int step1,step2,iens1,iens2;
+  bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
+  run_mode_type run_mode = ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
+
+  enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
+
+  enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
+  {
+    char * prompt = util_alloc_sprintf("Which realizations to load [ensemble size:%d] : " , ens_size);
+    char * select_string;
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    select_string = util_alloc_stdin_line();
+    util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+    free( prompt );
+    free( select_string );
+  }
+  {
+    int iens;
+    arg_pack_type ** arg_list = util_malloc( ens_size * sizeof * arg_list , __func__);
+    thread_pool_type * tp = thread_pool_alloc( 4 );  /* num_cpu - HARD coded. */
+
+    for (iens = 0; iens < ens_size; iens++) {
+      arg_pack_type * arg_pack = arg_pack_alloc();
+      arg_list[iens] = arg_pack;
+      
+      if (iactive[iens]) {
+        enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
+        enkf_state_init_run( enkf_state , run_mode , true , 0 , analyzed , analyzed, step1 , step1 , step2 , NULL);  /* Thiiiis is ugly */
+        
+        
+        arg_pack_append_ptr( arg_pack , enkf_state);
+        arg_pack_append_int( arg_pack , step1 );
+        arg_pack_append_int( arg_pack , step2 );
+        thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);
+      }
+    }
+    
+    thread_pool_join( tp );
+    thread_pool_free( tp );
+    
+    for (iens = 0; iens < ens_size; iens++) 
+      arg_pack_free( arg_list[iens]);
+    free( arg_list );      
+  }
+  free( iactive );
+}
 
 
 
@@ -159,6 +211,7 @@ void enkf_tui_run_menu(void * arg) {
   menu_add_separator(menu);
   menu_add_item(menu , "Start predictions from end of history"  , "pP" , enkf_tui_run_predictions__ , enkf_main , NULL);
   menu_add_separator(menu);
+  menu_add_item(menu , "Load results manually"                  , "lL"  , enkf_tui_run_manual_load__ , enkf_main , NULL);
   menu_add_separator(menu);
   menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_tui_run_analyze__ , enkf_main , NULL);
   menu_add_item(menu , "Analyze interval manually" , "iI" , enkf_tui_run_smooth__  , enkf_main , NULL);

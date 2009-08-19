@@ -20,7 +20,7 @@ const double   * gen_kw_get_data_ref(const gen_kw_type * );
 void             gen_kw_set_data(gen_kw_type * , const double * );
 
 gen_kw_type    * gen_kw_alloc(const gen_kw_config_type * );
-
+void             gen_kw_fload(gen_kw_type * gen_kw , const char * filename);
 void             gen_kw_free(gen_kw_type *);
 void             gen_kw_ens_write(const gen_kw_type * , const char *);
 void             gen_kw_ens_read(gen_kw_type * , const char *);

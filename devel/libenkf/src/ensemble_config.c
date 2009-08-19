@@ -138,7 +138,7 @@ void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char
 }
 
 
-void ensemble_config_add_node(ensemble_config_type * ensemble_config , 
+enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensemble_config , 
 			      const char    * key      	   , 
 			      enkf_var_type enkf_type  	   , 
 			      enkf_impl_type impl_type 	   ,
@@ -152,6 +152,7 @@ void ensemble_config_add_node(ensemble_config_type * ensemble_config ,
   {
     enkf_config_node_type * node = enkf_config_node_alloc(enkf_type , impl_type , key , enkf_outfile , enkf_infile , data );
     hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
+    return node;
   }
 }
 
@@ -327,19 +328,20 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     field_trans_table_type * field_trans_table = ensemble_config->field_trans_table;
     for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
       stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
+      enkf_config_node_type * config_node;
       char *  key             = stringlist_iget_copy(tokens , 0);
       char *  var_type_string = stringlist_iget_copy(tokens , 1);
       stringlist_idel( tokens , 0 );   
       stringlist_idel( tokens , 0 );
       
       if (strcmp(var_type_string , "DYNAMIC") == 0) {
-	ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , tokens));
+	config_node = ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , NULL , NULL , field_config_alloc_dynamic(key , grid , field_trans_table , tokens));
       } else if (strcmp(var_type_string , "PARAMETER") == 0) {
 	char *  ecl_file        = stringlist_iget_copy(tokens , 0);
 	stringlist_idel( tokens , 0 );
 	
-	ensemble_config_add_node(ensemble_config , key , PARAMETER   , FIELD , ecl_file , NULL , 
-				 field_config_alloc_parameter(key , ecl_file , grid , field_trans_table , tokens));
+	config_node = ensemble_config_add_node(ensemble_config , key , PARAMETER   , FIELD , ecl_file , NULL , 
+                                               field_config_alloc_parameter(key , ecl_file , grid , field_trans_table , tokens));
 	free(ecl_file);
       } else if (strcmp(var_type_string , "GENERAL") == 0) {
 	char * enkf_outfile = stringlist_iget_copy(tokens , 0); /* Out before in ?? */
@@ -347,12 +349,27 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 	stringlist_idel( tokens , 0 );
 	stringlist_idel( tokens , 0 );
 	
-	ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , enkf_outfile , enkf_infile , 
-				 field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , field_trans_table , tokens));
+	config_node = ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , enkf_outfile , enkf_infile , 
+                                               field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , field_trans_table , tokens));
 	free(enkf_outfile);
 	free(enkf_infile);
       } else 
 	util_abort("%s: FIELD type: %s is not recognized\n",__func__ , var_type_string);
+
+
+      /**
+         This will essentially install a min std instance.
+      */
+      {
+        const field_config_type * field_config  = enkf_config_node_get_ref( config_node  );
+        const field_type        * field_min_std = field_config_get_min_std( field_config );
+        
+        if (field_min_std != NULL) {
+          enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , field_min_std);
+          enkf_config_node_set_min_std( config_node , min_std_node );
+        }
+      }
+      
       free( key );
       free( var_type_string );
     }

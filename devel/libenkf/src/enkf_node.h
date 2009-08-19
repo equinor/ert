@@ -96,7 +96,7 @@ typedef void          (enkf_node_ftype_NEW)        (enkf_node_type * , arg_pack_
 
 double           enkf_node_user_get(enkf_node_type *  , const char * , bool * );
 enkf_node_type * enkf_node_alloc(const enkf_config_node_type *);
-enkf_node_type * enkf_node_alloc_static(const char *);
+enkf_node_type * enkf_node_alloc_with_data(const enkf_config_node_type * config , void * data);
 enkf_node_type * enkf_node_copyc(const enkf_node_type * );
 /*
   The enkf_node_free() function declaration is in the enkf_config_node.h header,

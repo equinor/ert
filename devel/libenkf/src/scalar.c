@@ -57,6 +57,12 @@ double scalar_iget_double(scalar_type * scalar , bool internal_value , int index
 }
 
 
+void scalar_iset(scalar_type * scalar , int index , double value) {
+  scalar->data[index]  = value;
+  scalar->output_valid = false;
+}
+
+
 
 void scalar_get_output_data(const scalar_type * scalar , double * output_data) {
   memcpy(output_data , scalar->output_data , scalar_config_get_data_size(scalar->config) * sizeof * output_data);

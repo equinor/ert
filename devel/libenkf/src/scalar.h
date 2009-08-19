@@ -45,6 +45,7 @@ void 		 scalar_matrix_deserialize(scalar_type * scalar , const active_list_type 
 void 		 scalar_matrix_serialize(const scalar_type *scalar ,  const active_list_type * active_list , matrix_type * A , int row_offset , int column);
 void             scalar_set_inflation(scalar_type * inflation , const scalar_type * std , const scalar_type * min_std);
 void             scalar_scale(scalar_type * scalar, double factor);
+void             scalar_iset(scalar_type * scalar , int index , double value);
 
 
 MATH_OPS_HEADER(scalar);

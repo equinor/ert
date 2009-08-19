@@ -14,6 +14,7 @@
 #include <field_active.h>
 #include <active_list.h>
 #include <field_trans.h>
+#include <field.h>  /* Circualar refernce - for the min_std implementation. */
 
 /**
    About transformations and truncations
@@ -125,6 +126,7 @@ struct field_config_struct {
   bool write_compressed;
   bool add_perturbation;
 
+  field_type              * min_std;
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
   field_func_type         * init_transform;       /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
   field_func_type         * input_transform;      /* Function to apply on the data when they are loaded from the forward model - i.e. for dynamic data. */
@@ -314,6 +316,11 @@ field_file_format_type field_config_guess_file_type(const char * filename , bool
 
 
 
+const field_type * field_config_get_min_std( const field_config_type * field_config ) {
+  return field_config->min_std;
+}  
+
+
 field_file_format_type field_config_get_export_format(const field_config_type * field_config) {
   return field_config->export_format;
 }
@@ -373,12 +380,14 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->init_transform           = NULL;
   config->input_transform          = NULL;
   config->active_list              = active_list_alloc( ALL_ACTIVE );
+  config->min_std                  = NULL;
 
   /* Starting on the options. */
   {
     hash_type * opt_hash = hash_alloc_from_options( options );
     hash_iter_type * iter = hash_iter_alloc(opt_hash);
     const char * option = hash_iter_get_next_key(iter);
+    const char * min_std_file = NULL;
     while (option != NULL) {
       const char * value = hash_get( opt_hash , option );
       bool option_OK     = false;
@@ -411,7 +420,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	option_OK = true;
       }
 
-
       if (strcmp(option , "OUTPUT_TRANSFORM") == 0) {
 	if (field_trans_table_has_key( field_trans_table , value))
 	  config->output_transform = field_trans_table_lookup( field_trans_table , value);
@@ -432,7 +440,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	option_OK = true;
       }
 
-
       if (strcmp(option , "INIT_TRANSFORM") == 0) {
 	if (field_trans_table_has_key( field_trans_table , value))
 	  config->init_transform = field_trans_table_lookup( field_trans_table , value);
@@ -443,10 +450,14 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	option_OK = true;
       }
 
-
       if (strcmp(option , "INIT_FILES") == 0) {
 	config->init_file_fmt = path_fmt_alloc_path_fmt( value );
 	option_OK = true;
+      }
+
+      if (strcmp(option , "MIN_STD") == 0) {
+        min_std_file = value;
+        option_OK = true;
       }
 
       if (!option_OK)
@@ -454,6 +465,12 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 
       option = hash_iter_get_next_key(iter);
     }
+    
+    if (min_std_file != NULL) {
+      config->min_std = field_alloc( config );
+      field_fload(config->min_std , min_std_file , field_config_get_endian_swap(config));
+    }
+
     hash_iter_free(iter);
     hash_free(opt_hash);
   }

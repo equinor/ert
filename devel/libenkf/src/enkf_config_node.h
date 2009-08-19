@@ -37,7 +37,8 @@ enkf_impl_type    	enkf_config_node_get_impl_type(const enkf_config_node_type *)
 enkf_var_type     	enkf_config_node_get_var_type(const enkf_config_node_type *);
       void     *  	enkf_config_node_get_ref(const enkf_config_node_type * );
 const char     *  	enkf_config_node_get_key(const enkf_config_node_type * );
-void enkf_config_node_init_internalization(enkf_config_node_type * );
+void                    enkf_config_node_init_internalization(enkf_config_node_type * );
+void                    enkf_config_node_set_min_std( enkf_config_node_type * config_node , enkf_node_type * min_std );
 
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step);
 bool enkf_config_node_internalize(const enkf_config_node_type * node, int report_step);

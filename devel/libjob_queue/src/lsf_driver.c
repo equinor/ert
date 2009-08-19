@@ -108,12 +108,6 @@ lsf_job_type * lsf_job_alloc() {
 }
 
 
-void lsf_job_fprintf(const lsf_job_type * lsf_job) {
-  if (lsf_job->num_exec_host != 0)
-    printf("%s ",lsf_job->exec_host[0]);
-  printf("LSF_ID: %ld \n",lsf_job->lsf_jobnr);
-}
-
 
 void lsf_job_free(lsf_job_type * job) {
 #ifdef LSF_SYSTEM_DRIVER
@@ -310,9 +304,6 @@ job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , b
 #else
   status = lsf_driver_get_job_status_system(__driver , __job);
 #endif
-  if (status == job_queue_exit) 
-    lsf_job_fprintf((lsf_job_type *) __job);
-
   return status;
 }
 

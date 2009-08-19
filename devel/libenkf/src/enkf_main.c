@@ -390,7 +390,7 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
         
 */
 
-void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , double inflation_factor) {
+void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std , double inflation_factor) {
   int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
   const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key); 
   enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , forecast/* analyzed */ );
@@ -415,12 +415,10 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
   */
   {
     bool scalar_inflation          = true;
-    const enkf_node_type * min_std = enkf_config_node_get_min_std( config_node );
     if (min_std != NULL)
       scalar_inflation = false;
     
     if (scalar_inflation) {
-      printf("Scalar inflation on:%s \n",key);
       for (iens = 0; iens < ens_size; iens++) 
         enkf_node_scale( ensemble[iens] , inflation_factor );
     } else {
@@ -450,9 +448,14 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
 void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , double scalar_inflation) {
   stringlist_type * keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE);
 
-  for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++)
-    enkf_main_inflate_node(enkf_main , report_step , stringlist_iget( keys  , ikey ) , scalar_inflation );
-  
+  for (int ikey = 0; ikey < stringlist_get_size( keys ); ikey++) {
+    const char * key = stringlist_iget( keys  , ikey );
+    const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+    const enkf_node_type * min_std            = enkf_config_node_get_min_std( config_node );
+
+    if (min_std != NULL) 
+      enkf_main_inflate_node(enkf_main , report_step , key , min_std , scalar_inflation );
+  }
   stringlist_free( keys );
 }
 
@@ -684,7 +687,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     meas_matrix_free( meas_forecast );
     meas_matrix_free( meas_analyzed );
   }
-  //enkf_main_inflate( enkf_main , step2 , 2.0 ); 
+  enkf_main_inflate( enkf_main , step2 , 1.0 );  /* Current implementation should be a no-op if no min_std instance has been installed. */
 }
 
 

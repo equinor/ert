@@ -117,7 +117,7 @@ static void enkf_tui_fs_copy_ensemble__(
   ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
   int ens_size                  = ensemble_config_get_size(config);
   char * ranking_key;
-  int  * ranking_permutation = NULL;
+  const int  * ranking_permutation = NULL;
   
   
   misfit_table_type * misfit_table = enkf_main_get_misfit( enkf_main );
@@ -158,7 +158,7 @@ static void enkf_tui_fs_copy_ensemble__(
       for (i = 0; i < stringlist_get_size( restart_kw_list ); i++) {
 	const char * kw = stringlist_iget( restart_kw_list , i);
 	if (!ensemble_config_has_key(config , kw)) 
-	  ensemble_config_add_node(config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
+	  ensemble_config_add_node(config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL );
       }
       for (i=0; i < ens_size; i++) 
 	enkf_fs_fwrite_restart_kw_list(fs , report_step_to , i , restart_kw_list);

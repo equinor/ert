@@ -27,8 +27,6 @@ struct block_fs_driver_index_struct {
   /*-----------------------------------------------------------------*/
   /* options which go directly to the underlying block_fs instances. */
   int              block_size;
-  bool             internal_index;
-  bool             external_index;
 };
 
 
@@ -41,16 +39,14 @@ static block_fs_driver_index_type * block_fs_driver_index_safe_cast(void * __ind
 }
 
 static void block_fs_driver_index_single_mount( block_fs_driver_index_type * driver , bool read) {
-  const bool internal_index = driver->internal_index;
-  const bool external_index = driver->external_index;
   const int  blocksize      = driver->block_size;
   char * mount_file;
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , "INDEX" , "mnt");
-    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , internal_index , external_index , false);
+    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , 0.0 , false);
   } else {
     mount_file = util_alloc_filename( driver->write_path , "INDEX" , "mnt");
-    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , internal_index , external_index , false);
+    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , 0.0 , false);
   }
   free( mount_file );
 }
@@ -154,8 +150,6 @@ void * block_fs_driver_index_alloc(const char * root_path) {
   block_fs_driver->free_driver = block_fs_driver_index_free;
 
   block_fs_driver->block_size     = 8;
-  block_fs_driver->internal_index = true;
-  block_fs_driver->external_index = true;
   block_fs_driver->root_path      = util_alloc_string_copy( root_path );
   block_fs_driver->read_path      = NULL;
   block_fs_driver->write_path     = NULL;

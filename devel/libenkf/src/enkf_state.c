@@ -762,8 +762,8 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
     if (file != NULL) {
       restart_file = ecl_file_fread_alloc(file , endian_swap);
       free(file);
-    } else
-      restart_file = NULL;   /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
+    } else 
+      restart_file = NULL;              /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
   }
   
   /*****************************************************************/
@@ -798,7 +798,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	     LGR section. The way this is implemented here is as follows:
 	     
 	     1. The first occurence of pressure is internalized as the enkf_node
-	        pressure (if ww indeed have a pressure node).
+	        pressure (if we indeed have a pressure node).
 	     
 	     2. The consecutive pressure nodes are internalized as static
 	        parameters.
@@ -920,10 +920,13 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
    This function loads the results from a forward simulations from report_step1
    to report_step2. The details of what to load are in model_config and the
    spesific nodes for special cases.
+
+   Will mainly be called at the end of the forward model, but can also
+   be called manually from external scope.
 */
    
 
-static void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2) {
+void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2) {
   int report_step;
   {
     const model_config_type * model_config = enkf_state->shared_info->model_config;
@@ -931,11 +934,25 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , int re
       if (model_config_load_state( model_config , report_step)) 
 	enkf_state_internalize_state(enkf_state , model_config , report_step);
       
+
       if (model_config_load_results( model_config , report_step)) 
 	enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step);
     }
   }
 }
+
+
+void * enkf_state_internalize_results_mt( void * arg ) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  enkf_state_type * enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
+  int step1                    = arg_pack_iget_int( arg_pack , 1 );
+  int step2                    = arg_pack_iget_int( arg_pack , 2 );
+
+  enkf_state_internalize_results( enkf_state , step1 , step2 );
+  
+  return NULL;
+}  
+
 
 
 
@@ -977,7 +994,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
        before things blow up completely at a later instant.
     */  
     if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-      ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
+      ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL );
     
     if (!enkf_state_has_node(enkf_state , kw)) {
       const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
@@ -1124,8 +1141,10 @@ static void enkf_state_try_fread(enkf_state_type * enkf_state , int mask , int r
       if ((var_type == PARAMETER) || (var_type == STATIC_STATE))
 	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , load_state);
       else {
-	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , both)) 
-	  util_abort("%s: failed to load node:%s \n",__func__ , key_list[ikey]);
+	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , both)) {
+          //printf("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , enkf_state->my_config->iens  );
+	  util_abort("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , enkf_state->my_config->iens  );
+        }
       }
     }
   }

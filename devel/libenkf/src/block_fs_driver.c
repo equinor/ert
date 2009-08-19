@@ -25,8 +25,6 @@ struct block_fs_driver_struct {
   /*-----------------------------------------------------------------*/
   /* Options which go directly to the underlying block_fs instances. */
   int              * block_size;
-  bool             * internal_index;
-  bool             * exernal_index;
   bool             * preload; 
 };
 
@@ -90,7 +88,6 @@ static void block_fs_driver_save_node(void * _driver , const enkf_config_node_ty
   {
     char * key               = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
     block_fs_type * block_fs = block_fs_driver_get_fs( driver , config_node , false );
-    
     block_fs_fwrite_buffer( block_fs , key , buffer);
     
     free( key );
@@ -138,15 +135,15 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
 
 
 
-static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_type impl_type , bool read , int blocksize , int max_cache_size , bool internal_index , bool external_index , bool preload) {
+static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_type impl_type , bool read , int blocksize , int max_cache_size , bool preload) {
   char * mount_file;
   char * base = util_alloc_sprintf("%s_%s" , driver->mount_prefix , enkf_types_get_impl_name( impl_type ));
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , base , "mnt" );
-    driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , internal_index, external_index , preload );
+    driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload );
   } else {
     mount_file = util_alloc_filename( driver->write_path , base , "mnt" );
-    driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , internal_index, external_index , preload );
+    driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload );
   }
   free( mount_file );
   free( base );
@@ -155,8 +152,6 @@ static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_
 
 
 static void block_fs_create_new_fs( block_fs_driver_type * driver , bool read , bool mount ) {
-  bool internal_index = true;
-  bool external_index = true;
   const int STATIC_blocksize       = 1;
   const int MULTFLT_blocksize      = 1;
   const int FIELD_blocksize        = 1;
@@ -179,24 +174,24 @@ static void block_fs_create_new_fs( block_fs_driver_type * driver , bool read , 
   if (mount) {
     switch( driver->driver_type) {
     case(DRIVER_STATIC):
-      block_fs_mount_single_fs( driver , STATIC       , read , STATIC_blocksize        , max_cache_size , internal_index , external_index , false);
+      block_fs_mount_single_fs( driver , STATIC       , read , STATIC_blocksize        , max_cache_size , false);
       break;
     case(DRIVER_PARAMETER):
-      block_fs_mount_single_fs( driver , MULTFLT      , read , MULTFLT_blocksize       , max_cache_size , internal_index , external_index , false);
-      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , internal_index , external_index , false);
-      block_fs_mount_single_fs( driver , GEN_KW       , read , GEN_KW_blocksize        , max_cache_size , internal_index , external_index , true);
-      block_fs_mount_single_fs( driver , HAVANA_FAULT , read , HAVANA_FAULT_blocksize  , max_cache_size , internal_index , external_index , false);
-      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , internal_index , external_index , false);
+      block_fs_mount_single_fs( driver , MULTFLT      , read , MULTFLT_blocksize       , max_cache_size , false);
+      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , false);
+      block_fs_mount_single_fs( driver , GEN_KW       , read , GEN_KW_blocksize        , max_cache_size , true);
+      block_fs_mount_single_fs( driver , HAVANA_FAULT , read , HAVANA_FAULT_blocksize  , max_cache_size , false);
+      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , false);
       break;
     case(DRIVER_DYNAMIC_FORECAST):
-      block_fs_mount_single_fs( driver , SUMMARY      , read , SUMMARY_blocksize       , max_cache_size , internal_index , external_index , true);
-      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , internal_index , external_index , false);
-      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , internal_index , external_index , false);
+      block_fs_mount_single_fs( driver , SUMMARY      , read , SUMMARY_blocksize       , max_cache_size , true);
+      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , false);
+      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , false);
       break;
     case(DRIVER_DYNAMIC_ANALYZED):
-      block_fs_mount_single_fs( driver , SUMMARY      , read , SUMMARY_blocksize       , max_cache_size , internal_index , external_index , true);
-      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , internal_index , external_index , false);
-      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , internal_index , external_index , false);
+      block_fs_mount_single_fs( driver , SUMMARY      , read , SUMMARY_blocksize       , max_cache_size , true);
+      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , false);
+      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , false);
       break;
     default:
       util_abort("%s: driver_type:%d not recognized \n",__func__);

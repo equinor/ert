@@ -857,19 +857,21 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
 #undef CASE_SET
 
 
-static enkf_node_type * enkf_node_alloc__(const enkf_config_node_type * config) {
+
+enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
   enkf_node_type * node    = enkf_node_alloc_empty(config);
   enkf_node_alloc_domain_object(node);
   return node;
 }
 
 
-enkf_node_type * enkf_node_alloc(const enkf_config_node_type * config) {
-  if (config == NULL)
-    util_abort("%s: internal error - must use enkf_node_alloc_static() to allocate static nodes.\n",__func__);
-
-  return enkf_node_alloc__(config);
+enkf_node_type * enkf_node_alloc_with_data(const enkf_config_node_type * config , void * data) {
+  enkf_node_type * node    = enkf_node_alloc_empty( config );
+  node->data               = data;
+  node->__memory_allocated = true;
+  return node;
 }
+
 
 
 

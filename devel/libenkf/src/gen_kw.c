@@ -209,6 +209,83 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 }
 
 
+/**
+   This function will load values for gen_kw instance from file. The
+   file should be formatted as either:
+   
+   -------
+   Value1
+   Value2
+   Value3
+   ....
+   ValueN
+   -------
+   
+   Or
+
+   ------------
+   Key3  Value3  
+   Key5  Value5
+   Key1  Value1
+   .....
+   ------------
+
+   I.e. you can either just dump in all the numbers in one long
+   vector, or you can interlace numbers and keys. In the latter case
+   the ordering is arbitrary.
+
+   Observe the following:
+
+    1. All values must be specified.
+    2. The values are in the N(0,1) domain, i.e. the untransformed variables.
+    
+*/
+
+void gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
+  const int size = gen_kw_config_get_data_size(gen_kw->config);
+  FILE * stream  = util_fopen( filename , "r");
+  bool   readOK = true;
+
+  /* First try reading all the data as one long vector. */
+  {
+    int index = 0;
+    while ((index < size) && readOK) {
+      double value;
+      if (fscanf(stream,"%lg" , &value) == 1) 
+        scalar_iset( gen_kw->scalar , index , value);
+      else
+        readOK = false;
+      index++;
+    }
+  }
+
+  /* OK - rewind and try again with interlaced key + value pairs. */
+  if (!readOK) {
+    int counter = 0;
+    readOK = true;
+    fseek( stream , 0 , SEEK_SET );
+    
+    while ((counter < size) && readOK) {
+      char key[128];
+      double value;
+      if (fscanf(stream , "%s %lg" , key , &value) == 2) {
+        int index = gen_kw_config_get_index(gen_kw->config , key);
+        if (index >= 0) 
+          scalar_iset( gen_kw->scalar , index , value);
+        else
+          util_abort("%s: key:%s not recognized as part of GEN_KW instance - error when reading file:%s \n",__func__ , key , filename);
+      } else {
+        util_abort("%s: failed to read (key,value) pair at line:%d in file:%s \n",__func__ , util_get_current_linenr( stream ) , filename);
+        readOK = false;
+      }
+      counter++;
+    }
+  }
+
+  fclose(stream);
+}
+
+
 
 /**
    Will return 0.0 on invalid input, and set valid -> false. It is the

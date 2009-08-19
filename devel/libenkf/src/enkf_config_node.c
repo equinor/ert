@@ -144,6 +144,14 @@ const enkf_node_type * enkf_config_node_get_min_std( const enkf_config_node_type
 }
 
 
+void enkf_config_node_set_min_std( enkf_config_node_type * config_node , enkf_node_type * min_std ) {
+  if (config_node->min_std != NULL)
+    enkf_node_free( config_node->min_std );
+  
+  config_node->min_std = min_std;
+}
+
+
 
 void enkf_config_node_set_internalize(enkf_config_node_type * node, int report_step) {
   if (node->internalize == NULL)
