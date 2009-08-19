@@ -13,6 +13,7 @@
 #include <enkf_util.h>
 #include <gen_data_config.h>
 #include <gen_data.h>
+#include <gen_data_common.h>
 #include <gen_common.h>
 #include <matrix.h>
 #include <math.h>
@@ -257,27 +258,36 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
    object that this file was as long as the others we have loaded for
    other members; it is perfectly OK for the file to not exist. In
    which case a size of zero is set, for this report step.
+
+   Return value is whether file was found - might have to check this
+   in calling scope.
 */
 
-void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
-  {
-    void * buffer = NULL;
-    int    size   = 0;
-    ecl_type_enum load_type;
-    
-    if (util_file_exists(ecl_file)) {
-      ecl_type_enum internal_type            = gen_data_config_get_internal_type(gen_data->config);
-      gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
-      buffer = gen_common_fload_alloc( ecl_file , input_format , internal_type , &load_type , &size);
-    } 
-    
-    gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
-    util_safe_free(buffer);
-  }
+bool gen_data_fload( gen_data_type * gen_data , const char * filename , int report_step) {
+  bool   has_file = util_file_exists(filename);
+  void * buffer   = NULL;
+  int    size     = 0;
+  ecl_type_enum load_type;
+  
+  if ( has_file ) {
+    ecl_type_enum internal_type            = gen_data_config_get_internal_type(gen_data->config);
+    gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
+    buffer = gen_common_fload_alloc( filename , input_format , internal_type , &load_type , &size);
+  } 
+  
+  gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
+  util_safe_free(buffer);
+  
+  return has_file;
 }
 
 
-    
+
+void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
+  gen_data_fload( gen_data , ecl_file , report_step );
+}
+
+
 /**
    This function initializes the parameter. This is based on loading a
    file. The name of the file is derived from a path_fmt instance
@@ -298,7 +308,8 @@ void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
 bool gen_data_initialize(gen_data_type * gen_data , int iens) {
   char * init_file = gen_data_config_alloc_initfile(gen_data->config , iens);
   if (init_file != NULL) {
-    gen_data_ecl_load(gen_data , init_file , NULL , NULL , 0);
+    if (!gen_data_fload(gen_data , init_file , 0))
+      util_abort("%s: could not find file:%s \n",__func__ , init_file);
     free(init_file);
     return true;
   } else

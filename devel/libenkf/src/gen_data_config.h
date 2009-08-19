@@ -9,6 +9,7 @@ extern "C" {
 #include <stdbool.h>
 #include <gen_data_active.h>
 #include <stringlist.h>
+#include <gen_data_common.h>
 
 typedef enum { GEN_DATA_UNDEFINED = 0,  
 	       ASCII           	  = 1,   /*   The file is ASCII file with a vector of numbers formatted with "%g".       */
@@ -24,10 +25,7 @@ gen_data_file_format_type;
    loading files.
 */
 
-typedef struct gen_data_config_struct gen_data_config_type;
-typedef struct gen_data_struct        gen_data_type;
-
-
+gen_data_type              * gen_data_config_get_min_std( const gen_data_config_type * config );
 gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );
 gen_data_file_format_type    gen_data_config_get_output_format ( const gen_data_config_type * );
 char                  	   * gen_data_config_alloc_initfile(const gen_data_config_type *  , int );

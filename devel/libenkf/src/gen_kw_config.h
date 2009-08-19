@@ -10,13 +10,12 @@ extern "C" {
 #include <enkf_macros.h>
 #include <scalar_config.h>
 #include <scalar.h>
-
-typedef struct gen_kw_config_struct gen_kw_config_type;
-typedef struct gen_kw_struct        gen_kw_type;
+#include <gen_kw_common.h>
 
 
+gen_kw_type               * gen_kw_config_get_min_std( const gen_kw_config_type * gen_kw_config );
 const char         	  * gen_kw_config_get_template_ref(const gen_kw_config_type * );
-gen_kw_config_type 	  * gen_kw_config_fscanf_alloc(const char * , const char *);
+gen_kw_config_type 	  * gen_kw_config_fscanf_alloc(const char * , const char *, const char * min_std_file);
 void               	    gen_kw_config_free(gen_kw_config_type *);
 void               	    gen_kw_config_transform(const gen_kw_config_type * , const double * , double *);
 void               	    gen_kw_config_truncate(const gen_kw_config_type * , scalar_type * );

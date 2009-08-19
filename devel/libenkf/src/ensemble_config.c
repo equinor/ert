@@ -189,7 +189,7 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
   
   item = config_add_item(config , "GEN_KW" , false , true);
-  config_item_set_argc_minmax(item , 4 , 4 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE});
+  config_item_set_argc_minmax(item , 4 , 5 ,  (const config_item_types [5]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_EXISTING_FILE});
   
   item = config_add_item(config , "GEN_PARAM" , false , true);
   config_item_set_argc_minmax(item , 5 , 7 ,  NULL);
@@ -296,6 +296,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   
   /* GEN_DATA */
   for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
+    enkf_config_node_type * config_node;
     stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
     char * key               = stringlist_iget_copy(tokens , 0);
     gen_data_config_type * gen_data_config;
@@ -314,10 +315,19 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 	else
 	  var_type = DYNAMIC_STATE;   
 	
-	ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
+	config_node = ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
 	
 	util_safe_free( ecl_file );
 	util_safe_free( result_file );
+      }
+    }
+    {
+      const gen_data_config_type * gen_data_config  = enkf_config_node_get_ref( config_node  );
+      gen_data_type        * gen_data_min_std       = gen_data_config_get_min_std( gen_data_config );
+      
+      if (gen_data_min_std != NULL) {
+        enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
+        enkf_config_node_set_min_std( config_node , min_std_node );
       }
     }
     free(key);
@@ -328,7 +338,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     field_trans_table_type * field_trans_table = ensemble_config->field_trans_table;
     for (i=0; i < config_get_occurences(config , "FIELD"); i++) {
       stringlist_type * tokens = config_iget_stringlist_ref(config , "FIELD" , i);
-      enkf_config_node_type * config_node;
+      enkf_config_node_type * config_node = NULL;
       char *  key             = stringlist_iget_copy(tokens , 0);
       char *  var_type_string = stringlist_iget_copy(tokens , 1);
       stringlist_idel( tokens , 0 );   
@@ -362,7 +372,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       */
       {
         const field_config_type * field_config  = enkf_config_node_get_ref( config_node  );
-        const field_type        * field_min_std = field_config_get_min_std( field_config );
+        field_type        * field_min_std       = field_config_get_min_std( field_config );
         
         if (field_min_std != NULL) {
           enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , field_min_std);
@@ -375,6 +385,32 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     }
   }
 
+  /* GEN_KW */
+  for (i=0; i < config_get_occurences(config , "GEN_KW"); i++) {
+    const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_KW" , i);
+    const char * key           = stringlist_iget(tokens , 0);
+    const char * template_file = stringlist_iget(tokens , 1);
+    const char * target_file   = stringlist_iget(tokens , 2);
+    const char * config_file   = stringlist_iget(tokens , 3);
+    const char * min_std_file  = NULL;
+    enkf_config_node_type * config_node;
+
+    if (stringlist_get_size( tokens ) > 4) 
+      min_std_file = stringlist_iget( tokens , 4);
+    
+    config_node = ensemble_config_add_node(ensemble_config , key , PARAMETER , GEN_KW , target_file , NULL , 
+                                           gen_kw_config_fscanf_alloc(config_file , template_file , min_std_file));
+    {
+      const gen_kw_config_type * gen_kw_config  = enkf_config_node_get_ref( config_node  );
+      gen_kw_type              * gen_kw_min_std = gen_kw_config_get_min_std( gen_kw_config );
+
+      if (gen_kw_min_std != NULL) {
+        enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_kw_min_std);
+        enkf_config_node_set_min_std( config_node , min_std_node );
+      }
+    }
+      
+  }
 
   /* SUMMARY */
   for (i=0; i < config_get_occurences(config , "SUMMARY"); i++) {
@@ -384,19 +420,6 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     ensemble_config_ensure_summary(ensemble_config , key );
   }
   
-
-
-  /* GEN_KW */
-  for (i=0; i < config_get_occurences(config , "GEN_KW"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_KW" , i);
-    const char * key           = stringlist_iget(tokens , 0);
-    const char * template_file = stringlist_iget(tokens , 1);
-    const char * target_file   = stringlist_iget(tokens , 2);
-    const char * config_file   = stringlist_iget(tokens , 3);
-    
-    ensemble_config_add_node(ensemble_config , key , PARAMETER , GEN_KW , target_file , NULL , gen_kw_config_fscanf_alloc(config_file , template_file));
-  }
-
   /*****************************************************************/
 
     

@@ -723,6 +723,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->iaddsqr            = gen_kw_iaddsqr__;
     node->imul               = gen_kw_imul__;
     node->isqrt              = gen_kw_isqrt__;
+    node->set_inflation      = gen_kw_set_inflation__;
     break;
   case(MULTFLT):
     node->realloc_data 	     = multflt_realloc_data__;

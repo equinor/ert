@@ -225,7 +225,7 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
     fprintf(stderr,"%s: ** Warning: freeing existsing gen_kw_config object from second DATA statement.\n",__func__);
     gen_kw_config_free(config->gen_kw_config);
   }
-  config->gen_kw_config = gen_kw_config_fscanf_alloc( gen_kw_config_file , NULL );
+  config->gen_kw_config = gen_kw_config_fscanf_alloc( gen_kw_config_file , NULL , NULL );
 }
 
 

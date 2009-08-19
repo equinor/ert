@@ -9,6 +9,7 @@
 #include <enkf_types.h>
 #include <pthread.h>
 #include <path_fmt.h>
+#include <gen_data_common.h>
 #include <gen_data_active.h>
 #include <active_list.h>
 
@@ -27,6 +28,7 @@ struct gen_data_config_struct {
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
   int                            __report_step;         /* Internal variable used for run_time checking that all instances have the same size (at the same report_step). */
+  gen_data_type                * min_std;
 };
 
 /*****************************************************************/
@@ -67,8 +69,9 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
 						      const char * init_file_fmt     ,  
 						      const char * template_ecl_file , 
 						      const char * template_data_key ,
-						       const char * ecl_file          ,
-						      const char * result_file) {
+                                                      const char * ecl_file          ,
+						      const char * result_file       ,
+                                                      const char * min_std_file) {
   
   gen_data_config_type * config = util_malloc(sizeof * config , __func__);
   config->__type_id         = GEN_DATA_CONFIG_ID;
@@ -123,12 +126,22 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
   else
     config->init_file_fmt = NULL;
   
-  pthread_mutex_init( &config->update_lock , NULL );
-
+  if (min_std_file != NULL) {
+    config->min_std = gen_data_alloc( config );
+    if (!gen_data_fload( config->min_std , min_std_file , 0))
+      util_abort("%s: could not locate file:%s \n",__func__ , min_std_file );
+  } else
+    config->min_std = NULL;
   
+  pthread_mutex_init( &config->update_lock , NULL );
   if (config->output_format == GEN_DATA_UNDEFINED) 
     config->output_format = config->input_format;
   return config;
+}
+
+
+gen_data_type * gen_data_config_get_min_std( const gen_data_config_type * config ) {
+  return config->min_std;
 }
 
 
@@ -190,7 +203,8 @@ gen_data_config_type * gen_data_config_alloc(const char * key , bool as_param , 
     char * template_file = NULL;
     char * template_key  = NULL;
     char * init_file_fmt = NULL;
-
+    char * min_std_file  = NULL;
+    
     hash_iter_type * iter = hash_iter_alloc(opt_hash);
     const char * option = hash_iter_get_next_key(iter);
     while (option != NULL) {
@@ -215,6 +229,9 @@ gen_data_config_type * gen_data_config_alloc(const char * key , bool as_param , 
       else if (strcmp(option , "INIT_FILES") == 0)
 	init_file_fmt = util_alloc_string_copy( value );
 
+      else if (strcmp(option , "MIN_STD") == 0)
+	min_std_file = value;
+
       else if ((__ecl_file != NULL) && ((strcmp(option , "ECL_FILE") == 0)))
 	ecl_file = util_alloc_string_copy( value );
       
@@ -227,7 +244,7 @@ gen_data_config_type * gen_data_config_alloc(const char * key , bool as_param , 
       
       option = hash_iter_get_next_key(iter);
     } 
-    config = gen_data_config_alloc__(key , as_param , internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file);
+    config = gen_data_config_alloc__(key , as_param , internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file , min_std_file);
     util_safe_free( init_file_fmt );
     util_safe_free( template_file );
     util_safe_free( template_key );

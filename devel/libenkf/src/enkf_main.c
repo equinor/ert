@@ -453,8 +453,10 @@ void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , double sca
     const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
     const enkf_node_type * min_std            = enkf_config_node_get_min_std( config_node );
 
-    if (min_std != NULL) 
+    if (min_std != NULL) {
+      printf("Inflating node: %s \n",key);
       enkf_main_inflate_node(enkf_main , report_step , key , min_std , scalar_inflation );
+    }
   }
   stringlist_free( keys );
 }

@@ -9,6 +9,7 @@ extern "C" {
 #include <enkf_util.h>
 #include <field_config.h>
 #include <enkf_serialize.h>
+#include <field_common.h>
 
 /* Typedef field_type moved to field_config.h */
 
@@ -18,9 +19,9 @@ void         field_indexed_set(field_type * field, ecl_type_enum , int , const i
 void         field_indexed_add(field_type * field, ecl_type_enum , int , const int * , const void * );
 double       field_iget_double(const field_type * , int );
 double       field_ijk_get_double(const field_type * field, int  , int  , int );
-float       field_iget_float(const field_type * , int );
+float        field_iget_float(const field_type * , int );
 float        field_ijk_get_float(const field_type * field, int  , int  , int );
-void          field_ijk_get(const field_type * , int , int  , int , void *);
+void         field_ijk_get(const field_type * , int , int  , int , void *);
 bool         field_ijk_valid(const field_type * , int , int , int );
 void         field_ijk_get_if_valid(const field_type * , int  , int  , int , void * , bool *);
 void 	     field_ecl_write1D_fortio(const field_type * , fortio_type *);
@@ -28,10 +29,8 @@ void 	     field_ecl_write3D_fortio(const field_type * , fortio_type *);
 void         field_ROFF_export(const field_type * , const char * );
 void 	     field_copy_ecl_kw_data(field_type * , const ecl_kw_type * );
 field_type * field_alloc_shared(const field_config_type * , void * , int );
-field_type * field_alloc(const field_config_type * );
 void         field_free(field_type *);
 void         field_get_dims(const field_type *, int *, int *, int *);
-void         field_fload(field_type * , const char * , bool );
 void         field_fload_auto(field_type * , const char * , bool );
 void         field_export3D(const field_type * , void *, bool , ecl_type_enum , void *);
 void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool);

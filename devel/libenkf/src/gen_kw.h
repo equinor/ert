@@ -10,6 +10,8 @@ extern "C" {
 #include <enkf_macros.h>
 #include <enkf_serialize.h>
 #include <subst.h>
+#include <gen_kw_common.h>
+
 
 
 void             gen_kw_output_transform(const gen_kw_type * );
@@ -19,8 +21,6 @@ const double   * gen_kw_get_data_ref(const gen_kw_type * );
   //void             gen_kw_get_data(const gen_kw_type * , double * );
 void             gen_kw_set_data(gen_kw_type * , const double * );
 
-gen_kw_type    * gen_kw_alloc(const gen_kw_config_type * );
-void             gen_kw_fload(gen_kw_type * gen_kw , const char * filename);
 void             gen_kw_free(gen_kw_type *);
 void             gen_kw_ens_write(const gen_kw_type * , const char *);
 void             gen_kw_ens_read(gen_kw_type * , const char *);
@@ -58,6 +58,7 @@ VOID_IMUL_HEADER(gen_kw);
 VOID_SCALE_HEADER(gen_kw);
 VOID_IADDSQR_HEADER(gen_kw);
 VOID_ISQRT_HEADER(gen_kw);
+VOID_SET_INFLATION_HEADER(gen_kw);
 #ifdef __cplusplus
 }
 #endif

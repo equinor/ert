@@ -14,7 +14,7 @@
 #include <field_active.h>
 #include <active_list.h>
 #include <field_trans.h>
-#include <field.h>  /* Circualar refernce - for the min_std implementation. */
+#include <field_common.h>  
 
 /**
    About transformations and truncations
@@ -316,7 +316,7 @@ field_file_format_type field_config_guess_file_type(const char * filename , bool
 
 
 
-const field_type * field_config_get_min_std( const field_config_type * field_config ) {
+field_type * field_config_get_min_std( const field_config_type * field_config ) {
   return field_config->min_std;
 }  
 
@@ -626,7 +626,6 @@ void field_config_set_io_options(const field_config_type * config , bool *fmt_fi
 
 
 void field_config_free(field_config_type * config) {
-
   util_safe_free(config->ecl_kw_name);
   active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );

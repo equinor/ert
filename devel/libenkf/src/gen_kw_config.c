@@ -1,23 +1,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
-#include <gen_kw_config.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <trans_func.h>
 #include <scalar_config.h>
 #include <enkf_defaults.h>
-
+#include <gen_kw_common.h>
+#include <gen_kw_config.h>
 
 #define GEN_KW_CONFIG_TYPE_ID 550761
 
 struct gen_kw_config_struct {
   UTIL_TYPE_ID_DECLARATION;
-  char                * executable;
   char               ** kw_list;
   char               ** tagged_kw_list;  /* The same keywords - but '<' and '>' */
   scalar_config_type  * scalar_config;
   char                * template_file;
+  gen_kw_type         * min_std;
 };
 
 
@@ -31,8 +31,7 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * t
   gen_kw_config->tagged_kw_list     = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
   gen_kw_config->scalar_config      = scalar_config_alloc_empty(size);
   gen_kw_config->template_file      = util_alloc_string_copy(template_file);
-  gen_kw_config->executable         = NULL;
-
+  gen_kw_config->min_std            = NULL;
   /* 
      Allows for template_file == NULL - as a way to adapt to
      the requirements of the havana_fault object. Should maybe
@@ -81,7 +80,7 @@ For the template file there are essentially no restrictions:
 
 */
 
-gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const char * template_file) {
+gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const char * template_file, const char * min_std_file) {
   gen_kw_config_type * config = NULL;
   if (util_file_exists(filename)) {
     FILE * stream = util_fopen(filename , "r");
@@ -105,7 +104,17 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * filename , const ch
   } else 
     util_abort("%s: config_file:%s does not exist - aborting.\n" , __func__ , filename);
 
+  if (min_std_file != NULL) {
+    config->min_std = gen_kw_alloc( config );
+    gen_kw_fload( config->min_std , min_std_file );
+  }
+  
   return config;
+}
+
+
+gen_kw_type * gen_kw_config_get_min_std( const gen_kw_config_type * gen_kw_config ) {
+  return gen_kw_config->min_std;
 }
 
 

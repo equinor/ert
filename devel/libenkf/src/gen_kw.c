@@ -3,8 +3,7 @@
 #include <stdio.h>
 #include <enkf_types.h>
 #include <util.h>
-#include <gen_kw_config.h>
-#include <gen_kw.h>
+
 #include <enkf_util.h>
 #include <math.h>
 #include <scalar.h>
@@ -12,7 +11,9 @@
 #include <subst.h>
 #include <buffer.h>
 #include <matrix.h>
-
+#include <gen_kw_common.h>
+#include <gen_kw_config.h>
+#include <gen_kw.h>
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
@@ -281,6 +282,9 @@ void gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
       counter++;
     }
   }
+
+  if (!readOK)
+    util_abort("%s: fuck off \n",__func__);
 
   fclose(stream);
 }
