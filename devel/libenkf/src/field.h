@@ -13,6 +13,7 @@ extern "C" {
 
 /* Typedef field_type moved to field_config.h */
 
+void         field_scale(field_type * field, double scale_factor);
 int          field_get_global_index(const field_type * , int  , int  , int );
 void         field_ijk_set(field_type * , int  , int  , int  , const void * );
 void         field_indexed_set(field_type * field, ecl_type_enum , int , const int * , const void * );

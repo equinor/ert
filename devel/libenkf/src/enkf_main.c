@@ -393,7 +393,7 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
 void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std , double inflation_factor) {
   int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
   const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key); 
-  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , forecast/* analyzed */ );
+  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , FORECAST/* analyzed */ );
   enkf_node_type *  mean                    = enkf_node_alloc( config_node );
   enkf_node_type *  std                     = enkf_node_alloc( config_node );
   int iens;
@@ -435,7 +435,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
     enkf_node_iadd( ensemble[iens] , mean );
-    enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , analyzed );
+    enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , ANALYZED );
   }
 
   enkf_node_free( mean );
@@ -521,7 +521,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       {
 	if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
 	  enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[0] , key);
-	  enkf_fs_fread_node( fs , node , report_step , 0 , forecast);
+	  enkf_fs_fread_node( fs , node , report_step , 0 , FORECAST);
 	}
       }
       active_size[ikw] = __get_active_size( config_node , active_list );
@@ -544,9 +544,9 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	  state_enum load_state;
 	  
 	  if (hash_inc_counter( use_count , key) == 0)
-	    load_state = forecast;   /* This is the first time this keyword is updated for this reportstep */
+	    load_state = FORECAST;   /* This is the first time this keyword is updated for this reportstep */
 	  else
-	    load_state = analyzed;
+	    load_state = ANALYZED;
 
 	  /** This could be multi-threaded */
 	  for (int iens = 0; iens < ens_size; iens++) {
@@ -590,7 +590,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	  for (int iens = 0; iens < ens_size; iens++) {
 	    enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
 	    enkf_node_matrix_deserialize(node , active_list , A , row_offset[i] , iens);
-	    enkf_fs_fwrite_node( fs , node , report_step , iens , analyzed);
+	    enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
 	  }
 	}
       }
@@ -663,7 +663,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 	local_ministep_type   * ministep      = local_reportstep_iget_ministep( reportstep , ministep_nr );      
 	
 	printf("Fetching simulated responses and observations for step %i.\n", report_step); 
-	enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, forecast, ens_size, 
+	enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size, 
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
 
 	meas_matrix_calculate_ens_stats( meas_forecast );
@@ -971,9 +971,9 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 	const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
 	int inode;
 	
-	if (start_state == analyzed)
+	if (start_state == ANALYZED)
 	  analyzed_start = true;
-	else if (start_state == forecast)
+	else if (start_state == FORECAST)
 	  analyzed_start = false;
 	else
 	  util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
@@ -997,14 +997,14 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
           if (rerun) {
             /** rerun ... */
             load_start           = init_step_parameters; /* +1 below */
-            init_state_dynamic   = forecast;
-            init_state_parameter = analyzed;
+            init_state_dynamic   = FORECAST;
+            init_state_parameter = ANALYZED;
             report_step1 = rerun_start;
           } else {
             if (prev_enkf_on)
-              init_state_dynamic = analyzed;
+              init_state_dynamic = ANALYZED;
             else
-              init_state_dynamic = forecast;
+              init_state_dynamic = FORECAST;
             init_state_parameter = init_state_dynamic;
             
             load_start = report_step1;

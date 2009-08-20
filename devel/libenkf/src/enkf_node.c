@@ -374,7 +374,7 @@ void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
     util_safe_free( input_file );
   }
   enkf_node->__report_step = report_step;
-  enkf_node->__state       = forecast;
+  enkf_node->__state       = FORECAST;
   enkf_node->__modified    = false;
   enkf_node->__iens        = iens; 
 }
@@ -385,7 +385,7 @@ void enkf_node_ecl_load_static(enkf_node_type * enkf_node , const ecl_kw_type * 
   ecl_static_kw_init(enkf_node_value_ptr(enkf_node) , ecl_kw);
   enkf_node->__memory_allocated = true;
   enkf_node->__report_step 	= report_step;
-  enkf_node->__state       	= forecast;
+  enkf_node->__state       	= FORECAST;
   enkf_node->__modified    	= false;
   enkf_node->__iens             = iens;
 }
@@ -592,7 +592,7 @@ bool enkf_node_initialize(enkf_node_type *enkf_node, int iens) {
     enkf_node_ensure_memory(enkf_node);
     if (enkf_node->initialize(enkf_node->data , iens)) {
       enkf_node->__report_step = 0;
-      enkf_node->__state       = analyzed;
+      enkf_node->__state       = ANALYZED;
       enkf_node->__modified    = true;
       return true;
     } else 
@@ -606,7 +606,7 @@ void enkf_node_free_data(enkf_node_type * enkf_node) {
   FUNC_ASSERT(enkf_node->free_data);
   enkf_node->free_data(enkf_node->data);
   enkf_node->__memory_allocated = false;
-  enkf_node->__state            = undefined;
+  enkf_node->__state            = UNDEFINED;
   enkf_node->__modified         = true;
   enkf_node->__report_step      = -1;  
 }
@@ -654,7 +654,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->__memory_allocated = false;
   node->__modified         = true;
   node->__report_step      = -1;
-  node->__state            = undefined;
+  node->__state            = UNDEFINED;
 
   /*
     Start by initializing all function pointers to NULL.

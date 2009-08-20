@@ -50,7 +50,6 @@ void                          enkf_main_set_state_eclbase(const enkf_main_type *
 void                          enkf_main_interactive_set_runpath__(void * );
 enkf_main_type              * enkf_main_bootstrap(const char * , const char * );
 
-lock_mode_type                enkf_main_get_runlock_mode(const enkf_main_type * );
 enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
 enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );

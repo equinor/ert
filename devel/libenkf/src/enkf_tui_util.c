@@ -42,13 +42,13 @@ state_enum enkf_tui_util_scanf_state(const char * prompt, int prompt_len, bool a
     if (strlen(analyzed_string) == 1) {
       char c = toupper(analyzed_string[0]);
       if (c == 'A')
-	state = analyzed;
+	state = ANALYZED;
       else if (c == 'F')
-	state = forecast;
+	state = FORECAST;
       else {
 	if (accept_both) {
 	  if (c == 'B') 
-	    state = both;
+	    state = BOTH;
 	  else
 	    OK = false;
 	} else
@@ -288,9 +288,9 @@ void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * co
   int index = 0;
   for (report_step = step1; report_step <= step2; report_step++) {
     
-    if (analysis_state & forecast) {
-      if (enkf_fs_has_node(fs , config_node , report_step , iens , forecast)) {
-	enkf_fs_fread_node(fs , node , report_step , iens , forecast); {
+    if (analysis_state & FORECAST) {
+      if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST)) {
+	enkf_fs_fread_node(fs , node , report_step , iens , FORECAST); {
 	  const field_type * field = enkf_node_value_ptr( node );
 	  y[index] = field_iget_double(field , get_index);
 	}
@@ -303,9 +303,9 @@ void enkf_tui_util_get_time(enkf_fs_type * fs , const enkf_config_node_type * co
     }
     
     
-    if (analysis_state & analyzed) {
-      if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
-	enkf_fs_fread_node(fs , node , report_step , iens , analyzed); {
+    if (analysis_state & ANALYZED) {
+      if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) {
+	enkf_fs_fread_node(fs , node , report_step , iens , ANALYZED); {
 	  const field_type * field = enkf_node_value_ptr( node );
 	  y[index] = field_iget_double(field , get_index);
 	}

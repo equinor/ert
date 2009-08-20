@@ -265,7 +265,7 @@ static void misfit_table_update( misfit_table_type * misfit_table , const ensemb
     obs_vector_type * obs_vector = enkf_obs_get_vector( misfit_table->enkf_obs , obs_key );
     
     msg_update( msg , obs_key );
-    obs_vector_ensemble_chi2( obs_vector , fs , 0 , misfit_table->history_length + 1 , 0 , ens_size , both , chi2_work);
+    obs_vector_ensemble_chi2( obs_vector , fs , 0 , misfit_table->history_length + 1 , 0 , ens_size , BOTH , chi2_work);
     
     
     /** 

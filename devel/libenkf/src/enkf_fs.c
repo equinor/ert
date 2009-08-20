@@ -930,7 +930,6 @@ static void enkf_fs_upgrade_104(const char * config_file, const char * root_path
       void * driver                  = NULL;
       bool read                      = util_fread_bool( read_stream );
       long int driver_start          = ftell( read_stream );
-      fs_driver_type driver_category = util_fread_int( read_stream );
       fs_driver_impl driver_id       = util_fread_int( read_stream );
       
       switch(driver_id) {
@@ -1300,9 +1299,9 @@ void enkf_fs_free(enkf_fs_type * fs) {
 static void * select_dynamic_driver(enkf_fs_type * fs , state_enum state ) {
   void * driver = NULL;
 
-  if (state == analyzed) 
+  if (state == ANALYZED) 
     driver = fs->dynamic_analyzed;
-  else if (state == forecast) 
+  else if (state == FORECAST) 
     driver = fs->dynamic_forecast;
   else
     util_abort("%s: fatal internal error \n",__func__);
@@ -1373,10 +1372,10 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
 */
 
 static int __get_parameter_report_step( int report_step , state_enum state) {
-  if (state == forecast) {
+  if (state == FORECAST) {
     if (report_step > 0) /* Time step zero is special - we do not differentiate between forecast and analyzed. */
       report_step--;
-  } else if (state != analyzed)
+  } else if (state != ANALYZED)
     util_abort("%s: asked for state:%d - internal error \n",__func__ , state);
 
   return report_step;
@@ -1503,12 +1502,12 @@ void enkf_fs_scatter_node(enkf_fs_type * enkf_fs, enkf_config_node_type * config
 */
 
 bool enkf_fs_try_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * node , int report_step , int iens , state_enum state) {
-  if (state == both) {
-    bool analyzed_return = enkf_fs_try_fread_node(enkf_fs , node , report_step , iens , analyzed);
+  if (state == BOTH) {
+    bool analyzed_return = enkf_fs_try_fread_node(enkf_fs , node , report_step , iens , ANALYZED);
     if (analyzed_return)
       return true;
     else
-      return enkf_fs_try_fread_node(enkf_fs , node , report_step , iens , forecast);
+      return enkf_fs_try_fread_node(enkf_fs , node , report_step , iens , FORECAST);
   } else {
 
     if (enkf_fs_has_node(enkf_fs , enkf_node_get_config(node) , report_step , iens , state)) {
@@ -1531,17 +1530,17 @@ enkf_node_type ** enkf_fs_fread_alloc_ensemble( enkf_fs_type * fs , const enkf_c
     state_enum load_state;
     ensemble[iens - iens1] = NULL;
 
-    if (state == both) {
-      if (enkf_fs_has_node( fs , config_node , report_step , iens , analyzed))
-        load_state = analyzed;
-      else if (enkf_fs_has_node( fs , config_node , report_step , iens , forecast))
-        load_state = forecast;
+    if (state == BOTH) {
+      if (enkf_fs_has_node( fs , config_node , report_step , iens , ANALYZED))
+        load_state = ANALYZED;
+      else if (enkf_fs_has_node( fs , config_node , report_step , iens , FORECAST))
+        load_state = FORECAST;
       else
-        load_state = undefined;
+        load_state = UNDEFINED;
     } else 
       load_state = state;
 
-    if (load_state != undefined)
+    if (load_state != UNDEFINED)
       ensemble[iens - iens1] = enkf_fs_fread_alloc_node(fs , config_node , report_step , iens , load_state);
   }
   

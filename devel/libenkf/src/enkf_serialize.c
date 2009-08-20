@@ -314,7 +314,7 @@ void serial_state_clear(serial_state_type * state) {
   state->current_active_node_index = 0;
   
   state->complete            = false;
-  state->state               = forecast;
+  state->state               = FORECAST;
 }
 
 
@@ -413,7 +413,7 @@ size_t enkf_serialize_part(const void * __node_data         ,   /* The data of t
 	  serial_state->active_node_index2 = active_node_offset + active_size;
 	  if (serial_state->active_node_index2 == total_node_size) {
 	    /* We are completely done with this node - including all subnodes. */ 
-	    serial_state->state            = serialized;
+	    serial_state->state            = SERIALIZED;
 	    serial_state->complete         = true;
 	  }
 	}
@@ -508,7 +508,7 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
   }
   current_active_node_index = serial_state->current_active_node_index;
 
-  if (serial_state->state == serialized) {
+  if (serial_state->state == SERIALIZED) {
     if (active_node_index1 < active_node_offset + active_size) {  /* The node we are looking at contains, or follows after, node_index1 */
       
       if (node_type == ecl_double_type) {
@@ -521,7 +521,7 @@ void enkf_deserialize_part(void * __node_data                , /* The data of th
 	util_abort("%s: internal error: trying to deserialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
       
       if (serial_state->complete) 
-	serial_state->state        = analyzed;
+	serial_state->state        = ANALYZED;
       else 
 	serial_state->active_node_index1  = serial_state->active_node_index2;  /* This is where the next serialization should start. */
     }
@@ -561,7 +561,7 @@ void enkf_deserialize(void * __node_data                ,
   if (active_size > 0)
     enkf_deserialize_part(__node_data , first_call , node_size , node_offset , total_node_size , node_type , active_list , serial_state , serial_vector);
   else 
-    serial_state->state = analyzed;
+    serial_state->state = ANALYZED;
 }
 
 

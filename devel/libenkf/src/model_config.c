@@ -51,7 +51,6 @@ struct model_config_struct {
   bool                  has_prediction;      	    /* Is the SCHEDULE_PREDICTION_FILE option set ?? */
   bool                  resample_when_fail;         /* Should we resample when a model fails to integrate? */
   char                * lock_path;           	    /* Path containing lock files */
-  lock_mode_type        runlock_mode;        	    /* Mode for locking run directories - currently not working.*/ 
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
   bool_vector_type    * internalize_results; 	    /* Should the results (i.e. summary in ECLIPSE speak) be intrenalized at this report_step? */
   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
@@ -111,7 +110,6 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
     model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , statoil_mode , model_config->use_lsf);
     free(config_string);
   }
-  model_config->runlock_mode       = lock_none;
   {
     char * cwd = util_alloc_cwd();
     model_config->lock_path      = util_alloc_filename(cwd , "locks" , NULL);

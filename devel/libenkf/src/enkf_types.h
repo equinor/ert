@@ -72,11 +72,11 @@ typedef enum {INVALID 	       = 0   ,
 */
 
 
-typedef enum   {undefined   = 0 , 
-		serialized  = 1,
-		forecast    = 2, 
-		analyzed    = 4,
-		both        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
+typedef enum   {UNDEFINED   = 0 , 
+		SERIALIZED  = 1,
+		FORECAST    = 2, 
+		ANALYZED    = 4,
+		BOTH        = 6} state_enum;  /* It is important that both == (forecast + analyzed) */
   /**
      The state == both is used for output purposes (getting both forecast and analyzed).
   */
@@ -126,11 +126,7 @@ typedef enum { ENKF_ASSIMILATION       = 1,
 	       ENSEMBLE_EXPERIMENT     = 2} run_mode_type;
 	       
 
-
-typedef enum { lock_lockf = 1,
-	       lock_file  = 2,
-	       lock_none  = 3 } lock_mode_type;
-
+ 
 
 
 /**
@@ -138,7 +134,6 @@ typedef enum { lock_lockf = 1,
    be used. Observe that the actual variable used is not en enum
    instance, but rather an ordinary integer which is in general a sum
    of of the values listed in this enum.
-   
 */
 
 

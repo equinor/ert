@@ -146,7 +146,7 @@ struct enkf_state_struct {
    Currently no locking is implemented - the lock_mode parameter is not used. 
 */
 
-static void run_info_set_run_path(run_info_type * run_info , lock_mode_type lock_mode , int iens , path_fmt_type * run_path_fmt) {
+static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt_type * run_path_fmt) {
   util_safe_free(run_info->run_path);
   run_info->run_path = path_fmt_alloc_path(run_path_fmt , true , iens , run_info->step1 , run_info->step2);
 }
@@ -197,7 +197,7 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->can_sim              = true;
   run_info->run_mode             = run_mode;
   run_info->load_start           = load_start;
-  run_info_set_run_path(run_info , lock_none , iens , run_path_fmt);
+  run_info_set_run_path(run_info , iens , run_path_fmt);
 }
 
 
@@ -332,7 +332,7 @@ void enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type 
     int iens = enkf_state_get_iens( enkf_state );
     enkf_node_type * param_node = enkf_state_get_node( enkf_state , stringlist_iget( param_list , ip));
     if (enkf_node_initialize( param_node , iens))
-      enkf_fs_fwrite_node(enkf_state_get_fs_ref( enkf_state ) , param_node , 0 , iens , analyzed);
+      enkf_fs_fwrite_node(enkf_state_get_fs_ref( enkf_state ) , param_node , 0 , iens , ANALYZED);
   }
 }
 
@@ -692,7 +692,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 
 	  if (internalize) {
 	    enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens);    /* Loading/internalizing */
-	    enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , forecast);            /* Saving to disk */
+	    enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);            /* Saving to disk */
 	  } 
 
 	}
@@ -864,7 +864,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 		/*
 		  Static kewyords go straight out ....
 		*/
-		enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
+		enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
 		enkf_node_free_data(enkf_node);
 	      }
 	    }
@@ -898,7 +898,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	if (internalize_kw) {
 	  if (enkf_node_has_func(enkf_node , ecl_load_func)) {
 	    enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , my_config->iens);
-	    enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , forecast);
+	    enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
 	  }
 	}
       }
@@ -1141,7 +1141,7 @@ static void enkf_state_try_fread(enkf_state_type * enkf_state , int mask , int r
       if ((var_type == PARAMETER) || (var_type == STATIC_STATE))
 	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , load_state);
       else {
-	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , both)) {
+	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , BOTH)) {
           //printf("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , enkf_state->my_config->iens  );
 	  util_abort("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , enkf_state->my_config->iens  );
         }
@@ -1177,7 +1177,7 @@ static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
       /* Just checked for != NULL */
       char * load_file = enkf_config_node_alloc_infile( config_node , 0);
       if (load_file != NULL) 
-	enkf_fs_fread_node(shared_info->fs , enkf_node , 0 , my_config->iens , analyzed);
+	enkf_fs_fread_node(shared_info->fs , enkf_node , 0 , my_config->iens , ANALYZED);
 
       util_safe_free( load_file );
     }

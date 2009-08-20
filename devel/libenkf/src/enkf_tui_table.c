@@ -78,7 +78,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool ens_plot) {
   }
   
   {
-    state_enum state  = forecast;
+    state_enum state  = FORECAST;
     int active_length = 0;
     int total_line_count = 0;
     double line[num_keys];

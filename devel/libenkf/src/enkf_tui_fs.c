@@ -216,10 +216,10 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
     char * current_case = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
     src_step         = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
     src_state        = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
-    target_state     = analyzed;
+    target_state     = ANALYZED;
     target_step      = 0;
     
-    enkf_tui_fs_copy_ensemble__(enkf_main, source_case, current_case, src_step, src_state, 0, analyzed, true);
+    enkf_tui_fs_copy_ensemble__(enkf_main, source_case, current_case, src_step, src_state, 0, ANALYZED, true);
     free(current_case);
   }
   util_safe_free( source_case );
@@ -305,8 +305,8 @@ void enkf_tui_fs_initialize_case_for_predictions(void * arg)
   enkf_main_type * enkf_main = enkf_main_safe_cast( arg );
   enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
-  state_from       = analyzed;
-  state_to         = analyzed;
+  state_from       = ANALYZED;
+  state_to         = ANALYZED;
   report_step_from = enkf_main_get_history_length( enkf_main ); 
   report_step_to   = enkf_main_get_history_length( enkf_main );
 

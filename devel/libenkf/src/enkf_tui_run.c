@@ -30,7 +30,7 @@ void enkf_tui_run_start__(void * enkf_main) {
       iactive[iens] = true;
   }
 
-  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , 0 , 0 , analyzed);
+  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , 0 , 0 , ANALYZED);
   free(iactive);
 }
 
@@ -75,7 +75,7 @@ void enkf_tui_run_exp__(void * enkf_main) {
   int prompt_len = 45;
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
-  state_enum init_state    = analyzed; 
+  state_enum init_state    = ANALYZED; 
   int start_report   	   = 0;
   int init_step_parameters = 0;
   {
@@ -123,7 +123,7 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
     const int ens_size     			 = ensemble_config_get_size(ensemble_config);
     bool * iactive         			 = util_malloc(ens_size * sizeof * iactive , __func__);
     int        history_end 			 = enkf_main_get_history_length( enkf_main );
-    state_enum start_state 			 = analyzed;           
+    state_enum start_state 			 = ANALYZED;           
     {
       int iens;
       for (iens= 0; iens < ens_size; iens++)
@@ -145,7 +145,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int last_report                        = enkf_main_get_total_length( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size                           = ensemble_config_get_size(ensemble_config);
-  int step1,step2,iens1,iens2;
+  int step1,step2;
   bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
   run_mode_type run_mode = ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
 
@@ -172,7 +172,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
       
       if (iactive[iens]) {
         enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
-        enkf_state_init_run( enkf_state , run_mode , true , 0 , analyzed , analyzed, step1 , step1 , step2 , NULL);  /* Thiiiis is ugly */
+        enkf_state_init_run( enkf_state , run_mode , true , 0 , ANALYZED , ANALYZED, step1 , step1 , step2 , NULL);  /* Thiiiis is ugly */
         
         
         arg_pack_append_ptr( arg_pack , enkf_state);

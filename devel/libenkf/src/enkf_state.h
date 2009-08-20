@@ -71,7 +71,6 @@ void               enkf_state_set_iens(enkf_state_type *  , int );
 int                enkf_state_get_iens(const enkf_state_type * );
 member_config_type *enkf_state_get_member_config(const enkf_state_type * enkf_state);
 const char       * enkf_state_get_run_path(const enkf_state_type * );
-void               enkf_state_steal_run_path_lock(enkf_state_type *  , lock_mode_type  , const char *  , const char * );
 void               enkf_state_set_eclbase(enkf_state_type * , const char*);
 
 //void               enkf_state_matrix_serialize(enkf_state_type * enkf_state , const char * key , const active_list_type * , matrix_type * A , int row_offset , int column);

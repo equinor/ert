@@ -36,8 +36,8 @@
 
 struct gen_data_struct {
   int                     __type_id;
-  gen_data_config_type  * config;    /* Thin config object - mainly contains filename for remote load */
-  char                  * data;      /* Actual storage - will be casted to double or float on use. */
+  gen_data_config_type  * config;           /* Thin config object - mainly contains filename for remote load */
+  char                  * data;             /* Actual storage - will be casted to double or float on use. */
 };
 
 

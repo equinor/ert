@@ -170,7 +170,7 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
     plot =  __plot_alloc(driver_type , "Simulation time (days) ", /* y akse */ "" ,user_key,plot_file , image_type);
   
   node = enkf_node_alloc( config_node );
-  if (plot_state == both) 
+  if (plot_state == BOTH) 
     size = 2 * (step2 - step1 + 1);
   else
     size = (step2 - step1 + 1);
@@ -196,10 +196,10 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
       time_t sim_time = sched_file_get_sim_time( vector_iget( sched_vector , iens) , step );
 	  
       /* Forecast block */
-      if (plot_state & forecast) {
-	if (enkf_fs_has_node(fs , config_node , step , iens , forecast)) {
+      if (plot_state & FORECAST) {
+	if (enkf_fs_has_node(fs , config_node , step , iens , FORECAST)) {
 	  bool valid;
-	  enkf_fs_fread_node(fs , node , step , iens , forecast);
+	  enkf_fs_fread_node(fs , node , step , iens , FORECAST);
 	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
 
 	  if ((iens == 2) && (step == 10))
@@ -220,10 +220,10 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
       }
 	  
       /* Analyzed block */
-      if (plot_state & analyzed) {
-	if (enkf_fs_has_node(fs , config_node , step , iens , analyzed)) {
+      if (plot_state & ANALYZED) {
+	if (enkf_fs_has_node(fs , config_node , step , iens , ANALYZED)) {
 	  bool valid;
-	  enkf_fs_fread_node(fs , node , step , iens , analyzed);
+	  enkf_fs_fread_node(fs , node , step , iens , ANALYZED);
 	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
 	  bool_vector_iset(has_data , step , true);
 	  if (valid) {
@@ -397,7 +397,7 @@ void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_
   for (ikw = 0; ikw < num_kw; ikw++) {
     char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , node_key , ikw);
     enkf_tui_plot_ensemble__( fs , enkf_obs , config_node , user_key , key_list[ikw] , sched_vector,
-                              step1 , step2 , iens1 , iens2 , analyzed , plot_path , plot_driver , viewer , image_type);
+                              step1 , step2 , iens1 , iens2 , ANALYZED , plot_path , plot_driver , viewer , image_type);
     free( user_key );
   }
 }
@@ -498,7 +498,7 @@ void enkf_tui_plot_histogram(void * arg) {
     user_key = util_alloc_stdin_line();
     if (user_key != NULL) {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
-      state_enum plot_state = analyzed; /* Compiler shut up */
+      state_enum plot_state = ANALYZED; /* Compiler shut up */
       char * key_index;
       const int last_report = enkf_main_get_total_length( enkf_main );
       double * count        = util_malloc(ens_size * sizeof * count , __func__);
@@ -518,7 +518,7 @@ void enkf_tui_plot_histogram(void * arg) {
 	if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) 
 	  plot_state = enkf_tui_util_scanf_state("Plot Forecast/Analyzed: [F|A]" , prompt_len , false);
 	else if (var_type == PARAMETER)
-	  plot_state = analyzed;
+	  plot_state = ANALYZED;
 	else
 	  util_abort("%s: can not plot this type \n",__func__);
       }
@@ -528,7 +528,7 @@ void enkf_tui_plot_histogram(void * arg) {
 	for (iens = 0; iens < ens_size; iens++) {
 	  if (enkf_fs_has_node(fs , config_node , report_step , iens , plot_state)) {
 	    bool valid;
-	    enkf_fs_fread_node(fs , node , report_step , iens , forecast);
+	    enkf_fs_fread_node(fs , node , report_step , iens , FORECAST);
 	    count[active_size] = enkf_node_user_get( node , key_index , &valid);
 	    if (valid) 
 	      active_size++;
@@ -575,7 +575,7 @@ void enkf_tui_plot_ensemble(void * arg) {
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
     user_key = util_alloc_stdin_line();
     if (user_key != NULL) {
-      state_enum plot_state = analyzed; /* Compiler shut up */
+      state_enum plot_state = ANALYZED; /* Compiler shut up */
       char * key_index;
       const int last_report = enkf_main_get_total_length( enkf_main );
       int iens1 , iens2 , step1 , step2;   
@@ -595,25 +595,25 @@ void enkf_tui_plot_ensemble(void * arg) {
 	if ((var_type == DYNAMIC_STATE) || (var_type == DYNAMIC_RESULT)) 
 	  plot_state = enkf_tui_util_scanf_state("Plot Forecast/Analyzed/Both: [F|A|B]" , prompt_len , true);
 	else if (var_type == PARAMETER)
-	  plot_state = analyzed;
+	  plot_state = ANALYZED;
 	else
 	  util_abort("%s: can not plot this type \n",__func__);
       }
       enkf_tui_plot_ensemble__(fs, 
-			      enkf_obs,
-			      config_node , 
-			      user_key , 
-			      key_index , 
-			      sched_vector , 
-			      step1 , 
-			      step2 , 
-			      iens1 , 
-			      iens2 , 
-			      plot_state , 
-			      plot_path,
+                               enkf_obs,
+                               config_node , 
+                               user_key , 
+                               key_index , 
+                               sched_vector , 
+                               step1 , 
+                               step2 , 
+                               iens1 , 
+                               iens2 , 
+                               plot_state , 
+                               plot_path,
                                driver_type, 
-			      viewer,
-                              image_type);
+                               viewer,
+                               image_type);
       util_safe_free(key_index);
     }
     util_safe_free( user_key );
@@ -661,7 +661,7 @@ void enkf_tui_plot_all_summary(void * arg) {
                                sched_vector , 
                                step1 , step2 , 
                                iens1 , iens2 , 
-                               both  , 
+                               BOTH  , 
                                plot_path , 
                                driver_type,
                                viewer,
@@ -762,15 +762,15 @@ void enkf_tui_plot_observation(void * arg) {
 	  sprintf(cens , "%03d" , iens);
 	  msg_update(msg , cens);
 
-	  if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) {
-	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , analyzed);
+	  if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) {
+	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , ANALYZED);
 	    y = enkf_node_user_get( enkf_node , index_key , &valid);
 	    if (valid) 
 	      plot_dataset_append_point_xy( analyzed_data , iens , y);
 	  }
 
-	  if (enkf_fs_has_node(fs , config_node , report_step , iens , forecast)) {
-	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , forecast);
+	  if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST)) {
+	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , FORECAST);
 	    y = enkf_node_user_get( enkf_node , index_key , &valid);
 	    if (valid) 
 	      plot_dataset_append_point_xy( forecast_data , iens , y);
@@ -840,10 +840,10 @@ void enkf_tui_plot_RFT__(enkf_fs_type * fs, const char * driver_type , const cha
       msg_update(msg , cens);
       bool has_node = true;
 
-      if (enkf_fs_has_node(fs , config_node , report_step , iens , analyzed)) /* Trying analyzed first. */
-	enkf_fs_fread_node(fs , node , report_step , iens , analyzed);
-      else if (enkf_fs_has_node(fs , config_node , report_step , iens , forecast))
-	enkf_fs_fread_node(fs , node , report_step , iens , forecast);
+      if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) /* Trying analyzed first. */
+	enkf_fs_fread_node(fs , node , report_step , iens , ANALYZED);
+      else if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST))
+	enkf_fs_fread_node(fs , node , report_step , iens , FORECAST);
       else 
 	has_node = false;
       
@@ -974,7 +974,7 @@ void enkf_tui_plot_RFT_time(void * arg) {
     step2      = enkf_main_get_total_length( enkf_main );
     iens1      = 0;
     iens2      = ensemble_config_get_size(ensemble_config) - 1;
-    plot_state = both;
+    plot_state = BOTH;
     state_kw   = enkf_config_node_get_key( config_node );
     {
       int block_nr,i,j,k;
@@ -1055,8 +1055,8 @@ void enkf_tui_plot_sensitivity(void * arg) {
   double * x 	 = util_malloc( ens_size * sizeof * x , __func__);
   double * y 	 = util_malloc( ens_size * sizeof * y , __func__);
   bool   * valid = util_malloc( ens_size * sizeof * valid , __func__);
-  state_enum state_x = both;
-  state_enum state_y = both; 
+  state_enum state_x = BOTH;
+  state_enum state_y = BOTH; 
   int report_step_x = 0;
   int report_step_y;
   int iens;
