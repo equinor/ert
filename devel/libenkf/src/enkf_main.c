@@ -393,11 +393,13 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
 void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std , double inflation_factor) {
   int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
   const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key); 
-  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , FORECAST/* analyzed */ );
+  enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , ANALYZED );
   enkf_node_type *  mean                    = enkf_node_alloc( config_node );
   enkf_node_type *  std                     = enkf_node_alloc( config_node );
   int iens;
-
+  bool valid;
+  
+  
   enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
   /* Shifting away the mean */
   enkf_node_scale( mean , -1 );
@@ -405,7 +407,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
     enkf_node_iadd( ensemble[iens] , mean );
   enkf_node_scale( mean , -1 );
 
-
+  
   enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , NULL , std );
   /*****************************************************************/
   /*
@@ -437,7 +439,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
     enkf_node_iadd( ensemble[iens] , mean );
     enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , ANALYZED );
   }
-
+  
   enkf_node_free( mean );
   enkf_node_free( std );
   free( ensemble );
@@ -634,7 +636,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     start_step = step2;
     end_step   = step2;
   }
-    
+  
   
   {
     /*

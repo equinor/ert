@@ -441,12 +441,12 @@ void obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_t
 
 void obs_data_fprintf(const obs_data_type * obs_data , FILE * stream, const double * meanS , const double * stdS) {
   int iobs;
-  fprintf(stream , "/-------------------------------------------------------------------------------------|---------------------------------\\\n");
-  fprintf(stream , "|                                 Observed history                                    |         Simulated data          |\n");  
-  fprintf(stream , "|-------------------------------------------------------------------------------------|---------------------------------|\n");
+  fprintf(stream , "/-------------------------------------------------------------------------------------------|---------------------------------\\\n");
+  fprintf(stream , "|                                     Observed history                                      |         Simulated data          |\n");  
+  fprintf(stream , "|-------------------------------------------------------------------------------------------|---------------------------------|\n");
   for (iobs = 0; iobs < obs_data->total_size; iobs++) {
     obs_data_node_type * node = obs_data->data[iobs];
-    fprintf(stream , "| %-3d : %-30s    %12.3f +/-  %12.3f ",iobs + 1 , node->keyword , node->value , node->std);
+    fprintf(stream , "| %-3d : %-36s    %12.3f +/-  %12.3f ",iobs + 1 , node->keyword , node->value , node->std);
     if (node->active)
       fprintf(stream , "   Active    |");
     else

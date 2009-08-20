@@ -445,14 +445,14 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , FILE * stream ) {
   int iobs;
-  fprintf(stream , "/-----------------------------------------------------------------------|---------------------------------\\\n");
-  fprintf(stream , "|                          Observed history                             |         Simulated data          |\n");  
-  fprintf(stream , "|-----------------------------------------------------------------------|---------------------------------|\n");
+  fprintf(stream , "/-------------------------------------------------------------------------------|---------------------------------\\\n");
+  fprintf(stream , "|                               Observed history                                |         Simulated data          |\n");  
+  fprintf(stream , "|-------------------------------------------------------------------------------|---------------------------------|\n");
   for (iobs = 0; iobs < obs_data_get_nrobs(obs_data); iobs++) {
     obs_data_node_type * node = obs_data_iget_node( obs_data , iobs);
     
 
-    fprintf(stream , "| %-3d : %-16s    %12.3f +/-  %12.3f ",iobs + 1 , 
+    fprintf(stream , "| %-3d : %-24s    %12.3f +/-  %12.3f ",iobs + 1 , 
 	    obs_data_node_get_keyword(node),
 	    obs_data_node_get_value(node),
 	    obs_data_node_get_std(node));
@@ -467,7 +467,7 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
       fprintf(stream , "   %12.3f +/- %12.3f |\n", mean , std);
     }
   }
-  fprintf(stream , "\\-----------------------------------------------------------------------|---------------------------------/\n");
+  fprintf(stream , "\\-------------------------------------------------------------------------------|---------------------------------/\n");
 }
 
 
