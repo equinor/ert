@@ -222,6 +222,12 @@ void ext_job_free__(void * __ext_job) {
   ext_job_free ( ext_job_safe_cast(__ext_job) );
 }
 
+static void __update_exe_mode( const char * filename ) {
+  mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;
+  if (util_chmod_if_owner( filename , target_mode ))
+    printf("Updated mode on on \'%s\' to: %d \n", filename , target_mode);
+}
+
 
 void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
   /**
@@ -233,6 +239,7 @@ void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe)
 
       1. Call util_alloc_realpth() to get the full absolute path.
       2. Require that it is a executable file.
+      3. If current user is owner we update the access rights to a+rx.
   
   */
   if (util_file_exists( portable_exe )) {
@@ -242,6 +249,7 @@ void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe)
     else
       ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , full_path);
     free(full_path);
+    __update_exe_mode( ext_job->portable_exe );
   } else
     ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , portable_exe);
 }
@@ -412,19 +420,16 @@ const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
 
 
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
-  if (getuid() == util_get_file_uid( filename )) {
-    mode_t mode        = util_get_file_mode( filename );
+  {
     mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;
-    if (mode != target_mode) {
-      printf("** Updating mode on :\'%s\' to %d \n",filename , target_mode);
-      chmod( filename , target_mode );
-    }
+    if (util_chmod_if_owner( filename , target_mode ));
+      printf("Changed mode on file:%s to: %d \n",filename , target_mode);
   }
   
   if (util_file_readable( filename )) {
     ext_job_type * ext_job = ext_job_alloc(name);
     config_type * config   = config_alloc(  );
-  
+    
     {
       config_item_type * item;
       item = config_add_item(config , "STDIN"  	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
