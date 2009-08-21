@@ -53,7 +53,7 @@ void enkf_tui_run_restart__(void * enkf_main) {
   start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
   state        = enkf_tui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
   
-  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , 0 , start_report  , state);
+  enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , start_report , start_report  , state);
   free(iactive);
 }
 

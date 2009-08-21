@@ -790,13 +790,13 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 static void enkf_main_run_step(enkf_main_type * enkf_main      , 
                                run_mode_type    run_mode       , 
                                const bool * iactive            , 
-                               int load_start, 
+                               int load_start                  ,  /* For internalizing results. */
                                int init_step_parameter         ,     
-                               state_enum init_state_parameter     , 
-                               state_enum init_state_dynamic       , 
-                               int step1                 , 
-                               int step2                 , 
-                               bool enkf_update          , 
+                               state_enum init_state_parameter , 
+                               state_enum init_state_dynamic   , 
+                               int step1                       , 
+                               int step2                       , 
+                               bool enkf_update                ,     
                                forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
   
   const int ens_size    = ensemble_config_get_size(enkf_main->ensemble_config);
@@ -957,7 +957,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 		   int              init_step_parameters ,
 		   int              start_report         , 
 		   state_enum       start_state) {
-
+  
   bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
   int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
 
@@ -1014,7 +1014,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 
           if (load_start > 0)
             load_start++;
-	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
+	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , report_step1 , init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
 	  prev_enkf_on = enkf_on;
 	}
       } else

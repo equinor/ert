@@ -72,7 +72,7 @@ static void block_fs_driver_load_node(void * _driver , const enkf_config_node_ty
   {
     char * key               = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
     block_fs_type * block_fs = block_fs_driver_get_fs( driver , config_node , true );
-    
+
     block_fs_fread_realloc_buffer( block_fs , key , buffer);
     
     free( key );

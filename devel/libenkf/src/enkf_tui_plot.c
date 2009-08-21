@@ -48,7 +48,7 @@
 static vector_type * enkf_tui_alloc_sched_vector( const enkf_main_type * enkf_main ) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size                           = ensemble_config_get_size( ensemble_config );
-
+  
   int iens;
   vector_type * vector = vector_alloc_new();
   for (iens = 0; iens < ens_size; iens++)
@@ -710,11 +710,11 @@ void enkf_tui_plot_observation(void * arg) {
       const char * state_kw               = obs_vector_get_state_kw( obs_vector );
       enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
       int   num_active                    = obs_vector_get_num_active( obs_vector );
-      plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
-      plot_dataset_type * obs_quant_lower = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
-      plot_dataset_type * obs_quant_upper = plot_alloc_new_dataset(plot , NULL , PLOT_YLINE );
-      plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , NULL , PLOT_XY    );
-      plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , NULL , PLOT_XY    );
+      plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , "observation"   , PLOT_YLINE );
+      plot_dataset_type * obs_quant_lower = plot_alloc_new_dataset(plot , "obs_minus_std" , PLOT_YLINE );
+      plot_dataset_type * obs_quant_upper = plot_alloc_new_dataset(plot , "obs_plus_std"  , PLOT_YLINE );
+      plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , "forecast"      , PLOT_XY    );
+      plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , "analyzed"      , PLOT_XY    );
       int   report_step;
       
       do {

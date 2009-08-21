@@ -645,7 +645,7 @@ static void field_revert_output_transform(field_type * field) {
 void field_export(const field_type * __field, const char * file , fortio_type * restart_fortio , field_file_format_type file_type, bool output_transform) {
   field_type * field = (field_type *) __field;  /* Net effect is no change ... but */
 
-  if (output_transform)   field_output_transform(field);
+  if (output_transform) field_output_transform(field);
   {
     
     /*  Writes the field to in ecl_kw format to a new file.  */

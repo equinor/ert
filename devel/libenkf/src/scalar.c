@@ -345,7 +345,11 @@ void scalar_set_inflation(scalar_type * inflation , const scalar_type * std , co
   const scalar_config_type *config = inflation->config; 			       
   const int data_size = scalar_config_get_data_size(config);
   
-  for (int i=0; i < data_size; i++)
-    inflation->data[i] = util_double_max( 1.0 , min_std->data[i] / std->data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
+  for (int i=0; i < data_size; i++) {
+    if (std->data[i] > 0)
+      inflation->data[i] = util_double_max( 1.0 , min_std->data[i] / std->data[i]);   
+    else
+      inflation->data[i] = 1;
+  }
 }
 

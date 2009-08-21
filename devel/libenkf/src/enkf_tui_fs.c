@@ -231,7 +231,7 @@ void enkf_tui_fs_copy_ensemble(void * arg)
 {
   int prompt_len = 35;
   char * source_case;
-  char target_case[256];
+  char * target_case;
   int last_report;
   int report_step_from;
   int report_step_to;
@@ -247,14 +247,16 @@ void enkf_tui_fs_copy_ensemble(void * arg)
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
   state_from       = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
 
-  printf("Target case ==> ");
-  scanf("%s", target_case);
+  util_printf_prompt("Target case" , prompt_len , '=' , "=> ");
+  target_case = util_alloc_stdin_line();
+
 
   report_step_to = util_scanf_int_with_limits("Target report step",prompt_len , 0 , last_report);
   state_to       = enkf_tui_util_scanf_state("Target analyzed/forecast [A|F]" , prompt_len , false);
 
   enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, false);
 
+  free(target_case);
   free(source_case);
 }
 
@@ -264,7 +266,7 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
 {
   int prompt_len = 35;
   char * source_case;
-  char target_case[256];
+  char * target_case;
   int last_report;
   int report_step_from;
   int report_step_to;
@@ -279,15 +281,16 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
 
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
   state_from       = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
-
-  printf("Target case ==> ");
-  scanf("%s", target_case);
-
+  
+  util_printf_prompt("Target case" , prompt_len , '=' , "=> ");
+  target_case = util_alloc_stdin_line();
+  
   report_step_to = util_scanf_int_with_limits("Target report step",prompt_len , 0 , last_report);
   state_to       = enkf_tui_util_scanf_state("Target analyzed/forecast [A|F]" , prompt_len , false);
 
   enkf_tui_fs_copy_ensemble__(enkf_main, source_case, target_case, report_step_from, state_from, report_step_to, state_to, true);
 
+  free(target_case);
   free(source_case);
 }
 

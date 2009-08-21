@@ -588,16 +588,23 @@ void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * st
     const float * std_data       = (const float *) std->data;
     const float * min_std_data   = (const float *) min_std->data;
 
-    for (int i=0; i < data_size; i++)
-      inflation_data[i] = util_float_max( 1.0 , min_std_data[i] / std_data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
-    
+    for (int i=0; i < data_size; i++) {
+      if (std_data[i] > 0)
+        inflation_data[i] = util_float_max( 1.0 , min_std_data[i] / std_data[i]);  
+      else
+        inflation_data[i] = 0;
+    }
   } else {
     double       * inflation_data = (double *)       inflation->data;
     const double * std_data       = (const double *) std->data;
     const double * min_std_data   = (const double *) min_std->data;
     
-    for (int i=0; i < data_size; i++)
-      inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]);   /* This will go belly up if std[i] == 0 - but that is quite pathological anyway ... */
+    for (int i=0; i < data_size; i++) {
+      if (std_data[i] > 0)
+        inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]); 
+      else
+        inflation_data[i] = 1.0;
+    }
   }
 }
 
