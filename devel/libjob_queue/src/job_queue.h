@@ -15,6 +15,10 @@ void                job_queue_add_job(job_queue_type * , const char * , const ch
 void                job_queue_run_jobs(job_queue_type * , int );
 void *              job_queue_run_jobs__(void * );
 job_status_type     job_queue_export_job_status(job_queue_type * , int );
+void                job_queue_set_load_OK(job_queue_type * queue , int external_id);
+void                job_queue_set_external_restart(job_queue_type * queue , int external_id);
+void                job_queue_set_external_fail(job_queue_type * queue , int external_id);
+
 #ifdef __cplusplus
 }
 #endif

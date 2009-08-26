@@ -94,6 +94,8 @@ struct ext_job_struct {
   stringlist_type * init_code;
   hash_type  	  * platform_exe;     /* The hash tables can NOT be NULL. */
   hash_type  	  * environment;
+  
+  bool              __valid;          /* Temporary variable consulted durin the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
 };
 
 
@@ -134,6 +136,7 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->environment    = NULL;
   ext_job->argv           = NULL;
   ext_job->init_code      = NULL;
+  ext_job->__valid        = true;
   /* 
      ext_job->private_args is set explicitly in the ext_job_alloc() 
      and ext_job_alloc_copy() functions. 
@@ -222,14 +225,13 @@ void ext_job_free__(void * __ext_job) {
   ext_job_free ( ext_job_safe_cast(__ext_job) );
 }
 
-static void __update_exe_mode( const char * filename ) {
-  mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;
+static void __update_mode( const char * filename , mode_t target_mode) {
   if (util_chmod_if_owner( filename , target_mode ))
-    printf("Updated mode on on \'%s\' to: %d \n", filename , target_mode);
+    printf("Updated mode on on \'%s\' to: %04d \n", filename , target_mode);
 }
 
 
-void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
+static void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
   /**
 
      The portable exe can be a <...> string, i.e. not ready yet. Then
@@ -244,14 +246,17 @@ void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe)
   */
   if (util_file_exists( portable_exe )) {
     char * full_path = util_alloc_realpath( portable_exe );
-    if (!util_is_executable( full_path ))
-      util_exit("%s: The program: %s -> %s is not executable \n",__func__ , portable_exe , full_path);
-    else
+    __update_mode( full_path , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH);  /* u:rwx  g:rwx  o:rx */
+    
+    if (util_is_executable( full_path )) 
       ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , full_path);
-    free(full_path);
-    __update_exe_mode( ext_job->portable_exe );
-  } else
+    else {
+      fprintf(stderr , "** You do not have execute rights to:%s - job will not be available.\n" , full_path);
+      ext_job->__valid = false;
+    }
+  } else 
     ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , portable_exe);
+  /* We take the chance that user will supply a valid subst key for this later. */
 }
 
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
@@ -403,16 +408,6 @@ void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
 
 
 
-static void ext_job_assert(const ext_job_type * ext_job) {
-  bool OK = true;
-  if (ext_job->name == NULL) {
-    OK = false;
-  }
-
-  if (!OK) 
-    util_abort("%s: errors in the ext_job instance. \n" , __func__);
-}
-
 
 const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
   return ext_job->lsf_resources;
@@ -422,8 +417,7 @@ const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
   {
     mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;
-    if (util_chmod_if_owner( filename , target_mode ));
-      printf("Changed mode on file:%s to: %d \n",filename , target_mode);
+    __update_mode( filename , target_mode );
   }
   
   if (util_file_readable( filename )) {
@@ -477,7 +471,16 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
     
     }
     config_free(config);
-    ext_job_assert(ext_job);
+    
+    if (!ext_job->__valid) {
+      /* 
+         Something NOT OK (i.e. PORTABLE_EXE now); free the job instance and return NULL:
+      */
+      ext_job_free( ext_job );
+      ext_job = NULL;
+      fprintf(stderr,"** Warning: job: \'%s\' not available ... \n", name );
+    }
+    
     return ext_job;
   } else {
     fprintf(stderr,"** Warning: you do not have permission to read file:\'%s\' - job:%s not available. \n", filename , name);
