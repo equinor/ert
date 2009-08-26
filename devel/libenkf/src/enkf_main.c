@@ -654,16 +654,16 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     meas_matrix_type  	  	* meas_forecast = meas_matrix_alloc( ens_size );
     meas_matrix_type  	  	* meas_analyzed = meas_matrix_alloc( ens_size );
     local_config_type 	  	* local_config  = enkf_main->local_config;
-    const local_reportstep_type * reportstep    = local_config_iget_reportstep( local_config , step2 );  /* Only step2 considered */
+    const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , step2 );  /* Only step2 considered */
     hash_type                   * use_count     = hash_alloc();                                          
     matrix_type                 * randrot       = NULL;
 
     if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
       randrot = enkf_analysis_alloc_mp_randrot( ens_size ); 
 
-    for (int ministep_nr = 0; ministep_nr < local_reportstep_get_num_ministep( reportstep ); ministep_nr++) {
+    for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {
       for(int report_step = start_step; report_step <= end_step; report_step++)  {
-	local_ministep_type   * ministep      = local_reportstep_iget_ministep( reportstep , ministep_nr );      
+	local_ministep_type   * ministep      = local_updatestep_iget_ministep( updatestep , ministep_nr );      
 	
 	printf("Fetching simulated responses and observations for step %i.\n", report_step); 
 	enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size, 

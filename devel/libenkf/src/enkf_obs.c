@@ -11,7 +11,6 @@
 #include <msg.h>
 #include <enkf_state.h>
 #include <local_ministep.h>
-#include <local_reportstep.h>
 #include <local_config.h>
 
 /*
