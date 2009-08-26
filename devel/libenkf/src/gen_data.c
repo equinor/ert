@@ -594,36 +594,50 @@ void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
 
 
 
-void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std, log_type * logh) {
-  const gen_data_config_type * config = inflation->config;
-  ecl_type_enum internal_type         = gen_data_config_get_internal_type( config );
-  const int data_size                 = gen_data_config_get_data_size( config );   
+#define INFLATE(inf,std,min,logh)                                                                                                                                \
+{                                                                                                                                                                \
+   for (int i=0; i < data_size; i++) {                                                                                                                           \
+     if (std_data[i] > 0)                                                                                                                                        \
+        inflation_data[i] = util_float_max( 1.0 , min_std_data[i] / std_data[i]);                                                                                \
+      else                                                                                                                                                       \
+        inflation_data[i] = 1.0;                                                                                                                                 \
+   }                                                                                                                                                             \
+   if (add_log_entry) {                                                                                                                                          \
+     for (int c=0; c < data_size; c++) {                                                                                                                         \
+       if (inflation_data[c] > 1.0)                                                                                                                              \
+         log_add_fmt_message( logh , log_level , "Inflating %s:%d with %6.4f" , gen_data_config_get_key( inflation->config ) , c, inflation_data[c]);            \
+     }                                                                                                                                                           \
+   }                                                                                                                                                             \
+}                                                                   
 
-  if (internal_type == ecl_float_type) {
+
+
+void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std , log_type * logh) {
+  const int log_level              = 3;
+  const gen_data_config_type * config = inflation->config;
+  ecl_type_enum ecl_type           = gen_data_config_get_internal_type( config );
+  const int data_size              = gen_data_config_get_data_size( config );   
+  bool add_log_entry = false;
+  if (log_get_level( logh ) >= log_level)
+    add_log_entry = true;
+
+
+  if (ecl_type == ecl_float_type) {
     float       * inflation_data = (float *)       inflation->data;
     const float * std_data       = (const float *) std->data;
     const float * min_std_data   = (const float *) min_std->data;
-
-    for (int i=0; i < data_size; i++) {
-      if (std_data[i] > 0)
-        inflation_data[i] = util_float_max( 1.0 , min_std_data[i] / std_data[i]);  
-      else
-        inflation_data[i] = 0;
-    }
+    
+    INFLATE(inflation_data , std_data , min_std_data , logh);
+    
   } else {
     double       * inflation_data = (double *)       inflation->data;
     const double * std_data       = (const double *) std->data;
     const double * min_std_data   = (const double *) min_std->data;
     
-    for (int i=0; i < data_size; i++) {
-      if (std_data[i] > 0)
-        inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]); 
-      else
-        inflation_data[i] = 1.0;
-    }
+    INFLATE(inflation_data , std_data , min_std_data , logh);
   }
 }
-
+#undef INFLATE
 
 
 /******************************************************************/

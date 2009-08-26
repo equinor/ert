@@ -42,7 +42,7 @@
 #include <forward_model.h>
 #include <enkf_analysis.h>
 #include <local_ministep.h>
-#include <local_reportstep.h>
+#include <local_updatestep.h>
 #include <local_config.h>
 #include <misfit_table.h>
 #include <log.h>
@@ -808,7 +808,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
   int iens;
   
   printf("Starting forward step: %d -> %d\n",step1 , step2);
-  
+  log_add_fmt_message(enkf_main->logh , 1 , "Forward model: %d -> %d ",step1,step2);
   job_size = 0;
   for (iens = 0; iens < ens_size; iens++)
     if (iactive[iens]) job_size++;
@@ -849,7 +849,8 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(submit_threads);
     }
-    
+    log_add_message(enkf_main->logh , 1 , "Alle jobs submitted - waiting for completion" , false);
+  
     {
       thread_pool_type * complete_threads = thread_pool_alloc(ens_size);
       for (iens = 0; iens < ens_size; iens++) 
@@ -879,7 +880,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
     if (!runOK) 
       util_exit("The integration failed - check your forward model ...\n");
   }
-  
+  log_add_fmt_message(enkf_main->logh , 1 , "All jobs complete and data loaded for step: ->%d" , step2);
   if (enkf_update)
     enkf_main_UPDATE(enkf_main , step1 , step2);
   
@@ -1476,7 +1477,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 						       enkf_main->site_config    , 
 						       enkf_main->ecl_config     ,
 						       data_kw,
-						       model_config_get_std_forward_model(enkf_main->model_config));
+						       model_config_get_std_forward_model(enkf_main->model_config),
+                                                       enkf_main->logh);
 
 	  /** This is the time we tell the model config object about our 'maximum report step' - possibly including predictions. */
 	  model_config_update_last_restart(enkf_main->model_config , enkf_state_get_last_restart_nr( enkf_main->ensemble[iens] ));
@@ -1502,10 +1504,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	 fully active. */
       {
 	enkf_main->local_config = local_config_alloc( model_config_get_last_history_restart( enkf_main->model_config ) );
-	local_reportstep_type * reportstep_all_active = local_config_alloc_reportstep( enkf_main->local_config , "ALL_ACTIVE");
+	local_updatestep_type * updatestep_all_active = local_config_alloc_updatestep( enkf_main->local_config , "ALL_ACTIVE");
 	local_ministep_type   * ministep_all_active   = local_config_alloc_ministep( enkf_main->local_config , "ALL_ACTIVE");
 	
-	local_reportstep_add_ministep( reportstep_all_active , ministep_all_active );  
+	local_updatestep_add_ministep( updatestep_all_active , ministep_all_active );  
 	
 	/* Adding all observation keys */
 	{
@@ -1527,50 +1529,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	}
 	
 	/* Install the ALL_ACTIVE step as the default. */
-	local_config_set_default_reportstep( enkf_main->local_config , "ALL_ACTIVE");
+	local_config_set_default_updatestep( enkf_main->local_config , "ALL_ACTIVE");
 	
-
-	//{
-	//  local_reportstep_type * reportstep12 = local_config_alloc_reportstep( enkf_main->local_config , "REPORTSTEP12");
-	//  local_ministep_type * ministep1 = local_config_alloc_ministep_copy(enkf_main->local_config , "ALL_ACTIVE" , "UPDATE1");
-	//  local_ministep_type * ministep2 = local_config_alloc_ministep(enkf_main->local_config , "UPDATE2");
-	//
-	//  local_ministep_clear_observations( ministep1 );
-	//  local_ministep_add_obs( ministep1 , "WWCT:OP_1");
-	//  local_ministep_add_obs( ministep1 , "WWCT:OP_2");
-	//  local_ministep_add_obs( ministep1 , "WWCT:OP_3");
-	//  local_ministep_del_node(ministep1 , "FLUID_PARAMS");
-	//  local_ministep_del_node(ministep1 , "WGOR:OP_4");
-	//  local_ministep_del_node(ministep1 , "WGOR:OP_5");
-	//  {
-	//    const ecl_grid_type * ecl_grid = ecl_config_get_grid( enkf_main->ecl_config );
-	//    active_list_type * active_swat = local_ministep_get_node_active_list( ministep1 , "SWAT");
-	//    active_list_type * active_pres = local_ministep_get_node_active_list( ministep1 , "PRESSURE");
-	//    int nx,ny,nz,active_size;
-	//    int i,j,k;
-	//    ecl_grid_get_dims( ecl_grid , &nx , &ny , &nz , &active_size);
-	//    for (i=0; i < nx; i++)
-	//      for (j=0; j< ny; j++)
-	//	for (k=0; k < 3; k++) {
-	//	  int active_index = ecl_grid_get_active_index3( ecl_grid , i,j,k);
-	//	  if (active_index >= 0) {
-	//	    active_list_add_index( active_swat , active_index );
-	//	    active_list_add_index( active_pres , active_index );
-	//	    
-	//	  }
-	//	}
-	//  }
-	//
-	//  local_ministep_add_obs( ministep2 , "WGOR:OP_4");
-	//  local_ministep_add_obs( ministep2 , "WGOR:OP_5");  /* This is _only_ observed. */
-	//  local_ministep_add_node(ministep2 , "FLUID_PARAMS");
-	//  local_ministep_add_node(ministep2 , "WGOR:OP_4");
-	//  
-	//  
-	//  local_reportstep_add_ministep( reportstep12 , ministep1 );
-	//  local_reportstep_add_ministep( reportstep12 , ministep2 );
-	//  local_config_set_default_reportstep( enkf_main->local_config , "REPORTSTEP12");
-	//}
 	//#include "local_config_grane.c"
       }
       

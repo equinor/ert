@@ -1459,6 +1459,7 @@ void field_set_inflation(field_type * inflation , const field_type * std , const
     INFLATE(inflation_data , std_data , min_std_data , logh);
   }
 }
+#undef INFLATE
 
 
 

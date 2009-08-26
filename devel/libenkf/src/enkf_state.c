@@ -42,7 +42,7 @@
 #include <ecl_config.h>
 #include <subst.h>
 #include <forward_model.h>
-
+#include <log.h>
 #define ENKF_STATE_TYPE_ID 78132
 
 
@@ -91,6 +91,7 @@ typedef struct shared_info_struct {
   enkf_fs_type                * fs;                /* The filesystem object - used to load and store nodes. */
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
+  log_type                    * logh;              /* The log handle. */
   bool                          statoil_mode;      /* Fucking hack - should be removed. */
 } shared_info_type;
 
@@ -228,7 +229,7 @@ static void run_info_complete_run(run_info_type * run_info) {
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, log_type * logh) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
   shared_info->fs           = model_config_get_fs( model_config );
@@ -516,7 +517,8 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   const site_config_type    * site_config,
 				   const ecl_config_type     * ecl_config,
 				   hash_type                 * data_kw,
-				   const forward_model_type  * default_forward_model) { 
+				   const forward_model_type  * default_forward_model,
+                                   log_type                  * logh) { 
   
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
@@ -524,7 +526,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->ensemble_config = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
   enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config );
-  enkf_state->shared_info     = shared_info_alloc(site_config , model_config );
+  enkf_state->shared_info     = shared_info_alloc(site_config , model_config , logh);
   enkf_state->run_info        = run_info_alloc();
   
   enkf_state->node_hash       = hash_alloc();

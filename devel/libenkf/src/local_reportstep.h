@@ -1,15 +1,15 @@
-#ifndef __LOCAL_REPORTSTEP_H__
-#define __LOCAL_REPORTSTEP_H__
+#ifndef __LOCAL_UPDATESTEP_H__
+#define __LOCAL_UPDATESTEP_H__
 
 #include <local_ministep.h>
 
-typedef struct local_reportstep_struct local_reportstep_type;
+typedef struct local_updatestep_struct local_updatestep_type;
 
-local_reportstep_type * local_reportstep_alloc( const char * name );
-void                    local_reportstep_free__(void * arg);
-void                    local_reportstep_add_ministep( local_reportstep_type * reportstep , local_ministep_type * ministep);
-local_ministep_type   * local_reportstep_iget_ministep( const local_reportstep_type * reportstep , int index);
-local_reportstep_type * local_reportstep_alloc_copy( const local_reportstep_type * src , const char * name );
-int                     local_reportstep_get_num_ministep( const local_reportstep_type * reportstep);
+local_updatestep_type * local_updatestep_alloc( const char * name );
+void                    local_updatestep_free__(void * arg);
+void                    local_updatestep_add_ministep( local_updatestep_type * updatestep , local_ministep_type * ministep);
+local_ministep_type   * local_updatestep_iget_ministep( const local_updatestep_type * updatestep , int index);
+local_updatestep_type * local_updatestep_alloc_copy( const local_updatestep_type * src , const char * name );
+int                     local_updatestep_get_num_ministep( const local_updatestep_type * updatestep );
 
 #endif
