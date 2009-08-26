@@ -50,6 +50,7 @@ struct model_config_struct {
   int                   abs_last_restart;           /* The total end of schedule file - will be updated with enkf_sched_file. */  
   bool                  has_prediction;      	    /* Is the SCHEDULE_PREDICTION_FILE option set ?? */
   bool                  resample_when_fail;         /* Should we resample when a model fails to integrate? */
+  int                   max_internal_submit;        /* How many times to retry if the load fails. */
   char                * lock_path;           	    /* Path containing lock files */
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
   bool_vector_type    * internalize_results; 	    /* Should the results (i.e. summary in ECLIPSE speak) be intrenalized at this report_step? */
@@ -104,6 +105,7 @@ model_config_type * model_config_alloc(const config_type * config , const ext_jo
 
   model_config->use_lsf            = use_lsf;
   model_config->plot_path          = NULL;
+  model_config->max_internal_submit       = config_get_as_int( config , "MAX_RETRY" );
   model_config->resample_when_fail        = config_get_as_bool( config , "RESAMPLE_WHEN_FAIL" );
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
@@ -332,4 +334,8 @@ bool model_config_load_results( const model_config_type * config , int report_st
 
 bool model_config_resample_when_fail( const model_config_type * config ) {
   return config->resample_when_fail;
+}
+
+int model_config_get_max_internal_submit( const model_config_type * config ) {
+  return config->max_internal_submit;
 }

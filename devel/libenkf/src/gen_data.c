@@ -17,7 +17,7 @@
 #include <gen_common.h>
 #include <matrix.h>
 #include <math.h>
-
+#include <log.h>
 
 /**
    The file implements a general data type which can be used to update
@@ -283,9 +283,25 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
 
 
 
-void gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
+/**
+   The return value from the xxx_ecl_load() functions should be
+   true|false whether the load has worked out OK. The
+   summary_ecl_load() and field_ecl_load() functions should only be
+   called when we insist that there should be data waiting, and
+   consequently a false return value should be interpreted as a failure. 
+   
+   For the gen_data_ecl_load() function we do not know if we can
+   expect to find data (that should probably be internalized in the
+   config object ... ), hence the function must return true anyway, to
+   not signal false errors.
+*/
+
+
+bool gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
   gen_data_fload( gen_data , ecl_file , report_step );
+  return true;
 }
+
 
 
 /**
@@ -578,7 +594,7 @@ void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
 
 
 
-void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std) {
+void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std, log_type * logh) {
   const gen_data_config_type * config = inflation->config;
   ecl_type_enum internal_type         = gen_data_config_get_internal_type( config );
   const int data_size                 = gen_data_config_get_data_size( config );   

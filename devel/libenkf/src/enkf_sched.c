@@ -305,7 +305,7 @@ static void enkf_sched_verify__(const enkf_sched_type * enkf_sched) {
 
     if (report2 != next_report1) {
       enkf_sched_fprintf(enkf_sched , stdout);
-      util_abort("%s - abort \n",__func__);
+      util_abort("%s report steps must be continous - there is a gap.\n",__func__);
     }
   }
 

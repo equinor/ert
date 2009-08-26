@@ -360,23 +360,25 @@ double enkf_node_user_get(enkf_node_type * enkf_node , const char * key , bool *
 */
 
 
-void enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step, int iens) {
+bool enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_block , int report_step, int iens ) {
+  bool loadOK;
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
   {
     char * input_file = enkf_config_node_alloc_infile(enkf_node->config , report_step);
     if (input_file != NULL) {
       char * file = util_alloc_filename( run_path , input_file , NULL);
-      enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
+      loadOK = enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
       free(file);
     } else
-      enkf_node->ecl_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
+      loadOK = enkf_node->ecl_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
     util_safe_free( input_file );
   }
   enkf_node->__report_step = report_step;
   enkf_node->__state       = FORECAST;
   enkf_node->__modified    = false;
   enkf_node->__iens        = iens; 
+  return loadOK;
 }
 
 
@@ -540,12 +542,12 @@ void enkf_node_matrix_deserialize(enkf_node_type *enkf_node , const active_list_
 
 
 
-void enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std) {
+void enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std, log_type * logh) {
   {
     enkf_node_type * enkf_node = inflation;
     FUNC_ASSERT(enkf_node->set_inflation);
   }
-  inflation->set_inflation( inflation->data , std->data , min_std->data);
+  inflation->set_inflation( inflation->data , std->data , min_std->data , logh);
 }
 
 void enkf_node_sqrt(enkf_node_type *enkf_node) {

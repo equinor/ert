@@ -58,21 +58,22 @@
 typedef struct run_info_struct {
   bool               	  __ready;              /* An attempt to check the internal state - not active yet. */
   bool               	  active;               /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
+  bool                    resample_when_fail;   
   int                	  init_step_parameters; /* The report step we initialize parameters from - will often be equal to step1, but can be different. */
   state_enum         	  init_state_parameter; /* Whether we should init from a forecast or an analyzed state - parameters. */
   state_enum              init_state_dynamic;   /* Whether we should init from a forecast or an analyzed state - dynamic state variables. */
+  int                     max_internal_submit;  /* How many times the enkf_state object should try to resubmit when the queueu has said everything is OK - but the load fails. */  
+  int                     num_internal_submit;
   int                     load_start;           /* When loading back results - start at this step. */
   int                	  step1;                /* The forward model is integrated: step1 -> step2 */
   int                	  step2;  	          
   char            	* run_path;             /* The currently used runpath - is realloced / freed for every step. */
-  bool            	  can_sim;              /* If false - this member can not start simulations. */
   run_mode_type   	  run_mode;             /* What type of run this is */
-  
   /******************************************************************/
   /* Return value - set by the called routine!!  */
-  bool              complete_OK;           /* Did the forward model complete OK? */
+  bool                    runOK;               /* Set to true when the run has completed - AND - the results have been loaded back. */
 } run_info_type;
-
+  
 
 
 /**
@@ -176,6 +177,8 @@ static void run_info_summarize( const run_info_type * run_info ) {
 static void run_info_set(run_info_type * run_info        , 
 			 run_mode_type run_mode          , 
 			 bool active                     , 
+                         bool resample_when_fail         ,
+                         int max_internal_submit         ,
 			 int init_step_parameters        ,      
 			 state_enum init_state_parameter ,
                          state_enum init_state_dynamic   ,
@@ -192,11 +195,13 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->init_state_dynamic = init_state_dynamic;
   run_info->step1      	         = step1;
   run_info->step2      	         = step2;
-  run_info->complete_OK          = false;
+  run_info->runOK                = false;
   run_info->__ready              = true;
-  run_info->can_sim              = true;
   run_info->run_mode             = run_mode;
   run_info->load_start           = load_start;
+  run_info->resample_when_fail   = resample_when_fail;
+  run_info->max_internal_submit  = max_internal_submit;
+  run_info->num_internal_submit  = 0;
   run_info_set_run_path(run_info , iens , run_path_fmt);
 }
 
@@ -215,7 +220,7 @@ static void run_info_free(run_info_type * run_info) {
 
 
 static void run_info_complete_run(run_info_type * run_info) {
-  if (run_info->complete_OK)
+  if (run_info->runOK)
     run_info->run_path = util_safe_free(run_info->run_path);
 }
 
@@ -358,8 +363,6 @@ void enkf_state_set_special_forward_model(enkf_state_type * enkf_state , forward
   enkf_state_init_forward_model(enkf_state);
 }
 
-
-static void enkf_state_add_node_internal(enkf_state_type * , const char * , const enkf_node_type * );
 
 
 void enkf_state_apply_NEW2(enkf_state_type * enkf_state , int mask , node_function_type function_type, arg_pack_type * arg) {
@@ -657,7 +660,7 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
    When we arrive in this function we *KNOW* that summary should be
    loaded from disk.
 */
-static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step) {
+static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step, bool * loadOK) {
   /* IFF reservoir_simulator == ECLIPSE ... */
   if (report_step > 0) {
     const shared_info_type   * shared_info = enkf_state->shared_info;
@@ -691,10 +694,13 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 	    internalize = enkf_node_internalize(node , report_step);
 
 	  if (internalize) {
-	    enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens);    /* Loading/internalizing */
-	    enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);            /* Saving to disk */
+	    if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens)) /* Loading/internalizing */
+              enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);            /* Saving to disk */
+            else {
+              *loadOK = false;
+              fprintf(stderr,"** Warning: failed to load data for node: %s \n", enkf_node_get_key( node ));
+            }
 	  } 
-
 	}
       }
       hash_iter_free(iter);
@@ -740,7 +746,7 @@ static char * __realloc_static_kw(char * kw , int occurence) {
    When the state has been loaded it goes straight to disk.
 */
 
-static void enkf_state_internalize_state(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step)   {
+static void enkf_state_internalize_state(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step , bool * loadOK) {
   member_config_type * my_config   = enkf_state->my_config;
   shared_info_type   * shared_info = enkf_state->shared_info;
   run_info_type      * run_info    = enkf_state->run_info;
@@ -763,7 +769,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
       restart_file = ecl_file_fread_alloc(file , endian_swap);
       free(file);
     } else 
-      restart_file = NULL;              /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
+      restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
   }
   
   /*****************************************************************/
@@ -897,8 +903,12 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	
 	if (internalize_kw) {
 	  if (enkf_node_has_func(enkf_node , ecl_load_func)) {
-	    enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , my_config->iens);
-	    enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
+	    if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , my_config->iens ))
+              enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
+            else {
+              *loadOK = false;
+              fprintf(stderr,"** Warning: failed to load data for node:%s \n", enkf_node_get_key( enkf_node ));
+            }
 	  }
 	}
       }
@@ -926,17 +936,17 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 */
    
 
-void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2) {
+void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2 , bool * loadOK) {
   int report_step;
   {
     const model_config_type * model_config = enkf_state->shared_info->model_config;
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
       if (model_config_load_state( model_config , report_step)) 
-	enkf_state_internalize_state(enkf_state , model_config , report_step);
+	enkf_state_internalize_state(enkf_state , model_config , report_step , loadOK);
       
 
       if (model_config_load_results( model_config , report_step)) 
-	enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step);
+	enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step , loadOK);
     }
   }
 }
@@ -947,8 +957,9 @@ void * enkf_state_internalize_results_mt( void * arg ) {
   enkf_state_type * enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
   int step1                    = arg_pack_iget_int( arg_pack , 1 );
   int step2                    = arg_pack_iget_int( arg_pack , 2 );
-
-  enkf_state_internalize_results( enkf_state , step1 , step2 );
+  bool loadOK                  = true;
+  
+  enkf_state_internalize_results( enkf_state , step1 , step2 , &loadOK);
   
   return NULL;
 }  
@@ -1331,9 +1342,6 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
 
 static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
   const member_config_type  * my_config = enkf_state->my_config;  
-  const run_info_type       * run_info  = enkf_state->run_info;
-  if (!run_info->can_sim)
-    util_abort("%s: this EnKF instance can not start simulations - aborting \n", __func__ );
   {
     const run_info_type       * run_info    = enkf_state->run_info;
     if (!run_info->__ready) 
@@ -1402,7 +1410,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
 
 
 static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
-  const run_info_type       * run_info    = enkf_state->run_info;
+  run_info_type       * run_info    = enkf_state->run_info;
   if (run_info->active) {  /* if the job is not active we just return .*/
     const shared_info_type    * shared_info = enkf_state->shared_info;
     const member_config_type  * my_config   = enkf_state->my_config;
@@ -1412,6 +1420,7 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
     */
     enkf_state_init_eclipse(enkf_state);
     job_queue_add_job(shared_info->job_queue , run_info->run_path , my_config->eclbase , my_config->iens , forward_model_get_lsf_request(enkf_state->forward_model));
+    run_info->num_internal_submit++;
   }
 }
 
@@ -1423,28 +1432,62 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
 
 static void enkf_state_complete_forward_model(enkf_state_type * enkf_state) {
   run_info_type             * run_info    = enkf_state->run_info;
-  run_info->complete_OK = true;
+  run_info->runOK = true;
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
     const member_config_type  * my_config   = enkf_state->my_config;
     const int usleep_time = 2500000; //100000; /* 1/10 of a second */ 
     job_status_type final_status;
     
+
+    /*****************************************************************/
+    /* Start of wait loop to wait for the job to complete.           */
     while (true) {
+      bool loadOK  = true;
       final_status = job_queue_export_job_status(shared_info->job_queue , my_config->iens);
   
-      if (final_status == job_queue_complete_OK) {
-	enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2); 
-	break;
-      } else if (final_status == job_queue_complete_FAIL) {
-	fprintf(stderr,"** job:%d failed completely - this will break ... \n",my_config->iens);
-	run_info->complete_OK = false;
+      if (final_status == job_queue_run_OK) {
+        /**
+           The queue system has reported that the run is OK, i.e. it
+           has completed and produced the targetfile it should. We
+           then check in this scope whether the results can be loaded
+           back; if that is OK the final status is updated, otherwise: restart.
+        */
+	enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2 , &loadOK); 
+        if (loadOK) {
+          final_status = job_queue_all_OK;
+          job_queue_set_load_OK( shared_info->job_queue , my_config->iens );
+          break;
+        } else {
+          if (run_info->num_internal_submit < run_info->max_internal_submit) {
+            if (run_info->resample_when_fail) {
+              /* resample_when_fail is set to true - we try to resample before resubmitting. */
+              {
+                stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
+                for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
+                  enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
+                  enkf_node_initialize( node , my_config->iens );
+                }
+                stringlist_free( init_keys );
+              }
+            }
+            enkf_state_ecl_write( enkf_state );  /* Writing a full new enkf_state instance */
+            run_info->num_internal_submit++;
+            job_queue_set_external_restart( shared_info->job_queue , my_config->iens );
+          } else  /* No more attempts on this one - we are GIVING UP */
+            job_queue_set_external_fail( shared_info->job_queue , my_config->iens );
+        }
+      } else if (final_status == job_queue_run_FAIL) {
+	run_info->runOK = false;
 	break;
       } else usleep(usleep_time);
     } 
+    /* End of wait loop                                              */
+    /*****************************************************************/
     
+
     /* In case the job fails, we leave the run_path directory around for debugging. */
-    if (final_status == job_queue_complete_OK) {
+    if (final_status == job_queue_all_OK) {
       bool unlink_runpath;
       if (my_config->keep_runpath == DEFAULT_KEEP) {
 	if (run_info->run_mode == ENKF_ASSIMILATION)
@@ -1481,9 +1524,13 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state) {
 }
 
 
-
-bool enkf_state_run_OK(const enkf_state_type * state) {
-  return state->run_info->complete_OK;
+/**
+   Checks that both the run has completed OK - that also includes the
+   loading back of results.
+*/
+   
+bool enkf_state_runOK(const enkf_state_type * state) {
+  return state->run_info->runOK;
 }
 
 
@@ -1793,7 +1840,9 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 
 void enkf_state_init_run(enkf_state_type * state , 
                          run_mode_type run_mode  , 
-                         bool active             , 
+                         bool active                    , 
+                         bool resample_when_fail , 
+                         int max_internal_submit,
                          int init_step_parameter         , 
                          state_enum init_state_parameter , 
                          state_enum init_state_dynamic   , 
@@ -1805,9 +1854,14 @@ void enkf_state_init_run(enkf_state_type * state ,
   member_config_type * my_config    = state->my_config;
   shared_info_type   * shared_info  = state->shared_info;
 
+  if (init_step_parameter != 0)
+    resample_when_fail = false;
+  
   run_info_set( state->run_info , 
                 run_mode        , 
                 active          , 
+                resample_when_fail , 
+                max_internal_submit,
                 init_step_parameter , 
                 init_state_parameter , 
                 init_state_dynamic  , 
@@ -1817,7 +1871,7 @@ void enkf_state_init_run(enkf_state_type * state ,
                 __forward_model , 
                 my_config->iens ,  
                 model_config_get_runpath_fmt( shared_info->model_config ) );
-
+  
   if (__forward_model != NULL)
     enkf_state_set_special_forward_model( state , __forward_model);
 }

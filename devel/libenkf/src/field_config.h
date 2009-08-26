@@ -66,7 +66,7 @@ typedef enum { UNDEFINED_FORMAT         = 0,
 
 
 
-
+void                    field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k);
 field_type            * field_config_get_min_std( const field_config_type * field_config );
 const char            * field_config_default_extension(field_file_format_type , bool );
 bool                    field_config_get_endian_swap(const field_config_type * );

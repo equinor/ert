@@ -45,6 +45,7 @@
 #include <local_reportstep.h>
 #include <local_config.h>
 #include <misfit_table.h>
+#include <log.h>
 #include "enkf_defaults.h"
 
 /**
@@ -86,7 +87,8 @@ struct enkf_main_struct {
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
   local_config_type    * local_config;     /* Holding all the information about local analysis. */
-  
+  log_type             * logh;             /* Handle to an open log file. */
+
   /*-------------------------*/
   
   enkf_obs_type        * obs;
@@ -162,7 +164,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
       enkf_state_free(enkf_main->ensemble[i]);
     free(enkf_main->ensemble);
   }
-
+  log_close( enkf_main->logh);
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
@@ -370,6 +372,7 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
   enkf_node_clear( std );
   for (iens = 0; iens < ens_size; iens++) 
     enkf_node_iaddsqr( std , ensemble[iens] );
+  enkf_node_scale(std , 1.0 / ens_size );
 
   if (mean != NULL) {
     enkf_node_scale( std , -1 );
@@ -390,15 +393,13 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
         
 */
 
-void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std , double inflation_factor) {
+void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std , double inflation_factor ) {
   int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
   const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key); 
   enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , ANALYZED );
   enkf_node_type *  mean                    = enkf_node_alloc( config_node );
   enkf_node_type *  std                     = enkf_node_alloc( config_node );
   int iens;
-  bool valid;
-  
   
   enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
   /* Shifting away the mean */
@@ -425,7 +426,7 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
         enkf_node_scale( ensemble[iens] , inflation_factor );
     } else {
       enkf_node_type * inflation = enkf_node_alloc( config_node );
-      enkf_node_set_inflation( inflation , std , min_std );
+      enkf_node_set_inflation( inflation , std , min_std , enkf_main->logh);
       
       for (iens = 0; iens < ens_size; iens++) 
         enkf_node_imul( ensemble[iens] , inflation );
@@ -457,7 +458,7 @@ void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , double sca
 
     if (min_std != NULL) {
       printf("Inflating node: %s \n",key);
-      enkf_main_inflate_node(enkf_main , report_step , key , min_std , scalar_inflation );
+      enkf_main_inflate_node(enkf_main , report_step , key , min_std , scalar_inflation);
     }
   }
   stringlist_free( keys );
@@ -799,7 +800,9 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
                                bool enkf_update                ,     
                                forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
   
-  const int ens_size    = ensemble_config_get_size(enkf_main->ensemble_config);
+  bool resample_when_fail  = model_config_resample_when_fail(enkf_main->model_config);
+  int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
+  const int ens_size       = ensemble_config_get_size(enkf_main->ensemble_config);
   int   job_size;
 
   int iens;
@@ -830,9 +833,11 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
 	  enkf_state_init_run(enkf_main->ensemble[iens] , 
                               run_mode , 
                               iactive[iens] , 
+                              resample_when_fail  ,
+                              max_internal_submit ,
                               init_step_parameter , 
                               init_state_parameter,
-                              init_state_dynamic, 
+                              init_state_dynamic  , 
                               load_start , 
                               step1 , 
                               step2 , 
@@ -860,44 +865,19 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
   }
   
   {
-    bool complete_OK   = true;
+    bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
     
     for (iens = 0; iens < ens_size; iens++) {
-      if (! enkf_state_run_OK(enkf_main->ensemble[iens])) {
-        if ( complete_OK ) {
+      if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
+        if ( runOK ) {
           fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
-          complete_OK = false;
+          runOK = false;
         }
         fprintf(stderr,"** Error in: %s \n",enkf_state_get_run_path(enkf_main->ensemble[iens]));
       }
     }
-
-    /** A retry is recursive */
-    if (!complete_OK) {
-      if ((step1 == 0) && (model_config_resample_when_fail(enkf_main->model_config))) {
-        /** We resample the failed members and try again - RECURSIVE CALL */
-        bool * iactive_retry = util_malloc( ens_size * sizeof * iactive_retry , __func__);
-        
-        printf("Resampling ... \n");
-        
-        for (iens = 0; iens < ens_size; iens++) 
-          iactive_retry[iens] = !enkf_state_run_OK(enkf_main->ensemble[iens]);
-        
-        {
-          stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , DYNAMIC_STATE + PARAMETER );
-          for (iens = 0; iens < ens_size; iens++) 
-            if (iactive_retry[iens]) enkf_state_initialize( enkf_main->ensemble[iens] , init_keys );
-          
-          stringlist_free( init_keys );
-        }
-
-        /* RECURSIVE CALL: */
-        enkf_main_run_step(enkf_main , run_mode , iactive_retry , load_start , init_step_parameter , init_state_parameter , init_state_dynamic , step1 , step2 , enkf_update , forward_model);
-        
-        free( iactive_retry );
-      } else
-        util_exit("The integration failed - check your forward model ...\n");
-    }
+    if (!runOK) 
+      util_exit("The integration failed - check your forward model ...\n");
   }
   
   if (enkf_update)
@@ -997,7 +977,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 
 	  
           if (rerun) {
-            /** rerun ... */
+            /* rerun ... */
             load_start           = init_step_parameters; /* +1 below */
             init_state_dynamic   = FORECAST;
             init_state_parameter = ANALYZED;
@@ -1007,13 +987,18 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
               init_state_dynamic = ANALYZED;
             else
               init_state_dynamic = FORECAST;
+            /* 
+               This is not a rerun - and then parameters and dynamic
+               data should be initialized be initialized from the same
+               report step.
+            */
             init_state_parameter = init_state_dynamic;
-            
             load_start = report_step1;
           }
 
           if (load_start > 0)
             load_start++;
+
 	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , report_step1 , init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
 	  prev_enkf_on = enkf_on;
 	}
@@ -1103,18 +1088,19 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	free(base);
       } else 
 	model_config = base;
+      
       free(ext);
       free(path);
     } else
       model_config = util_alloc_string_copy(_model_config);
   }  
-
+  
   if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {
     config_type * config = config_alloc();
     config_item_type * item;
-
+    
     /*****************************************************************/
     /* config_add_item():                                            */
     /*                                                               */
@@ -1129,6 +1115,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
     config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
     
+    item = config_add_item(config , "LOG_LEVEL" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+    config_set_arg(config , "LOG_LEVEL" , 1 , (const char *[1]) { DEFAULT_LOG_LEVEL });
 
     item = config_add_item(config , "MAX_SUBMIT" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
@@ -1137,6 +1126,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     item = config_add_item(config , "RESAMPLE_WHEN_FAIL" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_BOOLEAN});
     config_set_arg(config , "RESAMPLE_WHEN_FAIL" , 1 , (const char *[1]) { DEFAULT_RESAMPLE_WHEN_FAIL});
+    
+    item = config_add_item(config , "MAX_RETRY" , true , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+    config_set_arg(config , "MAX_RETRY" , 1 , (const char *[1]) { DEFAULT_MAX_INTERNAL_SUBMIT });
+
+    
 
     item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -1344,6 +1339,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
        populating the enkf_main object. 
     */
     
+    {
+      char * log_file = util_alloc_filename(NULL , model_config , "log");
+      enkf_main->logh = log_alloc_existing( log_file , config_get_as_int(config , "LOG_LEVEL"));
+      printf("Activity will be logged to ..............: %s \n",log_file );
+      free( log_file );
+    }
+
 
     enkf_main->analysis_config = analysis_config_alloc(config);
     {

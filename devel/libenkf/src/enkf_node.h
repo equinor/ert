@@ -18,6 +18,7 @@ extern "C" {
 #include <msg.h>
 #include <matrix.h>
 #include <active_list.h>
+#include <log.h>
 
 /**********************************/
 
@@ -53,14 +54,16 @@ typedef void   	      (load_ftype)                	(      void *  , buffer_type 
 typedef bool   	      (store_ftype)                	(const void *  , buffer_type * , bool);
 
 
-typedef void          (set_inflation_ftype)             (void *       ,  /* Node object which is used for storing inflation factors. */
-                                                         const void * ,  /* Node object with the ensemble standard deviation. */
-                                                         const void *);  /* Node object with the minimum standard deviation - supplied by the user. */
+typedef void          (set_inflation_ftype)             (void *       ,     /* Node object which is used for storing inflation factors. */
+                                                         const void * ,     /* Node object with the ensemble standard deviation. */
+                                                         const void * ,     /* Node object with the minimum standard deviation - supplied by the user. */
+                                                         log_type * logh);
+
 
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
 typedef void * 	      (alloc_ftype)                	(const void *);
 typedef bool   	      (initialize_ftype)     	   	(      void *  , int);
-typedef void   	      (ecl_load_ftype)            	(void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int);
+typedef bool   	      (ecl_load_ftype)            	(void *  , const char * , const ecl_sum_type * , const ecl_file_type * , int);
 typedef void          (realloc_data_ftype)	   	(void * );
 typedef void          (free_data_ftype)	           	(void * );
 typedef void   	      (node_free_ftype)       	   	(      void *);
@@ -116,7 +119,7 @@ void             enkf_node_deserialize(enkf_node_type * , const serial_vector_ty
 void             enkf_node_matrix_serialize(enkf_node_type *enkf_node , const active_list_type * active_list , matrix_type * A , int row_offset , int column);
 void             enkf_node_matrix_deserialize(enkf_node_type *enkf_node , const active_list_type * active_list , const matrix_type * A , int row_offset , int column);
 
-void             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
+bool             enkf_node_ecl_load  (enkf_node_type *, const char * , const ecl_sum_type * , const ecl_file_type * , int, int );
 void             enkf_node_ecl_load_static  (enkf_node_type *, const ecl_kw_type * , int , int);
 void             enkf_node_ecl_write (const enkf_node_type *, const char * , fortio_type * , int);
 bool             enkf_node_initialize(enkf_node_type *enkf_node , int);
@@ -129,7 +132,7 @@ void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int 
 void             enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state);
 bool             enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state);
 
-void   enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std);
+void   enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std, log_type * logh);
 void   enkf_node_sqrt(enkf_node_type *enkf_node);
 void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );

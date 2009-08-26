@@ -140,10 +140,10 @@ static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_
   char * base = util_alloc_sprintf("%s_%s" , driver->mount_prefix , enkf_types_get_impl_name( impl_type ));
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , base , "mnt" );
-    driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload );
+    driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload , false);
   } else {
     mount_file = util_alloc_filename( driver->write_path , base , "mnt" );
-    driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload );
+    driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload , false);
   }
   free( mount_file );
   free( base );

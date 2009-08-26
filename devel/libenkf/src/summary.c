@@ -12,6 +12,7 @@
 #include <enkf_types.h>
 #include <enkf_util.h>
 #include <enkf_serialize.h>
+#include <log.h>
 
 /*****************************************************************/
 
@@ -161,37 +162,59 @@ double summary_user_get(const summary_type * summary , const char * index_key , 
 
 
 
+/**
+   There are three typical reasons why the node data can not be loaded:
 
-void summary_ecl_load(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step) {
+     1. The ecl_sum instance is equal to NULL.
+     2. The ecl_sum instance does not have the report step we are asking for.
+     3. The ecl_sum instance does not have the variable we are asking for.
+
+   In the two first cases the function will return false, ultimately
+   signaling that the simulation has failed. In the last case we
+   return true, because this is a typical situation for e.g. a well
+   which has not yet opened.
+*/
+
+bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step) {
+  bool loadOK = false;
+
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
     const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config);
-    int ministep2;
-    ecl_sum_report2ministep_range(ecl_sum , report_step , NULL , &ministep2);
-    if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
-      /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
-      if (ecl_sum_has_general_var(ecl_sum , var_key))
-	summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  , var_key);
-      else 
-	/* 
+
+    /* Check if the ecl_sum instance has this report step. */
+    if (ecl_sum_has_report_step( ecl_sum , report_step )) {
+      int ministep2;
+      ecl_sum_report2ministep_range(ecl_sum , report_step , NULL , &ministep2);
+
+      if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
+        /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
+        if (ecl_sum_has_general_var(ecl_sum , var_key)) 
+          summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  , var_key);
+        else 
+          /* 
 	   The summary object does not have this well/group - probably
-	   meaning that it has not yet opened. If the user has
-	   mis-spelled the name, we will go through the whole
-	   simulation without detecting that error. 
+	   meaning that it has not yet opened. We return loadOK ==
+	   true in this case.
+           
+           If the user has misspelled the name, we will go through
+	   the whole simulation without detecting that error.
 	*/
-	summary->data[0] = 0;
-    } else {
-      if (!ecl_sum_has_general_var(ecl_sum , var_key))
-	util_abort("%s: sorry - could not find variable: \"%s\" in summary files. \n",__func__ , var_key);
-      summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  ,var_key );
+          summary->data[0] = 0;
+        loadOK = true;   
+      } else if (ecl_sum_has_general_var(ecl_sum , var_key)) {
+        summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  ,var_key );
+        loadOK = true;
+      }
     }
-  } else 
-    util_abort("%s fatal error when trying to internalize:%s - no summary data loaded from disk \n",__func__ , summary_config_get_var( summary->config ));
+  }
+  
+  return loadOK;
 }
 
 
 
-void summary_set_inflation(summary_type * inflation , const summary_type * std , const summary_type * min_std) {
+void summary_set_inflation(summary_type * inflation , const summary_type * std , const summary_type * min_std, log_type * logh) {
   int size = 1;
   for (int i = 0; i < size; i++) 
     inflation->data[i] = util_double_max( 1.0 , min_std->data[i] / std->data[i]);

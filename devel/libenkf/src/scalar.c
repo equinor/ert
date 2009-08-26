@@ -241,7 +241,7 @@ void scalar_transform(scalar_type * scalar) {
 }
 
 const double * scalar_get_output_ref(const scalar_type * scalar) { return scalar->output_data; }
-const double * scalar_get_data_ref  (const scalar_type * scalar) { return scalar->data; }
+      double * scalar_get_data_ref  (const scalar_type * scalar) { return scalar->data; }
 
 
 

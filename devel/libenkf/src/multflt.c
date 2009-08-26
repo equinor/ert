@@ -10,7 +10,7 @@
 #include <math.h>
 #include <scalar.h>
 #include <fortio.h>
-
+#include <log.h>
 
 
 GET_DATA_SIZE_HEADER(multflt);
@@ -302,7 +302,7 @@ double multflt_user_get(const multflt_type * multflt, const char * key , bool * 
 
 
 
-void multflt_set_inflation(multflt_type * inflation , const multflt_type * std , const multflt_type * min_std) {
+void multflt_set_inflation(multflt_type * inflation , const multflt_type * std , const multflt_type * min_std, log_type * logh) {
   scalar_set_inflation( inflation->scalar , std->scalar , min_std->scalar );
 }
 

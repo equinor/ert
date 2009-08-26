@@ -12,6 +12,7 @@ extern "C" {
 #include <enkf_serialize.h>
 #include <active_list.h>
 #include <matrix.h>
+#include <log.h>
 
 #define CONFIG_STD_FIELDS \
 int __type_id;            \
@@ -130,12 +131,12 @@ void prefix ## _ecl_write__(const void * void_arg , const char * path , const ch
 /*****************************************************************/
 
 #define VOID_ECL_LOAD(prefix) \
-void prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step) { \
+bool prefix ## _ecl_load__(void * void_arg , const char * ecl_file  , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file, int report_step) { \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg );                         \
-   prefix ## _ecl_load(arg , ecl_file , ecl_sum , restart_file , report_step);      \
+   return prefix ## _ecl_load(arg , ecl_file , ecl_sum , restart_file , report_step);      \
 }
 
-#define VOID_ECL_LOAD_HEADER(prefix) void prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int);
+#define VOID_ECL_LOAD_HEADER(prefix) bool prefix ## _ecl_load__(void * , const char * , const ecl_sum_type *, const ecl_file_type * , int);
 
 
 /*****************************************************************/
@@ -257,11 +258,11 @@ bool prefix ## _initialize__(void *void_arg, int iens) {         \
 /*****************************************************************/
 
 #define VOID_SET_INFLATION(prefix) \
-void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std) {                                               \
-   prefix ## _set_inflation( prefix ## _safe_cast( void_inflation ) , prefix ## _safe_const_cast( void_std ) , prefix ## _safe_const_cast( void_min_std )); \
+void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std , log_type * logh) {                                    \
+   prefix ## _set_inflation( prefix ## _safe_cast( void_inflation ) , prefix ## _safe_const_cast( void_std ) , prefix ## _safe_const_cast( void_min_std ) , logh); \
 }
 
-#define VOID_SET_INFLATION_HEADER(prefix) void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std);
+#define VOID_SET_INFLATION_HEADER(prefix) void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std , log_type * logh);
 
 /*****************************************************************/
 

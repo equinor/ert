@@ -399,7 +399,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       min_std_file = stringlist_iget( tokens , 4);
     
     config_node = ensemble_config_add_node(ensemble_config , key , PARAMETER , GEN_KW , target_file , NULL , 
-                                           gen_kw_config_fscanf_alloc(config_file , template_file , min_std_file));
+                                           gen_kw_config_fscanf_alloc(key , config_file , template_file , min_std_file));
     {
       const gen_kw_config_type * gen_kw_config  = enkf_config_node_get_ref( config_node  );
       gen_kw_type              * gen_kw_min_std = gen_kw_config_get_min_std( gen_kw_config );

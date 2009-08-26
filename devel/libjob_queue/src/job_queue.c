@@ -1,3 +1,4 @@
+#define  _GNU_SOURCE   /* Must define this to get access to pthread_rwlock_t */
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,7 +26,6 @@
 
      status: This will get the status of the job. 
 
-
    The job_queue instance only has a (void *) pointer to the driver
    instance, i.e. the job_queue does not know anything of how the
    driver actually submits/queries/stops/... the jobs. Currently we
@@ -39,12 +39,6 @@
    functionality; there is no compile-time dependencies either (ehhh -
    the EXIT file name is a small link).
 */
-
-
-
-
-
-
 
 
 /*
@@ -171,9 +165,10 @@ struct job_queue_struct {
   int                        status_list[job_queue_max_state];  /* The number of jobs in the different states (observe that the state is (ab)used as index). */
   
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
-  pthread_mutex_t            active_mutex;                      /* Two mutexes protecting the jobs array and the status_list array respectively. */
-  pthread_mutex_t            status_mutex;
+  pthread_rwlock_t           active_rwlock;
+  pthread_rwlock_t           status_rwlock;                  
 };
+
 
 static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
@@ -204,9 +199,9 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
 
 static int job_queue_get_active_size(job_queue_type * queue) {
   int active_size;
-  pthread_mutex_lock( &queue->active_mutex );
+  pthread_rwlock_rdlock( &queue->active_rwlock );
   active_size = queue->active_size;
-  pthread_mutex_unlock( &queue->active_mutex );
+  pthread_rwlock_unlock( &queue->active_rwlock );
   return active_size;
 }
 
@@ -217,16 +212,22 @@ static void job_queue_assert_queue_index(const job_queue_type * queue , int queu
 }
 
 
+
 static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node_type * node , job_status_type new_status) {
-  job_status_type old_status = job_queue_node_get_status(node);
-  job_queue_node_set_status(node , new_status);
-  queue->status_list[old_status]--;
-  queue->status_list[new_status]++;
-  if (new_status != old_status)
-    return true;
-  else
-    return false;
+  bool status_change = false;
+  pthread_rwlock_wrlock( &queue->status_rwlock );
+  {
+    job_status_type old_status = job_queue_node_get_status(node);
+    job_queue_node_set_status(node , new_status);
+    queue->status_list[old_status]--;
+    queue->status_list[new_status]++;
+    if (new_status != old_status)
+      status_change = true;
+  }
+  pthread_rwlock_unlock( &queue->status_rwlock );
+  return status_change;
 }
+
 
 static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * node) {
   basic_queue_driver_type *driver  = queue->driver;
@@ -274,7 +275,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 	  submit_status = submit_driver_FAIL;
       }
     } else {
-      job_queue_change_node_status(queue , node , job_queue_complete_FAIL);
+      job_queue_change_node_status(queue , node , job_queue_run_FAIL);
       submit_status = submit_job_FAIL;
     }
     return submit_status;
@@ -287,31 +288,78 @@ static void job_queue_print_status(const job_queue_type * queue) {
   printf("active_size ......: %d \n",queue->active_size);
 }
 
-
-
-job_status_type job_queue_export_job_status(job_queue_type * queue , int external_id) {
-  bool node_found    = false;
-  int active_size    = job_queue_get_active_size(queue);
-  int queue_index    = 0; 
-  job_status_type status;
+/**
+   Will return -1 if no node with the external_id can be found.
+*/
+static int job_queue_get_internal_index(job_queue_type * queue , int external_id) {
+  bool node_found = false;
+  int queue_index = 0;
+  int active_size = job_queue_get_active_size(queue);
   while (queue_index < active_size) {
     job_queue_node_type * node = queue->jobs[queue_index];
     if (job_queue_node_get_external_id(node) == external_id) {
       node_found = true;
-      status = node->job_status;
       break;
     } else
       queue_index++;
   }
-  
   if (node_found)
-    return status;
-  else {
+    return queue_index;
+  else
+    return -1;
+}
+
+
+job_status_type job_queue_export_job_status(job_queue_type * queue , int external_id) {
+  int queue_index    = job_queue_get_internal_index( queue , external_id );
+  if (queue_index >= 0) {
+    job_queue_node_type * node = queue->jobs[queue_index];
+    return node->job_status;
+  } else {
     job_queue_print_status(queue);
     util_abort("%s: could not find job with id: %d - aborting.\n",__func__ , external_id);
     return 0; 
   }
 }
+
+
+
+void job_queue_set_load_OK(job_queue_type * queue , int external_id) {
+  int queue_index    = job_queue_get_internal_index( queue , external_id );
+  if (queue_index >= 0) {
+    job_queue_node_type * node = queue->jobs[queue_index];
+    job_queue_change_node_status( queue , node , job_queue_all_OK);
+  } else 
+    util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
+}
+
+
+/**
+   The external scope asks the queue to restart the the job. We reset
+   the submit counter to zero.
+*/
+   
+void job_queue_set_external_restart(job_queue_type * queue , int external_id) {
+  int queue_index    = job_queue_get_internal_index( queue , external_id );
+  if (queue_index >= 0) {
+    job_queue_node_type * node = queue->jobs[queue_index];
+    node->submit_attempt = 0;
+    job_queue_change_node_status( queue , node , job_queue_restart);
+  } else 
+    util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
+}
+
+
+void job_queue_set_external_fail(job_queue_type * queue , int external_id) {
+  int queue_index    = job_queue_get_internal_index( queue , external_id );
+  if (queue_index >= 0) {
+    job_queue_node_type * node = queue->jobs[queue_index];
+    node->submit_attempt = 0;
+    job_queue_change_node_status( queue , node , job_queue_run_FAIL);
+  } else 
+    util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
+}
+
 
 
 static void job_queue_print_jobs(const job_queue_type *queue) {
@@ -322,8 +370,8 @@ static void job_queue_print_jobs(const job_queue_type *queue) {
      file has not yet been checked.
   */
   int running  = queue->status_list[job_queue_running] + queue->status_list[job_queue_done] + queue->status_list[job_queue_exit];
-  int complete = queue->status_list[job_queue_complete_OK];
-  int failed   = queue->status_list[job_queue_complete_FAIL];
+  int complete = queue->status_list[job_queue_all_OK];
+  int failed   = queue->status_list[job_queue_run_FAIL];
   int restarts = queue->status_list[job_queue_restart];  
 
   printf("Waiting: %3d    Pending: %3d    Running: %3d     Restarts: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , restarts , failed , complete);
@@ -332,9 +380,9 @@ static void job_queue_print_jobs(const job_queue_type *queue) {
 
 
 /** 
-This function goes through all the nodes and call finalize on them. It
-is essential that this routine is not called before all the jobs have
-completed.
+    This function goes through all the nodes and call finalize on them. It
+    is essential that this routine is not called before all the jobs have
+    completed.
 */
 
 void job_queue_finalize(job_queue_type * queue) {
@@ -377,7 +425,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
       memcpy(old_status_list , queue->status_list , job_queue_max_state * sizeof * old_status_list);
     } 
     
-    if ((queue->status_list[job_queue_complete_OK] + queue->status_list[job_queue_complete_FAIL]) == num_total_run)
+    if ((queue->status_list[job_queue_all_OK] + queue->status_list[job_queue_run_FAIL]) == num_total_run)
       cont = false;
     
     if (cont) {
@@ -459,7 +507,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	      job_queue_change_node_status(queue , node , job_queue_waiting);
 	      queue->status_list[job_queue_restart]++;
 	    } else 
-	      job_queue_change_node_status(queue , node , job_queue_complete_OK);
+	      job_queue_change_node_status(queue , node , job_queue_run_OK);
 
 	    job_queue_free_job(queue , node);
 	    break;
@@ -501,7 +549,7 @@ void * job_queue_run_jobs__(void * __arg_pack) {
 
 
 void job_queue_add_job(job_queue_type * queue , const char * run_path , const char * job_name , int external_id , const void * job_arg) {
-  pthread_mutex_lock( &queue->active_mutex );
+  pthread_rwlock_wrlock( &queue->active_rwlock );
   {
     int active_size  = queue->active_size;
     if (active_size == queue->size) 
@@ -510,7 +558,7 @@ void job_queue_add_job(job_queue_type * queue , const char * run_path , const ch
     job_queue_initialize_node(queue , run_path , job_name , active_size , external_id , job_arg);
     queue->active_size++;
   }
-  pthread_mutex_unlock( &queue->active_mutex );
+  pthread_rwlock_unlock( &queue->active_rwlock );
 }
 
 
@@ -554,8 +602,8 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
   }
   
   job_queue_set_driver(queue , driver);
-  pthread_mutex_init( &queue->status_mutex , NULL );
-  pthread_mutex_init( &queue->active_mutex , NULL );
+  pthread_rwlock_init( &queue->active_rwlock , NULL);
+  pthread_rwlock_init( &queue->status_rwlock , NULL);
   queue->active_size = 0;
   return queue;
 }

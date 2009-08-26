@@ -1163,7 +1163,9 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
    and not from a file.
 */
 
-void field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
+
+bool field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
+  bool loadOK = true;
   {
     field_file_format_type import_format = field_config_get_import_format(field->config);
     if (import_format == ECL_FILE) {
@@ -1171,7 +1173,8 @@ void field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_
 	ecl_kw_type * field_kw = ecl_file_iget_named_kw(restart_file , field_config_get_ecl_kw_name(field->config) , 0);
 	field_copy_ecl_kw_data(field , field_kw);
       } else 
-	util_abort("%s: fatal error when loading: %s - no restart information has been loaded \n",__func__ , field_config_get_key( field->config ));
+        loadOK = false;
+	//util_abort("%s: fatal error when loading: %s - no restart information has been loaded \n",__func__ , field_config_get_key( field->config ));
     } else {
       /* Loading from unique file - currently this only applies to the modelerror implementation. */
       bool __ENDIAN_FLIP__ = true; /* Fuck this ... */
@@ -1180,14 +1183,16 @@ void field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_
       
       field_fload_typed(field , ecl_file_name , __ENDIAN_FLIP__ , import_format);
     }
-    {
+    if (loadOK) {
       field_func_type * input_transform = field_config_get_input_transform(field->config);
       /* The input transform is done in-place. */
       if (input_transform != NULL) 
 	field_apply(field , input_transform);
     }
   }
+  return loadOK;
 }
+
 
 
 void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
@@ -1408,10 +1413,15 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
 }
 
 
-void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std) {
+void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std , log_type * logh) {
+  const int log_level              = 3;
   const field_config_type * config = inflation->config;
   ecl_type_enum ecl_type           = field_config_get_ecl_type( config );
   const int data_size              = field_config_get_data_size( config );   
+  bool add_log_entry = false;
+  if (log_get_level( logh ) >= log_level)
+    add_log_entry = true;
+
 
   if (ecl_type == ecl_float_type) {
     float       * inflation_data = (float *)       inflation->data;
@@ -1424,7 +1434,16 @@ void field_set_inflation(field_type * inflation , const field_type * std , const
       else
         inflation_data[i] = 1.0;
     }
-    
+
+    if (add_log_entry) {
+      for (int c=0; c < data_size; c++) {
+        if (inflation_data[c] > 1.0) {
+          int i,j,k;
+          field_config_get_ijk( inflation->config , c , &i, &j , &k );
+          log_add_fmt_message( logh , log_level , "Inflating %s:%d,%d,%d with %6.4f" , field_config_get_key( inflation->config ) , i,j,k , inflation_data[c]);
+        }
+      }
+    }
   } else {
     double       * inflation_data = (double *)       inflation->data;
     const double * std_data       = (const double *) std->data;

@@ -504,6 +504,10 @@ bool field_config_ijk_valid(const field_config_type * config , int i , int j , i
 }
 
 
+void field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k) {
+  ecl_grid_get_ijk1A( config->grid , active_index , i,j,k);
+}
+
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , const stringlist_type * options) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ECL_FILE , ECL_FILE , trans_table , options);
@@ -703,14 +707,6 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
 
 
 
-/**
-   This function takes an active index (in the interval [0,size>) and
-   finds the corresponding i,j,k.
-*/
-
-void field_config_get_ijk(const field_config_type * config , int active_index, int *i , int *j , int *k) {
-  ecl_grid_get_ijk1A(config->grid , active_index , i,j,k);
-}
 
 
 

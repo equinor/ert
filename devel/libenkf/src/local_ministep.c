@@ -144,6 +144,7 @@ void local_ministep_clear_nodes( local_ministep_type * ministep) {
 
 
 
+
 active_list_type * local_ministep_get_obs_active_list(const local_ministep_type * ministep , const char * obs_key ) {
   return hash_get( ministep->observations , obs_key );  /* Fails hard if you do not have the key ... */
 }

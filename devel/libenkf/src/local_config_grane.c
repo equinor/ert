@@ -34,7 +34,12 @@
     active_list_type * active_poro  = local_ministep_get_node_active_list( ministep_north , "PORO");
     active_list_type * active_permx = local_ministep_get_node_active_list( ministep_north , "PERMX");
     active_list_type * active_pres  = local_ministep_get_node_active_list( ministep_north , "PRESSURE");
-    
+
+    local_ministep_add_node( ministep_north , "GEN_KW");
+    active_list * active_gkw = local_ministep_get_node_active_list( ministep_north , "PRESSURE");
+    active_list_add_index( active_gkw , gen_kw_config_get_index( , "SWCR") );
+
+
     for (i = i1; i <= i2; i++)
       for (j = j1; j <= j2; j++)
 	for (k = k1; k <= k2; k++) {

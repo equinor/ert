@@ -225,7 +225,7 @@ void havana_fault_config_set_gen_kw_config(havana_fault_config_type * config , c
     fprintf(stderr,"%s: ** Warning: freeing existsing gen_kw_config object from second DATA statement.\n",__func__);
     gen_kw_config_free(config->gen_kw_config);
   }
-  config->gen_kw_config = gen_kw_config_fscanf_alloc( gen_kw_config_file , NULL , NULL );
+  config->gen_kw_config = gen_kw_config_fscanf_alloc( NULL , gen_kw_config_file , NULL , NULL );
 }
 
 
@@ -445,13 +445,13 @@ int havana_fault_config_get_data_size(const havana_fault_config_type * havana_fa
 
 const char * havana_fault_config_get_name(const havana_fault_config_type * config, int kw_nr) 
 {
-    return (gen_kw_config_get_name(config->gen_kw_config,  kw_nr));
+    return (gen_kw_config_iget_name(config->gen_kw_config,  kw_nr));
 }
 
 
 char ** havana_fault_config_get_name_list(const havana_fault_config_type * config) 
 {
-    return ( gen_kw_config_get_name_list(config->gen_kw_config));
+  return ( gen_kw_config_get_name_list(config->gen_kw_config));
 }
 
 const char * havana_fault_config_get_template_ref(const havana_fault_config_type * config) 

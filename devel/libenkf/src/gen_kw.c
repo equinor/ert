@@ -14,6 +14,7 @@
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
 #include <gen_kw.h>
+#include <log.h>
 
 GET_DATA_SIZE_HEADER(gen_kw);
 
@@ -206,7 +207,7 @@ void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list ,
 
 
 const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
-  return  gen_kw_config_get_name(gen_kw->config , kw_nr);
+  return  gen_kw_config_iget_name(gen_kw->config , kw_nr);
 }
 
 
@@ -314,9 +315,31 @@ void gen_kw_set_global_subst_list(gen_kw_type * gen_kw , const subst_list_type *
 }
 
 
-void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std) {
-  scalar_set_inflation( inflation->scalar , std->scalar , min_std->scalar );
+void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std, log_type * logh) {
+  const int log_level           = 3;
+  const int data_size           = gen_kw_config_get_data_size(std->config);
+  const double * std_data       = scalar_get_data_ref( std->scalar );
+  const double * min_std_data   = scalar_get_data_ref( min_std->scalar );
+  double       * inflation_data = scalar_get_data_ref( inflation->scalar );
+  bool add_log_entry = false;
+  if (log_get_level( logh ) >= log_level)
+    add_log_entry = true;
+
+  {
+    for (int i=0; i < data_size; i++) {
+      if (std_data[i] > 0)
+        inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]);   
+      else
+        inflation_data[i] = 1;
+      
+      printf("Sammenligner: %g %g \n",min_std_data[i] , std_data[i]);
+
+      if (add_log_entry)
+        log_add_fmt_message(logh , log_level , "Inflating %s:%s with %7.4f", gen_kw_config_get_key( inflation->config ) , gen_kw_config_iget_name( inflation->config , i) , inflation_data[i]);
+    }
+  }
 }
+
 
 void gen_kw_iadd( gen_kw_type * gen_kw , const gen_kw_type * delta) {
   scalar_iadd( gen_kw->scalar , delta->scalar );
@@ -365,3 +388,4 @@ VOID_SCALE(gen_kw)
 VOID_IMUL(gen_kw)
 VOID_IADDSQR(gen_kw)
 VOID_ISQRT(gen_kw)
+     

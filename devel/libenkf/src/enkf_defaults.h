@@ -33,7 +33,12 @@
 #define DEFAULT_MAX_SUBMIT "2"
 
 
-#define DEFAULT_RESAMPLE_WHEN_FAIL "FALSE"
+#define DEFAULT_RESAMPLE_WHEN_FAIL  "FALSE"
+#define DEFAULT_MAX_INTERNAL_SUBMIT "1"      /** Attached to keyword : MAX_RETRY */
+
+
+#define DEFAULT_LOG_LEVEL "1"
+
 
 
 /* Defaults for the EnKF analysis. */

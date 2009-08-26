@@ -9,4 +9,3 @@
 #include <lsf_request.h>
 #include <rsh_driver.c>
 #include <rsh_driver.h>
-#include <rsh_driver.o>

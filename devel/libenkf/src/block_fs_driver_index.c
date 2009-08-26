@@ -43,10 +43,10 @@ static void block_fs_driver_index_single_mount( block_fs_driver_index_type * dri
   char * mount_file;
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , "INDEX" , "mnt");
-    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , 0.0 , false);
+    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , 0.0 , false , false);
   } else {
     mount_file = util_alloc_filename( driver->write_path , "INDEX" , "mnt");
-    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , 0.0 , false);
+    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , 0.0 , false , false);
   }
   free( mount_file );
 }
