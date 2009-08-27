@@ -232,6 +232,11 @@ const stringlist_type  * enkf_config_node_get_obs_keys(const enkf_config_node_ty
 }
 
 
+int enkf_config_node_get_num_obs( const enkf_config_node_type * config_node ) {
+  return stringlist_get_size( config_node->obs_keys );
+}
+
+
 void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const char * obs_key) {
   if (!stringlist_contains(config_node->obs_keys , obs_key))
     stringlist_append_copy(config_node->obs_keys , obs_key);

@@ -24,7 +24,7 @@
 #define LOCAL_MINISTEP_TYPE_ID 661066  
 
 struct local_ministep_struct {
-  int         __type_id;
+  UTIL_TYPE_ID_DECLARATION;
   char      * name;             /* A name used for this ministep - string is also used as key in a hash table holding this instance. */
   hash_type * observations;     /* A hash table indexed by observation keys - each element is an active_list instance. */
   hash_type * nodes;            /* A hash table indexed by node keys - each element is an active_list instance. */
@@ -36,8 +36,8 @@ struct local_ministep_struct {
    observations/nodes (apart from the key in the hash).
 */
 
-SAFE_CAST(local_ministep , LOCAL_MINISTEP_TYPE_ID)
-
+UTIL_SAFE_CAST_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION(local_ministep , LOCAL_MINISTEP_TYPE_ID)
 
 local_ministep_type * local_ministep_alloc(const char * name) {
   local_ministep_type * ministep = util_malloc( sizeof * ministep , __func__ );
@@ -45,7 +45,7 @@ local_ministep_type * local_ministep_alloc(const char * name) {
   ministep->name         = util_alloc_string_copy( name );
   ministep->observations = hash_alloc();
   ministep->nodes        = hash_alloc();
-  ministep->__type_id    = LOCAL_MINISTEP_TYPE_ID;
+  UTIL_TYPE_ID_INIT( ministep , LOCAL_MINISTEP_TYPE_ID);
   
   return ministep;
 }

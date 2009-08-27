@@ -11,7 +11,7 @@ field_obs.o                         : field_obs.c field_obs.h enkf_util.o field_
 enkf_tui_init.o                     : enkf_tui_init.c enkf_tui_init.h enkf_main.o enkf_sched.o enkf_types.o enkf_tui_util.o enkf_state.o enkf_node.o enkf_fs.o ensemble_config.o  
 block_fs_driver.o                   : block_fs_driver.c block_fs_driver.h fs_types.o basic_driver.o  
 enkf_tui_ranking.o                  : enkf_tui_ranking.c enkf_tui_ranking.h enkf_main.o enkf_obs.o enkf_tui_util.o  
-enkf_main.o                         : enkf_main.c enkf_main.h enkf_config_node.o enkf_types.o obs_data.o meas_matrix.o enkf_state.o enkf_obs.o enkf_fs.o enkf_serialize.o enkf_sched.o ecl_config.o ensemble_config.o model_config.o site_config.o active_config.o enkf_analysis.o local_ministep.o local_updatestep.o local_config.o misfit_table.o enkf_defaults.o  
+enkf_main.o                         : enkf_main.c enkf_main.h enkf_config_node.o enkf_types.o obs_data.o meas_matrix.o enkf_state.o enkf_obs.o enkf_fs.o enkf_serialize.o enkf_sched.o ecl_config.o ensemble_config.o model_config.o site_config.o active_config.o enkf_analysis.o local_ministep.o local_updatestep.o local_config.o local_config_bootstrap.o misfit_table.o enkf_defaults.o  
 plain_driver_common.o               : plain_driver_common.c plain_driver_common.h enkf_types.o enkf_node.o  
 gen_kw.o                            : gen_kw.c gen_kw.h enkf_types.o enkf_util.o scalar.o enkf_macros.h gen_kw_common.h gen_kw_config.o  
 active_node.o                       : active_node.c active_node.h enkf_types.o enkf_config_node.o ensemble_config.o obs_vector.o  
@@ -22,6 +22,7 @@ plain_driver.o                      : plain_driver.c plain_driver.h fs_types.o b
 model_config.o                      : model_config.c model_config.h enkf_fs.o enkf_sched.o enkf_types.o plain_driver.o fs_types.o  
 fs_types.o                          : fs_types.c fs_types.h  
 site_config.o                       : site_config.c site_config.h  
+local_config_bootstrap.o            : local_config_bootstrap.c local_config_bootstrap.h local_config.o local_updatestep.o local_ministep.o  
 misfit_table.o                      : misfit_table.c misfit_table.h enkf_obs.o enkf_fs.o  
 multflt_config.o                    : multflt_config.c multflt_config.h enkf_util.o enkf_macros.h trans_func.o scalar_config.o  
 field_active.o                      : field_active.c field_active.h enkf_macros.h active_list.o  

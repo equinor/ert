@@ -833,22 +833,25 @@ double history_get_var_from_summary_key(const history_type * history, int restar
 
     /** 100% plain ecl_sum_get... */
 
-    *default_used = false;  /* Do not have control over this when using the ecl_sum interface. */
-    int ministep  = ecl_sum_get_report_ministep_end( history->ecl_sum , restart_nr );
-    char * gen_key = (char *) summary_key;
-    if (history->source == REFCASE_HISTORY) {
-      /* Must add H to make keywords into history version: */
-      int argc;
-      char ** argv;
-    
-      util_split_string(summary_key, ":", &argc, &argv); 
-      argv[0] = util_strcat_realloc(argv[0] , "H");
-      gen_key = util_alloc_joined_string( (const char **) argv , argc , ":");
-      util_free_stringlist( argv , argc );
-    }
-    value = ecl_sum_get_general_var( history->ecl_sum , ministep , gen_key );
-    if (history->source == REFCASE_HISTORY)
-      free( gen_key );
+    *default_used  = false;  /* Do not have control over this when using the ecl_sum interface. */
+    int ministep   = ecl_sum_get_report_ministep_end( history->ecl_sum , restart_nr );
+    if (ministep >= 0) {
+      char * gen_key = (char *) summary_key;
+      if (history->source == REFCASE_HISTORY) {
+        /* Must add H to make keywords into history version: */
+        int argc;
+        char ** argv;
+        
+        util_split_string(summary_key, ":", &argc, &argv); 
+        argv[0] = util_strcat_realloc(argv[0] , "H");
+        gen_key = util_alloc_joined_string( (const char **) argv , argc , ":");
+        util_free_stringlist( argv , argc );
+      }
+      value = ecl_sum_get_general_var( history->ecl_sum , ministep , gen_key );
+      if (history->source == REFCASE_HISTORY)
+        free( gen_key );
+    } else
+      *default_used = true;   /* We did not have this ministep. */
     return value;
   }
 }

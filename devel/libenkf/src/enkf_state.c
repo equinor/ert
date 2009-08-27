@@ -237,7 +237,8 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info->job_queue    = site_config_get_job_queue( site_config );
   shared_info->model_config = model_config;
   shared_info->statoil_mode = site_config_get_statoil_mode( site_config );
-
+  shared_info->logh         = logh;
+  
   return shared_info;
 }
 
@@ -700,7 +701,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
               enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);            /* Saving to disk */
             else {
               *loadOK = false;
-              fprintf(stderr,"** Warning: failed to load data for node: %s \n", enkf_node_get_key( node ));
+              fprintf(stderr,"** Warning: failed to load data for node: %s  report_step:%d \n", enkf_node_get_key( node ) , report_step);
             }
 	  } 
 	}
@@ -1428,6 +1429,56 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
 
 
 /** 
+    This function is called when:
+
+     1. The external queue system has said that everything is OK; BUT
+        the ert layer  to load all the data.
+    
+     2. The external queue system has let the job fail.
+    
+    If resample_when_fail is true the parameter and state variables
+    will be resampled before retrying. If resample_when_fail is not
+    equal to true it is actually not much of a point to do this - the
+    chance that the job will suddenly get through now is quite small.
+*/
+
+static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_failure) {
+  const member_config_type  * my_config   = enkf_state->my_config;
+  run_info_type             * run_info    = enkf_state->run_info;
+  const shared_info_type    * shared_info = enkf_state->shared_info;
+
+  if (load_failure)
+    log_add_fmt_message(shared_info->logh , 1 , "[%03d:%04d-%04d] Failed to load all data.",my_config->iens , run_info->step1 , run_info->step2);
+  else
+    log_add_fmt_message(shared_info->logh , 1 , "[%03d:%04d-%04d] Forward model failed.",my_config->iens, run_info->step1 , run_info->step2);
+
+  if (run_info->num_internal_submit < run_info->max_internal_submit) {
+    if (run_info->resample_when_fail) {
+      log_add_fmt_message( shared_info->logh , 1 , "[%03d] Resampling and resubmitting realization." ,my_config->iens);
+      /* resample_when_fail is set to true - we try to resample before resubmitting. */
+      {
+        stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
+        for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
+          enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
+          enkf_node_initialize( node , my_config->iens );
+        }
+        stringlist_free( init_keys );
+      }
+    } else
+      log_add_fmt_message( shared_info->logh , 1 , "[%03d:%04d-%04d] Retrying realization from ERT main." ,my_config->iens , run_info->step1 , run_info->step2);
+    
+    enkf_state_ecl_write( enkf_state );  /* Writing a full new enkf_state instance */
+    run_info->num_internal_submit++;
+    job_queue_set_external_restart( shared_info->job_queue , my_config->iens );
+
+    return true;
+  } else
+    return false;
+}
+
+
+
+/** 
     Observe that if run_info == false, this routine will return with
     job_completeOK == true, that might be a bit misleading.
 */
@@ -1438,7 +1489,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state) {
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
     const member_config_type  * my_config   = enkf_state->my_config;
-    const int usleep_time = 2500000; //100000; /* 1/10 of a second */ 
+    const int usleep_time                   = 2500000; //100000; /* 1/10 of a second */ 
     job_status_type final_status;
     
 
@@ -1455,39 +1506,38 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state) {
            then check in this scope whether the results can be loaded
            back; if that is OK the final status is updated, otherwise: restart.
         */
-	enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2 , &loadOK); 
+	log_add_fmt_message( shared_info->logh , 2 , "[%03d:%04d-%04d] Forward model complete - starting to load results." , my_config->iens , run_info->step1, run_info->step2);
+        enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2 , &loadOK); 
         if (loadOK) {
           final_status = job_queue_all_OK;
           job_queue_set_load_OK( shared_info->job_queue , my_config->iens );
-          break;
-        } else {
-          if (run_info->num_internal_submit < run_info->max_internal_submit) {
-            if (run_info->resample_when_fail) {
-              /* resample_when_fail is set to true - we try to resample before resubmitting. */
-              {
-                stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
-                for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
-                  enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
-                  enkf_node_initialize( node , my_config->iens );
-                }
-                stringlist_free( init_keys );
-              }
-            }
-            enkf_state_ecl_write( enkf_state );  /* Writing a full new enkf_state instance */
-            run_info->num_internal_submit++;
-            job_queue_set_external_restart( shared_info->job_queue , my_config->iens );
-          } else  /* No more attempts on this one - we are GIVING UP */
+          log_add_fmt_message( shared_info->logh , 2 , "[%03d:%04d-%04d] Results loaded successfully." , my_config->iens , run_info->step1, run_info->step2);
+          break; /* All coool */
+        } else 
+          if (!enkf_state_internal_retry( enkf_state , true)) 
+            /* 
+               We tell the queue system that the job failed hard; it
+               will immediately come back here with status
+               job_queue_run_FAIL and then it falls all the way
+               through to runOK = false and no more attempts.
+            */
             job_queue_set_external_fail( shared_info->job_queue , my_config->iens );
-        }
       } else if (final_status == job_queue_run_FAIL) {
-	run_info->runOK = false;
-	break;
+        /* 
+           The external queue system has said that the job failed - we
+           give it another try from this scope?? 
+        */
+        if (!enkf_state_internal_retry( enkf_state , false)) {
+          run_info->runOK = false; /* OK - no more attempts. */
+          log_add_fmt_message( shared_info->logh , 1 , "[%03d:%04d-%04d] FAILED COMPLETELY." , my_config->iens , run_info->step1, run_info->step2);
+          break;
+        }
       } else usleep(usleep_time);
     } 
     /* End of wait loop                                              */
     /*****************************************************************/
     
-
+    
     /* In case the job fails, we leave the run_path directory around for debugging. */
     if (final_status == job_queue_all_OK) {
       bool unlink_runpath;

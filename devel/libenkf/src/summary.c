@@ -181,7 +181,7 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
     const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config);
-
+    
     /* Check if the ecl_sum instance has this report step. */
     if (ecl_sum_has_report_step( ecl_sum , report_step )) {
       int ministep2;
@@ -206,8 +206,19 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
         summary->data[0] = ecl_sum_get_general_var(ecl_sum , ministep2  ,var_key );
         loadOK = true;
       }
-    }
-  }
+    } else if (report_step == 0) {
+      summary->data[0] = 0;
+      loadOK = true;  
+      /* 
+         We do not signal load failure if we do not have the S0000
+         summary file - which does not contain any useful information
+         anyway. 
+         
+         Hmmm - there is a "if (report_step > 0)" check in the
+         enkf_state_internalize_x() function as well.
+      */
+    } 
+  } 
   
   return loadOK;
 }

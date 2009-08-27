@@ -27,6 +27,7 @@ int enkf_config_node_get_data_size( const enkf_config_node_type * node);
 
 char                  * enkf_config_node_alloc_infile(const enkf_config_node_type * , int );
 char                  * enkf_config_node_alloc_outfile(const enkf_config_node_type * , int );
+int                     enkf_config_node_get_num_obs( const enkf_config_node_type * config_node );
 const stringlist_type * enkf_config_node_get_obs_keys(const enkf_config_node_type *);
 void              	enkf_config_node_add_obs_key(enkf_config_node_type *  , const char * );
 void 		  	enkf_config_node_free(enkf_config_node_type * );

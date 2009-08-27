@@ -44,6 +44,7 @@
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <local_config.h>
+#include <local_config_bootstrap.h>
 #include <misfit_table.h>
 #include <log.h>
 #include "enkf_defaults.h"
@@ -808,6 +809,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
   int iens;
   
   printf("Starting forward step: %d -> %d\n",step1 , step2);
+  log_add_message(enkf_main->logh , 1 , "===================================================================",false);
   log_add_fmt_message(enkf_main->logh , 1 , "Forward model: %d -> %d ",step1,step2);
   job_size = 0;
   for (iens = 0; iens < ens_size; iens++)
@@ -849,7 +851,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(submit_threads);
     }
-    log_add_message(enkf_main->logh , 1 , "Alle jobs submitted - waiting for completion" , false);
+    log_add_message(enkf_main->logh , 1 , "All jobs ready for running - waiting for completion" , false);
   
     {
       thread_pool_type * complete_threads = thread_pool_alloc(ens_size);
@@ -1040,6 +1042,57 @@ void enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_type * p
   msg_free(msg , false);
 }
 
+
+/**
+   This function creates a local_config file corresponding to the
+   default 'ALL_ACTIVE' configuration. We eat our own shit around here ... 
+*/
+   
+void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , const char * local_config_file ) {
+  FILE * stream = util_fopen( local_config_file , "w");
+
+  fprintf(stream , "%-32s ALL_ACTIVE\n", local_config_get_cmd_string( CREATE_UPDATESTEP ));
+  fprintf(stream , "%-32s ALL_ACTIVE\n", local_config_get_cmd_string( CREATE_MINISTEP ));
+  fprintf(stream , "%-32s ALL_ACTIVE ALL_ACTIVE\n" , local_config_get_cmd_string( ATTACH_MINISTEP ));
+  
+  /* Adding all observation keys */
+  {
+    hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
+    while ( !hash_iter_is_complete(obs_iter) ) {
+      const char * obs_key = hash_iter_get_next_key( obs_iter );
+      fprintf(stream , "%-32s ALL_ACTIVE %s\n",local_config_get_cmd_string( ADD_OBS ) , obs_key);
+    }
+    hash_iter_free( obs_iter );
+  }
+  
+  /* Adding all node which can be updated. */
+  {
+    stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
+    int i;
+    for (i = 0; i < stringlist_get_size( keylist ); i++) {
+      const char * key = stringlist_iget( keylist , i);
+      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+      bool add_node = true;
+      
+      /* 
+         We make sure that summary nodes which are not observed
+         are not updated. I.e. the total production in a
+         well. 
+      */
+      if (enkf_config_node_get_var_type( config_node ) == DYNAMIC_RESULT)
+        if (enkf_config_node_get_num_obs( config_node ) == 0)
+          add_node = false;
+      
+      if (add_node)
+        fprintf(stream , "%-32s ALL_ACTIVE %s\n",local_config_get_cmd_string( ADD_DATA ) , key);
+    }
+    stringlist_free( keylist);
+  }
+  
+  /* Install the ALL_ACTIVE step as the default. */
+  fprintf(stream , "%-32s ALL_ACTIVE" , local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ));
+  fclose( stream );
+}
 
 
   
@@ -1280,6 +1333,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
     item = config_add_item(config , "OBS_CONFIG"  , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+    item = config_add_item(config , "LOCAL_CONFIG"  , false , true);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
     
     item = config_add_item(config , "REFCASE" , false , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
@@ -1444,7 +1500,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       {
 	hash_type      * map  = enkf_obs_alloc_summary_map(enkf_main->obs);
         hash_iter_type * iter = hash_iter_alloc(map);
-	const char * obs_key = hash_iter_get_next_key(iter);
+	const char * obs_key  = hash_iter_get_next_key(iter);
 	while (obs_key  != NULL) {
 	  const char * state_kw = hash_get(map , obs_key);
 	  ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
@@ -1500,40 +1556,34 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
       /*****************************************************************/
-      /* Installing a default local_config object where all observations/nodes are
-	 fully active. */
-      {
-	enkf_main->local_config = local_config_alloc( model_config_get_last_history_restart( enkf_main->model_config ) );
-	local_updatestep_type * updatestep_all_active = local_config_alloc_updatestep( enkf_main->local_config , "ALL_ACTIVE");
-	local_ministep_type   * ministep_all_active   = local_config_alloc_ministep( enkf_main->local_config , "ALL_ACTIVE");
-	
-	local_updatestep_add_ministep( updatestep_all_active , ministep_all_active );  
-	
-	/* Adding all observation keys */
-	{
-	  hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
-	  while ( !hash_iter_is_complete(obs_iter) ) {
-	    const char * obs_key = hash_iter_get_next_key( obs_iter );
-	    local_ministep_add_obs( ministep_all_active , obs_key );
-	  }
-	  hash_iter_free( obs_iter );
-	}
-	
-	/* Adding all node which can be updated. */
-	{
-	  stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
-	  int i;
-	  for (i = 0; i < stringlist_get_size( keylist ); i++)
-	    local_ministep_add_node( ministep_all_active , stringlist_iget( keylist , i));
-	  stringlist_free( keylist);
-	}
-	
-	/* Install the ALL_ACTIVE step as the default. */
-	local_config_set_default_updatestep( enkf_main->local_config , "ALL_ACTIVE");
-	
-	//#include "local_config_grane.c"
-      }
+      /* 
+         Installing the local_config object. Observe that the
+         ALL_ACTIVE local_config configuration is ALWAYS loaded. But
+         if you have created a personal local config that will be
+         loaded on top.
+      */
       
+      {
+        enkf_main->local_config  = local_config_alloc( /*enkf_main->ensemble_config , enkf_main->enkf_obs , */ model_config_get_last_history_restart( enkf_main->model_config ));
+        
+        /* First installing the default ALL_ACTIVE configuration. */
+        {
+          char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
+          enkf_main_create_all_active_config( enkf_main , all_active_config_file );
+          local_config_load( enkf_main->local_config , all_active_config_file , enkf_main->logh);
+          util_copy_file( all_active_config_file , "/tmp/ALLACTIVE.conf");
+          unlink( all_active_config_file );
+          free(all_active_config_file);
+        }
+
+        /* Install a custom local_config */
+        {
+          int i;
+          for (i = 0; i < config_get_occurences( config , "LOCAL_CONFIG"); i++) 
+            local_config_load( enkf_main->local_config , config_iget( config , "LOCAL_CONFIG" , i) , enkf_main->logh);
+        }
+        
+      }
       free(keep_runpath);
     }
     config_free(config);

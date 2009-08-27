@@ -45,7 +45,6 @@ local_updatestep_type * local_updatestep_alloc_copy( const local_updatestep_type
     local_updatestep_add_ministep( new , vector_iget( src->ministep , i) );
   return new;
 }
-   
 
 
 void local_updatestep_free( local_updatestep_type * updatestep) {
