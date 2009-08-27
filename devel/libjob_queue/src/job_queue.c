@@ -344,7 +344,7 @@ void job_queue_set_external_restart(job_queue_type * queue , int external_id) {
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
     node->submit_attempt = 0;
-    job_queue_change_node_status( queue , node , job_queue_restart);
+    job_queue_change_node_status( queue , node , job_queue_waiting);
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
@@ -365,6 +365,7 @@ void job_queue_set_external_fail(job_queue_type * queue , int external_id) {
 static void job_queue_print_jobs(const job_queue_type *queue) {
   int waiting  = queue->status_list[job_queue_waiting];
   int pending  = queue->status_list[job_queue_pending];
+
   /* 
      EXIT and DONE are included in "xxx_running", because the target
      file has not yet been checked.
@@ -372,9 +373,9 @@ static void job_queue_print_jobs(const job_queue_type *queue) {
   int running  = queue->status_list[job_queue_running] + queue->status_list[job_queue_done] + queue->status_list[job_queue_exit];
   int complete = queue->status_list[job_queue_all_OK];
   int failed   = queue->status_list[job_queue_run_FAIL];
-  int restarts = queue->status_list[job_queue_restart];  
+  int loading  = queue->status_list[job_queue_run_OK];  
 
-  printf("Waiting: %3d    Pending: %3d    Running: %3d     Restarts: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , restarts , failed , complete);
+  printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , loading , failed , complete);
   fflush(stdout);
 }
 
