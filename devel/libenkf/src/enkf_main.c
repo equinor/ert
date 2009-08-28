@@ -1579,8 +1579,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         /* Install a custom local_config */
         {
           int i;
-          for (i = 0; i < config_get_occurences( config , "LOCAL_CONFIG"); i++) 
-            local_config_load( enkf_main->local_config , config_iget( config , "LOCAL_CONFIG" , i) , enkf_main->logh);
+          for (i = 0; i < config_get_occurences( config , "LOCAL_CONFIG"); i++) {
+            const stringlist_type * files = config_iget_stringlist_ref(config , "LOCAL_CONFIG" , i);
+            for (int j=0; j < stringlist_get_size( files ); j++)
+              local_config_load( enkf_main->local_config , stringlist_iget( files , j), enkf_main->logh);
+          }
         }
         
       }

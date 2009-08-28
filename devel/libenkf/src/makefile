@@ -73,7 +73,7 @@ include dependencies
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x test.x run_ensemble.x sqlite3_driver_test.x
+BIN_FILES             = enkf gen_test.x test.x run_ensemble.x sqlite3_driver_test.x  make_grane_config.x
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = enkf
 
@@ -94,6 +94,9 @@ gen_test.x:	gen_test.o $(LIB)
 
 field_convert.x:	field_convert.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) field_convert.o -o field_convert.x  $(LIB_PATH)  $(LIB_LINK) 	
+
+make_grane_config.x:	make_grane_config.o $(LIB)
+	$(LD) -$(MFLAG) $(LDFLAGS) make_grane_config.o -o make_grane_config.x  $(LIB_PATH)  $(LIB_LINK) 	
 
 sched_test.x:	sched_test.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	

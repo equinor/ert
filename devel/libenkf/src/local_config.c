@@ -317,8 +317,8 @@ static local_config_instruction_type local_config_cmd_from_string( char * cmd_st
     cmd = ACTIVE_LIST_ADD_DATA_INDEX;
   else if (strcmp( cmd_string , ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING) == 0)
     cmd = ACTIVE_LIST_ADD_MANY_OBS_INDEX;
-  else if (strcmp( cmd_string , ACTIVE_LIST_ADD_MANY_NODE_INDEX_STRING) == 0)
-    cmd = ACTIVE_LIST_ADD_MANY_NODE_INDEX;
+  else if (strcmp( cmd_string , ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING) == 0)
+    cmd = ACTIVE_LIST_ADD_MANY_DATA_INDEX;
   else if (strcmp( cmd_string , INSTALL_UPDATESTEP_STRING) == 0)
     cmd = INSTALL_UPDATESTEP;
   else if (strcmp( cmd_string , INSTALL_DEFAULT_UPDATESTEP_STRING) == 0)
@@ -364,8 +364,8 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
   case(ACTIVE_LIST_ADD_MANY_OBS_INDEX):
     return ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING;
     break;
-  case(ACTIVE_LIST_ADD_MANY_NODE_INDEX):
-    return ACTIVE_LIST_ADD_MANY_NODE_INDEX_STRING;
+  case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
+    return ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING;
     break;
   case(INSTALL_UPDATESTEP):
     return INSTALL_UPDATESTEP_STRING;
@@ -458,6 +458,7 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
   int_vector_type * int_vector = int_vector_alloc(0,0);
   
   while ( read_cmd(stream, binary , &cmd)) {
+    log_add_fmt_message(logh , 2 , "Have read command %s[%d] ", local_config_get_cmd_string(cmd) , cmd );
     switch(cmd) {
     case(CREATE_UPDATESTEP):   
       update_name = read_alloc_string( stream , binary );
@@ -526,7 +527,7 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
           active_list_add_index( active_list , int_vector_iget(int_vector , i));
       }
       break;
-    case(ACTIVE_LIST_ADD_MANY_NODE_INDEX):
+    case(ACTIVE_LIST_ADD_MANY_DATA_INDEX):
       mini_name = read_alloc_string( stream , binary );
       data_key   = read_alloc_string( stream , binary );
       read_int_vector( stream , binary , int_vector);
