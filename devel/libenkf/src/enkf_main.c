@@ -1571,7 +1571,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
           char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
           enkf_main_create_all_active_config( enkf_main , all_active_config_file );
           local_config_load( enkf_main->local_config , all_active_config_file , enkf_main->logh);
-          util_copy_file( all_active_config_file , "/tmp/ALLACTIVE.conf");
           unlink( all_active_config_file );
           free(all_active_config_file);
         }

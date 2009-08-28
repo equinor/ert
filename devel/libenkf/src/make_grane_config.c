@@ -66,7 +66,7 @@ int main(int argc, char ** argv) {
         
         ecl_box_free( ecl_box );
       }
-
+      
       /* Attach the ministep to the updatestep */
       fprintf(stream , "%-32s %s %s\n", local_config_get_cmd_string( ATTACH_MINISTEP ) , update_step , ministep_name);
     }
@@ -92,7 +92,7 @@ int main(int argc, char ** argv) {
         
         ecl_box_free( ecl_box );
       }
-
+      
       /* Attach the ministep to the updatestep */
       fprintf(stream , "%-32s %s %s\n", local_config_get_cmd_string( ATTACH_MINISTEP ) , update_step , ministep_name);
     }
