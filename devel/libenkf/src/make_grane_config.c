@@ -2,16 +2,26 @@
 #include <ecl_box.h>
 #include <util.h>
 #include <local_config.h>
+#include <ecl_region.h>
 
 
-static void add_ecl_box( const char * ministep , const char * key , const ecl_box_type * ecl_box , FILE * stream) {
+static void add_box_or_region( const char * ministep , const char * key , void * box_or_region , FILE * stream) {
   /* Add the data node: */
-  int active_size = ecl_box_get_active_size( ecl_box );
+  int         active_size;
+  const int * active_list;
+  if (ecl_box_is_instance( box_or_region )) {
+    active_size = ecl_box_get_active_size( box_or_region );
+    active_list = ecl_box_get_active_list( box_or_region );
+  } else if (ecl_region_is_instance( box_or_region )) {
+    active_size = ecl_region_get_active_size( box_or_region );
+    active_list = ecl_region_get_active_list( box_or_region );
+  } else 
+    util_abort("%s: could not determine type of arg 3 \n",__func__);
+
   fprintf(stream , "%-32s %s %s\n" , local_config_get_cmd_string( ADD_DATA ) , ministep , key);
   fprintf(stream , "%-32s %s %s %d\n" , local_config_get_cmd_string( ACTIVE_LIST_ADD_MANY_DATA_INDEX ) , ministep , key , active_size);
   {
     int i;
-    const int * active_list = ecl_box_get_active_list( ecl_box );
     for (i=0; i < active_size; i++) {
       fprintf(stream ,"%6d ",active_list[i]);
       if ((i % 10) == 9)
@@ -21,6 +31,9 @@ static void add_ecl_box( const char * ministep , const char * key , const ecl_bo
   }
 }
 
+
+
+
 static void usage( char * exe ) {
   fprintf(stderr,"Usage: \n\n");
   fprintf(stderr,"%s  NAME_OF_FILE\n\n" , exe);
@@ -28,10 +41,20 @@ static void usage( char * exe ) {
 }
 
 
+
+
+
 int main(int argc, char ** argv) {
   const char * command_file;
-  const char * grid_file = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/EnKF/sf02rg01/Refcase/GRANE.EGRID";
-  ecl_grid_type * ecl_grid = ecl_grid_alloc( grid_file , true );
+  const char * grid_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/EnKF/sf02rg01/Refcase/GRANE.EGRID";
+  const char * eqlnum_file  = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/include/regions/sf02gf01rg01v2_edit.eqlnum";
+  ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file , true );
+  ecl_kw_type   * eqlnum_kw;
+  {
+    FILE * stream = util_fopen(eqlnum_file , "r");
+    eqlnum_kw = ecl_kw_fscanf_alloc_grdecl_data( stream , ecl_grid_get_global_size( ecl_grid ) , ecl_int_type );
+    fclose( stream );
+  }
   
   if (argc < 2)
     usage(argv[0]);
@@ -66,11 +89,25 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid ,  0,32,115,165,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
         
+        ecl_region_type * ecl_region = ecl_region_alloc( ecl_grid , false );  /* Create empty region instance with nothing selected */
+        ecl_region_select_equal( ecl_region , eqlnum_kw , 5 );                /* Lager en region basert på alle celler som har eqlnum == 5 */
+
+        add_box_or_region(ministep_name , "PORO"     , ecl_region , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_region , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_region , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_region , stream );
+
+        /**
+           Original:
+
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
+        */
+        
+        ecl_region_free( ecl_region );
         ecl_box_free( ecl_box );
       }
       
@@ -93,10 +130,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 33,43,115,165,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -119,10 +156,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 33,43,115,165,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -149,10 +186,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 56, 101,115,165,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -195,10 +232,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 0, 45,89,114,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -231,10 +268,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid ,46, 101,89,114,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -259,10 +296,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid ,0, 101,84,88,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -305,10 +342,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 0,53,45,83,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -344,10 +381,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 54,101,45,83,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
@@ -371,10 +408,10 @@ int main(int argc, char ** argv) {
       {
         ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 0,101,0,44,0,19);
         /* Add the field data which is updated. */
-        add_ecl_box(ministep_name , "PORO"     , ecl_box , stream );
-        add_ecl_box(ministep_name , "PERMX"    , ecl_box , stream );
-	add_ecl_box(ministep_name , "MULTPV"   , ecl_box , stream );
-        add_ecl_box(ministep_name , "PRESSURE" , ecl_box , stream );
+        add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
+        add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
+	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
+        add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
         
         ecl_box_free( ecl_box );
       }
