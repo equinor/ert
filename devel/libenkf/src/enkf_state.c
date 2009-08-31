@@ -108,6 +108,7 @@ typedef struct shared_info_struct {
 
 struct member_config_struct {
   int  		        iens;                /* The ensemble member number of this member. */
+  char                * casename;            /* The name of this case - will mosttly be NULL. */
   keep_runpath_type     keep_runpath;        /* Should the run-path directory be left around (for this member)*/
   char 		      * eclbase;             /* The ECLBASE string used for simulations of this member. */
   sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
@@ -272,6 +273,7 @@ static int member_config_get_last_restart_nr( const member_config_type * member_
 
 static void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
+  util_safe_free(member_config->casename );
 
   if (member_config->private_sched_file)
     sched_file_free( member_config->sched_file );
@@ -287,12 +289,13 @@ static void member_config_set_keep_runpath(member_config_type * member_config , 
 
 
 static member_config_type * member_config_alloc(int iens , 
+                                                const char * casename , 
 						keep_runpath_type            keep_runpath , 
 						const ecl_config_type      * ecl_config , 
 						const ensemble_config_type * ensemble_config) {
 						
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
-  
+  member_config->casename       = util_alloc_string_copy( casename );
   member_config->iens           = iens; /* Can only be changed in the allocater. */
   member_config->eclbase  	= NULL;
   {
@@ -512,6 +515,7 @@ static char * enkf_state_subst_randfloat(const char * key , void * arg) {
 }
 
 enkf_state_type * enkf_state_alloc(int iens,
+                                   const char * casename , 
 				   keep_runpath_type keep_runpath , 
 				   const model_config_type   * model_config,
 				   ensemble_config_type      * ensemble_config,
@@ -526,7 +530,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   
   enkf_state->ensemble_config = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
-  enkf_state->my_config       = member_config_alloc( iens , keep_runpath , ecl_config , ensemble_config );
+  enkf_state->my_config       = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config );
   enkf_state->shared_info     = shared_info_alloc(site_config , model_config , logh);
   enkf_state->run_info        = run_info_alloc();
   

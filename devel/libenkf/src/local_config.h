@@ -21,7 +21,9 @@ typedef enum {
   INSTALL_DEFAULT_UPDATESTEP      = 12, /* UPDATETSTEP_NAME                         local_config_set_default_updatestep() */
   ALLOC_MINISTEP_COPY             = 13, /* SRC_NAME TARGET_NAME */ 
   DEL_DATA                        = 14, /* MINISTEP KEY*/
-  DEL_OBS                         = 15  /* MINISTEP OBS_KEY */
+  DEL_OBS                         = 15, /* MINISTEP OBS_KEY */
+  DEL_ALL_DATA                    = 16, /* Nor arguments */
+  DEL_ALL_OBS                     = 17
 } local_config_instruction_type; 
 
 
@@ -41,6 +43,8 @@ typedef enum {
 #define ALLOC_MINISTEP_COPY_STRING              "COPY_MINISTEP"
 #define DEL_DATA_STRING                         "DEL_DATA"
 #define DEL_OBS_STRING                          "DEL_OBS"
+#define DEL_ALLD_ATA_STRING                     "DEL_ALL_DATA"
+#define DEL_ALL_OBS_STRING                      "DEL_ALL_OBS"
 
 
 
@@ -51,7 +55,6 @@ typedef struct local_config_struct local_config_type;
 
 local_config_type     	    * local_config_alloc( int history_length );
 void                  	      local_config_free( local_config_type * local_config );
-
 local_updatestep_type 	    * local_config_alloc_updatestep( local_config_type * local_config , const char * key );
 local_ministep_type   	    * local_config_alloc_ministep( local_config_type * local_config , const char * key );
 local_ministep_type         * local_config_alloc_ministep_copy( local_config_type * local_config , const char * src_key , const char * new_key);

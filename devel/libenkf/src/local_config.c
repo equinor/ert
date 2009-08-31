@@ -67,6 +67,19 @@ DEL_OBS [NAME_OF_MINISTEP  OBS_KEY]
 This function will delete the obs 'OBS_KEY' from the ministep
 'NAME_OF_MINISTEP'.
 
+DEL_ALL_DATA [NAME_OF_MINISTEP]
+--------------------------------
+This function will delete all the data keys from the ministep
+'NAME_OF_MINISTEP'; typically used after a call to
+alloc_ministep_copy.
+
+
+DEL_ALL_OBS [NAME_OF_MINISTEP]
+-----------------------------------
+This function will delete all the obs keys from the ministep
+'NAME_OF_MINISTEP'; typically used after a call to
+alloc_ministep_copy.
+
 
 ALLOC_MINISTEP_COPY [SRC_MINISTEP  TARGET_MINISTEP]
 ---------------------------------------------------
@@ -566,6 +579,20 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
       {
         local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
         local_ministep_del_obs( ministep , obs_key );
+      }
+      break;
+    case(DEL_ALL_DATA):
+      mini_name = read_alloc_string( stream , binary );
+      {
+        local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
+        local_ministep_clear_nodes( ministep );
+      }
+      break;
+    case(DEL_ALL_OBS):
+      mini_name = read_alloc_string( stream , binary );
+      {
+        local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
+        local_ministep_clear_observations( ministep );
       }
       break;
     case(ALLOC_MINISTEP_COPY):

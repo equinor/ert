@@ -44,7 +44,6 @@
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <local_config.h>
-#include <local_config_bootstrap.h>
 #include <misfit_table.h>
 #include <log.h>
 #include "enkf_defaults.h"
@@ -1525,8 +1524,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	msg_show(msg);
 	enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
 	for (int iens = 0; iens < ens_size; iens++) {
+          const char * casename = NULL;
 	  msg_update_int(msg , "%03d" , iens);
 	  enkf_main->ensemble[iens] = enkf_state_alloc(iens,
+                                                       casename , 
 						       keep_runpath[iens],
 						       enkf_main->model_config   , 
 						       enkf_main->ensemble_config,
