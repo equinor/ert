@@ -1578,8 +1578,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
           unlink( all_active_config_file );
           free(all_active_config_file);
         }
-
-        /* Install a custom local_config */
+        
+        /* Install custom local_config - if present.*/
         {
           int i;
           for (i = 0; i < config_get_occurences( config , "LOCAL_CONFIG"); i++) {

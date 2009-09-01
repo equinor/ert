@@ -902,7 +902,7 @@ void enkf_node_upgrade_file_103( const char * path , const char * file , enkf_im
       
       if (!util_file_exists( backup_file )) {
 	util_make_path( backup_path );
-	util_copy_file( filename , backup_file);
+	util_copy_file( filename , backup_file , true);
 	
 	switch (impl_type) {
 	case(HAVANA_FAULT):
