@@ -26,12 +26,38 @@
 
      status: This will get the status of the job. 
 
-   The job_queue instance only has a (void *) pointer to the driver
-   instance, i.e. the job_queue does not know anything of how the
-   driver actually submits/queries/stops/... the jobs. Currently we
-   have implemented three drivers: lsf_driver, local_driver and
-   rsh_driver.
-   
+     display_info: [Optional] - this is only for the LSF layer to
+                   display the name of a possibly faulty node before 
+                   restarting.
+
+   When calling the various driver functions the queue layer needs to
+   dereference the driver structures, i.e. to get access to the
+   driver->submit_jobs function. This is currently (rather clumsily??
+   implemented like this):
+
+        When implementing a driver the driver struct MUST start like
+        this:
+  
+        struct some_driver {
+            UTIL_TYPE_ID_DECLARATION
+            QUEUE_DRIVER_FUNCTIONS
+            ....
+            ....
+        }
+
+        The function allocating a driver instance will just return a
+        (void *) however in the queue layer the driver is stored as a
+        basic_queue_driver_type instance which is a struct like this:
+
+        struct basic_queue_driver_struct {
+            UTIL_TYPE_ID_DECLARATION
+            QUEUE_DRIVER_FUNCTIONS
+        }   
+        
+        I.e. it only contains the pointers common to all the driver
+        implementations. When calling a driver function the spesific
+        driver will cast to it's datatype.
+
    Observe that this library also contains the files ext_joblist and
    ext_job, those files implement a particular way of dispatching
    external jobs in a series; AFTER THEY HAVE BEEN SUBMITTED. So seen
@@ -81,6 +107,38 @@ typedef struct {
   basic_queue_job_type 	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
   const void            *job_arg;         /* Untyped data which is sent to the submit function as extra argument - can be whatever - fully owned by external scope.*/
 } job_queue_node_type;
+
+
+
+/*****************************************************************/
+
+/**
+   This is the struct for a whole queue. Observe the following:
+   
+    1. The number of elements is specified at the allocation time, and
+       all nodes are allocated then; i.e. when xx_add_job() is called
+       from external scope a new node is not actaully created
+       internally, it is just an existing node which is initialized.
+
+    2. The queue can start running before all jobs are added.
+
+*/
+
+struct job_queue_struct {
+  int                        active_size;   			/* The number of jobs currently added to the queue. */
+  int                        size;          			/* The total number of job slots in the queue. */
+  int                        max_submit;    			/* The maximum number of submit attempts for one job. */
+  int                        max_running;   			/* The maximum number of concurrently running jobs. */
+  char                     * run_cmd;       			/* The command which is run (i.e. path to an executable with arguments). */
+  job_queue_node_type     ** jobs;          			/* A vector of job nodes .*/
+  basic_queue_driver_type  * driver;        			/* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
+  int                        status_list[job_queue_max_state];  /* The number of jobs in the different states (observe that the state is (ab)used as index). */
+  
+  unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
+  pthread_rwlock_t           active_rwlock;
+  pthread_rwlock_t           status_rwlock;                  
+};
+
 
 /*****************************************************************/
 
@@ -141,34 +199,6 @@ static void job_queue_node_finalize(job_queue_node_type * node) {
 
 
 /*****************************************************************/
-
-/**
-   This is the struct for a whole queue. Observe the following:
-   
-    1. The number of elements is specified at the allocation time, and
-       all nodes are allocated then; i.e. when xx_add_job() is called
-       from external scope a new node is not actaully created
-       internally, it is just an existing node which is initialized.
-
-    2. The queue can start running before all jobs are added.
-
-*/
-
-struct job_queue_struct {
-  int                        active_size;   			/* The number of jobs currently added to the queue. */
-  int                        size;          			/* The total number of job slots in the queue. */
-  int                        max_submit;    			/* The maximum number of submit attempts for one job. */
-  int                        max_running;   			/* The maximum number of concurrently running jobs. */
-  char                     * run_cmd;       			/* The command which is run (i.e. path to an executable with arguments). */
-  job_queue_node_type     ** jobs;          			/* A vector of job nodes .*/
-  basic_queue_driver_type  * driver;        			/* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
-  int                        status_list[job_queue_max_state];  /* The number of jobs in the different states (observe that the state is (ab)used as index). */
-  
-  unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
-  pthread_rwlock_t           active_rwlock;
-  pthread_rwlock_t           status_rwlock;                  
-};
-
 
 static bool job_queue_change_node_status(job_queue_type *  , job_queue_node_type *  , job_status_type );
 
@@ -502,9 +532,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	  case(job_queue_done):
 
 	    if (util_file_exists(node->exit_file)) {
-	      if (verbose)
-		printf("Restarting: %s \n",node->job_name);
-	      
+	      if (verbose) {
+		printf("Restarting: %s | ",node->job_name);
+                queue->driver->display_info( queue->driver , node->job_data );
+              }
 	      job_queue_change_node_status(queue , node , job_queue_waiting);
 	      queue->status_list[job_queue_restart]++;
 	    } else 
@@ -513,8 +544,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	    job_queue_free_job(queue , node);
 	    break;
 	  case(job_queue_exit):
-	    if (verbose)
-	      printf("Restarting: %s \n",node->job_name);
+	    if (verbose) {
+	      printf("Restarting: %s | ",node->job_name);
+              queue->driver->display_info( queue->driver , node->job_data );
+            }
 	    queue->status_list[job_queue_restart]++;
 	    job_queue_change_node_status(queue , node , job_queue_waiting);
 	    job_queue_free_job(queue , node);
@@ -572,9 +605,8 @@ void job_queue_add_job(job_queue_type * queue , const char * run_path , const ch
 void job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver) {
   if (queue->driver != NULL)
     driver->free_driver(driver);
-
+  
   queue->driver = driver;
-  basic_queue_driver_assert_cast(queue->driver);
 }
 
 

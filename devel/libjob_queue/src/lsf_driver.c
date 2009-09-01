@@ -44,9 +44,11 @@ struct lsf_job_struct {
 
 
 
+#define LSF_DRIVER_TYPE_ID 100078365
 
 struct lsf_driver_struct {
-  BASIC_QUEUE_DRIVER_FIELDS
+  UTIL_TYPE_ID_DECLARATION;
+  QUEUE_DRIVER_FUNCTIONS
   int __lsf_id;
   char * queue_name;
   pthread_mutex_t    submit_lock;
@@ -73,12 +75,6 @@ struct lsf_driver_struct {
 #define LSF_JOB_ID     2001
 
 
-void lsf_driver_assert_cast(const lsf_driver_type * queue_driver) {
-  if (queue_driver->__lsf_id != LSF_DRIVER_ID) {
-    fprintf(stderr,"%s: internal error - cast failed \n",__func__);
-    abort();
-  }
-}
 
 
 void lsf_driver_init(lsf_driver_type * queue_driver) {
@@ -92,6 +88,12 @@ void lsf_job_assert_cast(const lsf_job_type * queue_job) {
     abort();
   }
 }
+
+
+UTIL_SAFE_CAST_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
+
+
 
 
 
@@ -135,6 +137,8 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
   fclose( stream );
   return jobid;
 }
+
+
 
 
 /*
@@ -206,15 +210,13 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
 
 #ifdef LSF_LIBRARY_DRIVER
-#define case(s1,s2) case(s1):  status = s2; break;
-static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+#define CASE_SET(s1,s2) case(s1):  status = s2; break;
+static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* the job has not been registered at all ... */
     return job_queue_null;
   else {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
-    lsf_driver_type * driver = (lsf_driver_type *) __driver;
-    lsf_driver_assert_cast(driver); 
     lsf_job_assert_cast(job);
     {
       job_status_type status;
@@ -241,14 +243,14 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
 	}
 	
 	switch (job_info->status) {
-	  case(JOB_STAT_PEND  , job_queue_pending);
-	  case(JOB_STAT_SSUSP , job_queue_running);
-	  case(JOB_STAT_RUN   , job_queue_running);
-	  case(JOB_STAT_EXIT  , job_queue_exit);
-	  case(JOB_STAT_DONE  , job_queue_done);
-	  case(JOB_STAT_PDONE , job_queue_done);
-	  case(JOB_STAT_PERR  , job_queue_exit);
-	  case(192            , job_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
+	  CASE_SET(JOB_STAT_PEND  , job_queue_pending);
+	  CASE_SET(JOB_STAT_SSUSP , job_queue_running);
+	  CASE_SET(JOB_STAT_RUN   , job_queue_running);
+	  CASE_SET(JOB_STAT_EXIT  , job_queue_exit);
+	  CASE_SET(JOB_STAT_DONE  , job_queue_done);
+	  CASE_SET(JOB_STAT_PDONE , job_queue_done);
+	  CASE_SET(JOB_STAT_PERR  , job_queue_exit);
+	  CASE_SET(192            , job_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
 	default:
 	  fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
 	  status = job_queue_done; /* ????  */
@@ -263,14 +265,13 @@ static job_status_type lsf_driver_get_job_status_libary(basic_queue_driver_type 
 
 #else
 
-static job_status_type lsf_driver_get_job_status_system(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+static job_status_type lsf_driver_get_job_status_system(void * __driver , basic_queue_job_type * __job) {
   const int bjobs_refresh_time = 5; /* Seconds */
   job_status_type status = job_queue_null;
   
   if (__job != NULL) {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
-    lsf_driver_type * driver = (lsf_driver_type *) __driver;
-    lsf_driver_assert_cast(driver); 
+    lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
     lsf_job_assert_cast(job);
     
     {
@@ -297,7 +298,7 @@ static job_status_type lsf_driver_get_job_status_system(basic_queue_driver_type 
 
 
 
-job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+job_status_type lsf_driver_get_job_status(void * __driver , basic_queue_job_type * __job) {
   job_status_type status;
 #ifdef LSF_LIBRARY_DRIVER
   status = lsf_driver_get_job_status_libary(__driver , __job);
@@ -308,11 +309,24 @@ job_status_type lsf_driver_get_job_status(basic_queue_driver_type * __driver , b
 }
 
 
-void lsf_driver_free_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+void lsf_driver_display_info( void * __driver , basic_queue_job_type * __job) {
   lsf_job_type    * job    = (lsf_job_type    *) __job;
-  lsf_driver_type * driver = (lsf_driver_type *) __driver;
+  lsf_job_assert_cast(job);
+  
+  printf("Executing host: ");
+  {
+    int i;
+    for (i=0; i < job->num_exec_host; i++)
+      printf("%s ", job->exec_host[i]);
+  }
+  printf("\n");
+}
 
-  lsf_driver_assert_cast(driver); 
+
+
+void lsf_driver_free_job(void * __driver , basic_queue_job_type * __job) {
+  lsf_job_type    * job    = (lsf_job_type    *) __job;
+  
   lsf_job_assert_cast(job);
   lsf_job_free(job);
 }
@@ -327,10 +341,8 @@ static void lsf_driver_killjob(int jobnr) {
 }
 
 
-void lsf_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+void lsf_driver_abort_job(void * __driver , basic_queue_job_type * __job) {
   lsf_job_type    * job    = (lsf_job_type    *) __job;
-  lsf_driver_type * driver = (lsf_driver_type *) __driver;
-  lsf_driver_assert_cast(driver); 
   lsf_job_assert_cast(job);
   lsf_driver_killjob(job->lsf_jobnr);
   lsf_driver_free_job(__driver , __job);
@@ -343,15 +355,13 @@ void lsf_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_t
 
 
 
-
-basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver, 
+basic_queue_job_type * lsf_driver_submit_job(void * __driver , 
 					     int   queue_index , 
 					     const char * submit_cmd  	  , 
 					     const char * run_path    	  , 
 					     const char * job_name,
 					     const void * job_arg) {
-  lsf_driver_type * driver = (lsf_driver_type *) __driver;
-  lsf_driver_assert_cast(driver); 
+  lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   {
     lsf_job_type * job 		  = lsf_job_alloc();
     char * lsf_stdout  		  = util_alloc_joined_string((const char *[2]) {run_path   , "/LSF.stdout"}  , 2 , "");
@@ -424,15 +434,34 @@ basic_queue_job_type * lsf_driver_submit_job(basic_queue_driver_type * __driver,
 //}
 
 
+void lsf_driver_free(lsf_driver_type * driver ) {
+  free(driver->queue_name);
+#ifdef LSF_SYSTEM_DRIVER
+  hash_free(driver->status_map);
+  hash_free(driver->bjobs_output);
+#endif
+  free(driver);
+  driver = NULL;
+}
+
+void lsf_driver_free__(void * __driver ) {
+  lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
+  lsf_driver_free( driver );
+}
+
+
+
+
 void * lsf_driver_alloc(const char * queue_name) {
   lsf_driver_type * lsf_driver 	   = util_malloc(sizeof * lsf_driver , __func__);
   lsf_driver->queue_name       	   = util_alloc_string_copy(queue_name);
-  lsf_driver->__lsf_id         	   = LSF_DRIVER_ID;
+  UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
   lsf_driver->submit           	   = lsf_driver_submit_job;
   lsf_driver->get_status       	   = lsf_driver_get_job_status;
   lsf_driver->abort_f          	   = lsf_driver_abort_job;
   lsf_driver->free_job         	   = lsf_driver_free_job;
   lsf_driver->free_driver      	   = lsf_driver_free__;
+  lsf_driver->display_info         = lsf_driver_display_info;
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
   
 #ifdef LSF_LIBRARY_DRIVER
@@ -464,26 +493,12 @@ void * lsf_driver_alloc(const char * queue_name) {
   hash_insert_int(lsf_driver->status_map , "DONE"   , job_queue_done);
   hash_insert_int(lsf_driver->status_map , "UNKWN"  , job_queue_exit); /* Uncertain about this one */
 #endif
-  {
-    basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) lsf_driver;
-    basic_queue_driver_init(basic_driver);
-    return basic_driver;
-  }
+  return lsf_driver;
 }
 
-void lsf_driver_free(lsf_driver_type * driver) {
-  free(driver->queue_name);
-#ifdef LSF_SYSTEM_DRIVER
-  hash_free(driver->status_map);
-  hash_free(driver->bjobs_output);
-#endif
-  free(driver);
-  driver = NULL;
-}
 
- void lsf_driver_free__(basic_queue_driver_type * driver) {
-  lsf_driver_free((lsf_driver_type *) driver);
-}
+
+
 
 #undef LSF_DRIVER_ID  
 #undef LSF_JOB_ID    
