@@ -136,14 +136,15 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
 
 
 static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_type impl_type , bool read , int blocksize , int max_cache_size , bool preload) {
+  const float fragmentation_limit = 1.0; /* I.e. no defrag */
   char * mount_file;
   char * base = util_alloc_sprintf("%s_%s" , driver->mount_prefix , enkf_types_get_impl_name( impl_type ));
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , base , "mnt" );
-    driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload , false);
+    driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , fragmentation_limit , preload , false);
   } else {
     mount_file = util_alloc_filename( driver->write_path , base , "mnt" );
-    driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , 0.0 , preload , false);
+    driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , fragmentation_limit , preload , false);
   }
   free( mount_file );
   free( base );

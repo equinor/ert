@@ -149,9 +149,14 @@ struct enkf_state_struct {
    Currently no locking is implemented - the lock_mode parameter is not used. 
 */
 
-static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt_type * run_path_fmt) {
+static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt_type * run_path_fmt, const subst_list_type * state_subst_list) {
   util_safe_free(run_info->run_path);
-  run_info->run_path = path_fmt_alloc_path(run_path_fmt , true , iens , run_info->step1 , run_info->step2);
+  {
+    char * tmp = path_fmt_alloc_path(run_path_fmt , false , iens , run_info->step1 , run_info->step2);
+    run_info->run_path = subst_list_alloc_filtered_string( state_subst_list , tmp );
+    free( tmp );
+  }
+  util_make_path( run_info->run_path );
 }
 
 
@@ -189,7 +194,8 @@ static void run_info_set(run_info_type * run_info        ,
 			 int step2                       ,      
 			 forward_model_type * __forward_model , 
 			 int iens                             , 
-			 path_fmt_type * run_path_fmt ) {
+			 path_fmt_type * run_path_fmt ,
+                         const subst_list_type * state_subst_list) {
 
   run_info->active               = active;
   run_info->init_step_parameters = init_step_parameters;
@@ -204,7 +210,7 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->resample_when_fail   = resample_when_fail;
   run_info->max_internal_submit  = max_internal_submit;
   run_info->num_internal_submit  = 0;
-  run_info_set_run_path(run_info , iens , run_path_fmt);
+  run_info_set_run_path(run_info , iens , run_path_fmt , state_subst_list );
 }
 
 
@@ -261,8 +267,14 @@ static void shared_info_free(shared_info_type * shared_info) {
 */
 
 
-static void member_config_set_eclbase(member_config_type * member_config , const char * eclbase) {
-  member_config->eclbase = util_realloc_string_copy(member_config->eclbase , eclbase);
+
+static void member_config_set_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list) {
+  util_safe_free( member_config->eclbase );
+  {
+    char * tmp = path_fmt_alloc_path(ecl_config_get_eclbase_fmt(ecl_config), false , member_config->iens);
+    member_config->eclbase = subst_list_alloc_filtered_string( subst_list , tmp );
+    free( tmp );
+  }
 }
 
 
@@ -295,14 +307,9 @@ static member_config_type * member_config_alloc(int iens ,
 						const ensemble_config_type * ensemble_config) {
 						
   member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
-  member_config->casename       = util_alloc_string_copy( casename );
-  member_config->iens           = iens; /* Can only be changed in the allocater. */
-  member_config->eclbase  	= NULL;
-  {
-    char * eclbase = path_fmt_alloc_path(ecl_config_get_eclbase_fmt(ecl_config), false , member_config->iens);
-    member_config_set_eclbase(member_config  , eclbase);
-    free(eclbase);
-  }
+  member_config->casename            = util_alloc_string_copy( casename );
+  member_config->iens                = iens; /* Can only be changed in the allocater. */
+  member_config->eclbase  	     = NULL;
   member_config_set_keep_runpath(member_config , keep_runpath);
   {
     char * schedule_prediction_file = ecl_config_alloc_schedule_prediction_file(ecl_config , iens);
@@ -417,11 +424,6 @@ const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) {
 
 
 
-void enkf_state_set_eclbase(enkf_state_type * enkf_state , const char * eclbase) {
-  member_config_set_eclbase(enkf_state->my_config , eclbase);
-}
-
-
 /*
   void enkf_state_set_iens(enkf_state_type * enkf_state , int iens) {
   enkf_state->my_iens = iens;
@@ -481,23 +483,30 @@ int enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state ) {
    Sets all the static subst keywords which will not change during the simulation.
 */
 static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
-  char * iens_s      = util_alloc_sprintf("%d"   , enkf_state->my_config->iens);
-  char * iens4_s     = util_alloc_sprintf("%04d" , enkf_state->my_config->iens);
-  char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
-  char * cwd         = util_alloc_cwd();
+  {
+    char * iens_s      = util_alloc_sprintf("%d"   , enkf_state->my_config->iens);
+    char * iens4_s     = util_alloc_sprintf("%04d" , enkf_state->my_config->iens);
+    char * cwd         = util_alloc_cwd();
     
-
-  enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd , NULL); 
-  enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s , NULL);
-  enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s , NULL);
-  enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
-  enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
-  enkf_state_add_subst_kw(enkf_state , "SMSPEC"      , smspec_file , NULL);
+    enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd     , NULL); 
+    enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s  , NULL);
+    enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s , NULL);
+    
+    free(cwd);
+    free(iens_s);
+    free(iens4_s);
+  }
   
-  free(cwd);
-  free(iens_s);
-  free(iens4_s);
-  free(smspec_file);
+  member_config_set_eclbase(enkf_state->my_config , enkf_state->ecl_config , enkf_state->subst_list);
+
+  {
+    char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+    enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
+    enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
+    enkf_state_add_subst_kw(enkf_state , "SMSPEC"      , smspec_file , NULL);
+    
+    free(smspec_file);
+  }
 }
 
 /**
@@ -530,7 +539,6 @@ enkf_state_type * enkf_state_alloc(int iens,
   
   enkf_state->ensemble_config = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
-  enkf_state->my_config       = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config );
   enkf_state->shared_info     = shared_info_alloc(site_config , model_config , logh);
   enkf_state->run_info        = run_info_alloc();
   
@@ -586,7 +594,9 @@ INCLDUE
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , "---" , "The ECLIPSE restart file this simulation should end with.");
   enkf_state_add_subst_kw(enkf_state , "RANDINT"       , NULL  , "Random integer value");
   enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , NULL  , "Random float value");
-
+  if (casename != NULL) 
+    enkf_state_add_subst_kw(enkf_state , "CASE" , casename , "The casename for this realization - as loaded from the CASE_TABLE file");
+  
   {
     /** Adding substitute callbacks */
     char * tagged_randint   = enkf_util_alloc_tagged_string( "RANDINT" );
@@ -606,7 +616,9 @@ INCLDUE
     }
     hash_iter_free(iter);
   }
+  enkf_state->my_config = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config);
   enkf_state_set_static_subst_kw(  enkf_state );
+
 
   enkf_state->special_forward_model = NULL;
   enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model , site_config_get_statoil_mode(site_config));
@@ -1926,7 +1938,8 @@ void enkf_state_init_run(enkf_state_type * state ,
                 step2 , 
                 __forward_model , 
                 my_config->iens ,  
-                model_config_get_runpath_fmt( shared_info->model_config ) );
+                model_config_get_runpath_fmt( shared_info->model_config ),
+                state->subst_list );
   
   if (__forward_model != NULL)
     enkf_state_set_special_forward_model( state , __forward_model);

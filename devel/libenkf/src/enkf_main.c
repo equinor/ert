@@ -1168,6 +1168,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
     config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
     
+    item = config_add_item(config , "CASE_TABLE" , false , false);
+    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+    
     item = config_add_item(config , "LOG_LEVEL" , true , false);
     config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     config_set_arg(config , "LOG_LEVEL" , 1 , (const char *[1]) { DEFAULT_LOG_LEVEL });
@@ -1410,6 +1413,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
       enkf_main->model_config    = model_config_alloc(config , 
+                                                      ensemble_config_get_size( enkf_main->ensemble_config ),
 						      site_config_get_installed_jobs(enkf_main->site_config) , 
 						      ecl_config_get_last_history_restart( enkf_main->ecl_config ), 
 						      ecl_config_get_sched_file(enkf_main->ecl_config) , 
@@ -1524,10 +1528,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	msg_show(msg);
 	enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
 	for (int iens = 0; iens < ens_size; iens++) {
-          const char * casename = NULL;
 	  msg_update_int(msg , "%03d" , iens);
 	  enkf_main->ensemble[iens] = enkf_state_alloc(iens,
-                                                       casename , 
+                                                       model_config_iget_casename( enkf_main->model_config , iens ) , 
 						       keep_runpath[iens],
 						       enkf_main->model_config   , 
 						       enkf_main->ensemble_config,

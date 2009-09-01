@@ -525,7 +525,7 @@ static void enkf_fs_upgrade_102(const char * config_file , const char * root_pat
   
   {
     char * backup_file = util_alloc_sprintf("%s.backup" , config_file);
-    util_copy_file( config_file , backup_file);
+    util_copy_file( config_file , backup_file , true);
     printf("********************************************************************\n");
     printf("** Upgrading your enkf filesystem from version 101 to version 102 **\n");
     printf("********************************************************************\n");
@@ -910,7 +910,7 @@ static int enkf_fs_get_fs_version(const char * config_file) {
 static void enkf_fs_upgrade_104(const char * config_file, const char * root_path) {
   char * backup_file = util_alloc_sprintf("%s.backup" , config_file);
   {
-    util_copy_file( config_file , backup_file);
+    util_copy_file( config_file , backup_file , true);
     printf("********************************************************************\n");
     printf("** Upgrading your enkf filesystem from version 103 to version 104 **\n");
     printf("********************************************************************\n");
