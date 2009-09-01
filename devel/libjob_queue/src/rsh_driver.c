@@ -34,9 +34,11 @@ typedef struct {
 
 
 
+#define RSH_DRIVER_TYPE_ID 44963256
+
 struct rsh_driver_struct {
-  BASIC_QUEUE_DRIVER_FIELDS
-  int                 __rsh_id;
+  UTIL_TYPE_ID_DECLARATION
+  QUEUE_DRIVER_FUNCTIONS
   pthread_mutex_t     submit_lock;
   pthread_attr_t      thread_attr;
   char              * rsh_command;
@@ -148,17 +150,7 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
 
 /*****************************************************************/
 
-#define RSH_DRIVER_ID  1003
 #define RSH_JOB_ID     2003
-
-void rsh_driver_assert_cast(const rsh_driver_type * queue_driver) {
-  if (queue_driver->__rsh_id != RSH_DRIVER_ID) 
-    util_abort("%s: internal error - cast failed \n",__func__);
-}
-
-void rsh_driver_init(rsh_driver_type * queue_driver) {
-  queue_driver->__rsh_id = RSH_DRIVER_ID;
-}
 
 
 void rsh_job_assert_cast(const rsh_job_type * queue_job) {
@@ -186,16 +178,17 @@ void rsh_job_free(rsh_job_type * job) {
   free(job);
 }
 
+static UTIL_SAFE_CAST_FUNCTION( rsh_driver , RSH_DRIVER_TYPE_ID )
+UTIL_IS_INSTANCE_FUNCTION( rsh_driver , RSH_DRIVER_TYPE_ID )
 
 
-job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+
+job_status_type rsh_driver_get_job_status(void * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
     return job_queue_null;
   else {
     rsh_job_type    * job    = (rsh_job_type    *) __job;
-    rsh_driver_type * driver = (rsh_driver_type *) __driver;
-    rsh_driver_assert_cast(driver); 
     rsh_job_assert_cast(job);
     {
       if (job->active == false) {
@@ -209,20 +202,16 @@ job_status_type rsh_driver_get_job_status(basic_queue_driver_type * __driver , b
 
 
 
-void rsh_driver_free_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+void rsh_driver_free_job(void * __driver , basic_queue_job_type * __job) {
   rsh_job_type    * job    = (rsh_job_type    *) __job;
-  rsh_driver_type * driver = (rsh_driver_type *) __driver;
-  rsh_driver_assert_cast(driver); 
   rsh_job_assert_cast(job);
   rsh_job_free(job);
 }
 
 
 
-void rsh_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+void rsh_driver_abort_job(void * __driver , basic_queue_job_type * __job) {
   rsh_job_type    * job    = (rsh_job_type    *) __job;
-  rsh_driver_type * driver = (rsh_driver_type *) __driver;
-  rsh_driver_assert_cast(driver); 
   rsh_job_assert_cast(job);
   if (job->active)
     pthread_kill(job->run_thread , SIGABRT);
@@ -231,15 +220,14 @@ void rsh_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_t
 
 
 
-basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver, 
+basic_queue_job_type * rsh_driver_submit_job(void  * __driver, 
 					     int   node_index , 
 					     const char * submit_cmd  	  , 
 					     const char * run_path    	  ,
 					     const char * job_name        ,
 					     const void * job_arg) {
 
-  rsh_driver_type * driver = (rsh_driver_type *) __driver;
-  rsh_driver_assert_cast(driver); 
+  rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
   {
     basic_queue_job_type * basic_job = NULL;
     /* 
@@ -286,6 +274,26 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
 }
 
 
+void rsh_driver_free(rsh_driver_type * driver) {
+  int ihost;
+  for (ihost =0; ihost < driver->num_hosts; ihost++) 
+    rsh_host_free(driver->host_list[ihost]);
+  free(driver->host_list);
+
+  pthread_attr_destroy ( &driver->thread_attr );
+  free(driver);
+  driver = NULL;
+}
+
+
+void rsh_driver_free__(void * __driver) {
+  rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
+  rsh_driver_free( driver );
+}
+
+
+
+
 /**
    The rsh_host_list should be a list of strings of the following
    format:
@@ -299,7 +307,7 @@ basic_queue_job_type * rsh_driver_submit_job(basic_queue_driver_type * __driver,
 
 void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_host_list) {
   rsh_driver_type * rsh_driver = util_malloc(sizeof * rsh_driver , __func__);
-  rsh_driver->__rsh_id         = RSH_DRIVER_ID;
+  UTIL_TYPE_ID_INIT( rsh_driver , RSH_DRIVER_TYPE_ID );
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
   pthread_attr_init( &rsh_driver->thread_attr );
   pthread_attr_setdetachstate( &rsh_driver->thread_attr , PTHREAD_CREATE_DETACHED );
@@ -310,6 +318,8 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
   rsh_driver->abort_f         	   = rsh_driver_abort_job;
   rsh_driver->free_job        	   = rsh_driver_free_job;
   rsh_driver->free_driver     	   = rsh_driver_free__;
+  rsh_driver->display_info         = NULL;
+
   rsh_driver->num_hosts       	   = 0;
   rsh_driver->host_list       	   = NULL;
   rsh_driver->last_host_index 	   = 0;  
@@ -340,13 +350,9 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
   if (rsh_driver->num_hosts == 0) 
     util_abort("%s: failed to add any valid RSH hosts - aborting.\n",__func__);
 
-  {
-    basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) rsh_driver;
-    basic_queue_driver_init(basic_driver);
-
-    return basic_driver;
-  }
+  return rsh_driver;
 }
+
 
 
 void rsh_driver_add_host(rsh_driver_type * rsh_driver , const char * hostname , int host_max_running) {
@@ -359,25 +365,8 @@ void rsh_driver_add_host(rsh_driver_type * rsh_driver , const char * hostname , 
 }
 
 
-void rsh_driver_free(rsh_driver_type * driver) {
-  int ihost;
-  for (ihost =0; ihost < driver->num_hosts; ihost++) 
-    rsh_host_free(driver->host_list[ihost]);
-  free(driver->host_list);
-
-  pthread_attr_destroy ( &driver->thread_attr );
-  free(driver);
-  driver = NULL;
-}
 
 
-void rsh_driver_free__(basic_queue_driver_type * driver) {
-  rsh_driver_free((rsh_driver_type *) driver);
-}
-
-
-
-#undef RSH_DRIVER_ID  
 #undef RSH_JOB_ID    
 
 /*****************************************************************/

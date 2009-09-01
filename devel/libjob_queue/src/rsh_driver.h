@@ -10,8 +10,6 @@ typedef struct rsh_job_struct    rsh_job_type;
 
 void        rsh_driver_add_host(rsh_driver_type * , const char * , int );
 void 	  * rsh_driver_alloc(const char *, const stringlist_type *);
-void 	    rsh_driver_free(rsh_driver_type * );
-void        rsh_driver_free__(basic_queue_driver_type * );
 
 #ifdef __cplusplus
 }

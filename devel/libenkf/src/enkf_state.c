@@ -294,6 +294,7 @@ static void member_config_free(member_config_type * member_config) {
 }
 
 
+
 static void member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath) {
   member_config->keep_runpath   = keep_runpath;
 }

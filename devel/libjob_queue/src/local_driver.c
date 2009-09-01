@@ -18,29 +18,21 @@ struct local_job_struct {
 };
 
 
+#define LOCAL_DRIVER_TYPE_ID 66196305
 
 struct local_driver_struct {
-  BASIC_QUEUE_DRIVER_FIELDS
-  int __local_id;
+  UTIL_TYPE_ID_DECLARATION
+  QUEUE_DRIVER_FUNCTIONS
   pthread_attr_t     thread_attr;
   pthread_mutex_t    submit_lock;
 };
 
 /*****************************************************************/
 
-#define LOCAL_DRIVER_ID  1002
 #define LOCAL_JOB_ID     2002
 
-void local_driver_assert_cast(const local_driver_type * queue_driver) {
-  if (queue_driver->__local_id != LOCAL_DRIVER_ID) {
-    fprintf(stderr,"%s: internal error - cast failed \n",__func__);
-    abort();
-  }
-}
-
-void local_driver_init(local_driver_type * queue_driver) {
-  queue_driver->__local_id = LOCAL_DRIVER_ID;
-}
+UTIL_SAFE_CAST_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
+UTIL_IS_INSTANCE_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
 
 
 void local_job_assert_cast(const local_job_type * queue_job) {
@@ -70,14 +62,12 @@ void local_job_free(local_job_type * job) {
 
 
 
-job_status_type local_driver_get_job_status(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+job_status_type local_driver_get_job_status(void * __driver, basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
     return job_queue_null;
   else {
     local_job_type    * job    = (local_job_type    *) __job;
-    local_driver_type * driver = (local_driver_type *) __driver;
-    local_driver_assert_cast(driver); 
     local_job_assert_cast(job);
     {
       if (job->active == false) {
@@ -91,20 +81,16 @@ job_status_type local_driver_get_job_status(basic_queue_driver_type * __driver ,
 
 
 
-void local_driver_free_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+void local_driver_free_job(void * __driver , basic_queue_job_type * __job) {
   local_job_type    * job    = (local_job_type    *) __job;
-  local_driver_type * driver = (local_driver_type *) __driver;
-  local_driver_assert_cast(driver); 
   local_job_assert_cast(job);
   local_job_free(job);
 }
 
 
 
-void local_driver_abort_job(basic_queue_driver_type * __driver , basic_queue_job_type * __job) {
+void local_driver_abort_job(void * __driver , basic_queue_job_type * __job) {
   local_job_type    * job    = (local_job_type    *) __job;
-  local_driver_type * driver = (local_driver_type *) __driver;
-  local_driver_assert_cast(driver); 
   local_job_assert_cast(job);
   if (job->active)
     pthread_kill(job->run_thread , SIGABRT);
@@ -128,14 +114,13 @@ void * submit_job_thread__(void * __arg) {
 
 
 
-basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __driver, 
+basic_queue_job_type * local_driver_submit_job(void * __driver, 
 					       int   node_index                   , 
 					       const char * submit_cmd  	  , 
 					       const char * run_path    	  , 
 					       const char * job_name              ,
 					       const void * job_arg) {
-  local_driver_type * driver = (local_driver_type *) __driver;
-  local_driver_assert_cast(driver); 
+  local_driver_type * driver = local_driver_safe_cast( __driver );
   {
     local_job_type * job    = local_job_alloc();
     arg_pack_type  * arg_pack = arg_pack_alloc();
@@ -161,9 +146,22 @@ basic_queue_job_type * local_driver_submit_job(basic_queue_driver_type * __drive
 
 
 
+void local_driver_free(local_driver_type * driver) {
+  pthread_attr_destroy ( &driver->thread_attr );
+  free(driver);
+  driver = NULL;
+}
+
+
+void local_driver_free__(void * __driver) {
+  local_driver_type * driver = local_driver_safe_cast( __driver );
+  local_driver_free( driver );
+}
+
+
 void * local_driver_alloc() {
   local_driver_type * local_driver = util_malloc(sizeof * local_driver , __func__);
-  local_driver->__local_id         = LOCAL_DRIVER_ID;
+  UTIL_TYPE_ID_INIT( local_driver , LOCAL_DRIVER_TYPE_ID);
   pthread_mutex_init( &local_driver->submit_lock , NULL );
   pthread_attr_init( &local_driver->thread_attr );
   pthread_attr_setdetachstate( &local_driver->thread_attr , PTHREAD_CREATE_DETACHED );
@@ -173,24 +171,12 @@ void * local_driver_alloc() {
   local_driver->abort_f     	     = local_driver_abort_job;
   local_driver->free_job    	     = local_driver_free_job;
   local_driver->free_driver 	     = local_driver_free__;
-  {
-    basic_queue_driver_type * basic_driver = (basic_queue_driver_type *) local_driver;
-    basic_queue_driver_init(basic_driver);
-    return basic_driver;
-  }
+  local_driver->display_info         = NULL;
+  
+  return local_driver;
 }
 
 
-void local_driver_free(local_driver_type * driver) {
-  pthread_attr_destroy ( &driver->thread_attr );
-  free(driver);
-  driver = NULL;
-}
-
-
-void local_driver_free__(basic_queue_driver_type * driver) {
-  local_driver_free((local_driver_type *) driver);
-}
 
 
 
