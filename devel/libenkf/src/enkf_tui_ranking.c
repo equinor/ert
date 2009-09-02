@@ -33,24 +33,29 @@ static void enkf_tui_ranking_create( void * arg ) {
   } else {
     const int history_length    = enkf_main_get_history_length( enkf_main );
     const int    prompt_len = 50;
-    const char * prompt1  = "Observations to use for ranking";
-    const char * prompt2  = "Name to store ranking under";
+    const char * prompt1      = "Observations to use for ranking";
+    const char * prompt2      = "Name to store ranking under";
+    const char * store_prompt = "Name of file to store ranking";
     int step1,step2;
     stringlist_type * ranking_keys;
     char * obs_keys_input;
     char * ranking_key;
+    char * ranking_file;
     util_printf_prompt(prompt1 , prompt_len , '=' , "=> ");
     obs_keys_input = util_alloc_stdin_line();
     ranking_keys   = enkf_obs_alloc_matching_keylist( enkf_obs , obs_keys_input );
     enkf_tui_util_scanf_report_steps(history_length , prompt_len , &step1 , &step2);
-    
+
     util_printf_prompt(prompt2 , prompt_len , '=' , "=> ");
     ranking_key = util_alloc_stdin_line();
     if (ranking_key == NULL) 
-      ranking_key = util_alloc_string_copy( MISFIT_DEFAULT_RANKING_KEY);
-    
+      ranking_key = util_alloc_string_copy( MISFIT_DEFAULT_RANKING_KEY );
+
+    util_printf_prompt(store_prompt , prompt_len , '=' , "=> ");
+    ranking_file = util_alloc_stdin_line();
+        
     if (stringlist_get_size( ranking_keys ) > 0) {
-      misfit_table_create_ranking( misfit_table  , ranking_keys , step1 , step2 , ranking_key);
+      misfit_table_create_ranking( misfit_table  , ranking_keys , step1 , step2 , ranking_key , ranking_file);
       misfit_table_display_ranking( misfit_table , ranking_key);
     } else
       fprintf(stderr,"The input string : \"%s\" did not resolve to any valid observation keys \n", obs_keys_input);
@@ -58,6 +63,7 @@ static void enkf_tui_ranking_create( void * arg ) {
     free( obs_keys_input );
     stringlist_free( ranking_keys );
     free( ranking_key );
+    util_safe_free( ranking_file );
   }
 }
 

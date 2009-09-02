@@ -390,7 +390,7 @@ void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_
   gen_kw_config_type * gen_kw_config 	    = enkf_config_node_get_ref( config_node );
   int num_kw                         	    = gen_kw_config_get_data_size( gen_kw_config );
   const char * node_key              	    = enkf_config_node_get_key( config_node );
-  char ** key_list             	            = gen_kw_config_get_name_list( gen_kw_config );
+  char ** key_list             	            = gen_kw_config_iget_name_list( gen_kw_config );
   
   int ikw;
   
@@ -816,7 +816,7 @@ void enkf_tui_plot_RFT__(enkf_fs_type * fs, const char * driver_type , const cha
     int l;
     int iens;
     int iens1 = 0;        /* Could be user input */
-    int iens2 = ens_size;
+    int iens2 = ens_size - 1;
     
     plot_dataset_type *  obs;
     node = enkf_node_alloc( config_node );
