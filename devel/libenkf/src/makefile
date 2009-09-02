@@ -73,9 +73,9 @@ include dependencies
 #################################################################
 # Binaries
 
-BIN_FILES             = enkf gen_test.x test.x run_ensemble.x sqlite3_driver_test.x  make_grane_config.x
+BIN_FILES             = ert gen_test.x test.x run_ensemble.x sqlite3_driver_test.x  make_grane_config.x
 BIN:	                $(BIN_FILES)
-BIN_FILES_SDP_INSTALL = enkf
+BIN_FILES_SDP_INSTALL = ert
 
 main.o		: main.c
 
@@ -83,8 +83,8 @@ main.o		: main.c
 main.o	: main.c
 	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
 
-enkf:	main.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) main.o -o enkf $(LIB_PATH)  $(LIB_LINK) 	
+ert:	main.o $(LIB)
+	$(LD) -$(MFLAG) $(LDFLAGS) main.o -o ert $(LIB_PATH)  $(LIB_LINK) 	
 
 test.x:	test.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH)  $(LIB_LINK) 	
