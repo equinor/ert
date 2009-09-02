@@ -270,7 +270,7 @@
 
 
 struct enkf_fs_struct {
-  
+  char                      * root_path;
   basic_driver_type         * dynamic_forecast;
   basic_driver_type         * dynamic_analyzed;
   basic_driver_type  	    * parameter;
@@ -287,6 +287,15 @@ struct enkf_fs_struct {
   char                      * current_write_dir;     /* The currently active directory fro writing. */ 
   char                      * mount_map;             /* Binary file containing all the information the filesystem needs to bootstrap itself. Updated when e.g. new directories are added. */
   long int                     __dir_offset;         /* The offset into the mount map where the directory information starts - very internal. */
+  /*****************************************************************/
+  /* 
+     The variables below here are for storing arbitrary files within 
+     the enkf_fs storage directory, but not as serialize enkf_nodes.
+  */
+  path_fmt_type             * case_fmt;
+  path_fmt_type             * case_member_fmt;
+  path_fmt_type             * case_tstep_fmt;
+  path_fmt_type             * case_tstep_member_fmt;
 };
 
 /*****************************************************************/
@@ -1133,7 +1142,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
   {
     const int num_drivers      = 5;
     enkf_fs_type * fs          = util_malloc(sizeof * fs , __func__);
-
+    fs->root_path              = util_alloc_string_copy( root_path );
     fs->use_locking            = use_locking;
     fs->lockfile               = NULL;
 
@@ -1259,6 +1268,19 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
       fs->read_only = false;
     
     free( config_file );
+    {
+      /*
+        Installing the path_fmt instances for the storage of arbitrary files.
+      */
+      fs->case_fmt              = path_fmt_alloc_directory_fmt( DEFAULT_CASE_PATH );
+      fs->case_member_fmt       = path_fmt_alloc_directory_fmt( DEFAULT_CASE_MEMBER_PATH );
+      fs->case_tstep_fmt        = path_fmt_alloc_directory_fmt( DEFAULT_CASE_TSTEP_PATH );
+      fs->case_tstep_member_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_TSTEP_MEMBER_PATH );
+    }
+    
+
+
+
     return fs;
   }
 }
@@ -1291,7 +1313,12 @@ void enkf_fs_free(enkf_fs_type * fs) {
     close(fs->lock_fd);
     util_unlink_existing(fs->lockfile);
   }
+  util_safe_free(fs->root_path);
   util_safe_free(fs->lockfile);
+  path_fmt_free( fs->case_fmt );
+  path_fmt_free( fs->case_member_fmt );
+  path_fmt_free( fs->case_tstep_fmt );
+  path_fmt_free( fs->case_tstep_member_fmt );
   free(fs);
 }
 
@@ -1628,5 +1655,58 @@ void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , in
 }
 
 
+/*****************************************************************/
 
+
+char * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input_name) {
+  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , input_name);
+}
+
+
+FILE * enkf_fs_open_case_file( const enkf_fs_type * fs , const char * input_name , const char * mode) {
+  char * filename = enkf_fs_alloc_case_filename( fs , input_name );
+  FILE * stream   = util_fopen( filename , mode );
+  free( filename );
+  return stream;
+}
+
+
+char * enkf_fs_alloc_case_member_filename( const enkf_fs_type * fs , int iens , const char * input_name) {
+  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , iens , input_name);
+}
+
+
+FILE * enkf_fs_open_case_member_file( const enkf_fs_type * fs , const char * input_name , int iens , const char * mode) {
+  char * filename = enkf_fs_alloc_case_member_filename( fs , iens , input_name );
+  FILE * stream   = util_fopen( filename , mode );
+  free( filename );
+  return stream;
+}
+  
+
+char * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name) {
+  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , tstep , input_name);
+}
+
+
+FILE * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep , const char * mode) {
+  char * filename = enkf_fs_alloc_case_member_filename( fs , tstep , input_name );
+  FILE * stream   = util_fopen( filename , mode );
+  free( filename );
+  return stream;
+}
+
+
+char * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int tstep , int iens , const char * input_name) {
+  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , tstep , iens , input_name);
+}
+
+
+FILE * enkf_fs_open_case_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens , const char * mode) {
+  char * filename = enkf_fs_alloc_case_tstep_member_filename( fs , tstep , iens , input_name );
+  FILE * stream   = util_fopen( filename , mode );
+  free( filename );
+  return stream;
+}
+  
 

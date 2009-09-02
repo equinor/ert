@@ -7,6 +7,7 @@
 #include <list_node.h>
 #include <util.h>
 
+
 #include <rms_type.h>
 #include <rms_util.h>
 #include <rms_tag.h>
@@ -402,7 +403,7 @@ void rms_file_printf(const rms_file_type *rms_file , FILE *stream) {
   will break hard.
 */
 
-void rms_file_2eclipse(const char * rms_file , const char * ecl_path, bool ecl_fmt_file , bool ecl_endian_convert , int ecl_file_nr) {
+void rms_file_2eclipse(const char * rms_file , const char * ecl_path, bool ecl_fmt_file , int ecl_file_nr) {
   char * rms_base_file;
   int dims[3] , size;
   rms_file_type *file = rms_file_alloc(rms_file , false);
@@ -442,7 +443,7 @@ void rms_file_2eclipse(const char * rms_file , const char * ecl_path, bool ecl_f
 	      abort();
 	    }
 	    
-	    ecl_kw_fwrite_param(ecl_file , ecl_fmt_file , ecl_endian_convert , tagname , ecl_float_type , size , ecl_data);
+	    ecl_kw_fwrite_param(ecl_file , ecl_fmt_file , tagname , ecl_float_type , size , ecl_data);
 	    free(ecl_base);
 	    free(ecl_file);
 	    

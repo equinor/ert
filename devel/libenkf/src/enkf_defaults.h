@@ -19,7 +19,6 @@
 
 /* Eclipse IO  related stuff */
 #define DEFAULT_FORMATTED   false
-#define DEFAULT_ENDIAN_FLIP true
 #define DEFAULT_UNIFIED     false
 
 
@@ -149,11 +148,11 @@
 
 #define DEFAULT_CASE "default"
 
-#define DEFAULT_PLAIN_PARAMETER_PATH 	      "%04d/mem%03d/Parameter"
-#define DEFAULT_PLAIN_STATIC_PATH    	      "%04d/mem%03d/Static"
-#define DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH "%04d/mem%03d/Forecast"
-#define DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH "%04d/mem%03d/Analyzed"
-#define DEFAULT_PLAIN_INDEX_PATH            "%04d/mem%03d/INDEX"
+#define DEFAULT_PLAIN_PARAMETER_PATH 	       "%04d/mem%03d/Parameter"
+#define DEFAULT_PLAIN_STATIC_PATH    	       "%04d/mem%03d/Static"
+#define DEFAULT_PLAIN_DYNAMIC_FORECAST_PATH    "%04d/mem%03d/Forecast"
+#define DEFAULT_PLAIN_DYNAMIC_ANALYZED_PATH    "%04d/mem%03d/Analyzed"
+#define DEFAULT_PLAIN_INDEX_PATH               "%04d/mem%03d/INDEX"
 
 
 #define DEFAULT_SQLITE_PARAMETER_DBFILE  	 "Parameter.sqlite_db"
@@ -161,6 +160,10 @@
 #define DEFAULT_SQLITE_DYNAMIC_FORECAST_DBFILE   "Forecast.sqlite_db"
 #define DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE   "Analyzed.sqlite_db"
 
+#define DEFAULT_CASE_PATH                        "%s/%s/files"             
+#define DEFAULT_CASE_MEMBER_PATH                 "%s/%s/mem%03d/files"
+#define DEFAULT_CASE_TSTEP_PATH                  "%s/%s/%04d/files"
+#define DEFAULT_CASE_TSTEP_MEMBER_PATH           "%s/%s/%04d/mem%03d/files"    
 
 
 #endif

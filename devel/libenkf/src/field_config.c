@@ -122,7 +122,6 @@ struct field_config_struct {
 
   bool __enkf_mode;                      /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool fmt_file;
-  bool endian_swap;
   bool write_compressed;
   bool add_perturbation;
 
@@ -296,12 +295,12 @@ file. It can determine the following three types of files:
   i.e. it is *essential* to check the return value.
 
 */
-field_file_format_type field_config_guess_file_type(const char * filename , bool endian_flip) {
+field_file_format_type field_config_guess_file_type(const char * filename ) {
   bool fmt_file = util_fmt_bit8(filename );
   FILE * stream = util_fopen(filename , "r");
 
   field_file_format_type file_type;
-  if (ecl_kw_is_kw_file(stream , fmt_file , endian_flip))
+  if (ecl_kw_is_kw_file(stream , fmt_file ))
     file_type = ECL_KW_FILE;
   else if (rms_file_is_roff(stream))
     file_type = RMS_ROFF_FILE;
@@ -373,7 +372,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->truncation               = TRUNCATE_NONE;
   config->__enkf_mode              = true;
   config->fmt_file    	      	   = false;
-  config->endian_swap 	      	   = true;
   config->write_compressed    	   = true;
   config->init_file_fmt            = NULL;
   config->output_transform         = NULL;
@@ -468,7 +466,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
     
     if (min_std_file != NULL) {
       config->min_std = field_alloc( config );
-      field_fload(config->min_std , min_std_file , field_config_get_endian_swap(config));
+      field_fload(config->min_std , min_std_file );
     }
 
     hash_iter_free(iter);
@@ -619,12 +617,8 @@ truncation_type field_config_get_truncation(const field_config_type * config , d
 
 
 
-void field_config_set_io_options(const field_config_type * config , bool *fmt_file , bool * endian_swap) {
+void field_config_set_io_options(const field_config_type * config , bool *fmt_file ) {
   *fmt_file    = config->fmt_file;
-  *endian_swap = config->endian_swap;
-  /*
-   *ecl_type    = config->internal_ecl_type;
-   */
 }
 
 
@@ -694,10 +688,6 @@ bool field_config_enkf_init(const field_config_type * config) {
 
 
 
-
-bool field_config_get_endian_swap(const field_config_type * config) {
-  return config->endian_swap;
-}
 
 
 

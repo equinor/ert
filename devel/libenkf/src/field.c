@@ -17,7 +17,7 @@
 #include <fortio.h>
 #include <enkf_serialize.h>
 #include <buffer.h>
-
+#include <ecl_endian_flip.h>
 
 
 GET_DATA_SIZE_HEADER(field);
@@ -651,10 +651,10 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
     /*  Writes the field to in ecl_kw format to a new file.  */
     if ((file_type == ECL_KW_FILE_ALL_CELLS) || (file_type == ECL_KW_FILE_ACTIVE_CELLS)) {
       fortio_type * fortio;
-      bool fmt_file , endian_swap;
+      bool fmt_file ;
       
-      field_config_set_io_options(field->config , &fmt_file , &endian_swap);
-      fortio = fortio_fopen(file , "w" , endian_swap , fmt_file);
+      field_config_set_io_options(field->config , &fmt_file );
+      fortio = fortio_fopen(file , "w" , ECL_ENDIAN_FLIP , fmt_file);
       
       if (file_type == ECL_KW_FILE_ALL_CELLS)
 	field_ecl_write3D_fortio(field , fortio);
@@ -710,7 +710,7 @@ bool field_initialize(field_type *field , int iens) {
   if (field_config_enkf_init(field->config)) {
     {
       char * filename = field_config_alloc_init_file(field->config , iens);
-      field_fload(field , filename , field_config_get_endian_swap(field->config));
+      field_fload(field , filename );
       free(filename);
     }
     {
@@ -1030,13 +1030,13 @@ void field_fload_rms(field_type * field , const char * filename) {
 
 
 
-void field_fload_ecl_kw(field_type * field , const char * filename , bool endian_flip) {
+void field_fload_ecl_kw(field_type * field , const char * filename ) {
   const char * key = field_config_get_ecl_kw_name(field->config);
   ecl_kw_type * ecl_kw;
   
   {
     bool fmt_file        = ecl_util_fmt_file(filename);
-    fortio_type * fortio = fortio_fopen(filename , "r" , endian_flip , fmt_file);
+    fortio_type * fortio = fortio_fopen(filename , "r" , ECL_ENDIAN_FLIP , fmt_file);
     ecl_kw_fseek_kw(key , true , true , fortio);
     ecl_kw = ecl_kw_fread_alloc( fortio );
     fortio_fclose(fortio);
@@ -1056,7 +1056,7 @@ void field_fload_ecl_kw(field_type * field , const char * filename , bool endian
 
 
 /* No type translation possible */
-void field_fload_ecl_grdecl(field_type * field , const char * filename , bool endian_flip) {
+void field_fload_ecl_grdecl(field_type * field , const char * filename ) {
   const char * key = field_config_get_ecl_kw_name(field->config);
   int size = field_config_get_volume(field->config);
   ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
@@ -1077,16 +1077,16 @@ void field_fload_ecl_grdecl(field_type * field , const char * filename , bool en
 
 
 
-void field_fload_typed(field_type * field , const char * filename ,  bool endian_flip , field_file_format_type file_type) {
+void field_fload_typed(field_type * field , const char * filename ,  field_file_format_type file_type) {
   switch (file_type) {
   case(RMS_ROFF_FILE):
     field_fload_rms(field , filename );
     break;
   case(ECL_KW_FILE):
-    field_fload_ecl_kw(field , filename  , endian_flip);
+    field_fload_ecl_kw(field , filename  );
     break;
   case(ECL_GRDECL_FILE):
-    field_fload_ecl_grdecl(field , filename  , endian_flip);
+    field_fload_ecl_grdecl(field , filename);
     break;
   default:
     util_abort("%s: file_type:%d not recognized - aborting \n",__func__ , file_type);
@@ -1096,17 +1096,17 @@ void field_fload_typed(field_type * field , const char * filename ,  bool endian
 
 
 
-void field_fload(field_type * field , const char * filename , bool endian_flip) {
-  field_file_format_type file_type = field_config_guess_file_type(filename , endian_flip);
+void field_fload(field_type * field , const char * filename ) {
+  field_file_format_type file_type = field_config_guess_file_type( filename );
   if (file_type == UNDEFINED_FORMAT) file_type = field_config_manual_file_type(filename , true);
-  field_fload_typed(field , filename , endian_flip , file_type);
+  field_fload_typed(field , filename , file_type);
 }
 
 
 
-void field_fload_auto(field_type * field , const char * filename , bool endian_flip) {
-  field_file_format_type file_type = field_config_guess_file_type(filename , endian_flip);
-  field_fload_typed(field , filename , endian_flip , file_type);
+void field_fload_auto(field_type * field , const char * filename ) {
+  field_file_format_type file_type = field_config_guess_file_type(filename);
+  field_fload_typed(field , filename , file_type);
 }
 
 
@@ -1175,14 +1175,10 @@ bool field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_
       } else 
         loadOK = false;
 	//util_abort("%s: fatal error when loading: %s - no restart information has been loaded \n",__func__ , field_config_get_key( field->config ));
-    } else {
+    } else 
       /* Loading from unique file - currently this only applies to the modelerror implementation. */
-      bool __ENDIAN_FLIP__ = true; /* Fuck this ... */
-      if (import_format == UNDEFINED_FORMAT)
-	import_format = field_config_guess_file_type(ecl_file_name , __ENDIAN_FLIP__);
-      
-      field_fload_typed(field , ecl_file_name , __ENDIAN_FLIP__ , import_format);
-    }
+      field_fload_typed(field , ecl_file_name , import_format);
+    
     if (loadOK) {
       field_func_type * input_transform = field_config_get_input_transform(field->config);
       /* The input transform is done in-place. */
@@ -1430,7 +1426,7 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
          log_add_fmt_message( logh , log_level , "Inflating %s:%d,%d,%d with %6.4f" , field_config_get_key( inflation->config ) , i,j,k , inflation_data[c]);    \
        }                                                                                                                                                         \
      }                                                                                                                                                           \
-   }                                                                                                                                                             \    
+   }                                                                                                                                                             \
 }                                                                   
 
 

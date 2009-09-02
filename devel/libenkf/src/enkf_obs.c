@@ -132,8 +132,8 @@ In the following example we have two observations
 
  The observation RFT_P2 is an RFT observation which is only active at
  one report step, i.e. 4/5 pointers in the obs_vector are just NULL
- pointers. The oactual observation(s) are stored in a field_obs
- instance. 
+ pointers. The actual observation(s) are stored in a field_obs
+ instance.
 
  */
 

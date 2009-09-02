@@ -69,9 +69,8 @@ typedef enum { UNDEFINED_FORMAT         = 0,
 void                    field_config_get_ijk( const field_config_type * config , int active_index , int *i , int * j , int * k);
 field_type            * field_config_get_min_std( const field_config_type * field_config );
 const char            * field_config_default_extension(field_file_format_type , bool );
-bool                    field_config_get_endian_swap(const field_config_type * );
 bool                    field_config_write_compressed(const field_config_type * );
-field_file_format_type  field_config_guess_file_type(const char * , bool);
+field_file_format_type  field_config_guess_file_type(const char * );
 field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
@@ -80,7 +79,7 @@ field_config_type     * field_config_alloc_dynamic(const char * , const ecl_grid
 field_config_type     * field_config_alloc_parameter(const char * , const char * , const ecl_grid_type * , field_trans_table_type * , const stringlist_type *);
 field_config_type     * field_config_alloc_general(const char *  , const char * , const ecl_grid_type *  , ecl_type_enum , field_trans_table_type * , const stringlist_type *);
 void                    field_config_free(field_config_type *);
-void                    field_config_set_io_options(const field_config_type * , bool *, bool *);
+void                    field_config_set_io_options(const field_config_type * , bool *);
 int                     field_config_get_volume(const field_config_type * );
 void                    field_config_set_ecl_kw_name(field_config_type * , const char * );
 void                    field_config_set_ecl_type(field_config_type *  , ecl_type_enum );

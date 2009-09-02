@@ -58,9 +58,6 @@ static void block_fs_driver_index_single_mount( block_fs_driver_index_type * dri
 void block_fs_driver_index_select_dir(void *_driver , const char * directory, bool read) {
 
   block_fs_driver_index_type * driver = block_fs_driver_index_safe_cast(_driver);
-  printf("read:%d \n",read);
-  printf("Selecting: %s \n",directory);
-  printf("Current write:%s    read:%s \n",driver->write_path , driver->read_path);
 
   if (read) {
     if (util_string_equal( driver->write_path , driver->read_path)) {

@@ -32,7 +32,7 @@ void 	     field_copy_ecl_kw_data(field_type * , const ecl_kw_type * );
 field_type * field_alloc_shared(const field_config_type * , void * , int );
 void         field_free(field_type *);
 void         field_get_dims(const field_type *, int *, int *, int *);
-void         field_fload_auto(field_type * , const char * , bool );
+void         field_fload_auto(field_type * , const char * );
 void         field_export3D(const field_type * , void *, bool , ecl_type_enum , void *);
 void         field_export(const field_type * , const char * , fortio_type * , field_file_format_type , bool);
 field_type * field_copyc(const field_type *);

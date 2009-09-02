@@ -43,6 +43,7 @@
 #include <subst.h>
 #include <forward_model.h>
 #include <log.h>
+#include <ecl_endian_flip.h>
 #define ENKF_STATE_TYPE_ID 78132
 
 
@@ -688,7 +689,6 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     const run_info_type   * run_info       = enkf_state->run_info;
     const ecl_config_type * ecl_config     = enkf_state->ecl_config;
     const bool fmt_file  		   = ecl_config_get_formatted(ecl_config);
-    const bool endian_swap                 = ecl_config_get_endian_flip(ecl_config);
     const bool internalize_all             = model_config_internalize_results( model_config , report_step );
     const int  iens                        = my_config->iens;
     
@@ -697,7 +697,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     ecl_sum_type * summary;
 
     if ((summary_file != NULL) && (header_file != NULL)) {
-      summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file , endian_swap);
+      summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file );
       free( summary_file );
       free( header_file );
     } else
@@ -771,7 +771,6 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   shared_info_type   * shared_info = enkf_state->shared_info;
   run_info_type      * run_info    = enkf_state->run_info;
   const bool fmt_file              = ecl_config_get_formatted(enkf_state->ecl_config);
-  const bool endian_swap           = ecl_config_get_endian_flip(enkf_state->ecl_config);
   const bool unified               = ecl_config_get_unified(enkf_state->ecl_config);
   const bool internalize_state     = model_config_internalize_state( model_config , report_step );
   ecl_file_type  * restart_file;
@@ -786,7 +785,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   {
     char * file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_RESTART_FILE , fmt_file , report_step);
     if (file != NULL) {
-      restart_file = ecl_file_fread_alloc(file , endian_swap);
+      restart_file = ecl_file_fread_alloc(file );
       free(file);
     } else 
       restart_file = NULL;  /* No restart information was found; if that is expected the program will fail hard in the enkf_node_ecl_load() functions. */
@@ -999,9 +998,8 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const member_config_type * my_config = enkf_state->my_config;
   const run_info_type      * run_info  = enkf_state->run_info;
   const bool fmt_file  		       = ecl_config_get_formatted(enkf_state->ecl_config);
-  const bool endian_swap               = ecl_config_get_endian_flip(enkf_state->ecl_config);
   char * restart_file    	       = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step1);
-  fortio_type * fortio   	       = fortio_fopen(restart_file , "w" , endian_swap , fmt_file);
+  fortio_type * fortio   	       = fortio_fopen(restart_file , "w" , ECL_ENDIAN_FLIP , fmt_file);
   const char * kw;
   int          ikw;
 
