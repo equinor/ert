@@ -8,7 +8,7 @@
 
 
 void convert_test(const char * rms_file, const char * ecl_path) {
-  rms_file_2eclipse(rms_file , ecl_path , false , true , 1);
+  rms_file_2eclipse(rms_file , ecl_path , false , 1);
 }
 
 
