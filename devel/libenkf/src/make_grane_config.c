@@ -48,7 +48,7 @@ int main(int argc, char ** argv) {
   const char * command_file;
   const char * grid_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/EnKF/sf02rg01/Refcase/GRANE.EGRID";
   const char * eqlnum_file  = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/include/regions/sf02gf01rg01v2_edit.eqlnum";
-  ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file , true );
+  ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file );
   ecl_kw_type   * eqlnum_kw;
   {
     FILE * stream = util_fopen(eqlnum_file , "r");

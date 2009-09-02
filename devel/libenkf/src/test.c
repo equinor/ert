@@ -34,13 +34,13 @@ int main(void) {
   int global_size;
     
 
-  ecl_grid = ecl_grid_alloc(GRID_FILE, 1);
+  ecl_grid = ecl_grid_alloc(GRID_FILE);
   ecl_grid_get_dims(ecl_grid, &nx, &ny, &nz, &active_size);
   printf("dims: %d, %d, %d\n", nx, ny, nz);
   global_size = ecl_grid_get_global_size(ecl_grid);
   printf("glob: %d\n", global_size);
 
-  ecl_file = ecl_file_fread_alloc (RESTART_FILE, 1);
+  ecl_file = ecl_file_fread_alloc (RESTART_FILE);
   ecl_kw = ecl_file_iget_named_kw (ecl_file, "PRESSURE", 0);
 
   src_data = (float *) ecl_kw_get_void_ptr(ecl_kw);
