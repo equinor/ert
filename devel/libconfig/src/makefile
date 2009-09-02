@@ -21,7 +21,6 @@ LOCAL: LIB BIN
 
 SDP_INSTALL: LIB BIN
 	install $(LIB) $(SDP_ROOT)/lib/$(LIB_ROOT).a
-	install $(BIN_FILES) $(SDP_ROOT)/bin
 	install $(INC_FILES_INSTALL) $(SDP_ROOT)/include
 
 clean:
@@ -51,7 +50,8 @@ include dependencies
 #################################################################
 
 BIN: config_test.x conf_test.x
- 
+
+
 config_test.x: config_test.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) config_test.o -o config_test.x     $(LINK_LIB_PATH) $(LIB_LINK) 
 
