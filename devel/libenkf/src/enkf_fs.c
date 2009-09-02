@@ -1045,8 +1045,8 @@ bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool 
   fs->dynamic_forecast->select_dir(fs->dynamic_forecast , dir , read);
   fs->dynamic_analyzed->select_dir(fs->dynamic_analyzed , dir , read);
   fs->parameter->select_dir(fs->parameter , dir , read);
-  fs->index->select_dir(fs->index , dir , read);    
   fs->eclipse_static->select_dir(fs->eclipse_static , dir , read);
+  fs->index->select_dir(fs->index , dir , read);    
   
   
   enkf_fs_update_map(fs);
