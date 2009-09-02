@@ -59,11 +59,8 @@ new:
 include dependencies
 
 
-BIN_FILES  = test.x
-BIN	:  $(BIN_FILES) 
-
-test.x: $(LIB) test.o
-	$(LD) -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH) $(LIB_LINK)
+#BIN_FILES
+#BIN	:  $(BIN_FILES) 
 
 
 
