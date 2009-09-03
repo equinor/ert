@@ -1657,54 +1657,52 @@ void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , in
 
 /*****************************************************************/
 
-
 char * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input_name) {
-  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , input_name);
+  return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , input_name);
 }
+
+char * enkf_fs_alloc_case_member_filename( const enkf_fs_type * fs , int iens , const char * input_name) {
+  return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , iens , input_name);
+}
+
+char * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name) {
+  return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , tstep , input_name);
+}
+
+char * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int tstep , int iens , const char * input_name) {
+  return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , tstep , iens , input_name);
+}
+
 
 
 FILE * enkf_fs_open_case_file( const enkf_fs_type * fs , const char * input_name , const char * mode) {
   char * filename = enkf_fs_alloc_case_filename( fs , input_name );
-  FILE * stream   = util_fopen( filename , mode );
+  FILE * stream   = util_mkdir_fopen( filename , mode );
+  printf("Har aapnet:%s \n",filename);
   free( filename );
   return stream;
-}
-
-
-char * enkf_fs_alloc_case_member_filename( const enkf_fs_type * fs , int iens , const char * input_name) {
-  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , iens , input_name);
 }
 
 
 FILE * enkf_fs_open_case_member_file( const enkf_fs_type * fs , const char * input_name , int iens , const char * mode) {
   char * filename = enkf_fs_alloc_case_member_filename( fs , iens , input_name );
-  FILE * stream   = util_fopen( filename , mode );
+  FILE * stream   = util_mkdir_fopen( filename , mode );
   free( filename );
   return stream;
 }
   
 
-char * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name) {
-  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , tstep , input_name);
-}
-
-
 FILE * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep , const char * mode) {
   char * filename = enkf_fs_alloc_case_member_filename( fs , tstep , input_name );
-  FILE * stream   = util_fopen( filename , mode );
+  FILE * stream   = util_mkdir_fopen( filename , mode );
   free( filename );
   return stream;
 }
 
 
-char * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int tstep , int iens , const char * input_name) {
-  return path_fmt_alloc_file( fs->case_fmt , fs->root_path , fs->current_write_dir , tstep , iens , input_name);
-}
-
-
 FILE * enkf_fs_open_case_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens , const char * mode) {
   char * filename = enkf_fs_alloc_case_tstep_member_filename( fs , tstep , iens , input_name );
-  FILE * stream   = util_fopen( filename , mode );
+  FILE * stream   = util_mkdir_fopen( filename , mode );
   free( filename );
   return stream;
 }

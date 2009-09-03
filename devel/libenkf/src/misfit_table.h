@@ -14,6 +14,6 @@ void                misfit_table_free( misfit_table_type * table );
 void                misfit_table_create_ranking(misfit_table_type * table , const stringlist_type * sort_keys , int step1 , int step2, const char * ranking_key , const char * filename);
 bool                misfit_table_has_ranking( const misfit_table_type * table , const char * ranking_key );
 void                misfit_table_display_ranking( const misfit_table_type * table , const char * ranking_key );
-void                misfit_table_fwrite( const misfit_table_type * misfit_table , const char * filename );
+void                misfit_table_fwrite( const misfit_table_type * misfit_table , FILE * stream);
 
 #endif

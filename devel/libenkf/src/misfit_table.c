@@ -310,10 +310,10 @@ void misfit_table_buffer_fwrite( const misfit_table_type * misfit_table , buffer
    Dumps a misfit table to file.
 */
 
-void misfit_table_fwrite( const misfit_table_type * misfit_table , const char * filename ) {
+void misfit_table_fwrite( const misfit_table_type * misfit_table , FILE * stream) {
   buffer_type * buffer = buffer_alloc( 1024 );
   misfit_table_buffer_fwrite( misfit_table , buffer );
-  buffer_store( buffer , filename );
+  buffer_stream_fwrite( buffer , stream );
   buffer_free( buffer );
 }
 
@@ -364,6 +364,11 @@ misfit_table_type * misfit_table_alloc( const ensemble_config_type * config , en
       vector_append_owned_ref( table->ensemble , misfit_node_alloc( iens ) , misfit_node_free__);
   }
   misfit_table_update(table , config , fs);
+  {
+    FILE * stream = enkf_fs_open_case_file( fs , "misfit" , "w");
+    misfit_table_fwrite( table , stream );
+    fclose( stream );
+  }
   return table;
 }
 

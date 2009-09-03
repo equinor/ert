@@ -77,7 +77,14 @@
 
 */
 
-#define ENKF_MAIN_ID 8301
+#define ENKF_MAIN_ID              8301
+#define ENKF_ENSEMBLE_TYPE_ID   776098
+
+//struct enkf_ensemble_struct {
+//  
+//};
+
+
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -90,10 +97,13 @@ struct enkf_main_struct {
   log_type             * logh;             /* Handle to an open log file. */
 
   /*-------------------------*/
+
+  keep_runpath_type    * keep_runpath;     /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
   
-  enkf_obs_type        * obs;
+  
+  enkf_obs_type        * obs;               
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
-  enkf_state_type     ** ensemble;
+  enkf_state_type     ** ensemble;         /* The ensemble ... */
 }; 
 
 
@@ -173,6 +183,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   local_config_free( enkf_main->local_config );
   if (enkf_main->misfit_table != NULL)
     misfit_table_free( enkf_main->misfit_table );
+  util_safe_free( enkf_main->keep_runpath );
   free(enkf_main);
 }
 
@@ -1094,6 +1105,350 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
 }
 
 
+
+
+
+static config_type * enkf_main_alloc_config() {
+  config_type * config = config_alloc();
+  config_item_type * item;
+    
+  /*****************************************************************/
+  /* config_add_item():                                            */
+  /*                                                               */
+  /*  1. boolean - required?                                       */
+  /*  2. boolean - append?                                         */
+  /*****************************************************************/
+  
+  /*****************************************************************/
+  /** Keywords expected normally found in site_config */
+  item = config_add_item(config , "HOST_TYPE" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
+  config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
+  
+  item = config_add_item(config , "CASE_TABLE" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  
+  item = config_add_item(config , "LOG_LEVEL" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_set_arg(config , "LOG_LEVEL" , 1 , (const char *[1]) { DEFAULT_LOG_LEVEL });
+  
+  item = config_add_item(config , "MAX_SUBMIT" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT});
+  
+  item = config_add_item(config , "RESAMPLE_WHEN_FAIL" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_BOOLEAN});
+  config_set_arg(config , "RESAMPLE_WHEN_FAIL" , 1 , (const char *[1]) { DEFAULT_RESAMPLE_WHEN_FAIL});
+  
+  item = config_add_item(config , "MAX_RETRY" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_set_arg(config , "MAX_RETRY" , 1 , (const char *[1]) { DEFAULT_MAX_INTERNAL_SUBMIT });
+  
+    
+
+  item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  {
+    stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
+    stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
+    stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
+    
+    config_item_set_common_selection_set( item , 3 , (const char *[3]) {"LSF" , "LOCAL" , "RSH"});
+    config_item_set_required_children_on_value( item , "LSF"   , lsf_dep);
+    config_item_set_required_children_on_value( item , "RSH"   , rsh_dep);
+    config_item_set_required_children_on_value( item , "LOCAL" , local_dep);
+    
+    stringlist_free(lsf_dep);
+    stringlist_free(rsh_dep);
+    stringlist_free(local_dep);
+  }
+  
+  /* 
+     You can set environment variables which will be applied to the
+     run-time environment. Can unfortunately not use constructions
+     like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
+  */
+  item = config_add_item(config , "SETENV" , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 , NULL);
+
+  /**
+     UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
+     
+     Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
+  */
+  item = config_add_item(config , "UPDATE_PATH" , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 , NULL);
+    
+
+
+    
+  /* These must be set IFF QUEUE_SYSTEM == LSF */
+  item = config_add_item(config , "LSF_QUEUE"     , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  
+  item = config_add_item(config , "MAX_RUNNING_LSF" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+
+
+  /* These must be set IFF QUEUE_SYSTEM == RSH */
+  config_add_item(config , "RSH_HOST_LIST" , false , false);
+  item = config_add_item(config , "RSH_COMMAND" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
+  item = config_add_item(config , "MAX_RUNNING_RSH" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  
+    
+  /* These must be set IFF QUEUE_SYSTEM == LOCAL */
+  item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+
+
+  item = config_add_item(config , "JOB_SCRIPT" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+  item = config_add_item(config , "IMAGE_VIEWER" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+
+  item = config_add_item(config , "IMAGE_TYPE" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
+  config_set_arg(config , "IMAGE_TYPE" , 1 , (const char *[1]) { DEFAULT_IMAGE_TYPE });
+  
+  item = config_add_item(config , "PLOT_DRIVER" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
+  config_set_arg(config , "PLOT_DRIVER" , 1 , (const char *[1]) { DEFAULT_PLOT_DRIVER });
+  
+  item = config_add_item(config , "PLOT_PATH" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_set_arg(config , "PLOT_PATH" , 1 , (const char *[1]) { DEFAULT_PLOT_PATH });
+  
+  
+  item = config_add_item(config , "INSTALL_JOB" , true , true);
+  config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
+  
+    
+  /*****************************************************************/
+  /* Required keywords from the ordinary model_config file */
+  item = config_add_item(config , "NUM_REALIZATIONS" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+  config_add_alias(config , "NUM_REALIZATIONS" , "SIZE");
+  config_add_alias(config , "NUM_REALIZATIONS" , "NUM_REALISATIONS");
+  config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
+  
+
+  item = config_add_item(config , "GRID" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  
+  item = config_add_item(config , "ECLBASE" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  
+  item = config_add_item(config , "SCHEDULE_FILE" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  
+  item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+    
+  item = config_add_item(config , "DATA_FILE" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  
+  item = config_add_item(config , "INIT_SECTION" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
+  config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE"); 
+  
+  /*****************************************************************/
+  /* Optional keywords from the model config file */
+  
+  item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
+  
+  item = config_add_item(config , "RUNPATH" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_set_arg(config , "RUNPATH" , 1 , (const char *[1]) { DEFAULT_RUNPATH });
+  
+  item = config_add_item(config , "ENSPATH" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
+  
+  item = config_add_item(config , "DBASE_TYPE" , true , false);
+  config_item_set_argc_minmax(item , 1, 1 , NULL);
+  config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
+  config_set_arg(config , "DBASE_TYPE" , 1 , (const char *[1] ) { DEFAULT_DBASE_TYPE });
+  
+  item = config_add_item(config , "FORWARD_MODEL" , true , true);
+  config_item_set_argc_minmax(item , 1 , -1 , NULL);
+  
+  item = config_add_item(config , "DATA_KW" , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 , NULL);
+  
+  item = config_add_item(config , "KEEP_RUNPATH" , false , false);
+  config_item_set_argc_minmax(item , 1 , -1 , NULL);
+  
+  item = config_add_item(config , "DELETE_RUNPATH" , false , false);
+  config_item_set_argc_minmax(item , 1 , -1 , NULL);
+
+  item = config_add_item(config , "ADD_STATIC_KW" , false , true);
+  config_item_set_argc_minmax(item , 1 , -1 , NULL);
+    
+  item = config_add_item(config , "OBS_CONFIG"  , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+  item = config_add_item(config , "LOCAL_CONFIG"  , false , true);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+  
+  item = config_add_item(config , "REFCASE" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+  item = config_add_item(config , "ENKF_SCHED_FILE" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
+
+  item = config_add_item(config , "HISTORY_SOURCE" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  {
+    stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
+    
+    config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
+    config_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
+    config_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
+
+    stringlist_free(refcase_dep);
+  }
+  config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
+  
+  
+  /*****************************************************************/
+  /* Keywords for the analysis - all optional. */
+  item = config_add_item(config , "ENKF_MODE" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
+  config_set_arg(config , "ENKF_MODE" , 1 , (const char *[1]) { DEFAULT_ENKF_MODE });
+
+  item = config_add_item(config , "ENKF_ALPHA" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
+  config_set_arg(config , "ENKF_ALPHA" , 1 , (const char *[1]) { DEFAULT_ENKF_ALPHA });
+
+  item = config_add_item(config , "ENKF_TRUNCATION" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
+  config_set_arg(config , "ENKF_TRUNCATION" , 1 , (const char *[1]) { DEFAULT_ENKF_TRUNCATION });
+
+  item = config_add_item(config , "ENKF_MERGE_OBSERVATIONS" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
+  config_set_arg(config , "ENKF_MERGE_OBSERVATIONS" , 1 , (const char *[1]) { DEFAULT_MERGE_OBSERVATIONS });
+      
+  item = config_add_item(config , "ENKF_RERUN" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
+  config_set_arg(config , "ENKF_RERUN" , 1 , (const char *[1]) { DEFAULT_RERUN });
+  
+  item = config_add_item(config , "RERUN_START" , true , false);
+  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_INT });
+  config_set_arg(config , "RERUN_START" , 1 , (const char *[1]) { DEFAULT_RERUN_START });
+  
+  /*****************************************************************/
+  /* Keywords for the estimation                                   */
+  ensemble_config_add_config_items(config); 
+  return config;
+}
+
+
+static void enkf_main_iset_keep_runpath( enkf_main_type * enkf_main , int index , keep_runpath_type keep) {
+  enkf_main->keep_runpath[index] = keep;
+}
+
+
+void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep_runpath_string , const char * delete_runpath_string) {
+  const int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
+  
+  int i;
+  for (i = 0; i < ens_size; i++) 
+  enkf_main_iset_keep_runpath( enkf_main , i , DEFAULT_KEEP);
+  
+  {
+    bool * flag = util_malloc( sizeof * flag * ens_size , __func__);
+    
+    util_sscanf_active_range(keep_runpath_string , ens_size - 1 , flag);
+    for (i = 0; i < ens_size; i++) {
+      if (flag[i]) 
+        enkf_main_iset_keep_runpath( enkf_main , i , EXPLICIT_KEEP);
+    }
+    
+    free( flag );
+  }
+  
+  {
+    bool * flag = util_malloc( sizeof * flag * ens_size , __func__);
+    
+    util_sscanf_active_range(delete_runpath_string , ens_size - 1 , flag);
+    for (i = 0; i < ens_size; i++) {
+      if (flag[i]) {
+        if (enkf_main->keep_runpath[i] == EXPLICIT_KEEP)
+          util_abort("%s: Inconsistent use of KEEP_RUNPATH / DELETE_RUNPATH - trying to both keep and delete member:%d \n",__func__ , i);
+        enkf_main_iset_keep_runpath( enkf_main , i , EXPLICIT_DELETE);
+      }
+    }
+    
+    free(flag );
+  }
+}
+
+
+static enkf_main_type * enkf_main_alloc_empty() {
+  enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
+  UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);  
+  enkf_main->ensemble     = NULL;
+  enkf_main->keep_runpath = NULL;
+  return enkf_main;
+}
+  
+
+
+
+static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * data_kw) {
+  stringlist_type * keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config);
+  int ens_size               = ensemble_config_get_size( enkf_main->ensemble_config );
+  
+  int keys = stringlist_get_size(keylist);
+  
+  msg_type * msg  = msg_alloc("Initializing member: ");
+  msg_show(msg);
+  enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
+  for (int iens = 0; iens < ens_size; iens++) {
+    msg_update_int(msg , "%03d" , iens);
+    enkf_main->ensemble[iens] = enkf_state_alloc(iens,
+                                                 model_config_iget_casename( enkf_main->model_config , iens ) , 
+                                                 enkf_main->keep_runpath[iens],
+                                                 enkf_main->model_config   , 
+                                                 enkf_main->ensemble_config,
+                                                 enkf_main->site_config    , 
+                                                 enkf_main->ecl_config     ,
+                                                 data_kw,
+                                                 model_config_get_std_forward_model(enkf_main->model_config),
+                                                 enkf_main->logh);
+    
+    /** 
+        This is the time we tell the model config object about
+        our 'maximum report step' - possibly including
+        predictions.
+    */
+    model_config_update_last_restart(enkf_main->model_config , enkf_state_get_last_restart_nr( enkf_main->ensemble[iens] ));
+  }
+  msg_free(msg , true);
+  
+  msg  = msg_alloc("Adding key: ");
+  msg_show(msg);
+  for (int ik = 0; ik < keys; ik++) {
+    const char * key = stringlist_iget(keylist, ik);
+    msg_update(msg , key);
+    const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , key);
+    for (int iens = 0; iens < ens_size; iens++) 
+      enkf_state_add_node(enkf_main->ensemble[iens] , key , config_node);
+  }
+  msg_free(msg , true);
+  stringlist_free(keylist);
+}
+
+
+
   
 /**
    This function boots everything needed for running a EnKF
@@ -1114,10 +1469,9 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
 
 
 enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
-  enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
-  
-  const char * site_config = getenv("ENKF_SITE_CONFIG");
-  char       * model_config;
+  const char     * site_config  = getenv("ENKF_SITE_CONFIG");
+  char           * model_config;
+  enkf_main_type * enkf_main    = enkf_main_alloc_empty(); 
   
   if (site_config == NULL)
     site_config = _site_config;
@@ -1125,7 +1479,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (site_config == NULL) 
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   printf("site config : %s \n\n",site_config);
-  UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   {
     char * path;
     char * base;
@@ -1150,246 +1503,8 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   
   if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
-  {
-    config_type * config = config_alloc();
-    config_item_type * item;
-    
-    /*****************************************************************/
-    /* config_add_item():                                            */
-    /*                                                               */
-    /*  1. boolean - required?                                       */
-    /*  2. boolean - append?                                         */
-    /*****************************************************************/
-
-    /*****************************************************************/
-    /** Keywords expected normally found in site_config */
-    item = config_add_item(config , "HOST_TYPE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
-    config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
-    
-    item = config_add_item(config , "CASE_TABLE" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "LOG_LEVEL" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-    config_set_arg(config , "LOG_LEVEL" , 1 , (const char *[1]) { DEFAULT_LOG_LEVEL });
-
-    item = config_add_item(config , "MAX_SUBMIT" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-    config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT});
-    
-    item = config_add_item(config , "RESAMPLE_WHEN_FAIL" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_BOOLEAN});
-    config_set_arg(config , "RESAMPLE_WHEN_FAIL" , 1 , (const char *[1]) { DEFAULT_RESAMPLE_WHEN_FAIL});
-    
-    item = config_add_item(config , "MAX_RETRY" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-    config_set_arg(config , "MAX_RETRY" , 1 , (const char *[1]) { DEFAULT_MAX_INTERNAL_SUBMIT });
-
-    
-
-    item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    {
-      stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
-      stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
-      stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
-
-      config_item_set_common_selection_set( item , 3 , (const char *[3]) {"LSF" , "LOCAL" , "RSH"});
-      config_item_set_required_children_on_value( item , "LSF"   , lsf_dep);
-      config_item_set_required_children_on_value( item , "RSH"   , rsh_dep);
-      config_item_set_required_children_on_value( item , "LOCAL" , local_dep);
-      
-      stringlist_free(lsf_dep);
-      stringlist_free(rsh_dep);
-      stringlist_free(local_dep);
-    }
-    
-    /* 
-       You can set environment variables which will be applied to the
-       run-time environment. Can unfortunately not use constructions
-       like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
-    */
-    item = config_add_item(config , "SETENV" , false , true);
-    config_item_set_argc_minmax(item , 2 , 2 , NULL);
-
-    /**
-       UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
-
-       Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
-    */
-    item = config_add_item(config , "UPDATE_PATH" , false , true);
-    config_item_set_argc_minmax(item , 2 , 2 , NULL);
-    
-
-
-    
-    /* These must be set IFF QUEUE_SYSTEM == LSF */
-    item = config_add_item(config , "LSF_QUEUE"     , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-
-    item = config_add_item(config , "MAX_RUNNING_LSF" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-
-
-    /* These must be set IFF QUEUE_SYSTEM == RSH */
-    config_add_item(config , "RSH_HOST_LIST" , false , false);
-    item = config_add_item(config , "RSH_COMMAND" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
-    item = config_add_item(config , "MAX_RUNNING_RSH" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-    
-    
-    /* These must be set IFF QUEUE_SYSTEM == LOCAL */
-    item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-
-
-    item = config_add_item(config , "JOB_SCRIPT" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "IMAGE_VIEWER" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "IMAGE_TYPE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
-    config_set_arg(config , "IMAGE_TYPE" , 1 , (const char *[1]) { DEFAULT_IMAGE_TYPE });
-
-    item = config_add_item(config , "PLOT_DRIVER" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
-    config_set_arg(config , "PLOT_DRIVER" , 1 , (const char *[1]) { DEFAULT_PLOT_DRIVER });
-
-    item = config_add_item(config , "PLOT_PATH" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_set_arg(config , "PLOT_PATH" , 1 , (const char *[1]) { DEFAULT_PLOT_PATH });
-
-    
-    item = config_add_item(config , "INSTALL_JOB" , true , true);
-    config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
-
-    
-    /*****************************************************************/
-    /* Required keywords from the ordinary model_config file */
-    item = config_add_item(config , "NUM_REALIZATIONS" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-    config_add_alias(config , "NUM_REALIZATIONS" , "SIZE");
-    config_add_alias(config , "NUM_REALIZATIONS" , "NUM_REALISATIONS");
-    config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
-    
-
-    item = config_add_item(config , "GRID" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "ECLBASE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    
-    item = config_add_item(config , "SCHEDULE_FILE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    
-    item = config_add_item(config , "DATA_FILE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "INIT_SECTION" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
-    config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE"); 
-    
-    /*****************************************************************/
-    /* Optional keywords from the model config file */
-
-    item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "RUNPATH" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_set_arg(config , "RUNPATH" , 1 , (const char *[1]) { DEFAULT_RUNPATH });
-
-    item = config_add_item(config , "ENSPATH" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
-
-    item = config_add_item(config , "DBASE_TYPE" , true , false);
-    config_item_set_argc_minmax(item , 1, 1 , NULL);
-    config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
-    config_set_arg(config , "DBASE_TYPE" , 1 , (const char *[1] ) { DEFAULT_DBASE_TYPE });
-
-    item = config_add_item(config , "FORWARD_MODEL" , true , true);
-    config_item_set_argc_minmax(item , 1 , -1 , NULL);
-
-    item = config_add_item(config , "DATA_KW" , false , true);
-    config_item_set_argc_minmax(item , 2 , 2 , NULL);
-
-    item = config_add_item(config , "KEEP_RUNPATH" , false , false);
-    config_item_set_argc_minmax(item , 1 , -1 , NULL);
-
-    item = config_add_item(config , "DELETE_RUNPATH" , false , false);
-    config_item_set_argc_minmax(item , 1 , -1 , NULL);
-
-    item = config_add_item(config , "ADD_STATIC_KW" , false , true);
-    config_item_set_argc_minmax(item , 1 , -1 , NULL);
-    
-    item = config_add_item(config , "OBS_CONFIG"  , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "LOCAL_CONFIG"  , false , true);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-    
-    item = config_add_item(config , "REFCASE" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "ENKF_SCHED_FILE" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-
-    item = config_add_item(config , "HISTORY_SOURCE" , false , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    {
-      stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
-      
-      config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
-      config_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
-      config_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
-
-      stringlist_free(refcase_dep);
-    }
-    config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
-    
-    
-    /*****************************************************************/
-    /* Keywords for the analysis - all optional. */
-    item = config_add_item(config , "ENKF_MODE" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
-    config_set_arg(config , "ENKF_MODE" , 1 , (const char *[1]) { DEFAULT_ENKF_MODE });
-
-    item = config_add_item(config , "ENKF_ALPHA" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
-    config_set_arg(config , "ENKF_ALPHA" , 1 , (const char *[1]) { DEFAULT_ENKF_ALPHA });
-
-    item = config_add_item(config , "ENKF_TRUNCATION" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
-    config_set_arg(config , "ENKF_TRUNCATION" , 1 , (const char *[1]) { DEFAULT_ENKF_TRUNCATION });
-
-    item = config_add_item(config , "ENKF_MERGE_OBSERVATIONS" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
-    config_set_arg(config , "ENKF_MERGE_OBSERVATIONS" , 1 , (const char *[1]) { DEFAULT_MERGE_OBSERVATIONS });
-        
-    item = config_add_item(config , "ENKF_RERUN" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
-    config_set_arg(config , "ENKF_RERUN" , 1 , (const char *[1]) { DEFAULT_RERUN });
-    
-    item = config_add_item(config , "RERUN_START" , true , false);
-    config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_INT });
-    config_set_arg(config , "RERUN_START" , 1 , (const char *[1]) { DEFAULT_RERUN_START });
-    
-    /*****************************************************************/
-    /* Keywords for the estimation                                   */
-    ensemble_config_add_config_items(config); 
-    
+  {  
+    config_type * config = enkf_main_alloc_config();
     
     config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , false);
     config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , true);
@@ -1440,47 +1555,28 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
        The final decision is performed in enkf_state().
     */
     {
-      const int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
-      keep_runpath_type * keep_runpath = util_malloc( ens_size * sizeof * keep_runpath , __func__);
+
+      {
+        char * keep_runpath_string   = NULL;
+        char * delete_runpath_string = NULL;
       
-      int i;
-      for (i = 0; i < ens_size; i++) 
-	keep_runpath[i] = DEFAULT_KEEP;
+        enkf_main->keep_runpath = util_malloc( sizeof * enkf_main->keep_runpath * ensemble_config_get_size( enkf_main->ensemble_config ) , __func__);
+        
+        if (config_has_set_item(config , "KEEP_RUNPATH")) 
+          keep_runpath_string = config_alloc_joined_string(config , "KEEP_RUNPATH" , "");
+        
+        if (config_has_set_item(config , "DELETE_RUNPATH")) 
+          delete_runpath_string = config_alloc_joined_string(config , "DELETE_RUNPATH" , "");
 
-      if (config_has_set_item(config , "KEEP_RUNPATH")) {
-	char * keep_runpath_string = config_alloc_joined_string(config , "KEEP_RUNPATH" , "");
-	bool * flag                = util_malloc( sizeof * flag * ens_size , __func__);
-
-	util_sscanf_active_range(keep_runpath_string , ens_size - 1 , flag);
-	for (i = 0; i < ens_size; i++) {
-	  if (flag[i]) 
-	    keep_runpath[i] = EXPLICIT_KEEP;
-	}
-	
-	free( flag );
-	free( keep_runpath_string );
+        enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string);
+        
+        util_safe_free( keep_runpath_string );
+        util_safe_free( delete_runpath_string );
       }
-
-      if (config_has_set_item(config , "DELETE_RUNPATH")) {
-	char * delete_runpath_string = config_alloc_joined_string(config , "DELETE_RUNPATH" , "");
-	bool * flag                = util_malloc( sizeof * flag * ens_size , __func__);
-	
-	util_sscanf_active_range(delete_runpath_string , ens_size - 1 , flag);
-	for (i = 0; i < ens_size; i++) {
-	  if (flag[i]) {
-	    if (keep_runpath[i] == EXPLICIT_KEEP)
-	      util_abort("%s: Inconsistent use of KEEP_RUNPATH / DELETE_RUNPATH - trying to both keep and delete member:%d \n",__func__ , i);
-	    keep_runpath[i] = EXPLICIT_DELETE;
-	  }
-	}
-
-	free(flag );
-	free( delete_runpath_string );
-      }
-    
-
+      
+      
       if (config_has_set_item(config , "ADD_STATIC_KW")) {
-	for (i=0; i < config_get_occurences(config , "ADD_STATIC_KW"); i++) {
+	for (int i=0; i < config_get_occurences(config , "ADD_STATIC_KW"); i++) {
 	  const stringlist_type * static_kw_list = config_iget_stringlist_ref(config , "ADD_STATIC_KW" , i);
 	  int k;
 	  for (k = 0; k < stringlist_get_size(static_kw_list); k++)
@@ -1517,46 +1613,10 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       
       /*****************************************************************/
       /* Adding ensemble members */
-      
       {
-	hash_type       * data_kw  =  config_alloc_hash(config , "DATA_KW");
-	stringlist_type * keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config);
-
-        int keys = stringlist_get_size(keylist);
-
-	msg_type * msg  = msg_alloc("Initializing member: ");
-	msg_show(msg);
-	enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
-	for (int iens = 0; iens < ens_size; iens++) {
-	  msg_update_int(msg , "%03d" , iens);
-	  enkf_main->ensemble[iens] = enkf_state_alloc(iens,
-                                                       model_config_iget_casename( enkf_main->model_config , iens ) , 
-						       keep_runpath[iens],
-						       enkf_main->model_config   , 
-						       enkf_main->ensemble_config,
-						       enkf_main->site_config    , 
-						       enkf_main->ecl_config     ,
-						       data_kw,
-						       model_config_get_std_forward_model(enkf_main->model_config),
-                                                       enkf_main->logh);
-
-	  /** This is the time we tell the model config object about our 'maximum report step' - possibly including predictions. */
-	  model_config_update_last_restart(enkf_main->model_config , enkf_state_get_last_restart_nr( enkf_main->ensemble[iens] ));
-	}
-	msg_free(msg , true);
-	
-	msg  = msg_alloc("Adding key: ");
-	msg_show(msg);
-	for (int ik = 0; ik < keys; ik++) {
-          const char * key = stringlist_iget(keylist, ik);
-	  msg_update(msg , key);
-	  const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , key);
-	  for (int iens = 0; iens < ens_size; iens++) 
-	    enkf_state_add_node(enkf_main->ensemble[iens] , key , config_node);
-	}
-	msg_free(msg , true);
+	hash_type       * data_kw  = config_alloc_hash(config , "DATA_KW");
+	enkf_main_alloc_members( enkf_main  , data_kw);
 	hash_free(data_kw);
-        stringlist_free(keylist);
       }
 
       /*****************************************************************/
@@ -1590,7 +1650,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         }
         
       }
-      free(keep_runpath);
     }
     config_free(config);
   }

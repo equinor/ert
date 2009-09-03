@@ -18,7 +18,6 @@ static void enkf_tui_ranking_make_misfit_table( void * arg) {
   const int ens_size                           = ensemble_config_get_size(ensemble_config);
   misfit_table_type * misfit_table             = misfit_table_alloc( ensemble_config , fs , history_length , ens_size , enkf_obs );
   enkf_main_set_misfit_table( enkf_main , misfit_table );
-  misfit_table_fwrite( misfit_table , "/tmp/misfit.txt");
 }
 
 
