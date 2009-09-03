@@ -46,6 +46,7 @@
                                   |   2047: sqlite added  |  2125
    104                            |   2127                |
                                   |   2140: block_fs_index added
+                                  |   2190: started to distribute ert binary internally
    --------------------------------------------------------------------------
 
 
@@ -939,6 +940,7 @@ static void enkf_fs_upgrade_104(const char * config_file, const char * root_path
       void * driver                  = NULL;
       bool read                      = util_fread_bool( read_stream );
       long int driver_start          = ftell( read_stream );
+      fs_driver_type driver_category = util_fread_int( read_stream );
       fs_driver_impl driver_id       = util_fread_int( read_stream );
       
       switch(driver_id) {
