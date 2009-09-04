@@ -219,7 +219,7 @@ void ensemble_config_add_config_items(config_type * config) {
 
 ensemble_config_type * ensemble_config_alloc(const config_type * config , const ecl_grid_type * grid) {
   int i;
-  ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( strtol(config_get(config , "NUM_REALIZATIONS") , NULL , 10) );
+  ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( config_iget_as_int(config , "NUM_REALIZATIONS" , 0 , 0));
   ensemble_config->field_trans_table     = field_trans_table_alloc();
 
   {

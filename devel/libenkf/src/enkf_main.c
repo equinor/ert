@@ -1515,7 +1515,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     
     {
       char * log_file = util_alloc_filename(NULL , model_config , "log");
-      enkf_main->logh = log_alloc_existing( log_file , config_get_as_int(config , "LOG_LEVEL"));
+      enkf_main->logh = log_alloc_existing( log_file , config_iget_as_int(config , "LOG_LEVEL" , 0,0));
       printf("Activity will be logged to ..............: %s \n",log_file );
       free( log_file );
     }
@@ -1587,7 +1587,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       {
 	const char * obs_config_file;
 	if (config_has_set_item(config , "OBS_CONFIG"))
-	  obs_config_file = config_get(config  , "OBS_CONFIG");
+	  obs_config_file = config_iget(config  , "OBS_CONFIG" , 0,0);
 	else
 	  obs_config_file = NULL;
 	

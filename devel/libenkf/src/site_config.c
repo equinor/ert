@@ -135,48 +135,42 @@ static void site_config_install_LSF_job_queue(site_config_type * site_config ,  
 
 
 static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , int ens_size, bool * use_lsf) {
-  const char * queue_system = config_get(config , "QUEUE_SYSTEM");
-  const char * job_script   = config_get(config , "JOB_SCRIPT");
-  int   max_submit          = strtol(config_get(config , "MAX_SUBMIT") , NULL , 10);
+  const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
+  const char * job_script   = config_iget(config , "JOB_SCRIPT" , 0,0);
+  int   max_submit          = config_iget_as_int(config , "MAX_SUBMIT" , 0,0);
   *use_lsf                  = false;
 
   
   if (strcmp(queue_system , "LSF") == 0) {
-    const char * lsf_queue_name = config_get(config , "LSF_QUEUE");
+    const char * lsf_queue_name = config_iget(config , "LSF_QUEUE" , 0,0);
     char * lsf_resource_request = NULL;
     int max_running;
     
     
     if (config_has_set_item(config , "LSF_RESOURCES"))
       lsf_resource_request = config_alloc_joined_string(config , "LSF_RESOURCES" , " ");
-    if (!util_sscanf_int(config_get(config , "MAX_RUNNING_LSF") , &max_running))
+    if (!util_sscanf_int(config_iget(config , "MAX_RUNNING_LSF" , 0,0) , &max_running))
       util_abort("%s: internal error - \n",__func__);
     
     site_config_install_LSF_job_queue(site_config , ens_size , job_script , max_submit , max_running , lsf_queue_name , lsf_resource_request);
     util_safe_free(lsf_resource_request);
     *use_lsf = true;
   } else if (strcmp(queue_system , "RSH") == 0) {
-    const char * rsh_command        = config_get(config , "RSH_COMMAND");
+    const char * rsh_command        = config_iget(config , "RSH_COMMAND" , 0,0);
     stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
-    int max_running;
-    
-    if (!util_sscanf_int(config_get(config , "MAX_RUNNING_RSH") , &max_running))
-      util_abort("%s: internal error - \n",__func__);
+    int max_running = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
     
     site_config_install_RSH_job_queue(site_config , ens_size , job_script , max_submit , max_running , rsh_command , rsh_host_list);
     stringlist_free( rsh_host_list );
   } else if (strcmp(queue_system , "LOCAL") == 0) {
-    int max_running;
-    
-    if (!util_sscanf_int(config_get(config , "MAX_RUNNING_LOCAL") , &max_running))
-      util_abort("%s: internal error - \n",__func__);
+    int max_running = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
     site_config_install_LOCAL_job_queue(site_config , ens_size , job_script , max_submit , max_running);
   }
 }
 
 
 site_config_type * site_config_alloc(const config_type * config , int ens_size , bool * use_lsf) {
-  const char * host_type    = config_get(config , "HOST_TYPE");
+  const char * host_type    = config_iget(config , "HOST_TYPE" , 0,0);
   site_config_type * site_config = site_config_alloc_empty();
   site_config_install_joblist(site_config , config);
   {
@@ -207,9 +201,9 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
     site_config->statoil_mode = false;
   
   site_config_install_job_queue(site_config , config , ens_size , use_lsf);
-  site_config_set_image_viewer(site_config , config_get(config , "IMAGE_VIEWER"));
-  site_config_set_image_type(site_config , config_get(config , "IMAGE_TYPE"));
-  site_config_set_plot_driver(site_config , config_get(config , "PLOT_DRIVER"));
+  site_config_set_image_viewer(site_config , config_iget(config , "IMAGE_VIEWER" , 0,0));
+  site_config_set_image_type(site_config , config_iget(config , "IMAGE_TYPE"     , 0,0));
+  site_config_set_plot_driver(site_config , config_iget(config , "PLOT_DRIVER"   , 0,0));
   
   return site_config;
 }

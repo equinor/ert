@@ -144,6 +144,7 @@ struct config_struct {
   stringlist_type      * parse_errors;              /* A stringlist containg the errors found when parsing.*/
   set_type             * parsed_files;              /* A set of config files whcih have been parsed - to protect against circular includes. */
   hash_type            * messages;                  /* Can print a (warning) message when a keyword is encountered. */
+  subst_list_type      * define_list;
 };
 
 
@@ -225,6 +226,8 @@ static void validate_set_argc_minmax(validate_type * validate , int argc_min , i
       validate->indexed_selection_set[iarg] = NULL;
   }
 }
+
+
 
 static void validate_set_common_selection_set(validate_type * validate , int argc , const char ** argv) {
   if (validate->common_selection_set != NULL)
@@ -324,6 +327,7 @@ static void config_item_realloc_nodes(config_item_type * item , int new_size) {
 }
 
 
+
 static void config_item_node_clear(config_item_node_type * node) {
   stringlist_clear( node->stringlist );
   node->config_cwd = util_safe_free(node->config_cwd);
@@ -366,14 +370,11 @@ static config_item_node_type * config_item_get_first_node(config_item_type * ite
   append_arg == false.
 */
 
-const char * config_item_iget(const config_item_type * item , int index) {
-  if (item->append_arg) 
-    util_abort("%s: kw:%s this function can only be used on items added with append_arg == FALSE\n" , __func__ , item->kw);
-  {
-    config_item_node_type * node = config_item_iget_node(item , 0);  
-    return stringlist_iget( node->stringlist , index );
-  }
+const char * config_item_iget(const config_item_type * item , int occurence , int index) {
+  config_item_node_type * node = config_item_iget_node(item , occurence);  
+  return stringlist_iget( node->stringlist , index );
 }
+
 
 void config_item_assure_type(const config_item_type * item , int index , config_item_types item_type) {
   bool OK = false;
@@ -386,28 +387,28 @@ void config_item_assure_type(const config_item_type * item , int index , config_
     util_abort("%s: failed - wrong installed type \n" , __func__);
 }
 
-/*
-  This function will fail if we can not satisfy argc_minmax = (1,1).
-*/
-const char * config_item_get(const config_item_type * item) {
-  validate_assert_get(item->validate);
-  return config_item_iget(item , 0);
-}
 
-bool config_item_get_as_bool(const config_item_type * item) {
+
+bool config_item_iget_as_bool(const config_item_type * item, int occurence , int index) {
   bool value;
   validate_assert_get(item->validate);
-  config_item_assure_type(item , 0 , CONFIG_BOOLEAN);
-  util_sscanf_bool( config_item_iget(item , 0) , &value );
+  util_sscanf_bool( config_item_iget(item , occurence ,index) , &value );
   return value;
 }
 
 
-int config_item_get_as_int(const config_item_type * item) {
+static int config_item_iget_as_int(const config_item_type * item, int occurence , int index) {
   int value;
-  validate_assert_get(item->validate);
-  config_item_assure_type(item , 0 , CONFIG_INT);
-  util_sscanf_int( config_item_iget(item , 0) , &value );
+  config_item_assure_type(item , index , CONFIG_INT);
+  util_sscanf_int( config_item_iget(item , occurence , index) , &value );
+  return value;
+}
+
+
+double config_item_iget_as_double(const config_item_type * item, int occurence , int index) {
+  double value;
+  config_item_assure_type(item , index , CONFIG_FLOAT);
+  util_sscanf_double( config_item_iget(item , occurence , index) , &value );
   return value;
 }
 
@@ -749,7 +750,7 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
   calling scope will free it.
 */
 
-static void config_item_set_arg__(config_type * config , config_item_type * item , int argc , char ** argv , const char * config_file , const char * config_cwd , subst_list_type * subst_list) {
+static void config_item_set_arg__(config_type * config , config_item_type * item , int argc , char ** argv , const char * config_file , const char * config_cwd) {
   if (argc == 1 && (strcmp(argv[0] , CLEAR_STRING) == 0)) {
     config_item_clear(item);
   } else {
@@ -764,10 +765,10 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
 
 
     /* Filtering ... */
-    if ((subst_list != NULL) && (subst_list_get_size( subst_list ))) {
+    if (subst_list_get_size( config->define_list ) > 0) {
       int iarg;
       for (iarg = 0; iarg < argc; iarg++) {
-	char * filtered_copy = subst_list_alloc_filtered_string( subst_list , argv[iarg] );
+	char * filtered_copy = subst_list_alloc_filtered_string( config->define_list , argv[iarg] );
 	free( argv[iarg] );
 	argv[iarg] = filtered_copy;
       }
@@ -964,6 +965,7 @@ config_type * config_alloc() {
   config->parse_errors    = stringlist_alloc_new();
   config->parsed_files    = set_alloc_empty();
   config->messages        = hash_alloc();
+  config->define_list     = subst_list_alloc();
   return config;
 }
 
@@ -973,6 +975,7 @@ void config_free(config_type * config) {
   hash_free(config->messages);
   stringlist_free(config->parse_errors);
   set_free(config->parsed_files);
+  subst_list_free( config->define_list );
   free(config);
 }
 
@@ -1028,11 +1031,15 @@ bool config_item_set(const config_type * config , const char * kw) {
 
 void config_set_arg(config_type * config , const char * kw, int argc , const char **__argv) {
   char ** argv = util_alloc_stringlist_copy(__argv , argc);  
-  config_item_set_arg__( config , config_get_item(config , kw) , argc , argv , NULL , NULL , NULL);
+  config_item_set_arg__( config , config_get_item(config , kw) , argc , argv , NULL , NULL );
   util_free_stringlist(argv , argc);
 }
 
 
+
+void config_add_define( config_type * config , const char * key , const char * value ) {
+  subst_list_insert_copy( config->define_list , key , value );
+}
 
 
 
@@ -1158,7 +1165,6 @@ static void config_parse__(config_type * config ,
 			   const char * include_kw ,
 			   const char * define_kw , 
 			   alloc_new_key_ftype * alloc_new_key,
-			   subst_list_type * subst_list , 
 			   bool auto_add , 
 			   bool validate) {
   char * config_file  = util_alloc_filename(config_cwd , _config_file , NULL);
@@ -1228,7 +1234,7 @@ static void config_parse__(config_type * config ,
 		free(tmp_path);
 	      }
 
-	      config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , alloc_new_key , subst_list , auto_add , false); /* Recursive call */
+	      config_parse__(config , include_path , include_file , comment_string , include_kw , define_kw , alloc_new_key , auto_add , false); /* Recursive call */
 	      util_safe_free(include_file);
 	      util_safe_free(include_path);
 	    }
@@ -1242,10 +1248,10 @@ static void config_parse__(config_type * config ,
 		key = alloc_new_key( token_list[1] );  
 	      else
 		key = util_alloc_string_copy( token_list[1] );
-
-	      {
-		char * filtered_value = subst_list_alloc_filtered_string( subst_list , value);
-		subst_list_insert_copy( subst_list , key , filtered_value);
+              
+              {
+		char * filtered_value = subst_list_alloc_filtered_string( config->define_list , value);
+                config_add_define( config , key , filtered_value );
 		free( filtered_value );
 	      }
 	      free(key);
@@ -1260,7 +1266,7 @@ static void config_parse__(config_type * config ,
 	    
 	    if (config_has_item(config , kw)) {
 	      config_item_type * item = config_get_item(config , kw);
-	      config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd , subst_list);
+	      config_item_set_arg__(config , item , active_tokens - 1,  &token_list[1] , config_file , config_cwd);
 	    } else 
 	      fprintf(stderr,"** Warning keyword:%s not recognized when parsing:%s - ignored \n" , kw , config_file);
 	  }
@@ -1289,17 +1295,14 @@ void config_parse(config_type * config ,
   char * config_file;
   char * tmp_file;
   char * extension;
-  subst_list_type * subst_list = subst_list_alloc(); 
-
   util_alloc_file_components(filename , &config_path , &tmp_file , &extension);
   config_file = util_alloc_filename(NULL , tmp_file , extension);
-  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , alloc_new_key ,  subst_list , auto_add , validate);
+  config_parse__(config , config_path , config_file , comment_string , include_kw , define_kw , alloc_new_key ,  auto_add , validate);
 
   util_safe_free(tmp_file);
   util_safe_free(extension);
   util_safe_free(config_path);
   util_safe_free(config_file);
-  subst_list_free(subst_list);
 }
 
 
@@ -1336,9 +1339,11 @@ bool config_has_keys(const config_type * config, const char **ext_keys, int ext_
 
 
 /*****************************************************************/
-/* Here comes some xxx_get() functions - many of them will fail if
+/* 
+   Here comes some xxx_get() functions - many of them will fail if
    the item has not been added in the right way (this is to ensure that
-   the xxx_get() request is unambigous. */
+   the xxx_get() request is unambigous. 
+*/
 
 
 /**
@@ -1352,47 +1357,71 @@ bool config_has_keys(const config_type * config, const char **ext_keys, int ext_
    If this is not the case - we die.
 */
 
-const char * config_get(const config_type * config , const char * kw) {
-  config_item_type * item = config_get_item(config , kw);
-
-  return config_item_get(item);
-}
-
-
-
-bool config_get_as_bool(const config_type * config , const char * kw) {
-  config_item_type * item = config_get_item(config , kw);
-  return config_item_get_as_bool(item);
-}
-
-
-int config_get_as_int(const config_type * config , const char * kw) {
-  config_item_type * item = config_get_item(config , kw);
-  return config_item_get_as_int(item);
-}
-
-
 /**
-   This function will return NULL is the item has not been set, 
-   however it must be installed with config_add_item().
+   Assume we installed a key 'KEY' which occurs three times in the final 
+   config file:
+
+   KEY  1    2     3
+   KEY  11   22    33
+   KEY  111  222   333
+
+
+   Now when accessing these values the occurence variable will
+   correspond to the linenumber, and the index will index along a line:
+
+     config_iget_as_int( config , "KEY" , 0 , 2) => 3
+     config_iget_as_int( config , "KEY" , 2 , 1) => 222
 */
-const char * config_safe_get(const config_type * config , const char *kw) {
+
+
+
+bool config_iget_as_bool(const config_type * config , const char * kw, int occurence , int index) {
   config_item_type * item = config_get_item(config , kw);
-  if (config_item_is_set(item))
-    return config_item_get(item);
-  else
-    return NULL;
+  return config_item_iget_as_bool(item , occurence , index);
+}
+
+
+int config_iget_as_int(const config_type * config , const char * kw, int occurence , int index) {
+  config_item_type * item = config_get_item(config , kw);
+  return config_item_iget_as_int(item , occurence , index);
+}
+
+
+double config_iget_as_double(const config_type * config , const char * kw, int occurence , int index) {
+  config_item_type * item = config_get_item(config , kw);
+  return config_item_iget_as_double(item , occurence , index);
 }
 
 
 /** 
     As the config_get function, but the argc_minmax requiremnt has been removed.
 */
-const char * config_iget(const config_type * config , const char * kw, int index) {
+const char * config_iget(const config_type * config , const char * kw, int occurence , int index) {
   config_item_type * item = config_get_item(config , kw);
-
-  return config_item_iget(item , index);
+  
+  return config_item_iget(item , occurence , index);
 }
+
+
+
+/**
+   This function will return NULL is the item has not been set, 
+   however it must be installed with config_add_item().
+*/
+const char * config_safe_iget(const config_type * config , const char *kw, int occurence , int index) {
+  const char * value = NULL;
+
+  config_item_type * item = config_get_item(config , kw);
+  if (config_item_is_set(item)) {
+    if (occurence < config_item_get_occurences( item )) {
+      config_item_node_type * node = config_item_iget_node( item , occurence );
+      value = stringlist_safe_iget( node->stringlist , index);
+    }
+  }
+  return value;
+}
+
+
 
 
 
@@ -1462,6 +1491,10 @@ char * config_alloc_joined_string(const config_type * config , const char * kw, 
 }
 
 
+//config_item_node_type * config_iget_item_node( const config_type * config , const char * kw , int item_index) {
+//  config_item_type * item = config_get_item(config , kw);
+//  return config_item_iget_node( config , item_index );
+//}
 
 
 
@@ -1472,6 +1505,12 @@ char * config_alloc_joined_string(const config_type * config , const char * kw, 
 
 int config_get_occurences(const config_type * config, const char * kw) {
   return config_item_get_occurences(config_get_item(config , kw));
+}
+
+int config_get_occurence_size( const config_type * config , const char * kw , int occurence) {
+  config_item_type      * item = config_get_item(config , kw);
+  config_item_node_type * node = config_item_iget_node( item , occurence );
+  return stringlist_get_size( node->stringlist );
 }
 
 
@@ -1532,6 +1571,10 @@ void config_add_alias(config_type * config , const char * src , const char * ali
 void config_install_message(config_type * config , const char * kw, const char * message) {
   hash_insert_hash_owned_ref(config->messages , kw , util_alloc_string_copy(message) , free);
 }
+
+
+/*****************************************************************/
+
 
 
 

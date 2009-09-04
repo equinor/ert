@@ -66,7 +66,7 @@ void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_
 ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
   ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED );
-  ecl_config->eclbase   	    = path_fmt_alloc_path_fmt( config_get(config , "ECLBASE") );
+  ecl_config->eclbase   	    = path_fmt_alloc_path_fmt( config_iget(config , "ECLBASE" ,0,0) );
   ecl_config->include_all_static_kw = false;
   ecl_config->static_kw_set         = set_alloc_empty();
   ecl_config->data_file             = NULL;
@@ -74,7 +74,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
       set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
   }
-  ecl_config_set_data_file( ecl_config , config_get( config , "DATA_FILE" ));
+  ecl_config_set_data_file( ecl_config , config_iget( config , "DATA_FILE" ,0,0));
   {
     time_t start_date = ecl_util_get_start_date( ecl_config->data_file );
     const stringlist_type * sched_list = config_get_stringlist_ref(config , "SCHEDULE_FILE");
@@ -93,7 +93,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
     ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the
 													     end of HISTORY. */
     if (config_has_set_item(config , "SCHEDULE_PREDICTION_FILE"))
-      ecl_config->prediction_sched_file_fmt = path_fmt_alloc_path_fmt( config_get(config , "SCHEDULE_PREDICTION_FILE") );
+      ecl_config->prediction_sched_file_fmt = path_fmt_alloc_path_fmt( config_iget(config , "SCHEDULE_PREDICTION_FILE" , 0,0) );
     else
       ecl_config->prediction_sched_file_fmt = NULL;
 
@@ -118,7 +118,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
              be checked/verified before the ECLIPSE simulation fails.
     */
     
-    const char * init_section = config_get(config , "INIT_SECTION");
+    const char * init_section = config_iget(config , "INIT_SECTION" , 0,0);
     if (util_file_exists( init_section ))
       ecl_config->equil_init_file = util_alloc_realpath(init_section);
     else {
@@ -144,7 +144,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
     ecl_config->equil_init_file = NULL; 
   }
   if (config_item_set(config , "GRID"))
-    ecl_config->grid = ecl_grid_alloc( config_get(config , "GRID") );
+    ecl_config->grid = ecl_grid_alloc( config_iget(config , "GRID" , 0,0) );
   else
     ecl_config->grid = NULL;
 

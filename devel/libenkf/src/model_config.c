@@ -106,8 +106,8 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
   model_config->case_names         = NULL;
   model_config->use_lsf            = use_lsf;
   model_config->plot_path          = NULL;
-  model_config->max_internal_submit       = config_get_as_int( config , "MAX_RETRY" );
-  model_config->resample_when_fail        = config_get_as_bool( config , "RESAMPLE_WHEN_FAIL" );
+  model_config->max_internal_submit       = config_iget_as_int( config , "MAX_RETRY" , 0,0);
+  model_config->resample_when_fail        = config_iget_as_bool( config , "RESAMPLE_WHEN_FAIL" ,0,0);
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
     model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , statoil_mode , model_config->use_lsf);
@@ -119,12 +119,14 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
     free(cwd);
   }
   util_make_path( model_config->lock_path );
-  model_config->ensemble_dbase = fs_mount( config_get(config , "ENSPATH") , config_get(config , "DBASE_TYPE") , model_config->lock_path);
+  model_config->ensemble_dbase = fs_mount( config_iget(config , "ENSPATH" , 0,0) , 
+                                           config_iget(config , "DBASE_TYPE" , 0 ,0) , 
+                                           model_config->lock_path);
   model_config->runpath         = NULL;
   model_config->enkf_sched      = NULL;
   model_config->enkf_sched_file = NULL;
-  model_config_set_enkf_sched_file(model_config , config_safe_get(config , "ENKF_SCHED_FILE"));
-  model_config_set_runpath_fmt( model_config , config_get(config , "RUNPATH") );
+  model_config_set_enkf_sched_file(model_config , config_safe_iget(config , "ENKF_SCHED_FILE" , 0 ,0));
+  model_config_set_runpath_fmt( model_config , config_iget(config , "RUNPATH" , 0,0) );
   model_config->history                 = history_alloc_from_sched_file(sched_file);  
 
   /**
@@ -144,15 +146,15 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
     model_config->has_prediction = false;
   
   {
-    const char * history_source = config_get(config , "HISTORY_SOURCE");
+    const char * history_source = config_iget(config , "HISTORY_SOURCE", 0,0);
     const char * refcase        = NULL;
     bool  use_history;
 
     if (strcmp(history_source , "REFCASE_SIMULATED") == 0) {
-      refcase = config_get(config , "REFCASE");
+      refcase = config_iget(config , "REFCASE" , 0,0);
       use_history = false;
     } else if (strcmp(history_source , "REFCASE_HISTORY") == 0) {
-      refcase = config_get(config , "REFCASE");
+      refcase = config_iget(config , "REFCASE" , 0,0);
       use_history = true;
     }
 
@@ -168,13 +170,13 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
     model_config->__load_state        = bool_vector_alloc( num_restart , false ); 
     model_config->__load_results      = bool_vector_alloc( num_restart , false );
   }
-  model_config_set_plot_path( model_config , config_get(config , "PLOT_PATH"));
+  model_config_set_plot_path( model_config , config_iget(config , "PLOT_PATH" , 0,0));
 
   if (config_item_set(config ,  "CASE_TABLE")) {
     bool atEOF = false;
     char casename[128];
     int  case_size = 0;
-    FILE * stream = util_fopen( config_get( config , "CASE_TABLE") , "r");
+    FILE * stream = util_fopen( config_iget( config , "CASE_TABLE" , 0,0) , "r");
     model_config->case_names = stringlist_alloc_new();
     while (!atEOF) {
       if (fscanf( stream , "%s" , casename) == 1) {

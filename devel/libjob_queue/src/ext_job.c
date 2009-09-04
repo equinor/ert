@@ -440,12 +440,12 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
     }
     config_parse(config , filename , "--" , NULL , NULL , NULL , false , true);
     {
-      if (config_item_set(config , "STDIN"))  	    ext_job_set_stdin_file(ext_job   , config_get(config  , "STDIN"));
-      if (config_item_set(config , "STDOUT")) 	    ext_job_set_stdout_file(ext_job  , config_get(config  , "STDOUT"));
-      if (config_item_set(config , "STDERR")) 	    ext_job_set_stderr_file(ext_job  , config_get(config  , "STDERR"));
-      if (config_item_set(config , "TARGET_FILE"))    ext_job_set_target_file(ext_job  , config_get(config  , "TARGET_FILE"));
-      if (config_item_set(config , "START_FILE"))     ext_job_set_start_file(ext_job   , config_get(config  , "START_FILE"));
-      if (config_item_set(config , "PORTABLE_EXE"))   ext_job_set_portable_exe(ext_job , config_get(config  , "PORTABLE_EXE"));
+      if (config_item_set(config , "STDIN"))  	      ext_job_set_stdin_file(ext_job   , config_iget(config  , "STDIN" , 0,0));
+      if (config_item_set(config , "STDOUT")) 	      ext_job_set_stdout_file(ext_job  , config_iget(config  , "STDOUT" , 0,0));
+      if (config_item_set(config , "STDERR")) 	      ext_job_set_stderr_file(ext_job  , config_iget(config  , "STDERR" , 0,0));
+      if (config_item_set(config , "TARGET_FILE"))    ext_job_set_target_file(ext_job  , config_iget(config  , "TARGET_FILE" , 0,0));
+      if (config_item_set(config , "START_FILE"))     ext_job_set_start_file(ext_job   , config_iget(config  , "START_FILE" , 0,0));
+      if (config_item_set(config , "PORTABLE_EXE"))   ext_job_set_portable_exe(ext_job , config_iget(config  , "PORTABLE_EXE" , 0,0));
 
       if (config_item_set(config , "LSF_RESOURCES")) {
         char * lsf_resources = stringlist_alloc_joined_string(config_get_stringlist_ref(config , "LSF_RESOURCES") , " ");

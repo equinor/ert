@@ -69,10 +69,10 @@ bool analysis_config_get_random_rotation(const analysis_config_type * config) {
 
 
 analysis_config_type * analysis_config_alloc(const config_type * config) {
-  double truncation 	    = strtod( config_get(config , "ENKF_TRUNCATION") , NULL);
-  double alpha      	    = strtod( config_get(config , "ENKF_ALPHA") , NULL);
-  bool   merge_observations = config_get_as_bool(config , "ENKF_MERGE_OBSERVATIONS");
-  const char * enkf_mode_string = config_get(config , "ENKF_MODE");
+  double truncation 	    = config_iget_as_double(config , "ENKF_TRUNCATION" , 0,0);
+  double alpha      	    = config_iget_as_double(config , "ENKF_ALPHA" , 0,0);
+  bool   merge_observations = config_iget_as_bool(config , "ENKF_MERGE_OBSERVATIONS" , 0,0);
+  const char * enkf_mode_string = config_iget(config , "ENKF_MODE" , 0,0);
   enkf_mode_type enkf_mode = ENKF_SQRT; /* Compiler shut up */
   
   if (strcmp(enkf_mode_string,"STANDARD") == 0)
@@ -84,9 +84,8 @@ analysis_config_type * analysis_config_alloc(const config_type * config) {
   
   {
     analysis_config_type * analysis = analysis_config_alloc__(truncation , alpha , enkf_mode , merge_observations);
-    analysis_config_set_rerun( analysis , config_get_as_bool(config , "ENKF_RERUN"));
-    analysis_config_set_rerun_start( analysis , config_get_as_int( config , "RERUN_START" ));
-    
+    analysis_config_set_rerun( analysis , config_iget_as_bool(config , "ENKF_RERUN", 0,0));
+    analysis_config_set_rerun_start( analysis , config_iget_as_int( config , "RERUN_START" ,0,0));
     return analysis;
   }
 }
