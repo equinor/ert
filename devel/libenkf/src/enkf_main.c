@@ -1319,29 +1319,20 @@ static config_type * enkf_main_alloc_config() {
   
   /*****************************************************************/
   /* Keywords for the analysis - all optional. */
-  item = config_add_item(config , "ENKF_MODE" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  item = config_add_key_value(config , "ENKF_MODE" , true , CONFIG_STRING );
   config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
   config_set_arg(config , "ENKF_MODE" , 1 , (const char *[1]) { DEFAULT_ENKF_MODE });
 
-  item = config_add_item(config , "ENKF_ALPHA" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
-  config_set_arg(config , "ENKF_ALPHA" , 1 , (const char *[1]) { DEFAULT_ENKF_ALPHA });
-
-  item = config_add_item(config , "ENKF_TRUNCATION" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_FLOAT });
-  config_set_arg(config , "ENKF_TRUNCATION" , 1 , (const char *[1]) { DEFAULT_ENKF_TRUNCATION });
-
-  item = config_add_item(config , "ENKF_MERGE_OBSERVATIONS" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
+  config_add_key_value( config , "ENKF_TRUNCATION" , true , CONFIG_FLOAT);
+  config_add_key_value( config , "ENKF_ALPHA" , true , CONFIG_FLOAT);
+  
+  config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , true , CONFIG_BOOLEAN);
   config_set_arg(config , "ENKF_MERGE_OBSERVATIONS" , 1 , (const char *[1]) { DEFAULT_MERGE_OBSERVATIONS });
       
-  item = config_add_item(config , "ENKF_RERUN" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_BOOLEAN });
+  config_add_key_value(config , "ENKF_RERUN" , true , CONFIG_BOOLEAN);
   config_set_arg(config , "ENKF_RERUN" , 1 , (const char *[1]) { DEFAULT_RERUN });
   
-  item = config_add_item(config , "RERUN_START" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types[1]) { CONFIG_INT });
+  config_add_item(config , "RERUN_START" , true , CONFIG_INT);
   config_set_arg(config , "RERUN_START" , 1 , (const char *[1]) { DEFAULT_RERUN_START });
   
   /*****************************************************************/

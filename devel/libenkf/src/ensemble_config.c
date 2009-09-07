@@ -34,8 +34,6 @@
 #include <ensemble_config.h>
 #include <config.h>
 #include <gen_data_config.h>
-#include <multflt_config.h>
-#include <havana_fault_config.h>
 #include <pthread.h>                /* Must have rw locking on the config_nodes ... */
 #include <field_trans.h>
 
@@ -185,8 +183,17 @@ void ensemble_config_add_obs_key(ensemble_config_type * ensemble_config , const 
 void ensemble_config_add_config_items(config_type * config) {
   config_item_type * item;
 
+  /** 
+      The two fault types are just added to the CONFIG object only to
+      be able to print suitable messages before exiting.
+  */
+      
+  item = config_add_item(config , "HAVANA_FAULT" , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
+
   item = config_add_item(config , "MULTFLT" , false , true);
   config_item_set_argc_minmax(item , 3 , 3 ,  (const config_item_types [3]) { CONFIG_STRING , CONFIG_STRING , CONFIG_EXISTING_FILE});
+  /*****************************************************************/
   
   item = config_add_item(config , "GEN_KW" , false , true);
   config_item_set_argc_minmax(item , 4 , 5 ,  (const config_item_types [5]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_EXISTING_FILE});
@@ -196,10 +203,6 @@ void ensemble_config_add_config_items(config_type * config) {
   
   item = config_add_item(config , "GEN_DATA" , false , true);
   config_item_set_argc_minmax(item , 1 , -1 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
-
-  item = config_add_item(config , "HAVANA_FAULT" , false , true);
-  config_item_set_argc_minmax(item , 2 , 2 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
-
 
   item = config_add_item(config , "SUMMARY" , false , true);
   config_item_set_argc_minmax(item , 1 , 1 ,  NULL);
@@ -222,40 +225,31 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( config_iget_as_int(config , "NUM_REALIZATIONS" , 0 , 0));
   ensemble_config->field_trans_table     = field_trans_table_alloc();
 
-  {
-    /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
-    if (config_get_occurences(config , "MULTFLT") > 0) {
-      printf("*****************************************************************\n");
-      printf("**                    W A R N I N G                            **\n");
-      printf("** ----------------------------------------------------------  **\n");
-      printf("** You have used the keyword \'MULTFLT\' for estimating fault    **\n");
-      printf("** transmissibility multipliers. This will be disabled in the  **\n");
-      printf("** future. Instead you should use the GEN_KW keyword, look at  **\n");
-      printf("** GEN_KW documentation for an example of how to use GEN_KW    **\n");
-      printf("** to estimate fault transmissibility multipliers.             **\n");
-      printf("*****************************************************************\n");
-    }
-    
-    /* MULTFLT */
-    for (i=0; i < config_get_occurences(config , "MULTFLT"); i++) {
-      const stringlist_type * tokens = config_iget_stringlist_ref(config , "MULTFLT" , i);
-      const char * key         = stringlist_iget(tokens , 0);
-      const char * ecl_file    = stringlist_iget(tokens , 1);
-      const char * config_file = stringlist_iget(tokens , 2);
-      
-      ensemble_config_add_node(ensemble_config , key , PARAMETER , MULTFLT , ecl_file , NULL , multflt_config_fscanf_alloc(config_file));
-    }
+  /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */
+  if (config_get_occurences(config , "MULTFLT") > 0) {
+    printf("******************************************************************\n");
+    printf("** You have used the keyword MULTFLT - this is unfortunately no **\n");
+    printf("** longer supported - use GEN_KW instead.                       **\n");
+    printf("******************************************************************\n");
+    exit(1);
   }
 
-
-  /* HAVANA_FAULT */
-  for (i=0; i < config_get_occurences(config , "HAVANA_FAULT"); i++) {
-    const stringlist_type * tokens = config_iget_stringlist_ref(config , "HAVANA_FAULT" , i);
-    const char * key         = stringlist_iget(tokens , 0);
-    const char * config_file = stringlist_iget(tokens , 1);
-    
-    ensemble_config_add_node(ensemble_config , key , PARAMETER , HAVANA_FAULT , NULL , NULL , havana_fault_config_fscanf_alloc(config_file));
+  if (config_get_occurences(config , "HAVANA_FAULT") > 0) {
+    printf("************************************************************************\n");
+    printf("** You have used the keyword HAVANA_FAULT - this is unfortunately     **\n");
+    printf("** longer supported - use GEN_KW instead and a suitable FORWARD_MODEL.**\n");
+    printf("************************************************************************\n");
+    exit(1);
   }
+
+  ///* HAVANA_FAULT */
+  //for (i=0; i < config_get_occurences(config , "HAVANA_FAULT"); i++) {
+  //  const stringlist_type * tokens = config_iget_stringlist_ref(config , "HAVANA_FAULT" , i);
+  //  const char * key         = stringlist_iget(tokens , 0);
+  //  const char * config_file = stringlist_iget(tokens , 1);
+  //  
+  //  ensemble_config_add_node(ensemble_config , key , PARAMETER , HAVANA_FAULT , NULL , NULL , havana_fault_config_fscanf_alloc(config_file));
+  //}
   
   
   /* GEN_PARAM */

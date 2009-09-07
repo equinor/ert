@@ -19,23 +19,24 @@ struct analysis_config_struct {
   double                 std_cutoff;
   enkf_mode_type         enkf_mode;
   pseudo_inversion_type  inversion_mode;
-  int                    fortran_enkf_mode; 
 };
+
+
+
 
 
 
 static analysis_config_type * analysis_config_alloc__(double truncation , double overlap_alpha , enkf_mode_type enkf_mode , bool merge_observations) {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
 
-  config->merge_observations = merge_observations;
-  config->truncation         = truncation;
-  config->overlap_alpha      = overlap_alpha;
-  config->enkf_mode          = enkf_mode;
   config->inversion_mode     = SVD_SS_N1_R;
   config->std_cutoff         = 1e-6;
   config->random_rotation    = true;
-  
-  config->fortran_enkf_mode  = config->enkf_mode + config->inversion_mode;
+
+  analysis_config_set_truncation( config , truncation );
+  analysis_config_set_alpha( config , overlap_alpha );
+  analysis_config_set_merge_observations( config , merge_observations );
+  analysis_config_set_enkf_mode ( config , enkf_mode );
   return config;
 }
 
@@ -68,10 +69,27 @@ bool analysis_config_get_random_rotation(const analysis_config_type * config) {
 }
 
 
+void analysis_config_set_truncation( analysis_config_type * config , double truncation) {
+  config->truncation = truncation;
+}
+
+void analysis_config_set_alpha( analysis_config_type * config , double alpha) {
+  config->overlap_alpha = alpha;
+}
+
+void analysis_config_set_merge_observations( analysis_config_type * config , double merge_observations) {
+  config->merge_observations = merge_observations;
+}
+
+void analysis_config_set_enkf_mode( analysis_config_type * config , double enkf_mode) {
+  config->enkf_mode = enkf_mode;
+}
+
+
 analysis_config_type * analysis_config_alloc(const config_type * config) {
-  double truncation 	    = config_iget_as_double(config , "ENKF_TRUNCATION" , 0,0);
-  double alpha      	    = config_iget_as_double(config , "ENKF_ALPHA" , 0,0);
-  bool   merge_observations = config_iget_as_bool(config , "ENKF_MERGE_OBSERVATIONS" , 0,0);
+  double truncation 	    = config_get_value_as_double(config , "ENKF_TRUNCATION");
+  double alpha      	    = config_get_value_as_double(config , "ENKF_ALPHA");
+  bool   merge_observations = config_get_value_as_bool(config , "ENKF_MERGE_OBSERVATIONS");
   const char * enkf_mode_string = config_iget(config , "ENKF_MODE" , 0,0);
   enkf_mode_type enkf_mode = ENKF_SQRT; /* Compiler shut up */
   
@@ -84,8 +102,8 @@ analysis_config_type * analysis_config_alloc(const config_type * config) {
   
   {
     analysis_config_type * analysis = analysis_config_alloc__(truncation , alpha , enkf_mode , merge_observations);
-    analysis_config_set_rerun( analysis , config_iget_as_bool(config , "ENKF_RERUN", 0,0));
-    analysis_config_set_rerun_start( analysis , config_iget_as_int( config , "RERUN_START" ,0,0));
+    analysis_config_set_rerun( analysis , config_get_value_as_bool(config , "ENKF_RERUN"));
+    analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , "RERUN_START"));
     return analysis;
   }
 }
@@ -107,9 +125,6 @@ double analysis_config_get_truncation(const analysis_config_type * config) {
   return config->truncation;
 }
 
-int analysis_config_get_fortran_enkf_mode(const analysis_config_type * config) {
-  return config->fortran_enkf_mode;
-}
 
 
 void analysis_config_free(analysis_config_type * config) {

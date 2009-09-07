@@ -97,15 +97,17 @@ bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  bool intern
    has been inserted as a 'drop-in-replacement'. This implies that
    existing storage labeled with implemantation type 'MULTFLT' should
    be silently 'upgraded' to 'GEN_KW'.
+
 */
 
-
+#define MULTFLT 102
 void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer) {
   enkf_impl_type file_type;
   file_type = buffer_fread_int(buffer);
   if ((file_type == GEN_KW) || (file_type == MULTFLT))
     scalar_buffer_fload( gen_kw->scalar , buffer);
 }
+#undef MULTFLT
 
 void gen_kw_upgrade_103( const char * filename ) {
   FILE * stream            = util_fopen( filename , "r");

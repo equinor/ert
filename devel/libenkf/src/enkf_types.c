@@ -15,9 +15,6 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   case STATIC:
     return "STATIC";
     break;
-  case MULTFLT:
-    return "MULTFLT";
-    break;
   case FIELD:
     return "FIELD";
     break;
@@ -26,9 +23,6 @@ const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
     break;
   case SUMMARY:
     return "SUMMARY";
-    break;
-  case HAVANA_FAULT:
-    return "HAVANA_FAULT";
     break;
   case GEN_DATA:
     return "GEN_DATA";
@@ -45,8 +39,6 @@ static enkf_impl_type enkf_types_get_impl_type__(const char * impl_type_string) 
   enkf_impl_type impl_type;
   if_strcmp(STATIC);
   else if_strcmp(SUMMARY);
-  else if_strcmp(HAVANA_FAULT);
-  else if_strcmp(MULTFLT);
   else if_strcmp(FIELD);
   else if_strcmp(GEN_KW);
   else if_strcmp(GEN_DATA);

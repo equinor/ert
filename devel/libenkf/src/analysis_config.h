@@ -12,7 +12,6 @@ void                   analysis_config_free( analysis_config_type * );
 bool                   analysis_config_merge_observations(const analysis_config_type * );
 double 		       analysis_config_get_alpha(const analysis_config_type * config);
 double 		       analysis_config_get_truncation(const analysis_config_type * config);
-int    		       analysis_config_get_fortran_enkf_mode(const analysis_config_type * config);
 bool                   analysis_config_Xbased(const analysis_config_type * config);
 enkf_mode_type         analysis_config_get_enkf_mode( const analysis_config_type * config );
 pseudo_inversion_type  analysis_config_get_inversion_mode( const analysis_config_type * config );
@@ -22,6 +21,10 @@ bool                   analysis_config_get_random_rotation(const analysis_config
 int                    analysis_config_get_rerun_start(const analysis_config_type * config);
 void                   analysis_config_set_rerun(analysis_config_type * config , bool rerun);
 void                   analysis_config_set_rerun_start( analysis_config_type * config , int rerun_start );
+void                   analysis_config_set_truncation( analysis_config_type * config , double truncation);
+void                   analysis_config_set_alpha( analysis_config_type * config , double alpha);
+void                   analysis_config_set_merge_observations( analysis_config_type * config , double merge_observations);
+void                   analysis_config_set_enkf_mode( analysis_config_type * config , double enkf_mode);
 
 
 

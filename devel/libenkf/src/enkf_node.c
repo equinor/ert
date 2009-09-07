@@ -12,8 +12,6 @@
 #include <path_fmt.h>
 #include <gen_data.h>
 #include <enkf_serialize.h>
-#include <havana_fault.h>
-#include <multflt.h>
 #include <buffer.h>
 #include <msg.h>
 
@@ -688,22 +686,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->imul               = NULL;
 
   switch (impl_type) {
-  case(HAVANA_FAULT):
-    node->realloc_data 	     = havana_fault_realloc_data__;
-    node->alloc        	     = havana_fault_alloc__;
-    node->ecl_write    	     = havana_fault_ecl_write__;
-    node->copyc        	     = havana_fault_copyc__;
-    node->initialize   	     = havana_fault_initialize__;
-    node->serialize    	     = havana_fault_serialize__;
-    node->deserialize  	     = havana_fault_deserialize__;
-    node->freef        	     = havana_fault_free__;
-    node->free_data    	     = havana_fault_free_data__;
-    node->user_get           = havana_fault_user_get__; 
-    node->load               = havana_fault_load__;
-    node->store              = havana_fault_store__;
-    node->matrix_serialize   = havana_fault_matrix_serialize__;
-    node->matrix_deserialize = havana_fault_matrix_deserialize__;
-    break;
   case(GEN_KW):
     node->realloc_data 	     = gen_kw_realloc_data__;
     node->alloc        	     = gen_kw_alloc__;
@@ -726,28 +708,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->imul               = gen_kw_imul__;
     node->isqrt              = gen_kw_isqrt__;
     node->set_inflation      = gen_kw_set_inflation__;
-    break;
-  case(MULTFLT):
-    node->realloc_data 	     = multflt_realloc_data__;
-    node->alloc        	     = multflt_alloc__;
-    node->ecl_write    	     = multflt_ecl_write__;
-    node->copyc        	     = multflt_copyc__;
-    node->initialize   	     = multflt_initialize__;
-    node->serialize    	     = multflt_serialize__;
-    node->deserialize  	     = multflt_deserialize__;
-    node->freef        	     = multflt_free__;
-    node->free_data    	     = multflt_free_data__;
-    node->user_get           = multflt_user_get__; 
-    node->load               = multflt_load__;
-    node->store              = multflt_store__;
-    node->matrix_serialize   = multflt_matrix_serialize__;
-    node->matrix_deserialize = multflt_matrix_deserialize__;
-    node->clear              = multflt_clear__;
-    node->iadd               = multflt_iadd__;
-    node->scale              = multflt_scale__;
-    node->iaddsqr            = multflt_iaddsqr__;
-    node->imul               = multflt_imul__;
-    node->isqrt              = multflt_isqrt__;
     break;
   case(SUMMARY):
     node->ecl_load           = summary_ecl_load__;
@@ -905,12 +865,6 @@ void enkf_node_upgrade_file_103( const char * path , const char * file , enkf_im
 	util_copy_file( filename , backup_file , true);
 	
 	switch (impl_type) {
-	case(HAVANA_FAULT):
-	  havana_fault_upgrade_103( filename );
-	  break;
-	case(MULTFLT):
-	  multflt_upgrade_103( filename );
-	  break;
 	case(GEN_KW):
 	  gen_kw_upgrade_103( filename );
 	  break;

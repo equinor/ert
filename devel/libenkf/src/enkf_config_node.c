@@ -9,11 +9,9 @@
 #include <path_fmt.h>
 #include <bool_vector.h>
 #include <field_config.h>
-#include <multflt_config.h>
 #include <gen_data_config.h>
 #include <gen_kw_config.h>
 #include <summary_config.h>
-#include <havana_fault_config.h>
 
 
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
@@ -87,14 +85,6 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
     case(SUMMARY):
       node->freef             = summary_config_free__;
       node->get_data_size     = summary_config_get_data_size__;
-      break;
-    case(MULTFLT):
-      node->freef             = multflt_config_free__;
-      node->get_data_size     = multflt_config_get_data_size__;
-      break;
-    case(HAVANA_FAULT):
-      node->freef             = havana_fault_config_free__;
-      node->get_data_size     = havana_fault_config_get_data_size__;
       break;
     case(GEN_DATA):
       node->freef             = gen_data_config_free__;
