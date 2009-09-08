@@ -17,6 +17,7 @@ extern "C" {
 #include <enkf_obs.h>
 #include <forward_model.h>
 #include <misfit_table.h>
+#include <plot_config.h>
   
 /*****************************************************************/
 
@@ -63,7 +64,8 @@ int   			      enkf_main_get_total_length( const enkf_main_type * );
 int   			      enkf_main_get_history_length( const enkf_main_type * );
 bool  			      enkf_main_has_prediction( const enkf_main_type *  );
 //const enkf_sched_type       * enkf_main_get_enkf_sched(const enkf_main_type *);
-      model_config_type     * enkf_main_get_model_config( const enkf_main_type * );
+model_config_type           * enkf_main_get_model_config( const enkf_main_type * );
+plot_config_type            * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
 enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
 

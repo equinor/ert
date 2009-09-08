@@ -8,6 +8,7 @@
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
+void                     ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config);
 void                     ensemble_config_add_obs_key(ensemble_config_type * , const char * , const char * );
 const enkf_config_node_type  * ensemble_config_user_get_node(const ensemble_config_type *  , const char * , char **);
 enkf_impl_type           ensemble_config_impl_type(const ensemble_config_type *, const char * );

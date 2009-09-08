@@ -400,7 +400,7 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
   const int * permutations            = ranking->sort_permutation;
   {
     const char * key_fmt       = "  %12s";
-    const char * dash_line     = "--------------";
+    //const char * dash_line     = "--------------";
     const char * value_fmt     = " %12.3f ";
     const char * start_fmt     = " %3d       %3d           %10.3f      ";  /* <- This is significant whitespace ... */
     hash_type * obs_hash       = vector_iget( ranking->ensemble , 0);
@@ -409,15 +409,15 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
     int iobs;
 
 
-    fprintf(stream , "   #     Realization   Total misfit     ");
+    fprintf(stream , "   #     Realization   Total-misfit     ");
     for (iobs =0; iobs < num_obs; iobs++) 
       fprintf(stream , key_fmt , stringlist_iget( obs_keys , iobs ));
     fprintf(stream , "\n");
 
-    fprintf(stream , "----------------------------------------");
-    for (iobs =0; iobs < num_obs; iobs++) 
-      fprintf(stream , "%s" , dash_line);
-    fprintf(stream , "\n");
+    //fprintf(stream , "----------------------------------------");
+    //for (iobs =0; iobs < num_obs; iobs++) 
+    //  fprintf(stream , "%s" , dash_line);
+    //fprintf(stream , "\n");
 
     for (int i = 0; i < ens_size; i++) {
       int iens = permutations[i];
@@ -429,10 +429,10 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
       fprintf(stream , "\n");
     }
 
-    fprintf(stream , "----------------------------------------");
-    for (iobs =0; iobs < num_obs; iobs++) 
-      fprintf(stream , "%s" , dash_line);
-    fprintf(stream , "\n");
+    //fprintf(stream , "----------------------------------------");
+    //for (iobs =0; iobs < num_obs; iobs++) 
+    //  fprintf(stream , "%s" , dash_line);
+    //fprintf(stream , "\n");
     
   }
   fclose( stream );

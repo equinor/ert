@@ -46,6 +46,7 @@
 #include <local_config.h>
 #include <misfit_table.h>
 #include <log.h>
+#include <plot_config.h>
 #include "enkf_defaults.h"
 
 /**
@@ -89,12 +90,14 @@
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
   ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/ 
+  enkf_fs_type         * dbase;            /* The internalized information. */
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
   analysis_config_type * analysis_config;
   local_config_type    * local_config;     /* Holding all the information about local analysis. */
   log_type             * logh;             /* Handle to an open log file. */
+  plot_config_type     * plot_config;      /* Information about plotting. */
 
   /*-------------------------*/
 
@@ -126,6 +129,10 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
   return enkf_main->model_config;
 }
 
+plot_config_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
+  return enkf_main->plot_config;
+}
+
 ecl_config_type *enkf_main_get_ecl_config(const enkf_main_type * enkf_main) {
 	return enkf_main->ecl_config;
 }
@@ -150,7 +157,7 @@ bool enkf_main_has_prediction( const enkf_main_type * enkf_main ) {
 
 
 enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
-  return model_config_get_fs( enkf_main->model_config );
+  return enkf_main->dbase;
 }
 
 
@@ -174,7 +181,9 @@ void enkf_main_free(enkf_main_type * enkf_main) {
       enkf_state_free(enkf_main->ensemble[i]);
     free(enkf_main->ensemble);
   }
-  log_close( enkf_main->logh);
+  if (enkf_main->dbase != NULL) enkf_fs_free(enkf_main->dbase );
+
+  log_close( enkf_main->logh );
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
   model_config_free( enkf_main->model_config);
@@ -184,6 +193,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   if (enkf_main->misfit_table != NULL)
     misfit_table_free( enkf_main->misfit_table );
   util_safe_free( enkf_main->keep_runpath );
+  plot_config_free( enkf_main->plot_config );
   free(enkf_main);
 }
 
@@ -907,19 +917,6 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
   return enkf_config_node_get_ref(config_node_type);
 }
 
-const char * enkf_main_get_plot_driver(const enkf_main_type * enkf_main ) {
-  return site_config_get_plot_driver( enkf_main->site_config );
-}
-
-const char * enkf_main_get_image_viewer(const enkf_main_type * enkf_main) {
-  return site_config_get_image_viewer(enkf_main->site_config);
-}
-
-const char * enkf_main_get_image_type(const enkf_main_type * enkf_main) {
-  return site_config_get_image_type(enkf_main->site_config);
-}
-
-
 /**
    This function will initialize the necessary enkf_main structures
    before a run. Currently this means:
@@ -1129,23 +1126,17 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "CASE_TABLE" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   
-  item = config_add_item(config , "LOG_LEVEL" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-  config_set_arg(config , "LOG_LEVEL" , 1 , (const char *[1]) { DEFAULT_LOG_LEVEL });
+  config_add_key_value( config , "LOG_LEVEL" , false , CONFIG_INT);
+  config_add_key_value( config , "LOG_FILE"  , false , CONFIG_STRING);
+  
   
   item = config_add_item(config , "MAX_SUBMIT" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
   config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT});
   
-  item = config_add_item(config , "RESAMPLE_WHEN_FAIL" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_BOOLEAN});
-  config_set_arg(config , "RESAMPLE_WHEN_FAIL" , 1 , (const char *[1]) { DEFAULT_RESAMPLE_WHEN_FAIL});
-  
-  item = config_add_item(config , "MAX_RETRY" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-  config_set_arg(config , "MAX_RETRY" , 1 , (const char *[1]) { DEFAULT_MAX_INTERNAL_SUBMIT });
-  
-    
+  config_add_key_value(config , "RESAMPLE_WHEN_FAIL" , false , CONFIG_BOOLEAN);
+  config_add_key_value(config , "MAX_RETRY" , false , CONFIG_INT);
+      
 
   item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -1163,7 +1154,7 @@ static config_type * enkf_main_alloc_config() {
     stringlist_free(rsh_dep);
     stringlist_free(local_dep);
   }
-  
+
   /* 
      You can set environment variables which will be applied to the
      run-time environment. Can unfortunately not use constructions
@@ -1180,9 +1171,9 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "UPDATE_PATH" , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
     
-
-
-    
+  /*****************************************************************/
+  /* Items related to running jobs with lsf/rsh/local ...          */
+  
   /* These must be set IFF QUEUE_SYSTEM == LSF */
   item = config_add_item(config , "LSF_QUEUE"     , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -1203,30 +1194,23 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
-
+    
   item = config_add_item(config , "JOB_SCRIPT" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
-  item = config_add_item(config , "IMAGE_VIEWER" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
-  item = config_add_item(config , "IMAGE_TYPE" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
-  config_set_arg(config , "IMAGE_TYPE" , 1 , (const char *[1]) { DEFAULT_IMAGE_TYPE });
-  
-  item = config_add_item(config , "PLOT_DRIVER" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
-  config_set_arg(config , "PLOT_DRIVER" , 1 , (const char *[1]) { DEFAULT_PLOT_DRIVER });
-  
-  item = config_add_item(config , "PLOT_PATH" , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  config_set_arg(config , "PLOT_PATH" , 1 , (const char *[1]) { DEFAULT_PLOT_PATH });
-  
-  
   item = config_add_item(config , "INSTALL_JOB" , true , true);
   config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
+  
+  
+  /* Plotting stuff */
+  item = config_add_key_value(config , "IMAGE_TYPE" , true , false);
+  config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
+  
+  item = config_add_key_value(config , "PLOT_DRIVER" , false , CONFIG_STRING);
+  config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
+  
+  config_add_key_value(config , "PLOT_PATH" , false , CONFIG_STRING);
+  config_add_key_value(config , "IMAGE_VIEWER" , false , CONFIG_EXISTING_FILE);
   
     
   /*****************************************************************/
@@ -1263,9 +1247,7 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   
-  item = config_add_item(config , "RUNPATH" , true , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  config_set_arg(config , "RUNPATH" , 1 , (const char *[1]) { DEFAULT_RUNPATH });
+  config_add_key_value(config , "RUNPATH" , false , CONFIG_STRING);
   
   item = config_add_item(config , "ENSPATH" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -1318,22 +1300,17 @@ static config_type * enkf_main_alloc_config() {
   
   
   /*****************************************************************/
-  /* Keywords for the analysis - all optional. */
-  item = config_add_key_value(config , "ENKF_MODE" , true , CONFIG_STRING );
+  /* 
+     Keywords for the analysis - all optional. The analysis_config object
+     is instantiated with defaults from enkf_defaults.h
+  */
+  item = config_add_key_value(config , "ENKF_MODE" , false , CONFIG_STRING );
   config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
-  config_set_arg(config , "ENKF_MODE" , 1 , (const char *[1]) { DEFAULT_ENKF_MODE });
-
-  config_add_key_value( config , "ENKF_TRUNCATION" , true , CONFIG_FLOAT);
-  config_add_key_value( config , "ENKF_ALPHA" , true , CONFIG_FLOAT);
-  
-  config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , true , CONFIG_BOOLEAN);
-  config_set_arg(config , "ENKF_MERGE_OBSERVATIONS" , 1 , (const char *[1]) { DEFAULT_MERGE_OBSERVATIONS });
-      
-  config_add_key_value(config , "ENKF_RERUN" , true , CONFIG_BOOLEAN);
-  config_set_arg(config , "ENKF_RERUN" , 1 , (const char *[1]) { DEFAULT_RERUN });
-  
-  config_add_item(config , "RERUN_START" , true , CONFIG_INT);
-  config_set_arg(config , "RERUN_START" , 1 , (const char *[1]) { DEFAULT_RERUN_START });
+  config_add_key_value( config , "ENKF_TRUNCATION" , false , CONFIG_FLOAT);
+  config_add_key_value( config , "ENKF_ALPHA" , false , CONFIG_FLOAT);
+  config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , "ENKF_RERUN" , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , "RERUN_START" , false , CONFIG_INT);
   
   /*****************************************************************/
   /* Keywords for the estimation                                   */
@@ -1386,6 +1363,7 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 static enkf_main_type * enkf_main_alloc_empty() {
   enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);  
+  enkf_main->dbase        = NULL;
   enkf_main->ensemble     = NULL;
   enkf_main->keep_runpath = NULL;
   return enkf_main;
@@ -1398,14 +1376,15 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
   stringlist_type * keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config);
   int ens_size               = ensemble_config_get_size( enkf_main->ensemble_config );
   
-  int keys = stringlist_get_size(keylist);
-  
+  int keys        = stringlist_get_size(keylist);
   msg_type * msg  = msg_alloc("Initializing member: ");
   msg_show(msg);
+  
   enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
   for (int iens = 0; iens < ens_size; iens++) {
     msg_update_int(msg , "%03d" , iens);
     enkf_main->ensemble[iens] = enkf_state_alloc(iens,
+                                                 enkf_main->dbase , 
                                                  model_config_iget_casename( enkf_main->model_config , iens ) , 
                                                  enkf_main->keep_runpath[iens],
                                                  enkf_main->model_config   , 
@@ -1439,6 +1418,40 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
 }
 
 
+
+void enkf_main_remount_fs( enkf_main_type * enkf_main ) {
+  const model_config_type * model_config = enkf_main->model_config;
+  const char * mount_map = "enkf_mount_info";
+  enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , mount_map );
+}
+
+
+
+
+/******************************************************************/
+/* 
+   Adding inverse observation keys to the enkf_nodes; can be called 
+   several times.
+*/
+
+void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
+  /* First clear all existing observation keys. */
+  ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
+
+  /* Add new observation keys. */
+  {
+    hash_type      * map  = enkf_obs_alloc_summary_map(enkf_main->obs);
+    hash_iter_type * iter = hash_iter_alloc(map);
+    const char * obs_key  = hash_iter_get_next_key(iter);
+    while (obs_key  != NULL) {
+      const char * state_kw = hash_get(map , obs_key);
+      ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
+      obs_key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+    hash_free(map);
+  }
+}
 
   
 /**
@@ -1504,15 +1517,35 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
        populating the enkf_main object. 
     */
     
+    /* The log object */
     {
-      char * log_file = util_alloc_filename(NULL , model_config , "log");
-      enkf_main->logh = log_alloc_existing( log_file , config_iget_as_int(config , "LOG_LEVEL" , 0,0));
-      printf("Activity will be logged to ..............: %s \n",log_file );
+      char * log_file = util_alloc_filename(NULL , model_config , DEFAULT_LOG_FILE);
+      enkf_main->logh = log_alloc_existing( log_file , DEFAULT_LOG_LEVEL);
       free( log_file );
+    }
+    
+    if (config_item_set( config , "LOG_LEVEL")) 
+      log_set_level( enkf_main->logh , config_get_value_as_int(config , "LOG_LEVEL"));
+    
+    if (config_item_set( config , "LOG_FILE")) 
+      log_reset_filename( enkf_main->logh , config_get_value(config , "LOG_FILE"));
+      
+    printf("Activity will be logged to ..............: %s \n",log_get_filename( enkf_main->logh ));
+    log_add_message(enkf_main->logh , 1 , "ert configuration loaded" , false);
+
+
+
+    /* Plot info */
+    {
+      enkf_main->plot_config = plot_config_alloc();
+      plot_config_init_from_config( enkf_main->plot_config , config );
     }
 
 
-    enkf_main->analysis_config = analysis_config_alloc(config);
+
+
+    enkf_main->analysis_config = analysis_config_alloc( );
+    analysis_config_init_from_config( enkf_main->analysis_config , config );
     {
       bool use_lsf;
       enkf_main->ecl_config      = ecl_config_alloc( config );
@@ -1582,26 +1615,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	else
 	  obs_config_file = NULL;
 	
-	enkf_main->obs             = enkf_obs_fscanf_alloc(obs_config_file , model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config);
+	enkf_main->obs = enkf_obs_fscanf_alloc(obs_config_file , model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config);
       }
 
-      /******************************************************************/
-      /* Adding inverse observation keys, and config_nodes to the obs_vectors. */
-      {
-	hash_type      * map  = enkf_obs_alloc_summary_map(enkf_main->obs);
-        hash_iter_type * iter = hash_iter_alloc(map);
-	const char * obs_key  = hash_iter_get_next_key(iter);
-	while (obs_key  != NULL) {
-	  const char * state_kw = hash_get(map , obs_key);
-	  ensemble_config_add_obs_key(enkf_main->ensemble_config , state_kw , obs_key);
-	  obs_key = hash_iter_get_next_key(iter);
-	}
-        hash_iter_free(iter);
-	hash_free(map);
-      }
+      enkf_main_update_obs_keys(enkf_main);
       
 
-      
+      enkf_main_remount_fs( enkf_main );
       /*****************************************************************/
       /* Adding ensemble members */
       {
@@ -1639,7 +1659,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
               local_config_load( enkf_main->local_config , stringlist_iget( files , j), enkf_main->logh);
           }
         }
-        
       }
     }
     config_free(config);

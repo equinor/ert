@@ -50,6 +50,7 @@ void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_forward_model__(void * );
 void             * enkf_state_complete_forward_model__(void * );
 enkf_state_type  * enkf_state_alloc(int ,
+                                    enkf_fs_type   * fs, 
                                     const char * casename , 
 				    keep_runpath_type , 
 				    const model_config_type * ,

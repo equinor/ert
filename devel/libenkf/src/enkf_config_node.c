@@ -232,6 +232,13 @@ void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const ch
     stringlist_append_copy(config_node->obs_keys , obs_key);
 }
 
+
+void enkf_config_node_clear_obs_keys(enkf_config_node_type * config_node) {
+  stringlist_clear( config_node->obs_keys );
+}
+
+
+
 /*****************************************************************/
 
 SAFE_CAST(enkf_config_node , ENKF_CONFIG_NODE_TYPE_ID)

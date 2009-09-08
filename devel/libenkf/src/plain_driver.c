@@ -66,7 +66,6 @@ static void plain_driver_load_node(void * _driver , const enkf_config_node_type 
   {
     const char * key     = enkf_config_node_get_key( config_node );
     char * filename      = path_fmt_alloc_file(driver->read_path , false , report_step , iens , key);
-    if (enkf_config_node_get_var_type( config_node ) == PARAMETER) printf("bootstrapping from:%s \n",filename);
 
     buffer_fread_realloc( buffer , filename );
     free(filename);

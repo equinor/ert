@@ -24,9 +24,6 @@ struct site_config_struct {
   ext_joblist_type 	* joblist;       /* The list of external jobs which have been installed. 
                    	                    These jobs will be the parts of the forward model. */
   job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
-  char             	* image_viewer;  /* String pointing to an executable which can show images. */
-  char                  * image_type;
-  char                  * plot_driver;   /* The driver used for plotting. */ 
   bool                    statoil_mode;  /* Quite obtrusive hack to support statoil_mode in the lsf_request. */
 };
 
@@ -41,39 +38,8 @@ static site_config_type * site_config_alloc_empty() {
 
   site_config->joblist      = NULL;
   site_config->job_queue    = NULL;
-  site_config->image_viewer = NULL;
-  site_config->image_type   = NULL;
-  site_config->plot_driver  = NULL;
   
   return site_config;
-}
-
-
-static void site_config_set_image_viewer(site_config_type * site_config , const char * image_viewer) {
-  site_config->image_viewer = util_realloc_string_copy(site_config->image_viewer , image_viewer );
-}
-
-
-const char * site_config_get_image_viewer(site_config_type * site_config) {
-  return site_config->image_viewer;
-}
-
-
-static void site_config_set_image_type(site_config_type * site_config , const char * image_type) {
-  site_config->image_type = util_realloc_string_copy(site_config->image_type , image_type );
-}
-
-
-const char * site_config_get_image_type(site_config_type * site_config) {
-  return site_config->image_type;
-}
-
-static void site_config_set_plot_driver(site_config_type * site_config , const char * plot_driver) {
-  site_config->plot_driver = util_realloc_string_copy(site_config->plot_driver , plot_driver );
-}
-
-const char * site_config_get_plot_driver(site_config_type * site_config) {
-  return site_config->plot_driver;
 }
 
 
@@ -201,18 +167,12 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
     site_config->statoil_mode = false;
   
   site_config_install_job_queue(site_config , config , ens_size , use_lsf);
-  site_config_set_image_viewer(site_config , config_iget(config , "IMAGE_VIEWER" , 0,0));
-  site_config_set_image_type(site_config , config_iget(config , "IMAGE_TYPE"     , 0,0));
-  site_config_set_plot_driver(site_config , config_iget(config , "PLOT_DRIVER"   , 0,0));
-  
   return site_config;
 }
 
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
-  free(site_config->image_viewer);
-  free(site_config->image_type);
   free(site_config);
 }
 

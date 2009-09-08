@@ -7,7 +7,8 @@
 
 typedef struct analysis_config_struct analysis_config_type;
 
-analysis_config_type * analysis_config_alloc(const config_type * );
+void                   analysis_config_init_from_config( analysis_config_type * analysis , const config_type * config );
+analysis_config_type * analysis_config_alloc(void );
 void                   analysis_config_free( analysis_config_type * );
 bool                   analysis_config_merge_observations(const analysis_config_type * );
 double 		       analysis_config_get_alpha(const analysis_config_type * config);
@@ -24,7 +25,7 @@ void                   analysis_config_set_rerun_start( analysis_config_type * c
 void                   analysis_config_set_truncation( analysis_config_type * config , double truncation);
 void                   analysis_config_set_alpha( analysis_config_type * config , double alpha);
 void                   analysis_config_set_merge_observations( analysis_config_type * config , double merge_observations);
-void                   analysis_config_set_enkf_mode( analysis_config_type * config , double enkf_mode);
+void                   analysis_config_set_enkf_mode( analysis_config_type * config , enkf_mode_type enkf_mode);
 
 
 

@@ -237,10 +237,10 @@ static void run_info_complete_run(run_info_type * run_info) {
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, log_type * logh) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, enkf_fs_type * fs , log_type * logh) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
-  shared_info->fs           = model_config_get_fs( model_config );
+  shared_info->fs           = fs;
   shared_info->joblist      = site_config_get_installed_jobs( site_config );
   shared_info->job_queue    = site_config_get_job_queue( site_config );
   shared_info->model_config = model_config;
@@ -490,6 +490,7 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
     char * iens4_s     = util_alloc_sprintf("%04d" , enkf_state->my_config->iens);
     char * cwd         = util_alloc_cwd();
     
+    enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH" , cwd     , NULL);  /* Alias for CWD */
     enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd     , NULL); 
     enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s  , NULL);
     enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s , NULL);
@@ -526,8 +527,9 @@ static char * enkf_state_subst_randfloat(const char * key , void * arg) {
 }
 
 enkf_state_type * enkf_state_alloc(int iens,
-                                   const char * casename , 
-				   keep_runpath_type keep_runpath , 
+                                   enkf_fs_type              * fs, 
+                                   const char                * casename , 
+				   keep_runpath_type           keep_runpath , 
 				   const model_config_type   * model_config,
 				   ensemble_config_type      * ensemble_config,
 				   const site_config_type    * site_config,
@@ -538,10 +540,10 @@ enkf_state_type * enkf_state_alloc(int iens,
   
   enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id            = ENKF_STATE_TYPE_ID;
-  
+
   enkf_state->ensemble_config = ensemble_config;
   enkf_state->ecl_config      = ecl_config;
-  enkf_state->shared_info     = shared_info_alloc(site_config , model_config , logh);
+  enkf_state->shared_info     = shared_info_alloc(site_config , model_config , fs , logh);
   enkf_state->run_info        = run_info_alloc();
   
   enkf_state->node_hash       = hash_alloc();
@@ -581,6 +583,7 @@ INCLDUE
      the ordering (which is interesting because the substititions are
      done in cacade like fashion).
   */
+  enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH"   , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
   enkf_state_add_subst_kw(enkf_state , "CWD"           , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
   enkf_state_add_subst_kw(enkf_state , "IENS"          , "---" , "The realisation number for this realization.");
   enkf_state_add_subst_kw(enkf_state , "IENS4"         , "---" , "The realization number for this realization - formated with %04d.");

@@ -8,6 +8,7 @@
 #include <basic_driver.h>
 #include <block_fs_driver.h>
 #include <block_fs.h>
+#include <enkf_types.h>
 
 
 struct block_fs_driver_struct {
@@ -154,10 +155,8 @@ static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_
 
 static void block_fs_create_new_fs( block_fs_driver_type * driver , bool read , bool mount ) {
   const int STATIC_blocksize       = 1;
-  const int MULTFLT_blocksize      = 1;
   const int FIELD_blocksize        = 1;
   const int GEN_KW_blocksize       = 1;
-  const int HAVANA_FAULT_blocksize = 1;
   const int SUMMARY_blocksize      = 1;
   const int GEN_DATA_blocksize     = 1;
   const int max_cache_size         = 256; /* ~ 16 doubles */
@@ -178,10 +177,8 @@ static void block_fs_create_new_fs( block_fs_driver_type * driver , bool read , 
       block_fs_mount_single_fs( driver , STATIC       , read , STATIC_blocksize        , max_cache_size , false);
       break;
     case(DRIVER_PARAMETER):
-      block_fs_mount_single_fs( driver , MULTFLT      , read , MULTFLT_blocksize       , max_cache_size , false);
       block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , false);
       block_fs_mount_single_fs( driver , GEN_KW       , read , GEN_KW_blocksize        , max_cache_size , true);
-      block_fs_mount_single_fs( driver , HAVANA_FAULT , read , HAVANA_FAULT_blocksize  , max_cache_size , false);
       block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , false);
       break;
     case(DRIVER_DYNAMIC_FORECAST):

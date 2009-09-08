@@ -4,7 +4,6 @@
 #include <util.h>
 #include <stdlib.h>
 #include <string.h>
-#include <enkf_fs.h>
 #include <path_fmt.h>
 #include <enkf_sched.h>
 #include <model_config.h>
@@ -21,6 +20,7 @@
 #include <forward_model.h>
 #include <bool_vector.h>
 #include <fs_types.h>
+#include <enkf_defaults.h>
 
 /**
    This struct contains configuration which is specific to this
@@ -41,18 +41,17 @@ struct model_config_struct {
   stringlist_type     * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
   forward_model_type  * std_forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
   bool                  use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
-  enkf_fs_type        * ensemble_dbase;      	    /* Where the ensemble files are stored */
   history_type        * history;             	    /* The history object. */
   path_fmt_type       * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
-  char                * plot_path;           	    /* A dumping ground for PLOT files. */
   enkf_sched_type     * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
   char                * enkf_sched_file;     	    /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
+  char                * enspath;
+  fs_driver_impl        dbase_type;
   int                   last_history_restart;       /* The end of the history - this is inclusive.*/
   int                   abs_last_restart;           /* The total end of schedule file - will be updated with enkf_sched_file. */  
   bool                  has_prediction;      	    /* Is the SCHEDULE_PREDICTION_FILE option set ?? */
   bool                  resample_when_fail;         /* Should we resample when a model fails to integrate? */
   int                   max_internal_submit;        /* How many times to retry if the load fails. */
-  char                * lock_path;           	    /* Path containing lock files */
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
   bool_vector_type    * internalize_results; 	    /* Should the results (i.e. summary in ECLIPSE speak) be intrenalized at this report_step? */
   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
@@ -61,10 +60,6 @@ struct model_config_struct {
 
 
 
-static enkf_fs_type * fs_mount(const char * root_path , const char * driver_name , const char * lock_path) {
-  const char * mount_map = "enkf_mount_info";
-  return enkf_fs_mount(root_path , fs_types_lookup_string_name( driver_name ) , mount_map , lock_path);
-}
 
 
 void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
@@ -101,43 +96,79 @@ void model_config_set_enkf_sched_file(model_config_type * model_config , const c
 }
 
 
+void model_config_set_enspath( model_config_type * model_config , const char * enspath) {
+  model_config->enspath = util_realloc_string_copy( model_config->enspath , enspath );
+}
+
+
+void model_config_set_dbase_type( model_config_type * model_config , const char * dbase_type_string) {
+  model_config->dbase_type = fs_types_lookup_string_name( dbase_type_string );
+  if (model_config->dbase_type == INVALID_DRIVER_ID)
+    util_abort("%s: did not recognize driver_type:%s \n",__func__ , dbase_type_string);
+}
+
+
+const char * model_config_get_enspath( const model_config_type * model_config) {
+  return model_config->enspath;
+}
+
+
+fs_driver_impl model_config_get_dbase_type(const model_config_type * model_config ) {
+  return model_config->dbase_type;
+}
+
+
 model_config_type * model_config_alloc(const config_type * config , int ens_size , const ext_joblist_type * joblist , int last_history_restart , const sched_file_type * sched_file , bool statoil_mode , bool use_lsf) {
-  model_config_type * model_config = util_malloc(sizeof * model_config , __func__);
-  model_config->case_names         = NULL;
-  model_config->use_lsf            = use_lsf;
-  model_config->plot_path          = NULL;
-  model_config->max_internal_submit       = config_iget_as_int( config , "MAX_RETRY" , 0,0);
-  model_config->resample_when_fail        = config_iget_as_bool( config , "RESAMPLE_WHEN_FAIL" ,0,0);
+  model_config_type * model_config        = util_malloc(sizeof * model_config , __func__);
+  /**
+     There are essentially three levels of initialisation:
+
+     1. Initialize to NULL / invalid.
+     2. Initialize with default values.
+     3. Initialize with user supplied values.
+
+  */
+  model_config->case_names                = NULL;
+  model_config->use_lsf                   = use_lsf;
+  model_config->max_internal_submit       = DEFAULT_MAX_INTERNAL_SUBMIT;
+  model_config->resample_when_fail        = DEFAULT_RESAMPLE_WHEN_FAIL;
+  model_config->enspath                   = NULL;
+  model_config->dbase_type                = INVALID_DRIVER_ID;
+  model_config->runpath                   = NULL;
+  model_config->enkf_sched                = NULL;
+  model_config->enkf_sched_file           = NULL;   
+  model_config->std_forward_model         = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
+  
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
-    model_config->std_forward_model  = forward_model_alloc(  config_string , joblist , statoil_mode , model_config->use_lsf);
+    forward_model_parse_init( model_config->std_forward_model , config_string );
     free(config_string);
   }
-  {
-    char * cwd = util_alloc_cwd();
-    model_config->lock_path      = util_alloc_filename(cwd , "locks" , NULL);
-    free(cwd);
-  }
-  util_make_path( model_config->lock_path );
-  model_config->ensemble_dbase = fs_mount( config_iget(config , "ENSPATH" , 0,0) , 
-                                           config_iget(config , "DBASE_TYPE" , 0 ,0) , 
-                                           model_config->lock_path);
-  model_config->runpath         = NULL;
-  model_config->enkf_sched      = NULL;
-  model_config->enkf_sched_file = NULL;
-  model_config_set_enkf_sched_file(model_config , config_safe_iget(config , "ENKF_SCHED_FILE" , 0 ,0));
-  model_config_set_runpath_fmt( model_config , config_iget(config , "RUNPATH" , 0,0) );
-  model_config->history                 = history_alloc_from_sched_file(sched_file);  
+  
+  model_config_set_enspath( model_config , DEFAULT_ENSPATH );
+  model_config_set_dbase_type( model_config , DEFAULT_DBASE_TYPE );
+  model_config_set_runpath_fmt( model_config , DEFAULT_RUNPATH);
 
-  /**
-     last_history_restart and abs_last_restart are inclusive upper limits.
-  */
-  model_config->last_history_restart = last_history_restart;
-  /* 
-     Currently only the historical part - if a prediction file is in use, 
-     the extended length is pushed from enkf_state.
-  */
-  model_config->abs_last_restart = model_config->last_history_restart;
+
+  if (config_item_set( config , "ENKF_SCHED_FILE"))
+    model_config_set_enkf_sched_file(model_config , config_get_value(config , "ENKF_SCHED_FILE" ));
+  
+  if (config_item_set( config, "RUNPATH"))
+    model_config_set_runpath_fmt( model_config , config_get_value(config , "RUNPATH") );
+
+  {
+    model_config->history                 = history_alloc_from_sched_file(sched_file);  
+
+    /**
+       last_history_restart and abs_last_restart are inclusive upper limits.
+    */
+    model_config->last_history_restart = last_history_restart;
+    /* 
+       Currently only the historical part - if a prediction file is in use, 
+       the extended length is pushed from enkf_state.
+    */
+    model_config->abs_last_restart = model_config->last_history_restart;
+  }
 
   
   if (config_item_set(config ,  "SCHEDULE_PREDICTION_FILE"))
@@ -170,7 +201,6 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
     model_config->__load_state        = bool_vector_alloc( num_restart , false ); 
     model_config->__load_results      = bool_vector_alloc( num_restart , false );
   }
-  model_config_set_plot_path( model_config , config_iget(config , "PLOT_PATH" , 0,0));
 
   if (config_item_set(config ,  "CASE_TABLE")) {
     bool atEOF = false;
@@ -195,6 +225,18 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
       fprintf(stderr, "** Warning: mismatch between NUM_REALIZATIONS:%d and CASE_TABLE:%d - only the %d realizations will be used.\n", ens_size , case_size , ens_size);
   }
     
+  
+  if (config_item_set( config , "ENSPATH"))
+    model_config_set_enspath( model_config , config_get_value(config , "ENSPATH"));
+
+  if (config_item_set( config , "DBASE_TYPE"))
+    model_config_set_dbase_type( model_config , config_get_value(config , "DBASE_TYPE"));
+  
+  if (config_item_set( config , "MAX_RETRY"))
+    model_config->max_internal_submit = config_iget_as_int( config , "MAX_RETRY" , 0,0);
+
+  if (config_item_set( config , "RESAMPLE_WHEN_FAIL"))
+    model_config->resample_when_fail        = config_iget_as_bool( config , "RESAMPLE_WHEN_FAIL" ,0,0);
 
   return model_config;
 }
@@ -210,13 +252,11 @@ const char * model_config_iget_casename( const model_config_type * model_config 
 
 
 void model_config_free(model_config_type * model_config) {
-  free(model_config->plot_path);
   path_fmt_free(  model_config->runpath );
   if (model_config->enkf_sched != NULL)
     enkf_sched_free( model_config->enkf_sched );
+  free( model_config->enspath );
   util_safe_free( model_config->enkf_sched_file );
-  free(model_config->lock_path);
-  enkf_fs_free(model_config->ensemble_dbase);
   history_free(model_config->history);
   forward_model_free(model_config->std_forward_model);
   bool_vector_free(model_config->internalize_results);
@@ -227,10 +267,6 @@ void model_config_free(model_config_type * model_config) {
   free(model_config);
 }
 
-
-enkf_fs_type * model_config_get_fs(const model_config_type * model_config) {
-  return model_config->ensemble_dbase;
-}
 
 
 path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
@@ -277,15 +313,6 @@ int model_config_get_abs_last_restart(const model_config_type * config) {
 
 bool model_config_has_prediction(const model_config_type * config) {
   return config->has_prediction;
-}
-
-
-void model_config_set_plot_path(model_config_type * config , const char * path) {
-  config->plot_path = util_realloc_string_copy( config->plot_path , path );
-}
-
-const char * model_config_get_plot_path(const model_config_type * config) {
-  return config->plot_path;
 }
 
 

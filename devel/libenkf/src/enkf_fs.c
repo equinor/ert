@@ -269,8 +269,10 @@
 */
 
 
+#define ENKF_FS_TYPE_ID 1089763
 
 struct enkf_fs_struct {
+  UTIL_TYPE_ID_DECLARATION;
   char                      * root_path;
   basic_driver_type         * dynamic_forecast;
   basic_driver_type         * dynamic_analyzed;
@@ -278,11 +280,7 @@ struct enkf_fs_struct {
   basic_driver_type  	    * eclipse_static;
   basic_driver_index_type   * index ;
 
-  bool                        use_locking;           /* */ 
   bool                        read_only;             /* Whether this filesystem has been mounted read-only. */
-  int                         lock_fd;               /* Integer containing a file descriptor to lockfile. */
-  char                      * lockfile;              /* Filename for lockfile. */
-
   set_type                  * dir_set;               /* Set containing the existing directories. */
   char                      * current_read_dir;      /* The currently active "directory" for reading. */
   char                      * current_write_dir;     /* The currently active directory fro writing. */ 
@@ -300,6 +298,10 @@ struct enkf_fs_struct {
 };
 
 /*****************************************************************/
+
+
+UTIL_SAFE_CAST_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
+UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 
 
 /** 
@@ -1093,8 +1095,7 @@ bool enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mk
 
 
 
-enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl, const char *mount_info , const char * lock_path) {
-  const bool   use_locking = false;
+enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl, const char *mount_info) {
   const char * default_dir = DEFAULT_CASE;
   char * config_file       = util_alloc_filename(root_path , mount_info , NULL);  /* This file should be protected - at all costs. */
   int    version           = enkf_fs_get_fs_version( config_file );
@@ -1145,10 +1146,8 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
   {
     const int num_drivers      = 5;
     enkf_fs_type * fs          = util_malloc(sizeof * fs , __func__);
+    UTIL_TYPE_ID_INIT( fs , ENKF_FS_TYPE_ID );
     fs->root_path              = util_alloc_string_copy( root_path );
-    fs->use_locking            = use_locking;
-    fs->lockfile               = NULL;
-
     fs->index                  = NULL;
     fs->eclipse_static         = NULL;
     fs->parameter              = NULL;
@@ -1250,26 +1249,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
     basic_driver_assert_cast(fs->parameter);
     basic_driver_index_assert_cast(fs->index);
     
-    if (use_locking) {
-      {
-	char * ens_path    = util_alloc_string_copy(root_path);
-	util_string_tr( ens_path , UTIL_PATH_SEP_CHAR , '_' );
-	fs->lockfile = util_alloc_filename(lock_path , ens_path , "ensemble_lock");
-	free(ens_path);
-      }
-      
-      
-      if (util_try_lockf(fs->lockfile , S_IWUSR + S_IWGRP, &fs->lock_fd))
-	fs->read_only = false;
-      else {
-	fs->read_only = true;
-	fprintf(stderr,"------------------------------------------------------------------------\n");
-	fprintf(stderr,"| Warning: another EnKF instance has currently locked the ensemble at\n| \'%s\' for writing - this instance will be read-only.\n",root_path);
-	fprintf(stderr,"-------------------------------------------------------------------------\n");
-      }
-    } else
-      fs->read_only = false;
-    
+    fs->read_only = false;
     free( config_file );
     {
       /*
@@ -1312,12 +1292,7 @@ void enkf_fs_free(enkf_fs_type * fs) {
   util_safe_free(fs->current_write_dir);
   free(fs->mount_map);
   set_free(fs->dir_set);
-  if (fs->use_locking) {
-    close(fs->lock_fd);
-    util_unlink_existing(fs->lockfile);
-  }
   util_safe_free(fs->root_path);
-  util_safe_free(fs->lockfile);
   path_fmt_free( fs->case_fmt );
   path_fmt_free( fs->case_member_fmt );
   path_fmt_free( fs->case_tstep_fmt );

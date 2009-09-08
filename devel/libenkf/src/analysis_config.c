@@ -5,7 +5,7 @@
 #include <util.h>
 #include <enkf_types.h>
 #include <analysis_config.h>
-
+#include <enkf_defaults.h>
 
 
 
@@ -26,17 +26,19 @@ struct analysis_config_struct {
 
 
 
-static analysis_config_type * analysis_config_alloc__(double truncation , double overlap_alpha , enkf_mode_type enkf_mode , bool merge_observations) {
+static analysis_config_type * analysis_config_alloc__() {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
 
   config->inversion_mode     = SVD_SS_N1_R;
   config->std_cutoff         = 1e-6;
   config->random_rotation    = true;
 
-  analysis_config_set_truncation( config , truncation );
-  analysis_config_set_alpha( config , overlap_alpha );
-  analysis_config_set_merge_observations( config , merge_observations );
-  analysis_config_set_enkf_mode ( config , enkf_mode );
+  analysis_config_set_truncation( config , DEFAULT_ENKF_TRUNCATION );
+  analysis_config_set_alpha( config , DEFAULT_ENKF_ALPHA );
+  analysis_config_set_merge_observations( config , DEFAULT_MERGE_OBSERVATIONS );
+  analysis_config_set_enkf_mode ( config , DEFAULT_ENKF_MODE );
+  analysis_config_set_rerun( config , DEFAULT_RERUN );
+  analysis_config_set_rerun_start( config , DEFAULT_RERUN_START );
   return config;
 }
 
@@ -81,32 +83,52 @@ void analysis_config_set_merge_observations( analysis_config_type * config , dou
   config->merge_observations = merge_observations;
 }
 
-void analysis_config_set_enkf_mode( analysis_config_type * config , double enkf_mode) {
+void analysis_config_set_enkf_mode( analysis_config_type * config , enkf_mode_type enkf_mode) {
   config->enkf_mode = enkf_mode;
 }
 
 
-analysis_config_type * analysis_config_alloc(const config_type * config) {
-  double truncation 	    = config_get_value_as_double(config , "ENKF_TRUNCATION");
-  double alpha      	    = config_get_value_as_double(config , "ENKF_ALPHA");
-  bool   merge_observations = config_get_value_as_bool(config , "ENKF_MERGE_OBSERVATIONS");
-  const char * enkf_mode_string = config_iget(config , "ENKF_MODE" , 0,0);
-  enkf_mode_type enkf_mode = ENKF_SQRT; /* Compiler shut up */
-  
-  if (strcmp(enkf_mode_string,"STANDARD") == 0)
-    enkf_mode = ENKF_STANDARD;
-  else if (strcmp(enkf_mode_string , "SQRT") == 0)
-    enkf_mode = ENKF_SQRT;
-  else
-    util_abort("%s: internal error : enkf_mode:%s not recognized \n",__func__ , enkf_mode_string);
-  
-  {
-    analysis_config_type * analysis = analysis_config_alloc__(truncation , alpha , enkf_mode , merge_observations);
-    analysis_config_set_rerun( analysis , config_get_value_as_bool(config , "ENKF_RERUN"));
-    analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , "RERUN_START"));
-    return analysis;
-  }
+/**
+   The analysis_config object is instantiated with the default values
+   for enkf_defaults.h
+*/
+
+analysis_config_type * analysis_config_alloc() {
+  return analysis_config_alloc__();
 }
+ 
+
+void analysis_config_init_from_config( analysis_config_type * analysis , const config_type * config ) {
+  if (config_item_set( config , "ENKF_TRUNCATION" ))
+    analysis_config_set_truncation( analysis , config_get_value_as_double( config , "ENKF_TRUNCATION" ));
+
+  if (config_item_set( config , "ENKF_ALPHA" ))
+    analysis_config_set_alpha( analysis , config_get_value_as_double( config , "ENKF_ALPHA" ));
+
+  if (config_item_set( config , "ENKF_MERGE_OBSERVATIONS" ))
+    analysis_config_set_merge_observations( analysis , config_get_value_as_bool( config , "ENKF_MERGE_OBSERVATIONS" ));
+
+  if (config_item_set( config , "ENKF_MODE" )) {
+    const char * enkf_mode_string = config_get_value(config , "ENKF_MODE");
+    enkf_mode_type enkf_mode      = ENKF_SQRT; /* Compiler shut up */
+  
+    if (strcmp(enkf_mode_string,"STANDARD") == 0)
+      enkf_mode = ENKF_STANDARD;
+    else if (strcmp(enkf_mode_string , "SQRT") == 0)
+      enkf_mode = ENKF_SQRT;
+    else
+      util_abort("%s: internal error : enkf_mode:%s not recognized \n",__func__ , enkf_mode_string);
+  
+    analysis_config_set_enkf_mode( analysis , enkf_mode );
+  }
+  
+  if (config_item_set( config , "ENKF_RERUN" ))
+    analysis_config_set_rerun( analysis , config_get_value_as_bool( config , "ENKF_RERUN" ));
+
+  if (config_item_set( config , "RERUN_START" ))
+    analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , "RERUN_START" ));
+}
+
 
 
 bool analysis_config_merge_observations(const analysis_config_type * config) {

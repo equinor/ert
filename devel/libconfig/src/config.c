@@ -265,15 +265,6 @@ static char * __alloc_relocated__(const char * config_cwd , const char * value) 
 
 
 
-/**
-   This function asserts that argc_min == argc_max == 1. This must be
-   satisfied to be able to call config_get() without any index.
-*/
-
-static void validate_assert_get(const validate_type * validate) {
-  if (!((validate->argc_min == 1) && (validate->argc_min == 1)))
-    util_abort("%s: before calling config_get() functions *without* index you must set argc_min == argc_max = 1 \n",__func__);
-}
 
 
 /*****************************************************************/
@@ -391,7 +382,6 @@ void config_item_assure_type(const config_item_type * item , int index , config_
 
 bool config_item_iget_as_bool(const config_item_type * item, int occurence , int index) {
   bool value;
-  validate_assert_get(item->validate);
   util_sscanf_bool( config_item_iget(item , occurence ,index) , &value );
   return value;
 }
@@ -1010,7 +1000,21 @@ config_item_type * config_add_item(config_type * config ,
 
 
 
+/**
+  This is a minor wrapper for adding an item with the properties. 
 
+    1. It has argc_minmax = {1,1}
+    2. It has append == false.
+    
+   The value can than be extracted with config_get_value() and
+   config_get_value_as_xxxx functions. 
+*/
+
+config_item_type * config_add_key_value( config_type * config , const char * key , bool required , config_item_types item_type) {
+  config_item_type * item = config_add_item( config , key , required , false );
+  config_item_set_argc_minmax( item , 1 , 1 , (const config_item_types  [1]) { item_type });
+  return item;
+}
 
 
 
@@ -1403,7 +1407,6 @@ const char * config_iget(const config_type * config , const char * kw, int occur
 }
 
 
-
 /**
    This function will return NULL is the item has not been set, 
    however it must be installed with config_add_item().
@@ -1422,17 +1425,50 @@ const char * config_safe_iget(const config_type * config , const char *kw, int o
 }
 
 
-
-
+static void assert_key_value(const config_item_type * item) {
+  if (!((item->validate->argc_min == 1) && (item->validate->argc_min == 1)))
+    util_abort("%s: item:%s before calling config_get_value() functions *without* index you must set argc_min == argc_max = 1 \n",__func__ , item->kw);
+  
+  if (item->append_arg) 
+    util_abort("%s: must have append_arg == false for _get_value functions \n",__func__);
+}
 
 /**
-   This returns A REFERENCE to the stringlist of an item, assuming the
-   item corresponding to 'kw':
+   The config_get_value_??() functions are simpler wrappers for:
 
-    * It has been added with append_arg == false.
+    1. Check that item has been added with append==false and
+       arg_minmax = {1,1}, i.e. it has typically been added with
+       config_add_key_value().
 
-   If this is not the case - we die.
+    2. Call config_iget_?? with both the occurence and index values
+       set to 0.
 */
+
+bool config_get_value_as_bool(const config_type * config , const char * kw) {
+  config_item_type * item = config_get_item(config , kw);
+  assert_key_value( item );
+  return config_item_iget_as_bool(item , 0 , 0);
+}
+
+int config_get_value_as_int(const config_type * config , const char * kw) {
+  config_item_type * item = config_get_item(config , kw);
+  assert_key_value( item );
+  return config_item_iget_as_int(item , 0 , 0);
+}
+
+double config_get_value_as_double(const config_type * config , const char * kw) {
+  config_item_type * item = config_get_item(config , kw);
+  assert_key_value( item );
+  return config_item_iget_as_double(item , 0 , 0);
+}
+
+const char * config_get_value(const config_type * config , const char * kw) {
+  config_item_type * item = config_get_item(config , kw);
+  assert_key_value( item );
+  return config_item_iget(item , 0 , 0);
+}
+
+
 
 
 

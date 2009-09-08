@@ -10,6 +10,7 @@
 #include <forward_model.h>
 #include <vector.h>
 #include <parser.h>
+#include <enkf_defaults.h>
 
 /**
    How long is the simulation?
@@ -256,7 +257,8 @@ static void  enkf_sched_fscanf_alloc_nodes(enkf_sched_type * enkf_sched , FILE *
 	  model_length = tokens - model_start;
 	  if (model_length > 0) {
 	    char * input_string = util_alloc_joined_string( (const char **) &token_list[model_start] , model_length , " ");
-	    forward_model = forward_model_alloc( input_string , joblist , statoil_mode , use_lsf );
+	    forward_model = forward_model_alloc( joblist , statoil_mode , use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
+            forward_model_parse_init( forward_model , input_string );
 	    free( input_string );
 	  }
 	}
