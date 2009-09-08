@@ -9,17 +9,17 @@ gen_data.o                          : gen_data.c gen_data.h enkf_serialize.o enk
 block_fs_driver_index.o             : block_fs_driver_index.c block_fs_driver_index.h fs_types.o basic_driver.o  
 field_obs.o                         : field_obs.c field_obs.h enkf_util.o field_config.o obs_data.o meas_vector.o field_config.o field.o active_list.o  
 enkf_tui_init.o                     : enkf_tui_init.c enkf_tui_init.h enkf_main.o enkf_sched.o enkf_types.o enkf_tui_util.o enkf_state.o enkf_node.o enkf_fs.o ensemble_config.o  
-block_fs_driver.o                   : block_fs_driver.c block_fs_driver.h fs_types.o basic_driver.o  
+block_fs_driver.o                   : block_fs_driver.c block_fs_driver.h fs_types.o basic_driver.o enkf_types.o  
 enkf_tui_ranking.o                  : enkf_tui_ranking.c enkf_tui_ranking.h enkf_main.o enkf_obs.o enkf_tui_util.o  
 enkf_main.o                         : enkf_main.c enkf_main.h enkf_config_node.o enkf_types.o obs_data.o meas_matrix.o enkf_state.o enkf_obs.o enkf_fs.o enkf_serialize.o enkf_sched.o ecl_config.o ensemble_config.o model_config.o site_config.o active_config.o enkf_analysis.o local_ministep.o local_updatestep.o local_config.o misfit_table.o plot_config.o enkf_defaults.o  
 plain_driver_common.o               : plain_driver_common.c plain_driver_common.h enkf_types.o enkf_node.o  
 gen_data_active.o                   : gen_data_active.c gen_data_active.h enkf_macros.h  
 active_node.o                       : active_node.c active_node.h enkf_types.o enkf_config_node.o ensemble_config.o obs_vector.o  
-enkf_sched.o                        : enkf_sched.c enkf_sched.h enkf_types.o  
+enkf_sched.o                        : enkf_sched.c enkf_sched.h enkf_types.o enkf_defaults.o  
 summary.o                           : summary.c summary.h enkf_macros.h enkf_util.o summary_config.o enkf_types.o enkf_util.o enkf_serialize.o  
 enkf_types.o                        : enkf_types.c enkf_types.h  
 plain_driver.o                      : plain_driver.c plain_driver.h fs_types.o basic_driver.o plain_driver_index.o plain_driver_common.o enkf_node.o  
-model_config.o                      : model_config.c model_config.h enkf_fs.o enkf_sched.o enkf_types.o plain_driver.o fs_types.o  
+model_config.o                      : model_config.c model_config.h enkf_sched.o enkf_types.o plain_driver.o fs_types.o enkf_defaults.o  
 fs_types.o                          : fs_types.c fs_types.h  
 site_config.o                       : site_config.c site_config.h  
 misfit_table.o                      : misfit_table.c misfit_table.h enkf_obs.o enkf_fs.o  

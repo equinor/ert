@@ -31,7 +31,7 @@ int main(void) {
     stringlist_type * sl = config_alloc_complete_stringlist(config , "KEY1");
     char * s = stringlist_alloc_joined_string(sl , "|");
     printf("KEY1 -> \"%s\" \n",s);
-    printf("CONFIG_IGET:%s\n" , config_iget(config , "KEY2" , 0));
+    printf("CONFIG_IGET:%s\n" , config_iget(config , "KEY2" , 0 , 0));
     free(s);
     stringlist_free(sl);
   }

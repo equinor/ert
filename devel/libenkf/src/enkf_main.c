@@ -182,7 +182,8 @@ void enkf_main_free(enkf_main_type * enkf_main) {
     free(enkf_main->ensemble);
   }
   if (enkf_main->dbase != NULL) enkf_fs_free(enkf_main->dbase );
-
+  
+  log_add_message( enkf_main->logh , false , "Exiting ert application normally." , false);
   log_close( enkf_main->logh );
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
