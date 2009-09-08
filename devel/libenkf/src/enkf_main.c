@@ -183,7 +183,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   }
   if (enkf_main->dbase != NULL) enkf_fs_free(enkf_main->dbase );
   
-  log_add_message( enkf_main->logh , false , "Exiting ert application normally." , false);
+  log_add_message( enkf_main->logh , false , "Exiting ert application normally - all is fine(?)" , false);
   log_close( enkf_main->logh );
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
@@ -1204,7 +1204,7 @@ static config_type * enkf_main_alloc_config() {
   
   
   /* Plotting stuff */
-  item = config_add_key_value(config , "IMAGE_TYPE" , true , false);
+  item = config_add_key_value(config , "IMAGE_TYPE" , false , CONFIG_STRING);
   config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
   
   item = config_add_key_value(config , "PLOT_DRIVER" , false , CONFIG_STRING);

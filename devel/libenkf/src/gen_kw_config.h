@@ -11,13 +11,15 @@ extern "C" {
 #include <scalar_config.h>
 #include <scalar.h>
 #include <gen_kw_common.h>
+#include <stringlist.h>
 
 
+char                      * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens );
 void                        gen_kw_config_set_init_file_fmt( gen_kw_config_type * config , const char * init_file_fmt );
 const char                * gen_kw_config_get_key(const gen_kw_config_type * config );
 gen_kw_type               * gen_kw_config_get_min_std( const gen_kw_config_type * gen_kw_config );
 const char         	  * gen_kw_config_get_template_ref(const gen_kw_config_type * );
-gen_kw_config_type 	  * gen_kw_config_fscanf_alloc(const char * key , const char * , const char *, const char * min_std_file , const char * init_file_fmt );
+  gen_kw_config_type 	  * gen_kw_config_fscanf_alloc(const char * key , const char * , const char *, const stringlist_type * options);
 void               	    gen_kw_config_free(gen_kw_config_type *);
 void               	    gen_kw_config_transform(const gen_kw_config_type * , const double * , double *);
 void               	    gen_kw_config_truncate(const gen_kw_config_type * , scalar_type * );

@@ -407,7 +407,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 	  fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid minimum value - ignored \n",value);
 	option_OK = true;
       }
-
+      
       if (strcmp(option , "MAX") == 0) {
 	double max_value;
 	if (util_sscanf_double( value , &max_value)) {

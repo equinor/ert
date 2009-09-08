@@ -59,7 +59,7 @@ static void site_config_install_joblist(site_config_type * site_config , const c
 
   for (i=0; i < stringlist_get_size(item_list); i+=2) 
     site_config_install_job(site_config , stringlist_iget(item_list , i) , stringlist_iget(item_list , i + 1));
-  
+
   stringlist_free(item_list);
 }
 

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+#include <hash.h>
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <trans_func.h>
@@ -36,6 +37,13 @@ void gen_kw_config_set_init_file_fmt( gen_kw_config_type * gen_kw_config , const
     gen_kw_config->init_file_fmt = NULL;
 }
 
+
+char * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens ) {
+  if (gen_kw_config->init_file_fmt != NULL)
+    return path_fmt_alloc_path( gen_kw_config->init_file_fmt , false , iens);
+  else
+    return NULL;
+}
 
 
 static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file, const char * init_file_fmt) {
@@ -88,10 +96,47 @@ For the template file there are essentially no restrictions:
  o The file template file must exist when the function
    gen_kw_config_fscanf_alloc() is called.
 
+OPTIONS:
+
+MIN_STD:
+INIT_FILES:
+
 */
 
-gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * key , const char * filename , const char * template_file, const char * min_std_file, const char * init_file_fmt) {
+gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * key , const char * filename , const char * template_file, const stringlist_type * options) {
+  char * min_std_file  = NULL;
+  char * init_file_fmt = NULL;
   gen_kw_config_type * config = NULL;
+
+  /* Starting on the options. */
+  {
+    hash_type * opt_hash = hash_alloc_from_options( options );
+    hash_iter_type * iter = hash_iter_alloc(opt_hash);
+    const char * option = hash_iter_get_next_key(iter);
+    while (option != NULL) {
+      const char * value = hash_get( opt_hash , option );
+      /*
+	This could (should ??) have been implemented with
+	if-then-else; isolated if-blocks have been chosen for
+	clarity. Must update option_OK in every block, and check it
+	at the bottom.
+
+      */
+
+      if (strcmp(option , "MIN_STD") == 0) 
+	min_std_file = util_alloc_string_copy( value );
+      else if (strcmp( option , "INIT_FILES") == 0)
+        init_file_fmt = util_alloc_string_copy( value );
+      else
+        fprintf(stderr,"** Warning: options:%s not recognized \n",option);
+      
+      option = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free( iter );
+    hash_free( opt_hash );
+  }
+
+
   if (util_file_exists(filename)) {
     FILE * stream = util_fopen(filename , "r");
     int line_nr = 0;

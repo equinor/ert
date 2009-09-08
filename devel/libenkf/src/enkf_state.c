@@ -500,15 +500,22 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
     free(iens4_s);
   }
   
-  member_config_set_eclbase(enkf_state->my_config , enkf_state->ecl_config , enkf_state->subst_list);
-
   {
-    char * smspec_file = ecl_util_alloc_filename(NULL , enkf_state->my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
-    enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
-    enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , enkf_state->my_config->eclbase , NULL);  /* Can not change run_time .. */
-    enkf_state_add_subst_kw(enkf_state , "SMSPEC"      , smspec_file , NULL);
-    
-    free(smspec_file);
+    member_config_type * my_config = enkf_state->my_config;
+    member_config_set_eclbase(my_config , enkf_state->ecl_config , enkf_state->subst_list);
+  
+    {
+      char * smspec_file = ecl_util_alloc_filename(NULL  , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+      enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , my_config->eclbase , NULL);  /* Can not change run_time .. */
+      enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , my_config->eclbase , NULL);  /* Can not change run_time .. */
+      enkf_state_add_subst_kw(enkf_state , "SMSPEC"      , smspec_file , NULL);
+      if (my_config->casename != NULL)
+        enkf_state_add_subst_kw( enkf_state , "CASE" , my_config->eclbase , NULL);  /* No CASE_TABLE loaded - using the eclbase as default. */
+      else
+        enkf_state_add_subst_kw( enkf_state , "CASE" , my_config->casename , NULL);
+
+      free(smspec_file);
+    }
   }
 }
 
@@ -538,16 +545,16 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   const forward_model_type  * default_forward_model,
                                    log_type                  * logh) { 
   
-  enkf_state_type * enkf_state = util_malloc(sizeof *enkf_state , __func__);
-  enkf_state->__id            = ENKF_STATE_TYPE_ID;
+  enkf_state_type * enkf_state  = util_malloc(sizeof *enkf_state , __func__);
+  enkf_state->__id              = ENKF_STATE_TYPE_ID; 
 
-  enkf_state->ensemble_config = ensemble_config;
-  enkf_state->ecl_config      = ecl_config;
-  enkf_state->shared_info     = shared_info_alloc(site_config , model_config , fs , logh);
-  enkf_state->run_info        = run_info_alloc();
+  enkf_state->ensemble_config   = ensemble_config;
+  enkf_state->ecl_config        = ecl_config;
+  enkf_state->shared_info       = shared_info_alloc(site_config , model_config , fs , logh);
+  enkf_state->run_info          = run_info_alloc();
   
-  enkf_state->node_hash       = hash_alloc();
-  enkf_state->restart_kw_list = stringlist_alloc_new();
+  enkf_state->node_hash         = hash_alloc();
+  enkf_state->restart_kw_list   = stringlist_alloc_new();
 
   enkf_state->subst_list        = subst_list_alloc();
   enkf_state->subst_description = hash_alloc();
@@ -600,7 +607,9 @@ INCLDUE
   enkf_state_add_subst_kw(enkf_state , "RANDINT"       , NULL  , "Random integer value");
   enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , NULL  , "Random float value");
   if (casename != NULL) 
-    enkf_state_add_subst_kw(enkf_state , "CASE" , casename , "The casename for this realization - as loaded from the CASE_TABLE file");
+    enkf_state_add_subst_kw(enkf_state , "CASE" , casename , "The casename for this realization - as loaded from the CASE_TABLE file.");
+  else
+    enkf_state_add_subst_kw(enkf_state , "CASE" , "---" , "The casename for this realization - similar to ECLBASE.");
   
   {
     /** Adding substitute callbacks */
