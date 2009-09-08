@@ -20,26 +20,28 @@ struct forward_model_struct {
   vector_type               * jobs;         /* The actual jobs in this forward model. */
   const ext_joblist_type    * ext_joblist;  /* This is the list of external jobs which have been installed - which we can choose from. */
   lsf_request_type          * lsf_request;  /* The lsf_requests needed for this forward model == NULL if we are not using lsf. */
+  char                      * start_tag;
+  char                      * end_tag;
 };
 
+//#define DEFAULT_START_TAG    "<"
+//#define DEFAULT_END_TAG      ">"
 #define DEFAULT_JOB_MODULE   "jobs.py"
 #define DEFAULT_JOBLIST_NAME "jobList"
-#define DEFAULT_START_TAG    "<"
-#define DEFAULT_END_TAG      ">"
 
 
 
-static char * __alloc_tagged_string(const char * s) {
-  return util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , s , DEFAULT_END_TAG);
+static char * forward_model_alloc_tagged_string(const forward_model_type * forward_model , const char * s) {
+  return util_alloc_sprintf("%s%s%s" , forward_model->start_tag , s , forward_model->end_tag);
 }
 
 
 /*****************************************************************/
 
 
-static forward_model_type * forward_model_alloc__(const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf) {
+forward_model_type * forward_model_alloc(const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf , const char * start_tag , const char * end_tag) {
   forward_model_type * forward_model = util_malloc( sizeof * forward_model , __func__);
-
+  
   forward_model->jobs        = vector_alloc_new();
   forward_model->ext_joblist = ext_joblist;
   if (use_lsf)
@@ -47,13 +49,15 @@ static forward_model_type * forward_model_alloc__(const ext_joblist_type * ext_j
   else
     forward_model->lsf_request = NULL;
   
+  forward_model->start_tag = util_alloc_string_copy( start_tag );
+  forward_model->end_tag = util_alloc_string_copy( end_tag );
   return forward_model;
 }
 
 
 /**
    This function adds the job named 'job_name' to the forward model. The return
-   value is the newly created ext_job instance. This can bes used to set private
+   value is the newly created ext_job instance. This can be used to set private
    arguments for this job.
 */
 
@@ -62,6 +66,22 @@ ext_job_type * forward_model_add_job(forward_model_type * forward_model , const 
   vector_append_owned_ref( forward_model->jobs , new_job , ext_job_free__);
   return new_job;
 }
+
+/**
+   This function is used to set private argument values to jobs in the
+   forward model (i.e. the argument values passed in with KEY=VALUE
+   pairs in the defining ().  
+
+   The use of 'index' to get the job is unfortunate , however one
+   forward model can contain several instances of the same job, it is
+   therefor not possible to use name based lookup.
+*/
+
+void forward_model_iset_job_arg( forward_model_type * forward_model , int job_index , const char * arg , const char * value) {
+  ext_job_type * job = vector_iget( forward_model->jobs , job_index );
+  ext_job_set_private_arg(job , arg , value);
+}
+
 
 
 void forward_model_free( forward_model_type * forward_model) {
@@ -100,11 +120,10 @@ static void forward_model_update_lsf_request(forward_model_type * forward_model)
     * If the function takes private arguments it is NOT allowed with space
       between the end of the function name and the opening parenthesis.
 
-   
 */
 
-forward_model_type * forward_model_alloc(const char * input_string , const ext_joblist_type * ext_joblist, bool statoil_mode , bool use_lsf) {
-  forward_model_type * forward_model = forward_model_alloc__(ext_joblist , statoil_mode , use_lsf);
+
+void forward_model_parse_init(forward_model_type * forward_model , const char * input_string ) {
   //tokenizer_type * tokenizer_alloc(" " , "\'\"" , ",=()" , NUlL , NULL , NULL);
   //stringlist_type * tokens = tokenizer_buffer( tokenizer , input_string , true);
   //stringlist_free( tokens );
@@ -113,14 +132,15 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
   char * p1                          = (char *) input_string;
   while (true) {
     char         * job_name;
-    ext_job_type * job;
+    int            job_index;          
     {
       int job_length  = strcspn(p1 , " (");  /* Scanning until we meet ' ' or '(' */
       job_name = util_alloc_substring_copy(p1 , job_length);
       p1 += job_length;
     }
-    job = forward_model_add_job(forward_model , job_name);
-    
+    job_index = vector_get_size( forward_model->jobs );
+    forward_model_add_job(forward_model , job_name);
+
     if (*p1 == '(') {  /* The function has arguments. */
       int arg_length = strcspn(p1 , ")");
       if (arg_length == strlen(p1))
@@ -147,13 +167,13 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
 	    tmp += arg_length;
 	    while ((*tmp == ' ') || (*tmp == '='))
 	      tmp++;
-	    tagged_key = __alloc_tagged_string(key);
+	    tagged_key = forward_model_alloc_tagged_string(forward_model , key);
 
 	    value_length = strcspn(tmp , " ");
 	    value = util_alloc_substring_copy( tmp , value_length);
 
 	    /* Setting the argument */
-	    ext_job_set_private_arg(job , tagged_key , value);
+            forward_model_iset_job_arg( forward_model , job_index , tagged_key , value);
 	    free(key);
 	    free(value);
 	    free(tagged_key);
@@ -193,7 +213,6 @@ forward_model_type * forward_model_alloc(const char * input_string , const ext_j
     }
   }
   forward_model_update_lsf_request(forward_model);
-  return forward_model;
 }
 
 
@@ -235,11 +254,13 @@ forward_model_type * forward_model_alloc_copy(const forward_model_type * forward
 
   if (forward_model->lsf_request != NULL)
     use_lsf = true;
-  new = forward_model_alloc__(forward_model->ext_joblist , statoil_mode , use_lsf);
+  new = forward_model_alloc(forward_model->ext_joblist , statoil_mode , use_lsf , forward_model->start_tag , forward_model->end_tag);
+  
   for (ijob = 0; ijob < vector_get_size(forward_model->jobs); ijob++) {
     const ext_job_type * job = vector_iget_const( forward_model->jobs , ijob);
     vector_append_owned_ref( new->jobs , ext_job_alloc_copy( job ) , ext_job_free__);
   }
+
   forward_model_update_lsf_request(new);
   
   return new;
