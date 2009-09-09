@@ -1,4 +1,5 @@
 #include <ecl_grid.h>
+#include <ecl_file.h>
 #include <ecl_box.h>
 #include <util.h>
 #include <local_config.h>
@@ -46,15 +47,18 @@ static void usage( char * exe ) {
 
 int main(int argc, char ** argv) {
   const char * command_file;
-  const char * grid_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/EnKF/sf02rg01/Refcase/GRANE.EGRID";
-  const char * eqlnum_file  = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/include/regions/sf02gf01rg01v2_edit.eqlnum";
-  ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file );
+  const char * grid_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/jaskje/realization-25/RG09A-ST-PP-AI-EP-25.EGRID";
+  const char * eqlnum_file  = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/jaskje/realization-25/RG09A-ST-PP-AI-EP-25.INIT";  
+  ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file , true );
+  
   ecl_kw_type   * eqlnum_kw;
-  {
-    FILE * stream = util_fopen(eqlnum_file , "r");
-    eqlnum_kw = ecl_kw_fscanf_alloc_grdecl_data( stream , ecl_grid_get_global_size( ecl_grid ) , ecl_int_type );
-    fclose( stream );
+  ecl_file_type * ecl_file;
+  {  
+    ecl_file=ecl_file_fread_alloc(eqlnum_file , true);
+    eqlnum_kw = ecl_file_iget_named_kw( ecl_file , "EQLNUM" , 0);
+    
   }
+  
   
   if (argc < 2)
     usage(argv[0]);
@@ -87,27 +91,27 @@ int main(int argc, char ** argv) {
       fprintf(stream , "%-32s %s %s\n" , local_config_get_cmd_string( ADD_OBS ) , ministep_name , "WGPR:PR02_G12");
       
       {
-        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid ,  0,32,115,165,0,19);
-        /* Add the field data which is updated. */
+        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid ,  0,32,115,216,0,19);
         
-        ecl_region_type * ecl_region = ecl_region_alloc( ecl_grid , false );  /* Create empty region instance with nothing selected */
-        ecl_region_select_equal( ecl_region , eqlnum_kw , 5 );                /* Lager en region basert på alle celler som har eqlnum == 5 */
+	/* Add the field data which is updated. */
+        
+        /*ecl_region_type * ecl_region = ecl_region_alloc( ecl_grid , false );*/  /* Create empty region instance with nothing selected */
+        /*ecl_region_select_equal( ecl_region , eqlnum_kw , 5 ); */               /* Lager en region basert på alle celler som har eqlnum == 5 */
 
+        /**
         add_box_or_region(ministep_name , "PORO"     , ecl_region , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_region , stream );
 	add_box_or_region(ministep_name , "MULTPV"   , ecl_region , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_region , stream );
-
-        /**
-           Original:
+	*/
 
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
 	add_box_or_region(ministep_name , "MULTPV"   , ecl_box , stream );
         add_box_or_region(ministep_name , "PRESSURE" , ecl_box , stream );
-        */
+
         
-        ecl_region_free( ecl_region );
+	/* ecl_region_free( ecl_region );*/
         ecl_box_free( ecl_box );
       }
       
@@ -128,7 +132,7 @@ int main(int argc, char ** argv) {
       fprintf(stream , "%-32s %s %s\n" , local_config_get_cmd_string( ADD_OBS ) , ministep_name , "WGPR:PR03A_G8");
 
       {
-        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 33,43,115,165,0,19);
+        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 33,43,115,216,0,19);
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
@@ -154,7 +158,7 @@ int main(int argc, char ** argv) {
       fprintf(stream , "%-32s %s %s\n" , local_config_get_cmd_string( ADD_OBS ) , ministep_name , "WGPR:PR06_G28");
 
       {
-        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 33,43,115,165,0,19);
+        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 33,43,115,216,0,19);
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
@@ -184,7 +188,7 @@ int main(int argc, char ** argv) {
       fprintf(stream , "%-32s %s %s\n" , local_config_get_cmd_string( ADD_OBS ) , ministep_name , "WGPR:PR08_G16");
 
       {
-        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 56, 101,115,165,0,19);
+        ecl_box_type * ecl_box = ecl_box_alloc(ecl_grid , 56, 101,115,216,0,19);
         /* Add the field data which is updated. */
         add_box_or_region(ministep_name , "PORO"     , ecl_box , stream );
         add_box_or_region(ministep_name , "PERMX"    , ecl_box , stream );
