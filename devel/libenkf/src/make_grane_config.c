@@ -49,12 +49,12 @@ int main(int argc, char ** argv) {
   const char * command_file;
   const char * grid_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/jaskje/realization-25/RG09A-ST-PP-AI-EP-25.EGRID";
   const char * eqlnum_file  = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/jaskje/realization-25/RG09A-ST-PP-AI-EP-25.INIT";  
-  ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file , true );
+  ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file);
   
   ecl_kw_type   * eqlnum_kw;
   ecl_file_type * ecl_file;
   {  
-    ecl_file=ecl_file_fread_alloc(eqlnum_file , true);
+    ecl_file=ecl_file_fread_alloc(eqlnum_file);
     eqlnum_kw = ecl_file_iget_named_kw( ecl_file , "EQLNUM" , 0);
     
   }
