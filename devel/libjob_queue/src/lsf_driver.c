@@ -124,7 +124,7 @@ void lsf_job_free(lsf_job_type * job) {
 static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
   int     jobid = -1;
   FILE * stream = util_fopen(stdout_file , "r");
-  if (util_fseek_string(stream , "<" , true)) {
+  if (util_fseek_string(stream , "<" , true , true)) {
     char * jobid_string = util_fscanf_alloc_upto(stream , ">" , false);
     if (jobid_string != NULL) {
       jobid = atoi( jobid_string );
