@@ -47,6 +47,7 @@
 #include <misfit_table.h>
 #include <log.h>
 #include <plot_config.h>
+#include <ert_template.h>
 #include "enkf_defaults.h"
 
 /**
@@ -98,7 +99,7 @@ struct enkf_main_struct {
   local_config_type    * local_config;     /* Holding all the information about local analysis. */
   log_type             * logh;             /* Handle to an open log file. */
   plot_config_type     * plot_config;      /* Information about plotting. */
-
+  ert_templates_type   * templates;       
   /*-------------------------*/
 
   keep_runpath_type    * keep_runpath;     /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
@@ -195,6 +196,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
     misfit_table_free( enkf_main->misfit_table );
   util_safe_free( enkf_main->keep_runpath );
   plot_config_free( enkf_main->plot_config );
+  ert_templates_free( enkf_main->templates );
   free(enkf_main);
 }
 
@@ -1119,6 +1121,9 @@ static config_type * enkf_main_alloc_config() {
   
   /*****************************************************************/
   /** Keywords expected normally found in site_config */
+  item = config_add_item( config , "RUN_TEMPLATE" , false , true );
+  config_item_set_argc_minmax(item , 2 , -1 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
+  
   item = config_add_item(config , "HOST_TYPE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
@@ -1210,7 +1215,10 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_key_value(config , "PLOT_DRIVER" , false , CONFIG_STRING);
   config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
   
-  config_add_key_value(config , "PLOT_PATH" , false , CONFIG_STRING);
+
+  config_add_key_value(config , "PLOT_HEIGHT"  , false , CONFIG_INT);
+  config_add_key_value(config , "PLOT_WIDTH"   , false , CONFIG_INT);
+  config_add_key_value(config , "PLOT_PATH"    , false , CONFIG_STRING);
   config_add_key_value(config , "IMAGE_VIEWER" , false , CONFIG_EXISTING_FILE);
   
     
@@ -1367,6 +1375,7 @@ static enkf_main_type * enkf_main_alloc_empty() {
   enkf_main->dbase        = NULL;
   enkf_main->ensemble     = NULL;
   enkf_main->keep_runpath = NULL;
+  enkf_main->templates    = ert_templates_alloc();
   return enkf_main;
 }
   
@@ -1394,7 +1403,8 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
                                                  enkf_main->ecl_config     ,
                                                  data_kw,
                                                  model_config_get_std_forward_model(enkf_main->model_config),
-                                                 enkf_main->logh);
+                                                 enkf_main->logh,
+                                                 enkf_main->templates);
     
     /** 
         This is the time we tell the model config object about
@@ -1608,6 +1618,31 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	    ecl_config_add_static_kw(enkf_main->ecl_config , stringlist_iget( static_kw_list , k));
 	}
       }
+
+      /* Installing templates */
+      {
+        for (int i=0; i < config_get_occurences( config , "RUN_TEMPLATE"); i++) {
+          const char * template_file = config_iget( config , "RUN_TEMPLATE" , i , 0);
+          const char * target_file   = config_iget( config , "RUN_TEMPLATE" , i , 1);
+          ert_template_type * template = ert_templates_add_template( enkf_main->templates , template_file , target_file );
+
+          for (int iarg = 2; iarg < config_get_occurence_size( config , "RUN_TEMPLATE" , i); iarg++) {
+            char * key , *value;
+            util_binary_split_string( config_iget( config , "RUN_TEMPLATE" , i , iarg ), "=:" , true , &key , &value);
+            
+            if (value != NULL) {
+              char * tagged_key = enkf_util_alloc_tagged_string( key );
+              ert_template_add_arg( template , tagged_key , value );
+              free( tagged_key );
+            } else
+              fprintf(stderr,"** Warning - failed to parse argument:%s as key:value - ignored \n",config_iget( config , "RUN_TEMPLATE" , i , iarg ));
+            
+            free( key );
+            util_safe_free( value );
+          }
+        }
+      }
+
       
       {
 	const char * obs_config_file;

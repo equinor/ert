@@ -4,12 +4,16 @@
 
 typedef struct plot_config_struct plot_config_type;
 
-
+void               plot_config_set_width(plot_config_type * plot_config , int width);
+void               plot_config_set_height(plot_config_type * plot_config , int height);
 void               plot_config_set_path(plot_config_type * plot_config , const char * plot_path);
 void               plot_config_set_image_type(plot_config_type * plot_config , const char * plot_device);
 void               plot_config_set_viewer(plot_config_type * plot_config , const char * plot_viewer);
 void               plot_config_set_driver(plot_config_type * plot_config , const char * plot_driver);;
 
+
+int                plot_config_get_width(const plot_config_type * plot_config );
+int                plot_config_get_height(const plot_config_type * plot_config );
 const char  *      plot_config_get_path(const plot_config_type * plot_config );
 const char  *      plot_config_get_image_type(const plot_config_type * plot_config );
 const char  *      plot_config_get_viewer(const plot_config_type * plot_config );

@@ -25,6 +25,8 @@ extern "C" {
 #include <forward_model.h>
 #include <matrix.h>
 #include <log.h>
+#include <ert_template.h>
+
 
 typedef struct enkf_state_struct    enkf_state_type;
 typedef struct member_config_struct member_config_type;
@@ -59,7 +61,8 @@ enkf_state_type  * enkf_state_alloc(int ,
 				    const ecl_config_type * ,
 				    hash_type *,
 				    const forward_model_type *,
-                                    log_type * logh);            
+                                    log_type * logh,
+                                    ert_templates_type * templates);
 
 int                enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state );
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );

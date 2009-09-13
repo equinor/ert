@@ -9,7 +9,6 @@
 
 
 static void enkf_tui_ranking_make_misfit_table( void * arg) {
-  const state_enum load_state  		       = BOTH;
   enkf_main_type  * enkf_main  		       = enkf_main_safe_cast( arg );  
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );

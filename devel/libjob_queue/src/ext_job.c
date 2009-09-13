@@ -225,9 +225,10 @@ void ext_job_free__(void * __ext_job) {
   ext_job_free ( ext_job_safe_cast(__ext_job) );
 }
 
-static void __update_mode( const char * filename , mode_t target_mode) {
-  if (util_chmod_if_owner( filename , target_mode ))
-    printf("Updated mode on on \'%s\' to: %04d \n", filename , target_mode);
+
+static void __update_mode( const char * filename , mode_t add_mode) {
+  if (util_addmode_if_owner( filename , add_mode))
+    printf("Updated mode on on \'%s\'.\n", filename );
 }
 
 
@@ -257,6 +258,7 @@ static void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portab
   } else 
     ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , portable_exe);
   /* We take the chance that user will supply a valid subst key for this later. */
+
 }
 
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
@@ -392,7 +394,7 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const s
   __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	  , ext_job->stdout_file  , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	  , ext_job->stderr_file  , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	  , ext_job->stdin_file   , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , ext_job->argv         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , ext_job->argv         , ext_job->private_args, global_args);  __end_line(stream); /*  */
   __indent(stream, 2); __fprintf_python_list(stream   , "init_code"    	  , ext_job->init_code    , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	  , ext_job->environment  , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_hash(stream   , "platform_exe" 	  , ext_job->platform_exe , ext_job->private_args, global_args);
@@ -416,7 +418,7 @@ const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
 
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * filename) {
   {
-    mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;
+    mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;  /* u+rw  g+rw  o+r */
     __update_mode( filename , target_mode );
   }
   

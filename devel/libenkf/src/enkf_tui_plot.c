@@ -105,7 +105,7 @@ static plot_type * __plot_alloc(const plot_config_type * plot_config , const cha
   
   plot = plot_alloc(plot_config_get_driver( plot_config ) , arg_pack);
   
-  plot_set_window_size(plot , DEFAULT_PLOT_WIDTH , DEFAULT_PLOT_HEIGHT);
+  plot_set_window_size(plot , plot_config_get_width( plot_config ) , plot_config_get_height( plot_config ));
   plot_set_labels(plot, x_label , y_label , title);
   arg_pack_free( arg_pack );
   
@@ -382,13 +382,12 @@ void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_
   const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
   gen_kw_config_type * gen_kw_config 	    = enkf_config_node_get_ref( config_node );
   int num_kw                         	    = gen_kw_config_get_data_size( gen_kw_config );
-  const char * node_key              	    = enkf_config_node_get_key( config_node );
-  char ** key_list             	            = gen_kw_config_get_name_list( gen_kw_config );
+  const char ** key_list             	    = gen_kw_config_get_name_list( gen_kw_config );
   
   int ikw;
   
   for (ikw = 0; ikw < num_kw; ikw++) {
-    char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , node_key , ikw);
+    char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , ikw );
     enkf_tui_plot_ensemble__( fs , enkf_obs , config_node , user_key , key_list[ikw] , sched_vector,
                               step1 , step2 , iens1 , iens2 , ANALYZED , plot_config );
     free( user_key );

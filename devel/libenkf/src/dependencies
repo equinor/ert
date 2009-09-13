@@ -22,10 +22,11 @@ plain_driver.o                      : plain_driver.c plain_driver.h fs_types.o b
 model_config.o                      : model_config.c model_config.h enkf_sched.o enkf_types.o plain_driver.o fs_types.o enkf_defaults.o  
 fs_types.o                          : fs_types.c fs_types.h  
 site_config.o                       : site_config.c site_config.h  
+ert_template.o                      : ert_template.c ert_template.h  
 misfit_table.o                      : misfit_table.c misfit_table.h enkf_obs.o enkf_fs.o  
 field_active.o                      : field_active.c field_active.h enkf_macros.h active_list.o  
 enkf_obs.o                          : enkf_obs.c enkf_obs.h summary_obs.o field_obs.o enkf_fs.o obs_vector.o enkf_state.o local_ministep.o local_config.o  
-enkf_state.o                        : enkf_state.c enkf_state.h enkf_node.o enkf_types.o ecl_static_kw.o field.o field_config.o gen_kw.o summary.o enkf_fs.o basic_driver.o ensemble_config.o model_config.o site_config.o ecl_config.o  
+enkf_state.o                        : enkf_state.c enkf_state.h enkf_node.o enkf_types.o ecl_static_kw.o field.o field_config.o gen_kw.o summary.o enkf_fs.o basic_driver.o ensemble_config.o model_config.o site_config.o ecl_config.o ert_template.o  
 active_config.o                     : active_config.c active_config.h enkf_types.o ensemble_config.o enkf_obs.o active_node.o  
 ensemble_config.o                   : ensemble_config.c ensemble_config.h enkf_config_node.o enkf_types.o field_config.o gen_data_config.o meas_matrix.o enkf_types.o enkf_fs.o gen_kw_config.o summary.o summary_config.o gen_data.o pilot_point_config.o gen_data_config.o gen_data_config.o field_trans.o  
 field_trans.o                       : field_trans.c field_trans.h  
@@ -33,7 +34,7 @@ sqlite3_driver.o                    : sqlite3_driver.c sqlite3_driver.h sqlite3.
 field_config.o                      : field_config.c field_config.h enkf_types.o enkf_macros.h field_active.o active_list.o field_trans.o field_common.h  
 obs_vector.o                        : obs_vector.c obs_vector.h enkf_fs.o summary_obs.o field_obs.o gen_obs.o ensemble_config.o active_list.o  
 enkf_tui_export.o                   : enkf_tui_export.c enkf_tui_export.h enkf_main.o field.o field_config.o enkf_state.o enkf_fs.o enkf_tui_util.o field_config.o gen_data.o  
-enkf_tui_table.o                    : enkf_tui_table.c enkf_tui_table.h enkf_main.o enkf_tui_plot.o enkf_tui_fs.o enkf_obs.o field_obs.o field_config.o obs_vector.o enkf_tui_util.o ensemble_config.o  
+enkf_tui_table.o                    : enkf_tui_table.c enkf_tui_table.h enkf_main.o enkf_tui_plot.o enkf_tui_fs.o enkf_obs.o field_obs.o field_config.o obs_vector.o enkf_tui_util.o ensemble_config.o gen_kw_config.o  
 enkf_tui_main.o                     : enkf_tui_main.c enkf_tui_main.h enkf_tui_run.o enkf_tui_export.o enkf_tui_plot.o enkf_tui_table.o enkf_tui_fs.o enkf_tui_ranking.o enkf_tui_misc.o enkf_main.o enkf_sched.o  
 enkf_util.o                         : enkf_util.c enkf_util.h enkf_defaults.o  
 main.o                              : main.c enkf_fs.o enkf_main.o enkf_types.o enkf_sched.o enkf_tui_main.o ERT.h  

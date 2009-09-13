@@ -8,8 +8,8 @@
 
 static void add_box_or_region( const char * ministep , const char * key , void * box_or_region , FILE * stream) {
   /* Add the data node: */
-  int         active_size;
-  const int * active_list;
+  int         active_size = -1;
+  const int * active_list = NULL;
   if (ecl_box_is_instance( box_or_region )) {
     active_size = ecl_box_get_active_size( box_or_region );
     active_list = ecl_box_get_active_list( box_or_region );
@@ -48,21 +48,17 @@ static void usage( char * exe ) {
 int main(int argc, char ** argv) {
   const char * command_file;
   const char * grid_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/jaskje/realization-25/RG09A-ST-PP-AI-EP-25.EGRID";
-  const char * eqlnum_file  = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/jaskje/realization-25/RG09A-ST-PP-AI-EP-25.INIT";  
+  const char * INIT_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/jaskje/realization-25/RG09A-ST-PP-AI-EP-25.INIT";  
   ecl_grid_type * ecl_grid  = ecl_grid_alloc( grid_file);
   
   ecl_kw_type   * eqlnum_kw;
-  ecl_file_type * ecl_file;
-  {  
-    ecl_file=ecl_file_fread_alloc(eqlnum_file);
-    eqlnum_kw = ecl_file_iget_named_kw( ecl_file , "EQLNUM" , 0);
-    
-  }
+  ecl_file_type * ecl_file = ecl_file_fread_alloc(INIT_file);
+  eqlnum_kw = ecl_file_iget_named_kw( ecl_file , "EQLNUM" , 0);
   
   
   if (argc < 2)
     usage(argv[0]);
-
+  
   command_file = argv[1];
   {
     const char * update_step = "UPDATESTEP";
@@ -472,5 +468,6 @@ int main(int argc, char ** argv) {
     
     fclose( stream );
   }
+  ecl_file_free( ecl_file );
 }
  

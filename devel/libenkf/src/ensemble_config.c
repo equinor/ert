@@ -168,9 +168,10 @@ enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensembl
 */
 
 void ensemble_config_add_gen_param(ensemble_config_type * config , const char * key , const char * enkf_outfile , stringlist_type * options) {
-  gen_data_config_type * node = gen_data_config_alloc( key , true , options , NULL , NULL);
+  gen_data_config_type * node = gen_data_config_alloc_with_options( key , true , options );
   
   {
+    char                  * enkf_outfile     = gen_data_config_pop_enkf_outfile( node );
     enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , PARAMETER , GEN_DATA , enkf_outfile , NULL , node );
     gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
     
@@ -178,7 +179,15 @@ void ensemble_config_add_gen_param(ensemble_config_type * config , const char * 
       enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
       enkf_config_node_set_min_std( config_node , min_std_node );
     }
+
+    util_safe_free( enkf_outfile );
   }
+}
+
+
+
+void ensemble_config_add_field(ensemble_config_type * config ) {
+
 }
 
 
@@ -195,9 +204,12 @@ void ensemble_config_add_gen_param(ensemble_config_type * config , const char * 
 
 void ensemble_config_add_gen_data(ensemble_config_type * config , const char * key , stringlist_type * options) {
   enkf_var_type var_type;
-  char * enkf_outfile = NULL;
-  char * enkf_infile  = NULL;
-  gen_data_config_type * node = gen_data_config_alloc( key , false , options , &enkf_outfile , &enkf_infile);
+  char * enkf_outfile;
+  char * enkf_infile;
+  gen_data_config_type * node = gen_data_config_alloc_with_options( key , false , options);
+  enkf_outfile = gen_data_config_pop_enkf_outfile( node );
+  enkf_infile  = gen_data_config_pop_enkf_infile( node );
+  
   if (enkf_outfile == NULL) 
     /* 
        EnKF should not provide the forward model with an instance of this
@@ -232,9 +244,9 @@ void ensemble_config_add_gen_kw(ensemble_config_type * config ,
                                 const char * template_file    , 
                                 const char * config_file      , 
                                 const stringlist_type * options) {
-
   
-  gen_kw_config_type    * node        = gen_kw_config_fscanf_alloc( key , config_file , template_file , options);
+  
+  gen_kw_config_type    * node        = gen_kw_config_alloc_with_options( key , config_file , template_file , options);
   enkf_config_node_type * config_node = ensemble_config_add_node(config , key , PARAMETER , GEN_KW , enkf_outfile , NULL , node);
   
   /* Installing the min_std instance. */
@@ -359,46 +371,19 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     free( key );
     free( ecl_file );
   }
-
-
+  
+  
   /* GEN_DATA */
-  for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
-    enkf_config_node_type * config_node;
-    stringlist_type * tokens = config_iget_stringlist_ref(config , "GEN_DATA" , i);
-    char * key               = stringlist_iget_copy(tokens , 0);
-    gen_data_config_type * gen_data_config;
-    {
-      stringlist_idel(tokens , 0);
-      {
-	char * ecl_file;
-	char * result_file;
-	enkf_var_type var_type;
-	gen_data_config = gen_data_config_alloc(key , false , tokens , &ecl_file , &result_file);
-	if (ecl_file == NULL) /* 
-				 EnKF should not provide the forward model with an instance of this
-				 data => We have dynamic_result.
-			      */
-	  var_type = DYNAMIC_RESULT;
-	else
-	  var_type = DYNAMIC_STATE;   
-	
-	config_node = ensemble_config_add_node(ensemble_config , key , var_type , GEN_DATA , ecl_file , result_file , gen_data_config);
-	
-	util_safe_free( ecl_file );
-	util_safe_free( result_file );
-      }
-    }
-    {
-      const gen_data_config_type * gen_data_config  = enkf_config_node_get_ref( config_node  );
-      gen_data_type        * gen_data_min_std       = gen_data_config_get_min_std( gen_data_config );
+  for (i=0; i < config_get_occurences(config , "GEN_PARAM"); i++) {
+    stringlist_type * options = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
+    char * key           = stringlist_iget_copy(options , 0);
+    stringlist_idel( options , 0 );
       
-      if (gen_data_min_std != NULL) {
-        enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
-        enkf_config_node_set_min_std( config_node , min_std_node );
-      }
-    }
-    free(key);
+    ensemble_config_add_gen_data(ensemble_config , key , options);
+
+    free( key );
   }
+
 
   /* FIELD */
   {

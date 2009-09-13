@@ -28,7 +28,15 @@ struct gen_data_config_struct {
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
   int                            __report_step;         /* Internal variable used for run_time checking that all instances have the same size (at the same report_step). */
-  gen_data_type                * min_std;
+
+  /* 
+     The data below this line is just held during booting,
+     later the enkf_node layer takes ownership of the data.
+  */
+  /*****************************************************************/  
+  gen_data_type                * min_std;              
+  char                         * enkf_outfile;
+  char                         * enkf_infile;
 };
 
 /*****************************************************************/
@@ -54,24 +62,24 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
 /**
    Internal consistency checks:
 
-   1. (ecl_file != NULL)                                 => out_format != gen_data_undefined.
-   2. ((result_file != NULL) || (init_file_fmt != NULL)) => input_format != gen_data_undefined
+   1. (enkf_outfile != NULL)                             => out_format != gen_data_undefined.
+   2. ((enkf_infile != NULL) || (init_file_fmt != NULL)) => input_format != gen_data_undefined
    3. (output_format == ASCII_template)                  => (template_ecl_file != NULL) && (template_data_key != NULL)
    4. as_param == true                                   => init_file_fmt != NULL
    5. input_format == ASCII_template                     => INVALID
 */
 
-static gen_data_config_type * gen_data_config_alloc__(const char * key,  
-						      bool as_param, 
-						      ecl_type_enum internal_type       , 
-						      gen_data_file_format_type input_format ,
-						      gen_data_file_format_type output_format,
-						      const char * init_file_fmt     ,  
-						      const char * template_ecl_file , 
-						      const char * template_data_key ,
-                                                      const char * ecl_file          ,
-						      const char * result_file       ,
-                                                      const char * min_std_file) {
+gen_data_config_type * gen_data_config_alloc(const char * key,  
+                                             bool as_param, 
+                                             ecl_type_enum internal_type       , 
+                                             gen_data_file_format_type input_format ,
+                                             gen_data_file_format_type output_format,
+                                             const char * init_file_fmt     ,  
+                                             const char * template_ecl_file , 
+                                             const char * template_data_key ,
+                                             const char * enkf_outfile          ,
+                                             const char * enkf_infile       ,
+                                             const char * min_std_file) {
   
   gen_data_config_type * config = util_malloc(sizeof * config , __func__);
   config->__type_id         = GEN_DATA_CONFIG_ID;
@@ -81,15 +89,17 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
   config->active_list       = active_list_alloc( ALL_ACTIVE );
   config->input_format      = input_format;
   config->output_format     = output_format;
+  config->enkf_infile       = util_alloc_string_copy( enkf_infile );
+  config->enkf_outfile      = util_alloc_string_copy( enkf_outfile );
   config->__report_step     = -1;
 
   /* Condition 1: */
-  if ((ecl_file != NULL) && (output_format == GEN_DATA_UNDEFINED))
-    util_abort("%s: invalid configuration. When ecl_file != NULL you must explicitly specify an output format with OUTPUT_FORMAT:.\n",__func__);
+  if ((enkf_outfile != NULL) && (output_format == GEN_DATA_UNDEFINED))
+    util_abort("%s: invalid configuration. When enkf_outfile != NULL you must explicitly specify an output format with OUTPUT_FORMAT:.\n",__func__);
 
   /* Condition 2: */
-  if (((result_file != NULL) || (init_file_fmt != NULL)) && (input_format == GEN_DATA_UNDEFINED))
-    util_abort("%s: invalid configuration. When loading with result_file / init_files you must specify an input format with INPUT_FORMAT: \n",__func__);
+  if (((enkf_infile != NULL) || (init_file_fmt != NULL)) && (input_format == GEN_DATA_UNDEFINED))
+    util_abort("%s: invalid configuration. When loading with enkf_infile / init_files you must specify an input format with INPUT_FORMAT: \n",__func__);
 
   /* Condition 3: */
   if (config->output_format == ASCII_TEMPLATE) {
@@ -140,11 +150,34 @@ static gen_data_config_type * gen_data_config_alloc__(const char * key,
 }
 
 
+
+/**
+   The gen_data_config object has (during the boot process) had
+   temporary ownership to some objects, these should go be handled by
+   the enkf_node layer. The pop_xxx functions will return the objects
+   in question, and set the internal gen_data_config pointer to NULL.
+
+   I.e. these functions can only be called once.
+*/
+   
+
+
 gen_data_type * gen_data_config_get_min_std( const gen_data_config_type * config ) {
   return config->min_std;
 }
 
 
+char * gen_data_config_pop_enkf_infile( gen_data_config_type * config ) {
+  char * enkf_infile  = config->enkf_infile;
+  config->enkf_infile = NULL;
+  return enkf_infile;
+}
+
+char * gen_data_config_pop_enkf_outfile( gen_data_config_type * config ) {
+  char * enkf_outfile  = config->enkf_outfile;
+  config->enkf_outfile = NULL;
+  return enkf_outfile;
+}
 
 
 /**
@@ -157,20 +190,24 @@ gen_data_type * gen_data_config_get_min_std( const gen_data_config_type * config
 */
 
 
-static gen_data_file_format_type __gen_data_config_check_format( const char * format ) {
+static gen_data_file_format_type __gen_data_config_check_format( const void * __format ) {
   gen_data_file_format_type type = GEN_DATA_UNDEFINED;
 
-  if (strcmp(format , "ASCII") == 0)
-    type = ASCII;
-  else if (strcmp(format , "ASCII_TEMPLATE") == 0)
-    type = ASCII_TEMPLATE;
-  else if (strcmp(format , "BINARY_DOUBLE") == 0)
-    type = BINARY_DOUBLE;
-  else if (strcmp(format , "BINARY_FLOAT") == 0)
-    type = BINARY_FLOAT;
-  
-  if (type == GEN_DATA_UNDEFINED)
-    util_exit("Sorry: format:\"%s\" not recognized - valid values: ASCII / ASCII_TEMPLATE / BINARY_DOUBLE / BINARY_FLOAT \n", format);
+  if (__format != NULL) {
+    const char * format = (const char *) __format;
+
+    if (strcmp(format , "ASCII") == 0)
+      type = ASCII;
+    else if (strcmp(format , "ASCII_TEMPLATE") == 0)
+      type = ASCII_TEMPLATE;
+    else if (strcmp(format , "BINARY_DOUBLE") == 0)
+      type = BINARY_DOUBLE;
+    else if (strcmp(format , "BINARY_FLOAT") == 0)
+      type = BINARY_FLOAT;
+    
+    if (type == GEN_DATA_UNDEFINED)
+      util_exit("Sorry: format:\"%s\" not recognized - valid values: ASCII / ASCII_TEMPLATE / BINARY_DOUBLE / BINARY_FLOAT \n", format);
+  }
   
   return type;
 }
@@ -189,72 +226,24 @@ static gen_data_file_format_type __gen_data_config_check_format( const char * fo
 
 */
 
-gen_data_config_type * gen_data_config_alloc(const char * key , bool as_param , const stringlist_type * options , char **__ecl_file , char ** __result_file) {
+gen_data_config_type * gen_data_config_alloc_with_options(const char * key , bool as_param , const stringlist_type * options) {
   const ecl_type_enum internal_type = ecl_double_type;
   gen_data_config_type * config;
   hash_type * opt_hash = hash_alloc_from_options( options );
-  char * result_file   = NULL;
-  char * ecl_file      = NULL;
 
-  /* Parsing options */
-  {
-    gen_data_file_format_type input_format  = GEN_DATA_UNDEFINED;
-    gen_data_file_format_type output_format = GEN_DATA_UNDEFINED;
-    char * template_file = NULL;
-    char * template_key  = NULL;
-    char * init_file_fmt = NULL;
-    char * min_std_file  = NULL;
-    
-    hash_iter_type * iter = hash_iter_alloc(opt_hash);
-    const char * option = hash_iter_get_next_key(iter);
-    while (option != NULL) {
-      const char * value = hash_get(opt_hash , option);
-
-      /* 
-	 That the various options are internally consistent is ensured
-	 in the final static allocater.
-      */
-      if (strcmp(option , "INPUT_FORMAT") == 0) 
-	input_format = __gen_data_config_check_format( value );
-      
-      else if (strcmp(option , "OUTPUT_FORMAT") == 0)
-	output_format = __gen_data_config_check_format( value );
-      
-      else if (strcmp(option , "TEMPLATE") == 0)
-	template_file = util_alloc_string_copy( value );
-      
-      else if (strcmp(option , "KEY") == 0)
-	template_key = util_alloc_string_copy( value );
-      
-      else if (strcmp(option , "INIT_FILES") == 0)
-	init_file_fmt = util_alloc_string_copy( value );
-
-      else if (strcmp(option , "MIN_STD") == 0)
-	min_std_file = value;
-
-      else if ((__ecl_file != NULL) && ((strcmp(option , "ECL_FILE") == 0)))
-	ecl_file = util_alloc_string_copy( value );
-      
-      else if ((__result_file != NULL) && ((strcmp(option , "RESULT_FILE") == 0)))
-	result_file = util_alloc_string_copy( value );
-      
-      else
-	fprintf(stderr , "%s: Warning: \'%s:%s\' not recognized as valid option - ignored \n",__func__ , option , value);
-
-      
-      option = hash_iter_get_next_key(iter);
-    } 
-    config = gen_data_config_alloc__(key , as_param , internal_type , input_format , output_format , init_file_fmt , template_file , template_key , ecl_file , result_file , min_std_file);
-    util_safe_free( init_file_fmt );
-    util_safe_free( template_file );
-    util_safe_free( template_key );
-    hash_iter_free( iter );
-  }
+  config = gen_data_config_alloc(key      , 
+                                 as_param , 
+                                 internal_type , 
+                                 __gen_data_config_check_format( hash_safe_get( opt_hash , "INPUT_FORMAT") ),
+                                 __gen_data_config_check_format( hash_safe_get( opt_hash , "OUTPUT_FORMAT") ),
+                                 hash_safe_get( opt_hash , "INIT_FILES" ),
+                                 hash_safe_get( opt_hash , "TEMPLATE" ),
+                                 hash_safe_get( opt_hash , "KEY"),
+                                 hash_safe_get( opt_hash , "ECL_FILE"),
+                                 hash_safe_get( opt_hash , "RESULT_FILE"),
+                                 hash_safe_get( opt_hash , "MIN_STD" ));
+  
   hash_free(opt_hash);
-
-  /* These must be returned to the enkf_node layer - UGGGLY */
-  if (__ecl_file    != NULL) *__ecl_file    = ecl_file;
-  if (__result_file != NULL) *__result_file = result_file;
   return config;
 }
 

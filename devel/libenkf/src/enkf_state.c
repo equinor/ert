@@ -44,6 +44,7 @@
 #include <forward_model.h>
 #include <log.h>
 #include <ecl_endian_flip.h>
+#include <ert_template.h>
 #define ENKF_STATE_TYPE_ID 78132
 
 
@@ -93,6 +94,7 @@ typedef struct shared_info_struct {
   ext_joblist_type            * joblist;           /* The list of external jobs which are installed - and *how* they should be run (with Python code) */
   job_queue_type              * job_queue;         /* The queue handling external jobs. (i.e. LSF / rsh / local / ... )*/ 
   log_type                    * logh;              /* The log handle. */
+  ert_templates_type          * templates; 
   bool                          statoil_mode;      /* Fucking hack - should be removed. */
 } shared_info_type;
 
@@ -145,10 +147,6 @@ struct enkf_state_struct {
 
 /*****************************************************************/
 
-
-/**
-   Currently no locking is implemented - the lock_mode parameter is not used. 
-*/
 
 static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt_type * run_path_fmt, const subst_list_type * state_subst_list) {
   util_safe_free(run_info->run_path);
@@ -237,7 +235,7 @@ static void run_info_complete_run(run_info_type * run_info) {
 
 /*****************************************************************/
 
-static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, enkf_fs_type * fs , log_type * logh) {
+static shared_info_type * shared_info_alloc(const site_config_type * site_config , const model_config_type * model_config, enkf_fs_type * fs , log_type * logh , ert_templates_type * templates) {
   shared_info_type * shared_info = util_malloc(sizeof * shared_info , __func__);
 
   shared_info->fs           = fs;
@@ -246,7 +244,7 @@ static shared_info_type * shared_info_alloc(const site_config_type * site_config
   shared_info->model_config = model_config;
   shared_info->statoil_mode = site_config_get_statoil_mode( site_config );
   shared_info->logh         = logh;
-  
+  shared_info->templates    = templates;
   return shared_info;
 }
 
@@ -513,7 +511,7 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
         enkf_state_add_subst_kw( enkf_state , "CASE" , my_config->eclbase , NULL);  /* No CASE_TABLE loaded - using the eclbase as default. */
       else
         enkf_state_add_subst_kw( enkf_state , "CASE" , my_config->casename , NULL);
-
+      
       free(smspec_file);
     }
   }
@@ -543,14 +541,15 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   const ecl_config_type     * ecl_config,
 				   hash_type                 * data_kw,
 				   const forward_model_type  * default_forward_model,
-                                   log_type                  * logh) { 
+                                   log_type                  * logh,
+                                   ert_templates_type        * templates) {
   
   enkf_state_type * enkf_state  = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id              = ENKF_STATE_TYPE_ID; 
 
   enkf_state->ensemble_config   = ensemble_config;
   enkf_state->ecl_config        = ecl_config;
-  enkf_state->shared_info       = shared_info_alloc(site_config , model_config , fs , logh);
+  enkf_state->shared_info       = shared_info_alloc(site_config , model_config , fs , logh, templates);
   enkf_state->run_info          = run_info_alloc();
   
   enkf_state->node_hash         = hash_alloc();
@@ -590,6 +589,7 @@ INCLDUE
      the ordering (which is interesting because the substititions are
      done in cacade like fashion).
   */
+  enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , "---" , "The absolute path of the current forward model instance. ");
   enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH"   , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
   enkf_state_add_subst_kw(enkf_state , "CWD"           , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
   enkf_state_add_subst_kw(enkf_state , "IENS"          , "---" , "The realisation number for this realization.");
@@ -1284,7 +1284,7 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
    change with report step.
 */
 
-static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int step1 , int step2) {
+static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const char * run_path , int step1 , int step2) {
   const member_config_type  * my_config = enkf_state->my_config;  
   const bool fmt_file  = ecl_config_get_formatted(enkf_state->ecl_config);
   char * step1_s 	   = util_alloc_sprintf("%d" , step1);
@@ -1294,8 +1294,9 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , int s
   char * restart_file1     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step1);
   char * restart_file2     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step2);
   
-  enkf_state_add_subst_kw(enkf_state , "TSTEP1"  	   , step1_s   , NULL);
-  enkf_state_add_subst_kw(enkf_state , "TSTEP2"  	   , step2_s   , NULL);
+  enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , run_path      , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , step1_s       , NULL);
+  enkf_state_add_subst_kw(enkf_state , "TSTEP2"        , step2_s       , NULL);
   enkf_state_add_subst_kw(enkf_state , "TSTEP1_04"     , step1_s04     , NULL);
   enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , step2_s04     , NULL);
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , restart_file1 , NULL);
@@ -1338,7 +1339,7 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
   printf(fmt_string , "Key" , "Current value" , "Description");
   printf("------------------------------------------------------------------------------------------------------------------------\n");
   if (step1 >= 0)
-    enkf_state_set_dynamic_subst_kw(enkf_state , step1 , step2);
+    enkf_state_set_dynamic_subst_kw(enkf_state , NULL , step1 , step2);
 
   for (ikw = 0; ikw < subst_list_get_size( enkf_state->subst_list ); ikw++) {
     const char * key   = subst_list_iget_key( enkf_state->subst_list , ikw);
@@ -1353,6 +1354,7 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
   printf("------------------------------------------------------------------------------------------------------------------------\n");
   
 }
+
 
 
 
@@ -1399,8 +1401,8 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     else
       enkf_state_try_fread(enkf_state , DYNAMIC_STATE + STATIC_STATE , run_info->step1 , run_info->init_state_dynamic);
     
-    
-    enkf_state_set_dynamic_subst_kw(  enkf_state , run_info->step1 , run_info->step2);
+    enkf_state_set_dynamic_subst_kw(  enkf_state , run_info->run_path , run_info->step1 , run_info->step2);
+    ert_templates_instansiate( enkf_state->shared_info->templates , run_info->run_path , enkf_state->subst_list );
     enkf_state_ecl_write( enkf_state );
     
     {

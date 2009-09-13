@@ -206,7 +206,7 @@ void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const
 void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list , double **_output_values) {
   gen_kw_output_transform(gen_kw);
 
-  *_kw_list       = gen_kw_config_get_name_list(gen_kw->config);
+  *_kw_list       = (char **) gen_kw_config_get_name_list(gen_kw->config);
   *_size          = gen_kw_config_get_data_size(gen_kw->config);
   *_output_values = (double *) scalar_get_output_ref(gen_kw->scalar);
 

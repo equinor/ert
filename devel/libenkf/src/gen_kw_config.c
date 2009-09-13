@@ -103,39 +103,8 @@ INIT_FILES:
 
 */
 
-gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * key , const char * filename , const char * template_file, const stringlist_type * options) {
-  char * min_std_file  = NULL;
-  char * init_file_fmt = NULL;
+gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filename , const char * template_file, const char * min_std_file , const char * init_file_fmt ) {
   gen_kw_config_type * config = NULL;
-
-  /* Starting on the options. */
-  {
-    hash_type * opt_hash = hash_alloc_from_options( options );
-    hash_iter_type * iter = hash_iter_alloc(opt_hash);
-    const char * option = hash_iter_get_next_key(iter);
-    while (option != NULL) {
-      const char * value = hash_get( opt_hash , option );
-      /*
-	This could (should ??) have been implemented with
-	if-then-else; isolated if-blocks have been chosen for
-	clarity. Must update option_OK in every block, and check it
-	at the bottom.
-
-      */
-
-      if (strcmp(option , "MIN_STD") == 0) 
-	min_std_file = util_alloc_string_copy( value );
-      else if (strcmp( option , "INIT_FILES") == 0)
-        init_file_fmt = util_alloc_string_copy( value );
-      else
-        fprintf(stderr,"** Warning: options:%s not recognized \n",option);
-      
-      option = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free( iter );
-    hash_free( opt_hash );
-  }
-
 
   if (util_file_exists(filename)) {
     FILE * stream = util_fopen(filename , "r");
@@ -169,6 +138,17 @@ gen_kw_config_type * gen_kw_config_fscanf_alloc(const char * key , const char * 
 }
 
 
+
+
+gen_kw_config_type * gen_kw_config_alloc_with_options(const char * key , const char * filename , const char * template_file, const stringlist_type * options) {
+  hash_type * opt_hash = hash_alloc_from_options( options );
+  return gen_kw_config_alloc( key , filename , template_file , hash_safe_get( opt_hash , "MIN_STD" ), hash_safe_get( opt_hash , "INIT_FILES") );
+}
+
+
+
+
+
 gen_kw_type * gen_kw_config_get_min_std( const gen_kw_config_type * gen_kw_config ) {
   return gen_kw_config->min_std;
 }
@@ -199,8 +179,8 @@ const char * gen_kw_config_get_key(const gen_kw_config_type * config ) {
 }
 
 
-char * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , const char * key , int kw_nr) {
-  char * user_key = util_alloc_sprintf("%s:%s" , key ,gen_kw_config_iget_name( config , kw_nr ));
+char * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , int kw_nr) {
+  char * user_key = util_alloc_sprintf("%s:%s" , config->key ,gen_kw_config_iget_name( config , kw_nr ));
   return user_key;
 }
 
@@ -229,8 +209,8 @@ const char * gen_kw_config_get_tagged_name(const gen_kw_config_type * config, in
 }
 
 
-char ** gen_kw_config_get_name_list(const gen_kw_config_type * config) {
-  return config->kw_list;
+const char ** gen_kw_config_get_name_list(const gen_kw_config_type * config) {
+  return (const char **) config->kw_list;
 }
 
 

@@ -25,6 +25,8 @@ gen_data_file_format_type;
    loading files.
 */
 
+char                       * gen_data_config_pop_enkf_infile( gen_data_config_type * config );
+char                       * gen_data_config_pop_enkf_outfile( gen_data_config_type * config );
 gen_data_type              * gen_data_config_get_min_std( const gen_data_config_type * config );
 gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_config_type * );
 gen_data_file_format_type    gen_data_config_get_output_format ( const gen_data_config_type * );
@@ -33,7 +35,7 @@ ecl_type_enum         	     gen_data_config_get_internal_type(const gen_data_con
 int                   	     gen_data_config_get_byte_size(const gen_data_config_type * );
 int                   	     gen_data_config_get_data_size(const gen_data_config_type * );
 int                          gen_data_config_get_report_step(const gen_data_config_type *);
-gen_data_config_type  	   * gen_data_config_alloc(const char * key , bool , const stringlist_type * , char ** , char **);
+gen_data_config_type  	   * gen_data_config_alloc_with_options(const char * key , bool , const stringlist_type *);
 void                         gen_data_config_free(gen_data_config_type * );
 void                         gen_data_config_assert_size(gen_data_config_type *  , int , int);
 const bool     *             gen_data_config_get_iactive(const gen_data_config_type * );
