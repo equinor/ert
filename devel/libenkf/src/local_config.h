@@ -43,7 +43,7 @@ typedef enum {
 #define ALLOC_MINISTEP_COPY_STRING              "COPY_MINISTEP"
 #define DEL_DATA_STRING                         "DEL_DATA"
 #define DEL_OBS_STRING                          "DEL_OBS"
-#define DEL_ALLD_ATA_STRING                     "DEL_ALL_DATA"
+#define DEL_ALL_DATA_STRING                     "DEL_ALL_DATA"
 #define DEL_ALL_OBS_STRING                      "DEL_ALL_OBS"
 
 
