@@ -470,8 +470,8 @@ static void enkf_fs_upgrade_103(const char * config_file , const char * root_pat
     arg_pack_append_int( arg_pack , 0 );
     arg_pack_append_ptr( arg_pack , msg );
 
-    util_walk_directory(root_path , file_count , arg_pack);
-    util_walk_directory(root_path , upgrade_file_103 , arg_pack);
+    util_walk_directory(root_path , file_count , arg_pack , NULL , NULL);
+    util_walk_directory(root_path , upgrade_file_103 , arg_pack , NULL , NULL);
     msg_free( msg , true );
     arg_pack_free( arg_pack );
   }
@@ -843,7 +843,7 @@ static void enkf_fs_upgrade_101(const char * config_file, const char * root_path
     free( prompt );
   }
   free( backup_path );
-  util_walk_directory( root_path , enkf_fs_upgrade_101_kwlist , NULL);
+  util_walk_directory( root_path , enkf_fs_upgrade_101_kwlist , NULL , NULL , NULL);
   {
     char     * current_case = NULL;
     set_type * cases        = set_alloc_empty();

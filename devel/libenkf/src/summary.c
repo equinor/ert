@@ -18,7 +18,7 @@
 
 struct summary_struct {
   int                          __type_id;    /* Only used for run_time checking. */
-  const summary_config_type  * config;
+  summary_config_type        * config;       /* Can not be NULL - var_type is set on first load. */
   double                     * data;         /* Size is always one - but what the fuck ... */
   summary_type               * min_variance;
 };
@@ -48,7 +48,7 @@ void summary_free_data(summary_type *summary) {
 summary_type * summary_alloc(const summary_config_type * summary_config) {
   summary_type * summary  = util_malloc(sizeof *summary , __func__);
   summary->__type_id      = SUMMARY;
-  summary->config = summary_config;
+  summary->config = (summary_config_type *) summary_config;
   summary->data = NULL;
   summary_realloc_data(summary);
   return summary;
@@ -180,7 +180,7 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
 
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
-    const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config);
+    const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config , ecl_sum);
     
     /* Check if the ecl_sum instance has this report step. */
     if (ecl_sum_has_report_step( ecl_sum , report_step )) {

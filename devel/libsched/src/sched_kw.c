@@ -79,6 +79,7 @@ struct data_handlers_struct {
 struct sched_kw_struct {
   sched_type_enum      type;
   data_handlers_type   data_handlers;
+  int                  restart_nr;  /* The block nr owning this instance. */
   void               * data;
 };
 
@@ -235,37 +236,35 @@ static data_handlers_type get_data_handlers(sched_type_enum type)
 
 static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_kw, int * num_steps)
 {
-      *num_steps = sched_kw_tstep_get_size(sched_kw->data);
-      sched_kw_type ** sched_kw_tsteps = util_malloc(*num_steps * sizeof * sched_kw_tsteps, __func__);
-
-      for(int i=0; i<*num_steps; i++)
-      {
-        sched_kw_tsteps[i] = util_malloc(sizeof * sched_kw_tsteps[i], __func__);
-        sched_kw_tsteps[i]->type = TSTEP;
-        GET_DATA_HANDLERS(sched_kw_tsteps[i]->data_handlers, tstep);
-        double step = sched_kw_tstep_iget_step((const sched_kw_tstep_type *) sched_kw->data, i);
-        sched_kw_tsteps[i]->data = (void *) sched_kw_tstep_alloc_from_double(step);
-      }
-      
-      return sched_kw_tsteps;
+  *num_steps = sched_kw_tstep_get_size(sched_kw->data);
+  sched_kw_type ** sched_kw_tsteps = util_malloc(*num_steps * sizeof * sched_kw_tsteps, __func__);
+  
+  for(int i=0; i<*num_steps; i++) {
+    sched_kw_tsteps[i] = util_malloc(sizeof * sched_kw_tsteps[i], __func__);
+    sched_kw_tsteps[i]->type = TSTEP;
+    GET_DATA_HANDLERS(sched_kw_tsteps[i]->data_handlers, tstep);
+    double step = sched_kw_tstep_iget_step((const sched_kw_tstep_type *) sched_kw->data, i);
+    sched_kw_tsteps[i]->data = (void *) sched_kw_tstep_alloc_from_double(step);
+  }
+  
+  return sched_kw_tsteps;
 }
 
 
 
 static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_kw, int * num_steps) 
 {
-      *num_steps = sched_kw_dates_get_size(sched_kw->data);
-      sched_kw_type ** sched_kw_dates = util_malloc(*num_steps * sizeof * sched_kw_dates, __func__);
-
-      for(int i=0; i<*num_steps; i++)
-      {
-        sched_kw_dates[i] = util_malloc(sizeof * sched_kw_dates[i], __func__);
-        sched_kw_dates[i]->type = DATES;
-        GET_DATA_HANDLERS(sched_kw_dates[i]->data_handlers, dates);
-        time_t date = sched_kw_dates_iget_time_t((const sched_kw_dates_type *) sched_kw->data, i);
-        sched_kw_dates[i]->data = (void *) sched_kw_dates_alloc_from_time_t(date);
-      }
-      return sched_kw_dates;
+  *num_steps = sched_kw_dates_get_size(sched_kw->data);
+  sched_kw_type ** sched_kw_dates = util_malloc(*num_steps * sizeof * sched_kw_dates, __func__);
+  
+  for(int i=0; i<*num_steps; i++) {
+    sched_kw_dates[i] = util_malloc(sizeof * sched_kw_dates[i], __func__);
+    sched_kw_dates[i]->type = DATES;
+    GET_DATA_HANDLERS(sched_kw_dates[i]->data_handlers, dates);
+    time_t date = sched_kw_dates_iget_time_t((const sched_kw_dates_type *) sched_kw->data, i);
+    sched_kw_dates[i]->data = (void *) sched_kw_dates_alloc_from_time_t(date);
+  }
+  return sched_kw_dates;
 }
 /*****************************************************************/
 
@@ -328,12 +327,17 @@ sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
     sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
     sched_kw->type           = get_sched_type_from_string(kw_name);
     sched_kw->data_handlers  = get_data_handlers(sched_kw->type);
-    //printf("Loading %d: %8s : %8s \n",sched_kw->type , get_name_from_type(sched_kw->type) , kw_name);
+    sched_kw->restart_nr     = -1;
     sched_kw->data           = sched_kw->data_handlers.fscanf_alloc(stream, at_eos, kw_name); 
 
     free(kw_name);
     return sched_kw;
   } 
+}
+
+
+void sched_kw_set_restart_nr( sched_kw_type * kw , int restart_nr) {
+  kw->restart_nr = restart_nr;
 }
 
 

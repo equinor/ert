@@ -301,7 +301,7 @@ void local_config_set_updatestep(local_config_type * local_config, int step1 , i
   int step;
   
   for ( step = step1; step < util_int_min(step2 + 1 , vector_get_size( local_config->updatestep )); step++)
-    vector_insert_ref(local_config->updatestep , step , updatestep );
+    vector_iset_ref(local_config->updatestep , step , updatestep );
   
 }
 

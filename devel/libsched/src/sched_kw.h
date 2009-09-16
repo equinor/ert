@@ -8,10 +8,28 @@ extern "C" {
 #include <time.h>
 #include <hash.h>
 
-typedef enum {WCONHIST, DATES , COMPDAT , TSTEP, TIME, WELSPECS, GRUPTREE,
-              INCLUDE, RPTSCHED, DRSDT, SKIPREST, RPTRST, TUNING, WHISTCTL, UNTYPED, 
-              WCONINJ, WCONINJE, WCONINJH, WCONPROD} sched_type_enum;
+typedef enum {WCONHIST =  0, 
+              DATES    =  1, 
+              COMPDAT  =  2, 
+              TSTEP    =  3, 
+              TIME     =  4, 
+              WELSPECS =  5, 
+              GRUPTREE =  6,
+              INCLUDE  =  7, 
+              RPTSCHED =  8, 
+              DRSDT    =  9, 
+              SKIPREST = 10, 
+              RPTRST   = 11, 
+              TUNING   = 12, 
+              WHISTCTL = 13, 
+              UNTYPED  = 14, 
+              WCONINJ  = 15, 
+              WCONINJE = 16, 
+              WCONINJH = 17, 
+              WCONPROD = 18,
+              NUM_SCHED_KW_TYPES = 19} sched_type_enum;
               
+
 
 #define WCONHIST_STRING  "WCONHIST"
 #define DATES_STRING     "DATES"
@@ -57,6 +75,7 @@ char          ** sched_kw_alloc_well_list(const sched_kw_type *, int *);
 hash_type      * sched_kw_alloc_well_obs_hash(const sched_kw_type *);
 void             sched_kw_alloc_child_parent_list(const sched_kw_type *, char ***, char ***, int *);
 void           * sched_kw_get_data( sched_kw_type * kw);
+void             sched_kw_set_restart_nr( sched_kw_type * kw , int restart_nr);
 
 #ifdef __cplusplus
 }

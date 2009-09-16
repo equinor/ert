@@ -1121,9 +1121,6 @@ static config_type * enkf_main_alloc_config() {
   
   /*****************************************************************/
   /** Keywords expected normally found in site_config */
-  item = config_add_item( config , "RUN_TEMPLATE" , false , true );
-  config_item_set_argc_minmax(item , 2 , -1 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
-  
   item = config_add_item(config , "HOST_TYPE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
@@ -1253,6 +1250,9 @@ static config_type * enkf_main_alloc_config() {
   /*****************************************************************/
   /* Optional keywords from the model config file */
   
+  item = config_add_item( config , "RUN_TEMPLATE" , false , true );
+  config_item_set_argc_minmax(item , 2 , -1 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
+
   item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   
