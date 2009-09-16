@@ -342,6 +342,8 @@ static local_config_instruction_type local_config_cmd_from_string( char * cmd_st
     cmd = DEL_DATA;
   else if (strcmp( cmd_string , DEL_OBS_STRING) == 0)
     cmd = DEL_OBS;
+  else if (strcmp( cmd_string ,DEL_ALL_DATA_STRING ) == 0)
+    cmd = DEL_ALL_DATA;
   else {
     util_abort("%s: Command:%s not recognized \n",__func__ , cmd_string);
     cmd = INVALID_CMD;
@@ -394,6 +396,9 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
     break;
   case(DEL_OBS):
     return DEL_OBS_STRING;
+    break;
+  case(DEL_ALL_DATA):
+    return DEL_ALL_DATA_STRING;
     break;
   default:
     util_abort("%s: command:%d not recognized \n",__func__ , cmd);
