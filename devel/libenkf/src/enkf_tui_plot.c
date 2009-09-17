@@ -150,7 +150,7 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
                                      const plot_config_type * plot_config) {
   
   bool  plot_dates             = true;
-  const int errorbar_max_obsnr = 25;
+  const int errorbar_max_obsnr = plot_config_get_errorbar_max( plot_config );
   const bool add_observations  = true;
   bool  show_plot              = false;
   char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , enkf_fs_get_read_dir(fs), user_key );

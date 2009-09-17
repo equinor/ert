@@ -18,6 +18,7 @@ extern "C" {
 #include <forward_model.h>
 #include <misfit_table.h>
 #include <plot_config.h>
+#include <set.h>
   
 /*****************************************************************/
 
@@ -80,6 +81,9 @@ void         enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_
 void                enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit);
 misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main );
 
+void                enkf_main_store_pid(const char * argv0);
+void                enkf_main_delete_pid( );
+void                enkf_main_list_users(  set_type * users , const char * executable );
 
 SAFE_CAST_HEADER(enkf_main)
 

@@ -48,6 +48,10 @@
 #include <log.h>
 #include <plot_config.h>
 #include <ert_template.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "enkf_defaults.h"
 
 /**
@@ -1213,10 +1217,7 @@ static config_type * enkf_main_alloc_config() {
   config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
   
 
-  config_add_key_value(config , "PLOT_HEIGHT"  , false , CONFIG_INT);
-  config_add_key_value(config , "PLOT_WIDTH"   , false , CONFIG_INT);
-  config_add_key_value(config , "PLOT_PATH"    , false , CONFIG_STRING);
-  config_add_key_value(config , "IMAGE_VIEWER" , false , CONFIG_EXISTING_FILE);
+  plot_config_add_config_items( config );
   
     
   /*****************************************************************/
@@ -1871,4 +1872,86 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 
 
-  
+/*****************************************************************/
+
+
+void enkf_main_store_pid(const char * argv0) {
+  char * current_executable;
+  if (util_is_abs_path( argv0 ))
+    current_executable = util_alloc_string_copy( argv0 );
+  else 
+    current_executable = util_alloc_PATH_executable( argv0 );
+
+  util_make_path( DEFAULT_VAR_DIR );
+  util_chmod_if_owner( DEFAULT_VAR_DIR , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH + S_IWOTH); /* chmod a+rwx */
+  {
+    char * pidfile = util_alloc_sprintf("%s/%d" , DEFAULT_VAR_DIR , getpid());
+    FILE * stream = util_fopen( pidfile , "w");
+    
+    fprintf(stream , "%s %d\n", current_executable , getuid());
+    fclose( stream );
+    util_chmod_if_owner( pidfile , S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH + S_IWOTH); /* chmod a+rw */
+    free( pidfile );
+  }
+
+  util_safe_free( current_executable );
+}
+
+
+void enkf_main_delete_pid( ) {
+  char * pidfile = util_alloc_sprintf("%s/%d" , DEFAULT_VAR_DIR , getpid());
+  util_unlink_existing( pidfile );
+  free( pidfile );
+}
+
+
+
+/* Used by external application - this is a library ... */
+void  enkf_main_list_users(  set_type * users , const char * executable ) {
+  DIR * dir = opendir( DEFAULT_VAR_DIR );
+  if (dir != NULL) {
+    struct dirent * dp;
+    do {
+      dp = readdir(dir);
+      if (dp != NULL) {
+        int pid;
+        if (util_sscanf_int( dp->d_name , &pid )) {
+          char * full_path = util_alloc_filename( DEFAULT_VAR_DIR , dp->d_name , NULL );
+          FILE * stream    = util_fopen( full_path , "r");
+          int  uid;
+          char this_executable[512];
+          bool add_user   = false;
+          
+          
+          if (fscanf( stream , "%s %d" , this_executable , &uid) == 2) {
+            if (executable != NULL) {
+              if (util_string_equal( this_executable , executable )) 
+                add_user   = true;
+            } else
+              add_user = true;
+          }
+          fclose( stream );
+
+
+          /* Remove the pid files of dead processes. */
+          if (!util_proc_alive( pid )) {
+            unlink( full_path );
+            add_user = false;
+          }
+          
+          
+          if (add_user) {
+            struct passwd *pwd;
+            pwd = getpwuid( uid );
+            if (pwd != NULL)
+              set_add_key( users , pwd->pw_name );
+          } 
+
+
+          free( full_path );
+        }
+      }
+    } while (dp != NULL );
+    closedir( dir );
+  } 
+}

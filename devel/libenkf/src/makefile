@@ -73,7 +73,7 @@ include dependencies
 #################################################################
 # Binaries
 
-BIN_FILES             = ert gen_test.x test.x run_ensemble.x sqlite3_driver_test.x  make_grane_config.x
+BIN_FILES             = ert gen_test.x test.x run_ensemble.x sqlite3_driver_test.x  make_grane_config.x ert_users
 BIN:	                $(BIN_FILES)
 BIN_FILES_SDP_INSTALL = ert
 
@@ -100,6 +100,9 @@ make_grane_config.x:	make_grane_config.o $(LIB)
 
 sched_test.x:	sched_test.o $(LIB)
 	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+
+ert_users:	ert_users.o $(LIB)
+	$(LD) -$(MFLAG) $(LDFLAGS) ert_users.o -o ert_users  $(LIB_PATH)  $(LIB_LINK) 	
 
 run_ensemble.o	: run_ensemble.c
 	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@

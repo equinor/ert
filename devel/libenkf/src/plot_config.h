@@ -10,8 +10,9 @@ void               plot_config_set_path(plot_config_type * plot_config , const c
 void               plot_config_set_image_type(plot_config_type * plot_config , const char * plot_device);
 void               plot_config_set_viewer(plot_config_type * plot_config , const char * plot_viewer);
 void               plot_config_set_driver(plot_config_type * plot_config , const char * plot_driver);;
+void               plot_config_set_errorbar_max(plot_config_type * plot_config , int errorbar_max);
 
-
+int                plot_config_get_errorbar_max(const plot_config_type * plot_config );
 int                plot_config_get_width(const plot_config_type * plot_config );
 int                plot_config_get_height(const plot_config_type * plot_config );
 const char  *      plot_config_get_path(const plot_config_type * plot_config );
@@ -21,5 +22,7 @@ const char  *      plot_config_get_driver(const plot_config_type * plot_config )
 void               plot_config_free( plot_config_type * plot_config);
 plot_config_type * plot_config_alloc();
 void               plot_config_init_from_config(plot_config_type * plot_config , const config_type * config );
+
+void               plot_config_add_config_items( config_type * config );
 
 #endif

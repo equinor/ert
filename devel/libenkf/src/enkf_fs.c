@@ -1040,7 +1040,7 @@ bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool 
       } else {
 	fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
 	fprintf(stderr,"Available: directories: ");
-	set_fprintf(fs->dir_set , stderr);
+	set_fprintf(fs->dir_set , " " , stderr);
 	fprintf(stderr,"\n");
 	
 	has_dir = false;

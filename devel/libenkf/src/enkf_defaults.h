@@ -60,11 +60,13 @@
 #define DEFAULT_ENSPATH     "storage"
 
 
-#define DEFAULT_PLOT_WIDTH    1024
-#define DEFAULT_PLOT_HEIGHT    768
-#define DEFAULT_IMAGE_TYPE    "png"
-#define DEFAULT_PLOT_DRIVER   "PLPLOT"
-#define DEFAULT_IMAGE_VIEWER  "/usr/bin/display"
+#define DEFAULT_PLOT_WIDTH           1024
+#define DEFAULT_PLOT_HEIGHT           768
+#define DEFAULT_PLOT_ERRORBAR_MAX      25
+#define DEFAULT_IMAGE_TYPE         "png"
+#define DEFAULT_PLOT_DRIVER        "PLPLOT"
+#define DEFAULT_IMAGE_VIEWER       "/usr/bin/display"
+
 
 
 /* The magic string used to signal that *ALL* static keywords should be included. */
@@ -143,6 +145,10 @@
 #define DEFAULT_START_TAG "<"
 #define DEFAULT_END_TAG   ">"
 
+
+/*****************************************************************/
+
+#define DEFAULT_VAR_DIR "/tmp/var/run/ert"
 
 /*****************************************************************/
 /* file system spesific defaults. */

@@ -12,11 +12,16 @@ struct plot_config_struct {
   char * image_type;    /* Type of plot file - currently only 'png' is tested. */
   char * driver;        /* The driver used by the libplot layer when actually 'rendering' the plots. */
   char * viewer;        /* The executable used when displaying the newly created image. */
+  int    errorbar_max;  /* If the number of observations is less than this it is plotted with errorbars - otherwise with lines. */
   int    height;   
   int    width;
 };
 
 /*****************************************************************/
+
+void plot_config_set_errorbar_max( plot_config_type * plot_config , int errorbar_max ) {
+  plot_config->errorbar_max = errorbar_max;
+}
 
 void plot_config_set_width(plot_config_type * plot_config , int width) {
   plot_config->width = width;
@@ -75,6 +80,10 @@ int plot_config_get_height(const plot_config_type * plot_config ) {
 }
 
 
+int plot_config_get_errorbar_max( const plot_config_type * plot_config ) {
+  return plot_config->errorbar_max;
+}
+
 
 
 void plot_config_free( plot_config_type * plot_config) {
@@ -96,13 +105,14 @@ plot_config_type * plot_config_alloc() {
   info->viewer      = NULL;
   info->driver      = NULL;
   
-  plot_config_set_path(info       , DEFAULT_PLOT_PATH );
-  plot_config_set_image_type(info , DEFAULT_IMAGE_TYPE );
-  plot_config_set_viewer(info     , DEFAULT_IMAGE_VIEWER );
-  plot_config_set_driver(info     , DEFAULT_PLOT_DRIVER );
-  plot_config_set_width(info      , DEFAULT_PLOT_WIDTH );
-  plot_config_set_height(info     , DEFAULT_PLOT_HEIGHT );
-  
+  plot_config_set_path(info         , DEFAULT_PLOT_PATH );
+  plot_config_set_image_type(info   , DEFAULT_IMAGE_TYPE );
+  plot_config_set_viewer(info       , DEFAULT_IMAGE_VIEWER );
+  plot_config_set_driver(info       , DEFAULT_PLOT_DRIVER );
+  plot_config_set_width(info        , DEFAULT_PLOT_WIDTH );
+  plot_config_set_height(info       , DEFAULT_PLOT_HEIGHT );
+  plot_config_set_errorbar_max(info , DEFAULT_PLOT_ERRORBAR_MAX);
+
   return info;
 }
 
@@ -120,5 +130,16 @@ void plot_config_init_from_config(plot_config_type * plot_config , const config_
 
   if (config_item_set( config , "PLOT_DRIVER"))
     plot_config_set_driver( plot_config , config_get_value( config , "PLOT_DRIVER" ));
+
+  if (config_item_set( config , "PLOT_ERRORBAR_MAX"))
+    plot_config_set_driver( plot_config , config_get_value( config , "PLOT_ERRORBAR_MAX" ));
 }
 
+
+void plot_config_add_config_items( config_type * config ) {
+  config_add_key_value(config , "PLOT_HEIGHT"       , false , CONFIG_INT);
+  config_add_key_value(config , "PLOT_WIDTH"        , false , CONFIG_INT);
+  config_add_key_value(config , "PLOT_PATH"         , false , CONFIG_STRING);
+  config_add_key_value(config , "IMAGE_VIEWER"      , false , CONFIG_EXISTING_FILE);
+  config_add_key_value(config , "PLOT_ERRORBAR_MAX" , false , CONFIG_INT);
+}

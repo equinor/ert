@@ -147,7 +147,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int ens_size                           = ensemble_config_get_size(ensemble_config);
   int step1,step2;
   bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
-  run_mode_type run_mode = ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
+  run_mode_type run_mode = ENSEMBLE_EXPERIMENT; //ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
 
   enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
 

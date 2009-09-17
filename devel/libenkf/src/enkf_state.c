@@ -726,11 +726,11 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 	    internalize = enkf_node_internalize(node , report_step);
 
 	  if (internalize) {
-	    if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens)) /* Loading/internalizing */
+	    if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))  /* Loading/internalizing */
               enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);            /* Saving to disk */
             else {
               *loadOK = false;
-              fprintf(stderr,"** Warning: failed to load data for node: %s  report_step:%d \n", enkf_node_get_key( node ) , report_step);
+              log_add_fmt_message(shared_info->logh , 3 , "[%03d:%04d] Failed load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( node ));
             }
 	  } 
 	}
@@ -938,7 +938,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
               enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
             else {
               *loadOK = false;
-              fprintf(stderr,"** Warning: failed to load data for node:%s \n", enkf_node_get_key( enkf_node ));
+              log_add_fmt_message(shared_info->logh , 3 , "[%03d:%04d] Failed load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( enkf_node ));
             }
 	  }
 	}
@@ -974,10 +974,10 @@ void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_st
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
       if (model_config_load_state( model_config , report_step)) 
 	enkf_state_internalize_state(enkf_state , model_config , report_step , loadOK);
-      
 
       if (model_config_load_results( model_config , report_step)) 
 	enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step , loadOK);
+      
     }
   }
 }
