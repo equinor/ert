@@ -606,6 +606,7 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
         char * target_name = read_alloc_string( stream , binary );
         local_config_alloc_ministep_copy( local_config , src_name , target_name );
       }
+      break;
     default:
       util_abort("%s: invalid command:%d \n",__func__ , cmd);
     }
