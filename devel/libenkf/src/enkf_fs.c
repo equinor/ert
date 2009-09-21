@@ -1032,6 +1032,7 @@ bool enkf_fs_has_dir(const enkf_fs_type * fs, const char * dir) {
 
 bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool auto_mkdir) {
   bool has_dir = true;
+  printf("%s:  dir:%s \n",__func__ , dir);
   if (dir != NULL) {
     if (!set_has_key(fs->dir_set , dir)) {
       if ((!read) && (auto_mkdir)) {

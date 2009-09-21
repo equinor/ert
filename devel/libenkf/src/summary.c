@@ -177,16 +177,16 @@ double summary_user_get(const summary_type * summary , const char * index_key , 
 
 bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * ecl_file , int report_step) {
   bool loadOK = false;
-
   if (ecl_sum != NULL) {
     const char * var_key               = summary_config_get_var(summary->config);
     const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config , ecl_sum);
     
+
     /* Check if the ecl_sum instance has this report step. */
     if (ecl_sum_has_report_step( ecl_sum , report_step )) {
       int ministep2;
       ecl_sum_report2ministep_range(ecl_sum , report_step , NULL , &ministep2);
-
+      
       if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
         /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
         if (ecl_sum_has_general_var(ecl_sum , var_key)) 
@@ -219,7 +219,6 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
       */
     } 
   } 
-  
   return loadOK;
 }
 
@@ -293,3 +292,4 @@ VOID_SCALE(summary)
 VOID_IMUL(summary)
 VOID_IADDSQR(summary)
 VOID_ISQRT(summary)
+     

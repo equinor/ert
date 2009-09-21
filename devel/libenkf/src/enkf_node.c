@@ -363,14 +363,19 @@ bool enkf_node_ecl_load(enkf_node_type *enkf_node , const char * run_path , cons
   FUNC_ASSERT(enkf_node->ecl_load);
   enkf_node_ensure_memory(enkf_node);
   {
-    char * input_file = enkf_config_node_alloc_infile(enkf_node->config , report_step);
-    if (input_file != NULL) {
-      char * file = util_alloc_filename( run_path , input_file , NULL);
-      loadOK = enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
-      free(file);
-    } else
-      loadOK = enkf_node->ecl_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
-    util_safe_free( input_file );
+    if (enkf_node_get_impl_type(enkf_node) == SUMMARY)
+      /* Fast path for loading summary data. */
+      loadOK = enkf_node->ecl_load(enkf_node->data , NULL  , ecl_sum , restart_block , report_step);
+    else {
+      char * input_file = enkf_config_node_alloc_infile(enkf_node->config , report_step);
+      if (input_file != NULL) {
+        char * file = util_alloc_filename( run_path , input_file , NULL);
+        loadOK = enkf_node->ecl_load(enkf_node->data , file  , ecl_sum , restart_block , report_step);
+        free(file);
+      } else
+        loadOK = enkf_node->ecl_load(enkf_node->data , run_path , ecl_sum , restart_block , report_step);
+      util_safe_free( input_file );
+    }
   }
   enkf_node->__report_step = report_step;
   enkf_node->__state       = FORECAST;

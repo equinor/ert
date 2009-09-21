@@ -678,46 +678,44 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 
 
 
-/**
-   This function loads the dynamic results from one report step. In
-   ECLIPSE speak this implies loading the summary data. Observe the following:
-
-    2. When loading results from several report_steps consecutively
-       the whole thing could be speeded up by doing it one go. That is
-       currently not implemented.
-
-   The results are immediately stored in the enkf_fs filesystem.
-*/
-  
-/* 
-   When we arrive in this function we *KNOW* that summary should be
-   loaded from disk.
-*/
-static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step, bool * loadOK) {
+static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step1  , int report_step2 , bool * loadOK) {
   /* IFF reservoir_simulator == ECLIPSE ... */
-  if (report_step > 0) {
+  if (true) {
     const shared_info_type   * shared_info = enkf_state->shared_info;
     const member_config_type * my_config   = enkf_state->my_config;
     const run_info_type   * run_info       = enkf_state->run_info;
     const ecl_config_type * ecl_config     = enkf_state->ecl_config;
     const bool fmt_file  		   = ecl_config_get_formatted(ecl_config);
-    const bool internalize_all             = model_config_internalize_results( model_config , report_step );
     const int  iens                        = my_config->iens;
+    int        num_data_files              = 0;
+    int report_step;
+    char     ** data_files                 = util_malloc( (report_step2 - report_step1 + 1) * sizeof * data_files , __func__);
     
-    char * summary_file     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE        , fmt_file ,  report_step);
-    char * header_file      = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
+    char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
     ecl_sum_type * summary;
 
-    if ((summary_file != NULL) && (header_file != NULL)) {
-      summary = ecl_sum_fread_alloc(header_file , 1 , (const char **) &summary_file );
-      free( summary_file );
+    for (report_step = report_step1; report_step <= report_step2; report_step++) {
+      if (model_config_load_results( model_config , report_step)) {
+        data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
+        num_data_files++;
+      }
+    }
+    for (report_step = num_data_files; report_step <= (report_step2 - report_step1); report_step++)
+      data_files[report_step] = NULL;
+
+    if ((header_file != NULL) && (num_data_files > 0)) {
+      summary = ecl_sum_fread_alloc(header_file , num_data_files , (const char **) data_files );
+      util_free_stringlist( data_files , report_step2 - report_step1 + 1);
       free( header_file );
     } else
       summary = NULL;  /* OK - no summary data was found on the disk. */
     
+
+    
     /* The actual loading */
-    {
-      hash_iter_type * iter = hash_iter_alloc(enkf_state->node_hash);
+    for (report_step = report_step1; report_step <= report_step2; report_step++) {
+      const bool internalize_all  = model_config_internalize_results( model_config , report_step );
+      hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
       while ( !hash_iter_is_complete(iter) ) {
         enkf_node_type * node = hash_iter_get_next_value(iter);
 	if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
@@ -726,7 +724,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 	    internalize = enkf_node_internalize(node , report_step);
 
 	  if (internalize) {
-	    if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))  /* Loading/internalizing */
+            if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))  /* Loading/internalizing */
               enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);            /* Saving to disk */
             else {
               *loadOK = false;
@@ -974,11 +972,12 @@ void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_st
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
       if (model_config_load_state( model_config , report_step)) 
 	enkf_state_internalize_state(enkf_state , model_config , report_step , loadOK);
-
-      if (model_config_load_results( model_config , report_step)) 
-	enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step , loadOK);
-      
     }
+    
+    if (report_step1 == 0)
+      report_step1++;
+        
+    enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step1 , report_step2 , loadOK);
   }
 }
 

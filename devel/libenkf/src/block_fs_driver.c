@@ -10,25 +10,153 @@
 #include <block_fs.h>
 #include <enkf_types.h>
 
+typedef struct bfs_struct bfs_type;
+
+struct bfs_struct  {
+  block_fs_type * read_fs;
+  block_fs_type * write_fs;
+
+  char          * read_path;
+  char          * write_path;
+
+  /*****************************************************************/
+  /* All fields below here are info which go straight to the block_fs system. */ 
+  char          * mount_basefile;
+  bool            preload;
+  int             block_size;
+  int             max_cache_size;
+};
+
+
 
 struct block_fs_driver_struct {
   BASIC_DRIVER_FIELDS;
   int                __id;
+  int                num_drivers;
   fs_driver_type     driver_type;
-  char             * mount_prefix;     /* ANALYZED | FORECAST | PARAMETER | STATIC : a string representation of the role this driver instance has. */
   block_fs_type   ** read_fs;
   block_fs_type   ** write_fs;
+  bfs_type       *** fs_list;
   
-  char             * write_path;       /* root_path + the current write_case */
-  char             * read_path;        /* root_path + the current read case  */
   char             * root_path;        /* The root path - as given by the ENSPATH directive. */
-
-  /*-----------------------------------------------------------------*/
-  /* Options which go directly to the underlying block_fs instances. */
-  int              * block_size;
-  bool             * preload; 
 };
 
+
+
+static void bfs_close( bfs_type * bfs ) {
+  bool equal = ( bfs->read_fs == bfs->write_fs );
+  if (bfs->read_fs != NULL)
+    block_fs_close( bfs->read_fs , true);
+  if (!equal)
+    block_fs_close( bfs->write_fs , true);
+
+  util_safe_free( bfs->read_path );
+  util_safe_free( bfs->write_path );
+  free( bfs->mount_basefile );
+  free( bfs );
+}
+
+
+static bfs_type * bfs_alloc( fs_driver_type driver_type , enkf_impl_type node_impl_type , int block_size , int max_cache_size , bool preload) {
+  bfs_type * fs      = util_malloc( sizeof * fs , __func__);
+  fs->read_fs        = NULL;
+  fs->write_fs       = NULL;
+  fs->read_path      = NULL;
+  fs->write_path     = NULL;
+  fs->block_size     = block_size;
+  fs->max_cache_size = max_cache_size;
+  fs->preload        = preload;
+  fs->mount_basefile = util_alloc_sprintf("%s_%s" , fs_types_get_driver_name( driver_type ) , enkf_types_get_impl_name( node_impl_type ));
+  return fs;
+}
+
+
+
+
+static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type driver_type , enkf_impl_type node_impl_type , int block_size , int max_cache_size , bool preload) {
+  int i;
+  bfs_type ** driver_list = util_malloc( num_drivers * sizeof * driver_list , __func__); 
+  for (i=0; i < num_drivers; i++)
+    driver_list[i] = bfs_alloc( driver_type , node_impl_type , block_size , max_cache_size , preload);
+  return driver_list;
+}
+
+
+
+/**
+   The enkf_fs layer has already made certain that this directory is
+   different from the current.
+*/
+
+static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char * directory , bool read ) {
+  const int fragmentation_limit = 1.0;  /* 1.0 => NO defrag is run. */
+  if (read) {
+    if (bfs->read_fs == bfs->write_fs) {
+      /**
+         Read an write currently mount the same fs. Must open a
+         new fs instance for the reading. 
+      */
+
+      bfs->read_path = util_realloc_filename( bfs->read_path , root_path , directory , NULL);
+      util_make_path( bfs->read_path );
+      {
+        char * mount_file = util_alloc_filename( bfs->read_path , bfs->mount_basefile , "mnt" );
+        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        free( mount_file );
+      }
+    } else {
+      /* 
+         They are currently different:
+         
+         1. Must close the existing read fs properly.
+         2. Read/write Might become equal after the select?? 
+      */
+      if (bfs->read_fs != NULL) block_fs_close( bfs->read_fs , true);
+      bfs->read_path = util_realloc_filename( bfs->read_path , root_path , directory , NULL);
+      if (util_string_equal( bfs->read_path , bfs->write_path))
+        bfs->read_fs = bfs->write_fs;  /* OK - the same underlying storage. */
+      else {
+        char * mount_file = util_alloc_filename( bfs->read_path , bfs->mount_basefile , "mnt" );
+        util_make_path( bfs->read_path );
+        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        free( mount_file );
+      }
+    }
+  } else {
+    if (bfs->read_fs == bfs->write_fs) {
+      /**
+         Read an write currently mount the same fs. Must open a
+         new fs instance for the writing. 
+      */
+
+      bfs->write_path = util_realloc_filename( bfs->write_path , root_path , directory , NULL);
+      util_make_path( bfs->write_path );
+      {
+        char * mount_file = util_alloc_filename( bfs->write_path , bfs->mount_basefile , "mnt" );
+        bfs->write_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        free( mount_file );
+      }
+    } else {
+      /* They are currently different. Might become equal after the select?? */
+      if (bfs->write_fs != NULL) block_fs_close( bfs->write_fs , true);
+      bfs->write_path = util_realloc_filename( bfs->write_path , root_path , directory , NULL);
+      if (util_string_equal( bfs->read_path , bfs->write_path))
+        bfs->write_fs = bfs->read_fs;  /* OK - the same underlying storage. */
+      else {
+        char * mount_file = util_alloc_filename( bfs->write_path , bfs->mount_basefile , "mnt" );
+        util_make_path( bfs->write_path );
+        bfs->write_fs     = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        free( mount_file );
+      }
+    }
+  }
+}
+
+
+
+
+
+/*****************************************************************/
 
 
 static void block_fs_driver_assert_cast(block_fs_driver_type * block_fs_driver) {
@@ -50,20 +178,13 @@ static char * block_fs_driver_alloc_key( const block_fs_driver_type * driver , c
 }
 
 
-static block_fs_type * block_fs_driver_get_fs( block_fs_driver_type * driver , const enkf_config_node_type * config_node , bool read) {
+static bfs_type * block_fs_driver_get_fs( block_fs_driver_type * driver , const enkf_config_node_type * config_node , int iens ) {
   enkf_impl_type impl_type = enkf_config_node_get_impl_type( config_node );
   int fs_nr                = impl_type - IMPL_TYPE_OFFSET;
-  block_fs_type * block_fs;
-  
-  if (read) 
-    block_fs = driver->read_fs[fs_nr];
-  else 
-    block_fs = driver->write_fs[fs_nr];
-  
-  return block_fs;
+  int phase                = (iens % driver->num_drivers);
+
+  return driver->fs_list[fs_nr][phase];
 }
-
-
 
 
 
@@ -71,10 +192,10 @@ static block_fs_type * block_fs_driver_get_fs( block_fs_driver_type * driver , c
 static void block_fs_driver_load_node(void * _driver , const enkf_config_node_type * config_node , int report_step , int iens ,  buffer_type * buffer) {
   block_fs_driver_type * driver = block_fs_driver_safe_cast( _driver );
   {
-    char * key               = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    block_fs_type * block_fs = block_fs_driver_get_fs( driver , config_node , true );
-
-    block_fs_fread_realloc_buffer( block_fs , key , buffer);
+    char * key          = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
+    bfs_type      * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    
+    block_fs_fread_realloc_buffer( bfs->read_fs , key , buffer);
     
     free( key );
   }
@@ -87,9 +208,9 @@ static void block_fs_driver_save_node(void * _driver , const enkf_config_node_ty
   block_fs_driver_type * driver = (block_fs_driver_type *) _driver;
   block_fs_driver_assert_cast(driver);
   {
-    char * key               = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    block_fs_type * block_fs = block_fs_driver_get_fs( driver , config_node , false );
-    block_fs_fwrite_buffer( block_fs , key , buffer);
+    char * key     = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
+    bfs_type * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    block_fs_fwrite_buffer( bfs->write_fs , key , buffer);
     
     free( key );
   }
@@ -100,32 +221,21 @@ void block_fs_driver_unlink_node(void * _driver , const enkf_config_node_type * 
   block_fs_driver_type * driver = (block_fs_driver_type *) _driver;
   block_fs_driver_assert_cast(driver);
   {
-    char * key               = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    block_fs_type * block_fs = block_fs_driver_get_fs( driver , config_node , true );
-    block_fs_unlink_file( block_fs , key );
+    char * key     = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
+    bfs_type * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    block_fs_unlink_file( bfs->read_fs , key );
     free( key );
   }
 }
 
 
-/**
-   Observe that the semantics is fundamentally different between
-   block_fs_driver_paramater_has_node, and block_fs_driver_load_node:
-
-   * When (trying to) load a node the function will try previous report steps
-     all the way back to the first report step.
-
-   * The has_node function will _not_ go back to earlier report steps, but
-     instead return false if the report_step we ask for is not present.
-*/
-
 bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * config_node , int report_step , int iens ) {
   block_fs_driver_type * driver = (block_fs_driver_type *) _driver;
   block_fs_driver_assert_cast(driver);
   {
-    char * key               = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    block_fs_type * block_fs = block_fs_driver_get_fs( driver , config_node , true );
-    bool has_node            = block_fs_has_file( block_fs , key );
+    char * key      = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
+    bfs_type  * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    bool has_node   = block_fs_has_file( bfs->read_fs , key );
     free( key );
     return has_node;
   }
@@ -136,173 +246,27 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
 
 
 
-static void block_fs_mount_single_fs( block_fs_driver_type * driver , enkf_impl_type impl_type , bool read , int blocksize , int max_cache_size , bool preload) {
-  const float fragmentation_limit = 1.0; /* I.e. no defrag */
-  char * mount_file;
-  char * base = util_alloc_sprintf("%s_%s" , driver->mount_prefix , enkf_types_get_impl_name( impl_type ));
-  if (read) {
-    mount_file = util_alloc_filename( driver->read_path , base , "mnt" );
-    driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , fragmentation_limit , preload , false);
-  } else {
-    mount_file = util_alloc_filename( driver->write_path , base , "mnt" );
-    driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ] = block_fs_mount( mount_file , blocksize , max_cache_size , fragmentation_limit , preload , false);
-  }
-  free( mount_file );
-  free( base );
-}
-
-
-
-static void block_fs_create_new_fs( block_fs_driver_type * driver , bool read , bool mount ) {
-  const int STATIC_blocksize       = 1;
-  const int FIELD_blocksize        = 1;
-  const int GEN_KW_blocksize       = 1;
-  const int SUMMARY_blocksize      = 1;
-  const int GEN_DATA_blocksize     = 1;
-  const int max_cache_size         = 256; /* ~ 16 doubles */
-
-  if (read) {
-    driver->read_fs = util_malloc( (MAX_IMPL_TYPE - IMPL_TYPE_OFFSET + 1) * sizeof * driver->read_fs , __func__);
-    for (int impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++)
-      driver->read_fs[impl_type - IMPL_TYPE_OFFSET] = NULL;
-  } else {
-    driver->write_fs = util_malloc( (MAX_IMPL_TYPE - IMPL_TYPE_OFFSET + 1) * sizeof * driver->write_fs , __func__);
-    for (int impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++)
-      driver->write_fs[impl_type - IMPL_TYPE_OFFSET] = NULL;
-  }
-
-  if (mount) {
-    switch( driver->driver_type) {
-    case(DRIVER_STATIC):
-      block_fs_mount_single_fs( driver , STATIC       , read , STATIC_blocksize        , max_cache_size , false);
-      break;
-    case(DRIVER_PARAMETER):
-      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , false);
-      block_fs_mount_single_fs( driver , GEN_KW       , read , GEN_KW_blocksize        , max_cache_size , true);
-      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , false);
-      break;
-    case(DRIVER_DYNAMIC_FORECAST):
-      block_fs_mount_single_fs( driver , SUMMARY      , read , SUMMARY_blocksize       , max_cache_size , true);
-      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , false);
-      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , false);
-      break;
-    case(DRIVER_DYNAMIC_ANALYZED):
-      block_fs_mount_single_fs( driver , SUMMARY      , read , SUMMARY_blocksize       , max_cache_size , true);
-      block_fs_mount_single_fs( driver , FIELD        , read , FIELD_blocksize         , max_cache_size , false);
-      block_fs_mount_single_fs( driver , GEN_DATA     , read , GEN_DATA_blocksize      , max_cache_size , false);
-      break;
-    default:
-      util_abort("%s: driver_type:%d not recognized \n",__func__);
-    }
-  }
-}
-
-
-
-static void block_fs_close_fs( block_fs_driver_type * driver , bool read ) {
-  int impl_type;
-  if (read) {
-    if (driver->read_fs != NULL) {
-      for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
-        block_fs_type * block_fs = driver->read_fs[ impl_type - IMPL_TYPE_OFFSET ];
-        if (block_fs != NULL)  /* There are holes with NULL */
-          block_fs_close( block_fs , true);
-      }
-      free( driver->read_fs );
-    }
-  } else {
-    if (driver->write_fs != NULL) {
-      for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
-        block_fs_type * block_fs = driver->write_fs[ impl_type - IMPL_TYPE_OFFSET ];
-        if (block_fs != NULL)
-          block_fs_close( block_fs , true);
-      }
-      free( driver->write_fs );
-    }
-  }
-}
-
-
-
-
 /**
    The enkf_fs layer has already made certain that this directory is different
    from the current. 
 */
+
 void block_fs_driver_select_dir(void *_driver , const char * directory, bool read) {
+  int driver_nr, impl_type;
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-  if (read) {
-    if (util_string_equal( driver->write_path , driver->read_path)) {
-      /* 
-         Read and write have accessed the same fs, must create new pointers
-         for the read_fs instances.
-      */
-      driver->read_path = util_realloc_filename( driver->read_path , driver->root_path , directory , NULL);
-      util_make_path( driver->read_path );
-      block_fs_create_new_fs( driver ,  true , true);
-    } else {
-      /* 
-         When the read_fs is changed over, the underlying fs will go out of scope.
-         Must close the current read_fs properly before continuing.
-      */
-      block_fs_close_fs( driver , true );
-      driver->read_path = util_realloc_filename( driver->read_path , driver->root_path , directory , NULL);
-      util_make_path( driver->read_path );
-      if (util_string_equal( driver->read_path , driver->write_path)) {
-        /* 
-           The new read driver is equal the existing write_driver. We
-           do not mount anything more, we just assign the read
-           pointers to point to write pointers.
-        */
-        int impl_type;
-        block_fs_create_new_fs( driver , true , false);
-        for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) 
-          driver->read_fs[impl_type - IMPL_TYPE_OFFSET] = driver->write_fs[impl_type - IMPL_TYPE_OFFSET];
-        
-      } else 
-        /* 
-           The new read driver is different from the existing write driver - we create a brand new; fully mounted fs.
-        */
-        block_fs_create_new_fs( driver , true , true);
-    }
-  } else {
-    /*****************************************************************/
-    /* We are selecting a new write driver. */
-    if (util_string_equal( driver->write_path , driver->read_path)) {
-      /* 
-         Read and write have accessed the same fs, must create new pointers
-         for the write_fs instances.
-      */
-      driver->write_path = util_realloc_filename( driver->write_path , driver->root_path , directory , NULL);
-      util_make_path( driver->write_path );
-      block_fs_create_new_fs( driver ,  false , true );
-    } else {
-      /* 
-         When the write_fs is changed over, the underlying fs will go out of scope.
-         Must close the current write_fs properly before continuing.
-      */
-      block_fs_close_fs( driver , false );
-      driver->write_path = util_realloc_filename( driver->write_path , driver->root_path , directory , NULL);
-      util_make_path( driver->write_path );
-      if (util_string_equal( driver->read_path , driver->write_path)) {
-        /* 
-           The new write driver is equal the existing read_driver. We
-           do not mount anything more, we just assign the write
-           pointers to point to read pointers.
-        */
-        int impl_type;
-        block_fs_create_new_fs( driver , false , false);
-        for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) 
-          driver->write_fs[impl_type - IMPL_TYPE_OFFSET] = driver->read_fs[impl_type - IMPL_TYPE_OFFSET];
-        
-      } else 
-        /* 
-           The new read driver is different from the existing write driver - we create a brand new; fully mounted fs.
-        */
-        block_fs_create_new_fs( driver , false , true);
+  printf("%s:  dir:%s \n",__func__ , directory );
+  for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
+    if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
+      for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) {
+        char * path = util_alloc_sprintf("mod_%d%c%s" , driver_nr , UTIL_PATH_SEP_CHAR , directory );
+        bfs_select_dir( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] , driver->root_path , directory , read );
+        free( path );
+      }
     }
   }
 }
+
+
 
 
 
@@ -310,19 +274,19 @@ void block_fs_driver_select_dir(void *_driver , const char * directory, bool rea
 void block_fs_driver_free(void *_driver) {
   block_fs_driver_type * driver = (block_fs_driver_type *) _driver;
   block_fs_driver_assert_cast(driver);
-
-  block_fs_close_fs( driver , true );
   
-  if (util_string_equal( driver->read_path , driver->write_path)) 
-    /* Write has already been closed .*/
-    free( driver->write_fs );
-  else
-    block_fs_close_fs( driver , false );
-
-  free( driver->read_path );
-  free( driver->write_path );
+  {
+    int driver_nr, impl_type;
+    block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
+    for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
+      if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
+        for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++)  
+          bfs_close( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] );
+      }
+    }
+  }
+  
   util_safe_free( driver->root_path );
-  util_safe_free( driver->mount_prefix );
   free(driver);
 }
 
@@ -347,29 +311,47 @@ static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driv
 
   driver->write_fs      = NULL;
   driver->read_fs       = NULL;
-
   driver->root_path     = util_alloc_string_copy( root_path );
-  driver->read_path     = NULL;
-  driver->write_path    = NULL;
   driver->__id          = BLOCK_FS_DRIVER_ID;
-  driver->driver_type        = driver_type;
+  driver->driver_type   = driver_type;
+  driver->num_drivers   = 1;
 
-  switch (driver_type) {
-  case(DRIVER_PARAMETER):
-    driver->mount_prefix = util_alloc_string_copy("PARAMETER");
-    break;
-  case(DRIVER_STATIC):
-    driver->mount_prefix = util_alloc_string_copy("STATIC");
-    break;
-  case(DRIVER_DYNAMIC_FORECAST):
-    driver->mount_prefix = util_alloc_string_copy("FORECAST");
-    break;
-  case(DRIVER_DYNAMIC_ANALYZED):
-    driver->mount_prefix = util_alloc_string_copy("ANALYZED");
-    break;
-  default:
-    util_abort("%s: driver_id:%d not recognized \n",__func__ , driver_type);
+  driver->fs_list = util_malloc( ( MAX_IMPL_TYPE - IMPL_TYPE_OFFSET + 1 ) * sizeof * driver->fs_list , __func__);
+  for (int impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++)
+    driver->fs_list[impl_type - IMPL_TYPE_OFFSET] = NULL;
+
+  {
+    const int STATIC_blocksize       = 1;
+    const int FIELD_blocksize        = 1;
+    const int GEN_KW_blocksize       = 1;
+    const int SUMMARY_blocksize      = 1;
+    const int GEN_DATA_blocksize     = 1;
+    const int max_cache_size         = 512; /* ~ 32 doubles */
+    
+    switch( driver->driver_type) {
+    case(DRIVER_STATIC):
+      driver->fs_list[STATIC - IMPL_TYPE_OFFSET]   = bfs_alloc_driver_list( driver->num_drivers , DRIVER_STATIC , STATIC , STATIC_blocksize , max_cache_size , false);
+      break;
+    case(DRIVER_PARAMETER):
+      driver->fs_list[FIELD - IMPL_TYPE_OFFSET]    = bfs_alloc_driver_list( driver->num_drivers , DRIVER_PARAMETER , FIELD    , FIELD_blocksize    , max_cache_size , false);
+      driver->fs_list[GEN_KW - IMPL_TYPE_OFFSET]   = bfs_alloc_driver_list( driver->num_drivers , DRIVER_PARAMETER , GEN_KW   , GEN_KW_blocksize   , max_cache_size , true);
+      driver->fs_list[GEN_DATA - IMPL_TYPE_OFFSET] = bfs_alloc_driver_list( driver->num_drivers , DRIVER_PARAMETER , GEN_DATA , GEN_DATA_blocksize , max_cache_size , false);
+      break;
+    case(DRIVER_DYNAMIC_FORECAST):
+      driver->fs_list[FIELD - IMPL_TYPE_OFFSET]    = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_FORECAST , FIELD    , FIELD_blocksize    , max_cache_size , false);
+      driver->fs_list[SUMMARY - IMPL_TYPE_OFFSET]  = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_FORECAST , SUMMARY  , SUMMARY_blocksize  , max_cache_size , true);
+      driver->fs_list[GEN_DATA - IMPL_TYPE_OFFSET] = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_FORECAST , GEN_DATA  , GEN_DATA_blocksize  , max_cache_size , false);
+      break;
+    case(DRIVER_DYNAMIC_ANALYZED):
+      driver->fs_list[FIELD - IMPL_TYPE_OFFSET]    = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_ANALYZED , FIELD    , FIELD_blocksize    , max_cache_size , false);
+      driver->fs_list[SUMMARY - IMPL_TYPE_OFFSET]  = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_ANALYZED , SUMMARY  , SUMMARY_blocksize  , max_cache_size , true);
+      driver->fs_list[GEN_DATA - IMPL_TYPE_OFFSET] = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_ANALYZED , GEN_DATA  , GEN_DATA_blocksize  , max_cache_size , false);
+      break;
+    default:
+      util_abort("%s: driver_type:%d not recognized \n",__func__);
+    }
   }
+
 
   {
     basic_driver_type * basic_driver = (basic_driver_type *) driver;

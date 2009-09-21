@@ -1874,6 +1874,23 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 /*****************************************************************/
 
+/**
+   This function stores a pid file for the running ert instance. The
+   rules of the game are as follows:
+
+     1. The name of the file is just the pid number.
+
+     2. The content of the file is the current executable and the uid
+        of the current user, separated with a space.
+        
+     3. The argument to the function is argv[0] from the main
+        function.
+
+        
+   On normal exit the file is removed with the enkf_main_delete_pid()
+   function.
+*/
+
 
 void enkf_main_store_pid(const char * argv0) {
   char * current_executable;
@@ -1898,11 +1915,22 @@ void enkf_main_store_pid(const char * argv0) {
 }
 
 
+
+/**
+   This function is called when the ert application is exiting, it
+   will just delete the pid file.
+   
+   If the ert application exits through a crash the pid file will be
+   left hanging around. In that case it will be deleted the
+   next time the enkf_main_list_users() function is run.
+*/
+
 void enkf_main_delete_pid( ) {
   char * pidfile = util_alloc_sprintf("%s/%d" , DEFAULT_VAR_DIR , getpid());
   util_unlink_existing( pidfile );
   free( pidfile );
 }
+
 
 
 
@@ -1917,22 +1945,24 @@ void  enkf_main_list_users(  set_type * users , const char * executable ) {
         int pid;
         if (util_sscanf_int( dp->d_name , &pid )) {
           char * full_path = util_alloc_filename( DEFAULT_VAR_DIR , dp->d_name , NULL );
-          FILE * stream    = util_fopen( full_path , "r");
+          bool add_user    = false;
           int  uid;
-          char this_executable[512];
-          bool add_user   = false;
           
-          
-          if (fscanf( stream , "%s %d" , this_executable , &uid) == 2) {
-            if (executable != NULL) {
-              if (util_string_equal( this_executable , executable )) 
-                add_user   = true;
-            } else
-              add_user = true;
+          {
+            FILE * stream    = util_fopen( full_path , "r");
+            char this_executable[512];
+
+            if (fscanf( stream , "%s %d" , this_executable , &uid) == 2) {
+              if (executable != NULL) {
+                if (util_string_equal( this_executable , executable )) 
+                  add_user   = true;
+              } else
+                add_user = true;
+            }
+            fclose( stream );
           }
-          fclose( stream );
-
-
+          
+          
           /* Remove the pid files of dead processes. */
           if (!util_proc_alive( pid )) {
             unlink( full_path );
