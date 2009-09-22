@@ -89,7 +89,8 @@ static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type drive
 */
 
 static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char * directory , bool read ) {
-  const int fragmentation_limit = 1.0;  /* 1.0 => NO defrag is run. */
+  const int fsync_interval      = 0;     /* An fsync() call is issued for every 100'th write. */
+  const int fragmentation_limit = 1.0;   /* 1.0 => NO defrag is run. */
   if (read) {
     if (bfs->read_fs == bfs->write_fs) {
       /**
@@ -101,7 +102,7 @@ static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char
       util_make_path( bfs->read_path );
       {
         char * mount_file = util_alloc_filename( bfs->read_path , bfs->mount_basefile , "mnt" );
-        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , fsync_interval , bfs->preload , false );
         free( mount_file );
       }
     } else {
@@ -118,7 +119,7 @@ static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char
       else {
         char * mount_file = util_alloc_filename( bfs->read_path , bfs->mount_basefile , "mnt" );
         util_make_path( bfs->read_path );
-        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        bfs->read_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , fsync_interval , bfs->preload , false );
         free( mount_file );
       }
     }
@@ -133,7 +134,7 @@ static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char
       util_make_path( bfs->write_path );
       {
         char * mount_file = util_alloc_filename( bfs->write_path , bfs->mount_basefile , "mnt" );
-        bfs->write_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        bfs->write_fs      = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , fsync_interval , bfs->preload , false );
         free( mount_file );
       }
     } else {
@@ -145,7 +146,7 @@ static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char
       else {
         char * mount_file = util_alloc_filename( bfs->write_path , bfs->mount_basefile , "mnt" );
         util_make_path( bfs->write_path );
-        bfs->write_fs     = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , bfs->preload , false );
+        bfs->write_fs     = block_fs_mount( mount_file , bfs->block_size , bfs->max_cache_size , fragmentation_limit , fsync_interval , bfs->preload , false );
         free( mount_file );
       }
     }
@@ -153,6 +154,12 @@ static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char
 }
 
 
+
+static void bfs_fsync( bfs_type * bfs ) {
+  block_fs_fsync( bfs->read_fs );
+  if (bfs->write_fs != bfs->read_fs)
+    block_fs_fsync( bfs->write_fs );
+}
 
 
 
@@ -254,7 +261,6 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
 void block_fs_driver_select_dir(void *_driver , const char * directory, bool read) {
   int driver_nr, impl_type;
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-  printf("%s:  dir:%s \n",__func__ , directory );
   for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
     if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
       for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) {
@@ -292,6 +298,23 @@ void block_fs_driver_free(void *_driver) {
 
 
 
+static void block_fs_driver_fsync( void * _driver ) {
+  block_fs_driver_type * driver = (block_fs_driver_type *) _driver;
+  block_fs_driver_assert_cast(driver);
+  
+  {
+    int driver_nr, impl_type;
+    block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
+    for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
+      if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
+        for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++)  
+          bfs_fsync( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] );
+      }
+    }
+  }
+}
+
+
 
 /**
   The driver takes a copy of the path object, i.e. it can be deleted
@@ -308,6 +331,7 @@ static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driv
   driver->unlink_node 	= block_fs_driver_unlink_node;
   driver->has_node    	= block_fs_driver_has_node;
   driver->select_dir    = block_fs_driver_select_dir;
+  driver->fsync_driver  = block_fs_driver_fsync;
 
   driver->write_fs      = NULL;
   driver->read_fs       = NULL;

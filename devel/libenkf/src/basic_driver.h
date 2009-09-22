@@ -21,6 +21,7 @@ typedef void (load_node_ftype) 	  (void * driver, const enkf_config_node_type * 
 typedef void (save_node_ftype) 	  (void * driver, const enkf_config_node_type * , int , int , buffer_type * );
 typedef void (unlink_node_ftype)  (void * driver, const enkf_config_node_type * , int , int );
 typedef bool (has_node_ftype)     (void * driver, const enkf_config_node_type * , int , int );
+typedef void (fsync_driver_ftype) (void * driver);
 typedef void (free_driver_ftype)  (void * driver);
 
 
@@ -54,6 +55,7 @@ save_node_ftype    	  * save;    	   \
 has_node_ftype     	  * has_node;      \
 unlink_node_ftype  	  * unlink_node;   \
 free_driver_ftype  	  * free_driver;   \
+fsync_driver_ftype        * fsync_driver;  \
 int                         type_id
 
 
@@ -71,6 +73,7 @@ select_dir_ftype    * select_dir;   \
 save_kwlist_ftype   * save_kwlist;  \
 load_kwlist_ftype   * load_kwlist;  \
 free_driver_ftype   * free_driver;  \
+fsync_driver_ftype  * fsync_driver; \
 int                   type_id;
 
 

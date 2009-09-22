@@ -175,6 +175,7 @@ void * plain_driver_alloc(const char * root_path , const char * fmt) {
   driver->fmt_string      = util_alloc_string_copy( fmt );
   driver->read_path       = NULL;    /* This is set by calls to select_dir */
   driver->write_path      = NULL;    /* This is set by calls to select_dir */
+  driver->fsync_driver    = NULL;
   driver->plain_driver_id = PLAIN_DRIVER_ID;
   {
     basic_driver_type * basic_driver = (basic_driver_type *) driver;

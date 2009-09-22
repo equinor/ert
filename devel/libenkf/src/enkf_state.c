@@ -45,6 +45,7 @@
 #include <log.h>
 #include <ecl_endian_flip.h>
 #include <ert_template.h>
+#include <timer.h>
 #define ENKF_STATE_TYPE_ID 78132
 
 
@@ -56,7 +57,7 @@
    Typcially the values in this struct are set from the enkf_main object
    before a forward_step starts.
 */
-
+ 
 typedef struct run_info_struct {
   bool               	  __ready;              /* An attempt to check the internal state - not active yet. */
   bool               	  active;               /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
@@ -69,7 +70,7 @@ typedef struct run_info_struct {
   int                     load_start;           /* When loading back results - start at this step. */
   int                	  step1;                /* The forward model is integrated: step1 -> step2 */
   int                	  step2;  	          
-  char            	* run_path;             /* The currently used runpath - is realloced / freed for every step. */
+  char            	* run_path;             /* The currently used  runpath - is realloced / freed for every step. */
   run_mode_type   	  run_mode;             /* What type of run this is */
   /******************************************************************/
   /* Return value - set by the called routine!!  */
@@ -693,7 +694,9 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     
     char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
     ecl_sum_type * summary;
-
+    timer_type * summary_timer = timer_alloc( "Summary" , false ); 
+    timer_type * store_timer   = timer_alloc( "store"   , false ); 
+    
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
       if (model_config_load_results( model_config , report_step)) {
         data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
@@ -704,13 +707,15 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
       data_files[report_step] = NULL;
 
     if ((header_file != NULL) && (num_data_files > 0)) {
+      timer_start( summary_timer );
       summary = ecl_sum_fread_alloc(header_file , num_data_files , (const char **) data_files );
+      timer_stop( summary_timer );
       util_free_stringlist( data_files , report_step2 - report_step1 + 1);
       free( header_file );
     } else
       summary = NULL;  /* OK - no summary data was found on the disk. */
-    
-
+   
+    //printf("ECLIPSE summary loaded ... \n");
     
     /* The actual loading */
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
@@ -724,9 +729,11 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 	    internalize = enkf_node_internalize(node , report_step);
 
 	  if (internalize) {
-            if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))  /* Loading/internalizing */
-              enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);            /* Saving to disk */
-            else {
+            if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens)) { /* Loading/internalizing */
+              timer_start( store_timer );
+              enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
+              timer_stop( store_timer );
+            } else {
               *loadOK = false;
               log_add_fmt_message(shared_info->logh , 3 , "[%03d:%04d] Failed load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( node ));
             }
@@ -738,6 +745,11 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     
     if (summary != NULL)
       ecl_sum_free( summary );
+
+    printf("Summary: %g \n",timer_get_total_time( summary_timer ));
+    printf("Store  : %g   min:%g   avg:%g  max:%g \n", timer_get_total_time( store_timer ), timer_get_min_time( store_timer ) , timer_get_avg_time( store_timer ) , timer_get_max_time( store_timer ));
+    timer_free( summary_timer );
+    timer_free( store_timer );
   }
 }
 
@@ -781,7 +793,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   shared_info_type   * shared_info = enkf_state->shared_info;
   run_info_type      * run_info    = enkf_state->run_info;
   const bool fmt_file              = ecl_config_get_formatted(enkf_state->ecl_config);
-  const bool unified               = ecl_config_get_unified(enkf_state->ecl_config);
+  const bool unified               = ecl_config_get_unified_restart(enkf_state->ecl_config);
   const bool internalize_state     = model_config_internalize_state( model_config , report_step );
   ecl_file_type  * restart_file;
   
@@ -1520,7 +1532,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state) {
     const int usleep_time                   = 2500000; //100000; /* 1/10 of a second */ 
     job_status_type final_status;
     
-
+    
     /*****************************************************************/
     /* Start of wait loop to wait for the job to complete.           */
     while (true) {

@@ -1032,7 +1032,6 @@ bool enkf_fs_has_dir(const enkf_fs_type * fs, const char * dir) {
 
 bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool auto_mkdir) {
   bool has_dir = true;
-  printf("%s:  dir:%s \n",__func__ , dir);
   if (dir != NULL) {
     if (!set_has_key(fs->dir_set , dir)) {
       if ((!read) && (auto_mkdir)) {
@@ -1368,6 +1367,21 @@ void enkf_fs_fwrite_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , i
       }
     }
   }
+}
+
+
+static void enkf_fs_fsync_driver( basic_driver_type * driver ) {
+  if (driver->fsync_driver != NULL)
+    driver->fsync_driver( driver );
+}
+
+
+void enkf_fs_fsync( enkf_fs_type * fs ) {
+  enkf_fs_fsync_driver( fs->parameter );
+  enkf_fs_fsync_driver( fs->eclipse_static );
+  enkf_fs_fsync_driver( fs->dynamic_forecast );
+  enkf_fs_fsync_driver( fs->dynamic_analyzed );
+  enkf_fs_fsync_driver( fs->index );
 }
 
 

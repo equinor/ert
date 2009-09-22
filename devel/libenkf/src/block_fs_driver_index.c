@@ -41,13 +41,15 @@ static block_fs_driver_index_type * block_fs_driver_index_safe_cast(void * __ind
 static void block_fs_driver_index_single_mount( block_fs_driver_index_type * driver , bool read) {
   const float fragmentation_limit = 1.0;
   const int  blocksize            = driver->block_size;
+  const int  fsync_interval       = 100;
+
   char * mount_file;
   if (read) {
     mount_file = util_alloc_filename( driver->read_path , "INDEX" , "mnt");
-    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , false , false);
+    driver->read_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , fsync_interval , false , false);
   } else {
     mount_file = util_alloc_filename( driver->write_path , "INDEX" , "mnt");
-    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , false , false);
+    driver->write_fs = block_fs_mount( mount_file , blocksize , 0 , fragmentation_limit , fsync_interval , false , false);
   }
   free( mount_file );
 }

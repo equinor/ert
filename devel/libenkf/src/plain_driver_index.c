@@ -92,7 +92,7 @@ void * plain_driver_index_alloc(const char * root_path , const char * index_path
   plain_driver->fmt_string     = util_alloc_string_copy( index_path );  
   plain_driver->read_path_fmt  = NULL;   
   plain_driver->write_path_fmt = NULL;   
-  
+  plain_driver->fsync_driver   = NULL;
   plain_driver->__id = PLAIN_DRIVER_INDEX_ID;
   {
     basic_driver_index_type * basic_driver = (basic_driver_index_type *) plain_driver;

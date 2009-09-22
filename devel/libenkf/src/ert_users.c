@@ -18,6 +18,7 @@ int main (int argc , char ** argv) {
       set_fprintf(user_set , " " , stdout );
     else
       printf("No users.");
+
     printf("\n");
     
     set_free( user_set );
