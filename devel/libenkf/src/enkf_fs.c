@@ -310,6 +310,7 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 */
 
 long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir, fs_driver_impl driver_impl) {
+  const int num_block_fs_drivers = 5;
   long int  __dir_offset;
   FILE * stream = util_fopen( mount_map , "w");
   util_fwrite_long(FS_MAGIC_ID , stream);
@@ -330,10 +331,10 @@ long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * defau
     sqlite3_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , DEFAULT_SQLITE_DYNAMIC_ANALYZED_DBFILE);
     plain_driver_index_fwrite_mount_info( stream ,                       DEFAULT_PLAIN_INDEX_PATH);   /* Using the plain index driver. */
   } else if (driver_impl == BLOCK_FS_DRIVER_ID) {
-    block_fs_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	);
-    block_fs_driver_fwrite_mount_info( stream , DRIVER_STATIC    	);
-    block_fs_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST );
-    block_fs_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED );
+    block_fs_driver_fwrite_mount_info( stream , DRIVER_PARAMETER 	, num_block_fs_drivers);
+    block_fs_driver_fwrite_mount_info( stream , DRIVER_STATIC    	, num_block_fs_drivers);
+    block_fs_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_FORECAST , num_block_fs_drivers);
+    block_fs_driver_fwrite_mount_info( stream , DRIVER_DYNAMIC_ANALYZED , num_block_fs_drivers);
     //plain_driver_index_fwrite_mount_info( stream ,                     DEFAULT_PLAIN_INDEX_PATH);
     block_fs_driver_index_fwrite_mount_info( stream );
   } else
@@ -1381,7 +1382,7 @@ void enkf_fs_fsync( enkf_fs_type * fs ) {
   enkf_fs_fsync_driver( fs->eclipse_static );
   enkf_fs_fsync_driver( fs->dynamic_forecast );
   enkf_fs_fsync_driver( fs->dynamic_analyzed );
-  enkf_fs_fsync_driver( fs->index );
+  //enkf_fs_fsync_driver( fs->index );
 }
 
 

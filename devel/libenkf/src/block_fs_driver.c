@@ -264,8 +264,8 @@ void block_fs_driver_select_dir(void *_driver , const char * directory, bool rea
   for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
     if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
       for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) {
-        char * path = util_alloc_sprintf("mod_%d%c%s" , driver_nr , UTIL_PATH_SEP_CHAR , directory );
-        bfs_select_dir( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] , driver->root_path , directory , read );
+        char * path = util_alloc_sprintf("%s%cmod_%d" , directory , UTIL_PATH_SEP_CHAR , driver_nr);
+        bfs_select_dir( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] , driver->root_path , path , read );
         free( path );
       }
     }
@@ -322,7 +322,7 @@ static void block_fs_driver_fsync( void * _driver ) {
 
   This is where the various function pointers are initialized.
 */
-static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driver_type) {
+static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driver_type , int num_drivers ) {
   block_fs_driver_type * driver = util_malloc(sizeof * driver , __func__);
 
   driver->load        	= block_fs_driver_load_node;
@@ -338,7 +338,7 @@ static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driv
   driver->root_path     = util_alloc_string_copy( root_path );
   driver->__id          = BLOCK_FS_DRIVER_ID;
   driver->driver_type   = driver_type;
-  driver->num_drivers   = 1;
+  driver->num_drivers   = num_drivers;
 
   driver->fs_list = util_malloc( ( MAX_IMPL_TYPE - IMPL_TYPE_OFFSET + 1 ) * sizeof * driver->fs_list , __func__);
   for (int impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++)
@@ -387,10 +387,11 @@ static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driv
 
 
 
-void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type) {
-  util_fwrite_int(driver_type , stream);
+void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , int num_drivers ) {
+  util_fwrite_int(driver_type        , stream);
   util_fwrite_int(BLOCK_FS_DRIVER_ID , stream);
-  util_fwrite_int(driver_type , stream );
+  util_fwrite_int(driver_type        , stream );
+  util_fwrite_int(num_drivers        , stream );
 }
 
 
@@ -401,7 +402,9 @@ void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_typ
 
 block_fs_driver_type * block_fs_driver_fread_alloc(const char * root_path , FILE * stream) {
   fs_driver_type driver_type = util_fread_int( stream );
-  block_fs_driver_type * driver = block_fs_driver_alloc(root_path , driver_type );
+  int num_drivers            = util_fread_int( stream );
+  printf("Har lest inn: driver_type:%d  num_drivers:%d \n",driver_type , num_drivers);
+  block_fs_driver_type * driver = block_fs_driver_alloc(root_path , driver_type , num_drivers );
   return driver;
 }
 

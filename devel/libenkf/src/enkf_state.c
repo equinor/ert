@@ -746,8 +746,8 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     if (summary != NULL)
       ecl_sum_free( summary );
 
-    printf("Summary: %g \n",timer_get_total_time( summary_timer ));
-    printf("Store  : %g   min:%g   avg:%g  max:%g \n", timer_get_total_time( store_timer ), timer_get_min_time( store_timer ) , timer_get_avg_time( store_timer ) , timer_get_max_time( store_timer ));
+    //printf("Summary: %g \n",timer_get_total_time( summary_timer ));
+    //printf("Store  : %g   min:%g   avg:%g  max:%g \n", timer_get_total_time( store_timer ), timer_get_min_time( store_timer ) , timer_get_avg_time( store_timer ) , timer_get_max_time( store_timer ));
     timer_free( summary_timer );
     timer_free( store_timer );
   }

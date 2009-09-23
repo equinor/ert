@@ -9,7 +9,7 @@
 typedef struct block_fs_driver_struct block_fs_driver_type;
 
 
-void                   block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type );
+void                   block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_type , int num_block_fs_drivers);
 block_fs_driver_type * block_fs_driver_fread_alloc(const char * root_path , FILE * stream);
 
 
