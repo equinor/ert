@@ -52,7 +52,6 @@ struct sched_file_struct {
   UTIL_TYPE_ID_DECLARATION;
   vector_type     * kw_list;
   vector_type     * kw_list_by_type;
-  vector_type     * old_blocks;
   vector_type     * blocks;           /* A list of chronologically sorted sched_block_type's. */
   stringlist_type * files;            /* The name of the files which have been parsed to generate this sched_file instance. */
   time_t            start_time;       /* The start of the simulation. */
@@ -74,6 +73,20 @@ static sched_block_type * sched_block_alloc_empty()
 }
 
 
+static void sched_block_debug_fprintf( const sched_block_type * block ) {
+  util_fprintf_date( block->block_start_time , stdout );
+  printf(" -- ");
+  util_fprintf_date( block->block_end_time , stdout );
+  printf("\n");
+  {
+    int i;
+    for (i=0; i < vector_get_size( block->kw_list ); i++) {
+      const sched_kw_type * sched_kw = vector_iget_const( block->kw_list , i);
+      printf("%s \n",sched_kw_get_type_name( sched_kw ));
+    }
+  }
+}
+
 
 static void sched_block_free(sched_block_type * block)
 {
@@ -93,7 +106,7 @@ static void sched_block_free__(void * block)
 
 static void sched_block_add_kw(sched_block_type * block, const sched_kw_type * kw)
 {
-  vector_append_owned_ref(block->kw_list , kw , sched_kw_free__);
+  vector_append_ref(block->kw_list , kw );
 }
 
 
@@ -143,21 +156,6 @@ static sched_block_type * sched_block_fread_alloc(FILE * stream)
 
 
 
-static sched_block_type * sched_block_alloc_copy( const sched_block_type * src ) {
-  sched_block_type * target = sched_block_alloc_empty();
-  target->block_start_time  = src->block_start_time;
-  target->block_end_time    = src->block_end_time;
-  for(int i=0; i < vector_get_size(src->kw_list); i++)
-  {
-    sched_kw_type * sched_kw = vector_iget(src->kw_list , i);
-    sched_block_add_kw(target , sched_kw_alloc_copy(sched_kw));
-  }
-  return target;
-}
-
-
-
-
 static void sched_block_fprintf(const sched_block_type * block, FILE * stream)
 {
   int i;
@@ -193,14 +191,14 @@ static sched_kw_type * sched_block_get_last_kw_ref(const sched_block_type * bloc
 
 static void sched_file_add_block(sched_file_type * sched_file, sched_block_type * block)
 {
-  vector_append_owned_ref(sched_file->old_blocks , block , sched_block_free__);
+  vector_append_owned_ref(sched_file->blocks , block , sched_block_free__);
 }
 
 
 
 static sched_block_type * sched_file_iget_block_ref(const sched_file_type * sched_file, int i)
 {
-  return vector_iget(sched_file->old_blocks , i);
+  return vector_iget(sched_file->blocks , i);
 }
 
 
@@ -243,48 +241,96 @@ static void sched_file_build_block_dates(sched_file_type * sched_file)
 
 
 static void sched_file_add_kw( sched_file_type * sched_file , const sched_kw_type * kw) {
-  vector_append_ref( sched_file->kw_list , kw );
+  vector_append_owned_ref( sched_file->kw_list , kw , sched_kw_free__);
 }
 
 
 static void sched_file_update_index( sched_file_type * sched_file ) {
   int ikw;
-  sched_block_type * current_block = sched_block_alloc_empty( 0 );
-  vector_clear( sched_file->blocks );
+
+
+  /* By type index */
+  {
+    if (sched_file->kw_list_by_type != NULL) 
+      vector_free( sched_file->kw_list_by_type );
+    sched_file->kw_list_by_type = vector_alloc_NULL_initialized( NUM_SCHED_KW_TYPES );
+    for (ikw = 0; ikw < vector_get_size( sched_file->kw_list ); ikw++) {
+      const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
+      sched_type_enum type     = sched_kw_get_type( kw );
+      {
+        vector_type * tmp        = vector_iget( sched_file->kw_list_by_type , type );
+        
+        if (tmp == NULL) {
+          tmp = vector_alloc_new();
+          vector_iset_owned_ref( sched_file->kw_list_by_type , type , tmp , vector_free__ );
+        }
+        
+        vector_append_ref( tmp , kw );
+      }
+    }
+  }
+
   
-  if (sched_file->kw_list_by_type != NULL) 
-    vector_free( sched_file->kw_list_by_type );
   
-  vector_alloc_NULL_initialized( NUM_SCHED_KW_TYPES );
-  for (ikw = 0; ikw < vector_get_size( sched_file->kw_list ); ikw++) {
-    const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
-    sched_type_enum type     = sched_kw_get_type( kw );
-    /* By type index */
-    {
-      vector_type * tmp        = vector_iget( sched_file->kw_list_by_type , type );
+  /* Block based on restart number. */
+  {
+    time_t current_time;
+    sched_block_type * current_block;
+    vector_clear( sched_file->blocks );
+
+    /* 
+       Adding a pseudo block at the start which runs from the start of
+       time (i.e. EPOCH start 01/01/1970) to simulation start.
+    */
+    current_block = sched_block_alloc_empty( 0 );
+    current_block->block_start_time  = -1;
+    current_block->block_end_time    = sched_file->start_time;
+    sched_file_add_block( sched_file , current_block );
     
-      if (tmp == NULL) {
-        tmp = vector_alloc_new();
-        vector_insert_owned_ref( sched_file->kw_list_by_type , type , tmp , vector_free__ );
+    current_block = sched_block_alloc_empty( 0 );
+    current_block->block_start_time  = sched_file->start_time;
+    current_time = sched_file->start_time;
+    
+    for (ikw = 0; ikw < vector_get_size( sched_file->kw_list ); ikw++) {
+      const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
+      sched_type_enum type     = sched_kw_get_type( kw );
+      {
+        sched_block_add_kw( current_block , kw );
+        if(type == DATES || type == TSTEP || type == TIME) {
+          /**
+             Observe that when we enocunter a time-based keyword we do the following:
+             
+               1. Finish the the current block by setting the end_time
+                  field and add this block to the sched_file
+                  structure.
+
+               2. Create a new block starting at current time.
+
+              ------- 
+
+              Blocks are not actually added to the sched_file instance
+              before they are terminated with a DATES/TSTEP
+              keyword. This implies that keywords which come after the
+              last DATES/TSTEP keyword are lost.
+          */
+               
+          current_time = sched_kw_get_new_time( kw , current_time );
+
+          /* Finishing off the current block, and adding it to the sched_file. */
+          current_block->block_end_time = current_time;
+          sched_file_add_block( sched_file , current_block );
+          
+          /* Creating a new block - not yet added to the sched_file. */
+          current_block = sched_block_alloc_empty( vector_get_size( sched_file->blocks ));
+          current_block->block_start_time = current_time;
+        }
       }
-      
-      vector_append_ref( tmp , kw );
     }
-
-
-    /* Block based on restart number. */
-    {
-      sched_block_add_kw( current_block , kw );
-      if(type == DATES || type == TSTEP || type == TIME) {
-        /* OK A new Time based keyword. We do the following:
-
-           1. We add the block to the sched_file
-           2. Create a new block.
-        */
-        sched_file_add_block( sched_file , current_block );
-        current_block = sched_block_alloc_empty( vector_get_size( sched_file->blocks ));
-      }
-    }
+    /*
+      Free the last block, which has not been added to the sched_file
+      object.
+    */
+    sched_block_free( current_block );
   }
 }
 
@@ -293,7 +339,6 @@ sched_file_type * sched_file_alloc(time_t start_time)
 {
   sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
   UTIL_TYPE_ID_INIT( sched_file , SCHED_FILE_TYPE_ID);
-  sched_file->old_blocks   	       = vector_alloc_new();
   sched_file->kw_list          = vector_alloc_new();
   sched_file->kw_list_by_type  = NULL;
   sched_file->blocks           = vector_alloc_new();
@@ -307,7 +352,11 @@ UTIL_SAFE_CAST_FUNCTION(sched_file , SCHED_FILE_TYPE_ID);
 
 void sched_file_free(sched_file_type * sched_file)
 {
-  vector_free(sched_file->old_blocks);
+  vector_free( sched_file->blocks );
+  vector_free( sched_file->kw_list );
+  if (sched_file->kw_list_by_type != NULL)
+    vector_free( sched_file->kw_list_by_type );
+
   stringlist_free( sched_file->files );
   free(sched_file);
 }
@@ -337,7 +386,6 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     stringlist_free( tokens );
     fclose(stream);
   }
-  //printf("tmp_file stored in:%s \n",tmp_file);
 
   {
     bool at_eof        = false;
@@ -356,6 +404,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
         sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
         sched_kw_free(current_kw);
         for(int i=0; i<num_steps; i++) {
+          sched_file_add_kw( sched_file , sched_kw_dates[i]);
           sched_block_add_kw(current_block, sched_kw_dates[i]);
           sched_file_add_block(sched_file, current_block);
           current_block = sched_block_alloc_empty();
@@ -363,6 +412,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
         free(sched_kw_dates); /* Note: This is *not* the storage! */
       } else{
         sched_block_add_kw(current_block, current_kw);
+        sched_file_add_kw( sched_file , current_kw);
       }
       current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
     } 
@@ -370,12 +420,13 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     fclose(stream);
     sched_block_free(current_block); /* Free the last non-proper block. */
     sched_file_build_block_dates(sched_file);
+    sched_file_update_index( sched_file );
   }
-  /* Should delete the tmp file - but we keep it around just in case ... */
-  // unlink_existing_file( tmp_file );
   free( tmp_base );
   free( tmp_file );
 }
+
+
 
 void sched_file_parse(sched_file_type * sched_file, time_t start_date, const char * filename)
 {
@@ -397,7 +448,7 @@ sched_file_type * sched_file_parse_alloc(const char * filename , time_t start_da
 
 int sched_file_get_num_restart_files(const sched_file_type * sched_file)
 {
-  return vector_get_size(sched_file->old_blocks);
+  return vector_get_size(sched_file->blocks);
 }
 
 
@@ -415,7 +466,7 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
   
   for(int i=0; i<= last_restart_file; i++)
   {
-    const sched_block_type * sched_block = vector_iget_const( sched_file->old_blocks , i);
+    const sched_block_type * sched_block = vector_iget_const( sched_file->blocks , i);
     sched_block_fprintf(sched_block, stream);
   }
   fprintf(stream, "END\n");
@@ -578,7 +629,7 @@ static void __sched_file_summarize_line(int restart_nr , time_t start_time , tim
 
 
 void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
-  int len = sched_file_get_num_restart_files(sched_file);
+  int len            = sched_file_get_num_restart_files(sched_file);
   time_t  start_time = sched_file_iget_block_start_time(sched_file , 0);
   for(int i=1; i<len; i++) {
     time_t t = sched_file_iget_block_start_time(sched_file , i);
@@ -586,7 +637,7 @@ void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
   }
   {
     time_t t = sched_file_iget_block_end_time(sched_file , len - 1);
-    __sched_file_summarize_line(len - 2 , start_time , t , stream);
+    __sched_file_summarize_line(len - 1 , start_time , t , stream);
   }
 }
 
@@ -597,31 +648,26 @@ void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
 */
 
 sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_copy) {
+  int ikw;
   sched_file_type * target = sched_file_alloc(src->start_time);
+  
+  for (ikw = 0; ikw < vector_get_size( src->kw_list ); ikw++) {
+    sched_kw_type * kw = vector_iget( src->kw_list , ikw );
+    sched_file_add_kw( target , kw );
+  }
+                                                                
   
   {
     int i;
-    for (i=0; i < vector_get_size( src->old_blocks ); i++) {
-      sched_block_type * block = vector_iget(src->old_blocks , i);
-      if (deep_copy) 
-	/* 
-	   sched_block_alloc_copy will invoke the kw copy constructors,
-	   and they are not all implemented.
-	*/
-	sched_file_add_block(target , sched_block_alloc_copy( block ));
-      else 
-	vector_append_ref( target->old_blocks , block);
-    }
-    
-
     for (i = 0; i < stringlist_get_size( src->files ); i++) {
       if (deep_copy)
-	stringlist_append_copy( target->files , stringlist_iget(src->files , i));
+        stringlist_append_copy( target->files , stringlist_iget(src->files , i));
       else
-	stringlist_append_ref( target->files , stringlist_iget(src->files , i));
+        stringlist_append_ref( target->files , stringlist_iget(src->files , i));
     }
   }
-  
+
+  sched_file_update_index( target );
   return target;
 }
 

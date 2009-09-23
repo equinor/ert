@@ -12,11 +12,12 @@ LIB_LINK  = -lsched -lecl -lutil -lm -lz -lpthread
 LIB_PATH  = -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib
 TARGET_INCLUDE = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBSCHED_HOME)/include
 
-all: LIB 
+LIB:	$(LIB)
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
+
 
 clean:
 	rm -f *.o *~ 
@@ -34,7 +35,6 @@ BIN:	LIB
 
 rebuild: clean all
 
-LIB:	$(LIB)
 
 $(LIB): $(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
@@ -72,4 +72,4 @@ gruptree_test.x: $(LIB) gruptree_test.o
 	$(LD) -$(MFLAG) $(LDFLAGS) gruptree_test.o -o gruptree_test.x $(LIB_PATH) $(LIB_LINK)
 
 sched_summary.x: $(LIB) sched_summary.o
-	$(LD) -$(MFLAG) $(LDFLAGS) sched_summary.o -o sched_summary.x $(LIB_PATH) $(LIB_LINK)
+	$(LD) -$(MFLAG) $(LDFLAGS) sched_summary.o -o sched_summary.x -L./ $(LIB_PATH) $(LIB_LINK)

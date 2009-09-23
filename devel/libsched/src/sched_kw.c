@@ -270,6 +270,10 @@ static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_k
 
 
 
+const char * sched_kw_get_type_name( const sched_kw_type * sched_kw ) {
+  return get_name_from_type( sched_kw->type );
+}
+
 sched_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 {
   return sched_kw->type;  
