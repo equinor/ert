@@ -364,6 +364,16 @@ void job_queue_set_load_OK(job_queue_type * queue , int external_id) {
 }
 
 
+void job_queue_set_all_fail(job_queue_type * queue , int external_id) {
+  int queue_index    = job_queue_get_internal_index( queue , external_id );
+  if (queue_index >= 0) {
+    job_queue_node_type * node = queue->jobs[queue_index];
+    job_queue_change_node_status( queue , node , JOB_QUEUE_ALL_FAIL);
+  } else 
+    util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
+}
+
+
 /**
    The external scope asks the queue to restart the the job. We reset
    the submit counter to zero.
@@ -456,7 +466,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
       memcpy(old_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * old_status_list);
     } 
     
-    if ((queue->status_list[JOB_QUEUE_ALL_OK] + queue->status_list[JOB_QUEUE_RUN_FAIL]) == num_total_run)
+    if ((queue->status_list[JOB_QUEUE_ALL_OK] + queue->status_list[JOB_QUEUE_ALL_FAIL]) == num_total_run)
       cont = false;
     
     if (cont) {
