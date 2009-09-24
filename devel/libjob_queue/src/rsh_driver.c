@@ -113,7 +113,7 @@ static void rsh_host_submit_job(rsh_host_type * rsh_host , rsh_job_type * job, c
   */
   
   util_vfork_exec(rsh_cmd , 3 , (const char *[3]) {rsh_host->host_name , submit_cmd , run_path} , true , NULL , NULL , NULL , NULL , NULL);
-  job->status = job_queue_done;
+  job->status = JOB_QUEUE_DONE;
 
   pthread_mutex_lock( &rsh_host->host_mutex );
   rsh_host->running--;
@@ -165,7 +165,7 @@ rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
   job = util_malloc(sizeof * job , __func__);
   job->__rsh_id   = RSH_JOB_ID;
   job->active     = false;
-  job->status     = job_queue_waiting;
+  job->status     = JOB_QUEUE_WAITING;
   job->run_path   = util_alloc_string_copy(run_path);
   job->node_index = node_index;
   return job;
@@ -186,14 +186,14 @@ UTIL_IS_INSTANCE_FUNCTION( rsh_driver , RSH_DRIVER_TYPE_ID )
 job_status_type rsh_driver_get_job_status(void * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
-    return job_queue_null;
+    return JOB_QUEUE_NULL;
   else {
     rsh_job_type    * job    = (rsh_job_type    *) __job;
     rsh_job_assert_cast(job);
     {
       if (job->active == false) {
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
-	return job_queue_null;  /* Dummy to shut up compiler */
+	return JOB_QUEUE_NULL;  /* Dummy to shut up compiler */
       } else 
 	return job->status;
     }
@@ -262,7 +262,7 @@ basic_queue_job_type * rsh_driver_submit_job(void  * __driver,
 	if (pthread_return_value != 0) 
 	  util_abort("%s failed to create thread ERROR:%d  \n", __func__ , pthread_return_value);
       }
-      job->status = job_queue_running; 
+      job->status = JOB_QUEUE_RUNNING; 
       job->active = true;
       basic_job = (basic_queue_job_type *) job;
       basic_queue_job_init(basic_job);

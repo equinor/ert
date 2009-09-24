@@ -132,7 +132,7 @@ struct job_queue_struct {
   char                     * run_cmd;       			/* The command which is run (i.e. path to an executable with arguments). */
   job_queue_node_type     ** jobs;          			/* A vector of job nodes .*/
   basic_queue_driver_type  * driver;        			/* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
-  int                        status_list[job_queue_max_state];  /* The number of jobs in the different states (observe that the state is (ab)used as index). */
+  int                        status_list[JOB_QUEUE_MAX_STATE];  /* The number of jobs in the different states (observe that the state is (ab)used as index). */
   
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_rwlock_t           active_rwlock;
@@ -144,7 +144,7 @@ struct job_queue_struct {
 
 static void job_queue_node_clear(job_queue_node_type * node) {
   node->external_id    = -1;
-  node->job_status     = job_queue_null;
+  node->job_status     = JOB_QUEUE_NULL;
   node->submit_attempt = 0;
   node->job_name       = NULL;
   node->run_path       = NULL;
@@ -222,7 +222,7 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
       util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
 
     node->exit_file = util_alloc_filename(node->run_path , EXIT_FILE , NULL);
-    job_queue_change_node_status(queue , node , job_queue_waiting);
+    job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
   }
 }
 
@@ -305,7 +305,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 	  submit_status = submit_driver_FAIL;
       }
     } else {
-      job_queue_change_node_status(queue , node , job_queue_run_FAIL);
+      job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_FAIL);
       submit_status = submit_job_FAIL;
     }
     return submit_status;
@@ -358,7 +358,7 @@ void job_queue_set_load_OK(job_queue_type * queue , int external_id) {
   int queue_index    = job_queue_get_internal_index( queue , external_id );
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
-    job_queue_change_node_status( queue , node , job_queue_all_OK);
+    job_queue_change_node_status( queue , node , JOB_QUEUE_ALL_OK);
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
@@ -374,7 +374,7 @@ void job_queue_set_external_restart(job_queue_type * queue , int external_id) {
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
     node->submit_attempt = 0;
-    job_queue_change_node_status( queue , node , job_queue_waiting);
+    job_queue_change_node_status( queue , node , JOB_QUEUE_WAITING);
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
@@ -385,7 +385,7 @@ void job_queue_set_external_fail(job_queue_type * queue , int external_id) {
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
     node->submit_attempt = 0;
-    job_queue_change_node_status( queue , node , job_queue_run_FAIL);
+    job_queue_change_node_status( queue , node , JOB_QUEUE_RUN_FAIL);
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
@@ -393,17 +393,17 @@ void job_queue_set_external_fail(job_queue_type * queue , int external_id) {
 
 
 static void job_queue_print_jobs(const job_queue_type *queue) {
-  int waiting  = queue->status_list[job_queue_waiting];
-  int pending  = queue->status_list[job_queue_pending];
+  int waiting  = queue->status_list[JOB_QUEUE_WAITING];
+  int pending  = queue->status_list[JOB_QUEUE_PENDING];
 
   /* 
      EXIT and DONE are included in "xxx_running", because the target
      file has not yet been checked.
   */
-  int running  = queue->status_list[job_queue_running] + queue->status_list[job_queue_done] + queue->status_list[job_queue_exit];
-  int complete = queue->status_list[job_queue_all_OK];
-  int failed   = queue->status_list[job_queue_run_FAIL];
-  int loading  = queue->status_list[job_queue_run_OK];  
+  int running  = queue->status_list[JOB_QUEUE_RUNNING] + queue->status_list[JOB_QUEUE_DONE] + queue->status_list[JOB_QUEUE_EXIT];
+  int complete = queue->status_list[JOB_QUEUE_ALL_OK];
+  int failed   = queue->status_list[JOB_QUEUE_RUN_FAIL];
+  int loading  = queue->status_list[JOB_QUEUE_RUN_OK];  
 
   printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , loading , failed , complete);
   fflush(stdout);
@@ -421,7 +421,7 @@ void job_queue_finalize(job_queue_type * queue) {
   for (i=0; i < queue->size; i++) 
     job_queue_node_finalize(queue->jobs[i]);
   
-  for (i=0; i < job_queue_max_state; i++) 
+  for (i=0; i < JOB_QUEUE_MAX_STATE; i++) 
     queue->status_list[i] = 0;
   
   queue->active_size = 0;
@@ -434,10 +434,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
   bool new_jobs = false;
   bool cont     = true;
   int  phase = 0;
-  int  old_status_list[job_queue_max_state];
+  int  old_status_list[JOB_QUEUE_MAX_STATE];
   {
     int i;
-    for (i=0; i < job_queue_max_state; i++)
+    for (i=0; i < JOB_QUEUE_MAX_STATE; i++)
       old_status_list[i] = -1;
   }
 
@@ -450,13 +450,13 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
     spinner[3] = '/';
 
     job_queue_update_status(queue);
-    if ( (memcmp(old_status_list , queue->status_list , job_queue_max_state * sizeof * old_status_list) != 0) || new_jobs ) {
+    if ( (memcmp(old_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * old_status_list) != 0) || new_jobs ) {
       printf("\b \n");
       job_queue_print_jobs(queue);
-      memcpy(old_status_list , queue->status_list , job_queue_max_state * sizeof * old_status_list);
+      memcpy(old_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * old_status_list);
     } 
     
-    if ((queue->status_list[job_queue_all_OK] + queue->status_list[job_queue_run_FAIL]) == num_total_run)
+    if ((queue->status_list[JOB_QUEUE_ALL_OK] + queue->status_list[JOB_QUEUE_RUN_FAIL]) == num_total_run)
       cont = false;
     
     if (cont) {
@@ -468,13 +468,13 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	/* Submitting new jobs */
 	
 	int active_size    = job_queue_get_active_size(queue);
-	int total_active   = queue->status_list[job_queue_pending] + queue->status_list[job_queue_running];
+	int total_active   = queue->status_list[JOB_QUEUE_PENDING] + queue->status_list[JOB_QUEUE_RUNNING];
 	int num_submit_new = queue->max_running - total_active; 
 	char spinner2[2];
 	spinner2[1] = '\0';
 	
 	new_jobs = false;
-	if (queue->status_list[job_queue_waiting] > 0)   /* We have waiting jobs at all           */
+	if (queue->status_list[JOB_QUEUE_WAITING] > 0)   /* We have waiting jobs at all           */
 	  if (num_submit_new > 0)                        /* The queue can allow more running jobs */
 	    new_jobs = true;
 	
@@ -485,7 +485,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 
 	  while ((queue_index < active_size) && (num_submit_new > 0)) {
 	    job_queue_node_type * node = queue->jobs[queue_index];
-	    if (job_queue_node_get_status(node) == job_queue_waiting) {
+	    if (job_queue_node_get_status(node) == JOB_QUEUE_WAITING) {
 	      {
 		submit_status_type submit_status = job_queue_submit_job(queue , queue_index);
 		
@@ -529,27 +529,25 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	for (queue_index = 0; queue_index < job_queue_get_active_size(queue); queue_index++) {
 	  job_queue_node_type * node = queue->jobs[queue_index];
 	  switch (job_queue_node_get_status(node)) {
-	  case(job_queue_done):
+	  case(JOB_QUEUE_DONE):
 
 	    if (util_file_exists(node->exit_file)) {
 	      if (verbose) {
 		printf("Restarting: %s | ",node->job_name);
                 queue->driver->display_info( queue->driver , node->job_data );
               }
-	      job_queue_change_node_status(queue , node , job_queue_waiting);
-	      queue->status_list[job_queue_restart]++;
+	      job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
 	    } else 
-	      job_queue_change_node_status(queue , node , job_queue_run_OK);
+	      job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_OK);
 
 	    job_queue_free_job(queue , node);
 	    break;
-	  case(job_queue_exit):
+	  case(JOB_QUEUE_EXIT):
 	    if (verbose) {
 	      printf("Restarting: %s | ",node->job_name);
               queue->driver->display_info( queue->driver , node->job_data );
             }
-	    queue->status_list[job_queue_restart]++;
-	    job_queue_change_node_status(queue , node , job_queue_waiting);
+	    job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
 	    job_queue_free_job(queue , node);
 	    break;
 	  default:
@@ -627,7 +625,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
     for (i=0; i < size; i++) 
       queue->jobs[i] = job_queue_node_alloc();
 
-    for (i=0; i < job_queue_max_state; i++)
+    for (i=0; i < JOB_QUEUE_MAX_STATE; i++)
       queue->status_list[i] = 0;
     
     for (i=0; i < size; i++) 

@@ -214,7 +214,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* the job has not been registered at all ... */
-    return job_queue_null;
+    return JOB_QUEUE_NULL;
   else {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
     lsf_job_assert_cast(job);
@@ -233,7 +233,7 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_
 	     
 	*/
 	fprintf(stderr,"Warning: failed to get status information for job:%ld - assuming it is finished. \n", job->lsf_jobnr);
-	status = job_queue_done;
+	status = JOB_QUEUE_DONE;
       } else {
 	job_info = lsb_readjobinfo( NULL );
 	lsb_closejobinfo();
@@ -243,17 +243,17 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_
 	}
 	
 	switch (job_info->status) {
-	  CASE_SET(JOB_STAT_PEND  , job_queue_pending);
-	  CASE_SET(JOB_STAT_SSUSP , job_queue_running);
-	  CASE_SET(JOB_STAT_RUN   , job_queue_running);
-	  CASE_SET(JOB_STAT_EXIT  , job_queue_exit);
-	  CASE_SET(JOB_STAT_DONE  , job_queue_done);
-	  CASE_SET(JOB_STAT_PDONE , job_queue_done);
-	  CASE_SET(JOB_STAT_PERR  , job_queue_exit);
-	  CASE_SET(192            , job_queue_done); /* this 192 seems to pop up - where the fuck it comes frome  _pdone + _ususp ??? */
+	  CASE_SET(JOB_STAT_PEND  , JOB_QUEUE_PENDING);
+	  CASE_SET(JOB_STAT_SSUSP , JOB_QUEUE_RUNNING);
+	  CASE_SET(JOB_STAT_RUN   , JOB_QUEUE_RUNNING);
+	  CASE_SET(JOB_STAT_EXIT  , JOB_QUEUE_EXIT);
+	  CASE_SET(JOB_STAT_DONE  , JOB_QUEUE_DONE);
+	  CASE_SET(JOB_STAT_PDONE , JOB_QUEUE_DONE);
+	  CASE_SET(JOB_STAT_PERR  , JOB_QUEUE_EXIT);
+	  CASE_SET(192            , JOB_QUEUE_DONE); /* this 192 seems to pop up - where the fuck it comes frome ??  _pdone + _ususp ??? */
 	default:
 	  fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
-	  status = job_queue_done; /* ????  */
+	  status = JOB_QUEUE_DONE; /* ????  */
 	}
       }
       
