@@ -5,6 +5,7 @@
 #include <sched_util.h>
 #include <vector.h>
 #include <hash.h>
+#include <stringlist.h>
 
 /*
   Define the maximum number of keywords in a WCONHIST record.
@@ -356,6 +357,10 @@ sched_kw_wconhist_type * sched_kw_wconhist_safe_cast( void * arg ) {
 
 
 /***********************************************************************/
+
+sched_kw_wconhist_type * sched_kw_wconhist_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
+}
 
 
 

@@ -3,6 +3,7 @@
 #include <sched_kw_gruptree.h>
 #include <sched_util.h>
 #include <sched_macros.h>
+#include <stringlist.h>
 
 struct sched_kw_gruptree_struct
 {
@@ -46,6 +47,11 @@ static sched_kw_gruptree_type * sched_kw_gruptree_alloc()
 
 
 /***********************************************************************/
+
+
+sched_kw_gruptree_type * sched_kw_gruptree_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
+}
 
 
 

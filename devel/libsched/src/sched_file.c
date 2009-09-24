@@ -283,7 +283,7 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
        time (i.e. EPOCH start 01/01/1970) to simulation start.
     */
     current_block = sched_block_alloc_empty( 0 );
-    current_block->block_start_time  = -1;
+    current_block->block_start_time  = sched_file->start_time;//-1;     /* Need this funny node - hhmmmmmm */
     current_block->block_end_time    = sched_file->start_time;
     sched_file_add_block( sched_file , current_block );
     
@@ -377,7 +377,13 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
   char * tmp_base             = util_alloc_sprintf("enkf-schedule:%s" , filename);
   char * tmp_file             = util_alloc_tmp_file("/tmp" , tmp_base , true);
   {
-    parser_type     * parser    = parser_alloc(" \t" , "\'\"" , "\n" , "\r" , "--" , "\n");
+    parser_type     * parser    = parser_alloc(" \t"  ,      /* Splitters */
+                                               "\'\"" ,      /* Quoters   */
+                                               "\n"   ,      /* Specials - splitters which will be kept. */  
+                                               "\r"   ,      /* Delete set - these are just deleted. */
+                                               "--"   ,      /* Comment start */
+                                               "\n");        /* Comment end */  
+
     stringlist_type * tokens    = parser_tokenize_file( parser , filename , false );
     FILE * stream               = util_fopen(tmp_file , "w");
 
@@ -388,37 +394,31 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
   }
 
   {
-    bool at_eof        = false;
+    bool at_eof      = false;
     sched_kw_type    * current_kw;
-    sched_block_type * current_block;
     
     FILE * stream = util_fopen(tmp_file , "r");
     stringlist_append_copy( sched_file->files , filename);
-    current_block = sched_block_alloc_empty();
-    current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
+    current_kw     = sched_kw_fscanf_alloc(stream, &at_eof);
     while(!at_eof) {
       sched_type_enum type = sched_kw_get_type(current_kw);
       
       if(type == DATES || type == TSTEP || type == TIME) {
-        int num_steps;
+        int i , num_steps;
         sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
         sched_kw_free(current_kw);
-        for(int i=0; i<num_steps; i++) {
+
+        for(i=0; i<num_steps; i++) 
           sched_file_add_kw( sched_file , sched_kw_dates[i]);
-          sched_block_add_kw(current_block, sched_kw_dates[i]);
-          sched_file_add_block(sched_file, current_block);
-          current_block = sched_block_alloc_empty();
-        }
-        free(sched_kw_dates); /* Note: This is *not* the storage! */
-      } else{
-        sched_block_add_kw(current_block, current_kw);
+
+        free(sched_kw_dates);   
+      } else
         sched_file_add_kw( sched_file , current_kw);
-      }
+      
       current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
     } 
-
+    
     fclose(stream);
-    sched_block_free(current_block); /* Free the last non-proper block. */
     sched_file_build_block_dates(sched_file);
     sched_file_update_index( sched_file );
   }

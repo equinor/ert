@@ -2,6 +2,7 @@
 #define __SCHED_KW_INCLDUE_H__
 
 #include <sched_macros.h>
+#include <stringlist.h>
 
 typedef struct sched_kw_include_struct sched_kw_include_type;
 

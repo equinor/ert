@@ -5,7 +5,7 @@
 #include <sched_kw_wconinj.h>
 #include <sched_kw_untyped.h>
 #include <sched_util.h>
-
+#include <stringlist.h>
 
 
 
@@ -71,6 +71,12 @@ static void sched_kw_wconinj_add_line(sched_kw_wconinj_type * kw , const char * 
   stringlist_append_copy(kw->wells , token_list[0]);
   sched_kw_untyped_add_line(kw->untyped_kw , line , true );
   util_free_stringlist( token_list , tokens );
+}
+
+
+
+sched_kw_wconinj_type * sched_kw_wconinj_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
 }
 
 

@@ -5,6 +5,7 @@ extern "C" {
 #endif
 #include <stdio.h>
 #include <sched_macros.h>
+#include <stringlist.h>
 
 typedef struct sched_kw_gruptree_struct sched_kw_gruptree_type;
 

@@ -6,7 +6,7 @@
 #include <util.h>
 #include <sched_util.h>
 #include <sched_macros.h>
-
+#include <stringlist.h>
 
 
 /*
@@ -465,6 +465,12 @@ static void sched_kw_welspecs_add_line(sched_kw_welspecs_type * kw, const char *
 
 
 /*****************************************************************************/
+
+
+sched_kw_welspecs_type * sched_kw_welspecs_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
+}
+
 
 
 sched_kw_welspecs_type * sched_kw_welspecs_fscanf_alloc(FILE *stream, bool * at_eof, const char * kw_name)

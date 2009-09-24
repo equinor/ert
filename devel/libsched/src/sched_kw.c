@@ -21,7 +21,7 @@
 #include <sched_kw_untyped.h>
 #include <sched_kw_include.h>
 #include <sched_macros.h>
-
+#include <stringlist.h>
 
 /*
   The structure sched_kw_type is used for internalization
@@ -56,7 +56,8 @@
 
 */
 
-typedef void * (data_fscanf_alloc_proto)( FILE *, bool *,  const char *);
+typedef void * (data_token_alloc_proto)  ( const stringlist_type * , int * );
+typedef void * (data_fscanf_alloc_proto) ( FILE *, bool *,  const char *);
 typedef void   (data_free_proto)(         void *);
 typedef void   (data_fprintf_proto)(const void *, FILE *);
 typedef void   (data_fwrite_proto) ( const void *, FILE *);
@@ -67,6 +68,7 @@ typedef struct data_handlers_struct data_handlers_type;
 
 
 struct data_handlers_struct {
+  data_token_alloc_proto  * token_alloc;
   data_fscanf_alloc_proto * fscanf_alloc;
   data_free_proto         * free;
   data_fprintf_proto      * fprintf;

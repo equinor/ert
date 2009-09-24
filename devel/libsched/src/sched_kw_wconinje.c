@@ -7,7 +7,7 @@
 #include <sched_kw_wconinje.h>
 #include <sched_kw_untyped.h>
 #include <sched_util.h>
-
+#include <stringlist.h>
 
 
 
@@ -311,6 +311,11 @@ static void sched_kw_wconinje_add_line(sched_kw_wconinje_type * kw , const char 
   well = wconinje_well_alloc_from_string( token_list );
   vector_append_owned_ref(kw->wells , well , wconinje_well_free__);
   util_free_stringlist( token_list , tokens );
+}
+
+
+sched_kw_wconinje_type * sched_kw_wconinje_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
 }
 
 

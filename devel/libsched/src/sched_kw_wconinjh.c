@@ -5,6 +5,7 @@
 #include <sched_kw_wconinjh.h>
 #include <sched_util.h>
 #include <hash.h>
+#include <stringlist.h>
 
 /*
   Define the maximum number of keywords in a WCONINJH record.
@@ -296,6 +297,11 @@ static sched_kw_wconinjh_type * sched_kw_wconinjh_alloc()
 /***********************************************************************/
 
 
+sched_kw_wconinjh_type * sched_kw_wconinjh_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
+}
+
+
 sched_kw_wconinjh_type * sched_kw_wconinjh_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)
 {
   bool   at_eokw = false;
@@ -398,7 +404,7 @@ hash_type * sched_kw_wconinjh_alloc_well_obs_hash(const sched_kw_wconinjh_type *
 
 
 /***********************************************************************/
-
+KW_TOKEN_ALLOC_IMPL(wconinjh)
 KW_FSCANF_ALLOC_IMPL(wconinjh)
 KW_FWRITE_IMPL(wconinjh)
 KW_FREAD_ALLOC_IMPL(wconinjh)

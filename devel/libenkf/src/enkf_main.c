@@ -52,6 +52,8 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <job_queue.h>
+#include <basic_queue_driver.h>
 #include "enkf_defaults.h"
 
 /**
@@ -814,6 +816,55 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 
 
 
+static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
+  const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
+  arg_pack_type ** arg_list     = util_malloc( ens_size * sizeof * arg_list , __func__);
+  thread_pool_type * tp         = thread_pool_alloc( 10 );
+  job_status_type * status_list = util_malloc( ens_size * sizeof * status_list , __func__);
+  const int usleep_time         = 2500000; //100000; /* 1/10 of a second */ 
+  int jobs_remaining;
+  int iens;
+  
+  for (iens = 0; iens < ens_size; iens++) {
+    arg_list[iens]    = arg_pack_alloc();
+    status_list[iens] = JOB_QUEUE_NOT_ACTIVE;
+  }
+
+  do {
+    job_status_type status;
+    jobs_remaining = 0;
+    
+    for (iens = 0; iens < ens_size; iens++) {
+      enkf_state_type * enkf_state = enkf_main->ensemble[iens];
+      status = enkf_state_get_run_status( enkf_state );
+      if ((status != JOB_QUEUE_NOT_ACTIVE) && ( status != JOB_QUEUE_ALL_OK) && (status != JOB_QUEUE_ALL_FAIL))
+        jobs_remaining += 1; /* OK - the job is still running. */
+      
+      if ((status == JOB_QUEUE_RUN_OK) || (status == JOB_QUEUE_RUN_FAIL)) {
+        if (status_list[iens] != status) {
+          arg_pack_append_ptr( arg_list[iens] , enkf_state );
+          arg_pack_append_int( arg_list[iens] , status );
+        
+          thread_pool_add_job( tp , enkf_state_complete_forward_model__ , arg_list[iens] );
+        }
+      }
+      status_list[iens] = status;
+    }
+    if (jobs_remaining > 0)
+      usleep( usleep_time );
+  } while (jobs_remaining > 0);
+  thread_pool_join( tp );
+  thread_pool_free( tp );
+
+  for (iens = 0; iens < ens_size; iens++) 
+    arg_pack_free( arg_list[iens] );
+  free( arg_list );
+  free( status_list );
+}
+
+
+
+
 
 
 static void enkf_main_run_step(enkf_main_type * enkf_main      , 
@@ -879,21 +930,13 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       thread_pool_free(submit_threads);
     }
     log_add_message(enkf_main->logh , 1 , "All jobs ready for running - waiting for completion" , false);
-  
-    {
-      thread_pool_type * complete_threads = thread_pool_alloc(ens_size);
-      for (iens = 0; iens < ens_size; iens++) 
-	if (iactive[iens]) 
-	  thread_pool_add_job(complete_threads , enkf_state_complete_forward_model__ , enkf_main->ensemble[iens]);
-      
-      thread_pool_join(complete_threads);      /* All jobs have completed and the results have been loaded back. */
-      thread_pool_free(complete_threads);
-    }
-    pthread_join ( queue_thread , NULL );      /* The thread running the queue is complete.      */
+    enkf_main_run_wait_loop( enkf_main );
     job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
     arg_pack_free( queue_args );
   }
   
+
+
   {
     bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
     

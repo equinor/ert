@@ -7,7 +7,7 @@
 #include <sched_kw_untyped.h>
 #include <sched_util.h>
 #include <subst.h>
-
+#include <stringlist.h>
 
 
 
@@ -114,6 +114,11 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_varlen(FILE * strea
 
 
 /*****************************************************************/
+
+
+sched_kw_untyped_type * sched_kw_untyped_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
+}
 
 
 

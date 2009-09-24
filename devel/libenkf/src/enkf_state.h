@@ -26,13 +26,14 @@ extern "C" {
 #include <matrix.h>
 #include <log.h>
 #include <ert_template.h>
-
+#include <job_queue.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
 typedef struct member_config_struct member_config_type;
 
-keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config);
-
+keep_runpath_type  member_config_get_keep_runpath(const member_config_type * member_config);
+void             * enkf_state_complete_forward_model__(void * arg );
+job_status_type    enkf_state_get_run_status( const enkf_state_type * enkf_state );
 void               enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2 , bool * loadOK);
 void *             enkf_state_internalize_results_mt( void * arg );
 void               enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type * param_list);
@@ -50,7 +51,6 @@ void               enkf_state_del_node(enkf_state_type * , const char * );
 void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_forward_model__(void * );
-void             * enkf_state_complete_forward_model__(void * );
 enkf_state_type  * enkf_state_alloc(int ,
                                     enkf_fs_type   * fs, 
                                     const char * casename , 

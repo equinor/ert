@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 #include <sched_macros.h>
-
+#include <stringlist.h>
 
 typedef struct sched_kw_wconinje_struct sched_kw_wconinje_type;
 

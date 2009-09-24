@@ -8,6 +8,7 @@
 #include <sched_kw_include.h>
 #include <sched_macros.h>
 #include <parser.h>
+#include <stringlist.h>
 
 /**
    This file implemtents support for the INCLUDE keyword in the
@@ -42,6 +43,12 @@ static sched_kw_include_type * sched_kw_include_alloc_empty() {
 
 static void sched_kw_include_set_file( sched_kw_include_type * kw , const char * file) {
   kw->include_file = util_alloc_string_copy( file );
+}
+
+
+
+sched_kw_include_type * sched_kw_include_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
 }
 
 

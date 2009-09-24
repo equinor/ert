@@ -355,6 +355,11 @@ void sched_kw_compdat_add_line(sched_kw_compdat_type * kw , const char * line) {
 }
 
 
+sched_kw_compdat_type * sched_kw_compdat_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
+}
+
+
 sched_kw_compdat_type * sched_kw_compdat_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name) {
   bool   at_eokw = false;
   sched_kw_compdat_type * kw = sched_kw_compdat_alloc();

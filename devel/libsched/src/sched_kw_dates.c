@@ -5,7 +5,7 @@
 #include <util.h>
 #include <sched_util.h>
 #include <sched_kw_dates.h>
-
+#include <stringlist.h>
 
 
 struct sched_kw_dates_struct {
@@ -91,6 +91,10 @@ static void sched_kw_dates_add_line(sched_kw_dates_type *kw, const char *line) {
 
 /*****************************************************************/
 
+
+sched_kw_dates_type * sched_kw_dates_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+  
+}
 
 
 sched_kw_dates_type  * sched_kw_dates_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)

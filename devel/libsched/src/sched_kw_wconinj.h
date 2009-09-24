@@ -9,6 +9,7 @@ extern "C" {
 #include <stdbool.h>
 #include <sched_macros.h>
 #include <hash.h>
+#include <stringlist.h>
 
 
 typedef struct sched_kw_wconinj_struct sched_kw_wconinj_type;

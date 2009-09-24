@@ -401,8 +401,8 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
   {
     const char * key_fmt       = "  %12s";
     //const char * dash_line     = "--------------";
-    const char * value_fmt     = " %12.3f ";
-    const char * start_fmt     = " %3d       %3d           %10.3f      ";  /* <- This is significant whitespace ... */
+    const char * value_fmt     = " %13.3f ";
+    const char * start_fmt     = " %3d       %3d           %10.3f     ";  /* <- This is significant whitespace ... */
     hash_type * obs_hash       = vector_iget( ranking->ensemble , 0);
     stringlist_type * obs_keys = hash_alloc_stringlist( obs_hash );
     int num_obs                = stringlist_get_size( obs_keys );
@@ -414,11 +414,6 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
       fprintf(stream , key_fmt , stringlist_iget( obs_keys , iobs ));
     fprintf(stream , "\n");
 
-    //fprintf(stream , "----------------------------------------");
-    //for (iobs =0; iobs < num_obs; iobs++) 
-    //  fprintf(stream , "%s" , dash_line);
-    //fprintf(stream , "\n");
-
     for (int i = 0; i < ens_size; i++) {
       int iens = permutations[i];
       hash_type * obs_hash = vector_iget( ranking->ensemble , iens );
@@ -428,12 +423,6 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
         fprintf(stream , value_fmt , hash_get_double( obs_hash , stringlist_iget( obs_keys , iobs )));
       fprintf(stream , "\n");
     }
-
-    //fprintf(stream , "----------------------------------------");
-    //for (iobs =0; iobs < num_obs; iobs++) 
-    //  fprintf(stream , "%s" , dash_line);
-    //fprintf(stream , "\n");
-    
   }
   fclose( stream );
 }

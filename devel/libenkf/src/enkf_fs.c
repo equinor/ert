@@ -310,7 +310,7 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 */
 
 long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir, fs_driver_impl driver_impl) {
-  const int num_block_fs_drivers = 5;
+  const int num_block_fs_drivers = 10;
   long int  __dir_offset;
   FILE * stream = util_fopen( mount_map , "w");
   util_fwrite_long(FS_MAGIC_ID , stream);

@@ -5,16 +5,18 @@ extern "C" {
 #endif
 #include <util.h>
 
-typedef enum {JOB_QUEUE_NULL          =  0 ,   /* For a queue node which has been allocated - but not "added" with a job_queue_add_job() call. */
-	      JOB_QUEUE_WAITING       =  1 ,   /* A node which is waiting in the internal queue. */
-	      JOB_QUEUE_PENDING       =  2 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
-	      JOB_QUEUE_RUNNING       =  3 ,   /* The job is running */
-	      JOB_QUEUE_DONE          =  4 ,   /* The job is done - but we have not yet checked if the target file is produced */
-	      JOB_QUEUE_EXIT          =  5 ,   /* The job has exited - check attempts to determine if we retry or go to complete_fail */
-	      JOB_QUEUE_RUN_OK        =  6 ,   /* The job has completed - and all checks performed by the queue layer indicate success. */
-	      JOB_QUEUE_RUN_FAIL      =  7 ,   /* The job has completed - but the queue system has detected that it has failed. */
-              JOB_QUEUE_ALL_OK        =  8 ,   /* The job has loaded OK - observe that it is the calling scope which will set the status to this. */
-	      JOB_QUEUE_MAX_STATE     =  9 } job_status_type;
+typedef enum {JOB_QUEUE_NOT_ACTIVE    =  0 ,   /* This value is used in external query routines - for jobs which are not active. Not used in libjob_queue implementation. */
+              JOB_QUEUE_NULL          =  1 ,   /* For a queue node which has been allocated - but not (yet) "added" with a job_queue_add_job() call. */
+	      JOB_QUEUE_WAITING       =  2 ,   /* A node which is waiting in the internal queue. */
+	      JOB_QUEUE_PENDING       =  3 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
+	      JOB_QUEUE_RUNNING       =  4 ,   /* The job is running */
+	      JOB_QUEUE_DONE          =  5 ,   /* The job is done - but we have not yet checked if the target file is produced */
+	      JOB_QUEUE_EXIT          =  6 ,   /* The job has exited - check attempts to determine if we retry or go to complete_fail */
+	      JOB_QUEUE_RUN_OK        =  7 ,   /* The job has completed - and all checks performed by the queue layer indicate success. */
+	      JOB_QUEUE_RUN_FAIL      =  8 ,   /* The job has completed - but the queue system has detected that it has failed. */
+              JOB_QUEUE_ALL_OK        =  9 ,   /* The job has loaded OK - observe that it is the calling scope which will set the status to this. */
+              JOB_QUEUE_ALL_FAIL      = 10 ,   /* The job has failed completely - the calling scope must set this status. */
+	      JOB_QUEUE_MAX_STATE     = 11 } job_status_type;
 
 
 typedef struct basic_queue_driver_struct basic_queue_driver_type;

@@ -9,6 +9,7 @@
 #include <block_fs_driver.h>
 #include <block_fs.h>
 #include <enkf_types.h>
+#include <thread_pool.h>
 
 typedef struct bfs_struct bfs_type;
 
@@ -36,10 +37,10 @@ struct block_fs_driver_struct {
   fs_driver_type     driver_type;
   block_fs_type   ** read_fs;
   block_fs_type   ** write_fs;
-  bfs_type       *** fs_list;
+  bfs_type        ** fs_list;
   
   char             * root_path;        /* The root path - as given by the ENSPATH directive. */
-};
+}; 
 
 
 
@@ -57,7 +58,15 @@ static void bfs_close( bfs_type * bfs ) {
 }
 
 
-static bfs_type * bfs_alloc( fs_driver_type driver_type , enkf_impl_type node_impl_type , int block_size , int max_cache_size , bool preload) {
+static void * bfs_close__( void * arg ) {
+  bfs_type * bfs = ( bfs_type * ) arg;
+  bfs_close( bfs );
+  
+  return NULL;
+}
+
+
+static bfs_type * bfs_alloc( fs_driver_type driver_type , int block_size , int max_cache_size , bool preload) {
   bfs_type * fs      = util_malloc( sizeof * fs , __func__);
   fs->read_fs        = NULL;
   fs->write_fs       = NULL;
@@ -66,18 +75,18 @@ static bfs_type * bfs_alloc( fs_driver_type driver_type , enkf_impl_type node_im
   fs->block_size     = block_size;
   fs->max_cache_size = max_cache_size;
   fs->preload        = preload;
-  fs->mount_basefile = util_alloc_sprintf("%s_%s" , fs_types_get_driver_name( driver_type ) , enkf_types_get_impl_name( node_impl_type ));
+  fs->mount_basefile = util_alloc_sprintf("%s" , fs_types_get_driver_name( driver_type ) );
   return fs;
 }
 
 
 
 
-static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type driver_type , enkf_impl_type node_impl_type , int block_size , int max_cache_size , bool preload) {
+static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type driver_type , int block_size , int max_cache_size , bool preload) {
   int i;
   bfs_type ** driver_list = util_malloc( num_drivers * sizeof * driver_list , __func__); 
   for (i=0; i < num_drivers; i++)
-    driver_list[i] = bfs_alloc( driver_type , node_impl_type , block_size , max_cache_size , preload);
+    driver_list[i] = bfs_alloc( driver_type , block_size , max_cache_size , preload);
   return driver_list;
 }
 
@@ -89,8 +98,8 @@ static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type drive
 */
 
 static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char * directory , bool read ) {
-  const int fsync_interval      = 0;     /* An fsync() call is issued for every 100'th write. */
-  const int fragmentation_limit = 1.0;   /* 1.0 => NO defrag is run. */
+  const int fsync_interval      = 100;     /* An fsync() call is issued for every 100'th write. */
+  const int fragmentation_limit = 1.0;     /* 1.0 => NO defrag is run. */
   if (read) {
     if (bfs->read_fs == bfs->write_fs) {
       /**
@@ -155,6 +164,18 @@ static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char
 
 
 
+static void * bfs_select_dir__(void * arg) {
+  arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
+  bfs_type * bfs         = arg_pack_iget_ptr( arg_pack , 0 );
+  const char * root_path = arg_pack_iget_ptr( arg_pack , 1 );
+  const char * directory = arg_pack_iget_ptr( arg_pack , 2 );
+  bool  read             = arg_pack_iget_bool( arg_pack , 3 );
+
+  bfs_select_dir( bfs , root_path , directory , read );
+  return NULL;
+}
+
+
 static void bfs_fsync( bfs_type * bfs ) {
   block_fs_fsync( bfs->read_fs );
   if (bfs->write_fs != bfs->read_fs)
@@ -185,12 +206,10 @@ static char * block_fs_driver_alloc_key( const block_fs_driver_type * driver , c
 }
 
 
-static bfs_type * block_fs_driver_get_fs( block_fs_driver_type * driver , const enkf_config_node_type * config_node , int iens ) {
-  enkf_impl_type impl_type = enkf_config_node_get_impl_type( config_node );
-  int fs_nr                = impl_type - IMPL_TYPE_OFFSET;
+static bfs_type * block_fs_driver_get_fs( block_fs_driver_type * driver , int iens ) {
   int phase                = (iens % driver->num_drivers);
-
-  return driver->fs_list[fs_nr][phase];
+  
+  return driver->fs_list[phase];
 }
 
 
@@ -200,7 +219,7 @@ static void block_fs_driver_load_node(void * _driver , const enkf_config_node_ty
   block_fs_driver_type * driver = block_fs_driver_safe_cast( _driver );
   {
     char * key          = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    bfs_type      * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    bfs_type      * bfs = block_fs_driver_get_fs( driver , iens );
     
     block_fs_fread_realloc_buffer( bfs->read_fs , key , buffer);
     
@@ -216,7 +235,7 @@ static void block_fs_driver_save_node(void * _driver , const enkf_config_node_ty
   block_fs_driver_assert_cast(driver);
   {
     char * key     = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    bfs_type * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    bfs_type * bfs = block_fs_driver_get_fs( driver , iens );
     block_fs_fwrite_buffer( bfs->write_fs , key , buffer);
     
     free( key );
@@ -229,7 +248,7 @@ void block_fs_driver_unlink_node(void * _driver , const enkf_config_node_type * 
   block_fs_driver_assert_cast(driver);
   {
     char * key     = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    bfs_type * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    bfs_type * bfs = block_fs_driver_get_fs( driver , iens );
     block_fs_unlink_file( bfs->read_fs , key );
     free( key );
   }
@@ -241,7 +260,7 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
   block_fs_driver_assert_cast(driver);
   {
     char * key      = block_fs_driver_alloc_key( driver , config_node , report_step , iens );
-    bfs_type  * bfs = block_fs_driver_get_fs( driver , config_node , iens );
+    bfs_type  * bfs = block_fs_driver_get_fs( driver , iens );
     bool has_node   = block_fs_has_file( bfs->read_fs , key );
     free( key );
     return has_node;
@@ -259,17 +278,29 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
 */
 
 void block_fs_driver_select_dir(void *_driver , const char * directory, bool read) {
-  int driver_nr, impl_type;
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-  for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
-    if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
-      for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) {
-        char * path = util_alloc_sprintf("%s%cmod_%d" , directory , UTIL_PATH_SEP_CHAR , driver_nr);
-        bfs_select_dir( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] , driver->root_path , path , read );
-        free( path );
-      }
-    }
+  thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers ); /* Maaany threads .... */
+  arg_pack_type ** arglist      = util_malloc( sizeof * arglist * driver->num_drivers , __func__);
+  int driver_nr;
+
+  for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) {
+    char * path = util_alloc_sprintf("%s%cmod_%d" , directory , UTIL_PATH_SEP_CHAR , driver_nr);
+    arglist[driver_nr] = arg_pack_alloc();
+
+    arg_pack_append_ptr( arglist[driver_nr] , driver->fs_list[driver_nr] );
+    arg_pack_append_ptr( arglist[driver_nr] , driver->root_path );
+    arg_pack_append_owned_ptr( arglist[driver_nr] , path , free);
+    arg_pack_append_bool( arglist[driver_nr] , read );
+
+    printf("Mounting: %s \n",path);
+    thread_pool_add_job( tp , bfs_select_dir__ , arglist[driver_nr] );
   }
+  thread_pool_join( tp );
+
+  for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) 
+    arg_pack_free( arglist[driver_nr] );
+  free( arglist );
+  thread_pool_free( tp );
 }
 
 
@@ -278,20 +309,17 @@ void block_fs_driver_select_dir(void *_driver , const char * directory, bool rea
 
 
 void block_fs_driver_free(void *_driver) {
-  block_fs_driver_type * driver = (block_fs_driver_type *) _driver;
-  block_fs_driver_assert_cast(driver);
-  
+  block_fs_driver_type * driver = block_fs_driver_safe_cast( _driver );
   {
-    int driver_nr, impl_type;
-    block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-    for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
-      if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
-        for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++)  
-          bfs_close( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] );
-      }
-    }
+    int driver_nr;
+    thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers );
+    for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) 
+      thread_pool_add_job( tp , bfs_close__ , driver->fs_list[driver_nr] );
+
+    thread_pool_join( tp );
+    thread_pool_free( tp );
   }
-  
+  free( driver->fs_list );
   util_safe_free( driver->root_path );
   free(driver);
 }
@@ -303,14 +331,10 @@ static void block_fs_driver_fsync( void * _driver ) {
   block_fs_driver_assert_cast(driver);
   
   {
-    int driver_nr, impl_type;
+    int driver_nr;
     block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-    for (impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++) {
-      if (driver->fs_list[impl_type - IMPL_TYPE_OFFSET] != NULL) {
-        for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++)  
-          bfs_fsync( driver->fs_list[impl_type - IMPL_TYPE_OFFSET][driver_nr] );
-      }
-    }
+    for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++)  
+      bfs_fsync( driver->fs_list[driver_nr] );
   }
 }
 
@@ -340,43 +364,31 @@ static void * block_fs_driver_alloc(const char * root_path , fs_driver_type driv
   driver->driver_type   = driver_type;
   driver->num_drivers   = num_drivers;
 
-  driver->fs_list = util_malloc( ( MAX_IMPL_TYPE - IMPL_TYPE_OFFSET + 1 ) * sizeof * driver->fs_list , __func__);
-  for (int impl_type = IMPL_TYPE_OFFSET; impl_type <= MAX_IMPL_TYPE; impl_type++)
-    driver->fs_list[impl_type - IMPL_TYPE_OFFSET] = NULL;
-
   {
-    const int STATIC_blocksize       = 1;
-    const int FIELD_blocksize        = 1;
-    const int GEN_KW_blocksize       = 1;
-    const int SUMMARY_blocksize      = 1;
-    const int GEN_DATA_blocksize     = 1;
+    const int STATIC_blocksize       = 64;
+    const int PARAMETER_blocksize    = 64;
+    const int DYNAMIC_blocksize      = 64;
     const int max_cache_size         = 512; /* ~ 32 doubles */
-    
+  
     switch( driver->driver_type) {
     case(DRIVER_STATIC):
-      driver->fs_list[STATIC - IMPL_TYPE_OFFSET]   = bfs_alloc_driver_list( driver->num_drivers , DRIVER_STATIC , STATIC , STATIC_blocksize , max_cache_size , false);
+      driver->fs_list = bfs_alloc_driver_list( driver->num_drivers , DRIVER_STATIC , STATIC_blocksize , max_cache_size , false);
       break;
     case(DRIVER_PARAMETER):
-      driver->fs_list[FIELD - IMPL_TYPE_OFFSET]    = bfs_alloc_driver_list( driver->num_drivers , DRIVER_PARAMETER , FIELD    , FIELD_blocksize    , max_cache_size , false);
-      driver->fs_list[GEN_KW - IMPL_TYPE_OFFSET]   = bfs_alloc_driver_list( driver->num_drivers , DRIVER_PARAMETER , GEN_KW   , GEN_KW_blocksize   , max_cache_size , true);
-      driver->fs_list[GEN_DATA - IMPL_TYPE_OFFSET] = bfs_alloc_driver_list( driver->num_drivers , DRIVER_PARAMETER , GEN_DATA , GEN_DATA_blocksize , max_cache_size , false);
+      driver->fs_list  = bfs_alloc_driver_list( driver->num_drivers , DRIVER_PARAMETER , PARAMETER_blocksize    , max_cache_size , false);
       break;
     case(DRIVER_DYNAMIC_FORECAST):
-      driver->fs_list[FIELD - IMPL_TYPE_OFFSET]    = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_FORECAST , FIELD    , FIELD_blocksize    , max_cache_size , false);
-      driver->fs_list[SUMMARY - IMPL_TYPE_OFFSET]  = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_FORECAST , SUMMARY  , SUMMARY_blocksize  , max_cache_size , true);
-      driver->fs_list[GEN_DATA - IMPL_TYPE_OFFSET] = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_FORECAST , GEN_DATA  , GEN_DATA_blocksize  , max_cache_size , false);
+      driver->fs_list = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_FORECAST , DYNAMIC_blocksize , max_cache_size , true);
       break;
     case(DRIVER_DYNAMIC_ANALYZED):
-      driver->fs_list[FIELD - IMPL_TYPE_OFFSET]    = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_ANALYZED , FIELD    , FIELD_blocksize    , max_cache_size , false);
-      driver->fs_list[SUMMARY - IMPL_TYPE_OFFSET]  = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_ANALYZED , SUMMARY  , SUMMARY_blocksize  , max_cache_size , true);
-      driver->fs_list[GEN_DATA - IMPL_TYPE_OFFSET] = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_ANALYZED , GEN_DATA  , GEN_DATA_blocksize  , max_cache_size , false);
+      driver->fs_list = bfs_alloc_driver_list( driver->num_drivers , DRIVER_DYNAMIC_ANALYZED , DYNAMIC_blocksize , max_cache_size , true);
       break;
     default:
       util_abort("%s: driver_type:%d not recognized \n",__func__);
     }
   }
-
-
+  
+  
   {
     basic_driver_type * basic_driver = (basic_driver_type *) driver;
     basic_driver_init(basic_driver);
@@ -403,7 +415,6 @@ void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_typ
 block_fs_driver_type * block_fs_driver_fread_alloc(const char * root_path , FILE * stream) {
   fs_driver_type driver_type = util_fread_int( stream );
   int num_drivers            = util_fread_int( stream );
-  printf("Har lest inn: driver_type:%d  num_drivers:%d \n",driver_type , num_drivers);
   block_fs_driver_type * driver = block_fs_driver_alloc(root_path , driver_type , num_drivers );
   return driver;
 }
