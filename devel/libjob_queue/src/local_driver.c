@@ -49,7 +49,7 @@ local_job_type * local_job_alloc() {
   job = util_malloc(sizeof * job , __func__);
   job->__local_id = LOCAL_JOB_ID;
   job->active = false;
-  job->status = job_queue_waiting;
+  job->status = JOB_QUEUE_WAITING;
   return job;
 }
 
@@ -65,14 +65,14 @@ void local_job_free(local_job_type * job) {
 job_status_type local_driver_get_job_status(void * __driver, basic_queue_job_type * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
-    return job_queue_null;
+    return JOB_QUEUE_NULL;
   else {
     local_job_type    * job    = (local_job_type    *) __job;
     local_job_assert_cast(job);
     {
       if (job->active == false) {
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
-	return job_queue_null; /* Dummy */
+	return JOB_QUEUE_NULL; /* Dummy */
       } else 
 	return job->status;
     }
@@ -107,7 +107,7 @@ void * submit_job_thread__(void * __arg) {
   local_job_type * job     = arg_pack_iget_ptr(arg_pack , 2);
 
   util_vfork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL , NULL); 
-  job->status = job_queue_done;
+  job->status = JOB_QUEUE_DONE;
   pthread_exit(NULL);
   return NULL;
 }
@@ -133,7 +133,7 @@ basic_queue_job_type * local_driver_submit_job(void * __driver,
       abort();
     }
     job->active = true;
-    job->status = job_queue_running;
+    job->status = JOB_QUEUE_RUNNING;
     pthread_mutex_unlock( &driver->submit_lock );
     
     {
