@@ -267,7 +267,7 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_
 
 static job_status_type lsf_driver_get_job_status_system(void * __driver , basic_queue_job_type * __job) {
   const int bjobs_refresh_time = 5; /* Seconds */
-  job_status_type status = job_queue_null;
+  job_status_type status = JOB_QUEUE_NULL;
   
   if (__job != NULL) {
     lsf_job_type    * job    = (lsf_job_type    *) __job;
@@ -286,7 +286,7 @@ static job_status_type lsf_driver_get_job_status_system(void * __driver , basic_
 	/* 
 	   It might be running - but since job != NULL it is at least in the queue system.
 	*/
-	status = job_queue_pending;
+	status = JOB_QUEUE_PENDING;
 
     }
   }
@@ -484,14 +484,14 @@ void * lsf_driver_alloc(const char * queue_name) {
   lsf_driver->last_bjobs_update = time( NULL );
   lsf_driver->bjobs_output 	  = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
-  hash_insert_int(lsf_driver->status_map , "PEND"   , job_queue_pending);
-  hash_insert_int(lsf_driver->status_map , "SSUSP"  , job_queue_running);
-  hash_insert_int(lsf_driver->status_map , "PSUSP"  , job_queue_pending);
-  hash_insert_int(lsf_driver->status_map , "RUN"    , job_queue_running);
-  hash_insert_int(lsf_driver->status_map , "EXIT"   , job_queue_exit);
-  hash_insert_int(lsf_driver->status_map , "USUSP"  , job_queue_running);
-  hash_insert_int(lsf_driver->status_map , "DONE"   , job_queue_done);
-  hash_insert_int(lsf_driver->status_map , "UNKWN"  , job_queue_exit); /* Uncertain about this one */
+  hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
+  hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
+  hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_QUEUE_PENDING);
+  hash_insert_int(lsf_driver->status_map , "RUN"    , JOB_QUEUE_RUNNING);
+  hash_insert_int(lsf_driver->status_map , "EXIT"   , JOB_QUEUE_EXIT);
+  hash_insert_int(lsf_driver->status_map , "USUSP"  , JOB_QUEUE_RUNNING);
+  hash_insert_int(lsf_driver->status_map , "DONE"   , JOB_QUEUE_DONE);
+  hash_insert_int(lsf_driver->status_map , "UNKWN"  , JOB_QUEUE_EXIT); /* Uncertain about this one */
 #endif
   return lsf_driver;
 }
