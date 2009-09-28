@@ -13,7 +13,7 @@
 
 struct sched_kw_untyped_struct {
   char      *kw_name;  /* The name of the current keyword. */
-  char      *buffer;   /* The content of the keyword is just appended in on char * pointer. */
+  char      *buffer;   /* The content of the keyword is just appended in one char * pointer. */
 };
 
 
@@ -108,16 +108,51 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_varlen(FILE * strea
   }
 
   return kw;
-
 }
-
 
 
 /*****************************************************************/
 
 
 sched_kw_untyped_type * sched_kw_untyped_token_alloc(const stringlist_type * tokens , int * __token_index ) {
-  
+  int token_index = *__token_index;
+  const char * kw_name = stringlist_iget( tokens , token_index - 1);
+  int rec_len = get_fixed_record_length(kw_name);
+  {
+    sched_kw_untyped_type * kw = sched_kw_untyped_alloc(stringlist_iget( tokens , token_index - 1) );
+    int line_nr = 0;
+    int eokw    = false;
+    do {
+      int line_start = token_index;
+      int line_end;
+      const char * current_token;
+      do {
+        current_token = stringlist_iget( tokens , token_index );
+      } while (strcmp(current_token , "/") != 0);
+      line_end = token_index;
+      
+      /** Append line buffer */
+      {
+        char * line_buffer = stringlist_alloc_joined_segment_string( tokens , line_start , line_end , "  ");
+        sched_kw_untyped_add_line(kw, line_buffer , true );
+        free( line_buffer );
+      }
+      line_nr++;
+      if (line_nr == rec_len) 
+        /*
+          We have reached the end of a fixed length kw.
+        */
+        eokw = true;
+      else if ((line_end - line_start) == 1) 
+        /* 
+           This line *only* contained a terminating '/'. This marks the
+           end of a varlen keyword.
+        */
+        eokw = true;
+      
+    } while (!eokw);
+    return kw;
+  }
 }
 
 

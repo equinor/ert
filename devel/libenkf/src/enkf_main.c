@@ -885,6 +885,10 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
   int   job_size;
 
   int iens;
+
+  for (int i=0; i < ens_size; i++)
+    printf("active[%d] = %d \n",i,iactive[i]);
+  
   
   printf("Starting forward step: %d -> %d\n",step1 , step2);
   log_add_message(enkf_main->logh , 1 , "===================================================================",false);
@@ -924,7 +928,8 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
                               forward_model);
           
 	  thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
-	}
+	} else
+          enkf_state_set_inactive( enkf_main->ensemble[iens] );
       }
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(submit_threads);

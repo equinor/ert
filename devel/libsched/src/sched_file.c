@@ -374,6 +374,8 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
      stripped out. The remaining parsing is done on this file with no
      comments.
   */
+  bool token_alloc           = false;
+  stringlist_type  * token_list;
   char * tmp_base             = util_alloc_sprintf("enkf-schedule:%s" , filename);
   char * tmp_file             = util_alloc_tmp_file("/tmp" , tmp_base , true);
   {
@@ -383,15 +385,26 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
                                                "\r"   ,      /* Delete set - these are just deleted. */
                                                "--"   ,      /* Comment start */
                                                "\n");        /* Comment end */  
-
-    stringlist_type * tokens    = parser_tokenize_file( parser , filename , false );
-    FILE * stream               = util_fopen(tmp_file , "w");
-
-    stringlist_fprintf( tokens , " " , stream );
+    bool strip_quote_marks = false;
+    token_list             = parser_tokenize_file( parser , filename , strip_quote_marks  );
+    FILE * stream          = util_fopen(tmp_file , "w");
+    
+    stringlist_fprintf( token_list , " " , stream );
     parser_free( parser );
-    stringlist_free( tokens );
     fclose(stream);
   }
+  
+  
+  if (token_alloc)
+  {
+    sched_kw_type    * current_kw;
+    bool at_eof      = false;
+    int  token_index = 0;
+    while (!at_eof) {
+      current_kw = sched_kw_token_alloc(token_list , &token_index);
+    }
+  }
+
 
   {
     bool at_eof      = false;
@@ -422,6 +435,8 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     sched_file_build_block_dates(sched_file);
     sched_file_update_index( sched_file );
   }
+  
+  stringlist_free( token_list );
   free( tmp_base );
   free( tmp_file );
 }

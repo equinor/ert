@@ -87,6 +87,7 @@ void enkf_tui_run_exp__(void * enkf_main) {
     free( prompt );
     free( select_string );
   }
+  
   enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
   free(iactive);
 }

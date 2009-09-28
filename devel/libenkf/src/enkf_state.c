@@ -1928,6 +1928,10 @@ void enkf_ensemble_update(enkf_state_type ** enkf_ensemble , int ens_size , seri
 }
 
 
+void enkf_state_set_inactive(enkf_state_type * state) {
+  state->run_info->active = false;
+}
+
 
 void enkf_state_init_run(enkf_state_type * state , 
                          run_mode_type run_mode  , 

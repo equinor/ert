@@ -95,7 +95,7 @@ struct sched_kw_struct {
    (currently) no case-normalization is performed.
 */
 
-static sched_type_enum get_sched_type_from_string(char * kw_name)
+static sched_type_enum get_sched_type_from_string(const char * kw_name)
 {
   sched_type_enum kw_type = UNTYPED;
 
@@ -159,12 +159,19 @@ static void sched_kw_name_assert(const char * kw_name , FILE * stream)
     fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
     util_abort("%s: Internal error - trying to dereference NULL pointer.\n",__func__);
   }
+  
+  {
+    bool valid_kw = true;
+    for (int i = 0; i < strlen(kw_name); i++)
+      if (isspace(kw_name[i])) 
+        valid_kw = false;
 
-  for (int i = 0; i < strlen(kw_name); i++)
-    if (isspace(kw_name[i])) {
-      fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
+    if (!valid_kw) {
+      if (stream != NULL)
+        fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
       util_abort("%s: \"%s\" is not a valid schedule kw - aborting.\n",__func__ , kw_name);
     }
+  }
 }
 
 
@@ -340,6 +347,27 @@ sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
     return sched_kw;
   } 
 }
+
+
+
+sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * token_index) {
+  const char * kw_name  = stringlist_iget( token_list , *token_index );
+  (*token_index) += 1;
+
+  sched_kw_name_assert(kw_name , NULL);
+  if(strcmp(kw_name,"END") == 0) 
+    return NULL;
+  else {
+    sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
+    sched_kw->type           = get_sched_type_from_string(kw_name);
+    sched_kw->data_handlers  = get_data_handlers(sched_kw->type);
+    sched_kw->restart_nr     = -1;
+    sched_kw->data           = sched_kw->data_handlers.token_alloc(token_list , token_index);
+    return sched_kw;
+  }
+}
+
+
 
 
 void sched_kw_set_restart_nr( sched_kw_type * kw , int restart_nr) {
