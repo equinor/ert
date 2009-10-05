@@ -18,7 +18,6 @@ sched_kw_tstep_type * sched_kw_tstep_fread_alloc(FILE *);
 int                   sched_kw_tstep_get_size(const sched_kw_tstep_type *);
 sched_kw_tstep_type * sched_kw_tstep_alloc_from_double(double);
 double                sched_kw_tstep_iget_step(const sched_kw_tstep_type *, int);
-double                sched_kw_tstep_get_step(const sched_kw_tstep_type *);
 time_t                sched_kw_tstep_get_new_time(const sched_kw_tstep_type *, time_t);
 
 

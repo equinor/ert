@@ -351,19 +351,25 @@ sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
 
 
 sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * token_index) {
-  const char * kw_name  = stringlist_iget( token_list , *token_index );
-  (*token_index) += 1;
-
-  sched_kw_name_assert(kw_name , NULL);
-  if(strcmp(kw_name,"END") == 0) 
+  if (*token_index >= stringlist_get_size( token_list ))
     return NULL;
   else {
-    sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
-    sched_kw->type           = get_sched_type_from_string(kw_name);
-    sched_kw->data_handlers  = get_data_handlers(sched_kw->type);
-    sched_kw->restart_nr     = -1;
-    sched_kw->data           = sched_kw->data_handlers.token_alloc(token_list , token_index);
-    return sched_kw;
+    const char * kw_name  = stringlist_iget( token_list , *token_index );
+    (*token_index) += 1;
+    sched_kw_name_assert(kw_name , NULL);
+    if (strcmp(kw_name,"END") == 0)
+      return NULL;
+    else {
+      sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
+      sched_kw->type           = get_sched_type_from_string(kw_name);
+      sched_kw->data_handlers  = get_data_handlers(sched_kw->type);
+      sched_kw->restart_nr     = -1;
+      
+      sched_util_skip_newline( token_list , token_index );
+      sched_kw->data           = sched_kw->data_handlers.token_alloc(token_list , token_index);
+      
+      return sched_kw;
+    }
   }
 }
 

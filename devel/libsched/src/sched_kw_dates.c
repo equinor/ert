@@ -51,25 +51,37 @@ static const char * get_month_string_from_int(int month_nr)
 }
 
 
+static time_t parse_time_t(const char * day_string , const char * month_string , const char * year_string) {
+  int mday , month , year;
+  time_t time = -1;
 
-static time_t parse_time_t_from_dates_line(const char * line)
-{
-  int mday , month , year, tokens;
+  month = util_get_month_nr(month_string);
+  if (month < 0)
+    util_abort("%s: failed to interpret:%s a month name \n",__func__ , month_string );
+
+  if (util_sscanf_int(day_string , &mday) && util_sscanf_int(year_string , &year))
+    time = util_make_date(mday , month , year);
+  else 
+    util_abort("%s: fatal error when extracting date from:%s %s %s \n", __func__, day_string , month_string , year_string);
+
+  return time;
+}
+
+
+
+static time_t parse_time_t_from_dates_line(const char * line) {
+  int tokens;
   char **token_list;
   time_t time = -1;
 
   sched_util_parse_line(line ,&tokens ,&token_list , 3, NULL);
-  month = util_get_month_nr(token_list[1]);
-
-  if (util_sscanf_int(token_list[0] , &mday) && util_sscanf_int(token_list[2] , &year))
-    time = util_make_date(mday , month , year);
-  else 
-    util_abort("%s: fatal error when extracting date from:%s \n", __func__, line);
-  
+  time = parse_time_t( token_list[0] , token_list[1] , token_list[2] );
   util_free_stringlist(token_list , tokens);
   
   return time;
 }
+
+
 
 
 
@@ -92,9 +104,32 @@ static void sched_kw_dates_add_line(sched_kw_dates_type *kw, const char *line) {
 /*****************************************************************/
 
 
-sched_kw_dates_type * sched_kw_dates_token_alloc(const stringlist_type * tokens , int * __token_index ) {
-  
+sched_kw_dates_type * sched_kw_dates_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_dates_type * kw = sched_kw_dates_alloc();
+  int eokw                    = false;
+  do {
+    stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false, 0 , token_index );
+    if (line_tokens == NULL)
+      eokw = true;
+    else {
+      if (stringlist_get_size( line_tokens ) == 3) {
+        const char * day_string   = stringlist_iget( line_tokens , 0 );
+        const char * month_string = stringlist_iget( line_tokens , 1 );
+        const char * year_string  = stringlist_iget( line_tokens , 2 );
+
+        time_t date = parse_time_t( day_string , month_string , year_string );
+        time_t_vector_append( kw->date_list , date );
+      } else {
+        stringlist_fprintf( line_tokens , "  " , stdout );
+        util_abort("%s: malformed DATES keyword\n",__func__);
+      }
+      stringlist_free( line_tokens );
+    } 
+    
+  } while (!eokw);
+  return kw;
 }
+
 
 
 sched_kw_dates_type  * sched_kw_dates_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)
@@ -219,3 +254,4 @@ time_t sched_kw_dates_get_time_t(const sched_kw_dates_type * kw)
 
 
 KW_IMPL(dates)
+     

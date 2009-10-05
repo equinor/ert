@@ -55,7 +55,7 @@ typedef struct  {
 
 
 struct sched_kw_compdat_struct {
-  int            __type_id;
+  UTIL_TYPE_ID_DECLARATION;
   vector_type  * completions;
 };
 
@@ -197,10 +197,44 @@ static void comp_set_from_string(comp_type * node , const char **token_list ) {
 }
 
 
+
 static comp_type * comp_alloc_empty( ) {
   comp_type *node = util_malloc(sizeof * node , __func__);
   node->well      = NULL;
   return node;
+}
+
+
+static comp_type * comp_alloc_from_tokens( const stringlist_type * line_tokens ) {
+  comp_type * comp = comp_alloc_empty();
+  sched_util_init_default( line_tokens , comp->def );
+
+  
+  comp->well         = util_alloc_string_copy(stringlist_iget( line_tokens , 0));
+  comp->i            = sched_util_atoi(stringlist_iget( line_tokens , 1));
+  comp->j            = sched_util_atoi(stringlist_iget( line_tokens , 2));
+  comp->k1           = sched_util_atoi(stringlist_iget( line_tokens , 3));
+  comp->k2           = sched_util_atoi(stringlist_iget( line_tokens , 4));
+
+  if (comp->def[5]) 
+    comp->state = COMP_DEFAULT_STATE;
+  else 
+    comp->state = comp_get_state_from_string( stringlist_iget( line_tokens , 5 ));
+  
+  comp->sat_table       = sched_util_atoi(stringlist_iget( line_tokens , 6));
+  comp->conn_factor     = sched_util_atof(stringlist_iget( line_tokens , 7));
+  comp->well_diameter   = sched_util_atof(stringlist_iget( line_tokens , 8));     
+  comp->eff_perm        = sched_util_atof(stringlist_iget( line_tokens , 9));	       
+  comp->skin_factor     = sched_util_atof(stringlist_iget( line_tokens , 10));       
+  comp->D_factor        = sched_util_atof(stringlist_iget( line_tokens , 11));	       
+
+  if (comp->def[12]) 
+    comp->well_dir = WELL_DIR_DEFAULT;
+  else
+    comp->well_dir = comp_get_well_dir_from_string( stringlist_iget( line_tokens , 12 ));
+  
+  comp->r0 = sched_util_atof(stringlist_iget( line_tokens , 13));                
+  return comp;
 }
 
 
@@ -307,6 +341,10 @@ static void comp_free__(void *__comp) {
 
 
 
+
+
+
+
 void sched_kw_compdat_fprintf(const sched_kw_compdat_type *kw , FILE *stream) {
   fprintf(stream , "COMPDAT\n");
   {
@@ -324,21 +362,16 @@ void sched_kw_compdat_fprintf(const sched_kw_compdat_type *kw , FILE *stream) {
 sched_kw_compdat_type * sched_kw_compdat_alloc( ) {
   sched_kw_compdat_type * kw = util_malloc(sizeof *kw , __func__);
   kw->completions = vector_alloc_new();
-  kw->__type_id   = SCHED_KW_COMPDAT_ID; 
+  UTIL_TYPE_ID_INIT( kw , SCHED_KW_COMPDAT_ID );
   return kw;
 }
 
 
-sched_kw_compdat_type * sched_kw_compdat_safe_cast( void * arg ) {
-  sched_kw_compdat_type * kw = (sched_kw_compdat_type * ) arg;
-  if (kw->__type_id == SCHED_KW_COMPDAT_ID)
-    return kw;
-  else {
-    util_abort("%s: runtime cast failed \n",__func__);
-    return NULL;
-  }
-}
+UTIL_SAFE_CAST_FUNCTION( sched_kw_compdat , SCHED_KW_COMPDAT_ID )
 
+void sched_kw_compdat_add_comp( sched_kw_compdat_type * kw , comp_type * comp) {
+  vector_append_owned_ref(kw->completions , comp , comp_free__);
+}
 
 
 void sched_kw_compdat_add_line(sched_kw_compdat_type * kw , const char * line) {
@@ -348,16 +381,33 @@ void sched_kw_compdat_add_line(sched_kw_compdat_type * kw , const char * line) {
   sched_util_parse_line(line , &tokens , &token_list , COMPDAT_NUM_KW , NULL);
   {
     comp_type * comp = comp_alloc((const char **) token_list);
-    vector_append_owned_ref(kw->completions , comp , comp_free__);
+    sched_kw_compdat_add_comp( kw , comp );
   }
   
   util_free_stringlist(token_list , tokens);
 }
 
 
-sched_kw_compdat_type * sched_kw_compdat_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+
+sched_kw_compdat_type * sched_kw_compdat_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_compdat_type * kw = sched_kw_compdat_alloc();
+  int eokw                    = false;
+  do {
+    stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , COMPDAT_NUM_KW , token_index );
+    if (line_tokens == NULL)
+      eokw = true;
+    else {
+      comp_type * comp = comp_alloc_from_tokens( line_tokens );
+      sched_kw_compdat_add_comp( kw , comp );
+      stringlist_free( line_tokens );
+    } 
+  }
   
+  while (!eokw);
+  return kw;
 }
+
+      
 
 
 sched_kw_compdat_type * sched_kw_compdat_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name) {

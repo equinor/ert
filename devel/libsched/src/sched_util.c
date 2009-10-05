@@ -135,6 +135,96 @@ void sched_util_parse_file(const char *filename , int *_lines , char ***_line_li
 
 
 
+/**
+ * We parse up to the terminating '/' - but it is NOT included in the returned string 
+
+   The num_tokens variable is only used to fill up with defaults at the end.
+*/
+stringlist_type * sched_util_alloc_line_tokens( const stringlist_type * tokens , bool untyped , int num_tokens , int * __token_index ) {
+  /** First part - identify the right start/end of the token list */
+  stringlist_type * line_tokens = NULL;
+  int token_index  = *__token_index;
+  int line_start;
+  int line_end;
+  bool at_eokw = false;
+  {
+    line_start       = token_index;
+    const char * current_token;
+    {
+      bool at_eol = false;
+      do {
+        current_token = stringlist_iget( tokens , token_index );
+        if (strcmp( current_token , "/" ) == 0)
+          at_eol = true;
+        token_index++;
+      } while (!at_eol);
+    }
+    line_end = token_index;
+    if ((line_end - line_start) == 1) 
+      /* 
+         This line *only* contained a terminating '/'. This marks the
+         end of the kewyord.
+      */
+      at_eokw = true;
+  }
+
+  
+  /* Second part - filling in with defaults+++ */
+  if (!at_eokw) {
+    line_tokens = stringlist_alloc_new( );
+    if (untyped) {  /* In case of untyped we basically do nothing with the content - even keeping the trailing '/'. */
+      int it;
+      for (it = line_start; it < line_end; it++) {
+        const char * token          = stringlist_iget( tokens , it );
+        stringlist_append_copy(line_tokens , token );
+      }
+    } else {
+      int it;
+      for (it = line_start; it < (line_end - 1); it++) {
+        const char * token          = stringlist_iget( tokens , it );
+        char       * dequoted_token = util_alloc_dequoted_copy( token );
+        
+        if (util_string_equal( dequoted_token , SCHED_KW_DEFAULT_ITEM ))                /* The item is just '*'  */
+          stringlist_append_copy(line_tokens , SCHED_KW_DEFAULT_ITEM );
+        else {
+          char repeated_value[32];
+          long int items;
+          if (sscanf(dequoted_token , "%ld*%s" , &items , repeated_value) == 2) {       /* It is a '5*8.60' item - i.e. the value 8.60 repeated five times. */
+            int counter = 0;
+            do {
+              stringlist_append_copy(line_tokens , repeated_value);
+              counter++;
+            } while ( counter < items );
+          } else {
+            char * star_ptr = (char *) dequoted_token;
+            items           = strtol(dequoted_token , &star_ptr , 10);                  /* The item is a repeated default: '5*'  */
+            if (star_ptr != token && util_string_equal( star_ptr , SCHED_KW_DEFAULT_ITEM )) {
+              for (int i=0; i < items; i++)
+                stringlist_append_copy( line_tokens , SCHED_KW_DEFAULT_ITEM );
+            } else                                                                     /* The item is a non-default value. */
+              stringlist_append_copy(line_tokens , dequoted_token );
+          }
+        }
+        free( dequoted_token );
+      }
+    }
+  }
+
+  
+  /** Skip trailing garbage */
+  sched_util_skip_trailing_tokens(  tokens , &token_index );
+  sched_util_skip_newline( tokens , &token_index );
+  
+  /* Append default items at the end until we have num_tokens length. */
+  if (line_tokens != NULL) {
+    while (stringlist_get_size( line_tokens ) < num_tokens)
+      stringlist_append_copy( line_tokens , SCHED_KW_DEFAULT_ITEM );
+  }
+  
+  *__token_index = token_index;
+  return line_tokens;
+}
+
 
 /**
    Added delimiter on "'" - not well tested.
@@ -352,23 +442,32 @@ void sched_util_fprintf_qst(bool def, const char *s , int width , FILE *stream) 
 
 
 
+/**
+   The atof / atoi functions accept either 'NULL' or '*' as default
+   values, in that case numeric 0 is returned.
+*/
 
 double sched_util_atof(const char *token) {
   if (token != NULL) {
-    double value;
-    if (!util_sscanf_double(token , &value))
-      util_abort("%s: failed to parse:\"%s\" as floating point number. \n",__func__ , token);
+    double value = 0;
+    if (!util_string_equal( token , SCHED_KW_DEFAULT_ITEM)) {
+      if (!util_sscanf_double(token , &value))
+        util_abort("%s: failed to parse:\"%s\" as floating point number. \n",__func__ , token);
+    }
     return value;
   } else
     return 0.0;
 }
 
 
+
 int sched_util_atoi(const char *token) {
   if (token != NULL) {
-    int value;
-    if (!util_sscanf_int(token , &value))
-      util_abort("%s: failed to parse:\"%s\" as integer \n",__func__ , token);
+    int value = 0;
+    if (!util_string_equal( token , SCHED_KW_DEFAULT_ITEM)) {
+      if (!util_sscanf_int(token , &value))
+        util_abort("%s: failed to parse:\"%s\" as integer \n",__func__ , token);
+    }
     return value;
   } else
     return 0;
@@ -390,4 +489,40 @@ void sched_util_fprintf_tokenlist(int num_token , const char ** token_list , con
 
 
 
+/**
+   This should repeatedly skip tokens until the token_index points to
+   a newline. Should return with token_index pointing at the first newline character.
+*/
 
+void sched_util_skip_trailing_tokens( const stringlist_type * tokens , int * __token_index ) {
+  int token_index = *__token_index;
+  int len         = stringlist_get_size( tokens );
+  while ( (token_index < len) && (!stringlist_iequal( tokens , token_index , "\n"))) {
+    token_index++;
+  } 
+  *__token_index = token_index;
+}
+
+
+void sched_util_skip_newline( const stringlist_type * tokens , int * __token_index ) {
+  int token_index = *__token_index;
+  int len         = stringlist_get_size( tokens );
+  while ( (token_index < len) && (stringlist_iequal( tokens , token_index , "\n"))) {
+    token_index++;
+  } 
+  *__token_index = token_index;
+}
+
+
+
+
+
+void sched_util_init_default(const stringlist_type * line_tokens , bool * def) {
+  int i;
+  for (i = 0; i < stringlist_get_size( line_tokens ); i++) {
+    if (util_string_equal( stringlist_iget( line_tokens , i ) , SCHED_KW_DEFAULT_ITEM))
+      def[i] = true;
+    else
+      def[i] = false;
+  }
+}

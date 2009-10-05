@@ -15,7 +15,7 @@
 
 #define WCONHIST_NUM_KW       11
 #define SCHED_KW_WCONHIST_ID  771054  /* Very random intgere for checking type-cast. */
-#define ECL_DEFAULT_KW "*"
+#define DEFAULT_STATUS OPEN
 
 
 typedef enum {OPEN, STOP, SHUT} st_flag_type;
@@ -57,7 +57,7 @@ struct wconhist_well_struct{
 
 
 struct sched_kw_wconhist_struct{
-  int           __type_id;          
+  UTIL_TYPE_ID_DECLARATION;
   vector_type * wells;
 };
 
@@ -76,7 +76,7 @@ static char * get_st_string(st_flag_type status)
     case(SHUT):
       return ST_SHUT_STRING;
     default:
-      return ECL_DEFAULT_KW;
+      return SCHED_KW_DEFAULT_ITEM;
   }
 }
 
@@ -97,7 +97,7 @@ static char * get_cm_string(cm_flag_type cmode)
     case(RESV):
       return CM_RESV_STRING;
     default:
-      return ECL_DEFAULT_KW;
+      return SCHED_KW_DEFAULT_ITEM;
   }
 }
 
@@ -105,7 +105,9 @@ static char * get_cm_string(cm_flag_type cmode)
 
 static st_flag_type get_st_flag_from_string(const char * st_string)
 {
-  if( strcmp(st_string, ST_OPEN_STRING) == 0)
+  if (strcmp(st_string , SCHED_KW_DEFAULT_ITEM) == 0)
+    return DEFAULT_STATUS;
+  else if( strcmp(st_string, ST_OPEN_STRING) == 0)
     return OPEN; 
   else if( strcmp(st_string, ST_STOP_STRING) == 0)
     return STOP; 
@@ -244,7 +246,6 @@ static wconhist_well_type * wconhist_well_alloc_from_string(char ** token_list)
   }
 
   well->name  = util_alloc_string_copy(token_list[0]);
-
   if(!well->def[1])
     well->status = get_st_flag_from_string(token_list[1]);
   if(!well->def[2])
@@ -268,6 +269,35 @@ static wconhist_well_type * wconhist_well_alloc_from_string(char ** token_list)
 
   return well;
 }
+
+
+
+static wconhist_well_type * wconhist_well_alloc_from_tokens(const stringlist_type * line_tokens ) {
+  wconhist_well_type * well = wconhist_well_alloc_empty();
+  sched_util_init_default( line_tokens , well->def );
+  
+  well->name  = util_alloc_string_copy(stringlist_iget(line_tokens, 0));
+
+  if(!well->def[1])
+    well->status = get_st_flag_from_string(stringlist_iget(line_tokens , 1));
+
+  if(!well->def[2])
+    well->cmode = get_cm_flag_from_string(stringlist_iget(line_tokens , 2));
+
+  well->orat      = sched_util_atof(stringlist_iget(line_tokens , 3)); 
+  well->wrat      = sched_util_atof(stringlist_iget(line_tokens , 4)); 
+  well->grat      = sched_util_atof(stringlist_iget(line_tokens , 5)); 
+  well->vfptable  = sched_util_atoi(stringlist_iget(line_tokens , 6));
+  well->alift     = sched_util_atof(stringlist_iget(line_tokens , 7));
+  well->thp       = sched_util_atof(stringlist_iget(line_tokens , 8));
+  well->bhp       = sched_util_atof(stringlist_iget(line_tokens , 9));
+  well->wgrat     = sched_util_atof(stringlist_iget(line_tokens , 10));
+
+  return well;
+}
+
+
+
 
 
 
@@ -320,6 +350,11 @@ static hash_type * wconhist_well_export_obs_hash(const wconhist_well_type * well
 }
 
 
+static void sched_kw_wconhist_add_well( sched_kw_wconhist_type * kw , wconhist_well_type * well) {
+  vector_append_owned_ref(kw->wells, well, wconhist_well_free__);
+}
+
+
 
 static void sched_kw_wconhist_add_line(sched_kw_wconhist_type * kw, const char *line)
 {
@@ -330,19 +365,21 @@ static void sched_kw_wconhist_add_line(sched_kw_wconhist_type * kw, const char *
   sched_util_parse_line(line, &tokens, &token_list, WCONHIST_NUM_KW, NULL);
 
   well = wconhist_well_alloc_from_string(token_list);
-  vector_append_owned_ref(kw->wells, well, wconhist_well_free__);
-
+  sched_kw_wconhist_add_well( kw , well );
   util_free_stringlist(token_list, tokens);
 }
+
+
 
 
 static sched_kw_wconhist_type * sched_kw_wconhist_alloc()
 {
   sched_kw_wconhist_type * kw = util_malloc(sizeof * kw, __func__);
+  UTIL_TYPE_ID_INIT( kw , SCHED_KW_WCONHIST_ID );
   kw->wells     = vector_alloc_new();
-  kw->__type_id = SCHED_KW_WCONHIST_ID;
   return kw;
 }
+
 
 
 sched_kw_wconhist_type * sched_kw_wconhist_safe_cast( void * arg ) {
@@ -356,11 +393,28 @@ sched_kw_wconhist_type * sched_kw_wconhist_safe_cast( void * arg ) {
 }
 
 
+
 /***********************************************************************/
 
-sched_kw_wconhist_type * sched_kw_wconhist_token_alloc(const stringlist_type * tokens , int * __token_index ) {
-  
+
+
+sched_kw_wconhist_type * sched_kw_wconhist_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_wconhist_type * kw = sched_kw_wconhist_alloc();
+  int eokw                    = false;
+  do {
+    stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , WCONHIST_NUM_KW , token_index );
+    if (line_tokens == NULL)
+      eokw = true;
+    else {
+      wconhist_well_type * well = wconhist_well_alloc_from_tokens( line_tokens );
+      sched_kw_wconhist_add_well( kw , well );
+      stringlist_free( line_tokens );
+    } 
+    
+  } while (!eokw);
+  return kw;
 }
+
 
 
 

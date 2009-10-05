@@ -12,22 +12,16 @@ typedef enum {WCONHIST =  0,
               DATES    =  1, 
               COMPDAT  =  2, 
               TSTEP    =  3, 
-              TIME     =  4, 
+              TIME     =  4,   /* Not implemented support */
               WELSPECS =  5, 
               GRUPTREE =  6,
-              INCLUDE  =  7, 
-              RPTSCHED =  8, 
-              DRSDT    =  9, 
-              SKIPREST = 10, 
-              RPTRST   = 11, 
-              TUNING   = 12, 
-              WHISTCTL = 13, 
-              UNTYPED  = 14, 
-              WCONINJ  = 15, 
-              WCONINJE = 16, 
-              WCONINJH = 17, 
-              WCONPROD = 18,
-              NUM_SCHED_KW_TYPES = 19} sched_type_enum;
+              INCLUDE  =  7,   
+              UNTYPED  =  8,
+              WCONINJ  =  9,
+              WCONINJE = 10, 
+              WCONINJH = 11, 
+              WCONPROD = 12,
+              NUM_SCHED_KW_TYPES = 13} sched_type_enum;
               
 
 
@@ -39,12 +33,6 @@ typedef enum {WCONHIST =  0,
 #define WELSPECS_STRING  "WELSPECS"
 #define GRUPTREE_STRING  "GRUPTREE"
 #define INCLUDE_STRING   "INCLUDE"
-#define RPTSCHED_STRING  "RPTSCHED"
-#define DRSDT_STRING     "DRSDT"
-#define SKIPREST_STRING  "SKIPREST"
-#define RPTRST_STRING    "RPTRST"
-#define TUNING_STRING    "TUNING"
-#define WHISTCTL_STRING  "WHISTCTL"
 #define WCONINJ_STRING   "WCONINJ"
 #define WCONINJE_STRING  "WCONINJE"
 #define WCONINJH_STRING  "WCONINJH"

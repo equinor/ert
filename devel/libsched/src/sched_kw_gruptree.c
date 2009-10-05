@@ -1,5 +1,6 @@
 #include <hash.h>
 #include <util.h>
+#include <string.h>
 #include <sched_kw_gruptree.h>
 #include <sched_util.h>
 #include <sched_macros.h>
@@ -7,7 +8,7 @@
 
 struct sched_kw_gruptree_struct
 {
-  hash_type * gruptree_hash;
+  hash_type * gruptree_hash;  /* The use of hash implies that the ordering within one GRUPTREE instance is not retained. */
 };
 
 
@@ -15,6 +16,10 @@ struct sched_kw_gruptree_struct
 /***********************************************************************/
 
 
+
+static void sched_kw_gruptree_add_well(sched_kw_gruptree_type * kw , const char * child_group , const char * parent_group) {
+  hash_insert_string(kw->gruptree_hash, child_group , parent_group);
+}
 
 static void sched_kw_gruptree_add_line(sched_kw_gruptree_type * kw, const char * line)
 {
@@ -27,10 +32,10 @@ static void sched_kw_gruptree_add_line(sched_kw_gruptree_type * kw, const char *
     util_abort("%s: Error when parsing record in GRUPTREE. Record must have one or two strings. Found %i - aborting.\n",__func__,tokens);
   
   if(token_list[1] == NULL)
-    hash_insert_string(kw->gruptree_hash, token_list[0], "FIELD");
+    sched_kw_gruptree_add_well(kw , token_list[0], "FIELD");
   else
-    hash_insert_string(kw->gruptree_hash, token_list[0], token_list[1]);
-
+    sched_kw_gruptree_add_well(kw , token_list[0], token_list[1]);
+  
   util_free_stringlist( token_list , tokens );
 };
 
@@ -49,8 +54,26 @@ static sched_kw_gruptree_type * sched_kw_gruptree_alloc()
 /***********************************************************************/
 
 
-sched_kw_gruptree_type * sched_kw_gruptree_token_alloc(const stringlist_type * tokens , int * __token_index ) {
-  
+sched_kw_gruptree_type * sched_kw_gruptree_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_gruptree_type * kw = sched_kw_gruptree_alloc();
+  int eokw                    = false;
+  do {
+    stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , 0 , token_index );
+    if (line_tokens == NULL)
+      eokw = true;
+    else {
+      const char * parent_group = "FIELD";
+      const char * child_group  =  stringlist_iget( line_tokens , 0 );
+      if (stringlist_get_size( line_tokens ) == 2) 
+        parent_group = stringlist_iget( line_tokens , 1 );
+      
+      sched_kw_gruptree_add_well(kw , child_group , parent_group );
+      
+      stringlist_free( line_tokens );
+    } 
+    
+  } while (!eokw);
+  return kw;
 }
 
 

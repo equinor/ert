@@ -47,11 +47,19 @@ static void sched_kw_include_set_file( sched_kw_include_type * kw , const char *
 
 
 
-sched_kw_include_type * sched_kw_include_token_alloc(const stringlist_type * tokens , int * __token_index ) {
+sched_kw_include_type * sched_kw_include_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_include_type * kw    = sched_kw_include_alloc_empty();
+  stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , 0 , token_index );
+  if (line_tokens == NULL)
+    util_abort("%s: fatal error when parsing INCLUDE \n",__func__);
+    
+  if (stringlist_get_size( line_tokens ) != 1)
+    util_abort("%s: fatal error when parsing INCLUDE \n",__func__);
   
+  sched_kw_include_set_file( kw , stringlist_iget( line_tokens , 0 ));
+  
+  return kw;
 }
-
-
 
 
 sched_kw_include_type * sched_kw_include_fscanf_alloc(FILE * stream , bool * at_eof , const char * kw_name) {

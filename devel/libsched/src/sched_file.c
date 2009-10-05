@@ -374,10 +374,10 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
      stripped out. The remaining parsing is done on this file with no
      comments.
   */
-  bool token_alloc           = false;
   stringlist_type  * token_list;
-  char * tmp_base             = util_alloc_sprintf("enkf-schedule:%s" , filename);
-  char * tmp_file             = util_alloc_tmp_file("/tmp" , tmp_base , true);
+  bool token_alloc   = true;
+  char * tmp_base    = util_alloc_sprintf("enkf-schedule:%s" , filename);
+  char * tmp_file    = util_alloc_tmp_file("/tmp" , tmp_base , true);
   {
     parser_type     * parser    = parser_alloc(" \t"  ,      /* Splitters */
                                                "\'\"" ,      /* Quoters   */
@@ -392,19 +392,38 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     stringlist_fprintf( token_list , " " , stream );
     parser_free( parser );
     fclose(stream);
+    
+    stream = util_fopen("tokens.txt" , "w");
+    for (int i = 0; i < stringlist_get_size( token_list ); i++)
+      fprintf(stream , "%4d:  <%s> \n",i , stringlist_iget( token_list , i));
+    fclose( stream );
   }
   
   
-  if (token_alloc)
-  {
+  if (token_alloc) {
     sched_kw_type    * current_kw;
-    bool at_eof      = false;
-    int  token_index = 0;
-    while (!at_eof) {
+    int token_index = 0;
+    do {
+      sched_util_skip_newline( token_list , &token_index );
       current_kw = sched_kw_token_alloc(token_list , &token_index);
-    }
+      if (current_kw != NULL) {
+        sched_type_enum type = sched_kw_get_type(current_kw);
+        if (type == DATES || type == TSTEP || type == TIME) {
+          int i , num_steps;
+          sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
+          sched_kw_free(current_kw);
+          
+          for(i=0; i<num_steps; i++)  
+            sched_file_add_kw( sched_file , sched_kw_dates[i]);
+          
+          free(sched_kw_dates);   
+        } else
+          sched_file_add_kw( sched_file , current_kw);
+      }
+    } while ( current_kw != NULL );
   }
-
+  
+  else
 
   {
     bool at_eof      = false;
@@ -432,9 +451,9 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     } 
     
     fclose(stream);
-    sched_file_build_block_dates(sched_file);
-    sched_file_update_index( sched_file );
   }
+  sched_file_build_block_dates(sched_file);
+  sched_file_update_index( sched_file );
   
   stringlist_free( token_list );
   free( tmp_base );

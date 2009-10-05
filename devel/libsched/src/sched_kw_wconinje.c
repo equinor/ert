@@ -5,16 +5,11 @@
 #include <util.h>
 #include <vector.h>
 #include <sched_kw_wconinje.h>
-#include <sched_kw_untyped.h>
 #include <sched_util.h>
 #include <stringlist.h>
 
+#define DEFAULT_INJECTOR_STATE OPEN
 
-
-/**
-   
-*/
-   
 
 typedef enum {OPEN  , STOP , SHUT , AUTO}      wconinje_status_enum;
 #define STATUS_OPEN_STRING "OPEN"
@@ -23,14 +18,18 @@ typedef enum {OPEN  , STOP , SHUT , AUTO}      wconinje_status_enum;
 #define STATUS_AUTO_STRING "AUTO"
 
   
-
+/**
+   There is no default injector type.
+*/
 typedef enum {WATER , GAS  , OIL}              wconinje_injector_enum;
 #define TYPE_WATER_STRING "WATER"
 #define TYPE_GAS_STRING   "GAS"
 #define TYPE_OIL_STRING   "OIL"
 
   
-
+/**
+   There is no default cmode value. 
+*/
 typedef enum {RATE  , RESV , BHP , THP , GRUP} wconinje_control_enum;
 #define CONTROL_RATE_STRING  "RATE"
 #define CONTROL_RESV_STRING  "RESV"
@@ -126,7 +125,9 @@ static char * get_control_string(wconinje_control_enum cmode)
 
 static wconinje_status_enum get_status_from_string(const char * st_string)
 {
-  if( strcmp(st_string, STATUS_OPEN_STRING) == 0)
+  if (strcmp( st_string , SCHED_KW_DEFAULT_ITEM ) == 0)
+    return DEFAULT_INJECTOR_STATE;
+  else if( strcmp(st_string, STATUS_OPEN_STRING) == 0)
     return OPEN; 
   else if( strcmp(st_string, STATUS_STOP_STRING) == 0)
     return STOP; 
@@ -251,19 +252,40 @@ static wconinje_well_type * wconinje_well_alloc_from_string(char ** token_list)
 
 
 
+
+static wconinje_well_type * wconinje_well_alloc_from_tokens(const stringlist_type * line_tokens ) {
+  wconinje_well_type * well = wconinje_well_alloc_empty();
+  sched_util_init_default( line_tokens , well->def );
+
+  well->name           = util_alloc_string_copy( stringlist_iget( line_tokens , 0 ));
+  well->injector_type  = get_type_from_string(stringlist_iget(line_tokens , 1));
+  well->status         = get_status_from_string( stringlist_iget( line_tokens , 2 ));
+  well->control        = get_cmode_from_string( stringlist_iget( line_tokens , 3 ));
+  well->surface_flow   = sched_util_atof( stringlist_iget( line_tokens , 4 ));
+  well->reservoir_flow = sched_util_atof(stringlist_iget(line_tokens , 5 ));
+  well->BHP_target     = sched_util_atof(stringlist_iget(line_tokens , 6 ));
+  well->THP_target     = sched_util_atof( stringlist_iget( line_tokens , 7 ));
+  well->vfp_table_nr   = sched_util_atoi( stringlist_iget( line_tokens , 8));
+  well->vapoil_conc    = sched_util_atof( stringlist_iget( line_tokens , 9 ));
+
+  return well;
+}
+
+
+
 static void wconinje_well_fprintf(const wconinje_well_type * well, FILE * stream)
 {
   fprintf(stream, "  ");
-  sched_util_fprintf_qst(well->def[0],  well->name                               , 8,  stream);
-  sched_util_fprintf_qst(well->def[1],  get_injector_string(well->injector_type) , 5,  stream); /* 5 ?? */
-  sched_util_fprintf_qst(well->def[2],  get_status_string(well->status)          , 4,  stream);
-  sched_util_fprintf_qst(well->def[3],  get_control_string(well->control)        , 4,  stream);
-  sched_util_fprintf_dbl(well->def[4],  well->surface_flow         , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[5],  well->reservoir_flow       , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[6],  well->BHP_target           , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[7],  well->THP_target           , 11, 3, stream);
-  sched_util_fprintf_int(well->def[8],  well->vfp_table_nr         , 4,     stream);
-  sched_util_fprintf_dbl(well->def[9],  well->vapoil_conc          , 11, 3, stream);
+  sched_util_fprintf_qst(well->def[0],  well->name                               , 8,     stream);
+  sched_util_fprintf_qst(well->def[1],  get_injector_string(well->injector_type) , 5,     stream); /* 5 ?? */
+  sched_util_fprintf_qst(well->def[2],  get_status_string(well->status)          , 4,     stream);
+  sched_util_fprintf_qst(well->def[3],  get_control_string(well->control)        , 4,     stream);
+  sched_util_fprintf_dbl(well->def[4],  well->surface_flow                       , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[5],  well->reservoir_flow                     , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[6],  well->BHP_target                         , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[7],  well->THP_target                         , 11, 3, stream);
+  sched_util_fprintf_int(well->def[8],  well->vfp_table_nr                       , 4,     stream);
+  sched_util_fprintf_dbl(well->def[9],  well->vapoil_conc                        , 11, 3, stream);
   fprintf(stream, "/ \n");
 }
 
@@ -273,8 +295,7 @@ static void wconinje_well_fprintf(const wconinje_well_type * well, FILE * stream
 
 
 
-static sched_kw_wconinje_type * sched_kw_wconinje_alloc(bool alloc_untyped)
-{
+static sched_kw_wconinje_type * sched_kw_wconinje_alloc() {
   sched_kw_wconinje_type * kw = util_malloc(sizeof * kw, __func__);
   kw->wells     = vector_alloc_new();
   kw->__type_id = SCHED_KW_WCONINJE_ID;
@@ -301,6 +322,10 @@ void sched_kw_wconinje_free(sched_kw_wconinje_type * kw)
 }
 
 
+static void sched_kw_wconinje_add_well( sched_kw_wconinje_type * kw , const wconinje_well_type * well) {
+  vector_append_owned_ref(kw->wells , well , wconinje_well_free__);  
+}
+
 
 static void sched_kw_wconinje_add_line(sched_kw_wconinje_type * kw , const char * line , FILE * stream) {
   int tokens;
@@ -309,13 +334,26 @@ static void sched_kw_wconinje_add_line(sched_kw_wconinje_type * kw , const char 
 
   sched_util_parse_line(line , &tokens , &token_list , WCONINJE_NUM_KW , NULL);
   well = wconinje_well_alloc_from_string( token_list );
-  vector_append_owned_ref(kw->wells , well , wconinje_well_free__);
+  sched_kw_wconinje_add_well( kw , well );
   util_free_stringlist( token_list , tokens );
 }
 
 
-sched_kw_wconinje_type * sched_kw_wconinje_token_alloc(const stringlist_type * tokens , int * __token_index ) {
-  
+
+sched_kw_wconinje_type * sched_kw_wconinje_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_wconinje_type * kw = sched_kw_wconinje_alloc();
+  int eokw                    = false;
+  do {
+    stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , WCONINJE_NUM_KW , token_index );
+    if (line_tokens == NULL)
+      eokw = true;
+    else {
+      wconinje_well_type * well = wconinje_well_alloc_from_tokens( line_tokens );
+      sched_kw_wconinje_add_well( kw , well );
+      stringlist_free( line_tokens );
+    } 
+  } while (!eokw);
+  return kw;  
 }
 
 

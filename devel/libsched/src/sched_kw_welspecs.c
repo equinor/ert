@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sched_kw_welspecs.h>
-#include <list.h>
+#include <vector.h>
 #include <util.h>
 #include <sched_util.h>
 #include <sched_macros.h>
@@ -20,13 +20,19 @@
   Define the maximum number of keywords in a WELSPEC record.
   Note that this includes FrontSim and ECLIPSE 300 KWs.
 */
-#define WELSPEC_NUM_KW 16
+#define WELSPECS_NUM_KW 16
 #define ECL_DEFAULT_KW "*"
+
+
+#define DEFAULT_INFLOW_EQUATION    IE_STD
+#define DEFAULT_AUTO_SHUT_TYPE     AS_SHUT
+#define DEFAULT_CROSSFLOW_ABILITY  CF_YES
+#define DEFAULT_HDSTAT_TYPE        HD_SEG
 
 
 struct sched_kw_welspecs_struct
 {
-  list_type * welspec_list;
+  vector_type * welspec_list;
 };
 
 /*
@@ -72,7 +78,7 @@ typedef struct
   /*
     def : Read as defaulted, not as defined.
   */
-  bool             def[WELSPEC_NUM_KW];
+  bool             def[WELSPECS_NUM_KW];
 
   char           * name;
   char           * group;
@@ -183,25 +189,28 @@ static char * get_hdstat_head_string(hdstat_head_type hd)
 
 static inflow_eq_type get_inflow_eq_from_string(const char * string)
 {
-    if(strcmp(string     , IE_STD_STRING) == 0)
-      return IE_STD;
-    else if(strcmp(string, IE_NO_STRING)  == 0)
-      return IE_NO;
-    else if(strcmp(string, IE_RG_STRING)  == 0)
-      return IE_RG;
-    else if(strcmp(string, IE_YES_STRING) == 0)
-      return IE_YES;
-    else if(strcmp(string, IE_PP_STRING)  == 0)
-      return IE_PP;
-    else if(strcmp(string, IE_GPP_STRING) == 0)
-      return IE_GPP;
-    else
-      util_abort("%s: Inflow equation %s not recognized - aborting.\n",__func__, string);
-      return IE_STD;
+  if(strcmp(string     , IE_STD_STRING) == 0)
+    return IE_STD;
+  else if(strcmp(string, IE_NO_STRING)  == 0)
+    return IE_NO;
+  else if(strcmp(string, IE_RG_STRING)  == 0)
+    return IE_RG;
+  else if(strcmp(string, IE_YES_STRING) == 0)
+    return IE_YES;
+  else if(strcmp(string, IE_PP_STRING)  == 0)
+    return IE_PP;
+  else if(strcmp(string, IE_GPP_STRING) == 0)
+    return IE_GPP;
+  else if (strcmp(string , SCHED_KW_DEFAULT_ITEM) == 0)
+    return DEFAULT_INFLOW_EQUATION;
+  else
+    util_abort("%s: Inflow equation %s not recognized - aborting.\n",__func__, string);
+  return IE_STD;
 }
 
 
 
+/* No default is defined according to the documentation. */
 static phase_type get_phase_from_string(const char * string)
 {
     if(strcmp(string     , PH_OIL_STRING) == 0)
@@ -221,39 +230,45 @@ static phase_type get_phase_from_string(const char * string)
 
 static auto_shut_type get_auto_shut_from_string(const char * string)
 {
-    if(strcmp(string,     AS_STOP_STRING) == 0)
-      return AS_STOP;
-    else if(strcmp(string,AS_SHUT_STRING) == 0)
-      return AS_SHUT;
-    else
-      util_abort("%s: Automatic shut-in mode %s not recognized - aborting.\n",__func__,string);
-      return 0;
+  if(strcmp(string,     AS_STOP_STRING) == 0)
+    return AS_STOP;
+  else if (strcmp(string,AS_SHUT_STRING) == 0)
+    return AS_SHUT;
+  else if (strcmp(string , SCHED_KW_DEFAULT_ITEM) == 0)
+    return DEFAULT_AUTO_SHUT_TYPE;
+  else
+    util_abort("%s: Automatic shut-in mode %s not recognized - aborting.\n",__func__,string);
+  return 0;
 }
 
 
 
 static crossflow_type get_crossflow_from_string(const char * string)
 {
-    if(strcmp(string     ,CF_YES_STRING) == 0)
-      return CF_YES;
-    else if(strcmp(string,CF_NO_STRING) == 0)
-      return CF_NO;
-    else
-      util_abort("%s: Crossflow ability mode %s not recognized - aborting.\n",__func__,string);
-      return 0;
+  if(strcmp(string     ,CF_YES_STRING) == 0)
+    return CF_YES;
+  else if(strcmp(string,CF_NO_STRING) == 0)
+    return CF_NO;
+  else if(strcmp(string,SCHED_KW_DEFAULT_ITEM) == 0)
+    return DEFAULT_CROSSFLOW_ABILITY;
+  else
+    util_abort("%s: Crossflow ability mode %s not recognized - aborting.\n",__func__,string);
+  return 0;
 }
 
 
 
 static hdstat_head_type get_hdstat_head_from_string(const char * string)
 {
-    if(strcmp(string     ,HD_SEG_STRING) == 0)
-      return HD_SEG;
-    else if(strcmp(string,HD_AVG_STRING) == 0)
-      return HD_AVG;
-    else
-      util_abort("%s: Hydrostatic head model %s not recognized - aborting.\n",__func__,string);
-      return 0;
+  if(strcmp(string     ,HD_SEG_STRING) == 0)
+    return HD_SEG;
+  else if(strcmp(string,HD_AVG_STRING) == 0)
+    return HD_AVG;
+  else if(strcmp(string,SCHED_KW_DEFAULT_ITEM) == 0)
+    return DEFAULT_HDSTAT_TYPE;
+  else
+    util_abort("%s: Hydrostatic head model %s not recognized - aborting.\n",__func__,string);
+  return 0;
 }
 
 
@@ -319,7 +334,7 @@ static void welspec_fwrite(const welspec_type * ws, FILE * stream)
   util_fwrite(&ws->hdstat_head , sizeof ws->hdstat_head , 1 , stream, __func__);
   util_fwrite(&ws->fip_region  , sizeof ws->fip_region  , 1 , stream, __func__);
 
-  util_fwrite(&ws->def         , sizeof ws->def[0], WELSPEC_NUM_KW, stream, __func__);
+  util_fwrite(&ws->def         , sizeof ws->def[0], WELSPECS_NUM_KW, stream, __func__);
 }; 
 
 
@@ -346,7 +361,7 @@ static welspec_type * welspec_fread_alloc(FILE * stream)
   util_fread(&ws->hdstat_head , sizeof ws->hdstat_head , 1 , stream, __func__);
   util_fread(&ws->fip_region  , sizeof ws->fip_region  , 1 , stream, __func__);
 
-  util_fread(&ws->def         , sizeof ws->def[0]         , WELSPEC_NUM_KW, stream, __func__);
+  util_fread(&ws->def         , sizeof ws->def[0]         , WELSPECS_NUM_KW, stream, __func__);
 
   return ws;
 };
@@ -380,7 +395,7 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
 
   {
     int i;
-    for(i=0; i<WELSPEC_NUM_KW; i++)
+    for(i=0; i<WELSPECS_NUM_KW; i++)
     {
       if(token_list[i] == NULL)
         ws->def[i] = true;
@@ -440,12 +455,52 @@ static welspec_type * welspec_alloc_from_string(char ** token_list)
 
 
 
+static welspec_type * welspec_alloc_from_tokens(const stringlist_type * line_tokens )
+{
+  welspec_type * ws = welspec_alloc_empty();
+  sched_util_init_default( line_tokens , ws->def );
+  ws->name = util_alloc_string_copy(stringlist_iget( line_tokens , 0));
+  
+  if(ws->def[1])
+    ws->group = util_alloc_string_copy("FIELD");
+  else
+    ws->group = util_alloc_string_copy(stringlist_iget( line_tokens , 1 ));
+
+  ws->hh_i        = sched_util_atoi(stringlist_iget( line_tokens , 2));
+  ws->hh_j        = sched_util_atoi(stringlist_iget( line_tokens , 3));
+  ws->md          = sched_util_atof(stringlist_iget( line_tokens , 4));
+  ws->phase       = get_phase_from_string(stringlist_iget( line_tokens , 5));        
+  ws->drain_rad   = sched_util_atof(stringlist_iget( line_tokens , 6));
+  ws->inflow_eq   = get_inflow_eq_from_string(stringlist_iget( line_tokens , 7));
+  ws->auto_shut   = get_auto_shut_from_string(stringlist_iget( line_tokens , 8));
+  ws->crossflow   = get_crossflow_from_string(stringlist_iget( line_tokens , 9));
+  ws->pvt_region  = sched_util_atoi(stringlist_iget( line_tokens , 10));
+  ws->hdstat_head = get_hdstat_head_from_string(stringlist_iget( line_tokens , 11));
+  ws->fip_region  = sched_util_atoi(stringlist_iget( line_tokens , 12));
+
+  ws->fs_kw1      = util_alloc_string_copy(stringlist_iget( line_tokens , 13));   /* Reserved for use with FRONTSIM */
+  ws->fs_kw2      = util_alloc_string_copy(stringlist_iget( line_tokens , 14));   /* Reserved for use with FRONTSIM */ 
+  ws->ecl300_kw   = util_alloc_string_copy(stringlist_iget( line_tokens , 15));   /* Could not find this in the dcoumentation ...??? */
+
+  return ws;
+};
+
+
+
+
+
+
 static sched_kw_welspecs_type * sched_kw_welspecs_alloc()
 {
   sched_kw_welspecs_type * kw = util_malloc(sizeof * kw,__func__);
-  kw->welspec_list = list_alloc();
+  kw->welspec_list = vector_alloc_new();
   return kw;
 };
+
+
+static void sched_kw_welspecs_add_well( sched_kw_welspecs_type * kw , const welspec_type * ws) {
+  vector_append_owned_ref( kw->welspec_list , ws , welspec_free__ );
+}
 
 
 
@@ -454,10 +509,10 @@ static void sched_kw_welspecs_add_line(sched_kw_welspecs_type * kw, const char *
   int tokens;
   char **token_list;
 
-  sched_util_parse_line(line, &tokens, &token_list, WELSPEC_NUM_KW, NULL);
+  sched_util_parse_line(line, &tokens, &token_list, WELSPECS_NUM_KW, NULL);
   {
     welspec_type * ws = welspec_alloc_from_string(token_list);
-    list_append_list_owned_ref(kw->welspec_list, ws, welspec_free__);
+    sched_kw_welspecs_add_well( kw , ws );
   }
   util_free_stringlist(token_list , tokens);
 };
@@ -467,9 +522,23 @@ static void sched_kw_welspecs_add_line(sched_kw_welspecs_type * kw, const char *
 /*****************************************************************************/
 
 
-sched_kw_welspecs_type * sched_kw_welspecs_token_alloc(const stringlist_type * tokens , int * __token_index ) {
-  
+sched_kw_welspecs_type * sched_kw_welspecs_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc();
+  int eokw                    = false;
+  do {
+    stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , WELSPECS_NUM_KW , token_index );
+    if (line_tokens == NULL)
+      eokw = true;
+    else {
+      welspec_type   * well         = welspec_alloc_from_tokens( line_tokens );
+      sched_kw_welspecs_add_well( kw , well );
+      stringlist_free( line_tokens );
+    } 
+    
+  } while (!eokw);
+  return kw;
 }
+
 
 
 
@@ -505,7 +574,7 @@ sched_kw_welspecs_type * sched_kw_welspecs_fscanf_alloc(FILE *stream, bool * at_
 
 void sched_kw_welspecs_free(sched_kw_welspecs_type * kw)
 {
-  list_free(kw->welspec_list);
+  vector_free(kw->welspec_list);
   free(kw);
 };
 
@@ -514,62 +583,64 @@ void sched_kw_welspecs_free(sched_kw_welspecs_type * kw)
 void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type * kw, FILE * stream)
 {
   fprintf(stream, "WELSPECS\n");
-  list_node_type *ws_node = list_get_head(kw->welspec_list);
-  while(ws_node != NULL)
-  {
-   welspec_type * ws = list_node_value_ptr(ws_node);
-   welspec_sched_fprintf(ws, stream);
-   ws_node = list_node_get_next(ws_node);
+  int i;
+  for (i=0; i < vector_get_size( kw->welspec_list ); i++) {
+    const welspec_type * ws = vector_iget_const( kw->welspec_list , i );
+    welspec_sched_fprintf(ws, stream);
   }
   fprintf(stream,"/\n\n");
 };
-
+  
 
 
 void sched_kw_welspecs_fwrite(const sched_kw_welspecs_type * kw, FILE * stream)
 {
-  int welspec_lines = list_get_size(kw->welspec_list);
-  util_fwrite(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
-  {
-    list_node_type * ws_node = list_get_head(kw->welspec_list);
-    while(ws_node != NULL)
-    {
-      welspec_type * ws = list_node_value_ptr(ws_node);
-      welspec_fwrite(ws, stream);
-      ws_node = list_node_get_next(ws_node);
-    }
-  }
+  //int welspec_lines = list_get_size(kw->welspec_list);
+  //util_fwrite(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
+  //{
+  //  list_node_type * ws_node = list_get_head(kw->welspec_list);
+  //  while(ws_node != NULL)
+  //  {
+  //    welspec_type * ws = list_node_value_ptr(ws_node);
+  //    welspec_fwrite(ws, stream);
+  //    ws_node = list_node_get_next(ws_node);
+  //  }
+  //}
 };
 
 
 
 sched_kw_welspecs_type * sched_kw_welspecs_fread_alloc(FILE * stream)
 {
-  int i, welspec_lines;
-  sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc();
-  
-  util_fread(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
-
-  for(i=0; i< welspec_lines; i++)
-  {
-    welspec_type * ws = welspec_fread_alloc(stream);
-    list_append_list_owned_ref(kw->welspec_list, ws, welspec_free__);
-  }
-
-  return kw;
+  //int i, welspec_lines;
+  //sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc();
+  //
+  //util_fread(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
+  //
+  //for(i=0; i< welspec_lines; i++)
+  //{
+  //  welspec_type * ws = welspec_fread_alloc(stream);
+  //  list_append_list_owned_ref(kw->welspec_list, ws, welspec_free__);
+  //}
+  //
+  //return kw;
+  return NULL;
 };
+
+
 
 
 
 void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw, char *** __children, char *** __parents, int * num_pairs)
 {
-  int num_wells = list_get_size(kw->welspec_list);
+  int num_wells    = vector_get_size(kw->welspec_list);
   char ** children = util_malloc(num_wells * sizeof * children, __func__);
   char ** parents  = util_malloc(num_wells * sizeof * parents, __func__);
 
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
   {
-    welspec_type * well = list_iget_node_value_ptr(kw->welspec_list, well_nr);
+    const welspec_type * well = vector_iget_const(kw->welspec_list , well_nr);
+
     children[well_nr] = util_alloc_string_copy(well->name);
     if(!well->def[1])
       parents[well_nr] = util_alloc_string_copy(well->group);

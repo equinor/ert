@@ -12,6 +12,7 @@
 
 
 struct sched_kw_untyped_struct {
+  int        rec_len;   
   char      *kw_name;  /* The name of the current keyword. */
   char      *buffer;   /* The content of the keyword is just appended in one char * pointer. */
 };
@@ -20,23 +21,23 @@ struct sched_kw_untyped_struct {
 
 /*****************************************************************/
 
-
-
 static int get_fixed_record_length(const char * kw_name)
 {
-    
-   if( strcmp(kw_name, "INCLUDE" ) == 0) { return  1;}
-   if( strcmp(kw_name, "RPTSCHED") == 0) { return  1;}
-   if( strcmp(kw_name, "DRSDT"   ) == 0) { return  1;}
-   if( strcmp(kw_name, "SKIPREST") == 0) { return  0;}
-   if( strcmp(kw_name, "RPTRST"  ) == 0) { return  1;}
-   if( strcmp(kw_name, "TUNING"  ) == 0) { return  3;}
-   if( strcmp(kw_name, "WHISTCTL") == 0) { return  1;}
-   if( strcmp(kw_name, "TIME"    ) == 0) { return  1;}
-   if( strcmp(kw_name, "VAPPARS" ) == 0) { return  1;}
-   if( strcmp(kw_name, "NETBALAN") == 0) { return  1;}
-   if( strcmp(kw_name, "WPAVE"   ) == 0) { return  1;}
-    
+  
+   if( strcmp(kw_name , "INCLUDE" ) == 0) { return  1;}
+   if( strcmp(kw_name , "RPTSCHED") == 0) { return  1;}
+   if( strcmp(kw_name , "DRSDT"   ) == 0) { return  1;}
+   if( strcmp(kw_name , "SKIPREST") == 0) { return  0;}
+   if( strcmp(kw_name , "RPTRST"  ) == 0) { return  1;}
+   if( strcmp(kw_name , "TUNING"  ) == 0) { return  3;}
+   if( strcmp(kw_name , "WHISTCTL") == 0) { return  1;}
+   if( strcmp(kw_name , "TIME"    ) == 0) { return  1;}
+   if( strcmp(kw_name , "VAPPARS" ) == 0) { return  1;}
+   if( strcmp(kw_name , "NETBALAN") == 0) { return  1;}
+   if( strcmp(kw_name , "WPAVE"   ) == 0) { return  1;}
+   if( strcmp(kw_name , "VFPTABL" ) == 0) { return  1;}
+   if( strcmp(kw_name , "GUIDERAT") == 0) { return  1;} 
+   
    return -1;
 }
 
@@ -44,6 +45,7 @@ static int get_fixed_record_length(const char * kw_name)
 sched_kw_untyped_type * sched_kw_untyped_alloc(const char * kw_name) {
   sched_kw_untyped_type * kw = util_malloc(sizeof *kw , __func__);
   kw->kw_name   = util_alloc_string_copy(kw_name);
+  kw->rec_len   = get_fixed_record_length( kw_name );
   kw->buffer    = NULL; 
   return kw;
 }
@@ -114,40 +116,48 @@ static sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc_varlen(FILE * strea
 /*****************************************************************/
 
 
-sched_kw_untyped_type * sched_kw_untyped_token_alloc(const stringlist_type * tokens , int * __token_index ) {
-  int token_index = *__token_index;
-  const char * kw_name = stringlist_iget( tokens , token_index - 1);
-  int rec_len = get_fixed_record_length(kw_name);
+void sched_kw_untyped_add_tokens( sched_kw_untyped_type * kw , const stringlist_type * line_tokens) {
+  char * line_buffer = stringlist_alloc_joined_string( line_tokens , "  ");
+  sched_kw_untyped_add_line(kw, line_buffer , true );
+  free( line_buffer );
+}
+
+
+
+
+
+sched_kw_untyped_type * sched_kw_untyped_token_alloc(const stringlist_type * tokens , int * token_index ) {
+  const char * kw_name = NULL;
+
+  /* First part - get hold of the kw name */
   {
-    sched_kw_untyped_type * kw = sched_kw_untyped_alloc(stringlist_iget( tokens , token_index - 1) );
-    int line_nr = 0;
-    int eokw    = false;
+    int kw_index = (*token_index) - 1;
     do {
-      int line_start = token_index;
-      int line_end;
-      const char * current_token;
-      do {
-        current_token = stringlist_iget( tokens , token_index );
-      } while (strcmp(current_token , "/") != 0);
-      line_end = token_index;
-      
-      /** Append line buffer */
-      {
-        char * line_buffer = stringlist_alloc_joined_segment_string( tokens , line_start , line_end , "  ");
-        sched_kw_untyped_add_line(kw, line_buffer , true );
-        free( line_buffer );
-      }
-      line_nr++;
-      if (line_nr == rec_len) 
-        /*
-          We have reached the end of a fixed length kw.
-        */
+      kw_name = stringlist_iget( tokens , kw_index);
+      if (util_string_isspace( kw_name ))
+        kw_name = NULL;  /* Try again */
+      kw_index--;
+    } while (kw_name == NULL && (kw_index >= 0));
+
+    if (kw_name == NULL)
+      util_abort("%s: internal error - failed to identify untyped kw name \n",__func__);
+  }
+  
+  {
+    bool eokw                  = false;
+    sched_kw_untyped_type * kw = sched_kw_untyped_alloc( kw_name );
+    int line_nr                = 0;
+    do {
+      stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , true , 0 , token_index );
+      if (line_tokens == NULL)
         eokw = true;
-      else if ((line_end - line_start) == 1) 
-        /* 
-           This line *only* contained a terminating '/'. This marks the
-           end of a varlen keyword.
-        */
+      else {
+        sched_kw_untyped_add_tokens( kw , line_tokens );
+        stringlist_free( line_tokens );
+      }
+      
+      line_nr++;
+      if (line_nr == kw->rec_len)
         eokw = true;
       
     } while (!eokw);
@@ -172,11 +182,10 @@ sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc(FILE * stream, bool * at_e
 void sched_kw_untyped_fprintf(const sched_kw_untyped_type *kw , FILE *stream) {
   fprintf(stream , "%s \n" , kw->kw_name);
   {
-    int rec_len = get_fixed_record_length(kw->kw_name);
     if (kw->buffer != NULL)
       fprintf(stream , "%s" , kw->buffer);
     
-    if(rec_len < 0)
+    if(kw->rec_len < 0)
       fprintf(stream , "/\n\n");
     else
       fprintf(stream, "\n\n");
