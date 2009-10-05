@@ -13,11 +13,11 @@ typedef struct sched_file_struct sched_file_type;
 
 typedef void * (sched_file_callback_ftype)( void * sched_kw , int restart_nr , void * arg);
 
-
+void              sched_file_add_fixed_length_kw( sched_file_type * sched_file , const char * kw , int length );
 sched_file_type * sched_file_alloc(time_t);
 sched_file_type * sched_file_safe_cast(void * );
 void 		  sched_file_free(sched_file_type *);
-void 		  sched_file_parse(sched_file_type *, time_t, const char *);
+void 		  sched_file_parse(sched_file_type *, const char *);
 void              sched_file_parse_append(sched_file_type *  , const char * );
 sched_file_type * sched_file_parse_alloc(const char * , time_t);
 void              sched_file_fprintf_i(const sched_file_type *, int, const char *);

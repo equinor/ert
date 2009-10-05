@@ -24,7 +24,6 @@ struct sched_kw_untyped_struct {
 static int get_fixed_record_length(const char * kw_name)
 {
   
-   if( strcmp(kw_name , "INCLUDE" ) == 0) { return  1;}
    if( strcmp(kw_name , "RPTSCHED") == 0) { return  1;}
    if( strcmp(kw_name , "DRSDT"   ) == 0) { return  1;}
    if( strcmp(kw_name , "SKIPREST") == 0) { return  0;}
@@ -38,7 +37,7 @@ static int get_fixed_record_length(const char * kw_name)
    if( strcmp(kw_name , "VFPTABL" ) == 0) { return  1;}
    if( strcmp(kw_name , "GUIDERAT") == 0) { return  1;} 
    
-   return -1;
+   return -1;  /* Can not use 0 - because some KW actually have 0 as a valid fixed value. */
 }
 
 

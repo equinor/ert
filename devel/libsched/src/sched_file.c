@@ -50,11 +50,12 @@ struct sched_block_struct {
 
 struct sched_file_struct {
   UTIL_TYPE_ID_DECLARATION;
+  hash_type       * fixed_length_table;    /* A hash table of keywords with a fixed length, i.e. not '/' terminated. */
   vector_type     * kw_list;
   vector_type     * kw_list_by_type;
-  vector_type     * blocks;           /* A list of chronologically sorted sched_block_type's. */
-  stringlist_type * files;            /* The name of the files which have been parsed to generate this sched_file instance. */
-  time_t            start_time;       /* The start of the simulation. */
+  vector_type     * blocks;                /* A list of chronologically sorted sched_block_type's. */
+  stringlist_type * files;                 /* The name of the files which have been parsed to generate this sched_file instance. */
+  time_t            start_time;            /* The start of the simulation. */
 };
 
 
@@ -335,17 +336,43 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
 }
 
 
+
+void sched_file_add_fixed_length_kw( sched_file_type * sched_file , const char * kw , int length ) {
+  hash_insert_int( sched_file->fixed_length_table, kw , length );
+}
+
+
+
+static void sched_file_init_fixed_length( sched_file_type * sched_file ) {
+  sched_file_add_fixed_length_kw(sched_file , "RPTSCHED" , 1);
+  sched_file_add_fixed_length_kw(sched_file , "DRSDT"    , 1);
+  sched_file_add_fixed_length_kw(sched_file , "SKIPREST" , 0);
+  sched_file_add_fixed_length_kw(sched_file , "RPTRST"   , 1);
+  sched_file_add_fixed_length_kw(sched_file , "TUNING"   , 3);
+  sched_file_add_fixed_length_kw(sched_file , "WHISTCTL" , 1);
+  sched_file_add_fixed_length_kw(sched_file , "TIME"     , 1);
+  sched_file_add_fixed_length_kw(sched_file , "VAPPARS"  , 1);
+  sched_file_add_fixed_length_kw(sched_file , "NETBALAN" , 1);
+  sched_file_add_fixed_length_kw(sched_file , "WPAVE"    , 1);
+  sched_file_add_fixed_length_kw(sched_file , "VFPTABL"  , 1);
+  sched_file_add_fixed_length_kw(sched_file , "GUIDERAT" , 1);
+}
+
+
 sched_file_type * sched_file_alloc(time_t start_time)
 {
   sched_file_type * sched_file = util_malloc(sizeof * sched_file, __func__);
   UTIL_TYPE_ID_INIT( sched_file , SCHED_FILE_TYPE_ID);
-  sched_file->kw_list          = vector_alloc_new();
-  sched_file->kw_list_by_type  = NULL;
-  sched_file->blocks           = vector_alloc_new();
-  sched_file->files    	       = stringlist_alloc_new();
-  sched_file->start_time       = start_time;
+  sched_file->kw_list            = vector_alloc_new();
+  sched_file->kw_list_by_type    = NULL;
+  sched_file->blocks             = vector_alloc_new();
+  sched_file->files    	         = stringlist_alloc_new();
+  sched_file->start_time         = start_time;
+  sched_file->fixed_length_table = hash_alloc();
+  sched_file_init_fixed_length( sched_file );
   return sched_file;
 }
+
 
 UTIL_SAFE_CAST_FUNCTION(sched_file , SCHED_FILE_TYPE_ID);
 
@@ -358,6 +385,7 @@ void sched_file_free(sched_file_type * sched_file)
     vector_free( sched_file->kw_list_by_type );
 
   stringlist_free( sched_file->files );
+  hash_free( sched_file->fixed_length_table );
   free(sched_file);
 }
 
@@ -462,7 +490,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
 
 
 
-void sched_file_parse(sched_file_type * sched_file, time_t start_date, const char * filename)
+void sched_file_parse(sched_file_type * sched_file, const char * filename)
 {
   /* 
      Add the first empty pseudo block - this runs from time -infty:start_date.
@@ -472,9 +500,10 @@ void sched_file_parse(sched_file_type * sched_file, time_t start_date, const cha
 }
 
 
+
 sched_file_type * sched_file_parse_alloc(const char * filename , time_t start_date) {
   sched_file_type * sched_file = sched_file_alloc( start_date );
-  sched_file_parse(sched_file , start_date , filename);
+  sched_file_parse(sched_file , filename);
   return sched_file;
 }
 
