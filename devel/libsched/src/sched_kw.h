@@ -52,7 +52,7 @@ void sched_kw_free__(void *);
 const char     * sched_kw_get_type_name( const sched_kw_type * sched_kw );
 sched_type_enum  sched_kw_get_type(const sched_kw_type *);
 sched_kw_type *  sched_kw_fscanf_alloc(FILE *, bool *);
-sched_kw_type *  sched_kw_token_alloc(const stringlist_type * tokens, int * token_index);
+sched_kw_type *  sched_kw_token_alloc(const stringlist_type * tokens, int * token_index, hash_type * fixed_length_table);
 void             sched_kw_fprintf(const sched_kw_type *, FILE *);
 void             sched_kw_free(sched_kw_type *);
 void             sched_kw_fwrite(sched_kw_type *, FILE *);

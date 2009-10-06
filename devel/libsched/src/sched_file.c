@@ -433,7 +433,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     int token_index = 0;
     do {
       sched_util_skip_newline( token_list , &token_index );
-      current_kw = sched_kw_token_alloc(token_list , &token_index);
+      current_kw = sched_kw_token_alloc(token_list , &token_index , sched_file->fixed_length_table);
       if (current_kw != NULL) {
         sched_type_enum type = sched_kw_get_type(current_kw);
         if (type == DATES || type == TSTEP || type == TIME) {

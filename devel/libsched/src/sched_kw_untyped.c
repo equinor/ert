@@ -41,6 +41,7 @@ static int get_fixed_record_length(const char * kw_name)
 }
 
 
+
 sched_kw_untyped_type * sched_kw_untyped_alloc(const char * kw_name) {
   sched_kw_untyped_type * kw = util_malloc(sizeof *kw , __func__);
   kw->kw_name   = util_alloc_string_copy(kw_name);
@@ -142,6 +143,7 @@ sched_kw_untyped_type * sched_kw_untyped_token_alloc(const stringlist_type * tok
       util_abort("%s: internal error - failed to identify untyped kw name \n",__func__);
   }
   
+  
   {
     bool eokw                  = false;
     sched_kw_untyped_type * kw = sched_kw_untyped_alloc( kw_name );
@@ -211,7 +213,7 @@ void sched_kw_untyped_fwrite(const sched_kw_untyped_type *kw , FILE *stream) {
 sched_kw_untyped_type * sched_kw_untyped_fread_alloc(FILE *stream) {
   char *kw_name = util_fread_alloc_string(stream);
   {
-    sched_kw_untyped_type *kw = sched_kw_untyped_alloc(kw_name);
+    sched_kw_untyped_type * kw = sched_kw_untyped_alloc(kw_name);
     kw->buffer = util_fread_alloc_string(stream);
     return kw;
   }

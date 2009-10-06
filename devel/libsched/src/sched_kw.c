@@ -350,7 +350,7 @@ sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
 
 
 
-sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * token_index) {
+sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * token_index, hash_type * fixed_length_table) {
   if (*token_index >= stringlist_get_size( token_list ))
     return NULL;
   else {
@@ -366,6 +366,7 @@ sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * t
       sched_kw->restart_nr     = -1;
       
       sched_util_skip_newline( token_list , token_index );
+      if (
       sched_kw->data           = sched_kw->data_handlers.token_alloc(token_list , token_index);
       
       return sched_kw;
