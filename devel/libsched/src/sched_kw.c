@@ -57,37 +57,36 @@
 */
 
 typedef void * (data_token_alloc_proto)  ( const stringlist_type * , int * );
-typedef void * (data_fscanf_alloc_proto) ( FILE *, bool *,  const char *);
-typedef void   (data_free_proto)(         void *);
-typedef void   (data_fprintf_proto)(const void *, FILE *);
-typedef void   (data_fwrite_proto) ( const void *, FILE *);
-typedef void * (data_fread_proto)  (        FILE * );
-typedef void * (alloc_copy_proto)  (const void *);
-
-typedef struct data_handlers_struct data_handlers_type;
+typedef void   (data_free_proto)         ( void *);
+typedef void   (data_fprintf_proto)      ( const void *, FILE *);
+typedef void * (alloc_copy_proto)        ( const void *);
 
 
 struct data_handlers_struct {
   data_token_alloc_proto  * token_alloc;
-  data_fscanf_alloc_proto * fscanf_alloc;
   data_free_proto         * free;
   data_fprintf_proto      * fprintf;
-  data_fwrite_proto       * fwrite;
-  data_fread_proto        * fread_alloc;
-  alloc_copy_proto        * alloc_copy;
+  alloc_copy_proto        * copyc;
 };
 
 
 struct sched_kw_struct {
-  sched_type_enum      type;
-  data_handlers_type   data_handlers;
-  int                  restart_nr;  /* The block nr owning this instance. */
-  void               * data;
+  char                    * kw_name; 
+  sched_type_enum           type;
+  int                       restart_nr;  /* The block nr owning this instance. */
+  
+
+  /* Function pointers to work on the data pointer. */
+  data_token_alloc_proto  * alloc;
+  data_free_proto         * free;
+  data_fprintf_proto      * fprintf;
+  alloc_copy_proto        * copyc;
+  
+  void                    * data;        /* A void point pointer to a detailed implementation - i.e. sched_kw_wconhist. */
 };
 
 
 
-/*****************************************************************/
 
 /**
    This function does a direct translation of a string name to
@@ -135,6 +134,99 @@ static const char * get_name_from_type(sched_type_enum kw_type) {
 }
 
 
+
+/*****************************************************************/
+
+/**
+   Nothing like a little manual inheritance....
+*/
+
+static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
+  sched_kw_type * kw = util_malloc(sizeof * kw, __func__);
+  kw->kw_name = util_alloc_string_copy( kw_name );
+  kw->type    = get_sched_type_from_string( kw_name );
+  
+  switch( kw->type ) {
+  case(WCONHIST):
+    kw->alloc   = sched_kw_wconhist_alloc__;
+    kw->free    = sched_kw_wconhist_free__;
+    kw->fprintf = sched_kw_wconhist_fprintf__;
+    kw->copyc   = sched_kw_wconhist_copyc__;
+    break;
+  case(DATES):
+    kw->alloc   = sched_kw_dates_alloc__;
+    kw->free    = sched_kw_dates_free__;
+    kw->fprintf = sched_kw_dates_fprintf__;
+    kw->copyc   = sched_kw_dates_copyc__;
+    break;
+  case(COMPDAT):
+    kw->alloc   = sched_kw_compdat_alloc__;
+    kw->free    = sched_kw_compdat_free__;
+    kw->fprintf = sched_kw_compdat_fprintf__;
+    kw->copyc   = sched_kw_compdat_copyc__;
+    break;
+  case(WELSPECS):
+    kw->alloc   = sched_kw_welspecs_alloc__;
+    kw->free    = sched_kw_welspecs_free__;
+    kw->fprintf = sched_kw_welspecs_fprintf__;
+    kw->copyc   = sched_kw_welspecs_copyc__;
+    break;
+  case(GRUPTREE):
+    kw->alloc   = sched_kw_gruptree_alloc__;
+    kw->free    = sched_kw_gruptree_free__;
+    kw->fprintf = sched_kw_gruptree_fprintf__;
+    kw->copyc   = sched_kw_gruptree_copyc__;
+    break;
+  case(INCLUDE):
+    kw->alloc   = sched_kw_include_alloc__;
+    kw->free    = sched_kw_include_free__;
+    kw->fprintf = sched_kw_include_fprintf__;
+    kw->copyc   = sched_kw_include_copyc__;
+    break;
+  case(UNTYPED):
+    /** 
+        Observe that the untyped keyword uses a custom allocator
+        function, because it needs to get the keyword length as extra
+        input. 
+    */
+    kw->alloc   = NULL;    
+    kw->free    = sched_kw_untyped_free__;
+    kw->fprintf = sched_kw_untyped_fprintf__;
+    kw->copyc   = sched_kw_untyped_copyc__;
+    break;
+  case(WCONINJ):
+    kw->alloc   = sched_kw_wconinj_alloc__;
+    kw->free    = sched_kw_wconinj_free__;
+    kw->fprintf = sched_kw_wconinj_fprintf__;
+    kw->copyc   = sched_kw_wconinj_copyc__;
+    break;
+  case(WCONINJE):
+    kw->alloc   = sched_kw_wconinje_alloc__;
+    kw->free    = sched_kw_wconinje_free__;
+    kw->fprintf = sched_kw_wconinje_fprintf__;
+    kw->copyc   = sched_kw_wconinje_copyc__;
+    break;
+  case(WCONINJH):
+    kw->alloc   = sched_kw_wconinjh_alloc__;
+    kw->free    = sched_kw_wconinjh_free__;
+    kw->fprintf = sched_kw_wconinjh_fprintf__;
+    kw->copyc   = sched_kw_wconinjh_copyc__;
+    break;
+  case(WCONPROD):
+    kw->alloc   = sched_kw_wconprod_alloc__;
+    kw->free    = sched_kw_wconprod_free__;
+    kw->fprintf = sched_kw_wconprod_fprintf__;
+    kw->copyc   = sched_kw_wconprod_copyc__;
+    break;
+  default:
+    util_abort("%s: unrecognized type:%d \n",__func__ , kw->type );
+  }
+  return kw;
+}
+
+
+
+
 /*
   This tries to check if kw_name is a valid keyword in an ECLIPSE
   schedule file. It is essentially based on checking that there are
@@ -176,72 +268,6 @@ static void sched_kw_name_assert(const char * kw_name , FILE * stream)
 
 
 
-/*
-  This function returns the data_handlers_type for
-  a specific sched_type_enum. If you implement a new
-  type, be sure to add it here.
-
-  Also, if you can add "untyped" handlers if you do not
-  need a fully fledged internalization (i.e. if you only
-  need to check for the type of kw). A full implementation
-  can then easily be added later.
-
-*/
-static data_handlers_type get_data_handlers(sched_type_enum type)
-{
-  data_handlers_type handlers;
-  /*
-    The GET_DATA_HANDLERS macro is implemented in sched_macros.h 
-  */
-  switch(type) {
-  case(GRUPTREE):
-    GET_DATA_HANDLERS(handlers, gruptree);
-    break;
-  case(COMPDAT):
-    GET_DATA_HANDLERS(handlers, compdat);
-    break;
-  case(TSTEP):
-    GET_DATA_HANDLERS(handlers, tstep);
-    break;
-  case(TIME):
-    GET_DATA_HANDLERS(handlers, untyped);
-    break;
-  case(DATES):
-    GET_DATA_HANDLERS(handlers, dates);
-    break;
-  case(WCONHIST):
-    GET_DATA_HANDLERS(handlers, wconhist);
-    break;
-  case(WCONINJH):
-    GET_DATA_HANDLERS(handlers, wconinjh);
-    break;
-  case(WELSPECS):
-    GET_DATA_HANDLERS(handlers, welspecs);
-    break;
-  case(WCONINJ):
-    GET_DATA_HANDLERS(handlers, wconinj);
-    break;
-  case(WCONINJE):
-    GET_DATA_HANDLERS(handlers, wconinje);
-    break;
-  case(WCONPROD):
-    GET_DATA_HANDLERS(handlers, wconprod);
-    break;
-  case(UNTYPED):
-    GET_DATA_HANDLERS(handlers, untyped);
-    break;
-  case(INCLUDE):
-    GET_DATA_HANDLERS(handlers , include);
-    break;
-  default:
-    util_abort("%s: Internal error - aborting.\n",__func__);
-    GET_DATA_HANDLERS(handlers, untyped);
-  }
-  
-  return handlers;
-}
-
-
 
 static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_kw, int * num_steps)
 {
@@ -249,11 +275,9 @@ static sched_kw_type ** sched_kw_tstep_split_alloc(const sched_kw_type * sched_k
   sched_kw_type ** sched_kw_tsteps = util_malloc(*num_steps * sizeof * sched_kw_tsteps, __func__);
   
   for(int i=0; i<*num_steps; i++) {
-    sched_kw_tsteps[i] = util_malloc(sizeof * sched_kw_tsteps[i], __func__);
-    sched_kw_tsteps[i]->type = TSTEP;
-    GET_DATA_HANDLERS(sched_kw_tsteps[i]->data_handlers, tstep);
+    sched_kw_tsteps[i] = sched_kw_alloc_empty( "TSTEP" );
     double step = sched_kw_tstep_iget_step((const sched_kw_tstep_type *) sched_kw->data, i);
-    sched_kw_tsteps[i]->data = (void *) sched_kw_tstep_alloc_from_double(step);
+    sched_kw_tsteps[i]->data = sched_kw_tstep_alloc_from_double(step);
   }
   
   return sched_kw_tsteps;
@@ -267,15 +291,15 @@ static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_k
   sched_kw_type ** sched_kw_dates = util_malloc(*num_steps * sizeof * sched_kw_dates, __func__);
   
   for(int i=0; i<*num_steps; i++) {
-    sched_kw_dates[i] = util_malloc(sizeof * sched_kw_dates[i], __func__);
-    sched_kw_dates[i]->type = DATES;
-    GET_DATA_HANDLERS(sched_kw_dates[i]->data_handlers, dates);
+    sched_kw_dates[i] = sched_kw_alloc_empty( "DATES" );
     time_t date = sched_kw_dates_iget_time_t((const sched_kw_dates_type *) sched_kw->data, i);
-    sched_kw_dates[i]->data = (void *) sched_kw_dates_alloc_from_time_t(date);
+    sched_kw_dates[i]->data = sched_kw_dates_alloc_from_time_t(date);
   }
   return sched_kw_dates;
 }
 /*****************************************************************/
+
+
 
 
 
@@ -289,65 +313,15 @@ sched_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 }
 
 
-
-/*
-  This function will try to allocate a sched_kw from the schedule
-  file  pointed by stream. The bool pointed by *at_eos will be
-  set to true and NULL returned under the following conditions: 
-    1. True EOF is reached.
-    2. The keyword END is reached, terminating a valid schedule
-       section.
-
-
-  The function will abort under the following circumstances:
-    1. If a valid kw is started, but EOF is reached prematurely.
-
-
-
-  *************************************************************
-  ** Note that scheduling data after keyword END is ignored! **
-  *************************************************************
-
-
-*/
-sched_kw_type * sched_kw_fscanf_alloc(FILE * stream, bool * at_eos)
-{
-  char * kw_name = NULL;
-
-  /* We need to assume that we are not and the end of the schedule. */
-  *at_eos = false; 
-
-  while(kw_name == NULL && !*at_eos)
-  {
-    kw_name = sched_util_alloc_line(stream, at_eos);
-  }
-  
-  if(*at_eos)
-  {
-    return NULL;
-  }
-
-  sched_kw_name_assert(kw_name , stream);
-
-  if(strcmp(kw_name,"END") == 0)
-  {
-    free(kw_name);
-    *at_eos = true;
-    return NULL;
-  }
-
-  {
-    sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
-    sched_kw->type           = get_sched_type_from_string(kw_name);
-    sched_kw->data_handlers  = get_data_handlers(sched_kw->type);
-    sched_kw->restart_nr     = -1;
-    sched_kw->data           = sched_kw->data_handlers.fscanf_alloc(stream, at_eos, kw_name); 
-
-    free(kw_name);
-    return sched_kw;
-  } 
+static void sched_kw_alloc_data( sched_kw_type * kw , const stringlist_type * token_list , int * token_index , hash_type * fixed_length_table) {
+  if (kw->type == UNTYPED) {
+    int rec_len = -1;
+    if (hash_has_key( fixed_length_table , kw->kw_name ))
+      rec_len = hash_get_int( fixed_length_table , kw->kw_name );
+    kw->data = sched_kw_untyped_alloc( token_list , token_index , rec_len );
+  } else
+    kw->data = kw->alloc( token_list , token_index );
 }
-
 
 
 sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * token_index, hash_type * fixed_length_table) {
@@ -360,14 +334,11 @@ sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * t
     if (strcmp(kw_name,"END") == 0)
       return NULL;
     else {
-      sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
-      sched_kw->type           = get_sched_type_from_string(kw_name);
-      sched_kw->data_handlers  = get_data_handlers(sched_kw->type);
+      sched_kw_type * sched_kw = sched_kw_alloc_empty( kw_name );
       sched_kw->restart_nr     = -1;
       
       sched_util_skip_newline( token_list , token_index );
-      if (
-      sched_kw->data           = sched_kw->data_handlers.token_alloc(token_list , token_index);
+      sched_kw_alloc_data( sched_kw , token_list , token_index , fixed_length_table);
       
       return sched_kw;
     }
@@ -385,7 +356,8 @@ void sched_kw_set_restart_nr( sched_kw_type * kw , int restart_nr) {
 
 void sched_kw_free(sched_kw_type * sched_kw)
 {
-  sched_kw->data_handlers.free(sched_kw->data);
+  sched_kw->free(sched_kw->data);
+  free(sched_kw->kw_name);
   free(sched_kw);
 }
 
@@ -404,37 +376,11 @@ void sched_kw_free__(void * sched_kw_void)
 */
 void sched_kw_fprintf(const sched_kw_type * sched_kw, FILE * stream)
 {
-  sched_kw->data_handlers.fprintf(sched_kw->data, stream);
+  sched_kw->fprintf(sched_kw->data, stream);
 }
 
 
 
-/*
-  This stores the kw to stream in a format specified
-  by each kw.
-*/
-void sched_kw_fwrite(sched_kw_type * sched_kw, FILE * stream)
-{
-  util_fwrite(&sched_kw->type, sizeof sched_kw->type, 1, stream, __func__);
-  sched_kw->data_handlers.fwrite(sched_kw->data, stream);
-}
-
-
-
-/*
-  This reads the kw from stream. It is assumed that the
-  kw has previously been written using sched_kw_fwrite.
-*/
-sched_kw_type * sched_kw_fread_alloc(FILE * stream, bool * at_eof)
-{
-  sched_kw_type * sched_kw = util_malloc(sizeof * sched_kw, __func__);
-  util_fread(&sched_kw->type, sizeof sched_kw->type, 1, stream, __func__);
-
-  sched_kw->data_handlers = get_data_handlers(sched_kw->type);
-  sched_kw->data = sched_kw->data_handlers.fread_alloc(stream);
-
-  return sched_kw;
-}
 
 
 

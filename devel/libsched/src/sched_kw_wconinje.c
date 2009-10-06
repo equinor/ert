@@ -204,52 +204,6 @@ static void wconinje_well_free__(void * well)
 }
 
 
-static wconinje_well_type * wconinje_well_alloc_from_string(char ** token_list)
-{
-  wconinje_well_type * well = wconinje_well_alloc_empty();
-
-  {
-    for(int i=0; i< WCONINJE_NUM_KW; i++)
-    {
-      if(token_list[i] == NULL)
-        well->def[i] = true;
-      else
-        well->def[i] = false;
-    }
-  }
-
-  well->name  = util_alloc_string_copy(token_list[0]);
-
-  if(!well->def[1])
-    well->injector_type = get_type_from_string(token_list[1]);
-
-  if(!well->def[2])
-    well->status = get_status_from_string(token_list[2]);
-
-  if(!well->def[3])
-    well->control = get_cmode_from_string(token_list[3]); 
-
-  if(!well->def[4])
-    well->surface_flow = sched_util_atof(token_list[4]); 
-
-  if(!well->def[5])
-    well->reservoir_flow = sched_util_atof(token_list[5]); 
-
-  if(!well->def[6])
-    well->BHP_target = sched_util_atof(token_list[6]);
-
-  if(!well->def[7])
-    well->THP_target = sched_util_atof(token_list[7]);
-  
-  if(!well->def[8])
-    well->vfp_table_nr = sched_util_atoi(token_list[8]);
-  
-  if(!well->def[9])
-    well->vapoil_conc = sched_util_atof(token_list[9]);
-
-  return well;
-}
-
 
 
 
@@ -295,7 +249,7 @@ static void wconinje_well_fprintf(const wconinje_well_type * well, FILE * stream
 
 
 
-static sched_kw_wconinje_type * sched_kw_wconinje_alloc() {
+static sched_kw_wconinje_type * sched_kw_wconinje_alloc_empty() {
   sched_kw_wconinje_type * kw = util_malloc(sizeof * kw, __func__);
   kw->wells     = vector_alloc_new();
   kw->__type_id = SCHED_KW_WCONINJE_ID;
@@ -327,21 +281,11 @@ static void sched_kw_wconinje_add_well( sched_kw_wconinje_type * kw , const wcon
 }
 
 
-static void sched_kw_wconinje_add_line(sched_kw_wconinje_type * kw , const char * line , FILE * stream) {
-  int tokens;
-  char ** token_list;
-  wconinje_well_type * well;
-
-  sched_util_parse_line(line , &tokens , &token_list , WCONINJE_NUM_KW , NULL);
-  well = wconinje_well_alloc_from_string( token_list );
-  sched_kw_wconinje_add_well( kw , well );
-  util_free_stringlist( token_list , tokens );
-}
 
 
 
-sched_kw_wconinje_type * sched_kw_wconinje_token_alloc(const stringlist_type * tokens , int * token_index ) {
-  sched_kw_wconinje_type * kw = sched_kw_wconinje_alloc();
+sched_kw_wconinje_type * sched_kw_wconinje_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_wconinje_type * kw = sched_kw_wconinje_alloc_empty();
   int eokw                    = false;
   do {
     stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , WCONINJE_NUM_KW , token_index );
@@ -356,43 +300,6 @@ sched_kw_wconinje_type * sched_kw_wconinje_token_alloc(const stringlist_type * t
   return kw;  
 }
 
-
-sched_kw_wconinje_type * sched_kw_wconinje_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)
-{
-  bool   at_eokw = false;
-  char * line;
-  sched_kw_wconinje_type * kw = sched_kw_wconinje_alloc(true);
-
-  while(!*at_eof && !at_eokw)
-  {
-    line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
-    if(at_eokw)
-    {
-      break;
-    }
-    else if(*at_eof)
-    {
-      util_abort("%s: Reached EOF before WCONINJE was finished - aborting.\n", __func__);
-    }
-    else
-    {
-      sched_kw_wconinje_add_line(kw, line , stream);
-      free(line);
-    }
-  }
-  return kw;
-}
-
-
-void sched_kw_wconinje_fwrite(const sched_kw_wconinje_type *kw , FILE *stream) {
-  util_abort("%s: not implemented \n",__func__);
-}
-
-
-sched_kw_wconinje_type *  sched_kw_wconinje_fread_alloc(FILE *stream) {
-  util_abort("%s: not implemented \n",__func__);
-  return NULL;
-}
 
 
 void sched_kw_wconinje_fprintf(const sched_kw_wconinje_type * kw , FILE * stream) {
@@ -474,6 +381,13 @@ bool sched_kw_wconinje_has_well( const sched_kw_wconinje_type * kw , const char 
   else
     return true;
 }
+
+
+sched_kw_wconinje_type * sched_kw_wconinje_copyc(const sched_kw_wconinje_type * kw) {
+  util_abort("%s: not implemented ... \n",__func__);
+  return NULL;
+}
+
 
 
 /*****************************************************************/

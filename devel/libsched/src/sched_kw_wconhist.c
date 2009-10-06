@@ -187,88 +187,6 @@ static void wconhist_well_fprintf(const wconhist_well_type * well, FILE * stream
 
 
 
-static void wconhist_well_fwrite(const wconhist_well_type * well, FILE * stream)
-{
-  util_fwrite_string(well->name, stream);
-
-  util_fwrite(&well->status,   sizeof well->status   , 1, stream, __func__);
-  util_fwrite(&well->cmode,    sizeof well->cmode    , 1, stream, __func__);
-  util_fwrite(&well->orat,     sizeof well->orat     , 1, stream, __func__);
-  util_fwrite(&well->wrat,     sizeof well->wrat     , 1, stream, __func__);
-  util_fwrite(&well->grat,     sizeof well->grat     , 1, stream, __func__);
-  util_fwrite(&well->vfptable, sizeof well->vfptable , 1, stream, __func__);
-  util_fwrite(&well->alift,    sizeof well->alift    , 1, stream, __func__);
-  util_fwrite(&well->thp,      sizeof well->thp      , 1, stream, __func__);
-  util_fwrite(&well->bhp,      sizeof well->bhp      , 1, stream, __func__);
-  util_fwrite(&well->wgrat,    sizeof well->wgrat    , 1, stream, __func__);
-
-  util_fwrite(&well->def,      sizeof well->def[0]   , WCONHIST_NUM_KW, stream, __func__);
-}
-
-
-
-static wconhist_well_type * wconhist_well_fread_alloc(FILE * stream)
-{
-  wconhist_well_type * well = wconhist_well_alloc_empty();
-
-  well->name = util_fread_alloc_string(stream);
-
-  util_fread(&well->status,   sizeof well->status   , 1, stream, __func__);
-  util_fread(&well->cmode,    sizeof well->cmode    , 1, stream, __func__);
-  util_fread(&well->orat,     sizeof well->orat     , 1, stream, __func__);
-  util_fread(&well->wrat,     sizeof well->wrat     , 1, stream, __func__);
-  util_fread(&well->grat,     sizeof well->grat     , 1, stream, __func__);
-  util_fread(&well->vfptable, sizeof well->vfptable , 1, stream, __func__);
-  util_fread(&well->alift,    sizeof well->alift    , 1, stream, __func__);
-  util_fread(&well->thp,      sizeof well->thp      , 1, stream, __func__);
-  util_fread(&well->bhp,      sizeof well->bhp      , 1, stream, __func__);
-  util_fread(&well->wgrat,    sizeof well->wgrat    , 1, stream, __func__);
-
-  util_fread(&well->def,      sizeof well->def[0]   , WCONHIST_NUM_KW, stream, __func__);
-
-  return well;
-}
-
-
-
-static wconhist_well_type * wconhist_well_alloc_from_string(char ** token_list)
-{
-  wconhist_well_type * well = wconhist_well_alloc_empty();
-
-  {
-    for(int i=0; i<WCONHIST_NUM_KW; i++)
-    {
-      if(token_list[i] == NULL)
-        well->def[i] = true;
-      else
-        well->def[i] = false;
-    }
-  }
-
-  well->name  = util_alloc_string_copy(token_list[0]);
-  if(!well->def[1])
-    well->status = get_st_flag_from_string(token_list[1]);
-  if(!well->def[2])
-    well->cmode = get_cm_flag_from_string(token_list[2]);
-  if(!well->def[3])
-    well->orat = sched_util_atof(token_list[3]); 
-  if(!well->def[4])
-    well->wrat = sched_util_atof(token_list[4]); 
-  if(!well->def[5])
-    well->grat = sched_util_atof(token_list[5]); 
-  if(!well->def[6])
-    well->vfptable = sched_util_atoi(token_list[6]);
-  if(!well->def[7])
-    well->alift = sched_util_atof(token_list[7]);
-  if(!well->def[8])
-    well->thp = sched_util_atof(token_list[8]);
-  if(!well->def[9])
-    well->bhp = sched_util_atof(token_list[9]);
-  if(!well->def[10])
-    well->wgrat = sched_util_atof(token_list[10]);
-
-  return well;
-}
 
 
 
@@ -356,23 +274,8 @@ static void sched_kw_wconhist_add_well( sched_kw_wconhist_type * kw , wconhist_w
 
 
 
-static void sched_kw_wconhist_add_line(sched_kw_wconhist_type * kw, const char *line)
-{
-  int tokens;
-  char ** token_list;
-  wconhist_well_type * well;
 
-  sched_util_parse_line(line, &tokens, &token_list, WCONHIST_NUM_KW, NULL);
-
-  well = wconhist_well_alloc_from_string(token_list);
-  sched_kw_wconhist_add_well( kw , well );
-  util_free_stringlist(token_list, tokens);
-}
-
-
-
-
-static sched_kw_wconhist_type * sched_kw_wconhist_alloc()
+static sched_kw_wconhist_type * sched_kw_wconhist_alloc_empty()
 {
   sched_kw_wconhist_type * kw = util_malloc(sizeof * kw, __func__);
   UTIL_TYPE_ID_INIT( kw , SCHED_KW_WCONHIST_ID );
@@ -398,8 +301,8 @@ sched_kw_wconhist_type * sched_kw_wconhist_safe_cast( void * arg ) {
 
 
 
-sched_kw_wconhist_type * sched_kw_wconhist_token_alloc(const stringlist_type * tokens , int * token_index ) {
-  sched_kw_wconhist_type * kw = sched_kw_wconhist_alloc();
+sched_kw_wconhist_type * sched_kw_wconhist_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_wconhist_type * kw = sched_kw_wconhist_alloc_empty();
   int eokw                    = false;
   do {
     stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , WCONHIST_NUM_KW , token_index );
@@ -414,36 +317,6 @@ sched_kw_wconhist_type * sched_kw_wconhist_token_alloc(const stringlist_type * t
   } while (!eokw);
   return kw;
 }
-
-
-
-
-sched_kw_wconhist_type * sched_kw_wconhist_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)
-{
-  bool   at_eokw = false;
-  char * line;
-  sched_kw_wconhist_type * kw = sched_kw_wconhist_alloc();
-
-  while(!*at_eof && !at_eokw)
-  {
-    line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
-    if(at_eokw)
-    {
-      break;
-    }
-    else if(*at_eof)
-    {
-      util_abort("%s: Reached EOF before WCONHIST was finished - aborting.\n", __func__);
-    }
-    else
-    {
-      sched_kw_wconhist_add_line(kw, line);
-      free(line);
-    }
-  }
-  return kw;
-}
-
 
 
 void sched_kw_wconhist_free(sched_kw_wconhist_type * kw)
@@ -468,36 +341,6 @@ void sched_kw_wconhist_fprintf(const sched_kw_wconhist_type * kw, FILE * stream)
 }
 
 
-
-void sched_kw_wconhist_fwrite(const sched_kw_wconhist_type * kw, FILE * stream)
-{
-  int size = vector_get_size(kw->wells);
-  util_fwrite(&size, sizeof size, 1, stream, __func__);
-  for(int i=0; i<size; i++)
-  {
-    const wconhist_well_type * well = vector_iget_const(kw->wells, i);
-    wconhist_well_fwrite(well, stream);
-  }
-}
-
-
-sched_kw_wconhist_type * sched_kw_wconhist_fread_alloc(FILE * stream)
-{
-  int size;
-  sched_kw_wconhist_type * kw = sched_kw_wconhist_alloc();
-  util_fread(&size, sizeof size, 1, stream, __func__);
-
-  for(int i=0; i<size; i++)
-  {
-    wconhist_well_type * well = wconhist_well_fread_alloc(stream);
-    vector_append_owned_ref(kw->wells, well, wconhist_well_free__);
-  }
-
-  return kw;
-}
-
-
-
 /***********************************************************************/
 
 
@@ -517,6 +360,13 @@ hash_type * sched_kw_wconhist_alloc_well_obs_hash(const sched_kw_wconhist_type *
 
   return well_hash;
 }
+
+sched_kw_wconhist_type * sched_kw_wconhist_copyc(const sched_kw_wconhist_type * kw) {
+  util_abort("%s: not implemented ... \n",__func__);
+  return NULL;
+}
+
+
 
 /***********************************************************************/
 /* Functions exported for the sched_file_update api.                   */
@@ -539,8 +389,10 @@ static wconhist_well_type * sched_kw_wconhist_get_well( const sched_kw_wconhist_
 }
 
 
+/*****************************************************************/
+/* ORAT functions                                                */
 
-double sched_kw_wconhist_get_orat( const sched_kw_wconhist_type * kw , const char * well_name) {
+double sched_kw_wconhist_get_orat( sched_kw_wconhist_type * kw , const char * well_name) {
   wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
   if (well != NULL)
     return well->orat;
@@ -548,17 +400,28 @@ double sched_kw_wconhist_get_orat( const sched_kw_wconhist_type * kw , const cha
     return -1;
 }
 
-void sched_kw_wconhist_scale_orat( const sched_kw_wconhist_type * kw , const char * well_name, double factor) {
+void sched_kw_wconhist_scale_orat( sched_kw_wconhist_type * kw , const char * well_name, double factor) {
   wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
   if (well != NULL)
     well->orat *= factor;
 }
 
-void sched_kw_wconhist_set_surface_flow( const sched_kw_wconhist_type * kw , const char * well_name , double orat) {
+void sched_kw_wconhist_shift_orat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL) {
+    well->orat += shift_value;
+    if (well->orat < 0)
+      well->orat = 0;
+  }
+}
+
+void sched_kw_wconhist_set_orat( sched_kw_wconhist_type * kw , const char * well_name , double orat) {
   wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
   if (well != NULL)
     well->orat = orat;
 }
+
+/*****************************************************************/
 
 
 bool sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char * well_name) {
@@ -568,6 +431,7 @@ bool sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char 
   else
     return true;
 }
+
 
 
 

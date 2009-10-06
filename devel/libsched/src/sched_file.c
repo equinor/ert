@@ -52,7 +52,7 @@ struct sched_file_struct {
   UTIL_TYPE_ID_DECLARATION;
   hash_type       * fixed_length_table;    /* A hash table of keywords with a fixed length, i.e. not '/' terminated. */
   vector_type     * kw_list;
-  vector_type     * kw_list_by_type;
+  vector_type     * kw_list_by_type;        
   vector_type     * blocks;                /* A list of chronologically sorted sched_block_type's. */
   stringlist_type * files;                 /* The name of the files which have been parsed to generate this sched_file instance. */
   time_t            start_time;            /* The start of the simulation. */
@@ -118,42 +118,6 @@ static sched_kw_type * sched_block_iget_kw(sched_block_type * block, int i)
 }
 
 
-
-static void sched_block_fwrite(sched_block_type * block, FILE * stream)
-{
-  int len = vector_get_size(block->kw_list);
-  util_fwrite(&len, sizeof len, 1, stream, __func__);
-
-  for(int i=0; i<len; i++)
-  {
-    sched_kw_type * sched_kw = sched_block_iget_kw(block, i);
-    sched_kw_fwrite(sched_kw, stream);
-  }
-
-  util_fwrite(&block->block_start_time, sizeof block->block_start_time, 1, stream, __func__);
-  util_fwrite(&block->block_end_time  , sizeof block->block_end_time,   1, stream, __func__);
-}
-
-
-
-static sched_block_type * sched_block_fread_alloc(FILE * stream)
-{
-  sched_block_type * block = sched_block_alloc_empty();
-  int len;
-  bool at_eof = false;
-
-  util_fread(&len, sizeof len, 1, stream, __func__);
-
-  for(int i=0; i<len; i++)
-  {
-    sched_kw_type * sched_kw = sched_kw_fread_alloc(stream, &at_eof);
-    sched_block_add_kw(block, sched_kw);
-  }
- 
-  util_fread(&block->block_start_time, sizeof block->block_start_time, 1, stream, __func__);
-  util_fread(&block->block_end_time,   sizeof block->block_end_time  , 1, stream, __func__);
-  return block;
-}
 
 
 
@@ -248,7 +212,7 @@ static void sched_file_add_kw( sched_file_type * sched_file , const sched_kw_typ
 
 static void sched_file_update_index( sched_file_type * sched_file ) {
   int ikw;
-
+  
 
   /* By type index */
   {
@@ -259,7 +223,7 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
       const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
       sched_type_enum type     = sched_kw_get_type( kw );
       {
-        vector_type * tmp        = vector_iget( sched_file->kw_list_by_type , type );
+        vector_type * tmp      = vector_iget( sched_file->kw_list_by_type , type );
         
         if (tmp == NULL) {
           tmp = vector_alloc_new();
@@ -370,6 +334,23 @@ sched_file_type * sched_file_alloc(time_t start_time)
   sched_file->start_time         = start_time;
   sched_file->fixed_length_table = hash_alloc();
   sched_file_init_fixed_length( sched_file );
+  {
+    char * fixed_length_file = getenv("SCHEDULE_FIXED_LENGTH");
+    if ((fixed_length_file != NULL) && (util_file_readable( fixed_length_file ))) {
+      FILE * stream = util_fopen(fixed_length_file , "r");
+      char kw[32];
+      int  len;
+      bool OK = true;
+
+      do {
+        if (fscanf(stream , "%s %d" , kw , &len) == 2)
+          sched_file_add_fixed_length_kw( sched_file , kw , len);
+        else
+          OK = false;
+      } while (OK);
+      fclose( stream);
+    }
+  }
   return sched_file;
 }
 
@@ -403,7 +384,6 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
      comments.
   */
   stringlist_type  * token_list;
-  bool token_alloc   = true;
   char * tmp_base    = util_alloc_sprintf("enkf-schedule:%s" , filename);
   char * tmp_file    = util_alloc_tmp_file("/tmp" , tmp_base , true);
   {
@@ -428,7 +408,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
   }
   
   
-  if (token_alloc) {
+  {
     sched_kw_type    * current_kw;
     int token_index = 0;
     do {
@@ -450,36 +430,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
       }
     } while ( current_kw != NULL );
   }
-  
-  else
 
-  {
-    bool at_eof      = false;
-    sched_kw_type    * current_kw;
-    
-    FILE * stream = util_fopen(tmp_file , "r");
-    stringlist_append_copy( sched_file->files , filename);
-    current_kw     = sched_kw_fscanf_alloc(stream, &at_eof);
-    while(!at_eof) {
-      sched_type_enum type = sched_kw_get_type(current_kw);
-      
-      if(type == DATES || type == TSTEP || type == TIME) {
-        int i , num_steps;
-        sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
-        sched_kw_free(current_kw);
-
-        for(i=0; i<num_steps; i++) 
-          sched_file_add_kw( sched_file , sched_kw_dates[i]);
-
-        free(sched_kw_dates);   
-      } else
-        sched_file_add_kw( sched_file , current_kw);
-      
-      current_kw = sched_kw_fscanf_alloc(stream, &at_eof);
-    } 
-    
-    fclose(stream);
-  }
   sched_file_build_block_dates(sched_file);
   sched_file_update_index( sched_file );
   
@@ -545,42 +496,6 @@ void sched_file_fprintf(const sched_file_type * sched_file, const char * file)
 
 
 
-void sched_file_fwrite(const sched_file_type * sched_file, FILE * stream)
-{
-  int len = sched_file_get_num_restart_files(sched_file);
-  
-  util_fwrite(&sched_file->start_time , sizeof sched_file->start_time , 1 , stream , __func__);
-  util_fwrite(&len, sizeof len, 1, stream, __func__);
-
-  for(int i=0; i<len; i++)
-  {
-    sched_block_type * block = sched_file_iget_block_ref(sched_file, i);
-    sched_block_fwrite(block, stream);
-  }
-}
-
-
-
-sched_file_type * sched_file_fread_alloc(FILE * stream)
-{
-
-  time_t start_time;
-  util_fwrite(&start_time , sizeof start_time , 1 , stream , __func__);
-  {
-    int len;
-    
-    sched_file_type * sched_file = sched_file_alloc( start_time );
-    util_fread(&len, sizeof len, 1, stream, __func__);
-    
-    for(int i=0; i<len; i++)
-      {
-	sched_block_type * block = sched_block_fread_alloc(stream);
-	sched_file_add_block(sched_file, block);
-      }
-    
-    return sched_file;
-  }
-}
 
 
 /*
@@ -779,6 +694,7 @@ void sched_file_update_blocks(sched_file_type * sched_file,
     sched_file_update_block( sched_block , restart_nr , kw_type , callback , callback_arg);
   }
 }
+
 
 
 /** 

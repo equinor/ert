@@ -11,8 +11,8 @@ extern "C" {
 
 typedef struct sched_kw_untyped_struct sched_kw_untyped_type;
 
-sched_kw_untyped_type * sched_kw_untyped_alloc(const char * );
-sched_kw_untyped_type * sched_kw_untyped_fscanf_alloc(FILE * , bool *, const char *);
+sched_kw_untyped_type * sched_kw_untyped_alloc(const stringlist_type * tokens , int * token_index , int rec_len);
+sched_kw_untyped_type * sched_kw_untyped_alloc_empty(const char * , int rec_len);
 void                    sched_kw_untyped_fprintf(const sched_kw_untyped_type *, FILE *);
 void                    sched_kw_untyped_free(sched_kw_untyped_type * );
 sched_kw_untyped_type * sched_kw_untyped_fread_alloc(FILE *);
@@ -21,11 +21,12 @@ void                    sched_kw_untyped_add_line(sched_kw_untyped_type *  , con
 void                    sched_kw_untyped_add_tokens( sched_kw_untyped_type * kw , const stringlist_type * tokens);
 char **                 sched_kw_untyped_iget_entries_alloc(const sched_kw_untyped_type *, int, int *);
 
-
 /*******************************************************************/
 
+KW_FREE_HEADER(untyped)         
+KW_FPRINTF_HEADER(untyped)   
+KW_COPYC_HEADER(untyped)
 
-KW_HEADER(untyped)
 #ifdef __cplusplus
 }
 #endif

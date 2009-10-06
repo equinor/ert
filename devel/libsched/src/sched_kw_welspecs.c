@@ -314,58 +314,6 @@ static welspec_type * welspec_alloc_empty()
 
 
 
-static void welspec_fwrite(const welspec_type * ws, FILE * stream)
-{
-  util_fwrite_string(ws->name     , stream);
-  util_fwrite_string(ws->group    , stream);
-  util_fwrite_string(ws->fs_kw1   , stream);
-  util_fwrite_string(ws->fs_kw2   , stream);
-  util_fwrite_string(ws->ecl300_kw, stream);
-
-  util_fwrite(&ws->hh_i        , sizeof ws->hh_i        , 1 , stream, __func__);
-  util_fwrite(&ws->hh_j        , sizeof ws->hh_j        , 1 , stream, __func__);
-  util_fwrite(&ws->md          , sizeof ws->md          , 1 , stream, __func__);
-  util_fwrite(&ws->phase       , sizeof ws->phase       , 1 , stream, __func__);
-  util_fwrite(&ws->drain_rad   , sizeof ws->drain_rad   , 1 , stream, __func__);
-  util_fwrite(&ws->inflow_eq   , sizeof ws->inflow_eq   , 1 , stream, __func__);
-  util_fwrite(&ws->auto_shut   , sizeof ws->auto_shut   , 1 , stream, __func__);
-  util_fwrite(&ws->crossflow   , sizeof ws->crossflow   , 1 , stream, __func__);
-  util_fwrite(&ws->pvt_region  , sizeof ws->pvt_region  , 1 , stream, __func__);
-  util_fwrite(&ws->hdstat_head , sizeof ws->hdstat_head , 1 , stream, __func__);
-  util_fwrite(&ws->fip_region  , sizeof ws->fip_region  , 1 , stream, __func__);
-
-  util_fwrite(&ws->def         , sizeof ws->def[0], WELSPECS_NUM_KW, stream, __func__);
-}; 
-
-
-
-static welspec_type * welspec_fread_alloc(FILE * stream)
-{
-  welspec_type * ws = welspec_alloc_empty();  
-
-  ws->name      = util_fread_alloc_string(stream);
-  ws->group     = util_fread_alloc_string(stream);
-  ws->fs_kw1    = util_fread_alloc_string(stream);
-  ws->fs_kw2    = util_fread_alloc_string(stream);
-  ws->ecl300_kw = util_fread_alloc_string(stream);
-
-  util_fread(&ws->hh_i        , sizeof ws->hh_i        , 1 , stream, __func__);
-  util_fread(&ws->hh_j        , sizeof ws->hh_j        , 1 , stream, __func__);
-  util_fread(&ws->md          , sizeof ws->md          , 1 , stream, __func__);
-  util_fread(&ws->phase       , sizeof ws->phase       , 1 , stream, __func__);
-  util_fread(&ws->drain_rad   , sizeof ws->drain_rad   , 1 , stream, __func__);
-  util_fread(&ws->inflow_eq   , sizeof ws->inflow_eq   , 1 , stream, __func__);
-  util_fread(&ws->auto_shut   , sizeof ws->auto_shut   , 1 , stream, __func__);
-  util_fread(&ws->crossflow   , sizeof ws->crossflow   , 1 , stream, __func__);
-  util_fread(&ws->pvt_region  , sizeof ws->pvt_region  , 1 , stream, __func__);
-  util_fread(&ws->hdstat_head , sizeof ws->hdstat_head , 1 , stream, __func__);
-  util_fread(&ws->fip_region  , sizeof ws->fip_region  , 1 , stream, __func__);
-
-  util_fread(&ws->def         , sizeof ws->def[0]         , WELSPECS_NUM_KW, stream, __func__);
-
-  return ws;
-};
-
 
 
 
@@ -387,71 +335,6 @@ static void welspec_free__(void * __ws)
   welspec_free(ws);
 };
 
-
-
-static welspec_type * welspec_alloc_from_string(char ** token_list)
-{
-  welspec_type * ws = welspec_alloc_empty();
-
-  {
-    int i;
-    for(i=0; i<WELSPECS_NUM_KW; i++)
-    {
-      if(token_list[i] == NULL)
-        ws->def[i] = true;
-      else
-        ws->def[i] = false;
-    }
-  }
-
-  ws->name = util_alloc_string_copy(token_list[0]);
-  
-  if(!ws->def[1])
-    ws->group = util_alloc_string_copy(token_list[1]);
-  else
-    ws->group = util_alloc_string_copy("FIELD");
-
-  ws->hh_i = sched_util_atoi(token_list[2]);
-  ws->hh_j = sched_util_atoi(token_list[3]);
-
-  if(!ws->def[4])
-    ws->md = sched_util_atof(token_list[4]);
-
-  if(!ws->def[5])
-    ws->phase = get_phase_from_string(token_list[5]);
-
-  if(!ws->def[6])
-    ws->drain_rad = sched_util_atof(token_list[6]);
-
-  if(!ws->def[7])
-    ws->inflow_eq = get_inflow_eq_from_string(token_list[7]);
-
-  if(!ws->def[8])
-    ws->auto_shut = get_auto_shut_from_string(token_list[8]);
-
-  if(!ws->def[9])
-    ws->crossflow = get_crossflow_from_string(token_list[9]);
-
-  if(!ws->def[10])
-    ws->pvt_region = sched_util_atoi(token_list[10]);
-
-  if(!ws->def[11])
-    ws->hdstat_head = get_hdstat_head_from_string(token_list[11]);
-
-  if(!ws->def[12])
-    ws->fip_region = sched_util_atoi(token_list[12]);
-
-  if(!ws->def[13])
-    ws->fs_kw1 = util_alloc_string_copy(token_list[13]);
-
-  if(!ws->def[14])
-    ws->fs_kw2 = util_alloc_string_copy(token_list[14]);
-
-  if(!ws->def[15])
-    ws->ecl300_kw = util_alloc_string_copy(token_list[15]);
-
-  return ws;
-};
 
 
 
@@ -490,7 +373,7 @@ static welspec_type * welspec_alloc_from_tokens(const stringlist_type * line_tok
 
 
 
-static sched_kw_welspecs_type * sched_kw_welspecs_alloc()
+static sched_kw_welspecs_type * sched_kw_welspecs_alloc_empty()
 {
   sched_kw_welspecs_type * kw = util_malloc(sizeof * kw,__func__);
   kw->welspec_list = vector_alloc_new();
@@ -503,27 +386,11 @@ static void sched_kw_welspecs_add_well( sched_kw_welspecs_type * kw , const wels
 }
 
 
-
-static void sched_kw_welspecs_add_line(sched_kw_welspecs_type * kw, const char * line)
-{
-  int tokens;
-  char **token_list;
-
-  sched_util_parse_line(line, &tokens, &token_list, WELSPECS_NUM_KW, NULL);
-  {
-    welspec_type * ws = welspec_alloc_from_string(token_list);
-    sched_kw_welspecs_add_well( kw , ws );
-  }
-  util_free_stringlist(token_list , tokens);
-};
-
-
-
 /*****************************************************************************/
 
 
-sched_kw_welspecs_type * sched_kw_welspecs_token_alloc(const stringlist_type * tokens , int * token_index ) {
-  sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc();
+sched_kw_welspecs_type * sched_kw_welspecs_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc_empty();
   int eokw                    = false;
   do {
     stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , WELSPECS_NUM_KW , token_index );
@@ -539,36 +406,6 @@ sched_kw_welspecs_type * sched_kw_welspecs_token_alloc(const stringlist_type * t
   return kw;
 }
 
-
-
-
-sched_kw_welspecs_type * sched_kw_welspecs_fscanf_alloc(FILE *stream, bool * at_eof, const char * kw_name)
-{
-  bool   at_eokw = false;
-  char * line;
-  sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc();
-
-  while(!*at_eof && !at_eokw)
-  {
-    line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
-    if(at_eokw)
-    {
-      break;
-    }
-    else if(*at_eof)
-    {
-      util_abort("%s: Reached EOF before WELSPECS was finished - aborting.\n", __func__);
-    }
-    else
-    {
-      sched_kw_welspecs_add_line(kw, line);
-      free(line);
-    }
-  }
-
-  return kw;
-
-}
 
 
 
@@ -593,44 +430,6 @@ void sched_kw_welspecs_fprintf(const sched_kw_welspecs_type * kw, FILE * stream)
   
 
 
-void sched_kw_welspecs_fwrite(const sched_kw_welspecs_type * kw, FILE * stream)
-{
-  //int welspec_lines = list_get_size(kw->welspec_list);
-  //util_fwrite(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
-  //{
-  //  list_node_type * ws_node = list_get_head(kw->welspec_list);
-  //  while(ws_node != NULL)
-  //  {
-  //    welspec_type * ws = list_node_value_ptr(ws_node);
-  //    welspec_fwrite(ws, stream);
-  //    ws_node = list_node_get_next(ws_node);
-  //  }
-  //}
-};
-
-
-
-sched_kw_welspecs_type * sched_kw_welspecs_fread_alloc(FILE * stream)
-{
-  //int i, welspec_lines;
-  //sched_kw_welspecs_type * kw = sched_kw_welspecs_alloc();
-  //
-  //util_fread(&welspec_lines, sizeof welspec_lines, 1, stream, __func__);
-  //
-  //for(i=0; i< welspec_lines; i++)
-  //{
-  //  welspec_type * ws = welspec_fread_alloc(stream);
-  //  list_append_list_owned_ref(kw->welspec_list, ws, welspec_free__);
-  //}
-  //
-  //return kw;
-  return NULL;
-};
-
-
-
-
-
 void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw, char *** __children, char *** __parents, int * num_pairs)
 {
   int num_wells    = vector_get_size(kw->welspec_list);
@@ -640,7 +439,6 @@ void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw
   for(int well_nr = 0; well_nr < num_wells; well_nr++)
   {
     const welspec_type * well = vector_iget_const(kw->welspec_list , well_nr);
-
     children[well_nr] = util_alloc_string_copy(well->name);
     if(!well->def[1])
       parents[well_nr] = util_alloc_string_copy(well->group);
@@ -651,6 +449,12 @@ void sched_kw_welspecs_alloc_child_parent_list(const sched_kw_welspecs_type * kw
   *num_pairs = num_wells;
   *__children = children;
   *__parents  = parents;
+}
+
+
+sched_kw_welspecs_type * sched_kw_welspecs_copyc(const sched_kw_welspecs_type * kw) {
+  util_abort("%s: not implemented ... \n",__func__);
+  return NULL;
 }
 
 

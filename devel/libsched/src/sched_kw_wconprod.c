@@ -31,12 +31,12 @@ struct sched_kw_wconprod_struct {
 
 
 
-static sched_kw_wconprod_type * sched_kw_wconprod_alloc(bool alloc_untyped)
+static sched_kw_wconprod_type * sched_kw_wconprod_alloc_empty(bool alloc_untyped)
 {
   sched_kw_wconprod_type * kw = util_malloc(sizeof * kw, __func__);
   kw->wells      = stringlist_alloc_new();
   if (alloc_untyped)
-    kw->untyped_kw = sched_kw_untyped_alloc("WCONPROD");  /* Hardcoded ... */
+    kw->untyped_kw = sched_kw_untyped_alloc_empty("WCONPROD" , -1 /* -1: Variable length keyword */);
   else
     kw->untyped_kw = NULL;
   return kw;
@@ -56,27 +56,11 @@ static void sched_kw_wconprod_add_well(sched_kw_wconprod_type * kw , const char 
 }
 
 
-static void sched_kw_wconprod_add_line(sched_kw_wconprod_type * kw , const char * line , FILE * stream) {
-  int tokens;
-  char ** token_list;
-  bool    slash_term;
-  
-  sched_util_parse_line(line , &tokens , &token_list , 1 , &slash_term);
-  if (!slash_term) 
-    util_abort("%s: line[%d]: \"%s\" not properly terminated with \'/\' \n",__func__ , util_get_current_linenr(stream) , line);
-
-  if (token_list[0] == NULL)
-    util_abort("%s: line[%d]: failed to get well name \n",__func__ , util_get_current_linenr(stream));
-
-  sched_kw_wconprod_add_well( kw , token_list[0]);
-  sched_kw_untyped_add_line(kw->untyped_kw , line , true );
-  util_free_stringlist( token_list , tokens );
-}
 
 
 
-sched_kw_wconprod_type * sched_kw_wconprod_token_alloc(const stringlist_type * tokens , int * token_index ) {
-  sched_kw_wconprod_type * kw = sched_kw_wconprod_alloc( true );
+sched_kw_wconprod_type * sched_kw_wconprod_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_wconprod_type * kw = sched_kw_wconprod_alloc_empty( true );
   int eokw                    = false;
   do {
     stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , true , 0 , token_index );
@@ -95,50 +79,6 @@ sched_kw_wconprod_type * sched_kw_wconprod_token_alloc(const stringlist_type * t
 }
 
 
-
-
-sched_kw_wconprod_type * sched_kw_wconprod_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)
-{
-  bool   at_eokw = false;
-  char * line;
-  sched_kw_wconprod_type * kw = sched_kw_wconprod_alloc(true);
-
-  while(!*at_eof && !at_eokw)
-  {
-    line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
-    if(at_eokw)
-    {
-      break;
-    }
-    else if(*at_eof)
-    {
-      util_abort("%s: Reached EOF before WCONPROD was finished - aborting.\n", __func__);
-    }
-    else
-    {
-      sched_kw_wconprod_add_line(kw, line , stream);
-      free(line);
-    }
-  }
-  return kw;
-}
-
-
-void sched_kw_wconprod_fwrite(const sched_kw_wconprod_type *kw , FILE *stream) {
-  stringlist_fwrite( kw->wells , stream );
-  sched_kw_untyped_fwrite( kw->untyped_kw , stream);
-}
-
-
-sched_kw_wconprod_type *  sched_kw_wconprod_fread_alloc(FILE *stream) {
-  sched_kw_wconprod_type * kw = sched_kw_wconprod_alloc(false);
-  
-  stringlist_fread( kw->wells , stream );
-  kw->untyped_kw = sched_kw_untyped_fread_alloc(stream);
-  return kw;
-  
-}
-
 void sched_kw_wconprod_fprintf(const sched_kw_wconprod_type * kw , FILE * stream) {
   sched_kw_untyped_fprintf( kw->untyped_kw , stream );
 }
@@ -147,6 +87,12 @@ void sched_kw_wconprod_fprintf(const sched_kw_wconprod_type * kw , FILE * stream
 char ** sched_kw_wconprod_alloc_wells_copy( const sched_kw_wconprod_type * kw , int * num_wells) {
   *num_wells = stringlist_get_size( kw->wells );
   return stringlist_alloc_char_copy( kw->wells );
+}
+
+
+sched_kw_wconprod_type * sched_kw_wconprod_copyc(const sched_kw_wconprod_type * kw) {
+  util_abort("%s: not implemented ... \n",__func__);
+  return NULL;
 }
 
 

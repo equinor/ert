@@ -11,10 +11,7 @@ extern "C" {
 
 char * sched_util_alloc_line(FILE *, bool *);
 void   sched_util_parse_line(const char * , int * , char *** , int , bool *);
-void   sched_util_parse_file(const char *, int *, char ***);
 
-char * sched_util_alloc_next_entry(FILE *, bool *, bool *);
-char * sched_util_alloc_slash_terminated_line(FILE * stream);
 
 void   sched_util_fprintf_int(bool ,          int , int , FILE *);
 void   sched_util_fprintf_dbl(bool , double , int , int , FILE *);

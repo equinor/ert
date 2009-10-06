@@ -19,7 +19,7 @@ typedef enum {WCONHIST =  0,
               UNTYPED  =  8,
               WCONINJ  =  9,
               WCONINJE = 10, 
-              WCONINJH = 11, 
+              WCONINJH = 11,
               WCONPROD = 12,
               NUM_SCHED_KW_TYPES = 13} sched_type_enum;
               
@@ -51,12 +51,9 @@ typedef struct sched_kw_struct sched_kw_type;
 void sched_kw_free__(void *);
 const char     * sched_kw_get_type_name( const sched_kw_type * sched_kw );
 sched_type_enum  sched_kw_get_type(const sched_kw_type *);
-sched_kw_type *  sched_kw_fscanf_alloc(FILE *, bool *);
 sched_kw_type *  sched_kw_token_alloc(const stringlist_type * tokens, int * token_index, hash_type * fixed_length_table);
 void             sched_kw_fprintf(const sched_kw_type *, FILE *);
 void             sched_kw_free(sched_kw_type *);
-void             sched_kw_fwrite(sched_kw_type *, FILE *);
-sched_kw_type *  sched_kw_fread_alloc(FILE *, bool * at_eof);
 
 sched_kw_type  * sched_kw_alloc_copy(const sched_kw_type * );
 sched_kw_type ** sched_kw_restart_file_split_alloc(const sched_kw_type *, int *);

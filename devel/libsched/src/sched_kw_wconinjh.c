@@ -166,77 +166,8 @@ static void wconinjh_well_fprintf(const wconinjh_well_type * well, FILE * stream
 
 
 
-static void wconinjh_well_fwrite(const wconinjh_well_type * well, FILE * stream)
-{
-  util_fwrite_string(well->name, stream);
-  
-  util_fwrite(&well->inj_phase, sizeof well->inj_phase, 1, stream, __func__);
-  util_fwrite(&well->status   , sizeof well->status   , 1, stream, __func__);
-  util_fwrite(&well->inj_rate , sizeof well->inj_rate , 1, stream, __func__);
-  util_fwrite(&well->bhp      , sizeof well->bhp      , 1, stream, __func__);
-  util_fwrite(&well->thp      , sizeof well->thp      , 1, stream, __func__);
-  util_fwrite(&well->vfptable , sizeof well->vfptable , 1, stream, __func__);
-  util_fwrite(&well->vapdiscon, sizeof well->vapdiscon, 1, stream, __func__);
-
-  util_fwrite(&well->def, sizeof well->def[0], WCONINJH_NUM_KW, stream, __func__);
-}
 
 
-
-static wconinjh_well_type * wconinjh_well_fread_alloc(FILE * stream)
-{
-  wconinjh_well_type * well = wconinjh_well_alloc_empty();
-
-  well->name = util_fread_alloc_string( stream);
-  
-  util_fread(&well->inj_phase, sizeof well->inj_phase, 1, stream, __func__);
-  util_fread(&well->status   , sizeof well->status   , 1, stream, __func__);
-  util_fread(&well->inj_rate , sizeof well->inj_rate , 1, stream, __func__);
-  util_fread(&well->bhp      , sizeof well->bhp      , 1, stream, __func__);
-  util_fread(&well->thp      , sizeof well->thp      , 1, stream, __func__);
-  util_fread(&well->vfptable , sizeof well->vfptable , 1, stream, __func__);
-  util_fread(&well->vapdiscon, sizeof well->vapdiscon, 1, stream, __func__);
-
-  util_fread(&well->def, sizeof well->def[0], WCONINJH_NUM_KW, stream, __func__);
-
-  return well;
-}
-
-
-
-static wconinjh_well_type * wconinjh_well_alloc_from_string(char ** token_list)
-{
-  wconinjh_well_type * well = wconinjh_well_alloc_empty();
-
-  {
-    for(int i=0; i<WCONINJH_NUM_KW; i++)
-    {
-      if(token_list[i] == NULL)
-        well->def[i] = true;
-      else
-        well->def[i] = false;
-    }
-  }
-
-  well->name  = util_alloc_string_copy(token_list[0]);
-
-  if(!well->def[1])
-    well->inj_phase = get_inj_flag_from_string(token_list[1]);
-  if(!well->def[2])
-    well->status = get_st_flag_from_string(token_list[2]);
-  if(!well->def[3])
-    well->inj_rate = sched_util_atof(token_list[3]);
-  if(!well->def[4])
-    well->bhp = sched_util_atof(token_list[4]);
-  if(!well->def[5])
-    well->thp = sched_util_atof(token_list[5]);
-  if(!well->def[6])
-    well->vfptable = sched_util_atoi(token_list[6]);
-  if(!well->def[7])
-    well->vapdiscon = sched_util_atof(token_list[7]);
-
-  return well;
-}
 
 
 
@@ -295,23 +226,7 @@ static void sched_kw_wconinjh_add_well( sched_kw_wconinjh_type * kw , wconinjh_w
 
 
 
-static void sched_kw_wconinjh_add_line(sched_kw_wconinjh_type * kw, const char *line)
-{
-  int tokens;
-  char ** token_list;
-  wconinjh_well_type * well;
-
-  sched_util_parse_line(line, &tokens, &token_list, WCONINJH_NUM_KW, NULL);
-
-  well = wconinjh_well_alloc_from_string(token_list);
-  sched_kw_wconinjh_add_well( kw , well );
-  
-  util_free_stringlist(token_list, tokens);
-}
-
-
-
-static sched_kw_wconinjh_type * sched_kw_wconinjh_alloc()
+static sched_kw_wconinjh_type * sched_kw_wconinjh_alloc_empty()
 {
   sched_kw_wconinjh_type * kw = util_malloc(sizeof * kw, __func__);
   kw->wells = vector_alloc_new();
@@ -323,8 +238,8 @@ static sched_kw_wconinjh_type * sched_kw_wconinjh_alloc()
 /***********************************************************************/
 
 
-sched_kw_wconinjh_type * sched_kw_wconinjh_token_alloc(const stringlist_type * tokens , int * token_index ) {
-  sched_kw_wconinjh_type * kw = sched_kw_wconinjh_alloc();
+sched_kw_wconinjh_type * sched_kw_wconinjh_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_wconinjh_type * kw = sched_kw_wconinjh_alloc_empty();
   int eokw                    = false;
   do {
     stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false, WCONINJH_NUM_KW , token_index );
@@ -340,34 +255,6 @@ sched_kw_wconinjh_type * sched_kw_wconinjh_token_alloc(const stringlist_type * t
 }
 
 
-sched_kw_wconinjh_type * sched_kw_wconinjh_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)
-{
-  bool   at_eokw = false;
-  char * line;
-  sched_kw_wconinjh_type * kw = sched_kw_wconinjh_alloc();
-
-  while(!*at_eof && !at_eokw)
-  {
-    line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
-    if(at_eokw)
-    {
-      break;
-    }
-    else if(*at_eof)
-    {
-      util_abort("%s: Reached EOF before WCONINJH was finished - aborting.\n", __func__);
-    }
-    else
-    {
-      sched_kw_wconinjh_add_line(kw, line);
-      free(line);
-    }
-  }
-  return kw;
-}
-
-
-
 void sched_kw_wconinjh_free(sched_kw_wconinjh_type * kw)
 {
   vector_free(kw->wells);
@@ -378,46 +265,17 @@ void sched_kw_wconinjh_free(sched_kw_wconinjh_type * kw)
 
 void sched_kw_wconinjh_fprintf(const sched_kw_wconinjh_type * kw, FILE * stream)
 {
-  //int size = vector_get_size(kw->wells);
-  //
-  //fprintf(stream, "WCONINJH\n");
-  //for(int i=0; i<size; i++)
-  //{
-  //  wconinjh_well_type * well = vector_iget_const( kw->wells, i );
-  //  wconinjh_well_fprintf(well, stream);
-  //}
-  //fprintf(stream,"/\n\n");
+  int size = vector_get_size(kw->wells);
+    
+  fprintf(stream, "WCONINJH\n");
+  for(int i=0; i<size; i++)
+  {
+    const wconinjh_well_type * well = vector_iget_const( kw->wells, i );
+    wconinjh_well_fprintf(well, stream);
+  }
+  fprintf(stream,"/\n\n");
 }
 
-
-
-void sched_kw_wconinjh_fwrite(const sched_kw_wconinjh_type * kw, FILE * stream)
-{
-  //int size = vector_get_size(kw->wells);
-  //util_fwrite(&size, sizeof size, 1, stream, __func__);
-  //for(int i=0; i<size; i++)
-  //{
-  //  wconinjh_well_type * well = vector_iget_const(kw->wells, i);
-  //  wconinjh_well_fwrite(well, stream);
-  //}
-}
-
-
-sched_kw_wconinjh_type * sched_kw_wconinjh_fread_alloc(FILE * stream)
-{
-  //int size;
-  //sched_kw_wconinjh_type * kw = sched_kw_wconinjh_alloc();
-  //util_fread(&size, sizeof size, 1, stream, __func__);
-  //
-  //for(int i=0; i<size; i++)
-  //{
-  //  wconinjh_well_type * well = wconinjh_well_fread_alloc(stream);
-  //  list_append_list_owned_ref(kw->wells, well, wconinjh_well_free__);
-  //}
-  //
-  //return kw;
-  return NULL;
-}
 
 
 
@@ -441,11 +299,12 @@ hash_type * sched_kw_wconinjh_alloc_well_obs_hash(const sched_kw_wconinjh_type *
   return well_hash;
 }
 
+sched_kw_wconinjh_type * sched_kw_wconinjh_copyc(const sched_kw_wconinjh_type * kw) {
+  util_abort("%s: not implemented ... \n",__func__);
+  return NULL;
+}
+
+
 
 /***********************************************************************/
-KW_TOKEN_ALLOC_IMPL(wconinjh)
-KW_FSCANF_ALLOC_IMPL(wconinjh)
-KW_FWRITE_IMPL(wconinjh)
-KW_FREAD_ALLOC_IMPL(wconinjh)
-KW_FREE_IMPL(wconinjh)
-KW_FPRINTF_IMPL(wconinjh)
+KW_IMPL(wconinjh)

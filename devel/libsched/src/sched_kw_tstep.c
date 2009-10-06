@@ -34,24 +34,9 @@ static void sched_kw_tstep_add_tstep_string( sched_kw_tstep_type * kw, const cha
 
 
 
-static void sched_kw_tstep_add_line(sched_kw_tstep_type *kw , const char *line , bool *complete) {
-  char **tstep_list;
-  int i , steps;
-  sched_util_parse_line(line , &steps , &tstep_list , 1 , complete);
-  for (i=0; i  < steps; i++) 
-    sched_kw_tstep_add_tstep_string( kw , tstep_list[i]);
-
-  {
-    int len = strlen(tstep_list[steps-1]);
-    if(tstep_list[steps-1][len-1] == '/')
-      *complete = true;
-  }
-  util_free_stringlist(tstep_list , steps);
-}
 
 
-
-static sched_kw_tstep_type * sched_kw_tstep_alloc(){
+static sched_kw_tstep_type * sched_kw_tstep_alloc_empty(){
   sched_kw_tstep_type *tstep = util_malloc(sizeof * tstep , __func__ );
   tstep->tstep_list          = double_vector_alloc(0 , 0);
   return tstep;
@@ -61,8 +46,8 @@ static sched_kw_tstep_type * sched_kw_tstep_alloc(){
 
 /*****************************************************************/
 
-sched_kw_tstep_type * sched_kw_tstep_token_alloc(const stringlist_type * tokens , int * token_index ) {
-  sched_kw_tstep_type * kw = sched_kw_tstep_alloc();
+sched_kw_tstep_type * sched_kw_tstep_alloc(const stringlist_type * tokens , int * token_index ) {
+  sched_kw_tstep_type * kw = sched_kw_tstep_alloc_empty();
   int eokw                    = false;
   do {
     stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false , 0 , token_index );
@@ -77,33 +62,6 @@ sched_kw_tstep_type * sched_kw_tstep_token_alloc(const stringlist_type * tokens 
   } while (!eokw);
   return kw;
 }
-
-
-
-sched_kw_tstep_type * sched_kw_tstep_fscanf_alloc(FILE * stream, bool * at_eof, const char * kw_name)
-{
-  bool   at_eokw = false;
-  char * line;
-  sched_kw_tstep_type * kw = sched_kw_tstep_alloc();
-
-  while(!*at_eof && !at_eokw)
-  {
-    line = sched_util_alloc_next_entry(stream, at_eof, &at_eokw);
-    if(at_eokw)
-    {
-      free(line);
-      break;
-    }
-    else if(line != NULL)
-    {
-      sched_kw_tstep_add_line(kw, line, &at_eokw);
-      free(line);
-    }
-  }
-
-  return kw;
-}
-
 
 
 void sched_kw_tstep_fprintf(const sched_kw_tstep_type *kw , FILE *stream) {
@@ -125,40 +83,6 @@ void sched_kw_tstep_free(sched_kw_tstep_type * kw) {
 
 
 
-void sched_kw_tstep_fwrite(const sched_kw_tstep_type *kw , FILE *stream) {
-  //{
-  //  int tstep_lines = list_get_size(kw->tstep_list);
-  //  util_fwrite(&tstep_lines , sizeof tstep_lines , 1, stream , __func__);
-  //}
-  //{
-  //  list_node_type *list_node = list_get_head(kw->tstep_list);
-  //  while (list_node != NULL) {
-  //    const double * step = list_node_value_ptr(list_node);
-  //    util_fwrite(step, sizeof *step, 1, stream, __func__);
-  //    list_node = list_node_get_next(list_node);
-  //  }
-  //}
-}
-
-
-
-sched_kw_tstep_type * sched_kw_tstep_fread_alloc(FILE * stream) {
-  //int lines , line_nr;
-  //sched_kw_tstep_type *kw = sched_kw_tstep_alloc();
-  //util_fread(&lines, sizeof lines, 1, stream, __func__);
-  //line_nr = 0;
-  //while (line_nr < lines) {
-  //  double * step = util_malloc(sizeof * step, __func__);
-  //  util_fread(step, sizeof * step, 1, stream, __func__);
-  //  list_append_list_owned_ref(kw->tstep_list , step, free);
-  //  line_nr++;
-  //} 
-  //return kw;
-  return NULL;
-}
-
-
-
 int sched_kw_tstep_get_size(const sched_kw_tstep_type * kw)
 {
   return double_vector_size(kw->tstep_list);
@@ -168,9 +92,14 @@ int sched_kw_tstep_get_size(const sched_kw_tstep_type * kw)
 
 sched_kw_tstep_type * sched_kw_tstep_alloc_from_double(double step)
 {
-  sched_kw_tstep_type * kw = sched_kw_tstep_alloc();
+  sched_kw_tstep_type * kw = sched_kw_tstep_alloc_empty();
   double_vector_append( kw->tstep_list , step );
   return kw;
+}
+
+sched_kw_tstep_type * sched_kw_tstep_copyc(const sched_kw_tstep_type * kw) {
+  util_abort("%s: not implemented ... \n",__func__);
+  return NULL;
 }
 
 
