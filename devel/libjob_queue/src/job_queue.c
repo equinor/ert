@@ -266,14 +266,29 @@ static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * no
 }
 
 
+
+/**
+   Observe that this function should only query the driver for state
+   change when the job is currently in one of the states: 
+
+     JOB_QUEUE_WAITING || JOB_QUEUE_PENDING || JOB_QUEUE_RUNNING 
+
+   The other state transitions are handled by the job_queue itself,
+   without consulting the driver functions.
+*/
+
+
 static void job_queue_update_status(job_queue_type * queue ) {
   basic_queue_driver_type *driver  = queue->driver;
   int ijob;
   for (ijob = 0; ijob < queue->size; ijob++) {
     job_queue_node_type * node       = queue->jobs[ijob];
     if (node->job_data != NULL) {
-      job_status_type  new_status = driver->get_status(driver , node->job_data);
-      job_queue_change_node_status(queue , node , new_status);
+      job_status_type current_status = job_queue_node_get_status(node);
+      if ((current_status == JOB_QUEUE_RUNNING) || (current_status == JOB_QUEUE_WAITING) || (current_status == JOB_QUEUE_PENDING)) {
+        job_status_type new_status = driver->get_status(driver , node->job_data);
+        job_queue_change_node_status(queue , node , new_status);
+      }
     }
   }
 }
@@ -297,7 +312,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 							 node->job_arg);
 	
 	if (job_data != NULL) {
-	  job_queue_change_node_status(queue , node , driver->get_status(driver , node->job_data));
+	  job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING /* This is when it is installed as runnable in the internal queue */);
 	  node->job_data = job_data;
 	  node->submit_attempt++;
 	  submit_status = submit_OK;
@@ -305,6 +320,11 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 	  submit_status = submit_driver_FAIL;
       }
     } else {
+      /* 
+         The queue system will not make more attempts to submit this job. The
+         external scope might call job_queue_set_external_restart() - otherwise
+         this job is failed.
+      */
       job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_FAIL);
       submit_status = submit_job_FAIL;
     }
@@ -412,7 +432,7 @@ static void job_queue_print_jobs(const job_queue_type *queue) {
   */
   int running  = queue->status_list[JOB_QUEUE_RUNNING] + queue->status_list[JOB_QUEUE_DONE] + queue->status_list[JOB_QUEUE_EXIT];
   int complete = queue->status_list[JOB_QUEUE_ALL_OK];
-  int failed   = queue->status_list[JOB_QUEUE_RUN_FAIL];
+  int failed   = queue->status_list[JOB_QUEUE_ALL_FAIL];
   int loading  = queue->status_list[JOB_QUEUE_RUN_OK];  
 
   printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , loading , failed , complete);
@@ -540,25 +560,27 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	  job_queue_node_type * node = queue->jobs[queue_index];
 	  switch (job_queue_node_get_status(node)) {
 	  case(JOB_QUEUE_DONE):
-
 	    if (util_file_exists(node->exit_file)) {
-	      if (verbose) {
-		printf("Restarting: %s | ",node->job_name);
-                queue->driver->display_info( queue->driver , node->job_data );
-              }
-	      job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
-	    } else 
+              printf("Switching job status DONE->EXIT internal_index:%d   external_index:%d \n" , queue_index , node->external_id);
+	      job_queue_change_node_status(queue , node , JOB_QUEUE_EXIT);
+            } else {
+              /* 
+                 That the target file has been produced is checked by
+                 the job script, and not here. This scope just does
+                 the opposite test, i.e. whether an EXIT file has been
+                 produced to indicate failure.
+              */
 	      job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_OK);
-
-	    job_queue_free_job(queue , node);
+              job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver. */
+            }
 	    break;
 	  case(JOB_QUEUE_EXIT):
 	    if (verbose) {
-	      printf("Restarting: %s | ",node->job_name);
+	      printf("QUEUE: Restarting: %s | ",node->job_name);
               queue->driver->display_info( queue->driver , node->job_data );
             }
 	    job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
-	    job_queue_free_job(queue , node);
+	    job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver. */
 	    break;
 	  default:
 	    break;
@@ -588,6 +610,7 @@ void * job_queue_run_jobs__(void * __arg_pack) {
   job_queue_run_jobs(queue , num_total_run);
   return NULL;
 }
+
 
 
 void job_queue_add_job(job_queue_type * queue , const char * run_path , const char * job_name , int external_id , const void * job_arg) {
