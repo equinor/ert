@@ -410,7 +410,7 @@ bool enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool int
   {
     bool data_written = false;
     FUNC_ASSERT(enkf_node->store);
-    data_written = enkf_node->store(enkf_node->data , buffer , internal_state);
+    data_written = enkf_node->store(enkf_node->data , buffer , report_step , internal_state);
     
     enkf_node->__report_step = report_step;
     enkf_node->__state       = state;

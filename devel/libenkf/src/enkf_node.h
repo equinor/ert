@@ -51,7 +51,7 @@ typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node objec
                                                  fortio_type *);   /* fortio inistance for writing elements in restart files. */
 
 typedef void   	      (load_ftype)                	(      void *  , buffer_type *);
-typedef bool   	      (store_ftype)                	(const void *  , buffer_type * , bool);
+typedef bool   	      (store_ftype)                	(const void *  , buffer_type * , int , bool);
 
 
 typedef void          (set_inflation_ftype)             (void *       ,     /* Node object which is used for storing inflation factors. */

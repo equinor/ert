@@ -35,5 +35,6 @@ const char * fs_types_get_driver_name(fs_driver_type driver_type) {
     break;
   default:
     util_abort("%s: driver_id:%d not recognized. \n",__func__ , driver_type );
+    return NULL;
   }
 }

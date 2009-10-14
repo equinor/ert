@@ -133,6 +133,12 @@ void plot_config_init_from_config(plot_config_type * plot_config , const config_
 
   if (config_item_set( config , "PLOT_ERRORBAR_MAX"))
     plot_config_set_driver( plot_config , config_get_value( config , "PLOT_ERRORBAR_MAX" ));
+  
+  if (config_item_set( config , "PLOT_HEIGHT"))
+    plot_config_set_height( plot_config , config_get_value_as_int( config , "PLOT_HEIGHT" ));
+
+  if (config_item_set( config , "PLOT_WIDTH"))
+    plot_config_set_width( plot_config , config_get_value_as_int( config , "PLOT_WIDTH" ));
 }
 
 

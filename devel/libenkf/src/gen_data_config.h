@@ -32,9 +32,6 @@ gen_data_file_format_type    gen_data_config_get_input_format ( const gen_data_c
 gen_data_file_format_type    gen_data_config_get_output_format ( const gen_data_config_type * );
 char                  	   * gen_data_config_alloc_initfile(const gen_data_config_type *  , int );
 ecl_type_enum         	     gen_data_config_get_internal_type(const gen_data_config_type * );
-int                   	     gen_data_config_get_byte_size(const gen_data_config_type * );
-int                   	     gen_data_config_get_data_size(const gen_data_config_type * );
-int                          gen_data_config_get_report_step(const gen_data_config_type *);
 gen_data_config_type  	   * gen_data_config_alloc_with_options(const char * key , bool , const stringlist_type *);
 void                         gen_data_config_free(gen_data_config_type * );
 void                         gen_data_config_assert_size(gen_data_config_type *  , int , int);
@@ -47,7 +44,6 @@ const char  *                gen_data_config_get_key( const gen_data_config_type
 SAFE_CAST_HEADER(gen_data_config)
 GET_ACTIVE_LIST_HEADER(gen_data)
 VOID_FREE_HEADER(gen_data_config)
-VOID_GET_DATA_SIZE_HEADER(gen_data);
 
 #ifdef __cplusplus
 }

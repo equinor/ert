@@ -129,7 +129,7 @@ explicitly set another updatestep with the INSTALL_UPDATESTEP function.
     _________________________________________________________________________
    /                                                                         \
    | Observe that prior to loading your hand-crafted configuration file      | 
-   | the program will load am ALL_ACTIVE configuration which will be         | 
+   | the program will load an ALL_ACTIVE configuration which will be         | 
    | installed as default. If you want you can start with this               |
    | configuration:                                                          |
    |                                                                         |
@@ -476,17 +476,17 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
   int_vector_type * int_vector = int_vector_alloc(0,0);
   
   while ( read_cmd(stream, binary , &cmd)) {
-    log_add_fmt_message(logh , 2 , "Have read command %s[%d] ", local_config_get_cmd_string(cmd) , cmd );
+    log_add_fmt_message(logh , 2 , NULL , "Have read command %s[%d] ", local_config_get_cmd_string(cmd) , cmd );
     switch(cmd) {
     case(CREATE_UPDATESTEP):   
       update_name = read_alloc_string( stream , binary );
       local_config_alloc_updatestep( local_config , update_name );
-      log_add_fmt_message(logh , 2 , "Added local update step:%s" , update_name);
+      log_add_fmt_message(logh , 2 , NULL , "Added local update step:%s" , update_name);
       break;
     case(CREATE_MINISTEP):
       mini_name = read_alloc_string( stream , binary );
       local_config_alloc_ministep( local_config , mini_name );
-      log_add_fmt_message(logh , 2 , "Added local mini step:%s" , mini_name);
+      log_add_fmt_message(logh , 2 , NULL , "Added local mini step:%s" , mini_name);
       break;
     case(ATTACH_MINISTEP):
       update_name = read_alloc_string( stream , binary );
@@ -494,7 +494,7 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
       {
         local_updatestep_type * update   = local_config_get_updatestep( local_config , update_name );
         local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
-        log_add_fmt_message(logh , 2 , "Attached ministep:%s to update_step:%s", mini_name , update_name);
+        log_add_fmt_message(logh , 2 , NULL , "Attached ministep:%s to update_step:%s", mini_name , update_name);
         local_updatestep_add_ministep( update , ministep );
       }
       break;

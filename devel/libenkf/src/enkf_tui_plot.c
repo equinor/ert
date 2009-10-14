@@ -11,6 +11,7 @@
 #include <enkf_tui_fs.h>
 #include <enkf_obs.h>
 #include <field_obs.h>
+#include <gen_obs.h>
 #include <field_config.h>
 #include <obs_vector.h>
 #include <bool_vector.h>
@@ -181,66 +182,69 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
   }
   msg_show(msg);
   
+  {
+    time_t min_time = util_make_date(1 , 1 , 2030);
+    time_t max_time = 0;
 
-  for (iens = iens1; iens <= iens2; iens++) {
-    char msg_label[32];
-    char plot_label[32];
-    int this_size = 0;
-    sprintf(msg_label , "%03d" , iens );
-    msg_update( msg , msg_label);
-    for (step = step1; step <= step2; step++) {
-      double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens) , step );
-      time_t sim_time = sched_file_get_sim_time( vector_iget( sched_vector , iens) , step );
-	  
-      /* Forecast block */
-      if (plot_state & FORECAST) {
-	if (enkf_fs_has_node(fs , config_node , step , iens , FORECAST)) {
-	  bool valid;
-	  enkf_fs_fread_node(fs , node , step , iens , FORECAST);
-	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
+    for (iens = iens1; iens <= iens2; iens++) {
+      char msg_label[32];
+      char plot_label[32];
+      int this_size = 0;
+      sprintf(msg_label , "%03d" , iens );
+      msg_update( msg , msg_label);
+      for (step = step1; step <= step2; step++) {
+        double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens) , step );
+        time_t sim_time = sched_file_get_sim_time( vector_iget( sched_vector , iens) , step );
 
-	  if ((iens == 2) && (step == 10))
-	    y[this_size] = NAN;
-	  
-	  if ((iens == 2) && (step == 20))
-	    y[this_size] = INFINITY;
-
-	  bool_vector_iset(has_data , step , true);
-	  if (valid) {
-	    if (plot_dates)
-	      x[this_size] = sim_time;
-	    else
-	      x[this_size] = sim_days;
-	    this_size++;
-	  }
-	} 
+        /* Forecast block */
+        if (plot_state & FORECAST) {
+          if (enkf_fs_has_node(fs , config_node , step , iens , FORECAST)) {
+            bool valid;
+            enkf_fs_fread_node(fs , node , step , iens , FORECAST);
+            y[this_size] = enkf_node_user_get( node , key_index , &valid);
+            
+            bool_vector_iset(has_data , step , true);
+            if (valid) {
+              if (plot_dates) {
+                x[this_size] = sim_time;
+                if (sim_time < min_time) min_time = sim_time;
+                if (sim_time > max_time) max_time = sim_time;
+              } else
+                x[this_size] = sim_days;
+              this_size++;
+            }
+          } 
+        }
+        
+        /* Analyzed block */
+        if (plot_state & ANALYZED) {
+          if (enkf_fs_has_node(fs , config_node , step , iens , ANALYZED)) {
+            bool valid;
+            enkf_fs_fread_node(fs , node , step , iens , ANALYZED);
+            y[this_size] = enkf_node_user_get( node , key_index , &valid);
+            bool_vector_iset(has_data , step , true);
+            if (valid) {
+              if (plot_dates) {
+                x[this_size] = sim_time;
+                if (sim_time < min_time) min_time = sim_time;
+                if (sim_time > max_time) max_time = sim_time;
+              } else
+                x[this_size] = sim_days;
+              this_size++;
+            }
+          } 
+        }
       }
-	  
-      /* Analyzed block */
-      if (plot_state & ANALYZED) {
-	if (enkf_fs_has_node(fs , config_node , step , iens , ANALYZED)) {
-	  bool valid;
-	  enkf_fs_fread_node(fs , node , step , iens , ANALYZED);
-	  y[this_size] = enkf_node_user_get( node , key_index , &valid);
-	  bool_vector_iset(has_data , step , true);
-	  if (valid) {
-	    if (plot_dates)
-	      x[this_size] = sim_time;
-	    else
-	      x[this_size] = sim_days;
-	    this_size++;
-	  }
-	} 
-      }
+      if (this_size > 0)
+        show_plot = true;
+      
+      /* This is called once for every realization - that is kind of wasted. */
+      if (plot_dates) 
+        plot_set_default_timefmt( plot , min_time , max_time );
+      
+      sprintf(plot_label , "mem_%03d" , iens);
+      __plot_add_data(plot , plot_label ,this_size , x , y );
     }
-    if (this_size > 0)
-      show_plot = true;
-    
-    if (plot_dates) 
-      plot_set_default_timefmt( plot , (time_t) x[0] , (time_t) x[this_size - 1]);
-    
-    sprintf(plot_label , "mem_%03d" , iens);
-    __plot_add_data(plot , plot_label ,this_size , x , y );
   }
 
 
@@ -249,7 +253,7 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
   */
   if (add_observations) {
     enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
-    if ((impl_type == SUMMARY) || (impl_type == FIELD)) {
+    if ((impl_type == SUMMARY) || (impl_type == FIELD) || (impl_type == GEN_DATA)) {
       /*
 	These three double vectors are used to assemble
 	all observations.
@@ -263,22 +267,29 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
       int i;
       for (i=0; i < stringlist_get_size( obs_keys ); i++) {
 	const char * obs_key = stringlist_iget(obs_keys , i);
-	const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
-	obs_size += obs_vector_get_num_active( obs_vector );
-      }
-      
-      for (i=0; i < stringlist_get_size( obs_keys ); i++) {
-	const char * obs_key = stringlist_iget(obs_keys , i);
 	
 	const obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , obs_key);
 	double  value , std;
 	int report_step = -1;
 	do {
 	  report_step = obs_vector_get_next_active_step( obs_vector , report_step);
-	  if (report_step != -1) {
+	  
+          if (report_step != -1) {
 	    if (bool_vector_safe_iget( has_data , report_step)) {   /* Not plotting an observation if we do not have any simulations at the same time. */
 	      bool valid;
-	      obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
+
+              /**
+                 The user index used when calling the user_get function on the
+                 gen_obs data type is different depending on whether is called with a
+                 data context user_key (as here) or with a observation context
+                 user_key (as when plotting an observation plot). See more
+                 documentation of the function gen_obs_user_get_data_index(). 
+              */
+
+              if (impl_type == GEN_DATA)
+                gen_obs_user_get_with_data_index( obs_vector_iget_node( obs_vector , report_step ) , key_index , &value , &std , &valid);
+              else
+                obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
 	      if (valid) {
 
 		if (plot_dates)
@@ -288,9 +299,12 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
 		
 		double_vector_append( obs_value , value );
 		double_vector_append( obs_std , std );
+
+                obs_size += 1;
 	      }
 	    }
 	  }
+
 	} while (report_step != -1);
       }
 
@@ -395,6 +409,7 @@ void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_
 }
 
 
+
 void enkf_tui_plot_GEN_KW(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
@@ -440,6 +455,10 @@ void enkf_tui_plot_GEN_KW(void * arg) {
   }
 }
 
+
+
+
+
 			 
 
 void enkf_tui_plot_all_GEN_KW(void * arg) {
@@ -464,6 +483,8 @@ void enkf_tui_plot_all_GEN_KW(void * arg) {
     stringlist_free( gen_kw_keys );
   }
 }
+
+
 
 
 
@@ -657,95 +678,110 @@ void enkf_tui_plot_observation(void * arg) {
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
     enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
     const obs_vector_type * obs_vector;
-    char user_key[64];
+    char * user_key;
     char * index_key;
 
     util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-    scanf("%s" , user_key);
-    
-    obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
-    if (obs_vector != NULL) {
-      char * plot_file                    = enkf_tui_plot_alloc_plot_file(plot_config , enkf_fs_get_read_dir(fs), user_key);
-      plot_type * plot                    = __plot_alloc(plot_config , "Member nr" , "Value" , user_key , plot_file);   
-      const char * state_kw               = obs_vector_get_state_kw( obs_vector );
-      enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
-      int   num_active                    = obs_vector_get_num_active( obs_vector );
-      plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , "observation"   , PLOT_YLINE );
-      plot_dataset_type * obs_quant_lower = plot_alloc_new_dataset(plot , "obs_minus_std" , PLOT_YLINE );
-      plot_dataset_type * obs_quant_upper = plot_alloc_new_dataset(plot , "obs_plus_std"  , PLOT_YLINE );
-      plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , "forecast"      , PLOT_XY    );
-      plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , "analyzed"      , PLOT_XY    );
-      int   report_step;
-      
-      do {
-	if (num_active == 1)
-	  report_step = obs_vector_get_active_report_step( obs_vector );
-	else
-	  report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
-      } while (!obs_vector_iget_active(obs_vector , report_step));
-      {
-	enkf_node_type * enkf_node = enkf_node_alloc( config_node );
-	msg_type * msg = msg_alloc("Loading realization: ");
-	double y , value , std ;
-	bool   valid;
-	const int    iens1 = 0;
-	const int    iens2 = ens_size - 1;
-	int    iens;
-	char  cens[5];
-
-	obs_vector_user_get( obs_vector , index_key , report_step , &value , &std , &valid);
-	plot_set_bottom_padding( plot , 0.10);
-	plot_set_top_padding( plot , 0.10);
-	plot_set_left_padding( plot , 0.05);
-	plot_set_right_padding( plot , 0.05);
-			    
-	plot_dataset_set_yline(obs_value       , value);
-	plot_dataset_set_yline(obs_quant_lower , value - std);
-	plot_dataset_set_yline(obs_quant_upper , value + std);
-	
-	plot_dataset_set_line_color(obs_value       , BLACK);
-	plot_dataset_set_line_color(obs_quant_lower , BLACK);
-	plot_dataset_set_line_color(obs_quant_upper , BLACK);
-	plot_dataset_set_line_width(obs_value , 2.0);
-	plot_dataset_set_line_style(obs_quant_lower , PLOT_LINESTYLE_LONG_DASH);
-        plot_dataset_set_line_style(obs_quant_upper , PLOT_LINESTYLE_LONG_DASH);
-
-
-
-	plot_dataset_set_style( forecast_data , POINTS);
-	plot_dataset_set_style( analyzed_data , POINTS);
-	plot_dataset_set_point_color( forecast_data , BLUE );
-	plot_dataset_set_point_color( analyzed_data , RED  );
-	
-	msg_show(msg);
-	for (iens = iens1; iens <= iens2; iens++) {
-	  sprintf(cens , "%03d" , iens);
-	  msg_update(msg , cens);
-
-	  if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) {
-	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , ANALYZED);
-	    y = enkf_node_user_get( enkf_node , index_key , &valid);
-	    if (valid) 
-	      plot_dataset_append_point_xy( analyzed_data , iens , y);
-	  }
-
-	  if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST)) {
-	    enkf_fs_fread_node(fs , enkf_node   , report_step , iens , FORECAST);
-	    y = enkf_node_user_get( enkf_node , index_key , &valid);
-	    if (valid) 
-	      plot_dataset_append_point_xy( forecast_data , iens , y);
-	  }
-	  
-	}
-	msg_free(msg , true);
-	printf("\n");
+    user_key = util_alloc_stdin_line();
+    if (user_key != NULL) {
+      obs_vector = enkf_obs_user_get_vector(enkf_obs , user_key , &index_key);
+      if (obs_vector != NULL) {
+        char * plot_file                    = enkf_tui_plot_alloc_plot_file(plot_config , enkf_fs_get_read_dir(fs), user_key);
+        plot_type * plot                    = __plot_alloc(plot_config , "Member nr" , "Value" , user_key , plot_file);   
+        const char * state_kw               = obs_vector_get_state_kw( obs_vector );
+        enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
+        int   num_active                    = obs_vector_get_num_active( obs_vector );
+        plot_dataset_type * obs_value       = plot_alloc_new_dataset(plot , "observation"   , PLOT_YLINE );
+        plot_dataset_type * obs_quant_lower = plot_alloc_new_dataset(plot , "obs_minus_std" , PLOT_YLINE );
+        plot_dataset_type * obs_quant_upper = plot_alloc_new_dataset(plot , "obs_plus_std"  , PLOT_YLINE );
+        plot_dataset_type * forecast_data   = plot_alloc_new_dataset(plot , "forecast"      , PLOT_XY    );
+        plot_dataset_type * analyzed_data   = plot_alloc_new_dataset(plot , "analyzed"      , PLOT_XY    );
+        int   report_step;
+        
+        do {
+          if (num_active == 1)
+            report_step = obs_vector_get_active_report_step( obs_vector );
+          else
+            report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
+        } while (!obs_vector_iget_active(obs_vector , report_step));
+        {
+          enkf_node_type * enkf_node = enkf_node_alloc( config_node );
+          msg_type * msg = msg_alloc("Loading realization: ");
+          double y , value , std ;
+          bool   valid;
+          const int    iens1 = 0;
+          const int    iens2 = ens_size - 1;
+          int    iens;
+          char  cens[5];
+          
+          obs_vector_user_get( obs_vector , index_key , report_step , &value , &std , &valid);
+          plot_set_bottom_padding( plot , 0.10);
+          plot_set_top_padding( plot , 0.10);
+          plot_set_left_padding( plot , 0.05);
+          plot_set_right_padding( plot , 0.05);
+          
+          plot_dataset_set_yline(obs_value       , value);
+          plot_dataset_set_yline(obs_quant_lower , value - std);
+          plot_dataset_set_yline(obs_quant_upper , value + std);
+          
+          plot_dataset_set_line_color(obs_value       , BLACK);
+          plot_dataset_set_line_color(obs_quant_lower , BLACK);
+          plot_dataset_set_line_color(obs_quant_upper , BLACK);
+          plot_dataset_set_line_width(obs_value , 2.0);
+          plot_dataset_set_line_style(obs_quant_lower , PLOT_LINESTYLE_LONG_DASH);
+          plot_dataset_set_line_style(obs_quant_upper , PLOT_LINESTYLE_LONG_DASH);
+          
+          
+          
+          plot_dataset_set_style( forecast_data , POINTS);
+          plot_dataset_set_style( analyzed_data , POINTS);
+          plot_dataset_set_point_color( forecast_data , BLUE );
+          plot_dataset_set_point_color( analyzed_data , RED  );
+          
+          msg_show(msg);
+          {
+            double sum1 = 0;
+            double sum2 = 0;
+            int    num  = 0;
+            
+            for (iens = iens1; iens <= iens2; iens++) {
+              sprintf(cens , "%03d" , iens);
+              msg_update(msg , cens);
+              
+              if (enkf_fs_has_node(fs , config_node , report_step , iens , ANALYZED)) {
+                enkf_fs_fread_node(fs , enkf_node   , report_step , iens , ANALYZED);
+                y = enkf_node_user_get( enkf_node , index_key , &valid);
+                if (valid) 
+                  plot_dataset_append_point_xy( analyzed_data , iens , y);
+              }
+              
+              if (enkf_fs_has_node(fs , config_node , report_step , iens , FORECAST)) {
+                enkf_fs_fread_node(fs , enkf_node   , report_step , iens , FORECAST);
+                y = enkf_node_user_get( enkf_node , index_key , &valid);
+                if (valid) {
+                  plot_dataset_append_point_xy( forecast_data , iens , y);
+                  sum1 += y;
+                  sum2 += y*y;
+                  num  += 1;
+                }
+            }
+            }
+            {
+              FILE * stream = util_fopen("/tmp/obs.txt" , "a");
+              fprintf(stream , "%s &  %g & %g & %g & %g \\ \n", index_key , value , std , sum1 / num , sqrt( sum2 / num ) - (sum1*sum1 / (num*num)));
+              fclose( stream );
+            }
+          }
+          msg_free(msg , true);
+          printf("\n");
 	enkf_node_free(enkf_node);
-      }
-      __plot_show(plot , plot_config , plot_file);
-      free(plot_file);
-    } 
-    
-    util_safe_free( index_key );
+        }
+        __plot_show(plot , plot_config , plot_file);
+        free(plot_file);
+      } 
+      util_safe_free( index_key );
+    }
+    util_safe_free( user_key );
   }
 }
 
@@ -1152,16 +1188,16 @@ void enkf_tui_plot_menu(void * arg) {
       menu = menu_alloc(title , "Back" , "bB");
       free(title);
     }
-    menu_add_item(menu , "Ensemble plot"    , "eE"                          , enkf_tui_plot_ensemble    , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot"    , "eE"                           , enkf_tui_plot_ensemble    , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of ALL summary variables"     , "aA" , enkf_tui_plot_all_summary , enkf_main , NULL);
     menu_add_item(menu , "Ensemble plot of GEN_KW parameter"          , "g"  , enkf_tui_plot_GEN_KW      , enkf_main , NULL);
-    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters" , "G"  , enkf_tui_plot_all_GEN_KW      , enkf_main , NULL);
-    menu_add_item(menu , "Observation plot" , "oO" 			    , enkf_tui_plot_observation , enkf_main , NULL);
-    menu_add_item(menu , "RFT depth plot"   , "rR" 			    , enkf_tui_plot_RFT_depth   , enkf_main , NULL);
-    menu_add_item(menu , "RFT time plot"    , "tT"                          , enkf_tui_plot_RFT_time    , enkf_main , NULL);
-    menu_add_item(menu , "RFT plot of all RFT"  , "fF" 			    , enkf_tui_plot_all_RFT     , enkf_main , NULL);
-    menu_add_item(menu , "Sensitivity plot"     , "sS"                      , enkf_tui_plot_sensitivity , enkf_main , NULL); 
-    menu_add_item(menu , "Histogram"        , "hH"                          , enkf_tui_plot_histogram   , enkf_main , NULL);
+    menu_add_item(menu , "Ensemble plot of ALL ALL GEN_KW parameters" , "G"  , enkf_tui_plot_all_GEN_KW  , enkf_main , NULL);
+    menu_add_item(menu , "Observation plot" , "oO" 			     , enkf_tui_plot_observation , enkf_main , NULL);
+    menu_add_item(menu , "RFT depth plot"   , "rR" 			     , enkf_tui_plot_RFT_depth   , enkf_main , NULL);
+    menu_add_item(menu , "RFT time plot"    , "tT"                           , enkf_tui_plot_RFT_time    , enkf_main , NULL);
+    menu_add_item(menu , "RFT plot of all RFT"  , "fF" 			     , enkf_tui_plot_all_RFT     , enkf_main , NULL);
+    menu_add_item(menu , "Sensitivity plot"     , "sS"                       , enkf_tui_plot_sensitivity , enkf_main , NULL); 
+    menu_add_item(menu , "Histogram"        , "hH"                           , enkf_tui_plot_histogram   , enkf_main , NULL);
     menu_run(menu);
     menu_free(menu);
   }

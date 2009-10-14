@@ -237,7 +237,7 @@ void enkf_obs_get_obs_and_measure(
 	for (iens = 0; iens < ens_size; iens++) {
 	  enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
 	  meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
-	  
+	  printf("iens:%03d/%s ",iens,obs_key);
 	  enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
 	  obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector , active_list);
 	}
@@ -678,7 +678,7 @@ stringlist_type * enkf_obs_alloc_matching_keylist(const enkf_obs_type * enkf_obs
 
 
 
-hash_type * enkf_obs_alloc_summary_map(enkf_obs_type * enkf_obs)
+hash_type * enkf_obs_alloc_data_map(enkf_obs_type * enkf_obs)
 {
   hash_type      * map  = hash_alloc();
   hash_iter_type * iter = hash_iter_alloc(enkf_obs->obs_hash); 

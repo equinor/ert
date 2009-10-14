@@ -310,7 +310,7 @@ UTIL_IS_INSTANCE_FUNCTION( enkf_fs , ENKF_FS_TYPE_ID)
 */
 
 long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * default_dir, fs_driver_impl driver_impl) {
-  const int num_block_fs_drivers = 10;
+  const int num_block_fs_drivers = ENKF_DEFAULT_NUM_BLOCK_FS_DRIVERS;
   long int  __dir_offset;
   FILE * stream = util_fopen( mount_map , "w");
   util_fwrite_long(FS_MAGIC_ID , stream);
@@ -1055,7 +1055,6 @@ bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool 
     fs->current_read_dir = util_realloc_string_copy( fs->current_read_dir , dir );
   else
     fs->current_write_dir = util_realloc_string_copy( fs->current_write_dir , dir );
-
 
   fs->dynamic_forecast->select_dir(fs->dynamic_forecast , dir , read);
   fs->dynamic_analyzed->select_dir(fs->dynamic_analyzed , dir , read);

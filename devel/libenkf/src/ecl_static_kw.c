@@ -95,7 +95,7 @@ void ecl_static_kw_load(ecl_static_kw_type * ecl_static_kw , buffer_type * buffe
 }
 
 
-bool ecl_static_kw_store(const ecl_static_kw_type * ecl_static_kw , buffer_type * buffer, bool internal_state) {
+bool ecl_static_kw_store(const ecl_static_kw_type * ecl_static_kw , buffer_type * buffer, int report_step , bool internal_state) {
   buffer_fwrite_int( buffer , STATIC );
   ecl_kw_buffer_store( ecl_static_kw->ecl_kw , buffer);
   return true;

@@ -241,7 +241,7 @@ static void field_import3D(field_type * field , const void *_src_data , bool rms
 #define CLEAR_MACRO(d,s) { int k; for (k=0; k < (s); k++) (d)[k] = 0; }
 void field_clear(field_type * field) {
   const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
-  const int data_size          = field_config_get_data_size(field->config);   
+  const int data_size          = field_config_get_data_size(field->config );   
 
   switch (ecl_type) {
   case(ecl_double_type):
@@ -496,7 +496,7 @@ void field_ROFF_export(const field_type * field , const char * filename) {
 
 
 
-bool field_store(const field_type * field , buffer_type * buffer , bool internal_state) {
+bool field_store(const field_type * field , buffer_type * buffer , int report_step , bool internal_state) {
   int byte_size = field_config_get_byte_size( field->config );
   buffer_fwrite_int( buffer , FIELD );
   buffer_fwrite_compressed( buffer , field->data , byte_size );
@@ -506,7 +506,7 @@ bool field_store(const field_type * field , buffer_type * buffer , bool internal
 
 
 void field_ecl_write1D_fortio(const field_type * field , fortio_type * fortio) {
-  const int data_size = field_config_get_data_size(field->config);
+  const int data_size = field_config_get_data_size(field->config );
   const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config); 
   
   ecl_kw_fwrite_param_fortio(fortio , field_config_get_ecl_kw_name(field->config), ecl_type , data_size , field->data);
@@ -584,7 +584,7 @@ static void field_apply_truncation(field_type * field) {
   double min_value, max_value;
   truncation_type   truncation = field_config_get_truncation(field->config , &min_value , &max_value); 
   if (truncation != TRUNCATE_NONE) {
-    const int data_size          = field_config_get_data_size(field->config);   
+    const int data_size          = field_config_get_data_size(field->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
     if (ecl_type == ecl_float_type) {
       float * data = (float *) field->data;
@@ -738,7 +738,7 @@ void field_free(field_type *field) {
 
 void field_deserialize(field_type * field , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const field_config_type *config      = field->config;
-  const int                data_size   = field_config_get_data_size(config);
+  const int                data_size   = field_config_get_data_size(config );
   const active_list_type * active_list = field_config_get_active_list(config); 
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   
@@ -749,7 +749,7 @@ void field_deserialize(field_type * field , serial_state_type * serial_state , c
 
 int field_serialize(const field_type *field , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const field_config_type *config      = field->config;
-  const int                data_size   = field_config_get_data_size(config);
+  const int                data_size   = field_config_get_data_size(config );
   const active_list_type  *active_list = field_config_get_active_list(config); 
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   
@@ -760,7 +760,7 @@ int field_serialize(const field_type *field , serial_state_type * serial_state ,
 
 void field_matrix_serialize(const field_type * field , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
-  const int                data_size   = field_config_get_data_size(config);
+  const int                data_size   = field_config_get_data_size(config );
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   
   enkf_matrix_serialize( field->data , data_size , ecl_type , active_list , A , row_offset , column);
@@ -769,7 +769,7 @@ void field_matrix_serialize(const field_type * field , const active_list_type * 
 
 void field_matrix_deserialize(field_type * field , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const field_config_type *config      = field->config;
-  const int                data_size   = field_config_get_data_size(config);
+  const int                data_size   = field_config_get_data_size(config );
   ecl_type_enum ecl_type               = field_config_get_ecl_type(config);
   
   enkf_matrix_deserialize( field->data , data_size , ecl_type , active_list , A , row_offset , column);
@@ -979,11 +979,12 @@ int field_get_active_index(const field_type * field , int i , int j  , int k) {
 
 void field_copy_ecl_kw_data(field_type * field , const ecl_kw_type * ecl_kw) {
   const field_config_type * config = field->config;
-  const int data_size      	   = field_config_get_data_size(config);
+  const int data_size      	   = field_config_get_data_size(config );
   ecl_type_enum field_type 	   = field_config_get_ecl_type(field->config);
   ecl_type_enum kw_type            = ecl_kw_get_type(ecl_kw);
 
   if (data_size != ecl_kw_get_size(ecl_kw)) {
+    fprintf(stderr,"\n");
     fprintf(stderr," ** Fatal error - the number of active cells has changed \n");
     fprintf(stderr," **   Grid:%s has %d active cells. \n",field_config_get_grid_name( config ) , data_size);
     fprintf(stderr," **   %s loaded from file has %d active cells.\n",field_config_get_key(config), ecl_kw_get_size(ecl_kw));
@@ -1201,7 +1202,7 @@ void field_get_dims(const field_type * field, int *nx, int *ny , int *nz) {
 void field_apply(field_type * field , field_func_type * func) {
   field_config_assert_unary(field->config , __func__);
   {
-    const int data_size          = field_config_get_data_size(field->config);   
+    const int data_size          = field_config_get_data_size( field->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
     
     if (ecl_type == ecl_float_type) {
@@ -1222,8 +1223,8 @@ void field_apply(field_type * field , field_func_type * func) {
 void field_iadd(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__); 
   {
-    const int data_size          = field_config_get_data_size(field1->config);   
-    const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
+    const int data_size          = field_config_get_data_size( field1->config );   
+    const ecl_type_enum ecl_type = field_config_get_ecl_type( field1->config );
     int i;
 
     if (ecl_type == ecl_float_type) {
@@ -1244,7 +1245,7 @@ void field_iadd(field_type * field1, const field_type * field2) {
 void field_imul(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__); 
   {
-    const int data_size          = field_config_get_data_size(field1->config);   
+    const int data_size          = field_config_get_data_size(field1->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
     int i;
 
@@ -1266,7 +1267,7 @@ void field_imul(field_type * field1, const field_type * field2) {
 void field_iaddsqr(field_type * field1, const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__); 
   {
-    const int data_size          = field_config_get_data_size(field1->config);   
+    const int data_size          = field_config_get_data_size(field1->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
     int i;
 
@@ -1288,7 +1289,7 @@ void field_iaddsqr(field_type * field1, const field_type * field2) {
 void field_scale(field_type * field, double scale_factor) {
   field_config_assert_unary(field->config, __func__); 
   {
-    const int data_size          = field_config_get_data_size(field->config);   
+    const int data_size          = field_config_get_data_size(field->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
     int i;
 
@@ -1319,7 +1320,7 @@ void field_isqrt(field_type * field) {
 void field_imul_add(field_type * field1 , double factor , const field_type * field2) {
   field_config_assert_binary(field1->config , field2->config , __func__); 
   {
-    const int data_size          = field_config_get_data_size(field1->config);   
+    const int data_size          = field_config_get_data_size(field1->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field1->config);
     int i;
 
@@ -1341,7 +1342,7 @@ void field_imul_add(field_type * field1 , double factor , const field_type * fie
 void field_update_sum(field_type * sum , const field_type * field , double lower_limit , double upper_limit) {
   field_output_transform( field );
   {
-    const int data_size          = field_config_get_data_size(field->config);   
+    const int data_size          = field_config_get_data_size(field->config );   
     const ecl_type_enum ecl_type = field_config_get_ecl_type(field->config);
     int i;
     
@@ -1423,7 +1424,7 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
        if (inflation_data[c] > 1.0) {                                                                                                                            \
          int i,j,k;                                                                                                                                              \
          field_config_get_ijk( inflation->config , c , &i, &j , &k );                                                                                            \
-         log_add_fmt_message( logh , log_level , "Inflating %s:%d,%d,%d with %6.4f" , field_config_get_key( inflation->config ) , i,j,k , inflation_data[c]);    \
+         log_add_fmt_message( logh , log_level , NULL , "Inflating %s:%d,%d,%d with %6.4f" , field_config_get_key( inflation->config ) , i,j,k , inflation_data[c]);    \
        }                                                                                                                                                         \
      }                                                                                                                                                           \
    }                                                                                                                                                             \

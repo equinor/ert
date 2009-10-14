@@ -190,7 +190,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   }
   if (enkf_main->dbase != NULL) enkf_fs_free(enkf_main->dbase );
   
-  log_add_message( enkf_main->logh , false , "Exiting ert application normally - all is fine(?)" , false);
+  log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
   log_close( enkf_main->logh );
   analysis_config_free(enkf_main->analysis_config);
   ecl_config_free(enkf_main->ecl_config);
@@ -844,7 +844,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
         if (status_list[iens] != status) {
           arg_pack_append_ptr( arg_list[iens] , enkf_state );
           arg_pack_append_int( arg_list[iens] , status );
-        
+          
           thread_pool_add_job( tp , enkf_state_complete_forward_model__ , arg_list[iens] );
         }
       }
@@ -886,13 +886,9 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
 
   int iens;
 
-  for (int i=0; i < ens_size; i++)
-    printf("active[%d] = %d \n",i,iactive[i]);
-  
-  
   printf("Starting forward step: %d -> %d\n",step1 , step2);
-  log_add_message(enkf_main->logh , 1 , "===================================================================",false);
-  log_add_fmt_message(enkf_main->logh , 1 , "Forward model: %d -> %d ",step1,step2);
+  log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
+  log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
   job_size = 0;
   for (iens = 0; iens < ens_size; iens++)
     if (iactive[iens]) job_size++;
@@ -934,7 +930,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
       thread_pool_free(submit_threads);
     }
-    log_add_message(enkf_main->logh , 1 , "All jobs ready for running - waiting for completion" , false);
+    log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
     enkf_main_run_wait_loop( enkf_main );
     job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
     arg_pack_free( queue_args );
@@ -948,18 +944,19 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
     for (iens = 0; iens < ens_size; iens++) {
       if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
         if ( runOK ) {
-          fprintf(stderr,"Some models failed to integrate from DATES %d -> %d:\n",step1 , step2);
+          log_add_fmt_message( enkf_main->logh , 1 , stderr , "Some models failed to integrate from DATES %d -> %d:",step1 , step2);
           runOK = false;
         }
-        fprintf(stderr,"** Error in: %s \n",enkf_state_get_run_path(enkf_main->ensemble[iens]));
+        log_add_fmt_message( enkf_main->logh , 1 , stderr , "** Error in: %s " , enkf_state_get_run_path(enkf_main->ensemble[iens]));
       }
     }
     if (!runOK) 
       util_exit("The integration failed - check your forward model ...\n");
   }
-  log_add_fmt_message(enkf_main->logh , 1 , "All jobs complete and data loaded for step: ->%d" , step2);
+  log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
+
   if (enkf_update)
-    enkf_main_UPDATE(enkf_main , step1 , step2);
+    enkf_main_UPDATE(enkf_main , load_start , step2);
   
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
@@ -1030,6 +1027,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 	  const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
 	  state_enum init_state_parameter;
           state_enum init_state_dynamic;
+          int      init_step_parameter;
           int      load_start;
 	  int 	   report_step1;
 	  int 	   report_step2;
@@ -1039,14 +1037,14 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 	  enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on , &forward_model);
 	  if (inode == start_inode) 
 	    report_step1 = start_report;  /* If we are restarting from somewhere. */
-
 	  
           if (rerun) {
             /* rerun ... */
-            load_start           = init_step_parameters; /* +1 below */
+            load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
+            init_step_parameter  = report_step1;
             init_state_dynamic   = FORECAST;
             init_state_parameter = ANALYZED;
-            report_step1 = rerun_start;
+            report_step1         = rerun_start;
           } else {
             if (prev_enkf_on)
               init_state_dynamic = ANALYZED;
@@ -1054,17 +1052,17 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
               init_state_dynamic = FORECAST;
             /* 
                This is not a rerun - and then parameters and dynamic
-               data should be initialized be initialized from the same
-               report step.
+               data should be initialized from the same report step.
             */
+            init_step_parameter  = report_step1;
             init_state_parameter = init_state_dynamic;
             load_start = report_step1;
           }
-
+          
           if (load_start > 0)
             load_start++;
 
-	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , report_step1 , init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
+	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
 	  prev_enkf_on = enkf_on;
 	}
       } else
@@ -1225,6 +1223,10 @@ static config_type * enkf_main_alloc_config() {
   */
   item = config_add_item(config , "UPDATE_PATH" , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
+
+  item = config_add_item( config , "LICENSE_PATH" , true , false );
+  config_item_set_argc_minmax(item , 1 , 1, NULL );
+  
     
   /*****************************************************************/
   /* Items related to running jobs with lsf/rsh/local ...          */
@@ -1330,6 +1332,9 @@ static config_type * enkf_main_alloc_config() {
 
   item = config_add_item(config , "ADD_STATIC_KW" , false , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
+  
+  item = config_add_item(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , false , true);
+  config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
     
   item = config_add_item(config , "OBS_CONFIG"  , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
@@ -1494,13 +1499,14 @@ void enkf_main_remount_fs( enkf_main_type * enkf_main ) {
    several times.
 */
 
+
 void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
   /* First clear all existing observation keys. */
   ensemble_config_clear_obs_keys( enkf_main->ensemble_config );
 
   /* Add new observation keys. */
   {
-    hash_type      * map  = enkf_obs_alloc_summary_map(enkf_main->obs);
+    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
     hash_iter_type * iter = hash_iter_alloc(map);
     const char * obs_key  = hash_iter_get_next_key(iter);
     while (obs_key  != NULL) {
@@ -1591,7 +1597,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       log_reset_filename( enkf_main->logh , config_get_value(config , "LOG_FILE"));
       
     printf("Activity will be logged to ..............: %s \n",log_get_filename( enkf_main->logh ));
-    log_add_message(enkf_main->logh , 1 , "ert configuration loaded" , false);
+    log_add_message(enkf_main->logh , 1 , NULL , "ert configuration loaded" , false);
 
 
 
@@ -1887,11 +1893,12 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   }
 
   
+
   /* Make sure we internalize at all observation times.*/
   {
-    hash_type      * map  = enkf_obs_alloc_summary_map(enkf_main->obs);
+    hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
     hash_iter_type * iter = hash_iter_alloc(map); 
-    const char * obs_key = hash_iter_get_next_key(iter);
+    const char * obs_key  = hash_iter_get_next_key(iter);
     
     while (obs_key != NULL) {
       obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_main->obs , obs_key );

@@ -36,19 +36,26 @@
 
 struct gen_data_struct {
   int                     __type_id;
-  gen_data_config_type  * config;           /* Thin config object - mainly contains filename for remote load */
-  char                  * data;             /* Actual storage - will be casted to double or float on use. */
+  gen_data_config_type  * config;            /* Thin config object - mainly contains filename for remote load */
+  char                  * data;              /* Actual storage - will be casted to double or float on use. */
+  int                     current_data_size; /* The instance is holding the size itself. */
 };
 
 
+
+static int gen_data_get_current_byte_size( const gen_data_type * gen_data ) {
+  //if (gen_data->current_size < 0) 
+  //util_abort("%s: tried to read invalid gen_data->current_data_size - BROKEN CODE \n",__func__ );
+  return gen_data->current_data_size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
+}
 
 
 gen_data_config_type * gen_data_get_config(const gen_data_type * gen_data) { return gen_data->config; }
 
 
 void gen_data_realloc_data(gen_data_type * gen_data) {
-  int byte_size = gen_data_config_get_byte_size(gen_data->config);
-
+  int byte_size = gen_data_get_current_byte_size(gen_data);
+  
   if (byte_size > 0)
     gen_data->data = util_realloc(gen_data->data , byte_size , __func__);
   else 
@@ -63,7 +70,8 @@ gen_data_type * gen_data_alloc(const gen_data_config_type * config) {
   gen_data->config    = (gen_data_config_type *) config;
   gen_data->data      = NULL;
   gen_data_realloc_data(gen_data);
-  gen_data->__type_id = GEN_DATA;
+  gen_data->__type_id         = GEN_DATA;
+  gen_data->current_data_size = -1;  /* God - if you ever read this .... */
   return gen_data;
 }
 
@@ -72,17 +80,18 @@ gen_data_type * gen_data_copyc(const gen_data_type * gen_data) {
   gen_data_type * copy = gen_data_alloc(gen_data->config);
   
   if (gen_data->data != NULL) {
-    int byte_size = gen_data_config_get_byte_size( gen_data->config );
-    copy->data = util_alloc_copy(gen_data->data , byte_size , __func__);
+    int byte_size = gen_data_get_current_byte_size( gen_data );
+    copy->data    = util_alloc_copy(gen_data->data , byte_size , __func__);
   }
-  
+  copy->current_data_size = gen_data->current_data_size;
   return copy;
 }
   
   
 void gen_data_free_data(gen_data_type * gen_data) {
   util_safe_free(gen_data->data);
-  gen_data->data = NULL;
+  gen_data->data              = NULL;
+  gen_data->current_data_size = -1;
 }
 
 
@@ -108,21 +117,19 @@ void gen_data_free(gen_data_type * gen_data) {
 */
 
 
-bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , bool internal_state) {
+bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , int report_step , bool internal_state) {
   const bool write_zero_size = true; /* true:ALWAYS write a file   false:only write files with size > 0. */
   {
-    bool write      = write_zero_size;
-    int size        = gen_data_config_get_data_size(gen_data->config);
-    int report_step = gen_data_config_get_report_step(gen_data->config); 
+    bool write    = write_zero_size;
+    int size      = gen_data->current_data_size;
     if (size > 0) 
       write = true;
-
+    
     if (write) {
-      int byte_size = gen_data_config_get_byte_size(gen_data->config);
-      
+      int byte_size = gen_data_get_current_byte_size( gen_data );
       buffer_fwrite_int( buffer , GEN_DATA );
       buffer_fwrite_int( buffer , size );
-      buffer_fwrite_int( buffer , report_step);
+      buffer_fwrite_int( buffer , report_step);   /* Why the heck do I need to store this ???? */
       buffer_fwrite_compressed( buffer , gen_data->data , byte_size);
       return true;
     } else
@@ -145,14 +152,18 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer) {
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size           = buffer_fread_int(buffer);
   report_step    = buffer_fread_int(buffer);
+  printf("report_step:%d   size:%d \n",report_step , size );
   {
-    size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
+    size_t byte_size       = gen_data_get_current_byte_size( gen_data );
     size_t compressed_size = buffer_get_remaining_size( buffer ); 
     gen_data->data         = util_realloc( gen_data->data , byte_size , __func__);
-    buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size);
+    buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
   }
   gen_data_config_assert_size(gen_data->config , size , report_step);
+  gen_data->current_data_size = size;
 }
+
+
 
 
 void gen_data_upgrade_103(const char * filename) {
@@ -181,7 +192,7 @@ void gen_data_upgrade_103(const char * filename) {
 
 int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   ecl_type_enum ecl_type 	       = gen_data_config_get_internal_type(gen_data->config);
-  const int data_size    	       = gen_data_config_get_data_size(gen_data->config);
+  const int data_size    	       = gen_data->current_data_size;
   const active_list_type  *active_list = gen_data_config_get_active_list(gen_data->config);
   int elements_added;
 
@@ -193,7 +204,7 @@ int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial
 
 void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   ecl_type_enum ecl_type              = gen_data_config_get_internal_type(gen_data->config);
-  const int data_size    	      = gen_data_config_get_data_size(gen_data->config);
+  const int data_size    	      = gen_data->current_data_size;
   const active_list_type *active_list = gen_data_config_get_active_list(gen_data->config);
   
   enkf_deserialize(gen_data->data , data_size , ecl_type , active_list  , serial_state , serial_vector);
@@ -203,16 +214,16 @@ void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_
 
 void gen_data_matrix_serialize(const gen_data_type * gen_data , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const gen_data_config_type *config   = gen_data->config;
-  const int                data_size   = gen_data_config_get_data_size(config);
-  ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
+  const int                data_size   = gen_data->current_data_size;
+  ecl_type_enum ecl_type               = gen_data_config_get_internal_type( config );
 
   enkf_matrix_serialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
 }
 
 
 void gen_data_matrix_deserialize(gen_data_type * gen_data , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
-  const gen_data_config_type *config      = gen_data->config;
-  const int                data_size   = gen_data_config_get_data_size(config);
+  const gen_data_config_type *config   = gen_data->config;
+  const int                data_size   = gen_data->current_data_size;
   ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
   
   enkf_matrix_deserialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
@@ -232,7 +243,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
     ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
 
     if (load_type == internal_type)
-      memcpy(gen_data->data , data , gen_data_config_get_byte_size(gen_data->config));
+      memcpy(gen_data->data , data , gen_data_get_current_byte_size( gen_data ));
     else {
       if (load_type == ecl_float_type)
 	util_float_to_double((double *) gen_data->data , data , size);
@@ -276,10 +287,11 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
   } 
   
   gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
+  gen_data->current_data_size = size;
   util_safe_free(buffer);
-  
   return has_file;
 }
+
 
 
 
@@ -295,6 +307,7 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
    config object ... ), hence the function must return true anyway, to
    not signal false errors.
 */
+
 
 
 bool gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
@@ -348,7 +361,7 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
   
   {
     ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
-    const int size              = gen_data_config_get_data_size(gen_data->config); 
+    const int size              = gen_data->current_data_size;
     int i;
     if (internal_type == ecl_float_type) {
       float * float_data = (float *) gen_data->data;
@@ -374,7 +387,7 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
 static void gen_data_ecl_write_binary(const gen_data_type * gen_data , const char * file , ecl_type_enum export_type) {
   FILE * stream    = util_fopen(file , "w");
   int sizeof_ctype = ecl_util_get_sizeof_ctype( export_type );
-  util_fwrite( gen_data->data , sizeof_ctype , gen_data_config_get_data_size( gen_data->config ) , stream , __func__);
+  util_fwrite( gen_data->data , sizeof_ctype , gen_data->current_data_size , stream , __func__);
   fclose(stream);
 }
 
@@ -416,8 +429,8 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path ,
 
 
 static void gen_data_assert_index(const gen_data_type * gen_data, int index) {
-  if ((index < 0) || (index >= gen_data_config_get_data_size(gen_data->config)))
-    util_abort("%s: index:%d invalid. Valid range: [0,%d) \n",__func__ , index , gen_data_config_get_data_size(gen_data->config));
+  if ((index < 0) || (index >= gen_data->current_data_size))
+    util_abort("%s: index:%d invalid. Valid range: [0,%d) \n",__func__ , index , gen_data->current_data_size);
 }
 
 
@@ -448,20 +461,22 @@ double gen_data_user_get(const gen_data_type * gen_data, const char * index_key,
 {
   int index;
 
-  if (util_sscanf_int(index_key , &index)) {
-    if (index < gen_data_config_get_data_size(gen_data->config)) {
-      *valid = true;
-      return gen_data_iget_double( gen_data , index );
-    }
-  } 
-
+  if (index_key != NULL) {
+    if (util_sscanf_int(index_key , &index)) {
+      if (index < gen_data->current_data_size) {
+        *valid = true;
+        return gen_data_iget_double( gen_data , index );
+      }
+    } 
+  }
+  
   *valid = false;
   return -1; /* Dummy to shut up compiler */
 }
 
 
 int gen_data_get_size(const gen_data_type * gen_data) {
-  return gen_data_config_get_data_size( gen_data->config );
+  return gen_data->current_data_size;
 }
 
 
@@ -473,7 +488,7 @@ const char * gen_data_get_key( const gen_data_type * gen_data) {
 void gen_data_clear( gen_data_type * gen_data ) {
   const gen_data_config_type * config = gen_data->config;
   ecl_type_enum internal_type         = gen_data_config_get_internal_type( config );
-  const int data_size                 = gen_data_config_get_data_size( config );   
+  const int data_size                 = gen_data->current_data_size;
 
   if (internal_type == ecl_float_type) {
     float * data = (float * ) gen_data->data;
@@ -489,7 +504,7 @@ void gen_data_clear( gen_data_type * gen_data ) {
 
 
 void gen_data_isqrt(gen_data_type * gen_data) {
-  const int data_size          = gen_data_config_get_data_size(gen_data->config);   
+  const int data_size               = gen_data->current_data_size;
   const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
   
   if (internal_type == ecl_float_type) {
@@ -509,7 +524,7 @@ void gen_data_isqrt(gen_data_type * gen_data) {
 void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
   {
-    const int data_size          = gen_data_config_get_data_size(gen_data1->config);   
+    const int data_size               = gen_data1->current_data_size;
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 
@@ -531,7 +546,7 @@ void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
 void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
   {
-    const int data_size          = gen_data_config_get_data_size(gen_data1->config);   
+    const int data_size               = gen_data1->current_data_size;
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 
@@ -553,7 +568,7 @@ void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
 void gen_data_iaddsqr(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
   {
-    const int data_size          = gen_data_config_get_data_size(gen_data1->config);   
+    const int data_size               = gen_data1->current_data_size;
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 
@@ -575,7 +590,7 @@ void gen_data_iaddsqr(gen_data_type * gen_data1, const gen_data_type * gen_data2
 void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
   //gen_data_config_assert_unary(gen_data->config, __func__); 
   {
-    const int data_size          = gen_data_config_get_data_size(gen_data->config);   
+    const int data_size               = gen_data->current_data_size;
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
     int i;
 
@@ -605,18 +620,21 @@ void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
    if (add_log_entry) {                                                                                                                                          \
      for (int c=0; c < data_size; c++) {                                                                                                                         \
        if (inflation_data[c] > 1.0)                                                                                                                              \
-         log_add_fmt_message( logh , log_level , "Inflating %s:%d with %6.4f" , gen_data_config_get_key( inflation->config ) , c, inflation_data[c]);            \
+         log_add_fmt_message( logh , log_level , NULL , "Inflating %s:%d with %6.4f" , gen_data_config_get_key( inflation->config ) , c, inflation_data[c]);     \
      }                                                                                                                                                           \
    }                                                                                                                                                             \
 }                                                                   
 
 
+/**
+   If the size changes during the simulation this will go 100% belly up.
+*/
 
 void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * std , const gen_data_type * min_std , log_type * logh) {
   const int log_level              = 3;
   const gen_data_config_type * config = inflation->config;
-  ecl_type_enum ecl_type           = gen_data_config_get_internal_type( config );
-  const int data_size              = gen_data_config_get_data_size( config );   
+  ecl_type_enum ecl_type              = gen_data_config_get_internal_type( config );
+  const int data_size                 = std->current_data_size;
   bool add_log_entry = false;
   if (log_get_level( logh ) >= log_level)
     add_log_entry = true;

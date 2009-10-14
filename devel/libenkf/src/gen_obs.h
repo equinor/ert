@@ -10,11 +10,11 @@
 typedef struct gen_obs_struct gen_obs_type;
 
 gen_obs_type * gen_obs_alloc( const char * obs_key , const char * , double , double , const char * , const char * );
+void           gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid);
 
 VOID_CHI2_HEADER(gen_obs);
 SAFE_CAST_HEADER(gen_obs);
 IS_INSTANCE_HEADER(gen_obs);
-VOID_OBS_ACTIVATE_HEADER(gen_obs)
 VOID_FREE_HEADER(gen_obs);
 VOID_GET_OBS_HEADER(gen_obs);
 VOID_MEASURE_HEADER(gen_obs);

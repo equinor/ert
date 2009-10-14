@@ -202,6 +202,7 @@ void ensemble_config_add_field(ensemble_config_type * config ) {
    needs the input/output filenames.
 */
 
+
 void ensemble_config_add_gen_data(ensemble_config_type * config , const char * key , stringlist_type * options) {
   enkf_var_type var_type;
   char * enkf_outfile;
@@ -374,8 +375,8 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
   
   
   /* GEN_DATA */
-  for (i=0; i < config_get_occurences(config , "GEN_PARAM"); i++) {
-    stringlist_type * options = config_iget_stringlist_ref(config , "GEN_PARAM" , i);
+  for (i=0; i < config_get_occurences(config , "GEN_DATA"); i++) {
+    stringlist_type * options = config_iget_stringlist_ref(config , "GEN_DATA" , i);
     char * key           = stringlist_iget_copy(options , 0);
     stringlist_idel( options , 0 );
       

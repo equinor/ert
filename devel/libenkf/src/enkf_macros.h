@@ -63,15 +63,6 @@ const prefix ## _type * prefix ## _safe_const_cast(const void * __arg) {   \
 /*****************************************************************/
 
 
-
-#define VOID_OBS_ACTIVATE(prefix) \
-void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void * active_info) { \
-    prefix ## _type * obs = prefix ## _safe_cast( void_obs );                           \
-    prefix ## _activate( obs , active_mode , active_info);                                        \
-}
-
-#define VOID_OBS_ACTIVATE_HEADER(prefix) void prefix ## _activate__(void * , active_mode_type , void *);
-
 /*****************************************************************/
 
 #define VOID_CONFIG_FREE(prefix)            void prefix ## _config_free__(void *void_arg) { prefix ## _config_free((prefix ## _config_type *) void_arg); }
@@ -80,7 +71,7 @@ void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void
 /*****************************************************************/
 
 #define GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size (const prefix ## _config_type *arg) { return arg->data_size; }
-#define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *);
+#define GET_DATA_SIZE_HEADER(prefix)        int prefix ## _config_get_data_size (const prefix ## _config_type *arg);
 
 #define VOID_GET_DATA_SIZE(prefix)               int prefix ## _config_get_data_size__ (const void * arg) {\
    prefix ## _config_type * config = prefix ## _config_safe_cast( arg ); \
@@ -90,6 +81,7 @@ void prefix ## _activate__(void * void_obs , active_mode_type active_mode , void
 
 
 /*****************************************************************/
+
 
 #define VOID_ALLOC(prefix)                                                            \
 void * prefix ## _alloc__(const void *void_config) {                                  \
@@ -102,9 +94,9 @@ void * prefix ## _alloc__(const void *void_config) {                            
 /*****************************************************************/
 
 #define VOID_STORE(prefix)                                        \
-bool prefix ## _store__(const void * void_arg , buffer_type * buffer , bool internal_state) {  \
+bool prefix ## _store__(const void * void_arg , buffer_type * buffer , int report_step , bool internal_state) {  \
    const prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
-   return prefix ## _store(arg , buffer , internal_state);        \
+   return prefix ## _store(arg , buffer , report_step , internal_state);        \
 }
 
 
@@ -114,7 +106,7 @@ void prefix ## _load__(void * void_arg , buffer_type * buffer) {  \
    prefix ## _load(arg , buffer);                          \
 }
 
-#define VOID_STORE_HEADER(prefix) bool prefix ## _store__(const void * , buffer_type * , bool);
+#define VOID_STORE_HEADER(prefix) bool prefix ## _store__(const void * , buffer_type * , int , bool);
 #define VOID_LOAD_HEADER(prefix) void prefix ## _load__(void * , buffer_type *);
 
 

@@ -84,7 +84,7 @@ gen_kw_type * gen_kw_copyc(const gen_kw_type *gen_kw) {
 
 
 
-bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  bool internal_state) {
+bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_step , bool internal_state) {
   buffer_fwrite_int( buffer , GEN_KW );
   scalar_buffer_fsave(gen_kw->scalar , buffer , internal_state);
   return true;
@@ -176,7 +176,7 @@ void gen_kw_matrix_deserialize(gen_kw_type *gen_kw , const active_list_type * ac
 void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
   const char * template_file = gen_kw_config_get_template_ref(gen_kw->config);
   if (template_file != NULL) {
-    const int size               = gen_kw_config_get_data_size(gen_kw->config);
+    const int size               = gen_kw_config_get_data_size(gen_kw->config );
     const double * output_data   = scalar_get_output_ref(gen_kw->scalar);
 
     int ikw;
@@ -207,7 +207,7 @@ void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list ,
   gen_kw_output_transform(gen_kw);
 
   *_kw_list       = (char **) gen_kw_config_get_name_list(gen_kw->config);
-  *_size          = gen_kw_config_get_data_size(gen_kw->config);
+  *_size          = gen_kw_config_get_data_size(gen_kw->config );
   *_output_values = (double *) scalar_get_output_ref(gen_kw->scalar);
 
 }
@@ -253,7 +253,7 @@ const char * gen_kw_get_name(const gen_kw_type * gen_kw, int kw_nr) {
 */
 
 void gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
-  const int size = gen_kw_config_get_data_size(gen_kw->config);
+  const int size = gen_kw_config_get_data_size(gen_kw->config );
   FILE * stream  = util_fopen( filename , "r");
   bool   readOK = true;
 
@@ -326,7 +326,7 @@ void gen_kw_set_global_subst_list(gen_kw_type * gen_kw , const subst_list_type *
 
 void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std, log_type * logh) {
   const int log_level           = 3;
-  const int data_size           = gen_kw_config_get_data_size(std->config);
+  const int data_size           = gen_kw_config_get_data_size(std->config );
   const double * std_data       = scalar_get_data_ref( std->scalar );
   const double * min_std_data   = scalar_get_data_ref( min_std->scalar );
   double       * inflation_data = scalar_get_data_ref( inflation->scalar );
@@ -342,7 +342,7 @@ void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , co
         inflation_data[i] = 1;
       
       if (add_log_entry && inflation_data[i] > 1)
-        log_add_fmt_message(logh , log_level , "Inflating %s:%s with %7.4f", gen_kw_config_get_key( inflation->config ) , gen_kw_config_iget_name( inflation->config , i) , inflation_data[i]);
+        log_add_fmt_message(logh , log_level , NULL , "Inflating %s:%s with %7.4f", gen_kw_config_get_key( inflation->config ) , gen_kw_config_iget_name( inflation->config , i) , inflation_data[i]);
     }
   }
 }

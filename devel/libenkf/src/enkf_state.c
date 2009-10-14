@@ -694,7 +694,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     
     char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
     ecl_sum_type * summary;
-    
+
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
       if (model_config_load_results( model_config , report_step)) {
         data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
@@ -708,10 +708,9 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
       summary = ecl_sum_fread_alloc(header_file , num_data_files , (const char **) data_files );
       util_free_stringlist( data_files , report_step2 - report_step1 + 1);
       free( header_file );
-    } else
+    } else 
       summary = NULL;  /* OK - no summary data was found on the disk. */
-   
-    
+
     /* The actual loading */
     for (report_step = report_step1; report_step <= report_step2; report_step++) {
       const bool internalize_all  = model_config_internalize_results( model_config , report_step );
@@ -720,15 +719,15 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         enkf_node_type * node = hash_iter_get_next_value(iter);
 	if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
 	  bool internalize = internalize_all;
-	  if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
+          if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
 	    internalize = enkf_node_internalize(node , report_step);
-
+          
 	  if (internalize) {
             if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))   /* Loading/internalizing */
               enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
             else {
               *loadOK = false;
-              log_add_fmt_message(shared_info->logh , 3 , "[%03d:%04d] Failed load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( node ));
+              log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( node ));
             }
 	  } 
 	}
@@ -867,9 +866,11 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	    if (internalize_state) {  
 	      stringlist_append_copy( enkf_state->restart_kw_list , kw);
 	      
+              /* Race condition here: */
 	      if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
 		ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
-	      
+	      /* Race end ... */
+
 	      if (!enkf_state_has_node(enkf_state , kw)) {
 		const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
 		enkf_state_add_node(enkf_state , kw , config_node); 
@@ -929,18 +930,18 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	bool internalize_kw = internalize_state;
 	if (!internalize_kw)
 	  internalize_kw = enkf_node_internalize(enkf_node , report_step);
-	
+        
 	if (internalize_kw) {
 	  if (enkf_node_has_func(enkf_node , ecl_load_func)) {
 	    if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , my_config->iens ))
               enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
             else {
               *loadOK = false;
-              log_add_fmt_message(shared_info->logh , 3 , "[%03d:%04d] Failed load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( enkf_node ));
+              log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( enkf_node ));
             }
 	  }
-	}
-      }
+	} 
+      } 
     }                                                                      
     hash_iter_free(iter);
   }
@@ -1476,13 +1477,13 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_f
   const shared_info_type    * shared_info = enkf_state->shared_info;
 
   if (load_failure)
-    log_add_fmt_message(shared_info->logh , 1 , "[%03d:%04d-%04d] Failed to load all data.",my_config->iens , run_info->step1 , run_info->step2);
+    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Failed to load all data.",my_config->iens , run_info->step1 , run_info->step2);
   else
-    log_add_fmt_message(shared_info->logh , 1 , "[%03d:%04d-%04d] Forward model failed.",my_config->iens, run_info->step1 , run_info->step2);
+    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Forward model failed.",my_config->iens, run_info->step1 , run_info->step2);
 
   if (run_info->num_internal_submit < run_info->max_internal_submit) {
     if (run_info->resample_when_fail) {
-      log_add_fmt_message( shared_info->logh , 1 , "[%03d] Resampling and resubmitting realization." ,my_config->iens);
+      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d] Resampling and resubmitting realization." ,my_config->iens);
       /* resample_when_fail is set to true - we try to resample before resubmitting. */
       {
         stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
@@ -1493,12 +1494,12 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_f
         stringlist_free( init_keys );
       }
     } else
-      log_add_fmt_message( shared_info->logh , 1 , "[%03d:%04d-%04d] Retrying realization from ERT main." ,my_config->iens , run_info->step1 , run_info->step2);
+      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Retrying realization from ERT main." ,my_config->iens , run_info->step1 , run_info->step2);
     
     enkf_state_ecl_write( enkf_state );  /* Writing a full new enkf_state instance */
     run_info->num_internal_submit++;
     job_queue_set_external_restart( shared_info->job_queue , my_config->iens );
-
+    
     return true;
   } else
     return false;
@@ -1525,24 +1526,23 @@ job_status_type  enkf_state_get_run_status( const enkf_state_type * enkf_state )
 
 static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job_status_type status) {
   run_info_type             * run_info    = enkf_state->run_info;
-  run_info->runOK = true;
   const shared_info_type    * shared_info = enkf_state->shared_info;
   const member_config_type  * my_config   = enkf_state->my_config;
   bool loadOK  = true;
   
   if (status == JOB_QUEUE_RUN_OK) {
     /**
-       The queue system has reported that the run is OK, i.e. it
-       has completed and produced the targetfile it should. We
-       then check in this scope whether the results can be loaded
-       back; if that is OK the final status is updated, otherwise: restart.
+       The queue system has reported that the run is OK, i.e. it has
+       completed and produced the targetfile it should. We then check
+       in this scope whether the results can be loaded back; if that
+       is OK the final status is updated, otherwise: restart.
     */
-    log_add_fmt_message( shared_info->logh , 2 , "[%03d:%04d-%04d] Forward model complete - starting to load results." , my_config->iens , run_info->step1, run_info->step2);
+    log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , my_config->iens , run_info->step1, run_info->step2);
     enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2 , &loadOK); 
     if (loadOK) {
       status = JOB_QUEUE_ALL_OK;
       job_queue_set_load_OK( shared_info->job_queue , my_config->iens );
-      log_add_fmt_message( shared_info->logh , 2 , "[%03d:%04d-%04d] Results loaded successfully." , my_config->iens , run_info->step1, run_info->step2);
+      log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , my_config->iens , run_info->step1, run_info->step2);
     } else 
       if (!enkf_state_internal_retry( enkf_state , true)) 
         /* 
@@ -1560,7 +1560,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
     */
     if (!enkf_state_internal_retry( enkf_state , false)) {
       run_info->runOK = false; /* OK - no more attempts. */
-      log_add_fmt_message( shared_info->logh , 1 , "[%03d:%04d-%04d] FAILED COMPLETELY." , my_config->iens , run_info->step1, run_info->step2);
+      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , my_config->iens , run_info->step1, run_info->step2);
       /* We tell the queue system that we have really given up on this one */
       job_queue_set_all_fail( shared_info->job_queue , my_config->iens );
     }
@@ -1595,7 +1595,8 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
     }
     if (unlink_runpath)
       util_unlink_path(run_info->run_path);
-  }
+    run_info->runOK = true;
+  } 
   run_info_complete_run(enkf_state->run_info);
   run_info->__ready = false;
   

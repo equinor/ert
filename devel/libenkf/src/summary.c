@@ -27,7 +27,7 @@ struct summary_struct {
 
 
 void summary_clear(summary_type * summary) {
-  const int size = summary_config_get_data_size(summary->config);   
+  const int size = summary_config_get_data_size(summary->config );   
   int k;
   for (k = 0; k < size; k++)
     summary->data[k] = 0.0;
@@ -35,7 +35,7 @@ void summary_clear(summary_type * summary) {
 
 
 void summary_realloc_data(summary_type *summary) {
-  summary->data = util_malloc(summary_config_get_data_size(summary->config) * sizeof *summary->data , __func__);
+  summary->data = util_malloc(summary_config_get_data_size(summary->config ) * sizeof *summary->data , __func__);
 }
 
 
@@ -58,7 +58,7 @@ summary_type * summary_alloc(const summary_config_type * summary_config) {
 
 
 summary_type * summary_copyc(const summary_type *summary) {
-  const int size = summary_config_get_data_size(summary->config);   
+  const int size = summary_config_get_data_size(summary->config );   
   summary_type * new = summary_alloc(summary->config);
   
   memcpy(new->data , summary->data , size * sizeof *summary->data);
@@ -99,7 +99,7 @@ void summary_upgrade_103( const char * filename ) {
 
 
 
-bool summary_store(const summary_type * summary , buffer_type * buffer, bool internal_state) {
+bool summary_store(const summary_type * summary , buffer_type * buffer, int report_step , bool internal_state) {
   int  size = summary_config_get_data_size( summary->config );
   buffer_fwrite_int( buffer , SUMMARY );
   buffer_fwrite( buffer , summary->data , sizeof * summary->data , size);
@@ -117,7 +117,7 @@ void summary_free(summary_type *summary) {
 
 void summary_deserialize(const summary_type * summary , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
   const summary_config_type *config      = summary->config;
-  const int                data_size   = summary_config_get_data_size(config);
+  const int                data_size   = summary_config_get_data_size(config );
   const active_list_type  *active_list = summary_config_get_active_list(config);
   enkf_deserialize(summary->data , data_size , ecl_double_type , active_list , serial_state , serial_vector);
 }
@@ -125,7 +125,7 @@ void summary_deserialize(const summary_type * summary , serial_state_type * seri
 
 int summary_serialize(const summary_type *summary , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
   const summary_config_type *config    = summary->config;
-  const int                data_size   = summary_config_get_data_size(config);
+  const int                data_size   = summary_config_get_data_size(config );
   const active_list_type  *active_list = summary_config_get_active_list(config);
   
   return enkf_serialize(summary->data , data_size , ecl_double_type , active_list , serial_state , serial_offset , serial_vector);
@@ -134,7 +134,7 @@ int summary_serialize(const summary_type *summary , serial_state_type * serial_s
 
 void summary_matrix_serialize(const summary_type * summary , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const summary_config_type *config  = summary->config;
-  const int                data_size = summary_config_get_data_size(config);
+  const int                data_size = summary_config_get_data_size(config );
   
   enkf_matrix_serialize( summary->data , data_size , ecl_double_type , active_list , A , row_offset , column);
 }
@@ -142,7 +142,7 @@ void summary_matrix_serialize(const summary_type * summary , const active_list_t
 
 void summary_matrix_deserialize(summary_type * summary , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
   const summary_config_type *config  = summary->config;
-  const int                data_size = summary_config_get_data_size(config);
+  const int                data_size = summary_config_get_data_size(config );
   
   enkf_matrix_deserialize( summary->data , data_size , ecl_double_type , active_list , A , row_offset , column);
 }
@@ -181,12 +181,11 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
     const char * var_key               = summary_config_get_var(summary->config);
     const ecl_smspec_var_type var_type = summary_config_get_var_type(summary->config , ecl_sum);
     
-
     /* Check if the ecl_sum instance has this report step. */
     if (ecl_sum_has_report_step( ecl_sum , report_step )) {
       int ministep2;
       ecl_sum_report2ministep_range(ecl_sum , report_step , NULL , &ministep2);
-      
+
       if ((var_type == ECL_SMSPEC_WELL_VAR) || (var_type == ECL_SMSPEC_GROUP_VAR)) {
         /* .. check if the/group well is defined in the smspec file (i.e. if it is open). */
         if (ecl_sum_has_general_var(ecl_sum , var_key)) 

@@ -88,7 +88,7 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
       break;
     case(GEN_DATA):
       node->freef             = gen_data_config_free__;
-      node->get_data_size     = gen_data_config_get_data_size__;
+      node->get_data_size     = NULL;
       break;
     default:
       util_abort("%s : invalid implementation type: %d - aborting \n",__func__ , impl_type);
@@ -103,6 +103,9 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
 */
 
 int enkf_config_node_get_data_size( const enkf_config_node_type * node) {
+  if (node->get_data_size == NULL)
+    util_abort("%s: function_handler: get_data_size not registered \n",__func__);
+  
   return node->get_data_size( node->data );
 }
 

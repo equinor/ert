@@ -114,6 +114,7 @@ static obs_vector_type * obs_vector_alloc(obs_impl_type obs_type , const char * 
     vector->get_obs    = gen_obs_get_observations__;
     vector->type_check = gen_obs_is_instance__;
     vector->user_get   = gen_obs_user_get__;
+    vector->chi2       = gen_obs_chi2__; 
     break;
   default:
     util_abort("%s: internal error - obs_type:%d not recognized \n",__func__ , obs_type);
@@ -579,8 +580,9 @@ void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,co
 
 
 static double obs_vector_chi2__(const obs_vector_type * obs_vector , int report_step , const enkf_node_type * node) { 
-  if (obs_vector->nodes[report_step] != NULL) 
+  if (obs_vector->nodes[report_step] != NULL) {
     return obs_vector->chi2( obs_vector->nodes[report_step] , enkf_node_value_ptr( node ));
+  }
   else
     return 0.0;  /* Observation not active for this report step. */
 }

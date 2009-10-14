@@ -8,6 +8,31 @@
 /*****************************************************************/
 
 
+const char * enkf_types_get_var_name(enkf_var_type var_type) {
+  switch(var_type) {
+  case(INVALID):
+    return "INVALID";
+    break;
+  case PARAMETER:
+    return "PARAMETER";
+    break;
+  case STATIC_STATE:
+    return "STATIC_STATE";
+    break;
+  case DYNAMIC_STATE:
+    return "DYNAMIC_STATE";
+    break;
+  case DYNAMIC_RESULT:
+    return "DYNAMIC_RESULT";
+    break;
+  default:
+    util_abort("%s: internal error - unrecognized var type: %d - aborting \n",__func__ , var_type);
+    return NULL;
+  }
+}
+
+
+
 const char * enkf_types_get_impl_name(enkf_impl_type impl_type) {
   switch(impl_type) {
   case(INVALID):

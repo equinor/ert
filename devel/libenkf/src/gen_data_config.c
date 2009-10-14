@@ -12,6 +12,7 @@
 #include <gen_data_common.h>
 #include <gen_data_active.h>
 #include <active_list.h>
+#include <int_vector.h>
 
 #define GEN_DATA_CONFIG_ID 90051
 struct gen_data_config_struct {
@@ -27,7 +28,7 @@ struct gen_data_config_struct {
   gen_data_file_format_type    	 output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
-  int                            __report_step;         /* Internal variable used for run_time checking that all instances have the same size (at the same report_step). */
+  int_vector_type              * data_size_vector;      /* Data size - indexed with report_step */
 
   /* 
      The data below this line is just held during booting,
@@ -46,12 +47,6 @@ SAFE_CAST(gen_data_config , GEN_DATA_CONFIG_ID)
 gen_data_file_format_type gen_data_config_get_input_format ( const gen_data_config_type * config) { return config->input_format; }
 gen_data_file_format_type gen_data_config_get_output_format( const gen_data_config_type * config) { return config->output_format; }
 
-int gen_data_config_get_report_step(const gen_data_config_type * config) { return config->__report_step; }
-
-
-int gen_data_config_get_byte_size(const gen_data_config_type * config) {
-  return config->data_size * ecl_util_get_sizeof_ctype(config->internal_type);
-}
 
 ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * config) {
   return config->internal_type;
@@ -91,8 +86,8 @@ gen_data_config_type * gen_data_config_alloc(const char * key,
   config->output_format     = output_format;
   config->enkf_infile       = util_alloc_string_copy( enkf_infile );
   config->enkf_outfile      = util_alloc_string_copy( enkf_outfile );
-  config->__report_step     = -1;
-
+  config->data_size_vector  = int_vector_alloc( 0 , -1 );   /* The default value: -1 - indicates "NOT SET" */
+  
   /* Condition 1: */
   if ((enkf_outfile != NULL) && (output_format == GEN_DATA_UNDEFINED))
     util_abort("%s: invalid configuration. When enkf_outfile != NULL you must explicitly specify an output format with OUTPUT_FORMAT:.\n",__func__);
@@ -253,6 +248,7 @@ gen_data_config_type * gen_data_config_alloc_with_options(const char * key , boo
 void gen_data_config_free(gen_data_config_type * config) {
   active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free(config->init_file_fmt);
+  int_vector_free( config->data_size_vector );
   util_safe_free( config->key );
   free(config);
 }
@@ -281,14 +277,17 @@ void gen_data_config_free(gen_data_config_type * config) {
 void gen_data_config_assert_size(gen_data_config_type * config , int data_size, int report_step) {
   pthread_mutex_lock( &config->update_lock );
   {
-    if (report_step != config->__report_step) {
-      config->data_size     = data_size; 
-      config->__report_step = report_step;
-    } else if (config->data_size != data_size) {
+    int current_size = int_vector_safe_iget( config->data_size_vector , report_step );
+    if (current_size < 0) {
+      int_vector_iset( config->data_size_vector , report_step , data_size );
+      current_size = data_size;
+    }
+    
+    if (current_size != data_size) {
       util_abort("%s: Size mismatch when loading from file - got %d elements - expected:%d [report_step:%d] \n",
 		 __func__ , 
 		 data_size , 
-		 config->data_size, 
+		 current_size , 
 		 report_step);
     }
   }
@@ -337,5 +336,3 @@ const char * gen_data_config_get_key( const gen_data_config_type * config) {
 
 VOID_FREE(gen_data_config)
 GET_ACTIVE_LIST(gen_data)
-GET_DATA_SIZE(gen_data)
-VOID_GET_DATA_SIZE(gen_data) 

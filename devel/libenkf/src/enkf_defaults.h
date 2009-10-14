@@ -15,6 +15,10 @@
 #define DEFAULT_HOST_TYPE  "STATOIL"
 #define DEFAULT_DBASE_TYPE "PLAIN"
 
+/** 
+    The default number of block_fs instances allocated. 
+*/
+#define ENKF_DEFAULT_NUM_BLOCK_FS_DRIVERS 32
 
 
 /* Eclipse IO  related stuff */

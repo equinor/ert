@@ -89,9 +89,21 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       free(base);
     } 
 
-    ecl_config->sched_file = sched_file_parse_alloc( schedule_src , start_date );
+    ecl_config->sched_file = sched_file_alloc( start_date );
+    {
+      if (config_has_set_item( config , "ADD_FIXED_LENGTH_SCHEDULE_KW")) {
+        int iocc;
+        for (iocc = 0; iocc < config_get_occurences(config , "ADD_FIXED_LENGTH_SCHEDULE_KW"); iocc++) 
+          sched_file_add_fixed_length_kw( ecl_config->sched_file , 
+                                          config_iget(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 0) , 
+                                          config_iget_as_int(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 1));
+        
+      }
+    }
+    sched_file_parse(ecl_config->sched_file , schedule_src );
+
     ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the
-													     end of HISTORY. */
+                                                                                                            end of HISTORY. */
     if (config_has_set_item(config , "SCHEDULE_PREDICTION_FILE"))
       ecl_config->prediction_sched_file_fmt = path_fmt_alloc_path_fmt( config_iget(config , "SCHEDULE_PREDICTION_FILE" , 0,0) );
     else

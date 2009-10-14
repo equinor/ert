@@ -219,16 +219,53 @@ void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data
 
 
 
-void gen_obs_activate(gen_obs_type * obs , active_mode_type active_mode , void * __active) {
-  //gen_obs_active_type * active = gen_obs_active_safe_cast(__active);
-}
+
+/**
+   In general the gen_obs observation vector can be smaller than the
+   gen_data field it is observing, i.e. we can have a situation like
+   this:
+
+           Data               Obs
+           ----               ---
+
+          [ 6.0 ] ----\
+          [ 2.0 ]      \---> [ 6.3 ]    
+          [ 3.0 ] ---------> [ 2.8 ]   
+          [ 2.0 ]      /---> [ 4.3 ]
+          [ 4.5 ] ----/
+
+   The situation here is as follows:
+
+   1. We have a gen data vector with five elements.
+
+   2. We have an observation vector of three elements, which observes
+      three of the elements in the gen_data vector, in this particular
+      case the data_index_list of the observation equals: [0 , 2 , 4].
+
+   Now when we want to look at the match of observation quality of the
+   last element in the observation vector it would be natural to use
+   the user_get key: "obs_key:2" - however this is an observation of
+   data element number 4, i.e. as seen from data context (when adding
+   observations to an ensemble plot) the natural indexing would be:
+   "data_key:4".
 
 
+   The function gen_obs_user_get_with_data_index() will do the
+   translation from data based indexing to observation based indexing, i.e.
+   
+      gen_obs_user_get_with_data_index("obs_key:4") 
 
-void gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid) {
-  int index;
+   will do an inverse lookup of the '4' and further call
+
+      gen_obs_user_get("obs_key:2")
+
+*/
+          
+
+void gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid) { 
+  int index; 
   *valid = false;
-  
+
   if (util_sscanf_int( index_key , &index)) {
     if ((index >= 0) && (index < gen_obs->obs_size)) {
       *valid = true;
@@ -239,12 +276,37 @@ void gen_obs_user_get(const gen_obs_type * gen_obs , const char * index_key , do
 }
 
 
+void gen_obs_user_get_with_data_index(const gen_obs_type * gen_obs , const char * index_key , double * value , double * std , bool * valid) { 
+  if (gen_obs->observe_all_data)
+    /* The observation and data vectors are equally long - no reverse lookup necessary. */
+    gen_obs_user_get(gen_obs , index_key , value , std , valid);
+  else {
+    *valid = false;
+    int data_index;
+    if (util_sscanf_int( index_key , &data_index )) {
+      int obs_index      =  0; 
+      do {
+        if (gen_obs->data_index_list[ obs_index ] == data_index) 
+          /* Found it - will use the 'obs_index' value. */
+          break;
+        
+        obs_index++;
+      } while (obs_index < gen_obs->obs_size);
+      if (obs_index < gen_obs->obs_size) { /* The reverse lookup succeeded. */
+        *valid = true;
+        *value = gen_obs->obs_data[ obs_index ];
+        *std   = gen_obs->obs_std[ obs_index ];
+      }
+    }
+  }
+}
+
+
 
   
 /*****************************************************************/
 SAFE_CAST(gen_obs , GEN_OBS_TYPE_ID)
 IS_INSTANCE(gen_obs , GEN_OBS_TYPE_ID)
-VOID_OBS_ACTIVATE(gen_obs)
 VOID_FREE(gen_obs)
 VOID_GET_OBS(gen_obs)
 VOID_MEASURE(gen_obs , gen_data)

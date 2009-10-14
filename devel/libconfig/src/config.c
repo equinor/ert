@@ -13,6 +13,9 @@
 
 
 
+
+
+
 /**
 Structure to parse configuration files of this type:
 
@@ -754,13 +757,35 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
     }
 
 
-    /* Filtering ... */
+    /* Filtering based on DEFINE statements */
     if (subst_list_get_size( config->define_list ) > 0) {
       int iarg;
       for (iarg = 0; iarg < argc; iarg++) {
 	char * filtered_copy = subst_list_alloc_filtered_string( config->define_list , argv[iarg] );
 	free( argv[iarg] );
 	argv[iarg] = filtered_copy;
+      }
+    }
+
+    
+    /* Filtering based on environment variables */
+    {
+      int iarg;
+      for (iarg = 0; iarg < argc; iarg++) {
+        int    env_offset = 0;
+        char * env_var;
+        do {
+          env_var = util_isscanf_alloc_envvar( argv[iarg] , env_offset );
+          if (env_var != NULL) {
+            const char * env_value = getenv( &env_var[1] );
+            if (env_value != NULL)
+              util_string_replace_inplace( &argv[iarg] , env_var , env_value , NULL , NULL );
+            else {
+              env_offset += 1;
+              fprintf(stderr,"** Warning: environment variable: %s is not defined \n", env_var);
+            }
+          }
+        } while (env_var != NULL);
       }
     }
     
@@ -1223,17 +1248,16 @@ static void config_parse__(config_type * config ,
 		util_alloc_file_components(token_list[1] , &tmp_path , &tmp_file , &extension);
 
 		/* Allocating a new path with current config_cwd and the (relative) path to the new config_file */
-		if (!util_is_abs_path(tmp_path)) 
-		  include_path = util_alloc_filename(config_cwd , tmp_path , NULL);
-		else
-		  include_path = util_alloc_string_copy(tmp_path);
+                if (tmp_path == NULL)
+                  include_path = util_alloc_string_copy( config_cwd );
+                else {
+                  if (!util_is_abs_path(tmp_path)) 
+                    include_path = util_alloc_filename(config_cwd , tmp_path , NULL);
+                  else
+                    include_path = util_alloc_string_copy(tmp_path);
+                }
 		
-		/* Allocating a new filename **with** extension */
-		if (extension != NULL) 
-		  include_file = util_alloc_filename(NULL , tmp_file , extension);
-		else
-		  include_file = util_alloc_string_copy(tmp_file);
-
+                include_file = util_alloc_filename(NULL , tmp_file , extension);
 		free(tmp_file);
 		free(tmp_path);
 	      }

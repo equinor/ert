@@ -54,7 +54,7 @@ static void site_config_install_job(site_config_type * site_config , const char 
 static void site_config_install_joblist(site_config_type * site_config , const config_type * config) {
   int  i;
 
-  site_config->joblist = ext_joblist_alloc();
+  site_config->joblist = ext_joblist_alloc( config_iget( config , "LICENSE_PATH" , 0 , 0));
   stringlist_type *item_list = config_alloc_complete_stringlist(config , "INSTALL_JOB");
 
   for (i=0; i < stringlist_get_size(item_list); i+=2) 
