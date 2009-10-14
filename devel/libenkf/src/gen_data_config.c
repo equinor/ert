@@ -53,6 +53,14 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
 }
 
 
+int gen_data_config_get_data_size( const gen_data_config_type * config , int report_step) {
+  int current_size = int_vector_safe_iget( config->data_size_vector , report_step );
+  if (current_size < 0) 
+    util_abort("%s: Size not set \n",__func__);
+  return current_size; 
+}
+
+
 
 /**
    Internal consistency checks:
@@ -273,7 +281,6 @@ void gen_data_config_free(gen_data_config_type * config) {
 */
 
 
-/* Locking is completely broken here ... */
 void gen_data_config_assert_size(gen_data_config_type * config , int data_size, int report_step) {
   pthread_mutex_lock( &config->update_lock );
   {
@@ -282,10 +289,11 @@ void gen_data_config_assert_size(gen_data_config_type * config , int data_size, 
       int_vector_iset( config->data_size_vector , report_step , data_size );
       current_size = data_size;
     }
-    
+
     if (current_size != data_size) {
-      util_abort("%s: Size mismatch when loading from file - got %d elements - expected:%d [report_step:%d] \n",
+      util_abort("%s: Size mismatch when loading:%s from file - got %d elements - expected:%d [report_step:%d] \n",
 		 __func__ , 
+                 gen_data_config_get_key( config ),
 		 data_size , 
 		 current_size , 
 		 report_step);

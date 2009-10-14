@@ -497,13 +497,13 @@ void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , double sca
 
 
 
-static int __get_active_size(const enkf_config_node_type * config_node , const active_list_type * active_list) {
+static int __get_active_size(const enkf_config_node_type * config_node , int report_step , const active_list_type * active_list) {
   active_mode_type active_mode = active_list_get_mode( active_list );
   int active_size;
   if (active_mode == INACTIVE)
     active_size = 0;
   else if (active_mode == ALL_ACTIVE)
-    active_size = enkf_config_node_get_data_size( config_node );
+    active_size = enkf_config_node_get_data_size( config_node , report_step );
   else if (active_mode == PARTLY_ACTIVE)
     active_size = active_list_get_active_size( active_list );
   else {
@@ -557,7 +557,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	  enkf_fs_fread_node( fs , node , report_step , 0 , FORECAST);
 	}
       }
-      active_size[ikw] = __get_active_size( config_node , active_list );
+      active_size[ikw] = __get_active_size( config_node , report_step , active_list );
       row_offset[ikw]  = current_row_offset;
 
       if ((active_size[ikw] + current_row_offset) > matrix_size) {

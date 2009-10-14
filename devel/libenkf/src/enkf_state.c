@@ -731,12 +731,12 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
             }
 	  } 
 	}
-      }
+      } 
       hash_iter_free(iter);
     }
     
-    if (summary != NULL)
-      ecl_sum_free( summary );
+    if (summary != NULL) 
+      ecl_sum_free( summary ); 
   }
 }
 

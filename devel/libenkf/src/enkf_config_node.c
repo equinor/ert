@@ -102,11 +102,11 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
    Invokes the get_data_size() function of the underlying node object.
 */
 
-int enkf_config_node_get_data_size( const enkf_config_node_type * node) {
-  if (node->get_data_size == NULL)
-    util_abort("%s: function_handler: get_data_size not registered \n",__func__);
-  
-  return node->get_data_size( node->data );
+int enkf_config_node_get_data_size( const enkf_config_node_type * node , int report_step) {
+  if (node->impl_type == GEN_DATA)
+    return gen_data_config_get_data_size( node->data , report_step);
+  else
+    return node->get_data_size( node->data );
 }
 
 void enkf_config_node_free(enkf_config_node_type * node) {

@@ -152,7 +152,7 @@
 
 /*****************************************************************/
 
-#define DEFAULT_VAR_DIR "/tmp/var/run/ert"
+#define DEFAULT_VAR_DIR "/tmp/ert/var/run/ert"
 
 /*****************************************************************/
 /* file system spesific defaults. */

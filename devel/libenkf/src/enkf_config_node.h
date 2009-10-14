@@ -23,7 +23,7 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       const char          * , 
 					       const void          * );
 
-int                     enkf_config_node_get_data_size( const enkf_config_node_type * node);					
+int                     enkf_config_node_get_data_size( const enkf_config_node_type * node , int report_step);					
 char                  * enkf_config_node_alloc_infile(const enkf_config_node_type * , int );
 char                  * enkf_config_node_alloc_outfile(const enkf_config_node_type * , int );
 int                     enkf_config_node_get_num_obs( const enkf_config_node_type * config_node );

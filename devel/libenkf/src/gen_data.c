@@ -130,6 +130,7 @@ bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , int 
       buffer_fwrite_int( buffer , GEN_DATA );
       buffer_fwrite_int( buffer , size );
       buffer_fwrite_int( buffer , report_step);   /* Why the heck do I need to store this ???? */
+      
       buffer_fwrite_compressed( buffer , gen_data->data , byte_size);
       return true;
     } else
@@ -152,9 +153,8 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer) {
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size           = buffer_fread_int(buffer);
   report_step    = buffer_fread_int(buffer);
-  printf("report_step:%d   size:%d \n",report_step , size );
   {
-    size_t byte_size       = gen_data_get_current_byte_size( gen_data );
+    size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
     size_t compressed_size = buffer_get_remaining_size( buffer ); 
     gen_data->data         = util_realloc( gen_data->data , byte_size , __func__);
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
@@ -286,8 +286,8 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
     buffer = gen_common_fload_alloc( filename , input_format , internal_type , &load_type , &size);
   } 
   
-  gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
   gen_data->current_data_size = size;
+  gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
   util_safe_free(buffer);
   return has_file;
 }
