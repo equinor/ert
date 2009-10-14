@@ -313,6 +313,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
 	
 	if (job_data != NULL) {
 	  job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING /* This is when it is installed as runnable in the internal queue */);
+                                                                        /* The update_status function will grab this and update. */
 	  node->job_data = job_data;
 	  node->submit_attempt++;
 	  submit_status = submit_OK;
