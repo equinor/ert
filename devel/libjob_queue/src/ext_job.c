@@ -243,17 +243,16 @@ static void __update_mode( const char * filename , mode_t add_mode) {
 /**
    The license_path = 
    
-   root_license_path / user / current_pid / job_name / job_name 
+   root_license_path / job_name / job_name 
 
 */
 
 static void ext_job_init_license_control(ext_job_type * ext_job , const char * license_root_path , int max_running) {
-  const char * user     = getenv("USER"); 
   ext_job->max_running  = max_running;
   if (max_running <= 0) 
     util_abort("%s: max_running = %d - funny eehh? \n",__func__ , max_running);
   
-  ext_job->license_path   = util_alloc_sprintf("%s%c%s%c%d%c%s" , license_root_path , UTIL_PATH_SEP_CHAR , user , UTIL_PATH_SEP_CHAR , getpid() , UTIL_PATH_SEP_CHAR , ext_job->name );
+  ext_job->license_path   = util_alloc_sprintf("%s%c%s" , license_root_path , UTIL_PATH_SEP_CHAR , ext_job->name );
   util_make_path( ext_job->license_path );
   printf("License for %s in %s \n",ext_job->name , ext_job->license_path);
 }

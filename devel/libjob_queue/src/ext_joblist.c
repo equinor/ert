@@ -22,16 +22,29 @@ struct ext_joblist_struct {
 
 
 
+
+
 ext_joblist_type * ext_joblist_alloc(const char * license_root_path) {
   ext_joblist_type * joblist = util_malloc( sizeof * joblist , __func__ );
+  const char       * user    = getenv("USER"); 
   joblist->jobs = hash_alloc();
-  joblist->license_root_path = util_alloc_string_copy( license_root_path );
-  return joblist;
+  /**
+  
+    Appending /user/pid to the license root path. Everything
+    including the pid is removed when exiting (gracefully ...).
+  
+    Dangling license directories after a crash can just be removed.
+
+  */
+  joblist->license_root_path = util_alloc_sprintf("%s%c%s%c%d" , license_root_path , UTIL_PATH_SEP_CHAR , user , UTIL_PATH_SEP_CHAR , getpid());
+  return joblist; 
 }
+
 
 
 void ext_joblist_free(ext_joblist_type * joblist) {
   hash_free(joblist->jobs);
+  util_unlink_path( joblist->license_root_path );
   util_safe_free( joblist->license_root_path );
   free(joblist);
 }
