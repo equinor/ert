@@ -409,13 +409,16 @@ void job_queue_set_external_restart(job_queue_type * queue , int external_id) {
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
 
-
+/**
+   The external scope has decided that no more attempts will be tried. This job
+   should really fail!! 
+*/
 void job_queue_set_external_fail(job_queue_type * queue , int external_id) {
   int queue_index    = job_queue_get_internal_index( queue , external_id );
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
     node->submit_attempt = 0;
-    job_queue_change_node_status( queue , node , JOB_QUEUE_RUN_FAIL);
+    job_queue_change_node_status( queue , node , JOB_QUEUE_ALL_FAIL);
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
@@ -438,6 +441,14 @@ static void job_queue_print_jobs(const job_queue_type *queue) {
   printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , loading , failed , complete);
   fflush(stdout);
 }
+
+
+static void job_queue_display_job_info( const job_queue_type * job_queue , const job_queue_node_type * job_node ) {
+  if (job_queue->driver->display_info != NULL)
+    job_queue->driver->display_info( job_queue->driver , job_node->job_data );
+  printf("\n");
+}
+
 
 
 /** 
@@ -560,10 +571,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	  job_queue_node_type * node = queue->jobs[queue_index];
 	  switch (job_queue_node_get_status(node)) {
 	  case(JOB_QUEUE_DONE):
-	    if (util_file_exists(node->exit_file)) {
-              printf("Switching job status DONE->EXIT internal_index:%d   external_index:%d \n" , queue_index , node->external_id);
+	    if (util_file_exists(node->exit_file)) 
 	      job_queue_change_node_status(queue , node , JOB_QUEUE_EXIT);
-            } else {
+            else {
               /* 
                  That the target file has been produced is checked by
                  the job script, and not here. This scope just does
@@ -571,16 +581,16 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
                  produced to indicate failure.
               */
 	      job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_OK);
-              job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver. */
+              job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
             }
 	    break;
 	  case(JOB_QUEUE_EXIT):
 	    if (verbose) {
-	      printf("QUEUE: Restarting: %s | ",node->job_name);
-              queue->driver->display_info( queue->driver , node->job_data );
+	      printf("Job: %s failed | ",node->job_name);
+              job_queue_display_job_info( queue , node );
             }
 	    job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
-	    job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver. */
+	    job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
 	    break;
 	  default:
 	    break;
@@ -590,7 +600,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
       
       if (!new_jobs)
 	usleep(queue->usleep_time);
-      
       /*
 	else we have submitted new jobs - and know the status is out
 	of sync, no need to wait before a rescan.

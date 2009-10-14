@@ -319,7 +319,6 @@ void lsf_driver_display_info( void * __driver , basic_queue_job_type * __job) {
     for (i=0; i < job->num_exec_host; i++)
       printf("%s ", job->exec_host[i]);
   }
-  printf("\n");
 }
 
 

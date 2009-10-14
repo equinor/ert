@@ -120,7 +120,7 @@ void plot_range_set_auto_xmin(plot_range_type * plot_range , double xmin) {
 
 static double plot_range_get_final__(const plot_range_type * plot_range , int index) {
   if (plot_range->final_set[index])
-    return plot_range->limits[index];
+    return plot_range->final[index];
   else {
     util_abort("%s: tried to get xmin - but that has not been set.\n",__func__);
     return 0;
@@ -333,9 +333,8 @@ void plot_range_apply(plot_range_type * plot_range) {
     } else {
       y1 = ymin;
       y2 = ymax;
-      
       if (plot_range->auto_range[YMIN]) y1 -= height * plot_range->padding[YMIN];
-      if (plot_range->auto_range[YMAX]) y2 += height * plot_range->padding[YMAX];
+      if (plot_range->auto_range[YMAX]) y2 += height * plot_range->padding[YMIN];
     }
   } 
   

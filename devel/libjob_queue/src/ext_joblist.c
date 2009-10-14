@@ -17,32 +17,30 @@
 
 struct ext_joblist_struct {
   hash_type * jobs;
+  char      * license_root_path;   
 };
 
 
 
-ext_joblist_type * ext_joblist_alloc() {
+ext_joblist_type * ext_joblist_alloc(const char * license_root_path) {
   ext_joblist_type * joblist = util_malloc( sizeof * joblist , __func__ );
   joblist->jobs = hash_alloc();
+  joblist->license_root_path = util_alloc_string_copy( license_root_path );
   return joblist;
 }
 
 
 void ext_joblist_free(ext_joblist_type * joblist) {
   hash_free(joblist->jobs);
+  util_safe_free( joblist->license_root_path );
   free(joblist);
 }
 
 
-ext_job_type * ext_joblist_alloc_new(ext_joblist_type * joblist , const char * new_name) {
-  ext_job_type * new_job = ext_job_alloc( new_name );
-  hash_insert_hash_owned_ref(joblist->jobs , new_name , new_job , ext_job_free__);
-  return new_job;
-}
 
 
 ext_job_type * ext_joblist_add_job(ext_joblist_type * joblist , const char * name , const char * config_file) {
-  ext_job_type * new_job = ext_job_fscanf_alloc(name , config_file); /* Return NULL if you did not have permission to read file. */
+  ext_job_type * new_job = ext_job_fscanf_alloc(name , joblist->license_root_path , config_file); /* Return NULL if you did not have permission to read file. */
   if (new_job != NULL) 
     hash_insert_hash_owned_ref(joblist->jobs , name , new_job , ext_job_free__);
   return new_job;

@@ -102,7 +102,7 @@ const char * plot_set_default_timefmt(plot_type * plot , time_t t1 , time_t t2) 
   const int year   = day    * 365; 
     
   double diff_time = difftime(t2 , t1);
-  
+
   if (diff_time < day) 
     plot_set_timefmt(plot , "%H:%M");       /* Hour:Minute */ 
   else if (diff_time < week)
