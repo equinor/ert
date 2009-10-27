@@ -12,6 +12,36 @@
 #define MODULE_NAME    "jobs.py"
 #define JOBLIST_NAME   "jobList"
 
+/**
+   About the 'license' system:
+   ---------------------------
+
+   There is a simple possibility to limit the number of jobs which are
+   running in parallell. It works like this:
+
+    1. For the joblist as a whole a license_path is created. This
+       license path should contain both a uid and pid of the current
+       process. This ensures that:
+
+       a. The license count is per user and per ert instance.
+       b. Each ert instance starts with a fresh license count. A
+          license path, and license files left dangling after unclean
+          shutdown can just be removed.
+
+    2. For each job in the joblist a subdirectory is created under the
+       license_path. 
+
+    3. For each job a license_file is created, and for each time a new
+       instance is checked out a hard_link to this license_file is
+       created - i.e. the number of checked out licenses is a
+       hard_link count (-1). 
+       
+       Step three here is implemented by the job_dispatch script
+       actually running the jobs.
+
+*/
+
+
 
 /*****************************************************************/
 
@@ -23,23 +53,26 @@ struct ext_joblist_struct {
 
 
 
+/**
+   It is essential that the license_root_path is on a volume which is
+   accessible from all the nodes which will run jobs. Using e.g. /tmp
+   as license_root_path will fail HARD.
+*/
+
 
 ext_joblist_type * ext_joblist_alloc(const char * license_root_path) {
   ext_joblist_type * joblist = util_malloc( sizeof * joblist , __func__ );
   const char       * user    = getenv("USER"); 
   joblist->jobs = hash_alloc();
   /**
-  
     Appending /user/pid to the license root path. Everything
     including the pid is removed when exiting (gracefully ...).
-  
+    
     Dangling license directories after a crash can just be removed.
-
   */
   joblist->license_root_path = util_alloc_sprintf("%s%c%s%c%d" , license_root_path , UTIL_PATH_SEP_CHAR , user , UTIL_PATH_SEP_CHAR , getpid());
   return joblist; 
 }
-
 
 
 void ext_joblist_free(ext_joblist_type * joblist) {
@@ -48,7 +81,6 @@ void ext_joblist_free(ext_joblist_type * joblist) {
   util_safe_free( joblist->license_root_path );
   free(joblist);
 }
-
 
 
 
