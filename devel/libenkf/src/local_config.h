@@ -5,6 +5,9 @@
 #include <local_ministep.h>
 #include <log.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
   INVALID_CMD                     = 0,  /* MArks EOF */
@@ -67,4 +70,7 @@ void                          local_config_load( local_config_type * local_confi
 const char                  * local_config_get_cmd_string( local_config_instruction_type cmd );
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

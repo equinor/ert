@@ -1,6 +1,10 @@
 #ifndef __LOCAL_UPDATESTEP_H__
 #define __LOCAL_UPDATESTEP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <local_ministep.h>
 
 typedef struct local_updatestep_struct local_updatestep_type;
@@ -11,4 +15,8 @@ void                    local_updatestep_add_ministep( local_updatestep_type * u
 local_ministep_type   * local_updatestep_iget_ministep( const local_updatestep_type * updatestep , int index);
 int                     local_updatestep_get_num_ministep( const local_updatestep_type * updatestep );
 local_updatestep_type * local_updatestep_alloc_copy( const local_updatestep_type * src , const char * name );
+
+#ifdef __cplusplus
+}
+#endif
 #endif

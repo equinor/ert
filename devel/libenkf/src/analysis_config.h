@@ -7,6 +7,7 @@
 
 typedef struct analysis_config_struct analysis_config_type;
 
+const char           * analysis_config_get_log_path( const analysis_config_type * config );
 void                   analysis_config_init_from_config( analysis_config_type * analysis , const config_type * config );
 analysis_config_type * analysis_config_alloc(void );
 void                   analysis_config_free( analysis_config_type * );

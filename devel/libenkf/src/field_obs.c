@@ -14,6 +14,7 @@
 #include <field_config.h>
 #include <field.h>
 #include <active_list.h>
+#include <stringlist.h>
 
 #define FIELD_OBS_TYPE_ID 661098
 
@@ -29,6 +30,7 @@ struct field_obs_struct {
   int    * k;
   double * obs_value;    		  /** The observed values.                            */
   double * obs_std;      		  /** The standard deviation of the observations.     */
+  stringlist_type * keylist;
   
   const field_config_type * field_config; /* The config object of the field we are observing - shared reference. */
 };
@@ -61,14 +63,16 @@ field_obs_type * field_obs_alloc(
   field_obs->obs_label       = util_alloc_string_copy(obs_label);
   field_obs->index_list      = util_malloc( size * sizeof * field_obs->index_list , __func__);
   field_obs->field_config    = field_config;
+  field_obs->keylist         = stringlist_alloc_new();
   {
     int l;
     for (l = 0; l < size; l++) {
       if (field_config_ijk_valid(field_config , i[l] , j[l] , k[l])) {
 	int active_index = field_config_active_index(field_config , i[l] , j[l] , k[l]);
-	if (active_index >= 0)
+	if (active_index >= 0) {
 	  field_obs->index_list[l] = active_index;
-	else
+          stringlist_append_owned_ref( field_obs->keylist , util_alloc_sprintf("%s:%d,%d,%d" , obs_label , i[l]+1 , j[l]+1 , k[l]+1));
+        } else
 	  util_abort("%s: sorry: cell:(%d,%d,%d) is not active - can not observe it. \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
       } else
 	util_abort("%s: sorry: cell (%d,%d,%d) is outside valid range:  \n",__func__ , i[l]+1 , j[l]+1 , k[l]+1);
@@ -88,6 +92,7 @@ field_obs_type * field_obs_alloc(
 void field_obs_free(
   field_obs_type * field_obs)
 {
+  stringlist_free( field_obs->keylist );
   free(field_obs->index_list);
   free(field_obs->obs_value);
   free(field_obs->obs_std);
@@ -118,10 +123,10 @@ void field_obs_get_observations(
   int                    restart_nr,
   obs_data_type        * obs_data,
   const active_list_type * active_list) {
-
-  for (int i=0; i < field_obs->size; i++)
-    obs_data_add(obs_data , field_obs->obs_value[i] , field_obs->obs_std[i] , field_obs->field_name);
   
+  for (int i=0; i < field_obs->size; i++) 
+    obs_data_add(obs_data , field_obs->obs_value[i] , field_obs->obs_std[i] , stringlist_iget(field_obs->keylist , i) );
+
 }
 
 

@@ -847,7 +847,12 @@ double history_get_var_from_summary_key(const history_type * history, int restar
         gen_key = util_alloc_joined_string( (const char **) argv , argc , ":");
         util_free_stringlist( argv , argc );
       }
-      value = ecl_sum_get_general_var( history->ecl_sum , ministep , gen_key );
+      
+      if (ecl_sum_has_general_var(history->ecl_sum , gen_key)) 
+        value = ecl_sum_get_general_var( history->ecl_sum , ministep , gen_key );
+      else 
+        *default_used = true;
+      
       if (history->source == REFCASE_HISTORY)
         free( gen_key );
     } else

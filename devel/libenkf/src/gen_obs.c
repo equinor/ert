@@ -42,6 +42,7 @@ struct gen_obs_struct {
   char                       * obs_key;          /* The key this observation is held by - in the enkf_obs structur (only for debug messages). */  
   char                       * obs_file;         /* The file holding the observation. */ 
   gen_data_file_format_type    obs_format;       /* The format, i.e. ASCII, binary_double or binary_float, of the observation file. */
+  stringlist_type            * keylist;
 };
 
 /******************************************************************/
@@ -53,6 +54,7 @@ void gen_obs_free(gen_obs_type * gen_obs) {
   util_safe_free(gen_obs->obs_file);
   util_safe_free(gen_obs->data_index_list);
   util_safe_free(gen_obs->obs_key);
+  stringlist_free( gen_obs->keylist );
   free(gen_obs);
 }
 
@@ -160,6 +162,15 @@ gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , doub
       /* Parsing a string of the type "1,3,5,9-100,200,202,300-1000" */
       obs->data_index_list = util_sscanf_alloc_active_list(data_index_string , &obs->obs_size);
   }
+  obs->keylist = stringlist_alloc_new();
+
+  /* A bit wasteful on memory - should have a low memory alternative
+     for very large observation vectors.*/
+  {
+    int i;
+    for (i=0; i < obs->obs_size; i++)
+      stringlist_append_owned_ref( obs->keylist , util_alloc_sprintf("%s:%d" , obs->obs_key , i) );
+  }
   return obs;
 }
 
@@ -207,12 +218,8 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 
 void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data, const active_list_type * active_list) {
   int iobs;
-  char * kw = NULL;
-  for (iobs = 0; iobs < gen_obs->obs_size; iobs++) {
-    kw = util_realloc_sprintf(kw , "%s:%d" , gen_obs->obs_key , iobs);
-    obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , kw);
-  }
-  util_safe_free( kw );
+  for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
+    obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , stringlist_iget(gen_obs->keylist, iobs));
 }
 
 

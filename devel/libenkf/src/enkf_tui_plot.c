@@ -818,7 +818,7 @@ void enkf_tui_plot_RFT__(enkf_fs_type * fs, const plot_config_type * plot_config
     
     for (l = 0; l < obs_size; l++) {
       double xpos, ypos,zpos;
-      ecl_grid_get_pos3(grid , i[l] , j[l] , k[l] , &xpos , &ypos , &zpos);
+      ecl_grid_get_xyz3(grid , i[l] , j[l] , k[l] , &xpos , &ypos , &zpos);
       depth[l] = zpos;
     }
     

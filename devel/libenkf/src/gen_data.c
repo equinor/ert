@@ -239,6 +239,7 @@ void gen_data_matrix_deserialize(gen_data_type * gen_data , const active_list_ty
 static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_step , ecl_type_enum load_type , const void * data) {
   gen_data_config_assert_size(gen_data->config , size, report_step);
   gen_data_realloc_data(gen_data);
+
   if (size > 0) {
     ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
 
@@ -251,6 +252,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
 	util_double_to_float((float *) gen_data->data , data , size);
     }
   }
+
 }
       
       
@@ -287,6 +289,7 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
   } 
   
   gen_data->current_data_size = size;
+  //printf("Loaded %d elements from:%s \n",size , filename );
   gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
   util_safe_free(buffer);
   return has_file;

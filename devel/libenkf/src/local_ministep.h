@@ -1,6 +1,10 @@
 #ifndef __LOCAL_MINISTEP_H__
 #define __LOCAL_MINISTEP_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <active_list.h>
 #include <hash.h>
 #include <stringlist.h>
@@ -29,4 +33,7 @@ void                  local_ministep_clear_observations( local_ministep_type * m
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -19,7 +19,8 @@ struct analysis_config_struct {
   double                 std_cutoff;
   enkf_mode_type         enkf_mode;
   pseudo_inversion_type  inversion_mode;
-};
+  char                  *log_path;           /* Points to directory with update logs. */
+}; 
 
 
 
@@ -32,7 +33,8 @@ static analysis_config_type * analysis_config_alloc__() {
   config->inversion_mode     = SVD_SS_N1_R;
   config->std_cutoff         = 1e-6;
   config->random_rotation    = true;
-
+  config->log_path           = util_alloc_string_copy("update_log");
+  
   analysis_config_set_truncation( config , DEFAULT_ENKF_TRUNCATION );
   analysis_config_set_alpha( config , DEFAULT_ENKF_ALPHA );
   analysis_config_set_merge_observations( config , DEFAULT_MERGE_OBSERVATIONS );
@@ -148,8 +150,13 @@ double analysis_config_get_truncation(const analysis_config_type * config) {
 }
 
 
+const char * analysis_config_get_log_path( const analysis_config_type * config ) {
+  return config->log_path; 
+}
+
 
 void analysis_config_free(analysis_config_type * config) {
+  free(config->log_path);
   free(config);
 }
 

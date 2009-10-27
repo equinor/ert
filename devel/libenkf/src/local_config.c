@@ -467,16 +467,16 @@ static bool read_cmd( FILE * stream , bool binary , local_config_instruction_typ
 void local_config_load( local_config_type * local_config /*const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , */ , const char * config_file , log_type * logh) {
   bool binary = false;
   local_config_instruction_type cmd;
-  FILE * stream = util_fopen( config_file , "r");
+  FILE * stream      = util_fopen( config_file , "r");
   char * update_name = NULL;
   char * mini_name   = NULL;
   char * obs_key     = NULL;
   char * data_key    = NULL;
   int index;
   int_vector_type * int_vector = int_vector_alloc(0,0);
-  
+
+  log_add_fmt_message(logh , 1 , NULL , "Loading local configuration from file:%s" , config_file);
   while ( read_cmd(stream, binary , &cmd)) {
-    log_add_fmt_message(logh , 2 , NULL , "Have read command %s[%d] ", local_config_get_cmd_string(cmd) , cmd );
     switch(cmd) {
     case(CREATE_UPDATESTEP):   
       update_name = read_alloc_string( stream , binary );
@@ -505,6 +505,7 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
         local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
         local_ministep_add_node( ministep , data_key );
       }
+      log_add_fmt_message(logh , 3 , NULL , "Added data:%s to mini step:%s" , data_key , mini_name);
       break;
     case(ADD_OBS):
       mini_name = read_alloc_string( stream , binary );
@@ -513,6 +514,7 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
         local_ministep_type * ministep = local_config_get_ministep( local_config , mini_name );
         local_ministep_add_obs( ministep , obs_key );
       }
+      log_add_fmt_message(logh , 3 , NULL , "Added observation:%s to mini step:%s" , obs_key , mini_name);
       break;
     case(ACTIVE_LIST_ADD_OBS_INDEX):
       mini_name = read_alloc_string( stream , binary );

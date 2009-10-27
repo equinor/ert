@@ -24,7 +24,7 @@
 #include <job_queue.h>
 #include <msg.h>
 #include <stringlist.h>
-#include <enkf_main.h>
+#include <enkf_main.h> 
 #include <enkf_serialize.h>
 #include <config.h>  
 #include <local_driver.h>
@@ -661,7 +661,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
   
   /* Observe that end_step is inclusive. */
   if (include_internal_observations) {
-    start_step = step1 + 1;
+    start_step = step1;
     end_step   = step2;
   } else {
     start_step = step2;
@@ -687,21 +687,35 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , step2 );  /* Only step2 considered */
     hash_type                   * use_count     = hash_alloc();                                          
     matrix_type                 * randrot       = NULL;
+    const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
+    FILE                        * log_stream;
+    char                        * log_file; 
+
 
     if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
       randrot = enkf_analysis_alloc_mp_randrot( ens_size ); 
-
+    
+    util_make_path( log_path );
+    if (start_step == end_step)
+      log_file = util_alloc_sprintf("%s%c%04d" , log_path , UTIL_PATH_SEP_CHAR , end_step);
+    else
+      log_file = util_alloc_sprintf("%s%c%04d-%04d" , log_path , UTIL_PATH_SEP_CHAR , start_step , end_step);
+    log_stream = util_fopen( log_file , "w" );
+    
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {
       for(int report_step = start_step; report_step <= end_step; report_step++)  {
 	local_ministep_type   * ministep      = local_updatestep_iget_ministep( updatestep , ministep_nr );      
 	
-	printf("Fetching simulated responses and observations for step %i.\n", report_step); 
-	enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size, 
+        enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size, 
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
 
 	meas_matrix_calculate_ens_stats( meas_forecast );
 	enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
-	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , stdout );
+        
+        /* How the fuck does dup() work?? */
+	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , stdout );
+        enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , log_stream );
+
 	if (obs_data_get_active_size(obs_data) > 0) {
 	  if (analysis_config_Xbased( enkf_main->analysis_config )) {
 	    matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
@@ -713,6 +727,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 	}
       }
     }
+    fclose( log_stream );
+    free( log_file );
 
     if (randrot != NULL)
       matrix_free( randrot );

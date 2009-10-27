@@ -101,7 +101,7 @@ In the following example we have two observations
 												 |
 												 |
   The observation WWCT:OP1 is an observation of summary type, and the				 |
-  obs_vector conatins pointers to summary_obs instances; along iwth				 |
+  obs_vector conatins pointers to summary_obs instances; along with				 |
   function pointers to manipulate the summary_obs instances. The				 |
   observation is not active for report steps 0 and 3, so for these				 |
   report steps the obse vector has a NULL pointer.						 |

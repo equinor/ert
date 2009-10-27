@@ -81,9 +81,7 @@ void summary_obs_get_observations(const summary_obs_type * summary_obs,
 				  int                      restart_nr,
 				  obs_data_type          * obs_data,
 				  const active_list_type * active_list) {
-  char * obs_key = util_alloc_sprintf("%s:%d" , summary_obs->summary_key , restart_nr);
-  obs_data_add(obs_data , summary_obs->value , summary_obs->std , obs_key);
-  free( obs_key );
+  obs_data_add(obs_data , summary_obs->value , summary_obs->std , summary_obs->summary_key);
 }
 
 
