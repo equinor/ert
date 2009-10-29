@@ -602,7 +602,6 @@ void enkf_matrix_serialize(const void * __node_data 	   	 ,
 	matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
       }
     }
-    
   } else if (node_type == ecl_float_type) {
     const float * node_data = (const float *) __node_data;
     int row_index;
@@ -615,7 +614,7 @@ void enkf_matrix_serialize(const void * __node_data 	   	 ,
       for (row_index = 0; row_index < active_size; row_index++) {
 	node_index = active_list[ row_index ];
 	matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
-	}
+      }
     }      
   } else 
       util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
@@ -669,7 +668,6 @@ void enkf_matrix_deserialize(void * __node_data 	   	,
 	node_data[node_index] = matrix_iget( A , row_index + row_offset , column);
       }
     }
-
   } else 
     util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
 }

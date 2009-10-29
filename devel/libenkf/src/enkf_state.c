@@ -688,6 +688,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     const ecl_config_type * ecl_config     = enkf_state->ecl_config;
     const bool fmt_file  		   = ecl_config_get_formatted(ecl_config);
     const int  iens                        = my_config->iens;
+    bool       load_summary                = false; 
     int        num_data_files              = 0;
     int report_step;
     char     ** data_files                 = util_malloc( (report_step2 - report_step1 + 1) * sizeof * data_files , __func__);
@@ -695,48 +696,68 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
     ecl_sum_type * summary;
 
-    for (report_step = report_step1; report_step <= report_step2; report_step++) {
-      if (model_config_load_results( model_config , report_step)) {
-        data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
-        num_data_files++;
+
+    /* First: determine whether summary data should be loaded at all. */
+    for (report_step = report_step1; report_step <= report_step2; report_step++) 
+      if (model_config_load_results( model_config , report_step)) 
+        load_summary = true;
+
+    if (load_summary) {
+      /* Should we load from a unified summary file, or from several non-unified files? */
+      char * unified_file = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_UNIFIED_SUMMARY_FILE , fmt_file ,  -1);
+
+      /* Use unified file */
+      if (unified_file != NULL) {
+        data_files[0] = unified_file;
+        num_data_files = 1;
+      } else {
+        for (report_step = report_step1; report_step <= report_step2; report_step++) {
+          if (model_config_load_results( model_config , report_step)) {
+            data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
+            /* This will fail hard if there are holes in the series, i.e. S0007, S0010 */
+            num_data_files++;
+          }
+        }
       }
+      
+      /* Explicitly setting the empty slots to NULL - to not create problems in the free routine. */
+      for (report_step = num_data_files; report_step <= (report_step2 - report_step1); report_step++)
+        data_files[report_step] = NULL;
+      
+      if ((header_file != NULL) && (num_data_files > 0)) {
+        summary = ecl_sum_fread_alloc(header_file , num_data_files , (const char **) data_files );
+        util_free_stringlist( data_files , report_step2 - report_step1 + 1);
+        free( header_file );
+      } else 
+        summary = NULL;  /* OK - no summary data was found on the disk. */
+      
+      /* The actual loading */
+      for (report_step = report_step1; report_step <= report_step2; report_step++) {
+        const bool internalize_all  = model_config_internalize_results( model_config , report_step );
+        hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
+        while ( !hash_iter_is_complete(iter) ) {
+          enkf_node_type * node = hash_iter_get_next_value(iter);
+          if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
+            bool internalize = internalize_all;
+            if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
+              internalize = enkf_node_internalize(node , report_step);
+            
+            if (internalize) {
+              if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))   /* Loading/internalizing */
+                enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
+              else {
+                *loadOK = false;
+                log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( node ));
+              }
+            } 
+          }
+        } 
+        hash_iter_free(iter);
+      }
+      
+      if (summary != NULL) 
+        ecl_sum_free( summary ); 
     }
-    for (report_step = num_data_files; report_step <= (report_step2 - report_step1); report_step++)
-      data_files[report_step] = NULL;
-
-    if ((header_file != NULL) && (num_data_files > 0)) {
-      summary = ecl_sum_fread_alloc(header_file , num_data_files , (const char **) data_files );
-      util_free_stringlist( data_files , report_step2 - report_step1 + 1);
-      free( header_file );
-    } else 
-      summary = NULL;  /* OK - no summary data was found on the disk. */
-
-    /* The actual loading */
-    for (report_step = report_step1; report_step <= report_step2; report_step++) {
-      const bool internalize_all  = model_config_internalize_results( model_config , report_step );
-      hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
-      while ( !hash_iter_is_complete(iter) ) {
-        enkf_node_type * node = hash_iter_get_next_value(iter);
-	if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
-	  bool internalize = internalize_all;
-          if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
-	    internalize = enkf_node_internalize(node , report_step);
-          
-	  if (internalize) {
-            if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))   /* Loading/internalizing */
-              enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
-            else {
-              *loadOK = false;
-              log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( node ));
-            }
-	  } 
-	}
-      } 
-      hash_iter_free(iter);
-    }
-    
-    if (summary != NULL) 
-      ecl_sum_free( summary ); 
   }
 }
 
@@ -866,11 +887,8 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	    if (internalize_state) {  
 	      stringlist_append_copy( enkf_state->restart_kw_list , kw);
 	      
-              /* Race condition here: */
-	      if (!ensemble_config_has_key(enkf_state->ensemble_config , kw)) 
-		ensemble_config_add_node(enkf_state->ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
-	      /* Race end ... */
-
+              ensemble_config_ensure_static_key(enkf_state->ensemble_config , kw );
+              
 	      if (!enkf_state_has_node(enkf_state , kw)) {
 		const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
 		enkf_state_add_node(enkf_state , kw , config_node); 

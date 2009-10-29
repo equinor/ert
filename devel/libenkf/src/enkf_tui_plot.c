@@ -1055,7 +1055,7 @@ void enkf_tui_plot_sensitivity(void * arg) {
     char * key_index_x = NULL;
     util_printf_prompt("Parameter on the x-axis (blank for iens): " , prompt_len , '=' , "=> ");
     user_key_x = util_alloc_stdin_line();
-    if (strlen(user_key_x) == 0) {
+    if (user_key_x == NULL) {
       user_key_x = util_realloc_string_copy(user_key_x , "Ensemble member");
       config_node_x = NULL;
     } else {

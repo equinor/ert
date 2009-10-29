@@ -31,7 +31,7 @@ active_config.o                     : active_config.c active_config.h enkf_types
 ensemble_config.o                   : ensemble_config.c ensemble_config.h enkf_config_node.o enkf_types.o field_config.o gen_data_config.o meas_matrix.o enkf_types.o enkf_fs.o gen_kw_config.o summary.o summary_config.o gen_data.o pilot_point_config.o gen_data_config.o gen_data_config.o field_trans.o  
 field_trans.o                       : field_trans.c field_trans.h  
 sqlite3_driver.o                    : sqlite3_driver.c sqlite3_driver.h sqlite3.o basic_driver.o fs_types.o enkf_config_node.o  
-field_config.o                      : field_config.c field_config.h enkf_types.o enkf_macros.h field_active.o active_list.o field_trans.o field_common.h  
+field_config.o                      : field_config.c field_config.h enkf_types.o enkf_macros.h field_active.o field_trans.o field_common.h  
 obs_vector.o                        : obs_vector.c obs_vector.h enkf_fs.o summary_obs.o field_obs.o gen_obs.o ensemble_config.o active_list.o  
 enkf_tui_export.o                   : enkf_tui_export.c enkf_tui_export.h enkf_main.o field.o field_config.o enkf_state.o enkf_fs.o enkf_tui_util.o field_config.o gen_data.o  
 enkf_tui_table.o                    : enkf_tui_table.c enkf_tui_table.h enkf_main.o enkf_tui_plot.o enkf_tui_fs.o enkf_obs.o field_obs.o field_config.o obs_vector.o enkf_tui_util.o ensemble_config.o gen_kw_config.o  
@@ -40,7 +40,7 @@ enkf_util.o                         : enkf_util.c enkf_util.h enkf_defaults.o
 main.o                              : main.c enkf_fs.o enkf_main.o enkf_types.o enkf_sched.o enkf_tui_main.o ERT.h  
 scalar.o                            : scalar.c scalar.h enkf_types.o scalar_config.o enkf_util.o enkf_serialize.o  
 pilot_point_config.o                : pilot_point_config.c pilot_point_config.h enkf_types.o enkf_macros.h scalar_config.o  
-enkf_tui_plot.o                     : enkf_tui_plot.c enkf_tui_plot.h enkf_main.o enkf_tui_fs.o enkf_obs.o field_obs.o field_config.o obs_vector.o enkf_tui_util.o ensemble_config.o enkf_state.o gen_kw_config.o enkf_defaults.o plot_config.o  
+enkf_tui_plot.o                     : enkf_tui_plot.c enkf_tui_plot.h enkf_main.o enkf_tui_fs.o enkf_obs.o field_obs.o gen_obs.o field_config.o obs_vector.o enkf_tui_util.o ensemble_config.o enkf_state.o gen_kw_config.o enkf_defaults.o plot_config.o  
 summary_config.o                    : summary_config.c summary_config.h enkf_types.o enkf_util.o enkf_macros.h active_list.o  
 meas_matrix.o                       : meas_matrix.c meas_matrix.h meas_vector.o  
 gen_data_config.o                   : gen_data_config.c gen_data_config.h enkf_macros.h enkf_types.o gen_data_common.h gen_data_active.o active_list.o  

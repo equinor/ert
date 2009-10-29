@@ -41,9 +41,10 @@
 
 
 struct ensemble_config_struct {
+  pthread_mutex_t          mutex;
   int  		  	   ens_size;          /*  The size of the ensemble  */
   hash_type       	 * config_nodes;      /*  A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
-  field_trans_table_type * field_trans_table; /* A table of the transformations which are available to apply on fields. */
+  field_trans_table_type * field_trans_table; /*  A table of the transformations which are available to apply on fields. */
 };
 
 
@@ -56,6 +57,7 @@ static ensemble_config_type * ensemble_config_alloc_empty(int ens_size) {
     ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config , __func__);
     ensemble_config->ens_size     = ens_size;
     ensemble_config->config_nodes = hash_alloc();
+    pthread_mutex_init( &ensemble_config->mutex , NULL);
     
     return ensemble_config;
   }
@@ -152,6 +154,21 @@ enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensembl
     hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
     return node;
   }
+}
+
+
+
+/**
+   This is called by the enkf_state function while loading results,
+   that code is run in parallell by many threads.
+*/
+void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , const char * kw ) {
+  pthread_mutex_lock( &ensemble_config->mutex );
+  {
+    if (!ensemble_config_has_key(ensemble_config , kw)) 
+      ensemble_config_add_node(ensemble_config , kw , STATIC_STATE , STATIC , NULL , NULL , NULL);
+  }
+  pthread_mutex_unlock( &ensemble_config->mutex );
 }
 
 

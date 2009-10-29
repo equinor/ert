@@ -44,8 +44,6 @@ a fault object. Then the code will be like:
 
 struct active_list_struct {
   int     	    __type_id;      /* Used for checking run_time casting. */
-  int     	    active_size;    /* The number of active elements. */
-  int     	    alloc_size;     /* The allocated size of the  active_list pointer. */
   active_mode_type  mode;           /* ALL_ACTIVE | INACTIVE | PARTLY_ACTIVE */
   int_vector_type  *index_list;     /* A list of active indices - if data_size == active_size this can be NULL. */
 };

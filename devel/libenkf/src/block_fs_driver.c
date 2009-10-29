@@ -98,7 +98,7 @@ static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type drive
 */
 
 static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char * directory , bool read ) {
-  const int fsync_interval      = 100;     /* An fsync() call is issued for every 100'th write. */
+  const int fsync_interval      =  10;     /* An fsync() call is issued for every 100'th write. */
   const int fragmentation_limit = 1.0;     /* 1.0 => NO defrag is run. */
   if (read) {
     if (bfs->read_fs == bfs->write_fs) {
@@ -281,8 +281,10 @@ void block_fs_driver_select_dir(void *_driver , const char * directory, bool rea
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
   thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers ); /* Maaany threads .... */
   arg_pack_type ** arglist      = util_malloc( sizeof * arglist * driver->num_drivers , __func__);
+  msg_type * msg = msg_alloc("Mounting: ");
   int driver_nr;
-
+  
+  msg_show( msg );
   for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) {
     char * path = util_alloc_sprintf("%s%cmod_%d" , directory , UTIL_PATH_SEP_CHAR , driver_nr);
     arglist[driver_nr] = arg_pack_alloc();
@@ -292,10 +294,11 @@ void block_fs_driver_select_dir(void *_driver , const char * directory, bool rea
     arg_pack_append_owned_ptr( arglist[driver_nr] , path , free);
     arg_pack_append_bool( arglist[driver_nr] , read );
 
-    printf("Mounting: %s \n",path);
+    msg_update( msg , path );
     thread_pool_add_job( tp , bfs_select_dir__ , arglist[driver_nr] );
   }
   thread_pool_join( tp );
+  msg_free( msg , true );
 
   for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) 
     arg_pack_free( arglist[driver_nr] );
