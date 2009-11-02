@@ -166,6 +166,7 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
   else
     util_vfork_exec("bsub" , 8 , (const char *[8]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
 
+
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
   util_unlink_existing(tmp_file); 
   free(lsf_stdout);
