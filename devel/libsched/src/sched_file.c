@@ -474,6 +474,8 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
   
 
+  last_restart_file = util_int_min( last_restart_file , num_restart_files - 1);
+  
   if (last_restart_file > num_restart_files) {
     util_abort("%s: you asked for restart nr:%d - the last available restart nr is: %d \n",__func__ , last_restart_file , num_restart_files);
     /* Must abort here because the calling scope is expecting to find last_restart_file.  */
@@ -484,7 +486,7 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
     const sched_block_type * sched_block = vector_iget_const( sched_file->blocks , i);
     sched_block_fprintf(sched_block, stream);
   }
-  fprintf(stream, "END\n");
+  //fprintf(stream, "END\n");
   fclose(stream);
 }
 

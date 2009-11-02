@@ -117,6 +117,7 @@ struct member_config_struct {
   char 		      * eclbase;             /* The ECLBASE string used for simulations of this member. */
   sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
   bool                  private_sched_file;  /* Is the member config holding a private schedule file - just relevant when freeing up? */ 
+  int                   last_restart_nr;
 };
 
 
@@ -279,7 +280,7 @@ static void member_config_set_eclbase(member_config_type * member_config , const
 
 
 static int member_config_get_last_restart_nr( const member_config_type * member_config) {
-  return sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
+  return member_config->last_restart_nr;
 }
 				   
 
@@ -323,6 +324,8 @@ static member_config_type * member_config_alloc(int iens ,
       member_config->sched_file         = ecl_config_get_sched_file( ecl_config );
       member_config->private_sched_file = false;
     }
+    member_config->last_restart_nr  = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
+    member_config->last_restart_nr += ecl_config_get_prediction_length( ecl_config );
   }
   return member_config;
 }
@@ -334,7 +337,7 @@ static const sched_file_type * member_config_get_sched_file( const member_config
 }
 
 keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config) {
-	return member_config->keep_runpath;
+  return member_config->keep_runpath;
 }
 
 

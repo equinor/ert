@@ -1306,7 +1306,10 @@ static config_type * enkf_main_alloc_config() {
   
   item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
-    
+
+  item = config_add_item( config , "PREDICTION_LENGTH" , false , false );
+  config_item_set_argc_minmax( item , 1 , 1 , (const config_item_types [1]) { CONFIG_INT });
+      
   item = config_add_item(config , "DATA_FILE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   

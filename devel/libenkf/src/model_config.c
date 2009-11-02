@@ -176,6 +176,9 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
   else
     model_config->has_prediction = false;
   
+  if (config_item_set(config , "PREDICTION_LENGTH"))
+    model_config->has_prediction = true;
+  
   {
     const char * history_source = config_iget(config , "HISTORY_SOURCE", 0,0);
     const char * refcase        = NULL;
