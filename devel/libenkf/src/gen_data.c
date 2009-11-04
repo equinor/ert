@@ -289,7 +289,6 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
   } 
   
   gen_data->current_data_size = size;
-  //printf("Loaded %d elements from:%s \n",size , filename );
   gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
   util_safe_free(buffer);
   return has_file;

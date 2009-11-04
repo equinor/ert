@@ -1967,24 +1967,24 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
 
 void enkf_main_store_pid(const char * argv0) {
+  const mode_t var_dir_mode = S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH + S_IWOTH; /* = a+rwx */
   char * current_executable;
   if (util_is_abs_path( argv0 ))
     current_executable = util_alloc_string_copy( argv0 );
   else 
     current_executable = util_alloc_PATH_executable( argv0 );
 
-  util_make_path( DEFAULT_VAR_DIR );
-  util_chmod_if_owner( DEFAULT_VAR_DIR , S_IRUSR + S_IWUSR + S_IXUSR + S_IRGRP + S_IWGRP + S_IXGRP + S_IROTH + S_IXOTH + S_IWOTH); /* chmod a+rwx */
-  {
+  if (util_make_path2( DEFAULT_VAR_DIR , var_dir_mode )) {
     char * pidfile = util_alloc_sprintf("%s/%d" , DEFAULT_VAR_DIR , getpid());
-    FILE * stream = util_fopen( pidfile , "w");
+    FILE * stream  = util_fopen( pidfile , "w");
     
     fprintf(stream , "%s %d\n", current_executable , getuid());
     fclose( stream );
     util_chmod_if_owner( pidfile , S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH + S_IWOTH); /* chmod a+rw */
     free( pidfile );
-  }
-
+  } else
+    fprintf(stderr,"** Failed to make directory:%s \n",DEFAULT_VAR_DIR);
+  
   util_safe_free( current_executable );
 }
 
