@@ -272,14 +272,12 @@ local_ministep_type * local_config_alloc_ministep_copy( local_config_type * loca
 
 const local_updatestep_type * local_config_iget_updatestep( const local_config_type * local_config , int index) {
   const local_updatestep_type * updatestep = vector_iget_const( local_config->updatestep , index );
-  if (updatestep == NULL) {
+  if (updatestep == NULL) 
     /* 
        No particular report step has been installed for this
        time-index, revert to the default.
     */
     updatestep = local_config->default_updatestep;
-    printf("Returning default update step \n");
-  }
 
   if (updatestep == NULL) 
     util_exit("%s: fatal error. No report step information for step:%d - and no default \n",__func__ , index);

@@ -29,10 +29,6 @@ struct gen_kw_struct {
 
 /*****************************************************************/
 
-void gen_kw_free_data(gen_kw_type *gen_kw) {
-  scalar_free_data(gen_kw->scalar);
-}
-
 
 
 void gen_kw_free(gen_kw_type *gen_kw) {
@@ -42,10 +38,6 @@ void gen_kw_free(gen_kw_type *gen_kw) {
 }
 
 
-
-void gen_kw_realloc_data(gen_kw_type *gen_kw) {
-  scalar_realloc_data(gen_kw->scalar);
-}
 
 
 void gen_kw_output_transform(const gen_kw_type * gen_kw) {
@@ -62,7 +54,7 @@ gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw_type * gen_kw  = util_malloc(sizeof *gen_kw , __func__);
   gen_kw->config = config;
   gen_kw->scalar = scalar_alloc(gen_kw_config_get_scalar_config( config ));
-  gen_kw->__type_id  = GEN_KW;
+  gen_kw->__type_id          = GEN_KW;
   gen_kw->private_subst_list = subst_list_alloc();  
   gen_kw->global_subst_list  = NULL;
   return gen_kw;
@@ -75,10 +67,11 @@ void gen_kw_clear(gen_kw_type * gen_kw) {
 
 
 
-gen_kw_type * gen_kw_copyc(const gen_kw_type *gen_kw) {
-  gen_kw_type * new = gen_kw_alloc(gen_kw->config); 
-  scalar_memcpy(new->scalar , gen_kw->scalar);
-  return new; 
+void gen_kw_copy(const gen_kw_type * src , gen_kw_type * target) {
+  if (src->config == target->config) 
+    scalar_memcpy(target->scalar , src->scalar);
+  else
+    util_abort("%s: two elements do not share config object \n",__func__);
 }
 
 
@@ -101,7 +94,7 @@ bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_
 */
 
 #define MULTFLT 102
-void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer) {
+void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer, int report_step) {
   enkf_impl_type file_type;
   file_type = buffer_fread_int(buffer);
   if ((file_type == GEN_KW) || (file_type == MULTFLT))
@@ -324,15 +317,12 @@ void gen_kw_set_global_subst_list(gen_kw_type * gen_kw , const subst_list_type *
 }
 
 
-void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std, log_type * logh) {
+void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , const gen_kw_type * min_std) {
   const int log_level           = 3;
   const int data_size           = gen_kw_config_get_data_size(std->config );
   const double * std_data       = scalar_get_data_ref( std->scalar );
   const double * min_std_data   = scalar_get_data_ref( min_std->scalar );
   double       * inflation_data = scalar_get_data_ref( inflation->scalar );
-  bool add_log_entry = false;
-  if (log_get_level( logh ) >= log_level)
-    add_log_entry = true;
 
   {
     for (int i=0; i < data_size; i++) {
@@ -340,9 +330,6 @@ void gen_kw_set_inflation(gen_kw_type * inflation , const gen_kw_type * std , co
         inflation_data[i] = util_double_max( 1.0 , min_std_data[i] / std_data[i]);   
       else 
         inflation_data[i] = 1;
-      
-      if (add_log_entry && inflation_data[i] > 1)
-        log_add_fmt_message(logh , log_level , NULL , "Inflating %s:%s with %7.4f", gen_kw_config_get_key( inflation->config ) , gen_kw_config_iget_name( inflation->config , i) , inflation_data[i]);
     }
   }
 }
@@ -375,12 +362,10 @@ void gen_kw_isqrt( gen_kw_type * gen_kw ) {
 SAFE_CAST(gen_kw , GEN_KW);
 SAFE_CONST_CAST(gen_kw , GEN_KW);
 VOID_ALLOC(gen_kw);
-VOID_REALLOC_DATA(gen_kw);
 VOID_SERIALIZE (gen_kw);
 VOID_DESERIALIZE (gen_kw);
 VOID_INITIALIZE(gen_kw);
-VOID_FREE_DATA(gen_kw)
-VOID_COPYC  (gen_kw)
+VOID_COPY(gen_kw)
 VOID_FREE   (gen_kw)
 VOID_ECL_WRITE(gen_kw)
 VOID_USER_GET(gen_kw)

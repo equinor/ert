@@ -269,24 +269,6 @@ void field_clear(field_type * field) {
 #undef CLEAR_MACRO
 
 
-void field_realloc_data(field_type *field) {
-  if (field->shared_data) {
-    if (field_config_get_byte_size(field->config) > field->shared_byte_size) 
-      util_abort("%s: attempt to grow field with shared data - aborting \n",__func__);
-  } else 
-    field->data = util_malloc(field_config_get_byte_size(field->config) , __func__);
-}
-
-
-
-void field_free_data(field_type *field) {
-  if (!field->shared_data) {
-    free(field->data);
-    field->data = NULL;
-  }
-}
-
-
 
 
 static field_type * __field_alloc(const field_config_type * field_config , void * shared_data , int shared_byte_size) {
@@ -294,9 +276,8 @@ static field_type * __field_alloc(const field_config_type * field_config , void 
   field->config = field_config;
   field->private_config = false;
   if (shared_data == NULL) {
-    field->data        = NULL;
     field->shared_data = false;
-    field_realloc_data(field);
+    field->data        = util_malloc(field_config_get_byte_size(field->config) , __func__);
   } else {
     field->data             = shared_data;
     field->shared_data      = true;
@@ -311,6 +292,7 @@ static field_type * __field_alloc(const field_config_type * field_config , void 
 }
 
 
+
 field_type * field_alloc(const field_config_type * field_config) {
   return __field_alloc(field_config , NULL , 0);
 }
@@ -321,10 +303,12 @@ field_type * field_alloc_shared(const field_config_type * field_config, void * s
 }
 
 
-field_type * field_copyc(const field_type *field) {
-  field_type * new = field_alloc(field->config);
-  memcpy(new->data , field->data , field_config_get_byte_size(field->config));
-  return new;
+
+void field_copy(const field_type *src , field_type * target ) {
+  if (src->config == target->config)
+    memcpy(target->data , src->data , field_config_get_byte_size(src->config));
+  else
+    util_abort("%s: instances do not share config \n",__func__);
 }
 
 
@@ -332,7 +316,7 @@ field_type * field_copyc(const field_type *field) {
 
 
 
-void field_load(field_type * field , buffer_type * buffer) {
+void field_load(field_type * field , buffer_type * buffer, int report_step) {
   int byte_size = field_config_get_byte_size( field->config );
   enkf_util_assert_buffer_type(buffer , FIELD);
   buffer_fread_compressed(buffer , buffer_get_remaining_size( buffer ) , field->data , byte_size);
@@ -730,7 +714,10 @@ bool field_initialize(field_type *field , int iens) {
 
 
 void field_free(field_type *field) {
-  field_free_data(field);
+  if (!field->shared_data) {
+    free(field->data);
+    field->data = NULL;
+  }
   free(field);
 }
 
@@ -1411,7 +1398,7 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
 
 
 
-#define INFLATE(inf,std,min,logh)                                                                                                                                \
+#define INFLATE(inf,std,min)                                                                                                                                     \
 {                                                                                                                                                                \
    for (int i=0; i < data_size; i++) {                                                                                                                           \
      if (std_data[i] > 0)                                                                                                                                        \
@@ -1419,41 +1406,28 @@ double field_user_get(const field_type * field, const char * index_key, bool * v
       else                                                                                                                                                       \
         inflation_data[i] = 1.0;                                                                                                                                 \
    }                                                                                                                                                             \
-   if (add_log_entry) {                                                                                                                                          \
-     for (int c=0; c < data_size; c++) {                                                                                                                         \
-       if (inflation_data[c] > 1.0) {                                                                                                                            \
-         int i,j,k;                                                                                                                                              \
-         field_config_get_ijk( inflation->config , c , &i, &j , &k );                                                                                            \
-         log_add_fmt_message( logh , log_level , NULL , "Inflating %s:%d,%d,%d with %6.4f" , field_config_get_key( inflation->config ) , i,j,k , inflation_data[c]);    \
-       }                                                                                                                                                         \
-     }                                                                                                                                                           \
-   }                                                                                                                                                             \
 }                                                                   
 
 
-void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std , log_type * logh) {
+void field_set_inflation(field_type * inflation , const field_type * std , const field_type * min_std) {
   const int log_level              = 3;
   const field_config_type * config = inflation->config;
   ecl_type_enum ecl_type           = field_config_get_ecl_type( config );
   const int data_size              = field_config_get_data_size( config );   
-  bool add_log_entry = false;
-  if (log_get_level( logh ) >= log_level)
-    add_log_entry = true;
-
 
   if (ecl_type == ecl_float_type) {
     float       * inflation_data = (float *)       inflation->data;
     const float * std_data       = (const float *) std->data;
     const float * min_std_data   = (const float *) min_std->data;
     
-    INFLATE(inflation_data , std_data , min_std_data , logh);
+    INFLATE(inflation_data , std_data , min_std_data );
     
   } else {
     double       * inflation_data = (double *)       inflation->data;
     const double * std_data       = (const double *) std->data;
     const double * min_std_data   = (const double *) min_std->data;
     
-    INFLATE(inflation_data , std_data , min_std_data , logh);
+    INFLATE(inflation_data , std_data , min_std_data );
   }
 }
 #undef INFLATE
@@ -1475,11 +1449,9 @@ SAFE_CAST(field , FIELD)
 SAFE_CONST_CAST(field , FIELD)
 VOID_ALLOC(field)
 VOID_FREE(field)
-VOID_FREE_DATA(field)
-VOID_REALLOC_DATA(field)
 VOID_ECL_WRITE (field)
 VOID_ECL_LOAD(field)
-VOID_COPYC     (field)
+VOID_COPY     (field)
 VOID_SERIALIZE (field);
 VOID_DESERIALIZE (field);
 VOID_INITIALIZE(field);

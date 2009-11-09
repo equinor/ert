@@ -37,16 +37,14 @@ void             gen_kw_set_global_subst_list(gen_kw_type * gen_kw , const subst
 SAFE_CAST_HEADER(gen_kw);
 ALLOC_STATS_HEADER(gen_kw)
 VOID_ECL_WRITE_HEADER  (gen_kw)
-VOID_COPYC_HEADER      (gen_kw);
+VOID_COPY_HEADER (gen_kw);
 VOID_SERIALIZE_HEADER  (gen_kw);
 VOID_DESERIALIZE_HEADER  (gen_kw);
-VOID_FREE_DATA_HEADER(gen_kw)
 VOID_INITIALIZE_HEADER(gen_kw);
 VOID_FREE_HEADER       (gen_kw);
   //MATH_OPS_VOID_HEADER(gen_kw);
 VOID_ALLOC_HEADER(gen_kw);
 VOID_ECL_WRITE_HEADER(gen_kw);
-VOID_REALLOC_DATA_HEADER(gen_kw);
 VOID_USER_GET_HEADER(gen_kw);
 VOID_STORE_HEADER(gen_kw);
 VOID_LOAD_HEADER(gen_kw);

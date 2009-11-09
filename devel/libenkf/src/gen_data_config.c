@@ -28,7 +28,7 @@ struct gen_data_config_struct {
   gen_data_file_format_type    	 output_format;         /* The format used when gen_data instances are written to disk for the forward model. */
   active_list_type             * active_list;           /* List of (EnKF) active indices. */
   pthread_mutex_t                update_lock;           /* mutex serializing (write) access to the gen_data_config object. */
-  int_vector_type              * data_size_vector;      /* Data size - indexed with report_step */
+  int_vector_type              * data_size_vector;      /* Data size, i.e. number of elements , indexed with report_step */
 
   /* 
      The data below this line is just held during booting,
@@ -56,8 +56,14 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
 int gen_data_config_get_data_size( const gen_data_config_type * config , int report_step) {
   int current_size = int_vector_safe_iget( config->data_size_vector , report_step );
   if (current_size < 0) 
-    util_abort("%s: Size not set \n",__func__);
+    util_abort("%s: Size not set for object:%s report_step:%d - internal error: \n",__func__ , config->key , report_step);
   return current_size; 
+}
+
+
+int gen_data_config_get_byte_size( const gen_data_config_type * config , int report_step) {
+  int byte_size = gen_data_config_get_data_size( config , report_step ) * ecl_util_get_sizeof_ctype( config->internal_type );
+  return byte_size;
 }
 
 

@@ -34,41 +34,31 @@ void summary_clear(summary_type * summary) {
 }
 
 
-void summary_realloc_data(summary_type *summary) {
-  summary->data = util_malloc(summary_config_get_data_size(summary->config ) * sizeof *summary->data , __func__);
-}
-
-
-void summary_free_data(summary_type *summary) {
-  free(summary->data);
-  summary->data = NULL;
-}
-
 
 summary_type * summary_alloc(const summary_config_type * summary_config) {
   summary_type * summary  = util_malloc(sizeof *summary , __func__);
   summary->__type_id      = SUMMARY;
   summary->config = (summary_config_type *) summary_config;
-  summary->data = NULL;
-  summary_realloc_data(summary);
+  summary->data   = util_malloc(summary_config_get_data_size(summary->config ) * sizeof *summary->data , __func__);
   return summary;
 }
 
 
 
 
-summary_type * summary_copyc(const summary_type *summary) {
-  const int size = summary_config_get_data_size(summary->config );   
-  summary_type * new = summary_alloc(summary->config);
-  
-  memcpy(new->data , summary->data , size * sizeof *summary->data);
-  return new;
+void summary_copy(const summary_type *src , summary_type * target) {
+  if (src->config == target->config) {
+    const int size = summary_config_get_data_size(src->config );   
+    
+    memcpy(target->data , src->data , size * sizeof * src->data);
+  } else
+    util_abort("%s: do not share config objects \n",__func__);
 }
 
 
 
 
-void summary_load(summary_type * summary , buffer_type * buffer) {
+void summary_load(summary_type * summary , buffer_type * buffer, int report_step) {
   int  size = summary_config_get_data_size( summary->config );
   enkf_util_assert_buffer_type( buffer , SUMMARY );
   buffer_fread( buffer , summary->data , sizeof * summary->data , size);
@@ -108,7 +98,7 @@ bool summary_store(const summary_type * summary , buffer_type * buffer, int repo
 
 
 void summary_free(summary_type *summary) {
-  summary_free_data(summary);
+  free(summary->data);
   free(summary);
 }
 
@@ -223,7 +213,7 @@ bool summary_ecl_load(summary_type * summary , const char * ecl_file_name , cons
 
 
 
-void summary_set_inflation(summary_type * inflation , const summary_type * std , const summary_type * min_std, log_type * logh) {
+void summary_set_inflation(summary_type * inflation , const summary_type * std , const summary_type * min_std) {
   int size = 1;
   for (int i = 0; i < size; i++) 
     inflation->data[i] = util_double_max( 1.0 , min_std->data[i] / std->data[i]);
@@ -273,9 +263,7 @@ SAFE_CAST(summary , SUMMARY)
 SAFE_CONST_CAST(summary , SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
-VOID_FREE_DATA(summary)
-VOID_REALLOC_DATA(summary)
-VOID_COPYC     (summary)
+VOID_COPY     (summary)
 VOID_SERIALIZE(summary)
 VOID_DESERIALIZE(summary)
 VOID_ECL_LOAD(summary)

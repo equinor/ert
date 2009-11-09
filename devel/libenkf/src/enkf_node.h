@@ -18,7 +18,6 @@ extern "C" {
 #include <msg.h>
 #include <matrix.h>
 #include <active_list.h>
-#include <log.h>
 
 /**********************************/
 
@@ -50,14 +49,14 @@ typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node objec
                                                  const char *  ,   /* Filename - can be NULL. */
                                                  fortio_type *);   /* fortio inistance for writing elements in restart files. */
 
-typedef void   	      (load_ftype)                	(      void *  , buffer_type *);
+typedef void   	      (load_ftype)                	(      void *  , buffer_type * , int);
 typedef bool   	      (store_ftype)                	(const void *  , buffer_type * , int , bool);
 
 
-typedef void          (set_inflation_ftype)             (void *       ,     /* Node object which is used for storing inflation factors. */
-                                                         const void * ,     /* Node object with the ensemble standard deviation. */
-                                                         const void * ,     /* Node object with the minimum standard deviation - supplied by the user. */
-                                                         log_type * logh);
+typedef void          (set_inflation_ftype)             (void *       ,   
+                                                         const void * ,      /* Node object with the ensemble standard deviation. */
+                                                         const void * );     /* Node object with the minimum standard deviation - supplied by the user. */
+
 
 
 typedef double        (user_get_ftype)                  (void * , const char * , bool *);
@@ -68,7 +67,7 @@ typedef void          (realloc_data_ftype)	   	(void * );
 typedef void          (free_data_ftype)	           	(void * );
 typedef void   	      (node_free_ftype)       	   	(      void *);
 typedef void   	      (clear_ftype)      	   	(      void *);
-typedef void * 	      (node_copyc_ftype)      	   	(const void *);
+typedef void   	      (node_copy_ftype)      	   	(const void * , void *);
 typedef void   	      (isqrt_ftype)      	   	(      void *);
 typedef void   	      (scale_ftype)      	   	(      void *  , double);
 typedef void   	      (iadd_ftype)       	   	(      void *  , const void *);
@@ -82,7 +81,7 @@ typedef enum {alloc_func       	   	    = 0,
 	      ecl_load_func                 = 2,
 	      fread_func       	   	    = 3,
 	      fwrite_func      	   	    = 4,
-	      copyc_func       	   	    = 5,
+	      copy_func       	   	    = 5,
 	      initialize_func  	   	    = 6,
 	      serialize_func   	   	    = 7,
 	      deserialize_func 	   	    = 8,
@@ -132,7 +131,7 @@ void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int 
 void             enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state);
 bool             enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state);
 
-void   enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std, log_type * logh);
+void   enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std);
 void   enkf_node_sqrt(enkf_node_type *enkf_node);
 void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );

@@ -51,9 +51,6 @@ void             scalar_iset(scalar_type * scalar , int index , double value);
 MATH_OPS_HEADER(scalar);
 VOID_ALLOC_HEADER(scalar);
 VOID_FREE_HEADER(scalar);
-VOID_FREE_DATA_HEADER(scalar);
-VOID_REALLOC_DATA_HEADER(scalar);
-VOID_COPYC_HEADER      (scalar);
 VOID_ECL_WRITE_HEADER (scalar)
 VOID_INITIALIZE_HEADER(scalar);
 

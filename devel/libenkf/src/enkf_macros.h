@@ -100,14 +100,14 @@ bool prefix ## _store__(const void * void_arg , buffer_type * buffer , int repor
 }
 
 
-#define VOID_LOAD(prefix)                                          \
-void prefix ## _load__(void * void_arg , buffer_type * buffer) {  \
-   prefix ## _type * arg = prefix ## _safe_cast( void_arg );\
-   prefix ## _load(arg , buffer);                          \
+#define VOID_LOAD(prefix)                                                          \
+void prefix ## _load__(void * void_arg , buffer_type * buffer , int report_step) { \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );                       \
+   prefix ## _load(arg , buffer , report_step);                                     \
 }
 
 #define VOID_STORE_HEADER(prefix) bool prefix ## _store__(const void * , buffer_type * , int , bool);
-#define VOID_LOAD_HEADER(prefix) void prefix ## _load__(void * , buffer_type *);
+#define VOID_LOAD_HEADER(prefix) void prefix ## _load__(void * , buffer_type * , int);
 
 
 /*****************************************************************/
@@ -176,6 +176,7 @@ void prefix ## _free_data__(void * void_arg) {         	     \
 
 /*****************************************************************/
 
+/*
 #define VOID_REALLOC_DATA(prefix)                            \
 void prefix ## _realloc_data__(void * void_arg) {            \
    prefix ## _type * arg = prefix ## _safe_cast( void_arg ); \
@@ -183,16 +184,17 @@ void prefix ## _realloc_data__(void * void_arg) {            \
 }
 
 #define VOID_REALLOC_DATA_HEADER(prefix) void prefix ## _realloc_data__(void * );
+*/
 
 /*****************************************************************/
 
-#define VOID_COPYC(prefix)                                        \
-void * prefix ## _copyc__(const void * void_arg) {                \
-   const prefix ## _type * arg = prefix ## _safe_cast( void_arg );\
-   return prefix ## _copyc( arg );                                \
+#define VOID_COPY(prefix)                                             \
+void prefix ## _copy__(const void * void_src, void * void_target) {   \
+   const prefix ## _type * src = prefix ## _safe_cast( void_src );    \
+   prefix ## _type * target = prefix ## _safe_cast( void_target );    \
+   prefix ## _copy( src , target );                                   \
 }
-
-#define VOID_COPYC_HEADER(prefix) void * prefix ## _copyc__(const void * );
+#define VOID_COPY_HEADER(prefix) void prefix ## _copy__(const void * , void * );
 
 /*****************************************************************/
 
@@ -250,11 +252,11 @@ bool prefix ## _initialize__(void *void_arg, int iens) {         \
 /*****************************************************************/
 
 #define VOID_SET_INFLATION(prefix) \
-void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std , log_type * logh) {                                    \
-   prefix ## _set_inflation( prefix ## _safe_cast( void_inflation ) , prefix ## _safe_const_cast( void_std ) , prefix ## _safe_const_cast( void_min_std ) , logh); \
+void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std) {                                               \
+   prefix ## _set_inflation( prefix ## _safe_cast( void_inflation ) , prefix ## _safe_const_cast( void_std ) , prefix ## _safe_const_cast( void_min_std )); \
 }
+#define VOID_SET_INFLATION_HEADER(prefix) void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std );
 
-#define VOID_SET_INFLATION_HEADER(prefix) void prefix ## _set_inflation__( void * void_inflation , const void * void_std , const void * void_min_std , log_type * logh);
 
 /*****************************************************************/
 

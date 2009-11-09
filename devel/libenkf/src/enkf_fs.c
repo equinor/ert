@@ -1407,9 +1407,10 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
   const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
   enkf_var_type var_type     = enkf_config_node_get_var_type(config_node);
   basic_driver_type * driver = enkf_fs_select_driver(enkf_fs , var_type , state , enkf_node_get_key(enkf_node) );
+  int internal_report_step   = report_step;
   
   if (var_type == PARAMETER) {
-    report_step = __get_parameter_report_step( report_step , state );
+    internal_report_step = __get_parameter_report_step( report_step , state );
     
     /*
       Observe that if we do not find the filename we are looking for, we
@@ -1421,17 +1422,18 @@ void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , in
       
         2. We start the assimulation from R1, then we have to go all the
            way back to report 0 to get hold of the parameter.
+
     */
-    while (!driver->has_node( driver , config_node , report_step , iens )) {
-      report_step--;
-      if (report_step < 0)
+    while (!driver->has_node( driver , config_node , internal_report_step , iens )) {
+      internal_report_step--;
+      if (internal_report_step < 0)
 	util_abort("%s: can not find any stored item for key:%s(%d). Forgot to initialize ensemble ??? \n",__func__ , enkf_node_get_key( enkf_node ) , iens);
     }
   }
 
   {
     buffer_type * buffer = buffer_alloc(100);
-    driver->load(driver , config_node ,  report_step , iens , buffer);
+    driver->load(driver , config_node ,  internal_report_step , iens , buffer);
     buffer_fskip_time_t( buffer );
     enkf_node_load(enkf_node , buffer , report_step, iens , state);
     buffer_free( buffer );

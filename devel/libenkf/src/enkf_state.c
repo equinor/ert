@@ -1064,12 +1064,11 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
       const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_state->ensemble_config , kw);
       enkf_state_add_node(enkf_state , kw , config_node); 
     }
-	
+    
     {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
       if (var_type == STATIC_STATE) 
-	//ecl_static_kw_inc_counter(enkf_node_value_ptr(enkf_node) , false , run_info->step1);
 	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state_dynamic);
       
       if (var_type == DYNAMIC_STATE) {

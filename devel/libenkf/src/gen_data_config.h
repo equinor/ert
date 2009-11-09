@@ -40,6 +40,8 @@ void                  	     gen_data_config_ecl_write(const gen_data_config_type
 void                  	     gen_data_config_get_template_data( const gen_data_config_type * , char ** , int * , int * , int *);
 gen_data_config_type  	   * gen_data_config_fscanf_alloc(const char * );
 const char  *                gen_data_config_get_key( const gen_data_config_type * config);
+int                          gen_data_config_get_byte_size( const gen_data_config_type * config , int report_step);
+int                          gen_data_config_get_data_size( const gen_data_config_type * config , int report_step);
 
 SAFE_CAST_HEADER(gen_data_config)
 GET_ACTIVE_LIST_HEADER(gen_data)
