@@ -187,8 +187,8 @@ Python end:
 
 int main (int argc , char ** argv ) {
   const char * command_file = argv[1];  /* The file to generate should be the first argument */
-  const char * grid_file    = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/EnKF/sf02rg01/Refcase/GRANE.EGRID";
-  const char * surface_file = "/d/proj/bg/ior_fsenter2/grane/ressim/hstruct/2008a/e100/EnKF/sf02rg01/Realizations/Cohiba/Surface_T/Init/topHeimdal_100.irap";
+  const char * grid_file    = "/d/proj/bg/enkf/jaskje/iior_hstruct_2009a_r004_local_struct/Refcase/RG09A-ST-PP-PRED-ROO4-1.EGRID";
+  const char * surface_file = "/d/proj/bg/enkf/jaskje/iior_hstruct_2009a_r004_local_struct/Realizations/Cohiba/Surface_B/Init/baseHeimdal_0.irap";
   FILE * stream = util_mkdir_fopen( command_file , "w");
 
   /* Load the grid */
@@ -204,7 +204,7 @@ int main (int argc , char ** argv ) {
     fprintf_command( stream , CREATE_UPDATESTEP );
     fprintf(stream , "%s\n", update_step);
 
-
+    /* North west */
     /* Region NORTHW */
     {
       const char * ministep_name = "NORTHW";
@@ -222,13 +222,366 @@ int main (int argc , char ** argv ) {
 
       add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
       add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
-      add_eclipse_field( stream , ministep_name , "MULTPV"   , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
       add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
 
       
       Region.select_from_ijkbox( 0,32,115,216, 19 , 19 );
-      add_surface_data( stream , ministep_name , "SURFACE" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
     }
+    
+    /* North centre */
+    {
+       const char * ministep_name = "NORTHC";
+       add_ministep( stream , update_step , ministep_name );
+       add_obs(stream , ministep_name , "WWPR:PR03A_G8");
+       add_obs(stream , ministep_name , "WOPR:PR03A_G8");
+       add_obs(stream , ministep_name , "WGPR:PR03A_G8");
+
+       Region.select_from_ijkbox(33,43,115,216,0,19 );
+
+       add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+       add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+       add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+       add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+       add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+       add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+       add_eclipse_field( stream , ministep_name , "RS" , &Region);
+
+       Region.select_from_ijkbox(33,43,115,216, 19 , 19 );
+       add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+       add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+       
+    }
+    
+    /* North east 1 */
+    {
+       const char * ministep_name = "NORTHE1";
+       add_ministep( stream , update_step , ministep_name );
+       add_obs(stream , ministep_name , "WWPR:PR06_G28");
+       add_obs(stream , ministep_name , "WOPR:PR06_G28");
+       add_obs(stream , ministep_name , "WGPR:PR06_G28");
+       
+       Region.select_from_ijkbox(44,55,115,216,0,19 );
+
+       add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+       add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+       add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+       add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+       add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+       add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+       add_eclipse_field( stream , ministep_name , "RS" , &Region);
+
+       Region.select_from_ijkbox(44,55,115,216, 19 , 19 );
+       add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+       add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+
+    }
+
+    /* North east 2 */
+    {
+      const char * ministep_name = "NORTHE2";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR07_G2");
+      add_obs(stream , ministep_name , "WOPR:PR07_G2");
+      add_obs(stream , ministep_name , "WGPR:PR07_G2"); 
+      
+      add_obs(stream , ministep_name , "WWPR:PR08_G16");
+      add_obs(stream , ministep_name , "WOPR:PR08_G16");
+      add_obs(stream , ministep_name , "WGPR:PR08_G16"); 
+      
+      Region.select_from_ijkbox(56,101,115,216,0,19 );
+      
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(56,101,115,216, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+      
+    }
+
+    /* Middle part */
+    /* Middle west */
+    {
+      const char * ministep_name = "MIDDLEW";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR11E_G5");
+      add_obs(stream , ministep_name , "WOPR:PR11E_G5");
+      add_obs(stream , ministep_name , "WGPR:PR11E_G5");
+      
+      add_obs(stream , ministep_name , "WWPR:PR12_G19");
+      add_obs(stream , ministep_name , "WOPR:PR12_G19");
+      add_obs(stream , ministep_name , "WGPR:PR12_G19");
+
+      add_obs(stream , ministep_name , "WWPR:PR11_G6");
+      add_obs(stream , ministep_name , "WOPR:PR11_G6");
+      add_obs(stream , ministep_name , "WGPR:PR11_G6");
+ 
+      add_obs(stream , ministep_name , "WWPR:PR10_G18");
+      add_obs(stream , ministep_name , "WOPR:PR10_G18");
+      add_obs(stream , ministep_name , "WGPR:PR10_G18");
+
+      add_obs(stream , ministep_name , "WWPR:PR09_G10");
+      add_obs(stream , ministep_name , "WOPR:PR09_G10");
+      add_obs(stream , ministep_name , "WGPR:PR09_G10");
+
+      Region.select_from_ijkbox(0,47,89,114,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(0,47,89,114, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+
+    }
+
+    /* Middle east */
+    {
+      const char * ministep_name = "MIDDLEE1";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR13_G22");
+      add_obs(stream , ministep_name , "WOPR:PR13_G22");
+      add_obs(stream , ministep_name , "WGPR:PR13_G22");
+      
+      Region.select_from_ijkbox(46,54,89,114,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(46,54,89,114, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+
+    }
+    
+    {
+      const char * ministep_name = "MIDDLEE2";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR26_G26");
+      add_obs(stream , ministep_name , "WOPR:PR26_G26");
+      add_obs(stream , ministep_name , "WGPR:PR26_G26");
+     
+      add_obs(stream , ministep_name , "WWPR:PR14_G27");
+      add_obs(stream , ministep_name , "WOPR:PR14_G27");
+      add_obs(stream , ministep_name , "WGPR:PR14_G27");
+ 
+      Region.select_from_ijkbox(50,101,89,114,0,19 );
+      
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(50,101,89,114, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+
+    }
+
+    /* Middle centre */
+    {
+      const char * ministep_name = "MIDDLEC";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR24_G17");
+      add_obs(stream , ministep_name , "WOPR:PR24_G17");
+      add_obs(stream , ministep_name , "WGPR:PR24_G17");
+
+      Region.select_from_ijkbox(0,101,84,88,0,19 );
+      
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(0,101,84,88, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+
+    }
+
+    /* The southern region. */
+    /* South west */
+    {
+      const char * ministep_name = "SOUTHW1";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR25_G21");
+      add_obs(stream , ministep_name , "WOPR:PR25_G21");
+      add_obs(stream , ministep_name , "WGPR:PR25_G21");
+
+      Region.select_from_ijkbox(0,101,78,84,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(0,101,78,84, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+
+    }
+
+    {
+      const char * ministep_name = "SOUTHW2";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR27_G11");
+      add_obs(stream , ministep_name , "WOPR:PR27_G11");
+      add_obs(stream , ministep_name , "WGPR:PR27_G11");
+
+      Region.select_from_ijkbox(0,44,67,80,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(0,44,67,80, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+
+    }
+
+    {
+      const char * ministep_name = "SOUTHW3";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR23_G9");
+      add_obs(stream , ministep_name , "WOPR:PR23_G9");
+      add_obs(stream , ministep_name , "WGPR:PR23_G9");
+      
+      add_obs(stream , ministep_name , "WWPR:PR22_G25");
+      add_obs(stream , ministep_name , "WOPR:PR22_G25");
+      add_obs(stream , ministep_name , "WGPR:PR22_G25");
+
+      add_obs(stream , ministep_name , "WWPR:PR29_G34");
+      add_obs(stream , ministep_name , "WOPR:PR29_G34");
+      add_obs(stream , ministep_name , "WGPR:PR29_G34");
+
+      Region.select_from_ijkbox(39,53,45,80,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(39,53,45,80, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+    }
+
+    /* South east */
+    
+    {
+      const char * ministep_name = "SOUTHE1";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR18_G40");
+      add_obs(stream , ministep_name , "WOPR:PR18_G40");
+      add_obs(stream , ministep_name , "WGPR:PR18_G40");
+      
+      add_obs(stream , ministep_name , "WWPR:PR17_G30");
+      add_obs(stream , ministep_name , "WOPR:PR17_G30");
+      add_obs(stream , ministep_name , "WGPR:PR17_G30");
+      
+      Region.select_from_ijkbox(54,68,45,83,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(54,68,45,83, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+    }
+
+    {
+      const char * ministep_name = "SOUTHE2";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR16_G15");
+      add_obs(stream , ministep_name , "WOPR:PR16_G15");
+      add_obs(stream , ministep_name , "WGPR:PR16_G15");
+      
+      add_obs(stream , ministep_name , "WWPR:PR15_G35");
+      add_obs(stream , ministep_name , "WOPR:PR15_G35");
+      add_obs(stream , ministep_name , "WGPR:PR15_G35");
+      
+      Region.select_from_ijkbox(69,101,45,83,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(69,101,45,83, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+      
+    }
+
+    /* South centre */
+    {
+      const char * ministep_name = "SOUTHC";
+      add_ministep( stream , update_step , ministep_name );
+      add_obs(stream , ministep_name , "WWPR:PR20_G39");
+      add_obs(stream , ministep_name , "WOPR:PR20_G39");
+      add_obs(stream , ministep_name , "WGPR:PR20_G39");
+
+      Region.select_from_ijkbox(0,101,0,44,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+      
+      Region.select_from_ijkbox(0,101,0,44, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+    }
+
 
 
     fprintf_command( stream , INSTALL_DEFAULT_UPDATESTEP );
