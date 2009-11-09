@@ -36,18 +36,12 @@
 
 struct gen_data_struct {
   int                     __type_id;
-  gen_data_config_type  * config;            /* Thin config object - mainly contains filename for remote load */
-  char                  * data;              /* Actual storage - will be casted to double or float on use. */
-  int                     current_data_size; /* The instance is holding the size itself. */
+  gen_data_config_type  * config;               /* Thin config object - mainly contains filename for remote load */
+  char                  * data;                 /* Actual storage - will be casted to double or float on use. */
+  int                     current_report_step;  /* Need this to look up the correct size in the config object. */
 };
 
 
-
-static int gen_data_get_current_byte_size( const gen_data_type * gen_data ) {
-  //if (gen_data->current_size < 0) 
-  //util_abort("%s: tried to read invalid gen_data->current_data_size - BROKEN CODE \n",__func__ );
-  return gen_data->current_data_size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
-}
 
 
 gen_data_config_type * gen_data_get_config(const gen_data_type * gen_data) { return gen_data->config; }
@@ -242,7 +236,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
 
   if (size > 0) {
     ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
-
+    
     if (load_type == internal_type)
       memcpy(gen_data->data , data , gen_data_get_current_byte_size( gen_data ));
     else {
@@ -287,10 +281,10 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
     gen_data_file_format_type input_format = gen_data_config_get_input_format( gen_data->config );
     buffer = gen_common_fload_alloc( filename , input_format , internal_type , &load_type , &size);
   } 
-  
   gen_data->current_data_size = size;
   gen_data_set_data__(gen_data , size , report_step , load_type , buffer);
   util_safe_free(buffer);
+  
   return has_file;
 }
 
@@ -538,8 +532,10 @@ void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
     } else if (internal_type == ecl_double_type) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
-      for (i = 0; i < data_size; i++)
+      for (i = 0; i < data_size; i++) {
+        printf("%s:%d\n",__func__ , i);
 	data1[i] += data2[i];
+      }
     }
   }
 }

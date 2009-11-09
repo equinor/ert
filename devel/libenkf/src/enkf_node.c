@@ -261,7 +261,7 @@ enkf_node_type * enkf_node_copyc(const enkf_node_type * src) {
   {
     enkf_node_type * new;
     new = enkf_node_alloc(src->config);
-
+    
     printf("%s: not properly implemented ... \n",__func__);
     util_abort("%s: ",__func__);
     return new;

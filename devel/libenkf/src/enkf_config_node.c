@@ -60,7 +60,7 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   else
     node->enkf_infile_fmt = NULL;
 
-  if (enkf_outfile_fmt != NULL)
+  if (enkf_outfile_fmt != NULL) 
     node->enkf_outfile_fmt = path_fmt_alloc_path_fmt(enkf_outfile_fmt);
   else
     node->enkf_outfile_fmt = NULL;

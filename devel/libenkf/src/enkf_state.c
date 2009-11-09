@@ -591,8 +591,19 @@ INCLDUE
      Adding all the subst_kw keywords here, with description. Listing
      all of them here in one go guarantees that we have control over
      the ordering (which is interesting because the substititions are
-     done in cacade like fashion).
+     done in cascade like fashion). The user defined keywords are
+     added first, so that these can refer to the built in keywords.
   */
+  {
+    hash_iter_type * iter = hash_iter_alloc(data_kw);
+    const char * key = hash_iter_get_next_key(iter);
+    while (key != NULL) {
+      enkf_state_add_subst_kw(enkf_state , key , hash_get(data_kw , key) , "Supplied by the user in the enkf configuration file");
+      key = hash_iter_get_next_key(iter);
+    }
+    hash_iter_free(iter);
+  }
+  
   enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , "---" , "The absolute path of the current forward model instance. ");
   enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH"   , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
   enkf_state_add_subst_kw(enkf_state , "CWD"           , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
@@ -625,15 +636,6 @@ INCLDUE
     free( tagged_randfloat );
   }
 
-  {
-    hash_iter_type * iter = hash_iter_alloc(data_kw);
-    const char * key = hash_iter_get_next_key(iter);
-    while (key != NULL) {
-      enkf_state_add_subst_kw(enkf_state , key , hash_get(data_kw , key) , "Supplied by the user in the enkf configuration file");
-      key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-  }
   enkf_state->my_config = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config);
   enkf_state_set_static_subst_kw(  enkf_state );
 

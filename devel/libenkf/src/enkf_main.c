@@ -419,16 +419,16 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
    1. A scalar inflation factor is applied to the whole node.  
    2. A node-inflation factor is applied which will allow for much
       greater flexibility.
-
         
 */
+
 
 void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std , double inflation_factor ) {
   int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
   const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key); 
   enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , ANALYZED );
-  enkf_node_type *  mean                    = enkf_node_alloc( config_node );
-  enkf_node_type *  std                     = enkf_node_alloc( config_node );
+  enkf_node_type * mean                     = enkf_node_alloc( config_node );
+  enkf_node_type * std                      = enkf_node_alloc( config_node );
   int iens;
   
   enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
@@ -512,6 +512,7 @@ static int __get_active_size(const enkf_config_node_type * config_node , int rep
   }
   return active_size;
 }
+
 
 
 void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 , const local_ministep_type * ministep, int report_step , hash_type * use_count) {
@@ -703,8 +704,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     log_stream = util_fopen( log_file , "w" );
     
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {
+      printf("Running ministep:%d \n" , ministep_nr);
       for(int report_step = start_step; report_step <= end_step; report_step++)  {
-	local_ministep_type   * ministep      = local_updatestep_iget_ministep( updatestep , ministep_nr );      
+	local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );      
 	
         enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size, 
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
@@ -1312,7 +1314,8 @@ static config_type * enkf_main_alloc_config() {
       
   item = config_add_item(config , "DATA_FILE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-  
+
+
   item = config_add_item(config , "INIT_SECTION" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
   config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE"); 

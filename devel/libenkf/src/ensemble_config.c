@@ -186,18 +186,17 @@ void ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , 
 
 void ensemble_config_add_gen_param(ensemble_config_type * config , const char * key , const char * enkf_outfile , stringlist_type * options) {
   gen_data_config_type * node = gen_data_config_alloc_with_options( key , true , options );
-  
   {
-    char                  * enkf_outfile     = gen_data_config_pop_enkf_outfile( node );
+    //char                  * enkf_outfile   = gen_data_config_pop_enkf_outfile( node );
     enkf_config_node_type * config_node      = ensemble_config_add_node( config , key , PARAMETER , GEN_DATA , enkf_outfile , NULL , node );
     gen_data_type         * gen_data_min_std = gen_data_config_get_min_std( node );
-    
+
     if (gen_data_min_std != NULL) {
       enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_data_min_std);
       enkf_config_node_set_min_std( config_node , min_std_node );
     }
 
-    util_safe_free( enkf_outfile );
+    //util_safe_free( enkf_outfile );
   }
 }
 
@@ -331,7 +330,7 @@ void ensemble_config_add_config_items(config_type * config) {
   config_item_set_argc_minmax(item , 4 , 6 ,  (const config_item_types [6]) { CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_EXISTING_FILE , CONFIG_STRING , CONFIG_STRING});
   
   item = config_add_item(config , "GEN_PARAM" , false , true);
-  config_item_set_argc_minmax(item , 5 , 7 ,  NULL);
+  config_item_set_argc_minmax(item , 5 , -1 ,  NULL);
   
   item = config_add_item(config , "GEN_DATA" , false , true);
   config_item_set_argc_minmax(item , 1 , -1 ,  (const config_item_types [4]) { CONFIG_STRING , CONFIG_EXISTING_FILE});
@@ -369,7 +368,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 
   if (config_get_occurences(config , "HAVANA_FAULT") > 0) {
     printf("************************************************************************\n");
-    printf("** You have used the keyword HAVANA_FAULT - this is unfortunately     **\n");
+    printf("** You have used the keyword HAVANA_FAULT - this is unfortunately no  **\n");
     printf("** longer supported - use GEN_KW instead and a suitable FORWARD_MODEL.**\n");
     printf("************************************************************************\n");
     exit(1);
@@ -383,7 +382,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     char * ecl_file      = stringlist_iget_copy(options , 1);
     stringlist_idel( options , 0 );
     stringlist_idel( options , 0 );
-      
+    
     ensemble_config_add_gen_param(ensemble_config , key , ecl_file , options);
 
     free( key );

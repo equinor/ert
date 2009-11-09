@@ -106,13 +106,13 @@ int main (int argc , char ** argv) {
     const char * model_config_file = argv[1]; 
     
     enkf_welcome( model_config_file );
-    enkf_main_store_pid( argv[0] );
+    //enkf_main_store_pid( argv[0] );
     {
       enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file);
       enkf_tui_main_menu(enkf_main); 
       enkf_main_free(enkf_main);
     }
-    enkf_main_delete_pid();
+    //enkf_main_delete_pid();
     
     util_abort_free_version_info(); /* No fucking leaks ... */
   }

@@ -161,7 +161,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
     }
   } else {
     if (!config_has_set_item(config , "EQUIL"))
-      util_abort("%s: you must specify how ECLIPSE is initialized - with either EQUIL or EQUIL_INIT_FILE ",__func__);
+      util_abort("%s: you must specify how ECLIPSE is initialized - with the INIT_SECTION_KEYWORD.",__func__);
     ecl_config->equil_init_file = NULL; 
   }
   if (config_item_set(config , "GRID"))

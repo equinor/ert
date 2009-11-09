@@ -445,11 +445,11 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int report_step, const char * ministep_name , FILE * stream ) {
   int iobs;
+  fprintf(stream , "======================================================================================================================\n");
+  fprintf(stream , "Report step...: %04d \n",report_step);
+  fprintf(stream , "Ministep......: %s   \n",ministep_name);  
+  fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
   if (obs_data_get_nrobs( obs_data ) > 0) {
-    fprintf(stream , "======================================================================================================================\n");
-    fprintf(stream , "Report step...: %04d \n",report_step);
-    fprintf(stream , "Ministep......: %s   \n",ministep_name);  
-    fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
     fprintf(stream , "                                                   Observed history                |            Simulated data        \n");  
     fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
     for (iobs = 0; iobs < obs_data_get_nrobs(obs_data); iobs++) {
@@ -471,9 +471,11 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
         fprintf(stream , "   %12.3f +/- %12.3f  \n", mean , std);
       }
     }
-    fprintf(stream , "======================================================================================================================\n");
-    fprintf(stream , "\n\n\n");
-  }
+  } else
+    fprintf(stream , "No observations for this ministep / report_step. \n");
+    
+  fprintf(stream , "======================================================================================================================\n");
+  fprintf(stream , "\n\n\n");
 }
 
 

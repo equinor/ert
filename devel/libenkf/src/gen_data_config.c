@@ -134,21 +134,34 @@ gen_data_config_type * gen_data_config_alloc(const char * key,
   } else 
     config->template_buffer = NULL;
 
+  /* init files */
   if (init_file_fmt != NULL)
     config->init_file_fmt     = path_fmt_alloc_path_fmt( init_file_fmt );
   else
     config->init_file_fmt = NULL;
   
+  pthread_mutex_init( &config->update_lock , NULL );
+  if (config->output_format == GEN_DATA_UNDEFINED) 
+    config->output_format = config->input_format;
+  
+    
+  /* 
+     min_std for inflation. 
+     ----------------------
+
+     This code must be at the VERY END of the constructor because the
+     function calls loading the min-std instance will use this
+     gen_data_config instance, nad consequently assume that it is
+     fully initialized.
+  */
+     
   if (min_std_file != NULL) {
     config->min_std = gen_data_alloc( config );
     if (!gen_data_fload( config->min_std , min_std_file , 0))
       util_abort("%s: could not locate file:%s \n",__func__ , min_std_file );
-  } else
+  } else 
     config->min_std = NULL;
-  
-  pthread_mutex_init( &config->update_lock , NULL );
-  if (config->output_format == GEN_DATA_UNDEFINED) 
-    config->output_format = config->input_format;
+
   return config;
 }
 
@@ -245,6 +258,7 @@ gen_data_config_type * gen_data_config_alloc_with_options(const char * key , boo
                                  hash_safe_get( opt_hash , "ECL_FILE"),
                                  hash_safe_get( opt_hash , "RESULT_FILE"),
                                  hash_safe_get( opt_hash , "MIN_STD" ));
+  
   
   hash_free(opt_hash);
   return config;
