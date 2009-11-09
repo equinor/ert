@@ -39,6 +39,7 @@ static void include_cell(const EclGrid * Grid , int global_index , const IrapCla
         {
           int map_i , map_j, err;
           Map->getIndex( x , y , map_i , map_j , err);
+          //printf("map_i:%d  map_j:%d   global:%d \n",map_i , map_j , Map->getGlobalIndex( map_i , map_j ));
           if (err == 0)
             indexList->append( Map->getGlobalIndex( map_i , map_j ));
         }
@@ -65,6 +66,9 @@ static void add_eclipse_field( FILE * stream , const char * ministep , const cha
       fprintf(stream , "%6d " , active_list[i]);
       if ((i % 10) == 9)
         fprintf(stream , "\n");
+
+      if ((Region->get_active_size() % 10) != 9)
+        fprintf(stream , "\n");
     }
   }
 }
@@ -75,8 +79,8 @@ static void add_surface_data( FILE * stream ,
                               const char * ministep , 
                               const char * surface_key , 
                               const IrapClassicMap * Map , 
-                              const EclGrid * Grid , 
-                              const EclRegion * Region) {
+                              const EclGrid        * Grid , 
+                              const EclRegion      * Region) {
   
   intVector   indexList         = intVector(0 , 0);      
   int         global_size       = Region->get_global_size();
@@ -97,6 +101,8 @@ static void add_surface_data( FILE * stream ,
         if ((i % 10) == 9)
           fprintf(stream , "\n");
       }
+      if ((indexList.size() % 10) != 9)
+        fprintf(stream , "\n");
     }
   }
 }
