@@ -13,6 +13,8 @@ extern "C" {
 
 typedef struct sched_kw_welspecs_struct sched_kw_welspecs_type;
 
+
+
 sched_kw_welspecs_type * sched_kw_welspecs_fscanf_alloc(FILE *, bool *, const char *);
 sched_kw_welspecs_type * sched_kw_welspecs_fread_alloc(FILE *);
 void sched_kw_welspecs_free(sched_kw_welspecs_type *);

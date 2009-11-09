@@ -657,7 +657,7 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
     from the summary object.
     
     Observe the following:
-
+    
      1. The time-framework, i.e. when the blocks starts and stops is unchanged,
         i.e. the values from the original SCHEDULE file are retained.
 

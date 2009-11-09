@@ -1,4 +1,4 @@
-#ifndef __SHCED_KW_H__
+#ifndef __SCHED_KW_H__
 #define __SCHED_KW_H__
 #ifdef __cplusplus
 extern "C" {
@@ -63,6 +63,9 @@ hash_type      * sched_kw_alloc_well_obs_hash(const sched_kw_type *);
 void             sched_kw_alloc_child_parent_list(const sched_kw_type *, char ***, char ***, int *);
 void           * sched_kw_get_data( sched_kw_type * kw);
 void             sched_kw_set_restart_nr( sched_kw_type * kw , int restart_nr);
+const char     * sched_kw_get_name( const sched_kw_type * kw);
+bool             sched_kw_has_well( const sched_kw_type * sched_kw , const char * well );
+bool             sched_kw_well_open( const sched_kw_type * sched_kw , const char * well );
 
 #ifdef __cplusplus
 }

@@ -346,6 +346,8 @@ sched_kw_type * sched_kw_token_alloc(const stringlist_type * token_list, int * t
 }
 
 
+const char * sched_kw_get_name( const sched_kw_type * kw) { return kw->kw_name; }
+
 
 
 void sched_kw_set_restart_nr( sched_kw_type * kw , int restart_nr) {
@@ -516,6 +518,29 @@ void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** c
        util_abort("%s: Internal error - trying to get GRUPTREE from non-gruptre kw - aborting.\n", __func__);
     }
   }
+}
+
+
+/** 
+    Only WCONHIST 
+*/
+
+bool sched_kw_has_well( const sched_kw_type * sched_kw , const char * well ) {
+  if (sched_kw_get_type( sched_kw ) == WCONHIST)
+    return sched_kw_wconhist_has_well( sched_kw->data , well);
+  else
+    return false;
+}
+
+/** 
+    Only WCONHIST 
+*/
+
+bool sched_kw_well_open( const sched_kw_type * sched_kw , const char * well ) {
+  if (sched_kw_get_type( sched_kw ) == WCONHIST)
+    return sched_kw_wconhist_well_open( sched_kw->data , well);
+  else
+    return false;
 }
 
 

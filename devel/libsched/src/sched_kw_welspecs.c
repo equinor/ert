@@ -41,7 +41,7 @@ struct sched_kw_welspecs_struct
   welspec_type struct.
 */
 
-typedef enum {PH_OIL, PH_WAT, PH_GAS, PH_LIQ} phase_type;
+typedef enum {PH_OIL , PH_WAT , PH_GAS , PH_LIQ} phase_type;
 #define PH_OIL_STRING "OIL"
 #define PH_WAT_STRING "WATER"
 #define PH_GAS_STRING "GAS"

@@ -240,8 +240,6 @@ static void validate_set_common_selection_set(validate_type * validate , int arg
 
 
 static void validate_set_indexed_selection_set(validate_type * validate , int index , int argc , const char ** argv) {
-  if (index < (validate->argc_min - 1) || index >= validate->argc_max)
-    util_abort("%s: index:%d invalid. argc_minmax = (%d,%d) \n",__func__ , index , validate->argc_min , validate->argc_max);
   
   if (validate->indexed_selection_set == NULL)
     util_abort("%s: must call xxx_set_argc_minmax() first - aborting \n",__func__);
@@ -603,13 +601,14 @@ static bool config_item_validate_set(config_type * config , const config_item_ty
 	config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have at least %d arguments.",item->kw , item->validate->argc_min));
     }
   }
+
   if (item->validate->argc_max >= 0) {
     if (argc > item->validate->argc_max) {
       OK = false;
       if (config_file != NULL)
-	config_add_and_free_error(config ,util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->validate->argc_min));
+	config_add_and_free_error(config , util_alloc_sprintf("Error when parsing config_file:\"%s\" Keyword:%s must have maximum %d arguments.",config_file , item->kw , item->validate->argc_max));
       else
-	config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->validate->argc_min));
+	config_add_and_free_error(config , util_alloc_sprintf("Error:: Keyword:%s must have maximum %d arguments.",item->kw , item->validate->argc_max));
     }
   }
 
@@ -1270,7 +1269,7 @@ static void config_parse__(config_type * config ,
 	    if (active_tokens < 3) 
 	      util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
 	    {
-	      char * key   ;
+	      char * key ;
 	      char * value = util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ");
 	      if (alloc_new_key != NULL)
 		key = alloc_new_key( token_list[1] );  

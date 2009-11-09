@@ -252,7 +252,7 @@ static hash_type * wconhist_well_export_obs_hash(const wconhist_well_type * well
 
     hash_insert_double(obs_hash, "WWCT", wct);
   }
-
+  
   // Gas oil ratio.
   if(!well->def[3] && !well->def[5])
   {
@@ -422,6 +422,71 @@ void sched_kw_wconhist_set_orat( sched_kw_wconhist_type * kw , const char * well
 }
 
 /*****************************************************************/
+/* WRAT functions                                                */
+
+double sched_kw_wconhist_get_wrat( sched_kw_wconhist_type * kw , const char * well_name) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    return well->wrat;
+  else
+    return -1;
+}
+
+void sched_kw_wconhist_scale_wrat( sched_kw_wconhist_type * kw , const char * well_name, double factor) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    well->wrat *= factor;
+}
+
+void sched_kw_wconhist_shift_wrat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL) {
+    well->wrat += shift_value;
+    if (well->wrat < 0)
+      well->wrat = 0;
+  }
+}
+
+void sched_kw_wconhist_set_wrat( sched_kw_wconhist_type * kw , const char * well_name , double wrat) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    well->wrat = wrat;
+}
+
+/*****************************************************************/
+/* GRAT functions                                                */
+
+double sched_kw_wconhist_get_grat( sched_kw_wconhist_type * kw , const char * well_name) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    return well->grat;
+  else
+    return -1;
+}
+
+void sched_kw_wconhist_scale_grat( sched_kw_wconhist_type * kw , const char * well_name, double factor) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    well->grat *= factor;
+}
+
+void sched_kw_wconhist_shift_grat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL) {
+    well->grat += shift_value;
+    if (well->grat < 0)
+      well->grat = 0;
+  }
+}
+
+void sched_kw_wconhist_set_grat( sched_kw_wconhist_type * kw , const char * well_name , double grat) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL)
+    well->grat = grat;
+}
+
+
+/*****************************************************************/
 
 
 bool sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char * well_name) {
@@ -432,6 +497,34 @@ bool sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char 
     return true;
 }
 
+/**
+   This keyword checks if the well @well_name is open in this wconhist
+   instance. The check is quite simple: if the wconhist instance has
+   this well, and that well has status == OPEN AND a finite rate of at
+   least one phase - we return true, in ALL other cases we return
+   false. 
+   
+   Observe that this function has no possibility to check well-names
+   +++ - if you ask for a non-existing well you will just get false.
+*/
+   
+
+bool sched_kw_wconhist_well_open( const sched_kw_wconhist_type * kw, const char * well_name) {
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well == NULL)
+    return false;
+  else {
+    /* OK - we have the well. */
+    if (well->status == OPEN) {
+      /* The well seems to be open - any rates around? */
+      if ((well->orat + well->grat + well->wrat) > 0.0)
+        return true;
+      else
+        return false;
+    } else
+      return false;
+  }
+}
 
 
 

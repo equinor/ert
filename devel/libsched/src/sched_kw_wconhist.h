@@ -28,6 +28,10 @@ double 	 		 sched_kw_wconhist_get_orat( sched_kw_wconhist_type * kw , const char
 void   	 		 sched_kw_wconhist_scale_orat(  sched_kw_wconhist_type * kw , const char * well_name, double factor);
 void   	 		 sched_kw_wconhist_set_surface_flow(  sched_kw_wconhist_type * kw , const char * well_name , double orat);
 bool   	 		 sched_kw_wconhist_has_well( const sched_kw_wconhist_type * kw , const char * well_name);
+bool                     sched_kw_wconhist_well_open( const sched_kw_wconhist_type * kw, const char * well_name);
+void                     sched_kw_wconhist_shift_orat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value);
+void                     sched_kw_wconhist_shift_grat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value);
+void                     sched_kw_wconhist_shift_wrat( sched_kw_wconhist_type * kw , const char * well_name, double shift_value);
 
 
 /*******************************************************************/

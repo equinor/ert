@@ -5,6 +5,7 @@
 #include <sched_util.h>
 #include <vector.h>
 #include <parser.h>
+#include <time_t_vector.h>
 
 /* This sched_file.c contains code for internalizing an ECLIPSE
    schedule file.
@@ -44,6 +45,7 @@ struct sched_block_struct {
   vector_type * kw_list;           /* A list of sched_kw's in the block.   */
   time_t        block_start_time;  
   time_t        block_end_time;
+  hash_type   * kw_hash;           /* Hash table indexed with kw_name - containing vectors of kw instances . */
 };
 
 
@@ -69,7 +71,7 @@ static sched_block_type * sched_block_alloc_empty()
   sched_block_type * block = util_malloc(sizeof * block, __func__);
   
   block->kw_list = vector_alloc_new();
-
+  block->kw_hash = hash_alloc();
   return block;
 }
 
@@ -108,6 +110,13 @@ static void sched_block_free__(void * block)
 static void sched_block_add_kw(sched_block_type * block, const sched_kw_type * kw)
 {
   vector_append_ref(block->kw_list , kw );
+  if (!hash_has_key( block->kw_hash , sched_kw_get_name( kw ))) 
+    hash_insert_hash_owned_ref( block->kw_hash , sched_kw_get_name( kw ) , vector_alloc_new() , vector_free__);
+  
+  {
+    vector_type * kw_vector = hash_get( block->kw_hash , sched_kw_get_name( kw ));
+    vector_append_ref( kw_vector , kw );
+  }
 }
 
 
@@ -165,6 +174,19 @@ static sched_block_type * sched_file_iget_block_ref(const sched_file_type * sche
 {
   return vector_iget(sched_file->blocks , i);
 }
+
+/**
+   This is a fucking mess:
+
+   block[0]   start_time - start_time
+   block[1]   start_time - time of first report, i.e. X0001
+   block[2]   X0001      - X0002
+   ....
+
+   The reason for this funny convention is to ensure one-to-one index
+   correspondance between the restart files and the sched_file blocks
+   (I think ...).
+*/
 
 
 
@@ -372,6 +394,23 @@ void sched_file_free(sched_file_type * sched_file)
 }
 
 
+/**
+   This function will allocate a time_t_vector instance, which
+   contains all the time_t values for this schedule_file - starting
+   with the start_date.
+*/
+
+time_t_vector_type * sched_file_alloc_time_t_vector( const sched_file_type * sched_file ) {
+  time_t_vector_type * vector = time_t_vector_alloc(0,0);
+  int i;
+  time_t_vector_append( vector , sched_file->start_time );
+  for (i=1; i < vector_get_size( sched_file->blocks ); i++) {
+    const sched_block_type * block = vector_iget_const( sched_file->blocks , i );
+    time_t_vector_append( vector , block->block_end_time );
+  }
+  return vector;
+}
+
 
 /**
    This function parses 'further', i.e typically adding another schedule
@@ -401,11 +440,6 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
     stringlist_fprintf( token_list , " " , stream );
     parser_free( parser );
     fclose(stream);
-    
-    stream = util_fopen("tokens.txt" , "w");
-    for (int i = 0; i < stringlist_get_size( token_list ); i++)
-      fprintf(stream , "%4d:  <%s> \n",i , stringlist_iget( token_list , i));
-    fclose( stream );
   }
   
   
@@ -628,6 +662,7 @@ void sched_file_summarize(const sched_file_type * sched_file , FILE * stream) {
     container (i.e. vector) , but the node content is unchanged.
 */
 
+
 sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_copy) {
   int ikw;
   sched_file_type * target = sched_file_alloc(src->start_time);
@@ -739,4 +774,39 @@ void sched_file_update(sched_file_type * sched_file,
 		       sched_file_callback_ftype * callback,
 		       void * callback_arg) {
   sched_file_update_blocks(sched_file , 1 , sched_file_get_num_restart_files(sched_file) - 1 , kw_type , callback , callback_arg);
+}
+
+
+/*****************************************************************/
+
+
+
+/**
+   Currently ONLY applicable to WCONHIST producers.
+*/
+
+bool sched_file_well_open( const sched_file_type * sched_file , 
+                           int restart_nr , 
+                           const char * well_name) {
+
+  bool well_found = false;
+  bool well_open  = false;
+  int block_nr    = restart_nr;
+  while (!well_found && (block_nr >= 0)) {
+    sched_block_type * block = sched_file_iget_block_ref( sched_file , block_nr );
+    
+    if (hash_has_key( block->kw_hash , "WCONHIST")) {
+      const vector_type * wconhist_vector = hash_get( block->kw_hash , "WCONHIST");
+      int i;
+      for (i=0; i < vector_get_size( wconhist_vector ); i++) {
+        const sched_kw_type * kw = vector_iget_const( wconhist_vector , i );
+        if (sched_kw_has_well( kw , well_name )) {
+          well_found = true;
+          well_open = sched_kw_well_open( kw , well_name );
+        }
+      }
+    }
+    block_nr--;
+  } 
+  return well_open;
 }

@@ -1,0 +1,31 @@
+Very high level documentation of the ert codebase.
+
+
+
+
+
+Libraries
+---------
+
+
+
+
+
+Opaque abstract types
+---------------------
+
+
+
+
+
+File scope
+----------
+
+
+
+
+
+
+Naming conventions
+------------------
+
