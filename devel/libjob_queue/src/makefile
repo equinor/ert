@@ -11,7 +11,7 @@ LIB       = libjob_queue.a
 LIB_PATH  = -L$(EXTERNAL_LIB_PATH) -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L./
 LIB_LINK  = -ljob_queue -lconfig -lutil -lm -lz -lbat  -llsf -lnsl -lpthread
 
-LOCAL: LIB 
+LOCAL: LIB BIN
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES) $(INSTALL_INC_PATH)
@@ -59,8 +59,11 @@ new:
 include dependencies
 
 
-#BIN_FILES
-#BIN	:  $(BIN_FILES) 
+BIN_FILES = block_node
+BIN	: $(BIN_FILES)
+
+block_node: $(LIB) block_node.o
+	$(LD) -$(MFLAG) $(LDFLAGS) block_node.o -o block_node $(LIB_PATH) $(LIB_LINK)
 
 
 

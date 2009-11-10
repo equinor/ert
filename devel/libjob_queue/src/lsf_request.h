@@ -7,6 +7,8 @@ extern "C" {
 #include <stringlist.h>
 #include <stdbool.h>
 
+#define STATOIL_LSF_REQUEST  "select[cs && x86_64Linux]"
+
 typedef struct lsf_request_struct lsf_request_type;
 
 
