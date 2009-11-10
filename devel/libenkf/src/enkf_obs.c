@@ -211,16 +211,15 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * ke
   obs_data and meas_matrix if you want to use fresh
   instances.
 */
-void enkf_obs_get_obs_and_measure(
-        const enkf_obs_type    * enkf_obs,
-        enkf_fs_type           * fs,
-        int                      report_step,
-        state_enum               state,
-        int                      ens_size,
-        const enkf_state_type ** ensemble ,
-        meas_matrix_type       * meas_matrix,
-        obs_data_type          * obs_data,
-	const local_ministep_type  * mstep) {
+void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
+                                  enkf_fs_type           * fs,
+                                  int                      report_step,
+                                  state_enum               state,
+                                  int                      ens_size,
+                                  const enkf_state_type ** ensemble ,
+                                  meas_matrix_type       * meas_matrix,
+                                  obs_data_type          * obs_data,
+                                  const local_ministep_type  * mstep) {
   
   hash_iter_type * iter = local_ministep_alloc_obs_iter( mstep );
   obs_data_reset( obs_data );
@@ -241,7 +240,7 @@ void enkf_obs_get_obs_and_measure(
 	  obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector , active_list);
 	}
       }
-    }
+    } 
   }
   hash_iter_free(iter);
 }

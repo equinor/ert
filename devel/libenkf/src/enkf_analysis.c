@@ -444,19 +444,24 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int report_step, const char * ministep_name , FILE * stream ) {
+  const char * float_fmt = "%12.6f";
   int iobs;
   fprintf(stream , "======================================================================================================================\n");
   fprintf(stream , "Report step...: %04d \n",report_step);
   fprintf(stream , "Ministep......: %s   \n",ministep_name);  
   fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
   if (obs_data_get_nrobs( obs_data ) > 0) {
+    char * obs_fmt = util_alloc_sprintf("  %%-3d : %%-32s %s +/-  %s" , float_fmt , float_fmt);
+    char * sim_fmt = util_alloc_sprintf("   %s +/- %s  \n" , float_fmt , float_fmt);
+
     fprintf(stream , "                                                   Observed history                |            Simulated data        \n");  
     fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
     for (iobs = 0; iobs < obs_data_get_nrobs(obs_data); iobs++) {
       obs_data_node_type * node = obs_data_iget_node( obs_data , iobs);
       
       
-      fprintf(stream , "  %-3d : %-32s %12.3f +/-  %12.3f ",iobs + 1 , 
+      
+      fprintf(stream , obs_fmt ,iobs + 1 , 
               obs_data_node_get_keyword(node),
               obs_data_node_get_value(node),
               obs_data_node_get_std(node));
@@ -468,9 +473,12 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
       {
         double mean,std;
         meas_matrix_iget_ens_mean_std( meas_matrix , iobs , &mean , &std);
-        fprintf(stream , "   %12.3f +/- %12.3f  \n", mean , std);
+        fprintf(stream , sim_fmt, mean , std);
       }
     }
+    
+    free( obs_fmt );
+    free( sim_fmt );
   } else
     fprintf(stream , "No observations for this ministep / report_step. \n");
     

@@ -126,7 +126,7 @@ static void __plot_show(plot_type * plot , const plot_config_type * plot_config 
   plot_free(plot);
   if (util_file_exists( file )) {
     printf("Plot saved in: %s \n",file);
-    util_vfork_exec(plot_config_get_viewer( plot_config ) , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
+    util_fork_exec(plot_config_get_viewer( plot_config ) , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
   }
   /*
     else: the file does not exist - that might be OK?

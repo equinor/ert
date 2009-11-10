@@ -63,8 +63,10 @@ void update_job_status( lsf_job_type * job , hash_type * nodes) {
         job->running   = true;
         job->host_name = util_realloc_string_copy( job->host_name , job_info->exHosts[0]); /* Hardcoded only one node. */
 
-        if (hash_has_key( nodes, job->host_name))  /* This is one of the instances which should be left running. */
+        if (hash_has_key( nodes, job->host_name))  {/* This is one of the instances which should be left running. */
           job->block_job = true;
+          printf("Got a block on:%s \n",job->host_name);
+        }
       }
     }
   }
@@ -134,7 +136,11 @@ void update_pool_status(vector_type * job_pool , hash_type * block_nodes , int *
 
 
 
+
 int main( int argc, char ** argv) {
+  if (argc == 1)
+    util_exit("block_node  node1  node2  node3:2  \n");
+  
   /* Initialize lsf environment */
   setenv( "LSF_BINDIR"    , "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin" , 1);
   setenv( "LSF_LINDIR"    , "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib" , 1);
@@ -152,17 +158,22 @@ int main( int argc, char ** argv) {
     hash_type * nodes       = hash_alloc();
     int         node_count  = 0; 
     int iarg;
+    printf("Attempting to block nodes \n");
     for (iarg = 1; iarg < argc; iarg++) {
       char   node_name[64];
       int    num_slots;
-      if (sscanf(argv[iarg] , "%s:%d" , node_name , &num_slots) == 2) {
-        hash_insert_int( nodes , node_name , num_slots );
-        node_count += num_slots;
-      } else {
-        hash_insert_int( nodes , argv[iarg] , 1);
-        node_count += 1;
-      }
+      if (sscanf(argv[iarg] , "%s:%d" , node_name , &num_slots) != 2) 
+        num_slots = 1;
+
+      hash_insert_int( nodes , node_name , num_slots );
+      node_count += num_slots;
+      
+      printf("  %s",node_name);
+      if (num_slots != 1)
+        printf(" * %d",num_slots );
+      printf("\n");
     }
+    printf("-----------------------------------------------------------------\n");
     
     {
       const int sleep_time    = 5;
@@ -176,7 +187,7 @@ int main( int argc, char ** argv) {
       int            blocked;
       int            attempt     = 0;
       while (cont) {
-        printf("Attempt: %d ",attempt); fflush( stdout );
+        printf("Attempt: %2d/%2d ",attempt , max_attempt); fflush( stdout );
         if (pending == 0) {
           if (vector_get_size( job_pool ) < max_pool_size)
             add_jobs( job_pool , chunk_size );

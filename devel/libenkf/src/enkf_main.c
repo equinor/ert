@@ -692,7 +692,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     log_stream = util_fopen( log_file , "w" );
     
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {
-      printf("Running ministep:%d \n" , ministep_nr);
       for(int report_step = start_step; report_step <= end_step; report_step++)  {
 	local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );      
 	
