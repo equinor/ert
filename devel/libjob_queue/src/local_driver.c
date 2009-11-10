@@ -106,7 +106,7 @@ void * submit_job_thread__(void * __arg) {
   const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);
   local_job_type * job     = arg_pack_iget_ptr(arg_pack , 2);
 
-  util_vfork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL , NULL); 
+  util_fork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL , NULL); 
   job->status = JOB_QUEUE_DONE;
   pthread_exit(NULL);
   return NULL;
