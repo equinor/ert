@@ -105,7 +105,7 @@ void lsf_request_set_request_string(lsf_request_type * lsf_request , const char 
 
   if ( lsf_request->select_set != NULL ) {
     if (lsf_request->statoil_mode) {
-      select_string = util_alloc_string_copy("select[cs && x86_64Linux]");
+      select_string = util_alloc_string_copy( STATOIL_LSF_REQUEST );
     } else {
       char ** select_keys = set_alloc_keylist(lsf_request->select_set);
       int     keys        = set_get_size(lsf_request->select_set);
