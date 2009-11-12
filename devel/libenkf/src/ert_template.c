@@ -30,7 +30,9 @@ struct ert_templates_struct {
 ert_template_type * ert_template_alloc( const char * template_file , const char * target_file ) {
   ert_template_type * template = util_malloc( sizeof * template , __func__);
   UTIL_TYPE_ID_INIT(template , ERT_TEMPLATE_TYPE_ID);
-  template->template    = template_alloc( template_file , true );
+  template->template    = template_alloc( template_file , false );  /* The templates are instantiated with internalize_template == false;
+                                                                       this means that substitutions are performed on the filename of the 
+                                                                       template itself .*/
   template->target_file = util_alloc_string_copy( target_file );
   return template;
 }

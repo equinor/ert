@@ -105,6 +105,19 @@ static void add_surface_data( FILE * stream ,
         fprintf(stream , "\n");
     }
   }
+  {
+    char * filename = util_alloc_sprintf("Surfaces/%s.xy" , ministep);
+    FILE * stream = util_mkdir_fopen( filename , "w");
+    for (int l = 0; l < indexList.size(); l++) {
+      int i, j;
+      double x,y;
+      Map->getIJ( indexList.iget(l) , i , j);
+      Map->getXY( i , j , x , y);
+      fprintf(stream , "%12.6f %12.6f \n", x , y);
+    }
+    fclose(stream);
+  }
+
 }
 
 
