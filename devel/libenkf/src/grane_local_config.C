@@ -34,17 +34,20 @@ static void include_cell(const EclGrid * Grid , int global_index , const IrapCla
     Point2D p;
     for (j=0; j < num_points; j++)
       for (i =0; i < num_points; i++) {
-        p = p0 + v1*(i + 0.5) * (1/num_points) + v2*(j + 0.5) * (1/ num_points);
+        p = p0 + v1*(i + 0.5) * (1.0/num_points) + v2*(j + 0.5) * (1.0/ num_points);
         
         {
           int map_i , map_j, err;
-          Map->getIndex( x , y , map_i , map_j , err);
+          Map->getIndex( p.x() , p.y() , map_i , map_j , err);
           //printf("map_i:%d  map_j:%d   global:%d \n",map_i , map_j , Map->getGlobalIndex( map_i , map_j ));
+          //printf("p.x() %g p.y() %g \n",p.x(),p.y());
           if (err == 0)
             indexList->append( Map->getGlobalIndex( map_i , map_j ));
+	  //printf("map %d \n", Map->getGlobalIndex( map_i , map_j ));
         }
       }
   }
+  //  exit(1);
 }
 
 
@@ -113,7 +116,7 @@ static void add_surface_data( FILE * stream ,
       double x,y;
       Map->getIJ( indexList.iget(l) , i , j);
       Map->getXY( i , j , x , y);
-      fprintf(stream , "%12.6f %12.6f \n", x , y);
+      fprintf(stream , "%12.6f %12.6f %12.6f  \n", x , y, 1640);
     }
     fclose(stream);
   }
@@ -223,10 +226,77 @@ int main (int argc , char ** argv ) {
     fprintf_command( stream , CREATE_UPDATESTEP );
     fprintf(stream , "%s\n", update_step);
 
+    
+    /* Test region */
+    /*
+    {
+
+      const char * ministep_name = "TEST_62_62_52_72";
+      
+      Region.Clear();
+      add_ministep( stream , update_step , ministep_name );
+      
+      add_obs(stream , ministep_name , "WWPR:PR01_G1");
+      add_obs(stream , ministep_name , "WOPR:PR01_G1");
+      add_obs(stream , ministep_name , "WGPR:PR01_G1");
+      
+      add_obs(stream , ministep_name , "WWPR:PR02_G12");
+      add_obs(stream , ministep_name , "WOPR:PR02_G12");
+      add_obs(stream , ministep_name , "WGPR:PR02_G12");
+
+      Region.select_from_ijkbox( 62,62,52,72,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+
+      
+      Region.select_from_ijkbox( 62,62,52,72, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+    }
+    */
+    /* Test region */
+    /*
+    {
+      const char * ministep_name = "TEST_62_82_52_52";
+      Region.Clear();
+      add_ministep( stream , update_step , ministep_name );
+      
+      add_obs(stream , ministep_name , "WWPR:PR01_G1");
+      add_obs(stream , ministep_name , "WOPR:PR01_G1");
+      add_obs(stream , ministep_name , "WGPR:PR01_G1");
+      
+      add_obs(stream , ministep_name , "WWPR:PR02_G12");
+      add_obs(stream , ministep_name , "WOPR:PR02_G12");
+      add_obs(stream , ministep_name , "WGPR:PR02_G12");
+
+      Region.select_from_ijkbox( 62,82,52,52,0,19 );
+
+      add_eclipse_field( stream , ministep_name , "PORO"     , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMX"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PERMZ"    , &Region);
+      add_eclipse_field( stream , ministep_name , "PRESSURE" , &Region);
+      add_eclipse_field( stream , ministep_name , "SWAT" , &Region);
+      add_eclipse_field( stream , ministep_name , "SGAS" , &Region);
+      add_eclipse_field( stream , ministep_name , "RS" , &Region);
+
+      
+      Region.select_from_ijkbox( 62,82,52,52, 19 , 19 );
+      add_surface_data( stream , ministep_name , "SURFACE_T" , &Map , &Grid , &Region);
+      add_surface_data( stream , ministep_name , "SURFACE_B" , &Map , &Grid , &Region);
+    }
+    */
+
     /* North west */
     /* Region NORTHW */
     {
       const char * ministep_name = "NORTHW";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       
       add_obs(stream , ministep_name , "WWPR:PR01_G1");
@@ -256,6 +326,7 @@ int main (int argc , char ** argv ) {
     /* North centre */
     {
        const char * ministep_name = "NORTHC";
+       Region.Clear();
        add_ministep( stream , update_step , ministep_name );
        add_obs(stream , ministep_name , "WWPR:PR03A_G8");
        add_obs(stream , ministep_name , "WOPR:PR03A_G8");
@@ -280,6 +351,7 @@ int main (int argc , char ** argv ) {
     /* North east 1 */
     {
        const char * ministep_name = "NORTHE1";
+       Region.Clear();
        add_ministep( stream , update_step , ministep_name );
        add_obs(stream , ministep_name , "WWPR:PR06_G28");
        add_obs(stream , ministep_name , "WOPR:PR06_G28");
@@ -304,6 +376,7 @@ int main (int argc , char ** argv ) {
     /* North east 2 */
     {
       const char * ministep_name = "NORTHE2";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR07_G2");
       add_obs(stream , ministep_name , "WOPR:PR07_G2");
@@ -333,6 +406,7 @@ int main (int argc , char ** argv ) {
     /* Middle west */
     {
       const char * ministep_name = "MIDDLEW";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR11E_G5");
       add_obs(stream , ministep_name , "WOPR:PR11E_G5");
@@ -373,6 +447,7 @@ int main (int argc , char ** argv ) {
     /* Middle east */
     {
       const char * ministep_name = "MIDDLEE1";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR13_G22");
       add_obs(stream , ministep_name , "WOPR:PR13_G22");
@@ -396,6 +471,7 @@ int main (int argc , char ** argv ) {
     
     {
       const char * ministep_name = "MIDDLEE2";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR26_G26");
       add_obs(stream , ministep_name , "WOPR:PR26_G26");
@@ -424,6 +500,7 @@ int main (int argc , char ** argv ) {
     /* Middle centre */
     {
       const char * ministep_name = "MIDDLEC";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR24_G17");
       add_obs(stream , ministep_name , "WOPR:PR24_G17");
@@ -449,6 +526,7 @@ int main (int argc , char ** argv ) {
     /* South west */
     {
       const char * ministep_name = "SOUTHW1";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR25_G21");
       add_obs(stream , ministep_name , "WOPR:PR25_G21");
@@ -472,6 +550,7 @@ int main (int argc , char ** argv ) {
 
     {
       const char * ministep_name = "SOUTHW2";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR27_G11");
       add_obs(stream , ministep_name , "WOPR:PR27_G11");
@@ -495,6 +574,7 @@ int main (int argc , char ** argv ) {
 
     {
       const char * ministep_name = "SOUTHW3";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR23_G9");
       add_obs(stream , ministep_name , "WOPR:PR23_G9");
@@ -527,6 +607,7 @@ int main (int argc , char ** argv ) {
     
     {
       const char * ministep_name = "SOUTHE1";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR18_G40");
       add_obs(stream , ministep_name , "WOPR:PR18_G40");
@@ -553,6 +634,7 @@ int main (int argc , char ** argv ) {
 
     {
       const char * ministep_name = "SOUTHE2";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR16_G15");
       add_obs(stream , ministep_name , "WOPR:PR16_G15");
@@ -581,6 +663,7 @@ int main (int argc , char ** argv ) {
     /* South centre */
     {
       const char * ministep_name = "SOUTHC";
+      Region.Clear();
       add_ministep( stream , update_step , ministep_name );
       add_obs(stream , ministep_name , "WWPR:PR20_G39");
       add_obs(stream , ministep_name , "WOPR:PR20_G39");
