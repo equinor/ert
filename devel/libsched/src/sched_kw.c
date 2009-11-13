@@ -159,6 +159,12 @@ static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
     kw->fprintf = sched_kw_dates_fprintf__;
     kw->copyc   = sched_kw_dates_copyc__;
     break;
+  case(TSTEP):
+    kw->alloc   = sched_kw_tstep_alloc__;
+    kw->free    = sched_kw_tstep_free__;
+    kw->fprintf = sched_kw_tstep_fprintf__;
+    kw->copyc   = sched_kw_tstep_copyc__;
+    break;
   case(COMPDAT):
     kw->alloc   = sched_kw_compdat_alloc__;
     kw->free    = sched_kw_compdat_free__;
