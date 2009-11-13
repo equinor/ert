@@ -548,7 +548,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       }
       active_size[ikw] = __get_active_size( config_node , report_step , active_list );
       row_offset[ikw]  = current_row_offset;
-
+      
       if ((active_size[ikw] + current_row_offset) > matrix_size) {
 	/* Not enough space in A */
 	if (first_kw) {
@@ -596,24 +596,27 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     matrix_shrink_header( A , current_row_offset , ens_size );
     if (current_row_offset > 0) {
       /* The actual update */
+
       msg_update(msg , " matrix multiplication");
       matrix_inplace_matmul_mt( A , X5 , 4 );  /* Four CPU threads - nothing like a little hardcoding ... */
       /* Deserialize */
       {
 	for (int i = ikw1; i < ikw2; i++) {
-	  const char             * key              = stringlist_iget(update_keys , i);
-	  const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
-	  {
-	    char * label = util_alloc_sprintf("deserializing: %s" , key);
-	    msg_update( msg , label);
-	    free(label);
-	  }
-	  
-	  for (int iens = 0; iens < ens_size; iens++) {
-	    enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
-	    enkf_node_matrix_deserialize(node , active_list , A , row_offset[i] , iens);
-	    enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
-	  }
+          if (active_size[i] > 0) {
+            const char             * key              = stringlist_iget(update_keys , i);
+            const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+            {
+              char * label = util_alloc_sprintf("deserializing: %s" , key);
+              msg_update( msg , label);
+              free(label);
+            }
+            
+            for (int iens = 0; iens < ens_size; iens++) {
+              enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
+              enkf_node_matrix_deserialize(node , active_list , A , row_offset[i] , iens);
+              enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
+            }
+          }
 	}
       }
     }

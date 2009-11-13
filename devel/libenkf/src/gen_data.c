@@ -131,7 +131,7 @@ bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , int 
 
 void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_step) {
   int size;
-  
+
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
   size           = buffer_fread_int(buffer);
   buffer_fskip_int( buffer );  /* Skipping this from the buffer - was a mistake to store it - I think ... */
@@ -143,6 +143,7 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_
   }
   gen_data_config_assert_size(gen_data->config , size , report_step);
   gen_data->current_report_step = report_step;
+
 }
 
 
@@ -199,16 +200,20 @@ void gen_data_matrix_serialize(const gen_data_type * gen_data , const active_lis
   const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
   ecl_type_enum ecl_type               = gen_data_config_get_internal_type( config );
 
-  enkf_matrix_serialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
+  //printf("Serializing:%s step:%d  size:%d \n",gen_data_get_key( gen_data ) , gen_data->current_report_step , data_size );
+  enkf_matrix_serialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column );
 }
 
 
 void gen_data_matrix_deserialize(gen_data_type * gen_data , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
-  const gen_data_config_type *config   = gen_data->config;
-  const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
-  ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
-  
-  enkf_matrix_deserialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
+  //printf("DESerializing:%s step:%d  column:%d \n",gen_data_get_key( gen_data ) , gen_data->current_report_step , column);
+  {
+    const gen_data_config_type *config   = gen_data->config;
+    const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
+    ecl_type_enum ecl_type               = gen_data_config_get_internal_type(config);
+    
+    enkf_matrix_deserialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column);
+  }
 }
 
 

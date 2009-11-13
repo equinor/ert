@@ -656,7 +656,7 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
 				 basic_queue_driver_type * driver) {
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   
-  queue->usleep_time     = 200000; /* 1/5 second */
+  queue->usleep_time     = 1000000; /* 1 second */
   queue->max_running     = max_running;
   queue->max_submit      = max_submit;
   queue->size            = size;

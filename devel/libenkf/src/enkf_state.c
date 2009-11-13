@@ -491,12 +491,15 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
     char * iens_s      = util_alloc_sprintf("%d"   , enkf_state->my_config->iens);
     char * iens4_s     = util_alloc_sprintf("%04d" , enkf_state->my_config->iens);
     char * cwd         = util_alloc_cwd();
+    char * date_string = util_alloc_date_stamp();
     
-    enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH" , cwd     , NULL);  /* Alias for CWD */
-    enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd     , NULL); 
-    enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s  , NULL);
-    enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s , NULL);
-    
+    enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH" , cwd         , NULL);  /* Alias for CWD */
+    enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd         , NULL); 
+    enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s      , NULL);
+    enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s     , NULL);
+    enkf_state_add_subst_kw(enkf_state , "DATE"        , date_string , NULL);   
+
+    free(date_string);
     free(cwd);
     free(iens_s);
     free(iens4_s);
@@ -619,6 +622,7 @@ INCLDUE
   enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , "---" , "The final report step for this simulation - formated withh %04d.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , "---" , "The ECLIPSE restart file this simulation starts with.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , "---" , "The ECLIPSE restart file this simulation should end with.");
+  enkf_state_add_subst_kw(enkf_state , "DATE"          , "---" , "The date at simulation start - formatted as dd/mm/yyyy.");
   enkf_state_add_subst_kw(enkf_state , "RANDINT"       , NULL  , "Random integer value");
   enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , NULL  , "Random float value");
   if (casename != NULL) 
@@ -713,7 +717,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 
       /* Use unified file */
       if (unified_file != NULL) {
-        data_files[0] = unified_file;
+        data_files[0]  = unified_file;
         num_data_files = 1;
       } else {
         for (report_step = report_step1; report_step <= report_step2; report_step++) {

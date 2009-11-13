@@ -236,7 +236,7 @@ void ext_job_free__(void * __ext_job) {
 
 static void __update_mode( const char * filename , mode_t add_mode) {
   if (util_addmode_if_owner( filename , add_mode))
-    printf("Updated mode on on \'%s\'.\n", filename );
+    printf("Updated mode on \'%s\'.\n", filename );
 }
 
 
@@ -285,8 +285,9 @@ static void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portab
   } else 
     ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , portable_exe);
   /* We take the chance that user will supply a valid subst key for this later. */
-
 }
+
+
 
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
   ext_job->stdout_file = util_realloc_string_copy(ext_job->stdout_file , stdout_file);
