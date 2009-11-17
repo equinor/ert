@@ -98,7 +98,7 @@ static bfs_type ** bfs_alloc_driver_list( int num_drivers , fs_driver_type drive
 */
 
 static void bfs_select_dir( bfs_type * bfs , const char * root_path , const char * directory , bool read ) {
-  const int fsync_interval      =  10;     /* An fsync() call is issued for every 100'th write. */
+  const int fsync_interval      =  10;     /* An fsync() call is issued for every 10'th write. */
   const int fragmentation_limit = 1.0;     /* 1.0 => NO defrag is run. */
   if (read) {
     if (bfs->read_fs == bfs->write_fs) {
@@ -204,6 +204,44 @@ static char * block_fs_driver_alloc_key( const block_fs_driver_type * driver , c
   char * key = util_alloc_sprintf("%s.%d.%d" , enkf_config_node_get_key( config_node ) , report_step , iens);
   return key;
 }
+
+
+/**
+   This function will take an input string, and try to to parse it as
+   string.int.int, where string is the normal enkf key, and the two
+   integers are report_step and ensemble number respectively. The
+   storage for the enkf_key is allocated here in this function, and
+   must be freed by the calling scope.  
+
+   If the parsing fails the function will return false, and *config_key
+   will be set to NULL; in this case the report_step and iens poinyers
+   will not be touched.
+*/
+
+bool block_fs_sscanf_key(const char * key , char ** config_key , int * __report_step , int * __iens) {
+  char ** tmp;
+  int num_items;
+
+  *config_key = NULL;
+  util_split_string(key , "." , &num_items , &tmp);  /* The key can contain additional '.' - can not use sscanf(). */
+  if (num_items >= 3) {
+    int report_step , iens;
+    if (util_sscanf_int(tmp[num_items - 2] , &report_step) && util_sscanf_int(tmp[num_items - 1] , &iens)) {
+      /* OK - all is hunkadory */
+      *__report_step = report_step;
+      *__iens        = iens;
+      *config_key    = util_alloc_joined_string((const char **) tmp , num_items - 2 , ".");  /* This must bee freed by the calling scope */
+      util_free_stringlist( tmp , num_items );
+      return true;
+    } else  
+      /* Failed to parse the two last items as integers. */
+      return false;
+  } else
+    /* Did not have at least three items. */
+    return false;
+}
+
+
 
 
 static bfs_type * block_fs_driver_get_fs( block_fs_driver_type * driver , int iens ) {

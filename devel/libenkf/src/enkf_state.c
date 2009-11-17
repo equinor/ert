@@ -46,7 +46,9 @@
 #include <ecl_endian_flip.h>
 #include <ert_template.h>
 #include <timer.h>
+#include <time_t_vector.h>
 #define ENKF_STATE_TYPE_ID 78132
+
 
 
 /**
@@ -54,8 +56,8 @@
    bits and pieces of information needed to start, monitor, and load
    back results from the forward model simulations. 
 
-   Typcially the values in this struct are set from the enkf_main object
-   before a forward_step starts.
+   Typcially the values in this struct are set from the enkf_main
+   object before a forward_step starts.
 */
  
 typedef struct run_info_struct {
@@ -118,6 +120,7 @@ struct member_config_struct {
   sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
   bool                  private_sched_file;  /* Is the member config holding a private schedule file - just relevant when freeing up? */ 
   int                   last_restart_nr;
+  time_t_vector_type  * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. [NOT in use yet]. */
 };
 
 
@@ -290,7 +293,7 @@ static void member_config_free(member_config_type * member_config) {
 
   if (member_config->private_sched_file)
     sched_file_free( member_config->sched_file );
-  
+  time_t_vector_free( member_config->report_time );
   free(member_config);
 }
 
@@ -327,6 +330,7 @@ static member_config_type * member_config_alloc(int iens ,
     member_config->last_restart_nr  = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
     member_config->last_restart_nr += ecl_config_get_prediction_length( ecl_config );
   }
+  member_config->report_time = time_t_vector_alloc( 0 , -1 );
   return member_config;
 }
 
@@ -338,6 +342,10 @@ static const sched_file_type * member_config_get_sched_file( const member_config
 
 keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config) {
   return member_config->keep_runpath;
+}
+
+static void member_config_set_sim_time( member_config_type * member_config , int report_step , time_t sim_time ) {
+  time_t_vector_iset( member_config->report_time , report_step , sim_time );
 }
 
 
@@ -692,7 +700,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
   /* IFF reservoir_simulator == ECLIPSE ... */
   if (true) {
     const shared_info_type   * shared_info = enkf_state->shared_info;
-    const member_config_type * my_config   = enkf_state->my_config;
+    member_config_type * my_config         = enkf_state->my_config;
     const run_info_type   * run_info       = enkf_state->run_info;
     const ecl_config_type * ecl_config     = enkf_state->ecl_config;
     const bool fmt_file  		   = ecl_config_get_formatted(ecl_config);
@@ -762,6 +770,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
           }
         } 
         hash_iter_free(iter);
+        member_config_set_sim_time( my_config , report_step , ecl_sum_get_report_time( summary , report_step ));
       }
       
       if (summary != NULL) 

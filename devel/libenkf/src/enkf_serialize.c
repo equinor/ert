@@ -574,9 +574,9 @@ void enkf_deserialize(void * __node_data                ,
 */
    
 
-void enkf_matrix_serialize(const void * __node_data 	   	 , 
-			   int node_size    	   	         ,      
-			   ecl_type_enum node_type 	         ,           
+void enkf_matrix_serialize(const void * __node_data 	   	  , 
+			   int node_size    	   	          ,      
+			   ecl_type_enum node_type 	          ,           
 			   const active_list_type * __active_list , 
 			   matrix_type * A                        ,
 			   int row_offset,

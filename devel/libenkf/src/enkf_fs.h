@@ -14,6 +14,7 @@ extern "C" {
 
 typedef struct enkf_fs_struct enkf_fs_type;
 
+void              enkf_fs_fsync( enkf_fs_type * fs );
 bool              enkf_fs_rw_equal(const enkf_fs_type * );
 stringlist_type * enkf_fs_alloc_dirlist(const enkf_fs_type * );
 const char     *  enkf_fs_get_read_dir(const enkf_fs_type * );
@@ -43,10 +44,16 @@ char             * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const 
 char             * enkf_fs_alloc_case_member_filename( const enkf_fs_type * fs , int iens , const char * input_name);
 char             * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name);
 char             * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int tstep , int iens , const char * input_name);
+
 FILE             * enkf_fs_open_case_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens , const char * mode);
 FILE             * enkf_fs_open_case_file( const enkf_fs_type * fs , const char * input_name , const char * mode);
 FILE             * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep , const char * mode);
 FILE             * enkf_fs_open_case_member_file( const enkf_fs_type * fs , const char * input_name , int iens , const char * mode);
+
+FILE             * enkf_fs_open_case_extstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens);
+FILE             * enkf_fs_open_case_exfile( const enkf_fs_type * fs , const char * input_name);
+FILE             * enkf_fs_open_case_extstep_file( const enkf_fs_type * fs , const char * input_name , int tstep );
+FILE             * enkf_fs_open_case_exmember_file( const enkf_fs_type * fs , const char * input_name , int iens );
 
 
 UTIL_SAFE_CAST_HEADER( enkf_fs );

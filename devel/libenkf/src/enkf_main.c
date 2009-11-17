@@ -188,7 +188,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
       enkf_state_free(enkf_main->ensemble[i]);
     free(enkf_main->ensemble);
   }
-  if (enkf_main->dbase != NULL) enkf_fs_free(enkf_main->dbase );
+  if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
   
   log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
   log_close( enkf_main->logh );
@@ -966,6 +966,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
   if (enkf_update)
     enkf_main_UPDATE(enkf_main , load_start , step2);
   
+  enkf_fs_fsync( enkf_main->dbase );
   printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
 

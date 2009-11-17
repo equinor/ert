@@ -107,6 +107,8 @@
    instead the drivers have internal state which differentiates
    between read and write.
 
+   The block_fs driver is added - and reasonably stabilized in this
+   version.
 */
 
 
@@ -1376,12 +1378,22 @@ static void enkf_fs_fsync_driver( basic_driver_type * driver ) {
 }
 
 
+static void enkf_fs_fsync_driver_index( basic_driver_index_type * driver ) {
+  if (driver->fsync_driver != NULL)
+    driver->fsync_driver( driver );
+}
+
+
+
+
 void enkf_fs_fsync( enkf_fs_type * fs ) {
-  enkf_fs_fsync_driver( fs->parameter );
-  enkf_fs_fsync_driver( fs->eclipse_static );
-  enkf_fs_fsync_driver( fs->dynamic_forecast );
-  enkf_fs_fsync_driver( fs->dynamic_analyzed );
-  //enkf_fs_fsync_driver( fs->index );
+  {
+    enkf_fs_fsync_driver( fs->parameter );
+    enkf_fs_fsync_driver( fs->eclipse_static );
+    enkf_fs_fsync_driver( fs->dynamic_forecast );
+    enkf_fs_fsync_driver( fs->dynamic_analyzed );
+    enkf_fs_fsync_driver_index( fs->index );
+  }
 }
 
 
@@ -1673,7 +1685,6 @@ char * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int t
 FILE * enkf_fs_open_case_file( const enkf_fs_type * fs , const char * input_name , const char * mode) {
   char * filename = enkf_fs_alloc_case_filename( fs , input_name );
   FILE * stream   = util_mkdir_fopen( filename , mode );
-  printf("Har aapnet:%s \n",filename);
   free( filename );
   return stream;
 }
@@ -1698,6 +1709,53 @@ FILE * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * inpu
 FILE * enkf_fs_open_case_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens , const char * mode) {
   char * filename = enkf_fs_alloc_case_tstep_member_filename( fs , tstep , iens , input_name );
   FILE * stream   = util_mkdir_fopen( filename , mode );
+  free( filename );
+  return stream;
+}
+
+/*****************************************************************/
+/* 
+   The open_exXXX functions will return NULL if the file does not
+   already exist. These functions can only be used to open with 'r'
+   mode.
+*/
+
+
+
+static FILE * enkf_fs_open_exfile( const char * filename ) {
+  if (util_file_exists(filename))
+    return util_fopen( filename , "r");
+  else
+    return NULL;
+}
+
+FILE * enkf_fs_open_excase_file( const enkf_fs_type * fs , const char * input_name ) {
+  char * filename = enkf_fs_alloc_case_filename( fs , input_name );
+  FILE * stream   = enkf_fs_open_exfile( filename );
+  free( filename );
+  return stream;
+}
+
+
+FILE * enkf_fs_open_excase_member_file( const enkf_fs_type * fs , const char * input_name , int iens ) {
+  char * filename = enkf_fs_alloc_case_member_filename( fs , iens , input_name );
+  FILE * stream   = enkf_fs_open_exfile( filename );
+  free( filename );
+  return stream;
+}
+  
+
+FILE * enkf_fs_open_excase_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep ) {
+  char * filename = enkf_fs_alloc_case_member_filename( fs , tstep , input_name );
+  FILE * stream   = enkf_fs_open_exfile( filename );
+  free( filename );
+  return stream;
+}
+
+
+FILE * enkf_fs_open_excase_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens ) {
+  char * filename = enkf_fs_alloc_case_tstep_member_filename( fs , tstep , iens , input_name );
+  FILE * stream   = enkf_fs_open_exfile( filename );
   free( filename );
   return stream;
 }

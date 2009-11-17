@@ -55,6 +55,14 @@ static void block_fs_driver_index_single_mount( block_fs_driver_index_type * dri
 }
 
 
+static void block_fs_driver_index_fsync( void * _driver ) {
+  block_fs_driver_index_type * driver = block_fs_driver_index_safe_cast( _driver );  
+  
+  block_fs_fsync( driver->read_fs );
+  block_fs_fsync( driver->write_fs );
+}
+
+
 
   
 void block_fs_driver_index_select_dir(void *_driver , const char * directory, bool read) {
@@ -147,10 +155,11 @@ void block_fs_driver_index_free(void * __index_driver) {
 
 void * block_fs_driver_index_alloc(const char * root_path) {
   block_fs_driver_index_type * block_fs_driver = util_malloc(sizeof * block_fs_driver , __func__);
-  block_fs_driver->select_dir  = block_fs_driver_index_select_dir;
-  block_fs_driver->save_kwlist = block_fs_driver_index_fwrite_restart_kw_list;
-  block_fs_driver->load_kwlist = block_fs_driver_index_fread_restart_kw_list;
-  block_fs_driver->free_driver = block_fs_driver_index_free;
+  block_fs_driver->select_dir    = block_fs_driver_index_select_dir;
+  block_fs_driver->save_kwlist   = block_fs_driver_index_fwrite_restart_kw_list;
+  block_fs_driver->load_kwlist   = block_fs_driver_index_fread_restart_kw_list;
+  block_fs_driver->free_driver   = block_fs_driver_index_free;
+  block_fs_driver->fsync_driver  = block_fs_driver_index_fsync;
 
   block_fs_driver->block_size     = 8;
   block_fs_driver->root_path      = util_alloc_string_copy( root_path );
