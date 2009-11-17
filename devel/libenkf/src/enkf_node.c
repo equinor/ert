@@ -171,8 +171,6 @@ struct enkf_node_struct {
   //realloc_data_ftype  *realloc_data;
   free_data_ftype     *free_data;
   user_get_ftype      *user_get;
-  serialize_ftype     *serialize;
-  deserialize_ftype   *deserialize;
   set_data_ftype      *set_data;
   set_inflation_ftype *set_inflation;
 
@@ -196,7 +194,6 @@ struct enkf_node_struct {
   char               *node_key;       	    /* The (hash)key this node is identified with. */
   void               *data;                 /* A pointer to the underlying enkf_object, i.e. multflt_type instance, or a field_type instance or ... */
   const enkf_config_node_type *config;      /* A pointer to a enkf_config_node instance (which again cointans a pointer to the config object of data). */
-  serial_state_type  *serial_state;   	    /* A very internal object - containg information about the seralization of the this node .*/
   
   /*****************************************************************/
   /* The variables below this line are VERY INTERNAL.              */
@@ -245,9 +242,6 @@ void enkf_node_alloc_domain_object(enkf_node_type * node) {
 
 
 
-void enkf_node_clear_serial_state(enkf_node_type * node) {
-  serial_state_clear(node->serial_state);
-}
 
 
 
@@ -482,25 +476,6 @@ void enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int repor
 
 
 
-int enkf_node_serialize(enkf_node_type *enkf_node , size_t current_serial_offset ,serial_vector_type * serial_vector, bool * complete) {
-  FUNC_ASSERT(enkf_node->serialize);
-  { 
-    int elements_added = 0;
-    elements_added = enkf_node->serialize(enkf_node->data , enkf_node->serial_state , current_serial_offset , serial_vector );
-    *complete = serial_state_complete( enkf_node->serial_state );
-    return elements_added;
-  } 
-}
-
-
-
-void enkf_node_deserialize(enkf_node_type *enkf_node , const serial_vector_type * serial_vector) {
-  FUNC_ASSERT(enkf_node->serialize);
-  enkf_node->deserialize(enkf_node->data , enkf_node->serial_state , serial_vector);
-  enkf_node->__modified = true;
-}
-
-
 void enkf_node_matrix_serialize(enkf_node_type *enkf_node , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   FUNC_ASSERT(enkf_node->matrix_serialize);
   enkf_node->matrix_serialize(enkf_node->data , active_list , A , row_offset , column);
@@ -605,7 +580,6 @@ void enkf_node_free(enkf_node_type *enkf_node) {
   if (enkf_node->freef != NULL)
     enkf_node->freef(enkf_node->data);
   free(enkf_node->node_key);
-  serial_state_free(enkf_node->serial_state);
   free(enkf_node);
 }
 
@@ -647,8 +621,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->ecl_load       	   = NULL;
   node->copy          	   = NULL;
   node->initialize     	   = NULL;
-  node->serialize      	   = NULL;
-  node->deserialize    	   = NULL;
   node->freef          	   = NULL;
   node->free_data      	   = NULL;
   node->user_get       	   = NULL;
@@ -674,8 +646,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->ecl_write    	     = gen_kw_ecl_write__;
     node->copy        	     = gen_kw_copy__;
     node->initialize   	     = gen_kw_initialize__;
-    node->serialize    	     = gen_kw_serialize__;
-    node->deserialize  	     = gen_kw_deserialize__;
     node->freef        	     = gen_kw_free__;
     //node->free_data    	     = gen_kw_free_data__;
     node->user_get           = gen_kw_user_get__; 
@@ -696,8 +666,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     //node->realloc_data       = summary_realloc_data__;
     node->alloc              = summary_alloc__;
     node->copy               = summary_copy__;
-    node->serialize          = summary_serialize__;
-    node->deserialize        = summary_deserialize__;
     node->freef              = summary_free__;
     //node->free_data          = summary_free_data__;
     node->user_get           = summary_user_get__; 
@@ -719,8 +687,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->ecl_load     	     = field_ecl_load__;  
     node->copy        	     = field_copy__;
     node->initialize   	     = field_initialize__;
-    node->serialize    	     = field_serialize__;
-    node->deserialize  	     = field_deserialize__;
     node->freef        	     = field_free__;
     //node->free_data    	     = field_free_data__;
     node->user_get     	     = field_user_get__;
@@ -756,8 +722,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     //node->free_data    	     = gen_data_free_data__;
     node->ecl_write    	     = gen_data_ecl_write__;
     node->ecl_load     	     = gen_data_ecl_load__;
-    node->serialize    	     = gen_data_serialize__;
-    node->deserialize  	     = gen_data_deserialize__;
     node->user_get     	     = gen_data_user_get__;
     node->load         	     = gen_data_load__;
     node->store        	     = gen_data_store__;
@@ -775,7 +739,6 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);
   }
-  node->serial_state = serial_state_alloc();
   return node;
 }
 
@@ -790,8 +753,6 @@ bool enkf_node_has_func(const enkf_node_type * node , node_function_type functio
     CASE_SET(ecl_load_func                  , node->ecl_load);
     CASE_SET(copy_func        		    , node->copy);
     CASE_SET(initialize_func   		    , node->initialize);
-    CASE_SET(serialize_func    		    , node->serialize);
-    CASE_SET(deserialize_func  		    , node->deserialize);
     CASE_SET(free_func         		    , node->freef);
   default:
     fprintf(stderr,"%s: node_function_identifier: %d not recognized - aborting \n",__func__ , function_type);

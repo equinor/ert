@@ -142,15 +142,6 @@ bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
 
 
 
-int gen_kw_serialize(const gen_kw_type *gen_kw , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  return scalar_serialize(gen_kw->scalar , serial_state , serial_offset , serial_vector);
-}
-
-
-void gen_kw_deserialize(gen_kw_type *gen_kw , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  scalar_deserialize(gen_kw->scalar , serial_state , serial_vector);
-}
-
 
 
 void gen_kw_matrix_serialize(const gen_kw_type *gen_kw , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
@@ -362,8 +353,6 @@ void gen_kw_isqrt( gen_kw_type * gen_kw ) {
 SAFE_CAST(gen_kw , GEN_KW);
 SAFE_CONST_CAST(gen_kw , GEN_KW);
 VOID_ALLOC(gen_kw);
-VOID_SERIALIZE (gen_kw);
-VOID_DESERIALIZE (gen_kw);
 VOID_INITIALIZE(gen_kw);
 VOID_COPY(gen_kw)
 VOID_FREE   (gen_kw)

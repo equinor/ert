@@ -82,7 +82,6 @@ const char       * enkf_state_get_run_path(const enkf_state_type * );
 //void               enkf_state_matrix_serialize(enkf_state_type * enkf_state , const char * key , const active_list_type * , matrix_type * A , int row_offset , int column);
 //void               enkf_state_matrix_deserialize(enkf_state_type * enkf_state , const char * key , const active_list_type * active_list, const matrix_type * A , int row_offset , int column);
 
-void enkf_ensemble_update(enkf_state_type ** , int  , serial_vector_type * , const double * );
 void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int step2);
 
   // void enkf_state_internalize_results(enkf_state_type *  , int  , int  , int , int );

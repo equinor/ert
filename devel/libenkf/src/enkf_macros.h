@@ -204,23 +204,6 @@ void prefix ## _copy__(const void * void_src, void * void_target) {   \
 
 
 /*****************************************************************/
-#define VOID_SERIALIZE(prefix)     \
-int prefix ## _serialize__(const void *void_arg, serial_state_type * serial_state , size_t offset , serial_vector_type * serial_vector) { \
-   const prefix ## _type  *arg = prefix ## _safe_cast( void_arg );       \
-   return prefix ## _serialize (arg , serial_state , offset , serial_vector);       \
-}
-#define VOID_SERIALIZE_HEADER(prefix) int prefix ## _serialize__(const void *, serial_state_type * , size_t , serial_vector_type *);
-
-
-#define VOID_DESERIALIZE(prefix)     \
-void prefix ## _deserialize__(void *void_arg, serial_state_type * serial_state, const serial_vector_type * serial_vector) { \
-   prefix ## _type  *arg = prefix ## _safe_cast( void_arg );    \
-   prefix ## _deserialize (arg , serial_state , serial_vector); \
-}
-#define VOID_DESERIALIZE_HEADER(prefix) void prefix ## _deserialize__(void *, serial_state_type * , const serial_vector_type *);
-
-
-/*****************************************************************/
 
 #define VOID_MATRIX_SERIALIZE(prefix)     \
 void prefix ## _matrix_serialize__(const void *void_arg, const active_list_type * active_list , matrix_type * A , int row_offset , int column) {\

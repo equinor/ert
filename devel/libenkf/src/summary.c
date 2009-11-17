@@ -105,23 +105,6 @@ void summary_free(summary_type *summary) {
 
 
 
-void summary_deserialize(const summary_type * summary , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  const summary_config_type *config      = summary->config;
-  const int                data_size   = summary_config_get_data_size(config );
-  const active_list_type  *active_list = summary_config_get_active_list(config);
-  enkf_deserialize(summary->data , data_size , ecl_double_type , active_list , serial_state , serial_vector);
-}
-
-
-int summary_serialize(const summary_type *summary , serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  const summary_config_type *config    = summary->config;
-  const int                data_size   = summary_config_get_data_size(config );
-  const active_list_type  *active_list = summary_config_get_active_list(config);
-  
-  return enkf_serialize(summary->data , data_size , ecl_double_type , active_list , serial_state , serial_offset , serial_vector);
-}
-
-
 void summary_matrix_serialize(const summary_type * summary , const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
   const summary_config_type *config  = summary->config;
   const int                data_size = summary_config_get_data_size(config );
@@ -264,8 +247,6 @@ SAFE_CONST_CAST(summary , SUMMARY)
 VOID_ALLOC(summary)
 VOID_FREE(summary)
 VOID_COPY     (summary)
-VOID_SERIALIZE(summary)
-VOID_DESERIALIZE(summary)
 VOID_ECL_LOAD(summary)
 VOID_USER_GET(summary)
 VOID_STORE(summary)

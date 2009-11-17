@@ -173,25 +173,6 @@ void gen_data_upgrade_103(const char * filename) {
 
 
 
-int gen_data_serialize(const gen_data_type *gen_data ,serial_state_type * serial_state , size_t serial_offset , serial_vector_type * serial_vector) {
-  ecl_type_enum ecl_type 	       = gen_data_config_get_internal_type(gen_data->config);
-  const int data_size    	       = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
-  const active_list_type  *active_list = gen_data_config_get_active_list(gen_data->config);
-  int elements_added;
-
-  elements_added = enkf_serialize(gen_data->data , data_size , ecl_type , active_list , serial_state ,serial_offset , serial_vector);
-  return elements_added;
-}
-
-
-
-void gen_data_deserialize(gen_data_type * gen_data , serial_state_type * serial_state , const serial_vector_type * serial_vector) {
-  ecl_type_enum ecl_type              = gen_data_config_get_internal_type(gen_data->config);
-  const int data_size    	      = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
-  const active_list_type *active_list = gen_data_config_get_active_list(gen_data->config);
-  
-  enkf_deserialize(gen_data->data , data_size , ecl_type , active_list  , serial_state , serial_vector);
-}
 
 
 
@@ -200,13 +181,11 @@ void gen_data_matrix_serialize(const gen_data_type * gen_data , const active_lis
   const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
   ecl_type_enum ecl_type               = gen_data_config_get_internal_type( config );
 
-  //printf("Serializing:%s step:%d  size:%d \n",gen_data_get_key( gen_data ) , gen_data->current_report_step , data_size );
   enkf_matrix_serialize( gen_data->data , data_size , ecl_type , active_list , A , row_offset , column );
 }
 
 
 void gen_data_matrix_deserialize(gen_data_type * gen_data , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
-  //printf("DESerializing:%s step:%d  column:%d \n",gen_data_get_key( gen_data ) , gen_data->current_report_step , column);
   {
     const gen_data_config_type *config   = gen_data->config;
     const int                data_size   = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
@@ -643,8 +622,6 @@ VOID_USER_GET(gen_data)
 VOID_ALLOC(gen_data)
 VOID_FREE(gen_data)
 VOID_COPY     (gen_data)
-VOID_SERIALIZE(gen_data)
-VOID_DESERIALIZE(gen_data)
 VOID_INITIALIZE(gen_data)
 VOID_ECL_WRITE(gen_data)
 VOID_ECL_LOAD(gen_data)
