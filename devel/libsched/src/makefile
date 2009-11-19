@@ -1,16 +1,13 @@
 include global_config
 SDP_ROOT          = $(shell get_sdp_root.py)
 #################################################################
-COMPILE_INCLUDE  = -I$(LIBSCHED_HOME)/src -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include 
+COMPILE_INCLUDE  = -I$(LIBSCHED_HOME)/src -I$(LIBUTIL_HOME)/include -I$(LIBECL_HOME)/include 
 INSTALL_INC_PATH =   $(LIBSCHED_HOME)/include
 INSTALL_LIB_PATH =   $(LIBSCHED_HOME)/lib
 #################################################################
 OBJECTS   = sched_kw.o sched_file.o  sched_kw_untyped.o sched_kw_gruptree.o sched_kw_tstep.o sched_kw_dates.o sched_kw_wconhist.o sched_kw_wconinjh.o sched_kw_welspecs.o sched_util.o gruptree.o history.o sched_kw_wconprod.o sched_kw_wconinj.o sched_kw_wconinje.o sched_kw_compdat.o sched_kw_include.o
 INC_FILES = sched_file.h sched_kw.h sched_kw_untyped.h sched_kw_gruptree.h sched_kw_tstep.h sched_kw_dates.h sched_kw_wconhist.h sched_kw_wconinjh.h sched_kw_welspecs.h sched_util.h gruptree.h history.h sched_kw_wconprod.h sched_kw_wconinj.h  sched_kw_wconinje.h sched_kw_compdat.h sched_kw_include.h sched_macros.h
 LIB       = libsched.a
-LIB_LINK  = -lsched -lecl -lutil -lm -lz -lpthread
-LIB_PATH  = -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib
-TARGET_INCLUDE = -I$(LIBECL_HOME)/include -I$(LIBUTIL_HOME)/include -I$(LIBSCHED_HOME)/include
 
 LIB:	$(LIB)
 	install -d $(INSTALL_INC_PATH)
@@ -26,12 +23,9 @@ clean:
 	rm -f $(INSTALL_INC_PATH)/*.h
 
 
-SDP_INSTALL: LIB BIN
+SDP_INSTALL: LIB 
 	install $(LIB) $(SDP_ROOT)/lib/$(LIB_ROOT).a
-	install $(BIN_FILES_SDP_INSTALL) $(SDP_ROOT)/bin
 	install $(INC_FILES) $(SDP_ROOT)/include
-
-BIN:	LIB
 
 rebuild: clean all
 
@@ -48,28 +42,3 @@ new:
 
 include dependencies
 
-#################################################################
-# Binaries
-# Observe that the binaries are built against the libraries / headers
-
-
-
-BIN_FILES = sched_test.x gruptree_test.x sched_summary.x get_well_list.x update_ir.x
-BIN	: $(BIN_FILES)
-BIN_FILES_SDP_INSTALL = sched_summary.x get_well_list.x update_ir.x
-
-
-sched_test.x: $(LIB) sched_test.o
-	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x $(LIB_PATH) $(LIB_LINK)
-
-update_ir.x: $(LIB) update_ir.o
-	$(LD) -$(MFLAG) $(LDFLAGS) update_ir.o -o update_ir.x $(LIB_PATH) $(LIB_LINK)
-
-get_well_list.x: $(LIB) get_well_list.o
-	$(LD) -$(MFLAG) $(LDFLAGS) get_well_list.o -o get_well_list.x $(LIB_PATH) $(LIB_LINK)
-
-gruptree_test.x: $(LIB) gruptree_test.o
-	$(LD) -$(MFLAG) $(LDFLAGS) gruptree_test.o -o gruptree_test.x $(LIB_PATH) $(LIB_LINK)
-
-sched_summary.x: $(LIB) sched_summary.o
-	$(LD) -$(MFLAG) $(LDFLAGS) sched_summary.o -o sched_summary.x -L./ $(LIB_PATH) $(LIB_LINK)
