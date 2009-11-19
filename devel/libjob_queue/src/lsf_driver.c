@@ -253,7 +253,7 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_
 	  CASE_SET(JOB_STAT_PERR  , JOB_QUEUE_EXIT);
 	  CASE_SET(192            , JOB_QUEUE_DONE); /* this 192 seems to pop up - where the fuck it comes frome ??  _pdone + _ususp ??? */
 	default:
-	  fprintf(stderr,"%s: job:%ld lsf_status:%d not handled - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
+          util_abort("%s: job:%ld lsf_status:%d not recognized - internal LSF fuck up - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
 	  status = JOB_QUEUE_DONE; /* ????  */
 	}
       }

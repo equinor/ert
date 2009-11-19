@@ -62,17 +62,63 @@
    ext_job, those files implement a particular way of dispatching
    external jobs in a series; AFTER THEY HAVE BEEN SUBMITTED. So seen
    from the this scope those files do not provide any particluar
-   functionality; there is no compile-time dependencies either (ehhh -
-   the EXIT file name is a small link).
+   functionality; there is no compile-time dependencies either.
 */
+
 
 
 /*
-  This must match the EXIT_file variable in the job_dispatch script.
+  Communicating success/failure between the job_script and the job_queue:
+  =======================================================================
+
+  The system for communicatin success/failure between the queue system
+  (i.e. this file) and the job script is quite elaborate. There are
+  essentially three problems which make this complicated:
+
+   1. The exit status of the jobs is NOT reliably captured - the job
+      might very well fail without us detecing it with the exit
+      status.
+
+   2. Syncronizing of disks can be quite slow, so altough a job has
+      completede successfully the files we expect to find might not
+      present.
+
+   3. There is layer upon layer here - this file scope (i.e. the
+      internal queue_system) spawns external jobs in the form of a job
+      script. This script again spawns a series of real external jobs
+      like e.g. ECLIPSE and RMS. The job_script does not realiably
+      capture the exit status of the external programs.
+
+
+  The approach to this is as follows: 
+
+   1. If the job (i.e. the job script) finishes with a failure status
+      we communicate the failure back to the calling scope with no
+      more ado.
+
+   2. When a job has finished (seemingly OK) we try hard to determine
+      whether the job has failed or not. This is based on the
+      following tests:
+
+      a) If the job has produced an EXIT file it has failed.
+
+      b) If the job has produced an OK file it has succeeded.
+      
+      c) If neither EXIT nor OK files have been produced we spin for a
+         while waiting for one of the files, if none turn up we will
+         eventually mark the job as failed.
+
+
+
+   Observe that there is a random ugly coupling between this file and
+   the job script thorugh the name of the EXIT and OK files. In this
+   file those names are just defined with #define below here. If these
+   are changed, all hell will break loose.
 */
 
-#define EXIT_FILE "EXIT"
 
+#define EXIT_FILE "EXIT"
+#define OK_FILE   "OK"
 
 
 
@@ -101,6 +147,7 @@ typedef struct {
   int                  	 external_id;     /* An id number supplied when submitting; this is used when external functions query for status ++ */
   int                  	 submit_attempt;  /* Which attempt is this ... */
   char                  *exit_file;       /* The queue will look for the occurence of this file to detect a failure. */
+  char                  *ok_file;         /* The queue will look for this file to verify that the job was OK - can be NULL - in which case it is ignored. */
   char                 	*job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
   job_status_type  	 job_status;      /* The current status of the job. */
@@ -150,6 +197,7 @@ static void job_queue_node_clear(job_queue_node_type * node) {
   node->run_path       = NULL;
   node->job_data       = NULL;
   node->exit_file      = NULL;
+  node->ok_file        = NULL;
 }
 
 
@@ -168,6 +216,7 @@ static void job_queue_node_free_data(job_queue_node_type * node) {
   node->run_path  = util_safe_free(node->run_path);
   node->job_name  = util_safe_free(node->job_name);
   node->exit_file = util_safe_free(node->exit_file);
+  node->ok_file   = util_safe_free(node->ok_file);
   if (node->job_data != NULL) 
     util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }
@@ -220,8 +269,9 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
       node->run_path = util_alloc_realpath( run_path );
     if ( !util_path_exists(node->run_path) ) 
       util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
-
+    
     node->exit_file = util_alloc_filename(node->run_path , EXIT_FILE , NULL);
+    node->ok_file   = util_alloc_filename(node->run_path , OK_FILE   , NULL);
     job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
   }
 }
@@ -472,6 +522,9 @@ void job_queue_finalize(job_queue_type * queue) {
 
 
 void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
+  const int max_ok_wait_time = 60; /* Seconds to wait for an OK file - when the job itself has said all OK. */
+  const int ok_sleep_time    =  1; /* Time to wait between checks for OK|EXIT file. */
+
   msg_type * submit_msg = msg_alloc("Submitting new jobs:  ]");
   bool new_jobs = false;
   bool cont     = true;
@@ -575,14 +628,31 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	    if (util_file_exists(node->exit_file)) 
 	      job_queue_change_node_status(queue , node , JOB_QUEUE_EXIT);
             else {
-              /* 
-                 That the target file has been produced is checked by
-                 the job script, and not here. This scope just does
-                 the opposite test, i.e. whether an EXIT file has been
-                 produced to indicate failure.
-              */
-	      job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_OK);
-              job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
+              /* Check if the OK file has been produced. Wait and retry. */
+              if (node->ok_file != NULL) {
+                int  total_wait_time = 0;
+                
+                while (true) {
+                  if (util_file_exists( node->ok_file )) {
+                    job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_OK);
+                    job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
+                    break;
+                  } else {
+                    if (total_wait_time <  max_ok_wait_time) {
+                      sleep( ok_sleep_time );
+                      total_wait_time += ok_sleep_time;
+                    } else {
+                      /* We have waited long enough - this does not seem to give any OK file. */
+                      job_queue_change_node_status(queue , node , JOB_QUEUE_EXIT);
+                      break;
+                    }
+                  }
+                } 
+              } else {
+                /* We have not set the ok_file - then we just assume that the job is OK. */
+                job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_OK);
+                job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
+              }
             }
 	    break;
 	  case(JOB_QUEUE_EXIT):
