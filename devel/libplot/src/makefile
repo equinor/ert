@@ -12,8 +12,6 @@ ARFLAGS = -csr
 OBJECTS        = plot.o plot_dataset.o  plot_range.o plplot_driver.o plot_driver.o text_driver.o 
 INC_FILES      = plot.h plot_dataset.h  plot_range.h plot_const.h plot_driver.h  plplot_driver.h text_driver.h
 LIB            = libplot.a 
-LIB_LINK       = -lplot -lutil -lecl -lz -lm -lplplotd -lpthread 
-LIB_PATH       = -L$(LIBPLOT_HOME)/lib     -L$(EXTERNAL_LIB_PATH) -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib 
 TARGET_INCLUDE = -I$(LIBPLOT_HOME)/include -I$(EXTERNAL_INC_PATH) -I$(LIBUTIL_HOME)/include -I$(LIBECL_HOME)/include
 
 
