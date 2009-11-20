@@ -1,0 +1,34 @@
+import os
+import os.path
+import sys
+sys.path += ["../../build"]
+import global_config
+from   global_config import LIBUTIL
+from   global_config import LIBCONFIG
+from   global_config import EXTERNAL
+
+conf = global_config.get_conf(os.getcwd() , 2)
+env  = Environment()
+conf.update_env( env , [LIBCONFIG , LIBUTIL , EXTERNAL] )
+
+src_list    = Split("forward_model.c job_queue.c basic_queue_driver.c lsf_driver.c local_driver.c rsh_driver.c ext_job.c ext_joblist.c lsf_request.c")
+header_list = Split("job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h lsf_request.h forward_model.h")
+
+LIB = env.StaticLibrary("job_queue" , src_list , CPPDEFINES = ["\'USE_LSF_LIBRARY=TRUE\'"])
+env.Install("../lib" , LIB)
+env.Install(conf.SDP_LIB , LIB )
+
+env.Install("../lib"     , header_list)
+env.Install(conf.SDP_LIB , header_list)
+
+##################################################################
+
+if not os.path.exists( conf.SDP_LIB ):
+    os.makedirs( conf.SDP_LIB )
+ 
+install     = env.Alias('install',["../lib" , "../include"])
+SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
+
+Default( install )
+
+
