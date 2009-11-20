@@ -1470,7 +1470,7 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
      1. The external queue system has said that everything is OK; BUT
         the ert layer failed to load all the data.
     
-     2. The external queue system has let the job fail.
+     2. The external queue system has seen the job fail.
     
     If resample_when_fail is true the parameter and state variables
     will be resampled before retrying. If resample_when_fail is not

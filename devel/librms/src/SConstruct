@@ -1,0 +1,29 @@
+import os
+import os.path
+import sys
+sys.path += ["../../build"]
+import global_config
+from   global_config import LIBUTIL
+from   global_config import LIBECL
+
+conf = global_config.get_conf(os.getcwd() , 2)
+env  = Environment()
+conf.update_env( env , [ LIBECL , LIBUTIL ] , link = False)
+
+src_list    = Split("rms_file.c rms_util.c rms_tag.c rms_type.c rms_tagkey.c rms_stats.c rms_export.c")
+header_list = Split("rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h rms_export.h")
+
+
+LIB = env.StaticLibrary("rms" , src_list)
+env.Install("../lib"     , LIB)
+env.Install(conf.SDP_LIB , LIB )
+
+env.Install("../include"     , header_list)
+env.Install(conf.SDP_INCLUDE , header_list)
+
+##################################################################
+
+install     = env.Alias('install',["../lib" , "../include"])
+SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
+
+Default( install )

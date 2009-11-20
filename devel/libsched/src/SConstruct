@@ -1,0 +1,36 @@
+import os
+import os.path
+import sys
+sys.path += ["../../build"]
+import global_config
+from   global_config import LIBUTIL
+from   global_config import LIBECL
+from   global_config import EXTERNAL
+
+conf = global_config.get_conf(os.getcwd() , 2)
+env  = Environment()
+conf.update_env( env , [ LIBECL , LIBUTIL ] )
+
+src_list = Split("sched_kw.c sched_file.c  sched_kw_untyped.c sched_kw_gruptree.c sched_kw_tstep.c sched_kw_dates.c sched_kw_wconhist.c sched_kw_wconinjh.c sched_kw_welspecs.c sched_util.c gruptree.c history.c sched_kw_wconprod.c sched_kw_wconinj.c sched_kw_wconinje.c sched_kw_compdat.c sched_kw_include.c")
+
+header_list = Split("sched_file.h sched_kw.h sched_kw_untyped.h sched_kw_gruptree.h sched_kw_tstep.h sched_kw_dates.h sched_kw_wconhist.h sched_kw_wconinjh.h sched_kw_welspecs.h sched_util.h gruptree.h history.h sched_kw_wconprod.h sched_kw_wconinj.h  sched_kw_wconinje.h sched_kw_compdat.h sched_kw_include.h sched_macros.h")
+
+
+LIB = env.StaticLibrary("sched" , src_list)
+env.Install("../lib" , LIB)
+env.Install(conf.SDP_LIB , LIB )
+
+env.Install("../include" , header_list)
+env.Install(conf.SDP_LIB , header_list)
+
+##################################################################
+
+if not os.path.exists( conf.SDP_LIB ):
+    os.makedirs( conf.SDP_LIB )
+ 
+install     = env.Alias('install',["../lib" , "../include"])
+SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
+
+Default( install )
+
+

@@ -1,0 +1,38 @@
+import os
+import os.path
+import sys
+sys.path += ["../../build"]
+import global_config
+from   global_config import LIBUTIL
+from   global_config import LIBCONFIG
+
+
+conf = global_config.get_conf(os.getcwd() , 2)
+env  = Environment()
+conf.update_env( env , [LIBCONFIG , LIBUTIL] , ext_liblist = ["m","z","pthread"] , link = True)
+
+##################################################################
+
+
+
+def add_program(env , conf , target , src , SDP_INSTALL = False):
+    P = env.Program( target , src )
+    env.Install( "../bin" , P)
+    if SDP_INSTALL:
+        env.Install(conf.SDP_BIN , P)
+
+
+
+
+add_program(env , conf , "config_test" , "config_test.c" , False)
+add_program(env , conf , "conf_test"   , "conf_test.c"   , False)
+
+##################################################################
+
+if not os.path.exists( conf.SDP_BIN ):
+    os.makedirs( conf.SDP_BIN )
+ 
+install = env.Alias('install',"../bin")
+env.Alias('SDP_INSTALL' , conf.SDP_BIN)
+
+Default( install )

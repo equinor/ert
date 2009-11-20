@@ -18,8 +18,8 @@
    i.e. it is linear algeabra, and we need(?) to write the various
    objects in the form of an ensemble matrix, this is the process we
    call serialization. Then the linear algebra update is performed,
-   and afterwards we must read the data back from the serial vector to
-   the enkf_node object, this is deserialization.
+   and afterwards we must read the data back from the ensemble matrix
+   to the enkf_node object, this is deserialization.
 
 
                                          
