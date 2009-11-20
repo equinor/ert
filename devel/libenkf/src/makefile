@@ -21,22 +21,18 @@ else
    LSF_LIBS   = 
 endif
 
-LIB_LINK          = -lenkf -lsched -lrms -ljob_queue -lecl -lconfig -lutil -lplot -lplplotd -lm -lpthread -lz  -llapack -lblas $(LSF_LIBS) 
-LIB_PATH          = -L$(LIBJOB_QUEUE_HOME)/lib -L$(LIBPLOT_HOME)/lib -L$(LIBCONFIG_HOME)/lib -L$(LIBUTIL_HOME)/lib -L$(LIBECL_HOME)/lib -L$(LIBSCHED_HOME)/lib -L$(LIBRMS_HOME)/lib -L./ -L$(LIBANALYSIS_HOME)/lib -L$(EXTERNAL_LIB_PATH) 
 LIB               = libenkf.a
-TARGET_INCLUDE    = -I$(INSTALL_INC_PATH) $(MAIN_INCLUDE)
 
 
 
-LOCAL: 	LIB BIN 
+LOCAL: 	LIB  
 	install -d $(INSTALL_INC_PATH)
 	install -d $(INSTALL_LIB_PATH)
 	install $(INC_FILES_INSTALL) $(INSTALL_INC_PATH)
 	install $(LIB) $(INSTALL_LIB_PATH)
 
-SDP_INSTALL: LIB BIN
+SDP_INSTALL: LIB
 	install $(LIB) $(SDP_ROOT)/lib/lib$(LIB_ROOT).a
-	install $(BIN_FILES_SDP_INSTALL) $(SDP_ROOT)/bin
 	install $(INC_FILES_INSTALL) $(SDP_ROOT)/include
 
 
@@ -45,11 +41,8 @@ APPS:	LOCAL
 
 LIB:	$(LIB)
 
-clean_enkf: 
-	rm -f $(BIN_FILES)
 
-
-clean:  clean_enkf
+clean:  
 	rm -f *.o *~ 
 	rm -f $(LIB)
 	rm -f $(INSTALL_LIB_PATH)/$(LIB)
@@ -71,47 +64,47 @@ $(LIB): $(OBJECTS)
 #################################################################
 include dependencies
 #################################################################
-# Binaries
-
-BIN_FILES             = ert gen_test.x test.x run_ensemble.x sqlite3_driver_test.x  make_grane_config.x ert_users migrate_bfs
-BIN:	                $(BIN_FILES)
-BIN_FILES_SDP_INSTALL = ert
-
-main.o		: main.c
-
-
-main.o	: main.c
-	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
-
-ert:	main.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) main.o -o ert $(LIB_PATH)  $(LIB_LINK) 	
-
-test.x:	test.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH)  $(LIB_LINK) 	
-
-gen_test.x:	gen_test.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	
-
-field_convert.x:	field_convert.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) field_convert.o -o field_convert.x  $(LIB_PATH)  $(LIB_LINK) 	
-
-make_grane_config.x:	make_grane_config.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) make_grane_config.o -o make_grane_config.x  $(LIB_PATH)  $(LIB_LINK) 	
-
-sched_test.x:	sched_test.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
-
-ert_users:	ert_users.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) ert_users.o -o ert_users  $(LIB_PATH)  $(LIB_LINK) 	
-
-migrate_bfs:	migrate_bfs.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) migrate_bfs.o -o migrate_bfs  $(LIB_PATH)  $(LIB_LINK) 	
-
-run_ensemble.o	: run_ensemble.c
-	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
-
-run_ensemble.x:	run_ensemble.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) run_ensemble.o -o run_ensemble.x  $(LIB_PATH)  $(LIB_LINK) 	
-
-sqlite3_driver_test.x: sqlite3_driver_test.o $(LIB)
-	$(LD) -$(MFLAG) $(LDFLAGS) sqlite3_driver_test.o -o sqlite3_driver_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+# # Binaries
+# 
+# BIN_FILES             = ert gen_test.x test.x run_ensemble.x sqlite3_driver_test.x  make_grane_config.x ert_users migrate_bfs
+# BIN:	                $(BIN_FILES)
+# BIN_FILES_SDP_INSTALL = ert
+# 
+# main.o		: main.c
+# 
+# 
+# main.o	: main.c
+# 	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
+# 
+# ert:	main.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) main.o -o ert $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# test.x:	test.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) test.o -o test.x $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# gen_test.x:	gen_test.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) gen_test.o -o gen_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# field_convert.x:	field_convert.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) field_convert.o -o field_convert.x  $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# make_grane_config.x:	make_grane_config.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) make_grane_config.o -o make_grane_config.x  $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# sched_test.x:	sched_test.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) sched_test.o -o sched_test.x  $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# ert_users:	ert_users.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) ert_users.o -o ert_users  $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# migrate_bfs:	migrate_bfs.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) migrate_bfs.o -o migrate_bfs  $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# run_ensemble.o	: run_ensemble.c
+# 	$(CC) -c $(CFLAGS) -D'SITE_CONFIG_FILE="$(SITE_CONFIG_FILE)"' -D'SVN_VERSION="$(SVN_VERSION)"' -D'COMPILE_TIME_STAMP="$(COMPILE_TIME_STAMP)"' $(COMPILE_INCLUDE) $(CPPFLAGS) $< -o $@
+# 
+# run_ensemble.x:	run_ensemble.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) run_ensemble.o -o run_ensemble.x  $(LIB_PATH)  $(LIB_LINK) 	
+# 
+# sqlite3_driver_test.x: sqlite3_driver_test.o $(LIB)
+# 	$(LD) -$(MFLAG) $(LDFLAGS) sqlite3_driver_test.o -o sqlite3_driver_test.x  $(LIB_PATH)  $(LIB_LINK) 	
