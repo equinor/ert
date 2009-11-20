@@ -7,7 +7,8 @@
 #include <math.h>
 #include <pert_util.h>
 #include <well_rate.h>
-
+#include <sched_types.h>
+#include <sched_kw_wconinje.h>
 
 #define WELL_RATE_ID  6681055
 
@@ -21,7 +22,7 @@ struct well_rate_struct {
   double_vector_type       * std_shift;
   double_vector_type       * rate; 
   bool_vector_type         * well_open;
-  phase_type                 phase;
+  sched_phase_type           phase;
   const time_t_vector_type * time_vector;
 };
   
@@ -34,15 +35,23 @@ void well_rate_update_wconhist( well_rate_type * well_rate , sched_kw_wconhist_t
   double shift = double_vector_iget( well_rate->shift , restart_nr );
   switch (well_rate->phase) {
   case(OIL):
-    sched_kw_wconhist_shift_orat( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ) );
-    break;
-  case(GAS):
-    sched_kw_wconhist_shift_grat( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ) );
-    break;
-  case(WATER):
-    sched_kw_wconhist_shift_wrat( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ) );
+    sched_kw_wconhist_shift_orat( kw , well_rate->name , shift);
+    break;                                               
+  case(GAS):                                             
+    sched_kw_wconhist_shift_grat( kw , well_rate->name , shift);
+    break;                                               
+  case(WATER):                                           
+    sched_kw_wconhist_shift_wrat( kw , well_rate->name , shift);
     break;
   }
+}
+
+
+void well_rate_update_wconinje( well_rate_type * well_rate , sched_kw_wconinje_type * kw, int restart_nr ) {
+  if (well_rate->phase == sched_kw_wconinje_get_phase( kw , well_rate->name)) 
+    sched_kw_wconinje_shift_surface_flow( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ));
+  else 
+    util_abort("%s: phase fuckup in well:%s \n",__func__ , well_rate->name);
 }
 
 
@@ -95,7 +104,7 @@ well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const 
   well_rate->shift        = double_vector_alloc(0,0);
   well_rate->mean_shift   = double_vector_alloc(0 , 0);
   well_rate->std_shift    = double_vector_alloc(0 , 0);
-  well_rate->phase        = phase_from_string( phase );  
+  well_rate->phase        = sched_phase_type_from_string( phase );  
   well_rate->well_open    = bool_vector_alloc(0 , false );
   well_rate->rate         = double_vector_alloc(0 , 0);
   fscanf_2ts( time_vector , filename , well_rate->mean_shift , well_rate->std_shift );
@@ -134,7 +143,7 @@ void well_rate_free__( void * arg ) {
 
 
 
-phase_type well_rate_get_phase( const well_rate_type * well_rate ) {
+sched_phase_type well_rate_get_phase( const well_rate_type * well_rate ) {
   return well_rate->phase;
 }
 

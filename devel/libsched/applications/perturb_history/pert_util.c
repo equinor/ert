@@ -121,45 +121,6 @@ void fscanf_2ts(const time_t_vector_type * time_vector , const char * filename ,
   }
 }
 
-/*****************************************************************/
-#define OIL_STRING    "OIL"
-#define WATER_STRING  "WATER"
-#define GAS_STRING    "GAS"
-
-phase_type phase_from_string(const char * __phase_string) {
-  phase_type phase = WATER;
-  char * phase_string = util_alloc_strupr_copy( __phase_string );
-
-  if (util_string_equal( phase_string , OIL_STRING))
-    phase = OIL;
-  else if (util_string_equal( phase_string , WATER_STRING ))
-    phase = WATER;
-  else if (util_string_equal( phase_string , GAS_STRING ))
-    phase = GAS;
-  else
-    util_exit("Failed to interpret: %s as on of: \'GAS|OIL|WATER\'.\n",__phase_string);
-  
-  free( phase_string );
-  return phase;
-}
-
-
-const char * get_phase_name( phase_type phase) {
-  switch( phase ) {
-  case(OIL):
-    return OIL_STRING;
-    break;
-  case(GAS):
-    return GAS_STRING;
-    break;
-  case(WATER):
-    return WATER_STRING;
-    break;
-  default:
-    util_abort("%s: hmmmm - this smells of internal fuckup phase_id:%d \n",__func__ , phase);
-    return NULL;
-  }
-}
 
 
 /*****************************************************************/

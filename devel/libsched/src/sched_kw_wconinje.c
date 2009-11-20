@@ -7,35 +7,9 @@
 #include <sched_kw_wconinje.h>
 #include <sched_util.h>
 #include <stringlist.h>
+#include <sched_types.h>
 
 #define DEFAULT_INJECTOR_STATE OPEN
-
-
-typedef enum {OPEN  , STOP , SHUT , AUTO}      wconinje_status_enum;
-#define STATUS_OPEN_STRING "OPEN"
-#define STATUS_STOP_STRING "STOP"
-#define STATUS_SHUT_STRING "SHUT"
-#define STATUS_AUTO_STRING "AUTO"
-
-  
-/**
-   There is no default injector type.
-*/
-typedef enum {WATER , GAS  , OIL}              wconinje_injector_enum;
-#define TYPE_WATER_STRING "WATER"
-#define TYPE_GAS_STRING   "GAS"
-#define TYPE_OIL_STRING   "OIL"
-
-  
-/**
-   There is no default cmode value. 
-*/
-typedef enum {RATE  , RESV , BHP , THP , GRUP} wconinje_control_enum;
-#define CONTROL_RATE_STRING  "RATE"
-#define CONTROL_RESV_STRING  "RESV"
-#define CONTROL_BHP_STRING   "BHP"
-#define CONTROL_THP_STRING   "THP"
-#define CONTROL_GRUP_STRING  "GRUP"
 
 #define SCHED_KW_WCONINJE_ID  99165
 #define WCONINJE_NUM_KW 10
@@ -53,7 +27,7 @@ typedef struct {
   bool                       def[WCONINJE_NUM_KW];            /* Has the item been defaulted? */
 
   char                      * name;               /* This does NOT support well_name_root or well list notation. */
-  wconinje_injector_enum      injector_type;      /* Injecting GAS/WATER/OIL */
+  sched_phase_type            injector_type;      /* Injecting GAS/WATER/OIL */
   wconinje_status_enum        status;             /* Well is open/shut/??? */
   wconinje_control_enum       control;            /* How is the well controlled? */
   double                      surface_flow;       
@@ -89,18 +63,6 @@ static char * get_status_string(wconinje_status_enum status)
 }
 
 
-static char * get_injector_string(wconinje_injector_enum injector_type) {
-  switch (injector_type) {
-  case(WATER):
-    return TYPE_WATER_STRING;
-  case(GAS):
-    return TYPE_GAS_STRING;
-  case(OIL):
-    return TYPE_OIL_STRING;
-  default:
-    return ECL_DEFAULT_KW;
-  }
-}
 
 
 static char * get_control_string(wconinje_control_enum cmode)
@@ -143,18 +105,6 @@ static wconinje_status_enum get_status_from_string(const char * st_string)
 }
 
 
-static wconinje_injector_enum get_type_from_string(const char * type_string) {
-  if (strcmp(type_string , TYPE_WATER_STRING) == 0)
-    return WATER;
-  else if (strcmp(type_string , TYPE_GAS_STRING) == 0)
-    return GAS;
-  else if (strcmp(type_string , TYPE_OIL_STRING) == 0)
-    return OIL;
-  else {
-    util_abort("%s: Could not recognize:%s as injector phase. Valid values are: [%s, %s, %s] \n",__func__ , type_string , TYPE_WATER_STRING , TYPE_GAS_STRING , TYPE_OIL_STRING);
-    return 0;
-  }
-}
 
 
 
@@ -212,7 +162,7 @@ static wconinje_well_type * wconinje_well_alloc_from_tokens(const stringlist_typ
   sched_util_init_default( line_tokens , well->def );
 
   well->name           = util_alloc_string_copy( stringlist_iget( line_tokens , 0 ));
-  well->injector_type  = get_type_from_string(stringlist_iget(line_tokens , 1));
+  well->injector_type  = sched_phase_type_from_string(stringlist_iget(line_tokens , 1));
   well->status         = get_status_from_string( stringlist_iget( line_tokens , 2 ));
   well->control        = get_cmode_from_string( stringlist_iget( line_tokens , 3 ));
   well->surface_flow   = sched_util_atof( stringlist_iget( line_tokens , 4 ));
@@ -230,16 +180,16 @@ static wconinje_well_type * wconinje_well_alloc_from_tokens(const stringlist_typ
 static void wconinje_well_fprintf(const wconinje_well_type * well, FILE * stream)
 {
   fprintf(stream, "  ");
-  sched_util_fprintf_qst(well->def[0],  well->name                               , 8,     stream);
-  sched_util_fprintf_qst(well->def[1],  get_injector_string(well->injector_type) , 5,     stream); /* 5 ?? */
-  sched_util_fprintf_qst(well->def[2],  get_status_string(well->status)          , 4,     stream);
-  sched_util_fprintf_qst(well->def[3],  get_control_string(well->control)        , 4,     stream);
-  sched_util_fprintf_dbl(well->def[4],  well->surface_flow                       , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[5],  well->reservoir_flow                     , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[6],  well->BHP_target                         , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[7],  well->THP_target                         , 11, 3, stream);
-  sched_util_fprintf_int(well->def[8],  well->vfp_table_nr                       , 4,     stream);
-  sched_util_fprintf_dbl(well->def[9],  well->vapoil_conc                        , 11, 3, stream);
+  sched_util_fprintf_qst(well->def[0],  well->name                                   , 8,     stream);
+  sched_util_fprintf_qst(well->def[1],  sched_phase_type_string(well->injector_type) , 5,     stream); /* 5 ?? */
+  sched_util_fprintf_qst(well->def[2],  get_status_string(well->status)              , 4,     stream);
+  sched_util_fprintf_qst(well->def[3],  get_control_string(well->control)            , 4,     stream);
+  sched_util_fprintf_dbl(well->def[4],  well->surface_flow                           , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[5],  well->reservoir_flow                         , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[6],  well->BHP_target                             , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[7],  well->THP_target                             , 11, 3, stream);
+  sched_util_fprintf_int(well->def[8],  well->vfp_table_nr                           , 4,     stream);
+  sched_util_fprintf_dbl(well->def[9],  well->vapoil_conc                            , 11, 3, stream);
   fprintf(stream, "/ \n");
 }
 
@@ -372,6 +322,24 @@ void sched_kw_wconinje_set_surface_flow( const sched_kw_wconinje_type * kw , con
   if (well != NULL)
     well->surface_flow = surface_flow;
 }
+
+
+
+void sched_kw_wconinje_shift_surface_flow( const sched_kw_wconinje_type * kw , const char * well_name , double delta_surface_flow) {
+  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
+  if (well != NULL)
+    well->surface_flow += delta_surface_flow;
+}
+
+
+sched_phase_type sched_kw_wconinje_get_phase( const sched_kw_wconinje_type * kw , const char * well_name) {
+  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
+  if (well != NULL)
+    return well->injector_type;
+  else
+    return -1;
+}
+
 
 
 bool sched_kw_wconinje_has_well( const sched_kw_wconinje_type * kw , const char * well_name) {

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <util.h>
 #include <time_t_vector.h>
+#include <string.h>
 #include <double_vector.h>
 #include <time.h>
 #include <math.h>
@@ -9,19 +10,21 @@
 #include <well_rate.h>
 #include <hash.h>
 #include <vector.h>
+#include <sched_types.h>
+
 #define GROUP_RATE_ID  6681055
 
 
 struct group_rate_struct {
   UTIL_TYPE_ID_DECLARATION;
   char * name;
+  bool                       producer;
   double_vector_type       * shift;
   double_vector_type       * min_shift;
   double_vector_type       * max_shift;
-  phase_type                 phase;
+  sched_phase_type           phase;
   const time_t_vector_type * time_vector;
-  //hash_type                * well_rates;
-  vector_type  * well_rates;
+  vector_type              * well_rates;    
 };
   
 
@@ -35,8 +38,19 @@ void group_rate_update_wconhist( group_rate_type * group_rate , sched_kw_wconhis
 }
 
 
+void group_rate_update_wconinje( group_rate_type * group_rate , sched_kw_wconinje_type * kw, int restart_nr ) {
+  int well_nr;
+  for (well_nr = 0; well_nr < vector_get_size( group_rate->well_rates ); well_nr++) {
+    well_rate_type * well_rate = vector_iget( group_rate->well_rates , well_nr );
+    well_rate_update_wconinje( well_rate ,kw , restart_nr );
+  }
+}
 
-group_rate_type * group_rate_alloc(const time_t_vector_type * time_vector , const char * name , const char * phase , const char * filename) {
+
+
+
+
+group_rate_type * group_rate_alloc(const time_t_vector_type * time_vector , const char * name , const char * phase , const char * type_string , const char * filename) {
   group_rate_type * group_rate = util_malloc( sizeof * group_rate , __func__);
   UTIL_TYPE_ID_INIT( group_rate , GROUP_RATE_ID );
   group_rate->name         = util_alloc_string_copy( name );
@@ -44,10 +58,16 @@ group_rate_type * group_rate_alloc(const time_t_vector_type * time_vector , cons
   group_rate->shift        = double_vector_alloc(0,0);
   group_rate->min_shift    = double_vector_alloc(0 , 0);
   group_rate->max_shift    = double_vector_alloc(0 , 0);
-  group_rate->phase        = phase_from_string( phase );  
+  group_rate->phase        = sched_phase_type_from_string( phase );  
+
+  {
+    if (strcmp( type_string , "INJECTOR") == 0)
+      group_rate->producer = false;
+    else if ( strcmp( type_string , "PRODUCER") == 0)
+      group_rate->producer = true;
+  }
   
   fscanf_2ts( time_vector , filename , group_rate->min_shift , group_rate->max_shift );
-  //group_rate->well_rates   = hash_alloc();
   group_rate->well_rates   = vector_alloc_new();
   return group_rate;
 }
@@ -61,10 +81,10 @@ void group_rate_free( group_rate_type * group_rate ) {
   double_vector_free( group_rate->shift );
   double_vector_free( group_rate->min_shift );
   double_vector_free( group_rate->max_shift );
-  //hash_free( group_rate->well_rates );
   vector_free( group_rate->well_rates );
   free( group_rate );
 }
+
 
 void group_rate_free__( void * arg ) {
   group_rate_type * group_rate = group_rate_safe_cast( arg );
@@ -73,7 +93,11 @@ void group_rate_free__( void * arg ) {
 
 
 
-phase_type group_rate_get_phase( const group_rate_type * group_rate ) {
+bool group_rate_is_producer( const group_rate_type * group_rate ) {
+  return group_rate->producer;
+}
+
+sched_phase_type group_rate_get_phase( const group_rate_type * group_rate ) {
   return group_rate->phase;
 }
 
@@ -90,8 +114,7 @@ double_vector_type * group_rate_get_shift( group_rate_type * group_rate ) {
 
 void group_rate_add_well_rate( group_rate_type * group_rate , well_rate_type * well_rate) {
   if (well_rate_get_phase( well_rate ) == group_rate->phase) {
-    char * key = util_alloc_sprintf("%s:%s" , well_rate_get_name( well_rate ) , get_phase_name( group_rate->phase ));
-    //hash_insert_hash_owned_ref( group_rate->well_rates , key , well_rate , well_rate_free__ );
+    char * key = util_alloc_sprintf("%s:%s" , well_rate_get_name( well_rate ) , sched_phase_type_string( group_rate->phase ));
     vector_append_owned_ref( group_rate->well_rates , well_rate , well_rate_free__ );
     free( key );
   }
@@ -102,7 +125,6 @@ void group_rate_add_well_rate( group_rate_type * group_rate , well_rate_type * w
 
 void group_rate_sample( group_rate_type * group_rate ) {
   int length                       = time_t_vector_size( group_rate->time_vector );
-  //hash_iter_type     * well_iter   = hash_iter_alloc( group_rate->well_rates );
   double * group_shift             = util_malloc( length * sizeof * group_shift , __func__); 
   int    * well_count              = util_malloc( length * sizeof * well_count , __func__); 
   int      num_wells               = vector_get_size( group_rate->well_rates );
@@ -113,9 +135,7 @@ void group_rate_sample( group_rate_type * group_rate ) {
     well_count[i] = 0;
   }
   
-  //while (!hash_iter_is_complete( well_iter )) {
   for (well_nr=0; well_nr < num_wells; well_nr++) {
-    //well_rate_type * well_rate = hash_iter_get_next_value( well_iter );
     well_rate_type * well_rate = vector_iget( group_rate->well_rates , well_nr );
     well_rate_sample_shift( well_rate );
     {
@@ -150,7 +170,5 @@ void group_rate_sample( group_rate_type * group_rate ) {
   
   free( well_count );
   free( group_shift );
-    
-    
-  //hash_iter_free( well_iter );
+
 }
