@@ -47,6 +47,7 @@
 #include <ert_template.h>
 #include <timer.h>
 #include <time_t_vector.h>
+#include <member_config.h>
 #define ENKF_STATE_TYPE_ID 78132
 
 
@@ -102,26 +103,6 @@ typedef struct shared_info_struct {
 } shared_info_type;
 
 
-
-
-/**
-   This struct contains information which is private to this
-   member. It is initialized at object boot time, and (typically) not
-   changed during the simulation. [In principle it could change during
-   the simulation, but the current API does not support that.]
-*/ 
-
-
-struct member_config_struct {
-  int  		        iens;                /* The ensemble member number of this member. */
-  char                * casename;            /* The name of this case - will mosttly be NULL. */
-  keep_runpath_type     keep_runpath;        /* Should the run-path directory be left around (for this member)*/
-  char 		      * eclbase;             /* The ECLBASE string used for simulations of this member. */
-  sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
-  bool                  private_sched_file;  /* Is the member config holding a private schedule file - just relevant when freeing up? */ 
-  int                   last_restart_nr;
-  time_t_vector_type  * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. [NOT in use yet]. */
-};
 
 
 
@@ -264,89 +245,6 @@ static void shared_info_free(shared_info_type * shared_info) {
 
                                          
 
-/******************************************************************/
-/** Implementation of the member_config struct. All of this implementation
-    is private - however some of it is exported through the enkf_state object,
-    and it should be perfectly safe to export more of it.
-*/
-
-
-
-static void member_config_set_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list) {
-  util_safe_free( member_config->eclbase );
-  {
-    char * tmp = path_fmt_alloc_path(ecl_config_get_eclbase_fmt(ecl_config), false , member_config->iens);
-    member_config->eclbase = subst_list_alloc_filtered_string( subst_list , tmp );
-    free( tmp );
-  }
-}
-
-
-static int member_config_get_last_restart_nr( const member_config_type * member_config) {
-  return member_config->last_restart_nr;
-}
-				   
-
-static void member_config_free(member_config_type * member_config) {
-  util_safe_free(member_config->eclbase);
-  util_safe_free(member_config->casename );
-
-  if (member_config->private_sched_file)
-    sched_file_free( member_config->sched_file );
-  time_t_vector_free( member_config->report_time );
-  free(member_config);
-}
-
-
-
-static void member_config_set_keep_runpath(member_config_type * member_config , keep_runpath_type keep_runpath) {
-  member_config->keep_runpath   = keep_runpath;
-}
-
-
-
-static member_config_type * member_config_alloc(int iens , 
-                                                const char * casename , 
-						keep_runpath_type            keep_runpath , 
-						const ecl_config_type      * ecl_config , 
-						const ensemble_config_type * ensemble_config) {
-						
-  member_config_type * member_config = util_malloc(sizeof * member_config , __func__);
-  member_config->casename            = util_alloc_string_copy( casename );
-  member_config->iens                = iens; /* Can only be changed in the allocater. */
-  member_config->eclbase  	     = NULL;
-  member_config_set_keep_runpath(member_config , keep_runpath);
-  {
-    char * schedule_prediction_file = ecl_config_alloc_schedule_prediction_file(ecl_config , iens);
-    if (schedule_prediction_file != NULL) {
-      member_config->sched_file = sched_file_alloc_copy( ecl_config_get_sched_file( ecl_config ) , false); /* The historic part is a shallow copy. */
-      sched_file_parse_append( member_config->sched_file , schedule_prediction_file );
-      member_config->private_sched_file = true;
-      free( schedule_prediction_file );
-    } else {
-      member_config->sched_file         = ecl_config_get_sched_file( ecl_config );
-      member_config->private_sched_file = false;
-    }
-    member_config->last_restart_nr  = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
-    member_config->last_restart_nr += ecl_config_get_prediction_length( ecl_config );
-  }
-  member_config->report_time = time_t_vector_alloc( 0 , -1 );
-  return member_config;
-}
-
-
-
-static const sched_file_type * member_config_get_sched_file( const member_config_type * member_config) {
-  return member_config->sched_file;
-}
-
-keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config) {
-  return member_config->keep_runpath;
-}
-
-static void member_config_set_sim_time( member_config_type * member_config , int report_step , time_t sim_time ) {
-  time_t_vector_iset( member_config->report_time , report_step , sim_time );
-}
 
 
 /*****************************************************************/
@@ -367,10 +265,11 @@ void enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type 
 
 
 void enkf_state_init_forward_model(enkf_state_type * enkf_state) {
-  member_config_type * member_config = enkf_state->my_config;
-  char * iens_s       	  = util_alloc_sprintf("%d"   , member_config->iens);
-  char * iens4_s      	  = util_alloc_sprintf("%04d" , member_config->iens);
-  char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+  member_config_type * my_config = enkf_state->my_config;
+  const int iens          = member_config_get_iens( my_config );
+  char * iens_s       	  = util_alloc_sprintf("%d"   , iens);
+  char * iens4_s      	  = util_alloc_sprintf("%04d" , iens);
+  char * smspec_file  	  = ecl_util_alloc_filename(NULL , member_config_get_eclbase( my_config ) , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
   char * cwd              = util_alloc_cwd();
   
   free(cwd);
@@ -415,11 +314,11 @@ const char * enkf_state_get_run_path(const enkf_state_type * enkf_state) {
 */
 
 int  enkf_state_get_iens(const enkf_state_type * enkf_state) {
-  return enkf_state->my_config->iens;
+  return member_config_get_iens( enkf_state->my_config );
 }
 
 member_config_type *enkf_state_get_member_config(const enkf_state_type * enkf_state) {
-	return enkf_state->my_config;
+  return enkf_state->my_config;
 }
 
 
@@ -467,9 +366,11 @@ int enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state ) {
    Sets all the static subst keywords which will not change during the simulation.
 */
 static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
+
   {
-    char * iens_s      = util_alloc_sprintf("%d"   , enkf_state->my_config->iens);
-    char * iens4_s     = util_alloc_sprintf("%04d" , enkf_state->my_config->iens);
+    int    iens        = member_config_get_iens( enkf_state->my_config );
+    char * iens_s      = util_alloc_sprintf("%d"   , iens);
+    char * iens4_s     = util_alloc_sprintf("%04d" , iens);
     char * cwd         = util_alloc_cwd();
     char * date_string = util_alloc_date_stamp();
     
@@ -486,18 +387,17 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
   }
   
   {
-    member_config_type * my_config = enkf_state->my_config;
-    member_config_set_eclbase(my_config , enkf_state->ecl_config , enkf_state->subst_list);
-  
+    const char * eclbase  = member_config_set_eclbase( enkf_state->my_config , enkf_state->ecl_config , enkf_state->subst_list);
+    const char * casename = member_config_get_casename( enkf_state->my_config ); /* Mostly NULL */
     {
-      char * smspec_file = ecl_util_alloc_filename(NULL  , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
-      enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , my_config->eclbase , NULL);  /* Can not change run_time .. */
-      enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , my_config->eclbase , NULL);  /* Can not change run_time .. */
+      char * smspec_file = ecl_util_alloc_filename(NULL  , eclbase , ECL_SUMMARY_HEADER_FILE , ecl_config_get_formatted(enkf_state->ecl_config) , -1);
+      enkf_state_add_subst_kw(enkf_state , "ECL_BASE"    , eclbase , NULL);  /* Can not change run_time .. */
+      enkf_state_add_subst_kw(enkf_state , "ECLBASE"     , eclbase , NULL);  /* Can not change run_time .. */
       enkf_state_add_subst_kw(enkf_state , "SMSPEC"      , smspec_file , NULL);
-      if (my_config->casename != NULL)
-        enkf_state_add_subst_kw( enkf_state , "CASE" , my_config->eclbase , NULL);  /* No CASE_TABLE loaded - using the eclbase as default. */
+      if (casename == NULL)
+        enkf_state_add_subst_kw( enkf_state , "CASE" , eclbase , NULL);  /* No CASE_TABLE loaded - using the eclbase as default. */
       else
-        enkf_state_add_subst_kw( enkf_state , "CASE" , my_config->casename , NULL);
+        enkf_state_add_subst_kw( enkf_state , "CASE" , casename , NULL);
       
       free(smspec_file);
     }
@@ -620,7 +520,7 @@ INCLDUE
     free( tagged_randfloat );
   }
 
-  enkf_state->my_config = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config);
+  enkf_state->my_config = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config , fs);
   enkf_state_set_static_subst_kw(  enkf_state );
 
 
@@ -672,17 +572,18 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
   /* IFF reservoir_simulator == ECLIPSE ... */
   if (true) {
     const shared_info_type   * shared_info = enkf_state->shared_info;
-    member_config_type * my_config         = enkf_state->my_config;
     const run_info_type   * run_info       = enkf_state->run_info;
     const ecl_config_type * ecl_config     = enkf_state->ecl_config;
+    member_config_type * my_config         = enkf_state->my_config;
+    const int iens                         = member_config_get_iens( my_config );
+    const char            * eclbase        = member_config_get_eclbase( enkf_state->my_config );
     const bool fmt_file  		   = ecl_config_get_formatted(ecl_config);
-    const int  iens                        = my_config->iens;
     bool       load_summary                = false; 
     int        num_data_files              = 0;
     int report_step;
     char     ** data_files                 = util_malloc( (report_step2 - report_step1 + 1) * sizeof * data_files , __func__);
     
-    char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
+    char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
     ecl_sum_type * summary;
 
 
@@ -693,7 +594,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 
     if (load_summary) {
       /* Should we load from a unified summary file, or from several non-unified files? */
-      char * unified_file = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_UNIFIED_SUMMARY_FILE , fmt_file ,  -1);
+      char * unified_file = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_UNIFIED_SUMMARY_FILE , fmt_file ,  -1);
 
       /* Use unified file */
       if (unified_file != NULL) {
@@ -702,7 +603,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
       } else {
         for (report_step = report_step1; report_step <= report_step2; report_step++) {
           if (model_config_load_results( model_config , report_step)) {
-            data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
+            data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
             /* This will fail hard if there are holes in the series, i.e. S0007, S0010 */
             num_data_files++;
           }
@@ -736,17 +637,19 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
                 enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
               else {
                 *loadOK = false;
-                log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( node ));
+                log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
               }
             } 
           }
         } 
         hash_iter_free(iter);
-        member_config_set_sim_time( my_config , report_step , ecl_sum_get_report_time( summary , report_step ));
+        member_config_iset_sim_time( my_config , report_step , ecl_sum_get_report_time( summary , report_step ));
       }
       
-      if (summary != NULL) 
+      if (summary != NULL) {
         ecl_sum_free( summary ); 
+        member_config_fwrite_sim_time( my_config , shared_info->fs );
+      }
     }
   }
 }
@@ -790,6 +693,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   member_config_type * my_config   = enkf_state->my_config;
   shared_info_type   * shared_info = enkf_state->shared_info;
   run_info_type      * run_info    = enkf_state->run_info;
+  const int  iens                  = member_config_get_iens( my_config ); 
   const bool fmt_file              = ecl_config_get_formatted(enkf_state->ecl_config);
   const bool unified               = ecl_config_get_unified_restart(enkf_state->ecl_config);
   const bool internalize_state     = model_config_internalize_state( model_config , report_step );
@@ -803,7 +707,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   if (unified) 
     util_abort("%s: sorry - unified restart files are not supported \n",__func__);
   {
-    char * file  = ecl_util_alloc_exfilename(run_info->run_path , my_config->eclbase , ECL_RESTART_FILE , fmt_file , report_step);
+    char * file  = ecl_util_alloc_exfilename(run_info->run_path , member_config_get_eclbase(enkf_state->my_config) , ECL_RESTART_FILE , fmt_file , report_step);
     if (file != NULL) {
       restart_file = ecl_file_fread_alloc(file );
       free(file);
@@ -904,11 +808,11 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	      
 	      {
 		enkf_node_type * enkf_node         = enkf_state_get_node(enkf_state , kw);
-		enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , my_config->iens);
+		enkf_node_ecl_load_static(enkf_node , ecl_kw , report_step , iens);
 		/*
 		  Static kewyords go straight out ....
 		*/
-		enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
+		enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , iens , FORECAST);
 		enkf_node_free_data(enkf_node);
 	      }
 	    }
@@ -917,7 +821,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	  util_abort("%s: hm - something wrong - can (currently) only load FIELD/STATIC implementations from restart files - aborting \n",__func__);
 	free(kw);
       }
-      enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , my_config->iens , enkf_state->restart_kw_list );
+      enkf_fs_fwrite_restart_kw_list( shared_info->fs , report_step , iens , enkf_state->restart_kw_list );
     }
   }
   
@@ -941,11 +845,11 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
         
 	if (internalize_kw) {
 	  if (enkf_node_has_func(enkf_node , ecl_load_func)) {
-	    if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , my_config->iens ))
-              enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , FORECAST);
+	    if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , iens ))
+              enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , iens , FORECAST);
             else {
               *loadOK = false;
-              log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed load data for node:%s.",my_config->iens , report_step , enkf_node_get_key( enkf_node ));
+              log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
             }
 	  }
 	} 
@@ -1018,13 +922,14 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
   const member_config_type * my_config = enkf_state->my_config;
   const run_info_type      * run_info  = enkf_state->run_info;
   const bool fmt_file  		       = ecl_config_get_formatted(enkf_state->ecl_config);
-  char * restart_file    	       = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ECL_RESTART_FILE , fmt_file , run_info->step1);
+  const int iens                       = member_config_get_iens( my_config );
+  char * restart_file    	       = ecl_util_alloc_filename(run_info->run_path , member_config_get_eclbase( enkf_state->my_config ) , ECL_RESTART_FILE , fmt_file , run_info->step1);
   fortio_type * fortio   	       = fortio_fopen(restart_file , "w" , ECL_ENDIAN_FLIP , fmt_file);
   const char * kw;
   int          ikw;
 
   if (stringlist_get_size(enkf_state->restart_kw_list) == 0)
-    enkf_fs_fread_restart_kw_list(shared_info->fs , run_info->step1 , my_config->iens , enkf_state->restart_kw_list);
+    enkf_fs_fread_restart_kw_list(shared_info->fs , run_info->step1 , iens , enkf_state->restart_kw_list);
 
   for (ikw = 0; ikw < stringlist_get_size(enkf_state->restart_kw_list); ikw++) {
     kw = stringlist_iget( enkf_state->restart_kw_list , ikw);
@@ -1054,7 +959,7 @@ static void enkf_state_write_restart_file(enkf_state_type * enkf_state) {
       enkf_node_type * enkf_node = enkf_state_get_node(enkf_state , kw); 
       enkf_var_type var_type = enkf_node_get_var_type(enkf_node); 
       if (var_type == STATIC_STATE) 
-	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , my_config->iens , run_info->init_state_dynamic);
+	enkf_fs_fread_node(shared_info->fs , enkf_node , run_info->step1 , iens , run_info->init_state_dynamic);
       
       if (var_type == DYNAMIC_STATE) {
 	/* Pressure and saturations */
@@ -1137,6 +1042,7 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
   disk.
 */
 
+
 void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask , int report_step , state_enum state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
@@ -1147,7 +1053,7 @@ void enkf_state_fwrite(const enkf_state_type * enkf_state , int mask , int repor
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask))                       
-      enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
+      enkf_fs_fwrite_node(shared_info->fs , enkf_node , report_step , member_config_get_iens( my_config ) , state);
   }                                                                     
   util_free_stringlist(key_list , num_keys);
 }
@@ -1163,7 +1069,7 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
   for (ikey = 0; ikey < num_keys; ikey++) {
     enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
     if (enkf_node_include_type(enkf_node , mask)) 
-      enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , state);
+      enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , member_config_get_iens( my_config ) , state);
   }
   util_free_stringlist(key_list , num_keys);
 }
@@ -1178,6 +1084,7 @@ void enkf_state_fread(enkf_state_type * enkf_state , int mask , int report_step 
 static void enkf_state_try_fread(enkf_state_type * enkf_state , int mask , int report_step , state_enum load_state) {
   shared_info_type * shared_info = enkf_state->shared_info;
   const member_config_type * my_config = enkf_state->my_config;
+  const int iens     = member_config_get_iens( my_config );
   const int num_keys = hash_get_size(enkf_state->node_hash);
   char ** key_list   = hash_alloc_keylist(enkf_state->node_hash);
   int ikey;
@@ -1187,12 +1094,10 @@ static void enkf_state_try_fread(enkf_state_type * enkf_state , int mask , int r
     if (enkf_node_include_type(enkf_node , mask)) {
       enkf_var_type var_type = enkf_node_get_var_type( enkf_node );
       if ((var_type == PARAMETER) || (var_type == STATIC_STATE))
-	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , load_state);
+	enkf_fs_fread_node(shared_info->fs , enkf_node , report_step , iens , load_state);
       else {
-	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , my_config->iens , BOTH)) {
-          //printf("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , enkf_state->my_config->iens  );
-	  util_abort("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , enkf_state->my_config->iens  );
-        }
+	if (!enkf_fs_try_fread_node(shared_info->fs , enkf_node , report_step , iens , BOTH)) 
+	  util_abort("%s: failed to load node:%s  report_step:%d iens:%d \n",__func__ , key_list[ikey] , report_step , iens  );
       }
     }
   }
@@ -1225,7 +1130,7 @@ static void enkf_state_fread_initial_state(enkf_state_type * enkf_state) {
       /* Just checked for != NULL */
       char * load_file = enkf_config_node_alloc_infile( config_node , 0);
       if (load_file != NULL) 
-	enkf_fs_fread_node(shared_info->fs , enkf_node , 0 , my_config->iens , ANALYZED);
+	enkf_fs_fread_node(shared_info->fs , enkf_node , 0 , member_config_get_iens( my_config ) , ANALYZED);
 
       util_safe_free( load_file );
     }
@@ -1292,14 +1197,14 @@ void enkf_state_del_node(enkf_state_type * enkf_state , const char * node_key) {
 */
 
 static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const char * run_path , int step1 , int step2) {
-  const member_config_type  * my_config = enkf_state->my_config;  
-  const bool fmt_file  = ecl_config_get_formatted(enkf_state->ecl_config);
+  const bool fmt_file      = ecl_config_get_formatted(enkf_state->ecl_config);
+  const char * eclbase     = member_config_get_eclbase( enkf_state->my_config );
   char * step1_s 	   = util_alloc_sprintf("%d" , step1);
   char * step2_s 	   = util_alloc_sprintf("%d" , step2);
   char * step1_s04 	   = util_alloc_sprintf("%04d" , step1);
   char * step2_s04 	   = util_alloc_sprintf("%04d" , step2);
-  char * restart_file1     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step1);
-  char * restart_file2     = ecl_util_alloc_filename(NULL , my_config->eclbase , ECL_RESTART_FILE , fmt_file , step2);
+  char * restart_file1     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step1);
+  char * restart_file2     = ecl_util_alloc_filename(NULL , eclbase , ECL_RESTART_FILE , fmt_file , step2);
   
   enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , run_path      , NULL);
   enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , step1_s       , NULL);
@@ -1323,7 +1228,7 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
       free(tmp_include);
     }
   } else {
-    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , my_config->eclbase , step1);
+    char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , eclbase , step1);
     enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize , NULL);
     free(data_initialize);
   }
@@ -1389,7 +1294,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     util_make_path(run_info->run_path);
     {
       char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config) , NULL);
-      sched_file_fprintf_i(my_config->sched_file , run_info->step2 , schedule_file);
+      sched_file_fprintf_i(member_config_get_sched_file( my_config ) , run_info->step2 , schedule_file);
       free(schedule_file);
     }
 
@@ -1414,14 +1319,15 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     
     {
       char * stdin_file = util_alloc_filename(run_info->run_path , "eclipse"  , "stdin");  /* The name eclipse.stdin must be mathched when the job is dispatched. */
-      ecl_util_init_stdin( stdin_file , my_config->eclbase );
+      ecl_util_init_stdin( stdin_file , member_config_get_eclbase( my_config ));
       free(stdin_file);
     }
     
     /* Writing the ECLIPSE data file. */
     {
-      char * data_file = ecl_util_alloc_filename(run_info->run_path , my_config->eclbase , ECL_DATA_FILE , true , -1);
+      char * data_file = ecl_util_alloc_filename(run_info->run_path , member_config_get_eclbase( my_config ) , ECL_DATA_FILE , true , -1);
       subst_list_filter_file(enkf_state->subst_list , ecl_config_get_data_file(enkf_state->ecl_config) , data_file);
+      free( data_file );
     }
     
     /* This is where the job script is created */
@@ -1458,7 +1364,7 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
-    job_queue_add_job(shared_info->job_queue , run_info->run_path , my_config->eclbase , my_config->iens , forward_model_get_lsf_request(enkf_state->forward_model));
+    job_queue_add_job(shared_info->job_queue , run_info->run_path , member_config_get_eclbase(my_config) , member_config_get_iens(my_config) , forward_model_get_lsf_request(enkf_state->forward_model));
     run_info->num_internal_submit++;
   }
 }
@@ -1482,30 +1388,31 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_f
   const member_config_type  * my_config   = enkf_state->my_config;
   run_info_type             * run_info    = enkf_state->run_info;
   const shared_info_type    * shared_info = enkf_state->shared_info;
+  const int iens                          = member_config_get_iens( my_config );
 
   if (load_failure)
-    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Failed to load all data.",my_config->iens , run_info->step1 , run_info->step2);
+    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Failed to load all data.",iens , run_info->step1 , run_info->step2);
   else
-    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Forward model failed.",my_config->iens, run_info->step1 , run_info->step2);
+    log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Forward model failed.",iens, run_info->step1 , run_info->step2);
 
   if (run_info->num_internal_submit < run_info->max_internal_submit) {
     if (run_info->resample_when_fail) {
-      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d] Resampling and resubmitting realization." ,my_config->iens);
+      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
       /* resample_when_fail is set to true - we try to resample before resubmitting. */
       {
         stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
         for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
           enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
-          enkf_node_initialize( node , my_config->iens );
+          enkf_node_initialize( node , iens );
         }
         stringlist_free( init_keys );
       }
     } else
-      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Retrying realization from ERT main." ,my_config->iens , run_info->step1 , run_info->step2);
+      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Retrying realization from ERT main." ,iens , run_info->step1 , run_info->step2);
     
     enkf_state_ecl_write( enkf_state );  /* Writing a full new enkf_state instance */
     run_info->num_internal_submit++;
-    job_queue_set_external_restart( shared_info->job_queue , my_config->iens );
+    job_queue_set_external_restart( shared_info->job_queue , iens );
     
     return true;
   } else
@@ -1518,8 +1425,7 @@ job_status_type  enkf_state_get_run_status( const enkf_state_type * enkf_state )
   run_info_type             * run_info    = enkf_state->run_info;
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
-    const member_config_type  * my_config   = enkf_state->my_config;
-    return job_queue_export_job_status(shared_info->job_queue , my_config->iens);
+    return job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
   } else
     return JOB_QUEUE_NOT_ACTIVE;
 }
@@ -1535,6 +1441,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
   run_info_type             * run_info    = enkf_state->run_info;
   const shared_info_type    * shared_info = enkf_state->shared_info;
   const member_config_type  * my_config   = enkf_state->my_config;
+  const int iens                          = member_config_get_iens( my_config );
   bool loadOK  = true;
   
   if (status == JOB_QUEUE_RUN_OK) {
@@ -1544,12 +1451,12 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
        in this scope whether the results can be loaded back; if that
        is OK the final status is updated, otherwise: restart.
     */
-    log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , my_config->iens , run_info->step1, run_info->step2);
+    log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
     enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2 , &loadOK); 
     if (loadOK) {
       status = JOB_QUEUE_ALL_OK;
-      job_queue_set_load_OK( shared_info->job_queue , my_config->iens );
-      log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , my_config->iens , run_info->step1, run_info->step2);
+      job_queue_set_load_OK( shared_info->job_queue , iens );
+      log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Results loaded successfully." , iens , run_info->step1, run_info->step2);
     } else 
       if (!enkf_state_internal_retry( enkf_state , true)) 
         /* 
@@ -1558,7 +1465,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
            job_queue_run_FAIL and then it falls all the way
            through to runOK = false and no more attempts.
         */
-        job_queue_set_external_fail( shared_info->job_queue , my_config->iens );
+        job_queue_set_external_fail( shared_info->job_queue , iens );
   } else if (status == JOB_QUEUE_RUN_FAIL) {
     /* 
        The external queue system has said that the job failed - we
@@ -1567,9 +1474,9 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
     */
     if (!enkf_state_internal_retry( enkf_state , false)) {
       run_info->runOK = false; /* OK - no more attempts. */
-      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , my_config->iens , run_info->step1, run_info->step2);
+      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
       /* We tell the queue system that we have really given up on this one */
-      job_queue_set_all_fail( shared_info->job_queue , my_config->iens );
+      job_queue_set_all_fail( shared_info->job_queue , iens );
     }
   } else 
     util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_ALL_OK].",__func__ , status);
@@ -1583,17 +1490,18 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
   /* In case the job fails, we leave the run_path directory around
      for debugging. */
   if (status == JOB_QUEUE_ALL_OK) {
+    keep_runpath_type keep_runpath = member_config_get_keep_runpath( my_config );
     bool unlink_runpath;
-    if (my_config->keep_runpath == DEFAULT_KEEP) {
+    if (keep_runpath == DEFAULT_KEEP) {
       if (run_info->run_mode == ENKF_ASSIMILATION)
         unlink_runpath = true;   /* For assimilation the default is to unlink. */
       else
         unlink_runpath = false;  /* For experiments the default is to keep the directories around. */
     } else {
       /* We have explcitly set a value for the keep_runpath variable - with either KEEP_RUNAPTH or DELETE_RUNPATH. */
-      if (my_config->keep_runpath == EXPLICIT_KEEP)
+      if (keep_runpath == EXPLICIT_KEEP)
         unlink_runpath = false;
-      else if (my_config->keep_runpath == EXPLICIT_DELETE)
+      else if (keep_runpath == EXPLICIT_DELETE)
         unlink_runpath = true;
       else {
         util_abort("%s: internal error \n",__func__);
@@ -1689,7 +1597,7 @@ void enkf_state_init_run(enkf_state_type * state ,
                 step1 , 
                 step2 , 
                 __forward_model , 
-                my_config->iens ,  
+                member_config_get_iens( my_config ), 
                 model_config_get_runpath_fmt( shared_info->model_config ),
                 state->subst_list );
   
@@ -1706,4 +1614,19 @@ const sched_file_type * enkf_state_get_sched_file(const enkf_state_type * enkf_s
 }
 
 
+/**
+   This function will return the true time (i.e. time_t instance)
+   cooresponding to the report_step 'report_step'. If no data has been
+   loaded for the input report_step -1 is returned, this must be
+   checked by the calling scope.
+*/
+
+time_t enkf_state_iget_sim_time( const enkf_state_type * enkf_state , int report_step ) {
+  return member_config_iget_sim_time(enkf_state->my_config , report_step );
+}
+
+
+bool enkf_state_has_report_step( const enkf_state_type * enkf_state , int report_step) {
+  return member_config_has_report_step(enkf_state->my_config , report_step );
+}
 

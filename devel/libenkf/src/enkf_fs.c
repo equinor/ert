@@ -1664,20 +1664,22 @@ void enkf_fs_fread_restart_kw_list(enkf_fs_type * enkf_fs , int report_step , in
 
 /*****************************************************************/
 
+/* write_dir / read_dir confusion. */
+
 char * enkf_fs_alloc_case_filename( const enkf_fs_type * fs , const char * input_name) {
   return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , input_name);
 }
 
 char * enkf_fs_alloc_case_member_filename( const enkf_fs_type * fs , int iens , const char * input_name) {
-  return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , iens , input_name);
+  return path_fmt_alloc_file( fs->case_member_fmt , false , fs->root_path , fs->current_write_dir , iens , input_name);
 }
 
 char * enkf_fs_alloc_case_tstep_filename( const enkf_fs_type * fs , int tstep , const char * input_name) {
-  return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , tstep , input_name);
+  return path_fmt_alloc_file( fs->case_tstep_fmt , false , fs->root_path , fs->current_write_dir , tstep , input_name);
 }
 
 char * enkf_fs_alloc_case_tstep_member_filename( const enkf_fs_type * fs , int tstep , int iens , const char * input_name) {
-  return path_fmt_alloc_file( fs->case_fmt , false , fs->root_path , fs->current_write_dir , tstep , iens , input_name);
+  return path_fmt_alloc_file( fs->case_tstep_member_fmt , false , fs->root_path , fs->current_write_dir , tstep , iens , input_name);
 }
 
 

@@ -27,9 +27,9 @@ extern "C" {
 #include <log.h>
 #include <ert_template.h>
 #include <job_queue.h>
+#include <member_config.h>
 
 typedef struct enkf_state_struct    enkf_state_type;
-typedef struct member_config_struct member_config_type;
 
 keep_runpath_type  member_config_get_keep_runpath(const member_config_type * member_config);
 void             * enkf_state_complete_forward_model__(void * arg );

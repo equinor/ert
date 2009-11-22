@@ -50,10 +50,10 @@ FILE             * enkf_fs_open_case_file( const enkf_fs_type * fs , const char 
 FILE             * enkf_fs_open_case_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep , const char * mode);
 FILE             * enkf_fs_open_case_member_file( const enkf_fs_type * fs , const char * input_name , int iens , const char * mode);
 
-FILE             * enkf_fs_open_case_extstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens);
-FILE             * enkf_fs_open_case_exfile( const enkf_fs_type * fs , const char * input_name);
-FILE             * enkf_fs_open_case_extstep_file( const enkf_fs_type * fs , const char * input_name , int tstep );
-FILE             * enkf_fs_open_case_exmember_file( const enkf_fs_type * fs , const char * input_name , int iens );
+FILE             * enkf_fs_open_excase_tstep_member_file( const enkf_fs_type * fs , const char * input_name , int tstep , int iens);
+FILE             * enkf_fs_open_excase_file( const enkf_fs_type * fs , const char * input_name);
+FILE             * enkf_fs_open_excase_tstep_file( const enkf_fs_type * fs , const char * input_name , int tstep );
+FILE             * enkf_fs_open_excase_member_file( const enkf_fs_type * fs , const char * input_name , int iens );
 
 
 UTIL_SAFE_CAST_HEADER( enkf_fs );
