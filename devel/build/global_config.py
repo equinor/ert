@@ -25,6 +25,10 @@ class conf:
         
         
         self.SITE_CONFIG_FILE     = "/d/proj/bg/enkf/Config/statoil/site-config"
+        if SDP_ROOT:
+            if not os.path.exists(SDP_ROOT):
+                SDP_ROOT = None
+            
         self.SDP_ROOT             = SDP_ROOT
 
 
