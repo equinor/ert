@@ -94,26 +94,67 @@ void member_config_iset_sim_time( member_config_type * member_config , int repor
   time_t_vector_iset( member_config->report_time , report_step , sim_time );
 }
 
+
 /**
    This function will return the default value (i.e. -1) if the input
    report_step is invalid. The calling scope must check for this.
+
+   
+   Historical note:
+   ----------------
+
+   Time in the ert codebase is in terms of ECLIPS report
+   steps. Originally these were translated to 'true time' via the
+   schedule file. In newer implementations this is done as follows:
+
+    1. The member_config object contains a time_t vector which
+       translates from report_step to time_t.
+
+    2. The elements in this time_t vector are set with the
+       member_config_iset_sim_time() function when loading summary
+       data.
+
+    3. The time_t vector of the member_config object is stored as an
+       enkf_fs case_member file.
+
+   To support older cases, where the time_t vector has not been
+   stored, this function will fall back to the schedule file if it
+   does not have the report step which is asked for. In the latter
+   situation the time_t vector is updated. If the fs pointer is !=
+   NULL the updated vector is written to disk, i.e. the ensemble is
+   'upgraded'.
+
+   This is introduced at svn =~ 2300 = 23/11/2009, when this has been
+   in place for sufficiently long time, the fallback to schedule
+   should be removed.
 */
 
-time_t member_config_iget_sim_time( const member_config_type * member_config , int report_step) {
-  return time_t_vector_safe_iget( member_config->report_time , report_step );
+
+time_t member_config_iget_sim_time( member_config_type * member_config , int report_step , enkf_fs_type * fs) {
+  time_t sim_time = time_t_vector_safe_iget( member_config->report_time , report_step );
+  
+  if (sim_time == -1) {
+    /* Fall back to check with the schedule file. */
+    sim_time = sched_file_get_sim_time( member_config->sched_file , report_step );
+    member_config_iset_sim_time( member_config , report_step , sim_time );
+    if (fs != NULL)
+      member_config_fwrite_sim_time( member_config , fs );
+  }
 }
 
 
 /**
    Will return -1 if the data are not available. 
 */
-static time_t member_config_iget_sim_days( const member_config_type * member_config , int report_step) {
-  time_t start_time = time_t_vector_iget( member_config->report_time , 0 );
-  time_t sim_time   = time_t_vector_iget( member_config->report_time , report_step );
+double member_config_iget_sim_days( member_config_type * member_config , int report_step, enkf_fs_type * fs) {
+  time_t start_time = member_config_iget_sim_time( member_config , 0           , fs );
+  time_t sim_time   = member_config_iget_sim_time( member_config , report_step , fs );
+
   if (sim_time >= start_time)
     return 1.0 * (sim_time - start_time) / (3600 * 24);
   else
     return -1;
+  
 }
 
 
@@ -150,6 +191,7 @@ void member_config_fwrite_sim_time( const member_config_type * member_config , e
 const char * member_config_get_eclbase( const member_config_type * member_config ) {
   return member_config->eclbase;
 }
+
 
 const char * member_config_get_casename( const member_config_type * member_config ) {
   return member_config->casename;

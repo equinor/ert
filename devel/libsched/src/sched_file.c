@@ -783,6 +783,8 @@ void sched_file_update(sched_file_type * sched_file,
 
 /**
    Currently ONLY applicable to WCONHIST producers.
+
+   
 */
 
 bool sched_file_well_open( const sched_file_type * sched_file , 
@@ -806,6 +808,22 @@ bool sched_file_well_open( const sched_file_type * sched_file ,
         }
       }
     }
+
+    
+    if (hash_has_key( block->kw_hash , "WCONINJE")) {
+      const vector_type * wconinje_vector = hash_get( block->kw_hash , "WCONINJE");
+      int i;
+      for (i=0; i < vector_get_size( wconinje_vector ); i++) {
+        const sched_kw_type * kw = vector_iget_const( wconinje_vector , i );
+        if (sched_kw_has_well( kw , well_name )) {
+          well_found = true;
+          well_open  = sched_kw_well_open( kw , well_name );
+        }
+      }
+    }
+    
+
+
     block_nr--;
   } 
   return well_open;

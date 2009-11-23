@@ -11,7 +11,10 @@ extern "C" {
 
 
 
-typedef enum {OPEN  , STOP , SHUT , AUTO}      wconinje_status_enum;
+typedef enum { OPEN  = 1, 
+               STOP  = 2, 
+               SHUT  = 3, 
+               AUTO  = 4 }      wconinje_status_enum;
 #define STATUS_OPEN_STRING "OPEN"
 #define STATUS_STOP_STRING "STOP"
 #define STATUS_SHUT_STRING "SHUT"

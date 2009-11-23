@@ -317,7 +317,7 @@ int  enkf_state_get_iens(const enkf_state_type * enkf_state) {
   return member_config_get_iens( enkf_state->my_config );
 }
 
-member_config_type *enkf_state_get_member_config(const enkf_state_type * enkf_state) {
+member_config_type * enkf_state_get_member_config(const enkf_state_type * enkf_state) {
   return enkf_state->my_config;
 }
 
@@ -1622,7 +1622,7 @@ const sched_file_type * enkf_state_get_sched_file(const enkf_state_type * enkf_s
 */
 
 time_t enkf_state_iget_sim_time( const enkf_state_type * enkf_state , int report_step ) {
-  return member_config_iget_sim_time(enkf_state->my_config , report_step );
+  return member_config_iget_sim_time(enkf_state->my_config , report_step , NULL);
 }
 
 

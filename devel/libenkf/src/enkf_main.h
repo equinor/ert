@@ -19,12 +19,14 @@ extern "C" {
 #include <misfit_table.h>
 #include <plot_config.h>
 #include <set.h>
+#include <member_config.h>
   
 /*****************************************************************/
 
 
 
 typedef struct enkf_main_struct enkf_main_type;
+member_config_type          * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens);
 misfit_table_type           * enkf_main_get_misfit(const enkf_main_type * enkf_main);
 void                          enkf_main_del_unused_static(enkf_main_type * , int );
 const char                  * enkf_main_get_data_file(const enkf_main_type * );

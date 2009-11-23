@@ -21,7 +21,8 @@ keep_runpath_type member_config_get_keep_runpath(const member_config_type * memb
 int               member_config_get_iens( const member_config_type * member_config );
 void              member_config_fwrite_sim_time( const member_config_type * member_config , enkf_fs_type * enkf_fs );
 void              member_config_iset_sim_time( member_config_type * member_config , int report_step , time_t sim_time );
-time_t            member_config_iget_sim_time( const member_config_type * member_config , int report_step);
+double            member_config_iget_sim_days( member_config_type * member_config , int report_step, enkf_fs_type * fs);
+time_t            member_config_iget_sim_time( member_config_type * member_config , int report_step, enkf_fs_type * fs);
 bool              member_config_has_report_step( const member_config_type * member_config , int report_step);
 const char *      member_config_set_eclbase(member_config_type * member_config , const ecl_config_type * ecl_config , const subst_list_type * subst_list);
 int               member_config_get_last_restart_nr( const member_config_type * member_config);

@@ -27,36 +27,8 @@
 #include <math.h>
 #include <time.h>
 #include <plot_config.h>
+#include <member_config.h>
 
-
-/**
-   This vector of sched_file instances is used to translate from
-   report_step to simulation days on the x-axis of the ensemble
-   plots. This is a bit awkward for two reasons:
-
-    * Most of the plot functions only relate to the ensemble_config
-      and the enkf_fs filesystem; _not_ the enkf_state
-      instances. These sched_file pointers break that premise. Should
-      probably get the sim_time directly from the file-system?
-
-    * The implementation supports the use of member-specific schedule
-      files, and for this reason we must have member specific files
-      her as well, this increases the complexity for something which
-      is probably only used in 1/1000 cases.
-      
-*/
-
-static vector_type * enkf_tui_alloc_sched_vector( const enkf_main_type * enkf_main ) {
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size                           = ensemble_config_get_size( ensemble_config );
-  
-  int iens;
-  vector_type * vector = vector_alloc_new();
-  for (iens = 0; iens < ens_size; iens++)
-    vector_append_ref( vector , enkf_state_get_sched_file ( enkf_main_iget_state( enkf_main , iens )));
-  
-  return vector;
-}
 
 
 
@@ -139,16 +111,18 @@ static void __plot_show(plot_type * plot , const plot_config_type * plot_config 
 
 
 
-static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       , 
-                                     enkf_obs_type * enkf_obs, 
+static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main , 
                                      const enkf_config_node_type * config_node , 
                                      const char * user_key  ,
                                      const char * key_index ,
-                                     const vector_type * sched_vector , 
                                      int step1 , int step2  , 
                                      int iens1 , int iens2  , 
-                                     state_enum plot_state  ,
-                                     const plot_config_type * plot_config) {
+                                     state_enum plot_state) {
+                                     
+  
+  enkf_fs_type               * fs           = enkf_main_get_fs(enkf_main);
+  enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );
+  const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
   
   bool  plot_dates             = true;
   const int errorbar_max_obsnr = plot_config_get_errorbar_max( plot_config );
@@ -193,8 +167,10 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
       sprintf(msg_label , "%03d" , iens );
       msg_update( msg , msg_label);
       for (step = step1; step <= step2; step++) {
-        double sim_days = sched_file_get_sim_days( vector_iget( sched_vector , iens) , step );
-        time_t sim_time = sched_file_get_sim_time( vector_iget( sched_vector , iens) , step );
+        
+        double sim_days = member_config_iget_sim_days(enkf_main_iget_member_config( enkf_main , iens ) , step , fs);
+        time_t sim_time = member_config_iget_sim_time(enkf_main_iget_member_config( enkf_main , iens ) , step , fs);
+
 
         /* Forecast block */
         if (plot_state & FORECAST) {
@@ -291,11 +267,14 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
               else
                 obs_vector_user_get( obs_vector , key_index , report_step , &value , &std , &valid);
 	      if (valid) {
-
-		if (plot_dates)
-		  double_vector_append( sim_time  , sched_file_get_sim_time( vector_iget( sched_vector , iens1) , report_step ));  
+                
+                /**
+                   Should get sim_time directly from the observation - and not inderctly thrugh the member_config object.
+                */
+                if (plot_dates)
+		  double_vector_append( sim_time  , member_config_iget_sim_time(enkf_main_iget_member_config( enkf_main , iens1 ) , report_step , fs));  
 		else
-		  double_vector_append( sim_time  , sched_file_get_sim_days( vector_iget( sched_vector , iens1) , report_step ));
+		  double_vector_append( sim_time  , member_config_iget_sim_days(enkf_main_iget_member_config( enkf_main , iens1 ) , report_step , fs));  
 		
 		double_vector_append( obs_value , value );
 		double_vector_append( obs_std , std );
@@ -390,10 +369,7 @@ static void enkf_tui_plot_ensemble__(enkf_fs_type * fs       ,
 
 
 
-void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_type * config_node , int step1 , int step2 , int iens1 , int iens2 , vector_type * sched_vector) {
-  enkf_fs_type               * fs           = enkf_main_get_fs(enkf_main);
-  enkf_obs_type              * enkf_obs     = enkf_main_get_obs( enkf_main );
-  const plot_config_type     * plot_config  = enkf_main_get_plot_config( enkf_main );
+void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_type * config_node , int step1 , int step2 , int iens1 , int iens2) {
   gen_kw_config_type * gen_kw_config 	    = enkf_config_node_get_ref( config_node );
   int num_kw                         	    = gen_kw_config_get_data_size( gen_kw_config );
   const char ** key_list             	    = gen_kw_config_get_name_list( gen_kw_config );
@@ -402,8 +378,7 @@ void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_
   
   for (ikw = 0; ikw < num_kw; ikw++) {
     char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , ikw );
-    enkf_tui_plot_ensemble__( fs , enkf_obs , config_node , user_key , key_list[ikw] , sched_vector,
-                              step1 , step2 , iens1 , iens2 , ANALYZED , plot_config );
+    enkf_tui_plot_ensemble__( enkf_main , config_node , user_key , key_list[ikw] , step1 , step2 , iens1 , iens2 , ANALYZED );
     free( user_key );
   }
 }
@@ -443,14 +418,12 @@ void enkf_tui_plot_GEN_KW(void * arg) {
 
     if (config_node != NULL) {
       int iens1 , iens2 , step1 , step2;   
-      vector_type * sched_vector = enkf_tui_alloc_sched_vector( enkf_main );
       const int last_report      = enkf_main_get_total_length( enkf_main );
 
       enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
       enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
       
-      enkf_tui_plot_GEN_KW__(enkf_main , config_node , step1 , step2 , iens1 , iens2 , sched_vector);
-      vector_free( sched_vector );
+      enkf_tui_plot_GEN_KW__(enkf_main , config_node , step1 , step2 , iens1 , iens2);
     }
   }
 }
@@ -467,7 +440,6 @@ void enkf_tui_plot_all_GEN_KW(void * arg) {
   {
     const int prompt_len = 40;
     int iens1 , iens2 , step1 , step2 , ikey;   
-    vector_type * sched_vector    = enkf_tui_alloc_sched_vector( enkf_main );
     stringlist_type * gen_kw_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , GEN_KW);
     const int last_report         = enkf_main_get_total_length( enkf_main );
 
@@ -477,9 +449,8 @@ void enkf_tui_plot_all_GEN_KW(void * arg) {
     for (ikey = 0; ikey < stringlist_get_size( gen_kw_keys ); ikey++) {
       const char * key = stringlist_iget( gen_kw_keys , ikey);
       enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , key ); 
-      enkf_tui_plot_GEN_KW__(enkf_main , config_node , step1 , step2 , iens1 , iens2 , sched_vector);
+      enkf_tui_plot_GEN_KW__(enkf_main , config_node , step1 , step2 , iens1 , iens2);
     }
-    vector_free( sched_vector );
     stringlist_free( gen_kw_keys );
   }
 }
@@ -566,11 +537,7 @@ void enkf_tui_plot_histogram(void * arg) {
 
 void enkf_tui_plot_ensemble(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
-  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main );
-  vector_type * sched_vector                   = enkf_tui_alloc_sched_vector( enkf_main );
   {
     const int prompt_len = 40;
     const char * prompt  = "What do you want to plot (KEY:INDEX)";
@@ -604,34 +571,26 @@ void enkf_tui_plot_ensemble(void * arg) {
 	else
 	  util_abort("%s: can not plot this type \n",__func__);
       }
-      enkf_tui_plot_ensemble__(fs, 
-                               enkf_obs,
+      enkf_tui_plot_ensemble__(enkf_main , 
                                config_node , 
                                user_key , 
                                key_index , 
-                               sched_vector , 
                                step1 , 
                                step2 , 
                                iens1 , 
                                iens2 , 
-                               plot_state , 
-                               plot_config);
+                               plot_state);
       util_safe_free(key_index);
     }
     util_safe_free( user_key );
   }
-  vector_free( sched_vector );
 }
 	
 	   
 
 void enkf_tui_plot_all_summary(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
-  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main );
-  vector_type * sched_vector                   = enkf_tui_alloc_sched_vector( enkf_main );  
   int last_report                              = enkf_main_get_total_length( enkf_main );
   const int prompt_len = 40;
   int iens1 , iens2 , step1 , step2;   
@@ -646,21 +605,18 @@ void enkf_tui_plot_all_summary(void * arg) {
     for (ikey = 0; ikey < stringlist_get_size( summary_keys ); ikey++) {
       const char * key = stringlist_iget( summary_keys , ikey);
       
-      enkf_tui_plot_ensemble__(fs , 
-                               enkf_obs , 
+      enkf_tui_plot_ensemble__(enkf_main,
                                ensemble_config_get_node( ensemble_config , key ),
                                key , 
                                NULL , 
-                               sched_vector , 
                                step1 , step2 , 
                                iens1 , iens2 , 
-                               BOTH  , 
-                               plot_config);
+                               BOTH);
+                               
       
     }
     stringlist_free( summary_keys );
   }
-  vector_free( sched_vector );
 }
 
 
@@ -764,12 +720,7 @@ void enkf_tui_plot_observation(void * arg) {
                   sum2 += y*y;
                   num  += 1;
                 }
-            }
-            }
-            {
-              FILE * stream = util_fopen("/tmp/obs.txt" , "a");
-              fprintf(stream , "%s &  %g & %g & %g & %g \\ \n", index_key , value , std , sum1 / num , sqrt( sum2 / num ) - (sum1*sum1 / (num*num)));
-              fclose( stream );
+              }
             }
           }
           msg_free(msg , true);
@@ -786,10 +737,19 @@ void enkf_tui_plot_observation(void * arg) {
 }
 
 
-void enkf_tui_plot_RFT__(enkf_fs_type * fs, const plot_config_type * plot_config , const model_config_type * model_config , const ensemble_config_type * ensemble_config , const obs_vector_type * obs_vector , const char * obs_key , int report_step) {
-  plot_type             * plot;
-  const char            * state_kw    = obs_vector_get_state_kw(obs_vector);
-  enkf_node_type        * node;
+void enkf_tui_plot_RFT__(enkf_main_type * enkf_main,
+                         const char * obs_key , 
+                         int report_step) {
+  
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config( enkf_main );
+  const plot_config_type     * plot_config     = enkf_main_get_plot_config( enkf_main );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
+  enkf_fs_type               * fs              = enkf_main_get_fs( enkf_main );
+  const obs_vector_type      * obs_vector      = enkf_obs_get_vector( enkf_obs , obs_key );
+  const char                 * state_kw        = obs_vector_get_state_kw( obs_vector );
+  plot_type                  * plot;
+  enkf_node_type             * node;
+  
   const int ens_size                  = ensemble_config_get_size(ensemble_config);
   enkf_config_node_type * config_node = ensemble_config_get_node( ensemble_config , state_kw );
   field_config_type * field_config    = enkf_config_node_get_ref( config_node );
@@ -882,32 +842,37 @@ static void enkf_tui_plot_select_RFT(const enkf_main_type * enkf_main , char ** 
     const int prompt_len = 40;
     const char * prompt  = "Which RFT observation: ";
 
-    const obs_vector_type * obs_vector;
+    const obs_vector_type * obs_vector = NULL;
     char  *obs_key;
     int    report_step;
-    {
-      bool OK = false;
-      while (!OK) {
-	util_printf_prompt(prompt , prompt_len , '=' , "=> ");
-	obs_key = util_alloc_stdin_line( );
-	if (enkf_obs_has_key(enkf_obs , obs_key)) {
-	  obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-	  if (obs_vector_get_impl_type( obs_vector ) == FIELD_OBS)
-	    OK = true;
-	  else
-	    fprintf(stderr,"Observation key:%s does not correspond to a field observation.\n",obs_key);
-	} else
-	  fprintf(stderr,"Do not have observation key:%s \n",obs_key);
-      }
+    while (true) {
+      util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+      obs_key = util_alloc_stdin_line( );
+      if (obs_key != NULL) {
+        if (enkf_obs_has_key(enkf_obs , obs_key)) {
+          obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
+          if (obs_vector_get_impl_type( obs_vector ) == FIELD_OBS)
+            break; /* Jumping out with a valid obs_vector pointer. */
+          else {
+            fprintf(stderr,"Observation key:%s does not correspond to a field observation.\n",obs_key);
+            obs_vector = NULL;
+          }
+        } else
+          fprintf(stderr,"Do not have observation key:%s \n",obs_key);
+      } else
+        break; /* Jumping out on blank input */
     }
-    do {
-      if (obs_vector_get_num_active( obs_vector ) == 1)
-	report_step = obs_vector_get_active_report_step( obs_vector );
-      else
-	report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
-    } while (!obs_vector_iget_active(obs_vector , report_step));
-    *_obs_key = obs_key;
-    *_report_step = report_step;
+
+    if (obs_vector != NULL) {
+      do {
+        if (obs_vector_get_num_active( obs_vector ) == 1)
+          report_step = obs_vector_get_active_report_step( obs_vector );
+        else
+          report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
+      } while (!obs_vector_iget_active(obs_vector , report_step));
+      *_obs_key = obs_key;
+      *_report_step = report_step;
+    }
   }
 }
 
@@ -916,10 +881,6 @@ static void enkf_tui_plot_select_RFT(const enkf_main_type * enkf_main , char ** 
 void enkf_tui_plot_RFT_depth(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
-  const plot_config_type    * plot_config      = enkf_main_get_plot_config( enkf_main );
-  enkf_fs_type   * fs                          = enkf_main_get_fs(enkf_main);    
   {
     char * obs_key;
     int report_step;
@@ -927,9 +888,8 @@ void enkf_tui_plot_RFT_depth(void * arg) {
     
     enkf_tui_plot_select_RFT(enkf_main , &obs_key , &report_step);
     obs_vector = enkf_obs_get_vector( enkf_obs , obs_key );
-    enkf_tui_plot_RFT__(fs , plot_config , model_config , ensemble_config , obs_vector , obs_key , report_step);
+    enkf_tui_plot_RFT__(enkf_main , obs_key , report_step);
     free( obs_key );
-    
   }
 }
 
@@ -937,12 +897,8 @@ void enkf_tui_plot_RFT_depth(void * arg) {
 
 void enkf_tui_plot_RFT_time(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
-  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const plot_config_type * plot_config         = enkf_main_get_plot_config(enkf_main);
-  
-  enkf_fs_type   * fs                          = enkf_main_get_fs(enkf_main);    
-  vector_type * sched_vector                   = enkf_tui_alloc_sched_vector( enkf_main );
+  enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   {
     const char * state_kw;
     char * index_key = NULL;
@@ -973,7 +929,7 @@ void enkf_tui_plot_RFT_time(void * arg) {
 	field_obs_iget_ijk( field_obs , block_nr , &i , &j , &k);
 	index_key = util_realloc_sprintf( index_key , "%d,%d,%d"    , i+1,j+1,k+1);
 	user_key  = util_realloc_sprintf( user_key  , "%s:%d,%d,%d" , state_kw , i+1,j+1,k+1);
-	enkf_tui_plot_ensemble__(fs , enkf_obs , config_node , user_key , index_key , sched_vector , step1 , step2 , iens1 , iens2 , plot_state , plot_config );
+	enkf_tui_plot_ensemble__(enkf_main , config_node , user_key , index_key , step1 , step2 , iens1 , iens2 , plot_state);
       }
     }
     free( obs_key );
@@ -997,12 +953,8 @@ void enkf_tui_plot_RFT_time(void * arg) {
 void enkf_tui_plot_all_RFT( void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
-  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const model_config_type    * model_config    = enkf_main_get_model_config( enkf_main );
-  const plot_config_type    * plot_config      = enkf_main_get_plot_config( enkf_main );
   {
     const int prompt_len  = 30;
-    enkf_fs_type   * fs   = enkf_main_get_fs(enkf_main);
     int iobs , report_step;
     stringlist_type * RFT_keys = enkf_obs_alloc_typed_keylist(enkf_obs , FIELD_OBS);
     
@@ -1018,7 +970,7 @@ void enkf_tui_plot_all_RFT( void * arg) {
 	  report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
       } while (!obs_vector_iget_active(obs_vector , report_step));
       
-      enkf_tui_plot_RFT__(fs , plot_config , model_config , ensemble_config , obs_vector , obs_key , report_step);
+      enkf_tui_plot_RFT__(enkf_main , obs_key , report_step);
     }
   }
 }

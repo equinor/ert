@@ -48,7 +48,6 @@ void well_rate_update_wconhist( well_rate_type * well_rate , sched_kw_wconhist_t
 
 
 void well_rate_update_wconinje( well_rate_type * well_rate , sched_kw_wconinje_type * kw, int restart_nr ) {
-  //printf("SHifting wconinje with:%g \n",double_vector_iget( well_rate->shift , restart_nr ));
   sched_kw_wconinje_shift_surface_flow( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ));
   return;
 
@@ -115,11 +114,8 @@ well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const 
 
   {
     int i;
-    for (i=0; i < time_t_vector_size( time_vector ); i++) {
-      printf("Well_open must support wconinje .... \n");
+    for (i=0; i < time_t_vector_size( time_vector ); i++) 
       bool_vector_iset( well_rate->well_open , i , sched_file_well_open( sched_file , i , well_rate->name) );
-      
-    }
   }
 
   return well_rate;

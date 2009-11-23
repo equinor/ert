@@ -379,6 +379,11 @@ enkf_state_type * enkf_main_iget_state(const enkf_main_type * enkf_main , int ie
 }
 
 
+member_config_type * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens) {
+  return enkf_state_get_member_config( enkf_main->ensemble[iens] );
+}
+
+
 
 void enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean ) {
   int iens;

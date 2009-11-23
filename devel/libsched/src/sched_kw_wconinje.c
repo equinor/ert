@@ -357,6 +357,24 @@ sched_kw_wconinje_type * sched_kw_wconinje_copyc(const sched_kw_wconinje_type * 
 }
 
 
+bool sched_kw_wconinje_well_open( const sched_kw_wconinje_type * kw, const char * well_name) {
+  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
+  if (well == NULL)
+    return false;
+  else {
+    /* OK - we have the well. */
+
+    if (well->status == OPEN) {
+      /* The well seems to be open - any rates around? */
+      if (well->surface_flow > 0)
+        return true;
+      else
+        return false;
+    } else
+      return false;
+  }
+}
+
 
 /*****************************************************************/
 
