@@ -1,0 +1,33 @@
+import os
+import os.path
+import sys
+sys.path += ["../../../build"]
+import global_config
+from   global_config import LIBUTIL
+from   global_config import LIBECL
+from   global_config import LIBPLOT
+from   global_config import LIBCONFIG
+from   global_config import EXTERNAL
+from   global_config import LIBJOB_QUEUE
+from   global_config import LIBENKF
+from   global_config import LIBRMS
+from   global_config import LIBSCHED
+
+SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
+conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 3)
+env  = Environment()
+
+conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL , EXTERNAL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "plplotd" , "m" , "z" , "pthread"] , link = True)
+
+
+define_fmt = "\'%s=\"%s\"\'"
+ert = env.Program( "ert" , "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE),
+                                                    define_fmt % ("SVN_VERSION"        ,  conf.SVN_VERSION),
+                                                    define_fmt % ("COMPILE_TIME_STAMP" ,  conf.TIME_STAMP)])
+
+Default( ert )
+
+if SDP_ROOT:
+    env.Install(conf.SDP_BIN , ert)
+    env.Alias('SDP_INSTALL' , conf.SDP_BIN)
+
