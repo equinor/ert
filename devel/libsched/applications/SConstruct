@@ -1,0 +1,45 @@
+import os
+import os.path
+import sys
+sys.path += ["../../build"]
+import global_config
+from   global_config import LIBUTIL
+from   global_config import LIBECL
+from   global_config import LIBSCHED
+
+SConscript(["perturb_history/SConstruct"])
+
+SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
+conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
+env  = Environment()
+conf.update_env( env , [LIBSCHED , LIBECL , LIBUTIL] , ["m","z","pthread"] , link = True)
+
+            
+
+##################################################################
+
+
+
+def add_program(env , conf , target , src , SDP_INSTALL = False):
+    P = env.Program( target , src )
+    env.Install( "../bin" , P)
+    if conf.SDP_BIN:
+        if SDP_INSTALL:
+            env.Install(conf.SDP_BIN , P)
+
+
+
+
+add_program(env , conf , "sched_summary.x"         , "sched_summary.c"   , True)
+add_program(env , conf , "sched_test.x"            , "sched_test.c"   , True)
+add_program(env , conf , "update_ir.x"             , "update_ir.c"   , True)
+
+##################################################################
+
+install = env.Alias('install',"../bin")
+if SDP_ROOT:
+    env.Alias('SDP_INSTALL' , conf.SDP_BIN)
+
+Default( install )
+
+
