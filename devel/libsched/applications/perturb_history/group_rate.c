@@ -42,6 +42,7 @@ void group_rate_update_wconinje( group_rate_type * group_rate , sched_kw_wconinj
   int well_nr;
   for (well_nr = 0; well_nr < vector_get_size( group_rate->well_rates ); well_nr++) {
     well_rate_type * well_rate = vector_iget( group_rate->well_rates , well_nr );
+    //printf("Well.%s \n",well_rate_get_name( well_rate ));
     well_rate_update_wconinje( well_rate ,kw , restart_nr );
   }
 }
@@ -135,6 +136,8 @@ void group_rate_sample( group_rate_type * group_rate ) {
     well_count[i] = 0;
   }
   
+  printf("Sampling group:%s \n",group_rate->name);
+
   for (well_nr=0; well_nr < num_wells; well_nr++) {
     well_rate_type * well_rate = vector_iget( group_rate->well_rates , well_nr );
     well_rate_sample_shift( well_rate );

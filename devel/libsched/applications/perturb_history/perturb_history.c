@@ -86,9 +86,7 @@ void load_groups( const config_type * config , const sched_file_type * sched_fil
     const char * min_max_file = config_iget( config , "GROUP_RATE" , i , 3 );
     
     group_rate_type * group_rate = group_rate_alloc( time_vector , group_name , phase_string , type_string , min_max_file );
-    char * key = util_alloc_sprintf("%s:%s" , group_name , sched_phase_type_string( group_rate_get_phase( group_rate )));
-    hash_insert_hash_owned_ref( group_rates , key , group_rate , group_rate_free__);
-    free( key );
+    hash_insert_hash_owned_ref( group_rates , group_name , group_rate , group_rate_free__);
   }
 
 
@@ -96,13 +94,12 @@ void load_groups( const config_type * config , const sched_file_type * sched_fil
   for (i=0; i < config_get_occurences( config , "WELL_RATE" ); i++) {
     const char * group_name   = config_iget( config , "WELL_RATE" , i , 0 );
     const char * well_name    = config_iget( config , "WELL_RATE" , i , 1 );
-    const char * phase_string = config_iget( config , "WELL_RATE" , i , 2 );
-    double corr_length        = config_iget_as_double( config , "WELL_RATE" , i , 3 );
-    const char * stat_file    = config_iget( config , "WELL_RATE" , i , 4 );
+    double corr_length        = config_iget_as_double( config , "WELL_RATE" , i , 2 );
+    const char * stat_file    = config_iget( config , "WELL_RATE" , i , 3 );
     
-    well_rate_type * well_rate = well_rate_alloc( time_vector , sched_file ,well_name , corr_length , phase_string , stat_file );
-    char * group_key = util_alloc_sprintf("%s:%s" , group_name , sched_phase_type_string( well_rate_get_phase( well_rate )));
-    group_rate_type * group_rate = hash_get( group_rates , group_key );
+    well_rate_type * well_rate;
+    group_rate_type * group_rate = hash_get( group_rates , group_name );
+    well_rate = well_rate_alloc( time_vector , sched_file ,well_name , corr_length ,  stat_file , group_rate_get_phase( group_rate) );
     group_rate_add_well_rate( group_rate , well_rate );
   }
   

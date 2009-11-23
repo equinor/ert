@@ -48,6 +48,10 @@ void well_rate_update_wconhist( well_rate_type * well_rate , sched_kw_wconhist_t
 
 
 void well_rate_update_wconinje( well_rate_type * well_rate , sched_kw_wconinje_type * kw, int restart_nr ) {
+  //printf("SHifting wconinje with:%g \n",double_vector_iget( well_rate->shift , restart_nr ));
+  sched_kw_wconinje_shift_surface_flow( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ));
+  return;
+
   if (well_rate->phase == sched_kw_wconinje_get_phase( kw , well_rate->name)) 
     sched_kw_wconinje_shift_surface_flow( kw , well_rate->name , double_vector_iget( well_rate->shift , restart_nr ));
   else 
@@ -95,7 +99,7 @@ void well_rate_ishift( well_rate_type * well_rate ,  int index, double shift) {
 }
 
 
-well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const sched_file_type * sched_file , const char * name , double corr_length , const char * phase , const char * filename) {
+well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const sched_file_type * sched_file , const char * name , double corr_length , const char * filename, sched_phase_type phase) {
   well_rate_type * well_rate = util_malloc( sizeof * well_rate , __func__);
   UTIL_TYPE_ID_INIT( well_rate , WELL_RATE_ID );
   well_rate->name         = util_alloc_string_copy( name );
@@ -104,14 +108,15 @@ well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const 
   well_rate->shift        = double_vector_alloc(0,0);
   well_rate->mean_shift   = double_vector_alloc(0 , 0);
   well_rate->std_shift    = double_vector_alloc(0 , 0);
-  well_rate->phase        = sched_phase_type_from_string( phase );  
   well_rate->well_open    = bool_vector_alloc(0 , false );
   well_rate->rate         = double_vector_alloc(0 , 0);
+  well_rate->phase        = phase;
   fscanf_2ts( time_vector , filename , well_rate->mean_shift , well_rate->std_shift );
 
   {
     int i;
     for (i=0; i < time_t_vector_size( time_vector ); i++) {
+      printf("Well_open must support wconinje .... \n");
       bool_vector_iset( well_rate->well_open , i , sched_file_well_open( sched_file , i , well_rate->name) );
       
     }

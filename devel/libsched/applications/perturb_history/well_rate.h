@@ -11,7 +11,7 @@
 typedef struct well_rate_struct well_rate_type;
 well_rate_type     * well_rate_alloc(const time_t_vector_type * time_vector , 
                                      const sched_file_type    * sched_file  , 
-                                     const char * name , double corr_length , const char * phase, const char * filename);
+                                     const char * name , double corr_length , const char * filename, sched_phase_type phase);
 void                 well_rate_free__( void * arg );
 double_vector_type * well_rate_get_shift( well_rate_type * well_rate );
 sched_phase_type     well_rate_get_phase( const well_rate_type * well_rate );

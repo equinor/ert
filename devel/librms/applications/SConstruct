@@ -7,7 +7,8 @@ from   global_config import LIBUTIL
 from   global_config import LIBECL
 from   global_config import LIBRMS
 
-conf = global_config.get_conf(os.getcwd() , 2)
+SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
+conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
 env  = Environment()
 
 conf.update_env( env , [ LIBRMS , LIBECL , LIBUTIL ] ,  ext_liblist = ["m" , "z" , "pthread"] , link = True)
@@ -19,8 +20,9 @@ conf.update_env( env , [ LIBRMS , LIBECL , LIBUTIL ] ,  ext_liblist = ["m" , "z"
 def add_program(env , conf , target , src , SDP_INSTALL = False):
     P = env.Program( target , src)
     env.Install( "../bin" , P)
-    if SDP_INSTALL:
-        env.Install(conf.SDP_BIN , P)
+    if conf.SDP_BIN:
+        if SDP_INSTALL:
+            env.Install(conf.SDP_BIN , P)
 
 
 add_program(env , conf ,  "rms_extract" , "rms_extract.c" , False)
@@ -29,11 +31,10 @@ add_program(env , conf ,  "rms_stat"    , "rms_stat.c"    , False)
 add_program(env , conf ,  "rms_test"    , "rms_test.c"    , False)
 add_program(env , conf ,  "tag_list"    , "tag_list.c"    , False)
 
-if not os.path.exists( conf.SDP_BIN ):
-    os.makedirs( conf.SDP_BIN )
  
 install = env.Alias('install',"../bin")
-env.Alias('SDP_INSTALL' , conf.SDP_BIN)
+if SDP_ROOT:
+   env.Alias('SDP_INSTALL' , conf.SDP_BIN)
 
 Default( install )
 

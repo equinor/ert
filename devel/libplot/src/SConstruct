@@ -6,8 +6,8 @@ import global_config
 from   global_config import LIBUTIL
 from   global_config import EXTERNAL
 
-
-conf = global_config.get_conf(os.getcwd() , 2)
+SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
+conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBUTIL , EXTERNAL ] , link = False)
 
@@ -17,17 +17,16 @@ header_list = Split("plot.h plot_dataset.h  plot_range.h plot_const.h plot_drive
 
 LIB = env.StaticLibrary("plot" , src_list)
 env.Install("../lib" , LIB)
-env.Install(conf.SDP_LIB , LIB )
-
 env.Install("../include" , header_list)
-env.Install(conf.SDP_LIB , header_list)
+
 
 ##################################################################
-
-if not os.path.exists( conf.SDP_LIB ):
-    os.makedirs( conf.SDP_LIB )
  
 install     = env.Alias('install',["../lib" , "../include"])
-SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
+
+if SDP_ROOT:
+   env.Install(conf.SDP_LIB , header_list)
+   env.Install(conf.SDP_LIB , LIB )
+   SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
 
 Default( install )

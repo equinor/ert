@@ -15,22 +15,25 @@ EXTERNAL     = 100
 
 
 class conf:
-    def __init__(self , cwd , sub_level_depth):
+    def __init__(self , SDP_ROOT , cwd , sub_level_depth):
 
         self.SVN_VERSION      = commands.getoutput("svnversion ./")
         self.TIME_STAMP       = commands.getoutput("date").replace(" " , "_")
-
-        self.SITE_CONFIG_FILE = "/d/proj/bg/enkf/Config/statoil/site-config"
-        self.SDP_ROOT         = "/d/proj/bg/enkf"
-        self.SDP_BIN          = "%s/bin"     % self.SDP_ROOT
-        self.SDP_INCLUDE      = "%s/include" % self.SDP_ROOT
-        self.SDP_LIB          = "%s/lib"     % self.SDP_ROOT
-        self.EXTERNAL_HOME    = "/d/proj/bg/enkf/software"
+        self.SDP_BIN          = None
+        self.SDP_INCLUDE      = None
+        self.SDP_LIB          = None
         
         
+        self.SITE_CONFIG_FILE     = "/d/proj/bg/enkf/Config/statoil/site-config"
+        self.SDP_ROOT             = SDP_ROOT
 
+
+        if SDP_ROOT:
+            self.SDP_BIN              = "%s/bin"     % self.SDP_ROOT
+            self.SDP_INCLUDE          = "%s/include" % self.SDP_ROOT
+            self.SDP_LIB              = "%s/lib"     % self.SDP_ROOT
+        
         self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall -fPIC"
-        self.RPATH    = "%s/lib" % self.EXTERNAL_HOME
         self.ARFLAGS  = "csr"
 
         
@@ -39,7 +42,8 @@ class conf:
         self.BUILD_ROOT = ""
         for path in tmp[1:n]:
             self.BUILD_ROOT += "/%s" % path
-
+            
+        self.EXTERNAL_HOME      = "%s/ext" % self.BUILD_ROOT
         self.LIB = {}
         self.LIB[LIBUTIL]       = {"home": "%s/libutil"      % self.BUILD_ROOT , "name": "util"}
         self.LIB[LIBECL]        = {"home": "%s/libecl"       % self.BUILD_ROOT , "name": "ecl"}
@@ -51,16 +55,19 @@ class conf:
         self.LIB[LIBSCHED]      = {"home": "%s/libsched"     % self.BUILD_ROOT , "name": "sched"}
         self.LIB[LIBCONFIG]     = {"home": "%s/libconfig"    % self.BUILD_ROOT , "name": "config"}
         self.LIB[EXTERNAL]      = {"home": self.EXTERNAL_HOME}
+        self.RPATH    = "%s/lib" % self.EXTERNAL_HOME
 
+        if self.SDP_LIB:
+            if not os.path.exists( self.SDP_LIB ):
+                os.makedirs( self.SDP_LIB )
 
-        if not os.path.exists( self.SDP_LIB ):
-            os.makedirs( self.SDP_LIB )
+        if self.SDP_BIN:
+            if not os.path.exists( self.SDP_BIN ):
+                os.makedirs( self.SDP_BIN )
 
-        if not os.path.exists( self.SDP_BIN ):
-            os.makedirs( self.SDP_BIN )
-
-        if not os.path.exists( self.SDP_INCLUDE ):
-            os.makedirs( self.SDP_INCLUDE )
+        if self.SDP_INCLUDE:
+            if not os.path.exists( self.SDP_INCLUDE ):
+                os.makedirs( self.SDP_INCLUDE )
  
 
 
@@ -93,8 +100,8 @@ class conf:
             
         
         
-def get_conf(cwd , sub_level_depth):
-    return conf( cwd , sub_level_depth )
+def get_conf(SDP_ROOT , cwd , sub_level_depth):
+    return conf( SDP_ROOT , cwd , sub_level_depth )
         
 
 
