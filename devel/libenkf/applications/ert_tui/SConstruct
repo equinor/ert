@@ -17,7 +17,7 @@ SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
 conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 3)
 env  = Environment()
 
-conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL , EXTERNAL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "plplotd" , "m" , "z" , "pthread"] , link = True)
+conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL , EXTERNAL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "g2c" , "plplotd" , "m" , "z" , "pthread"] , link = True)
 
 
 define_fmt = "\'%s=\"%s\"\'"
