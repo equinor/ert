@@ -17,7 +17,7 @@ header_list = Split("job_queue.h basic_queue_driver.h lsf_driver.h local_driver.
 
 LIB = env.StaticLibrary("job_queue" , src_list , CPPDEFINES = ["\'USE_LSF_LIBRARY=TRUE\'"])
 env.Install("../lib" , LIB)
-env.Install("../lib"     , header_list)
+env.Install("../include"     , header_list)
 
 
 ##################################################################
