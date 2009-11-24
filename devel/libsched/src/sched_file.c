@@ -6,6 +6,9 @@
 #include <vector.h>
 #include <parser.h>
 #include <time_t_vector.h>
+#include <sched_kw_dates.h>
+#include <sched_kw_tstep.h>
+#include <sched_kw.h>
 
 /* This sched_file.c contains code for internalizing an ECLIPSE
    schedule file.
@@ -243,7 +246,7 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
     sched_file->kw_list_by_type = vector_alloc_NULL_initialized( NUM_SCHED_KW_TYPES );
     for (ikw = 0; ikw < vector_get_size( sched_file->kw_list ); ikw++) {
       const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
-      sched_type_enum type     = sched_kw_get_type( kw );
+      sched_kw_type_enum type  = sched_kw_get_type( kw );
       {
         vector_type * tmp      = vector_iget( sched_file->kw_list_by_type , type );
         
@@ -280,7 +283,7 @@ static void sched_file_update_index( sched_file_type * sched_file ) {
     
     for (ikw = 0; ikw < vector_get_size( sched_file->kw_list ); ikw++) {
       const sched_kw_type * kw = vector_iget_const( sched_file->kw_list , ikw );
-      sched_type_enum type     = sched_kw_get_type( kw );
+      sched_kw_type_enum type  = sched_kw_get_type( kw );
       {
         sched_block_add_kw( current_block , kw );
         if(type == DATES || type == TSTEP || type == TIME) {
@@ -333,6 +336,7 @@ static void sched_file_init_fixed_length( sched_file_type * sched_file ) {
   sched_file_add_fixed_length_kw(sched_file , "RPTSCHED" , 1);
   sched_file_add_fixed_length_kw(sched_file , "DRSDT"    , 1);
   sched_file_add_fixed_length_kw(sched_file , "SKIPREST" , 0);
+  sched_file_add_fixed_length_kw(sched_file , "NOECHO"   , 0);
   sched_file_add_fixed_length_kw(sched_file , "RPTRST"   , 1);
   sched_file_add_fixed_length_kw(sched_file , "TUNING"   , 3);
   sched_file_add_fixed_length_kw(sched_file , "WHISTCTL" , 1);
@@ -412,66 +416,53 @@ time_t_vector_type * sched_file_alloc_time_t_vector( const sched_file_type * sch
 }
 
 
+static stringlist_type * sched_file_tokenize( const char * filename ) {
+  stringlist_type  * token_list;
+  parser_type     * parser    = parser_alloc(" \t"  ,      /* Splitters */
+                                             "\'\"" ,      /* Quoters   */
+                                             "\n"   ,      /* Specials - splitters which will be kept. */  
+                                             "\r"   ,      /* Delete set - these are just deleted. */
+                                             "--"   ,      /* Comment start */
+                                             "\n");        /* Comment end */  
+  bool strip_quote_marks = false;
+  token_list             = parser_tokenize_file( parser , filename , strip_quote_marks  );
+  parser_free( parser );
+  
+  return token_list;
+}
+
+
 /**
-   This function parses 'further', i.e typically adding another schedule
-   file to the sched_file instance.
+   This function parses 'further', i.e typically adding another
+   schedule file to the sched_file instance.
 */
 
 void sched_file_parse_append(sched_file_type * sched_file , const char * filename) {
-  /* 
-     We start by writing a new copy of the file with all comments
-     stripped out. The remaining parsing is done on this file with no
-     comments.
-  */
-  stringlist_type  * token_list;
-  char * tmp_base    = util_alloc_sprintf("enkf-schedule:%s" , filename);
-  char * tmp_file    = util_alloc_tmp_file("/tmp" , tmp_base , true);
-  {
-    parser_type     * parser    = parser_alloc(" \t"  ,      /* Splitters */
-                                               "\'\"" ,      /* Quoters   */
-                                               "\n"   ,      /* Specials - splitters which will be kept. */  
-                                               "\r"   ,      /* Delete set - these are just deleted. */
-                                               "--"   ,      /* Comment start */
-                                               "\n");        /* Comment end */  
-    bool strip_quote_marks = false;
-    token_list             = parser_tokenize_file( parser , filename , strip_quote_marks  );
-    FILE * stream          = util_fopen(tmp_file , "w");
-    
-    stringlist_fprintf( token_list , " " , stream );
-    parser_free( parser );
-    fclose(stream);
-  }
+  stringlist_type * token_list = sched_file_tokenize( filename );
+  sched_kw_type    * current_kw;
+  int token_index = 0;
+  do {
+    sched_util_skip_newline( token_list , &token_index );
+    current_kw = sched_kw_token_alloc(token_list , &token_index , sched_file->fixed_length_table);
+    if (current_kw != NULL) {
+      sched_kw_type_enum type = sched_kw_get_type(current_kw);
+      if (type == DATES || type == TSTEP || type == TIME) {
+        int i , num_steps;
+        sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
+        sched_kw_free(current_kw);
+        
+        for(i=0; i<num_steps; i++)  
+          sched_file_add_kw( sched_file , sched_kw_dates[i]);
+        
+        free(sched_kw_dates);   
+      } else
+        sched_file_add_kw( sched_file , current_kw);
+    }
+  } while ( current_kw != NULL );
   
-  
-  {
-    sched_kw_type    * current_kw;
-    int token_index = 0;
-    do {
-      sched_util_skip_newline( token_list , &token_index );
-      current_kw = sched_kw_token_alloc(token_list , &token_index , sched_file->fixed_length_table);
-      if (current_kw != NULL) {
-        sched_type_enum type = sched_kw_get_type(current_kw);
-        if (type == DATES || type == TSTEP || type == TIME) {
-          int i , num_steps;
-          sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
-          sched_kw_free(current_kw);
-          
-          for(i=0; i<num_steps; i++)  
-            sched_file_add_kw( sched_file , sched_kw_dates[i]);
-          
-          free(sched_kw_dates);   
-        } else
-          sched_file_add_kw( sched_file , current_kw);
-      }
-    } while ( current_kw != NULL );
-  }
-
   sched_file_build_block_dates(sched_file);
   sched_file_update_index( sched_file );
-  
   stringlist_free( token_list );
-  free( tmp_base );
-  free( tmp_file );
 }
 
 
@@ -693,7 +684,7 @@ sched_file_type * sched_file_alloc_copy(const sched_file_type * src , bool deep_
 
 static void sched_file_update_block(sched_block_type * block , 
 				    int restart_nr, 
-				    sched_type_enum kw_type , 
+				    sched_kw_type_enum          kw_type , 
 				    sched_file_callback_ftype * callback,
 				    void * arg) {
   int ikw;
@@ -719,7 +710,7 @@ static void sched_file_update_block(sched_block_type * block ,
 void sched_file_update_blocks(sched_file_type * sched_file, 
 			      int restart1 , 
 			      int restart2 , 
-			      sched_type_enum kw_type,
+			      sched_kw_type_enum kw_type,
 			      sched_file_callback_ftype * callback,
 			      void * callback_arg) {
 
@@ -770,11 +761,50 @@ void sched_file_update_blocks(sched_file_type * sched_file,
 
 
 void sched_file_update(sched_file_type * sched_file, 
-		       sched_type_enum kw_type,
+		       sched_kw_type_enum kw_type,
 		       sched_file_callback_ftype * callback,
 		       void * callback_arg) {
+
   sched_file_update_blocks(sched_file , 1 , sched_file_get_num_restart_files(sched_file) - 1 , kw_type , callback , callback_arg);
+
 }
+
+
+
+/*****************************************************************/
+/**
+   This function will count the number of TSTEP / DATES keywords in a
+   schedule file, without actually internalizing the file. This
+   function 'should' be used for schedule files which we do not manage
+   to parse.
+*/
+
+int sched_file_step_count( const char * filename ) {
+  stringlist_type * token_list = sched_file_tokenize( filename );
+  int token_index = 0;
+  int step_count  = 0;
+  do {
+    const char * current_token = stringlist_iget( token_list , token_index );
+    sched_kw_type_enum kw_type = sched_kw_type_from_string( current_token );
+
+    if (kw_type == DATES) {
+      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL);
+      const sched_kw_dates_type * dates_kw = sched_kw_get_data( sched_kw );
+      step_count += sched_kw_dates_get_length( dates_kw );
+      sched_kw_free( sched_kw );
+    } else if (kw_type == TSTEP ) {
+      sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL);
+      const sched_kw_tstep_type * tstep_kw = sched_kw_get_data( sched_kw );
+      step_count += sched_kw_tstep_get_length( tstep_kw );
+      sched_kw_free( sched_kw );
+    } else 
+      token_index++;
+    
+  } while ( token_index < stringlist_get_size( token_list ));
+  stringlist_free( token_list );
+  return step_count;
+}
+
 
 
 /*****************************************************************/

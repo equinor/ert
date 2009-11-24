@@ -72,7 +72,7 @@ struct data_handlers_struct {
 
 struct sched_kw_struct {
   char                    * kw_name; 
-  sched_type_enum           type;
+  sched_kw_type_enum        type;
   int                       restart_nr;  /* The block nr owning this instance. */
   
 
@@ -88,50 +88,8 @@ struct sched_kw_struct {
 
 
 
-/**
-   This function does a direct translation of a string name to
-   implementation type - i.e. an enum instance. Observe that
-   (currently) no case-normalization is performed.
-*/
-
-static sched_type_enum get_sched_type_from_string(const char * kw_name)
-{
-  sched_type_enum kw_type = UNTYPED;
-
-  if     ( strcmp(kw_name, GRUPTREE_STRING ) == 0) kw_type = GRUPTREE ;
-  else if( strcmp(kw_name, TSTEP_STRING    ) == 0) kw_type = TSTEP    ;
-  else if( strcmp(kw_name, INCLUDE_STRING  ) == 0) kw_type = INCLUDE  ;
-  else if( strcmp(kw_name, TIME_STRING     ) == 0) kw_type = TIME     ;
-  else if( strcmp(kw_name, DATES_STRING    ) == 0) kw_type = DATES    ;
-  else if( strcmp(kw_name, WCONHIST_STRING ) == 0) kw_type = WCONHIST ;
-  else if( strcmp(kw_name, WELSPECS_STRING ) == 0) kw_type = WELSPECS ;
-  else if( strcmp(kw_name, WCONINJ_STRING  ) == 0) kw_type = WCONINJ  ;
-  else if( strcmp(kw_name, WCONINJE_STRING ) == 0) kw_type = WCONINJE ;
-  else if( strcmp(kw_name, WCONINJH_STRING ) == 0) kw_type = WCONINJH ;
-  else if( strcmp(kw_name, WCONPROD_STRING ) == 0) kw_type = WCONPROD ;
-  else if( strcmp(kw_name, COMPDAT_STRING  ) == 0) kw_type = COMPDAT  ;   
-  
-  return kw_type;
-}
 
 
-
-static const char * get_name_from_type(sched_type_enum kw_type) {
-  if      ( kw_type == GRUPTREE ) return GRUPTREE_STRING ;
-  else if ( kw_type == TSTEP    ) return TSTEP_STRING    ;
-  else if ( kw_type == INCLUDE  ) return INCLUDE_STRING  ;
-  else if ( kw_type == TIME     ) return TIME_STRING     ;
-  else if ( kw_type == DATES    ) return DATES_STRING    ;
-  else if ( kw_type == WCONHIST ) return WCONHIST_STRING ;
-  else if ( kw_type == WELSPECS ) return WELSPECS_STRING ;
-  else if ( kw_type == WCONINJ  ) return WCONINJ_STRING  ;
-  else if ( kw_type == WCONINJE ) return WCONINJE_STRING ;
-  else if ( kw_type == WCONINJH ) return WCONINJH_STRING ;
-  else if ( kw_type == WCONPROD ) return WCONPROD_STRING ;
-  else if ( kw_type == COMPDAT  ) return COMPDAT_STRING  ;   
-
-  return UNTYPED_STRING; /* Unknown type */
-}
 
 
 
@@ -144,7 +102,7 @@ static const char * get_name_from_type(sched_type_enum kw_type) {
 static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
   sched_kw_type * kw = util_malloc(sizeof * kw, __func__);
   kw->kw_name = util_alloc_string_copy( kw_name );
-  kw->type    = get_sched_type_from_string( kw_name );
+  kw->type    = sched_kw_type_from_string( kw_name );
   
   switch( kw->type ) {
   case(WCONHIST):
@@ -310,10 +268,11 @@ static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_k
 
 
 const char * sched_kw_get_type_name( const sched_kw_type * sched_kw ) {
-  return get_name_from_type( sched_kw->type );
+  return sched_kw_type_name( sched_kw->type );
 }
 
-sched_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
+
+sched_kw_type_enum sched_kw_get_type(const sched_kw_type * sched_kw)
 {
   return sched_kw->type;  
 }
@@ -429,7 +388,7 @@ time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
       new_time = sched_kw_tstep_get_new_time((const sched_kw_tstep_type *) sched_kw->data, curr_time);
       break;
     case(DATES):
-      new_time = sched_kw_dates_get_time_t((const sched_kw_dates_type *) sched_kw->data);
+      new_time = sched_kw_dates_iget_time_t((const sched_kw_dates_type *) sched_kw->data , 0);
       break;
     case(TIME):
       util_abort("%s: Sorry - no support for TIME kw. Please use TSTEP.\n", __func__);
@@ -532,7 +491,7 @@ void sched_kw_alloc_child_parent_list(const sched_kw_type * sched_kw, char *** c
 */
 
 bool sched_kw_has_well( const sched_kw_type * sched_kw , const char * well ) {
-  sched_type_enum type = sched_kw_get_type( sched_kw );
+  sched_kw_type_enum type = sched_kw_get_type( sched_kw );
   if (type == WCONHIST)
     return sched_kw_wconhist_has_well( sched_kw->data , well);
   else if (type == WCONINJE)
@@ -548,7 +507,7 @@ bool sched_kw_has_well( const sched_kw_type * sched_kw , const char * well ) {
 */
 
 bool sched_kw_well_open( const sched_kw_type * sched_kw , const char * well ) {
-  sched_type_enum type = sched_kw_get_type( sched_kw );
+  sched_kw_type_enum type = sched_kw_get_type( sched_kw );
   if (type == WCONHIST)
     return sched_kw_wconhist_well_open( sched_kw->data , well);
   else if (type == WCONINJE)

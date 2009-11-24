@@ -38,7 +38,31 @@ typedef enum {RATE  , RESV , BHP , THP , GRUP} wconinje_control_enum;
 #define CONTROL_GRUP_STRING  "GRUP"
 
 
-  
+
+/*****************************************************************/
+
+
+
+typedef enum {WCONHIST =  0, 
+              DATES    =  1, 
+              COMPDAT  =  2, 
+              TSTEP    =  3, 
+              TIME     =  4,   /* Not implemented support */
+              WELSPECS =  5, 
+              GRUPTREE =  6,
+              INCLUDE  =  7,   
+              UNTYPED  =  8,
+              WCONINJ  =  9,
+              WCONINJE = 10, 
+              WCONINJH = 11,
+              WCONPROD = 12,
+              NUM_SCHED_KW_TYPES = 13} sched_kw_type_enum;
+              
+
+sched_kw_type_enum sched_kw_type_from_string(const char * kw_name);
+const char *       sched_kw_type_name(sched_kw_type_enum kw_type);
+
+/*****************************************************************/  
 
 sched_phase_type sched_phase_type_from_string(const char * type_string);
 const char *     sched_phase_type_string(sched_phase_type type);

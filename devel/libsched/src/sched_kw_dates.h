@@ -19,8 +19,7 @@ sched_kw_dates_type * sched_kw_dates_fread_alloc(FILE * );
 int                   sched_kw_dates_get_size(const sched_kw_dates_type *);
 sched_kw_dates_type * sched_kw_dates_alloc_from_time_t(time_t );
 time_t                sched_kw_dates_iget_time_t(const sched_kw_dates_type *, int);
-time_t                sched_kw_dates_get_time_t(const sched_kw_dates_type *);
-
+int                   sched_kw_dates_get_length( const sched_kw_dates_type * kw );
 /*******************************************************************/
 
 

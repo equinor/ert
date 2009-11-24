@@ -8,6 +8,7 @@ extern "C" {
 #include <time.h>
 #include <sched_kw.h>
 #include <time_t_vector.h>
+#include <sched_types.h>
 
 typedef struct sched_file_struct sched_file_type;
 
@@ -43,8 +44,8 @@ void                 sched_file_summarize(const sched_file_type *  , FILE * );
 sched_file_type    * sched_file_alloc_copy(const sched_file_type * , bool);
 time_t_vector_type * sched_file_alloc_time_t_vector( const sched_file_type * sched_file );
 
-void 		     sched_file_update_blocks(sched_file_type * sched_file, int restart1 , int restart2 , sched_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
-void 		     sched_file_update(sched_file_type * sched_file, sched_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
+void 		     sched_file_update_blocks(sched_file_type * sched_file, int restart1 , int restart2 , sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
+void 		     sched_file_update(sched_file_type * sched_file, sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
 bool                 sched_file_well_open( const sched_file_type * sched_file , int restart_nr , const char * well_name );
 
 #ifdef __cplusplus

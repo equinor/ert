@@ -87,7 +87,7 @@ static void time_t_to_dates_line_fprintf(time_t date, FILE * stream)
 
 sched_kw_dates_type * sched_kw_dates_alloc(const stringlist_type * tokens , int * token_index ) {
   sched_kw_dates_type * kw = sched_kw_dates_alloc_empty();
-  int eokw                    = false;
+  int eokw                 = false;
   do {
     stringlist_type * line_tokens = sched_util_alloc_line_tokens( tokens , false, 0 , token_index );
     if (line_tokens == NULL)
@@ -157,13 +157,11 @@ time_t sched_kw_dates_iget_time_t(const sched_kw_dates_type * kw, int i)
 }
 
 
-
-time_t sched_kw_dates_get_time_t(const sched_kw_dates_type * kw)
-{
-  if(sched_kw_dates_get_size(kw) > 1)
-    util_abort("%s: Internal error, must use scehd_kw_dates_iget_time_t - aborting size:%d .\n", __func__ , sched_kw_dates_get_size(kw));
-  
-  return sched_kw_dates_iget_time_t(kw, 0);
+/**
+   Returns the number of dates in this DATES keyword.
+*/
+int sched_kw_dates_get_length( const sched_kw_dates_type * kw ) {
+  return time_t_vector_size( kw->date_list );
 }
 
 

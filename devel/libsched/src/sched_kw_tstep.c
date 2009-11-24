@@ -110,18 +110,9 @@ double sched_kw_tstep_iget_step(const sched_kw_tstep_type * kw, int i)
 }
 
 
-
-double sched_kw_tstep_get_step(const sched_kw_tstep_type * kw)
-{
-  if(sched_kw_tstep_get_size(kw) > 1)
-  {
-    util_abort("%s: Internal error - must use sched_kw_tstep_iget_step instead - aborting\n", __func__);
-  }
-
-  return sched_kw_tstep_iget_step(kw, 0);
+int sched_kw_tstep_get_length( const sched_kw_tstep_type * kw) {
+  return double_vector_size( kw->tstep_list );
 }
-
-
 
 time_t sched_kw_tstep_get_new_time(const sched_kw_tstep_type *kw, time_t curr_time)
 {
