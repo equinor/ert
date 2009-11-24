@@ -140,6 +140,7 @@ time_t member_config_iget_sim_time( member_config_type * member_config , int rep
     if (fs != NULL)
       member_config_fwrite_sim_time( member_config , fs );
   }
+  return sim_time;
 }
 
 
@@ -171,6 +172,10 @@ bool member_config_has_report_step( const member_config_type * member_config , i
   }
 }
 
+
+int member_config_get_sim_length( const member_config_type * member_config ) {
+  return time_t_vector_size( member_config->report_time );
+}
 
 
 static void member_config_fread_sim_time( member_config_type * member_config , enkf_fs_type * enkf_fs) {

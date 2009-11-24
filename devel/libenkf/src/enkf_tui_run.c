@@ -173,14 +173,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
       
       if (iactive[iens]) {
         enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
-        /** 
-            Sets up the run_info structure to get the correct state
-            for loading - but we do not actually intend to run
-            anything ...
-        */
-        enkf_state_init_run( enkf_state , run_mode , true , false , 0 , 0 , ANALYZED , ANALYZED, step1 , step1 , step2 , NULL);  /* Thiiiis is ugly */
-        
-        
+
         arg_pack_append_ptr( arg_pack , enkf_state);
         arg_pack_append_int( arg_pack , step1 );
         arg_pack_append_int( arg_pack , step2 );

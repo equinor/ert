@@ -291,7 +291,7 @@ struct enkf_fs_struct {
   /*****************************************************************/
   /* 
      The variables below here are for storing arbitrary files within 
-     the enkf_fs storage directory, but not as serialize enkf_nodes.
+     the enkf_fs storage directory, but not as serialized enkf_nodes.
   */
   path_fmt_type             * case_fmt;
   path_fmt_type             * case_member_fmt;
@@ -341,7 +341,13 @@ long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * defau
     block_fs_driver_index_fwrite_mount_info( stream );
   } else
     util_abort("%s: unrecognized driver id:%d \n",__func__ , driver_impl);
-  
+
+
+  /**
+     Observe that function - writing the initial default/plain mount
+     map does not use the enkf_fs functions. The (one) reason to do it
+     like this is that one avoids temporarily writing invalid files.
+  */
   __dir_offset = ftell( stream );
   {
     set_type * set = set_alloc_empty();
@@ -362,12 +368,29 @@ long int enkf_fs_fwrite_new_mount_map(const char * mount_map, const char * defau
 */
 
 static void __fs_update_map(const char * config_file , long int __dir_offset , set_type * cases , const char * current_read_case, const char * current_write_case) {
-  FILE * stream = util_fopen(config_file , "r+");
-  fseek(stream , __dir_offset , SEEK_SET);  /* Skipping all the driver information - which is left untouched. */
-  set_fwrite( cases , stream );
-  util_fwrite_string( current_read_case , stream );
-  util_fwrite_string( current_write_case , stream );
-  fclose(stream);
+  /**
+     Have (for a long time) had a bug in this which has stored mount
+     maps with NULL for the current cases. The broken files have
+     typically been updated immediately with correct files, but
+     nevertheless there has been a short window with broken
+     configurations on disk. Extra nazi checking this now.
+  */
+
+  if (current_read_case == NULL)
+    util_abort("%s: internal bug - trying to store NULL for read_case.\n",__func__);
+  
+  if (current_write_case == NULL)
+    util_abort("%s: internal bug - trying to store NULL for write_case.\n",__func__);
+  
+  {
+    FILE * stream = util_fopen(config_file , "r+");
+    fseek(stream , __dir_offset , SEEK_SET);  /* Skipping all the driver information - which is left untouched. */
+    set_fwrite( cases , stream );
+    
+    util_fwrite_string( current_read_case , stream );
+    util_fwrite_string( current_write_case , stream );
+    fclose(stream);
+  }
 }
 
 /*****************************************************************/
@@ -1023,36 +1046,26 @@ static void enkf_fs_update_map(const enkf_fs_type * fs) {
 
 /*****************************************************************/
 
-void enkf_fs_add_dir(enkf_fs_type * fs, const char * dir) {
+static void enkf_fs_add_dir__(enkf_fs_type * fs, const char * dir, bool store) {
   set_add_key(fs->dir_set , dir);
-  enkf_fs_update_map(fs);
+  if (store) enkf_fs_update_map(fs);
 }
+
+
+void enkf_fs_add_dir(enkf_fs_type * fs, const char * dir) {
+  enkf_fs_add_dir__( fs , dir , true );
+}
+
+
+
+
 
 bool enkf_fs_has_dir(const enkf_fs_type * fs, const char * dir) {
   return set_has_key( fs->dir_set , dir );
 }
 
 
-bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool auto_mkdir) {
-  bool has_dir = true;
-  if (dir != NULL) {
-    if (!set_has_key(fs->dir_set , dir)) {
-      if ((!read) && (auto_mkdir)) {
-	enkf_fs_add_dir(fs , dir);
-	has_dir = false;
-      } else {
-	fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
-	fprintf(stderr,"Available: directories: ");
-	set_fprintf(fs->dir_set , " " , stderr);
-	fprintf(stderr,"\n");
-	
-	has_dir = false;
-	util_abort("%s: Aborting (make the directory first ...) \n",__func__);
-      }
-    }
-  }
-
-
+static void enkf_fs_select_dir(enkf_fs_type * fs, const char * dir, bool read , bool store_map) {
   if (read) 
     fs->current_read_dir = util_realloc_string_copy( fs->current_read_dir , dir );
   else
@@ -1064,34 +1077,56 @@ bool enkf_fs_select_dir__(enkf_fs_type * fs, const char * dir, bool read , bool 
   fs->eclipse_static->select_dir(fs->eclipse_static , dir , read);
   fs->index->select_dir(fs->index , dir , read);    
   
-  
-  enkf_fs_update_map(fs);
-  return has_dir;
+  if (store_map)
+    enkf_fs_update_map(fs);
 }
+
 
 
 void enkf_fs_select_read_dir(enkf_fs_type * fs, const char * dir) {
-  if ((fs->current_read_dir == NULL) || (dir == NULL) || (strcmp(fs->current_read_dir , dir) != 0)) {
-    enkf_fs_select_dir__(fs , dir , true , false);
+  if (!util_string_equal(fs->current_read_dir , dir)) {
+    if (set_has_key( fs->dir_set , dir))
+      enkf_fs_select_dir(fs , dir , true , (fs->current_read_dir != NULL));   /* If the current_read_dir == NULL this is part of the mount process, and no need to write a (not) updated mount map. */
+    else {
+      /* To avoid util_abort() on not existing dir the calling scope
+         should check existence prior to calling this function. */
+      
+      fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
+      fprintf(stderr,"Available: directories: ");
+      set_fprintf(fs->dir_set , " " , stderr);
+      fprintf(stderr,"\n");
+      
+      util_abort("%s: Aborting (make the directory first ...) \n",__func__);
+    }
   }
 }
+
+
 
 
 /**
    If auto_mkdir == true a directory which does not exist will be
    created; if auto_mkdir == false the function will util_abort() if
    the directory does not exist.
-
-   Return true if the directory already exists, and false if the
-   directory was created (latter return value only applies when the
-   function is called with auto_mkdir == true).
 */
 
-bool enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mkdir) {
-  if ((fs->current_write_dir == NULL) || (dir == NULL) || (strcmp(fs->current_write_dir , dir) != 0)) {
-    return enkf_fs_select_dir__(fs , dir , false , auto_mkdir);
+void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mkdir) {
+  if (!util_string_equal(fs->current_write_dir , dir)) {
+    if (!set_has_key( fs->dir_set , dir))
+      if (auto_mkdir)
+        enkf_fs_add_dir__( fs , dir , false); /* Add a dir instance - without storing a new mount map. */
+    
+    if (set_has_key( fs->dir_set , dir))
+      enkf_fs_select_dir(fs , dir , false , (fs->current_write_dir != NULL));
+    else {
+      fprintf(stderr,"%s: fatal error - can not select directory: \"%s\" \n",__func__ , dir);
+      fprintf(stderr,"Available: directories: ");
+      set_fprintf(fs->dir_set , " " , stderr);
+      fprintf(stderr,"\n");
+      
+      util_abort("%s: Aborting (make the directory first ...) \n",__func__);
+    }
   }
-  return false;
 }
 
 
@@ -1162,6 +1197,7 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
     {
       fs->mount_map      = util_alloc_string_copy( config_file );
       FILE * stream      = util_fopen(fs->mount_map , "r");
+      bool store_map     = false; 
       int i;
       
       enkf_fs_get_fs_version__(stream);   /* Just top skip version header */
@@ -1228,22 +1264,37 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
 	/* Loading the set of directories. */
 	for (int i=0; i < num_dir; i++) {
 	  dir = util_fread_realloc_string( dir , stream); 
-	  enkf_fs_add_dir( fs , dir );
+	  enkf_fs_add_dir__( fs , dir , false);
 	}
         free(dir);
+        
         
         /* Loading and selecting the currently selected read and write directories. */
         {
           char * current_read_dir  = util_fread_alloc_string( stream );
           char * current_write_dir = util_fread_alloc_string( stream );
           
-          enkf_fs_select_read_dir(fs , current_read_dir);
-          enkf_fs_select_write_dir(fs , current_write_dir , false);
+          if ((current_read_dir == NULL) || (current_write_dir == NULL)) {
+            fprintf(stderr," *************************************************************\n");
+            fprintf(stderr," ** Hmmmm - the mount map has been corrupted. I have lost   **\n"); 
+            fprintf(stderr," ** track of your currently selected read/write cases. Will **\n");
+            fprintf(stderr," ** just select the default case.                           **\n"); 
+            fprintf(stderr," *************************************************************\n");
+
+            enkf_fs_select_read_dir(fs , "default");
+            enkf_fs_select_write_dir(fs , "default" , false );
+            store_map = true;
+          } else {
+            enkf_fs_select_read_dir(fs , current_read_dir);
+            enkf_fs_select_write_dir(fs , current_write_dir , false);
+          }
         }
       }
       fclose( stream );
+      if (store_map) /* The dir info has been updated - and we dump and updated map to file. */
+        enkf_fs_update_map( fs );
     }
-  
+    
 
     basic_driver_assert_cast(fs->dynamic_analyzed);
     basic_driver_assert_cast(fs->dynamic_forecast);
@@ -1584,32 +1635,6 @@ enkf_node_type ** enkf_fs_fread_alloc_ensemble( enkf_fs_type * fs , const enkf_c
 
 
 /*****************************************************************/
-
-void enkf_fs_interactive_select_directory(void * arg) {
-  arg_pack_type * arg_pack         = arg_pack_safe_cast( arg );
-  enkf_fs_type   * fs              = arg_pack_iget_ptr(arg_pack , 0);  
-  bool read                        = arg_pack_iget_bool(arg_pack , 1); 
-  menu_item_type * item            = arg_pack_iget_ptr(arg_pack , 2);
-
-  char dir[256];
-  if (read)
-    printf("Give directory for reading ==> ");
-  else
-    printf("Give directory for writing ==> ");
-  scanf("%s" , dir);
-  enkf_fs_select_dir__(fs , dir , read , true);
-  
-  {
-    char * menu_label;
-    if (read)
-      menu_label = util_alloc_sprintf("Set new directory for reading:%s" , dir);
-    else
-      menu_label = util_alloc_sprintf("Set new directory for writing:%s" , dir);
-
-    menu_item_set_label( item , menu_label );
-    free(menu_label);
-  }
-}
 
 /**
    Checks if the current_read_dir == current_write_dir.

@@ -34,7 +34,6 @@ typedef struct enkf_state_struct    enkf_state_type;
 keep_runpath_type  member_config_get_keep_runpath(const member_config_type * member_config);
 void             * enkf_state_complete_forward_model__(void * arg );
 job_status_type    enkf_state_get_run_status( const enkf_state_type * enkf_state );
-void               enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2 , bool * loadOK);
 void *             enkf_state_internalize_results_mt( void * arg );
 void               enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type * param_list);
 void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );
@@ -84,7 +83,6 @@ const char       * enkf_state_get_run_path(const enkf_state_type * );
 
 void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int step2);
 
-  // void enkf_state_internalize_results(enkf_state_type *  , int  , int  , int , int );
 
 /*****************************************************************/
 const sched_file_type * enkf_state_get_sched_file(const enkf_state_type * enkf_state);

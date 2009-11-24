@@ -117,8 +117,31 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
 
   }
   
-  if (config_item_set(config , "PREDICTION_LENGTH"))
-    ecl_config->prediction_length = config_iget_as_int( config , "PREDICTION_LENGTH" , 0 , 0 );
+
+  /**
+     The config item PREDICTION_LENGTH can either be an integer, or
+     the name of an existing schedule prediction file. In the latter
+     case the number of dates/tstep keywords in the files is counted,
+     without any attempt to fully internalize the file. Observe the
+     following:
+
+       1. This really should be a per-member property.
+       
+       2. If the file exists the counting of dates/tstep will not fail
+          - i.e. if the file is not a valid schedule file we will just
+          get prediction_length zero. (Of course malformed DATES/TSTEP
+          keywords will still lead to parsing failure.)
+  */
+
+  if (config_item_set(config , "PREDICTION_LENGTH")) {
+    const char * tmp_str = config_iget( config , "PREDICTION_LENGTH" , 0 , 0 );
+    int prediction_length;
+
+    if (!util_sscanf_int( tmp_str , &prediction_length)) 
+      prediction_length = sched_file_step_count( tmp_str );  /* <- This will fail hard if the file does not exist - however the parsing "can not" fail. */
+    
+    ecl_config->prediction_length = prediction_length;   
+  }
   
   if (config_has_set_item(config , "INIT_SECTION")) {
 

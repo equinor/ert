@@ -17,6 +17,7 @@ extern "C" {
 
 typedef struct member_config_struct member_config_type;
 
+int               member_config_get_sim_length( const member_config_type * member_config );
 keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config);
 int               member_config_get_iens( const member_config_type * member_config );
 void              member_config_fwrite_sim_time( const member_config_type * member_config , enkf_fs_type * enkf_fs );

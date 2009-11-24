@@ -166,6 +166,29 @@ static void run_info_summarize( const run_info_type * run_info ) {
 }
 
 
+/**
+   This function inits the necessary fields in the run_info structure
+   to be able to use the xxx_internalize_xxx() functions. Observe that
+   trying actually run after the run_info structure has only been
+   initialized here will lead to hard failure.
+
+   The inits performed are essential for running, not only for the
+   internalizing.
+*/
+
+
+static void run_info_init_for_load(run_info_type * run_info , 
+                                   int load_start, 
+                                   int step2,
+                                   int iens,
+                                   path_fmt_type * run_path_fmt ,
+                                   const subst_list_type * state_subst_list) {
+  run_info->step2      = step2;
+  run_info->load_start = load_start;
+  run_info_set_run_path(run_info , iens , run_path_fmt , state_subst_list );
+}
+
+
 static void run_info_set(run_info_type * run_info        , 
 			 run_mode_type run_mode          , 
 			 bool active                     , 
@@ -187,15 +210,13 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->init_state_parameter = init_state_parameter;
   run_info->init_state_dynamic = init_state_dynamic;
   run_info->step1      	         = step1;
-  run_info->step2      	         = step2;
   run_info->runOK                = false;
   run_info->__ready              = true;
   run_info->run_mode             = run_mode;
-  run_info->load_start           = load_start;
   run_info->resample_when_fail   = resample_when_fail;
   run_info->max_internal_submit  = max_internal_submit;
   run_info->num_internal_submit  = 0;
-  run_info_set_run_path(run_info , iens , run_path_fmt , state_subst_list );
+  run_info_init_for_load( run_info , load_start , step2 , iens , run_path_fmt , state_subst_list);
 }
 
 
@@ -568,7 +589,7 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
 
 
 
-static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , int report_step1  , int report_step2 , bool * loadOK) {
+static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state , const model_config_type * model_config , bool * loadOK) {
   /* IFF reservoir_simulator == ECLIPSE ... */
   if (true) {
     const shared_info_type   * shared_info = enkf_state->shared_info;
@@ -579,17 +600,23 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
     const char            * eclbase        = member_config_get_eclbase( enkf_state->my_config );
     const bool fmt_file  		   = ecl_config_get_formatted(ecl_config);
     bool       load_summary                = false; 
+    int        load_start                  = run_info->load_start;
     int        num_data_files              = 0;
     int report_step;
-    char     ** data_files                 = util_malloc( (report_step2 - report_step1 + 1) * sizeof * data_files , __func__);
+    char     ** data_files;
     
     char * header_file                     = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
     ecl_sum_type * summary;
 
+    if (load_start == 0)  /* Do not attempt to load the "S0000" summary results. */
+      load_start++;
+
+    data_files = util_malloc( (run_info->step2 - load_start + 1) * sizeof * data_files , __func__);
+
 
     /* First: determine whether summary data should be loaded at all. */
-    for (report_step = report_step1; report_step <= report_step2; report_step++) 
-      if (model_config_load_results( model_config , report_step)) 
+    for (report_step = load_start; report_step <= run_info->step2; report_step++) 
+      if (model_config_load_results( model_config , report_step )) 
         load_summary = true;
 
     if (load_summary) {
@@ -601,7 +628,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         data_files[0]  = unified_file;
         num_data_files = 1;
       } else {
-        for (report_step = report_step1; report_step <= report_step2; report_step++) {
+        for (report_step = load_start; report_step <= run_info->step2; report_step++) {
           if (model_config_load_results( model_config , report_step)) {
             data_files[num_data_files] = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
             /* This will fail hard if there are holes in the series, i.e. S0007, S0010 */
@@ -611,18 +638,18 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
       }
       
       /* Explicitly setting the empty slots to NULL - to not create problems in the free routine. */
-      for (report_step = num_data_files; report_step <= (report_step2 - report_step1); report_step++)
+      for (report_step = num_data_files; report_step <= (run_info->step2 - load_start); report_step++)
         data_files[report_step] = NULL;
       
       if ((header_file != NULL) && (num_data_files > 0)) {
         summary = ecl_sum_fread_alloc(header_file , num_data_files , (const char **) data_files );
-        util_free_stringlist( data_files , report_step2 - report_step1 + 1);
+        util_free_stringlist( data_files , run_info->step2 - load_start + 1);
         free( header_file );
       } else 
         summary = NULL;  /* OK - no summary data was found on the disk. */
       
       /* The actual loading */
-      for (report_step = report_step1; report_step <= report_step2; report_step++) {
+      for (report_step = load_start; report_step <= run_info->step2; report_step++) {
         const bool internalize_all  = model_config_internalize_results( model_config , report_step );
         hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
         while ( !hash_iter_is_complete(iter) ) {
@@ -878,31 +905,35 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 */
    
 
-void enkf_state_internalize_results(enkf_state_type * enkf_state , int report_step1 , int report_step2 , bool * loadOK) {
+static void enkf_state_internalize_results(enkf_state_type * enkf_state , bool * loadOK) {
+  run_info_type             * run_info   = enkf_state->run_info;
+  const model_config_type * model_config = enkf_state->shared_info->model_config;
   int report_step;
-  {
-    const model_config_type * model_config = enkf_state->shared_info->model_config;
-    for (report_step = report_step1; report_step <= report_step2; report_step++) {
-      if (model_config_load_state( model_config , report_step)) 
-	enkf_state_internalize_state(enkf_state , model_config , report_step , loadOK);
-    }
-    
-    if (report_step1 == 0)
-      report_step1++;
-        
-    enkf_state_internalize_dynamic_results(enkf_state , model_config , report_step1 , report_step2 , loadOK);
+  for (report_step = run_info->load_start; report_step <= run_info->step2; report_step++) {
+    if (model_config_load_state( model_config , report_step)) 
+      enkf_state_internalize_state(enkf_state , model_config , report_step , loadOK);
   }
+  
+  enkf_state_internalize_dynamic_results(enkf_state , model_config , loadOK);
 }
 
 
 void * enkf_state_internalize_results_mt( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
-  int step1                    = arg_pack_iget_int( arg_pack , 1 );
+  int load_start               = arg_pack_iget_int( arg_pack , 1 );
   int step2                    = arg_pack_iget_int( arg_pack , 2 );
   bool loadOK                  = true;
+
   
-  enkf_state_internalize_results( enkf_state , step1 , step2 , &loadOK);
+  run_info_init_for_load( enkf_state->run_info , 
+                          load_start , 
+                          step2 , 
+                          member_config_get_iens( enkf_state->my_config ) , 
+                          model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 
+                          enkf_state->subst_list );
+  
+  enkf_state_internalize_results( enkf_state , &loadOK);
   
   return NULL;
 }  
@@ -1452,7 +1483,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
        is OK the final status is updated, otherwise: restart.
     */
     log_add_fmt_message( shared_info->logh , 2 , NULL , "[%03d:%04d-%04d] Forward model complete - starting to load results." , iens , run_info->step1, run_info->step2);
-    enkf_state_internalize_results(enkf_state , run_info->load_start , run_info->step2 , &loadOK); 
+    enkf_state_internalize_results(enkf_state , &loadOK); 
     if (loadOK) {
       status = JOB_QUEUE_ALL_OK;
       job_queue_set_load_OK( shared_info->job_queue , iens );
