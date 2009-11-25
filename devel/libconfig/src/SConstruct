@@ -22,7 +22,7 @@ env.Install("../include" , header_list)
 ##################################################################
 
  
-install     = env.Alias('install',["../lib" , "../include"])
+install = env.Alias('install',["../lib" , "../include"])
 if SDP_ROOT:
    env.Install(conf.SDP_LIB , header_list)
    env.Install(conf.SDP_LIB , LIB )

@@ -12,9 +12,9 @@ conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBECL , LIBUTIL ] )
 
-src_list = Split("sched_types.c sched_kw.c sched_file.c  sched_kw_untyped.c sched_kw_gruptree.c sched_kw_tstep.c sched_kw_dates.c sched_kw_wconhist.c sched_kw_wconinjh.c sched_kw_welspecs.c sched_util.c gruptree.c history.c sched_kw_wconprod.c sched_kw_wconinj.c sched_kw_wconinje.c sched_kw_compdat.c sched_kw_include.c")
+src_list = Split("sched_types.c sched_kw.c sched_file.c  sched_kw_untyped.c sched_kw_gruptree.c sched_kw_tstep.c sched_kw_dates.c sched_kw_wconhist.c sched_kw_wconinjh.c sched_kw_welspecs.c sched_util.c history.c sched_kw_wconprod.c sched_kw_wconinj.c sched_kw_wconinje.c sched_kw_compdat.c sched_kw_include.c gruptree.c")
 
-header_list = Split("sched_types.h sched_file.h sched_kw.h sched_kw_untyped.h sched_kw_gruptree.h sched_kw_tstep.h sched_kw_dates.h sched_kw_wconhist.h sched_kw_wconinjh.h sched_kw_welspecs.h sched_util.h gruptree.h history.h sched_kw_wconprod.h sched_kw_wconinj.h  sched_kw_wconinje.h sched_kw_compdat.h sched_kw_include.h sched_macros.h")
+header_list = Split("sched_types.h sched_file.h sched_kw.h sched_kw_untyped.h sched_kw_gruptree.h sched_kw_tstep.h sched_kw_dates.h sched_kw_wconhist.h sched_kw_wconinjh.h sched_kw_welspecs.h sched_util.h  history.h sched_kw_wconprod.h sched_kw_wconinj.h  sched_kw_wconinje.h sched_kw_compdat.h sched_kw_include.h sched_macros.h gruptree.h")
 
 
 LIB = env.StaticLibrary("sched" , src_list)
@@ -27,7 +27,7 @@ if SDP_ROOT:
     SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
 
 
-install     = env.Alias('install',["../lib" , "../include"])
+install     = env.Alias('install', ["../lib" , "../include"])
 Default( install )
 
 

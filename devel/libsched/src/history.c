@@ -7,6 +7,7 @@
 #include <ecl_util.h>
 #include <gruptree.h>
 #include <history.h>
+#include <stringlist.h>
 
 typedef struct history_node_struct history_node_type;
 
@@ -674,14 +675,13 @@ void history_realloc_from_summary(history_type * history, const char * refcase ,
   char  * refcase_path;
   char  * refcase_base;
   char  * header_file;
-  char ** summary_file_list;
-  int     files;
+  stringlist_type * summary_files = stringlist_alloc_new();
   bool    fmt_file ,unified;
   
   util_alloc_file_components( refcase , &refcase_path , &refcase_base , NULL);
-  ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , &summary_file_list , &files , &fmt_file , &unified);
+  ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , summary_files , &fmt_file , &unified);
   
-  history->ecl_sum = ecl_sum_fread_alloc( header_file , files , (const char **) summary_file_list);
+  history->ecl_sum = ecl_sum_fread_alloc( header_file , summary_files );
   if (use_h_keywords)
     history->source = REFCASE_HISTORY;
   else
@@ -731,7 +731,7 @@ void history_realloc_from_summary(history_type * history, const char * refcase ,
   util_safe_free(header_file);
   util_safe_free(refcase_base);
   util_safe_free(refcase_path);
-  util_free_stringlist(summary_file_list, files);
+  stringlist_free( summary_files );
 }
 
 

@@ -124,7 +124,8 @@ typedef enum {TRUNCATE_NONE   = 0,
 */
 
 typedef enum { ENKF_ASSIMILATION       = 1, 
-	       ENSEMBLE_EXPERIMENT     = 2} run_mode_type;
+	       ENSEMBLE_EXPERIMENT     = 2,
+               ENSEMBLE_PREDICTION     = 3} run_mode_type;
 	       
 
  

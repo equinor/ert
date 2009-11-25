@@ -454,7 +454,7 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
     char * obs_fmt = util_alloc_sprintf("  %%-3d : %%-32s %s +/-  %s" , float_fmt , float_fmt);
     char * sim_fmt = util_alloc_sprintf("   %s +/- %s  \n" , float_fmt , float_fmt);
 
-    fprintf(stream , "                                                   Observed history                |            Simulated data        \n");  
+    fprintf(stream , "                                                   Observed history               |             Simulated data        \n");  
     fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
     for (iobs = 0; iobs < obs_data_get_nrobs(obs_data); iobs++) {
       obs_data_node_type * node = obs_data_iget_node( obs_data , iobs);

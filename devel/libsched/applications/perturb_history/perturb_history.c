@@ -14,6 +14,7 @@
 #include <group_rate.h>
 #include <config.h>
 #include <sched_types.h>
+#include <msg.h>
 
 /*****************************************************************/
 
@@ -132,6 +133,7 @@ int main( int argc , char ** argv ) {
     const char * sched_file_name = config_iget( config , "SCHEDULE_FILE" , 0 , 0 );
     path_fmt_type * sched_fmt    = path_fmt_alloc_path_fmt( config_iget( config , "TARGET" , 0 , 0) );
     const int num_realizations   = config_iget_as_int(config , "NUM_REALIZATIONS" , 0 , 0 );
+    msg_type * msg               = msg_alloc("Creating file: ");
     
     time_t start_date = ecl_util_get_start_date( data_file );
     time_t_vector_type * time_vector;
@@ -145,6 +147,7 @@ int main( int argc , char ** argv ) {
     {
       
       int i;
+      msg_show( msg );
       for (i = 0; i < num_realizations; i++) {
         //sched_file_type * sched_file = sched_file_alloc_copy( );
         sched_file_type * sched_file = sched_file_parse_alloc( sched_file_name , start_date );
@@ -155,11 +158,13 @@ int main( int argc , char ** argv ) {
         {
           char * new_file = path_fmt_alloc_file(sched_fmt , true , i );
           sched_file_fprintf( sched_file , new_file );
+          msg_update( msg , new_file );
           free( new_file );
         }
         sched_file_free( sched_file );
       }
     }
+    msg_free( msg , true );
   }
   config_free( config );
   hash_free( group_rates );
