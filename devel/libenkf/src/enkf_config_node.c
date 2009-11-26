@@ -21,7 +21,7 @@ struct enkf_config_node_struct {
   enkf_impl_type     	  impl_type;
   enkf_var_type      	  var_type; 
 
-  bool_vector_type      * internalize;      /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a hight level - without consulting this variable. Can be NULL. */ 
+  bool_vector_type      * internalize;      /* Should this node be internalized - observe that question of what to internalize is MOSTLY handled at a higher level - without consulting this variable. Can be NULL. */ 
   stringlist_type       * obs_keys;         /* Keys of observations which observe this node. */
   char               	* key;
   path_fmt_type         * enkf_infile_fmt;  /* Format used to load in file from forward model - one %d (if present) is replaced with report_step. */
@@ -157,6 +157,7 @@ void enkf_config_node_init_internalization(enkf_config_node_type * node) {
   if (node->internalize != NULL)
     bool_vector_reset( node->internalize );
 }
+
 
 /* Query function: */
 bool enkf_config_node_internalize(const enkf_config_node_type * node, int report_step) {

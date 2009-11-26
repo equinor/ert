@@ -191,17 +191,6 @@ static void gen_obs_assert_data_size(const gen_obs_type * gen_obs, const gen_dat
 }
 
 
-/** Active - not active when it comes to local analysis is *NOT* handled. */
-void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , meas_vector_type * meas_vector) {
-  gen_obs_assert_data_size(gen_obs , gen_data);
-  {
-    int iobs;
-    for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
-      meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
-  }
-}
-
-
 double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_data) {
   gen_obs_assert_data_size(gen_obs , gen_data);
   {
@@ -216,11 +205,49 @@ double gen_obs_chi2(const gen_obs_type * gen_obs , const gen_data_type * gen_dat
 
 
 
-void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data, const active_list_type * active_list) {
-  int iobs;
-  for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
-    obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , stringlist_iget(gen_obs->keylist, iobs));
+void gen_obs_measure(const gen_obs_type * gen_obs , const gen_data_type * gen_data , meas_vector_type * meas_vector, const active_list_type * __active_list) {
+  gen_obs_assert_data_size(gen_obs , gen_data);
+  {
+    active_mode_type active_mode = active_list_get_mode( __active_list );
+    int iobs;
+    if (active_mode == ALL_ACTIVE) {
+      for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
+        meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
+    } else if ( active_mode == PARTLY_ACTIVE) {
+      const int   * active_list    = active_list_get_active( __active_list ); 
+      int active_size              = active_list_get_active_size( __active_list );
+      int index;
+      
+      for (index = 0; index < active_size; index++) {
+        iobs = active_list[index];
+        meas_vector_add( meas_vector , gen_data_iget_double( gen_data , gen_obs->data_index_list[iobs] ));
+      }
+    }
+  }
 }
+
+
+
+void gen_obs_get_observations(gen_obs_type * gen_obs , int report_step, obs_data_type * obs_data, const active_list_type * __active_list) {
+  int iobs;
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  
+  if (active_mode == ALL_ACTIVE) {
+    for (iobs = 0; iobs < gen_obs->obs_size; iobs++) 
+      obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , stringlist_iget(gen_obs->keylist, iobs));
+  } else if (active_mode == PARTLY_ACTIVE) {
+    const int   * active_list    = active_list_get_active( __active_list ); 
+    int active_size              = active_list_get_active_size( __active_list );
+    int index;
+    
+    for (index = 0; index < active_size; index++) {
+      iobs = active_list[index];
+      obs_data_add( obs_data , gen_obs->obs_data[iobs] , gen_obs->obs_std[iobs] , stringlist_iget(gen_obs->keylist, iobs));
+    }
+  }
+}
+
+
 
 
 

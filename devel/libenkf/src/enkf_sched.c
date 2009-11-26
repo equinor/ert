@@ -346,7 +346,7 @@ static enkf_sched_type * enkf_sched_alloc_empty( ) {
 
 
 
-static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_history_restart , int abs_last_restart , run_mode_type run_mode) {
+static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_history_restart , run_mode_type run_mode) {
   enkf_sched_node_type * node;
 
   if (run_mode == ENKF_ASSIMILATION) {
@@ -358,12 +358,6 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
       enkf_sched_append_node(enkf_sched , node);
     }
     /* Okay we are doing assimilation and prediction in one go - fair enough. */
-    
-    if (abs_last_restart > last_history_restart) {
-      /* We have prediction. */
-      node = enkf_sched_node_alloc(last_history_restart , abs_last_restart , false , NULL);
-      enkf_sched_append_node(enkf_sched , node);
-    }
   } else {
     /* 
        experiment: Do the whole thing in two steps, 
@@ -371,11 +365,6 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
     */
     node = enkf_sched_node_alloc(0 , last_history_restart , false , NULL); 
     enkf_sched_append_node(enkf_sched , node);
-    if (abs_last_restart > last_history_restart) {
-      /* We have prediction. */
-      node = enkf_sched_node_alloc(last_history_restart , abs_last_restart , false , NULL);
-      enkf_sched_append_node(enkf_sched , node);
-    }
   }
 }
 
@@ -388,10 +377,10 @@ static void  enkf_sched_set_default(enkf_sched_type * enkf_sched , int last_hist
    enkf_sched_type instance is allocated.
 */
 
-enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int last_history_restart , int abs_last_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool statoil_mode , bool use_lsf) {
+enkf_sched_type * enkf_sched_fscanf_alloc(const char * enkf_sched_file , int last_history_restart , run_mode_type run_mode, const ext_joblist_type * joblist , bool statoil_mode , bool use_lsf) {
   enkf_sched_type * enkf_sched = enkf_sched_alloc_empty( );
   if (enkf_sched_file == NULL)
-    enkf_sched_set_default(enkf_sched , last_history_restart , abs_last_restart , run_mode);
+    enkf_sched_set_default(enkf_sched , last_history_restart , run_mode);
   else {
     FILE * stream = util_fopen(enkf_sched_file , "r");
     bool at_eof;

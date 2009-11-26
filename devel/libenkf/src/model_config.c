@@ -48,12 +48,11 @@ struct model_config_struct {
   char                * enspath;
   fs_driver_impl        dbase_type;
   int                   last_history_restart;       /* The end of the history - this is inclusive.*/
-  int                   abs_last_restart;           /* The total end of schedule file - will be updated with enkf_sched_file. */  
-  bool                  has_prediction;      	    /* Is the SCHEDULE_PREDICTION_FILE option set ?? */
   bool                  resample_when_fail;         /* Should we resample when a model fails to integrate? */
+  bool                  has_prediction; 
   int                   max_internal_submit;        /* How many times to retry if the load fails. */
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
-  bool_vector_type    * internalize_results; 	    /* Should the results (i.e. summary in ECLIPSE speak) be intrenalized at this report_step? */
+  bool_vector_type    * internalize_results; 	    /* Should the results (i.e. summary in ECLIPSE speak) be internalized at this report_step? */
   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
   bool_vector_type    * __load_results;      	    /* Internal variable: is it necessary to load the results? */
 };
@@ -83,7 +82,6 @@ void model_config_set_enkf_sched(model_config_type * model_config , const ext_jo
   
   model_config->enkf_sched  = enkf_sched_fscanf_alloc(model_config->enkf_sched_file       , 
 						      model_config->last_history_restart  , 
-						      model_config->abs_last_restart     , 
 						      run_mode                            , 
 						      joblist                             , 
 						      statoil_mode , 
@@ -157,27 +155,9 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
     model_config_set_runpath_fmt( model_config , config_get_value(config , "RUNPATH") );
 
   {
-    model_config->history                 = history_alloc_from_sched_file(sched_file);  
-
-    /**
-       last_history_restart and abs_last_restart are inclusive upper limits.
-    */
+    model_config->history              = history_alloc_from_sched_file(sched_file);  
     model_config->last_history_restart = last_history_restart;
-    /* 
-       Currently only the historical part - if a prediction file is in use, 
-       the extended length is pushed from enkf_state.
-    */
-    model_config->abs_last_restart = model_config->last_history_restart;
   }
-
-  
-  if (config_item_set(config ,  "SCHEDULE_PREDICTION_FILE"))
-    model_config->has_prediction = true;
-  else
-    model_config->has_prediction = false;
-  
-  if (config_item_set(config , "PREDICTION_LENGTH"))
-    model_config->has_prediction = true;
   
   {
     const char * history_source = config_iget(config , "HISTORY_SOURCE", 0,0);
@@ -197,6 +177,7 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
       history_realloc_from_summary( model_config->history , refcase , use_history);        
     }
   }
+
   {
     int num_restart = history_get_num_restarts(model_config->history);
     model_config->internalize_state   = bool_vector_alloc( num_restart , false );
@@ -204,6 +185,19 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
     model_config->__load_state        = bool_vector_alloc( num_restart , false ); 
     model_config->__load_results      = bool_vector_alloc( num_restart , false );
   }
+
+  /*
+    The full treatment of the SCHEDULE_PREDICTION_FILE keyword is in
+    the ensemble_config file, because the functionality is implemented
+    as (quite) plain GEN_KW instance. Here we just check if it is
+    present or not.
+  */
+  
+  if (config_item_set(config ,  "SCHEDULE_PREDICTION_FILE")) 
+    model_config->has_prediction = true;
+  else
+    model_config->has_prediction = false;
+
 
   if (config_item_set(config ,  "CASE_TABLE")) {
     bool atEOF = false;
@@ -299,20 +293,12 @@ history_type * model_config_get_history(const model_config_type * config) {
 
 */
 
-void model_config_update_last_restart(model_config_type * config, int last_restart) {
-  if (config->abs_last_restart < last_restart)
-    config->abs_last_restart = last_restart;
-}
-
 
 
 int model_config_get_last_history_restart(const model_config_type * config) {
   return config->last_history_restart;
 }
 
-int model_config_get_abs_last_restart(const model_config_type * config) {
-  return config->abs_last_restart;
-}
 
 bool model_config_has_prediction(const model_config_type * config) {
   return config->has_prediction;
@@ -388,6 +374,7 @@ bool model_config_internalize_results( const model_config_type * config , int re
   return bool_vector_iget(config->internalize_results , report_step);
 }
 
+/*****************************************************************/
 
 bool model_config_load_state( const model_config_type * config , int report_step) {
   return bool_vector_iget(config->__load_state , report_step);

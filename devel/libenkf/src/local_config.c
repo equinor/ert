@@ -430,8 +430,10 @@ static void read_int_vector(FILE * stream , bool binary , int_vector_type * vect
     int_vector_reset( vector );
     fscanf(stream , "%d" , &size);
     for (i=0; i < size; i++) { 
-      fscanf(stream , "%d", &value);
-      int_vector_append(vector , value);
+      if (fscanf(stream , "%d", &value) == 1)
+        int_vector_append(vector , value);
+      else 
+        util_abort("%s: premature end of indices when reading local configuraton - malformed file.\n",__func__);
     }
   }
 }
@@ -531,7 +533,7 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
     case(ACTIVE_LIST_ADD_DATA_INDEX):
       mini_name = read_alloc_string( stream , binary );
       data_key   = read_alloc_string( stream , binary );
-      index = read_int( stream , binary );
+      index      = read_int( stream , binary );
       {
         local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
         active_list_type * active_list = local_ministep_get_node_active_list( ministep , data_key );

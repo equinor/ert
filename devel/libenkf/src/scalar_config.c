@@ -41,7 +41,7 @@ scalar_config_type * scalar_config_alloc_empty(int size) {
     for (i=0; i < size; i++) {
       scalar_config->output_transform_name[i] = NULL;
       scalar_config->arg_pack[i]              = NULL;
-      scalar_config->std[i]                   = 1.0;
+      scalar_config->std[i]                   = 1.0;    /* These are currently always 1.0 and 0.0 respectively, but are still kept as variables. */
       scalar_config->mean[i]                  = 0.0;
     }
   }
@@ -103,15 +103,15 @@ void scalar_config_fscanf_line(scalar_config_type * config , int line_nr , FILE 
 
 void scalar_config_free(scalar_config_type * scalar_config) {
   int i;
-  free(scalar_config->mean);
-  free(scalar_config->std);
+  util_safe_free(scalar_config->mean);
+  util_safe_free(scalar_config->std);
   active_list_free(scalar_config->active_list);
   util_free_stringlist(scalar_config->output_transform_name , scalar_config->data_size);
   for (i=0; i < scalar_config->data_size; i++)
     if (scalar_config->arg_pack[i] != NULL) arg_pack_free(scalar_config->arg_pack[i]);
 
-  free(scalar_config->arg_pack);
-  free(scalar_config->output_transform);
+  util_safe_free(scalar_config->arg_pack);
+  util_safe_free(scalar_config->output_transform);
   free(scalar_config);
 }
 

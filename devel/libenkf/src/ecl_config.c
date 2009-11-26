@@ -34,7 +34,6 @@ struct ecl_config_struct {
   ecl_io_config_type * io_config;              	   /* This struct contains information of whether the eclipse files should be formatted|unified|endian_fliped */
   path_fmt_type      * eclbase;                	   /* A pth_fmt instance with one %d specifer which will be used for eclbase - members will allocate private eclbase; i.e. updates will not be refelected. */
   sched_file_type    * sched_file;             	   /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
-  path_fmt_type      * prediction_sched_file_fmt;  /* A format variable for schedule prediction files - can be NULL. */
   bool                 include_all_static_kw;  	   /* If true all static keywords are stored.*/ 
   set_type           * static_kw_set;          	   /* Minimum set of static keywords which must be included to make valid restart files. */
   char               * data_file;              	   /* Eclipse data file. */
@@ -42,7 +41,6 @@ struct ecl_config_struct {
   char               * schedule_target_file;   	   /* File name to write schedule info to */
   char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation. */
   int                  last_history_restart;
-  int                  prediction_length;
 };
 
 
@@ -58,9 +56,6 @@ int ecl_config_get_last_history_restart( const ecl_config_type * ecl_config ) {
   return ecl_config->last_history_restart;
 }
 
-int ecl_config_get_prediction_length(const ecl_config_type * ecl_config ) {
-  return ecl_config->prediction_length;
-}
 
 
 void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file) {
@@ -75,7 +70,6 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->include_all_static_kw = false;
   ecl_config->static_kw_set         = set_alloc_empty();
   ecl_config->data_file             = NULL;
-  ecl_config->prediction_length     = 0;
   {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
       set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
@@ -107,46 +101,13 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       }
     }
     sched_file_parse(ecl_config->sched_file , schedule_src );
-
-    ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the
-                                                                                                            end of HISTORY. */
-    if (config_has_set_item(config , "SCHEDULE_PREDICTION_FILE"))
-      ecl_config->prediction_sched_file_fmt = path_fmt_alloc_path_fmt( config_iget(config , "SCHEDULE_PREDICTION_FILE" , 0,0) );
-    else
-      ecl_config->prediction_sched_file_fmt = NULL;
-
-  }
-  
-
-  /**
-     The config item PREDICTION_LENGTH can either be an integer, or
-     the name of an existing schedule prediction file. In the latter
-     case the number of dates/tstep keywords in the files is counted,
-     without any attempt to fully internalize the file. Observe the
-     following:
-
-       1. This really should be a per-member property.
-       
-       2. If the file exists the counting of dates/tstep will not fail
-          - i.e. if the file is not a valid schedule file we will just
-          get prediction_length zero. (Of course malformed DATES/TSTEP
-          keywords will still lead to parsing failure.)
-  */
-
-  if (config_item_set(config , "PREDICTION_LENGTH")) {
-    const char * tmp_str = config_iget( config , "PREDICTION_LENGTH" , 0 , 0 );
-    int prediction_length;
-
-    if (!util_sscanf_int( tmp_str , &prediction_length)) 
-      prediction_length = sched_file_step_count( tmp_str );  /* <- This will fail hard if the file does not exist - however the parsing "can not" fail. */
-    
-    ecl_config->prediction_length = prediction_length;   
+    ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the end of history */
   }
   
   if (config_has_set_item(config , "INIT_SECTION")) {
 
-    /* The semantic regarding INIT_SECTION is as follows:
-
+  /* The semantic regarding INIT_SECTION is as follows:
+  
        1. If the INIT_SECTION points to an existing file - the
           ecl_config->equil_init_file is set to the absolute path of
           this file.
@@ -205,9 +166,6 @@ void ecl_config_free(ecl_config_type * ecl_config) {
   free(ecl_config->schedule_target_file);
 
   util_safe_free(ecl_config->equil_init_file);
-
-  if (ecl_config->prediction_sched_file_fmt != NULL)
-    path_fmt_free(ecl_config->prediction_sched_file_fmt);
 
   if (ecl_config->grid != NULL)
     ecl_grid_free( ecl_config->grid );
@@ -274,12 +232,6 @@ sched_file_type * ecl_config_get_sched_file(const ecl_config_type * ecl_config) 
   return ecl_config->sched_file;
 }
 
-char * ecl_config_alloc_schedule_prediction_file(const ecl_config_type * ecl_config, int iens) {
-  if (ecl_config->prediction_sched_file_fmt != NULL)
-    return path_fmt_alloc_path(ecl_config->prediction_sched_file_fmt , false , iens);
-  else
-    return NULL;
-}
 
 
 const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {

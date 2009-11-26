@@ -611,7 +611,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
       const char            * eclbase        = member_config_get_eclbase( my_config );
       const ecl_config_type * ecl_config     = enkf_state->ecl_config;
       const bool fmt_file    		     = ecl_config_get_formatted(ecl_config);
-      ecl_sum_type * summary;
+      ecl_sum_type          * summary        = NULL;
       
       
       /* Looking for summary files on disk, and loading them. */
@@ -621,61 +621,76 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         char * unified_file          = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_UNIFIED_SUMMARY_FILE , fmt_file ,  -1);
         
         /* Should we load from a unified summary file, or from several non-unified files? */
-        /* Use unified file */
         if (unified_file != NULL) 
+          /* Use unified file: */
           stringlist_append_owned_ref( data_files , unified_file);
         else {
-          for (report_step = load_start; report_step <= run_info->step2; report_step++) {
-            if (model_config_load_results( model_config , report_step)) 
-              /* This will fail hard if there are holes in the series, i.e. S0007, S0010 */
-              stringlist_append_owned_ref( data_files , ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step));
+          /* Use several non unified files. */
+          
+          /* Bypassing the query to model_config_load_results() */
+          report_step = load_start;
+          while (true) {
+            char * summary_file = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_FILE , fmt_file ,  report_step);
+            if (summary_file == NULL) {
+              /* If in prediction mode, we jump ship when we reach the first non-existing file. */
+              if (run_info->run_mode == ENSEMBLE_PREDICTION)
+                break;
+            } else
+              stringlist_append_owned_ref( data_files , summary_file);
+            
+            report_step++;
+            if (run_info->run_mode != ENSEMBLE_PREDICTION && report_step > run_info->step2)
+              break;
           }
+          
+          printf("Summary files: ");
+          stringlist_fprintf( data_files , ", " , stdout);
+
+          if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
+            summary = ecl_sum_fread_alloc(header_file , data_files );
+          
+          stringlist_free( data_files );
+          util_safe_free( header_file );
         }
-      
-        if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
-          summary = ecl_sum_fread_alloc(header_file , data_files );
-        else 
-          summary = NULL;  /* OK - no summary data was found on the disk. */
+
+
         
-        stringlist_free( data_files );
-        util_safe_free( header_file );
-      }
+        /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
+        if (summary != NULL) {
+          /* The actual loading internalizing - from ecl_sum -> enkf_node. */
+          const shared_info_type   * shared_info = enkf_state->shared_info;
+          const int iens                         = member_config_get_iens( my_config );
+          const int step2                        = ecl_sum_get_last_report_step( summary );
+          
+          printf("Loading %d - %d \n",load_start , step2);
 
-
-
-      /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
-      if (summary != NULL) {
-        /* The actual loading internalizing - from ecl_sum -> enkf_node. */
-        const shared_info_type   * shared_info = enkf_state->shared_info;
-        const int iens                         = member_config_get_iens( my_config );
-        const int step2                        = ecl_sum_get_last_report_step( summary );
-        
-        for (report_step = load_start; report_step <= step2; report_step++) {
-          const bool internalize_all  = model_config_internalize_results( model_config , report_step );
-          hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
-          while ( !hash_iter_is_complete(iter) ) {
-            enkf_node_type * node = hash_iter_get_next_value(iter);
-            if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
-              bool internalize = internalize_all;
-              if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
-                internalize = enkf_node_internalize(node , report_step);
-              
-              if (internalize) {
-                if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))   /* Loading/internalizing */
-                  enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
-                else {
-                  *loadOK = false;
-                  log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
-                }
-              } 
-            }
-          } 
-          hash_iter_free(iter);
-          member_config_iset_sim_time( my_config , report_step , ecl_sum_get_report_time( summary , report_step ));
+          for (report_step = load_start; report_step <= step2; report_step++) {
+            const bool internalize_all  = model_config_internalize_results( model_config , report_step );
+            hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
+            while ( !hash_iter_is_complete(iter) ) {
+              enkf_node_type * node = hash_iter_get_next_value(iter);
+              if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
+                bool internalize = internalize_all;
+                if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
+                  internalize = enkf_node_internalize(node , report_step);
+                
+                if (internalize) {
+                  if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))   /* Loading/internalizing */
+                    enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
+                  else {
+                    *loadOK = false;
+                    log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
+                  }
+                } 
+              }
+            } 
+            hash_iter_free(iter);
+            member_config_iset_sim_time( my_config , report_step , ecl_sum_get_report_time( summary , report_step ));
+          }
+          
+          ecl_sum_free( summary ); 
+          member_config_fwrite_sim_time( my_config , shared_info->fs );
         }
-        
-        ecl_sum_free( summary ); 
-        member_config_fwrite_sim_time( my_config , shared_info->fs );
       }
     }
   }
@@ -1305,7 +1320,7 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
    init_step    : The parameters are loaded from this EnKF/report step.
    report_step1 : The simulation should start from this report step; 
                   dynamic data are loaded from this step.
-   report_step2 : The simulation should stop at this report step.
+   report_step2 : The simulation should stop at this report step. (unless run_mode == ENSEMBLE_PREDICTION - where it just runs til end.)
 
    For a normal EnKF run we well have init_step == report_step1, but
    in the case where we want rerun from the beginning with updated
@@ -1325,7 +1340,13 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     util_make_path(run_info->run_path);
     {
       char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config) , NULL);
-      sched_file_fprintf_i(member_config_get_sched_file( my_config ) , run_info->step2 , schedule_file);
+      bool   addEND;
+      if (run_info->run_mode == ENSEMBLE_PREDICTION)
+        addEND = false;
+      else
+        addEND = true;
+      
+      sched_file_fprintf_i(member_config_get_sched_file( my_config ) , run_info->step2 , schedule_file , addEND);
       free(schedule_file);
     }
 

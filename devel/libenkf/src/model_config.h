@@ -31,8 +31,6 @@ void                  model_config_set_load_results( model_config_type *  , int 
 int 		      model_config_get_history_length(const model_config_type * );
 bool                  model_config_has_prediction(const model_config_type * );
 int                   model_config_get_last_history_restart(const model_config_type * );
-int                   model_config_get_abs_last_restart(const model_config_type * );
-void                  model_config_update_last_restart(model_config_type * , int );
 model_config_type   * model_config_alloc(const config_type * , int ens_size , const ext_joblist_type * , int , const sched_file_type * , bool , bool);
 void                  model_config_free(model_config_type *);
 path_fmt_type       * model_config_get_runpath_fmt(const model_config_type * );

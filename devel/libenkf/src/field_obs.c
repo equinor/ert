@@ -118,30 +118,48 @@ const char * field_obs_get_field_name(
 
 
 
-void field_obs_get_observations(
-  const field_obs_type * field_obs,
-  int                    restart_nr,
-  obs_data_type        * obs_data,
-  const active_list_type * active_list) {
-  
-  for (int i=0; i < field_obs->size; i++) 
-    obs_data_add(obs_data , field_obs->obs_value[i] , field_obs->obs_std[i] , stringlist_iget(field_obs->keylist , i) );
-
-}
-
-
-
-
-void field_obs_measure(
-  const field_obs_type * field_obs,
-  const field_type     * field_state,
-  meas_vector_type     * meas_vector)
-{
-  for (int i=0; i < field_obs->size; i++) {
-    double value = field_iget_double(field_state , field_obs->index_list[i]);
-    meas_vector_add(meas_vector , value);
+void field_obs_get_observations(const field_obs_type * field_obs,  int  restart_nr,  obs_data_type * obs_data,  const active_list_type * __active_list) {
+  int i;
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  if (active_mode == ALL_ACTIVE) {
+    for (i=0; i < field_obs->size; i++) 
+      obs_data_add(obs_data , field_obs->obs_value[i] , field_obs->obs_std[i] , stringlist_iget(field_obs->keylist , i) );
+    
+  } else if (active_mode == PARTLY_ACTIVE) {
+    const int   * active_list    = active_list_get_active( __active_list ); 
+    int active_size              = active_list_get_active_size( __active_list );
+    for (i =0 ; i < active_size; i++) {
+      int iobs = active_list[i];
+      obs_data_add(obs_data , field_obs->obs_value[iobs] , field_obs->obs_std[iobs] , stringlist_iget(field_obs->keylist , iobs) );
+    }
   }
 }
+
+
+
+
+void field_obs_measure(const field_obs_type * field_obs, const field_type * field_state, meas_vector_type * meas_vector , const active_list_type * __active_list) {
+  int iobs;
+  
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  if (active_mode == ALL_ACTIVE) {
+    for (iobs=0; iobs < field_obs->size; iobs++) {
+      double value = field_iget_double(field_state , field_obs->index_list[iobs]);
+      meas_vector_add(meas_vector , value);
+    }
+  } else if (active_mode == PARTLY_ACTIVE) {
+    const int   * active_list    = active_list_get_active( __active_list ); 
+    int active_size              = active_list_get_active_size( __active_list );
+    for (int i =0 ; i < active_size; i++) {
+      iobs = active_list[i];
+      double value = field_iget_double(field_state , field_obs->index_list[iobs]);
+      meas_vector_add(meas_vector , value);
+    }
+  }
+}
+
+
+
 
 
 double field_obs_chi2(const field_obs_type * field_obs,  const field_type     * field_state) {

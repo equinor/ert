@@ -148,20 +148,9 @@ int enkf_main_get_history_length( const enkf_main_type * enkf_main) {
   return model_config_get_last_history_restart( enkf_main->model_config);
 }
 
-int enkf_main_get_total_length( const enkf_main_type * enkf_main) {
-  return model_config_get_abs_last_restart( enkf_main->model_config );
-}
-
 bool enkf_main_has_prediction( const enkf_main_type * enkf_main ) {
   return model_config_has_prediction( enkf_main->model_config );
 }
-
-
-
-//const enkf_sched_type * enkf_main_get_enkf_sched(const enkf_main_type * enkf_main) {
-//return model_config_get_enkf_sched(enkf_main->model_config);
-//}
-
 
 enkf_fs_type * enkf_main_get_fs(const enkf_main_type * enkf_main) {
   return enkf_main->dbase;
@@ -802,7 +791,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
                                state_enum init_state_parameter , 
                                state_enum init_state_dynamic   , 
                                int step1                       , 
-                               int step2                       , 
+                               int step2                       ,  /* Discarded for predictions */
                                bool enkf_update                ,     
                                forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
   
@@ -812,8 +801,11 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
   int   job_size;
 
   int iens;
-
-  printf("Starting forward step: %d -> %d\n",step1 , step2);
+  if (run_mode == ENSEMBLE_PREDICTION)
+    printf("Starting predictions from step: %d\n",step1);
+  else
+    printf("Starting forward step: %d -> %d\n",step1 , step2);
+  
   log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
   log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
   job_size = 0;
@@ -999,12 +991,12 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
       /* It is an experiment */
       const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
       const int last_report              = enkf_sched_get_last_report(enkf_sched);
-      if (run_mode == ENSEMBLE_EXPERIMENT) {
+      if (run_mode == ENSEMBLE_EXPERIMENT || run_mode == ENSEMBLE_PREDICTION) {
 	/* No possibility to use funky forward model */
         int load_start = start_report;
         state_enum init_state_parameter = start_state;
         state_enum init_state_dynamic   = start_state;
-	enkf_main_run_step(enkf_main , ENSEMBLE_EXPERIMENT , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
+	enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
       } 
     }
   }
@@ -1070,6 +1062,13 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
       if (enkf_config_node_get_var_type( config_node ) == DYNAMIC_RESULT)
         if (enkf_config_node_get_num_obs( config_node ) == 0)
           add_node = false;
+      
+      /*
+        Make sure the funny GEN_KW instance masquerading as
+        SCHEDULE_PREDICTION_FILE is not added to the soup.
+      */
+      if (util_string_equal(key , "PRED"))
+        add_node = false;
       
       if (add_node)
         fprintf(stream , "%-32s ALL_ACTIVE %s\n",local_config_get_cmd_string( ADD_DATA ) , key);
@@ -1215,16 +1214,13 @@ static config_type * enkf_main_alloc_config() {
   
   item = config_add_item(config , "SCHEDULE_FILE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-  
-  item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+  /* 
+     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a GEN_KW is
+     added en ensemble_config.c 
+  */
 
-  item = config_add_item( config , "PREDICTION_LENGTH" , false , false );  
-  config_item_set_argc_minmax( item , 1 , 1 , NULL);
-      
   item = config_add_item(config , "DATA_FILE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-
 
   item = config_add_item(config , "INIT_SECTION" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
@@ -1236,9 +1232,6 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item( config , "RUN_TEMPLATE" , false , true );
   config_item_set_argc_minmax(item , 2 , -1 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
 
-  item = config_add_item(config , "SCHEDULE_PREDICTION_FILE" , false , false);
-  config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-  
   config_add_key_value(config , "RUNPATH" , false , CONFIG_STRING);
   
   item = config_add_item(config , "ENSPATH" , true , false);
@@ -1391,13 +1384,6 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
                                                  model_config_get_std_forward_model(enkf_main->model_config),
                                                  enkf_main->logh,
                                                  enkf_main->templates);
-    
-    /** 
-        This is the time we tell the model config object about
-        our 'maximum report step' - possibly including
-        predictions.
-    */
-    model_config_update_last_restart(enkf_main->model_config , enkf_state_get_last_restart_nr( enkf_main->ensemble[iens] ));
   }
   msg_free(msg , true);
   
@@ -1820,7 +1806,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   /* We internalize all the results - for all the report steps (beyond zero). */
   {
     int report_step;
-    for (report_step = 1; report_step < enkf_main_get_total_length(enkf_main); report_step++)
+    for (report_step = 1; report_step < enkf_main_get_history_length(enkf_main); report_step++)
       model_config_set_internalize_results( enkf_main->model_config , report_step);
   }
 

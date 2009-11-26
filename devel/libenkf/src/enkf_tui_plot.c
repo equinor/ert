@@ -418,7 +418,7 @@ void enkf_tui_plot_GEN_KW(void * arg) {
 
     if (config_node != NULL) {
       int iens1 , iens2 , step1 , step2;   
-      const int last_report      = enkf_main_get_total_length( enkf_main );
+      const int last_report      = enkf_main_get_history_length( enkf_main );
 
       enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
       enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
@@ -441,7 +441,7 @@ void enkf_tui_plot_all_GEN_KW(void * arg) {
     const int prompt_len = 40;
     int iens1 , iens2 , step1 , step2 , ikey;   
     stringlist_type * gen_kw_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , GEN_KW);
-    const int last_report         = enkf_main_get_total_length( enkf_main );
+    const int last_report         = enkf_main_get_history_length( enkf_main );
 
     enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
     enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
@@ -480,7 +480,7 @@ void enkf_tui_plot_histogram(void * arg) {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
       state_enum plot_state = ANALYZED; /* Compiler shut up */
       char * key_index;
-      const int last_report = enkf_main_get_total_length( enkf_main );
+      const int last_report = enkf_main_get_history_length( enkf_main );
       double * count        = util_malloc(ens_size * sizeof * count , __func__);
       int iens , report_step;
       char * plot_file = enkf_tui_plot_alloc_plot_file( plot_config , case_name , user_key );
@@ -549,7 +549,7 @@ void enkf_tui_plot_ensemble(void * arg) {
     if (user_key != NULL) {
       state_enum plot_state = ANALYZED; /* Compiler shut up */
       char * key_index;
-      const int last_report = enkf_main_get_total_length( enkf_main );
+      const int last_report = enkf_main_get_history_length( enkf_main );
       int iens1 , iens2 , step1 , step2;   
             
       config_node = ensemble_config_user_get_node( ensemble_config , user_key , &key_index);
@@ -591,12 +591,14 @@ void enkf_tui_plot_ensemble(void * arg) {
 void enkf_tui_plot_all_summary(void * arg) {
   enkf_main_type             * enkf_main       = enkf_main_safe_cast( arg );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  int last_report                              = enkf_main_get_total_length( enkf_main );
+  int last_report                              = enkf_main_get_history_length( enkf_main );
   const int prompt_len = 40;
   int iens1 , iens2 , step1 , step2;   
 
         
-  enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
+  //enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
+  step1 = 62;
+  step2 = 79;
   enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , prompt_len , &iens1 , &iens2);
   
   {
@@ -658,7 +660,7 @@ void enkf_tui_plot_observation(void * arg) {
           if (num_active == 1)
             report_step = obs_vector_get_active_report_step( obs_vector );
           else
-            report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
+            report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length( enkf_main ) , "Report step" , prompt_len);
         } while (!obs_vector_iget_active(obs_vector , report_step));
         {
           enkf_node_type * enkf_node = enkf_node_alloc( config_node );
@@ -868,7 +870,7 @@ static void enkf_tui_plot_select_RFT(const enkf_main_type * enkf_main , char ** 
         if (obs_vector_get_num_active( obs_vector ) == 1)
           report_step = obs_vector_get_active_report_step( obs_vector );
         else
-          report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
+          report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length( enkf_main ) , "Report step" , prompt_len);
       } while (!obs_vector_iget_active(obs_vector , report_step));
       *_obs_key = obs_key;
       *_report_step = report_step;
@@ -917,7 +919,7 @@ void enkf_tui_plot_RFT_time(void * arg) {
 
     /* Could be user input ... */
     step1      = 0;
-    step2      = enkf_main_get_total_length( enkf_main );
+    step2      = enkf_main_get_history_length( enkf_main );
     iens1      = 0;
     iens2      = ensemble_config_get_size(ensemble_config) - 1;
     plot_state = BOTH;
@@ -967,7 +969,7 @@ void enkf_tui_plot_all_RFT( void * arg) {
 	  report_step = obs_vector_get_active_report_step( obs_vector );
 	else 
 	  /* An RFT should really be active at only one report step - but ... */
-	  report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length( enkf_main ) , "Report step" , prompt_len);
+	  report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length( enkf_main ) , "Report step" , prompt_len);
       } while (!obs_vector_iget_active(obs_vector , report_step));
       
       enkf_tui_plot_RFT__(enkf_main , obs_key , report_step);
@@ -984,7 +986,7 @@ void enkf_tui_plot_sensitivity(void * arg) {
   
   
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
-  const int last_report                        = enkf_main_get_total_length( enkf_main );
+  const int last_report                        = enkf_main_get_history_length( enkf_main );
   const int ens_size    		       = ensemble_config_get_size(ensemble_config);
   const int prompt_len  		       = 45;                   
   const enkf_config_node_type * config_node_x;

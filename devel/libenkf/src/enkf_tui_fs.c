@@ -209,7 +209,7 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   ens_size = ensemble_config_get_size(config);
 
   
-  last_report  = enkf_main_get_total_length( enkf_main );
+  last_report  = enkf_main_get_history_length( enkf_main );
 
   source_case = enkf_tui_fs_alloc_existing_case( fs , "Initialize from case" , prompt_len);
   if (source_case != NULL) {                                              
@@ -242,7 +242,7 @@ void enkf_tui_fs_copy_ensemble(void * arg)
   enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
   source_case = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
-  last_report  = enkf_main_get_total_length( enkf_main );
+  last_report  = enkf_main_get_history_length( enkf_main );
 
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
   state_from       = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);
@@ -277,7 +277,7 @@ void enkf_tui_fs_copy_ensemble_of_parameters(void * arg)
   enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
   source_case  	   = util_alloc_string_copy(enkf_fs_get_read_dir(fs));
-  last_report  	   = enkf_main_get_total_length( enkf_main );
+  last_report  	   = enkf_main_get_history_length( enkf_main );
 
   report_step_from = util_scanf_int_with_limits("Source report step",prompt_len , 0 , last_report);
   state_from       = enkf_tui_util_scanf_state("Source analyzed/forecast [A|F]" , prompt_len , false);

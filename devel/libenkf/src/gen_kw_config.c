@@ -17,7 +17,7 @@ struct gen_kw_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   char                * key;
   char               ** kw_list;
-  char               ** tagged_kw_list;  /* The same keywords - but '<' and '>' */
+  char               ** tagged_kw_list;  /* The same keywords - but with '<' and '>' */
   scalar_config_type  * scalar_config;
   char                * template_file;
   gen_kw_type         * min_std;
@@ -101,30 +101,41 @@ OPTIONS:
 MIN_STD:
 INIT_FILES:
 
+Observe that internally the gen_kw implementation allows for filename
+== NULL, that is a gen_kw instance without keywords. This capability
+is not exported to the end user in the GEN_KW interface, but used in
+the SCHEDULE_PREDICTION file keyword.
 */
 
 gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filename , const char * template_file, const char * min_std_file , const char * init_file_fmt ) {
   gen_kw_config_type * config = NULL;
+  
+  if (filename == NULL || util_file_exists(filename)) {
+    FILE * stream = NULL;
+    int    size   = 0;
 
-  if (util_file_exists(filename)) {
-    FILE * stream = util_fopen(filename , "r");
-    int line_nr = 0;
-    int size;
-    
-    size = util_count_file_lines(stream);
-    fseek(stream , 0L , SEEK_SET);
+    if (filename != NULL) {
+      stream = util_fopen(filename , "r");
+      size = util_count_file_lines(stream);
+      fseek(stream , 0L , SEEK_SET);
+    }
+
     config = __gen_kw_config_alloc_empty(size , template_file , init_file_fmt);
-    do {
-      char name[128];  /* UGGLY HARD CODED LIMIT */
-      if (fscanf(stream , "%s" , name) != 1) 
-        util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
-      
-      config->tagged_kw_list[line_nr] = util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , name , DEFAULT_END_TAG);
-      config->kw_list[line_nr] = util_alloc_string_copy(name);
-      scalar_config_fscanf_line(config->scalar_config , line_nr , stream);
-      line_nr++;
-    } while ( line_nr < size );
-    fclose(stream);
+
+    if (stream != NULL) {
+      int line_nr = 0;
+      do {
+        char name[128];  /* UGGLY HARD CODED LIMIT */
+        if (fscanf(stream , "%s" , name) != 1) 
+          util_abort("%s: something wrong when reading: %s - aborting \n",__func__ , filename);
+        
+        config->tagged_kw_list[line_nr] = util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , name , DEFAULT_END_TAG);
+        config->kw_list[line_nr] = util_alloc_string_copy(name);
+        scalar_config_fscanf_line(config->scalar_config , line_nr , stream);
+        line_nr++;
+      } while ( line_nr < size );
+      fclose(stream);
+    }
   } else 
     util_abort("%s: config_file:%s does not exist - aborting.\n" , __func__ , filename);
   
@@ -140,9 +151,21 @@ gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filenam
 
 
 
-gen_kw_config_type * gen_kw_config_alloc_with_options(const char * key , const char * filename , const char * template_file, const stringlist_type * options) {
-  hash_type * opt_hash = hash_alloc_from_options( options );
-  return gen_kw_config_alloc( key , filename , template_file , hash_safe_get( opt_hash , "MIN_STD" ), hash_safe_get( opt_hash , "INIT_FILES") );
+gen_kw_config_type * gen_kw_config_alloc_with_options(const char * key , const char * __parameter_file , const char * template_file, const stringlist_type * options) {
+  hash_type          * opt_hash      = hash_alloc_from_options( options );
+  const char * min_std_file          = hash_safe_get( opt_hash , "MIN_STD" ); 
+  const char * init_files            = hash_safe_get( opt_hash , "INIT_FILES");
+  const char * parameter_file        = __parameter_file;
+
+  gen_kw_config_type * gen_kw_config;
+  
+  /* Funny code path for the situation where the GEN_KW instance is masked in as SCHEDULE_PREDICTION_FILE */
+  if (parameter_file == NULL)
+    parameter_file = hash_safe_get( opt_hash , "PARAMETERS" );
+  
+  gen_kw_config = gen_kw_config_alloc( key , parameter_file , template_file , min_std_file , init_files);
+  hash_free( opt_hash );
+  return gen_kw_config;
 }
 
 
@@ -158,9 +181,9 @@ void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
   util_free_stringlist(gen_kw_config->kw_list        , scalar_config_get_data_size(gen_kw_config->scalar_config));
   util_free_stringlist(gen_kw_config->tagged_kw_list , scalar_config_get_data_size(gen_kw_config->scalar_config));
   util_safe_free( gen_kw_config->key );
-  if (gen_kw_config->template_file != NULL)
-    free(gen_kw_config->template_file);
+  util_safe_free(gen_kw_config->template_file);
   scalar_config_free(gen_kw_config->scalar_config);
+  
   if (gen_kw_config->init_file_fmt != NULL)
     path_fmt_free( gen_kw_config->init_file_fmt );
   free(gen_kw_config);

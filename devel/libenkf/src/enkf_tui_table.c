@@ -29,7 +29,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   enkf_fs_type               * fs              = enkf_main_get_fs(enkf_main);
   const int ens_size    = ensemble_config_get_size(ensemble_config);
-  const int last_report = enkf_main_get_total_length( enkf_main );
+  const int last_report = enkf_main_get_history_length( enkf_main );
   int iens1, iens2, step1 , step2;
   int ikey , num_keys;
   int length;

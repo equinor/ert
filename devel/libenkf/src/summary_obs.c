@@ -76,23 +76,40 @@ const char * summary_obs_get_summary_key(const summary_obs_type * summary_obs)
 }
 
 
-
+/**
+   Hardcodes an assumption that the size of summary data|observations is always one.
+*/
 void summary_obs_get_observations(const summary_obs_type * summary_obs,
 				  int                      restart_nr,
 				  obs_data_type          * obs_data,
-				  const active_list_type * active_list) {
-  obs_data_add(obs_data , summary_obs->value , summary_obs->std , summary_obs->summary_key);
+				  const active_list_type * __active_list) {
+
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  if (active_mode == ALL_ACTIVE) 
+    obs_data_add(obs_data , summary_obs->value , summary_obs->std , summary_obs->summary_key);
+  else if (active_mode == PARTLY_ACTIVE) { /* This is quite lame - but ... */
+    int active_size = active_list_get_active_size( __active_list );
+    if (active_size == 1)
+      obs_data_add(obs_data , summary_obs->value , summary_obs->std , summary_obs->summary_key);
+  }
 }
 
 
 
-void summary_obs_measure(const summary_obs_type * obs,
-			 const summary_type     * summary,
-			 meas_vector_type       * meas_vector)
-{
-  meas_vector_add(meas_vector , summary_get(summary));
+void summary_obs_measure(const summary_obs_type * obs, const summary_type * summary, meas_vector_type * meas_vector , const active_list_type * __active_list) {
+
+  active_mode_type active_mode = active_list_get_mode( __active_list );
+  if (active_mode == ALL_ACTIVE) 
+    meas_vector_add(meas_vector , summary_get(summary));
+  else if (active_mode == PARTLY_ACTIVE) {
+    int active_size = active_list_get_active_size( __active_list );
+    if (active_size == 1)
+      meas_vector_add(meas_vector , summary_get(summary));
+  }
 }
 
+
+ 
 
 double summary_obs_chi2(const summary_obs_type * obs,
 			const summary_type     * summary) {

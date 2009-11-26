@@ -554,7 +554,7 @@ void obs_vector_iget_observations(const obs_vector_type * obs_vector , int repor
 
 void obs_vector_measure(const obs_vector_type * obs_vector , int report_step ,const enkf_node_type * enkf_node ,  meas_vector_type * meas_vector, const active_list_type * active_list) {
   if (obs_vector->nodes[report_step] != NULL)
-    obs_vector->measure(obs_vector->nodes[report_step] , enkf_node_value_ptr(enkf_node) , meas_vector);
+    obs_vector->measure(obs_vector->nodes[report_step] , enkf_node_value_ptr(enkf_node) , meas_vector, active_list);
 }
 
 

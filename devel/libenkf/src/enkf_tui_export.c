@@ -23,7 +23,7 @@ void enkf_tui_export_field(const enkf_main_type * enkf_main , field_file_format_
   const int prompt_len = 45;
   const enkf_config_node_type * config_node;
   state_enum analysis_state;
-  const int last_report = enkf_main_get_total_length( enkf_main );
+  const int last_report = enkf_main_get_history_length( enkf_main );
   int        iens1 , iens2 , iens , report_step;
   path_fmt_type * export_path;
   
@@ -98,7 +98,7 @@ void enkf_tui_export_gen_data(void * arg) {
     const int prompt_len = 60;
     int report_step;
     int iens1 , iens2;
-    const int last_report = enkf_main_get_total_length( enkf_main );
+    const int last_report = enkf_main_get_history_length( enkf_main );
 
     const enkf_config_node_type * config_node;
     state_enum state = ANALYZED;
@@ -163,7 +163,7 @@ void enkf_tui_export_profile(void * enkf_main) {
     const int prompt_len = 60;
     const int ens_size   = ensemble_config_get_size(ensemble_config);
     int iens1 , iens2;
-    const int last_report = enkf_main_get_total_length( enkf_main );
+    const int last_report = enkf_main_get_history_length( enkf_main );
     bool * iens_active  ;
     bool * report_active;
 
@@ -282,7 +282,7 @@ void enkf_tui_export_cell(void * enkf_main) {
     cell_nr = enkf_tui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
       const int ens_size    = ensemble_config_get_size(ensemble_config);
-      const int last_report = enkf_main_get_total_length( enkf_main );
+      const int last_report = enkf_main_get_history_length( enkf_main );
       int iens1 , iens2;   
       bool * iens_active    = enkf_tui_util_scanf_alloc_iens_active( ens_size , prompt_len , &iens1 , &iens2); /* Not used yet ... */
       bool * report_active  = enkf_tui_util_scanf_alloc_report_active( last_report , prompt_len);
@@ -343,7 +343,7 @@ void enkf_tui_export_time(void * enkf_main) {
     config_node = enkf_tui_util_scanf_key(ensemble_config , prompt_len , FIELD ,INVALID_VAR);
     cell_nr = enkf_tui_util_scanf_ijk(enkf_config_node_get_ref(config_node) , prompt_len);
     {
-      const int last_report = enkf_main_get_total_length( enkf_main );
+      const int last_report = enkf_main_get_history_length( enkf_main );
       const int step1       = util_scanf_int_with_limits("First report step",prompt_len , 0 , last_report);
       const int step2       = util_scanf_int_with_limits("Last report step",prompt_len , step1 , last_report);
       const int ens_size    = ensemble_config_get_size(ensemble_config);
@@ -470,7 +470,7 @@ void enkf_tui_export_fieldP(void * arg) {
   const enkf_config_node_type * config_node    = enkf_tui_util_scanf_key(ensemble_config , prompt_len ,  FIELD  , INVALID_VAR );
   int iens1                   	      	       = 0;
   int iens2                   	      	       = ensemble_config_get_size(ensemble_config);
-  const int last_report                        = enkf_main_get_total_length( enkf_main );
+  const int last_report                        = enkf_main_get_history_length( enkf_main );
   int report_step                              = util_scanf_int_with_limits("Report step: ", prompt_len , 0 , last_report);
   double lower_limit                           = util_scanf_double("Lower limit", prompt_len);
   double upper_limit                           = util_scanf_double("Upper limit", prompt_len);
@@ -576,7 +576,7 @@ void enkf_tui_export_scalar2csv(void * arg) {
     iens2 	 = ensemble_config_get_size(ensemble_config) - 1;
     iens1 	 = 0;   
     first_report = 0;
-    last_report  = enkf_main_get_total_length( enkf_main );
+    last_report  = enkf_main_get_history_length( enkf_main );
     {
       char * path;
       char * prompt = util_alloc_sprintf("File to store \'%s\'", user_key);

@@ -40,7 +40,7 @@ void enkf_tui_run_restart__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
   const int prompt_len  = 35;
-  const int last_report = enkf_main_get_total_length( enkf_main );
+  const int last_report = enkf_main_get_history_length( enkf_main );
   int start_report;
   state_enum state;
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
@@ -101,13 +101,13 @@ void enkf_main_interactive_set_runpath__(void *arg) {
 
 
 void enkf_tui_run_analyze__(void * enkf_main) {
-  int report_step = enkf_tui_util_scanf_report_step(enkf_main_get_total_length(enkf_main) , "Which report step to analyze" , 40);
+  int report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length(enkf_main) , "Which report step to analyze" , 40);
   enkf_main_UPDATE(enkf_main , report_step - 1, report_step );
 }
 
 
 void enkf_tui_run_smooth__(void * enkf_main) {
-  int last_report = enkf_main_get_total_length( enkf_main ) ;
+  int last_report = enkf_main_get_history_length( enkf_main ) ;
   int step1 = enkf_tui_util_scanf_report_step(last_report , "First report step" , 20);
   int step2 = enkf_tui_util_scanf_report_step(last_report , "Last report step" , 20);
 
@@ -130,7 +130,7 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
       for (iens= 0; iens < ens_size; iens++)
 	iactive[iens] = true;
     }
-    enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , history_end , history_end  , start_state);
+    enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , history_end , history_end  , start_state);
     free( iactive );
 
   } else
@@ -143,7 +143,7 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
 void enkf_tui_run_manual_load__( void * arg ) {
   const int prompt_len                         = 60;
   enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
-  const int last_report                        = enkf_main_get_total_length( enkf_main );
+  const int last_report                        = enkf_main_get_history_length( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size                           = ensemble_config_get_size(ensemble_config);
   int step1,step2;

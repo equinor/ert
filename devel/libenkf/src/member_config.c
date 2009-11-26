@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <path_fmt.h>
 #include <subst.h>
+#include <sched_file.h>
 #include <ecl_config.h>
 #include <enkf_fs.h>
 #include <enkf_types.h>
@@ -21,14 +22,13 @@
 
 
 struct member_config_struct {
-  int  		        iens;                /* The ensemble member number of this member. */
-  char                * casename;            /* The name of this case - will mosttly be NULL. */
-  keep_runpath_type     keep_runpath;        /* Should the run-path directory be left around (for this member)*/
-  char 		      * eclbase;             /* The ECLBASE string used for simulations of this member. */
-  sched_file_type     * sched_file;          /* The schedule file - can either be a shared pointer to somehwere else - or a pr. member schedule file. */
-  bool                  private_sched_file;  /* Is the member config holding a private schedule file - just relevant when freeing up? */ 
-  int                   last_restart_nr;
-  time_t_vector_type  * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. [NOT in use yet]. */
+  int  		          iens;                /* The ensemble member number of this member. */
+  char                  * casename;            /* The name of this case - will mosttly be NULL. */
+  keep_runpath_type       keep_runpath;        /* Should the run-path directory be left around (for this member)*/
+  char 		        * eclbase;             /* The ECLBASE string used for simulations of this member. */
+  const sched_file_type * sched_file;          /* The schedule file - a shared pointer NOT owned bt this object. */ 
+  int                     last_restart_nr;
+  time_t_vector_type    * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. */
 };
 
 
@@ -65,9 +65,6 @@ int member_config_get_last_restart_nr( const member_config_type * member_config)
 void member_config_free(member_config_type * member_config) {
   util_safe_free(member_config->eclbase);
   util_safe_free(member_config->casename );
-
-  if (member_config->private_sched_file)
-    sched_file_free( member_config->sched_file );
   time_t_vector_free( member_config->report_time );
   free(member_config);
 }
@@ -215,20 +212,8 @@ member_config_type * member_config_alloc(int iens ,
   member_config->iens                = iens; /* Can only be changed in the allocater. */
   member_config->eclbase  	     = NULL;
   member_config_set_keep_runpath(member_config , keep_runpath);
-  {
-    char * schedule_prediction_file = ecl_config_alloc_schedule_prediction_file(ecl_config , iens);
-    if (schedule_prediction_file != NULL) {
-      member_config->sched_file = sched_file_alloc_copy( ecl_config_get_sched_file( ecl_config ) , false); /* The historic part is a shallow copy. */
-      sched_file_parse_append( member_config->sched_file , schedule_prediction_file );
-      member_config->private_sched_file = true;
-      free( schedule_prediction_file );
-    } else {
-      member_config->sched_file         = ecl_config_get_sched_file( ecl_config );
-      member_config->private_sched_file = false;
-    }
-    member_config->last_restart_nr  = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
-    member_config->last_restart_nr += ecl_config_get_prediction_length( ecl_config );
-  }
+  member_config->sched_file         = ecl_config_get_sched_file( ecl_config );
+  member_config->last_restart_nr  = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
   member_config->report_time = time_t_vector_alloc( 0 , -1 );
   member_config_fread_sim_time( member_config , fs );
   return member_config;

@@ -34,17 +34,6 @@ bool summary_obs_default_used(
 const char * summary_obs_get_summary_key(
   const summary_obs_type * summary_obs);
 
-void summary_obs_get_observations(
-  const summary_obs_type * summary_obs,
-  int                      restart_nr,
-  obs_data_type          * obs_data,
-  const active_list_type * active_list); 
-
-void summary_obs_measure(
-  const summary_obs_type * obs,
-  const summary_type     * summary,
-  meas_vector_type       * meas_vector);
-
 summary_obs_type * summary_obs_alloc_from_HISTORY_OBSERVATION(
   const conf_instance_type * conf_instance,
   const history_type       * history);
