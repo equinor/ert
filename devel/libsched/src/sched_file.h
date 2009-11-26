@@ -22,8 +22,8 @@ void 		     sched_file_free(sched_file_type *);
 void 		     sched_file_parse(sched_file_type *, const char *);
 void                 sched_file_parse_append(sched_file_type *  , const char * );
 sched_file_type *    sched_file_parse_alloc(const char * , time_t);
-void                 sched_file_fprintf_i(const sched_file_type *, int, const char *);
-void                 sched_file_fprintf(const sched_file_type * sched_file, const char * file);
+void                 sched_file_fprintf_i(const sched_file_type *, int, const char *, bool);
+void                 sched_file_fprintf(const sched_file_type * sched_file, const char * file , bool);
 
 int                  sched_file_get_num_restart_files(const sched_file_type *);
 int                  sched_file_get_restart_nr_from_time_t(const sched_file_type *, time_t);

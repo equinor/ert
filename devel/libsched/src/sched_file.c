@@ -493,7 +493,7 @@ int sched_file_get_num_restart_files(const sched_file_type * sched_file)
 
 
 
-void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_file, const char * file)
+void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_file, const char * file , bool addEND)
 {
   FILE * stream = util_fopen(file, "w");
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
@@ -511,15 +511,22 @@ void sched_file_fprintf_i(const sched_file_type * sched_file, int last_restart_f
     const sched_block_type * sched_block = vector_iget_const( sched_file->blocks , i);
     sched_block_fprintf(sched_block, stream);
   }
-  //fprintf(stream, "END\n");
+
+  /** 
+      When this is added the ECLIPSE simulation will stop when reacing this END, 
+      irrespective of what follows.
+  */
+      
+  if (addEND)
+    fprintf(stream, "END\n");
   fclose(stream);
 }
 
 /* Writes the complete schedule file. */
-void sched_file_fprintf(const sched_file_type * sched_file, const char * file)
+void sched_file_fprintf(const sched_file_type * sched_file, const char * file, bool addEND)
 {
   int num_restart_files = sched_file_get_num_restart_files(sched_file);
-  sched_file_fprintf_i( sched_file , num_restart_files - 1 , file);
+  sched_file_fprintf_i( sched_file , num_restart_files - 1 , file , addEND);
 }
 
 

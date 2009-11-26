@@ -157,7 +157,7 @@ int main( int argc , char ** argv ) {
 
         {
           char * new_file = path_fmt_alloc_file(sched_fmt , true , i );
-          sched_file_fprintf( sched_file , new_file );
+          sched_file_fprintf( sched_file , new_file , false);
           msg_update( msg , new_file );
           free( new_file );
         }
