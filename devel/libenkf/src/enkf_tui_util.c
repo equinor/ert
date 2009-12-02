@@ -326,6 +326,28 @@ int enkf_tui_util_scanf_report_step(int last_report, const char * prompt , int p
 }
 
 
+int enkf_tui_util_scanf_int_with_default(const char * prompt , int prompt_len , bool * default_used) {
+  bool        OK;
+  int value;
+  *default_used = false;
+  do {
+    char * input;
+
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    input = util_alloc_stdin_line();
+    if (input == NULL) {
+      *default_used = true;
+      OK = true;
+      value = -1;
+    } else {
+      OK = util_sscanf_int( input , &value ); 
+      free( input );
+    }
+  } while (!OK);
+  return value;
+}
+
+
 /*****************************************************************/
 
 

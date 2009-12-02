@@ -51,10 +51,10 @@ struct model_config_struct {
   bool                  resample_when_fail;         /* Should we resample when a model fails to integrate? */
   bool                  has_prediction; 
   int                   max_internal_submit;        /* How many times to retry if the load fails. */
+  
+  /** The results are always loaded. */
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
-  bool_vector_type    * internalize_results; 	    /* Should the results (i.e. summary in ECLIPSE speak) be internalized at this report_step? */
   bool_vector_type    * __load_state;        	    /* Internal variable: is it necessary to load the state? */
-  bool_vector_type    * __load_results;      	    /* Internal variable: is it necessary to load the results? */
 };
 
 
@@ -181,9 +181,7 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
   {
     int num_restart = history_get_num_restarts(model_config->history);
     model_config->internalize_state   = bool_vector_alloc( num_restart , false );
-    model_config->internalize_results = bool_vector_alloc( num_restart , false );
     model_config->__load_state        = bool_vector_alloc( num_restart , false ); 
-    model_config->__load_results      = bool_vector_alloc( num_restart , false );
   }
 
   /*
@@ -256,11 +254,9 @@ void model_config_free(model_config_type * model_config) {
   util_safe_free( model_config->enkf_sched_file );
   history_free(model_config->history);
   forward_model_free(model_config->std_forward_model);
-  bool_vector_free(model_config->internalize_results);
   bool_vector_free(model_config->internalize_state);
   bool_vector_free(model_config->__load_state);
-  bool_vector_free(model_config->__load_results);
-  if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
+    if (model_config->case_names != NULL) stringlist_free( model_config->case_names );
   free(model_config);
 }
 
@@ -332,8 +328,6 @@ forward_model_type * model_config_get_std_forward_model( const model_config_type
 void model_config_init_internalization( model_config_type * config ) {
   bool_vector_reset(config->internalize_state);
   bool_vector_reset(config->__load_state);
-  bool_vector_reset(config->internalize_results);
-  bool_vector_reset(config->__load_results);
 }
 
 
@@ -349,15 +343,6 @@ void model_config_set_internalize_state( model_config_type * config , int report
 }
 
 
-void model_config_set_internalize_results( model_config_type * config , int report_step) {
-  bool_vector_iset(config->internalize_results , report_step , true);
-  bool_vector_iset(config->__load_results      , report_step , true);
-}
-
-void model_config_set_load_results( model_config_type * config , int report_step) {
-  bool_vector_iset(config->__load_results , report_step , true);
-}
-
 void model_config_set_load_state( model_config_type * config , int report_step) {
   bool_vector_iset(config->__load_state , report_step , true);
 }
@@ -370,18 +355,10 @@ bool model_config_internalize_state( const model_config_type * config , int repo
   return bool_vector_iget(config->internalize_state , report_step);
 }
 
-bool model_config_internalize_results( const model_config_type * config , int report_step) {
-  return bool_vector_iget(config->internalize_results , report_step);
-}
-
 /*****************************************************************/
 
 bool model_config_load_state( const model_config_type * config , int report_step) {
   return bool_vector_iget(config->__load_state , report_step);
-}
-
-bool model_config_load_results( const model_config_type * config , int report_step) {
-  return bool_vector_iget(config->__load_results , report_step);
 }
 
 bool model_config_resample_when_fail( const model_config_type * config ) {

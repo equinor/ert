@@ -179,10 +179,12 @@ static void run_info_summarize( const run_info_type * run_info ) {
 
 static void run_info_init_for_load(run_info_type * run_info , 
                                    int load_start, 
+                                   int step1,
                                    int step2,
                                    int iens,
                                    path_fmt_type * run_path_fmt ,
                                    const subst_list_type * state_subst_list) {
+  run_info->step1      = step1;
   run_info->step2      = step2;
   run_info->load_start = load_start;
   run_info_set_run_path(run_info , iens , run_path_fmt , state_subst_list );
@@ -209,14 +211,13 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->init_step_parameters = init_step_parameters;
   run_info->init_state_parameter = init_state_parameter;
   run_info->init_state_dynamic = init_state_dynamic;
-  run_info->step1      	         = step1;
   run_info->runOK                = false;
   run_info->__ready              = true;
   run_info->run_mode             = run_mode;
   run_info->resample_when_fail   = resample_when_fail;
   run_info->max_internal_submit  = max_internal_submit;
   run_info->num_internal_submit  = 0;
-  run_info_init_for_load( run_info , load_start , step2 , iens , run_path_fmt , state_subst_list);
+  run_info_init_for_load( run_info , load_start , step1 , step2 , iens , run_path_fmt , state_subst_list);
 }
 
 
@@ -599,14 +600,8 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
 
     if (load_start == 0)  /* Do not attempt to load the "S0000" summary results. */
       load_start++;
-    
 
-    /* First: determine whether summary data should be loaded at all. */
-    for (report_step = load_start; report_step <= run_info->step2; report_step++) 
-      if (model_config_load_results( model_config , report_step )) 
-        load_summary = true;
-
-    if (load_summary) {
+    {
       member_config_type * my_config         = enkf_state->my_config;
       const char            * eclbase        = member_config_get_eclbase( my_config );
       const ecl_config_type * ecl_config     = enkf_state->ecl_config;
@@ -643,9 +638,6 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
               break;
           }
           
-          printf("Summary files: ");
-          stringlist_fprintf( data_files , ", " , stdout);
-
           if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
             summary = ecl_sum_fread_alloc(header_file , data_files );
           
@@ -662,26 +654,21 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
           const int iens                         = member_config_get_iens( my_config );
           const int step2                        = ecl_sum_get_last_report_step( summary );
           
-          printf("Loading %d - %d \n",load_start , step2);
 
           for (report_step = load_start; report_step <= step2; report_step++) {
-            const bool internalize_all  = model_config_internalize_results( model_config , report_step );
             hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
             while ( !hash_iter_is_complete(iter) ) {
               enkf_node_type * node = hash_iter_get_next_value(iter);
               if (enkf_node_get_var_type(node) == DYNAMIC_RESULT) {
-                bool internalize = internalize_all;
-                if (!internalize)  /* If we are not set up to load the full state - then we query this particular node. */
-                  internalize = enkf_node_internalize(node , report_step);
+                /* We internalize all DYNAMIC_RESULT nodes without any further ado. */
                 
-                if (internalize) {
-                  if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))   /* Loading/internalizing */
-                    enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
-                  else {
-                    *loadOK = false;
-                    log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
-                  }
+                if (enkf_node_ecl_load(node , run_info->run_path , summary , NULL , report_step , iens))   /* Loading/internalizing */
+                  enkf_fs_fwrite_node(shared_info->fs , node , report_step , iens , FORECAST);             /* Saving to disk */
+                else {
+                  *loadOK = false;
+                  log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed to load data for node:%s.",iens , report_step , enkf_node_get_key( node ));
                 } 
+                
               }
             } 
             hash_iter_free(iter);
@@ -745,7 +732,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
   /**
      Loading the restart block.
   */
-
+  
   if (unified) 
     util_abort("%s: sorry - unified restart files are not supported \n",__func__);
   {
@@ -884,7 +871,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
 	bool internalize_kw = internalize_state;
 	if (!internalize_kw)
 	  internalize_kw = enkf_node_internalize(enkf_node , report_step);
-        
+
 	if (internalize_kw) {
 	  if (enkf_node_has_func(enkf_node , ecl_load_func)) {
 	    if (enkf_node_ecl_load(enkf_node , run_info->run_path , NULL , restart_file , report_step , iens ))
@@ -893,6 +880,7 @@ static void enkf_state_internalize_state(enkf_state_type * enkf_state , const mo
               *loadOK = false;
               log_add_fmt_message(shared_info->logh , 3 , NULL , "[%03d:%04d] Failed load data for node:%s.",iens , report_step , enkf_node_get_key( enkf_node ));
             }
+
 	  }
 	} 
       } 
@@ -937,12 +925,14 @@ void * enkf_state_internalize_results_mt( void * arg ) {
   arg_pack_type * arg_pack = arg_pack_safe_cast( arg );
   enkf_state_type * enkf_state = arg_pack_iget_ptr( arg_pack , 0 );
   int load_start               = arg_pack_iget_int( arg_pack , 1 );
-  int step2                    = arg_pack_iget_int( arg_pack , 2 );
+  int step1                    = arg_pack_iget_int( arg_pack , 2 );
+  int step2                    = arg_pack_iget_int( arg_pack , 3 );
   bool loadOK                  = true;
 
   
   run_info_init_for_load( enkf_state->run_info , 
                           load_start , 
+                          step1 , 
                           step2 , 
                           member_config_get_iens( enkf_state->my_config ) , 
                           model_config_get_runpath_fmt( enkf_state->shared_info->model_config ) , 

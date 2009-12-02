@@ -175,6 +175,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
         enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
 
         arg_pack_append_ptr( arg_pack , enkf_state);
+        arg_pack_append_int( arg_pack , step1 );   /* This will be the load start parameter for the run_info struct. */
         arg_pack_append_int( arg_pack , step1 );
         arg_pack_append_int( arg_pack , step2 );
         thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);

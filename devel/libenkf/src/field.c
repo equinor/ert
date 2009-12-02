@@ -1133,27 +1133,28 @@ bool field_cmp(const field_type * f1 , const field_type * f2) {
 
 
 bool field_ecl_load(field_type * field , const char * ecl_file_name , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
-  bool loadOK = true;
-  {
-    field_file_format_type import_format = field_config_get_import_format(field->config);
-    if (import_format == ECL_FILE) {
-      if (restart_file != NULL) {
-	ecl_kw_type * field_kw = ecl_file_iget_named_kw(restart_file , field_config_get_ecl_kw_name(field->config) , 0);
-	field_copy_ecl_kw_data(field , field_kw);
-      } else 
-        loadOK = false;
-	//util_abort("%s: fatal error when loading: %s - no restart information has been loaded \n",__func__ , field_config_get_key( field->config ));
-    } else 
-      /* Loading from unique file - currently this only applies to the modelerror implementation. */
-      field_fload_typed(field , ecl_file_name , import_format);
+  bool loadOK                          = true;
+  field_file_format_type import_format = field_config_get_import_format(field->config);
     
-    if (loadOK) {
-      field_func_type * input_transform = field_config_get_input_transform(field->config);
-      /* The input transform is done in-place. */
-      if (input_transform != NULL) 
-	field_apply(field , input_transform);
-    }
+  if (import_format == ECL_FILE) {
+    if (restart_file != NULL) {
+      ecl_kw_type * field_kw = ecl_file_iget_named_kw(restart_file , field_config_get_ecl_kw_name(field->config) , 0);
+      field_copy_ecl_kw_data(field , field_kw);
+    } else 
+      loadOK = false;
+    //util_abort("%s: fatal error when loading: %s - no restart information has been loaded \n",__func__ , field_config_get_key( field->config ));
+  } else 
+    /* Loading from unique file - currently this only applies to the modelerror implementation. */
+    field_fload_typed(field , ecl_file_name , import_format);
+  
+  
+  if (loadOK) {
+    field_func_type * input_transform = field_config_get_input_transform(field->config);
+    /* The input transform is done in-place. */
+    if (input_transform != NULL) 
+      field_apply(field , input_transform);
   }
+
   return loadOK;
 }
 

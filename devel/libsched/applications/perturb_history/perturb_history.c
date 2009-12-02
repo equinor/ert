@@ -124,10 +124,27 @@ void sample( hash_type * group_rates ) {
 
 
 int main( int argc , char ** argv ) {
-  hash_type * group_rates = hash_alloc();
-  config_type * config = config_alloc();
+  hash_type   * group_rates = hash_alloc();
+  config_type * config      = config_alloc();
+  char        * config_file;
+  {
+    char * config_base;
+    char * config_ext;
+    char * run_path;
+    util_alloc_file_components( argv[1] , &run_path , &config_base , &config_ext);
+    if (run_path != NULL) {
+      printf("Changing to directory: %s \n",run_path);
+      if (chdir( run_path) != 0)
+        util_exit("Hmmmm - failed to change to directory:%s \n",run_path);
+    }
+    config_file = util_alloc_filename(NULL , config_base , config_ext);
+    util_safe_free( config_base );
+    util_safe_free( config_ext );
+    util_safe_free( run_path );
+  }
+
   config_init( config );
-  config_parse(config , argv[1] , "--" , NULL , "DEFINE" , NULL , false , true );
+  config_parse(config , config_file , "--" , NULL , "DEFINE" , NULL , false , true );
   {
     const char * data_file       = config_iget( config , "DATA_FILE" , 0 , 0 );
     const char * sched_file_name = config_iget( config , "SCHEDULE_FILE" , 0 , 0 );

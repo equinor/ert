@@ -1787,8 +1787,6 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   /* Internalizing the initial state. */
   model_config_set_internalize_state( enkf_main->model_config , 0);
   
-  
-  
   /* We internalize all the endpoints in the enkf_sched. */
   {
     int inode;
@@ -1797,20 +1795,9 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
       const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
       int report_step2            = enkf_sched_node_get_last_step( node );
       model_config_set_internalize_state( enkf_main->model_config , report_step2);
-      model_config_set_internalize_results( enkf_main->model_config , report_step2);
     }
   }
 
-
-  
-  /* We internalize all the results - for all the report steps (beyond zero). */
-  {
-    int report_step;
-    for (report_step = 1; report_step < enkf_main_get_history_length(enkf_main); report_step++)
-      model_config_set_internalize_results( enkf_main->model_config , report_step);
-  }
-
-  
 
   /* Make sure we internalize at all observation times.*/
   {
@@ -1828,10 +1815,8 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 	  enkf_config_node_set_internalize( data_node , active_step );
 	  {
 	    enkf_var_type var_type = enkf_config_node_get_var_type( data_node );
-	    if (var_type == DYNAMIC_STATE)
+	    if (var_type == DYNAMIC_STATE) 
 	      model_config_set_load_state( enkf_main->model_config , active_step);
-	    else if (var_type == DYNAMIC_RESULT)
-	      model_config_set_load_results( enkf_main->model_config , active_step);
 	  }
 	}
       } while (active_step >= 0);
