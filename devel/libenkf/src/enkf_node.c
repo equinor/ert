@@ -610,6 +610,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->data               = NULL;
   node->__modified         = true;
   node->__report_step      = -1;
+  node->__iens             = -1;
   node->__state            = UNDEFINED;
 
   /*

@@ -55,7 +55,7 @@ gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw->config = config;
   gen_kw->scalar = scalar_alloc(gen_kw_config_get_scalar_config( config ));
   gen_kw->__type_id          = GEN_KW;
-  gen_kw->private_subst_list = subst_list_alloc();  
+  gen_kw->private_subst_list = subst_list_alloc( gen_kw_config_get_subst_func_pool( config ));  
   gen_kw->global_subst_list  = NULL;
   return gen_kw;
 }

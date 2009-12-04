@@ -25,6 +25,7 @@
 #include <stringlist.h>
 #include <arg_pack.h>
 #include <pthread.h>
+#include <gen_data.h>
 
 #define FS_MAGIC_ID         123998L
 #define CURRENT_FS_VERSION  104
@@ -1464,8 +1465,6 @@ static int __get_parameter_report_step( int report_step , state_enum state) {
   return report_step;
 }
 
-pthread_mutex_t read_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 void enkf_fs_fread_node(enkf_fs_type * enkf_fs , enkf_node_type * enkf_node , int report_step , int iens , state_enum state) {
   const enkf_config_node_type * config_node = enkf_node_get_config( enkf_node );
   enkf_var_type var_type     = enkf_config_node_get_var_type(config_node);
@@ -1527,9 +1526,24 @@ void enkf_fs_copy_node(enkf_fs_type * enkf_fs,
 		       int report_step_to  , int iens_to  , state_enum state_to) { /* target state */
 
   enkf_node_type * enkf_node = enkf_fs_fread_alloc_node(enkf_fs, config_node, report_step_from, iens_from, state_from);
+
+  
+  
+  /* Hack to ensure that size is set for the gen_data instances.
+     This sneeks low level stuff into a high level scope. BAD. */
+  {
+    enkf_impl_type impl_type = enkf_node_get_impl_type( enkf_node );
+    if (impl_type == GEN_DATA) {
+      /* Read the size at report_step_from */
+      gen_data_type * gen_data = enkf_node_value_ptr( enkf_node );
+      int size                 = gen_data_get_size( gen_data );
+      
+      /* Enforce the size at report_step_to */
+      gen_data_assert_size( gen_data , size , report_step_to);
+    }
+  }
   enkf_fs_fwrite_node(enkf_fs, enkf_node, report_step_to, iens_to, state_to);
   enkf_node_free(enkf_node);
-
 }
 
 
@@ -1538,7 +1552,7 @@ void enkf_fs_copy_node(enkf_fs_type * enkf_fs,
 */
 void enkf_fs_copy_ensemble(enkf_fs_type * enkf_fs, 
 			   enkf_config_node_type * config_node,               
-			   int report_step_from, state_enum state_from,  /* src state */
+			   int report_step_from, state_enum state_from,    /* src state */
 			   int report_step_to  , state_enum state_to,      /* target state */
 			   int ens_size, 
 			   const int * __permutations) {

@@ -54,6 +54,7 @@
 #include <sys/types.h>
 #include <job_queue.h>
 #include <basic_queue_driver.h>
+#include <subst_func.h>
 #include "enkf_defaults.h"
 
 /**
@@ -106,6 +107,7 @@ struct enkf_main_struct {
   log_type             * logh;             /* Handle to an open log file. */
   plot_config_type     * plot_config;      /* Information about plotting. */
   ert_templates_type   * templates;       
+  subst_func_pool_type * subst_func_pool;
   /*-------------------------*/
 
   keep_runpath_type    * keep_runpath;     /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
@@ -192,6 +194,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   util_safe_free( enkf_main->keep_runpath );
   plot_config_free( enkf_main->plot_config );
   ert_templates_free( enkf_main->templates );
+  subst_func_pool_free( enkf_main->subst_func_pool );
   free(enkf_main);
 }
 
@@ -1354,7 +1357,15 @@ static enkf_main_type * enkf_main_alloc_empty() {
   enkf_main->dbase        = NULL;
   enkf_main->ensemble     = NULL;
   enkf_main->keep_runpath = NULL;
-  enkf_main->templates    = ert_templates_alloc();
+
+
+  /* Here we add the functions which should be available for string substitution operations. */
+  enkf_main->subst_func_pool = subst_func_pool_alloc( );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP" , subst_func_exp , false , 1 , 1 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD" , subst_func_add , true  , 0 , 0 );
+  
+  
+  enkf_main->templates    = ert_templates_alloc( enkf_main->subst_func_pool );
   return enkf_main;
 }
   
@@ -1383,7 +1394,8 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
                                                  data_kw,
                                                  model_config_get_std_forward_model(enkf_main->model_config),
                                                  enkf_main->logh,
-                                                 enkf_main->templates);
+                                                 enkf_main->templates,
+                                                 enkf_main->subst_func_pool);
   }
   msg_free(msg , true);
   
@@ -1533,7 +1545,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       bool use_lsf;
       enkf_main->ecl_config      = ecl_config_alloc( config );
-      enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ));
+      enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) , enkf_main->subst_func_pool);
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
       enkf_main->model_config    = model_config_alloc(config , 
                                                       ensemble_config_get_size( enkf_main->ensemble_config ),

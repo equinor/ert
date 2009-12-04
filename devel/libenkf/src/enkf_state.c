@@ -451,7 +451,8 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   hash_type                 * data_kw,
 				   const forward_model_type  * default_forward_model,
                                    log_type                  * logh,
-                                   ert_templates_type        * templates) {
+                                   ert_templates_type        * templates,
+                                   subst_func_pool_type      * subst_func_pool) {
   
   enkf_state_type * enkf_state  = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id              = ENKF_STATE_TYPE_ID; 
@@ -464,7 +465,7 @@ enkf_state_type * enkf_state_alloc(int iens,
   enkf_state->node_hash         = hash_alloc();
   enkf_state->restart_kw_list   = stringlist_alloc_new();
 
-  enkf_state->subst_list        = subst_list_alloc();
+  enkf_state->subst_list        = subst_list_alloc( subst_func_pool );
   enkf_state->subst_description = hash_alloc();
   
   /*
@@ -594,7 +595,6 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
   /* IFF reservoir_simulator == ECLIPSE ... */
   if (true) {
     const run_info_type   * run_info       = enkf_state->run_info;
-    bool       load_summary                = false; 
     int        load_start                  = run_info->load_start;
     int        report_step;
 

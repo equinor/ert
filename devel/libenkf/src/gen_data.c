@@ -43,6 +43,13 @@ struct gen_data_struct {
 
 
 
+void gen_data_assert_size( gen_data_type * gen_data , int size , int report_step) {
+  gen_data_config_assert_size(gen_data->config , size , report_step);
+  gen_data->current_report_step = report_step;
+}
+
+
+
 
 gen_data_config_type * gen_data_get_config(const gen_data_type * gen_data) { return gen_data->config; }
 
@@ -100,7 +107,7 @@ void gen_data_free(gen_data_type * gen_data) {
    The function currently writes an empty file (with only a report
    step and a size == 0) in the case where it does not have data. This
    is controlled by the value of the variable write_zero_size; if this
-   is changed to false some semantics in the laod code must be
+   is changed to false some semantics in the load code must be
    changed.
 */
 
@@ -128,12 +135,10 @@ bool gen_data_store(const gen_data_type * gen_data , buffer_type * buffer , int 
 
 
 
-
 void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_step) {
   int size;
-
   enkf_util_assert_buffer_type(buffer , GEN_DATA);
-  size           = buffer_fread_int(buffer);
+  size = buffer_fread_int(buffer);
   buffer_fskip_int( buffer );  /* Skipping this from the buffer - was a mistake to store it - I think ... */
   {
     size_t byte_size       = size * ecl_util_get_sizeof_ctype( gen_data_config_get_internal_type ( gen_data->config ));
@@ -141,9 +146,7 @@ void gen_data_load(gen_data_type * gen_data , buffer_type * buffer , int report_
     gen_data->data         = util_realloc( gen_data->data , byte_size , __func__);
     buffer_fread_compressed( buffer , compressed_size , gen_data->data , byte_size );
   }
-  gen_data_config_assert_size(gen_data->config , size , report_step);
-  gen_data->current_report_step = report_step;
-
+  gen_data_assert_size( gen_data , size , report_step );
 }
 
 
@@ -203,8 +206,7 @@ void gen_data_matrix_deserialize(gen_data_type * gen_data , const active_list_ty
   data has been loaded from file.
 */ 
 static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_step , ecl_type_enum load_type , const void * data) {
-  gen_data_config_assert_size(gen_data->config , size, report_step);
-  gen_data->current_report_step = report_step;
+  gen_data_assert_size(gen_data , size, report_step);
   gen_data_realloc_data(gen_data);
 
   if (size > 0) {

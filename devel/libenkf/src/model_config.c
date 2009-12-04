@@ -38,19 +38,19 @@
 
 
 struct model_config_struct {
-  stringlist_type     * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
-  forward_model_type  * std_forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
-  bool                  use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
-  history_type        * history;             	    /* The history object. */
-  path_fmt_type       * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
-  enkf_sched_type     * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
-  char                * enkf_sched_file;     	    /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
-  char                * enspath;
-  fs_driver_impl        dbase_type;
-  int                   last_history_restart;       /* The end of the history - this is inclusive.*/
-  bool                  resample_when_fail;         /* Should we resample when a model fails to integrate? */
-  bool                  has_prediction; 
-  int                   max_internal_submit;        /* How many times to retry if the load fails. */
+  stringlist_type      * case_names;                 /* A list of "iens -> name" mappings - can be NULL. */
+  forward_model_type   * std_forward_model;   	    /* The forward_model - as loaded from the config file. Each enkf_state object internalizes its private copy of the forward_model. */  
+  bool                   use_lsf;             	    /* The forward models need to know whether we are using lsf. */  
+  history_type         * history;             	    /* The history object. */
+  path_fmt_type        * runpath;             	    /* path_fmt instance for runpath - runtime the call gets arguments: (iens, report_step1 , report_step2) - i.e. at least one %d must be present.*/  
+  enkf_sched_type      * enkf_sched;          	    /* The enkf_sched object controlling when the enkf is ON|OFF, strides in report steps and special forward model - allocated on demand - right before use. */ 
+  char                 * enkf_sched_file;     	    /* THe name of file containg enkf schedule information - can be NULL to get default behaviour. */
+  char                 * enspath;
+  fs_driver_impl         dbase_type;
+  int                    last_history_restart;       /* The end of the history - this is inclusive.*/
+  bool                   resample_when_fail;         /* Should we resample when a model fails to integrate? */
+  bool                   has_prediction; 
+  int                    max_internal_submit;        /* How many times to retry if the load fails. */
   
   /** The results are always loaded. */
   bool_vector_type    * internalize_state;   	    /* Should the (full) state be internalized (at this report_step). */
@@ -136,7 +136,6 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
   model_config->enkf_sched                = NULL;
   model_config->enkf_sched_file           = NULL;   
   model_config->std_forward_model         = forward_model_alloc(  joblist , statoil_mode , model_config->use_lsf , DEFAULT_START_TAG , DEFAULT_END_TAG );
-  
   {
     char * config_string = config_alloc_joined_string( config , "FORWARD_MODEL" , " ");
     forward_model_parse_init( model_config->std_forward_model , config_string );
@@ -368,3 +367,5 @@ bool model_config_resample_when_fail( const model_config_type * config ) {
 int model_config_get_max_internal_submit( const model_config_type * config ) {
   return config->max_internal_submit;
 }
+
+

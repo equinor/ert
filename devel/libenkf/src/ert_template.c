@@ -4,6 +4,7 @@
 #include <vector.h>
 #include <util.h>
 #include <ert_template.h>
+#include <subst_func.h>
 
 #define ERT_TEMPLATE_TYPE_ID  7731963
 #define ERT_TEMPLATES_TYPE_ID 6677330
@@ -20,19 +21,20 @@ struct ert_template_struct {
 /* Plural - many templates. */
 struct ert_templates_struct {
   UTIL_TYPE_ID_DECLARATION;
-  vector_type * templates;
+  vector_type          * templates;
+  subst_func_pool_type * subst_func_pool;
 };
 
 
 
 
 
-ert_template_type * ert_template_alloc( const char * template_file , const char * target_file ) {
+ert_template_type * ert_template_alloc( const char * template_file , const char * target_file , subst_func_pool_type * subst_func_pool) {
   ert_template_type * template = util_malloc( sizeof * template , __func__);
   UTIL_TYPE_ID_INIT(template , ERT_TEMPLATE_TYPE_ID);
-  template->template    = template_alloc( template_file , false );  /* The templates are instantiated with internalize_template == false;
-                                                                       this means that substitutions are performed on the filename of the 
-                                                                       template itself .*/
+  template->template    = template_alloc( template_file , false , subst_func_pool);  /* The templates are instantiated with internalize_template == false;
+                                                                                        this means that substitutions are performed on the filename of the 
+                                                                                        template itself .*/
   template->target_file = util_alloc_string_copy( target_file );
   return template;
 }
@@ -67,10 +69,11 @@ void ert_template_free__(void * arg) {
 /*****************************************************************/
 
 
-ert_templates_type * ert_templates_alloc( ) {
+ert_templates_type * ert_templates_alloc( subst_func_pool_type * subst_func_pool ) {
   ert_templates_type * templates = util_malloc( sizeof * templates , __func__);
   UTIL_TYPE_ID_INIT( templates , ERT_TEMPLATES_TYPE_ID );
-  templates->templates = vector_alloc_new();
+  templates->templates       = vector_alloc_new();
+  templates->subst_func_pool = subst_func_pool;
   return templates;
 }
 
@@ -81,8 +84,8 @@ void ert_templates_free( ert_templates_type * ert_templates ) {
 }
 
 
-ert_template_type * ert_templates_add_template( ert_templates_type * ert_templates , const char * template_file , const char * target_file ) {
-  ert_template_type * template = ert_template_alloc( template_file , target_file );
+ert_template_type * ert_templates_add_template( ert_templates_type * ert_templates , const char * template_file , const char * target_file) {
+  ert_template_type * template = ert_template_alloc( template_file , target_file , ert_templates->subst_func_pool);
   vector_append_owned_ref( ert_templates->templates , template , ert_template_free__);
   return template;
 }

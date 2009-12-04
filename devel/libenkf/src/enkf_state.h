@@ -28,6 +28,8 @@ extern "C" {
 #include <ert_template.h>
 #include <job_queue.h>
 #include <member_config.h>
+#include <subst_func.h>
+
 
 typedef struct enkf_state_struct    enkf_state_type;
 
@@ -61,7 +63,8 @@ enkf_state_type  * enkf_state_alloc(int ,
 				    hash_type *,
 				    const forward_model_type *,
                                     log_type * logh,
-                                    ert_templates_type * templates);
+                                    ert_templates_type * templates,
+                                    subst_func_pool_type * subst_func_pool);
 
 int                enkf_state_get_last_restart_nr(const enkf_state_type * enkf_state );
 void               enkf_state_add_node(enkf_state_type * , const char *  , const enkf_config_node_type * );

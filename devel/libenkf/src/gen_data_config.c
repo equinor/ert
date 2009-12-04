@@ -53,6 +53,11 @@ ecl_type_enum gen_data_config_get_internal_type(const gen_data_config_type * con
 }
 
 
+/**
+   If current_size as queried from config->data_size_vector == -1
+   (i.e. not set); we seek through 
+*/
+
 int gen_data_config_get_data_size( const gen_data_config_type * config , int report_step) {
   int current_size = int_vector_safe_iget( config->data_size_vector , report_step );
   if (current_size < 0) 
