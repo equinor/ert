@@ -153,7 +153,7 @@ static ext_job_type * ext_job_alloc__(const char * name) {
 /* Exported function - must have name != NULL */
 ext_job_type * ext_job_alloc(const char * name) {
   ext_job_type * ext_job = ext_job_alloc__(name);
-  ext_job->private_args  = subst_list_alloc();
+  ext_job->private_args  = subst_list_alloc( NULL );
   return ext_job;
 }
 

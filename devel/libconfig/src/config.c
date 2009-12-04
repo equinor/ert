@@ -979,7 +979,7 @@ config_type * config_alloc() {
   config->parse_errors    = stringlist_alloc_new();
   config->parsed_files    = set_alloc_empty();
   config->messages        = hash_alloc();
-  config->define_list     = subst_list_alloc();
+  config->define_list     = subst_list_alloc( NULL );
   return config;
 }
 
