@@ -521,13 +521,13 @@ void job_queue_finalize(job_queue_type * queue) {
 
 
 
-void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
+void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
   const int max_ok_wait_time = 60; /* Seconds to wait for an OK file - when the job itself has said all OK. */
   const int ok_sleep_time    =  1; /* Time to wait between checks for OK|EXIT file. */
 
-  msg_type * submit_msg = msg_alloc("Submitting new jobs:  ]");
-  bool new_jobs = false;
-  bool cont     = true;
+  msg_type * submit_msg = NULL;
+  bool new_jobs         = false;
+  bool cont             = true;
   int  phase = 0;
   int  old_status_list[JOB_QUEUE_MAX_STATE];
   {
@@ -536,7 +536,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
       old_status_list[i] = -1;
   }
 
-  
+  if (verbose)
+    submit_msg = msg_alloc("Submitting new jobs:  ]");
+
   do {
     char spinner[4];
     spinner[0] = '-';
@@ -546,8 +548,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 
     job_queue_update_status(queue);
     if ( (memcmp(old_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * old_status_list) != 0) || new_jobs ) {
-      printf("\b \n");
-      job_queue_print_jobs(queue);
+      if (verbose) {
+        printf("\b \n");
+        job_queue_print_jobs(queue);
+      }
       memcpy(old_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * old_status_list);
     } 
     
@@ -555,9 +559,11 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
       cont = false;
     
     if (cont) {
-      printf("\b%c",spinner[phase]); 
-      fflush(stdout);
-      phase = (phase + 1) % 4;
+      if (verbose) {
+        printf("\b%c",spinner[phase]); 
+        fflush(stdout);
+        phase = (phase + 1) % 4;
+      }
       
       {
 	/* Submitting new jobs */
@@ -585,7 +591,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 		submit_status_type submit_status = job_queue_submit_job(queue , queue_index);
 		
 		if (submit_status == submit_OK) {
-		  if (submit_count == 0) {
+		  if ((submit_count == 0) && verbose) {
 		    printf("\b");
 		    msg_show(submit_msg);
 		    printf("\b\b");
@@ -602,7 +608,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	    queue_index++;
 	  }
 	  
-	  if (submit_count > 0) {
+	  if ((submit_count > 0) && verbose) {
 	    printf("  "); fflush(stdout);
 	    msg_hide(submit_msg);
 	    printf(" ]\b"); fflush(stdout);
@@ -619,7 +625,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
 	/*
 	  Checking for complete / exited jobs.
 	*/
-	bool verbose = true;
 	int queue_index;
 	for (queue_index = 0; queue_index < job_queue_get_active_size(queue); queue_index++) {
 	  job_queue_node_type * node = queue->jobs[queue_index];
@@ -677,8 +682,10 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run) {
       */
     }
   } while ( cont );
-  printf("\n");
-  msg_free(submit_msg , false);
+  if (verbose) {
+    printf("\n");
+    msg_free(submit_msg , false);
+  }
 }
 
 
@@ -686,8 +693,9 @@ void * job_queue_run_jobs__(void * __arg_pack) {
   arg_pack_type * arg_pack = arg_pack_safe_cast(__arg_pack);
   job_queue_type * queue   = arg_pack_iget_ptr(arg_pack , 0);
   int num_total_run        = arg_pack_iget_int(arg_pack , 1);
+  bool verbose             = arg_pack_iget_bool(arg_pack , 2);
   
-  job_queue_run_jobs(queue , num_total_run);
+  job_queue_run_jobs(queue , num_total_run , verbose);
   return NULL;
 }
 
