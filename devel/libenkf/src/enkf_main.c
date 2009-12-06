@@ -798,90 +798,103 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
                                bool enkf_update                ,     
                                forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
   
-  bool resample_when_fail  = model_config_resample_when_fail(enkf_main->model_config);
-  int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
-  const int ens_size       = ensemble_config_get_size(enkf_main->ensemble_config);
-  int   job_size;
-
-  int iens;
-  if (run_mode == ENSEMBLE_PREDICTION)
-    printf("Starting predictions from step: %d\n",step1);
-  else
-    printf("Starting forward step: %d -> %d\n",step1 , step2);
-  
-  log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
-  log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
-  job_size = 0;
-  for (iens = 0; iens < ens_size; iens++)
-    if (iactive[iens]) job_size++;
-
   {
-    pthread_t          queue_thread;
-    job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-    arg_pack_type * queue_args = arg_pack_alloc();
-    arg_pack_append_ptr(queue_args , job_queue);
-    arg_pack_append_int(queue_args , job_size);
-    arg_pack_lock( queue_args );
-    pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
-
-    {
-      thread_pool_type * submit_threads = thread_pool_alloc(4);
-      for (iens = 0; iens < ens_size; iens++) {
-	if (iactive[iens]) {
-          int load_start = step1;
-          if (step1 > 0)
-            load_start++;
-          
-	  enkf_state_init_run(enkf_main->ensemble[iens] , 
-                              run_mode , 
-                              iactive[iens] , 
-                              resample_when_fail  ,
-                              max_internal_submit ,
-                              init_step_parameter , 
-                              init_state_parameter,
-                              init_state_dynamic  , 
-                              load_start , 
-                              step1 , 
-                              step2 , 
-                              forward_model);
-          
-	  thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
-	} else
-          enkf_state_set_inactive( enkf_main->ensemble[iens] );
-      }
-      thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
-      thread_pool_free(submit_threads);
+    const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
+    if ((step1 > 0) && (!ecl_config_can_restart(ecl_config))) {
+      fprintf(stderr,"** Warning - tried to restart case which is not properly set up for restart.\n");
+      fprintf(stderr,"** Need <INIT> in datafile and INIT_SECTION keyword in config file.\n");
+      util_exit("%s: exiting \n",__func__);
     }
-    log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
-    enkf_main_run_wait_loop( enkf_main );
-    job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
-    arg_pack_free( queue_args );
   }
   
-
-
   {
-    bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
+    bool resample_when_fail  = model_config_resample_when_fail(enkf_main->model_config);
+    int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
+    const int ens_size       = ensemble_config_get_size(enkf_main->ensemble_config);
+    int   job_size;
+    int iens;
+  
+    if (run_mode == ENSEMBLE_PREDICTION)
+      printf("Starting predictions from step: %d\n",step1);
+    else
+      printf("Starting forward step: %d -> %d\n",step1 , step2);
     
-    for (iens = 0; iens < ens_size; iens++) {
-      if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
-        if ( runOK ) {
-          log_add_fmt_message( enkf_main->logh , 1 , stderr , "Some models failed to integrate from DATES %d -> %d:",step1 , step2);
-          runOK = false;
+    log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
+    log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
+    job_size = 0;
+    for (iens = 0; iens < ens_size; iens++)
+      if (iactive[iens]) job_size++;
+    
+    {
+      pthread_t          queue_thread;
+      job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
+      bool             verbose   = true;  
+      arg_pack_type * queue_args = arg_pack_alloc();
+      arg_pack_append_ptr(queue_args  , job_queue);
+      arg_pack_append_int(queue_args  , job_size);
+      arg_pack_append_bool(queue_args , verbose);
+      arg_pack_lock( queue_args );
+      pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
+      
+      {
+        thread_pool_type * submit_threads = thread_pool_alloc(4);
+        for (iens = 0; iens < ens_size; iens++) {
+          if (iactive[iens]) {
+            int load_start = step1;
+            if (step1 > 0)
+              load_start++;
+            
+            enkf_state_init_run(enkf_main->ensemble[iens] , 
+                                run_mode , 
+                                iactive[iens] , 
+                                resample_when_fail  ,
+                                max_internal_submit ,
+                                init_step_parameter , 
+                                init_state_parameter,
+                                init_state_dynamic  , 
+                                load_start , 
+                                step1 , 
+                                step2 , 
+                                forward_model);
+            
+            thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
+          } else
+            enkf_state_set_inactive( enkf_main->ensemble[iens] );
         }
-        log_add_fmt_message( enkf_main->logh , 1 , stderr , "** Error in: %s " , enkf_state_get_run_path(enkf_main->ensemble[iens]));
+        thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
+        thread_pool_free(submit_threads);
       }
+      log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
+      enkf_main_run_wait_loop( enkf_main );
+      job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
+      arg_pack_free( queue_args );
     }
-    if (!runOK) 
-      util_exit("The integration failed - check your forward model ...\n");
+    
+    
+    
+    {
+      bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
+      
+      for (iens = 0; iens < ens_size; iens++) {
+        if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
+          if ( runOK ) {
+            log_add_fmt_message( enkf_main->logh , 1 , stderr , "Some models failed to integrate from DATES %d -> %d:",step1 , step2);
+            runOK = false;
+          }
+          log_add_fmt_message( enkf_main->logh , 1 , stderr , "** Error in: %s " , enkf_state_get_run_path(enkf_main->ensemble[iens]));
+        }
+      }
+      if (!runOK) 
+        util_exit("The integration failed - check your forward model ...\n");
+    }
+    log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
+    
+    if (enkf_update)
+      enkf_main_UPDATE(enkf_main , load_start , step2);
+    
+    enkf_fs_fsync( enkf_main->dbase );
+    printf("%s: ferdig med step: %d \n" , __func__,step2);
   }
-  log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
-
-  if (enkf_update)
-    enkf_main_UPDATE(enkf_main , load_start , step2);
-  
-  enkf_fs_fsync( enkf_main->dbase );
-  printf("%s: ferdig med step: %d \n" , __func__,step2);
 }
 
 
@@ -1137,6 +1150,7 @@ static config_type * enkf_main_alloc_config() {
     stringlist_free(rsh_dep);
     stringlist_free(local_dep);
   }
+
 
   /* 
      You can set environment variables which will be applied to the

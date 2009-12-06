@@ -1,5 +1,10 @@
 #ifndef __ECL_CONFIG_H__
 #define __ECL_CONFIG_H__
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include <config.h>
 #include <ecl_grid.h>
 #include <time.h>
@@ -27,6 +32,10 @@ const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * );
 int                   ecl_config_get_num_restart_files(const ecl_config_type * );
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * );
 int                   ecl_config_get_last_history_restart( const ecl_config_type * );
+bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
 
 
+#ifdef __cplusplus
+}
+#endif
 #endif

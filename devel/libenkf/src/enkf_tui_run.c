@@ -135,8 +135,31 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
 
   } else
     fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");
-  
+}
 
+
+/**
+   Runs an ensemble experiment including both history and prediction period. 
+*/
+void enkf_tui_run_full__(void * __enkf_main) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
+  if (enkf_main_has_prediction( enkf_main )) {
+    const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+    const int ens_size     			 = ensemble_config_get_size(ensemble_config);
+    bool * iactive         			 = util_malloc(ens_size * sizeof * iactive , __func__);
+    state_enum init_state                        = ANALYZED; 
+    int start_report                             = 0;
+    int init_step_parameters                     = 0;                
+    {
+      int iens;
+      for (iens= 0; iens < ens_size; iens++)
+	iactive[iens] = true;
+    }
+    enkf_main_run(enkf_main , ENSEMBLE_PREDICTION , iactive , init_step_parameters , start_report , init_state);
+    free( iactive );
+
+  } else
+    fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");
 }
 
 
@@ -148,7 +171,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   const int ens_size                           = ensemble_config_get_size(ensemble_config);
   int step1,step2;
   bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
-  run_mode_type run_mode = ENSEMBLE_EXPERIMENT; //ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
+  run_mode_type run_mode = ENSEMBLE_EXPERIMENT; //ENSEMBLE_PREDICTION will induce the most powerfull load. ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
 
   enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
 
@@ -204,19 +227,17 @@ void enkf_tui_run_menu(void * arg) {
     menu = menu_alloc(title , "Back" , "bB");
     free(title);
   }
-  menu_add_item(menu , "Run ensemble experiment"                , "xX" , enkf_tui_run_exp__         , enkf_main , NULL);
+  menu_add_item(menu , "Ensemble run: history"                , "xX" , enkf_tui_run_exp__         , enkf_main , NULL);
+  menu_add_item(menu , "Ensemble run: predictions"            , "pP" , enkf_tui_run_predictions__ , enkf_main , NULL);
+  menu_add_item(menu , "Ensemble run: history + predictions"  , "fF" , enkf_tui_run_full__        , enkf_main , NULL);
   menu_add_separator( menu );
   menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__       , enkf_main , NULL);
   menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__     , enkf_main , NULL);
-  menu_add_separator(menu);
-  menu_add_item(menu , "Start predictions from end of history"  , "pP" , enkf_tui_run_predictions__ , enkf_main , NULL);
   menu_add_separator(menu);
   menu_add_item(menu , "Load results manually"                  , "lL"  , enkf_tui_run_manual_load__ , enkf_main , NULL);
   menu_add_separator(menu);
   menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_tui_run_analyze__ , enkf_main , NULL);
   menu_add_item(menu , "Analyze interval manually" , "iI" , enkf_tui_run_smooth__  , enkf_main , NULL);
-  //menu_add_separator(menu);
-  //menu_add_item(menu , "Manually load simulation results" , "mM" , enkf_tui_run_manual_internalize__ , enkf_main , NULL);
   menu_add_separator(menu);
   {
     model_config_type * model_config = enkf_main_get_model_config( enkf_main );

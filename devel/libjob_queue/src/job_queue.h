@@ -12,7 +12,7 @@ void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt
 job_queue_type   *  job_queue_alloc(int  , int , int  , const char * , basic_queue_driver_type * );
 void                job_queue_free(job_queue_type *);
 void                job_queue_add_job(job_queue_type * , const char * , const char * , int , const void *);
-void                job_queue_run_jobs(job_queue_type * , int );
+void                job_queue_run_jobs(job_queue_type * , int , bool verbose);
 void *              job_queue_run_jobs__(void * );
 job_status_type     job_queue_export_job_status(job_queue_type * , int );
 void                job_queue_set_load_OK(job_queue_type * queue , int external_id);

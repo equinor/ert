@@ -11,7 +11,7 @@
 #include <sched_file.h>
 #include <config.h>
 #include <ecl_config.h>
-
+#include <parser.h>
 
 #include "enkf_defaults.h"
 
@@ -39,8 +39,9 @@ struct ecl_config_struct {
   char               * data_file;              	   /* Eclipse data file. */
   ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
   char               * schedule_target_file;   	   /* File name to write schedule info to */
-  char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation. */
+  char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
   int                  last_history_restart;
+  bool                 can_restart;                /* Have we found the <INIT> tag in the data file? */
 };
 
 
@@ -57,9 +58,24 @@ int ecl_config_get_last_history_restart( const ecl_config_type * ecl_config ) {
 }
 
 
+bool ecl_config_can_restart( const ecl_config_type * ecl_config ) {
+  return ecl_config->can_restart;
+}
+
 
 void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_file) {
   ecl_config->data_file = util_realloc_string_copy( ecl_config->data_file , data_file );
+  {
+    FILE * stream        = util_fopen( ecl_config->data_file , "r");
+    parser_type * parser = parser_alloc(NULL , NULL , NULL , NULL , "--" , "\n" );
+    char * init_tag      = enkf_util_alloc_tagged_string( "INIT" );
+    
+    ecl_config->can_restart = parser_fseek_string( parser , stream , init_tag , false , true ); 
+    
+    free( init_tag );
+    parser_free( parser );
+    fclose( stream );
+  }
 }
 
 
@@ -70,6 +86,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->include_all_static_kw = false;
   ecl_config->static_kw_set         = set_alloc_empty();
   ecl_config->data_file             = NULL;
+  ecl_config->can_restart           = false;
   {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
       set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
@@ -143,11 +160,25 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       util_safe_free( basename );
       util_safe_free( extension );
     }
-  } else {
-    if (!config_has_set_item(config , "EQUIL"))
-      util_abort("%s: you must specify how ECLIPSE is initialized - with the INIT_SECTION_KEYWORD.",__func__);
-    ecl_config->equil_init_file = NULL; 
-  }
+  } else
+    ecl_config->can_restart = false;
+  /*
+      The user has not supplied a INIT_SECTION keyword whatsoever, 
+      this essentially meens that we can not restart - because:
+
+      1. The EQUIL section must be inlined in the DATAFILE without any
+         special markup.
+      
+      2. ECLIPSE will fail hard if the datafile contains both an EQUIL
+         section and a restart statement, and when we have not marked
+         the EQUIL section specially with the INIT_SECTION keyword it
+         is impossible for ERT to dynamically change between a
+         datafile with initialisation and a datafile for restart.
+         
+      IFF the user has no intentitions of any form of restart, this is
+      perfectly legitemate.
+  */
+
   if (config_item_set(config , "GRID"))
     ecl_config->grid = ecl_grid_alloc( config_iget(config , "GRID" , 0,0) );
   else
