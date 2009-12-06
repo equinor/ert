@@ -1255,14 +1255,14 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
   */
   if (step1 == 0) {
     const char * init_file = ecl_config_get_equil_init_file(enkf_state->ecl_config);
-    if (init_file == NULL) 
-      util_abort("%s: INIT_SECTION is not set - must either use INIT_SECTION in config_file or EQUIL keyword.",__func__);
-    
     if (init_file != NULL) {
       char * tmp_include = util_alloc_sprintf("INCLUDE\n   \'%s\' /\n",init_file);
       enkf_state_add_subst_kw(enkf_state , "INIT" , tmp_include , NULL);
       free(tmp_include);
-    }
+    } /* 
+         if init_file == NULL that means the user has not supplied the INIT_SECTION keyword, 
+         and the EQUIL (or whatever) info to initialize the model is inlined in the datafile.
+      */
   } else {
     char * data_initialize = util_alloc_sprintf("RESTART\n   \'%s\'  %d  /\n" , eclbase , step1);
     enkf_state_add_subst_kw(enkf_state , "INIT" , data_initialize , NULL);

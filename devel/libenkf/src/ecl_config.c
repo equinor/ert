@@ -86,6 +86,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->include_all_static_kw = false;
   ecl_config->static_kw_set         = set_alloc_empty();
   ecl_config->data_file             = NULL;
+  ecl_config->equil_init_file       = NULL; 
   ecl_config->can_restart           = false;
   {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
@@ -138,30 +139,76 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
           c. WE TRUST THE USER TO SUPPLY CONTENT (THROUGH SOME FUNKY
              FORWARD MODEL) IN THE RUNPATH. This can unfortunately not
              be checked/verified before the ECLIPSE simulation fails.
-    */
-    
-    const char * init_section = config_iget(config , "INIT_SECTION" , 0,0);
-    if (util_file_exists( init_section ))
-      ecl_config->equil_init_file = util_alloc_realpath(init_section);
-    else {
-      char * filename;
-      char * basename;
-      char * extension;
-      
-      util_alloc_file_components( init_section , NULL , &basename , &extension);
-      filename = util_alloc_filename( NULL , basename , extension);
-      if (strcmp( filename , init_section) == 0) 
-	ecl_config->equil_init_file = filename;
+
+
+     The INIT_SECTION keyword and <INIT> in the datafile (checked with
+     ecl_config->can_restart) interplay as follows: 
+
+
+     CASE   |   INIT_SECTION  |  <INIT>    | OK ?
+     ---------------------------------------------
+     0      |   Present       | Present    |  Yes 
+     1      |   Not Present   | Present    |  No    
+     2      |   Present       | Not present|  No
+     3      |   Not Present   | Not present|  Yes
+     ---------------------------------------------
+
+
+     Case 0: This is the most flexible case, which can do arbitrary
+        restart.
+
+     Case 1: In this case the datafile will contain a <INIT> tag, we
+        we do not have the info to replace that tag with for
+        initialisation, and ECLIPSE will fail. Strictly speaking this
+        case can actually restart, but that is not enough - we let
+        this case fail hard.
+
+     Case 2: We have some INIT_SECTION infor, but no tag in he
+        datafile to update. If the datafile has embedded
+        initialisation info this case will work for init; but it is
+        logically flawed, and not accepted. Currently only a warning.
+
+     Case 3: This case has just the right amount of information for
+        initialisation, but it is 'consistently unable' to restart.
+     
+  */
+    if (ecl_config->can_restart) {  /* The <INIT> tag is set. */
+      const char * init_section = config_iget(config , "INIT_SECTION" , 0,0);
+      if (util_file_exists( init_section ))
+        ecl_config->equil_init_file = util_alloc_realpath(init_section);
       else {
-	util_abort("%s: When INIT_SECTION:%s is set to a non-existing file - you can not have any path components.\n",__func__ , init_section);
-	util_safe_free( filename );
+        char * filename;
+        char * basename;
+        char * extension;
+        
+        util_alloc_file_components( init_section , NULL , &basename , &extension);
+        filename = util_alloc_filename( NULL , basename , extension);
+        if (strcmp( filename , init_section) == 0) 
+          ecl_config->equil_init_file = filename;
+        else {
+          util_abort("%s: When INIT_SECTION:%s is set to a non-existing file - you can not have any path components.\n",__func__ , init_section);
+          util_safe_free( filename );
+        }
+        
+        util_safe_free( basename );
+        util_safe_free( extension );
       }
-      
-      util_safe_free( basename );
-      util_safe_free( extension );
-    }
+    } else
+      /* 
+         The <INIT> tag is not set - we can not utilize the
+         equil_init_file info, and we just ignore it.
+      */
+      fprintf(stderr,"** Warning: <INIT> tag was not found in datafile - can not utilize INIT_SECTION keyword - ignored.\n");
   } else
-    ecl_config->can_restart = false;
+    if (ecl_config->can_restart) 
+      /** This is a hard error - the datafile contains <INIT>, however
+          the config file does NOT contain INIT_SECTION, i.e. we have
+          no information to fill in for the <INIT> section. This case
+          will not be able to initialize an ECLIPSE model, and that is
+          broken behaviour. 
+      */
+      util_exit("Sorry: when the datafile contains <INIT> the config file MUST have the INIT_SECTIOn keyword. \n");
+
   /*
       The user has not supplied a INIT_SECTION keyword whatsoever, 
       this essentially meens that we can not restart - because:
