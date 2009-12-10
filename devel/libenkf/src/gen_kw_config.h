@@ -12,10 +12,8 @@ extern "C" {
 #include <scalar.h>
 #include <gen_kw_common.h>
 #include <stringlist.h>
-#include <subst_func.h>
 
-subst_func_pool_type      * gen_kw_config_get_subst_func_pool( const gen_kw_config_type * config );
-gen_kw_config_type        * gen_kw_config_alloc_with_options(const char * key , const char * filename , const char * template_file, const stringlist_type * options , subst_func_pool_type * subst_func_pool);
+gen_kw_config_type        * gen_kw_config_alloc_with_options(const char * key , const char * filename , const char * template_file, const stringlist_type * options);
 char                      * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens );
 void                        gen_kw_config_set_init_file_fmt( gen_kw_config_type * config , const char * init_file_fmt );
 const char                * gen_kw_config_get_key(const gen_kw_config_type * config );

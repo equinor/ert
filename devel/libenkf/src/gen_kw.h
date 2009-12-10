@@ -31,7 +31,7 @@ void             gen_kw_filter_file(const gen_kw_type * , const char * );
 void             gen_kw_export(const gen_kw_type * , int * , char ***, double **);
 void             gen_kw_upgrade_103( const char * filename );
 char           * gen_kw_alloc_user_key(const gen_kw_config_type *  , const char * , int );
-void             gen_kw_set_global_subst_list(gen_kw_type * gen_kw , const subst_list_type * global_subst_list);
+void             gen_kw_set_subst_parent(gen_kw_type * gen_kw , const subst_list_type * parent_subst);
 
 
 SAFE_CAST_HEADER(gen_kw);

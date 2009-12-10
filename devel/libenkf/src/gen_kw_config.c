@@ -10,7 +10,6 @@
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
 #include <path_fmt.h>
-#include <subst_func.h>
 
 #define GEN_KW_CONFIG_TYPE_ID 550761
 
@@ -23,7 +22,6 @@ struct gen_kw_config_struct {
   char                 * template_file;
   gen_kw_type          * min_std;
   path_fmt_type        * init_file_fmt;    /* The format for loading init_files - if this is NULL the initialization is done by sampling N(0,1) numbers. */
-  subst_func_pool_type * subst_func_pool;  /* The functions available for substitutions. */
 };
 
 
@@ -48,14 +46,13 @@ char * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , 
 }
 
 
-static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file, const char * init_file_fmt, subst_func_pool_type * subst_func_pool) {
+static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * template_file, const char * init_file_fmt) {
   gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
   gen_kw_config->kw_list            = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
   gen_kw_config->tagged_kw_list     = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
   gen_kw_config->scalar_config      = scalar_config_alloc_empty(size);
   gen_kw_config->template_file      = util_alloc_string_copy(template_file);
-  gen_kw_config->subst_func_pool    = subst_func_pool;
   gen_kw_config->min_std            = NULL;
   gen_kw_config->key                = NULL; 
   gen_kw_config->init_file_fmt      = NULL;
@@ -110,7 +107,7 @@ is not exported to the end user in the GEN_KW interface, but used in
 the SCHEDULE_PREDICTION file keyword.
 */
 
-gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filename , const char * template_file, const char * min_std_file , const char * init_file_fmt , subst_func_pool_type * subst_func_pool) {
+gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filename , const char * template_file, const char * min_std_file , const char * init_file_fmt) {
   gen_kw_config_type * config = NULL;
   
   if (filename == NULL || util_file_exists(filename)) {
@@ -123,7 +120,7 @@ gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filenam
       fseek(stream , 0L , SEEK_SET);
     }
 
-    config = __gen_kw_config_alloc_empty(size , template_file , init_file_fmt, subst_func_pool);
+    config = __gen_kw_config_alloc_empty(size , template_file , init_file_fmt);
 
     if (stream != NULL) {
       int line_nr = 0;
@@ -154,7 +151,7 @@ gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filenam
 
 
 
-gen_kw_config_type * gen_kw_config_alloc_with_options(const char * key , const char * __parameter_file , const char * template_file, const stringlist_type * options, subst_func_pool_type * subst_func_pool) {
+gen_kw_config_type * gen_kw_config_alloc_with_options(const char * key , const char * __parameter_file , const char * template_file, const stringlist_type * options) {
   hash_type          * opt_hash      = hash_alloc_from_options( options );
   const char * min_std_file          = hash_safe_get( opt_hash , "MIN_STD" ); 
   const char * init_files            = hash_safe_get( opt_hash , "INIT_FILES");
@@ -166,15 +163,11 @@ gen_kw_config_type * gen_kw_config_alloc_with_options(const char * key , const c
   if (parameter_file == NULL)
     parameter_file = hash_safe_get( opt_hash , "PARAMETERS" );
   
-  gen_kw_config = gen_kw_config_alloc( key , parameter_file , template_file , min_std_file , init_files, subst_func_pool);
+  gen_kw_config = gen_kw_config_alloc( key , parameter_file , template_file , min_std_file , init_files);
   hash_free( opt_hash );
   return gen_kw_config;
 }
 
-
-subst_func_pool_type * gen_kw_config_get_subst_func_pool( const gen_kw_config_type * config ) {
-  return config->subst_func_pool;
-}
 
 
 

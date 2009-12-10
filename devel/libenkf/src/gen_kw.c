@@ -23,8 +23,7 @@ struct gen_kw_struct {
   int                        __type_id;
   const gen_kw_config_type * config;
   scalar_type              * scalar;
-  subst_list_type          * private_subst_list;
-  const subst_list_type    * global_subst_list;   /* This is owned by the enkf_state object holding this gen_kw instance. */
+  subst_list_type          * subst_list;
 };
 
 /*****************************************************************/
@@ -33,7 +32,7 @@ struct gen_kw_struct {
 
 void gen_kw_free(gen_kw_type *gen_kw) {
   scalar_free(gen_kw->scalar);
-  subst_list_free(gen_kw->private_subst_list);
+  subst_list_free(gen_kw->subst_list);
   free(gen_kw);
 }
 
@@ -55,8 +54,7 @@ gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw->config = config;
   gen_kw->scalar = scalar_alloc(gen_kw_config_get_scalar_config( config ));
   gen_kw->__type_id          = GEN_KW;
-  gen_kw->private_subst_list = subst_list_alloc( gen_kw_config_get_subst_func_pool( config ));  
-  gen_kw->global_subst_list  = NULL;
+  gen_kw->subst_list         = subst_list_alloc( NULL );
   return gen_kw;
 }
 
@@ -168,12 +166,10 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
     gen_kw_output_transform(gen_kw);
     for (ikw = 0; ikw < size; ikw++) {
       const char * key = gen_kw_config_get_tagged_name(gen_kw->config , ikw);      
-      subst_list_insert_owned_ref(gen_kw->private_subst_list , key , util_alloc_sprintf("%g" , output_data[ikw]));
+      subst_list_insert_owned_ref(gen_kw->subst_list , key , util_alloc_sprintf("%g" , output_data[ikw]) , NULL);
     }
     
-    subst_list_filter_file( gen_kw->private_subst_list  , template_file  , target_file);
-    if (gen_kw->global_subst_list != NULL)
-      subst_list_filter_file( gen_kw->global_subst_list   ,  target_file   , target_file );
+    subst_list_filter_file( gen_kw->subst_list  , template_file  , target_file);
   } else 
     util_abort("%s: internal error - tried to filter gen_kw instance without template file.\n",__func__);
 }
@@ -303,8 +299,8 @@ double gen_kw_user_get(const gen_kw_type * gen_kw, const char * key , bool * val
 }
 
 
-void gen_kw_set_global_subst_list(gen_kw_type * gen_kw , const subst_list_type * global_subst_list) {
-  gen_kw->global_subst_list = global_subst_list;
+void gen_kw_set_subst_parent(gen_kw_type * gen_kw , const subst_list_type * subst_parent) {
+  subst_list_set_parent( gen_kw->subst_list , subst_parent );
 }
 
 

@@ -778,7 +778,7 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
           if (env_var != NULL) {
             const char * env_value = getenv( &env_var[1] );
             if (env_value != NULL)
-              util_string_replace_inplace( &argv[iarg] , env_var , env_value , NULL , NULL );
+              util_string_replace_inplace( &argv[iarg] , env_var , env_value);
             else {
               env_offset += 1;
               fprintf(stderr,"** Warning: environment variable: %s is not defined \n", env_var);
@@ -1066,7 +1066,7 @@ void config_set_arg(config_type * config , const char * kw, int argc , const cha
 
 
 void config_add_define( config_type * config , const char * key , const char * value ) {
-  subst_list_insert_copy( config->define_list , key , value );
+  subst_list_insert_copy( config->define_list , key , value , NULL );
 }
 
 

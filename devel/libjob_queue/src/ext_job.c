@@ -164,7 +164,7 @@ ext_job_type * ext_job_alloc(const char * name) {
    possible variations of ownership+++ 
    
    This is a specialized implementation where it is assumed that all
-   values in the hash are actuall pointers to \0 terminated strings.
+   values in the hash are actual pointers to \0 terminated strings.
 */
 
 
@@ -311,7 +311,7 @@ void ext_job_set_lsf_request(ext_job_type * ext_job, const char * lsf_request) {
 
 
 void ext_job_set_private_arg(ext_job_type * ext_job, const char * key , const char * value) {
-  subst_list_insert_copy( ext_job->private_args  , key , value);
+  subst_list_insert_copy( ext_job->private_args  , key , value , NULL);
 }
 
 void ext_job_set_stdin_file(ext_job_type * ext_job, const char * stdin_file) {
@@ -414,7 +414,7 @@ static void __indent(FILE * stream, int indent) {
 
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   fprintf(stream," {");
-  __indent(stream, 0); __fprintf_python_string(stream , "name"  	  , ext_job->name , ext_job->private_args , NULL);                __end_line(stream);
+  __indent(stream, 0); __fprintf_python_string(stream , "name"  	  , ext_job->name         , ext_job->private_args , NULL);        __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	  , ext_job->target_file  , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	  , ext_job->start_file   , ext_job->private_args, global_args);  __end_line(stream);

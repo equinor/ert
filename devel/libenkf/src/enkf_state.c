@@ -117,8 +117,6 @@ struct enkf_state_struct {
   subst_list_type       * subst_list;        	   /* This a list of key - value pairs which are used in a search-replace
                                              	      operation on the ECLIPSE data file. Will at least contain the key INIT"
                                              	      - which will describe initialization of ECLIPSE (EQUIL or RESTART).*/
-  hash_type             * subst_description;      /* A table of description of the various subst_list keys. */
-  
   const ecl_config_type * ecl_config;        	   /* ecl_config object - pure reference to the enkf_main object. */
   ensemble_config_type  * ensemble_config;   	   /* The config nodes for the enkf_node objects contained in node_hash. */
   
@@ -358,16 +356,9 @@ static enkf_state_type * enkf_state_safe_cast(void * __enkf_state) {
 
 
 
-static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value , const char * description) {
+static void enkf_state_add_subst_kw(enkf_state_type * enkf_state , const char * kw , const char * value , const char * doc_string) {
   char * tagged_key = enkf_util_alloc_tagged_string( kw );
-  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , util_alloc_string_copy(value));
-  if (description != NULL) 
-    hash_insert_hash_owned_ref( enkf_state->subst_description , tagged_key , util_alloc_string_copy( description ) , free);
-  else {
-    if (!hash_has_key( enkf_state->subst_description , tagged_key))
-      util_abort("%s: must provide documentation for subst key:%s \n",__func__ , kw);
-  }
-    
+  subst_list_insert_owned_ref(enkf_state->subst_list , tagged_key , util_alloc_string_copy(value) , doc_string);
   free(tagged_key);
 }
 
@@ -393,17 +384,10 @@ static void enkf_state_set_static_subst_kw(enkf_state_type * enkf_state) {
     int    iens        = member_config_get_iens( enkf_state->my_config );
     char * iens_s      = util_alloc_sprintf("%d"   , iens);
     char * iens4_s     = util_alloc_sprintf("%04d" , iens);
-    char * cwd         = util_alloc_cwd();
-    char * date_string = util_alloc_date_stamp();
-    
-    enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH" , cwd         , NULL);  /* Alias for CWD */
-    enkf_state_add_subst_kw(enkf_state , "CWD"         , cwd         , NULL); 
+
     enkf_state_add_subst_kw(enkf_state , "IENS"        , iens_s      , NULL);
     enkf_state_add_subst_kw(enkf_state , "IENS4"       , iens4_s     , NULL);
-    enkf_state_add_subst_kw(enkf_state , "DATE"        , date_string , NULL);   
-
-    free(date_string);
-    free(cwd);
+    
     free(iens_s);
     free(iens4_s);
   }
@@ -448,11 +432,10 @@ enkf_state_type * enkf_state_alloc(int iens,
 				   ensemble_config_type      * ensemble_config,
 				   const site_config_type    * site_config,
 				   const ecl_config_type     * ecl_config,
-				   hash_type                 * data_kw,
 				   const forward_model_type  * default_forward_model,
                                    log_type                  * logh,
                                    ert_templates_type        * templates,
-                                   subst_func_pool_type      * subst_func_pool) {
+                                   subst_list_type           * subst_parent) { 
   
   enkf_state_type * enkf_state  = util_malloc(sizeof *enkf_state , __func__);
   enkf_state->__id              = ENKF_STATE_TYPE_ID; 
@@ -464,9 +447,8 @@ enkf_state_type * enkf_state_alloc(int iens,
   
   enkf_state->node_hash         = hash_alloc();
   enkf_state->restart_kw_list   = stringlist_alloc_new();
+  enkf_state->subst_list        = subst_list_alloc( subst_parent );
 
-  enkf_state->subst_list        = subst_list_alloc( subst_func_pool );
-  enkf_state->subst_description = hash_alloc();
   
   /*
     The user MUST specify an INIT_FILE, and for the first timestep the
@@ -497,27 +479,15 @@ INCLDUE
      Adding all the subst_kw keywords here, with description. Listing
      all of them here in one go guarantees that we have control over
      the ordering (which is interesting because the substititions are
-     done in cascade like fashion). The user defined keywords are
+     done in a cascade like fashion). The user defined keywords are
      added first, so that these can refer to the built in keywords.
   */
-  {
-    hash_iter_type * iter = hash_iter_alloc(data_kw);
-    const char * key = hash_iter_get_next_key(iter);
-    while (key != NULL) {
-      enkf_state_add_subst_kw(enkf_state , key , hash_get(data_kw , key) , "Supplied by the user in the enkf configuration file");
-      key = hash_iter_get_next_key(iter);
-    }
-    hash_iter_free(iter);
-  }
   
   enkf_state_add_subst_kw(enkf_state , "RUNPATH"       , "---" , "The absolute path of the current forward model instance. ");
-  enkf_state_add_subst_kw(enkf_state , "CONFIG_PATH"   , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
-  enkf_state_add_subst_kw(enkf_state , "CWD"           , "---" , "The working directory of the enkf simulation == the location of the configuration file.");
   enkf_state_add_subst_kw(enkf_state , "IENS"          , "---" , "The realisation number for this realization.");
   enkf_state_add_subst_kw(enkf_state , "IENS4"         , "---" , "The realization number for this realization - formated with %04d.");
   enkf_state_add_subst_kw(enkf_state , "ECLBASE"       , "---" , "The ECLIPSE basename for this realization.");
   enkf_state_add_subst_kw(enkf_state , "ECL_BASE"      , "---" , "Depreceated - use ECLBASE instead.");
-  enkf_state_add_subst_kw(enkf_state , "INIT"          , "---" , "The string which will be inserted instead of <INIT> in the ECLIPSE data file.");
   enkf_state_add_subst_kw(enkf_state , "SMSPEC"        , "---" , "The ECLIPSE SMSPEC file for this realization.");
   enkf_state_add_subst_kw(enkf_state , "TSTEP1"        , "---" , "The initial report step for this simulation.");
   enkf_state_add_subst_kw(enkf_state , "TSTEP2"        , "---" , "The final report step for this simulation.");
@@ -525,24 +495,13 @@ INCLDUE
   enkf_state_add_subst_kw(enkf_state , "TSTEP2_04"     , "---" , "The final report step for this simulation - formated withh %04d.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE1" , "---" , "The ECLIPSE restart file this simulation starts with.");
   enkf_state_add_subst_kw(enkf_state , "RESTART_FILE2" , "---" , "The ECLIPSE restart file this simulation should end with.");
-  enkf_state_add_subst_kw(enkf_state , "DATE"          , "---" , "The date at simulation start - formatted as dd/mm/yyyy.");
-  enkf_state_add_subst_kw(enkf_state , "RANDINT"       , NULL  , "Random integer value");
-  enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , NULL  , "Random float value");
+  enkf_state_add_subst_kw(enkf_state , "RANDINT"       , "---" , "Random integer value (depreceated: use __RANDINT__() instead).");
+  enkf_state_add_subst_kw(enkf_state , "RANDFLOAT"     , "---" , "Random float value (depreceated: use __RANDFLOAT__() instead).");
   if (casename != NULL) 
     enkf_state_add_subst_kw(enkf_state , "CASE" , casename , "The casename for this realization - as loaded from the CASE_TABLE file.");
   else
     enkf_state_add_subst_kw(enkf_state , "CASE" , "---" , "The casename for this realization - similar to ECLBASE.");
   
-  {
-    /** Adding substitute callbacks */
-    char * tagged_randint   = enkf_util_alloc_tagged_string( "RANDINT" );
-    char * tagged_randfloat = enkf_util_alloc_tagged_string( "RANDFLOAT" );
-    subst_list_insert_callback( enkf_state->subst_list , tagged_randint   , enkf_state_subst_randint   , NULL , NULL);
-    subst_list_insert_callback( enkf_state->subst_list , tagged_randfloat , enkf_state_subst_randfloat , NULL , NULL);
-    free( tagged_randint );
-    free( tagged_randfloat );
-  }
-
   enkf_state->my_config = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config , fs);
   enkf_state_set_static_subst_kw(  enkf_state );
 
@@ -586,7 +545,7 @@ void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , 
   
   /* Setting the global subst list so that the GEN_KW templates can contain e.g. <IENS> and <CWD>. */
   if (enkf_node_get_impl_type( enkf_node ) == GEN_KW)
-    gen_kw_set_global_subst_list( enkf_node_value_ptr( enkf_node ) , enkf_state->subst_list );
+    gen_kw_set_subst_parent( enkf_node_value_ptr( enkf_node ) , enkf_state->subst_list );
 }
 
 
@@ -1196,7 +1155,6 @@ void enkf_state_free_nodes(enkf_state_type * enkf_state, int mask) {
 void enkf_state_free(enkf_state_type *enkf_state) {
   hash_free(enkf_state->node_hash);
   subst_list_free(enkf_state->subst_list);
-  hash_free(enkf_state->subst_description);
   stringlist_free(enkf_state->restart_kw_list);
   member_config_free(enkf_state->my_config);
   run_info_free(enkf_state->run_info);
@@ -1269,6 +1227,24 @@ static void enkf_state_set_dynamic_subst_kw(enkf_state_type * enkf_state , const
     free(data_initialize);
   }
   
+  
+  {
+    /** 
+        Adding keys for <RANDINT> and <RANDFLOAT> - these are only
+         added for backwards compatibility, should be replaced with
+        prober function callbacks.
+    */
+    char * randint_value    = util_alloc_sprintf( "%d"      , rand());
+    char * randfloat_value  = util_alloc_sprintf( "%12.10f" , 1.0 * rand() / RAND_MAX);
+    
+    enkf_state_add_subst_kw( enkf_state , "RANDINT"   , randint_value   , NULL);
+    enkf_state_add_subst_kw( enkf_state , "RANDFLOAT" , randfloat_value , NULL);
+    
+    free( randint_value );
+    free( randfloat_value );
+  }
+
+
 
   free(step1_s);
   free(step2_s);
@@ -1292,7 +1268,7 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
   for (ikw = 0; ikw < subst_list_get_size( enkf_state->subst_list ); ikw++) {
     const char * key   = subst_list_iget_key( enkf_state->subst_list , ikw);
     const char * value = subst_list_iget_value( enkf_state->subst_list , ikw);
-    const char * desc  = hash_get( enkf_state->subst_description , key);
+    const char * desc  = subst_list_iget_doc_string( enkf_state->subst_list , ikw );
     
     if (value != NULL)
       printf(fmt_string , key , value , desc);

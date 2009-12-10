@@ -108,6 +108,7 @@ struct enkf_main_struct {
   plot_config_type     * plot_config;      /* Information about plotting. */
   ert_templates_type   * templates;       
   subst_func_pool_type * subst_func_pool;
+  subst_list_type      * subst_list;       /* A parent subst_list instance - common to all ensemble members. */
   /*-------------------------*/
 
   keep_runpath_type    * keep_runpath;     /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
@@ -194,7 +195,10 @@ void enkf_main_free(enkf_main_type * enkf_main) {
   util_safe_free( enkf_main->keep_runpath );
   plot_config_free( enkf_main->plot_config );
   ert_templates_free( enkf_main->templates );
+
   subst_func_pool_free( enkf_main->subst_func_pool );
+  subst_list_free( enkf_main->subst_list );
+
   free(enkf_main);
 }
 
@@ -1074,10 +1078,14 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
          We make sure that summary nodes which are not observed
          are not updated. I.e. the total production in a
          well. 
+
+         This was changed by request ... 
       */
-      if (enkf_config_node_get_var_type( config_node ) == DYNAMIC_RESULT)
-        if (enkf_config_node_get_num_obs( config_node ) == 0)
-          add_node = false;
+
+
+      //if (enkf_config_node_get_var_type( config_node ) == DYNAMIC_RESULT)
+      //  if (enkf_config_node_get_num_obs( config_node ) == 0)
+      //    add_node = false;
       
       /*
         Make sure the funny GEN_KW instance masquerading as
@@ -1365,21 +1373,92 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 }
 
 
-static enkf_main_type * enkf_main_alloc_empty() {
+static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);  
   enkf_main->dbase        = NULL;
   enkf_main->ensemble     = NULL;
   enkf_main->keep_runpath = NULL;
 
-
+  
   /* Here we add the functions which should be available for string substitution operations. */
   enkf_main->subst_func_pool = subst_func_pool_alloc( );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP" , subst_func_exp , false , 1 , 1 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD" , subst_func_add , true  , 0 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                              , subst_func_exp         , false , 1 , 1 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "LOG"       , "log"                              , subst_func_log         , false , 1 , 1 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "POW10"     , "Calculates 10^x"                  , subst_func_pow10       , false , 1 , 1 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD"       , "Adds arguments"                   , subst_func_add         , true  , 1 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"             , subst_func_mul         , true  , 1 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer"         , subst_func_randint     , false , 0 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float : %12.10f" , subst_func_randfloat   , false , 0 , 0 );
+  
+  /**
+     Allocating the parent subst_list instance. This will (should ...)
+     be the top level subst instance for all substitions in the ert
+     program.
+     
+     All the functions available or only installed in this
+     subst_list.
+     
+     The key->value replacements installed in this instance are
+     key,value pairs which are:
+
+      o Common to all ensemble members.
+       
+      o Constant in time.
+
+  */
+
+  enkf_main->subst_list = subst_list_alloc( enkf_main->subst_func_pool );
+  /* Installing the functions. */
+  subst_list_insert_func( enkf_main->subst_list , "EXP"         , "__EXP__");
+  subst_list_insert_func( enkf_main->subst_list , "LOG"         , "__LOG__");
+  subst_list_insert_func( enkf_main->subst_list , "POW10"       , "__POW10__");
+  subst_list_insert_func( enkf_main->subst_list , "ADD"         , "__ADD__");
+  subst_list_insert_func( enkf_main->subst_list , "MUL"         , "__MUL__");
+  subst_list_insert_func( enkf_main->subst_list , "RANDINT"     , "__RANDINT__");
+  subst_list_insert_func( enkf_main->subst_list , "RANDFLOAT"   , "__RANDFLOAT__");
+  
+
+  /*
+    Installing the DATA_KW keywords supplied by the user - these are
+    at the very top level, so they can reuse everything defined later.
+  */
+  
+  {
+    hash_iter_type * iter = hash_iter_alloc(config_data_kw);
+    const char * key = hash_iter_get_next_key(iter);
+    while (key != NULL) {
+      char * tagged_key = enkf_util_alloc_tagged_string( key );
+      subst_list_insert_copy( enkf_main->subst_list , tagged_key , hash_get( config_data_kw , key ) , "Supplied by the user in the configuration file.");
+      key = hash_iter_get_next_key(iter);
+      free( tagged_key );
+    }
+    hash_iter_free(iter);
+  }
   
   
-  enkf_main->templates    = ert_templates_alloc( enkf_main->subst_func_pool );
+  
+  /* 
+     Installing the based (key,value) pairs which are common to all
+     ensemble members, and independent of time.
+  */
+  {
+    char * cwd             = util_alloc_cwd();
+    char * date_string     = util_alloc_date_stamp();
+
+    char * cwd_key         = enkf_util_alloc_tagged_string( "CWD" );   
+    char * config_path_key = enkf_util_alloc_tagged_string( "CONFIG_PATH" );   
+    char * date_key        = enkf_util_alloc_tagged_string( "DATE" );   
+
+    subst_list_insert_owned_ref( enkf_main->subst_list , cwd_key         , cwd , "The current working directory we are running from - the location of the config file.");
+    subst_list_insert_ref( enkf_main->subst_list , config_path_key , cwd , "The current working directory we are running from - the location of the config file.");
+    subst_list_insert_owned_ref( enkf_main->subst_list , date_key        , date_string , "The current date");
+    
+    free( cwd_key );
+    free( config_path_key );
+    free( date_key );
+  }
+  enkf_main->templates    = ert_templates_alloc( enkf_main->subst_list );
   return enkf_main;
 }
   
@@ -1400,16 +1479,15 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
     enkf_main->ensemble[iens] = enkf_state_alloc(iens,
                                                  enkf_main->dbase , 
                                                  model_config_iget_casename( enkf_main->model_config , iens ) , 
-                                                 enkf_main->keep_runpath[iens],
-                                                 enkf_main->model_config   , 
-                                                 enkf_main->ensemble_config,
-                                                 enkf_main->site_config    , 
-                                                 enkf_main->ecl_config     ,
-                                                 data_kw,
+                                                 enkf_main->keep_runpath[iens]                                ,
+                                                 enkf_main->model_config                                      , 
+                                                 enkf_main->ensemble_config                                   ,
+                                                 enkf_main->site_config                                       , 
+                                                 enkf_main->ecl_config                                        ,
                                                  model_config_get_std_forward_model(enkf_main->model_config),
                                                  enkf_main->logh,
                                                  enkf_main->templates,
-                                                 enkf_main->subst_func_pool);
+                                                 enkf_main->subst_list);
   }
   msg_free(msg , true);
   
@@ -1485,7 +1563,8 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
 enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _model_config) {
   const char     * site_config  = getenv("ENKF_SITE_CONFIG");
   char           * model_config;
-  enkf_main_type * enkf_main    = enkf_main_alloc_empty(); 
+  enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
+  
   
   if (site_config == NULL)
     site_config = _site_config;
@@ -1519,14 +1598,20 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
   {  
     config_type * config = enkf_main_alloc_config();
-    
     config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , false);
     config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , true);
     /*****************************************************************/
     /* OK - now we have parsed everything - and we are ready to start
        populating the enkf_main object. 
     */
-    
+
+    {
+      hash_type      * data_kw   = config_alloc_hash(config , "DATA_KW");
+      enkf_main = enkf_main_alloc_empty( data_kw );
+      hash_free( data_kw );
+    }
+
+
     /* The log object */
     {
       char * log_file = util_alloc_filename(NULL , model_config , DEFAULT_LOG_FILE);
@@ -1559,7 +1644,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       bool use_lsf;
       enkf_main->ecl_config      = ecl_config_alloc( config );
-      enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) , enkf_main->subst_func_pool);
+      enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) );
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
       enkf_main->model_config    = model_config_alloc(config , 
                                                       ensemble_config_get_size( enkf_main->ensemble_config ),

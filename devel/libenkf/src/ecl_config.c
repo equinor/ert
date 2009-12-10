@@ -201,7 +201,8 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       fprintf(stderr,"** Warning: <INIT> tag was not found in datafile - can not utilize INIT_SECTION keyword - ignored.\n");
   } else
     if (ecl_config->can_restart) 
-      /** This is a hard error - the datafile contains <INIT>, however
+      /** 
+          This is a hard error - the datafile contains <INIT>, however
           the config file does NOT contain INIT_SECTION, i.e. we have
           no information to fill in for the <INIT> section. This case
           will not be able to initialize an ECLIPSE model, and that is
