@@ -7,7 +7,7 @@
 #include <hash.h>
 #include <stringlist.h>
 #include <set.h>
-#include <subst.h>
+#include <subst_list.h>
 
 #define CLEAR_STRING "__RESET__"
 

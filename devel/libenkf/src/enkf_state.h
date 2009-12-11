@@ -28,7 +28,7 @@ extern "C" {
 #include <ert_template.h>
 #include <job_queue.h>
 #include <member_config.h>
-#include <subst.h>
+#include <subst_list.h>
 
 
 typedef struct enkf_state_struct    enkf_state_type;

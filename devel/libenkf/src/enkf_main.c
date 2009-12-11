@@ -54,6 +54,7 @@
 #include <sys/types.h>
 #include <job_queue.h>
 #include <basic_queue_driver.h>
+#include <subst_list.h>
 #include <subst_func.h>
 #include "enkf_defaults.h"
 

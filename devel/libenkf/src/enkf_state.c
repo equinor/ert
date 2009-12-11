@@ -40,7 +40,7 @@
 #include <model_config.h>
 #include <site_config.h>
 #include <ecl_config.h>
-#include <subst.h>
+#include <subst_list.h>
 #include <forward_model.h>
 #include <log.h>
 #include <ecl_endian_flip.h>
