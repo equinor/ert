@@ -83,7 +83,7 @@ struct ext_job_struct {
   char       	  * name;
   char 	     	  * portable_exe;
   char 	     	  * target_file;
-  char       	  * start_file;          /* Will not start if not this file is present */
+  char       	  * start_file;       /* Will not start if not this file is present */
   char 	     	  * stdout_file;
   char 	     	  * stdin_file;
   char 	     	  * stderr_file;
@@ -97,7 +97,7 @@ struct ext_job_struct {
   hash_type  	  * platform_exe;     /* The hash tables can NOT be NULL. */
   hash_type  	  * environment;
   
-  bool              __valid;          /* Temporary variable consulted durin the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
+  bool              __valid;          /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
 };
 
 
