@@ -216,7 +216,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
         show_plot = true;
       
       /* This is called once for every realization - that is kind of wasted. */
-      if (plot_dates) {
+      if (plot_dates && show_plot) {
         time_t min_time = ( time_t ) double_vector_get_min( x );
         time_t max_time = ( time_t ) double_vector_get_max( x );
         

@@ -1383,13 +1383,13 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   
   /* Here we add the functions which should be available for string substitution operations. */
   enkf_main->subst_func_pool = subst_func_pool_alloc( );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                              , subst_func_exp         , false , 1 , 1 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "LOG"       , "log"                              , subst_func_log         , false , 1 , 1 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "POW10"     , "Calculates 10^x"                  , subst_func_pow10       , false , 1 , 1 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD"       , "Adds arguments"                   , subst_func_add         , true  , 1 , 0 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"             , subst_func_mul         , true  , 1 , 0 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer"         , subst_func_randint     , false , 0 , 0 );
-  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float : %12.10f" , subst_func_randfloat   , false , 0 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "LOG"       , "log"                               , subst_func_log         , false , 1 , 1 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "POW10"     , "Calculates 10^x"                   , subst_func_pow10       , false , 1 , 1 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "ADD"       , "Adds arguments"                    , subst_func_add         , true  , 1 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"              , subst_func_mul         , true  , 1 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer - 32 bit" , subst_func_randint     , false , 0 , 0 );
+  subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float 0-1."       , subst_func_randfloat   , false , 0 , 0 );
   
   /**
      Allocating the parent subst_list instance. This will (should ...)
@@ -1405,7 +1405,6 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
       o Common to all ensemble members.
        
       o Constant in time.
-
   */
 
   enkf_main->subst_list = subst_list_alloc( enkf_main->subst_func_pool );
