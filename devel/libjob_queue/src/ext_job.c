@@ -6,11 +6,10 @@
 #include <ext_job.h>
 #include <config.h>
 #include <stringlist.h>
-#include <subst.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <subst_list.h>
 
 /*
   About arguments
