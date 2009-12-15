@@ -4,7 +4,7 @@
 #include <vector.h>
 #include <util.h>
 #include <ert_template.h>
-#include <subst.h>
+#include <subst_list.h>
 
 #define ERT_TEMPLATE_TYPE_ID  7731963
 #define ERT_TEMPLATES_TYPE_ID 6677330

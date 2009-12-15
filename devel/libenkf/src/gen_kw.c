@@ -8,7 +8,7 @@
 #include <math.h>
 #include <scalar.h>
 #include <enkf_macros.h>
-#include <subst.h>
+#include <subst_list.h>
 #include <buffer.h>
 #include <matrix.h>
 #include <gen_kw_common.h>

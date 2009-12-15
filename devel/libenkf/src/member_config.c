@@ -4,7 +4,7 @@
 #include <time_t_vector.h>
 #include <stdbool.h>
 #include <path_fmt.h>
-#include <subst.h>
+#include <subst_list.h>
 #include <sched_file.h>
 #include <ecl_config.h>
 #include <enkf_fs.h>

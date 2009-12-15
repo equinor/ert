@@ -61,8 +61,8 @@ static void copy_index( const char * src_case , const char * target_case) {
   char * data_src     = util_alloc_filename(src_case , "INDEX" , "data_0");
   char * data_target  = util_alloc_filename(target_case , "INDEX" , "data_0");
 
-  util_copy_file( mount_src , mount_target , true );
-  util_copy_file( data_src , data_target , true );
+  util_copy_file( mount_src , mount_target );
+  util_copy_file( data_src , data_target );
 
   free( mount_src );
   free( mount_target );

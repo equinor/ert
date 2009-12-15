@@ -60,7 +60,7 @@ void rms_stats_update_ens(const char *prior_path , const char *posterior_path , 
   rms_tagkey_type  * post ;
   rms_tag_type     * dim_tag = NULL;
 
-  if (!util_path_exists(posterior_path)) {
+  if (!util_is_directory(posterior_path)) {
     fprintf(stderr,"%s: posterior_path:%s does not exist - aborting \n",__func__ , posterior_path);
     abort();
   }

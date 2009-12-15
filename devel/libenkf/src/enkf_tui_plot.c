@@ -135,8 +135,6 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
   plot_type * plot ;
   enkf_node_type * node;
   msg_type * msg;
-  double_vector_type * x      = double_vector_alloc(0,0);
-  double_vector_type * y      = double_vector_alloc(0,0);
   bool_vector_type * has_data = bool_vector_alloc( 0 , false );
   int     iens , step;
 
@@ -157,6 +155,8 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 
   
   {
+    double_vector_type * x      = double_vector_alloc(0,0);
+    double_vector_type * y      = double_vector_alloc(0,0);
     for (iens = iens1; iens <= iens2; iens++) {
       char msg_label[32];
       char plot_label[32];
@@ -212,19 +212,20 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
         }
       }
 
-      if (double_vector_size( x ) > 0)
+      if (double_vector_size( x ) > 0) {
         show_plot = true;
       
-      /* This is called once for every realization - that is kind of wasted. */
-      if (plot_dates && show_plot) {
-        time_t min_time = ( time_t ) double_vector_get_min( x );
-        time_t max_time = ( time_t ) double_vector_get_max( x );
-        
-        plot_set_default_timefmt( plot , min_time , max_time );
-      }
+        /* This is called once for every realization - that is kind of wasted. */
+        if (plot_dates) {
+          time_t min_time = ( time_t ) double_vector_get_min( x );
+          time_t max_time = ( time_t ) double_vector_get_max( x );
+          
+          plot_set_default_timefmt( plot , min_time , max_time );
+        }
       
-      sprintf(plot_label , "mem_%03d" , iens);
-      __plot_add_data(plot , plot_label , double_vector_size( x ) , double_vector_get_ptr( x ) , double_vector_get_ptr( y ));
+        sprintf(plot_label , "mem_%03d" , iens);
+        __plot_add_data(plot , plot_label , double_vector_size( x ) , double_vector_get_ptr( x ) , double_vector_get_ptr( y ));
+      }
     }
     double_vector_free( x );
     double_vector_free( y );

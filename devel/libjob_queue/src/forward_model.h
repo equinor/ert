@@ -1,7 +1,7 @@
 #ifndef __FORWARD_MODEL_H__
 #define __FORWARD_MODEL_H__
 
-#include <subst.h>
+#include <subst_list.h>
 #include <ext_joblist.h>
 #include <stdbool.h>
 

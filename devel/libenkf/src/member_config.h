@@ -9,11 +9,11 @@ extern "C" {
 #include <enkf_types.h>
 #include <ensemble_config.h>
 #include <ecl_config.h>
-#include <subst.h>
 #include <time.h>
 #include <sched_file.h> 
 #include <enkf_types.h>
 #include <stdbool.h>
+#include <subst_list.h>
 
 typedef struct member_config_struct member_config_type;
 

@@ -267,7 +267,7 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
       node->run_path = util_alloc_string_copy( run_path );
     else
       node->run_path = util_alloc_realpath( run_path );
-    if ( !util_path_exists(node->run_path) ) 
+    if ( !util_is_directory(node->run_path) ) 
       util_abort("%s: the run_path: %s does not exist - aborting \n",__func__ , node->run_path);
     
     node->exit_file = util_alloc_filename(node->run_path , EXIT_FILE , NULL);

@@ -1,7 +1,7 @@
 #ifndef __ERT_TEMPLATE_H__
 #define __ERT_TEMPLATE_H__
 
-#include <subst.h>
+#include <subst_list.h>
 
 typedef struct ert_template_struct  ert_template_type;
 typedef struct ert_templates_struct ert_templates_type;

@@ -6,7 +6,7 @@
 #include <ext_job.h>
 #include <ext_joblist.h>
 #include <forward_model.h>
-#include <subst.h>
+#include <subst_list.h>
 #include <lsf_request.h>
 #include <vector.h>
 #include <parser.h>

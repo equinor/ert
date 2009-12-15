@@ -6,6 +6,7 @@
 #include <sched_util.h>
 #include <sched_kw_dates.h>
 #include <stringlist.h>
+#include <ecl_util.h>
 
 
 struct sched_kw_dates_struct {
@@ -55,7 +56,7 @@ static time_t parse_time_t(const char * day_string , const char * month_string ,
   int mday , month , year;
   time_t time = -1;
 
-  month = util_get_month_nr(month_string);
+  month = ecl_util_get_month_nr(month_string);
   if (month < 0)
     util_abort("%s: failed to interpret:%s a month name \n",__func__ , month_string );
 

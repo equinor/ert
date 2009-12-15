@@ -585,7 +585,7 @@ void enkf_tui_export_scalar2csv(void * arg) {
 
       util_alloc_file_components( csv_file , &path , NULL , NULL);
       if (path != NULL) {
-	if (util_path_exists( path )) {
+	if (util_entry_exists( path )) {
 	  if (!util_is_directory( path )) {
 	    /* The path component already exists in the filesystem - and it is not a directory - we leave the building. */
 	    fprintf(stderr,"Sorry: %s already exists - and is not a directory.\n",path);

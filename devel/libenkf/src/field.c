@@ -512,7 +512,7 @@ static ecl_kw_type * field_alloc_ecl_kw_wrapper__(const field_type * field, void
   const int data_size             = field_config_get_volume(field->config);
   const ecl_type_enum target_type = field_config_get_ecl_type(field->config); /* Could/should in principle be input */
 
-  ecl_kw_type            * ecl_kw = ecl_kw_alloc_complete_shared(field_config_get_ecl_kw_name(field->config) , data_size , target_type , data);
+  ecl_kw_type            * ecl_kw = ecl_kw_alloc_new_shared(field_config_get_ecl_kw_name(field->config) , data_size , target_type , data);
 
   return ecl_kw;
 }

@@ -155,7 +155,7 @@ char * enkf_util_scanf_alloc_filename(const char * prompt , int options) {
       scanf("%s" , file);
       util_alloc_file_components(file , &_path , NULL ,  NULL);
       if (_path != NULL) {
-	if (!util_path_exists(_path)) 
+	if (!util_is_directory(_path)) 
 	  if (options & AUTO_MKDIR)
 	    util_make_path(_path);
 	free(_path);

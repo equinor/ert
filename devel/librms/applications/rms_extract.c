@@ -58,7 +58,7 @@ int main (int argc , char **argv) {
       
       split_name(argv[i] , &old_name , &new_name);
       printf("Exctracting %s -> %s \n" , old_name , new_name); fflush(stdout);
-      new_file = util_alloc_string_sum2(new_name , ".ROFF");
+      new_file = util_alloc_filename(NULL , new_name , "ROFF");
       
       {
 	rms_tag_type   * tag;

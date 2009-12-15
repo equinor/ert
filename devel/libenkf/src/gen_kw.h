@@ -9,7 +9,7 @@ extern "C" {
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <enkf_serialize.h>
-#include <subst.h>
+#include <subst_list.h>
 #include <gen_kw_common.h>
 
 

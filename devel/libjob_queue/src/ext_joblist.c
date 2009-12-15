@@ -6,11 +6,12 @@
 #include <ext_job.h>
 #include <stringlist.h>
 #include <ext_joblist.h>
-#include <subst.h>
+#include <subst_list.h>
 
 
-#define MODULE_NAME    "jobs.py"
-#define JOBLIST_NAME   "jobList"
+//#define MODULE_NAME    "jobs.py"
+//#define JOBLIST_NAME   "jobList"
+
 
 /**
    About the 'license' system:
@@ -117,20 +118,20 @@ bool ext_joblist_has_job(const ext_joblist_type * joblist , const char * job_nam
 }
 
 
-void ext_joblist_python_fprintf(const ext_joblist_type * joblist , const stringlist_type * kw_list , const char * path, const subst_list_type * subst_list) {
-  char * module_file = util_alloc_filename(path , MODULE_NAME , NULL);
-  FILE * stream      = util_fopen(module_file , "w");
-  int i;
-
-  fprintf(stream , "%s = [" , JOBLIST_NAME);
-  for (i=0; i < stringlist_get_size(kw_list); i++) {
-    const ext_job_type * job = ext_joblist_get_job( joblist , stringlist_iget(kw_list , i));
-    ext_job_python_fprintf(job , stream , subst_list);
-    if (i < (stringlist_get_size(kw_list) - 1))
-      fprintf(stream,",\n");
-  }
-  fprintf(stream , "]\n");
-  
-  fclose(stream);
-  free(module_file);
-}
+//void ext_python_joblist_fprintf(const ext_joblist_type * joblist , const stringlist_type * kw_list , const char * path, const subst_list_type * subst_list) {
+//  char * module_file = util_alloc_filename(path , MODULE_NAME , NULL);
+//  FILE * stream      = util_fopen(module_file , "w");
+//  int i;
+//
+//  fprintf(stream , "%s = [" , JOBLIST_NAME);
+//  for (i=0; i < stringlist_get_size(kw_list); i++) {
+//    const ext_job_type * job = ext_joblist_get_job( joblist , stringlist_iget(kw_list , i));
+//    ext_job_python_fprintf(job , stream , subst_list);
+//    if (i < (stringlist_get_size(kw_list) - 1))
+//      fprintf(stream,",\n");
+//  }
+//  fprintf(stream , "]\n");
+//  
+//  fclose(stream);
+//  free(module_file);
+//}
