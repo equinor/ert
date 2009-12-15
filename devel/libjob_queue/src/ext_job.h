@@ -5,7 +5,7 @@ extern "C" {
 #endif
 #include <hash.h>
 #include <stdio.h>
-#include <subst.h>
+#include <subst_list.h>
 
 typedef struct ext_job_struct ext_job_type;
 
