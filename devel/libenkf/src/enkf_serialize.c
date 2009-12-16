@@ -180,7 +180,7 @@ void enkf_matrix_serialize(const void * __node_data 	   	  ,
   else
     active_size = active_list_get_active_size( __active_list );
 
-  if (node_type == ecl_double_type) {
+  if (node_type == ECL_DOUBLE_TYPE) {
     const double * node_data = (const double *) __node_data;
     if (active_size == node_size) /** All elements active */
       matrix_set_many_on_column( A , row_offset , node_size , node_data , column);
@@ -192,7 +192,7 @@ void enkf_matrix_serialize(const void * __node_data 	   	  ,
 	matrix_iset( A , row_index + row_offset , column , node_data[node_index] );
       }
     }
-  } else if (node_type == ecl_float_type) {
+  } else if (node_type == ECL_FLOAT_TYPE) {
     const float * node_data = (const float *) __node_data;
     int row_index;
     if (active_size == node_size) {/** All elements active */
@@ -207,7 +207,7 @@ void enkf_matrix_serialize(const void * __node_data 	   	  ,
       }
     }      
   } else 
-      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+      util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_get_type_name( node_type ));
 }
 
 
@@ -227,7 +227,7 @@ void enkf_matrix_deserialize(void * __node_data 	   	,
   else
     active_size = active_list_get_active_size( __active_list );
     
-  if (node_type == ecl_double_type) {
+  if (node_type == ECL_DOUBLE_TYPE) {
     double * node_data = (double *) __node_data;
 
     if (active_size == node_size) { /** All elements active */
@@ -243,7 +243,7 @@ void enkf_matrix_deserialize(void * __node_data 	   	,
       }
     }
     
-  } else if (node_type == ecl_float_type) {
+  } else if (node_type == ECL_FLOAT_TYPE) {
     float * node_data = (float *) __node_data;
     
     if (active_size == node_size) { /** All elements active */
@@ -259,6 +259,6 @@ void enkf_matrix_deserialize(void * __node_data 	   	,
       }
     }
   } else 
-    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_type_name( node_type ));
+    util_abort("%s: internal error: trying to serialize unserializable type:%s \n",__func__ , ecl_util_get_type_name( node_type ));
 }
 			   

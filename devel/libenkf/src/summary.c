@@ -109,7 +109,7 @@ void summary_matrix_serialize(const summary_type * summary , const active_list_t
   const summary_config_type *config  = summary->config;
   const int                data_size = summary_config_get_data_size(config );
   
-  enkf_matrix_serialize( summary->data , data_size , ecl_double_type , active_list , A , row_offset , column);
+  enkf_matrix_serialize( summary->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
 
 
@@ -117,7 +117,7 @@ void summary_matrix_deserialize(summary_type * summary , const active_list_type 
   const summary_config_type *config  = summary->config;
   const int                data_size = summary_config_get_data_size(config );
   
-  enkf_matrix_deserialize( summary->data , data_size , ecl_double_type , active_list , A , row_offset , column);
+  enkf_matrix_deserialize( summary->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
 
 

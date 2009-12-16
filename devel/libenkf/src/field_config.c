@@ -508,7 +508,7 @@ void field_config_get_ijk( const field_config_type * config , int active_index ,
 
 
 field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , const stringlist_type * options) {
-  field_config_type * config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , ECL_FILE , ECL_FILE , trans_table , options);
+  field_config_type * config = field_config_alloc__(ecl_kw_name , ECL_FLOAT_TYPE , ecl_grid , ECL_FILE , ECL_FILE , trans_table , options);
   return config;
 }
 
@@ -543,7 +543,7 @@ field_config_type * field_config_alloc_parameter(const char * ecl_kw_name 	     
   field_file_format_type import_format = UNDEFINED_FORMAT;
   field_file_format_type export_format = field_config_default_export_format( ecl_file );
 
-  config = field_config_alloc__(ecl_kw_name , ecl_float_type , ecl_grid , import_format , export_format , trans_table ,options);
+  config = field_config_alloc__(ecl_kw_name , ECL_FLOAT_TYPE , ecl_grid , import_format , export_format , trans_table ,options);
   if (config->init_file_fmt == NULL)
     util_abort("%s:(INTERNAL ERROR)  invalid init type \n",__func__);
 
@@ -863,7 +863,7 @@ void field_config_set_output_transform(field_config_type * config , field_func_t
 */
 void field_config_assert_unary( const field_config_type * field_config , const char * caller) {
   const ecl_type_enum ecl_type = field_config_get_ecl_type(field_config);
-  if (ecl_type == ecl_float_type || ecl_type == ecl_double_type)
+  if (ecl_type == ECL_FLOAT_TYPE || ecl_type == ECL_DOUBLE_TYPE)
     return;
   else
     util_abort("%s: error in:%s unary functions can only be applied on fields of type ecl_float / ecl_double \n",__func__ , caller);

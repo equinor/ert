@@ -216,7 +216,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
     if (load_type == internal_type)
       memcpy(gen_data->data , data , byte_size );
     else {
-      if (load_type == ecl_float_type)
+      if (load_type == ECL_FLOAT_TYPE)
 	util_float_to_double((double *) gen_data->data , data , size);
       else
 	util_double_to_float((float *) gen_data->data , data , size);
@@ -333,11 +333,11 @@ static void gen_data_ecl_write_ASCII(const gen_data_type * gen_data , const char
     ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
     const int size              = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
     int i;
-    if (internal_type == ecl_float_type) {
+    if (internal_type == ECL_FLOAT_TYPE) {
       float * float_data = (float *) gen_data->data;
       for (i=0; i < size; i++)
 	fprintf(stream , "%g\n",float_data[i]);
-    } else if (internal_type == ecl_double_type) {
+    } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * double_data = (double *) gen_data->data;
       for (i=0; i < size; i++)
 	fprintf(stream , "%lg\n",double_data[i]);
@@ -384,10 +384,10 @@ void gen_data_ecl_write(const gen_data_type * gen_data , const char * run_path ,
       gen_data_ecl_write_ASCII(gen_data , full_path , export_type);
       break;
     case(BINARY_DOUBLE):
-      gen_data_ecl_write_binary(gen_data , full_path , ecl_double_type);
+      gen_data_ecl_write_binary(gen_data , full_path , ECL_DOUBLE_TYPE);
       break;
     case(BINARY_FLOAT):
-      gen_data_ecl_write_binary(gen_data , full_path , ecl_float_type);
+      gen_data_ecl_write_binary(gen_data , full_path , ECL_FLOAT_TYPE);
       break;
     default:
       util_abort("%s: internal error - export type is not set.\n",__func__);
@@ -409,7 +409,7 @@ double gen_data_iget_double(const gen_data_type * gen_data, int index) {
   gen_data_assert_index(gen_data , index); 
   {
     ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
-    if (internal_type == ecl_double_type) {
+    if (internal_type == ECL_DOUBLE_TYPE) {
       double * data = (double *) gen_data->data;
       return data[index];
     } else {
@@ -456,11 +456,11 @@ void gen_data_clear( gen_data_type * gen_data ) {
   ecl_type_enum internal_type         = gen_data_config_get_internal_type( config );
   const int data_size                 = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
 
-  if (internal_type == ecl_float_type) {
+  if (internal_type == ECL_FLOAT_TYPE) {
     float * data = (float * ) gen_data->data;
     for (int i = 0; i < data_size; i++)
       data[i] = 0;
-  } else if (internal_type == ecl_double_type) {
+  } else if (internal_type == ECL_DOUBLE_TYPE) {
     double * data = (double * ) gen_data->data;
     for (int i = 0; i < data_size; i++)
       data[i] = 0;
@@ -473,11 +473,11 @@ void gen_data_isqrt(gen_data_type * gen_data) {
   const int data_size                 = gen_data_config_get_data_size( gen_data->config , gen_data->current_report_step );
   const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
   
-  if (internal_type == ecl_float_type) {
+  if (internal_type == ECL_FLOAT_TYPE) {
     float * data = (float *) gen_data->data;
     for (int i=0; i < data_size; i++)
       data[i] = sqrtf( data[i] );
-  } else if (internal_type == ecl_double_type) {
+  } else if (internal_type == ECL_DOUBLE_TYPE) {
     double * data = (double *) gen_data->data;
     for (int i=0; i < data_size; i++)
       data[i] = sqrt( data[i] );
@@ -494,12 +494,12 @@ void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 
-    if (internal_type == ecl_float_type) {
+    if (internal_type == ECL_FLOAT_TYPE) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
 	data1[i] += data2[i];
-    } else if (internal_type == ecl_double_type) {
+    } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++) {
@@ -517,12 +517,12 @@ void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 
-    if (internal_type == ecl_float_type) {
+    if (internal_type == ECL_FLOAT_TYPE) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
 	data1[i] *= data2[i];
-    } else if (internal_type == ecl_double_type) {
+    } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++)
@@ -539,12 +539,12 @@ void gen_data_iaddsqr(gen_data_type * gen_data1, const gen_data_type * gen_data2
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 
-    if (internal_type == ecl_float_type) {
+    if (internal_type == ECL_FLOAT_TYPE) {
       float * data1       = (float *) gen_data1->data;
       const float * data2 = (const float *) gen_data2->data;
       for (i = 0; i < data_size; i++)
 	data1[i] += data2[i] * data2[i];
-    } else if (internal_type == ecl_double_type) {
+    } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
       for (i = 0; i < data_size; i++)
@@ -561,11 +561,11 @@ void gen_data_scale(gen_data_type * gen_data, double scale_factor) {
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data->config);
     int i;
 
-    if (internal_type == ecl_float_type) {
+    if (internal_type == ECL_FLOAT_TYPE) {
       float * data       = (float *) gen_data->data;
       for (i = 0; i < data_size; i++)
 	data[i] *= scale_factor;
-    } else if (internal_type == ecl_double_type) {
+    } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data       = (double *) gen_data->data;
       for (i = 0; i < data_size; i++)
 	data[i] *= scale_factor;
@@ -597,7 +597,7 @@ void gen_data_set_inflation(gen_data_type * inflation , const gen_data_type * st
   ecl_type_enum ecl_type              = gen_data_config_get_internal_type( config );
   const int data_size                 = gen_data_config_get_data_size( std->config , std->current_report_step );
 
-  if (ecl_type == ecl_float_type) {
+  if (ecl_type == ECL_FLOAT_TYPE) {
     float       * inflation_data = (float *)       inflation->data;
     const float * std_data       = (const float *) std->data;
     const float * min_std_data   = (const float *) min_std->data;

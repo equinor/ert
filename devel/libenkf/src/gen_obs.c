@@ -82,18 +82,18 @@ static void gen_obs_load_observation(gen_obs_type * gen_obs, double scalar_value
   
   gen_obs->obs_size = 0;
   if (gen_obs->obs_file != NULL)
-    buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ecl_double_type , &load_type , &gen_obs->obs_size);
+    buffer = gen_common_fload_alloc(gen_obs->obs_file , gen_obs->obs_format , ECL_DOUBLE_TYPE , &load_type , &gen_obs->obs_size);
   else {
     double * double_buffer = util_malloc(2 * sizeof * double_buffer , __func__);
     buffer = double_buffer;
     double_buffer[0] = scalar_value;
     double_buffer[1] = scalar_error;
-    load_type         = ecl_double_type;
+    load_type         = ECL_DOUBLE_TYPE;
     gen_obs->obs_size = 2;
   }
   
   /** Ensure that the data is of type double. */
-  if (load_type == ecl_float_type) {
+  if (load_type == ECL_FLOAT_TYPE) {
     double * double_data = util_malloc(gen_obs->obs_size * sizeof * double_data , __func__);
     util_float_to_double(double_data , (const float *) buffer , gen_obs->obs_size);
     free(buffer);
@@ -157,7 +157,7 @@ gen_obs_type * gen_obs_alloc(const char * obs_key , const char * obs_file , doub
     obs->observe_all_data = false;
     if (data_index_file != NULL) 
       /* Parsing an a file with integers. */
-      obs->data_index_list = gen_common_fscanf_alloc( data_index_file , ecl_int_type , &obs->obs_size);
+      obs->data_index_list = gen_common_fscanf_alloc( data_index_file , ECL_INT_TYPE , &obs->obs_size);
     else   
       /* Parsing a string of the type "1,3,5,9-100,200,202,300-1000" */
       obs->data_index_list = util_sscanf_alloc_active_list(data_index_string , &obs->obs_size);

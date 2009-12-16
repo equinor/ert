@@ -613,13 +613,13 @@ ecl_type_enum rms_tagkey_get_ecl_type(const rms_tagkey_type * key) {
   ecl_type_enum ecl_type;
   switch (key->rms_type) {
   case(rms_float_type):
-    ecl_type = ecl_float_type;
+    ecl_type = ECL_FLOAT_TYPE;
     break;
   case(rms_double_type):
-    ecl_type = ecl_double_type;
+    ecl_type = ECL_DOUBLE_TYPE;
     break;
   case(rms_int_type):
-    ecl_type = ecl_int_type;
+    ecl_type = ECL_INT_TYPE;
     break;
   default:
     fprintf(stderr,"%s: sorry rms_type: %d not implemented - aborting \n",__func__ , key->rms_type);

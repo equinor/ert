@@ -27,13 +27,13 @@ void * gen_common_fscanf_alloc(const char * file , ecl_type_enum load_type , int
   buffer = util_malloc( buffer_elements * sizeof_ctype , __func__);
   {
     do {
-      if (load_type == ecl_float_type) {
+      if (load_type == ECL_FLOAT_TYPE) {
 	float  * float_buffer = (float *) buffer;
 	fscanf_return = fscanf(stream , "%g" , &float_buffer[current_size]);
-      } else if (load_type == ecl_double_type) {
+      } else if (load_type == ECL_DOUBLE_TYPE) {
 	double  * double_buffer = (double *) buffer;
 	fscanf_return = fscanf(stream , "%lg" , &double_buffer[current_size]);
-      } else if (load_type == ecl_int_type) {
+      } else if (load_type == ECL_INT_TYPE) {
 	int * int_buffer = (int *) buffer;
 	fscanf_return = fscanf(stream , "%d" , &int_buffer[current_size]);
       }  else 
@@ -106,21 +106,13 @@ void * gen_common_fload_alloc(const char * file , gen_data_file_format_type load
     *load_type = ASCII_type;
     buffer =  gen_common_fscanf_alloc(file , ASCII_type , size);
   } else if (load_format == BINARY_FLOAT) {
-    *load_type = ecl_float_type;
-    buffer = gen_common_fread_alloc(file , ecl_float_type , size);
+    *load_type = ECL_FLOAT_TYPE;
+    buffer = gen_common_fread_alloc(file , ECL_FLOAT_TYPE , size);
   } else if (load_format == BINARY_DOUBLE) {
-    *load_type = ecl_double_type;
-    buffer = gen_common_fread_alloc(file , ecl_double_type , size);
+    *load_type = ECL_DOUBLE_TYPE;
+    buffer = gen_common_fread_alloc(file , ECL_DOUBLE_TYPE , size);
   } else 
     util_abort("%s: trying to load with unsupported format ... \n");
-  
-  //{
-  //  FILE * stream = util_fopen("/tmp/data.txt" , "w");
-  //  double * data = (double *) buffer;
-  //  for (int i = 0; i < *size; i++)
-  //   fprintf(stream , "%12.4f[%06d] \n",data[i] , i);
-  //  fclose(stream);
-  //}
   
   return buffer;
 }

@@ -63,11 +63,11 @@ void enkf_util_rand_stdnormal_vector(int size , double *R) {
 }  
 
 void enkf_util_truncate(void * void_data , int size , ecl_type_enum ecl_type , void * min_ptr , void *max_ptr) {
-  if (ecl_type == ecl_double_type) 
+  if (ecl_type == ECL_DOUBLE_TYPE) 
      TRUNCATE(double , void_data , size , min_ptr , max_ptr)
-  else if (ecl_type == ecl_float_type)
+  else if (ecl_type == ECL_FLOAT_TYPE)
      TRUNCATE(float , void_data , size , min_ptr , max_ptr)
-  else if (ecl_type == ecl_int_type)
+  else if (ecl_type == ECL_INT_TYPE)
      TRUNCATE(int , void_data , size , min_ptr , max_ptr)
   else 
      util_abort("%s: unrecognized type - aborting \n",__func__);

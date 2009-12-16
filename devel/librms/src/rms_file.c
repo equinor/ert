@@ -443,7 +443,7 @@ void rms_file_2eclipse(const char * rms_file , const char * ecl_path, bool ecl_f
 	      abort();
 	    }
 	    
-	    ecl_kw_fwrite_param(ecl_file , ecl_fmt_file , tagname , ecl_float_type , size , ecl_data);
+	    ecl_kw_fwrite_param(ecl_file , ecl_fmt_file , tagname , ECL_FLOAT_TYPE , size , ecl_data);
 	    free(ecl_base);
 	    free(ecl_file);
 	    

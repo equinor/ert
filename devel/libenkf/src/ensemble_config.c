@@ -433,7 +433,7 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
 	stringlist_idel( tokens , 0 );
 	
 	config_node = ensemble_config_add_node(ensemble_config , key , DYNAMIC_STATE , FIELD , enkf_outfile , enkf_infile , 
-                                               field_config_alloc_general(key , enkf_outfile , grid , ecl_float_type , field_trans_table , tokens));
+                                               field_config_alloc_general(key , enkf_outfile , grid , ECL_FLOAT_TYPE , field_trans_table , tokens));
 	free(enkf_outfile);
 	free(enkf_infile);
       } else 
