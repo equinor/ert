@@ -21,10 +21,13 @@ conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , L
 
 
 define_fmt = "\'%s=\"%s\"\'"
-ert = env.Program( "ert" , "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE),
-                                                    define_fmt % ("SVN_VERSION"        ,  conf.SVN_VERSION),
-                                                    define_fmt % ("COMPILE_TIME_STAMP" ,  conf.TIME_STAMP)])
+tui_objects = env.Object( ["enkf_tui_main.c" , "enkf_tui_fs.c" , "enkf_tui_ranking.c" , "enkf_tui_misc.c" , "enkf_tui_table.c" , "enkf_tui_plot.c" , 
+                           "enkf_tui_run.c", "enkf_tui_util.c" , "enkf_tui_init.c" , "enkf_tui_export.c"])
+main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE),
+                                                   define_fmt % ("SVN_VERSION"        ,  conf.SVN_VERSION),
+                                                   define_fmt % ("COMPILE_TIME_STAMP" ,  conf.TIME_STAMP)])
 
+ert         = env.Program( [main_object, tui_objects])
 Default( ert )
 
 if SDP_ROOT:
