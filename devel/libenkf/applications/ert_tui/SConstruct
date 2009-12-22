@@ -27,7 +27,7 @@ main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FI
                                                    define_fmt % ("SVN_VERSION"        ,  conf.SVN_VERSION),
                                                    define_fmt % ("COMPILE_TIME_STAMP" ,  conf.TIME_STAMP)])
 
-ert         = env.Program( [main_object, tui_objects])
+ert         = env.Program( "ert" , [main_object, tui_objects])
 Default( ert )
 
 if SDP_ROOT:
