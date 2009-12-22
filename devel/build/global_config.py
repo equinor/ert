@@ -70,8 +70,10 @@ class conf:
                 os.makedirs( self.SDP_BIN )
 
         if self.SDP_INCLUDE:
-            if not os.path.exists( self.SDP_INCLUDE ):
-                os.makedirs( self.SDP_INCLUDE )
+            for lib in ["libutil","libecl","librms","libconfig","libplot","libenkf","libjob_queue" , "libsched"]:
+                path = "%s/%s" % (self.SDP_INCLUDE , lib)
+                if not os.path.exists( path ):
+                    os.makedirs( path )
  
 
 
