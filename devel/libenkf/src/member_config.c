@@ -25,13 +25,20 @@ struct member_config_struct {
   int  		          iens;                /* The ensemble member number of this member. */
   char                  * casename;            /* The name of this case - will mosttly be NULL. */
   keep_runpath_type       keep_runpath;        /* Should the run-path directory be left around (for this member)*/
+  bool                    pre_clear_runpath;   /* Should the runpath directory be cleared before starting? */ 
   char 		        * eclbase;             /* The ECLBASE string used for simulations of this member. */
   const sched_file_type * sched_file;          /* The schedule file - a shared pointer NOT owned bt this object. */ 
   int                     last_restart_nr;
   time_t_vector_type    * report_time;         /* This vector contains the (per member) report_step -> simulation_time mapping. */
 };
 
-
+/*****************************************************************/
+/*
+  Observe that there is a potential for conflict between the fields
+  pre_clear_runpath and keep_runpath when running normal EnKF. If both
+  are set to true the former will win.
+*/
+  
 
 
 /******************************************************************/
@@ -76,8 +83,6 @@ static void member_config_set_keep_runpath(member_config_type * member_config , 
 }
 
 
-
-
 const sched_file_type * member_config_get_sched_file( const member_config_type * member_config) {
   return member_config->sched_file;
 }
@@ -85,6 +90,11 @@ const sched_file_type * member_config_get_sched_file( const member_config_type *
 keep_runpath_type member_config_get_keep_runpath(const member_config_type * member_config) {
   return member_config->keep_runpath;
 }
+
+bool member_config_pre_clear_runpath(const member_config_type * member_config) {
+  return member_config->pre_clear_runpath;
+}
+
 
 
 void member_config_iset_sim_time( member_config_type * member_config , int report_step , time_t sim_time ) {
@@ -100,7 +110,7 @@ void member_config_iset_sim_time( member_config_type * member_config , int repor
    Historical note:
    ----------------
 
-   Time in the ert codebase is in terms of ECLIPS report
+   Time in the ert codebase is in terms of ECLIPSE report
    steps. Originally these were translated to 'true time' via the
    schedule file. In newer implementations this is done as follows:
 
@@ -202,6 +212,7 @@ const char * member_config_get_casename( const member_config_type * member_confi
 
 member_config_type * member_config_alloc(int iens , 
                                          const char * casename , 
+                                         bool                         pre_clear_runpath , 
                                          keep_runpath_type            keep_runpath , 
                                          const ecl_config_type      * ecl_config , 
                                          const ensemble_config_type * ensemble_config,
@@ -211,9 +222,10 @@ member_config_type * member_config_alloc(int iens ,
   member_config->casename            = util_alloc_string_copy( casename );
   member_config->iens                = iens; /* Can only be changed in the allocater. */
   member_config->eclbase  	     = NULL;
+  member_config->pre_clear_runpath   = pre_clear_runpath;
   member_config_set_keep_runpath(member_config , keep_runpath);
   member_config->sched_file         = ecl_config_get_sched_file( ecl_config );
-  member_config->last_restart_nr  = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
+  member_config->last_restart_nr    = sched_file_get_num_restart_files( member_config->sched_file ) - 1; /* Fuck me +/- 1 */
   member_config->report_time = time_t_vector_alloc( 0 , -1 );
   member_config_fread_sim_time( member_config , fs );
   return member_config;

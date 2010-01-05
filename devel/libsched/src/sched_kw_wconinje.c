@@ -105,24 +105,27 @@ static wconinje_status_enum get_status_from_string(const char * st_string)
 }
 
 
-
-
+/**
+   Must use the strncmp(x,x,4) function for comparison, because
+   suddenly files with control mode 'GRUP ' appear; and ECLIPSE
+   appearantly eats that nicely.
+*/
 
 static wconinje_control_enum get_cmode_from_string(const char * cm_string)
 {
-  if(     strcmp(cm_string, CONTROL_RATE_STRING) == 0)
+  if(     strncmp(cm_string, CONTROL_RATE_STRING , 4) == 0)
     return RATE;
-  else if(strcmp(cm_string, CONTROL_RESV_STRING) == 0)
+  else if(strncmp(cm_string, CONTROL_RESV_STRING , 4) == 0)
     return RESV;
-  else if(strcmp(cm_string, CONTROL_BHP_STRING) == 0)
+  else if(strncmp(cm_string, CONTROL_BHP_STRING , 4) == 0)
     return BHP;
-  else if(strcmp(cm_string, CONTROL_THP_STRING) == 0)
+  else if(strncmp(cm_string, CONTROL_THP_STRING, 4) == 0)
     return THP;
-  else if(strcmp(cm_string, CONTROL_GRUP_STRING) == 0)
+  else if(strncmp(cm_string, CONTROL_GRUP_STRING , 4) == 0)
     return GRUP;
   else
   {
-    util_abort("%s: Could not recognize %s as a control mode. Valid values are: [%s, %s, %s, %s, %s] \n", __func__, cm_string, 
+    util_abort("%s: Could not recognize \'%s\' as a control mode. Valid values are: [%s, %s, %s, %s, %s] \n", __func__, cm_string, 
 	       CONTROL_RATE_STRING , CONTROL_RESV_STRING , CONTROL_BHP_STRING, CONTROL_THP_STRING, CONTROL_GRUP_STRING);
     return 0;
   }

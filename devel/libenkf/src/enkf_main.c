@@ -90,16 +90,12 @@
 #define ENKF_MAIN_ID              8301
 #define ENKF_ENSEMBLE_TYPE_ID   776098
 
-//struct enkf_ensemble_struct {
-//  
-//};
-
 
 
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
-  ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/ 
   enkf_fs_type         * dbase;            /* The internalized information. */
+  ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/ 
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
@@ -112,8 +108,8 @@ struct enkf_main_struct {
   subst_list_type      * subst_list;       /* A parent subst_list instance - common to all ensemble members. */
   /*-------------------------*/
 
-  keep_runpath_type    * keep_runpath;     /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
-  
+  keep_runpath_type    * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
+  bool                   pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
   
   enkf_obs_type        * obs;               
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
@@ -1479,6 +1475,7 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
     enkf_main->ensemble[iens] = enkf_state_alloc(iens,
                                                  enkf_main->dbase , 
                                                  model_config_iget_casename( enkf_main->model_config , iens ) , 
+                                                 enkf_main->pre_clear_runpath                                 , 
                                                  enkf_main->keep_runpath[iens]                                ,
                                                  enkf_main->model_config                                      , 
                                                  enkf_main->ensemble_config                                   ,
@@ -1692,7 +1689,15 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         util_safe_free( keep_runpath_string );
         util_safe_free( delete_runpath_string );
       }
-      
+      /* This is really in the wrong place ... */
+      {
+        enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
+        if (config_has_set_item(config , "PRE_CLEAR_RUNPATH")) 
+          enkf_main->pre_clear_runpath = config_get_value_as_bool( config , "PRE_CLEAR_RUNPATH");
+      }
+
+
+
       
       if (config_has_set_item(config , "ADD_STATIC_KW")) {
 	for (int i=0; i < config_get_occurences(config , "ADD_STATIC_KW"); i++) {

@@ -424,9 +424,11 @@ static char * enkf_state_subst_randfloat(const char * key , void * arg) {
   return util_alloc_sprintf("%12.10f" , 1.0 * rand() / RAND_MAX);
 }
 
+
 enkf_state_type * enkf_state_alloc(int iens,
                                    enkf_fs_type              * fs, 
                                    const char                * casename , 
+                                   bool                        pre_clear_runpath , 
 				   keep_runpath_type           keep_runpath , 
 				   const model_config_type   * model_config,
 				   ensemble_config_type      * ensemble_config,
@@ -503,7 +505,7 @@ INCLDUE
   else
     enkf_state_add_subst_kw(enkf_state , "CASE" , "---" , "The casename for this realization - similar to ECLBASE.");
   
-  enkf_state->my_config = member_config_alloc( iens , casename , keep_runpath , ecl_config , ensemble_config , fs);
+  enkf_state->my_config = member_config_alloc( iens , casename , pre_clear_runpath , keep_runpath , ecl_config , ensemble_config , fs);
   enkf_state_set_static_subst_kw(  enkf_state );
 
 
@@ -1303,6 +1305,9 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
     const run_info_type       * run_info    = enkf_state->run_info;
     if (!run_info->__ready) 
       util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
+
+    if (member_config_pre_clear_runpath( my_config ))
+      util_clear_directory( run_info->run_path , true , false );
     
     util_make_path(run_info->run_path);
     {
@@ -1506,8 +1511,10 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
      just leave the runpath directory hanging around.
   */
     
-  /* In case the job fails, we leave the run_path directory around
-     for debugging. */
+  /* 
+     In case the job fails, we leave the run_path directory around
+     for debugging. 
+  */
   if (status == JOB_QUEUE_ALL_OK) {
     keep_runpath_type keep_runpath = member_config_get_keep_runpath( my_config );
     bool unlink_runpath;
@@ -1528,7 +1535,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
       }
     }
     if (unlink_runpath)
-      util_unlink_path(run_info->run_path);
+      util_clear_directory(run_info->run_path , true , true);
     run_info->runOK = true;
   } 
   run_info_complete_run(enkf_state->run_info);

@@ -681,7 +681,7 @@ void history_realloc_from_summary(history_type * history, const char * refcase ,
   util_alloc_file_components( refcase , &refcase_path , &refcase_base , NULL);
   ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , summary_files , &fmt_file , &unified);
   
-  history->ecl_sum = ecl_sum_fread_alloc( header_file , summary_files );
+  history->ecl_sum = ecl_sum_fread_alloc( header_file , summary_files , ":");
   if (use_h_keywords)
     history->source = REFCASE_HISTORY;
   else

@@ -78,7 +78,7 @@ ext_joblist_type * ext_joblist_alloc(const char * license_root_path) {
 
 void ext_joblist_free(ext_joblist_type * joblist) {
   hash_free(joblist->jobs);
-  util_unlink_path( joblist->license_root_path );
+  util_clear_directory( joblist->license_root_path , true , true );
   util_safe_free( joblist->license_root_path );
   free(joblist);
 }
