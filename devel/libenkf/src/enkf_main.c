@@ -103,7 +103,7 @@ struct enkf_main_struct {
   local_config_type    * local_config;     /* Holding all the information about local analysis. */
   log_type             * logh;             /* Handle to an open log file. */
   plot_config_type     * plot_config;      /* Information about plotting. */
-  ert_templates_type   * templates;       
+  ert_templates_type   * templates;        /* Run time templates */
   subst_func_pool_type * subst_func_pool;
   subst_list_type      * subst_list;       /* A parent subst_list instance - common to all ensemble members. */
   /*-------------------------*/
@@ -1274,6 +1274,8 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "KEEP_RUNPATH" , false , false);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
   
+  config_add_key_value(config , "PRE_CLEAR_RUNPATH" , false , CONFIG_BOOLEAN);
+
   item = config_add_item(config , "DELETE_RUNPATH" , false , false);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
 
@@ -1481,9 +1483,9 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
                                                  enkf_main->ensemble_config                                   ,
                                                  enkf_main->site_config                                       , 
                                                  enkf_main->ecl_config                                        ,
-                                                 model_config_get_std_forward_model(enkf_main->model_config),
-                                                 enkf_main->logh,
-                                                 enkf_main->templates,
+                                                 model_config_get_std_forward_model(enkf_main->model_config)  ,
+                                                 enkf_main->logh                                              ,
+                                                 enkf_main->templates                                         ,
                                                  enkf_main->subst_list);
   }
   msg_free(msg , true);
