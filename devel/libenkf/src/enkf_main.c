@@ -732,15 +732,23 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 }
 
 
+/**
+   This function will spin while it is periodically checking the
+   status of the forward model simulations. Everytime a completed
+   simulation is detected is seperate thread is spawned (via a
+   thread_pool) to actually load the results.
 
-
+   The function will return when all the results have been loaded.
+*/
+   
 
 
 static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
+  const int num_load_threads    = 10;
   const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
   arg_pack_type ** arg_list     = util_malloc( ens_size * sizeof * arg_list , __func__);
-  thread_pool_type * tp         = thread_pool_alloc( 10 );
   job_status_type * status_list = util_malloc( ens_size * sizeof * status_list , __func__);
+  thread_pool_type * tp         = thread_pool_alloc( num_load_threads );
   const int usleep_time         = 2500000; //100000; /* 1/10 of a second */ 
   int jobs_remaining;
   int iens;
@@ -749,7 +757,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
     arg_list[iens]    = arg_pack_alloc();
     status_list[iens] = JOB_QUEUE_NOT_ACTIVE;
   }
-
+  
   do {
     job_status_type status;
     jobs_remaining = 0;
@@ -764,7 +772,8 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
         if (status_list[iens] != status) {
           arg_pack_append_ptr( arg_list[iens] , enkf_state );
           arg_pack_append_int( arg_list[iens] , status );
-          
+
+          /* Dispatch a separate thread to load the results from this job. */
           thread_pool_add_job( tp , enkf_state_complete_forward_model__ , arg_list[iens] );
         }
       }
@@ -862,12 +871,15 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
           } else
             enkf_state_set_inactive( enkf_main->ensemble[iens] );
         }
-        thread_pool_join(submit_threads);  /* OK: All directories for ECLIPSE simulations are ready. */
+        thread_pool_join(submit_threads);        /* OK: All directories for ECLIPSE simulations are ready. */
         thread_pool_free(submit_threads);
       }
       log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
-      enkf_main_run_wait_loop( enkf_main );
-      job_queue_finalize(job_queue);             /* Must *NOT* be called before all jobs are done. */               
+      
+      enkf_main_run_wait_loop( enkf_main );      /* Waiting for all the jobs - and the loading of results - to complete. */
+      pthread_join( queue_thread , NULL );       /* Wait for the job_queue_run_jobs() function to complete. */
+      job_queue_finalize( job_queue );           /* Tear down / finalize all the nodes related to remote jobs - must NOT be called before job_queue_run_jobs() has returned. */
+      
       arg_pack_free( queue_args );
     }
     
@@ -1327,6 +1339,13 @@ static config_type * enkf_main_alloc_config() {
   /*****************************************************************/
   /* Keywords for the estimation                                   */
   ensemble_config_add_config_items(config); 
+
+  {
+    FILE * stream = util_fopen("/tmp/config_items.txt" , "w");
+    config_fprintf_item_list( config , stream );
+    fclose( stream );
+  }
+  
   return config;
 }
 

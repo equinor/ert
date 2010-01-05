@@ -132,13 +132,13 @@ typedef struct validate_struct validate_type;
 */
     
 struct validate_struct {
-  int 		      argc_min;                /* The minimum number of arguments: -1 means no lower limit. */
-  int 		      argc_max;                /* The maximum number of arguments: -1 means no upper limit. */ 
-  set_type          * common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */ 
-  set_type          **indexed_selection_set;   /* A selection set which will apply for specifi (indexed) arguments. */
-  config_item_types * type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
-  stringlist_type   * required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
-  hash_type         * required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
+  int 		       argc_min;                /* The minimum number of arguments: -1 means no lower limit. */
+  int 		       argc_max;                /* The maximum number of arguments: -1 means no upper limit. */ 
+  set_type          *  common_selection_set;    /* A selection set which will apply uniformly to all the arguments. */ 
+  set_type          ** indexed_selection_set;   /* A selection set which will apply for specifi (indexed) arguments. */
+  config_item_types *  type_map;                /* A list of types for the items - can be NULL. Set along with argc_minmax(); */
+  stringlist_type   *  required_children;       /* A list of item's which must also be set (if this item is set). (can be NULL) */
+  hash_type         *  required_children_value; /* A list of item's which must also be set - depending on the value of this item. (can be NULL) (This one is complex). */
 };
 
 
@@ -809,15 +809,6 @@ static void config_item_set_arg__(config_type * config , config_item_type * item
 void config_item_validate(config_type * config , const config_item_type * item) {
   
   if (item->currently_set) {
-    //if (item->type_map != NULL) {
-    //  int inode;
-    //  for (inode = 0; inode < item->node_size; inode++) {
-    //    char * error_message = config_item_node_validate(item->nodes[inode] , item->type_map);
-    //    if (error_message != NULL) {
-    //      config_add_and_free_error(config , error_message);
-    //    }
-    //  }
-    //}
 
     if (item->required_children != NULL) {
       int i;
@@ -888,7 +879,6 @@ void config_item_free( config_item_type * item) {
   }
   if (item->required_children       != NULL) stringlist_free(item->required_children);
   if (item->required_children_value != NULL) hash_free(item->required_children_value); 
-  //util_safe_free(item->type_map);
   validate_free(item->validate);
   free(item);
 }
@@ -1550,11 +1540,6 @@ char * config_alloc_joined_string(const config_type * config , const char * kw, 
 }
 
 
-//config_item_node_type * config_iget_item_node( const config_type * config , const char * kw , int item_index) {
-//  config_item_type * item = config_get_item(config , kw);
-//  return config_item_iget_node( config , item_index );
-//}
-
 
 
 
@@ -1629,6 +1614,19 @@ void config_add_alias(config_type * config , const char * src , const char * ali
 
 void config_install_message(config_type * config , const char * kw, const char * message) {
   hash_insert_hash_owned_ref(config->messages , kw , util_alloc_string_copy(message) , free);
+}
+
+
+void config_fprintf_item_list(const config_type * config , FILE * stream) {
+  stringlist_type * items = hash_alloc_stringlist( config->items );
+  stringlist_sort( items );
+  {
+    int i; 
+    for (i=0; i < stringlist_get_size( items ); i++) 
+      fprintf(stream , "%s \n",stringlist_iget( items , i));
+  }
+
+  stringlist_free( items );
 }
 
 

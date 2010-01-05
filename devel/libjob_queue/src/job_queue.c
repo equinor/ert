@@ -523,7 +523,7 @@ void job_queue_finalize(job_queue_type * queue) {
 
 void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose) {
   const int max_ok_wait_time = 60; /* Seconds to wait for an OK file - when the job itself has said all OK. */
-  const int ok_sleep_time    =  1; /* Time to wait between checks for OK|EXIT file. */
+  const int ok_sleep_time    =  1; /* Time to wait between checks for OK|EXIT file.                         */
 
   msg_type * submit_msg = NULL;
   bool new_jobs         = false;
@@ -682,6 +682,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
       */
     }
   } while ( cont );
+
   if (verbose) {
     printf("\n");
     msg_free(submit_msg , false);

@@ -48,7 +48,7 @@
 #include <timer.h>
 #include <time_t_vector.h>
 #include <member_config.h>
-#define ENKF_STATE_TYPE_ID 78132
+#define  ENKF_STATE_TYPE_ID 78132
 
 
 
@@ -69,7 +69,7 @@ typedef struct run_info_struct {
   state_enum         	  init_state_parameter; /* Whether we should init from a forecast or an analyzed state - parameters. */
   state_enum              init_state_dynamic;   /* Whether we should init from a forecast or an analyzed state - dynamic state variables. */
   int                     max_internal_submit;  /* How many times the enkf_state object should try to resubmit when the queueu has said everything is OK - but the load fails. */  
-  int                     num_internal_submit;
+  int                     num_internal_submit;   
   int                     load_start;           /* When loading back results - start at this step. */
   int                	  step1;                /* The forward model is integrated: step1 -> step2 */
   int                	  step2;  	          

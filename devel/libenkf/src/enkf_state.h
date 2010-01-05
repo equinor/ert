@@ -52,7 +52,7 @@ void               enkf_state_del_node(enkf_state_type * , const char * );
 void               enkf_state_load_ecl_summary(enkf_state_type * , bool , int );
 void             * enkf_state_run_eclipse__(void * );
 void             * enkf_state_start_forward_model__(void * );
-enkf_state_type  * enkf_state_alloc(int ,
+enkf_state_type  * enkf_state_allock(int ,
                                     enkf_fs_type   * fs, 
                                     const char * casename , 
                                     bool         pre_clear_runpath, 
