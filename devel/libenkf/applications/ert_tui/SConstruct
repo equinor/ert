@@ -31,6 +31,6 @@ ert         = env.Program( "ert" , [main_object, tui_objects])
 Default( ert )
 
 if SDP_ROOT:
-    env.Install(conf.SDP_BIN , ert)
+    env.InstallProgram(conf.SDP_BIN , ert)
     env.Alias('SDP_INSTALL' , conf.SDP_BIN)
 
