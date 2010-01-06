@@ -16,8 +16,8 @@ header_list = Split("rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms
 
 
 LIB = env.StaticLibrary("rms" , src_list)
-env.Install("../lib"     , LIB)
-env.Install("../include"     , header_list)
+env.InstallLibrary("../lib"     , LIB)
+env.InstallHeader("../include"     , header_list)
 
 
 ##################################################################
@@ -25,8 +25,8 @@ env.Install("../include"     , header_list)
 install     = env.Alias('install',["../lib" , "../include"])
 if SDP_ROOT:
    SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
-   env.Install("%s/librms" % conf.SDP_INCLUDE , header_list)
-   env.Install(conf.SDP_LIB , LIB )
+   env.InstallHeader("%s/librms" % conf.SDP_INCLUDE , header_list)
+   env.InstallLibrary(conf.SDP_LIB , LIB )
 
 
 Default( install )

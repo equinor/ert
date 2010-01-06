@@ -39,7 +39,6 @@ forward_model_type   * model_config_get_std_forward_model( const model_config_ty
 bool                   model_config_internalize_state( const model_config_type *, int );
 bool                   model_config_load_state( const model_config_type *, int );
 void                   model_config_set_enkf_sched(model_config_type *  , const ext_joblist_type * , run_mode_type , bool);
-bool                   model_config_resample_when_fail( const model_config_type * config );
 int                    model_config_get_max_internal_submit( const model_config_type * config );
 const char           * model_config_iget_casename( const model_config_type * model_config , int index);
 

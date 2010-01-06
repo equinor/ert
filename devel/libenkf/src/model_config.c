@@ -48,7 +48,6 @@ struct model_config_struct {
   char                 * enspath;
   fs_driver_impl         dbase_type;
   int                    last_history_restart;       /* The end of the history - this is inclusive.*/
-  bool                   resample_when_fail;         /* Should we resample when a model fails to integrate? */
   bool                   has_prediction; 
   int                    max_internal_submit;        /* How many times to retry if the load fails. */
   
@@ -129,7 +128,6 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
   model_config->case_names                = NULL;
   model_config->use_lsf                   = use_lsf;
   model_config->max_internal_submit       = DEFAULT_MAX_INTERNAL_SUBMIT;
-  model_config->resample_when_fail        = DEFAULT_RESAMPLE_WHEN_FAIL;
   model_config->enspath                   = NULL;
   model_config->dbase_type                = INVALID_DRIVER_ID;
   model_config->runpath                   = NULL;
@@ -226,12 +224,9 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
   if (config_item_set( config , "DBASE_TYPE"))
     model_config_set_dbase_type( model_config , config_get_value(config , "DBASE_TYPE"));
   
-  if (config_item_set( config , "MAX_RETRY"))
-    model_config->max_internal_submit = config_iget_as_int( config , "MAX_RETRY" , 0,0);
-
-  if (config_item_set( config , "RESAMPLE_WHEN_FAIL"))
-    model_config->resample_when_fail        = config_iget_as_bool( config , "RESAMPLE_WHEN_FAIL" ,0,0);
-
+  if (config_item_set( config , "MAX_RESAMPLE"))
+    model_config->max_internal_submit = config_get_value_as_int( config , "MAX_RESAMPLE" );
+  
   return model_config;
 }
 
@@ -360,9 +355,6 @@ bool model_config_load_state( const model_config_type * config , int report_step
   return bool_vector_iget(config->__load_state , report_step);
 }
 
-bool model_config_resample_when_fail( const model_config_type * config ) {
-  return config->resample_when_fail;
-}
 
 int model_config_get_max_internal_submit( const model_config_type * config ) {
   return config->max_internal_submit;

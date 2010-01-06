@@ -1289,6 +1289,9 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
             enkf_fs_select_read_dir(fs , current_read_dir);
             enkf_fs_select_write_dir(fs , current_write_dir , false);
           }
+
+          util_safe_free( current_read_dir );
+          util_safe_free( current_write_dir );
         }
       }
       fclose( stream );

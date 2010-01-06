@@ -64,7 +64,6 @@
 typedef struct run_info_struct {
   bool               	  __ready;              /* An attempt to check the internal state - not active yet. */
   bool               	  active;               /* Is this state object active at all - used for instance in ensemble experiments where only some of the members are integrated. */
-  bool                    resample_when_fail;   
   int                	  init_step_parameters; /* The report step we initialize parameters from - will often be equal to step1, but can be different. */
   state_enum         	  init_state_parameter; /* Whether we should init from a forecast or an analyzed state - parameters. */
   state_enum              init_state_dynamic;   /* Whether we should init from a forecast or an analyzed state - dynamic state variables. */
@@ -139,7 +138,6 @@ static void run_info_set_run_path(run_info_type * run_info , int iens , path_fmt
     run_info->run_path = subst_list_alloc_filtered_string( state_subst_list , tmp );
     free( tmp );
   }
-  util_make_path( run_info->run_path );
 }
 
 
@@ -192,7 +190,6 @@ static void run_info_init_for_load(run_info_type * run_info ,
 static void run_info_set(run_info_type * run_info        , 
 			 run_mode_type run_mode          , 
 			 bool active                     , 
-                         bool resample_when_fail         ,
                          int max_internal_submit         ,
 			 int init_step_parameters        ,      
 			 state_enum init_state_parameter ,
@@ -212,7 +209,6 @@ static void run_info_set(run_info_type * run_info        ,
   run_info->runOK                = false;
   run_info->__ready              = true;
   run_info->run_mode             = run_mode;
-  run_info->resample_when_fail   = resample_when_fail;
   run_info->max_internal_submit  = max_internal_submit;
   run_info->num_internal_submit  = 0;
   run_info_init_for_load( run_info , load_start , step1 , step2 , iens , run_path_fmt , state_subst_list);
@@ -1007,15 +1003,14 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     stringlist_append_copy(enkf_state->restart_kw_list , "RV");
     stringlist_append_copy(enkf_state->restart_kw_list , "RS");
   }
-
-  util_make_path(run_info->run_path);
+  
   {
     /** 
-	This iteration manipulates the hash (thorugh the enkf_state_del_node() call) 
-	
-	-----------------------------------------------------------------------------------------
-	T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
-	-----------------------------------------------------------------------------------------
+        This iteration manipulates the hash (thorugh the enkf_state_del_node() call) 
+        
+        -----------------------------------------------------------------------------------------
+        T H I S  W I L L  D E A D L O C K  I F  T H E   H A S H _ I T E R  A P I   I S   U S E D.
+        -----------------------------------------------------------------------------------------
     */
     
     const int num_keys = hash_get_size(enkf_state->node_hash);
@@ -1024,15 +1019,14 @@ void enkf_state_ecl_write(enkf_state_type * enkf_state) {
     
     for (ikey = 0; ikey < num_keys; ikey++) {
       if (!stringlist_contains(enkf_state->restart_kw_list , key_list[ikey])) {          /* Make sure that the elements in the restart file are not written (again). */
-	enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
-	if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE)                          /* Ensure that no-longer-active static keywords do not create problems. */
-	  enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
+        enkf_node_type * enkf_node = hash_get(enkf_state->node_hash , key_list[ikey]);
+        if (enkf_node_get_var_type( enkf_node ) != STATIC_STATE)                          /* Ensure that no-longer-active static keywords do not create problems. */
+          enkf_node_ecl_write(enkf_node , run_info->run_path , NULL , run_info->step1); 
       }
     }
     util_free_stringlist(key_list , num_keys);
   }
 }
-
 
 /**
    This function takes a report_step and a analyzed|forecast state as
@@ -1302,15 +1296,16 @@ void enkf_state_printf_subst_list(enkf_state_type * enkf_state , int step1 , int
 static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
   const member_config_type  * my_config = enkf_state->my_config;  
   {
-    const run_info_type       * run_info    = enkf_state->run_info;
+    const run_info_type * run_info    = enkf_state->run_info;
     if (!run_info->__ready) 
       util_abort("%s: must initialize run parameters with enkf_state_init_run() first \n",__func__);
 
-    if (member_config_pre_clear_runpath( my_config ))
+    if (member_config_pre_clear_runpath( my_config )) 
       util_clear_directory( run_info->run_path , true , false );
-    
+
     util_make_path(run_info->run_path);
     {
+  
       char * schedule_file = util_alloc_filename(run_info->run_path , ecl_config_get_schedule_target(enkf_state->ecl_config) , NULL);
       bool   addEND;
       if (run_info->run_mode == ENSEMBLE_PREDICTION)
@@ -1321,6 +1316,7 @@ static void enkf_state_init_eclipse(enkf_state_type *enkf_state) {
       sched_file_fprintf_i(member_config_get_sched_file( my_config ) , run_info->step2 , schedule_file , addEND);
       free(schedule_file);
     }
+
 
     /**
        For reruns of various kinds the parameters and the state are
@@ -1402,10 +1398,9 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
     
      2. The external queue system has seen the job fail.
     
-    If resample_when_fail is true the parameter and state variables
-    will be resampled before retrying. If resample_when_fail is not
-    equal to true it is actually not much of a point to do this - the
-    chance that the job will suddenly get through now is quite small.
+    The parameter and state variables will be resampled before
+    retrying. And all random elements in templates+++ will be
+    resampled.
 */
 
 static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_failure) {
@@ -1420,32 +1415,29 @@ static bool enkf_state_internal_retry(enkf_state_type * enkf_state , bool load_f
     log_add_fmt_message(shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Forward model failed.",iens, run_info->step1 , run_info->step2);
 
   if (run_info->num_internal_submit < run_info->max_internal_submit) {
-    if (run_info->resample_when_fail) {
-      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
-      /* resample_when_fail is set to true - we try to resample before resubmitting. */
-      {
-        stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
-        for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
-          enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
-          enkf_node_initialize( node , iens );
-        }
-        stringlist_free( init_keys );
+    log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d] Resampling and resubmitting realization." ,iens);
+    {
+      /* Reinitialization of the nodes */
+      stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
+      for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
+        enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
+        enkf_node_initialize( node , iens );
       }
-    } else
-      log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] Retrying realization from ERT main." ,iens , run_info->step1 , run_info->step2);
+      stringlist_free( init_keys );
+    }
     
-    enkf_state_ecl_write( enkf_state );  /* Writing a full new enkf_state instance */
-    run_info->num_internal_submit++;
-    job_queue_set_external_restart( shared_info->job_queue , iens );
-    
+    enkf_state_init_eclipse( enkf_state );                              /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
+    job_queue_set_external_restart( shared_info->job_queue , iens );    /* Here we inform the queue system that it should pick up this job and try again. */
+    run_info->num_internal_submit++;                                    
     return true;
-  } else
-    return false;
+  } else 
+    return false;                                                       /* No more internal retries. */
+
 }
 
 
 
-job_status_type  enkf_state_get_run_status( const enkf_state_type * enkf_state ) {
+job_status_type enkf_state_get_run_status( const enkf_state_type * enkf_state ) {
   run_info_type             * run_info    = enkf_state->run_info;
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
@@ -1459,15 +1451,19 @@ job_status_type  enkf_state_get_run_status( const enkf_state_type * enkf_state )
 /** 
     Observe that if run_info == false, this routine will return with
     job_completeOK == true, that might be a bit misleading.
+
+    Observe that if an internal retry is performed, this function will
+    be called several times - MUST BE REENTRANT.
 */
 
 static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job_status_type status) {
-  run_info_type             * run_info    = enkf_state->run_info;
   const shared_info_type    * shared_info = enkf_state->shared_info;
+  run_info_type             * run_info    = enkf_state->run_info;
   const member_config_type  * my_config   = enkf_state->my_config;
   const int iens                          = member_config_get_iens( my_config );
   bool loadOK  = true;
-  
+
+  job_queue_set_external_load( shared_info->job_queue , iens );  /* Set the the status of to JOB_QUEUE_LOADING */
   if (status == JOB_QUEUE_RUN_OK) {
     /**
        The queue system has reported that the run is OK, i.e. it has
@@ -1501,7 +1497,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
       log_add_fmt_message( shared_info->logh , 1 , NULL , "[%03d:%04d-%04d] FAILED COMPLETELY." , iens , run_info->step1, run_info->step2);
       /* We tell the queue system that we have really given up on this one */
       job_queue_set_all_fail( shared_info->job_queue , iens );
-    }
+    } 
   } else 
     util_abort("%s: status:%d invalid - should only be called with status == [JOB_QUEUE_RUN_FAIL || JON_QUEUE_ALL_OK].",__func__ , status);
   
@@ -1536,19 +1532,20 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
     }
     if (unlink_runpath)
       util_clear_directory(run_info->run_path , true , true);
-    run_info->runOK = true;
-  } 
-  run_info_complete_run(enkf_state->run_info);
-  run_info->__ready = false;
-  
-  /* 
-     If we have used a special forward model for this report step we
-     discard that model, and recover the default forward_model.
-  */
-  if (enkf_state->special_forward_model != NULL) {
-    forward_model_free( enkf_state->special_forward_model );
-    enkf_state->special_forward_model = NULL;
-    enkf_state->forward_model = enkf_state->default_forward_model;
+    
+    run_info->runOK   = true;
+    run_info->__ready = false;                    /* Setting it to false - for the next round ??? */
+    run_info_complete_run(enkf_state->run_info);  /* free() on runpath */
+
+    /* 
+       If we have used a special forward model for this report step we
+       discard that model, and recover the default forward_model.
+    */
+    if (enkf_state->special_forward_model != NULL) {
+      forward_model_free( enkf_state->special_forward_model );
+      enkf_state->special_forward_model = NULL;
+      enkf_state->forward_model = enkf_state->default_forward_model;
+    }
   }
 }
 
@@ -1595,7 +1592,6 @@ void enkf_state_set_inactive(enkf_state_type * state) {
 void enkf_state_init_run(enkf_state_type * state , 
                          run_mode_type run_mode  , 
                          bool active                    , 
-                         bool resample_when_fail , 
                          int max_internal_submit,
                          int init_step_parameter         , 
                          state_enum init_state_parameter , 
@@ -1608,13 +1604,13 @@ void enkf_state_init_run(enkf_state_type * state ,
   member_config_type * my_config    = state->my_config;
   shared_info_type   * shared_info  = state->shared_info;
 
-  if (init_step_parameter != 0)
-    resample_when_fail = false;
-  
+  //if (run_mode == ENKF_ASSIMILATION)
+  //max_internal_submit = 1;    /* Resampling makes no sense for a EnKF run. */
+
+
   run_info_set( state->run_info , 
                 run_mode        , 
                 active          , 
-                resample_when_fail , 
                 max_internal_submit,
                 init_step_parameter , 
                 init_state_parameter , 

@@ -122,7 +122,10 @@
 
 
 
-typedef enum {submit_OK = 0 , submit_job_FAIL , submit_driver_FAIL} submit_status_type;
+typedef enum {SUBMIT_OK          = 0 , 
+              SUBMIT_JOB_FAIL    = 1 , /* Typically no more attempts. */
+              SUBMIT_DRIVER_FAIL = 2}  /* The driver would not take the job - for whatever reason?? */ submit_status_type;
+
 
 
 /**
@@ -353,23 +356,21 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
     basic_queue_driver_type * driver  = queue->driver;
     
     if (node->submit_attempt < queue->max_submit) {
-      {
-	basic_queue_job_type * job_data = driver->submit(queue->driver         , 
-							 queue_index           , 
-							 queue->run_cmd        , 
-							 node->run_path        , 
-							 node->job_name        , 
-							 node->job_arg);
-	
-	if (job_data != NULL) {
-	  job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING /* This is when it is installed as runnable in the internal queue */);
-                                                                        /* The update_status function will grab this and update. */
-	  node->job_data = job_data;
-	  node->submit_attempt++;
-	  submit_status = submit_OK;
-	} else
-	  submit_status = submit_driver_FAIL;
-      }
+      basic_queue_job_type * job_data = driver->submit(queue->driver         , 
+                                                       queue_index           , 
+                                                       queue->run_cmd        , 
+                                                       node->run_path        , 
+                                                       node->job_name        , 
+                                                       node->job_arg);
+      
+      if (job_data != NULL) {
+        job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING /* This is when it is installed as runnable in the internal queue */);
+        /* The update_status function will grab this and update. */
+        node->job_data = job_data;
+        node->submit_attempt++;
+        submit_status = SUBMIT_OK;
+      } else
+        submit_status = SUBMIT_DRIVER_FAIL;
     } else {
       /* 
          The queue system will not make more attempts to submit this job. The
@@ -377,7 +378,7 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
          this job is failed.
       */
       job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_FAIL);
-      submit_status = submit_job_FAIL;
+      submit_status = SUBMIT_JOB_FAIL;
     }
     return submit_status;
   }
@@ -412,7 +413,7 @@ static int job_queue_get_internal_index(job_queue_type * queue , int external_id
 
 
 job_status_type job_queue_export_job_status(job_queue_type * queue , int external_id) {
-  int queue_index    = job_queue_get_internal_index( queue , external_id );
+  int queue_index = job_queue_get_internal_index( queue , external_id );
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
     return node->job_status;
@@ -454,8 +455,8 @@ void job_queue_set_external_restart(job_queue_type * queue , int external_id) {
   int queue_index    = job_queue_get_internal_index( queue , external_id );
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
-    node->submit_attempt = 0;
-    job_queue_change_node_status( queue , node , JOB_QUEUE_WAITING);
+    node->submit_attempt       = 0;
+    job_queue_change_node_status( queue , node , JOB_QUEUE_WAITING );
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
@@ -468,8 +469,21 @@ void job_queue_set_external_fail(job_queue_type * queue , int external_id) {
   int queue_index    = job_queue_get_internal_index( queue , external_id );
   if (queue_index >= 0) {
     job_queue_node_type * node = queue->jobs[queue_index];
-    node->submit_attempt = 0;
+    node->submit_attempt       = 0;
     job_queue_change_node_status( queue , node , JOB_QUEUE_ALL_FAIL);
+  } else 
+    util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
+}
+
+/**
+   The external scope is loading results. Just for keeping track of status.
+*/
+
+void job_queue_set_external_load(job_queue_type * queue , int external_id) {
+  int queue_index    = job_queue_get_internal_index( queue , external_id );
+  if (queue_index >= 0) {
+    job_queue_node_type * node = queue->jobs[queue_index];
+    job_queue_change_node_status( queue , node , JOB_QUEUE_LOADING );
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
@@ -538,7 +552,8 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 
   if (verbose)
     submit_msg = msg_alloc("Submitting new jobs:  ]");
-
+  
+  
   do {
     char spinner[4];
     spinner[0] = '-';
@@ -590,7 +605,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 	      {
 		submit_status_type submit_status = job_queue_submit_job(queue , queue_index);
 		
-		if (submit_status == submit_OK) {
+		if (submit_status == SUBMIT_OK) {
 		  if ((submit_count == 0) && verbose) {
 		    printf("\b");
 		    msg_show(submit_msg);
@@ -601,7 +616,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 		  phase = (phase + 1) % 4;
 		  num_submit_new--;
 		  submit_count++;
-		} else if (submit_status == submit_driver_FAIL)
+		} else if (submit_status == SUBMIT_DRIVER_FAIL)
 		  break;
 	      }
 	    }
@@ -628,9 +643,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 	int queue_index;
 	for (queue_index = 0; queue_index < job_queue_get_active_size(queue); queue_index++) {
 	  job_queue_node_type * node = queue->jobs[queue_index];
-	  switch (job_queue_node_get_status(node)) {
+          switch ( job_queue_node_get_status(node) ) {
 	  case(JOB_QUEUE_DONE):
-	    if (util_file_exists(node->exit_file)) 
+            if (util_file_exists(node->exit_file)) 
 	      job_queue_change_node_status(queue , node , JOB_QUEUE_EXIT);
             else {
               /* Check if the OK file has been produced. Wait and retry. */
@@ -656,7 +671,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
               } else {
                 /* We have not set the ok_file - then we just assume that the job is OK. */
                 job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_OK);
-                job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
+                job_queue_free_job(queue , node);   /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
               }
             }
 	    break;
@@ -665,9 +680,16 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
 	      printf("Job: %s failed | ",node->job_name);
               job_queue_display_job_info( queue , node );
             }
+            /* 
+               If the job has failed with status JOB_QUEUE_EXIT it
+               will always go via status JOB_QUEUE_WAITING first. The
+               job dispatched will then either resubmit, in case there
+               are more attempts to go, or set the status to
+               JOB_QUEUE_FAIL.
+            */
 	    job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
 	    job_queue_free_job(queue , node);  /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
-	    break;
+            break;
 	  default:
 	    break;
 	  }
@@ -781,4 +803,51 @@ void job_queue_free(job_queue_type * queue) {
   }
   free(queue);
   queue = NULL;
+}
+
+
+/*****************************************************************/
+
+const char * job_queue_status_name( job_status_type status ) {
+  switch (status) {
+  case(JOB_QUEUE_NOT_ACTIVE):
+    return "JOB_QUEUE_NOT_ACTIVE";
+    break;
+  case(JOB_QUEUE_LOADING):
+    return "JOB_QUEUE_LOADING";
+    break;
+  case(JOB_QUEUE_NULL):
+    return "JOB_QUEUE_NULL";
+    break;
+  case(JOB_QUEUE_WAITING):
+    return "JOB_QUEUE_WAITING";
+    break;
+  case(JOB_QUEUE_PENDING):
+    return "JOB_QUEUE_PENDING";
+    break;
+  case(JOB_QUEUE_RUNNING):
+    return "JOB_QUEUE_RUNNING";
+    break;
+  case(JOB_QUEUE_DONE):
+    return "JOB_QUEUE_DONE";
+    break;
+  case(JOB_QUEUE_EXIT):
+    return "JOB_QUEUE_EXIT";
+    break;
+  case(JOB_QUEUE_RUN_OK):
+    return "JOB_QUEUE_RUN_OK";
+    break;
+  case(JOB_QUEUE_RUN_FAIL):
+    return "JOB_QUEUE_RUN_FAIL";
+    break;
+  case(JOB_QUEUE_ALL_OK):
+    return "JOB_QUEUE_ALL_OK";
+    break;
+  case(JOB_QUEUE_ALL_FAIL):
+    return "JOB_QUEUE_ALL_FAIL";
+    break;
+  default:
+    util_abort("%s: invalid job_status value:%d \n",__func__ , status);
+    return NULL;
+  }
 }

@@ -434,10 +434,6 @@ static int config_item_get_occurences(const config_item_type * item) {
 static char * config_item_alloc_joined_string(const config_item_type * item , const char * sep) {
   const int occurences = config_item_get_occurences( item );
   char * joined_string = NULL;
-  /*
-    if (item->append_arg) 
-    util_abort("%s: this function can only be used on items added with append_arg == FALSE\n" , __func__);
-  */
   
   for (int i =0; i < occurences ; i++) {
     joined_string = util_strcat_realloc( joined_string , config_item_ialloc_joined_string(item , sep , i));
@@ -513,9 +509,12 @@ static hash_type * config_item_alloc_hash(const config_item_type * item , bool c
   for (inode = 0; inode < item->node_size; inode++) {
     const config_item_node_type * node = item->nodes[inode];
 
-    if (copy)
-      hash_insert_hash_owned_ref(hash , stringlist_iget(node->stringlist , 0) , util_alloc_string_copy(stringlist_iget(node->stringlist , 1)) , free);
-    else
+    if (copy) {
+      hash_insert_hash_owned_ref(hash , 
+                                 stringlist_iget(node->stringlist , 0) , 
+                                 util_alloc_string_copy(stringlist_iget(node->stringlist , 1)) , 
+                                 free);
+    } else
       hash_insert_ref(hash , stringlist_iget(node->stringlist , 0) , stringlist_iget(node->stringlist , 1));
     
   }
@@ -1255,22 +1254,32 @@ static void config_parse__(config_type * config ,
 	      util_safe_free(include_file);
 	      util_safe_free(include_path);
 	    }
-	  } else if (define_kw != NULL && (strcmp(define_kw , kw) == 0)) {
+	  } else if ((define_kw != NULL) && (strcmp(define_kw , kw) == 0)) {
 	    if (active_tokens < 3) 
 	      util_abort("%s: keyword:%s must have exactly one (or more) arguments. \n",__func__ , define_kw);
 	    {
 	      char * key ;
 	      char * value = util_alloc_joined_string((const char **) &token_list[2] , active_tokens - 2 , " ");
+              //printf("Active_tokens:%d  \n",active_tokens);
+              //printf("token0:%s   token1:%s   token2:%s \n",token_list[0] , token_list[1] , token_list[2]);
+
 	      if (alloc_new_key != NULL)
 		key = alloc_new_key( token_list[1] );  
 	      else
 		key = util_alloc_string_copy( token_list[1] );
               
+              //printf("key:%s \n",key);
+              //printf("VALUE:%s\n",value);
+              
+
               {
 		char * filtered_value = subst_list_alloc_filtered_string( config->define_list , value);
                 config_add_define( config , key , filtered_value );
+                //printf("filtered_value:%s \n",filtered_value);
 		free( filtered_value );
 	      }
+              //if (strcmp( key , "<GRID>" ) == 0)
+              //  exit(1);
 	      free(key);
 	      free(value);
 	    }

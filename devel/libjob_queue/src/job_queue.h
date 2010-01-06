@@ -19,6 +19,8 @@ void                job_queue_set_load_OK(job_queue_type * queue , int external_
 void                job_queue_set_all_fail(job_queue_type * queue , int external_id);
 void                job_queue_set_external_restart(job_queue_type * queue , int external_id);
 void                job_queue_set_external_fail(job_queue_type * queue , int external_id);
+void                job_queue_set_external_load(job_queue_type * queue , int external_id);
+const char        * job_queue_status_name( job_status_type status );
 
 #ifdef __cplusplus
 }

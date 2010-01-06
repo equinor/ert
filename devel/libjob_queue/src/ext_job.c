@@ -279,8 +279,10 @@ static void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portab
       ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , full_path);
     else {
       fprintf(stderr , "** You do not have execute rights to:%s - job will not be available.\n" , full_path);
-      ext_job->__valid = false;
+      ext_job->__valid = false;  /* Mark the job as NOT successfully installed - the ext_job 
+                                    instance will later be freed and discarded. */
     }
+    free( full_path );
   } else 
     ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , portable_exe);
   /* We take the chance that user will supply a valid subst key for this later. */

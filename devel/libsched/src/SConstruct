@@ -18,12 +18,12 @@ header_list = Split("sched_types.h sched_file.h sched_kw.h sched_kw_untyped.h sc
 
 
 LIB = env.StaticLibrary("sched" , src_list)
-env.Install("../lib" , LIB)
-env.Install("../include" , header_list)
+env.InstallLibrary("../lib" , LIB)
+env.InstallHeader("../include" , header_list)
 
 if SDP_ROOT:
-    env.Install(conf.SDP_LIB , header_list)
-    env.Install(conf.SDP_LIB , LIB )
+    env.InstallHeader(conf.SDP_LIB , header_list)
+    env.InstallLibrary(conf.SDP_LIB , LIB )
     SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
 
 

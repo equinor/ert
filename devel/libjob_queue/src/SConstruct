@@ -16,8 +16,8 @@ src_list    = Split("forward_model.c job_queue.c basic_queue_driver.c lsf_driver
 header_list = Split("job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h lsf_request.h forward_model.h")
 
 LIB = env.StaticLibrary("job_queue" , src_list , CPPDEFINES = ["\'USE_LSF_LIBRARY=TRUE\'"])
-env.Install("../lib" , LIB)
-env.Install("../include"     , header_list)
+env.InstallLibrary("../lib" , LIB)
+env.InstallHeader("../include"     , header_list)
 
 
 ##################################################################
@@ -26,8 +26,8 @@ install     = env.Alias('install',["../lib" , "../include"])
 
 if SDP_ROOT:
    SDP_include = "%s/libjob_queue" % conf.SDP_INCLUDE
-   env.Install(SDP_include , header_list)
-   env.Install(conf.SDP_LIB , LIB )
+   env.InstallHeader(SDP_include , header_list)
+   env.InstallLibrary(conf.SDP_LIB , LIB )
    SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , SDP_include])
 
 

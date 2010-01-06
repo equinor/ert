@@ -96,8 +96,8 @@ static void sched_block_debug_fprintf( const sched_block_type * block ) {
 
 static void sched_block_free(sched_block_type * block)
 {
-  vector_free(block->kw_list);
-
+  vector_free( block->kw_list );
+  hash_free( block->kw_hash );
   free(block);
 }
 

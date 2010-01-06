@@ -738,7 +738,8 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
    simulation is detected is seperate thread is spawned (via a
    thread_pool) to actually load the results.
 
-   The function will return when all the results have been loaded.
+   The function will return when all the results have been loaded, or
+   alternatively the jobs have given up completely.
 */
    
 
@@ -750,6 +751,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
   job_status_type * status_list = util_malloc( ens_size * sizeof * status_list , __func__);
   thread_pool_type * tp         = thread_pool_alloc( num_load_threads );
   const int usleep_time         = 2500000; //100000; /* 1/10 of a second */ 
+  const int load_start_usleep   = 10000;
   int jobs_remaining;
   int iens;
   
@@ -766,17 +768,67 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
       enkf_state_type * enkf_state = enkf_main->ensemble[iens];
       status = enkf_state_get_run_status( enkf_state );
       if ((status != JOB_QUEUE_NOT_ACTIVE) && ( status != JOB_QUEUE_ALL_OK) && (status != JOB_QUEUE_ALL_FAIL))
-        jobs_remaining += 1; /* OK - the job is still running. */
+        jobs_remaining += 1; /* OK - the job is still running/loading. */
       
-      if ((status == JOB_QUEUE_RUN_OK) || (status == JOB_QUEUE_RUN_FAIL)) {
+      if ((status == JOB_QUEUE_RUN_OK) || (status == JOB_QUEUE_RUN_FAIL)) {  
         if (status_list[iens] != status) {
+          arg_pack_clear( arg_list[iens] );
           arg_pack_append_ptr( arg_list[iens] , enkf_state );
           arg_pack_append_int( arg_list[iens] , status );
 
-          /* Dispatch a separate thread to load the results from this job. */
+          /* 
+             Dispatch a separate thread to load the results from this job. This
+             must be done also for the jobs with status JOB_QUEUE_RUN_FAIL -
+             because it is the enkf_state_complete_forward_model() function
+             which does a resubmit, or alternatively signal complete failure to
+             the queue system (should probably be split in two).
+          */
+          
           thread_pool_add_job( tp , enkf_state_complete_forward_model__ , arg_list[iens] );
+          /* This will block until the enkf_state_complete_forward_model() has actually started executing. */
+          {
+            job_status_type new_status;
+            do {
+              usleep( load_start_usleep );
+              new_status = enkf_state_get_run_status( enkf_state );   
+            } while ( new_status == status );
+            status = new_status;
+          }
         }
       }
+
+      /*
+        The code in the {} above is an attempt to solve this race:
+        ----------------------------------------------------------
+
+        In the case of jobs failing with status == JOB_QUEUE_RUN_FAIL this code
+        has the following race-condition:
+
+        1. This function detects the JOB_QUEUE_RUN_FAIL state and dispatches a
+           thread to run the function enkf_state_complete_forward_model(). This
+           again will (possibly) tell the queue system to try the job again.
+
+
+        2. This function will store status JOB_QUEUE_RUN_FAIL as status for this
+           job.
+
+
+        3. The code dispatching the enkf_state_complete_forward_model() function
+           is enclosed in a
+
+             if (status_list[iens] != status) {
+                ....
+             }
+  
+           i.e. it reacts to state *changes*. Now if the job immediately fails
+           again with status JOB_QUEUE_RUN_FAIL, without this scope getting the
+           chance to temporarily register a different status, there will no
+           state *change*, and the second failure will not be registered.
+
+        The same applies to jobs which suceed with JOB_QUEUE_RUN_OK, but then
+        subsequently fail to load.
+      */
+      
       status_list[iens] = status;
     }
     if (jobs_remaining > 0)
@@ -818,7 +870,6 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
   }
   
   {
-    bool resample_when_fail  = model_config_resample_when_fail(enkf_main->model_config);
     int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
     const int ens_size       = ensemble_config_get_size(enkf_main->ensemble_config);
     int   job_size;
@@ -857,7 +908,6 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
             enkf_state_init_run(enkf_main->ensemble[iens] , 
                                 run_mode , 
                                 iactive[iens] , 
-                                resample_when_fail  ,
                                 max_internal_submit ,
                                 init_step_parameter , 
                                 init_state_parameter,
@@ -1145,10 +1195,9 @@ static config_type * enkf_main_alloc_config() {
   
   item = config_add_item(config , "MAX_SUBMIT" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-  config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT});
+  config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT} );
   
-  config_add_key_value(config , "RESAMPLE_WHEN_FAIL" , false , CONFIG_BOOLEAN);
-  config_add_key_value(config , "MAX_RETRY" , false , CONFIG_INT);
+  config_add_key_value(config , "MAX_RESAMPLE" , false , CONFIG_INT);
       
 
   item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
@@ -1704,7 +1753,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         
         if (config_has_set_item(config , "DELETE_RUNPATH")) 
           delete_runpath_string = config_alloc_joined_string(config , "DELETE_RUNPATH" , "");
-
+        
         enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string);
         
         util_safe_free( keep_runpath_string );
@@ -1771,7 +1820,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       /*****************************************************************/
       /* Adding ensemble members */
       {
-	hash_type       * data_kw  = config_alloc_hash(config , "DATA_KW");
+	hash_type * data_kw  = config_alloc_hash(config , "DATA_KW");
 	enkf_main_alloc_members( enkf_main  , data_kw);
 	hash_free(data_kw);
       }

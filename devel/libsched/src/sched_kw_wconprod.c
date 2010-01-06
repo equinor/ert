@@ -46,8 +46,9 @@ static sched_kw_wconprod_type * sched_kw_wconprod_alloc_empty(bool alloc_untyped
 
 void sched_kw_wconprod_free(sched_kw_wconprod_type * kw)
 {
-  stringlist_free(kw->wells);
+  stringlist_free( kw->wells );
   sched_kw_untyped_free(kw->untyped_kw);
+  free( kw );
 }
 
 

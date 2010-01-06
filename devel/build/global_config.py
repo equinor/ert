@@ -1,5 +1,40 @@
+import SCons
 import os.path
 import commands
+
+#################################################################
+from SCons.Script.SConscript import SConsEnvironment
+SConsEnvironment.Chmod = SCons.Action.ActionFactory( os.chmod , lambda dest,mode: 'Chmod("%s" , 0%o)' % (dest , mode))
+
+
+def InstallPerm(env , dest , files , mode):
+    if not os.path.exists(dest):
+        os.makedirs( dest )
+    os.chmod( dest , 0755)
+    obj = env.Install( dest , files )
+    for f in obj:
+        env.AddPostAction(f , env.Chmod(str(f) , mode))
+    return dest
+
+
+def InstallProgram(env , dest , files):
+    return InstallPerm( env , dest , files , 0755)
+
+
+def InstallHeader(env , dest , files):
+    return InstallPerm( env , dest , files , 0644)
+
+
+def InstallLibrary(env , dest , files):
+    return InstallPerm( env , dest , files , 0644)
+
+
+SConsEnvironment.InstallPerm    = InstallPerm
+SConsEnvironment.InstallLibrary = InstallLibrary
+SConsEnvironment.InstallHeader  = InstallHeader
+SConsEnvironment.InstallProgram = InstallProgram
+
+#################################################################
 
 # Used as hash keys
 LIBUTIL      = 0
@@ -12,6 +47,8 @@ LIBSCHED     = 6
 LIBCONFIG    = 7
 LIBCONF      = 8
 EXTERNAL     = 100
+
+
 
 
 class conf:
@@ -61,21 +98,7 @@ class conf:
         self.LIB[EXTERNAL]      = {"home": self.EXTERNAL_HOME}
         self.RPATH    = "%s/lib" % self.EXTERNAL_HOME
 
-        if self.SDP_LIB:
-            if not os.path.exists( self.SDP_LIB ):
-                os.makedirs( self.SDP_LIB )
-
-        if self.SDP_BIN:
-            if not os.path.exists( self.SDP_BIN ):
-                os.makedirs( self.SDP_BIN )
-
-        if self.SDP_INCLUDE:
-            for lib in ["libutil","libecl","librms","libconfig","libplot","libenkf","libjob_queue" , "libsched"]:
-                path = "%s/%s" % (self.SDP_INCLUDE , lib)
-                if not os.path.exists( path ):
-                    os.makedirs( path )
- 
-
+        
 
 
 
@@ -103,8 +126,7 @@ class conf:
                         LIBS     = LIBS    , 
                         RPATH    = self.RPATH)
 
-            
-        
+                
         
 def get_conf(SDP_ROOT , cwd , sub_level_depth):
     return conf( SDP_ROOT , cwd , sub_level_depth )

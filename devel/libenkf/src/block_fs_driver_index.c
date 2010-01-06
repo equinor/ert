@@ -146,7 +146,10 @@ void block_fs_driver_index_free(void * __index_driver) {
     if (!util_string_equal( driver->read_path , driver->write_path)) 
       block_fs_close( driver->write_fs , true);
     
-    free(driver);
+    util_safe_free( driver->read_path  );
+    util_safe_free( driver->write_path );
+    free( driver->root_path );
+    free( driver );
     driver = NULL;
   }
 }

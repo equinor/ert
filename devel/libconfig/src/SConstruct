@@ -15,8 +15,8 @@ header_list = Split("config.h conf.h conf_data.h")
 
 
 LIB = env.StaticLibrary("config" , src_list)
-env.Install("../lib" , LIB)
-env.Install("../include" , header_list)
+env.InstallLibrary("../lib" , LIB)
+env.InstallHeader("../include" , header_list)
 
 
 ##################################################################
@@ -24,8 +24,8 @@ env.Install("../include" , header_list)
  
 install = env.Alias('install',["../lib" , "../include"])
 if SDP_ROOT:
-   env.Install(conf.SDP_LIB , header_list)
-   env.Install(conf.SDP_LIB , LIB )
+   env.InstallHeader(conf.SDP_LIB , header_list)
+   env.InstallLibrary(conf.SDP_LIB , LIB )
    SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
 
 Default( install )

@@ -19,10 +19,10 @@ conf.update_env( env , [ LIBRMS , LIBECL , LIBUTIL ] ,  ext_liblist = ["m" , "z"
 
 def add_program(env , conf , target , src , SDP_INSTALL = False):
     P = env.Program( target , src)
-    env.Install( "../bin" , P)
+    env.InstallProgram( "../bin" , P)
     if conf.SDP_BIN:
         if SDP_INSTALL:
-            env.Install(conf.SDP_BIN , P)
+            env.InstallProgram(conf.SDP_BIN , P)
 
 
 add_program(env , conf ,  "rms_extract" , "rms_extract.c" , False)
