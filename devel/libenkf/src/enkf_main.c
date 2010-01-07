@@ -13,7 +13,7 @@
 #include <obs_data.h>
 #include <history.h>
 #include <meas_matrix.h>
-#include <enkf_state.h>  
+#include <enkf_state.h>
 #include <enkf_obs.h>
 #include <sched_file.h>
 #include <enkf_fs.h>
@@ -24,9 +24,9 @@
 #include <job_queue.h>
 #include <msg.h>
 #include <stringlist.h>
-#include <enkf_main.h> 
+#include <enkf_main.h>
 #include <enkf_serialize.h>
-#include <config.h>  
+#include <config.h>
 #include <local_driver.h>
 #include <rsh_driver.h>
 #include <lsf_driver.h>
@@ -72,14 +72,14 @@
        configuration?? [In this case ecl_config wins out.]
 
     2. The information stored in these objects is typically passed on
-       to the enkf_state object, where it is used. 
+       to the enkf_state object, where it is used.
 
     3. At enkf_state level it is not really consequent - in some cases
        the enkf_state object takes a scalar copy (i.e. keep_runpath),
        and in other cases only a pointer down to the underlying
        enkf_main object is taken. In the former case it is no way to
        change global behaviour by modifying the enkf_main objects.
-       
+
        In the enkf_state object the fields of the member_config,
        ecl_config, site_config and ensemble_config objects are mixed
        and matched into other small holding objects defined in
@@ -95,7 +95,7 @@
 struct enkf_main_struct {
   UTIL_TYPE_ID_DECLARATION;
   enkf_fs_type         * dbase;            /* The internalized information. */
-  ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/ 
+  ensemble_config_type * ensemble_config;  /* The config objects for the various enkf nodes.*/
   model_config_type    * model_config;
   ecl_config_type      * ecl_config;
   site_config_type     * site_config;
@@ -110,11 +110,11 @@ struct enkf_main_struct {
 
   keep_runpath_type    * keep_runpath;       /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
   bool                   pre_clear_runpath;  /* HACK: This is only used in the initialization period - afterwards the data is held by the enkf_state object. */
-  
-  enkf_obs_type        * obs;               
+
+  enkf_obs_type        * obs;
   misfit_table_type    * misfit_table;     /* An internalization of misfit results - used for ranking according to various criteria. */
   enkf_state_type     ** ensemble;         /* The ensemble ... */
-}; 
+};
 
 
 
@@ -168,7 +168,7 @@ misfit_table_type * enkf_main_get_misfit(const enkf_main_type * enkf_main) {
 
 
 
-void enkf_main_free(enkf_main_type * enkf_main) {  
+void enkf_main_free(enkf_main_type * enkf_main) {
   enkf_obs_free(enkf_main->obs);
   {
     const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
@@ -178,7 +178,7 @@ void enkf_main_free(enkf_main_type * enkf_main) {
     free(enkf_main->ensemble);
   }
   if (enkf_main->dbase != NULL) enkf_fs_free( enkf_main->dbase );
-  
+
   log_add_message( enkf_main->logh , false , NULL , "Exiting ert application normally - all is fine(?)" , false);
   log_close( enkf_main->logh );
   analysis_config_free(enkf_main->analysis_config);
@@ -233,18 +233,18 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
   int     icpu;
   thread_pool_type * tp          = thread_pool_alloc( cpu_threads );
   arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
-  
+
   for (icpu = 0; icpu < cpu_threads; icpu++) {
     arg_pack_type * arg = arg_pack_alloc();
     arg_pack_append_ptr(arg , enkf_main);
     arg_pack_append_int(arg , mask);
     arg_pack_append_int(arg , report_step);
     arg_pack_append_int(arg , state);
-    
+
     {
       int iens1 =  icpu * sub_ens_size;
       int iens2 = iens1 + sub_ens_size;
-      
+
       if (icpu == (cpu_threads - 1))
 	iens2 = ensemble_config_get_size(enkf_main->ensemble_config);
 
@@ -258,7 +258,7 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
   thread_pool_join( tp );
   thread_pool_free( tp );
 
-  for (icpu = 0; icpu < cpu_threads; icpu++) 
+  for (icpu = 0; icpu < cpu_threads; icpu++)
     arg_pack_free( arg_pack_list[icpu] );
   free(arg_pack_list);
 }
@@ -294,18 +294,18 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
   int     icpu;
   thread_pool_type * tp = thread_pool_alloc( cpu_threads );
   arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
-  
+
   for (icpu = 0; icpu < cpu_threads; icpu++) {
     arg_pack_type * arg = arg_pack_alloc();
     arg_pack_append_ptr(arg , enkf_main);
     arg_pack_append_int(arg , mask);
     arg_pack_append_int(arg , report_step);
     arg_pack_append_int(arg , state);
-    
+
     {
       int iens1 =  icpu * sub_ens_size;
       int iens2 = iens1 + sub_ens_size;
-      
+
       if (icpu == (cpu_threads - 1))
 	iens2 = ensemble_config_get_size(enkf_main->ensemble_config);
 
@@ -319,7 +319,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
   thread_pool_join( tp );
   thread_pool_free( tp );
 
-  for (icpu = 0; icpu < cpu_threads; icpu++) 
+  for (icpu = 0; icpu < cpu_threads; icpu++)
     arg_pack_free( arg_pack_list[icpu]);
   free(arg_pack_list);
 }
@@ -332,7 +332,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
    to all the instances with the same keyword, i.e.
 
    enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
-  
+
    Will return an ensemble of pressure nodes. Observe that apart from
    the list of pointers, *now new storage* is allocated, all the
    pointers point in to the underlying enkf_node instances under the
@@ -340,10 +340,10 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
    free() function to match this, just free() the result.
 
    Example:
-   
+
    enkf_node_type ** pressure_nodes = enkf_main_get_node_ensemble(enkf_main , "PRESSURE");
- 
-   Do something with the pressure nodes ... 
+
+   Do something with the pressure nodes ...
 
    free(pressure_nodes);
 
@@ -354,7 +354,7 @@ static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
   int iens;
-  
+
   for (iens = 0; iens < ens_size; iens++) {
     node_ensemble[iens] = enkf_state_get_node(enkf_main->ensemble[iens] , key);
     enkf_fs_fread_node( fs , node_ensemble[iens] , report_step , iens ,load_state);
@@ -381,9 +381,9 @@ member_config_type * enkf_main_iget_member_config(const enkf_main_type * enkf_ma
 void enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean ) {
   int iens;
   enkf_node_clear( mean );
-  for (iens = 0; iens < ens_size; iens++) 
+  for (iens = 0; iens < ens_size; iens++)
     enkf_node_iadd( mean , ensemble[iens] );
-    
+
   enkf_node_scale( mean , 1.0 / ens_size );
 }
 
@@ -391,14 +391,14 @@ void enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf
 /**
    This function calculates the node standard deviation from the
    ensemble. The mean can be NULL, in which case it is assumed that
-   the mean has already been shifted away from the ensemble. 
+   the mean has already been shifted away from the ensemble.
 */
 
 
 void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std) {
   int iens;
   enkf_node_clear( std );
-  for (iens = 0; iens < ens_size; iens++) 
+  for (iens = 0; iens < ens_size; iens++)
     enkf_node_iaddsqr( std , ensemble[iens] );
   enkf_node_scale(std , 1.0 / ens_size );
 
@@ -413,20 +413,20 @@ void enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const
 
 
 void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const char * key , const enkf_node_type * min_std) {
-  int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);  
+  int ens_size                              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** ensemble                = enkf_main_get_node_ensemble( enkf_main , key , report_step , ANALYZED );
   enkf_node_type * mean                     = enkf_node_copyc( ensemble[0] );
   enkf_node_type * std                      = enkf_node_copyc( ensemble[0] );
   int iens;
-  
+
   enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
   /* Shifting away the mean */
   enkf_node_scale( mean , -1 );
-  for (iens = 0; iens < ens_size; iens++) 
+  for (iens = 0; iens < ens_size; iens++)
     enkf_node_iadd( ensemble[iens] , mean );
   enkf_node_scale( mean , -1 );
-  
-  
+
+
   enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , NULL , std );
   /*****************************************************************/
   /*
@@ -437,25 +437,25 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
   {
     enkf_node_type * inflation = enkf_node_copyc( ensemble[0] );
     enkf_node_set_inflation( inflation , std , min_std  );
-    
-    for (iens = 0; iens < ens_size; iens++) 
+
+    for (iens = 0; iens < ens_size; iens++)
       enkf_node_imul( ensemble[iens] , inflation );
-    
+
     enkf_node_free( inflation );
   }
-  
-  
+
+
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
     enkf_node_iadd( ensemble[iens] , mean );
     enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , ANALYZED );
   }
-  
+
   enkf_node_free( mean );
   enkf_node_free( std );
   free( ensemble );
 }
-  
+
 
 
 
@@ -469,7 +469,7 @@ void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , hash_type 
     if (hash_get_counter(use_count , key) > 0) {
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
       const enkf_node_type * min_std            = enkf_config_node_get_min_std( config_node );
-      
+
       if (min_std != NULL) {
         msg_update( msg , key );
         enkf_main_inflate_node(enkf_main , report_step , key , min_std );
@@ -493,7 +493,7 @@ static int __get_active_size(const enkf_config_node_type * config_node , int rep
   else if (active_mode == PARTLY_ACTIVE)
     active_size = active_list_get_active_size( active_list );
   else {
-    util_abort("%s: internal error .. \n",__func__); 
+    util_abort("%s: internal error .. \n",__func__);
     active_size = -1; /* Compiler shut up */
   }
   return active_size;
@@ -505,7 +505,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 
   int       matrix_size              = 1000;  /* Starting with this */
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
-  enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main ); 
+  enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
   matrix_type * A = matrix_alloc(matrix_size , ens_size);
   msg_type  * msg = msg_alloc("Updating: ");
   stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
@@ -520,7 +520,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     bool first_kw    	     = true;
     bool add_more_kw 	     = true;
     int ikw1 	     	     = ikw;
-    int ikw2 	     	     = ikw;  
+    int ikw2 	     	     = ikw;
     int current_row_offset   = 0;
     matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
     do {
@@ -529,7 +529,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
 
 
-      /** 
+      /**
 	  This is very awkward; the problem is that for the GEN_DATA
 	  type the config object does not really own the size. Instead
 	  the size is pushed (on load time) from gen_data instances to
@@ -546,12 +546,12 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       }
       active_size[ikw] = __get_active_size( config_node , report_step , active_list );
       row_offset[ikw]  = current_row_offset;
-      
+
       if ((active_size[ikw] + current_row_offset) > matrix_size) {
 	/* Not enough space in A */
 	if (first_kw) {
 	  /* Try to grow the matrix */
-	  if (!matrix_safe_resize(A , active_size[ikw] , ens_size , false)) 
+	  if (!matrix_safe_resize(A , active_size[ikw] , ens_size , false))
 	    util_exit("%s: sorry failed to allocate %d doubles for the inner enkf update. Need more memory \n",__func__ , active_size[ikw] * ens_size);
 	  matrix_size = active_size[ikw];
 	} else
@@ -562,7 +562,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
       if (add_more_kw) {
 	if (active_size[ikw] > 0) {
 	  state_enum load_state;
-	  
+
 	  if (hash_inc_counter( use_count , key) == 0)
 	    load_state = FORECAST;   /* This is the first time this keyword is updated for this reportstep */
 	  else
@@ -577,7 +577,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	  current_row_offset += active_size[ikw];
 
 	}
-	
+
 	ikw++;
 	if (ikw == num_kw)
 	  add_more_kw = false;
@@ -608,7 +608,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
               msg_update( msg , label);
               free(label);
             }
-            
+
             for (int iens = 0; iens < ens_size; iens++) {
               enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
               enkf_node_matrix_deserialize(node , active_list , A , row_offset[i] , iens);
@@ -618,7 +618,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	}
       }
     }
-    
+
     if (ikw2 == num_kw)
       complete = true;
   } while ( !complete );
@@ -633,22 +633,22 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 
 
 /**
-   This is  T H E  EnKF update routine. 
+   This is  T H E  EnKF update routine.
 */
 
 
 void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
-  /* 
+  /*
      If include_internal_observations is true all observations in the
      time interval [step1+1,step2] will be used, otherwise only the
      last observation at step2 will be used.
   */
   bool include_internal_observations = analysis_config_merge_observations( enkf_main->analysis_config );
-  double alpha                       = analysis_config_get_alpha( enkf_main->analysis_config ); 
+  double alpha                       = analysis_config_get_alpha( enkf_main->analysis_config );
   double std_cutoff                  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
   int start_step , end_step;
-  
+
   /* Observe that end_step is inclusive. */
   if (include_internal_observations) {
     start_step = step1;
@@ -657,51 +657,51 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     start_step = step2;
     end_step   = step2;
   }
-  
-  
+
+
   {
     /*
       Observations and measurements are collected in these temporary
       structures. obs_data is a precursor for the 'd' vector, and
       meas_forecast is a precursor for the 'S' matrix'.
-      
+
       The reason for gong via these temporary structures is to support
       deactivating observations which should not be used in the update
       process.
     */
-    
+
     obs_data_type     	  	* obs_data      = obs_data_alloc();
     meas_matrix_type  	  	* meas_forecast = meas_matrix_alloc( ens_size );
     meas_matrix_type  	  	* meas_analyzed = meas_matrix_alloc( ens_size );
     local_config_type 	  	* local_config  = enkf_main->local_config;
     const local_updatestep_type * updatestep    = local_config_iget_updatestep( local_config , step2 );  /* Only step2 considered */
-    hash_type                   * use_count     = hash_alloc();                                          
+    hash_type                   * use_count     = hash_alloc();
     matrix_type                 * randrot       = NULL;
     const char                  * log_path      = analysis_config_get_log_path( enkf_main->analysis_config );
     FILE                        * log_stream;
-    char                        * log_file; 
+    char                        * log_file;
 
 
     if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
-      randrot = enkf_analysis_alloc_mp_randrot( ens_size ); 
-    
+      randrot = enkf_analysis_alloc_mp_randrot( ens_size );
+
     util_make_path( log_path );
     if (start_step == end_step)
       log_file = util_alloc_sprintf("%s%c%04d" , log_path , UTIL_PATH_SEP_CHAR , end_step);
     else
       log_file = util_alloc_sprintf("%s%c%04d-%04d" , log_path , UTIL_PATH_SEP_CHAR , start_step , end_step);
     log_stream = util_fopen( log_file , "w" );
-    
+
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {
       for(int report_step = start_step; report_step <= end_step; report_step++)  {
-	local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );      
-	
-        enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size, 
+	local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
+
+        enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size,
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
 
 	meas_matrix_calculate_ens_stats( meas_forecast );
 	enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
-        
+
         /* How the fuck does dup() work?? */
 	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , stdout );
         enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , log_stream );
@@ -709,9 +709,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 	if (obs_data_get_active_size(obs_data) > 0) {
 	  if (analysis_config_Xbased( enkf_main->analysis_config )) {
 	    matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
-	    
+
 	    enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
-	    
+
 	    matrix_free( X );
 	  }
 	}
@@ -722,11 +722,11 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 
     if (randrot != NULL)
       matrix_free( randrot );
-    
+
     obs_data_free( obs_data );
     meas_matrix_free( meas_forecast );
     meas_matrix_free( meas_analyzed );
-    enkf_main_inflate( enkf_main , step2 , use_count); 
+    enkf_main_inflate( enkf_main , step2 , use_count);
     hash_free( use_count );
   }
 }
@@ -741,56 +741,56 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
    The function will return when all the results have been loaded, or
    alternatively the jobs have given up completely.
 */
-   
+
 
 
 static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
-  const int num_load_threads    = 10;
-  const int ens_size            = ensemble_config_get_size(enkf_main->ensemble_config);
-  arg_pack_type ** arg_list     = util_malloc( ens_size * sizeof * arg_list , __func__);
-  job_status_type * status_list = util_malloc( ens_size * sizeof * status_list , __func__);
-  thread_pool_type * tp         = thread_pool_alloc( num_load_threads );
-  const int usleep_time         = 2500000; //100000; /* 1/10 of a second */ 
-  const int load_start_usleep   = 10000;
+  const int num_load_threads      = 10;
+  const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
+  arg_pack_type ** arg_list       = util_malloc( ens_size * sizeof * arg_list , __func__);
+  job_status_type * status_list   = util_malloc( ens_size * sizeof * status_list , __func__);
+  thread_pool_type * load_threads = thread_pool_alloc( num_load_threads );
+  const int usleep_time           = 2500000; //100000; /* 1/10 of a second */
+  const int load_start_usleep     = 10000;
   int jobs_remaining;
   int iens;
-  
+
   for (iens = 0; iens < ens_size; iens++) {
     arg_list[iens]    = arg_pack_alloc();
     status_list[iens] = JOB_QUEUE_NOT_ACTIVE;
   }
-  
+
   do {
     job_status_type status;
     jobs_remaining = 0;
-    
+
     for (iens = 0; iens < ens_size; iens++) {
       enkf_state_type * enkf_state = enkf_main->ensemble[iens];
       status = enkf_state_get_run_status( enkf_state );
       if ((status != JOB_QUEUE_NOT_ACTIVE) && ( status != JOB_QUEUE_ALL_OK) && (status != JOB_QUEUE_ALL_FAIL))
         jobs_remaining += 1; /* OK - the job is still running/loading. */
-      
-      if ((status == JOB_QUEUE_RUN_OK) || (status == JOB_QUEUE_RUN_FAIL)) {  
+
+      if ((status == JOB_QUEUE_RUN_OK) || (status == JOB_QUEUE_RUN_FAIL)) {
         if (status_list[iens] != status) {
           arg_pack_clear( arg_list[iens] );
           arg_pack_append_ptr( arg_list[iens] , enkf_state );
           arg_pack_append_int( arg_list[iens] , status );
 
-          /* 
+          /*
              Dispatch a separate thread to load the results from this job. This
              must be done also for the jobs with status JOB_QUEUE_RUN_FAIL -
              because it is the enkf_state_complete_forward_model() function
              which does a resubmit, or alternatively signal complete failure to
              the queue system (should probably be split in two).
           */
-          
-          thread_pool_add_job( tp , enkf_state_complete_forward_model__ , arg_list[iens] );
+
+          thread_pool_add_job( load_threads , enkf_state_complete_forward_model__ , arg_list[iens] );
           /* This will block until the enkf_state_complete_forward_model() has actually started executing. */
           {
             job_status_type new_status;
             do {
               usleep( load_start_usleep );
-              new_status = enkf_state_get_run_status( enkf_state );   
+              new_status = enkf_state_get_run_status( enkf_state );
             } while ( new_status == status );
             status = new_status;
           }
@@ -819,7 +819,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
              if (status_list[iens] != status) {
                 ....
              }
-  
+
            i.e. it reacts to state *changes*. Now if the job immediately fails
            again with status JOB_QUEUE_RUN_FAIL, without this scope getting the
            chance to temporarily register a different status, there will no
@@ -828,16 +828,16 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
         The same applies to jobs which suceed with JOB_QUEUE_RUN_OK, but then
         subsequently fail to load.
       */
-      
+
       status_list[iens] = status;
     }
     if (jobs_remaining > 0)
       usleep( usleep_time );
   } while (jobs_remaining > 0);
-  thread_pool_join( tp );
-  thread_pool_free( tp );
+  thread_pool_join( load_threads );
+  thread_pool_free( load_threads );
 
-  for (iens = 0; iens < ens_size; iens++) 
+  for (iens = 0; iens < ens_size; iens++)
     arg_pack_free( arg_list[iens] );
   free( arg_list );
   free( status_list );
@@ -845,21 +845,96 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 
 
 
+/**
+   The function enkf_main_run_step() is quite heavily multithreaded involving
+   one designated worker thread (queue_thread) and two thread_pools. In the
+   diagram below we have attempted to illustrate the multrthreaded behaviour of
+   the function enkf_main_run_step():
+
+    o The execution path does not leave a 'box' before the thread / thread_pool
+      has been joined.
+
+    o An 'X' is meant to indicate a join.
+
+    o Dotted lines indicate communication; specifically the queue_thread running
+      the queue is "the owner" of all the job status information.
+
+    o The thread pool spawns many individual worker threads, these are
+      administrated by the thread_pool and not shown in the diagram.
+
+
+   main_thread: enkf_main_run_step
+   -------------------------------
+               |
+               |
+               |------------------------------------->--------------------------+
+               |                                                                |
+               |                                                                |
+               |                                                                |
+               |                                                                |
+               |                                                                |
+               |                                                   _____________|____________________
+    ___________|_______ thread pool __________________            /                                  \
+   /                                                  \           | queue_thread: job_queue_run_jobs |
+   |  submit_threads: enkf_state_start_forward_model  |...........\__________________________________/
+   \__________________________________________________/              .     .    |
+               |                                                     .     .    |
+               |                                                     .     .    |
+               |                                                     .     .    |
+               |                                                     .     .    |
+               |                                                     .     .    |
+               +---------+                                           .     .    |
+                         |                                           .     .    |
+                         |                                           .     .    |
+                         |                                           .     .    |
+                                                                     .     .    |
+              main_thread: enkf_main_wait_loop()......................     .    |
+              ----------------------------------                           .    |
+                         |                                                 .    |
+                         |                                                 .    |
+        _________________| thread pool ____________________                .    |
+       /                                                   \               .    |
+       | load_threads: enkf_state_complete_forward_model() |................    |
+       \___________________________________________________/                    |
+                         |                                                      |
+                         |                                                      |
+                         |                                                      |
+               +---------+                                                      |
+               |                                                                |
+               |                                                                |
+               X---------------------------------------<------------------------+
+               |
+               |
+              \|/
+
+         Some single threaded clean up.
+
+
+  In addition to the trivial speed up (on a multi CPU box) the multithreading
+  allows for asyncronous treatmeant of the queue, loading of results e.t.c. The
+  latter is probably the most important argument for using a multithreaded
+  approach.
+*/
 
 
 
-static void enkf_main_run_step(enkf_main_type * enkf_main      , 
-                               run_mode_type    run_mode       , 
-                               const bool * iactive            , 
+
+
+
+
+
+static void enkf_main_run_step(enkf_main_type * enkf_main      ,
+                               run_mode_type    run_mode       ,
+                               const bool * iactive            ,
                                int load_start                  ,  /* For internalizing results. */
-                               int init_step_parameter         ,     
-                               state_enum init_state_parameter , 
-                               state_enum init_state_dynamic   , 
-                               int step1                       , 
+                               int init_step_parameter         ,
+                               state_enum init_state_parameter ,
+                               state_enum init_state_dynamic   ,
+                               int step1                       ,
                                int step2                       ,  /* Discarded for predictions */
-                               bool enkf_update                ,     
+                               bool enkf_update                ,
                                forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
-  
+
   {
     const ecl_config_type * ecl_config = enkf_main_get_ecl_config( enkf_main );
     if ((step1 > 0) && (!ecl_config_can_restart(ecl_config))) {
@@ -868,35 +943,35 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       util_exit("%s: exiting \n",__func__);
     }
   }
-  
+
   {
     int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
     const int ens_size       = ensemble_config_get_size(enkf_main->ensemble_config);
     int   job_size;
     int iens;
-  
+
     if (run_mode == ENSEMBLE_PREDICTION)
       printf("Starting predictions from step: %d\n",step1);
     else
       printf("Starting forward step: %d -> %d\n",step1 , step2);
-    
+
     log_add_message(enkf_main->logh , 1 , NULL , "===================================================================", false);
     log_add_fmt_message(enkf_main->logh , 1 , NULL , "Forward model: %d -> %d ",step1,step2);
     job_size = 0;
     for (iens = 0; iens < ens_size; iens++)
       if (iactive[iens]) job_size++;
-    
+
     {
-      pthread_t          queue_thread;
+      pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-      bool             verbose   = true;  
+      bool             verbose   = true;
       arg_pack_type * queue_args = arg_pack_alloc();
       arg_pack_append_ptr(queue_args  , job_queue);
       arg_pack_append_int(queue_args  , job_size);
       arg_pack_append_bool(queue_args , verbose);
       arg_pack_lock( queue_args );
       pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
-      
+
       {
         thread_pool_type * submit_threads = thread_pool_alloc(4);
         for (iens = 0; iens < ens_size; iens++) {
@@ -904,19 +979,19 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
             int load_start = step1;
             if (step1 > 0)
               load_start++;
-            
-            enkf_state_init_run(enkf_main->ensemble[iens] , 
-                                run_mode , 
-                                iactive[iens] , 
+
+            enkf_state_init_run(enkf_main->ensemble[iens] ,
+                                run_mode ,
+                                iactive[iens] ,
                                 max_internal_submit ,
-                                init_step_parameter , 
+                                init_step_parameter ,
                                 init_state_parameter,
-                                init_state_dynamic  , 
-                                load_start , 
-                                step1 , 
-                                step2 , 
+                                init_state_dynamic  ,
+                                load_start ,
+                                step1 ,
+                                step2 ,
                                 forward_model);
-            
+
             thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
           } else
             enkf_state_set_inactive( enkf_main->ensemble[iens] );
@@ -925,19 +1000,19 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
         thread_pool_free(submit_threads);
       }
       log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
-      
+
       enkf_main_run_wait_loop( enkf_main );      /* Waiting for all the jobs - and the loading of results - to complete. */
       pthread_join( queue_thread , NULL );       /* Wait for the job_queue_run_jobs() function to complete. */
       job_queue_finalize( job_queue );           /* Tear down / finalize all the nodes related to remote jobs - must NOT be called before job_queue_run_jobs() has returned. */
-      
+
       arg_pack_free( queue_args );
     }
-    
-    
-    
+
+
+
     {
       bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
-      
+
       for (iens = 0; iens < ens_size; iens++) {
         if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
           if ( runOK ) {
@@ -947,14 +1022,14 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
           log_add_fmt_message( enkf_main->logh , 1 , stderr , "** Error in: %s " , enkf_state_get_run_path(enkf_main->ensemble[iens]));
         }
       }
-      if (!runOK) 
+      if (!runOK)
         util_exit("The integration failed - check your forward model ...\n");
     }
     log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
-    
+
     if (enkf_update)
       enkf_main_UPDATE(enkf_main , load_start , step2);
-    
+
     enkf_fs_fsync( enkf_main->dbase );
     printf("%s: ferdig med step: %d \n" , __func__,step2);
   }
@@ -974,7 +1049,7 @@ void * enkf_main_get_enkf_config_node_type(const ensemble_config_type * ensemble
 
      1. Set the enkf_sched instance - either by loading from file or
         by using the default.
-	 
+
      2. Set up the configuration of what should be internalized.
 
 */
@@ -992,17 +1067,17 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 /**
    The main RUN function - will run both enkf assimilations and experiments.
 */
-void enkf_main_run(enkf_main_type * enkf_main            , 
-		   run_mode_type    run_mode             , 
-		   const bool     * iactive              ,          
+void enkf_main_run(enkf_main_type * enkf_main            ,
+		   run_mode_type    run_mode             ,
+		   const bool     * iactive              ,
 		   int              init_step_parameters ,
-		   int              start_report         , 
+		   int              start_report         ,
 		   state_enum       start_state) {
-  
+
   bool rerun       = analysis_config_get_rerun( enkf_main->analysis_config );
   int  rerun_start = analysis_config_get_rerun_start( enkf_main->analysis_config );
 
-  enkf_main_init_run( enkf_main , run_mode);  
+  enkf_main_init_run( enkf_main , run_mode);
   {
     enkf_fs_type * fs = enkf_main_get_fs(enkf_main);
     if (run_mode == ENKF_ASSIMILATION) {
@@ -1013,14 +1088,14 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 	const int num_nodes                = enkf_sched_get_num_nodes(enkf_sched);
 	const int start_inode              = enkf_sched_get_node_index(enkf_sched , start_report);
 	int inode;
-	
+
 	if (start_state == ANALYZED)
 	  analyzed_start = true;
 	else if (start_state == FORECAST)
 	  analyzed_start = false;
 	else
 	  util_abort("%s: internal error - start_state must be analyzed | forecast \n",__func__);
-	
+
 	prev_enkf_on = analyzed_start;
 	for (inode = start_inode; inode < num_nodes; inode++) {
 	  const enkf_sched_node_type * node = enkf_sched_iget_node(enkf_sched , inode);
@@ -1032,11 +1107,11 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
 	  int 	   report_step2;
 	  bool enkf_on;
 	  forward_model_type * forward_model;
-	  
+
 	  enkf_sched_node_get_data(node , &report_step1 , &report_step2 , &enkf_on , &forward_model);
-	  if (inode == start_inode) 
+	  if (inode == start_inode)
 	    report_step1 = start_report;  /* If we are restarting from somewhere. */
-	  
+
           if (rerun) {
             /* rerun ... */
             load_start           = report_step1;    /* +1 below. Observe that report_step is set to rerun_start below. */
@@ -1049,7 +1124,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
               init_state_dynamic = ANALYZED;
             else
               init_state_dynamic = FORECAST;
-            /* 
+            /*
                This is not a rerun - and then parameters and dynamic
                data should be initialized from the same report step.
             */
@@ -1057,7 +1132,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
             init_state_parameter = init_state_dynamic;
             load_start = report_step1;
           }
-          
+
           if (load_start > 0)
             load_start++;
 
@@ -1076,7 +1151,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
         state_enum init_state_parameter = start_state;
         state_enum init_state_dynamic   = start_state;
 	enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
-      } 
+      }
     }
   }
 }
@@ -1092,7 +1167,7 @@ void enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_type * p
     enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
     {
       char * iens_string = util_alloc_sprintf("%04d" , iens);
-      msg_update(msg , iens_string); 
+      msg_update(msg , iens_string);
       free(iens_string);
     }
     enkf_state_initialize( state , param_list );
@@ -1104,16 +1179,16 @@ void enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_type * p
 
 /**
    This function creates a local_config file corresponding to the
-   default 'ALL_ACTIVE' configuration. We eat our own shit around here ... 
+   default 'ALL_ACTIVE' configuration. We eat our own shit around here ...
 */
-   
+
 void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , const char * local_config_file ) {
   FILE * stream = util_fopen( local_config_file , "w");
 
   fprintf(stream , "%-32s ALL_ACTIVE\n", local_config_get_cmd_string( CREATE_UPDATESTEP ));
   fprintf(stream , "%-32s ALL_ACTIVE\n", local_config_get_cmd_string( CREATE_MINISTEP ));
   fprintf(stream , "%-32s ALL_ACTIVE ALL_ACTIVE\n" , local_config_get_cmd_string( ATTACH_MINISTEP ));
-  
+
   /* Adding all observation keys */
   {
     hash_iter_type * obs_iter = enkf_obs_alloc_iter( enkf_main->obs );
@@ -1123,7 +1198,7 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
     }
     hash_iter_free( obs_iter );
   }
-  
+
   /* Adding all node which can be updated. */
   {
     stringlist_type * keylist = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER + DYNAMIC_STATE + DYNAMIC_RESULT);
@@ -1132,33 +1207,33 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
       const char * key = stringlist_iget( keylist , i);
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
       bool add_node = true;
-      
-      /* 
+
+      /*
          We make sure that summary nodes which are not observed
          are not updated. I.e. the total production in a
-         well. 
+         well.
 
-         This was changed by request ... 
+         This was changed by request ...
       */
 
 
       //if (enkf_config_node_get_var_type( config_node ) == DYNAMIC_RESULT)
       //  if (enkf_config_node_get_num_obs( config_node ) == 0)
       //    add_node = false;
-      
+
       /*
         Make sure the funny GEN_KW instance masquerading as
         SCHEDULE_PREDICTION_FILE is not added to the soup.
       */
       if (util_string_equal(key , "PRED"))
         add_node = false;
-      
+
       if (add_node)
         fprintf(stream , "%-32s ALL_ACTIVE %s\n",local_config_get_cmd_string( ADD_DATA ) , key);
     }
     stringlist_free( keylist);
   }
-  
+
   /* Install the ALL_ACTIVE step as the default. */
   fprintf(stream , "%-32s ALL_ACTIVE" , local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ));
   fclose( stream );
@@ -1171,34 +1246,34 @@ void enkf_main_create_all_active_config( const enkf_main_type * enkf_main , cons
 static config_type * enkf_main_alloc_config() {
   config_type * config = config_alloc();
   config_item_type * item;
-    
+
   /*****************************************************************/
   /* config_add_item():                                            */
   /*                                                               */
   /*  1. boolean - required?                                       */
   /*  2. boolean - append?                                         */
   /*****************************************************************/
-  
+
   /*****************************************************************/
   /** Keywords expected normally found in site_config */
   item = config_add_item(config , "HOST_TYPE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   config_item_set_common_selection_set(item , 2, (const char *[2]) {"STATOIL" , "HYDRO"});
   config_set_arg( config , "HOST_TYPE" , 1 , (const char *[1]) { DEFAULT_HOST_TYPE });
-  
+
   item = config_add_item(config , "CASE_TABLE" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-  
+
   config_add_key_value( config , "LOG_LEVEL" , false , CONFIG_INT);
   config_add_key_value( config , "LOG_FILE"  , false , CONFIG_STRING);
-  
-  
+
+
   item = config_add_item(config , "MAX_SUBMIT" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
   config_set_arg(config , "MAX_SUBMIT" , 1 , (const char *[1]) { DEFAULT_MAX_SUBMIT} );
-  
+
   config_add_key_value(config , "MAX_RESAMPLE" , false , CONFIG_INT);
-      
+
 
   item = config_add_item(config , "QUEUE_SYSTEM" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
@@ -1206,19 +1281,19 @@ static config_type * enkf_main_alloc_config() {
     stringlist_type * lsf_dep    = stringlist_alloc_argv_ref( (const char *[2]) {"LSF_QUEUE" , "MAX_RUNNING_LSF"}   , 2);
     stringlist_type * rsh_dep    = stringlist_alloc_argv_ref( (const char *[3]) {"RSH_HOST_LIST" , "RSH_COMMAND" , "MAX_RUNNING_RSH"} , 2);
     stringlist_type * local_dep  = stringlist_alloc_argv_ref( (const char *[1]) {"MAX_RUNNING_LOCAL"}   , 1);
-    
+
     config_item_set_common_selection_set( item , 3 , (const char *[3]) {"LSF" , "LOCAL" , "RSH"});
     config_item_set_required_children_on_value( item , "LSF"   , lsf_dep);
     config_item_set_required_children_on_value( item , "RSH"   , rsh_dep);
     config_item_set_required_children_on_value( item , "LOCAL" , local_dep);
-    
+
     stringlist_free(lsf_dep);
     stringlist_free(rsh_dep);
     stringlist_free(local_dep);
   }
 
 
-  /* 
+  /*
      You can set environment variables which will be applied to the
      run-time environment. Can unfortunately not use constructions
      like PATH=$PATH:/some/new/path, use the UPDATE_PATH function instead.
@@ -1228,7 +1303,7 @@ static config_type * enkf_main_alloc_config() {
 
   /**
      UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
-     
+
      Will prepend "/path/to/some/funky/lib" at the front of LD_LIBRARY_PATH.
   */
   item = config_add_item(config , "UPDATE_PATH" , false , true);
@@ -1236,15 +1311,15 @@ static config_type * enkf_main_alloc_config() {
 
   item = config_add_item( config , "LICENSE_PATH" , true , false );
   config_item_set_argc_minmax(item , 1 , 1, NULL );
-  
-    
+
+
   /*****************************************************************/
   /* Items related to running jobs with lsf/rsh/local ...          */
-  
+
   /* These must be set IFF QUEUE_SYSTEM == LSF */
   item = config_add_item(config , "LSF_QUEUE"     , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  
+
   item = config_add_item(config , "MAX_RUNNING_LSF" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
@@ -1255,31 +1330,31 @@ static config_type * enkf_main_alloc_config() {
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXECUTABLE});
   item = config_add_item(config , "MAX_RUNNING_RSH" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-  
-    
+
+
   /* These must be set IFF QUEUE_SYSTEM == LOCAL */
   item = config_add_item(config , "MAX_RUNNING_LOCAL" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
 
-    
+
   item = config_add_item(config , "JOB_SCRIPT" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , "INSTALL_JOB" , true , true);
   config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) {CONFIG_STRING , CONFIG_EXISTING_FILE});
-  
-  
+
+
   /* Plotting stuff */
   item = config_add_key_value(config , "IMAGE_TYPE" , false , CONFIG_STRING);
   config_item_set_common_selection_set( item , 3 , (const char *[3]) {"png" , "jpg" , "psc"});
-  
+
   item = config_add_key_value(config , "PLOT_DRIVER" , false , CONFIG_STRING);
   config_item_set_common_selection_set( item , 2 , (const char *[2]) {"PLPLOT" , "TEXT"});
-  
+
 
   plot_config_add_config_items( config );
-  
-    
+
+
   /*****************************************************************/
   /* Required keywords from the ordinary model_config file */
   item = config_add_item(config , "NUM_REALIZATIONS" , true , false);
@@ -1287,19 +1362,19 @@ static config_type * enkf_main_alloc_config() {
   config_add_alias(config , "NUM_REALIZATIONS" , "SIZE");
   config_add_alias(config , "NUM_REALIZATIONS" , "NUM_REALISATIONS");
   config_install_message(config , "SIZE" , "** Warning: \'SIZE\' is depreceated - use \'NUM_REALIZATIONS\' instead.");
-  
+
 
   item = config_add_item(config , "GRID" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-  
+
   item = config_add_item(config , "ECLBASE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
-  
+
   item = config_add_item(config , "SCHEDULE_FILE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
-  /* 
+  /*
      Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a GEN_KW is
-     added en ensemble_config.c 
+     added en ensemble_config.c
   */
 
   item = config_add_item(config , "DATA_FILE" , true , false);
@@ -1307,34 +1382,34 @@ static config_type * enkf_main_alloc_config() {
 
   item = config_add_item(config , "INIT_SECTION" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_FILE});
-  config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE"); 
-  
+  config_add_alias(config , "INIT_SECTION" , "EQUIL_INIT_FILE");
+
   /*****************************************************************/
   /* Optional keywords from the model config file */
-  
+
   item = config_add_item( config , "RUN_TEMPLATE" , false , true );
   config_item_set_argc_minmax(item , 2 , -1 , (const config_item_types [2]) { CONFIG_EXISTING_FILE , CONFIG_STRING });  /* Force the template to exist at boot time. */
 
   config_add_key_value(config , "RUNPATH" , false , CONFIG_STRING);
-  
+
   item = config_add_item(config , "ENSPATH" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
-  
+
   item = config_add_item(config , "DBASE_TYPE" , true , false);
   config_item_set_argc_minmax(item , 1, 1 , NULL);
   config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
   config_set_arg(config , "DBASE_TYPE" , 1 , (const char *[1] ) { DEFAULT_DBASE_TYPE });
-  
+
   item = config_add_item(config , "FORWARD_MODEL" , true , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
-  
+
   item = config_add_item(config , "DATA_KW" , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
-  
+
   item = config_add_item(config , "KEEP_RUNPATH" , false , false);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
-  
+
   config_add_key_value(config , "PRE_CLEAR_RUNPATH" , false , CONFIG_BOOLEAN);
 
   item = config_add_item(config , "DELETE_RUNPATH" , false , false);
@@ -1342,16 +1417,16 @@ static config_type * enkf_main_alloc_config() {
 
   item = config_add_item(config , "ADD_STATIC_KW" , false , true);
   config_item_set_argc_minmax(item , 1 , -1 , NULL);
-  
+
   item = config_add_item(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , (const config_item_types [2]) { CONFIG_STRING , CONFIG_INT});
-    
+
   item = config_add_item(config , "OBS_CONFIG"  , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
   item = config_add_item(config , "LOCAL_CONFIG"  , false , true);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
-  
+
   item = config_add_item(config , "REFCASE" , false , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) { CONFIG_EXISTING_FILE});
 
@@ -1362,7 +1437,7 @@ static config_type * enkf_main_alloc_config() {
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   {
     stringlist_type * refcase_dep = stringlist_alloc_argv_ref( (const char *[1]) {"REFCASE"} , 1);
-    
+
     config_item_set_common_selection_set(item , 3 , (const char *[3]) {"SCHEDULE" , "REFCASE_SIMULATED" , "REFCASE_HISTORY"});
     config_item_set_required_children_on_value(item , "REFCASE_SIMULATED" , refcase_dep);
     config_item_set_required_children_on_value(item , "REFCASE_HISTORY"  , refcase_dep);
@@ -1370,10 +1445,10 @@ static config_type * enkf_main_alloc_config() {
     stringlist_free(refcase_dep);
   }
   config_set_arg(config , "HISTORY_SOURCE" , 1 , (const char *[1]) { DEFAULT_HISTORY_SOURCE });
-  
-  
+
+
   /*****************************************************************/
-  /* 
+  /*
      Keywords for the analysis - all optional. The analysis_config object
      is instantiated with defaults from enkf_defaults.h
   */
@@ -1384,17 +1459,17 @@ static config_type * enkf_main_alloc_config() {
   config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , false , CONFIG_BOOLEAN);
   config_add_key_value( config , "ENKF_RERUN" , false , CONFIG_BOOLEAN);
   config_add_key_value( config , "RERUN_START" , false , CONFIG_INT);
-  
+
   /*****************************************************************/
   /* Keywords for the estimation                                   */
-  ensemble_config_add_config_items(config); 
+  ensemble_config_add_config_items(config);
 
   {
     FILE * stream = util_fopen("/tmp/config_items.txt" , "w");
     config_fprintf_item_list( config , stream );
     fclose( stream );
   }
-  
+
   return config;
 }
 
@@ -1406,26 +1481,26 @@ static void enkf_main_iset_keep_runpath( enkf_main_type * enkf_main , int index 
 
 void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep_runpath_string , const char * delete_runpath_string) {
   const int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
-  
+
   int i;
-  for (i = 0; i < ens_size; i++) 
+  for (i = 0; i < ens_size; i++)
   enkf_main_iset_keep_runpath( enkf_main , i , DEFAULT_KEEP);
-  
+
   {
     bool * flag = util_malloc( sizeof * flag * ens_size , __func__);
-    
+
     util_sscanf_active_range(keep_runpath_string , ens_size - 1 , flag);
     for (i = 0; i < ens_size; i++) {
-      if (flag[i]) 
+      if (flag[i])
         enkf_main_iset_keep_runpath( enkf_main , i , EXPLICIT_KEEP);
     }
-    
+
     free( flag );
   }
-  
+
   {
     bool * flag = util_malloc( sizeof * flag * ens_size , __func__);
-    
+
     util_sscanf_active_range(delete_runpath_string , ens_size - 1 , flag);
     for (i = 0; i < ens_size; i++) {
       if (flag[i]) {
@@ -1434,7 +1509,7 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
         enkf_main_iset_keep_runpath( enkf_main , i , EXPLICIT_DELETE);
       }
     }
-    
+
     free(flag );
   }
 }
@@ -1442,12 +1517,12 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 
 static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
-  UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);  
+  UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
   enkf_main->dbase        = NULL;
   enkf_main->ensemble     = NULL;
   enkf_main->keep_runpath = NULL;
 
-  
+
   /* Here we add the functions which should be available for string substitution operations. */
   enkf_main->subst_func_pool = subst_func_pool_alloc( );
   subst_func_pool_add_func( enkf_main->subst_func_pool , "EXP"       , "exp"                               , subst_func_exp         , false , 1 , 1 );
@@ -1457,20 +1532,20 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   subst_func_pool_add_func( enkf_main->subst_func_pool , "MUL"       , "Multiplies arguments"              , subst_func_mul         , true  , 1 , 0 );
   subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDINT"   , "Returns a random integer - 32 bit" , subst_func_randint     , false , 0 , 0 );
   subst_func_pool_add_func( enkf_main->subst_func_pool , "RANDFLOAT" , "Returns a random float 0-1."       , subst_func_randfloat   , false , 0 , 0 );
-  
+
   /**
      Allocating the parent subst_list instance. This will (should ...)
      be the top level subst instance for all substitions in the ert
      program.
-     
+
      All the functions available or only installed in this
      subst_list.
-     
+
      The key->value replacements installed in this instance are
      key,value pairs which are:
 
       o Common to all ensemble members.
-       
+
       o Constant in time.
   */
 
@@ -1483,13 +1558,13 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   subst_list_insert_func( enkf_main->subst_list , "MUL"         , "__MUL__");
   subst_list_insert_func( enkf_main->subst_list , "RANDINT"     , "__RANDINT__");
   subst_list_insert_func( enkf_main->subst_list , "RANDFLOAT"   , "__RANDFLOAT__");
-  
+
 
   /*
     Installing the DATA_KW keywords supplied by the user - these are
     at the very top level, so they can reuse everything defined later.
   */
-  
+
   {
     hash_iter_type * iter = hash_iter_alloc(config_data_kw);
     const char * key = hash_iter_get_next_key(iter);
@@ -1501,10 +1576,10 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     }
     hash_iter_free(iter);
   }
-  
-  
-  
-  /* 
+
+
+
+  /*
      Installing the based (key,value) pairs which are common to all
      ensemble members, and independent of time.
   */
@@ -1512,14 +1587,14 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     char * cwd             = util_alloc_cwd();
     char * date_string     = util_alloc_date_stamp();
 
-    char * cwd_key         = enkf_util_alloc_tagged_string( "CWD" );   
-    char * config_path_key = enkf_util_alloc_tagged_string( "CONFIG_PATH" );   
-    char * date_key        = enkf_util_alloc_tagged_string( "DATE" );   
+    char * cwd_key         = enkf_util_alloc_tagged_string( "CWD" );
+    char * config_path_key = enkf_util_alloc_tagged_string( "CONFIG_PATH" );
+    char * date_key        = enkf_util_alloc_tagged_string( "DATE" );
 
     subst_list_insert_owned_ref( enkf_main->subst_list , cwd_key         , cwd , "The current working directory we are running from - the location of the config file.");
     subst_list_insert_ref( enkf_main->subst_list , config_path_key , cwd , "The current working directory we are running from - the location of the config file.");
     subst_list_insert_owned_ref( enkf_main->subst_list , date_key        , date_string , "The current date");
-    
+
     free( cwd_key );
     free( config_path_key );
     free( date_key );
@@ -1527,29 +1602,29 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   enkf_main->templates    = ert_templates_alloc( enkf_main->subst_list );
   return enkf_main;
 }
-  
+
 
 
 
 static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * data_kw) {
   stringlist_type * keylist  = ensemble_config_alloc_keylist(enkf_main->ensemble_config);
   int ens_size               = ensemble_config_get_size( enkf_main->ensemble_config );
-  
+
   int keys        = stringlist_get_size(keylist);
   msg_type * msg  = msg_alloc("Initializing member: ");
   msg_show(msg);
-  
+
   enkf_main->ensemble = util_malloc(ensemble_config_get_size(enkf_main->ensemble_config) * sizeof * enkf_main->ensemble , __func__);
   for (int iens = 0; iens < ens_size; iens++) {
     msg_update_int(msg , "%03d" , iens);
     enkf_main->ensemble[iens] = enkf_state_alloc(iens,
-                                                 enkf_main->dbase , 
-                                                 model_config_iget_casename( enkf_main->model_config , iens ) , 
-                                                 enkf_main->pre_clear_runpath                                 , 
+                                                 enkf_main->dbase ,
+                                                 model_config_iget_casename( enkf_main->model_config , iens ) ,
+                                                 enkf_main->pre_clear_runpath                                 ,
                                                  enkf_main->keep_runpath[iens]                                ,
-                                                 enkf_main->model_config                                      , 
+                                                 enkf_main->model_config                                      ,
                                                  enkf_main->ensemble_config                                   ,
-                                                 enkf_main->site_config                                       , 
+                                                 enkf_main->site_config                                       ,
                                                  enkf_main->ecl_config                                        ,
                                                  model_config_get_std_forward_model(enkf_main->model_config)  ,
                                                  enkf_main->logh                                              ,
@@ -1557,14 +1632,14 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
                                                  enkf_main->subst_list);
   }
   msg_free(msg , true);
-  
+
   msg  = msg_alloc("Adding key: ");
   msg_show(msg);
   for (int ik = 0; ik < keys; ik++) {
     const char * key = stringlist_iget(keylist, ik);
     msg_update(msg , key);
     const enkf_config_node_type * config_node = ensemble_config_get_node(enkf_main->ensemble_config , key);
-    for (int iens = 0; iens < ens_size; iens++) 
+    for (int iens = 0; iens < ens_size; iens++)
       enkf_state_add_node(enkf_main->ensemble[iens] , key , config_node);
   }
   msg_free(msg , true);
@@ -1583,8 +1658,8 @@ void enkf_main_remount_fs( enkf_main_type * enkf_main ) {
 
 
 /******************************************************************/
-/* 
-   Adding inverse observation keys to the enkf_nodes; can be called 
+/*
+   Adding inverse observation keys to the enkf_nodes; can be called
    several times.
 */
 
@@ -1608,7 +1683,7 @@ void enkf_main_update_obs_keys( enkf_main_type * enkf_main ) {
   }
 }
 
-  
+
 /**
    This function boots everything needed for running a EnKF
    application. Very briefly it can be summarized as follows:
@@ -1631,12 +1706,12 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   const char     * site_config  = getenv("ENKF_SITE_CONFIG");
   char           * model_config;
   enkf_main_type * enkf_main;    /* The enkf_main object is allocated when the config parsing is completed. */
-  
-  
+
+
   if (site_config == NULL)
     site_config = _site_config;
-  
-  if (site_config == NULL) 
+
+  if (site_config == NULL)
     util_exit("%s: main enkf_config file is not set. Use environment variable \"ENKF_SITE_CONFIG\" - or recompile - aborting.\n",__func__);
   printf("site config : %s \n\n",site_config);
   {
@@ -1645,31 +1720,31 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     char * ext;
     util_alloc_file_components(_model_config , &path , &base , &ext);
     if (path != NULL) {
-      if (chdir(path) != 0) 
+      if (chdir(path) != 0)
 	util_abort("%s: failed to change directory to: %s : %s \n",__func__ , path , strerror(errno));
 
       printf("Changing to directory ...................: %s \n",path);
       if (ext != NULL) {
 	model_config = util_alloc_joined_string((const char *[3]) {base , "." , ext} , 3 , "");
 	free(base);
-      } else 
+      } else
 	model_config = base;
-      
+
       free(ext);
       free(path);
     } else
       model_config = util_alloc_string_copy(_model_config);
-  }  
-  
+  }
+
   if (!util_file_exists(site_config))  util_exit("%s: can not locate site configuration file:%s \n",__func__ , site_config);
   if (!util_file_exists(model_config)) util_exit("%s: can not locate user configuration file:%s \n",__func__ , model_config);
-  {  
+  {
     config_type * config = enkf_main_alloc_config();
     config_parse(config , site_config  , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , false);
     config_parse(config , model_config , "--" , "INCLUDE" , "DEFINE" , enkf_util_alloc_tagged_string , false , true);
     /*****************************************************************/
     /* OK - now we have parsed everything - and we are ready to start
-       populating the enkf_main object. 
+       populating the enkf_main object.
     */
 
     {
@@ -1685,13 +1760,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main->logh = log_alloc_existing( log_file , DEFAULT_LOG_LEVEL);
       free( log_file );
     }
-    
-    if (config_item_set( config , "LOG_LEVEL")) 
+
+    if (config_item_set( config , "LOG_LEVEL"))
       log_set_level( enkf_main->logh , config_get_value_as_int(config , "LOG_LEVEL"));
-    
-    if (config_item_set( config , "LOG_FILE")) 
+
+    if (config_item_set( config , "LOG_FILE"))
       log_reset_filename( enkf_main->logh , config_get_value(config , "LOG_FILE"));
-      
+
     printf("Activity will be logged to ..............: %s \n",log_get_filename( enkf_main->logh ));
     log_add_message(enkf_main->logh , 1 , NULL , "ert configuration loaded" , false);
 
@@ -1713,11 +1788,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main->ecl_config      = ecl_config_alloc( config );
       enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) );
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
-      enkf_main->model_config    = model_config_alloc(config , 
+      enkf_main->model_config    = model_config_alloc(config ,
                                                       ensemble_config_get_size( enkf_main->ensemble_config ),
-						      site_config_get_installed_jobs(enkf_main->site_config) , 
-						      ecl_config_get_last_history_restart( enkf_main->ecl_config ), 
-						      ecl_config_get_sched_file(enkf_main->ecl_config) , 
+						      site_config_get_installed_jobs(enkf_main->site_config) ,
+						      ecl_config_get_last_history_restart( enkf_main->ecl_config ),
+						      ecl_config_get_sched_file(enkf_main->ecl_config) ,
 						      site_config_get_statoil_mode( enkf_main->site_config ),
 						      use_lsf);
     }
@@ -1731,7 +1806,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
        enkf_mode: In this case the default behaviour is to delete the
        runpath directories. You can explicitly say that you want to
        keep runpath directories with the KEEP_RUNPATH
-       directive. 
+       directive.
 
        experiments: In this case the default is to keep the runpath
        directories around, but you can explicitly say that you
@@ -1745,30 +1820,30 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       {
         char * keep_runpath_string   = NULL;
         char * delete_runpath_string = NULL;
-      
+
         enkf_main->keep_runpath = util_malloc( sizeof * enkf_main->keep_runpath * ensemble_config_get_size( enkf_main->ensemble_config ) , __func__);
-        
-        if (config_has_set_item(config , "KEEP_RUNPATH")) 
+
+        if (config_has_set_item(config , "KEEP_RUNPATH"))
           keep_runpath_string = config_alloc_joined_string(config , "KEEP_RUNPATH" , "");
-        
-        if (config_has_set_item(config , "DELETE_RUNPATH")) 
+
+        if (config_has_set_item(config , "DELETE_RUNPATH"))
           delete_runpath_string = config_alloc_joined_string(config , "DELETE_RUNPATH" , "");
-        
+
         enkf_main_parse_keep_runpath( enkf_main , keep_runpath_string , delete_runpath_string);
-        
+
         util_safe_free( keep_runpath_string );
         util_safe_free( delete_runpath_string );
       }
       /* This is really in the wrong place ... */
       {
         enkf_main->pre_clear_runpath = DEFAULT_PRE_CLEAR_RUNPATH;
-        if (config_has_set_item(config , "PRE_CLEAR_RUNPATH")) 
+        if (config_has_set_item(config , "PRE_CLEAR_RUNPATH"))
           enkf_main->pre_clear_runpath = config_get_value_as_bool( config , "PRE_CLEAR_RUNPATH");
       }
 
 
 
-      
+
       if (config_has_set_item(config , "ADD_STATIC_KW")) {
 	for (int i=0; i < config_get_occurences(config , "ADD_STATIC_KW"); i++) {
 	  const stringlist_type * static_kw_list = config_iget_stringlist_ref(config , "ADD_STATIC_KW" , i);
@@ -1788,33 +1863,33 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
           for (int iarg = 2; iarg < config_get_occurence_size( config , "RUN_TEMPLATE" , i); iarg++) {
             char * key , *value;
             util_binary_split_string( config_iget( config , "RUN_TEMPLATE" , i , iarg ), "=:" , true , &key , &value);
-            
+
             if (value != NULL) {
               char * tagged_key = enkf_util_alloc_tagged_string( key );
               ert_template_add_arg( template , tagged_key , value );
               free( tagged_key );
             } else
               fprintf(stderr,"** Warning - failed to parse argument:%s as key:value - ignored \n",config_iget( config , "RUN_TEMPLATE" , i , iarg ));
-            
+
             free( key );
             util_safe_free( value );
           }
         }
       }
 
-      
+
       {
 	const char * obs_config_file;
 	if (config_has_set_item(config , "OBS_CONFIG"))
 	  obs_config_file = config_iget(config  , "OBS_CONFIG" , 0,0);
 	else
 	  obs_config_file = NULL;
-	
+
 	enkf_main->obs = enkf_obs_fscanf_alloc(obs_config_file , model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config);
       }
 
       enkf_main_update_obs_keys(enkf_main);
-      
+
 
       enkf_main_remount_fs( enkf_main );
       /*****************************************************************/
@@ -1826,16 +1901,16 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
       /*****************************************************************/
-      /* 
+      /*
          Installing the local_config object. Observe that the
          ALL_ACTIVE local_config configuration is ALWAYS loaded. But
          if you have created a personal local config that will be
          loaded on top.
       */
-      
+
       {
         enkf_main->local_config  = local_config_alloc( /*enkf_main->ensemble_config , enkf_main->enkf_obs , */ model_config_get_last_history_restart( enkf_main->model_config ));
-        
+
         /* First installing the default ALL_ACTIVE configuration. */
         {
           char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
@@ -1844,7 +1919,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
           unlink( all_active_config_file );
           free(all_active_config_file);
         }
-        
+
         /* Install custom local_config - if present.*/
         {
           int i;
@@ -1862,11 +1937,11 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
   enkf_main->misfit_table = NULL;
   return enkf_main;
 }
-    
+
 
 /**
    Sets the misfit_table of the enkf_main object. If a misfit table is
-   already installed the currently installed misfit table is freed first. 
+   already installed the currently installed misfit table is freed first.
 
    The enkf_main object takes ownership of the input misfit table,
    i.e. the calling scope should not free the table.
@@ -1893,7 +1968,7 @@ misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main
 void enkf_main_del_node(enkf_main_type * enkf_main , const char * key) {
   const int ens_size = ensemble_config_get_size(enkf_main->ensemble_config);
   int iens;
-  for (iens = 0; iens < ens_size; iens++) 
+  for (iens = 0; iens < ens_size; iens++)
     enkf_state_del_node(enkf_main->ensemble[iens] , key);
   ensemble_config_del_node(enkf_main->ensemble_config , key);
 }
@@ -1925,10 +2000,10 @@ enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
      objects where we can explicitly say that, altough we do not want
      to internalize the full state, we want to internalize e.g. the
      pressure field.
- 
+
    * All decisions on internalization are based on a per report step
      basis.
-   
+
    The user-space API for manipulating this is (extremely)
    limited. What is implemented here is the following:
 
@@ -1948,9 +2023,9 @@ enkf_state_type ** enkf_main_get_ensemble( enkf_main_type * enkf_main) {
    Observe that this cascade can result in some nodes, i.e. a rate we
    are observing, to be marked for internalization several times -
    that is no problem.
-    
+
    -----
-   
+
    For performance reason model_config contains two bool vectors
    __load_state and __load_result; if they are true the state and
    summary are loaded from disk, otherwise no loading is
@@ -1969,10 +2044,10 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   /* Clearing old internalize flags. */
   model_config_init_internalization( enkf_main->model_config );
   ensemble_config_init_internalization( enkf_main->ensemble_config );
-  
+
   /* Internalizing the initial state. */
   model_config_set_internalize_state( enkf_main->model_config , 0);
-  
+
   /* We internalize all the endpoints in the enkf_sched. */
   {
     int inode;
@@ -1988,9 +2063,9 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
   /* Make sure we internalize at all observation times.*/
   {
     hash_type      * map  = enkf_obs_alloc_data_map(enkf_main->obs);
-    hash_iter_type * iter = hash_iter_alloc(map); 
+    hash_iter_type * iter = hash_iter_alloc(map);
     const char * obs_key  = hash_iter_get_next_key(iter);
-    
+
     while (obs_key != NULL) {
       obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_main->obs , obs_key );
       enkf_config_node_type * data_node = obs_vector_get_config_node( obs_vector );
@@ -2001,7 +2076,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 	  enkf_config_node_set_internalize( data_node , active_step );
 	  {
 	    enkf_var_type var_type = enkf_config_node_get_var_type( data_node );
-	    if (var_type == DYNAMIC_STATE) 
+	    if (var_type == DYNAMIC_STATE)
 	      model_config_set_load_state( enkf_main->model_config , active_step);
 	  }
 	}
@@ -2012,7 +2087,7 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
     hash_free(map);
   }
 }
-  
+
 
 
 
@@ -2026,11 +2101,11 @@ void enkf_main_init_internalization( enkf_main_type * enkf_main , run_mode_type 
 
      2. The content of the file is the current executable and the uid
         of the current user, separated with a space.
-        
+
      3. The argument to the function is argv[0] from the main
         function.
 
-        
+
    On normal exit the file is removed with the enkf_main_delete_pid()
    function.
 */
@@ -2041,20 +2116,20 @@ void enkf_main_store_pid(const char * argv0) {
   char * current_executable;
   if (util_is_abs_path( argv0 ))
     current_executable = util_alloc_string_copy( argv0 );
-  else 
+  else
     current_executable = util_alloc_PATH_executable( argv0 );
 
   if (util_make_path2( DEFAULT_VAR_DIR , var_dir_mode )) {
     char * pidfile = util_alloc_sprintf("%s/%d" , DEFAULT_VAR_DIR , getpid());
     FILE * stream  = util_fopen( pidfile , "w");
-    
+
     fprintf(stream , "%s %d\n", current_executable , getuid());
     fclose( stream );
     util_chmod_if_owner( pidfile , S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH + S_IWOTH); /* chmod a+rw */
     free( pidfile );
   } else
     fprintf(stderr,"** Failed to make directory:%s \n",DEFAULT_VAR_DIR);
-  
+
   util_safe_free( current_executable );
 }
 
@@ -2063,7 +2138,7 @@ void enkf_main_store_pid(const char * argv0) {
 /**
    This function is called when the ert application is exiting, it
    will just delete the pid file.
-   
+
    If the ert application exits through a crash the pid file will be
    left hanging around. In that case it will be deleted the
    next time the enkf_main_list_users() function is run.
@@ -2091,35 +2166,35 @@ void  enkf_main_list_users(  set_type * users , const char * executable ) {
           char * full_path = util_alloc_filename( DEFAULT_VAR_DIR , dp->d_name , NULL );
           bool add_user    = false;
           int  uid;
-          
+
           {
             FILE * stream    = util_fopen( full_path , "r");
             char this_executable[512];
 
             if (fscanf( stream , "%s %d" , this_executable , &uid) == 2) {
               if (executable != NULL) {
-                if (util_string_equal( this_executable , executable )) 
+                if (util_string_equal( this_executable , executable ))
                   add_user   = true;
               } else
                 add_user = true;
             }
             fclose( stream );
           }
-          
-          
+
+
           /* Remove the pid files of dead processes. */
           if (!util_proc_alive( pid )) {
             unlink( full_path );
             add_user = false;
           }
-          
-          
+
+
           if (add_user) {
             struct passwd *pwd;
             pwd = getpwuid( uid );
             if (pwd != NULL)
               set_add_key( users , pwd->pw_name );
-          } 
+          }
 
 
           free( full_path );
@@ -2127,5 +2202,5 @@ void  enkf_main_list_users(  set_type * users , const char * executable ) {
       }
     } while (dp != NULL );
     closedir( dir );
-  } 
+  }
 }
