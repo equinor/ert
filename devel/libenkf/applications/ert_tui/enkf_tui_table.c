@@ -38,6 +38,7 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
   char ** user_keys;
   char ** index_keys;
   double ** data;
+  bool     * active;  
   enkf_config_node_type ** config_nodes;
   enkf_node_type        ** nodes;
 
@@ -89,12 +90,20 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     free( filename );
   }
 
+  active       = util_malloc( num_keys * sizeof * active       , __func__);
   nodes        = util_malloc( num_keys * sizeof * nodes        , __func__);
   config_nodes = util_malloc( num_keys * sizeof * config_nodes , __func__);
   index_keys   = util_malloc( num_keys * sizeof * index_keys   , __func__);
   for (ikey  = 0; ikey < num_keys; ikey++) {
     config_nodes[ikey] = (enkf_config_node_type *) ensemble_config_user_get_node( ensemble_config , user_keys[ikey] , &index_keys[ikey]);
-    nodes[ikey]        = enkf_node_alloc( config_nodes[ikey] );
+    if (config_nodes[ikey] != NULL) {
+      nodes[ikey]  = enkf_node_alloc( config_nodes[ikey] );
+      active[ikey] = true;
+    } else {
+      fprintf(stderr,"** Warning: could not lookup node: %s \n",user_keys[ikey]);
+      nodes[ikey]  = NULL;
+      active[ikey] = false;
+    }
   }
   
   if (ens_plot) {
@@ -131,15 +140,17 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
 	bool valid;
 	
 	for (ikey = 0; ikey < num_keys; ikey++) {
-	  if (enkf_fs_has_node(fs , config_nodes[ikey] , step , iens , state)) {
-	    enkf_fs_fread_node(fs , nodes[ikey] , step , iens , state);
-	    line[ikey] = enkf_node_user_get( nodes[ikey] , index_keys[ikey] , &valid);
-	    if (valid) 
-	      line_count++;
-	    else
-	      line[ikey] = -1;
-	  } 
-	}
+          if (active[ikey]) {
+            if (enkf_fs_has_node(fs , config_nodes[ikey] , step , iens , state)) {
+              enkf_fs_fread_node(fs , nodes[ikey] , step , iens , state);
+              line[ikey] = enkf_node_user_get( nodes[ikey] , index_keys[ikey] , &valid);
+              if (valid) 
+                line_count++;
+              else
+                line[ikey] = -1;
+            } 
+          }
+        }
 	
 	if (line_count > 0) {
 	  for (ikey=0; ikey < num_keys; ikey++) 
@@ -154,26 +165,29 @@ static void enkf_tui_table__(enkf_main_type * enkf_main , bool gen_kw_table , bo
     
     if (stream != NULL) {
       if (ens_plot) 
-        enkf_util_fprintf_data( index , (const double **) data , "Realization"   , (const char **) user_keys , active_length , num_keys , true , stream);
+        enkf_util_fprintf_data( index , (const double **) data , "Realization"   , (const char **) user_keys , active_length , num_keys , active , true , stream);
       else
-        enkf_util_fprintf_data( index , (const double **) data , "Report-step" , (const char **) user_keys , active_length , num_keys , false , stream);
+        enkf_util_fprintf_data( index , (const double **) data , "Report-step" , (const char **) user_keys , active_length , num_keys , active , false , stream);
       fclose(stream);
     }
 
     printf("\n\n"); 
     if (ens_plot) 
-      enkf_util_fprintf_data( index , (const double **) data , "Realization"   , (const char **) user_keys , active_length , num_keys , true , stdout);
+      enkf_util_fprintf_data( index , (const double **) data , "Realization"   , (const char **) user_keys , active_length , num_keys , active , true , stdout);
     else
-      enkf_util_fprintf_data( index , (const double **) data , "Report-step" , (const char **) user_keys , active_length , num_keys , false , stdout);
+      enkf_util_fprintf_data( index , (const double **) data , "Report-step" , (const char **) user_keys , active_length , num_keys , active , false , stdout);
   }
 
   for (ikey = 0; ikey < num_keys; ikey++) {
-    enkf_node_free( nodes[ikey] );
+    if (active[ikey])
+      enkf_node_free( nodes[ikey] );
+
     free(index_keys[ikey]);
     free(user_keys[ikey]);
     free(data[ikey]);
   }
   free( user_keys );
+  free( active );
   free( index_keys);
   free( data );
   free( nodes );

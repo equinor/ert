@@ -399,10 +399,11 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
   const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
   const int * permutations            = ranking->sort_permutation;
   {
-    const char * key_fmt       = "  %12s";
-    //const char * dash_line     = "--------------";
+    // All this whitsepace is finely tuned and highly significant .... 
+    const char * key_fmt       = " %13s ";                                
     const char * value_fmt     = " %13.3f ";
-    const char * start_fmt     = " %3d       %3d           %10.3f     ";  /* <- This is significant whitespace ... */
+    const char * start_fmt     = " %3d       %3d           %10.3f     ";  
+
     hash_type * obs_hash       = vector_iget( ranking->ensemble , 0);
     stringlist_type * obs_keys = hash_alloc_stringlist( obs_hash );
     int num_obs                = stringlist_get_size( obs_keys );

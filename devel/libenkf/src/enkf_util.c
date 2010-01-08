@@ -182,7 +182,8 @@ char * enkf_util_scanf_alloc_filename(const char * prompt , int options) {
   If summarize is true, the mean and standard deviation of each column will be printed.
 */
 #define PRINT_LINE(n,c,stream) { int _i; for (_i = 0; _i < (n); _i++) fputc(c , stream); fprintf(stream,"\n"); }
-void enkf_util_fprintf_data(const int * index_column , const double ** data, const char * index_name , const char ** column_names, int num_rows, int num_columns, bool summarize, FILE * stream) {
+void enkf_util_fprintf_data(const int * index_column , const double ** data, const char * index_name , const char ** column_names, int num_rows, int num_columns, const bool * active , 
+                            bool summarize, FILE * stream) {
   const int float_width     =  9;
   const int float_precision =  4;
 
@@ -203,24 +204,29 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
   width[0] = strlen(index_name) + 1;
   total_width = width[0];
   for (int column_nr = 0; column_nr < num_columns; column_nr++) {
-    if(column_names[column_nr] != NULL)
-    width[column_nr + 1]  = util_int_max(strlen(column_names[column_nr]), 2 * float_width + 5) + 1;  /* Must accomodate A +/- B */
-    width[column_nr + 1] += ( 1 - (width[column_nr + 1] & 1)); /* Ensure odd length */
-    total_width += width[column_nr + 1] + 1;
+    if (active[column_nr]) {
+      if(column_names[column_nr] != NULL)
+        width[column_nr + 1]  = util_int_max(strlen(column_names[column_nr]), 2 * float_width + 5) + 1;  /* Must accomodate A +/- B */
+      width[column_nr + 1] += ( 1 - (width[column_nr + 1] & 1)); /* Ensure odd length */
+      total_width += width[column_nr + 1] + 1;
+    }
   }
 
   /* Calculate the mean and std dev of each column. */
   for(int column_nr = 0; column_nr < num_columns; column_nr++) {
-    mean  [column_nr] = util_double_vector_mean(  num_rows, data[column_nr]); 
-    stddev[column_nr] = util_double_vector_stddev(num_rows, data[column_nr]); 
+    if (active[column_nr]) {
+      mean  [column_nr] = util_double_vector_mean(  num_rows, data[column_nr]); 
+      stddev[column_nr] = util_double_vector_stddev(num_rows, data[column_nr]); 
+    }
   }
 
   {
-
     util_fprintf_string(index_name , width[0] - 1 , true , stream); fprintf(stream , "|");
     for (int column_nr = 0; column_nr < num_columns; column_nr++) {
-      util_fprintf_string(column_names[column_nr] , width[column_nr + 1] , center , stream);
-      fprintf(stream , "|");
+      if (active[column_nr]) {
+        util_fprintf_string(column_names[column_nr] , width[column_nr + 1] , center , stream);
+        fprintf(stream , "|");
+      }
     }
     fprintf(stream , "\n");
     PRINT_LINE(total_width , '=' , stream);
@@ -232,11 +238,13 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
       fprintf(stream , "|");
       {
         for (int column_nr = 0; column_nr < num_columns; column_nr++) {
-          int w = (width[column_nr + 1] - 5) / 2;
-          util_fprintf_double(mean[column_nr] , w , float_precision , 'g' , stream);
-          fprintf(stream , " +/- ");
-          util_fprintf_double(stddev[column_nr] , w , float_precision , 'g' , stream);
-          fprintf(stream , "|");
+          if (active[column_nr]) {
+            int w = (width[column_nr + 1] - 5) / 2;
+            util_fprintf_double(mean[column_nr] , w , float_precision , 'g' , stream);
+            fprintf(stream , " +/- ");
+            util_fprintf_double(stddev[column_nr] , w , float_precision , 'g' , stream);
+            fprintf(stream , "|");
+          }
         }
         fprintf(stream , "\n");
       }
@@ -249,8 +257,10 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
       fprintf(stream , "|");
       
       for (int column_nr = 0; column_nr < num_columns; column_nr++) {
-        util_fprintf_double(data[column_nr][row_nr] , width[column_nr + 1] , float_precision , 'g' , stream);
-        fprintf(stream , "|");
+        if (active[column_nr]) {
+          util_fprintf_double(data[column_nr][row_nr] , width[column_nr + 1] , float_precision , 'g' , stream);
+          fprintf(stream , "|");
+        }
       }
       fprintf(stream , "\n");
     }

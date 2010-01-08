@@ -85,7 +85,7 @@ const prefix ## _config_type *config = arg->config; 			       \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != delta->config) {                                                 \
-    fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
+    fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
 for (i=0; i < data_size; i++)                            			       \
@@ -105,7 +105,7 @@ const prefix ## _config_type *config = arg->config; 			       \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != delta->config) {                                                 \
-    fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
+    fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
 for (i=0; i < data_size; i++)                            			       \
@@ -126,7 +126,7 @@ const prefix ## _config_type *config = arg->config; 			       \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != diff->config) {                                                  \
-    fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
+    fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
 for (i=0; i < data_size; i++)                            		       \
@@ -146,7 +146,7 @@ const prefix ## _config_type *config = arg->config; 			       \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != factor->config) {                                                 \
-    fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
+    fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
 for (i=0; i < data_size; i++)                            			       \
@@ -166,7 +166,7 @@ const prefix ## _config_type *config = arg->config; 			       \
 const int data_size = prefix ## _config_get_data_size(arg->config);            \
 int i;                                              			       \
 if (config != delta->config) {                                                 \
-    fprintf(stderr,"%s:two multz object have different config objects - aborting \n",__func__);\
+    fprintf(stderr,"%s:two object have different config objects - aborting \n",__func__);\
     abort();                                                                   \
 }                                                                              \
 for (i=0; i < data_size; i++)                            		       \
@@ -309,7 +309,7 @@ void   	enkf_util_fwrite_target_type(FILE * , enkf_impl_type);
 void    enkf_util_assert_buffer_type(buffer_type * buffer, enkf_impl_type target_type);
 
 char  * enkf_util_scanf_alloc_filename(const char * , int );
-void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , bool , FILE * stream);
+void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , const bool * , bool , FILE * stream);
 
 char * enkf_util_alloc_tagged_string(const char * );
 
