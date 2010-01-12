@@ -531,6 +531,9 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
 }
 
 
+const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
+  return ext_job->argv;
+}
 
 
 #undef ASSERT_TOKENS
