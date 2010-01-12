@@ -4,8 +4,8 @@
 #include <enkf_main.h>
 #include <enkf_state.h>
 #include <enkf_tui_misc.h>
-
-
+#include <ext_joblist.h>
+#include <ext_job.h>
 
 
 static void enkf_tui_misc_printf_subst_list(void * arg) {
@@ -21,10 +21,34 @@ static void enkf_tui_misc_printf_subst_list(void * arg) {
 }
 
 
+static void enkf_tui_misc_list_jobs(void * arg) {
+  enkf_main_type * enkf_main              = enkf_main_safe_cast( arg );
+  const ext_joblist_type * installed_jobs = enkf_main_get_installed_jobs( enkf_main );
+  stringlist_type * job_names             = ext_joblist_alloc_list( installed_jobs );
+  int job_nr;
+  stringlist_sort( job_names );
+  printf("================================================================================\n");
+  printf("%-30s : Arguments\n" , "Job name");
+  printf("--------------------------------------------------------------------------------\n");
+  for (job_nr = 0; job_nr < stringlist_get_size( job_names ); job_nr++) {
+    const ext_job_type * job = ext_joblist_get_job( installed_jobs , stringlist_iget( job_names , job_nr ));
+    const stringlist_type * arglist = ext_job_get_arglist( job );
+    printf("%-30s : " , stringlist_iget( job_names , job_nr ));
+    if (arglist != NULL)
+      stringlist_fprintf( arglist , " " , stdout );
+    printf("\n");
+  }
+  printf("================================================================================\n");
+}
+
+
+
+
 void enkf_tui_misc_menu( void * arg) {
   enkf_main_type  * enkf_main  = enkf_main_safe_cast( arg );
   menu_type       * menu       = menu_alloc( "Misceallanous stuff" , "Back" , "bB");
-  menu_add_item(menu , "List all \'magic\' <...> strings" , "lL" , enkf_tui_misc_printf_subst_list , enkf_main , NULL); 
+  menu_add_item(menu , "List all \'magic\' <...> strings" , "lL"    , enkf_tui_misc_printf_subst_list , enkf_main , NULL); 
+  menu_add_item(menu , "List all available forward model jobs","jJ" , enkf_tui_misc_list_jobs , enkf_main , NULL );
   menu_run(menu);
   menu_free(menu);
 }

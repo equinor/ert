@@ -82,10 +82,10 @@ void         enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_
 void                enkf_main_set_misfit_table( enkf_main_type * enkf_main , misfit_table_type * misfit);
 misfit_table_type * enkf_main_get_misfit_table( const enkf_main_type * enkf_main );
 
-void                enkf_main_store_pid(const char * argv0);
-void                enkf_main_delete_pid( );
-void                enkf_main_list_users(  set_type * users , const char * executable );
-
+void                     enkf_main_store_pid(const char * argv0);
+void                     enkf_main_delete_pid( );
+void                     enkf_main_list_users(  set_type * users , const char * executable );
+const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 SAFE_CAST_HEADER(enkf_main)
 
 #ifdef __cplusplus

@@ -34,9 +34,6 @@
 
 /* The number of times to resubmit - default value for config item: MAX_SUBMIT */
 #define DEFAULT_MAX_SUBMIT "2"
-
-
-#define DEFAULT_RESAMPLE_WHEN_FAIL   false
 #define DEFAULT_MAX_INTERNAL_SUBMIT  1        /** Attached to keyword : MAX_RETRY */
 
 

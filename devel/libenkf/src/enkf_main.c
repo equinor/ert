@@ -926,12 +926,12 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 static void enkf_main_run_step(enkf_main_type * enkf_main      ,
                                run_mode_type    run_mode       ,
                                const bool * iactive            ,
-                               int load_start                  ,  /* For internalizing results. */
+                               int load_start                  ,      /* For internalizing results. */
                                int init_step_parameter         ,
                                state_enum init_state_parameter ,
                                state_enum init_state_dynamic   ,
                                int step1                       ,
-                               int step2                       ,  /* Discarded for predictions */
+                               int step2                       ,      /* Discarded for predictions */
                                bool enkf_update                ,
                                forward_model_type * forward_model) {  /* The forward model will be != NULL ONLY if it is different from the default forward model. */
 
@@ -1060,7 +1060,6 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 
   model_config_set_enkf_sched( enkf_main->model_config , joblist , run_mode , site_config_get_statoil_mode( enkf_main->site_config ));
   enkf_main_init_internalization(enkf_main , run_mode);
-
 }
 
 
@@ -1145,14 +1144,12 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
       /* It is an experiment */
       const enkf_sched_type * enkf_sched = model_config_get_enkf_sched(enkf_main->model_config);
       const int last_report              = enkf_sched_get_last_report(enkf_sched);
-      if (run_mode == ENSEMBLE_EXPERIMENT || run_mode == ENSEMBLE_PREDICTION) {
-	/* No possibility to use funky forward model */
-        int load_start = start_report;
-        state_enum init_state_parameter = start_state;
-        state_enum init_state_dynamic   = start_state;
-	enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
-      }
-    }
+      /* No possibility to use funky forward model */
+      int load_start = start_report;
+      state_enum init_state_parameter = start_state;
+      state_enum init_state_dynamic   = start_state;
+      enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
+    } 
   }
 }
 
@@ -2203,4 +2200,8 @@ void  enkf_main_list_users(  set_type * users , const char * executable ) {
     } while (dp != NULL );
     closedir( dir );
   }
+}
+
+const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main ) {
+  return site_config_get_installed_jobs( enkf_main->site_config );
 }

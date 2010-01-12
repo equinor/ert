@@ -572,7 +572,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         stringlist_type * data_files = stringlist_alloc_new();
         char * header_file           = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_SUMMARY_HEADER_FILE , fmt_file , -1);
         char * unified_file          = ecl_util_alloc_exfilename(run_info->run_path , eclbase , ECL_UNIFIED_SUMMARY_FILE , fmt_file ,  -1);
-        
+      
         /* Should we load from a unified summary file, or from several non-unified files? */
         if (unified_file != NULL) 
           /* Use unified file: */
@@ -595,16 +595,14 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
             if (run_info->run_mode != ENSEMBLE_PREDICTION && report_step > run_info->step2)
               break;
           }
-          
-          if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
-            summary = ecl_sum_fread_alloc(header_file , data_files , ":");
-          
-          stringlist_free( data_files );
-          util_safe_free( header_file );
-        }
+        }  
 
+        if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
+          summary = ecl_sum_fread_alloc(header_file , data_files , ":");
+          
+        stringlist_free( data_files );
+        util_safe_free( header_file );
 
-        
         /** OK - now we have actually loaded the ecl_sum instance, or ecl_sum == NULL. */
         if (summary != NULL) {
           /* The actual loading internalizing - from ecl_sum -> enkf_node. */

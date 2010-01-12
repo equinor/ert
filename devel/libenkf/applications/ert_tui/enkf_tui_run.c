@@ -94,6 +94,33 @@ void enkf_tui_run_exp__(void * enkf_main) {
 
 
 
+void enkf_tui_run_create_runpath__(void * __enkf_main) {
+  enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
+  const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
+  const int ens_size           = ensemble_config_get_size(ensemble_config);
+  int prompt_len = 45;
+  bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
+
+  state_enum init_state    = ANALYZED; 
+  int start_report   	   = 0;
+  int init_step_parameters = 0;
+  {
+    char * prompt = util_alloc_sprintf("Which realizations to create[ensemble size:%d] : " , ens_size);
+    char * select_string;
+    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    select_string = util_alloc_stdin_line();
+    util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+    free( prompt );
+    free( select_string );
+  }
+
+  enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);
+  free(iactive);
+}
+
+
+
+
 
 void enkf_main_interactive_set_runpath__(void *arg) {
   
@@ -161,6 +188,7 @@ void enkf_tui_run_full__(void * __enkf_main) {
   } else
     fprintf(stderr,"** Sorry: you must set a schedule prediction file with configuration option SCHEDULE_PREDICTION_FILE to use this option.\n");
 }
+
 
 
 void enkf_tui_run_manual_load__( void * arg ) {
@@ -234,6 +262,7 @@ void enkf_tui_run_menu(void * arg) {
   menu_add_item(menu , "Start EnKF run from beginning"          , "sS" , enkf_tui_run_start__       , enkf_main , NULL);
   menu_add_item(menu , "Restart EnKF run from arbitrary state"  , "rR" , enkf_tui_run_restart__     , enkf_main , NULL);
   menu_add_separator(menu);
+  menu_add_item(menu , "Create runpath directories - NO simulation" , "cC" , enkf_tui_run_create_runpath__ , enkf_main , NULL );
   menu_add_item(menu , "Load results manually"                  , "lL"  , enkf_tui_run_manual_load__ , enkf_main , NULL);
   menu_add_separator(menu);
   menu_add_item(menu , "Analyze one step manually" , "aA" , enkf_tui_run_analyze__ , enkf_main , NULL);

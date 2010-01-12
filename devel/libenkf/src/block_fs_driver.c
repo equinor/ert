@@ -454,8 +454,8 @@ void block_fs_driver_fwrite_mount_info(FILE * stream , fs_driver_type driver_typ
 */
 
 block_fs_driver_type * block_fs_driver_fread_alloc(const char * root_path , FILE * stream) {
-  fs_driver_type driver_type = util_fread_int( stream );
-  int num_drivers            = util_fread_int( stream );
+  fs_driver_type driver_type    = util_fread_int( stream );
+  int num_drivers               = util_fread_int( stream );
   block_fs_driver_type * driver = block_fs_driver_alloc(root_path , driver_type , num_drivers );
   return driver;
 }
