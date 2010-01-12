@@ -70,7 +70,7 @@ void config_init(config_type * config ) {
 
 
   item = config_add_item( config , "WELL_RATE" , false , true );  /* Group name as part of parsing */
-  config_item_set_argc_minmax(item , 4 , 4 , (const 
+  config_item_set_argc_minmax(item , 4 , 4 , (const config_item_types[4])  {  CONFIG_STRING,         /* GROUP NAME */   
                                                                               CONFIG_STRING ,        /* Well name */
                                                                               CONFIG_FLOAT  ,        /* Corr_length (days) */
                                                                               CONFIG_EXISTING_FILE});/* File with mean , std shift */

@@ -609,7 +609,6 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
           const shared_info_type   * shared_info = enkf_state->shared_info;
           const int iens                         = member_config_get_iens( my_config );
           const int step2                        = ecl_sum_get_last_report_step( summary );
-          
 
           for (report_step = load_start; report_step <= step2; report_step++) {
             hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
