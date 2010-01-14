@@ -609,7 +609,7 @@ void enkf_tui_plot_all_summary(void * arg) {
       step1 = 0;
     step2 = enkf_tui_util_scanf_int_with_default( "Stop plotting at report step [default: everything]" , PROMPT_LEN , &prediction_mode);
   }
-  enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d)" , ensemble_config_get_size(ensemble_config) , PROMPT_LEN , &iens1 , &iens2);
+  enkf_tui_util_scanf_iens_range("Realizations members to plot(0 - %d) [default: all]" , ensemble_config_get_size(ensemble_config) , PROMPT_LEN , &iens1 , &iens2);
   
   {
     stringlist_type * summary_keys = ensemble_config_alloc_keylist_from_impl_type(ensemble_config , SUMMARY);

@@ -140,7 +140,11 @@ bool * enkf_tui_util_scanf_alloc_iens_active(int ens_size, int prompt_len , int 
 
 /**
    Presents the reader with a prompt, and reads a string containing
-   two integers separated by a character(s) in the set: " ,-:".
+   two integers separated by a character(s) in the set: " ,-:". If the
+   user enters a blank string that is interpreted as "all
+   realizations", and the return variabels are set to:
+
+      iens1 = 0     iens2 = ens_size - 1
 
    Will not return before the user has actually presented a valid
    string.
@@ -158,13 +162,18 @@ void enkf_tui_util_scanf_iens_range(const char * prompt_fmt , int ens_size , int
     const char * current_ptr = input;
     OK = true;
 
-    current_ptr = util_parse_int(current_ptr , iens1 , &OK);
-    current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
-    current_ptr = util_parse_int(current_ptr , iens2 , &OK);
-    
-    if (!OK) 
-      printf("Failed to parse two integers from: \"%s\". Example: \"0 - 19\" to get the 20 first members.\n",input);
-    free(input);
+    if (input != NULL) {
+      current_ptr = util_parse_int(current_ptr , iens1 , &OK);
+      current_ptr = util_skip_sep(current_ptr , " ,-:" , &OK);
+      current_ptr = util_parse_int(current_ptr , iens2 , &OK);
+      
+      if (!OK) 
+        printf("Failed to parse two integers from: \"%s\". Example: \"0 - 19\" to get the 20 first members.\n",input);
+      free(input);
+    } else {
+      *iens1 = 0;
+      *iens2 = ens_size - 1;
+    }
   }
   free(prompt);
 }
