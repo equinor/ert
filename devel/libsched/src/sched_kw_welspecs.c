@@ -21,7 +21,7 @@
   Note that this includes FrontSim and ECLIPSE 300 KWs.
 */
 #define WELSPECS_NUM_KW 16
-#define ECL_DEFAULT_KW "*"
+#define ECL_DEFAULT_KW  "*"
 
 
 #define DEFAULT_INFLOW_EQUATION    IE_STD
@@ -36,9 +36,8 @@ struct sched_kw_welspecs_struct
 };
 
 /*
-  See ECLIPSE Reference Manual, section WELSPECS
-  for an explantion of the members in the 
-  welspec_type struct.
+  See ECLIPSE Reference Manual, section WELSPECS for an explantion of
+  the members in the welspec_type struct.
 */
 
 typedef enum {PH_OIL , PH_WAT , PH_GAS , PH_LIQ} phase_type;

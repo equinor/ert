@@ -27,9 +27,9 @@ typedef struct {
   bool                       def[WCONINJE_NUM_KW];            /* Has the item been defaulted? */
 
   char                      * name;               /* This does NOT support well_name_root or well list notation. */
-  sched_phase_type            injector_type;      /* Injecting GAS/WATER/OIL */
-  wconinje_status_enum        status;             /* Well is open/shut/??? */
-  wconinje_control_enum       control;            /* How is the well controlled? */
+  sched_phase_enum            injector_type;      /* Injecting GAS/WATER/OIL */
+  well_status_enum            status;             /* Well is open/shut/??? */
+  well_cm_enum                cmode;              /* How is the well controlled? */
   double                      surface_flow;       
   double                      reservoir_flow;
   double                      BHP_target;
@@ -46,90 +46,9 @@ typedef struct {
 
 
 
-static char * get_status_string(wconinje_status_enum status) 
-{
-  switch(status) {
-  case(OPEN):
-    return STATUS_OPEN_STRING; 
-  case(STOP):
-    return STATUS_STOP_STRING;
-  case(SHUT):
-    return STATUS_SHUT_STRING;
-  case(AUTO):
-    return STATUS_AUTO_STRING;
-  default:
-    return ECL_DEFAULT_KW;
-  }
-}
 
 
 
-
-static char * get_control_string(wconinje_control_enum cmode)
-{
-  switch(cmode) {
-  case(RATE):
-    return CONTROL_RATE_STRING;
-  case(RESV):
-    return CONTROL_RESV_STRING;
-  case(BHP):
-    return CONTROL_BHP_STRING;
-  case(THP):
-    return CONTROL_THP_STRING;
-  case(GRUP):
-    return CONTROL_GRUP_STRING;
-  default:
-    return ECL_DEFAULT_KW;
-  }
-}
-
-
-
-static wconinje_status_enum get_status_from_string(const char * st_string)
-{
-  if (strcmp( st_string , SCHED_KW_DEFAULT_ITEM ) == 0)
-    return DEFAULT_INJECTOR_STATE;
-  else if( strcmp(st_string, STATUS_OPEN_STRING) == 0)
-    return OPEN; 
-  else if( strcmp(st_string, STATUS_STOP_STRING) == 0)
-    return STOP; 
-  else if( strcmp(st_string, STATUS_SHUT_STRING) == 0)
-    return SHUT; 
-  else if( strcmp(st_string, STATUS_AUTO_STRING) == 0)
-    return SHUT; 
-  else
-  {
-    util_abort("%s: Could not recognize %s as a well status.\n", __func__, st_string);
-    return 0;
-  }
-}
-
-
-/**
-   Must use the strncmp(x,x,4) function for comparison, because
-   suddenly files with control mode 'GRUP ' appear; and ECLIPSE
-   appearantly eats that nicely.
-*/
-
-static wconinje_control_enum get_cmode_from_string(const char * cm_string)
-{
-  if(     strncmp(cm_string, CONTROL_RATE_STRING , 4) == 0)
-    return RATE;
-  else if(strncmp(cm_string, CONTROL_RESV_STRING , 4) == 0)
-    return RESV;
-  else if(strncmp(cm_string, CONTROL_BHP_STRING , 4) == 0)
-    return BHP;
-  else if(strncmp(cm_string, CONTROL_THP_STRING, 4) == 0)
-    return THP;
-  else if(strncmp(cm_string, CONTROL_GRUP_STRING , 4) == 0)
-    return GRUP;
-  else
-  {
-    util_abort("%s: Could not recognize \'%s\' as a control mode. Valid values are: [%s, %s, %s, %s, %s] \n", __func__, cm_string, 
-	       CONTROL_RATE_STRING , CONTROL_RESV_STRING , CONTROL_BHP_STRING, CONTROL_THP_STRING, CONTROL_GRUP_STRING);
-    return 0;
-  }
-}
 
 
 
@@ -166,8 +85,7 @@ static wconinje_well_type * wconinje_well_alloc_from_tokens(const stringlist_typ
 
   well->name           = util_alloc_string_copy( stringlist_iget( line_tokens , 0 ));
   well->injector_type  = sched_phase_type_from_string(stringlist_iget(line_tokens , 1));
-  well->status         = get_status_from_string( stringlist_iget( line_tokens , 2 ));
-  well->control        = get_cmode_from_string( stringlist_iget( line_tokens , 3 ));
+  well->cmode          = sched_types_get_cm_from_string( stringlist_iget( line_tokens , 3 ) , false);
   well->surface_flow   = sched_util_atof( stringlist_iget( line_tokens , 4 ));
   well->reservoir_flow = sched_util_atof(stringlist_iget(line_tokens , 5 ));
   well->BHP_target     = sched_util_atof(stringlist_iget(line_tokens , 6 ));
@@ -175,6 +93,9 @@ static wconinje_well_type * wconinje_well_alloc_from_tokens(const stringlist_typ
   well->vfp_table_nr   = sched_util_atoi( stringlist_iget( line_tokens , 8));
   well->vapoil_conc    = sched_util_atof( stringlist_iget( line_tokens , 9 ));
 
+  well->status         = sched_types_get_status_from_string( stringlist_iget( line_tokens , 2 ));
+  if (well->status == DEFAULT)
+    well->status = DEFAULT_INJECTOR_STATE;
   return well;
 }
 
@@ -185,8 +106,8 @@ static void wconinje_well_fprintf(const wconinje_well_type * well, FILE * stream
   fprintf(stream, "  ");
   sched_util_fprintf_qst(well->def[0],  well->name                                   , 8,     stream);
   sched_util_fprintf_qst(well->def[1],  sched_phase_type_string(well->injector_type) , 5,     stream); /* 5 ?? */
-  sched_util_fprintf_qst(well->def[2],  get_status_string(well->status)              , 4,     stream);
-  sched_util_fprintf_qst(well->def[3],  get_control_string(well->control)            , 4,     stream);
+  sched_util_fprintf_qst(well->def[2],  sched_types_get_status_string(well->status)  , 4,     stream);
+  sched_util_fprintf_qst(well->def[3],  sched_types_get_cm_string(well->cmode)       , 4,     stream);
   sched_util_fprintf_dbl(well->def[4],  well->surface_flow                           , 11, 3, stream);
   sched_util_fprintf_dbl(well->def[5],  well->reservoir_flow                         , 11, 3, stream);
   sched_util_fprintf_dbl(well->def[6],  well->BHP_target                             , 11, 3, stream);
@@ -335,7 +256,7 @@ void sched_kw_wconinje_shift_surface_flow( const sched_kw_wconinje_type * kw , c
 }
 
 
-sched_phase_type sched_kw_wconinje_get_phase( const sched_kw_wconinje_type * kw , const char * well_name) {
+sched_phase_enum sched_kw_wconinje_get_phase( const sched_kw_wconinje_type * kw , const char * well_name) {
   wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
   if (well != NULL)
     return well->injector_type;

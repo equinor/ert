@@ -22,7 +22,7 @@ struct well_rate_struct {
   double_vector_type       * std_shift;
   double_vector_type       * rate; 
   bool_vector_type         * well_open;
-  sched_phase_type           phase;
+  sched_phase_enum           phase;
   const time_t_vector_type * time_vector;
 };
   
@@ -98,7 +98,7 @@ void well_rate_ishift( well_rate_type * well_rate ,  int index, double shift) {
 }
 
 
-well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const sched_file_type * sched_file , const char * name , double corr_length , const char * filename, sched_phase_type phase) {
+well_rate_type * well_rate_alloc(const time_t_vector_type * time_vector , const sched_file_type * sched_file , const char * name , double corr_length , const char * filename, sched_phase_enum phase) {
   well_rate_type * well_rate = util_malloc( sizeof * well_rate , __func__);
   UTIL_TYPE_ID_INIT( well_rate , WELL_RATE_ID );
   well_rate->name         = util_alloc_string_copy( name );
@@ -144,7 +144,7 @@ void well_rate_free__( void * arg ) {
 
 
 
-sched_phase_type well_rate_get_phase( const well_rate_type * well_rate ) {
+sched_phase_enum well_rate_get_phase( const well_rate_type * well_rate ) {
   return well_rate->phase;
 }
 

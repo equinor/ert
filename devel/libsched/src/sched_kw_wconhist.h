@@ -9,9 +9,11 @@ extern "C" {
 #include <sched_macros.h>
 #include <hash.h>
 #include <stringlist.h>
-
+#include <sched_types.h>
+  
 typedef struct sched_kw_wconhist_struct sched_kw_wconhist_type;
 
+#define WCONHIST_DEFAULT_STATUS  OPEN
 
 
 sched_kw_wconhist_type * sched_kw_wconhist_fscanf_alloc( FILE *, bool *, const char *);

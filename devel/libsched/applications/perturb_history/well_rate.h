@@ -11,10 +11,10 @@
 typedef struct well_rate_struct well_rate_type;
 well_rate_type     * well_rate_alloc(const time_t_vector_type * time_vector , 
                                      const sched_file_type    * sched_file  , 
-                                     const char * name , double corr_length , const char * filename, sched_phase_type phase);
+                                     const char * name , double corr_length , const char * filename, sched_phase_enum phase);
 void                 well_rate_free__( void * arg );
 double_vector_type * well_rate_get_shift( well_rate_type * well_rate );
-sched_phase_type     well_rate_get_phase( const well_rate_type * well_rate );
+sched_phase_enum     well_rate_get_phase( const well_rate_type * well_rate );
 const char         * well_rate_get_name( const well_rate_type * well_rate );
 void                 well_rate_sample_shift( well_rate_type * well_rate );
 bool                 well_rate_well_open( const well_rate_type * well_rate , int index );

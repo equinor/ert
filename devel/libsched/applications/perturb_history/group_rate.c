@@ -22,7 +22,7 @@ struct group_rate_struct {
   double_vector_type       * shift;
   double_vector_type       * min_shift;
   double_vector_type       * max_shift;
-  sched_phase_type           phase;
+  sched_phase_enum           phase;
   const time_t_vector_type * time_vector;
   vector_type              * well_rates;    
 };
@@ -97,7 +97,7 @@ bool group_rate_is_producer( const group_rate_type * group_rate ) {
   return group_rate->producer;
 }
 
-sched_phase_type group_rate_get_phase( const group_rate_type * group_rate ) {
+sched_phase_enum group_rate_get_phase( const group_rate_type * group_rate ) {
   return group_rate->phase;
 }
 

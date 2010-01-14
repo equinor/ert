@@ -6,6 +6,7 @@
 #include <vector.h>
 #include <hash.h>
 #include <stringlist.h>
+#include <sched_types.h>
 
 /*
   Define the maximum number of keywords in a WCONHIST record.
@@ -15,20 +16,7 @@
 
 #define WCONHIST_NUM_KW       11
 #define SCHED_KW_WCONHIST_ID  771054  /* Very random intgere for checking type-cast. */
-#define DEFAULT_STATUS OPEN
 
-
-typedef enum {OPEN, STOP, SHUT} st_flag_type;
-#define ST_OPEN_STRING "OPEN"
-#define ST_STOP_STRING "STOP"
-#define ST_SHUT_STRING "SHUT"
-
-typedef enum {ORAT, WRAT, GRAT, LRAT, RESV} cm_flag_type;
-#define CM_ORAT_STRING "ORAT"
-#define CM_WRAT_STRING "WRAT"
-#define CM_GRAT_STRING "GRAT"
-#define CM_LRAT_STRING "LRAT"
-#define CM_RESV_STRING "RESV"
 
 
 typedef struct wconhist_well_struct wconhist_well_type;
@@ -41,9 +29,9 @@ struct wconhist_well_struct{
   */
   bool          def[WCONHIST_NUM_KW];
 
-  char        * name;
-  st_flag_type  status;
-  cm_flag_type  cmode;
+  char            * name;
+  well_status_enum  status;
+  well_cm_enum  cmode;
   double        orat;
   double        wrat;
   double        grat;
@@ -65,89 +53,12 @@ struct sched_kw_wconhist_struct{
 
 
 
-static char * get_st_string(st_flag_type status)
-{
-  switch(status)
-  {
-    case(OPEN):
-     return ST_OPEN_STRING; 
-    case(STOP):
-      return ST_STOP_STRING;
-    case(SHUT):
-      return ST_SHUT_STRING;
-    default:
-      return SCHED_KW_DEFAULT_ITEM;
-  }
-}
-
-
-
-static char * get_cm_string(cm_flag_type cmode)
-{
-  switch(cmode)
-  {
-    case(ORAT):
-      return CM_ORAT_STRING;
-    case(WRAT):
-      return CM_WRAT_STRING;
-    case(GRAT):
-      return CM_GRAT_STRING;
-    case(LRAT):
-      return CM_LRAT_STRING;
-    case(RESV):
-      return CM_RESV_STRING;
-    default:
-      return SCHED_KW_DEFAULT_ITEM;
-  }
-}
-
-
-
-static st_flag_type get_st_flag_from_string(const char * st_string)
-{
-  if (strcmp(st_string , SCHED_KW_DEFAULT_ITEM) == 0)
-    return DEFAULT_STATUS;
-  else if( strcmp(st_string, ST_OPEN_STRING) == 0)
-    return OPEN; 
-  else if( strcmp(st_string, ST_STOP_STRING) == 0)
-    return STOP; 
-  else if( strcmp(st_string, ST_SHUT_STRING) == 0)
-    return SHUT; 
-  else
-  {
-    util_abort("%s: Could not recognize %s as a well status.\n", __func__, st_string);
-    return 0;
-  }
-}
-
-
-
-static cm_flag_type get_cm_flag_from_string(const char * cm_string)
-{
-  if(     strcmp(cm_string, CM_ORAT_STRING) == 0)
-    return ORAT;
-  else if(strcmp(cm_string, CM_WRAT_STRING) == 0)
-    return WRAT;
-  else if(strcmp(cm_string, CM_GRAT_STRING) == 0)
-    return GRAT;
-  else if(strcmp(cm_string, CM_LRAT_STRING) == 0)
-    return LRAT;
-  else if(strcmp(cm_string, CM_RESV_STRING) == 0)
-    return RESV;
-  else
-  {
-    util_abort("%s: Could not recognize %s as a control mode.\n", __func__, cm_string);
-    return 0;
-  }
-}
-
-
-
 
 static wconhist_well_type * wconhist_well_alloc_empty()
 {
   wconhist_well_type * well = util_malloc(sizeof * well, __func__);
-  well->name = NULL;
+  well->name   = NULL;
+  well->status = WCONHIST_DEFAULT_STATUS;
   return well;
 }
 
@@ -171,17 +82,17 @@ static void wconhist_well_free__(void * well)
 static void wconhist_well_fprintf(const wconhist_well_type * well, FILE * stream)
 {
   fprintf(stream, "  ");
-  sched_util_fprintf_qst(well->def[0],  well->name                 , 8,     stream);
-  sched_util_fprintf_qst(well->def[1],  get_st_string(well->status), 4,     stream);
-  sched_util_fprintf_qst(well->def[2],  get_cm_string(well->cmode) , 4,     stream);
-  sched_util_fprintf_dbl(well->def[3],  well->orat                 , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[4],  well->wrat                 , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[5],  well->grat                 , 11, 3, stream);
-  sched_util_fprintf_int(well->def[6],  well->vfptable             , 4 ,    stream);
-  sched_util_fprintf_dbl(well->def[7],  well->alift                , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[8],  well->thp                  , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[9] , well->bhp                  , 11, 3, stream);
-  sched_util_fprintf_dbl(well->def[10], well->wgrat                , 11, 3, stream);
+  sched_util_fprintf_qst(well->def[0],  well->name                                  , 8,     stream);
+  sched_util_fprintf_qst(well->def[1],  sched_types_get_status_string(well->status) , 4,     stream);
+  sched_util_fprintf_qst(well->def[2],  sched_types_get_cm_string(well->cmode)      , 4,     stream);
+  sched_util_fprintf_dbl(well->def[3],  well->orat                                  , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[4],  well->wrat                                  , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[5],  well->grat                                  , 11, 3, stream);
+  sched_util_fprintf_int(well->def[6],  well->vfptable                              , 4 ,    stream);
+  sched_util_fprintf_dbl(well->def[7],  well->alift                                 , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[8],  well->thp                                   , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[9] , well->bhp                                   , 11, 3, stream);
+  sched_util_fprintf_dbl(well->def[10], well->wgrat                                 , 11, 3, stream);
   fprintf(stream, "/\n");
 }
 
@@ -195,12 +106,15 @@ static wconhist_well_type * wconhist_well_alloc_from_tokens(const stringlist_typ
   sched_util_init_default( line_tokens , well->def );
   
   well->name  = util_alloc_string_copy(stringlist_iget(line_tokens, 0));
-
+  
   if(!well->def[1])
-    well->status = get_st_flag_from_string(stringlist_iget(line_tokens , 1));
-
+    well->status = sched_types_get_status_from_string(stringlist_iget(line_tokens , 1));
+  if (well->status == DEFAULT)
+    well->status = WCONHIST_DEFAULT_STATUS;
+  
+  
   if(!well->def[2])
-    well->cmode = get_cm_flag_from_string(stringlist_iget(line_tokens , 2));
+    well->cmode = sched_types_get_cm_from_string(stringlist_iget(line_tokens , 2) , true);
 
   well->orat      = sched_util_atof(stringlist_iget(line_tokens , 3)); 
   well->wrat      = sched_util_atof(stringlist_iget(line_tokens , 4)); 

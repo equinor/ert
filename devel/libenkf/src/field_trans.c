@@ -186,6 +186,7 @@ field_trans_table_type * field_trans_table_alloc() {
   field_trans_table_add( table , "LOG"         , "This function will take the NATURAL logarithm of x: y = ln(x)" , logf);
   field_trans_table_add( table , "LN"          , "This function will take the NATURAL logarithm of x: y = ln(x)" , logf);
   field_trans_table_add( table , "LOG10"       , "This function will take the log10 logarithm of x: y = log10(x)" , log10f);
+  field_trans_table_add( table , "EXP"         , "This function will calculate y = exp(x) " , expf);
   table->case_sensitive = false;
   return table;
 }

@@ -4,6 +4,8 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
+
 /**
    Contains numerous typedefs for the types used in the sched_kw keywords. 
 */
@@ -11,31 +13,60 @@ extern "C" {
 
 
 
-typedef enum { OPEN  = 1, 
-               STOP  = 2, 
-               SHUT  = 3, 
-               AUTO  = 4 }      wconinje_status_enum;
-#define STATUS_OPEN_STRING "OPEN"
-#define STATUS_STOP_STRING "STOP"
-#define STATUS_SHUT_STRING "SHUT"
-#define STATUS_AUTO_STRING "AUTO"
+typedef enum { INJECTOR = 1,
+               PRODUCER = 2 } well_state_well_type;
+
+
+
+/**
+   This enum is used for internalizing both the sched_kw_wconhist
+   keyword, and the sched_kw_wconinje keyword. Observe that the 'AUTO'
+   mode is only applicable when used in injector context.
+*/
+  
+
+typedef enum { DEFAULT = 0,
+               OPEN    = 1, 
+               STOP    = 2, 
+               SHUT    = 3, 
+               AUTO    = 4 }   well_status_enum;
 
   
 /**
    There is no default injector type.
 */
-typedef enum {WATER , GAS  , OIL} sched_phase_type;
+typedef enum {WATER = 0 , 
+              GAS   = 1 , 
+              OIL   = 2 } sched_phase_enum;
 
   
 /**
-   There is no default cmode value. 
+   This enum is used to enumerate the different control modes. Observe
+   that the enum is used BOTH by the WCONHIST and the WCONINJE
+   keywords (only the enum value 'RESV' is actually shared between the
+   two keywords.
 */
-typedef enum {RATE  , RESV , BHP , THP , GRUP} wconinje_control_enum;
-#define CONTROL_RATE_STRING  "RATE"
-#define CONTROL_RESV_STRING  "RESV"
-#define CONTROL_BHP_STRING   "BHP"
-#define CONTROL_THP_STRING   "THP"
-#define CONTROL_GRUP_STRING  "GRUP"
+   
+typedef enum {RESV  = 0, /* Injector || Producer */
+              RATE  = 1, /* Injector */
+              BHP   = 2, /* Injector  */
+              THP   = 3, /* Injector  */ 
+              GRUP  = 4, /* Injector  */
+              ORAT  = 5, /* Producer  */ 
+              WRAT  = 6, /* Producrer */ 
+              GRAT  = 7, /* Producer  */
+              LRAT  = 8} /* Producer  */ well_cm_enum;
+  
+
+#define CM_RATE_STRING "RATE"
+#define CM_RESV_STRING "RESV"
+#define CM_BHP_STRING  "BHP"
+#define CM_THP_STRING  "THP"
+#define CM_GRUP_STRING "GRUP"
+#define CM_ORAT_STRING "ORAT"
+#define CM_WRAT_STRING "WRAT"
+#define CM_GRAT_STRING "GRAT"
+#define CM_LRAT_STRING "LRAT"
 
 
 
@@ -63,9 +94,13 @@ sched_kw_type_enum sched_kw_type_from_string(const char * kw_name);
 const char *       sched_kw_type_name(sched_kw_type_enum kw_type);
 
 /*****************************************************************/  
+sched_phase_enum       sched_phase_type_from_string(const char * type_string);
+const char *           sched_phase_type_string(sched_phase_enum type);
+const char           * sched_types_get_status_string(well_status_enum status); 
+well_status_enum       sched_types_get_status_from_string(const char * st_string);
 
-sched_phase_type sched_phase_type_from_string(const char * type_string);
-const char *     sched_phase_type_string(sched_phase_type type);
+well_cm_enum           sched_types_get_cm_from_string(const char * cm_string , bool wconhist);
+const char *           sched_types_get_cm_string( well_cm_enum cm );
 
 #ifdef __cplusplus 
 }

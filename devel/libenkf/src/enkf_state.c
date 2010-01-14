@@ -1503,6 +1503,7 @@ static void enkf_state_complete_forward_model(enkf_state_type * enkf_state , job
      directory. Or alternatively the job has failed completely, and we
      just leave the runpath directory hanging around.
   */
+
     
   /* 
      In case the job fails, we leave the run_path directory around
