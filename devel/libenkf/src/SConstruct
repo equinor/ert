@@ -1,0 +1,1 @@
+SConscript(["SConscript", "../applications/ert_tui/SConstruct"])
