@@ -8,7 +8,6 @@ SConsEnvironment.Chmod = SCons.Action.ActionFactory( os.chmod , lambda dest,mode
 
 
 def InstallPerm(env , dest , files , mode):
-    print "Dest: %s" % dest
     if not os.path.exists( dest ):
         os.makedirs( dest )
     os.chmod( dest , 0755)
@@ -47,7 +46,6 @@ LIBJOB_QUEUE = 5
 LIBSCHED     = 6
 LIBCONFIG    = 7
 LIBCONF      = 8
-EXTERNAL     = 100
 
 
 
@@ -63,17 +61,9 @@ class conf:
         
         
         self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/Config/site-config"
-        if SDP_ROOT:
-            if not os.path.exists(SDP_ROOT):
-                SDP_ROOT = None
-            
-        self.SDP_ROOT             = SDP_ROOT
-
-
-        if SDP_ROOT:
-            self.SDP_BIN              = "%s/bin"     % self.SDP_ROOT
-            self.SDP_INCLUDE          = "%s/include" % self.SDP_ROOT
-            self.SDP_LIB              = "%s/lib"     % self.SDP_ROOT
+        self.SDP_BIN              = "%s/bin"     % self.SDP_ROOT
+        self.SDP_INCLUDE          = "%s/include" % self.SDP_ROOT
+        self.SDP_LIB              = "%s/lib"     % self.SDP_ROOT
         
         self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall -fPIC"
         self.ARFLAGS  = "csr"
@@ -85,7 +75,6 @@ class conf:
         for path in tmp[1:n]:
             self.BUILD_ROOT += "/%s" % path
             
-        self.EXTERNAL_HOME      = "%s/ext" % self.BUILD_ROOT
         self.LIB = {}
         self.LIB[LIBUTIL]       = {"home": "%s/libutil"      % self.BUILD_ROOT , "name": "util"}
         self.LIB[LIBECL]        = {"home": "%s/libecl"       % self.BUILD_ROOT , "name": "ecl"}
@@ -96,8 +85,7 @@ class conf:
         self.LIB[LIBJOB_QUEUE]  = {"home": "%s/libjob_queue" % self.BUILD_ROOT , "name": "job_queue"}
         self.LIB[LIBSCHED]      = {"home": "%s/libsched"     % self.BUILD_ROOT , "name": "sched"}
         self.LIB[LIBCONFIG]     = {"home": "%s/libconfig"    % self.BUILD_ROOT , "name": "config"}
-        self.LIB[EXTERNAL]      = {"home": self.EXTERNAL_HOME}
-        self.RPATH              = "%s/lib" % "/project/res/x86_64_RH_4"
+        self.RPATH              = self.SDP_LIB
 
         
 
