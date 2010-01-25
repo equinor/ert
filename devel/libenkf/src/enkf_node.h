@@ -116,6 +116,13 @@ void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int 
 void             enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state);
 bool             enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state);
 
+
+/*****************************************************************/
+/* Function callbacks */
+ecl_write_ftype * enkf_node_get_func_pointer( const enkf_node_type * node );
+
+
+
 void   enkf_node_set_inflation( enkf_node_type * inflation , const enkf_node_type * std , const enkf_node_type * min_std);
 void   enkf_node_sqrt(enkf_node_type *enkf_node);
 void   enkf_node_scale(enkf_node_type *   , double );

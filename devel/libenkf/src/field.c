@@ -593,7 +593,7 @@ static void field_output_transform(field_type * field) {
   if ((output_transform != NULL) || (truncation != TRUNCATE_NONE)) {
     field->export_data = util_alloc_copy(field->data , field_config_get_byte_size(field->config) , __func__);
     field->__data = field->data;  /* Storing a pointer to the original data. */
-    field->data = field->export_data;
+    field->data   = field->export_data;
     
     if (output_transform != NULL)
       field_inplace_output_transform(field);

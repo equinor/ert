@@ -833,3 +833,10 @@ void enkf_node_upgrade_file_103( const char * path , const char * file , enkf_im
     free(filename);
   }
 }
+
+/*****************************************************************/
+
+
+ecl_write_ftype * enkf_node_get_func_pointer( const enkf_node_type * node ) {
+  return node->ecl_write;
+}

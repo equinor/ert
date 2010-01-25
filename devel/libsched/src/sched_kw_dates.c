@@ -1,18 +1,22 @@
 #include <stdlib.h>
 #include <string.h>
-#include <time_t_vector.h>
+#include <vector.h>
 #include <time.h>
 #include <util.h>
 #include <sched_util.h>
 #include <sched_kw_dates.h>
 #include <stringlist.h>
 #include <ecl_util.h>
+#include <sched_types.h>
+#include <sched_time.h>
+
+
+#define DATES_FMT          "  %d \'%s\' %4d  /  \n"    // The format string used when writing dates the arguments are (day , month_string , year).
 
 
 struct sched_kw_dates_struct {
-  time_t_vector_type  * date_list;
+  vector_type         * time_list;
 };
-
 
 
 /*****************************************************************/
@@ -22,7 +26,7 @@ struct sched_kw_dates_struct {
 static sched_kw_dates_type * sched_kw_dates_alloc_empty()
 {
   sched_kw_dates_type *dates = util_malloc(sizeof *dates , __func__);
-  dates->date_list           = time_t_vector_alloc(0 , -1);
+  dates->time_list           = vector_alloc_new();
   return dates;
 }
 
@@ -72,13 +76,6 @@ static time_t parse_time_t(const char * day_string , const char * month_string ,
 
 
 
-static void time_t_to_dates_line_fprintf(time_t date, FILE * stream)
-{
-  int day, month, year;
-  util_set_date_values(date, &day, &month, &year);
-  fprintf(stream , "  %d \'%s\' %4d  /  \n" , day, get_month_string_from_int(month), year );
-}
-
 
 
 
@@ -100,7 +97,8 @@ sched_kw_dates_type * sched_kw_dates_alloc(const stringlist_type * tokens , int 
         const char * year_string  = stringlist_iget( line_tokens , 2 );
 
         time_t date = parse_time_t( day_string , month_string , year_string );
-        time_t_vector_append( kw->date_list , date );
+        sched_time_type * time_node = sched_time_alloc( date , 0 , DATES_TIME );
+        vector_append_owned_ref( kw->time_list , time_node , sched_time_free__ );
       } else {
         stringlist_fprintf( line_tokens , "  " , stdout );
         util_abort("%s: malformed DATES keyword\n",__func__);
@@ -119,9 +117,15 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
   fprintf(stream,"DATES\n");
   {
     int i;
-    for (i=0; i < time_t_vector_size( kw->date_list ); i++) {
-      const time_t date = time_t_vector_iget( kw->date_list , i);
-      time_t_to_dates_line_fprintf(date , stream);
+    for (i=0; i < vector_get_size( kw->time_list ); i++) {
+      const sched_time_type * time_node = vector_iget_const( kw->time_list , i );
+      if (sched_time_get_type( time_node ) == DATES_TIME) {
+        time_t date          = sched_time_get_date( time_node );
+        int day, month, year;
+        util_set_date_values(date, &day, &month, &year);
+        fprintf(stream , DATES_FMT , day, get_month_string_from_int(month), year );
+      } else 
+        util_abort("%s: internal type fuckup \n",__func__);
     }
     fprintf(stream , "/\n\n");
   }
@@ -130,7 +134,7 @@ void sched_kw_dates_fprintf(const sched_kw_dates_type *kw , FILE *stream) {
 
 
 void sched_kw_dates_free(sched_kw_dates_type * kw) {
-  time_t_vector_free(kw->date_list);
+  vector_free(kw->time_list);
   free(kw);
 }
 
@@ -138,32 +142,28 @@ void sched_kw_dates_free(sched_kw_dates_type * kw) {
 
 int sched_kw_dates_get_size(const sched_kw_dates_type * kw)
 {
-  return time_t_vector_size(kw->date_list);
+  return vector_get_size(kw->time_list);
 }
 
 
 
 sched_kw_dates_type * sched_kw_dates_alloc_from_time_t(time_t date)
 {
-  sched_kw_dates_type * kw = sched_kw_dates_alloc_empty();
-  time_t_vector_append(kw->date_list , date );
+  sched_kw_dates_type * kw        = sched_kw_dates_alloc_empty();
+  sched_time_type     * time_node = sched_time_alloc( date , 0 , DATES_TIME );
+  vector_append_owned_ref(kw->time_list , time_node , sched_time_free__);
   return kw;
 }
 
 
 
-time_t sched_kw_dates_iget_time_t(const sched_kw_dates_type * kw, int i)
+time_t sched_kw_dates_iget_date(const sched_kw_dates_type * kw, int i)
 {
-  return time_t_vector_iget( kw->date_list , i);
+  const sched_time_type * time_node = vector_iget_const( kw->time_list , i );
+  return sched_time_get_date( time_node );
 }
 
 
-/**
-   Returns the number of dates in this DATES keyword.
-*/
-int sched_kw_dates_get_length( const sched_kw_dates_type * kw ) {
-  return time_t_vector_size( kw->date_list );
-}
 
 
 sched_kw_dates_type * sched_kw_dates_copyc(const sched_kw_dates_type * kw) {

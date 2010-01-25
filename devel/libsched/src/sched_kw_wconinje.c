@@ -8,10 +8,15 @@
 #include <sched_util.h>
 #include <stringlist.h>
 #include <sched_types.h>
+#include <buffer.h>
+#include <int_vector.h>
+#include <double_vector.h>
+
 
 #define DEFAULT_INJECTOR_STATE OPEN
 
 #define SCHED_KW_WCONINJE_ID  99165
+#define WCONINJE_TYPE_ID      5705235
 #define WCONINJE_NUM_KW 10
 #define ECL_DEFAULT_KW "*"
 
@@ -38,6 +43,23 @@ typedef struct {
   double                      vapoil_conc;
 } wconinje_well_type;
   
+
+
+
+
+struct wconinje_state_struct {
+  UTIL_TYPE_ID_DECLARATION;
+  int_vector_type    * phase;                  /* Contains values from sched_phase_enum */
+  int_vector_type    * state;                  /* Contains values from the well_status_enum. */ 
+  int_vector_type    * cmode;                  /* Contains values from the well_cm_enum. */
+  double_vector_type * surface_flow;
+  double_vector_type * reservoir_flow;
+  double_vector_type * bhp_limit;
+  double_vector_type * thp_limit;
+  int_vector_type    * vfp_table_nr;
+  double_vector_type * vapoil;
+};
+
 
 
 
@@ -295,11 +317,70 @@ bool sched_kw_wconinje_well_open( const sched_kw_wconinje_type * kw, const char 
       else
         return false;
     } else
-      return false;
+      return false;  }
+}
+
+/*****************************************************************/
+
+
+/*****************************************************************/
+
+wconinje_state_type * wconinje_state_alloc( ) {
+  wconinje_state_type * wconinje = util_malloc( sizeof * wconinje , __func__);
+  UTIL_TYPE_ID_INIT( wconinje , WCONINJE_TYPE_ID );
+
+  wconinje->phase          = int_vector_alloc( 0 , 0 );
+  wconinje->state          = int_vector_alloc( 0 , 0 );  /* Default wconinje state ? */
+  wconinje->cmode          = int_vector_alloc( 0 , 0 );  /* Default control mode ?? */
+  wconinje->surface_flow   = double_vector_alloc( 0 , 0 );
+  wconinje->reservoir_flow = double_vector_alloc( 0 , 0 );
+  wconinje->bhp_limit      = double_vector_alloc( 0 , 0 );
+  wconinje->thp_limit      = double_vector_alloc( 0 , 0 );
+  wconinje->vfp_table_nr   = int_vector_alloc( 0 , 0 );
+  wconinje->vapoil         = double_vector_alloc( 0 ,0 );
+
+  return wconinje;
+}
+
+
+static UTIL_SAFE_CAST_FUNCTION( wconinje_state , WCONINJE_TYPE_ID )
+
+void wconinje_state_free( wconinje_state_type * wconinje ) {
+
+  int_vector_free(wconinje->phase);
+  int_vector_free(wconinje->state);
+  int_vector_free(wconinje->cmode);
+  double_vector_free(wconinje->surface_flow);
+  double_vector_free(wconinje->reservoir_flow);
+  double_vector_free(wconinje->bhp_limit);
+  double_vector_free(wconinje->thp_limit);
+  int_vector_free(wconinje->vfp_table_nr);
+  double_vector_free(wconinje->vapoil);
+  free( wconinje );
+
+}
+
+void wconinje_state_free__( void * arg ) {
+  wconinje_state_free( wconinjh_state_safe_cast( arg ));
+}
+
+
+
+static void sched_kw_wconinje_update_state( const sched_kw_wconinje_type * kw , wconinje_state_type * state , const char * well_name , int report_step ) {
+  wconinje_well_type * well = sched_kw_wconinje_get_well( kw , well_name );
+  if (well != NULL) {
+    int_vector_iset_default(state->phase             , report_step , well->injector_type );  
+    int_vector_iset_default(state->state             , report_step , well->status);          
+    int_vector_iset_default(state->cmode             , report_step , well->cmode);           
+    double_vector_iset_default(state->surface_flow   , report_step , well->surface_flow);    
+    double_vector_iset_default(state->reservoir_flow , report_step , well->reservoir_flow);  
+    double_vector_iset_default(state->bhp_limit      , report_step , well->BHP_target);      
+    double_vector_iset_default(state->thp_limit      , report_step , well->THP_target);      
+    int_vector_iset_default(state->vfp_table_nr      , report_step , well->vfp_table_nr);    
+    double_vector_iset_default(state->vapoil         , report_step , well->vapoil_conc);     
   }
 }
 
 
-/*****************************************************************/
 
 KW_IMPL(wconinje)

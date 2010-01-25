@@ -256,8 +256,8 @@ static gen_data_file_format_type __gen_data_config_check_format( const void * __
 gen_data_config_type * gen_data_config_alloc_with_options(const char * key , bool as_param , const stringlist_type * options) {
   const ecl_type_enum internal_type = ECL_DOUBLE_TYPE;
   gen_data_config_type * config;
-  hash_type * opt_hash = hash_alloc_from_options( options );
-
+  hash_type * opt_hash              = hash_alloc_from_options( options );
+  
   config = gen_data_config_alloc(key      , 
                                  as_param , 
                                  internal_type , 
@@ -269,7 +269,6 @@ gen_data_config_type * gen_data_config_alloc_with_options(const char * key , boo
                                  hash_safe_get( opt_hash , "ECL_FILE"),
                                  hash_safe_get( opt_hash , "RESULT_FILE"),
                                  hash_safe_get( opt_hash , "MIN_STD" ));
-  
   
   hash_free(opt_hash);
   return config;

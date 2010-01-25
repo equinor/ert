@@ -513,7 +513,7 @@ void gen_data_iadd(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
 void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
   {
-    const int data_size                 = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
+    const int data_size               = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 
@@ -525,7 +525,7 @@ void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
     } else if (internal_type == ECL_DOUBLE_TYPE) {
       double * data1       = (double *) gen_data1->data;
       const double * data2 = (const double *) gen_data2->data;
-      for (i = 0; i < data_size; i++)
+      for (i = 0; i < data_size; i++) 
 	data1[i] *= data2[i];
     }
   }
@@ -535,7 +535,7 @@ void gen_data_imul(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
 void gen_data_iaddsqr(gen_data_type * gen_data1, const gen_data_type * gen_data2) {
   //gen_data_config_assert_binary(gen_data1->config , gen_data2->config , __func__); 
   {
-    const int data_size                 = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
+    const int data_size               = gen_data_config_get_data_size( gen_data1->config , gen_data1->current_report_step );
     const ecl_type_enum internal_type = gen_data_config_get_internal_type(gen_data1->config);
     int i;
 

@@ -6,6 +6,7 @@
 #include <vector.h>
 #include <parser.h>
 #include <time_t_vector.h>
+#include <sched_blob.h>
 #include <sched_kw_dates.h>
 #include <sched_kw_tstep.h>
 #include <sched_kw.h>
@@ -42,25 +43,23 @@
 
 #define SCHED_FILE_TYPE_ID 677198
 
-typedef struct sched_block_struct sched_block_type;
-
 struct sched_block_struct {
-  vector_type * kw_list;           /* A list of sched_kw's in the block.   */
-  time_t        block_start_time;  
-  time_t        block_end_time;
-  hash_type   * kw_hash;           /* Hash table indexed with kw_name - containing vectors of kw instances . */
+  vector_type     * kw_list;           /* A list of sched_kw's in the block.   */
+  time_t            block_start_time;  
+  time_t            block_end_time;
+  hash_type       * kw_hash;           /* Hash table indexed with kw_name - containing vectors of kw instances . */
 };
 
 
 
 struct sched_file_struct {
   UTIL_TYPE_ID_DECLARATION;
-  hash_type       * fixed_length_table;    /* A hash table of keywords with a fixed length, i.e. not '/' terminated. */
-  vector_type     * kw_list;
-  vector_type     * kw_list_by_type;        
-  vector_type     * blocks;                /* A list of chronologically sorted sched_block_type's. */
-  stringlist_type * files;                 /* The name of the files which have been parsed to generate this sched_file instance. */
-  time_t            start_time;            /* The start of the simulation. */
+  hash_type         * fixed_length_table;    /* A hash table of keywords with a fixed length, i.e. not '/' terminated. */
+  vector_type       * kw_list;
+  vector_type       * kw_list_by_type;        
+  vector_type       * blocks;                /* A list of chronologically sorted sched_block_type's. */
+  stringlist_type   * files;                 /* The name of the files which have been parsed to generate this sched_file instance. */
+  time_t              start_time;            /* The start of the simulation. */
 };
 
 
@@ -72,11 +71,11 @@ struct sched_file_struct {
 static sched_block_type * sched_block_alloc_empty()
 {
   sched_block_type * block = util_malloc(sizeof * block, __func__);
-  
   block->kw_list = vector_alloc_new();
   block->kw_hash = hash_alloc();
   return block;
 }
+
 
 
 static void sched_block_debug_fprintf( const sched_block_type * block ) {
@@ -123,8 +122,7 @@ static void sched_block_add_kw(sched_block_type * block, const sched_kw_type * k
 }
 
 
-
-static sched_kw_type * sched_block_iget_kw(sched_block_type * block, int i)
+sched_kw_type * sched_block_iget_kw(sched_block_type * block, int i)
 {
   return vector_iget( block->kw_list , i);
 }
@@ -144,24 +142,19 @@ static void sched_block_fprintf(const sched_block_type * block, FILE * stream)
 
 
 
-static int sched_block_get_size(const sched_block_type * block)
+int sched_block_get_size(const sched_block_type * block)
 {
   return vector_get_size(block->kw_list);
 }
 
 
 
-static sched_kw_type * sched_block_iget_kw_ref(const sched_block_type * block, int i)
-{
-  return vector_iget(block->kw_list , i);
-}
 
 
-
-static sched_kw_type * sched_block_get_last_kw_ref(const sched_block_type * block)
+static sched_kw_type * sched_block_get_last_kw_ref(sched_block_type * block)
 {
   int last_index = vector_get_size( block->kw_list ) - 1;
-  return sched_block_iget_kw_ref( block , last_index );
+  return sched_block_iget_kw( block , last_index );
 }
 
 
@@ -173,7 +166,7 @@ static void sched_file_add_block(sched_file_type * sched_file, sched_block_type 
 
 
 
-static sched_block_type * sched_file_iget_block_ref(const sched_file_type * sched_file, int i)
+sched_block_type * sched_file_iget_block(const sched_file_type * sched_file, int i)
 {
   return vector_iget(sched_file->blocks , i);
 }
@@ -202,14 +195,14 @@ static void sched_file_build_block_dates(sched_file_type * sched_file)
     util_abort("%s: Error - empty sched_file - aborting.\n", __func__);
 
   /* Special case for block 0. */
-  sched_block_type * sched_block = sched_file_iget_block_ref(sched_file, 0);
+  sched_block_type * sched_block = sched_file_iget_block(sched_file, 0);
   sched_block->block_start_time  = sched_file->start_time ;
   sched_block->block_end_time    = sched_file->start_time ;
 
   curr_time = sched_file->start_time;
   for(int i=1; i<num_restart_files; i++)
   {
-    sched_block = sched_file_iget_block_ref(sched_file, i);
+    sched_block = sched_file_iget_block(sched_file, i);
     sched_block->block_start_time = curr_time;
     
     sched_kw_type * timing_kw = sched_block_get_last_kw_ref(sched_block);
@@ -448,7 +441,7 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
       sched_kw_type_enum type = sched_kw_get_type(current_kw);
       if (type == DATES || type == TSTEP || type == TIME) {
         int i , num_steps;
-        sched_kw_type ** sched_kw_dates = sched_kw_restart_file_split_alloc(current_kw, &num_steps);
+        sched_kw_type ** sched_kw_dates = sched_kw_split_alloc_DATES(current_kw, &num_steps);
         sched_kw_free(current_kw);
         
         for(i=0; i<num_steps; i++)  
@@ -462,6 +455,21 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
   
   sched_file_build_block_dates(sched_file);
   sched_file_update_index( sched_file );
+  stringlist_free( token_list );
+}
+
+
+void sched_file_simple_parse( const char * filename , time_t start_time) {
+  stringlist_type * token_list = sched_file_tokenize( filename );
+  const int num_tokens         = stringlist_get_size( token_list );
+  int token_index = 0;
+  do {
+    sched_kw_type_enum kw_type = sched_kw_type_from_string( stringlist_iget( token_list , token_index ));
+    if ((kw_type == DATES) || (kw_type == TSTEP)) {
+      
+    }
+  } while( token_index < num_tokens );
+  
   stringlist_free( token_list );
 }
 
@@ -573,7 +581,7 @@ int sched_file_get_restart_nr_from_days(const sched_file_type * sched_file , dou
 
 time_t sched_file_iget_block_start_time(const sched_file_type * sched_file, int i)
 {
-  sched_block_type * block = sched_file_iget_block_ref(sched_file, i);
+  sched_block_type * block = sched_file_iget_block(sched_file, i);
   return block->block_start_time;
 }
 
@@ -581,21 +589,21 @@ time_t sched_file_iget_block_start_time(const sched_file_type * sched_file, int 
 
 time_t sched_file_iget_block_end_time(const sched_file_type * sched_file, int i)
 {
-  sched_block_type * block = sched_file_iget_block_ref(sched_file, i);
+  sched_block_type * block = sched_file_iget_block(sched_file, i);
   return block->block_end_time;
 }
 
 
 double sched_file_iget_block_start_days(const sched_file_type * sched_file, int i)
 {
-  sched_block_type * block = sched_file_iget_block_ref(sched_file, i);
+  sched_block_type * block = sched_file_iget_block(sched_file, i);
   return util_difftime_days( sched_file->start_time , block->block_start_time );
 }
 
 
 double sched_file_iget_block_end_days(const sched_file_type * sched_file, int i)
 {
-  sched_block_type * block = sched_file_iget_block_ref(sched_file, i);
+  sched_block_type * block = sched_file_iget_block(sched_file, i);
   return util_difftime_days( sched_file->start_time , block->block_end_time );
 }
 
@@ -615,7 +623,7 @@ time_t sched_file_get_sim_time(const sched_file_type * sched_file , int report_s
 
 int sched_file_iget_block_size(const sched_file_type * sched_file, int block_nr)
 {
-  sched_block_type * block = sched_file_iget_block_ref(sched_file, block_nr);
+  sched_block_type * block = sched_file_iget_block(sched_file, block_nr);
   return sched_block_get_size(block);
 }
 
@@ -623,8 +631,8 @@ int sched_file_iget_block_size(const sched_file_type * sched_file, int block_nr)
 
 sched_kw_type * sched_file_ijget_block_kw_ref(const sched_file_type * sched_file, int block_nr, int kw_nr)
 {
-  sched_block_type * block = sched_file_iget_block_ref(sched_file, block_nr);
-  sched_kw_type * sched_kw = sched_block_iget_kw_ref(block, kw_nr);
+  sched_block_type * block = sched_file_iget_block(sched_file, block_nr);
+  sched_kw_type * sched_kw = sched_block_iget_kw(block, kw_nr);
   return sched_kw;
 }
 
@@ -726,7 +734,7 @@ void sched_file_update_blocks(sched_file_type * sched_file,
     restart2 = sched_file_get_num_restart_files(sched_file) - 1;
   
   for (restart_nr = restart1; restart_nr <= restart2; restart_nr++) {
-    sched_block_type * sched_block = sched_file_iget_block_ref( sched_file , restart_nr );
+    sched_block_type * sched_block = sched_file_iget_block( sched_file , restart_nr );
     sched_file_update_block( sched_block , restart_nr , kw_type , callback , callback_arg);
   }
 }
@@ -797,7 +805,7 @@ int sched_file_step_count( const char * filename ) {
     if (kw_type == DATES) {
       sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL);
       const sched_kw_dates_type * dates_kw = sched_kw_get_data( sched_kw );
-      step_count += sched_kw_dates_get_length( dates_kw );
+      step_count += sched_kw_dates_get_size( dates_kw );
       sched_kw_free( sched_kw );
     } else if (kw_type == TSTEP ) {
       sched_kw_type * sched_kw             = sched_kw_token_alloc( token_list , &token_index , NULL);
@@ -812,6 +820,54 @@ int sched_file_step_count( const char * filename ) {
   return step_count;
 }
 
+
+/*****************************************************************/
+
+
+//void sched_file_merge( const char * filename , time_t start_date , time_t insert_date , bool append_string , const char * insert_string) {
+//  stringlist_type * token_list = sched_file_tokenize( filename );
+//  int  token_index = 0;
+//  int  step_count  = 0;
+//  bool has_date    = false;
+//
+//  do {
+//    time_t       current_time  = start_date;
+//    const char * current_token = stringlist_iget( token_list , token_index );
+//    sched_kw_type_enum kw_type = sched_kw_type_from_string( current_token );
+//
+//    if ((kw_type == DATES) || (kw_type == TSTEP)) {
+//      int istep , num_step;
+//      sched_kw_type *  sched_kw = sched_kw_token_alloc( token_list , &token_index , NULL);
+//      sched_kw_type ** split_kw = sched_kw_split_alloc_DATES( sched_kw , &num_step );
+//      
+//      for (istep = 0; istep  < num_step; istep++) {
+//        if (kw_type == DATES) {
+//          const sched_kw_dates_type * dates_kw = sched_kw_get_data( sched_kw );
+//          current_time = sched_kw_dates_iget_date( dates_kw , 0 );
+//        }
+//        if (current_time == insert_date) {
+//          /* 
+//             We are currently looking at a DATES keyword EXACTLY at
+//             the date we should insert at. If append_string == false
+//             we let the new string go in immediately, otherwise we set
+//             has_date to true and continue one more time_step (then
+//             the current_time > insert_date test will kick in).
+//          */
+//          has_date = true;
+//          if (!append_string) {
+//            
+//          }
+//        }
+//      }
+//      sched_kw_free( sched_kw );
+//      
+//    } else 
+//      token_index++;
+//    
+//  } while ( token_index < stringlist_get_size( token_list ));
+//
+//}
+//
 
 
 /*****************************************************************/
@@ -832,7 +888,7 @@ bool sched_file_well_open( const sched_file_type * sched_file ,
   bool well_open  = false;
   int block_nr    = restart_nr;
   while (!well_found && (block_nr >= 0)) {
-    sched_block_type * block = sched_file_iget_block_ref( sched_file , block_nr );
+    sched_block_type * block = sched_file_iget_block( sched_file , block_nr );
     
     if (hash_has_key( block->kw_hash , "WCONHIST")) {
       const vector_type * wconhist_vector = hash_get( block->kw_hash , "WCONHIST");

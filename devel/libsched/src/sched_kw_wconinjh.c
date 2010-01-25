@@ -4,37 +4,22 @@
 #include <util.h>
 #include <sched_kw_wconinjh.h>
 #include <sched_util.h>
+#include <sched_types.h>
 #include <hash.h>
 #include <stringlist.h>
+#include <int_vector.h>
+#include <double_vector.h>
 
-/*
-  Define the maximum number of keywords in a WCONINJH record.
-*/
+#define WCONINJH_TYPE_ID 88163977
+#define WCONINJH_NUM_KW  8
 
-#define WCONINJH_NUM_KW 8
-#define ECL_DEFAULT_KW "*"
-
-
-
-typedef enum {WATER, GAS, OIL} inj_flag_type;
-#define INJ_WATER_STRING "WATER"
-#define INJ_GAS_STRING   "GAS"
-#define INJ_OIL_STRING   "OIL"
-
-
-
-typedef enum {OPEN, STOP, SHUT} st_flag_type;
-#define ST_OPEN_STRING "OPEN"
-#define ST_STOP_STRING "STOP"
-#define ST_SHUT_STRING "SHUT"
 
 struct sched_kw_wconhist_struct{
   vector_type * wells;
 };
 
 
-
-typedef struct wconinjh_well_struct wconinjh_well_type;
+typedef struct wconinjh_well_struct   wconinjh_well_type;
 
 
 
@@ -42,87 +27,33 @@ struct wconinjh_well_struct{
   /*
     def: Read as defaulted, not defined!
   */
-  bool          def[WCONINJH_NUM_KW];
+  bool               def[WCONINJH_NUM_KW];
 
-  char          * name;
-  inj_flag_type   inj_phase;
-  st_flag_type    status;
-  double          inj_rate;
-  double          bhp;
-  double          thp;
-  int             vfptable;
-  double          vapdiscon;
+  char             * name;
+  sched_phase_enum   inj_phase;
+  well_status_enum   status;
+  double             inj_rate;
+  double             bhp;
+  double             thp;
+  int                vfptable;
+  double             vapdiscon;
+};
+
+
+struct wconinjh_state_struct {
+  UTIL_TYPE_ID_DECLARATION;
+  int_vector_type    * phase;                  /* Contains values from sched_phase_enum */
+  int_vector_type    * state;                  /* Contains values from the well_status_enum. */ 
+  double_vector_type * injection_rate;
+  double_vector_type * bhp;
+  double_vector_type * thp;
+  int_vector_type    * vfp_table_nr;
+  double_vector_type * vapoil;
 };
 
 
 
-static char * get_inj_string_from_flag(inj_flag_type inj_phase)
-{
-  switch(inj_phase)
-  {
-    case(WATER):
-      return INJ_WATER_STRING;
-    case(GAS):
-      return INJ_GAS_STRING;
-    case(OIL):
-      return INJ_OIL_STRING;
-    default:
-      return ECL_DEFAULT_KW;
-  }
-}
 
-
-
-static char * get_st_string_from_flag(st_flag_type status)
-{
-  switch(status)
-  {
-    case(OPEN):
-      return ST_OPEN_STRING;
-    case(STOP):
-      return ST_STOP_STRING;
-    case(SHUT):
-      return ST_SHUT_STRING;
-    default:
-      return ECL_DEFAULT_KW;
-  }
-}
-
-
-/*
-  No default defined
-*/
-static inj_flag_type get_inj_flag_from_string(const char * inj_phase)
-{
-  if(      strcmp(inj_phase, INJ_WATER_STRING) == 0)
-    return WATER;
-  else if( strcmp(inj_phase, INJ_GAS_STRING)   == 0)
-    return GAS;
-  else if( strcmp(inj_phase, INJ_OIL_STRING)   == 0)
-    return OIL;
-  else
-  {
-    util_abort("%s: Couldn't recognize %s as a injection phase.\n", __func__, inj_phase);
-    return 0;
-  }
-}
-
-
-
-static st_flag_type get_st_flag_from_string(const char * status)
-{
-  if(      strcmp(status, ST_OPEN_STRING) == 0)
-    return OPEN;
-  else if( strcmp(status, ST_STOP_STRING) == 0)
-    return STOP;
-  else if( strcmp(status, ST_SHUT_STRING) == 0)
-    return SHUT;
-  else
-  {
-    util_abort("%s: Could'nt recognize %s as a well status.\n", __func__, status);
-    return 0;
-  }
-}
 
 
 
@@ -150,17 +81,33 @@ static void wconinjh_well_free__(void * well)
 
 
 
+/** Will return NULL if the well is not present. */
+static wconinjh_well_type * sched_kw_wconinjh_get_well( const sched_kw_wconinjh_type * kw , const char * well_name) {
+  int size = vector_get_size(kw->wells);
+  wconinjh_well_type * well = NULL;
+  int index = 0;
+  do {
+    wconinjh_well_type * iwell = vector_iget( kw->wells , index);
+    if (strcmp( well_name , iwell->name ) == 0) 
+      well = iwell;
+    
+    index++;
+  } while ((well == NULL) && (index < size));
+  return well;
+}
+
+
 static void wconinjh_well_fprintf(const wconinjh_well_type * well, FILE * stream)
 {
   fprintf(stream, "  ");
-  sched_util_fprintf_qst(well->def[0], well->name                               , 8, stream);
-  sched_util_fprintf_qst(well->def[1], get_inj_string_from_flag(well->inj_phase), 5, stream);
-  sched_util_fprintf_qst(well->def[2], get_st_string_from_flag(well->status)    , 4, stream);
-  sched_util_fprintf_dbl(well->def[3], well->inj_rate                           , 9 , 3, stream);
-  sched_util_fprintf_dbl(well->def[4], well->bhp                                , 9 , 3, stream);
-  sched_util_fprintf_dbl(well->def[5], well->thp                                , 9 , 3, stream);
-  sched_util_fprintf_int(well->def[6], well->vfptable                           , 4, stream);
-  sched_util_fprintf_dbl(well->def[7], well->vapdiscon                          , 9 , 3, stream);
+  sched_util_fprintf_qst(well->def[0], well->name                                   , 8      , stream);
+  sched_util_fprintf_qst(well->def[1], sched_phase_type_string(well->inj_phase)     , 5      , stream);
+  sched_util_fprintf_qst(well->def[2], sched_types_get_status_string(well->status)  , 4      , stream);
+  sched_util_fprintf_dbl(well->def[3], well->inj_rate                               , 9 , 3  , stream);
+  sched_util_fprintf_dbl(well->def[4], well->bhp                                    , 9 , 3  , stream);
+  sched_util_fprintf_dbl(well->def[5], well->thp                                    , 9 , 3  , stream);
+  sched_util_fprintf_int(well->def[6], well->vfptable                               , 4      , stream);
+  sched_util_fprintf_dbl(well->def[7], well->vapdiscon                              , 9 , 3  , stream);
   fprintf(stream, "/\n");
 }
 
@@ -178,8 +125,8 @@ static wconinjh_well_type * wconinjh_well_alloc_from_tokens(const stringlist_typ
   sched_util_init_default( line_tokens , well->def );
   
   well->name      = util_alloc_string_copy(stringlist_iget(line_tokens , 0));
-  well->inj_phase = get_inj_flag_from_string(stringlist_iget(line_tokens , 1));
-  well->status    = get_st_flag_from_string(stringlist_iget(line_tokens , 2));
+  well->inj_phase = sched_phase_type_from_string(stringlist_iget(line_tokens , 1));
+  well->status    = sched_types_get_status_from_string(stringlist_iget(line_tokens , 2));
   well->inj_rate  = sched_util_atof(stringlist_iget(line_tokens , 3));
   well->bhp       = sched_util_atof(stringlist_iget(line_tokens , 4));
   well->thp       = sched_util_atof(stringlist_iget(line_tokens , 5));
@@ -303,6 +250,77 @@ sched_kw_wconinjh_type * sched_kw_wconinjh_copyc(const sched_kw_wconinjh_type * 
   util_abort("%s: not implemented ... \n",__func__);
   return NULL;
 }
+
+
+/*****************************************************************/
+
+void sched_kw_wconinjh_init_well_list( const sched_kw_wconinjh_type * kw , stringlist_type * well_list) {
+  stringlist_clear( well_list );
+  {
+    int iw;
+    for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
+      const wconinjh_well_type * well = vector_iget_const( kw->wells , iw );
+      stringlist_append_ref( well_list , well->name );
+    }
+  }
+}
+
+
+
+
+/*****************************************************************/
+
+wconinjh_state_type * wconinjh_state_alloc( ) {
+  wconinjh_state_type * wconinjh = util_malloc( sizeof * wconinjh , __func__);
+  UTIL_TYPE_ID_INIT( wconinjh , WCONINJH_TYPE_ID );
+
+  wconinjh->phase          = int_vector_alloc( 0 , 0 );
+  wconinjh->state          = int_vector_alloc( 0 , 0 );  /* Default wconinjh state ? */
+  wconinjh->injection_rate = double_vector_alloc( 0 , 0 );
+  wconinjh->bhp            = double_vector_alloc( 0 , 0 );
+  wconinjh->thp            = double_vector_alloc( 0 , 0 );
+  wconinjh->vfp_table_nr   = int_vector_alloc( 0 , 0 );
+  wconinjh->vapoil         = double_vector_alloc( 0 ,0 );
+
+  return wconinjh;
+}
+
+UTIL_SAFE_CAST_FUNCTION( wconinjh_state , WCONINJH_TYPE_ID )
+
+void wconinjh_state_free( wconinjh_state_type * wconinjh ) {
+  
+  int_vector_free( wconinjh->phase );
+  int_vector_free( wconinjh->state );
+  double_vector_free( wconinjh->injection_rate );
+  double_vector_free( wconinjh->bhp );
+  double_vector_free( wconinjh->thp );
+  int_vector_free( wconinjh->vfp_table_nr );
+  double_vector_free( wconinjh->vapoil );
+  
+  free( wconinjh );
+}
+
+
+
+void wconinjh_state_free__( void * arg ) {
+  wconinjh_state_free( wconinjh_state_safe_cast( arg ));
+}
+
+
+
+void sched_kw_wconinjh_update_state( const sched_kw_wconinjh_type * kw , wconinjh_state_type * state , const char * well_name , int report_step ) {
+  wconinjh_well_type * well = sched_kw_wconinjh_get_well( kw , well_name );
+  if (well != NULL) {
+    int_vector_iset_default(state->phase             , report_step , well->inj_phase );  
+    int_vector_iset_default(state->state             , report_step , well->status );          
+    double_vector_iset_default(state->injection_rate , report_step , well->inj_rate);    
+    double_vector_iset_default(state->bhp            , report_step , well->bhp);      
+    double_vector_iset_default(state->thp            , report_step , well->thp);      
+    int_vector_iset_default(state->vfp_table_nr      , report_step , well->vfptable);    
+    double_vector_iset_default(state->vapoil         , report_step , well->vapdiscon);     
+  }
+}
+
 
 
 

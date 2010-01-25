@@ -210,8 +210,7 @@ static sched_kw_type * sched_kw_alloc_empty( const char * kw_name ) {
 */
 static void sched_kw_name_assert(const char * kw_name , FILE * stream)
 {
-  if(kw_name == NULL)
-  {
+  if(kw_name == NULL) {
     fprintf(stderr,"** Parsing SCHEDULE file line-nr: %d \n",util_get_current_linenr(stream));
     util_abort("%s: Internal error - trying to dereference NULL pointer.\n",__func__);
   }
@@ -256,7 +255,7 @@ static sched_kw_type ** sched_kw_dates_split_alloc(const sched_kw_type * sched_k
   
   for(int i=0; i<*num_steps; i++) {
     sched_kw_dates[i] = sched_kw_alloc_empty( "DATES" );
-    time_t date = sched_kw_dates_iget_time_t((const sched_kw_dates_type *) sched_kw->data, i);
+    time_t date = sched_kw_dates_iget_date((const sched_kw_dates_type *) sched_kw->data, i);
     sched_kw_dates[i]->data = sched_kw_dates_alloc_from_time_t(date);
   }
   return sched_kw_dates;
@@ -354,26 +353,26 @@ void sched_kw_fprintf(const sched_kw_type * sched_kw, FILE * stream)
 
 /*
   This function takes a kw related to timing, such as DATES or TSTEP
-  and converts it into a series of kw's with one timing event in each kw.
-
-  Note that TIME (ECL300 only) is not supported yet.
+  and converts it into a series of kw's with one timing event in each
+  kw. Note that TIME (ECL300 only) is not supported.
 */
-sched_kw_type ** sched_kw_restart_file_split_alloc(const sched_kw_type * sched_kw,  int * num_steps)
+sched_kw_type ** sched_kw_split_alloc_DATES(const sched_kw_type * sched_kw,  int * num_steps)
 {
   switch(sched_kw_get_type(sched_kw))
   {
-    case(TSTEP):
-      return sched_kw_tstep_split_alloc(sched_kw, num_steps);
-
-    case(DATES):
-      return sched_kw_dates_split_alloc(sched_kw, num_steps);
-
-     case(TIME):
-       util_abort("%s: Sorry - no support for TIME kw yet. Please use TSTEP.\n", __func__);
-       return NULL;
-     default:
-       util_abort("%s: Internal error - aborting.\n", __func__);
-       return NULL;
+  case(TSTEP):
+    return sched_kw_tstep_split_alloc(sched_kw, num_steps);
+    break;
+  case(DATES):
+    return sched_kw_dates_split_alloc(sched_kw, num_steps);
+    break;
+  case(TIME):
+    util_abort("%s: Sorry - no support for TIME kw yet. Please use TSTEP.\n", __func__);
+    return NULL;
+    break;
+  default:
+    util_abort("%s: Internal error - aborting.\n", __func__);
+    return NULL;
   }
 }
 
@@ -388,7 +387,7 @@ time_t sched_kw_get_new_time(const sched_kw_type * sched_kw, time_t curr_time)
       new_time = sched_kw_tstep_get_new_time((const sched_kw_tstep_type *) sched_kw->data, curr_time);
       break;
     case(DATES):
-      new_time = sched_kw_dates_iget_time_t((const sched_kw_dates_type *) sched_kw->data , 0);
+      new_time = sched_kw_dates_iget_date((const sched_kw_dates_type *) sched_kw->data , 0);
       break;
     case(TIME):
       util_abort("%s: Sorry - no support for TIME kw. Please use TSTEP.\n", __func__);
@@ -531,6 +530,10 @@ sched_kw_type * sched_kw_alloc_copy(const sched_kw_type * src) {
 */
 
 void * sched_kw_get_data( sched_kw_type * kw) {
+  return kw->data;
+}
+
+const void * sched_kw_get_const_data( const sched_kw_type * kw) {
   return kw->data;
 }
 

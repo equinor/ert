@@ -55,6 +55,10 @@ void                          enkf_main_set_state_eclbase(const enkf_main_type *
 void                          enkf_main_interactive_set_runpath__(void * );
 enkf_main_type              * enkf_main_bootstrap(const char * , const char * );
 
+enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state);
+void                          enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean );
+void                          enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std);
+
 enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
 enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );

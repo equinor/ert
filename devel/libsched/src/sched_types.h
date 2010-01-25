@@ -11,6 +11,15 @@ extern "C" {
 */
 
 
+/*
+  The two (supported) keywords used for time stepping.
+*/
+
+typedef enum { DATES_TIME = 1,
+               TSTEP_TIME = 2 } sched_time_enum;
+
+
+
 
 
 typedef enum { INJECTOR = 1,
@@ -74,20 +83,21 @@ typedef enum {RESV  = 0, /* Injector || Producer */
 
 
 
-typedef enum {WCONHIST =  0, 
-              DATES    =  1, 
-              COMPDAT  =  2, 
-              TSTEP    =  3, 
-              TIME     =  4,   /* Not implemented support */
-              WELSPECS =  5, 
-              GRUPTREE =  6,
-              INCLUDE  =  7,   
-              UNTYPED  =  8,
-              WCONINJ  =  9,
-              WCONINJE = 10, 
-              WCONINJH = 11,
-              WCONPROD = 12,
-              NUM_SCHED_KW_TYPES = 13} sched_kw_type_enum;
+typedef enum {NONE     =  0,
+              WCONHIST =  1,
+              DATES    =  2, 
+              COMPDAT  =  3, 
+              TSTEP    =  4, 
+              TIME     =  5,   /* Not implemented support */
+              WELSPECS =  6, 
+              GRUPTREE =  7,
+              INCLUDE  =  8,   
+              UNTYPED  =  9,
+              WCONINJ  = 10,
+              WCONINJE = 11, 
+              WCONINJH = 12,
+              WCONPROD = 13,
+              NUM_SCHED_KW_TYPES = 14} sched_kw_type_enum;
               
 
 sched_kw_type_enum sched_kw_type_from_string(const char * kw_name);
@@ -96,7 +106,7 @@ const char *       sched_kw_type_name(sched_kw_type_enum kw_type);
 /*****************************************************************/  
 sched_phase_enum       sched_phase_type_from_string(const char * type_string);
 const char *           sched_phase_type_string(sched_phase_enum type);
-const char           * sched_types_get_status_string(well_status_enum status); 
+const char           * sched_types_get_status_string(well_status_enum status);
 well_status_enum       sched_types_get_status_from_string(const char * st_string);
 
 well_cm_enum           sched_types_get_cm_from_string(const char * cm_string , bool wconhist);

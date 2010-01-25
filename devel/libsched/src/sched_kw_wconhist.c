@@ -7,6 +7,9 @@
 #include <hash.h>
 #include <stringlist.h>
 #include <sched_types.h>
+#include <buffer.h>
+#include <int_vector.h>
+#include <double_vector.h>
 
 /*
   Define the maximum number of keywords in a WCONHIST record.
@@ -15,8 +18,8 @@
 */
 
 #define WCONHIST_NUM_KW       11
-#define SCHED_KW_WCONHIST_ID  771054  /* Very random intgere for checking type-cast. */
-
+#define SCHED_KW_WCONHIST_ID  771054    /* Very random intgere for checking type-cast. */
+#define WCONHIST_TYPE_ID      7752053
 
 
 typedef struct wconhist_well_struct wconhist_well_type;
@@ -50,7 +53,25 @@ struct sched_kw_wconhist_struct{
 };
 
 
+/*****************************************************************/
 
+struct wconhist_state_struct {
+  UTIL_TYPE_ID_DECLARATION;
+  int_vector_type    * state;                   /* Contains values from the well_status_enum. */ 
+  int_vector_type    * cmode;                   /* Contains values from the well_cm_enum. */
+  double_vector_type * oil_rate;                
+  double_vector_type * water_rate;              
+  double_vector_type * gas_rate;                
+  int_vector_type    * vfp_table; 
+  double_vector_type * art_lift;
+  double_vector_type * thp;
+  double_vector_type * bhp;
+  double_vector_type * wgas_rate;
+};
+
+
+
+/*****************************************************************/
 
 
 
@@ -439,6 +460,105 @@ bool sched_kw_wconhist_well_open( const sched_kw_wconhist_type * kw, const char 
       return false;
   }
 }
+
+/*****************************************************************/
+
+void sched_kw_wconhist_init_well_list( const sched_kw_wconhist_type * kw , stringlist_type * well_list) {
+  stringlist_clear( well_list );
+  {
+    int iw;
+    for (iw = 0; iw < stringlist_get_size( well_list ); iw++) {
+      const wconhist_well_type * well = vector_iget_const( kw->wells , iw );
+      stringlist_append_ref( well_list , well->name );
+    }
+  }
+}
+
+
+/*****************************************************************/
+/*
+  Functions implementing the wconhist state.
+*/
+
+wconhist_state_type * wconhist_state_alloc( ) {
+  wconhist_state_type * wconhist = util_malloc( sizeof * wconhist , __func__);
+  UTIL_TYPE_ID_INIT( wconhist , WCONHIST_TYPE_ID );
+
+  wconhist->state      = int_vector_alloc( 0 , WCONHIST_DEFAULT_STATUS );
+  wconhist->cmode      = int_vector_alloc( 0 , 0 ); 
+  
+  wconhist->oil_rate   = double_vector_alloc( 0 , 0 );
+  wconhist->gas_rate   = double_vector_alloc( 0 , 0 );
+  wconhist->water_rate = double_vector_alloc( 0 , 0 );
+  
+  /*
+    The vfp_table and art_list keywords have an EXTREMELY ugly
+    DEFAULT behaviour - it changes as function of time:
+  
+     1. The first occurence of a default value should be interpreted
+        as a '0'.
+
+     2. The second occurence of a default value should be interpreted
+        as 'No change prom previous value' - whatever that was.
+       
+    This behaviour is not properly supported in this implementation.    
+  */
+
+
+  wconhist->vfp_table  = int_vector_alloc( 0 , 0 );
+  wconhist->art_lift   = double_vector_alloc( 0 , 0);
+
+  wconhist->thp        = double_vector_alloc( 0 , 0 );
+  wconhist->bhp        = double_vector_alloc( 0 , 0 );
+  wconhist->wgas_rate  = double_vector_alloc( 0 , 0 );
+  
+  return wconhist;
+}
+
+
+static UTIL_SAFE_CAST_FUNCTION( wconhist_state , WCONHIST_TYPE_ID)
+
+void wconhist_state_free( wconhist_state_type * wconhist ) {
+  int_vector_free( wconhist->state );
+  int_vector_free( wconhist->cmode );
+  int_vector_free( wconhist->vfp_table );
+  
+  double_vector_free( wconhist->oil_rate );
+  double_vector_free( wconhist->gas_rate );
+  double_vector_free( wconhist->water_rate );
+  double_vector_free( wconhist->art_lift );
+  double_vector_free( wconhist->thp );
+  double_vector_free( wconhist->bhp );
+  double_vector_free( wconhist->wgas_rate );
+  
+  free( wconhist );
+}
+
+
+void wconhist_state_free__( void * arg ) {
+  wconhist_state_free( wconhist_state_safe_cast( arg ));
+}
+
+
+void sched_kw_wconhist_update_state(const sched_kw_wconhist_type * kw , wconhist_state_type * state , const char * well_name , int report_step ) {
+  
+  wconhist_well_type * well = sched_kw_wconhist_get_well( kw , well_name );
+  if (well != NULL) {
+
+    int_vector_iset_default( state->state         , report_step  ,  well->status   );
+    int_vector_iset_default( state->cmode         , report_step  ,  well->cmode    );
+    double_vector_iset_default( state->oil_rate   , report_step  ,  well->orat     );
+    double_vector_iset_default( state->water_rate , report_step  ,  well->wrat     );
+    double_vector_iset_default( state->gas_rate   , report_step  ,  well->grat     );
+    int_vector_iset_default( state->vfp_table     , report_step  ,  well->vfptable );
+    double_vector_iset_default( state->art_lift   , report_step  ,  well->alift    );
+    double_vector_iset_default( state->thp        , report_step  ,  well->thp      );
+    double_vector_iset_default( state->bhp        , report_step  ,  well->bhp      );
+    double_vector_iset_default( state->wgas_rate  , report_step  ,  well->wgrat    );
+    
+  }
+}
+
 
 
 

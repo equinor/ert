@@ -349,7 +349,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
 
 */
 
-static enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state) {
+enkf_node_type ** enkf_main_get_node_ensemble(const enkf_main_type * enkf_main , const char * key , int report_step , state_enum load_state) {
   enkf_fs_type * fs               = enkf_main_get_fs( enkf_main );
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   enkf_node_type ** node_ensemble = util_malloc(ens_size * sizeof * node_ensemble , __func__ );
@@ -418,16 +418,17 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
   enkf_node_type * mean                     = enkf_node_copyc( ensemble[0] );
   enkf_node_type * std                      = enkf_node_copyc( ensemble[0] );
   int iens;
-
-  enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
+  
   /* Shifting away the mean */
-  enkf_node_scale( mean , -1 );
+  enkf_main_node_mean( (const enkf_node_type **) ensemble , ens_size , mean );
+   enkf_node_scale( mean , -1 );
   for (iens = 0; iens < ens_size; iens++)
     enkf_node_iadd( ensemble[iens] , mean );
   enkf_node_scale( mean , -1 );
 
 
   enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , NULL , std );
+  gen_data_ecl_write( enkf_node_value_ptr( std ) , "/tmp" , "VELOCITY_T.std1" , NULL);
   /*****************************************************************/
   /*
     Now we have the ensemble represented as a mean and an ensemble of
@@ -444,13 +445,15 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
     enkf_node_free( inflation );
   }
 
-
   /* Add the mean back in - and store the updated node to disk.*/
   for (iens = 0; iens < ens_size; iens++) {
     enkf_node_iadd( ensemble[iens] , mean );
     enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , ANALYZED );
   }
 
+  enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , mean , std );
+  gen_data_ecl_write( enkf_node_value_ptr( std ) , "/tmp" , "VELOCITY_T.std2" , NULL);
+  
   enkf_node_free( mean );
   enkf_node_free( std );
   free( ensemble );
@@ -469,7 +472,7 @@ void enkf_main_inflate(enkf_main_type * enkf_main , int report_step , hash_type 
     if (hash_get_counter(use_count , key) > 0) {
       const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
       const enkf_node_type * min_std            = enkf_config_node_get_min_std( config_node );
-
+      
       if (min_std != NULL) {
         msg_update( msg , key );
         enkf_main_inflate_node(enkf_main , report_step , key , min_std );
@@ -730,6 +733,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     hash_free( use_count );
   }
 }
+
 
 
 /**

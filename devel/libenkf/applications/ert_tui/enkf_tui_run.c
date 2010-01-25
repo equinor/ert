@@ -126,10 +126,16 @@ void enkf_main_interactive_set_runpath__(void *arg) {
   
 }
 
+/**
+   Observe that this function will update manually at the report step
+   given by the user. The function will ignore
+   ENKF_SCHED_FILE setting and also the
+   ENKF_MERGE_OBSERVATIONS
+*/
 
 void enkf_tui_run_analyze__(void * enkf_main) {
   int report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length(enkf_main) , "Which report step to analyze" , 40);
-  enkf_main_UPDATE(enkf_main , report_step - 1, report_step );
+  enkf_main_UPDATE(enkf_main , report_step , report_step );
 }
 
 
