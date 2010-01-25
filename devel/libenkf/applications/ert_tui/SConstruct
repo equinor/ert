@@ -14,6 +14,9 @@ from   global_config import LIBRMS
 from   global_config import LIBSCHED
 
 SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
+if not os.path.exists( SDP_ROOT ):
+   SDP_ROOT = None
+
 conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 3)
 env  = Environment()
 

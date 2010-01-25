@@ -7,6 +7,9 @@ from   global_config import LIBUTIL
 from   global_config import EXTERNAL
 
 SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
+if not os.path.exists( SDP_ROOT ):
+   SDP_ROOT = None
+
 conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBUTIL , EXTERNAL ] , link = False)
