@@ -8,7 +8,8 @@ SConsEnvironment.Chmod = SCons.Action.ActionFactory( os.chmod , lambda dest,mode
 
 
 def InstallPerm(env , dest , files , mode):
-    if not os.path.exists(dest):
+    print "Dest: %s" % dest
+    if not os.path.exists( dest ):
         os.makedirs( dest )
     os.chmod( dest , 0755)
     obj = env.Install( dest , files )
@@ -61,7 +62,7 @@ class conf:
         self.SDP_LIB          = None
         
         
-        self.SITE_CONFIG_FILE     = "/d/proj/bg/enkf/Config/statoil/site-config"
+        self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/Config/site-config"
         if SDP_ROOT:
             if not os.path.exists(SDP_ROOT):
                 SDP_ROOT = None
@@ -96,7 +97,7 @@ class conf:
         self.LIB[LIBSCHED]      = {"home": "%s/libsched"     % self.BUILD_ROOT , "name": "sched"}
         self.LIB[LIBCONFIG]     = {"home": "%s/libconfig"    % self.BUILD_ROOT , "name": "config"}
         self.LIB[EXTERNAL]      = {"home": self.EXTERNAL_HOME}
-        self.RPATH    = "%s/lib" % self.EXTERNAL_HOME
+        self.RPATH              = "%s/lib" % "/project/res/x86_64_RH_4"
 
         
 
