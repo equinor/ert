@@ -14,14 +14,17 @@ SConsEnvironment.Chgrp = SCons.Action.ActionFactory(    chgrp , lambda dest,mode
 def InstallPerm(env , dest , files , mode):
     if not os.path.exists( dest ):
         os.makedirs( dest )
+
     try:
-        os.chmod( dest , 0755)
+        os.chmod( dest , 0775)
         os.chgrp( dest , "res" ) 
     except:
         pass
+    
     obj = env.Install( dest , files )
     for f in obj:
         env.AddPostAction(f , env.Chmod(str(f) , mode))
+        env.AddPostAction(f , env.Chgrp(str(f) , "res"))
     return dest
 
 
