@@ -17,8 +17,8 @@ def InstallPerm(env , dest , files , mode):
         os.makedirs( dest )
 
     try:
-        os.chmod( dest , 0775)
-        os.chgrp( dest , "res" ) 
+        os.chmod( dest , 0775 )
+        chgrp( dest , "res" ) 
     except:
         pass
     
@@ -51,9 +51,9 @@ SConsEnvironment.InstallProgram = InstallProgram
 
 def add_program(env , conf , bin_path , target , src):
     P = env.Program( target , src )
-    env.Install(bin_path , P)
+    env.InstallProgram(bin_path , P)
 
-    env.Install(conf.SDP_BIN , P)
+    env.InstallProgram(conf.SDP_BIN , P)
 
 #################################################################
 
