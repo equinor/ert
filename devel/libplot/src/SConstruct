@@ -4,32 +4,27 @@ import sys
 sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
-from   global_config import EXTERNAL
 
-SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
-if not os.path.exists( SDP_ROOT ):
-   SDP_ROOT = None
-
-conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBUTIL ] , link = False)
 
 src_list    = Split("plot.c plot_dataset.c  plot_range.c plplot_driver.c plot_driver.c text_driver.c")
 header_list = Split("plot.h plot_dataset.h  plot_range.h plot_const.h plot_driver.h  plplot_driver.h text_driver.h")
 
-
 LIB = env.StaticLibrary("plot" , src_list)
-env.Install("../lib" , LIB)
-env.Install("../include" , header_list)
+lib_path     = "../lib"
+include_path = "../include"
+env.Install(lib_path    , LIB)
+env.Install(include_path , header_list)
 
 
 ##################################################################
  
-install     = env.Alias('install',["../lib" , "../include"])
+install     = env.Alias('install',[lib_path , include_path])
 
-if SDP_ROOT:
-   env.Install(conf.SDP_LIB , header_list)
-   env.Install(conf.SDP_LIB , LIB )
-   SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
+env.Install(conf.SDP_LIB , header_list)
+env.Install(conf.SDP_LIB , LIB )
+SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_INCLUDE , include_path , lib_path , conf.SDP_LIB])
 
 Default( install )
