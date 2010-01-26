@@ -6,13 +6,14 @@ import commands
 #################################################################
 from SCons.Script.SConscript import SConsEnvironment
 SConsEnvironment.Chmod = SCons.Action.ActionFactory( os.chmod , lambda dest,mode: 'Chmod("%s" , 0%o)' % (dest , mode))
-
+SconsEnvironment.Chgrp = SCons.Action.ActionFactory( os.chgrp , lambda dest,mode: 'Chgrp("%s" , %s)'  % (dest , group))
 
 def InstallPerm(env , dest , files , mode):
     if not os.path.exists( dest ):
         os.makedirs( dest )
     try:
         os.chmod( dest , 0755)
+        os.chgrp( dest , "res" ) 
     except:
         pass
     obj = env.Install( dest , files )
