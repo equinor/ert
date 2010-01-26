@@ -52,7 +52,7 @@
 #define DEFAULT_MERGE_OBSERVATIONS false
 #define DEFAULT_RERUN              false
 #define DEFAULT_RERUN_START        0  
-
+#define DEFAULT_UPDATE_LOG_PATH    "update_log"
 
 
 /* Default directories. */

@@ -24,5 +24,6 @@ plot_config_type * plot_config_alloc();
 void               plot_config_init_from_config(plot_config_type * plot_config , const config_type * config );
 
 void               plot_config_add_config_items( config_type * config );
+void               plot_config_show_viewer_warning( plot_config_type * plot_config );
 
 #endif

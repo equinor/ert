@@ -10,17 +10,18 @@
 
 
 struct analysis_config_struct {
-  bool                   merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
-  bool                   rerun;               /* Should we rerun the simulator when the parameters have been updated? */
-  int                    rerun_start;         /* When rerunning - from where should we start? */
-  bool                   random_rotation;     /* When using the SQRT scheme - should a random rotation be performed?? */
-  double 	         truncation;
-  double 	         overlap_alpha;
-  double                 std_cutoff;
-  enkf_mode_type         enkf_mode;
-  pseudo_inversion_type  inversion_mode;
-  char                  *log_path;           /* Points to directory with update logs. */
+  bool                    merge_observations;  /* When observing from time1 to time2 - should ALL observations in between be used? */
+  bool                    rerun;               /* Should we rerun the simulator when the parameters have been updated? */
+  int                     rerun_start;         /* When rerunning - from where should we start? */
+  bool                    random_rotation;     /* When using the SQRT scheme - should a random rotation be performed?? */
+  double 	          truncation;
+  double 	          overlap_alpha;
+  double                  std_cutoff;
+  enkf_mode_type          enkf_mode;
+  pseudo_inversion_type   inversion_mode;
+  char                  * log_path;           /* Points to directory with update logs. */
 }; 
+
 
 
 
@@ -33,8 +34,9 @@ static analysis_config_type * analysis_config_alloc__() {
   config->inversion_mode     = SVD_SS_N1_R;
   config->std_cutoff         = 1e-6;
   config->random_rotation    = true;
-  config->log_path           = util_alloc_string_copy("update_log");
+  config->log_path           = NULL;
   
+  analysis_config_set_log_path( config , DEFAULT_UPDATE_LOG_PATH );
   analysis_config_set_truncation( config , DEFAULT_ENKF_TRUNCATION );
   analysis_config_set_alpha( config , DEFAULT_ENKF_ALPHA );
   analysis_config_set_merge_observations( config , DEFAULT_MERGE_OBSERVATIONS );
@@ -42,6 +44,12 @@ static analysis_config_type * analysis_config_alloc__() {
   analysis_config_set_rerun( config , DEFAULT_RERUN );
   analysis_config_set_rerun_start( config , DEFAULT_RERUN_START );
   return config;
+}
+
+
+void analysis_config_set_log_path(analysis_config_type * config , const char * log_path ) {
+  config->log_path = util_realloc_string_copy(config->log_path , log_path);
+  util_make_path( log_path );
 }
 
 
@@ -101,6 +109,9 @@ analysis_config_type * analysis_config_alloc() {
  
 
 void analysis_config_init_from_config( analysis_config_type * analysis , const config_type * config ) {
+  if (config_item_set( config , "UPDATE_LOG_PATH" ))
+    analysis_config_set_log_path( analysis , config_get_value( config , "UPDATE_LOG_PATH" ));
+  
   if (config_item_set( config , "ENKF_TRUNCATION" ))
     analysis_config_set_truncation( analysis , config_get_value_as_double( config , "ENKF_TRUNCATION" ));
 

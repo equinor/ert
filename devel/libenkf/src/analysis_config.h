@@ -27,7 +27,6 @@ void                   analysis_config_set_truncation( analysis_config_type * co
 void                   analysis_config_set_alpha( analysis_config_type * config , double alpha);
 void                   analysis_config_set_merge_observations( analysis_config_type * config , double merge_observations);
 void                   analysis_config_set_enkf_mode( analysis_config_type * config , enkf_mode_type enkf_mode);
-
-
+void                   analysis_config_set_log_path(analysis_config_type * config , const char * log_path );
 
 #endif

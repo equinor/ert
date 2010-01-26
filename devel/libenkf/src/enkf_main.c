@@ -231,7 +231,7 @@ void enkf_main_load_ensemble(enkf_main_type * enkf_main , int mask , int report_
   const   int cpu_threads = 4;
   int     sub_ens_size    = ensemble_config_get_size(enkf_main->ensemble_config) / cpu_threads;
   int     icpu;
-  thread_pool_type * tp          = thread_pool_alloc( cpu_threads );
+  thread_pool_type * tp          = thread_pool_alloc( cpu_threads , true );
   arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
 
   for (icpu = 0; icpu < cpu_threads; icpu++) {
@@ -292,7 +292,7 @@ void enkf_main_fwrite_ensemble(enkf_main_type * enkf_main , int mask , int repor
   const   int cpu_threads = 4;
   int     sub_ens_size    = ensemble_config_get_size(enkf_main->ensemble_config) / cpu_threads;
   int     icpu;
-  thread_pool_type * tp = thread_pool_alloc( cpu_threads );
+  thread_pool_type * tp = thread_pool_alloc( cpu_threads , true );
   arg_pack_type ** arg_pack_list = util_malloc( cpu_threads * sizeof * arg_pack_list , __func__);
 
   for (icpu = 0; icpu < cpu_threads; icpu++) {
@@ -426,9 +426,6 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
     enkf_node_iadd( ensemble[iens] , mean );
   enkf_node_scale( mean , -1 );
 
-
-  enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , NULL , std );
-  gen_data_ecl_write( enkf_node_value_ptr( std ) , "/tmp" , "VELOCITY_T.std1" , NULL);
   /*****************************************************************/
   /*
     Now we have the ensemble represented as a mean and an ensemble of
@@ -503,8 +500,84 @@ static int __get_active_size(const enkf_config_node_type * config_node , int rep
 }
 
 
+/*****************************************************************/
+/**
+   Helper struct used to pass information to the multithreaded 
+   serialize / deserialize functions.
+*/
+
+typedef struct {
+  enkf_fs_type            * fs; 
+  enkf_state_type        ** ensemble;
+  int                       iens1;    /* Inclusive lower limit. */
+  int                       iens2;    /* NOT inclusive upper limit. */
+  const char              * key;
+  int                       report_step;
+  state_enum                load_state;
+  int                       row_offset;
+  const active_list_type  * active_list;
+  matrix_type             * A;
+} serialize_info_type;
+
+
+
+static void serialize_node( enkf_fs_type * fs , 
+                            enkf_state_type ** ensemble , 
+                            int iens , 
+                            const char * key , 
+                            int report_step , 
+                            state_enum load_state , 
+                            int row_offset , 
+                            const active_list_type * active_list,
+                            matrix_type * A) {
+  
+  enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
+  enkf_fs_fread_node( fs , node , report_step , iens , load_state);
+  enkf_node_matrix_serialize( node , active_list , A , row_offset , iens);
+  
+}
+
+
+static void * serialize_nodes_mt( void * arg ) {
+  serialize_info_type * info = (serialize_info_type *) arg;
+  int iens;
+  for (iens = info->iens1; iens < info->iens2; iens++) 
+    serialize_node( info->fs , info->ensemble , iens , info->key , info->report_step , info->load_state , info->row_offset , info->active_list , info->A );
+  
+  return NULL;
+}
+
+
+static void deserialize_node( enkf_fs_type            * fs, 
+                              enkf_state_type ** ensemble , 
+                              int iens, 
+                              const char * key , 
+                              int report_step , 
+                              int row_offset , 
+                              const active_list_type * active_list,
+                              matrix_type * A) {
+  
+  enkf_node_type * node = enkf_state_get_node( ensemble[iens] , key);
+  enkf_node_matrix_deserialize(node , active_list , A , row_offset , iens);
+  enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
+  
+}
+
+
+static void * deserialize_nodes_mt( void * arg ) {
+  serialize_info_type * info = (serialize_info_type *) arg;
+  int iens;
+  for (iens = info->iens1; iens < info->iens2; iens++) 
+    deserialize_node( info->fs , info->ensemble , iens , info->key , info->report_step , info->row_offset , info->active_list , info->A );
+
+  return NULL;
+}
+
+
+
 
 void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 , const local_ministep_type * ministep, int report_step , hash_type * use_count) {
+  const int num_cpu_threads          = 4;
 
   int       matrix_size              = 1000;  /* Starting with this */
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
@@ -517,6 +590,22 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
   int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
   int ikw           = 0;
   bool complete     = false;
+  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info * num_cpu_threads , __func__);
+  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
+
+  {
+    int icpu;
+    int iens_offset = 0;
+    for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+      serialize_info[icpu].fs          = fs;
+      serialize_info[icpu].ensemble    = enkf_main->ensemble;
+      serialize_info[icpu].report_step = report_step;
+      serialize_info[icpu].A           = A;
+      serialize_info[icpu].iens1       = iens_offset;
+      serialize_info[icpu].iens2       = iens_offset + (ens_size - iens_offset) / (num_cpu_threads - icpu);
+      iens_offset = serialize_info[icpu].iens2;
+    }
+  }
 
   msg_show( msg );
   do {
@@ -571,14 +660,22 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	  else
 	    load_state = ANALYZED;
 
-	  /** This could be multi-threaded */
-	  for (int iens = 0; iens < ens_size; iens++) {
-	    enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
-	    enkf_fs_fread_node( fs , node , report_step , iens , load_state);
-	    enkf_node_matrix_serialize( node , active_list , A , row_offset[ikw] , iens);
-	  }
-	  current_row_offset += active_size[ikw];
+          {
+            /* Multithreaded */
+            int icpu;
+            thread_pool_restart( work_pool );
+            for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+              serialize_info[icpu].key         = key;
+              serialize_info[icpu].active_list = active_list;
+              serialize_info[icpu].load_state  = load_state;
+              serialize_info[icpu].row_offset  = row_offset[ikw];
+              
+              thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
+            }
+            thread_pool_join( work_pool );
 
+            current_row_offset += active_size[ikw];
+          }
 	}
 
 	ikw++;
@@ -597,9 +694,9 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     matrix_shrink_header( A , current_row_offset , ens_size );
     if (current_row_offset > 0) {
       /* The actual update */
-
+      
       msg_update(msg , " matrix multiplication");
-      matrix_inplace_matmul_mt( A , X5 , 4 );  /* Four CPU threads - nothing like a little hardcoding ... */
+      matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
       /* Deserialize */
       {
 	for (int i = ikw1; i < ikw2; i++) {
@@ -612,10 +709,18 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
               free(label);
             }
 
-            for (int iens = 0; iens < ens_size; iens++) {
-              enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
-              enkf_node_matrix_deserialize(node , active_list , A , row_offset[i] , iens);
-              enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
+            {
+              /* Multithreaded */
+              int icpu;
+              thread_pool_restart( work_pool );
+              for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+                serialize_info[icpu].key         = key;
+                serialize_info[icpu].active_list = active_list;
+                serialize_info[icpu].row_offset  = row_offset[i];
+                
+                thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
+              }
+              thread_pool_join( work_pool );
             }
           }
 	}
@@ -625,9 +730,12 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
     if (ikw2 == num_kw)
       complete = true;
   } while ( !complete );
-
-  free(active_size);
-  free(row_offset);
+  
+  
+  thread_pool_free( work_pool );
+  free( serialize_info );
+  free( active_size );
+  free( row_offset );
   msg_free( msg , true );
   matrix_free( A );
 }
@@ -688,15 +796,14 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
       randrot = enkf_analysis_alloc_mp_randrot( ens_size );
 
-    util_make_path( log_path );
     if (start_step == end_step)
       log_file = util_alloc_sprintf("%s%c%04d" , log_path , UTIL_PATH_SEP_CHAR , end_step);
     else
       log_file = util_alloc_sprintf("%s%c%04d-%04d" , log_path , UTIL_PATH_SEP_CHAR , start_step , end_step);
     log_stream = util_fopen( log_file , "w" );
 
-    for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {
-      for(int report_step = start_step; report_step <= end_step; report_step++)  {
+    for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
+      for(int report_step = start_step; report_step <= end_step; report_step++)  {                              /* Looping over normal report steps.    */ 
 	local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
 
         enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size,
@@ -753,7 +860,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
   arg_pack_type ** arg_list       = util_malloc( ens_size * sizeof * arg_list , __func__);
   job_status_type * status_list   = util_malloc( ens_size * sizeof * status_list , __func__);
-  thread_pool_type * load_threads = thread_pool_alloc( num_load_threads );
+  thread_pool_type * load_threads = thread_pool_alloc( num_load_threads , true);
   const int usleep_time           = 2500000; //100000; /* 1/10 of a second */
   const int load_start_usleep     = 10000;
   int jobs_remaining;
@@ -977,7 +1084,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
       {
-        thread_pool_type * submit_threads = thread_pool_alloc(4);
+        thread_pool_type * submit_threads = thread_pool_alloc( 4 , true );
         for (iens = 0; iens < ens_size; iens++) {
           if (iactive[iens]) {
             int load_start = step1;
@@ -1455,11 +1562,13 @@ static config_type * enkf_main_alloc_config() {
   */
   item = config_add_key_value(config , "ENKF_MODE" , false , CONFIG_STRING );
   config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
-  config_add_key_value( config , "ENKF_TRUNCATION" , false , CONFIG_FLOAT);
-  config_add_key_value( config , "ENKF_ALPHA" , false , CONFIG_FLOAT);
+
+  config_add_key_value( config , "ENKF_TRUNCATION"         , false , CONFIG_FLOAT);
+  config_add_key_value( config , "ENKF_ALPHA"              , false , CONFIG_FLOAT);
   config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "ENKF_RERUN" , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "RERUN_START" , false , CONFIG_INT);
+  config_add_key_value( config , "ENKF_RERUN"              , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , "RERUN_START"             , false , CONFIG_INT);
+  config_add_key_value( config , "UPDATE_LOG_PATH"         , false , CONFIG_STRING);
 
   /*****************************************************************/
   /* Keywords for the estimation                                   */

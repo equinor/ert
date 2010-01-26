@@ -11,11 +11,12 @@ struct plot_config_struct {
   char * plot_path;     /* All the plots will be saved as xxxx files in this directory. */
   char * image_type;    /* Type of plot file - currently only 'png' is tested. */
   char * driver;        /* The driver used by the libplot layer when actually 'rendering' the plots. */
-  char * viewer;        /* The executable used when displaying the newly created image. */
+  char * viewer;        /* The executable used when displaying the newly created image - can be NULL - in which case the plots are not displayed in any way. */
   int    errorbar_max;  /* If the number of observations is less than this it is plotted with errorbars - otherwise with lines. */
   int    height;   
   int    width;
 };
+
 
 /*****************************************************************/
 
@@ -43,8 +44,25 @@ void plot_config_set_image_type(plot_config_type * plot_config , const char * im
 
 
 void plot_config_set_viewer(plot_config_type * plot_config , const char * plot_viewer) {
-  plot_config->viewer = util_realloc_string_copy(plot_config->viewer , plot_viewer);
+  if (util_file_exists( plot_viewer) && util_is_executable( plot_viewer ))
+    plot_config->viewer = util_realloc_string_copy(plot_config->viewer , plot_viewer);
+  else {
+    plot_config->viewer = util_realloc_string_copy(plot_config->viewer , NULL );
+    
+    fprintf(stderr , "\n ---------------------------------------------------------------------\n");
+    fprintf(stderr , " - The ERT variable \"IMAGE_VIEWER\" has not been set to a valid       -\n");
+    fprintf(stderr , " - value; this means that ERT can not display the plots for you -    -\n");
+    fprintf(stderr , " - sorry. However the plotfiles are available for later viewing with -\n");
+    fprintf(stderr , " - your favorite image viewer software.                              -\n");
+    fprintf(stderr , " -                                                                   -\n");
+    fprintf(stderr , " - To actually set the IMAGE_VIEWER add the following in your        -\n");
+    fprintf(stderr , " - configuration file:                                               -\n");  
+    fprintf(stderr , " -                                                                   -\n");
+    fprintf(stderr , " - IMAGE_VIEWER    /path/to/binary/which/can/display/graphical/files -\n");
+    fprintf(stderr , " ---------------------------------------------------------------------\n\n");
+  }
 }
+
 
 
 void plot_config_set_driver(plot_config_type * plot_config , const char * plot_driver) {
@@ -88,7 +106,7 @@ int plot_config_get_errorbar_max( const plot_config_type * plot_config ) {
 
 void plot_config_free( plot_config_type * plot_config) {
   free(plot_config->plot_path);
-  free(plot_config->viewer);
+  util_safe_free(plot_config->viewer);
   free(plot_config->image_type);
   free(plot_config->driver );
   free(plot_config);
@@ -99,11 +117,11 @@ void plot_config_free( plot_config_type * plot_config) {
    The plot_config object is instantiated with the default values from enkf_defaults.h
 */
 plot_config_type * plot_config_alloc() {
-  plot_config_type * info = util_malloc( sizeof * info , __func__);
-  info->plot_path   = NULL;
-  info->image_type  = NULL;
-  info->viewer      = NULL;
-  info->driver      = NULL;
+  plot_config_type * info        = util_malloc( sizeof * info , __func__);
+  info->plot_path                = NULL;
+  info->image_type               = NULL;
+  info->viewer                   = NULL;
+  info->driver                   = NULL;      
   
   plot_config_set_path(info         , DEFAULT_PLOT_PATH );
   plot_config_set_image_type(info   , DEFAULT_IMAGE_TYPE );
@@ -146,6 +164,7 @@ void plot_config_add_config_items( config_type * config ) {
   config_add_key_value(config , "PLOT_HEIGHT"       , false , CONFIG_INT);
   config_add_key_value(config , "PLOT_WIDTH"        , false , CONFIG_INT);
   config_add_key_value(config , "PLOT_PATH"         , false , CONFIG_STRING);
-  config_add_key_value(config , "IMAGE_VIEWER"      , false , CONFIG_EXISTING_FILE);
+  config_add_key_value(config , "IMAGE_VIEWER"      , false , CONFIG_FILE);
   config_add_key_value(config , "PLOT_ERRORBAR_MAX" , false , CONFIG_INT);
 }
+

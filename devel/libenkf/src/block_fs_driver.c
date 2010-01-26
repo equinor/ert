@@ -317,7 +317,7 @@ bool block_fs_driver_has_node(void * _driver , const enkf_config_node_type * con
 
 void block_fs_driver_select_dir(void *_driver , const char * directory, bool read) {
   block_fs_driver_type * driver = block_fs_driver_safe_cast(_driver);
-  thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers ); /* Maaany threads .... */
+  thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers , true ); /* Maaany threads .... */
   arg_pack_type ** arglist      = util_malloc( sizeof * arglist * driver->num_drivers , __func__);
   msg_type * msg = msg_alloc("Mounting: ");
   int driver_nr;
@@ -353,7 +353,7 @@ void block_fs_driver_free(void *_driver) {
   block_fs_driver_type * driver = block_fs_driver_safe_cast( _driver );
   {
     int driver_nr;
-    thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers );
+    thread_pool_type * tp         = thread_pool_alloc( driver->num_drivers , true);
     for (driver_nr = 0; driver_nr < driver->num_drivers; driver_nr++) 
       thread_pool_add_job( tp , bfs_close__ , driver->fs_list[driver_nr] );
 

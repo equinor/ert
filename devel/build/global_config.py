@@ -117,6 +117,9 @@ class conf:
             if lib.has_key("name"):
                 name = lib["name"]
                 LIBS.append( name )
+        CPPPATH.append( self.SDP_INCLUDE )
+        LIBPATH.append( self.SDP_LIB )
+
 
         if ext_liblist:
             LIBS += ext_liblist
