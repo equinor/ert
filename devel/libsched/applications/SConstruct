@@ -16,13 +16,14 @@ conf.update_env( env , [LIBSCHED , LIBECL , LIBUTIL] , ["m","z","pthread"] , lin
 
 ##################################################################
 
+bin_path = "../bin"
 add_program(env , conf , bin_path , "sched_summary.x"         , "sched_summary.c")
 add_program(env , conf , bin_path , "sched_test.x"            , "sched_test.c")
 add_program(env , conf , bin_path , "update_ir.x"             , "update_ir.c")
 
 ##################################################################
 
-bin_path = "../bin"
+
 install = env.Alias('install',bin_path)
 
 env.Alias('SDP_INSTALL' , [bin_path , conf.SDP_BIN])
