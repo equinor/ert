@@ -4,27 +4,29 @@ import sys
 sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
+from   global_config import add_static_library
+from   global_config import add_header
+from   global_config import get_targets
 
-conf = global_config.get_conf(os.getcwd() , 2)
-env  = Environment()
+
+
+package      = "plot"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
+
+conf    = global_config.get_conf(os.getcwd() , "plot" , 2)
+env     = Environment()
 conf.update_env( env , [ LIBUTIL ] , link = False)
 
 src_list    = Split("plot.c plot_dataset.c  plot_range.c plplot_driver.c plot_driver.c text_driver.c")
 header_list = Split("plot.h plot_dataset.h  plot_range.h plot_const.h plot_driver.h  plplot_driver.h text_driver.h")
 
-LIB = env.StaticLibrary("plot" , src_list)
-lib_path     = "../lib"
-include_path = "../include"
-env.Install(lib_path    , LIB)
-env.Install(include_path , header_list)
+add_static_library( env , conf , lib_path , package , src_list)
+add_header( env , conf , include_path , header_list )
+
+(local , SDP_INSTALL) = get_targets( env , conf )
+Default( local )
 
 
-##################################################################
- 
-install     = env.Alias('install',[lib_path , include_path])
 
-env.Install(conf.SDP_LIB , header_list)
-env.Install(conf.SDP_LIB , LIB )
-SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_INCLUDE , include_path , lib_path , conf.SDP_LIB])
-
-Default( install )
