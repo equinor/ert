@@ -67,16 +67,13 @@ class conf:
 
         self.SVN_VERSION      = commands.getoutput("svnversion ./")
         self.TIME_STAMP       = commands.getoutput("date").replace(" " , "_")
-        self.SDP_BIN          = None
-        self.SDP_INCLUDE      = None
-        self.SDP_LIB          = None
-        
         
         self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/Config/site-config"
         self.SDP_ROOT             = get_SDP_ROOT()
-        self.SDP_BIN              = "%s/bin"     % self.SDP_ROOT
-        self.SDP_INCLUDE          = "%s/include" % self.SDP_ROOT
-        self.SDP_LIB              = "%s/lib"     % self.SDP_ROOT
+        self.SDP_BIN              = "%s/bin"             % self.SDP_ROOT
+        self.SDP_INCLUDE          = "%s/include"         % self.SDP_ROOT
+        self.SDP_LIB              = "%s/lib"             % self.SDP_ROOT
+        self.SDP_ERT_RELEASE      = "%s/bin/ert_release" % self.SDP_ROOT
         
         self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall -fPIC"
         self.ARFLAGS  = "csr"
