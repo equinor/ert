@@ -29,15 +29,15 @@ def InstallPerm(env , dest , files , mode):
 
 
 def InstallProgram(env , dest , files):
-    return InstallPerm( env , dest , files , 0755)
+    return InstallPerm( env , dest , files , 0775)
 
 
 def InstallHeader(env , dest , files):
-    return InstallPerm( env , dest , files , 0644)
+    return InstallPerm( env , dest , files , 0664)
 
 
 def InstallLibrary(env , dest , files):
-    return InstallPerm( env , dest , files , 0644)
+    return InstallPerm( env , dest , files , 0664)
 
 
 SConsEnvironment.InstallPerm    = InstallPerm
