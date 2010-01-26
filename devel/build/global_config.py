@@ -3,8 +3,8 @@ import os.path
 import os
 import commands
 
-def chgrp(path):
-    os.system("chgrp res %s" % path)
+def chgrp(path , group):
+    os.system("chgrp %s %s" % (group , path))
 
 #################################################################
 from SCons.Script.SConscript import SConsEnvironment
