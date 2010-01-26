@@ -48,6 +48,16 @@ SConsEnvironment.InstallProgram = InstallProgram
 
 #################################################################
 
+
+def add_program(env , conf , bin_path , target , src):
+    P = env.Program( target , src )
+    env.Install(bin_path , P)
+
+    env.Install(conf.SDP_BIN , P)
+
+#################################################################
+
+
 # Used as hash keys
 LIBUTIL      = 0
 LIBECL       = 1

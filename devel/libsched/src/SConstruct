@@ -21,16 +21,18 @@ header_list = Split("sched_history.h sched_time.h sched_blob.h well_history.h sc
 
 
 LIB = env.StaticLibrary("sched" , src_list)
-env.InstallLibrary("../lib" , LIB)
-env.InstallHeader("../include" , header_list)
+lib_path     = "../lib"
+include_path = "../include"
+env.InstallLibrary(lib_path , LIB)
+env.InstallHeader(include_path , header_list)
+install = env.Alias('install',[lib_path , include_path])
 
-if SDP_ROOT:
-    env.InstallHeader(conf.SDP_LIB , header_list)
-    env.InstallLibrary(conf.SDP_LIB , LIB )
-    SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
+env.InstallHeader(conf.SDP_LIB , header_list)
+env.InstallLibrary(conf.SDP_LIB , LIB )
+SDP_INSTALL = env.Alias('SDP_INSTALL' , [include_path , conf.SDP_INCLUDE  , conf.SDP_LIB , lib_path ])
 
 
-install     = env.Alias('install', ["../lib" , "../include"])
+install     = env.Alias('install', [lib_path , include_path])
 Default( install )
 
 

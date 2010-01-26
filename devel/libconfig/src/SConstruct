@@ -5,11 +5,7 @@ sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
 
-SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
-if not os.path.exists( SDP_ROOT ):
-   SDP_ROOT = None
-
-conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
+conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
 conf.update_env( env , [ LIBUTIL ] , link = False)
 
@@ -18,17 +14,20 @@ header_list = Split("config.h conf.h conf_data.h")
 
 
 LIB = env.StaticLibrary("config" , src_list)
-env.InstallLibrary("../lib" , LIB)
-env.InstallHeader("../include" , header_list)
+
+lib_path     = "../lib"
+include_path = "../include"
+env.InstallLibrary(lib_path , LIB)
+env.InstallHeader(include_path , header_list)
+install = env.Alias('install',[lib_path , include_path])
 
 
 ##################################################################
 
- 
-install = env.Alias('install',["../lib" , "../include"])
-if SDP_ROOT:
-   env.InstallHeader(conf.SDP_LIB , header_list)
-   env.InstallLibrary(conf.SDP_LIB , LIB )
-   SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
+
+
+env.InstallHeader(conf.SDP_LIB , header_list)
+env.InstallLibrary(conf.SDP_LIB , LIB )
+SDP_INSTALL = env.Alias('SDP_INSTALL' , [ lib_path , include_path , conf.SDP_LIB , conf.SDP_INCLUDE])
 
 Default( install )
