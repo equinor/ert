@@ -99,8 +99,10 @@ static void __plot_show(plot_type * plot , const plot_config_type * plot_config 
   plot_data(plot);
   plot_free(plot);
   if (util_file_exists( file )) {
+    const char * viewer = plot_config_get_viewer( plot_config );
     printf("Plot saved in: %s \n",file);
-    util_fork_exec(plot_config_get_viewer( plot_config ) , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
+    if (viewer != NULL)
+      util_fork_exec(viewer , 1 , (const char *[1]) { file } , false , NULL , NULL , NULL , NULL , NULL);
   }
   /*
     else: the file does not exist - that might be OK?

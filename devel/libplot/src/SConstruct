@@ -12,7 +12,7 @@ if not os.path.exists( SDP_ROOT ):
 
 conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
 env  = Environment()
-conf.update_env( env , [ LIBUTIL , EXTERNAL ] , link = False)
+conf.update_env( env , [ LIBUTIL ] , link = False)
 
 src_list    = Split("plot.c plot_dataset.c  plot_range.c plplot_driver.c plot_driver.c text_driver.c")
 header_list = Split("plot.h plot_dataset.h  plot_range.h plot_const.h plot_driver.h  plplot_driver.h text_driver.h")

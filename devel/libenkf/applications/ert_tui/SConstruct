@@ -7,20 +7,15 @@ from   global_config import LIBUTIL
 from   global_config import LIBECL
 from   global_config import LIBPLOT
 from   global_config import LIBCONFIG
-from   global_config import EXTERNAL
 from   global_config import LIBJOB_QUEUE
 from   global_config import LIBENKF
 from   global_config import LIBRMS
 from   global_config import LIBSCHED
 
-SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
-if not os.path.exists( SDP_ROOT ):
-   SDP_ROOT = None
-
-conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 3)
+conf = global_config.get_conf(os.getcwd() , 3)
 env  = Environment()
 
-conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL , EXTERNAL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "g2c" , "plplotd" , "m" , "z" , "pthread"] , link = True)
+conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "g2c" , "plplotd" , "m" , "z" , "pthread"] , link = True)
 
 
 define_fmt = "\'%s=\"%s\"\'"
@@ -33,7 +28,6 @@ main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FI
 ert         = env.Program( "ert" , [main_object, tui_objects])
 Default( ert )
 
-if SDP_ROOT:
-    env.InstallProgram(conf.SDP_BIN , ert)
-    env.Alias('SDP_INSTALL' , conf.SDP_BIN)
+env.InstallProgram(conf.SDP_BIN , ert)
+env.Alias('SDP_INSTALL' , conf.SDP_BIN)
 

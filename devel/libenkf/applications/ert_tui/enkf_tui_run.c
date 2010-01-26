@@ -222,7 +222,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   {
     int iens;
     arg_pack_type ** arg_list = util_malloc( ens_size * sizeof * arg_list , __func__);
-    thread_pool_type * tp = thread_pool_alloc( 4 );  /* num_cpu - HARD coded. */
+    thread_pool_type * tp = thread_pool_alloc( 4 , true );  /* num_cpu - HARD coded. */
 
     for (iens = 0; iens < ens_size; iens++) {
       arg_pack_type * arg_pack = arg_pack_alloc();
