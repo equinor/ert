@@ -5,11 +5,10 @@ sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
 from   global_config import LIBCONFIG
-from   global_config import EXTERNAL
 
 conf = global_config.get_conf(os.getcwd() , 2)
 env  = Environment()
-conf.update_env( env , [LIBCONFIG , LIBUTIL , EXTERNAL] )
+conf.update_env( env , [LIBCONFIG , LIBUTIL ] )
 
 src_list    = Split("forward_model.c job_queue.c basic_queue_driver.c lsf_driver.c local_driver.c rsh_driver.c ext_job.c ext_joblist.c lsf_request.c")
 header_list = Split("job_queue.h basic_queue_driver.h lsf_driver.h local_driver.h rsh_driver.h ext_job.h ext_joblist.h lsf_request.h forward_model.h")
