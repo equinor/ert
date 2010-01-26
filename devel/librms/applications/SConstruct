@@ -6,39 +6,25 @@ import global_config
 from   global_config import LIBUTIL
 from   global_config import LIBECL
 from   global_config import LIBRMS
+from   global_config import add_program
+from   global_config import get_targets
 
-SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
-if not os.path.exists( SDP_ROOT ):
-   SDP_ROOT = None
+package      = "rms"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
 
-conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
+conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
-
 conf.update_env( env , [ LIBRMS , LIBECL , LIBUTIL ] ,  ext_liblist = ["m" , "z" , "pthread"] , link = True)
 
-##################################################################
+add_program(env , conf ,  bin_path , "rms_extract" , "rms_extract.c" )
+add_program(env , conf ,  bin_path , "rms_setname" , "rms_setname.c" )
+add_program(env , conf ,  bin_path , "rms_stat"    , "rms_stat.c"    )
+add_program(env , conf ,  bin_path , "rms_test"    , "rms_test.c"    )
+add_program(env , conf ,  bin_path , "tag_list"    , "tag_list.c"    )
 
-
-
-def add_program(env , conf , target , src , SDP_INSTALL = False):
-    P = env.Program( target , src)
-    env.InstallProgram( "../bin" , P)
-    if conf.SDP_BIN:
-        if SDP_INSTALL:
-            env.InstallProgram(conf.SDP_BIN , P)
-
-
-add_program(env , conf ,  "rms_extract" , "rms_extract.c" , False)
-add_program(env , conf ,  "rms_setname" , "rms_setname.c" , False)
-add_program(env , conf ,  "rms_stat"    , "rms_stat.c"    , False)
-add_program(env , conf ,  "rms_test"    , "rms_test.c"    , False)
-add_program(env , conf ,  "tag_list"    , "tag_list.c"    , False)
-
- 
-install = env.Alias('install',"../bin")
-if SDP_ROOT:
-   env.Alias('SDP_INSTALL' , conf.SDP_BIN)
-
-Default( install )
+(local , SDP_INSTALL) = get_targets( env , conf )
+Default( local )
 
 

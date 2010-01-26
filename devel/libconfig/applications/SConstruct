@@ -5,36 +5,21 @@ sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
 from   global_config import LIBCONFIG
+from   global_config import get_targets
+from   global_config import add_program
 
+package      = "config"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
 
-SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
-if not os.path.exists( SDP_ROOT ):
-   SDP_ROOT = None
-
-conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
+conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 conf.update_env( env , [LIBCONFIG , LIBUTIL] , ext_liblist = ["m","z","pthread"] , link = True)
 
-##################################################################
 
+add_program(env , conf , bin_path , "config_test" , "config_test.c")
+add_program(env , conf , bin_path , "conf_test"   , "conf_test.c"  )
 
-
-def add_program(env , conf , target , src , SDP_INSTALL = False):
-    P = env.Program( target , src )
-    env.InstallProgram( "../bin" , P)
-    if conf.SDP_BIN:
-        if SDP_INSTALL:
-            env.InstallProgram(conf.SDP_BIN , P)
-
-
-
-
-add_program(env , conf , "config_test" , "config_test.c" , False)
-add_program(env , conf , "conf_test"   , "conf_test.c"   , False)
-
-##################################################################
-install = env.Alias('install',"../bin")
-if SDP_ROOT:
-   env.Alias('SDP_INSTALL' , conf.SDP_BIN)
-
-Default( install )
+(local , SDP_INSTALL) = get_targets( env , conf )
+Default( local )

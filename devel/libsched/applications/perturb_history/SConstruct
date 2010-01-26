@@ -8,20 +8,21 @@ from   global_config import LIBECL
 from   global_config import LIBSCHED
 from   global_config import LIBCONFIG
 from   global_config import add_program
+from   global_config import get_targets
+
+package      = "sched"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
+
 
 env  = Environment()
-conf = global_config.get_conf(os.getcwd() , 3)
+conf = global_config.get_conf(os.getcwd() , package , 3)
 conf.update_env( env , [LIBSCHED , LIBECL , LIBCONFIG , LIBUTIL] , ["m","z","pthread"] , link = True)
 
 
-
-bin_path = "../../bin"
-
 add_program(env , conf , bin_path , "perturb_history" ,["perturb_history.c" , "well_rate.c" , "group_rate.c" , "pert_util.c"])
-
-install = env.Alias('install',bin_path)
-env.Alias('SDP_INSTALL' , [bin_path , conf.SDP_BIN])
-
-Default( install )
+(local , SDP_INSTALL) = get_targets( env , conf )
+Default( local )
 
 

@@ -4,30 +4,24 @@ import sys
 sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
+from   global_config import add_static_library
+from   global_config import add_header
+from   global_config import get_targets
 
-conf = global_config.get_conf(os.getcwd() , 2)
+package      = "config"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
+
+conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 conf.update_env( env , [ LIBUTIL ] , link = False)
 
 src_list    = Split("config.c conf.c conf_util.c conf_data.c")
 header_list = Split("config.h conf.h conf_data.h")
 
+add_static_library( env , conf , lib_path , package , src_list)
+add_header( env , conf , include_path , header_list )
 
-LIB = env.StaticLibrary("config" , src_list)
-
-lib_path     = "../lib"
-include_path = "../include"
-env.InstallLibrary(lib_path , LIB)
-env.InstallHeader(include_path , header_list)
-install = env.Alias('install',[lib_path , include_path])
-
-
-##################################################################
-
-
-
-env.InstallHeader(conf.SDP_LIB , header_list)
-env.InstallLibrary(conf.SDP_LIB , LIB )
-SDP_INSTALL = env.Alias('SDP_INSTALL' , [ lib_path , include_path , conf.SDP_LIB , conf.SDP_INCLUDE])
-
-Default( install )
+(local , SDP_INSTALL) = get_targets( env , conf )
+Default( local )

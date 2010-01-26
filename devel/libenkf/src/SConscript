@@ -4,15 +4,23 @@ import sys
 sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
+from   global_config import LIBECL
 from   global_config import LIBCONFIG
 from   global_config import LIBRMS
-from   global_config import LIBECL
 from   global_config import LIBPLOT
 from   global_config import LIBSCHED
 from   global_config import LIBPLOT
 from   global_config import LIBJOB_QUEUE
+from   global_config import add_static_library
+from   global_config import add_header
+from   global_config import get_targets
 
-conf = global_config.get_conf(os.getcwd() , 2)
+package      = "enkf"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
+
+conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 conf.update_env( env , [ LIBJOB_QUEUE , LIBCONFIG , LIBRMS , LIBSCHED , LIBECL , LIBPLOT , LIBUTIL ] , link = False)
 
@@ -22,18 +30,5 @@ src_list = Split("scalar.c scalar_config.c trans_func.c enkf_types.c enkf_obs.c 
 header_list = Split("scalar.h scalar_config.h trans_func.h enkf_obs.h obs_data.h meas_vector.h enkf_config_node.h field_obs.h field_config.h field.h enkf_macros.h ecl_static_kw.h enkf_state.h enkf_util.h enkf_main.h enkf_node.h enkf_fs.h gen_kw_config.h gen_kw.h enkf_types.h basic_driver.h  meas_matrix.h summary_obs.h summary_config.h summary_config.h gen_data_config.h gen_data.h gen_common.h gen_obs.h enkf_sched.h fs_types.h enkf_serialize.h plain_driver_common.h ecl_config.h ensemble_config.h model_config.h site_config.h gen_data_active.h gen_obs_active.h field_active.h active_list.h obs_vector.h field_trans.h plain_driver_index.h plain_driver.h sqlite3.h sqlite3_driver.h config_parser.h enkf_analysis.h local_ministep.h local_updatestep.h local_config.h analysis_config.h misfit_table.h block_fs_driver.h block_fs_driver_index.h field_common.h gen_kw_common.h gen_data_common.h plot_config.h ert_template.h member_config.h enkf_defaults.h")
 
 
-LIB = env.StaticLibrary("enkf" , src_list)
-lib_path     = "../lib"
-include_path = "../include"
-env.InstallLibrary( lib_path , include_path )
-env.InstallHeader(include_path , header_list)
-install     = env.Alias('install',[lib_path , include_path])
-
-
-env.InstallHeader("%s/libenkf" % conf.SDP_INCLUDE , header_list)
-env.InstallLibrary(conf.SDP_LIB , LIB )
-SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE , lib_path , include_path])
-
-##################################################################
-
-Default( install )
+(local , SDP_INSTALL) = get_targets( env , conf )
+Default( local )

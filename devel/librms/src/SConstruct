@@ -5,31 +5,25 @@ sys.path += ["../../build"]
 import global_config
 from   global_config import LIBUTIL
 from   global_config import LIBECL
+from   global_config import add_static_library
+from   global_config import add_header
+from   global_config import get_targets
 
-SDP_ROOT = ARGUMENTS.get('SDP_ROOT','/d/proj/bg/enkf')
-if not os.path.exists( SDP_ROOT ):
-   SDP_ROOT = None
+package      = "rms"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
 
-conf = global_config.get_conf(SDP_ROOT , os.getcwd() , 2)
+conf = global_config.get_conf(os.getcwd() , package , 2)
 env  = Environment()
 conf.update_env( env , [ LIBECL , LIBUTIL ] , link = False)
 
 src_list    = Split("rms_file.c rms_util.c rms_tag.c rms_type.c rms_tagkey.c rms_stats.c rms_export.c")
 header_list = Split("rms_file.h rms_util.h rms_tag.h rms_type.h rms_tagkey.h rms_stats.h rms_export.h")
 
+add_static_library( env , conf , lib_path , package , src_list)
+add_header( env , conf , include_path , header_list )
 
-LIB = env.StaticLibrary("rms" , src_list)
-env.InstallLibrary("../lib"     , LIB)
-env.InstallHeader("../include"     , header_list)
+(local , SDP_INSTALL) = get_targets( env , conf )
+Default( local )
 
-
-##################################################################
-
-install     = env.Alias('install',["../lib" , "../include"])
-if SDP_ROOT:
-   SDP_INSTALL = env.Alias('SDP_INSTALL' , [conf.SDP_LIB , conf.SDP_INCLUDE])
-   env.InstallHeader("%s/librms" % conf.SDP_INCLUDE , header_list)
-   env.InstallLibrary(conf.SDP_LIB , LIB )
-
-
-Default( install )

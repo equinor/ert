@@ -2,30 +2,34 @@ import SCons
 import os.path
 import os
 import commands
+import stat
 
-def chgrp(path , group):
-    os.system("chgrp %s %s" % (group , path))
+os.umask(2)
+res_guid = os.stat("/project/res")[stat.ST_GID]
 
+def mkdir_gid( path ):
+    mkdir( path )
+    os.chown( path , -1 , res_guid )
+
+mkdir    = os.mkdir
+os.mkdir = mkdir_gid
+
+    
+
+def chgrp(path , guid ):
+    os.chown( path , -1 , guid )
+
+    
 #################################################################
 from SCons.Script.SConscript import SConsEnvironment
 SConsEnvironment.Chmod = SCons.Action.ActionFactory( os.chmod , lambda dest,mode : '')
 SConsEnvironment.Chgrp = SCons.Action.ActionFactory(    chgrp , lambda dest,group: '')
 
 def InstallPerm(env , dest , files , mode):
-    if not os.path.exists( dest ):
-        print "Creating directory: %s" % dest
-        os.makedirs( dest )
-
-    try:
-        os.chmod( dest , 0775 )
-        chgrp( dest , "res" ) 
-    except:
-        pass
-    
     obj = env.Install( dest , files )
     for f in obj:
         env.AddPostAction(f , env.Chmod(str(f) , mode))
-        env.AddPostAction(f , env.Chgrp(str(f) , "res"))
+        env.AddPostAction(f , env.Chgrp(str(f) , res_guid))
     return dest
 
 
@@ -34,11 +38,11 @@ def InstallProgram(env , dest , files):
 
 
 def InstallHeader(env , dest , files):
-    return InstallPerm( env , dest , files , 0664)
+    return InstallPerm( env , dest , files , 0553)
 
 
-def InstallLibrary(env , dest , files):
-    return InstallPerm( env , dest , files , 0664)
+def InstallLibrary(env , dest , files ):
+    return InstallPerm( env , dest , files , 0553)
 
 
 SConsEnvironment.InstallPerm    = InstallPerm
@@ -49,11 +53,40 @@ SConsEnvironment.InstallProgram = InstallProgram
 #################################################################
 
 
-def add_program(env , conf , bin_path , target , src):
-    P = env.Program( target , src )
+def add_program(env , conf , bin_path , target , src , **kwlist):
+    P = env.Program( target , src , **kwlist)
     env.InstallProgram(bin_path , P)
+    env.InstallProgram(conf.SDP_BIN_TARGET , P)
+    conf.SDP_INSTALL[ conf.SDP_BIN_TARGET ] = True
+    conf.local_install[ bin_path ]   = True
 
-    env.InstallProgram(conf.SDP_BIN , P)
+
+def add_static_library( env, conf , lib_path , target , src , **kwlist):
+    LIB = env.StaticLibrary( target , src , **kwlist)
+    env.InstallLibrary( lib_path , LIB )
+    env.InstallLibrary( conf.SDP_LIB_TARGET , LIB )
+    conf.SDP_INSTALL[ conf.SDP_LIB_TARGET ] = True
+    conf.local_install[ lib_path ]   = True
+
+
+def add_header( env, conf , include_path , header_list ):
+    env.InstallHeader( include_path , header_list )
+    env.InstallHeader( conf.SDP_INCLUDE_TARGET , header_list )
+    conf.SDP_INSTALL[ conf.SDP_INCLUDE_TARGET ] = True
+    conf.local_install[ include_path ]   = True
+
+
+def get_targets( env , conf):
+    def_list = []
+    SDP_list = []
+    for target in conf.local_install.keys():
+        def_list.append( target )
+
+    for target in conf.SDP_INSTALL.keys():
+        SDP_list.append( target )
+
+    return (env.Alias('local' , def_list) , env.Alias('SDP_INSTALL' , SDP_list))
+
 
 #################################################################
 
@@ -81,17 +114,20 @@ def get_SDP_ROOT():
 
 
 class conf:
-    def __init__(self , cwd , sub_level_depth):
+    def __init__(self , cwd , package , sub_level_depth):
 
         self.SVN_VERSION      = commands.getoutput("svnversion ./")
         self.TIME_STAMP       = commands.getoutput("date").replace(" " , "_")
         
         self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/Config/site-config"
         self.SDP_ROOT             = get_SDP_ROOT()
-        self.SDP_BIN              = "%s/bin"             % self.SDP_ROOT
-        self.SDP_INCLUDE          = "%s/include"         % self.SDP_ROOT
-        self.SDP_LIB              = "%s/lib"             % self.SDP_ROOT
-        self.SDP_ERT_RELEASE      = "%s/bin/ert_release" % self.SDP_ROOT
+        self.SDP_BIN              = "%s/bin"             %  self.SDP_ROOT
+        self.SDP_BIN_TARGET       = "%s/bin"             %  self.SDP_ROOT
+        self.SDP_INCLUDE          = "%s/include"         %  self.SDP_ROOT
+        self.SDP_INCLUDE_TARGET   = "%s/include/lib%s"   % (self.SDP_ROOT , package)
+        self.SDP_LIB              = "%s/lib"             %  self.SDP_ROOT
+        self.SDP_LIB_TARGET       = "%s/lib"             %  self.SDP_ROOT
+        self.SDP_ERT_RELEASE      = "%s/bin/ert_release" %  self.SDP_ROOT
         
         self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall -fPIC"
         self.ARFLAGS  = "csr"
@@ -120,6 +156,8 @@ class conf:
 
 
     def update_env( self , env , liblist , ext_liblist = None , link = False):
+        self.SDP_INSTALL   = {}
+        self.local_install = {}
         CPPPATH = ["./"]
         LIBPATH = []
         LIBS    = []
@@ -148,8 +186,8 @@ class conf:
 
                 
         
-def get_conf(cwd , sub_level_depth):
-    return conf( cwd , sub_level_depth )
+def get_conf(cwd , package , sub_level_depth):
+    return conf( cwd , package , sub_level_depth )
         
 
 

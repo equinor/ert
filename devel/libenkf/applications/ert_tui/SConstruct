@@ -12,7 +12,14 @@ from   global_config import LIBENKF
 from   global_config import LIBRMS
 from   global_config import LIBSCHED
 
-conf = global_config.get_conf(os.getcwd() , 3)
+from   global_config import add_program
+
+package      = "enkf"
+lib_path     = "../lib"
+include_path = "../include"
+bin_path     = "../bin"  
+
+conf = global_config.get_conf(os.getcwd() , package , 3)
 env  = Environment()
 
 conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "g2c" , "plplotd" , "m" , "z" , "pthread"] , link = True)
@@ -27,8 +34,8 @@ main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FI
 
 ert         = env.Program( "ert"                       , [main_object, tui_objects])
 ert_svn     = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
-Default( ert )
 
-env.InstallProgram(conf.SDP_ERT_RELEASE , ert_svn)
-env.Alias('SDP_INSTALL' , conf.SDP_ERT_RELEASE)
+env.InstallProgram( bin_path , ert )
+SDP_INSTALL = env.Alias('SDP_INSTALL' , env.InstallProgram( conf.SDP_ERT_RELEASE , ert_svn ))
 
+Default( bin_path )
