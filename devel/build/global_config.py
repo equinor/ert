@@ -13,6 +13,7 @@ SConsEnvironment.Chgrp = SCons.Action.ActionFactory(    chgrp , lambda dest,grou
 
 def InstallPerm(env , dest , files , mode):
     if not os.path.exists( dest ):
+        print "Creating directory: %s" % dest
         os.makedirs( dest )
 
     try:
