@@ -9,7 +9,7 @@ def chgrp(path , group):
 #################################################################
 from SCons.Script.SConscript import SConsEnvironment
 SConsEnvironment.Chmod = SCons.Action.ActionFactory( os.chmod , lambda dest,mode : 'chmod(%s , 0%o)' % (dest , mode))
-SConsEnvironment.Chgrp = SCons.Action.ActionFactory(    chgrp , lambda dest,group: pass)
+SConsEnvironment.Chgrp = SCons.Action.ActionFactory(    chgrp , lambda dest,group: '')
 
 def InstallPerm(env , dest , files , mode):
     if not os.path.exists( dest ):
