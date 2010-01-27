@@ -208,8 +208,9 @@ void enkf_tui_run_manual_load__( void * arg ) {
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT; //ENSEMBLE_PREDICTION will induce the most powerfull load. ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */
 
   enkf_main_init_run(enkf_main , run_mode);     /* This is ugly */
-
-  enkf_tui_util_scanf_report_steps(last_report , prompt_len , &step1 , &step2);
+  /** Observe that for the summary data it will load all the available data anyway. */
+  step1 = 0;
+  step2 = last_report;
   {
     char * prompt = util_alloc_sprintf("Which realizations to load [ensemble size:%d] : " , ens_size);
     char * select_string;
@@ -232,9 +233,9 @@ void enkf_tui_run_manual_load__( void * arg ) {
         enkf_state_type * enkf_state = enkf_main_iget_state( enkf_main , iens );
 
         arg_pack_append_ptr( arg_pack , enkf_state);
-        arg_pack_append_int( arg_pack , step1 );   /* This will be the load start parameter for the run_info struct. */
-        arg_pack_append_int( arg_pack , step1 );
-        arg_pack_append_int( arg_pack , step2 );
+        arg_pack_append_int( arg_pack , step1 );      /* This will be the load start parameter for the run_info struct. */
+        arg_pack_append_int( arg_pack , step1 );      /* Step1 */ 
+        arg_pack_append_int( arg_pack , step2 );      /* Step2 For summary data it will load the whole goddamn thing anyway.*/
         thread_pool_add_job( tp , enkf_state_internalize_results_mt , arg_pack);
       }
     }
