@@ -596,10 +596,10 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
               break;
           }
         }  
-
+        
         if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
           summary = ecl_sum_fread_alloc(header_file , data_files , ":");
-          
+        
         stringlist_free( data_files );
         util_safe_free( header_file );
 
@@ -608,7 +608,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
           /* The actual loading internalizing - from ecl_sum -> enkf_node. */
           const shared_info_type   * shared_info = enkf_state->shared_info;
           const int iens                         = member_config_get_iens( my_config );
-          const int step2                        = ecl_sum_get_last_report_step( summary );
+          const int step2                        = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
 
           for (report_step = load_start; report_step <= step2; report_step++) {
             hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);

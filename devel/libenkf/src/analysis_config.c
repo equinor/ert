@@ -48,8 +48,7 @@ static analysis_config_type * analysis_config_alloc__() {
 
 
 void analysis_config_set_log_path(analysis_config_type * config , const char * log_path ) {
-  config->log_path = util_realloc_string_copy(config->log_path , log_path);
-  util_make_path( log_path );
+  config->log_path        = util_realloc_string_copy(config->log_path , log_path);
 }
 
 
@@ -160,8 +159,11 @@ double analysis_config_get_truncation(const analysis_config_type * config) {
   return config->truncation;
 }
 
-
+/**
+   Will in addition create the path.
+*/
 const char * analysis_config_get_log_path( const analysis_config_type * config ) {
+  util_make_path( config->log_path );
   return config->log_path; 
 }
 

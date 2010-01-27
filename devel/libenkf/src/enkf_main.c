@@ -808,14 +808,14 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
 
         enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size,
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
-
+        
 	meas_matrix_calculate_ens_stats( meas_forecast );
 	enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
 
         /* How the fuck does dup() work?? */
 	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , stdout );
         enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , log_stream );
-
+        
 	if (obs_data_get_active_size(obs_data) > 0) {
 	  if (analysis_config_Xbased( enkf_main->analysis_config )) {
 	    matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
