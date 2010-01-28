@@ -1573,13 +1573,6 @@ static config_type * enkf_main_alloc_config() {
   /*****************************************************************/
   /* Keywords for the estimation                                   */
   ensemble_config_add_config_items(config);
-
-  {
-    FILE * stream = util_fopen("/tmp/config_items.txt" , "w");
-    config_fprintf_item_list( config , stream );
-    fclose( stream );
-  }
-
   return config;
 }
 
