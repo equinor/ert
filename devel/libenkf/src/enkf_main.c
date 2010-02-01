@@ -1562,7 +1562,8 @@ static config_type * enkf_main_alloc_config() {
   */
   item = config_add_key_value(config , "ENKF_MODE" , false , CONFIG_STRING );
   config_item_set_common_selection_set(item , 2 , (const char *[2]) {"STANDARD" , "SQRT"});
-
+  
+  config_add_key_value( config , "STD_CUTOFF"              , false , CONFIG_FLOAT);
   config_add_key_value( config , "ENKF_TRUNCATION"         , false , CONFIG_FLOAT);
   config_add_key_value( config , "ENKF_ALPHA"              , false , CONFIG_FLOAT);
   config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , false , CONFIG_BOOLEAN);
@@ -1988,7 +1989,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 	else
 	  obs_config_file = NULL;
 
-	enkf_main->obs = enkf_obs_fscanf_alloc(obs_config_file , model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config);
+	enkf_main->obs = enkf_obs_fscanf_alloc(obs_config_file , model_config_get_history(enkf_main->model_config) , enkf_main->ensemble_config, analysis_config_get_std_cutoff(enkf_main->analysis_config) );
       }
 
       enkf_main_update_obs_keys(enkf_main);

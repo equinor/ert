@@ -32,10 +32,10 @@ static analysis_config_type * analysis_config_alloc__() {
   analysis_config_type * config = util_malloc( sizeof * config , __func__);
 
   config->inversion_mode     = SVD_SS_N1_R;
-  config->std_cutoff         = 1e-6;
   config->random_rotation    = true;
   config->log_path           = NULL;
   
+  analysis_config_set_std_cutoff( config , DEFAULT_ENKF_STD_CUTOFF );
   analysis_config_set_log_path( config , DEFAULT_UPDATE_LOG_PATH );
   analysis_config_set_truncation( config , DEFAULT_ENKF_TRUNCATION );
   analysis_config_set_alpha( config , DEFAULT_ENKF_ALPHA );
@@ -44,6 +44,11 @@ static analysis_config_type * analysis_config_alloc__() {
   analysis_config_set_rerun( config , DEFAULT_RERUN );
   analysis_config_set_rerun_start( config , DEFAULT_RERUN_START );
   return config;
+}
+
+
+void analysis_config_set_std_cutoff( analysis_config_type * config , double std_cutoff ) {
+  config->std_cutoff = std_cutoff;
 }
 
 
@@ -64,6 +69,10 @@ void analysis_config_set_rerun_start( analysis_config_type * config , int rerun_
 
 bool analysis_config_get_rerun(const analysis_config_type * config) {
   return config->rerun;
+}
+
+double analysis_config_get_std_cutoff(const analysis_config_type * config) {
+  return config->std_cutoff;
 }
 
 
@@ -111,6 +120,9 @@ void analysis_config_init_from_config( analysis_config_type * analysis , const c
   if (config_item_set( config , "UPDATE_LOG_PATH" ))
     analysis_config_set_log_path( analysis , config_get_value( config , "UPDATE_LOG_PATH" ));
   
+  if (config_item_set( config , "STD_CUTOFF" ))
+    analysis_config_set_std_cutoff( analysis , config_get_value_as_double( config , "STD_CUTOFF" ));
+
   if (config_item_set( config , "ENKF_TRUNCATION" ))
     analysis_config_set_truncation( analysis , config_get_value_as_double( config , "ENKF_TRUNCATION" ));
 
@@ -151,9 +163,6 @@ double analysis_config_get_alpha(const analysis_config_type * config) {
   return config->overlap_alpha;
 }
 
-double analysis_config_get_std_cutoff(const analysis_config_type * config) {
-  return config->std_cutoff;
-}
 
 double analysis_config_get_truncation(const analysis_config_type * config) {
   return config->truncation;

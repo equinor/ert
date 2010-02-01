@@ -254,7 +254,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
     conf_instance_type, not a config_file.
 */
 
-enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_type * hist, ensemble_config_type * ensemble_config) {
+enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_type * hist, ensemble_config_type * ensemble_config, double std_cutoff) {
   enkf_obs_type      * enkf_obs        = enkf_obs_alloc();
   if(config_file == NULL)
     return enkf_obs;
@@ -280,7 +280,7 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
       const char               * sum_key       = stringlist_iget(hist_obs_keys, hist_obs_nr);
       const conf_instance_type * hist_obs_conf = conf_instance_get_sub_instance_ref(enkf_conf, sum_key);
 
-      obs_vector_type * obs_vector = obs_vector_alloc_from_HISTORY_OBSERVATION(hist_obs_conf , hist , ensemble_config);
+      obs_vector_type * obs_vector = obs_vector_alloc_from_HISTORY_OBSERVATION(hist_obs_conf , hist , ensemble_config , std_cutoff);
       enkf_obs_add_obs_vector(enkf_obs, sum_key, obs_vector);
     }
 

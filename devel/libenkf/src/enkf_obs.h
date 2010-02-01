@@ -32,7 +32,8 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * , const char * );
 enkf_obs_type * enkf_obs_fscanf_alloc(
   const char         * config_file,
   const history_type * hist,
-  ensemble_config_type * ensemble_config);
+  ensemble_config_type * ensemble_config, 
+  double std_cutoff);
 
 void enkf_obs_get_obs_and_measure(
         const enkf_obs_type    * enkf_obs,

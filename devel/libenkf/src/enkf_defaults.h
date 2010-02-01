@@ -49,6 +49,7 @@
 #define DEFAULT_ENKF_MODE          ENKF_STANDARD
 #define DEFAULT_ENKF_TRUNCATION    0.99
 #define DEFAULT_ENKF_ALPHA         1.50      /* Should be raised ?? */
+#define DEFAULT_ENKF_STD_CUTOFF    1e-6
 #define DEFAULT_MERGE_OBSERVATIONS false
 #define DEFAULT_RERUN              false
 #define DEFAULT_RERUN_START        0  

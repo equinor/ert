@@ -363,7 +363,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 
 
 
-obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history , ensemble_config_type * ensemble_config) {
+obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
   if(!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
     util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" instance, got \"%s\".\n",__func__, conf_instance_get_class_name_ref(conf_instance) );
   
@@ -452,9 +452,9 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
       } 
       else if(strcmp(error_mode_segment, "RELMIN") == 0) {
         for(restart_nr = start; restart_nr <= stop ; restart_nr++) {
-         std[restart_nr] = error_segment * abs(value[restart_nr]);
-         if(std[restart_nr] < error_min_segment)
-           std[restart_nr] = error_min_segment;
+          std[restart_nr] = error_segment * abs(value[restart_nr]);
+          if(std[restart_nr] < error_min_segment)
+            std[restart_nr] = error_min_segment;
         }
       } else
         util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
@@ -463,12 +463,14 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
     stringlist_free(segment_keys);
     
 
-    for (restart_nr = 0; restart_nr < size; restart_nr++) 
-    {
-      if (!default_used[restart_nr]) 
-      {
-       summary_obs_type * sum_obs  = summary_obs_alloc( sum_key , value[restart_nr] , std[restart_nr]);
-       obs_vector_install_node( obs_vector , restart_nr , sum_obs );
+    for (restart_nr = 0; restart_nr < size; restart_nr++) {
+      if (!default_used[restart_nr]) {
+        if (std[restart_nr] > std_cutoff) {
+          summary_obs_type * sum_obs  = summary_obs_alloc( sum_key , value[restart_nr] , std[restart_nr]);
+          obs_vector_install_node( obs_vector , restart_nr , sum_obs );
+        } else 
+          fprintf(stderr,"** Warning: to small observation error in observation %s:%d - ignored. \n", sum_key , restart_nr);
+        
       } 
     }
     
