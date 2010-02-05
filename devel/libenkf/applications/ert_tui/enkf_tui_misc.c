@@ -26,7 +26,7 @@ static void enkf_tui_misc_list_jobs(void * arg) {
   const ext_joblist_type * installed_jobs = enkf_main_get_installed_jobs( enkf_main );
   stringlist_type * job_names             = ext_joblist_alloc_list( installed_jobs );
   int job_nr;
-  stringlist_sort( job_names );
+  stringlist_sort( job_names , NULL );
   printf("================================================================================\n");
   printf("%-30s : Arguments\n" , "Job name");
   printf("--------------------------------------------------------------------------------\n");
