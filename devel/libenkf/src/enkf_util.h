@@ -312,6 +312,8 @@ char  * enkf_util_scanf_alloc_filename(const char * , int );
 void    enkf_util_fprintf_data(const int * , const double ** , const char * , const char ** , int , int , const bool * , bool , FILE * stream);
 
 char * enkf_util_alloc_tagged_string(const char * );
+int    enkf_util_compare_keys( const char * key1 , const char * key2 );
+int    enkf_util_compare_keys__( const void * __key1 , const void * __key2 );
 
 /* These #defines are used in the enkf_util_scanf_alloc_filename function. */
 #define EXISTING_FILE  1

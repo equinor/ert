@@ -24,6 +24,7 @@ double             meas_matrix_iget_ens_mean(const meas_matrix_type * matrix , i
 double             meas_matrix_iget_ens_std(const meas_matrix_type * matrix , int index);
 void               meas_matrix_iget_ens_mean_std( const meas_matrix_type * matrix , int index , double * mean , double * std);
 int                meas_matrix_get_ens_size( const meas_matrix_type * meas_matrix );
+int                meas_matrix_get_nrobs( const meas_matrix_type * meas_matrix );
 #ifdef __cplusplus
 }
 #endif

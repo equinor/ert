@@ -14,7 +14,7 @@
 #include <enkf_analysis.h>
 #include <enkf_tui_util.h>
 #include <enkf_tui_fs.h>
-
+#include <ert_tui_const.h>
 
 
 
@@ -39,7 +39,6 @@ void enkf_tui_run_start__(void * enkf_main) {
 void enkf_tui_run_restart__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
-  const int prompt_len  = 35;
   const int last_report = enkf_main_get_history_length( enkf_main );
   int start_report;
   state_enum state;
@@ -50,8 +49,8 @@ void enkf_tui_run_restart__(void * enkf_main) {
       iactive[iens] = true;
   }
 
-  start_report = util_scanf_int_with_limits("Report step",prompt_len , 0 , last_report);
-  state        = enkf_tui_util_scanf_state("Analyzed/forecast" , prompt_len , false);
+  start_report = util_scanf_int_with_limits("Report step",PROMPT_LEN , 0 , last_report);
+  state        = enkf_tui_util_scanf_state("Analyzed/forecast" , PROMPT_LEN , false);
   
   enkf_main_run(enkf_main , ENKF_ASSIMILATION , iactive , start_report , start_report  , state);
   free(iactive);
@@ -72,7 +71,6 @@ void enkf_tui_run_restart__(void * enkf_main) {
 void enkf_tui_run_exp__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
-  int prompt_len = 45;
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   state_enum init_state    = ANALYZED; 
@@ -81,7 +79,7 @@ void enkf_tui_run_exp__(void * enkf_main) {
   {
     char * prompt = util_alloc_sprintf("Which realizations to simulate[ensemble size:%d] : " , ens_size);
     char * select_string;
-    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     util_sscanf_active_range( select_string , ens_size - 1 , iactive);
     free( prompt );
@@ -98,7 +96,6 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int ens_size           = ensemble_config_get_size(ensemble_config);
-  int prompt_len = 45;
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   state_enum init_state    = ANALYZED; 
@@ -107,7 +104,7 @@ void enkf_tui_run_create_runpath__(void * __enkf_main) {
   {
     char * prompt = util_alloc_sprintf("Which realizations to create[ensemble size:%d] : " , ens_size);
     char * select_string;
-    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     util_sscanf_active_range( select_string , ens_size - 1 , iactive);
     free( prompt );
@@ -134,18 +131,18 @@ void enkf_main_interactive_set_runpath__(void *arg) {
 */
 
 void enkf_tui_run_analyze__(void * enkf_main) {
-  int report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length(enkf_main) , "Which report step to analyze" , 40);
-  enkf_main_UPDATE(enkf_main , report_step , report_step );
+  int report_step = enkf_tui_util_scanf_report_step(enkf_main_get_history_length(enkf_main) , "Which report step to analyze" , PROMPT_LEN);
+  enkf_main_UPDATE(enkf_main , false , report_step , report_step );
 }
 
 
 void enkf_tui_run_smooth__(void * enkf_main) {
   int last_report = enkf_main_get_history_length( enkf_main ) ;
-  int step1 = enkf_tui_util_scanf_report_step(last_report , "First report step" , 20);
-  int step2 = enkf_tui_util_scanf_report_step(last_report , "Last report step" , 20);
-
+  int step1       = enkf_tui_util_scanf_report_step(last_report , "First report step" , PROMPT_LEN);
+  int step2       = enkf_tui_util_scanf_report_step(last_report , "Last report step"  , PROMPT_LEN);
+  
   if(step1 <= step2)
-    enkf_main_UPDATE(enkf_main , step1, step2 );
+    enkf_main_UPDATE(enkf_main , true , step1, step2 );
 }
 
 
@@ -198,7 +195,6 @@ void enkf_tui_run_full__(void * __enkf_main) {
 
 
 void enkf_tui_run_manual_load__( void * arg ) {
-  const int prompt_len                         = 60;
   enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
   const int last_report                        = enkf_main_get_history_length( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
@@ -214,7 +210,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   {
     char * prompt = util_alloc_sprintf("Which realizations to load [ensemble size:%d] : " , ens_size);
     char * select_string;
-    util_printf_prompt(prompt , prompt_len , '=' , "=> ");
+    util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
     util_sscanf_active_range( select_string , ens_size - 1 , iactive);
     free( prompt );

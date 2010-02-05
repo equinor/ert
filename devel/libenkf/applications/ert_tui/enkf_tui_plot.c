@@ -29,9 +29,9 @@
 #include <plot_config.h>
 #include <member_config.h>
 #include <double_vector.h>
+#include <ert_tui_const.h>
 
 
-#define PROMPT_LEN 60
 
 
 /**

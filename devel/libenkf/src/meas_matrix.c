@@ -134,8 +134,8 @@ void fwrite_matrix(const char * filename, const double *M , int ny , int nx , in
 */
 
 void meas_matrix_calculate_ens_stats(meas_matrix_type * matrix) {
-  int nrobs        = meas_vector_get_size( matrix->meas_vectors[0] );
-
+  int nrobs            = meas_vector_get_size( matrix->meas_vectors[0] );
+  printf("NROBS:%d \n",nrobs);
   matrix->active       = util_realloc( matrix->active   , sizeof * matrix->active   * nrobs , __func__);
   matrix->ens_std      = util_realloc( matrix->ens_std  , sizeof * matrix->ens_std  * nrobs , __func__);
   matrix->ens_mean     = util_realloc( matrix->ens_mean , sizeof * matrix->ens_mean * nrobs , __func__);
@@ -193,8 +193,10 @@ double meas_matrix_iget_ens_mean(const meas_matrix_type * matrix , int index) {
 
 
 double meas_matrix_iget_ens_std(const meas_matrix_type * matrix , int index) {
+  printf("Asking for:%d \n",index);
   return matrix->ens_std[index];
 }
+
 
 void meas_matrix_iget_ens_mean_std( const meas_matrix_type * matrix , int index , double * mean , double * std) {
   *mean = matrix->ens_mean[index];
@@ -239,6 +241,10 @@ matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix) {
 }
 
 
+
+int meas_matrix_get_nrobs( const meas_matrix_type * meas_matrix ) {
+  return meas_vector_get_nrobs( meas_matrix->meas_vectors[0] );
+}
 
 
 int meas_matrix_get_ens_size( const meas_matrix_type * meas_matrix ) {

@@ -34,7 +34,7 @@ meas_vector_type * meas_vector_alloc() {
   meas_vector_type * meas_vector = malloc(sizeof * meas_vector);
   meas_vector->data = NULL;
   meas_vector->target_size = 32;
-  meas_vector_realloc_data(meas_vector , meas_vector->target_size);
+  meas_vector->alloc_size  = 0;
   meas_vector_reset(meas_vector);
   return meas_vector;
 }

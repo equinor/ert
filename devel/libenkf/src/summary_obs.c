@@ -77,7 +77,9 @@ const char * summary_obs_get_summary_key(const summary_obs_type * summary_obs)
 
 
 /**
-   Hardcodes an assumption that the size of summary data|observations is always one.
+   Hardcodes an assumption that the size of summary data|observations
+   is always one; i.e. PARTLY_ACTIVE and ALL_ACTIVE are treated in the
+   same manner.
 */
 void summary_obs_get_observations(const summary_obs_type * summary_obs,
 				  int                      restart_nr,
@@ -85,12 +87,10 @@ void summary_obs_get_observations(const summary_obs_type * summary_obs,
 				  const active_list_type * __active_list) {
 
   active_mode_type active_mode = active_list_get_mode( __active_list );
-  if (active_mode == ALL_ACTIVE) 
-    obs_data_add(obs_data , summary_obs->value , summary_obs->std , summary_obs->summary_key);
-  else if (active_mode == PARTLY_ACTIVE) { /* This is quite lame - but ... */
-    int active_size = active_list_get_active_size( __active_list );
-    if (active_size == 1)
-      obs_data_add(obs_data , summary_obs->value , summary_obs->std , summary_obs->summary_key);
+  if ((active_mode == ALL_ACTIVE) || (active_mode == PARTLY_ACTIVE)) {
+    char * key = util_alloc_sprintf( "%s (%d)" , summary_obs->summary_key, restart_nr);
+    obs_data_add(obs_data , summary_obs->value , summary_obs->std , key);
+    free( key );
   }
 }
 

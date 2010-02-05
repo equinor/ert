@@ -748,20 +748,19 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 */
 
 
-void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
+void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int step1 , int step2) {
   /*
-     If include_internal_observations is true all observations in the
-     time interval [step1+1,step2] will be used, otherwise only the
-     last observation at step2 will be used.
+     If merge_observations is true all observations in the time
+     interval [step1+1,step2] will be used, otherwise only the last
+     observation at step2 will be used.
   */
-  bool include_internal_observations = analysis_config_merge_observations( enkf_main->analysis_config );
   double alpha                       = analysis_config_get_alpha( enkf_main->analysis_config );
   double std_cutoff                  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
   int start_step , end_step;
 
   /* Observe that end_step is inclusive. */
-  if (include_internal_observations) {
+  if (merge_observations) {
     start_step = step1;
     end_step   = step2;
   } else {
@@ -803,28 +802,31 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , int step1 , int step2) {
     log_stream = util_fopen( log_file , "w" );
 
     for (int ministep_nr = 0; ministep_nr < local_updatestep_get_num_ministep( updatestep ); ministep_nr++) {   /* Looping over local analysis ministep */
+      local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
+      obs_data_reset( obs_data );
+      meas_matrix_reset( meas_forecast );
       for(int report_step = start_step; report_step <= end_step; report_step++)  {                              /* Looping over normal report steps.    */ 
-	local_ministep_type   * ministep = local_updatestep_iget_ministep( updatestep , ministep_nr );
-
+        
+        //printf("Fetching observations: %d \n",report_step);
         enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size,
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
         
-	meas_matrix_calculate_ens_stats( meas_forecast );
-	enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
-
-        /* How the fuck does dup() work?? */
-	enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , stdout );
-        enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , report_step , local_ministep_get_name( ministep ) , log_stream );
-        
-	if (obs_data_get_active_size(obs_data) > 0) {
-	  if (analysis_config_Xbased( enkf_main->analysis_config )) {
-	    matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
-
-	    enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
-
-	    matrix_free( X );
-	  }
-	}
+      }
+      meas_matrix_calculate_ens_stats( meas_forecast );
+      enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
+      
+      /* How the fuck does dup() work?? */
+      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , stdout );
+      enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , log_stream );
+      
+      if (obs_data_get_active_size(obs_data) > 0) {
+        if (analysis_config_Xbased( enkf_main->analysis_config )) {
+          matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
+          
+          enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
+          
+          matrix_free( X );
+        }
       }
     }
     fclose( log_stream );
@@ -1139,7 +1141,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
     log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
 
     if (enkf_update)
-      enkf_main_UPDATE(enkf_main , load_start , step2);
+      enkf_main_UPDATE(enkf_main , analysis_config_merge_observations( enkf_main->analysis_config ) , load_start , step2);
 
     enkf_fs_fsync( enkf_main->dbase );
     printf("%s: ferdig med step: %d \n" , __func__,step2);

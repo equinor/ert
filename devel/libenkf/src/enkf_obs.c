@@ -205,11 +205,10 @@ obs_vector_type * enkf_obs_get_vector(const enkf_obs_type * obs, const char * ke
 
 
 /*
-  This will append observations and simulated responses 
-  from report_step to obs_data and meas_matrix.
-  Call obs_data_reset and meas_matrix_reset on
-  obs_data and meas_matrix if you want to use fresh
-  instances.
+  This will append observations and simulated responses from
+  report_step to obs_data and meas_matrix.  
+  Call obs_data_reset and meas_matrix_reset on obs_data and meas_matrix
+  if you want to use fresh instances.
 */
 void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   enkf_fs_type           * fs,
@@ -222,9 +221,6 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
                                   const local_ministep_type  * mstep) {
   
   hash_iter_type * iter = local_ministep_alloc_obs_iter( mstep );
-  obs_data_reset( obs_data );
-  meas_matrix_reset( meas_matrix );
-
   while ( !hash_iter_is_complete(iter) ) {
     const char * obs_key         = hash_iter_get_next_key( iter );
     obs_vector_type * obs_vector = hash_get( enkf_obs->obs_hash , obs_key );
@@ -236,6 +232,7 @@ void enkf_obs_get_obs_and_measure(const enkf_obs_type    * enkf_obs,
 	for (iens = 0; iens < ens_size; iens++) {
 	  enkf_node_type * enkf_node = enkf_state_get_node(ensemble[iens] , obs_vector_get_state_kw(obs_vector));
 	  meas_vector_type * meas_vector = meas_matrix_iget_vector(meas_matrix , iens);
+
 	  enkf_fs_fread_node(fs , enkf_node , report_step , iens , state);
 	  obs_vector_measure(obs_vector , report_step , enkf_node , meas_vector , active_list);
 	}

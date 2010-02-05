@@ -48,6 +48,7 @@
 #include <timer.h>
 #include <time_t_vector.h>
 #include <member_config.h>
+#include <enkf_defaults.h>
 #define  ENKF_STATE_TYPE_ID 78132
 
 
@@ -598,7 +599,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
         }  
         
         if ((header_file != NULL) && (stringlist_get_size(data_files) > 0)) 
-          summary = ecl_sum_fread_alloc(header_file , data_files , ":");
+          summary = ecl_sum_fread_alloc(header_file , data_files , DEFAULT_SUMMARY_JOIN);
         
         stringlist_free( data_files );
         util_safe_free( header_file );

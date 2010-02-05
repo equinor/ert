@@ -56,15 +56,10 @@ Matrices: S, D, E and various internal variables.
 /* Small type holding one observation  - could be enhanced for non-diagonal covariance observation errors.*/
 
 struct obs_data_node_struct {
-  double        value;
-  double        std; 
-  const char   *keyword;  /* 
-                             This keyword is ONLY used for pretty-printing. Observe that the
-                             storage for this keyword is NOT owned by the obs_data_node
-                             structure, but rather by the type specific field_obs || gen_obs ||
-                             summary_obs structure.
-                          */
-  bool          active;
+  double         value;
+  double         std; 
+  char         * keyword;  /* This keyword is ONLY used for pretty-printing. */
+  bool           active;
 };
 
 
@@ -72,16 +67,17 @@ static obs_data_node_type * obs_data_node_alloc( double value , double std , con
   obs_data_node_type * node = util_malloc( sizeof * node , __func__);
   node->value   = value;
   node->std     = std;
-  node->keyword = keyword;
+  node->keyword = util_alloc_string_copy( keyword );
   node->active  = true;
   return node;
 }
 
 
 static void obs_data_node_free( obs_data_node_type * node ) {
+  free( node->keyword );
   free( node );
 }
-  
+
 
 const char * obs_data_node_get_keyword( const obs_data_node_type * node ) {
   return node->keyword;

@@ -443,16 +443,20 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 /*****************************************************************/
 
 
-void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int report_step, const char * ministep_name , FILE * stream ) {
+void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int start_step, int end_step , const char * ministep_name , FILE * stream ) {
   const char * float_fmt = "%12.6f";
   int iobs;
   fprintf(stream , "======================================================================================================================\n");
-  fprintf(stream , "Report step...: %04d \n",report_step);
+  if (start_step == end_step)
+    fprintf(stream , "Report step...: %04d \n",start_step);
+  else
+    fprintf(stream , "Report step...: %04d - %04d \n",start_step , end_step);
+  
   fprintf(stream , "Ministep......: %s   \n",ministep_name);  
   fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
   if (obs_data_get_nrobs( obs_data ) > 0) {
     char * obs_fmt = util_alloc_sprintf("  %%-3d : %%-32s %s +/-  %s" , float_fmt , float_fmt);
-    char * sim_fmt = util_alloc_sprintf("   %s +/- %s  \n" , float_fmt , float_fmt);
+    char * sim_fmt = util_alloc_sprintf("   %s +/- %s  \n"            , float_fmt , float_fmt);
 
     fprintf(stream , "                                                   Observed history               |             Simulated data        \n");  
     fprintf(stream , "----------------------------------------------------------------------------------------------------------------------\n");
@@ -492,6 +496,7 @@ void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const me
 void enkf_analysis_deactivate_outliers(obs_data_type * obs_data , meas_matrix_type * meas_matrix , double std_cutoff , double alpha) {
   int nrobs = obs_data_get_nrobs( obs_data );
   int iobs;
+  
   for (iobs = 0; iobs < nrobs; iobs++) {
     if (meas_matrix_iget_ens_std( meas_matrix , iobs) < std_cutoff) {
       /*

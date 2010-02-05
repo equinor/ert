@@ -277,3 +277,66 @@ void enkf_util_fprintf_data(const int * index_column , const double ** data, con
 char * enkf_util_alloc_tagged_string(const char * s) {
   return util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , s , DEFAULT_END_TAG);
 }
+
+
+
+
+/**
+   This function will compare two (key) strings. The function is
+   intended to be used when sorting observation keys in summary tables
+   of misfit. First the string is split on ':' - then the subsequent
+   sorting is as follows:
+
+    1. The number of items is compared, with fewer items coming first.
+
+    2. A normal string compare is performed on the second item.
+
+    3. A normal string compare on the first item.
+
+    4. A normal string compare of the input key.
+
+   The main point of this whole complexity is what is the items 2 & 3;
+   this will guarantee that the different summary keys related to the
+   same well, i.e. WWCT:OP1, WGOR:OP_1 and WBHP:OP_1 will come
+   together.
+
+*/
+
+
+int enkf_util_compare_keys( const char * key1 , const char * key2 ) {
+  int cmp;
+  {
+    stringlist_type * items1 = stringlist_alloc_from_split( key1 , DEFAULT_SUMMARY_JOIN );
+    stringlist_type * items2 = stringlist_alloc_from_split( key2 , DEFAULT_SUMMARY_JOIN );
+
+    /* 1: Compare number of items. */
+    cmp = stringlist_get_size( items1 ) - stringlist_get_size( items2 );
+    if (cmp == 0) {
+      /* 2: String compare on second item */
+      if (stringlist_get_size( items1 ) >= 2)
+        cmp = strcmp( stringlist_iget( items1 , 1) , stringlist_iget( items2  , 1));
+    }
+    
+    /* 3: String compare on first item */
+    if (cmp == 0) 
+      cmp = strcmp( stringlist_iget( items1 , 0) , stringlist_iget( items2  , 0));
+
+    /* String compare of the whole god damn thing. */
+    if (cmp == 0)
+      cmp = strcmp( key1 , key2 );
+
+    stringlist_free( items2 );
+    stringlist_free( items1 );
+  }
+  return cmp;
+}
+
+
+int enkf_util_compare_keys__( const void * __key1 , const void * __key2 ) {
+  const char * key1 = (const char *) __key1;
+  const char * key2 = (const char *) __key2;
+
+  return enkf_util_compare_keys( key1 , key2 );
+}
+
+

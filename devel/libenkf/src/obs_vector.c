@@ -406,10 +406,10 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
       }
     } else
       util_abort("%s: Internal error. Unknown error mode \"%s\"\n", __func__, error_mode);
-
+    
     // Handle SEGMENTs that can customize the observation error.
     stringlist_type * segment_keys = conf_instance_alloc_list_of_sub_instances_of_class_by_name(conf_instance, "SEGMENT");
-    stringlist_sort(segment_keys);
+    stringlist_sort( segment_keys , NULL );
 
     int num_segments = stringlist_get_size(segment_keys);
 

@@ -7,6 +7,7 @@
 #include <double_vector.h>
 #include <misfit_table.h>
 #include <enkf_fs.h>
+#include <enkf_util.h>
 #include <msg.h>
 #include <buffer.h>
 
@@ -399,7 +400,7 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
   const misfit_ranking_type * ranking = hash_get( table->ranking_list , ranking_key );
   const int * permutations            = ranking->sort_permutation;
   {
-    // All this whitsepace is finely tuned and highly significant .... 
+    // All this whitespace is finely tuned and highly significant .... 
     const char * key_fmt       = " %13s ";                                
     const char * value_fmt     = " %13.3f ";
     const char * start_fmt     = " %3d       %3d           %10.3f     ";  
@@ -409,7 +410,7 @@ void misfit_table_fprintf_ranking( const misfit_table_type * table , const char 
     int num_obs                = stringlist_get_size( obs_keys );
     int iobs;
 
-
+    stringlist_sort( obs_keys , enkf_util_compare_keys__ );
     fprintf(stream , "   #     Realization   Total-misfit     ");
     for (iobs =0; iobs < num_obs; iobs++) 
       fprintf(stream , key_fmt , stringlist_iget( obs_keys , iobs ));
