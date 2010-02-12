@@ -425,6 +425,56 @@ job_status_type job_queue_export_job_status(job_queue_type * queue , int externa
 }
 
 
+/**
+   This function will copy the internal queue->status_list to the
+   input variable @external_status_list. The external scope can then
+   query this variable with the enum fields defined in
+   'basic_queue_driver.h':
+
+      #include <basic_queue_driver.h>
+
+      int * status_list = util_malloc( sizeof * status_list * JOB_QUEUE_MAX_STATE , __func__);
+   
+      job_queue_export_status_summary( queue , status_list );
+      printf("Running jobs...: %03d \n", status_list[ JOB_QUEUE_RUNNING ]);
+      printf("Waiting jobs:..: %03d \n", status_list[ JOB_QUEUE_WAITING ]);
+
+   Alternatively the function job_queue_iget_status_summary() can be used
+*/
+
+
+
+void job_queue_export_status_summary( job_queue_type * queue , int * external_status_list) {
+  pthread_rwlock_rdlock( &queue->status_rwlock );
+  {
+    memcpy( external_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * queue->status_list );
+  }
+  pthread_rwlock_unlock( &queue->status_rwlock );
+}
+
+
+
+/**
+   Will return the number of jobs with status @status.
+
+      #include <basic_queue_driver.h>
+
+      printf("Running jobs...: %03d \n", job_queue_iget_status_summary( queue , JOB_QUEUE_RUNNING ));
+      printf("Waiting jobs:..: %03d \n", job_queue_iget_status_summary( queue , JOB_QUEUE_WAITING ));
+
+   Observe that if this function is called repeatedly the status might change between
+   calls, with the consequence that the total number of jobs does not add up
+   properly. The handles itself autonomously so as long as the return value from this
+   function is only used for information purposes this does not matter. Alternatively
+   the function job_queue_export_status_summary(), which does proper locking, can be
+   used.
+*/
+
+int job_queue_iget_status_summary( job_queue_type * queue , job_status_type status) {
+  return queue->status_list[ status ];
+}
+
+
 
 void job_queue_set_load_OK(job_queue_type * queue , int external_id) {
   int queue_index    = job_queue_get_internal_index( queue , external_id );
@@ -581,8 +631,8 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
       }
       
       {
+        
 	/* Submitting new jobs */
-	
 	int active_size    = job_queue_get_active_size(queue);
 	int total_active   = queue->status_list[JOB_QUEUE_PENDING] + queue->status_list[JOB_QUEUE_RUNNING];
 	int num_submit_new = queue->max_running - total_active; 
@@ -749,6 +799,32 @@ void job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * dri
     driver->free_driver(driver);
   
   queue->driver = driver;
+}
+
+
+/**
+   Observe that if the max number of running jobs is decreased,
+   nothing will be done to reduce the number of jobs currently
+   running; but no more jobs will be submitted until the number of
+   running has fallen below the new limit.
+*/
+
+void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
+  queue->max_running     = max_running;
+  if (queue->max_running < 0)
+    queue->max_running = 0;
+}
+
+/*
+  The return value is the new value for max_running.
+*/
+int job_queue_inc_max_runnning( job_queue_type * queue, int delta ) {
+  job_queue_set_max_running( queue , queue->max_running + delta );
+  return queue->max_running;
+}
+
+int job_queue_get_max_running( const job_queue_type * queue ) {
+  return queue->max_running;
 }
 
 

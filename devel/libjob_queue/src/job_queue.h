@@ -21,6 +21,12 @@ void                job_queue_set_external_restart(job_queue_type * queue , int 
 void                job_queue_set_external_fail(job_queue_type * queue , int external_id);
 void                job_queue_set_external_load(job_queue_type * queue , int external_id);
 const char        * job_queue_status_name( job_status_type status );
+void                job_queue_set_max_running( job_queue_type * queue , int max_running );
+int                 job_queue_inc_max_runnning( job_queue_type * queue, int delta );
+int                 job_queue_get_max_running( const job_queue_type * queue );
+void                job_queue_export_status_summary( job_queue_type * queue , int * external_status_list);
+int                 job_queue_iget_status_summary( job_queue_type * queue , job_status_type status);
+
 
 #ifdef __cplusplus
 }

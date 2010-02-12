@@ -297,6 +297,7 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
       }
 
       if (double_vector_size( sim_time ) > 0) {
+        printf("Obs_size:%d    errorbar_max_obsnr:%d \n",obs_size , errorbar_max_obsnr);
 	if (obs_size > errorbar_max_obsnr) {
 	  /* 
 	     There are very many observations - to increase
@@ -341,6 +342,11 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 	    plot_dataset_append_point_xy( data_upper , days , value + std);
 	  }
 	} else {
+          /*
+            Normal plot with errorbars. Observe that the coordinates
+            are (x,y1,y2) and NOT (x,y,std_y).
+          */
+
 	  plot_dataset_type * obs_errorbar  = plot_alloc_new_dataset( plot , "observations" , PLOT_XY1Y2 );
 	  plot_dataset_set_line_color( obs_errorbar , RED);
 	  plot_dataset_set_line_width( obs_errorbar , 1.5);
