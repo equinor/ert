@@ -860,6 +860,7 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
 static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
   const int num_load_threads      = 10;
   const int ens_size              = ensemble_config_get_size(enkf_main->ensemble_config);
+  job_queue_type * job_queue      = site_config_get_job_queue(enkf_main->site_config);                          
   arg_pack_type ** arg_list       = util_malloc( ens_size * sizeof * arg_list , __func__);
   job_status_type * status_list   = util_malloc( ens_size * sizeof * status_list , __func__);
   thread_pool_type * load_threads = thread_pool_alloc( num_load_threads , true);
@@ -946,6 +947,20 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
     }
     if (jobs_remaining > 0)
       usleep( usleep_time );
+    
+
+    /* A poor man's /proc interface .... */
+    {
+      if (util_file_exists("MAX_RUNNING")) {
+        FILE * stream = util_fopen("MAX_RUNNING" , "r");
+        int max_running;
+        fscanf( stream , "%d" , &max_running);
+        fclose( stream );
+        unlink( "MAX_RUNNING" );
+        job_queue_set_max_running( job_queue , max_running );
+      }
+    }
+    
   } while (jobs_remaining > 0);
   thread_pool_join( load_threads );
   thread_pool_free( load_threads );
@@ -959,10 +974,10 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
 
 
 /**
-   The function enkf_main_run_step() is quite heavily multithreaded involving
-   one designated worker thread (queue_thread) and two thread_pools. In the
-   diagram below we have attempted to illustrate the multrthreaded behaviour of
-   the function enkf_main_run_step():
+   The function enkf_main_run_step() is quite heavily multithreaded
+   involving one designated worker thread (queue_thread) and two
+   thread_pools. In the diagram below we have attempted to illustrate
+   the multithreaded behaviour of the function enkf_main_run_step():
 
     o The execution path does not leave a 'box' before the thread / thread_pool
       has been joined.
@@ -1023,10 +1038,10 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
          Some single threaded clean up.
 
 
-  In addition to the trivial speed up (on a multi CPU box) the multithreading
-  allows for asyncronous treatmeant of the queue, loading of results e.t.c. The
-  latter is probably the most important argument for using a multithreaded
-  approach.
+  In addition to the trivial speed up (on a multi CPU box) the
+  multithreading allows for asyncronous treatmeant of the queue,
+  loading of results e.t.c. The latter is probably the most important
+  argument for using a multithreaded approach.
 */
 
 
