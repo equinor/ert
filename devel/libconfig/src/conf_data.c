@@ -158,7 +158,7 @@ bool conf_data_validate_string_as_dt_vector(
   if(num_elem != NULL)
     *num_elem = 0;
 
-  util_split_string(str, " \t\r\n,", &num_tokens, &tokens);
+  util_split_string(str, DT_VECTOR_SEP, &num_tokens, &tokens);
 
   for(int i=0; i<num_tokens; i++)
   {
