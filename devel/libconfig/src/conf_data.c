@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <conf_data.h>
@@ -146,33 +147,6 @@ bool conf_data_validate_string_as_dt_value(
 
 
 
-bool conf_data_validate_string_as_dt_vector(
-  dt_enum      dt,
-  const char * str,
-  int        * num_elem)
-{
-  bool ok = true;
-  int num_tokens; 
-  char ** tokens;
-
-  if(num_elem != NULL)
-    *num_elem = 0;
-
-  util_split_string(str, DT_VECTOR_SEP, &num_tokens, &tokens);
-
-  for(int i=0; i<num_tokens; i++)
-  {
-    if(!conf_data_validate_string_as_dt_value(dt, tokens[i]))
-      ok = false;
-    else if(num_elem != NULL)
-      *num_elem = *num_elem + 1;
-  }
-  util_free_stringlist(tokens, num_tokens);
-
-  return ok;
-
-}
-
 
 
 int conf_data_get_int_from_string(
@@ -261,66 +235,3 @@ time_t conf_data_get_time_t_from_string(
 
 
 
-int_vector_type * conf_data_get_int_vector_from_string(
-  dt_enum dt,
-  const char * str)
-{
-  int num_tokens; 
-  char ** tokens;
-  int_vector_type * vec = int_vector_alloc(1,0);
-
-  util_split_string(str, DT_VECTOR_SEP, &num_tokens, &tokens);
-
-  for(int i=0; i<num_tokens; i++)
-  {
-    int elem = conf_data_get_int_from_string(dt, tokens[i]);
-    int_vector_append(vec, elem);
-  }
-  util_free_stringlist(tokens, num_tokens);
-
-  return vec;
-}
-
-
-
-double_vector_type * conf_data_get_double_vector_from_string(
-  dt_enum dt,
-  const char * str)
-{
-  int num_tokens; 
-  char ** tokens;
-  double_vector_type * vec = double_vector_alloc(1,0);
-
-  util_split_string(str, DT_VECTOR_SEP, &num_tokens, &tokens);
-
-  for(int i=0; i<num_tokens; i++)
-  {
-    double elem = conf_data_get_double_from_string(dt, tokens[i]);
-    double_vector_append(vec, elem);
-  }
-  util_free_stringlist(tokens, num_tokens);
-
-  return vec;
-}
-
-
-
-time_t_vector_type * conf_data_get_time_t_vector_from_string(
-  dt_enum dt,
-  const char * str)
-{
-  int num_tokens; 
-  char ** tokens;
-  time_t_vector_type * vec = time_t_vector_alloc(1,0);
-
-  util_split_string(str, DT_VECTOR_SEP, &num_tokens, &tokens);
-
-  for(int i=0; i<num_tokens; i++)
-  {
-    time_t elem = conf_data_get_time_t_from_string(dt, tokens[i]);
-    time_t_vector_append(vec, elem);
-  }
-  util_free_stringlist(tokens, num_tokens);
-
-  return vec;
-}

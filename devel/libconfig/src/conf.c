@@ -44,7 +44,6 @@ struct conf_item_spec_struct
   const conf_class_type * super_class;   /** NULL if not inserted into a class.      */
   char                  * name;
   bool                    required_set;  /** Require the item to take a valid value. */
-  bool                    scalar;        /** Do not allow vectorized values.         */
   char                  * default_value; /** Can be NULL if not given.               */
   dt_enum                 dt;            /** Data type. See conf_data.*              */
   set_type              * restriction;   /** If non-empty, allowable values.         */
@@ -241,7 +240,6 @@ void conf_instance_free__(
 conf_item_spec_type * conf_item_spec_alloc(
   char    * name,
   bool      required_set,
-  bool      scalar,
   dt_enum   dt,
   const char * help) 
 {
@@ -252,7 +250,6 @@ conf_item_spec_type * conf_item_spec_alloc(
   conf_item_spec->super_class   = NULL;
   conf_item_spec->name          = util_alloc_string_copy(name);
   conf_item_spec->required_set  = required_set;
-  conf_item_spec->scalar        = scalar;
   conf_item_spec->dt            = dt;
   conf_item_spec->default_value = NULL;
   conf_item_spec->restriction   = set_alloc_empty();
@@ -834,27 +831,6 @@ const char * conf_instance_get_item_value_ref(
 }
 
 
-stringlist_type * conf_instance_get_item_value_elements(
-  const conf_instance_type * conf_instance,
-  const char               * item_name)
-{
-  if(!hash_has_key(conf_instance->items, item_name))
-  {
-    util_abort("%s: Instance %s of type %s has no item %s.\n",
-               __func__, conf_instance->name,
-               conf_instance->conf_class->class_name,
-               item_name);
-  }
-
-  const conf_item_type * conf_item = hash_get(conf_instance->items, item_name);
-  int num_tokens;
-  char ** tokens;
-  util_split_string(conf_item->value, DT_VECTOR_SEP, &num_tokens, &tokens);
-
-  return stringlist_alloc_argv_owned_ref(tokens, num_tokens);
-}
-
-
 
 /** If the dt supports it, this function shall return the item value as an int.
     If the dt does not support it, the function will abort.
@@ -918,67 +894,6 @@ time_t conf_instance_get_item_value_time_t(
 }
 
 
-
-/** If the dt supports it, this function shall return the item value as an int_vector.
-    If the dt does not support it, the function will abort.
-*/
-int_vector_type * conf_instance_get_item_value_int_vector(
-  const conf_instance_type * conf_instance,
-  const char               * item_name)
-{
-  if(!hash_has_key(conf_instance->items, item_name))
-    util_abort("%s: Instance %s of type %s has no item %s.\n",
-               __func__, conf_instance->name,
-               conf_instance->conf_class->class_name,
-               item_name);
-
-  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
-  const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
-
-  return conf_data_get_int_vector_from_string(conf_item_spec->dt, conf_item->value);
-}
-
-
-
-/** If the dt supports it, this function shall return the item value as an double_vector.
-    If the dt does not support it, the function will abort.
-*/
-double_vector_type * conf_instance_get_item_value_double_vector(
-  const conf_instance_type * conf_instance,
-  const char               * item_name)
-{
-  if(!hash_has_key(conf_instance->items, item_name))
-    util_abort("%s: Instance %s of type %s has no item %s.\n",
-               __func__, conf_instance->name,
-               conf_instance->conf_class->class_name,
-               item_name);
-
-  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
-  const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
-
-  return conf_data_get_double_vector_from_string(conf_item_spec->dt, conf_item->value);
-}
-
-
-
-/** If the dt supports it, this function shall return the item value as an time_t_vector.
-    If the dt does not support it, the function will abort.
-*/
-time_t_vector_type * conf_instance_get_item_value_time_t_vector(
-  const conf_instance_type * conf_instance,
-  const char               * item_name)
-{
-  if(!hash_has_key(conf_instance->items, item_name))
-    util_abort("%s: Instance %s of type %s has no item %s.\n",
-               __func__, conf_instance->name,
-               conf_instance->conf_class->class_name,
-               item_name);
-
-  const conf_item_type      * conf_item      = hash_get(conf_instance->items, item_name);
-  const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
-
-  return conf_data_get_time_t_vector_from_string(conf_item_spec->dt, conf_item->value);
-}
 
 
 
@@ -1048,35 +963,25 @@ bool conf_item_validate(
   assert(conf_item != NULL);
 
   bool ok = true;
-  int num_elem;
   const conf_item_spec_type * conf_item_spec = conf_item->conf_item_spec;
   int   num_restrictions = set_get_size(conf_item_spec->restriction);
 
-  if(!conf_data_validate_string_as_dt_vector(
-      conf_item_spec->dt, conf_item->value, &num_elem))
+  if(!conf_data_validate_string_as_dt_value(conf_item_spec->dt, conf_item->value))
   {
     ok = false; 
     printf("ERROR: Failed to validate \"%s\" as a %s for item \"%s\".\n",
-            conf_item->value, conf_data_get_dt_name_ref(conf_item_spec->dt),
-            conf_item_spec->name);
-  }
-
-  if(conf_item->conf_item_spec->scalar && num_elem > 1)
-  {
-    ok = false; 
-    printf("ERROR: Cannot use vector \"%s\" for scalar item \"%s\".\n",
-            conf_item->value, conf_item_spec->name);
+           conf_item->value, conf_data_get_dt_name_ref(conf_item_spec->dt),
+           conf_item_spec->name);
   }
 
   if(num_restrictions > 0 && ok)
   {
     char ** restriction_keys = set_alloc_keylist(conf_item_spec->restriction);
     
-    int num_tokens;
-    char ** tokens;
-
-    util_split_string(conf_item->value, DT_VECTOR_SEP, &num_tokens, &tokens);
-
+    /** Legacy work-around when removing the vector supprt. */
+    const int num_tokens = 1;
+    const char ** tokens = (const char **) &conf_item->value;
+    
     for(int token_nr = 0; token_nr < num_tokens; token_nr++)
     {
       bool valid = false;
@@ -1094,7 +999,6 @@ bool conf_item_validate(
                conf_item->value, conf_item_spec->name);
       }
     }
-    util_free_stringlist(tokens, num_tokens);
     util_free_stringlist(restriction_keys, num_restrictions);
   }
 

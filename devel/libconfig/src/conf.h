@@ -134,7 +134,6 @@ void conf_instance_free__(
 conf_item_spec_type * conf_item_spec_alloc(
   char    * name,
   bool      required_set,
-  bool      scalar,
   dt_enum   dt,
   const char * help);
 
@@ -292,10 +291,6 @@ const char * conf_instance_get_item_value_ref(
   const conf_instance_type * conf_instance,
   const char               * item_name);
 
-stringlist_type * conf_instance_get_item_value_elements(
-  const conf_instance_type * conf_instance,
-  const char               * item_name);
-
 /** If the dt supports it, these functions will parse the item
     value to the requested types.
 
@@ -314,19 +309,6 @@ double conf_instance_get_item_value_double(
 time_t conf_instance_get_item_value_time_t(
   const conf_instance_type * conf_instance,
   const char               * item_name);
-
-int_vector_type * conf_instance_get_item_value_int_vector(
-  const conf_instance_type * conf_instance,
-  const char               * item_name);
-
-double_vector_type * conf_instance_get_item_value_double_vector(
-  const conf_instance_type * conf_instance,
-  const char               * item_name);
-
-time_t_vector_type * conf_instance_get_item_value_time_t_vector(
-  const conf_instance_type * conf_instance,
-  const char               * item_name);
-
 
 /** V A L I D A T O R S */
 
