@@ -448,9 +448,6 @@ void enkf_main_inflate_node(enkf_main_type * enkf_main , int report_step , const
     enkf_fs_fwrite_node( enkf_main_get_fs( enkf_main ) , ensemble[iens] , report_step , iens , ANALYZED );
   }
 
-  enkf_main_node_std( (const enkf_node_type **) ensemble , ens_size , mean , std );
-  gen_data_ecl_write( enkf_node_value_ptr( std ) , "/tmp" , "VELOCITY_T.std2" , NULL);
-  
   enkf_node_free( mean );
   enkf_node_free( std );
   free( ensemble );

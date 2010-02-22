@@ -572,8 +572,8 @@ enkf_obs_type * enkf_obs_fscanf_alloc(const char * config_file,  const history_t
        INDEX_LIST or INDEX_FILE keywords.
     */
     {
-      conf_item_spec_type * item_spec_index_list = conf_item_spec_alloc("INDEX_LIST" , false , DT_STR  , "A list of indicies - possibly with ranges which should be observed in the target field.");
-      conf_item_spec_type * item_spec_index_file = conf_item_spec_alloc("INDEX_FILE" , false , DT_FILE , "An ASCII file containing a list of indices which should be observed in the target field.");
+      conf_item_spec_type * item_spec_index_list = conf_item_spec_alloc("INDEX_LIST"  ,  false  ,  DT_STR   , "A list of indicies - possibly with ranges which should be observed in the target field.");
+      conf_item_spec_type * item_spec_index_file = conf_item_spec_alloc("INDEX_FILE"  ,  false  ,  DT_FILE  , "An ASCII file containing a list of indices which should be observed in the target field.");
       conf_item_mutex_type * index_mutex         = conf_class_new_item_mutex( gen_obs_class , false , false);
       
       conf_class_insert_owned_item_spec(gen_obs_class, item_spec_index_list);
