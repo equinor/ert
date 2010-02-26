@@ -76,7 +76,7 @@ alloc_ministep_copy.
 
 DEL_ALL_OBS [NAME_OF_MINISTEP]
 -----------------------------------
-This function will delete all the obs keys from the ministep
+this function will delete all the obs keys from the ministep
 'NAME_OF_MINISTEP'; typically used after a call to
 alloc_ministep_copy.
 
@@ -346,6 +346,8 @@ static local_config_instruction_type local_config_cmd_from_string( char * cmd_st
     cmd = DEL_OBS;
   else if (strcmp( cmd_string ,DEL_ALL_DATA_STRING ) == 0)
     cmd = DEL_ALL_DATA;
+  else if (strcmp( cmd_string ,DEL_ALL_OBS_STRING ) == 0)
+    cmd = DEL_ALL_OBS;
   else {
     util_abort("%s: Command:%s not recognized \n",__func__ , cmd_string);
     cmd = INVALID_CMD;
@@ -401,6 +403,9 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
     break;
   case(DEL_ALL_DATA):
     return DEL_ALL_DATA_STRING;
+    break;
+  case(DEL_ALL_OBS):
+    return DEL_ALL_OBS_STRING;
     break;
   default:
     util_abort("%s: command:%d not recognized \n",__func__ , cmd);
