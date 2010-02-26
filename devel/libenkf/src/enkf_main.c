@@ -894,7 +894,7 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
              which does a resubmit, or alternatively signal complete failure to
              the queue system (should probably be split in two).
           */
-
+          
           thread_pool_add_job( load_threads , enkf_state_complete_forward_model__ , arg_list[iens] );
           /* This will block until the enkf_state_complete_forward_model() has actually started executing. */
           {
@@ -1518,6 +1518,9 @@ static config_type * enkf_main_alloc_config() {
   config_item_set_argc_minmax(item , 1 , 1 , NULL);
   config_set_arg(config , "ENSPATH" , 1 , (const char *[1]) { DEFAULT_ENSPATH });
 
+  item = config_add_item(config , "SELECT_CASE" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
+
   item = config_add_item(config , "DBASE_TYPE" , true , false);
   config_item_set_argc_minmax(item , 1, 1 , NULL);
   config_item_set_common_selection_set(item , 3 , (const char *[3]) {"PLAIN" , "SQLITE" , "BLOCK_FS"});
@@ -1766,10 +1769,10 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
 
 
 
-void enkf_main_remount_fs( enkf_main_type * enkf_main ) {
+void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case ) {
   const model_config_type * model_config = enkf_main->model_config;
   const char * mount_map = "enkf_mount_info";
-  enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , mount_map );
+  enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , mount_map , select_case );
 }
 
 
@@ -1904,13 +1907,14 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
     {
       bool use_lsf;
       enkf_main->ecl_config      = ecl_config_alloc( config );
-      enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) );
+      enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
       enkf_main->site_config     = site_config_alloc(config , ensemble_config_get_size( enkf_main->ensemble_config ) , &use_lsf);
       enkf_main->model_config    = model_config_alloc(config ,
                                                       ensemble_config_get_size( enkf_main->ensemble_config ),
 						      site_config_get_installed_jobs(enkf_main->site_config) ,
 						      ecl_config_get_last_history_restart( enkf_main->ecl_config ),
 						      ecl_config_get_sched_file(enkf_main->ecl_config) ,
+                                                      ecl_config_get_refcase( enkf_main->ecl_config ) , 
 						      site_config_get_statoil_mode( enkf_main->site_config ),
 						      use_lsf);
     }
@@ -2009,7 +2013,13 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       enkf_main_update_obs_keys(enkf_main);
 
 
-      enkf_main_remount_fs( enkf_main );
+      {
+        const char * select_case = NULL;
+        if (config_item_set( config , "SELECT_CASE"))
+          select_case = config_get_value( config , "SELECT_CASE" );
+        
+        enkf_main_remount_fs( enkf_main , select_case );
+      }
       /*****************************************************************/
       /* Adding ensemble members */
       {

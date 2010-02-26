@@ -77,13 +77,20 @@ void enkf_tui_run_exp__(void * enkf_main) {
   int start_report   	   = 0;
   int init_step_parameters = 0;
   {
-    char * prompt = util_alloc_sprintf("Which realizations to simulate[ensemble size:%d] : " , ens_size);
+    char * prompt = util_alloc_sprintf("Which realizations to simulate <default:all> : " , ens_size);
     char * select_string;
     util_printf_prompt(prompt , PROMPT_LEN , '=' , "=> ");
     select_string = util_alloc_stdin_line();
-    util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+    if (select_string != NULL) {
+      util_sscanf_active_range( select_string , ens_size - 1 , iactive);
+      free( select_string );
+    } else {
+      /* The user entered <return> : Run all realizations. */
+      int i;
+      for (i=0; i < ens_size; i++)
+        iactive[i] = true;
+    }
     free( prompt );
-    free( select_string );
   }
   
   enkf_main_run(enkf_main , ENSEMBLE_EXPERIMENT , iactive , init_step_parameters , start_report , init_state);

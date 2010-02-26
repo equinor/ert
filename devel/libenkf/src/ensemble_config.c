@@ -355,8 +355,13 @@ void ensemble_config_add_config_items(config_type * config) {
 }
 
 
+/**
+   Observe that if the user has not given a refcase with the REFCASE
+   key the refcase pointer will be NULL. In that case it will be
+   impossible to use wildcards when expanding summary variables.
+*/
 
-ensemble_config_type * ensemble_config_alloc(const config_type * config , const ecl_grid_type * grid) {
+ensemble_config_type * ensemble_config_alloc(const config_type * config , const ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
   ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( config_iget_as_int(config , "NUM_REALIZATIONS" , 0 , 0));
   ensemble_config->field_trans_table     = field_trans_table_alloc();
@@ -512,10 +517,28 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     free(template_file);
   }
   
+  
   /* SUMMARY */
-  for (i=0; i < config_get_occurences(config , "SUMMARY"); i++) {
-    const char * key = config_iget( config , "SUMMARY" , i , 0 );
-    ensemble_config_ensure_summary(ensemble_config , key );
+  {
+    stringlist_type * keys = stringlist_alloc_new ( );
+
+    
+    for (i=0; i < config_get_occurences(config , "SUMMARY"); i++) {
+      const char * key = config_iget( config , "SUMMARY" , i , 0 );
+      if (util_string_has_wildcard( key )) {
+        if (refcase != NULL) {
+          int i;
+          ecl_sum_select_matching_general_var_list( refcase , key , keys );
+          for (i=0; i < stringlist_get_size( keys ); i++) 
+            ensemble_config_ensure_summary(ensemble_config , stringlist_iget(keys , i));
+        } else
+          util_exit("ERROR: When using SUMMARY wildcards like: \"%s\" you must supply a valid refcase.\n",key);
+      } else
+        ensemble_config_ensure_summary(ensemble_config , key );
+    }
+
+    
+    stringlist_free( keys );
   }
   
   /*****************************************************************/

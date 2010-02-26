@@ -115,7 +115,13 @@ fs_driver_impl model_config_get_dbase_type(const model_config_type * model_confi
 }
 
 
-model_config_type * model_config_alloc(const config_type * config , int ens_size , const ext_joblist_type * joblist , int last_history_restart , const sched_file_type * sched_file , bool statoil_mode , bool use_lsf) {
+model_config_type * model_config_alloc(const config_type * config , 
+                                       int ens_size , 
+                                       const ext_joblist_type * joblist , 
+                                       int last_history_restart , 
+                                       const sched_file_type * sched_file , 
+                                       const ecl_sum_type * refcase, 
+                                       bool statoil_mode , bool use_lsf) {
   model_config_type * model_config        = util_malloc(sizeof * model_config , __func__);
   /**
      There are essentially three levels of initialisation:
@@ -158,20 +164,20 @@ model_config_type * model_config_alloc(const config_type * config , int ens_size
   
   {
     const char * history_source = config_iget(config , "HISTORY_SOURCE", 0,0);
-    const char * refcase        = NULL;
     bool  use_history;
 
-    if (strcmp(history_source , "REFCASE_SIMULATED") == 0) {
-      refcase = config_iget(config , "REFCASE" , 0,0);
+    if (strcmp(history_source , "REFCASE_SIMULATED") == 0) 
       use_history = false;
-    } else if (strcmp(history_source , "REFCASE_HISTORY") == 0) {
-      refcase = config_iget(config , "REFCASE" , 0,0);
+    else if (strcmp(history_source , "REFCASE_HISTORY") == 0) 
       use_history = true;
-    }
-
-    if ((refcase != NULL) && (strcmp(history_source , "SCHEDULE") != 0)) {
-      printf("Loading summary from: %s \n",refcase);
-      history_realloc_from_summary( model_config->history , refcase , use_history);        
+    
+    if (strcmp( history_source , "SCHEDULE" ) != 0) {
+      /* We want to use the REFCASE */
+      
+      if (refcase != NULL) 
+        history_realloc_from_summary( model_config->history , refcase , use_history);        
+      else
+        util_exit("%s: Invalid configuration. When using HISTORY_SOURCE != SCHEDULE you must supply a REFCASE.\n",__func__);
     }
   }
 

@@ -1132,8 +1132,16 @@ void enkf_fs_select_write_dir(enkf_fs_type * fs, const char * dir , bool auto_mk
 
 
 
+/**
+   The filesystem will start by selecting the case given by the input
+   parameter @select_case; this input can be NULL (in which case the
+   current default case is selected), if @select_case points to a
+   non-existing case a warning will be printed on stderr on no
+   selection will be performed.
+*/
 
-enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl, const char *mount_info) {
+
+enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl, const char *mount_info , const char * select_case) {
   const char * default_dir = DEFAULT_CASE;
   char * config_file       = util_alloc_filename(root_path , mount_info , NULL);  /* This file should be protected - at all costs. */
   int    version           = enkf_fs_get_fs_version( config_file );
@@ -1274,22 +1282,45 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
         {
           char * current_read_dir  = util_fread_alloc_string( stream );
           char * current_write_dir = util_fread_alloc_string( stream );
+          bool   case_selected     = false;
           
-          if ((current_read_dir == NULL) || (current_write_dir == NULL)) {
-            fprintf(stderr," *************************************************************\n");
-            fprintf(stderr," ** Hmmmm - the mount map has been corrupted. I have lost   **\n"); 
-            fprintf(stderr," ** track of your currently selected read/write cases. Will **\n");
-            fprintf(stderr," ** just select the default case.                           **\n"); 
-            fprintf(stderr," *************************************************************\n");
+          /** 
+              If the user has given an initial case for selection wr
+              try to select that first; otherwise we select the
+              current directories which are (hopefully) found in the
+              mount map.
+          */
+          if (select_case != NULL) {
+            if (enkf_fs_has_dir( fs , select_case )) {
+              enkf_fs_select_read_dir( fs , select_case );
+              enkf_fs_select_write_dir( fs , select_case , false );
+              case_selected = true;
+            } else
+              fprintf(stderr,"** Warning: case:%s does not exist \n", select_case );
+          } 
 
-            enkf_fs_select_read_dir(fs , "default");
-            enkf_fs_select_write_dir(fs , "default" , false );
-            store_map = true;
-          } else {
-            enkf_fs_select_read_dir(fs , current_read_dir);
-            enkf_fs_select_write_dir(fs , current_write_dir , false);
+          
+          /* 
+             No initial case selected - try for the current selections
+             in the mount map.
+          */
+          if (!case_selected) {
+            if ((current_read_dir == NULL) || (current_write_dir == NULL)) {
+              fprintf(stderr," *************************************************************\n");
+              fprintf(stderr," ** Hmmmm - the mount map has been corrupted. I have lost   **\n"); 
+              fprintf(stderr," ** track of your currently selected read/write cases. Will **\n");
+              fprintf(stderr," ** just select the default case.                           **\n"); 
+              fprintf(stderr," *************************************************************\n");
+              
+              enkf_fs_select_read_dir(fs , "default");
+              enkf_fs_select_write_dir(fs , "default" , false );
+              store_map = true;
+            } else {
+              enkf_fs_select_read_dir(fs , current_read_dir);
+              enkf_fs_select_write_dir(fs , current_write_dir , false);
+            }
           }
-
+          
           util_safe_free( current_read_dir );
           util_safe_free( current_write_dir );
         }
@@ -1317,9 +1348,6 @@ enkf_fs_type * enkf_fs_mount(const char * root_path , fs_driver_impl driver_impl
       fs->case_tstep_fmt        = path_fmt_alloc_directory_fmt( DEFAULT_CASE_TSTEP_PATH );
       fs->case_tstep_member_fmt = path_fmt_alloc_directory_fmt( DEFAULT_CASE_TSTEP_MEMBER_PATH );
     }
-    
-
-
 
     return fs;
   }

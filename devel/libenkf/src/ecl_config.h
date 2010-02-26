@@ -7,6 +7,7 @@ extern "C" {
 
 #include <config.h>
 #include <ecl_grid.h>
+#include <ecl_sum.h>
 #include <time.h>
 #include <ecl_io_config.h>
 #include <sched_file.h>
@@ -30,6 +31,7 @@ const char          * ecl_config_get_schedule_target(const ecl_config_type * );
 const char          * ecl_config_get_equil_init_file(const ecl_config_type * );
 const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * );
 int                   ecl_config_get_num_restart_files(const ecl_config_type * );
+const ecl_sum_type  * ecl_config_get_refcase(const ecl_config_type * ecl_config);
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * );
 int                   ecl_config_get_last_history_restart( const ecl_config_type * );
 bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );

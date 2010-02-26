@@ -8,6 +8,7 @@
 #include <set.h>
 #include <path_fmt.h>
 #include <ecl_grid.h>
+#include <ecl_sum.h>
 #include <sched_file.h>
 #include <config.h>
 #include <ecl_config.h>
@@ -37,6 +38,7 @@ struct ecl_config_struct {
   bool                 include_all_static_kw;  	   /* If true all static keywords are stored.*/ 
   set_type           * static_kw_set;          	   /* Minimum set of static keywords which must be included to make valid restart files. */
   char               * data_file;              	   /* Eclipse data file. */
+  ecl_sum_type       * refcase;                    /* Refcase - can be NULL. */
   ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
   char               * schedule_target_file;   	   /* File name to write schedule info to */
   char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
@@ -79,6 +81,16 @@ void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_
 }
 
 
+static void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase) {
+
+  ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
+  if (ecl_config->refcase == NULL)
+    util_exit("%s:\nSorry: failed to load refcase:%s \n",__func__ , refcase );
+  
+}
+
+
+
 ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
   ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
@@ -87,6 +99,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->static_kw_set         = set_alloc_empty();
   ecl_config->data_file             = NULL;
   ecl_config->equil_init_file       = NULL; 
+  ecl_config->refcase               = NULL;
   ecl_config->can_restart           = false;
   {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
@@ -231,6 +244,9 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
     ecl_config->grid = ecl_grid_alloc( config_iget(config , "GRID" , 0,0) );
   else
     ecl_config->grid = NULL;
+  
+  if (config_item_set( config , "REFCASE")) 
+    ecl_config_load_refcase( ecl_config , config_get_value( config , "REFCASE" ));
 
   return ecl_config;
 }
@@ -248,6 +264,9 @@ void ecl_config_free(ecl_config_type * ecl_config) {
 
   if (ecl_config->grid != NULL)
     ecl_grid_free( ecl_config->grid );
+
+  if (ecl_config->refcase != NULL)
+    ecl_sum_free( ecl_config->refcase );
   
   free(ecl_config);
 }
@@ -295,6 +314,11 @@ bool ecl_config_include_static_kw(const ecl_config_type * ecl_config, const char
 
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config) {
   return ecl_config->grid;
+}
+
+
+const ecl_sum_type * ecl_config_get_refcase(const ecl_config_type * ecl_config) {
+  return ecl_config->refcase;
 }
 
 

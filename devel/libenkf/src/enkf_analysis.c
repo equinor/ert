@@ -444,7 +444,7 @@ static void enkf_analysis_SQRT(matrix_type * X5 , const matrix_type * S , const 
 
 
 void enkf_analysis_fprintf_obs_summary(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix , int start_step, int end_step , const char * ministep_name , FILE * stream ) {
-  const char * float_fmt = "%12.6f";
+  const char * float_fmt = "%15.3f";
   int iobs;
   fprintf(stream , "======================================================================================================================\n");
   if (start_step == end_step)

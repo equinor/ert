@@ -610,7 +610,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
           const shared_info_type   * shared_info = enkf_state->shared_info;
           const int iens                         = member_config_get_iens( my_config );
           const int step2                        = ecl_sum_get_last_report_step( summary );  /* Step2 is just taken from the number of steps found in the summary file. */
-
+          
           for (report_step = load_start; report_step <= step2; report_step++) {
             hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
             while ( !hash_iter_is_complete(iter) ) {
@@ -633,7 +633,7 @@ static void enkf_state_internalize_dynamic_results(enkf_state_type * enkf_state 
           
           ecl_sum_free( summary ); 
           member_config_fwrite_sim_time( my_config , shared_info->fs );
-        }
+        } 
       }
     }
   }
@@ -868,6 +868,7 @@ static void enkf_state_internalize_results(enkf_state_type * enkf_state , bool *
   run_info_type             * run_info   = enkf_state->run_info;
   const model_config_type * model_config = enkf_state->shared_info->model_config;
   int report_step;
+
   for (report_step = run_info->load_start; report_step <= run_info->step2; report_step++) {
     if (model_config_load_state( model_config , report_step)) 
       enkf_state_internalize_state(enkf_state , model_config , report_step , loadOK);

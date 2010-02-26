@@ -28,7 +28,7 @@ struct history_node_struct{
 
 struct history_struct{
   list_type           * nodes;
-  ecl_sum_type        * ecl_sum;        /* ecl_sum instance used when the data are taken from a summary instance . */
+  const ecl_sum_type  * ecl_sum;        /* ecl_sum instance used when the data are taken from a summary instance. Observe that this is NOT owned by history instance.*/
   history_source_type   source;
 };
 
@@ -594,8 +594,6 @@ static history_node_type * history_iget_node_ref(const history_type * history, i
 void history_free(history_type * history)
 {
   list_free(history->nodes);
-  if (history->ecl_sum != NULL)
-    ecl_sum_free( history->ecl_sum );
   free(history);
 }
 
@@ -671,68 +669,16 @@ history_type * history_alloc_from_sched_file(const sched_file_type * sched_file)
     
 */
 
-void history_realloc_from_summary(history_type * history, const char * refcase , bool use_h_keywords) {
-  char  * refcase_path;
-  char  * refcase_base;
-  char  * header_file;
-  stringlist_type * summary_files = stringlist_alloc_new();
-  bool    fmt_file ,unified;
-  
-  util_alloc_file_components( refcase , &refcase_path , &refcase_base , NULL);
-  ecl_util_alloc_summary_files( refcase_path , refcase_base , &header_file , summary_files , &fmt_file , &unified);
-  
-  history->ecl_sum = ecl_sum_fread_alloc( header_file , summary_files , ":");
+void history_realloc_from_summary(history_type * history, const ecl_sum_type * refcase , bool use_h_keywords) {
+
+  history->ecl_sum = refcase;
   if (use_h_keywords)
     history->source = REFCASE_HISTORY;
   else
     history->source = REFCASE_SIMULATED;
   
-  //{
-  //  int           num_restarts  = history_get_num_restarts(history);
-  //  stringlist_type * wells     = ecl_sum_alloc_well_list( summary );
-  //  bool          time_error    = false;  
-  //  
-  //  for(int restart_nr = 0; restart_nr < num_restarts; restart_nr++) {
-  //    /* The list elements in history->nodes are updated IN-PLACE. */
-  //    history_node_type * node = list_iget_node_value_ptr(history->nodes, restart_nr);
-  //    hash_free(node->well_hash);  /* Removing the old information. */
-  //    
-  //    
-  //    if (ecl_sum_has_report_step(summary , restart_nr)) 
-  //      {
-  //        {
-  //          time_t sum_time;
-  //          int    ministep2;
-  //          
-  //          ecl_sum_report2ministep_range( summary , restart_nr , NULL , &ministep2);
-  //          sum_time = ecl_sum_get_sim_time( summary , ministep2 ); 
-  //          if (sum_time != node->node_end_time) {
-  //            int sec,min,hour,mday,month,year;
-  //            printf("Report_step:%3d  " , restart_nr);  
-  //            util_set_datetime_values( sum_time , &sec , &min , &hour , &mday , &month , &year);
-  //            printf("summary: %02d/%02d/%4d  %02d:%02d:%02d  || ", mday,month,year,hour,min,sec);
-  //            util_set_datetime_values( node->node_end_time , &sec , &min , &hour , &mday , &month , &year);
-  //            printf("schedule: %02d/%02d/%4d  %02d:%02d:%02d  || difference: %d seconds \n", mday,month,year,hour,min,sec , sum_time - node->node_end_time);
-  //            time_error = true;
-  //          }
-  //        }
-  //        node->well_hash = well_hash_alloc_from_summary(summary, wells , restart_nr, use_h_keywords);
-  //      } 
-  //    else 
-  //      {
-  //        fprintf(stderr,"Warning: refcase: \'%s\' does not have any data for report_step: %d \n", ecl_sum_get_simulation_case( summary ) , restart_nr);
-  //        node->well_hash = hash_alloc();  
-  //      }
-  //  }
-  //  if (time_error)
-  //    util_exit("Sorry - time inconsistencies between refcase and schedule file\n");
-  //  stringlist_free(wells);
-  //}
-  util_safe_free(header_file);
-  util_safe_free(refcase_base);
-  util_safe_free(refcase_path);
-  stringlist_free( summary_files );
 }
+
 
 
 void history_fwrite(const history_type * history, FILE * stream)

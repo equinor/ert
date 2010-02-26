@@ -91,6 +91,7 @@ bool gen_kw_store(const gen_kw_type *gen_kw , buffer_type * buffer,  int report_
 
 */
 
+
 #define MULTFLT 102
 void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer, int report_step) {
   enkf_impl_type file_type;
@@ -99,6 +100,7 @@ void gen_kw_load(gen_kw_type * gen_kw , buffer_type * buffer, int report_step) {
     scalar_buffer_fload( gen_kw->scalar , buffer);
 }
 #undef MULTFLT
+
 
 void gen_kw_upgrade_103( const char * filename ) {
   FILE * stream            = util_fopen( filename , "r");
@@ -250,7 +252,16 @@ void gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
     }
   }
 
-  /* OK - rewind and try again with interlaced key + value pairs. */
+  /* 
+     OK - rewind and try again with interlaced key + value
+     pairs. Observe that we still require that ALL the elements in the
+     gen_kw instance are set, i.e. it is not allowed to read only some
+     of the keywords; but the ordering is not relevant.
+     
+     The code will be fooled (and give undefined erronous results) if
+     the same key appears several times. Be polite!
+  */
+  
   if (!readOK) {
     int counter = 0;
     readOK = true;
@@ -259,22 +270,24 @@ void gen_kw_fload(gen_kw_type * gen_kw , const char * filename) {
     while ((counter < size) && readOK) {
       char key[128];
       double value;
-      if (fscanf(stream , "%s %lg" , key , &value) == 2) {
+      int    fscanf_return = fscanf(stream , "%s %lg" , key , &value);
+
+      if (fscanf_return == 2) {
         int index = gen_kw_config_get_index(gen_kw->config , key);
         if (index >= 0) 
           scalar_iset( gen_kw->scalar , index , value);
         else
           util_abort("%s: key:%s not recognized as part of GEN_KW instance - error when reading file:%s \n",__func__ , key , filename);
+        counter++;
       } else {
         util_abort("%s: failed to read (key,value) pair at line:%d in file:%s \n",__func__ , util_get_current_linenr( stream ) , filename);
         readOK = false;
       }
-      counter++;
     }
   }
-
+  
   if (!readOK)
-    util_abort("%s: fuck off \n",__func__);
+    util_abort("%s: failed loading from file:%s \n",__func__ , filename);
 
   fclose(stream);
 }
