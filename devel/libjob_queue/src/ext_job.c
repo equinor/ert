@@ -82,21 +82,22 @@ struct ext_job_struct {
   char       	  * name;
   char 	     	  * portable_exe;
   char 	     	  * target_file;
-  char       	  * start_file;       /* Will not start if not this file is present */
+  char       	  * start_file;            /* Will not start if not this file is present */
   char 	     	  * stdout_file;
   char 	     	  * stdin_file;
   char 	     	  * stderr_file;
   char       	  * lsf_resources;  
-  char            * license_path;     /* If this is NULL - it will be unrestricted ... */
+  char            * license_path;          /* If this is NULL - it will be unrestricted ... */
   int               max_running;
-  subst_list_type * private_args;     /* A substitution list of input arguments which is performed before the external substitutions - 
-                                         these are the arguments supplied as key=value pairs in the forward model call. */
-  stringlist_type * argv;             /* This should *NOT* start with the executable */
+  int               max_running_minutes;   /* The maximum number of minutes this job is allowed to run - 0: unlimited. */
+  subst_list_type * private_args;          /* A substitution list of input arguments which is performed before the external substitutions - 
+                                              these are the arguments supplied as key=value pairs in the forward model call. */
+  stringlist_type * argv;                  /* This should *NOT* start with the executable */
   stringlist_type * init_code;
-  hash_type  	  * platform_exe;     /* The hash tables can NOT be NULL. */
+  hash_type  	  * platform_exe;          /* The hash tables can NOT be NULL. */
   hash_type  	  * environment;
   
-  bool              __valid;          /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
+  bool              __valid;               /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
 };
 
 
@@ -122,24 +123,25 @@ const char * ext_job_get_name(const ext_job_type * ext_job) {
 static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
   
-  ext_job->__type_id      = __TYPE_ID__;
-  ext_job->name           = util_alloc_string_copy(name);
-  ext_job->portable_exe   = NULL;
-  ext_job->stdout_file    = NULL;
-  ext_job->target_file    = NULL;
-  ext_job->start_file     = NULL;
-  ext_job->stdin_file     = NULL;
-  ext_job->stderr_file    = NULL;
-  ext_job->init_code      = NULL;
-  ext_job->argv 	  = NULL;
-  ext_job->lsf_resources  = NULL;
-  ext_job->platform_exe   = NULL;
-  ext_job->environment    = NULL;
-  ext_job->argv           = NULL;
-  ext_job->init_code      = NULL;
-  ext_job->__valid        = true;
-  ext_job->license_path   = NULL;
-  ext_job->max_running    = 0;     /* 0 means unlimited. */
+  ext_job->__type_id           = __TYPE_ID__;
+  ext_job->name                = util_alloc_string_copy(name);
+  ext_job->portable_exe        = NULL;
+  ext_job->stdout_file         = NULL;
+  ext_job->target_file         = NULL;
+  ext_job->start_file          = NULL;
+  ext_job->stdin_file          = NULL;
+  ext_job->stderr_file         = NULL;
+  ext_job->init_code           = NULL;
+  ext_job->argv 	       = NULL;
+  ext_job->lsf_resources       = NULL;
+  ext_job->platform_exe        = NULL;
+  ext_job->environment         = NULL;
+  ext_job->argv                = NULL;
+  ext_job->init_code           = NULL;
+  ext_job->__valid             = true;
+  ext_job->license_path        = NULL;
+  ext_job->max_running         = 0;     /* 0 means unlimited. */
+  ext_job->max_running_minutes = 0;     /* 0 means unlimited. */
   /* 
      ext_job->private_args is set explicitly in the ext_job_alloc() 
      and ext_job_alloc_copy() functions. 
@@ -255,6 +257,13 @@ static void ext_job_init_license_control(ext_job_type * ext_job , const char * l
   util_make_path( ext_job->license_path );
   printf("License for %s in %s \n",ext_job->name , ext_job->license_path);
 }
+
+
+
+static void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
+  ext_job->max_running_minutes = max_time;
+}
+
 
 
 
@@ -400,6 +409,12 @@ static void __fprintf_python_hash(FILE * stream , const char * id , hash_type * 
 }
 
 
+static void __fprintf_python_int( FILE * stream , const char * key , int value) {
+  if (value > 0)
+    fprintf(stream , "\"%s\" : %d" , key , value);
+  else
+    fprintf(stream , "\"%s\" : None" , key);
+}
 
 
 static void __end_line(FILE * stream) {
@@ -413,27 +428,24 @@ static void __indent(FILE * stream, int indent) {
 }
 
 
+
+
 void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const subst_list_type * global_args) {
   fprintf(stream," {");
-  __indent(stream, 0); __fprintf_python_string(stream , "name"  	  , ext_job->name         , ext_job->private_args , NULL);        __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	  , ext_job->portable_exe , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	  , ext_job->target_file  , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	  , ext_job->start_file   , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	  , ext_job->stdout_file  , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	  , ext_job->stderr_file  , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	  , ext_job->stdin_file   , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	  , ext_job->argv         , ext_job->private_args, global_args);  __end_line(stream); /*  */
-  __indent(stream, 2); __fprintf_python_list(stream   , "init_code"    	  , ext_job->init_code    , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	  , ext_job->environment  , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream   , "license_path"  , ext_job->license_path , ext_job->private_args, global_args);  __end_line(stream);
-  __indent(stream, 2);
-  {
-    if (ext_job->max_running > 0)
-      fprintf(stream , "\"max_running\" : %d" , ext_job->max_running);
-    else
-      fprintf(stream , "\"max_running\" : None");
-  }
-  __end_line(stream);
+
+  __indent(stream, 0); __fprintf_python_string(stream , "name"  	      , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "portable_exe" 	      , ext_job->portable_exe        , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	      , ext_job->target_file         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	      , ext_job->start_file          , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	      , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stderr"    	      , ext_job->stderr_file         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "stdin"     	      , ext_job->stdin_file          , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_list(stream   , "argList"      	      , ext_job->argv                , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_list(stream   , "init_code"    	      , ext_job->init_code           , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_hash(stream   , "environment"  	      , ext_job->environment         , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "license_path"        , ext_job->license_path        , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_int( stream   , "max_running_minutes" , ext_job->max_running_minutes );                                      __end_line(stream);
+  __indent(stream, 2); __fprintf_python_int( stream   , "max_running"         , ext_job->max_running );                                              __end_line(stream);
   __indent(stream, 2); __fprintf_python_hash(stream   , "platform_exe" 	  , ext_job->platform_exe , ext_job->private_args, global_args);
   
   fprintf(stream,"}");
@@ -466,28 +478,30 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     
     {
       config_item_type * item;
-      item = config_add_item(config , "MAX_RUNNING"    , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
-      item = config_add_item(config , "STDIN"  	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "STDOUT" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "STDERR" 	       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "INIT_CODE"        , false , true ); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "PORTABLE_EXE"     , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "TARGET_FILE"      , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "START_FILE"       , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
-      item = config_add_item(config , "ENV"              , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
-      item = config_add_item(config , "PLATFORM_EXE"     , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
-      item = config_add_item(config , "ARGLIST"          , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
-      item = config_add_item(config , "LSF_RESOURCES"    , false , false); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
+      item = config_add_item(config , "MAX_RUNNING"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
+      item = config_add_item(config , "STDIN"  	            , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "STDOUT" 	            , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "STDERR" 	            , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "INIT_CODE"           , false , true ); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "PORTABLE_EXE"        , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "TARGET_FILE"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "START_FILE"          , false , false); config_item_set_argc_minmax(item  , 1 , 1 , NULL);
+      item = config_add_item(config , "ENV"                 , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
+      item = config_add_item(config , "PLATFORM_EXE"        , false , true ); config_item_set_argc_minmax(item  , 2 , 2 , NULL);
+      item = config_add_item(config , "ARGLIST"             , false , true ); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
+      item = config_add_item(config , "LSF_RESOURCES"       , false , false); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
+      item = config_add_item(config , "MAX_RUNNING_MINUTES" , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
     config_parse(config , filename , "--" , NULL , NULL , NULL , false , true);
     {
-      if (config_item_set(config , "STDIN"))  	      ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
-      if (config_item_set(config , "STDOUT")) 	      ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
-      if (config_item_set(config , "STDERR")) 	      ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
-      if (config_item_set(config , "TARGET_FILE"))    ext_job_set_target_file(ext_job      , config_iget(config  , "TARGET_FILE" , 0,0));
-      if (config_item_set(config , "START_FILE"))     ext_job_set_start_file(ext_job       , config_iget(config  , "START_FILE" , 0,0));
-      if (config_item_set(config , "PORTABLE_EXE"))   ext_job_set_portable_exe(ext_job     , config_iget(config  , "PORTABLE_EXE" , 0,0));
-      if (config_item_set(config , "MAX_RUNNING"))    ext_job_init_license_control(ext_job , license_root_path , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
+      if (config_item_set(config , "STDIN"))  	             ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
+      if (config_item_set(config , "STDOUT")) 	             ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
+      if (config_item_set(config , "STDERR")) 	             ext_job_set_stderr_file(ext_job      , config_iget(config  , "STDERR" , 0,0));
+      if (config_item_set(config , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_iget(config  , "TARGET_FILE" , 0,0));
+      if (config_item_set(config , "START_FILE"))            ext_job_set_start_file(ext_job       , config_iget(config  , "START_FILE" , 0,0));
+      if (config_item_set(config , "PORTABLE_EXE"))          ext_job_set_portable_exe(ext_job     , config_iget(config  , "PORTABLE_EXE" , 0,0));
+      if (config_item_set(config , "MAX_RUNNING"))           ext_job_init_license_control(ext_job , license_root_path , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
+      if (config_item_set(config , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job , config_iget_as_int(config  , "MAX_RUNNING_MINUTES" , 0,0));
 
       if (config_item_set(config , "LSF_RESOURCES")) {
         char * lsf_resources = stringlist_alloc_joined_string(config_get_stringlist_ref(config , "LSF_RESOURCES") , " ");
