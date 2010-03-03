@@ -201,10 +201,11 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   if (src_job->argv      != NULL) new_job->argv          = stringlist_alloc_deep_copy( src_job->argv );
   if (src_job->init_code != NULL) new_job->init_code     = stringlist_alloc_deep_copy( src_job->init_code );
 
-  new_job->max_running   = src_job->max_running;
-  new_job->platform_exe  = ext_job_hash_copyc__( src_job->platform_exe );
-  new_job->environment   = ext_job_hash_copyc__( src_job->environment );
-  new_job->private_args  = subst_list_alloc_deep_copy( src_job->private_args );
+  new_job->max_running_minutes   = src_job->max_running_minutes;
+  new_job->max_running           = src_job->max_running;
+  new_job->platform_exe          = ext_job_hash_copyc__( src_job->platform_exe );
+  new_job->environment           = ext_job_hash_copyc__( src_job->environment );
+  new_job->private_args          = subst_list_alloc_deep_copy( src_job->private_args );
   return new_job;
 }
 
