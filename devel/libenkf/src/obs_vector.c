@@ -17,7 +17,7 @@
 #include <ensemble_config.h>
 #include <msg.h>
 #include <active_list.h>
-
+#include <ecl_sum.h>
 
 #define OBS_VECTOR_TYPE_ID 120086
 
@@ -283,7 +283,7 @@ int obs_vector_get_next_active_step(const obs_vector_type * obs_vector , int pre
 /*****************************************************************/
 
 
-obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, ensemble_config_type * ensemble_config) {
+obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history, const ecl_sum_type * refcase , ensemble_config_type * ensemble_config) {
   if(!conf_instance_is_of_class(conf_instance, "SUMMARY_OBSERVATION"))
     util_abort("%s: internal error. expected \"SUMMARY_OBSERVATION\" instance, got \"%s\".\n",
                __func__, conf_instance_get_class_name_ref(conf_instance) );
@@ -298,7 +298,7 @@ obs_vector_type * obs_vector_alloc_from_SUMMARY_OBSERVATION(const conf_instance_
     int          obs_restart_nr  = __conf_instance_get_restart_nr(conf_instance , obs_key , history , size);
     summary_obs_type * sum_obs;
 
-    ensemble_config_ensure_summary( ensemble_config , sum_key );
+    ensemble_config_ensure_summary( ensemble_config , sum_key , refcase );
     obs_vector = obs_vector_alloc( SUMMARY_OBS , obs_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     sum_obs = summary_obs_alloc(sum_key , obs_value , obs_error);
     obs_vector_install_node( obs_vector , obs_restart_nr , sum_obs );
@@ -363,7 +363,7 @@ obs_vector_type * obs_vector_alloc_from_GENERAL_OBSERVATION(const conf_instance_
 
 
 
-obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history , ensemble_config_type * ensemble_config, double std_cutoff) {
+obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_type * conf_instance , const history_type * history , const ecl_sum_type * refcase , ensemble_config_type * ensemble_config, double std_cutoff) {
   if(!conf_instance_is_of_class(conf_instance, "HISTORY_OBSERVATION"))
     util_abort("%s: internal error. expected \"HISTORY_OBSERVATION\" instance, got \"%s\".\n",__func__, conf_instance_get_class_name_ref(conf_instance) );
   
@@ -386,7 +386,7 @@ obs_vector_type * obs_vector_alloc_from_HISTORY_OBSERVATION(const conf_instance_
 
 
 
-    ensemble_config_ensure_summary( ensemble_config , sum_key );
+    ensemble_config_ensure_summary( ensemble_config , sum_key , refcase);
     std = util_malloc(size * sizeof * std, __func__);
     obs_vector = obs_vector_alloc( SUMMARY_OBS , sum_key , ensemble_config_get_node(ensemble_config , sum_key) , size );
     

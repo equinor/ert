@@ -282,13 +282,26 @@ void ensemble_config_add_gen_kw(ensemble_config_type * config ,
 /**
    This function ensures that object contains a node with 'key' and
    type == SUMMARY.
+   
+   If the @refcase pointer is different from NULL the key will be
+   validated. Keys which do not exist in the refcase will be ignored
+   and a warning will be printed on stderr.
 */
-void ensemble_config_ensure_summary(ensemble_config_type * ensemble_config , const char * key) {
+
+void ensemble_config_ensure_summary(ensemble_config_type * ensemble_config , const char * key, const ecl_sum_type * refcase) {
   if (hash_has_key(ensemble_config->config_nodes, key)) {
     if (ensemble_config_impl_type(ensemble_config , key) != SUMMARY)
       util_abort("%s: ensemble key:%s already existst - but it is not of summary type\n",__func__ , key);
-  } else 
+  } else {
+    if (refcase != NULL) {
+      if (!ecl_sum_has_general_var( refcase , key )) {
+        fprintf(stderr,"** Warning: the refcase:%s does not contain the summary key:\"%s\" - will be ignored.\n", ecl_sum_get_case( refcase ) , key);
+        return;
+      }
+    }
+    
     ensemble_config_add_node(ensemble_config , key , DYNAMIC_RESULT , SUMMARY , NULL , NULL , summary_config_alloc(key));
+  }
 }
 
 
@@ -530,11 +543,11 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
           int i;
           ecl_sum_select_matching_general_var_list( refcase , key , keys );
           for (i=0; i < stringlist_get_size( keys ); i++) 
-            ensemble_config_ensure_summary(ensemble_config , stringlist_iget(keys , i));
+            ensemble_config_ensure_summary(ensemble_config , stringlist_iget(keys , i) , refcase);
         } else
           util_exit("ERROR: When using SUMMARY wildcards like: \"%s\" you must supply a valid refcase.\n",key);
       } else
-        ensemble_config_ensure_summary(ensemble_config , key );
+        ensemble_config_ensure_summary(ensemble_config , key , refcase);
     }
 
     
