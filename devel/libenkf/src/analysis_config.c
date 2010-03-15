@@ -19,7 +19,10 @@ struct analysis_config_struct {
   double                  std_cutoff;
   enkf_mode_type          enkf_mode;
   pseudo_inversion_type   inversion_mode;
-  char                  * log_path;           /* Points to directory with update logs. */
+  char                  * log_path;                  /* Points to directory with update logs. */
+  bool                    do_cross_validation;       /* Should we perform CV */
+  int                     nfolds_CV;                 /* Number of folds in the CV scheme */
+  bool                    do_local_cross_validation; /* Should we do CV for separate state vector matrices? */
 }; 
 
 
@@ -34,6 +37,9 @@ static analysis_config_type * analysis_config_alloc__() {
   config->inversion_mode     = SVD_SS_N1_R;
   config->random_rotation    = true;
   config->log_path           = NULL;
+  config->do_cross_validation = true;
+  config->nfolds_CV          = 10;
+  config->do_local_cross_validation = false;
   
   analysis_config_set_std_cutoff( config , DEFAULT_ENKF_STD_CUTOFF );
   analysis_config_set_log_path( config , DEFAULT_UPDATE_LOG_PATH );
@@ -43,6 +49,8 @@ static analysis_config_type * analysis_config_alloc__() {
   analysis_config_set_enkf_mode ( config , DEFAULT_ENKF_MODE );
   analysis_config_set_rerun( config , DEFAULT_RERUN );
   analysis_config_set_rerun_start( config , DEFAULT_RERUN_START );
+
+
   return config;
 }
 
@@ -88,6 +96,18 @@ bool analysis_config_get_random_rotation(const analysis_config_type * config) {
     return false;
 }
 
+int analysis_config_get_nfolds_CV(const analysis_config_type * config) {
+  return config->nfolds_CV;
+}
+
+bool analysis_config_get_do_cross_validation(const analysis_config_type * config) {
+  return config->do_cross_validation;
+}
+
+bool analysis_config_get_do_local_cross_validation(const analysis_config_type * config) {
+  return config->do_local_cross_validation;
+}
+
 
 void analysis_config_set_truncation( analysis_config_type * config , double truncation) {
   config->truncation = truncation;
@@ -105,6 +125,17 @@ void analysis_config_set_enkf_mode( analysis_config_type * config , enkf_mode_ty
   config->enkf_mode = enkf_mode;
 }
 
+void analysis_config_set_nfolds_CV( analysis_config_type * config , int folds) {
+  config->nfolds_CV = folds;
+}
+
+void analysis_config_set_do_cross_validation( analysis_config_type * config , bool do_cv) {
+  config->do_cross_validation = do_cv;
+}
+
+void analysis_config_set_do_local_cross_validation( analysis_config_type * config , bool do_cv) {
+  config->do_local_cross_validation = do_cv;
+}
 
 /**
    The analysis_config object is instantiated with the default values
@@ -151,6 +182,26 @@ void analysis_config_init_from_config( analysis_config_type * analysis , const c
 
   if (config_item_set( config , "RERUN_START" ))
     analysis_config_set_rerun_start( analysis , config_get_value_as_int( config , "RERUN_START" ));
+
+  /*Check and set CV parameters: */
+  if (config_item_set( config , "ENKF_CROSS_VALIDATION" )) {
+    analysis_config_set_do_cross_validation( analysis , config_get_value_as_bool(config , "ENKF_CROSS_VALIDATION" ));
+    if (config_item_set( config , "ENKF_CV_FOLDS" ))
+      analysis_config_set_nfolds_CV( analysis , config_get_value_as_int( config , "ENKF_CV_FOLDS" ));
+    else
+      analysis_config_set_nfolds_CV( analysis , 10);
+
+    if (config_item_set( config , "ENKF_LOCAL_CV" ))
+      analysis_config_set_do_local_cross_validation( analysis , config_get_value_as_bool(config , "ENKF_LOCAL_CV" ));
+    else
+      analysis_config_set_do_local_cross_validation( analysis , false );
+
+  }
+  else {
+    analysis_config_set_do_cross_validation( analysis , false );
+  }
+  
+  
 }
 
 
