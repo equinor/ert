@@ -182,15 +182,18 @@ void enkf_obs_free(
 
 
 
-
-void enkf_obs_add_obs_vector(
-  enkf_obs_type       * enkf_obs,
-  const char          * key ,
-  const obs_vector_type * vector)
+/**
+   Observe that the obs_vector can be NULL - in which it is of course not added.
+*/
+void enkf_obs_add_obs_vector(enkf_obs_type       * enkf_obs,
+                             const char          * key ,
+                             const obs_vector_type * vector)
 {
-  if (hash_has_key(enkf_obs->obs_hash , key))
-    util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
-  hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , vector , obs_vector_free__);
+  if (vector != NULL) {
+    if (hash_has_key(enkf_obs->obs_hash , key))
+      util_abort("%s: Observation with key:%s already added.\n",__func__ , key);
+    hash_insert_hash_owned_ref(enkf_obs->obs_hash , key , vector , obs_vector_free__);
+  }
 }
 
 

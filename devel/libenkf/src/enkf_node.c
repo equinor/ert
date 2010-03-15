@@ -599,6 +599,18 @@ const char *enkf_node_get_key(const enkf_node_type * enkf_node) {
 
 /*****************************************************************/
 
+/**
+   This function has been implemented to ensure/force a reload of
+   nodes when the case has changed.
+*/
+   
+void enkf_node_invalidate_cache( enkf_node_type * node ) {
+  node->__modified         = true;
+  node->__report_step      = -1;
+  node->__iens             = -1;
+  node->__state            = UNDEFINED;
+}
+
 
 /* Manual inheritance - .... */
 static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *config) {
@@ -608,10 +620,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->config             = config;
   node->node_key           = util_alloc_string_copy(node_key);
   node->data               = NULL;
-  node->__modified         = true;
-  node->__report_step      = -1;
-  node->__iens             = -1;
-  node->__state            = UNDEFINED;
+  enkf_node_invalidate_cache( node );
 
   /*
     Start by initializing all function pointers to NULL.

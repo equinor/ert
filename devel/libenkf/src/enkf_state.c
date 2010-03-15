@@ -1579,6 +1579,16 @@ void * enkf_state_start_forward_model__(void * __enkf_state) {
 }
 
 
+void enkf_state_invalidate_cache( enkf_state_type * enkf_state ) {
+  hash_iter_type * iter       = hash_iter_alloc(enkf_state->node_hash);
+  while ( !hash_iter_is_complete(iter) ) {
+    enkf_node_type * node = hash_iter_get_next_value(iter);
+    enkf_node_invalidate_cache( node );
+  }
+  hash_iter_free(iter);
+}
+
+
 
 
 /*****************************************************************/

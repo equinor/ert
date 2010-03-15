@@ -129,6 +129,7 @@ void   enkf_node_scale(enkf_node_type *   , double );
 void   enkf_node_iadd(enkf_node_type *    , const enkf_node_type * );
 void   enkf_node_iaddsqr(enkf_node_type * , const enkf_node_type * );
 void   enkf_node_imul(enkf_node_type *    , const enkf_node_type * );
+void   enkf_node_invalidate_cache( enkf_node_type * node );
 const  enkf_config_node_type * enkf_node_get_config(const enkf_node_type * );
 const char     *  enkf_config_node_get_infile(const enkf_config_node_type * );
 const char     *  enkf_node_get_key(const enkf_node_type * );

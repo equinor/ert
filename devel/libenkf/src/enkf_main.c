@@ -1721,6 +1721,7 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     free( date_key );
   }
   enkf_main->templates    = ert_templates_alloc( enkf_main->subst_list );
+  
   return enkf_main;
 }
 
@@ -1768,11 +1769,32 @@ static void enkf_main_alloc_members( enkf_main_type * enkf_main , hash_type * da
 }
 
 
+/**
+   When the case has changed it is essential to invalidate the meta
+   information in the enkf_nodes, otherwise the nodes might reuse old
+   data (from a previous case).
+*/
+
+
+static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
+  int ens_size = ensemble_config_get_size( enkf_main->ensemble_config );
+  int iens;
+  for (iens = 0; iens < ens_size; iens++)
+    enkf_state_invalidate_cache( enkf_main->ensemble[iens] );
+}
+
+
 
 void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case ) {
   const model_config_type * model_config = enkf_main->model_config;
   const char * mount_map = "enkf_mount_info";
   enkf_main->dbase = enkf_fs_mount(model_config_get_enspath(model_config ) , model_config_get_dbase_type( model_config ) , mount_map , select_case );
+  {
+    char * case_key = enkf_util_alloc_tagged_string( "SELECTED_CASE" );
+    subst_list_insert_ref( enkf_main->subst_list , case_key , enkf_fs_get_read_dir( enkf_main->dbase ) , "The case currently selected.");
+    free( case_key );
+  }
+  enkf_main_invalidate_cache( enkf_main );
 }
 
 
@@ -2015,7 +2037,6 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       }
 
       enkf_main_update_obs_keys(enkf_main);
-
 
       {
         const char * select_case = NULL;
