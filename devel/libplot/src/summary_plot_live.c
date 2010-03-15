@@ -159,8 +159,8 @@ void summary_plot_get_ecl_data(summary_plot_member_type * spm, char ***sfl,
     snprintf(data_file, PATH_MAX, "%s/%s", spm->dir, spm->file);
     util_alloc_file_components(data_file, &path, &base, NULL);
     ecl_util_alloc_summary_files(path, base, &header,
-				 &summary_file_list, &j,
-				 &fmt_file, &unified);
+				 &summary_file_list, &j);
+				 
     if (sfl)
 	*sfl = summary_file_list;
     else

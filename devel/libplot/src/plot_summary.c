@@ -14,7 +14,7 @@ plot_summary_collect_data(PLFLT ** x, PLFLT ** y, int *size,
     char **summary_file_list;
     char *path;
     int files;
-    bool fmt_file, unified;
+    bool fmt_file;
     ecl_sum_type *ecl_sum;
     int report_step, first_report_step, last_report_step;
     PLFLT *x_tmp, *y_tmp;
@@ -23,8 +23,8 @@ plot_summary_collect_data(PLFLT ** x, PLFLT ** y, int *size,
 
     util_alloc_file_components(data_file, &path, &base, NULL);
     ecl_util_alloc_summary_files(path, base, &header_file,
-				 &summary_file_list, &files, &fmt_file,
-				 &unified);
+				 &summary_file_list, &files, &fmt_file);
+				 
     ecl_sum = ecl_sum_fread_alloc(header_file, files,
 				  (const char **) summary_file_list, true,
 				  true);
