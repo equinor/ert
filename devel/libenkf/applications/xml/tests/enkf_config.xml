@@ -100,7 +100,6 @@
         <parameters>
             <gen_kw>
                 <kw id="MULTFLT">
-                    <!--Denne va ikkje intuitiv...-->
                     <template path="Templates/MULTFLT_TEMPLATE"/>
                     <eclipse_include path="MULTFLT.INC"/>
                     <priors path="Parameters/MULTFLT.txt"/>
