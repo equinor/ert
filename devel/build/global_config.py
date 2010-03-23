@@ -69,6 +69,14 @@ def add_static_library( env, conf , lib_path , target , src , **kwlist):
     conf.local_install[ lib_path ]   = True
 
 
+def add_shared_library( env, conf , lib_path , target , src , **kwlist):
+    LIB = env.SharedLibrary( target , src , **kwlist)
+    env.InstallLibrary( lib_path , LIB )
+    #env.InstallLibrary( conf.SDP_LIB_TARGET , LIB )
+    #conf.SDP_INSTALL[ conf.SDP_LIB_TARGET ] = True
+    conf.local_install[ lib_path ]   = True
+
+
 def add_header( env, conf , include_path , header_list ):
     env.InstallHeader( include_path , header_list )
     env.InstallHeader( conf.SDP_INCLUDE_TARGET , header_list )
