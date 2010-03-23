@@ -11,7 +11,7 @@ from   global_config import get_targets
 
 package      = "config"
 lib_path     = "../lib"
-lib_path     = "../slib"
+slib_path    = "../slib"
 include_path = "../include"
 bin_path     = "../bin"  
 
