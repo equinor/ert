@@ -343,7 +343,7 @@ void obs_data_deactivate_outliers(obs_data_type * obs_data , const double * inno
 }
 
 
-matrix_type * obs_data_allocR__(obs_data_type * obs_data) {
+matrix_type * obs_data_allocR__(const obs_data_type * obs_data) {
   const int nrobs_total  = obs_data->total_size;
   const int nrobs_active = obs_data->active_size;
   matrix_type * R;

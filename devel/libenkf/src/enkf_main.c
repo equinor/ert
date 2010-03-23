@@ -648,6 +648,7 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
 	  add_more_kw = false;
       }
 
+
       if (add_more_kw) {
 	if (active_size[ikw] > 0) {
 	  state_enum load_state;
@@ -722,19 +723,225 @@ void enkf_main_update_mulX(enkf_main_type * enkf_main , const matrix_type * X5 ,
           }
 	}
       }
+      
+
     }
 
     if (ikw2 == num_kw)
       complete = true;
   } while ( !complete );
-  
-  
   thread_pool_free( work_pool );
   free( serialize_info );
   free( active_size );
   free( row_offset );
   msg_free( msg , true );
   matrix_free( A );
+}
+
+
+/* 
+   Perform Cross-Validation for localised EnKF updating schemes.  Here
+   we create the update matrix X5 within the function, rather than
+   sending it as an input.
+*/
+
+void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count , meas_matrix_type * meas_matrix , obs_data_type * obs_data) {
+  const int num_cpu_threads          = 4;
+
+  int       matrix_size              = 1000;  /* Starting with this */
+  const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
+  enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
+  matrix_type * A = matrix_alloc(matrix_size , ens_size);
+  msg_type  * msg = msg_alloc("Updating: ");
+  stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
+  const int num_kw  = stringlist_get_size( update_keys );
+  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
+  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
+  int ikw           = 0;
+  bool complete     = false;
+  serialize_info_type * serialize_info = util_malloc( sizeof * serialize_info * num_cpu_threads , __func__);
+  thread_pool_type * work_pool = thread_pool_alloc( num_cpu_threads , false );
+  
+  int nrobs                = obs_data_get_active_size(obs_data);
+  int nrmin                = util_int_min( ens_size , nrobs);
+  
+  
+  matrix_type * randrot       = NULL;
+  matrix_type * U0   = matrix_alloc( nrobs , nrmin    ); /* Left singular vectors.  */
+  matrix_type * V0T  = matrix_alloc( nrmin , ens_size ); /* Right singular vectors. */
+  matrix_type * Z    = matrix_alloc( nrmin , nrmin    );
+  double      * eig  = util_malloc( sizeof * eig * nrmin , __func__);
+  
+
+  /*
+    Pre-processing step: Returns matrices V0T, Z, eig, U0, needed for
+    local CV below. This step is only performed once for each
+    ministep, whereas the the update code below (can) go in several
+    steps if memory is tight.
+  */
+  enkf_analysis_local_pre_cv( enkf_main->analysis_config , meas_matrix , obs_data ,  V0T , Z , eig , U0 );
+    
+  if (analysis_config_get_random_rotation( enkf_main->analysis_config ))
+    randrot = enkf_analysis_alloc_mp_randrot( ens_size );
+  
+  {
+    int icpu;
+    int iens_offset = 0;
+    for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+      serialize_info[icpu].fs          = fs;
+      serialize_info[icpu].ensemble    = enkf_main->ensemble;
+      serialize_info[icpu].report_step = report_step;
+      serialize_info[icpu].A           = A;
+      serialize_info[icpu].iens1       = iens_offset;
+      serialize_info[icpu].iens2       = iens_offset + (ens_size - iens_offset) / (num_cpu_threads - icpu);
+      iens_offset = serialize_info[icpu].iens2;
+    }
+  }
+
+  msg_show( msg );
+  do {
+    bool first_kw    	     = true;
+    bool add_more_kw 	     = true;
+    int ikw1 	     	     = ikw;
+    int ikw2 	     	     = ikw;
+    int current_row_offset   = 0;
+    matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
+
+    do { /* Fill up the A-matrix */
+      const char             * key              = stringlist_iget(update_keys , ikw);
+      const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+
+
+      /**
+	  This is very awkward; the problem is that for the GEN_DATA
+	  type the config object does not really own the size. Instead
+	  the size is pushed (on load time) from gen_data instances to
+	  the gen_data_config instance. Therefor we have to assert
+	  that at least one gen_data instance has been loaded (and
+	  consequently updated the gen_data_config instance) before we
+	  query for the size.
+      */
+      {
+	if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
+	  enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[0] , key);
+	  enkf_fs_fread_node( fs , node , report_step , 0 , FORECAST);
+	}
+      }
+      active_size[ikw] = __get_active_size( config_node , report_step , active_list );
+      row_offset[ikw]  = current_row_offset;
+
+      if ((active_size[ikw] + current_row_offset) > matrix_size) {
+	/* Not enough space in A */
+	if (first_kw) {
+	  /* Try to grow the matrix */
+	  if (!matrix_safe_resize(A , active_size[ikw] , ens_size , false))
+	    util_exit("%s: sorry failed to allocate %d doubles for the inner enkf update. Need more memory \n",__func__ , active_size[ikw] * ens_size);
+	  matrix_size = active_size[ikw];
+	} else
+	  /* Do not try to grow the matrix unless we are at the first kw. */
+	  add_more_kw = false;
+      }
+
+
+      if (add_more_kw) {
+	if (active_size[ikw] > 0) {
+	  state_enum load_state;
+
+	  if (hash_inc_counter( use_count , key) == 0)
+	    load_state = FORECAST;   /* This is the first time this keyword is updated for this reportstep */
+	  else
+	    load_state = ANALYZED;
+
+          {
+            /* Multithreaded */
+            int icpu;
+            thread_pool_restart( work_pool );
+            for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+              serialize_info[icpu].key         = key;
+              serialize_info[icpu].active_list = active_list;
+              serialize_info[icpu].load_state  = load_state;
+              serialize_info[icpu].row_offset  = row_offset[ikw];
+              
+              thread_pool_add_job( work_pool , serialize_nodes_mt , &serialize_info[icpu]);
+            }
+            thread_pool_join( work_pool );
+
+            current_row_offset += active_size[ikw];
+          }
+	}
+
+	ikw++;
+	if (ikw == num_kw)
+	  add_more_kw = false;
+      }
+      //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
+      first_kw = false;
+      {
+	char * label = util_alloc_sprintf("serializing: %s" , key);
+	msg_update( msg , label);
+	free(label);
+      }
+    } while (add_more_kw);
+    /*****************************************************************/
+    /* OK - the A matrix is full. We continue to the analysis step.  */
+    /*****************************************************************/
+    ikw2 = ikw;
+    matrix_shrink_header( A , current_row_offset , ens_size );
+
+    if (current_row_offset > 0) {
+      /* The actual update */
+
+      /*Get the optimal update matrix - observe that the A matrix is input.*/
+      matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_matrix , obs_data , randrot, A , V0T , Z , eig, U0);   
+      
+
+      msg_update(msg , " matrix multiplication");
+      matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
+      matrix_free( X5 );
+
+      /* Deserialize */
+      {
+	for (int i = ikw1; i < ikw2; i++) {
+          if (active_size[i] > 0) {
+            const char             * key              = stringlist_iget(update_keys , i);
+            const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+            {
+              char * label = util_alloc_sprintf("deserializing: %s" , key);
+              msg_update( msg , label);
+              free(label);
+            }
+
+            {
+              /* Multithreaded */
+              int icpu;
+              thread_pool_restart( work_pool );
+              for (icpu = 0; icpu < num_cpu_threads; icpu++) {
+                serialize_info[icpu].key         = key;
+                serialize_info[icpu].active_list = active_list;
+                serialize_info[icpu].row_offset  = row_offset[i];
+                
+                thread_pool_add_job( work_pool , deserialize_nodes_mt , &serialize_info[icpu]);
+              }
+              thread_pool_join( work_pool );
+            }
+          }
+	}
+      }
+    }
+
+    if (ikw2 == num_kw)
+      complete = true;
+  } while ( !complete );
+  thread_pool_free( work_pool );
+  free( serialize_info );
+  free( active_size );
+  free( row_offset );
+  msg_free( msg , true );
+  matrix_free( A );
+  
+  if (randrot != NULL)
+    matrix_free( randrot );
 }
 
 
@@ -755,6 +962,9 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
   double std_cutoff                  = analysis_config_get_std_cutoff( enkf_main->analysis_config );
   const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
   int start_step , end_step;
+  matrix_type * X;
+
+
 
   /* Observe that end_step is inclusive. */
   if (merge_observations) {
@@ -776,7 +986,6 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
       deactivating observations which should not be used in the update
       process.
     */
-
     obs_data_type     	  	* obs_data      = obs_data_alloc();
     meas_matrix_type  	  	* meas_forecast = meas_matrix_alloc( ens_size );
     meas_matrix_type  	  	* meas_analyzed = meas_matrix_alloc( ens_size );
@@ -804,25 +1013,32 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
       meas_matrix_reset( meas_forecast );
       for(int report_step = start_step; report_step <= end_step; report_step++)  {                              /* Looping over normal report steps.    */ 
         
-        //printf("Fetching observations: %d \n",report_step);
         enkf_obs_get_obs_and_measure(enkf_main->obs, enkf_main_get_fs(enkf_main), report_step, FORECAST, ens_size,
 				     (const enkf_state_type **) enkf_main->ensemble, meas_forecast, obs_data , ministep);
-        
       }
+
       meas_matrix_calculate_ens_stats( meas_forecast );
       enkf_analysis_deactivate_outliers( obs_data , meas_forecast  , std_cutoff , alpha);
-      
+
       /* How the fuck does dup() work?? */
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , stdout );
       enkf_analysis_fprintf_obs_summary( obs_data , meas_forecast  , start_step , end_step , local_ministep_get_name( ministep ) , log_stream );
-      
+
       if (obs_data_get_active_size(obs_data) > 0) {
         if (analysis_config_Xbased( enkf_main->analysis_config )) {
-          matrix_type * X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
           
-          enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
+          /*LOCAL CV: */
+
+          // Should ONLY support CV + Local
           
-          matrix_free( X );
+          if (analysis_config_get_do_local_cross_validation( enkf_main->analysis_config )) {
+            /* Update based on Cross validation AND local analysis. */
+            enkf_main_update_mulX_cv(enkf_main , ministep, end_step , use_count , meas_forecast , obs_data);
+          } else {
+            X = enkf_analysis_allocX( enkf_main->analysis_config , meas_forecast , obs_data , randrot);
+            enkf_main_update_mulX( enkf_main , X , ministep , end_step , use_count);
+            matrix_free( X );
+          }
         }
       }
     }
@@ -839,6 +1055,175 @@ void enkf_main_UPDATE(enkf_main_type * enkf_main , bool merge_observations , int
     hash_free( use_count );
   }
 }
+
+
+
+/**
+   This function returns the state-vector ensemble matrix A in order to do
+   Cross-Validation. The function is simply based on the function enkf_main_update_mulX
+   (without deserializing)
+*/
+
+matrix_type * enkf_main_getA(enkf_main_type * enkf_main , const local_ministep_type * ministep, int report_step , hash_type * use_count) {
+
+  int       matrix_size              = 1000;  /* Starting with this */
+  const int ens_size                 = ensemble_config_get_size(enkf_main->ensemble_config);
+  enkf_fs_type * fs                  = enkf_main_get_fs( enkf_main );
+  matrix_type * A = matrix_alloc(matrix_size , ens_size);
+  msg_type  * msg = msg_alloc("\nSTARTING getA...\n ");
+  stringlist_type * update_keys = local_ministep_alloc_node_keys( ministep );
+  const int num_kw  = stringlist_get_size( update_keys );
+  int * active_size = util_malloc( num_kw * sizeof * active_size , __func__);
+  int * row_offset  = util_malloc( num_kw * sizeof * row_offset  , __func__);
+  int ikw           = 0;
+  bool complete     = false;
+
+  msg_show( msg );
+  do {
+    bool first_kw    	     = true;
+    bool add_more_kw 	     = true;
+    int current_row_offset   = 0;
+    matrix_resize( A , matrix_size , ens_size , false);  /* Recover full matrix size - after matrix_shrink_header() has been called. */
+    do {
+  
+      const char             * key              = stringlist_iget(update_keys , ikw);
+      const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+      const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , key );
+
+
+      /**
+	  This is very awkward; the problem is that for the GEN_DATA
+	  type the config object does not really own the size. Instead
+	  the size is pushed (on load time) from gen_data instances to
+	  the gen_data_config instance. Therefor we have to assert
+	  that at least one gen_data instance has been loaded (and
+	  consequently updated the gen_data_config instance) before we
+	  query for the size.
+      */
+      {
+	if (enkf_config_node_get_impl_type( config_node ) == GEN_DATA) {
+	  enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[0] , key);
+	  enkf_fs_fread_node( fs , node , report_step , 0 , FORECAST);
+	}
+      }
+      active_size[ikw] = __get_active_size( config_node , report_step , active_list );
+      row_offset[ikw]  = current_row_offset;
+      
+
+      if ((active_size[ikw] + current_row_offset) > matrix_size) {
+        /*  util_abort("%s: Problem is too large to create the A (state vector) matrix needed for CV - ABORTING \n",__func__); 
+         */
+	/* Not enough space in A */
+        /*  if (first_kw) { */
+        /* Try to grow the matrix */ 
+        if (!matrix_safe_resize(A , active_size[ikw] + current_row_offset , ens_size , false))
+          util_exit("%s: sorry failed to allocate %d doubles for the inner enkf update. Need more memory \n",__func__ , active_size[ikw] * ens_size);
+        
+        matrix_size = matrix_get_rows( A );
+        /*      } else */
+                /* Do not try to grow the matrix unless we are at the first kw. */
+        /*        add_more_kw = false;*/
+        printf("\n allocated matrix size %d \n",matrix_size);
+      }
+      
+
+      if (add_more_kw) {
+	if (active_size[ikw] > 0) {
+	  state_enum load_state;
+          
+
+          /*remove this:
+            if (hash_inc_counter( use_count , key) == 0)*/
+          /*	    load_state = FORECAST;*/   /* This is the first time this keyword is updated for this reportstep */
+          /*	  else
+	    load_state = ANALYZED;
+          */
+          load_state = FORECAST;
+	  /** This could be multi-threaded */
+	  for (int iens = 0; iens < ens_size; iens++) {
+	    enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
+            if (iens == 0)
+              printf("\nLoading key %s\n",key);
+            
+ 	    enkf_fs_fread_node( fs , node , report_step , iens , load_state);
+	    enkf_node_matrix_serialize( node , active_list , A , row_offset[ikw] , iens);
+	  }
+          
+                
+	  current_row_offset += active_size[ikw];
+
+	}
+
+	ikw++;
+  
+	if (ikw == num_kw) {
+	  add_more_kw = false;
+          complete = true;
+        }
+      }
+      //add_more_kw = false;   /* If this is here unconditionally we will only have one node for each matrix A */
+      first_kw = false;
+      {
+	char * label = util_alloc_sprintf("serializing: %s" , key);
+	msg_update( msg , label);
+	free(label);
+      }
+
+  
+
+
+     } while (add_more_kw);
+
+    matrix_shrink_header( A , current_row_offset , ens_size );
+    
+    /* NOT NEEDED 
+    if (current_row_offset > 0) {
+    */
+      /* The actual update */
+    /*
+      msg_update(msg , " matrix multiplication");
+      matrix_inplace_matmul_mt( A , X5 , 4 );*/  /* Four CPU threads - nothing like a little hardcoding ... */
+      /* Deserialize NOT NEEDED 
+      {
+	for (int i = ikw1; i < ikw2; i++) {
+          if (active_size[i] > 0) {
+            const char             * key              = stringlist_iget(update_keys , i);
+            const active_list_type * active_list      = local_ministep_get_node_active_list( ministep , key );
+            {
+              char * label = util_alloc_sprintf("deserializing: %s" , key);
+              msg_update( msg , label);
+              free(label);
+            }
+
+            for (int iens = 0; iens < ens_size; iens++) {
+              enkf_node_type * node = enkf_state_get_node( enkf_main->ensemble[iens] , key);
+              enkf_node_matrix_deserialize(node , active_list , A , row_offset[i] , iens);
+              enkf_fs_fwrite_node( fs , node , report_step , iens , ANALYZED);
+            }
+          }
+	}
+      }
+      */
+    
+    /*}*/
+  
+
+  } while ( !complete );
+
+  free(active_size);
+  free(row_offset);
+  msg_free( msg , true );
+  
+  
+  int nx = matrix_get_rows( A );
+  int ne = matrix_get_columns( A );
+  printf("\n Size A = (%d,%d)\n",nx,ne);
+
+  printf("\n FINISHED, RETURNING THE STATE VECTOR ENSEMBLE A\n");
+  
+  return A;
+}
+
 
 
 
@@ -1584,8 +1969,11 @@ static config_type * enkf_main_alloc_config() {
   config_add_key_value( config , "ENKF_TRUNCATION"         , false , CONFIG_FLOAT);
   config_add_key_value( config , "ENKF_ALPHA"              , false , CONFIG_FLOAT);
   config_add_key_value( config , "ENKF_MERGE_OBSERVATIONS" , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "ENKF_RERUN"              , false , CONFIG_BOOLEAN);
-  config_add_key_value( config , "RERUN_START"             , false , CONFIG_INT);
+  config_add_key_value( config , "ENKF_CROSS_VALIDATION" , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , "ENKF_LOCAL_CV" , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , "ENKF_CV_FOLDS" , false , CONFIG_INT);
+  config_add_key_value( config , "ENKF_RERUN" , false , CONFIG_BOOLEAN);
+  config_add_key_value( config , "RERUN_START" , false , CONFIG_INT);
   config_add_key_value( config , "UPDATE_LOG_PATH"         , false , CONFIG_STRING);
 
   /*****************************************************************/

@@ -23,7 +23,7 @@ void          	     obs_data_free(obs_data_type *);
 void          	     obs_data_add(obs_data_type * , double , double , const char * );
 void          	     obs_data_reset(obs_data_type * obs_data);
 matrix_type   	   * obs_data_allocD__(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
-matrix_type   	   * obs_data_allocR__(obs_data_type * obs_data);
+matrix_type   	   * obs_data_allocR__(const obs_data_type * obs_data);
 double             * obs_data_alloc_innov__(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix);
 matrix_type   	   * obs_data_allocE__(const obs_data_type * obs_data , int ens_size);
 void                 obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov);
