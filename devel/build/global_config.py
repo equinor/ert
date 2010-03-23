@@ -117,7 +117,7 @@ def get_SDP_ROOT():
     RH  = open('/etc/redhat-release').read().split()[6]
     res_target = "%s_RH_%s" % (cpu , RH)
     sdp_root = "/project/res/%s_RH_%s" % (cpu , RH)
-    return sdp_root
+    return (sdp_root , float(RH))
 
 
 
@@ -128,7 +128,7 @@ class conf:
         self.TIME_STAMP       = commands.getoutput("date").replace(" " , "_")
         
         self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/Config/site-config"
-        self.SDP_ROOT             = get_SDP_ROOT()
+        (self.SDP_ROOT , self.RH) = get_SDP_ROOT()
         self.SDP_BIN              = "%s/bin"             %  self.SDP_ROOT
         self.SDP_BIN_TARGET       = "%s/bin"             %  self.SDP_ROOT
         self.SDP_INCLUDE          = "%s/include"         %  self.SDP_ROOT
