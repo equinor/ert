@@ -22,7 +22,7 @@ bin_path     = "../bin"
 conf = global_config.get_conf(os.getcwd() , package , 3)
 env  = Environment()
 
-conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "g2c" , "plplotd" , "m" , "z" , "pthread"] , link = True)
+conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , LIBPLOT , LIBCONFIG , LIBUTIL ] , ["bat"  ,"lsf" , "nsl" , "lapack" , "plplotd" , "m" , "z" , "pthread"] , link = True)
 
 
 define_fmt = "\'%s=\"%s\"\'"
