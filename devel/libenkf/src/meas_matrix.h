@@ -17,7 +17,7 @@ meas_vector_type * meas_matrix_iget_vector(const meas_matrix_type *, int );
 meas_matrix_type * meas_matrix_alloc( int );
 void               meas_matrix_free(meas_matrix_type * );
 void               meas_matrix_add(meas_matrix_type * , int , double );
-matrix_type      * meas_matrix_allocS__(const meas_matrix_type * matrix);
+matrix_type      * meas_matrix_allocS(const meas_matrix_type * matrix);
 void               meas_matrix_deactivate(meas_matrix_type * meas_matrix, int index);
 void               meas_matrix_calculate_ens_stats(meas_matrix_type * matrix);
 double             meas_matrix_iget_ens_mean(const meas_matrix_type * matrix , int index);

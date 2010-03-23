@@ -22,11 +22,11 @@ obs_data_node_type * obs_data_iget_node( const obs_data_type * obs_data , int in
 void          	     obs_data_free(obs_data_type *);
 void          	     obs_data_add(obs_data_type * , double , double , const char * );
 void          	     obs_data_reset(obs_data_type * obs_data);
-matrix_type   	   * obs_data_allocD__(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
-matrix_type   	   * obs_data_allocR__(const obs_data_type * obs_data);
-double             * obs_data_alloc_innov__(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix);
-matrix_type   	   * obs_data_allocE__(const obs_data_type * obs_data , int ens_size);
-void                 obs_data_scale__(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov);
+matrix_type   	   * obs_data_allocD(const obs_data_type * obs_data , const matrix_type * E  , const matrix_type * S);
+matrix_type   	   * obs_data_allocR(const obs_data_type * obs_data);
+double             * obs_data_alloc_innov(const obs_data_type * obs_data , const meas_matrix_type * meas_matrix);
+matrix_type   	   * obs_data_allocE(const obs_data_type * obs_data , int ens_size);
+void                 obs_data_scale(const obs_data_type * obs_data , matrix_type *S , matrix_type *E , matrix_type *D , matrix_type *R , double *innov);
 int           	     obs_data_get_nrobs(const obs_data_type * );
 void          	     obs_data_deactivate_outliers(obs_data_type * , const double * , const double *, double , double , int * , bool **);
 void          	     obs_data_fprintf(const obs_data_type * , FILE * , const double * , const double *);

@@ -883,9 +883,11 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
 	free(label);
       }
     } while (add_more_kw);
+
     /*****************************************************************/
     /* OK - the A matrix is full. We continue to the analysis step.  */
     /*****************************************************************/
+
     ikw2 = ikw;
     matrix_shrink_header( A , current_row_offset , ens_size );
 
@@ -893,12 +895,13 @@ void enkf_main_update_mulX_cv(enkf_main_type * enkf_main , const local_ministep_
       /* The actual update */
 
       /*Get the optimal update matrix - observe that the A matrix is input.*/
-      matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_matrix , obs_data , randrot, A , V0T , Z , eig, U0);   
-      
-
-      msg_update(msg , " matrix multiplication");
-      matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
-      matrix_free( X5 );
+      {
+        matrix_type * X5 = enkf_analysis_allocX_pre_cv( enkf_main->analysis_config , meas_matrix , obs_data , randrot, A , V0T , Z , eig, U0);   
+        
+        msg_update(msg , " matrix multiplication");
+        matrix_inplace_matmul_mt( A , X5 , num_cpu_threads );  
+        matrix_free( X5 );
+      }
 
       /* Deserialize */
       {

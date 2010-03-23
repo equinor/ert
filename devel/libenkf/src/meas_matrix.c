@@ -207,7 +207,7 @@ void meas_matrix_iget_ens_mean_std( const meas_matrix_type * matrix , int index 
 
  
 
-matrix_type * meas_matrix_allocS__(const meas_matrix_type * matrix) {
+matrix_type * meas_matrix_allocS(const meas_matrix_type * matrix) {
   const int nrobs_total = meas_vector_get_nrobs(matrix->meas_vectors[0]);
   matrix_type * S;
   int iens , active_iobs;
