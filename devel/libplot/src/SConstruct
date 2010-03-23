@@ -13,7 +13,7 @@ from   global_config import get_targets
 
 package      = "plot"
 lib_path     = "../lib"
-slib_path     = "../slib"
+slib_path    = "../slib"
 include_path = "../include"
 bin_path     = "../bin"  
 
