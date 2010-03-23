@@ -136,7 +136,7 @@ class conf:
         self.SDP_LIB              = "%s/lib"             %  self.SDP_ROOT
         self.SDP_LIB_TARGET       = "%s/lib"             %  self.SDP_ROOT
         self.SDP_ERT_RELEASE      = "%s/bin/ert_release" %  self.SDP_ROOT
-        
+
         self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall -fPIC"
         self.ARFLAGS  = "csr"
 
@@ -180,13 +180,13 @@ class conf:
                 LIBS.append( name )
         CPPPATH.append( self.SDP_INCLUDE )
         LIBPATH.append( self.SDP_LIB )
-
+        env.Replace( CC = "gcc4" )
 
         if ext_liblist:
             LIBS += ext_liblist
         env.Replace( CPPPATH  = CPPPATH ,
                      CCFLAGS  = self.CCFLAGS )
-
+        
         if link:
             env.Replace(LIBPATH  = LIBPATH ,
                         LIBS     = LIBS    , 
