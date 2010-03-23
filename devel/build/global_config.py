@@ -180,7 +180,7 @@ class conf:
                 LIBS.append( name )
         CPPPATH.append( self.SDP_INCLUDE )
         LIBPATH.append( self.SDP_LIB )
-        env.Replace( CC = "gcc4" )
+        env.Replace( CC = "gcc" )
 
         if ext_liblist:
             LIBS += ext_liblist
