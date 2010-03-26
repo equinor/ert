@@ -115,7 +115,7 @@ static void enkf_tui_fs_copy_ensemble__(
   enkf_fs_type   * fs        	= enkf_main_get_fs(enkf_main);
   msg_type       * msg       	= msg_alloc("Copying: ");
   ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
-  int ens_size                  = ensemble_config_get_size(config);
+  int ens_size                  = enkf_main_get_ensemble_size(enkf_main);
   char * ranking_key;
   const int  * ranking_permutation = NULL;
   
@@ -205,7 +205,7 @@ void enkf_tui_fs_initialize_case_from_copy(void * arg)
   enkf_fs_type   * fs        = enkf_main_get_fs(enkf_main);
 
   const ensemble_config_type * config = enkf_main_get_ensemble_config(enkf_main);
-  ens_size = ensemble_config_get_size(config);
+  ens_size = enkf_main_get_ensemble_size( enkf_main );
 
   
   last_report  = enkf_main_get_history_length( enkf_main );

@@ -14,7 +14,7 @@ static void enkf_tui_ranking_make_misfit_table( void * arg) {
   enkf_obs_type              * enkf_obs        = enkf_main_get_obs( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
   const int history_length                     = enkf_main_get_history_length( enkf_main );
-  const int ens_size                           = ensemble_config_get_size(ensemble_config);
+  const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   misfit_table_type * misfit_table             = misfit_table_alloc( ensemble_config , fs , history_length , ens_size , enkf_obs );
   enkf_main_set_misfit_table( enkf_main , misfit_table );
 }
