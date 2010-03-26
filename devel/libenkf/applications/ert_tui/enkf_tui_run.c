@@ -22,7 +22,7 @@
 
 void enkf_tui_run_start__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size           = ensemble_config_get_size(ensemble_config);
+  const int ens_size = enkf_main_get_ensemble_size( enkf_main );
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
   {
     int iens;
@@ -38,7 +38,7 @@ void enkf_tui_run_start__(void * enkf_main) {
 
 void enkf_tui_run_restart__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size           = ensemble_config_get_size(ensemble_config);
+  const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
   const int last_report = enkf_main_get_history_length( enkf_main );
   int start_report;
   state_enum state;
@@ -70,7 +70,7 @@ void enkf_tui_run_restart__(void * enkf_main) {
 
 void enkf_tui_run_exp__(void * enkf_main) {
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size           = ensemble_config_get_size(ensemble_config);
+  const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   state_enum init_state    = ANALYZED; 
@@ -102,7 +102,7 @@ void enkf_tui_run_exp__(void * enkf_main) {
 void enkf_tui_run_create_runpath__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size           = ensemble_config_get_size(ensemble_config);
+  const int ens_size           = enkf_main_get_ensemble_size( enkf_main );
   bool * iactive = util_malloc(ens_size * sizeof * iactive , __func__);
 
   state_enum init_state    = ANALYZED; 
@@ -158,7 +158,7 @@ void enkf_tui_run_predictions__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   if (enkf_main_has_prediction( enkf_main )) {
     const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-    const int ens_size     			 = ensemble_config_get_size(ensemble_config);
+    const int ens_size     			 = enkf_main_get_ensemble_size( enkf_main );
     bool * iactive         			 = util_malloc(ens_size * sizeof * iactive , __func__);
     int        history_end 			 = enkf_main_get_history_length( enkf_main );
     state_enum start_state 			 = ANALYZED;           
@@ -182,7 +182,7 @@ void enkf_tui_run_full__(void * __enkf_main) {
   enkf_main_type * enkf_main = enkf_main_safe_cast(__enkf_main);
   if (enkf_main_has_prediction( enkf_main )) {
     const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-    const int ens_size     			 = ensemble_config_get_size(ensemble_config);
+    const int ens_size     			 = enkf_main_get_ensemble_size( enkf_main );
     bool * iactive         			 = util_malloc(ens_size * sizeof * iactive , __func__);
     state_enum init_state                        = ANALYZED; 
     int start_report                             = 0;
@@ -205,7 +205,7 @@ void enkf_tui_run_manual_load__( void * arg ) {
   enkf_main_type * enkf_main                   = enkf_main_safe_cast( arg );
   const int last_report                        = enkf_main_get_history_length( enkf_main );
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  const int ens_size                           = ensemble_config_get_size(ensemble_config);
+  const int ens_size                           = enkf_main_get_ensemble_size( enkf_main );
   int step1,step2;
   bool * iactive         = util_malloc(ens_size * sizeof * iactive , __func__);
   run_mode_type run_mode = ENSEMBLE_EXPERIMENT; //ENSEMBLE_PREDICTION will induce the most powerfull load. ENKF_ASSIMILATION; /*ENSEMBLE_EXPERIMENT;*/ /* Should really ask the user abourt this? */

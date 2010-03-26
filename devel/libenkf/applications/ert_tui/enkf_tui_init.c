@@ -22,7 +22,7 @@
 void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_parameters) {
   const int prompt_len                         = 35;
   const ensemble_config_type * ensemble_config = enkf_main_get_ensemble_config(enkf_main);
-  int   ens_size                               = ensemble_config_get_size(ensemble_config);
+  int   ens_size                               = enkf_main_get_ensemble_size( enkf_main );
   stringlist_type * param_list                 = stringlist_alloc_new();
   int iens1, iens2;
   

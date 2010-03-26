@@ -84,7 +84,7 @@ state_enum enkf_tui_util_scanf_state(const char * prompt, int prompt_len, bool a
 const enkf_config_node_type * enkf_tui_util_scanf_key(const ensemble_config_type * config , int prompt_len , enkf_impl_type impl_type ,  enkf_var_type var_type) {
   char * kw;
   bool OK;
-  const enkf_config_node_type * config_node;
+  const enkf_config_node_type * config_node = NULL;
   do {
     OK = true;
     util_printf_prompt("Keyword" , prompt_len , '=' , "=> ");

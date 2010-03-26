@@ -100,6 +100,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->data_file             = NULL;
   ecl_config->equil_init_file       = NULL; 
   ecl_config->refcase               = NULL;
+  ecl_config->grid                  = NULL;
   ecl_config->can_restart           = false;
   {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
@@ -240,10 +241,10 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       perfectly legitemate.
   */
 
+
   if (config_item_set(config , "GRID"))
-    ecl_config->grid = ecl_grid_alloc( config_iget(config , "GRID" , 0,0) );
-  else
-    ecl_config->grid = NULL;
+    ecl_config_set_grid( ecl_config , config_iget(config , "GRID" , 0,0) );
+    
   
   if (config_item_set( config , "REFCASE")) 
     ecl_config_load_refcase( ecl_config , config_get_value( config , "REFCASE" ));
@@ -314,6 +315,13 @@ bool ecl_config_include_static_kw(const ecl_config_type * ecl_config, const char
 
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config) {
   return ecl_config->grid;
+}
+
+
+void ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file ) {
+  if (ecl_config->grid != NULL)
+    ecl_grid_free( ecl_config->grid );
+  ecl_config->grid = ecl_grid_alloc( grid_file );
 }
 
 

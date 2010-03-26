@@ -42,7 +42,6 @@
 
 struct ensemble_config_struct {
   pthread_mutex_t          mutex;
-  int  		  	   ens_size;          /*  The size of the ensemble  */
   hash_type       	 * config_nodes;      /*  A hash of enkf_config_node instances - which again conatin pointers to e.g. field_config objects.  */
   field_trans_table_type * field_trans_table; /*  A table of the transformations which are available to apply on fields. */
 };
@@ -50,18 +49,14 @@ struct ensemble_config_struct {
 
 
 
-static ensemble_config_type * ensemble_config_alloc_empty(int ens_size) {
-  if (ens_size <= 0)
-    util_exit("%s: ensemble size must be > 0 \n",__func__);
-  {
-    ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config , __func__);
-    ensemble_config->ens_size     = ens_size;
-    ensemble_config->config_nodes = hash_alloc();
-    pthread_mutex_init( &ensemble_config->mutex , NULL);
-    
-    return ensemble_config;
-  }
+static ensemble_config_type * ensemble_config_alloc_empty( ) {
+  ensemble_config_type * ensemble_config = util_malloc(sizeof * ensemble_config , __func__);
+  ensemble_config->config_nodes = hash_alloc();
+  pthread_mutex_init( &ensemble_config->mutex , NULL);
+  
+  return ensemble_config;
 }
+
 
 
 enkf_impl_type ensemble_config_impl_type(const ensemble_config_type *ensemble_config, const char * ecl_kw_name) {
@@ -98,9 +93,6 @@ void ensemble_config_free(ensemble_config_type * ensemble_config) {
 }
 
 
-int ensemble_config_get_size(const ensemble_config_type * ensemble_config) { 
-  return ensemble_config->ens_size;
-}
 
 
 
@@ -376,7 +368,7 @@ void ensemble_config_add_config_items(config_type * config) {
 
 ensemble_config_type * ensemble_config_alloc(const config_type * config , const ecl_grid_type * grid, const ecl_sum_type * refcase) {
   int i;
-  ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( config_iget_as_int(config , "NUM_REALIZATIONS" , 0 , 0));
+  ensemble_config_type * ensemble_config = ensemble_config_alloc_empty( );
   ensemble_config->field_trans_table     = field_trans_table_alloc();
 
   /* MULTFLT depreceation warning added 17/03/09 (svn 1811). */

@@ -33,6 +33,7 @@ const path_fmt_type * ecl_config_get_eclbase_fmt(const ecl_config_type * );
 int                   ecl_config_get_num_restart_files(const ecl_config_type * );
 const ecl_sum_type  * ecl_config_get_refcase(const ecl_config_type * ecl_config);
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * );
+void                  ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file );
 int                   ecl_config_get_last_history_restart( const ecl_config_type * );
 bool                  ecl_config_can_restart( const ecl_config_type * ecl_config );
 

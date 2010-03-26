@@ -422,6 +422,21 @@ static char * enkf_state_subst_randfloat(const char * key , void * arg) {
 }
 
 
+static void enkf_state_add_nodes( enkf_state_type * enkf_state, const ensemble_config_type * ensemble_config) {
+  stringlist_type * keylist  = ensemble_config_alloc_keylist(ensemble_config);
+  int keys        = stringlist_get_size(keylist);
+
+  for (int ik = 0; ik < keys; ik++) {
+    const char * key = stringlist_iget(keylist, ik);
+    const enkf_config_node_type * config_node = ensemble_config_get_node(ensemble_config , key);
+    enkf_state_add_node(enkf_state , key , config_node);
+  }
+
+  stringlist_free(keylist);
+}
+
+
+
 enkf_state_type * enkf_state_alloc(int iens,
                                    enkf_fs_type              * fs, 
                                    const char                * casename , 
@@ -510,7 +525,8 @@ INCLDUE
   enkf_state->default_forward_model = forward_model_alloc_copy( default_forward_model , site_config_get_statoil_mode(site_config));
   enkf_state->forward_model         = enkf_state->default_forward_model;
   enkf_state_init_forward_model( enkf_state );
-  
+  enkf_state_add_nodes( enkf_state , ensemble_config );
+
   return enkf_state;
 }
 
@@ -534,18 +550,24 @@ static bool enkf_state_has_node(const enkf_state_type * enkf_state , const char 
    The enkf_state inserts a reference to the node object. The
    enkf_state object takes ownership of the node object, i.e. it will
    free it when the game is over.
+
+   Observe that if the node already exists the existing node will be
+   removed (freed and so on ... ) from the enkf_state object before
+   adding the new; this was previously considered a run-time error.
 */
 
 
 void enkf_state_add_node(enkf_state_type * enkf_state , const char * node_key , const enkf_config_node_type * config) {
-  enkf_node_type *enkf_node = enkf_node_alloc(config);
   if (enkf_state_has_node(enkf_state , node_key)) 
-    util_abort("%s: node:%s already added  - aborting \n",__func__ , node_key);
-  hash_insert_hash_owned_ref(enkf_state->node_hash , node_key , enkf_node, enkf_node_free__);
+    enkf_state_del_node( enkf_state , node_key );   /* Deleting the old instance (if we had one). */
+  {
+    enkf_node_type *enkf_node = enkf_node_alloc(config);
+    hash_insert_hash_owned_ref(enkf_state->node_hash , node_key , enkf_node, enkf_node_free__);
   
-  /* Setting the global subst list so that the GEN_KW templates can contain e.g. <IENS> and <CWD>. */
-  if (enkf_node_get_impl_type( enkf_node ) == GEN_KW)
-    gen_kw_set_subst_parent( enkf_node_value_ptr( enkf_node ) , enkf_state->subst_list );
+    /* Setting the global subst list so that the GEN_KW templates can contain e.g. <IENS> and <CWD>. */
+    if (enkf_node_get_impl_type( enkf_node ) == GEN_KW)
+      gen_kw_set_subst_parent( enkf_node_value_ptr( enkf_node ) , enkf_state->subst_list );
+  }
 }
 
 
