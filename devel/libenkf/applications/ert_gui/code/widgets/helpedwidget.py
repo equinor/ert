@@ -9,37 +9,43 @@ def abstract():
 
 
 class ContentModel:
+    """This class is a wrapper for communication between the model and the view."""
     contentModel = None # A hack to have a "static" class variable
     observers = []
 
     def __init__(self):
+        """Constructs a ContentModel. All inheritors are registered"""
         ContentModel.observers.append(self)
 
-    def getFromModel(self):
-        return self.getter(ContentModel.contentModel)
-
     def initialize(self, model):
-        """Must be implemented to get data from a source."""
+        """This should be implemented by inheriting classes that wants to do some one time initialization before getting and setting."""
         abstract()
 
     def getter(self, model):
-        """Must be implemented to get data from a source."""
+        """Must be implemented to get data from a source. Should not be called directly."""
         abstract()
 
     def setter(self, model, value):
-        """Must be implemented to update the source with new data."""
+        """Must be implemented to update the source with new data. Should not be called directly."""
         abstract()
 
     def fetchContent(self):
-        """This function is called to tell all inheriting classes to retrieve data from this model"""
+        """This function is called to tell all inheriting classes to retrieve data from the model"""
         abstract()
 
+    def getFromModel(self):
+        """Retrieves the data from the model. Calls the getter function with an appropriate model."""
+        return self.getter(ContentModel.contentModel)
+
+
     def updateContent(self, value):
+        """Sends updated data to the model. Calls the setter function with an appropriate model."""
         if not ContentModel.contentModel == None :
             self.setter(ContentModel.contentModel, value)
 
     @classmethod
     def updateObservers(cls):
+        """Calls all ContentModel inheritors to initialize (if implemented) and perform initial fetch of data."""
         for o in ContentModel.observers:
             try:
                 o.initialize(ContentModel.contentModel)
@@ -50,6 +56,7 @@ class ContentModel:
 
     @classmethod
     def printObservers(cls):
+        """Convenience method for printing the registered inheritors."""
         for o in ContentModel.observers:
             print o
 
@@ -109,10 +116,13 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
             self.addWidget(self.getHelpButton())
 
     def getLabel(self):
+        """Returns the label of this widget if set or empty string."""
         return self.tr(self.label)
 
     def addWidget(self, widget):
+        """Add a widget to the layout of this widget."""
         self.widgetLayout.addWidget(widget)
 
     def addStretch(self):
+        """Add stretch between widgets. Usually added between a widget and the help button."""
         self.widgetLayout.addStretch(1)
