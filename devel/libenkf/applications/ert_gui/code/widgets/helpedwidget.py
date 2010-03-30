@@ -18,19 +18,19 @@ class ContentModel:
         ContentModel.observers.append(self)
 
     def initialize(self, model):
-        """This should be implemented by inheriting classes that wants to do some one time initialization before getting and setting."""
+        """Should be implemented by inheriting classes that wants to do some one time initialization before getting and setting."""
         abstract()
 
     def getter(self, model):
-        """Must be implemented to get data from a source. Should not be called directly."""
+        """MUST be implemented to get data from a source. Should not be called directly."""
         abstract()
 
     def setter(self, model, value):
-        """Must be implemented to update the source with new data. Should not be called directly."""
+        """MUST be implemented to update the source with new data. Should not be called directly."""
         abstract()
 
     def fetchContent(self):
-        """This function is called to tell all inheriting classes to retrieve data from the model"""
+        """MUST be implemented. This function is called to tell all inheriting classes to retrieve data from the model. """
         abstract()
 
     def getFromModel(self):

@@ -52,12 +52,14 @@ class KeywordList(HelpedWidget):
 
 
     def contentsChanged(self):
+        """Called whenever the contents of a cell changes."""
 
         keywordList = []
         for index in range(self.list.count()):
             keywordList.append(self.list.item(index).text())
 
         self.updateContent(keywordList)
+
 
     def fetchContent(self):
         keywords = self.getFromModel()
@@ -87,6 +89,7 @@ class KeywordTable(HelpedWidget):
 
         self.addWidget(self.table)
 
+        #todo: refactor into a add/remove widget
         buttonWidget = QtGui.QWidget(self)
         addButton = QtGui.QToolButton(self)
         addButton.setIcon(QtGui.QIcon.fromTheme("add"))
@@ -129,6 +132,7 @@ class KeywordTable(HelpedWidget):
 
 
     def contentsChanged(self):
+        """Called whenever the contents of a cell changes."""
         keyValueList = {}
 
         for index in range(self.table.rowCount()):
@@ -224,6 +228,7 @@ class MultiColumnTable(HelpedWidget):
 
 
     def contentsChanged(self):
+        """Called whenever the contents of a cell changes."""
         rowValues = []
 
         for rowIndex in range(self.table.rowCount()):
