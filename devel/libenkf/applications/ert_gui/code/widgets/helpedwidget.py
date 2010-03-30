@@ -18,11 +18,15 @@ class ContentModel:
     def getFromModel(self):
         return self.getter(ContentModel.contentModel)
 
+    def initialize(self, model):
+        """Must be implemented to get data from a source."""
+        abstract()
+
     def getter(self, model):
         """Must be implemented to get data from a source."""
         abstract()
 
-    def setter(self, source, value):
+    def setter(self, model, value):
         """Must be implemented to update the source with new data."""
         abstract()
 
@@ -37,6 +41,11 @@ class ContentModel:
     @classmethod
     def updateObservers(cls):
         for o in ContentModel.observers:
+            try:
+                o.initialize(ContentModel.contentModel)
+            except NotImplementedError:
+                pass
+                
             o.fetchContent()
 
     @classmethod

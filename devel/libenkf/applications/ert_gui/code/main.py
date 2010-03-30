@@ -2,6 +2,8 @@
 from PyQt4 import QtGui, QtCore
 import sys
 
+import ertwrapper
+
 from widgets.configpanel import ConfigPanel
 from widgets.checkbox import CheckBox
 from widgets.combochoice import ComboChoice
@@ -31,9 +33,6 @@ widget = QtGui.QWidget()
 widget.resize(750, 350)
 widget.setWindowTitle('ERT GUI')
 
-quitButton = QtGui.QPushButton("Close", widget)
-
-widget.connect(quitButton, QtCore.SIGNAL('clicked()'), QtGui.qApp, QtCore.SLOT('quit()'))
 widgetLayout = QtGui.QVBoxLayout()
 
 
@@ -128,7 +127,9 @@ class ERT:
         print "get " + attribute + ": " + str(getattr(self, attribute))
         return getattr(self, attribute)
 
-ert = ERT()
+
+        
+ert = ertwrapper.ErtWrapper()
 
 
 
@@ -340,33 +341,37 @@ configPanel.endPage()
 configPanel.startPage("Plot")
 
 r = configPanel.addRow(PathChooser(widget, "Output path", "plot_path"))
-r.getter = lambda ert : ert.getAttribute("plot_path")
-r.setter = lambda ert, value : ert.setAttribute("plot_path", value)
+r.initialize = lambda ert : ert.setRestype("plot_config_get_path", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.plot_config_get_path(ert.plot_config)
+r.setter = lambda ert, value : ert.enkf.plot_config_set_path(ert.plot_config, str(value))
 
 
 r = configPanel.addRow(ComboChoice(widget, ["PLPLOT", "TEXT"], "Driver", "plot_driver"))
-r.getter = lambda ert : ert.getAttribute("driver")
-r.setter = lambda ert, value : ert.setAttribute("driver", value)
+r.initialize = lambda ert : ert.setRestype("plot_config_get_driver", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.plot_config_get_driver(ert.plot_config)
+r.setter = lambda ert, value : ert.enkf.plot_config_set_driver(ert.plot_config, str(value))
 
 r = configPanel.addRow(IntegerSpinner(widget, "Errorbar max", "plot_errorbar_max", 1, 10000000))
-r.getter = lambda ert : ert.getAttribute("errorbar")
-r.setter = lambda ert, value : ert.setAttribute("errorbar", value)
+r.getter = lambda ert : ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
+r.setter = lambda ert, value : ert.enkf.plot_config_set_errorbar_max(ert.plot_config, value)
 
 r = configPanel.addRow(IntegerSpinner(widget, "Width", "plot_width", 1, 10000))
-r.getter = lambda ert : ert.getAttribute("width")
-r.setter = lambda ert, value : ert.setAttribute("width", value)
+r.getter = lambda ert : ert.enkf.plot_config_get_width(ert.plot_config)
+r.setter = lambda ert, value : ert.enkf.plot_config_set_width(ert.plot_config, value)
 
 r = configPanel.addRow(IntegerSpinner(widget, "Height", "plot_height", 1, 10000))
-r.getter = lambda ert : ert.getAttribute("height")
-r.setter = lambda ert, value : ert.setAttribute("height", value)
+r.getter = lambda ert : ert.enkf.plot_config_get_height(ert.plot_config)
+r.setter = lambda ert, value : ert.enkf.plot_config_set_height(ert.plot_config, value)
 
 r = configPanel.addRow(PathChooser(widget, "Image Viewer", "image_viewer", True))
-r.getter = lambda ert : ert.getAttribute("image_viewer")
-r.setter = lambda ert, value : ert.setAttribute("image_viewer", value)
+r.initialize = lambda ert : ert.setRestype("plot_config_get_viewer", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.plot_config_get_viewer(ert.plot_config)
+r.setter = lambda ert, value : ert.enkf.plot_config_set_viewer(ert.plot_config, value)
 
-r = configPanel.addRow(ComboChoice(widget, ["png", "jpg", "tif", "bmp"], "Image type", "image_type"))
-r.getter = lambda ert : ert.getAttribute("image_type")
-r.setter = lambda ert, value : ert.setAttribute("image_type", value)
+r = configPanel.addRow(ComboChoice(widget, ["bmp", "jpg", "png", "tif"], "Image type", "image_type"))
+r.initialize = lambda ert : ert.setRestype("plot_config_get_image_type", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.plot_config_get_image_type(ert.plot_config)
+r.setter = lambda ert, value : ert.enkf.plot_config_set_image_type(ert.plot_config, str(value))
 
 
 configPanel.endPage()
@@ -572,7 +577,17 @@ ContentModel.updateObservers()
 
 
 widgetLayout.addWidget(configPanel)
-widgetLayout.addWidget(quitButton)
+
+quitButton = QtGui.QPushButton("Close", widget)
+widget.connect(quitButton, QtCore.SIGNAL('clicked()'), QtGui.qApp, QtCore.SLOT('quit()'))
+
+buttonWidget = QtGui.QWidget(widget)
+buttonLayout = QtGui.QHBoxLayout()
+buttonLayout.addStretch(1)
+buttonLayout.addWidget(quitButton)
+
+buttonWidget.setLayout(buttonLayout)
+widgetLayout.addWidget(buttonWidget)
 
 widget.setLayout(widgetLayout)
 widget.show()
