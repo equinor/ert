@@ -19,7 +19,10 @@ class ConfigPanel(QtGui.QTabWidget):
 
 
     def addRow(self, row):
-        """Add a new row on a configuration page. Returns the row widget."""
+        """
+        Add a new row on a configuration page. Returns the row widget.
+        If the row does not have a getLabel() function the row spans both columns.
+        """
         if hasattr(row, "getLabel"):
             self.formLayout.addRow(row.getLabel(), row)
         else:

@@ -2,8 +2,12 @@ from PyQt4 import QtGui, QtCore
 from helpedwidget import *
 
 class ComboChoice(HelpedWidget):
+    """
+    A combo box widget for choices. The data structure expected and sent to the getter and setter is a string
+    that is equal to one of the available ones.
+    """
     def __init__(self, parent=None, choiceList=["No choices"], comboLabel="Choice", help=""):
-        """Construct a PathChooser widget"""
+        """Construct a ComboChoice widget"""
         HelpedWidget.__init__(self, parent, comboLabel, help)
 
         self.combo = QtGui.QComboBox(self)
@@ -19,6 +23,7 @@ class ComboChoice(HelpedWidget):
 
 
     def fetchContent(self):
+        """Retrieves data from the model and updates the combo box."""
         newValue = self.getFromModel()
 
         indexSet = False

@@ -3,10 +3,9 @@ from PyQt4 import QtGui, QtCore
 from helpedwidget import *
 
 class PathChooser(HelpedWidget):
-    """PathChooser shows, enables choosing of and validates paths."""
+    """PathChooser shows, enables choosing of and validates paths. The data structure expected and sent to the getter and setter is a string."""
 
     invalidColor = QtGui.QColor(255, 235, 235)
-    #invalidColor = QtGui.QColor(255, 204, 153)
 
     def __init__(self, parent=None, pathLabel="Path", help="", files=False):
         """Construct a PathChooser widget"""
@@ -36,13 +35,10 @@ class PathChooser(HelpedWidget):
         #self.pathLine.setText(os.path.expanduser("~"))
         self.pathLine.setText(os.getcwd())
 
-    #palette = self.palette()
-    #palette.setColor(self.backgroundRole(), QtCore.Qt.red)
-    #self.setPalette(palette)
-    #self.setAutoFillBackground(True)
 
 
     def validatePath(self):
+        """Called whenever the path is modified"""
         palette = self.pathLine.palette()
 
         if os.path.exists(self.pathLine.text()):
@@ -56,6 +52,7 @@ class PathChooser(HelpedWidget):
 
 
     def selectDirectory(self):
+        """Pops up the select a directory dialog"""
         currentDirectory = self.pathLine.text()
 
         #if not os.path.exists(currentDirectory):
@@ -71,8 +68,10 @@ class PathChooser(HelpedWidget):
 
 
     def contentsChanged(self):
+        """Called whenever the path is changed."""
         self.updateContent(self.pathLine.text())
 
     def fetchContent(self):
+        """Retrieves data from the model and inserts it into the edit line"""
         self.pathLine.setText(self.getFromModel())
 
