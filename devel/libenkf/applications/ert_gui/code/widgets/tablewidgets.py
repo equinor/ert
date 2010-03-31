@@ -1,9 +1,38 @@
 from PyQt4 import QtGui, QtCore
 from helpedwidget import *
 
+class AddRemoveWidget(QtGui.QWidget):
+    """
+    A simple class that provides to vertically positioned buttons for adding and removing something.
+    The addFunction and removeFunction functions must be provided.
+    """
+    def __init__(self, parent=None, addFunction=None, removeFunction=None):
+        """Creates a two button widget"""
+        QtGui.QWidget.__init__(self, parent)
+
+        addButton = QtGui.QToolButton(self)
+        addButton.setIcon(QtGui.QIcon.fromTheme("add"))
+        addButton.setIconSize(QtCore.QSize(16, 16))
+        self.connect(addButton, QtCore.SIGNAL('clicked()'), addFunction)
+
+        removeButton = QtGui.QToolButton(self)
+        removeButton.setIcon(QtGui.QIcon.fromTheme("remove"))
+        removeButton.setIconSize(QtCore.QSize(16, 16))
+        self.connect(removeButton, QtCore.SIGNAL('clicked()'), removeFunction)
+
+        buttonLayout = QtGui.QVBoxLayout()
+        buttonLayout.setMargin(0)
+        buttonLayout.addWidget(addButton)
+        buttonLayout.addWidget(removeButton)
+        buttonLayout.addStretch(1)
+        self.setLayout(buttonLayout)
+
+
+
 class KeywordList(HelpedWidget):
+    """Shows a list of keywords. The data structure expected and sent to the getter and setter is an array of values."""
     def __init__(self, parent=None, listLabel="", help=""):
-        """Construct a spinner widget for integers"""
+        """Construct a list for showing keywords"""
         HelpedWidget.__init__(self, parent, listLabel, help)
 
         self.list = QtGui.QListWidget(self)
@@ -12,32 +41,14 @@ class KeywordList(HelpedWidget):
 
         self.addWidget(self.list)
 
-        buttonWidget = QtGui.QWidget(self)
-        addButton = QtGui.QToolButton(self)
-        addButton.setIcon(QtGui.QIcon.fromTheme("add"))
-        addButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(addButton, QtCore.SIGNAL('clicked()'), self.addItem)
-
-        removeButton = QtGui.QToolButton(self)
-        removeButton.setIcon(QtGui.QIcon.fromTheme("remove"))
-        removeButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(removeButton, QtCore.SIGNAL('clicked()'), self.removeItem)
-
-        buttonLayout = QtGui.QVBoxLayout()
-        buttonLayout.setMargin(0)
-        buttonLayout.addWidget(addButton)
-        buttonLayout.addWidget(removeButton)
-        buttonLayout.addStretch(1)
-        buttonWidget.setLayout(buttonLayout)
-        self.addWidget(buttonWidget)
+        self.addWidget(AddRemoveWidget(self, self.addItem, self.removeItem))
 
         self.addStretch()
         self.addHelpButton()
 
-        #self.connect(self.spinner, QtCore.SIGNAL('valueChanged(int)'), self.updateContent)
-        #self.connect(self.spinner, QtCore.SIGNAL('editingFinished()'), self.contentsChanged)
 
     def addItem(self):
+        """Called by the add button to insert a new keyword"""
         newKeyWord, ok = QtGui.QInputDialog.getText(self, self.tr("QInputDialog.getText()"), self.tr("Keyword:"), QtGui.QLineEdit.Normal )
         newKeyWord = str(newKeyWord).strip()
 
@@ -45,15 +56,16 @@ class KeywordList(HelpedWidget):
             self.list.addItem(newKeyWord)
             self.contentsChanged()
 
+
     def removeItem(self):
+        """Called by the remove button to remove a selected keyword"""
         if not self.list.currentItem() == None:
             self.list.takeItem(self.list.currentRow())
             self.contentsChanged()
 
 
     def contentsChanged(self):
-        """Called whenever the contents of a cell changes."""
-
+        """Called whenever the contents of the list changes."""
         keywordList = []
         for index in range(self.list.count()):
             keywordList.append(self.list.item(index).text())
@@ -62,6 +74,7 @@ class KeywordList(HelpedWidget):
 
 
     def fetchContent(self):
+        """Retrieves data from the model and inserts it into the list"""
         keywords = self.getFromModel()
 
         self.list.clear()
@@ -70,9 +83,12 @@ class KeywordList(HelpedWidget):
             self.list.addItem(keyword)
 
 
+
+
 class KeywordTable(HelpedWidget):
+    """Shows a table of key/value pairs. The data structure expected and sent to the getter and setter is a dictionary of values."""
     def __init__(self, parent=None, tableLabel="", help="", colHead1="Keyword", colHead2="Value"):
-        """Construct a spinner widget for integers"""
+        """Construct a table for key/value pairs."""
         HelpedWidget.__init__(self, parent, tableLabel, help)
 
         self.table = QtGui.QTableWidget(self)
@@ -89,25 +105,7 @@ class KeywordTable(HelpedWidget):
 
         self.addWidget(self.table)
 
-        #todo: refactor into a add/remove widget
-        buttonWidget = QtGui.QWidget(self)
-        addButton = QtGui.QToolButton(self)
-        addButton.setIcon(QtGui.QIcon.fromTheme("add"))
-        addButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(addButton, QtCore.SIGNAL('clicked()'), self.addItem)
-
-        removeButton = QtGui.QToolButton(self)
-        removeButton.setIcon(QtGui.QIcon.fromTheme("remove"))
-        removeButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(removeButton, QtCore.SIGNAL('clicked()'), self.removeItem)
-
-        buttonLayout = QtGui.QVBoxLayout()
-        buttonLayout.setMargin(0)
-        buttonLayout.addWidget(addButton)
-        buttonLayout.addWidget(removeButton)
-        buttonLayout.addStretch(1)
-        buttonWidget.setLayout(buttonLayout)
-        self.addWidget(buttonWidget)
+        self.addWidget(AddRemoveWidget(self, self.addItem, self.removeItem))
 
         self.addHelpButton()
 
@@ -116,11 +114,13 @@ class KeywordTable(HelpedWidget):
 
 
     def addItem(self):
+        """Called by the add button to insert a new keyword"""
         self.table.insertRow(self.table.currentRow() + 1)
         self.contentsChanged()
 
 
     def removeItem(self):
+        """Called by the remove button to remove a selected keyword"""
         currentRow = self.table.currentRow()
 
         if currentRow >= 0:
@@ -148,6 +148,7 @@ class KeywordTable(HelpedWidget):
 
 
     def fetchContent(self):
+        """Retrieves data from the model and inserts it into the table."""
         keywords = self.getFromModel()
 
         self.table.clear()
@@ -166,8 +167,9 @@ class KeywordTable(HelpedWidget):
 
 
 class MultiColumnTable(HelpedWidget):
+    """Shows a table of parameters. The data structure expected and sent to the getter and setter is an array of arrays."""
     def __init__(self, parent=None, tableLabel="", help="", colHeads=["c1", "c2", "c3", "c4", "c5"]):
-        """Construct a spinner widget for integers"""
+        """Construct a table with arbitrary number of columns."""
         HelpedWidget.__init__(self, parent, tableLabel, help)
 
         self.table = QtGui.QTableWidget(self)
@@ -186,24 +188,8 @@ class MultiColumnTable(HelpedWidget):
 
         self.addWidget(self.table)
 
-        buttonWidget = QtGui.QWidget(self)
-        addButton = QtGui.QToolButton(self)
-        addButton.setIcon(QtGui.QIcon.fromTheme("add"))
-        addButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(addButton, QtCore.SIGNAL('clicked()'), self.addItem)
 
-        removeButton = QtGui.QToolButton(self)
-        removeButton.setIcon(QtGui.QIcon.fromTheme("remove"))
-        removeButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(removeButton, QtCore.SIGNAL('clicked()'), self.removeItem)
-
-        buttonLayout = QtGui.QVBoxLayout()
-        buttonLayout.setMargin(0)
-        buttonLayout.addWidget(addButton)
-        buttonLayout.addWidget(removeButton)
-        buttonLayout.addStretch(1)
-        buttonWidget.setLayout(buttonLayout)
-        self.addWidget(buttonWidget)
+        self.addWidget(AddRemoveWidget(self, self.addItem, self.removeItem))
 
         self.addHelpButton()
 
@@ -212,11 +198,13 @@ class MultiColumnTable(HelpedWidget):
 
 
     def addItem(self):
+        """Called by the add button to insert a new keyword"""
         self.table.insertRow(self.table.currentRow() + 1)
         self.contentsChanged()
 
 
     def removeItem(self):
+        """Called by the remove button to remove a selected keyword"""
         currentRow = self.table.currentRow()
 
         if currentRow >= 0:
@@ -247,6 +235,7 @@ class MultiColumnTable(HelpedWidget):
 
 
     def fetchContent(self):
+        """Retrieves data from the model and inserts it into the table"""
         rows = self.getFromModel()
 
         self.table.clear()

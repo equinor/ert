@@ -2,8 +2,9 @@ from PyQt4 import QtGui, QtCore
 from helpedwidget import *
 
 class CheckBox(HelpedWidget):
+    """A checbox widget for booleans. The data structure expected and sent to the getter and setter is a boolean."""
     def __init__(self, parent=None, checkLabel="Do this", help="", altLabel="", defaultCheckState=True):
-        """Construct a spinner widget for integers"""
+        """Construct a checkbox widget for booleans"""
         HelpedWidget.__init__(self, parent, checkLabel, help)
 
         if altLabel:
@@ -29,6 +30,7 @@ class CheckBox(HelpedWidget):
 
 
     def contentsChanged(self):
+        """Called whenever the contents of the checbox changes."""
         if self.check.checkState() == QtCore.Qt.Checked:
             self.updateContent(True)
         else:
@@ -36,6 +38,7 @@ class CheckBox(HelpedWidget):
 
 
     def fetchContent(self):
+        """Retrieves data from the model and inserts it into the checkbox"""
         if self.getFromModel():
             self.check.setCheckState(QtCore.Qt.Checked)
         else:
