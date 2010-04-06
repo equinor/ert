@@ -90,10 +90,12 @@ const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
 
 
 const char * ecl_config_get_schedule_file( const ecl_config_type * ecl_config ) {
+
   if (ecl_config->sched_file != NULL) 
     return sched_file_iget_filename( ecl_config->sched_file , 0 );
-  else
+  else 
     return NULL;
+  
 }
 
 

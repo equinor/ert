@@ -452,7 +452,8 @@ void sched_file_parse_append(sched_file_type * sched_file , const char * filenam
         sched_file_add_kw( sched_file , current_kw);
     }
   } while ( current_kw != NULL );
-  
+
+  stringlist_append_copy( sched_file->files , filename );
   sched_file_build_block_dates(sched_file);
   sched_file_update_index( sched_file );
   stringlist_free( token_list );
