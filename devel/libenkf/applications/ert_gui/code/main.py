@@ -18,15 +18,12 @@ from widgets.spinnerwidgets import DoubleSpinner, IntegerSpinner
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
+from widgets.application import Application
 
 app = QtGui.QApplication(sys.argv)
 
+widget = Application()
 
-widget = QtGui.QWidget()
-widget.resize(750, 350)
-widget.setWindowTitle('ERT GUI')
-
-widgetLayout = QtGui.QVBoxLayout()
 
 site_config = "/project/res/etc/ERT/Config/site-config"
 enkf_config = local.enkf_config
@@ -111,7 +108,7 @@ configPanel.endPage()
 
 
 # ----------------------------------------------------------------------------------------------
-# Output tab
+# Analysis tab
 # ----------------------------------------------------------------------------------------------
 configPanel.startPage("Analysis")
 
@@ -503,30 +500,23 @@ configPanel.endPage()
 
 
 
+widget.addPage("Configuration", widget.resourceIcon("config"), configPanel)
 
 
+
+plotPage = QtGui.QWidget()
+plotLayout = QtGui.QHBoxLayout()
+plotLayout.addWidget(QtGui.QLabel("Hello?"))
+plotPage.setLayout(plotLayout)
+
+widget.addPage("Plots", widget.resourceIcon("plot"), plotPage)
 
 
 ContentModel.contentModel = ert
 ContentModel.updateObservers()
 
-
-
-widgetLayout.addWidget(configPanel)
-
-quitButton = QtGui.QPushButton("Close", widget)
-widget.connect(quitButton, QtCore.SIGNAL('clicked()'), QtGui.qApp, QtCore.SLOT('quit()'))
-
-buttonWidget = QtGui.QWidget(widget)
-buttonLayout = QtGui.QHBoxLayout()
-buttonLayout.addStretch(1)
-buttonLayout.addWidget(quitButton)
-
-buttonWidget.setLayout(buttonLayout)
-widgetLayout.addWidget(buttonWidget)
-
-widget.setLayout(widgetLayout)
-widget.show()
-
-
 sys.exit(app.exec_())
+
+
+
+
