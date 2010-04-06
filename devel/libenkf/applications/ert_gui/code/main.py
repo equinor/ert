@@ -58,12 +58,10 @@ r.initialize = lambda ert : ert.setRestype("ecl_config_get_gridfile", ertwrapper
 r.getter = lambda ert : ert.enkf.ecl_config_get_gridfile(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_grid(ert.ecl_config, str(value))
 
-r = configPanel.addRow(PathChooser(widget, "Schedule file", "schedule_file"))
+r = configPanel.addRow(PathChooser(widget, "Schedule file" , "schedule_file" , files = True))
 r.initialize = lambda ert : ert.setRestype("ecl_config_get_schedule_file", ertwrapper.c_char_p)
-#r.getter = lambda ert : ert.enkf.ecl_config_get_schedule_file(ert.ecl_config)
-r.getter = lambda ert : "Crash when read!"
-r.setter = lambda ert, value : 2+2 # do nothing
-#r.setter = lambda ert, value : ert.enkf.ecl_config_set_schedule_file(ert.ecl_config, str(value))
+r.getter = lambda ert : ert.enkf.ecl_config_get_schedule_file(ert.ecl_config)
+r.setter = lambda ert, value : ert.enkf.ecl_config_set_schedule_file(ert.ecl_config, str(value))
 
 
 
