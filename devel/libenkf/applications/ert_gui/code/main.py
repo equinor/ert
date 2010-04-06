@@ -1,6 +1,7 @@
 # Some comments :)
 from PyQt4 import QtGui, QtCore
 import sys
+import local
 
 import ertwrapper
 
@@ -27,8 +28,13 @@ widget.setWindowTitle('ERT GUI')
 
 widgetLayout = QtGui.QVBoxLayout()
 
+site_config = "/project/res/etc/ERT/Config/site-config"
+enkf_config = local.enkf_config
+enkf_so     = local.enkf_so
 
-ert = ertwrapper.ErtWrapper(site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/")
+ert = ertwrapper.ErtWrapper( site_config = site_config , 
+                             enkf_config = enkf_config , 
+                             enkf_so     = enkf_so )
 
 
 
