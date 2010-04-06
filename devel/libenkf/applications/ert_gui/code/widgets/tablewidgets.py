@@ -68,7 +68,7 @@ class KeywordList(HelpedWidget):
         """Called whenever the contents of the list changes."""
         keywordList = []
         for index in range(self.list.count()):
-            keywordList.append(self.list.item(index).text())
+            keywordList.append(str(self.list.item(index).text()))
 
         self.updateContent(keywordList)
 

@@ -27,7 +27,7 @@ class ErtWrapper:
         self.schedule_file="eclpath"
         self.init_section="init_section"
         self.add_fixed_length_schedule_kw = ["item1", "item2"]
-        self.add_static_kw = ["item1", "item2"]
+        self.add_static_kw = ["item1", "item2", "item3"]
         self.equil_init_file = "some new path"
         self.refcase = "some new path"
         self.schedule_prediction_file = "some new path"
@@ -78,9 +78,10 @@ class ErtWrapper:
         self.max_resample = 16
         self.case_table = "..."
 
-        self.run_template = "..."
-        self.target_file = "..."
-        self.template_arguments = {"HABBA":"sdfkjskdf/sdf"}
+        self.run_template = [["...", ".....", "asdf:asdf asdfasdf:asdfasdf"], ["other", "sdtsdf", ".as.asdfsdf"]]
+#        self.run_template = "..."
+#        self.target_file = "..."
+#        self.template_arguments = {"HABBA":"sdfkjskdf/sdf"}
         self.forward_model = {"MY_RELPERM_SCRIPT":"Arg1<some> COPY(asdfdf)"}
 
         self.field_dynamic = [["PRESSURE", "", ""], ["SWAT", 0.1, 0.95], ["SGAS", "", 0.25]]

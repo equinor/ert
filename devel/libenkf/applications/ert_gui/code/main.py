@@ -60,19 +60,6 @@ r = configPanel.addRow(PathChooser(widget, "Init section", "init_section"))
 r.getter = lambda ert : ert.getAttribute("init_section")
 r.setter = lambda ert, value : ert.setAttribute("init_section", value)
 
-r = configPanel.addRow(KeywordList(widget, "Fixed length schedule keywords", "add_fixed_length_schedule_kw"))
-r.getter = lambda ert : ert.getAttribute("add_fixed_length_schedule_kw")
-r.setter = lambda ert, value : ert.setAttribute("add_fixed_length_schedule_kw", value)
-
-r = configPanel.addRow(KeywordList(widget, "Static keywords", "add_static_kw"))
-r.getter = lambda ert : ert.getAttribute("add_static_kw")
-r.setter = lambda ert, value : ert.setAttribute("add_static_kw", value)
-
-r = configPanel.addRow(KeywordTable(widget, "Data keywords", "data_kw"))
-r.getter = lambda ert : ert.getAttribute("data_kw")
-r.setter = lambda ert, value : ert.setAttribute("data_kw", value)
-
-
 r = configPanel.addRow(PathChooser(widget, "Equil init file", "equil_init_file"))
 r.getter = lambda ert : ert.getAttribute("equil_init_file")
 r.setter = lambda ert, value : ert.setAttribute("equil_init_file", value)
@@ -84,6 +71,39 @@ r.setter = lambda ert, value : ert.setAttribute("refcase", value)
 r = configPanel.addRow(PathChooser(widget, "Schedule prediction file", "schedule_prediction_file"))
 r.getter = lambda ert : ert.getAttribute("schedule_prediction_file")
 r.setter = lambda ert, value : ert.setAttribute("schedule_prediction_file", value)
+
+r = configPanel.addRow(KeywordTable(widget, "Data keywords", "data_kw"))
+r.getter = lambda ert : ert.getAttribute("data_kw")
+r.setter = lambda ert, value : ert.setAttribute("data_kw", value)
+
+
+
+#todo: add sepearator line
+
+r = configPanel.addRow(QtGui.QFrame(widget))
+r.setFrameShape(QtGui.QFrame.HLine)
+r.setFrameShadow(QtGui.QFrame.Sunken)
+
+internalPanel = ConfigPanel(widget)
+
+internalPanel.startPage("Static keywords")
+
+r = internalPanel.addRow(KeywordList(widget, "", "add_static_kw"))
+r.getter = lambda ert : ert.getAttribute("add_static_kw")
+r.setter = lambda ert, value : ert.setAttribute("add_static_kw", value)
+
+internalPanel.endPage()
+
+internalPanel.startPage("Fixed length schedule keywords")
+
+r = internalPanel.addRow(KeywordList(widget, "", "add_fixed_length_schedule_kw"))
+r.getter = lambda ert : ert.getAttribute("add_fixed_length_schedule_kw")
+r.setter = lambda ert, value : ert.setAttribute("add_fixed_length_schedule_kw", value)
+
+internalPanel.endPage()
+
+#configPanel.endGroup()
+configPanel.addRow(internalPanel)
 
 configPanel.endPage()
 
@@ -244,7 +264,6 @@ r.initialize = lambda ert : ert.setRestype("plot_config_get_path", ertwrapper.c_
 r.getter = lambda ert : ert.enkf.plot_config_get_path(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_path(ert.plot_config, str(value))
 
-
 r = configPanel.addRow(ComboChoice(widget, ["PLPLOT", "TEXT"], "Driver", "plot_driver"))
 r.initialize = lambda ert : ert.setRestype("plot_config_get_driver", ertwrapper.c_char_p)
 r.getter = lambda ert : ert.enkf.plot_config_get_driver(ert.plot_config)
@@ -309,13 +328,13 @@ internalPanel.endPage()
 
 internalPanel.startPage("Gen")
 
-r = internalPanel.addRow(MultiColumnTable(widget, "Data", "gen_data", ["Name", "Result file", "Input", "Output", "Eclipse file", "Init files"]))
-r.getter = lambda ert : ert.getAttribute("gen_data")
-r.setter = lambda ert, value : ert.setAttribute("gen_data", value)
-
 r = internalPanel.addRow(MultiColumnTable(widget, "Keyword", "gen_kw", ["Name", "Template", "Eclipse include", "Priors"]))
 r.getter = lambda ert : ert.getAttribute("gen_kw")
 r.setter = lambda ert, value : ert.setAttribute("gen_kw", value)
+
+r = internalPanel.addRow(MultiColumnTable(widget, "Data", "gen_data", ["Name", "Result file", "Input", "Output", "Eclipse file", "Init files"]))
+r.getter = lambda ert : ert.getAttribute("gen_data")
+r.setter = lambda ert, value : ert.setAttribute("gen_data", value)
 
 r = internalPanel.addRow(MultiColumnTable(widget, "Param", "gen_param", ["Name", "Input", "Output", "Eclipse file", "Init files", "Template"]))
 r.getter = lambda ert : ert.getAttribute("gen_param")
@@ -397,17 +416,21 @@ internalPanel.endPage()
 internalPanel.startPage("Run Template")
 #configPanel.startGroup("Run Template")
 
-r = internalPanel.addRow(PathChooser(widget, "Template", "run_template", True))
+r = internalPanel.addRow(MultiColumnTable(widget, "", "run_template", ["Template", "Target file", "Arguments"]))
 r.getter = lambda ert : ert.getAttribute("run_template")
 r.setter = lambda ert, value : ert.setAttribute("run_template", value)
 
-r = internalPanel.addRow(PathChooser(widget, "Target file", "target_file", True))
-r.getter = lambda ert : ert.getAttribute("target_file")
-r.setter = lambda ert, value : ert.setAttribute("target_file", value)
-
-r = internalPanel.addRow(KeywordTable(widget, "Arguments", "template_arguments"))
-r.getter = lambda ert : ert.getAttribute("template_arguments")
-r.setter = lambda ert, value : ert.setAttribute("template_arguments", value)
+#r = internalPanel.addRow(PathChooser(widget, "Template", "run_template", True))
+#r.getter = lambda ert : ert.getAttribute("run_template")
+#r.setter = lambda ert, value : ert.setAttribute("run_template", value)
+#
+#r = internalPanel.addRow(PathChooser(widget, "Target file", "target_file", True))
+#r.getter = lambda ert : ert.getAttribute("target_file")
+#r.setter = lambda ert, value : ert.setAttribute("target_file", value)
+#
+#r = internalPanel.addRow(KeywordTable(widget, "Arguments", "template_arguments"))
+#r.getter = lambda ert : ert.getAttribute("template_arguments")
+#r.setter = lambda ert, value : ert.setAttribute("template_arguments", value)
 
 internalPanel.endPage()
 #configPanel.endGroup()
