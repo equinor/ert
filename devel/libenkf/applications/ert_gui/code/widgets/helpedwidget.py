@@ -64,7 +64,7 @@ class ContentModel:
 class HelpedWidget(QtGui.QWidget, ContentModel):
     """
     HelpedWidget is a class that enables embedded help messages in widgets.
-    The help button must manually be added to the containing layout with addHelpButton(layout).
+    The help button must manually be added to the containing layout with addHelpButton().
     """
 
     def __init__(self, parent=None, widgetLabel="", helpLabel=""):
