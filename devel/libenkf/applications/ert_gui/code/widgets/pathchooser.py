@@ -11,6 +11,7 @@ class PathChooser(HelpedWidget):
         """Construct a PathChooser widget"""
         HelpedWidget.__init__(self, parent, pathLabel, help)
 
+        self.editing = True
         self.selectFiles = files
 
         self.pathLine = QtGui.QLineEdit()
@@ -35,6 +36,8 @@ class PathChooser(HelpedWidget):
         #self.pathLine.setText(os.path.expanduser("~"))
         self.pathLine.setText(os.getcwd())
 
+        self.editing = False
+
 
 
     def validatePath(self):
@@ -52,6 +55,7 @@ class PathChooser(HelpedWidget):
 
 
     def selectDirectory(self):
+        self.editing = True
         """Pops up the select a directory dialog"""
         currentDirectory = self.pathLine.text()
 
@@ -66,12 +70,18 @@ class PathChooser(HelpedWidget):
         if not currentDirectory == "":
             self.pathLine.setText(currentDirectory)
 
+        self.editing = False
+
 
     def contentsChanged(self):
         """Called whenever the path is changed."""
-        self.updateContent(self.pathLine.text())
+        if not self.editing:
+            self.updateContent(self.pathLine.text())
 
+            
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the edit line"""
+        self.editing = True
         self.pathLine.setText(self.getFromModel())
+        self.editing = False
 

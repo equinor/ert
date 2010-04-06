@@ -12,6 +12,7 @@ class ErtWrapper:
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
         self.plot_config = self.enkf.enkf_main_get_plot_config(self.main)
         self.analysis_config = self.enkf.enkf_main_get_analysis_config(self.main)
+        self.ecl_config = self.enkf.enkf_main_get_ecl_config(self.main)
 
         
 
@@ -23,16 +24,15 @@ class ErtWrapper:
 #        self.image_viewer = "another path"
 #        self.image_type = "png"
 
-        self.eclbase="eclpath"
-        self.data_file="eclpath"
-        self.grid="eclpath"
-        self.schedule_file="eclpath"
-        self.init_section="init_section"
+        #self.eclbase="eclpath"
+        #self.data_file="eclpath"
+        #self.grid="eclpath"
+        ###self.schedule_file="eclpath"
+        #self.init_section="init_section"
         self.add_fixed_length_schedule_kw = ["item1", "item2"]
         self.add_static_kw = ["item1", "item2", "item3"]
-        self.equil_init_file = "some new path"
-        self.refcase = "some new path"
-        self.schedule_prediction_file = "some new path"
+        #self.refcase = "some new path"
+        self.schedule_prediction_file = "Missing???"
         self.data_kw = {"INCLUDE_PATH" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH2" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH3" : "<CWD>/../Common/ECLIPSE2"}
 
 #        self.enkf_rerun = False

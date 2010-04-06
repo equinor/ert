@@ -2,6 +2,7 @@
 from PyQt4 import QtGui, QtCore
 import sys
 import local
+import os
 
 import ertwrapper
 
@@ -13,12 +14,13 @@ from widgets.stringbox import StringBox
 from widgets.helpedwidget import ContentModel, HelpedWidget
 from widgets.tablewidgets import KeywordList, KeywordTable, MultiColumnTable
 from widgets.spinnerwidgets import DoubleSpinner, IntegerSpinner
+from widgets.application import Application
 
 #for k in QtGui.QStyleFactory.keys():
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
-from widgets.application import Application
+
 
 app = QtGui.QApplication(sys.argv)
 
@@ -29,9 +31,7 @@ site_config = "/project/res/etc/ERT/Config/site-config"
 enkf_config = local.enkf_config
 enkf_so     = local.enkf_so
 
-ert = ertwrapper.ErtWrapper( site_config = site_config , 
-                             enkf_config = enkf_config , 
-                             enkf_so     = enkf_so )
+ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config, enkf_so = enkf_so)
 
 
 
@@ -44,32 +44,39 @@ configPanel.startPage("Eclipse")
 
 #todo should be special % name type
 r = configPanel.addRow(PathChooser(widget, "Eclipse Base", "eclbase"))
-r.getter = lambda ert : ert.getAttribute("eclbase")
-r.setter = lambda ert, value : ert.setAttribute("eclbase", value)
+r.initialize = lambda ert : ert.setRestype("ecl_config_get_eclbase", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.ecl_config_get_eclbase(ert.ecl_config)
+r.setter = lambda ert, value : ert.enkf.ecl_config_set_eclbase(ert.ecl_config, str(value))
 
 r = configPanel.addRow(PathChooser(widget, "Data file", "data_file"))
-r.getter = lambda ert : ert.getAttribute("data_file")
-r.setter = lambda ert, value : ert.setAttribute("data_file", value)
+r.initialize = lambda ert : ert.setRestype("ecl_config_get_data_file", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.ecl_config_get_data_file(ert.ecl_config)
+r.setter = lambda ert, value : ert.enkf.ecl_config_set_data_file(ert.ecl_config, str(value))
 
 r = configPanel.addRow(PathChooser(widget, "Grid", "grid"))
-r.getter = lambda ert : ert.getAttribute("grid")
-r.setter = lambda ert, value : ert.setAttribute("grid", value)
+r.initialize = lambda ert : ert.setRestype("ecl_config_get_gridfile", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.ecl_config_get_gridfile(ert.ecl_config)
+r.setter = lambda ert, value : ert.enkf.ecl_config_set_grid(ert.ecl_config, str(value))
 
 r = configPanel.addRow(PathChooser(widget, "Schedule file", "schedule_file"))
-r.getter = lambda ert : ert.getAttribute("schedule_file")
-r.setter = lambda ert, value : ert.setAttribute("schedule_file", value)
+r.initialize = lambda ert : ert.setRestype("ecl_config_get_schedule_file", ertwrapper.c_char_p)
+#r.getter = lambda ert : ert.enkf.ecl_config_get_schedule_file(ert.ecl_config)
+r.getter = lambda ert : "Crash when read!"
+r.setter = lambda ert, value : 2+2 # do nothing
+#r.setter = lambda ert, value : ert.enkf.ecl_config_set_schedule_file(ert.ecl_config, str(value))
+
+
 
 r = configPanel.addRow(PathChooser(widget, "Init section", "init_section"))
-r.getter = lambda ert : ert.getAttribute("init_section")
-r.setter = lambda ert, value : ert.setAttribute("init_section", value)
+r.initialize = lambda ert : ert.setRestype("ecl_config_get_init_section", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.ecl_config_get_init_section(ert.ecl_config)
+r.setter = lambda ert, value : ert.enkf.ecl_config_set_init_section(ert.ecl_config, str(value))
 
-r = configPanel.addRow(PathChooser(widget, "Equil init file", "equil_init_file"))
-r.getter = lambda ert : ert.getAttribute("equil_init_file")
-r.setter = lambda ert, value : ert.setAttribute("equil_init_file", value)
 
 r = configPanel.addRow(PathChooser(widget, "Refcase", "refcase"))
-r.getter = lambda ert : ert.getAttribute("refcase")
-r.setter = lambda ert, value : ert.setAttribute("refcase", value)
+r.initialize = lambda ert : ert.setRestype("ecl_config_get_refcase_name", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.ecl_config_get_refcase_name(ert.ecl_config)
+r.setter = lambda ert, value : ert.enkf.ecl_config_set_refcase(ert.ecl_config, str(value))
 
 r = configPanel.addRow(PathChooser(widget, "Schedule prediction file", "schedule_prediction_file"))
 r.getter = lambda ert : ert.getAttribute("schedule_prediction_file")
@@ -142,7 +149,7 @@ r.getter = lambda ert : ert.enkf.analysis_config_get_alpha(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_alpha(ert.analysis_config, value)
 
 r = configPanel.addRow(CheckBox(widget, "Merge Observations", "enkf_merge_observations", "Perform merge"))
-r.getter = lambda ert : ert.enkf.analysis_config_merge_observations(ert.analysis_config)
+r.getter = lambda ert : ert.enkf.analysis_config_get_merge_observations(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_merge_observations(ert.analysis_config, value)
 
 
@@ -504,10 +511,10 @@ widget.addPage("Configuration", widget.resourceIcon("config"), configPanel)
 
 
 
-plotPage = QtGui.QWidget()
-plotLayout = QtGui.QHBoxLayout()
-plotLayout.addWidget(QtGui.QLabel("Hello?"))
-plotPage.setLayout(plotLayout)
+plotPage = ConfigPanel()
+
+
+files = os.listdir("plots/default")
 
 widget.addPage("Plots", widget.resourceIcon("plot"), plotPage)
 
