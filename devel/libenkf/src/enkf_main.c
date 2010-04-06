@@ -130,6 +130,11 @@ void enkf_main_init_internalization( enkf_main_type *  , run_mode_type  );
 SAFE_CAST(enkf_main , ENKF_MAIN_ID)
 
 
+analysis_config_type * enkf_main_get_analysis_config(const enkf_main_type * enkf_main) {
+  return enkf_main->analysis_config;
+}
+
+
 ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf_main) {
   return enkf_main->ensemble_config;
 }
@@ -2203,8 +2208,11 @@ void enkf_main_remount_fs( enkf_main_type * enkf_main , const char * select_case
     subst_list_insert_ref( enkf_main->subst_list , case_key , enkf_fs_get_read_dir( enkf_main->dbase ) , "The case currently selected.");
     free( case_key );
   }
+
+
   if (enkf_main->ensemble != NULL)
     enkf_main_invalidate_cache( enkf_main );
+
 }
 
 

@@ -20,6 +20,7 @@ extern "C" {
 #include <plot_config.h>
 #include <set.h>
 #include <member_config.h>
+#include <analysis_config.h>
   
 /*****************************************************************/
 
@@ -75,6 +76,7 @@ model_config_type           * enkf_main_get_model_config( const enkf_main_type *
 plot_config_type            * enkf_main_get_plot_config( const enkf_main_type * enkf_main );
 enkf_fs_type                * enkf_main_get_fs(const enkf_main_type * );
 enkf_obs_type               * enkf_main_get_obs(const enkf_main_type * );
+analysis_config_type        * enkf_main_get_analysis_config(const enkf_main_type * );
 
 void       * enkf_main_get_enkf_config_node_type(const ensemble_config_type *, const char *);
 void 	     enkf_main_set_field_config_iactive(const ensemble_config_type *, int);
