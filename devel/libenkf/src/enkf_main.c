@@ -1555,7 +1555,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
     log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
 
     if (enkf_update)
-      enkf_main_UPDATE(enkf_main , analysis_config_merge_observations( enkf_main->analysis_config ) , load_start , step2);
+      enkf_main_UPDATE(enkf_main , analysis_config_get_merge_observations( enkf_main->analysis_config ) , load_start , step2);
 
     enkf_fs_fsync( enkf_main->dbase );
     printf("%s: ferdig med step: %d \n" , __func__,step2);
@@ -2037,6 +2037,19 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 }
 
 
+void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
+  char * tagged_key = enkf_util_alloc_tagged_string( key );
+  subst_list_insert_copy( enkf_main->subst_list , tagged_key , value , "Supplied by the user in the configuration file.");
+  free( tagged_key );
+}
+
+
+void enkf_main_clear_data_kw( enkf_main_type * enkf_main ) {
+  subst_list_clear( enkf_main->subst_list );
+}
+
+
+
 static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
   enkf_main_type * enkf_main = util_malloc(sizeof *enkf_main, __func__);
   UTIL_TYPE_ID_INIT(enkf_main , ENKF_MAIN_ID);
@@ -2092,10 +2105,8 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     hash_iter_type * iter = hash_iter_alloc(config_data_kw);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      char * tagged_key = enkf_util_alloc_tagged_string( key );
-      subst_list_insert_copy( enkf_main->subst_list , tagged_key , hash_get( config_data_kw , key ) , "Supplied by the user in the configuration file.");
+      enkf_main_add_data_kw( enkf_main , key , hash_get( config_data_kw , key ));
       key = hash_iter_get_next_key(iter);
-      free( tagged_key );
     }
     hash_iter_free(iter);
   }
@@ -2143,6 +2154,9 @@ static void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_
   if (new_ens_size == enkf_main->ens_size)
     return ;
 
+  /* Tell the site_config object (i.e. the queue drivers) about the new ensemble size: */
+  site_config_set_ens_size( enkf_main->site_config , new_ens_size );
+  
 
   /* The ensemble is shrinking. */
   if (new_ens_size < enkf_main->ens_size) {
@@ -2155,8 +2169,8 @@ static void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_
     enkf_main->ens_size = new_ens_size;
     return;
   }
-
-
+  
+  
   /* The ensemble is expanding */
   if (new_ens_size > enkf_main->ens_size) {
     /*1: Grow the ensemble pointer. */
@@ -2179,8 +2193,12 @@ static void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_
                                                    enkf_main->templates                                         ,
                                                    enkf_main->subst_list);
     enkf_main->ens_size = new_ens_size;
+    return;
   }
+  
+  util_abort("%s: something is seriously broken - should NOT be here .. \n",__func__);
 }
+
 
 
 /**
@@ -2188,7 +2206,6 @@ static void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_
    information in the enkf_nodes, otherwise the nodes might reuse old
    data (from a previous case).
 */
-
 
 static void enkf_main_invalidate_cache( enkf_main_type * enkf_main ) {
   int ens_size = enkf_main_get_ensemble_size( enkf_main );
@@ -2348,7 +2365,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
       bool use_lsf;
       enkf_main->ecl_config      = ecl_config_alloc( config );
       enkf_main->ensemble_config = ensemble_config_alloc( config , ecl_config_get_grid( enkf_main->ecl_config ) , ecl_config_get_refcase( enkf_main->ecl_config) );
-      enkf_main->site_config     = site_config_alloc(config , enkf_main_get_ensemble_size( enkf_main ) , &use_lsf);
+      enkf_main->site_config     = site_config_alloc(config , &use_lsf);
       enkf_main->model_config    = model_config_alloc(config ,
                                                       enkf_main_get_ensemble_size( enkf_main ),
 						      site_config_get_installed_jobs(enkf_main->site_config) ,

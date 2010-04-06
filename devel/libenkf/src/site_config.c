@@ -69,38 +69,38 @@ static void site_config_install_joblist(site_config_type * site_config , const c
    These functions can be called repeatedly if you should want to
    change driver characteristics run-time.
 */
-static void site_config_install_LOCAL_job_queue(site_config_type * site_config , int ens_size , const char * job_script , int max_submit , int max_running) {
+static void site_config_install_LOCAL_job_queue(site_config_type * site_config , const char * job_script , int max_submit , int max_running) {
   basic_queue_driver_type * driver = local_driver_alloc();
   if (site_config->job_queue != NULL)
     job_queue_free( site_config->job_queue );
   
-  site_config->job_queue = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
+  site_config->job_queue = job_queue_alloc(0 , max_running , max_submit , job_script , driver);
 }
 
 
 
-static void site_config_install_RSH_job_queue(site_config_type * site_config , int ens_size , const char * job_script , int max_submit , int max_running , const char * rsh_command , const stringlist_type * rsh_host_list) {
+static void site_config_install_RSH_job_queue(site_config_type * site_config , const char * job_script , int max_submit , int max_running , const char * rsh_command , const stringlist_type * rsh_host_list) {
   basic_queue_driver_type * driver = rsh_driver_alloc(rsh_command , rsh_host_list);
   if (site_config->job_queue != NULL)
     job_queue_free( site_config->job_queue );
   
-  site_config->job_queue = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
+  site_config->job_queue = job_queue_alloc(0 , max_running , max_submit , job_script , driver);
 }
 
 
-static void site_config_install_LSF_job_queue(site_config_type * site_config ,  int ens_size , const char * job_script , int max_submit , int max_running , const char * lsf_queue_name, const char * manual_lsf_request) {
+static void site_config_install_LSF_job_queue(site_config_type * site_config , const char * job_script , int max_submit , int max_running , const char * lsf_queue_name, const char * manual_lsf_request) {
   basic_queue_driver_type * driver = lsf_driver_alloc( lsf_queue_name );
   if (site_config->job_queue != NULL)
     job_queue_free( site_config->job_queue );
   
-  site_config->job_queue   = job_queue_alloc(ens_size , max_running , max_submit , job_script , driver);
+  site_config->job_queue   = job_queue_alloc(0 , max_running , max_submit , job_script , driver);
 }
 
 
 
 
 
-static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , int ens_size, bool * use_lsf) {
+static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , bool * use_lsf) {
   const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
   const char * job_script   = config_iget(config , "JOB_SCRIPT" , 0,0);
   int   max_submit          = config_iget_as_int(config , "MAX_SUBMIT" , 0,0);
@@ -118,7 +118,7 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
     if (!util_sscanf_int(config_iget(config , "MAX_RUNNING_LSF" , 0,0) , &max_running))
       util_abort("%s: internal error - \n",__func__);
     
-    site_config_install_LSF_job_queue(site_config , ens_size , job_script , max_submit , max_running , lsf_queue_name , lsf_resource_request);
+    site_config_install_LSF_job_queue(site_config , job_script , max_submit , max_running , lsf_queue_name , lsf_resource_request);
     util_safe_free(lsf_resource_request);
     *use_lsf = true;
   } else if (strcmp(queue_system , "RSH") == 0) {
@@ -126,16 +126,16 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
     stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
     int max_running = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
     
-    site_config_install_RSH_job_queue(site_config , ens_size , job_script , max_submit , max_running , rsh_command , rsh_host_list);
+    site_config_install_RSH_job_queue(site_config , job_script , max_submit , max_running , rsh_command , rsh_host_list);
     stringlist_free( rsh_host_list );
   } else if (strcmp(queue_system , "LOCAL") == 0) {
     int max_running = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
-    site_config_install_LOCAL_job_queue(site_config , ens_size , job_script , max_submit , max_running);
+    site_config_install_LOCAL_job_queue(site_config , job_script , max_submit , max_running);
   }
 }
 
 
-site_config_type * site_config_alloc(const config_type * config , int ens_size , bool * use_lsf) {
+site_config_type * site_config_alloc(const config_type * config , bool * use_lsf) {
   const char * host_type    = config_iget(config , "HOST_TYPE" , 0,0);
   site_config_type * site_config = site_config_alloc_empty();
   site_config_install_joblist(site_config , config);
@@ -166,7 +166,7 @@ site_config_type * site_config_alloc(const config_type * config , int ens_size ,
   else
     site_config->statoil_mode = false;
   
-  site_config_install_job_queue(site_config , config , ens_size , use_lsf);
+  site_config_install_job_queue(site_config , config , use_lsf);
   return site_config;
 }
 
@@ -184,3 +184,7 @@ job_queue_type * site_config_get_job_queue( const site_config_type * site_config
   return site_config->job_queue;
 }
 
+
+void site_config_set_ens_size( site_config_type * site_config , int ens_size ) {
+  job_queue_set_size( site_config->job_queue , ens_size );
+}

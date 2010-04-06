@@ -38,10 +38,12 @@ struct ecl_config_struct {
   bool                 include_all_static_kw;  	   /* If true all static keywords are stored.*/ 
   set_type           * static_kw_set;          	   /* Minimum set of static keywords which must be included to make valid restart files. */
   char               * data_file;              	   /* Eclipse data file. */
+  time_t               start_date;                 /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   ecl_sum_type       * refcase;                    /* Refcase - can be NULL. */
   ecl_grid_type      * grid;                   	   /* The grid which is active for this model. */
   char               * schedule_target_file;   	   /* File name to write schedule info to */
-  char               * equil_init_file;        	   /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
+  char               * input_init_section;         /* File name for ECLIPSE (EQUIL) initialisation - can be NULL if the user has not supplied INIT_SECTION. */
+  char               * init_section;               /* Equal to the full path of input_init_section IFF input_init_section points to an existing file - otherwise equal to input_init_section. */
   int                  last_history_restart;
   bool                 can_restart;                /* Have we found the <INIT> tag in the data file? */
 };
@@ -78,10 +80,80 @@ void ecl_config_set_data_file( ecl_config_type * ecl_config , const char * data_
     parser_free( parser );
     fclose( stream );
   }
+  ecl_config->start_date = ecl_util_get_start_date( ecl_config->data_file );
 }
 
 
-static void ecl_config_load_refcase( ecl_config_type * ecl_config , const char * refcase) {
+const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
+  return ecl_config->data_file;
+}
+
+
+const char * ecl_config_get_schedule_file( const ecl_config_type * ecl_config ) {
+  if (ecl_config->sched_file != NULL) 
+    return sched_file_iget_filename( ecl_config->sched_file , 0 );
+  else
+    return NULL;
+}
+
+
+/**
+   Observe: This function makes a hard assumption that the
+   ecl_config->start_date has already been set. (And should not be
+   changed either ...)
+*/
+
+void ecl_config_set_schedule_file( ecl_config_type * ecl_config , const char * schedule_file ) {
+  if (ecl_config->start_date == -1)
+    util_abort("%s: must set ecl_data_file first \n",__func__);
+  {
+    char * base;  /* The schedule target file will be without any path component */
+    char * ext;
+    util_alloc_file_components(schedule_file , NULL , &base , &ext);
+    ecl_config->schedule_target_file = util_alloc_filename(NULL , base , ext);
+    free(ext);
+    free(base);
+  }
+  ecl_config->sched_file = sched_file_alloc( ecl_config->start_date );
+
+  /* Fixed length schedule_kw  - not supported at the moment */
+  //{
+  //  if (config_has_set_item( config , "ADD_FIXED_LENGTH_SCHEDULE_KW")) {
+  //    int iocc;
+  //    for (iocc = 0; iocc < config_get_occurences(config , "ADD_FIXED_LENGTH_SCHEDULE_KW"); iocc++) 
+  //      sched_file_add_fixed_length_kw( ecl_config->sched_file , 
+  //                                      config_iget(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 0) , 
+  //                                      config_iget_as_int(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 1));
+  //    
+  //  }
+  //}
+  
+  sched_file_parse(ecl_config->sched_file , schedule_file );
+  ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the end of history */
+}
+
+
+
+void ecl_config_set_eclbase( ecl_config_type * ecl_config , const char * eclbase_fmt ) {
+  if (ecl_config->eclbase != NULL)
+    path_fmt_free( ecl_config->eclbase );
+  ecl_config->eclbase = path_fmt_alloc_path_fmt( eclbase_fmt );
+}
+
+
+/**
+   Observe that this function returns a (char *) - corresponding to
+   the argument used when calling the ecl_config_set_eclbase()
+   function, and not a path_fmt instance.
+*/
+ 
+const char * ecl_config_get_eclbase( const ecl_config_type * ecl_config ) {
+  return path_fmt_get_fmt( ecl_config->eclbase );
+}
+
+
+
+void ecl_config_set_refcase( ecl_config_type * ecl_config , const char * refcase){ 
 
   ecl_config->refcase = ecl_sum_fread_alloc_case( refcase , DEFAULT_SUMMARY_JOIN );
   if (ecl_config->refcase == NULL)
@@ -90,65 +162,46 @@ static void ecl_config_load_refcase( ecl_config_type * ecl_config , const char *
 }
 
 
+/**
+   Will return NULL if no refcase is set.
+*/
+const char * ecl_config_get_refcase_name( const ecl_config_type * ecl_config) {
 
-ecl_config_type * ecl_config_alloc( const config_type * config ) {
-  ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
-  ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
-  ecl_config->eclbase   	    = path_fmt_alloc_path_fmt( config_iget(config , "ECLBASE" ,0,0) );
+  if (ecl_config->refcase == NULL)
+    return NULL;
+  else
+    return ecl_sum_get_case( ecl_config->refcase );
+
+}
+
+/**
+   This function will clear the list of static keywords --AND-- add
+   all the default static keywords.
+*/
+
+void ecl_config_clear_static_kw( ecl_config_type * ecl_config ) {
   ecl_config->include_all_static_kw = false;
-  ecl_config->static_kw_set         = set_alloc_empty();
-  ecl_config->data_file             = NULL;
-  ecl_config->equil_init_file       = NULL; 
-  ecl_config->refcase               = NULL;
-  ecl_config->grid                  = NULL;
-  ecl_config->can_restart           = false;
+  set_clear( ecl_config->static_kw_set );
   {
     for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
       set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
   }
-  ecl_config_set_data_file( ecl_config , config_iget( config , "DATA_FILE" ,0,0));
-  {
-    time_t start_date = ecl_util_get_start_date( ecl_config->data_file );
-    const stringlist_type * sched_list = config_get_stringlist_ref(config , "SCHEDULE_FILE");
-    const char * schedule_src = stringlist_iget( sched_list , 0);
+}
 
-    {
-      char * base;  /* The schedule target file will be without any path component */
-      char * ext;
-      util_alloc_file_components(schedule_src , NULL , &base , &ext);
-      ecl_config->schedule_target_file = util_alloc_filename(NULL , base , ext);
-      free(ext);
-      free(base);
-    } 
 
-    ecl_config->sched_file = sched_file_alloc( start_date );
-    {
-      if (config_has_set_item( config , "ADD_FIXED_LENGTH_SCHEDULE_KW")) {
-        int iocc;
-        for (iocc = 0; iocc < config_get_occurences(config , "ADD_FIXED_LENGTH_SCHEDULE_KW"); iocc++) 
-          sched_file_add_fixed_length_kw( ecl_config->sched_file , 
-                                          config_iget(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 0) , 
-                                          config_iget_as_int(config , "ADD_FIXED_LENGTH_SCHEDULE_KW" , iocc , 1));
-        
-      }
-    }
-    sched_file_parse(ecl_config->sched_file , schedule_src );
-    ecl_config->last_history_restart = sched_file_get_num_restart_files( ecl_config->sched_file ) - 1;   /* We keep track of this - so we can stop assimilation at the end of history */
-  }
-  
-  if (config_has_set_item(config , "INIT_SECTION")) {
 
+void ecl_config_set_init_section( ecl_config_type * ecl_config , const char * input_init_section ) {
   /* The semantic regarding INIT_SECTION is as follows:
   
        1. If the INIT_SECTION points to an existing file - the
-          ecl_config->equil_init_file is set to the absolute path of
+          ecl_config->input_init_section is set to the absolute path of
           this file.
 
        2. If the INIT_SECTION points to a not existing file:
 
           a. We assert that INIT_SECTION points to a pure filename,
              i.e. /some/path/which/does/not/exist is NOT accepted.
-          b. The ecl_config->equil_init_file is set to point to this
+          b. The ecl_config->input_init_section is set to point to this
              file.
           c. WE TRUST THE USER TO SUPPLY CONTENT (THROUGH SOME FUNKY
              FORWARD MODEL) IN THE RUNPATH. This can unfortunately not
@@ -186,34 +239,65 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
         initialisation, but it is 'consistently unable' to restart.
      
   */
-    if (ecl_config->can_restart) {  /* The <INIT> tag is set. */
-      const char * init_section = config_iget(config , "INIT_SECTION" , 0,0);
-      if (util_file_exists( init_section ))
-        ecl_config->equil_init_file = util_alloc_realpath(init_section);
-      else {
-        char * filename;
-        char * basename;
-        char * extension;
-        
-        util_alloc_file_components( init_section , NULL , &basename , &extension);
-        filename = util_alloc_filename( NULL , basename , extension);
-        if (strcmp( filename , init_section) == 0) 
-          ecl_config->equil_init_file = filename;
-        else {
-          util_abort("%s: When INIT_SECTION:%s is set to a non-existing file - you can not have any path components.\n",__func__ , init_section);
-          util_safe_free( filename );
-        }
-        
-        util_safe_free( basename );
-        util_safe_free( extension );
-      }
-    } else
-      /* 
-         The <INIT> tag is not set - we can not utilize the
-         equil_init_file info, and we just ignore it.
-      */
-      fprintf(stderr,"** Warning: <INIT> tag was not found in datafile - can not utilize INIT_SECTION keyword - ignored.\n");
+  if (ecl_config->can_restart) {  /* The <INIT> tag is set. */
+    ecl_config->input_init_section = util_realloc_string_copy( ecl_config->input_init_section , input_init_section );  /* input_init_section = path/to/init_section         */
+    if (util_file_exists( ecl_config->input_init_section )) {                                                           /* init_section       = $CWD/path/to/init_section */ 
+      util_safe_free( ecl_config->init_section );
+      ecl_config->init_section = util_alloc_realpath(input_init_section);
+    } else {
+      char * path;
+      
+      util_alloc_file_components( ecl_config->input_init_section , &path , NULL , NULL );
+      if (path != NULL) 
+        util_abort("%s: When INIT_SECTION:%s is set to a non-existing file - you can not have any path components.\n",__func__ , input_init_section);
+      
+      util_safe_free( path );
+      ecl_config->init_section = util_alloc_string_copy(input_init_section);
+    }
   } else
+    /* 
+       The <INIT> tag is not set - we can not utilize the
+       input_init_section info, and we just ignore it.
+    */
+    fprintf(stderr,"** Warning: <INIT> tag was not found in datafile - can not utilize INIT_SECTION keyword - ignored.\n");
+}
+
+
+
+
+
+
+
+ecl_config_type * ecl_config_alloc( const config_type * config ) {
+  ecl_config_type * ecl_config      = util_malloc(sizeof * ecl_config , __func__);
+  ecl_config->io_config 	    = ecl_io_config_alloc( DEFAULT_FORMATTED , DEFAULT_UNIFIED , DEFAULT_UNIFIED );
+  ecl_config->eclbase               = NULL;
+  ecl_config->include_all_static_kw = false;
+  ecl_config->static_kw_set         = set_alloc_empty();
+  ecl_config->data_file             = NULL;
+  ecl_config->input_init_section    = NULL; 
+  ecl_config->init_section          = NULL;
+  ecl_config->refcase               = NULL;
+  ecl_config->grid                  = NULL;
+  ecl_config->can_restart           = false;
+  ecl_config->start_date            = -1;
+  ecl_config->sched_file            = NULL;
+
+  /*****************************************************************/
+
+  ecl_config_set_eclbase( ecl_config , config_iget(config , "ECLBASE" ,0,0) );
+  ecl_config_set_data_file( ecl_config , config_iget( config , "DATA_FILE" ,0,0));
+  ecl_config_set_schedule_file( ecl_config , config_iget( config , "SCHEDULE_FILE" ,0,0));
+  ecl_config_clear_static_kw( ecl_config );
+  if (config_item_set(config , "GRID"))
+    ecl_config_set_grid( ecl_config , config_iget(config , "GRID" , 0,0) );
+  
+  if (config_item_set( config , "REFCASE")) 
+    ecl_config_set_refcase( ecl_config , config_get_value( config , "REFCASE" ));
+
+  if (config_has_set_item(config , "INIT_SECTION")) 
+    ecl_config_set_init_section( ecl_config , config_get_value( config , "INIT_SECTION" ));
+  else 
     if (ecl_config->can_restart) 
       /** 
           This is a hard error - the datafile contains <INIT>, however
@@ -223,10 +307,10 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
           broken behaviour. 
       */
       util_exit("Sorry: when the datafile contains <INIT> the config file MUST have the INIT_SECTIOn keyword. \n");
-
+  
   /*
       The user has not supplied a INIT_SECTION keyword whatsoever, 
-      this essentially meens that we can not restart - because:
+      this essentially means that we can not restart - because:
 
       1. The EQUIL section must be inlined in the DATAFILE without any
          special markup.
@@ -241,16 +325,9 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
       perfectly legitemate.
   */
 
-
-  if (config_item_set(config , "GRID"))
-    ecl_config_set_grid( ecl_config , config_iget(config , "GRID" , 0,0) );
-    
-  
-  if (config_item_set( config , "REFCASE")) 
-    ecl_config_load_refcase( ecl_config , config_get_value( config , "REFCASE" ));
-
   return ecl_config;
 }
+
 
 
 void ecl_config_free(ecl_config_type * ecl_config) {
@@ -261,7 +338,8 @@ void ecl_config_free(ecl_config_type * ecl_config) {
   sched_file_free(ecl_config->sched_file);
   free(ecl_config->schedule_target_file);
 
-  util_safe_free(ecl_config->equil_init_file);
+  util_safe_free(ecl_config->input_init_section);
+  util_safe_free(ecl_config->init_section);
 
   if (ecl_config->grid != NULL)
     ecl_grid_free( ecl_config->grid );
@@ -313,10 +391,26 @@ bool ecl_config_include_static_kw(const ecl_config_type * ecl_config, const char
 }
 
 
+  
+
 const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config) {
   return ecl_config->grid;
 }
 
+
+const char * ecl_config_get_gridfile( const ecl_config_type * ecl_config ) {
+  return ecl_grid_get_name( ecl_config->grid );
+}
+
+
+/**
+   The ecl_config object isolated supports run-time changing of the
+   grid, however this does not (in general) apply to the system as a
+   whole. Other objects which internalize pointers (i.e. field_config
+   objects) to an ecl_grid_type instance will be left with dangling
+   pointers; and things will probably die an ugly death. So - changing
+   grid runtime should be done with extreme care.
+*/
 
 void ecl_config_set_grid( ecl_config_type * ecl_config , const char * grid_file ) {
   if (ecl_config->grid != NULL)
@@ -344,14 +438,22 @@ sched_file_type * ecl_config_get_sched_file(const ecl_config_type * ecl_config) 
 }
 
 
+/**
+   This just returns the string which has been set with the
+   ecl_config_set_init_section() function, whereas the
+   ecl_config_get_equil_init_file() function will return the absolute
+   path to the init_section (if it exists).
+*/
 
-const char * ecl_config_get_data_file(const ecl_config_type * ecl_config) {
-  return ecl_config->data_file;
+
+const char * ecl_config_get_init_section(const ecl_config_type * ecl_config) {
+  return ecl_config->input_init_section;
 }
 
 const char * ecl_config_get_equil_init_file(const ecl_config_type * ecl_config) {
-  return ecl_config->equil_init_file;
+  return ecl_config->init_section;
 }
+
 
 const char * ecl_config_get_schedule_target(const ecl_config_type * ecl_config) {
   return ecl_config->schedule_target_file;

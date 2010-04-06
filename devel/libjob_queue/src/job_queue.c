@@ -828,30 +828,47 @@ int job_queue_get_max_running( const job_queue_type * queue ) {
 }
 
 
+void job_queue_set_size( job_queue_type * queue , int size ) {
+  /* Delete the existing nodes. */
+  {
+    if (queue->size != 0) {
+      for (int i=0; i < queue->size; i++)
+        job_queue_node_free( queue->jobs[i] );
+    }
+  }
+  
+  
+  /* Fill the new nodes */
+  {
+    queue->size            = size;
+    queue->jobs            = util_realloc(queue->jobs , size * sizeof * queue->jobs , __func__);
+    {
+      int i;
+      for (i=0; i < size; i++) 
+        queue->jobs[i] = job_queue_node_alloc();
+      
+      for (i=0; i < JOB_QUEUE_MAX_STATE; i++)
+        queue->status_list[i] = 0;
+      
+      for (i=0; i < size; i++) 
+        queue->status_list[job_queue_node_get_status(queue->jobs[i])]++;
+    }
+  }
+}
+
+
+
 job_queue_type * job_queue_alloc(int size , int max_running , int max_submit , 
 				 const char    	     * run_cmd      	 , 
 				 basic_queue_driver_type * driver) {
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
-  
+  queue->jobs            = NULL;
   queue->usleep_time     = 1000000; /* 1 second */
   queue->max_running     = max_running;
   queue->max_submit      = max_submit;
-  queue->size            = size;
-  queue->run_cmd         = util_alloc_string_copy(run_cmd);
-  queue->jobs            = util_malloc(size * sizeof * queue->jobs , __func__);
   queue->driver          = NULL;
-  {
-    int i;
-    for (i=0; i < size; i++) 
-      queue->jobs[i] = job_queue_node_alloc();
-
-    for (i=0; i < JOB_QUEUE_MAX_STATE; i++)
-      queue->status_list[i] = 0;
-    
-    for (i=0; i < size; i++) 
-      queue->status_list[job_queue_node_get_status(queue->jobs[i])]++;
-  }
-  
+  queue->run_cmd         = util_alloc_string_copy(run_cmd);
+  job_queue_set_size( queue , size );
   job_queue_set_driver(queue , driver);
   pthread_rwlock_init( &queue->active_rwlock , NULL);
   pthread_rwlock_init( &queue->status_rwlock , NULL);

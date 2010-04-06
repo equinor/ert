@@ -96,6 +96,10 @@ matrix_type      *       enkf_main_getA(enkf_main_type * enkf_main , const local
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main );
 SAFE_CAST_HEADER(enkf_main)
 
+void                     enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value);
+void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
+
+
 
 /*****************************************************************/
 

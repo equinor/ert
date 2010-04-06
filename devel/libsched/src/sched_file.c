@@ -618,6 +618,10 @@ time_t sched_file_get_sim_time(const sched_file_type * sched_file , int report_s
 }
 
 
+const char * sched_file_iget_filename( const sched_file_type * sched_file , int file_nr ) {
+  return stringlist_iget( sched_file->files , file_nr );
+}
+
 
 
 

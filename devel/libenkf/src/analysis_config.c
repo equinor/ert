@@ -64,6 +64,14 @@ void analysis_config_set_log_path(analysis_config_type * config , const char * l
   config->log_path        = util_realloc_string_copy(config->log_path , log_path);
 }
 
+/**
+   Will in addition create the path.
+*/
+const char * analysis_config_get_log_path( const analysis_config_type * config ) {
+  util_make_path( config->log_path );
+  return config->log_path; 
+}
+
 
 void analysis_config_set_rerun(analysis_config_type * config , bool rerun) {
   config->rerun = rerun;
@@ -117,7 +125,7 @@ void analysis_config_set_alpha( analysis_config_type * config , double alpha) {
   config->overlap_alpha = alpha;
 }
 
-void analysis_config_set_merge_observations( analysis_config_type * config , double merge_observations) {
+void analysis_config_set_merge_observations( analysis_config_type * config , bool merge_observations) {
   config->merge_observations = merge_observations;
 }
 
@@ -206,7 +214,7 @@ void analysis_config_init_from_config( analysis_config_type * analysis , const c
 
 
 
-bool analysis_config_merge_observations(const analysis_config_type * config) {
+bool analysis_config_get_merge_observations(const analysis_config_type * config) {
   return config->merge_observations;
 }
 
@@ -219,13 +227,6 @@ double analysis_config_get_truncation(const analysis_config_type * config) {
   return config->truncation;
 }
 
-/**
-   Will in addition create the path.
-*/
-const char * analysis_config_get_log_path( const analysis_config_type * config ) {
-  util_make_path( config->log_path );
-  return config->log_path; 
-}
 
 
 void analysis_config_free(analysis_config_type * config) {

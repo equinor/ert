@@ -48,7 +48,7 @@ time_t_vector_type * sched_file_alloc_time_t_vector( const sched_file_type * sch
 void 		     sched_file_update_blocks(sched_file_type * sched_file, int restart1 , int restart2 , sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
 void 		     sched_file_update(sched_file_type * sched_file, sched_kw_type_enum kw_type, sched_file_callback_ftype * callback, void * arg);
 bool                 sched_file_well_open( const sched_file_type * sched_file , int restart_nr , const char * well_name );
-
+const char         * sched_file_iget_filename( const sched_file_type * sched_file , int file_nr );
 
 
 int                sched_block_get_size(const sched_block_type * block);

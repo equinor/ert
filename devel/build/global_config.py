@@ -137,7 +137,7 @@ class conf:
         self.SDP_LIB_TARGET       = "%s/lib"             %  self.SDP_ROOT
         self.SDP_ERT_RELEASE      = "%s/bin/ert_release" %  self.SDP_ROOT
 
-        self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall -fPIC"
+        self.CCFLAGS  = "-m64 -O2 -std=gnu99 -g -Wall"
         self.ARFLAGS  = "csr"
 
         

@@ -171,6 +171,15 @@ void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
       subst_list_insert_owned_ref(gen_kw->subst_list , key , util_alloc_sprintf("%g" , output_data[ikw]) , NULL);
     }
     
+    /*
+      If the target_file already exists as a symbolic link the
+      symbolic link is removed before creating the target file. The is
+      to ensure against existing symlinks pointing to a common file
+      outside the realization root.
+    */
+    if (util_is_link( target_file ))
+      unlink( target_file );
+    
     subst_list_filter_file( gen_kw->subst_list  , template_file  , target_file);
   } else 
     util_abort("%s: internal error - tried to filter gen_kw instance without template file.\n",__func__);
