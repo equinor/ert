@@ -11,7 +11,9 @@ class ErtWrapper:
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
         self.plot_config = self.enkf.enkf_main_get_plot_config(self.main)
+        self.analysis_config = self.enkf.enkf_main_get_analysis_config(self.main)
 
+        
 
 #        self.plot_path = "somepath"
 #        self.driver = "PLPLOT"
@@ -33,14 +35,14 @@ class ErtWrapper:
         self.schedule_prediction_file = "some new path"
         self.data_kw = {"INCLUDE_PATH" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH2" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH3" : "<CWD>/../Common/ECLIPSE2"}
 
-        self.enkf_rerun = False
-        self.rerun_start = 0
+#        self.enkf_rerun = False
+#        self.rerun_start = 0
         self.enkf_sched_file = "..."
         self.local_config = "..."
-        self.enkf_merge_observations = False
-        self.enkf_mode = "SQRT"
-        self.enkf_alpha = 2.5
-        self.enkf_truncation = 0.99
+#        self.enkf_merge_observations = False
+#        self.enkf_mode = "SQRT"
+#        self.enkf_alpha = 2.5
+#        self.enkf_truncation = 0.99
 
         self.queue_system = "RSH"
         self.lsf_queue = "NORMAL"
@@ -118,7 +120,11 @@ class ErtWrapper:
 
 
     def setRestype(self, attribute, restype):
-        getattr(self.enkf, attribute).restype = restype     
+        getattr(self.enkf, attribute).restype = restype
+
+    def setValueType(self, returnAttribute, setAttribute, type):
+        getattr(self.enkf, returnAttribute).restype = type
+        getattr(self.enkf, setAttribute).argtypes = [ctypes.c_int, type]
 
     def setAttribute(self, attribute, value):
         print "set " + attribute + ": " + str(getattr(self, attribute)) + " -> " + str(value)
