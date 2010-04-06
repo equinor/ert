@@ -111,15 +111,16 @@ configPanel.endPage()
 # ----------------------------------------------------------------------------------------------
 # Output tab
 # ----------------------------------------------------------------------------------------------
-configPanel.startPage("Output")
+configPanel.startPage("Analysis")
 
 r = configPanel.addRow(CheckBox(widget, "ENKF rerun", "enkf_rerun", "Perform rerun"))
-r.getter = lambda ert : ert.getAttribute("enkf_rerun")
-r.setter = lambda ert, value : ert.setAttribute("enkf_rerun", value)
+#r.initialize = lambda ert : ert.setRestype("analysis_config_get_rerun", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.analysis_config_get_rerun(ert.analysis_config)
+r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun(ert.analysis_config, value)
 
 r = configPanel.addRow(IntegerSpinner(widget, "Rerun start", "rerun_start",  0, 100000))
-r.getter = lambda ert : ert.getAttribute("rerun_start")
-r.setter = lambda ert, value : ert.setAttribute("rerun_start", value)
+r.getter = lambda ert : ert.enkf.analysis_config_get_rerun_start(ert.analysis_config)
+r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun_start(ert.analysis_config, value)
 
 r = configPanel.addRow(PathChooser(widget, "ENKF schedule file", "enkf_sched_file"))
 r.getter = lambda ert : ert.getAttribute("enkf_sched_file")
@@ -129,24 +130,36 @@ r = configPanel.addRow(PathChooser(widget, "Local config", "local_config"))
 r.getter = lambda ert : ert.getAttribute("local_config")
 r.setter = lambda ert, value : ert.setAttribute("local_config", value)
 
+r = configPanel.addRow(PathChooser(widget, "Update log", "update_log"))
+r.initialize = lambda ert : ert.setRestype("analysis_config_get_log_path", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.analysis_config_get_log_path(ert.analysis_config)
+r.setter = lambda ert, value : ert.enkf.analysis_config_set_log_path(ert.analysis_config, str(value))
+
 
 configPanel.startGroup("EnKF")
 
 r = configPanel.addRow(DoubleSpinner(widget, "Alpha", "enkf_alpha", 0, 100000, 2))
-r.getter = lambda ert : ert.getAttribute("enkf_alpha")
-r.setter = lambda ert, value : ert.setAttribute("enkf_alpha", value)
+r.initialize = lambda ert : ert.setValueType("analysis_config_get_alpha", "analysis_config_set_alpha", ertwrapper.c_double)
+r.getter = lambda ert : ert.enkf.analysis_config_get_alpha(ert.analysis_config)
+r.setter = lambda ert, value : ert.enkf.analysis_config_set_alpha(ert.analysis_config, value)
 
 r = configPanel.addRow(CheckBox(widget, "Merge Observations", "enkf_merge_observations", "Perform merge"))
-r.getter = lambda ert : ert.getAttribute("enkf_merge_observations")
-r.setter = lambda ert, value : ert.setAttribute("enkf_merge_observations", value)
+r.getter = lambda ert : ert.enkf.analysis_config_merge_observations(ert.analysis_config)
+r.setter = lambda ert, value : ert.enkf.analysis_config_set_merge_observations(ert.analysis_config, value)
 
-r = configPanel.addRow(ComboChoice(widget, ["STANDARD", "SQRT"], "Mode", "enkf_mode"))
-r.getter = lambda ert : ert.getAttribute("enkf_mode")
-r.setter = lambda ert, value : ert.setAttribute("enkf_mode", value)
+
+enkf_mode_type = {"ENKF_STANDARD" : 10, "ENKF_SQRT" : 20}
+enkf_mode_type_reverse = {10 : "ENKF_STANDARD" , 20 : "ENKF_SQRT"}
+r = configPanel.addRow(ComboChoice(widget, enkf_mode_type.keys(), "Mode", "enkf_mode"))
+r.getter = lambda ert : enkf_mode_type_reverse[ert.enkf.analysis_config_get_enkf_mode(ert.analysis_config)]
+r.setter = lambda ert, value : ert.enkf.analysis_config_set_enkf_mode(ert.analysis_config, enkf_mode_type[str(value)])
+
 
 r = configPanel.addRow(DoubleSpinner(widget, "Truncation", "enkf_truncation", 0, 1, 2))
-r.getter = lambda ert : ert.getAttribute("enkf_truncation")
-r.setter = lambda ert, value : ert.setAttribute("enkf_truncation", value)
+r.initialize = lambda ert : ert.setValueType("analysis_config_get_truncation", "analysis_config_set_truncation", ertwrapper.c_double)
+r.getter = lambda ert : ert.enkf.analysis_config_get_truncation(ert.analysis_config)
+r.setter = lambda ert, value : ert.enkf.analysis_config_set_truncation(ert.analysis_config, value)
+
 
 
 configPanel.endGroup()
@@ -367,9 +380,6 @@ configPanel.endPage()
 # ----------------------------------------------------------------------------------------------
 configPanel.startPage("Simulations")
 
-r = configPanel.addRow(PathChooser(widget, "License path", "license_path"))
-r.getter = lambda ert : ert.getAttribute("license_path")
-r.setter = lambda ert, value : ert.setAttribute("license_path", value)
 
 r = configPanel.addRow(IntegerSpinner(widget, "Max submit", "max_submit", 1, 10000))
 r.getter = lambda ert : ert.getAttribute("max_submit")
@@ -379,14 +389,17 @@ r = configPanel.addRow(IntegerSpinner(widget, "Max resample", "max_resample", 1,
 r.getter = lambda ert : ert.getAttribute("max_resample")
 r.setter = lambda ert, value : ert.setAttribute("max_resample", value)
 
-r = configPanel.addRow(PathChooser(widget, "Case table", "case_table"))
-r.getter = lambda ert : ert.getAttribute("case_table")
-r.setter = lambda ert, value : ert.setAttribute("case_table", value)
-
 r = configPanel.addRow(KeywordTable(widget, "Forward model", "forward_model", "Job", "Arguments"))
 r.getter = lambda ert : ert.getAttribute("forward_model")
 r.setter = lambda ert, value : ert.setAttribute("forward_model", value)
 
+r = configPanel.addRow(PathChooser(widget, "Case table", "case_table"))
+r.getter = lambda ert : ert.getAttribute("case_table")
+r.setter = lambda ert, value : ert.setAttribute("case_table", value)
+
+r = configPanel.addRow(PathChooser(widget, "License path", "license_path"))
+r.getter = lambda ert : ert.getAttribute("license_path")
+r.setter = lambda ert, value : ert.setAttribute("license_path", value)
 
 
 internalPanel = ConfigPanel(widget)
