@@ -5,8 +5,8 @@ import ctypes.util
 
 class ErtWrapper:
 
-    def __init__(self, site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config"):
-        self.__loadLibraries__("/private/jpb/EnKF/")
+    def __init__(self, site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/"):
+        self.__loadLibraries__(enkf_so)
 
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)

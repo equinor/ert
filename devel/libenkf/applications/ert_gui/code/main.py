@@ -28,7 +28,7 @@ widget.setWindowTitle('ERT GUI')
 widgetLayout = QtGui.QVBoxLayout()
 
 
-ert = ertwrapper.ErtWrapper()
+ert = ertwrapper.ErtWrapper(site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/")
 
 
 
