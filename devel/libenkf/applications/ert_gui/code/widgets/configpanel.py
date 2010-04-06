@@ -53,3 +53,19 @@ class ConfigPanel(QtGui.QTabWidget):
         self.formLayout = self.layoutQueue.pop()
         self.formLayout.addRow(self.groupBox)
         self.groupBox = None
+
+    def addSeparator(self):
+        """Adds a separator line to the panel."""
+        qw = QtGui.QWidget()
+        qwl = QtGui.QVBoxLayout()
+        qw.setLayout(qwl)
+
+        qf = QtGui.QFrame()
+        qf.setFrameShape(QtGui.QFrame.HLine)
+        qf.setFrameShadow(QtGui.QFrame.Sunken)
+
+        qwl.addSpacing(10)
+        qwl.addWidget(qf)
+        qwl.addSpacing(10)
+
+        self.formLayout.addRow(qw)

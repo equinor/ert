@@ -78,11 +78,7 @@ r.setter = lambda ert, value : ert.setAttribute("data_kw", value)
 
 
 
-#todo: add sepearator line
-
-r = configPanel.addRow(QtGui.QFrame(widget))
-r.setFrameShape(QtGui.QFrame.HLine)
-r.setFrameShadow(QtGui.QFrame.Sunken)
+configPanel.addSeparator()
 
 internalPanel = ConfigPanel(widget)
 
@@ -114,7 +110,6 @@ configPanel.endPage()
 configPanel.startPage("Analysis")
 
 r = configPanel.addRow(CheckBox(widget, "ENKF rerun", "enkf_rerun", "Perform rerun"))
-#r.initialize = lambda ert : ert.setRestype("analysis_config_get_rerun", ertwrapper.c_char_p)
 r.getter = lambda ert : ert.enkf.analysis_config_get_rerun(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun(ert.analysis_config, value)
 
@@ -149,9 +144,9 @@ r.setter = lambda ert, value : ert.enkf.analysis_config_set_merge_observations(e
 
 
 enkf_mode_type = {"ENKF_STANDARD" : 10, "ENKF_SQRT" : 20}
-enkf_mode_type_reverse = {10 : "ENKF_STANDARD" , 20 : "ENKF_SQRT"}
+enkf_mode_type_inverted = {10 : "ENKF_STANDARD" , 20 : "ENKF_SQRT"}
 r = configPanel.addRow(ComboChoice(widget, enkf_mode_type.keys(), "Mode", "enkf_mode"))
-r.getter = lambda ert : enkf_mode_type_reverse[ert.enkf.analysis_config_get_enkf_mode(ert.analysis_config)]
+r.getter = lambda ert : enkf_mode_type_inverted[ert.enkf.analysis_config_get_enkf_mode(ert.analysis_config)]
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_enkf_mode(ert.analysis_config, enkf_mode_type[str(value)])
 
 
