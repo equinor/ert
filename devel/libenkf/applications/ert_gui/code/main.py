@@ -20,7 +20,7 @@ from widgets.application import Application
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
-
+from widgets.plotpanel import PlotPanel
 
 app = QtGui.QApplication(sys.argv)
 
@@ -71,7 +71,7 @@ r.getter = lambda ert : ert.enkf.ecl_config_get_init_section(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_init_section(ert.ecl_config, str(value))
 
 
-r = configPanel.addRow(PathChooser(widget, "Refcase", "refcase"))
+r = configPanel.addRow(PathChooser(widget, "Refcase", "refcase", True))
 r.initialize = lambda ert : ert.setRestype("ecl_config_get_refcase_name", ertwrapper.c_char_p)
 r.getter = lambda ert : ert.enkf.ecl_config_get_refcase_name(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_refcase(ert.ecl_config, str(value))
@@ -509,10 +509,9 @@ widget.addPage("Configuration", widget.resourceIcon("config"), configPanel)
 
 
 
-plotPage = ConfigPanel()
+plotPage = PlotPanel("plots/default")
 
 
-files = os.listdir("plots/default")
 
 widget.addPage("Plots", widget.resourceIcon("plot"), plotPage)
 
