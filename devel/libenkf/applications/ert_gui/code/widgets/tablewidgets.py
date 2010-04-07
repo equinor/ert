@@ -252,5 +252,101 @@ class MultiColumnTable(HelpedWidget):
 
             rowIndex+=1
 
+    def setDelegate(self, column, delegate):
+        self.table.setItemDelegateForColumn(column, delegate)
 
+
+
+class SpinBoxDelegate(QtGui.QItemDelegate):
+    def __init__(self, parent):
+        QtGui.QItemDelegate.__init__(self, parent)
+
+    # QWidget *parent, const QStyleOptionViewItem &/* option */, const QModelIndex &/* index */
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QSpinBox(parent)
+
+        editor.setMinimum(0)
+        editor.setMaximum(100)
+
+        return editor
+
+    #QWidget *editor, const QModelIndex &index
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.EditRole).toInt()
+        editor.setValue(value[0])
+
+    #QWidget *editor, QAbstractItemModel *model, const QModelIndex &index
+    def setModelData(self, editor, model, index):
+        editor.interpretText()
+        value = editor.value()
+
+        model.setData(index, value, QtCore.Qt.EditRole)
+
+    #Widget *editor, const QStyleOptionViewItem &option, const QModelIndex &/* index */
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+
+class DoubleSpinBoxDelegate(QtGui.QItemDelegate):
+    def __init__(self, parent):
+        QtGui.QItemDelegate.__init__(self, parent)
+
+    # QWidget *parent, const QStyleOptionViewItem &/* option */, const QModelIndex &/* index */
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QDoubleSpinBox(parent)
+
+        editor.setMinimum(0)
+        editor.setMaximum(100)
+        editor.setDecimals(2)
+        editor.setSingleStep(0.01)
+
+        return editor
+
+    #QWidget *editor, const QModelIndex &index
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.EditRole).toDouble()
+        editor.setValue(value[0])
+
+    #QWidget *editor, QAbstractItemModel *model, const QModelIndex &index
+    def setModelData(self, editor, model, index):
+        editor.interpretText()
+        value = editor.value()
+
+        model.setData(index, value, QtCore.Qt.EditRole)
+
+    #Widget *editor, const QStyleOptionViewItem &option, const QModelIndex &/* index */
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
+
+class ComboBoxDelegate(QtGui.QItemDelegate):
+    def __init__(self, parent):
+        QtGui.QItemDelegate.__init__(self, parent)
+
+    # QWidget *parent, const QStyleOptionViewItem &/* option */, const QModelIndex &/* index */
+    def createEditor(self, parent, option, index):
+        editor = QtGui.QComboBox(parent)
+
+        editor.setMinimum(0)
+        editor.setMaximum(100)
+        editor.setDecimals(2)
+        editor.setSingleStep(0.01)
+
+        return editor
+
+    #QWidget *editor, const QModelIndex &index
+    def setEditorData(self, editor, index):
+        value = index.model().data(index, QtCore.Qt.EditRole).toDouble()
+        editor.setValue(value[0])
+
+    #QWidget *editor, QAbstractItemModel *model, const QModelIndex &index
+    def setModelData(self, editor, model, index):
+        editor.interpretText()
+        value = editor.value()
+
+        model.setData(index, value, QtCore.Qt.EditRole)
+
+    #Widget *editor, const QStyleOptionViewItem &option, const QModelIndex &/* index */
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
 

@@ -9,11 +9,11 @@ class PlotPanel(QtGui.QFrame):
         self.path = path
         QtGui.QFrame.__init__(self)
 
-        variables = []
+        files = []
         for file in os.listdir(self.path):
-            variables.append(file.split(".")[0])
+            files.append(file.split(".")[0])
 
-        self.image = QtGui.QPixmap(self.path + variables[0])
+        self.image = QtGui.QPixmap(self.path + files[0])
 
         plotLayout = QtGui.QHBoxLayout()
 
@@ -23,10 +23,11 @@ class PlotPanel(QtGui.QFrame):
         #self.label.setFrameShadow(QtGui.QFrame.Sunken)
 
         plotList = QtGui.QListWidget(self)
-        plotList.addItems(variables)
+        plotList.addItems(files)
         plotList.sortItems()
         plotList.setMaximumWidth(150)
         plotList.setMinimumWidth(150)
+
 
         self.connect(plotList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), self.select)
         plotLayout.addWidget(plotList)
@@ -41,6 +42,18 @@ class PlotPanel(QtGui.QFrame):
 
         self.setFrameShape(QtGui.QFrame.Panel)
         self.setFrameShadow(QtGui.QFrame.Raised)
+
+
+        # thumbnails -> slow loading of page
+        #plotList.setViewMode(QtGui.QListView.IconMode)
+        #plotList.setIconSize(QtCore.QSize(96, 96))
+        #self.contentsWidget.setMovement(QtGui.QListView.Static)
+        #for index in range(plotList.count()):
+        #    item = plotList.item(index)
+        #    icon = QtGui.QIcon(self.path + "/" + str(item.text()))
+        #    item.setIcon(icon)
+        #    item.setTextAlignment(QtCore.Qt.AlignHCenter)
+        #    item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
 
 
 
@@ -59,7 +72,3 @@ class PlotPanel(QtGui.QFrame):
         """Scale and update the displayed image"""
         if not self.image.isNull():
             self.label.setPixmap(self.image.scaled(size.width(), size.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
-
-
-
-
