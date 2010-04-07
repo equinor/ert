@@ -49,7 +49,6 @@ struct lsf_job_struct {
 struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
   QUEUE_DRIVER_FUNCTIONS
-  int __lsf_id;
   char * queue_name;
   pthread_mutex_t    submit_lock;
   
@@ -69,14 +68,13 @@ struct lsf_driver_struct {
 
 /*****************************************************************/
 
-#define LSF_DRIVER_ID  1001
 #define LSF_JOB_ID     2001
 
 
 
 
 void lsf_driver_init(lsf_driver_type * queue_driver) {
-  queue_driver->__lsf_id = LSF_DRIVER_ID;
+  //queue_driver->__lsf_id = LSF_DRIVER_ID;
 }
 
 
@@ -460,6 +458,7 @@ void * lsf_driver_alloc(const char * queue_name) {
   lsf_driver->free_job         	   = lsf_driver_free_job;
   lsf_driver->free_driver      	   = lsf_driver_free__;
   lsf_driver->display_info         = lsf_driver_display_info;
+  lsf_driver->driver_type          = LSF_DRIVER; 
   pthread_mutex_init( &lsf_driver->submit_lock , NULL );
   
 #ifdef LSF_LIBRARY_DRIVER
@@ -497,8 +496,6 @@ void * lsf_driver_alloc(const char * queue_name) {
 
 
 
-
-#undef LSF_DRIVER_ID  
 #undef LSF_JOB_ID    
 
 /*****************************************************************/

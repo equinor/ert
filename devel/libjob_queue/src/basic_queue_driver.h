@@ -5,6 +5,12 @@ extern "C" {
 #endif
 #include <util.h>
 
+typedef enum { NULL_DRIVER  = 0,
+               LSF_DRIVER   = 1,
+               LOCAL_DRIVER = 2,
+               RSH_DRIVER   = 3} job_driver_type;
+
+
 typedef enum {JOB_QUEUE_NOT_ACTIVE    =  0 ,   /* This value is used in external query routines - for jobs which are not active. Not used in libjob_queue implementation. */
               JOB_QUEUE_LOADING       =  1 ,   /* This value is used by external routines. Not used in the libjob_queue implementation. */
               JOB_QUEUE_NULL          =  2 ,   /* For a queue node which has been allocated - but not (yet) "added" with a job_queue_add_job() call. */
@@ -42,26 +48,18 @@ free_job_ftype    	   * free_job;      	    \
 abort_job_ftype   	   * abort_f;       	    \
 get_status_ftype  	   * get_status;    	    \
 free_queue_driver_ftype    * free_driver;   	    \
-display_info_ftype         * display_info;
-
-
-#define BASIC_QUEUE_DRIVER_FIELDS           	    \
-submit_job_ftype  	   * submit;        	    \
-free_job_ftype    	   * free_job;      	    \
-abort_job_ftype   	   * abort_f;       	    \
-get_status_ftype  	   * get_status;    	    \
-free_queue_driver_ftype    * free_driver;   	    \
-display_info_ftype         * display_info;          
+display_info_ftype         * display_info;          \
+job_driver_type              driver_type;
 
 
 struct basic_queue_driver_struct {
   UTIL_TYPE_ID_DECLARATION
-  BASIC_QUEUE_DRIVER_FIELDS
+  QUEUE_DRIVER_FUNCTIONS
 };
 
 
 
-
+void basic_queue_job_init(basic_queue_job_type * queue_job);
 
 
 #ifdef __cplusplus

@@ -7,10 +7,13 @@ extern "C" {
 #include <path_fmt.h>
 
 typedef struct job_queue_struct job_queue_type;
+
+job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
+void                job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver);
 void                job_queue_set_size( job_queue_type * job_queue , int size );
 void                job_queue_finalize(job_queue_type * queue);
 void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
-job_queue_type   *  job_queue_alloc(int  , int , int  , const char * , basic_queue_driver_type * );
+job_queue_type   *  job_queue_alloc(int  , int , int  , const char * );
 void                job_queue_free(job_queue_type *);
 void                job_queue_add_job(job_queue_type * , const char * , const char * , int , const void *);
 void                job_queue_run_jobs(job_queue_type * , int , bool verbose);

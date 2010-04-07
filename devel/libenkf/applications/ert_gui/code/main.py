@@ -64,7 +64,6 @@ r.getter = lambda ert : ert.enkf.ecl_config_get_schedule_file(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_schedule_file(ert.ecl_config, str(value))
 
 
-
 r = configPanel.addRow(PathChooser(widget, "Init section", "init_section"))
 r.initialize = lambda ert : ert.setRestype("ecl_config_get_init_section", ertwrapper.c_char_p)
 r.getter = lambda ert : ert.enkf.ecl_config_get_init_section(ert.ecl_config)
