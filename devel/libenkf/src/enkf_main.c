@@ -139,6 +139,11 @@ ensemble_config_type * enkf_main_get_ensemble_config(const enkf_main_type * enkf
   return enkf_main->ensemble_config;
 }
 
+site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main ) {
+  return enkf_main->site_config;
+}
+
+
 model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main ) {
   return enkf_main->model_config;
 }
