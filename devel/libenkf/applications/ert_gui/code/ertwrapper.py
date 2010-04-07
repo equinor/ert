@@ -102,8 +102,7 @@ class ErtWrapper:
 
 
     def __loadLibraries__(self, prefix):
-        libraries = ["libutil/slib/libutil.so",
-                     "libecl/slib/libecl.so",
+        libraries = ["libecl/slib/libecl.so",
                      "libsched/slib/libsched.so",
                      "librms/slib/librms.so",
                      "libconfig/slib/libconfig.so",
@@ -113,6 +112,8 @@ class ErtWrapper:
         CDLL("liblapack.so", RTLD_GLOBAL)
         CDLL("libz.so", RTLD_GLOBAL)
 
+        self.util = CDLL(prefix + "libutil/slib/libutil.so", RTLD_GLOBAL)
+        
         for lib in libraries:
             CDLL(prefix + lib, RTLD_GLOBAL)
 
@@ -133,3 +134,34 @@ class ErtWrapper:
     def getAttribute(self, attribute):
         print "get " + attribute + ": " + str(getattr(self, attribute))
         return getattr(self, attribute)
+
+        
+    def getStringList(self, stringlistpointer):
+        result = []
+
+        self.util.stringlist_iget.restype = c_char_p
+        numberOfStrings = self.util.stringlist_get_size(stringlistpointer)
+
+        for index in range(numberOfStrings):
+            result.append(self.util.stringlist_iget(stringlistpointer, index))
+
+        return result
+
+
+    def freeStringList(self, stringlistpointer):
+        self.util.stringlist_free(stringlistpointer)
+
+
+    def getHash(self, hashpointer):
+        hashiterator = self.util.hash_iter_alloc(hashpointer)
+        self.util.hash_iter_get_next_key.restype = c_char_p
+        self.util.hash_get.restype = c_char_p
+
+        result = {}
+        while not self.util.hash_iter_is_complete(hashiterator):
+            key   = self.util.hash_iter_get_next_key(hashiterator)
+            value = self.util.hash_get(hashpointer, key)
+            result[key] = value
+
+        self.util.hash_iter_free(hashiterator)
+        return result

@@ -12,7 +12,7 @@ from widgets.combochoice import ComboChoice
 from widgets.pathchooser import PathChooser
 from widgets.stringbox import StringBox
 from widgets.helpedwidget import ContentModel, HelpedWidget
-from widgets.tablewidgets import KeywordList, KeywordTable, MultiColumnTable
+from widgets.tablewidgets import KeywordList, KeywordTable, MultiColumnTable, SpinBoxDelegate, DoubleSpinBoxDelegate
 from widgets.spinnerwidgets import DoubleSpinner, IntegerSpinner
 from widgets.application import Application
 
@@ -330,6 +330,8 @@ internalPanel.startPage("Fields")
 r = internalPanel.addRow(MultiColumnTable(widget, "Dynamic", "field_dynamic", ["Name", "Min", "Max"]))
 r.getter = lambda ert : ert.getAttribute("field_dynamic")
 r.setter = lambda ert, value : ert.setAttribute("field_dynamic", value)
+#r.setDelegate(1, DoubleSpinBoxDelegate(widget))
+#r.setDelegate(2, DoubleSpinBoxDelegate(widget))
 
 r = internalPanel.addRow(MultiColumnTable(widget, "Parameter", "field_parameter", ["Name", "Min", "Max", "Init", "Output", "Eclipse file", "Init files"]))
 r.getter = lambda ert : ert.getAttribute("field_parameter")
@@ -504,19 +506,57 @@ configPanel.endPage()
 
 
 
+
+
 widget.addPage("Configuration", widget.resourceIcon("config"), configPanel)
 
 
 
-plotPage = PlotPanel("plots/default")
+panel = QtGui.QFrame()
+panel.setFrameShape(QtGui.QFrame.Panel)
+panel.setFrameShadow(QtGui.QFrame.Raised)
+
+panelLayout = QtGui.QVBoxLayout()
+panel.setLayout(panelLayout)
+
+
+import ctypes
+
+def perform():
+    fs = ert.enkf.enkf_main_get_fs(ert.main)
+    caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
+
+    list = ert.getStringList(caseList)
+    print list
+    ert.freeStringList(caseList)
+
+
+    site_config = ert.enkf.enkf_main_get_site_config(ert.main)
+    env_hash = ert.enkf.site_config_get_env_hash(site_config)
+    ert.util.hash_insert_ref(env_hash, "LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin")
+
+    print ert.getHash(env_hash)
+
+
+    
+
+
+button = QtGui.QPushButton("Get case list")
+panel.connect(button, QtCore.SIGNAL('clicked()'), perform)
+
+panelLayout.addWidget(button)
+
+widget.addPage("Run", widget.resourceIcon("run"), panel)
 
 
 
-widget.addPage("Plots", widget.resourceIcon("plot"), plotPage)
+widget.addPage("Plots", widget.resourceIcon("plot"), PlotPanel("plots/default"))
 
 
 ContentModel.contentModel = ert
 ContentModel.updateObservers()
+
+
 
 sys.exit(app.exec_())
 
