@@ -16,6 +16,7 @@ class Application(QtGui.QWidget):
         self.contentsWidget.setIconSize(QtCore.QSize(96, 96))
         self.contentsWidget.setMovement(QtGui.QListView.Static)
         self.contentsWidget.setMaximumWidth(128)
+        self.contentsWidget.setMinimumWidth(128)
         self.contentsWidget.setSpacing(12)
 
         self.pagesWidget = QtGui.QStackedWidget()
