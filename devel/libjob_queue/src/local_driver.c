@@ -172,6 +172,7 @@ void * local_driver_alloc() {
   local_driver->free_job    	     = local_driver_free_job;
   local_driver->free_driver 	     = local_driver_free__;
   local_driver->display_info         = NULL;
+  local_driver->driver_type          = LOCAL_DRIVER; 
   
   return local_driver;
 }

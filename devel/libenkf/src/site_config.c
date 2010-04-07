@@ -11,6 +11,7 @@
 #include <lsf_driver.h>
 #include <lsf_request.h>
 #include <rsh_driver.h>
+#include <basic_queue_driver.h>
 
 /**
    This struct contains information which is specific to the site
@@ -24,6 +25,18 @@ struct site_config_struct {
   ext_joblist_type 	* joblist;       /* The list of external jobs which have been installed. 
                    	                    These jobs will be the parts of the forward model. */
   job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
+  hash_type             * env_variables;
+  hash_type             * path_variables;
+  /*---------------------------------------------------------------*/
+  int                     max_running_lsf;     /* Need to hold the detailed information about the         */
+  char                  * lsf_queue_name;      /* various drivers here to be able to "hot-switch" driver. */
+  char                  * lsf_request;  
+  
+  int                     max_running_rsh;
+  stringlist_type       * rsh_host_list;
+  
+  int                     max_running_local;
+  /*---------------------------------------------------------------*/
   bool                    statoil_mode;  /* Quite obtrusive hack to support statoil_mode in the lsf_request. */
 };
 
@@ -38,7 +51,16 @@ static site_config_type * site_config_alloc_empty() {
 
   site_config->joblist      = NULL;
   site_config->job_queue    = NULL;
+
+  site_config->lsf_queue_name = NULL;
+  site_config->lsf_request    = NULL;
+  site_config->rsh_host_list  = stringlist_alloc_new( );
   
+  site_config->max_running_local = 0;
+  site_config->max_running_lsf   = 0;
+  site_config->max_running_rsh   = 0;
+  site_config->env_variables     = hash_alloc();
+  site_config->path_variables    = hash_alloc();
   return site_config;
 }
 
@@ -64,75 +86,152 @@ static void site_config_install_joblist(site_config_type * site_config , const c
 }
 
 
+hash_type * site_config_get_env_hash( const site_config_type * site_config ) {
+  return site_config->env_variables;
+}
+
+
+void site_config_setenv( site_config_type * site_config , const char * variable, const char * value) {
+  hash_insert_hash_owned_ref( site_config->env_variables , variable , util_alloc_string_copy( value ) , free);
+  setenv( variable , value , 1);  /* This will update the environment if the variable has already been set to another value. */
+  return true;
+}
+
+
 
 /**
    These functions can be called repeatedly if you should want to
-   change driver characteristics run-time.
+   change driver characteristics run-time. The job_queue will discard
+   the old driver, if a driver is already installed. 
 */
-static void site_config_install_LOCAL_job_queue(site_config_type * site_config , const char * job_script , int max_submit , int max_running) {
+static void site_config_install_LOCAL_job_queue(site_config_type * site_config ) {
   basic_queue_driver_type * driver = local_driver_alloc();
-  if (site_config->job_queue != NULL)
-    job_queue_free( site_config->job_queue );
-  
-  site_config->job_queue = job_queue_alloc(0 , max_running , max_submit , job_script , driver);
+  job_queue_set_driver( site_config->job_queue , driver );
+  job_queue_set_max_running( site_config->job_queue , site_config->max_running_local );
 }
 
 
-
-static void site_config_install_RSH_job_queue(site_config_type * site_config , const char * job_script , int max_submit , int max_running , const char * rsh_command , const stringlist_type * rsh_host_list) {
+static void site_config_install_RSH_job_queue(site_config_type * site_config , const char * rsh_command , const stringlist_type * rsh_host_list) {
   basic_queue_driver_type * driver = rsh_driver_alloc(rsh_command , rsh_host_list);
-  if (site_config->job_queue != NULL)
-    job_queue_free( site_config->job_queue );
-  
-  site_config->job_queue = job_queue_alloc(0 , max_running , max_submit , job_script , driver);
+  job_queue_set_driver( site_config->job_queue , driver );
+  job_queue_set_max_running( site_config->job_queue , site_config->max_running_rsh );
 }
 
 
-static void site_config_install_LSF_job_queue(site_config_type * site_config , const char * job_script , int max_submit , int max_running , const char * lsf_queue_name, const char * manual_lsf_request) {
+static void site_config_install_LSF_job_queue(site_config_type * site_config , const char * lsf_queue_name, const char * manual_lsf_request) {
   basic_queue_driver_type * driver = lsf_driver_alloc( lsf_queue_name );
-  if (site_config->job_queue != NULL)
-    job_queue_free( site_config->job_queue );
-  
-  site_config->job_queue   = job_queue_alloc(0 , max_running , max_submit , job_script , driver);
+  job_queue_set_driver( site_config->job_queue , driver );
+  job_queue_set_max_running( site_config->job_queue , site_config->max_running_lsf );
 }
 
 
+/*****************************************************************/
+/**
+   This is quite awkward because the max_running variable is located
+   both in the job_queue instance, and in each separate driver
+   individually:
 
+    o If you call set_max_running - i.e. without specifiying a
+      particular driver, it will tell the queue system to use this
+      many jobs, and also look up the right driver and update the
+      internal info on that driver.
+
+    o If you tell a specific driver a value for max_running, it will
+      update the internal field for that driver, AND the queue IFF the
+      queue is currently running this driver.
+
+   What a mess.   
+*/
+
+
+void site_config_set_max_running( site_config_type * site_config , int max_running ) {
+  job_driver_type current_driver = job_queue_get_driver_type( site_config->job_queue );
+  switch(current_driver) {
+  case( NULL_DRIVER ):
+    util_abort("%s: trying to set the number of jobs before a driver has been allocated \n",__func__);
+    break;
+  case( LSF_DRIVER ):
+    site_config_set_max_running_lsf( site_config , max_running );
+    break;
+  case( RSH_DRIVER ):
+    site_config_set_max_running_rsh( site_config , max_running );
+    break;
+  case( LOCAL_DRIVER ):
+    site_config_set_max_running_local( site_config , max_running );
+    break;
+  default:
+    util_abort("%s: what the fuck? \n",__func__);
+  }
+}
+
+
+void site_config_set_max_running_lsf( site_config_type * site_config , int max_running_lsf) {
+  site_config->max_running_lsf = max_running_lsf;
+  if (job_queue_get_driver_type( site_config->job_queue ) == LSF_DRIVER)
+    job_queue_set_max_running( site_config->job_queue , max_running_lsf );
+}
+
+int site_config_get_max_running_lsf( const site_config_type * site_config ) {
+  return site_config->max_running_lsf;
+}
+
+void site_config_set_max_running_rsh( site_config_type * site_config , int max_running_rsh) {
+  site_config->max_running_rsh = max_running_rsh;
+  if (job_queue_get_driver_type( site_config->job_queue ) == RSH_DRIVER)
+    job_queue_set_max_running( site_config->job_queue , max_running_rsh );
+}
+
+int site_config_get_max_running_rsh( const site_config_type * site_config) {
+  return site_config->max_running_rsh;
+}
+
+void site_config_set_max_running_local( site_config_type * site_config , int max_running_local) {
+  site_config->max_running_local = max_running_local;
+  if (job_queue_get_driver_type( site_config->job_queue ) == LOCAL_DRIVER)
+    job_queue_set_max_running( site_config->job_queue , max_running_local );
+}
+
+int site_config_get_max_running_local( const site_config_type * site_config ) {
+  return site_config->max_running_local;
+}
+
+/*****************************************************************/
 
 
 static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , bool * use_lsf) {
   const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
   const char * job_script   = config_iget(config , "JOB_SCRIPT" , 0,0);
   int   max_submit          = config_iget_as_int(config , "MAX_SUBMIT" , 0,0);
+  int   max_running;
   *use_lsf                  = false;
 
-  
+  site_config->job_queue = job_queue_alloc(0 , 0 , max_submit , job_script);
   if (strcmp(queue_system , "LSF") == 0) {
     const char * lsf_queue_name = config_iget(config , "LSF_QUEUE" , 0,0);
     char * lsf_resource_request = NULL;
-    int max_running;
-    
     
     if (config_has_set_item(config , "LSF_RESOURCES"))
       lsf_resource_request = config_alloc_joined_string(config , "LSF_RESOURCES" , " ");
     if (!util_sscanf_int(config_iget(config , "MAX_RUNNING_LSF" , 0,0) , &max_running))
       util_abort("%s: internal error - \n",__func__);
     
-    site_config_install_LSF_job_queue(site_config , job_script , max_submit , max_running , lsf_queue_name , lsf_resource_request);
+    site_config_install_LSF_job_queue(site_config , lsf_queue_name , lsf_resource_request);
     util_safe_free(lsf_resource_request);
     *use_lsf = true;
   } else if (strcmp(queue_system , "RSH") == 0) {
     const char * rsh_command        = config_iget(config , "RSH_COMMAND" , 0,0);
     stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
-    int max_running = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
+    max_running = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
     
-    site_config_install_RSH_job_queue(site_config , job_script , max_submit , max_running , rsh_command , rsh_host_list);
+    site_config_install_RSH_job_queue(site_config , rsh_command , rsh_host_list);
     stringlist_free( rsh_host_list );
   } else if (strcmp(queue_system , "LOCAL") == 0) {
-    int max_running = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
-    site_config_install_LOCAL_job_queue(site_config , job_script , max_submit , max_running);
+    max_running = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
+    site_config_install_LOCAL_job_queue( site_config );
   }
 }
+
+
 
 
 site_config_type * site_config_alloc(const config_type * config , bool * use_lsf) {
@@ -173,6 +272,11 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
+  stringlist_free( site_config->rsh_host_list );
+  hash_free( site_config->env_variables );
+  hash_free( site_config->path_variables );
+  util_safe_free( site_config->lsf_queue_name );
+  util_safe_free( site_config->lsf_request );
   free(site_config);
 }
 

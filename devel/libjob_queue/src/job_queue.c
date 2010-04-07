@@ -108,8 +108,7 @@
          while waiting for one of the files, if none turn up we will
          eventually mark the job as failed.
 
-
-
+         
    Observe that there is a random ugly coupling between this file and
    the job script thorugh the name of the EXIT and OK files. In this
    file those names are just defined with #define below here. If these
@@ -356,11 +355,11 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
     basic_queue_driver_type * driver  = queue->driver;
     
     if (node->submit_attempt < queue->max_submit) {
-      basic_queue_job_type * job_data = driver->submit(queue->driver         , 
-                                                       queue_index           , 
-                                                       queue->run_cmd        , 
-                                                       node->run_path        , 
-                                                       node->job_name        , 
+      basic_queue_job_type * job_data = driver->submit(queue->driver  , 
+                                                       queue_index    , 
+                                                       queue->run_cmd , 
+                                                       node->run_path , 
+                                                       node->job_name , 
                                                        node->job_arg);
       
       if (job_data != NULL) {
@@ -828,6 +827,15 @@ int job_queue_get_max_running( const job_queue_type * queue ) {
 }
 
 
+job_driver_type job_queue_get_driver_type( const job_queue_type * queue ) {
+  if (queue->driver == NULL)
+    return NULL_DRIVER;
+  else
+    return queue->driver->driver_type;
+}
+
+
+
 void job_queue_set_size( job_queue_type * queue , int size ) {
   /* Delete the existing nodes. */
   {
@@ -857,10 +865,19 @@ void job_queue_set_size( job_queue_type * queue , int size ) {
 }
 
 
+/**
+   The job_queue instance can be resized afterwards with a call to
+   job_queue_set_size(). Observe that the job_queue returned by this
+   function is NOT ready for use; a driver must be set explicitly with
+   a call to job_queue_set_driver() first.
+*/
 
-job_queue_type * job_queue_alloc(int size , int max_running , int max_submit , 
-				 const char    	     * run_cmd      	 , 
-				 basic_queue_driver_type * driver) {
+job_queue_type * job_queue_alloc(int size , 
+                                 int max_running , 
+                                 int max_submit , 
+				 const char * run_cmd) {
+				 
+
   job_queue_type * queue = util_malloc(sizeof * queue , __func__);
   queue->jobs            = NULL;
   queue->usleep_time     = 1000000; /* 1 second */
@@ -869,7 +886,6 @@ job_queue_type * job_queue_alloc(int size , int max_running , int max_submit ,
   queue->driver          = NULL;
   queue->run_cmd         = util_alloc_string_copy(run_cmd);
   job_queue_set_size( queue , size );
-  job_queue_set_driver(queue , driver);
   pthread_rwlock_init( &queue->active_rwlock , NULL);
   pthread_rwlock_init( &queue->status_rwlock , NULL);
   queue->active_size = 0;

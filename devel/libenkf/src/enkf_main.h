@@ -21,6 +21,7 @@ extern "C" {
 #include <set.h>
 #include <member_config.h>
 #include <analysis_config.h>
+#include <site_config.h>
   
 /*****************************************************************/
 
@@ -60,7 +61,6 @@ enkf_node_type             ** enkf_main_get_node_ensemble(const enkf_main_type *
 void                          enkf_main_node_mean( const enkf_node_type ** ensemble , int ens_size , enkf_node_type * mean );
 void                          enkf_main_node_std( const enkf_node_type ** ensemble , int ens_size , const enkf_node_type * mean , enkf_node_type * std);
 
-enkf_fs_type                * enkf_main_get_fs_ref(const enkf_main_type *);
 enkf_impl_type                enkf_main_impl_type(const enkf_main_type *, const char * );
 enkf_state_type             * enkf_main_iget_state(const enkf_main_type * , int );
 
@@ -98,7 +98,7 @@ SAFE_CAST_HEADER(enkf_main)
 
 void                     enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value);
 void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
-
+site_config_type       * enkf_main_get_site_config( const enkf_main_type * enkf_main );
 
 
 /*****************************************************************/

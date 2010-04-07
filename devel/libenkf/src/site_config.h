@@ -20,6 +20,16 @@ ext_joblist_type       * site_config_get_installed_jobs( const site_config_type 
 job_queue_type         * site_config_get_job_queue( const site_config_type * );
 void                     site_config_set_ens_size( site_config_type * site_config , int ens_size );
 
+void                     site_config_set_max_running_lsf( site_config_type * site_config , int max_running_lsf);
+int                      site_config_get_max_running_lsf( const site_config_type * site_config );
+void                     site_config_set_max_running_rsh( site_config_type * site_config , int max_running_rsh);
+int                      site_config_get_max_running_rsh( const site_config_type * site_config);
+void                     site_config_set_max_running_local( site_config_type * site_config , int max_running_local);
+int                      site_config_get_max_running_local( const site_config_type * site_config );
+void                     site_config_setenv( site_config_type * site_config , const char * variable, const char * value);
+hash_type              * site_config_get_env_hash( const site_config_type * site_config );
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -2792,16 +2792,10 @@ void  enkf_main_list_users(  set_type * users , const char * executable ) {
   }
 }
 
+
 const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * enkf_main ) {
   return site_config_get_installed_jobs( enkf_main->site_config );
 }
 
 
-/*****************************************************************/
-
-
-int enkf_main_hello( const enkf_main_type * enkf_main ) {
-  printf("Hello - message from the dungeons - returning 42.\n");
-  return 42;
-}
 

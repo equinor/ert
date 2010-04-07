@@ -319,6 +319,7 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
   rsh_driver->free_job        	   = rsh_driver_free_job;
   rsh_driver->free_driver     	   = rsh_driver_free__;
   rsh_driver->display_info         = NULL;
+  rsh_driver->driver_type          = RSH_DRIVER; 
 
   rsh_driver->num_hosts       	   = 0;
   rsh_driver->host_list       	   = NULL;
