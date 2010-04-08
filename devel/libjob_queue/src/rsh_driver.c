@@ -305,7 +305,7 @@ void rsh_driver_free__(void * __driver) {
    that the load of the host is *not* consulted.
 */
 
-void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_host_list) {
+void * rsh_driver_alloc(const char * rsh_command, const hash_type * rsh_host_list) {
   rsh_driver_type * rsh_driver = util_malloc(sizeof * rsh_driver , __func__);
   UTIL_TYPE_ID_INIT( rsh_driver , RSH_DRIVER_TYPE_ID );
   pthread_mutex_init( &rsh_driver->submit_lock , NULL );
@@ -325,27 +325,11 @@ void * rsh_driver_alloc(const char * rsh_command, const stringlist_type * rsh_ho
   rsh_driver->host_list       	   = NULL;
   rsh_driver->last_host_index 	   = 0;  
   {
-    int ihost;
-    for (ihost = 0; ihost < stringlist_get_size(rsh_host_list); ihost++) {
-      const char * host = stringlist_iget(rsh_host_list , ihost);
-      int pos = 0;
-      while ( pos < strlen(host) && host[pos] != ':') 
-	pos++;
-
-      {
-	char *host_only = util_alloc_substring_copy(host , pos);
-	int max_running;
-
-	if (pos == strlen(host)) {
-	  fprintf(stderr," ** Warning no \":\" found for host:%s - assuming only one job to this host\n",host_only);
-	  max_running = 1;
-	} else 
-	  if (!util_sscanf_int(&host[pos+1] , &max_running))
-	    util_abort("%s: failed to parse integer from: %s - format should be host:number \n",__func__ , host);
-	
-	rsh_driver_add_host(rsh_driver , host_only , max_running);
-	free(host_only);
-      }
+    hash_iter_type * hash_iter = hash_iter_alloc( rsh_host_list );
+    while (!hash_iter_is_complete( hash_iter )) {
+      const char * host = hash_iter_get_next_key( hash_iter );
+      int max_running   = hash_get_int( rsh_host_list , host );
+      rsh_driver_add_host(rsh_driver , host , max_running);
     }
   }
   if (rsh_driver->num_hosts == 0) 

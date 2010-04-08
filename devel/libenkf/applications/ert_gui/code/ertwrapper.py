@@ -78,6 +78,12 @@ class ErtWrapper:
 #       site_config_get_max_running_(lsf|rsh|local)( s )
 #Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
 
+#Get    s = enkf_main_get_site_config( enkf_main )
+#       h = site_config_get_rsh_host_list( s )
+#       Itererer over hash - men bruk hash_get_int() for å få antall jobber en host kan ta.
+#Set    site_config_clear_rsh_host_list( s )
+#       site_config_add_rsh_host( s , host_name , max_running )
+
  
 
         self.job_script = "..."
