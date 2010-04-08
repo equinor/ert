@@ -2,6 +2,9 @@ from PyQt4 import QtGui, QtCore
 from helpedwidget import *
 from widgets.tablewidgets import AddRemoveWidget
 import util
+from widgets.pathchooser import PathChooser
+from widgets.combochoice import ComboChoice
+import widgets.stringbox
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
@@ -12,56 +15,46 @@ class ParameterPanel(HelpedWidget):
         """Construct a ParameterPanel."""
         HelpedWidget.__init__(self, parent, label, help)
 
-        listWidget = QtGui.QWidget(self)
-        listWidget.setMaximumWidth(130)
-        listWidget.setMinimumWidth(130)
-        vlayout = QtGui.QVBoxLayout()
-        vlayout.setMargin(0)
-
-        self.searchBox = QtGui.QLineEdit()
-        self.searchBox.setToolTip("Type to search!")
-        self.searchBox.focusInEvent = lambda event : self.enterSearch(event)
-        self.searchBox.focusOutEvent = lambda event : self.exitSearch(event)
-        self.activeColor = self.searchBox.palette().color(self.searchBox.foregroundRole())
-        self.disableSearch = True
-        self.presentSearch()
-
-        self.connect(self.searchBox, QtCore.SIGNAL('textChanged(QString)'), self.searchInList)
-
-        vlayout.addWidget(self.searchBox)
-
-        self.list = QtGui.QListWidget(self)
-        self.list.setMaximumWidth(128)
-        self.list.setMinimumWidth(128)
-        self.list.setMinimumHeight(350)
-        self.list.setSortingEnabled(True)
-
-        vlayout.addWidget(self.list)
-        vlayout.addWidget(AddRemoveWidget(self, self.addItem, self.removeItem, True))
-
-        listWidget.setLayout(vlayout)
-        self.addWidget(listWidget)
-
-
-        self.pagesWidget = QtGui.QStackedWidget()
-
-        panel = QtGui.QFrame()
-        panel.setFrameShape(QtGui.QFrame.Panel)
-        panel.setFrameShadow(QtGui.QFrame.Raised)
-        panel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-
-        self.pagesWidget.addWidget(panel)
-
-        self.addWidget(self.pagesWidget)
-
-
-        self.addHelpButton()
-
         self.typeIcons = {}
         self.typeIcons["Field"] = util.resourceIcon("grid_16")
         self.typeIcons["Data"] = util.resourceIcon("data")
         self.typeIcons["Summary"] = util.resourceIcon("summary")
         self.typeIcons["Keyword"] = util.resourceIcon("key")
+
+        self.addWidget((self.createListWidget()))
+
+
+        self.pagesWidget = QtGui.QStackedWidget()
+
+
+        self.emptyPanel = QtGui.QFrame(self)
+
+        self.emptyPanel.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.emptyPanel.setFrameShadow(QtGui.QFrame.Plain)
+        self.emptyPanel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        self.fieldPanel = FieldPanel(self)
+
+        self.pagesWidget.addWidget(self.emptyPanel)
+        self.pagesWidget.addWidget(self.fieldPanel)
+
+        self.addWidget(self.pagesWidget)
+
+        self.connect(self.list, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), self.changeParameter)
+
+        #self.addHelpButton()
+
+
+
+
+    def changeParameter(self, current, previous):
+        if not current:
+            self.pagesWidget.setCurrentWidget(self.emptyPanel)
+        elif current.getType() == "Field":
+            self.pagesWidget.setCurrentWidget(self.fieldPanel)
+            self.fieldPanel.setFieldModel(current.getData())
+        else:
+            self.pagesWidget.setCurrentWidget(self.emptyPanel)
 
 
 
@@ -107,7 +100,12 @@ class ParameterPanel(HelpedWidget):
     def addToList(self, type, name):
         """Adds a new parameter to the list"""
         param = Parameter(type, self.typeIcons[type], name)
+
+        if type == "Field":
+            param.setData(FieldModel(name))
+
         self.list.addItem(param)
+        self.list.setCurrentItem(param)
         return param
 
 
@@ -173,6 +171,154 @@ class ParameterPanel(HelpedWidget):
 #                columnIndex+=1
 #
 #            rowIndex+=1
+
+
+    def createListWidget(self):
+        listWidget = QtGui.QWidget(self)
+        listWidget.setMaximumWidth(130)
+        listWidget.setMinimumWidth(130)
+        vlayout = QtGui.QVBoxLayout()
+        vlayout.setMargin(0)
+        self.searchBox = QtGui.QLineEdit()
+        self.searchBox.setToolTip("Type to search!")
+        self.searchBox.focusInEvent = lambda event : self.enterSearch(event)
+        self.searchBox.focusOutEvent = lambda event : self.exitSearch(event)
+        self.activeColor = self.searchBox.palette().color(self.searchBox.foregroundRole())
+        self.disableSearch = True
+        self.presentSearch()
+        self.connect(self.searchBox, QtCore.SIGNAL('textChanged(QString)'), self.searchInList)
+        vlayout.addWidget(self.searchBox)
+        self.list = QtGui.QListWidget(self)
+        self.list.setMaximumWidth(128)
+        self.list.setMinimumWidth(128)
+        self.list.setMinimumHeight(350)
+        self.list.setSortingEnabled(True)
+        vlayout.addWidget(self.list)
+        vlayout.addWidget(AddRemoveWidget(self, self.addItem, self.removeItem, True))
+        listWidget.setLayout(vlayout)
+        return listWidget
+
+
+
+class FieldModel:
+    type = "General"
+    name = ""
+    min = ""
+    max = ""
+    init = "None"
+    output = "None"
+    eclipse_file = ""
+    init_files = ""
+    file_generated_by_enkf = ""
+    file_loaded_by_enkf = ""
+
+    def __init__(self, name):
+        self.name = name
+
+                   
+class FieldPanel(QtGui.QFrame):
+    fieldModel = FieldModel("")
+
+    def __init__(self, parent):
+        QtGui.QFrame.__init__(self, parent)
+
+        self.setFrameShape(QtGui.QFrame.StyledPanel)
+        self.setFrameShadow(QtGui.QFrame.Plain)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        layout = QtGui.QFormLayout()
+        layout.setLabelAlignment(QtCore.Qt.AlignRight)
+
+
+        self.fieldType = ComboChoice(self, ["Dynamic", "Parameter", "General"], "", "param_type")
+        self.fieldType.setter = lambda model, value: self.typeChanged(value)
+        self.fieldType.getter = lambda model: self.fieldModel.type
+
+        self.min = widgets.stringbox.DoubleBox(self, "", "param_min")
+        self.min.setter = lambda model, value: setattr(self.fieldModel, "min", value)
+        self.min.getter = lambda model: self.fieldModel.min
+
+
+        self.max = widgets.stringbox.DoubleBox(self, "", "param_max")
+        self.max.setter = lambda model, value: setattr(self.fieldModel, "max", value)
+        self.max.getter = lambda model: self.fieldModel.max
+
+
+        self.init = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "param_init")
+        self.init.setter = lambda model, value: setattr(self.fieldModel, "init", value)
+        self.init.getter = lambda model: self.fieldModel.init
+
+        self.output = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "param_output")
+        self.output.setter = lambda model, value: setattr(self.fieldModel, "output", value)
+        self.output.getter = lambda model: self.fieldModel.output
+
+        self.eclipse_file = PathChooser(self, "", "param_eclipse_file", True)
+        self.eclipse_file.setter = lambda model, value: setattr(self.fieldModel, "eclipse_file", value)
+        self.eclipse_file.getter = lambda model: self.fieldModel.eclipse_file
+
+        self.init_files = PathChooser(self, "", "param_init_files", True)
+        self.init_files.setter = lambda model, value: setattr(self.fieldModel, "init_files", value)
+        self.init_files.getter = lambda model: self.fieldModel.init_files
+
+        self.file_generated_by_enkf = PathChooser(self, "", "param_file_generated_by_enkf", True)
+        self.file_generated_by_enkf.setter = lambda model, value: setattr(self.fieldModel, "file_generated_by_enkf", value)
+        self.file_generated_by_enkf.getter = lambda model: self.fieldModel.file_generated_by_enkf
+
+        self.file_loaded_by_enkf = PathChooser(self, "", "param_file_loaded_by_enkf", True)
+        self.file_loaded_by_enkf.setter = lambda model, value: setattr(self.fieldModel, "file_loaded_by_enkf", value)
+        self.file_loaded_by_enkf.getter = lambda model: self.fieldModel.file_loaded_by_enkf
+
+        layout.addRow("Field type:", self.fieldType)
+        layout.addRow("Min:", self.min)
+        layout.addRow("Max:", self.max)
+        layout.addRow("Init:", self.init)
+        layout.addRow("Output:", self.output)
+        layout.addRow("Eclipse file:", self.eclipse_file)
+        layout.addRow("Init files:", self.init_files)
+        layout.addRow("File generated by EnKF:", self.file_generated_by_enkf)
+        layout.addRow("File loaded by EnKF:", self.file_loaded_by_enkf)
+
+        self.setLayout(layout)
+
+        self.typeChanged("Dynamic")
+
+
+    def typeChanged(self, value):
+        setattr(self.fieldModel, "type", value)
+
+        self.min.setEnabled(True)
+        self.max.setEnabled(True)
+        self.init.setEnabled(True)
+        self.output.setEnabled(True)
+        self.eclipse_file.setEnabled(True)
+        self.init_files.setEnabled(True)
+        self.file_generated_by_enkf.setEnabled(True)
+        self.file_loaded_by_enkf.setEnabled(True)
+
+        if value == "Dynamic":
+            self.init.setEnabled(False)
+            self.output.setEnabled(False)
+            self.eclipse_file.setEnabled(False)
+            self.init_files.setEnabled(False)
+            self.file_generated_by_enkf.setEnabled(False)
+            self.file_loaded_by_enkf.setEnabled(False)
+
+        elif value == "Parameter":
+            self.file_generated_by_enkf.setEnabled(False)
+            self.file_loaded_by_enkf.setEnabled(False)
+
+    def setFieldModel(self, fieldModel):
+        self.fieldModel = fieldModel
+
+        self.fieldType.fetchContent()
+        self.min.fetchContent()
+        self.max.fetchContent()
+        self.init.fetchContent()
+        self.output.fetchContent()
+        self.eclipse_file.fetchContent()
+        self.init_files.fetchContent()
+        self.file_generated_by_enkf.fetchContent()
+        self.file_loaded_by_enkf.fetchContent()
 
 
 
@@ -292,3 +438,9 @@ class Parameter(QtGui.QListWidgetItem):
 
     def __lt__(self, other):
         return not self >= other
+
+    def setData(self, data):
+        self.data = data
+
+    def getData(self):
+        return self.data
