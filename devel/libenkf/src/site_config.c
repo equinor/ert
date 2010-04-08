@@ -37,7 +37,8 @@ struct site_config_struct {
   
   int                     max_running_rsh;
   hash_type             * rsh_host_list;
-  
+  char                  * rsh_command;
+
   int                     max_running_local;
   /*---------------------------------------------------------------*/
   bool                    statoil_mode;  /* Quite obtrusive hack to support statoil_mode in the lsf_request. */
@@ -58,6 +59,7 @@ static site_config_type * site_config_alloc_empty() {
   site_config->lsf_queue_name = NULL;
   site_config->lsf_request    = NULL;
   site_config->rsh_host_list  = hash_alloc();
+  site_config->rsh_command    = NULL;
   
   site_config->max_running_local      = 0;
   site_config->max_running_lsf        = 0;
@@ -180,8 +182,8 @@ static void site_config_install_LOCAL_job_queue(site_config_type * site_config )
 }
 
 
-static void site_config_install_RSH_job_queue(site_config_type * site_config , const char * rsh_command , const hash_type * rsh_host_list) {
-  basic_queue_driver_type * driver = rsh_driver_alloc(rsh_command , rsh_host_list);
+static void site_config_install_RSH_job_queue(site_config_type * site_config) {
+  basic_queue_driver_type * driver = rsh_driver_alloc(site_config->rsh_command , site_config->rsh_host_list);
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_rsh );
 }
@@ -277,7 +279,7 @@ hash_type * site_config_get_rsh_host_list( const site_config_type * site_config 
 }
 
 
-void site_config_add_rsh_host( const site_config_type * site_config , const char * rsh_host , int max_running) {
+void site_config_add_rsh_host( const site_config_type * site_config , const char * rsh_host , int max_running ) {
   hash_insert_int( site_config->rsh_host_list , rsh_host , max_running );
 }
 
@@ -291,6 +293,17 @@ void site_config_set_lsf_queue( site_config_type * site_config , const char * ls
 const char * site_config_get_lsf_queue( const site_config_type * site_config ) {
   return site_config->lsf_queue_name;
 }
+
+/*****************************************************************/
+
+void site_config_set_rsh_command( site_config_type * site_config , const char * rsh_command) {
+  site_config->rsh_command = util_realloc_string_copy( site_config->rsh_command  , rsh_command);
+}
+
+const char * site_config_get_rsh_command( const site_config_type * site_config ) {
+  return site_config->rsh_command;
+}
+
 
 
 
@@ -319,16 +332,42 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
     util_safe_free(lsf_resource_request);
     *use_lsf = true;
   } else if (strcmp(queue_system , "RSH") == 0) {
-    const char * rsh_command        = config_iget(config , "RSH_COMMAND" , 0,0);
-    stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
+    {
+      const char * rsh_command        = config_iget(config , "RSH_COMMAND" , 0,0);
+      site_config_set_rsh_command( site_config , rsh_command );
+    }
+    {
+      /* Parsing the "host1:4" strings. */
+      
+      stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
+      int i;
+      for (i=0; i < stringlist_get_size( rsh_host_list ); i++) {
+        int     host_max_running;
+        char ** tmp;
+        char  * host;
+        int     tokens;
+        
+        util_split_string( stringlist_iget( rsh_host_list , i) , ":" , &tokens , &tmp);
+        if (tokens > 1) {
+          if (!util_sscanf_int( tmp[tokens - 1] , &host_max_running))
+            util_abort("%s: failed to parse out integer from: %s \n",__func__ , stringlist_iget( rsh_host_list , i));
+          host = util_alloc_joined_string((const char **) tmp , tokens - 1 , ":");
+        } else
+          host = util_alloc_string_copy( tmp[0] );
+        
+        site_config_add_rsh_host( site_config , host , host_max_running);
+        util_free_stringlist( tmp , tokens );
+        free( host );
+      }
+      stringlist_free( rsh_host_list );
+    }
+    site_config_install_RSH_job_queue(site_config);
     max_running = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
-    
-    //Broken: site_config_install_RSH_job_queue(site_config , rsh_command , rsh_host_list);
-    stringlist_free( rsh_host_list );
   } else if (strcmp(queue_system , "LOCAL") == 0) {
     max_running = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
     site_config_install_LOCAL_job_queue( site_config );
   }
+  site_config_set_max_running( site_config , max_running );  /* Will set max_running in the queue and locally for the currently active driver. */
 }
 
 
@@ -380,7 +419,8 @@ void site_config_free(site_config_type * site_config) {
   hash_free( site_config->initial_variables );
   hash_free( site_config->env_variables );
   hash_free( site_config->initial_path_variables );
-  
+
+  util_safe_free( site_config->rsh_command );
   util_safe_free( site_config->lsf_queue_name );
   util_safe_free( site_config->lsf_request );
   free(site_config);
