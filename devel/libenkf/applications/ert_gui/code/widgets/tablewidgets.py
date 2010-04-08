@@ -6,7 +6,7 @@ class AddRemoveWidget(QtGui.QWidget):
     A simple class that provides to vertically positioned buttons for adding and removing something.
     The addFunction and removeFunction functions must be provided.
     """
-    def __init__(self, parent=None, addFunction=None, removeFunction=None):
+    def __init__(self, parent=None, addFunction=None, removeFunction=None, horizontal=False):
         """Creates a two button widget"""
         QtGui.QWidget.__init__(self, parent)
 
@@ -20,11 +20,24 @@ class AddRemoveWidget(QtGui.QWidget):
         removeButton.setIconSize(QtCore.QSize(16, 16))
         self.connect(removeButton, QtCore.SIGNAL('clicked()'), removeFunction)
 
-        buttonLayout = QtGui.QVBoxLayout()
+        if horizontal:
+            buttonLayout = QtGui.QHBoxLayout()
+        else:
+            buttonLayout = QtGui.QVBoxLayout()
+
         buttonLayout.setMargin(0)
+
+        if horizontal:
+            buttonLayout.addStretch(1)
+
         buttonLayout.addWidget(addButton)
         buttonLayout.addWidget(removeButton)
-        buttonLayout.addStretch(1)
+
+        if not horizontal:
+            buttonLayout.addStretch(1)
+        else:
+            buttonLayout.addSpacing(2)
+
         self.setLayout(buttonLayout)
 
 
