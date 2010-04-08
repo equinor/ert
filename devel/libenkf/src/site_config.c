@@ -187,8 +187,8 @@ static void site_config_install_RSH_job_queue(site_config_type * site_config , c
 }
 
 
-static void site_config_install_LSF_job_queue(site_config_type * site_config , const char * lsf_queue_name, const char * manual_lsf_request) {
-  basic_queue_driver_type * driver = lsf_driver_alloc( lsf_queue_name );
+static void site_config_install_LSF_job_queue(site_config_type * site_config , const char * manual_lsf_request) {
+  basic_queue_driver_type * driver = lsf_driver_alloc( site_config->lsf_queue_name );
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_lsf );
 }
@@ -284,6 +284,18 @@ void site_config_add_rsh_host( const site_config_type * site_config , const char
 
 /*****************************************************************/
 
+void site_config_set_lsf_queue( site_config_type * site_config , const char * lsf_queue) {
+  site_config->lsf_queue_name = util_realloc_string_copy( site_config->lsf_queue_name , lsf_queue);
+}
+
+const char * site_config_get_lsf_queue( const site_config_type * site_config ) {
+  return site_config->lsf_queue_name;
+}
+
+
+
+/*****************************************************************/
+
 
 static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , bool * use_lsf) {
   const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
@@ -302,7 +314,8 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
     if (!util_sscanf_int(config_iget(config , "MAX_RUNNING_LSF" , 0,0) , &max_running))
       util_abort("%s: internal error - \n",__func__);
     
-    site_config_install_LSF_job_queue(site_config , lsf_queue_name , lsf_resource_request);
+    site_config_set_lsf_queue( site_config , lsf_queue_name );
+    site_config_install_LSF_job_queue( site_config , lsf_resource_request );
     util_safe_free(lsf_resource_request);
     *use_lsf = true;
   } else if (strcmp(queue_system , "RSH") == 0) {
