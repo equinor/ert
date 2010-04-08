@@ -31,18 +31,40 @@ class ErtWrapper:
         #self.init_section="init_section"
         self.add_fixed_length_schedule_kw = ["item1", "item2"]
         self.add_static_kw = ["item1", "item2", "item3"]
+
+#Get: ecl_config_get_static_kw_list( ecl_config )
+#Set: ecl_config_clear_static_kw(ecl_config)
+#     ecl_config_add_static_kw(ecl_config , "STRING")
+
+
         #self.refcase = "some new path"
         self.schedule_prediction_file = "Missing???"
         self.data_kw = {"INCLUDE_PATH" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH2" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH3" : "<CWD>/../Common/ECLIPSE2"}
+#Get: s = enkf_main_get_data_kw( enkf_main )
+#     subst_list_get_size( s )
+#     subst_list_iget_key( s )  
+#     subst_list_iget_value( s )
+#Set: enkf_main_clear_data_kw( enkf_main )
+#     enkf_main_add_data_kw( enkf_main , key , value )
+
+
+
 
 #        self.enkf_rerun = False
 #        self.rerun_start = 0
         self.enkf_sched_file = "..."
+#Get: m = enkf_main_get_model_config( enkf_main )
+#         model_config_get_enkf_sched_file( m )
+#Set:     model_config_set_enkf_sched_file( m , "FILENAME" )
+
+
         self.local_config = "..."
 #        self.enkf_merge_observations = False
 #        self.enkf_mode = "SQRT"
 #        self.enkf_alpha = 2.5
 #        self.enkf_truncation = 0.99
+
+
 
         self.queue_system = "RSH"
         self.lsf_queue = "NORMAL"
@@ -52,10 +74,28 @@ class ErtWrapper:
         self.max_running_rsh = 55
         self.max_running_local = 4
         self.rsh_host_list = {"host1" : '', "host2" : '6'}
+#Get    s = enkf_main_get_site_config( enkf_main )
+#       site_config_get_max_running_(lsf|rsh|local)( s )
+#Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
+
+
+
 
         self.job_script = "..."
         self.setenv = {"LSF_BINDIR" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin", "LSF_LIBDIR" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"}
+#Get:   s = enkf_main_get_site_config( enkf_main )
+#       h = site_config_get_env_hash( s )    
+#Set    site_config_clear_env( s )
+#       site_config_setenv( s , var , value )
+
         self.update_path = {"PATH" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin", "LD_LIBRARY_PATH" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"}
+#Get:   s = enkf_main_get_site_config( enkf_main )
+#       pathlist  = site_config_get_path_variables( s )
+#       valuelist = site_config_get_path_values( s )
+#Set:   site_config_clear_pathvar( s )
+#       site_config_update_pathvar( s , path , value );
+
+
         self.install_job = {"ECHO" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin", "ADJUSTGRID" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"}
 
 
