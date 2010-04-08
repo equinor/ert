@@ -78,8 +78,7 @@ class ErtWrapper:
 #       site_config_get_max_running_(lsf|rsh|local)( s )
 #Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
 
-
-
+ 
 
         self.job_script = "..."
         self.setenv = {"LSF_BINDIR" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin", "LSF_LIBDIR" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"}
