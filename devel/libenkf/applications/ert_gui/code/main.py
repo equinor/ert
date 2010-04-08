@@ -22,7 +22,7 @@ import widgets.util
 #
 #QtGui.QApplication.setStyle("Plastique")
 from widgets.plotpanel import PlotPanel
-from widgets.parameterpanel import ParameterPanel
+from widgets.parameters.parameterpanel import ParameterPanel
 
 app = QtGui.QApplication(sys.argv)
 
@@ -94,6 +94,7 @@ internalPanel = ConfigPanel(widget)
 internalPanel.startPage("Static keywords")
 
 r = internalPanel.addRow(KeywordList(widget, "", "add_static_kw"))
+#r.getter = lambda ert : ert.getStringList(ert.enkf.ecl_config_get_static_kw_list(ert.ecl_config))
 r.getter = lambda ert : ert.getAttribute("add_static_kw")
 r.setter = lambda ert, value : ert.setAttribute("add_static_kw", value)
 
