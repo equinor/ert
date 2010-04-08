@@ -189,7 +189,23 @@ struct local_config_struct {
   local_updatestep_type * default_updatestep;    /* A default report step returned if no particular report step has been installed for this time index. */
   hash_type 		* updatestep_storage;    /* These two hash tables are the 'holding area' for the local_updatestep */
   hash_type 		* ministep_storage;      /* and local_ministep instances. */
+  stringlist_type       * config_files;
+  int                     history_length;
 };
+
+
+static void local_config_clear( local_config_type * local_config ) {
+  local_config->default_updatestep  = NULL;
+  hash_clear( local_config->updatestep_storage );
+  hash_clear( local_config->ministep_storage );
+  vector_clear( local_config->updatestep );
+  {
+    int report;
+    for (report=0; report <= local_config->history_length; report++)
+      vector_append_ref( local_config->updatestep , NULL );
+  }
+}
+
 
 
 
@@ -199,16 +215,14 @@ struct local_config_struct {
 local_config_type * local_config_alloc( int history_length ) {
   local_config_type * local_config = util_malloc( sizeof * local_config , __func__);
 
-  local_config->default_updatestep = NULL;
+  local_config->default_updatestep  = NULL;
   local_config->updatestep_storage  = hash_alloc();
   local_config->ministep_storage    = hash_alloc();
   local_config->updatestep          = vector_alloc_new();
-  {
-    int report;
-    for (report=0; report <= history_length; report++)
-      vector_append_ref( local_config->updatestep , NULL );
-  }
+  local_config->history_length      = history_length;
+  local_config->config_files = stringlist_alloc_new();
   
+  local_config_clear( local_config );
   return local_config;
 }
 
@@ -217,6 +231,7 @@ void local_config_free(local_config_type * local_config) {
   vector_free( local_config->updatestep );
   hash_free( local_config->updatestep_storage );
   hash_free( local_config->ministep_storage);
+  stringlist_free( local_config->config_files );
   free( local_config );
 }
 
@@ -473,7 +488,24 @@ static bool read_cmd( FILE * stream , bool binary , local_config_instruction_typ
 }
 
 
-void local_config_load( local_config_type * local_config /*const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , */ , const char * config_file , log_type * logh) {
+stringlist_type * local_config_get_config_files( const local_config_type * local_config ) {
+  return local_config->config_files;
+}
+
+
+void local_config_clear_config_files( local_config_type * local_config ) {
+  stringlist_clear( local_config->config_files );
+}
+
+
+void local_config_add_config_file( local_config_type * local_config , const char * config_file ) {
+  stringlist_append_copy( local_config->config_files , config_file );
+}
+
+
+
+
+static void local_config_load_file( local_config_type * local_config /*const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , */ , const char * config_file , log_type * logh) {
   bool binary = false;
   local_config_instruction_type cmd;
   FILE * stream      = util_fopen( config_file , "r");
@@ -630,4 +662,16 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
   }
   fclose(stream);
   int_vector_free( int_vector );
+}
+
+
+
+void local_config_reload( local_config_type * local_config /*const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , */ , const char * all_active_config_file , log_type * logh) {
+  local_config_clear( local_config );
+  local_config_load_file( local_config , all_active_config_file , logh );
+  {
+    int i;
+    for (i = 0; i < stringlist_get_size( local_config->config_files ); i++)
+      local_config_load_file( local_config , stringlist_iget( local_config->config_files , i ) , logh);
+  }
 }

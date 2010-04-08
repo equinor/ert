@@ -59,6 +59,12 @@ class ErtWrapper:
 
 
         self.local_config = "..."
+#Get    l = enkf_main_get_local_config( enkf_main );
+#       s = local_config_get_config_files( l )  # Stringlist
+#Set    local_config_clear_config_files( l )
+#       local_config_add_config_file(l , "FILENAME")   
+
+
 #        self.enkf_merge_observations = False
 #        self.enkf_mode = "SQRT"
 #        self.enkf_alpha = 2.5

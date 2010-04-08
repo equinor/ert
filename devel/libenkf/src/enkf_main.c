@@ -1906,8 +1906,8 @@ static config_type * enkf_main_alloc_config() {
   item = config_add_item(config , "SCHEDULE_FILE" , true , false);
   config_item_set_argc_minmax(item , 1 , 1 , (const config_item_types [1]) {CONFIG_EXISTING_FILE});
   /*
-     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a GEN_KW is
-     added en ensemble_config.c
+     Observe that SCHEDULE_PREDICTION_FILE - which is implemented as a
+     GEN_KW is added in ensemble_config.c
   */
 
   item = config_add_item(config , "DATA_FILE" , true , false);
@@ -2053,7 +2053,7 @@ void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const
 
 static void enkf_main_add_tagged_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
   char * tagged_key = enkf_util_alloc_tagged_string( key );
-  enkf_main_add_data_kw( enkf_main , key , value );
+  enkf_main_add_data_kw( enkf_main , tagged_key , value );
   free( tagged_key );
 }
 
@@ -2512,19 +2512,20 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
         {
           char * all_active_config_file = util_alloc_tmp_file("/tmp" , "enkf_local_config" , true);
           enkf_main_create_all_active_config( enkf_main , all_active_config_file );
-          local_config_load( enkf_main->local_config , all_active_config_file , enkf_main->logh);
+
+          /* Install custom local_config - if present.*/
+          {
+            int i;
+            for (i = 0; i < config_get_occurences( config , "LOCAL_CONFIG"); i++) {
+              const stringlist_type * files = config_iget_stringlist_ref(config , "LOCAL_CONFIG" , i);
+              for (int j=0; j < stringlist_get_size( files ); j++)
+                local_config_add_config_file( enkf_main->local_config , stringlist_iget( files , j) );
+            }
+          }
+          
+          local_config_reload( enkf_main->local_config , all_active_config_file , enkf_main->logh);
           unlink( all_active_config_file );
           free(all_active_config_file);
-        }
-
-        /* Install custom local_config - if present.*/
-        {
-          int i;
-          for (i = 0; i < config_get_occurences( config , "LOCAL_CONFIG"); i++) {
-            const stringlist_type * files = config_iget_stringlist_ref(config , "LOCAL_CONFIG" , i);
-            for (int j=0; j < stringlist_get_size( files ); j++)
-              local_config_load( enkf_main->local_config , stringlist_iget( files , j), enkf_main->logh);
-          }
         }
       }
     }
