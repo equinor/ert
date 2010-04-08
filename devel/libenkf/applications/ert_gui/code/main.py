@@ -99,15 +99,15 @@ r.setter = lambda ert, value : ert.setAttribute("add_static_kw", value)
 
 internalPanel.endPage()
 
-internalPanel.startPage("Fixed length schedule keywords")
+# todo: add support for fixed length schedule keywords
+#internalPanel.startPage("Fixed length schedule keywords")
+#
+#r = internalPanel.addRow(KeywordList(widget, "", "add_fixed_length_schedule_kw"))
+#r.getter = lambda ert : ert.getAttribute("add_fixed_length_schedule_kw")
+#r.setter = lambda ert, value : ert.setAttribute("add_fixed_length_schedule_kw", value)
+#
+#internalPanel.endPage()
 
-r = internalPanel.addRow(KeywordList(widget, "", "add_fixed_length_schedule_kw"))
-r.getter = lambda ert : ert.getAttribute("add_fixed_length_schedule_kw")
-r.setter = lambda ert, value : ert.setAttribute("add_fixed_length_schedule_kw", value)
-
-internalPanel.endPage()
-
-#configPanel.endGroup()
 configPanel.addRow(internalPanel)
 
 configPanel.endPage()
@@ -182,7 +182,6 @@ r.setter = lambda ert, value : ert.setAttribute("queue_system", value)
 internalPanel = ConfigPanel(widget)
 
 internalPanel.startPage("LSF")
-#configPanel.startGroup("LSF")
 
 r = internalPanel.addRow(ComboChoice(widget, ["NORMAL", "FAST_LOCAL", "SHORT"], "Mode", "lsf_queue"))
 r.getter = lambda ert : ert.getAttribute("lsf_queue")
@@ -197,11 +196,9 @@ r.getter = lambda ert : ert.getAttribute("lsf_resources")
 r.setter = lambda ert, value : ert.setAttribute("lsf_resources", value)
 
 internalPanel.endPage()
-#configPanel.endGroup()
 
 
 internalPanel.startPage("RSH")
-#configPanel.startGroup("RSH")
 
 r = internalPanel.addRow(PathChooser(widget, "Command", "rsh_command", True))
 r.getter = lambda ert : ert.getAttribute("rsh_command")
@@ -216,17 +213,14 @@ r.getter = lambda ert : ert.getAttribute("rsh_host_list")
 r.setter = lambda ert, value : ert.setAttribute("rsh_host_list", value)
 
 internalPanel.endPage()
-#configPanel.endGroup()
 
 internalPanel.startPage("LOCAL")
-#configPanel.startGroup("LOCAL")
 
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_local", 1, 1000))
 r.getter = lambda ert : ert.getAttribute("max_running_local")
 r.setter = lambda ert, value : ert.setAttribute("max_running_local", value)
 
 internalPanel.endPage()
-#configPanel.endGroup()
 configPanel.addRow(internalPanel)
 
 configPanel.endPage()
@@ -317,7 +311,7 @@ configPanel.endPage()
 # ----------------------------------------------------------------------------------------------
 configPanel.startPage("Ensemble")
 
-r = configPanel.addRow(IntegerSpinner(widget, "# realizations", "num_realizations", 1, 10000))
+r = configPanel.addRow(IntegerSpinner(widget, "Number of realizations", "num_realizations", 1, 10000))
 r.getter = lambda ert : ert.getAttribute("num_realizations")
 r.setter = lambda ert, value : ert.setAttribute("num_realizations", value)
 
@@ -326,9 +320,11 @@ r.setter = lambda ert, value : ert.setAttribute("num_realizations", value)
 #r.setter = lambda ert, value : ert.setAttribute("summary", value)
 
 
-r = configPanel.addRow(ParameterPanel(widget, "Parameters", "summary"))
+configPanel.startGroup("Parameters")
+r = configPanel.addRow(ParameterPanel(widget, "", "paramters"))
 r.getter = lambda ert : ert.getAttribute("summary")
 r.setter = lambda ert, value : ert.setAttribute("summary", value)
+configPanel.endGroup()
 
 
 #internalPanel = ConfigPanel(widget)
@@ -417,7 +413,6 @@ r.setter = lambda ert, value : ert.setAttribute("license_path", value)
 internalPanel = ConfigPanel(widget)
 
 internalPanel.startPage("Runpath")
-#configPanel.startGroup("Runpath")
 
 r = internalPanel.addRow(PathChooser(widget, "Runpath", "runpath"))
 r.getter = lambda ert : ert.getAttribute("runpath")
@@ -435,11 +430,9 @@ r = internalPanel.addRow(StringBox(widget, "Keep", "keep_runpath"))
 r.getter = lambda ert : ert.getAttribute("keep_runpath")
 r.setter = lambda ert, value : ert.setAttribute("keep_runpath", value)
 
-#configPanel.endGroup()
 internalPanel.endPage()
 
 internalPanel.startPage("Run Template")
-#configPanel.startGroup("Run Template")
 
 r = internalPanel.addRow(MultiColumnTable(widget, "", "run_template", ["Template", "Target file", "Arguments"]))
 r.getter = lambda ert : ert.getAttribute("run_template")
@@ -458,7 +451,6 @@ r.setter = lambda ert, value : ert.setAttribute("run_template", value)
 #r.setter = lambda ert, value : ert.setAttribute("template_arguments", value)
 
 internalPanel.endPage()
-#configPanel.endGroup()
 configPanel.addRow(internalPanel)
 
 
