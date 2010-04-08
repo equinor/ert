@@ -1,12 +1,11 @@
 from PyQt4 import QtGui, QtCore
-import os
 
 
 class Application(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
 
-        self.resize(750, 350)
+        self.resize(900, 700)
         self.setWindowTitle('ERT GUI')
 
         widgetLayout = QtGui.QVBoxLayout()
@@ -62,6 +61,3 @@ class Application(QtGui.QWidget):
             current = previous
 
         self.pagesWidget.setCurrentIndex(self.contentsWidget.row(current))
-
-    def resourceIcon(self, name):
-        return QtGui.QIcon(os.path.dirname(__file__) + "/../../img/" + name)

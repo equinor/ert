@@ -23,7 +23,7 @@ class ConfigPanel(QtGui.QTabWidget):
         Add a new row on a configuration page. Returns the row widget.
         If the row does not have a getLabel() function the row spans both columns.
         """
-        if hasattr(row, "getLabel"):
+        if hasattr(row, "getLabel") and not row.getLabel() == "":            
             self.formLayout.addRow(row.getLabel(), row)
         else:
             self.formLayout.addRow(row)

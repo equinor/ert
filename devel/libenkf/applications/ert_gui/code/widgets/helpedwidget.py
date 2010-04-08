@@ -119,6 +119,11 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
         """Returns the label of this widget if set or empty string."""
         return self.tr(self.label)
 
+    def addLayout(self, layout):
+        """Add a layout to the layout of this widget."""
+        self.widgetLayout.addLayout(layout)
+
+
     def addWidget(self, widget):
         """Add a widget to the layout of this widget."""
         self.widgetLayout.addWidget(widget)
