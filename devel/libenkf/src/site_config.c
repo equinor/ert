@@ -26,7 +26,10 @@ struct site_config_struct {
                    	                    These jobs will be the parts of the forward model. */
   job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
   hash_type             * env_variables;
-  hash_type             * path_variables;
+  hash_type             * initial_variables;      /* Need to store the initial values so we can roll back. */
+  hash_type             * initial_path_variables;
+  stringlist_type       * path_variables;         /* We can update the same path variable several times - i.e. it can not be a hash table. */
+  stringlist_type       * path_values;
   /*---------------------------------------------------------------*/
   int                     max_running_lsf;     /* Need to hold the detailed information about the         */
   char                  * lsf_queue_name;      /* various drivers here to be able to "hot-switch" driver. */
@@ -56,11 +59,16 @@ static site_config_type * site_config_alloc_empty() {
   site_config->lsf_request    = NULL;
   site_config->rsh_host_list  = stringlist_alloc_new( );
   
-  site_config->max_running_local = 0;
-  site_config->max_running_lsf   = 0;
-  site_config->max_running_rsh   = 0;
-  site_config->env_variables     = hash_alloc();
-  site_config->path_variables    = hash_alloc();
+  site_config->max_running_local      = 0;
+  site_config->max_running_lsf        = 0;
+  site_config->max_running_rsh        = 0;
+
+  site_config->initial_variables      = hash_alloc();
+  site_config->env_variables          = hash_alloc();
+  site_config->path_variables         = stringlist_alloc_new();
+  site_config->path_values            = stringlist_alloc_new();
+  site_config->initial_path_variables = hash_alloc();
+  
   return site_config;
 }
 
@@ -90,11 +98,72 @@ hash_type * site_config_get_env_hash( const site_config_type * site_config ) {
   return site_config->env_variables;
 }
 
+stringlist_type * site_config_get_path_variables( const site_config_type * site_config ) {
+  return site_config->path_variables;
+}
+
+stringlist_type * site_config_get_path_values( const site_config_type * site_config ) {
+  return site_config->path_values;
+}
+
+
 
 void site_config_setenv( site_config_type * site_config , const char * variable, const char * value) {
+  /* Store the current variable, to be able to roll back */
+  if (!hash_has_key( site_config->initial_variables , variable )) 
+    hash_insert_hash_owned_ref( site_config->initial_variables , variable , util_alloc_string_copy( getenv( variable )) , util_safe_free); 
+  
   hash_insert_hash_owned_ref( site_config->env_variables , variable , util_alloc_string_copy( value ) , free);
   setenv( variable , value , 1);  /* This will update the environment if the variable has already been set to another value. */
-  return true;
+}
+
+
+void site_config_clear_env( site_config_type * site_config ) {
+  hash_clear( site_config->env_variables );
+  {
+    /* Recover the original values. */
+    hash_iter_type * hash_iter = hash_iter_alloc( site_config->initial_variables );
+    while (!hash_iter_is_complete( hash_iter )) {
+      const char * var       = hash_iter_get_next_key( hash_iter );
+      const char * old_value = hash_get( site_config->initial_variables , var );
+
+      if (old_value == NULL)
+        unsetenv( var );
+      else
+        setenv( var , old_value , 1 );
+    }
+  }
+}
+
+
+void site_config_clear_pathvar( site_config_type * site_config ) {
+  stringlist_clear( site_config->path_variables );
+  stringlist_clear( site_config->path_values );
+  {
+    /* Recover the original values. */
+    hash_iter_type * hash_iter = hash_iter_alloc( site_config->initial_path_variables );
+    while (!hash_iter_is_complete( hash_iter )) {
+      const char * var       = hash_iter_get_next_key( hash_iter );
+      const char * old_value = hash_get( site_config->initial_path_variables , var );
+
+      if (old_value == NULL)
+        unsetenv( var );
+      else
+        setenv( var , old_value , 1 );
+    }
+  }
+}
+
+
+void site_config_update_pathvar( site_config_type * site_config , const char * pathvar , const char * value) {
+  /* Store the current variable, to be able to roll back */
+  if (!hash_has_key( site_config->initial_path_variables , pathvar )) 
+    hash_insert_hash_owned_ref( site_config->initial_path_variables , pathvar , util_alloc_string_copy( getenv( pathvar )) , util_safe_free); 
+    
+  stringlist_append_copy( site_config->path_variables , pathvar );
+  stringlist_append_copy( site_config->path_values    , value   );
+  
+  util_update_path_var( pathvar , value , false );
 }
 
 
@@ -133,12 +202,13 @@ static void site_config_install_LSF_job_queue(site_config_type * site_config , c
 
     o If you call set_max_running - i.e. without specifiying a
       particular driver, it will tell the queue system to use this
-      many jobs, and also look up the right driver and update the
-      internal info on that driver.
+      many jobs, and also look up the currently active driver and
+      update the internal info on that.
 
     o If you tell a specific driver a value for max_running, it will
       update the internal field for that driver, AND the queue IFF the
-      queue is currently running this driver.
+      queue is currently running this driver; otherwise the queue will
+      be left untouched.
 
    What a mess.   
 */
@@ -235,7 +305,7 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
 
 
 site_config_type * site_config_alloc(const config_type * config , bool * use_lsf) {
-  const char * host_type    = config_iget(config , "HOST_TYPE" , 0,0);
+  const char * host_type         = config_iget(config , "HOST_TYPE" , 0,0);
   site_config_type * site_config = site_config_alloc_empty();
   site_config_install_joblist(site_config , config);
   {
@@ -245,7 +315,7 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
       const char * var               = stringlist_iget( tokens , 0);
       const char * value             = stringlist_iget( tokens , 1);
 
-      setenv( var , value , 1);
+      site_config_setenv( site_config , var , value );
     }
     
     for (i=0; i < config_get_occurences( config, "UPDATE_PATH"); i++) {
@@ -253,7 +323,7 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
       const char * path              = stringlist_iget( tokens , 0);
       const char * value             = stringlist_iget( tokens , 1);
       
-      util_update_path_var( path , value , false);
+      site_config_update_pathvar( site_config , path , value );
     }
   }
   /* 
@@ -272,9 +342,15 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
+  
   stringlist_free( site_config->rsh_host_list );
+  stringlist_free( site_config->path_variables );
+  stringlist_free( site_config->path_values );
+
+  hash_free( site_config->initial_variables );
   hash_free( site_config->env_variables );
-  hash_free( site_config->path_variables );
+  hash_free( site_config->initial_path_variables );
+  
   util_safe_free( site_config->lsf_queue_name );
   util_safe_free( site_config->lsf_request );
   free(site_config);

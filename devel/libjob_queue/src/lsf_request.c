@@ -58,7 +58,9 @@ lsf_request_type * lsf_request_alloc(bool statoil_mode) {
 
 
 void lsf_request_reset(lsf_request_type * lsf_request) {
-  lsf_request->request         = util_safe_free( lsf_request->request );
+  util_safe_free( lsf_request->request );
+  lsf_request->request         = NULL;
+  
   if (lsf_request->rusage     != NULL)  set_free(lsf_request->rusage);
   if (lsf_request->select_set != NULL)  set_free(lsf_request->select_set);
   lsf_request->rusage          = NULL;

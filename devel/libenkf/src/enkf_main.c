@@ -143,6 +143,10 @@ site_config_type * enkf_main_get_site_config( const enkf_main_type * enkf_main )
   return enkf_main->site_config;
 }
 
+subst_list_type * enkf_main_get_data_kw( const enkf_main_type * enkf_main ) {
+  return enkf_main->subst_list;
+}
+
 
 model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main ) {
   return enkf_main->model_config;
@@ -2043,8 +2047,13 @@ void enkf_main_parse_keep_runpath(enkf_main_type * enkf_main , const char * keep
 
 
 void enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
+  subst_list_insert_copy( enkf_main->subst_list , key , value , "Supplied by the user in the configuration file.");
+}
+
+
+static void enkf_main_add_tagged_data_kw(enkf_main_type * enkf_main , const char * key , const char * value) {
   char * tagged_key = enkf_util_alloc_tagged_string( key );
-  subst_list_insert_copy( enkf_main->subst_list , tagged_key , value , "Supplied by the user in the configuration file.");
+  enkf_main_add_data_kw( enkf_main , key , value );
   free( tagged_key );
 }
 
@@ -2110,7 +2119,7 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
     hash_iter_type * iter = hash_iter_alloc(config_data_kw);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
-      enkf_main_add_data_kw( enkf_main , key , hash_get( config_data_kw , key ));
+      enkf_main_add_tagged_data_kw( enkf_main , key , hash_get( config_data_kw , key ));
       key = hash_iter_get_next_key(iter);
     }
     hash_iter_free(iter);

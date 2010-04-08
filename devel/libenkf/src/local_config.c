@@ -621,11 +621,12 @@ void local_config_load( local_config_type * local_config /*const ensemble_config
     default:
       util_abort("%s: invalid command:%d \n",__func__ , cmd);
     }
+
     
-    update_name = util_safe_free( update_name );
-    mini_name   = util_safe_free( mini_name );
-    obs_key     = util_safe_free( obs_key );
-    data_key    = util_safe_free( data_key );
+    util_safe_free( update_name );  update_name = NULL;
+    util_safe_free( mini_name );    mini_name   = NULL;
+    util_safe_free( obs_key );      obs_key     = NULL;
+    util_safe_free( data_key );     data_key    = NULL;
   }
   fclose(stream);
   int_vector_free( int_vector );

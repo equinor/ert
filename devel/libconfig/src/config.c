@@ -322,7 +322,8 @@ static void config_item_realloc_nodes(config_item_type * item , int new_size) {
 
 static void config_item_node_clear(config_item_node_type * node) {
   stringlist_clear( node->stringlist );
-  node->config_cwd = util_safe_free(node->config_cwd);
+  util_safe_free(node->config_cwd);
+  node->config_cwd = NULL;
 }
 
 
@@ -576,7 +577,8 @@ static void config_item_clear( config_item_type * item ) {
   int i;
   for (i = 0; i < item->node_size; i++)
     config_item_node_free( item->nodes[i] );
-  item->nodes = util_safe_free(item->nodes);
+  util_safe_free(item->nodes);
+  item->nodes = NULL;
   item->node_size     = 0;
   item->currently_set = false;
   config_item_realloc_nodes(item , 1);

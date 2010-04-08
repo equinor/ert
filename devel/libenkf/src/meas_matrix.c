@@ -70,9 +70,10 @@ void meas_matrix_reset(meas_matrix_type * matrix) {
   int iens;
   for (iens = 0; iens < matrix->ens_size; iens++) 
     meas_vector_reset(matrix->meas_vectors[iens]);
-  matrix->active       = util_safe_free( matrix->active );
-  matrix->ens_mean     = util_safe_free( matrix->ens_mean );
-  matrix->ens_std      = util_safe_free( matrix->ens_std  );
+
+  util_safe_free( matrix->active );     matrix->active   = NULL;
+  util_safe_free( matrix->ens_mean );   matrix->ens_mean = NULL;
+  util_safe_free( matrix->ens_std  );   matrix->ens_std  = NULL;
 }
 
 

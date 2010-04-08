@@ -230,8 +230,10 @@ static void run_info_free(run_info_type * run_info) {
 
 
 static void run_info_complete_run(run_info_type * run_info) {
-  if (run_info->runOK)
-    run_info->run_path = util_safe_free(run_info->run_path);
+  if (run_info->runOK) {
+    util_safe_free(run_info->run_path);
+    run_info->run_path = NULL;
+  }
 }
 
 

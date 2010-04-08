@@ -37,6 +37,7 @@ struct ecl_config_struct {
   sched_file_type    * sched_file;             	   /* Will only contain the history - if predictions are active the member_config objects will have a private sched_file instance. */
   bool                 include_all_static_kw;  	   /* If true all static keywords are stored.*/ 
   set_type           * static_kw_set;          	   /* Minimum set of static keywords which must be included to make valid restart files. */
+  stringlist_type    * user_static_kw;
   char               * data_file;              	   /* Eclipse data file. */
   time_t               start_date;                 /* The start date of the ECLIPSE simulation - parsed from the data_file. */
   ecl_sum_type       * refcase;                    /* Refcase - can be NULL. */
@@ -177,19 +178,21 @@ const char * ecl_config_get_refcase_name( const ecl_config_type * ecl_config) {
 }
 
 /**
-   This function will clear the list of static keywords --AND-- add
-   all the default static keywords.
+   This function will clear the list of static keywords supplied by
+   the user. The default built in keywords are not touched.
 */
 
 void ecl_config_clear_static_kw( ecl_config_type * ecl_config ) {
   ecl_config->include_all_static_kw = false;
-  set_clear( ecl_config->static_kw_set );
-  {
-    for (int ikw = 0; ikw < NUM_STATIC_KW; ikw++)
-      set_add_key(ecl_config->static_kw_set , DEFAULT_STATIC_KW[ikw]);
-  }
+  stringlist_clear( ecl_config->user_static_kw );
 }
 
+/**
+   Returns a stringlist of the user-defined static keywords.
+*/
+stringlist_type * ecl_config_get_static_kw_list( const ecl_config_type * ecl_config ) {
+  return ecl_config->user_static_kw;
+}
 
 
 void ecl_config_set_init_section( ecl_config_type * ecl_config , const char * input_init_section ) {
@@ -276,6 +279,7 @@ ecl_config_type * ecl_config_alloc( const config_type * config ) {
   ecl_config->eclbase               = NULL;
   ecl_config->include_all_static_kw = false;
   ecl_config->static_kw_set         = set_alloc_empty();
+  ecl_config->user_static_kw        = stringlist_alloc_new();
   ecl_config->data_file             = NULL;
   ecl_config->input_init_section    = NULL; 
   ecl_config->init_section          = NULL;
@@ -336,6 +340,7 @@ void ecl_config_free(ecl_config_type * ecl_config) {
   ecl_io_config_free( ecl_config->io_config );
   path_fmt_free( ecl_config->eclbase );
   set_free( ecl_config->static_kw_set );
+  stringlist_free( ecl_config->user_static_kw );
   free(ecl_config->data_file);
   sched_file_free(ecl_config->sched_file);
   free(ecl_config->schedule_target_file);
@@ -370,8 +375,9 @@ void ecl_config_add_static_kw(ecl_config_type * ecl_config , const char * _kw) {
   else {
     char * kw = util_alloc_string_copy(_kw);
     ecl_util_escape_kw(kw);
-    set_add_key(ecl_config->static_kw_set , kw);
-    free(kw);
+    if (!stringlist_contains( ecl_config->user_static_kw , kw ))
+      stringlist_append_owned_ref( ecl_config->user_static_kw , kw );
+
   }
 }
 
@@ -388,8 +394,12 @@ void ecl_config_add_static_kw(ecl_config_type * ecl_config , const char * _kw) {
 bool ecl_config_include_static_kw(const ecl_config_type * ecl_config, const char * kw) {
   if (ecl_config->include_all_static_kw)
     return true;
-  else
-    return set_has_key(ecl_config->static_kw_set , kw);
+  else {
+    if (set_has_key(ecl_config->static_kw_set , kw))
+      return true;
+    else
+      return stringlist_contains( ecl_config->user_static_kw , kw );
+  }
 }
 
 
