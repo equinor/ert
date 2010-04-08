@@ -84,6 +84,10 @@ class ErtWrapper:
 #Set    site_config_clear_rsh_host_list( s )
 #       site_config_add_rsh_host( s , host_name , max_running )
 
+#Get    s = enkf_main_get_site_config( enkf_main )
+#       queue_name = site_config_get_lsf_queue( s )
+#Set    site_config_set_lsf_queue( s , "NORMAL" )
+
  
 
         self.job_script = "..."
