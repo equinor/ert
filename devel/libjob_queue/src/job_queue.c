@@ -215,10 +215,10 @@ static void job_queue_node_set_status(job_queue_node_type * node, job_status_typ
 }
 
 static void job_queue_node_free_data(job_queue_node_type * node) {
-  node->run_path  = util_safe_free(node->run_path);
-  node->job_name  = util_safe_free(node->job_name);
-  node->exit_file = util_safe_free(node->exit_file);
-  node->ok_file   = util_safe_free(node->ok_file);
+  util_safe_free(node->run_path);  node->run_path  = NULL;
+  util_safe_free(node->job_name);  node->job_name  = NULL;
+  util_safe_free(node->exit_file); node->exit_file = NULL;
+  util_safe_free(node->ok_file);   node->ok_file   = NULL;
   if (node->job_data != NULL) 
     util_abort("%s: internal error - driver spesific job data has not been freed - will leak.\n",__func__);
 }

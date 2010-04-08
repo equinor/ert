@@ -33,6 +33,11 @@ void                     site_config_clear_pathvar( site_config_type * site_conf
 stringlist_type        * site_config_get_path_variables( const site_config_type * site_config );
 stringlist_type        * site_config_get_path_values( const site_config_type * site_config );
 
+void                     site_config_clear_rsh_host_list( site_config_type * site_config );
+hash_type              * site_config_get_rsh_host_list( const site_config_type * site_config );
+void                     site_config_add_rsh_host( const site_config_type * site_config , const char * rsh_host , int max_running);
+
+
 
 #ifdef __cplusplus
 }

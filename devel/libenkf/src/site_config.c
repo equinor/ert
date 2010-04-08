@@ -31,12 +31,12 @@ struct site_config_struct {
   stringlist_type       * path_variables;         /* We can update the same path variable several times - i.e. it can not be a hash table. */
   stringlist_type       * path_values;
   /*---------------------------------------------------------------*/
-  int                     max_running_lsf;     /* Need to hold the detailed information about the         */
-  char                  * lsf_queue_name;      /* various drivers here to be able to "hot-switch" driver. */
+  int                     max_running_lsf;        /* Need to hold the detailed information about the         */
+  char                  * lsf_queue_name;         /* various drivers here to be able to "hot-switch" driver. */
   char                  * lsf_request;  
   
   int                     max_running_rsh;
-  stringlist_type       * rsh_host_list;
+  hash_type             * rsh_host_list;
   
   int                     max_running_local;
   /*---------------------------------------------------------------*/
@@ -57,7 +57,7 @@ static site_config_type * site_config_alloc_empty() {
 
   site_config->lsf_queue_name = NULL;
   site_config->lsf_request    = NULL;
-  site_config->rsh_host_list  = stringlist_alloc_new( );
+  site_config->rsh_host_list  = hash_alloc();
   
   site_config->max_running_local      = 0;
   site_config->max_running_lsf        = 0;
@@ -180,7 +180,7 @@ static void site_config_install_LOCAL_job_queue(site_config_type * site_config )
 }
 
 
-static void site_config_install_RSH_job_queue(site_config_type * site_config , const char * rsh_command , const stringlist_type * rsh_host_list) {
+static void site_config_install_RSH_job_queue(site_config_type * site_config , const char * rsh_command , const hash_type * rsh_host_list) {
   basic_queue_driver_type * driver = rsh_driver_alloc(rsh_command , rsh_host_list);
   job_queue_set_driver( site_config->job_queue , driver );
   job_queue_set_max_running( site_config->job_queue , site_config->max_running_rsh );
@@ -267,6 +267,23 @@ int site_config_get_max_running_local( const site_config_type * site_config ) {
 
 /*****************************************************************/
 
+void site_config_clear_rsh_host_list( site_config_type * site_config ) {
+  hash_clear( site_config->rsh_host_list );
+}
+
+
+hash_type * site_config_get_rsh_host_list( const site_config_type * site_config ) {
+  return site_config->rsh_host_list;
+}
+
+
+void site_config_add_rsh_host( const site_config_type * site_config , const char * rsh_host , int max_running) {
+  hash_insert_int( site_config->rsh_host_list , rsh_host , max_running );
+}
+
+
+/*****************************************************************/
+
 
 static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , bool * use_lsf) {
   const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
@@ -293,7 +310,7 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
     stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
     max_running = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
     
-    site_config_install_RSH_job_queue(site_config , rsh_command , rsh_host_list);
+    //Broken: site_config_install_RSH_job_queue(site_config , rsh_command , rsh_host_list);
     stringlist_free( rsh_host_list );
   } else if (strcmp(queue_system , "LOCAL") == 0) {
     max_running = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
@@ -343,10 +360,10 @@ void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
   
-  stringlist_free( site_config->rsh_host_list );
   stringlist_free( site_config->path_variables );
   stringlist_free( site_config->path_values );
 
+  hash_free( site_config->rsh_host_list );
   hash_free( site_config->initial_variables );
   hash_free( site_config->env_variables );
   hash_free( site_config->initial_path_variables );
