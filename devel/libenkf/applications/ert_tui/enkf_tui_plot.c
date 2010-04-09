@@ -145,7 +145,8 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
     plot =  __plot_alloc(plot_config , "" , /* y akse */ "" ,user_key,plot_file);
   else
     plot =  __plot_alloc(plot_config , "Simulation time (days) ", /* y akse */ "" ,user_key , plot_file);
-
+  
+  plot_set_log( plot , false , true );
   
   node = enkf_node_alloc( config_node );
   {
