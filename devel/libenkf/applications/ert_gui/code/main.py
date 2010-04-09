@@ -285,16 +285,34 @@ internalPanel = ConfigPanel(widget)
 internalPanel.startPage("setenv")
 
 r = internalPanel.addRow(KeywordTable(widget, "", "setenv"))
-r.getter = lambda ert : ert.getAttribute("setenv")
-r.setter = lambda ert, value : ert.setAttribute("setenv", value)
+r.getter = lambda ert : ert.getHash(ert.enkf.site_config_get_env_hash(ert.site_config))
+
+def setenv(ert, value):
+    ert.enkf.site_config_clear_env(ert.site_config)
+    for env in value:
+        ert.enkf.site_config_setenv(ert.site_config, env[0], env[1])
+
+r.setter = setenv
+
 
 internalPanel.endPage()
 
 internalPanel.startPage("Update path")
 
+#Get:   s = enkf_main_get_site_config( enkf_main )
+#       pathlist  = site_config_get_path_variables( s )
+#       valuelist = site_config_get_path_values( s )
+#Set:   site_config_clear_pathvar( s )
+#       site_config_update_pathvar( s , path , value );
 r = internalPanel.addRow(KeywordTable(widget, "", "update_path"))
-r.getter = lambda ert : ert.getAttribute("update_path")
-r.setter = lambda ert, value : ert.setAttribute("update_path", value)
+def get_update_path(ert):
+    paths = ert.getStringList(ert.enkf.site_config_get_path_variables(ert.site_config))
+    values =  ert.getStringList(ert.enkf.site_config_get_path_values(ert.site_config))
+    
+    return [[p, v] for p,v in zip(paths, values)]
+
+r.getter = get_update_path
+r.setter = lambda ert, value : ert.setAttribute("update_path", value)    #todo: missing setter
 
 internalPanel.endPage()
 
@@ -576,8 +594,7 @@ def perform():
     ert.freeStringList(caseList)
 
 
-    site_config = ert.enkf.enkf_main_get_site_config(ert.main)
-    env_hash = ert.enkf.site_config_get_env_hash(site_config)
+    env_hash = ert.enkf.site_config_get_env_hash(ert.site_config)
     ert.util.hash_insert_ref(env_hash, "LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin")
 
     print ert.getHash(env_hash)
