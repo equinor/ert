@@ -5,6 +5,9 @@
 #include <local_ministep.h>
 #include <log.h>
 #include <stringlist.h>
+#include <ensemble_config.h>
+#include <enkf_obs.h>
+
 
 
 #ifdef __cplusplus
@@ -68,7 +71,8 @@ const local_updatestep_type * local_config_iget_updatestep( const local_config_t
 local_updatestep_type       * local_config_get_updatestep( const local_config_type * local_config , const char * key);
 local_ministep_type         * local_config_get_ministep( const local_config_type * local_config , const char * key);
 void                          local_config_set_updatestep(local_config_type * local_config, int step1 , int step2 , const char * key);
-void                          local_config_reload( local_config_type * local_config , const char * all_active_config_file , log_type * logh);
+void                          local_config_reload( local_config_type * local_config , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , 
+                                                   const char * all_active_config_file , log_type * logh);
 const char                  * local_config_get_cmd_string( local_config_instruction_type cmd );
 
 stringlist_type             * local_config_get_config_files( const local_config_type * local_config );

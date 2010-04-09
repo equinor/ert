@@ -8,6 +8,8 @@
 #include <local_config.h>
 #include <int_vector.h>
 #include <log.h>
+#include <ensemble_config.h>
+#include <enkf_obs.h>
 /******************************************************************/
 /*
 
@@ -504,8 +506,12 @@ void local_config_add_config_file( local_config_type * local_config , const char
 
 
 
+/**
+   Currently the ensemble_config and enkf_obs objects are not used for
+   anything. These should be used for input validation.
+*/
 
-static void local_config_load_file( local_config_type * local_config /*const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , */ , const char * config_file , log_type * logh) {
+static void local_config_load_file( local_config_type * local_config , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , const char * config_file , log_type * logh) {
   bool binary = false;
   local_config_instruction_type cmd;
   FILE * stream      = util_fopen( config_file , "r");
@@ -666,12 +672,16 @@ static void local_config_load_file( local_config_type * local_config /*const ens
 
 
 
-void local_config_reload( local_config_type * local_config /*const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , */ , const char * all_active_config_file , log_type * logh) {
+/*
+  Should probably have a "modified" flag to ensure internal consistency 
+*/
+
+void local_config_reload( local_config_type * local_config , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , const char * all_active_config_file , log_type * logh) {
   local_config_clear( local_config );
-  local_config_load_file( local_config , all_active_config_file , logh );
+  local_config_load_file( local_config , ensemble_config , enkf_obs , all_active_config_file , logh );
   {
     int i;
     for (i = 0; i < stringlist_get_size( local_config->config_files ); i++)
-      local_config_load_file( local_config , stringlist_iget( local_config->config_files , i ) , logh);
+      local_config_load_file( local_config , ensemble_config , enkf_obs , stringlist_iget( local_config->config_files , i ) , logh);
   }
 }
