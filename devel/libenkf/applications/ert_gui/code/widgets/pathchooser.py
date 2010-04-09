@@ -5,7 +5,8 @@ from helpedwidget import *
 class PathChooser(HelpedWidget):
     """PathChooser shows, enables choosing of and validates paths. The data structure expected and sent to the getter and setter is a string."""
 
-    invalidColor = QtGui.QColor(255, 235, 235)
+    #invalidColor = QtGui.QColor(255, 235, 235)
+    invalidColor = QtGui.QColor(235, 235, 255)
 
     def __init__(self, parent=None, pathLabel="Path", help="", files=False):
         """Construct a PathChooser widget"""
@@ -55,8 +56,8 @@ class PathChooser(HelpedWidget):
 
 
     def selectDirectory(self):
-        self.editing = True
         """Pops up the select a directory dialog"""
+        self.editing = True
         currentDirectory = self.pathLine.text()
 
         #if not os.path.exists(currentDirectory):
@@ -82,6 +83,11 @@ class PathChooser(HelpedWidget):
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the edit line"""
         self.editing = True
-        self.pathLine.setText(self.getFromModel())
+        
+        path = self.getFromModel()
+        if path == None:
+            path = ""
+
+        self.pathLine.setText(path)
         self.editing = False
 

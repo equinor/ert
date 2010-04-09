@@ -28,7 +28,7 @@ class ComboChoice(HelpedWidget):
 
         indexSet = False
         for i in range(self.combo.count()):
-            if self.combo.itemText(i) == newValue:
+            if str(self.combo.itemText(i)).lower() == str(newValue).lower():
                 self.combo.setCurrentIndex(i)
                 indexSet = True
                 break

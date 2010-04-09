@@ -1,5 +1,5 @@
 from PyQt4 import QtGui, QtCore
-from helpedwidget import *
+from helpedwidget import HelpedWidget
 
 class IntegerSpinner(HelpedWidget):
     """A spinner widget for integers. The data structure expected and sent to the getter and setter is an integer."""
