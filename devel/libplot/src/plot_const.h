@@ -107,8 +107,10 @@ typedef enum {
 */ 
 
 
-#define PLOT_DEFAULT_PLBOX_XOPT  "bcnst"
-#define PLOT_DEFAULT_PLBOX_YOPT  "bcnstv"
+#define PLOT_DEFAULT_PLBOX_XOPT      "bcnst"
+#define PLOT_DEFAULT_PLBOX_YOPT      "bcnstv"
+#define PLOT_DEFAULT_LOG_PLBOX_XOPT  "bclnst"
+#define PLOT_DEFAULT_LOG_PLBOX_YOPT  "bcnlstv"
 
 
 #ifdef __cplusplus 

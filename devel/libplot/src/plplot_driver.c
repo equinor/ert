@@ -14,17 +14,34 @@ typedef struct {
   char       * plbox_yopt;
   char       * filename;         /* Filename for the plot */    
   char       * device;           /* Type for the plot: jpg|png|xwin|... */
+  bool         logx;
+  bool         logy;
 } plplot_state_type;
 
 
 
 
+static void plplot_state_set_log( plplot_state_type * state , bool logx , bool logy) {
+  state->logx = logx;
+  state->logy = logy;
+  
+  if (logx)
+    state->plbox_xopt = util_realloc_string_copy( state->plbox_xopt , PLOT_DEFAULT_LOG_PLBOX_XOPT );
+  else                                                
+    state->plbox_xopt = util_realloc_string_copy( state->plbox_xopt , PLOT_DEFAULT_PLBOX_XOPT );
+  
+  
+  
+  if (logy)
+    state->plbox_yopt = util_realloc_string_copy( state->plbox_yopt , PLOT_DEFAULT_LOG_PLBOX_YOPT );
+  else
+    state->plbox_yopt = util_realloc_string_copy( state->plbox_yopt , PLOT_DEFAULT_PLBOX_YOPT );
+}
+
 
 static plplot_state_type * plplot_state_alloc( void * init_arg ) {
   plplot_state_type * state = util_malloc( sizeof * state , __func__);
   state->stream     = 0;
-  state->plbox_xopt = util_alloc_string_copy( PLOT_DEFAULT_PLBOX_XOPT );
-  state->plbox_yopt = util_alloc_string_copy( PLOT_DEFAULT_PLBOX_YOPT );
   {
     arg_pack_type * arg_pack = arg_pack_safe_cast( init_arg );
     state->filename          = util_alloc_string_copy( arg_pack_iget_ptr( arg_pack , 0) );
@@ -35,7 +52,10 @@ static plplot_state_type * plplot_state_alloc( void * init_arg ) {
     if (strcmp(state->device , "xwin") != 0)
       plsfnam(state->filename);
   }
-
+  state->logx       = false;
+  state->logy       = false;
+  state->plbox_xopt = util_alloc_string_copy( PLOT_DEFAULT_PLBOX_XOPT );
+  state->plbox_yopt = util_alloc_string_copy( PLOT_DEFAULT_PLBOX_YOPT );
   /** This color initialization must be here - do not really understand what for. */
   plscol0(WHITE, 255, 255, 255);
   plscol0(BLACK, 0, 0, 0);
@@ -69,6 +89,25 @@ static void plplot_close_driver( plot_driver_type * driver ) {
 }
 
 
+static void plplot_set_log( plot_driver_type * driver , bool logx , bool logy) {
+  plplot_state_type * state = driver->state;
+  plplot_state_set_log( state , logx , logy );
+}
+
+
+static void plplot_logtransform_x( plot_driver_type * driver , double_vector_type * x) {
+  plplot_state_type * state = driver->state;
+  if (state->logx)
+    double_vector_apply( x , log );
+}
+
+
+static void plplot_logtransform_y( plot_driver_type * driver , double_vector_type * y) {
+  plplot_state_type * state = driver->state;
+  if (state->logy)
+    double_vector_apply( y , log );
+}
+
 
 static void plplot_set_window_size( plot_driver_type * driver , int width , int height) {
   char * geometry = util_alloc_sprintf("%dx%d", width, height);
@@ -96,8 +135,24 @@ static void plplot_set_labels( plot_driver_type * driver , const char * title , 
 
 static void plplot_set_axis(plot_driver_type * driver , plot_range_type * range , const char * timefmt , plot_color_type box_color , double tick_font_size) {
   plplot_state_type * state = driver->state;
-  plwind( plot_range_get_final_xmin( range ) , plot_range_get_final_xmax( range ) , plot_range_get_final_ymin( range ) , plot_range_get_final_ymax( range ));
-  
+  {
+    double xmin = plot_range_get_final_xmin( range );
+    double xmax = plot_range_get_final_xmax( range );
+    double ymin = plot_range_get_final_ymin( range );
+    double ymax = plot_range_get_final_ymax( range );
+    plplot_state_type * state = driver->state;
+    if (state->logx) {
+      xmin = log( xmin );
+      xmax = log( xmax );
+    }
+
+    if (state->logy) {
+      ymin = log( ymin );
+      ymax = log( ymax );
+    }
+    
+    plwind( xmin , xmax , ymin , ymax );
+  }
   plcol0(box_color);
   plschr(0, tick_font_size * PLOT_DEFAULT_LABEL_FONTSIZE);
   
@@ -129,12 +184,17 @@ static void plplot_setup_pointstyle( point_attribute_type point_attr ) {
 
 void plplot_plot_xy1y2(plot_driver_type * driver     , 
                        const char * label , 
-                       const double_vector_type * x  , 
-                       const double_vector_type * y1  , 
-                       const double_vector_type * y2  , 
+                       double_vector_type * x  , 
+                       double_vector_type * y1  , 
+                       double_vector_type * y2  , 
                        line_attribute_type line_attr) {
 
   int size = double_vector_size( x );
+  
+  plplot_logtransform_x( driver , x );
+  plplot_logtransform_x( driver , y1 );
+  plplot_logtransform_x( driver , y2 );
+  
   plplot_setup_linestyle( line_attr );
   plerry(size , double_vector_get_ptr(x) , double_vector_get_ptr(y1) , double_vector_get_ptr(y2));
 }
@@ -145,12 +205,17 @@ void plplot_plot_xy1y2(plot_driver_type * driver     ,
 
 void plplot_plot_x1x2y(plot_driver_type * driver      , 
                        const char * label             , 
-                       const double_vector_type * x1  , 
-                       const double_vector_type * x2  , 
-                       const double_vector_type * y   , 
+                       double_vector_type * x1  , 
+                       double_vector_type * x2  , 
+                       double_vector_type * y   , 
                        line_attribute_type line_attr) {
-
+  
   int size = double_vector_size( x1 );
+  
+  plplot_logtransform_x( driver , x1 );
+  plplot_logtransform_x( driver , x2 );
+  plplot_logtransform_y( driver , y );
+
   plplot_setup_linestyle( line_attr );
   plerrx(size , double_vector_get_ptr(x1) , double_vector_get_ptr(x2) , double_vector_get_ptr(y));
 }
@@ -162,15 +227,17 @@ void plplot_plot_x1x2y(plot_driver_type * driver      ,
 
 void plplot_plot_xy(plot_driver_type * driver     , 
                     const char * label , 
-                    const double_vector_type * x  , 
-                    const double_vector_type * y  , 
+                    double_vector_type * x  , 
+                    double_vector_type * y  , 
                     plot_style_type style         , 
                     line_attribute_type line_attr , 
                     point_attribute_type point_attr) {
 
   int size = double_vector_size( x );
 
-
+  plplot_logtransform_x( driver , x );
+  plplot_logtransform_y( driver , y );
+  
   /* 
      Special case: 
      -------------
@@ -197,7 +264,7 @@ void plplot_plot_xy(plot_driver_type * driver     ,
 
 
 
-void plplot_plot_hist( plot_driver_type * driver, const char * label , const double_vector_type * x , line_attribute_type line_attr) {
+void plplot_plot_hist( plot_driver_type * driver, const char * label , double_vector_type * x , line_attribute_type line_attr) {
   int size = double_vector_size( x );
   plplot_setup_linestyle( line_attr );
   {
@@ -282,6 +349,7 @@ plot_driver_type * plplot_driver_alloc(void * init_arg) {
   driver->plot_xy1y2      = plplot_plot_xy1y2;
   driver->plot_x1x2y      = plplot_plot_x1x2y;
   driver->plot_hist       = plplot_plot_hist;
+  driver->set_log         = plplot_set_log; 
 
   return driver;
 }

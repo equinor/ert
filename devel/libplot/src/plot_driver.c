@@ -77,6 +77,7 @@ plot_driver_type * plot_driver_alloc_empty(const char * driver_name) {
   driver->plot_xy1y2        = NULL;
   driver->plot_x1x2y        = NULL;
   driver->plot_hist         = NULL;
+  driver->set_log           = NULL;
   
   return driver;
 }
@@ -121,8 +122,8 @@ void plot_driver_free( plot_driver_type * driver ) {
 
 
 void plot_driver_plot_xy( plot_driver_type * driver , const char * label , 
-                          const double_vector_type * x  , 
-                          const double_vector_type * y  , 
+                          double_vector_type * x  , 
+                          double_vector_type * y  , 
                           plot_style_type style         , 
                           line_attribute_type line_attr , 
                           point_attribute_type point_attr) {
@@ -134,9 +135,9 @@ void plot_driver_plot_xy( plot_driver_type * driver , const char * label ,
 
 void plot_driver_plot_xy1y2(plot_driver_type * driver     , 
                             const char * label , 
-                            const double_vector_type * x  , 
-                            const double_vector_type * y1  , 
-                            const double_vector_type * y2  , 
+                            double_vector_type * x  , 
+                            double_vector_type * y1  , 
+                            double_vector_type * y2  , 
                             line_attribute_type line_attr) {
   
   driver->plot_xy1y2( driver , label , x , y1 , y2 , line_attr);
@@ -147,9 +148,9 @@ void plot_driver_plot_xy1y2(plot_driver_type * driver     ,
 
 void plot_driver_plot_x1x2y(plot_driver_type * driver      , 
                             const char * label             , 
-                            const double_vector_type * x1  , 
-                            const double_vector_type * x2  , 
-                            const double_vector_type * y   , 
+                            double_vector_type * x1  , 
+                            double_vector_type * x2  , 
+                            double_vector_type * y   , 
                             line_attribute_type line_attr) {
   driver->plot_x1x2y( driver , label , x1 , x2  , y , line_attr);
 }
@@ -171,6 +172,7 @@ void plot_driver_plot_yline( plot_driver_type * driver , const char * label , do
     point_attribute_type point_attr /* Complete dummy */;
     plot_driver_plot_xy( driver , label , x , y , LINE , line_attr , point_attr);
   }
+  
   double_vector_free( x );
   double_vector_free( y );
 }
@@ -229,3 +231,10 @@ void plot_driver_set_window_size(plot_driver_type * driver , int width , int hei
   if (driver->set_window_size != NULL)
     driver->set_window_size(driver , width , height );
 }
+
+
+void plot_driver_set_log(plot_driver_type * driver , bool logx , bool logy) {
+  if (driver->set_log != NULL)
+    driver->set_log(driver , logx , logy);
+}
+

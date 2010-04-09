@@ -94,11 +94,11 @@ static void text_fprintf3(plot_driver_type * driver , const char * label , const
 
 
 void text_plot_xy1y2(plot_driver_type * driver     , 
-                       const char * label , 
-                       const double_vector_type * x  , 
-                       const double_vector_type * y1  , 
-                       const double_vector_type * y2  , 
-                       line_attribute_type line_attr) {
+                     const char * label , 
+                     double_vector_type * x  , 
+                     double_vector_type * y1  , 
+                     double_vector_type * y2  , 
+                     line_attribute_type line_attr) {
   
   text_fprintf3( driver , label , x , y1 , y2);
   
@@ -109,11 +109,11 @@ void text_plot_xy1y2(plot_driver_type * driver     ,
 
 
 void text_plot_x1x2y(plot_driver_type * driver      , 
-                       const char * label             , 
-                       const double_vector_type * x1  , 
-                       const double_vector_type * x2  , 
-                       const double_vector_type * y   , 
-                       line_attribute_type line_attr) {
+                     const char * label             , 
+                     double_vector_type * x1  , 
+                     double_vector_type * x2  , 
+                     double_vector_type * y   , 
+                     line_attribute_type line_attr) {
 
   text_fprintf3( driver , label , x1 , x2 , y);
 
@@ -125,12 +125,12 @@ void text_plot_x1x2y(plot_driver_type * driver      ,
 
 
 void text_plot_xy(plot_driver_type * driver     , 
-                    const char * label , 
-                    const double_vector_type * x  , 
-                    const double_vector_type * y  , 
-                    plot_style_type style         , 
-                    line_attribute_type line_attr , 
-                    point_attribute_type point_attr) {
+                  const char * label , 
+                  double_vector_type * x  , 
+                  double_vector_type * y  , 
+                  plot_style_type style         , 
+                  line_attribute_type line_attr , 
+                  point_attribute_type point_attr) {
 
   text_fprintf2( driver , label , x ,  y);
   
@@ -139,7 +139,7 @@ void text_plot_xy(plot_driver_type * driver     ,
 
 
 
-void text_plot_hist( plot_driver_type * driver, const char * label , const double_vector_type * x , line_attribute_type line_attr) {
+void text_plot_hist( plot_driver_type * driver, const char * label , double_vector_type * x , line_attribute_type line_attr) {
 
   text_fprintf1( driver , label , x );
 

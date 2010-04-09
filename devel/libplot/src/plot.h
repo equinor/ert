@@ -30,14 +30,15 @@ plot_dataset_type * plot_alloc_new_dataset(plot_type *  , const char * __label ,
 plot_type * plot_alloc(const char * __driver_type , void * init_arg);
 int plot_get_stream(plot_type * item);
 
- void plot_set_xlabel(plot_type * , const char *);
- void plot_set_ylabel(plot_type * , const char *);
- void plot_set_title(plot_type * , const char *);
- void plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel, const char *title);
+void plot_set_log( plot_type * plot , bool logx , bool logy);
+void plot_set_xlabel(plot_type * , const char *);
+void plot_set_ylabel(plot_type * , const char *);
+void plot_set_title(plot_type * , const char *);
+void plot_set_labels(plot_type * item, const char *xlabel, const char *ylabel, const char *title);
 
- void plot_data(plot_type * item);
- void plot_free(plot_type * item);
- void plot_update_range(plot_type * item, plot_range_type * );
+void plot_data(plot_type * item);
+void plot_free(plot_type * item);
+void plot_update_range(plot_type * item, plot_range_type * );
 
 void plot_set_window_size(plot_type * , int , int );
 void plot_invert_y_axis(plot_type * );
