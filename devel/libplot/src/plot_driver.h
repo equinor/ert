@@ -28,16 +28,16 @@ struct point_attribute_struct {
 };
 
 
-
+typedef void (set_log_ftype)          (plot_driver_type * driver , bool logx , bool logy);
 typedef void (set_labels_ftype)       (plot_driver_type * driver , const char *title , const char * xlabel , const char * ylabel, plot_color_type label_color , double label_font_size);
 typedef void (window_size_ftype)      (plot_driver_type * driver , int width , int heigth);
 typedef void (close_driver_ftype)     (plot_driver_type * driver );
 typedef void (set_axis_ftype)         (plot_driver_type * driver , plot_range_type * range , const char * timefmt , plot_color_type box_color , double tick_font_size);
 
-typedef void (plot_xy_ftype)          (plot_driver_type * driver , const char * label , const double_vector_type * x , const double_vector_type * y , plot_style_type style , line_attribute_type line_attr , point_attribute_type point_attr);
-typedef void (plot_xy1y2_ftype)       (plot_driver_type * driver , const char * label , const double_vector_type * x , const double_vector_type * y1 , const double_vector_type * y2 , line_attribute_type line_attr );
-typedef void (plot_x1x2y_ftype)       (plot_driver_type * driver , const char * label , const double_vector_type * x1 , const double_vector_type * x2 , const double_vector_type * y , line_attribute_type line_attr );
-typedef void (plot_hist_ftype)        (plot_driver_type * driver , const char * label , const double_vector_type * x , line_attribute_type line_attr);
+typedef void (plot_xy_ftype)          (plot_driver_type * driver , const char * label , double_vector_type * x  , double_vector_type * y , plot_style_type style , line_attribute_type line_attr , point_attribute_type point_attr);
+typedef void (plot_xy1y2_ftype)       (plot_driver_type * driver , const char * label , double_vector_type * x  , double_vector_type * y1 , double_vector_type * y2 , line_attribute_type line_attr );
+typedef void (plot_x1x2y_ftype)       (plot_driver_type * driver , const char * label , double_vector_type * x1 , double_vector_type * x2 , double_vector_type * y , line_attribute_type line_attr );
+typedef void (plot_hist_ftype)        (plot_driver_type * driver , const char * label , double_vector_type * x , line_attribute_type line_attr);
 
     
 
@@ -55,6 +55,7 @@ struct plot_driver_struct {
   plot_xy1y2_ftype        * plot_xy1y2;
   plot_x1x2y_ftype        * plot_x1x2y;
   plot_hist_ftype         * plot_hist;
+  set_log_ftype           * set_log;
 };
 
 
@@ -64,24 +65,24 @@ void               plot_driver_free( plot_driver_type * driver );
 plot_driver_type * plot_driver_alloc_empty(const char * driver_name);
 
 void plot_driver_plot_xy( plot_driver_type * driver , const char * label , 
-                          const double_vector_type * x  , 
-                          const double_vector_type * y  , 
+                          double_vector_type * x  , 
+                          double_vector_type * y  , 
                           plot_style_type style         , 
                           line_attribute_type line_attr , 
                           point_attribute_type point_attr);
 
 void plot_driver_plot_xy1y2(plot_driver_type * driver     , 
                             const char * label , 
-                            const double_vector_type * x  , 
-                            const double_vector_type * y1  , 
-                            const double_vector_type * y2  , 
+                            double_vector_type * x  , 
+                            double_vector_type * y1  , 
+                            double_vector_type * y2  , 
                             line_attribute_type line_attr);
 
 void plot_driver_plot_x1x2y(plot_driver_type * driver      , 
                             const char * label             , 
-                            const double_vector_type * x1  , 
-                            const double_vector_type * x2  , 
-                            const double_vector_type * y   , 
+                            double_vector_type * x1  , 
+                            double_vector_type * x2  , 
+                            double_vector_type * y   , 
                             line_attribute_type line_attr);
 
 void plot_driver_plot_yline( plot_driver_type * driver , const char * label , double xmin , double xmax , double y0 , line_attribute_type line_attr);
@@ -95,6 +96,8 @@ void plot_driver_set_axis( plot_driver_type * driver , plot_range_type * range ,
 void plot_driver_set_labels(plot_driver_type * driver , const char *title , const char * xlabel , const char * ylabel, plot_color_type label_color , double label_font_size);
 
 void plot_driver_set_window_size(plot_driver_type * driver , int width , int height);
+
+void plot_driver_set_log(plot_driver_type * driver , bool logx, bool logy);
 
 void plot_driver_assert( const plot_driver_type * driver );
 

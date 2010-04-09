@@ -166,8 +166,13 @@ plot_type * plot_alloc(const char * __driver_type , void * init_arg)
   plot_set_label_fontsize(plot , 1.0);
   plot_set_axis_fontsize(plot , 1.0);
   plot_set_labels(plot , "" , "" , ""); /* Initializeing with empty labels. */
-
+  plot_set_log( plot , false , false ); /* Default - no log on the axis. */
   return plot;
+}
+
+
+void plot_set_log( plot_type * plot , bool logx , bool logy) {
+  plot_driver_set_log(plot->driver , logx , logy);  /* The driver can ignore this. */
 }
 
 
