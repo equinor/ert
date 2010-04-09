@@ -56,17 +56,25 @@ class KeywordList(HelpedWidget):
 
         self.addWidget(AddRemoveWidget(self, self.addItem, self.removeItem))
 
-        self.addStretch()
+        #self.addStretch()
         self.addHelpButton()
+
+
+    def newKeywordPopup(self):
+        """Pops up a message box asking for a new keyword. Override this and return a string to customize the input dialog - Empty string equals canceled"""
+        newKeyword, ok = QtGui.QInputDialog.getText(self, self.tr("New keyword"), self.tr("Enter name of keyword:"), QtGui.QLineEdit.Normal)
+
+        if ok:
+            return str(newKeyword).strip()
+        else:
+            return ""
 
 
     def addItem(self):
         """Called by the add button to insert a new keyword"""
-        newKeyWord, ok = QtGui.QInputDialog.getText(self, self.tr("QInputDialog.getText()"), self.tr("Keyword:"), QtGui.QLineEdit.Normal )
-        newKeyWord = str(newKeyWord).strip()
-
-        if ok and not newKeyWord == "":
-            self.list.addItem(newKeyWord)
+        newKeyword = self.newKeywordPopup()
+        if not newKeyword == "":
+            self.list.addItem(newKeyword)
             self.contentsChanged()
 
 
@@ -146,7 +154,7 @@ class KeywordTable(HelpedWidget):
 
     def contentsChanged(self):
         """Called whenever the contents of a cell changes."""
-        keyValueList = {}
+        keyValueList = []
 
         for index in range(self.table.rowCount()):
             key = self.table.item(index, 0)
@@ -155,27 +163,32 @@ class KeywordTable(HelpedWidget):
                 value = self.table.item(index, 1)
 
                 if not key == "" and not value == None:
-                    keyValueList[key] = str(value.text()).strip()
+                    keyValueList.append([key, str(value.text()).strip()])
 
         self.updateContent(keyValueList)
 
 
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the table."""
-        keywords = self.getFromModel()
+        values = self.getFromModel()
 
-        self.table.clear()
-        self.table.setHorizontalHeaderLabels(self.headers)
+        for row in reversed(range(self.table.rowCount())):
+            self.table.removeRow(row)
+
+        #for column in reversed(range(self.table.columnCount())):
+        #    self.table.removeColumn(column)
+
+        #self.table.clearContents()
 
         row = 0
-        for key in keywords.keys():
-            keyItem = QtGui.QTableWidgetItem(key)
-            valueItem = QtGui.QTableWidgetItem(keywords[key])
+        for value in values:
+            keyItem = QtGui.QTableWidgetItem(value[0])
+            valueItem = QtGui.QTableWidgetItem(value[1])
             self.table.insertRow(row)
             self.table.setItem(row, 0, keyItem)
             self.table.setItem(row, 1, valueItem)
             row+=1
-
+            
 
 
 

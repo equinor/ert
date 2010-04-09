@@ -12,7 +12,7 @@ from widgets.combochoice import ComboChoice
 from widgets.pathchooser import PathChooser
 from widgets.stringbox import StringBox
 from widgets.helpedwidget import ContentModel, HelpedWidget
-from widgets.tablewidgets import KeywordList, KeywordTable, MultiColumnTable, SpinBoxDelegate, DoubleSpinBoxDelegate
+from widgets.tablewidgets import KeywordList, KeywordTable, MultiColumnTable
 from widgets.spinnerwidgets import DoubleSpinner, IntegerSpinner
 from widgets.application import Application
 import widgets.util
@@ -23,6 +23,8 @@ import widgets.util
 #QtGui.QApplication.setStyle("Plastique")
 from widgets.plotpanel import PlotPanel
 from widgets.parameters.parameterpanel import ParameterPanel
+
+#todo: proper support for unicode characters?
 
 app = QtGui.QApplication(sys.argv)
 
@@ -82,8 +84,15 @@ r.getter = lambda ert : ert.getAttribute("schedule_prediction_file")
 r.setter = lambda ert, value : ert.setAttribute("schedule_prediction_file", value)
 
 r = configPanel.addRow(KeywordTable(widget, "Data keywords", "data_kw"))
-r.getter = lambda ert : ert.getAttribute("data_kw")
-r.setter = lambda ert, value : ert.setAttribute("data_kw", value)
+r.getter = lambda ert : ert.getSubstitutionList(ert.enkf.enkf_main_get_data_kw(ert.main))
+
+def add_data_kw(ert, listOfKeywords):
+    ert.enkf.enkf_main_clear_data_kw(ert.main)
+
+    for keyword in listOfKeywords:
+        ert.enkf.enkf_main_add_data_kw(ert.main, keyword[0], keyword[1])
+
+r.setter = add_data_kw
 
 
 
@@ -94,9 +103,15 @@ internalPanel = ConfigPanel(widget)
 internalPanel.startPage("Static keywords")
 
 r = internalPanel.addRow(KeywordList(widget, "", "add_static_kw"))
-#r.getter = lambda ert : ert.getStringList(ert.enkf.ecl_config_get_static_kw_list(ert.ecl_config))
-r.getter = lambda ert : ert.getAttribute("add_static_kw")
-r.setter = lambda ert, value : ert.setAttribute("add_static_kw", value)
+r.getter = lambda ert : ert.getStringList(ert.enkf.ecl_config_get_static_kw_list(ert.ecl_config))
+
+def add_static_kw(ert, listOfKeywords):
+    ert.enkf.ecl_config_clear_static_kw(ert.ecl_config)
+
+    for keyword in listOfKeywords:
+        ert.enkf.ecl_config_add_static_kw(ert.ecl_config, keyword)
+
+r.setter = add_static_kw
 
 internalPanel.endPage()
 
@@ -128,10 +143,21 @@ r.getter = lambda ert : ert.enkf.analysis_config_get_rerun_start(ert.analysis_co
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun_start(ert.analysis_config, value)
 
 r = configPanel.addRow(PathChooser(widget, "ENKF schedule file", "enkf_sched_file"))
-r.getter = lambda ert : ert.getAttribute("enkf_sched_file")
-r.setter = lambda ert, value : ert.setAttribute("enkf_sched_file", value)
+r.initialize = lambda ert: ert.setRestype("model_config_get_enkf_sched_file", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.model_config_get_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main))
+r.setter = lambda ert, value : ert.enkf.model_config_set_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main), str(value))
 
-r = configPanel.addRow(PathChooser(widget, "Local config", "local_config"))
+r = configPanel.addRow(KeywordList(widget, "Local config", "local_config"))
+r.newKeywordPopup = lambda : QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
+
+#todo: fix this (seg fault)!!!!
+def get_local_config_files(ert):
+    local_config = ert.enkf.enkf_main_get_local_config(ert.main)
+    #import pdb; pdb.set_trace()
+    config_files_pointer = ert.enkf.local_config_get_config_files(local_config)
+    return ert.getStringList(config_files_pointer)
+
+#r.getter = get_local_config_files
 r.getter = lambda ert : ert.getAttribute("local_config")
 r.setter = lambda ert, value : ert.setAttribute("local_config", value)
 
@@ -176,6 +202,10 @@ configPanel.endPage()
 # ----------------------------------------------------------------------------------------------
 configPanel.startPage("Queue System")
 
+
+
+
+
 r = configPanel.addRow(ComboChoice(widget, ["LSF", "RSH", "LOCAL"], "Queue system", "queue_system"))
 r.getter = lambda ert : ert.getAttribute("queue_system")
 r.setter = lambda ert, value : ert.setAttribute("queue_system", value)
@@ -185,12 +215,13 @@ internalPanel = ConfigPanel(widget)
 internalPanel.startPage("LSF")
 
 r = internalPanel.addRow(ComboChoice(widget, ["NORMAL", "FAST_LOCAL", "SHORT"], "Mode", "lsf_queue"))
-r.getter = lambda ert : ert.getAttribute("lsf_queue")
-r.setter = lambda ert, value : ert.setAttribute("lsf_queue", value)
+r.initialize  =lambda ert : ert.setRestype("site_config_get_lsf_queue", ertwrapper.c_char_p)
+r.getter = lambda ert : ert.enkf.site_config_get_lsf_queue(ert.site_config)
+r.setter = lambda ert, value : ert.enkf.site_config_set_lsf_queue(ert.site_config, str(value))
 
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_lsf", 1, 1000))
-r.getter = lambda ert : ert.getAttribute("max_running_lsf")
-r.setter = lambda ert, value : ert.setAttribute("max_running_lsf", value)
+r.getter = lambda ert : ert.enkf.site_config_get_max_running_lsf(ert.site_config)
+r.setter = lambda ert, value : ert.enkf.site_config_set_max_running_lsf(ert.site_config, value)
 
 r = internalPanel.addRow(StringBox(widget, "Resources", "lsf_resources"))
 r.getter = lambda ert : ert.getAttribute("lsf_resources")
@@ -205,21 +236,34 @@ r = internalPanel.addRow(PathChooser(widget, "Command", "rsh_command", True))
 r.getter = lambda ert : ert.getAttribute("rsh_command")
 r.setter = lambda ert, value : ert.setAttribute("rsh_command", value)
 
+#todo: wrong return value
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_rsh", 1, 1000))
-r.getter = lambda ert : ert.getAttribute("max_running_rsh")
-r.setter = lambda ert, value : ert.setAttribute("max_running_rsh", value)
+r.getter = lambda ert : ert.enkf.site_config_get_max_running_rsh(ert.site_config)
+r.setter = lambda ert, value : ert.enkf.site_config_set_max_running_rsh(ert.site_config, value)
+
+
 
 r = internalPanel.addRow(KeywordTable(widget, "Host List", "rsh_host_list", "Host", "Number of jobs"))
-r.getter = lambda ert : ert.getAttribute("rsh_host_list")
-r.setter = lambda ert, value : ert.setAttribute("rsh_host_list", value)
+
+r.getter = lambda ert : ert.getHash(ert.enkf.site_config_get_rsh_host_list(ert.site_config), True)
+
+def add_rsh_host(ert, listOfKeywords):
+    ert.enkf.site_config_clear_rsh_host_list(ert.site_config)
+
+    for keyword in listOfKeywords:
+        ert.enkf.site_config_add_rsh_host(ert.site_config, keyword[0], int(keyword[1])) #todo: what if max is not set?
+
+r.setter = add_rsh_host
+
 
 internalPanel.endPage()
 
 internalPanel.startPage("LOCAL")
 
+#todo: wrong return value
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_local", 1, 1000))
-r.getter = lambda ert : ert.getAttribute("max_running_local")
-r.setter = lambda ert, value : ert.setAttribute("max_running_local", value)
+r.getter = lambda ert : ert.enkf.site_config_get_max_running_local(ert.site_config)
+r.setter = lambda ert, value : ert.enkf.site_config_set_max_running_local(ert.site_config, value)
 
 internalPanel.endPage()
 configPanel.addRow(internalPanel)
@@ -322,7 +366,7 @@ r.setter = lambda ert, value : ert.setAttribute("num_realizations", value)
 
 
 configPanel.startGroup("Parameters")
-r = configPanel.addRow(ParameterPanel(widget, "", "paramters"))
+r = configPanel.addRow(ParameterPanel(widget, "", "parameters"))
 r.getter = lambda ert : ert.getAttribute("summary")
 r.setter = lambda ert, value : ert.setAttribute("summary", value)
 configPanel.endGroup()
@@ -544,6 +588,11 @@ def perform():
 
 button = QtGui.QPushButton("Get case list")
 panel.connect(button, QtCore.SIGNAL('clicked()'), perform)
+
+panelLayout.addWidget(button)
+
+button = QtGui.QPushButton("Refetch")
+panel.connect(button, QtCore.SIGNAL('clicked()'), ContentModel.updateObservers)
 
 panelLayout.addWidget(button)
 

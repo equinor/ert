@@ -13,6 +13,7 @@ class ErtWrapper:
         self.plot_config = self.enkf.enkf_main_get_plot_config(self.main)
         self.analysis_config = self.enkf.enkf_main_get_analysis_config(self.main)
         self.ecl_config = self.enkf.enkf_main_get_ecl_config(self.main)
+        self.site_config = self.enkf.enkf_main_get_site_config(self.main)
 
         
 
@@ -30,35 +31,33 @@ class ErtWrapper:
         ###self.schedule_file="eclpath"
         #self.init_section="init_section"
         self.add_fixed_length_schedule_kw = ["item1", "item2"]
-        self.add_static_kw = ["item1", "item2", "item3"]
+        #self.add_static_kw = ["item1", "item2", "item3"]
 
-#Get: ecl_config_get_static_kw_list( ecl_config )
-#Set: ecl_config_clear_static_kw(ecl_config)
-#     ecl_config_add_static_kw(ecl_config , "STRING")
+
 
 
         #self.refcase = "some new path"
         self.schedule_prediction_file = "Missing???"
-        self.data_kw = {"INCLUDE_PATH" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH2" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH3" : "<CWD>/../Common/ECLIPSE2"}
-#Get: s = enkf_main_get_data_kw( enkf_main )
-#     subst_list_get_size( s )
-#     subst_list_iget_key( s )  
-#     subst_list_iget_value( s )
-#Set: enkf_main_clear_data_kw( enkf_main )
-#     enkf_main_add_data_kw( enkf_main , key , value )
+        #self.data_kw = {"INCLUDE_PATH" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH2" : "<CWD>/../Common/ECLIPSE2", "INCLUDE_PATH3" : "<CWD>/../Common/ECLIPSE2"}
+        #Get: s = enkf_main_get_data_kw( enkf_main )
+        #     subst_list_get_size( s )
+        #     subst_list_iget_key( s )
+        #     subst_list_iget_value( s )
+        #Set: enkf_main_clear_data_kw( enkf_main )
+        #     enkf_main_add_data_kw( enkf_main , key , value )
 
 
 
 
 #        self.enkf_rerun = False
 #        self.rerun_start = 0
-        self.enkf_sched_file = "..."
-#Get: m = enkf_main_get_model_config( enkf_main )
-#         model_config_get_enkf_sched_file( m )
-#Set:     model_config_set_enkf_sched_file( m , "FILENAME" )
+        #self.enkf_sched_file = "..."
+        #Get: m = enkf_main_get_model_config( enkf_main )
+        #         model_config_get_enkf_sched_file( m )
+        #Set:     model_config_set_enkf_sched_file( m , "FILENAME" )
 
 
-        self.local_config = "..."
+        self.local_config = ["..."]
 #Get    l = enkf_main_get_local_config( enkf_main );
 #       s = local_config_get_config_files( l )  # Stringlist
 #Set    local_config_clear_config_files( l )
@@ -73,13 +72,13 @@ class ErtWrapper:
 
 
         self.queue_system = "RSH"
-        self.lsf_queue = "NORMAL"
-        self.max_running_lsf = 10
+        #self.lsf_queue = "NORMAL"
+        #self.max_running_lsf = 100
         self.lsf_resources = "magic string"
         self.rsh_command = "ssh"
         self.max_running_rsh = 55
         self.max_running_local = 4
-        self.rsh_host_list = {"host1" : '', "host2" : '6'}
+        self.rsh_host_list = [["host1", ''], ["host2", '6']]
 #Get    s = enkf_main_get_site_config( enkf_main )
 #       site_config_get_max_running_(lsf|rsh|local)( s )
 #Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
@@ -97,13 +96,13 @@ class ErtWrapper:
  
 
         self.job_script = "..."
-        self.setenv = {"LSF_BINDIR" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin", "LSF_LIBDIR" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"}
+        self.setenv = [["LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LSF_LIBDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
 #Get:   s = enkf_main_get_site_config( enkf_main )
 #       h = site_config_get_env_hash( s )    
 #Set    site_config_clear_env( s )
 #       site_config_setenv( s , var , value )
 
-        self.update_path = {"PATH" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin", "LD_LIBRARY_PATH" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"}
+        self.update_path = [["PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LD_LIBRARY_PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
 #Get:   s = enkf_main_get_site_config( enkf_main )
 #       pathlist  = site_config_get_path_variables( s )
 #       valuelist = site_config_get_path_values( s )
@@ -111,7 +110,7 @@ class ErtWrapper:
 #       site_config_update_pathvar( s , path , value );
 
 
-        self.install_job = {"ECHO" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin", "ADJUSTGRID" : "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"}
+        self.install_job = [["ECHO", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["ADJUSTGRID", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
 
 
         self.dbase_type = "BLOCK_FS"
@@ -139,7 +138,7 @@ class ErtWrapper:
 #        self.run_template = "..."
 #        self.target_file = "..."
 #        self.template_arguments = {"HABBA":"sdfkjskdf/sdf"}
-        self.forward_model = {"MY_RELPERM_SCRIPT":"Arg1<some> COPY(asdfdf)"}
+        self.forward_model = [["MY_RELPERM_SCRIPT", "Arg1<some> COPY(asdfdf)"]]
 
         self.field_dynamic = [["PRESSURE", "", ""], ["SWAT", 0.1, 0.95], ["SGAS", "", 0.25]]
         self.field_parameter = [["PRESSURE", "", "", "RANDINT", "EXP", "...", "/path/%d"], ["SWAT", 0.1, 0.95, "", "", ".", "..."]]
@@ -192,6 +191,7 @@ class ErtWrapper:
 
         
     def getStringList(self, stringlistpointer):
+        """Retrieve a list of strings"""
         result = []
 
         self.util.stringlist_iget.restype = c_char_p
@@ -204,19 +204,41 @@ class ErtWrapper:
 
 
     def freeStringList(self, stringlistpointer):
+        """Must be used if the stringlist was allocated on the python side"""
         self.util.stringlist_free(stringlistpointer)
 
 
-    def getHash(self, hashpointer):
+    def getHash(self, hashpointer, intValue = False):
+        """Retrieves a hash as a list of 2 element lists"""
         hashiterator = self.util.hash_iter_alloc(hashpointer)
         self.util.hash_iter_get_next_key.restype = c_char_p
         self.util.hash_get.restype = c_char_p
 
-        result = {}
+        result = []
         while not self.util.hash_iter_is_complete(hashiterator):
             key   = self.util.hash_iter_get_next_key(hashiterator)
-            value = self.util.hash_get(hashpointer, key)
-            result[key] = value
+
+            if not intValue:
+                value = self.util.hash_get(hashpointer, key)
+            else:
+                value = self.util.hash_get_int(hashpointer, key)
+
+            result.append([key, value])
 
         self.util.hash_iter_free(hashiterator)
+        #print result
+        return result
+
+    def getSubstitutionList(self, substlistpointer):
+        """Retrieves a substitution list as a list of 2 element lists"""
+        size = self.util.subst_list_get_size(substlistpointer)
+        self.util.subst_list_iget_key.restype = c_char_p
+        self.util.subst_list_iget_value.restype = c_char_p
+
+        result = []
+        for index in range(size):
+            key = self.util.subst_list_iget_key(substlistpointer, index)
+            value = self.util.subst_list_iget_value(substlistpointer, index)
+            result.append([key, value])
+
         return result
