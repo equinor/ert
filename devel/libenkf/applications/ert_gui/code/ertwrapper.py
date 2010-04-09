@@ -96,11 +96,11 @@ class ErtWrapper:
  
 
         self.job_script = "..."
-        self.setenv = [["LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LSF_LIBDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
-#Get:   s = enkf_main_get_site_config( enkf_main )
-#       h = site_config_get_env_hash( s )    
-#Set    site_config_clear_env( s )
-#       site_config_setenv( s , var , value )
+        #self.setenv = [["LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LSF_LIBDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
+        #Get:   s = enkf_main_get_site_config( enkf_main )
+        #       h = site_config_get_env_hash( s )
+        #Set    site_config_clear_env( s )
+        #       site_config_setenv( s , var , value )
 
         self.update_path = [["PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LD_LIBRARY_PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
 #Get:   s = enkf_main_get_site_config( enkf_main )
