@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <local_config.h>
 
 
 void install_SIGNALS(void) {
@@ -109,9 +109,12 @@ int main (int argc , char ** argv) {
     {
       enkf_main_type * enkf_main = enkf_main_bootstrap(site_config_file , model_config_file);
       printf("Bootstrap complete \n");
+      {
+        local_config_type * local_config = enkf_main_get_local_confg( enkf_main );
+        stringlist_type   * sl           = local_config_get_config_files( local_config );
 
-      
-
+        stringlist_fprintf( sl , " " , stdout );
+      }
       enkf_main_free(enkf_main);
     }
     util_abort_free_version_info(); /* No fucking leaks ... */
