@@ -155,6 +155,7 @@ typedef struct {
   job_status_type  	 job_status;      /* The current status of the job. */
   basic_queue_job_type 	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
   const void            *job_arg;         /* Untyped data which is sent to the submit function as extra argument - can be whatever - fully owned by external scope.*/
+  time_t                 sim_start;
 } job_queue_node_type;
 
 
@@ -274,6 +275,7 @@ static void job_queue_initialize_node(job_queue_type * queue , const char * run_
     
     node->exit_file = util_alloc_filename(node->run_path , EXIT_FILE , NULL);
     node->ok_file   = util_alloc_filename(node->run_path , OK_FILE   , NULL);
+    node->sim_start = -1;
     job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING);
   }
 }
@@ -303,8 +305,13 @@ static bool job_queue_change_node_status(job_queue_type * queue , job_queue_node
     job_queue_node_set_status(node , new_status);
     queue->status_list[old_status]--;
     queue->status_list[new_status]++;
-    if (new_status != old_status)
+
+    if (new_status != old_status) {
       status_change = true;
+      if (new_status == JOB_QUEUE_RUNNING) 
+        node->sim_start = time( NULL );
+    }
+    
   }
   pthread_rwlock_unlock( &queue->status_rwlock );
   return status_change;
@@ -469,9 +476,10 @@ void job_queue_export_status_summary( job_queue_type * queue , int * external_st
    used.
 */
 
-int job_queue_iget_status_summary( job_queue_type * queue , job_status_type status) {
+int job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status) {
   return queue->status_list[ status ];
 }
+
 
 
 
@@ -536,6 +544,19 @@ void job_queue_set_external_load(job_queue_type * queue , int external_id) {
   } else 
     util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
 }
+
+
+time_t job_queue_iget_sim_start( job_queue_type * queue, int external_id) {
+  int queue_index = job_queue_get_internal_index( queue , external_id );
+  if (queue_index >= 0) {
+    job_queue_node_type * node = queue->jobs[queue_index];
+    return node->sim_start;
+  } else {
+    util_abort("%s: could not find job with id:%d - aborting \n",__func__ , external_id);
+    return -1;
+  }
+}
+
 
 
 
@@ -779,6 +800,7 @@ void job_queue_add_job(job_queue_type * queue , const char * run_path , const ch
     int active_size  = queue->active_size;
     if (active_size == queue->size) 
       util_abort("%s: queue is already filled up with %d jobs - aborting \n",__func__ , queue->size);
+    
     
     job_queue_initialize_node(queue , run_path , job_name , active_size , external_id , job_arg);
     queue->active_size++;

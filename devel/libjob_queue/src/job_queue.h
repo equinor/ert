@@ -29,10 +29,11 @@ void                job_queue_set_max_running( job_queue_type * queue , int max_
 int                 job_queue_inc_max_runnning( job_queue_type * queue, int delta );
 int                 job_queue_get_max_running( const job_queue_type * queue );
 void                job_queue_export_status_summary( job_queue_type * queue , int * external_status_list);
-int                 job_queue_iget_status_summary( job_queue_type * queue , job_status_type status);
-
+int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
+time_t              job_queue_iget_sim_start( job_queue_type * queue, int external_id);
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+
