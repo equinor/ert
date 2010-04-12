@@ -39,8 +39,11 @@ void                     site_config_add_rsh_host( const site_config_type * site
 
 void                     site_config_set_lsf_queue( site_config_type * site_config , const char * lsf_queue);
 const char             * site_config_get_lsf_queue( const site_config_type * site_config );
+void                     site_config_set_lsf_request( site_config_type * site_config , const char * lsf_request);
+const char             * site_config_get_lsf_request( const site_config_type * site_config );
 
-
+const char             * site_config_get_job_queue_name( const site_config_type * site_config );
+void                     site_config_set_job_queue( site_config_type * site_config , const char * queue_name );
 
 #ifdef __cplusplus
 }

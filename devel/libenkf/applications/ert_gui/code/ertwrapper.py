@@ -93,7 +93,8 @@ class ErtWrapper:
 #       queue_name = site_config_get_lsf_queue( s )
 #Set    site_config_set_lsf_queue( s , "NORMAL" )
 
- 
+#       site_config_set_job_queue( s , "LOCAL|LSF|RSH" );
+#       site_config_get_job_queue_name( s ); 
 
         self.job_script = "..."
         #self.setenv = [["LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LSF_LIBDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]

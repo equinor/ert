@@ -113,18 +113,16 @@ int main (int argc , char ** argv) {
       /* Test code of various kinds can be added here */
 
       {
-        local_config_type * local_config = enkf_main_get_local_config( enkf_main );
-        stringlist_type   * sl;
+        site_config_type * site_config = enkf_main_get_site_config( enkf_main );
+        
+        printf("max_running_LOCAL: %d \n", site_config_get_max_running_local( site_config ));
+        printf("max_running_RSH:   %d \n", site_config_get_max_running_rsh( site_config ));
 
-        local_config_add_config_file( local_config , "FILE1");
-        local_config_add_config_file( local_config , "FILE2");
-
-        sl = local_config_get_config_files( local_config );
-        stringlist_fprintf( sl , " " , stdout );
-
-        local_config_clear_config_files( local_config );
-        local_config_add_config_file( local_config , "FILE3");
-        stringlist_fprintf( sl , " " , stdout );
+        site_config_set_max_running_rsh( site_config , 10 );
+        site_config_set_max_running_local( site_config , 77 );
+        
+        printf("max_running_LOCAL: %d \n", site_config_get_max_running_local( site_config ));
+        printf("max_running_RSH:   %d \n", site_config_get_max_running_rsh( site_config ));
       }
       
 
