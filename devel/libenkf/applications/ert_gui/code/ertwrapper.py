@@ -10,6 +10,7 @@ class ErtWrapper:
 
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
+        print "\nBootstrap complete!"
         
         self.plot_config = self.getErtPointer("enkf_main_get_plot_config")
         self.analysis_config = self.getErtPointer("enkf_main_get_analysis_config")
@@ -75,14 +76,11 @@ class ErtWrapper:
 
 
 
-        self.queue_system = "RSH"
+        #self.queue_system = "RSH"
         #self.lsf_queue = "NORMAL"
         #self.max_running_lsf = 100
-        self.lsf_resources = "magic string"
-        self.rsh_command = "ssh"
-        self.max_running_rsh = 55
-        self.max_running_local = 4
-        self.rsh_host_list = [["host1", ''], ["host2", '6']]
+        #self.lsf_resources = "magic string" # no data available from enkf
+        #self.rsh_command = "ssh"
         #Get    s = enkf_main_get_site_config( enkf_main )
         #       site_config_get_max_running_(lsf|rsh|local)( s )
         #Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
@@ -203,11 +201,11 @@ class ErtWrapper:
 
 
     def setAttribute(self, attribute, value):
-        print "set " + attribute + ": " + str(getattr(self, attribute)) + " -> " + str(value)
+        #print "set " + attribute + ": " + str(getattr(self, attribute)) + " -> " + str(value)
         setattr(self, attribute, value)
 
     def getAttribute(self, attribute):
-        print "get " + attribute + ": " + str(getattr(self, attribute))
+        #print "get " + attribute + ": " + str(getattr(self, attribute))
         return getattr(self, attribute)
 
     def initializeTypes(self):
@@ -257,7 +255,7 @@ class ErtWrapper:
             else:
                 value = self.util.hash_get_int(hashpointer, key)
 
-            result.append([key, value])
+            result.append([key, str(value)])
 
         self.util.hash_iter_free(hashiterator)
         #print result

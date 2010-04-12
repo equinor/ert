@@ -10,15 +10,15 @@ class AddRemoveWidget(QtGui.QWidget):
         """Creates a two button widget"""
         QtGui.QWidget.__init__(self, parent)
 
-        addButton = QtGui.QToolButton(self)
-        addButton.setIcon(QtGui.QIcon.fromTheme("add"))
-        addButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(addButton, QtCore.SIGNAL('clicked()'), addFunction)
+        self.addButton = QtGui.QToolButton(self)
+        self.addButton.setIcon(QtGui.QIcon.fromTheme("add"))
+        self.addButton.setIconSize(QtCore.QSize(16, 16))
+        self.connect(self.addButton, QtCore.SIGNAL('clicked()'), addFunction)
 
-        removeButton = QtGui.QToolButton(self)
-        removeButton.setIcon(QtGui.QIcon.fromTheme("remove"))
-        removeButton.setIconSize(QtCore.QSize(16, 16))
-        self.connect(removeButton, QtCore.SIGNAL('clicked()'), removeFunction)
+        self.removeButton = QtGui.QToolButton(self)
+        self.removeButton.setIcon(QtGui.QIcon.fromTheme("remove"))
+        self.removeButton.setIconSize(QtCore.QSize(16, 16))
+        self.connect(self.removeButton, QtCore.SIGNAL('clicked()'), removeFunction)
 
         if horizontal:
             buttonLayout = QtGui.QHBoxLayout()
@@ -30,8 +30,8 @@ class AddRemoveWidget(QtGui.QWidget):
         if horizontal:
             buttonLayout.addStretch(1)
 
-        buttonLayout.addWidget(addButton)
-        buttonLayout.addWidget(removeButton)
+        buttonLayout.addWidget(self.addButton)
+        buttonLayout.addWidget(self.removeButton)
 
         if not horizontal:
             buttonLayout.addStretch(1)
@@ -40,6 +40,11 @@ class AddRemoveWidget(QtGui.QWidget):
 
         self.setLayout(buttonLayout)
 
+    def enableAddButton(self, state):
+        self.addButton.setEnabled(state)
+
+    def enableRemoveButton(self, state):
+        self.removeButton.setEnabled(state)
 
 
 class KeywordList(HelpedWidget):
@@ -54,15 +59,25 @@ class KeywordList(HelpedWidget):
 
         self.addWidget(self.list)
 
-        self.addWidget(AddRemoveWidget(self, self.addItem, self.removeItem))
+        self.addRemoveWidget = AddRemoveWidget(self, self.addItem, self.removeItem)
+        self.addWidget(self.addRemoveWidget)
 
         #self.addStretch()
         self.addHelpButton()
+        self.title = "New keyword"
+        self.description = "Enter name of keyword:"
 
+    def setPopupLabels(self, title, description):
+        self.title = title
+        self.description = description
 
-    def newKeywordPopup(self):
-        """Pops up a message box asking for a new keyword. Override this and return a string to customize the input dialog - Empty string equals canceled"""
-        newKeyword, ok = QtGui.QInputDialog.getText(self, self.tr("New keyword"), self.tr("Enter name of keyword:"), QtGui.QLineEdit.Normal)
+    def newKeywordPopup(self, list):
+        """
+        Pops up a message box asking for a new keyword.
+        Override this and return a string to customize the input dialog - Empty string equals canceled.
+        The provided list are the keywords in the list
+        """
+        newKeyword, ok = QtGui.QInputDialog.getText(self, self.tr(self.title), self.tr(self.description), QtGui.QLineEdit.Normal)
 
         if ok:
             return str(newKeyword).strip()
@@ -72,7 +87,7 @@ class KeywordList(HelpedWidget):
 
     def addItem(self):
         """Called by the add button to insert a new keyword"""
-        newKeyword = self.newKeywordPopup()
+        newKeyword = self.newKeywordPopup(self.getList())
         if not newKeyword == "":
             self.list.addItem(newKeyword)
             self.contentsChanged()
@@ -85,13 +100,15 @@ class KeywordList(HelpedWidget):
             self.contentsChanged()
 
 
-    def contentsChanged(self):
-        """Called whenever the contents of the list changes."""
+    def getList(self):
         keywordList = []
         for index in range(self.list.count()):
             keywordList.append(str(self.list.item(index).text()))
+        return keywordList
 
-        self.updateContent(keywordList)
+    def contentsChanged(self):
+        """Called whenever the contents of the list changes."""
+        self.updateContent(self.getList())
 
 
     def fetchContent(self):
@@ -102,7 +119,6 @@ class KeywordList(HelpedWidget):
 
         for keyword in keywords:
             self.list.addItem(keyword)
-
 
 
 

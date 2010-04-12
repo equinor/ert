@@ -25,6 +25,7 @@ from widgets.plotpanel import PlotPanel
 from widgets.parameters.parameterpanel import ParameterPanel
 
 #todo: proper support for unicode characters?
+from widgets.validateddialog import ValidatedDialog
 
 app = QtGui.QApplication(sys.argv)
 
@@ -270,8 +271,10 @@ internalPanel.endPage()
 internalPanel.startPage("RSH")
 
 r = internalPanel.addRow(PathChooser(widget, "Command", "rsh_command", True))
-r.getter = lambda ert : ert.getAttribute("rsh_command")
-r.setter = lambda ert, value : ert.setAttribute("rsh_command", value)
+r.initialize = lambda ert : [ert.setTypes("site_config_get_rsh_command", ertwrapper.c_char_p),
+                             ert.setTypes("site_config_set_rsh_command", None, [ertwrapper.c_char_p])]
+r.getter = lambda ert : ert.enkf.site_config_get_rsh_command(ert.site_config)
+r.setter = lambda ert, value : ert.enkf.site_config_set_rsh_command(ert.site_config, str(value))
 
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_rsh", 1, 1000))
 r.initialize = lambda ert : [ert.setTypes("site_config_get_max_running_rsh", ertwrapper.c_int),
@@ -637,7 +640,38 @@ configPanel.endPage()
 
 widget.addPage("Configuration", widgets.util.resourceIcon("config"), configPanel)
 
+initPanel = QtGui.QFrame()
+initPanel.setFrameShape(QtGui.QFrame.Panel)
+initPanel.setFrameShadow(QtGui.QFrame.Raised)
 
+initPanelLayout = QtGui.QHBoxLayout()
+initPanel.setLayout(initPanelLayout)
+
+cases = KeywordList(widget, "", "case_list")
+
+cases.newKeywordPopup = lambda list : ValidatedDialog(cases, "New case", "Enter name of new case:", list).showAndTell()
+cases.addRemoveWidget.enableRemoveButton(False)
+cases.list.setMaximumHeight(150)
+cases.initialize = lambda ert : [ert.setTypes("enkf_main_get_fs"),
+                                 ert.setTypes("enkf_fs_alloc_dirlist")]
+def get_case_list(ert):
+    fs = ert.enkf.enkf_main_get_fs(ert.main)
+    caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
+
+    list = ert.getStringList(caseList)
+    ert.freeStringList(caseList)
+    return list
+
+def set_dummy(ert, value):
+    print "Dummy setter"
+
+cases.getter = get_case_list
+cases.setter = set_dummy 
+
+initPanelLayout.addWidget(cases)
+
+
+widget.addPage("Init", widgets.util.resourceIcon("db"), initPanel)
 
 panel = QtGui.QFrame()
 panel.setFrameShape(QtGui.QFrame.Panel)
@@ -658,14 +692,6 @@ def perform():
     ert.freeStringList(caseList)
 
 
-    env_hash = ert.enkf.site_config_get_env_hash(ert.site_config)
-    ert.util.hash_insert_ref(env_hash, "LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin")
-
-    print ert.getHash(env_hash)
-
-
-    
-
 
 button = QtGui.QPushButton("Get case list")
 panel.connect(button, QtCore.SIGNAL('clicked()'), perform)
@@ -676,6 +702,7 @@ button = QtGui.QPushButton("Refetch")
 panel.connect(button, QtCore.SIGNAL('clicked()'), ContentModel.updateObservers)
 
 panelLayout.addWidget(button)
+
 
 widget.addPage("Run", widgets.util.resourceIcon("run"), panel)
 
