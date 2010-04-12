@@ -114,15 +114,14 @@ int main (int argc , char ** argv) {
 
       {
         site_config_type * site_config = enkf_main_get_site_config( enkf_main );
+        hash_type * rsh_host_list = site_config_get_rsh_host_list( site_config );
+        hash_iter_type * iter = hash_iter_alloc( rsh_host_list );
         
-        printf("max_running_LOCAL: %d \n", site_config_get_max_running_local( site_config ));
-        printf("max_running_RSH:   %d \n", site_config_get_max_running_rsh( site_config ));
-
-        site_config_set_max_running_rsh( site_config , 10 );
-        site_config_set_max_running_local( site_config , 77 );
-        
-        printf("max_running_LOCAL: %d \n", site_config_get_max_running_local( site_config ));
-        printf("max_running_RSH:   %d \n", site_config_get_max_running_rsh( site_config ));
+        while (!hash_iter_is_complete( iter )) {
+          const char * host = hash_iter_get_next_key( iter );
+          printf("%s:%d \n",host , hash_get_int( rsh_host_list , host));
+        }
+        hash_iter_free( iter );
       }
       
 

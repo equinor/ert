@@ -352,37 +352,45 @@ void site_config_set_job_queue( site_config_type * site_config , const char * qu
 
 
 static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , bool * use_lsf) {
-  const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
   const char * job_script   = config_iget(config , "JOB_SCRIPT" , 0,0);
   int   max_submit          = config_iget_as_int(config , "MAX_SUBMIT" , 0,0);
-  int   max_running;
-  *use_lsf                  = false;
+  int   max_running_local;
+  int   max_running_lsf;
+  int   max_running_rsh;
   job_driver_type driver_type;
 
+  *use_lsf               = false;
   site_config->job_queue = job_queue_alloc(0 , 0 , max_submit , job_script);
-  if (strcmp(queue_system , "LSF") == 0) {
+
+  /* 
+     All the various driver options are set, unconditionally of which
+     driver is actually selected in the end.
+  */
+
+  /* LSF options. */
+  {
     const char * lsf_queue_name = config_iget(config , "LSF_QUEUE" , 0,0);
     char * lsf_resource_request = NULL;
-    
+
+    max_running_lsf = config_iget_as_int( config , "MAX_RUNNING_LSF" , 0,0);
     if (config_has_set_item(config , "LSF_RESOURCES"))
       lsf_resource_request = config_alloc_joined_string(config , "LSF_RESOURCES" , " ");
-
-    if (!util_sscanf_int(config_iget(config , "MAX_RUNNING_LSF" , 0,0) , &max_running))
-      util_abort("%s: internal error - \n",__func__);
     
     site_config_set_lsf_queue( site_config , lsf_queue_name );
     site_config_set_lsf_request( site_config , lsf_resource_request );  /* Not really in use at the moment ... */
-    
     util_safe_free(lsf_resource_request);
-    *use_lsf = true;
-    driver_type = LSF_DRIVER;
-  } else if (strcmp(queue_system , "RSH") == 0) {
+  }
+    
+
+  /* RSH options */
+  {
+    const char * rsh_command        = config_iget(config , "RSH_COMMAND" , 0,0);
+    
+    site_config_set_rsh_command( site_config , rsh_command );
+    max_running_rsh = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
+
+    /* Parsing the "host1:4" strings. */
     {
-      const char * rsh_command        = config_iget(config , "RSH_COMMAND" , 0,0);
-      site_config_set_rsh_command( site_config , rsh_command );
-    }
-    {
-      /* Parsing the "host1:4" strings. */
       
       stringlist_type * rsh_host_list = config_alloc_complete_stringlist(config , "RSH_HOST_LIST");
       int i;
@@ -393,28 +401,52 @@ static void site_config_install_job_queue(site_config_type  * site_config , cons
         int     tokens;
         
         util_split_string( stringlist_iget( rsh_host_list , i) , ":" , &tokens , &tmp);
-        if (tokens > 1) {
-          if (!util_sscanf_int( tmp[tokens - 1] , &host_max_running))
-            util_abort("%s: failed to parse out integer from: %s \n",__func__ , stringlist_iget( rsh_host_list , i));
-          host = util_alloc_joined_string((const char **) tmp , tokens - 1 , ":");
-        } else
-          host = util_alloc_string_copy( tmp[0] );
-        
-        site_config_add_rsh_host( site_config , host , host_max_running);
-        util_free_stringlist( tmp , tokens );
-        free( host );
+          if (tokens > 1) {
+            if (!util_sscanf_int( tmp[tokens - 1] , &host_max_running))
+              util_abort("%s: failed to parse out integer from: %s \n",__func__ , stringlist_iget( rsh_host_list , i));
+            host = util_alloc_joined_string((const char **) tmp , tokens - 1 , ":");
+          } else
+            host = util_alloc_string_copy( tmp[0] );
+          
+          site_config_add_rsh_host( site_config , host , host_max_running);
+          util_free_stringlist( tmp , tokens );
+          free( host );
       }
       stringlist_free( rsh_host_list );
     }
-    max_running = config_iget_as_int( config , "MAX_RUNNING_RSH" , 0,0);
-    driver_type = RSH_DRIVER;
-  } else if (strcmp(queue_system , "LOCAL") == 0) {
-    max_running = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
-    driver_type = LOCAL_DRIVER;
+  }
+
+  /* Parsing local options */
+  max_running_local = config_iget_as_int( config , "MAX_RUNNING_LOCAL" , 0,0);
+  
+  
+  {
+    const char * queue_system = config_iget(config , "QUEUE_SYSTEM" , 0,0);
+    if (strcmp(queue_system , "LSF") == 0) {
+      *use_lsf = true;
+      driver_type = LSF_DRIVER;
+    } else if (strcmp(queue_system , "RSH") == 0) 
+      driver_type = RSH_DRIVER;
+    else if (strcmp(queue_system , "LOCAL") == 0) 
+      driver_type = LOCAL_DRIVER;
+    else {
+      util_abort("%s: queue system :%s not recognized \n",__func__ , queue_system);
+      driver_type = NULL_DRIVER;
+    }
   }
   
   site_config_set_job_queue__( site_config , driver_type );
-  site_config_set_max_running( site_config , max_running );  /* Will set max_running in the queue and locally for the currently active driver. */
+
+  /* 
+     The site_config_set_max_running_xxx() calls are collected here
+     AFTER the call to site_config_set_job_queue__() to ensure that
+     the correct (i.e. corresponding to the selected driver) size for
+     the queue is set in addition to the drivers specific max_running
+     value.
+  */
+  site_config_set_max_running_lsf( site_config , max_running_lsf );
+  site_config_set_max_running_rsh( site_config , max_running_rsh );
+  site_config_set_max_running_local( site_config , max_running_local );
 }
 
 
