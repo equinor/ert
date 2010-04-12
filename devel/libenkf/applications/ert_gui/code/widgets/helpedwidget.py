@@ -1,5 +1,6 @@
 from PyQt4 import QtGui, QtCore
 import help #todo this is not a nice way of solving this...
+import sys
 
 def abstract():
     """Abstract keyword that indicate an abstract function"""
@@ -50,7 +51,7 @@ class ContentModel:
             try:
                 o.initialize(ContentModel.contentModel)
             except NotImplementedError:
-                pass
+                sys.stderr.write("Missing initializer: " + o.helpLabel + "\n")
                 
             o.fetchContent()
 

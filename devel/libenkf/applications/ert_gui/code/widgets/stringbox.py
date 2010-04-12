@@ -27,11 +27,19 @@ class StringBox(HelpedWidget):
 
     def contentsChanged(self):
         """Called whenever the contents of the editline changes."""
-        self.updateContent(self.boxString.text())
+        box_string_text = str(self.boxString.text())
+        if box_string_text == "":
+            box_string_text = None
+
+        self.updateContent(box_string_text)
 
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the edit line"""
-        self.boxString.setText(self.getFromModel())
+        self_get_from_model = self.getFromModel()
+        if self_get_from_model == None:
+            self_get_from_model = ""
+
+        self.boxString.setText(self_get_from_model)
 
 
 

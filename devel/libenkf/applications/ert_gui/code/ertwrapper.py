@@ -10,10 +10,14 @@ class ErtWrapper:
 
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
-        self.plot_config = self.enkf.enkf_main_get_plot_config(self.main)
-        self.analysis_config = self.enkf.enkf_main_get_analysis_config(self.main)
-        self.ecl_config = self.enkf.enkf_main_get_ecl_config(self.main)
-        self.site_config = self.enkf.enkf_main_get_site_config(self.main)
+        
+        self.plot_config = self.getErtPointer("enkf_main_get_plot_config")
+        self.analysis_config = self.getErtPointer("enkf_main_get_analysis_config")
+        self.ecl_config = self.getErtPointer("enkf_main_get_ecl_config")
+        self.site_config = self.getErtPointer("enkf_main_get_site_config")
+
+        self.initializeTypes()
+        
 
         
 
@@ -57,11 +61,11 @@ class ErtWrapper:
         #Set:     model_config_set_enkf_sched_file( m , "FILENAME" )
 
 
-        self.local_config = ["..."]
-#Get    l = enkf_main_get_local_config( enkf_main );
-#       s = local_config_get_config_files( l )  # Stringlist
-#Set    local_config_clear_config_files( l )
-#       local_config_add_config_file(l , "FILENAME")   
+        #self.local_config = ["..."]
+        #Get    l = enkf_main_get_local_config( enkf_main );
+        #       s = local_config_get_config_files( l )  # Stringlist
+        #Set    local_config_clear_config_files( l )
+        #       local_config_add_config_file(l , "FILENAME")
 
 
 #        self.enkf_merge_observations = False
@@ -79,22 +83,22 @@ class ErtWrapper:
         self.max_running_rsh = 55
         self.max_running_local = 4
         self.rsh_host_list = [["host1", ''], ["host2", '6']]
-#Get    s = enkf_main_get_site_config( enkf_main )
-#       site_config_get_max_running_(lsf|rsh|local)( s )
-#Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
+        #Get    s = enkf_main_get_site_config( enkf_main )
+        #       site_config_get_max_running_(lsf|rsh|local)( s )
+        #Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
 
-#Get    s = enkf_main_get_site_config( enkf_main )
-#       h = site_config_get_rsh_host_list( s )
-#       Iterer over hash - men bruk hash_get_int() for aa faa antall jobber en host kan ta.
-#Set    site_config_clear_rsh_host_list( s )
-#       site_config_add_rsh_host( s , host_name , max_running )
+        #Get    s = enkf_main_get_site_config( enkf_main )
+        #       h = site_config_get_rsh_host_list( s )
+        #       Iterer over hash - men bruk hash_get_int() for aa faa antall jobber en host kan ta.
+        #Set    site_config_clear_rsh_host_list( s )
+        #       site_config_add_rsh_host( s , host_name , max_running )
 
-#Get    s = enkf_main_get_site_config( enkf_main )
-#       queue_name = site_config_get_lsf_queue( s )
-#Set    site_config_set_lsf_queue( s , "NORMAL" )
+        #Get    s = enkf_main_get_site_config( enkf_main )
+        #       queue_name = site_config_get_lsf_queue( s )
+        #Set    site_config_set_lsf_queue( s , "NORMAL" )
 
-#       site_config_set_job_queue( s , "LOCAL|LSF|RSH" );
-#       site_config_get_job_queue_name( s ); 
+        #       site_config_set_job_queue( s , "LOCAL|LSF|RSH" );
+        #       site_config_get_job_queue_name( s );
 
         self.job_script = "..."
         #self.setenv = [["LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LSF_LIBDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
@@ -103,12 +107,12 @@ class ErtWrapper:
         #Set    site_config_clear_env( s )
         #       site_config_setenv( s , var , value )
 
-        self.update_path = [["PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LD_LIBRARY_PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
-#Get:   s = enkf_main_get_site_config( enkf_main )
-#       pathlist  = site_config_get_path_variables( s )
-#       valuelist = site_config_get_path_values( s )
-#Set:   site_config_clear_pathvar( s )
-#       site_config_update_pathvar( s , path , value );
+        #self.update_path = [["PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LD_LIBRARY_PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
+        #Get:   s = enkf_main_get_site_config( enkf_main )
+        #       pathlist  = site_config_get_path_variables( s )
+        #       valuelist = site_config_get_path_values( s )
+        #Set:   site_config_clear_pathvar( s )
+        #       site_config_update_pathvar( s , path , value );
 
 
         self.install_job = [["ECHO", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["ADJUSTGRID", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
@@ -175,12 +179,28 @@ class ErtWrapper:
         self.enkf = CDLL(prefix + "libenkf/slib/libenkf.so", RTLD_GLOBAL)
 
 
-    def setRestype(self, attribute, restype):
-        getattr(self.enkf, attribute).restype = restype
+    def setTypes(self, function, restype = c_long, argtypes = [], library = None):
+        """
+        Set the return and argument types of a ERT function.
+        Since all methods need a pointer, this is already defined as c_long.
+        library defaults to the enkf library
+        """
+        if library == None:
+            library = self.enkf
 
-    def setValueType(self, returnAttribute, setAttribute, type):
-        getattr(self.enkf, returnAttribute).restype = type
-        getattr(self.enkf, setAttribute).argtypes = [ctypes.c_int, type]
+        func = getattr(library, function)
+        func.restype = restype
+        if isinstance(argtypes, list):
+            args = [c_long]
+            args.extend(argtypes)
+            func.argtypes = args
+        else:
+            func.argtypes = [c_long, argtypes]
+
+
+        #print "Setting: " + str(func.restype) + " " + function + "( " + str(func.argtypes) + " ) "
+        return func
+
 
     def setAttribute(self, attribute, value):
         print "set " + attribute + ": " + str(getattr(self, attribute)) + " -> " + str(value)
@@ -190,12 +210,27 @@ class ErtWrapper:
         print "get " + attribute + ": " + str(getattr(self, attribute))
         return getattr(self, attribute)
 
+    def initializeTypes(self):
+        self.setTypes("stringlist_iget", c_char_p, c_int, library = self.util)
+        self.setTypes("stringlist_get_size", c_int, library = self.util)
+        self.setTypes("stringlist_free", None, library = self.util)
+
+        self.setTypes("hash_iter_alloc", library = self.util)
+        self.setTypes("hash_iter_get_next_key", c_char_p, library = self.util)
+        self.setTypes("hash_get", c_char_p, library = self.util)
+        self.setTypes("hash_get_int", c_int, library = self.util)
+        self.setTypes("hash_iter_free", None, library = self.util)
+        self.setTypes("hash_iter_is_complete", c_int, library = self.util)
+
+        self.setTypes("subst_list_get_size", c_int, library = self.util)
+        self.setTypes("subst_list_iget_key", c_char_p, c_int, library = self.util)
+        self.setTypes("subst_list_iget_value", c_char_p, c_int, library = self.util)
+
         
     def getStringList(self, stringlistpointer):
         """Retrieve a list of strings"""
         result = []
 
-        self.util.stringlist_iget.restype = c_char_p
         numberOfStrings = self.util.stringlist_get_size(stringlistpointer)
 
         for index in range(numberOfStrings):
@@ -212,8 +247,6 @@ class ErtWrapper:
     def getHash(self, hashpointer, intValue = False):
         """Retrieves a hash as a list of 2 element lists"""
         hashiterator = self.util.hash_iter_alloc(hashpointer)
-        self.util.hash_iter_get_next_key.restype = c_char_p
-        self.util.hash_get.restype = c_char_p
 
         result = []
         while not self.util.hash_iter_is_complete(hashiterator):
@@ -233,8 +266,6 @@ class ErtWrapper:
     def getSubstitutionList(self, substlistpointer):
         """Retrieves a substitution list as a list of 2 element lists"""
         size = self.util.subst_list_get_size(substlistpointer)
-        self.util.subst_list_iget_key.restype = c_char_p
-        self.util.subst_list_iget_value.restype = c_char_p
 
         result = []
         for index in range(size):
@@ -243,3 +274,9 @@ class ErtWrapper:
             result.append([key, value])
 
         return result
+
+    def getErtPointer(self, function):
+        """Returns a pointer from ERT as a c_long (64-bit support)"""
+        func = getattr(self.enkf, function)
+        func.restype = c_long
+        return func(self.main)

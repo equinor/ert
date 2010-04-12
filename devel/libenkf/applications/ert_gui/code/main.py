@@ -48,34 +48,40 @@ configPanel.startPage("Eclipse")
 
 #todo should be special % name type
 r = configPanel.addRow(PathChooser(widget, "Eclipse Base", "eclbase"))
-r.initialize = lambda ert : ert.setRestype("ecl_config_get_eclbase", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("ecl_config_get_eclbase", ertwrapper.c_char_p),
+                             ert.setTypes("ecl_config_set_eclbase", None, ertwrapper.c_char_p)]
 r.getter = lambda ert : ert.enkf.ecl_config_get_eclbase(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_eclbase(ert.ecl_config, str(value))
 
 r = configPanel.addRow(PathChooser(widget, "Data file", "data_file"))
-r.initialize = lambda ert : ert.setRestype("ecl_config_get_data_file", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("ecl_config_get_data_file", ertwrapper.c_char_p),
+                             ert.setTypes("ecl_config_set_data_file", None, ertwrapper.c_char_p)]
 r.getter = lambda ert : ert.enkf.ecl_config_get_data_file(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_data_file(ert.ecl_config, str(value))
 
 r = configPanel.addRow(PathChooser(widget, "Grid", "grid"))
-r.initialize = lambda ert : ert.setRestype("ecl_config_get_gridfile", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("ecl_config_get_gridfile", ertwrapper.c_char_p),
+                             ert.setTypes("ecl_config_set_grid", None, ertwrapper.c_char_p)]
 r.getter = lambda ert : ert.enkf.ecl_config_get_gridfile(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_grid(ert.ecl_config, str(value))
 
 r = configPanel.addRow(PathChooser(widget, "Schedule file" , "schedule_file" , files = True))
-r.initialize = lambda ert : ert.setRestype("ecl_config_get_schedule_file", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("ecl_config_get_schedule_file", ertwrapper.c_char_p),
+                             ert.setTypes("ecl_config_set_schedule_file", None, ertwrapper.c_char_p)]
 r.getter = lambda ert : ert.enkf.ecl_config_get_schedule_file(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_schedule_file(ert.ecl_config, str(value))
 
 
 r = configPanel.addRow(PathChooser(widget, "Init section", "init_section"))
-r.initialize = lambda ert : ert.setRestype("ecl_config_get_init_section", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("ecl_config_get_init_section", ertwrapper.c_char_p),
+                             ert.setTypes("ecl_config_set_init_section", None, ertwrapper.c_char_p)]
 r.getter = lambda ert : ert.enkf.ecl_config_get_init_section(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_init_section(ert.ecl_config, str(value))
 
 
 r = configPanel.addRow(PathChooser(widget, "Refcase", "refcase", True))
-r.initialize = lambda ert : ert.setRestype("ecl_config_get_refcase_name", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("ecl_config_get_refcase_name", ertwrapper.c_char_p),
+                             ert.setTypes("ecl_config_set_refcase", None, ertwrapper.c_char_p)]
 r.getter = lambda ert : ert.enkf.ecl_config_get_refcase_name(ert.ecl_config)
 r.setter = lambda ert, value : ert.enkf.ecl_config_set_refcase(ert.ecl_config, str(value))
 
@@ -84,6 +90,9 @@ r.getter = lambda ert : ert.getAttribute("schedule_prediction_file")
 r.setter = lambda ert, value : ert.setAttribute("schedule_prediction_file", value)
 
 r = configPanel.addRow(KeywordTable(widget, "Data keywords", "data_kw"))
+r.initialize = lambda ert : [ert.setTypes("enkf_main_get_data_kw"),
+                             ert.setTypes("enkf_main_clear_data_kw", None),
+                             ert.setTypes("enkf_main_add_data_kw", None, [ertwrapper.c_char_p, ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.getSubstitutionList(ert.enkf.enkf_main_get_data_kw(ert.main))
 
 def add_data_kw(ert, listOfKeywords):
@@ -103,6 +112,9 @@ internalPanel = ConfigPanel(widget)
 internalPanel.startPage("Static keywords")
 
 r = internalPanel.addRow(KeywordList(widget, "", "add_static_kw"))
+r.initialize = lambda ert : [ert.setTypes("ecl_config_get_static_kw_list"),
+                             ert.setTypes("ecl_config_clear_static_kw", None),
+                             ert.setTypes("ecl_config_add_static_kw", None, [ertwrapper.c_char_p, ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.getStringList(ert.enkf.ecl_config_get_static_kw_list(ert.ecl_config))
 
 def add_static_kw(ert, listOfKeywords):
@@ -135,34 +147,50 @@ configPanel.endPage()
 configPanel.startPage("Analysis")
 
 r = configPanel.addRow(CheckBox(widget, "ENKF rerun", "enkf_rerun", "Perform rerun"))
+r.initialize = lambda ert : [ert.setTypes("analysis_config_get_rerun", ertwrapper.c_int),
+                             ert.setTypes("analysis_config_set_rerun", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.analysis_config_get_rerun(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun(ert.analysis_config, value)
 
 r = configPanel.addRow(IntegerSpinner(widget, "Rerun start", "rerun_start",  0, 100000))
+r.initialize = lambda ert : [ert.setTypes("analysis_config_get_rerun_start", ertwrapper.c_int),
+                             ert.setTypes("analysis_config_set_rerun_start", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.analysis_config_get_rerun_start(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_rerun_start(ert.analysis_config, value)
 
 r = configPanel.addRow(PathChooser(widget, "ENKF schedule file", "enkf_sched_file"))
-r.initialize = lambda ert: ert.setRestype("model_config_get_enkf_sched_file", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("model_config_get_enkf_sched_file", ertwrapper.c_char_p),
+                             ert.setTypes("enkf_main_get_model_config"),
+                             ert.setTypes("model_config_set_enkf_sched_file", None, [ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.enkf.model_config_get_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main))
 r.setter = lambda ert, value : ert.enkf.model_config_set_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main), str(value))
 
 r = configPanel.addRow(KeywordList(widget, "Local config", "local_config"))
 r.newKeywordPopup = lambda : QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
+r.initialize = lambda ert : [ert.setTypes("local_config_get_config_files"),
+                             ert.setTypes("enkf_main_get_local_config"),
+                             ert.setTypes("local_config_clear_config_files", None),
+                             ert.setTypes("local_config_add_config_file"), None, ertwrapper.c_char_p]
 
-#todo: fix this (seg fault)!!!!
 def get_local_config_files(ert):
     local_config = ert.enkf.enkf_main_get_local_config(ert.main)
-    #import pdb; pdb.set_trace()
     config_files_pointer = ert.enkf.local_config_get_config_files(local_config)
     return ert.getStringList(config_files_pointer)
 
-#r.getter = get_local_config_files
-r.getter = lambda ert : ert.getAttribute("local_config")
-r.setter = lambda ert, value : ert.setAttribute("local_config", value)
+r.getter = get_local_config_files
+
+def add_config_file(ert, value):
+    local_config = ert.enkf.enkf_main_get_local_config(ert.main)
+    ert.enkf.local_config_clear_config_files(local_config)
+
+    for file in value:
+        ert.enkf.local_config_add_config_file(local_config, file)
+
+r.setter = add_config_file
 
 r = configPanel.addRow(PathChooser(widget, "Update log", "update_log"))
-r.initialize = lambda ert : ert.setRestype("analysis_config_get_log_path", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("analysis_config_get_log_path", ertwrapper.c_char_p),
+                             ert.setTypes("analysis_config_set_log_path", None, [ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.enkf.analysis_config_get_log_path(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_log_path(ert.analysis_config, str(value))
 
@@ -170,11 +198,14 @@ r.setter = lambda ert, value : ert.enkf.analysis_config_set_log_path(ert.analysi
 configPanel.startGroup("EnKF")
 
 r = configPanel.addRow(DoubleSpinner(widget, "Alpha", "enkf_alpha", 0, 100000, 2))
-r.initialize = lambda ert : ert.setValueType("analysis_config_get_alpha", "analysis_config_set_alpha", ertwrapper.c_double)
+r.initialize = lambda ert : [ert.setTypes("analysis_config_get_alpha", ertwrapper.c_double),
+                             ert.setTypes("analysis_config_set_alpha", None, [ertwrapper.c_double])]
 r.getter = lambda ert : ert.enkf.analysis_config_get_alpha(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_alpha(ert.analysis_config, value)
 
 r = configPanel.addRow(CheckBox(widget, "Merge Observations", "enkf_merge_observations", "Perform merge"))
+r.initialize = lambda ert : [ert.setTypes("analysis_config_get_merge_observations", ertwrapper.c_int),
+                             ert.setTypes("analysis_config_set_merge_observations", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.analysis_config_get_merge_observations(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_merge_observations(ert.analysis_config, value)
 
@@ -182,12 +213,15 @@ r.setter = lambda ert, value : ert.enkf.analysis_config_set_merge_observations(e
 enkf_mode_type = {"ENKF_STANDARD" : 10, "ENKF_SQRT" : 20}
 enkf_mode_type_inverted = {10 : "ENKF_STANDARD" , 20 : "ENKF_SQRT"}
 r = configPanel.addRow(ComboChoice(widget, enkf_mode_type.keys(), "Mode", "enkf_mode"))
+r.initialize = lambda ert : [ert.setTypes("analysis_config_get_enkf_mode", ertwrapper.c_int),
+                             ert.setTypes("analysis_config_set_enkf_mode", None, [ertwrapper.c_int])]
 r.getter = lambda ert : enkf_mode_type_inverted[ert.enkf.analysis_config_get_enkf_mode(ert.analysis_config)]
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_enkf_mode(ert.analysis_config, enkf_mode_type[str(value)])
 
 
 r = configPanel.addRow(DoubleSpinner(widget, "Truncation", "enkf_truncation", 0, 1, 2))
-r.initialize = lambda ert : ert.setValueType("analysis_config_get_truncation", "analysis_config_set_truncation", ertwrapper.c_double)
+r.initialize = lambda ert : [ert.setTypes("analysis_config_get_truncation", ertwrapper.c_double),
+                             ert.setTypes("analysis_config_set_truncation", None, [ertwrapper.c_double])]
 r.getter = lambda ert : ert.enkf.analysis_config_get_truncation(ert.analysis_config)
 r.setter = lambda ert, value : ert.enkf.analysis_config_set_truncation(ert.analysis_config, value)
 
@@ -202,30 +236,33 @@ configPanel.endPage()
 # ----------------------------------------------------------------------------------------------
 configPanel.startPage("Queue System")
 
-
-
-
-
 r = configPanel.addRow(ComboChoice(widget, ["LSF", "RSH", "LOCAL"], "Queue system", "queue_system"))
-r.getter = lambda ert : ert.getAttribute("queue_system")
-r.setter = lambda ert, value : ert.setAttribute("queue_system", value)
+r.initialize = lambda ert : [ert.setTypes("site_config_get_job_queue_name", ertwrapper.c_char_p),
+                             ert.setTypes("site_config_set_job_queue", None, [ertwrapper.c_char_p])]
+r.getter = lambda ert : ert.enkf.site_config_get_job_queue_name(ert.site_config)
+r.setter = lambda ert, value : ert.enkf.site_config_set_job_queue(ert.site_config, str(value))
 
 internalPanel = ConfigPanel(widget)
 
 internalPanel.startPage("LSF")
 
 r = internalPanel.addRow(ComboChoice(widget, ["NORMAL", "FAST_LOCAL", "SHORT"], "Mode", "lsf_queue"))
-r.initialize  =lambda ert : ert.setRestype("site_config_get_lsf_queue", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("site_config_get_lsf_queue", ertwrapper.c_char_p),
+                             ert.setTypes("site_config_set_lsf_queue", None, [ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.enkf.site_config_get_lsf_queue(ert.site_config)
 r.setter = lambda ert, value : ert.enkf.site_config_set_lsf_queue(ert.site_config, str(value))
 
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_lsf", 1, 1000))
+r.initialize = lambda ert : [ert.setTypes("site_config_get_max_running_lsf", ertwrapper.c_int),
+                             ert.setTypes("site_config_set_max_running_lsf", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.site_config_get_max_running_lsf(ert.site_config)
 r.setter = lambda ert, value : ert.enkf.site_config_set_max_running_lsf(ert.site_config, value)
 
 r = internalPanel.addRow(StringBox(widget, "Resources", "lsf_resources"))
-r.getter = lambda ert : ert.getAttribute("lsf_resources")
-r.setter = lambda ert, value : ert.setAttribute("lsf_resources", value)
+r.initialize = lambda ert : [ert.setTypes("site_config_get_lsf_request", ertwrapper.c_char_p),
+                             ert.setTypes("site_config_set_lsf_request", None, [ertwrapper.c_char_p])]
+r.getter = lambda ert : ert.enkf.site_config_get_lsf_request(ert.site_config)
+r.setter = lambda ert, value : ert.enkf.site_config_set_lsf_request(ert.site_config, str(value))
 
 internalPanel.endPage()
 
@@ -236,22 +273,29 @@ r = internalPanel.addRow(PathChooser(widget, "Command", "rsh_command", True))
 r.getter = lambda ert : ert.getAttribute("rsh_command")
 r.setter = lambda ert, value : ert.setAttribute("rsh_command", value)
 
-#todo: wrong return value
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_rsh", 1, 1000))
+r.initialize = lambda ert : [ert.setTypes("site_config_get_max_running_rsh", ertwrapper.c_int),
+                             ert.setTypes("site_config_set_max_running_rsh", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.site_config_get_max_running_rsh(ert.site_config)
 r.setter = lambda ert, value : ert.enkf.site_config_set_max_running_rsh(ert.site_config, value)
 
 
-
 r = internalPanel.addRow(KeywordTable(widget, "Host List", "rsh_host_list", "Host", "Number of jobs"))
-
+r.initialize = lambda ert : [ert.setTypes("site_config_get_rsh_host_list"),
+                             ert.setTypes("site_config_clear_rsh_host_list", None),
+                             ert.setTypes("site_config_add_rsh_host", None, [ertwrapper.c_char_p, ertwrapper.c_int])]
 r.getter = lambda ert : ert.getHash(ert.enkf.site_config_get_rsh_host_list(ert.site_config), True)
 
 def add_rsh_host(ert, listOfKeywords):
     ert.enkf.site_config_clear_rsh_host_list(ert.site_config)
 
     for keyword in listOfKeywords:
-        ert.enkf.site_config_add_rsh_host(ert.site_config, keyword[0], int(keyword[1])) #todo: what if max is not set?
+        if keyword[1].strip() == "":
+            max_running = 1
+        else:
+            max_running = int(keyword[1])
+
+        ert.enkf.site_config_add_rsh_host(ert.site_config, keyword[0], max_running)
 
 r.setter = add_rsh_host
 
@@ -260,8 +304,9 @@ internalPanel.endPage()
 
 internalPanel.startPage("LOCAL")
 
-#todo: wrong return value
 r = internalPanel.addRow(IntegerSpinner(widget, "Max running", "max_running_local", 1, 1000))
+r.initialize = lambda ert : [ert.setTypes("site_config_get_max_running_local", ertwrapper.c_int),
+                             ert.setTypes("site_config_set_max_running_local", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.site_config_get_max_running_local(ert.site_config)
 r.setter = lambda ert, value : ert.enkf.site_config_set_max_running_local(ert.site_config, value)
 
@@ -285,6 +330,9 @@ internalPanel = ConfigPanel(widget)
 internalPanel.startPage("setenv")
 
 r = internalPanel.addRow(KeywordTable(widget, "", "setenv"))
+r.initialize = lambda ert : [ert.setTypes("site_config_get_env_hash"),
+                             ert.setTypes("site_config_clear_env", None),
+                             ert.setTypes("site_config_setenv", None, [ertwrapper.c_char_p, ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.getHash(ert.enkf.site_config_get_env_hash(ert.site_config))
 
 def setenv(ert, value):
@@ -299,12 +347,11 @@ internalPanel.endPage()
 
 internalPanel.startPage("Update path")
 
-#Get:   s = enkf_main_get_site_config( enkf_main )
-#       pathlist  = site_config_get_path_variables( s )
-#       valuelist = site_config_get_path_values( s )
-#Set:   site_config_clear_pathvar( s )
-#       site_config_update_pathvar( s , path , value );
 r = internalPanel.addRow(KeywordTable(widget, "", "update_path"))
+r.initialize = lambda ert : [ert.setTypes("site_config_get_path_variables"),
+                             ert.setTypes("site_config_get_path_values"),
+                             ert.setTypes("site_config_clear_pathvar", None),
+                             ert.setTypes("site_config_update_pathvar", None, [ertwrapper.c_char_p, ertwrapper.c_char_p])]
 def get_update_path(ert):
     paths = ert.getStringList(ert.enkf.site_config_get_path_variables(ert.site_config))
     values =  ert.getStringList(ert.enkf.site_config_get_path_values(ert.site_config))
@@ -312,7 +359,14 @@ def get_update_path(ert):
     return [[p, v] for p,v in zip(paths, values)]
 
 r.getter = get_update_path
-r.setter = lambda ert, value : ert.setAttribute("update_path", value)    #todo: missing setter
+
+def update_pathvar(ert, value):
+    ert.enkf.site_config_clear_pathvar(ert.site_config)
+
+    for pathvar in value:
+        ert.enkf.site_config_update_pathvar(ert.site_config, pathvar[0], pathvar[1])
+
+r.setter = update_pathvar
 
 internalPanel.endPage()
 
@@ -334,34 +388,44 @@ configPanel.endPage()
 configPanel.startPage("Plot")
 
 r = configPanel.addRow(PathChooser(widget, "Output path", "plot_path"))
-r.initialize = lambda ert : ert.setRestype("plot_config_get_path", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("plot_config_get_path", ertwrapper.c_char_p),
+                             ert.setTypes("plot_config_set_path", None, [ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.enkf.plot_config_get_path(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_path(ert.plot_config, str(value))
 
 r = configPanel.addRow(ComboChoice(widget, ["PLPLOT", "TEXT"], "Driver", "plot_driver"))
-r.initialize = lambda ert : ert.setRestype("plot_config_get_driver", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("plot_config_get_driver", ertwrapper.c_char_p),
+                             ert.setTypes("plot_config_set_driver", None, [ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.enkf.plot_config_get_driver(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_driver(ert.plot_config, str(value))
 
 r = configPanel.addRow(IntegerSpinner(widget, "Errorbar max", "plot_errorbar_max", 1, 10000000))
+r.initialize = lambda ert : [ert.setTypes("plot_config_get_errorbar_max", ertwrapper.c_int),
+                             ert.setTypes("plot_config_set_errorbar_max", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_errorbar_max(ert.plot_config, value)
 
 r = configPanel.addRow(IntegerSpinner(widget, "Width", "plot_width", 1, 10000))
+r.initialize = lambda ert : [ert.setTypes("plot_config_get_width", ertwrapper.c_int),
+                             ert.setTypes("plot_config_set_width", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.plot_config_get_width(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_width(ert.plot_config, value)
 
 r = configPanel.addRow(IntegerSpinner(widget, "Height", "plot_height", 1, 10000))
+r.initialize = lambda ert : [ert.setTypes("plot_config_get_height", ertwrapper.c_int),
+                             ert.setTypes("plot_config_set_height", None, [ertwrapper.c_int])]
 r.getter = lambda ert : ert.enkf.plot_config_get_height(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_height(ert.plot_config, value)
 
 r = configPanel.addRow(PathChooser(widget, "Image Viewer", "image_viewer", True))
-r.initialize = lambda ert : ert.setRestype("plot_config_get_viewer", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("plot_config_get_viewer", ertwrapper.c_char_p),
+                             ert.setTypes("plot_config_set_viewer", None, [ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.enkf.plot_config_get_viewer(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_viewer(ert.plot_config, value)
 
 r = configPanel.addRow(ComboChoice(widget, ["bmp", "jpg", "png", "tif"], "Image type", "image_type"))
-r.initialize = lambda ert : ert.setRestype("plot_config_get_image_type", ertwrapper.c_char_p)
+r.initialize = lambda ert : [ert.setTypes("plot_config_get_image_type", ertwrapper.c_char_p),
+                             ert.setTypes("plot_config_set_image_type", None, [ertwrapper.c_char_p])]
 r.getter = lambda ert : ert.enkf.plot_config_get_image_type(ert.plot_config)
 r.setter = lambda ert, value : ert.enkf.plot_config_set_image_type(ert.plot_config, str(value))
 
