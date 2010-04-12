@@ -45,6 +45,10 @@ const char             * site_config_get_lsf_request( const site_config_type * s
 const char             * site_config_get_job_queue_name( const site_config_type * site_config );
 void                     site_config_set_job_queue( site_config_type * site_config , const char * queue_name );
 
+void                     site_config_set_rsh_command( site_config_type * site_config , const char * rsh_command);
+const char             * site_config_get_rsh_command( const site_config_type * site_config );
+
+
 #ifdef __cplusplus
 }
 #endif
