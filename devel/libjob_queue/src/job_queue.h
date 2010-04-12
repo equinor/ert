@@ -31,6 +31,8 @@ int                 job_queue_get_max_running( const job_queue_type * queue );
 void                job_queue_export_status_summary( job_queue_type * queue , int * external_status_list);
 int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
 time_t              job_queue_iget_sim_start( job_queue_type * queue, int external_id);
+const char        * job_queue_get_driver_name( const job_queue_type * queue );
+job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
 
 #ifdef __cplusplus
 }

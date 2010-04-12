@@ -856,6 +856,41 @@ job_driver_type job_queue_get_driver_type( const job_queue_type * queue ) {
     return queue->driver->driver_type;
 }
 
+/*****************************************************************/
+
+const char * job_queue_get_driver_name( const job_queue_type * queue ) {
+  job_driver_type driver_type = job_queue_get_driver_type( queue );
+  switch( driver_type ) {
+  case(LSF_DRIVER):
+    return "LSF";
+    break;
+  case(RSH_DRIVER):
+    return "RSH";
+    break;
+  case(LOCAL_DRIVER):
+    return "LOCAL";
+    break;
+  default:
+    util_abort("%s: driver_type not set?? \n",__func__);
+    return NULL;
+  }
+}
+
+
+job_driver_type job_queue_lookup_driver_name( const char * driver_name ) {
+  if (strcmp( driver_name , "LOCAL") == 0)
+    return LOCAL_DRIVER;
+  else if (strcmp( driver_name , "RSH") == 0)
+    return RSH_DRIVER;
+  else if (strcmp( driver_name , "LSF") == 0)
+    return LSF_DRIVER;
+  else {
+    util_abort("%s: driver:%s not recognized \n",__func__ , driver_name);
+    return NULL_DRIVER;
+  }
+}
+
+/*****************************************************************/
 
 
 void job_queue_set_size( job_queue_type * queue , int size ) {
