@@ -4,6 +4,24 @@ from widgets.validateddialog import ValidatedDialog
 import ertwrapper
 from widgets.combochoice import ComboChoice
 
+# e = enkf_main_get_ensemble_config( enkf_main )
+# s = ensemble_config_alloc_keylist_from_var_type(e , 1 # PARAMETER value from enkf_types.h)
+# # Itererer over stringlist
+# stringlist_free( s )
+# range = enkf_main_get_ensemble_size( enkf_main )
+#
+#
+# sl = stringlist_alloc_new()
+# stringlist_append_copy(sl , "STRING")
+#
+# 
+#
+# enkf_main_initialize(enkf_main , sl , iens1 , iens2);
+# stringlist_free( sl )
+
+
+
+
 class InitPanel(QtGui.QFrame):
     
     def __init__(self, parent):
