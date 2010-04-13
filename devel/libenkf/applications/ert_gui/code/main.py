@@ -168,7 +168,7 @@ r.getter = lambda ert : ert.enkf.model_config_get_enkf_sched_file(ert.enkf.enkf_
 r.setter = lambda ert, value : ert.enkf.model_config_set_enkf_sched_file(ert.enkf.enkf_main_get_model_config(ert.main), str(value))
 
 r = configPanel.addRow(KeywordList(widget, "Local config", "local_config"))
-r.newKeywordPopup = lambda : QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
+r.newKeywordPopup = lambda list : QtGui.QFileDialog.getOpenFileName(r, "Select a path", "")
 r.initialize = lambda ert : [ert.setTypes("local_config_get_config_files"),
                              ert.setTypes("enkf_main_get_local_config"),
                              ert.setTypes("local_config_clear_config_files", None),

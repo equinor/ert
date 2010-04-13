@@ -1,6 +1,7 @@
 from PyQt4 import QtGui, QtCore
 import help #todo this is not a nice way of solving this...
 import sys
+from widgets.util import resourceIcon
 
 def abstract():
     """Abstract keyword that indicate an abstract function"""
@@ -52,7 +53,7 @@ class ContentModel:
                 o.initialize(ContentModel.contentModel)
             except NotImplementedError:
                 sys.stderr.write("Missing initializer: " + o.helpLabel + "\n")
-                
+
             o.fetchContent()
 
     @classmethod
@@ -86,22 +87,11 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
         self.widgetLayout.setMargin(0)
         self.setLayout(self.widgetLayout)
 
-        self.helpButton = QtGui.QToolButton(self)
-
-        self.helpButton.setIcon(QtGui.QIcon.fromTheme("help"))
-        self.helpButton.setIconSize(QtCore.QSize(16, 16))
-        self.helpButton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.helpButton.setAutoRaise(True)
-
-        self.connect(self.helpButton, QtCore.SIGNAL('clicked()'), self.showHelp)
-
-        if self.helpMessage == "":
-            self.helpButton.setEnabled(False)
 
     def getHelpButton(self):
         """Returns the help button or None"""
         try:
-          self.helpButton
+            self.helpButton
         except AttributeError:
             self.helpButton = None
 
@@ -113,6 +103,19 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
 
     def addHelpButton(self):
         """Adds the help button to the provided layout."""
+
+        self.helpButton = QtGui.QToolButton(self)
+
+        self.helpButton.setIcon(resourceIcon("help"))
+        self.helpButton.setIconSize(QtCore.QSize(16, 16))
+        self.helpButton.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        self.helpButton.setAutoRaise(True)
+
+        self.connect(self.helpButton, QtCore.SIGNAL('clicked()'), self.showHelp)
+
+        if self.helpMessage == "":
+            self.helpButton.setEnabled(False)
+
         if not self.getHelpButton() is None :
             self.addWidget(self.getHelpButton())
 

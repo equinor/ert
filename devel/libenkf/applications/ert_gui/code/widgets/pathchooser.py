@@ -24,7 +24,7 @@ class PathChooser(HelpedWidget):
         self.addWidget(self.pathLine)
 
         dialogButton = QtGui.QToolButton(self)
-        dialogButton.setIcon(QtGui.QIcon.fromTheme("folder"))
+        dialogButton.setIcon(resourceIcon("folder"))
         dialogButton.setIconSize(QtCore.QSize(16, 16))
         self.connect(dialogButton, QtCore.SIGNAL('clicked()'), self.selectDirectory)
         self.addWidget(dialogButton)
