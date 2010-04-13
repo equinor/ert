@@ -26,11 +26,19 @@ class ParametersAndMembers(HelpedWidget):
     def __init__(self, parent = None):
         HelpedWidget.__init__(self, parent)
 
-        copySourceLayout = QtGui.QFormLayout()
+
+
+
+
+        #copyLabel = QtGui.QLabel("Copy:")
+        #copyLabel.setMaximumWidth(copyLabel.fontMetrics().width(copyLabel.text()))
+
         self.sourceCase = QtGui.QComboBox(self)
         self.sourceCase.setMaximumWidth(150)
+        self.sourceCase.setToolTip("Select source case")
         self.sourceType = QtGui.QComboBox(self)
         self.sourceType.setMaximumWidth(100)
+        self.sourceType.setToolTip("Select source type")
         self.sourceType.addItem("Analyzed")
         self.sourceType.addItem("Forecasted")
         self.sourceReportStep = QtGui.QSpinBox(self)
@@ -38,16 +46,13 @@ class ParametersAndMembers(HelpedWidget):
         self.sourceReportStep.setMinimum(0)
         self.sourceReportStep.setMaximum(0)
 
-        copySourceLayout.addRow(QtGui.QLabel("Source"))
-        copySourceLayout.addRow("Case:", self.sourceCase)
-        copySourceLayout.addRow("Type:", self.sourceType)
-        copySourceLayout.addRow("Report step:", self.sourceReportStep)
+        arrow = QtGui.QLabel(self)
+        arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
+        arrow.setMaximumSize(16, 16)
 
-
-        copyTargetLayout = QtGui.QFormLayout()
-        #self.targetCase = QtGui.QComboBox(self)
         self.targetType = QtGui.QComboBox(self)
         self.targetType.setMaximumWidth(100)
+        self.targetType.setToolTip("Select target type")
         self.targetType.addItem("Analyzed")
         self.targetType.addItem("Forecasted")
         self.targetReportStep = QtGui.QSpinBox(self)
@@ -55,26 +60,21 @@ class ParametersAndMembers(HelpedWidget):
         self.targetReportStep.setMinimum(0)
         self.targetReportStep.setMaximum(0)
 
-#        copyTargetLayout.addRow(QtGui.QLabel("Target"))
-#        copyTargetLayout.addRow("Case:", self.targetCase)
-#        copyTargetLayout.addRow("Type:", self.targetType)
-#        copyTargetLayout.addRow("Report step:", self.targetReportStep)
-
         stLayout = QtGui.QHBoxLayout()
-        #stLayout.addLayout(copySourceLayout)
-        #stLayout.addLayout(copyTargetLayout)
-        copyLabel = QtGui.QLabel("Copy:")
-        copyLabel.setMaximumWidth(copyLabel.fontMetrics().width(copyLabel.text()))
-        stLayout.addWidget(copyLabel)
+
+
         stLayout.addWidget(self.sourceCase)
         stLayout.addWidget(self.sourceType)
         stLayout.addWidget(self.sourceReportStep)
-        arrow = QtGui.QLabel(self)
-        arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
-        arrow.setMaximumSize(16, 16)
         stLayout.addWidget(arrow)
         stLayout.addWidget(self.targetType)
         stLayout.addWidget(self.targetReportStep)
+
+
+        radioLayout = QtGui.QVBoxLayout()
+        radioLayout.addWidget(QtGui.QRadioButton("Initialize from scratch"))
+        radioLayout.addWidget(QtGui.QRadioButton("Copy"))
+
 
         self.parametersList = QtGui.QListWidget(self)
         self.parametersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
@@ -97,8 +97,9 @@ class ParametersAndMembers(HelpedWidget):
         listLayout.addLayout(memberLayout)
 
         layout = QtGui.QVBoxLayout()
-        layout.addLayout(stLayout)
+        layout.addLayout(radioLayout)
         layout.addLayout(listLayout)
+        layout.addLayout(stLayout)
 
         self.addLayout(layout)
 
