@@ -21,29 +21,31 @@ class AddRemoveWidget(QtGui.QWidget):
         self.connect(self.removeButton, QtCore.SIGNAL('clicked()'), removeFunction)
 
         if horizontal:
-            buttonLayout = QtGui.QHBoxLayout()
+            self.buttonLayout = QtGui.QHBoxLayout()
         else:
-            buttonLayout = QtGui.QVBoxLayout()
+            self.buttonLayout = QtGui.QVBoxLayout()
 
-        buttonLayout.setMargin(0)
+        self.buttonLayout.setMargin(0)
 
         if horizontal:
-            buttonLayout.addStretch(1)
+            self.buttonLayout.addStretch(1)
 
-        buttonLayout.addWidget(self.addButton)
-        buttonLayout.addWidget(self.removeButton)
+        self.buttonLayout.addWidget(self.addButton)
+        self.buttonLayout.addWidget(self.removeButton)
 
         if not horizontal:
-            buttonLayout.addStretch(1)
+            self.buttonLayout.addStretch(1)
         else:
-            buttonLayout.addSpacing(2)
+            self.buttonLayout.addSpacing(2)
 
-        self.setLayout(buttonLayout)
+        self.setLayout(self.buttonLayout)
 
     def enableAddButton(self, state):
+        """Enable or disable the add button"""
         self.addButton.setEnabled(state)
 
     def enableRemoveButton(self, state):
+        """Enable or disable the remove button"""
         self.removeButton.setEnabled(state)
 
 
@@ -68,6 +70,7 @@ class KeywordList(HelpedWidget):
         self.description = "Enter name of keyword:"
 
     def setPopupLabels(self, title, description):
+        """Change the labels of the default popup."""
         self.title = title
         self.description = description
 
@@ -75,15 +78,14 @@ class KeywordList(HelpedWidget):
         """
         Pops up a message box asking for a new keyword.
         Override this and return a string to customize the input dialog - Empty string equals canceled.
-        The provided list are the keywords in the list
+        The provided list are the already defined keywords
         """
         newKeyword, ok = QtGui.QInputDialog.getText(self, self.tr(self.title), self.tr(self.description), QtGui.QLineEdit.Normal)
 
         if ok:
             return str(newKeyword).strip()
         else:
-            return ""
-
+            return ""    
 
     def addItem(self):
         """Called by the add button to insert a new keyword"""
@@ -101,6 +103,7 @@ class KeywordList(HelpedWidget):
 
 
     def getList(self):
+        """Returns the keywrods available in the list"""
         keywordList = []
         for index in range(self.list.count()):
             keywordList.append(str(self.list.item(index).text()))
