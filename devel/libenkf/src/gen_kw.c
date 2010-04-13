@@ -130,7 +130,7 @@ void gen_kw_truncate(gen_kw_type * gen_kw) {
 
 bool gen_kw_initialize(gen_kw_type *gen_kw, int iens) {
   char * init_file = gen_kw_config_alloc_initfile( gen_kw->config , iens);
-
+  
   if (init_file != NULL) {
     gen_kw_fload(gen_kw , init_file );
     free( init_file );

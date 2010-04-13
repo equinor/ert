@@ -47,6 +47,7 @@ void enkf_tui_init(enkf_main_type * enkf_main, bool all_members , bool all_param
     stringlist_append_copy( param_list , enkf_config_node_get_key(enkf_tui_util_scanf_key(ensemble_config , prompt_len , INVALID , INVALID_VAR)) );
 
     
+
   enkf_main_initialize(enkf_main , param_list , iens1 , iens2);
   stringlist_free( param_list );
 }
@@ -67,6 +68,7 @@ static void enkf_tui_init3(void * enkf_main) {
 static void enkf_tui_init4(void * enkf_main) {
   enkf_tui_init(enkf_main , false , false);
 }
+
 
 
 void enkf_tui_init_menu(void * arg) {

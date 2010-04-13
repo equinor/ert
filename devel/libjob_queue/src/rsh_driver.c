@@ -56,7 +56,6 @@ struct rsh_driver_struct {
    If the host is for some reason not available, NULL should be returned.
 */
 
-
 static rsh_host_type * rsh_host_alloc(const char * host_name , int max_running) {
   struct addrinfo * result;
   if (getaddrinfo(host_name , NULL , NULL , &result) == 0) {

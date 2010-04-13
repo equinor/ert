@@ -1699,7 +1699,6 @@ void enkf_main_initialize(enkf_main_type * enkf_main , const stringlist_type * p
   int iens;
   msg_type * msg = msg_alloc("Initializing...: " );
   msg_show(msg);
-
   for (iens = iens1; iens <= iens2; iens++) {
     enkf_state_type * state = enkf_main_iget_state( enkf_main , iens);
     {
