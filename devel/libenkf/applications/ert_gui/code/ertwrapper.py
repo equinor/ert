@@ -16,6 +16,7 @@ class ErtWrapper:
         self.analysis_config = self.getErtPointer("enkf_main_get_analysis_config")
         self.ecl_config = self.getErtPointer("enkf_main_get_ecl_config")
         self.site_config = self.getErtPointer("enkf_main_get_site_config")
+        self.ensemble_config = self.getErtPointer("enkf_main_get_ensemble_config")
 
         self.initializeTypes()
         

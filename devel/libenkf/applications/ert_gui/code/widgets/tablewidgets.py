@@ -1,5 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from helpedwidget import *
+from widgets.util import *
 
 class AddRemoveWidget(QtGui.QWidget):
     """
@@ -11,12 +12,12 @@ class AddRemoveWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
 
         self.addButton = QtGui.QToolButton(self)
-        self.addButton.setIcon(QtGui.QIcon.fromTheme("add"))
+        self.addButton.setIcon(resourceIcon("add"))
         self.addButton.setIconSize(QtCore.QSize(16, 16))
         self.connect(self.addButton, QtCore.SIGNAL('clicked()'), addFunction)
 
         self.removeButton = QtGui.QToolButton(self)
-        self.removeButton.setIcon(QtGui.QIcon.fromTheme("remove"))
+        self.removeButton.setIcon(resourceIcon("remove"))
         self.removeButton.setIconSize(QtCore.QSize(16, 16))
         self.connect(self.removeButton, QtCore.SIGNAL('clicked()'), removeFunction)
 
