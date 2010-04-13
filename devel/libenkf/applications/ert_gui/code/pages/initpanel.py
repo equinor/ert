@@ -23,6 +23,117 @@ from widgets.util import resourceIcon
 
 class ParametersAndMembers(HelpedWidget):
 
+    def __init__(self, parent = None):
+        HelpedWidget.__init__(self, parent)
+
+        copySourceLayout = QtGui.QFormLayout()
+        self.sourceCase = QtGui.QComboBox(self)
+        self.sourceCase.setMaximumWidth(150)
+        self.sourceType = QtGui.QComboBox(self)
+        self.sourceType.setMaximumWidth(100)
+        self.sourceType.addItem("Analyzed")
+        self.sourceType.addItem("Forecasted")
+        self.sourceReportStep = QtGui.QSpinBox(self)
+        self.sourceReportStep.setMaximumWidth(55)
+        self.sourceReportStep.setMinimum(0)
+        self.sourceReportStep.setMaximum(0)
+
+        copySourceLayout.addRow(QtGui.QLabel("Source"))
+        copySourceLayout.addRow("Case:", self.sourceCase)
+        copySourceLayout.addRow("Type:", self.sourceType)
+        copySourceLayout.addRow("Report step:", self.sourceReportStep)
+
+
+        copyTargetLayout = QtGui.QFormLayout()
+        #self.targetCase = QtGui.QComboBox(self)
+        self.targetType = QtGui.QComboBox(self)
+        self.targetType.setMaximumWidth(100)
+        self.targetType.addItem("Analyzed")
+        self.targetType.addItem("Forecasted")
+        self.targetReportStep = QtGui.QSpinBox(self)
+        self.targetReportStep.setMaximumWidth(55)
+        self.targetReportStep.setMinimum(0)
+        self.targetReportStep.setMaximum(0)
+
+#        copyTargetLayout.addRow(QtGui.QLabel("Target"))
+#        copyTargetLayout.addRow("Case:", self.targetCase)
+#        copyTargetLayout.addRow("Type:", self.targetType)
+#        copyTargetLayout.addRow("Report step:", self.targetReportStep)
+
+        stLayout = QtGui.QHBoxLayout()
+        #stLayout.addLayout(copySourceLayout)
+        #stLayout.addLayout(copyTargetLayout)
+        copyLabel = QtGui.QLabel("Copy:")
+        copyLabel.setMaximumWidth(copyLabel.fontMetrics().width(copyLabel.text()))
+        stLayout.addWidget(copyLabel)
+        stLayout.addWidget(self.sourceCase)
+        stLayout.addWidget(self.sourceType)
+        stLayout.addWidget(self.sourceReportStep)
+        arrow = QtGui.QLabel(self)
+        arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
+        arrow.setMaximumSize(16, 16)
+        stLayout.addWidget(arrow)
+        stLayout.addWidget(self.targetType)
+        stLayout.addWidget(self.targetReportStep)
+
+        self.parametersList = QtGui.QListWidget(self)
+        self.parametersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+
+        self.membersList = QtGui.QListWidget(self)
+        self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+
+        parameterLayout = QtGui.QVBoxLayout()
+        parameterLayout.addWidget(QtGui.QLabel("Parameters"))
+        parameterLayout.addWidget(self.parametersList)
+        parameterLayout.addLayout(self.createCheckPanel(self.parametersList.selectAll, self.parametersList.clearSelection))
+
+        memberLayout = QtGui.QVBoxLayout()
+        memberLayout.addWidget(QtGui.QLabel("Members"))
+        memberLayout.addWidget(self.membersList)
+        memberLayout.addLayout(self.createCheckPanel(self.membersList.selectAll, self.membersList.clearSelection))
+
+        listLayout = QtGui.QHBoxLayout()
+        listLayout.addLayout(parameterLayout)
+        listLayout.addLayout(memberLayout)
+
+        layout = QtGui.QVBoxLayout()
+        layout.addLayout(stLayout)
+        layout.addLayout(listLayout)
+
+        self.addLayout(layout)
+
+
+
+    def fetchContent(self):
+        data = self.getFromModel()
+
+        self.parametersList.clear()
+        self.membersList.clear()
+
+        for parameter in data["parameters"]:
+            self.parametersList.addItem(parameter)
+
+        for member in data["members"]:
+            self.membersList.addItem(str(member))
+
+
+    def getter(self, ert):
+        PARAMETER = 1 #PARAMETER value from enkf_types.h
+        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER)
+        parameters = ert.getStringList(keylist)
+        ert.freeStringList(keylist)
+
+        members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
+
+        return {"parameters" : parameters, "members" : range(members)}
+
+    def initialize(self, ert):
+        ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
+        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
+
+    def setter(self, ert, value):
+        pass
+
     def createCheckPanel(self, checkall, uncheckall):
         self.checkAll = QtGui.QToolButton(self)
         self.checkAll.setIcon(resourceIcon("checked"))
@@ -50,68 +161,6 @@ class ParametersAndMembers(HelpedWidget):
 
         return buttonLayout
 
-    def __init__(self, parent = None):
-        HelpedWidget.__init__(self, parent)
-
-        self.parametersList = QtGui.QListWidget(self)
-        self.parametersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
-
-        self.membersList = QtGui.QListWidget(self)
-        self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
-
-        parameterLayout = QtGui.QVBoxLayout()
-        parameterLayout.addWidget(QtGui.QLabel("Parameters"))
-        parameterLayout.addWidget(self.parametersList)
-        parameterLayout.addLayout(self.createCheckPanel(self.parametersList.selectAll, self.parametersList.clearSelection))
-
-        memberLayout = QtGui.QVBoxLayout()
-        memberLayout.addWidget(QtGui.QLabel("Members"))
-        memberLayout.addWidget(self.membersList)
-        memberLayout.addLayout(self.createCheckPanel(self.membersList.selectAll, self.membersList.clearSelection))
-
-
-        self.addLayout(parameterLayout)
-        self.addLayout(memberLayout)
-
-
-
-
-
-
-
-    def poink(self):
-        print "Poink"
-
-    def fetchContent(self):
-        data = self.getFromModel()
-
-        self.parametersList.clear()
-        self.membersList.clear()
-
-        for parameter in data["parameters"]:
-            self.parametersList.addItem(parameter)
-
-        for member in data["members"]:
-            self.membersList.addItem(str(member))
-
-
-
-    def getter(self, ert):
-        PARAMETER = 1 #PARAMETER value from enkf_types.h
-        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER)
-        parameters = ert.getStringList(keylist)
-        ert.freeStringList(keylist)
-
-        members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
-
-        return {"parameters" : parameters, "members" : range(members)}
-
-    def initialize(self, ert):
-        ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
-        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
-
-    def setter(self, ert, value):
-        pass
 
 class InitPanel(QtGui.QFrame):
     
