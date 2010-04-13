@@ -34,4 +34,13 @@ class ComboChoice(HelpedWidget):
                 break
 
         if not indexSet:
-            raise AssertionError("ComboBox can not be set to: " + newValue)
+            raise AssertionError("ComboBox can not be set to: " + str(newValue))
+
+    def updateList(self, choiceList):
+        self.disconnect(self.combo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.updateContent)
+
+        self.combo.clear()
+        for choice in choiceList:
+            self.combo.addItem(choice)
+
+        self.connect(self.combo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.updateContent)
