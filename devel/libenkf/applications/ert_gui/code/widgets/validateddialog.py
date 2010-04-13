@@ -2,7 +2,7 @@ from PyQt4 import QtGui, QtCore
 
 class ValidatedDialog(QtGui.QDialog):
     """A dialog for creating a validated. Performs validation of name."""
-    #todo: inherit parameterdialog from this
+
     invalidColor = QtGui.QColor(255, 235, 235)
 
     def __init__(self, parent, title = "Title", description = "Description", uniqueNames = []):
@@ -10,38 +10,41 @@ class ValidatedDialog(QtGui.QDialog):
         QtGui.QDialog.__init__(self, parent)
         self.setModal(True)
         self.setWindowTitle(title)
+        self.setMinimumWidth(250)
+        self.setMinimumHeight(150)
+
 
         self.uniqueNames = uniqueNames
 
-        layout = QtGui.QFormLayout()
+        self.layout = QtGui.QFormLayout()
 
-        layout.addRow(QtGui.QLabel(description))
+        self.layout.addRow(QtGui.QLabel(description))
 
-        layout.addRow(self.createSpace())
+        self.layout.addRow(self.createSpace())
 
 
         self.paramName = QtGui.QLineEdit(self)
         self.connect(self.paramName, QtCore.SIGNAL('textChanged(QString)'), self.validateName)
         self.validColor = self.paramName.palette().color(self.paramName.backgroundRole())
 
-        layout.addRow("Name:", self.paramName)
+        self.layout.addRow("Name:", self.paramName)
 
-        layout.addRow(self.createSpace())
+        self.layout.addRow(self.createSpace())
 
         buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
         self.okbutton = buttons.button(QtGui.QDialogButtonBox.Ok)
         self.okbutton.setEnabled(False)
 
-        layout.addRow(buttons)
+        self.layout.addRow(buttons)
 
 
         self.connect(buttons, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(buttons, QtCore.SIGNAL('rejected()'), self.reject)
 
-        self.setLayout(layout)
+        self.setLayout(self.layout)
 
     def notValid(self, msg):
-        """Called when the parameter name is not valid."""
+        """Called when the name is not valid."""
         self.okbutton.setEnabled(False)
         palette = self.paramName.palette()
         palette.setColor(self.paramName.backgroundRole(), self.invalidColor)
@@ -49,7 +52,7 @@ class ValidatedDialog(QtGui.QDialog):
         self.paramName.setPalette(palette)
 
     def valid(self):
-        """Called when the parameter name is valid."""
+        """Called when the name is valid."""
         self.okbutton.setEnabled(True)
         palette = self.paramName.palette()
         palette.setColor(self.paramName.backgroundRole(), self.validColor)
@@ -58,7 +61,7 @@ class ValidatedDialog(QtGui.QDialog):
 
 
     def validateName(self, value):
-        """Called to perform validation of a parameter name"""
+        """Called to perform validation of a name. For specific needs override this function and call valid() and notValid(msg)."""
         value = str(value)
 
         if value == "":
@@ -78,12 +81,12 @@ class ValidatedDialog(QtGui.QDialog):
         return space
 
     def getName(self):
-        """Return the parameter name chosen by the user"""
+        """Return the new name chosen by the user"""
         return str(self.paramName.text())
 
     def showAndTell(self):
         """Shows the dialog and returns the result"""
         if self.exec_():
-            return self.getName()
+            return str(self.getName()).strip()
 
         return ""

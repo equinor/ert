@@ -14,15 +14,15 @@ from widgets.stringbox import StringBox
 from widgets.helpedwidget import ContentModel, HelpedWidget
 from widgets.tablewidgets import KeywordList, KeywordTable, MultiColumnTable
 from widgets.spinnerwidgets import DoubleSpinner, IntegerSpinner
-from widgets.application import Application
+from pages.application import Application
 import widgets.util
 
 #for k in QtGui.QStyleFactory.keys():
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
-from widgets.plotpanel import PlotPanel
-from widgets.parameters.parameterpanel import ParameterPanel
+from pages.plotpanel import PlotPanel
+from pages.parameters.parameterpanel import ParameterPanel
 
 #todo: proper support for unicode characters?
 from widgets.validateddialog import ValidatedDialog
@@ -647,13 +647,18 @@ initPanel.setFrameShadow(QtGui.QFrame.Raised)
 initPanelLayout = QtGui.QHBoxLayout()
 initPanel.setLayout(initPanelLayout)
 
+casePanel = QtGui.QFormLayout()
+
 cases = KeywordList(widget, "", "case_list")
 
 cases.newKeywordPopup = lambda list : ValidatedDialog(cases, "New case", "Enter name of new case:", list).showAndTell()
 cases.addRemoveWidget.enableRemoveButton(False)
 cases.list.setMaximumHeight(150)
 cases.initialize = lambda ert : [ert.setTypes("enkf_main_get_fs"),
-                                 ert.setTypes("enkf_fs_alloc_dirlist")]
+                                 ert.setTypes("enkf_fs_alloc_dirlist"),
+                                 ert.setTypes("enkf_fs_has_dir", ertwrapper.c_int),
+                                 ert.setTypes("enkf_fs_select_write_dir", None),
+                                 ert.setTypes("enkf_fs_select_read_dir", None)]
 def get_case_list(ert):
     fs = ert.enkf.enkf_main_get_fs(ert.main)
     caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
@@ -662,13 +667,21 @@ def get_case_list(ert):
     ert.freeStringList(caseList)
     return list
 
-def set_dummy(ert, value):
-    print "Dummy setter"
+def create_case(ert, cases):
+    fs = ert.enkf.enkf_main_get_fs(ert.main)
+
+    for case in cases:
+        if not ert.enkf.enkf_fs_has_dir(fs, case):
+            ert.enkf.enkf_fs_select_write_dir(fs, case, True)
+            #ert.enkf.enkf_fs_select_read_dir(fs, case) #selection?
+            break
 
 cases.getter = get_case_list
-cases.setter = set_dummy 
+cases.setter = create_case
 
-initPanelLayout.addWidget(cases)
+casePanel.addRow("Cases:", cases)
+
+initPanelLayout.addLayout(casePanel)
 
 
 widget.addPage("Init", widgets.util.resourceIcon("db"), initPanel)
