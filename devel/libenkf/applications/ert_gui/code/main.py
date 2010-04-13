@@ -26,6 +26,7 @@ from pages.parameters.parameterpanel import ParameterPanel
 
 #todo: proper support for unicode characters?
 from widgets.validateddialog import ValidatedDialog
+from pages.initpanel import InitPanel
 
 app = QtGui.QApplication(sys.argv)
 
@@ -640,48 +641,7 @@ configPanel.endPage()
 
 widget.addPage("Configuration", widgets.util.resourceIcon("config"), configPanel)
 
-initPanel = QtGui.QFrame()
-initPanel.setFrameShape(QtGui.QFrame.Panel)
-initPanel.setFrameShadow(QtGui.QFrame.Raised)
-
-initPanelLayout = QtGui.QHBoxLayout()
-initPanel.setLayout(initPanelLayout)
-
-casePanel = QtGui.QFormLayout()
-
-cases = KeywordList(widget, "", "case_list")
-
-cases.newKeywordPopup = lambda list : ValidatedDialog(cases, "New case", "Enter name of new case:", list).showAndTell()
-cases.addRemoveWidget.enableRemoveButton(False)
-cases.list.setMaximumHeight(150)
-cases.initialize = lambda ert : [ert.setTypes("enkf_main_get_fs"),
-                                 ert.setTypes("enkf_fs_alloc_dirlist"),
-                                 ert.setTypes("enkf_fs_has_dir", ertwrapper.c_int),
-                                 ert.setTypes("enkf_fs_select_write_dir", None),
-                                 ert.setTypes("enkf_fs_select_read_dir", None)]
-def get_case_list(ert):
-    fs = ert.enkf.enkf_main_get_fs(ert.main)
-    caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
-
-    list = ert.getStringList(caseList)
-    ert.freeStringList(caseList)
-    return list
-
-def create_case(ert, cases):
-    fs = ert.enkf.enkf_main_get_fs(ert.main)
-
-    for case in cases:
-        if not ert.enkf.enkf_fs_has_dir(fs, case):
-            ert.enkf.enkf_fs_select_write_dir(fs, case, True)
-            #ert.enkf.enkf_fs_select_read_dir(fs, case) #selection?
-            break
-
-cases.getter = get_case_list
-cases.setter = create_case
-
-casePanel.addRow("Cases:", cases)
-
-initPanelLayout.addLayout(casePanel)
+initPanel = InitPanel(widget)
 
 
 widget.addPage("Init", widgets.util.resourceIcon("db"), initPanel)
