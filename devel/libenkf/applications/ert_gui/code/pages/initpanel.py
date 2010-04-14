@@ -23,6 +23,9 @@ from widgets.util import resourceIcon
 
 class ParametersAndMembers(HelpedWidget):
 
+    listOfParameters = []
+    listOfDynamicParameters = []
+
     def __init__(self, parent = None):
         HelpedWidget.__init__(self, parent)
 
@@ -36,12 +39,12 @@ class ParametersAndMembers(HelpedWidget):
         self.sourceType.addItem("Analyzed")
         self.sourceType.addItem("Forecasted")
         self.sourceReportStep = self.createValidatedTimestepCombo()
+        self.sourceCompleteEnsembleCheck = QtGui.QCheckBox("Complete Ensemble")
+        self.sourceCompleteEnsembleCheck.setChecked(True)
+        self.connect(self.sourceCompleteEnsembleCheck, QtCore.SIGNAL('stateChanged(int)'), lambda state : self.toggleCompleteEnsembleState(self.sourceCompleteEnsembleCheck.isChecked()))
+
 
         self.maxTimeStep = 11
-
-#        arrow = QtGui.QLabel(self)
-#        arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
-#        arrow.setMaximumSize(16, 16)
 
         self.targetType = QtGui.QComboBox(self)
         self.targetType.setMaximumWidth(100)
@@ -50,65 +53,40 @@ class ParametersAndMembers(HelpedWidget):
         self.targetType.addItem("Forecasted")
         self.targetReportStep = self.createValidatedTimestepCombo()
 
-        #stLayout = QtGui.QVBoxLayout()
         stLayout = QtGui.QGridLayout()
-        stLayout.setColumnStretch(6, 1)
-        
+        stLayout.setColumnStretch(8, 1)
+
         stLayout.addWidget(QtGui.QLabel("Case"), 0, 1)
         stLayout.addWidget(QtGui.QLabel("State"), 0, 3)
         stLayout.addWidget(QtGui.QLabel("Timestep"), 0, 5)
 
-        #sourceLayout = QtGui.QHBoxLayout()
-        #sourceLayout.setLabelAlignment(QtCore.Qt.AlignRight)
-        #targetLayout = QtGui.QHBoxLayout()
-        #targetLayout.setLabelAlignment(QtCore.Qt.AlignRight)
 
-
-#        self.copyLabel = QtGui.QLabel("Copy:")
-#        self.copyLabel.setMaximumWidth(self.copyLabel.fontMetrics().width(self.copyLabel.text()))
-#        stLayout.addWidget(self.copyLabel)
         self.sourceLabel = QtGui.QLabel("Source:")
-        #sourceLabel.setMinimumWidth(75)
         stLayout.addWidget(self.sourceLabel, 1, 0)
         stLayout.addWidget(self.sourceCase, 1, 1)
-        #sourceLayout.addRow("Source case:", self.sourceCase)
         stLayout.addWidget(self.sourceType, 1, 3)
-        #sourceLayout.addRow("State:", self.sourceType)
         stLayout.addWidget(self.sourceReportStep, 1, 5)
-        #sourceLayout.addRow("Timestep:", self.sourceReportStep)
-        #sourceLayout.addStretch(1)
+        stLayout.addWidget(self.sourceCompleteEnsembleCheck, 1, 7)
 
-        self.targetCaseLabel = QtGui.QLabel("default")
+        self.targetCaseLabel = QtGui.QLabel("none?")
         font = self.targetCaseLabel.font()
         font.setWeight(QtGui.QFont.Bold)
         self.targetCaseLabel.setFont(font)
         self.targetCaseLabel.setMinimumWidth(self.sourceCase.minimumWidth())
 
         self.targetLabel = QtGui.QLabel("Target:")
-        #targetLabel.setMinimumWidth(75)
         stLayout.addWidget(self.targetLabel, 2, 0)
         stLayout.addWidget(self.targetCaseLabel, 2, 1)
-        #targetLayout.addRow("Target case:", self.targetLabel)
         stLayout.addWidget(self.targetType, 2, 3)
-        #targetLayout.addRow("State:", self.targetType)
         stLayout.addWidget(self.targetReportStep, 2, 5)
-        #targetLayout.addStretch(1)
-        #targetLayout.addRow("Timestep:", self.targetReportStep)
-
-
-        #stLayout.addLayout(sourceLayout)
-        #stLayout.addWidget(arrow)
-        #stLayout.addLayout(targetLayout)
-
 
 
         radioLayout = self.createRadioButtons()
         listLayout = self.createParameterMemberPanel()
 
-
+        self.actionButton = QtGui.QPushButton("Initialize")
         actionLayout = QtGui.QHBoxLayout()
         actionLayout.addStretch(1)
-        self.actionButton = QtGui.QPushButton("Initialize")
         actionLayout.addWidget(self.actionButton)
         actionLayout.addStretch(1)
 
@@ -123,11 +101,23 @@ class ParametersAndMembers(HelpedWidget):
 
         self.addLayout(layout)
 
-    def toggleActionState(self, action="Initialize", selectParameter = True, selectSource = False, selectTarget = False):
+        self.toggleScratch.toggle()
+
+    def toggleCompleteEnsembleState(self, checkState):
+        self.parametersList.setEnabled(not checkState)
+        self.parametersList.checkAll.setEnabled(not checkState)
+        self.parametersList.uncheckAll.setEnabled(not checkState)
+
+        if checkState:
+            self.parametersList.selectAll()
+
+
+    def toggleActionState(self, action="Initialize", showCopyParameters = False, selectSource = False, selectTarget = False):
         self.sourceLabel.setEnabled(selectSource)
         self.sourceCase.setEnabled(selectSource)
         self.sourceType.setEnabled(selectSource)
         self.sourceReportStep.setEnabled(selectSource)
+        self.sourceCompleteEnsembleCheck.setEnabled(showCopyParameters)
 
         if not selectSource:
             self.sourceReportStep.setCurrentIndex(0)
@@ -143,12 +133,19 @@ class ParametersAndMembers(HelpedWidget):
 
         self.actionButton.setText(action)
 
-        self.parametersList.setEnabled(selectParameter)
-        self.parametersList.checkAll.setEnabled(selectParameter)
-        self.parametersList.uncheckAll.setEnabled(selectParameter)
 
-        if not selectParameter:
-            self.parametersList.selectAll()
+        self.parametersList.clear()
+        self.parametersList.addItems(self.listOfParameters)
+
+        self.parametersList.setEnabled(True)
+        self.parametersList.checkAll.setEnabled(True)
+        self.parametersList.uncheckAll.setEnabled(True)
+
+
+        if showCopyParameters:
+            self.parametersList.addItems(self.listOfDynamicParameters)
+            self.toggleCompleteEnsembleState(self.sourceCompleteEnsembleCheck.isChecked())
+
 
         
     def fetchContent(self): #todo: add support for updated parameters and cases. Make other operations emit signals
@@ -158,8 +155,8 @@ class ParametersAndMembers(HelpedWidget):
         self.membersList.clear()
         self.sourceCase.clear()
 
-        for parameter in data["parameters"]:
-            self.parametersList.addItem(parameter)
+        self.listOfParameters = data["parameters"]
+        self.listOfDynamicParameters = data["dynamic_parameters"]
 
         for member in data["members"]:
             self.membersList.addItem(str(member))
@@ -175,8 +172,14 @@ class ParametersAndMembers(HelpedWidget):
 
         self.targetCaseLabel.setText(data["current_case"])
 
+        if self.toggleScratch.isChecked():
+            self.toggleScratch.emit(QtCore.SIGNAL("toggled(bool)"), True)
+        elif self.toggleInitCopy.isChecked():
+            self.toggleInitCopy.emit(QtCore.SIGNAL("toggled(bool)"), True)
+        else:
+            self.toggleCopy.emit(QtCore.SIGNAL("toggled(bool)"), True)
 
-
+            
     def initialize(self, ert):
         ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
         ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
@@ -187,10 +190,16 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def getter(self, ert):
-        PARAMETER     = 1 #PARAMETER value from enkf_types.h
+        #enums from enkf_types.h
+        PARAMETER     = 1
         DYNAMIC_STATE = 2
-        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER + DYNAMIC_STATE )
+
+        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER )
         parameters = ert.getStringList(keylist)
+        ert.freeStringList(keylist)
+
+        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config,  DYNAMIC_STATE )
+        dynamicParameters = ert.getStringList(keylist)
         ert.freeStringList(keylist)
 
         members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
@@ -205,6 +214,7 @@ class ParametersAndMembers(HelpedWidget):
         historyLength = ert.enkf.enkf_main_get_history_length(ert.main)
 
         return {"parameters" : parameters,
+                "dynamic_parameters" : dynamicParameters,
                 "members" : range(members),
                 "current_case" : currentCase,
                 "cases" : list,
@@ -256,9 +266,8 @@ class ParametersAndMembers(HelpedWidget):
 
         self.connect(self.toggleScratch, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleActionState())
         self.connect(self.toggleInitCopy, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleActionState(selectSource = True))
-        self.connect(self.toggleCopy, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleActionState(action = "Copy", selectSource=True, selectParameter=False, selectTarget=True))
+        self.connect(self.toggleCopy, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleActionState(action = "Copy", selectSource=True, showCopyParameters=True, selectTarget=True))
 
-        self.toggleScratch.toggle()
         return radioLayout
 
 
