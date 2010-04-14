@@ -65,10 +65,21 @@ class ParametersAndMembers(HelpedWidget):
         radioLayout = self.createRadioButtons()
         listLayout = self.createParameterMemberPanel()
 
+
+        actionLayout = QtGui.QHBoxLayout()
+        actionLayout.addStretch(1)
+        self.actionButton = QtGui.QPushButton("Initialize")
+        actionLayout.addWidget(self.actionButton)
+        actionLayout.addStretch(1)
+
         layout = QtGui.QVBoxLayout()
         layout.addLayout(radioLayout)
+        layout.addSpacing(10)
         layout.addLayout(listLayout)
+        layout.addSpacing(10)
         layout.addLayout(stLayout)
+        layout.addSpacing(10)
+        layout.addLayout(actionLayout)
 
         self.addLayout(layout)
 
@@ -80,12 +91,17 @@ class ParametersAndMembers(HelpedWidget):
         self.targetType.setEnabled(state)
         self.targetReportStep.setEnabled(state)
 
-    def fetchContent(self):
+        if state:
+            self.actionButton.setText("Copy")
+        else:
+            self.actionButton.setText("Initialize")
+
+        
+    def fetchContent(self): #todo: add support for updated parameters and cases. Make other operations emit signals
         data = self.getFromModel()
 
         self.parametersList.clear()
         self.membersList.clear()
-
         self.sourceCase.clear()
 
         for parameter in data["parameters"]:
@@ -98,6 +114,11 @@ class ParametersAndMembers(HelpedWidget):
             if not case == data["current_case"]:
                 self.sourceCase.addItem(case)
 
+        self.maxTimeStep = data["history_length"]
+
+        self.sourceReportStep.setHistoryLength(self.maxTimeStep)
+        self.targetReportStep.setHistoryLength(self.maxTimeStep)
+
 
 
     def initialize(self, ert):
@@ -106,6 +127,7 @@ class ParametersAndMembers(HelpedWidget):
         ert.setTypes("enkf_main_get_fs")
         ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
         ert.setTypes("enkf_fs_alloc_dirlist")
+        ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
 
 
     def getter(self, ert):
@@ -123,10 +145,19 @@ class ParametersAndMembers(HelpedWidget):
         list = ert.getStringList(caseList)
         ert.freeStringList(caseList)
 
-        return {"parameters" : parameters, "members" : range(members), "current_case" : currentCase, "cases" : list}
+        historyLength = ert.enkf.enkf_main_get_history_length(ert.main)
+
+        return {"parameters" : parameters,
+                "members" : range(members),
+                "current_case" : currentCase,
+                "cases" : list,
+                "history_length" : historyLength}
+
 
     def setter(self, ert, value):
+        """The setting of these values are activated by a separate button."""
         pass
+
 
     def createCheckPanel(self, checkall, uncheckall):
         self.checkAll = QtGui.QToolButton(self)
@@ -157,11 +188,10 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def createRadioButtons(self):
-
         radioLayout = QtGui.QVBoxLayout()
         self.toggleScratch = QtGui.QRadioButton("Initialize from scratch")
         radioLayout.addWidget(self.toggleScratch)
-        self.toggleCopy = QtGui.QRadioButton("Copy")
+        self.toggleCopy = QtGui.QRadioButton("Copy from existing case")
         radioLayout.addWidget(self.toggleCopy)
 
         self.connect(self.toggleScratch, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleCopyState(self.toggleCopy.isChecked()))
@@ -170,22 +200,29 @@ class ParametersAndMembers(HelpedWidget):
         self.toggleScratch.toggle()
         return radioLayout
 
+
     def createParameterMemberPanel(self):
         self.parametersList = QtGui.QListWidget(self)
         self.parametersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
         self.membersList = QtGui.QListWidget(self)
         self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+
         parameterLayout = QtGui.QVBoxLayout()
-        parameterLayout.addWidget(QtGui.QLabel("Parameters"))
+        parametersCheckPanel = self.createCheckPanel(self.parametersList.selectAll, self.parametersList.clearSelection)
+        parametersCheckPanel.insertWidget(0, QtGui.QLabel("Parameters"))
+        parameterLayout.addLayout(parametersCheckPanel)
         parameterLayout.addWidget(self.parametersList)
-        parameterLayout.addLayout(self.createCheckPanel(self.parametersList.selectAll, self.parametersList.clearSelection))
+
         memberLayout = QtGui.QVBoxLayout()
-        memberLayout.addWidget(QtGui.QLabel("Members"))
+        membersCheckPanel = self.createCheckPanel(self.membersList.selectAll, self.membersList.clearSelection)
+        membersCheckPanel.insertWidget(0, QtGui.QLabel("Members"))
+        memberLayout.addLayout(membersCheckPanel)
         memberLayout.addWidget(self.membersList)
-        memberLayout.addLayout(self.createCheckPanel(self.membersList.selectAll, self.membersList.clearSelection))
+
         listLayout = QtGui.QHBoxLayout()
         listLayout.addLayout(parameterLayout)
         listLayout.addLayout(memberLayout)
+
         return listLayout
 
 
@@ -196,6 +233,7 @@ class ParametersAndMembers(HelpedWidget):
         validatedCombo.setValidator(QtGui.QIntValidator())
         validatedCombo.addItem("Initial (0)")
         validatedCombo.addItem("Prediction (n-1)")
+
 
         def focusOutValidation(combo, maxTimeStep, event):
             QtGui.QComboBox.focusOutEvent(combo, event)
@@ -209,14 +247,20 @@ class ParametersAndMembers(HelpedWidget):
                 timestepMakesSense = True
 
                 if intValue > maxTimeStep:
-                    combo.setEditText(str(maxTimeStep))
+                     combo.setCurrentIndex(1)
 
 
             if not timestepMakesSense:
                 combo.setCurrentIndex(0)
 
-
         validatedCombo.focusOutEvent = lambda event : focusOutValidation(validatedCombo, self.maxTimeStep, event)
+
+
+        def setHistoryLength(length):
+            validatedCombo.setItemText(1, "Prediction (" + str(length) + ")")
+
+        validatedCombo.setHistoryLength = setHistoryLength
+
         return validatedCombo
 
 
