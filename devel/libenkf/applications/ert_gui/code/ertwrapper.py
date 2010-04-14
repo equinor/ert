@@ -189,10 +189,13 @@ class ErtWrapper:
 
         func = getattr(library, function)
         func.restype = restype
+
         if isinstance(argtypes, list):
             args = [c_long]
             args.extend(argtypes)
             func.argtypes = args
+        elif argtypes == None:
+            func.argtypes = []
         else:
             func.argtypes = [c_long, argtypes]
 
@@ -211,6 +214,8 @@ class ErtWrapper:
 
     def initializeTypes(self):
         self.setTypes("stringlist_iget", c_char_p, c_int, library = self.util)
+        self.setTypes("stringlist_alloc_new", argtypes = None,library = self.util)
+        self.setTypes("stringlist_append_copy", None, c_char_p, library = self.util)
         self.setTypes("stringlist_get_size", c_int, library = self.util)
         self.setTypes("stringlist_free", None, library = self.util)
 
@@ -236,6 +241,15 @@ class ErtWrapper:
             result.append(self.util.stringlist_iget(stringlistpointer, index))
 
         return result
+
+    def createStringList(self, list):
+        """Creates a new string list from the specified list. Remember to free the list after use."""
+        sl = self.util.stringlist_alloc_new()
+
+        for item in list:
+            self.util.stringlist_append_copy(sl , item)
+
+        return sl
 
 
     def freeStringList(self, stringlistpointer):

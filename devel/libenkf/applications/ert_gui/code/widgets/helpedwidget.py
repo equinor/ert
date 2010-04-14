@@ -45,6 +45,10 @@ class ContentModel:
         if not ContentModel.contentModel == None :
             self.setter(ContentModel.contentModel, value)
 
+    def getModel(self):
+        """Returns the contentModel associated with this session"""
+        return ContentModel.contentModel
+
     @classmethod
     def updateObservers(cls):
         """Calls all ContentModel inheritors to initialize (if implemented) and perform initial fetch of data."""
