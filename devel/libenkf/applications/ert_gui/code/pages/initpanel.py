@@ -23,10 +23,8 @@ from widgets.util import resourceIcon
 
 class ParametersAndMembers(HelpedWidget):
 
-
     def __init__(self, parent = None):
         HelpedWidget.__init__(self, parent)
-
 
         self.sourceCase = QtGui.QComboBox(self)
         self.sourceCase.setMaximumWidth(150)
@@ -36,30 +34,9 @@ class ParametersAndMembers(HelpedWidget):
         self.sourceType.setToolTip("Select source type")
         self.sourceType.addItem("Analyzed")
         self.sourceType.addItem("Forecasted")
-        self.sourceReportStep = QtGui.QComboBox(self)
-        self.sourceReportStep.setMaximumWidth(125)
-        self.sourceReportStep.setEditable(True)
-        self.sourceReportStep.setValidator(QtGui.QIntValidator())
-        self.sourceReportStep.addItem("Initial (0)")
-        self.sourceReportStep.addItem("Prediction (n-1)")
+        self.sourceReportStep = self.createValidatedTimestepCombo()
 
-        def checkSomething(event):
-            QtGui.QComboBox.focusOutEvent(self.sourceReportStep, event)
-
-            timestepMakesSense = False
-            currentText = str(self.sourceReportStep.currentText())
-            if currentText.startswith("Initial") or currentText.startswith("Prediction"):
-                timestepMakesSense = True
-            elif currentText.isdigit():
-                intValue = int(currentText)
-                if intValue >= 0 and intValue < 10:
-                    timestepMakesSense = True
-
-            if not timestepMakesSense:
-                self.sourceReportStep.setCurrentIndex(0)
-
-
-        self.sourceReportStep.focusOutEvent = lambda event : checkSomething(event)
+        self.maxTimeStep = 11
 
         arrow = QtGui.QLabel(self)
         arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
@@ -70,10 +47,7 @@ class ParametersAndMembers(HelpedWidget):
         self.targetType.setToolTip("Select target type")
         self.targetType.addItem("Analyzed")
         self.targetType.addItem("Forecasted")
-        self.targetReportStep = QtGui.QSpinBox(self)
-        self.targetReportStep.setMaximumWidth(55)
-        self.targetReportStep.setMinimum(0)
-        self.targetReportStep.setMaximum(0)
+        self.targetReportStep = self.createValidatedTimestepCombo()
 
         stLayout = QtGui.QHBoxLayout()
 
@@ -112,11 +86,26 @@ class ParametersAndMembers(HelpedWidget):
         self.parametersList.clear()
         self.membersList.clear()
 
+        self.sourceCase.clear()
+
         for parameter in data["parameters"]:
             self.parametersList.addItem(parameter)
 
         for member in data["members"]:
             self.membersList.addItem(str(member))
+
+        for case in data["cases"]:
+            if not case == data["current_case"]:
+                self.sourceCase.addItem(case)
+
+
+
+    def initialize(self, ert):
+        ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
+        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
+        ert.setTypes("enkf_main_get_fs")
+        ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
+        ert.setTypes("enkf_fs_alloc_dirlist")
 
 
     def getter(self, ert):
@@ -127,11 +116,14 @@ class ParametersAndMembers(HelpedWidget):
 
         members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
 
-        return {"parameters" : parameters, "members" : range(members)}
+        fs = ert.enkf.enkf_main_get_fs(ert.main)
+        currentCase = ert.enkf.enkf_fs_get_read_dir(fs)
 
-    def initialize(self, ert):
-        ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
-        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
+        caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
+        list = ert.getStringList(caseList)
+        ert.freeStringList(caseList)
+
+        return {"parameters" : parameters, "members" : range(members), "current_case" : currentCase, "cases" : list}
 
     def setter(self, ert, value):
         pass
@@ -195,6 +187,39 @@ class ParametersAndMembers(HelpedWidget):
         listLayout.addLayout(parameterLayout)
         listLayout.addLayout(memberLayout)
         return listLayout
+
+
+    def createValidatedTimestepCombo(self):
+        validatedCombo = QtGui.QComboBox(self)
+        validatedCombo.setMaximumWidth(125)
+        validatedCombo.setEditable(True)
+        validatedCombo.setValidator(QtGui.QIntValidator())
+        validatedCombo.addItem("Initial (0)")
+        validatedCombo.addItem("Prediction (n-1)")
+
+        def focusOutValidation(combo, maxTimeStep, event):
+            QtGui.QComboBox.focusOutEvent(combo, event)
+
+            timestepMakesSense = False
+            currentText = str(combo.currentText())
+            if currentText.startswith("Initial") or currentText.startswith("Prediction"):
+                timestepMakesSense = True
+            elif currentText.isdigit():
+                intValue = int(currentText)
+                timestepMakesSense = True
+
+                if intValue > maxTimeStep:
+                    combo.setEditText(str(maxTimeStep))
+
+
+            if not timestepMakesSense:
+                combo.setCurrentIndex(0)
+
+
+        validatedCombo.focusOutEvent = lambda event : focusOutValidation(validatedCombo, self.maxTimeStep, event)
+        return validatedCombo
+
+
 
 class InitPanel(QtGui.QFrame):
     
