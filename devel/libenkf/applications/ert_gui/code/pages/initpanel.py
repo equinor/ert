@@ -187,8 +187,9 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def getter(self, ert):
-        PARAMETER = 1 #PARAMETER value from enkf_types.h
-        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER)
+        PARAMETER     = 1 #PARAMETER value from enkf_types.h
+        DYNAMIC_STATE = 2
+        keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER + DYNAMIC_STATE )
         parameters = ert.getStringList(keylist)
         ert.freeStringList(keylist)
 
