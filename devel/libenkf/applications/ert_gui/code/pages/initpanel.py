@@ -28,6 +28,7 @@ class ParametersAndMembers(HelpedWidget):
 
         self.sourceCase = QtGui.QComboBox(self)
         self.sourceCase.setMaximumWidth(150)
+        self.sourceCase.setMinimumWidth(150)
         self.sourceCase.setToolTip("Select source case")
         self.sourceType = QtGui.QComboBox(self)
         self.sourceType.setMaximumWidth(100)
@@ -38,9 +39,9 @@ class ParametersAndMembers(HelpedWidget):
 
         self.maxTimeStep = 11
 
-        arrow = QtGui.QLabel(self)
-        arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
-        arrow.setMaximumSize(16, 16)
+#        arrow = QtGui.QLabel(self)
+#        arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
+#        arrow.setMaximumSize(16, 16)
 
         self.targetType = QtGui.QComboBox(self)
         self.targetType.setMaximumWidth(100)
@@ -49,17 +50,56 @@ class ParametersAndMembers(HelpedWidget):
         self.targetType.addItem("Forecasted")
         self.targetReportStep = self.createValidatedTimestepCombo()
 
-        stLayout = QtGui.QHBoxLayout()
+        #stLayout = QtGui.QVBoxLayout()
+        stLayout = QtGui.QGridLayout()
+        stLayout.setColumnStretch(6, 1)
+        
+        stLayout.addWidget(QtGui.QLabel("Case"), 0, 1)
+        stLayout.addWidget(QtGui.QLabel("State"), 0, 3)
+        stLayout.addWidget(QtGui.QLabel("Timestep"), 0, 5)
 
-        self.copyLabel = QtGui.QLabel("Copy:")
-        self.copyLabel.setMaximumWidth(self.copyLabel.fontMetrics().width(self.copyLabel.text()))
-        stLayout.addWidget(self.copyLabel)
-        stLayout.addWidget(self.sourceCase)
-        stLayout.addWidget(self.sourceType)
-        stLayout.addWidget(self.sourceReportStep)
-        stLayout.addWidget(arrow)
-        stLayout.addWidget(self.targetType)
-        stLayout.addWidget(self.targetReportStep)
+        #sourceLayout = QtGui.QHBoxLayout()
+        #sourceLayout.setLabelAlignment(QtCore.Qt.AlignRight)
+        #targetLayout = QtGui.QHBoxLayout()
+        #targetLayout.setLabelAlignment(QtCore.Qt.AlignRight)
+
+
+#        self.copyLabel = QtGui.QLabel("Copy:")
+#        self.copyLabel.setMaximumWidth(self.copyLabel.fontMetrics().width(self.copyLabel.text()))
+#        stLayout.addWidget(self.copyLabel)
+        self.sourceLabel = QtGui.QLabel("Source:")
+        #sourceLabel.setMinimumWidth(75)
+        stLayout.addWidget(self.sourceLabel, 1, 0)
+        stLayout.addWidget(self.sourceCase, 1, 1)
+        #sourceLayout.addRow("Source case:", self.sourceCase)
+        stLayout.addWidget(self.sourceType, 1, 3)
+        #sourceLayout.addRow("State:", self.sourceType)
+        stLayout.addWidget(self.sourceReportStep, 1, 5)
+        #sourceLayout.addRow("Timestep:", self.sourceReportStep)
+        #sourceLayout.addStretch(1)
+
+        self.targetCaseLabel = QtGui.QLabel("default")
+        font = self.targetCaseLabel.font()
+        font.setWeight(QtGui.QFont.Bold)
+        self.targetCaseLabel.setFont(font)
+        self.targetCaseLabel.setMinimumWidth(self.sourceCase.minimumWidth())
+
+        self.targetLabel = QtGui.QLabel("Target:")
+        #targetLabel.setMinimumWidth(75)
+        stLayout.addWidget(self.targetLabel, 2, 0)
+        stLayout.addWidget(self.targetCaseLabel, 2, 1)
+        #targetLayout.addRow("Target case:", self.targetLabel)
+        stLayout.addWidget(self.targetType, 2, 3)
+        #targetLayout.addRow("State:", self.targetType)
+        stLayout.addWidget(self.targetReportStep, 2, 5)
+        #targetLayout.addStretch(1)
+        #targetLayout.addRow("Timestep:", self.targetReportStep)
+
+
+        #stLayout.addLayout(sourceLayout)
+        #stLayout.addWidget(arrow)
+        #stLayout.addLayout(targetLayout)
+
 
 
         radioLayout = self.createRadioButtons()
@@ -74,27 +114,41 @@ class ParametersAndMembers(HelpedWidget):
 
         layout = QtGui.QVBoxLayout()
         layout.addLayout(radioLayout)
-        layout.addSpacing(10)
+        layout.addSpacing(5)
         layout.addLayout(listLayout)
-        layout.addSpacing(10)
+        layout.addSpacing(5)
         layout.addLayout(stLayout)
-        layout.addSpacing(10)
+        layout.addSpacing(5)
         layout.addLayout(actionLayout)
 
         self.addLayout(layout)
 
-    def toggleCopyState(self, state):
-        self.copyLabel.setEnabled(state)
-        self.sourceCase.setEnabled(state)
-        self.sourceType.setEnabled(state)
-        self.sourceReportStep.setEnabled(state)
-        self.targetType.setEnabled(state)
-        self.targetReportStep.setEnabled(state)
+    def toggleActionState(self, action="Initialize", selectParameter = True, selectSource = False, selectTarget = False):
+        self.sourceLabel.setEnabled(selectSource)
+        self.sourceCase.setEnabled(selectSource)
+        self.sourceType.setEnabled(selectSource)
+        self.sourceReportStep.setEnabled(selectSource)
 
-        if state:
-            self.actionButton.setText("Copy")
-        else:
-            self.actionButton.setText("Initialize")
+        if not selectSource:
+            self.sourceReportStep.setCurrentIndex(0)
+
+        self.targetLabel.setEnabled(selectTarget)
+        self.targetCaseLabel.setEnabled(selectTarget)
+        self.targetType.setEnabled(selectTarget)
+        self.targetReportStep.setEnabled(selectTarget)
+
+
+        if not selectTarget:
+            self.targetReportStep.setCurrentIndex(0)
+
+        self.actionButton.setText(action)
+
+        self.parametersList.setEnabled(selectParameter)
+        self.parametersList.checkAll.setEnabled(selectParameter)
+        self.parametersList.uncheckAll.setEnabled(selectParameter)
+
+        if not selectParameter:
+            self.parametersList.selectAll()
 
         
     def fetchContent(self): #todo: add support for updated parameters and cases. Make other operations emit signals
@@ -118,6 +172,8 @@ class ParametersAndMembers(HelpedWidget):
 
         self.sourceReportStep.setHistoryLength(self.maxTimeStep)
         self.targetReportStep.setHistoryLength(self.maxTimeStep)
+
+        self.targetCaseLabel.setText(data["current_case"])
 
 
 
@@ -159,43 +215,47 @@ class ParametersAndMembers(HelpedWidget):
         pass
 
 
-    def createCheckPanel(self, checkall, uncheckall):
-        self.checkAll = QtGui.QToolButton(self)
-        self.checkAll.setIcon(resourceIcon("checked"))
-        self.checkAll.setIconSize(QtCore.QSize(16, 16))
-        self.checkAll.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.checkAll.setAutoRaise(True)
-        self.checkAll.setToolTip("Select all")
+    def createCheckPanel(self, list):
+        list.checkAll = QtGui.QToolButton(self)
+        list.checkAll.setIcon(resourceIcon("checked"))
+        list.checkAll.setIconSize(QtCore.QSize(16, 16))
+        list.checkAll.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        list.checkAll.setAutoRaise(True)
+        list.checkAll.setToolTip("Select all")
 
-        self.uncheckAll = QtGui.QToolButton(self)
-        self.uncheckAll.setIcon(resourceIcon("notchecked"))
-        self.uncheckAll.setIconSize(QtCore.QSize(16, 16))
-        self.uncheckAll.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.uncheckAll.setAutoRaise(True)
-        self.uncheckAll.setToolTip("Unselect all")
+        list.uncheckAll = QtGui.QToolButton(self)
+        list.uncheckAll.setIcon(resourceIcon("notchecked"))
+        list.uncheckAll.setIconSize(QtCore.QSize(16, 16))
+        list.uncheckAll.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        list.uncheckAll.setAutoRaise(True)
+        list.uncheckAll.setToolTip("Unselect all")
 
         buttonLayout = QtGui.QHBoxLayout()
         buttonLayout.setMargin(0)
         buttonLayout.setSpacing(0)
         buttonLayout.addStretch(1)
-        buttonLayout.addWidget(self.checkAll)
-        buttonLayout.addWidget(self.uncheckAll)
+        buttonLayout.addWidget(list.checkAll)
+        buttonLayout.addWidget(list.uncheckAll)
 
-        self.connect(self.checkAll, QtCore.SIGNAL('clicked()'), checkall)
-        self.connect(self.uncheckAll, QtCore.SIGNAL('clicked()'), uncheckall)
+        self.connect(list.checkAll, QtCore.SIGNAL('clicked()'), list.selectAll)
+        self.connect(list.uncheckAll, QtCore.SIGNAL('clicked()'), list.clearSelection)
 
         return buttonLayout
 
 
     def createRadioButtons(self):
         radioLayout = QtGui.QVBoxLayout()
+        radioLayout.setSpacing(2)
         self.toggleScratch = QtGui.QRadioButton("Initialize from scratch")
         radioLayout.addWidget(self.toggleScratch)
+        self.toggleInitCopy = QtGui.QRadioButton("Initialize from existing case")
+        radioLayout.addWidget(self.toggleInitCopy)
         self.toggleCopy = QtGui.QRadioButton("Copy from existing case")
         radioLayout.addWidget(self.toggleCopy)
 
-        self.connect(self.toggleScratch, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleCopyState(self.toggleCopy.isChecked()))
-        self.connect(self.toggleCopy, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleCopyState(self.toggleCopy.isChecked()))
+        self.connect(self.toggleScratch, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleActionState())
+        self.connect(self.toggleInitCopy, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleActionState(selectSource = True))
+        self.connect(self.toggleCopy, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleActionState(action = "Copy", selectSource=True, selectParameter=False, selectTarget=True))
 
         self.toggleScratch.toggle()
         return radioLayout
@@ -208,13 +268,13 @@ class ParametersAndMembers(HelpedWidget):
         self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
 
         parameterLayout = QtGui.QVBoxLayout()
-        parametersCheckPanel = self.createCheckPanel(self.parametersList.selectAll, self.parametersList.clearSelection)
+        parametersCheckPanel = self.createCheckPanel(self.parametersList)
         parametersCheckPanel.insertWidget(0, QtGui.QLabel("Parameters"))
         parameterLayout.addLayout(parametersCheckPanel)
         parameterLayout.addWidget(self.parametersList)
 
         memberLayout = QtGui.QVBoxLayout()
-        membersCheckPanel = self.createCheckPanel(self.membersList.selectAll, self.membersList.clearSelection)
+        membersCheckPanel = self.createCheckPanel(self.membersList)
         membersCheckPanel.insertWidget(0, QtGui.QLabel("Members"))
         memberLayout.addLayout(membersCheckPanel)
         memberLayout.addWidget(self.membersList)
@@ -341,6 +401,7 @@ class InitPanel(QtGui.QFrame):
     def createCurrentCaseCombo(self):
         """Creates the combo that enables selection of the current case"""
         self.currentCase = ComboChoice(self, ["none"])
+        self.currentCase.combo.setMinimumWidth(150)
 
         def initialize_cases(ert):
             ert.setTypes("enkf_main_get_fs")
