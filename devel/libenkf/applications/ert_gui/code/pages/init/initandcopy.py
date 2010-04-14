@@ -1,8 +1,6 @@
-from PyQt4 import QtGui, QtCore
-from widgets.tablewidgets import KeywordList
-from widgets.validateddialog import ValidatedDialog
+from widgets.helpedwidget import HelpedWidget
 import ertwrapper
-from widgets.combochoice import ComboChoice
+from PyQt4 import QtGui, QtCore
 
 # e = enkf_main_get_ensemble_config( enkf_main )
 # s = ensemble_config_alloc_keylist_from_var_type(e , 1 # PARAMETER value from enkf_types.h)
@@ -14,81 +12,25 @@ from widgets.combochoice import ComboChoice
 # sl = stringlist_alloc_new()
 # stringlist_append_copy(sl , "STRING")
 #
-# 
+#
 #
 # enkf_main_initialize(enkf_main , sl , iens1 , iens2);
 # stringlist_free( sl )
-from widgets.helpedwidget import HelpedWidget
 from widgets.util import resourceIcon
-
 class ParametersAndMembers(HelpedWidget):
 
     listOfParameters = []
     listOfDynamicParameters = []
+    maxTimeStep = 11
+
 
     def __init__(self, parent = None):
         HelpedWidget.__init__(self, parent)
 
-        self.sourceCase = QtGui.QComboBox(self)
-        self.sourceCase.setMaximumWidth(150)
-        self.sourceCase.setMinimumWidth(150)
-        self.sourceCase.setToolTip("Select source case")
-        self.sourceType = QtGui.QComboBox(self)
-        self.sourceType.setMaximumWidth(100)
-        self.sourceType.setToolTip("Select source type")
-        self.sourceType.addItem("Analyzed")
-        self.sourceType.addItem("Forecasted")
-        self.sourceReportStep = self.createValidatedTimestepCombo()
-        self.sourceCompleteEnsembleCheck = QtGui.QCheckBox("Complete Ensemble")
-        self.sourceCompleteEnsembleCheck.setChecked(True)
-        self.connect(self.sourceCompleteEnsembleCheck, QtCore.SIGNAL('stateChanged(int)'), lambda state : self.toggleCompleteEnsembleState(self.sourceCompleteEnsembleCheck.isChecked()))
-
-
-        self.maxTimeStep = 11
-
-        self.targetType = QtGui.QComboBox(self)
-        self.targetType.setMaximumWidth(100)
-        self.targetType.setToolTip("Select target type")
-        self.targetType.addItem("Analyzed")
-        self.targetType.addItem("Forecasted")
-        self.targetReportStep = self.createValidatedTimestepCombo()
-
-        stLayout = QtGui.QGridLayout()
-        stLayout.setColumnStretch(8, 1)
-
-        stLayout.addWidget(QtGui.QLabel("Case"), 0, 1)
-        stLayout.addWidget(QtGui.QLabel("State"), 0, 3)
-        stLayout.addWidget(QtGui.QLabel("Timestep"), 0, 5)
-
-
-        self.sourceLabel = QtGui.QLabel("Source:")
-        stLayout.addWidget(self.sourceLabel, 1, 0)
-        stLayout.addWidget(self.sourceCase, 1, 1)
-        stLayout.addWidget(self.sourceType, 1, 3)
-        stLayout.addWidget(self.sourceReportStep, 1, 5)
-        stLayout.addWidget(self.sourceCompleteEnsembleCheck, 1, 7)
-
-        self.targetCaseLabel = QtGui.QLabel("none?")
-        font = self.targetCaseLabel.font()
-        font.setWeight(QtGui.QFont.Bold)
-        self.targetCaseLabel.setFont(font)
-        self.targetCaseLabel.setMinimumWidth(self.sourceCase.minimumWidth())
-
-        self.targetLabel = QtGui.QLabel("Target:")
-        stLayout.addWidget(self.targetLabel, 2, 0)
-        stLayout.addWidget(self.targetCaseLabel, 2, 1)
-        stLayout.addWidget(self.targetType, 2, 3)
-        stLayout.addWidget(self.targetReportStep, 2, 5)
-
-
         radioLayout = self.createRadioButtons()
         listLayout = self.createParameterMemberPanel()
-
-        self.actionButton = QtGui.QPushButton("Initialize")
-        actionLayout = QtGui.QHBoxLayout()
-        actionLayout.addStretch(1)
-        actionLayout.addWidget(self.actionButton)
-        actionLayout.addStretch(1)
+        stLayout = self.createSourceTargetLayout()
+        actionLayout = self.createActionButton()
 
         layout = QtGui.QVBoxLayout()
         layout.addLayout(radioLayout)
@@ -102,6 +44,7 @@ class ParametersAndMembers(HelpedWidget):
         self.addLayout(layout)
 
         self.toggleScratch.toggle()
+
 
     def toggleCompleteEnsembleState(self, checkState):
         self.parametersList.setEnabled(not checkState)
@@ -146,8 +89,50 @@ class ParametersAndMembers(HelpedWidget):
             self.parametersList.addItems(self.listOfDynamicParameters)
             self.toggleCompleteEnsembleState(self.sourceCompleteEnsembleCheck.isChecked())
 
+        self.parametersList.selectAll()
+        self.membersList.selectAll()
 
-        
+
+    def getItemsFromList(self, list):
+        selectedItemsList = list.selectedItems()
+
+        selectedItems = []
+        for item in selectedItemsList:
+            selectedItems.append(str(item.text()))
+
+        return selectedItems
+
+
+    def initializeCase(self, parameters, members):
+        ert = self.getModel()
+
+        stringlist = ert.createStringList(parameters)
+
+        for member in members:
+            m = int(member.strip())
+            ert.enkf.enkf_main_initialize(ert.main, stringlist, m , m)
+
+        ert.freeStringList(stringlist)
+        #print parameters
+        #print members
+
+
+    def initializeOrCopy(self):
+        if self.toggleScratch.isChecked():
+            selectedParameters = self.getItemsFromList(self.parametersList)
+            selectedMembers = self.getItemsFromList(self.membersList)
+
+            if len(selectedParameters) == 0 or len(selectedMembers) == 0:
+                QtGui.QMessageBox.warning(self, "Missing data", "At least one parameter and one member must be selected!")
+            else:
+                self.initializeCase(selectedParameters, selectedMembers)
+
+        elif self.toggleInitCopy.isChecked():
+            print "initializing from existing case"
+        else:
+            print "copying"
+
+
     def fetchContent(self): #todo: add support for updated parameters and cases. Make other operations emit signals
         data = self.getFromModel()
 
@@ -179,9 +164,10 @@ class ParametersAndMembers(HelpedWidget):
         else:
             self.toggleCopy.emit(QtCore.SIGNAL("toggled(bool)"), True)
 
-            
+
     def initialize(self, ert):
         ert.setTypes("ensemble_config_alloc_keylist_from_var_type", ertwrapper.c_long, ertwrapper.c_int)
+        ert.setTypes("enkf_main_initialize", ertwrapper.c_int, [ertwrapper.c_long, ertwrapper.c_int, ertwrapper.c_int])
         ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
         ert.setTypes("enkf_main_get_fs")
         ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
@@ -277,6 +263,14 @@ class ParametersAndMembers(HelpedWidget):
         self.membersList = QtGui.QListWidget(self)
         self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
 
+        #--- members iconview code ---
+        self.membersList.setViewMode(QtGui.QListView.IconMode)
+        self.membersList.setMovement(QtGui.QListView.Static)
+        self.membersList.setResizeMode(QtGui.QListView.Adjust)
+        self.membersList.setUniformItemSizes(True)
+        self.membersList.setSelectionRectVisible(False)
+        #-----------------------------
+
         parameterLayout = QtGui.QVBoxLayout()
         parametersCheckPanel = self.createCheckPanel(self.parametersList)
         parametersCheckPanel.insertWidget(0, QtGui.QLabel("Parameters"))
@@ -302,7 +296,7 @@ class ParametersAndMembers(HelpedWidget):
         validatedCombo.setEditable(True)
         validatedCombo.setValidator(QtGui.QIntValidator())
         validatedCombo.addItem("Initial (0)")
-        validatedCombo.addItem("Prediction (n-1)")
+        validatedCombo.addItem("Final (n-1)")
 
 
         def focusOutValidation(combo, maxTimeStep, event):
@@ -310,7 +304,7 @@ class ParametersAndMembers(HelpedWidget):
 
             timestepMakesSense = False
             currentText = str(combo.currentText())
-            if currentText.startswith("Initial") or currentText.startswith("Prediction"):
+            if currentText.startswith("Initial") or currentText.startswith("Final"):
                 timestepMakesSense = True
             elif currentText.isdigit():
                 intValue = int(currentText)
@@ -327,133 +321,76 @@ class ParametersAndMembers(HelpedWidget):
 
 
         def setHistoryLength(length):
-            validatedCombo.setItemText(1, "Prediction (" + str(length) + ")")
+            validatedCombo.setItemText(1, "Final (" + str(length) + ")")
 
         validatedCombo.setHistoryLength = setHistoryLength
 
         return validatedCombo
 
 
+    def createActionButton(self):
+        self.actionButton = QtGui.QPushButton("Initialize")
 
-class InitPanel(QtGui.QFrame):
-    
-    def __init__(self, parent):
-        QtGui.QFrame.__init__(self, parent)
-        self.setFrameShape(QtGui.QFrame.Panel)
-        self.setFrameShadow(QtGui.QFrame.Raised)
+        self.connect(self.actionButton, QtCore.SIGNAL('clicked()'), self.initializeOrCopy)
 
-        initPanelLayout = QtGui.QVBoxLayout()
-        self.setLayout(initPanelLayout)
+        actionLayout = QtGui.QHBoxLayout()
+        actionLayout.addStretch(1)
+        actionLayout.addWidget(self.actionButton)
+        actionLayout.addStretch(1)
 
-        casePanel = QtGui.QFormLayout()
-
-
-        def get_case_list(ert):
-            fs = ert.enkf.enkf_main_get_fs(ert.main)
-            caseList = ert.enkf.enkf_fs_alloc_dirlist(fs)
-
-            list = ert.getStringList(caseList)
-            ert.freeStringList(caseList)
-            return list
-
-        self.get_case_list = get_case_list # convenience: used by several functions
+        return actionLayout
 
 
-        casePanel.addRow("Current case:", self.createCurrentCaseCombo())
-        casePanel.addRow("Cases:", self.createCaseList())
+    def createSourceTargetLayout(self):
+        self.createSourceTargetWidgets()
+
+        stLayout = QtGui.QGridLayout()
+        stLayout.setColumnStretch(8, 1)
+        stLayout.addWidget(QtGui.QLabel("Case"), 0, 1)
+        stLayout.addWidget(QtGui.QLabel("State"), 0, 3)
+        stLayout.addWidget(QtGui.QLabel("Timestep"), 0, 5)
+        self.sourceLabel = QtGui.QLabel("Source:")
+        stLayout.addWidget(self.sourceLabel, 1, 0)
+        stLayout.addWidget(self.sourceCase, 1, 1)
+        stLayout.addWidget(self.sourceType, 1, 3)
+        stLayout.addWidget(self.sourceReportStep, 1, 5)
+        stLayout.addWidget(self.sourceCompleteEnsembleCheck, 1, 7)
+
+        self.targetCaseLabel = QtGui.QLabel("none?")
+        font = self.targetCaseLabel.font()
+        font.setWeight(QtGui.QFont.Bold)
+        self.targetCaseLabel.setFont(font)
+
+        self.targetLabel = QtGui.QLabel("Target:")
+
+        stLayout.addWidget(self.targetLabel, 2, 0)
+        stLayout.addWidget(self.targetCaseLabel, 2, 1)
+        stLayout.addWidget(self.targetType, 2, 3)
+        stLayout.addWidget(self.targetReportStep, 2, 5)
+
+        return stLayout
 
 
+    def createSourceTargetWidgets(self):
+        self.sourceCase = QtGui.QComboBox(self)
+        self.sourceCase.setMaximumWidth(150)
+        self.sourceCase.setMinimumWidth(150)
+        self.sourceCase.setToolTip("Select source case")
+        self.sourceType = QtGui.QComboBox(self)
+        self.sourceType.setMaximumWidth(100)
+        self.sourceType.setToolTip("Select source type")
+        self.sourceType.addItem("Analyzed")
+        self.sourceType.addItem("Forecasted")
+        self.sourceReportStep = self.createValidatedTimestepCombo()
+        self.sourceCompleteEnsembleCheck = QtGui.QCheckBox("Complete Ensemble")
+        self.sourceCompleteEnsembleCheck.setChecked(True)
 
-        parametersPanelLayout = QtGui.QHBoxLayout()
+        self.connect(self.sourceCompleteEnsembleCheck, QtCore.SIGNAL('stateChanged(int)'),
+                    lambda state : self.toggleCompleteEnsembleState(state == QtCore.Qt.Checked))
 
-
-        parametersPanelLayout.addWidget(ParametersAndMembers(self))
-
-
-
-        initPanelLayout.addLayout(casePanel)
-        initPanelLayout.addWidget(self.createSeparator())
-        initPanelLayout.addLayout(parametersPanelLayout)
-
-        
-
-
-    def createCaseList(self):
-        """Creates a list that enables the creation of new cases. Removal has been disabled."""
-        cases = KeywordList(self, "", "case_list")
-
-        cases.newKeywordPopup = lambda list : ValidatedDialog(cases, "New case", "Enter name of new case:", list).showAndTell()
-        cases.addRemoveWidget.enableRemoveButton(False)  #todo: add support for removal
-        cases.list.setMaximumHeight(150)
-
-        cases.initialize = lambda ert : [ert.setTypes("enkf_main_get_fs"),
-                                         ert.setTypes("enkf_fs_alloc_dirlist"),
-                                         ert.setTypes("enkf_fs_has_dir", ertwrapper.c_int),
-                                         ert.setTypes("enkf_fs_select_write_dir", None)]
-
-
-        def create_case(ert, cases):
-            fs = ert.enkf.enkf_main_get_fs(ert.main)
-
-            for case in cases:
-                if not ert.enkf.enkf_fs_has_dir(fs, case):
-                    ert.enkf.enkf_fs_select_write_dir(fs, case, True)
-                    break
-
-            self.currentCase.updateList(self.get_case_list(ert))
-            self.currentCase.fetchContent()
-
-        cases.getter = self.get_case_list
-        cases.setter = create_case
-
-        return cases
-
-    def createCurrentCaseCombo(self):
-        """Creates the combo that enables selection of the current case"""
-        self.currentCase = ComboChoice(self, ["none"])
-        self.currentCase.combo.setMinimumWidth(150)
-
-        def initialize_cases(ert):
-            ert.setTypes("enkf_main_get_fs")
-            ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
-            ert.setTypes("enkf_fs_select_read_dir", None, ertwrapper.c_char_p)
-
-            self.currentCase.updateList(self.get_case_list(ert))
-            
-
-        self.currentCase.initialize = initialize_cases
-
-        def get_current_case(ert):
-            fs = ert.enkf.enkf_main_get_fs(ert.main)
-            currentCase = ert.enkf.enkf_fs_get_read_dir(fs)
-            #print "The selected case is: " + currentCase
-            return currentCase
-
-        self.currentCase.getter = get_current_case
-
-        def select_case(ert, case):
-            case = str(case)
-            #print "Selecting case: " + case
-            if not case == "":
-                fs = ert.enkf.enkf_main_get_fs(ert.main)
-                ert.enkf.enkf_fs_select_read_dir(fs, case)
-
-        self.currentCase.setter = select_case
-
-        return self.currentCase
-
-    def createSeparator(self):
-        """Adds a separator line to the panel."""
-        qw = QtGui.QWidget()
-        qwl = QtGui.QVBoxLayout()
-        qw.setLayout(qwl)
-
-        qf = QtGui.QFrame()
-        qf.setFrameShape(QtGui.QFrame.HLine)
-        qf.setFrameShadow(QtGui.QFrame.Sunken)
-
-        qwl.addSpacing(10)
-        qwl.addWidget(qf)
-        qwl.addSpacing(10)
-
-        return qw
+        self.targetType = QtGui.QComboBox(self)
+        self.targetType.setMaximumWidth(100)
+        self.targetType.setToolTip("Select target type")
+        self.targetType.addItem("Analyzed")
+        self.targetType.addItem("Forecasted")
+        self.targetReportStep = self.createValidatedTimestepCombo()

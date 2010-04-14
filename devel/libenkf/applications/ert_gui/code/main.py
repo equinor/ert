@@ -26,7 +26,7 @@ from pages.parameters.parameterpanel import ParameterPanel
 
 #todo: proper support for unicode characters?
 from widgets.validateddialog import ValidatedDialog
-from pages.initpanel import InitPanel
+from pages.init.initpanel import InitPanel
 
 app = QtGui.QApplication(sys.argv)
 
