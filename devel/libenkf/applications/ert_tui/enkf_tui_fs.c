@@ -132,6 +132,8 @@ static void enkf_tui_fs_copy_ensemble__(
       return;
     }
   }
+
+  
    
   {
     /* Store current selections */
@@ -166,15 +168,17 @@ static void enkf_tui_fs_copy_ensemble__(
       stringlist_free( restart_kw_list );
       nodes = ensemble_config_alloc_keylist(config);
     }
+
+    /***/
     
     int num_nodes = stringlist_get_size(nodes);
     
     msg_show(msg);
     for(int i = 0; i < num_nodes; i++) {
       const char * key = stringlist_iget(nodes, i);
-      enkf_config_node_type * config_node = ensemble_config_get_node(config, key);
+      enkf_config_node_type * config_node = ensemble_config_get_node(config , key);
       msg_update(msg , key);
-      enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , ens_size , NULL);
+      enkf_fs_copy_ensemble(fs, config_node, report_step_from, state_from, report_step_to , state_to , ens_size , ranking_permutation);
     }
     
     msg_free(msg , true);
