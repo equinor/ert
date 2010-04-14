@@ -23,15 +23,10 @@ from widgets.util import resourceIcon
 
 class ParametersAndMembers(HelpedWidget):
 
+
     def __init__(self, parent = None):
         HelpedWidget.__init__(self, parent)
 
-
-
-
-
-        #copyLabel = QtGui.QLabel("Copy:")
-        #copyLabel.setMaximumWidth(copyLabel.fontMetrics().width(copyLabel.text()))
 
         self.sourceCase = QtGui.QComboBox(self)
         self.sourceCase.setMaximumWidth(150)
@@ -41,10 +36,30 @@ class ParametersAndMembers(HelpedWidget):
         self.sourceType.setToolTip("Select source type")
         self.sourceType.addItem("Analyzed")
         self.sourceType.addItem("Forecasted")
-        self.sourceReportStep = QtGui.QSpinBox(self)
-        self.sourceReportStep.setMaximumWidth(55)
-        self.sourceReportStep.setMinimum(0)
-        self.sourceReportStep.setMaximum(0)
+        self.sourceReportStep = QtGui.QComboBox(self)
+        self.sourceReportStep.setMaximumWidth(125)
+        self.sourceReportStep.setEditable(True)
+        self.sourceReportStep.setValidator(QtGui.QIntValidator())
+        self.sourceReportStep.addItem("Initial (0)")
+        self.sourceReportStep.addItem("Prediction (n-1)")
+
+        def checkSomething(event):
+            QtGui.QComboBox.focusOutEvent(self.sourceReportStep, event)
+
+            timestepMakesSense = False
+            currentText = str(self.sourceReportStep.currentText())
+            if currentText.startswith("Initial") or currentText.startswith("Prediction"):
+                timestepMakesSense = True
+            elif currentText.isdigit():
+                intValue = int(currentText)
+                if intValue >= 0 and intValue < 10:
+                    timestepMakesSense = True
+
+            if not timestepMakesSense:
+                self.sourceReportStep.setCurrentIndex(0)
+
+
+        self.sourceReportStep.focusOutEvent = lambda event : checkSomething(event)
 
         arrow = QtGui.QLabel(self)
         arrow.setPixmap(resourceIcon("arrow_right").pixmap(16, 16, QtGui.QIcon.Disabled))
@@ -62,7 +77,9 @@ class ParametersAndMembers(HelpedWidget):
 
         stLayout = QtGui.QHBoxLayout()
 
-
+        self.copyLabel = QtGui.QLabel("Copy:")
+        self.copyLabel.setMaximumWidth(self.copyLabel.fontMetrics().width(self.copyLabel.text()))
+        stLayout.addWidget(self.copyLabel)
         stLayout.addWidget(self.sourceCase)
         stLayout.addWidget(self.sourceType)
         stLayout.addWidget(self.sourceReportStep)
@@ -71,30 +88,8 @@ class ParametersAndMembers(HelpedWidget):
         stLayout.addWidget(self.targetReportStep)
 
 
-        radioLayout = QtGui.QVBoxLayout()
-        radioLayout.addWidget(QtGui.QRadioButton("Initialize from scratch"))
-        radioLayout.addWidget(QtGui.QRadioButton("Copy"))
-
-
-        self.parametersList = QtGui.QListWidget(self)
-        self.parametersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
-
-        self.membersList = QtGui.QListWidget(self)
-        self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
-
-        parameterLayout = QtGui.QVBoxLayout()
-        parameterLayout.addWidget(QtGui.QLabel("Parameters"))
-        parameterLayout.addWidget(self.parametersList)
-        parameterLayout.addLayout(self.createCheckPanel(self.parametersList.selectAll, self.parametersList.clearSelection))
-
-        memberLayout = QtGui.QVBoxLayout()
-        memberLayout.addWidget(QtGui.QLabel("Members"))
-        memberLayout.addWidget(self.membersList)
-        memberLayout.addLayout(self.createCheckPanel(self.membersList.selectAll, self.membersList.clearSelection))
-
-        listLayout = QtGui.QHBoxLayout()
-        listLayout.addLayout(parameterLayout)
-        listLayout.addLayout(memberLayout)
+        radioLayout = self.createRadioButtons()
+        listLayout = self.createParameterMemberPanel()
 
         layout = QtGui.QVBoxLayout()
         layout.addLayout(radioLayout)
@@ -103,7 +98,13 @@ class ParametersAndMembers(HelpedWidget):
 
         self.addLayout(layout)
 
-
+    def toggleCopyState(self, state):
+        self.copyLabel.setEnabled(state)
+        self.sourceCase.setEnabled(state)
+        self.sourceType.setEnabled(state)
+        self.sourceReportStep.setEnabled(state)
+        self.targetType.setEnabled(state)
+        self.targetReportStep.setEnabled(state)
 
     def fetchContent(self):
         data = self.getFromModel()
@@ -162,6 +163,38 @@ class ParametersAndMembers(HelpedWidget):
 
         return buttonLayout
 
+
+    def createRadioButtons(self):
+
+        radioLayout = QtGui.QVBoxLayout()
+        self.toggleScratch = QtGui.QRadioButton("Initialize from scratch")
+        radioLayout.addWidget(self.toggleScratch)
+        self.toggleCopy = QtGui.QRadioButton("Copy")
+        radioLayout.addWidget(self.toggleCopy)
+
+        self.connect(self.toggleScratch, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleCopyState(self.toggleCopy.isChecked()))
+        self.connect(self.toggleCopy, QtCore.SIGNAL('toggled(bool)'), lambda : self.toggleCopyState(self.toggleCopy.isChecked()))
+
+        self.toggleScratch.toggle()
+        return radioLayout
+
+    def createParameterMemberPanel(self):
+        self.parametersList = QtGui.QListWidget(self)
+        self.parametersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.membersList = QtGui.QListWidget(self)
+        self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        parameterLayout = QtGui.QVBoxLayout()
+        parameterLayout.addWidget(QtGui.QLabel("Parameters"))
+        parameterLayout.addWidget(self.parametersList)
+        parameterLayout.addLayout(self.createCheckPanel(self.parametersList.selectAll, self.parametersList.clearSelection))
+        memberLayout = QtGui.QVBoxLayout()
+        memberLayout.addWidget(QtGui.QLabel("Members"))
+        memberLayout.addWidget(self.membersList)
+        memberLayout.addLayout(self.createCheckPanel(self.membersList.selectAll, self.membersList.clearSelection))
+        listLayout = QtGui.QHBoxLayout()
+        listLayout.addLayout(parameterLayout)
+        listLayout.addLayout(memberLayout)
+        return listLayout
 
 class InitPanel(QtGui.QFrame):
     
