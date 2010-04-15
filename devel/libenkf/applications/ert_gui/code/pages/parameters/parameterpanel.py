@@ -124,6 +124,7 @@ class ParameterPanel(HelpedWidget):
 
 
         #self.contentsChanged()
+        # todo: emit when a new field is added also make initandcopy listen -> self.modelEmit("casesUpdated()")
 
 
     def removeItem(self):

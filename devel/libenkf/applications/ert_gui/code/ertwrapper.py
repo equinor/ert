@@ -17,6 +17,8 @@ class ErtWrapper:
         self.ecl_config = self.getErtPointer("enkf_main_get_ecl_config")
         self.site_config = self.getErtPointer("enkf_main_get_site_config")
         self.ensemble_config = self.getErtPointer("enkf_main_get_ensemble_config")
+        self.model_config = self.getErtPointer("enkf_main_get_model_config")
+        self.logh = self.getErtPointer("enkf_main_get_logh")
 
         self.initializeTypes()
         
@@ -99,7 +101,7 @@ class ErtWrapper:
         #       site_config_set_job_queue( s , "LOCAL|LSF|RSH" );
         #       site_config_get_job_queue_name( s );
 
-        self.job_script = "..."
+        #self.job_script = "..."
         #self.setenv = [["LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LSF_LIBDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
         #Get:   s = enkf_main_get_site_config( enkf_main )
         #       h = site_config_get_env_hash( s )
@@ -121,8 +123,8 @@ class ErtWrapper:
         self.enspath = "storage"
         self.select_case = "some_case"
 
-        self.log_file = "log"
-        self.log_level = 1
+        #self.log_file = "log"
+        #self.log_level = 10
         self.update_log_path = "one path"
 
         self.history_source = "REFCASE_HISTORY"
@@ -134,8 +136,8 @@ class ErtWrapper:
         self.keep_runpath = "0-15, 18, 20"
 
         self.license_path = "/usr"
-        self.max_submit = 2
-        self.max_resample = 16
+        #self.max_submit = 20
+        #self.max_resample = 160
         self.case_table = "..."
 
         self.run_template = [["...", ".....", "asdf:asdf asdfasdf:asdfasdf"], ["other", "sdtsdf", ".as.asdfsdf"]]
@@ -152,7 +154,7 @@ class ErtWrapper:
         self.gen_kw = [["MULTFLT", "Templates/MULTFLT_TEMPLATE", "MULTFLT.INC", "Parameters/MULTFLT.txt"]]
         self.gen_param = [["DRIBBLE", "ASCII", "ASCII_TEMPLATE", "...", "/path/%d", "/some/file Magic123"]]
 
-        self.num_realizations = 100
+        #self.num_realizations = 100
         self.summary = ["WPOR:MY_WELL", "RPR:8", "F*"]
 
 

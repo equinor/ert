@@ -1,7 +1,7 @@
-Missing initializer: job_script
-  s = enkf_main_get_site_config( enkf_main )
-  site_config_get_job_script( s );
-  site_config_set_job_script( s , EXECUTABLE_FILE );
+#Missing initializer: job_script
+#  s = enkf_main_get_site_config( enkf_main )
+#  site_config_get_job_script( s );
+#  site_config_set_job_script( s , EXECUTABLE_FILE );
 
 
 
@@ -13,9 +13,9 @@ Missing initializer: install_job
                                                                  
 
 
-Missing initializer: num_realizations
-   enkf_main_get_ensemble_size( enkf_main );
-   enkf_main_resize_ensemble( enkf_main );                  <- Denne kan potensielt ta en del tid, og                                     
+#Missing initializer: num_realizations
+#   enkf_main_get_ensemble_size( enkf_main );
+#   enkf_main_resize_ensemble( enkf_main );                  <- Denne kan potensielt ta en del tid, og
                                                                bør være beskyttet av en APPLY knapp.
 
 
@@ -33,18 +33,18 @@ Missing initializer: obs_config
 
 
 
-Missing initializer: max_submit
-  s = enkf_main_get_site_config( enkf_main );
-  site_config_get_max_submit( s );
-  site_config_set_max_submit( s , max_submit );
+#Missing initializer: max_submit
+#  s = enkf_main_get_site_config( enkf_main );
+#  site_config_get_max_submit( s );
+#  site_config_set_max_submit( s , max_submit );
 
 
 
 
-Missing initializer: max_resample
-  m = enkf_main_get_model_config( enkf_main );
-  model_config_get_max_resample( m );
-  model_config_set_max_resample( m , max_resample );      
+#Missing initializer: max_resample
+#  m = enkf_main_get_model_config( enkf_main );
+#  model_config_get_max_resample( m );
+#  model_config_set_max_resample( m , max_resample );
 
 
 
@@ -61,14 +61,14 @@ Missing initializer: enspath
 Missing initializer: select_case
 
 
-Missing initializer: log_file
-Missing initializer: log_level
-   lg = enkf_main_get_logh( enkf_main );
-   log_reset_filename( lg , "/some/path/to/FILENAME" );
-   log_get_filename( lg );
-
-   log_get_level( lg );
-   log_set_level( lg , LOG_LEVEL)
+#Missing initializer: log_file
+#Missing initializer: log_level
+#   lg = enkf_main_get_logh( enkf_main );
+#   log_reset_filename( lg , "/some/path/to/FILENAME" );
+#   log_get_filename( lg );
+#
+#   log_get_level( lg );
+#   log_set_level( lg , LOG_LEVEL)
 
 
 
