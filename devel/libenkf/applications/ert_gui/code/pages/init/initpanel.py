@@ -46,6 +46,9 @@ class InitPanel(QtGui.QFrame):
         initPanelLayout.addWidget(self.createSeparator())
         initPanelLayout.addLayout(parametersPanelLayout)
 
+    def casesUpdated(self):
+        """Emit to all listeners that the a new case has been added or the current case has changed"""
+        self.currentCase.modelEmit("casesUpdated()")  # todo: also emit when a new field is added
 
     def createCaseList(self):
         """Creates a list that enables the creation of new cases. Removal has been disabled."""
@@ -71,6 +74,7 @@ class InitPanel(QtGui.QFrame):
 
             self.currentCase.updateList(self.get_case_list(ert))
             self.currentCase.fetchContent()
+            self.casesUpdated()
 
         cases.getter = self.get_case_list
         cases.setter = create_case
@@ -106,6 +110,7 @@ class InitPanel(QtGui.QFrame):
             if not case == "":
                 fs = ert.enkf.enkf_main_get_fs(ert.main)
                 ert.enkf.enkf_fs_select_read_dir(fs, case)
+                self.casesUpdated()
 
         self.currentCase.setter = select_case
 
