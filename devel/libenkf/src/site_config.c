@@ -78,7 +78,7 @@ static site_config_type * site_config_alloc_empty() {
 
 
 
-static void site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
+void site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
   ext_joblist_add_job(site_config->joblist , job_name , install_file);
 }
 
@@ -322,7 +322,7 @@ const char * site_config_get_rsh_command( const site_config_type * site_config )
 /*****************************************************************/
 
 
-const char * site_config_get_job_queue_name( const site_config_type * site_config ) {
+const char * site_config_get_queue_name( const site_config_type * site_config ) {
   return job_queue_get_driver_name( site_config->job_queue );
 }
 
@@ -349,6 +349,24 @@ void site_config_set_job_queue( site_config_type * site_config , const char * qu
   site_config_set_job_queue__( site_config , driver_type );
 }
 
+
+void site_config_set_job_script( site_config_type * site_config , const char * job_script ) {
+  job_queue_set_run_cmd( site_config->job_queue  , job_script );
+}
+
+
+const char * site_config_get_job_script( const site_config_type * site_config ) {
+  return job_queue_get_run_cmd( site_config->job_queue );
+}
+
+
+void site_config_set_max_submit( site_config_type * site_config , int max_submit ) {
+  job_queue_set_max_submit(site_config->job_queue , max_submit);
+}
+
+int site_config_get_max_submit(const site_config_type * site_config ) {
+  return job_queue_get_max_submit(site_config->job_queue);
+}
 
 
 static void site_config_install_job_queue(site_config_type  * site_config , const config_type * config , bool * use_lsf) {

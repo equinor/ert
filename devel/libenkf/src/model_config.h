@@ -42,6 +42,9 @@ bool                   model_config_load_state( const model_config_type *, int )
 void                   model_config_set_enkf_sched(model_config_type *  , const ext_joblist_type * , run_mode_type , bool);
 int                    model_config_get_max_internal_submit( const model_config_type * config );
 const char           * model_config_iget_casename( const model_config_type * model_config , int index);
+void                   model_config_set_max_resample( model_config_type * model_config , int max_resample );
+int                    model_config_get_max_resample(const model_config_type * model_config );
+
 
 #ifdef __cplusplus 
 }

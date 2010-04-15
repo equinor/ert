@@ -24,12 +24,14 @@ extern "C" {
 #include <site_config.h>
 #include <subst_list.h>
 #include <local_config.h>
-  
+#include <log.h>  
+
 /*****************************************************************/
 
 
 
 typedef struct enkf_main_struct enkf_main_type;
+log_type                    * enkf_main_get_logh( const enkf_main_type * enkf_main );
 member_config_type          * enkf_main_iget_member_config(const enkf_main_type * enkf_main , int iens);
 misfit_table_type           * enkf_main_get_misfit(const enkf_main_type * enkf_main);
 void                          enkf_main_del_unused_static(enkf_main_type * , int );
@@ -103,6 +105,7 @@ subst_list_type        * enkf_main_get_data_kw( const enkf_main_type * enkf_main
 void                     enkf_main_add_data_kw(enkf_main_type * enkf_main , const char * key , const char * value);
 void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
 site_config_type       * enkf_main_get_site_config( const enkf_main_type * enkf_main );
+void                     enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size );
 
 
 /*****************************************************************/

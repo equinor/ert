@@ -156,6 +156,9 @@ model_config_type * enkf_main_get_model_config( const enkf_main_type * enkf_main
   return enkf_main->model_config;
 }
 
+log_type * enkf_main_get_logh( const enkf_main_type * enkf_main ) {
+  return enkf_main->logh;
+}
 
 plot_config_type * enkf_main_get_plot_config( const enkf_main_type * enkf_main ) {
   return enkf_main->plot_config;
@@ -2164,7 +2167,7 @@ static enkf_main_type * enkf_main_alloc_empty(hash_type * config_data_kw) {
 */
 
 
-static void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) {
+void enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size ) {
   int iens;
 
   /* No change */
@@ -2361,6 +2364,9 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
 
     if (config_item_set( config , "LOG_FILE"))
       log_reset_filename( enkf_main->logh , config_get_value(config , "LOG_FILE"));
+
+    
+
 
     printf("Activity will be logged to ..............: %s \n",log_get_filename( enkf_main->logh ));
     log_add_message(enkf_main->logh , 1 , NULL , "ert configuration loaded" , false);

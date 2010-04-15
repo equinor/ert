@@ -119,6 +119,18 @@ fs_driver_impl model_config_get_dbase_type(const model_config_type * model_confi
 }
 
 
+
+void model_config_set_max_resample( model_config_type * model_config , int max_resample ) {
+  model_config->max_internal_submit = max_resample;
+}
+
+
+int model_config_get_max_resample(const model_config_type * model_config ) {
+  return model_config->max_internal_submit;
+}
+
+
+
 model_config_type * model_config_alloc(const config_type * config , 
                                        int ens_size , 
                                        const ext_joblist_type * joblist , 
@@ -235,7 +247,7 @@ model_config_type * model_config_alloc(const config_type * config ,
     model_config_set_dbase_type( model_config , config_get_value(config , "DBASE_TYPE"));
   
   if (config_item_set( config , "MAX_RESAMPLE"))
-    model_config->max_internal_submit = config_get_value_as_int( config , "MAX_RESAMPLE" );
+    model_config_set_max_resample( model_config , config_get_value_as_int( config , "MAX_RESAMPLE" ));
   
   return model_config;
 }

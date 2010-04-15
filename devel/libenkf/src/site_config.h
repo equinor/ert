@@ -49,6 +49,14 @@ void                     site_config_set_rsh_command( site_config_type * site_co
 const char             * site_config_get_rsh_command( const site_config_type * site_config );
 
 
+void                     site_config_set_job_script( site_config_type * site_config , const char * job_script );
+const char             * site_config_get_job_script( const site_config_type * site_config );
+
+void                     site_config_set_max_submit( site_config_type * site_config , int max_submit );
+int                      site_config_get_max_submit(const site_config_type * site_config );
+
+void                     site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file);
+
 #ifdef __cplusplus
 }
 #endif
