@@ -57,7 +57,7 @@ class Application(QtGui.QWidget):
         
 
     def changePage(self, current, previous):
-        if not current:
+        if current is None:
             current = previous
 
         self.pagesWidget.setCurrentIndex(self.contentsWidget.row(current))

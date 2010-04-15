@@ -13,6 +13,7 @@ def abstract():
 class ContentModel:
     """This class is a wrapper for communication between the model and the view."""
     contentModel = None # A hack to have a "static" class variable
+    signalManager = QtCore.QObject()
     observers = []
 
     def __init__(self):
@@ -42,12 +43,26 @@ class ContentModel:
 
     def updateContent(self, value):
         """Sends updated data to the model. Calls the setter function with an appropriate model."""
-        if not ContentModel.contentModel == None :
+        if not ContentModel.contentModel is None :
             self.setter(ContentModel.contentModel, value)
 
     def getModel(self):
         """Returns the contentModel associated with this session"""
         return ContentModel.contentModel
+
+    # The modelConnect, modelDisconnect and modelEmit uses Qt signal handling to enable communication between
+    # separate parts of the model that needs to know about changes.    
+    def modelConnect(self, signal, callable):
+        """Connect to a custom signal available to all ContentModel objects."""
+        QtCore.QObject.connect(ContentModel.signalManager, QtCore.SIGNAL(signal), callable)
+
+    def modelDisconnect(self, signal, callable):
+        """Disconnect from a custom signal available to all ContentModel objects."""
+        QtCore.QObject.disconnect(ContentModel.signalManager, QtCore.SIGNAL(signal), callable)
+
+    def modelEmit(self, signal, *args):
+        """Emit a custom signal available to all ContentModel objects."""
+        ContentModel.signalManager.emit(QtCore.SIGNAL(signal), *args)
 
     @classmethod
     def updateObservers(cls):

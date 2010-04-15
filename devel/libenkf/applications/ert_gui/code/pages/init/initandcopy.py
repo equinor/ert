@@ -1,22 +1,9 @@
 from widgets.helpedwidget import HelpedWidget
 import ertwrapper
 from PyQt4 import QtGui, QtCore
-
-# e = enkf_main_get_ensemble_config( enkf_main )
-# s = ensemble_config_alloc_keylist_from_var_type(e , 1 # PARAMETER value from enkf_types.h)
-# # Itererer over stringlist
-# stringlist_free( s )
-# range = enkf_main_get_ensemble_size( enkf_main )
-#
-#
-# sl = stringlist_alloc_new()
-# stringlist_append_copy(sl , "STRING")
-#
-#
-#
-# enkf_main_initialize(enkf_main , sl , iens1 , iens2);
-# stringlist_free( sl )
 from widgets.util import resourceIcon
+
+
 class ParametersAndMembers(HelpedWidget):
 
     listOfParameters = []
@@ -43,6 +30,8 @@ class ParametersAndMembers(HelpedWidget):
 
         self.addLayout(layout)
 
+            
+        self.modelConnect("casesUpdated()", self.fetchContent)
         self.toggleScratch.toggle()
 
 
@@ -133,7 +122,7 @@ class ParametersAndMembers(HelpedWidget):
             print "copying"
 
 
-    def fetchContent(self): #todo: add support for updated parameters and cases. Make other operations emit signals
+    def fetchContent(self):
         data = self.getFromModel()
 
         self.parametersList.clear()
@@ -143,8 +132,9 @@ class ParametersAndMembers(HelpedWidget):
         self.listOfParameters = data["parameters"]
         self.listOfDynamicParameters = data["dynamic_parameters"]
 
+
         for member in data["members"]:
-            self.membersList.addItem(str(member))
+            self.membersList.addItem("%3s" % (member))
 
         for case in data["cases"]:
             if not case == data["current_case"]:
@@ -177,7 +167,7 @@ class ParametersAndMembers(HelpedWidget):
 
     def getter(self, ert):
         #enums from enkf_types.h
-        PARAMETER     = 1
+        PARAMETER = 1
         DYNAMIC_STATE = 2
 
         keylist = ert.enkf.ensemble_config_alloc_keylist_from_var_type(ert.ensemble_config, PARAMETER )
