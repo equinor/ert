@@ -2,6 +2,7 @@ from PyQt4 import QtGui, QtCore
 import help #todo this is not a nice way of solving this...
 import sys
 from widgets.util import resourceIcon
+import inspect
 
 def abstract():
     """Abstract keyword that indicate an abstract function"""
@@ -38,18 +39,23 @@ class ContentModel:
 
     def getFromModel(self):
         """Retrieves the data from the model. Calls the getter function with an appropriate model."""
-        return self.getter(ContentModel.contentModel)
+        gargs = inspect.getargspec(self.getter)
 
+        if inspect.isfunction(self.getter) and "self" in gargs[0]:
+            return self.getter.__call__(self, ContentModel.contentModel)
+        else:
+            return self.getter(ContentModel.contentModel)
 
     def updateContent(self, value):
         """Sends updated data to the model. Calls the setter function with an appropriate model."""
         if not ContentModel.contentModel is None :
             self.setter(ContentModel.contentModel, value)
+            self.emit(QtCore.SIGNAL('contentsChanged()'))
 
     def getModel(self):
         """Returns the contentModel associated with this session"""
         return ContentModel.contentModel
-
+        
     # The modelConnect, modelDisconnect and modelEmit uses Qt signal handling to enable communication between
     # separate parts of the model that needs to know about changes.    
     def modelConnect(self, signal, callable):

@@ -48,7 +48,7 @@ class InitPanel(QtGui.QFrame):
 
     def casesUpdated(self):
         """Emit to all listeners that the a new case has been added or the current case has changed"""
-        self.currentCase.modelEmit("casesUpdated()")  # todo: also emit when a new field is added
+        self.currentCase.modelEmit("casesUpdated()")
 
     def createCaseList(self):
         """Creates a list that enables the creation of new cases. Removal has been disabled."""
@@ -62,7 +62,6 @@ class InitPanel(QtGui.QFrame):
                                          ert.setTypes("enkf_fs_alloc_dirlist"),
                                          ert.setTypes("enkf_fs_has_dir", ertwrapper.c_int),
                                          ert.setTypes("enkf_fs_select_write_dir", None)]
-
 
         def create_case(ert, cases):
             fs = ert.enkf.enkf_main_get_fs(ert.main)
@@ -81,6 +80,7 @@ class InitPanel(QtGui.QFrame):
 
         return cases
 
+
     def createCurrentCaseCombo(self):
         """Creates the combo that enables selection of the current case"""
         self.currentCase = ComboChoice(self, ["none"])
@@ -92,7 +92,6 @@ class InitPanel(QtGui.QFrame):
             ert.setTypes("enkf_fs_select_read_dir", None, ertwrapper.c_char_p)
 
             self.currentCase.updateList(self.get_case_list(ert))
-            
 
         self.currentCase.initialize = initialize_cases
 
@@ -115,6 +114,7 @@ class InitPanel(QtGui.QFrame):
         self.currentCase.setter = select_case
 
         return self.currentCase
+
 
     def createSeparator(self):
         """Adds a separator line to the panel."""

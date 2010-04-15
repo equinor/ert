@@ -32,6 +32,8 @@ class ParametersAndMembers(HelpedWidget):
 
             
         self.modelConnect("casesUpdated()", self.fetchContent)
+        self.modelConnect("ensembleResized()", self.fetchContent)
+
         self.toggleScratch.toggle()
 
 
@@ -134,7 +136,8 @@ class ParametersAndMembers(HelpedWidget):
 
 
         for member in data["members"]:
-            self.membersList.addItem("%3s" % (member))
+            self.membersList.addItem("%03d" % (member))
+            #self.membersList.addItem(str(member))
 
         for case in data["cases"]:
             if not case == data["current_case"]:
@@ -257,7 +260,8 @@ class ParametersAndMembers(HelpedWidget):
         self.membersList.setViewMode(QtGui.QListView.IconMode)
         self.membersList.setMovement(QtGui.QListView.Static)
         self.membersList.setResizeMode(QtGui.QListView.Adjust)
-        self.membersList.setUniformItemSizes(True)
+        #self.membersList.setUniformItemSizes(True)
+        self.membersList.setGridSize(QtCore.QSize(32, 16))
         self.membersList.setSelectionRectVisible(False)
         #-----------------------------
 

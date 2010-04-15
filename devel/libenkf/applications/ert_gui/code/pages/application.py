@@ -1,13 +1,14 @@
 from PyQt4 import QtGui, QtCore
 
 
-class Application(QtGui.QWidget):
+class Application(QtGui.QMainWindow):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
+        QtGui.QMainWindow.__init__(self)
 
         self.resize(900, 700)
         self.setWindowTitle('ERT GUI')
 
+        centralWidget = QtGui.QWidget()
         widgetLayout = QtGui.QVBoxLayout()
 
         self.contentsWidget = QtGui.QListWidget()
@@ -38,9 +39,8 @@ class Application(QtGui.QWidget):
         buttonWidget.setLayout(buttonLayout)
         widgetLayout.addWidget(buttonWidget)
 
-        self.setLayout(widgetLayout)
-        self.show()
-
+        centralWidget.setLayout(widgetLayout)
+        self.setCentralWidget(centralWidget)
 
 
     def addPage(self, name, icon, page):
