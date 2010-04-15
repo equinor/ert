@@ -922,6 +922,26 @@ void job_queue_set_size( job_queue_type * queue , int size ) {
 }
 
 
+void job_queue_set_run_cmd( job_queue_type * job_queue , const char * run_cmd ) {
+  job_queue->run_cmd = util_realloc_string_copy( job_queue->run_cmd , run_cmd );
+}
+
+const char * job_queue_get_run_cmd( job_queue_type * job_queue) {
+  return job_queue->run_cmd;
+}
+
+
+void job_queue_set_max_submit( job_queue_type * job_queue , int max_submit ) {
+  job_queue->max_submit = max_submit;
+}
+
+
+int job_queue_get_max_submit(const job_queue_type * job_queue ) {
+  return job_queue->max_submit;
+}
+
+
+
 /**
    The job_queue instance can be resized afterwards with a call to
    job_queue_set_size(). Observe that the job_queue returned by this
@@ -941,7 +961,8 @@ job_queue_type * job_queue_alloc(int size ,
   queue->max_running     = max_running;
   queue->max_submit      = max_submit;
   queue->driver          = NULL;
-  queue->run_cmd         = util_alloc_string_copy(run_cmd);
+  queue->run_cmd         = NULL;
+  job_queue_set_run_cmd( queue , run_cmd );
   job_queue_set_size( queue , size );
   pthread_rwlock_init( &queue->active_rwlock , NULL);
   pthread_rwlock_init( &queue->status_rwlock , NULL);
