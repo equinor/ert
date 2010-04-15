@@ -10,7 +10,7 @@ Missing initializer: install_job
   s = enkf_main_get_site_config( enkf_main );
   site_config_install_job( s , JOB_KEY , EXISTING_FILE );   <- Should have a GUI option for creating the 
                                                                config file EXISTING_FILE                      
-
+                                                                 
 
 
 Missing initializer: num_realizations
