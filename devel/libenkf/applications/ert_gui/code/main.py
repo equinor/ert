@@ -24,34 +24,25 @@ from widgets.helpedwidget import ContentModel
 
 app = QtGui.QApplication(sys.argv)
 
-doTheSplash = True
 
-if doTheSplash:
-    splash = QtGui.QSplashScreen(widgets.util.resourceImage("splash"))
-    splash.show()
-    splash.showMessage("Starting up...")
-    app.processEvents()
-    time.sleep(1)
+splash = QtGui.QSplashScreen(widgets.util.resourceImage("splash"))
+splash.show()
+splash.showMessage("Starting up...")
+app.processEvents()
 
 window = Application()
 
-if doTheSplash:
-    splash.showMessage("Bootstrapping...")
-    app.processEvents()
+splash.showMessage("Bootstrapping...")
+app.processEvents()
 
 site_config = "/project/res/etc/ERT/Config/site-config"
 enkf_config = local.enkf_config
 enkf_so     = local.enkf_so
 ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config, enkf_so = enkf_so)
 
-if doTheSplash:
-    time.sleep(1)
 
-
-if doTheSplash:
-    splash.showMessage("Creating GUI...")
-    app.processEvents()
-    time.sleep(1)
+splash.showMessage("Creating GUI...")
+app.processEvents()
 
 
 window.addPage("Configuration", widgets.util.resourceIcon("config"), ConfigPages(window))
@@ -66,8 +57,7 @@ ContentModel.updateObservers()
 
 window.show()
 
-if doTheSplash:
-    splash.finish(window)
+splash.finish(window)
 
 sys.exit(app.exec_())
 
