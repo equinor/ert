@@ -271,7 +271,7 @@ class ErtWrapper:
                 value = self.util.hash_get(hashpointer, key)
             else:
                 value = self.util.hash_get_int(hashpointer, key)
-                print "%s -> %d" % (key , value)
+                #print "%s -> %d" % (key , value)
 
             result.append([key, str(value)])
 
