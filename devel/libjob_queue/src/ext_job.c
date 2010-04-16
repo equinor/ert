@@ -96,7 +96,8 @@ struct ext_job_struct {
   stringlist_type * init_code;
   hash_type  	  * platform_exe;          /* The hash tables can NOT be NULL. */
   hash_type  	  * environment;
-  
+
+  bool              shared_job;            /* Can the current user/delete this job? (shared_job == true) means the user can not edit it. */
   bool              __valid;               /* Temporary variable consulted during the bootstrap - when the ext_job is completely initialized this should NOT be consulted anymore. */
 };
 
@@ -142,6 +143,7 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->license_path        = NULL;
   ext_job->max_running         = 0;     /* 0 means unlimited. */
   ext_job->max_running_minutes = 0;     /* 0 means unlimited. */
+  ext_job->shared_job          = true;  /* The job is NOTuser editable. */ 
   /* 
      ext_job->private_args is set explicitly in the ext_job_alloc() 
      and ext_job_alloc_copy() functions. 
