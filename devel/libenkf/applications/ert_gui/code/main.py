@@ -24,7 +24,6 @@ from widgets.helpedwidget import ContentModel
 
 app = QtGui.QApplication(sys.argv)
 
-
 doTheSplash = True
 
 if doTheSplash:
