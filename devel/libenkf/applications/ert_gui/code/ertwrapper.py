@@ -180,7 +180,7 @@ class ErtWrapper:
         self.enkf = CDLL(prefix + "libenkf/slib/libenkf.so", RTLD_GLOBAL)
 
 
-    def setTypes(self, function, restype = c_long, argtypes = [], library = None):
+    def setTypes(self, function, restype = c_long, argtypes = [], library = None, selfpointer=True):
         """
         Set the return and argument types of a ERT function.
         Since all methods need a pointer, this is already defined as c_long.
@@ -193,13 +193,19 @@ class ErtWrapper:
         func.restype = restype
 
         if isinstance(argtypes, list):
-            args = [c_long]
-            args.extend(argtypes)
+            if selfpointer:
+                args = [c_long]
+                args.extend(argtypes)
+            else:
+                args = argtypes
             func.argtypes = args
         elif argtypes == None:
             func.argtypes = []
         else:
-            func.argtypes = [c_long, argtypes]
+            if selfpointer:
+                func.argtypes = [c_long, argtypes]
+            else:
+                func.argtypes = [argtypes]
 
 
         #print "Setting: " + str(func.restype) + " " + function + "( " + str(func.argtypes) + " ) "
@@ -231,6 +237,11 @@ class ErtWrapper:
         self.setTypes("subst_list_get_size", c_int, library = self.util)
         self.setTypes("subst_list_iget_key", c_char_p, c_int, library = self.util)
         self.setTypes("subst_list_iget_value", c_char_p, c_int, library = self.util)
+
+        self.setTypes("bool_vector_alloc", c_long, [c_int, c_int], library = self.util, selfpointer=False)
+        self.setTypes("bool_vector_iset", c_long, [c_int, c_int], library = self.util)
+        self.setTypes("bool_vector_get_ptr", library = self.util)
+        self.setTypes("bool_vector_free", None, library = self.util)
 
         
     def getStringList(self, stringlistpointer):
@@ -296,3 +307,17 @@ class ErtWrapper:
         func = getattr(self.enkf, function)
         func.restype = c_long
         return func(self.main)
+
+    def createBoolVector(self, size, list):
+        mask = self.util.bool_vector_alloc(size , False)
+
+        for index in list:
+            self.util.bool_vector_iset(mask, int(index), True)
+
+        return mask
+
+    def getBoolVectorPtr(self, mask):
+        return self.util.bool_vector_get_ptr(mask)
+
+    def freeBoolVector(self, mask):
+        self.util.bool_vector_free(mask)

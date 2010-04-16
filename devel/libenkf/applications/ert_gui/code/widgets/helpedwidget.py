@@ -47,7 +47,11 @@ class ContentModel:
             return self.getter(ContentModel.contentModel)
 
     def updateContent(self, value):
-        """Sends updated data to the model. Calls the setter function with an appropriate model."""
+        """
+        Sends updated data to the model.
+        Calls the setter function with an appropriate model.
+        Emits a SIGNAL 'contentsChanged()' after the setter has been called.
+        """
         if not ContentModel.contentModel is None :
             self.setter(ContentModel.contentModel, value)
             self.emit(QtCore.SIGNAL('contentsChanged()'))
@@ -57,7 +61,8 @@ class ContentModel:
         return ContentModel.contentModel
         
     # The modelConnect, modelDisconnect and modelEmit uses Qt signal handling to enable communication between
-    # separate parts of the model that needs to know about changes.    
+    # separate parts of the model that needs to know about changes.
+    #todo: can be static?
     def modelConnect(self, signal, callable):
         """Connect to a custom signal available to all ContentModel objects."""
         QtCore.QObject.connect(ContentModel.signalManager, QtCore.SIGNAL(signal), callable)
