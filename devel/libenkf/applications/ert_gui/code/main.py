@@ -25,14 +25,14 @@ from widgets.helpedwidget import ContentModel
 app = QtGui.QApplication(sys.argv)
 
 
-splash = QtGui.QSplashScreen(widgets.util.resourceImage("splash"))
+splash = QtGui.QSplashScreen(widgets.util.resourceImage("splash"), QtCore.Qt.WindowStaysOnTopHint)
 splash.show()
-splash.showMessage("Starting up...")
+splash.showMessage("Starting up...", color=QtCore.Qt.white)
 app.processEvents()
 
 window = Application()
 
-splash.showMessage("Bootstrapping...")
+splash.showMessage("Bootstrapping...", color=QtCore.Qt.white)
 app.processEvents()
 
 site_config = "/project/res/etc/ERT/Config/site-config"
@@ -40,23 +40,22 @@ enkf_config = local.enkf_config
 enkf_so     = local.enkf_so
 ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config, enkf_so = enkf_so)
 
-
-splash.showMessage("Creating GUI...")
+splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
 app.processEvents()
-
 
 window.addPage("Configuration", widgets.util.resourceIcon("config"), ConfigPages(window))
 window.addPage("Init", widgets.util.resourceIcon("db"), InitPanel(window))
 window.addPage("Run", widgets.util.resourceIcon("run"), RunPanel(window))
 window.addPage("Plots", widgets.util.resourceIcon("plot"), PlotPanel("plots/default"))
 
+splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
+app.processEvents()
 
 ContentModel.contentModel = ert
 ContentModel.updateObservers()
 
 
 window.show()
-
 splash.finish(window)
 
 sys.exit(app.exec_())

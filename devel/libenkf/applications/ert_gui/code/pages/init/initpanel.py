@@ -6,7 +6,7 @@ from widgets.combochoice import ComboChoice
 
 
 from widgets.helpedwidget import HelpedWidget
-from widgets.util import resourceIcon
+from widgets.util import resourceIcon, createSeparator
 
 from initandcopy import *
 
@@ -43,7 +43,7 @@ class InitPanel(QtGui.QFrame):
         parametersPanelLayout.addWidget(ParametersAndMembers(self))
 
         initPanelLayout.addLayout(casePanel)
-        initPanelLayout.addWidget(self.createSeparator())
+        initPanelLayout.addWidget(createSeparator())
         initPanelLayout.addLayout(parametersPanelLayout)
 
     def casesUpdated(self):
@@ -114,20 +114,3 @@ class InitPanel(QtGui.QFrame):
         self.currentCase.setter = select_case
 
         return self.currentCase
-
-
-    def createSeparator(self):
-        """Adds a separator line to the panel."""
-        qw = QtGui.QWidget()
-        qwl = QtGui.QVBoxLayout()
-        qw.setLayout(qwl)
-
-        qf = QtGui.QFrame()
-        qf.setFrameShape(QtGui.QFrame.HLine)
-        qf.setFrameShadow(QtGui.QFrame.Sunken)
-
-        qwl.addSpacing(5)
-        qwl.addWidget(qf)
-        qwl.addSpacing(5)
-
-        return qw
