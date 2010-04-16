@@ -59,6 +59,14 @@ struct model_config_struct {
 
 
 
+path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
+  return model_config->runpath;
+}
+
+const char * model_config_get_runpath_as_char( const model_config_type * model_config ) {
+  return path_fmt_get_fmt( model_config->runpath );
+}
+
 
 void model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt){
   if (model_config->runpath != NULL)
@@ -277,10 +285,6 @@ void model_config_free(model_config_type * model_config) {
 }
 
 
-
-path_fmt_type * model_config_get_runpath_fmt(const model_config_type * model_config) {
-  return model_config->runpath;
-}
 
 
 enkf_sched_type * model_config_get_enkf_sched(const model_config_type * config) {

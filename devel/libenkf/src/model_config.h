@@ -35,7 +35,6 @@ void                   model_config_free(model_config_type *);
 path_fmt_type        * model_config_get_runpath_fmt(const model_config_type * );
 enkf_sched_type      * model_config_get_enkf_sched(const model_config_type * );
 history_type         * model_config_get_history(const model_config_type * );
-void                   model_config_interactive_set_runpath__(void * arg);
 forward_model_type   * model_config_get_std_forward_model( const model_config_type * );
 bool                   model_config_internalize_state( const model_config_type *, int );
 bool                   model_config_load_state( const model_config_type *, int );
@@ -44,6 +43,9 @@ int                    model_config_get_max_internal_submit( const model_config_
 const char           * model_config_iget_casename( const model_config_type * model_config , int index);
 void                   model_config_set_max_resample( model_config_type * model_config , int max_resample );
 int                    model_config_get_max_resample(const model_config_type * model_config );
+void                   model_config_set_runpath_fmt(model_config_type * model_config, const char * fmt);
+void                   model_config_interactive_set_runpath__(void * arg);
+const char           * model_config_get_runpath_as_char( const model_config_type * model_config );
 
 
 #ifdef __cplusplus 
