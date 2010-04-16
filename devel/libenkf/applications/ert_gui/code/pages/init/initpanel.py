@@ -90,6 +90,7 @@ class InitPanel(QtGui.QFrame):
             ert.setTypes("enkf_main_get_fs")
             ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
             ert.setTypes("enkf_fs_select_read_dir", None, ertwrapper.c_char_p)
+            ert.setTypes("enkf_fs_select_write_dir", None, ertwrapper.c_char_p)
 
             self.currentCase.updateList(self.get_case_list(ert))
 
@@ -109,6 +110,7 @@ class InitPanel(QtGui.QFrame):
             if not case == "":
                 fs = ert.enkf.enkf_main_get_fs(ert.main)
                 ert.enkf.enkf_fs_select_read_dir(fs, case)
+                ert.enkf.enkf_fs_select_write_dir(fs, case)
                 self.casesUpdated()
 
         self.currentCase.setter = select_case
