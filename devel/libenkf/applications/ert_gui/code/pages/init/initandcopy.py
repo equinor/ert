@@ -1,7 +1,7 @@
 from widgets.helpedwidget import HelpedWidget
 import ertwrapper
 from PyQt4 import QtGui, QtCore
-from widgets.util import resourceIcon
+from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo
 
 
 class ParametersAndMembers(HelpedWidget):
@@ -38,9 +38,7 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def toggleCompleteEnsembleState(self, checkState):
-        self.parametersList.setEnabled(not checkState)
-        self.parametersList.checkAll.setEnabled(not checkState)
-        self.parametersList.uncheckAll.setEnabled(not checkState)
+        self.parametersList.setSelectionEnabled(not checkState)
 
         if checkState:
             self.parametersList.selectAll()
@@ -206,31 +204,7 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def createCheckPanel(self, list):
-        list.checkAll = QtGui.QToolButton(self)
-        list.checkAll.setIcon(resourceIcon("checked"))
-        list.checkAll.setIconSize(QtCore.QSize(16, 16))
-        list.checkAll.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        list.checkAll.setAutoRaise(True)
-        list.checkAll.setToolTip("Select all")
-
-        list.uncheckAll = QtGui.QToolButton(self)
-        list.uncheckAll.setIcon(resourceIcon("notchecked"))
-        list.uncheckAll.setIconSize(QtCore.QSize(16, 16))
-        list.uncheckAll.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        list.uncheckAll.setAutoRaise(True)
-        list.uncheckAll.setToolTip("Unselect all")
-
-        buttonLayout = QtGui.QHBoxLayout()
-        buttonLayout.setMargin(0)
-        buttonLayout.setSpacing(0)
-        buttonLayout.addStretch(1)
-        buttonLayout.addWidget(list.checkAll)
-        buttonLayout.addWidget(list.uncheckAll)
-
-        self.connect(list.checkAll, QtCore.SIGNAL('clicked()'), list.selectAll)
-        self.connect(list.uncheckAll, QtCore.SIGNAL('clicked()'), list.clearSelection)
-
-        return buttonLayout
+        return ListCheckPanel(list)
 
 
     def createRadioButtons(self):
@@ -285,42 +259,7 @@ class ParametersAndMembers(HelpedWidget):
 
 
     def createValidatedTimestepCombo(self):
-        validatedCombo = QtGui.QComboBox(self)
-        validatedCombo.setMaximumWidth(125)
-        validatedCombo.setEditable(True)
-        validatedCombo.setValidator(QtGui.QIntValidator())
-        validatedCombo.addItem("Initial (0)")
-        validatedCombo.addItem("Final (n-1)")
-
-
-        def focusOutValidation(combo, maxTimeStep, event):
-            QtGui.QComboBox.focusOutEvent(combo, event)
-
-            timestepMakesSense = False
-            currentText = str(combo.currentText())
-            if currentText.startswith("Initial") or currentText.startswith("Final"):
-                timestepMakesSense = True
-            elif currentText.isdigit():
-                intValue = int(currentText)
-                timestepMakesSense = True
-
-                if intValue > maxTimeStep:
-                     combo.setCurrentIndex(1)
-
-
-            if not timestepMakesSense:
-                combo.setCurrentIndex(0)
-
-        validatedCombo.focusOutEvent = lambda event : focusOutValidation(validatedCombo, self.maxTimeStep, event)
-
-
-        def setHistoryLength(length):
-            validatedCombo.setItemText(1, "Final (" + str(length) + ")")
-
-        validatedCombo.setHistoryLength = setHistoryLength
-
-        return validatedCombo
-
+        return ValidatedTimestepCombo(self)
 
     def createActionButton(self):
         self.actionButton = QtGui.QPushButton("Initialize")
