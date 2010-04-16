@@ -10,7 +10,7 @@ import ertwrapper
 def createPlotPage(configPanel, parent):
     configPanel.startPage("Plot")
 
-    r = configPanel.addRow(PathChooser(parent, "Output path", "plot_path"))
+    r = configPanel.addRow(PathChooser(parent, "Output path", "config/plot/path"))
     r.initialize = lambda ert : [ert.setTypes("plot_config_get_path", ertwrapper.c_char_p),
                                  ert.setTypes("plot_config_set_path", None, [ertwrapper.c_char_p])]
     r.getter = lambda ert : ert.enkf.plot_config_get_path(ert.plot_config)
@@ -28,7 +28,7 @@ def createPlotPage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.plot_config_get_errorbar_max(ert.plot_config)
     r.setter = lambda ert, value : ert.enkf.plot_config_set_errorbar_max(ert.plot_config, value)
 
-    r = configPanel.addRow(IntegerSpinner(parent, "Width", "plot_width", 1, 10000))
+    r = configPanel.addRow(IntegerSpinner(parent, "Width", "config/plot/width", 1, 10000))
     r.initialize = lambda ert : [ert.setTypes("plot_config_get_width", ertwrapper.c_int),
                                  ert.setTypes("plot_config_set_width", None, [ertwrapper.c_int])]
     r.getter = lambda ert : ert.enkf.plot_config_get_width(ert.plot_config)
