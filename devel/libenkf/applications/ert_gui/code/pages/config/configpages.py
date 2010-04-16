@@ -12,6 +12,8 @@ import action
 import log
 
 class ConfigPages(ConfigPanel):
+    
+
     def __init__(self, parent):
         ConfigPanel.__init__(self, parent)
 
