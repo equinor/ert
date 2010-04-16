@@ -1,7 +1,7 @@
 from widgets.helpedwidget import HelpedWidget
 import ertwrapper
 from PyQt4 import QtGui, QtCore
-from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo
+from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, getItemsFromList
 
 
 class ParametersAndMembers(HelpedWidget):
@@ -82,16 +82,6 @@ class ParametersAndMembers(HelpedWidget):
         self.membersList.selectAll()
 
 
-    def getItemsFromList(self, list):
-        selectedItemsList = list.selectedItems()
-
-        selectedItems = []
-        for item in selectedItemsList:
-            selectedItems.append(str(item.text()))
-
-        return selectedItems
-
-
     def initializeCase(self, parameters, members):
         ert = self.getModel()
 
@@ -108,8 +98,8 @@ class ParametersAndMembers(HelpedWidget):
 
     def initializeOrCopy(self):
         if self.toggleScratch.isChecked():
-            selectedParameters = self.getItemsFromList(self.parametersList)
-            selectedMembers = self.getItemsFromList(self.membersList)
+            selectedParameters = getItemsFromList(self.parametersList)
+            selectedMembers = getItemsFromList(self.membersList)
 
             if len(selectedParameters) == 0 or len(selectedMembers) == 0:
                 QtGui.QMessageBox.warning(self, "Missing data", "At least one parameter and one member must be selected!")
@@ -311,7 +301,7 @@ class ParametersAndMembers(HelpedWidget):
         self.sourceCase.setToolTip("Select source case")
         self.sourceType = QtGui.QComboBox(self)
         self.sourceType.setMaximumWidth(100)
-        self.sourceType.setToolTip("Select source type")
+        self.sourceType.setToolTip("Select source state")
         self.sourceType.addItem("Analyzed")
         self.sourceType.addItem("Forecasted")
         self.sourceReportStep = self.createValidatedTimestepCombo()
@@ -323,7 +313,7 @@ class ParametersAndMembers(HelpedWidget):
 
         self.targetType = QtGui.QComboBox(self)
         self.targetType.setMaximumWidth(100)
-        self.targetType.setToolTip("Select target type")
+        self.targetType.setToolTip("Select target state")
         self.targetType.addItem("Analyzed")
         self.targetType.addItem("Forecasted")
         self.targetReportStep = self.createValidatedTimestepCombo()

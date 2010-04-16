@@ -2,7 +2,7 @@ from PyQt4 import QtGui, QtCore
 import ertwrapper
 
 from widgets.helpedwidget import HelpedWidget, ContentModel
-from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo
+from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, createSpace, getItemsFromList
 
 class RunWidget(HelpedWidget):
 
@@ -19,7 +19,6 @@ class RunWidget(HelpedWidget):
         self.membersList.setSelectionRectVisible(False)
 
 
-        #memberLayout = QtGui.QVBoxLayout()
         memberLayout = QtGui.QFormLayout()
         memberLayout.setLabelAlignment(QtCore.Qt.AlignRight)
 
@@ -35,12 +34,35 @@ class RunWidget(HelpedWidget):
         #membersCheckPanel.insertWidget(0, QtGui.QLabel("Members"))
 
         self.simulateFrom = ValidatedTimestepCombo(parent, fromLabel="Start", toLabel="End of history")
-        self.simulateTo = ValidatedTimestepCombo(parent, fromLabel="End of History", toLabel="End")
-        memberLayout.addRow("Run simulation from: ", self.simulateFrom)
+        self.simulateTo = ValidatedTimestepCombo(parent, fromLabel="End of history", toLabel="End of prediction")
+
+        self.startState = QtGui.QComboBox(self)
+        self.startState.setMaximumWidth(100)
+        self.startState.setToolTip("Select state")
+        self.startState.addItem("Analyzed")
+        self.startState.addItem("Forecasted")
+
+        startLayout = QtGui.QHBoxLayout()
+        startLayout.addWidget(self.simulateFrom)
+        startLayout.addWidget(self.startState)
+
+        memberLayout.addRow("Run simulation from: ", startLayout)
         memberLayout.addRow("Run simulation to: ", self.simulateTo)
         memberLayout.addRow("Mode: ", self.createRadioButtons())
         memberLayout.addRow(membersCheckPanel)
         memberLayout.addRow("Members:", self.membersList)
+
+        self.actionButton = QtGui.QPushButton("Run simulation")
+
+        self.connect(self.actionButton, QtCore.SIGNAL('clicked()'), self.run)
+
+        actionLayout = QtGui.QHBoxLayout()
+        actionLayout.addStretch(1)
+        actionLayout.addWidget(self.actionButton)
+        actionLayout.addStretch(1)
+
+        memberLayout.addRow(createSpace(10))
+        memberLayout.addRow(actionLayout)
 
 
 
@@ -51,6 +73,17 @@ class RunWidget(HelpedWidget):
 
         self.modelConnect("ensembleResized()", self.fetchContent)
         self.rbAssimilation.toggle()
+
+
+
+    def run(self):
+        selectedMembers = getItemsFromList(self.membersList)
+
+        if len(selectedMembers) == 0:
+            QtGui.QMessageBox.warning(self, "Missing data", "At least one member must be selected!")
+            return
+
+        print self.simulateFrom.getSelectedValue(), self.simulateTo.getSelectedValue(), self.simulateFrom.currentText()
 
     def setRunpath(self, runpath):
         #self.runpathLabel.setText("Runpath: " + runpath)
@@ -78,9 +111,6 @@ class RunWidget(HelpedWidget):
 
     def initialize(self, ert):
         ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
-        ert.setTypes("enkf_main_get_fs")
-        ert.setTypes("enkf_fs_get_read_dir", ertwrapper.c_char_p)
-        ert.setTypes("enkf_fs_alloc_dirlist")
         ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
 
 
@@ -92,7 +122,11 @@ class RunWidget(HelpedWidget):
 
 
     def rbToggle(self):
-        print "Radio button toggled"
+        if self.rbAssimilation.isChecked():
+            self.membersList.setSelectionEnabled(False)
+            self.membersList.selectAll()
+        else:
+            self.membersList.setSelectionEnabled(True)
 
     def createRadioButtons(self):
         radioLayout = QtGui.QVBoxLayout()
@@ -119,27 +153,12 @@ class RunPanel(QtGui.QFrame):
         self.setLayout(panelLayout)
 
                 
-        button = QtGui.QPushButton("Refetch")
-        self.connect(button, QtCore.SIGNAL('clicked()'), ContentModel.updateObservers)
-
-        panelLayout.addWidget(button)
+#        button = QtGui.QPushButton("Refetch")
+#        self.connect(button, QtCore.SIGNAL('clicked()'), ContentModel.updateObservers)
+#
+#        panelLayout.addWidget(button)
         panelLayout.addWidget(RunWidget())
 
 
 
 
-    def createSeparator(self):
-        """Adds a separator line to the panel."""
-        qw = QtGui.QWidget()
-        qwl = QtGui.QVBoxLayout()
-        qw.setLayout(qwl)
-
-        qf = QtGui.QFrame()
-        qf.setFrameShape(QtGui.QFrame.HLine)
-        qf.setFrameShadow(QtGui.QFrame.Sunken)
-
-        qwl.addSpacing(5)
-        qwl.addWidget(qf)
-        qwl.addSpacing(5)
-
-        return qw

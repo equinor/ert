@@ -2,9 +2,11 @@ from PyQt4 import QtGui, QtCore
 import os
 
 def resourceIcon(name):
+    """Load an image as an icon"""
     return QtGui.QIcon(os.path.dirname(__file__) + "/../../img/" + name)
 
 def resourceImage(name):
+    """Load an image as a Pixmap"""
     return QtGui.QPixmap(os.path.dirname(__file__) + "/../../img/" + name)
 
 
@@ -115,3 +117,48 @@ class ValidatedTimestepCombo(QtGui.QComboBox):
         self.setMaxTimeStep(length)
         self.setToValue(length)
 
+    def getSelectedValue(self):
+        currentText = str(self.currentText())
+
+        if currentText.startswith(self.fromLabel):
+            return self.fromValue
+        elif currentText.startswith(self.toLabel):
+            return self.toValue
+        else:
+            return int(currentText)
+
+
+
+def createSeparator():
+        """Creates a widget that can be used as a separator line on a panel."""
+        qw = QtGui.QWidget()
+        qwl = QtGui.QVBoxLayout()
+        qw.setLayout(qwl)
+
+        qf = QtGui.QFrame()
+        qf.setFrameShape(QtGui.QFrame.HLine)
+        qf.setFrameShadow(QtGui.QFrame.Sunken)
+
+        qwl.addSpacing(5)
+        qwl.addWidget(qf)
+        qwl.addSpacing(5)
+
+        return qw
+
+def createSpace(size = 5):
+    """Creates a widget that can be used as spacing on  a panel."""
+    qw = QtGui.QWidget()
+    qw.setMinimumSize(QtCore.QSize(size, size))
+
+    return qw
+
+
+def getItemsFromList(list):
+    """Creates a list of strings from the selected items of a ListWidget"""
+    selectedItemsList = list.selectedItems()
+
+    selectedItems = []
+    for item in selectedItemsList:
+        selectedItems.append(str(item.text()))
+
+    return selectedItems

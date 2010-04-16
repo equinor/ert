@@ -1,5 +1,5 @@
 from PyQt4 import QtGui, QtCore
-
+from widgets.util import createSeparator
 
 class ConfigPanel(QtGui.QTabWidget):
     """Convenience class for a tabbed configuration panel"""
@@ -56,16 +56,5 @@ class ConfigPanel(QtGui.QTabWidget):
 
     def addSeparator(self):
         """Adds a separator line to the panel."""
-        qw = QtGui.QWidget()
-        qwl = QtGui.QVBoxLayout()
-        qw.setLayout(qwl)
 
-        qf = QtGui.QFrame()
-        qf.setFrameShape(QtGui.QFrame.HLine)
-        qf.setFrameShadow(QtGui.QFrame.Sunken)
-
-        qwl.addSpacing(10)
-        qwl.addWidget(qf)
-        qwl.addSpacing(10)
-
-        self.formLayout.addRow(qw)
+        self.formLayout.addRow(createSeparator())
