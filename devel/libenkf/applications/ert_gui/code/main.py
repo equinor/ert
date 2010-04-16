@@ -25,7 +25,7 @@ from widgets.helpedwidget import ContentModel
 app = QtGui.QApplication(sys.argv)
 
 
-doTheSplash = False
+doTheSplash = True
 
 if doTheSplash:
     splash = QtGui.QSplashScreen(widgets.util.resourceImage("splash"))
