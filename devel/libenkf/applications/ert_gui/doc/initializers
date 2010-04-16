@@ -68,6 +68,7 @@ Missing initializer: obs_config
 Missing initializer: forward_model
 Missing initializer: case_table
 Missing initializer: license_path
+
 Missing initializer: runpath
 # m = enkf_main_get_model_config( enkf_main )
 # model_config_get_runpath_fmt( m )

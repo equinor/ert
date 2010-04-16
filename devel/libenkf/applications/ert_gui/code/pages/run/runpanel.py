@@ -3,6 +3,7 @@ import ertwrapper
 
 from widgets.helpedwidget import HelpedWidget, ContentModel
 from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, createSpace, getItemsFromList
+import PyQt4.uic.Compiler.qtproxies
 
 class RunWidget(HelpedWidget):
 
@@ -40,7 +41,7 @@ class RunWidget(HelpedWidget):
         self.startState.setMaximumWidth(100)
         self.startState.setToolTip("Select state")
         self.startState.addItem("Analyzed")
-        self.startState.addItem("Forecasted")
+        self.startState.addItem("Forecast")
 
         startLayout = QtGui.QHBoxLayout()
         startLayout.addWidget(self.simulateFrom)
@@ -72,19 +73,36 @@ class RunWidget(HelpedWidget):
         self.setRunpath("...")
 
         self.modelConnect("ensembleResized()", self.fetchContent)
+        self.modelConnect("runpathChanged()", self.fetchContent)
         self.rbAssimilation.toggle()
 
 
 
     def run(self):
+        ert = self.getModel()
         selectedMembers = getItemsFromList(self.membersList)
 
         if len(selectedMembers) == 0:
             QtGui.QMessageBox.warning(self, "Missing data", "At least one member must be selected!")
             return
 
-        print self.simulateFrom.getSelectedValue(), self.simulateTo.getSelectedValue(), self.simulateFrom.currentText()
+        run_mode_type = {"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4}
+        state_enum = {"UNDEFINED" : 0, "SERIALIZED" : 1, "FORECAST" : 2, "ANALYZED" : 4, "BOTH" : 6}
 
+        if self.rbAssimilation.isChecked():
+            mode = run_mode_type["ENKF_ASSIMILATION"]
+        else:
+            mode = run_mode_type["ENSEMBLE_EXPERIMENT"]
+            
+        boolVector = ert.createBoolVector(self.membersList.count(), selectedMembers)
+        boolPtr = ert.getBoolVectorPtr(boolVector)
+
+        ert.enkf.enkf_main_run(ert.main, mode, boolPtr, 0, 0, state_enum["ANALYZED"])
+
+        ert.freeBoolVector(boolVector)
+
+
+        
     def setRunpath(self, runpath):
         #self.runpathLabel.setText("Runpath: " + runpath)
         self.runpathLabel.setText(runpath)
@@ -100,6 +118,8 @@ class RunWidget(HelpedWidget):
             self.membersList.addItem("%03d" % (member))
             #self.membersList.addItem(str(member))
 
+        self.setRunpath(data["runpath"])
+
         self.simulateFrom.setHistoryLength(historyLength)
         self.simulateTo.setFromValue(historyLength)
         self.simulateTo.setToValue(-1)
@@ -112,13 +132,15 @@ class RunWidget(HelpedWidget):
     def initialize(self, ert):
         ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
         ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
+        ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p)
 
 
     def getter(self, ert):
         members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
         historyLength = ert.enkf.enkf_main_get_history_length(ert.main)
+        runpath = ert.enkf.model_config_get_runpath_as_char(ert.model_config)
 
-        return {"members" : range(members), "history_length" : historyLength}
+        return {"members" : range(members), "history_length" : historyLength, "runpath" : runpath}
 
 
     def rbToggle(self):

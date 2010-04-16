@@ -1,6 +1,7 @@
 # ----------------------------------------------------------------------------------------------
 # Simulations tab
 # ----------------------------------------------------------------------------------------------
+from PyQt4 import QtCore
 from widgets.spinnerwidgets import IntegerSpinner
 import ertwrapper
 from widgets.tablewidgets import KeywordTable, MultiColumnTable, MultiColumnTable
@@ -44,8 +45,11 @@ def createSimulationsPage(configPanel, parent):
     internalPanel.startPage("Runpath")
 
     r = internalPanel.addRow(PathChooser(parent, "Runpath", "runpath"))
-    r.getter = lambda ert : ert.getAttribute("runpath")
-    r.setter = lambda ert, value : ert.setAttribute("runpath", value)
+    r.initialize = lambda ert : [ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p),
+                                 ert.setTypes("model_config_set_runpath_fmt", None, [ertwrapper.c_char_p])]
+    r.getter = lambda ert : ert.enkf.model_config_get_runpath_as_char(ert.model_config)
+    r.setter = lambda ert, value : ert.enkf.model_config_set_runpath_fmt(ert.model_config, str(value))
+    parent.connect(r, QtCore.SIGNAL("contentsChanged()"), lambda : r.modelEmit("runpathChanged()"))
 
     r = internalPanel.addRow(CheckBox(parent, "Pre clear", "pre_clear_runpath", "Perform pre clear"))
     r.getter = lambda ert : ert.getAttribute("pre_clear_runpath")
