@@ -65,17 +65,14 @@ class RunWidget(HelpedWidget):
         memberLayout.addRow(createSpace(10))
         memberLayout.addRow(actionLayout)
 
-
-
-
         self.addLayout(memberLayout)
 
         self.setRunpath("...")
 
         self.modelConnect("ensembleResized()", self.fetchContent)
         self.modelConnect("runpathChanged()", self.fetchContent)
-        self.rbAssimilation.toggle()
 
+        self.rbAssimilation.toggle()
 
 
     def run(self):
@@ -93,7 +90,7 @@ class RunWidget(HelpedWidget):
             mode = run_mode_type["ENKF_ASSIMILATION"]
         else:
             mode = run_mode_type["ENSEMBLE_EXPERIMENT"]
-            
+
         boolVector = ert.createBoolVector(self.membersList.count(), selectedMembers)
         boolPtr = ert.getBoolVectorPtr(boolVector)
 
@@ -170,15 +167,13 @@ class RunPanel(QtGui.QFrame):
         self.setFrameShape(QtGui.QFrame.Panel)
         self.setFrameShadow(QtGui.QFrame.Raised)
 
-
         panelLayout = QtGui.QVBoxLayout()
         self.setLayout(panelLayout)
 
-                
 #        button = QtGui.QPushButton("Refetch")
 #        self.connect(button, QtCore.SIGNAL('clicked()'), ContentModel.updateObservers)
-#
 #        panelLayout.addWidget(button)
+
         panelLayout.addWidget(RunWidget())
 
 
