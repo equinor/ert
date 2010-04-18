@@ -121,6 +121,13 @@ int site_config_install_job(site_config_type * site_config , const char * job_na
 }
 
 
+/**
+   Will NOT remove shared jobs.
+*/
+bool site_config_del_job( site_config_type * site_config , const char * job_name ) {
+  return ext_joblist_del_job( site_config->joblist , job_name );
+}
+
 
 
 static void site_config_install_joblist(site_config_type * site_config , const config_type * config) {
