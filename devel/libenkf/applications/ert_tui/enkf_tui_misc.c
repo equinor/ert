@@ -39,6 +39,7 @@ static void enkf_tui_misc_list_jobs(void * arg) {
     printf("\n");
   }
   printf("================================================================================\n");
+  stringlist_free( job_names );
 }
 
 

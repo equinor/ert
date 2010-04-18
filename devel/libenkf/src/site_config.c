@@ -30,6 +30,8 @@ struct site_config_struct {
   hash_type             * initial_path_variables;
   stringlist_type       * path_variables;         /* We can update the same path variable several times - i.e. it can not be a hash table. */
   stringlist_type       * path_values;
+  char                  * license_root_path;      /* The license_root_path value set by the user. */
+  char                  * __license_root_path;    /* The license_root_path value actually used - includes a user/pid subdirectory. */
   /*---------------------------------------------------------------*/
   int                     max_running_lsf;        /* Need to hold the detailed information about the         */
   char                  * lsf_queue_name;         /* various drivers here to be able to "hot-switch" driver. */
@@ -52,15 +54,17 @@ bool site_config_get_statoil_mode(const site_config_type * site_config ) {
 
 static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc( sizeof * site_config , __func__);
-
-  site_config->joblist      = NULL;
-  site_config->job_queue    = NULL;
-
-  site_config->lsf_queue_name = NULL;
-  site_config->lsf_request    = NULL;
-  site_config->rsh_host_list  = hash_alloc();
-  site_config->rsh_command    = NULL;
   
+  site_config->joblist                = NULL;
+  site_config->job_queue              = NULL;
+
+  site_config->lsf_queue_name         = NULL;
+  site_config->lsf_request            = NULL;
+  site_config->rsh_host_list          = hash_alloc();
+  site_config->rsh_command            = NULL;
+  site_config->license_root_path      = NULL;
+  site_config->__license_root_path    = NULL;
+
   site_config->max_running_local      = 0;
   site_config->max_running_lsf        = 0;
   site_config->max_running_rsh        = 0;
@@ -74,13 +78,49 @@ static site_config_type * site_config_alloc_empty() {
   return site_config;
 }
 
-
-
-
-
-void site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
-  ext_joblist_add_job(site_config->joblist , job_name , install_file);
+const char * site_config_get_license_root_path__( const site_config_type * site_config ) {
+  return site_config->__license_root_path;
 }
+
+
+/**
+   Observe that this variable can not "really" be set to different
+   values during a simulation, when creating ext_job instances they
+   will internalize a copy of this variable on creation, if the
+   variable is later changed they will be left with a dangling
+   copy. That is not particularly elegant, however it should
+   nonetheless work.
+*/
+
+void site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path) {
+  /**
+    Appending /user/pid to the license root path. Everything
+    including the pid is removed when exiting (gracefully ...).
+    
+    Dangling license directories after a crash can just be removed.
+  */
+
+  site_config->license_root_path   = util_realloc_string_copy( site_config->license_root_path , license_root_path );
+  site_config->__license_root_path = util_realloc_sprintf(site_config->__license_root_path , "%s%c%s%c%d" , UTIL_PATH_SEP_CHAR , getenv("USER") , UTIL_PATH_SEP_CHAR , getpid());
+}
+
+
+
+/**
+   Will return 0 if the job is added correctly, and a non-zero (not
+   documented ...) error code if the job is not added. 
+*/
+
+int site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
+  ext_job_type * new_job = ext_job_fscanf_alloc(job_name , site_config->__license_root_path , install_file) ;
+  if (new_job != NULL) {
+    ext_joblist_add_job(site_config->joblist , job_name , new_job);
+    return 0;
+  } else
+    return 1; /* Some undocumented error condition - the job is NOT added. */
+}
+
+
 
 
 static void site_config_install_joblist(site_config_type * site_config , const config_type * config) {
@@ -505,6 +545,8 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
   return site_config;
 }
 
+
+
 void site_config_free(site_config_type * site_config) {
   ext_joblist_free( site_config->joblist );
   job_queue_free( site_config->job_queue );
@@ -517,11 +559,18 @@ void site_config_free(site_config_type * site_config) {
   hash_free( site_config->env_variables );
   hash_free( site_config->initial_path_variables );
 
+  if (site_config->__license_root_path != NULL)
+    util_clear_directory( site_config->__license_root_path , true , true );
+  
+  util_safe_free( site_config->license_root_path );
+  util_safe_free( site_config->__license_root_path );
+
   util_safe_free( site_config->rsh_command );
   util_safe_free( site_config->lsf_queue_name );
   util_safe_free( site_config->lsf_request );
   free(site_config);
 }
+
 
 ext_joblist_type * site_config_get_installed_jobs( const site_config_type * site_config) {
   return site_config->joblist;

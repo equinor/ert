@@ -88,7 +88,8 @@ struct ext_job_struct {
   char 	     	  * stderr_file;
   char       	  * lsf_resources;  
   char            * license_path;          /* If this is NULL - it will be unrestricted ... */
-  int               max_running;
+  char            * config_file; 
+  int               max_running;           /* 0 means unlimited. */ 
   int               max_running_minutes;   /* The maximum number of minutes this job is allowed to run - 0: unlimited. */
   subst_list_type * private_args;          /* A substitution list of input arguments which is performed before the external substitutions - 
                                               these are the arguments supplied as key=value pairs in the forward model call. */
@@ -121,7 +122,7 @@ const char * ext_job_get_name(const ext_job_type * ext_job) {
 
 
 
-static ext_job_type * ext_job_alloc__(const char * name) {
+static ext_job_type * ext_job_alloc__(const char * name, const char * config_file) {
   ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
   
   ext_job->__type_id           = __TYPE_ID__;
@@ -141,6 +142,7 @@ static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job->init_code           = NULL;
   ext_job->__valid             = true;
   ext_job->license_path        = NULL;
+  ext_job->config_file         = util_alloc_string_copy( config_file );
   ext_job->max_running         = 0;     /* 0 means unlimited. */
   ext_job->max_running_minutes = 0;     /* 0 means unlimited. */
   ext_job->shared_job          = true;  /* The job is NOTuser editable. */ 
@@ -154,8 +156,8 @@ static ext_job_type * ext_job_alloc__(const char * name) {
 
 
 /* Exported function - must have name != NULL */
-ext_job_type * ext_job_alloc(const char * name) {
-  ext_job_type * ext_job = ext_job_alloc__(name);
+ext_job_type * ext_job_alloc(const char * name , const char * config_file) {
+  ext_job_type * ext_job = ext_job_alloc__(name , config_file);
   ext_job->private_args  = subst_list_alloc( NULL );
   return ext_job;
 }
@@ -189,7 +191,7 @@ static hash_type * ext_job_hash_copyc__(hash_type * h) {
 
 
 ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
-  ext_job_type * new_job  = ext_job_alloc__(src_job->name);
+  ext_job_type * new_job  = ext_job_alloc__(src_job->name , src_job->config_file);
 
   new_job->portable_exe   = util_alloc_string_copy(src_job->portable_exe);
   new_job->target_file    = util_alloc_string_copy(src_job->target_file);
@@ -222,6 +224,7 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->stderr_file);
   util_safe_free(ext_job->lsf_resources);
   util_safe_free(ext_job->license_path);
+  util_safe_free(ext_job->config_file);
 
   if (ext_job->environment != NULL)  hash_free(ext_job->environment);
   if (ext_job->platform_exe != NULL) hash_free(ext_job->platform_exe);
@@ -300,7 +303,14 @@ static void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portab
   /* We take the chance that user will supply a valid subst key for this later. */
 }
 
+/**
+   Observe that this does NOT reread the ext_job instance from the new
+   config_file.
+*/
 
+void ext_job_set_config_file(ext_job_type * ext_job, const char * config_file) {
+  ext_job->config_file = util_realloc_string_copy(ext_job->config_file , config_file);
+}
 
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
   ext_job->stdout_file = util_realloc_string_copy(ext_job->stdout_file , stdout_file);
@@ -455,6 +465,54 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const s
 }
 
 
+#define PRINT_KEY_STRING( stream , key , value ) \
+if (value != NULL)                               \
+{                                                \
+   fprintf(stream , "%16s ", key);               \
+   fprintf(stream , "%s\n" , value);             \
+}
+                                                                     
+                                        
+#define PRINT_KEY_INT( stream , key , value ) \
+if (value != 0)                               \
+{                                             \
+   fprintf(stream , "%16s ", key);            \
+   fprintf(stream , "%d\n" , value);          \
+}
+
+
+/**
+   Observe that the job will save itself to the internalized
+   config_file; if you wish to save to some other place you must call
+   ext_job_set_config_file() first.
+*/
+
+void ext_job_save( const ext_job_type * ext_job ) {
+  FILE * stream = util_mkdir_fopen( ext_job->config_file , "w" );
+  
+  PRINT_KEY_STRING( stream , "PLATFORM_EXE"     , ext_job->portable_exe);
+  PRINT_KEY_STRING( stream , "STDIN"            , ext_job->stdin_file);
+  PRINT_KEY_STRING( stream , "STDERR"           , ext_job->stderr_file);
+  PRINT_KEY_STRING( stream , "STDOUT"           , ext_job->stdout_file);
+  PRINT_KEY_STRING( stream , "LICENSE_PATH"     , ext_job->license_path);
+  PRINT_KEY_STRING( stream , "TARGET_FILE"      , ext_job->target_file);
+  PRINT_KEY_STRING( stream , "LSF_RESOURCES"    , ext_job->lsf_resources);
+  PRINT_KEY_STRING( stream , "START_FILE"       , ext_job->start_file);
+  PRINT_KEY_INT( stream , "MAX_RUNNING"         , ext_job->max_running);
+  PRINT_KEY_INT( stream , "MAX_RUNNING_MINUTES" , ext_job->max_running_minutes);
+
+  /**
+     Warning - the high-dimensional config variables are not stored yet.
+  */
+  
+  fclose( stream );
+}
+
+#undef PRINT_KEY_STRING
+#undef PRINT_KEY_INT
+
+
+
 void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
   fprintf(stream , "%s(", ext_job->name);
   subst_list_fprintf(ext_job->private_args , stream);
@@ -463,11 +521,10 @@ void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
 
 
 
-
 const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
   return ext_job->lsf_resources;
 }
-
+ 
 
 ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , const char * filename) {
   {
@@ -476,8 +533,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
   }
   
   if (util_file_readable( filename )) {
-    ext_job_type * ext_job = ext_job_alloc(name);
-    config_type * config   = config_alloc(  );
+    ext_job_type * ext_job = ext_job_alloc(name , filename);
+    config_type  * config  = config_alloc(  );
     
     {
       config_item_type * item;
@@ -546,10 +603,21 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     return NULL;
   }
 }
-
-
+ 
+ 
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
-  return ext_job->argv;
+ return ext_job->argv;
+}
+
+
+ 
+ 
+bool ext_job_is_shared( const ext_job_type * ext_job ) {
+  return ext_job->shared_job;
+}
+
+bool ext_job_is_private( const ext_job_type * ext_job ) {
+  return !ext_job->shared_job;
 }
 
 
