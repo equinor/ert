@@ -48,7 +48,6 @@
 
 struct ext_joblist_struct {
   hash_type * jobs;
-  char      * license_root_path;   
 };
 
 
@@ -61,43 +60,21 @@ struct ext_joblist_struct {
 */
 
 
-ext_joblist_type * ext_joblist_alloc(const char * license_root_path) {
+ext_joblist_type * ext_joblist_alloc( ) {
   ext_joblist_type * joblist = util_malloc( sizeof * joblist , __func__ );
-  const char       * user    = getenv("USER"); 
   joblist->jobs = hash_alloc();
-  /**
-    Appending /user/pid to the license root path. Everything
-    including the pid is removed when exiting (gracefully ...).
-    
-    Dangling license directories after a crash can just be removed.
-  */
-  joblist->license_root_path = util_alloc_sprintf("%s%c%s%c%d" , license_root_path , UTIL_PATH_SEP_CHAR , user , UTIL_PATH_SEP_CHAR , getpid());
   return joblist; 
 }
 
 
 void ext_joblist_free(ext_joblist_type * joblist) {
   hash_free(joblist->jobs);
-  util_clear_directory( joblist->license_root_path , true , true );
-  util_safe_free( joblist->license_root_path );
   free(joblist);
 }
 
 
-/**
-   The function will return 0 if the job was added correctly, if there
-   were problems (typically with permissions) the function will return
-   a non-zero error code.
-*/
-
-int ext_joblist_add_job(ext_joblist_type * joblist , const char * name , const char * config_file) {
-  int error_code = 1;
-  ext_job_type * new_job = ext_job_fscanf_alloc(name , joblist->license_root_path , config_file); 
-  if (new_job != NULL) {
-    hash_insert_hash_owned_ref(joblist->jobs , name , new_job , ext_job_free__);
-    error_code = 0;
-  }
-  return error_code;
+void ext_joblist_add_job(ext_joblist_type * joblist , const char * name , ext_job_type * new_job) {
+  hash_insert_hash_owned_ref(joblist->jobs , name , new_job , ext_job_free__);
 }
 
 
@@ -129,6 +106,33 @@ bool ext_joblist_has_job(const ext_joblist_type * joblist , const char * job_nam
 stringlist_type * ext_joblist_alloc_list( const ext_joblist_type * joblist) {
   return hash_alloc_stringlist( joblist->jobs );
 }
+
+
+/**
+   Will attempt to remove the job @job_name from the joblist; if the
+   job is marked as a shared_job (i.e. installed centrally) the user
+   is not allowed to delete it. In this case the function will fail
+   silently.
+
+   Returns true if the job is actually removed, and false otherwise.
+*/
+
+bool ext_joblist_del_job( ext_joblist_type * joblist , const char * job_name ) {
+  ext_job_type * job = ext_joblist_get_job( joblist , job_name );
+  if (!ext_job_is_shared( job )) {
+    hash_del( joblist->jobs , job_name );
+    return true;
+  } else
+    return false;
+}
+
+
+hash_type * ext_joblist_get_jobs( const ext_joblist_type * joblist ) {
+  return joblist->jobs;
+}
+
+
+
 
 
 //void ext_python_joblist_fprintf(const ext_joblist_type * joblist , const stringlist_type * kw_list , const char * path, const subst_list_type * subst_list) {
