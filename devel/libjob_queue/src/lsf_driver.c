@@ -79,10 +79,9 @@ void lsf_driver_init(lsf_driver_type * queue_driver) {
 
 
 void lsf_job_assert_cast(const lsf_job_type * queue_job) {
-  if (queue_job->__lsf_id != LSF_JOB_ID) {
-    fprintf(stderr,"%s: internal error - cast failed \n",__func__);
-    abort();
-  }
+  if (queue_job->__lsf_id != LSF_JOB_ID) 
+    util_abort("%s: internal error - cast failed \n",__func__);
+  
 }
 
 
@@ -337,7 +336,7 @@ static void lsf_driver_killjob(int jobnr) {
 }
 
 
-void lsf_driver_abort_job(void * __driver , basic_queue_job_type * __job) {
+void lsf_driver_kill_job(void * __driver , basic_queue_job_type * __job) {
   lsf_job_type    * job    = (lsf_job_type    *) __job;
   lsf_job_assert_cast(job);
   lsf_driver_killjob(job->lsf_jobnr);
@@ -454,7 +453,7 @@ void * lsf_driver_alloc(const char * queue_name) {
   UTIL_TYPE_ID_INIT( lsf_driver , LSF_DRIVER_TYPE_ID);
   lsf_driver->submit           	   = lsf_driver_submit_job;
   lsf_driver->get_status       	   = lsf_driver_get_job_status;
-  lsf_driver->abort_f          	   = lsf_driver_abort_job;
+  lsf_driver->kill_job             = lsf_driver_kill_job;
   lsf_driver->free_job         	   = lsf_driver_free_job;
   lsf_driver->free_driver      	   = lsf_driver_free__;
   lsf_driver->display_info         = lsf_driver_display_info;
