@@ -26,6 +26,9 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =  0 ,   /* This value is used in external
 	      JOB_QUEUE_MAX_STATE     = 12 } job_status_type;
 
 
+
+
+
 typedef struct basic_queue_driver_struct basic_queue_driver_type;
 typedef struct basic_queue_job_struct    basic_queue_job_type;
 
