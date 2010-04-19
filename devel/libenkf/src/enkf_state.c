@@ -1470,6 +1470,16 @@ job_status_type enkf_state_get_run_status( const enkf_state_type * enkf_state ) 
 }
 
 
+time_t enkf_state_get_sim_start( const enkf_state_type * enkf_state ) {
+  run_info_type             * run_info    = enkf_state->run_info;
+  if (run_info->active) {
+    const shared_info_type    * shared_info = enkf_state->shared_info;
+    return job_queue_iget_sim_start(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+  } else
+    return -1;
+}
+
+
 
 /** 
     Observe that if run_info == false, this routine will return with

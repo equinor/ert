@@ -1,0 +1,4 @@
+state     = enkf_main_iget_state( enkf_main , iens );
+status    = enkf_state_get_run_status( state );
+sim_start = enkf_state_get_sim_start( state );
+

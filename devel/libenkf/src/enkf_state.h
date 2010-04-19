@@ -36,6 +36,7 @@ typedef struct enkf_state_struct    enkf_state_type;
 keep_runpath_type  member_config_get_keep_runpath(const member_config_type * member_config);
 void             * enkf_state_complete_forward_model__(void * arg );
 job_status_type    enkf_state_get_run_status( const enkf_state_type * enkf_state );
+time_t             enkf_state_get_sim_start( const enkf_state_type * enkf_state );
 void *             enkf_state_internalize_results_mt( void * arg );
 void               enkf_state_initialize(enkf_state_type * enkf_state , const stringlist_type * param_list);
 void               enkf_state_fread(enkf_state_type *  , int  , int  , state_enum );

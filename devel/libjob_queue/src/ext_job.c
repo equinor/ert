@@ -122,7 +122,7 @@ const char * ext_job_get_name(const ext_job_type * ext_job) {
 
 
 
-static ext_job_type * ext_job_alloc__(const char * name, const char * config_file) {
+static ext_job_type * ext_job_alloc__(const char * name) {
   ext_job_type * ext_job = util_malloc(sizeof * ext_job , __func__);
   
   ext_job->__type_id           = __TYPE_ID__;
@@ -142,7 +142,7 @@ static ext_job_type * ext_job_alloc__(const char * name, const char * config_fil
   ext_job->init_code           = NULL;
   ext_job->__valid             = true;
   ext_job->license_path        = NULL;
-  ext_job->config_file         = util_alloc_string_copy( config_file );
+  ext_job->config_file         = NULL;
   ext_job->max_running         = 0;     /* 0 means unlimited. */
   ext_job->max_running_minutes = 0;     /* 0 means unlimited. */
   ext_job->shared_job          = true;  /* The job is NOTuser editable. */ 
@@ -155,9 +155,17 @@ static ext_job_type * ext_job_alloc__(const char * name, const char * config_fil
 
 
 
-/* Exported function - must have name != NULL */
-ext_job_type * ext_job_alloc(const char * name , const char * config_file) {
-  ext_job_type * ext_job = ext_job_alloc__(name , config_file);
+/* 
+   Exported function - must have name != NULL. Observe that the
+   instance returned from this function is not really usable for
+   anything.
+
+   Should probably define a minium set of parameters which must be set
+   before the job is in a valid initialized state.
+*/
+
+ext_job_type * ext_job_alloc(const char * name ) {
+  ext_job_type * ext_job = ext_job_alloc__(name );
   ext_job->private_args  = subst_list_alloc( NULL );
   return ext_job;
 }
@@ -191,8 +199,9 @@ static hash_type * ext_job_hash_copyc__(hash_type * h) {
 
 
 ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
-  ext_job_type * new_job  = ext_job_alloc__(src_job->name , src_job->config_file);
-
+  ext_job_type * new_job  = ext_job_alloc__( src_job->name );
+  
+  new_job->config_file    = util_alloc_string_copy(src_job->config_file);
   new_job->portable_exe   = util_alloc_string_copy(src_job->portable_exe);
   new_job->target_file    = util_alloc_string_copy(src_job->target_file);
   new_job->start_file     = util_alloc_string_copy(src_job->start_file);
@@ -526,16 +535,17 @@ const char * ext_job_get_lsf_resources(const ext_job_type * ext_job) {
 }
  
 
-ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , const char * filename) {
+ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_root_path , const char * config_file) {
   {
     mode_t target_mode = S_IRUSR + S_IWUSR + S_IRGRP + S_IWGRP + S_IROTH;  /* u+rw  g+rw  o+r */
-    __update_mode( filename , target_mode );
+    __update_mode( config_file , target_mode );
   }
   
-  if (util_file_readable( filename )) {
-    ext_job_type * ext_job = ext_job_alloc(name , filename);
+  if (util_file_readable( config_file)) {
+    ext_job_type * ext_job = ext_job_alloc(name );
     config_type  * config  = config_alloc(  );
     
+    ext_job_set_config_file( ext_job , config_file );
     {
       config_item_type * item;
       item = config_add_item(config , "MAX_RUNNING"         , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
@@ -552,7 +562,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       item = config_add_item(config , "LSF_RESOURCES"       , false , false); config_item_set_argc_minmax(item  , 1 ,-1 , NULL);
       item = config_add_item(config , "MAX_RUNNING_MINUTES" , false , false); config_item_set_argc_minmax(item  , 1 , 1 , (const config_item_types [1]) {CONFIG_INT});
     }
-    config_parse(config , filename , "--" , NULL , NULL , NULL , false , true);
+    config_parse(config , config_file , "--" , NULL , NULL , NULL , false , true);
     {
       if (config_item_set(config , "STDIN"))  	             ext_job_set_stdin_file(ext_job       , config_iget(config  , "STDIN" , 0,0));
       if (config_item_set(config , "STDOUT")) 	             ext_job_set_stdout_file(ext_job      , config_iget(config  , "STDOUT" , 0,0));
@@ -575,10 +585,10 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       if (config_item_set(config , "INIT_CODE")) 
         ext_job->init_code = config_alloc_complete_stringlist(config , "INIT_CODE");
 
+      
       /**
          The code assumes that the hash tables are valid, can not be NULL:
       */
-    
       if (config_item_set(config , "ENV")) 
         ext_job->environment = config_alloc_hash(config , "ENV");
 
@@ -599,7 +609,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     
     return ext_job;
   } else {
-    fprintf(stderr,"** Warning: you do not have permission to read file:\'%s\' - job:%s not available. \n", filename , name);
+    fprintf(stderr,"** Warning: you do not have permission to read file:\'%s\' - job:%s not available. \n", config_file , name);
     return NULL;
   }
 }
