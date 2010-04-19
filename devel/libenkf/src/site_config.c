@@ -380,10 +380,10 @@ static void site_config_set_job_queue__( site_config_type * site_config , job_dr
     site_config_install_LSF_job_queue( site_config );
     break;
   case(RSH_DRIVER):
-    site_config_install_RSH_job_queue(site_config);
+    site_config_install_RSH_job_queue( site_config );
     break;
   case(LOCAL_DRIVER):
-    site_config_install_LOCAL_job_queue(site_config);
+    site_config_install_LOCAL_job_queue( site_config );
     break;
   default:
     util_abort("%s: internal error \n",__func__);
