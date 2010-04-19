@@ -101,12 +101,14 @@ class RunWidget(HelpedWidget):
         if self.startState.currentText() == "Forecast" and not simFrom == 0:
             state = state_enum["FORECAST"]
 
-        if mode == run_mode_type["ENKF_ASSIMILATION"]:
-            init_step_parameter = simFrom
-        elif mode == run_mode_type["ENSEMBLE_EXPERIMENT"]:
-            init_step_parameter = 0
-        else:
-            init_step_parameter = self.historyLength
+        init_step_parameter = simFrom
+
+        #if mode == run_mode_type["ENKF_ASSIMILATION"]:
+        #    init_step_parameter = simFrom
+        #elif mode == run_mode_type["ENSEMBLE_EXPERIMENT"]:
+        #    init_step_parameter = 0
+        #else:
+        #    init_step_parameter = self.historyLength
 
 
         boolVector = ert.createBoolVector(self.membersList.count(), selectedMembers)
