@@ -3,7 +3,6 @@ import ertwrapper
 
 from widgets.helpedwidget import HelpedWidget, ContentModel
 from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, createSpace, getItemsFromList
-import PyQt4.uic.Compiler.qtproxies
 
 class RunWidget(HelpedWidget):
 
@@ -86,15 +85,34 @@ class RunWidget(HelpedWidget):
         run_mode_type = {"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4}
         state_enum = {"UNDEFINED" : 0, "SERIALIZED" : 1, "FORECAST" : 2, "ANALYZED" : 4, "BOTH" : 6}
 
+
+        simFrom = self.simulateFrom.getSelectedValue()
+        simTo = self.simulateTo.getSelectedValue()
+
         if self.rbAssimilation.isChecked():
             mode = run_mode_type["ENKF_ASSIMILATION"]
         else:
-            mode = run_mode_type["ENSEMBLE_EXPERIMENT"]
+            if simTo == -1: # -1 == End
+                mode = run_mode_type["ENSEMBLE_PREDICTION"]
+            else:
+                mode = run_mode_type["ENSEMBLE_EXPERIMENT"]
+
+        state = state_enum["ANALYZED"]
+        if self.startState.currentText() == "Forecast" and not simFrom == 0:
+            state = state_enum["FORECAST"]
+
+        if mode == run_mode_type["ENKF_ASSIMILATION"]:
+            init_step_parameter = simFrom
+        elif mode == run_mode_type["ENSEMBLE_EXPERIMENT"]:
+            init_step_parameter = 0
+        else:
+            init_step_parameter = self.historyLength
+
 
         boolVector = ert.createBoolVector(self.membersList.count(), selectedMembers)
         boolPtr = ert.getBoolVectorPtr(boolVector)
 
-        ert.enkf.enkf_main_run(ert.main, mode, boolPtr, 0, 0, state_enum["ANALYZED"])
+        ert.enkf.enkf_main_run(ert.main, mode, boolPtr, init_step_parameter, simFrom, state)
 
         ert.freeBoolVector(boolVector)
 
@@ -107,7 +125,7 @@ class RunWidget(HelpedWidget):
     def fetchContent(self):
         data = self.getFromModel()
 
-        historyLength = data["history_length"]
+        self.historyLength = data["history_length"]
 
         self.membersList.clear()
 
@@ -117,11 +135,11 @@ class RunWidget(HelpedWidget):
 
         self.setRunpath(data["runpath"])
 
-        self.simulateFrom.setHistoryLength(historyLength)
-        self.simulateTo.setFromValue(historyLength)
+        self.simulateFrom.setHistoryLength(self.historyLength)
+        self.simulateTo.setFromValue(self.historyLength)
         self.simulateTo.setToValue(-1)
         self.simulateTo.setMinTimeStep(0)
-        self.simulateTo.setMaxTimeStep(historyLength)
+        self.simulateTo.setMaxTimeStep(self.historyLength)
 
         self.membersList.selectAll()
         
