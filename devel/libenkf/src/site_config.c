@@ -12,6 +12,8 @@
 #include <lsf_request.h>
 #include <rsh_driver.h>
 #include <basic_queue_driver.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /**
    This struct contains information which is specific to the site
@@ -22,9 +24,9 @@
 */
 
 struct site_config_struct {
-  ext_joblist_type 	* joblist;       /* The list of external jobs which have been installed. 
-                   	                    These jobs will be the parts of the forward model. */
-  job_queue_type   	* job_queue;     /* The queue instance which will run the external jobs. */
+  ext_joblist_type 	* joblist;                /* The list of external jobs which have been installed. 
+                   	                             These jobs will be the parts of the forward model. */
+  job_queue_type   	* job_queue;              /* The queue instance which will run the external jobs. */
   hash_type             * env_variables;
   hash_type             * initial_variables;      /* Need to store the initial values so we can roll back. */
   hash_type             * initial_path_variables;
@@ -32,6 +34,7 @@ struct site_config_struct {
   stringlist_type       * path_values;
   char                  * license_root_path;      /* The license_root_path value set by the user. */
   char                  * __license_root_path;    /* The license_root_path value actually used - includes a user/pid subdirectory. */
+  mode_t                  umask;
   /*---------------------------------------------------------------*/
   int                     max_running_lsf;        /* Need to hold the detailed information about the         */
   char                  * lsf_queue_name;         /* various drivers here to be able to "hot-switch" driver. */
@@ -52,6 +55,16 @@ bool site_config_get_statoil_mode(const site_config_type * site_config ) {
 }
 
 
+void site_config_set_umask( site_config_type * site_config , mode_t new_mask) {
+  site_config->umask = new_mask;
+  umask( new_mask );
+}
+
+mode_t site_config_get_umask( const site_config_type * site_config ) {
+  return site_config->umask;
+}
+
+
 static site_config_type * site_config_alloc_empty() {
   site_config_type * site_config = util_malloc( sizeof * site_config , __func__);
   
@@ -68,6 +81,10 @@ static site_config_type * site_config_alloc_empty() {
   site_config->max_running_local      = 0;
   site_config->max_running_lsf        = 0;
   site_config->max_running_rsh        = 0;
+
+  /* Some hooops to get the current umask. */ 
+  site_config->umask                  = umask( 0 );
+  site_config_set_umask( site_config , site_config->umask );
 
   site_config->initial_variables      = hash_alloc();
   site_config->env_variables          = hash_alloc();
@@ -543,6 +560,26 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
       site_config_update_pathvar( site_config , path , value );
     }
   }
+  
+  /* 
+     Set the umask for all file creation. A value of '0' will ensure
+     that all files and directories are created with 'equal rights'
+     for everyone - might be handy if you are helping someone... The
+     default statoil value is 0022, i.e. write access is removed from
+     group and others.  
+
+     The string is supposed to be in OCTAL representation (without any
+     prefix characters).
+  */
+  if (config_item_set(config , "UMASK")) {
+    const char * string_mask = config_iget( config , "UMASK" , 0 , 0);
+    mode_t umask_value;
+    if (util_sscanf_octal_int( string_mask , &umask_value))
+      site_config_set_umask( site_config , umask_value);
+    else
+      util_abort("%s: failed to parse:\"%s\" as a valid octal literal \n",__func__ , string_mask);
+  }
+
   /* 
      When LSF is used several enviroment variables must be set - i.e.
      the calls to SETENV must come first. 

@@ -1839,6 +1839,9 @@ static config_type * enkf_main_alloc_config() {
   */
   item = config_add_item(config , "SETENV" , false , true);
   config_item_set_argc_minmax(item , 2 , 2 , NULL);
+  
+  item = config_add_item(config , "UMASK" , false , false);
+  config_item_set_argc_minmax(item , 1 , 1 , NULL);
 
   /**
      UPDATE_PATH   LD_LIBRARY_PATH   /path/to/some/funky/lib
