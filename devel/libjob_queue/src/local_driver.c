@@ -36,10 +36,8 @@ UTIL_IS_INSTANCE_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
 
 
 void local_job_assert_cast(const local_job_type * queue_job) {
-  if (queue_job->__local_id != LOCAL_JOB_ID) {
-    fprintf(stderr,"%s: internal error - cast failed \n",__func__);
-    abort();
-  }
+  if (queue_job->__local_id != LOCAL_JOB_ID) 
+    util_abort("%s: internal error - cast failed \n",__func__);
 }
 
 
@@ -89,7 +87,7 @@ void local_driver_free_job(void * __driver , basic_queue_job_type * __job) {
 
 
 
-void local_driver_abort_job(void * __driver , basic_queue_job_type * __job) {
+void local_driver_kill_job(void * __driver , basic_queue_job_type * __job) {
   local_job_type    * job    = (local_job_type    *) __job;
   local_job_assert_cast(job);
   if (job->active)
@@ -128,10 +126,9 @@ basic_queue_job_type * local_driver_submit_job(void * __driver,
     arg_pack_append_ptr( arg_pack , (char *) run_path);
     arg_pack_append_ptr( arg_pack , job );
     pthread_mutex_lock( &driver->submit_lock );
-    if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , arg_pack) != 0) {
-      fprintf(stderr,"%s: failed to create run thread - aborting \n",__func__);
-      abort();
-    }
+    if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , arg_pack) != 0) 
+      util_abort("%s: failed to create run thread - aborting \n",__func__);
+    
     job->active = true;
     job->status = JOB_QUEUE_RUNNING;
     pthread_mutex_unlock( &driver->submit_lock );
@@ -168,7 +165,7 @@ void * local_driver_alloc() {
   
   local_driver->submit      	     = local_driver_submit_job;
   local_driver->get_status  	     = local_driver_get_job_status;
-  local_driver->abort_f     	     = local_driver_abort_job;
+  local_driver->kill_job     	     = local_driver_kill_job;
   local_driver->free_job    	     = local_driver_free_job;
   local_driver->free_driver 	     = local_driver_free__;
   local_driver->display_info         = NULL;

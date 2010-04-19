@@ -396,6 +396,10 @@ void site_config_set_job_queue( site_config_type * site_config , const char * qu
   site_config_set_job_queue__( site_config , driver_type );
 }
 
+bool site_config_queue_is_running( const site_config_type * site_config ) {
+  return job_queue_is_running( site_config->job_queue );
+}
+
 
 void site_config_set_job_script( site_config_type * site_config , const char * job_script ) {
   job_queue_set_run_cmd( site_config->job_queue  , job_script );

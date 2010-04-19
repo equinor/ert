@@ -55,6 +55,7 @@ const char             * site_config_get_job_script( const site_config_type * si
 void                     site_config_set_max_submit( site_config_type * site_config , int max_submit );
 int                      site_config_get_max_submit(const site_config_type * site_config );
 
+bool                     site_config_queue_is_running( const site_config_type * site_config );
 int                      site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file);
 bool                     site_config_del_job( site_config_type * site_config , const char * job_name );
 

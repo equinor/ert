@@ -34,8 +34,8 @@ time_t              job_queue_iget_sim_start( job_queue_type * queue, int extern
 const char        * job_queue_get_driver_name( const job_queue_type * queue );
 job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
 
-
-
+void                job_queue_kill_job( job_queue_type * queue , int external_id);
+bool                job_queue_is_running( const job_queue_type * queue );
 void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
 int                 job_queue_get_max_submit(const job_queue_type * job_queue );
 void                job_queue_set_run_cmd( job_queue_type * job_queue , const char * run_cmd );

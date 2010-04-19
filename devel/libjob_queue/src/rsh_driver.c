@@ -209,7 +209,7 @@ void rsh_driver_free_job(void * __driver , basic_queue_job_type * __job) {
 
 
 
-void rsh_driver_abort_job(void * __driver , basic_queue_job_type * __job) {
+void rsh_driver_kill_job(void * __driver , basic_queue_job_type * __job) {
   rsh_job_type    * job    = (rsh_job_type    *) __job;
   rsh_job_assert_cast(job);
   if (job->active)
@@ -294,14 +294,6 @@ void rsh_driver_free__(void * __driver) {
 
 
 /**
-   The rsh_host_list should be a list of strings of the following
-   format:
-
-   rsh_host_list = ["host1:2",   "host2:2", "host4:4" ,  "host6:2"]
-
-   i.e each host consists of a name and a number; the number
-   designating how many concurrent jobs this host can handle. Observe
-   that the load of the host is *not* consulted.
 */
 
 void * rsh_driver_alloc(const char * rsh_command, const hash_type * rsh_host_list) {
@@ -314,7 +306,7 @@ void * rsh_driver_alloc(const char * rsh_command, const hash_type * rsh_host_lis
   rsh_driver->rsh_command     	   = util_alloc_string_copy(rsh_command);
   rsh_driver->submit          	   = rsh_driver_submit_job;
   rsh_driver->get_status      	   = rsh_driver_get_job_status;
-  rsh_driver->abort_f         	   = rsh_driver_abort_job;
+  rsh_driver->kill_job         	   = rsh_driver_kill_job;
   rsh_driver->free_job        	   = rsh_driver_free_job;
   rsh_driver->free_driver     	   = rsh_driver_free__;
   rsh_driver->display_info         = NULL;

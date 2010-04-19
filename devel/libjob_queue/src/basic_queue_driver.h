@@ -23,7 +23,8 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =  0 ,   /* This value is used in external
 	      JOB_QUEUE_RUN_FAIL      =  9 ,   /* The job has completed - but the queue system has detected that it has failed.         */
               JOB_QUEUE_ALL_OK        = 10 ,   /* The job has loaded OK - observe that it is the calling scope which will set the status to this. */
               JOB_QUEUE_ALL_FAIL      = 11 ,   /* The job has failed completely - the calling scope must set this status. */
-	      JOB_QUEUE_MAX_STATE     = 12 } job_status_type;
+              JOB_QUEUE_USER_KILLED   = 12 ,   /* The job has been killed by the user. */
+	      JOB_QUEUE_MAX_STATE     = 13 } job_status_type;
 
 
 
@@ -33,7 +34,7 @@ typedef struct basic_queue_driver_struct basic_queue_driver_type;
 typedef struct basic_queue_job_struct    basic_queue_job_type;
 
 typedef basic_queue_job_type * (submit_job_ftype)  	    (void * , int , const char * , const char * , const char * , const void *);
-typedef void                   (abort_job_ftype)   	    (void * , basic_queue_job_type * );
+typedef void                   (kill_job_ftype)   	    (void * , basic_queue_job_type * );
 typedef job_status_type        (get_status_ftype)  	    (void * , basic_queue_job_type * );
 typedef void                   (free_job_ftype)    	    (void * , basic_queue_job_type * );
 typedef void                   (free_queue_driver_ftype)    (void *);
@@ -48,7 +49,7 @@ struct basic_queue_job_struct {
 #define QUEUE_DRIVER_FUNCTIONS                      \
 submit_job_ftype  	   * submit;        	    \
 free_job_ftype    	   * free_job;      	    \
-abort_job_ftype   	   * abort_f;       	    \
+kill_job_ftype   	   * kill_job;              \
 get_status_ftype  	   * get_status;    	    \
 free_queue_driver_ftype    * free_driver;   	    \
 display_info_ftype         * display_info;          \
