@@ -623,7 +623,6 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
   if (verbose)
     submit_msg = msg_alloc("Submitting new jobs:  ]");
   
-  
   do {
     char spinner[4];
     spinner[0] = '-';
@@ -816,8 +815,10 @@ void job_queue_add_job(job_queue_type * queue , const char * run_path , const ch
 */
 
 void job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver) {
-  if (queue->driver != NULL)
-    driver->free_driver(driver);
+  if (queue->driver != NULL) {
+    basic_queue_driver_type * old_driver = queue->driver;
+    old_driver->free_driver(old_driver);
+  }
   
   queue->driver = driver;
 }
@@ -831,7 +832,7 @@ void job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * dri
 */
 
 void job_queue_set_max_running( job_queue_type * queue , int max_running ) {
-  queue->max_running     = max_running;
+  queue->max_running = max_running;
   if (queue->max_running < 0)
     queue->max_running = 0;
 }
