@@ -41,6 +41,7 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
     failed = QtGui.QColor(255, 200, 200)
     unknown = QtGui.QColor(255, 200, 128)
     finished = QtGui.QColor(200, 200, 200)
+    notactive = QtGui.QColor(255, 255, 255)
 
     size = QtCore.QSize(32, 20)
 
@@ -49,6 +50,17 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
 
     def paint(self, painter, option, index):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        rect = option.rect
+        rect.setX(rect.x() + 1)
+        rect.setY(rect.y() + 1)
+        rect.setWidth(rect.width() - 1)
+        rect.setHeight(rect.height() - 1)
+
+        painter.fillRect(option.rect, QtCore.Qt.black)
+
+        if option.state & QtGui.QStyle.State_Selected:
+            painter.fillRect(option.rect, QtCore.Qt.blue)
 
         data = index.model().data(index).toPyObject()
 
@@ -64,6 +76,8 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
             color = self.finished
         elif data.hasFailed():
             color = self.failed
+        elif data.notActive():
+            color = self.notactive
         else:
             color = self.unknown
 
@@ -72,8 +86,8 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
         rect = option.rect
         rect.setX(rect.x() + 1)
         rect.setY(rect.y() + 1)
-        rect.setWidth(rect.width() - 2)
-        rect.setHeight(rect.height() - 2)
+        rect.setWidth(rect.width() - 1)
+        rect.setHeight(rect.height() - 1)
         #painter.drawRoundRect(rect)
         painter.fillRect(rect, color)
 
@@ -133,6 +147,9 @@ class Simulation:
 
     def hasFailed(self):
         return self.checkStatus("JOB_QUEUE_ALL_FAIL")
+
+    def notActive(self):
+        return self.checkStatus("JOB_QUEUE_NOT_ACTIVE")
 
     def finishedSuccesfully(self):
         return self.checkStatus("JOB_QUEUE_ALL_OK")
@@ -284,6 +301,9 @@ class RunWidget(HelpedWidget):
                     state = ert.enkf.enkf_main_iget_state(ert.main, member)
                     status = ert.enkf.enkf_state_get_run_status(state)
 
+                    start_time = ert.enkf.enkf_state_get_start_time(state)
+                    #print time.ctime(start_time), start_time
+
                     simulations[member].simulation.status = status
                     simulations[member].updateSimulation()
 
@@ -294,11 +314,9 @@ class RunWidget(HelpedWidget):
                         succesCount+=1
 
                 count = (100 * succesCount / totalCount)
-                #self.simulationProgress.setValue(count)
-                #self.updateProgress(count)
                 self.simulationProgress.emit(QtCore.SIGNAL("setValue(int)"), count)
 
-                time.sleep(1)
+                time.sleep(0.5)
 
         self.pollthread.setDaemon(True)
         self.pollthread.run = poll
@@ -344,6 +362,7 @@ class RunWidget(HelpedWidget):
         ert.setTypes("enkf_main_iget_state", ertwrapper.c_long, ertwrapper.c_int)
         ert.setTypes("enkf_state_get_run_status", ertwrapper.c_int)
         ert.setTypes("site_config_queue_is_running")
+        ert.setTypes("enkf_state_get_start_time")
 
 
     def getter(self, ert):
