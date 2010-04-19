@@ -1513,6 +1513,8 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       arg_pack_append_int(queue_args  , job_size);
       arg_pack_append_bool(queue_args , verbose);
       arg_pack_lock( queue_args );
+      
+      job_queue_reset( job_queue );
       pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
       {
@@ -1534,13 +1536,18 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
                                 step1 ,
                                 step2 ,
                                 forward_model);
-
+            
             thread_pool_add_job(submit_threads , enkf_state_start_forward_model__ , enkf_main->ensemble[iens]);
           } else
             enkf_state_set_inactive( enkf_main->ensemble[iens] );
         }
-        thread_pool_join(submit_threads);        /* OK: All directories for ECLIPSE simulations are ready. */
-        thread_pool_free(submit_threads);
+        /*
+          After this join all directories/files for the simulations
+          have been set up correctly, and all the jobs have been added
+          to the job_queue manager.
+        */
+        thread_pool_join(submit_threads);        
+        thread_pool_free(submit_threads);        
       }
       log_add_message(enkf_main->logh , 1 , NULL , "All jobs ready for running - waiting for completion" ,  false);
 
