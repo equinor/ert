@@ -312,7 +312,7 @@ class ErtWrapper:
         mask = self.util.bool_vector_alloc(size , False)
 
         for index in list:
-            self.util.bool_vector_iset(mask, int(index), True)
+            self.util.bool_vector_iset(mask, index, True)
 
         return mask
 
