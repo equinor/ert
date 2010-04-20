@@ -131,6 +131,48 @@ class RunWidget(HelpedWidget):
 
     
 
+        self.runthread.setDaemon(True)
+        self.runthread.run = action                        
+
+        self.pollthread = threading.Thread(name="polling_thread")
+        def poll():
+            while not ert.enkf.site_config_queue_is_running(ert.site_config):
+                time.sleep(0.5)
+
+            while(self.runthread.isAlive()):
+                for member in selectedMembers:
+                    state = ert.enkf.enkf_main_iget_state(ert.main, member)
+                    status = ert.enkf.enkf_state_get_run_status(state)
+
+                    if not status == Simulation.job_status_type_reverse["JOB_QUEUE_NOT_ACTIVE"]:
+                        #start_time = ert.enkf.enkf_state_get_start_time(state)
+                        #print time.ctime(start_time), start_time
+                        pass
+
+                    simulations[member].simulation.setStatus(status)
+                    simulations[member].updateSimulation()
+
+                totalCount = len(simulations.keys())
+                succesCount = 0
+                for key in simulations.keys():
+                    if simulations[key].simulation.finishedSuccesfully():
+                        succesCount+=1
+
+                count = (100 * succesCount / totalCount)
+                self.simulationProgress.emit(QtCore.SIGNAL("setValue(int)"), count)
+
+                time.sleep(0.5)
+
+        self.pollthread.setDaemon(True)
+        self.pollthread.run = poll
+
+        self.runthread.start()
+        self.pollthread.start()
+
+
+    def updateProgress(self, value):
+        self.simulationProgress.setValue(value)
+
     def setRunpath(self, runpath):
         #self.runpathLabel.setText("Runpath: " + runpath)
         self.runpathLabel.setText(runpath)
