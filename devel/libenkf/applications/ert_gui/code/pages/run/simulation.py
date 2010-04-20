@@ -1,6 +1,6 @@
 from PyQt4 import QtGui, QtCore
 from widgets.util import resourceIcon
-
+import time
 
 class SimulationList(QtGui.QListWidget):
     def __init__(self):
@@ -135,6 +135,12 @@ class SimulationPanel(QtGui.QFrame):
     def action(self):
         print "Woohoo"
 
+    def setSimulation(self, selection=None):
+        pass
+
+    def setModel(self, ert):
+        self.ert = ert
+
 class Simulation:
     job_status_type_reverse = {"JOB_QUEUE_NOT_ACTIVE" : 0,
                                "JOB_QUEUE_LOADING" : 1,
@@ -171,6 +177,10 @@ class Simulation:
         self.name = name
         self.status = 0 #JOB_QUEUE_NOT_ACTIVE
         self.statuslog = []
+        
+        self.startTime = -1
+        self.submitTime = -1
+        self.finishedTime = -1
 
     def checkStatus(self, type):
         return self.status == self.job_status_type_reverse[type]
@@ -190,8 +200,28 @@ class Simulation:
     def finishedSuccesfully(self):
         return self.checkStatus("JOB_QUEUE_ALL_OK")
 
+    def isUserKilled(self):
+        return self.checkStatus("JOB_QUEUE_USER_KILLED")
+
+
     def setStatus(self, status):
         if len(self.statuslog) == 0 or not self.statuslog[len(self.statuslog) - 1] == status:
             self.statuslog.append(status)
 
+            if status == self.job_status_type_reverse["JOB_QUEUE_ALL_OK"]:
+                self.finishedTime = int(time.time())
+                print self.startTime, self.submitTime, self.finishedTime
+
         self.status = status
+
+    def setStartTime(self, secs):
+        self.startTime = secs
+        #self.printTime(secs)
+
+    def setSubmitTime(self, secs):
+        self.submitTime = secs
+        #self.printTime(secs)
+
+    def printTime(self, secs):
+        if not secs == -1:
+            print time.localtime(secs)

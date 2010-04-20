@@ -43,7 +43,7 @@ class ParameterPanel(HelpedWidget):
 
         self.addWidget(self.pagesWidget)
 
-        self.connect(self.list, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), self.changeParameter)
+        self.connect(self.list, QtCore.SIGNAL('itemSelectionChanged(QListWidgetItem *, QListWidgetItem *)'), self.changeParameter)
 
         #self.addHelpButton()
 
