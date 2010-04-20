@@ -44,7 +44,7 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
     size = QtCore.QSize(32, 20)
     selectedSize = QtCore.QSize(32, 40)
 
-    step = 5
+    step = 2.5
 
     def __init__(self):
         QtGui.QStyledItemDelegate.__init__(self)
@@ -130,6 +130,7 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
         #painter.setBrush(QtGui.QBrush(self.running.dark(150)))
         painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
         painter.drawPolygon(QtGui.QPolygonF(self.points), len(self.points))
+        painter.setPen(QtGui.QColor(0, 0, 0, 128))
         painter.drawEllipse(-2, -2, 4, 4)
         painter.restore()
         
@@ -398,7 +399,7 @@ class RunWidget(HelpedWidget):
                 count = (100 * succesCount / totalCount)
                 self.simulationProgress.emit(QtCore.SIGNAL("setValue(int)"), count)
 
-                time.sleep(0.5)
+                time.sleep(0.01)
 
         self.pollthread.setDaemon(True)
         self.pollthread.run = poll

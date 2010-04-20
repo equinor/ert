@@ -179,6 +179,8 @@ class ErtWrapper:
 
         self.enkf = CDLL(prefix + "libenkf/slib/libenkf.so", RTLD_GLOBAL)
 
+        self.enkf.enkf_main_install_SIGNALS()
+        self.enkf.enkf_main_init_debug()
 
     def setTypes(self, function, restype = c_long, argtypes = [], library = None, selfpointer=True):
         """
