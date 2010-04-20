@@ -41,35 +41,13 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
     finished = QtGui.QColor(200, 200, 200)
     notactive = QtGui.QColor(255, 255, 255)
 
-    size = QtCore.QSize(32, 20)
-    selectedSize = QtCore.QSize(32, 40)
-
-    step = 2.5
+    size = QtCore.QSize(32, 27)
 
     def __init__(self):
         QtGui.QStyledItemDelegate.__init__(self)
 
-        self.inc = 0
-
-        self.points = []
-        r1 = 9
-        r2 = 0.80
-        teeth = 9
-
-        out = False
-        for t in frange(0.0, 2 * math.pi, 2 * math.pi / (teeth * 2.0)):
-            x = r1 * math.cos(t)
-            y = r1 * math.sin(t)
-            if out:
-                self.points.append(QtCore.QPointF(x, y))
-                self.points.append(QtCore.QPointF(r2 * x, r2 * y))
-            else:
-                self.points.append(QtCore.QPointF(r2 * x, r2 * y))
-                self.points.append(QtCore.QPointF(x, y))
-            out = not out
-
-
     def paint(self, painter, option, index):
+        painter.save()
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
         data = index.model().data(index)
@@ -101,15 +79,7 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
         rect.setHeight(rect.height() - 2)
         painter.fillRect(rect, color)
 
-        if data.isRunning():
-            painter.save()
-            painter.setClipRect(rect)
-            painter.translate(rect.x(), rect.center().y())
-            painter.rotate(self.step * self.inc)
-            #painter.translate(1, 1)
-            self.drawCog(painter)
-            painter.restore()
-            self.inc += 1
+
         
         painter.setPen(QtCore.Qt.black)
         painter.drawText(rect, QtCore.Qt.AlignCenter + QtCore.Qt.AlignVCenter, str(data.name))
@@ -118,21 +88,46 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
 
         painter.drawRect(rect)
 
+        prect = QtCore.QRect(option.rect)
+        offset = 3
+        psize = 7
+        prect.setX(prect.x() + 3)
+        prect.setY(prect.bottom() - psize - offset)
+        prect.setWidth(prect.width() - offset - 1)
+        prect.setHeight(psize)
+        painter.fillRect(prect, QtGui.QColor(220, 220, 220))
+        painter.drawRect(prect)
+
+
+        prect = QtCore.QRect(prect)
+        prect.setX(prect.x() + 2)
+        prect.setY(prect.y() + 2)
+        prect.setWidth(prect.width() - 1)
+        prect.setHeight(prect.height() - 1)
+
+        if data.isRunning():
+            cprect = QtCore.QRect(prect)
+            cprect.setWidth(cprect.width() * 0.75)
+            painter.fillRect(cprect, self.running.dark(120))
+
+        gradient = QtGui.QLinearGradient(0, prect.top(), 0, prect.bottom())
+        gradient.setColorAt(0, QtGui.QColor(255, 255, 255, 0))
+        gradient.setColorAt(0.25, QtCore.Qt.white)
+        gradient.setColorAt(0.50, QtGui.QColor(255, 255, 255, 0))
+        gradient.setColorAt(1, QtGui.QColor(255, 255, 255, 0))
+
+        painter.fillRect(prect, gradient)
+
+
         if option.state & QtGui.QStyle.State_Selected:
             painter.fillRect(option.rect, QtGui.QColor(128, 128, 128, 128))
+
+        painter.restore()
 
     def sizeHint(self, option, index):
         return self.size
 
-    def drawCog(self, painter):
-        painter.save()
-        #painter.setPen(QtCore.Qt.black)
-        #painter.setBrush(QtGui.QBrush(self.running.dark(150)))
-        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
-        painter.drawPolygon(QtGui.QPolygonF(self.points), len(self.points))
-        painter.setPen(QtGui.QColor(0, 0, 0, 128))
-        painter.drawEllipse(-2, -2, 4, 4)
-        painter.restore()
+
         
 
 
@@ -197,6 +192,77 @@ class Simulation:
 
         self.status = status
 
+
+class Cogwheel(QtGui.QWidget):
+
+    def __init__(self, color=QtGui.QColor(128, 128, 128), size=64, parent = None):
+        QtGui.QWidget.__init__(self, parent)
+
+        self.size = size
+        qsize = QtCore.QSize(size, size)
+        self.setMaximumSize(qsize)
+        self.setMinimumSize(qsize)
+
+        self.color = color
+        self.inc = 0
+        self.step = 2.5
+
+        self.createCogwheel(size)
+
+        timer = QtCore.QTimer(self)
+        self.connect(timer, QtCore.SIGNAL("timeout()"), self, QtCore.SLOT("update()"))
+        timer.start(16)
+
+        self.running = False
+
+
+    def paintEvent(self, paintevent):
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        rect = self.contentsRect()
+
+        painter.setPen(QtGui.QColor(255, 255, 255, 0))
+
+        painter.setClipRect(rect)
+        painter.translate(rect.center())
+        painter.rotate(self.step * self.inc)
+        self.drawCogwheel(painter)
+
+        r = (self.size / 2.0) * 0.4
+        painter.setBrush(QtGui.QBrush(self.color.light(150)))
+        painter.drawEllipse(QtCore.QPointF(0, 0), r, r)
+
+        if self.running:
+            self.inc += 1
+
+
+    def drawCogwheel(self, painter):
+        painter.save()
+        painter.setBrush(QtGui.QBrush(self.color))
+        painter.drawPolygon(QtGui.QPolygonF(self.points), len(self.points))
+        painter.restore()
+
+
+    def createCogwheel(self, size):
+        self.points = []
+        r1 = (size / 2.0) - 1.0
+        r2 = 0.80
+        teeth = 9
+        out = False
+        for t in frange(0.0, 2 * math.pi, 2 * math.pi / (teeth * 2.0)):
+            x = r1 * math.cos(t)
+            y = r1 * math.sin(t)
+            if out:
+                self.points.append(QtCore.QPointF(x, y))
+                self.points.append(QtCore.QPointF(r2 * x, r2 * y))
+            else:
+                self.points.append(QtCore.QPointF(r2 * x, r2 * y))
+                self.points.append(QtCore.QPointF(x, y))
+            out = not out
+
+    def setRunning(self, bool):
+        self.running = bool
 
 class LegendMarker(QtGui.QWidget):
     def __init__(self, color, parent = None):
@@ -294,7 +360,14 @@ class RunWidget(HelpedWidget):
         self.simulationProgress = QtGui.QProgressBar()
         self.simulationProgress.setValue(0)
         self.connect(self.simulationProgress, QtCore.SIGNAL('setValue(int)'), self.updateProgress)
-        memberLayout.addRow(self.simulationProgress)
+
+        self.cogwheel = Cogwheel(size=20)
+
+        progressLayout = QtGui.QHBoxLayout()
+        progressLayout.addWidget(self.simulationProgress)
+        progressLayout.addWidget(self.cogwheel)
+        memberLayout.addRow(progressLayout)
+
 
         self.simulationList = SimulationList()
         self.simulationList.setSortingEnabled(True)
@@ -384,8 +457,9 @@ class RunWidget(HelpedWidget):
                     status = ert.enkf.enkf_state_get_run_status(state)
 
                     if not status == Simulation.job_status_type_reverse["JOB_QUEUE_NOT_ACTIVE"]:
-                        start_time = ert.enkf.enkf_state_get_start_time(state)
+                        #start_time = ert.enkf.enkf_state_get_start_time(state)
                         #print time.ctime(start_time), start_time
+                        pass
 
                     simulations[member].simulation.setStatus(status)
                     simulations[member].updateSimulation()
@@ -399,7 +473,7 @@ class RunWidget(HelpedWidget):
                 count = (100 * succesCount / totalCount)
                 self.simulationProgress.emit(QtCore.SIGNAL("setValue(int)"), count)
 
-                time.sleep(0.01)
+                time.sleep(0.5)
 
         self.pollthread.setDaemon(True)
         self.pollthread.run = poll
@@ -486,6 +560,8 @@ class RunWidget(HelpedWidget):
         self.simulateTo.setEnabled(state)
         self.startState.setEnabled(state)
         self.actionButton.setEnabled(state)
+        
+        self.cogwheel.setRunning(not state)
 
 
 class RunPanel(QtGui.QFrame):
