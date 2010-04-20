@@ -6,6 +6,7 @@ from pages.run.simulation import SimulationItemDelegate, SimulationList, Simulat
 import threading
 import time
 import ertwrapper
+from widgets.util import getItemsFromList
 
 class JobsDialog(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -32,8 +33,10 @@ class JobsDialog(QtGui.QDialog):
 
         simulationLayout = QtGui.QHBoxLayout()
         self.simulationList = SimulationList()
+        self.connect(self.simulationList, QtCore.SIGNAL('itemSelectionChanged()'), self.selectSimulation)
         simulationLayout.addWidget(self.simulationList)
-        simulationLayout.addWidget(SimulationPanel())
+        self.simulationPanel = SimulationPanel()
+        simulationLayout.addWidget(self.simulationPanel)
         memberLayout.addLayout(simulationLayout)
 
         legendLayout = QtGui.QHBoxLayout()
@@ -61,6 +64,10 @@ class JobsDialog(QtGui.QDialog):
 
         self.initialized = False
 
+    def selectSimulation(self):
+        selection = getItemsFromList(self.simulationList, lambda item : item.simulation)
+        self.simulationPanel.setSimulation(selection)
+
     def closeEvent(self, event):
         event.ignore()
 
@@ -82,6 +89,7 @@ class JobsDialog(QtGui.QDialog):
             ert.setTypes("enkf_state_get_run_status", ertwrapper.c_int)
             ert.setTypes("site_config_queue_is_running")
             ert.setTypes("enkf_state_get_start_time")
+            ert.setTypes("enkf_state_get_submit_time")
             self.initialized = True
 
     def start(self, **kwargs):
@@ -98,6 +106,7 @@ class JobsDialog(QtGui.QDialog):
 
 
         self.initialize(ert)
+        self.simulationPanel.setModel(ert)
 
         simulations = {}
         for member in selectedMembers:
@@ -128,12 +137,16 @@ class JobsDialog(QtGui.QDialog):
                     state = ert.enkf.enkf_main_iget_state(ert.main, member)
                     status = ert.enkf.enkf_state_get_run_status(state)
 
-                    if not status == Simulation.job_status_type_reverse["JOB_QUEUE_NOT_ACTIVE"]:
-                        #start_time = ert.enkf.enkf_state_get_start_time(state)
-                        #print time.ctime(start_time), start_time
-                        pass
-
                     simulations[member].simulation.setStatus(status)
+
+                    if not status == Simulation.job_status_type_reverse["JOB_QUEUE_NOT_ACTIVE"]:
+                        start_time = ert.enkf.enkf_state_get_start_time(state)
+                        submit_time = ert.enkf.enkf_state_get_submit_time(state)
+
+                        simulations[member].simulation.setStartTime(start_time)
+                        simulations[member].simulation.setSubmitTime(submit_time)
+
+
                     simulations[member].updateSimulation()
 
                 totalCount = len(simulations.keys())

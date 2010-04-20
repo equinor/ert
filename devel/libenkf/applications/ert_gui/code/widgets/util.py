@@ -153,16 +153,17 @@ def createSpace(size = 5):
     return qw
 
 
-def getItemsFromList(list):
+def getItemsFromList(list, func = lambda item : str(item.text()) ) :
     """Creates a list of strings from the selected items of a ListWidget"""
     selectedItemsList = list.selectedItems()
 
     selectedItems = []
     for item in selectedItemsList:
-        selectedItems.append(str(item.text()))
+        selectedItems.append(func(item))
 
     return selectedItems
 
+    
 def frange(*args):
     """A float range generator."""
     start = 0.0
