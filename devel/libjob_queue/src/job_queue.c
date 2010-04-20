@@ -197,7 +197,7 @@ struct job_queue_struct {
 /*****************************************************************/
 
 static void job_queue_node_clear(job_queue_node_type * node) {
-  node->job_status     = JOB_QUEUE_NULL;
+  node->job_status     = JOB_QUEUE_NOT_ACTIVE;
   node->submit_attempt = 0;
   node->job_name       = NULL;
   node->run_path       = NULL;
@@ -397,12 +397,17 @@ static void job_queue_print_status(const job_queue_type * queue) {
   printf("active_size ......: %d \n",queue->active_size);
 }
 
+
 /**
    Will return INDEX_NOT_FOUND if no node with the external_id can be found.
 */
 
 static int job_queue_get_internal_index(job_queue_type * queue , int external_id) {
-  return int_vector_safe_iget( queue->index_map , external_id );   
+  int queue_index;
+  pthread_rwlock_rdlock( &queue->active_rwlock );
+  queue_index = int_vector_safe_iget( queue->index_map , external_id );   
+  pthread_rwlock_unlock( &queue->active_rwlock );
+  return queue_index;
 }
 
 
@@ -617,13 +622,17 @@ static void job_queue_display_job_info( const job_queue_type * job_queue , const
 
 
 /** 
-    This function goes through all the nodes and call finalize on them. It
-    is essential that this routine is not called before all the jobs have
-    completed.
+    This function goes through all the nodes and call finalize on
+    them. It is essential that this routine is not called before all
+    the jobs have completed. It is also essential that it is called
+    before the job_queue is reused for a new set of simulations.
 */
 
 void job_queue_finalize(job_queue_type * queue) {
   int i;
+  queue->active_size = 0;
+  int_vector_reset( queue->index_map );
+  
   for (i=0; i < queue->size; i++) 
     job_queue_node_finalize(queue->jobs[i]);
   

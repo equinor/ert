@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <util.h>
 #include <hash.h>
@@ -2832,4 +2833,22 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 }
 
 
+void enkf_main_install_SIGNALS(void) {
+  signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
+  signal(SIGINT  , util_abort_signal);    /* Control C */
+  signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. Killing with SIGKILL (-9) will not give a backtrace.*/
+}
+
+
+void enkf_main_init_debug( ) {
+  char * svn_version  	  = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
+  char * compile_time 	  = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
+
+  /* This will be printed if/when util_abort() is called on a later stage. */
+  util_abort_append_version_info(svn_version);
+  util_abort_append_version_info(compile_time);
+  
+  free(svn_version);
+  free(compile_time);
+}  
 
