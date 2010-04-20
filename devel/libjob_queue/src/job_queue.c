@@ -124,9 +124,10 @@
 #define INDEX_NOT_FOUND  -77   /* Arbitrary negative value. */
 
 
-typedef enum {SUBMIT_OK          = 0 , 
-              SUBMIT_JOB_FAIL    = 1 , /* Typically no more attempts. */
-              SUBMIT_DRIVER_FAIL = 2}  /* The driver would not take the job - for whatever reason?? */ submit_status_type;
+typedef enum {SUBMIT_OK           = 0 , 
+              SUBMIT_JOB_FAIL     = 1 , /* Typically no more attempts. */
+              SUBMIT_DRIVER_FAIL  = 2 , /* The driver would not take the job - for whatever reason?? */ 
+              SUBMIT_QUEUE_PAUSED = 3 } /* The queue is currently not accepting more jobs. */   submit_status_type;
 
 
 
@@ -187,10 +188,11 @@ struct job_queue_struct {
   basic_queue_driver_type  * driver;        			/* A pointer to a driver instance (LSF|LOCAL|RSH) which actually 'does it'. */
   int                        status_list[JOB_QUEUE_MAX_STATE];  /* The number of jobs in the different states (observe that the state is (ab)used as index). */
   bool                       running;                           /* Is the job queue currently running? */  
+  int_vector_type          * index_map;
+  bool                       pause_on;                          /* Is the job currently paused? If pause_on == true no new jobs will be submitted. */ 
   unsigned long              usleep_time;                       /* The sleep time before checking for updates. */
   pthread_rwlock_t           active_rwlock;
   pthread_rwlock_t           status_rwlock;                  
-  int_vector_type          * index_map;
 };
 
 
@@ -354,38 +356,42 @@ static void job_queue_update_status(job_queue_type * queue ) {
 
 static submit_status_type job_queue_submit_job(job_queue_type * queue , int queue_index) {
   submit_status_type submit_status;
-  job_queue_assert_queue_index(queue , queue_index);
-  {
-    job_queue_node_type     * node    = queue->jobs[queue_index];
-    basic_queue_driver_type * driver  = queue->driver;
-    
-    if (node->submit_attempt < queue->max_submit) {
-      basic_queue_job_type * job_data = driver->submit(queue->driver  , 
-                                                       queue_index    , 
-                                                       queue->run_cmd , 
-                                                       node->run_path , 
-                                                       node->job_name , 
-                                                       node->job_arg);
+  if (queue->pause_on)
+    submit_status = SUBMIT_QUEUE_PAUSED;   /* The queue is currently not accepting more jobs. */
+  else {
+    job_queue_assert_queue_index(queue , queue_index);
+    {
+      job_queue_node_type     * node    = queue->jobs[queue_index];
+      basic_queue_driver_type * driver  = queue->driver;
       
-      if (job_data != NULL) {
-        job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING /* This is when it is installed as runnable in the internal queue */);
-        /* The update_status function will grab this and update. */
-        node->job_data = job_data;
-        node->submit_attempt++;
-        submit_status = SUBMIT_OK;
-      } else
-        submit_status = SUBMIT_DRIVER_FAIL;
-    } else {
-      /* 
-         The queue system will not make more attempts to submit this job. The
-         external scope might call job_queue_set_external_restart() - otherwise
-         this job is failed.
-      */
-      job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_FAIL);
-      submit_status = SUBMIT_JOB_FAIL;
+      if (node->submit_attempt < queue->max_submit) {
+        basic_queue_job_type * job_data = driver->submit(queue->driver  , 
+                                                         queue_index    , 
+                                                         queue->run_cmd , 
+                                                         node->run_path , 
+                                                         node->job_name , 
+                                                         node->job_arg);
+        
+        if (job_data != NULL) {
+          job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING /* This is when it is installed as runnable in the internal queue */);
+          /* The update_status function will grab this and update. */
+          node->job_data = job_data;
+          node->submit_attempt++;
+          submit_status = SUBMIT_OK;
+        } else
+          submit_status = SUBMIT_DRIVER_FAIL;
+      } else {
+        /* 
+           The queue system will not make more attempts to submit this job. The
+           external scope might call job_queue_set_external_restart() - otherwise
+           this job is failed.
+        */
+        job_queue_change_node_status(queue , node , JOB_QUEUE_RUN_FAIL);
+        submit_status = SUBMIT_JOB_FAIL;
+      }
     }
-    return submit_status;
   }
+  return submit_status;
 }
 
 
@@ -630,6 +636,8 @@ static void job_queue_display_job_info( const job_queue_type * job_queue , const
 
 void job_queue_finalize(job_queue_type * queue) {
   int i;
+  
+  pthread_rwlock_wrlock( &queue->active_rwlock );
   queue->active_size = 0;
   int_vector_reset( queue->index_map );
   
@@ -638,6 +646,8 @@ void job_queue_finalize(job_queue_type * queue) {
   
   for (i=0; i < JOB_QUEUE_MAX_STATE; i++) 
     queue->status_list[i] = 0;
+  pthread_rwlock_unlock( &queue->active_rwlock );
+  
 }
 
 
@@ -729,7 +739,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
                     phase = (phase + 1) % 4;
                     num_submit_new--;
                     submit_count++;
-                  } else if (submit_status == SUBMIT_DRIVER_FAIL)
+                  } else if ((submit_status == SUBMIT_DRIVER_FAIL) || (submit_status == SUBMIT_QUEUE_PAUSED))
                     break;
                 }
               }
@@ -1003,12 +1013,14 @@ int job_queue_get_max_submit(const job_queue_type * job_queue ) {
 */
 
 void job_queue_reset( job_queue_type * job_queue ) {
+  pthread_rwlock_wrlock( &job_queue->active_rwlock );
   job_queue->active_size = 0;
   int_vector_reset( job_queue->index_map );
   for (int i=0; i < job_queue->size; i++) {
     job_queue_node_type * node = job_queue->jobs[i];
     job_queue_change_node_status(job_queue , node , JOB_QUEUE_NOT_ACTIVE);
   }
+  pthread_rwlock_unlock( &job_queue->active_rwlock );
 }
 
 
@@ -1034,6 +1046,7 @@ job_queue_type * job_queue_alloc(int size ,
   queue->driver          = NULL;
   queue->run_cmd         = NULL;
   queue->index_map       = int_vector_alloc( 0 , INDEX_NOT_FOUND );
+  queue->pause_on        = false;
   job_queue_set_run_cmd( queue , run_cmd );
   job_queue_set_size( queue , size );
   pthread_rwlock_init( &queue->active_rwlock , NULL);
@@ -1042,7 +1055,28 @@ job_queue_type * job_queue_alloc(int size ,
   return queue;
 }
 
+/**
+   Returns true if the queue is currently paused, which means that no
+   more jobs are submitted. 
+*/
 
+
+bool job_queue_get_pause( const job_queue_type * job_queue ) {
+  return job_queue->pause_on;
+}
+
+static void job_queue_set_pause__( job_queue_type * job_queue, bool pause_on) {
+  job_queue->pause_on = pause_on;
+}
+
+void job_queue_set_pause_on( job_queue_type * job_queue) {
+  job_queue_set_pause__( job_queue , true );
+}
+
+
+void job_queue_set_pause_off( job_queue_type * job_queue) {
+  job_queue_set_pause__( job_queue , false);
+}
 
 
 
