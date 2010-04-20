@@ -18,15 +18,10 @@
 
 
 
-void install_SIGNALS(void) {
-  signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
-  signal(SIGINT  , util_abort_signal);    /* Control C */
-  signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. Killing with SIGKILL (-9) will not give a backtrace.*/
-}
 
 
 void text_splash() {
-  const int usleep_time = 1250;
+  const int usleep_time = 1000;
   int i;
   {
     //#include "statoilhydro.h"
@@ -56,8 +51,7 @@ void enkf_welcome(const char * config_file) {
     char * config_file_msg       = util_alloc_sprintf("Configuration file...: %s \n",abs_path);
     
     /* This will be printed if/when util_abort() is called on a later stage. */
-    util_abort_append_version_info(svn_version);
-    util_abort_append_version_info(compile_time);
+    /* The svn_version and compile_time are added with the functione enkf_main_init_debug(). */
     util_abort_append_version_info(config_file_msg);
     
     free(config_file_msg);
@@ -97,7 +91,8 @@ int main (int argc , char ** argv) {
   printf("\n");
   printf("svn version : %s \n",SVN_VERSION);
   printf("compile time: %s \n",COMPILE_TIME_STAMP);
-  install_SIGNALS();
+  enkf_main_install_SIGNALS();
+  enkf_main_init_debug();
   if (argc != 2) {
     enkf_usage();
     exit(1);
