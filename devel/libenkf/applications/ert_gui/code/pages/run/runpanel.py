@@ -2,10 +2,11 @@ from PyQt4 import QtGui, QtCore
 import ertwrapper
 
 from widgets.helpedwidget import HelpedWidget, ContentModel
-from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, createSpace, getItemsFromList
+from widgets.util import resourceIcon, ListCheckPanel, ValidatedTimestepCombo, createSpace, getItemsFromList, frange
 import threading
 import time
 import widgets
+import math
 
 class SimulationList(QtGui.QListWidget):
     def __init__(self):
@@ -14,9 +15,6 @@ class SimulationList(QtGui.QListWidget):
         self.setViewMode(QtGui.QListView.IconMode)
         self.setMovement(QtGui.QListView.Static)
         self.setResizeMode(QtGui.QListView.Adjust)
-        #self.membersList.setUniformItemSizes(True)
-        #self.setGridSize(QtCore.QSize(32, 16))
-        self.setSelectionRectVisible(False)
 
         self.setItemDelegate(SimulationItemDelegate())
 
@@ -44,29 +42,43 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
     notactive = QtGui.QColor(255, 255, 255)
 
     size = QtCore.QSize(32, 20)
+    selectedSize = QtCore.QSize(32, 40)
+
+    step = 5
 
     def __init__(self):
         QtGui.QStyledItemDelegate.__init__(self)
 
+        self.inc = 0
+
+        self.points = []
+        r1 = 9
+        r2 = 0.80
+        teeth = 9
+
+        out = False
+        for t in frange(0.0, 2 * math.pi, 2 * math.pi / (teeth * 2.0)):
+            x = r1 * math.cos(t)
+            y = r1 * math.sin(t)
+            if out:
+                self.points.append(QtCore.QPointF(x, y))
+                self.points.append(QtCore.QPointF(r2 * x, r2 * y))
+            else:
+                self.points.append(QtCore.QPointF(r2 * x, r2 * y))
+                self.points.append(QtCore.QPointF(x, y))
+            out = not out
+
+
     def paint(self, painter, option, index):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        rect = option.rect
-        rect.setX(rect.x() + 1)
-        rect.setY(rect.y() + 1)
-        rect.setWidth(rect.width() - 1)
-        rect.setHeight(rect.height() - 1)
-
-        painter.fillRect(option.rect, QtCore.Qt.black)
-
-        if option.state & QtGui.QStyle.State_Selected:
-            painter.fillRect(option.rect, QtCore.Qt.blue)
-
-        data = index.model().data(index).toPyObject()
+        data = index.model().data(index)
 
         if data is None:
             data = Simulation("0")
             data.status = 0
+        else:
+            data = data.toPyObject()
 
         if data.isWaiting():
             color = self.waiting
@@ -82,23 +94,45 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
             color = self.unknown
 
         painter.setPen(color)
-        painter.pen().setWidth(10)
-        rect = option.rect
+        rect = QtCore.QRect(option.rect)
         rect.setX(rect.x() + 1)
         rect.setY(rect.y() + 1)
-        rect.setWidth(rect.width() - 1)
-        rect.setHeight(rect.height() - 1)
-        #painter.drawRoundRect(rect)
+        rect.setWidth(rect.width() - 2)
+        rect.setHeight(rect.height() - 2)
         painter.fillRect(rect, color)
 
+        if data.isRunning():
+            painter.save()
+            painter.setClipRect(rect)
+            painter.translate(rect.x(), rect.center().y())
+            painter.rotate(self.step * self.inc)
+            #painter.translate(1, 1)
+            self.drawCog(painter)
+            painter.restore()
+            self.inc += 1
+        
         painter.setPen(QtCore.Qt.black)
-        #painter.drawText(rect, QtCore.Qt.AlignRight, str(data.name))
-        #painter.drawText(rect, QtCore.Qt.AlignRight + QtCore.Qt.AlignBottom, str(data.status))
         painter.drawText(rect, QtCore.Qt.AlignCenter + QtCore.Qt.AlignVCenter, str(data.name))
 
+        painter.setRenderHint(QtGui.QPainter.Antialiasing, False)
+
+        painter.drawRect(rect)
+
+        if option.state & QtGui.QStyle.State_Selected:
+            painter.fillRect(option.rect, QtGui.QColor(128, 128, 128, 128))
 
     def sizeHint(self, option, index):
         return self.size
+
+    def drawCog(self, painter):
+        painter.save()
+        #painter.setPen(QtCore.Qt.black)
+        #painter.setBrush(QtGui.QBrush(self.running.dark(150)))
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(0, 0, 0, 128)))
+        painter.drawPolygon(QtGui.QPolygonF(self.points), len(self.points))
+        painter.drawEllipse(-2, -2, 4, 4)
+        painter.restore()
+        
 
 
 class Simulation:
@@ -132,9 +166,11 @@ class Simulation:
                        12 : "JOB_QUEUE_USER_KILLED",
                        13 : "JOB_QUEUE_MAX_STATE"}
 
+
     def __init__(self, name):
         self.name = name
         self.status = 0 #JOB_QUEUE_NOT_ACTIVE
+        self.statuslog = []
 
     def checkStatus(self, type):
         return self.status == self.job_status_type_reverse[type]
@@ -154,6 +190,42 @@ class Simulation:
     def finishedSuccesfully(self):
         return self.checkStatus("JOB_QUEUE_ALL_OK")
 
+    def setStatus(self, status):
+        if len(self.statuslog) == 0 or not self.statuslog[len(self.statuslog) - 1] == status:
+            self.statuslog.append(status)
+
+        self.status = status
+
+
+class LegendMarker(QtGui.QWidget):
+    def __init__(self, color, parent = None):
+        QtGui.QWidget.__init__(self, parent)
+
+        self.setMaximumSize(QtCore.QSize(12, 12))
+        self.setMinimumSize(QtCore.QSize(12, 12))
+
+        self.color = color
+
+    def paintEvent(self, paintevent):
+        painter = QtGui.QPainter(self)
+
+        rect = self.contentsRect()
+
+        rect.setWidth(rect.width() - 1)
+        rect.setHeight(rect.height() - 1)
+        painter.drawRect(rect)
+
+        rect.setX(rect.x() + 1)
+        rect.setY(rect.y() + 1)
+
+        painter.fillRect(rect, self.color)
+
+class Legend(QtGui.QHBoxLayout):
+    def __init__(self, legend, color, parent=None):
+        QtGui.QHBoxLayout.__init__(self, parent)
+
+        self.addWidget(LegendMarker(color, parent))
+        self.addWidget(QtGui.QLabel(legend))
 
 
 class RunWidget(HelpedWidget):
@@ -228,6 +300,15 @@ class RunWidget(HelpedWidget):
 
         memberLayout.addRow(self.simulationList)
 
+        legendLayout = QtGui.QHBoxLayout()
+        legendLayout.addLayout(Legend("Not active", SimulationItemDelegate.notactive))
+        legendLayout.addLayout(Legend("Waiting/Pending", SimulationItemDelegate.waiting))
+        legendLayout.addLayout(Legend("Running", SimulationItemDelegate.running))
+        legendLayout.addLayout(Legend("Loading/etc.", SimulationItemDelegate.unknown))
+        legendLayout.addLayout(Legend("Failed", SimulationItemDelegate.failed))
+        legendLayout.addLayout(Legend("Finished", SimulationItemDelegate.finished))
+        memberLayout.addRow(legendLayout)
+
         self.addLayout(memberLayout)
 
         self.setRunpath("...")
@@ -289,7 +370,7 @@ class RunWidget(HelpedWidget):
             self.setGUIEnabled(True)
 
         self.runthread.setDaemon(True)
-        self.runthread.run = action
+        self.runthread.run = action                        
 
         self.pollthread = threading.Thread(name="polling_thread")
         def poll():
@@ -301,10 +382,11 @@ class RunWidget(HelpedWidget):
                     state = ert.enkf.enkf_main_iget_state(ert.main, member)
                     status = ert.enkf.enkf_state_get_run_status(state)
 
-                    start_time = ert.enkf.enkf_state_get_start_time(state)
-                    #print time.ctime(start_time), start_time
+                    if not status == Simulation.job_status_type_reverse["JOB_QUEUE_NOT_ACTIVE"]:
+                        start_time = ert.enkf.enkf_state_get_start_time(state)
+                        #print time.ctime(start_time), start_time
 
-                    simulations[member].simulation.status = status
+                    simulations[member].simulation.setStatus(status)
                     simulations[member].updateSimulation()
 
                 totalCount = len(simulations.keys())
