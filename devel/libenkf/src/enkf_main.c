@@ -1515,7 +1515,6 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       arg_pack_append_bool(queue_args , verbose);
       arg_pack_lock( queue_args );
       
-      job_queue_reset( job_queue );
       pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
 
       {
