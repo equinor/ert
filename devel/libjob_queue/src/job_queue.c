@@ -1008,21 +1008,6 @@ int job_queue_get_max_submit(const job_queue_type * job_queue ) {
 }
 
 
-/**
-   This must be called BEFORE we start adding jobs. 
-*/
-
-void job_queue_reset( job_queue_type * job_queue ) {
-  pthread_rwlock_wrlock( &job_queue->active_rwlock );
-  job_queue->active_size = 0;
-  int_vector_reset( job_queue->index_map );
-  for (int i=0; i < job_queue->size; i++) {
-    job_queue_node_type * node = job_queue->jobs[i];
-    job_queue_change_node_status(job_queue , node , JOB_QUEUE_NOT_ACTIVE);
-  }
-  pthread_rwlock_unlock( &job_queue->active_rwlock );
-}
-
 
 /**
    The job_queue instance can be resized afterwards with a call to
@@ -1045,7 +1030,7 @@ job_queue_type * job_queue_alloc(int size ,
   queue->max_submit      = max_submit;
   queue->driver          = NULL;
   queue->run_cmd         = NULL;
-  queue->index_map       = int_vector_alloc( 0 , INDEX_NOT_FOUND );
+  queue->index_map       = int_vector_alloc( size , INDEX_NOT_FOUND );   /* <- This should NOT be allowed to grow - that is an indication of severe error. */
   queue->pause_on        = false;
   job_queue_set_run_cmd( queue , run_cmd );
   job_queue_set_size( queue , size );

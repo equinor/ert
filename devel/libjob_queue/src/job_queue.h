@@ -41,7 +41,6 @@ void                job_queue_set_max_submit( job_queue_type * job_queue , int m
 int                 job_queue_get_max_submit(const job_queue_type * job_queue );
 void                job_queue_set_run_cmd( job_queue_type * job_queue , const char * run_cmd );
 const char        * job_queue_get_run_cmd( job_queue_type * job_queue);
-void                job_queue_reset( job_queue_type * job_queue );
 
 bool        job_queue_get_pause( const job_queue_type * job_queue );
 void        job_queue_set_pause_on( job_queue_type * job_queue);
