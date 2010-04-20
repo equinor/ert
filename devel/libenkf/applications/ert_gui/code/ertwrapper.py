@@ -1,7 +1,7 @@
 
 from ctypes import *
 import ctypes.util
-
+import atexit
 
 class ErtWrapper:
 
@@ -22,7 +22,7 @@ class ErtWrapper:
 
         self.initializeTypes()
         
-
+        atexit.register(self.cleanup)
         
 
 #        self.plot_path = "somepath"
@@ -156,8 +156,6 @@ class ErtWrapper:
 
         #self.num_realizations = 100
         self.summary = ["WPOR:MY_WELL", "RPR:8", "F*"]
-
-
 
 
 
@@ -323,3 +321,6 @@ class ErtWrapper:
 
     def freeBoolVector(self, mask):
         self.util.bool_vector_free(mask)
+
+    def cleanup(self):
+        print "Cleaning up!!!"
