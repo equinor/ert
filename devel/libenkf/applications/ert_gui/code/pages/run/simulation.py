@@ -464,19 +464,26 @@ class Simulation:
 
 
 class SimulationStatistics:
+
+
     def __init__(self, name="default"):
         self.name = name
 
+        self.clear()
+
+    def clear(self):
         self.jobs = 0
         self.waiting = 0
         self.running = 0
         self.total = 0
         self.start = 0
+        self.last = 0
 
     def startTiming(self):
         self.start = int(time.time())
 
     def jobsPerSecond(self):
+        #t = self.last - self.start
         t = int(time.time()) - self.start
         if t > 0:
             return self.jobs / t
@@ -489,12 +496,10 @@ class SimulationStatistics:
     def estimate(self, jobs):
         if self.jobsPerSecond() > 0:
             spj = self.secondsPerJob()
-            all_jobs_estimate = jobs * spj
+            jobs_estimate = spj * (jobs - self.jobs)
 
-
-            completed = self.jobs * spj
-            timeUsed = int(time.time()) - self.last 
-            return all_jobs_estimate - completed - timeUsed
+            timeUsed = int(time.time()) - self.last
+            return jobs_estimate - timeUsed
         else:
             return -1
 
@@ -504,5 +509,5 @@ class SimulationStatistics:
         self.waiting += start - submit
         self.running += finish - start
         self.total += finish - submit
-        self.last = finish
+        self.last = int(time.time())
 

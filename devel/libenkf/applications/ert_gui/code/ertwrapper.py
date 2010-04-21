@@ -239,6 +239,8 @@ class ErtWrapper:
         self.setTypes("bool_vector_get_ptr", library = self.util)
         self.setTypes("bool_vector_free", None, library = self.util)
 
+        self.setTypes("enkf_main_free", None)
+
         
     def getStringList(self, stringlistpointer):
         """Retrieve a list of strings"""
@@ -319,4 +321,4 @@ class ErtWrapper:
         self.util.bool_vector_free(mask)
 
     def cleanup(self):
-        print "Cleaning up!!!"
+        self.enkf.enkf_main_free(self.main)
