@@ -1,7 +1,7 @@
 from PyQt4 import QtGui, QtCore
 from widgets.cogwheel import Cogwheel
 from pages.run.legend import Legend
-from pages.run.simulation import SimulationItemDelegate, SimulationList, SimulationItem, Simulation, SimulationPanel
+from pages.run.simulation import SimulationItemDelegate, SimulationList, SimulationItem, Simulation, SimulationPanel, SimulationStatistics
 
 import threading
 import time
@@ -14,14 +14,15 @@ class JobsDialog(QtGui.QDialog):
         self.setModal(True)
         self.setWindowTitle("Running jobs")
         self.setMinimumWidth(250)
-        self.setMinimumHeight(250)
+        #self.setMinimumHeight(250)
+
+        self.ctrl = JobsDialogController(self) 
 
         self.simulationProgress = QtGui.QProgressBar()
         self.simulationProgress.setValue(0)
         self.connect(self.simulationProgress, QtCore.SIGNAL('setValue(int)'), self.updateProgress)
 
         self.cogwheel = Cogwheel(size=20)
-
 
         memberLayout = QtGui.QVBoxLayout()
 
@@ -33,7 +34,8 @@ class JobsDialog(QtGui.QDialog):
 
         simulationLayout = QtGui.QHBoxLayout()
         self.simulationList = SimulationList()
-        self.connect(self.simulationList, QtCore.SIGNAL('itemSelectionChanged()'), self.selectSimulation)
+        self.simulationList.contextMenuEvent = self.contextMenu
+        self.connect(self.simulationList, QtCore.SIGNAL('itemSelectionChanged()'), self.ctrl.selectSimulation)
         simulationLayout.addWidget(self.simulationList)
         self.simulationPanel = SimulationPanel()
         simulationLayout.addWidget(self.simulationPanel)
@@ -44,6 +46,7 @@ class JobsDialog(QtGui.QDialog):
         legendLayout.addLayout(Legend("Waiting/Pending", SimulationItemDelegate.waiting))
         legendLayout.addLayout(Legend("Running", SimulationItemDelegate.running))
         legendLayout.addLayout(Legend("Loading/etc.", SimulationItemDelegate.unknown))
+        legendLayout.addLayout(Legend("User killed", SimulationItemDelegate.userkilled))
         legendLayout.addLayout(Legend("Failed", SimulationItemDelegate.failed))
         legendLayout.addLayout(Legend("Finished", SimulationItemDelegate.finished))
         memberLayout.addLayout(legendLayout)
@@ -53,20 +56,40 @@ class JobsDialog(QtGui.QDialog):
         self.connect(self.doneButton, QtCore.SIGNAL('clicked()'), self.accept)
 
         buttonLayout = QtGui.QHBoxLayout()
+
+        self.estimateLabel = QtGui.QLabel()
+        buttonLayout.addWidget(self.estimateLabel)
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.doneButton)
 
         memberLayout.addSpacing(10)
         memberLayout.addLayout(buttonLayout)
 
-
         self.setLayout(memberLayout)
 
-        self.initialized = False
 
-    def selectSimulation(self):
-        selection = getItemsFromList(self.simulationList, lambda item : item.simulation)
-        self.simulationPanel.setSimulation(selection)
+    def createAction(self, name, func, parent=None):
+        action = QtGui.QAction(name, parent)
+        action.connect(action, QtCore.SIGNAL("triggered()"), func)
+        return action
+
+    def contextMenu(self, event):
+        menu = QtGui.QMenu(self.simulationList)
+        selectAll = self.createAction("Select all", self.simulationList.selectAll)
+        unselectAll = self.createAction("Unselect all", self.simulationList.clearSelection)
+        selectRunning = self.createAction("Select all running", lambda : self.ctrl.select(Simulation.RUNNING))
+        selectFailed = self.createAction("Select all failed", lambda : self.ctrl.select(Simulation.ALL_FAIL))
+        selectUserKilled = self.createAction("Select all user killed", lambda : self.ctrl.select(Simulation.USER_KILLED))
+        selectWaiting = self.createAction("Select all waiting", lambda : self.ctrl.select(Simulation.WAITING, Simulation.PENDING))
+
+        menu.addAction(selectAll)
+        menu.addAction(unselectAll)
+        menu.addAction(selectWaiting)
+        menu.addAction(selectRunning)
+        menu.addAction(selectFailed)
+        menu.addAction(selectUserKilled)
+        menu.exec_(event.globalPos())
+        
 
     def closeEvent(self, event):
         event.ignore()
@@ -82,6 +105,34 @@ class JobsDialog(QtGui.QDialog):
         self.cogwheel.setRunning(state)
         self.doneButton.setEnabled(not state)
 
+    def start(self, **kwargs):
+        self.open()
+
+        self.ctrl.start(**kwargs)
+
+        self.exec_()
+
+
+
+class JobsDialogController:
+    def __init__(self, view):
+        self.view = view
+        self.initialized = False
+
+    def select(self, *states):
+        self.view.simulationList.clearSelection()
+
+        items = getItemsFromList(self.view.simulationList, lambda item : item, selected=False)
+
+        for state in states:
+            for item in items:
+                if item.simulation.checkStatus(state):
+                    item.setSelected(True)
+
+    def selectSimulation(self):
+        selection = getItemsFromList(self.view.simulationList, lambda item : item.simulation)
+        self.view.simulationPanel.setSimulations(selection)
+
 
     def initialize(self, ert):
         if not self.initialized:
@@ -93,8 +144,6 @@ class JobsDialog(QtGui.QDialog):
             self.initialized = True
 
     def start(self, **kwargs):
-        self.open()
-        
         ert = kwargs["ert"]
         memberCount = kwargs["memberCount"]
         selectedMembers = kwargs["selectedMembers"]
@@ -106,26 +155,28 @@ class JobsDialog(QtGui.QDialog):
 
 
         self.initialize(ert)
-        self.simulationPanel.setModel(ert)
+        self.view.simulationPanel.setModel(ert)
 
+        self.statistics = SimulationStatistics()
         simulations = {}
         for member in selectedMembers:
-            simulations[member] = SimulationItem(Simulation(member))
-            self.simulationList.addItem(simulations[member])
+            simulations[member] = SimulationItem(Simulation(member, self.statistics))
+            self.view.simulationList.addItem(simulations[member])
 
 
         self.runthread = threading.Thread(name="enkf_main_run")
-        def action():
-            self.setRunningState(True)
+        def run():
+            self.view.setRunningState(True)
             boolVector = ert.createBoolVector(memberCount, selectedMembers)
             boolPtr = ert.getBoolVectorPtr(boolVector)
 
             ert.enkf.enkf_main_run(ert.main, mode, boolPtr, init_step_parameter, simFrom, state)
             ert.freeBoolVector(boolVector)
-            self.setRunningState(False)
+            self.view.setRunningState(False)
 
         self.runthread.setDaemon(True)
-        self.runthread.run = action
+        self.runthread.run = run
+
 
         self.pollthread = threading.Thread(name="polling_thread")
         def poll():
@@ -139,7 +190,7 @@ class JobsDialog(QtGui.QDialog):
 
                     simulations[member].simulation.setStatus(status)
 
-                    if not status == Simulation.job_status_type_reverse["JOB_QUEUE_NOT_ACTIVE"]:
+                    if not status == Simulation.NOT_ACTIVE:
                         start_time = ert.enkf.enkf_state_get_start_time(state)
                         submit_time = ert.enkf.enkf_state_get_submit_time(state)
 
@@ -156,13 +207,18 @@ class JobsDialog(QtGui.QDialog):
                         succesCount+=1
 
                 count = (100 * succesCount / totalCount)
-                self.simulationProgress.emit(QtCore.SIGNAL("setValue(int)"), count)
+                self.view.simulationProgress.emit(QtCore.SIGNAL("setValue(int)"), count)
+                self.view.simulationPanel.emit(QtCore.SIGNAL("simulationsUpdated()"))
 
+                if self.statistics.jobsPerSecond() > 0:
+                    self.view.estimateLabel.setText("Estimated finished in %.2f secs" % (self.statistics.estimate(len(simulations))))
+                else:
+                    self.view.estimateLabel.setText("")
                 time.sleep(0.5)
 
         self.pollthread.setDaemon(True)
         self.pollthread.run = poll
 
+        self.statistics.startTiming()
         self.runthread.start()
         self.pollthread.start()
-        self.exec_()

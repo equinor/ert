@@ -18,3 +18,22 @@ enkf_state_kill_simulation( state )
 Restart simulation
 ------------------
 enkf_state_restart_simulation( state , resample )  /* Resample er en bool - True: Kjør ny initialisering */
+
+
+
+
+Main queue pausing:
+-------------------
+job_queue_get_pause( jq )
+
+job_queue_set_pause_on( jq )
+
+job_queue_set_pause_off( jp )
+
+
+
+Missing things:
+* kill does not kill.
+* can not access job_queue_type from main
+
+

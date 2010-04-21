@@ -160,20 +160,16 @@ class ErtWrapper:
 
 
     def __loadLibraries__(self, prefix):
-        libraries = ["libecl/slib/libecl.so",
-                     "libsched/slib/libsched.so",
-                     "librms/slib/librms.so",
-                     "libconfig/slib/libconfig.so",
-                     "libjob_queue/slib/libjob_queue.so"]
-
         CDLL("libblas.so", RTLD_GLOBAL)
         CDLL("liblapack.so", RTLD_GLOBAL)
         CDLL("libz.so", RTLD_GLOBAL)
 
         self.util = CDLL(prefix + "libutil/slib/libutil.so", RTLD_GLOBAL)
-        
-        for lib in libraries:
-            CDLL(prefix + lib, RTLD_GLOBAL)
+        CDLL(prefix + "libecl/slib/libecl.so", RTLD_GLOBAL)
+        CDLL(prefix + "libsched/slib/libsched.so", RTLD_GLOBAL)
+        CDLL(prefix + "librms/slib/librms.so", RTLD_GLOBAL)
+        CDLL(prefix + "libconfig/slib/libconfig.so", RTLD_GLOBAL)
+        self.job_queue = CDLL(prefix + "libjob_queue/slib/libjob_queue.so", RTLD_GLOBAL)
 
         self.enkf = CDLL(prefix + "libenkf/slib/libenkf.so", RTLD_GLOBAL)
 
