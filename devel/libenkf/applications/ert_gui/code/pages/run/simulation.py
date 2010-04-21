@@ -267,7 +267,7 @@ class SimulationPanelController:
             ert.setTypes("job_queue_set_pause_off", library = ert.job_queue)
             ert.setTypes("enkf_main_iget_state", argtypes=ertwrapper.c_int)
             ert.setTypes("enkf_state_kill_simulation", None)
-            ert.setTypes("enkf_state_restart_simulation", None, ertwrapper.c_int)
+            ert.setTypes("enkf_state_resubmit_simulation", None, ertwrapper.c_int)
             ert.setTypes("enkf_state_get_run_status", ertwrapper.c_int)
             self.initialized = True
 
@@ -291,7 +291,7 @@ class SimulationPanelController:
             status = self.ert.enkf.enkf_state_get_run_status(state)
 
             if status == Simulation.USER_KILLED:
-                self.ert.enkf.enkf_state_restart_simulation(state, resample)
+                self.ert.enkf.enkf_state_resubmit_simulation(state, resample)
 
     def pause(self):
         print "Pausing"

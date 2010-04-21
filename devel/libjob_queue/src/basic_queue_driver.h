@@ -31,14 +31,13 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =  0 ,   /* This value is used in external
 
 
 typedef struct basic_queue_driver_struct basic_queue_driver_type;
-typedef struct basic_queue_job_struct    basic_queue_job_type;
 
-typedef basic_queue_job_type * (submit_job_ftype)  	    (void * , int , const char * , const char * , const char * , const void *);
-typedef void                   (kill_job_ftype)   	    (void * , basic_queue_job_type * );
-typedef job_status_type        (get_status_ftype)  	    (void * , basic_queue_job_type * );
-typedef void                   (free_job_ftype)    	    (void * , basic_queue_job_type * );
-typedef void                   (free_queue_driver_ftype)    (void *);
-typedef void                   (display_info_ftype)         (void * , basic_queue_job_type * );
+typedef void                 * (submit_job_ftype)  	    (void * , int , const char * , const char * , const char * , const void *);
+typedef void                   (kill_job_ftype)   	    (void * , void * );
+typedef job_status_type        (get_status_ftype)  	    (void * , void * );
+typedef void                   (free_job_ftype)    	    (void * , void * );
+typedef void                   (free_queue_driver_ftype)    (void *); 
+typedef void                   (display_info_ftype)         (void * , void * );
 
 
 struct basic_queue_job_struct {
@@ -62,8 +61,6 @@ struct basic_queue_driver_struct {
 };
 
 
-
-void basic_queue_job_init(basic_queue_job_type * queue_job);
 
 
 #ifdef __cplusplus

@@ -30,10 +30,11 @@
 
 
 
+#define LSF_DRIVER_TYPE_ID 10078365
+#define LSF_JOB_TYPE_ID    99639007
 
 struct lsf_job_struct {
-  int 	    __basic_id;
-  int  	    __lsf_id;
+  UTIL_TYPE_ID_DECLARATION;
   long int  lsf_jobnr;
   int       num_exec_host;
   char    **exec_host;
@@ -43,8 +44,6 @@ struct lsf_job_struct {
 };
 
 
-
-#define LSF_DRIVER_TYPE_ID 100078365
 
 struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -68,39 +67,22 @@ struct lsf_driver_struct {
 
 /*****************************************************************/
 
-#define LSF_JOB_ID     2001
 
-
-
-
-void lsf_driver_init(lsf_driver_type * queue_driver) {
-  //queue_driver->__lsf_id = LSF_DRIVER_ID;
-}
-
-
-void lsf_job_assert_cast(const lsf_job_type * queue_job) {
-  if (queue_job->__lsf_id != LSF_JOB_ID) 
-    util_abort("%s: internal error - cast failed \n",__func__);
-  
-}
-
-
-UTIL_SAFE_CAST_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
-UTIL_IS_INSTANCE_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
-
-
+static UTIL_SAFE_CAST_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
+static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
 
 
 
 lsf_job_type * lsf_job_alloc() {
   lsf_job_type * job;
   job = util_malloc(sizeof * job , __func__);
-  job->__lsf_id = LSF_JOB_ID;
   job->num_exec_host = 0;
   job->exec_host     = NULL;
+
 #ifdef LSF_SYSTEM_DRIVER
   job->lsf_jobnr_char = NULL;
 #endif
+  UTIL_TYPE_ID_INIT( job , LSF_JOB_TYPE_ID);
   return job;
 }
 
@@ -207,13 +189,12 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
 #ifdef LSF_LIBRARY_DRIVER
 #define CASE_SET(s1,s2) case(s1):  status = s2; break;
-static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_queue_job_type * __job) {
+static job_status_type lsf_driver_get_job_status_libary(void * __driver , void * __job) {
   if (__job == NULL) 
     /* the job has not been registered at all ... */
     return JOB_QUEUE_NULL;
   else {
-    lsf_job_type    * job    = (lsf_job_type    *) __job;
-    lsf_job_assert_cast(job);
+    lsf_job_type    * job    = lsf_job_safe_cast( __job );
     {
       job_status_type status;
       struct jobInfoEnt *job_info;
@@ -261,14 +242,13 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , basic_
 
 #else
 
-static job_status_type lsf_driver_get_job_status_system(void * __driver , basic_queue_job_type * __job) {
+static job_status_type lsf_driver_get_job_status_system(void * __driver , void * __job) {
   const int bjobs_refresh_time = 5; /* Seconds */
   job_status_type status = JOB_QUEUE_NULL;
   
   if (__job != NULL) {
-    lsf_job_type    * job    = (lsf_job_type    *) __job;
+    lsf_job_type    * job    = lsf_job_safe_cast( __job );
     lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
-    lsf_job_assert_cast(job);
     
     {
       if (difftime(time(NULL) , driver->last_bjobs_update) > bjobs_refresh_time) {
@@ -294,7 +274,7 @@ static job_status_type lsf_driver_get_job_status_system(void * __driver , basic_
 
 
 
-job_status_type lsf_driver_get_job_status(void * __driver , basic_queue_job_type * __job) {
+job_status_type lsf_driver_get_job_status(void * __driver , void * __job) {
   job_status_type status;
 #ifdef LSF_LIBRARY_DRIVER
   status = lsf_driver_get_job_status_libary(__driver , __job);
@@ -305,10 +285,9 @@ job_status_type lsf_driver_get_job_status(void * __driver , basic_queue_job_type
 }
 
 
-void lsf_driver_display_info( void * __driver , basic_queue_job_type * __job) {
-  lsf_job_type    * job    = (lsf_job_type    *) __job;
-  lsf_job_assert_cast(job);
-  
+void lsf_driver_display_info( void * __driver , void * __job) {
+  lsf_job_type    * job    = lsf_job_safe_cast( __job );
+
   printf("Executing host: ");
   {
     int i;
@@ -319,10 +298,8 @@ void lsf_driver_display_info( void * __driver , basic_queue_job_type * __job) {
 
 
 
-void lsf_driver_free_job(void * __driver , basic_queue_job_type * __job) {
-  lsf_job_type    * job    = (lsf_job_type    *) __job;
-  
-  lsf_job_assert_cast(job);
+void lsf_driver_free_job(void * __driver , void * __job) {
+  lsf_job_type    * job    = lsf_job_safe_cast( __job );
   lsf_job_free(job);
 }
 
@@ -336,11 +313,10 @@ static void lsf_driver_killjob(int jobnr) {
 }
 
 
-void lsf_driver_kill_job(void * __driver , basic_queue_job_type * __job) {
-  lsf_job_type    * job    = (lsf_job_type    *) __job;
-  lsf_job_assert_cast(job);
+void lsf_driver_kill_job(void * __driver , void * __job) {
+  lsf_job_type    * job    = lsf_job_safe_cast( __job );
   lsf_driver_killjob(job->lsf_jobnr);
-  lsf_driver_free_job(__driver , __job);
+  lsf_job_free( job );
 }
 
 
@@ -350,12 +326,12 @@ void lsf_driver_kill_job(void * __driver , basic_queue_job_type * __job) {
 
 
 
-basic_queue_job_type * lsf_driver_submit_job(void * __driver , 
-					     int   queue_index , 
-					     const char * submit_cmd  	  , 
-					     const char * run_path    	  , 
-					     const char * job_name,
-					     const void * job_arg) {
+void * lsf_driver_submit_job(void * __driver , 
+                             int   queue_index , 
+                             const char * submit_cmd  	  , 
+                             const char * run_path    	  , 
+                             const char * job_name,
+                             const void * job_arg) {
   lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   {
     lsf_job_type * job 		  = lsf_job_alloc();
@@ -394,11 +370,9 @@ basic_queue_job_type * lsf_driver_submit_job(void * __driver ,
     free(command);
 
     
-    if (job->lsf_jobnr > 0) {
-      basic_queue_job_type * basic_job = (basic_queue_job_type *) job;
-      basic_queue_job_init(basic_job);
-      return basic_job;
-    } else {
+    if (job->lsf_jobnr > 0) 
+      return job;
+    else {
       /*
 	The submit failed - the queue system shall handle
 	NULL return values.
@@ -411,6 +385,7 @@ basic_queue_job_type * lsf_driver_submit_job(void * __driver ,
     }
   }
 }
+
 
 //void lsf_driver_set_resource_request(lsf_driver_type * driver , const char * resource_request) {
 //  util_safe_free(driver->resource_request);
@@ -492,10 +467,6 @@ void * lsf_driver_alloc(const char * queue_name) {
   return lsf_driver;
 }
 
-
-
-
-#undef LSF_JOB_ID    
 
 /*****************************************************************/
 

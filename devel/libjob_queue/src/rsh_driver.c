@@ -13,8 +13,7 @@
 
 
 struct rsh_job_struct {
-  int 	       __basic_id;
-  int  	       __rsh_id;
+  UTIL_TYPE_ID_DECLARATION;
   int          node_index;
   bool         active;       /* Means that it allocated - not really in use */ 
   job_status_type status;        
@@ -35,6 +34,8 @@ typedef struct {
 
 
 #define RSH_DRIVER_TYPE_ID 44963256
+#define RSH_JOB_TYPE_ID    63256701
+
 
 struct rsh_driver_struct {
   UTIL_TYPE_ID_DECLARATION
@@ -50,6 +51,9 @@ struct rsh_driver_struct {
 
 
 /******************************************************************/
+static UTIL_SAFE_CAST_FUNCTION( rsh_driver , RSH_DRIVER_TYPE_ID )
+static UTIL_SAFE_CAST_FUNCTION( rsh_job , RSH_JOB_TYPE_ID )
+
 
 
 /**
@@ -135,9 +139,8 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
   rsh_job_type * job       = arg_pack_iget_ptr(arg_pack , 4);
 
   rsh_host_submit_job(rsh_host , job , rsh_cmd , submit_cmd , run_path);
-  arg_pack_free( arg_pack );
   pthread_exit( NULL );
-
+  arg_pack_free( arg_pack );
 }
 
 
@@ -149,24 +152,17 @@ static void * rsh_host_submit_job__(void * __arg_pack) {
 
 /*****************************************************************/
 
-#define RSH_JOB_ID     2003
-
-
-void rsh_job_assert_cast(const rsh_job_type * queue_job) {
-  if (queue_job->__rsh_id != RSH_JOB_ID) 
-     util_abort("%s: internal error - cast failed \n",__func__);
-}
 
 
 
 rsh_job_type * rsh_job_alloc(int node_index , const char * run_path) {
   rsh_job_type * job;
   job = util_malloc(sizeof * job , __func__);
-  job->__rsh_id   = RSH_JOB_ID;
   job->active     = false;
   job->status     = JOB_QUEUE_WAITING;
   job->run_path   = util_alloc_string_copy(run_path);
   job->node_index = node_index;
+  UTIL_TYPE_ID_INIT( job , RSH_JOB_TYPE_ID );
   return job;
 }
 
@@ -177,18 +173,15 @@ void rsh_job_free(rsh_job_type * job) {
   free(job);
 }
 
-static UTIL_SAFE_CAST_FUNCTION( rsh_driver , RSH_DRIVER_TYPE_ID )
-UTIL_IS_INSTANCE_FUNCTION( rsh_driver , RSH_DRIVER_TYPE_ID )
 
 
 
-job_status_type rsh_driver_get_job_status(void * __driver , basic_queue_job_type * __job) {
+job_status_type rsh_driver_get_job_status(void * __driver , void * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
     return JOB_QUEUE_NULL;
   else {
-    rsh_job_type    * job    = (rsh_job_type    *) __job;
-    rsh_job_assert_cast(job);
+    rsh_job_type    * job    = rsh_job_safe_cast( __job );
     {
       if (job->active == false) {
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
@@ -201,34 +194,32 @@ job_status_type rsh_driver_get_job_status(void * __driver , basic_queue_job_type
 
 
 
-void rsh_driver_free_job(void * __driver , basic_queue_job_type * __job) {
-  rsh_job_type    * job    = (rsh_job_type    *) __job;
-  rsh_job_assert_cast(job);
+void rsh_driver_free_job(void * __driver , void * __job) {
+  rsh_job_type    * job    = rsh_job_safe_cast( __job );
   rsh_job_free(job);
 }
 
 
 
-void rsh_driver_kill_job(void * __driver , basic_queue_job_type * __job) {
-  rsh_job_type    * job    = (rsh_job_type    *) __job;
-  rsh_job_assert_cast(job);
+void rsh_driver_kill_job(void * __driver ,void  * __job) {
+  rsh_job_type    * job    = rsh_job_safe_cast( __job );
   if (job->active)
     pthread_kill(job->run_thread , SIGABRT);
-  rsh_driver_free_job(__driver , __job);
+  rsh_job_free( job );
 }
 
 
 
-basic_queue_job_type * rsh_driver_submit_job(void  * __driver, 
-					     int   node_index , 
-					     const char * submit_cmd  	  , 
-					     const char * run_path    	  ,
-					     const char * job_name        ,
-					     const void * job_arg) {
-
+void * rsh_driver_submit_job(void  * __driver, 
+                             int   node_index , 
+                             const char * submit_cmd  	  , 
+                             const char * run_path    	  ,
+                             const char * job_name        ,
+                             const void * job_arg) {
+  
   rsh_driver_type * driver = rsh_driver_safe_cast( __driver );
+  rsh_job_type  * job      = NULL; 
   {
-    basic_queue_job_type * basic_job = NULL;
     /* 
        command is freed in the start_routine() function
     */
@@ -247,14 +238,16 @@ basic_queue_job_type * rsh_driver_submit_job(void  * __driver,
     
     if (host != NULL) {
       /* A host is available */
-      arg_pack_type * arg_pack = arg_pack_alloc();
-      rsh_job_type  * job = rsh_job_alloc(node_index , run_path);
-  
+      arg_pack_type * arg_pack = arg_pack_alloc();   /* The arg_pack is freed() in the rsh_host_submit_job__() function.
+                                                        freeing it here is dangerous, because we might free it before the 
+                                                        thread-called function is finished with it. */
+
+      job = rsh_job_alloc(node_index , run_path);
       arg_pack_append_ptr(arg_pack ,  driver->rsh_command);
       arg_pack_append_ptr(arg_pack ,  host);
       arg_pack_append_ptr(arg_pack , (char *) submit_cmd);
       arg_pack_append_ptr(arg_pack , (char *) run_path);
-      arg_pack_append_ptr(arg_pack , job);
+      arg_pack_append_ptr(arg_pack , job);  
       
       {
 	int pthread_return_value = pthread_create( &job->run_thread , &driver->thread_attr , rsh_host_submit_job__ , arg_pack);
@@ -263,13 +256,10 @@ basic_queue_job_type * rsh_driver_submit_job(void  * __driver,
       }
       job->status = JOB_QUEUE_RUNNING; 
       job->active = true;
-      basic_job = (basic_queue_job_type *) job;
-      basic_queue_job_init(basic_job);
     } 
     pthread_mutex_unlock( &driver->submit_lock );
-
-    return basic_job;
   }
+  return job;
 }
 
 

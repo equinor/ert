@@ -156,7 +156,7 @@ typedef struct {
   char                 	*job_name;        /* The name of the job. */
   char                  *run_path;        /* Where the job is run - absolute path. */
   job_status_type  	 job_status;      /* The current status of the job. */
-  basic_queue_job_type 	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
+  void           	*job_data;        /* Driver specific data about this job - fully handled by the driver. */
   const void            *job_arg;         /* Untyped data which is sent to the submit function as extra argument - can be whatever - fully owned by external scope.*/
   time_t                 submit_time;     /* When was the job added to job_queue - the FIRST TIME. */
   time_t                 sim_start;       /* When did the job change status -> RUNNING - the LAST TIME. */
@@ -365,12 +365,12 @@ static submit_status_type job_queue_submit_job(job_queue_type * queue , int queu
       basic_queue_driver_type * driver  = queue->driver;
       
       if (node->submit_attempt < queue->max_submit) {
-        basic_queue_job_type * job_data = driver->submit(queue->driver  , 
-                                                         queue_index    , 
-                                                         queue->run_cmd , 
-                                                         node->run_path , 
-                                                         node->job_name , 
-                                                         node->job_arg);
+        void * job_data = driver->submit(queue->driver  , 
+                                         queue_index    , 
+                                         queue->run_cmd , 
+                                         node->run_path , 
+                                         node->job_name , 
+                                         node->job_arg);
         
         if (job_data != NULL) {
           job_queue_change_node_status(queue , node , JOB_QUEUE_WAITING /* This is when it is installed as runnable in the internal queue */);
@@ -427,12 +427,12 @@ static int job_queue_get_internal_index(job_queue_type * queue , int external_id
 
 job_status_type job_queue_export_job_status(job_queue_type * queue , int external_id) {
   int queue_index = job_queue_get_internal_index( queue , external_id );
-  if (queue_index == INDEX_NOT_FOUND)
+  if (queue_index == INDEX_NOT_FOUND) 
     return JOB_QUEUE_NOT_ACTIVE;
   else {
     job_queue_node_type * node = queue->jobs[queue_index];
     return node->job_status;
-  } 
+  }
 }
 
 
@@ -512,6 +512,11 @@ void job_queue_set_all_fail(job_queue_type * queue , int external_id) {
 
 
 
+/**
+   Observe that the driver->kill() function is responsible for freeing
+   the driver specific data.
+*/
+
 void job_queue_kill_job( job_queue_type * queue , int external_id) {
   int queue_index = job_queue_get_internal_index( queue , external_id );
   if (queue_index == INDEX_NOT_FOUND) 
@@ -521,7 +526,6 @@ void job_queue_kill_job( job_queue_type * queue , int external_id) {
     basic_queue_driver_type * driver  = queue->driver;
 
     driver->kill_job( driver , node->job_data );
-    job_queue_free_job(queue , node);                                      /* This frees the storage allocated by the driver - the storage allocated by the queue layer is retained. */
     job_queue_change_node_status( queue , node , JOB_QUEUE_USER_KILLED);
   } 
 }

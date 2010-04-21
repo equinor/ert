@@ -1490,31 +1490,41 @@ time_t enkf_state_get_submit_time( const enkf_state_type * enkf_state ) {
 }
 
 
-void enkf_state_kill_simulation( const enkf_state_type * enkf_state ) {
-  run_info_type * run_info = enkf_state->run_info;
+/**
+   Will only kill simulations which are currently running. Will return
+   true if the simulation is actually killed, and false if the "kill
+   command" is ignored.
+*/
 
-  if (run_info->active) {
-    const shared_info_type * shared_info = enkf_state->shared_info;
-    job_status_type current_status = job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
-    if (current_status == JOB_QUEUE_USER_KILLED) /* Will ONLY restart simulations which are in of the states : [JOB_QUEUE_USER_KILLED]  */
-      job_queue_kill_job(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
-  } 
-  
+bool enkf_state_kill_simulation( const enkf_state_type * enkf_state ) {
+  const shared_info_type * shared_info = enkf_state->shared_info;
+  int iens                       = member_config_get_iens( enkf_state->my_config );
+  job_status_type current_status = job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+
+
+  if (current_status == JOB_QUEUE_RUNNING) { /* Will ONLY kill simulations which are in of the states : [JOB_QUEUE_RUNNING]  */
+    job_queue_kill_job(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+    return true;
+  } else
+    return false;
 }
 
 
 /**
    This function is very similar to the enkf_state_internal_retry() -
    they should be refactored.
+
+   Will return true if the simulation is actually resubmitted, and
+   false if it is not restarted.
 */
 
-void enkf_state_restart_simulation( enkf_state_type * enkf_state , bool resample) {
-  run_info_type             * run_info    = enkf_state->run_info;
-  if (run_info->active) {
-    const shared_info_type * shared_info = enkf_state->shared_info;
-    int iens = member_config_get_iens( enkf_state->my_config );
-    {
-      /* Reinitialization of the nodes */
+bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resample) {
+  const shared_info_type * shared_info = enkf_state->shared_info;
+  int iens                       = member_config_get_iens( enkf_state->my_config );
+  job_status_type current_status = job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+  if (current_status == JOB_QUEUE_USER_KILLED) { /* Will ONLY restart simulations which are in of the states : [JOB_QUEUE_USER_KILLED]  */
+    /* Reinitialization of the nodes */
+    if (resample) {
       stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );
       for (int ikey=0; ikey < stringlist_get_size( init_keys ); ikey++) {
         enkf_node_type * node = enkf_state_get_node( enkf_state , stringlist_iget( init_keys , ikey) );
@@ -1522,10 +1532,11 @@ void enkf_state_restart_simulation( enkf_state_type * enkf_state , bool resample
       }
       stringlist_free( init_keys );
     }
-    
     enkf_state_init_eclipse( enkf_state );                              /* Possibly clear the directory and do a FULL rewrite of ALL the necessary files. */
     job_queue_set_external_restart( shared_info->job_queue , iens );    /* Here we inform the queue system that it should pick up this job and try again. */
-  } 
+    return true;
+  } else
+    return false; /* The job was not resubmitted. */
 }
 
 
