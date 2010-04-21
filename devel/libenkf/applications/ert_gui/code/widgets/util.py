@@ -1,9 +1,17 @@
 from PyQt4 import QtGui, QtCore
 import os
+import time
 
 def resourceIcon(name):
     """Load an image as an icon"""
     return QtGui.QIcon(os.path.dirname(__file__) + "/../../img/" + name)
+
+def resourceStateIcon(on, off):
+    """Load two images as an icon with on and off states"""
+    icon = QtGui.QIcon()
+    icon.addPixmap(resourceImage(on), state=QtGui.QIcon.On)
+    icon.addPixmap(resourceImage(off), state=QtGui.QIcon.Off)
+    return icon
 
 def resourceImage(name):
     """Load an image as a Pixmap"""
@@ -153,9 +161,14 @@ def createSpace(size = 5):
     return qw
 
 
-def getItemsFromList(list, func = lambda item : str(item.text()) ) :
-    """Creates a list of strings from the selected items of a ListWidget"""
-    selectedItemsList = list.selectedItems()
+def getItemsFromList(list, func = lambda item : str(item.text()), selected = True) :
+    """Creates a list of strings from the selected items of a ListWidget or all items if selected is False"""
+    if selected:
+        selectedItemsList = list.selectedItems()
+    else:
+        selectedItemsList = []
+        for index in range(list.count()):
+            selectedItemsList.append(list.item(index))
 
     selectedItems = []
     for item in selectedItemsList:
@@ -165,7 +178,10 @@ def getItemsFromList(list, func = lambda item : str(item.text()) ) :
 
     
 def frange(*args):
-    """A float range generator."""
+    """
+    A float range generator.
+    Found here: http://code.activestate.com/recipes/66472/
+    """
     start = 0.0
     step = 1.0
 
@@ -187,3 +203,10 @@ def frange(*args):
             raise StopIteration
         yield v
         v += step
+
+def shortTime(secs):
+    if secs == -1:
+        return "-"
+    else:
+        t = time.localtime(secs)
+        return time.strftime("%H:%M:%S", t)
