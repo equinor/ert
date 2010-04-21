@@ -211,7 +211,8 @@ class JobsDialogController:
                 self.view.simulationPanel.emit(QtCore.SIGNAL("simulationsUpdated()"))
 
                 if self.statistics.jobsPerSecond() > 0:
-                    self.view.estimateLabel.setText("Estimated finished in %.2f secs" % (self.statistics.estimate(len(simulations))))
+                    #with assimilation the number of jobs must be multiplied by timesteps
+                    self.view.estimateLabel.setText("Estimated finished in %d seconds" % (self.statistics.estimate(len(simulations))))
                 else:
                     self.view.estimateLabel.setText("")
                 time.sleep(0.5)
