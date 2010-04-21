@@ -10,8 +10,7 @@
 #include <errno.h>
 
 struct local_job_struct {
-  int 	     	  __basic_id;
-  int  	     	  __local_id;
+  UTIL_TYPE_ID_DECLARATION
   bool       	  active;
   job_status_type status;
   pthread_t       run_thread;
@@ -19,6 +18,7 @@ struct local_job_struct {
 
 
 #define LOCAL_DRIVER_TYPE_ID 66196305
+#define LOCAL_JOB_TYPE_ID    63056619
 
 struct local_driver_struct {
   UTIL_TYPE_ID_DECLARATION
@@ -29,23 +29,17 @@ struct local_driver_struct {
 
 /*****************************************************************/
 
-#define LOCAL_JOB_ID     2002
 
-UTIL_SAFE_CAST_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
-UTIL_IS_INSTANCE_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
+static UTIL_SAFE_CAST_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
+static UTIL_SAFE_CAST_FUNCTION( local_job , LOCAL_JOB_TYPE_ID )
 
-
-void local_job_assert_cast(const local_job_type * queue_job) {
-  if (queue_job->__local_id != LOCAL_JOB_ID) 
-    util_abort("%s: internal error - cast failed \n",__func__);
-}
 
 
 
 local_job_type * local_job_alloc() {
   local_job_type * job;
   job = util_malloc(sizeof * job , __func__);
-  job->__local_id = LOCAL_JOB_ID;
+  UTIL_TYPE_ID_INIT( job , LOCAL_JOB_TYPE_ID );
   job->active = false;
   job->status = JOB_QUEUE_WAITING;
   return job;
@@ -60,13 +54,12 @@ void local_job_free(local_job_type * job) {
 
 
 
-job_status_type local_driver_get_job_status(void * __driver, basic_queue_job_type * __job) {
+job_status_type local_driver_get_job_status(void * __driver, void * __job) {
   if (__job == NULL) 
     /* The job has not been registered at all ... */
     return JOB_QUEUE_NULL;
   else {
-    local_job_type    * job    = (local_job_type    *) __job;
-    local_job_assert_cast(job);
+    local_job_type    * job    = local_job_safe_cast( __job );
     {
       if (job->active == false) {
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
@@ -79,20 +72,18 @@ job_status_type local_driver_get_job_status(void * __driver, basic_queue_job_typ
 
 
 
-void local_driver_free_job(void * __driver , basic_queue_job_type * __job) {
-  local_job_type    * job    = (local_job_type    *) __job;
-  local_job_assert_cast(job);
+void local_driver_free_job(void * __driver , void * __job) {
+  local_job_type    * job    = local_job_safe_cast( __job );
   local_job_free(job);
 }
 
 
 
-void local_driver_kill_job(void * __driver , basic_queue_job_type * __job) {
-  local_job_type    * job    = (local_job_type    *) __job;
-  local_job_assert_cast(job);
+void local_driver_kill_job(void * __driver , void * __job) {
+  local_job_type    * job    = local_job_safe_cast( __job );
   if (job->active)
     pthread_kill(job->run_thread , SIGABRT);
-  local_driver_free_job(__driver , __job);
+  local_job_free( job );
 }
 
 
@@ -112,12 +103,12 @@ void * submit_job_thread__(void * __arg) {
 
 
 
-basic_queue_job_type * local_driver_submit_job(void * __driver, 
-					       int   node_index                   , 
-					       const char * submit_cmd  	  , 
-					       const char * run_path    	  , 
-					       const char * job_name              ,
-					       const void * job_arg) {
+void * local_driver_submit_job(void * __driver, 
+                               int   node_index                   , 
+                               const char * submit_cmd  	  , 
+                               const char * run_path    	  , 
+                               const char * job_name              ,
+                               const void * job_arg) {
   local_driver_type * driver = local_driver_safe_cast( __driver );
   {
     local_job_type * job    = local_job_alloc();
@@ -133,11 +124,7 @@ basic_queue_job_type * local_driver_submit_job(void * __driver,
     job->status = JOB_QUEUE_RUNNING;
     pthread_mutex_unlock( &driver->submit_lock );
     
-    {
-      basic_queue_job_type * basic_job = (basic_queue_job_type *) job;
-      basic_queue_job_init(basic_job);
-      return basic_job;
-    }
+    return job;
   }
 }
 
