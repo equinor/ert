@@ -25,9 +25,6 @@ class SimulationItem(QtGui.QListWidgetItem):
     def __init__(self, simulation):
         self.simulation = simulation
         QtGui.QListWidgetItem.__init__(self, type=9901)
-        self.updateSimulation()
-
-    def updateSimulation(self):
         self.setData(QtCore.Qt.DisplayRole, self.simulation)
 
     def __ge__(self, other):
@@ -38,7 +35,7 @@ class SimulationItem(QtGui.QListWidgetItem):
 
 
 class SimulationItemDelegate(QtGui.QStyledItemDelegate):
-    waiting = QtGui.QColor(200, 200, 255)
+    waiting = QtGui.QColor(164, 164, 255)
     running = QtGui.QColor(200, 255, 200)
     failed = QtGui.QColor(255, 200, 200)
     unknown = QtGui.QColor(255, 200, 128)
@@ -55,7 +52,9 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        data = index.model().data(index)
+        #data = index.model().data(index)
+        data = index.data(QtCore.Qt.DisplayRole)
+        #data = None
 
         if data is None:
             data = Simulation("0")
@@ -252,6 +251,9 @@ class SimulationPanel(QtGui.QStackedWidget):
     def setModel(self, ert):
         self.ctrl.setModel(ert)
 
+    def setSimulationStatistics(self, statistics):
+        self.ctrl.setSimulationStatistics(statistics)
+
 
 class SimulationPanelController:
     def __init__(self, view):
@@ -298,8 +300,10 @@ class SimulationPanelController:
         job_queue = self.ert.enkf.site_config_get_job_queue(self.ert.site_config)
 
         if pause:
+            self.statistics.stop()
             self.ert.job_queue.job_queue_set_pause_on(job_queue)
         else:
+            self.statistics.startTiming()
             self.ert.job_queue.job_queue_set_pause_off(job_queue)
 
 
@@ -348,6 +352,9 @@ class SimulationPanelController:
             self.view.setCurrentWidget(self.view.noSimulationsPanel)
 
         self.showSelectedSimulations()
+
+    def setSimulationStatistics(self, statistics):
+        self.statistics = statistics
 
 
 class Simulation:
@@ -471,14 +478,18 @@ class Simulation:
 
 
 class SimulationStatistics:
+    """A class that tracks statistics for Simulations (running time, waiting time, estimates, etc...)"""
 
 
     def __init__(self, name="default"):
+        """Create a new tracking object"""
         self.name = name
-
         self.clear()
+        self.old_job_count = 0
+        self.old_duration = 0
 
     def clear(self):
+        """Reset all values and stop estimate calculation"""
         self.jobs = 0
         self.waiting = 0
         self.running = 0
@@ -486,11 +497,15 @@ class SimulationStatistics:
         self.start = 0
         self.last = 0
 
+        self.stopped = True
+
     def startTiming(self):
+        """Starts estimate calculation"""
+        self.stopped = False
         self.start = int(time.time())
 
     def jobsPerSecond(self):
-        #t = self.last - self.start
+        """Returns the number of jobs per second as a float"""
         t = int(time.time()) - self.start
         if t > 0:
             return self.jobs / t
@@ -498,12 +513,14 @@ class SimulationStatistics:
             return 0
 
     def secondsPerJob(self):
+        """Returns how long a job takes in seconds"""
         return 1.0 / self.jobsPerSecond()
 
     def estimate(self, jobs):
+        """Returns an estimate on how long the rest of the job will take. Jobs = the total number of jobs"""
         if self.jobsPerSecond() > 0:
             spj = self.secondsPerJob()
-            jobs_estimate = spj * (jobs - self.jobs)
+            jobs_estimate = spj * (jobs - self.jobs - self.old_job_count)
 
             timeUsed = int(time.time()) - self.last
             return jobs_estimate - timeUsed
@@ -512,9 +529,17 @@ class SimulationStatistics:
 
 
     def addTime(self, submit, start, finish):
-        self.jobs += 1
-        self.waiting += start - submit
-        self.running += finish - start
-        self.total += finish - submit
-        self.last = int(time.time())
+        """Add new statistical data to the tracker"""
+        if not self.stopped:
+            self.jobs += 1
+            self.waiting += start - submit
+            self.running += finish - start
+            self.total += finish - submit
+            self.last = int(time.time())
+
+    def stop(self):
+        """Pause the tracker. Estimate data will be reset"""
+        self.old_job_count += self.jobs
+        self.old_duration += int(time.time()) - self.start
+        self.clear()
 

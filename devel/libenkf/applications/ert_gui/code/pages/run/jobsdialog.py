@@ -158,6 +158,7 @@ class JobsDialogController:
         self.view.simulationPanel.setModel(ert)
 
         self.statistics = SimulationStatistics()
+        self.view.simulationPanel.setSimulationStatistics(self.statistics)
         simulations = {}
         for member in selectedMembers:
             simulations[member] = SimulationItem(Simulation(member, self.statistics))
@@ -198,8 +199,6 @@ class JobsDialogController:
                         simulations[member].simulation.setSubmitTime(submit_time)
 
 
-                    simulations[member].updateSimulation()
-
                 totalCount = len(simulations.keys())
                 succesCount = 0
                 for key in simulations.keys():
@@ -210,12 +209,16 @@ class JobsDialogController:
                 self.view.simulationProgress.emit(QtCore.SIGNAL("setValue(int)"), count)
                 self.view.simulationPanel.emit(QtCore.SIGNAL("simulationsUpdated()"))
 
+                qmi1 = self.view.simulationList.indexFromItem(simulations[0])
+                qmi2 = self.view.simulationList.indexFromItem(simulations[len(simulations) - 1])
+                self.view.simulationList.model().emit(QtCore.SIGNAL("dataChanged(QModelIndex, QModelIndex)"), qmi1, qmi2)
+
                 if self.statistics.jobsPerSecond() > 0:
                     #with assimilation the number of jobs must be multiplied by timesteps
                     self.view.estimateLabel.setText("Estimated finished in %d seconds" % (self.statistics.estimate(len(simulations))))
                 else:
                     self.view.estimateLabel.setText("")
-                time.sleep(0.5)
+                time.sleep(0.01)
 
         self.pollthread.setDaemon(True)
         self.pollthread.run = poll
@@ -223,3 +226,5 @@ class JobsDialogController:
         self.statistics.startTiming()
         self.runthread.start()
         self.pollthread.start()
+        
+
