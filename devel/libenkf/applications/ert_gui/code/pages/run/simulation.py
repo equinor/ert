@@ -216,7 +216,7 @@ class SimulationPanel(QtGui.QStackedWidget):
         #self.pauseButton.setIcon(resourceStateIcon("pause", "start"))
         self.pauseButton.setIcon(resourceIcon("pause"))
         self.pauseButton.setCheckable(True)
-        self.connect(self.pauseButton, QtCore.SIGNAL('clicked()'), self.ctrl.pause)
+        self.connect(self.pauseButton, QtCore.SIGNAL('clicked()'), lambda : self.ctrl.pause(self.pauseButton.isChecked()))
 
         buttonLayout = QtGui.QHBoxLayout()
         buttonLayout.addStretch(1)
@@ -269,6 +269,7 @@ class SimulationPanelController:
             ert.setTypes("enkf_state_kill_simulation", None)
             ert.setTypes("enkf_state_resubmit_simulation", None, ertwrapper.c_int)
             ert.setTypes("enkf_state_get_run_status", ertwrapper.c_int)
+            ert.setTypes("site_config_get_job_queue")
             self.initialized = True
 
     def setModel(self, ert):
@@ -293,8 +294,14 @@ class SimulationPanelController:
             if status == Simulation.USER_KILLED:
                 self.ert.enkf.enkf_state_resubmit_simulation(state, resample)
 
-    def pause(self):
-        print "Pausing"
+    def pause(self, pause):
+        job_queue = self.ert.enkf.site_config_get_job_queue(self.ert.site_config)
+
+        if pause:
+            self.ert.job_queue.job_queue_set_pause_on(job_queue)
+        else:
+            self.ert.job_queue.job_queue_set_pause_off(job_queue)
+
 
     def showSelectedSimulations(self):
         if len(self.selectedSimulations) >= 2:
