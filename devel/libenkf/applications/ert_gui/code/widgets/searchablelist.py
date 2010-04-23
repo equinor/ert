@@ -39,7 +39,6 @@ class SearchableList(QtGui.QWidget):
         self.setLayout(vlayout)
 
         def emitter(current, previous):
-            print "WooHoo!!!"
             self.emit(QtCore.SIGNAL("currentItemChanged(QListWidgetItem, QListWidgetItem)"), current, previous)
 
         self.connect(self.list, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), emitter)

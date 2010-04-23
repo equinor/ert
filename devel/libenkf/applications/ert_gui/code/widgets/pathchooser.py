@@ -8,12 +8,13 @@ class PathChooser(HelpedWidget):
     #invalidColor = QtGui.QColor(255, 235, 235)
     invalidColor = QtGui.QColor(235, 235, 255)
 
-    def __init__(self, parent=None, pathLabel="Path", help="", files=False):
+    def __init__(self, parent=None, pathLabel="Path", help="", files=False, must_be_set=True):
         """Construct a PathChooser widget"""
         HelpedWidget.__init__(self, parent, pathLabel, help)
 
         self.editing = True
         self.selectFiles = files
+        self.must_be_set = must_be_set
 
         self.pathLine = QtGui.QLineEdit()
         #self.pathLine.setMinimumWidth(250)
@@ -38,21 +39,26 @@ class PathChooser(HelpedWidget):
         self.pathLine.setText(os.getcwd())
 
         self.editing = False
-        self.validationMessage = "The specififed path does not exist."
+        self.file_does_not_exist_msg = "The specified path does not exist."
+        self.required_field_msg = "A value is required."
 
 
     def validatePath(self):
         """Called whenever the path is modified"""
         palette = self.pathLine.palette()
 
-        if os.path.exists(self.pathLine.text()):
+        text = str(self.pathLine.text())
+        exists = os.path.exists(text)
+        if text.strip() == "" and self.must_be_set:
+            self.setValidationMessage(self.required_field_msg)
+        elif exists:
             self.setValidationMessage("")
             palette.setColor(self.pathLine.backgroundRole(), self.validColor)
             self.pathLine.setToolTip("")
-        else:
-            self.setValidationMessage(self.validationMessage)
+        elif not exists:
+            self.setValidationMessage(self.file_does_not_exist_msg)
             palette.setColor(self.pathLine.backgroundRole(), self.invalidColor)
-            self.pathLine.setToolTip(self.validationMessage)
+            self.pathLine.setToolTip(self.file_does_not_exist_msg)
 
         self.pathLine.setPalette(palette)
 
