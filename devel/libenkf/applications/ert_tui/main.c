@@ -91,7 +91,8 @@ int main (int argc , char ** argv) {
   printf("\n");
   printf("svn version : %s \n",SVN_VERSION);
   printf("compile time: %s \n",COMPILE_TIME_STAMP);
-  enkf_main_install_SIGNALS();
+  enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */
+  signal(SIGINT  , util_abort_signal);             /* Control C - tui only.*/
   enkf_main_init_debug();
   if (argc != 2) {
     enkf_usage();

@@ -1490,6 +1490,8 @@ time_t enkf_state_get_submit_time( const enkf_state_type * enkf_state ) {
 }
 
 
+
+
 /**
    Will only kill simulations which are currently running. Will return
    true if the simulation is actually killed, and false if the "kill

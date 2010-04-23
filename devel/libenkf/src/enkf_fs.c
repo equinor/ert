@@ -1542,6 +1542,7 @@ bool enkf_fs_has_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * con
 }
 
 
+
 enkf_node_type * enkf_fs_fread_alloc_node(enkf_fs_type * enkf_fs , const enkf_config_node_type * config_node , int report_step , int iens, state_enum state) {
   enkf_node_type * node = enkf_node_alloc(config_node);
   enkf_fs_fread_node(enkf_fs , node , report_step , iens , state);

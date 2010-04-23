@@ -294,7 +294,7 @@ class SimulationPanelController:
             status = self.ert.enkf.enkf_state_get_run_status(state)
 
             if status == Simulation.USER_KILLED:
-                self.ert.enkf.enkf_state_resubmit_simulation(state, resample)
+                self.ert.enkf.enkf_state_resubmit_simulation(state , resample)
 
     def pause(self, pause):
         """Pause the job queue after the currently running jobs are finished."""

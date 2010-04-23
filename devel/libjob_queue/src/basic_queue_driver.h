@@ -11,9 +11,8 @@ typedef enum { NULL_DRIVER  = 0,
                RSH_DRIVER   = 3} job_driver_type;
 
 
-typedef enum {JOB_QUEUE_NOT_ACTIVE    =  0 ,   /* This value is used in external query routines - for jobs which are not active. */
+typedef enum {JOB_QUEUE_NOT_ACTIVE    =  0 ,   /* This value is used in external query routines - for jobs which are (currently) not active. */
               JOB_QUEUE_LOADING       =  1 ,   /* This value is used by external routines. Not used in the libjob_queue implementation. */
-              JOB_QUEUE_NULL          =  2 ,   /* For a queue node which has been allocated - but not (yet) "added" with a job_queue_add_job() call. */
 	      JOB_QUEUE_WAITING       =  3 ,   /* A node which is waiting in the internal queue. */
 	      JOB_QUEUE_PENDING       =  4 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
 	      JOB_QUEUE_RUNNING       =  5 ,   /* The job is running */

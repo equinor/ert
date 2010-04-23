@@ -42,19 +42,19 @@ class DataPanel(QtGui.QFrame):
         self.output.setter = lambda model, value: self.dataModel.set("output", value)
         self.output.getter = lambda model: self.dataModel.output
 
-        self.eclipse_file = PathChooser(self, "", "gen_data_eclipse_file", True)
+        self.eclipse_file = PathChooser(self, "", "gen_data_eclipse_file", True , True)
         self.eclipse_file.setter = lambda model, value: self.dataModel.set("eclipse_file", value)
         self.eclipse_file.getter = lambda model: self.dataModel.eclipse_file
 
-        self.init_files = PathChooser(self, "", "gen_data_init_files", True)
+        self.init_files = PathChooser(self, "", "gen_data_init_files", True , True)
         self.init_files.setter = lambda model, value: self.dataModel.set("init_files", value)
         self.init_files.getter = lambda model: self.dataModel.init_files
 
-        self.template = PathChooser(self, "", "gen_data_template", True)
+        self.template = PathChooser(self, "", "gen_data_template", True , False)
         self.template.setter = lambda model, value: self.dataModel.set("template", value)
         self.template.getter = lambda model: self.dataModel.template
 
-        self.result_file = PathChooser(self, "", "gen_data_result_file", True)
+        self.result_file = PathChooser(self, "", "gen_data_result_file", True , False)
         self.result_file.setter = lambda model, value: self.dataModel.set("result_file", value)
         self.result_file.getter = lambda model: self.dataModel.result_file
 

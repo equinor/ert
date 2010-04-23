@@ -113,6 +113,7 @@ void                        enkf_main_install_SIGNALS(void);
 const                char * enkf_main_get_SVN_VERSION( void );
 const                char * enkf_main_get_COMPILE_TIME( void );
 void                        enkf_main_init_debug( void );
+bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main );
 
 #ifdef __cplusplus
 }

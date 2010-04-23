@@ -2831,10 +2831,33 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
   return site_config_get_installed_jobs( enkf_main->site_config );
 }
 
+/**
+   This function will go through the filesystem and check that we have
+   initial data for all parameters and all realizations.
+*/
+
+bool enkf_main_is_initialized( const enkf_main_type * enkf_main ) {
+  stringlist_type * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
+
+  bool initialized = true;
+  int ikey = 0;
+  do {
+    const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
+    int iens = 0;
+    do {
+      initialized = enkf_fs_has_node( enkf_main->dbase , parameter_keys , 0 , ANALYZED );
+      iens++;
+    } while ((iens < enkf_main->ens_size) && (initialized));
+    
+  } while ((ikey < stringlist_get_size( parameter_keys )) && (initialized));
+  
+  stringlist_free( parameter_keys );
+  return initialized;
+}
+
 
 void enkf_main_install_SIGNALS(void) {
   signal(SIGSEGV , util_abort_signal);    /* Segmentation violation, i.e. overwriting memory ... */
-  signal(SIGINT  , util_abort_signal);    /* Control C */
   signal(SIGTERM , util_abort_signal);    /* If killing the enkf program with SIGTERM (the default kill signal) you will get a backtrace. Killing with SIGKILL (-9) will not give a backtrace.*/
 }
 

@@ -321,4 +321,5 @@ class ErtWrapper:
         self.util.bool_vector_free(mask)
 
     def cleanup(self):
+        print "Calling enkf_main_free()"
         self.enkf.enkf_main_free(self.main)
