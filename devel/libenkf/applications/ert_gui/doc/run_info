@@ -32,8 +32,5 @@ job_queue_set_pause_off( jp )
 
 
 
-Missing things:
-* kill does not kill.
-* can not access job_queue_type from main
 
 
