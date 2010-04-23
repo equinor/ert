@@ -297,6 +297,7 @@ class SimulationPanelController:
                 self.ert.enkf.enkf_state_resubmit_simulation(state, resample)
 
     def pause(self, pause):
+        """Pause the job queue after the currently running jobs are finished."""
         job_queue = self.ert.enkf.site_config_get_job_queue(self.ert.site_config)
 
         if pause:
@@ -506,11 +507,16 @@ class SimulationStatistics:
 
     def jobsPerSecond(self):
         """Returns the number of jobs per second as a float"""
-        t = int(time.time()) - self.start
+        #t = int(time.time()) - self.start
+        t = self.last - self.start
         if t > 0:
             return self.jobs / t
         else:
             return 0
+
+    def averageRunningTime(self):
+        """Calculates the average running time"""
+        return self.running / self.jobs
 
     def secondsPerJob(self):
         """Returns how long a job takes in seconds"""
@@ -519,11 +525,18 @@ class SimulationStatistics:
     def estimate(self, jobs):
         """Returns an estimate on how long the rest of the job will take. Jobs = the total number of jobs"""
         if self.jobsPerSecond() > 0:
-            spj = self.secondsPerJob()
-            jobs_estimate = spj * (jobs - self.jobs - self.old_job_count)
+#            spj = self.secondsPerJob()
+#            jobs_estimate = spj * (jobs - self.jobs - self.old_job_count)
+#
+#            timeUsed = int(time.time()) - self.last
+#            return jobs_estimate - timeUsed
 
+            factor = (self.last - self.start) / self.running
+            jps = self.jobsPerSecond()
+            avg_running = self.averageRunningTime()
+            est_remaining_running = avg_running * (jobs - self.jobs) * factor
             timeUsed = int(time.time()) - self.last
-            return jobs_estimate - timeUsed
+            return est_remaining_running - timeUsed 
         else:
             return -1
 
