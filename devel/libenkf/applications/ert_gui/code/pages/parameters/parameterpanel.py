@@ -9,6 +9,7 @@ import widgets.stringbox
 from fieldpanel import *
 from parameterdialog import ParameterDialog
 from widgets.searchablelist import SearchableList
+from pages.parameters.datapanel import DataModel, DataPanel
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
@@ -37,9 +38,11 @@ class ParameterPanel(HelpedWidget):
         self.emptyPanel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
         self.fieldPanel = FieldPanel(self)
+        self.dataPanel = DataPanel(self)
 
         self.pagesWidget.addWidget(self.emptyPanel)
         self.pagesWidget.addWidget(self.fieldPanel)
+        self.pagesWidget.addWidget(self.dataPanel)
 
         self.addWidget(self.pagesWidget)
 
@@ -56,6 +59,9 @@ class ParameterPanel(HelpedWidget):
         elif current.getType() == "Field":
             self.pagesWidget.setCurrentWidget(self.fieldPanel)
             self.fieldPanel.setFieldModel(current.getData())
+        elif current.getType() == "Data":
+            self.pagesWidget.setCurrentWidget(self.dataPanel)
+            self.dataPanel.setDataModel(current.getData())
         else:
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
 
@@ -66,6 +72,8 @@ class ParameterPanel(HelpedWidget):
 
         if type == "Field":
             param.setData(FieldModel(name))
+        elif type == "Data":
+            param.setData(DataModel(name))
 
         list.addItem(param)
         list.setCurrentItem(param)
