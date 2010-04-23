@@ -107,7 +107,7 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
 
         self.validationLabel = QtGui.QLabel()
         self.validationLabel.setMaximumSize(QtCore.QSize(16, 16))
-        self.validationLabel.setPixmap(resourceImage("error"))
+        self.validationLabel.setPixmap(resourceImage("warning"))
         self.validationLabel.setHidden(True)
 
         if not widgetLabel == "":
