@@ -531,10 +531,11 @@ class SimulationStatistics:
 #            timeUsed = int(time.time()) - self.last
 #            return jobs_estimate - timeUsed
 
-            factor = (self.last - self.start) / self.running
-            jps = self.jobsPerSecond()
+            avg_concurrent_jobs = self.running / (self.last - self.start)
             avg_running = self.averageRunningTime()
-            est_remaining_running = avg_running * (jobs - self.jobs) * factor
+
+            jobs_left = jobs - self.jobs
+            est_remaining_running = avg_running * (jobs_left) / avg_concurrent_jobs
             timeUsed = int(time.time()) - self.last
             return est_remaining_running - timeUsed 
         else:
