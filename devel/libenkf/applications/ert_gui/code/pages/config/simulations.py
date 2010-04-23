@@ -44,7 +44,7 @@ def createSimulationsPage(configPanel, parent):
 
     internalPanel.startPage("Runpath")
 
-    r = internalPanel.addRow(PathChooser(parent, "Runpath", "runpath"))
+    r = internalPanel.addRow(PathChooser(parent, "Runpath", "runpath", path_format=True))
     r.initialize = lambda ert : [ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p),
                                  ert.setTypes("model_config_set_runpath_fmt", None, [ertwrapper.c_char_p])]
     r.getter = lambda ert : ert.enkf.model_config_get_runpath_as_char(ert.model_config)

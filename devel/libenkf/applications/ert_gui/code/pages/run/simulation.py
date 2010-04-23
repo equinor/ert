@@ -359,51 +359,47 @@ class SimulationPanelController:
 
 
 class Simulation:
-    job_status_type_reverse = {"JOB_QUEUE_NOT_ACTIVE" : 0,
-                               "JOB_QUEUE_LOADING" : 1,
-                               "JOB_QUEUE_NULL" : 2,
-                               "JOB_QUEUE_WAITING" : 3,
-                               "JOB_QUEUE_PENDING" : 4,
-                               "JOB_QUEUE_RUNNING" : 5,
-                               "JOB_QUEUE_DONE" : 6,
-                               "JOB_QUEUE_EXIT" : 7,
-                               "JOB_QUEUE_RUN_OK" : 8,
-                               "JOB_QUEUE_RUN_FAIL" : 9,
-                               "JOB_QUEUE_ALL_OK" : 10,
-                               "JOB_QUEUE_ALL_FAIL" : 11,
-                               "JOB_QUEUE_USER_KILLED" : 12,
-                               "JOB_QUEUE_MAX_STATE" : 13}
-
-    job_status_type = {0 : "JOB_QUEUE_NOT_ACTIVE",
-                       1 : "JOB_QUEUE_LOADING",
-                       2 : "JOB_QUEUE_NULL",
-                       3 : "JOB_QUEUE_WAITING",
-                       4 : "JOB_QUEUE_PENDING",
-                       5 : "JOB_QUEUE_RUNNING",
-                       6 : "JOB_QUEUE_DONE",
-                       7 : "JOB_QUEUE_EXIT",
-                       8 : "JOB_QUEUE_RUN_OK",
-                       9 : "JOB_QUEUE_RUN_FAIL",
-                       10 : "JOB_QUEUE_ALL_OK",
-                       11 : "JOB_QUEUE_ALL_FAIL",
-                       12 : "JOB_QUEUE_USER_KILLED",
-                       13 : "JOB_QUEUE_MAX_STATE"}
-    
-    
     NOT_ACTIVE = 0
     LOADING = 1
-    NULL = 2
-    WAITING = 3
-    PENDING = 4
-    RUNNING = 5
-    DONE = 6
-    EXIT = 7
-    RUN_OK = 8
-    RUN_FAIL = 9
-    ALL_OK = 10
-    ALL_FAIL = 11
-    USER_KILLED = 12
-    MAX_STATE = 13
+    WAITING = 2
+    PENDING = 3
+    RUNNING = 4
+    DONE = 5
+    EXIT = 6
+    RUN_OK = 7
+    RUN_FAIL = 8
+    ALL_OK = 9
+    ALL_FAIL = 10
+    USER_KILLED = 11
+
+    job_status_type_reverse = {"JOB_QUEUE_NOT_ACTIVE" : NOT_ACTIVE,
+                               "JOB_QUEUE_LOADING" : LOADING,
+                               "JOB_QUEUE_WAITING" : WAITING,
+                               "JOB_QUEUE_PENDING" : PENDING,
+                               "JOB_QUEUE_RUNNING" : RUNNING,
+                               "JOB_QUEUE_DONE" : DONE,
+                               "JOB_QUEUE_EXIT" : EXIT,
+                               "JOB_QUEUE_RUN_OK" : RUN_OK,
+                               "JOB_QUEUE_RUN_FAIL" : RUN_FAIL,
+                               "JOB_QUEUE_ALL_OK" : ALL_OK,
+                               "JOB_QUEUE_ALL_FAIL" : ALL_FAIL,
+                               "JOB_QUEUE_USER_KILLED" : USER_KILLED}
+
+    job_status_type = {NOT_ACTIVE : "JOB_QUEUE_NOT_ACTIVE",
+                       LOADING : "JOB_QUEUE_LOADING",
+                       WAITING : "JOB_QUEUE_WAITING",
+                       PENDING : "JOB_QUEUE_PENDING",
+                       RUNNING : "JOB_QUEUE_RUNNING",
+                       DONE : "JOB_QUEUE_DONE",
+                       EXIT : "JOB_QUEUE_EXIT",
+                       RUN_OK : "JOB_QUEUE_RUN_OK",
+                       RUN_FAIL : "JOB_QUEUE_RUN_FAIL",
+                       ALL_OK : "JOB_QUEUE_ALL_OK",
+                       ALL_FAIL : "JOB_QUEUE_ALL_FAIL",
+                       USER_KILLED : "JOB_QUEUE_USER_KILLED"}
+    
+    
+
     
 
     def __init__(self, name, statistics=None):

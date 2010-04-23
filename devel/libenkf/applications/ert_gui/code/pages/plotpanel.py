@@ -9,11 +9,15 @@ class PlotPanel(QtGui.QFrame):
         self.path = path
         QtGui.QFrame.__init__(self)
 
+        imageFile = None
         files = []
-        for file in os.listdir(self.path):
-            files.append(file.split(".")[0])
+        if os.path.exists(self.path):
+            for file in os.listdir(self.path):
+                files.append(file.split(".")[0])
+            imageFile = self.path + files[0]
 
-        self.image = QtGui.QPixmap(self.path + files[0])
+
+        self.image = QtGui.QPixmap(imageFile)
 
         plotLayout = QtGui.QHBoxLayout()
 

@@ -44,7 +44,7 @@ def createPlotPage(configPanel, parent):
     r.initialize = lambda ert : [ert.setTypes("plot_config_get_viewer", ertwrapper.c_char_p),
                                  ert.setTypes("plot_config_set_viewer", None, [ertwrapper.c_char_p])]
     r.getter = lambda ert : ert.enkf.plot_config_get_viewer(ert.plot_config)
-    r.setter = lambda ert, value : ert.enkf.plot_config_set_viewer(ert.plot_config, value)
+    r.setter = lambda ert, value : ert.enkf.plot_config_set_viewer(ert.plot_config, str(value))
 
     r = configPanel.addRow(ComboChoice(parent, ["bmp", "jpg", "png", "tif"], "Image type", "image_type"))
     r.initialize = lambda ert : [ert.setTypes("plot_config_get_image_type", ertwrapper.c_char_p),
