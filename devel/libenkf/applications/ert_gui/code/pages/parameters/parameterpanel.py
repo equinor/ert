@@ -10,6 +10,7 @@ from fieldpanel import *
 from parameterdialog import ParameterDialog
 from widgets.searchablelist import SearchableList
 from pages.parameters.datapanel import DataModel, DataPanel
+from pages.parameters.keywordpanel import KeywordPanel, KeywordModel
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
@@ -39,10 +40,12 @@ class ParameterPanel(HelpedWidget):
 
         self.fieldPanel = FieldPanel(self)
         self.dataPanel = DataPanel(self)
+        self.keywordPanel = KeywordPanel(self)
 
         self.pagesWidget.addWidget(self.emptyPanel)
         self.pagesWidget.addWidget(self.fieldPanel)
         self.pagesWidget.addWidget(self.dataPanel)
+        self.pagesWidget.addWidget(self.keywordPanel)
 
         self.addWidget(self.pagesWidget)
 
@@ -62,6 +65,9 @@ class ParameterPanel(HelpedWidget):
         elif current.getType() == "Data":
             self.pagesWidget.setCurrentWidget(self.dataPanel)
             self.dataPanel.setDataModel(current.getData())
+        elif current.getType() == "Keyword":
+            self.pagesWidget.setCurrentWidget(self.keywordPanel)
+            self.keywordPanel.setKeywordModel(current.getData())
         else:
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
 
@@ -74,6 +80,8 @@ class ParameterPanel(HelpedWidget):
             param.setData(FieldModel(name))
         elif type == "Data":
             param.setData(DataModel(name))
+        elif type == "Keyword":
+            param.setData(KeywordModel(name))
 
         list.addItem(param)
         list.setCurrentItem(param)
