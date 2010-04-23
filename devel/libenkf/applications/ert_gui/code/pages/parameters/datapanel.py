@@ -16,6 +16,9 @@ class DataModel:
     def __init__(self, name):
         self.name = name
 
+    def set(self, attr, value):
+        setattr(self, attr, value)
+
 
 class DataPanel(QtGui.QFrame):
     dataModel = DataModel("")
@@ -32,27 +35,27 @@ class DataPanel(QtGui.QFrame):
 
 
         self.input = ComboChoice(self, ["ASCII", "BINARY_FLOAT", "BINARY_DOUBLE"], "", "param_init")
-        self.input.setter = lambda model, value: setattr(self.dataModel, "input", value)
+        self.input.setter = lambda model, value: self.dataModel.set("input", value)
         self.input.getter = lambda model: self.dataModel.input
 
         self.output = ComboChoice(self, ["ASCII", "ASCII_TEMPLATE", "BINARY_FLOAT", "BINARY_DOUBLE"], "", "param_output")
-        self.output.setter = lambda model, value: setattr(self.dataModel, "output", value)
+        self.output.setter = lambda model, value: self.dataModel.set("output", value)
         self.output.getter = lambda model: self.dataModel.output
 
         self.eclipse_file = PathChooser(self, "", "gen_data_eclipse_file", True)
-        self.eclipse_file.setter = lambda model, value: setattr(self.dataModel, "eclipse_file", value)
+        self.eclipse_file.setter = lambda model, value: self.dataModel.set("eclipse_file", value)
         self.eclipse_file.getter = lambda model: self.dataModel.eclipse_file
 
         self.init_files = PathChooser(self, "", "gen_data_init_files", True)
-        self.init_files.setter = lambda model, value: setattr(self.dataModel, "init_files", value)
+        self.init_files.setter = lambda model, value: self.dataModel.set("init_files", value)
         self.init_files.getter = lambda model: self.dataModel.init_files
 
         self.template = PathChooser(self, "", "gen_data_template", True)
-        self.template.setter = lambda model, value: setattr(self.dataModel, "template", value)
+        self.template.setter = lambda model, value: self.dataModel.set("template", value)
         self.template.getter = lambda model: self.dataModel.template
 
         self.result_file = PathChooser(self, "", "gen_data_result_file", True)
-        self.result_file.setter = lambda model, value: setattr(self.dataModel, "result_file", value)
+        self.result_file.setter = lambda model, value: self.dataModel.set("result_file", value)
         self.result_file.getter = lambda model: self.dataModel.result_file
 
 
