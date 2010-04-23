@@ -51,7 +51,6 @@ class ParameterPanel(HelpedWidget):
 
 
     def changeParameter(self, current, previous):
-        print "Entered here!"
         if not current:
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
         elif current.getType() == "Field":
