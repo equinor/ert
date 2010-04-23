@@ -33,37 +33,37 @@ class FieldPanel(QtGui.QFrame):
         layout.setLabelAlignment(QtCore.Qt.AlignRight)
 
 
-        self.fieldType = ComboChoice(self, ["Dynamic", "Parameter", "General"], "", "param_type")
+        self.fieldType = ComboChoice(self, ["Dynamic", "Parameter", "General"], "", "field_type")
         self.fieldType.setter = lambda model, value: self.typeChanged(value)
         self.fieldType.getter = lambda model: self.fieldModel.type
 
-        self.min = DoubleBox(self, "", "param_min")
+        self.min = DoubleBox(self, "", "field_min")
         self.min.setter = lambda model, value: setattr(self.fieldModel, "min", value)
         self.min.getter = lambda model: self.fieldModel.min
 
 
-        self.max = DoubleBox(self, "", "param_max")
+        self.max = DoubleBox(self, "", "field_max")
         self.max.setter = lambda model, value: setattr(self.fieldModel, "max", value)
         self.max.getter = lambda model: self.fieldModel.max
 
 
-        self.init = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "param_init")
+        self.init = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "field_init")
         self.init.setter = lambda model, value: setattr(self.fieldModel, "init", value)
         self.init.getter = lambda model: self.fieldModel.init
 
-        self.output = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "param_output")
+        self.output = ComboChoice(self, ["None", "EXP", "LOG", "POW10", "ADD", "MUL", "RANDINT", "RANDFLOAT"], "", "field_output")
         self.output.setter = lambda model, value: setattr(self.fieldModel, "output", value)
         self.output.getter = lambda model: self.fieldModel.output
 
-        self.init_files = PathChooser(self, "", "param_init_files", True)
+        self.init_files = PathChooser(self, "", "field_init_files", True)
         self.init_files.setter = lambda model, value: setattr(self.fieldModel, "init_files", value)
         self.init_files.getter = lambda model: self.fieldModel.init_files
 
-        self.file_generated_by_enkf = PathChooser(self, "", "param_file_generated_by_enkf", True)
+        self.file_generated_by_enkf = PathChooser(self, "", "field_file_generated_by_enkf", True)
         self.file_generated_by_enkf.setter = lambda model, value: setattr(self.fieldModel, "file_generated_by_enkf", value)
         self.file_generated_by_enkf.getter = lambda model: self.fieldModel.file_generated_by_enkf
 
-        self.file_loaded_by_enkf = PathChooser(self, "", "param_file_loaded_by_enkf", True)
+        self.file_loaded_by_enkf = PathChooser(self, "", "field_file_loaded_by_enkf", True)
         self.file_loaded_by_enkf.setter = lambda model, value: setattr(self.fieldModel, "file_loaded_by_enkf", value)
         self.file_loaded_by_enkf.getter = lambda model: self.fieldModel.file_loaded_by_enkf
 
