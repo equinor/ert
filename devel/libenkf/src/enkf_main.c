@@ -2845,7 +2845,7 @@ bool enkf_main_is_initialized( const enkf_main_type * enkf_main ) {
     const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
     int iens = 0;
     do {
-      initialized = enkf_fs_has_node( enkf_main->dbase , parameter_keys , 0 , ANALYZED );
+      initialized = enkf_fs_has_node( enkf_main->dbase , config_node , parameter_keys , 0 , ANALYZED );
       iens++;
     } while ((iens < enkf_main->ens_size) && (initialized));
     
