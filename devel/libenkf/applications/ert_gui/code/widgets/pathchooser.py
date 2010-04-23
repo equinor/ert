@@ -5,7 +5,7 @@ from helpedwidget import *
 class PathChooser(HelpedWidget):
     """PathChooser shows, enables choosing of and validates paths. The data structure expected and sent to the getter and setter is a string."""
 
-    #invalidColor = QtGui.QColor(255, 235, 235)
+    errorColor = QtGui.QColor(255, 235, 235)
     invalidColor = QtGui.QColor(235, 235, 255)
 
     def __init__(self, parent=None, pathLabel="Path", help="", files=False, must_be_set=True):
@@ -51,6 +51,8 @@ class PathChooser(HelpedWidget):
         exists = os.path.exists(text)
         if text.strip() == "" and self.must_be_set:
             self.setValidationMessage(self.required_field_msg)
+            palette.setColor(self.pathLine.backgroundRole(), self.errorColor)
+            self.pathLine.setToolTip(self.required_field_msg)
         elif exists:
             self.setValidationMessage("")
             palette.setColor(self.pathLine.backgroundRole(), self.validColor)
