@@ -1,6 +1,7 @@
 import os
 from PyQt4 import QtGui, QtCore
 from helpedwidget import *
+import re
 
 class PathChooser(HelpedWidget):
     """PathChooser shows, enables choosing of and validates paths. The data structure expected and sent to the getter and setter is a string."""
@@ -8,13 +9,19 @@ class PathChooser(HelpedWidget):
     errorColor = QtGui.QColor(255, 235, 235)
     invalidColor = QtGui.QColor(235, 235, 255)
 
-    def __init__(self, parent=None, pathLabel="Path", help="", files=False, must_be_set=True):
+    file_does_not_exist_msg = "The specified path does not exist."
+    required_field_msg = "A value is required."
+    path_format_msg = "Must be a path format."
+
+    def __init__(self, parent=None, pathLabel="Path", help="", files=False, must_be_set=True, path_format=False, must_exist=True):
         """Construct a PathChooser widget"""
         HelpedWidget.__init__(self, parent, pathLabel, help)
 
         self.editing = True
         self.selectFiles = files
         self.must_be_set = must_be_set
+        self.path_format = path_format
+        self.must_exist = must_exist
 
         self.pathLine = QtGui.QLineEdit()
         #self.pathLine.setMinimumWidth(250)
@@ -39,8 +46,7 @@ class PathChooser(HelpedWidget):
         self.pathLine.setText(os.getcwd())
 
         self.editing = False
-        self.file_does_not_exist_msg = "The specified path does not exist."
-        self.required_field_msg = "A value is required."
+
 
 
     def validatePath(self):
@@ -49,18 +55,25 @@ class PathChooser(HelpedWidget):
 
         text = str(self.pathLine.text())
         exists = os.path.exists(text)
+
+        color = self.validColor
+        message = ""
+
         if text.strip() == "" and self.must_be_set:
-            self.setValidationMessage(self.required_field_msg)
-            palette.setColor(self.pathLine.backgroundRole(), self.errorColor)
-            self.pathLine.setToolTip(self.required_field_msg)
-        elif exists:
-            self.setValidationMessage("")
-            palette.setColor(self.pathLine.backgroundRole(), self.validColor)
-            self.pathLine.setToolTip("")
+            message = self.required_field_msg
+            color = self.errorColor
+        elif self.path_format and not re.search("%[0-9]*d", text):
+            message = self.path_format_msg
+            color = self.errorColor
         elif not exists:
-            self.setValidationMessage(self.file_does_not_exist_msg)
-            palette.setColor(self.pathLine.backgroundRole(), self.invalidColor)
-            self.pathLine.setToolTip(self.file_does_not_exist_msg)
+            if self.must_exist and not self.path_format:
+                message = self.file_does_not_exist_msg
+                color = self.invalidColor
+
+
+        self.setValidationMessage(message)
+        self.pathLine.setToolTip(message)
+        palette.setColor(self.pathLine.backgroundRole(), color)
 
         self.pathLine.setPalette(palette)
 
