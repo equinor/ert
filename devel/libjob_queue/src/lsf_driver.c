@@ -17,17 +17,30 @@
 */
 
 
-#ifdef i386
-#define LSF_SYSTEM_DRIVER
-#else
-#ifdef USE_LSF_LIBRARY
-#define LSF_LIBRARY_DRIVER
+/* 
+   Check the #defines - one-and-only-one of the symbols
+   LSF_LIBRARY_DRIVER and LSF_SYSTEM_DRIVER must be defined.
+*/
+
+#ifdef LSF_LIBRARY_DRIVER
+#ifdef LSF_SYSTEM_DRIVER
+#error: Both symbols LSF_LIBRARY_DRIVER and LSF_SYSTEM_DRIVER are defined; invalid configuration.
+#endif
+#endif
+
+#ifndef  LSF_LIBRARY_DRIVER
+#ifndef  LSF_SYSTEM_DRIVER
+#error: Neither LSF_LIBRARY_DRIVER nor LSF_SYSTEM_DRIVER are defined; invalid configuration.
+#endif
+#endif
+
+/*****************************************************************/
+
+#ifdef  LSF_LIBRARY_DRIVER
 #include <lsf/lsbatch.h>
 #else
 #define LSF_SYSTEM_DRIVER
 #endif
-#endif
-
 
 
 #define LSF_DRIVER_TYPE_ID 10078365
@@ -70,8 +83,6 @@ struct lsf_driver_struct {
 
 static UTIL_SAFE_CAST_FUNCTION( lsf_driver , LSF_DRIVER_TYPE_ID)
 static UTIL_SAFE_CAST_FUNCTION( lsf_job , LSF_JOB_TYPE_ID)
-
-
 
 lsf_job_type * lsf_job_alloc() {
   lsf_job_type * job;
@@ -192,7 +203,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 static job_status_type lsf_driver_get_job_status_libary(void * __driver , void * __job) {
   if (__job == NULL) 
     /* the job has not been registered at all ... */
-    return JOB_QUEUE_NULL;
+    return JOB_QUEUE_NOT_ACTIVE;
   else {
     lsf_job_type    * job    = lsf_job_safe_cast( __job );
     {
@@ -244,7 +255,7 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , void *
 
 static job_status_type lsf_driver_get_job_status_system(void * __driver , void * __job) {
   const int bjobs_refresh_time = 5; /* Seconds */
-  job_status_type status = JOB_QUEUE_NULL;
+  job_status_type status = JOB_QUEUE_NOT_ACTIVE;
   
   if (__job != NULL) {
     lsf_job_type    * job    = lsf_job_safe_cast( __job );
@@ -318,10 +329,6 @@ void lsf_driver_kill_job(void * __driver , void * __job) {
   lsf_driver_killjob(job->lsf_jobnr);
   lsf_job_free( job );
 }
-
-
-
-
 
 
 

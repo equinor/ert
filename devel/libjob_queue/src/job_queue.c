@@ -525,8 +525,9 @@ void job_queue_kill_job( job_queue_type * queue , int external_id) {
     job_queue_node_type * node        = queue->jobs[queue_index];
     basic_queue_driver_type * driver  = queue->driver;
 
-    driver->kill_job( driver , node->job_data );
     job_queue_change_node_status( queue , node , JOB_QUEUE_USER_KILLED);
+    driver->kill_job( driver , node->job_data );
+    node->job_data = NULL;               
   } 
 }
 
@@ -1099,9 +1100,6 @@ const char * job_queue_status_name( job_status_type status ) {
   case(JOB_QUEUE_LOADING):
     return "JOB_QUEUE_LOADING";
     break;
-  case(JOB_QUEUE_NULL):
-    return "JOB_QUEUE_NULL";
-    break;
   case(JOB_QUEUE_WAITING):
     return "JOB_QUEUE_WAITING";
     break;
@@ -1128,6 +1126,9 @@ const char * job_queue_status_name( job_status_type status ) {
     break;
   case(JOB_QUEUE_ALL_FAIL):
     return "JOB_QUEUE_ALL_FAIL";
+    break;
+  case(JOB_QUEUE_USER_KILLED):
+    return "JOB_QUEUE_USER_KILLED";
     break;
   default:
     util_abort("%s: invalid job_status value:%d \n",__func__ , status);
