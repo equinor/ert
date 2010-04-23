@@ -1,7 +1,7 @@
 from PyQt4 import QtGui, QtCore
 import help #todo this is not a nice way of solving this...
 import sys
-from widgets.util import resourceIcon
+from widgets.util import resourceIcon, resourceImage
 import inspect
 
 def abstract():
@@ -104,6 +104,12 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
         QtGui.QWidget.__init__(self, parent)
         ContentModel.__init__(self)
 
+
+        self.validationLabel = QtGui.QLabel()
+        self.validationLabel.setMaximumSize(QtCore.QSize(16, 16))
+        self.validationLabel.setPixmap(resourceImage("error"))
+        self.validationLabel.setHidden(True)
+
         if not widgetLabel == "":
             self.label = widgetLabel + ":"
         else:
@@ -115,6 +121,7 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
         self.widgetLayout = QtGui.QHBoxLayout()
         #self.setStyleSheet("padding: 2px")
         self.widgetLayout.setMargin(0)
+        self.widgetLayout.addWidget(self.validationLabel)
         self.setLayout(self.widgetLayout)
 
 
@@ -165,3 +172,11 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
     def addStretch(self):
         """Add stretch between widgets. Usually added between a widget and the help button."""
         self.widgetLayout.addStretch(1)
+
+    def setValidationMessage(self, message):
+        if message == "":
+            self.validationLabel.setHidden(True)
+            self.validationLabel.setToolTip("")
+        else:
+            self.validationLabel.setHidden(False)
+            self.validationLabel.setToolTip(message)

@@ -522,16 +522,14 @@ class SimulationStatistics:
         """Returns how long a job takes in seconds"""
         return 1.0 / self.jobsPerSecond()
 
+    def averageConcurrentJobs(self):
+        """Returns the average number of jobs performed in parallel"""
+        return max(self.running / (self.last - self.start), 1)
+
     def estimate(self, jobs):
         """Returns an estimate on how long the rest of the job will take. Jobs = the total number of jobs"""
         if self.jobsPerSecond() > 0:
-#            spj = self.secondsPerJob()
-#            jobs_estimate = spj * (jobs - self.jobs - self.old_job_count)
-#
-#            timeUsed = int(time.time()) - self.last
-#            return jobs_estimate - timeUsed
-
-            avg_concurrent_jobs = self.running / (self.last - self.start)
+            avg_concurrent_jobs = self.averageConcurrentJobs()
             avg_running = self.averageRunningTime()
 
             jobs_left = jobs - self.jobs

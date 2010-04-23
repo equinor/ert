@@ -38,7 +38,7 @@ class PathChooser(HelpedWidget):
         self.pathLine.setText(os.getcwd())
 
         self.editing = False
-
+        self.validationMessage = "The specififed path does not exist."
 
 
     def validatePath(self):
@@ -46,11 +46,13 @@ class PathChooser(HelpedWidget):
         palette = self.pathLine.palette()
 
         if os.path.exists(self.pathLine.text()):
+            self.setValidationMessage("")
             palette.setColor(self.pathLine.backgroundRole(), self.validColor)
             self.pathLine.setToolTip("")
         else:
+            self.setValidationMessage(self.validationMessage)
             palette.setColor(self.pathLine.backgroundRole(), self.invalidColor)
-            self.pathLine.setToolTip("The specififed path does not exist.")
+            self.pathLine.setToolTip(self.validationMessage)
 
         self.pathLine.setPalette(palette)
 
