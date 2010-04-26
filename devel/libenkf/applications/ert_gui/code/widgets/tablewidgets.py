@@ -98,7 +98,7 @@ class KeywordList(HelpedWidget):
 
     def removeItem(self):
         """Called by the remove button to remove a selected keyword"""
-        if not self.list.currentItem() == None:
+        if not self.list.currentItem() is None:
             self.list.takeItem(self.list.currentRow())
             self.contentsChanged()
 
@@ -178,11 +178,11 @@ class KeywordTable(HelpedWidget):
 
         for index in range(self.table.rowCount()):
             key = self.table.item(index, 0)
-            if not key == None:
+            if not key is None:
                 key = str(key.text()).strip()
                 value = self.table.item(index, 1)
 
-                if not key == "" and not value == None:
+                if not key == "" and not value is None:
                     keyValueList.append([key, str(value.text()).strip()])
 
         self.updateContent(keyValueList)
@@ -214,9 +214,12 @@ class KeywordTable(HelpedWidget):
 
 class MultiColumnTable(HelpedWidget):
     """Shows a table of parameters. The data structure expected and sent to the getter and setter is an array of arrays."""
-    def __init__(self, parent=None, tableLabel="", help="", colHeads=["c1", "c2", "c3", "c4", "c5"]):
+    def __init__(self, parent=None, tableLabel="", help="", colHeads=None):
         """Construct a table with arbitrary number of columns."""
         HelpedWidget.__init__(self, parent, tableLabel, help)
+
+        if colHeads is None:
+            colHeads = ["c1", "c2", "c3", "c4", "c5"]
 
         self.table = QtGui.QTableWidget(self)
         self.table.setColumnCount(len(colHeads))
@@ -269,7 +272,7 @@ class MultiColumnTable(HelpedWidget):
             row = []
             for columnIndex in range(self.table.columnCount()):
                 item = self.table.item(rowIndex, columnIndex)
-                if not item == None:
+                if not item is None:
                     row.append(str(item.text()))
                 else:
                     row.append("")

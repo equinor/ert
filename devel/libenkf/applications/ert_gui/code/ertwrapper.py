@@ -176,7 +176,7 @@ class ErtWrapper:
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug()
 
-    def setTypes(self, function, restype = c_long, argtypes = [], library = None, selfpointer=True):
+    def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer=True):
         """
         Set the return and argument types of a ERT function.
         Since all methods need a pointer, this is already defined as c_long.
@@ -186,7 +186,7 @@ class ErtWrapper:
             library = self.enkf
 
         if argtypes is None:
-            print "Error"
+            argtypes = []
 
         func = getattr(library, function)
         func.restype = restype
@@ -198,8 +198,6 @@ class ErtWrapper:
             else:
                 args = argtypes
             func.argtypes = args
-        elif argtypes is None:
-            func.argtypes = []
         else:
             if selfpointer:
                 func.argtypes = [c_long, argtypes]
@@ -221,7 +219,7 @@ class ErtWrapper:
 
     def initializeTypes(self):
         self.setTypes("stringlist_iget", c_char_p, c_int, library = self.util)
-        self.setTypes("stringlist_alloc_new", argtypes = None,library = self.util)
+        self.setTypes("stringlist_alloc_new", library = self.util, selfpointer=False)
         self.setTypes("stringlist_append_copy", None, c_char_p, library = self.util)
         self.setTypes("stringlist_get_size", c_int, library = self.util)
         self.setTypes("stringlist_free", None, library = self.util)

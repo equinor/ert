@@ -52,7 +52,7 @@ class JobsDialog(QtGui.QDialog):
         memberLayout.addLayout(legendLayout)
 
 
-        self.doneButton = QtGui.QPushButton("Done", self)
+        self.doneButton = QtGui.QPushButton("Kill", self)
         self.connect(self.doneButton, QtCore.SIGNAL('clicked()'), self.accept)
 
         buttonLayout = QtGui.QHBoxLayout()
@@ -202,7 +202,7 @@ class JobsDialogController:
                 totalCount = len(simulations.keys())
                 succesCount = 0
                 for key in simulations.keys():
-                    if simulations[key].simulation.finishedSuccesfully():
+                    if simulations[key].simulation.finishedSuccessfully():
                         succesCount+=1
 
                 count = (100 * succesCount / totalCount)

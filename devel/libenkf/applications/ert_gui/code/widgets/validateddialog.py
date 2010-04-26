@@ -5,7 +5,7 @@ class ValidatedDialog(QtGui.QDialog):
 
     invalidColor = QtGui.QColor(255, 235, 235)
 
-    def __init__(self, parent, title = "Title", description = "Description", uniqueNames = []):
+    def __init__(self, parent, title = "Title", description = "Description", uniqueNames = None):
         """Creates a new dialog that validates uniqueness against the provided list"""
         QtGui.QDialog.__init__(self, parent)
         self.setModal(True)
@@ -13,7 +13,8 @@ class ValidatedDialog(QtGui.QDialog):
         self.setMinimumWidth(250)
         self.setMinimumHeight(150)
 
-
+        if uniqueNames is None:
+            uniqueNames = []
         self.uniqueNames = uniqueNames
 
         self.layout = QtGui.QFormLayout()
