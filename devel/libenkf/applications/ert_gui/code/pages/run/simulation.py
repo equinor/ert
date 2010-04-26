@@ -359,6 +359,8 @@ class SimulationPanelController:
 
 
 class Simulation:
+    # These "enum" values are all copies from the header file "basic_queue_driver.h".
+
     NOT_ACTIVE  =    1
     LOADING     =    2
     WAITING     =    4
