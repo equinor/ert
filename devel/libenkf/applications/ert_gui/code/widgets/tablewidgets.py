@@ -136,6 +136,7 @@ class KeywordTable(HelpedWidget):
         self.table.setColumnCount(2)
         self.headers = [colHead1, colHead2]
         self.table.setHorizontalHeaderLabels(self.headers)
+        self.table.verticalHeader().setHidden(True)
         self.table.setColumnWidth(0, 150)
         #self.table.setColumnWidth(1, 250)
         self.table.horizontalHeader().setStretchLastSection(True)
@@ -157,6 +158,7 @@ class KeywordTable(HelpedWidget):
     def addItem(self):
         """Called by the add button to insert a new keyword"""
         self.table.insertRow(self.table.currentRow() + 1)
+
         self.contentsChanged()
 
 
@@ -208,6 +210,8 @@ class KeywordTable(HelpedWidget):
             self.table.setItem(row, 0, keyItem)
             self.table.setItem(row, 1, valueItem)
             row+=1
+
+
             
 
 
