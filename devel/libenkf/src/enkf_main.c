@@ -2831,6 +2831,8 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
   return site_config_get_installed_jobs( enkf_main->site_config );
 }
 
+
+
 /**
    This function will go through the filesystem and check that we have
    initial data for all parameters and all realizations.
@@ -2838,17 +2840,17 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
 
 bool enkf_main_is_initialized( const enkf_main_type * enkf_main ) {
   stringlist_type * parameter_keys = ensemble_config_alloc_keylist_from_var_type( enkf_main->ensemble_config , PARAMETER );
-
+  
   bool initialized = true;
   int ikey = 0;
   do {
     const enkf_config_node_type * config_node = ensemble_config_get_node( enkf_main->ensemble_config , stringlist_iget( parameter_keys , ikey) );
     int iens = 0;
     do {
-      initialized = enkf_fs_has_node( enkf_main->dbase , config_node , parameter_keys , 0 , ANALYZED );
+      initialized = enkf_fs_has_node( enkf_main->dbase , config_node , 0 , iens , ANALYZED );
       iens++;
     } while ((iens < enkf_main->ens_size) && (initialized));
-    
+    ikey++;
   } while ((ikey < stringlist_get_size( parameter_keys )) && (initialized));
   
   stringlist_free( parameter_keys );
