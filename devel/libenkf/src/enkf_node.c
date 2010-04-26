@@ -168,7 +168,6 @@ struct enkf_node_struct {
   alloc_ftype         *alloc;
   ecl_write_ftype     *ecl_write;
   ecl_load_ftype      *ecl_load;
-  //realloc_data_ftype  *realloc_data;
   free_data_ftype     *free_data;
   user_get_ftype      *user_get;
   set_data_ftype      *set_data;

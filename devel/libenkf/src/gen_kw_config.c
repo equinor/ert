@@ -38,11 +38,29 @@ void gen_kw_config_set_init_file_fmt( gen_kw_config_type * gen_kw_config , const
 }
 
 
+const char * gen_kw_get_init_file_fmt( const gen_kw_config_type * config ) {
+  return path_fmt_get_fmt( config->init_file_fmt );
+}
+
 char * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens ) {
   if (gen_kw_config->init_file_fmt != NULL)
     return path_fmt_alloc_path( gen_kw_config->init_file_fmt , false , iens);
   else
     return NULL;
+}
+
+const char * gen_kw_get_template_file( const gen_kw_config_type * config ) {
+  return config->template_file;
+}
+
+/*
+  The input template file must point to an existing file. 
+*/
+void gen_kw_config_set_template_file( gen_kw_config_type * config , const char * template_file ) {
+  if (!util_file_exists(template_file))
+    util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
+
+  config->template_file = util_realloc_string_copy( config->template_file , template_file );
 }
 
 
@@ -52,14 +70,14 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(int size, const char * t
   gen_kw_config->kw_list            = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
   gen_kw_config->tagged_kw_list     = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
   gen_kw_config->scalar_config      = scalar_config_alloc_empty(size);
-  gen_kw_config->template_file      = util_alloc_string_copy(template_file);
   gen_kw_config->min_std            = NULL;
   gen_kw_config->key                = NULL; 
   gen_kw_config->init_file_fmt      = NULL;
-  
+  gen_kw_config->template_file      = NULL;
+
   gen_kw_config_set_init_file_fmt( gen_kw_config , init_file_fmt );
-  if (!util_file_exists(template_file))
-    util_abort("%s: the template_file:%s does not exist - aborting.\n",__func__ , template_file);
+  gen_kw_config_set_template_file( gen_kw_config , template_file );
+  
   return gen_kw_config;
 }
 

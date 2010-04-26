@@ -4,8 +4,6 @@
 extern "C" {
 #endif
 #include <arg_pack.h>
-typedef double (transform_ftype) (double , const arg_pack_type *);
-
 
 
 

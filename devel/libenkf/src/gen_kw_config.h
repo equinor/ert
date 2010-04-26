@@ -30,6 +30,10 @@ const char               ** gen_kw_config_get_name_list(const gen_kw_config_type
 const scalar_config_type  * gen_kw_config_get_scalar_config(const gen_kw_config_type * );
 int                         gen_kw_config_get_index(const gen_kw_config_type *  , const char * );
 char                      * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , int kw_nr);
+const char                * gen_kw_get_init_file_fmt( const gen_kw_config_type * config );
+void                        gen_kw_config_set_template_file( gen_kw_config_type * config , const char * template_file );
+const char                * gen_kw_get_template_file( const gen_kw_config_type * config );
+
 
 SAFE_CAST_HEADER(gen_kw_config);
 VOID_FREE_HEADER(gen_kw_config);

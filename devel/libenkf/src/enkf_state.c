@@ -1493,22 +1493,14 @@ time_t enkf_state_get_submit_time( const enkf_state_type * enkf_state ) {
 
 
 /**
-   Will only kill simulations which are currently running. Will return
-   true if the simulation is actually killed, and false if the "kill
-   command" is ignored.
+   Will return true if the simulation is actually killed, and false if
+   the "kill command" is ignored (only jobs with status matching
+   JOB_QUEUE_CAN_KILL will actually be killed).
 */
 
 bool enkf_state_kill_simulation( const enkf_state_type * enkf_state ) {
   const shared_info_type * shared_info = enkf_state->shared_info;
-  int iens                       = member_config_get_iens( enkf_state->my_config );
-  job_status_type current_status = job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
-
-
-  if (current_status == JOB_QUEUE_RUNNING) { /* Will ONLY kill simulations which are in of the states : [JOB_QUEUE_RUNNING]  */
-    job_queue_kill_job(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
-    return true;
-  } else
-    return false;
+  return job_queue_kill_job(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
 }
 
 

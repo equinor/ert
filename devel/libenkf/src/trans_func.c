@@ -5,6 +5,18 @@
 #include <string.h>
 #include <arg_pack.h> 
 #include <util.h>
+#include <stringlist.h>
+
+
+
+struct trans_func_struct {
+  char            * name;          /* The name this function is registered as. */
+  arg_pack_type   * params;        /* The parameter values registered for this function. */
+  transform_ftype * func;          /* A pointer to the actual transformation function. */
+  validate_ftype  * validate;      /* A pointer to a a function which can be used to validate the parameters - can be NULL. */
+  stringlist_type * param_names;   /* A list of the parameter names. */
+};
+
 
 
 
@@ -23,7 +35,7 @@
    The width is a relavant scale for the value of skewness.
 */
 
-double trans_errf(double x, const arg_pack_type * arg) { 
+static double trans_errf(double x, const arg_pack_type * arg) { 
   double min      = arg_pack_iget_double(arg , 0);
   double max      = arg_pack_iget_double(arg , 1);
   double skewness = arg_pack_iget_double(arg , 2);
@@ -35,7 +47,7 @@ double trans_errf(double x, const arg_pack_type * arg) {
 }
 
 
-void trans_errf_check(const char * func_name , const arg_pack_type * arg) {
+static void trans_errf_check(const char * func_name , const arg_pack_type * arg) {
   double width    = arg_pack_iget_double(arg , 3);
   if (width <= 0)
     util_exit("In function:%s the witdh must be > 0.",func_name);
@@ -45,13 +57,13 @@ void trans_errf_check(const char * func_name , const arg_pack_type * arg) {
 
 
 
-double trans_const(double x , const arg_pack_type * arg) { 
+static double trans_const(double x , const arg_pack_type * arg) { 
   return arg_pack_iget_double(arg , 0); 
 }
 
 
 /* Observe that the argument of the shift should be "+" */
-double trans_derrf(double x , const arg_pack_type * arg) {
+static double trans_derrf(double x , const arg_pack_type * arg) {
   int    steps    = arg_pack_iget_int(arg , 0);
   double min      = arg_pack_iget_double(arg , 1);
   double max      = arg_pack_iget_double(arg , 2);
@@ -64,7 +76,7 @@ double trans_derrf(double x , const arg_pack_type * arg) {
 }
 
 
-void trans_derrf_check(const char * func_name , const arg_pack_type * arg) {
+static void trans_derrf_check(const char * func_name , const arg_pack_type * arg) {
   int    steps    = arg_pack_iget_int(arg , 0);
   double width    = arg_pack_iget_double(arg , 4);
   if (width <= 0)
@@ -78,7 +90,7 @@ void trans_derrf_check(const char * func_name , const arg_pack_type * arg) {
 
 
 
-double trans_unif(double x , const arg_pack_type * arg) {
+static double trans_unif(double x , const arg_pack_type * arg) {
   double y;
   double min   = arg_pack_iget_double(arg , 0);
   double max   = arg_pack_iget_double(arg , 1);
@@ -88,7 +100,7 @@ double trans_unif(double x , const arg_pack_type * arg) {
 
 
 
-double trans_dunif(double x , const arg_pack_type * arg) {
+static double trans_dunif(double x , const arg_pack_type * arg) {
   double y;
   int    steps = arg_pack_iget_int(arg , 0);
   double min   = arg_pack_iget_double(arg , 1);
@@ -99,7 +111,7 @@ double trans_dunif(double x , const arg_pack_type * arg) {
 }
 
 
-void trans_dunif_check(const char * func_name , const arg_pack_type * arg) {
+static void trans_dunif_check(const char * func_name , const arg_pack_type * arg) {
   int    steps = arg_pack_iget_int(arg , 0);
   
   if (steps <= 1)
@@ -108,7 +120,7 @@ void trans_dunif_check(const char * func_name , const arg_pack_type * arg) {
 
 
 
-double trans_normal(double x , const arg_pack_type * arg) {
+static double trans_normal(double x , const arg_pack_type * arg) {
   double mu , std;
   mu  = arg_pack_iget_double(arg , 0 );
   std = arg_pack_iget_double(arg , 1 );
@@ -117,7 +129,7 @@ double trans_normal(double x , const arg_pack_type * arg) {
 
 
 
-double trans_lognormal(double x, const arg_pack_type * arg) {
+static double trans_lognormal(double x, const arg_pack_type * arg) {
   double mu, std;
   mu  = arg_pack_iget_double(arg , 0 );
   std = arg_pack_iget_double(arg , 1 );
@@ -132,7 +144,7 @@ double trans_lognormal(double x, const arg_pack_type * arg) {
    distribution in the same manner as the lognormal distribution
    relates to the normal distribution.
 */
-double trans_logunif(double x , const arg_pack_type * arg) {
+static double trans_logunif(double x , const arg_pack_type * arg) {
   double log_min = log(arg_pack_iget_double(arg , 0));
   double log_max = log(arg_pack_iget_double(arg , 1));
   double log_y;
@@ -144,7 +156,7 @@ double trans_logunif(double x , const arg_pack_type * arg) {
 }
 
 
-void trans_logunif_check(const char * func_name , const arg_pack_type * arg) {
+static void trans_logunif_check(const char * func_name , const arg_pack_type * arg) {
 
   double min = arg_pack_iget_double(arg , 0);
   double max = arg_pack_iget_double(arg , 1);
@@ -154,12 +166,199 @@ void trans_logunif_check(const char * func_name , const arg_pack_type * arg) {
     util_exit("When using:%s both arguments must be greater than zero.\n",func_name);
 }
 
+/*****************************************************************/
+
+static trans_func_type * trans_func_alloc_empty( const char * func_name ) {
+  trans_func_type * trans_func = util_malloc( sizeof * trans_func , __func__);
+  
+
+  trans_func->params      = arg_pack_alloc();
+  trans_func->func        = NULL;
+  trans_func->validate    = NULL;
+  trans_func->name        = util_alloc_string_copy( func_name );
+  trans_func->param_names = stringlist_alloc_new();
+  
+  return trans_func;
+}
 
 
-transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pack_type **_arg_pack) {
+const char * trans_func_get_name( const trans_func_type * trans_func ) {
+  return trans_func->name;
+}
+
+
+const stringlist_type * trans_func_get_param_names( const trans_func_type * trans_func ) {
+  return trans_func->param_names;
+}
+
+node_ctype trans_func_iget_param_ctype( const trans_func_type * trans_func , int param_index) {
+  return arg_pack_iget_ctype( trans_func->params , param_index);
+}
+
+
+void trans_func_iset_double_param(trans_func_type  * trans_func , int param_index , double value ) {
+  if (arg_pack_iget_ctype( trans_func->params , param_index) == CTYPE_DOUBLE_VALUE)
+    arg_pack_iset_double( trans_func->params , param_index , value );
+  else
+    util_abort("%s: type mismatch - the does not expect double as argument:%d \n",__func__ , param_index );
+}
+
+/**
+   Return true if the _set operation suceeded (i.e. the name was
+   recognized), and false otherwise.
+*/
+bool trans_func_set_double_param( trans_func_type  * trans_func , const char * param_name , double value ) {
+  int param_index = stringlist_find_first( trans_func->param_names , param_name);
+  if (param_index >= 0) {
+    arg_pack_iset_double( trans_func->params , param_index , value );
+    return true;
+  } else
+    return false;
+}
+
+
+void trans_func_iset_int_param(trans_func_type  * trans_func , int param_index , int value ) {
+  if (arg_pack_iget_ctype( trans_func->params , param_index) == CTYPE_INT_VALUE)
+    arg_pack_iset_int( trans_func->params , param_index , value );
+  else
+    util_abort("%s: type mismatch - the does not expect int as argument:%d \n",__func__ , param_index );
+}
+
+/**
+   Return true if the _set operation suceeded (i.e. the name was
+   recognized), and false otherwise.
+*/
+bool trans_func_set_int_param( trans_func_type  * trans_func , const char * param_name , int value ) {
+  int param_index = stringlist_find_first( trans_func->param_names , param_name);
+  if (param_index >= 0) {
+    arg_pack_iset_int( trans_func->params , param_index , value );
+    return true;
+  } else
+    return false;
+}
+
+
+
+void trans_func_free( trans_func_type * trans_func ) {
+  stringlist_free( trans_func->param_names );
+  arg_pack_free( trans_func->params );
+  util_safe_free( trans_func->name );
+  free( trans_func );
+}
+
+
+
+
+/**
+   It is import to append all the parameters (with arbitrary values),
+   to ensure that the arg_pack registers the right type.
+*/
+
+
+trans_func_type * trans_func_alloc( const char * func_name ) {
+  trans_func_type * trans_func = trans_func_alloc_empty( func_name );
+  {
+    if (util_string_equal(func_name , "NORMAL")) {
+      stringlist_append_ref( trans_func->param_names , "MEAN");
+      stringlist_append_ref( trans_func->param_names , "STD" );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      trans_func->func = trans_normal;
+    }  
+    
+    if (util_string_equal( func_name , "LOGNORMAL")) {
+      stringlist_append_ref( trans_func->param_names , "MEAN");
+      stringlist_append_ref( trans_func->param_names , "STD" );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      trans_func->func = trans_lognormal;
+    }
+    
+
+    if (util_string_equal( func_name , "UNIFORM")) {
+      stringlist_append_ref( trans_func->param_names , "MIN");
+      stringlist_append_ref( trans_func->param_names , "MAX" );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      trans_func->func = trans_unif;
+    }
+
+
+    if (util_string_equal( func_name , "DUNIF")) {
+      stringlist_append_ref( trans_func->param_names , "STEPS");
+      stringlist_append_ref( trans_func->param_names , "MIN");
+      stringlist_append_ref( trans_func->param_names , "MAX" );
+      arg_pack_append_int( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      
+      trans_func->func = trans_dunif;
+    }
+
+
+    if (util_string_equal( func_name , "ERRF")) {
+      stringlist_append_ref( trans_func->param_names , "MIN");
+      stringlist_append_ref( trans_func->param_names , "MAX" );
+      stringlist_append_ref( trans_func->param_names , "SKEWNESS");
+      stringlist_append_ref( trans_func->param_names , "WIDTH" );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      
+      
+      trans_func->func = trans_errf;
+    }
+
+
+    if (util_string_equal( func_name , "DERRF")) {
+      stringlist_append_ref( trans_func->param_names , "STEPS");
+      stringlist_append_ref( trans_func->param_names , "MIN");
+      stringlist_append_ref( trans_func->param_names , "MAX" );
+      stringlist_append_ref( trans_func->param_names , "SKEWNESS");
+      stringlist_append_ref( trans_func->param_names , "WIDTH" );
+      arg_pack_append_int( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+
+      trans_func->func = trans_derrf;
+    }
+
+
+    if (util_string_equal( func_name , "LOGUNIF")) {
+      stringlist_append_ref( trans_func->param_names , "MIN");
+      stringlist_append_ref( trans_func->param_names , "MAX" );
+      
+      arg_pack_append_double( trans_func->params , 0 );
+      arg_pack_append_double( trans_func->params , 0 );
+      trans_func->func = trans_logunif;
+    }
+
+
+    if (util_string_equal( func_name , "CONST")) {
+      stringlist_append_ref( trans_func->param_names , "VALUE");
+      arg_pack_append_double( trans_func->params , 0 );
+      trans_func->func = trans_const;
+    }
+  }
+  return trans_func;
+}
+
+
+
+double trans_func_eval( const trans_func_type * trans_func , double x) {
+  return trans_func->func( x , trans_func->params );
+}
+
+
+
+
+
+trans_func_type * trans_func_fscanf_alloc( FILE * stream ) {
+  trans_func_type * trans_func;
   char            * func_name;
-  arg_pack_type   * arg_pack = NULL;
-  transform_ftype * transf   = NULL;
 
   func_name = util_fscanf_alloc_token(stream);
   if (func_name == NULL) {
@@ -167,87 +366,10 @@ transform_ftype * trans_func_lookup(FILE * stream , char ** _func_name , arg_pac
     util_abort("%s: could not locate name of transformation - aborting \n",__func__);
   }
   
-  arg_pack = arg_pack_alloc();
-  if (strcmp(func_name , "NORMAL") == 0) {
-    /* Normal distribution */
-    /* NORMAL mu std       */
-    transf   = trans_normal;
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-  } else if (strcmp(func_name , "LOGNORMAL") == 0) {
-    /* Log normal distribution */
-    /* LOGNORMAL mu std      */
-    transf   = trans_lognormal;
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-  } else if (strcmp(func_name , "UNIFORM") == 0) {
-    /* Uniform distribution */
-    /* UNIFORM min max      */
-    transf   = trans_unif;
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-  } else if (strcmp(func_name , "DUNIF") == 0) {
-    /* DUNIF discrete uniform distribution */
-    /* DUNIF steps min max */
-    transf   = trans_dunif;
-    arg_pack_append_int(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-  } else if (strcmp(func_name , "ERRF") == 0) {
-    /* ERRF min max skewness width */
-    transf   = trans_errf;
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-  } else if (strcmp(func_name , "DERRF") == 0) {
-    /* DERRF distribution */
-    /* DUNIF steps min max skewness width */
-    transf   = trans_derrf;
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-  } else if (strcmp(func_name , "LOGUNIF") == 0) {
-    /* LOGUNIF min max */
-    transf   = trans_logunif;
-    arg_pack_append_double(arg_pack , 0);
-    arg_pack_append_double(arg_pack , 0);
-  } else if (strcmp(func_name , "CONST") == 0) {
-    /* Constant    */
-    /* CONST value */
-    transf   = trans_const;
-    arg_pack_append_double(arg_pack , 0);
-  } else 
-    util_abort("%s: function name:%s not recognized - aborting \n", __func__ , func_name);
+  trans_func = trans_func_alloc( func_name );
+  arg_pack_fscanf( trans_func->params , stream );
   
-  arg_pack_fscanf(arg_pack , stream);
-  arg_pack_lock( arg_pack );
-  
-  *_func_name = func_name;
-  *_arg_pack  = arg_pack;
-
-  
-  /*******************************************************************/
-  /* Going through one more time to check that the input is valid    */
-  /*******************************************************************/
-  if (strcmp(func_name , "DUNIF") == 0) 
-    trans_dunif_check("DUNIF" , arg_pack);
-  else if (strcmp(func_name , "ERRF") == 0) 
-    trans_errf_check("ERRF" , arg_pack);
-  else if (strcmp(func_name , "DERRF") == 0) 
-    trans_derrf_check("DERRF" , arg_pack);
-  else if (strcmp(func_name , "LOGUNIF") == 0) 
-    trans_logunif_check("LOGUNIF" , arg_pack);
-  
-
-  return transf;
+  free( func_name);
+  return trans_func;
 }
-
-
-
-
-
-
 

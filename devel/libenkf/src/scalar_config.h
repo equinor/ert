@@ -21,8 +21,6 @@ void                  scalar_config_transform(const scalar_config_type * , const
 double                scalar_config_transform_item(const scalar_config_type *, double, int);
 void                  scalar_config_truncate(const scalar_config_type * config , double *);
 void                  scalar_config_fscanf_line(scalar_config_type * , int , FILE * );
-const        double * scalar_config_get_mean(const scalar_config_type * );
-const        double * scalar_config_get_std(const scalar_config_type * );
 int                   scalar_config_get_active_size(const scalar_config_type *);
 
 SAFE_CAST_HEADER(scalar_config)

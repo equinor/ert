@@ -150,14 +150,14 @@ void scalar_buffer_fsave(const scalar_type * scalar , buffer_type * buffer , boo
 
 
 void scalar_sample(scalar_type *scalar) {
+  const double mean = 0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */
+  const double std  = 1.0; 
   const scalar_config_type *config   = scalar->config;
-  const double            *std       = scalar_config_get_std(config);
-  const double            *mean      = scalar_config_get_mean(config);
   const int                data_size = scalar_config_get_data_size(config);
   int i;
   
   for (i=0; i < data_size; i++) 
-    scalar->data[i] = enkf_util_rand_normal(mean[i] , std[i]);
+    scalar->data[i] = enkf_util_rand_normal(mean , std);
   
   scalar->output_valid = false;
 }

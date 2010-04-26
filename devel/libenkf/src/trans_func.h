@@ -8,16 +8,20 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-double             trans_errf    (double  , const arg_pack_type *);
-double             trans_tanh    (double  , const arg_pack_type *);
-double             trans_exp     (double  , const arg_pack_type *);
-double             trans_pow10   (double  , const arg_pack_type *);
-double             trans_step    (double  , const arg_pack_type *);
-double             trans_const   (double  , const arg_pack_type *);
-double             trans_normal  (double  , const arg_pack_type *);
-double             trans_unif    (double  , const arg_pack_type *);
-double             trans_logunif (double  , const arg_pack_type *);
-transform_ftype  * trans_func_lookup(FILE * stream, char ** , arg_pack_type ** );
+
+typedef struct trans_func_struct  trans_func_type;
+typedef double (transform_ftype) (double , const arg_pack_type *);
+typedef bool   (validate_ftype)  (const trans_func_type * );
+
+trans_func_type  * trans_func_fscanf_alloc( FILE * stream );
+double             trans_func_eval( const trans_func_type * trans_func , double x);
+
+void               trans_func_free( trans_func_type * trans_func );
+void               trans_func_iset_double_param(trans_func_type  * trans_func , int param_index , double value );
+bool               trans_func_set_double_param( trans_func_type  * trans_func , const char * param_name , double value );
+void               trans_func_iset_int_param(trans_func_type  * trans_func , int param_index , int value );
+bool               trans_func_set_int_param( trans_func_type  * trans_func , const char * param_name , int value );
+
 
 #ifdef __cplusplus
 }
