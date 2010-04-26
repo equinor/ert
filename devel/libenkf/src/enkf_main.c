@@ -1297,8 +1297,8 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
     for (iens = 0; iens < ens_size; iens++) {
       enkf_state_type * enkf_state = enkf_main->ensemble[iens];
       status = enkf_state_get_run_status( enkf_state );
-      if ((status != JOB_QUEUE_NOT_ACTIVE) && ( status != JOB_QUEUE_ALL_OK) && (status != JOB_QUEUE_ALL_FAIL))
-        jobs_remaining += 1; /* OK - the job is still running/loading. */
+      if ((status & JOB_QUEUE_CAN_FINALIZE) == 0)
+        jobs_remaining += 1;  /* OK - the job is still running/loading. */
 
       if ((status == JOB_QUEUE_RUN_OK) || (status == JOB_QUEUE_RUN_FAIL)) {
         if (status_list[iens] != status) {

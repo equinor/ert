@@ -1524,7 +1524,7 @@ bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resampl
   const shared_info_type * shared_info = enkf_state->shared_info;
   int iens                       = member_config_get_iens( enkf_state->my_config );
   job_status_type current_status = job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
-  if (current_status == JOB_QUEUE_USER_KILLED) { /* Will ONLY restart simulations which are in of the states : [JOB_QUEUE_USER_KILLED]  */
+  if (current_status & JOB_QUEUE_CAN_RESTART) { 
     /* Reinitialization of the nodes */
     if (resample) {
       stringlist_type * init_keys = ensemble_config_alloc_keylist_from_var_type( enkf_state->ensemble_config , DYNAMIC_STATE + PARAMETER );

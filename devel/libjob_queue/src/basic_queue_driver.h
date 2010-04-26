@@ -11,19 +11,48 @@ typedef enum { NULL_DRIVER  = 0,
                RSH_DRIVER   = 3} job_driver_type;
 
 
-typedef enum {JOB_QUEUE_NOT_ACTIVE    =    0 ,   /* This value is used in external query routines - for jobs which are (currently) not active. */
-              JOB_QUEUE_LOADING       =    1 ,   /* This value is used by external routines. Not used in the libjob_queue implementation. */
-	      JOB_QUEUE_WAITING       =    2 ,   /* A node which is waiting in the internal queue. */
-	      JOB_QUEUE_PENDING       =    3 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
-	      JOB_QUEUE_RUNNING       =    4 ,   /* The job is running */
-	      JOB_QUEUE_DONE          =    5 ,   /* The job is done - but we have not yet checked if the target file is produced */
-	      JOB_QUEUE_EXIT          =    6 ,   /* The job has exited - check attempts to determine if we retry or go to complete_fail   */
-	      JOB_QUEUE_RUN_OK        =    7 ,   /* The job has completed - and all checks performed by the queue layer indicate success. */
-	      JOB_QUEUE_RUN_FAIL      =    8 ,   /* The job has completed - but the queue system has detected that it has failed.         */
-              JOB_QUEUE_ALL_OK        =    9 ,   /* The job has loaded OK - observe that it is the calling scope which will set the status to this. */
-              JOB_QUEUE_ALL_FAIL      =   10 ,   /* The job has failed completely - the calling scope must set this status. */
-              JOB_QUEUE_USER_KILLED   =   11 ,   /* The job has been killed by the user. */
-	      JOB_QUEUE_MAX_STATE     =   12 } job_status_type;
+typedef enum {JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in external query routines - for jobs which are (currently) not active. */
+              JOB_QUEUE_LOADING       =    2 ,   /* This value is used by external routines. Not used in the libjob_queue implementation. */
+	      JOB_QUEUE_WAITING       =    4 ,   /* A node which is waiting in the internal queue. */
+	      JOB_QUEUE_PENDING       =    8 ,   /* A node which is pending - a status returned by the external system. I.e LSF */
+	      JOB_QUEUE_RUNNING       =   16 ,   /* The job is running */
+	      JOB_QUEUE_DONE          =   32 ,   /* The job is done - but we have not yet checked if the target file is produced */
+	      JOB_QUEUE_EXIT          =   64 ,   /* The job has exited - check attempts to determine if we retry or go to complete_fail   */
+	      JOB_QUEUE_RUN_OK        =  128 ,   /* The job has completed - and all checks performed by the queue layer indicate success. */
+	      JOB_QUEUE_RUN_FAIL      =  256 ,   /* The job has completed - but the queue system has detected that it has failed.         */
+              JOB_QUEUE_ALL_OK        =  512 ,   /* The job has loaded OK - observe that it is the calling scope which will set the status to this. */
+              JOB_QUEUE_ALL_FAIL      = 1024 ,   /* The job has failed completely - the calling scope must set this status. */
+              JOB_QUEUE_USER_KILLED   = 2048 ,   /* The job has been killed by the user - can restart. */
+              JOB_QUEUE_USER_EXIT     = 4096 }   /* The whole job_queue has been exited by the user - the job can NOT be restarted. */
+              job_status_type;
+#define JOB_QUEUE_MAX_STATE 13
+
+
+/*
+  All jobs which are in the status set defined by
+  JOB_QUEUE_CAN_RESTART can be restarted based on external
+  user-input. It is OK to try to restart a job which is not in this
+  state - basically nothing should happen.
+*/
+#define JOB_QUEUE_CAN_RESTART  (JOB_QUEUE_ALL_FAIL   + JOB_QUEUE_USER_KILLED)
+
+
+/*
+  These are the jobs which can be killed. It is OK to try to kill a
+  job which is not in this state, the only thing happening is that the
+  function job_queue_kill_simulation() wil return false.
+*/
+#define JOB_QUEUE_CAN_KILL     (JOB_QUEUE_WAITING    + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING)
+
+
+/*
+  An external thread is watching the queue (enkf_main_wait_loop()),
+  and sending instructions to load (and verfiy) the results when the
+  queue says that the jobs have completed. This external
+  "queue-watcher" will exit when all jobs are in one of the states in
+  JOB_QUEUE_CAN_FINALIZE.
+*/
+#define JOB_QUEUE_CAN_FINALIZE (JOB_QUEUE_NOT_ACTIVE + JOB_QUEUE_USER_EXIT + JOB_QUEUE_ALL_FAIL + JOB_QUEUE_ALL_OK)   
 
 
 
