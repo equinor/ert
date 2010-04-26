@@ -28,7 +28,7 @@ def createEclipsePage(configPanel, parent):
     r.getter = lambda ert : ert.enkf.ecl_config_get_gridfile(ert.ecl_config)
     r.setter = lambda ert, value : ert.enkf.ecl_config_set_grid(ert.ecl_config, str(value))
 
-    r = configPanel.addRow(PathChooser(parent, "Schedule file" , "schedule_file" , files = True))
+    r = configPanel.addRow(PathChooser(parent, "Schedule file" , "schedule_file" , show_files = True))
     r.initialize = lambda ert : [ert.setTypes("ecl_config_get_schedule_file", ertwrapper.c_char_p),
                                  ert.setTypes("ecl_config_set_schedule_file", None, ertwrapper.c_char_p)]
     r.getter = lambda ert : ert.enkf.ecl_config_get_schedule_file(ert.ecl_config)

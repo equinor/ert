@@ -13,19 +13,23 @@ class PathChooser(HelpedWidget):
     required_field_msg = "A value is required."
     path_format_msg = "Must be a path format."
 
-    def __init__(self, parent=None, pathLabel="Path", help="", files=False, must_be_set=True, path_format=False, must_exist=True):
+    def __init__(self, parent=None, pathLabel="Path", help="",
+                 show_files=False, 
+                 must_be_set=True,
+                 path_format=False,
+                 must_exist=True):
         """Construct a PathChooser widget"""
         HelpedWidget.__init__(self, parent, pathLabel, help)
 
         self.editing = True
-        self.selectFiles = files
+        self.selectFiles = show_files
         self.must_be_set = must_be_set
         self.path_format = path_format
         self.must_exist = must_exist
 
         self.pathLine = QtGui.QLineEdit()
         #self.pathLine.setMinimumWidth(250)
-        
+
         self.connect(self.pathLine, QtCore.SIGNAL('editingFinished()'), self.validatePath)
         self.connect(self.pathLine, QtCore.SIGNAL('editingFinished()'), self.contentsChanged)
         self.connect(self.pathLine, QtCore.SIGNAL('textChanged(QString)'), self.validatePath)
@@ -48,7 +52,6 @@ class PathChooser(HelpedWidget):
         self.editing = False
 
 
-
     def validatePath(self):
         """Called whenever the path is modified"""
         palette = self.pathLine.palette()
@@ -69,7 +72,6 @@ class PathChooser(HelpedWidget):
             if self.must_exist and not self.path_format:
                 message = self.file_does_not_exist_msg
                 color = self.invalidColor
-
 
         self.setValidationMessage(message)
         self.pathLine.setToolTip(message)
@@ -102,11 +104,11 @@ class PathChooser(HelpedWidget):
         if not self.editing:
             self.updateContent(self.pathLine.text())
 
-            
+
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the edit line"""
         self.editing = True
-        
+
         path = self.getFromModel()
         if path == None:
             path = ""
