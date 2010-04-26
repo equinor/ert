@@ -66,7 +66,7 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
             color = self.waiting
         elif data.isRunning():
             color = self.running
-        elif data.finishedSuccesfully():
+        elif data.finishedSuccessfully():
             color = self.finished
         elif data.hasFailed():
             color = self.failed
@@ -206,20 +206,33 @@ class SimulationPanel(QtGui.QStackedWidget):
         self.noSimulationsPanel = QtGui.QWidget()
 
         layout = QtGui.QVBoxLayout()
-        label = QtGui.QLabel("Pause queue after currently running jobs are finished.")
+        label = QtGui.QLabel("Pause queue after currently running jobs are finished:")
         label.setWordWrap(True)
-        #label.setAlignment(QtCore.Qt.AlignHCenter)
         layout.addWidget(label)
 
         self.pauseButton = QtGui.QToolButton(self)
-        #self.pauseButton.setIcon(resourceStateIcon("pause", "start"))
         self.pauseButton.setIcon(resourceIcon("pause"))
         self.pauseButton.setCheckable(True)
         self.connect(self.pauseButton, QtCore.SIGNAL('clicked()'), lambda : self.ctrl.pause(self.pauseButton.isChecked()))
 
+
         buttonLayout = QtGui.QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.pauseButton)
+        buttonLayout.addStretch(1)
+        layout.addLayout(buttonLayout)
+
+        label = QtGui.QLabel("Remove all jobs from the queue:")
+        label.setWordWrap(True)
+        layout.addWidget(label)
+
+        self.killAllButton = QtGui.QToolButton(self)
+        self.killAllButton.setIcon(resourceIcon("cancel"))
+        self.connect(self.killAllButton, QtCore.SIGNAL('clicked()'), self.ctrl.killAll)
+
+        buttonLayout = QtGui.QHBoxLayout()
+        buttonLayout.addStretch(1)
+        buttonLayout.addWidget(self.killAllButton)
         buttonLayout.addStretch(1)
 
         layout.addLayout(buttonLayout)
@@ -228,7 +241,8 @@ class SimulationPanel(QtGui.QStackedWidget):
 
 
 
-    def setSimulations(self, selection=[]):
+    def setSimulations(self, selection=None):
+        if selection is None: selection = []
         self.ctrl.setSimulations(selection)
 
 #    def markText(self, a, b):
@@ -267,6 +281,7 @@ class SimulationPanelController:
             ert.setTypes("job_queue_get_pause", library = ert.job_queue)
             ert.setTypes("job_queue_set_pause_on", library = ert.job_queue)
             ert.setTypes("job_queue_set_pause_off", library = ert.job_queue)
+            ert.setTypes("job_queue_user_exit", library = ert.job_queue)
             ert.setTypes("enkf_main_iget_state", argtypes=ertwrapper.c_int)
             ert.setTypes("enkf_state_kill_simulation", None)
             ert.setTypes("enkf_state_resubmit_simulation", None, ertwrapper.c_int)
@@ -284,8 +299,8 @@ class SimulationPanelController:
             state = self.ert.enkf.enkf_main_iget_state(self.ert.main, simulation.name)
             status = self.ert.enkf.enkf_state_get_run_status(state)
 
-            if status == Simulation.RUNNING:
-                self.ert.enkf.enkf_state_kill_simulation(state)
+            #if status == Simulation.RUNNING:
+            self.ert.enkf.enkf_state_kill_simulation(state)
 
     def restart(self, resample):
         """Restarts the selected simulations. May also resample."""
@@ -293,8 +308,8 @@ class SimulationPanelController:
             state = self.ert.enkf.enkf_main_iget_state(self.ert.main, simulation.name)
             status = self.ert.enkf.enkf_state_get_run_status(state)
 
-            if status == Simulation.USER_KILLED:
-                self.ert.enkf.enkf_state_resubmit_simulation(state , resample)
+            #if status == Simulation.USER_KILLED:
+            self.ert.enkf.enkf_state_resubmit_simulation(state , resample)
 
     def pause(self, pause):
         """Pause the job queue after the currently running jobs are finished."""
@@ -307,6 +322,12 @@ class SimulationPanelController:
             self.statistics.startTiming()
             self.ert.job_queue.job_queue_set_pause_off(job_queue)
 
+    def killAll(self):
+        killAll = QtGui.QMessageBox.question(self.view, "Remove all jobs?", "Are you sure you want to remove all jobs from the queue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+
+        if killAll == QtGui.QMessageBox.Yes:
+            job_queue = self.ert.enkf.site_config_get_job_queue(self.ert.site_config)
+            self.ert.job_queue.job_queue_user_exit(job_queue)
 
     def showSelectedSimulations(self):
         if len(self.selectedSimulations) >= 2:
@@ -342,7 +363,8 @@ class SimulationPanelController:
             self.view.stateLabel.setText(status)
 
 
-    def setSimulations(self, selection=[]):
+    def setSimulations(self, selection=None):
+        if selection is None: selection = []
         self.selectedSimulations = selection
 
         if len(selection) >= 2:
@@ -433,7 +455,7 @@ class Simulation:
     def notActive(self):
         return self.checkStatus(Simulation.NOT_ACTIVE)
 
-    def finishedSuccesfully(self):
+    def finishedSuccessfully(self):
         return self.checkStatus(Simulation.ALL_OK)
 
     def isUserKilled(self):

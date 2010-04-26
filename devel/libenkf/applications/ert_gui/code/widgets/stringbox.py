@@ -36,7 +36,7 @@ class StringBox(HelpedWidget):
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the edit line"""
         self_get_from_model = self.getFromModel()
-        if self_get_from_model == None:
+        if self_get_from_model is None:
             self_get_from_model = ""
 
         self.boxString.setText(self_get_from_model)

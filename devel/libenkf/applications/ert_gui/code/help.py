@@ -12,7 +12,7 @@ def resolveHelpLabel(label):
     if os.path.exists(filename) and os.path.isfile(filename):
         f = open(filename, 'r')
         help = f.read()
-        f.closed
+        f.close()
         return help
     else:
         return ""

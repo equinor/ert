@@ -7,6 +7,7 @@ from widgets.spinnerwidgets import IntegerSpinner, DoubleSpinner, DoubleSpinner
 import widgets.tablewidgets
 from widgets.pathchooser import PathChooser
 from widgets.combochoice import ComboChoice
+from PyQt4 import QtGui
 
 def createAnalysisPage(configPanel, parent):
     configPanel.startPage("Analysis")

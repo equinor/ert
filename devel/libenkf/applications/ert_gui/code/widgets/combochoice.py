@@ -6,11 +6,14 @@ class ComboChoice(HelpedWidget):
     A combo box widget for choices. The data structure expected and sent to the getter and setter is a string
     that is equal to one of the available ones.
     """
-    def __init__(self, parent=None, choiceList=["No choices"], comboLabel="Choice", help=""):
+    def __init__(self, parent=None, choiceList=None, comboLabel="Choice", help=""):
         """Construct a ComboChoice widget"""
         HelpedWidget.__init__(self, parent, comboLabel, help)
 
         self.combo = QtGui.QComboBox(self)
+
+        if choiceList is None:
+            choiceList = ["No choices"]
 
         for choice in choiceList:
             self.combo.addItem(choice)

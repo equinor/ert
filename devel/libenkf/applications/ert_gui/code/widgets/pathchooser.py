@@ -102,7 +102,7 @@ class PathChooser(HelpedWidget):
     def contentsChanged(self):
         """Called whenever the path is changed."""
         if not self.editing:
-            self.updateContent(self.pathLine.text())
+            self.updateContent(str(self.pathLine.text()))
 
 
     def fetchContent(self):
