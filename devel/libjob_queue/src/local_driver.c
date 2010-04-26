@@ -82,7 +82,7 @@ void local_driver_free_job(void * __driver , void * __job) {
 void local_driver_kill_job(void * __driver , void * __job) {
   local_job_type    * job    = local_job_safe_cast( __job );
   if (job->active)
-    pthread_kill(job->run_thread , SIGABRT);
+    pthread_cancel( job->run_thread );
   local_job_free( job );
 }
 
