@@ -52,7 +52,7 @@ class JobsDialog(QtGui.QDialog):
         memberLayout.addLayout(legendLayout)
 
 
-        self.doneButton = QtGui.QPushButton("Kill", self)
+        self.doneButton = QtGui.QPushButton("Done", self)
         self.connect(self.doneButton, QtCore.SIGNAL('clicked()'), self.accept)
 
         buttonLayout = QtGui.QHBoxLayout()

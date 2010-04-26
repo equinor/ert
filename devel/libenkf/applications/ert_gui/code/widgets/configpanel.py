@@ -18,7 +18,7 @@ class ConfigPanel(QtGui.QTabWidget):
         self.formLayout.setLabelAlignment(QtCore.Qt.AlignRight)
 
 
-    def addRow(self, row):
+    def addRow(self, row, label=None):
         """
         Add a new row on a configuration page. Returns the row widget.
         If the row does not have a getLabel() function the row spans both columns.
@@ -26,7 +26,10 @@ class ConfigPanel(QtGui.QTabWidget):
         if hasattr(row, "getLabel") and not row.getLabel() == "":            
             self.formLayout.addRow(row.getLabel(), row)
         else:
-            self.formLayout.addRow(row)
+            if label is None:
+                self.formLayout.addRow(row)
+            else:
+                self.formLayout.addRow(label, row)
             
         return row
 
