@@ -19,11 +19,10 @@ class ParameterPanel(HelpedWidget):
         """Construct a ParameterPanel."""
         HelpedWidget.__init__(self, parent, label, help)
 
-        self.typeIcons = {}
-        self.typeIcons["Field"] = util.resourceIcon("grid_16")
-        self.typeIcons["Data"] = util.resourceIcon("data")
-        self.typeIcons["Summary"] = util.resourceIcon("summary")
-        self.typeIcons["Keyword"] = util.resourceIcon("key")
+        self.typeIcons = {"Field": util.resourceIcon("grid_16"),
+                          "Data": util.resourceIcon("data"),
+                          "Summary": util.resourceIcon("summary"),
+                          "Keyword": util.resourceIcon("key")}
 
         self.searchableList = SearchableList(converter=lambda item : item.getName())
         self.addWidget(self.searchableList)
@@ -123,7 +122,7 @@ class ParameterPanel(HelpedWidget):
             row = []
             for columnIndex in range(self.table.columnCount()):
                 item = self.table.item(rowIndex, columnIndex)
-                if not item == None:
+                if not item is None:
                     row.append(str(item.text()))
                 else:
                     row.append("")

@@ -93,6 +93,11 @@ class RunWidget(HelpedWidget):
             QtGui.QMessageBox.warning(self, "Missing data", "At least one member must be selected!")
             return
 
+        if not ert.enkf.enkf_main_is_initialized(ert.main):
+            QtGui.QMessageBox.warning(self, "Case not initialized", "The case must be initialized before simulation can start!")
+            return
+
+
         simFrom = self.simulateFrom.getSelectedValue()
         simTo = self.simulateTo.getSelectedValue()
 
@@ -157,6 +162,7 @@ class RunWidget(HelpedWidget):
         ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
         ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
         ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p)        
+        ert.setTypes("enkf_main_is_initialized", ertwrapper.c_int)
 
 
     def getter(self, ert):

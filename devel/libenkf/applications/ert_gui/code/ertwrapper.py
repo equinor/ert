@@ -182,8 +182,11 @@ class ErtWrapper:
         Since all methods need a pointer, this is already defined as c_long.
         library defaults to the enkf library
         """
-        if library == None:
+        if library is None:
             library = self.enkf
+
+        if argtypes is None:
+            print "Error"
 
         func = getattr(library, function)
         func.restype = restype
@@ -195,7 +198,7 @@ class ErtWrapper:
             else:
                 args = argtypes
             func.argtypes = args
-        elif argtypes == None:
+        elif argtypes is None:
             func.argtypes = []
         else:
             if selfpointer:

@@ -110,7 +110,7 @@ class PathChooser(HelpedWidget):
         self.editing = True
 
         path = self.getFromModel()
-        if path == None:
+        if path is None:
             path = ""
 
         self.pathLine.setText(path)
