@@ -35,17 +35,17 @@ time_t              job_queue_iget_submit_time( job_queue_type * queue, int exte
 const char        * job_queue_get_driver_name( const job_queue_type * queue );
 job_driver_type     job_queue_lookup_driver_name( const char * driver_name );
 
-void                job_queue_kill_job( job_queue_type * queue , int external_id);
+bool                job_queue_kill_job( job_queue_type * queue , int external_id);
 bool                job_queue_is_running( const job_queue_type * queue );
 void                job_queue_set_max_submit( job_queue_type * job_queue , int max_submit );
 int                 job_queue_get_max_submit(const job_queue_type * job_queue );
 void                job_queue_set_run_cmd( job_queue_type * job_queue , const char * run_cmd );
 const char        * job_queue_get_run_cmd( job_queue_type * job_queue);
 
-bool        job_queue_get_pause( const job_queue_type * job_queue );
-void        job_queue_set_pause_on( job_queue_type * job_queue);
-void        job_queue_set_pause_off( job_queue_type * job_queue);
-
+bool                job_queue_get_pause( const job_queue_type * job_queue );
+void                job_queue_set_pause_on( job_queue_type * job_queue);
+void                job_queue_set_pause_off( job_queue_type * job_queue);
+void                job_queue_user_exit( job_queue_type * queue);
 
 
 #ifdef __cplusplus

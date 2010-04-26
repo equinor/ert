@@ -38,8 +38,6 @@
 
 #ifdef  LSF_LIBRARY_DRIVER
 #include <lsf/lsbatch.h>
-#else
-#define LSF_SYSTEM_DRIVER
 #endif
 
 

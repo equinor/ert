@@ -94,7 +94,7 @@ void * submit_job_thread__(void * __arg) {
   const char * executable  = arg_pack_iget_ptr(arg_pack , 0);
   const char * run_path    = arg_pack_iget_ptr(arg_pack , 1);
   local_job_type * job     = arg_pack_iget_ptr(arg_pack , 2);
-
+  
   util_fork_exec(executable , 1 , &run_path , true , NULL , NULL , NULL , NULL , NULL); 
   job->status = JOB_QUEUE_DONE;
   pthread_exit(NULL);
@@ -117,13 +117,13 @@ void * local_driver_submit_job(void * __driver,
     arg_pack_append_ptr( arg_pack , (char *) run_path);
     arg_pack_append_ptr( arg_pack , job );
     pthread_mutex_lock( &driver->submit_lock );
+    job->active = true;
+    job->status = JOB_QUEUE_RUNNING;
+    
     if (pthread_create( &job->run_thread , &driver->thread_attr , submit_job_thread__ , arg_pack) != 0) 
       util_abort("%s: failed to create run thread - aborting \n",__func__);
     
-    job->active = true;
-    job->status = JOB_QUEUE_RUNNING;
     pthread_mutex_unlock( &driver->submit_lock );
-    
     return job;
   }
 }
