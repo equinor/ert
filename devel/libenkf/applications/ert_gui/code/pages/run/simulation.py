@@ -359,18 +359,24 @@ class SimulationPanelController:
 
 
 class Simulation:
-    NOT_ACTIVE = 0
-    LOADING = 1
-    WAITING = 2
-    PENDING = 3
-    RUNNING = 4
-    DONE = 5
-    EXIT = 6
-    RUN_OK = 7
-    RUN_FAIL = 8
-    ALL_OK = 9
-    ALL_FAIL = 10
-    USER_KILLED = 11
+    NOT_ACTIVE  =    1
+    LOADING     =    2
+    WAITING     =    4
+    PENDING     =    8
+    RUNNING     =   16
+    DONE        =   32
+    EXIT        =   64
+    RUN_OK      =  128
+    RUN_FAIL    =  256
+    ALL_OK      =  512
+    ALL_FAIL    = 1024
+    USER_KILLED = 2048
+    USER_EXIT   = 4096
+
+#
+# Observe that the status strings are available from the function: libjob_queue.job_queue_status_name( status_code )
+#
+
 
     job_status_type_reverse = {"JOB_QUEUE_NOT_ACTIVE" : NOT_ACTIVE,
                                "JOB_QUEUE_LOADING" : LOADING,
