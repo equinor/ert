@@ -149,3 +149,53 @@ Missing initializer: select_case
 
 
 Missing initializer: update_log_path
+
+
+
+
+#Get: s = enkf_main_get_data_kw( enkf_main )
+#     subst_list_get_size( s )
+#     subst_list_iget_key( s )
+#     subst_list_iget_value( s )
+#Set: enkf_main_clear_data_kw( enkf_main )
+#     enkf_main_add_data_kw( enkf_main , key , value )
+
+#Get: m = enkf_main_get_model_config( enkf_main )
+#         model_config_get_enkf_sched_file( m )
+#Set:     model_config_set_enkf_sched_file( m , "FILENAME" )
+
+#Get    l = enkf_main_get_local_config( enkf_main );
+#       s = local_config_get_config_files( l )  # Stringlist
+#Set    local_config_clear_config_files( l )
+#       local_config_add_config_file(l , "FILENAME")
+
+#Get    s = enkf_main_get_site_config( enkf_main )
+#       site_config_get_max_running_(lsf|rsh|local)( s )
+#Set    site_config_get_max_running_(lsf|rsh|local)( s , value )
+
+#Get    s = enkf_main_get_site_config( enkf_main )
+#       h = site_config_get_rsh_host_list( s )
+#       Iterer over hash - men bruk hash_get_int() for aa faa antall jobber en host kan ta.
+#Set    site_config_clear_rsh_host_list( s )
+#       site_config_add_rsh_host( s , host_name , max_running )
+
+#Get    s = enkf_main_get_site_config( enkf_main )
+#       queue_name = site_config_get_lsf_queue( s )
+#Set    site_config_set_lsf_queue( s , "NORMAL" )
+
+#       site_config_set_job_queue( s , "LOCAL|LSF|RSH" );
+#       site_config_get_job_queue_name( s );
+
+#self.job_script = "..."
+#self.setenv = [["LSF_BINDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LSF_LIBDIR", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
+#Get:   s = enkf_main_get_site_config( enkf_main )
+#       h = site_config_get_env_hash( s )
+#Set    site_config_clear_env( s )
+#       site_config_setenv( s , var , value )
+
+#self.update_path = [["PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/bin"], ["LD_LIBRARY_PATH", "/prog/LSF/7.0/linux2.6-glibc2.3-x86_64/lib"]]
+#Get:   s = enkf_main_get_site_config( enkf_main )
+#       pathlist  = site_config_get_path_variables( s )
+#       valuelist = site_config_get_path_values( s )
+#Set:   site_config_clear_pathvar( s )
+#       site_config_update_pathvar( s , path , value );

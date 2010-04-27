@@ -10,6 +10,7 @@ class PathChooser(HelpedWidget):
     invalidColor = QtGui.QColor(235, 235, 255)
 
     file_does_not_exist_msg = "The specified path does not exist."
+    #file_does_not_exist_msg = "The specified path does not exist."
     required_field_msg = "A value is required."
     path_format_msg = "Must be a path format."
 
@@ -35,6 +36,7 @@ class PathChooser(HelpedWidget):
         self.connect(self.pathLine, QtCore.SIGNAL('editingFinished()'), self.validatePath)
         self.connect(self.pathLine, QtCore.SIGNAL('editingFinished()'), self.contentsChanged)
         self.connect(self.pathLine, QtCore.SIGNAL('textChanged(QString)'), self.validatePath)
+
         self.addWidget(self.pathLine)
 
         dialogButton = QtGui.QToolButton(self)
@@ -75,10 +77,14 @@ class PathChooser(HelpedWidget):
             color = self.errorColor
             self.valid = False
         elif not exists:
-            if self.must_exist and not self.path_format:
+            if not self.path_format and self.must_exist:
                 message = self.file_does_not_exist_msg
-                color = self.invalidColor
                 self.valid = False
+
+                if self.must_be_set:
+                    color = self.errorColor
+                else:
+                    color = self.invalidColor
 
         self.setValidationMessage(message)
         self.pathLine.setToolTip(message)
@@ -118,6 +124,7 @@ class PathChooser(HelpedWidget):
                     currentDirectory = match.group(1)
 
             self.pathLine.setText(currentDirectory)
+            self.updateContent(self.getPath())
 
         self.editing = False
 
