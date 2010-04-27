@@ -17,7 +17,8 @@ class PathChooser(HelpedWidget):
                  show_files=False, 
                  must_be_set=True,
                  path_format=False,
-                 must_exist=True):
+                 must_exist=True,
+                 absolute_path = False):
         """Construct a PathChooser widget"""
         HelpedWidget.__init__(self, parent, pathLabel, help)
 
@@ -26,6 +27,7 @@ class PathChooser(HelpedWidget):
         self.must_be_set = must_be_set
         self.path_format = path_format
         self.must_exist = must_exist
+        self.absolute_path = absolute_path
 
         self.pathLine = QtGui.QLineEdit()
         #self.pathLine.setMinimumWidth(250)
@@ -56,22 +58,27 @@ class PathChooser(HelpedWidget):
         """Called whenever the path is modified"""
         palette = self.pathLine.palette()
 
-        text = str(self.pathLine.text())
+        text = self.getPath()
         exists = os.path.exists(text)
 
         color = self.validColor
         message = ""
 
+        self.valid = True
+
         if text.strip() == "" and self.must_be_set:
             message = self.required_field_msg
             color = self.errorColor
+            self.valid = False
         elif self.path_format and not re.search("%[0-9]*d", text):
             message = self.path_format_msg
             color = self.errorColor
+            self.valid = False
         elif not exists:
             if self.must_exist and not self.path_format:
                 message = self.file_does_not_exist_msg
                 color = self.invalidColor
+                self.valid = False
 
         self.setValidationMessage(message)
         self.pathLine.setToolTip(message)
@@ -80,10 +87,20 @@ class PathChooser(HelpedWidget):
         self.pathLine.setPalette(palette)
 
 
+    def getPath(self):
+        return str(self.pathLine.text())
+
+    def pathExists(self):
+        return os.path.exists(self.getPath())
+        
+    def isValid(self):
+        return self.valid
+
+
     def selectDirectory(self):
-        """Pops up the select a directory dialog"""
+        """Pops up the 'select a directory' dialog"""
         self.editing = True
-        currentDirectory = self.pathLine.text()
+        currentDirectory = self.getPath()
 
         #if not os.path.exists(currentDirectory):
         #    currentDirectory = "~"
@@ -94,6 +111,12 @@ class PathChooser(HelpedWidget):
             currentDirectory = QtGui.QFileDialog.getExistingDirectory(self, "Select a directory", currentDirectory)
 
         if not currentDirectory == "":
+            if not self.absolute_path:
+                cwd = os.getcwd()
+                match = re.match(cwd + "/(.*)", currentDirectory)
+                if match:
+                    currentDirectory = match.group(1)
+
             self.pathLine.setText(currentDirectory)
 
         self.editing = False
@@ -102,7 +125,7 @@ class PathChooser(HelpedWidget):
     def contentsChanged(self):
         """Called whenever the path is changed."""
         if not self.editing:
-            self.updateContent(str(self.pathLine.text()))
+            self.updateContent(self.getPath())
 
 
     def fetchContent(self):

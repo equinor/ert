@@ -8,11 +8,12 @@ class SearchableList(QtGui.QWidget):
     """
     passiveColor = QtGui.QColor(194, 194, 194)
 
-    def __init__(self, parent=None, converter=lambda item : str(item.text()), listHeight=350):
+    def __init__(self, parent=None, converter=lambda item : str(item.text()), list_height=350, list_width = 130, ignore_case=False):
         QtGui.QWidget.__init__(self, parent)
-        self.setMaximumWidth(130)
-        self.setMinimumWidth(130)
+        self.setMaximumWidth(list_width)
+        self.setMinimumWidth(list_width)
         self.converter = converter
+        self.ignore_case = ignore_case
 
         vlayout = QtGui.QVBoxLayout()
         vlayout.setMargin(0)
@@ -28,9 +29,9 @@ class SearchableList(QtGui.QWidget):
         vlayout.addWidget(self.searchBox)
 
         self.list = QtGui.QListWidget(parent)
-        self.list.setMaximumWidth(128)
-        self.list.setMinimumWidth(128)
-        self.list.setMinimumHeight(listHeight)
+        self.list.setMaximumWidth(list_width - 2)
+        self.list.setMinimumWidth(list_width - 2)
+        self.list.setMinimumHeight(list_height)
         self.list.setSortingEnabled(True)
         vlayout.addWidget(self.list)
         addItem = lambda : self.emit(QtCore.SIGNAL("addItem(list)"), self.list)
@@ -77,6 +78,11 @@ class SearchableList(QtGui.QWidget):
             for index in range(self.list.count()):
                 item = self.list.item(index)
                 text = self.converter(item)
+
+                if self.ignore_case:
+                    value = str(value).lower()
+                    text = text.lower()
+
                 if not text.find(value) == -1:
                     item.setHidden(False)
                 else:

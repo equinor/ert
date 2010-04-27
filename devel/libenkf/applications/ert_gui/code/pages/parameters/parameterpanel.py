@@ -11,6 +11,7 @@ from parameterdialog import ParameterDialog
 from widgets.searchablelist import SearchableList
 from pages.parameters.datapanel import DataModel, DataPanel
 from pages.parameters.keywordpanel import KeywordPanel, KeywordModel
+import widgets.util
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
@@ -30,12 +31,7 @@ class ParameterPanel(HelpedWidget):
 
         self.pagesWidget = QtGui.QStackedWidget()
 
-
-        self.emptyPanel = QtGui.QFrame(self)
-
-        self.emptyPanel.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.emptyPanel.setFrameShadow(QtGui.QFrame.Plain)
-        self.emptyPanel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.emptyPanel = widgets.util.createEmptyPanel()
 
         self.fieldPanel = FieldPanel(self)
         self.dataPanel = DataPanel(self)

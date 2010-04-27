@@ -8,7 +8,7 @@ import time
 import ertwrapper
 from widgets.util import getItemsFromList
 
-class JobsDialog(QtGui.QDialog):
+class SimulationsDialog(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.setModal(True)
@@ -16,7 +16,7 @@ class JobsDialog(QtGui.QDialog):
         self.setMinimumWidth(250)
         #self.setMinimumHeight(250)
 
-        self.ctrl = JobsDialogController(self) 
+        self.ctrl = SimulationsDialogController(self) 
 
         self.simulationProgress = QtGui.QProgressBar()
         self.simulationProgress.setValue(0)
@@ -114,7 +114,7 @@ class JobsDialog(QtGui.QDialog):
 
 
 
-class JobsDialogController:
+class SimulationsDialogController:
     def __init__(self, view):
         self.view = view
         self.initialized = False
