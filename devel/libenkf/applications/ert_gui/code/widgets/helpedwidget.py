@@ -3,6 +3,7 @@ import help #todo this is not a nice way of solving this...
 import sys
 from widgets.util import resourceIcon, resourceImage
 import inspect
+import widgets.helpedwidget
 
 def abstract():
     """Abstract keyword that indicate an abstract function"""
@@ -10,12 +11,17 @@ def abstract():
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
     raise NotImplementedError(caller + ' must be implemented in subclass')
 
+    
 
 class ContentModel:
     """This class is a wrapper for communication between the model and the view."""
     contentModel = None # A hack to have a "static" class variable
     signalManager = QtCore.QObject()
     observers = []
+
+    INSERT = 1
+    REMOVE = 2
+    UPDATE = 3
 
     def __init__(self):
         """Constructs a ContentModel. All inheritors are registered"""
@@ -33,6 +39,14 @@ class ContentModel:
         """MUST be implemented to update the source with new data. Should not be called directly."""
         abstract()
 
+    def insert(self, model, value):
+        """Can be implemented to insert new data to the source. Should not be called directly."""
+        abstract()
+
+    def remove(self, model, value):
+        """Can be implemented to remove data from the source. Should not be called directly."""
+        abstract()
+
     def fetchContent(self):
         """MUST be implemented. This function is called to tell all inheriting classes to retrieve data from the model. """
         abstract()
@@ -46,15 +60,31 @@ class ContentModel:
         else:
             return self.getter(ContentModel.contentModel)
 
-    def updateContent(self, value):
+    def updateContent(self, value, operation = UPDATE):
         """
         Sends updated data to the model.
-        Calls the setter function with an appropriate model.
-        Emits a SIGNAL 'contentsChanged()' after the setter has been called.
+        Calls the a function with an appropriate model.
+        The function is one of INSERT, REMOVE, UPDATE which corresponds to insert, remove and setter
+        Any value returned by insert, remove or setter is also returned to the caller of this function
+
+        Emits a SIGNAL 'contentsChanged()' after the function has been called.
+        Emits a SIGNAL 'contentsChanged(int)' after the function has been called, where int is the operation performed.
         """
         if not ContentModel.contentModel is None :
-            self.setter(ContentModel.contentModel, value)
+            if operation == ContentModel.INSERT:
+                result = self.insert(ContentModel.contentModel, value)
+            elif operation == ContentModel.REMOVE:
+                result = self.remove(ContentModel.contentModel, value)
+            elif operation == ContentModel.UPDATE:
+                result = self.setter(ContentModel.contentModel, value)
+            else:
+                sys.stderr.write("Unknown operation: %d\n" % (operation))
+                return
+
             self.emit(QtCore.SIGNAL('contentsChanged()'))
+            self.emit(QtCore.SIGNAL('contentsChanged(int)'), operation)
+            
+            return result
 
     def getModel(self):
         """Returns the contentModel associated with this session"""

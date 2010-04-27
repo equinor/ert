@@ -269,13 +269,14 @@ class ErtWrapper:
         self.util.stringlist_free(stringlistpointer)
 
 
-    def getHash(self, hashpointer, intValue = False):
+    def getHash(self, hashpointer, intValue = False, return_type=c_char_p):
         """Retrieves a hash as a list of 2 element lists"""
-        hashiterator = self.util.hash_iter_alloc(hashpointer)
+        hash_iterator = self.util.hash_iter_alloc(hashpointer)
+        self.setTypes("hash_get", return_type, library = self.util)
 
         result = []
-        while not self.util.hash_iter_is_complete(hashiterator):
-            key   = self.util.hash_iter_get_next_key(hashiterator)
+        while not self.util.hash_iter_is_complete(hash_iterator):
+            key   = self.util.hash_iter_get_next_key(hash_iterator)
 
             if not intValue:
                 value = self.util.hash_get(hashpointer, key)
@@ -285,7 +286,7 @@ class ErtWrapper:
 
             result.append([key, str(value)])
 
-        self.util.hash_iter_free(hashiterator)
+        self.util.hash_iter_free(hash_iterator)
         #print result
         return result
 

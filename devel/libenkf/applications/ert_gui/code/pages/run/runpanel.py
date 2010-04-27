@@ -10,7 +10,7 @@ import math
 from widgets.cogwheel import Cogwheel
 from pages.run.simulation import SimulationList, SimulationItemDelegate, SimulationItem, Simulation
 from pages.run.legend import Legend
-from pages.run.jobsdialog import JobsDialog
+from pages.run.simulationsdialog import SimulationsDialog
 
 class RunWidget(HelpedWidget):
     run_mode_type = {"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4}
@@ -122,7 +122,7 @@ class RunWidget(HelpedWidget):
         #else:
         #    init_step_parameter = self.historyLength
 
-        jobsdialog = JobsDialog(self)
+        jobsdialog = SimulationsDialog(self)
         jobsdialog.start(ert = ert,
                          memberCount = self.membersList.count(),
                          selectedMembers = selectedMembers,

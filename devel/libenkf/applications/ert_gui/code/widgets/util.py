@@ -160,6 +160,13 @@ def createSpace(size = 5):
 
     return qw
 
+def createEmptyPanel():
+    emptyPanel = QtGui.QFrame()
+    emptyPanel.setFrameShape(QtGui.QFrame.StyledPanel)
+    emptyPanel.setFrameShadow(QtGui.QFrame.Plain)
+    emptyPanel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+    return emptyPanel
+
 
 def getItemsFromList(list, func = lambda item : str(item.text()), selected = True) :
     """Creates a list of strings from the selected items of a ListWidget or all items if selected is False"""
