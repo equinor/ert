@@ -275,14 +275,14 @@ static void ext_job_init_license_control(ext_job_type * ext_job , const char * l
 
 
 
-static void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
+void ext_job_set_max_time( ext_job_type * ext_job , int max_time ) {
   ext_job->max_running_minutes = max_time;
 }
 
 
 
 
-static void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
+void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe) {
   /**
 
      The portable exe can be a <...> string, i.e. not ready yet. Then
@@ -316,14 +316,10 @@ static void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portab
    Observe that this does NOT reread the ext_job instance from the new
    config_file.
 */
-
 void ext_job_set_config_file(ext_job_type * ext_job, const char * config_file) {
   ext_job->config_file = util_realloc_string_copy(ext_job->config_file , config_file);
 }
 
-void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
-  ext_job->stdout_file = util_realloc_string_copy(ext_job->stdout_file , stdout_file);
-}
 
 void ext_job_set_target_file(ext_job_type * ext_job, const char * target_file) {
   ext_job->target_file = util_realloc_string_copy(ext_job->target_file , target_file);
@@ -341,13 +337,16 @@ void ext_job_set_lsf_request(ext_job_type * ext_job, const char * lsf_request) {
   ext_job->lsf_resources = util_realloc_string_copy(ext_job->lsf_resources , lsf_request);
 }
 
-
 void ext_job_set_private_arg(ext_job_type * ext_job, const char * key , const char * value) {
   subst_list_insert_copy( ext_job->private_args  , key , value , NULL);
 }
 
 void ext_job_set_stdin_file(ext_job_type * ext_job, const char * stdin_file) {
   ext_job->stdin_file = util_realloc_string_copy(ext_job->stdin_file , stdin_file);
+}
+
+void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
+  ext_job->stdout_file = util_realloc_string_copy(ext_job->stdout_file , stdout_file);
 }
 
 void ext_job_set_stderr_file(ext_job_type * ext_job, const char * stderr_file) {
@@ -361,6 +360,17 @@ void ext_job_add_platform_exe(ext_job_type *ext_job , const char * platform , co
 void ext_job_add_environment(ext_job_type *ext_job , const char * key , const char * value) {
   hash_insert_hash_owned_ref( ext_job->environment , key , util_alloc_string_copy( value ) , free);
 }
+
+void ext_job_clear_platform_exe( ext_job_type * ext_job ) {
+  hash_clear( ext_job->platform_exe );
+}
+
+void ext_job_clear_environment( ext_job_type * ext_job ) {
+  hash_clear( ext_job->environment );
+}
+
+//#define EXT_JOB_GET( field ) \
+//const
 
 
 static void __fprintf_string(FILE * stream , const char * s , const subst_list_type * private_args, const subst_list_type * global_args) {
@@ -541,7 +551,7 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
     __update_mode( config_file , target_mode );
   }
   
-  if (util_file_readable( config_file)) {
+  if (util_entry_readable( config_file)) {
     ext_job_type * ext_job = ext_job_alloc(name );
     config_type  * config  = config_alloc(  );
     

@@ -18,7 +18,7 @@
 
 
 /* 
-   Check the #defines - one-and-only-one of the symbols
+   Check the #defines - one-and-only-one - of the symbols
    LSF_LIBRARY_DRIVER and LSF_SYSTEM_DRIVER must be defined.
 */
 
@@ -314,17 +314,16 @@ void lsf_driver_free_job(void * __driver , void * __job) {
 
 
 
-static void lsf_driver_killjob(int jobnr) {
-#ifdef LSF_LIBRARY_DRIVER
-  lsb_forcekilljob(jobnr);
-#else
-#endif
-}
-
 
 void lsf_driver_kill_job(void * __driver , void * __job) {
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
-  lsf_driver_killjob(job->lsf_jobnr);
+  {
+#ifdef LSF_LIBRARY_DRIVER
+    lsb_forcekilljob(job->lsf_jobnr);
+#else
+    util_fork_exec("bkill" , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
+#endif
+  }
   lsf_job_free( job );
 }
 
