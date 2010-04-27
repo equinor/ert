@@ -356,7 +356,7 @@ sched_file_type * sched_file_alloc(time_t start_time)
   sched_file_init_fixed_length( sched_file );
   {
     char * fixed_length_file = getenv("SCHEDULE_FIXED_LENGTH");
-    if ((fixed_length_file != NULL) && (util_file_readable( fixed_length_file ))) {
+    if ((fixed_length_file != NULL) && (util_entry_readable( fixed_length_file ))) {
       FILE * stream = util_fopen(fixed_length_file , "r");
       char kw[32];
       int  len;

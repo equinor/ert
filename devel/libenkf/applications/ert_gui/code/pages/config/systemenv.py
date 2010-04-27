@@ -85,6 +85,7 @@ def createSystemPage(configPanel, parent):
         private_jobs = []
         for k, v in jobs:
             print k, v
+            
             #if ert.job_queue.ext_job_is_private(v):
             #    private_jobs.append(k)
 
