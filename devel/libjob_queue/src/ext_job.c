@@ -115,9 +115,6 @@ ext_job_type * ext_job_safe_cast(const void * __ext_job) {
 
 
 
-const char * ext_job_get_name(const ext_job_type * ext_job) {
-  return ext_job->name;
-}
 
 
 
@@ -316,41 +313,95 @@ void ext_job_set_portable_exe(ext_job_type * ext_job, const char * portable_exe)
    Observe that this does NOT reread the ext_job instance from the new
    config_file.
 */
+
+
+/*****************************************************************/
+/* Scalar set and get functions                                  */
+
 void ext_job_set_config_file(ext_job_type * ext_job, const char * config_file) {
   ext_job->config_file = util_realloc_string_copy(ext_job->config_file , config_file);
 }
 
+const char * ext_job_get_config_file(const ext_job_type * ext_job) {
+  return ext_job->config_file;
+}
 
 void ext_job_set_target_file(ext_job_type * ext_job, const char * target_file) {
   ext_job->target_file = util_realloc_string_copy(ext_job->target_file , target_file);
+}
+
+const char * ext_job_get_target_file(const ext_job_type * ext_job) {
+  return ext_job->target_file;
 }
 
 void ext_job_set_start_file(ext_job_type * ext_job, const char * start_file) {
   ext_job->start_file = util_realloc_string_copy(ext_job->start_file , start_file);
 }
 
+const char * ext_job_get_start_file(const ext_job_type * ext_job) {
+  return ext_job->start_file;
+}
+
 void ext_job_set_name(ext_job_type * ext_job, const char * name) {
   ext_job->name = util_realloc_string_copy(ext_job->name , name);
+}
+
+const char * ext_job_get_name(const ext_job_type * ext_job) {
+  return ext_job->name;
 }
 
 void ext_job_set_lsf_request(ext_job_type * ext_job, const char * lsf_request) {
   ext_job->lsf_resources = util_realloc_string_copy(ext_job->lsf_resources , lsf_request);
 }
 
-void ext_job_set_private_arg(ext_job_type * ext_job, const char * key , const char * value) {
-  subst_list_insert_copy( ext_job->private_args  , key , value , NULL);
+const char * ext_job_get_lsf_request(const ext_job_type * ext_job) {
+  return ext_job->lsf_resources;
 }
 
 void ext_job_set_stdin_file(ext_job_type * ext_job, const char * stdin_file) {
   ext_job->stdin_file = util_realloc_string_copy(ext_job->stdin_file , stdin_file);
 }
 
+const char * ext_job_get_stdin_file(const ext_job_type * ext_job) {
+  return ext_job->stdin_file;
+}
+
 void ext_job_set_stdout_file(ext_job_type * ext_job, const char * stdout_file) {
   ext_job->stdout_file = util_realloc_string_copy(ext_job->stdout_file , stdout_file);
 }
 
+const char * ext_job_get_stdout_file(const ext_job_type * ext_job) {
+  return ext_job->stdout_file;
+}
+
 void ext_job_set_stderr_file(ext_job_type * ext_job, const char * stderr_file) {
   ext_job->stderr_file = util_realloc_string_copy(ext_job->stderr_file , stderr_file);
+}
+
+const char * ext_job_get_stderr_file(const ext_job_type * ext_job) {
+  return ext_job->stderr_file;
+}
+
+void ext_job_set_max_running( ext_job_type * ext_job , int max_running) {
+  ext_job->max_running = max_running;
+}
+
+int ext_job_get_max_running( const ext_job_type * ext_job ) {
+  return ext_job->max_running;
+}
+
+void ext_job_set_max_running_minutes( ext_job_type * ext_job , int max_running_minutes) {
+  ext_job->max_running_minutes = max_running_minutes;
+}
+
+int ext_job_get_max_running_minutes( const ext_job_type * ext_job ) {
+  return ext_job->max_running_minutes;
+}
+
+/*****************************************************************/
+
+void ext_job_set_private_arg(ext_job_type * ext_job, const char * key , const char * value) {
+  subst_list_insert_copy( ext_job->private_args  , key , value , NULL);
 }
 
 void ext_job_add_platform_exe(ext_job_type *ext_job , const char * platform , const char * exe) {
@@ -369,9 +420,15 @@ void ext_job_clear_environment( ext_job_type * ext_job ) {
   hash_clear( ext_job->environment );
 }
 
-//#define EXT_JOB_GET( field ) \
-//const
+hash_type * ext_job_get_environment( ext_job_type * ext_job ) {
+  return ext_job->environment;
+}
 
+hash_type * ext_job_get_platform_exe( ext_job_type * ext_job ) {
+  return ext_job->platform_exe;
+}
+
+/*****************************************************************/
 
 static void __fprintf_string(FILE * stream , const char * s , const subst_list_type * private_args, const subst_list_type * global_args) {
   char * tmp = subst_list_alloc_filtered_string( private_args , s ); /* internal filtering first */
@@ -513,7 +570,6 @@ void ext_job_save( const ext_job_type * ext_job ) {
   PRINT_KEY_STRING( stream , "STDIN"            , ext_job->stdin_file);
   PRINT_KEY_STRING( stream , "STDERR"           , ext_job->stderr_file);
   PRINT_KEY_STRING( stream , "STDOUT"           , ext_job->stdout_file);
-  PRINT_KEY_STRING( stream , "LICENSE_PATH"     , ext_job->license_path);
   PRINT_KEY_STRING( stream , "TARGET_FILE"      , ext_job->target_file);
   PRINT_KEY_STRING( stream , "LSF_RESOURCES"    , ext_job->lsf_resources);
   PRINT_KEY_STRING( stream , "START_FILE"       , ext_job->start_file);
