@@ -11,7 +11,7 @@ extern "C" {
 typedef struct ext_job_struct ext_job_type;
 
 ext_job_type          * ext_job_alloc_copy(const ext_job_type * );
-ext_job_type          * ext_job_alloc(const char * );
+ext_job_type          * ext_job_alloc(const char * , const char * license_root_path , bool private_job);
 const char            * ext_job_get_name(const ext_job_type * );
 const char            * ext_job_get_lsf_resources(const ext_job_type * );
 void 	                ext_job_free(ext_job_type * ) ;
@@ -24,7 +24,7 @@ void                    ext_job_set_private_arg(ext_job_type * , const char *  ,
 void 	                ext_job_add_platform_exe(ext_job_type *, const char * , const char * ) ;
 void 	                ext_job_set_argc(ext_job_type *   , const char ** , int);
 void 	                ext_job_python_fprintf(const ext_job_type * , FILE * , const subst_list_type *);
-ext_job_type          * ext_job_fscanf_alloc(const char * , const char * , const char *);
+ext_job_type          * ext_job_fscanf_alloc(const char * , const char * , bool private_job , const char *);
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job );
 bool                    ext_job_is_shared( const ext_job_type * ext_job );
 bool                    ext_job_is_private( const ext_job_type * ext_job );

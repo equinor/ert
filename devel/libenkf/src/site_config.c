@@ -103,10 +103,9 @@ const char * site_config_get_license_root_path__( const site_config_type * site_
 /**
    Observe that this variable can not "really" be set to different
    values during a simulation, when creating ext_job instances they
-   will internalize a copy of this variable on creation, if the
-   variable is later changed they will be left with a dangling
-   copy. That is not particularly elegant, however it should
-   nonetheless work.
+   will store a pointer to this variable on creation, if the variable
+   is later changed they will be left with a dangling copy. That is
+   not particularly elegant, however it should nonetheless work.
 */
 
 void site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path) {
@@ -129,7 +128,7 @@ void site_config_set_license_root_path( site_config_type * site_config , const c
 */
 
 int site_config_install_job(site_config_type * site_config , const char * job_name , const char * install_file) {
-  ext_job_type * new_job = ext_job_fscanf_alloc(job_name , site_config->__license_root_path , install_file) ;
+  ext_job_type * new_job = ext_job_fscanf_alloc(job_name , site_config->__license_root_path , false, install_file) ;
   if (new_job != NULL) {
     ext_joblist_add_job(site_config->joblist , job_name , new_job);
     return 0;
