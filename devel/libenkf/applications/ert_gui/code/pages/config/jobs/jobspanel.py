@@ -4,10 +4,12 @@ from PyQt4 import QtGui, QtCore
 from widgets.pathchooser import PathChooser
 from widgets.validateddialog import ValidatedDialog
 import widgets.util
+import os
+import pages.config.jobs.jobsdialog
 
 class JobsPanel(HelpedWidget):
     """
-    Enables adding, removing and editing jobs.
+    Widget for adding, removing and editing jobs.
     These additional ContentModel functions must be implemented: insert and remove.
     The panel expects remove to return True or False based on the success of the removal.
     """
@@ -45,11 +47,36 @@ class JobsPanel(HelpedWidget):
         self.jobpath.getter = lambda model: self.job.path
 
         layout.addRow("Job:", self.jobpath)
+
+
+        self.editButton = QtGui.QToolButton(self)
+        self.editButton.setToolTip("Edit job")
+        self.editButton.setIcon(widgets.util.resourceIcon("cog"))
+        self.editButton.setText("Edit")
+        self.connect(self.editButton, QtCore.SIGNAL('clicked()'), self.editJob)
+
+
+        buttonLayout = QtGui.QHBoxLayout()
+        buttonLayout.addStretch(1)
+        buttonLayout.addWidget(self.editButton)
+        buttonLayout.addStretch(1)
+
+        layout.addRow(buttonLayout)
+
+
         self.jobPanel.setLayout(layout)
 
     def setPath(self, model, path):
         self.job.set("path", path)
         self.updateContent(self.job)
+
+    def editJob(self):
+        if not os.path.exists(Job.path_prefix):
+            os.mkdir(Job.path_prefix)
+
+        ejd = pages.config.jobs.jobsdialog.EditJobDialog(self)
+        ejd.setJob(self.job)
+        ejd.exec_()
 
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the widget"""

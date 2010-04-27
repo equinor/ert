@@ -7,6 +7,7 @@ from widgets.tablewidgets import KeywordTable, KeywordList
 import ertwrapper
 from PyQt4 import QtGui, QtCore
 from pages.config.jobs.jobspanel import JobsPanel, Job
+import os
 
 def createSystemPage(configPanel, parent):
     configPanel.startPage("System")
@@ -70,6 +71,7 @@ def createSystemPage(configPanel, parent):
                                  ert.setTypes("ext_job_get_config_file", ertwrapper.c_char_p, library=ert.job_queue),
                                  ert.setTypes("ext_job_set_config_file", None, ertwrapper.c_char_p, library=ert.job_queue),
                                  ert.setTypes("ext_job_alloc", argtypes=ertwrapper.c_char_p, library=ert.job_queue, selfpointer=False),
+                                 ert.setTypes("ext_job_fscanf_alloc", argtypes=[ertwrapper.c_char_p, ertwrapper.c_char_p, ertwrapper.c_char_p], library=ert.job_queue, selfpointer=False),
                                  ert.setTypes("ext_joblist_get_job", argtypes=ertwrapper.c_char_p, library=ert.job_queue),
                                  ert.setTypes("ext_joblist_del_job", ertwrapper.c_int, ertwrapper.c_char_p, library=ert.job_queue),
                                  ert.setTypes("ext_joblist_has_job", ertwrapper.c_int, ertwrapper.c_char_p, library=ert.job_queue),
@@ -95,7 +97,18 @@ def createSystemPage(configPanel, parent):
         return private_jobs
 
     def update_job(ert, value):
-        print "Set", value
+        jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
+
+        if os.path.exists(value.path):
+            #license = ert.enkf.site_config_get_license_root_path__(ert.site_config) todo: missing function
+            job = ert.job_queue.ext_job_fscanf_alloc(value.name, "/tmp", value.path)
+            ert.job_queue.ext_joblist_add_job(jl, value.name, job)
+        else:
+            job = ert.job_queue.ext_joblist_get_job(jl, value.name)
+            ert.job_queue.ext_job_set_config_file(job, value.path)
+
+        for job in get_jobs(ert):
+            print job.name, job.path
 
     def add_job(ert, value):
         jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
