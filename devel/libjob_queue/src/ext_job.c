@@ -209,8 +209,10 @@ ext_job_type * ext_job_alloc_copy(const ext_job_type * src_job) {
   new_job->platform_exe          = ext_job_hash_copyc__( src_job->platform_exe );
   new_job->environment           = ext_job_hash_copyc__( src_job->environment );
   new_job->private_args          = subst_list_alloc_deep_copy( src_job->private_args );
+
   return new_job;
 }
+
 
 
 
@@ -254,14 +256,12 @@ static void __update_mode( const char * filename , mode_t add_mode) {
 
 */
 
-static void ext_job_init_license_control(ext_job_type * ext_job , int max_running) {
-  ext_job->max_running  = max_running;
-  if (max_running <= 0) 
-    util_abort("%s: max_running = %d - funny eehh? \n",__func__ , max_running);
-  
-  ext_job->license_path   = util_alloc_sprintf("%s%c%s" , ext_job->license_root_path , UTIL_PATH_SEP_CHAR , ext_job->name );
-  util_make_path( ext_job->license_path );
-  printf("License for %s in %s \n",ext_job->name , ext_job->license_path);
+static void ext_job_init_license_control(ext_job_type * ext_job) {
+  if (ext_job->license_path == NULL) {
+    ext_job->license_path   = util_alloc_sprintf("%s%c%s" , ext_job->license_root_path , UTIL_PATH_SEP_CHAR , ext_job->name );
+    util_make_path( ext_job->license_path );
+    printf("License for %s in %s \n",ext_job->name , ext_job->license_path);
+  }
 }
 
 
@@ -378,6 +378,8 @@ const char * ext_job_get_stderr_file(const ext_job_type * ext_job) {
 
 void ext_job_set_max_running( ext_job_type * ext_job , int max_running) {
   ext_job->max_running = max_running;
+  if (max_running > 0)
+    ext_job_init_license_control( ext_job );
 }
 
 int ext_job_get_max_running( const ext_job_type * ext_job ) {
@@ -630,8 +632,8 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
       if (config_item_set(config , "TARGET_FILE"))           ext_job_set_target_file(ext_job      , config_iget(config  , "TARGET_FILE" , 0,0));
       if (config_item_set(config , "START_FILE"))            ext_job_set_start_file(ext_job       , config_iget(config  , "START_FILE" , 0,0));
       if (config_item_set(config , "PORTABLE_EXE"))          ext_job_set_portable_exe(ext_job     , config_iget(config  , "PORTABLE_EXE" , 0,0));
-      if (config_item_set(config , "MAX_RUNNING"))           ext_job_init_license_control(ext_job , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
-      if (config_item_set(config , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job , config_iget_as_int(config  , "MAX_RUNNING_MINUTES" , 0,0));
+      if (config_item_set(config , "MAX_RUNNING"))           ext_job_set_max_running(ext_job      , config_iget_as_int(config  , "MAX_RUNNING" , 0,0));
+      if (config_item_set(config , "MAX_RUNNING_MINUTES"))   ext_job_set_max_time(ext_job        , config_iget_as_int(config  , "MAX_RUNNING_MINUTES" , 0,0));
 
       if (config_item_set(config , "LSF_RESOURCES")) {
         char * lsf_resources = stringlist_alloc_joined_string(config_get_stringlist_ref(config , "LSF_RESOURCES") , " ");
