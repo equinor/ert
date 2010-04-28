@@ -45,7 +45,7 @@ def createQueueSystemPage(configPanel, parent):
 
     internalPanel.startPage("RSH")
 
-    r = internalPanel.addRow(PathChooser(parent, "Command", "rsh_command", True))
+    r = internalPanel.addRow(PathChooser(parent, "Command", "rsh_command", show_files=True, must_exist=True, is_executable_file=True))
     r.initialize = lambda ert : [ert.setTypes("site_config_get_rsh_command", ertwrapper.c_char_p),
                                  ert.setTypes("site_config_set_rsh_command", None, [ertwrapper.c_char_p])]
     r.getter = lambda ert : ert.enkf.site_config_get_rsh_command(ert.site_config)

@@ -15,7 +15,7 @@ def abstract():
 
 class ContentModel:
     """This class is a wrapper for communication between the model and the view."""
-    contentModel = None # A hack to have a "static" class variable
+    contentModel = None 
     signalManager = QtCore.QObject()
     observers = []
 
@@ -92,16 +92,18 @@ class ContentModel:
         
     # The modelConnect, modelDisconnect and modelEmit uses Qt signal handling to enable communication between
     # separate parts of the model that needs to know about changes.
-    #todo: can be static?
-    def modelConnect(self, signal, callable):
+    @classmethod
+    def modelConnect(cls, signal, callable):
         """Connect to a custom signal available to all ContentModel objects."""
         QtCore.QObject.connect(ContentModel.signalManager, QtCore.SIGNAL(signal), callable)
 
-    def modelDisconnect(self, signal, callable):
+    @classmethod
+    def modelDisconnect(cls, signal, callable):
         """Disconnect from a custom signal available to all ContentModel objects."""
         QtCore.QObject.disconnect(ContentModel.signalManager, QtCore.SIGNAL(signal), callable)
 
-    def modelEmit(self, signal, *args):
+    @classmethod
+    def modelEmit(cls, signal, *args):
         """Emit a custom signal available to all ContentModel objects."""
         ContentModel.signalManager.emit(QtCore.SIGNAL(signal), *args)
 

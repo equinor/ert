@@ -11,9 +11,16 @@ class PathChooser(HelpedWidget):
 
     file_does_not_exist_msg = "The specified path does not exist."
     file_is_not_executable_msg = "The specified file is not an executable."
-    #file_does_not_exist_msg = "The specified path does not exist."
+    path_is_not_a_file_msg = "The specified path must be a file."
     required_field_msg = "A value is required."
     path_format_msg = "Must be a path format."
+
+#    UNDEFINED = 0
+#    REQUIRED = 1
+#    FILE = 2
+#    DIRECTORY = 4
+#    MUST_EXIST = 8
+#    EXECUTABLE = 16
 
     def __init__(self, parent=None, pathLabel="Path", help="",
                  show_files=False, 
@@ -21,7 +28,7 @@ class PathChooser(HelpedWidget):
                  path_format=False,
                  must_exist=True,
                  absolute_path = False,
-                 is_executable=False):
+                 is_executable_file=False):
         """Construct a PathChooser widget"""
         HelpedWidget.__init__(self, parent, pathLabel, help)
 
@@ -31,7 +38,7 @@ class PathChooser(HelpedWidget):
         self.path_format = path_format
         self.must_exist = must_exist
         self.absolute_path = absolute_path
-        self.is_executable = is_executable
+        self.is_executable_file = is_executable_file
 
         self.pathLine = QtGui.QLineEdit()
         #self.pathLine.setMinimumWidth(250)
@@ -48,22 +55,25 @@ class PathChooser(HelpedWidget):
         self.connect(dialogButton, QtCore.SIGNAL('clicked()'), self.selectDirectory)
         self.addWidget(dialogButton)
 
-        #self.addStretch()
         self.addHelpButton()
 
         self.validColor = self.pathLine.palette().color(self.pathLine.backgroundRole())
 
-        #self.pathLine.setText(os.path.expanduser("~"))
         self.pathLine.setText(os.getcwd())
-
         self.editing = False
 
+    def getFailColor(self):
+        if self.must_be_set:
+            color = self.errorColor
+        else:
+            color = self.invalidColor
+        return color
 
     def validatePath(self):
         """Called whenever the path is modified"""
         palette = self.pathLine.palette()
 
-        path = self.getPath()
+        path = self.getPath().strip()
         exists = os.path.exists(path)
 
         color = self.validColor
@@ -71,7 +81,7 @@ class PathChooser(HelpedWidget):
 
         self.valid = True
 
-        if path.strip() == "" and self.must_be_set:
+        if path == "" and self.must_be_set:
             message = self.required_field_msg
             color = self.errorColor
             self.valid = False
@@ -83,18 +93,17 @@ class PathChooser(HelpedWidget):
             if not self.path_format and self.must_exist:
                 message = self.file_does_not_exist_msg
                 self.valid = False
-
-                if self.must_be_set:
-                    color = self.errorColor
-                else:
-                    color = self.invalidColor
-        elif exists and self.is_executable:
-            if not os.access(path, os.X_OK):
-                if self.must_be_set:
-                    color = self.errorColor
-                else:
-                    color = self.invalidColor
+                color = self.getFailColor()
+        elif exists:
+            if self.is_executable_file and os.path.isfile(path) and not os.access(path, os.X_OK):
+                color = self.getFailColor()
                 message = self.file_is_not_executable_msg
+                self.valid = False
+            elif self.is_executable_file and not os.path.isfile(path):
+                color = self.getFailColor()
+                message = self.path_is_not_a_file_msg
+                self.valid = False
+            
 
         self.setValidationMessage(message)
         self.pathLine.setToolTip(message)

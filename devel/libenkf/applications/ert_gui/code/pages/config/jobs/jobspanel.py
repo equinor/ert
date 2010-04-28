@@ -135,7 +135,7 @@ class JobsPanel(HelpedWidget):
         #todo: tell forward model that a new variable is available
 
     def removeItem(self, list):
-        """Called by the remove button to remove a selected parameter"""
+        """Called by the remove button to remove a selected job"""
         currentRow = list.currentRow()
 
         if currentRow >= 0:
