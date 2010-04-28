@@ -59,9 +59,7 @@ class EditJobDialog(QtGui.QDialog):
             self.validationInfo.setMessage(msg)
 
 
-
 class JobConfigPanel(ConfigPanel):
-
     def __init__(self, parent=None):
         ConfigPanel.__init__(self, parent)
 
@@ -87,12 +85,13 @@ class JobConfigPanel(ConfigPanel):
         self.stderr.setter = lambda ert, value : ert.job_queue.ext_job_set_stderr_file(jid(ert), value)
         self.stderr.getter = lambda ert : ert.job_queue.ext_job_get_stderr_file(jid(ert))
 
-        self.target_file = PathChooser(self, "", "install_job_target_file", show_files=True, must_be_set=False, must_exist=False)
+        self.target_file = PathChooser(self, "", "install_job_target_file", show_files=True, must_be_set=False,
+                                       must_exist=False)
         self.target_file.setter = lambda ert, value : ert.job_queue.ext_job_set_target_file(jid(ert), value)
         self.target_file.getter = lambda ert : ert.job_queue.ext_job_get_target_file(jid(ert))
 
         self.executable = PathChooser(self, "", "install_job_executable", show_files=True, must_be_set=True,
-                                        must_exist=True, is_executable=True)
+                                      must_exist=True, is_executable_file=True)
         self.executable.setter = lambda ert, value : ert.job_queue.ext_job_set_executable(jid(ert), value)
         self.executable.getter = lambda ert : ert.job_queue.ext_job_get_executable(jid(ert))
 
@@ -125,22 +124,19 @@ class JobConfigPanel(ConfigPanel):
 
 
         self.arglist.getter = get_arglist
-#
+        #
         self.lsf_resources = StringBox(self, "", "install_job_lsf_resources")
         self.lsf_resources.setter = lambda ert, value : ert.job_queue.ext_job_set_lsf_request(jid(ert), value)
         self.lsf_resources.getter = lambda ert : ert.job_queue.ext_job_get_lsf_request(jid(ert))
 
-
-        self.max_running = IntegerSpinner(self, "", "install_job_max_running",  0, 10000)
+        self.max_running = IntegerSpinner(self, "", "install_job_max_running", 0, 10000)
         self.max_running.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running(jid(ert), value)
         self.max_running.getter = lambda ert : ert.job_queue.ext_job_get_max_running(jid(ert))
 
-        self.max_running_minutes = IntegerSpinner(self, "", "install_job_max_running_minutes",  0, 10000)
-        self.max_running_minutes.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running_minutes(jid(ert), value)
+        self.max_running_minutes = IntegerSpinner(self, "", "install_job_max_running_minutes", 0, 10000)
+        self.max_running_minutes.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running_minutes(jid(ert),
+                                                                                                            value)
         self.max_running_minutes.getter = lambda ert : ert.job_queue.ext_job_get_max_running_minutes(jid(ert))
-
-
-
 
         self.startPage("Standard")
         self.add("Stdin:", self.stdin)
@@ -150,7 +146,7 @@ class JobConfigPanel(ConfigPanel):
         self.add("Executable.:", self.executable)
         self.add("Env.:", self.env)
         self.endPage()
-#
+        #
         self.startPage("Advanced")
         self.add("Arglist.:", self.arglist)
         self.add("LSF resources:", self.lsf_resources)
@@ -184,7 +180,8 @@ class JobConfigPanel(ConfigPanel):
             ert.setTypes("ext_job_get_max_running_minutes", ertwrapper.c_int, library=ert.job_queue)
             ert.setTypes("ext_job_set_max_running_minutes", None, ertwrapper.c_int, library=ert.job_queue)
             ert.setTypes("ext_job_get_environment", library=ert.job_queue)
-            ert.setTypes("ext_job_add_environment", None, [ertwrapper.c_char_p, ertwrapper.c_char_p], library=ert.job_queue)
+            ert.setTypes("ext_job_add_environment", None, [ertwrapper.c_char_p, ertwrapper.c_char_p],
+                         library=ert.job_queue)
             ert.setTypes("ext_job_clear_environment", None, library=ert.job_queue)
             ert.setTypes("ext_job_save", None, library=ert.job_queue)
             ert.setTypes("ext_joblist_get_job", argtypes=ertwrapper.c_char_p, library=ert.job_queue)

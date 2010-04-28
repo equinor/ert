@@ -103,7 +103,6 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
 
 class SimulationPanel(QtGui.QStackedWidget):
 
-
     def __init__(self, parent=None):
         QtGui.QStackedWidget.__init__(self, parent)
         self.setFrameShape(QtGui.QFrame.Panel)
