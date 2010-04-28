@@ -5,9 +5,10 @@ from widgets.tablewidgets import KeywordTable
 from widgets.tablewidgets import KeywordList
 from widgets.stringbox import StringBox
 import os
-import ertwrapper
+from ertwrapper import c_char_p, c_int
 from widgets.spinnerwidgets import IntegerSpinner
 import widgets.util
+from widgets.helpedwidget import ContentModelProxy
 
 class EditJobDialog(QtGui.QDialog):
     """
@@ -26,9 +27,9 @@ class EditJobDialog(QtGui.QDialog):
         layout.addWidget(self.jobPanel)
 
         self.doneButton = QtGui.QPushButton("Done", self)
-        #self.cancelButton = QtGui.QPushButton("Cancel", self)
-        self.connect(self.doneButton, QtCore.SIGNAL('clicked()'), self.storeJob)
-        #self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
+        self.cancelButton = QtGui.QPushButton("Cancel", self)
+        self.connect(self.doneButton, QtCore.SIGNAL('clicked()'), self.saveJob)
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
 
         self.validationInfo = widgets.util.ValidationInfo()
 
@@ -36,7 +37,7 @@ class EditJobDialog(QtGui.QDialog):
         buttonLayout.addWidget(self.validationInfo)
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.doneButton)
-        #buttonLayout.addWidget(self.cancelButton)
+        buttonLayout.addWidget(self.cancelButton)
 
         layout.addSpacing(10)
         layout.addLayout(buttonLayout)
@@ -51,8 +52,8 @@ class EditJobDialog(QtGui.QDialog):
     def setJob(self, job):
         self.jobPanel.setJob(job)
 
-    def storeJob(self):
-        msg = self.jobPanel.storeJob()
+    def saveJob(self):
+        msg = self.jobPanel.saveJob()
         if msg is None:
             self.accept()
         else:
@@ -102,7 +103,6 @@ class JobConfigPanel(ConfigPanel):
             for env in value:
                 ert.job_queue.ext_job_add_environment(job, env[0], env[1])
 
-
         self.env = KeywordTable(self, "", "install_job_env", colHead1="Variable", colHead2="Value")
         self.env.setter = setEnv
         self.env.getter = lambda ert : ert.getHash(ert.job_queue.ext_job_get_environment(jid(ert)))
@@ -113,6 +113,7 @@ class JobConfigPanel(ConfigPanel):
         def set_arglist(ert, value):
             if not value is None:
                 list_from_string = value.split(' ')
+                #todo: missing setter
                 print list_from_string
 
         self.arglist.setter = set_arglist
@@ -122,9 +123,8 @@ class JobConfigPanel(ConfigPanel):
             string_from_list = " ".join(arglist)
             return string_from_list
 
-
         self.arglist.getter = get_arglist
-        #
+
         self.lsf_resources = StringBox(self, "", "install_job_lsf_resources")
         self.lsf_resources.setter = lambda ert, value : ert.job_queue.ext_job_set_lsf_request(jid(ert), value)
         self.lsf_resources.getter = lambda ert : ert.job_queue.ext_job_get_lsf_request(jid(ert))
@@ -134,9 +134,9 @@ class JobConfigPanel(ConfigPanel):
         self.max_running.getter = lambda ert : ert.job_queue.ext_job_get_max_running(jid(ert))
 
         self.max_running_minutes = IntegerSpinner(self, "", "install_job_max_running_minutes", 0, 10000)
-        self.max_running_minutes.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running_minutes(jid(ert),
-                                                                                                            value)
+        self.max_running_minutes.setter = lambda ert, value : ert.job_queue.ext_job_set_max_running_minutes(jid(ert), value)
         self.max_running_minutes.getter = lambda ert : ert.job_queue.ext_job_get_max_running_minutes(jid(ert))
+
 
         self.startPage("Standard")
         self.add("Stdin:", self.stdin)
@@ -146,7 +146,7 @@ class JobConfigPanel(ConfigPanel):
         self.add("Executable.:", self.executable)
         self.add("Env.:", self.env)
         self.endPage()
-        #
+
         self.startPage("Advanced")
         self.add("Arglist.:", self.arglist)
         self.add("LSF resources:", self.lsf_resources)
@@ -163,28 +163,27 @@ class JobConfigPanel(ConfigPanel):
     def initialize(self, ert):
         if not self.initialized:
             ert.setTypes("site_config_get_installed_jobs")
-            ert.setTypes("ext_job_get_stdin_file", ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_set_stdin_file", None, ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_get_stdout_file", ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_set_stdout_file", None, ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_get_stderr_file", ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_set_stderr_file", None, ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_get_target_file", ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_set_target_file", None, ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_get_executable", ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_set_executable", None, ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_get_lsf_request", ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_set_lsf_request", None, ertwrapper.c_char_p, library=ert.job_queue)
-            ert.setTypes("ext_job_get_max_running", ertwrapper.c_int, library=ert.job_queue)
-            ert.setTypes("ext_job_set_max_running", None, ertwrapper.c_int, library=ert.job_queue)
-            ert.setTypes("ext_job_get_max_running_minutes", ertwrapper.c_int, library=ert.job_queue)
-            ert.setTypes("ext_job_set_max_running_minutes", None, ertwrapper.c_int, library=ert.job_queue)
+            ert.setTypes("ext_job_get_stdin_file", c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_set_stdin_file", None, c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_get_stdout_file", c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_set_stdout_file", None, c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_get_stderr_file", c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_set_stderr_file", None, c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_get_target_file", c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_set_target_file", None, c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_get_executable", c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_set_executable", None, c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_get_lsf_request", c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_set_lsf_request", None, c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_get_max_running", c_int, library=ert.job_queue)
+            ert.setTypes("ext_job_set_max_running", None, c_int, library=ert.job_queue)
+            ert.setTypes("ext_job_get_max_running_minutes", c_int, library=ert.job_queue)
+            ert.setTypes("ext_job_set_max_running_minutes", None, c_int, library=ert.job_queue)
             ert.setTypes("ext_job_get_environment", library=ert.job_queue)
-            ert.setTypes("ext_job_add_environment", None, [ertwrapper.c_char_p, ertwrapper.c_char_p],
-                         library=ert.job_queue)
+            ert.setTypes("ext_job_add_environment", None, [c_char_p, c_char_p], library=ert.job_queue)
             ert.setTypes("ext_job_clear_environment", None, library=ert.job_queue)
             ert.setTypes("ext_job_save", None, library=ert.job_queue)
-            ert.setTypes("ext_joblist_get_job", argtypes=ertwrapper.c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_joblist_get_job", argtypes=c_char_p, library=ert.job_queue)
 
             self.initialized = True
 
@@ -193,6 +192,10 @@ class JobConfigPanel(ConfigPanel):
         self.job = job
 
         self.initialize(self.stdin.getModel())
+
+        self.cmproxy = ContentModelProxy() #Since only the last change matters and no insert and remove is done
+        self.cmproxy.proxify(self.stdin, self.stdout, self.stderr, self.target_file, self.executable,
+                             self.env, self.arglist, self.lsf_resources, self.max_running, self.max_running_minutes)
 
         self.stdin.fetchContent()
         self.stdout.fetchContent()
@@ -205,8 +208,10 @@ class JobConfigPanel(ConfigPanel):
         self.max_running.fetchContent()
         self.max_running_minutes.fetchContent()
 
-    def storeJob(self):
+    def saveJob(self):
         if self.executable.isValid() and self.stderr.isValid() and self.stdout.isValid():
+            self.cmproxy.apply()
+
             ert = self.stdin.getModel()
             jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
             jid = ert.job_queue.ext_joblist_get_job(jl, self.job.name)
