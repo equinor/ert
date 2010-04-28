@@ -115,7 +115,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   
   UTIL_TYPE_ID_INIT( ext_job , EXT_JOB_TYPE_ID);
   ext_job->name                = util_alloc_string_copy( name );
-  ext_job->name                = util_alloc_string_copy( license_root_path );
+  ext_job->license_root_path   = util_alloc_string_copy( license_root_path );
   ext_job->portable_exe        = NULL;
   ext_job->stdout_file         = NULL;
   ext_job->target_file         = NULL;
