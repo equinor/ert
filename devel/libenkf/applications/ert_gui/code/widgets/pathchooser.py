@@ -62,12 +62,14 @@ class PathChooser(HelpedWidget):
         self.pathLine.setText(os.getcwd())
         self.editing = False
 
-    def getFailColor(self):
+    def getFailColorAndType(self):
         if self.must_be_set:
             color = self.errorColor
+            type = self.WARNING
         else:
             color = self.invalidColor
-        return color
+            type = self.EXCLAMATION
+        return color, type
 
     def validatePath(self):
         """Called whenever the path is modified"""
@@ -78,6 +80,7 @@ class PathChooser(HelpedWidget):
 
         color = self.validColor
         message = ""
+        type = self.WARNING
 
         self.valid = True
 
@@ -93,19 +96,19 @@ class PathChooser(HelpedWidget):
             if not self.path_format and self.must_exist:
                 message = self.file_does_not_exist_msg
                 self.valid = False
-                color = self.getFailColor()
+                color, type = self.getFailColorAndType()
         elif exists:
             if self.is_executable_file and os.path.isfile(path) and not os.access(path, os.X_OK):
-                color = self.getFailColor()
+                color, type = self.getFailColorAndType()
                 message = self.file_is_not_executable_msg
                 self.valid = False
             elif self.is_executable_file and not os.path.isfile(path):
-                color = self.getFailColor()
+                color, type = self.getFailColorAndType()
                 message = self.path_is_not_a_file_msg
                 self.valid = False
             
 
-        self.setValidationMessage(message)
+        self.setValidationMessage(message, type)
         self.pathLine.setToolTip(message)
         palette.setColor(self.pathLine.backgroundRole(), color)
 

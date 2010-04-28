@@ -64,7 +64,7 @@ class ErtWrapper:
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug()
 
-    def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer=True):
+    def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer = True):
         """
         Set the return and argument types of a ERT function.
         Since all methods need a pointer, this is already defined as c_long.

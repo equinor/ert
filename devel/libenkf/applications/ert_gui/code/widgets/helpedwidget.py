@@ -11,11 +11,11 @@ def abstract():
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
     raise NotImplementedError(caller + ' must be implemented in subclass')
 
-    
+
 
 class ContentModel:
     """This class is a wrapper for communication between the model and the view."""
-    contentModel = None 
+    contentModel = None
     signalManager = QtCore.QObject()
     observers = []
 
@@ -56,9 +56,11 @@ class ContentModel:
         gargs = inspect.getargspec(self.getter)
 
         if inspect.isfunction(self.getter) and "self" in gargs[0]:
-            return self.getter.__call__(self, ContentModel.contentModel)
+            data = self.getter.__call__(self, ContentModel.contentModel)
         else:
-            return self.getter(ContentModel.contentModel)
+            data = self.getter(ContentModel.contentModel)
+
+        return data
 
     def updateContent(self, value, operation = UPDATE):
         """
@@ -83,13 +85,13 @@ class ContentModel:
 
             self.emit(QtCore.SIGNAL('contentsChanged()'))
             self.emit(QtCore.SIGNAL('contentsChanged(int)'), operation)
-            
+
             return result
 
     def getModel(self):
         """Returns the contentModel associated with this session"""
         return ContentModel.contentModel
-        
+
     # The modelConnect, modelDisconnect and modelEmit uses Qt signal handling to enable communication between
     # separate parts of the model that needs to know about changes.
     @classmethod
@@ -124,12 +126,57 @@ class ContentModel:
         for o in ContentModel.observers:
             print o
 
+class ContentModelProxy:
+    """
+    A ContentModelProxy adds an apply mode to a ContentModel
+    The proxy sits between the widget and the updateContent function call
+    and delays the updateContent call until the apply function of the proxy is called.
+    It only relays the last updateContent call (for a single instance) so it should only
+    be used in situations when this is the desired behaviour.
+    """
+    def __init__(self):
+        self.objects = {}
+        self.objectContent = {}
+
+    def proxifyObject(self, object):
+        """
+        This function is here because lambdas loose context in loops.
+        Lambdas point to the variable and not the content.
+        """
+        self.objects[object] = object.updateContent
+        object.updateContent = lambda value, operation = ContentModel.UPDATE : self._proxyUpdateContent(object, value,
+                                                                                                       operation)
+
+    def proxify(self, *objects):
+        """Add a ContenModel instance to this proxy group"""
+        for object in objects:
+            self.proxifyObject(object)
+
+    def _proxyUpdateContent(self, object, value, operation):
+        self.objectContent[object] = (value, operation)
+
+    def apply(self):
+        """Perform all delayed updateContent calls"""
+        for key in self.objects.keys():
+            uc = self.objects[key]
+            if self.objectContent.has_key(key):
+                data = self.objectContent[key]
+                uc(data[0], data[1])
+            else:
+                #This usually means that no value has been sent to the setter
+                #print "Unknown key: %s" % (str(key))
+                pass
+
+
 
 class HelpedWidget(QtGui.QWidget, ContentModel):
     """
     HelpedWidget is a class that enables embedded help messages in widgets.
     The help button must manually be added to the containing layout with addHelpButton().
     """
+
+    WARNING = "warning"
+    EXCLAMATION = "exclamation"
 
     def __init__(self, parent=None, widgetLabel="", helpLabel=""):
         """Creates a widget that can have a help button"""
@@ -205,11 +252,12 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
         """Add stretch between widgets. Usually added between a widget and the help button."""
         self.widgetLayout.addStretch(1)
 
-    def setValidationMessage(self, message):
+    def setValidationMessage(self, message, validationType=WARNING):
         if message == "":
             self.validationLabel.setHidden(True)
             self.validationLabel.setToolTip("")
         else:
             self.validationLabel.setHidden(False)
             self.validationLabel.setToolTip(message)
+            self.validationLabel.setPixmap(resourceImage(validationType))
 
