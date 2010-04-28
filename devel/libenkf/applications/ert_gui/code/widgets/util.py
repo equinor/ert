@@ -136,6 +136,36 @@ class ValidatedTimestepCombo(QtGui.QComboBox):
             return int(currentText)
 
 
+class ValidationInfo(QtGui.QWidget):
+    """A message with an icon that present information about validation."""
+
+    WARNING = "warning"
+    EXCLAMATION = "exclamation"
+
+    def __init__(self, type=WARNING, parent = None):
+        QtGui.QWidget.__init__(self, parent)
+
+        layout = QtGui.QHBoxLayout()
+        self.iconLabel = QtGui.QLabel()
+        self.iconLabel.setMaximumSize(QtCore.QSize(16, 16))
+        self.iconLabel.setPixmap(resourceImage(type))
+        layout.addWidget(self.iconLabel)
+
+        self.messageLabel = QtGui.QLabel()
+        layout.addWidget(self.messageLabel)
+        self.setLayout(layout)
+        self.setHidden(True)
+
+    def setMessage(self, msg):
+        """Set this message to an empty string to hide the validation widget"""
+        if msg.strip() == "":
+            self.setHidden(True)
+        else:
+            self.setHidden(False)
+
+        self.messageLabel.setText(msg)
+
+
 
 def createSeparator():
         """Creates a widget that can be used as a separator line on a panel."""
@@ -161,11 +191,20 @@ def createSpace(size = 5):
     return qw
 
 def createEmptyPanel():
+    """An empty expanding bordered panel"""
     emptyPanel = QtGui.QFrame()
     emptyPanel.setFrameShape(QtGui.QFrame.StyledPanel)
     emptyPanel.setFrameShadow(QtGui.QFrame.Plain)
     emptyPanel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
     return emptyPanel
+
+def centeredWidget(widget):
+    """Returns a layout with the widget centered"""
+    layout = QtGui.QHBoxLayout()
+    layout.addStretch(1)
+    layout.addWidget(widget)
+    layout.addStretch(1)
+    return layout
 
 
 def getItemsFromList(list, func = lambda item : str(item.text()), selected = True) :
@@ -212,6 +251,7 @@ def frange(*args):
         v += step
 
 def shortTime(secs):
+    """Converts seconds into hours:minutes:seconds. -1 returns a '-'"""
     if secs == -1:
         return "-"
     else:

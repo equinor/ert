@@ -10,6 +10,7 @@ class PathChooser(HelpedWidget):
     invalidColor = QtGui.QColor(235, 235, 255)
 
     file_does_not_exist_msg = "The specified path does not exist."
+    file_is_not_executable_msg = "The specified file is not an executable."
     #file_does_not_exist_msg = "The specified path does not exist."
     required_field_msg = "A value is required."
     path_format_msg = "Must be a path format."
@@ -19,7 +20,8 @@ class PathChooser(HelpedWidget):
                  must_be_set=True,
                  path_format=False,
                  must_exist=True,
-                 absolute_path = False):
+                 absolute_path = False,
+                 is_executable=False):
         """Construct a PathChooser widget"""
         HelpedWidget.__init__(self, parent, pathLabel, help)
 
@@ -29,6 +31,7 @@ class PathChooser(HelpedWidget):
         self.path_format = path_format
         self.must_exist = must_exist
         self.absolute_path = absolute_path
+        self.is_executable = is_executable
 
         self.pathLine = QtGui.QLineEdit()
         #self.pathLine.setMinimumWidth(250)
@@ -60,19 +63,19 @@ class PathChooser(HelpedWidget):
         """Called whenever the path is modified"""
         palette = self.pathLine.palette()
 
-        text = self.getPath()
-        exists = os.path.exists(text)
+        path = self.getPath()
+        exists = os.path.exists(path)
 
         color = self.validColor
         message = ""
 
         self.valid = True
 
-        if text.strip() == "" and self.must_be_set:
+        if path.strip() == "" and self.must_be_set:
             message = self.required_field_msg
             color = self.errorColor
             self.valid = False
-        elif self.path_format and not re.search("%[0-9]*d", text):
+        elif self.path_format and not re.search("%[0-9]*d", path):
             message = self.path_format_msg
             color = self.errorColor
             self.valid = False
@@ -85,6 +88,13 @@ class PathChooser(HelpedWidget):
                     color = self.errorColor
                 else:
                     color = self.invalidColor
+        elif exists and self.is_executable:
+            if not os.access(path, os.X_OK):
+                if self.must_be_set:
+                    color = self.errorColor
+                else:
+                    color = self.invalidColor
+                message = self.file_is_not_executable_msg
 
         self.setValidationMessage(message)
         self.pathLine.setToolTip(message)

@@ -13,6 +13,10 @@ class IntegerSpinner(HelpedWidget):
         #self.connect(self.pathLine, QtCore.SIGNAL('textChanged(QString)'), self.validatePath)
         self.addWidget(self.spinner)
 
+        self.infoLabel = QtGui.QLabel()
+        self.infoLabel.setHidden(True)
+        self.addWidget(self.infoLabel)
+
         self.addStretch()
         self.addHelpButton()
 
@@ -27,6 +31,9 @@ class IntegerSpinner(HelpedWidget):
         """Retrieves data from the model and inserts it into the spinner"""
         self.spinner.setValue(self.getFromModel())
 
+    def setInfo(self, info):
+        self.infoLabel.setText(info)
+        self.infoLabel.setHidden(False)
 
 class DoubleSpinner(HelpedWidget):
     """A spinner widget for doubles. The data structure expected and sent to the getter and setter is a double."""
