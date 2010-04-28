@@ -133,6 +133,9 @@ class ErtWrapper:
         
     def getStringList(self, stringlistpointer):
         """Retrieve a list of strings"""
+        if stringlistpointer == 0:
+            return []
+
         result = []
 
         numberOfStrings = self.util.stringlist_get_size(stringlistpointer)
@@ -159,6 +162,9 @@ class ErtWrapper:
 
     def getHash(self, hashpointer, intValue = False, return_type=c_char_p):
         """Retrieves a hash as a list of 2 element lists"""
+        if hashpointer == 0:
+            return []
+
         hash_iterator = self.util.hash_iter_alloc(hashpointer)
         self.setTypes("hash_get", return_type, library = self.util)
 

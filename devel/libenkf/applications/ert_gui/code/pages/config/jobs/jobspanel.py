@@ -5,7 +5,8 @@ from widgets.pathchooser import PathChooser
 from widgets.validateddialog import ValidatedDialog
 import widgets.util
 import os
-import pages.config.jobs.jobsdialog
+from widgets.util import ValidationInfo
+from pages.config.jobs.jobsdialog import EditJobDialog
 
 class JobsPanel(HelpedWidget):
     """
@@ -48,20 +49,21 @@ class JobsPanel(HelpedWidget):
 
         layout.addRow("Job:", self.jobpath)
 
+        layout.addRow(widgets.util.createSpace(20))
 
-        self.editButton = QtGui.QToolButton(self)
+        self.validationInfo = ValidationInfo(ValidationInfo.EXCLAMATION)
+        self.validationInfo.setMessage("Pressing edit will create a job that does not exist.")
+
+        self.editButton = QtGui.QPushButton(self)
         self.editButton.setToolTip("Edit job")
         self.editButton.setIcon(widgets.util.resourceIcon("cog"))
         self.editButton.setText("Edit")
         self.connect(self.editButton, QtCore.SIGNAL('clicked()'), self.editJob)
 
 
-        buttonLayout = QtGui.QHBoxLayout()
-        buttonLayout.addStretch(1)
-        buttonLayout.addWidget(self.editButton)
-        buttonLayout.addStretch(1)
+        layout.addRow(widgets.util.centeredWidget(self.editButton))
 
-        layout.addRow(buttonLayout)
+        layout.addRow(widgets.util.centeredWidget(self.validationInfo))
 
 
         self.jobPanel.setLayout(layout)
@@ -70,13 +72,19 @@ class JobsPanel(HelpedWidget):
         self.job.set("path", path)
         self.updateContent(self.job)
 
+#        if os.path.exists(path):
+#            self.validationInfo.setMessage("")
+#        else:
+#            self.validationInfo.setMessage("The path must exist! Edit to create the job.")
+
     def editJob(self):
         if not os.path.exists(Job.path_prefix):
             os.mkdir(Job.path_prefix)
 
-        ejd = pages.config.jobs.jobsdialog.EditJobDialog(self)
+        ejd = EditJobDialog(self)
         ejd.setJob(self.job)
         ejd.exec_()
+        self.jobpath.validatePath()
 
     def fetchContent(self):
         """Retrieves data from the model and inserts it into the widget"""

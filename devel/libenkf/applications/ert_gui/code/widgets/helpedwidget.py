@@ -210,3 +210,4 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
         else:
             self.validationLabel.setHidden(False)
             self.validationLabel.setToolTip(message)
+
