@@ -125,8 +125,8 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   ext_job->init_code           = NULL;
   ext_job->argv 	       = NULL;
   ext_job->lsf_resources       = NULL;
-  ext_job->platform_exe        = NULL;
-  ext_job->environment         = NULL;
+  ext_job->platform_exe        = hash_alloc();
+  ext_job->environment         = hash_alloc();
   ext_job->argv                = NULL;
   ext_job->init_code           = NULL;
   ext_job->__valid             = true;
@@ -228,8 +228,8 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->license_root_path);
   util_safe_free(ext_job->config_file);
 
-  if (ext_job->environment != NULL)  hash_free(ext_job->environment);
-  if (ext_job->platform_exe != NULL) hash_free(ext_job->platform_exe);
+  hash_free( ext_job->environment );
+  hash_free( ext_job->platform_exe );
   
   if (ext_job->argv != NULL)         stringlist_free(ext_job->argv);
   if (ext_job->init_code != NULL)    stringlist_free(ext_job->init_code);
@@ -326,6 +326,14 @@ void ext_job_set_target_file(ext_job_type * ext_job, const char * target_file) {
 
 const char * ext_job_get_target_file(const ext_job_type * ext_job) {
   return ext_job->target_file;
+}
+
+void ext_job_set_executable(ext_job_type * ext_job, const char * executable) {
+  ext_job->portable_exe = util_realloc_string_copy(ext_job->portable_exe , executable);
+}
+
+const char * ext_job_get_executable(const ext_job_type * ext_job) {
+  return ext_job->portable_exe;
 }
 
 void ext_job_set_start_file(ext_job_type * ext_job, const char * start_file) {
@@ -472,10 +480,10 @@ static void __fprintf_python_list(FILE * stream , const char * id , const string
 
 static void __fprintf_python_hash(FILE * stream , const char * id , hash_type * hash, const subst_list_type * private_args, const subst_list_type * global_args) {
   fprintf(stream , "\"%s\" : " , id);
-  fprintf(stream,"{");
-  if (hash != NULL) {
-    int   hash_size = hash_get_size(hash);
+  int   hash_size = hash_get_size(hash);
+  if (hash_size > 0) {
     int   counter   = 0;
+    fprintf(stream,"{");
     hash_iter_type * iter = hash_iter_alloc(hash);
     const char * key = hash_iter_get_next_key(iter);
     while (key != NULL) {
@@ -489,8 +497,9 @@ static void __fprintf_python_hash(FILE * stream , const char * id , hash_type * 
       
       key = hash_iter_get_next_key(iter);
     }
-  }
-  fprintf(stream,"}");
+    fprintf(stream,"}");
+  } else
+    fprintf(stream , "None");
 }
 
 
@@ -562,7 +571,7 @@ if (value != 0)                               \
 void ext_job_save( const ext_job_type * ext_job ) {
   FILE * stream = util_mkdir_fopen( ext_job->config_file , "w" );
   
-  PRINT_KEY_STRING( stream , "PLATFORM_EXE"     , ext_job->portable_exe);
+  PRINT_KEY_STRING( stream , "PORTABLE_EXE"     , ext_job->portable_exe);
   PRINT_KEY_STRING( stream , "STDIN"            , ext_job->stdin_file);
   PRINT_KEY_STRING( stream , "STDERR"           , ext_job->stderr_file);
   PRINT_KEY_STRING( stream , "STDOUT"           , ext_job->stdout_file);
