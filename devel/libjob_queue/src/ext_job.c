@@ -739,7 +739,10 @@ const char * ext_job_get_arglist_as_string( ext_job_type * ext_job ) {
  
 
 void ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string ) {
-  
+  parser_type * parser = parser_alloc(" " , "\"" , NULL , NULL , NULL , NULL );
+  stringlist_free( ext_job->argv );
+  ext_job->argv = parser_tokenize_buffer( parser , argv_string , true );
+  parser_free( parser );
 }
 
  
