@@ -21,7 +21,6 @@ void                    ext_job_save( const ext_job_type * ext_job );
 void                    ext_job_fprintf(const ext_job_type * , FILE * stream );
 void                    ext_job_set_private_arg(ext_job_type * , const char *  , const char * );
 
-void 	                ext_job_add_platform_exe(ext_job_type *, const char * , const char * ) ;
 void 	                ext_job_set_argc(ext_job_type *   , const char ** , int);
 void 	                ext_job_python_fprintf(const ext_job_type * , FILE * , const subst_list_type *);
 ext_job_type          * ext_job_fscanf_alloc(const char * , const char * , bool private_job , const char *);
@@ -54,12 +53,9 @@ void                    ext_job_set_max_running( ext_job_type * ext_job , int ma
 int                     ext_job_get_max_running( const ext_job_type * ext_job );
 void                    ext_job_set_max_running_minutes( ext_job_type * ext_job , int max_running_minutes);
 int                     ext_job_get_max_running_minutes( const ext_job_type * ext_job );
-void                    ext_job_add_platform_exe(ext_job_type *ext_job , const char * platform , const char * exe);
 void                    ext_job_add_environment(ext_job_type *ext_job , const char * key , const char * value);
-void                    ext_job_clear_platform_exe( ext_job_type * ext_job );
 void                    ext_job_clear_environment( ext_job_type * ext_job );
 hash_type             * ext_job_get_environment( ext_job_type * ext_job );
-hash_type             * ext_job_get_platform_exe( ext_job_type * ext_job );
 const char            * ext_job_get_arglist_as_string( ext_job_type * ext_job );
 void                    ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string );
 
