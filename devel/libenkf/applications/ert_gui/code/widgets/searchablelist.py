@@ -87,3 +87,6 @@ class SearchableList(QtGui.QWidget):
                     item.setHidden(False)
                 else:
                     item.setHidden(True)
+
+    def getList(self):
+        return self.list

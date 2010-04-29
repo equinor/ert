@@ -131,7 +131,7 @@ class ErtWrapper:
         self.setTypes("enkf_main_free", None)
 
         
-    def getStringList(self, stringlistpointer):
+    def getStringList(self, stringlistpointer, free_after_use=False):
         """Retrieve a list of strings"""
         if stringlistpointer == 0:
             return []
@@ -142,6 +142,9 @@ class ErtWrapper:
 
         for index in range(numberOfStrings):
             result.append(self.util.stringlist_iget(stringlistpointer, index))
+
+        if free_after_use:
+            self.freeStringList(stringlistpointer)
 
         return result
 
