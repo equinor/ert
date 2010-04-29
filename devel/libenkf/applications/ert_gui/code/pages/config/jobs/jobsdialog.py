@@ -108,22 +108,8 @@ class JobConfigPanel(ConfigPanel):
         self.env.getter = lambda ert : ert.getHash(ert.job_queue.ext_job_get_environment(jid(ert)))
 
         self.arglist = StringBox(self, "", "install_job_arglist")
-        #self.arglist = KeywordList(self, "", "install_job_arglist")
-        #self.arglist.setPopupLabels("New argument", "Enter name of new argument:")
-        def set_arglist(ert, value):
-            if not value is None:
-                list_from_string = value.split(' ')
-                #todo: missing setter
-                print list_from_string
-
-        self.arglist.setter = set_arglist
-
-        def get_arglist(ert):
-            arglist = ert.getStringList(ert.job_queue.ext_job_get_arglist(jid(ert)))
-            string_from_list = " ".join(arglist)
-            return string_from_list
-
-        self.arglist.getter = get_arglist
+        self.arglist.setter = lambda ert, value : ert.job_queue.ext_job_set_arglist_from_string(jid(ert), value)
+        self.arglist.getter = lambda ert : ert.job_queue.ext_job_get_arglist_as_string(jid(ert))
 
         self.lsf_resources = StringBox(self, "", "install_job_lsf_resources")
         self.lsf_resources.setter = lambda ert, value : ert.job_queue.ext_job_set_lsf_request(jid(ert), value)
@@ -175,6 +161,8 @@ class JobConfigPanel(ConfigPanel):
             ert.setTypes("ext_job_set_executable", None, c_char_p, library=ert.job_queue)
             ert.setTypes("ext_job_get_lsf_request", c_char_p, library=ert.job_queue)
             ert.setTypes("ext_job_set_lsf_request", None, c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_get_arglist_as_string", c_char_p, library=ert.job_queue)
+            ert.setTypes("ext_job_set_arglist_from_string", None, c_char_p, library=ert.job_queue)
             ert.setTypes("ext_job_get_max_running", c_int, library=ert.job_queue)
             ert.setTypes("ext_job_set_max_running", None, c_int, library=ert.job_queue)
             ert.setTypes("ext_job_get_max_running_minutes", c_int, library=ert.job_queue)
