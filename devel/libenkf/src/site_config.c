@@ -117,7 +117,7 @@ void site_config_set_license_root_path( site_config_type * site_config , const c
   */
 
   site_config->license_root_path   = util_realloc_string_copy( site_config->license_root_path , license_root_path );
-  site_config->__license_root_path = util_realloc_sprintf(site_config->__license_root_path , "%s%c%s%c%d" , UTIL_PATH_SEP_CHAR , getenv("USER") , UTIL_PATH_SEP_CHAR , getpid());
+  site_config->__license_root_path = util_realloc_sprintf(site_config->__license_root_path , "%s%c%s%c%d" , license_root_path , UTIL_PATH_SEP_CHAR , getenv("USER") , UTIL_PATH_SEP_CHAR , getpid());
 }
 
 
