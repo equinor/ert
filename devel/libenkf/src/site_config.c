@@ -148,8 +148,8 @@ bool site_config_del_job( site_config_type * site_config , const char * job_name
 
 static void site_config_install_joblist(site_config_type * site_config , const config_type * config) {
   int  i;
-
-  site_config->joblist = ext_joblist_alloc( config_iget( config , "LICENSE_PATH" , 0 , 0));
+  
+  site_config->joblist = ext_joblist_alloc( );
   stringlist_type *item_list = config_alloc_complete_stringlist(config , "INSTALL_JOB");
 
   for (i=0; i < stringlist_get_size(item_list); i+=2) 
@@ -587,7 +587,8 @@ site_config_type * site_config_alloc(const config_type * config , bool * use_lsf
     site_config->statoil_mode = true;
   else
     site_config->statoil_mode = false;
-  
+
+  site_config_set_license_root_path( site_config , config_iget( config , "LICENSE_PATH" , 0 , 0));
   site_config_install_job_queue(site_config , config , use_lsf);
   return site_config;
 }

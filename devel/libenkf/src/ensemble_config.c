@@ -132,11 +132,11 @@ void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char
 
 enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensemble_config , 
                                                   const char    * key      	   , 
-                                                  enkf_var_type enkf_type  	   , 
+                                                  enkf_var_type  enkf_type  	   , 
                                                   enkf_impl_type impl_type 	   ,
-                                                  const char   * enkf_outfile  , /* Written by EnKF and read by forward model */
-                                                  const char   * enkf_infile   , /* Written by forward model and read by EnKF */ 
-                                                  const void   * data) {
+                                                  const char   * enkf_outfile      , /* Written by EnKF and read by forward model */
+                                                  const char   * enkf_infile       , /* Written by forward model and read by EnKF */ 
+                                                  const void   * data ) {
 
   if (ensemble_config_has_key(ensemble_config , key)) 
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
