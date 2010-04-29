@@ -12,6 +12,7 @@ from widgets.searchablelist import SearchableList
 from pages.parameters.datapanel import DataModel, DataPanel
 from pages.parameters.keywordpanel import KeywordPanel, KeywordModel
 import widgets.util
+from pages.parameters.parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
@@ -25,7 +26,7 @@ class ParameterPanel(HelpedWidget):
                           "Summary": util.resourceIcon("summary"),
                           "Keyword": util.resourceIcon("key")}
 
-        self.searchableList = SearchableList(converter=lambda item : item.getName())
+        self.searchableList = SearchableList(converter=lambda item : item.getName(), list_width=175)
         self.addWidget(self.searchableList)
 
 
@@ -77,6 +78,8 @@ class ParameterPanel(HelpedWidget):
             param.setData(DataModel(name))
         elif type == "Keyword":
             param.setData(KeywordModel(name))
+        elif type == "Summary":
+            param.setData(SummaryModel(name))
 
         list.addItem(param)
         list.setCurrentItem(param)
@@ -112,43 +115,32 @@ class ParameterPanel(HelpedWidget):
 
     def contentsChanged(self):
         """Called whenever the contents of a cell changes."""
-        rowValues = []
-
-        for rowIndex in range(self.table.rowCount()):
-            row = []
-            for columnIndex in range(self.table.columnCount()):
-                item = self.table.item(rowIndex, columnIndex)
-                if not item is None:
-                    row.append(str(item.text()))
-                else:
-                    row.append("")
-
-            rowValues.append(row)
-
-
-        self.updateContent(rowValues)
+        pass
 
 
     def fetchContent(self):
-        """Retrieves data from the model and inserts it into the table"""
-#        rows = self.getFromModel()
-#
-#        self.table.clear()
-#        self.table.setHorizontalHeaderLabels(self.headers)
-#
-#        rowIndex = 0
-#        for row in rows:
-#            self.table.insertRow(rowIndex)
-#            columnIndex = 0
-#            for value in row:
-#                item = QtGui.QTableWidgetItem(str(value))
-#                self.table.setItem(rowIndex, columnIndex, item)
-#                columnIndex+=1
-#
-#            rowIndex+=1
+        """Retrieves data from the model and inserts it into the list"""
+        parameters = self.getFromModel()
 
+        for parameter in parameters:
+            ptype = "?"
+            if parameter.TYPE == SummaryModel.TYPE:
+                ptype = "Summary"
+            elif parameter.TYPE == FieldModel.TYPE:
+                ptype = "Field"
+            elif parameter.TYPE == DataModel.TYPE:
+                ptype = "Data"
+            elif parameter.TYPE == KeywordModel.TYPE:
+                ptype = "Keyword"
 
+            param = Parameter(ptype, self.typeIcons[ptype], parameter.name)
+            param.setData(parameter)
 
+            self.searchableList.getList().addItem(param)
+            self.searchableList.getList().setCurrentItem(param)
+
+        if self.searchableList.getList().count > 0:
+            self.searchableList.getList().setCurrentRow(0)
 
 
 class Parameter(QtGui.QListWidgetItem):

@@ -2,19 +2,7 @@ from PyQt4 import QtGui, QtCore
 from widgets.combochoice import ComboChoice
 from widgets.stringbox import DoubleBox
 from widgets.pathchooser import PathChooser
-
-class KeywordModel:
-    name = ""
-    eclipse_file = ""
-    template = ""
-    priors = ""
-
-    def __init__(self, name):
-        self.name = name
-
-    def set(self, attr, value):
-        setattr(self, attr, value)
-
+from pages.parameters.models import KeywordModel
 
 class KeywordPanel(QtGui.QFrame):
     def __init__(self, parent):
@@ -31,15 +19,15 @@ class KeywordPanel(QtGui.QFrame):
 
         self.eclipse_file = PathChooser(self, "", "gen_kw_eclipse_file", True)
         self.eclipse_file.setter = lambda model, value: self.keywordModel.set("eclipse_file", value)
-        self.eclipse_file.getter = lambda model: self.keywordModel.eclipse_file
+        self.eclipse_file.getter = lambda model: self.keywordModel["eclipse_file"]
 
         self.template = PathChooser(self, "", "gen_kw_template", True, must_be_set=False)
         self.template.setter = lambda model, value: self.keywordModel.set("template", value)
-        self.template.getter = lambda model: self.keywordModel.template
+        self.template.getter = lambda model: self.keywordModel["template"]
 
         self.priors = PathChooser(self, "", "gen_kw_result_file", True, must_be_set=False)
         self.priors.setter = lambda model, value: self.keywordModel.set("priors", value)
-        self.priors.getter = lambda model: self.keywordModel.priors
+        self.priors.getter = lambda model: self.keywordModel["priors"]
 
         layout.addRow("Eclipse file:", self.eclipse_file)
         layout.addRow("Template:", self.template)
