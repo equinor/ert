@@ -77,7 +77,7 @@ def createEclipsePage(configPanel, parent):
     r = internalPanel.addRow(KeywordList(parent, "", "add_static_kw"))
     r.initialize = lambda ert : [ert.setTypes("ecl_config_get_static_kw_list"),
                                  ert.setTypes("ecl_config_clear_static_kw", None),
-                                 ert.setTypes("ecl_config_add_static_kw", None, [ertwrapper.c_char_p, ertwrapper.c_char_p])]
+                                 ert.setTypes("ecl_config_add_static_kw", None, ertwrapper.c_char_p)]
     r.getter = lambda ert : ert.getStringList(ert.enkf.ecl_config_get_static_kw_list(ert.ecl_config))
 
     def add_static_kw(ert, listOfKeywords):
