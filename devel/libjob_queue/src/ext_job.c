@@ -581,10 +581,19 @@ void ext_job_save( const ext_job_type * ext_job ) {
   PRINT_KEY_INT( stream , "MAX_RUNNING"         , ext_job->max_running);
   PRINT_KEY_INT( stream , "MAX_RUNNING_MINUTES" , ext_job->max_running_minutes);
 
-  /**
-     Warning - the high-dimensional config variables are not stored yet.
-  */
-  
+  if (stringlist_get_size( ext_job->argv ) > 0) {
+    fprintf(stream , "%16s" , "ARGLIST");
+    stringlist_fprintf( ext_job->argv , " " , stream );
+    fprintf(stream , "\n");
+  }
+  if (hash_get_size( ext_job->environment ) > 0) {
+    hash_iter_type * hash_iter = hash_iter_alloc( ext_job->environment );
+    while (!hash_iter_is_complete( hash_iter )) {
+      const char * key = hash_iter_get_next_key( hash_iter );
+      fprintf(stream, "%16s  %16s  %s\n" , "ENV" , key , (const char *) hash_get( ext_job->environment , key ));
+    }
+    hash_iter_free( hash_iter );
+  }
   fclose( stream );
 }
 
@@ -598,6 +607,8 @@ void ext_job_fprintf(const ext_job_type * ext_job , FILE * stream) {
   subst_list_fprintf(ext_job->private_args , stream);
   fprintf(stream , ")  ");
 }
+
+
 
 
 
