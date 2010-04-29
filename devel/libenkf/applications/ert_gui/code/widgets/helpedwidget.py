@@ -135,7 +135,7 @@ class ContentModelProxy:
     be used in situations when this is the desired behaviour.
     """
     def __init__(self):
-        self.objects = {}
+        self.objectFunctions = {}
         self.objectContent = {}
 
     def proxifyObject(self, object):
@@ -143,7 +143,7 @@ class ContentModelProxy:
         This function is here because lambdas loose context in loops.
         Lambdas point to the variable and not the content.
         """
-        self.objects[object] = object.updateContent
+        self.objectFunctions[object] = object.updateContent
         object.updateContent = lambda value, operation = ContentModel.UPDATE : self._proxyUpdateContent(object, value,
                                                                                                        operation)
 
@@ -157,11 +157,11 @@ class ContentModelProxy:
 
     def apply(self):
         """Perform all delayed updateContent calls"""
-        for key in self.objects.keys():
-            uc = self.objects[key]
+        for key in self.objectFunctions.keys():
+            function = self.objectFunctions[key]
             if self.objectContent.has_key(key):
                 data = self.objectContent[key]
-                uc(data[0], data[1])
+                function(data[0], data[1])
             else:
                 #This usually means that no value has been sent to the setter
                 #print "Unknown key: %s" % (str(key))

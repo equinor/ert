@@ -67,6 +67,7 @@ def createSystemPage(configPanel, parent):
 
     r = internalPanel.addRow(JobsPanel(parent))
     r.initialize = lambda ert : [ert.setTypes("site_config_get_installed_jobs"),
+                                 ert.setTypes("site_config_get_license_root_path__", ertwrapper.c_char_p),
                                  ert.setTypes("ext_job_is_private", ertwrapper.c_int, library=ert.job_queue),
                                  ert.setTypes("ext_job_get_config_file", ertwrapper.c_char_p, library=ert.job_queue),
                                  ert.setTypes("ext_job_set_config_file", None, ertwrapper.c_char_p, library=ert.job_queue),
@@ -85,12 +86,8 @@ def createSystemPage(configPanel, parent):
 
         private_jobs = []
         for k, v in jobs:
-            #print k, v
             v = int(v)
             path = ert.job_queue.ext_job_get_config_file(v)
-            #job = Job(k, path)
-            #private_jobs.append(job)
-            #print k, ert.job_queue.ext_job_get_config_file(v)
             if ert.job_queue.ext_job_is_private(v):
                 private_jobs.append(Job(k, path))
 
@@ -100,25 +97,23 @@ def createSystemPage(configPanel, parent):
         jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
 
         if os.path.exists(value.path):
-            #license = ert.enkf.site_config_get_license_root_path__(ert.site_config) todo: missing function
-            job = ert.job_queue.ext_job_fscanf_alloc(value.name, "/tmp", True, value.path)
+            license = ert.enkf.site_config_get_license_root_path__(ert.site_config)
+            job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
             ert.job_queue.ext_joblist_add_job(jl, value.name, job)
         else:
             job = ert.job_queue.ext_joblist_get_job(jl, value.name)
             ert.job_queue.ext_job_set_config_file(job, value.path)
 
-        #for job in get_jobs(ert):
-        #    print job.name, job.path
 
     def add_job(ert, value):
         jl = ert.enkf.site_config_get_installed_jobs(ert.site_config)
         if not ert.job_queue.ext_joblist_has_job(jl, value.name):
+            license = ert.enkf.site_config_get_license_root_path__(ert.site_config)
             if os.path.exists(value.path):
-                #license = ert.enkf.site_config_get_license_root_path__(ert.site_config) todo: missing function
-                job = ert.job_queue.ext_job_fscanf_alloc(value.name, "/tmp", True, value.path)
+                job = ert.job_queue.ext_job_fscanf_alloc(value.name, license, True, value.path)
                 ert.job_queue.ext_joblist_add_job(jl, value.name, job)
             else:
-                job = ert.job_queue.ext_job_alloc(value.name, "/tmp", True)
+                job = ert.job_queue.ext_job_alloc(value.name, license, True)
                 ert.job_queue.ext_job_set_config_file(job, value.path)
                 ert.job_queue.ext_joblist_add_job(jl, value.name, job)
             return True

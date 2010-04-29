@@ -36,8 +36,18 @@ def createSimulationsPage(configPanel, parent):
     r.setter = lambda ert, value : ert.setAttribute("case_table", value)
 
     r = configPanel.addRow(PathChooser(parent, "License path", "license_path"))
-    r.getter = lambda ert : ert.getAttribute("license_path")
-    r.setter = lambda ert, value : ert.setAttribute("license_path", value)
+    r.initialize = lambda ert : [ert.setTypes("site_config_get_license_root_path__", ertwrapper.c_char_p),
+                                 ert.setTypes("site_config_set_license_root_path", None, ertwrapper.c_char_p)]
+    r.getter = lambda ert : ert.enkf.site_config_get_license_root_path__(ert.site_config)
+
+    def ls(string):
+        if string is None:
+            return ""
+        else:
+            return string
+
+    r.setter = lambda ert, value : ert.enkf.site_config_set_license_root_path(ert.site_config, ls(value))
+
 
 
     internalPanel = ConfigPanel(parent)
