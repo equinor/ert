@@ -12,7 +12,8 @@ extern "C" {
 
 typedef struct site_config_struct site_config_type;
 
-const char            * site_config_get_license_root_path__( const site_config_type * site_config );
+const char            *  site_config_get_license_root_path__( const site_config_type * site_config );
+void                     site_config_set_license_root_path( site_config_type * site_config , const char * license_root_path);
 
 bool                     site_config_get_statoil_mode(const site_config_type * site_config );
 void                     site_config_update_lsf_request(site_config_type *  , const forward_model_type *);
