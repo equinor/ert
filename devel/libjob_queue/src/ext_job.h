@@ -60,7 +60,8 @@ void                    ext_job_clear_platform_exe( ext_job_type * ext_job );
 void                    ext_job_clear_environment( ext_job_type * ext_job );
 hash_type             * ext_job_get_environment( ext_job_type * ext_job );
 hash_type             * ext_job_get_platform_exe( ext_job_type * ext_job );
-
+const char            * ext_job_get_arglist_as_string( ext_job_type * ext_job );
+void                    ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string );
 
 
 #ifdef __cplusplus

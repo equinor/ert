@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <subst_list.h>
+#include <parser.h>
 
 /*
   About arguments
@@ -94,6 +95,7 @@ struct ext_job_struct {
   int               max_running_minutes;   /* The maximum number of minutes this job is allowed to run - 0: unlimited. */
   subst_list_type * private_args;          /* A substitution list of input arguments which is performed before the external substitutions - 
                                               these are the arguments supplied as key=value pairs in the forward model call. */
+  char            * argv_string;
   stringlist_type * argv;                  /* This should *NOT* start with the executable */
   stringlist_type * init_code;
   hash_type  	  * platform_exe;          /* The hash tables can NOT be NULL. */
@@ -227,7 +229,8 @@ void ext_job_free(ext_job_type * ext_job) {
   util_safe_free(ext_job->license_path);
   util_safe_free(ext_job->license_root_path);
   util_safe_free(ext_job->config_file);
-
+  util_safe_free(ext_job->argv_string);
+  
   hash_free( ext_job->environment );
   hash_free( ext_job->platform_exe );
   
@@ -698,11 +701,47 @@ ext_job_type * ext_job_fscanf_alloc(const char * name , const char * license_roo
  
  
 const stringlist_type * ext_job_get_arglist( const ext_job_type * ext_job ) {
- return ext_job->argv;
+  return ext_job->argv;
 }
 
 
+const char * ext_job_get_arglist_as_string( ext_job_type * ext_job ) {
+  if (stringlist_get_size( ext_job->argv ) == 0)
+    return NULL;
+  else {
+    const char * sep = "  ";
+    int argc =  stringlist_get_size( ext_job->argv );
+    int i;
+    buffer_type * buffer = buffer_alloc( 512 );
+    for (i = 0; i < argc; i++) {
+      const char * arg = stringlist_iget( ext_job->argv , i );
+      bool quote       = false;
+      if (strchr(arg , ' ') != NULL)
+        quote = true;
+
+      if (quote)
+        buffer_fwrite_char( buffer , ' ' );
+      buffer_fwrite_char_ptr( buffer , arg );
+      if (quote)
+        buffer_fwrite_char( buffer , ' ' );
+      
+      if (i < (argc - 1))
+        buffer_fwrite_char_ptr( buffer , sep );
+    }
+    buffer_fwrite_char( buffer , '\0');
+    util_safe_free(ext_job->argv_string);
+    ext_job->argv_string = buffer_alloc_data_copy( buffer );
+    buffer_free( buffer );
+    
+    return ext_job->argv_string;
+  }
+}
  
+
+void ext_job_set_arglist_from_string( ext_job_type * ext_job , const char * argv_string ) {
+  
+}
+
  
 bool ext_job_is_shared( const ext_job_type * ext_job ) {
   return !ext_job->private_job;
