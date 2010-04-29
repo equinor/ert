@@ -139,21 +139,21 @@ class JobConfigPanel(ConfigPanel):
 
 
         self.startPage("Standard")
-        self.add("Stdin:", self.stdin)
+        self.add("Executable.:", self.executable)
         self.add("Stdout:", self.stdout)
         self.add("Stderr:", self.stderr)
         self.add("Target file:", self.target_file)
-        self.add("Executable.:", self.executable)
-        self.add("Env.:", self.env)
+        self.add("Arglist.:", self.arglist)
         self.endPage()
 
         self.startPage("Advanced")
-        self.add("Arglist.:", self.arglist)
-        self.add("LSF resources:", self.lsf_resources)
+        self.add("Stdin:", self.stdin)
         self.add("Max running:", self.max_running)
         self.max_running.setInfo("(0=unlimited)")
         self.add("Max running minutes:", self.max_running_minutes)
         self.max_running_minutes.setInfo("(0=unlimited)")
+        self.add("LSF resources:", self.lsf_resources)
+        self.add("Env.:", self.env)
         self.endPage()
 
     def add(self, label, widget):
