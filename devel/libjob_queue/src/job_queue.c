@@ -418,8 +418,9 @@ static bool job_queue_update_status(job_queue_type * queue ) {
   {
     int istat;
     for (istat = 0; istat  < JOB_QUEUE_MAX_STATE; istat++)
-      if (old_status[istat] != queue->status_list[istat])
+      if (old_status[istat] != queue->status_list[istat]) 
         return true;
+    
   }
   return false; /* Nothing changed. */
 }
@@ -647,22 +648,33 @@ time_t job_queue_iget_submit_time( job_queue_type * queue, int job_index) {
 
 
 
-static void job_queue_print_jobs(const job_queue_type *queue) {
-  int waiting  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_WAITING) ];
-  int pending  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_PENDING) ];
-  
-    /* 
-       EXIT and DONE are included in "xxx_running", because the target
-       file has not yet been checked.
-    */
-  int running  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUNNING) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_DONE) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_EXIT) ];
-  int complete = queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_OK) ];
-  int failed   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_FAIL) ];
-  int loading  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUN_OK) ];  
-  
-  printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b",waiting , pending , running , loading , failed , complete);
+static void job_queue_print_summary(const job_queue_type *queue, bool status_change , int phase) {
+  const char * spinner = "-\\|/";
+  int string_length    = 97;
+
+  if (status_change) {
+    for (int i=0; i < string_length; i++)
+      printf("\b");
+    {
+      int waiting  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_WAITING) ];
+      int pending  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_PENDING) ];
+      
+      /* 
+         EXIT and DONE are included in "xxx_running", because the target
+         file has not yet been checked.
+      */
+      int running  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUNNING) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_DONE) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_EXIT) ];
+      int complete = queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_OK) ];
+      int failed   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_FAIL) ];
+      int loading  = queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUN_OK) ];  
+      
+      printf("Waiting: %3d    Pending: %3d    Running: %3d     Loading: %3d    Failed: %3d   Complete: %3d   [ ]\b\b",waiting , pending , running , loading , failed , complete);
+    }
+  }
+  printf("%c\b" , spinner[ (phase % 4) ]);
   fflush(stdout);
 }
+
 
 
 static void job_queue_display_job_info( const job_queue_type * job_queue , const job_queue_node_type * job_node ) {
@@ -711,25 +723,15 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
   queue->running = true;
   if (num_total_run > queue->size) util_abort("%s: invalid num_total_run \n",__func__);
   {
-
     const int max_ok_wait_time = 60; /* Seconds to wait for an OK file - when the job itself has said all OK. */
     const int ok_sleep_time    =  1; /* Time to wait between checks for OK|EXIT file.                         */
 
-    msg_type * submit_msg = NULL;
     bool new_jobs         = false;
     bool cont             = true;
     int  phase = 0;
     
-    if (verbose)
-      submit_msg = msg_alloc("Submitting new jobs:  ]");
-  
     do {
-      char spinner[4];
-      spinner[0] = '-';
-      spinner[1] = '\\';
-      spinner[2] = '|';
-      spinner[3] = '/';
-
+      /*****************************************************************/
       if (queue->user_exit) { /* An external thread has called the job_queue_user_exit() function, and we
                                  should kill all jobs, do some clearing up and go home. */
         int queue_index;
@@ -739,13 +741,12 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
         }
         cont = false;
       } 
+      /*****************************************************************/
         
       if (cont) {
-        if (job_queue_update_status( queue ) || new_jobs) 
-          if (verbose) {
-            printf("\b \n");
-            job_queue_print_jobs(queue);
-          } 
+        bool update_status = job_queue_update_status( queue );
+        if ((verbose) & update_status || new_jobs) 
+          job_queue_print_summary(queue , update_status , phase);
         
         
         if ((queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_OK)    ] + 
@@ -754,67 +755,40 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           cont = false;
         
         if (cont) {
-          if (verbose) {
-            printf("\b%c",spinner[phase]); 
-            fflush(stdout);
-            phase = (phase + 1) % 4;
-          }
+          /* Submitting new jobs */
+          int max_submit     = 5; /* This is the maximum number of jobs submitted in one while() { ... } below. 
+                                     Only to ensure that the waiting time before a status update is not too long. */
+          int total_active   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_PENDING) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUNNING) ];
+          int num_submit_new = util_int_min( max_submit , queue->max_running - total_active );
           
-          {
-            /* Submitting new jobs */
-            int max_submit     = 5; /* This is the maximum number of jobs submitted in one while() { ... } below. 
-                                       Only to ensure that the waiting time before a status update is not too long. */
-            int total_active   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_PENDING) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUNNING) ];
-            int num_submit_new = util_int_min( max_submit , queue->max_running - total_active );
-            char spinner2[2];
-            spinner2[1] = '\0';
+          new_jobs = false;
+          if (queue->status_list[ STATUS_INDEX(JOB_QUEUE_WAITING) ] > 0)   /* We have waiting jobs at all           */
+            if (num_submit_new > 0)                                        /* The queue can allow more running jobs */
+              new_jobs = true;
+          
+          
+          if (new_jobs) {
+            int submit_count = 0;
+            int queue_index  = 0;
             
-            new_jobs = false;
-            if (queue->status_list[ STATUS_INDEX(JOB_QUEUE_WAITING) ] > 0)   /* We have waiting jobs at all           */
-              if (num_submit_new > 0)                                        /* The queue can allow more running jobs */
-                new_jobs = true;
-            
-            
-            if (new_jobs) {
-              int submit_count = 0;
-              int queue_index  = 0;
-              
-              while ((queue_index < queue->size) && (num_submit_new > 0)) {
-                job_queue_node_type * node = queue->jobs[queue_index];
-                if (job_queue_node_get_status(node) == JOB_QUEUE_WAITING) {
-                  {
-                    submit_status_type submit_status = job_queue_submit_job(queue , queue_index);
-                    
-                    if (submit_status == SUBMIT_OK) {
-                      if ((submit_count == 0) && verbose) {
-                        printf("\b");
-                        msg_show(submit_msg);
-                        printf("\b\b");
-                      }
-                      spinner2[0] = spinner[phase];
-                      msg_update(submit_msg , spinner2);
-                      phase = (phase + 1) % 4;
-                      num_submit_new--;
-                      submit_count++;
-                    } else if ((submit_status == SUBMIT_DRIVER_FAIL) || (submit_status == SUBMIT_QUEUE_PAUSED))
-                      break;
-                  }
+            while ((queue_index < queue->size) && (num_submit_new > 0)) {
+              job_queue_node_type * node = queue->jobs[queue_index];
+              if (job_queue_node_get_status(node) == JOB_QUEUE_WAITING) {
+                {
+                  submit_status_type submit_status = job_queue_submit_job(queue , queue_index);
+                  
+                  if (submit_status == SUBMIT_OK) {
+                    phase = (phase + 1) % 4;
+                    num_submit_new--;
+                    submit_count++;
+                  } else if ((submit_status == SUBMIT_DRIVER_FAIL) || (submit_status == SUBMIT_QUEUE_PAUSED))
+                    break;
                 }
-                queue_index++;
               }
-              
-              if ((submit_count > 0) && verbose) {
-                printf("  "); fflush(stdout);
-                msg_hide(submit_msg);
-                printf(" ]\b"); fflush(stdout);
-              } else 
-                /* 
-                   We wanted to - and tried - to submit new jobs; but the
-                   driver failed to deliver.
-                */
-                new_jobs = false;
+              queue_index++;
             }
           }
+
           
           {
             /*
@@ -885,12 +859,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
         }
       }
     } while ( cont );
-
-    if (verbose) {
-      printf("\n");
-      msg_free(submit_msg , false);
-    }
   }
+  if (verbose) 
+    printf("\n");
   queue->user_exit = false;
   queue->running   = false;
 }
