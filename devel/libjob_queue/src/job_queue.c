@@ -383,9 +383,22 @@ static void job_queue_free_job(job_queue_type * queue , job_queue_node_type * no
 
 static void job_queue_kill_job__( job_queue_type * queue , int queue_index);
 
-static void job_queue_update_status(job_queue_type * queue ) {
+/* 
+   Will return true if the status has changed since the last time.
+*/
+
+static bool job_queue_update_status(job_queue_type * queue ) {
   basic_queue_driver_type *driver  = queue->driver;
+  int old_status[JOB_QUEUE_MAX_STATE];  
   int ijob;
+
+  /* Caching the old status */
+  {
+    int istat;
+    for (istat = 0; istat  < JOB_QUEUE_MAX_STATE; istat++)
+      old_status[istat] = queue->status_list[istat];
+  }
+
   for (ijob = 0; ijob < queue->size; ijob++) {
     job_queue_node_type * node = queue->jobs[ijob];
     if (node->job_data != NULL) {
@@ -400,6 +413,15 @@ static void job_queue_update_status(job_queue_type * queue ) {
       }
     }
   }
+  
+  /* Has the net status changed? */
+  {
+    int istat;
+    for (istat = 0; istat  < JOB_QUEUE_MAX_STATE; istat++)
+      if (old_status[istat] != queue->status_list[istat])
+        return true;
+  }
+  return false; /* Nothing changed. */
 }
 
 
@@ -697,13 +719,7 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
     bool new_jobs         = false;
     bool cont             = true;
     int  phase = 0;
-    int  old_status_list[ JOB_QUEUE_MAX_STATE ];
-    {
-      int i;
-      for (i=0; i < JOB_QUEUE_MAX_STATE; i++)
-        old_status_list[i] = -1;
-    }
-
+    
     if (verbose)
       submit_msg = msg_alloc("Submitting new jobs:  ]");
   
@@ -725,14 +741,12 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
       } 
         
       if (cont) {
-        job_queue_update_status( queue );
-        if ( (memcmp(old_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * old_status_list) != 0) || new_jobs ) {
+        if (job_queue_update_status( queue ) || new_jobs) 
           if (verbose) {
             printf("\b \n");
             job_queue_print_jobs(queue);
-          }
-          memcpy(old_status_list , queue->status_list , JOB_QUEUE_MAX_STATE * sizeof * old_status_list);
-        } 
+          } 
+        
         
         if ((queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_OK)    ] + 
              queue->status_list[ STATUS_INDEX(JOB_QUEUE_ALL_FAIL)  ] +
@@ -747,10 +761,9 @@ void job_queue_run_jobs(job_queue_type * queue , int num_total_run, bool verbose
           }
           
           {
-            
             /* Submitting new jobs */
             int max_submit     = 5; /* This is the maximum number of jobs submitted in one while() { ... } below. 
-                                       Only to ensure that the waiting time before a status update is not to long. */
+                                       Only to ensure that the waiting time before a status update is not too long. */
             int total_active   = queue->status_list[ STATUS_INDEX(JOB_QUEUE_PENDING) ] + queue->status_list[ STATUS_INDEX(JOB_QUEUE_RUNNING) ];
             int num_submit_new = util_int_min( max_submit , queue->max_running - total_active );
             char spinner2[2];
