@@ -34,7 +34,7 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in extern
   user-input. It is OK to try to restart a job which is not in this
   state - basically nothing should happen.
 */
-#define JOB_QUEUE_CAN_RESTART  (JOB_QUEUE_ALL_FAIL   + JOB_QUEUE_USER_KILLED)
+#define JOB_QUEUE_CAN_RESTART  (JOB_QUEUE_ALL_FAIL + JOB_QUEUE_USER_KILLED  +  JOB_QUEUE_ALL_OK)
 
 
 /*
@@ -42,7 +42,7 @@ typedef enum {JOB_QUEUE_NOT_ACTIVE    =    1 ,   /* This value is used in extern
   job which is not in this state, the only thing happening is that the
   function job_queue_kill_simulation() wil return false.
 */
-#define JOB_QUEUE_CAN_KILL     (JOB_QUEUE_WAITING    + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING)
+#define JOB_QUEUE_CAN_KILL    (JOB_QUEUE_WAITING + JOB_QUEUE_RUNNING + JOB_QUEUE_PENDING)
 
 
 /*

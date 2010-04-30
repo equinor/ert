@@ -8,6 +8,7 @@ extern "C" {
 
 typedef struct job_queue_struct job_queue_type;
 
+void                job_queue_init( job_queue_type * job_queue );
 job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
 void                job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver);
 void                job_queue_set_size( job_queue_type * job_queue , int size );
