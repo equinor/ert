@@ -113,7 +113,7 @@ static ext_job_type * ext_job_alloc__(const char * name , const char * license_r
   UTIL_TYPE_ID_INIT( ext_job , EXT_JOB_TYPE_ID);
   ext_job->name                = util_alloc_string_copy( name );
   ext_job->license_root_path   = util_alloc_string_copy( license_root_path );
-  ext_job->executable        = NULL;
+  ext_job->executable          = NULL;
   ext_job->stdout_file         = NULL;
   ext_job->target_file         = NULL;
   ext_job->start_file          = NULL;
@@ -506,7 +506,7 @@ void ext_job_python_fprintf(const ext_job_type * ext_job, FILE * stream, const s
   fprintf(stream," {");
 
   __indent(stream, 0); __fprintf_python_string(stream , "name"  	      , ext_job->name                , ext_job->private_args , NULL);        __end_line(stream);
-  __indent(stream, 2); __fprintf_python_string(stream , "executable" 	      , ext_job->executable        , ext_job->private_args, global_args);  __end_line(stream);
+  __indent(stream, 2); __fprintf_python_string(stream , "executable" 	      , ext_job->executable          , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "target_file"  	      , ext_job->target_file         , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "start_file"  	      , ext_job->start_file          , ext_job->private_args, global_args);  __end_line(stream);
   __indent(stream, 2); __fprintf_python_string(stream , "stdout"    	      , ext_job->stdout_file         , ext_job->private_args, global_args);  __end_line(stream);

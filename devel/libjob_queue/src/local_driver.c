@@ -31,9 +31,7 @@ struct local_driver_struct {
 
 
 static UTIL_SAFE_CAST_FUNCTION( local_driver , LOCAL_DRIVER_TYPE_ID )
-static UTIL_SAFE_CAST_FUNCTION( local_job , LOCAL_JOB_TYPE_ID )
-
-
+static UTIL_SAFE_CAST_FUNCTION( local_job    , LOCAL_JOB_TYPE_ID    )
 
 
 local_job_type * local_job_alloc() {
@@ -59,7 +57,7 @@ job_status_type local_driver_get_job_status(void * __driver, void * __job) {
     /* The job has not been registered at all ... */
     return JOB_QUEUE_NOT_ACTIVE;
   else {
-    local_job_type    * job    = local_job_safe_cast( __job );
+    local_job_type * job = local_job_safe_cast( __job );
     {
       if (job->active == false) {
 	util_abort("%s: internal error - should not query status on inactive jobs \n" , __func__);
