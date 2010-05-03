@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <ert_build_info.h>
 
 
 
@@ -93,7 +93,7 @@ int main (int argc , char ** argv) {
   printf("compile time: %s \n",COMPILE_TIME_STAMP);
   enkf_main_install_SIGNALS();                     /* Signals common to both tui and gui. */
   signal(SIGINT  , util_abort_signal);             /* Control C - tui only.*/
-  enkf_main_init_debug();
+  enkf_main_init_debug( NULL );
   if (argc != 2) {
     enkf_usage();
     exit(1);

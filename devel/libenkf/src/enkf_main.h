@@ -53,7 +53,7 @@ void                          enkf_main_init_run( enkf_main_type * enkf_main, ru
 void                          enkf_main_load_ecl_init_mt(enkf_main_type * enkf_main , int );
 void                          enkf_main_load_ecl_complete_mt(enkf_main_type *);
 void                          enkf_main_iload_ecl_mt(enkf_main_type *enkf_main , int );
-void                          enkf_main_run(enkf_main_type * , run_mode_type , const bool * ,  int  , int , state_enum );
+bool                          enkf_main_run(enkf_main_type * , run_mode_type , const bool * ,  int  , int , state_enum );
   //void                          enkf_main_run_step(enkf_main_type *, run_mode_type , const bool * , int, state_enum , int , int, bool, forward_model_type *);
 void                          enkf_main_set_data_kw(enkf_main_type * , const char * , const char *);
 void                          enkf_main_set_state_run_path(const enkf_main_type * , int );
@@ -112,7 +112,7 @@ void                     enkf_main_resize_ensemble( enkf_main_type * enkf_main ,
 void                        enkf_main_install_SIGNALS(void);
 const                char * enkf_main_get_SVN_VERSION( void );
 const                char * enkf_main_get_COMPILE_TIME( void );
-void                        enkf_main_init_debug( void );
+void                        enkf_main_init_debug( const char * executable) ;
 bool                        enkf_main_is_initialized( const enkf_main_type * enkf_main );
 
 #ifdef __cplusplus

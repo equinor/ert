@@ -458,7 +458,7 @@ class Simulation:
         return self.checkStatus(Simulation.ALL_OK)
 
     def isUserKilled(self):
-        return self.checkStatus(Simulation.USER_KILLED)
+        return self.checkStatus(Simulation.USER_KILLED) or self.checkStatus(Simulation.USER_EXIT)
 
 
     def setStatus(self, status):

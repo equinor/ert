@@ -15,7 +15,7 @@ class SimulationsDialog(QtGui.QDialog):
         self.setWindowTitle("Running jobs")
         self.setMinimumWidth(250)
         #self.setMinimumHeight(250)
-
+        
         self.ctrl = SimulationsDialogController(self) 
 
         self.simulationProgress = QtGui.QProgressBar()
@@ -218,7 +218,7 @@ class SimulationsDialogController:
                     self.view.estimateLabel.setText("Estimated finished in %d seconds" % (self.statistics.estimate(len(simulations))))
                 else:
                     self.view.estimateLabel.setText("")
-                time.sleep(0.01)
+                time.sleep(0.1)
 
         self.pollthread.setDaemon(True)
         self.pollthread.run = poll

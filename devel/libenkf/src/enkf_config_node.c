@@ -191,6 +191,8 @@ char * enkf_config_node_alloc_outfile(const enkf_config_node_type * node , int r
 
 
 
+
+
 void *  enkf_config_node_get_ref(const enkf_config_node_type * node) { 
   return node->data; 
 }

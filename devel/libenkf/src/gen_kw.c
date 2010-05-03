@@ -51,10 +51,10 @@ void gen_kw_set_data(gen_kw_type * gen_kw , const double * data) {
 
 gen_kw_type * gen_kw_alloc(const gen_kw_config_type * config) {
   gen_kw_type * gen_kw  = util_malloc(sizeof *gen_kw , __func__);
-  gen_kw->config = config;
-  gen_kw->scalar = scalar_alloc(gen_kw_config_get_scalar_config( config ));
-  gen_kw->__type_id          = GEN_KW;
-  gen_kw->subst_list         = subst_list_alloc( NULL );
+  gen_kw->config        = config;
+  //gen_kw->scalar        = scalar_alloc(gen_kw_config_get_scalar_config( config ));
+  gen_kw->__type_id     = GEN_KW;
+  gen_kw->subst_list    = subst_list_alloc( NULL );
   return gen_kw;
 }
 
@@ -158,7 +158,7 @@ void gen_kw_matrix_deserialize(gen_kw_type *gen_kw , const active_list_type * ac
 
 
 void gen_kw_filter_file(const gen_kw_type * gen_kw , const char * target_file) {
-  const char * template_file = gen_kw_config_get_template_ref(gen_kw->config);
+  const char * template_file = gen_kw_config_get_template_file(gen_kw->config);
   if (template_file != NULL) {
     const int size               = gen_kw_config_get_data_size(gen_kw->config );
     const double * output_data   = scalar_get_output_ref(gen_kw->scalar);
@@ -194,14 +194,14 @@ void gen_kw_ecl_write(const gen_kw_type * gen_kw , const char * run_path , const
 
 
 
-void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list , double **_output_values) {
-  gen_kw_output_transform(gen_kw);
-
-  *_kw_list       = (char **) gen_kw_config_get_name_list(gen_kw->config);
-  *_size          = gen_kw_config_get_data_size(gen_kw->config );
-  *_output_values = (double *) scalar_get_output_ref(gen_kw->scalar);
-
-}
+//void gen_kw_export(const gen_kw_type * gen_kw , int * _size , char ***_kw_list , double **_output_values) {
+//  gen_kw_output_transform(gen_kw);
+//
+//  *_kw_list       = (char **) gen_kw_config_get_name_list(gen_kw->config);
+//  *_size          = gen_kw_config_get_data_size(gen_kw->config );
+//  *_output_values = (double *) scalar_get_output_ref(gen_kw->scalar);
+//
+//}
 
 
 

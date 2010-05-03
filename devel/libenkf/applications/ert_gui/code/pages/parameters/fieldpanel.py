@@ -2,7 +2,7 @@ from PyQt4 import QtGui, QtCore
 from widgets.combochoice import ComboChoice
 from widgets.stringbox import DoubleBox
 from widgets.pathchooser import PathChooser
-from pages.parameters.models import FieldModel
+from pages.parameters.parametermodels import FieldModel
 
 class FieldPanel(QtGui.QFrame):
 

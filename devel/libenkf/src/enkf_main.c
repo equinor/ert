@@ -58,6 +58,7 @@
 #include <subst_list.h>
 #include <subst_func.h>
 #include <int_vector.h>
+#include <ert_build_info.h>
 #include "enkf_defaults.h"
 
 /**
@@ -1458,16 +1459,13 @@ static void enkf_main_run_wait_loop(enkf_main_type * enkf_main ) {
   multithreading allows for asyncronous treatmeant of the queue,
   loading of results e.t.c. The latter is probably the most important
   argument for using a multithreaded approach.
+
+  If all simulations have completed successfully the function will
+  return true, otherwise it will return false.
 */
 
 
-
-
-
-
-
-
-static void enkf_main_run_step(enkf_main_type * enkf_main      ,
+static bool enkf_main_run_step(enkf_main_type * enkf_main      ,
                                run_mode_type    run_mode       ,
                                const bool * iactive            ,
                                int load_start                  ,      /* For internalizing results. */
@@ -1487,8 +1485,9 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
       util_exit("%s: exiting \n",__func__);
     }
   }
-
+  
   {
+    bool     verbose_queue   = true;
     int  max_internal_submit = model_config_get_max_internal_submit(enkf_main->model_config);
     const int ens_size       = enkf_main_get_ensemble_size( enkf_main );
     int   job_size;
@@ -1508,11 +1507,10 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
     {
       pthread_t        queue_thread;
       job_queue_type * job_queue = site_config_get_job_queue(enkf_main->site_config);
-      bool             verbose   = true;
       arg_pack_type * queue_args = arg_pack_alloc();
       arg_pack_append_ptr(queue_args  , job_queue);
       arg_pack_append_int(queue_args  , job_size);
-      arg_pack_append_bool(queue_args , verbose);
+      arg_pack_append_bool(queue_args , verbose_queue);
       arg_pack_lock( queue_args );
       
       pthread_create( &queue_thread , NULL , job_queue_run_jobs__ , queue_args);
@@ -1553,7 +1551,6 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
 
       enkf_main_run_wait_loop( enkf_main );      /* Waiting for all the jobs - and the loading of results - to complete. */
       pthread_join( queue_thread , NULL );       /* Wait for the job_queue_run_jobs() function to complete. */
-      job_queue_finalize( job_queue );           /* Tear down / finalize all the nodes related to remote jobs - must NOT be called before job_queue_run_jobs() has returned. */
 
       arg_pack_free( queue_args );
     }
@@ -1562,7 +1559,7 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
 
     {
       bool runOK   = true;  /* The runOK checks both that the external jobs have completed OK, and that the ert layer has loaded all data. */
-
+      
       for (iens = 0; iens < ens_size; iens++) {
         if (! enkf_state_runOK(enkf_main->ensemble[iens])) {
           if ( runOK ) {
@@ -1572,16 +1569,20 @@ static void enkf_main_run_step(enkf_main_type * enkf_main      ,
           log_add_fmt_message( enkf_main->logh , 1 , stderr , "** Error in: %s " , enkf_state_get_run_path(enkf_main->ensemble[iens]));
         }
       }
-      if (!runOK)
-        util_exit("The integration failed - check your forward model ...\n");
+      /* 
+         If !runOK the tui code used to call util_exit() here, now the code just returns false.
+      */
+
+      if (runOK) {
+        log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
+        
+        if (enkf_update)
+          enkf_main_UPDATE(enkf_main , analysis_config_get_merge_observations( enkf_main->analysis_config ) , load_start , step2);
+      }
+      enkf_fs_fsync( enkf_main->dbase );
+      
+      return runOK;
     }
-    log_add_fmt_message(enkf_main->logh , 1 , NULL , "All jobs complete and data loaded for step: ->%d" , step2);
-
-    if (enkf_update)
-      enkf_main_UPDATE(enkf_main , analysis_config_get_merge_observations( enkf_main->analysis_config ) , load_start , step2);
-
-    enkf_fs_fsync( enkf_main->dbase );
-    printf("%s: ferdig med step: %d \n" , __func__,step2);
   }
 }
 
@@ -1616,7 +1617,7 @@ void enkf_main_init_run( enkf_main_type * enkf_main, run_mode_type run_mode) {
 /**
    The main RUN function - will run both enkf assimilations and experiments.
 */
-void enkf_main_run(enkf_main_type * enkf_main            ,
+bool enkf_main_run(enkf_main_type * enkf_main            ,
 		   run_mode_type    run_mode             ,
 		   const bool     * iactive              ,
 		   int              init_step_parameters ,
@@ -1685,7 +1686,12 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
           if (load_start > 0)
             load_start++;
 
-	  enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
+	  {
+            bool runOK = enkf_main_run_step(enkf_main , ENKF_ASSIMILATION , iactive , load_start , init_step_parameter , 
+                                            init_state_parameter , init_state_dynamic , report_step1 , report_step2 , enkf_on , forward_model);
+            if (!runOK)
+              return false;   /* If the run did not succed we just return false. */
+          }
 	  prev_enkf_on = enkf_on;
 	}
       } else
@@ -1701,6 +1707,7 @@ void enkf_main_run(enkf_main_type * enkf_main            ,
       enkf_main_run_step(enkf_main , run_mode , iactive , load_start , init_step_parameters , init_state_parameter , init_state_dynamic , start_report , last_report , false , NULL );
     } 
   }
+  return true;
 }
 
 
@@ -2864,15 +2871,18 @@ void enkf_main_install_SIGNALS(void) {
 }
 
 
-void enkf_main_init_debug( ) {
+void enkf_main_init_debug( const char * executable ) {
   char * svn_version  	  = util_alloc_sprintf("svn version..........: %s \n",SVN_VERSION);
   char * compile_time 	  = util_alloc_sprintf("Compile time.........: %s \n",COMPILE_TIME_STAMP);
 
   /* This will be printed if/when util_abort() is called on a later stage. */
-  util_abort_append_version_info(svn_version);
-  util_abort_append_version_info(compile_time);
+  util_abort_append_version_info( svn_version );
+  util_abort_append_version_info( compile_time );
   
   free(svn_version);
   free(compile_time);
+
+  if (executable != NULL)
+    util_abort_set_executable( executable );
 }  
 

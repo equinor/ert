@@ -60,7 +60,7 @@ class RunWidget(HelpedWidget):
         memberLayout.addRow(membersCheckPanel)
         memberLayout.addRow("Members:", self.membersList)
 
-        self.actionButton = QtGui.QPushButton("Run simulation")
+        self.actionButton = QtGui.QPushButton("Run simulations")
 
         self.connect(self.actionButton, QtCore.SIGNAL('clicked()'), self.run)
 

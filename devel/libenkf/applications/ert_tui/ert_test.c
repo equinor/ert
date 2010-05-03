@@ -3,6 +3,7 @@
 #include <util.h>
 #include <config.h>
 #include <hash.h>
+#include <pthread.h>
 #include <enkf_types.h>
 #include <string.h>
 #include <local_driver.h>
@@ -16,6 +17,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <local_config.h>
+#include <site_config.h>
+#include <job_queue.h>
+#include <ert_build_info.h>
 
 
 void install_SIGNALS(void) {
@@ -91,6 +95,24 @@ void enkf_usage() {
 
 
 
+void kill_func( void * __enkf_main ) {
+  int sleep_time = 6;
+  int N          = 5;
+  enkf_main_type * enkf_main = enkf_main_safe_cast( __enkf_main );
+  for (int i=0; i < N; i++) {
+    printf("#### %d \n",i);
+    sleep( sleep_time );
+  }
+  printf("-----------------------------------------------------------------\n");
+  {
+    site_config_type * site_config = enkf_main_get_site_config( enkf_main );
+    job_queue_type * job_queue = site_config_get_job_queue( site_config );
+
+    job_queue_user_exit( job_queue );
+  }
+}
+
+
 
 int main (int argc , char ** argv) {
   text_splash();
@@ -111,17 +133,14 @@ int main (int argc , char ** argv) {
       printf("Bootstrap complete \n");
       /*****************************************************************/
       /* Test code of various kinds can be added here */
-
       {
-        site_config_type * site_config = enkf_main_get_site_config( enkf_main );
-        hash_type * rsh_host_list = site_config_get_rsh_host_list( site_config );
-        hash_iter_type * iter = hash_iter_alloc( rsh_host_list );
+        pthread_t kill_thread;
+        pthread_create( &kill_thread , 
+                        NULL ,
+                        kill_func , 
+                        enkf_main );
         
-        while (!hash_iter_is_complete( iter )) {
-          const char * host = hash_iter_get_next_key( iter );
-          printf("%s:%d \n",host , hash_get_int( rsh_host_list , host));
-        }
-        hash_iter_free( iter );
+        enkf_tui_run_start__( enkf_main );
       }
       
 

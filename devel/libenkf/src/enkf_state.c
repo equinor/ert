@@ -1407,7 +1407,11 @@ static void enkf_state_start_forward_model(enkf_state_type * enkf_state) {
       Prepare the job and submit it to the queue
     */
     enkf_state_init_eclipse(enkf_state);
-    job_queue_add_job(shared_info->job_queue , run_info->run_path , member_config_get_eclbase(my_config) , member_config_get_iens(my_config) , forward_model_get_lsf_request(enkf_state->forward_model));
+    job_queue_insert_job(shared_info->job_queue , 
+                         run_info->run_path , 
+                         member_config_get_eclbase(my_config) , 
+                         member_config_get_iens(my_config) , 
+                         forward_model_get_lsf_request(enkf_state->forward_model));
     run_info->num_internal_submit++;
   }
 }
@@ -1464,7 +1468,7 @@ job_status_type enkf_state_get_run_status( const enkf_state_type * enkf_state ) 
   run_info_type             * run_info    = enkf_state->run_info;
   if (run_info->active) {
     const shared_info_type    * shared_info = enkf_state->shared_info;
-    return job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+    return job_queue_get_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
   } else
     return JOB_QUEUE_NOT_ACTIVE;
 }
@@ -1483,7 +1487,7 @@ time_t enkf_state_get_start_time( const enkf_state_type * enkf_state ) {
 time_t enkf_state_get_submit_time( const enkf_state_type * enkf_state ) {
   run_info_type             * run_info    = enkf_state->run_info;
   if (run_info->active) {
-    const shared_info_type    * shared_info = enkf_state->shared_info;
+    const shared_info_type * shared_info = enkf_state->shared_info;
     return job_queue_iget_submit_time(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
   } else
     return -1;
@@ -1515,7 +1519,7 @@ bool enkf_state_kill_simulation( const enkf_state_type * enkf_state ) {
 bool enkf_state_resubmit_simulation( enkf_state_type * enkf_state , bool resample) {
   const shared_info_type * shared_info = enkf_state->shared_info;
   int iens                       = member_config_get_iens( enkf_state->my_config );
-  job_status_type current_status = job_queue_export_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
+  job_status_type current_status = job_queue_get_job_status(shared_info->job_queue , member_config_get_iens( enkf_state->my_config ));
   if (current_status & JOB_QUEUE_CAN_RESTART) { 
     /* Reinitialization of the nodes */
     if (resample) {

@@ -387,16 +387,16 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
 
 void enkf_tui_plot_GEN_KW__(enkf_main_type * enkf_main , const enkf_config_node_type * config_node , int step1 , int step2 , int iens1 , int iens2) {
   gen_kw_config_type * gen_kw_config 	    = enkf_config_node_get_ref( config_node );
-  int num_kw                         	    = gen_kw_config_get_data_size( gen_kw_config );
-  const char ** key_list             	    = gen_kw_config_get_name_list( gen_kw_config );
+  stringlist_type * key_list                = gen_kw_config_alloc_name_list( gen_kw_config );
   
   int ikw;
-  
-  for (ikw = 0; ikw < num_kw; ikw++) {
+  for (ikw = 0; ikw < stringlist_get_size( key_list ); ikw++) {
     char * user_key = gen_kw_config_alloc_user_key( gen_kw_config , ikw );
-    enkf_tui_plot_ensemble__( enkf_main , config_node , user_key , key_list[ikw] , step1 , step2 , false , iens1 , iens2 , ANALYZED );
+    enkf_tui_plot_ensemble__( enkf_main , config_node , user_key , stringlist_iget( key_list , ikw) , step1 , step2 , false , iens1 , iens2 , ANALYZED );
     free( user_key );
   }
+  
+  stringlist_free( key_list );
 }
 
 
