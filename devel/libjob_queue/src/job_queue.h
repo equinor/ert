@@ -8,11 +8,9 @@ extern "C" {
 
 typedef struct job_queue_struct job_queue_type;
 
-void                job_queue_init( job_queue_type * job_queue );
 job_driver_type     job_queue_get_driver_type( const job_queue_type * queue );
 void                job_queue_set_driver(job_queue_type * queue , basic_queue_driver_type * driver);
 void                job_queue_set_size( job_queue_type * job_queue , int size );
-void                job_queue_finalize(job_queue_type * queue);
 void                job_queue_set_runpath_fmt(job_queue_type *  , const path_fmt_type * );
 job_queue_type   *  job_queue_alloc(int  , int , int  , const char * );
 void                job_queue_free(job_queue_type *);
@@ -29,7 +27,6 @@ const char        * job_queue_status_name( job_status_type status );
 void                job_queue_set_max_running( job_queue_type * queue , int max_running );
 int                 job_queue_inc_max_runnning( job_queue_type * queue, int delta );
 int                 job_queue_get_max_running( const job_queue_type * queue );
-void                job_queue_export_status_summary( job_queue_type * queue , int * external_status_list);
 int                 job_queue_iget_status_summary( const job_queue_type * queue , job_status_type status);
 time_t              job_queue_iget_sim_start( job_queue_type * queue, int job_index);
 time_t              job_queue_iget_submit_time( job_queue_type * queue, int job_index);

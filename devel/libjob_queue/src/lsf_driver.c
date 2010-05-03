@@ -50,7 +50,7 @@ struct lsf_job_struct {
   int       num_exec_host;
   char    **exec_host;
 #ifdef LSF_SYSTEM_DRIVER
-  char            * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_output hash table */
+  char     * lsf_jobnr_char;  /* Used to look up the job status in the bjobs_cache hash table */
 #endif
 };
 
@@ -68,8 +68,8 @@ struct lsf_driver_struct {
 #else
   time_t             last_bjobs_update;
   hash_type         *status_map;
-  hash_type         *bjobs_output;
-  pthread_mutex_t    bjobs_mutex;     /* Only one thread should update the bjobs_output table. */
+  hash_type         *bjobs_cache;     /* The output of calling bjobs is cached in this table. */
+  pthread_mutex_t    bjobs_mutex;     /* Only one thread should update the bjobs_chache table. */
 #endif
 };
 
@@ -170,7 +170,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
     char status[16];
     FILE *stream = util_fopen(tmp_file , "r");;
     bool at_eof = false;
-    hash_clear(driver->bjobs_output);
+    hash_clear(driver->bjobs_cache);
     util_fskip_lines(stream , 1);
     while (!at_eof) {
       char * line = util_fscanf_alloc_line(stream , &at_eof);
@@ -179,7 +179,7 @@ static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
 
 	if (sscanf(line , "%d %s %s", &job_id_int , user , status) == 3) {
 	  char * job_id = util_alloc_sprintf("%d" , job_id_int);
-	  hash_insert_int(driver->bjobs_output , job_id , hash_get_int(driver->status_map , status));
+	  hash_insert_int(driver->bjobs_cache , job_id , hash_get_int(driver->status_map , status));
 	  free(job_id);
 	}
 	
@@ -211,7 +211,7 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , void *
 	   Failed to get information about the job - we boldly assume
 	   the following situation has occured:
            
-           1. The job is running happily along.
+             1. The job is running happily along.
 	     2. The lsf deamon is not responding for a long time.
 	     3. The job finishes, and is eventually expired from the LSF job database.
 	     4. The lsf deamon answers again - but can not find the job...
@@ -235,7 +235,8 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , void *
 	  CASE_SET(JOB_STAT_DONE  , JOB_QUEUE_DONE);
 	  CASE_SET(JOB_STAT_PDONE , JOB_QUEUE_DONE);
 	  CASE_SET(JOB_STAT_PERR  , JOB_QUEUE_EXIT);
-	  CASE_SET(192            , JOB_QUEUE_DONE); /* this 192 seems to pop up - where the fuck it comes frome ??  _pdone + _ususp ??? */
+	  CASE_SET(192            , JOB_QUEUE_DONE); /* this 192 seems to pop up - where the fuck 
+                                                        does it come frome ??  _pdone + _ususp ??? */
 	default:
           util_abort("%s: job:%ld lsf_status:%d not recognized - internal LSF fuck up - aborting \n",__func__ , job->lsf_jobnr , job_info->status);
 	  status = JOB_QUEUE_DONE; /* ????  */
@@ -262,7 +263,7 @@ static job_status_type lsf_driver_get_job_status_system(void * __driver , void *
       /**
          Updating the bjobs_table of the driver involves a significant change in
          the internal state of the driver; that is semantically a bit
-         unfortunate because this is clearly a get() function - to protect
+         unfortunate because this is clearly a get() function; to protect
          against concurrent updates of this table we use a mutex.
       */
       pthread_mutex_lock( &driver->bjobs_mutex );
@@ -275,8 +276,8 @@ static job_status_type lsf_driver_get_job_status_system(void * __driver , void *
       pthread_mutex_unlock( &driver->bjobs_mutex );
 
 
-      if (hash_has_key( driver->bjobs_output , job->lsf_jobnr_char) ) 
-	status = hash_get_int(driver->bjobs_output , job->lsf_jobnr_char);
+      if (hash_has_key( driver->bjobs_cache , job->lsf_jobnr_char) ) 
+	status = hash_get_int(driver->bjobs_cache , job->lsf_jobnr_char);
       else
 	/* 
 	   It might be running - but since job != NULL it is at least in the queue system.
@@ -422,7 +423,7 @@ void lsf_driver_free(lsf_driver_type * driver ) {
   free(driver->queue_name);
 #ifdef LSF_SYSTEM_DRIVER
   hash_free(driver->status_map);
-  hash_free(driver->bjobs_output);
+  hash_free(driver->bjobs_cache);
 #endif
   free(driver);
   driver = NULL;
@@ -467,7 +468,7 @@ void * lsf_driver_alloc(const char * queue_name) {
   setenv("BSUB_QUIET" , "yes" , 1);
 #else
   lsf_driver->last_bjobs_update   = time( NULL );
-  lsf_driver->bjobs_output 	  = hash_alloc(); 
+  lsf_driver->bjobs_cache 	  = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
   hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
