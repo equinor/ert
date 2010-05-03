@@ -29,7 +29,7 @@ def createEnsemblePage(configPanel, parent):
     r.initialize = lambda ert : [ert.setTypes("ensemble_config_get_node", argtypes=ertwrapper.c_char_p),
                                  ert.setTypes("enkf_config_node_get_impl_type"),
                                  ert.setTypes("ensemble_config_alloc_keylist"),
-                                 ert.setTypes("gen_kw_get_template_file", ertwrapper.c_char_p), 
+                                 ert.setTypes("gen_kw_config_get_template_file", ertwrapper.c_char_p),
                                  ert.setTypes("enkf_config_node_get_ref")]
 
     def get_ensemble_parameters(ert):
@@ -51,7 +51,7 @@ def createEnsemblePage(configPanel, parent):
             elif type == KeywordModel.TYPE:
                 model = KeywordModel(key)
 
-                model["template"] = ert.enkf.gen_kw_get_template_file(data)
+                model["template"] = ert.enkf.gen_kw_config_get_template_file(data)
             elif type == SummaryModel.TYPE:
                 model = SummaryModel(key)
             else:

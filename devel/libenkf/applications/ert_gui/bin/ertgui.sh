@@ -7,6 +7,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/res/x86_64_RH_4/lib
 
 cd ../code
 
+python ../bin/clean.py
+
 if [ "$1" = "debug" ]
 then
     gdb python --command=../bin/gdbcommands    
