@@ -125,7 +125,7 @@ class conf:
     def __init__(self , cwd , package , sub_level_depth):
 
         self.SVN_VERSION      = commands.getoutput("svnversion ./")
-        self.TIME_STAMP       = commands.getoutput("date").replace(" " , "_")
+        self.TIME_STAMP       = commands.getoutput("date")#.replace(" " , "_")
         
         self.SITE_CONFIG_FILE     = "/project/res/etc/ERT/Config/site-config"
         (self.SDP_ROOT , self.RH) = get_SDP_ROOT()

@@ -33,17 +33,11 @@ conf.update_env( env , [ LIBENKF , LIBRMS , LIBJOB_QUEUE , LIBSCHED , LIBECL , L
 tui_objects = env.Object( ["enkf_tui_main.c" , "enkf_tui_fs.c" , "enkf_tui_ranking.c" , "enkf_tui_misc.c" , "enkf_tui_table.c" , "enkf_tui_plot.c" , 
                            "enkf_tui_run.c", "enkf_tui_util.c" , "enkf_tui_init.c" , "enkf_tui_export.c"])
 define_fmt = "\'%s=\"%s\"\'"
-main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE),
-                                                   define_fmt % ("SVN_VERSION"        ,  conf.SVN_VERSION),
-                                                   define_fmt % ("COMPILE_TIME_STAMP" ,  conf.TIME_STAMP)])
+main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE) ])
 
+ert_test_object = env.Object( "ert_test.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE)])
 
-ert_test_object = env.Object( "ert_test.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE),
-                                                           define_fmt % ("SVN_VERSION"        ,  conf.SVN_VERSION),
-                                                           define_fmt % ("COMPILE_TIME_STAMP" ,  conf.TIME_STAMP)])
-
-
-ert_test    = env.Program( "ert_test"                  , [ert_test_object])
+ert_test    = env.Program( "ert_test"                  , [ert_test_object, tui_objects])
 ert         = env.Program( "ert"                       , [main_object, tui_objects])
 ert_svn     = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
 
