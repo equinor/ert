@@ -12,7 +12,6 @@
 struct scalar_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   int 		     data_size;
-  int 		     internal_offset;
   active_list_type * active_list;
 
   trans_func_type ** transform;  
@@ -26,7 +25,6 @@ scalar_config_type * scalar_config_alloc_empty(int size) {
   UTIL_TYPE_ID_INIT( scalar_config , SCALAR_CONFIG_TYPE_ID );
   scalar_config->data_size   	       = size;
   scalar_config->active_list           = active_list_alloc( ALL_ACTIVE );
-  scalar_config->internal_offset       = 0;
   
   scalar_config->transform             = util_malloc(scalar_config->data_size * sizeof * scalar_config->transform             , __func__);
   return scalar_config;
@@ -41,10 +39,6 @@ void scalar_config_transform(const scalar_config_type * config , const double * 
 }
 
  
-
-void scalar_config_truncate(const scalar_config_type * config , double *data) {
-  return;
-}
 
 
 

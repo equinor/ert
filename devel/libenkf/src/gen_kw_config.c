@@ -5,7 +5,7 @@
 #include <enkf_util.h>
 #include <enkf_macros.h>
 #include <trans_func.h>
-#include <scalar_config.h>
+#include <active_list.h>
 #include <enkf_defaults.h>
 #include <gen_kw_common.h>
 #include <gen_kw_config.h>
@@ -30,11 +30,7 @@ struct gen_kw_config_struct {
   UTIL_TYPE_ID_DECLARATION;
   char                 * key;
   vector_type          * parameters;       /* Vector of gen_kw_parameter_type instances. */
-  
-  //char                ** kw_list;
-  //char                ** tagged_kw_list;   /* The same keywords - but with '<' and '>' */
-  //scalar_config_type   * scalar_config;
-
+  active_list_type     * active_list;
   char                 * template_file;
   char                 * parameter_file;
   gen_kw_type          * min_std;
@@ -52,6 +48,7 @@ static gen_kw_parameter_type * gen_kw_parameter_alloc( const char * parameter_na
   parameter->name        = util_alloc_string_copy( parameter_name );
   parameter->tagged_name = util_alloc_sprintf("%s%s%s" , DEFAULT_START_TAG , parameter_name , DEFAULT_END_TAG);
   parameter->trans_func  = NULL;
+  return parameter;
 }
 
 
@@ -134,6 +131,8 @@ void gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char 
         gen_kw_parameter_type * parameter  = gen_kw_parameter_alloc( parameter_name );
         trans_func_type       * trans_func = trans_func_fscanf_alloc( stream );
         gen_kw_parameter_set_trans_func( parameter , trans_func );
+
+        vector_append_owned_ref( config->parameters , parameter , gen_kw_parameter_free__ );
       } else 
         break; /* OK - we are ate EOF. */
     } 
@@ -155,10 +154,7 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(const char * template_fi
   gen_kw_config_type *gen_kw_config = util_malloc(sizeof *gen_kw_config , __func__);
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
 
-  //gen_kw_config->kw_list            = util_malloc(size * sizeof *gen_kw_config->kw_list , __func__);
-  //gen_kw_config->tagged_kw_list     = util_malloc(size * sizeof *gen_kw_config->tagged_kw_list , __func__);
-  //gen_kw_config->scalar_config      = scalar_config_alloc_empty(size);
-
+  gen_kw_config->active_list        = active_list_alloc( ALL_ACTIVE );
   gen_kw_config->min_std            = NULL;
   gen_kw_config->key                = NULL; 
   gen_kw_config->init_file_fmt      = NULL;
@@ -174,12 +170,9 @@ static gen_kw_config_type * __gen_kw_config_alloc_empty(const char * template_fi
 
 
 
-void gen_kw_config_transform(const gen_kw_config_type * config , const double * input_data , double * output_data) {
-  int i;
-  for (i=0; i < vector_get_size( config->parameters ); i++) {
-    const gen_kw_parameter_type * parameter = vector_iget_const( config->parameters , i );
-    output_data[i] = trans_func_eval( parameter->trans_func , input_data[i]);
-  }
+double gen_kw_config_transform(const gen_kw_config_type * config , int index, double x) {
+  const gen_kw_parameter_type * parameter = vector_iget_const( config->parameters , index );
+  return trans_func_eval( parameter->trans_func , x);
 }
 
 
@@ -266,10 +259,6 @@ gen_kw_type * gen_kw_config_get_min_std( const gen_kw_config_type * gen_kw_confi
 
 
 void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {
-  //util_free_stringlist(gen_kw_config->kw_list        , scalar_config_get_data_size(gen_kw_config->scalar_config));
-  //util_free_stringlist(gen_kw_config->tagged_kw_list , scalar_config_get_data_size(gen_kw_config->scalar_config));
-  //scalar_config_free(gen_kw_config->scalar_config);
-  
   util_safe_free( gen_kw_config->key );
   util_safe_free(gen_kw_config->template_file);
   

@@ -4,7 +4,6 @@
 #include <math.h>
 #include <util.h>
 #include <enkf_types.h>
-#include <scalar_config.h>
 #include <scalar.h>
 #include <enkf_util.h>
 #include <enkf_serialize.h>
@@ -13,10 +12,10 @@
 
 /*****************************************************************/
 
-GET_DATA_SIZE_HEADER(scalar);
+//GET_DATA_SIZE_HEADER(scalar);
 
 struct scalar_struct {
-  const scalar_config_type * config;
+  int                        size;
   double                   * data;
   double                   * output_data;
   bool                       output_valid;
@@ -26,34 +25,38 @@ struct scalar_struct {
 /*****************************************************************/
 
 void scalar_clear(scalar_type * scalar) {
-  const int size = scalar_config_get_data_size(scalar->config);   
+  const int data_size = scalar->size;
   int k;
-  for (k = 0; k < size; k++) {
+  for (k = 0; k < data_size; k++) {
     scalar->output_data[k] = 0.0;
     scalar->data[k]        = 0.0;
   }
 }
 
 void scalar_set_data(scalar_type * scalar , const double * data) {
-  memcpy(scalar->data , data , scalar_config_get_data_size(scalar->config) * sizeof * data);
+  const int data_size = scalar->size;
+  memcpy(scalar->data , data , data_size * sizeof * data);
   scalar->output_valid = false;
 }
 
 
 void scalar_get_data(const scalar_type * scalar , double * data) {
-  memcpy(data , scalar->data , scalar_config_get_data_size(scalar->config) * sizeof * data);
+  const int data_size = scalar->size;
+  memcpy(data , scalar->data , data_size * sizeof * data);
 }
 
 
 
 double scalar_iget_double(scalar_type * scalar , bool internal_value , int index) {
-  if (internal_value)
-    return scalar->data[index];
-  else {
-    if (!scalar->output_valid)
-      scalar_transform( scalar );
-    return scalar->output_data[index];
-  }
+  util_abort("%s: Broken \n",__func__);
+  //if (internal_value)
+  //  return scalar->data[index];
+  //else {
+  //  if (!scalar->output_valid)
+  //    scalar_transform( scalar );
+  //  return scalar->output_data[index];
+  //}
+  return -1;
 }
 
 
@@ -65,13 +68,15 @@ void scalar_iset(scalar_type * scalar , int index , double value) {
 
 
 void scalar_get_output_data(const scalar_type * scalar , double * output_data) {
-  memcpy(output_data , scalar->output_data , scalar_config_get_data_size(scalar->config) * sizeof * output_data);
+  const int data_size = scalar->size;
+  memcpy(output_data , scalar->output_data , data_size * sizeof * output_data);
 }
 
 
-void scalar_realloc_data(scalar_type *scalar) {
-  scalar->data        = util_malloc(scalar_config_get_data_size(scalar->config) * sizeof *scalar->data        , __func__);
-  scalar->output_data = util_malloc(scalar_config_get_data_size(scalar->config) * sizeof *scalar->output_data , __func__);
+void scalar_resize(scalar_type * scalar , int size) {
+  scalar->size        = size;
+  scalar->data        = util_malloc(size * sizeof *scalar->data        , __func__);
+  scalar->output_data = util_malloc(size * sizeof *scalar->output_data , __func__);
 }
 
 
@@ -83,19 +88,18 @@ void scalar_free_data(scalar_type *scalar) {
 }
 
 
-scalar_type * scalar_alloc(const scalar_config_type * scalar_config) {
+scalar_type * scalar_alloc( int size ) {
   scalar_type * scalar  = malloc(sizeof *scalar);
-  scalar->config = scalar_config;
   scalar->data        	  = NULL;
   scalar->output_data 	  = NULL;
   scalar->__output_locked = false;
-  scalar_realloc_data(scalar);
+  scalar_resize(scalar , size);
   return scalar;
 }
 
 
 void scalar_memcpy(scalar_type * new, const scalar_type * old) {
-  int size = scalar_config_get_data_size(old->config);
+  int size = old->size;
 
   memcpy(new->data        , old->data        , size * sizeof *old->data);
   memcpy(new->output_data , old->output_data , size * sizeof *old->output_data);
@@ -106,7 +110,7 @@ void scalar_memcpy(scalar_type * new, const scalar_type * old) {
 
 
 scalar_type * scalar_copyc(const scalar_type *scalar) {
-  scalar_type * new = scalar_alloc(scalar->config);
+  scalar_type * new = scalar_alloc( scalar->size );
   scalar_memcpy(new , scalar);
   return new;
 }
@@ -124,7 +128,7 @@ void scalar_stream_fread(scalar_type * scalar , FILE * stream) {
 
 
 void scalar_buffer_fload(scalar_type * scalar , buffer_type * buffer) {
-  int size = scalar_config_get_data_size( scalar->config );
+  int size = scalar->size;
   buffer_fread(buffer , scalar->data , sizeof *scalar->data , size);
   scalar->output_valid = false;
 }
@@ -132,7 +136,7 @@ void scalar_buffer_fload(scalar_type * scalar , buffer_type * buffer) {
 
 void scalar_stream_fwrite(const scalar_type * scalar , FILE * stream , bool internal_state) {
   
-  const int data_size = scalar_config_get_data_size(scalar->config);
+  const int data_size = scalar->size;
   fwrite(&data_size     ,   sizeof  data_size     , 1 , stream);
   util_fwrite(scalar->data , sizeof *scalar->data    ,data_size , stream , __func__);
 
@@ -141,7 +145,7 @@ void scalar_stream_fwrite(const scalar_type * scalar , FILE * stream , bool inte
 
 void scalar_buffer_fsave(const scalar_type * scalar , buffer_type * buffer , bool internal_state) {
   
-  const int data_size = scalar_config_get_data_size(scalar->config);
+  const int data_size = scalar->size;
   buffer_fwrite(buffer , scalar->data , sizeof *scalar->data    ,data_size);
 
 }
@@ -152,8 +156,7 @@ void scalar_buffer_fsave(const scalar_type * scalar , buffer_type * buffer , boo
 void scalar_sample(scalar_type *scalar) {
   const double mean = 0.0; /* Mean and std are hardcoded - the variability should be in the transformation. */
   const double std  = 1.0; 
-  const scalar_config_type *config   = scalar->config;
-  const int                data_size = scalar_config_get_data_size(config);
+  const int                data_size = scalar->size;
   int i;
   
   for (i=0; i < data_size; i++) 
@@ -176,15 +179,13 @@ void scalar_free(scalar_type *scalar) {
 
 
 void scalar_matrix_deserialize(scalar_type * scalar , const active_list_type * active_list , const matrix_type * A , int row_offset , int column) {
-  const scalar_config_type *config      = scalar->config;
-  const int                data_size    = scalar_config_get_data_size(config);
+  const int                data_size    = scalar->size;
   enkf_matrix_deserialize( scalar->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
 
 
 void scalar_matrix_serialize(const scalar_type *scalar ,  const active_list_type * active_list , matrix_type * A , int row_offset , int column) {
-  const scalar_config_type *config      = scalar->config;
-  const int                data_size    = scalar_config_get_data_size(config);
+  const int                data_size    = scalar->size;
   enkf_matrix_serialize( scalar->data , data_size , ECL_DOUBLE_TYPE , active_list , A , row_offset , column);
 }
 
@@ -192,17 +193,10 @@ void scalar_matrix_serialize(const scalar_type *scalar ,  const active_list_type
 
 
 void scalar_truncate(scalar_type * scalar) {
-  scalar_config_truncate(scalar->config , scalar->data);
+  return ; 
 }
 
 
-void scalar_transform(scalar_type * scalar) {
-  if (scalar->__output_locked) 
-    util_abort("%s: internal error - trying to do output_transform on locked data.\n",__func__);
-  
-  scalar_config_transform(scalar->config , scalar->data , scalar->output_data);
-  scalar->output_valid = true;
-}
 
 const double * scalar_get_output_ref(const scalar_type * scalar) { return scalar->output_data; }
       double * scalar_get_data_ref  (const scalar_type * scalar) { return scalar->data; }
@@ -229,8 +223,7 @@ static void scalar_lock_output(scalar_type * scalar) { scalar->__output_locked  
 
 
 void scalar_isqrt(scalar_type * scalar) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
+  const int data_size = scalar->size;
   int i;
   
   for (i=0; i < data_size; i++) 
@@ -240,8 +233,7 @@ void scalar_isqrt(scalar_type * scalar) {
 
 
 void scalar_scale(scalar_type * scalar, double factor) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
+  const int data_size = scalar->size;
   int i;
   for (i=0; i < data_size; i++) 
     scalar->data[i] *= factor;
@@ -249,10 +241,8 @@ void scalar_scale(scalar_type * scalar, double factor) {
 
 
 void scalar_iadd(scalar_type * scalar , const scalar_type * delta) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
+  const int data_size = scalar->size;
   int i;                                              			       
-  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   for (i=0; i < data_size; i++) 
     scalar->data[i] += delta->data[i];
 }
@@ -270,10 +260,8 @@ void scalar_iadd(scalar_type * scalar , const scalar_type * delta) {
 
 
 void scalar_imul(scalar_type * scalar , const scalar_type * delta) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
+  const int data_size = scalar->size;
   int i;                                              			       
-  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   for (i=0; i < data_size; i++) 
     scalar->data[i] *= delta->data[i];
 }
@@ -291,10 +279,8 @@ void scalar_imul(scalar_type * scalar , const scalar_type * delta) {
 
 
 void scalar_iaddsqr(scalar_type * scalar , const scalar_type * delta) {
-  const scalar_config_type *config = scalar->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
+  const int data_size = scalar->size;
   int i;                                              			       
-  if (config != delta->config) util_abort("%s:two scalar object have different config objects - aborting \n",__func__);
   for (i=0; i < data_size; i++) 
     scalar->data[i] += delta->data[i] * delta->data[i];
 }
@@ -306,9 +292,7 @@ void scalar_iaddsqr(scalar_type * scalar , const scalar_type * delta) {
 */
 
 void scalar_set_inflation(scalar_type * inflation , const scalar_type * std , const scalar_type * min_std) {
-  const scalar_config_type *config = inflation->config; 			       
-  const int data_size = scalar_config_get_data_size(config);
-  
+  const int data_size = std->size;
   for (int i=0; i < data_size; i++) {
     if (std->data[i] > 0)
       inflation->data[i] = util_double_max( 1.0 , min_std->data[i] / std->data[i]);   

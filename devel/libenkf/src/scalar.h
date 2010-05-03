@@ -4,7 +4,6 @@
 extern "C" {
 #endif
 #include <enkf_util.h>
-#include <scalar_config.h>
 #include <enkf_serialize.h>
 #include <stdio.h>
 #include <buffer.h>
@@ -12,18 +11,12 @@ extern "C" {
 typedef struct scalar_struct scalar_type;
 
 void             scalar_truncate(scalar_type * );
-void             scalar_transform(scalar_type * );
 void             scalar_get_data(const scalar_type * , double * );
 void             scalar_get_output_data(const scalar_type * , double * );
 void             scalar_set_data(scalar_type * , const double * );
-char           * scalar_alloc_ensfile(const scalar_type * , const char *);
-scalar_type      * scalar_alloc(const scalar_config_type * );
+void             scalar_resize(scalar_type * scalar , int size);
+scalar_type      * scalar_alloc( int size );
 void             scalar_free(scalar_type *);
-char           * scalar_alloc_ensname(const scalar_type *);
-char           * scalar_alloc_eclname(const scalar_type *);
-void             scalar_ecl_write(const scalar_type * , const char *);
-void             scalar_ens_write(const scalar_type * , const char *);
-void             scalar_ens_read(scalar_type * , const char *);
 void             scalar_sample(scalar_type *);
 void             scalar_truncate(scalar_type *);
 void             scalar_stream_fwrite(const scalar_type * scalar , FILE * , bool);
@@ -44,11 +37,8 @@ void             scalar_scale(scalar_type * scalar, double factor);
 void             scalar_iset(scalar_type * scalar , int index , double value);
 
 
+
 MATH_OPS_HEADER(scalar);
-VOID_ALLOC_HEADER(scalar);
-VOID_FREE_HEADER(scalar);
-VOID_ECL_WRITE_HEADER (scalar)
-VOID_INITIALIZE_HEADER(scalar);
 
 #ifdef __cplusplus
 }
