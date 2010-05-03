@@ -13,7 +13,7 @@ import widgets.util
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
-from pages.plotpanel import PlotPanel
+from pages.plotpanel import ImagePlotPanel, PlotPanel
 from pages.parameters.parameterpanel import ParameterPanel
 
 #todo: proper support for unicode characters?
@@ -46,7 +46,8 @@ app.processEvents()
 window.addPage("Configuration", widgets.util.resourceIcon("config"), ConfigPages(window))
 window.addPage("Init", widgets.util.resourceIcon("db"), InitPanel(window))
 window.addPage("Run", widgets.util.resourceIcon("run"), RunPanel(window))
-window.addPage("Plots", widgets.util.resourceIcon("plot"), PlotPanel("plots/default"))
+window.addPage("Plots", widgets.util.resourceIcon("plot"), ImagePlotPanel("plots/default"))
+window.addPage("Plots", widgets.util.resourceIcon("plot"), PlotPanel())
 
 splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
 app.processEvents()

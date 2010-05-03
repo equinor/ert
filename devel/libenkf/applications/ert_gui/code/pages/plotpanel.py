@@ -1,7 +1,8 @@
 from PyQt4 import QtGui, QtCore
 import os
+import numpy
 
-class PlotPanel(QtGui.QFrame):
+class ImagePlotPanel(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
     def __init__(self, path="plots"):
         """Create a PlotPanel"""
@@ -76,3 +77,39 @@ class PlotPanel(QtGui.QFrame):
         """Scale and update the displayed image"""
         if not self.image.isNull():
             self.label.setPixmap(self.image.scaled(size.width(), size.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+
+
+
+import matplotlib.figure
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+
+class PlotPanel(QtGui.QFrame):
+    """PlotPanel shows available plot result files and displays them"""
+    def __init__(self):
+        """Create a PlotPanel"""
+        QtGui.QFrame.__init__(self)
+
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        self.fig = matplotlib.figure.Figure(dpi=100)
+        self.canvas = FigureCanvas(self.fig)
+        self.canvas.setParent(self)
+        self.canvas.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        rect = 0.07, 0.07, 0.88, 0.88
+        self.axes = self.fig.add_axes(rect)
+
+
+        x = numpy.arange(0.0, 2.0, 0.02)
+        y = numpy.sin(2 * numpy.pi * x)
+        l = self.axes.plot(x, y, 'r-')
+
+        self.axes.set_ylim(numpy.min(y) - 0.5, numpy.max(y) + 0.5)
+
+        self.setMaximumSize(10000, 10000)
+
+
+    def resizeEvent(self, event):
+        QtGui.QFrame.resizeEvent(self, event)
+        self.canvas.resize(event.size().width(), event.size().height())
+

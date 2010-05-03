@@ -9,8 +9,8 @@ import widgets.stringbox
 from fieldpanel import *
 from parameterdialog import ParameterDialog
 from widgets.searchablelist import SearchableList
-from pages.parameters.datapanel import DataModel, DataPanel
-from pages.parameters.keywordpanel import KeywordPanel, KeywordModel
+from pages.parameters.datapanel import DataPanel
+from pages.parameters.keywordpanel import KeywordPanel
 import widgets.util
 from pages.parameters.parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
 
