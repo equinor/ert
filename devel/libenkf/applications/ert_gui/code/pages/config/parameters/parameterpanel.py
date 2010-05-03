@@ -9,10 +9,10 @@ import widgets.stringbox
 from fieldpanel import *
 from parameterdialog import ParameterDialog
 from widgets.searchablelist import SearchableList
-from pages.parameters.datapanel import DataPanel
-from pages.parameters.keywordpanel import KeywordPanel
+from pages.config.parameters.datapanel import DataPanel
+from pages.config.parameters.keywordpanel import KeywordPanel
 import widgets.util
-from pages.parameters.parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
+from pages.config.parameters.parametermodels import SummaryModel, FieldModel, DataModel, KeywordModel
 
 class ParameterPanel(HelpedWidget):
     """Shows a widget for parameters. The data structure expected and sent to the getter and setter is an array of Parameters."""
