@@ -4,8 +4,8 @@
 from PyQt4 import QtGui, QtCore
 from widgets.spinnerwidgets import IntegerSpinner
 import ertwrapper
-from pages.parameters.parameterpanel import ParameterPanel
-from pages.parameters.parametermodels import SummaryModel, DataModel, FieldModel, KeywordModel
+from pages.config.parameters.parameterpanel import ParameterPanel
+from pages.config.parameters.parametermodels import SummaryModel, DataModel, FieldModel, KeywordModel
 
 
 
