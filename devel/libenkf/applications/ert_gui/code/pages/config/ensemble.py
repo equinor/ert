@@ -34,7 +34,7 @@ def createEnsemblePage(configPanel, parent):
 
     def get_ensemble_parameters(ert):
         ens_conf = ert.ensemble_config
-        keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ens_conf))
+        keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ens_conf), free_after_use=True)
 
         parameters = []
         for key in keys:

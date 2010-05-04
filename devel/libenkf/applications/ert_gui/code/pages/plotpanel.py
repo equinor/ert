@@ -1,6 +1,9 @@
 from PyQt4 import QtGui, QtCore
 import os
 import numpy
+from widgets.helpedwidget import ContentModel
+import time
+import time
 
 class ImagePlotPanel(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -82,6 +85,7 @@ class ImagePlotPanel(QtGui.QFrame):
 
 import matplotlib.figure
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+import ertwrapper
 
 class PlotPanel(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -106,10 +110,107 @@ class PlotPanel(QtGui.QFrame):
 
         self.axes.set_ylim(numpy.min(y) - 0.5, numpy.max(y) + 0.5)
 
-        self.setMaximumSize(10000, 10000)
+        self.setMaximumSize(10000, 1000)
+
+        self.plotData = PlotData()
+        self.plotData.setKey("FOPT")
 
 
     def resizeEvent(self, event):
         QtGui.QFrame.resizeEvent(self, event)
         self.canvas.resize(event.size().width(), event.size().height())
+
+        self.axes.cla()
+        for member in range(0, 50):
+            self.axes.plot(self.plotData.data[member]["x_days"], self.plotData.data[member]["y"], "b-")
+
+
+class PlotData(ContentModel):
+
+    def __init__(self):
+        ContentModel.__init__(self)
+        self.initialized = False
+        self.key = ""
+
+
+    def initialize(self, ert):
+        ert.setTypes("ensemble_config_alloc_keylist")
+        ert.setTypes("ensemble_config_get_node", argtypes=ertwrapper.c_char_p)
+        ert.setTypes("enkf_main_get_fs")
+        ert.setTypes("enkf_fs_has_node", ertwrapper.c_int, argtypes=[ertwrapper.c_long, ertwrapper.c_int, ertwrapper.c_int, ertwrapper.c_int])
+        ert.setTypes("enkf_fs_fread_node", None, argtypes=[ertwrapper.c_long, ertwrapper.c_int, ertwrapper.c_int, ertwrapper.c_int])
+        ert.setTypes("enkf_node_alloc")
+        ert.setTypes("enkf_node_user_get", ertwrapper.c_double, argtypes=[ertwrapper.c_char_p, ertwrapper.c_void_p])
+        ert.setTypes("ensemble_config_has_key", ertwrapper.c_int, argtypes=ertwrapper.c_char_p)
+        ert.setTypes("enkf_main_get_history_length")
+        ert.setTypes("member_config_iget_sim_days", ertwrapper.c_double, argtypes=[ertwrapper.c_int, ertwrapper.c_int])
+        ert.setTypes("member_config_iget_sim_time", ertwrapper.c_long, argtypes=[ertwrapper.c_int, ertwrapper.c_int])
+        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
+        ert.setTypes("enkf_main_iget_member_config", argtypes=ertwrapper.c_int)
+
+        self.initialized = True
+
+
+    def getter(self, ert):
+        results = {}
+
+        ens_conf = ert.ensemble_config
+        keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ens_conf), free_after_use=True)
+        results["keys"] = keys
+
+        if ert.enkf.ensemble_config_has_key(ens_conf, self.key):
+            config_node = ert.enkf.ensemble_config_get_node(ens_conf, self.key)
+            fs = ert.enkf.enkf_main_get_fs(ert.main)
+            node = ert.enkf.enkf_node_alloc(config_node)
+
+            stop_time = ert.enkf.enkf_main_get_history_length(ert.main)
+            num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
+
+            for member in range(0, num_realizations):
+                results[member] = {}
+                results[member]["x_days"] = []
+                results[member]["x_time"] = []
+                results[member]["y"] = []
+
+                for step in range(1, stop_time + 1):
+                    
+                    FORECAST = 2
+                    if ert.enkf.enkf_fs_has_node(fs, config_node, step, member, FORECAST):
+
+                        member_config = ert.enkf.enkf_main_iget_member_config(ert.main, member)
+                        sim_days = ert.enkf.member_config_iget_sim_days(member_config, step, fs)
+                        sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, fs)
+
+                        ert.enkf.enkf_fs_fread_node(fs , node , step , member , FORECAST)
+                        key_index = None
+                        valid = ertwrapper.c_int()
+                        value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
+
+
+                        if valid.value == 1:
+                            #print self.key, member, sim_days, time.localtime(sim_time), value
+                            results[member]["x_days"].append(sim_days)
+                            results[member]["x_time"].append(sim_time)
+                            results[member]["y"].append(value)
+                            #print self.key, member, sim_days, time.ctime(sim_time), value
+                        else:
+                            print "Not valid: ", self.key, member, step
+
+
+        return results
+
+    def fetchContent(self):
+        self.data = self.getFromModel()
+
+
+    def setKey(self, key):
+        self.key = key
+
+    def getKeys(self):
+        return self.data["keys"]
+
+
+
+
+
 
