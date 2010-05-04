@@ -54,7 +54,7 @@ struct lsf_job_struct {
 #endif
 };
 
-
+#define BJOBS_REFRESH_TIME 5
 
 struct lsf_driver_struct {
   UTIL_TYPE_ID_DECLARATION;
@@ -255,7 +255,6 @@ static job_status_type lsf_driver_get_job_status_libary(void * __driver , void *
 #else
 
 static job_status_type lsf_driver_get_job_status_system(void * __driver , void * __job) {
-  const int bjobs_refresh_time = 5; /* Seconds */
   job_status_type status = JOB_QUEUE_NOT_ACTIVE;
   
   if (__job != NULL) {
@@ -271,7 +270,7 @@ static job_status_type lsf_driver_get_job_status_system(void * __driver , void *
       */
       pthread_mutex_lock( &driver->bjobs_mutex );
       {
-        if (difftime(time(NULL) , driver->last_bjobs_update) > bjobs_refresh_time) {
+        if (difftime(time(NULL) , driver->last_bjobs_update) > BJOBS_REFRESH_TIME) {
           lsf_driver_update_bjobs_table(driver);
           driver->last_bjobs_update = time( NULL );
         }

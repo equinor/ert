@@ -620,10 +620,14 @@ bool job_queue_kill_job( job_queue_type * queue , int job_index) {
     if (node->job_status & JOB_QUEUE_CAN_KILL) {
       basic_queue_driver_type * driver = queue->driver;
       
-      job_queue_change_node_status( queue , node , JOB_QUEUE_USER_KILLED );
-      if (node->job_status != JOB_QUEUE_NOT_ACTIVE)
+      if (node->job_status != JOB_QUEUE_WAITING) { /* Jobs with status JOB_QUEUE_WAITING are killable - in the sense
+                                                      that status should be set to JOB_QUEUE_USER_KILLED; but they do
+                                                      not have any driver specific job_data, and the driver->kill_job()
+                                                      function can NOT be called. */
         driver->kill_job( driver , node->job_data );
-      node->job_data = NULL;               
+        node->job_data = NULL;
+      }
+      job_queue_change_node_status( queue , node , JOB_QUEUE_USER_KILLED );
       result = true;
     }
   }
