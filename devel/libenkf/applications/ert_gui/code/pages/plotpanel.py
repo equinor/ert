@@ -3,7 +3,9 @@ import os
 import numpy
 from widgets.helpedwidget import ContentModel
 import time
-import time
+import pages.config.parameters.parametermodels
+import datetime
+from widgets.util import print_timing
 
 class ImagePlotPanel(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -112,17 +114,29 @@ class PlotPanel(QtGui.QFrame):
 
         self.setMaximumSize(10000, 1000)
 
+
         self.plotData = PlotData()
         self.plotData.setKey("FOPT")
+        self.generated = False
 
 
     def resizeEvent(self, event):
         QtGui.QFrame.resizeEvent(self, event)
         self.canvas.resize(event.size().width(), event.size().height())
 
-        self.axes.cla()
-        for member in range(0, 50):
-            self.axes.plot(self.plotData.data[member]["x_days"], self.plotData.data[member]["y"], "b-")
+        if not self.generated:
+            self.axes.cla()
+            self.axes.set_title("FOPT")
+            for member in range(0, 50):
+                key = "FOPT"
+                x = self.plotData.data[key][member]["x_time"]
+                #x = [t / 86400.0 for t in x]
+                x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
+                y = self.plotData.data[key][member]["y"]
+
+                #self.axes.plot(x, y, "b-")
+                self.axes.plot_date(x, y, "b-")
+            self.generated = True
 
 
 class PlotData(ContentModel):
@@ -146,62 +160,82 @@ class PlotData(ContentModel):
         ert.setTypes("member_config_iget_sim_days", ertwrapper.c_double, argtypes=[ertwrapper.c_int, ertwrapper.c_int])
         ert.setTypes("member_config_iget_sim_time", ertwrapper.c_long, argtypes=[ertwrapper.c_int, ertwrapper.c_int])
         ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
+        ert.setTypes("member_config_get_last_restart_nr", ertwrapper.c_int)
         ert.setTypes("enkf_main_iget_member_config", argtypes=ertwrapper.c_int)
+        ert.setTypes("enkf_config_node_get_impl_type")
 
         self.initialized = True
 
 
+    @print_timing
     def getter(self, ert):
         results = {}
 
         ens_conf = ert.ensemble_config
         keys = ert.getStringList(ert.enkf.ensemble_config_alloc_keylist(ens_conf), free_after_use=True)
         results["keys"] = keys
+        results["summary_keys"] = []
 
         if ert.enkf.ensemble_config_has_key(ens_conf, self.key):
-            config_node = ert.enkf.ensemble_config_get_node(ens_conf, self.key)
             fs = ert.enkf.enkf_main_get_fs(ert.main)
-            node = ert.enkf.enkf_node_alloc(config_node)
 
-            stop_time = ert.enkf.enkf_main_get_history_length(ert.main)
-            num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
+            for key in keys:
+                config_node = ert.enkf.ensemble_config_get_node(ens_conf, key)
+                type = ert.enkf.enkf_config_node_get_impl_type(config_node)
 
-            for member in range(0, num_realizations):
-                results[member] = {}
-                results[member]["x_days"] = []
-                results[member]["x_time"] = []
-                results[member]["y"] = []
+                if type == pages.config.parameters.parametermodels.SummaryModel.TYPE:
+                    results["summary_keys"].append(key)
+                    node = ert.enkf.enkf_node_alloc(config_node)
+                    print key
+                    key_index = None
+                    results[key] = {}
+                    num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
 
-                for step in range(1, stop_time + 1):
-                    
-                    FORECAST = 2
-                    if ert.enkf.enkf_fs_has_node(fs, config_node, step, member, FORECAST):
+                    for member in range(0, num_realizations):
+                        results[key][member] = {}
+                        results[key][member]["x_days"] = []
+                        results[key][member]["x_time"] = []
+                        results[key][member]["y"] = []
+                        
+                        x_days = results[key][member]["x_days"]
+                        x_time = results[key][member]["x_time"]
+                        y = results[key][member]["y"]
 
                         member_config = ert.enkf.enkf_main_iget_member_config(ert.main, member)
-                        sim_days = ert.enkf.member_config_iget_sim_days(member_config, step, fs)
-                        sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, fs)
+                        stop_time = ert.enkf.member_config_get_last_restart_nr(member_config)
 
-                        ert.enkf.enkf_fs_fread_node(fs , node , step , member , FORECAST)
-                        key_index = None
-                        valid = ertwrapper.c_int()
-                        value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
+                        t1 = time.time()
+                        for step in range(0, stop_time + 1):
+
+                            #t3 = time.time()
+                            FORECAST = 2
+                            if ert.enkf.enkf_fs_has_node(fs, config_node, step, member, FORECAST) == 1:
+
+                                sim_days = ert.enkf.member_config_iget_sim_days(member_config, step, fs)
+                                sim_time = ert.enkf.member_config_iget_sim_time(member_config, step, fs)
+
+                                ert.enkf.enkf_fs_fread_node(fs , node , step , member , FORECAST)
+                                valid = ertwrapper.c_int()
+                                value = ert.enkf.enkf_node_user_get(node, key_index, ertwrapper.byref(valid))
 
 
-                        if valid.value == 1:
-                            #print self.key, member, sim_days, time.localtime(sim_time), value
-                            results[member]["x_days"].append(sim_days)
-                            results[member]["x_time"].append(sim_time)
-                            results[member]["y"].append(value)
-                            #print self.key, member, sim_days, time.ctime(sim_time), value
-                        else:
-                            print "Not valid: ", self.key, member, step
+                                #t4 = time.time()
+                                #print '--loop took %0.3f ms' % ((t4-t3)*1000.0)
+                                if valid.value == 1:
+                                    x_days.append(sim_days)
+                                    x_time.append(sim_time)
+                                    y.append(value)
+                                else:
+                                    print "Not valid: ", key, member, step
 
+
+                        t2 = time.time()
+                        print 'loop took %0.3f ms' % ((t2-t1)*1000.0)
 
         return results
 
     def fetchContent(self):
         self.data = self.getFromModel()
-
 
     def setKey(self, key):
         self.key = key
