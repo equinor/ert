@@ -66,10 +66,13 @@ struct lsf_driver_struct {
   struct submit      lsf_request;
   struct submitReply lsf_reply; 
 #else
-  time_t             last_bjobs_update;
-  hash_type         *status_map;
-  hash_type         *bjobs_cache;     /* The output of calling bjobs is cached in this table. */
-  pthread_mutex_t    bjobs_mutex;     /* Only one thread should update the bjobs_chache table. */
+  time_t              last_bjobs_update;
+  hash_type         * status_map;
+  hash_type         * bjobs_cache;     /* The output of calling bjobs is cached in this table. */
+  pthread_mutex_t     bjobs_mutex;     /* Only one thread should update the bjobs_chache table. */
+  char              * bjobs_executable;
+  char              * bsub_executable;
+  char              * bkill_executable;
 #endif
 };
 
@@ -132,7 +135,7 @@ static int lsf_job_parse_bsub_stdout(const char * stdout_file) {
 */
 
 
-static int lsf_driver_submit_system_job(const char * run_path , const char * job_name , const char * lsf_queue , const char * resource_request , const char * submit_cmd) {
+static int lsf_driver_submit_system_job(lsf_driver_type * driver , const char * run_path , const char * job_name , const char * lsf_queue , const char * resource_request , const char * submit_cmd) {
   int job_id;
   char * tmp_file         = util_alloc_tmp_file("/tmp" , "enkf-submit" , true);
   char * lsf_stdout       = util_alloc_filename(run_path , job_name , "LSF-stdout");
@@ -141,15 +144,15 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
   if (resource_request != NULL) 
 #ifdef xStatoil
     {
-       char * cmd = util_alloc_sprintf("bsub -o %s -q %s -J %s -R %s %s %s > %s " , lsf_stdout , lsf_queue , job_name , resource_request , submit_cmd , run_path , tmp_file);
+       char * cmd = util_alloc_sprintf("%s -o %s -q %s -J %s -R %s %s %s > %s " , driver->bsub_executable , lsf_stdout , lsf_queue , job_name , resource_request , submit_cmd , run_path , tmp_file);
        system(cmd);
        free(cmd);
     }
 #else
-    util_fork_exec("bsub" , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
+  util_fork_exec(driver->bsub_executable , 10 , (const char *[10]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , "-R" , resource_request , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
 #endif
   else
-    util_fork_exec("bsub" , 8 , (const char *[8]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
+    util_fork_exec(driver->bsub_executable , 8 , (const char *[8]) {"-o" , lsf_stdout , "-q" , lsf_queue , "-J" , job_name , submit_cmd , run_path} , true , NULL , NULL , NULL , tmp_file , NULL);
 
 
   job_id = lsf_job_parse_bsub_stdout(tmp_file);
@@ -164,7 +167,7 @@ static int lsf_driver_submit_system_job(const char * run_path , const char * job
 
 static void lsf_driver_update_bjobs_table(lsf_driver_type * driver) {
   char * tmp_file   = util_alloc_tmp_file("/tmp" , "enkf-bjobs" , true);
-  util_fork_exec("bjobs", 1 , (const char *[1]) {"-a"} , true , NULL , NULL , NULL , tmp_file , NULL);
+  util_fork_exec(driver->bjobs_executable , 1 , (const char *[1]) {"-a"} , true , NULL , NULL , NULL , tmp_file , NULL);
   {
     char user[32];
     char status[16];
@@ -327,12 +330,13 @@ void lsf_driver_free_job(void * __driver , void * __job) {
 
 
 void lsf_driver_kill_job(void * __driver , void * __job) {
+  lsf_driver_type * driver = lsf_driver_safe_cast( __driver );
   lsf_job_type    * job    = lsf_job_safe_cast( __job );
   {
 #ifdef LSF_LIBRARY_DRIVER
     lsb_forcekilljob(job->lsf_jobnr);
 #else
-    util_fork_exec("bkill" , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
+    util_fork_exec(driver->bkill_executable , 1 , (const char **)  &job->lsf_jobnr_char , true , NULL , NULL , NULL , NULL , NULL);
 #endif
   }
   lsf_job_free( job );
@@ -374,7 +378,7 @@ void * lsf_driver_submit_job(void * __driver ,
       if (resource_request != NULL)
 	quoted_resource_request = util_alloc_sprintf("\"%s\"" , resource_request);
 
-      job->lsf_jobnr      = lsf_driver_submit_system_job( run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd );
+      job->lsf_jobnr      = lsf_driver_submit_system_job( driver , run_path , job_name , driver->queue_name , quoted_resource_request , submit_cmd );
       job->lsf_jobnr_char = util_alloc_sprintf("%ld" , job->lsf_jobnr);
       util_safe_free(quoted_resource_request);
     }
@@ -424,6 +428,9 @@ void lsf_driver_free(lsf_driver_type * driver ) {
 #ifdef LSF_SYSTEM_DRIVER
   hash_free(driver->status_map);
   hash_free(driver->bjobs_cache);
+  free( driver->bjobs_executable );
+  free( driver->bsub_executable );
+  free( driver->bkill_executable );
 #endif
   free(driver);
   driver = NULL;
@@ -470,6 +477,9 @@ void * lsf_driver_alloc(const char * queue_name) {
   lsf_driver->last_bjobs_update   = time( NULL );
   lsf_driver->bjobs_cache 	  = hash_alloc(); 
   lsf_driver->status_map   	  = hash_alloc();
+  lsf_driver->bjobs_executable    = util_alloc_PATH_executable( "bjobs" );
+  lsf_driver->bsub_executable     = util_alloc_PATH_executable( "bsub" );
+  lsf_driver->bkill_executable    = util_alloc_PATH_executable( "bkill" );
   hash_insert_int(lsf_driver->status_map , "PEND"   , JOB_QUEUE_PENDING);
   hash_insert_int(lsf_driver->status_map , "SSUSP"  , JOB_QUEUE_RUNNING);
   hash_insert_int(lsf_driver->status_map , "PSUSP"  , JOB_QUEUE_PENDING);
