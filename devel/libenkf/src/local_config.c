@@ -212,6 +212,8 @@ CREATE_REGION   FIPNUM3       FALSE              --- We create a region called F
                                                  --- selected from the start.
 CREATE_REGION   WATER_FLOODED TRUE               --- We create a region called WATER_FLOEDED, 
                                                  --- which starts with all elements selected.
+CREATE_REGION   MIDLLE        FALSE              --- Create a region called MIDDLE with
+                                                 --- no elements initially.    
 LOAD_FILE       INIT          /path/to/ECL.INIT  --- We load the INIT file and label
                                                  --- it as INIT for further use.
 LOAD_FILE       RESTART       /path/to/ECL.UNRST --- We load a unified restart fila
@@ -226,11 +228,17 @@ REGION_SELECT_VALUE_EQUAL     FIPNUM3     INIT:FIPNUM    3    TRUE
 -- we deselect all the cells which have SWAT value below 0.90, at report step 100:
 REGION_SELECT_VALUE_LESS    WATER_FLOODED RESTART:SWAT:100   0.90    FALSE
 
+-- We select the the layers k=4,5,6 in the region MIDDLE. The indices 4,5
+-- and 6 are "normal" k values, where the counting starts at 1.
+REGION_SELECT_SLICE  MIDDLE   Z   4  6   TRUE   
+
+
 -- We add field data in the current ministep, corresponding to the two 
--- selection region (poro is only updated in FIPNUM3 and PERMX is only updated in 
--- the water flooded region).
+-- selection region (poro is only updated in FIPNUM3, PERMX is only updated in 
+-- the water flooded region and NTG is only updates in the MIDDLE region).
 ADD_FIELD    MSTEP    PORO    FIPNUM3
 ADD_FIELD    MSTEP    PERMX   WATER_FLOODED
+ADD_FIELD    MSTEP    NTG     MIDDLE 
 -------------------------------------------------------------------------------------
 
     _________________________________________________________________________
