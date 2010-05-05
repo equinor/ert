@@ -237,7 +237,7 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
 
     def getLabel(self):
         """Returns the label of this widget if set or empty string."""
-        return self.tr(self.label)
+        return self.label
 
     def addLayout(self, layout):
         """Add a layout to the layout of this widget."""
@@ -253,6 +253,7 @@ class HelpedWidget(QtGui.QWidget, ContentModel):
         self.widgetLayout.addStretch(1)
 
     def setValidationMessage(self, message, validationType=WARNING):
+        """Add a warning or information icon to the widget with a tooltip"""
         if message == "":
             self.validationLabel.setHidden(True)
             self.validationLabel.setToolTip("")

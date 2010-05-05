@@ -61,8 +61,12 @@ class ListCheckPanel(QtGui.QHBoxLayout):
 
 
 class ValidatedTimestepCombo(QtGui.QComboBox):
-
+    """
+    A special type of combobox applicable to ERTs "fluxing" history length
+    It supports values that have different representations and internal values
+    """
     def __init__(self, parent, fromValue=0, fromLabel="Initial", toValue=1, toLabel="Final"):
+        """Constructor"""
         QtGui.QComboBox.__init__(self, parent)
 
         self.fromLabel = fromLabel
@@ -80,6 +84,7 @@ class ValidatedTimestepCombo(QtGui.QComboBox):
 
 
     def focusOutEvent(self, event):
+        """Combo lost focus. Validate and approve contents."""
         QtGui.QComboBox.focusOutEvent(self, event)
 
         timestepMakesSense = False
@@ -103,18 +108,22 @@ class ValidatedTimestepCombo(QtGui.QComboBox):
 
 
     def setMinTimeStep(self, value):
+        """Set the minimum timestep value for custom values"""
         self.minTimeStep = value
         self.validator().setBottom(value)
 
     def setMaxTimeStep(self, value):
+        """Set the maximum timestep value for custom values"""
         self.maxTimeStep = value
         self.validator().setTop(value)
 
     def setFromValue(self, value):
+        """Set the presented from value"""
         self.fromValue = value
         self.setItemText(0, self.fromLabel + " (" + str(self.fromValue) + ")")
 
     def setToValue(self, value):
+        """Set the presented to value"""
         self.toValue = value
         if self.toValue < self.fromValue:
             self.setItemText(1, self.toLabel)
@@ -122,10 +131,12 @@ class ValidatedTimestepCombo(QtGui.QComboBox):
             self.setItemText(1, self.toLabel + " (" + str(self.toValue) + ")")
 
     def setHistoryLength(self, length):
+        """Set history length. Applies to both maximum timestep and value"""
         self.setMaxTimeStep(length)
         self.setToValue(length)
 
     def getSelectedValue(self):
+        """Return the selected value. Either custom or one of: from value or to value"""
         currentText = str(self.currentText())
 
         if currentText.startswith(self.fromLabel):
@@ -259,6 +270,7 @@ def shortTime(secs):
         return time.strftime("%H:%M:%S", t)
 
 def print_timing(func):
+    """A function decorator that performs timing of the applied function"""
     def wrapper(*arg):
         t1 = time.time()
         res = func(*arg)

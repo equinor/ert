@@ -2,11 +2,16 @@
 from ctypes import *
 import ctypes.util
 import atexit
+import re
+import sys
 
 class ErtWrapper:
+    """Wraps the functionality of ERT using ctypes"""
 
     def __init__(self, site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/"):
         self.__loadLibraries__(enkf_so)
+
+        self.pattern = re.compile("(?P<return>\w+) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_, ]*)[)]")
 
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
@@ -48,6 +53,7 @@ class ErtWrapper:
 
 
     def __loadLibraries__(self, prefix):
+        """Load libraries that are required by ERT and ERT itself"""
         CDLL("libblas.so", RTLD_GLOBAL)
         CDLL("liblapack.so", RTLD_GLOBAL)
         CDLL("libz.so", RTLD_GLOBAL)
@@ -63,6 +69,48 @@ class ErtWrapper:
 
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug( "/usr/bin/python" )
+
+
+    def _parseType(self, type):
+        type = type.strip()
+        if type == "void":
+            return None
+        elif type == "int":
+            return ctypes.c_int
+        elif type == "bool":
+            return ctypes.c_int
+        elif type == "long":
+            return ctypes.c_long
+        elif type == "char":
+            return ctypes.c_char_p
+        else:
+            return getattr(ctypes, type)
+
+    def prototype(self, prototype, lib=None):
+        """
+        Provides the same functionality as setTypes but in a different way.
+        prototype is a string formatted like this:
+            "type functionName(type,type,type)"
+        where type is a type available to ctypes
+        if lib is None lib defaults to the enkf library
+        """
+        if lib is None:
+            lib = self.enkf
+
+        match = re.match(self.pattern, prototype)
+        if not match:
+            sys.stderr.write("Illegal prototype definition: %s\n" % (prototype))
+        else:
+            restype = match.groupdict()["return"]
+            functioname = match.groupdict()["function"]
+            arguments = match.groupdict()["arguments"].split(",")
+            #print restype, functioname, arguments
+
+            func = getattr(lib, functioname)
+            func.restype = self._parseType(restype)
+            func.argtypes = [self._parseType(arg) for arg in arguments]
+            print func, func.restype, func.argtypes
+
 
     def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer = True):
         """
@@ -206,6 +254,7 @@ class ErtWrapper:
         return func(self.main)
 
     def createBoolVector(self, size, list):
+        """Allocates a bool vector"""
         mask = self.util.bool_vector_alloc(size , False)
 
         for index in list:
@@ -214,11 +263,34 @@ class ErtWrapper:
         return mask
 
     def getBoolVectorPtr(self, mask):
+        """Returns the pointer to a bool vector"""
         return self.util.bool_vector_get_ptr(mask)
 
     def freeBoolVector(self, mask):
+        """Frees an allocated bool vector"""
         self.util.bool_vector_free(mask)
 
     def cleanup(self):
+        """Called at atexit to clean up before shutdown"""
         print "Calling enkf_main_free()"
         self.enkf.enkf_main_free(self.main)
+
+def testPrototypes():
+    import ertwrapper
+    import local
+    site_config = "/project/res/etc/ERT/Config/site-config"
+    enkf_config = local.enkf_config
+    enkf_so     = local.enkf_so
+    ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config, enkf_so = enkf_so)
+
+    ert.prototype("c_char_p subst_list_iget_value(c_long, c_int)", ert.util)
+    ert.prototype("void bool_vector_free (long)", ert.util)
+    ert.prototype("void bool_vector_free (c_long)", ert.util)
+    ert.prototype("char bool_vector_free (bool)", ert.util)
+    #ert.prototype("int fungus()")
+    #ert.prototype("int fungus(int, char_p, boo)")
+    #ert.prototype("int fungus(int, char_p, boo")
+
+if __name__ == "__main__":
+    testPrototypes()
+

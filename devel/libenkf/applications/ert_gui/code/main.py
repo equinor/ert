@@ -21,6 +21,11 @@ from pages.init.initpanel import InitPanel
 from pages.run.runpanel import RunPanel
 from pages.config.configpages import ConfigPages
 from widgets.helpedwidget import ContentModel
+import matplotlib
+import PyQt4
+
+print "PyQt4 version: ", PyQt4.QtCore.qVersion()
+print "matplotlib version: ", matplotlib.__version__
 
 app = QtGui.QApplication(sys.argv)
 
@@ -46,7 +51,7 @@ app.processEvents()
 window.addPage("Configuration", widgets.util.resourceIcon("config"), ConfigPages(window))
 window.addPage("Init", widgets.util.resourceIcon("db"), InitPanel(window))
 window.addPage("Run", widgets.util.resourceIcon("run"), RunPanel(window))
-window.addPage("Plots", widgets.util.resourceIcon("plot"), ImagePlotPanel("plots/default"))
+#window.addPage("Plots", widgets.util.resourceIcon("plot"), ImagePlotPanel("plots/default"))
 window.addPage("Plots", widgets.util.resourceIcon("plot"), PlotPanel())
 
 splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)

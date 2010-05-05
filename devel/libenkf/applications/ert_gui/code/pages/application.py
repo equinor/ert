@@ -2,7 +2,9 @@ from PyQt4 import QtGui, QtCore
 
 
 class Application(QtGui.QMainWindow):
+    """An application (window widget) with a list of "tasks" on the left side and a panel on the right side"""
     def __init__(self):
+        """Constructor"""
         QtGui.QMainWindow.__init__(self)
 
         self.resize(900, 700)
@@ -44,6 +46,7 @@ class Application(QtGui.QMainWindow):
 
 
     def addPage(self, name, icon, page):
+        """Add another page to the appliation"""
         button = QtGui.QListWidgetItem(self.contentsWidget)
         button.setIcon(icon)
         button.setText(name)
@@ -57,6 +60,7 @@ class Application(QtGui.QMainWindow):
         
 
     def changePage(self, current, previous):
+        """Switch page. Connected to the: currentItemChanged() signal of the list widget on the left side"""
         if current is None:
             current = previous
 
