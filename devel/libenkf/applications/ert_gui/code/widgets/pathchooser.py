@@ -63,6 +63,7 @@ class PathChooser(HelpedWidget):
         self.editing = False
 
     def getValidationTypeAndColor(self):
+        """Returns the type of validation message and the color that should be applied"""
         if self.must_be_set:
             color = self.errorColor
             type = self.WARNING
@@ -116,12 +117,15 @@ class PathChooser(HelpedWidget):
 
 
     def getPath(self):
+        """Returns the path"""
         return str(self.pathLine.text())
 
     def pathExists(self):
+        """Returns True if the entered path exists"""
         return os.path.exists(self.getPath())
         
     def isValid(self):
+        """Retruns the validation value"""
         return self.valid
 
 

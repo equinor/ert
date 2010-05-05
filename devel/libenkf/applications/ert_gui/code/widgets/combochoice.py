@@ -40,6 +40,7 @@ class ComboChoice(HelpedWidget):
             raise AssertionError("ComboBox can not be set to: " + str(newValue))
 
     def updateList(self, choiceList):
+        """Replace the list of choices with the specified items"""
         self.disconnect(self.combo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.updateContent)
 
         self.combo.clear()

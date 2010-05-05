@@ -8,7 +8,6 @@ import datetime
 from widgets.util import print_timing
 from widgets.combochoice import ComboChoice
 import matplotlib.dates
-import matplotlib.dates
 import matplotlib.backend_bases
 
 class ImagePlotPanel(QtGui.QFrame):
@@ -100,8 +99,7 @@ class PlotPanel(QtGui.QWidget):
         plotLayout = QtGui.QHBoxLayout()
 
         self.plot = PlotView()
-
-
+        
 
         plotList = QtGui.QListWidget(self)
         plotList.setMaximumWidth(150)
@@ -160,8 +158,9 @@ class PlotView(QtGui.QFrame):
             thisline = event.artist
             thisline.set_color("r")
             xdata, ydata = thisline.get_data()
-            ind = event.ind
-            print 'on pick line:', zip(xdata[ind], ydata[ind])
+            ind = event.ind            
+            print 'on pick line:', zip(xdata[ind], ydata[ind]) , thisline.get_gid()
+            self.canvas.draw()
 
             
         self.fig.canvas.mpl_connect('pick_event', onpick)
@@ -179,11 +178,12 @@ class PlotView(QtGui.QFrame):
 
             x = numpy.array(x)
             y = numpy.array(y)
-            self.axes.plot_date(x, y, "b-", picker=2)
+            line, = self.axes.plot_date(x, y, "b-", picker=2) #list of lines returned (we only add one)
+            line.set_gid(member)
 
 
-        years    = matplotlib.dates.YearLocator()   # every year
-        months   = matplotlib.dates.MonthLocator()  # every month
+        years = matplotlib.dates.YearLocator()   # every year
+        months = matplotlib.dates.MonthLocator()  # every month
         yearsFmt = matplotlib.dates.DateFormatter('%b %y')
         self.axes.xaxis.set_major_locator(years)
         self.axes.xaxis.set_major_formatter(yearsFmt)
@@ -279,6 +279,8 @@ class PlotData(ContentModel):
                     x_time = results[key][member]["x_time"]
                     y = results[key][member]["y"]
 
+                    #todo: exchange the following part with a single c call
+                    # most likely ctypes overhead reduces the speed of these operations
                     member_config = ert.enkf.enkf_main_iget_member_config(ert.main, member)
                     stop_time = ert.enkf.member_config_get_last_restart_nr(member_config)
 
@@ -296,6 +298,7 @@ class PlotData(ContentModel):
                                 y.append(value)
                             else:
                                 print "Not valid: ", key, member, step
+
                 ert.enkf.enkf_node_free(node)
 
 
