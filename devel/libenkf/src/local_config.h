@@ -32,7 +32,7 @@ typedef enum {
   DEL_OBS                         = 15, /* MINISTEP OBS_KEY */
   DEL_ALL_DATA                    = 16, /* No arguments */
   DEL_ALL_OBS                     = 17, /* No arguments */
-  ADD_FIELD                      = 18,  /* MINISTEP  FIELD_NAME  REGION_NAME */
+  ADD_FIELD                       = 18,  /* MINISTEP  FIELD_NAME  REGION_NAME */
   /*****************************************************************/
   CREATE_REGION                   = 19, /* Name of region  TRUE|FALSE*/
   LOAD_FILE                       = 20, /* Key, filename      */  
