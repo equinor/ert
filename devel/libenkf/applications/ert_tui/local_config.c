@@ -7,7 +7,7 @@
 
 int main( int argc , char ** argv) {
   if (argc != 4) {
-    fprintf(stderr,"Usage:\n\nbash% local_config  GRID_FILE   NEW_CONFIG_FILE  OLD_CONFIG_FILE");
+    fprintf(stderr,"Usage:\n\nbash\% local_config  GRID_FILE   NEW_CONFIG_FILE  OLD_CONFIG_FILE");
     exit(1);
   } else {
     ecl_grid_type * ecl_grid = ecl_grid_alloc( argv[1] );
