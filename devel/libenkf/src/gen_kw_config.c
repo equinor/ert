@@ -303,6 +303,7 @@ const char * gen_kw_config_get_tagged_name(const gen_kw_config_type * config, in
 
 
 stringlist_type * gen_kw_config_alloc_name_list( const gen_kw_config_type * config ) {
+  
   stringlist_type * name_list = stringlist_alloc_new();
   int i;
   for (i=0; i < vector_get_size( config->parameters ); i++) {

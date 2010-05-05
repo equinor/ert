@@ -186,7 +186,7 @@ void local_ministep_fprintf( const local_ministep_type * ministep , FILE * strea
       active_list_type * active_list = hash_get( ministep->observations , obs_key );
 
       fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ADD_OBS ) , ministep->name , obs_key );
-      active_list_fprintf( active_list , stream );
+      active_list_fprintf( active_list , true , obs_key , stream );
     }
     hash_iter_free( obs_iter );
   }
@@ -198,7 +198,7 @@ void local_ministep_fprintf( const local_ministep_type * ministep , FILE * strea
       active_list_type * active_list = hash_get( ministep->nodes , data_key );
       
       fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ADD_DATA ) , ministep->name , data_key );
-      active_list_fprintf( active_list , stream );
+      active_list_fprintf( active_list , false , data_key , stream );
     }
     hash_iter_free( data_iter );
   }

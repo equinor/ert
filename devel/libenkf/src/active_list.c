@@ -3,6 +3,7 @@
 #include <enkf_macros.h>
 #include <active_list.h>
 #include <int_vector.h>
+#include <local_config.h>
 
 
 /**
@@ -153,9 +154,14 @@ const int * active_list_get_active(const active_list_type * active_list) {
 
 /*****************************************************************/
 
-void active_list_fprintf( const active_list_type * active_list , FILE * stream ) {
+void active_list_fprintf( const active_list_type * active_list , bool obs , const char *key , FILE * stream ) {
   if (active_list->mode == PARTLY_ACTIVE) {
     int i;
+    if (obs)
+      fprintf(stream , "%s  %s  %d\n" , local_config_get_cmd_string( ACTIVE_LIST_ADD_MANY_OBS_INDEX ) , key , int_vector_size( active_list->index_list ));
+    else
+      fprintf(stream , "%s  %s  %d\n" , local_config_get_cmd_string( ACTIVE_LIST_ADD_MANY_OBS_INDEX ) , key , int_vector_size( active_list->index_list ));
+    
     for (i = 0; i < int_vector_size( active_list->index_list ); i++) {
       fprintf(stream , "%6d " , int_vector_iget( active_list->index_list , i));
       if ((i % 10) == 9)

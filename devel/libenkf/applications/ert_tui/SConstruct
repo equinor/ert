@@ -37,11 +37,12 @@ main_object = env.Object( "main.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FI
 
 ert_test_object = env.Object( "ert_test.c" , CPPDEFINES = [define_fmt % ("SITE_CONFIG_FILE"   ,  conf.SITE_CONFIG_FILE)])
 
-ert_test    = env.Program( "ert_test"                  , [ert_test_object, tui_objects])
-ert         = env.Program( "ert"                       , [main_object, tui_objects])
-ert_svn     = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
+local_config = env.Program( "local_config"              , ["local_config.c"])
+ert_test     = env.Program( "ert_test"                  , [ert_test_object, tui_objects])
+ert          = env.Program( "ert"                       , [main_object, tui_objects])
+ert_svn      = env.Program( "ert_%s" % conf.SVN_VERSION , [main_object, tui_objects])
 
-env.InstallProgram( bin_path , [ert , ert_test])
+env.InstallProgram( bin_path , [ert , ert_test , local_config])
 SDP_INSTALL = env.Alias('SDP_INSTALL' , env.InstallProgram( conf.SDP_ERT_RELEASE , ert_svn ))
 
 Default( bin_path )

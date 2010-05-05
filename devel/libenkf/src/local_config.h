@@ -3,7 +3,6 @@
 
 #include <local_updatestep.h>
 #include <local_ministep.h>
-#include <log.h>
 #include <stringlist.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
@@ -33,8 +32,16 @@ typedef enum {
   DEL_OBS                         = 15, /* MINISTEP OBS_KEY */
   DEL_ALL_DATA                    = 16, /* No arguments */
   DEL_ALL_OBS                     = 17, /* No arguments */
-  CREATE_REGION                   = 18, /* Name of region */
-  LOAD_FILE                       = 19  /* Key, filename */  
+  ADD_FIELD                      = 18,  /* MINISTEP  FIELD_NAME  REGION_NAME */
+  /*****************************************************************/
+  CREATE_REGION                   = 19, /* Name of region  TRUE|FALSE*/
+  LOAD_FILE                       = 20, /* Key, filename      */  
+  REGION_SELECT_ALL               = 21, /* Region  TRUE|FALSE */
+  REGION_SELECT_VALUE_EQUAL       = 22, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */
+  REGION_SELECT_VALUE_LESS        = 23, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
+  REGION_SELECT_VALUE_MORE        = 24, /* Region FILE_key:kw(:nr) VALUE   TRUE|FALSE */  
+  REGION_SELECT_BOX               = 25, /* Region i1 i2 j1 j2 k1 k2 TRUE|FALSE */
+  REGION_SELECT_SLICE             = 26  /* Region dir n1 n2    TRUE|FALSE  */
 } local_config_instruction_type; 
 
 
@@ -54,9 +61,17 @@ typedef enum {
 #define ALLOC_MINISTEP_COPY_STRING              "COPY_MINISTEP"
 #define DEL_DATA_STRING                         "DEL_DATA"
 #define DEL_OBS_STRING                          "DEL_OBS"
+#define ADD_FIELD_STRING                        "ADD_FIELD"
 #define DEL_ALL_DATA_STRING                     "DEL_ALL_DATA"
 #define DEL_ALL_OBS_STRING                      "DEL_ALL_OBS"
-
+#define CREATE_REGION_STRING                    "CREATE_REGION"
+#define LOAD_FILE_STRING                        "LOAD_FILE"
+#define REGION_SELECT_ALL_STRING                "REGION_SELECT_ALL"   
+#define REGION_SELECT_VALUE_EQUAL_STRING        "REGION_SELECT_VALUE_EQUAL"
+#define REGION_SELECT_VALUE_LESS_STRING         "REGION_SELECT_VALUE_LESS"
+#define REGION_SELECT_VALUE_MORE_STRING         "REGION_SELECT_VALUE_MORE"
+#define REGION_SELECT_BOX_STRING                "REGION_SELECT_BOX" 
+#define REGION_SELECT_SLICE_STRING              "REGION_SELECT_SLICE" 
 
 
 
@@ -75,7 +90,7 @@ local_updatestep_type       * local_config_get_updatestep( const local_config_ty
 local_ministep_type         * local_config_get_ministep( const local_config_type * local_config , const char * key);
 void                          local_config_set_updatestep(local_config_type * local_config, int step1 , int step2 , const char * key);
 void                          local_config_reload( local_config_type * local_config , const ecl_grid_type * ecl_grid , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , 
-                                                   const char * all_active_config_file , log_type * logh);
+                                                   const char * all_active_config_file);
 const char                  * local_config_get_cmd_string( local_config_instruction_type cmd );
 
 stringlist_type             * local_config_get_config_files( const local_config_type * local_config );

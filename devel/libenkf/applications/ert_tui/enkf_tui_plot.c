@@ -180,8 +180,15 @@ static void enkf_tui_plot_ensemble__(enkf_main_type * enkf_main ,
           if (enkf_fs_has_node(fs , config_node , step , iens , FORECAST)) {
             bool   valid;
             double value;
+
+
+
+
             enkf_fs_fread_node(fs , node , step , iens , FORECAST);
             value = enkf_node_user_get( node , key_index , &valid);
+
+
+
             
             if (valid) {
               double_vector_append(y , value);

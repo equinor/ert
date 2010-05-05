@@ -9,7 +9,6 @@
 #include <local_updatestep.h>
 #include <local_config.h>
 #include <int_vector.h>
-#include <log.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
 /******************************************************************/
@@ -71,6 +70,7 @@ DEL_OBS [NAME_OF_MINISTEP  OBS_KEY]
 This function will delete the obs 'OBS_KEY' from the ministep
 'NAME_OF_MINISTEP'.
 
+
 DEL_ALL_DATA [NAME_OF_MINISTEP]
 --------------------------------
 This function will delete all the data keys from the ministep
@@ -130,6 +130,109 @@ explicitly set another updatestep with the INSTALL_UPDATESTEP function.
 
 
 
+ADD_FIELD   [MINISTEP_NAME    FIELD_NAME    REGION_NAME]
+--------------------------------------------------------
+
+This function will install the node with name 'FIELD_NAME' in the
+ministep 'MINISTEP_NAME'. It will in addition select all the
+(currently) active cells in the region 'REGION_NAME' as active for
+this field/ministep combination. The ADD_FIELD command is actually a
+shortcut for the following:
+
+   ADD_DATA   MINISTEP  FIELD_NAME
+   ACTIVE_LIST_AD_MANY_DATA_INDEX  <All the indices from the region>
+
+
+
+LOAD_FILE       [KEY    FILENAME]
+---------------------------------
+This function will load an ECLIPSE file in restart format
+(i.e. restart file or INIT file), the keywords in this file can then
+subsequently be used in REGION_SELECT_VALUE_XXX commands below. The
+'KEY' argument is a string which will be used later when we refer to
+the content of this file
+
+
+CREATE_REGION   [REGION_NAME    SELECT_ALL]
+-------------------------------------------
+This function will create a new region 'REGION_NAME', which can
+subsequently be used when defining active regions for fields. The
+second argument, SELECT_ALL, is a boolean value. If this value is set
+to true the region will start with all cells selected, if set to false
+the region will start with no cells selected.
+
+
+REGION_SELECT_ALL     [REGION_NAME   SELECT]
+--------------------------------------------
+Will select all the cells in the region (or deselect if SELECT == FALSE).
+
+
+REGION_SELECT_VALUE_EQUAL   [REGION_NAME   FILE_KEY:KEYWORD<:NR>    VALUE   SELECT]
+-----------------------------------------------------------------------------------
+This function will compare an ecl_kw instance loaded from file with a
+user supplied value, and select (or deselect) all cells which match
+this value. It is assumed that the ECLIPSE keyword is an INTEGER
+keyword, for float comparisons use the REGION_SELECT_VALUE_LESS and
+REGION_SELECT_VALUE_MORE functions.
+
+
+REGION_SELECT_VALUE_LESS
+REGION_SELECT_VALUE_MORE    [REGION_NAME   FILE_KEY:KEYWORD<:NR>  VALUE   SELECT]
+---------------------------------------------------------------------------------
+This function will compare an ecl_kw instance loaded from disc with a
+numerical value, and select all cells which have numerical below or
+above the limiting value. The ecl_kw value should be a floating point
+value like e.g. PRESSURE or PORO. The arguments are just as for REGION_SELECT_VALUE_EQUAL.
+
+
+REGION_SELECT_BOX            [ REGION_NAME i1 i2 j1 j2 k1 k2 SELECT]
+--------------------------------------------------------------------
+This function will select (or deselect) all the cells in the box
+defined by the six coordinates i1 i2 j1 j2 k1 k2. The coordinates are
+inclusive, and the counting starts at 1.
+
+
+REGION_SELECT_SLICE         [ REGION_NAME dir n1 n2 SELECT]
+-----------------------------------------------------------
+This ffunction will select a slice in the direction given by 'dir',
+which can 'x', 'y' or 'z'. Depending on the value of 'dir' the numbers
+n1 and n2 are interpreted as (i1 i2), (j1 j2) or (k1 k2)
+respectively. The numbers n1 and n2 are inclusice and the counting
+starts at 1. It is OK to use very high/low values to imply "the rest
+of the cells" in one direction.
+
+
+
+
+I have added comments in the example - that is not actually supported (yet at least)
+
+-------------------------------------------------------------------------------------
+CREATE_MINISTEP MSTEP
+CREATE_REGION   FIPNUM3       FALSE              --- We create a region called FIPNUM3 with no elements 
+                                                 --- selected from the start.
+CREATE_REGION   WATER_FLOODED TRUE               --- We create a region called WATER_FLOEDED, 
+                                                 --- which starts with all elements selected.
+LOAD_FILE       INIT          /path/to/ECL.INIT  --- We load the INIT file and label
+                                                 --- it as INIT for further use.
+LOAD_FILE       RESTART       /path/to/ECL.UNRST --- We load a unified restart fila
+                                                 --- and label it RESTART
+
+-- We select all the cells corresponding to a FIPNUM value of 3. Since there is
+-- only one FIPNUM keyword in the INIT file we do not need the :NR suffix on the key.
+REGION_SELECT_VALUE_EQUAL     FIPNUM3     INIT:FIPNUM    3    TRUE
+
+
+-- In the region WATER_FLOODED all cells are selected from the start, now
+-- we deselect all the cells which have SWAT value below 0.90, at report step 100:
+REGION_SELECT_VALUE_LESS    WATER_FLOODED RESTART:SWAT:100   0.90    FALSE
+
+-- We add field data in the current ministep, corresponding to the two 
+-- selection region (poro is only updated in FIPNUM3 and PERMX is only updated in 
+-- the water flooded region).
+ADD_FIELD    MSTEP    PORO    FIPNUM3
+ADD_FIELD    MSTEP    PERMX   WATER_FLOODED
+-------------------------------------------------------------------------------------
+
     _________________________________________________________________________
    /                                                                         \
    | Observe that prior to loading your hand-crafted configuration file      | 
@@ -141,29 +244,6 @@ explicitly set another updatestep with the INSTALL_UPDATESTEP function.
    |                                                                         |
    \_________________________________________________________________________/ 
    
-
-
-
-The format of this config file does not support any form of comments,
-but it is completely ignorant about whitespace (including blank
-lines).
-
-Small example:
---------------
-CREATE_UPDATESTEP                UPDATE
-CREATE_MINISTEP                  MINI
-ATTACH_MINISTEP                  UPDATE MINI
-ADD_OBS                          MINI   WWCT:OP_1
-ADD_OBS                          MINI   WGOR:OP_1
-ADD_OBS                          MINI   RFT3
-ADD_DATA                         MINI   FLUID_PARAMS
-ADD_DATA                         MINI   GRID_PARAMS
-ADD_DATA                         MINI   PRESSURE
-ACTIVE_LIST_ADD_MANY_DATA_INDEX  MINI   PRESSURE 10 0 1 2 3 4 5 10 20 30 40
-INSTALL_DEFAULT_UPDATESTEP       UPDATE
----------------------------------------------------------------------------
-
-
 
 
 
@@ -331,47 +411,13 @@ void local_config_set_updatestep(local_config_type * local_config, int step1 , i
 /* Functions related to loading a local config instance from disk. */
 
 
-static local_config_instruction_type local_config_cmd_from_string( char * cmd_string ) {
-  local_config_instruction_type cmd;
-
+static local_config_instruction_type local_config_cmd_from_string( hash_type * cmd_table , char * cmd_string ) {
+  
   util_strupr( cmd_string );
-  if (strcmp( cmd_string , CREATE_UPDATESTEP_STRING) == 0)
-    cmd = CREATE_UPDATESTEP;
-  else if (strcmp( cmd_string , CREATE_MINISTEP_STRING) == 0)
-    cmd = CREATE_MINISTEP;
-  else if (strcmp( cmd_string , ATTACH_MINISTEP_STRING) == 0)
-    cmd =  ATTACH_MINISTEP;
-  else if (strcmp( cmd_string , ADD_DATA_STRING) == 0)
-    cmd = ADD_DATA;
-  else if (strcmp( cmd_string , ADD_OBS_STRING) == 0)
-    cmd = ADD_OBS;
-  else if (strcmp( cmd_string , ACTIVE_LIST_ADD_OBS_INDEX_STRING) == 0)
-    cmd = ACTIVE_LIST_ADD_OBS_INDEX;
-  else if (strcmp( cmd_string , ACTIVE_LIST_ADD_DATA_INDEX_STRING) == 0)
-    cmd = ACTIVE_LIST_ADD_DATA_INDEX;
-  else if (strcmp( cmd_string , ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING) == 0)
-    cmd = ACTIVE_LIST_ADD_MANY_OBS_INDEX;
-  else if (strcmp( cmd_string , ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING) == 0)
-    cmd = ACTIVE_LIST_ADD_MANY_DATA_INDEX;
-  else if (strcmp( cmd_string , INSTALL_UPDATESTEP_STRING) == 0)
-    cmd = INSTALL_UPDATESTEP;
-  else if (strcmp( cmd_string , INSTALL_DEFAULT_UPDATESTEP_STRING) == 0)
-    cmd = INSTALL_DEFAULT_UPDATESTEP;
-  else if (strcmp( cmd_string , ALLOC_MINISTEP_COPY_STRING) == 0)
-    cmd = ALLOC_MINISTEP_COPY;
-  else if (strcmp( cmd_string , DEL_DATA_STRING) == 0)
-    cmd = DEL_DATA;
-  else if (strcmp( cmd_string , DEL_OBS_STRING) == 0)
-    cmd = DEL_OBS;
-  else if (strcmp( cmd_string ,DEL_ALL_DATA_STRING ) == 0)
-    cmd = DEL_ALL_DATA;
-  else if (strcmp( cmd_string ,DEL_ALL_OBS_STRING ) == 0)
-    cmd = DEL_ALL_OBS;
-  else {
-    util_abort("%s: Command:%s not recognized \n",__func__ , cmd_string);
-    cmd = INVALID_CMD;
-  }
-  return cmd;
+  if (hash_has_key( cmd_table, cmd_string))
+    return hash_get_int( cmd_table , cmd_string);
+  else
+    util_abort("%s: command:%s not recognized \n",__func__ , cmd_string);
 }
 
 
@@ -426,6 +472,33 @@ const char * local_config_get_cmd_string( local_config_instruction_type cmd ) {
   case(DEL_ALL_OBS):
     return DEL_ALL_OBS_STRING;
     break;
+  case(ADD_FIELD):
+    return ADD_FIELD_STRING;
+    break;
+  case(CREATE_REGION):
+    return CREATE_REGION_STRING;
+    break;
+  case(LOAD_FILE):
+    return LOAD_FILE_STRING;
+    break;
+  case(REGION_SELECT_ALL):
+    return REGION_SELECT_ALL_STRING;
+    break;
+  case(REGION_SELECT_VALUE_EQUAL):
+    return REGION_SELECT_VALUE_EQUAL_STRING;
+    break;
+  case(REGION_SELECT_VALUE_LESS):
+    return REGION_SELECT_VALUE_LESS_STRING;
+    break;
+  case(REGION_SELECT_VALUE_MORE):
+    return REGION_SELECT_VALUE_MORE_STRING;
+    break;
+  case(REGION_SELECT_BOX):
+    return REGION_SELECT_BOX_STRING;
+    break;
+  case(REGION_SELECT_SLICE):
+    return REGION_SELECT_SLICE_STRING;
+    break;
   default:
     util_abort("%s: command:%d not recognized \n",__func__ , cmd);
     return NULL;
@@ -442,6 +515,7 @@ static int read_int(FILE * stream , bool binary ) {
     return value;
   }
 }
+
 
 
 
@@ -474,8 +548,24 @@ static char * read_alloc_string(FILE * stream , bool binary) {
 }
 
 
+static bool read_bool(FILE * stream , bool binary) {
+  if (binary)
+    return util_fread_bool( stream );
+  else {
+    bool value;
+    char * s = read_alloc_string( stream , binary );
+    if (!util_sscanf_bool( s , &value))
+      util_abort("%s: failed to interpret:\'%s\' as boolean true / false\n",__func__ , s );
+    free( s );
+    return value;
+  }
+}
 
-static bool read_cmd( FILE * stream , bool binary , local_config_instruction_type * cmd) {
+
+
+
+
+static bool read_cmd( hash_type * cmd_table , FILE * stream , bool binary , local_config_instruction_type * cmd) {
   if (binary) { 
     if (fread( cmd , sizeof cmd , 1 , stream) == 1)
       return true;
@@ -484,7 +574,7 @@ static bool read_cmd( FILE * stream , bool binary , local_config_instruction_typ
   } else {
     char cmd_string[64];
     if (fscanf(stream , "%s" , cmd_string) == 1) {
-      *cmd = local_config_cmd_from_string( cmd_string );
+      *cmd = local_config_cmd_from_string( cmd_table , cmd_string );
       return true;
     } else
       return false;
@@ -508,6 +598,35 @@ void local_config_add_config_file( local_config_type * local_config , const char
 
 
 
+static void local_config_init_cmd_table( hash_type * cmd_table ) {
+  hash_insert_int(cmd_table , CREATE_UPDATESTEP_STRING               , CREATE_UPDATESTEP);
+  hash_insert_int(cmd_table , CREATE_MINISTEP_STRING                 , CREATE_MINISTEP);
+  hash_insert_int(cmd_table , ATTACH_MINISTEP_STRING                 , ATTACH_MINISTEP);
+  hash_insert_int(cmd_table , ADD_DATA_STRING                        , ADD_DATA);
+  hash_insert_int(cmd_table , ADD_OBS_STRING                         , ADD_OBS);
+  hash_insert_int(cmd_table , ACTIVE_LIST_ADD_OBS_INDEX_STRING       , ACTIVE_LIST_ADD_OBS_INDEX);
+  hash_insert_int(cmd_table , ACTIVE_LIST_ADD_DATA_INDEX_STRING      , ACTIVE_LIST_ADD_DATA_INDEX);
+  hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING  , ACTIVE_LIST_ADD_MANY_OBS_INDEX);
+  hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_DATA_INDEX_STRING , ACTIVE_LIST_ADD_MANY_DATA_INDEX);
+  hash_insert_int(cmd_table , INSTALL_UPDATESTEP_STRING              , INSTALL_UPDATESTEP);
+  hash_insert_int(cmd_table , INSTALL_DEFAULT_UPDATESTEP_STRING      , INSTALL_DEFAULT_UPDATESTEP);
+  hash_insert_int(cmd_table , ALLOC_MINISTEP_COPY_STRING             , ALLOC_MINISTEP_COPY);
+  hash_insert_int(cmd_table , DEL_DATA_STRING                        , DEL_DATA);
+  hash_insert_int(cmd_table , DEL_OBS_STRING                         , DEL_OBS);
+  hash_insert_int(cmd_table , DEL_ALL_DATA_STRING                    , DEL_ALL_DATA);
+  hash_insert_int(cmd_table , DEL_ALL_OBS_STRING                     , DEL_ALL_OBS);
+  hash_insert_int(cmd_table , ADD_FIELD_STRING                       , ADD_FIELD);
+  hash_insert_int(cmd_table , CREATE_REGION_STRING                   , CREATE_REGION);
+  hash_insert_int(cmd_table , LOAD_FILE_STRING                       , LOAD_FILE);
+  hash_insert_int(cmd_table , REGION_SELECT_ALL_STRING               , REGION_SELECT_ALL);
+  hash_insert_int(cmd_table , REGION_SELECT_VALUE_EQUAL_STRING       , REGION_SELECT_VALUE_EQUAL);
+  hash_insert_int(cmd_table , REGION_SELECT_VALUE_LESS_STRING        , REGION_SELECT_VALUE_LESS);
+  hash_insert_int(cmd_table , REGION_SELECT_VALUE_MORE_STRING        , REGION_SELECT_VALUE_MORE);
+  hash_insert_int(cmd_table , REGION_SELECT_BOX_STRING               , REGION_SELECT_BOX);
+  hash_insert_int(cmd_table , REGION_SELECT_SLICE_STRING             , REGION_SELECT_SLICE);
+}
+
+
 /**
    Currently the ensemble_config and enkf_obs objects are not used for
    anything. These should be used for input validation.
@@ -515,33 +634,32 @@ void local_config_add_config_file( local_config_type * local_config , const char
 
 static void local_config_load_file( local_config_type * local_config , const ecl_grid_type * ecl_grid , 
                                     const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , 
-                                    const char * config_file , log_type * logh) {
+                                    const char * config_file) {
   bool binary = false;
   local_config_instruction_type cmd;
-  hash_type * regions = hash_alloc();
-  hash_type * files   = hash_alloc();
+  hash_type * regions   = hash_alloc();
+  hash_type * files     = hash_alloc();
+  hash_type * cmd_table = hash_alloc();
   
   FILE * stream       = util_fopen( config_file , "r");
   char * update_name  = NULL;
   char * mini_name    = NULL;
   char * obs_key      = NULL;
   char * data_key     = NULL;
+  char * region_name  = NULL;
   int index;
   int_vector_type * int_vector = int_vector_alloc(0,0);
   
-
-  log_add_fmt_message(logh , 1 , NULL , "Loading local configuration from file:%s" , config_file);
-  while ( read_cmd(stream, binary , &cmd)) {
+  local_config_init_cmd_table( cmd_table );
+  while ( read_cmd( cmd_table , stream, binary , &cmd)) {
     switch(cmd) {
     case(CREATE_UPDATESTEP):   
       update_name = read_alloc_string( stream , binary );
       local_config_alloc_updatestep( local_config , update_name );
-      log_add_fmt_message(logh , 2 , NULL , "Added local update step:%s" , update_name);
       break;
     case(CREATE_MINISTEP):
       mini_name = read_alloc_string( stream , binary );
       local_config_alloc_ministep( local_config , mini_name );
-      log_add_fmt_message(logh , 2 , NULL , "Added local mini step:%s" , mini_name);
       break;
     case(ATTACH_MINISTEP):
       update_name = read_alloc_string( stream , binary );
@@ -549,7 +667,6 @@ static void local_config_load_file( local_config_type * local_config , const ecl
       {
         local_updatestep_type * update   = local_config_get_updatestep( local_config , update_name );
         local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
-        log_add_fmt_message(logh , 2 , NULL , "Attached ministep:%s to update_step:%s", mini_name , update_name);
         local_updatestep_add_ministep( update , ministep );
       }
       break;
@@ -560,7 +677,6 @@ static void local_config_load_file( local_config_type * local_config , const ecl
         local_ministep_type   * ministep = local_config_get_ministep( local_config , mini_name );
         local_ministep_add_node( ministep , data_key );
       }
-      log_add_fmt_message(logh , 3 , NULL , "Added data:%s to mini step:%s" , data_key , mini_name);
       break;
     case(ADD_OBS):
       mini_name = read_alloc_string( stream , binary );
@@ -569,7 +685,6 @@ static void local_config_load_file( local_config_type * local_config , const ecl
         local_ministep_type * ministep = local_config_get_ministep( local_config , mini_name );
         local_ministep_add_obs( ministep , obs_key );
       }
-      log_add_fmt_message(logh , 3 , NULL , "Added observation:%s to mini step:%s" , obs_key , mini_name);
       break;
     case(ACTIVE_LIST_ADD_OBS_INDEX):
       mini_name = read_alloc_string( stream , binary );
@@ -662,13 +777,175 @@ static void local_config_load_file( local_config_type * local_config , const ecl
         char * src_name    = read_alloc_string( stream , binary );
         char * target_name = read_alloc_string( stream , binary );
         local_config_alloc_ministep_copy( local_config , src_name , target_name );
+        free( src_name );
+        free( target_name );
+      }
+      break;
+    case(ADD_FIELD):
+      {
+        char * field_name;
+        mini_name   = read_alloc_string( stream , binary );
+        field_name  = read_alloc_string( stream , binary );
+        region_name = read_alloc_string( stream , binary );
+        {
+          ecl_region_type     * region   = hash_get( regions , region_name );
+          local_ministep_type * ministep = local_config_get_ministep( local_config , mini_name );
+          local_ministep_add_node( ministep , field_name );
+          {
+            active_list_type * active_list = local_ministep_get_node_active_list( ministep , field_name );
+            const int * region_active      = ecl_region_get_active_list( region );
+            for (int i=0; i < ecl_region_get_active_size( region ); i++)
+              active_list_add_index( active_list , region_active[i]);
+          }
+        }
+        free( field_name );
+      }
+      break;
+    case(CREATE_REGION):
+      {
+        region_name = read_alloc_string( stream , binary );
+        bool   preselect   = read_bool( stream , binary );
+        ecl_region_type * new_region = ecl_region_alloc( ecl_grid , preselect );
+        hash_insert_hash_owned_ref( regions , region_name , new_region , ecl_region_free__);
+      }
+      break;
+    case(LOAD_FILE):
+      {
+        char * file_key  = read_alloc_string( stream , binary ); 
+        char * file_name = read_alloc_string( stream , binary );
+        ecl_file_type * ecl_file = ecl_file_fread_alloc( file_name );
+        hash_insert_hash_owned_ref( files , file_key , ecl_file , ecl_file_free__);
+        free( file_key );
+        free( file_name );
+      }
+      break;
+    case( REGION_SELECT_BOX ):  /* The coordinates in the box are inclusive in both upper and lower limit,
+                                   and the counting starts at 1. */
+      {
+        region_name = read_alloc_string( stream , binary );
+        {
+          int i1          = read_int( stream , binary ) - 1;
+          int i2          = read_int( stream , binary ) - 1;
+          int j1          = read_int( stream , binary ) - 1;
+          int j2          = read_int( stream , binary ) - 1;
+          int k1          = read_int( stream , binary ) - 1;
+          int k2          = read_int( stream , binary ) - 1;
+          bool     select = read_bool( stream , binary );
+          
+          ecl_region_type * region = hash_get( regions , region_name );
+          
+          if (select)
+            ecl_region_select_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
+          else
+            ecl_region_deselect_from_ijkbox( region , i1 , i2 , j1 , j2 , k1 , k2);
+          
+        }
+      }
+      break;
+    case( REGION_SELECT_SLICE ):
+      region_name = read_alloc_string( stream , binary );
+      {
+        char * dir       = read_alloc_string( stream , binary );
+        int n1           = read_int( stream , binary) - 1;
+        int n2           = read_int( stream , binary) - 1;
+        bool     select = read_bool( stream , binary );
+        ecl_region_type * region = hash_get( regions , region_name );
+        
+        util_strupr( dir );
+        
+        if (strcmp( dir , "X") == 0) {
+          if (select)
+            ecl_region_select_i1i2( region , n1 , n2 );
+          else
+            ecl_region_deselect_i1i2( region , n1 , n2 );
+        } else if (strcmp(dir , "Y") == 0) {
+          if (select)
+            ecl_region_select_j1j2( region , n1 , n2 );
+          else
+            ecl_region_deselect_j1j2( region , n1 , n2 );
+        } else if (strcmp(dir , "Z") == 0) {
+          if (select)
+            ecl_region_select_k1k2( region , n1 , n2 );
+          else
+            ecl_region_deselect_k1k2( region , n1 , n2 );
+        } else 
+          util_abort("%s: slice direction:%s not recognized \n",__func__ , dir );
+        
+        free(dir );
+      }
+      break;
+    case( REGION_SELECT_ALL ):
+      {
+        region_name = read_alloc_string( stream , binary );
+        bool select = read_bool( stream , binary );
+        ecl_region_type * region = hash_get( regions , region_name );
+        if (select)
+          ecl_region_select_all( region );
+        else
+          ecl_region_deselect_all( region );
+      }
+      break;
+    case( REGION_SELECT_VALUE_LESS  ):
+    case( REGION_SELECT_VALUE_EQUAL ):
+    case( REGION_SELECT_VALUE_MORE  ):
+      {
+        char * master_key;
+        ecl_kw_type * ecl_kw;
+        ecl_region_type * region;
+        char * value_string;
+        bool select;
+
+        region_name  = read_alloc_string( stream , binary );
+        master_key   = read_alloc_string( stream , binary );
+        value_string = read_alloc_string( stream , binary );
+        select       = read_bool( stream , binary );
+        
+        {
+          stringlist_type * key_list = stringlist_alloc_from_split( master_key , ":");
+          ecl_file_type * ecl_file   = hash_get( files , stringlist_iget(key_list , 0 ));
+          int key_nr = 0;
+          if (stringlist_get_size( key_list ) == 3) 
+            util_sscanf_int( stringlist_iget( key_list , 2 ) , &key_nr );
+          
+          ecl_kw = ecl_file_iget_named_kw( ecl_file , stringlist_iget( key_list , 1 ) , key_nr);
+          stringlist_free( key_list );
+        }
+        
+        region = hash_get( regions , region_name );
+
+        if (cmd == REGION_SELECT_VALUE_EQUAL) {
+          int value;
+          util_sscanf_int( value_string , &value );
+          if (select)
+            ecl_region_select_equal( region , ecl_kw , value );
+          else
+            ecl_region_deselect_equal( region , ecl_kw , value);
+        } else {
+          double value;
+          util_sscanf_double( value_string , &value );
+
+          if (cmd == REGION_SELECT_VALUE_LESS) {
+            if (select)
+              ecl_region_select_smaller( region , ecl_kw , value );
+            else
+              ecl_region_deselect_smaller( region , ecl_kw , value);
+          } else if (cmd == REGION_SELECT_VALUE_LESS) {
+            if (select)
+              ecl_region_select_larger( region , ecl_kw , value );
+            else
+              ecl_region_deselect_larger( region , ecl_kw , value);
+          }
+
+        }
+        free( master_key );
+        free( value_string );
       }
       break;
     default:
       util_abort("%s: invalid command:%d \n",__func__ , cmd);
     }
 
-    
+    util_safe_free( region_name );  region_name = NULL;
     util_safe_free( update_name );  update_name = NULL;
     util_safe_free( mini_name );    mini_name   = NULL;
     util_safe_free( obs_key );      obs_key     = NULL;
@@ -678,6 +955,7 @@ static void local_config_load_file( local_config_type * local_config , const ecl
   int_vector_free( int_vector );
   hash_free( regions );
   hash_free( files );
+  hash_free( cmd_table );
 }
 
 
@@ -686,13 +964,14 @@ static void local_config_load_file( local_config_type * local_config , const ecl
   Should probably have a "modified" flag to ensure internal consistency 
 */
 
-void local_config_reload( local_config_type * local_config , const ecl_grid_type * ecl_grid , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , const char * all_active_config_file , log_type * logh) {
+void local_config_reload( local_config_type * local_config , const ecl_grid_type * ecl_grid , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , const char * all_active_config_file ) {
   local_config_clear( local_config );
-  local_config_load_file( local_config , ecl_grid , ensemble_config , enkf_obs , all_active_config_file , logh );
+  if (all_active_config_file != NULL)
+    local_config_load_file( local_config , ecl_grid , ensemble_config , enkf_obs , all_active_config_file );
   {
     int i;
     for (i = 0; i < stringlist_get_size( local_config->config_files ); i++)
-      local_config_load_file( local_config , ecl_grid , ensemble_config , enkf_obs , stringlist_iget( local_config->config_files , i ) , logh);
+      local_config_load_file( local_config , ecl_grid , ensemble_config , enkf_obs , stringlist_iget( local_config->config_files , i ) );
   }
 }
 
