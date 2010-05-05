@@ -9,6 +9,7 @@ from widgets.util import print_timing
 from widgets.combochoice import ComboChoice
 import matplotlib.dates
 import matplotlib.dates
+import matplotlib.backend_bases
 
 class ImagePlotPanel(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -96,30 +97,38 @@ class PlotPanel(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
 
-        plotLayout = QtGui.QVBoxLayout()
+        plotLayout = QtGui.QHBoxLayout()
 
         self.plot = PlotView()
+
+
+
+        plotList = QtGui.QListWidget(self)
+        plotList.setMaximumWidth(150)
+        plotList.setMinimumWidth(150)
+
+
+        cm = ContentModel()
+        cm.helpLabel = "internal_plot_fetcher"
+        def get_data(ert):
+            plotList.clear()
+            plotList.addItems(self.plot.plotData.data["summary_keys"])
+            plotList.sortItems()
+
+        #cm.initialize = initialize
+        cm.getter = get_data
+        cm.fetchContent = lambda : cm.getFromModel()
+
+        self.connect(plotList, QtCore.SIGNAL('currentItemChanged(QListWidgetItem *, QListWidgetItem *)'), self.select)
+
+        plotLayout.addWidget(plotList)
         plotLayout.addWidget(self.plot)
-
-        cb = ComboChoice(help="plot_key")
-        def initialize(ert):
-            cb.updateList(self.plot.plotData.data["summary_keys"])
-
-        cb.initialize = initialize
-        cb.getter = lambda ert : self.plot.plotData.key
-
-        def update(ert, key):
-            self.plot.plotData.setKey(str(key))
-            self.plot.plotData.fetchContent()
-            self.plot.drawPlot()
-
-        cb.setter = update
-
-        plotLayout.addWidget(cb)
-
         self.setLayout(plotLayout)
 
-
+    def select(self, current, previous):
+        self.plot.plotData.setKey(str(current.text()))
+        self.plot.plotData.fetchContent()
+        self.plot.drawPlot()
 
 class PlotView(QtGui.QFrame):
     """PlotPanel shows available plot result files and displays them"""
@@ -142,6 +151,21 @@ class PlotView(QtGui.QFrame):
         self.plotData = PlotData()
         self.plotData.setKey("FOPT")
 
+        def onclick(event):
+            print 'button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(
+                event.button, event.x, event.y, event.xdata, event.ydata)
+        self.fig.canvas.mpl_connect('button_press_event', onclick)
+
+        def onpick(event):
+            thisline = event.artist
+            thisline.set_color("r")
+            xdata, ydata = thisline.get_data()
+            ind = event.ind
+            print 'on pick line:', zip(xdata[ind], ydata[ind])
+
+            
+        self.fig.canvas.mpl_connect('pick_event', onpick)
+
 
     def drawPlot(self):
         self.axes.cla()
@@ -153,7 +177,9 @@ class PlotView(QtGui.QFrame):
             x = [datetime.date(*time.localtime(t)[0:3]) for t in x]
             y = self.plotData.data[key][member]["y"]
 
-            self.axes.plot_date(x, y, "b-")
+            x = numpy.array(x)
+            y = numpy.array(y)
+            self.axes.plot_date(x, y, "b-", picker=2)
 
 
         years    = matplotlib.dates.YearLocator()   # every year
