@@ -4,6 +4,7 @@
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <enkf_macros.h>
+#include <local_config.h>
 
 /**
    One enkf update is described/configured by the data structure in
@@ -75,3 +76,21 @@ int local_updatestep_get_num_ministep( const local_updatestep_type * updatestep)
   return vector_get_size( updatestep->ministep );
 }
 
+const char * local_updatestep_get_name( const local_updatestep_type * updatestep ) {
+  return updatestep->name; 
+}
+
+
+/*****************************************************************/
+
+
+void local_updatestep_fprintf( const local_updatestep_type * updatestep , FILE * stream) {
+  fprintf(stream , "%s %s\n" , local_config_get_cmd_string( CREATE_UPDATESTEP ) , updatestep->name );
+  {
+    int i;
+    for (i=0; i < vector_get_size( updatestep->ministep ); i++) {
+      const local_ministep_type * ministep = vector_iget_const( updatestep->ministep , i );
+      fprintf(stream , "%s %s %s\n",local_config_get_cmd_string( ATTACH_MINISTEP ) , updatestep->name , local_ministep_get_name( ministep ));
+    }
+  }
+}

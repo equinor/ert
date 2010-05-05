@@ -149,3 +149,18 @@ const int * active_list_get_active(const active_list_type * active_list) {
   else
     return NULL;  
 }
+
+
+/*****************************************************************/
+
+void active_list_fprintf( const active_list_type * active_list , FILE * stream ) {
+  if (active_list->mode == PARTLY_ACTIVE) {
+    int i;
+    for (i = 0; i < int_vector_size( active_list->index_list ); i++) {
+      fprintf(stream , "%6d " , int_vector_iget( active_list->index_list , i));
+      if ((i % 10) == 9)
+        fprintf(stream , "\n");
+    }
+  } /* else: if mode == ALL_ACTIVE nothing is written */
+}
+

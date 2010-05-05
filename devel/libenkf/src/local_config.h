@@ -7,6 +7,7 @@
 #include <stringlist.h>
 #include <ensemble_config.h>
 #include <enkf_obs.h>
+#include <ecl_grid.h>
 
 
 
@@ -30,8 +31,10 @@ typedef enum {
   ALLOC_MINISTEP_COPY             = 13, /* SRC_NAME TARGET_NAME */ 
   DEL_DATA                        = 14, /* MINISTEP KEY*/
   DEL_OBS                         = 15, /* MINISTEP OBS_KEY */
-  DEL_ALL_DATA                    = 16, /* Nor arguments */
-  DEL_ALL_OBS                     = 17
+  DEL_ALL_DATA                    = 16, /* No arguments */
+  DEL_ALL_OBS                     = 17, /* No arguments */
+  CREATE_REGION                   = 18, /* Name of region */
+  LOAD_FILE                       = 19  /* Key, filename */  
 } local_config_instruction_type; 
 
 
@@ -71,7 +74,7 @@ const local_updatestep_type * local_config_iget_updatestep( const local_config_t
 local_updatestep_type       * local_config_get_updatestep( const local_config_type * local_config , const char * key);
 local_ministep_type         * local_config_get_ministep( const local_config_type * local_config , const char * key);
 void                          local_config_set_updatestep(local_config_type * local_config, int step1 , int step2 , const char * key);
-void                          local_config_reload( local_config_type * local_config , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , 
+void                          local_config_reload( local_config_type * local_config , const ecl_grid_type * ecl_grid , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs , 
                                                    const char * all_active_config_file , log_type * logh);
 const char                  * local_config_get_cmd_string( local_config_instruction_type cmd );
 

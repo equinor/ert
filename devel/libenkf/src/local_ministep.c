@@ -5,6 +5,7 @@
 #include <hash.h>
 #include <enkf_macros.h>
 #include <local_ministep.h>
+#include <local_config.h>  
 
 /**
    This file implements a 'ministep' configuration for active /
@@ -172,4 +173,33 @@ stringlist_type * local_ministep_alloc_node_keys(const local_ministep_type * min
 
 hash_iter_type * local_ministep_alloc_obs_iter(const local_ministep_type * ministep) {
   return hash_iter_alloc( ministep->observations );
+}
+
+/*****************************************************************/
+
+void local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream ) {
+  fprintf(stream , "%s %s\n", local_config_get_cmd_string( CREATE_MINISTEP ), ministep->name );
+  {
+    hash_iter_type * obs_iter = hash_iter_alloc( ministep->observations );
+    while (!hash_iter_is_complete( obs_iter )) {
+      const char * obs_key           = hash_iter_get_next_key( obs_iter );
+      active_list_type * active_list = hash_get( ministep->observations , obs_key );
+
+      fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ADD_OBS ) , ministep->name , obs_key );
+      active_list_fprintf( active_list , stream );
+    }
+    hash_iter_free( obs_iter );
+  }
+
+  {
+    hash_iter_type * data_iter = hash_iter_alloc( ministep->nodes );
+    while (!hash_iter_is_complete( data_iter )) {
+      const char * data_key          = hash_iter_get_next_key( data_iter );
+      active_list_type * active_list = hash_get( ministep->nodes , data_key );
+      
+      fprintf(stream , "%s %s %s\n", local_config_get_cmd_string( ADD_DATA ) , ministep->name , data_key );
+      active_list_fprintf( active_list , stream );
+    }
+    hash_iter_free( data_iter );
+  }
 }

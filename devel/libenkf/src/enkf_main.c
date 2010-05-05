@@ -2549,7 +2549,7 @@ enkf_main_type * enkf_main_bootstrap(const char * _site_config, const char * _mo
             }
           }
           
-          local_config_reload( enkf_main->local_config , enkf_main->ensemble_config , enkf_main->obs , all_active_config_file , enkf_main->logh);
+          local_config_reload( enkf_main->local_config , ecl_config_get_grid( enkf_main->ecl_config ), enkf_main->ensemble_config , enkf_main->obs , all_active_config_file , enkf_main->logh);
           unlink( all_active_config_file );
           free(all_active_config_file);
         }

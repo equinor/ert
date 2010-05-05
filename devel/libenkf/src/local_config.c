@@ -3,6 +3,8 @@
 #include <string.h>
 #include <vector.h>
 #include <util.h>
+#include <ecl_grid.h>
+#include <ecl_region.h>
 #include <local_ministep.h>
 #include <local_updatestep.h>
 #include <local_config.h>
@@ -465,7 +467,7 @@ static char * read_alloc_string(FILE * stream , bool binary) {
   if (binary)
     return util_fread_alloc_string( stream );
   else {
-    char * string = util_malloc(64 * sizeof * string ,__func__); /*64 - outht to be enough for everyone ... */
+    char * string = util_malloc(256 * sizeof * string ,__func__); /* 256 - outht to be enough for everyone ... */
     fscanf(stream , "%s" , string);
     return string;
   }
@@ -511,16 +513,22 @@ void local_config_add_config_file( local_config_type * local_config , const char
    anything. These should be used for input validation.
 */
 
-static void local_config_load_file( local_config_type * local_config , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , const char * config_file , log_type * logh) {
+static void local_config_load_file( local_config_type * local_config , const ecl_grid_type * ecl_grid , 
+                                    const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , 
+                                    const char * config_file , log_type * logh) {
   bool binary = false;
   local_config_instruction_type cmd;
-  FILE * stream      = util_fopen( config_file , "r");
-  char * update_name = NULL;
-  char * mini_name   = NULL;
-  char * obs_key     = NULL;
-  char * data_key    = NULL;
+  hash_type * regions = hash_alloc();
+  hash_type * files   = hash_alloc();
+  
+  FILE * stream       = util_fopen( config_file , "r");
+  char * update_name  = NULL;
+  char * mini_name    = NULL;
+  char * obs_key      = NULL;
+  char * data_key     = NULL;
   int index;
   int_vector_type * int_vector = int_vector_alloc(0,0);
+  
 
   log_add_fmt_message(logh , 1 , NULL , "Loading local configuration from file:%s" , config_file);
   while ( read_cmd(stream, binary , &cmd)) {
@@ -668,6 +676,8 @@ static void local_config_load_file( local_config_type * local_config , const ens
   }
   fclose(stream);
   int_vector_free( int_vector );
+  hash_free( regions );
+  hash_free( files );
 }
 
 
@@ -676,12 +686,60 @@ static void local_config_load_file( local_config_type * local_config , const ens
   Should probably have a "modified" flag to ensure internal consistency 
 */
 
-void local_config_reload( local_config_type * local_config , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , const char * all_active_config_file , log_type * logh) {
+void local_config_reload( local_config_type * local_config , const ecl_grid_type * ecl_grid , const ensemble_config_type * ensemble_config , const enkf_obs_type * enkf_obs  , const char * all_active_config_file , log_type * logh) {
   local_config_clear( local_config );
-  local_config_load_file( local_config , ensemble_config , enkf_obs , all_active_config_file , logh );
+  local_config_load_file( local_config , ecl_grid , ensemble_config , enkf_obs , all_active_config_file , logh );
   {
     int i;
     for (i = 0; i < stringlist_get_size( local_config->config_files ); i++)
-      local_config_load_file( local_config , ensemble_config , enkf_obs , stringlist_iget( local_config->config_files , i ) , logh);
+      local_config_load_file( local_config , ecl_grid , ensemble_config , enkf_obs , stringlist_iget( local_config->config_files , i ) , logh);
   }
 }
+
+
+
+void local_config_fprintf( const local_config_type * local_config , const char * config_file) {
+  FILE * stream = util_mkdir_fopen( config_file , "w");
+  
+  /* Start with dumping all the ministep instances. */
+  {
+    hash_iter_type * hash_iter = hash_iter_alloc( local_config->ministep_storage );
+
+    while (!hash_iter_is_complete( hash_iter )) {
+      const local_ministep_type * ministep = hash_iter_get_next_value( hash_iter );
+      local_ministep_fprintf( ministep , stream );
+    }
+        
+    hash_iter_free( hash_iter );
+  }
+  
+  
+  /* Dumping all the reportstep instances as ATTACH_MINISTEP commands. */
+  {
+    hash_iter_type * hash_iter = hash_iter_alloc( local_config->updatestep_storage );
+    
+    while (!hash_iter_is_complete( hash_iter )) {
+      const local_updatestep_type * updatestep = hash_iter_get_next_value( hash_iter );
+      local_updatestep_fprintf( updatestep , stream );
+    }
+        
+    hash_iter_free( hash_iter );
+  }
+
+  /* Writing out the updatestep / time */
+  {
+    int i;
+    for (i=0; i < vector_get_size( local_config->updatestep ); i++) {
+      const local_updatestep_type * updatestep = vector_iget_const( local_config->updatestep , i );
+      if (updatestep != NULL)
+        fprintf(stream , "%s %s %d %d \n", local_config_get_cmd_string( INSTALL_UPDATESTEP ) , local_updatestep_get_name( updatestep ) , i , i );
+    }
+  }
+
+  /* Installing the default updatestep */
+  if (local_config->default_updatestep != NULL) 
+    fprintf(stream , "%s %s\n", local_config_get_cmd_string( INSTALL_DEFAULT_UPDATESTEP ) , local_updatestep_get_name( local_config->default_updatestep ));
+  
+  fclose( stream );
+}
+

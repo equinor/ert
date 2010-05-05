@@ -28,7 +28,7 @@ void 		      local_ministep_del_node( local_ministep_type * ministep , const cha
 const char          * local_ministep_get_name( const local_ministep_type * ministep );
 void                  local_ministep_clear_nodes( local_ministep_type * ministep);
 void                  local_ministep_clear_observations( local_ministep_type * ministep);
-
+void                  local_ministep_fprintf( const local_ministep_type * ministep , FILE * stream );
 
 UTIL_SAFE_CAST_HEADER(local_ministep);
 UTIL_IS_INSTANCE_HEADER(local_ministep);
