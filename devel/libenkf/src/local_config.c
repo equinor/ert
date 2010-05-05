@@ -216,7 +216,6 @@ static void local_config_clear( local_config_type * local_config ) {
 */
 local_config_type * local_config_alloc( int history_length ) {
   local_config_type * local_config = util_malloc( sizeof * local_config , __func__);
-  
 
   local_config->default_updatestep  = NULL;
   local_config->updatestep_storage  = hash_alloc();
@@ -226,8 +225,6 @@ local_config_type * local_config_alloc( int history_length ) {
   local_config->config_files = stringlist_alloc_new();
   
   local_config_clear( local_config );
-
-
   return local_config;
 }
 
@@ -493,7 +490,7 @@ static bool read_cmd( FILE * stream , bool binary , local_config_instruction_typ
 }
 
 
-stringlist_type * local_config_get_config_files( const local_config_type * local_config ) {    
+stringlist_type * local_config_get_config_files( const local_config_type * local_config ) {
   return local_config->config_files;
 }
 
