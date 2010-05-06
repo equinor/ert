@@ -3,6 +3,8 @@ from pages.config.parameters.parameterpanel import Parameter
 from pages.plot.plotview import PlotView
 import ertwrapper
 import pages.config.parameters.parameterpanel
+import widgets.helpedwidget
+from widgets.helpedwidget import ContentModel
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
