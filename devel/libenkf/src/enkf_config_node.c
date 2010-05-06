@@ -154,13 +154,24 @@ enkf_config_node_type * enkf_config_node_alloc_gen_kw_config( const char * key  
                                                               const char * parameter_file   ,
                                                               const char * min_std_file     ,
                                                               const char * init_file_fmt ) {
-  /* 1: Allocate bare bones instances */
+  /* 1: Allocate bare bones instances         */
   enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , GEN_KW , key );
   config_node->data = gen_kw_config_alloc_empty( key );
   
-  /* 2: Update the content of the instances. */
+  /* 2: Update the content of the instances.  */
   enkf_config_node_update_gen_kw_config( config_node , enkf_outfile_fmt , template_file , parameter_file , min_std_file , init_file_fmt );
   return config_node;
+}
+
+
+
+
+enkf_config_node_type * enkf_config_node_alloc_field_config( const char * key              ,
+                                                             enkf_var_type var_type        ,       
+                                                             const char * enkf_outfile_fmt ,
+                                                             const char * enkf_infile_fmt  ) {
+
+  return NULL;
 }
 
 

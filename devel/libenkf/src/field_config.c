@@ -101,13 +101,14 @@ _______________/                     \___________/	 |  with EnKF.               
 #define FIELD_CONFIG_ID 78269
 
 struct field_config_struct {
-  CONFIG_STD_FIELDS;
+  UTIL_TYPE_ID_DECLARATION;
+  int                   data_size;
   char                * ecl_kw_name;    /* Name/key ... */
   int nx,ny,nz;                         /* The number of elements in the three directions. */
   const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */
   bool  private_grid;
   
-  active_list_type * active_list;
+  active_list_type      * active_list;
 
   int             	  truncation;           /* How the field should be trunacted before exporting for simulation, and for the inital import. */
   double   	  	  min_value;            /* The min value used in truncation. */
@@ -123,7 +124,6 @@ struct field_config_struct {
   bool __enkf_mode;                      /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool fmt_file;
   bool write_compressed;
-  bool add_perturbation;
 
   field_type              * min_std;
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
@@ -339,6 +339,8 @@ void field_config_set_grid(field_config_type * config, const ecl_grid_type * gri
 const char * field_config_get_grid_name( const field_config_type * config) {
   return ecl_grid_get_name( config->grid );
 }
+
+
 
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      	   , /* 1: Keyword name */
