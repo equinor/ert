@@ -111,7 +111,10 @@ class ContentModel:
 
     @classmethod
     def updateObservers(cls):
-        """Calls all ContentModel inheritors to initialize (if implemented) and perform initial fetch of data."""
+        """
+        Calls all ContentModel inheritors to initialize (if implemented) and perform initial fetch of data.
+        The signal 'initialized()' is emitted after initialization and fetching is completed.
+        """
         for o in ContentModel.observers:
             try:
                 o.initialize(ContentModel.contentModel)
@@ -119,6 +122,7 @@ class ContentModel:
                 sys.stderr.write("Missing initializer: " + o.helpLabel + "\n")
 
             o.fetchContent()
+        ContentModel.modelEmit('initialized()')
 
     @classmethod
     def printObservers(cls):
