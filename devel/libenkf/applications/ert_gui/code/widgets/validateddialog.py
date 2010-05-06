@@ -1,4 +1,5 @@
 from PyQt4 import QtGui, QtCore
+import util
 
 class ValidatedDialog(QtGui.QDialog):
     """A dialog for creating a validated. Performs validation of name."""
@@ -20,8 +21,7 @@ class ValidatedDialog(QtGui.QDialog):
         self.layout = QtGui.QFormLayout()
 
         self.layout.addRow(QtGui.QLabel(description))
-
-        self.layout.addRow(self.createSpace())
+        self.layout.addRow(util.createSpace(10))
 
 
         self.paramName = QtGui.QLineEdit(self)
@@ -29,15 +29,13 @@ class ValidatedDialog(QtGui.QDialog):
         self.validColor = self.paramName.palette().color(self.paramName.backgroundRole())
 
         self.layout.addRow("Name:", self.paramName)
-
-        self.layout.addRow(self.createSpace())
+        self.layout.addRow(util.createSpace(10))
 
         buttons = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok | QtGui.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
         self.okbutton = buttons.button(QtGui.QDialogButtonBox.Ok)
         self.okbutton.setEnabled(False)
 
         self.layout.addRow(buttons)
-
 
         self.connect(buttons, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(buttons, QtCore.SIGNAL('rejected()'), self.reject)
@@ -60,7 +58,6 @@ class ValidatedDialog(QtGui.QDialog):
         self.paramName.setToolTip("")
         self.paramName.setPalette(palette)
 
-
     def validateName(self, value):
         """Called to perform validation of a name. For specific needs override this function and call valid() and notValid(msg)."""
         value = str(value)
@@ -73,13 +70,6 @@ class ValidatedDialog(QtGui.QDialog):
             self.notValid("Name must be unique!")
         else:
             self.valid()
-
-
-    def createSpace(self):
-        """Create some space in the layout"""
-        space = QtGui.QFrame()
-        space.setMinimumSize(QtCore.QSize(10, 10))
-        return space
 
     def getName(self):
         """Return the new name chosen by the user"""

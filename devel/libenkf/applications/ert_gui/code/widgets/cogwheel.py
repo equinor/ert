@@ -3,6 +3,7 @@ from widgets.util import frange
 import math
 
 class Cogwheel(QtGui.QWidget):
+    """A rotating cogwheel that indicates that a process is running."""
 
     def __init__(self, color=QtGui.QColor(128, 128, 128), size=64, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -16,7 +17,7 @@ class Cogwheel(QtGui.QWidget):
         self.inc = 0
         self.step = 2.5
 
-        self.createCogwheel(size)
+        self._createCogwheel(size)
 
         timer = QtCore.QTimer(self)
         self.connect(timer, QtCore.SIGNAL("timeout()"), self, QtCore.SLOT("update()"))
@@ -26,6 +27,7 @@ class Cogwheel(QtGui.QWidget):
 
 
     def paintEvent(self, paintevent):
+        """Called whenever the widget needs to redraw"""
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
@@ -36,7 +38,7 @@ class Cogwheel(QtGui.QWidget):
         painter.setClipRect(rect)
         painter.translate(rect.center())
         painter.rotate(self.step * self.inc)
-        self.drawCogwheel(painter)
+        self._drawCogwheel(painter)
 
         r = (self.size / 2.0) * 0.3
         painter.setBrush(QtGui.QBrush(self.color.light(150)))
@@ -46,14 +48,16 @@ class Cogwheel(QtGui.QWidget):
             self.inc += 1
 
 
-    def drawCogwheel(self, painter):
+    def _drawCogwheel(self, painter):
+        """Draw the cogwheel polygon"""
         painter.save()
         painter.setBrush(QtGui.QBrush(self.color))
         painter.drawPolygon(QtGui.QPolygonF(self.points), len(self.points))
         painter.restore()
 
 
-    def createCogwheel(self, size):
+    def _createCogwheel(self, size):
+        """Creates the points that are part of the cogwheel polygon"""
         self.points = []
         r1 = (size / 2.0) - 1.0
         r2 = 0.80
@@ -71,4 +75,5 @@ class Cogwheel(QtGui.QWidget):
             out = not out
 
     def setRunning(self, bool):
+        """Set wether it should animat or not"""
         self.running = bool

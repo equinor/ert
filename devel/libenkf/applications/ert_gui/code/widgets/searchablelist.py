@@ -89,4 +89,5 @@ class SearchableList(QtGui.QWidget):
                     item.setHidden(True)
 
     def getList(self):
+        """Returns the contained list widget"""
         return self.list

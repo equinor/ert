@@ -72,6 +72,7 @@ class ErtWrapper:
 
 
     def _parseType(self, type):
+        """Convert a prototype definition type from string to a ctypes equivalent object"""
         type = type.strip()
         if type == "void":
             return None
@@ -83,6 +84,10 @@ class ErtWrapper:
             return ctypes.c_long
         elif type == "char":
             return ctypes.c_char_p
+        elif type == "double":
+            return ctypes.c_double
+        elif type == "float":
+            return ctypes.c_float
         else:
             return getattr(ctypes, type)
 
@@ -92,6 +97,14 @@ class ErtWrapper:
         prototype is a string formatted like this:
             "type functionName(type,type,type)"
         where type is a type available to ctypes
+        Some type are automatically converted:
+            int -> c_int
+            long -> c_long
+            char -> c_char_p
+            bool -> c_int
+            void -> None
+            double -> c_double
+            float -> c_float
         if lib is None lib defaults to the enkf library
         """
         if lib is None:
@@ -109,7 +122,7 @@ class ErtWrapper:
             func = getattr(lib, functioname)
             func.restype = self._parseType(restype)
             func.argtypes = [self._parseType(arg) for arg in arguments]
-            print func, func.restype, func.argtypes
+            #print func, func.restype, func.argtypes
 
 
     def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer = True):

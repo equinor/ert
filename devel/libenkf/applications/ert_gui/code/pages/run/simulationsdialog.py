@@ -9,6 +9,7 @@ import ertwrapper
 from widgets.util import getItemsFromList
 
 class SimulationsDialog(QtGui.QDialog):
+    """A dialog that shows the progress of a simulation"""
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)
         self.setModal(True)
@@ -34,7 +35,7 @@ class SimulationsDialog(QtGui.QDialog):
 
         simulationLayout = QtGui.QHBoxLayout()
         self.simulationList = SimulationList()
-        self.simulationList.contextMenuEvent = self.contextMenu
+        self.simulationList.contextMenuEvent = self._contextMenu
         self.connect(self.simulationList, QtCore.SIGNAL('itemSelectionChanged()'), self.ctrl.selectSimulation)
         simulationLayout.addWidget(self.simulationList)
         self.simulationPanel = SimulationPanel()
@@ -68,19 +69,21 @@ class SimulationsDialog(QtGui.QDialog):
         self.setLayout(memberLayout)
 
 
-    def createAction(self, name, func, parent=None):
+    def _createAction(self, name, func, parent=None):
+        """Create an action for the right click menu"""
         action = QtGui.QAction(name, parent)
         action.connect(action, QtCore.SIGNAL("triggered()"), func)
         return action
 
-    def contextMenu(self, event):
+    def _contextMenu(self, event):
+        """Create a right click menu for the simulation view."""
         menu = QtGui.QMenu(self.simulationList)
-        selectAll = self.createAction("Select all", self.simulationList.selectAll)
-        unselectAll = self.createAction("Unselect all", self.simulationList.clearSelection)
-        selectRunning = self.createAction("Select all running", lambda : self.ctrl.select(Simulation.RUNNING))
-        selectFailed = self.createAction("Select all failed", lambda : self.ctrl.select(Simulation.ALL_FAIL))
-        selectUserKilled = self.createAction("Select all user killed", lambda : self.ctrl.select(Simulation.USER_KILLED))
-        selectWaiting = self.createAction("Select all waiting", lambda : self.ctrl.select(Simulation.WAITING, Simulation.PENDING))
+        selectAll = self._createAction("Select all", self.simulationList.selectAll)
+        unselectAll = self._createAction("Unselect all", self.simulationList.clearSelection)
+        selectRunning = self._createAction("Select all running", lambda : self.ctrl.select(Simulation.RUNNING))
+        selectFailed = self._createAction("Select all failed", lambda : self.ctrl.select(Simulation.ALL_FAIL))
+        selectUserKilled = self._createAction("Select all user killed", lambda : self.ctrl.select(Simulation.USER_KILLED))
+        selectWaiting = self._createAction("Select all waiting", lambda : self.ctrl.select(Simulation.WAITING, Simulation.PENDING))
 
         menu.addAction(selectAll)
         menu.addAction(unselectAll)
@@ -92,34 +95,38 @@ class SimulationsDialog(QtGui.QDialog):
         
 
     def closeEvent(self, event):
+        """Ignore clicking of the x in the top right corner"""
         event.ignore()
 
     def keyPressEvent(self, event):
+        """Ignore ESC keystrokes"""
         if not event.key() == QtCore.Qt.Key_Escape:
             QtGui.QDialog.keyPressEvent(self, event)
 
     def updateProgress(self, value):
+        """Update the progress bar"""
         self.simulationProgress.setValue(value)
 
     def setRunningState(self, state):
+        """Set wehter the cogwheel should spin and the Done button is enabled"""
         self.cogwheel.setRunning(state)
         self.doneButton.setEnabled(not state)
 
     def start(self, **kwargs):
+        """Show the dialog and start the simulation"""
         self.open()
-
         self.ctrl.start(**kwargs)
-
         self.exec_()
 
 
-
 class SimulationsDialogController:
+    """All controller code for the dialog"""
     def __init__(self, view):
         self.view = view
         self.initialized = False
 
     def select(self, *states):
+        """Used by the right click menu to select multiple running jobs"""
         self.view.simulationList.clearSelection()
 
         items = getItemsFromList(self.view.simulationList, lambda item : item, selected=False)
@@ -130,11 +137,13 @@ class SimulationsDialogController:
                     item.setSelected(True)
 
     def selectSimulation(self):
+        """Set a job as selected"""
         selection = getItemsFromList(self.view.simulationList, lambda item : item.simulation)
         self.view.simulationPanel.setSimulations(selection)
 
 
     def initialize(self, ert):
+        """Protoype ERT functions"""
         if not self.initialized:
             ert.setTypes("enkf_main_iget_state", ertwrapper.c_long, ertwrapper.c_int)
             ert.setTypes("enkf_state_get_run_status", ertwrapper.c_int)
@@ -144,6 +153,7 @@ class SimulationsDialogController:
             self.initialized = True
 
     def start(self, **kwargs):
+        """Start the simulation. Two threads are started one for the simulation and one for progress monitoring"""
         ert = kwargs["ert"]
         memberCount = kwargs["memberCount"]
         selectedMembers = kwargs["selectedMembers"]
