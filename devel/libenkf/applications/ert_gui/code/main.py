@@ -1,36 +1,32 @@
-# Some comments :)
+#todo: proper support for unicode characters?
+
 from PyQt4 import QtGui, QtCore
 import sys
-import local
-import os
-import time
-
-import ertwrapper
-from pages.application import Application
-import widgets.util
 
 #for k in QtGui.QStyleFactory.keys():
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
-from pages.plotpanel import PlotPanel
-from pages.config.parameters.parameterpanel import ParameterPanel
 
-#todo: proper support for unicode characters?
+app = QtGui.QApplication(sys.argv) #Early so that QT is initialized before other imports
+
+import local
+import ertwrapper
+
+from pages.application import Application
 from pages.init.initpanel import InitPanel
 from pages.run.runpanel import RunPanel
 from pages.config.configpages import ConfigPages
+from pages.plot.plotpanel import PlotPanel
 from widgets.helpedwidget import ContentModel
-import matplotlib
-import PyQt4
+from widgets.util import resourceImage, resourceIcon
 
-print "PyQt4 version: ", PyQt4.QtCore.qVersion()
+import matplotlib
+
+print "PyQt4 version: ", QtCore.qVersion()
 print "matplotlib version: ", matplotlib.__version__
 
-app = QtGui.QApplication(sys.argv)
-
-
-splash = QtGui.QSplashScreen(widgets.util.resourceImage("splash"), QtCore.Qt.WindowStaysOnTopHint)
+splash = QtGui.QSplashScreen(resourceImage("splash"), QtCore.Qt.WindowStaysOnTopHint)
 splash.show()
 splash.showMessage("Starting up...", color=QtCore.Qt.white)
 app.processEvents()
@@ -48,18 +44,17 @@ ert = ertwrapper.ErtWrapper(site_config = site_config, enkf_config = enkf_config
 splash.showMessage("Creating GUI...", color=QtCore.Qt.white)
 app.processEvents()
 
-window.addPage("Configuration", widgets.util.resourceIcon("config"), ConfigPages(window))
-window.addPage("Init", widgets.util.resourceIcon("db"), InitPanel(window))
-window.addPage("Run", widgets.util.resourceIcon("run"), RunPanel(window))
-#window.addPage("Plots", widgets.util.resourceIcon("plot"), ImagePlotPanel("plots/default"))
-window.addPage("Plots", widgets.util.resourceIcon("plot"), PlotPanel())
+window.addPage("Configuration", resourceIcon("config"), ConfigPages(window))
+window.addPage("Init", resourceIcon("db"), InitPanel(window))
+window.addPage("Run", resourceIcon("run"), RunPanel(window))
+#window.addPage("Plots", resourceIcon("plot"), ImagePlotPanel("plots/default"))
+window.addPage("Plots", resourceIcon("plot"), PlotPanel())
 
 splash.showMessage("Communicating with ERT...", color=QtCore.Qt.white)
 app.processEvents()
 
 ContentModel.contentModel = ert
 ContentModel.updateObservers()
-
 
 window.show()
 splash.finish(window)

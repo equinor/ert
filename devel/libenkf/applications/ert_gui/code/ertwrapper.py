@@ -51,6 +51,16 @@ class ErtWrapper:
         self.run_template = [["...", ".....", "asdf:asdf asdfasdf:asdfasdf"], ["other", "sdtsdf", ".as.asdfsdf"]]
         self.forward_model = [["MY_RELPERM_SCRIPT", "Arg1<some> COPY(asdfdf)"]]
 
+        self.registered_types = {}
+        self.registerType("void", None)
+        self.registerType("int", ctypes.c_int)
+        self.registerType("bool", ctypes.c_int)
+        self.registerType("long", ctypes.c_long)
+        self.registerType("char", ctypes.c_char_p)
+        self.registerType("float", ctypes.c_float)
+        self.registerType("double", ctypes.c_double)
+        self.registerType("ref", ctypes.c_void_p)
+
 
     def __loadLibraries__(self, prefix):
         """Load libraries that are required by ERT and ERT itself"""
@@ -70,24 +80,16 @@ class ErtWrapper:
         self.enkf.enkf_main_install_SIGNALS()
         self.enkf.enkf_main_init_debug( "/usr/bin/python" )
 
+    def registerType(self, type, value):
+        """Register a type against a legal ctypes type"""
+        self.registered_types[type] = value
 
     def _parseType(self, type):
-        """Convert a prototype definition type from string to a ctypes equivalent object"""
+        """Convert a prototype definition type from string to a ctypes legal type."""
         type = type.strip()
-        if type == "void":
-            return None
-        elif type == "int":
-            return ctypes.c_int
-        elif type == "bool":
-            return ctypes.c_int
-        elif type == "long":
-            return ctypes.c_long
-        elif type == "char":
-            return ctypes.c_char_p
-        elif type == "double":
-            return ctypes.c_double
-        elif type == "float":
-            return ctypes.c_float
+
+        if self.registered_types.has_key(type):
+            return self.registered_types[type]
         else:
             return getattr(ctypes, type)
 
@@ -95,7 +97,9 @@ class ErtWrapper:
         """
         Provides the same functionality as setTypes but in a different way.
         prototype is a string formatted like this:
+
             "type functionName(type,type,type)"
+
         where type is a type available to ctypes
         Some type are automatically converted:
             int -> c_int
@@ -105,6 +109,8 @@ class ErtWrapper:
             void -> None
             double -> c_double
             float -> c_float
+            ref -> c_void_p (typically used for '&variable_name' situations (by reference))
+
         if lib is None lib defaults to the enkf library
         """
         if lib is None:

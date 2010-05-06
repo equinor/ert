@@ -18,7 +18,7 @@ class ParameterDialog(ValidatedDialog):
         self.layout.insertRow(2, "Type:", self.paramCombo)
 
 
-    def getType(self):
+    def getTypeName(self):
         """Return the type selected by the user"""
-        return str(self.paramCombo.currentText())
+        return str(self.paramCombo.currentText().strip())
 

@@ -11,7 +11,10 @@ python ../bin/clean.py
 
 if [ "$1" = "debug" ]
 then
-    gdb python --command=../bin/gdbcommands    
+    gdb python --command=../bin/gdbcommands
+elif [ "$1" = "strace" ]
+then
+    strace -e trace=file python main.py
 else
     python main.py
 fi
