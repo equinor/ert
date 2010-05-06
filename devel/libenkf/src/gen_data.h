@@ -12,6 +12,7 @@ extern "C" {
 #include <gen_data_common.h>
 #include <gen_data_config.h>
 
+
 void                     gen_data_assert_size( gen_data_type * gen_data , int size , int report_step);
 bool          	         gen_data_ecl_load(gen_data_type * , const char *  ,  const ecl_sum_type * , const ecl_file_type * , int );
 void          	         gen_data_free(gen_data_type * );
@@ -44,6 +45,7 @@ VOID_IADD_HEADER(gen_data);
 VOID_IADDSQR_HEADER(gen_data);
 VOID_SCALE_HEADER(gen_data);
 VOID_ISQRT_HEADER(gen_data);
+VOID_FLOAD_HEADER(gen_data)
 #ifdef __cplusplus
 }
 #endif

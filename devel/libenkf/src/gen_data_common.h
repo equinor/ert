@@ -11,7 +11,7 @@ typedef struct gen_data_config_struct gen_data_config_type;
 typedef struct gen_data_struct        gen_data_type;
 
 gen_data_type * gen_data_alloc(const gen_data_config_type * );
-bool            gen_data_fload(gen_data_type * , const char * , int report_step);
+void            gen_data_fload(gen_data_type * , const char * );
 
 
 

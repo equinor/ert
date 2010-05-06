@@ -74,6 +74,7 @@ VOID_IADD_HEADER(field);
 VOID_IADDSQR_HEADER(field);
 VOID_SCALE_HEADER(field);
 VOID_ISQRT_HEADER(field);
+VOID_FLOAD_HEADER(field);
 #ifdef __cplusplus
 }
 #endif

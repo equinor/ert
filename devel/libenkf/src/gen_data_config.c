@@ -168,8 +168,7 @@ gen_data_config_type * gen_data_config_alloc(const char * key,
      
   if (min_std_file != NULL) {
     config->min_std = gen_data_alloc( config );
-    if (!gen_data_fload( config->min_std , min_std_file , 0))
-      util_abort("%s: could not locate file:%s \n",__func__ , min_std_file );
+    gen_data_fload( config->min_std , min_std_file );
   } else 
     config->min_std = NULL;
 

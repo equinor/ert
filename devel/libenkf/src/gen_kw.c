@@ -383,4 +383,4 @@ VOID_SCALE(gen_kw)
 VOID_IMUL(gen_kw)
 VOID_IADDSQR(gen_kw)
 VOID_ISQRT(gen_kw)
-     
+VOID_FLOAD(gen_kw)     

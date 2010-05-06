@@ -38,6 +38,7 @@ typedef void   	      (ecl_write_ftype)         (const void *  ,   /* Node objec
                                                  const char *  ,   /* Filename - can be NULL. */
                                                  fortio_type *);   /* fortio inistance for writing elements in restart files. */
 
+typedef void   	      (fload_ftype)                	(      void *  , const char *);
 typedef void   	      (load_ftype)                	(      void *  , buffer_type * , int);
 typedef bool   	      (store_ftype)                	(const void *  , buffer_type * , int , bool);
 
@@ -113,6 +114,7 @@ bool             enkf_node_fwrite (enkf_node_type * , FILE * stream, bool , int 
 void             enkf_node_clear     (enkf_node_type *);
 void             enkf_node_fread  (enkf_node_type * , FILE * stream , int , int , state_enum);
 
+void             enkf_node_fload( enkf_node_type * enkf_node , const char * filename );
 void             enkf_node_load(enkf_node_type *enkf_node , buffer_type * buffer , int report_step , int iens , state_enum state);
 bool             enkf_node_store(enkf_node_type *enkf_node , buffer_type * buffer , bool internal_state , int report_step , int iens , state_enum state);
 

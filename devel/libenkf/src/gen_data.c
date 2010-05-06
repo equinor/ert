@@ -246,7 +246,7 @@ static void gen_data_set_data__(gen_data_type * gen_data , int size, int report_
    in calling scope.
 */
 
-bool gen_data_fload( gen_data_type * gen_data , const char * filename , int report_step) {
+bool gen_data_fload_with_report_step( gen_data_type * gen_data , const char * filename , int report_step) {
   bool   has_file = util_file_exists(filename);
   void * buffer   = NULL;
   int    size     = 0;
@@ -263,6 +263,10 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
 }
 
 
+void gen_data_fload( gen_data_type * gen_data , const char * filename) {
+  if (!gen_data_fload_with_report_step( gen_data , filename , 0))
+    util_abort("%s: failed to load from filename:%s \n",__func__ , filename );
+}
 
 
 /**
@@ -281,7 +285,7 @@ bool gen_data_fload( gen_data_type * gen_data , const char * filename , int repo
 
 
 bool gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const ecl_sum_type * ecl_sum, const ecl_file_type * restart_file , int report_step) {
-  gen_data_fload( gen_data , ecl_file , report_step );
+  gen_data_fload_with_report_step( gen_data , ecl_file , report_step );
   return true;
 }
 
@@ -307,7 +311,7 @@ bool gen_data_ecl_load(gen_data_type * gen_data , const char * ecl_file , const 
 bool gen_data_initialize(gen_data_type * gen_data , int iens) {
   char * init_file = gen_data_config_alloc_initfile(gen_data->config , iens);
   if (init_file != NULL) {
-    if (!gen_data_fload(gen_data , init_file , 0))
+    if (!gen_data_fload_with_report_step(gen_data , init_file , 0))
       util_abort("%s: could not find file:%s \n",__func__ , init_file);
     free(init_file);
     return true;
@@ -638,3 +642,4 @@ VOID_IMUL(gen_data)
 VOID_IADD(gen_data)
 VOID_IADDSQR(gen_data)
 VOID_ISQRT(gen_data)
+VOID_FLOAD(gen_data)

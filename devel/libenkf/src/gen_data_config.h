@@ -4,7 +4,6 @@
 extern "C" {
 #endif
 
-
 #include <enkf_macros.h>
 #include <stdbool.h>
 #include <gen_data_active.h>
@@ -18,7 +17,8 @@ typedef enum { GEN_DATA_UNDEFINED = 0,
 	       BINARY_FLOAT    	  = 4}   /*   The data is in a binary file with floats.  		       		 */          
 
 gen_data_file_format_type;
-	       
+
+
 
 /* 
    Observe that the format ASCII_template can *NOT* be used for

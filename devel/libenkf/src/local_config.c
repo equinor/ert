@@ -241,6 +241,7 @@ ADD_FIELD    MSTEP    PERMX   WATER_FLOODED
 ADD_FIELD    MSTEP    NTG     MIDDLE 
 -------------------------------------------------------------------------------------
 
+
     _________________________________________________________________________
    /                                                                         \
    | Observe that prior to loading your hand-crafted configuration file      | 
@@ -611,7 +612,7 @@ static void local_config_init_cmd_table( hash_type * cmd_table ) {
   hash_insert_int(cmd_table , CREATE_MINISTEP_STRING                 , CREATE_MINISTEP);
   hash_insert_int(cmd_table , ATTACH_MINISTEP_STRING                 , ATTACH_MINISTEP);
   hash_insert_int(cmd_table , ADD_DATA_STRING                        , ADD_DATA);
-  hash_insert_int(cmd_table , ADD_OBS_STRING                         , ADD_OBS);
+  hash_insert_int(cmd_table , ADD_OBS_STRING                         , ADD_OBS );
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_OBS_INDEX_STRING       , ACTIVE_LIST_ADD_OBS_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_DATA_INDEX_STRING      , ACTIVE_LIST_ADD_DATA_INDEX);
   hash_insert_int(cmd_table , ACTIVE_LIST_ADD_MANY_OBS_INDEX_STRING  , ACTIVE_LIST_ADD_MANY_OBS_INDEX);

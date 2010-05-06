@@ -5,6 +5,7 @@
 #include <stringlist.h>
 #include <enkf_macros.h>
 #include <enkf_config_node.h> 
+#include <enkf_node.h>
 #include <util.h>
 #include <path_fmt.h>
 #include <bool_vector.h>
@@ -17,7 +18,7 @@
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
 struct enkf_config_node_struct {
-  int                     __type_id; 
+  UTIL_TYPE_ID_DECLARATION;
   enkf_impl_type     	  impl_type;
   enkf_var_type      	  var_type; 
 
@@ -28,7 +29,7 @@ struct enkf_config_node_struct {
   path_fmt_type	     	* enkf_outfile_fmt; /* Name of file which is written by EnKF, and read by the forward model. */
   void               	* data;             /* This points to the config object of the actual implementation.        */
   enkf_node_type        * min_std;
-
+  char                  * min_std_file; 
   /*****************************************************************/
   /* Function pointers to methods working on the underlying config object. */
   get_data_size_ftype   * get_data_size;    /* Function pointer to ask the underlying config object of the size - i.e. number of elements. */
@@ -37,39 +38,25 @@ struct enkf_config_node_struct {
 
 
 
-enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_type,
-					       enkf_impl_type             impl_type,
-					       const char               * key , 
-					       const char               * enkf_outfile_fmt , 
-					       const char               * enkf_infile_fmt  , 
-					       const void               * data) {
-
-  
+static enkf_config_node_type * enkf_config_node_alloc__( enkf_var_type   var_type, 
+                                                         enkf_impl_type  impl_type, 
+                                                         const char * key) {
   enkf_config_node_type * node = util_malloc( sizeof *node , __func__);
-
-  node->internalize     = NULL;
-  node->data       	= (void *) data;
+  UTIL_TYPE_ID_INIT( node , ENKF_CONFIG_NODE_TYPE_ID );
   node->var_type   	= var_type;
   node->impl_type  	= impl_type;
-  node->key        	= util_alloc_string_copy(key);
-  node->obs_keys        = stringlist_alloc_new(); 
-  node->min_std         = NULL;
-  node->__type_id       = ENKF_CONFIG_NODE_TYPE_ID;
-  if (enkf_infile_fmt != NULL)
-    node->enkf_infile_fmt = path_fmt_alloc_path_fmt(enkf_infile_fmt);
-  else
-    node->enkf_infile_fmt = NULL;
+  node->key        	= util_alloc_string_copy( key );
 
-  if (enkf_outfile_fmt != NULL) 
-    node->enkf_outfile_fmt = path_fmt_alloc_path_fmt(enkf_outfile_fmt);
-  else
-    node->enkf_outfile_fmt = NULL;
+  node->enkf_infile_fmt  = NULL;
+  node->enkf_outfile_fmt = NULL;
+  node->internalize      = NULL;
+  node->data       	 = NULL;
+  node->obs_keys         = stringlist_alloc_new(); 
+  node->min_std          = NULL;
+  node->min_std_file     = NULL;
   
-
-  /* Some manual inheritance: */
   node->get_data_size = NULL;
   node->freef         = NULL; 
-
   {  
     switch(impl_type) {
     case(FIELD):
@@ -96,6 +83,86 @@ enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_ty
   }
   return node;
 }
+
+
+
+void enkf_config_node_update_min_std( enkf_config_node_type * config_node , const char * min_std_file ) {
+  if (!util_string_equal( config_node->min_std_file , min_std_file )) {
+    /* The current min_std_file and the new input are different,
+       and the min_std node must be cleared. */
+    if (config_node->min_std != NULL) {
+      enkf_node_free( config_node->min_std );
+      config_node->min_std = NULL;
+      free( config_node->min_std_file );
+    }
+  }
+  config_node->min_std_file = util_realloc_string_copy( config_node->min_std_file , min_std_file );
+  if (config_node->min_std_file != NULL) {
+    config_node->min_std = enkf_node_alloc( config_node );
+    enkf_node_fload( config_node->min_std , min_std_file );
+  }
+}
+
+
+static void enkf_config_node_update( enkf_config_node_type * config_node , 
+                              const char * enkf_outfile_fmt , 
+                              const char * enkf_infile_fmt ,
+                              const char * min_std_file ) {
+
+  config_node->enkf_infile_fmt  = path_fmt_realloc_path_fmt( config_node->enkf_infile_fmt  , enkf_infile_fmt ); 
+  config_node->enkf_outfile_fmt = path_fmt_realloc_path_fmt( config_node->enkf_outfile_fmt , enkf_outfile_fmt ); 
+  enkf_config_node_update_min_std( config_node , min_std_file );
+}
+
+
+
+
+enkf_config_node_type * enkf_config_node_alloc(enkf_var_type              var_type,
+					       enkf_impl_type             impl_type,
+					       const char               * key , 
+					       const char               * enkf_outfile_fmt , 
+					       const char               * enkf_infile_fmt  , 
+					       const void               * data) {
+
+  enkf_config_node_type * node = enkf_config_node_alloc__( var_type , impl_type , key );
+  enkf_config_node_update( node , enkf_outfile_fmt , enkf_infile_fmt , NULL );
+  node->data = (char *) data;
+  return node;
+}
+
+
+
+void enkf_config_node_update_gen_kw_config( enkf_config_node_type * config_node ,
+                                            const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                            const char * template_file    , 
+                                            const char * parameter_file   ,
+                                            const char * min_std_file     ,
+                                            const char * init_file_fmt ) {
+  /* 1: Update the low level gen_kw_config stuff. */
+  gen_kw_config_update( config_node->data , template_file , parameter_file , init_file_fmt );    
+
+  /* 2: Update the stuff which is owned by the upper-level enkf_config_node instance. */
+  enkf_config_node_update( config_node , enkf_outfile_fmt , NULL , min_std_file);
+}
+
+
+
+
+enkf_config_node_type * enkf_config_node_alloc_gen_kw_config( const char * key              , 
+                                                              const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                                              const char * template_file    , 
+                                                              const char * parameter_file   ,
+                                                              const char * min_std_file     ,
+                                                              const char * init_file_fmt ) {
+  /* 1: Allocate bare bones instances */
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( PARAMETER , GEN_KW , key );
+  config_node->data = gen_kw_config_alloc_empty( key );
+  
+  /* 2: Update the content of the instances. */
+  enkf_config_node_update_gen_kw_config( config_node , enkf_outfile_fmt , template_file , parameter_file , min_std_file , init_file_fmt );
+}
+
+
 
 
 /**

@@ -35,6 +35,8 @@ int                         gen_kw_config_get_index(const gen_kw_config_type *  
 char                      * gen_kw_config_alloc_user_key(const gen_kw_config_type * config , int kw_nr);
 const char                * gen_kw_get_init_file_fmt( const gen_kw_config_type * config );
 void                        gen_kw_config_set_template_file( gen_kw_config_type * config , const char * template_file );
+gen_kw_config_type        * gen_kw_config_alloc_empty(const char * key );
+void                        gen_kw_config_update( gen_kw_config_type * config , const char * template_file , const char * parameter_file , const char * init_file_fmt);
 
 
 SAFE_CAST_HEADER(gen_kw_config);

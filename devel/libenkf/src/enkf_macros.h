@@ -109,6 +109,13 @@ void prefix ## _load__(void * void_arg , buffer_type * buffer , int report_step)
 #define VOID_STORE_HEADER(prefix) bool prefix ## _store__(const void * , buffer_type * , int , bool);
 #define VOID_LOAD_HEADER(prefix) void prefix ## _load__(void * , buffer_type * , int);
 
+#define VOID_FLOAD(prefix)                                                         \
+void prefix ## _fload__(void * void_arg , const char * filename) {                 \
+   prefix ## _type * arg = prefix ## _safe_cast( void_arg );                       \
+   prefix ## _fload(arg , filename);                                               \
+}
+#define VOID_FLOAD_HEADER(prefix) void prefix ## _fload__(void * , const char * );
+
 
 /*****************************************************************/
 

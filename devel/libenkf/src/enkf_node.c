@@ -165,20 +165,19 @@
 
 
 struct enkf_node_struct {
-  alloc_ftype         *alloc;
-  ecl_write_ftype     *ecl_write;
-  ecl_load_ftype      *ecl_load;
-  free_data_ftype     *free_data;
-  user_get_ftype      *user_get;
-  set_data_ftype      *set_data;
-  set_inflation_ftype *set_inflation;
+  alloc_ftype                    * alloc;
+  ecl_write_ftype                * ecl_write;
+  ecl_load_ftype                 * ecl_load;
+  free_data_ftype                * free_data;
+  user_get_ftype                 * user_get;
+  set_data_ftype                 * set_data;
+  set_inflation_ftype            * set_inflation;
+  fload_ftype                    * fload;
 
-  matrix_serialize_ftype   * matrix_serialize;
-  matrix_deserialize_ftype * matrix_deserialize;
-  
-  load_ftype          *load;
-  store_ftype         *store;
-  
+  matrix_serialize_ftype         * matrix_serialize;
+  matrix_deserialize_ftype       * matrix_deserialize;
+  load_ftype                     * load;
+  store_ftype                    * store;    
   initialize_ftype   		 * initialize;
   node_free_ftype                * freef;
   clear_ftype        		 * clear;
@@ -327,6 +326,14 @@ double enkf_node_user_get(enkf_node_type * enkf_node , const char * key , bool *
     return 0.0;
   }
 }
+
+
+void enkf_node_fload( enkf_node_type * enkf_node , const char * filename ) {
+  FUNC_ASSERT( enkf_node->fload );
+  enkf_node->fload( enkf_node->data , filename );
+}
+
+
 
 
 
@@ -634,6 +641,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
   node->free_data      	   = NULL;
   node->user_get       	   = NULL;
   node->set_data           = NULL;
+  node->fload              = NULL; 
   node->load               = NULL;
   node->store              = NULL;
   node->matrix_serialize   = NULL; 
@@ -669,6 +677,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->imul               = gen_kw_imul__;
     node->isqrt              = gen_kw_isqrt__;
     node->set_inflation      = gen_kw_set_inflation__;
+    node->fload              = gen_kw_fload__;
     break;
   case(SUMMARY):
     node->ecl_load           = summary_ecl_load__;
@@ -711,6 +720,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->iaddsqr            = field_iaddsqr__;
     node->imul               = field_imul__; 
     node->isqrt              = field_isqrt__;
+    node->fload              = field_fload__;
     break;
   case(STATIC):
     //node->realloc_data = ecl_static_kw_realloc_data__;
@@ -744,6 +754,7 @@ static enkf_node_type * enkf_node_alloc_empty(const enkf_config_node_type *confi
     node->iaddsqr            = gen_data_iaddsqr__;
     node->imul               = gen_data_imul__;
     node->isqrt              = gen_data_isqrt__;
+    node->fload              = gen_data_fload__;
     break;
   default:
     util_abort("%s: implementation type: %d unknown - all hell is loose - aborting \n",__func__ , impl_type);
