@@ -54,19 +54,18 @@ class DoubleBox(HelpedWidget):
         self.doubleBox.setValidator(QtGui.QDoubleValidator(self))
         self.doubleBox.setMaximumWidth(75)
 
-        self.connect(self.doubleBox, QtCore.SIGNAL('editingFinished()'), self.validateString)
+        #self.connect(self.doubleBox, QtCore.SIGNAL('editingFinished()'), self.validateString)
         self.connect(self.doubleBox, QtCore.SIGNAL('editingFinished()'), self.contentsChanged)
-        self.connect(self.doubleBox, QtCore.SIGNAL('textChanged(QString)'), self.validateString)
+        #self.connect(self.doubleBox, QtCore.SIGNAL('textChanged(QString)'), self.validateString)
         self.addWidget(self.doubleBox)
 
         self.addStretch()
         self.addHelpButton()
 
 
-    def validateString(self):
-        """Override this to provide validation of the contained string. NOT SUPPORTED YET!"""
-        stringToValidate = self.doubleBox.text()
-        #todo implement validation possibility
+    #def validateString(self):
+    #    """Override this to provide validation of the contained string. NOT SUPPORTED YET!"""
+    #    stringToValidate = self.doubleBox.text()
 
 
     def contentsChanged(self):

@@ -6,6 +6,7 @@ import ertwrapper
 
 
 class SimulationList(QtGui.QListWidget):
+    """A list widget with custom items representing simulation jobs"""
     def __init__(self):
         QtGui.QListWidget.__init__(self)
 
@@ -22,6 +23,7 @@ class SimulationList(QtGui.QListWidget):
 
         
 class SimulationItem(QtGui.QListWidgetItem):
+    """Items for the custom SimulationList"""
     def __init__(self, simulation):
         self.simulation = simulation
         QtGui.QListWidgetItem.__init__(self, type=9901)
@@ -35,6 +37,7 @@ class SimulationItem(QtGui.QListWidgetItem):
 
 
 class SimulationItemDelegate(QtGui.QStyledItemDelegate):
+    """The delegate that renders the custom SimulationListItems"""
     waiting = QtGui.QColor(164, 164, 255)
     running = QtGui.QColor(200, 255, 200)
     failed = QtGui.QColor(255, 200, 200)
@@ -49,12 +52,11 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
         QtGui.QStyledItemDelegate.__init__(self)
 
     def paint(self, painter, option, index):
+        """Renders the item"""
         painter.save()
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        #data = index.model().data(index)
         data = index.data(QtCore.Qt.DisplayRole)
-        #data = None
 
         if data is None:
             data = Simulation("0")
@@ -98,10 +100,15 @@ class SimulationItemDelegate(QtGui.QStyledItemDelegate):
         painter.restore()
 
     def sizeHint(self, option, index):
+        """Returns the size of the item"""
         return self.size
 
 
 class SimulationPanel(QtGui.QStackedWidget):
+    """
+    A panel that shows information and enables interaction with jobs.
+    Three different views: no selected jobs, one selected job and multiple selected jobs.
+    """
 
     def __init__(self, parent=None):
         QtGui.QStackedWidget.__init__(self, parent)
@@ -123,6 +130,7 @@ class SimulationPanel(QtGui.QStackedWidget):
 
         
     def createButtons(self):
+        """Create kill, restart and resample and restart buttons"""
         self.killButton = QtGui.QToolButton(self)
         self.killButton.setIcon(resourceIcon("cross"))
         self.killButton.setToolTip("Kill job")
@@ -145,11 +153,12 @@ class SimulationPanel(QtGui.QStackedWidget):
 
         return buttonLayout
 
-    def createButtonedLayout(self, layout, stretch=True):
+    def createButtonedLayout(self, layout, prestretch=True):
+        """A centered layout for buttons"""
         btnlayout = QtGui.QVBoxLayout()
         btnlayout.addLayout(layout)
 
-        if stretch:
+        if prestretch:
             btnlayout.addStretch(1)
 
         btnlayout.addLayout(self.createButtons())
@@ -157,6 +166,7 @@ class SimulationPanel(QtGui.QStackedWidget):
 
 
     def createManySelectionsPanel(self):
+        """The panel for multiple selected jobs"""
         self.manySimulationsPanel = QtGui.QWidget()
 
         layout = QtGui.QVBoxLayout()
@@ -178,6 +188,7 @@ class SimulationPanel(QtGui.QStackedWidget):
         self.manySimulationsPanel.setLayout(self.createButtonedLayout(layout, False))
 
     def createSingleSelectionsPanel(self):
+        """The panel for a single selected job"""
         self.singleSimulationsPanel = QtGui.QWidget()
 
         layout = QtGui.QFormLayout()
@@ -202,6 +213,7 @@ class SimulationPanel(QtGui.QStackedWidget):
 
 
     def createNoSelectionsPanel(self):
+        """The panel for no selected jobs. Enables pausing and killing the entire simulation"""
         self.noSimulationsPanel = QtGui.QWidget()
 
         layout = QtGui.QVBoxLayout()
@@ -241,6 +253,7 @@ class SimulationPanel(QtGui.QStackedWidget):
 
 
     def setSimulations(self, selection=None):
+        """Set the list of selected jobs"""
         if selection is None: selection = []
         self.ctrl.setSimulations(selection)
 
@@ -262,13 +275,16 @@ class SimulationPanel(QtGui.QStackedWidget):
 #            return b
 
     def setModel(self, ert):
+        """Set the reference to ERT (ertwrapper instance)"""
         self.ctrl.setModel(ert)
 
     def setSimulationStatistics(self, statistics):
+        """Set the associated simulation statistics"""
         self.ctrl.setSimulationStatistics(statistics)
 
 
 class SimulationPanelController:
+    """Controller code for the simulation panel"""
     def __init__(self, view):
         self.view = view
         self.initialized = False
@@ -276,6 +292,7 @@ class SimulationPanelController:
         self.view.connect(self.view, QtCore.SIGNAL('simulationsUpdated()'), self.showSelectedSimulations)
 
     def initialize(self, ert):
+        """Set prototypes for ERT"""
         if not self.initialized:
             ert.setTypes("job_queue_get_pause", library = ert.job_queue)
             ert.setTypes("job_queue_set_pause_on", library = ert.job_queue)
@@ -289,6 +306,7 @@ class SimulationPanelController:
             self.initialized = True
 
     def setModel(self, ert):
+        """Set the reference to ERT (ertwrapper instance)"""
         self.initialize(ert)
         self.ert = ert
 
@@ -322,6 +340,7 @@ class SimulationPanelController:
             self.ert.job_queue.job_queue_set_pause_off(job_queue)
 
     def killAll(self):
+        """Kills all simulations"""
         killAll = QtGui.QMessageBox.question(self.view, "Remove all jobs?", "Are you sure you want to remove all jobs from the queue?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
 
         if killAll == QtGui.QMessageBox.Yes:
@@ -329,6 +348,7 @@ class SimulationPanelController:
             self.ert.job_queue.job_queue_user_exit(job_queue)
 
     def showSelectedSimulations(self):
+        """Update information relating to a single job"""
         if len(self.selectedSimulations) >= 2:
             members = reduce(lambda a, b: str(a) + " " + str(b), sorted(self.selectedSimulations))
             self.view.selectedSimulationsLabel.setText(members)
@@ -363,6 +383,7 @@ class SimulationPanelController:
 
 
     def setSimulations(self, selection=None):
+        """Change the view according to the selection. No, single or multiple jobs."""
         if selection is None: selection = []
         self.selectedSimulations = selection
 
@@ -376,10 +397,12 @@ class SimulationPanelController:
         self.showSelectedSimulations()
 
     def setSimulationStatistics(self, statistics):
+        """Set the associated statistics"""
         self.statistics = statistics
 
 
 class Simulation:
+    """An object that represents a single job"""
     # These "enum" values are all copies from the header file "basic_queue_driver.h".
 
     NOT_ACTIVE  =    1
@@ -440,28 +463,36 @@ class Simulation:
         self.resetTime()
 
     def checkStatus(self, type):
+        """Check the internal status against an ERT enum"""
         return self.status == type
 
     def isWaiting(self):
+        """Is the job waiting?"""
         return self.checkStatus(Simulation.WAITING) or self.checkStatus(Simulation.PENDING)
 
     def isRunning(self):
+        """Is the job running?"""
         return self.checkStatus(Simulation.RUNNING)
 
     def hasFailed(self):
+        """Has the job failed?"""
         return self.checkStatus(Simulation.ALL_FAIL)
 
     def notActive(self):
+        """Is the job active?"""
         return self.checkStatus(Simulation.NOT_ACTIVE)
 
     def finishedSuccessfully(self):
+        """Has  the job finished?"""
         return self.checkStatus(Simulation.ALL_OK)
 
     def isUserKilled(self):
+        """Has the job been killed by the user?"""
         return self.checkStatus(Simulation.USER_KILLED) or self.checkStatus(Simulation.USER_EXIT)
 
 
     def setStatus(self, status):
+        """Update the status of this job"""
         if len(self.statuslog) == 0 or not self.statuslog[len(self.statuslog) - 1] == status:
             self.statuslog.append(status)
 
@@ -471,24 +502,28 @@ class Simulation:
         self.status = status
 
     def setStartTime(self, secs):
+        """Set the time the job started"""
         self.startTime = secs
 
     def setSubmitTime(self, secs):
+        """Set the time the job was submitted to LSF"""
         self.submitTime = secs
         if self.submitTime > self.finishedTime:
             self.finishedTime = -1
 
     def setFinishedTime(self, secs):
+        """Set the time the job finished"""
         self.finishedTime = secs
         
         if not self.statistics is None:
             self.statistics.addTime(self.submitTime, self.startTime, self.finishedTime)
 
-    def printTime(self, secs):
+    def printTime(self, secs):        
         if not secs == -1:
             print time.localtime(secs)
 
     def resetTime(self):
+       """Reset job timing"""
        self.startTime = -1
        self.submitTime = -1
        self.finishedTime = -1

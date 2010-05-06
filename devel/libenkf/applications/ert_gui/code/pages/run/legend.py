@@ -1,6 +1,7 @@
 from PyQt4 import QtGui, QtCore
 
 class LegendMarker(QtGui.QWidget):
+    """A widget that shows a colored box"""
     def __init__(self, color, parent = None):
         QtGui.QWidget.__init__(self, parent)
 
@@ -10,6 +11,7 @@ class LegendMarker(QtGui.QWidget):
         self.color = color
 
     def paintEvent(self, paintevent):
+        """Paints the box"""
         painter = QtGui.QPainter(self)
 
         rect = self.contentsRect()
@@ -22,6 +24,7 @@ class LegendMarker(QtGui.QWidget):
         painter.fillRect(rect, self.color)
 
 class Legend(QtGui.QHBoxLayout):
+    """Combines a LegenMarker with a label"""
     def __init__(self, legend, color, parent=None):
         QtGui.QHBoxLayout.__init__(self, parent)
 

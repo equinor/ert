@@ -13,7 +13,7 @@ import widgets.util
 #    print k
 #
 #QtGui.QApplication.setStyle("Plastique")
-from pages.plotpanel import ImagePlotPanel, PlotPanel
+from pages.plotpanel import PlotPanel
 from pages.config.parameters.parameterpanel import ParameterPanel
 
 #todo: proper support for unicode characters?

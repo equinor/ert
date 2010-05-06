@@ -9,7 +9,6 @@ from widgets.configpanel import ConfigPanel
 def createEclipsePage(configPanel, parent):
     configPanel.startPage("Eclipse")
 
-    #todo should be special % name type
     r = configPanel.addRow(PathChooser(parent, "Eclipse Base", "eclbase", path_format=True))
     r.initialize = lambda ert : [ert.setTypes("ecl_config_get_eclbase", ertwrapper.c_char_p),
                                  ert.setTypes("ecl_config_set_eclbase", None, ertwrapper.c_char_p)]

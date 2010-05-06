@@ -1,5 +1,5 @@
 from PyQt4 import QtGui, QtCore
-import help #todo this is not a nice way of solving this...
+import help
 import sys
 from widgets.util import resourceIcon, resourceImage
 import inspect

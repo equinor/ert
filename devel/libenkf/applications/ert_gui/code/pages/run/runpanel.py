@@ -13,12 +13,21 @@ from pages.run.legend import Legend
 from pages.run.simulationsdialog import SimulationsDialog
 
 class RunWidget(HelpedWidget):
+    """A widget that shows simulation parameters and the possibility to start the simulation"""
     run_mode_type = {"ENKF_ASSIMILATION" : 1, "ENSEMBLE_EXPERIMENT" : 2, "ENSEMBLE_PREDICTION" : 3, "INIT_ONLY" : 4}
     state_enum = {"UNDEFINED" : 0, "SERIALIZED" : 1, "FORECAST" : 2, "ANALYZED" : 4, "BOTH" : 6}
 
     def __init__(self, parent=None):
         HelpedWidget.__init__(self, parent, widgetLabel="", helpLabel="widget_run")
 
+        self.addLayout(self.createPanel(parent))
+
+        self.modelConnect("ensembleResized()", self.fetchContent)
+        self.modelConnect("runpathChanged()", self.fetchContent)
+        self.rbAssimilation.toggle()
+
+    def createPanel(self, parent):
+        """Creates the panel with the simulation parameters."""
         self.membersList = QtGui.QListWidget(self)
         self.membersList.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
 
@@ -72,18 +81,13 @@ class RunWidget(HelpedWidget):
         memberLayout.addRow(createSpace(10))
         memberLayout.addRow(actionLayout)
 
-        self.addLayout(memberLayout)
-
-
         self.setRunpath("...")
 
-        self.modelConnect("ensembleResized()", self.fetchContent)
-        self.modelConnect("runpathChanged()", self.fetchContent)
-
-        self.rbAssimilation.toggle()
+        return memberLayout
 
 
     def run(self):
+        """Do pre run checks and start the simulation. A new dialog will be shown with simulation information."""
         ert = self.getModel()
         selectedMembers = getItemsFromList(self.membersList)
 
@@ -134,9 +138,11 @@ class RunWidget(HelpedWidget):
         
 
     def setRunpath(self, runpath):
+        """Update the label widget with a new runpath"""
         self.runpathLabel.setText(runpath)
 
     def fetchContent(self):
+        """Fetch updated data from ERT"""
         data = self.getFromModel()
 
         self.historyLength = data["history_length"]
@@ -159,13 +165,19 @@ class RunWidget(HelpedWidget):
 
 
     def initialize(self, ert):
-        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
-        ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
-        ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p)        
-        ert.setTypes("enkf_main_is_initialized", ertwrapper.c_int)
+        """Prototype functions"""
+        ert.prototype("int enkf_main_get_ensemble_size(long)")
+        ert.prototype("int enkf_main_get_history_length(long)")
+        ert.prototype("char model_config_get_runpath_as_char(long)")
+        ert.prototype("bool enkf_main_is_initialized(long)")
+#        ert.setTypes("enkf_main_get_ensemble_size", ertwrapper.c_int)
+#        ert.setTypes("enkf_main_get_history_length", ertwrapper.c_int)
+#        ert.setTypes("model_config_get_runpath_as_char", ertwrapper.c_char_p)
+#        ert.setTypes("enkf_main_is_initialized", ertwrapper.c_int)
 
 
     def getter(self, ert):
+        """Fetch data from EnKF. Such as number of realizations, runpath and number of timesteps."""
         members = ert.enkf.enkf_main_get_ensemble_size(ert.main)
         historyLength = ert.enkf.enkf_main_get_history_length(ert.main)
         runpath = ert.enkf.model_config_get_runpath_as_char(ert.model_config)
@@ -174,6 +186,7 @@ class RunWidget(HelpedWidget):
 
 
     def rbToggle(self):
+        """Activated when a toggle is selected. Enables/disables member selection."""
         if self.rbAssimilation.isChecked():
             self.membersList.setSelectionEnabled(False)
             self.membersList.selectAll()
@@ -181,6 +194,7 @@ class RunWidget(HelpedWidget):
             self.membersList.setSelectionEnabled(True)
 
     def createRadioButtons(self):
+        """Create a toggle between assimilation and experiment."""
         radioLayout = QtGui.QVBoxLayout()
         radioLayout.setSpacing(2)
         self.rbAssimilation = QtGui.QRadioButton("EnKF assimilation")
@@ -195,6 +209,7 @@ class RunWidget(HelpedWidget):
 
 
 class RunPanel(QtGui.QFrame):
+    """A panel that represents data relateed to starting simulation."""
     def __init__(self, parent):
         QtGui.QFrame.__init__(self, parent)
         self.setFrameShape(QtGui.QFrame.Panel)
