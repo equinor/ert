@@ -33,7 +33,6 @@ struct gen_kw_config_struct {
   active_list_type     * active_list;
   char                 * template_file;
   char                 * parameter_file;
-  gen_kw_type          * min_std;
   path_fmt_type        * init_file_fmt;    /* The format for loading init_files - if this is NULL the initialization is done by sampling N(0,1) numbers. */
 };
 
@@ -149,7 +148,6 @@ gen_kw_config_type * gen_kw_config_alloc_empty(const char * key ) {
   UTIL_TYPE_ID_INIT(gen_kw_config , GEN_KW_CONFIG_TYPE_ID);
 
   gen_kw_config->active_list        = active_list_alloc( ALL_ACTIVE );
-  gen_kw_config->min_std            = NULL;
   gen_kw_config->key                = NULL; 
   gen_kw_config->init_file_fmt      = NULL;
   gen_kw_config->template_file      = NULL;
@@ -176,88 +174,6 @@ double gen_kw_config_transform(const gen_kw_config_type * config , int index, do
   return trans_func_eval( parameter->trans_func , x);
 }
 
-
-
-/**
-This function will allocate a gen_kw_config keyword. The first
-argument is the name of a file containing the keywords, and the second
-argument is the name of the template file used.
-
-The format of the file containing keywords is as follows:
-  ________________________
- /
- | KEY1  UNIFORM 0     1
- | KEY2  NORMAL  10   10
- | KEY2  CONST   0.25
- \________________________
-
-The first part is just the keyword, the second part is the properties
-of the prior distribution of that keyword. That is implemented as an
-object of type scalar/scalar_config - and documented there.
-
-For the template file there are essentially no restrictions:
-
- o All occurences of <KEY1> are replaced with the corresponding value.
-
- o The file template file must exist when the function
-   gen_kw_config_fscanf_alloc() is called.
-
-OPTIONS:
-
-MIN_STD:
-INIT_FILES:
-
-Observe that internally the gen_kw implementation allows for filename
-== NULL, that is a gen_kw instance without keywords. This capability
-is not exported to the end user in the GEN_KW interface, but used in
-the SCHEDULE_PREDICTION file keyword.
-*/
-
-gen_kw_config_type * gen_kw_config_alloc(const char * key , const char * filename , const char * template_file, const char * min_std_file , const char * init_file_fmt) {
-  gen_kw_config_type * config = NULL;
-  
-  if (filename == NULL || util_file_exists(filename)) {
-    config = gen_kw_config_alloc_empty( key );
-    gen_kw_config_set_init_file_fmt( config , init_file_fmt );
-    gen_kw_config_set_template_file( config , template_file );
-    gen_kw_config_set_parameter_file( config , filename );
-  } else 
-    util_abort("%s: config_file:%s does not exist - aborting.\n" , __func__ , filename);
-  
-  if (min_std_file != NULL) {
-    config->min_std = gen_kw_alloc( config );
-    gen_kw_fload( config->min_std , min_std_file );
-  }
-  
-  return config;
-}
-
-
-
-
-gen_kw_config_type * gen_kw_config_alloc_with_options(const char * key , const char * __parameter_file , const char * template_file, const stringlist_type * options) {
-  hash_type          * opt_hash      = hash_alloc_from_options( options );
-  const char * min_std_file          = hash_safe_get( opt_hash , "MIN_STD" ); 
-  const char * init_files            = hash_safe_get( opt_hash , "INIT_FILES");
-  const char * parameter_file        = __parameter_file;
-
-  gen_kw_config_type * gen_kw_config;
-  
-  /* Funny code path for the situation where the GEN_KW instance is masked in as SCHEDULE_PREDICTION_FILE */
-  if (parameter_file == NULL)
-    parameter_file = hash_safe_get( opt_hash , "PARAMETERS" );
-  
-  gen_kw_config = gen_kw_config_alloc( key , parameter_file , template_file , min_std_file , init_files);
-  hash_free( opt_hash );
-  return gen_kw_config;
-}
-
-
-
-
-gen_kw_type * gen_kw_config_get_min_std( const gen_kw_config_type * gen_kw_config ) {
-  return gen_kw_config->min_std;
-}
 
 
 void gen_kw_config_free(gen_kw_config_type * gen_kw_config) {

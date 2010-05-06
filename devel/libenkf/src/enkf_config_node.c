@@ -160,6 +160,7 @@ enkf_config_node_type * enkf_config_node_alloc_gen_kw_config( const char * key  
   
   /* 2: Update the content of the instances. */
   enkf_config_node_update_gen_kw_config( config_node , enkf_outfile_fmt , template_file , parameter_file , min_std_file , init_file_fmt );
+  return config_node;
 }
 
 

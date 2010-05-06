@@ -16,13 +16,10 @@ extern "C" {
 
 void                        gen_kw_config_set_parameter_file( gen_kw_config_type * config , const char * parameter_file );
 const char                * gen_kw_config_get_parameter_file( const gen_kw_config_type * config );
-gen_kw_config_type        * gen_kw_config_alloc_with_options(const char * key , const char * filename , const char * template_file, const stringlist_type * options);
 char                      * gen_kw_config_alloc_initfile( const gen_kw_config_type * gen_kw_config , int iens );
 void                        gen_kw_config_set_init_file_fmt( gen_kw_config_type * config , const char * init_file_fmt );
 const char                * gen_kw_config_get_key(const gen_kw_config_type * config );
-gen_kw_type               * gen_kw_config_get_min_std( const gen_kw_config_type * gen_kw_config );
 const char         	  * gen_kw_config_get_template_file(const gen_kw_config_type * );
-gen_kw_config_type 	  * gen_kw_config_fscanf_alloc(const char * key , const char * , const char *, const char * min_std_file , const char * init_file_fmt);
 void               	    gen_kw_config_free(gen_kw_config_type *);
 double               	    gen_kw_config_transform(const gen_kw_config_type * , int index, double x);
 void               	    gen_kw_config_truncate(const gen_kw_config_type * , scalar_type * );

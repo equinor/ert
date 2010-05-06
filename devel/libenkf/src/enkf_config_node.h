@@ -16,6 +16,22 @@ typedef struct enkf_node_struct        enkf_node_type;
 
 
 
+enkf_config_node_type * enkf_config_node_alloc_gen_kw_config( const char * key              , 
+                                                              const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                                              const char * template_file    , 
+                                                              const char * parameter_file   ,
+                                                              const char * min_std_file     ,
+                                                              const char * init_file_fmt );
+
+
+void enkf_config_node_update_gen_kw_config( enkf_config_node_type * config_node ,
+                                            const char * enkf_outfile_fmt ,   /* The include file created by ERT for the forward model. */
+                                            const char * template_file    , 
+                                            const char * parameter_file   ,
+                                            const char * min_std_file     ,
+                                            const char * init_file_fmt );
+
+
 enkf_config_node_type * enkf_config_node_alloc(enkf_var_type         ,
 					       enkf_impl_type        ,
 					       const char          * ,

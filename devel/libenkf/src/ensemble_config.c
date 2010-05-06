@@ -130,6 +130,15 @@ void ensemble_config_del_node(ensemble_config_type * ensemble_config, const char
 }
 
 
+void ensemble_config_add_node__( ensemble_config_type * ensemble_config , enkf_config_node_type * node) {
+  
+  const char * key = enkf_config_node_get_key( node );
+  if (ensemble_config_has_key(ensemble_config , key)) 
+    util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
+  hash_insert_hash_owned_ref(ensemble_config->config_nodes , key , node , enkf_config_node_free__);
+}
+
+
 enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensemble_config , 
                                                   const char    * key      	   , 
                                                   enkf_var_type  enkf_type  	   , 
@@ -138,7 +147,7 @@ enkf_config_node_type *  ensemble_config_add_node(ensemble_config_type * ensembl
                                                   const char   * enkf_infile       , /* Written by forward model and read by EnKF */ 
                                                   const void   * data ) {
 
-  if (ensemble_config_has_key(ensemble_config , key)) 
+    if (ensemble_config_has_key(ensemble_config , key)) 
     util_abort("%s: a configuration object:%s has already been added - aborting \n",__func__ , key);
   
   {
@@ -254,19 +263,24 @@ void ensemble_config_add_gen_kw(ensemble_config_type * config ,
                                 const char * parameter_file   , 
                                 const stringlist_type * options) {
   
+  const char * min_std_file  = NULL;
+  const char * init_file_fmt = NULL;
+  enkf_config_node_type * config_node = enkf_config_node_alloc_gen_kw_config( key , enkf_outfile , template_file , parameter_file , min_std_file , init_file_fmt);
+  ensemble_config_add_node__( config , config_node );
   
-  gen_kw_config_type    * node        = gen_kw_config_alloc_with_options( key , parameter_file , template_file , options);
-  enkf_config_node_type * config_node = ensemble_config_add_node(config , key , PARAMETER , GEN_KW , enkf_outfile , NULL , node);
   
-  /* Installing the min_std instance. */
-  {
-    gen_kw_type * gen_kw_min_std = gen_kw_config_get_min_std( node );
-
-    if (gen_kw_min_std != NULL) {
-      enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_kw_min_std);
-      enkf_config_node_set_min_std( config_node , min_std_node );
-    }
-  }
+  //gen_kw_config_type    * node        = gen_kw_config_alloc_with_options( key , parameter_file , template_file , options);
+  //enkf_config_node_type * config_node = ensemble_config_add_node(config , key , PARAMETER , GEN_KW , enkf_outfile , NULL , node);
+  //
+  ///* Installing the min_std instance. */
+  //{
+  //  gen_kw_type * gen_kw_min_std = gen_kw_config_get_min_std( node );
+  //
+  //  if (gen_kw_min_std != NULL) {
+  //    enkf_node_type * min_std_node = enkf_node_alloc_with_data( config_node , gen_kw_min_std);
+  //    enkf_config_node_set_min_std( config_node , min_std_node );
+  //  }
+  //}
 }
 
      
@@ -480,7 +494,12 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
     stringlist_idel( tokens , 0);
     stringlist_idel( tokens , 0);
 
-    ensemble_config_add_gen_kw( ensemble_config , key , enkf_outfile , template_file , parameter_file , tokens);
+    {
+      hash_type * opt_hash                = hash_alloc_from_options( tokens );
+      enkf_config_node_type * config_node = enkf_config_node_alloc_gen_kw_config( key , enkf_outfile , template_file , parameter_file , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
+      ensemble_config_add_node__( ensemble_config , config_node );
+      hash_free( opt_hash );
+    }
   
     free(key);
     free(template_file);
@@ -517,7 +536,12 @@ ensemble_config_type * ensemble_config_alloc(const config_type * config , const 
       util_safe_free( ext );
     }
     stringlist_idel( tokens , 0);
-    ensemble_config_add_gen_kw( ensemble_config , key , target_file , template_file , NULL , tokens);
+    {
+      hash_type * opt_hash                = hash_alloc_from_options( tokens );
+      enkf_config_node_type * config_node = enkf_config_node_alloc_gen_kw_config( key , target_file , template_file , hash_safe_get( opt_hash , "PARAMETERS") , hash_safe_get( opt_hash , "MIN_STD") , hash_safe_get( opt_hash , "INIT_FILES"));
+      ensemble_config_add_node__( ensemble_config , config_node );
+      hash_free( opt_hash );
+    }
     free(target_file);
     free(template_file);
   }
