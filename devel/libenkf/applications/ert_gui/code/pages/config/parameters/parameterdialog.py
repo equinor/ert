@@ -13,12 +13,12 @@ class ParameterDialog(ValidatedDialog):
         keys = types.keys()
         keys.sort()
         for key in keys:
-            self.paramCombo.addItem(types[key], key)
+            self.paramCombo.addItem(types[key], key.name)
 
         self.layout.insertRow(2, "Type:", self.paramCombo)
 
 
     def getTypeName(self):
         """Return the type selected by the user"""
-        return str(self.paramCombo.currentText().strip())
+        return str(self.paramCombo.currentText()).strip()
 

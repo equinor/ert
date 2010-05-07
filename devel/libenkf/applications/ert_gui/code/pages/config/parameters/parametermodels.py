@@ -1,13 +1,4 @@
-
-class enkf_impl_type:
-    #INVALID = 0
-    #IMPL_TYPE_OFFSET = 100
-    #STATIC = 100
-    FIELD = 104
-    GEN_KW = 107
-    SUMMARY = 110
-    GEN_DATA = 113
-    #MAX_IMPL_TYPE = 113
+from enums import enkf_impl_type
 
 class Model:
 
@@ -27,7 +18,6 @@ class Model:
 
 class FieldModel(Model):
     TYPE = enkf_impl_type.FIELD
-    TYPE_NAME = "Field"
 
     def __init__(self, name):
         Model.__init__(self, name)
@@ -44,7 +34,6 @@ class FieldModel(Model):
 
 class KeywordModel(Model):
     TYPE = enkf_impl_type.GEN_KW
-    TYPE_NAME = "Keyword"
 
     def __init__(self, name):
         Model.__init__(self, name)
@@ -56,7 +45,6 @@ class KeywordModel(Model):
 
 class DataModel(Model):
     TYPE = enkf_impl_type.GEN_DATA
-    TYPE_NAME = "Data"
 
     #gen_data_file_format_type;
     #GEN_DATA_UNDEFINED = 0,
@@ -78,7 +66,6 @@ class DataModel(Model):
 
 class SummaryModel(Model):
     TYPE = enkf_impl_type.SUMMARY
-    TYPE_NAME = "Summary"
 
     def __init__(self, name):
         Model.__init__(self, name)

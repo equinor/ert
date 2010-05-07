@@ -44,15 +44,15 @@ def createEnsemblePage(configPanel, parent):
             #print key, type
 
             model = None
-            if type == FieldModel.TYPE:
+            if FieldModel.TYPE == type:
                 model = FieldModel(key)
-            elif type == DataModel.TYPE:
+            elif DataModel.TYPE == type:
                 model = DataModel(key)
-            elif type == KeywordModel.TYPE:
+            elif KeywordModel.TYPE == type:
                 model = KeywordModel(key)
 
                 model["template"] = ert.enkf.gen_kw_config_get_template_file(data)
-            elif type == SummaryModel.TYPE:
+            elif SummaryModel.TYPE == type:
                 model = SummaryModel(key)
             else:
                 pass #Unknown type

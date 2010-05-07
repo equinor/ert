@@ -6,6 +6,7 @@ import pages.config.parameters.parameterpanel
 import widgets.helpedwidget
 from widgets.helpedwidget import ContentModel
 from pages.config.parameters.parametermodels import DataModel, FieldModel, KeywordModel, SummaryModel
+from pages.plot.plotdata import PlotContextDataFetcher, PlotDataFetcher, enums
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -20,8 +21,9 @@ class PlotPanel(QtGui.QWidget):
         self.plotList.setMaximumWidth(150)
         self.plotList.setMinimumWidth(150)
 
-        self.plotDataPanel = ParameterPlotPanel(self, 150)
+        self.plotDataPanel = PlotParameterPanel(self, 150)
         self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+        self.connect(self.plotDataPanel.stateCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.stateChanged)
         parameterLayout.addWidget(self.plotList)
         parameterLayout.addWidget(self.plotDataPanel)
 
@@ -33,37 +35,51 @@ class PlotPanel(QtGui.QWidget):
         plotLayout.addWidget(self.plot)
         self.setLayout(plotLayout)
 
+        self.plotDataFetcher = PlotDataFetcher()
+        self.plotContextDataFetcher = PlotContextDataFetcher()
 
-    def select(self, current, previous):
-        self.plot.plotDataFetcher.setParameter(current)
-        self.plot.plotDataFetcher.fetchContent()
 
-        self.plotDataPanel.activatePanel(current.getTypeName())
-
-        if current.getTypeName() == KeywordModel.TYPE_NAME:
-            self.disconnect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
-            self.plotDataPanel.keyIndexCombo.clear()
-            self.plotDataPanel.keyIndexCombo.addItems(self.plot.plotContextDataFetcher.data.getKeyIndexList(current.getName()))
-            self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
-
+    def drawPlot(self):
+        self.plot.setData(self.plotDataFetcher.data)
         self.plot.drawPlot()
 
+    def select(self, current, previous):
+        self.plotDataFetcher.setParameter(current)
+        self.plotDataFetcher.setState(self.plotDataPanel.getState())
+        self.plotDataFetcher.fetchContent()
+
+        self.plotDataPanel.activatePanel(current.getType().name)
+
+        if current.getType() == KeywordModel.TYPE:
+            self.disconnect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+            self.plotDataPanel.keyIndexCombo.clear()
+            self.plotDataPanel.keyIndexCombo.addItems(self.plotContextDataFetcher.data.getKeyIndexList(current.getName()))
+            self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+
+        self.drawPlot()
+
     def updateList(self):
-        self.plot.plotContextDataFetcher.fetchContent()
+        self.plotContextDataFetcher.fetchContent()
         self.plotList.clear()
-        for parameter in self.plot.plotContextDataFetcher.data.parameters:
+        for parameter in self.plotContextDataFetcher.data.parameters:
             self.plotList.addItem(parameter)
 
         self.plotList.sortItems()
 
+    def stateChanged(self):
+        self.plotDataFetcher.setState(self.plotDataPanel.getState())
+        self.plotDataFetcher.fetchContent()
+        self.drawPlot()
+
     def keyIndexChanged(self, key):
-        parameter = self.plot.plotDataFetcher.getParameter()
+        parameter = self.plotDataFetcher.getParameter()
         parameter.setData(str(key))
-        self.plot.plotDataFetcher.fetchContent()
-        self.plot.drawPlot()
+        self.plotDataFetcher.setState(self.plotDataPanel.getState())
+        self.plotDataFetcher.fetchContent()
+        self.drawPlot()
 
 
-class ParameterPlotPanel(QtGui.QStackedWidget):
+class PlotParameterPanel(QtGui.QFrame):
 
     def __init__(self, parent=None, width=100):
         QtGui.QStackedWidget.__init__(self, parent)
@@ -73,34 +89,61 @@ class ParameterPlotPanel(QtGui.QStackedWidget):
 
         self.setMinimumWidth(width)
         self.setMaximumWidth(width)
-        self.setMaximumHeight(100)
+        self.setMaximumHeight(200)
 
-        self.summaryPanel = widgets.util.createEmptyPanel()
-        self.keywordPanel = self.createPanel()
+        self.stack = QtGui.QStackedWidget()
 
-        self.addWidget(self.summaryPanel)
-        self.addWidget(self.keywordPanel)
+        self.summaryPanel = self.createSummaryPanel()
+        self.keywordPanel = self.createKeywordPanel()
+
+        self.stack.addWidget(self.summaryPanel)
+        self.stack.addWidget(self.keywordPanel)
+
+        comboLayout, self.stateCombo = self.createStateCombo()
+
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.stack)
+        layout.addStretch()
+        layout.addLayout(comboLayout)
+        self.setLayout(layout)
 
     def activatePanel(self, parameter_type_name):
-        if parameter_type_name == SummaryModel.TYPE_NAME:
-            self.setCurrentWidget(self.summaryPanel)
-        elif parameter_type_name == KeywordModel.TYPE_NAME:
-            self.setCurrentWidget(self.keywordPanel)
+        if parameter_type_name == SummaryModel.TYPE.name:
+            self.stack.setCurrentWidget(self.summaryPanel)
+        elif parameter_type_name == KeywordModel.TYPE.name:
+            self.stack.setCurrentWidget(self.keywordPanel)
         else:
             print "Unknown parametertype"
 
-    def createPanel(self):
-        panel = QtGui.QFrame()
-        panel.setFrameShape(QtGui.QFrame.StyledPanel)
-        panel.setFrameShadow(QtGui.QFrame.Plain)
-        panel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-
+    def createStateCombo(self):
         layout = QtGui.QFormLayout()
         layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
-        self.keyIndexCombo = QtGui.QComboBox()
 
-        layout.addRow("Key index:", self.keyIndexCombo)
-        panel.setLayout(layout)
+        stateCombo = QtGui.QComboBox()
+
+        for state in enums.ert_state_enum.values():
+            stateCombo.addItem(state.name)
+            
+        stateCombo.setCurrentIndex(0)
+
+        layout.addRow("State:", stateCombo)
+        return layout, stateCombo
+
+    def createSummaryPanel(self):
+        panel = QtGui.QFrame()
+        panel.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         return panel
 
+    def createKeywordPanel(self):
+        widget = QtGui.QWidget()
+        layout = QtGui.QFormLayout()
+        layout.setMargin(0)
+        layout.setRowWrapPolicy(QtGui.QFormLayout.WrapLongRows)
+        self.keyIndexCombo = QtGui.QComboBox()
+        layout.addRow("Key index:", self.keyIndexCombo)
+        widget.setLayout(layout)
+        return widget
 
+    def getState(self):
+        selectedName = str(self.stateCombo.currentText())
+        return enums.ert_state_enum.resolveName(selectedName)
