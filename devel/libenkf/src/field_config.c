@@ -826,15 +826,15 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
 }
 
 
-void field_config_get_nx(const field_config_type * config ) {
+int field_config_get_nx(const field_config_type * config ) {
   return config->nx;
 }
 
-void field_config_get_ny(const field_config_type * config ) {
+int field_config_get_ny(const field_config_type * config ) {
   return config->ny;
 }
 
-void field_config_get_nz(const field_config_type * config ) {
+int field_config_get_nz(const field_config_type * config ) {
   return config->nz;
 }
 

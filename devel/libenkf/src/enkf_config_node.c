@@ -164,15 +164,25 @@ enkf_config_node_type * enkf_config_node_alloc_gen_kw_config( const char * key  
   return config_node;
 }
 
+/*****************************************************************/
+
+void enkf_config_node_update_state_field( enkf_config_node_type * config_node , int truncation , double value_min , double value_max ) {
+  field_config_update_state_field( config_node->data , truncation , value_min , value_max );
+}
 
 
+enkf_config_node_type * enkf_config_node_alloc_state_field( const char * key              ,
+                                                            ecl_grid_type * ecl_grid      , 
+                                                            int truncation                ,
+                                                            double value_min              , 
+                                                            double value_max              ,            
+                                                            field_trans_table_type * trans_table ) {
+  /* 1: Allocate bare bones instances         */
+  enkf_config_node_type * config_node = enkf_config_node_alloc__( DYNAMIC_STATE , FIELD , key );
+  config_node->data = field_config_alloc_empty( key , ecl_grid , trans_table );
 
-enkf_config_node_type * enkf_config_node_alloc_field_config( const char * key              ,
-                                                             enkf_var_type var_type        ,       
-                                                             const char * enkf_outfile_fmt ,
-                                                             const char * enkf_infile_fmt  ) {
-
-  return NULL;
+  /* 2: Update the content of the instances.  */
+  enkf_config_node_update_state_field( config_node , truncation , value_min , value_max );
 }
 
 
