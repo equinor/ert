@@ -12,8 +12,8 @@ extern "C" {
 #include <obs_vector.h>
 #include <hash.h>
 #include <local_ministep.h>
+#include <enkf_types.h>
 
-typedef struct enkf_obs_struct enkf_obs_type;
 
 
 

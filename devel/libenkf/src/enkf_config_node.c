@@ -13,7 +13,8 @@
 #include <gen_data_config.h>
 #include <gen_kw_config.h>
 #include <summary_config.h>
-
+#include <enkf_obs.h>
+#include <gen_obs.h>
 
 #define ENKF_CONFIG_NODE_TYPE_ID 776104
 
@@ -215,6 +216,15 @@ const enkf_node_type * enkf_config_node_get_min_std( const enkf_config_node_type
   return config_node->min_std;
 }
 
+const char * enkf_config_node_get_min_std_file( const enkf_config_node_type * config_node ) {
+  return config_node->min_std_file;
+}
+
+
+const char * enkf_config_node_get_enkf_outfile( const enkf_config_node_type * config_node ) {
+  return path_fmt_get_fmt( config_node->enkf_outfile_fmt );
+}
+
 
 void enkf_config_node_set_min_std( enkf_config_node_type * config_node , enkf_node_type * min_std ) {
   if (config_node->min_std != NULL)
@@ -312,6 +322,58 @@ int enkf_config_node_get_num_obs( const enkf_config_node_type * config_node ) {
 }
 
 
+/**
+   This checks the index_key - and sums up over all the time points of the observation.
+*/
+
+int enkf_config_node_load_obs( const enkf_config_node_type * config_node , const enkf_obs_type * enkf_obs ,const char * key_index , time_t * sim_time , double * y , double * std) {
+  enkf_impl_type impl_type = enkf_config_node_get_impl_type(config_node);
+  int num_obs = 0;
+  int iobs;
+
+  for (iobs = 0; iobs < stringlist_get_size( config_node->obs_keys ); iobs++) {
+    obs_vector_type * obs_vector = enkf_obs_get_vector( enkf_obs , stringlist_iget( config_node->obs_keys , iobs));
+    
+    int report_step = -1;
+    while (true) {
+      report_step = obs_vector_get_next_active_step( obs_vector , report_step);
+      if (report_step == -1) break;
+      
+      {
+        bool valid;
+        double value , std1;
+
+        /**
+           The user index used when calling the user_get function on the
+           gen_obs data type is different depending on whether is called with a
+           data context user_key (as here) or with a observation context
+           user_key (as when plotting an observation plot). See more
+           documentation of the function gen_obs_user_get_data_index(). 
+        */
+
+        if (impl_type == GEN_DATA)
+          gen_obs_user_get_with_data_index( obs_vector_iget_node( obs_vector , report_step ) , key_index , &value , &std1 , &valid);
+        else
+          obs_vector_user_get( obs_vector , key_index , report_step , &value , &std1 , &valid);
+        
+        if (valid) {
+          if (sim_time != NULL) {
+            sim_time[num_obs] = obs_vector_iget_obs_time( obs_vector , report_step );
+            y[num_obs]        = value;
+            std[num_obs]      = std1;
+          }
+          num_obs++;
+        }
+      }
+    }
+  }
+  return num_obs;
+}
+
+
+
+
+
 void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const char * obs_key) {
   if (!stringlist_contains(config_node->obs_keys , obs_key))
     stringlist_append_copy(config_node->obs_keys , obs_key);
@@ -321,7 +383,6 @@ void enkf_config_node_add_obs_key(enkf_config_node_type * config_node , const ch
 void enkf_config_node_clear_obs_keys(enkf_config_node_type * config_node) {
   stringlist_clear( config_node->obs_keys );
 }
-
 
 
 /*****************************************************************/

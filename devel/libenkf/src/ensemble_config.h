@@ -9,13 +9,14 @@
 
 typedef struct ensemble_config_struct ensemble_config_type;
 
+int                      ensemble_config_get_observations( const ensemble_config_type * config , const enkf_obs_type * enkf_obs , const char * user_key , time_t * obs_time , double * y , double * std);
 void                     ensemble_config_ensure_static_key(ensemble_config_type * ensemble_config , const char * kw );
 void                     ensemble_config_clear_obs_keys(ensemble_config_type * ensemble_config);
 void                     ensemble_config_add_obs_key(ensemble_config_type * , const char * , const char * );
 const enkf_config_node_type  * ensemble_config_user_get_node(const ensemble_config_type *  , const char * , char **);
 enkf_impl_type           ensemble_config_impl_type(const ensemble_config_type *, const char * );
 enkf_var_type            ensemble_config_var_type(const ensemble_config_type *, const char * );
-ensemble_config_type   * ensemble_config_alloc(const config_type * config , const ecl_grid_type * grid , const ecl_sum_type * refcase);
+ensemble_config_type   * ensemble_config_alloc(const config_type * config , ecl_grid_type * grid , const ecl_sum_type * refcase);
 void                     ensemble_config_free(ensemble_config_type * );
 bool                     ensemble_config_has_key(const ensemble_config_type * , const char * );
 enkf_config_node_type  * ensemble_config_add_node(ensemble_config_type * ,

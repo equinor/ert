@@ -43,6 +43,7 @@ void 		     obs_vector_deactivate_report_step(obs_vector_type * , int , int );
 void 		     obs_vector_activate_time_t(obs_vector_type * , const sched_file_type * , time_t , time_t );
 void 		     obs_vector_deactivate_time_t(obs_vector_type * , const sched_file_type * , time_t , time_t );
 int                  obs_vector_get_num_active(const obs_vector_type * );
+time_t               obs_vector_iget_obs_time( const obs_vector_type * vector , int index);
 bool   	   	     obs_vector_iget_active(const obs_vector_type * , int );
 void                 obs_vector_iget_observations(const obs_vector_type *  , int  , obs_data_type * , const active_list_type * active_list);
 void                 obs_vector_measure(const obs_vector_type *  , int  ,const enkf_node_type *  ,  meas_vector_type * , const active_list_type * active_list);

@@ -635,11 +635,10 @@ void field_export(const field_type * __field, const char * file , fortio_type * 
     /*  Writes the field to in ecl_kw format to a new file.  */
     if ((file_type == ECL_KW_FILE_ALL_CELLS) || (file_type == ECL_KW_FILE_ACTIVE_CELLS)) {
       fortio_type * fortio;
-      bool fmt_file ;
+      bool fmt_file = false;                /* For formats which support both formatted and unformatted output this is hardwired to unformatted. */
       
-      field_config_set_io_options(field->config , &fmt_file );
       fortio = fortio_fopen(file , "w" , ECL_ENDIAN_FLIP , fmt_file);
-      
+
       if (file_type == ECL_KW_FILE_ALL_CELLS)
 	field_ecl_write3D_fortio(field , fortio);
       else

@@ -187,6 +187,10 @@ typedef enum {
 } active_mode_type; 
 
 
+
+/*****************************************************************/
+
+typedef struct enkf_obs_struct enkf_obs_type;
   
 
 
@@ -194,6 +198,7 @@ const char      * enkf_types_get_var_name(enkf_var_type var_type);
 enkf_impl_type    enkf_types_get_impl_type(const char * );
 const char      * enkf_types_get_impl_name(enkf_impl_type );
 enkf_impl_type    enkf_types_check_impl_type(const char * );
+
 #ifdef __cplusplus
 }
 #endif

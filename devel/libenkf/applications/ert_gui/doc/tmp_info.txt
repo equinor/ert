@@ -1,0 +1,20 @@
+
+int enkf_main_get_observations( const enkf_main_type * enkf_main , const char * user_key , time_t * obs_time , double * y , double * std);
+
+o Kall funksjonen to ganger - første gang med NULL for de tre array
+  argumentene til slutt, da vil den bare telle opp hvor mange
+  observasjoner det er og returnere det. Dersom nøkkelen ikke er
+  gyldig vil funksjonen bare returnere 0.
+
+o user_key skal være en fully qualified nøkkel av typen WWCT:OP,
+  PRESSURE:10,10,2, FLUID_PARAMS:SGCR; hvis det du sender inn er
+  ugyldig får du bare returnert 0.
+
+---------------------
+
+
+Eclipse include : enkf_config_node_get_get_enkf_outfile( const enkf_config_node_type * config_node );
+
+Min_std         : enkf_config_node_get_min_std_file( const enkf_config_node_type * config_node );
+
+init_file_fmt   : gen_kw_config_get_init_file_fmt( const gen_kw_config_type * gen_kw_config );

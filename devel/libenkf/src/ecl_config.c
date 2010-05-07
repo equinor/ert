@@ -409,7 +409,7 @@ bool ecl_config_include_static_kw(const ecl_config_type * ecl_config, const char
 
   
 
-const ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config) {
+ecl_grid_type * ecl_config_get_grid(const ecl_config_type * ecl_config) {
   return ecl_config->grid;
 }
 

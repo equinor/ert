@@ -102,10 +102,10 @@ _______________/                     \___________/	 |  with EnKF.               
 
 struct field_config_struct {
   UTIL_TYPE_ID_DECLARATION;
-  int                   data_size;
-  char                * ecl_kw_name;    /* Name/key ... */
-  int nx,ny,nz;                         /* The number of elements in the three directions. */
-  const ecl_grid_type * grid;           /* A shared reference to the grid this field is defined on. */
+
+  char                 * ecl_kw_name;    /* Name/key ... */
+  int data_size , nx,ny,nz;              /* The number of elements in the three directions. */
+  ecl_grid_type * grid;                  /* A shared reference to the grid this field is defined on. */
   bool  private_grid;
   
   active_list_type      * active_list;
@@ -121,9 +121,8 @@ struct field_config_struct {
   ecl_type_enum           export_ecl_type;
   path_fmt_type         * init_file_fmt; /* The format for loding init_files - if this is NULL the initialization is done by the forward model. */
 
-  bool __enkf_mode;                      /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
-  bool fmt_file;
-  bool write_compressed;
+  bool                    __enkf_mode;                      /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
+  bool                    write_compressed;  
 
   field_type              * min_std;
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
@@ -328,8 +327,22 @@ field_file_format_type field_config_get_import_format(const field_config_type * 
   return field_config->import_format;
 }
 
+/**
+   IFF the @private_grid parameter is true, the field_config instance
+   will take ownership of grid, i.e. freeing it in
+   field_config_free().
 
-void field_config_set_grid(field_config_type * config, const ecl_grid_type * grid , bool private_grid) {
+   The field_config object exports a field_config_set_grid() function,
+   but that is actually quite misleading. If this function is called
+   during a run there are many other dependencies which must also be
+   updated, which are not handled.
+*/
+
+
+void field_config_set_grid(field_config_type * config, ecl_grid_type * grid , bool private_grid) {
+  if ((config->private_grid) && (config->grid != NULL))
+    ecl_grid_free( config->grid );
+  
   config->grid         = grid;
   config->private_grid = private_grid;
   ecl_grid_get_dims(grid , &config->nx , &config->ny , &config->nz , &config->data_size);
@@ -342,17 +355,43 @@ const char * field_config_get_grid_name( const field_config_type * config) {
 
 
 
+/*
+  The return value from this function is hardly usable. 
+*/
+field_config_type * field_config_alloc_empty( const char * ecl_kw_name ) {
+
+  field_config_type * config = util_malloc(sizeof *config, __func__);
+  UTIL_TYPE_ID_INIT( config , FIELD_CONFIG_ID);
+  
+  config->ecl_kw_name      = util_alloc_string_copy( ecl_kw_name );
+
+  config->private_grid     = false;
+  config->active_list      = active_list_alloc( ALL_ACTIVE );
+  config->__enkf_mode      = true;
+  config->grid             = NULL;
+  config->write_compressed = true;
+  config->output_transform = NULL;
+  config->input_transform  = NULL;
+  config->init_transform   = NULL;
+  config->truncation       = TRUNCATE_NONE;
+  config->init_file_fmt    = NULL;
+  config->min_std          = NULL;
+  
+  field_config_set_ecl_type( config , ECL_FLOAT_TYPE );   /* This is the internal type. */
+  return config;
+}
+                                              
+
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      	   , /* 1: Keyword name */
 						ecl_type_enum ecl_type   	      	   , /* 2: Type of underlying data.*/
-						const ecl_grid_type * ecl_grid        	   , /* 3: The underlying grid */
+						ecl_grid_type * ecl_grid        	   , /* 3: The underlying grid */
 						field_file_format_type import_format  	   , /* 4: The format used when loading instances of this field. */
 						field_file_format_type export_format  	   , /* 5: The format used when exporting (for ECLIPSE) instance of this field. */
 						field_trans_table_type * field_trans_table , /* 6: Table of available transformation functions for input/output. */
 						const stringlist_type * options) {           /* 7: Extra options in format: MIN:0.001   MAX:0.89 ...  */
   
-  field_config_type *config = util_malloc(sizeof *config, __func__);
-  config->__type_id = FIELD_CONFIG_ID;
+  field_config_type *config = field_config_alloc_empty( ecl_kw_name );
   /*
     Observe that size is the number of *ACTIVE* cells,
     and generally *not* equal to nx*ny*nz.
@@ -366,22 +405,9 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->export_format 	   = export_format;
   config->import_format 	   = import_format;
   
+  
   field_config_set_grid(config , ecl_grid , false);
-  config->ecl_kw_name = NULL;
-  field_config_set_ecl_kw_name(config , ecl_kw_name);
   field_config_set_ecl_type(config , ecl_type);
-
-  config->truncation               = TRUNCATE_NONE;
-  config->__enkf_mode              = true;
-  config->fmt_file    	      	   = false;
-  config->write_compressed    	   = true;
-  config->init_file_fmt            = NULL;
-  config->output_transform         = NULL;
-  config->init_transform           = NULL;
-  config->input_transform          = NULL;
-  config->active_list              = active_list_alloc( ALL_ACTIVE );
-  config->min_std                  = NULL;
-
   /* Starting on the options. */
   {
     hash_type * opt_hash = hash_alloc_from_options( options );
@@ -400,25 +426,31 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 
       */
 
-      if (strcmp(option , "MIN") == 0) {
-	double min_value;
-	if (util_sscanf_double( value , &min_value)) {
-	  config->min_value  = min_value;
-	  util_bitmask_on( &config->truncation , TRUNCATE_MIN );
-	} else
-	  fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid minimum value - ignored \n",value);
-	option_OK = true;
+      {
+        int    truncation = 0;
+        double min_value;
+        double max_value;
+        
+        if (strcmp(option , "MIN") == 0) {
+          if (util_sscanf_double( value , &min_value)) {
+            min_value  = min_value;
+            truncation |= TRUNCATE_MIN;
+          } else
+            fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid minimum value - ignored \n",value);
+          option_OK = true;
+        }
+      
+        if (strcmp(option , "MAX") == 0) {
+          if (util_sscanf_double( value , &max_value)) {
+            max_value  = max_value;
+            truncation |= TRUNCATE_MAX;
+          } else
+            fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid maximum value - ignored \n",value);
+          option_OK = true;
+        }
+        field_config_set_truncation( config , truncation , min_value , max_value );
       }
       
-      if (strcmp(option , "MAX") == 0) {
-	double max_value;
-	if (util_sscanf_double( value , &max_value)) {
-	  config->max_value  = max_value;
-	  util_bitmask_on( &config->truncation , TRUNCATE_MAX );
-	} else
-	  fprintf(stderr,"** Warning: failed to parse: \"%s\" as valid maximum value - ignored \n",value);
-	option_OK = true;
-      }
 
       if (strcmp(option , "OUTPUT_TRANSFORM") == 0) {
 	if (field_trans_table_has_key( field_trans_table , value))
@@ -509,7 +541,7 @@ void field_config_get_ijk( const field_config_type * config , int active_index ,
 }
 
 
-field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , const stringlist_type * options) {
+field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table , const stringlist_type * options) {
   field_config_type * config = field_config_alloc__(ecl_kw_name , ECL_FLOAT_TYPE , ecl_grid , ECL_FILE , ECL_FILE , trans_table , options);
   return config;
 }
@@ -518,7 +550,7 @@ field_config_type * field_config_alloc_dynamic(const char * ecl_kw_name , const 
 
 field_config_type * field_config_alloc_general(const char * ecl_kw_name , 
 					       const char * ecl_file    , 
-					       const ecl_grid_type * ecl_grid , 
+                                               ecl_grid_type * ecl_grid , 
 					       ecl_type_enum internal_type , 
 					       field_trans_table_type * trans_table , 
 					       const stringlist_type * options) {
@@ -538,7 +570,7 @@ field_config_type * field_config_alloc_general(const char * ecl_kw_name ,
 /* This interface is just to general */
 field_config_type * field_config_alloc_parameter(const char * ecl_kw_name 	      ,
 						 const char * ecl_file    	      ,
-						 const ecl_grid_type * ecl_grid       ,
+                                                 ecl_grid_type * ecl_grid       ,
 						 field_trans_table_type * trans_table ,
 						 const stringlist_type * options) {
   field_config_type * config;
@@ -619,16 +651,13 @@ truncation_type field_config_get_truncation(const field_config_type * config , d
 
 
 
-void field_config_set_io_options(const field_config_type * config , bool *fmt_file ) {
-  *fmt_file    = config->fmt_file;
-}
-
 
 
 void field_config_free(field_config_type * config) {
   util_safe_free(config->ecl_kw_name);
   active_list_free(config->active_list);
   if (config->init_file_fmt != NULL) path_fmt_free( config->init_file_fmt );
+  if ((config->private_grid) && (config->grid != NULL)) ecl_grid_free( config->grid );
   free(config);
 }
 

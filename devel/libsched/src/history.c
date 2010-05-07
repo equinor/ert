@@ -975,6 +975,12 @@ int history_get_restart_nr_from_days(const history_type * history, double days)
 }
 
 
+/* Uncertain about the first node - offset problems +++ ?? */
+time_t history_get_time_t_from_restart_nr( const history_type * history , int restart_nr) {
+  return history_iget_node_start_time(history, restart_nr);
+}
+
+
 void history_fprintf(const history_type * history , FILE * stream) {
   int item;
   for (item = 0; item < list_get_size(history->nodes); item++) {

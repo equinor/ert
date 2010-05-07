@@ -2838,6 +2838,12 @@ const ext_joblist_type * enkf_main_get_installed_jobs( const enkf_main_type * en
   return site_config_get_installed_jobs( enkf_main->site_config );
 }
 
+/*****************************************************************/
+
+int enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , time_t * obs_time , double * y , double * std) {
+  return ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , obs_time , y , std);
+}
+
 
 
 /**
@@ -2885,4 +2891,6 @@ void enkf_main_init_debug( const char * executable ) {
   if (executable != NULL)
     util_abort_set_executable( executable );
 }  
+
+
 
