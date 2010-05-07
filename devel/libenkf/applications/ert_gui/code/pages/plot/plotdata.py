@@ -98,7 +98,7 @@ class PlotContextDataFetcher(ContentModel):
         ert.prototype("long gen_kw_config_alloc_name_list(long)")
 
 
-    @print_timing
+    #@print_timing
     def getter(self, ert):
         data = PlotContextData()
 
