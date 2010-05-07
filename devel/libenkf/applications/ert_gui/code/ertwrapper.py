@@ -11,7 +11,7 @@ class ErtWrapper:
     def __init__(self, site_config="/project/res/etc/ERT/Config/site-config", enkf_config="/private/jpb/EnKF/Testcases/SimpleEnKF/enkf_config", enkf_so="/private/jpb/EnKF/"):
         self.__loadLibraries__(enkf_so)
 
-        self.pattern = re.compile("(?P<return>\w+) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_, ]*)[)]")
+        self.pattern = re.compile("(?P<return>\w+) +(?P<function>[a-zA-Z]\w*) *[(](?P<arguments>[a-zA-Z0-9_*, ]*)[)]")
 
         #bootstrap
         self.main = self.enkf.enkf_main_bootstrap(site_config, enkf_config)
@@ -54,12 +54,15 @@ class ErtWrapper:
         self.registered_types = {}
         self.registerType("void", None)
         self.registerType("int", ctypes.c_int)
+        self.registerType("int*", ctypes.POINTER(ctypes.c_int))
         self.registerType("bool", ctypes.c_int)
+        self.registerType("bool*", ctypes.POINTER(ctypes.c_int))
         self.registerType("long", ctypes.c_long)
+        self.registerType("long*", ctypes.POINTER(ctypes.c_long))
         self.registerType("char", ctypes.c_char_p)
         self.registerType("float", ctypes.c_float)
         self.registerType("double", ctypes.c_double)
-        self.registerType("ref", ctypes.c_void_p)
+        self.registerType("double*", ctypes.POINTER(ctypes.c_double))
 
 
     def __loadLibraries__(self, prefix):
@@ -129,7 +132,6 @@ class ErtWrapper:
             func.restype = self._parseType(restype)
             func.argtypes = [self._parseType(arg) for arg in arguments]
             #print func, func.restype, func.argtypes
-
 
     def setTypes(self, function, restype = c_long, argtypes = None, library = None, selfpointer = True):
         """
@@ -293,6 +295,8 @@ class ErtWrapper:
         """Called at atexit to clean up before shutdown"""
         print "Calling enkf_main_free()"
         self.enkf.enkf_main_free(self.main)
+
+
 
 def testPrototypes():
     import ertwrapper

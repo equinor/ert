@@ -50,13 +50,13 @@ class ParameterPanel(HelpedWidget):
     def changeParameter(self, current, previous):
         if not current:
             self.pagesWidget.setCurrentWidget(self.emptyPanel)
-        elif current.getTypeName() == FieldModel.TYPE_NAME:
+        elif FieldModel.TYPE == current.getType():
             self.pagesWidget.setCurrentWidget(self.fieldPanel)
             self.fieldPanel.setFieldModel(current.getData())
-        elif current.getTypeName() == DataModel.TYPE_NAME:
+        elif DataModel.TYPE == current.getType():
             self.pagesWidget.setCurrentWidget(self.dataPanel)
             self.dataPanel.setDataModel(current.getData())
-        elif current.getTypeName() == KeywordModel.TYPE_NAME:
+        elif KeywordModel.TYPE == current.getType():
             self.pagesWidget.setCurrentWidget(self.keywordPanel)
             self.keywordPanel.setKeywordModel(current.getData())
         else:
@@ -64,16 +64,24 @@ class ParameterPanel(HelpedWidget):
 
     def addToList(self, list, type_name, name):
         """Adds a new parameter to the list"""
-        param = Parameter(name, type_name)
 
-        if type_name == FieldModel.TYPE_NAME:
-            param.setData(FieldModel(name))
-        elif type_name == DataModel.TYPE_NAME:
-            param.setData(DataModel(name))
-        elif type_name == KeywordModel.TYPE_NAME:
-            param.setData(KeywordModel(name))
-        elif type_name == SummaryModel.TYPE_NAME:
-            param.setData(SummaryModel(name))
+        if type_name == FieldModel.TYPE.name:
+            type = FieldModel.TYPE
+            data = FieldModel(name)
+        elif type_name == DataModel.TYPE.name:
+            type = DataModel.TYPE
+            data = DataModel(name)
+        elif type_name == KeywordModel.TYPE.name:
+            type = KeywordModel.TYPE
+            data = KeywordModel(name)
+        elif type_name == SummaryModel.TYPE.name:
+            type = SummaryModel.TYPE
+            data = SummaryModel(name)
+        else:
+            raise AssertionError("Type name unknown: %s" % (type_name))
+
+        param = Parameter(name, type)
+        param.setData(data)
 
         list.addItem(param)
         list.setCurrentItem(param)
@@ -117,18 +125,10 @@ class ParameterPanel(HelpedWidget):
         parameters = self.getFromModel()
 
         for parameter in parameters:
-            if parameter.TYPE == SummaryModel.TYPE:
-                type_name = SummaryModel.TYPE_NAME
-            elif parameter.TYPE == FieldModel.TYPE:
-                type_name = FieldModel.TYPE_NAME
-            elif parameter.TYPE == DataModel.TYPE:
-                type_name = DataModel.TYPE_NAME
-            elif parameter.TYPE == KeywordModel.TYPE:
-                type_name = KeywordModel.TYPE_NAME
-            else:
-                type_name = "Unknown type name!"
+            if parameter is None:
+                raise AssertionError("Unknown type name!")
 
-            param = Parameter(parameter.name, type_name)
+            param = Parameter(parameter.name, parameter.TYPE)
             param.setData(parameter)
 
             self.searchableList.getList().addItem(param)
@@ -140,30 +140,30 @@ class ParameterPanel(HelpedWidget):
 
 class Parameter(QtGui.QListWidgetItem):
     """ListWidgetItem class that represents a Parameter with an associated icon."""
-    typeIcons = {FieldModel.TYPE_NAME: util.resourceIcon("grid_16"),
-                 DataModel.TYPE_NAME: util.resourceIcon("data"),
-                 SummaryModel.TYPE_NAME: util.resourceIcon("summary"),
-                 KeywordModel.TYPE_NAME: util.resourceIcon("key")}
+    typeIcons = {FieldModel.TYPE: util.resourceIcon("grid_16"),
+                 DataModel.TYPE: util.resourceIcon("data"),
+                 SummaryModel.TYPE: util.resourceIcon("summary"),
+                 KeywordModel.TYPE: util.resourceIcon("key")}
 
-    def __init__(self, name, type_name):
-        QtGui.QListWidgetItem.__init__(self, Parameter.typeIcons[type_name], name)
-        self.type_name = type_name
+    def __init__(self, name, type):
+        QtGui.QListWidgetItem.__init__(self, Parameter.typeIcons[type], name)
+        self.type = type
         self.name = name
         self.data = None
 
-    def getTypeName(self):
-        """Retruns the type name of this parameter"""
-        return self.type_name
+    def getType(self):
+        """Retruns the type of this parameter"""
+        return self.type
 
     def getName(self):
         """Returns the name of this parameter (keyword)"""
         return self.name
 
     def __ge__(self, other):
-        if self.type_name == other.type_name:
+        if self.type.name == other.type.name:
             return self.name.lower() >= other.name.lower()
         else:
-            return self.type_name >= other.type_name
+            return self.type.name >= other.type.name
 
     def __lt__(self, other):
         return not self >= other
