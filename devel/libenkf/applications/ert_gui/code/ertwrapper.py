@@ -125,7 +125,7 @@ class ErtWrapper:
             arguments = match.groupdict()["arguments"].split(",")
             #print restype, functioname, arguments
 
-            func = getattr(lib, functioname)
+            func = getattr(lib , functioname)
             func.restype = self._parseType(restype)
             func.argtypes = [self._parseType(arg) for arg in arguments]
             #print func, func.restype, func.argtypes
