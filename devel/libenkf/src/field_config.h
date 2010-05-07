@@ -31,7 +31,7 @@ typedef enum {
   ECLIPSE_RESTART   = 1,
   ECLIPSE_PARAMETER = 2,
   GENERAL           = 3
-} field_types;
+} field_type_enum;
  
 
 /** 
@@ -79,6 +79,10 @@ typedef enum { UNDEFINED_FORMAT         = 0,
 
   
 
+void                    field_config_update_state_field( field_config_type * config, int truncation, double min_value , double max_value);
+
+
+
 
 
 
@@ -91,6 +95,9 @@ field_file_format_type  field_config_manual_file_type(const char * , bool);
 ecl_type_enum           field_config_get_ecl_type(const field_config_type * );
 rms_type_enum           field_config_get_rms_type(const field_config_type * );
 void                    field_config_get_dims(const field_config_type * , int * , int * , int *);
+void                    field_config_get_nx(const field_config_type * config );
+void                    field_config_get_ny(const field_config_type * config );
+void                    field_config_get_nz(const field_config_type * config );
 field_config_type     * field_config_alloc_dynamic(const char * , ecl_grid_type * , field_trans_table_type * , const stringlist_type *);
 field_config_type     * field_config_alloc_parameter(const char * , const char * , ecl_grid_type * , field_trans_table_type * , const stringlist_type *);
 field_config_type     * field_config_alloc_general(const char *  , const char * , ecl_grid_type *  , ecl_type_enum , field_trans_table_type * , const stringlist_type *);

@@ -124,6 +124,7 @@ struct field_config_struct {
   bool                    __enkf_mode;                      /* See doc of functions field_config_set_key() / field_config_enkf_OFF() */
   bool                    write_compressed;  
 
+  field_type_enum           type;
   field_type              * min_std;
   field_trans_table_type  * trans_table;          /* Internalize a (pointer to) a table of the available transformation functions. */
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
@@ -395,6 +396,7 @@ void field_config_set_init_file_fmt( field_config_type * field_config , const ch
 
 void field_config_update_state_field( field_config_type * config, int truncation, double min_value , double max_value) {
   field_config_set_truncation( config ,truncation , min_value , max_value );
+  config->type = ECLIPSE_RESTART;
   
   /* Setting all the defaults for state_fields, i.e. PRESSURE / SGAS / SWAT ... */
   config->import_format = ECL_FILE;
@@ -405,7 +407,9 @@ void field_config_update_state_field( field_config_type * config, int truncation
   config->input_transform  = NULL;
   config->init_transform   = NULL;
 }
-                                      
+ 
+
+                                     
   
 void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value, 
                                           field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
@@ -413,6 +417,7 @@ void field_config_update_parameter_field( field_config_type * config , int trunc
                                           const char * init_transform , const char * output_transform ) {
   field_config_set_truncation( config , truncation , min_value , max_value );
   field_config_set_init_file_fmt( config , init_file_fmt);  
+  config->type = ECLIPSE_PARAMETER;
   
   config->export_format = export_format;
   config->import_format = UNDEFINED_FORMAT;  /* Guess from filename when loading. */
@@ -430,6 +435,39 @@ void field_config_update_parameter_field( field_config_type * config , int trunc
     config->output_transform = NULL;
 
 }
+
+
+void field_config_update_general_field( field_config_type * config , int truncation, double min_value , double max_value, 
+                                        field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
+                                        const char * init_file_fmt, 
+                                        const char * init_transform , const char * output_transform ) {
+  field_config_set_truncation( config , truncation , min_value , max_value );
+  field_config_set_init_file_fmt( config , init_file_fmt);  
+  config->type = GENERAL;
+  
+  config->export_format = export_format;
+  config->import_format = UNDEFINED_FORMAT;  /* Guess from filename when loading. */
+
+  config->input_transform = NULL;            /* This is a transformation on the data loaded from the forward model - could in principle be != NULL. */ 
+  
+  if (field_trans_table_has_key( config->trans_table , init_transform )) 
+    config->init_transform = field_trans_table_lookup( config->trans_table , init_transform);
+  else 
+    config->init_transform = NULL;
+  
+  if (field_trans_table_has_key( config->trans_table , output_transform )) 
+    config->output_transform = field_trans_table_lookup( config->trans_table , output_transform );
+  else 
+    config->output_transform = NULL;
+
+}
+
+
+
+field_type_enum field_config_get_type( const field_config_type * config) {
+  return config->type;
+}
+
 
 
 
@@ -788,6 +826,17 @@ char * field_config_alloc_init_file(const field_config_type * config, int iens) 
 }
 
 
+void field_config_get_nx(const field_config_type * config ) {
+  return config->nx;
+}
+
+void field_config_get_ny(const field_config_type * config ) {
+  return config->ny;
+}
+
+void field_config_get_nz(const field_config_type * config ) {
+  return config->nz;
+}
 
 
 
@@ -996,6 +1045,8 @@ void field_config_assert_binary( const field_config_type * config1 , const field
       3: ijk correspond to an inactive cell.
 
    In cases 2 & 3 the i,j,k are valid (in the string-parsing sense).
+   The input string is assumed to have offset one, and the return
+   values (by reference) are offset zero.
 */
    
 
