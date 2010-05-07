@@ -18,6 +18,22 @@ extern "C" {
 #include <stringlist.h>
 #include <field_common.h>
 
+
+
+/**
+   This is purely a convenience structure used during initialization,
+   to denote which arguments are required and, which should be
+   defualted.
+
+*/
+    
+typedef enum {
+  ECLIPSE_RESTART   = 1,
+  ECLIPSE_PARAMETER = 2,
+  GENERAL           = 3
+} field_types;
+ 
+
 /** 
     The field_file_format_type denotes different ways to store a
     field. Unfortunately the different elements in the enum definition

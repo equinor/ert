@@ -132,17 +132,22 @@ field_func_type * field_trans_table_lookup(field_trans_table_type * table , cons
 }
 
 
-
+/**
+   Will return false if _key == NULL 
+*/
 bool field_trans_table_has_key(field_trans_table_type * table , const char * _key) {
-  bool has_key;
-  char * key;
-  if (table->case_sensitive)
-    key = util_alloc_string_copy(_key);
-  else
-    key = util_alloc_strupr_copy(_key);
+  bool has_key = false;
 
-  has_key = hash_has_key( table->function_table , key);
-  free(key);
+  if (_key != NULL) {
+    char * key;
+    if (table->case_sensitive)
+      key = util_alloc_string_copy(_key);
+    else
+      key = util_alloc_strupr_copy(_key);
+    
+    has_key = hash_has_key( table->function_table , key);
+    free(key);
+  }
   
   return has_key;
 }

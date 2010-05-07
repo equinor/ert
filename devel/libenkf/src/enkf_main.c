@@ -2845,6 +2845,11 @@ int enkf_main_get_observations( const enkf_main_type * enkf_main, const char * u
 }
 
 
+int enkf_main_get_observation_count( const enkf_main_type * enkf_main, const char * user_key ) {
+  return ensemble_config_get_observations( enkf_main->ensemble_config , enkf_main->obs , user_key , NULL , NULL , NULL);
+}
+
+
 
 /**
    This function will go through the filesystem and check that we have

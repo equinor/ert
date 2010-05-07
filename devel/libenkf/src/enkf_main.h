@@ -107,6 +107,7 @@ void                     enkf_main_clear_data_kw( enkf_main_type * enkf_main );
 site_config_type       * enkf_main_get_site_config( const enkf_main_type * enkf_main );
 void                     enkf_main_resize_ensemble( enkf_main_type * enkf_main , int new_ens_size );
 int                      enkf_main_get_observations( const enkf_main_type * enkf_main, const char * user_key , time_t * obs_time , double * y , double * std);
+int                      enkf_main_get_observation_count( const enkf_main_type * enkf_main, const char * user_key );
 
 /*****************************************************************/
 void                        enkf_main_install_SIGNALS(void);

@@ -125,6 +125,7 @@ struct field_config_struct {
   bool                    write_compressed;  
 
   field_type              * min_std;
+  field_trans_table_type  * trans_table;          /* Internalize a (pointer to) a table of the available transformation functions. */
   field_func_type         * output_transform;     /* Function to apply to the data before they are exported - NULL: no transform. */
   field_func_type         * init_transform;       /* Function to apply on the data when they are loaded the first time - i.e. initialized. NULL : no transform*/
   field_func_type         * input_transform;      /* Function to apply on the data when they are loaded from the forward model - i.e. for dynamic data. */
@@ -358,7 +359,7 @@ const char * field_config_get_grid_name( const field_config_type * config) {
 /*
   The return value from this function is hardly usable. 
 */
-field_config_type * field_config_alloc_empty( const char * ecl_kw_name ) {
+field_config_type * field_config_alloc_empty( const char * ecl_kw_name , ecl_grid_type * ecl_grid , field_trans_table_type * trans_table ) {
 
   field_config_type * config = util_malloc(sizeof *config, __func__);
   UTIL_TYPE_ID_INIT( config , FIELD_CONFIG_ID);
@@ -376,11 +377,61 @@ field_config_type * field_config_alloc_empty( const char * ecl_kw_name ) {
   config->truncation       = TRUNCATE_NONE;
   config->init_file_fmt    = NULL;
   config->min_std          = NULL;
+  config->trans_table      = trans_table;
   
-  field_config_set_ecl_type( config , ECL_FLOAT_TYPE );   /* This is the internal type. */
+  field_config_set_grid(config , ecl_grid , false);       /* The grid is (currently) set on allocation and can NOT be updated afterwards. */
+  field_config_set_ecl_type( config , ECL_FLOAT_TYPE );   /* This is the internal type - currently not exported any API to change it. */
   return config;
 }
                                               
+
+
+void field_config_set_init_file_fmt( field_config_type * field_config , const char * init_file_fmt ) {
+  field_config->init_file_fmt = path_fmt_realloc_path_fmt( field_config->init_file_fmt , init_file_fmt );
+}
+
+
+
+
+void field_config_update_state_field( field_config_type * config, int truncation, double min_value , double max_value) {
+  field_config_set_truncation( config ,truncation , min_value , max_value );
+  
+  /* Setting all the defaults for state_fields, i.e. PRESSURE / SGAS / SWAT ... */
+  config->import_format = ECL_FILE;
+  config->export_format = ECL_FILE;
+  field_config_set_init_file_fmt( config , NULL );
+  
+  config->output_transform = NULL;
+  config->input_transform  = NULL;
+  config->init_transform   = NULL;
+}
+                                      
+  
+void field_config_update_parameter_field( field_config_type * config , int truncation, double min_value , double max_value, 
+                                          field_file_format_type export_format , /* This can be guessed with the field_config_default_export_format( ecl_file ) function. */
+                                          const char * init_file_fmt, 
+                                          const char * init_transform , const char * output_transform ) {
+  field_config_set_truncation( config , truncation , min_value , max_value );
+  field_config_set_init_file_fmt( config , init_file_fmt);  
+  
+  config->export_format = export_format;
+  config->import_format = UNDEFINED_FORMAT;  /* Guess from filename when loading. */
+
+  config->input_transform = NULL;
+  
+  if (field_trans_table_has_key( config->trans_table , init_transform )) 
+    config->init_transform = field_trans_table_lookup( config->trans_table , init_transform);
+  else 
+    config->init_transform = NULL;
+  
+  if (field_trans_table_has_key( config->trans_table , output_transform )) 
+    config->output_transform = field_trans_table_lookup( config->trans_table , output_transform );
+  else 
+    config->output_transform = NULL;
+
+}
+
+
 
 
 static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      	   , /* 1: Keyword name */
@@ -391,7 +442,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
 						field_trans_table_type * field_trans_table , /* 6: Table of available transformation functions for input/output. */
 						const stringlist_type * options) {           /* 7: Extra options in format: MIN:0.001   MAX:0.89 ...  */
   
-  field_config_type *config = field_config_alloc_empty( ecl_kw_name );
+  field_config_type *config = field_config_alloc_empty( ecl_kw_name , ecl_grid , field_trans_table );
   /*
     Observe that size is the number of *ACTIVE* cells,
     and generally *not* equal to nx*ny*nz.
@@ -406,7 +457,6 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
   config->import_format 	   = import_format;
   
   
-  field_config_set_grid(config , ecl_grid , false);
   field_config_set_ecl_type(config , ecl_type);
   /* Starting on the options. */
   {
@@ -483,7 +533,7 @@ static field_config_type * field_config_alloc__(const char * ecl_kw_name 	      
       }
 
       if (strcmp(option , "INIT_FILES") == 0) {
-	config->init_file_fmt = path_fmt_alloc_path_fmt( value );
+        field_config_set_init_file_fmt( config , value );
 	option_OK = true;
       }
 
