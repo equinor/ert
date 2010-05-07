@@ -5,6 +5,7 @@ import ertwrapper
 import pages.config.parameters.parameterpanel
 import widgets.helpedwidget
 from widgets.helpedwidget import ContentModel
+from pages.config.parameters.parametermodels import DataModel, FieldModel, KeywordModel, SummaryModel
 
 class PlotPanel(QtGui.QWidget):
     def __init__(self):
@@ -37,10 +38,13 @@ class PlotPanel(QtGui.QWidget):
         self.plot.plotDataFetcher.setParameter(current)
         self.plot.plotDataFetcher.fetchContent()
 
-        self.disconnect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
-        self.plotDataPanel.keyIndexCombo.clear()
-        self.plotDataPanel.keyIndexCombo.addItems(self.plot.plotContextDataFetcher.data.getKeyIndexList(current.getName()))
-        self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+        self.plotDataPanel.activatePanel(current.getTypeName())
+
+        if current.getTypeName() == KeywordModel.TYPE_NAME:
+            self.disconnect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
+            self.plotDataPanel.keyIndexCombo.clear()
+            self.plotDataPanel.keyIndexCombo.addItems(self.plot.plotContextDataFetcher.data.getKeyIndexList(current.getName()))
+            self.connect(self.plotDataPanel.keyIndexCombo, QtCore.SIGNAL('currentIndexChanged(QString)'), self.keyIndexChanged)
 
         self.plot.drawPlot()
 
@@ -71,7 +75,19 @@ class ParameterPlotPanel(QtGui.QStackedWidget):
         self.setMaximumWidth(width)
         self.setMaximumHeight(100)
 
-        self.addWidget(self.createPanel())
+        self.summaryPanel = widgets.util.createEmptyPanel()
+        self.keywordPanel = self.createPanel()
+
+        self.addWidget(self.summaryPanel)
+        self.addWidget(self.keywordPanel)
+
+    def activatePanel(self, parameter_type_name):
+        if parameter_type_name == SummaryModel.TYPE_NAME:
+            self.setCurrentWidget(self.summaryPanel)
+        elif parameter_type_name == KeywordModel.TYPE_NAME:
+            self.setCurrentWidget(self.keywordPanel)
+        else:
+            print "Unknown parametertype"
 
     def createPanel(self):
         panel = QtGui.QFrame()
