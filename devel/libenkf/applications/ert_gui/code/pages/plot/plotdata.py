@@ -20,7 +20,7 @@ class PlotDataFetcher(ContentModel):
         ert.prototype("long enkf_main_get_fs(long)")
         ert.prototype("int enkf_main_get_ensemble_size(long)")
         ert.prototype("long enkf_main_iget_member_config(long, int)")
-        ert.prototype("int enkf_main_get_observations(long, char, long*, double*, double*)") #main, user_key, *time, *y, *std
+        ert.prototype("void enkf_main_get_observations(long, char, int, long*, double*, double*)") #main, user_key, *time, *y, *std
         ert.prototype("int enkf_main_get_observation_count(long, char)")
 
         ert.prototype("bool enkf_fs_has_node(long, long, int, int, int)")
@@ -33,6 +33,9 @@ class PlotDataFetcher(ContentModel):
         ert.prototype("double member_config_iget_sim_days(long, int, int)")
         ert.prototype("long member_config_iget_sim_time(long, int, int)")
         ert.prototype("int member_config_get_last_restart_nr(long)")
+
+        ert.prototype("long enkf_config_node_get_ref(long)")
+        ert.prototype("bool field_config_ijk_active(long, int, int, int)")
 
 
     #@print_timing
@@ -49,6 +52,17 @@ class PlotDataFetcher(ContentModel):
                 num_realizations = ert.enkf.enkf_main_get_ensemble_size(ert.main)
 
                 key_index = self.parameter.getData()
+
+                if self.parameter.getType() == FieldModel.TYPE:
+                    field_config = ert.enkf.enkf_config_node_get_ref(config_node)
+                    position = "%i,%i,%i" % (key_index[0], key_index[1], key_index[2])
+
+                    print "State:", ert.enkf.field_config_ijk_active(field_config, *key_index), key_index 
+                    if ert.enkf.field_config_ijk_active(field_config, *key_index):
+                        key_index = position
+                    else:
+                        return data
+
                 data.setKeyIndex(key_index)
 
                 state_list = [self.state]
@@ -88,7 +102,7 @@ class PlotDataFetcher(ContentModel):
                     obs_y = (ertwrapper.c_double * obs_count)()
                     obs_std = (ertwrapper.c_double * obs_count)()
 
-                    ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_x,  obs_y, obs_std)
+                    ert.enkf.enkf_main_get_observations(ert.main, user_key, obs_count, obs_x,  obs_y, obs_std)
 
                     data.obs_x = obs_x
                     data.obs_y = obs_y
@@ -147,9 +161,15 @@ class PlotContextDataFetcher(ContentModel):
 
         ert.prototype("long enkf_config_node_get_impl_type(long)")
         ert.prototype("long enkf_config_node_get_ref(long)")
+
         ert.prototype("long gen_kw_config_alloc_name_list(long)")
 
+        ert.prototype("int field_config_get_nx(long)")
+        ert.prototype("int field_config_get_ny(long)")
+        ert.prototype("int field_config_get_nz(long)")
+
         ert.prototype("int plot_config_get_errorbar_max(long)")
+
 
 
     #@print_timing
@@ -168,12 +188,22 @@ class PlotContextDataFetcher(ContentModel):
                 p = Parameter(key, SummaryModel.TYPE)
                 data.parameters.append(p)
                 p.setData(None)
+
             elif type == FieldModel.TYPE:
                 p = Parameter(key, FieldModel.TYPE)
                 data.parameters.append(p)
-                p.setData("0,0,0")
+                p.setData((0,0,0)) #key_index
+
+                if data.field_bounds is None:
+                    field_config = ert.enkf.enkf_config_node_get_ref(config_node)
+                    x = ert.enkf.field_config_get_nx(field_config)
+                    y = ert.enkf.field_config_get_ny(field_config)
+                    z = ert.enkf.field_config_get_nz(field_config)
+                    data.field_bounds = (x,y,z)
+
             elif type == DataModel.TYPE:
                 data.parameters.append(Parameter(key, DataModel.TYPE))
+
             elif type == KeywordModel.TYPE:
                 p = Parameter(key, KeywordModel.TYPE)
                 data.parameters.append(p)
@@ -196,6 +226,7 @@ class PlotContextData:
         self.parameters = None
         self.key_index_list = {}
         self.errorbar_max = 0
+        self.field_bounds = None
 
     def getKeyIndexList(self, key):
         if self.key_index_list.has_key(key):
